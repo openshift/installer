@@ -1,3 +1,12 @@
+locals {
+  bootstrap_needed = "${var.step < 3}"
+  nodes_needed     = "${var.step > 1}"
+  dns_needed       = "${var.step >= 2}"
+
+  control_plane_count = "${local.nodes_needed ? var.control_plane_instance_count: 0}"
+  compute_count       = "${local.nodes_needed ? var.compute_instance_count: 0}"
+}
+
 provider "vsphere" {
   user                 = "${var.vsphere_user}"
   password             = "${var.vsphere_password}"
@@ -28,7 +37,7 @@ module "bootstrap" {
   source = "./machine"
 
   name             = "bootstrap"
-  instance_count   = "${var.bootstrap_complete ? 0 : 1}"
+  instance_count   = "${local.bootstrap_needed ? 1 : 0}"
   ignition_url     = "${var.bootstrap_ignition_url}"
   resource_pool_id = "${module.resource_pool.pool_id}"
   datastore        = "${var.vsphere_datastore}"
@@ -47,7 +56,7 @@ module "control_plane" {
   source = "./machine"
 
   name             = "control-plane"
-  instance_count   = "${var.control_plane_instance_count}"
+  instance_count   = "${local.nodes_needed ? var.control_plane_instance_count: 0}"
   ignition         = "${var.control_plane_ignition}"
   resource_pool_id = "${module.resource_pool.pool_id}"
   folder           = "${module.folder.path}"
@@ -66,7 +75,7 @@ module "compute" {
   source = "./machine"
 
   name             = "compute"
-  instance_count   = "${var.compute_instance_count}"
+  instance_count   = "${local.nodes_needed ? var.compute_instance_count: 0}"
   ignition         = "${var.compute_ignition}"
   resource_pool_id = "${module.resource_pool.pool_id}"
   folder           = "${module.folder.path}"
@@ -84,9 +93,11 @@ module "compute" {
 module "dns" {
   source = "./route53"
 
-  base_domain       = "${var.base_domain}"
-  cluster_domain    = "${var.cluster_domain}"
-  bootstrap_ip      = "${var.bootstrap_complete ? "" : var.bootstrap_ip}"
-  control_plane_ips = "${var.control_plane_ips}"
-  compute_ips       = "${var.compute_ips}"
+  base_domain                  = "${var.base_domain}"
+  cluster_domain               = "${var.cluster_domain}"
+  bootstrap_ip                 = ["${module.bootstrap.ip_addresses}"]
+  control_plane_instance_count = "${local.dns_needed ? var.control_plane_instance_count: 0}"
+  control_plane_ips            = ["${module.control_plane.ip_addresses}"]
+  compute_instance_count       = "${local.dns_needed ? var.compute_instance_count: 0}"
+  compute_ips                  = ["${module.compute.ip_addresses}"]
 }

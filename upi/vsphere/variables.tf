@@ -80,15 +80,8 @@ variable "bootstrap_ignition_url" {
   type = "string"
 }
 
-variable "bootstrap_complete" {
-  type    = "string"
-  default = "false"
-}
-
-variable "bootstrap_ip" {
-  type        = "string"
-  description = "The IP address in the machine_cidr to apply to the bootstrap."
-  default     = ""
+variable "step" {
+  type = "string"
 }
 
 ///////////
@@ -105,12 +98,6 @@ variable "control_plane_ignition" {
   type = "string"
 }
 
-variable "control_plane_ips" {
-  type        = "list"
-  description = "The IP addresses in the machine_cidr to apply to the control plane machines."
-  default     = []
-}
-
 //////////
 // Compute machine variables
 //////////
@@ -123,9 +110,4 @@ variable "compute_instance_count" {
 
 variable "compute_ignition" {
   type = "string"
-}
-
-variable "compute_ips" {
-  type    = "list"
-  default = []
 }

@@ -62,9 +62,6 @@ resource "vsphere_virtual_machine" "vm" {
   guest_id         = "other26xLinux64Guest"
   folder           = "${var.folder}"
 
-  wait_for_guest_net_timeout  = 0
-  wait_for_guest_net_routable = false
-
   network_interface {
     network_id = "${data.vsphere_network.network.id}"
   }
@@ -81,7 +78,8 @@ resource "vsphere_virtual_machine" "vm" {
 
   vapp {
     properties {
-      "guestinfo.coreos.config.data" = "${data.ignition_config.ign.*.rendered[count.index]}"
+      "guestinfo.ignition.config.data"          = "${base64encode(data.ignition_config.ign.*.rendered[count.index])}"
+      "guestinfo.ignition.config.data.encoding" = "base64"
     }
   }
 }

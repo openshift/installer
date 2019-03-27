@@ -4,11 +4,19 @@ variable "cluster_domain" {
 }
 
 variable "bootstrap_ip" {
+  type = "list"
+}
+
+variable "control_plane_instance_count" {
   type = "string"
 }
 
 variable "control_plane_ips" {
   type = "list"
+}
+
+variable "compute_instance_count" {
+  type = "string"
 }
 
 variable "compute_ips" {
