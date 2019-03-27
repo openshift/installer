@@ -27,9 +27,9 @@ type bootkubeTemplateData struct {
 	EtcdClientKey                   string
 	EtcdEndpointDNSSuffix           string
 	EtcdEndpointHostnames           []string
-	EtcdMetricsCaCert               string
-	EtcdMetricsClientCert           string
-	EtcdMetricsClientKey            string
+	EtcdMetricCaCert                string
+	EtcdMetricClientCert            string
+	EtcdMetricClientKey             string
 	EtcdSignerCert                  string
 	EtcdSignerClientCert            string
 	EtcdSignerClientKey             string
