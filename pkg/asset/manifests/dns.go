@@ -18,6 +18,7 @@ import (
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 var (
@@ -80,7 +81,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			fmt.Sprintf("kubernetes.io/cluster/%s", clusterID.InfraID): "owned",
 			"Name": fmt.Sprintf("%s-int", clusterID.InfraID),
 		}}
-	case libvirttypes.Name, openstacktypes.Name, nonetypes.Name:
+	case libvirttypes.Name, openstacktypes.Name, nonetypes.Name, vspheretypes.Name:
 	default:
 		return errors.New("invalid Platform")
 	}

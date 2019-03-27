@@ -1,5 +1,4 @@
 1. Create an install-config.yaml.
-There is not a vsphere platform yet, so use the none platform.
 The machine CIDR for the dev cluster is 139.178.89.192/26.
 
 ```
@@ -10,7 +9,7 @@ metadata:
 networking:
   machineCIDR: "139.178.89.192/26"
 platform:
-  none: {}
+  vsphere: {}
 pullSecret: YOUR_PULL_SECRET
 sshKey: YOUR_SSH_KEY
 ```

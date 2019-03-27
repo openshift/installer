@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
@@ -73,6 +74,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	rhcosImage := new(rhcos.Image)
 	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, rhcosImage)
 
+	platform := installConfig.Config.Platform.Name()
+	switch platform {
+	case none.Name, vsphere.Name:
+		return errors.Errorf("cannot create the cluster because %q is a UPI platform", platform)
+	}
+
 	bootstrapIgn := string(bootstrapIgnAsset.Files()[0].Data)
 	masterIgn := string(masterIgnAsset.Files()[0].Data)
 
@@ -101,7 +108,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		return errors.Errorf("master slice cannot be empty")
 	}
 
-	switch platform := installConfig.Config.Platform.Name(); platform {
+	switch platform {
 	case aws.Name:
 		masters, err := mastersAsset.StructuredMachines()
 		if err != nil {
@@ -138,7 +145,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
 			Data:     data,
 		})
-	case none.Name:
 	case openstack.Name:
 		masters, err := mastersAsset.StructuredMachines()
 		if err != nil {

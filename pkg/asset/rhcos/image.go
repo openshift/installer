@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // Image is location of RHCOS image.
@@ -60,7 +61,7 @@ func (i *Image) Generate(p asset.Parents) error {
 		osimage, err = rhcos.QEMU(ctx, rhcos.DefaultChannel)
 	case openstack.Name:
 		osimage = "rhcos"
-	case none.Name:
+	case none.Name, vsphere.Name:
 	default:
 		return errors.New("invalid Platform")
 	}

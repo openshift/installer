@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/pkg/errors"
 )
 
@@ -44,12 +45,12 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "validate AWS credentials")
 		}
-	case libvirt.Name:
-	case none.Name:
 	case openstack.Name:
 		opts := new(clientconfig.ClientOpts)
 		opts.Cloud = ic.Config.Platform.OpenStack.Cloud
 		_, err = clientconfig.GetCloudFromYAML(opts)
+	case libvirt.Name, none.Name, vsphere.Name:
+		// no creds to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
 	}
