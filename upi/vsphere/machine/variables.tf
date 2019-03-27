@@ -2,10 +2,6 @@ variable "name" {
   type = "string"
 }
 
-variable "instance_count" {
-  type = "string"
-}
-
 variable "ignition" {
   type    = "string"
   default = ""
@@ -46,4 +42,12 @@ variable "datacenter_id" {
 
 variable "template" {
   type = "string"
+}
+
+variable "machine_cidr" {
+  type = "string"
+}
+
+variable "ips" {
+  type = "list"
 }

@@ -72,53 +72,40 @@ variable "cluster_domain" {
   description = "The base DNS zone to add the sub zone to."
 }
 
+variable "machine_cidr" {
+  type = "string"
+}
+
 /////////
 // Bootstrap machine variables
 /////////
 
-variable "bootstrap_ignition_url" {
+variable "bootstrap_ip" {
   type = "string"
 }
 
-variable "bootstrap_complete" {
-  type    = "string"
-  default = "false"
-}
-
-variable "bootstrap_ip" {
-  type        = "string"
-  description = "The IP address in the machine_cidr to apply to the bootstrap."
-  default     = ""
+variable "bootstrap_ignition_url" {
+  type = "string"
 }
 
 ///////////
 // Control Plane machine variables
 ///////////
 
-variable "control_plane_instance_count" {
-  type        = "string"
-  description = "The number of control plane instances to deploy."
-  default     = 3
+variable "control_plane_ips" {
+  type = "list"
 }
 
 variable "control_plane_ignition" {
   type = "string"
 }
 
-variable "control_plane_ips" {
-  type        = "list"
-  description = "The IP addresses in the machine_cidr to apply to the control plane machines."
-  default     = []
-}
-
 //////////
 // Compute machine variables
 //////////
 
-variable "compute_instance_count" {
-  type        = "string"
-  description = "The number of compute instances to deploy."
-  default     = 3
+variable "compute_ips" {
+  type = "list"
 }
 
 variable "compute_ignition" {

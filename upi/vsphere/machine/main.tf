@@ -1,4 +1,7 @@
 locals {
+  mask = "${element(split("/", var.machine_cidr), 1)}"
+  gw   = "${cidrhost(var.machine_cidr,1)}"
+
   ignition_encoded = "data:text/plain;charset=utf-8;base64,${base64encode(var.ignition)}"
 }
 
@@ -18,7 +21,7 @@ data "vsphere_virtual_machine" "template" {
 }
 
 data "ignition_file" "hostname" {
-  count = "${var.instance_count}"
+  count = "${length(var.ips)}"
 
   filesystem = "root"
   path       = "/etc/hostname"
@@ -29,6 +32,44 @@ data "ignition_file" "hostname" {
   }
 }
 
+data "ignition_file" "static_ip" {
+  count = "${length(var.ips)}"
+
+  filesystem = "root"
+  path       = "/etc/sysconfig/network-scripts/ifcfg-eth0"
+  mode       = "420"
+
+  content {
+    content = <<EOF
+TYPE=Ethernet
+BOOTPROTO=none
+NAME=eth0
+DEVICE=eth0
+ONBOOT=yes
+IPADDR=${var.ips[count.index]}
+PREFIX=${local.mask}
+GATEWAY=${local.gw}
+DNS1=8.8.8.8
+EOF
+  }
+}
+
+data "ignition_systemd_unit" "restart" {
+  count = "${length(var.ips)}"
+
+  name = "restart.service"
+
+  content = <<EOF
+[Unit]
+ConditionFirstBoot=yes
+[Service]
+Type=idle
+ExecStart=/sbin/reboot
+[Install]
+WantedBy=multi-user.target
+EOF
+}
+
 data "ignition_user" "extra_users" {
   count = "${length(var.extra_user_names)}"
 
@@ -37,21 +78,26 @@ data "ignition_user" "extra_users" {
 }
 
 data "ignition_config" "ign" {
-  count = "${var.instance_count}"
+  count = "${length(var.ips)}"
 
   append {
     source = "${var.ignition_url != "" ? var.ignition_url : local.ignition_encoded}"
   }
 
+  systemd = [
+    "${data.ignition_systemd_unit.restart.*.id[count.index]}",
+  ]
+
   files = [
     "${data.ignition_file.hostname.*.id[count.index]}",
+    "${data.ignition_file.static_ip.*.id[count.index]}",
   ]
 
   users = ["${data.ignition_user.extra_users.*.id}"]
 }
 
 resource "vsphere_virtual_machine" "vm" {
-  count = "${var.instance_count}"
+  count = "${length(var.ips)}"
 
   name             = "${var.name}-${count.index}"
   resource_pool_id = "${var.resource_pool_id}"
@@ -59,9 +105,6 @@ resource "vsphere_virtual_machine" "vm" {
   num_cpus         = "4"
   memory           = "8192"
   guest_id         = "other26xLinux64Guest"
-
-  wait_for_guest_net_timeout  = 0
-  wait_for_guest_net_routable = false
 
   network_interface {
     network_id = "${data.vsphere_network.network.id}"
@@ -79,7 +122,8 @@ resource "vsphere_virtual_machine" "vm" {
 
   vapp {
     properties {
-      "guestinfo.coreos.config.data" = "${data.ignition_config.ign.*.rendered[count.index]}"
+      "guestinfo.ignition.config.data"          = "${base64encode(data.ignition_config.ign.*.rendered[count.index])}"
+      "guestinfo.ignition.config.data.encoding" = "base64"
     }
   }
 }
