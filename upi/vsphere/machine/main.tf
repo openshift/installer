@@ -56,7 +56,8 @@ DNS1=8.8.8.8
 data "ignition_systemd_unit" "restart" {
   count = "${var.instance_count}"
 
-  name    = "restart.service"
+  name = "restart.service"
+
   content = <<EOF
 [Unit]
 ConditionFirstBoot=yes
