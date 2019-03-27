@@ -1,5 +1,7 @@
 locals {
   ignition_encoded = "data:text/plain;charset=utf-8;base64,${base64encode(var.ignition)}"
+  mask             = "${element(split("/", var.machine_cidr), 1)}"
+  gw               = "${cidrhost(var.machine_cidr,1)}"
 }
 
 data "vsphere_datastore" "datastore" {
@@ -29,6 +31,35 @@ data "ignition_file" "hostname" {
   }
 }
 
+data "ignition_file" "static_ip" {
+  count = "${var.instance_count}"
+
+  filesystem = "root"
+  path       = "/etc/sysconfig/network-scripts/ifcfg-eth0"
+  mode       = "420"
+
+  content {
+    content = <<EOF
+TYPE=Ethernet
+BOOTPROTO=none
+NAME=eth0
+DEVICE=eth0
+ONBOOT=yes
+IPADDR=${var.ips[count.index]}
+PREFIX=${local.mask}
+GATEWAY=${local.gw}
+DNS1=8.8.8.8
+    EOF
+  }
+}
+
+data "ignition_systemd_unit" "restart" {
+  count = "${var.instance_count}"
+
+  name    = "restart.service"
+  content = "[Unit]\nConditionFirstBoot=yes\n\n[Service]\nType=idle\nExecStart=/sbin/reboot\n\n[Install]\nWantedBy=multi-user.target"
+}
+
 data "ignition_user" "extra_users" {
   count = "${length(var.extra_user_names)}"
 
@@ -43,8 +74,13 @@ data "ignition_config" "ign" {
     source = "${var.ignition_url != "" ? var.ignition_url : local.ignition_encoded}"
   }
 
+  systemd = [
+    "${data.ignition_systemd_unit.restart.*.id[count.index]}",
+  ]
+
   files = [
     "${data.ignition_file.hostname.*.id[count.index]}",
+    "${data.ignition_file.static_ip.*.id[count.index]}",
   ]
 
   users = ["${data.ignition_user.extra_users.*.id}"]
@@ -53,7 +89,7 @@ data "ignition_config" "ign" {
 resource "vsphere_virtual_machine" "vm" {
   count = "${var.instance_count}"
 
-  name             = "${var.name}-${count.index}"
+  name             = "${var.cluster_id}-${var.name}-${count.index}"
   resource_pool_id = "${var.resource_pool_id}"
   datastore_id     = "${data.vsphere_datastore.datastore.id}"
   num_cpus         = "4"
@@ -79,7 +115,8 @@ resource "vsphere_virtual_machine" "vm" {
 
   vapp {
     properties {
-      "guestinfo.coreos.config.data" = "${data.ignition_config.ign.*.rendered[count.index]}"
+      "guestinfo.ignition.config.data"          = "${base64encode(data.ignition_config.ign.*.rendered[count.index])}"
+      "guestinfo.ignition.config.data.encoding" = "base64"
     }
   }
 }

@@ -85,6 +85,11 @@ variable "bootstrap_complete" {
   default = "false"
 }
 
+variable "machine_cidr" {
+  type        = "string"
+  description = "The IP space to provision with."
+}
+
 variable "bootstrap_ip" {
   type        = "string"
   description = "The IP address in the machine_cidr to apply to the bootstrap."

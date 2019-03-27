@@ -4,7 +4,7 @@ variable "cluster_domain" {
 }
 
 variable "bootstrap_ip" {
-  type = "string"
+  type = "list"
 }
 
 variable "control_plane_ips" {

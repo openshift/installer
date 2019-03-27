@@ -2,6 +2,10 @@ variable "name" {
   type = "string"
 }
 
+variable "cluster_id" {
+  type = "string"
+}
+
 variable "instance_count" {
   type = "string"
 }
@@ -26,6 +30,14 @@ variable "datastore" {
 
 variable "network" {
   type = "string"
+}
+
+variable "machine_cidr" {
+  type = "string"
+}
+
+variable "ips" {
+  type = "list"
 }
 
 variable "cluster_domain" {
