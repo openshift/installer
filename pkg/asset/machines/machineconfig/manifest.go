@@ -46,8 +46,12 @@ func Manifests(configs []*mcfgv1.MachineConfig, role, directory string) ([]*asse
 }
 
 // IsManifest tests whether the specified filename is a MachineConfig manifest.
-func IsManifest(role, filename string) bool {
-	return fmt.Sprintf(machineConfigFileName, role) == filename
+func IsManifest(filename string) (bool, error) {
+	matched, err := filepath.Match(machineConfigFileNamePattern, filename)
+	if err != nil {
+		return false, err
+	}
+	return matched, nil
 }
 
 // Load loads the MachineConfig manifests.

@@ -39,7 +39,6 @@ func (o *Openshift) Name() string {
 func (o *Openshift) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
-		&machines.Worker{},
 		&password.KubeadminPassword{},
 
 		&openshift.BindingDiscovery{},
@@ -53,8 +52,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 func (o *Openshift) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	kubeadminPassword := &password.KubeadminPassword{}
-	worker := &machines.Worker{}
-	dependencies.Get(installConfig, worker, kubeadminPassword)
+	dependencies.Get(installConfig, kubeadminPassword)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -133,7 +131,6 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			Data:     data,
 		})
 	}
-	o.FileList = append(o.FileList, worker.Files()...)
 
 	asset.SortFiles(o.FileList)
 
@@ -153,7 +150,7 @@ func (o *Openshift) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	for _, file := range fileList {
-		if machines.IsMasterManifest(file) {
+		if machines.IsMachineManifest(file) {
 			continue
 		}
 
