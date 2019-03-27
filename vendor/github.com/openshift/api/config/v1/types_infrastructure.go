@@ -22,8 +22,12 @@ type Infrastructure struct {
 
 // InfrastructureSpec contains settings that apply to the cluster infrastructure.
 type InfrastructureSpec struct {
-	// secret reference?
-	// configmap reference to file?
+	// cloudConfig is a reference to a ConfigMap containing the cloud provider configuration file.
+	// This configuration file is used to configure the Kubernetes cloud provider integration
+	// when using the built-in cloud provider integration or the external cloud controller manager.
+	// The namespace for this config map is openshift-config.
+	// +optional
+	CloudConfig ConfigMapFileReference `json:"cloudConfig"`
 }
 
 // InfrastructureStatus describes the infrastructure the cluster is leveraging.
