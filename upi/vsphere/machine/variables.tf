@@ -2,10 +2,6 @@ variable "name" {
   type = "string"
 }
 
-variable "instance_count" {
-  type = "string"
-}
-
 variable "ignition" {
   type    = "string"
   default = ""
@@ -51,4 +47,12 @@ variable "template" {
 variable "pull_secret" {
   type    = "string"
   default = ""
+}
+
+variable "machine_cidr" {
+  type = "string"
+}
+
+variable "ips" {
+  type = "list"
 }
