@@ -40,13 +40,15 @@ func (*Infrastructure) Name() string {
 func (*Infrastructure) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		&CloudProviderConfig{},
 	}
 }
 
 // Generate generates the Infrastructure config and its CRD.
 func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	cloudproviderconfig := &CloudProviderConfig{}
+	dependencies.Get(installConfig, cloudproviderconfig)
 
 	var platform configv1.PlatformType
 	switch installConfig.Config.Platform.Name() {
@@ -80,18 +82,20 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		},
 	}
 
+	if cloudproviderconfig.ConfigMap != nil {
+		// set the configmap reference.
+		config.Spec.CloudConfig = configv1.ConfigMapFileReference{Name: cloudproviderconfig.ConfigMap.Name, Key: cloudProviderConfigDataKey}
+		i.FileList = append(i.FileList, cloudproviderconfig.File)
+	}
+
 	configData, err := yaml.Marshal(config)
 	if err != nil {
 		return errors.Wrapf(err, "failed to marshal config: %#v", config)
 	}
-
-	i.FileList = []*asset.File{
-		{
-			Filename: infraCfgFilename,
-			Data:     configData,
-		},
-	}
-
+	i.FileList = append(i.FileList, &asset.File{
+		Filename: infraCfgFilename,
+		Data:     configData,
+	})
 	return nil
 }
 
