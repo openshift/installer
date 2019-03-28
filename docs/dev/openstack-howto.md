@@ -10,4 +10,4 @@ instructions and scripts to help with creating a single-node OpenStack
 development environment for running the installer.  Please refer to the
 documentation in that repository for further details.
 
-* https://github.com/imain/ocp-doit
+* https://github.com/shiftstack-dev-tools/ocp-doit
