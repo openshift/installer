@@ -29,6 +29,7 @@ module "bootstrap" {
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
   cluster_domain   = "${var.cluster_domain}"
+  pull_secret      = "${var.pull_secret}"
 
   extra_user_names           = ["${var.extra_user_names}"]
   extra_user_password_hashes = ["${var.extra_user_password_hashes}"]

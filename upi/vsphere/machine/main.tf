@@ -1,5 +1,25 @@
 locals {
   ignition_encoded = "data:text/plain;charset=utf-8;base64,${base64encode(var.ignition)}"
+
+  pull_secret_ignition = <<EOF
+{
+  "ignition": {
+    "config": {},
+    "security": {
+      "tls": {}
+    },
+    "timeouts": {},
+    "version": "2.2.0"
+  },
+  "storage": {
+    "files": [
+${var.pull_secret}
+    ]
+  }
+}
+EOF
+
+  pull_secret_ignition_encoded = "data:text/plain;charset=utf-8;base64,${base64encode(local.pull_secret_ignition)}"
 }
 
 data "vsphere_datastore" "datastore" {
@@ -41,6 +61,10 @@ data "ignition_config" "ign" {
 
   append {
     source = "${var.ignition_url != "" ? var.ignition_url : local.ignition_encoded}"
+  }
+
+  append {
+    source = "${local.pull_secret_ignition_encoded}"
   }
 
   files = [
