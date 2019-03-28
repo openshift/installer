@@ -218,17 +218,8 @@ func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
 	return true, nil
 }
 
-// Machines returns master Machine manifest YAML.
-func (m *Master) Machines() [][]byte {
-	machines := make([][]byte, len(m.MachineFiles))
-	for i, file := range m.MachineFiles {
-		machines[i] = file.Data
-	}
-	return machines
-}
-
-// StructuredMachines returns master Machine manifest structures.
-func (m *Master) StructuredMachines() ([]machineapi.Machine, error) {
+// Machines returns master Machine manifest structures.
+func (m *Master) Machines() ([]machineapi.Machine, error) {
 	scheme := runtime.NewScheme()
 	awsapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)

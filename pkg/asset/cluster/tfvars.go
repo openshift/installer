@@ -83,8 +83,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	bootstrapIgn := string(bootstrapIgnAsset.Files()[0].Data)
 	masterIgn := string(masterIgnAsset.Files()[0].Data)
 
-	masters := mastersAsset.Machines()
-	masterCount := len(masters)
+	masterCount := len(mastersAsset.MachineFiles)
 	data, err := tfvars.TFVars(
 		clusterID.InfraID,
 		installConfig.Config.ClusterDomain(),
@@ -110,7 +109,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 	switch platform {
 	case aws.Name:
-		masters, err := mastersAsset.StructuredMachines()
+		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
 		}
@@ -127,7 +126,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case libvirt.Name:
-		masters, err := mastersAsset.StructuredMachines()
+		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
 		}
@@ -146,7 +145,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case openstack.Name:
-		masters, err := mastersAsset.StructuredMachines()
+		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
 		}
