@@ -26,6 +26,8 @@ MACHINE_CONFIG_SETUP_ETCD_ENV_IMAGE=$(podman run --quiet --rm ${release} image s
 MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(podman run --quiet --rm ${release} image kube-client-agent)
 MACHINE_CONFIG_INFRA_IMAGE=$(podman run --quiet --rm ${release} image pod)
 
+KUBE_ETCD_SIGNER_SERVER_IMAGE=$(podman run --quiet --rm ${release} image kube-etcd-signer-server)
+
 CONFIG_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image cluster-config-operator)
 KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image cluster-kube-apiserver-operator)
 KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image cluster-kube-controller-manager-operator)
@@ -222,7 +224,7 @@ podman run \
 	--detach \
 	--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
 	--network host \
-	"{{.EtcdCertSignerImage}}" \
+	"${KUBE_ETCD_SIGNER_SERVER_IMAGE}" \
 	serve \
 	--cacrt=/opt/openshift/tls/etcd-client-ca.crt \
 	--cakey=/opt/openshift/tls/etcd-client-ca.key \

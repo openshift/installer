@@ -65,8 +65,8 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&tls.EtcdCABundle{},
 		&tls.EtcdSignerClientCertKey{},
 		&tls.EtcdClientCertKey{},
-		&tls.EtcdMetricsCABundle{},
-		&tls.EtcdMetricsSignerClientCertKey{},
+		&tls.EtcdMetricCABundle{},
+		&tls.EtcdMetricSignerClientCertKey{},
 		&tls.MCSCertKey{},
 
 		&bootkube.CVOOverrides{},
@@ -82,8 +82,8 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.KubeSystemSecretEtcdSigner{},
 		&bootkube.KubeSystemSecretEtcdSignerClient{},
 		&bootkube.MachineConfigServerTLSSecret{},
-		&bootkube.OpenshiftConfigConfigmapEtcdMetricsServingCA{},
-		&bootkube.OpenshiftConfigSecretEtcdMetricsClient{},
+		&bootkube.OpenshiftConfigConfigmapEtcdMetricServingCA{},
+		&bootkube.OpenshiftConfigSecretEtcdMetricClient{},
 		&bootkube.OpenshiftMachineConfigOperator{},
 		&bootkube.Pull{},
 	}
@@ -140,8 +140,8 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	etcdCA := &tls.EtcdCA{}
 	mcsCertKey := &tls.MCSCertKey{}
 	etcdClientCertKey := &tls.EtcdClientCertKey{}
-	etcdMetricsCABundle := &tls.EtcdMetricsCABundle{}
-	etcdMetricsSignerClientCertKey := &tls.EtcdMetricsSignerClientCertKey{}
+	etcdMetricCABundle := &tls.EtcdMetricCABundle{}
+	etcdMetricSignerClientCertKey := &tls.EtcdMetricSignerClientCertKey{}
 	rootCA := &tls.RootCA{}
 	etcdSignerCertKey := &tls.EtcdSignerCertKey{}
 	etcdCABundle := &tls.EtcdCABundle{}
@@ -154,8 +154,8 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		etcdCABundle,
 		etcdSignerClientCertKey,
 		etcdClientCertKey,
-		etcdMetricsCABundle,
-		etcdMetricsSignerClientCertKey,
+		etcdMetricCABundle,
+		etcdMetricSignerClientCertKey,
 		mcsCertKey,
 		rootCA,
 	)
@@ -176,9 +176,9 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		EtcdClientKey:                   base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
 		EtcdEndpointDNSSuffix:           installConfig.Config.ClusterDomain(),
 		EtcdEndpointHostnames:           etcdEndpointHostnames,
-		EtcdMetricsCaCert:               string(etcdMetricsCABundle.Cert()),
-		EtcdMetricsClientCert:           base64.StdEncoding.EncodeToString(etcdMetricsSignerClientCertKey.Cert()),
-		EtcdMetricsClientKey:            base64.StdEncoding.EncodeToString(etcdMetricsSignerClientCertKey.Key()),
+		EtcdMetricCaCert:                string(etcdMetricCABundle.Cert()),
+		EtcdMetricClientCert:            base64.StdEncoding.EncodeToString(etcdMetricSignerClientCertKey.Cert()),
+		EtcdMetricClientKey:             base64.StdEncoding.EncodeToString(etcdMetricSignerClientCertKey.Key()),
 		EtcdSignerCert:                  base64.StdEncoding.EncodeToString(etcdSignerCertKey.Cert()),
 		EtcdSignerClientCert:            base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Cert()),
 		EtcdSignerClientKey:             base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Key()),
@@ -204,8 +204,8 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		&bootkube.KubeSystemSecretEtcdSigner{},
 		&bootkube.KubeSystemSecretEtcdSignerClient{},
 		&bootkube.MachineConfigServerTLSSecret{},
-		&bootkube.OpenshiftConfigConfigmapEtcdMetricsServingCA{},
-		&bootkube.OpenshiftConfigSecretEtcdMetricsClient{},
+		&bootkube.OpenshiftConfigConfigmapEtcdMetricServingCA{},
+		&bootkube.OpenshiftConfigSecretEtcdMetricClient{},
 		&bootkube.OpenshiftMachineConfigOperator{},
 		&bootkube.Pull{},
 	} {
