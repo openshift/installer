@@ -134,8 +134,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 		openstack.ConfigMasters(machines, clusterID.InfraID)
 	case nonetypes.Name, vspheretypes.Name:
-		// machines are managed directly by users
-		return nil
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
@@ -208,10 +206,6 @@ func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
 	fileList, err := f.FetchByPattern(filepath.Join(directory, masterMachineFileNamePattern))
 	if err != nil {
 		return true, err
-	}
-
-	if len(fileList) == 0 {
-		return true, errors.Errorf("master machine manifests are required if you also provide %s", m.UserDataFile.Filename)
 	}
 
 	m.MachineFiles = fileList
