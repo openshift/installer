@@ -30,20 +30,20 @@ additional clusters and deployed workloads.
 
 ## Elastic IP (EIP)
 
-By default, the installer distributes control-plane and compute machines across [all availability zones within a region][availability-zones] to provision the cluster in a highly available configuration.
+By default, the installer distributes control-plane and compute machines across [availability zones within a region][availability-zones] to provision the cluster in a highly available configuration.
 Please see [this map][az-map] for a current region map with availability zone count.
 We recommend selecting regions with 3 or more availability zones.
 You can [provide an install-config](../overview.md#multiple-invocations) to [configure](customization.md) the installer to use specific zones to override that default.
 
-The installer creates a public and private subnet for each configured availability zone.
-In each private subnet, a separate [NAT Gateway][nat-gateways] is created and requires a separate [EC2-VPC Elastic IP (EIP)][elastic-ip].
+The installer creates a public and private subnet for each availability zone that will contain machines.
+For each private subnet, a separate [NAT Gateway][nat-gateways] is created and requires a separate [EC2-VPC Elastic IP (EIP)][elastic-ip].
 The default limit of 5 is sufficient for a single cluster, unless you have configured your cluster to use more than five zones.
 For multiple clusters, a higher limit will likely be required (and will certainly be required to support more than five clusters, even if they are each single-zone clusters).
 
 ### Example: Using North Virginia (us-east-1)
 
-North Virginia (us-east-1) has six availablity zones, so a higher limit is required unless you configure your cluster to use fewer zones.
-To support the default, all-zone installation, please submit a limit increase for VPC Elastic IPs similar to the following in the support dashboard (to create more than one cluster, a higher limit will be necessary):
+North Virginia (us-east-1) has six availablity zones, so you will need to request a higher limit if you configure your cluster to use all of those zones.
+You can submit a limit increase for VPC Elastic IPs similar to the following in the support dashboard (to create more than one cluster, a higher limit may be necessary):
 
 ![Increase Elastic IP limit in AWS](images/support_increase_elastic_ip.png)
 

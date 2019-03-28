@@ -128,12 +128,15 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.InstanceType = awsDefaultWorkerMachineType(installconfig)
 			mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.AWS)
-			if len(mpool.Zones) == 0 {
+			if pool.Replicas != nil && *pool.Replicas > 0 && len(mpool.Zones) == 0 {
 				azs, err := aws.AvailabilityZones(ic.Platform.AWS.Region)
 				if err != nil {
 					return errors.Wrap(err, "failed to fetch availability zones")
 				}
 				mpool.Zones = azs
+				if int(*pool.Replicas) < len(mpool.Zones) {
+					mpool.Zones = azs[:*pool.Replicas]
+				}
 			}
 			pool.Platform.AWS = &mpool
 			sets, err := aws.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
