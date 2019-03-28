@@ -79,7 +79,7 @@ First, create the floating IP:
 
 Note the actual IP address. We will use `10.19.115.117` throughout this document.
 
-Next, add the `<cluster name>-api.<cluster domain>` and `*.apps.<cluster name>-api.<cluster domain>` name records pointing to that floating IP to your DNS:
+Next, add the `<cluster name>-api.<cluster domain>` and `*.apps.<cluster name>.<cluster domain>` name records pointing to that floating IP to your DNS:
 
     ostest-api.shiftstack.com IN A 10.19.115.117
     *.apps.ostest.shiftstack.com  IN  A  10.19.115.117
