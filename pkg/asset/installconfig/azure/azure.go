@@ -1,18 +1,14 @@
 package azure
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/azure/validation"
+
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
@@ -37,7 +33,7 @@ func Platform() (*azure.Platform, error) {
 		return nil, errors.Errorf("installer bug: invalid default azure region %q", defaultRegion)
 	}
 
-	err := GetSession()
+	_, err := azure.GetSession()
 	if err != nil {
 		return nil, err
 	}
@@ -72,93 +68,4 @@ func Platform() (*azure.Platform, error) {
 	return &azure.Platform{
 		Region: region,
 	}, nil
-}
-
-// GetSession returns an azure session by checking credentials
-// and, if no creds are found, asks for them and stores them on disk in a config file
-func GetSession() error {
-	return getCredentials()
-}
-
-type azureCredentials struct {
-	SubscriptionID string `json:"subscriptionID,omitempty"`
-	ClientID       string `json:"clientID,omitempty"`
-	ClientSecret   string `json:"clientSecret,omitempty"`
-	TenantID       string `json:"tenantID,omitempty"`
-}
-
-func getCredentials() error {
-	path := os.Getenv("HOME") + "/.azure/osServicePrincipal.json"
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
-		return nil
-	}
-
-	var subscriptionID, tenantID, clientID, clientSecret string
-
-	err := survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Input{
-				Message: "azure subscription id",
-				Help:    "The azure subscription id to use for installation",
-			},
-		},
-	}, &subscriptionID)
-	if err != nil {
-		return err
-	}
-
-	err = survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Input{
-				Message: "azure tenant id",
-				Help:    "The azure tenant id to use for installation",
-			},
-		},
-	}, &tenantID)
-	if err != nil {
-		return err
-	}
-
-	err = survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Input{
-				Message: "azure service principal client id",
-				Help:    "The azure client id to use for installation (this is not your username)",
-			},
-		},
-	}, &clientID)
-	if err != nil {
-		return err
-	}
-
-	err = survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Password{
-				Message: "azure service principal client secret",
-				Help:    "The azure secret access key corresponding to your client secret (this is not your password).",
-			},
-		},
-	}, &clientSecret)
-	if err != nil {
-		return err
-	}
-
-	jsonCreds, err := json.Marshal(azureCredentials{
-		SubscriptionID: subscriptionID,
-		ClientID:       clientID,
-		ClientSecret:   clientSecret,
-		TenantID:       tenantID,
-	})
-
-	logrus.Infof("Writing azure credentials to %q", path)
-	err = os.MkdirAll(filepath.Dir(path), 0700)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(path, jsonCreds, 0600)
-	if err != nil {
-		return err
-	}
-	return nil
 }

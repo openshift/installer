@@ -24,7 +24,9 @@ import (
 
 // Platform is an asset that queries the user for the platform on which to install
 // the cluster.
-type platform types.Platform
+type platform struct {
+	types.Platform
+}
 
 var _ asset.Asset = (*platform)(nil)
 
@@ -98,4 +100,8 @@ func (a *platform) queryUserForPlatform() (platform string, err error) {
 		},
 	}, &platform)
 	return
+}
+
+func (a *platform) CurrentPlatformName() string {
+	return a.Platform.Name()
 }

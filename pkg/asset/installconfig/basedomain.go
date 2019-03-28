@@ -1,13 +1,21 @@
 package installconfig
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig/aws"
+	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	"github.com/openshift/installer/pkg/dns"
+	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/libvirt"
+	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -28,15 +36,29 @@ func (a *baseDomain) Dependencies() []asset.Asset {
 func (a *baseDomain) Generate(parents asset.Parents) error {
 	platform := &platform{}
 	parents.Get(platform)
-
-	if platform.AWS != nil {
+	platformName := platform.CurrentPlatformName()
+	dnsConfig, err := dns.NewDNSConfig(platformName)
+	if err != nil {
+		return err
+	}
+	switch platformName {
+	case aws.Name:
 		var err error
-		a.BaseDomain, err = aws.GetBaseDomain()
+		a.BaseDomain, err = awsconfig.GetBaseDomain()
 		cause := errors.Cause(err)
-		if !(aws.IsForbidden(cause) || request.IsErrorThrottle(cause)) {
+		if !(awsconfig.IsForbidden(cause) || request.IsErrorThrottle(cause)) {
 			return err
 		}
 		logrus.Error(err)
+	case azure.Name:
+		var err error
+		a.BaseDomain, err = dnsConfig.GetBaseDomain()
+		if err != nil {
+			return err
+		}
+	case libvirt.Name, none.Name, openstack.Name:
+	default:
+		return fmt.Errorf("unknown platform type %q", platform)
 	}
 
 	return survey.Ask([]*survey.Question{
