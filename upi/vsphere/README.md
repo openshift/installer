@@ -17,9 +17,12 @@ sshKey: YOUR_SSH_KEY
 2. Run `openshift-install create ignition-configs`.
 
 3. Fill out a terraform.tfvars file with the ignition configs generated.
-There is an example terraform.tfvars file in this directory named terraform.tfvars.example. The example file is set up for use with the dev cluster running at vcsa.vmware.devcluster.openshift.com. At a minimum, you need to set values for `cluster_id`, `cluster_domain`, `vsphere_user`, `vsphere_password`, `bootstrap_ignition_url`, `control_plane_ignition`, and `compute_ignition`.
+There is an example terraform.tfvars file in this directory named terraform.tfvars.example. The example file is set up for use with the dev cluster running at vcsa.vmware.devcluster.openshift.com. At a minimum, you need to set values for `cluster_id`, `cluster_domain`, `vsphere_user`, `vsphere_password`, `pull_secret`, `bootstrap_ignition_url`, `control_plane_ignition`, and `compute_ignition`.
 The bootstrap ignition config must be placed in a location that will be accessible by the bootstrap machine. For example, you could store the bootstrap ignition config in a gist.
 Initially, the `bootstrap_complete` variable must be false, the `bootstrap_ip` variable must be an empty string, and the `control_plane_ips variable must be an empty list.
+To secure your pull secret, you should remove the pull from the bootstrap ignition config and pass it as a variable to terraform.
+  a) Create an ignition config without the pull secret via `jq 'del(.storage.files[] | select(.path=="/root/.docker/config.json"))' bootstrap.ign`.
+  b) Extract the pull secret to pass to terraform via `jq '.storage.files[] | select(.path=="/root/.docker/config.json")' bootstrap.ign`.
 
 4. Run `terraform init`.
 

@@ -72,6 +72,10 @@ variable "cluster_domain" {
   description = "The base DNS zone to add the sub zone to."
 }
 
+variable "pull_secret" {
+  type = "string"
+}
+
 /////////
 // Bootstrap machine variables
 /////////
