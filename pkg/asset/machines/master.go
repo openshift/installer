@@ -218,17 +218,8 @@ func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
 	return true, nil
 }
 
-// Machines returns master Machine manifest YAML.
-func (m *Master) Machines() [][]byte {
-	machines := make([][]byte, len(m.MachineFiles))
-	for i, file := range m.MachineFiles {
-		machines[i] = file.Data
-	}
-	return machines
-}
-
-// StructuredMachines returns master Machine manifest structures.
-func (m *Master) StructuredMachines() ([]machineapi.Machine, error) {
+// Machines returns master Machine manifest structures.
+func (m *Master) Machines() ([]machineapi.Machine, error) {
 	scheme := runtime.NewScheme()
 	awsapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
@@ -259,21 +250,28 @@ func (m *Master) StructuredMachines() ([]machineapi.Machine, error) {
 	return machines, nil
 }
 
-// IsMasterManifest tests whether a file is a manifest that belongs to the
-// Master Machines asset.
-func IsMasterManifest(file *asset.File) bool {
+// IsMachineManifest tests whether a file is a manifest that belongs to the
+// Master Machines or Worker Machines asset.
+func IsMachineManifest(file *asset.File) bool {
 	if filepath.Dir(file.Filename) != directory {
 		return false
 	}
 	filename := filepath.Base(file.Filename)
-	if filename == masterUserDataFileName {
+	if filename == masterUserDataFileName || filename == workerUserDataFileName {
 		return true
 	}
-	if machineconfig.IsManifest("master", filename) {
+	if matched, err := machineconfig.IsManifest(filename); err != nil {
+		panic(err)
+	} else if matched {
 		return true
 	}
 	if matched, err := filepath.Match(masterMachineFileNamePattern, filename); err != nil {
 		panic("bad format for master machine file name pattern")
+	} else if matched {
+		return true
+	}
+	if matched, err := filepath.Match(workerMachineSetFileNamePattern, filename); err != nil {
+		panic("bad format for worker machine file name pattern")
 	} else {
 		return matched
 	}

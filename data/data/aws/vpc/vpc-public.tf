@@ -31,10 +31,10 @@ resource "aws_subnet" "public_subnet" {
 
   cidr_block = "${cidrsubnet(local.new_public_cidr_range, 3, count.index)}"
 
-  availability_zone = "${local.new_subnet_azs[count.index]}"
+  availability_zone = "${var.availability_zones[count.index]}"
 
   tags = "${merge(map(
-    "Name", "${var.cluster_id}-public-${local.new_subnet_azs[count.index]}",
+    "Name", "${var.cluster_id}-public-${var.availability_zones[count.index]}",
   ), var.tags)}"
 }
 
@@ -49,7 +49,7 @@ resource "aws_eip" "nat_eip" {
   vpc   = true
 
   tags = "${merge(map(
-    "Name", "${var.cluster_id}-eip-${local.new_subnet_azs[count.index]}",
+    "Name", "${var.cluster_id}-eip-${var.availability_zones[count.index]}",
   ), var.tags)}"
 
   # Terraform does not declare an explicit dependency towards the internet gateway.
@@ -64,6 +64,6 @@ resource "aws_nat_gateway" "nat_gw" {
   subnet_id     = "${aws_subnet.public_subnet.*.id[count.index]}"
 
   tags = "${merge(map(
-    "Name", "${var.cluster_id}-nat-${local.new_subnet_azs[count.index]}",
+    "Name", "${var.cluster_id}-nat-${var.availability_zones[count.index]}",
   ), var.tags)}"
 }

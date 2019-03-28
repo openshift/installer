@@ -23,25 +23,27 @@ limit.
 
 ## Elastic Network Interfaces (ENI)
 
-The default installation creates 21 + the number of availability zones of ENIs (e.g. us-east-1 = 21 + 6 = 27 ENIs).
+The default installation creates 21 + the number of availability zones of ENIs (e.g. 21 + 3 = 24 ENIs for a three-zone cluster).
 The default limit per region is 350. Additional ENIs are created for additional machines and elastic load balancers
 created by cluster usage and deployed workloads. A service limit increase here may be required to satisfy the needs of
 additional clusters and deployed workloads.
 
 ## Elastic IP (EIP)
 
-For a single, default cluster, your account will have the needed capacity limits required. There is one exception,
-"EC2-VPC Elastic IPs". The installer creates a public and private subnet for each
-[availability zone within a region][availability-zones] to provision the cluster in a highly available configuration. In
-each private subnet, a separate [NAT Gateway][nat-gateways] is created and requires a separate [elastic IP][elastic-ip].
-The default limit of 5 is sufficient for most regions and a single cluster. For the us-east-1 region, a higher limit is
-required. For multiple clusters, a higher limit is required. Please see [this map][az-map] for a current region map with
-availability zone count. We recommend selecting regions with 3 or more availability zones.
+By default, the installer distributes control-plane and compute machines across [all availability zones within a region][availability-zones] to provision the cluster in a highly available configuration.
+Please see [this map][az-map] for a current region map with availability zone count.
+We recommend selecting regions with 3 or more availability zones.
+You can [provide an install-config](../overview.md#multiple-invocations) to [configure](customization.md) the installer to use specific zones to override that default.
 
-### Example: Using N. Virginia (us-east-1)
+The installer creates a public and private subnet for each configured availability zone.
+In each private subnet, a separate [NAT Gateway][nat-gateways] is created and requires a separate [EC2-VPC Elastic IP (EIP)][elastic-ip].
+The default limit of 5 is sufficient for a single cluster, unless you have configured your cluster to use more than five zones.
+For multiple clusters, a higher limit will likely be required (and will certainly be required to support more than five clusters, even if they are each single-zone clusters).
 
-To use N. Virginia (us-east-1) for a new cluster, please submit a limit increase for VPC Elastic IPs similar to the
-following in the support dashboard (to create more than one cluster, a higher limit will be necessary):
+### Example: Using North Virginia (us-east-1)
+
+North Virginia (us-east-1) has six availablity zones, so a higher limit is required unless you configure your cluster to use fewer zones.
+To support the default, all-zone installation, please submit a limit increase for VPC Elastic IPs similar to the following in the support dashboard (to create more than one cluster, a higher limit will be necessary):
 
 ![Increase Elastic IP limit in AWS](images/support_increase_elastic_ip.png)
 

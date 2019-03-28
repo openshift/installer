@@ -57,6 +57,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&kubeconfig.AdminClient{},
 		&kubeconfig.Kubelet{},
 		&machines.Master{},
+		&machines.Worker{},
 		&manifests.Manifests{},
 		&manifests.Openshift{},
 		&tls.AdminKubeConfigCABundle{},
@@ -368,6 +369,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 		&manifests.Manifests{},
 		&manifests.Openshift{},
 		&machines.Master{},
+		&machines.Worker{},
 	} {
 		dependencies.Get(asset)
 		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "root", 0644, asset)...)
