@@ -55,6 +55,11 @@ type StoragePoolTarget struct {
 type StoragePoolSourceFormat struct {
 	Type string `xml:"type,attr"`
 }
+
+type StoragePoolSourceProtocol struct {
+	Version string `xml:"ver,attr"`
+}
+
 type StoragePoolSourceHost struct {
 	Name string `xml:"name,attr"`
 	Port string `xml:"port,attr,omitempty"`
@@ -133,6 +138,7 @@ type StoragePoolSource struct {
 	Vendor    *StoragePoolSourceVendor    `xml:"vendor"`
 	Product   *StoragePoolSourceProduct   `xml:"product"`
 	Format    *StoragePoolSourceFormat    `xml:"format"`
+	Protocol  *StoragePoolSourceProtocol  `xml:"protocol"`
 	Adapter   *StoragePoolSourceAdapter   `xml:"adapter"`
 	Initiator *StoragePoolSourceInitiator `xml:"initiator"`
 }
@@ -147,6 +153,29 @@ type StoragePool struct {
 	Available  *StoragePoolSize   `xml:"available"`
 	Target     *StoragePoolTarget `xml:"target"`
 	Source     *StoragePoolSource `xml:"source"`
+
+	/* Pool backend namespcaes must be last */
+	FSCommandline  *StoragePoolFSCommandline
+	RBDCommandline *StoragePoolRBDCommandline
+}
+
+type StoragePoolFSCommandlineOption struct {
+	Name string `xml:"name,attr"`
+}
+
+type StoragePoolFSCommandline struct {
+	XMLName xml.Name                         `xml:"http://libvirt.org/schemas/storagepool/fs/1.0 mount_opts"`
+	Options []StoragePoolFSCommandlineOption `xml:"option"`
+}
+
+type StoragePoolRBDCommandlineOption struct {
+	Name  string `xml:"name,attr"`
+	Value string `xml:"value,attr"`
+}
+
+type StoragePoolRBDCommandline struct {
+	XMLName xml.Name                          `xml:"http://libvirt.org/schemas/storagepool/rbd/1.0 config_opts"`
+	Options []StoragePoolRBDCommandlineOption `xml:"option"`
 }
 
 func (a *StoragePoolPCIAddress) MarshalXML(e *xml.Encoder, start xml.StartElement) error {

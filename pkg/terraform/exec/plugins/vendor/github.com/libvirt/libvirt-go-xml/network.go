@@ -34,6 +34,7 @@ type NetworkBridge struct {
 	STP             string `xml:"stp,attr,omitempty"`
 	Delay           string `xml:"delay,attr,omitempty"`
 	MACTableManager string `xml:"macTableManager,attr,omitempty"`
+	Zone            string `xml:"zone,attr,omitempty"`
 }
 
 type NetworkVirtualPort struct {

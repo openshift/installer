@@ -35,6 +35,9 @@ func resourceAwsSsmPatchBaseline() *schema.Resource {
 		Read:   resourceAwsSsmPatchBaselineRead,
 		Update: resourceAwsSsmPatchBaselineUpdate,
 		Delete: resourceAwsSsmPatchBaselineDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -274,7 +277,7 @@ func resourceAwsSsmPatchBaselineDelete(d *schema.ResourceData, meta interface{})
 
 	_, err := ssmconn.DeletePatchBaseline(params)
 	if err != nil {
-		return err
+		return fmt.Errorf("error deleting SSM Patch Baseline (%s): %s", d.Id(), err)
 	}
 
 	return nil

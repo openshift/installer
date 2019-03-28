@@ -338,7 +338,8 @@ func tagIgnored(t *ec2.Tag) bool {
 	filter := []string{"^aws:"}
 	for _, v := range filter {
 		log.Printf("[DEBUG] Matching %v with %v\n", v, *t.Key)
-		if r, _ := regexp.MatchString(v, *t.Key); r == true {
+		r, _ := regexp.MatchString(v, *t.Key)
+		if r {
 			log.Printf("[DEBUG] Found AWS specific tag %s (val: %s), ignoring.\n", *t.Key, *t.Value)
 			return true
 		}
@@ -351,7 +352,8 @@ func tagIgnoredELBv2(t *elbv2.Tag) bool {
 	filter := []string{"^aws:"}
 	for _, v := range filter {
 		log.Printf("[DEBUG] Matching %v with %v\n", v, *t.Key)
-		if r, _ := regexp.MatchString(v, *t.Key); r == true {
+		r, _ := regexp.MatchString(v, *t.Key)
+		if r {
 			log.Printf("[DEBUG] Found AWS specific tag %s (val: %s), ignoring.\n", *t.Key, *t.Value)
 			return true
 		}
@@ -473,4 +475,18 @@ func tagsMapToRaw(m map[string]string) map[string]interface{} {
 	}
 
 	return raw
+}
+
+// ec2TagSpecificationsFromMap returns the tag specifications for the given map of data m and resource type t.
+func ec2TagSpecificationsFromMap(m map[string]interface{}, t string) []*ec2.TagSpecification {
+	if len(m) == 0 {
+		return nil
+	}
+
+	return []*ec2.TagSpecification{
+		{
+			ResourceType: aws.String(t),
+			Tags:         tagsFromMap(m),
+		},
+	}
 }

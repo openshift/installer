@@ -10,7 +10,7 @@
   version = "v2"
 
 [[projects]]
-  digest = "1:9442c4e2cb4563e33c8813929b1bc66b562629c981beeda38eaaa2d4a1d1bcb9"
+  digest = "1:e6d97567e560cc54e59ca39eed9651a615ea0d31cd1b104d8a4e27043afea53b"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -55,17 +55,20 @@
     "service/acm",
     "service/acmpca",
     "service/apigateway",
+    "service/apigatewayv2",
     "service/applicationautoscaling",
     "service/appmesh",
     "service/appsync",
     "service/athena",
     "service/autoscaling",
+    "service/backup",
     "service/batch",
     "service/budgets",
     "service/cloud9",
     "service/cloudformation",
     "service/cloudfront",
     "service/cloudhsmv2",
+    "service/cloudsearch",
     "service/cloudtrail",
     "service/cloudwatch",
     "service/cloudwatchevents",
@@ -77,13 +80,16 @@
     "service/cognitoidentity",
     "service/cognitoidentityprovider",
     "service/configservice",
+    "service/costandusagereportservice",
     "service/databasemigrationservice",
+    "service/datapipeline",
     "service/datasync",
     "service/dax",
     "service/devicefarm",
     "service/directconnect",
     "service/directoryservice",
     "service/dlm",
+    "service/docdb",
     "service/dynamodb",
     "service/ec2",
     "service/ecr",
@@ -99,37 +105,54 @@
     "service/emr",
     "service/firehose",
     "service/fms",
+    "service/fsx",
     "service/gamelift",
     "service/glacier",
+    "service/globalaccelerator",
     "service/glue",
     "service/guardduty",
     "service/iam",
     "service/inspector",
     "service/iot",
+    "service/kafka",
     "service/kinesis",
     "service/kinesisanalytics",
+    "service/kinesisanalyticsv2",
     "service/kms",
     "service/lambda",
     "service/lexmodelbuildingservice",
+    "service/licensemanager",
     "service/lightsail",
     "service/macie",
+    "service/mediaconnect",
+    "service/mediaconvert",
+    "service/medialive",
+    "service/mediapackage",
     "service/mediastore",
+    "service/mediastoredata",
     "service/mq",
     "service/neptune",
     "service/opsworks",
     "service/organizations",
     "service/pinpoint",
     "service/pricing",
+    "service/ram",
     "service/rds",
     "service/redshift",
+    "service/resourcegroups",
     "service/route53",
+    "service/route53resolver",
     "service/s3",
+    "service/s3control",
+    "service/sagemaker",
     "service/secretsmanager",
     "service/securityhub",
+    "service/serverlessapplicationrepository",
     "service/servicecatalog",
     "service/servicediscovery",
     "service/ses",
     "service/sfn",
+    "service/shield",
     "service/simpledb",
     "service/sns",
     "service/sqs",
@@ -140,19 +163,20 @@
     "service/transfer",
     "service/waf",
     "service/wafregional",
+    "service/worklink",
     "service/workspaces",
   ]
   pruneopts = "NUT"
-  revision = "5f1ca23f3ded773a9ba214e6fac36acd9a965a53"
-  version = "v1.16.6"
+  revision = "754d07f5dfb0a42be29df8da4a5428a321377cb3"
+  version = "v1.17.11"
 
 [[projects]]
-  digest = "1:f4298c81d8a94ab68d9e387eaf6e653387df5da17702f06c6d8718a7a8e549d0"
+  digest = "1:15e3271f463f2f40d98bf426aabb86941fc66b10272ccfdfebe548683e37acb1"
   name = "github.com/beevik/etree"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "9d7e8feddccb4ed1b8afb54e368bd323d2ff652c"
-  version = "v1.0.1"
+  revision = "8aee6516be3b1163bb6450c35c50e4969e3a3aa8"
+  version = "v1.1.0"
 
 [[projects]]
   branch = "master"
@@ -175,8 +199,8 @@
   name = "github.com/coreos/go-systemd"
   packages = ["unit"]
   pruneopts = "NUT"
-  revision = "9002847aa1425fb6ac49077c0a630b3b67e0fbfd"
-  version = "v18"
+  revision = "95778dfbb74eb7e4dbaf43bf7d71809650ef8076"
+  version = "v19"
 
 [[projects]]
   digest = "1:2b500565ed2c456d1b9349de3932052e603ef87da81f318fa57812ecf88ad29f"
@@ -204,6 +228,25 @@
   packages = ["libvirt"]
   pruneopts = "NUT"
   revision = "2ad0228349b2d3b487a2ada25d1a0eb40d73b7d1"
+
+[[projects]]
+  digest = "1:a1b2a5e38f79688ee8250942d5fa960525fceb1024c855c7bc76fa77b0f3cca2"
+  name = "github.com/gogo/protobuf"
+  packages = [
+    "proto",
+    "sortkeys",
+  ]
+  pruneopts = "NUT"
+  revision = "ba06b47c162d49f2af050fb4c75bcbc86a159d5c"
+  version = "v1.2.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:52c5834e2bebac9030c97cc0798ac11c3aa8a39f098aeb419f142533da6cd3cc"
+  name = "github.com/google/gofuzz"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "24818f796faf91cd76ec7bddd72458fbced7a6c1"
 
 [[projects]]
   digest = "1:54d36727a1d852a38be8b8dbcfbae6aa99130d793d63dabc865f150b690144af"
@@ -292,11 +335,19 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:df12b635fdefd90b1d139a70c45716896552051589b004021c745dcbaf0dad96"
+  digest = "1:4a14c92687d36a3875744de509bae52334a00ba487eb285b8a57645ec46acc7e"
   name = "github.com/gophercloud/utils"
   packages = ["openstack/clientconfig"]
   pruneopts = "NUT"
-  revision = "34f5991525d116b3832e0d9409492274f1c06bda"
+  revision = "0bcc8e728cb54c9dce9ed46924688b817ab14f31"
+
+[[projects]]
+  digest = "1:df21c2ff4fa960870ca75c87a68810a6f02b245b4de81528fd02ce99d1b35953"
+  name = "github.com/hashicorp/aws-sdk-go-base"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "51281492b48141180c0d50b814d73b7d438872db"
+  version = "v0.3.0"
 
 [[projects]]
   digest = "1:f0d9d74edbd40fdeada436d5ac9cb5197407899af3fef85ff0137077ffe8ae19"
@@ -307,12 +358,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:a5d940c38bf56f121721bfa747c66356df387cb9d5318c570c6d4170aab62862"
+  digest = "1:fff05cb0c34d2decaeb27bb6ab6b73a6947c3009d725160070da55f9511fd410"
   name = "github.com/hashicorp/go-cleanhttp"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "e8ab9daed8d1ddd2d3c4efba338fe2eeae2e4f18"
-  version = "v0.5.0"
+  revision = "eda1e5db218aad1db63ca4642c8906b26bcf2744"
+  version = "v0.5.1"
 
 [[projects]]
   digest = "1:2ed138049ab373f696db2081ca48f15c5abdf20893803612a284f2bdce2bf443"
@@ -323,12 +374,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:0b06ffe0c0764e413a6738e3f045d6bb14117359aef80a09f8c60fbff2ecad6b"
+  digest = "1:c7d9de42b661ba85788f5f631cbac165795a2ff7dc1c59a4241d6228b129c3e4"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "b5a281d3160aa11950a6182bd9a9dc2cb1e02d50"
-  version = "v1.0.0"
+  revision = "d40cf49b3a77bba84a7afdbd7f1dc295d114efb1"
+  version = "v1.1.0"
 
 [[projects]]
   digest = "1:2f3840740b71b2798a9c85f191367530771debdd812900c4a088ac1f3e31b20e"
@@ -354,12 +405,23 @@
   revision = "c2b33e84"
 
 [[projects]]
-  digest = "1:e8beb54864e4f61dfbb6c74f16a9aef14205c4849f2f3f9abce1710f314fa3db"
+  digest = "1:92819c3dc15d822e470ba6ddddc4b3790a8bb902f65e273f7ad5a1b288e39a60"
+  name = "github.com/kubernetes-sigs/aws-iam-authenticator"
+  packages = [
+    "pkg/arn",
+    "pkg/token",
+  ]
+  pruneopts = "NUT"
+  revision = "b4db1968bf8e9de634dc3e31baffc6dc3b000ee6"
+  version = "0.4.0-alpha"
+
+[[projects]]
+  digest = "1:041b92835a20d1839d5b0d6ee169bacf1fed943b4329e94e8f8bafbca610768d"
   name = "github.com/libvirt/libvirt-go-xml"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "e0ae6c18e37fe4d1ca4cb65eb3bfb2971838fd95"
-  version = "v4.10.0"
+  revision = "559807130d581fac8a790d43176ca2639da8c08d"
+  version = "v5.1.0"
 
 [[projects]]
   digest = "1:1e5a8bf6fb005f1808852ad1a4bedb7b4b3291af90dec12c4c9e4a955a42c9b2"
@@ -370,12 +432,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:a4df73029d2c42fabcb6b41e327d2f87e685284ec03edf76921c267d9cfc9c23"
+  digest = "1:f9f72e583aaacf1d1ac5d6121abd4afd3c690baa9e14e1d009df26bf831ba347"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "ae18d6b8b3205b561c79e8e5f69bff09736185f4"
-  version = "v1.0.0"
+  revision = "af06845cf3004701891bf4fdb884bfe4920b3727"
+  version = "v1.1.0"
 
 [[projects]]
   digest = "1:a45ae66dea4c899d79fceb116accfa1892105c251f0dcd9a217ddc276b42ec68"
@@ -390,8 +452,8 @@
   name = "github.com/mitchellh/packer"
   packages = ["common/uuid"]
   pruneopts = "NUT"
-  revision = "508b6efb4ababd3efa3614033f9529a30970899d"
-  version = "v1.3.3"
+  revision = "542cb1d872b4fbba57f34ebb5913a266017a38df"
+  version = "v1.3.5"
 
 [[projects]]
   digest = "1:44e35ced240c6d8316dc8d604a73774ab052d40ebe636fd8f2ba5934f6329034"
@@ -402,12 +464,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:7f2317445e38a3e350ad8e0d6558c27534519eeaa561b536bd5bd5202e916ecd"
+  digest = "1:5e830986b16143dce1be1ce497124b7e0f5dc46f7033722ac4031b2224ca9bc3"
   name = "github.com/terraform-providers/terraform-provider-aws"
   packages = ["aws"]
   pruneopts = "NUT"
-  revision = "ec37d790e2a6eb5a845a2420a6706f1bf0c266ab"
-  version = "v1.52.0"
+  revision = "3cf16f8b1a1386f7f046ae40fa397e902efd4839"
+  version = "v2.2.0"
 
 [[projects]]
   digest = "1:600308f54a5a80fc98ee41e14ac6795b144562a6bfc3ef3e4c440cdda5e9c632"
@@ -434,12 +496,105 @@
   revision = "9a301d65acbb728fcc3ace14f45f511a4cfeea9c"
 
 [[projects]]
+  branch = "master"
+  digest = "1:18108bc7e384e395b4805632a637405a3df71fa518e22f9b39b0c08b89a52b96"
+  name = "golang.org/x/net"
+  packages = [
+    "http/httpguts",
+    "http2",
+    "http2/hpack",
+    "idna",
+  ]
+  pruneopts = "NUT"
+  revision = "15845e8f865bdabdefb6e7da65b4d9e8de5e94ef"
+
+[[projects]]
+  digest = "1:e7071ed636b5422cc51c0e3a6cebc229d6c9fffc528814b519a980641422d619"
+  name = "golang.org/x/text"
+  packages = [
+    "collate",
+    "collate/build",
+    "internal/colltab",
+    "internal/gen",
+    "internal/tag",
+    "internal/triegen",
+    "internal/ucd",
+    "language",
+    "secure/bidirule",
+    "transform",
+    "unicode/bidi",
+    "unicode/cldr",
+    "unicode/norm",
+    "unicode/rangetable",
+  ]
+  pruneopts = "NUT"
+  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
+  version = "v0.3.0"
+
+[[projects]]
+  digest = "1:2d1fbdc6777e5408cabeb02bf336305e724b925ff4546ded0fa8715a7267922a"
+  name = "gopkg.in/inf.v0"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "d2d2541c53f18d2a059457998ce2876cc8e67cbf"
+  version = "v0.9.1"
+
+[[projects]]
   digest = "1:18108594151654e9e696b27b181b953f9a90b16bf14d253dd1b397b025a1487f"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "NUT"
   revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
   version = "v2.2.2"
+
+[[projects]]
+  branch = "master"
+  digest = "1:aaefe95d2394533638ec5319945e1cb4131bee130124c2145dc00e01247f7013"
+  name = "k8s.io/apimachinery"
+  packages = [
+    "pkg/api/resource",
+    "pkg/apis/meta/v1",
+    "pkg/conversion",
+    "pkg/conversion/queryparams",
+    "pkg/fields",
+    "pkg/labels",
+    "pkg/runtime",
+    "pkg/runtime/schema",
+    "pkg/selection",
+    "pkg/types",
+    "pkg/util/errors",
+    "pkg/util/intstr",
+    "pkg/util/json",
+    "pkg/util/naming",
+    "pkg/util/net",
+    "pkg/util/runtime",
+    "pkg/util/sets",
+    "pkg/util/validation",
+    "pkg/util/validation/field",
+    "pkg/watch",
+    "third_party/forked/golang/reflect",
+  ]
+  pruneopts = "NUT"
+  revision = "7b3d41122501114701f8d013ea1d9533f60c5dd5"
+
+[[projects]]
+  digest = "1:8fa3ae675fe0b2f1cd2331891c8140b84d34400c2232ac6cae0ccbd257d2c774"
+  name = "k8s.io/client-go"
+  packages = [
+    "pkg/apis/clientauthentication",
+    "pkg/apis/clientauthentication/v1alpha1",
+  ]
+  pruneopts = "NUT"
+  revision = "e64494209f554a6723674bd494d69445fb76a1d4"
+  version = "v10.0.0"
+
+[[projects]]
+  digest = "1:c263611800c3a97991dbcf9d3bc4de390f6224aaa8ca0a7226a9d734f65a416a"
+  name = "k8s.io/klog"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "71442cd4037d612096940ceb0f3fec3f7fff66e0"
+  version = "v0.2.0"
 
 [solve-meta]
   analyzer-name = "dep"
