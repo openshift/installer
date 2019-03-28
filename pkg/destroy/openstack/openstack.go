@@ -10,6 +10,8 @@ import (
 	"github.com/openshift/installer/pkg/types"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	"github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/apiversions"
+	"github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/loadbalancers"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/routers"
 	sg "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/groups"
@@ -22,6 +24,10 @@ import (
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
+)
+
+const (
+	minOctaviaVersionWithTagSupport = "v2.5"
 )
 
 // Filter holds the key/value pairs for the tags we will be matching
@@ -114,6 +120,7 @@ func deleteRunner(deleteFuncName string, dFunction deleteFunc, opts *clientconfi
 func populateDeleteFuncs(funcs map[string]deleteFunc) {
 	funcs["deleteServers"] = deleteServers
 	funcs["deleteTrunks"] = deleteTrunks
+	funcs["deleteLoadBalancers"] = deleteLoadBalancers
 	funcs["deletePorts"] = deletePorts
 	funcs["deleteSecurityGroups"] = deleteSecurityGroups
 	funcs["deleteRouters"] = deleteRouters
@@ -594,4 +601,84 @@ func deleteTrunks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 		}
 	}
 	return len(allTrunks) == 0, nil
+}
+
+func deleteLoadBalancers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+	logger.Debug("Deleting openstack load balancers")
+	defer logger.Debugf("Exiting deleting openstack load balancers")
+
+	conn, err := clientconfig.NewServiceClient("load-balancer", opts)
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+
+	newallPages, err := apiversions.List(conn).AllPages()
+	if err != nil {
+		logger.Debug("Unable to list api versions: %v", err)
+	}
+
+	allAPIVersions, err := apiversions.ExtractAPIVersions(newallPages)
+	if err != nil {
+		logger.Debug("Unable to extract api versions: %v", err)
+	}
+
+	var octaviaTagSupport bool
+	octaviaTagSupport = false
+	for _, apiVersion := range allAPIVersions {
+		if apiVersion.ID >= minOctaviaVersionWithTagSupport {
+			octaviaTagSupport = true
+		}
+	}
+
+	tags := filterTags(filter)
+	var allLoadBalancers []loadbalancers.LoadBalancer
+	if octaviaTagSupport {
+		listOpts := loadbalancers.ListOpts{
+			TagsAny: tags,
+		}
+		allPages, err := loadbalancers.List(conn, listOpts).AllPages()
+		if err != nil {
+			logger.Fatalf("%v", err)
+			os.Exit(1)
+		}
+
+		allLoadBalancers, err = loadbalancers.ExtractLoadBalancers(allPages)
+		if err != nil {
+			logger.Fatalf("%v", err)
+			os.Exit(1)
+		}
+	}
+
+	listOpts := loadbalancers.ListOpts{
+		Description: strings.Join(tags, ","),
+	}
+
+	allPages, err := loadbalancers.List(conn, listOpts).AllPages()
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+
+	allLoadBalancersWithTaggedDescription, err := loadbalancers.ExtractLoadBalancers(allPages)
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+
+	allLoadBalancers = append(allLoadBalancers, allLoadBalancersWithTaggedDescription...)
+	deleteOpts := loadbalancers.DeleteOpts{
+		Cascade: true,
+	}
+	for _, loadbalancer := range allLoadBalancers {
+		logger.Debugf("Deleting LoadBalancer: %+v", loadbalancer.ID)
+		err = loadbalancers.Delete(conn, loadbalancer.ID, deleteOpts).ExtractErr()
+		if err != nil {
+			// This can fail when the load balancer is still in use so return/retry
+			logger.Debugf("Deleting load balancer failed: %v", err)
+			return false, nil
+		}
+	}
+
+	return len(allLoadBalancers) == 0, nil
 }
