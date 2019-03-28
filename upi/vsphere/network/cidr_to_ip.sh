@@ -12,6 +12,7 @@ function error_exit() {
 function check_deps() {
   test -f $(which jq) || error_exit "jq command not detected in path, please install it"
   test -f $(which ipcalc) || error_exit "ipcalc command not detected in path, please install it"
+  test -f $(which dig) || error_exit "dig command not detected in path, please install it"
 
 }
 
@@ -41,9 +42,12 @@ function produce_output() {
   w_count=0
 
   # check cluster_domain DNS first
-  DNS_RECORDS=$(dig +short api.${cluster_domain}| sort)
+  for ETCD in 0 1 2
+  do
+	
+        DNS_RECORDS+="$(dig +short etcd-$ETCD.${cluster_domain}) " 
+  done
   
-
   for ENTRY in ${DNS_RECORDS} 
   do
        ping -c1 -w1 $ENTRY > /dev/null 2>&1
