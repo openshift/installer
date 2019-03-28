@@ -129,6 +129,7 @@ resource "vsphere_virtual_machine" "vm" {
   num_cpus         = "4"
   memory           = "8192"
   guest_id         = "other26xLinux64Guest"
+  folder           = "${var.folder_id}"
 
   network_interface {
     network_id = "${data.vsphere_network.network.id}"
