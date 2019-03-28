@@ -228,12 +228,15 @@ podman run \
 	serve \
 	--cacrt=/opt/openshift/tls/etcd-client-ca.crt \
 	--cakey=/opt/openshift/tls/etcd-client-ca.key \
+	--metric-cacrt=/opt/openshift/tls/etcd-metric-signer.crt \
+	--metric-cakey=/opt/openshift/tls/etcd-metric-signer.key \
 	--servcrt=/opt/openshift/tls/apiserver.crt \
 	--servkey=/opt/openshift/tls/apiserver.key \
 	--address=0.0.0.0:6443 \
 	--csrdir=/tmp \
 	--peercertdur=26280h \
-	--servercertdur=26280h
+	--servercertdur=26280h \
+	--metriccertdur=26280h
 
 echo "Waiting for etcd cluster..."
 
