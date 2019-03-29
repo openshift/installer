@@ -32,15 +32,9 @@ vsphere_datastore = "nvme-ds1"
 // Name of the VM template to clone to create VMs for the cluster. The dev cluster has a template named "rhcos-latest".
 vm_template = "rhcos-latest"
 
-// IP for the bootstrap machine
-// Leave this blank to destroy the bootstrap machine.
-bootstrap_ip = "139.178.89.xxx"
-
-// IP addresses for the control plane machines.
-control_plane_ips = ["139.178.89.xxx","139.178.89.xxx","139.178.89.xxx"]
-
-// IP addresses for the compute machines.
-compute_ips = ["139.178.89.xxx","139.178.89.xxx","139.178.89.xxx"]
+// The machine_cidr where IP addresses will be assigned for cluster node.s
+// Additionally, IPAM will assign IPs based on the network ID. 
+machine_cidr = "10.0.0.0/24"
 
 // URL of the bootstrap ignition. This needs to be publicly accessible so that the bootstrap machine can pull the ignition.
 bootstrap_ignition_url = "URL_FOR_YOUR_BOOTSTRAP_IGNITION"

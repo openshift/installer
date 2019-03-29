@@ -128,4 +128,10 @@ resource "vsphere_virtual_machine" "vm" {
       "guestinfo.ignition.config.data.encoding" = "base64"
     }
   }
+
+  provisioner "local-exec" {
+    when    = "destroy"
+    command = <<EOF
+curl "http://${var.ipam}/api/removeHost.php?apiapp=address&apitoken=${var.ipam_token}&host=${var.name}-${count.index}.${var.cluster_domain}"EOF
+  }
 }

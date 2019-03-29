@@ -9,12 +9,15 @@ data "vsphere_datacenter" "dc" {
   name = "${var.vsphere_datacenter}"
 }
 
-module "resource_pool" {
-  source = "./resource_pool"
+module "network" {
+  source = "./network"
 
-  name            = "${var.cluster_id}"
-  datacenter_id   = "${data.vsphere_datacenter.dc.id}"
-  vsphere_cluster = "${var.vsphere_cluster}"
+  machine_cidr        = "${var.machine_cidr}"
+  cluster_domain      = "${var.cluster_domain}"
+  control_plane_count = "${var.control_plane_count}"
+  compute_count       = "${var.compute_count}"
+  ipam                = "${var.ipam}"
+  ipam_token          = "${var.ipam_token}"
 }
 
 module "folder" {
@@ -22,6 +25,14 @@ module "folder" {
 
   path          = "${var.cluster_id}"
   datacenter_id = "${data.vsphere_datacenter.dc.id}"
+}
+
+module "resource_pool" {
+  source = "./resource_pool"
+
+  name            = "${var.cluster_id}"
+  datacenter_id   = "${data.vsphere_datacenter.dc.id}"
+  vsphere_cluster = "${var.vsphere_cluster}"
 }
 
 module "bootstrap" {
@@ -36,8 +47,12 @@ module "bootstrap" {
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
   cluster_domain   = "${var.cluster_domain}"
-  ips              = ["${compact(list(var.bootstrap_ip))}"]
+  ips              = ["${compact(list(module.network.bootstrap_ip))}"]
+  ipam             = "${var.ipam}"
+  ipam_token       = "${var.ipam_token}"
   machine_cidr     = "${var.machine_cidr}"
+
+
 
   extra_user_names           = ["${var.extra_user_names}"]
   extra_user_password_hashes = ["${var.extra_user_password_hashes}"]
@@ -55,7 +70,9 @@ module "control_plane" {
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
   cluster_domain   = "${var.cluster_domain}"
-  ips              = "${var.control_plane_ips}"
+  ips              = "${module.network.control_plane_ips}"
+  ipam             = "${var.ipam}"
+  ipam_token       = "${var.ipam_token}"
   machine_cidr     = "${var.machine_cidr}"
 
   extra_user_names           = ["${var.extra_user_names}"]
@@ -74,7 +91,9 @@ module "compute" {
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
   cluster_domain   = "${var.cluster_domain}"
-  ips              = "${var.compute_ips}"
+  ips              = "${module.network.compute_ips}"
+  ipam             = "${var.ipam}"
+  ipam_token       = "${var.ipam_token}"
   machine_cidr     = "${var.machine_cidr}"
 
   extra_user_names           = ["${var.extra_user_names}"]
@@ -86,7 +105,7 @@ module "dns" {
 
   base_domain       = "${var.base_domain}"
   cluster_domain    = "${var.cluster_domain}"
-  bootstrap_ip      = "${var.bootstrap_ip}"
-  control_plane_ips = ["${var.control_plane_ips}"]
-  compute_ips       = ["${var.compute_ips}"]
+  bootstrap_ip      = "${module.network.bootstrap_ip}"
+  control_plane_ips = ["${module.network.control_plane_ips}"]
+  compute_ips       = ["${module.network.compute_ips}"]
 }
