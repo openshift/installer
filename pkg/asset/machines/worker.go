@@ -108,20 +108,13 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	wign := &machine.Worker{}
 	dependencies.Get(clusterID, installconfig, rhcosImage, wign)
 
-	userDataMap := map[string][]byte{"worker-user-data": wign.File.Data}
-	data, err := userDataList(userDataMap)
-	if err != nil {
-		return errors.Wrap(err, "failed to create user-data secret for worker machines")
-	}
-	w.UserDataFile = &asset.File{
-		Filename: filepath.Join(directory, workerUserDataFileName),
-		Data:     data,
-	}
-
 	machineConfigs := []*mcfgv1.MachineConfig{}
 	machineSets := []runtime.Object{}
 	ic := installconfig.Config
 	for _, pool := range ic.Compute {
+		if ic.SSHKey != "" {
+			machineConfigs = append(machineConfigs, machineconfig.ForAuthorizedKeys(ic.SSHKey, "worker"))
+		}
 		switch ic.Platform.Name() {
 		case awstypes.Name:
 			mpool := defaultAWSMachinePoolPlatform()
@@ -169,14 +162,19 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				machineSets = append(machineSets, set)
 			}
 		case nonetypes.Name, vspheretypes.Name:
-			// machines are managed directly by users
-			return nil
 		default:
 			return fmt.Errorf("invalid Platform")
 		}
-		if ic.SSHKey != "" {
-			machineConfigs = append(machineConfigs, machineconfig.ForAuthorizedKeys(ic.SSHKey, "worker"))
-		}
+	}
+
+	userDataMap := map[string][]byte{"worker-user-data": wign.File.Data}
+	data, err := userDataList(userDataMap)
+	if err != nil {
+		return errors.Wrap(err, "failed to create user-data secret for worker machines")
+	}
+	w.UserDataFile = &asset.File{
+		Filename: filepath.Join(directory, workerUserDataFileName),
+		Data:     data,
 	}
 
 	w.MachineConfigFiles, err = machineconfig.Manifests(machineConfigs, "worker", directory)
