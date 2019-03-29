@@ -106,3 +106,18 @@ func (mr *MockValidValuesFetcherMockRecorder) GetNetworkExtensionsAliases(cloud 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetworkExtensionsAliases", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetNetworkExtensionsAliases), cloud)
 }
+
+// GetServiceCatalog mocks base method
+func (m *MockValidValuesFetcher) GetServiceCatalog(cloud string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetServiceCatalog", cloud)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetServiceCatalog indicates an expected call of GetServiceCatalog
+func (mr *MockValidValuesFetcherMockRecorder) GetServiceCatalog(cloud interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceCatalog", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetServiceCatalog), cloud)
+}

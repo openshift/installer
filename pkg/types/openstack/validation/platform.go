@@ -45,6 +45,16 @@ func ValidatePlatform(p *openstack.Platform, fldPath *field.Path, fetcher ValidV
 				p.TrunkSupport = "0"
 			}
 		}
+		serviceCatalog, err := fetcher.GetServiceCatalog(p.Cloud)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(fldPath.Child("octaviaSupport"), errors.New("could not retrieve service catalog")))
+		} else {
+			if isValidValue("octavia", serviceCatalog) {
+				p.OctaviaSupport = "1"
+			} else {
+				p.OctaviaSupport = "0"
+			}
+		}
 	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)

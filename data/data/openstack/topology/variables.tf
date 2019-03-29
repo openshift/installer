@@ -32,3 +32,6 @@ variable "trunk_support" {
   type = string
 }
 
+variable "octavia_support" {
+  type = "string"
+}

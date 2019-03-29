@@ -14,4 +14,6 @@ type ValidValuesFetcher interface {
 	GetFlavorNames(cloud string) ([]string, error)
 	// GetNetworkExtensionsAliases gets the aliases for all the networking enabled extensions
 	GetNetworkExtensionsAliases(cloud string) ([]string, error)
+	// GetServiceCatalog gets the catalog service names
+	GetServiceCatalog(cloud string) ([]string, error)
 }

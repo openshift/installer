@@ -85,6 +85,7 @@ module "topology" {
   masters_count       = var.master_count
   lb_floating_ip      = var.openstack_lb_floating_ip
   trunk_support       = var.openstack_trunk_support
+  octavia_support     = var.openstack_octavia_support
 }
 
 resource "openstack_objectstorage_container_v1" "container" {
