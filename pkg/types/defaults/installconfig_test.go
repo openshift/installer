@@ -24,7 +24,7 @@ func defaultInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		Networking: &types.Networking{
 			MachineCIDR:    defaultMachineCIDR,
-			NetworkType:    defaultNetworkType,
+			NetworkType:    DefaultNetworkType,
 			ServiceNetwork: []ipnet.IPNet{*defaultServiceNetwork},
 			ClusterNetwork: []types.ClusterNetworkEntry{
 				{

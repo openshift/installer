@@ -11,6 +11,8 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
+	"github.com/openshift/installer/pkg/types/defaults"
+	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -94,6 +96,18 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 				Policy: &configv1.ExternalIPPolicy{},
 			},
 		},
+	}
+
+	// Set Kuryr if there was no override on InstallConfig and platform meets all
+	// requirements. Default to OpenShiftSDN otherwise.
+	if no.Config.Spec.NetworkType == defaults.DefaultNetworkType {
+		if installConfig.Config.Platform.Name() == openstacktypes.Name &&
+			installConfig.Config.Platform.OpenStack.TrunkSupport == "1" &&
+			installConfig.Config.Platform.OpenStack.OctaviaSupport == "1" {
+			no.Config.Spec.NetworkType = "Kuryr"
+		} else {
+			no.Config.Spec.NetworkType = "OpenShiftSDN"
+		}
 	}
 
 	configData, err := yaml.Marshal(no.Config)

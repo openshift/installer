@@ -18,7 +18,10 @@ var (
 	defaultServiceNetwork = ipnet.MustParseCIDR("172.30.0.0/16")
 	defaultClusterNetwork = ipnet.MustParseCIDR("10.128.0.0/14")
 	defaultHostPrefix     = 23
-	defaultNetworkType    = "OpenShiftSDN"
+	// DefaultNetworkType is just a token meaning that user haven't specified preference for NetworkType. This is
+	// because for OpenStack installations Kuryr should be configured if possible and we are unable to know if cloud
+	// fulfills all the Kuryr requirements at the point SetInstallConfigDefaults() is called.
+	DefaultNetworkType = "DefaultNetworkType"
 )
 
 // SetInstallConfigDefaults sets the defaults for the install config.
@@ -33,7 +36,7 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		}
 	}
 	if c.Networking.NetworkType == "" {
-		c.Networking.NetworkType = defaultNetworkType
+		c.Networking.NetworkType = DefaultNetworkType
 	}
 	if len(c.Networking.ServiceNetwork) == 0 {
 		c.Networking.ServiceNetwork = []ipnet.IPNet{*defaultServiceNetwork}
