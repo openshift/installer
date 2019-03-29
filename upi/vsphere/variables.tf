@@ -85,10 +85,6 @@ variable "machine_cidr" {
 // Bootstrap machine variables
 /////////
 
-variable "bootstrap_ip" {
-  type = "string"
-}
-
 variable "bootstrap_ignition_url" {
   type = "string"
 }
@@ -97,8 +93,9 @@ variable "bootstrap_ignition_url" {
 // Control Plane machine variables
 ///////////
 
-variable "control_plane_ips" {
-  type = "list"
+variable "control_plane_count" {
+  type    = "string"
+  default = "3"
 }
 
 variable "control_plane_ignition" {
@@ -109,12 +106,11 @@ variable "control_plane_ignition" {
 // Compute machine variables
 //////////
 
-variable "compute_ips" {
-  type    = "list"
-  default = []
+variable "compute_count" {
+  type    = "string"
+  default = "3"
 }
 
 variable "compute_ignition" {
   type = "string"
 }
-
