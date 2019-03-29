@@ -48,7 +48,8 @@ module "bootstrap" {
   cluster_domain   = "${var.cluster_domain}"
   pull_secret      = "${var.pull_secret}"
 
-  ips              = ["${compact(list(module.network.bootstrap_ip))}"]
+  ips = ["${compact(list(module.network.bootstrap_ip))}"]
+
   //ips          = "${module.network.bootstrap_ip}"
   machine_cidr = "${var.machine_cidr}"
 
