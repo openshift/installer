@@ -8,8 +8,10 @@ WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN hack/build.sh
 
+FROM registry.svc.ci.openshift.org/openshift/origin-v4.0:cli as cli
+
 FROM registry.svc.ci.openshift.org/openshift/origin-v4.0:base
-COPY --from=registry.svc.ci.openshift.org/openshift/origin-v4.0:cli /usr/bin/oc /bin/oc
+COPY --from=cli /usr/bin/oc /bin/oc
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/upi /var/lib/openshift-install/upi
 
@@ -32,4 +34,3 @@ USER 1000:1000
 ENV PATH /bin
 ENV HOME /output
 WORKDIR /output
-
