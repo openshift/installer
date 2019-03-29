@@ -17,6 +17,13 @@ module "resource_pool" {
   vsphere_cluster = "${var.vsphere_cluster}"
 }
 
+module "folder" {
+  source = "./folder"
+
+  path          = "${var.cluster_id}"
+  datacenter_id = "${data.vsphere_datacenter.dc.id}"
+}
+
 module "bootstrap" {
   source = "./machine"
 
@@ -25,6 +32,7 @@ module "bootstrap" {
   ignition_url     = "${var.bootstrap_ignition_url}"
   resource_pool_id = "${module.resource_pool.pool_id}"
   datastore        = "${var.vsphere_datastore}"
+  folder           = "${module.folder.path}"
   network          = "${var.vm_network}"
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
@@ -41,6 +49,7 @@ module "control_plane" {
   instance_count   = "${var.control_plane_instance_count}"
   ignition         = "${var.control_plane_ignition}"
   resource_pool_id = "${module.resource_pool.pool_id}"
+  folder           = "${module.folder.path}"
   datastore        = "${var.vsphere_datastore}"
   network          = "${var.vm_network}"
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
@@ -58,6 +67,7 @@ module "compute" {
   instance_count   = "${var.compute_instance_count}"
   ignition         = "${var.compute_ignition}"
   resource_pool_id = "${module.resource_pool.pool_id}"
+  folder           = "${module.folder.path}"
   datastore        = "${var.vsphere_datastore}"
   network          = "${var.vm_network}"
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"

@@ -20,6 +20,10 @@ variable "resource_pool_id" {
   type = "string"
 }
 
+variable "folder" {
+  type = "string"
+}
+
 variable "datastore" {
   type = "string"
 }
