@@ -77,19 +77,24 @@ First, create the floating IP:
 
     $ openstack floating ip create <external network>
 
-Note the actual IP address. We will use `10.19.115.117` throughout this document.
+Note the actual IP address. We will use `10.19.115.117` throughout this
+document.
 
-Next, add the `<cluster name>-api.<cluster domain>` and `*.apps.<cluster name>.<cluster domain>` name records pointing to that floating IP to your DNS:
+Next, add the `api.<cluster name>.<cluster domain>` and `*.apps.<cluster
+name>.<cluster domain>` name records pointing to that floating IP to your DNS:
 
-    ostest-api.shiftstack.com IN A 10.19.115.117
+    api.ostest.shiftstack.com IN A 10.19.115.117
     *.apps.ostest.shiftstack.com  IN  A  10.19.115.117
 
-If you don't have a DNS server under your control, you finish the installation by adding the following to your `/etc/hosts`:
+If you don't have a DNS server under your control, you finish the installation
+by adding the following to your `/etc/hosts`:
 
-    10.19.115.117 ostest-api.shiftstack.com
+    10.19.115.117 api.ostest.shiftstack.com
     10.19.115.117 console-openshift-console.apps.ostest.shiftstack.com
 
-**NOTE:** *this will make the API accessible only to you. This is fine for your own testing (and it is enough for the installation to succeed), but it is not enough for a production deployment.*
+**NOTE:** *this will make the API accessible only to you. This is fine for your
+own testing (and it is enough for the installation to succeed), but it is not
+enough for a production deployment.*
 
 Finally, add the floating IP address to `install-config.yaml`.
 
