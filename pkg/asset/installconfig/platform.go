@@ -82,6 +82,7 @@ func (a *platform) queryUserForPlatform() (platform string, err error) {
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
 				choice := ans.(string)
+				sort.Strings(types.PlatformNames)
 				i := sort.SearchStrings(types.PlatformNames, choice)
 				if i == len(types.PlatformNames) || types.PlatformNames[i] != choice {
 					return errors.Errorf("invalid platform %q", choice)
