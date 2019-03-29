@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
+	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -76,6 +77,15 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 		serviceNet = append(serviceNet, sn.String())
 	}
 
+	networkType := netConfig.NetworkType
+	if installConfig.Config.Platform.Name() == openstacktypes.Name {
+		if networkType == "Kuryr" && (installConfig.Config.Platform.OpenStack.TrunkSupport == "0" || installConfig.Config.Platform.OpenStack.OctaviaSupport == "0") {
+			return errors.Errorf("NetworkType Kuryr requires Trunks and Octavia support")
+		}
+		if installConfig.Config.Platform.OpenStack.TrunkSupport == "1" && installConfig.Config.Platform.OpenStack.OctaviaSupport == "1" {
+			networkType = "Kuryr"
+		}
+	}
 	no.Config = &configv1.Network{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: configv1.SchemeGroupVersion.String(),
@@ -88,7 +98,7 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 		Spec: configv1.NetworkSpec{
 			ClusterNetwork: clusterNet,
 			ServiceNetwork: serviceNet,
-			NetworkType:    netConfig.NetworkType,
+			NetworkType:    networkType,
 			// Block all Service.ExternalIPs by default
 			ExternalIP: &configv1.ExternalIPConfig{
 				Policy: &configv1.ExternalIPPolicy{},
