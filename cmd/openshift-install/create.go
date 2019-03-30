@@ -65,16 +65,6 @@ var (
 		assets: targetassets.Manifests,
 	}
 
-	manifestTemplatesTarget = target{
-		name: "Manifest templates",
-		command: &cobra.Command{
-			Use:   "manifest-templates",
-			Short: "Generates the unrendered Kubernetes manifest templates",
-			Long:  "",
-		},
-		assets: targetassets.ManifestTemplates,
-	}
-
 	ignitionConfigsTarget = target{
 		name: "Ignition Configs",
 		command: &cobra.Command{
@@ -124,7 +114,7 @@ var (
 		assets: targetassets.Cluster,
 	}
 
-	targets = []target{installConfigTarget, manifestTemplatesTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget}
+	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget}
 )
 
 func newCreateCmd() *cobra.Command {
