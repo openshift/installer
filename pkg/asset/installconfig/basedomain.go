@@ -37,7 +37,7 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 	platform := &platform{}
 	parents.Get(platform)
 	platformName := platform.CurrentPlatformName()
-	dnsConfig, err := dns.NewDNSConfig(platformName)
+	dnsConfig, err := dns.NewConfig(platformName)
 	if err != nil {
 		return err
 	}

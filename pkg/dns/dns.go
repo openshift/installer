@@ -13,11 +13,11 @@ import (
 //ConfigProvider is an interface that provides means to fetch the DNS settings
 type ConfigProvider interface {
 	GetBaseDomain() (string, error)
-	GetPublicZone(name string) string
+	GetPublicZone(name string) (string, error)
 }
 
-//NewDNSConfig is a factory method to return the platform specific implementation of dnsConfig
-func NewDNSConfig(platform string) (ConfigProvider, error) {
+//NewConfig is a factory method to return the platform specific implementation of dnsConfig
+func NewConfig(platform string) (ConfigProvider, error) {
 	switch platform {
 	case azure.Name:
 		return azure.NewDNSConfig()
@@ -40,6 +40,6 @@ func (*MockConfigProvider) GetBaseDomain() (string, error) {
 }
 
 //GetPublicZone return the fake public zone
-func (*MockConfigProvider) GetPublicZone(name string) string {
-	return ""
+func (*MockConfigProvider) GetPublicZone(name string) (string, error) {
+	return "", nil
 }

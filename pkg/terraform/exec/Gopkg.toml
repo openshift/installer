@@ -28,6 +28,10 @@ ignored = [
   name = "golang.org/x/oauth2"
 
 [[override]]
+  revision = "891ebc4b82d6e74f468c533b06f983c7be918a96"
+  name = "golang.org/x/net"
+
+[[override]]
   revision = "cc9d70694ef317c2e6443e20b7927363d69c8b1e"
   name = "github.com/hashicorp/go-slug"
 
