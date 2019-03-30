@@ -29,9 +29,11 @@ var (
 	defaultReleaseImageLength = len(defaultReleaseImagePadded)
 )
 
-// defaultReleaseImage abstracts how the binary loads the default release payload. We want to lock the binary
-// to the
-func defaultReleaseImage() (string, error) {
+// DefaultReleaseImage abstracts how the binary loads the default release payload. We want to lock the binary
+// to the pull spec of the payload we test it with, and since a payload contains an installer image we can't
+// know that at build time. Instead, we make it possible to replace the release string after build via a
+// known constant in the binary.
+func DefaultReleaseImage() (string, error) {
 	if strings.HasPrefix(defaultReleaseImagePadded, defaultReleaseImagePrefix) {
 		// the defaultReleaseImagePadded constant hasn't been altered in the binary, fall back to the default
 		return defaultReleaseImageOriginal, nil

@@ -175,7 +175,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 		releaseImage = ri
 	} else {
 		var err error
-		releaseImage, err = defaultReleaseImage()
+		releaseImage, err = DefaultReleaseImage()
 		if err != nil {
 			return nil, err
 		}
