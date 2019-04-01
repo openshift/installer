@@ -12,10 +12,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/installer/pkg/asset"
+	dnsasset "github.com/openshift/installer/pkg/asset/dns"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
-	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/azure"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -70,6 +71,12 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			BaseDomain: installConfig.Config.ClusterDomain(),
 		},
 	}
+	platformName := installConfig.Config.Platform.Name()
+	dnsConfig, err := dnsasset.NewConfig(platformName)
+	if err != nil {
+		return err
+	}
+	//TODO:align aws with the dns.ConfigProvider interface to remove platform specific code
 
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
@@ -82,7 +89,17 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			fmt.Sprintf("kubernetes.io/cluster/%s", clusterID.InfraID): "owned",
 			"Name": fmt.Sprintf("%s-int", clusterID.InfraID),
 		}}
-	case libvirttypes.Name, openstacktypes.Name, nonetypes.Name, vspheretypes.Name, azuretypes.Name:
+	case azure.Name:
+		publicZoneID, err := dnsConfig.GetPublicZone(installConfig.Config.BaseDomain)
+		if err != nil {
+			return errors.Wrapf(err, "getting public dns zone for %q", installConfig.Config.BaseDomain)
+		}
+		config.Spec.PublicZone = &configv1.DNSZone{ID: publicZoneID}
+		config.Spec.PrivateZone = &configv1.DNSZone{Tags: map[string]string{
+			fmt.Sprintf("kubernetes.io.cluster.%s", clusterID.InfraID): "owned",
+			"Name": fmt.Sprintf("%s-int", clusterID.InfraID),
+		}}
+	case libvirttypes.Name, openstacktypes.Name, nonetypes.Name, vspheretypes.Name:
 	default:
 		return errors.New("invalid Platform")
 	}

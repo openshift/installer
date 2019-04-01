@@ -9,8 +9,8 @@ import (
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/dns"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
-	"github.com/openshift/installer/pkg/dns"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/libvirt"

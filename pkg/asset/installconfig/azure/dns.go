@@ -1,6 +1,8 @@
 package azure
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+)
 
 //DNSConfig implements dns.ConfigProvider interface which provides methods to choose the DNS settings
 type DNSConfig struct {

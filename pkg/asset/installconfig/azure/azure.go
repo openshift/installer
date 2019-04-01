@@ -33,7 +33,7 @@ func Platform() (*azure.Platform, error) {
 		return nil, errors.Errorf("installer bug: invalid default azure region %q", defaultRegion)
 	}
 
-	_, err := azure.GetSession()
+	_, err := GetSession()
 	if err != nil {
 		return nil, err
 	}

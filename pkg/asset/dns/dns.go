@@ -3,6 +3,7 @@ package dns
 import (
 	"errors"
 
+	azureasset "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -20,7 +21,7 @@ type ConfigProvider interface {
 func NewConfig(platform string) (ConfigProvider, error) {
 	switch platform {
 	case azure.Name:
-		return azure.NewDNSConfig()
+		return azureasset.NewDNSConfig()
 	case libvirt.Name, none.Name, openstack.Name, aws.Name:
 		return nil, nil //not using the common interface yet
 	case "fake":
