@@ -610,31 +610,31 @@ func (DNSZone) SwaggerDoc() map[string]string {
 	return map_DNSZone
 }
 
-var map_Features = map[string]string{
-	"":         "Features holds cluster-wide information about feature gates.  The canonical name is `cluster`",
+var map_FeatureGate = map[string]string{
+	"":         "Feature holds cluster-wide information about feature gates.  The canonical name is `cluster`",
 	"metadata": "Standard object's metadata.",
 	"spec":     "spec holds user settable values for configuration",
 	"status":   "status holds observed values from the cluster. They may not be overridden.",
 }
 
-func (Features) SwaggerDoc() map[string]string {
-	return map_Features
+func (FeatureGate) SwaggerDoc() map[string]string {
+	return map_FeatureGate
 }
 
-var map_FeaturesList = map[string]string{
+var map_FeatureGateList = map[string]string{
 	"metadata": "Standard object's metadata.",
 }
 
-func (FeaturesList) SwaggerDoc() map[string]string {
-	return map_FeaturesList
+func (FeatureGateList) SwaggerDoc() map[string]string {
+	return map_FeatureGateList
 }
 
-var map_FeaturesSpec = map[string]string{
+var map_FeatureGateSpec = map[string]string{
 	"featureSet": "featureSet changes the list of features in the cluster.  The default is empty.  Be very careful adjusting this setting. Turning on or off features may cause irreversible changes in your cluster which cannot be undone.",
 }
 
-func (FeaturesSpec) SwaggerDoc() map[string]string {
-	return map_FeaturesSpec
+func (FeatureGateSpec) SwaggerDoc() map[string]string {
+	return map_FeatureGateSpec
 }
 
 var map_Image = map[string]string{
@@ -718,7 +718,8 @@ func (InfrastructureList) SwaggerDoc() map[string]string {
 }
 
 var map_InfrastructureSpec = map[string]string{
-	"": "InfrastructureSpec contains settings that apply to the cluster infrastructure.",
+	"":            "InfrastructureSpec contains settings that apply to the cluster infrastructure.",
+	"cloudConfig": "cloudConfig is a reference to a ConfigMap containing the cloud provider configuration file. This configuration file is used to configure the Kubernetes cloud provider integration when using the built-in cloud provider integration or the external cloud controller manager. The namespace for this config map is openshift-config.",
 }
 
 func (InfrastructureSpec) SwaggerDoc() map[string]string {
@@ -727,6 +728,7 @@ func (InfrastructureSpec) SwaggerDoc() map[string]string {
 
 var map_InfrastructureStatus = map[string]string{
 	"":                    "InfrastructureStatus describes the infrastructure the cluster is leveraging.",
+	"infrastructureName":  "infrastructureName uniquely identifies a cluster with a human friendly name. Once set it should not be changed. Must be of max length 27 and must have only alphanumeric or hyphen characters.",
 	"platform":            "platform is the underlying infrastructure provider for the cluster. This value controls whether infrastructure automation such as service load balancers, dynamic volume provisioning, machine creation and deletion, and other integrations are enabled. If None, no infrastructure automation is enabled. Allowed values are \"AWS\", \"Azure\", \"GCP\", \"Libvirt\", \"OpenStack\", \"VSphere\", and \"None\". Individual components may not support all platforms, and must handle unrecognized platforms as None if they do not support that platform.",
 	"etcdDiscoveryDomain": "etcdDiscoveryDomain is the domain used to fetch the SRV records for discovering etcd servers and clients. For more info: https://github.com/etcd-io/etcd/blob/329be66e8b3f9e2e6af83c123ff89297e49ebd15/Documentation/op-guide/clustering.md#dns-discovery",
 	"apiServerURL":        "apiServerURL is a valid URL with scheme(http/https), address and port. apiServerURL can be used by components like kubelet on machines, to contact the `apisever` using the infrastructure provider rather than the kubernetes networking.",
@@ -872,8 +874,6 @@ func (HTPasswdIdentityProvider) SwaggerDoc() map[string]string {
 var map_IdentityProvider = map[string]string{
 	"":              "IdentityProvider provides identities for users authenticating using credentials",
 	"name":          "name is used to qualify the identities returned by this provider. - It MUST be unique and not shared by any other identity provider used - It MUST be a valid path segment: name cannot equal \".\" or \"..\" or contain \"/\" or \"%\" or \":\"\n  Ref: https://godoc.org/github.com/openshift/origin/pkg/user/apis/user/validation#ValidateIdentityProviderName",
-	"challenge":     "challenge indicates whether to issue WWW-Authenticate challenges for this provider",
-	"login":         "login indicates whether to use this identity provider for unauthenticated browsers to login against",
 	"mappingMethod": "mappingMethod determines how identities from this provider are mapped to users Defaults to \"claim\"",
 }
 
@@ -1002,23 +1002,12 @@ var map_OpenIDIdentityProvider = map[string]string{
 	"ca":                       "ca is an optional reference to a config map by name containing the PEM-encoded CA bundle. It is used as a trust anchor to validate the TLS certificate presented by the remote server. The key \"ca.crt\" is used to locate the data. If specified and the config map or expected key is not found, the identity provider is not honored. If the specified ca data is not valid, the identity provider is not honored. If empty, the default system roots are used. The namespace for this config map is openshift-config.",
 	"extraScopes":              "extraScopes are any scopes to request in addition to the standard \"openid\" scope.",
 	"extraAuthorizeParameters": "extraAuthorizeParameters are any custom parameters to add to the authorize request.",
-	"urls":   "urls to use to authenticate",
-	"claims": "claims mappings",
+	"issuer":                   "issuer is the URL that the OpenID Provider asserts as its Issuer Identifier. It must use the https scheme with no query or fragment component.",
+	"claims":                   "claims mappings",
 }
 
 func (OpenIDIdentityProvider) SwaggerDoc() map[string]string {
 	return map_OpenIDIdentityProvider
-}
-
-var map_OpenIDURLs = map[string]string{
-	"":          "OpenIDURLs are URLs to use when authenticating with an OpenID identity provider",
-	"authorize": "authorize is the oauth authorization URL",
-	"token":     "token is the oauth token granting URL",
-	"userInfo":  "userInfo is the optional userinfo URL. If present, a granted access_token is used to request claims If empty, a granted id_token is parsed for claims",
-}
-
-func (OpenIDURLs) SwaggerDoc() map[string]string {
-	return map_OpenIDURLs
 }
 
 var map_RequestHeaderIdentityProvider = map[string]string{
@@ -1132,7 +1121,8 @@ func (SchedulerList) SwaggerDoc() map[string]string {
 }
 
 var map_SchedulerSpec = map[string]string{
-	"policy": "policy is a reference to a ConfigMap containing scheduler policy which has user specified predicates and priorities. If this ConfigMap is not available scheduler will default to use DefaultAlgorithmProvider. The namespace for this configmap is openshift-config.",
+	"policy":              "policy is a reference to a ConfigMap containing scheduler policy which has user specified predicates and priorities. If this ConfigMap is not available scheduler will default to use DefaultAlgorithmProvider. The namespace for this configmap is openshift-config.",
+	"defaultNodeSelector": "defaultNodeSelector helps set the cluster-wide default node selector to restrict pod placement to specific nodes. This is applied to the pods created in all namespaces without a specified nodeSelector value. For example, defaultNodeSelector: \"type=user-node,region=east\" would set nodeSelector field in pod spec to \"type=user-node,region=east\" to all pods created in all namespaces. Namespaces having project-wide node selectors won't be impacted even if this field is set. This adds an annotation section to the namespace. For example, if a new namespace is created with node-selector='type=user-node,region=east', the annotation openshift.io/node-selector: type=user-node,region=east gets added to the project. When the openshift.io/node-selector annotation is set on the project the value is used in preference to the value we are setting for defaultNodeSelector field. For instance, openshift.io/node-selector: \"type=user-node,region=west\" means that the default of \"type=user-node,region=east\" set in defaultNodeSelector would not be applied.",
 }
 
 func (SchedulerSpec) SwaggerDoc() map[string]string {
