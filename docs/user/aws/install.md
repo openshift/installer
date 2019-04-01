@@ -34,10 +34,9 @@ INFO Destroying the bootstrap resources...
 INTO Waiting up to 30m0s for the cluster at https://api.test.example.com:6443 to initialize...
 INFO Waiting up to 10m0s for the openshift-console route to be created...
 INFO Install complete!
-INFO Run 'export KUBECONFIG=/home/user/auth/kubeconfig' to manage the cluster with 'oc', the OpenShift CLI.
-INFO The cluster is ready when 'oc login -u kubeadmin -p XXXX' succeeds (wait a few minutes).
+INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/home/user/auth/kubeconfig'
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.test.example.com
-INFO Login to the console with user: kubeadmin, password: XXXX
+INFO Login to the console with user: kubeadmin, password: 5char-5char-5char-5char
 ```
 
 ### Running Cluster
