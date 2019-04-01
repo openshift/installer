@@ -13,6 +13,8 @@ resource "aws_route53_zone" "int" {
   tags = "${merge(map(
     "Name", "${var.cluster_id}-int",
   ), var.tags)}"
+
+  depends_on = ["aws_route53_record.api_external"]
 }
 
 resource "aws_route53_record" "api_external" {
