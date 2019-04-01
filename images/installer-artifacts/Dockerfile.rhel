@@ -4,7 +4,8 @@
 FROM registry.svc.ci.openshift.org/ocp/builder:golang-1.10 AS builder
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
-RUN SKIP_GENERATION=y GOOS=darwin GOARCH=amd64 hack/build.sh
+RUN go generate ./data && \
+    SKIP_GENERATION=y GOOS=darwin GOARCH=amd64 hack/build.sh
 
 FROM registry.svc.ci.openshift.org/ocp/4.0:installer
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/mac/openshift-install
