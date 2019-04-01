@@ -33,14 +33,16 @@ func NewConfig(platform string) (ConfigProvider, error) {
 
 //MockConfigProvider allows faking the dns settings
 type MockConfigProvider struct {
+	BaseDomain string
+	PublicZone string
 }
 
 //GetBaseDomain returns the fake base domain
-func (*MockConfigProvider) GetBaseDomain() (string, error) {
-	return "cloudapp.azure.com", nil
+func (p *MockConfigProvider) GetBaseDomain() (string, error) {
+	return p.BaseDomain, nil
 }
 
 //GetPublicZone return the fake public zone
-func (*MockConfigProvider) GetPublicZone(name string) (string, error) {
-	return "", nil
+func (p *MockConfigProvider) GetPublicZone(name string) (string, error) {
+	return p.PublicZone, nil
 }
