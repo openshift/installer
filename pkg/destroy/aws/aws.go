@@ -687,6 +687,9 @@ func deleteEC2NATGateway(client *ec2.EC2, id string, logger logrus.FieldLogger) 
 		NatGatewayId: aws.String(id),
 	})
 	if err != nil {
+		if err.(awserr.Error).Code() == "NatGatewayNotFound" {
+			return nil
+		}
 		return err
 	}
 
