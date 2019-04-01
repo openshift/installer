@@ -687,11 +687,46 @@ func deleteEC2NATGateway(client *ec2.EC2, id string, logger logrus.FieldLogger) 
 		NatGatewayId: aws.String(id),
 	})
 	if err != nil {
+		if err.(awserr.Error).Code() == "NatGatewayNotFound" {
+			return nil
+		}
 		return err
 	}
 
 	logger.Info("Deleted")
 	return nil
+}
+
+func deleteEC2NATGatewaysByVPC(client *ec2.EC2, vpc string, logger logrus.FieldLogger) error {
+	var lastError error
+	err := client.DescribeNatGatewaysPages(
+		&ec2.DescribeNatGatewaysInput{
+			Filter: []*ec2.Filter{
+				{
+					Name:   aws.String("vpc-id"),
+					Values: []*string{&vpc},
+				},
+			},
+		},
+		func(results *ec2.DescribeNatGatewaysOutput, lastPage bool) bool {
+			for _, gateway := range results.NatGateways {
+				err := deleteEC2NATGateway(client, *gateway.NatGatewayId, logger.WithField("NAT gateway", *gateway.NatGatewayId))
+				if err != nil {
+					if lastError != nil {
+						logger.Debug(err)
+					}
+					lastError = errors.Wrapf(err, "deleting EC2 NAT gateway %s", *gateway.NatGatewayId)
+				}
+			}
+
+			return !lastPage
+		},
+	)
+
+	if lastError != nil {
+		return lastError
+	}
+	return err
 }
 
 func deleteEC2RouteTable(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
@@ -936,6 +971,7 @@ func deleteEC2VPC(ec2Client *ec2.EC2, elbClient *elb.ELB, elbv2Client *elbv2.ELB
 	}
 
 	for _, helper := range [](func(client *ec2.EC2, vpc string, logger logrus.FieldLogger) error){
+		deleteEC2NATGatewaysByVPC,      // not always tagged
 		deleteEC2NetworkInterfaceByVPC, // not always tagged
 		deleteEC2RouteTablesByVPC,      // not always tagged
 		deleteEC2VPCEndpointsByVPC,     // not taggable
