@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
+	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
@@ -71,7 +72,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	}
 
 	switch installConfig.Config.Platform.Name() {
-	case awstypes.Name, libvirttypes.Name, vspheretypes.Name, nonetypes.Name:
+	case awstypes.Name, libvirttypes.Name, nonetypes.Name:
 		return nil
 	case openstacktypes.Name:
 		opts := &ospclientconfig.ClientOpts{}
@@ -89,6 +90,12 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return err
 		}
 		cm.Data[cloudProviderConfigDataKey] = string(marshalled)
+	case vspheretypes.Name:
+		vsphereConfig, err := vspheremanifests.CloudProviderConfig(installConfig.Config.Platform.VSphere)
+		if err != nil {
+			return errors.Wrap(err, "could not create cloud provider config")
+		}
+		cm.Data[cloudProviderConfigDataKey] = vsphereConfig
 	default:
 		return errors.New("invalid Platform")
 	}

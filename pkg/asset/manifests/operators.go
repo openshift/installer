@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/templates/content/bootkube"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 const (
@@ -263,6 +264,16 @@ func (m *Manifests) Load(f asset.FileFetcher) (bool, error) {
 
 func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
 	config.PullSecret = ""
+	if config.Platform.VSphere != nil {
+		p := *config.Platform.VSphere
+		p.VirtualCenters = make([]vspheretypes.VirtualCenter, len(config.Platform.VSphere.VirtualCenters))
+		for i, vc := range config.Platform.VSphere.VirtualCenters {
+			vc.Username = ""
+			vc.Password = ""
+			p.VirtualCenters[i] = vc
+		}
+		config.Platform.VSphere = &p
+	}
 	return yaml.Marshal(config)
 }
 
