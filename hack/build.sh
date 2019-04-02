@@ -3,6 +3,7 @@
 set -ex
 
 RHCOS_BUILD_NAME="${RHCOS_BUILD_NAME:-410.8.20190325.0}"
+RELEASE_IMAGE="${RELEASE_IMAGE:-quay.io/openshift-release-dev/ocp-release:4.0.0-0.9}"
 
 # shellcheck disable=SC2068
 version() { IFS="."; printf "%03d%03d%03d\\n" $@; unset IFS;}
