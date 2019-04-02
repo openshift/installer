@@ -43,7 +43,7 @@ func setupParents() asset.Parents {
 func TestGenerateAzure(t *testing.T) {
 	expectedPublicZoneID := "/subscriptions/<subid>/resourceGroups/<rg>/providers/Microsoft.Network/dnszones/my-dns-zone.com"
 	dnsAsset := DNS{}
-	dnsAsset.DNSConfig = &dns.MockConfigProvider{
+	dns.DNSConfigOverride = &dns.MockConfigProvider{
 		BaseDomain: "",
 		PublicZone: expectedPublicZoneID,
 	}

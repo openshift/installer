@@ -5,8 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 
@@ -32,8 +30,6 @@ var (
 // DNS generates the cluster-dns-*.yml files.
 type DNS struct {
 	FileList []*asset.File
-	//DNSConfig allows to override the DNS Config Provider implementation during tests
-	DNSConfig dnsasset.ConfigProvider
 }
 
 var _ asset.WritableAsset = (*DNS)(nil)
@@ -56,15 +52,6 @@ func (*DNS) Dependencies() []asset.Asset {
 	}
 }
 
-func (d *DNS) getDNSConfig(platformName string) (dnsasset.ConfigProvider, error) {
-	//allows to inject a fake DNS for testing
-	if d.DNSConfig == nil {
-		return dnsasset.NewConfig(platformName)
-	}
-	logrus.Warn("Using injected Mock DNS config")
-	return d.DNSConfig, nil
-}
-
 // Generate generates the DNS config and its CRD.
 func (d *DNS) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
@@ -85,7 +72,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		},
 	}
 	platformName := installConfig.Config.Platform.Name()
-	dnsConfig, err := d.getDNSConfig(platformName)
+	dnsConfig, err := dnsasset.NewConfig(platformName)
 	if err != nil {
 		return err
 	}

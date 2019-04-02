@@ -11,6 +11,11 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
+var (
+	//DNSConfigOverride allows to override the DNS Config Provider implementation during tests
+	DNSConfigOverride ConfigProvider
+)
+
 //ConfigProvider is an interface that provides means to fetch the DNS settings
 type ConfigProvider interface {
 	GetBaseDomain() (string, error)
@@ -19,13 +24,14 @@ type ConfigProvider interface {
 
 //NewConfig is a factory method to return the platform specific implementation of dnsConfig
 func NewConfig(platform string) (ConfigProvider, error) {
+	if DNSConfigOverride != nil {
+		return DNSConfigOverride, nil
+	}
 	switch platform {
 	case azure.Name:
 		return azureasset.NewDNSConfig()
 	case libvirt.Name, none.Name, openstack.Name, aws.Name:
 		return nil, nil //not using the common interface yet
-	case "fake":
-		return &MockConfigProvider{}, nil
 	default:
 		return nil, errors.New("fail")
 	}
