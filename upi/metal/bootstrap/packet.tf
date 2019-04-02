@@ -1,6 +1,6 @@
 resource "packet_device" "bootstrap" {
   hostname         = "${var.cluster_id}-bootstrap"
-  plan             = "t1.small.x86"
+  plan             = "c1.small.x86"
   facilities       = ["${var.packet_facility}"]
   operating_system = "custom_ipxe"
   ipxe_script_url  = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=bootstrap"

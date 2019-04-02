@@ -98,7 +98,7 @@ resource "packet_device" "masters" {
   count            = "${var.master_count}"
   hostname         = "master-${count.index}.${var.cluster_domain}"
   plan             = "c1.small.x86"
-  facilities       = ["${local.packet_facility}"]
+  facilities       = ["any"]
   operating_system = "custom_ipxe"
   ipxe_script_url  = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=master"
   billing_cycle    = "hourly"
@@ -111,7 +111,7 @@ resource "packet_device" "workers" {
   count            = "${var.worker_count}"
   hostname         = "worker-${count.index}.${var.cluster_domain}"
   plan             = "c1.small.x86"
-  facilities       = ["${local.packet_facility}"]
+  facilities       = ["any"]
   operating_system = "custom_ipxe"
   ipxe_script_url  = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=worker"
   billing_cycle    = "hourly"
@@ -133,7 +133,7 @@ module "bootstrap" {
 
   cluster_id = "${var.cluster_id}"
 
-  packet_facility   = "${local.packet_facility}"
+  packet_facility   = "any"
   packet_project_id = "${var.packet_project_id}"
 }
 
