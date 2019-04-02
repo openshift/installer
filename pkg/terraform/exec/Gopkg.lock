@@ -1134,25 +1134,6 @@
   revision = "505ab145d0a99da450461ae2c1a9f6cd10d1f447"
 
 [[projects]]
-  digest = "1:1e3d40360b710aa4d650c83efedc986e447ff35e2ba86a15ff5add14e15c9b45"
-  name = "golang.org/x/net"
-  packages = [
-    "context",
-    "context/ctxhttp",
-    "html",
-    "html/atom",
-    "html/charset",
-    "http/httpguts",
-    "http2",
-    "http2/hpack",
-    "idna",
-    "internal/timeseries",
-    "trace",
-  ]
-  pruneopts = "NUT"
-  revision = "891ebc4b82d6e74f468c533b06f983c7be918a96"
-
-[[projects]]
   digest = "1:4648e14100dfb6fde9b6caa98d3b486721dfdf895cca58e3950240d5ef051f7b"
   name = "golang.org/x/oauth2"
   packages = [

@@ -3,6 +3,11 @@ ignored = [
   "github.com/openshift/installer/pkg/terraform/exec*"
 ]
 
+required = [
+  # used by terraform
+  "golang.org/x/net/html/charset"
+]
+
 [prune]
   non-go = true
   go-tests = true
