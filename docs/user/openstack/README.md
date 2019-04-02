@@ -188,10 +188,9 @@ It will print the console URL, username and password and you should be able to g
 
 ```
 INFO Install complete!
-INFO Run 'export KUBECONFIG=/home/thomas/go/src/github.com/openshift/installer/ostest/auth/kubeconfig' to manage the cluster with 'oc', the OpenShift CLI.
-INFO The cluster is ready when 'oc login -u kubeadmin -p siDhh-STMU3-hWDPW-jM4co' succeeds (wait a few minutes).
+INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/path/to/installer/auth/kubeconfig'
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.ostest.shiftstack.com
-INFO Login to the console with user: kubeadmin, password: siDhh-STMU3-hWDPW-jM4co
+INFO Login to the console with user: kubeadmin, password: 5char-5char-5char-5char
 ```
 
 ## Using an External Load Balancer
