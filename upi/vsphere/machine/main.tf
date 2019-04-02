@@ -60,6 +60,7 @@ resource "vsphere_virtual_machine" "vm" {
   memory           = "8192"
   guest_id         = "other26xLinux64Guest"
   folder           = "${var.folder}"
+  enable_disk_uuid = "true"
 
   wait_for_guest_net_timeout  = 0
   wait_for_guest_net_routable = false

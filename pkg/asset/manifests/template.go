@@ -11,9 +11,22 @@ type OpenStackCredsSecretData struct {
 	Base64encodeCloudCreds string
 }
 
+// VSphereCredsSecretData holds encoded credentials and is used to generated cloud-creds secret
+type VSphereCredsSecretData struct {
+	VirtualCenters []VSphereVirtualCenterCredsSecretData
+}
+
+// VSphereVirtualCenterCredsSecretData holds the encoded credentials for a vSphere vCenter.
+type VSphereVirtualCenterCredsSecretData struct {
+	Name                 string
+	Base64encodeUsername string
+	Base64encodePassword string
+}
+
 type cloudCredsSecretData struct {
 	AWS       *AwsCredsSecretData
 	OpenStack *OpenStackCredsSecretData
+	VSphere   *VSphereCredsSecretData
 }
 
 type bootkubeTemplateData struct {
