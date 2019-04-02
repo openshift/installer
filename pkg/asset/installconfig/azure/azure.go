@@ -1,15 +1,22 @@
 package azure
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/Azure/go-autorest/autorest/to"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/azure/validation"
 
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
+
+	azsub "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 )
 
 const (
@@ -18,9 +25,11 @@ const (
 
 // Platform collects azure-specific configuration.
 func Platform() (*azure.Platform, error) {
+	regions, err := getRegions()
+	logrus.Debugf("##### Retrieved regions for given subscription. count : %v", len(regions))
 	longRegions := make([]string, 0, len(validation.Regions))
 	shortRegions := make([]string, 0, len(validation.Regions))
-	for id, location := range validation.Regions {
+	for id, location := range regions {
 		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", id, location))
 		shortRegions = append(shortRegions, id)
 	}
@@ -31,11 +40,6 @@ func Platform() (*azure.Platform, error) {
 	_, ok := validation.Regions[defaultRegion]
 	if !ok {
 		return nil, errors.Errorf("installer bug: invalid default azure region %q", defaultRegion)
-	}
-
-	_, err := GetSession()
-	if err != nil {
-		return nil, err
 	}
 
 	sort.Strings(longRegions)
@@ -68,4 +72,26 @@ func Platform() (*azure.Platform, error) {
 	return &azure.Platform{
 		Region: region,
 	}, nil
+}
+
+func getRegions() (map[string]string, error) {
+	ctx := context.TODO()
+	session, err := GetSession()
+	if err != nil {
+		return nil, err
+	}
+	client := azsub.NewClient()
+	client.Authorizer = session.Authorizer
+	locations, err := client.ListLocations(ctx, session.SubscriptionID)
+	if err != nil {
+		return nil, err
+	}
+
+	locationsValue := *locations.Value
+
+	allLocations := map[string]string{}
+	for _, location := range locationsValue {
+		allLocations[to.String(location.Name)] = to.String(location.DisplayName)
+	}
+	return allLocations, nil
 }

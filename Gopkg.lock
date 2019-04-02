@@ -10,7 +10,19 @@
   version = "v0.4.9"
 
 [[projects]]
-  digest = "1:fbb825a847e7169951d8e65a35858e717c6acaab25e0ab49653d9be8e5e39592"
+  digest = "1:a3d143281561178015927bffd46fc0335231b60d373686f1dbbd9706d817779b"
+  name = "github.com/Azure/azure-sdk-for-go"
+  packages = [
+    "profiles/latest/resources/mgmt/subscriptions",
+    "services/resources/mgmt/2016-06-01/subscriptions",
+    "version",
+  ]
+  pruneopts = "NUT"
+  revision = "2ea98fc438b9d78aa2ab32bab44c7f68e506385e"
+  version = "v25.1.0"
+
+[[projects]]
+  digest = "1:2a32c4672f2a546df4ee663565c95175780f0ed9eaec3dec2cf588f1ef50c7fb"
   name = "github.com/Azure/go-autorest"
   packages = [
     "autorest",
@@ -19,6 +31,7 @@
     "autorest/azure/auth",
     "autorest/azure/cli",
     "autorest/date",
+    "autorest/to",
     "logger",
     "tracing",
   ]
@@ -1141,6 +1154,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions",
     "github.com/Azure/go-autorest/autorest",
     "github.com/Azure/go-autorest/autorest/azure",
     "github.com/Azure/go-autorest/autorest/azure/auth",
