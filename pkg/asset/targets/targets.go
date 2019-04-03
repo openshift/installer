@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/password"
+	"github.com/openshift/installer/pkg/asset/precluster"
 	"github.com/openshift/installer/pkg/asset/templates/content/bootkube"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
 	"github.com/openshift/installer/pkg/asset/tls"
@@ -51,13 +52,29 @@ var (
 		&openshift.RoleCloudCredsSecretReader{},
 	}
 
-	// IgnitionConfigs are the ignition-configs targeted assets.
+	// IgnitionConfigs are the (deprecated) ignition-configs targeted assets.
 	IgnitionConfigs = []asset.WritableAsset{
 		&kubeconfig.AdminClient{},
 		&machine.Master{},
 		&machine.Worker{},
 		&bootstrap.Bootstrap{},
 		&cluster.Metadata{},
+	}
+
+	// NodeConfig are the node-config targeted assets.
+	NodeConfig = []asset.WritableAsset{
+		&machine.Master{},
+		&machine.Worker{},
+	}
+
+	// BootstrapConfig are the bootstrap-config targeted assets.
+	BootstrapConfig = []asset.WritableAsset{
+		&bootstrap.Bootstrap{},
+	}
+
+	// PreCluster are the pre-cluster targeted assets.
+	PreCluster = []asset.WritableAsset{
+		&precluster.PreCluster{},
 	}
 
 	// Cluster are the cluster targeted assets.

@@ -69,11 +69,42 @@ var (
 		name: "Ignition Configs",
 		command: &cobra.Command{
 			Use:   "ignition-configs",
-			Short: "Generates the Ignition Config asset",
+			Short: "(deprecated) Generates the Ignition Config asset",
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
+			PreRun: func(_ *cobra.Command, _ []string) {
+				logrus.Warning("The ignition-configs sub-command has been deprecated. Use the bootstrap-config or pre-cluster sub-commands instead.")
+			},
 		},
 		assets: targetassets.IgnitionConfigs,
+	}
+
+	nodeConfigTarget = target{
+		name: "Node Config",
+		command: &cobra.Command{
+			Use:   "node-config",
+			Short: "Generates the ignition config for the master and worker machines",
+		},
+		assets: targetassets.NodeConfig,
+	}
+
+	bootstrapConfigTarget = target{
+		name: "Bootstrap Config",
+		command: &cobra.Command{
+			Use:   "bootstrap-config",
+			Short: "Generates the ignition config for the bootstrap machine",
+		},
+		assets: targetassets.BootstrapConfig,
+	}
+
+	preClusterTarget = target{
+		name: "Pre-Cluster",
+		command: &cobra.Command{
+			Use:   "pre-cluster",
+			Short: "Generates read-only copies of the final assets prior to the cluster",
+			Long:  "Generates the ignition configs for bootstrap, master, and worker; the admin kubeconfig; and the metadata.json file. These assets are generated in the pre-cluster directory.",
+		},
+		assets: targetassets.PreCluster,
 	}
 
 	clusterTarget = target{
@@ -114,7 +145,7 @@ var (
 		assets: targetassets.Cluster,
 	}
 
-	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget}
+	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, nodeConfigTarget, bootstrapConfigTarget, preClusterTarget, clusterTarget}
 )
 
 func newCreateCmd() *cobra.Command {

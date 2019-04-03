@@ -53,6 +53,18 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 			name:    "ignition configs",
 			targets: targets.IgnitionConfigs,
 		},
+		{
+			name:    "node config",
+			targets: targets.NodeConfig,
+		},
+		{
+			name:    "bootstrap config",
+			targets: targets.BootstrapConfig,
+		},
+		{
+			name:    "pre-cluster",
+			targets: targets.PreCluster,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -90,6 +102,7 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 				"Master Machines": true, // no files for the 'none' platform
 				"Worker Machines": true, // no files for the 'none' platform
 				"Metadata":        true, // read-only
+				"Pre-Cluster":     true, // read-only
 			}
 			for _, a := range tc.targets {
 				name := a.Name()
