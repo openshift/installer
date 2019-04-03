@@ -48,6 +48,14 @@ variable "template" {
   type = "string"
 }
 
+variable "ipam" {
+  type = "string"
+}
+
+variable "ipam_token" {
+  type = "string"
+}
+
 variable "pull_secret" {
   type    = "string"
   default = ""

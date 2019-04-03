@@ -1,6 +1,6 @@
 locals {
-  mask = "${element(split("/", var.machine_cidr), 1)}"
-  gw   = "${cidrhost(var.machine_cidr,1)}"
+  mask    = "${element(split("/", var.machine_cidr), 1)}"
+  gw      = "${cidrhost(var.machine_cidr,1)}"
 
   ignition_encoded = "data:text/plain;charset=utf-8;base64,${base64encode(var.ignition)}"
 
@@ -123,13 +123,13 @@ data "ignition_config" "ign" {
 resource "vsphere_virtual_machine" "vm" {
   count = "${length(var.ips)}"
 
-  name             = "${var.name}-${count.index}"
-  resource_pool_id = "${var.resource_pool_id}"
-  datastore_id     = "${data.vsphere_datastore.datastore.id}"
-  num_cpus         = "4"
-  memory           = "8192"
-  guest_id         = "other26xLinux64Guest"
-  folder           = "${var.folder_id}"
+  name                       = "${var.name}-${count.index}"
+  resource_pool_id           = "${var.resource_pool_id}"
+  datastore_id               = "${data.vsphere_datastore.datastore.id}"
+  num_cpus                   = "4"
+  memory                     = "8192"
+  guest_id                   = "other26xLinux64Guest"
+  folder                     = "${var.folder_id}"
 
   network_interface {
     network_id = "${data.vsphere_network.network.id}"
@@ -150,5 +150,11 @@ resource "vsphere_virtual_machine" "vm" {
       "guestinfo.ignition.config.data"          = "${base64encode(data.ignition_config.ign.*.rendered[count.index])}"
       "guestinfo.ignition.config.data.encoding" = "base64"
     }
+  }
+
+  provisioner "local-exec" {
+    when    = "destroy"
+    command = <<EOF
+curl "http://${var.ipam}/api/removeHost.php?apiapp=address&apitoken=${var.ipam_token}&host=${var.name}-${count.index}.${var.cluster_domain}"EOF
   }
 }

@@ -53,6 +53,16 @@ variable "extra_user_password_hashes" {
   default = []
 }
 
+variable "ipam" {
+  type        = "string"
+  description = "The IPAM server to use for IP management."
+}
+
+variable "ipam_token" {
+  type        = "string"
+  description = "The IPAM token to use for requests."
+}
+
 /////////
 // OpenShift cluster variables
 /////////
