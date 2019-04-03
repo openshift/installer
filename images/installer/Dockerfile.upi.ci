@@ -7,12 +7,14 @@ FROM registry.svc.ci.openshift.org/openshift/release:golang-1.10 AS builder
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN hack/build.sh
+RUN GOBIN=$(pwd)/bin go get -u github.com/coreos/terraform-provider-matchbox
 
 FROM registry.svc.ci.openshift.org/openshift/origin-v4.0:cli as cli
 
 FROM registry.svc.ci.openshift.org/openshift/origin-v4.0:base
 COPY --from=cli /usr/bin/oc /bin/oc
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
+COPY --from=builder /go/src/github.com/openshift/installer/bin/terraform-provider-matchbox /bin/terraform-provider-matchbox
 COPY --from=builder /go/src/github.com/openshift/installer/upi /var/lib/openshift-install/upi
 
 ## epel-release is required for jq
