@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -189,16 +190,26 @@ func validateCompute(pools []types.MachinePool, fldPath *field.Path, platform st
 	return allErrs
 }
 
-func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackValidValuesFetcher openstackvalidation.ValidValuesFetcher) field.ErrorList {
-	allErrs := field.ErrorList{}
-	activePlatform := platform.Name()
+// PlatformName name validates a platform name against the set of names
+// understood by the installer.
+func PlatformName(platform string) error {
 	platforms := make([]string, len(types.PlatformNames))
 	copy(platforms, types.PlatformNames)
 	platforms = append(platforms, types.HiddenPlatformNames...)
 	sort.Strings(platforms)
-	i := sort.SearchStrings(platforms, activePlatform)
-	if i == len(platforms) || platforms[i] != activePlatform {
-		allErrs = append(allErrs, field.Invalid(fldPath, platform, fmt.Sprintf("must specify one of the platforms (%s)", strings.Join(platforms, ", "))))
+	i := sort.SearchStrings(platforms, platform)
+	if i == len(platforms) || platforms[i] != platform {
+		return errors.Errorf("must specify one of the platforms (%s)", strings.Join(platforms, ", "))
+	}
+	return nil
+}
+
+func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackValidValuesFetcher openstackvalidation.ValidValuesFetcher) field.ErrorList {
+	allErrs := field.ErrorList{}
+	activePlatform := platform.Name()
+	err := PlatformName(activePlatform)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, platform, err.Error()))
 	}
 	validate := func(n string, value interface{}, validation func(*field.Path) field.ErrorList) {
 		if n != activePlatform {

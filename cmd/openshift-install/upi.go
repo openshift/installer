@@ -2,12 +2,18 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/libvirt"
+	"github.com/openshift/installer/pkg/types/validation"
 )
 
 var (
@@ -22,7 +28,8 @@ provides entry points to support the following workflow:
 1. Call 'create ignition-configs' to create the bootstrap Ignition
    config and admin kubeconfig.
 2. Creates all required cluster resources, after which the cluster
-   will being bootstrapping.
+   will being bootstrapping.  'user-provided-infrastructure bootimage'
+   may help with this.
 3. Call 'user-provided-infrastructure bootstrap-complete' to wait
    until the bootstrap phase has completed.
 4. Destroy the bootstrap resources.
@@ -42,8 +49,48 @@ func newUPICmd() *cobra.Command {
 			return cmd.Help()
 		},
 	}
+	cmd.AddCommand(newUPIBootimageCmd())
 	cmd.AddCommand(newUPIBootstrapCompleteCmd())
 	cmd.AddCommand(newUPIFinishCmd())
+	return cmd
+}
+
+func newUPIBootimageCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "bootimage",
+		Short: "Show the suggested RHCOS bootimage for a given platform",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
+
+			platformName := args[0]
+			switch platformName {
+			case aws.Name:
+				region, err := cmd.Flags().GetString("region")
+				if err != nil {
+					logrus.Fatal(err)
+				}
+
+				ami, err := rhcos.AMI(ctx, region)
+				if err != nil {
+					logrus.Fatal(err)
+				}
+				fmt.Println(ami)
+			case libvirt.Name:
+				qemu, err := rhcos.QEMU(ctx)
+				if err != nil {
+					logrus.Fatal(err)
+				}
+				fmt.Println(qemu)
+			default:
+				err := validation.PlatformName(platformName)
+				if err != nil {
+					logrus.Fatal(errors.Wrapf(err, "unrecognized %q", platformName))
+				}
+			}
+		},
+	}
+	cmd.Flags().StringP("region", "r", "", "AMI region (required for AWS)")
 	return cmd
 }
 
