@@ -131,7 +131,6 @@ Resources:
   ExternalApiTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: ExternalApiTargetGroup
       Port: 6443
       Protocol: TCP
       TargetType: ip
@@ -156,7 +155,6 @@ Resources:
   InternalApiTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: InternalApiTargetGroup
       Port: 6443
       Protocol: TCP
       TargetType: ip
@@ -181,7 +179,6 @@ Resources:
   InternalServiceTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: InternalServiceTargetGroup
       Port: 22623
       Protocol: TCP
       TargetType: ip
