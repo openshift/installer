@@ -39,7 +39,9 @@ VPC configuration and a CloudFormation template is provided [here](../../../upi/
 
 A created VPC via the template or manually should approximate a setup similar to this:
 
-![Example VPC Architecture Diagram](images/install_upi_vpc.png)
+<div style="text-align:center">
+  <img src="images/install_upi_vpc.svg" width="100%" />
+</div>
 
 ## Create DNS entries and Load Balancers for Control Plane Components
 
