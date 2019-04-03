@@ -3,7 +3,7 @@
 #  https://www.terraform.io/docs/providers/external/data_source.html
 #  Based on info from here: https://gist.github.com/irvingpop/968464132ded25a206ced835d50afa6b
 #  This script takes the CIDR address and cycles through looking for the first available address
-#  echo '{"cidr": "139.178.89.192/26", "control_plane_count": "3", "compute_count": "3", "cluster_domain": "dphillip.devcluster.openshift.com"}' | ./cidr_to_ip.sh
+#  echo '{"cidr": "139.178.89.192/26", "control_plane_count": "3", "compute_count": "3", "cluster_domain": "dphillip.devcluster.openshift.com", "ipam": "ipam_address", "ipam_token", "api_token" }' | ./cidr_to_ip.sh
 function error_exit() {
   echo "$1" 1>&2
   exit 1
@@ -12,7 +12,6 @@ function error_exit() {
 function check_deps() {
   test -f $(which jq) || error_exit "jq command not detected in path, please install it"
   test -f $(which ipcalc) || error_exit "ipcalc command not detected in path, please install it"
-  test -f $(which dig) || error_exit "dig command not detected in path, please install it"
 
 }
 
@@ -31,9 +30,6 @@ function produce_output() {
   cidr=$CIDR
 
   # Build the curl and run it
-
-  #IPAM="139.178.89.254"
-  #IPAM_TOKEN="EYmMFjaaQDNp7i1MlHRUZ0kPZC2hUHky" 
   lo=$(ipcalc -n $cidr | cut -f2 -d=)
    
   bs_count=0
