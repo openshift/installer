@@ -2,6 +2,8 @@ package rhcos
 
 import (
 	"context"
+	"sort"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -15,7 +17,13 @@ func AMI(ctx context.Context, region string) (string, error) {
 
 	ami, ok := meta.AMIs[region]
 	if !ok {
-		return "", errors.Errorf("no RHCOS AMIs found in %s", region)
+		regions := make([]string, 0, len(meta.AMIs))
+		for rgn := range meta.AMIs {
+			regions = append(regions, rgn)
+		}
+		sort.Strings(regions)
+
+		return "", errors.Errorf("no RHCOS AMIs found in %q (%s)", region, strings.Join(regions, ", "))
 	}
 
 	return ami.HVM, nil
