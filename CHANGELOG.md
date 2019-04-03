@@ -4,6 +4,55 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 0.16.0 - 2019-04-01
+
+### Added
+
+- Documentation for [user-provided infrastructure on bare
+  metal](docs/user/metal/install_upi.md).
+
+### Changed
+
+- Authorized SSH keys are now supplied via installer-generated
+  MachineConfig manifests instead of the stub Ignition configurations.
+  Additional MachineConfig manifests may be provided during a [staged
+  install](docs/user/overview.md#multiple-invocations).
+- [The certificate signer][kubecsr] used for etcd bootstrapping is now
+  sourced from the release image instead of from
+  `quay.io/coreos/kube-etcd-signer-server`.
+- The pinned RHCOS bootimage has been bumped from 400.7.20190306.0 to
+  410.8.20190325.0 to transition from a RHEL 7 base to RHEL 8.
+- The detailed networking configuration manifest has been moved from
+  `networkconfigs.networkoperator.openshift.io` to
+  `networks.operator.openshift.io`.
+- When installation fails after bootstrap removal, the installer will
+  now pass along the status reported by [the cluster-version
+  operator][cluster-version-operator], to make it easier to identify
+  underlying issues.
+- On AWS, when specific availability zones are requested for all
+  machine pools in `install-config.yaml`, the installer will now only
+  create per-zone resources for those zones.  This allows for clusters
+  in high-zone regions like us-east-1 without requiring limit bumps.
+- On OpenStack, we have restored the ability to create Machine(Set)s
+  with trunk support enabled.
+- On OpenStack, machines are now tagged with `Name` and
+  `openshiftClusterID`.
+- Several cleanups to docs, internal code, and user-provided
+  infrastructure support.
+
+### Fixed
+
+- On AWS, creating a new cluster using the same Kubernetes API URL as
+  an existing cluster will now error out instead of clobbering public
+  Route 53 records for the existing cluster.  This adds an additional
+  install-time permission requirement:
+  `s3:GetBucketObjectLockConfiguration`.
+- On AWS, install-config validation now requires any explicitly
+  configured machine-pool zones to be in the configured platform
+  region.  Installs never worked for zones from other regions, but the
+  improved validation gives a more obivous error message and avoids
+  partially provisioning a cluster before hitting the error.
+
 ## 0.15.0 - 2019-03-25
 
 ### Added
@@ -1145,6 +1194,7 @@ the new `openshift-install` command instead.
 [kube-apiserver-operator]: https://github.com/openshift/cluster-kube-apiserver-operator
 [kube-controller-manager-operator]: https://github.com/openshift/cluster-kube-controller-manager-operator
 [kube-selector]: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
+[kubecsr]: https://github.com/openshift/kubecsr/
 [machine-api-operator]: https://github.com/openshift/machine-api-operator
 [machine-config-operator]: https://github.com/openshift/machine-config-operator
 [machine-config-daemon-ssh-keys]: https://github.com/openshift/machine-config-operator/blob/master/docs/Update-SSHKeys.md
