@@ -2,6 +2,7 @@
 package aws
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/aws/validation"
 	"github.com/openshift/installer/pkg/version"
@@ -25,7 +27,14 @@ import (
 func Platform() (*aws.Platform, error) {
 	longRegions := make([]string, 0, len(validation.Regions))
 	shortRegions := make([]string, 0, len(validation.Regions))
+	rhcosRegions, err := rhcos.AMIRegions(context.TODO())
+	if err != nil {
+		return nil, err
+	}
 	for id, location := range validation.Regions {
+		if _, ok := rhcosRegions[id]; !ok {
+			continue
+		}
 		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", id, location))
 		shortRegions = append(shortRegions, id)
 	}
