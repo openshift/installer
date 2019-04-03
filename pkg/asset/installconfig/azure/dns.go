@@ -58,7 +58,7 @@ func (config DNSConfig) GetDNSZone() (*Zone, error) {
 	zonesClient := newZonesClient(config.Session)
 	allZones, _ := zonesClient.GetAllPublicZones()
 	if len(allZones) == 0 {
-		return nil, errors.New("No public DNS Zone found in your subscription")
+		return nil, errors.New("no public dns zone found in your subscription")
 	}
 	zoneNames := []string{}
 	for zoneName := range allZones {
