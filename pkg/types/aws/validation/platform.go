@@ -1,10 +1,12 @@
 package validation
 
 import (
+	"context"
 	"sort"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
@@ -55,6 +57,11 @@ func ValidatePlatform(p *aws.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if _, ok := Regions[p.Region]; !ok {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, validRegionValues))
+	} else if p.AMIID == "" {
+		_, err := rhcos.AMI(context.TODO(), p.Region)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("region"), p.Region, err.Error()))
+		}
 	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)

@@ -29,6 +29,20 @@ func TestValidatePlatform(t *testing.T) {
 			expected: "^test-path.region: Unsupported value: \"bad-region\": supported values: .*\"us-east-1\"",
 		},
 		{
+			name: "valid region without RHCOS",
+			platform: &aws.Platform{
+				Region: "us-gov-west-1",
+			},
+			expected: "^test-path.region: Invalid value: \"us-gov-west-1\": no RHCOS AMIs found in \"us-gov-west-1\" (.*us-east-1.*)$",
+		},
+		{
+			name: "valid region without RHCOS, but with an explicit AMI",
+			platform: &aws.Platform{
+				AMIID:  "ami-123",
+				Region: "us-gov-west-1",
+			},
+		},
+		{
 			name: "valid machine pool",
 			platform: &aws.Platform{
 				Region:                 "us-east-1",
