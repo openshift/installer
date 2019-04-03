@@ -1,7 +1,14 @@
 package azure
 
 import (
+	"context"
+	"fmt"
+
+	azdns "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns"
+	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
+	survey "gopkg.in/AlecAivazis/survey.v1"
+	//services/dns/mgmt
 )
 
 //DNSConfig implements dns.ConfigProvider interface which provides methods to choose the DNS settings
@@ -9,10 +16,74 @@ type DNSConfig struct {
 	Session *Session
 }
 
-//GetBaseDomain returns the base domain to use
-func (config DNSConfig) GetBaseDomain() (string, error) {
+//ZonesGetter fetches the DNS zones available for the installer
+type ZonesGetter interface {
+	GetAllPublicZones() (map[string]string, error)
+}
+
+//ZonesClient wraps the azure ZonesClient internal
+type ZonesClient struct {
+	azureClient azdns.ZonesClient
+}
+
+//Zone represents an Azure DNS Zone
+type Zone struct {
+	ID   string
+	Name string
+}
+
+func (z Zone) String() string {
+	return fmt.Sprintf("%s", z.Name)
+}
+
+func transformZone(f func(s string) *Zone) survey.Transformer {
+	return func(ans interface{}) interface{} {
+		// if the answer value passed in is the zero value of the appropriate type
+		if "" == ans.(string) {
+			return nil
+		}
+
+		s, ok := ans.(string)
+		if !ok {
+			return nil
+		}
+
+		return f(s)
+	}
+}
+
+//GetDNSZone returns a DNS zone selected by survey
+func (config DNSConfig) GetDNSZone() (*Zone, error) {
 	//call azure api using the session to retrieve available base domain
-	return "eastus.cloudapp.azure.com", nil
+	zonesClient := newZonesClient(config.Session)
+	allZones, _ := zonesClient.GetAllPublicZones()
+	if len(allZones) == 0 {
+		return nil, errors.New("No public DNS Zone found in your subscription")
+	}
+	zoneNames := []string{}
+	for zoneName := range allZones {
+		zoneNames = append(zoneNames, zoneName)
+	}
+
+	var zoneName string
+	err := survey.Ask([]*survey.Question{
+		{
+			Prompt: &survey.Select{
+				Message: "Base Domain",
+				Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base and will also include the cluster name.\n\nIf you don't see you intended base-domain listed, create a new Azure DNS Zone and rerun the installer.",
+				Options: zoneNames,
+			},
+		},
+	}, &zoneName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Zone{
+		ID:   allZones[zoneName],
+		Name: zoneName,
+	}, nil
+
 }
 
 //GetPublicZone returns the public zone id to create subdomain during deployment
@@ -29,8 +100,28 @@ func NewDNSConfig() (*DNSConfig, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "could not retrieve session information")
 	}
-	//get session here, set session on config object.
-	//each DNSConfig method implements the querying.
-	//allows for fake session injection and tests
 	return &DNSConfig{Session: session}, nil
+}
+
+func newZonesClient(session *Session) ZonesGetter {
+	azureClient := azdns.NewZonesClient(session.SubscriptionID)
+	azureClient.Authorizer = session.Authorizer
+	return &ZonesClient{azureClient: azureClient}
+}
+
+//GetAllPublicZones get all public zones from the current subscription
+func (client *ZonesClient) GetAllPublicZones() (map[string]string, error) {
+	ctx := context.TODO()
+	allZones := map[string]string{}
+	for zonesPage, err := client.azureClient.List(ctx, to.Int32Ptr(100)); zonesPage.NotDone(); err = zonesPage.NextWithContext(ctx) {
+		if err != nil {
+			return nil, err
+		}
+		//TODO: filter out private zone and show only public zones.
+		//the property is present in the REST api response, but not mapped yet in the SDK
+		for _, zone := range zonesPage.Values() {
+			allZones[to.String(zone.Name)] = to.String(zone.ID)
+		}
+	}
+	return allZones, nil
 }

@@ -5,12 +5,11 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/dns"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -37,10 +36,6 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 	platform := &platform{}
 	parents.Get(platform)
 	platformName := platform.CurrentPlatformName()
-	dnsConfig, err := dns.NewConfig(platformName)
-	if err != nil {
-		return err
-	}
 	switch platformName {
 	case aws.Name:
 		var err error
@@ -49,18 +44,19 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 		if !(awsconfig.IsForbidden(cause) || request.IsErrorThrottle(cause)) {
 			return err
 		}
-		logrus.Error(err)
 	case azure.Name:
 		var err error
-		a.BaseDomain, err = dnsConfig.GetBaseDomain()
+		azureDNS, _ := azureconfig.NewDNSConfig()
+		zone, err := azureDNS.GetDNSZone()
 		if err != nil {
 			return err
 		}
+		a.BaseDomain = zone.Name
+		return platform.Azure.SetBaseDomain(zone.ID)
 	case libvirt.Name, none.Name, openstack.Name:
 	default:
 		return fmt.Errorf("unknown platform type %q", platform)
 	}
-
 	return survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{

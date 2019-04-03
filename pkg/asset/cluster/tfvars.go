@@ -139,7 +139,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		})
 	case azure.Name:
 		//TODO(serbrech): rely on azure MachineProviderConfig once available
-		data, err := azuretfvars.TFVars(installConfig.Config.ObjectMeta.Name)
+		data, err := azuretfvars.TFVars(
+			installConfig.Config.Azure.Region,
+			installConfig.Config.Azure.BaseDomainResourceGroupName,
+		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}

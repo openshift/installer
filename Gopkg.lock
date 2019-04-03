@@ -10,10 +10,12 @@
   version = "v0.4.9"
 
 [[projects]]
-  digest = "1:a3d143281561178015927bffd46fc0335231b60d373686f1dbbd9706d817779b"
+  digest = "1:43d8579bc621651f7290504d0204f8815cc1328b1fc34cb69549ab2dfa949ed5"
   name = "github.com/Azure/azure-sdk-for-go"
   packages = [
+    "profiles/latest/dns/mgmt/dns",
     "profiles/latest/resources/mgmt/subscriptions",
+    "services/dns/mgmt/2017-10-01/dns",
     "services/resources/mgmt/2016-06-01/subscriptions",
     "version",
   ]
@@ -22,7 +24,7 @@
   version = "v25.1.0"
 
 [[projects]]
-  digest = "1:2a32c4672f2a546df4ee663565c95175780f0ed9eaec3dec2cf588f1ef50c7fb"
+  digest = "1:6c5cc479885a19f9425d5472e83740d3445a2b2dc96118da4ab95526de3b6795"
   name = "github.com/Azure/go-autorest"
   packages = [
     "autorest",
@@ -32,6 +34,7 @@
     "autorest/azure/cli",
     "autorest/date",
     "autorest/to",
+    "autorest/validation",
     "logger",
     "tracing",
   ]
@@ -1154,10 +1157,12 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns",
     "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions",
     "github.com/Azure/go-autorest/autorest",
     "github.com/Azure/go-autorest/autorest/azure",
     "github.com/Azure/go-autorest/autorest/azure/auth",
+    "github.com/Azure/go-autorest/autorest/to",
     "github.com/apparentlymart/go-cidr/cidr",
     "github.com/awalterschulze/gographviz",
     "github.com/aws/aws-sdk-go/aws",

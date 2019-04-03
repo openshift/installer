@@ -12,9 +12,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/installer/pkg/asset"
-	dnsasset "github.com/openshift/installer/pkg/asset/dns"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
@@ -72,13 +72,8 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		},
 	}
 	platformName := installConfig.Config.Platform.Name()
-	dnsConfig, err := dnsasset.NewConfig(platformName)
-	if err != nil {
-		return err
-	}
-	//TODO:align aws and other platforms with the dns.ConfigProvider interface to remove platform specific code
 
-	switch installConfig.Config.Platform.Name() {
+	switch platformName {
 	case awstypes.Name:
 		zone, err := icaws.GetPublicZone(installConfig.Config.BaseDomain)
 		if err != nil {
@@ -90,6 +85,10 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			"Name": fmt.Sprintf("%s-int", clusterID.InfraID),
 		}}
 	case azure.Name:
+		dnsConfig, err := icazure.NewDNSConfig()
+		if err != nil {
+			return err
+		}
 		publicZoneID, err := dnsConfig.GetPublicZone(installConfig.Config.BaseDomain)
 		if err != nil {
 			return errors.Wrapf(err, "getting public dns zone for %q", installConfig.Config.BaseDomain)
