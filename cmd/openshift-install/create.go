@@ -142,26 +142,7 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 			return errors.Wrap(err, "failed to create asset store")
 		}
 
-		for _, a := range targets {
-			err := assetStore.Fetch(a)
-			if err != nil {
-				err = errors.Wrapf(err, "failed to fetch %s", a.Name())
-			}
-
-			if err2 := asset.PersistToFile(a, directory); err2 != nil {
-				err2 = errors.Wrapf(err2, "failed to write asset (%s) to disk", a.Name())
-				if err != nil {
-					logrus.Error(err2)
-					return err
-				}
-				return err2
-			}
-
-			if err != nil {
-				return err
-			}
-		}
-		return nil
+		return assetStore.Fetch(targets...)
 	}
 
 	return func(cmd *cobra.Command, args []string) {

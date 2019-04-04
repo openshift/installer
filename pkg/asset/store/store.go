@@ -42,6 +42,10 @@ type assetState struct {
 	// presentOnDisk is true if the asset in on-disk. This is set whether the
 	// asset is sourced from on-disk or not. It is used in purging consumed assets.
 	presentOnDisk bool
+	// nonConsumable is true if the asset is not eligible to be consumed when
+	// purging on-disk assets. An asset that is directly fetched by the call to
+	// Fetch will be non-consumable.
+	nonConsumable bool
 }
 
 // storeImpl is the implementation of Store.
@@ -70,17 +74,35 @@ func newStore(dir string) (*storeImpl, error) {
 	return store, nil
 }
 
-// Fetch retrieves the state of the given asset, generating it and its
+// Fetch retrieves the state of the given assets, generating them and their
 // dependencies if necessary.
-func (s *storeImpl) Fetch(a asset.Asset) error {
-	if err := s.fetch(a, ""); err != nil {
-		return err
+func (s *storeImpl) Fetch(assets ...asset.WritableAsset) error {
+	assetStates := make([]*assetState, len(assets))
+	for i, a := range assets {
+		assetState, err := s.fetch(a, "")
+		if err != nil {
+			err = errors.Wrapf(err, "failed to fetch %s", a.Name())
+		}
+		assetState.nonConsumable = true
+		assetStates[i] = assetState
+
+		if err2 := asset.PersistToFile(a, s.directory); err2 != nil {
+			err2 = errors.Wrapf(err2, "failed to write asset (%s) to disk", a.Name())
+			if err != nil {
+				logrus.Error(err2)
+				return err
+			}
+			return err2
+		}
+		if err := s.saveStateFile(); err != nil {
+			return errors.Wrap(err, "failed to save state")
+		}
+		if err := s.purge(); err != nil {
+			return errors.Wrap(err, "failed to purge assets")
+		}
 	}
-	if err := s.saveStateFile(); err != nil {
-		return errors.Wrap(err, "failed to save state")
-	}
-	if wa, ok := a.(asset.WritableAsset); ok {
-		return errors.Wrap(s.purge(wa), "failed to purge asset")
+	for _, assetState := range assetStates {
+		assetState.nonConsumable = false
 	}
 	return nil
 }
@@ -192,13 +214,13 @@ func (s *storeImpl) saveStateFile() error {
 // fetch populates the given asset, generating it and its dependencies if
 // necessary, and returns whether or not the asset had to be regenerated and
 // any errors.
-func (s *storeImpl) fetch(a asset.Asset, indent string) error {
+func (s *storeImpl) fetch(a asset.Asset, indent string) (*assetState, error) {
 	logrus.Debugf("%sFetching %q...", indent, a.Name())
 
 	assetState, ok := s.assets[reflect.TypeOf(a)]
 	if !ok {
 		if _, err := s.load(a, ""); err != nil {
-			return err
+			return assetState, err
 		}
 		assetState = s.assets[reflect.TypeOf(a)]
 	}
@@ -210,25 +232,25 @@ func (s *storeImpl) fetch(a asset.Asset, indent string) error {
 	if assetState.source != unfetched {
 		logrus.Debugf("%sReusing previously-fetched %q", indent, a.Name())
 		reflect.ValueOf(a).Elem().Set(reflect.ValueOf(assetState.asset).Elem())
-		return nil
+		return assetState, nil
 	}
 
 	// Re-generate the asset
 	dependencies := a.Dependencies()
 	parents := make(asset.Parents, len(dependencies))
 	for _, d := range dependencies {
-		if err := s.fetch(d, increaseIndent(indent)); err != nil {
-			return errors.Wrapf(err, "failed to fetch dependency of %q", a.Name())
+		if _, err := s.fetch(d, increaseIndent(indent)); err != nil {
+			return assetState, errors.Wrapf(err, "failed to fetch dependency of %q", a.Name())
 		}
 		parents.Add(d)
 	}
 	logrus.Debugf("%sGenerating %q...", indent, a.Name())
 	if err := a.Generate(parents); err != nil {
-		return errors.Wrapf(err, "failed to generate asset %q", a.Name())
+		return assetState, errors.Wrapf(err, "failed to generate asset %q", a.Name())
 	}
 	assetState.asset = a
 	assetState.source = generatedSource
-	return nil
+	return assetState, nil
 }
 
 // load loads the asset and all of its ancestors from on-disk and the state file.
@@ -332,15 +354,11 @@ func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 	return state, nil
 }
 
-// purge deletes the on-disk assets that are consumed already.
+// purge consumes the on-disk assets on which the fetched assets depend.
 // E.g., install-config.yaml will be deleted after fetching 'manifests'.
-// The target asset is excluded.
-func (s *storeImpl) purge(excluded asset.WritableAsset) error {
+func (s *storeImpl) purge() error {
 	for _, assetState := range s.assets {
-		if !assetState.presentOnDisk {
-			continue
-		}
-		if reflect.TypeOf(assetState.asset) == reflect.TypeOf(excluded) {
+		if assetState.nonConsumable || !assetState.presentOnDisk {
 			continue
 		}
 		logrus.Infof("Consuming %q from target directory", assetState.asset.Name())
