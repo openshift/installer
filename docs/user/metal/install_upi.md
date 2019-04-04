@@ -170,20 +170,23 @@ NOTE: The filename for `install-config` in the `INSTALL_DIR` must be `install-co
 
 ### Invoking the installer to get Ignition configs
 
-Given that you have setup the `INSTALL_DIR` with the appropriate `install-config`, you can create the Ignition configs by using the `create ignition-configs` target. For example,
+Given that you have setup the `INSTALL_DIR` with the appropriate `install-config`, you can create the Ignition configs by using the `create pre-cluster` target. For example,
 
 ```console
-$ openshift-install --dir test-bare-metal create ignition-configs
+$ openshift-install --dir test-bare-metal create pre-cluster
 INFO Consuming "Install Config" from target directory
 $ tree test-bare-metal
 test-bare-metal
-├── auth
-│   └── kubeconfig
-├── bootstrap.ign
-├── master.ign
-└── worker.ign
+└── pre-cluster
+    ├── auth
+    │   ├── kubeadmin-password
+    │   └── kubeconfig
+    ├── bootstrap.ign
+    ├── master.ign
+    ├── metadata.json
+    └── worker.ign
 
-1 directory, 4 files
+2 directories, 6 files
 ```
 
 ## Getting OS related assets for machines

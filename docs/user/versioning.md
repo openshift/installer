@@ -4,7 +4,9 @@ The installer uses [Semantic Versioning][semver] for its user-facing API.
 Covered by the versioning are:
 
 * `openshift-install [options] create install-config`, which will always create `install-config.yaml` in the asset directory, although the version of the generated install-config may change.
-* `openshift-install [options] create ignition-configs`, which will always create `bootstrap.ign`, `master.ign`, and `worker.ign` in the asset directory, although the content of the generated files may change.
+* `openshift-install [options] create node-config`, which will always create `master.ign` and `worker.ign` in the asset directory, although the content of the generated files may change.
+* `openshift-install [options] create bootstrap-config`, which will always create `bootstrap.ign` in the asset directory, although the content of the generated files may change.
+* `openshift-install [options] create pre-cluster`, which will always create `boostrap.ign`, `master.ign`, `worker.ign`, `metadata.json`, `auth/kubeconfig`, and `auth/kubeadmin-password` in the `pre-cluster` directory in the asset directory, although the contents of the generated files may change.
 * `openshift-install [options] create cluster`, which will always launch a new cluster.
 * `openshift-install [options] destroy bootstrap`, which will always destroy any bootstrap resources created for the cluster.
 * `openshift-install [options] destroy cluster`, which will always destroy the cluster resources.

@@ -10,7 +10,7 @@ The machines will be started manually. Therefore, it is required to generate the
 and store them for later steps.
 
 ```console
-$ openshift-install-linux-amd64 create ignition-configs
+$ openshift-install-linux-amd64 create pre-cluster
 ? SSH Public Key /home/user_id/.ssh/id_rsa.pub
 ? Platform aws
 ? Region us-east-1
@@ -24,12 +24,16 @@ After running the command, several files will be available in the directory.
 ```console
 $ tree
 .
-├── auth
-│   └── kubeconfig
-├── bootstrap.ign
-├── master.ign
-├── metadata.json
-└── worker.ign
+└── pre-cluster
+    ├── auth
+    │   ├── kubeadmin-password
+    │   └── kubeconfig
+    ├── bootstrap.ign
+    ├── master.ign
+    ├── metadata.json
+    └── worker.ign
+
+2 directories, 6 files
 ```
 
 ## Create/Identify the VPC to be Used
