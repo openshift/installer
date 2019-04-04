@@ -1114,12 +1114,13 @@
   source = "https://github.com/openshift/cluster-api-provider-aws.git"
 
 [[projects]]
-  digest = "1:1fce76994e3e784e26a36958ddc023e270d84a1f371553928dfef20e83f603cb"
+  branch = "openshiftnocluster"
+  digest = "1:c973a352d5a0f10cc2c647b66eff1076c2be854c71eed9cffd829456f9ef438c"
   name = "sigs.k8s.io/cluster-api-provider-azure"
   packages = ["pkg/apis/azureprovider/v1alpha1"]
   pruneopts = "NUT"
-  revision = "6cef53ed62edb88529c2d3a6204e58d0e419c273"
-  version = "v0.1.0-alpha.1"
+  revision = "b49363c5b3247da8d7345904a3c95d4a28c66a61"
+  source = "https://github.com/awesomenix/cluster-api-provider-azure.git"
 
 [[projects]]
   branch = "master"
@@ -1185,7 +1186,6 @@
     "github.com/coreos/ignition/config/v2_2/types",
     "github.com/ghodss/yaml",
     "github.com/golang/mock/gomock",
-    "github.com/google/uuid",
     "github.com/gophercloud/gophercloud/openstack/common/extensions",
     "github.com/gophercloud/gophercloud/openstack/compute/v2/flavors",
     "github.com/gophercloud/gophercloud/openstack/compute/v2/servers",

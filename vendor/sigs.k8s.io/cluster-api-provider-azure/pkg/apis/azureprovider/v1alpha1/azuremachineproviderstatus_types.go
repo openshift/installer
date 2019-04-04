@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Kubernetes Authors.
+Copyright 2019 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,18 +23,28 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// AzureClusterProviderSpec is the Schema for the azureclusterproviderspecs API
+// AzureMachineProviderStatus is the type that will be embedded in a Machine.Status.ProviderStatus field.
+// It contains Azure-specific status information.
 // +k8s:openapi-gen=true
-type AzureClusterProviderSpec struct {
+type AzureMachineProviderStatus struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
+	// VMID is the ID of the virtual machine created in Azure.
+	// +optional
+	VMID *string `json:"vmId,omitempty"`
 
-	ResourceGroup string `json:"resourceGroup"`
-	Location      string `json:"location"`
+	// VMState is the provisioning state of the Azure virtual machine.
+	// +optional
+	VMState *VMState `json:"vmState,omitempty"`
+
+	// Conditions is a set of conditions associated with the Machine to indicate
+	// errors or other status.
+	// +optional
+	Conditions []AzureMachineProviderCondition `json:"conditions,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 func init() {
-	SchemeBuilder.Register(&AzureClusterProviderSpec{})
+	SchemeBuilder.Register(&AzureMachineProviderStatus{})
 }

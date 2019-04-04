@@ -17,48 +17,34 @@ limitations under the License.
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// AzureMachineProviderSpec is the Schema for the azuremachineproviderspecs API
+// AzureMachineProviderSpec is the type that will be embedded in a Machine.Spec.ProviderSpec field
+// for an Azure virtual machine. It is used by the Azure machine actuator to create a single Machine.
+// Required parameters such as location that are not specified by this configuration, will be defaulted
+// by the actuator.
+// TODO: Update type
 // +k8s:openapi-gen=true
 type AzureMachineProviderSpec struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Roles         []MachineRole `json:"roles,omitempty"`
-	Location      string        `json:"location"`
-	VMSize        string        `json:"vmSize"`
-	Image         Image         `json:"image"`
-	OSDisk        OSDisk        `json:"osDisk"`
-	SSHPublicKey  string        `json:"sshPublicKey"`
-	SSHPrivateKey string        `json:"sshPrivateKey"`
-}
-type MachineRole string
-
-const (
-	Master MachineRole = "Master"
-	Node   MachineRole = "Node"
-)
-
-type Image struct {
-	Publisher string `json:"publisher"`
-	Offer     string `json:"offer"`
-	SKU       string `json:"sku"`
-	Version   string `json:"version"`
-}
-
-type OSDisk struct {
-	OSType      string      `json:"osType"`
-	ManagedDisk ManagedDisk `json:"managedDisk"`
-	DiskSizeGB  int         `json:"diskSizeGB"`
-}
-
-type ManagedDisk struct {
-	StorageAccountType string `json:"storageAccountType"`
+	// UserDataSecret contains a local reference to a secret that contains the
+	// UserData to apply to the instance
+	UserDataSecret *corev1.SecretReference `json:"userDataSecret,omitempty"`
+	// CredentialsSecret is a reference to the secret with Azure credentials.
+	CredentialsSecret *corev1.SecretReference `json:"credentialsSecret,omitempty"`
+	Location          string                  `json:"location"`
+	VMSize            string                  `json:"vmSize"`
+	Image             Image                   `json:"image"`
+	OSDisk            OSDisk                  `json:"osDisk"`
+	SSHPublicKey      string                  `json:"sshPublicKey"`
+	SSHPrivateKey     string                  `json:"sshPrivateKey"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
