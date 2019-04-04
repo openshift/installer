@@ -10,6 +10,8 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
+	"github.com/openshift/installer/pkg/types/azure"
+	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	libvirtdefaults "github.com/openshift/installer/pkg/types/libvirt/defaults"
 	"github.com/openshift/installer/pkg/types/none"
@@ -48,6 +50,13 @@ func defaultAWSInstallConfig() *types.InstallConfig {
 	c := defaultInstallConfig()
 	c.Platform.AWS = &aws.Platform{}
 	awsdefaults.SetPlatformDefaults(c.Platform.AWS)
+	return c
+}
+
+func defaultAzureInstallConfig() *types.InstallConfig {
+	c := defaultInstallConfig()
+	c.Platform.Azure = &azure.Platform{}
+	azuredefaults.SetPlatformDefaults(c.Platform.Azure)
 	return c
 }
 
@@ -94,6 +103,15 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 				},
 			},
 			expected: defaultAWSInstallConfig(),
+		},
+		{
+			name: "empty Azure",
+			config: &types.InstallConfig{
+				Platform: types.Platform{
+					Azure: &azure.Platform{},
+				},
+			},
+			expected: defaultAzureInstallConfig(),
 		},
 		{
 			name: "empty Libvirt",
@@ -194,6 +212,18 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultAWSInstallConfig()
+				return c
+			}(),
+		},
+		{
+			name: "Azure platform present",
+			config: &types.InstallConfig{
+				Platform: types.Platform{
+					Azure: &azure.Platform{},
+				},
+			},
+			expected: func() *types.InstallConfig {
+				c := defaultAzureInstallConfig()
 				return c
 			}(),
 		},

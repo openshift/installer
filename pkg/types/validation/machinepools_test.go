@@ -9,6 +9,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -80,6 +81,18 @@ func TestValidateMachinePool(t *testing.T) {
 				return p
 			}(),
 			valid: false,
+		},
+		{
+			name:     "valid azure",
+			platform: &types.Platform{Azure: &azure.Platform{Region: "eastus"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool()
+				p.Platform = types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{},
+				}
+				return p
+			}(),
+			valid: true,
 		},
 		{
 			name:     "valid libvirt",
