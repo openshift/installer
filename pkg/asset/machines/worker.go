@@ -15,6 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	awsapi "sigs.k8s.io/cluster-api-provider-aws/pkg/apis"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
+	azureapi "sigs.k8s.io/cluster-api-provider-azure/pkg/apis"
+	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1alpha1"
 	openstackapi "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
@@ -175,10 +177,10 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.Azure)
 			pool.Platform.Azure = &mpool
-
+			//TODO: add support for availibility zones
 			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
 			if err != nil {
-				return errors.Wrap(err, "failed to create master machine objects")
+				return errors.Wrap(err, "failed to create worker machine objects")
 			}
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
@@ -263,10 +265,12 @@ func (w *Worker) MachineSets() ([]machineapi.MachineSet, error) {
 	awsapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
+	azureapi.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		awsprovider.SchemeGroupVersion,
 		libvirtprovider.SchemeGroupVersion,
 		openstackprovider.SchemeGroupVersion,
+		azureprovider.SchemeGroupVersion,
 	)
 
 	machineSets := []machineapi.MachineSet{}

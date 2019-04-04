@@ -10,11 +10,14 @@ import (
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/machines"
+
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -42,6 +45,7 @@ func (o *Openshift) Name() string {
 func (o *Openshift) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		&installconfig.ClusterID{},
 		&password.KubeadminPassword{},
 
 		&openshift.BindingDiscovery{},
@@ -54,8 +58,9 @@ func (o *Openshift) Dependencies() []asset.Asset {
 // Generate generates the respective operator config.yml files
 func (o *Openshift) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
+	clusterID := &installconfig.ClusterID{}
 	kubeadminPassword := &password.KubeadminPassword{}
-	dependencies.Get(installConfig, kubeadminPassword)
+	dependencies.Get(installConfig, kubeadminPassword, clusterID)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -71,6 +76,24 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			AWS: &AwsCredsSecretData{
 				Base64encodeAccessKeyID:     base64.StdEncoding.EncodeToString([]byte(creds.AccessKeyID)),
 				Base64encodeSecretAccessKey: base64.StdEncoding.EncodeToString([]byte(creds.SecretAccessKey)),
+			},
+		}
+
+	case azuretypes.Name:
+		resourceGroupName := clusterID.InfraID + "-rg"
+		creds, err := azure.GetCredentials()
+		if err != nil {
+			return err
+		}
+		cloudCreds = cloudCredsSecretData{
+			Azure: &AzureCredsSecretData{
+				Base64encodeSubscriptionID: base64.StdEncoding.EncodeToString([]byte(creds.SubscriptionID)),
+				Base64encodeClientID:       base64.StdEncoding.EncodeToString([]byte(creds.ClientID)),
+				Base64encodeClientSecret:   base64.StdEncoding.EncodeToString([]byte(creds.ClientSecret)),
+				Base64encodeTenantID:       base64.StdEncoding.EncodeToString([]byte(creds.TenantID)),
+				Base64encodeResourcePrefix: base64.StdEncoding.EncodeToString([]byte(clusterID.InfraID)),
+				Base64encodeResourceGroup:  base64.StdEncoding.EncodeToString([]byte(resourceGroupName)),
+				Base64encodeRegion:         base64.StdEncoding.EncodeToString([]byte(installConfig.Config.Azure.Region)),
 			},
 		}
 	case openstacktypes.Name:
@@ -131,7 +154,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	}
 
 	switch platform {
-	case awstypes.Name, openstacktypes.Name, vspheretypes.Name:
+	case awstypes.Name, openstacktypes.Name, vspheretypes.Name, azuretypes.Name:
 		assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
 		assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleCloudCredsSecretReader.Files()[0].Data, templateData)
 	}

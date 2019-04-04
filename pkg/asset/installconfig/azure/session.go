@@ -51,8 +51,8 @@ func newSessionFromFile() (*Session, error) {
 	return session, nil
 }
 
-func readCredentialsFromFile() (*azureCredentials, error) {
-	authInfo := &azureCredentials{}
+func readCredentialsFromFile() (*Credentials, error) {
+	authInfo := &Credentials{}
 	authBytes, err := ioutil.ReadFile(authFileLocation)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Can't read azure authorization file : %s", authFileLocation)
@@ -64,7 +64,13 @@ func readCredentialsFromFile() (*azureCredentials, error) {
 	return authInfo, nil
 }
 
-type azureCredentials struct {
+//GetCredentials returns the credentials stored by the installer
+func GetCredentials() (*Credentials, error) {
+	return readCredentialsFromFile()
+}
+
+//Credentials is the data type for credentials as undestood by the azure sdk
+type Credentials struct {
 	SubscriptionID string `json:"subscriptionId,omitempty"`
 	ClientID       string `json:"clientId,omitempty"`
 	ClientSecret   string `json:"clientSecret,omitempty"`
@@ -126,7 +132,7 @@ func getCredentials() error {
 		return err
 	}
 
-	jsonCreds, err := json.Marshal(azureCredentials{
+	jsonCreds, err := json.Marshal(Credentials{
 		SubscriptionID: subscriptionID,
 		ClientID:       clientID,
 		ClientSecret:   clientSecret,
