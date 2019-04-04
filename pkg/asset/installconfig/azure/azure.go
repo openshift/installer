@@ -8,10 +8,7 @@ import (
 
 	"github.com/Azure/go-autorest/autorest/to"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/openshift/installer/pkg/types/azure"
-	"github.com/openshift/installer/pkg/types/azure/validation"
 
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
@@ -26,9 +23,8 @@ const (
 // Platform collects azure-specific configuration.
 func Platform() (*azure.Platform, error) {
 	regions, err := getRegions()
-	logrus.Debugf("##### Retrieved regions for given subscription. count : %v", len(regions))
-	longRegions := make([]string, 0, len(validation.Regions))
-	shortRegions := make([]string, 0, len(validation.Regions))
+	longRegions := make([]string, 0, len(regions))
+	shortRegions := make([]string, 0, len(regions))
 	for id, location := range regions {
 		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", id, location))
 		shortRegions = append(shortRegions, id)
@@ -37,7 +33,7 @@ func Platform() (*azure.Platform, error) {
 		return strings.SplitN(s, " ", 2)[0]
 	})
 
-	_, ok := validation.Regions[defaultRegion]
+	_, ok := regions[defaultRegion]
 	if !ok {
 		return nil, errors.Errorf("installer bug: invalid default azure region %q", defaultRegion)
 	}
@@ -51,7 +47,7 @@ func Platform() (*azure.Platform, error) {
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The azure region to be used for installation.",
-				Default: fmt.Sprintf("%s (%s)", defaultRegion, validation.Regions[defaultRegion]),
+				Default: fmt.Sprintf("%s (%s)", defaultRegion, regions[defaultRegion]),
 				Options: longRegions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
