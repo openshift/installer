@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -78,15 +79,25 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 }
 
 func provider(clusterID string, platform *azure.Platform, mpool *azure.MachinePool, osImage string, az string, role, userDataSecret string) (*azureprovider.AzureMachineProviderSpec, error) {
-
 	return &azureprovider.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "azureprovider.k8s.io/v1alpha1",
 			Kind:       "AzureMachineProviderSpec",
 		},
-		Roles:    []azureprovider.MachineRole{azureprovider.MachineRole(azureprovider.Node)},
-		Location: platform.Region,
-		VMSize:   mpool.InstanceType,
+		UserDataSecret:    &corev1.SecretReference{Name: userDataSecret},
+		CredentialsSecret: &corev1.SecretReference{Name: "azure-credentials", Namespace: "kube-system"},
+		Location:          platform.Region,
+		VMSize:            mpool.InstanceType,
+		Image: azureprovider.Image{
+			ResourceID: "/resourceGroups/rhcos_images/providers/Microsoft.Compute/images/rhcostestimage",
+		},
+		OSDisk: azureprovider.OSDisk{
+			OSType:     "Linux",
+			DiskSizeGB: 64,
+			ManagedDisk: azureprovider.ManagedDisk{
+				StorageAccountType: "Premium_LRS",
+			},
+		},
 	}, nil
 }
 
