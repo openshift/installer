@@ -3,8 +3,8 @@ variable "cluster_domain" {
   type        = "string"
 }
 
-variable "bootstrap_ip" {
-  type = "string"
+variable "bootstrap_ips" {
+  type = "list"
 }
 
 variable "control_plane_ips" {

@@ -90,6 +90,11 @@ variable "machine_cidr" {
 // Bootstrap machine variables
 /////////
 
+variable "bootstrap_complete" {
+  type    = "string"
+  default = "false"
+}
+
 variable "bootstrap_ignition_url" {
   type = "string"
 }

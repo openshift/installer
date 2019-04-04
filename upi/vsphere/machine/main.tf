@@ -20,8 +20,21 @@ data "vsphere_virtual_machine" "template" {
   datacenter_id = "${var.datacenter_id}"
 }
 
+data "external" "ip_address" {
+  count = "${var.instance_count}"
+
+  program = ["bash", "${path.module}/cidr_to_ip.sh"]
+
+  query = {
+    cidr       = "${var.machine_cidr}"
+    hostname   = "${var.name}-${count.index}.${var.cluster_domain}"
+    ipam       = "${var.ipam}"
+    ipam_token = "${var.ipam_token}"
+  }
+}
+
 data "ignition_file" "hostname" {
-  count = "${length(var.ips)}"
+  count = "${var.instance_count}"
 
   filesystem = "root"
   path       = "/etc/hostname"
@@ -33,7 +46,7 @@ data "ignition_file" "hostname" {
 }
 
 data "ignition_file" "static_ip" {
-  count = "${length(var.ips)}"
+  count = "${var.instance_count}"
 
   filesystem = "root"
   path       = "/etc/sysconfig/network-scripts/ifcfg-eth0"
@@ -46,7 +59,7 @@ BOOTPROTO=none
 NAME=eth0
 DEVICE=eth0
 ONBOOT=yes
-IPADDR=${var.ips[count.index]}
+IPADDR=${data.external.ip_address.*.result.ip_address[count.index]}
 PREFIX=${local.mask}
 GATEWAY=${local.gw}
 DNS1=8.8.8.8
@@ -55,7 +68,7 @@ EOF
 }
 
 data "ignition_systemd_unit" "restart" {
-  count = "${length(var.ips)}"
+  count = "${var.instance_count}"
 
   name = "restart.service"
 
@@ -78,7 +91,7 @@ data "ignition_user" "extra_users" {
 }
 
 data "ignition_config" "ign" {
-  count = "${length(var.ips)}"
+  count = "${var.instance_count}"
 
   append {
     source = "${var.ignition_url != "" ? var.ignition_url : local.ignition_encoded}"
@@ -97,7 +110,7 @@ data "ignition_config" "ign" {
 }
 
 resource "vsphere_virtual_machine" "vm" {
-  count = "${length(var.ips)}"
+  count = "${var.instance_count}"
 
   name             = "${var.name}-${count.index}"
   resource_pool_id = "${var.resource_pool_id}"
@@ -130,8 +143,10 @@ resource "vsphere_virtual_machine" "vm" {
   }
 
   provisioner "local-exec" {
-    when    = "destroy"
+    when = "destroy"
+
     command = <<EOF
-curl "http://${var.ipam}/api/removeHost.php?apiapp=address&apitoken=${var.ipam_token}&host=${var.name}-${count.index}.${var.cluster_domain}"EOF
+curl "http://${var.ipam}/api/removeHost.php?apiapp=address&apitoken=${var.ipam_token}&host=${var.name}-${count.index}.${var.cluster_domain}"
+EOF
   }
 }

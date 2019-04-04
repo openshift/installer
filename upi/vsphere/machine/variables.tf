@@ -2,6 +2,10 @@ variable "name" {
   type = "string"
 }
 
+variable "instance_count" {
+  type = "string"
+}
+
 variable "ignition" {
   type    = "string"
   default = ""
@@ -58,8 +62,4 @@ variable "ipam_token" {
 
 variable "machine_cidr" {
   type = "string"
-}
-
-variable "ips" {
-  type = "list"
 }

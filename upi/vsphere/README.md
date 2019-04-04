@@ -22,14 +22,11 @@ There is an example terraform.tfvars file in this directory named terraform.tfva
 * cluster_domain
 * vsphere_user
 * vsphere_password
-* bootstrap_ip
-* control_plane_ips
-* compute_ips
+* ipam_token
 * bootstrap_ignition_url
 * control_plane_ignition
 * compute_ignition
 The bootstrap ignition config must be placed in a location that will be accessible by the bootstrap machine. For example, you could store the bootstrap ignition config in a gist.
-For the IP addresses, you should have static IP addresses reserved for you.
 
 4. Run `terraform init`.
 
@@ -40,7 +37,7 @@ This will create the OpenShift cluster
 
 7. Run `openshift-install upi bootstrap-complete`. Wait for the bootstrapping to complete.
 
-8. Run `terraform apply -auto-approve -var 'bootstrap_ip='`.
+8. Run `terraform apply -auto-approve -var 'bootstrap_complete=true'`.
 This will destroy the bootstrap VM.
 
 9. Run `openshift-install upi finish`. Wait for the cluster install to finish.

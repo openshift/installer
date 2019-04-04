@@ -25,7 +25,7 @@ resource "aws_route53_record" "api" {
   zone_id        = "${aws_route53_zone.cluster.zone_id}"
   name           = "api.${var.cluster_domain}"
   set_identifier = "api"
-  records        = ["${compact(concat(list(var.bootstrap_ip), var.control_plane_ips))}"]
+  records        = ["${concat(var.bootstrap_ips, var.control_plane_ips)}"]
 
   weighted_routing_policy {
     weight = 90

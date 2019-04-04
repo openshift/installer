@@ -32,6 +32,12 @@ vsphere_datastore = "nvme-ds1"
 // Name of the VM template to clone to create VMs for the cluster. The dev cluster has a template named "rhcos-latest".
 vm_template = "rhcos-latest"
 
+// Address or hostname of the IPAM server from which to reserve IP addresses for the cluster machines.
+ipam = "139.178.89.254"
+
+// Token to use to authenticate with the IPAM server.
+ipam_token = "TOKEN_FOR_THE_IPAM_SERVER"
+
 // The machine_cidr where IP addresses will be assigned for cluster node.s
 // Additionally, IPAM will assign IPs based on the network ID. 
 machine_cidr = "10.0.0.0/24"
