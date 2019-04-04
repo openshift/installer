@@ -45,18 +45,6 @@ git clone https://github.com/openshift/installer.git
 cd installer
 ```
 
-### Make sure you have permissions for `qemu:///system`
-You may want to grant yourself permissions to use libvirt as a non-root user. You could allow all users in the wheel group by doing the following:
-```sh
-cat <<EOF >> /etc/polkit-1/rules.d/80-libvirt.rules
-polkit.addRule(function(action, subject) {
-  if (action.id == "org.libvirt.unix.manage" && subject.local && subject.active && subject.isInGroup("wheel")) {
-      return polkit.Result.YES;
-  }
-});
-EOF
-```
-
 ### Enable IP Forwarding
 
 Libvirt creates a bridged connection to the host machine, but in order for the
