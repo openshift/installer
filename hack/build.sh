@@ -2,8 +2,6 @@
 
 set -ex
 
-RHCOS_BUILD_NAME="${RHCOS_BUILD_NAME:-410.8.20190325.0}"
-
 # shellcheck disable=SC2068
 version() { IFS="."; printf "%03d%03d%03d\\n" $@; unset IFS;}
 
@@ -45,10 +43,6 @@ release)
 	if test -n "${RELEASE_IMAGE}"
 	then
 		LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/asset/ignition/bootstrap.defaultReleaseImageOriginal=${RELEASE_IMAGE}"
-	fi
-	if test -n "${RHCOS_BUILD_NAME}"
-	then
-		LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/rhcos.buildName=${RHCOS_BUILD_NAME}"
 	fi
 	if test "${SKIP_GENERATION}" != y
 	then

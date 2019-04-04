@@ -56,9 +56,9 @@ func (i *Image) Generate(p asset.Parents) error {
 	defer cancel()
 	switch config.Platform.Name() {
 	case aws.Name:
-		osimage, err = rhcos.AMI(ctx, rhcos.DefaultChannel, config.Platform.AWS.Region)
+		osimage, err = rhcos.AMI(ctx, config.Platform.AWS.Region)
 	case libvirt.Name:
-		osimage, err = rhcos.QEMU(ctx, rhcos.DefaultChannel)
+		osimage, err = rhcos.QEMU(ctx)
 	case openstack.Name:
 		osimage = "rhcos"
 	case none.Name, vsphere.Name:
