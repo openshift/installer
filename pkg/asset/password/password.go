@@ -3,18 +3,25 @@ package password
 import (
 	"crypto/rand"
 	"math/big"
+	"path/filepath"
 
 	"github.com/openshift/installer/pkg/asset"
 	"golang.org/x/crypto/bcrypt"
+)
+
+var (
+	// kubeadminPasswordPath is the path where kubeadmin user password is stored.
+	kubeadminPasswordPath = filepath.Join("auth", "kubeadmin-password")
 )
 
 // KubeadminPassword is the asset for the kubeadmin user password
 type KubeadminPassword struct {
 	Password     string
 	PasswordHash []byte
+	File         *asset.File
 }
 
-var _ asset.Asset = (*KubeadminPassword)(nil)
+var _ asset.WritableAsset = (*KubeadminPassword)(nil)
 
 // Dependencies returns no dependencies.
 func (a *KubeadminPassword) Dependencies() []asset.Asset {
@@ -70,10 +77,26 @@ func (a *KubeadminPassword) generateRandomPasswordHash(length int) error {
 		return err
 	}
 	a.PasswordHash = bytes
+
+	a.File = &asset.File{
+		Filename: kubeadminPasswordPath,
+		Data:     []byte(a.Password),
+	}
+
 	return nil
 }
 
 // Name returns the human-friendly name of the asset.
 func (a *KubeadminPassword) Name() string {
 	return "Kubeadmin Password"
+}
+
+// Files returns the password file.
+func (a *KubeadminPassword) Files() []*asset.File {
+	return []*asset.File{a.File}
+}
+
+// Load returns false as the password file is read-only.
+func (a *KubeadminPassword) Load(f asset.FileFetcher) (found bool, err error) {
+	return false, nil
 }
