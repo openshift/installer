@@ -9,19 +9,19 @@ data "vsphere_datacenter" "dc" {
   name = "${var.vsphere_datacenter}"
 }
 
+module "folder" {
+  source = "./folder"
+
+  path          = "${var.cluster_id}"
+  datacenter_id = "${data.vsphere_datacenter.dc.id}"
+}
+
 module "resource_pool" {
   source = "./resource_pool"
 
   name            = "${var.cluster_id}"
   datacenter_id   = "${data.vsphere_datacenter.dc.id}"
   vsphere_cluster = "${var.vsphere_cluster}"
-}
-
-module "folder" {
-  source = "./folder"
-
-  path          = "${var.cluster_id}"
-  datacenter_id = "${data.vsphere_datacenter.dc.id}"
 }
 
 module "bootstrap" {
@@ -37,6 +37,9 @@ module "bootstrap" {
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
   cluster_domain   = "${var.cluster_domain}"
+  ipam             = "${var.ipam}"
+  ipam_token       = "${var.ipam_token}"
+  machine_cidr     = "${var.machine_cidr}"
 
   extra_user_names           = ["${var.extra_user_names}"]
   extra_user_password_hashes = ["${var.extra_user_password_hashes}"]
@@ -46,7 +49,7 @@ module "control_plane" {
   source = "./machine"
 
   name             = "control-plane"
-  instance_count   = "${var.control_plane_instance_count}"
+  instance_count   = "${var.control_plane_count}"
   ignition         = "${var.control_plane_ignition}"
   resource_pool_id = "${module.resource_pool.pool_id}"
   folder           = "${module.folder.path}"
@@ -55,6 +58,9 @@ module "control_plane" {
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
   cluster_domain   = "${var.cluster_domain}"
+  ipam             = "${var.ipam}"
+  ipam_token       = "${var.ipam_token}"
+  machine_cidr     = "${var.machine_cidr}"
 
   extra_user_names           = ["${var.extra_user_names}"]
   extra_user_password_hashes = ["${var.extra_user_password_hashes}"]
@@ -64,7 +70,7 @@ module "compute" {
   source = "./machine"
 
   name             = "compute"
-  instance_count   = "${var.compute_instance_count}"
+  instance_count   = "${var.compute_count}"
   ignition         = "${var.compute_ignition}"
   resource_pool_id = "${module.resource_pool.pool_id}"
   folder           = "${module.folder.path}"
@@ -73,6 +79,9 @@ module "compute" {
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
   cluster_domain   = "${var.cluster_domain}"
+  ipam             = "${var.ipam}"
+  ipam_token       = "${var.ipam_token}"
+  machine_cidr     = "${var.machine_cidr}"
 
   extra_user_names           = ["${var.extra_user_names}"]
   extra_user_password_hashes = ["${var.extra_user_password_hashes}"]
@@ -83,6 +92,7 @@ module "dns" {
 
   base_domain       = "${var.base_domain}"
   cluster_domain    = "${var.cluster_domain}"
-  bootstrap_ip      = "${var.bootstrap_complete ? "" : var.bootstrap_ip}"
-  control_plane_ips = "${var.control_plane_ips}"
+  bootstrap_ips     = ["${module.bootstrap.ip_addresses}"]
+  control_plane_ips = ["${module.control_plane.ip_addresses}"]
+  compute_ips       = ["${module.compute.ip_addresses}"]
 }
