@@ -33,13 +33,13 @@ resource "aws_route53_record" "api" {
 }
 
 resource "aws_route53_record" "etcd_a_nodes" {
-  count = "${length(var.control_plane_ips)}"
+  count = "${var.control_plane_count}"
 
   type    = "A"
   ttl     = "60"
   zone_id = "${aws_route53_zone.cluster.zone_id}"
   name    = "etcd-${count.index}.${var.cluster_domain}"
-  records = ["${var.control_plane_ips[count.index]}"]
+  records = ["${element(var.control_plane_ips, count.index)}"]
 }
 
 resource "aws_route53_record" "etcd_cluster" {
@@ -59,21 +59,21 @@ resource "aws_route53_record" "ingress" {
 }
 
 resource "aws_route53_record" "control_plane_nodes" {
-  count = "${length(var.control_plane_ips)}"
+  count = "${var.control_plane_count}"
 
   type    = "A"
   ttl     = "60"
   zone_id = "${aws_route53_zone.cluster.zone_id}"
   name    = "control-plane-${count.index}.${var.cluster_domain}"
-  records = ["${var.control_plane_ips[count.index]}"]
+  records = ["${element(var.control_plane_ips, count.index)}"]
 }
 
 resource "aws_route53_record" "compute_nodes" {
-  count = "${length(var.compute_ips)}"
+  count = "${var.compute_count}"
 
   type    = "A"
   ttl     = "60"
   zone_id = "${aws_route53_zone.cluster.zone_id}"
   name    = "compute-${count.index}.${var.cluster_domain}"
-  records = ["${var.compute_ips[count.index]}"]
+  records = ["${element(var.compute_ips, count.index)}"]
 }

@@ -33,7 +33,7 @@ The bootstrap ignition config must be placed in a location that will be accessib
 5. Ensure that you have you AWS profile set and a region specified. The installation will use create AWS route53 resources for routing to the OpenShift cluster.
 
 6. Run `terraform apply -auto-approve`.
-This will create the OpenShift cluster
+This will reserve IP addresses for the VMs.
 
 7. Run `openshift-install upi bootstrap-complete`. Wait for the bootstrapping to complete.
 
