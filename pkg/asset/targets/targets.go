@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
+	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/templates/content/bootkube"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
 	"github.com/openshift/installer/pkg/asset/tls"
@@ -62,6 +63,7 @@ var (
 	Cluster = []asset.WritableAsset{
 		&cluster.TerraformVariables{},
 		&kubeconfig.AdminClient{},
+		&password.KubeadminPassword{},
 		&tls.JournalCertKey{},
 		&cluster.Metadata{},
 		&cluster.Cluster{},

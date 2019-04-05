@@ -15,11 +15,6 @@ import (
 	"github.com/openshift/installer/pkg/terraform"
 )
 
-var (
-	// kubeadminPasswordPath is the path where kubeadmin user password is stored.
-	kubeadminPasswordPath = filepath.Join("auth", "kubeadmin-password")
-)
-
 // Cluster uses the terraform executable to launch a cluster
 // with the given terraform tfvar and generated templates.
 type Cluster struct {
@@ -53,8 +48,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	terraformVariables := &TerraformVariables{}
-	kubeadminPassword := &password.KubeadminPassword{}
-	parents.Get(clusterID, installConfig, terraformVariables, kubeadminPassword)
+	parents.Get(clusterID, installConfig, terraformVariables)
 
 	if installConfig.Config.Platform.None != nil {
 		return errors.New("cluster cannot be created with platform set to 'none'")
@@ -73,13 +67,6 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 			return err
 		}
 		extraArgs = append(extraArgs, fmt.Sprintf("-var-file=%s", filepath.Join(tmpDir, file.Filename)))
-	}
-
-	c.FileList = []*asset.File{
-		{
-			Filename: kubeadminPasswordPath,
-			Data:     []byte(kubeadminPassword.Password),
-		},
 	}
 
 	logrus.Infof("Creating infrastructure resources...")
