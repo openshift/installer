@@ -20,6 +20,8 @@ resource "aws_route53_record" "name_server" {
 }
 
 resource "aws_route53_record" "api" {
+  count = "${var.bootstrap_ips_exist && var.control_plane_ips_exist ? 1 : 0}"
+
   type           = "A"
   ttl            = "60"
   zone_id        = "${aws_route53_zone.cluster.zone_id}"
@@ -33,7 +35,7 @@ resource "aws_route53_record" "api" {
 }
 
 resource "aws_route53_record" "etcd_a_nodes" {
-  count = "${length(var.control_plane_ips)}"
+  count = "${var.control_plane_ips_exist ? length(var.control_plane_ips) : 0}"
 
   type    = "A"
   ttl     = "60"
@@ -43,6 +45,8 @@ resource "aws_route53_record" "etcd_a_nodes" {
 }
 
 resource "aws_route53_record" "etcd_cluster" {
+  count = "${var.control_plane_ips_exist ? 1 : 0}"
+
   type    = "SRV"
   ttl     = "60"
   zone_id = "${aws_route53_zone.cluster.zone_id}"
@@ -51,6 +55,8 @@ resource "aws_route53_record" "etcd_cluster" {
 }
 
 resource "aws_route53_record" "ingress" {
+  count = "${var.compute_ips_exist ? 1 : 0}"
+
   type    = "A"
   ttl     = "60"
   zone_id = "${aws_route53_zone.cluster.zone_id}"
@@ -59,7 +65,7 @@ resource "aws_route53_record" "ingress" {
 }
 
 resource "aws_route53_record" "control_plane_nodes" {
-  count = "${length(var.control_plane_ips)}"
+  count = "${var.control_plane_ips_exist ? length(var.control_plane_ips) : 0}"
 
   type    = "A"
   ttl     = "60"
@@ -69,7 +75,7 @@ resource "aws_route53_record" "control_plane_nodes" {
 }
 
 resource "aws_route53_record" "compute_nodes" {
-  count = "${length(var.compute_ips)}"
+  count = "${var.compute_ips_exist ? length(var.compute_ips) : 0}"
 
   type    = "A"
   ttl     = "60"

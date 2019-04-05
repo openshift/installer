@@ -1,3 +1,7 @@
 output "ip_addresses" {
-  value = "${data.external.ip_address.*.result.ip_address}"
+  value = ["${local.ip_addresses}"]
+}
+
+output "ips_exist" {
+  value = "${local.ips_exist}"
 }

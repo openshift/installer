@@ -7,12 +7,24 @@ variable "bootstrap_ips" {
   type = "list"
 }
 
+variable "bootstrap_ips_exist" {
+  type = "string"
+}
+
 variable "control_plane_ips" {
   type = "list"
 }
 
+variable "control_plane_ips_exist" {
+  type = "string"
+}
+
 variable "compute_ips" {
   type = "list"
+}
+
+variable "compute_ips_exist" {
+  type = "string"
 }
 
 variable "base_domain" {

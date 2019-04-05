@@ -64,6 +64,9 @@ module "control_plane" {
 
   extra_user_names           = ["${var.extra_user_names}"]
   extra_user_password_hashes = ["${var.extra_user_password_hashes}"]
+
+  dns_names          = ["${module.dns.etcd_names}"]
+  wait_for_dns_names = "true"
 }
 
 module "compute" {
@@ -90,9 +93,12 @@ module "compute" {
 module "dns" {
   source = "./route53"
 
-  base_domain       = "${var.base_domain}"
-  cluster_domain    = "${var.cluster_domain}"
-  bootstrap_ips     = ["${module.bootstrap.ip_addresses}"]
-  control_plane_ips = ["${module.control_plane.ip_addresses}"]
-  compute_ips       = ["${module.compute.ip_addresses}"]
+  base_domain             = "${var.base_domain}"
+  cluster_domain          = "${var.cluster_domain}"
+  bootstrap_ips           = ["${module.bootstrap.ip_addresses}"]
+  bootstrap_ips_exist     = "${module.bootstrap.ips_exist}"
+  control_plane_ips       = ["${module.control_plane.ip_addresses}"]
+  control_plane_ips_exist = "${module.control_plane.ips_exist}"
+  compute_ips             = ["${module.compute.ip_addresses}"]
+  compute_ips_exist       = "${module.compute.ips_exist}"
 }

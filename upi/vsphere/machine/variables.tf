@@ -52,6 +52,10 @@ variable "template" {
   type = "string"
 }
 
+variable "machine_cidr" {
+  type = "string"
+}
+
 variable "ipam" {
   type = "string"
 }
@@ -60,6 +64,12 @@ variable "ipam_token" {
   type = "string"
 }
 
-variable "machine_cidr" {
-  type = "string"
+variable "dns_names" {
+  type    = "list"
+  default = []
+}
+
+variable "wait_for_dns_names" {
+  type    = "string"
+  default = "false"
 }
