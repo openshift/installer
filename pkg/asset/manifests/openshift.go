@@ -14,6 +14,9 @@ import (
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
+	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 const (
@@ -56,7 +59,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
-	case "aws":
+	case awstypes.Name:
 		ssn := session.Must(session.NewSessionWithOptions(session.Options{
 			SharedConfigState: session.SharedConfigEnable,
 		}))
@@ -70,7 +73,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 				Base64encodeSecretAccessKey: base64.StdEncoding.EncodeToString([]byte(creds.SecretAccessKey)),
 			},
 		}
-	case "openstack":
+	case openstacktypes.Name:
 		opts := new(clientconfig.ClientOpts)
 		opts.Cloud = installConfig.Config.Platform.OpenStack.Cloud
 		cloud, err := clientconfig.GetCloudFromYAML(opts)
@@ -91,6 +94,18 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		cloudCreds = cloudCredsSecretData{
 			OpenStack: &OpenStackCredsSecretData{
 				Base64encodeCloudCreds: credsEncoded,
+			},
+		}
+	case vspheretypes.Name:
+		vcCreds := make([]VSphereVirtualCenterCredsSecretData, len(installConfig.Config.VSphere.VirtualCenters))
+		for i, vc := range installConfig.Config.VSphere.VirtualCenters {
+			vcCreds[i].Name = vc.Name
+			vcCreds[i].Base64encodeUsername = base64.StdEncoding.EncodeToString([]byte(vc.Username))
+			vcCreds[i].Base64encodePassword = base64.StdEncoding.EncodeToString([]byte(vc.Password))
+		}
+		cloudCreds = cloudCredsSecretData{
+			VSphere: &VSphereCredsSecretData{
+				VirtualCenters: vcCreds,
 			},
 		}
 	}
@@ -116,7 +131,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	}
 
 	switch platform {
-	case "aws", "openstack":
+	case awstypes.Name, openstacktypes.Name, vspheretypes.Name:
 		assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
 		assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleCloudCredsSecretReader.Files()[0].Data, templateData)
 	}

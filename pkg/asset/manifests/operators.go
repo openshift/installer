@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/templates/content/bootkube"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 const (
@@ -166,27 +167,26 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	}
 
 	templateData := &bootkubeTemplateData{
-		Base64encodeCloudProviderConfig: "", // FIXME
-		CVOClusterID:                    clusterID.UUID,
-		EtcdCaBundle:                    base64.StdEncoding.EncodeToString(etcdCABundle.Cert()),
-		EtcdCaCert:                      string(etcdCA.Cert()),
-		EtcdClientCaCert:                base64.StdEncoding.EncodeToString(etcdCA.Cert()),
-		EtcdClientCaKey:                 base64.StdEncoding.EncodeToString(etcdCA.Key()),
-		EtcdClientCert:                  base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
-		EtcdClientKey:                   base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
-		EtcdEndpointDNSSuffix:           installConfig.Config.ClusterDomain(),
-		EtcdEndpointHostnames:           etcdEndpointHostnames,
-		EtcdMetricCaCert:                string(etcdMetricCABundle.Cert()),
-		EtcdMetricClientCert:            base64.StdEncoding.EncodeToString(etcdMetricSignerClientCertKey.Cert()),
-		EtcdMetricClientKey:             base64.StdEncoding.EncodeToString(etcdMetricSignerClientCertKey.Key()),
-		EtcdSignerCert:                  base64.StdEncoding.EncodeToString(etcdSignerCertKey.Cert()),
-		EtcdSignerClientCert:            base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Cert()),
-		EtcdSignerClientKey:             base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Key()),
-		EtcdSignerKey:                   base64.StdEncoding.EncodeToString(etcdSignerCertKey.Key()),
-		McsTLSCert:                      base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
-		McsTLSKey:                       base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
-		PullSecretBase64:                base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
-		RootCaCert:                      string(rootCA.Cert()),
+		CVOClusterID:          clusterID.UUID,
+		EtcdCaBundle:          base64.StdEncoding.EncodeToString(etcdCABundle.Cert()),
+		EtcdCaCert:            string(etcdCA.Cert()),
+		EtcdClientCaCert:      base64.StdEncoding.EncodeToString(etcdCA.Cert()),
+		EtcdClientCaKey:       base64.StdEncoding.EncodeToString(etcdCA.Key()),
+		EtcdClientCert:        base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
+		EtcdClientKey:         base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
+		EtcdEndpointDNSSuffix: installConfig.Config.ClusterDomain(),
+		EtcdEndpointHostnames: etcdEndpointHostnames,
+		EtcdMetricCaCert:      string(etcdMetricCABundle.Cert()),
+		EtcdMetricClientCert:  base64.StdEncoding.EncodeToString(etcdMetricSignerClientCertKey.Cert()),
+		EtcdMetricClientKey:   base64.StdEncoding.EncodeToString(etcdMetricSignerClientCertKey.Key()),
+		EtcdSignerCert:        base64.StdEncoding.EncodeToString(etcdSignerCertKey.Cert()),
+		EtcdSignerClientCert:  base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Cert()),
+		EtcdSignerClientKey:   base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Key()),
+		EtcdSignerKey:         base64.StdEncoding.EncodeToString(etcdSignerCertKey.Key()),
+		McsTLSCert:            base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
+		McsTLSKey:             base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
+		PullSecretBase64:      base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
+		RootCaCert:            string(rootCA.Cert()),
 	}
 
 	files := []*asset.File{}
@@ -264,6 +264,16 @@ func (m *Manifests) Load(f asset.FileFetcher) (bool, error) {
 
 func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
 	config.PullSecret = ""
+	if config.Platform.VSphere != nil {
+		p := *config.Platform.VSphere
+		p.VirtualCenters = make([]vspheretypes.VirtualCenter, len(config.Platform.VSphere.VirtualCenters))
+		for i, vc := range config.Platform.VSphere.VirtualCenters {
+			vc.Username = ""
+			vc.Password = ""
+			p.VirtualCenters[i] = vc
+		}
+		config.Platform.VSphere = &p
+	}
 	return yaml.Marshal(config)
 }
 

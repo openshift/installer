@@ -11,34 +11,46 @@ type OpenStackCredsSecretData struct {
 	Base64encodeCloudCreds string
 }
 
+// VSphereCredsSecretData holds encoded credentials and is used to generated cloud-creds secret
+type VSphereCredsSecretData struct {
+	VirtualCenters []VSphereVirtualCenterCredsSecretData
+}
+
+// VSphereVirtualCenterCredsSecretData holds the encoded credentials for a vSphere vCenter.
+type VSphereVirtualCenterCredsSecretData struct {
+	Name                 string
+	Base64encodeUsername string
+	Base64encodePassword string
+}
+
 type cloudCredsSecretData struct {
 	AWS       *AwsCredsSecretData
 	OpenStack *OpenStackCredsSecretData
+	VSphere   *VSphereCredsSecretData
 }
 
 type bootkubeTemplateData struct {
-	Base64encodeCloudProviderConfig string
-	CVOClusterID                    string
-	EtcdCaBundle                    string
-	EtcdCaCert                      string
-	EtcdClientCaCert                string
-	EtcdClientCaKey                 string
-	EtcdClientCert                  string
-	EtcdClientKey                   string
-	EtcdEndpointDNSSuffix           string
-	EtcdEndpointHostnames           []string
-	EtcdMetricCaCert                string
-	EtcdMetricClientCert            string
-	EtcdMetricClientKey             string
-	EtcdSignerCert                  string
-	EtcdSignerClientCert            string
-	EtcdSignerClientKey             string
-	EtcdSignerKey                   string
-	McsTLSCert                      string
-	McsTLSKey                       string
-	PullSecretBase64                string
-	RootCaCert                      string
-	WorkerIgnConfig                 string
+	CVOClusterID          string
+	EtcdCaBundle          string
+	EtcdCaCert            string
+	EtcdClientCaCert      string
+	EtcdClientCaKey       string
+	EtcdClientCert        string
+	EtcdClientKey         string
+	EtcdEndpointDNSSuffix string
+	EtcdEndpointHostnames []string
+	EtcdMetricCaCert      string
+	EtcdMetricClientCert  string
+	EtcdMetricClientKey   string
+	EtcdSignerCert        string
+	EtcdSignerClientCert  string
+	EtcdSignerClientKey   string
+	EtcdSignerKey         string
+	McsTLSCert            string
+	McsTLSKey             string
+	PullSecretBase64      string
+	RootCaCert            string
+	WorkerIgnConfig       string
 }
 
 type openshiftTemplateData struct {
