@@ -27,9 +27,7 @@ provides entry points to support the following workflow:
    until the bootstrap phase has completed.
 4. Destroy the bootstrap resources.
 5. Call 'user-provided-infrastructure finish' to wait until the
-   cluster finishes deploying its initial version.  This also
-   retrieves the router certificate authority from the cluster and
-   inserts it into the admin kubeconfig.`
+   cluster finishes deploying its initial version.`
 )
 
 func newUPICmd() *cobra.Command {
@@ -76,7 +74,7 @@ func newUPIBootstrapCompleteCmd() *cobra.Command {
 func newUPIFinishCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "finish",
-		Short: "Wait for the cluster to finish updating and update local resources",
+		Short: "Wait for the cluster to finish updating",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
