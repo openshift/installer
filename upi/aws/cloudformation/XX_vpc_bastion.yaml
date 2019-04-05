@@ -1,0 +1,158 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template for Openshift VPC Bastion Instance (EC2 Instance, Security Group)
+
+Parameters:
+  UserDataStyle:
+    Type: String
+    Default: "ignition"
+    Description: Which format accepted by the instance UserData (RHEL CoreOS = ignition, cloud-config most others)
+    AllowedValues:
+    - "ignition"
+    - "cloud-config"
+  Username:
+    Type: String
+    Default: "core"
+    Description: Initial user ID
+  RhAmi:
+    Description: AMI for bastion host (Fedora, CentOS, RHEL or RHEL CoreOS)
+    Type: AWS::EC2::Image::Id
+  BastionInstanceType:
+    Default: t3.small
+    Type: String
+    AllowedValues:
+    - "t3.nano"
+    - "t3.micro"
+    - "t3.small"
+    - "t3.medium"
+    - "t3.large"
+    - "t3.xlarge"
+    - "t3.2xlarge"
+    - "m5.large"
+    - "m5.xlarge"
+    - "m5.2xlarge"
+    - "c5.large"
+    - "c5.xlarge"
+    - "c5.2xlarge"
+    - "r5.large"
+    - "r5.xlarge"
+    - "r5.2xlarge"
+    - "m5a.large"
+    - "m5a.xlarge"
+    - "m5a.2xlarge"
+    - "r5a.large"
+    - "r5a.xlarge"
+    - "r5a.2xlarge"
+  SshPublicKey:
+    Default: sh-rsa ABC...XYZ== user@mycorp.com
+    Description: Public key string to use for the initial user
+    Type: String
+  AllowedSshCidr:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|1[0-9]|2[0-9]|3[0-2]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/0-32
+    Default: 0.0.0.0/0
+    Description: CIDR block to allow SSH access to the bastion node
+    Type: String
+  PublicSubnet:
+    Description: The public subnet to launch the bastion node into
+    Type: AWS::EC2::Subnet::Id
+  VpcId:
+    Description: The VPC created resources will belong.
+    Type: AWS::EC2::VPC::Id
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "Host Information"
+      Parameters:
+      - BastionInstanceType
+      - RhAmi
+      - UserDataStyle
+      - Username
+      - SshPublicKey
+    - Label:
+        default: "Network Configuration"
+      Parameters:
+      - VpcId
+      - AllowedSshCidr
+      - PublicSubnet
+    ParameterLabels:
+      Username:
+        default: "Username"
+      BastionInstanceType:
+        default: "Instance Type"
+      VpcId:
+        default: "VPC ID"
+      AllowedSshCidr:
+        default: "Allowed SSH Source"
+      PublicSubnet:
+        default: "Public Subnet"
+      UserDataStyle:
+        default: "User Data Format"
+      RhAmi:
+        default: "Red Hat AMI ID"
+      SshPublicKey:
+        default: "SSH Public Key"
+
+Conditions:
+  IsIgnition: !Equals ["ignition", !Ref UserDataStyle]
+
+Resources:
+
+  BastionSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Bastion Security Group Allowing SSH Access
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref AllowedSshCidr
+      VpcId: !Ref VpcId
+
+  BastionInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref RhAmi
+      InstanceType: !Ref BastionInstanceType
+      UserData:
+        Fn::Base64: !If
+        - "IsIgnition"
+        - Fn::Sub:
+          - '{"ignition":{"config":{},"security":{"tls":{}},"timeouts":{},"version":"2.2.0"},"networkd":{},"passwd":{"users":[{"name":"${Username}","sshAuthorizedKeys":["${SshKey}\n"]}]},"storage":{},"systemd":{}}'
+          - {Username: !Ref Username, SshKey: !Ref SshPublicKey}
+        - Fn::Join:
+          - ""
+          - - "#cloud-config\n\n"
+            - "package_upgrade: true\n"
+            - "users:\n"
+            - "  - name: "
+            - !Ref Username
+            - "\n"
+            - "    sudo: ALL=(ALL) NOPASSWD:ALL\n"
+            - "    ssh_authorized_keys:\n"
+            - "      - "
+            - !Ref SshPublicKey
+            - "\n"
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: "true"
+        DeviceIndex: "0"
+        GroupSet:
+        - !Ref "BastionSecurityGroup"
+        SubnetId: !Ref "PublicSubnet"
+      Tags:
+      - Key: "Name"
+        Value: "BastionServer"
+
+Outputs:
+  BastionInstanceId:
+    Description: Bastion Instance ID
+    Value: !Ref BastionInstance
+
+  BastionPublicIp:
+    Description: The bastion node public IP address
+    Value: !GetAtt BastionInstance.PublicIp
+
+  BastionPrivateIp:
+    Description: The bastion node private IP address
+    Value: !GetAtt BastionInstance.PrivateIp
