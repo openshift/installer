@@ -22,7 +22,7 @@ provides entry points to support the following workflow:
 1. Call 'create ignition-configs' to create the bootstrap Ignition
    config and admin kubeconfig.
 2. Creates all required cluster resources, after which the cluster
-   will being bootstrapping.
+   will begin bootstrapping.
 3. Call 'user-provided-infrastructure bootstrap-complete' to wait
    until the bootstrap phase has completed.
 4. Destroy the bootstrap resources.
