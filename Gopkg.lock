@@ -715,11 +715,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8750c495cba39e0d2402c424760734a695d4ab91579374f0624f411d52cda1a6"
+  digest = "1:42ed38949b3ccadeb4718632a74ae17ae5b4ea86e79e6ee85db8fea64e73147d"
   name = "golang.org/x/net"
   packages = [
     "context",
     "context/ctxhttp",
+    "html",
+    "html/atom",
+    "html/charset",
     "http/httpguts",
     "http2",
     "http2/hpack",
@@ -761,17 +764,29 @@
   revision = "9b800f95dbbc54abff0acf7ee32d88ba4e328c89"
 
 [[projects]]
-  digest = "1:e7071ed636b5422cc51c0e3a6cebc229d6c9fffc528814b519a980641422d619"
+  digest = "1:8a12cbc891b7130d3f660f8a309e5c0b083f831e6ac38cdaa1f12e63c12d6bea"
   name = "golang.org/x/text"
   packages = [
     "collate",
     "collate/build",
+    "encoding",
+    "encoding/charmap",
+    "encoding/htmlindex",
+    "encoding/internal",
+    "encoding/internal/identifier",
+    "encoding/japanese",
+    "encoding/korean",
+    "encoding/simplifiedchinese",
+    "encoding/traditionalchinese",
+    "encoding/unicode",
     "internal/colltab",
     "internal/gen",
     "internal/tag",
     "internal/triegen",
     "internal/ucd",
+    "internal/utf8internal",
     "language",
+    "runes",
     "secure/bidirule",
     "transform",
     "unicode/bidi",
@@ -1216,6 +1231,7 @@
     "golang.org/x/crypto/bcrypt",
     "golang.org/x/crypto/ssh",
     "golang.org/x/crypto/ssh/terminal",
+    "golang.org/x/net/html/charset",
     "golang.org/x/sys/unix",
     "gopkg.in/AlecAivazis/survey.v1",
     "gopkg.in/ini.v1",
