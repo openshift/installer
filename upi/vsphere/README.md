@@ -1,3 +1,10 @@
+# Pre-Requisites
+
+* terraform
+* jq
+
+# Build a Cluster
+
 1. Create an install-config.yaml.
 The following example uses the settings for the dev cluster.
 
@@ -24,13 +31,13 @@ sshKey: YOUR_SSH_KEY
 3. Run `IPAM_TOKEN=YOUR_TOKEN BOOTSTRAP_IGNITION_URL=YOUR_URL create_tfvars.sh`
 This needs to be run in your asset directory so that the results from the installer can be used to fill out terraform.tfvars.
 The bootstrap ignition config must be placed in a location that will be accessible by the bootstrap machine. For example, you could store the bootstrap ignition config in a gist.
+If you are not using an IPAM server, you can supply the IP addresses to use by adding the variables `bootstrap_ip`, `control_plane_ips`, and `compute_ips`. See `terraform.tfvars.example` for details.
 
 4. Run `terraform init`.
 
 5. Ensure that you have you AWS profile set and a region specified. The installation will use create AWS route53 resources for routing to the OpenShift cluster.
 
 6. Run `terraform apply -auto-approve`.
-This will reserve IP addresses for the VMs.
 
 7. Run `openshift-install wait-for bootstrap-complete`. Wait for the bootstrapping to complete.
 
