@@ -179,7 +179,7 @@ then
 			--kube-ca=/assets/tls/kube-ca.crt \
 			--config-file=/assets/manifests/cluster-config.yaml \
 			--dest-dir=/assets/mco-bootstrap \
-			--pull-secret=/assets/manifests/pull.json \
+			--pull-secret=/assets/manifests/openshift-config-secret-pull-secret.yaml \
 			--etcd-image=${MACHINE_CONFIG_ETCD_IMAGE} \
 			--setup-etcd-env-image=${MACHINE_CONFIG_SETUP_ETCD_ENV_IMAGE} \
 			--kube-client-agent-image=${MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE} \
