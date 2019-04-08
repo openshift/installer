@@ -8,7 +8,6 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -35,9 +34,6 @@ func (*FeatureGate) Dependencies() []asset.Asset {
 
 // Generate generates the FeatureGate and its CRD.
 func (c *FeatureGate) Generate(dependencies asset.Parents) error {
-	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
-
 	config := &configv1.FeatureGate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: configv1.GroupVersion.String(),
