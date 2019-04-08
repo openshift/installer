@@ -5,7 +5,9 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -235,7 +237,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 
 	discovery := client.Discovery()
 
-	apiTimeout := 30 * time.Minute
+	apiTimeout := fetchTimeout("OPENSHIFT_API_TIMEOUT", 30)
 	logrus.Infof("Waiting up to %v for the Kubernetes API at %s...", apiTimeout, config.Host)
 	apiContext, cancel := context.WithTimeout(ctx, apiTimeout)
 	defer cancel()
@@ -269,7 +271,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 		return errors.Wrap(err, "waiting for Kubernetes API")
 	}
 
-	eventTimeout := 30 * time.Minute
+	eventTimeout := fetchTimeout("OPENSHIFT_EVENT_TIMEOUT", 30)
 	logrus.Infof("Waiting up to %v for the bootstrap-complete event...", eventTimeout)
 	return waitForEvent(ctx, client.CoreV1().RESTClient(), "bootstrap-complete", eventTimeout)
 }
@@ -308,7 +310,7 @@ func waitForEvent(ctx context.Context, client cache.Getter, name string, timeout
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation
 // that the cluster has been initialized.
 func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
-	timeout := 30 * time.Minute
+	timeout := fetchTimeout("OPENSHIFT_CLUSTER_TIMEOUT", 60)
 	logrus.Infof("Waiting up to %v for the cluster at %s to initialize...", timeout, config.Host)
 	cc, err := configclient.NewForConfig(config)
 	if err != nil {
@@ -370,7 +372,7 @@ func waitForConsole(ctx context.Context, config *rest.Config, directory string) 
 		return "", errors.Wrap(err, "creating a route client")
 	}
 
-	consoleRouteTimeout := 10 * time.Minute
+	consoleRouteTimeout := fetchTimeout("OPENSHIFT_CONSOLE_TIMEOUT", 10)
 	logrus.Infof("Waiting up to %v for the openshift-console route to be created...", consoleRouteTimeout)
 	consoleRouteContext, cancel := context.WithTimeout(ctx, consoleRouteTimeout)
 	defer cancel()
@@ -448,4 +450,18 @@ func finish(ctx context.Context, config *rest.Config, directory string) error {
 	}
 
 	return logComplete(rootOpts.dir, consoleURL)
+}
+
+// Reads a timeout value from an environment variable, or uses default
+func fetchTimeout(environmentVariable string, defaultValue time.Duration) time.Duration {
+	result := defaultValue
+
+	if timeout := os.Getenv(environmentVariable); timeout != "" {
+		v, err := strconv.Atoi(timeout)
+		if err == nil {
+			result = time.Duration(v)
+		}
+	}
+
+	return result * time.Minute
 }
