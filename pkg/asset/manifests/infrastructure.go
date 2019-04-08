@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -64,6 +65,8 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		platform = configv1.OpenStackPlatformType
 	case vsphere.Name:
 		platform = configv1.VSpherePlatformType
+	case azure.Name:
+		platform = configv1.AzurePlatformType
 	default:
 		platform = configv1.NonePlatformType
 	}
