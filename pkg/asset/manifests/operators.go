@@ -58,6 +58,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&Ingress{},
 		&DNS{},
+		&FeatureGate{},
 		&Infrastructure{},
 		&Networking{},
 		&tls.RootCA{},
@@ -93,11 +94,12 @@ func (m *Manifests) Dependencies() []asset.Asset {
 // Generate generates the respective operator config.yml files
 func (m *Manifests) Generate(dependencies asset.Parents) error {
 	ingress := &Ingress{}
+	featureGate := &FeatureGate{}
 	dns := &DNS{}
 	network := &Networking{}
 	infra := &Infrastructure{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig, ingress, dns, network, infra)
+	dependencies.Get(installConfig, ingress, featureGate, dns, network, infra)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -121,6 +123,7 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 	m.FileList = append(m.FileList, m.generateBootKubeManifests(dependencies)...)
 
 	m.FileList = append(m.FileList, ingress.Files()...)
+	m.FileList = append(m.FileList, featureGate.Files()...)
 	m.FileList = append(m.FileList, dns.Files()...)
 	m.FileList = append(m.FileList, network.Files()...)
 	m.FileList = append(m.FileList, infra.Files()...)
