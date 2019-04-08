@@ -93,7 +93,10 @@ func (a *KubeadminPassword) Name() string {
 
 // Files returns the password file.
 func (a *KubeadminPassword) Files() []*asset.File {
-	return []*asset.File{a.File}
+	if a.File != nil {
+		return []*asset.File{a.File}
+	}
+	return []*asset.File{}
 }
 
 // Load returns false as the password file is read-only.
