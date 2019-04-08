@@ -46,7 +46,7 @@ func installerMain() {
 	for _, subCmd := range []*cobra.Command{
 		newCreateCmd(),
 		newDestroyCmd(),
-		newUPICmd(),
+		newWaitForCmd(),
 		newVersionCmd(),
 		newGraphCmd(),
 		newCompletionCmd(),

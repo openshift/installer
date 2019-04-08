@@ -84,7 +84,7 @@ and load balancer configuration.
 ## Monitor for `bootstrap-complete` and Initialization
 
 ```console
-$ bin/openshift-install user-provided-infrastructure bootstrap-complete
+$ bin/openshift-install wait-for bootstrap-complete
 INFO Waiting up to 30m0s for the Kubernetes API at https://api.test.example.com:6443...
 INFO API v1.12.4+c53f462 up
 INFO Waiting up to 30m0s for the bootstrap-complete event...
@@ -248,7 +248,7 @@ TODO: Identify changes needed to Router or Ingress for DNS `*.apps` registration
 ## Monitor for Cluster Completion
 
 ```console
-$ bin/openshift-install user-provided-infrastructure finish
+$ bin/openshift-install wait-for cluster-ready
 INFO Waiting up to 30m0s for the cluster to initialize...
 ```
 

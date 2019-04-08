@@ -105,7 +105,7 @@ var (
 					logrus.Fatal(err)
 				}
 
-				err = finish(ctx, config, rootOpts.dir)
+				err = waitForClusterReady(ctx, config, rootOpts.dir)
 				if err != nil {
 					logrus.Fatal(err)
 				}
@@ -433,7 +433,7 @@ func logComplete(directory, consoleURL string) error {
 	return nil
 }
 
-func finish(ctx context.Context, config *rest.Config, directory string) error {
+func waitForClusterReady(ctx context.Context, config *rest.Config, directory string) error {
 	if err := waitForInitializedCluster(ctx, config); err != nil {
 		return err
 	}
