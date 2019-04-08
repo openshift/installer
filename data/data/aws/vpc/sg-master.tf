@@ -32,8 +32,8 @@ resource "aws_security_group_rule" "master_ingress_icmp" {
 
   protocol    = "icmp"
   cidr_blocks = ["${data.aws_vpc.cluster_vpc.cidr_block}"]
-  from_port   = 0
-  to_port     = 0
+  from_port   = -1
+  to_port     = -1
 }
 
 resource "aws_security_group_rule" "master_ingress_ssh" {
