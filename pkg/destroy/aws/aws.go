@@ -605,7 +605,7 @@ func deleteEC2Instance(ec2Client *ec2.EC2, iamClient *iam.IAM, id string, logger
 					return errors.Wrap(err, "parse ARN for IAM instance profile")
 				}
 
-				err = deleteIAMInstanceProfile(iamClient, parsed, logger.WithField("IAM instance profile", parsed.String()))
+				err = deleteIAMInstanceProfile(iamClient, parsed, logger)
 				if err != nil {
 					return errors.Wrapf(err, "deleting %s", parsed.String())
 				}
@@ -1251,7 +1251,7 @@ func deleteIAMInstanceProfileByName(client *iam.IAM, name *string, logger logrus
 		}
 		return err
 	}
-	logger.WithField("name", name).Info("Deleted")
+	logger.WithField("InstanceProfileName", *name).Info("Deleted")
 	return err
 }
 
@@ -1287,6 +1287,7 @@ func deleteIAMInstanceProfile(client *iam.IAM, profileARN arn.ARN, logger logrus
 		logger.WithField("name", name).WithField("role", *role.RoleName).Info("Disassociated")
 	}
 
+	logger = logger.WithField("arn", profileARN.String())
 	if err := deleteIAMInstanceProfileByName(client, profile.InstanceProfileName, logger); err != nil {
 		return err
 	}
@@ -1347,7 +1348,7 @@ func deleteIAMRole(client *iam.IAM, roleARN arn.ARN, logger logrus.FieldLogger) 
 					continue
 				}
 
-				err = deleteIAMInstanceProfile(client, parsed, logger.WithField("IAM instance profile", parsed.String()))
+				err = deleteIAMInstanceProfile(client, parsed, logger)
 				if err != nil {
 					if lastError != nil {
 						logger.Debug(lastError)
