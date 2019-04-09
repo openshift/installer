@@ -6,13 +6,13 @@
 # Build a Cluster
 
 1. Create an install-config.yaml.
-The machine CIDR for the dev cluster is 139.178.89.192/26.
+The following example uses the settings for the dev cluster.
 
 ```
 apiVersion: v1beta4
 baseDomain: devcluster.openshift.com
 metadata:
-  name: mstaeble
+  name: YOUR_CLUSTER_NAME
 networking:
   machineCIDR: "139.178.89.192/26"
 platform:
@@ -28,16 +28,8 @@ sshKey: YOUR_SSH_KEY
 
 2. Run `openshift-install create ignition-configs`.
 
-3. Fill out a terraform.tfvars file with the ignition configs generated.
-There is an example terraform.tfvars file in this directory named terraform.tfvars.example. The example file is set up for use with the dev cluster running at vcsa.vmware.devcluster.openshift.com. At a minimum, you need to set values for the following variables.
-* cluster_id
-* cluster_domain
-* vsphere_user
-* vsphere_password
-* ipam_token
-* bootstrap_ignition_url
-* control_plane_ignition
-* compute_ignition
+3. Run `IPAM_TOKEN=YOUR_TOKEN BOOTSTRAP_IGNITION_URL=YOUR_URL create_tfvars.sh`
+This needs to be run in your asset directory so that the results from the installer can be used to fill out terraform.tfvars.
 The bootstrap ignition config must be placed in a location that will be accessible by the bootstrap machine. For example, you could store the bootstrap ignition config in a gist.
 
 4. Run `terraform init`.

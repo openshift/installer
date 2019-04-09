@@ -59,17 +59,12 @@ variable "ipam_token" {
 // OpenShift cluster variables
 /////////
 
-variable "cluster_id" {
+variable "cluster_name" {
   type        = "string"
-  description = "This cluster id must be of max length 27 and must have only alphanumeric or hyphen characters."
+  description = "The name of the OpenShift cluster."
 }
 
 variable "base_domain" {
-  type        = "string"
-  description = "The base DNS zone to add the sub zone to."
-}
-
-variable "cluster_domain" {
   type        = "string"
   description = "The base DNS zone to add the sub zone to."
 }
