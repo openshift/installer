@@ -33,7 +33,6 @@ var (
 	ManifestTemplates = []asset.WritableAsset{
 		&bootkube.KubeCloudConfig{},
 		&bootkube.MachineConfigServerTLSSecret{},
-		&bootkube.Pull{},
 		&bootkube.CVOOverrides{},
 		&bootkube.HostEtcdServiceEndpointsKubeSystem{},
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
