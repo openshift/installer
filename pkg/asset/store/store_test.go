@@ -3,6 +3,7 @@ package store
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -386,4 +387,45 @@ func TestStoreFetchOnDiskAssets(t *testing.T) {
 			assert.Equal(t, tc.expectedDirty, store.assets[reflect.TypeOf(assets[tc.target])].anyParentsDirty)
 		})
 	}
+}
+
+func TestStoreFetchIdempotency(t *testing.T) {
+	clearAssetBehaviors()
+
+	tempDir, err := ioutil.TempDir("", "TestStoreFetchIdempotency")
+	if err != nil {
+		t.Fatalf("could not create the temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	for i := 0; i < 2; i++ {
+		store, err := newStore(tempDir)
+		if !assert.NoError(t, err, "(loop %d) unexpected error creating store", i) {
+			t.Fatal()
+		}
+		assets := []asset.WritableAsset{&testStoreAssetA{}, &testStoreAssetB{}}
+		for _, a := range assets {
+			err = store.Fetch(a, assets...)
+			if !assert.NoError(t, err, "(loop %d) unexpected error fetching asset %q", a.Name()) {
+				t.Fatal()
+			}
+			err = asset.PersistToFile(a, tempDir)
+			if !assert.NoError(t, err, "(loop %d) unexpected error persisting asset %q", a.Name()) {
+				t.Fatal()
+			}
+			onDiskAssets[reflect.TypeOf(a)] = true
+		}
+	}
+
+	expectedFiles := []string{"a", "b"}
+	actualFiles := []string{}
+	walkFunc := func(path string, fi os.FileInfo, err error) error {
+		if fi.IsDir() || fi.Name() == stateFileName {
+			return nil
+		}
+		actualFiles = append(actualFiles, fi.Name())
+		return nil
+	}
+	filepath.Walk(tempDir, walkFunc)
+	assert.Equal(t, expectedFiles, actualFiles, "unexpected files on disk")
 }

@@ -71,8 +71,9 @@ func newStore(dir string) (*storeImpl, error) {
 }
 
 // Fetch retrieves the state of the given asset, generating it and its
-// dependencies if necessary.
-func (s *storeImpl) Fetch(a asset.Asset) error {
+// dependencies if necessary. When purging consumed assets, none of the
+// assets in preserved will be purged.
+func (s *storeImpl) Fetch(a asset.Asset, preserved ...asset.WritableAsset) error {
 	if err := s.fetch(a, ""); err != nil {
 		return err
 	}
@@ -80,7 +81,7 @@ func (s *storeImpl) Fetch(a asset.Asset) error {
 		return errors.Wrap(err, "failed to save state")
 	}
 	if wa, ok := a.(asset.WritableAsset); ok {
-		return errors.Wrap(s.purge(wa), "failed to purge asset")
+		return errors.Wrap(s.purge(append(preserved, wa)), "failed to purge asset")
 	}
 	return nil
 }
@@ -335,12 +336,13 @@ func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 // purge deletes the on-disk assets that are consumed already.
 // E.g., install-config.yaml will be deleted after fetching 'manifests'.
 // The target asset is excluded.
-func (s *storeImpl) purge(excluded asset.WritableAsset) error {
+func (s *storeImpl) purge(excluded []asset.WritableAsset) error {
+	excl := make(map[reflect.Type]bool, len(excluded))
+	for _, a := range excluded {
+		excl[reflect.TypeOf(a)] = true
+	}
 	for _, assetState := range s.assets {
-		if !assetState.presentOnDisk {
-			continue
-		}
-		if reflect.TypeOf(assetState.asset) == reflect.TypeOf(excluded) {
+		if !assetState.presentOnDisk || excl[reflect.TypeOf(assetState.asset)] {
 			continue
 		}
 		logrus.Infof("Consuming %q from target directory", assetState.asset.Name())
