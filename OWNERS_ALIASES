@@ -11,6 +11,9 @@ aliases:
     - wking
   installer-reviewers:
     - vikramsk
+  azure-approvers:
+    - abhinavdahiya
+    - serbrech
   openstack-approvers:
     - flaper87
     - tomassedovic
