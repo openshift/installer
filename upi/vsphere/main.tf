@@ -1,3 +1,7 @@
+locals {
+  cluster_domain = "${var.cluster_name}.${var.base_domain}"
+}
+
 provider "vsphere" {
   user                 = "${var.vsphere_user}"
   password             = "${var.vsphere_password}"
@@ -12,14 +16,14 @@ data "vsphere_datacenter" "dc" {
 module "folder" {
   source = "./folder"
 
-  path          = "${var.cluster_id}"
+  path          = "${var.cluster_name}"
   datacenter_id = "${data.vsphere_datacenter.dc.id}"
 }
 
 module "resource_pool" {
   source = "./resource_pool"
 
-  name            = "${var.cluster_id}"
+  name            = "${var.cluster_name}"
   datacenter_id   = "${data.vsphere_datacenter.dc.id}"
   vsphere_cluster = "${var.vsphere_cluster}"
 }
@@ -36,7 +40,7 @@ module "bootstrap" {
   network          = "${var.vm_network}"
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
-  cluster_domain   = "${var.cluster_domain}"
+  cluster_domain   = "${local.cluster_domain}"
   ipam             = "${var.ipam}"
   ipam_token       = "${var.ipam_token}"
   machine_cidr     = "${var.machine_cidr}"
@@ -54,7 +58,7 @@ module "control_plane" {
   network          = "${var.vm_network}"
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
-  cluster_domain   = "${var.cluster_domain}"
+  cluster_domain   = "${local.cluster_domain}"
   ipam             = "${var.ipam}"
   ipam_token       = "${var.ipam_token}"
   machine_cidr     = "${var.machine_cidr}"
@@ -72,7 +76,7 @@ module "compute" {
   network          = "${var.vm_network}"
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
-  cluster_domain   = "${var.cluster_domain}"
+  cluster_domain   = "${local.cluster_domain}"
   ipam             = "${var.ipam}"
   ipam_token       = "${var.ipam_token}"
   machine_cidr     = "${var.machine_cidr}"
@@ -82,7 +86,7 @@ module "dns" {
   source = "./route53"
 
   base_domain         = "${var.base_domain}"
-  cluster_domain      = "${var.cluster_domain}"
+  cluster_domain      = "${local.cluster_domain}"
   bootstrap_count     = "${var.bootstrap_complete ? 0 : 1}"
   bootstrap_ips       = ["${module.bootstrap.ip_addresses}"]
   control_plane_count = "${var.control_plane_count}"

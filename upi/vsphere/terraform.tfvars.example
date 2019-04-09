@@ -1,8 +1,5 @@
-// ID identifying the cluster to create. Use your username so that resources created can be tracked back to you.
-cluster_id = "example-cluster"
-
-// Domain of the cluster. This should be "${cluster_id}.${base_domain}".
-cluster_domain = "example-cluster.devcluster.openshift.com"
+// Name of the cluster to create. Use your username so that resources created can be tracked back to you.
+cluster_name = "example-cluster"
 
 // Base domain from which the cluster domain is a subdomain.
 base_domain = "devcluster.openshift.com"
