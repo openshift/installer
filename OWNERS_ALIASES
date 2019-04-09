@@ -16,3 +16,7 @@ aliases:
     - tomassedovic
     - hardys
     - russellb
+  vsphere-approvers:
+    - abhinavdahiya
+    - dav1x
+    - staebler

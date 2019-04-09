@@ -1,0 +1,5 @@
+# See the OWNERS docs: https://git.k8s.io/community/contributors/guide/owners.md
+# This file just uses aliases defined in OWNERS_ALIASES.
+
+approvers:
+  - vsphere-approvers
