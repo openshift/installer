@@ -30,8 +30,8 @@ them directly.`,
 
 func newWaitForBootstrapCompleteCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "bootstrap-complete",
-		Short: "Wait until cluster bootstrapping has completed",
+		Use:   "control-plane-ready",
+		Short: "Wait until cluster bootstrapping has created the production control-plane",
 		Args:  cobra.ExactArgs(0),
 		Run: func(_ *cobra.Command, _ []string) {
 			ctx := context.Background()

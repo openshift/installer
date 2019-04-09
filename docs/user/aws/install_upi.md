@@ -81,10 +81,10 @@ template [here](../../../upi/aws/cloudformation/05_cluster_master_nodes.yaml). R
 nodes. It can also be inspected for the set of required attributes needed for manual creation of the nodes, DNS entries
 and load balancer configuration.
 
-## Monitor for `bootstrap-complete` and Initialization
+## Monitor for the Production Control-Plane
 
 ```console
-$ bin/openshift-install wait-for bootstrap-complete
+$ bin/openshift-install wait-for control-plane-ready
 INFO Waiting up to 30m0s for the Kubernetes API at https://api.test.example.com:6443...
 INFO API v1.12.4+c53f462 up
 INFO Waiting up to 30m0s for the bootstrap-complete event...
