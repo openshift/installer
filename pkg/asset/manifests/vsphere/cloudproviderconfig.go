@@ -39,7 +39,8 @@ type network struct {
 }
 
 type virtualCenter struct {
-	Datacenters []string `ini:"datacenters"`
+	Datacenters  []string `ini:"datacenters"`
+	InsecureFlag int      `ini:"insecure-flag,omitempty"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the vSphere platform.
@@ -72,10 +73,13 @@ func CloudProviderConfig(p *vspheretypes.Platform) (string, error) {
 		if err != nil {
 			return "", errors.Wrapf(err, "failed to create section for virtual center %q", vc.Name)
 		}
-		if err := s.ReflectFrom(
-			&virtualCenter{
-				Datacenters: vc.Datacenters,
-			}); err != nil {
+		vcIni := &virtualCenter{
+			Datacenters: vc.Datacenters,
+		}
+		if vc.Insecure {
+			vcIni.InsecureFlag = 1
+		}
+		if err := s.ReflectFrom(vcIni); err != nil {
 			return "", errors.Wrapf(err, "failed to reflect from virtual center %q", vc.Name)
 		}
 	}

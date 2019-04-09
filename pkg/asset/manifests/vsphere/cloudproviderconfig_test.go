@@ -193,6 +193,51 @@ datacenters = test-datacenter
 
 `,
 		},
+		{
+			name: "insecure flag",
+			platform: &vspheretypes.Platform{
+				VirtualCenters: []vspheretypes.VirtualCenter{
+					{
+						Name:        "test-name",
+						Username:    "test-username",
+						Password:    "test-password",
+						Datacenters: []string{"test-datacenter"},
+						Insecure:    true,
+					},
+				},
+				Workspace: vspheretypes.Workspace{
+					Server:           "test-name",
+					Datacenter:       "test-datacenter",
+					DefaultDatastore: "test-datastore",
+					ResourcePoolPath: "test-resource-pool",
+					Folder:           "test-folder",
+				},
+				SCSIControllerType: "test-scsi",
+				PublicNetwork:      "test-network",
+			},
+			expectedConfig: `[Global]
+secret-name      = vsphere-creds
+secret-namespace = kube-system
+
+[Workspace]
+server            = test-name
+datacenter        = test-datacenter
+default-datastore = test-datastore
+resourcepool-path = test-resource-pool
+folder            = test-folder
+
+[Disk]
+scsicontrollertype = test-scsi
+
+[Network]
+public-network = test-network
+
+[VirtualCenter "test-name"]
+datacenters   = test-datacenter
+insecure-flag = 1
+
+`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

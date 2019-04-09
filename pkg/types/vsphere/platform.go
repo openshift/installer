@@ -24,6 +24,10 @@ type VirtualCenter struct {
 	Password string `json:"password"`
 	// Datacenters are the names of the datacenters to use in the vCenter.
 	Datacenters []string `json:"datacenters"`
+	// Insecure should be true if the vCenter uses a self-signed cert.
+	// +optional
+	// The default is false.
+	Insecure bool `json:"insecure,omitempty"`
 }
 
 // Workspace is the configuration of the vSphere workspace.
