@@ -7,10 +7,6 @@ cluster_domain = "example-cluster.devcluster.openshift.com"
 // Base domain from which the cluster domain is a subdomain.
 base_domain = "devcluster.openshift.com"
 
-// Set extra users helpful for logging into the machines from the vSphere web UI.
-//extra_user_names = ["me"]
-//extra_user_password_hashes = ["$1$d51URPHU$NQGWywqfyGHYJrKK7GsOQ1"]
-
 // Name of the vSphere server. The dev cluster is on "vcsa.vmware.devcluster.openshift.com".
 vsphere_server = "vcsa.vmware.devcluster.openshift.com"
 

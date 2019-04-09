@@ -36,14 +36,6 @@ variable "cluster_domain" {
   type = "string"
 }
 
-variable "extra_user_names" {
-  type = "list"
-}
-
-variable "extra_user_password_hashes" {
-  type = "list"
-}
-
 variable "datacenter_id" {
   type = "string"
 }

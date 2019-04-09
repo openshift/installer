@@ -43,16 +43,6 @@ variable "vm_network" {
   default     = "VM Network"
 }
 
-variable "extra_user_names" {
-  type    = "list"
-  default = []
-}
-
-variable "extra_user_password_hashes" {
-  type    = "list"
-  default = []
-}
-
 variable "ipam" {
   type        = "string"
   description = "The IPAM server to use for IP management."

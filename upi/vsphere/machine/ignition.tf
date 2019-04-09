@@ -55,13 +55,6 @@ WantedBy=multi-user.target
 EOF
 }
 
-data "ignition_user" "extra_users" {
-  count = "${length(var.extra_user_names)}"
-
-  name          = "${var.extra_user_names[count.index]}"
-  password_hash = "${var.extra_user_password_hashes[count.index]}"
-}
-
 data "ignition_config" "ign" {
   count = "${var.instance_count}"
 
@@ -77,6 +70,4 @@ data "ignition_config" "ign" {
     "${data.ignition_file.hostname.*.id[count.index]}",
     "${data.ignition_file.static_ip.*.id[count.index]}",
   ]
-
-  users = ["${data.ignition_user.extra_users.*.id}"]
 }
