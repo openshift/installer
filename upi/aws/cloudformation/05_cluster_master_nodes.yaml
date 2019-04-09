@@ -3,7 +3,7 @@ Description: Template for Openshift Cluster UPI Node Launch (EC2 master instance
 
 Parameters:
   ClusterName:
-    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9]{0,31})$
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,31})$
     ConstraintDescription: Cluster name must be alphanumeric, start with a letter and a maximum of 32 characters
     Description: A short, representative cluster name to use for hostnames, etc.
     Type: String
