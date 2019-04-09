@@ -69,7 +69,27 @@ func validLibvirtPlatform() *libvirt.Platform {
 			IfName: "tt0",
 		},
 	}
+}
 
+func validVSpherePlatform() *vsphere.Platform {
+	return &vsphere.Platform{
+		VirtualCenters: []vsphere.VirtualCenter{
+			{
+				Name:        "test-server",
+				Username:    "test-username",
+				Password:    "test-password",
+				Datacenters: []string{"test-datacenter"},
+			},
+		},
+		Workspace: vsphere.Workspace{
+			Server:           "test-server",
+			Datacenter:       "test-datacenter",
+			DefaultDatastore: "test-datastore",
+			Folder:           "test-folder",
+		},
+		SCSIControllerType: "test-controller-type",
+		PublicNetwork:      "test-network",
+	}
 }
 
 func TestValidateInstallConfig(t *testing.T) {
@@ -438,10 +458,22 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{
-					VSphere: &vsphere.Platform{},
+					VSphere: validVSpherePlatform(),
 				}
 				return c
 			}(),
+		},
+		{
+			name: "invalid vsphere platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					VSphere: validVSpherePlatform(),
+				}
+				c.Platform.VSphere.Workspace.Server = ""
+				return c
+			}(),
+			expectedError: `^platform\.vsphere.workspace.server: Required value: must specify the workspace server$`,
 		},
 	}
 	for _, tc := range cases {
