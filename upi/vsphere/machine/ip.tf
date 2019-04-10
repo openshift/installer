@@ -1,4 +1,5 @@
 locals {
+  network      = "${cidrhost(var.machine_cidr,0)}"
   ip_addresses = ["${data.template_file.ip_address.*.rendered}"]
 }
 
@@ -27,7 +28,7 @@ resource "null_resource" "ip_address" {
 
   provisioner "local-exec" {
     command = <<EOF
-echo '{"cidr":"${var.machine_cidr}","hostname":"${var.name}-${count.index}.${var.cluster_domain}","ipam":"${var.ipam}","ipam_token":"${var.ipam_token}"}' | ${path.module}/cidr_to_ip.sh
+echo '{"network":"${local.network}","hostname":"${var.name}-${count.index}.${var.cluster_domain}","ipam":"${var.ipam}","ipam_token":"${var.ipam_token}"}' | ${path.module}/cidr_to_ip.sh
 EOF
   }
 
