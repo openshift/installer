@@ -46,11 +46,13 @@ variable "vm_network" {
 variable "ipam" {
   type        = "string"
   description = "The IPAM server to use for IP management."
+  default     = ""
 }
 
 variable "ipam_token" {
   type        = "string"
   description = "The IPAM token to use for requests."
+  default     = ""
 }
 
 /////////
@@ -89,6 +91,11 @@ variable "bootstrap_ignition_url" {
   type = "string"
 }
 
+variable "bootstrap_ip" {
+  type    = "string"
+  default = ""
+}
+
 ///////////
 // Control Plane machine variables
 ///////////
@@ -102,6 +109,11 @@ variable "control_plane_ignition" {
   type = "string"
 }
 
+variable "control_plane_ips" {
+  type    = "list"
+  default = []
+}
+
 //////////
 // Compute machine variables
 //////////
@@ -113,4 +125,9 @@ variable "compute_count" {
 
 variable "compute_ignition" {
   type = "string"
+}
+
+variable "compute_ips" {
+  type    = "list"
+  default = []
 }
