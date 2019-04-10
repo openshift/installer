@@ -18,7 +18,7 @@ Description=Load balancer for the OpenShift services
 [Service]
 ExecStartPre=/sbin/setenforce 0
 ExecStartPre=/bin/systemctl disable --now bootkube kubelet progress openshift
-ExecStart=/bin/podman run --name haproxy --rm -ti --net=host -v /etc/haproxy:/usr/local/etc/haproxy:ro docker.io/library/haproxy:1.7
+ExecStart=/bin/podman run --rm -ti --net=host -v /etc/haproxy:/usr/local/etc/haproxy:ro docker.io/library/haproxy:1.7
 ExecStop=/bin/podman stop -t 10 haproxy
 Restart=always
 RestartSec=10
