@@ -87,9 +87,10 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 			}
 
 			emptyAssets := map[string]bool{
-				"Master Machines": true, // no files for the 'none' platform
-				"Worker Machines": true, // no files for the 'none' platform
-				"Metadata":        true, // read-only
+				"Master Machines":    true, // no files for the 'none' platform
+				"Worker Machines":    true, // no files for the 'none' platform
+				"Metadata":           true, // read-only
+				"Kubeadmin Password": true, // read-only
 			}
 			for _, a := range tc.targets {
 				name := a.Name()
