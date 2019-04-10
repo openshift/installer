@@ -127,7 +127,7 @@ The OpenShift installer uses an [Install Config][install-config] to drive all in
 An example install config for bare-metal UPI is as follows:
 
 ```yaml
-apiVersion: v1beta3
+apiVersion: v1
 ## The base domain of the cluster. All DNS records will be sub-domains of this base and will also include the cluster name.
 baseDomain: example.com
 compute:
