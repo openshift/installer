@@ -416,15 +416,15 @@ func (a *KubeAPIServerLBCABundle) Name() string {
 	return "Certificate (kube-apiserver-lb-ca-bundle)"
 }
 
-// KubeAPIServerLBServerCertKey is the asset that generates the kube-apiserver serving key/cert pair for SNI load balancer.
-type KubeAPIServerLBServerCertKey struct {
+// KubeAPIServerExternalLBServerCertKey is the asset that generates the kube-apiserver serving key/cert pair for SNI external load balancer.
+type KubeAPIServerExternalLBServerCertKey struct {
 	SignedCertKey
 }
 
-var _ asset.Asset = (*KubeAPIServerLBServerCertKey)(nil)
+var _ asset.Asset = (*KubeAPIServerExternalLBServerCertKey)(nil)
 
 // Dependencies returns the dependency of the the cert/key pair
-func (a *KubeAPIServerLBServerCertKey) Dependencies() []asset.Asset {
+func (a *KubeAPIServerExternalLBServerCertKey) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&KubeAPIServerLBSignerCertKey{},
 		&installconfig.InstallConfig{},
@@ -432,7 +432,7 @@ func (a *KubeAPIServerLBServerCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *KubeAPIServerLBServerCertKey) Generate(dependencies asset.Parents) error {
+func (a *KubeAPIServerExternalLBServerCertKey) Generate(dependencies asset.Parents) error {
 	ca := &KubeAPIServerLBSignerCertKey{}
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(ca, installConfig)
@@ -451,8 +451,47 @@ func (a *KubeAPIServerLBServerCertKey) Generate(dependencies asset.Parents) erro
 }
 
 // Name returns the human-friendly name of the asset.
-func (a *KubeAPIServerLBServerCertKey) Name() string {
-	return "Certificate (kube-apiserver-lb-server)"
+func (a *KubeAPIServerExternalLBServerCertKey) Name() string {
+	return "Certificate (kube-apiserver-external-lb-server)"
+}
+
+// KubeAPIServerInternalLBServerCertKey is the asset that generates the kube-apiserver serving key/cert pair for SNI internal load balancer.
+type KubeAPIServerInternalLBServerCertKey struct {
+	SignedCertKey
+}
+
+var _ asset.Asset = (*KubeAPIServerInternalLBServerCertKey)(nil)
+
+// Dependencies returns the dependency of the the cert/key pair
+func (a *KubeAPIServerInternalLBServerCertKey) Dependencies() []asset.Asset {
+	return []asset.Asset{
+		&KubeAPIServerLBSignerCertKey{},
+		&installconfig.InstallConfig{},
+	}
+}
+
+// Generate generates the cert/key pair based on its dependencies.
+func (a *KubeAPIServerInternalLBServerCertKey) Generate(dependencies asset.Parents) error {
+	ca := &KubeAPIServerLBSignerCertKey{}
+	installConfig := &installconfig.InstallConfig{}
+	dependencies.Get(ca, installConfig)
+
+	cfg := &CertCfg{
+		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
+		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		Validity:     ValidityOneDay,
+		DNSNames: []string{
+			internalAPIAddress(installConfig.Config),
+		},
+	}
+
+	return a.SignedCertKey.Generate(cfg, ca, "kube-apiserver-internal-lb-server", AppendParent)
+}
+
+// Name returns the human-friendly name of the asset.
+func (a *KubeAPIServerInternalLBServerCertKey) Name() string {
+	return "Certificate (kube-apiserver-internal-lb-server)"
 }
 
 // KubeAPIServerCompleteCABundle is the asset the generates the kube-apiserver-complete-server-ca-bundle,
