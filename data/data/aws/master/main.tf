@@ -99,10 +99,8 @@ resource "aws_instance" "master" {
     ignore_changes = ["ami"]
   }
 
-  # `clusterid` is required for machine-api
   tags = "${merge(map(
     "Name", "${var.cluster_id}-master-${count.index}",
-    "clusterid", "${var.cluster_id}",
   ), var.tags)}"
 
   root_block_device {

@@ -188,8 +188,6 @@ Resources:
         Value: !Join ["-", [!Ref InfrastructureName, "master", "0"]]
       - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
         Value: "owned"
-      - Key: "clusterid"
-        Value: !Ref InfrastructureName
 
   RegisterMaster0:
     Condition: DoRegistration
@@ -239,8 +237,6 @@ Resources:
         Value: !Join ["-", [!Ref InfrastructureName, "master", "1"]]
       - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
         Value: "owned"
-      - Key: "clusterid"
-        Value: !Ref InfrastructureName
 
   RegisterMaster1:
     Condition: DoRegistration
@@ -290,8 +286,6 @@ Resources:
         Value: !Join ["-", [!Ref InfrastructureName, "master", "2"]]
       - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
         Value: "owned"
-      - Key: "clusterid"
-        Value: !Ref InfrastructureName
 
   RegisterMaster2:
     Condition: DoRegistration
