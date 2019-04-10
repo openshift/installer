@@ -24,7 +24,7 @@ them directly.`,
 		},
 	}
 	cmd.AddCommand(newWaitForBootstrapCompleteCmd())
-	cmd.AddCommand(newWaitForClusterReadyCmd())
+	cmd.AddCommand(newWaitForInstallCompleteCmd())
 	return cmd
 }
 
@@ -54,9 +54,9 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 	}
 }
 
-func newWaitForClusterReadyCmd() *cobra.Command {
+func newWaitForInstallCompleteCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "cluster-ready",
+		Use:   "install-complete",
 		Short: "Wait until the cluster is ready",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -70,7 +70,7 @@ func newWaitForClusterReadyCmd() *cobra.Command {
 				logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 			}
 
-			err = waitForClusterReady(ctx, config, rootOpts.dir)
+			err = waitForInstallComplete(ctx, config, rootOpts.dir)
 			if err != nil {
 				logrus.Fatal(err)
 			}
