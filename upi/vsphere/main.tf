@@ -43,6 +43,7 @@ module "bootstrap" {
   cluster_domain   = "${local.cluster_domain}"
   ipam             = "${var.ipam}"
   ipam_token       = "${var.ipam_token}"
+  ip_addresses     = ["${compact(list(var.bootstrap_ip))}"]
   machine_cidr     = "${var.machine_cidr}"
 }
 
@@ -61,6 +62,7 @@ module "control_plane" {
   cluster_domain   = "${local.cluster_domain}"
   ipam             = "${var.ipam}"
   ipam_token       = "${var.ipam_token}"
+  ip_addresses     = ["${var.control_plane_ips}"]
   machine_cidr     = "${var.machine_cidr}"
 }
 
@@ -79,6 +81,7 @@ module "compute" {
   cluster_domain   = "${local.cluster_domain}"
   ipam             = "${var.ipam}"
   ipam_token       = "${var.ipam_token}"
+  ip_addresses     = ["${var.compute_ips}"]
   machine_cidr     = "${var.machine_cidr}"
 }
 

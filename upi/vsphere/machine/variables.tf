@@ -55,3 +55,7 @@ variable "ipam" {
 variable "ipam_token" {
   type = "string"
 }
+
+variable "ip_addresses" {
+	type = "list"
+}
