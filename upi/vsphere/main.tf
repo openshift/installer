@@ -40,9 +40,6 @@ module "bootstrap" {
   ipam             = "${var.ipam}"
   ipam_token       = "${var.ipam_token}"
   machine_cidr     = "${var.machine_cidr}"
-
-  extra_user_names           = ["${var.extra_user_names}"]
-  extra_user_password_hashes = ["${var.extra_user_password_hashes}"]
 }
 
 module "control_plane" {
@@ -61,9 +58,6 @@ module "control_plane" {
   ipam             = "${var.ipam}"
   ipam_token       = "${var.ipam_token}"
   machine_cidr     = "${var.machine_cidr}"
-
-  extra_user_names           = ["${var.extra_user_names}"]
-  extra_user_password_hashes = ["${var.extra_user_password_hashes}"]
 }
 
 module "compute" {
@@ -82,9 +76,6 @@ module "compute" {
   ipam             = "${var.ipam}"
   ipam_token       = "${var.ipam_token}"
   machine_cidr     = "${var.machine_cidr}"
-
-  extra_user_names           = ["${var.extra_user_names}"]
-  extra_user_password_hashes = ["${var.extra_user_password_hashes}"]
 }
 
 module "dns" {
