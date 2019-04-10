@@ -25,7 +25,7 @@ RUN yum install --setopt=tsflags=nodocs -y \
     openssh-clients && \
     yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
-    unzip gzip jq awscli util-linux && \
+    unzip gzip jq awscli util-linux initscripts && \
     yum clean all && rm -rf /var/cache/yum/*
 
 ENV TERRAFORM_VERSION=0.11.11
