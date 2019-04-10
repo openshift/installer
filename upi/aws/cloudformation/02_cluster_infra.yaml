@@ -7,6 +7,9 @@ Parameters:
     ConstraintDescription: Cluster name must be alphanumeric, start with a letter and a maximum of 32 characters
     Description: A short, representative cluster name to use for hostnames, etc.
     Type: String
+  InfrastructureID:
+    Description: Infrastructure ID must be alphanumeric and match the manifests generated for your cluster.
+    Type: String
   HostedZoneId:
     Description: The Route53 public zone ID to register the targets with (e.g Z21IXYZABCZ2A4)
     Type: String
@@ -31,6 +34,7 @@ Metadata:
         default: "Cluster Information"
       Parameters:
       - ClusterName
+      - InfrastructureID
     - Label:
         default: "Network Configuration"
       Parameters:
@@ -45,6 +49,8 @@ Metadata:
     ParameterLabels:
       ClusterName:
         default: "Cluster Name"
+      InfrastructureID:
+        default: "Infrastructure ID"
       VpcId:
         default: "VPC ID"
       PublicSubnets:
@@ -80,6 +86,11 @@ Resources:
       HostedZoneConfig:
         Comment: "Managed by CloudFormation"
       Name: !Join [".", [!Ref ClusterName, !Ref HostedZoneName]]
+      HostedZoneTags:
+      - Key: Name
+        Value: !Join ["-", [!Ref ClusterName, !Ref InfrastructureID, "int"]]
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Join ["-", [!Ref ClusterName, !Ref InfrastructureID]]]]
+        Value: "owned"
       VPCs:
       - VPCId: !Ref VpcId
         VPCRegion: !Ref "AWS::Region"

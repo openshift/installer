@@ -32,6 +32,21 @@ $ tree
 └── worker.ign
 ```
 
+### Extract Infrastructure ID from Ignition Metadata
+
+Many of the operators and functions within OpenShift rely on tagging AWS resources. By default, Ignition
+generates a unique cluster identifier comprised of the cluster name specified during the invocation of the installer
+and a short string known internally as the infrastructure ID. These values are seeded in the initial manifests within
+the Ignition configuration. To use the output of the default, generated 
+`ignition-configs` extracting the internal infrastructure ID is necessary.
+
+An example of a way to get this is below (`vw9j6` is the infrastructure ID): 
+
+```
+$ jq -r .infraID metadata.json 
+openshift-vw9j6
+```
+
 ## Create/Identify the VPC to be Used
 
 You may create a VPC with various desirable characteristics for your situation (VPN, route tables, etc.). The
@@ -253,9 +268,47 @@ The CSR can be approved by using
 oc adm certificate approve <csr_name>
 ```
 
-## Configure Router for UPI DNS
+## Configure Router for UPI
 
-TODO: Identify changes needed to Router or Ingress for DNS `*.apps` registration or LoadBalancer creation.
+The Ingress operator manages DNS and LoadBalancers. It makes use of tags on HostedZones to identify which public and 
+private zones are to be updated from the cluster by the operator as objects are created in the cluster. 
+
+The tags used for finding HostedZones used by the operator
+are fulfilled by the CloudFormation template [here](../../../upi/aws/cloudformation/02_cluster_infra.yaml).
+
+An example of the `spec` for DNS configuration is below:
+
+```
+$ oc get dns -o yaml
+apiVersion: v1
+items:
+- apiVersion: config.openshift.io/v1
+  kind: DNS
+  metadata:
+    creationTimestamp: 2019-03-28T12:31:10Z
+    generation: 1
+    name: cluster
+    namespace: ""
+    resourceVersion: "395"
+    selfLink: /apis/config.openshift.io/v1/dnses/cluster
+    uid: 5e51dd25-5155-11e9-befc-02d75ce1a902
+  spec:
+    baseDomain: test.example.com
+    privateZone:
+      tags:
+        Name: test-r69hh-int
+        kubernetes.io/cluster/test-r69hh: owned
+    publicZone:
+      id: Z21IZ5YJJMZ2A4
+  status: {}
+kind: List
+metadata:
+  resourceVersion: ""
+  selfLink: ""
+
+```
+
+TODO: Identify changes needed to Router or Ingress for automatic LoadBalancer creation.
 
 ## Monitor for Cluster Completion
 
