@@ -13,12 +13,7 @@ type OpenStackCredsSecretData struct {
 
 // VSphereCredsSecretData holds encoded credentials and is used to generated cloud-creds secret
 type VSphereCredsSecretData struct {
-	VirtualCenters []VSphereVirtualCenterCredsSecretData
-}
-
-// VSphereVirtualCenterCredsSecretData holds the encoded credentials for a vSphere vCenter.
-type VSphereVirtualCenterCredsSecretData struct {
-	Name                 string
+	VCenter              string
 	Base64encodeUsername string
 	Base64encodePassword string
 }

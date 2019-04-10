@@ -9,7 +9,12 @@ metadata:
 networking:
   machineCIDR: "139.178.89.192/26"
 platform:
-  vsphere: {}
+  vsphere:
+    vCenter: vcsa.vmware.devcluster.openshift.com
+    username: YOUR_VSPHERE_USER
+    password: YOUR_VSPHERE_PASSWORD
+    datacenter: dc1
+    defaultDatastore: nvme-ds1
 pullSecret: YOUR_PULL_SECRET
 sshKey: YOUR_SSH_KEY
 ```

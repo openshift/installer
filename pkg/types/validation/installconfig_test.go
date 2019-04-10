@@ -73,22 +73,11 @@ func validLibvirtPlatform() *libvirt.Platform {
 
 func validVSpherePlatform() *vsphere.Platform {
 	return &vsphere.Platform{
-		VirtualCenters: []vsphere.VirtualCenter{
-			{
-				Name:        "test-server",
-				Username:    "test-username",
-				Password:    "test-password",
-				Datacenters: []string{"test-datacenter"},
-			},
-		},
-		Workspace: vsphere.Workspace{
-			Server:           "test-server",
-			Datacenter:       "test-datacenter",
-			DefaultDatastore: "test-datastore",
-			Folder:           "test-folder",
-		},
-		SCSIControllerType: "test-controller-type",
-		PublicNetwork:      "test-network",
+		VCenter:          "test-server",
+		Username:         "test-username",
+		Password:         "test-password",
+		Datacenter:       "test-datacenter",
+		DefaultDatastore: "test-datastore",
 	}
 }
 
@@ -470,10 +459,10 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{
 					VSphere: validVSpherePlatform(),
 				}
-				c.Platform.VSphere.Workspace.Server = ""
+				c.Platform.VSphere.VCenter = ""
 				return c
 			}(),
-			expectedError: `^platform\.vsphere.workspace.server: Required value: must specify the workspace server$`,
+			expectedError: `^platform\.vsphere.vCenter: Required value: must specify the name of the vCenter$`,
 		},
 	}
 	for _, tc := range cases {
