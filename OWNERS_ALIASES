@@ -11,6 +11,11 @@ aliases:
     - wking
   installer-reviewers:
     - vikramsk
+  aws-approvers:
+    - abhinavdahiya
+    - crawford
+    - staebler
+    - wking
   openstack-approvers:
     - flaper87
     - tomassedovic
