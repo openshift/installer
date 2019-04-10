@@ -186,11 +186,21 @@ resource "aws_security_group_rule" "master_ingress_etcd" {
   self      = true
 }
 
-resource "aws_security_group_rule" "master_ingress_services" {
+resource "aws_security_group_rule" "master_ingress_services_tcp" {
   type              = "ingress"
   security_group_id = "${aws_security_group.master.id}"
 
   protocol  = "tcp"
+  from_port = 30000
+  to_port   = 32767
+  self      = true
+}
+
+resource "aws_security_group_rule" "master_ingress_services_udp" {
+  type              = "ingress"
+  security_group_id = "${aws_security_group.master.id}"
+
+  protocol  = "udp"
   from_port = 30000
   to_port   = 32767
   self      = true
