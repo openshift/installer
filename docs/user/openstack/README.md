@@ -60,6 +60,16 @@ openstack network list --long -c ID -c Name -c "Router Type"
 +--------------------------------------+----------------+-------------+
 ```
 
+### Isolated Development
+
+If you would like to set up an isolated development environment, you may use a
+bare metal host running CentOS 7.  The following repository includes some
+instructions and scripts to help with creating a single-node OpenStack
+development environment for running the installer.  Please refer to the
+documentation in that repository for further details.
+
+* https://github.com/shiftstack-dev-tools/ocp-doit
+
 ## OpenShift API Access
 
 All the OpenShift nodes are created in an OpenStack tenant network and as such, can't be accessed directly. The installer does not create any floating IP addresses.
