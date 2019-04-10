@@ -52,14 +52,14 @@ variable "template" {
   type = "string"
 }
 
+variable "machine_cidr" {
+  type = "string"
+}
+
 variable "ipam" {
   type = "string"
 }
 
 variable "ipam_token" {
-  type = "string"
-}
-
-variable "machine_cidr" {
   type = "string"
 }

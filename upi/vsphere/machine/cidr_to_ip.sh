@@ -16,19 +16,45 @@ function check_deps() {
 }
 
 function parse_input() {
-  # jq reads from stdin so we don't have to set up any inputs, but let's validate the outputs
-  eval "$(jq -r '@sh "export CIDR=\(.cidr) hostname=\(.hostname) ipam=\(.ipam) ipam_token=\(.ipam_token)"')"
-  if [[ -z "${CIDR}" ]]; then export CIDR=none; fi
-  if [[ -z "${hostname}" ]]; then export hostname=none; fi
-  if [[ -z "${ipam}" ]]; then export ipam=none; fi
-  if [[ -z "${ipam_token}" ]]; then export ipam_token=none; fi
+  input=$(jq .)
+  CIDR=$(echo "$input" | jq -r .cidr)
+  hostname=$(echo "$input" | jq -r .hostname)
+  ipam=$(echo "$input" | jq -r .ipam)
+  ipam_token=$(echo "$input" | jq -r .ipam_token)
+}
+
+is_ip_address() {
+  if [[ $1 =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]]
+  then
+    echo "true"
+  else
+    echo "false"
+  fi
+}
+
+get_reservation() {
+  reserved_ip=$(curl -s "http://${ipam}/api/getIPs.php?apiapp=address&apitoken=${ipam_token}&domain=${hostname}" | \
+      jq -r ".\"${hostname}\"")
+  if [ "$(is_ip_address "${reserved_ip}")" == "false" ]
+  then
+    reserved_ip=""
+  fi
+  echo $reserved_ip
 }
 
 function produce_output() {
+  if [[ "${CIDR}" == "null" ]]
+  then
+    jq -n \
+      --arg ip_address "$(get_reservation)" \
+      '{"ip_address":$ip_address}'
+	exit 0
+  fi
+
   cidr=$CIDR
 
   # Build the curl and run it
-  lo=$(ipcalc -n $cidr | cut -f2 -d=)
+  lo=$(ipcalc -n "$cidr" | cut -f2 -d=)
   
   # Request an IP address. Verify that the IP address reserved matches the IP
   # address returned. Loop until the reservation matches the address returned.
@@ -38,12 +64,9 @@ function produce_output() {
   do 
     ip_address=$(curl -s "http://$ipam/api/getFreeIP.php?apiapp=address&apitoken=$ipam_token&subnet=$lo&host=${hostname}")
 
-    if ! [[ $ip_address =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]]; then error_exit "could not reserve an IP address: ${ip_address}"; fi
+    if [[ "$(is_ip_address "${ip_address}")" != "true" ]]; then error_exit "could not reserve an IP address: ${ip_address}"; fi
 	
-    reserved_ip=$(curl -s "http://$ipam/api/getIPs.php?apiapp=address&apitoken=$ipam_token&domain=${hostname}" | \
-      jq -r ".\"${hostname}\"")
-
-    if [[ "$ip_address" == "$reserved_ip" ]]
+    if [[ "$ip_address" == "$(get_reservation)" ]]
 	then
       jq -n \
         --arg ip_address "$ip_address" \
