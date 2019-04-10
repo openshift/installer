@@ -97,15 +97,11 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			},
 		}
 	case vspheretypes.Name:
-		vcCreds := make([]VSphereVirtualCenterCredsSecretData, len(installConfig.Config.VSphere.VirtualCenters))
-		for i, vc := range installConfig.Config.VSphere.VirtualCenters {
-			vcCreds[i].Name = vc.Name
-			vcCreds[i].Base64encodeUsername = base64.StdEncoding.EncodeToString([]byte(vc.Username))
-			vcCreds[i].Base64encodePassword = base64.StdEncoding.EncodeToString([]byte(vc.Password))
-		}
 		cloudCreds = cloudCredsSecretData{
 			VSphere: &VSphereCredsSecretData{
-				VirtualCenters: vcCreds,
+				VCenter:              installConfig.Config.VSphere.VCenter,
+				Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.VSphere.Username)),
+				Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.VSphere.Password)),
 			},
 		}
 	}

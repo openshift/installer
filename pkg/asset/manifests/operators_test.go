@@ -44,29 +44,11 @@ func TestRedactedInstallConfig(t *testing.T) {
 			},
 			Platform: types.Platform{
 				VSphere: &vspheretypes.Platform{
-					VirtualCenters: []vspheretypes.VirtualCenter{
-						{
-							Name:        "test-server-1",
-							Username:    "test-user-1",
-							Password:    "test-pass-1",
-							Datacenters: []string{"test-datacenter-1"},
-						},
-						{
-							Name:        "test-server-2",
-							Username:    "test-user-2",
-							Password:    "test-pass-2",
-							Datacenters: []string{"test-datacenter-2"},
-						},
-					},
-					Workspace: vspheretypes.Workspace{
-						Server:           "test-server-1",
-						Datacenter:       "test-datacenter-1",
-						DefaultDatastore: "test-datastore",
-						ResourcePoolPath: "test-resource-pool",
-						Folder:           "test-folder",
-					},
-					SCSIControllerType: "test-controller-type",
-					PublicNetwork:      "test-network",
+					VCenter:          "test-server-1",
+					Username:         "test-user-1",
+					Password:         "test-pass-1",
+					Datacenter:       "test-datacenter",
+					DefaultDatastore: "test-datastore",
 				},
 			},
 			PullSecret: "test-pull-secret",
@@ -95,25 +77,11 @@ networking:
   - 1.2.3.4/5
 platform:
   vsphere:
-    publicNetwork: test-network
-    scsiControllerType: test-controller-type
-    virtualCenters:
-    - datacenters:
-      - test-datacenter-1
-      name: test-server-1
-      password: ""
-      username: ""
-    - datacenters:
-      - test-datacenter-2
-      name: test-server-2
-      password: ""
-      username: ""
-    workspace:
-      datacenter: test-datacenter-1
-      defaultDatastore: test-datastore
-      folder: test-folder
-      resourcePoolPath: test-resource-pool
-      server: test-server-1
+    datacenter: test-datacenter
+    defaultDatastore: test-datastore
+    password: ""
+    username: ""
+    vCenter: test-server-1
 pullSecret: ""
 sshKey: test-ssh-key
 `
