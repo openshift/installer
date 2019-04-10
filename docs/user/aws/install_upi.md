@@ -60,8 +60,10 @@ A created VPC via the template or manually should approximate a setup similar to
 
 The DNS and load balancer configuration within a CloudFormation template is provided
 [here](../../../upi/aws/cloudformation/02_cluster_infra.yaml). It uses a public hosted zone and creates a private hosted
-zone similar to the IPI installation method. It also creates load balancers and listeners the same way as the IPI
-installation method. This template can be run multiple times within a single VPC and in combination with the VPC
+zone similar to the IPI installation method. 
+It also creates load balancers, listeners, as well as hosted zone and subnet tags the same way as the IPI
+installation method. 
+This template can be run multiple times within a single VPC and in combination with the VPC
 template provided above.
 
 ### Optional: Manually Create Load Balancer Configuration
@@ -271,7 +273,8 @@ oc adm certificate approve <csr_name>
 ## Configure Router for UPI
 
 The Ingress operator manages DNS and LoadBalancers. It makes use of tags on HostedZones to identify which public and 
-private zones are to be updated from the cluster by the operator as objects are created in the cluster. 
+private zones are to be updated from the cluster by the operator as objects are created in the cluster. It makes use
+of tags on subnets to identify those to associate with Service objects of type LoadBalancer created in the cluster.
 
 The tags used for finding HostedZones used by the operator
 are fulfilled by the CloudFormation template [here](../../../upi/aws/cloudformation/02_cluster_infra.yaml).
@@ -307,8 +310,6 @@ metadata:
   selfLink: ""
 
 ```
-
-TODO: Identify changes needed to Router or Ingress for automatic LoadBalancer creation.
 
 ## Monitor for Cluster Completion
 

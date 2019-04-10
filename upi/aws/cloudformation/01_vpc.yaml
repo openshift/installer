@@ -247,6 +247,8 @@ Resources:
         Value: !Ref "AWS::StackName"
       - Key: Network
         Value: Private
+      - Key: kubernetes.io/role/internal-elb
+        Value: ""
   PrivateRouteTable:
     Type: "AWS::EC2::RouteTable"
     Properties:
@@ -297,6 +299,8 @@ Resources:
         Value: !Ref "AWS::StackName"
       - Key: Network
         Value: Private
+      - Key: kubernetes.io/role/internal-elb
+        Value: ""
   PrivateRouteTable2:
     Type: "AWS::EC2::RouteTable"
     Condition: DoAz2
@@ -352,6 +356,8 @@ Resources:
         Value: !Ref "AWS::StackName"
       - Key: Network
         Value: Private
+      - Key: kubernetes.io/role/internal-elb
+        Value: ""
   PrivateRouteTable3:
     Type: "AWS::EC2::RouteTable"
     Condition: DoAz3

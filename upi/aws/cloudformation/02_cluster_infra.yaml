@@ -264,6 +264,80 @@ Resources:
       Runtime: "python3.7"
       Timeout: 120
 
+  RegisterSubnetTagsLambdaIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ["-", [!Ref ClusterName, "subnet-tags-lambda-role"]]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - "lambda.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+      - PolicyName: !Join ["-", [!Ref ClusterName, "subnet-tagging-policy"]]
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action:
+              [
+                "ec2:DeleteTags",
+                "ec2:CreateTags"
+              ]
+            Resource: "arn:aws:ec2:*:*:subnet/*"
+          - Effect: "Allow"
+            Action:
+              [
+                "ec2:DescribeSubnets",
+                "ec2:DescribeTags"
+              ]
+            Resource: "*"
+
+  RegisterSubnetTags:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Handler: "index.handler"
+      Role:
+        Fn::GetAtt:
+        - "RegisterSubnetTagsLambdaIamRole"
+        - "Arn"
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import cfnresponse
+          def handler(event, context):
+            ec2_client = boto3.client('ec2')
+            if event['RequestType'] == 'Delete':
+              for subnet_id in event['ResourceProperties']['Subnets']:
+                ec2_client.delete_tags(Resources=[subnet_id], Tags=[{'Key': 'kubernetes.io/cluster/' + event['ResourceProperties']['ClusterID']}]);
+            elif event['RequestType'] == 'Create':
+              for subnet_id in event['ResourceProperties']['Subnets']:
+                ec2_client.create_tags(Resources=[subnet_id], Tags=[{'Key': 'kubernetes.io/cluster/' + event['ResourceProperties']['ClusterID'], 'Value': 'shared'}]);
+            responseData = {}
+            cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, event['ResourceProperties']['ClusterID']+event['ResourceProperties']['Subnets'][0])
+      Runtime: "python3.7"
+      Timeout: 120
+
+  RegisterPublicSubnetTags:
+    Type: Custom::SubnetRegister
+    Properties:
+      ServiceToken: !GetAtt RegisterSubnetTags.Arn
+      ClusterID: !Join ["-", [!Ref ClusterName, !Ref InfrastructureID]]
+      Subnets: !Ref PublicSubnets
+
+  RegisterPrivateSubnetTags:
+    Type: Custom::SubnetRegister
+    Properties:
+      ServiceToken: !GetAtt RegisterSubnetTags.Arn
+      ClusterID: !Join ["-", [!Ref ClusterName, !Ref InfrastructureID]]
+      Subnets: !Ref PrivateSubnets
+
 Outputs:
   PrivateHostedZoneId:
     Description: Hosted zone ID for the private DNS - needed for private records
