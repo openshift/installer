@@ -19,11 +19,24 @@ resource "aws_route53_record" "name_server" {
   records = ["${aws_route53_zone.cluster.name_servers}"]
 }
 
-resource "aws_route53_record" "api" {
+resource "aws_route53_record" "api-external" {
   type           = "A"
   ttl            = "60"
   zone_id        = "${aws_route53_zone.cluster.zone_id}"
   name           = "api.${var.cluster_domain}"
+  set_identifier = "api"
+  records        = ["${concat(var.bootstrap_ips, var.control_plane_ips)}"]
+
+  weighted_routing_policy {
+    weight = 90
+  }
+}
+
+resource "aws_route53_record" "api-internal" {
+  type           = "A"
+  ttl            = "60"
+  zone_id        = "${aws_route53_zone.cluster.zone_id}"
+  name           = "api-int.${var.cluster_domain}"
   set_identifier = "api"
   records        = ["${concat(var.bootstrap_ips, var.control_plane_ips)}"]
 
