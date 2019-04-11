@@ -1,94 +1,111 @@
 {
     "amis": {
         "ap-northeast-1": {
-            "hvm": "ami-0fbc0018a8310e53e"
+            "hvm": "ami-09d3305f4d4a32aab"
         },
         "ap-northeast-2": {
-            "hvm": "ami-0ba6edf20991dee91"
+            "hvm": "ami-05000ed15563794d4"
         },
         "ap-south-1": {
-            "hvm": "ami-0acf1668760f8f8e9"
+            "hvm": "ami-085b9dd31ce1d0c47"
         },
         "ap-southeast-1": {
-            "hvm": "ami-0bcecfdf9ff5fd5ca"
+            "hvm": "ami-0b32c19c0e043fa25"
         },
         "ap-southeast-2": {
-            "hvm": "ami-0480abd0220d56ae2"
+            "hvm": "ami-0fa580c9d5f47044d"
         },
         "ca-central-1": {
-            "hvm": "ami-0de4e822461cb671b"
+            "hvm": "ami-0e7d27d33a5f83576"
         },
         "eu-central-1": {
-            "hvm": "ami-056c9291dce6d5023"
+            "hvm": "ami-0fb5771d5798d7999"
         },
         "eu-west-1": {
-            "hvm": "ami-0f0159b00648b0bf4"
+            "hvm": "ami-046291643f08c3c4b"
         },
         "eu-west-2": {
-            "hvm": "ami-044f299a3abcb4d96"
+            "hvm": "ami-05076ca846cebfed7"
         },
         "eu-west-3": {
-            "hvm": "ami-095776c2e71c62b2f"
+            "hvm": "ami-037a1a3dbe2087b95"
         },
         "sa-east-1": {
-            "hvm": "ami-00aefabf6d653ff5d"
+            "hvm": "ami-0e045e16599cf5732"
         },
         "us-east-1": {
-            "hvm": "ami-07f604c5f18a1e7a9"
+            "hvm": "ami-035b0b988ae903258"
         },
         "us-east-2": {
-            "hvm": "ami-0eef624367320ec26"
+            "hvm": "ami-0ccc42f7973195c2a"
         },
         "us-west-1": {
-            "hvm": "ami-0f89dba68d747846b"
+            "hvm": "ami-09c22dc55423861b8"
         },
         "us-west-2": {
-            "hvm": "ami-0eac581fbaa9fa9c6"
+            "hvm": "ami-0e4e79ed5d1ef2d16"
         }
     },
-    "baseURI": "https://releases-rhcos.svc.ci.openshift.org/storage/releases/ootpa/410.8.20190325.0/",
-    "buildid": "410.8.20190325.0",
+    "baseURI": "https://releases-rhcos.svc.ci.openshift.org/storage/releases/ootpa/410.8.20190410.0/",
+    "buildid": "410.8.20190410.0",
     "images": {
+        "aws": {
+            "path": "rhcos-410.8.20190410.0-aws.vmdk",
+            "sha256": "a63f92fc88064005df2171c88053c6c339f9a326f91bb9aa6f333830a1568bb3",
+            "size": "754143810",
+            "uncompressed-sha256": "67b75cff7f650721227142a79465ab7d33c4df12d31343dd94368f864db69943",
+            "uncompressed-size": 788509696
+        },
+        "initramfs": {
+            "path": "rhcos-410.8.20190410.0-installer-initramfs.img",
+            "sha256": "7c8b27cdcf9ffc6e8bb1f058470b6d952be6fefe7e3d9c3ae8f8cef8c7465c21"
+        },
+        "iso": {
+            "path": "rhcos-410.8.20190410.0-installer.iso",
+            "sha256": "f44282e438d38795b8ac35d76ccc9ceadafdc1edf735b2909c0e6b7e1dd1932e"
+        },
+        "kernel": {
+            "path": "rhcos-410.8.20190410.0-installer-kernel",
+            "sha256": "370db9a3943d4f46dc079dbaeb7e0cc3910dca069f7eede66d3d7d0d5177f684"
+        },
         "metal-bios": {
-            "path": "rhcos-410.8.20190325.0-metal-bios.raw",
-            "sha256": "3caaf8d714ac8bb820af6b31d595b8afae5ef951c68f8cee3701e236e9600f30",
-            "size": "735841103",
-            "uncompressed-sha256": "32d19b94cfb2aa45799caed2dda70f4e7ac1d0fca2b834a1cbd4459a6b0d056a",
-            "uncompressed-size": "17179869184"
+            "path": "rhcos-410.8.20190410.0-metal-bios.raw",
+            "sha256": "0ee2ee1535f34bc1c525025473276cc6783a54225241cd62304cc27bafecc716",
+            "size": "763528244",
+            "uncompressed-sha256": "1aedfa206accd485346fdcc536da0d7ce0f84b570c0724baebb3f467d20feca1",
+            "uncompressed-size": "3490709504"
         },
         "metal-uefi": {
-            "path": "rhcos-410.8.20190325.0-metal-uefi.raw",
-            "sha256": "1686bb2e3b01873804325b50e286d858435afe1fbc3e88479d54b7a21e58d0f1",
-            "size": "732781221",
-            "uncompressed-sha256": "4c9a34f8b30ff7c5b107c87faac0f34a6b591d07a43ae729c45d98d15f3a8fa1",
-            "uncompressed-size": "17179869184"
+            "path": "rhcos-410.8.20190410.0-metal-uefi.raw",
+            "sha256": "37adc9d83eaf91332a91faed999a808028f6a4a3eb102aea13402d401a68ce59",
+            "size": "763025389",
+            "uncompressed-sha256": "e956e0da3c20b07acbf2c26433cff773b447c8fdf96922ae22551aa3d5a36a30",
+            "uncompressed-size": "3490709504"
         },
         "openstack": {
-            "path": "rhcos-410.8.20190325.0-openstack.qcow2",
-            "sha256": "1b16214e59d38b5c1e6d291aea35f2539845232ca3300462104d022f9877fede",
-            "size": "721092654",
-            "uncompressed-sha256": "f2f1362c155d8d331387ce759a46b16c83c8a454f59d2ab5087d9781cdc29c97",
-            "uncompressed-size": "2014380032"
+            "path": "rhcos-410.8.20190410.0-openstack.qcow2",
+            "sha256": "707195b2dd279e10638f8bd6c46e4592f7c292d928197ce6ba9a876c8cdad1ca",
+            "size": "762738936",
+            "uncompressed-sha256": "176a6ab6206c5bbced4322cb6dc31b76b5a52842a3a39d4ef69a87198c2d3c2f",
+            "uncompressed-size": "2165440512"
         },
         "qemu": {
-            "path": "rhcos-410.8.20190325.0-qemu.qcow2",
-            "sha256": "12b2db0cae8ea4019f24183dfc905609ab27e8a0fa01bf3631dc6ad7d2afe664",
-            "size": "721096885",
-            "uncompressed-sha256": "3b288cf2e02b63f8852c731836d5923a75230a836c63814a3988a96c26268257",
-            "uncompressed-size": "2014314496"
+            "path": "rhcos-410.8.20190410.0-qemu.qcow2",
+            "sha256": "f162c7caeb444146d28e3d0c9c8ffbc7083bb77170f3a824778b92e0c9259370",
+            "size": "762718951",
+            "uncompressed-sha256": "3a9956efb0a66906c2889ae57d2424b892314db09e157e10b4eb055af15c7089",
+            "uncompressed-size": "2165374976"
         },
         "vmware": {
-            "path": "rhcos-410.8.20190325.0-vmware.ova",
-            "sha256": "d8c78e90f3a6fccd21c848a53b669c1c51080972377ad3f6bc81cdcc2cb48300",
-            "size": "710257080",
-            "uncompressed-sha256": "f73f5ef77095b0c79a648e2957a965f60544da08c78176028393948500da0dfc",
-            "uncompressed-size": "743802880"
+            "path": "rhcos-410.8.20190410.0-vmware.ova",
+            "sha256": "d1409d64665ce05318719f29e547e667f7183e7c50ed7a394dc462ed8e66d06b",
+            "size": "788520960"
         }
     },
     "oscontainer": {
-        "digest": "sha256:007512169406dfa78f2eefdcd1553d94c399340bd1e871b4c884baf609a967ba",
+        "digest": "sha256:e1bd2d7b1819c84c0d7b56fa96ca40a35e92a728dce4c70a44e4c00bbea12aae",
         "image": "docker-registry-default.cloud.registry.upshift.redhat.com/redhat-coreos/ootpa"
     },
-    "ostree-commit": "ed3e5f10b22db9db37e48b72e907ee60113ed259eeef5c019faa0109feeeccf8",
-    "ostree-version": "410.8.20190325.0"
+    "ostree-commit": "67a85a81e3dc38dbae236a623ddccac67a5f8bb4ddd541e50e704978d1e0cca4",
+    "ostree-version": "410.8.20190410.0"
 }
