@@ -93,7 +93,7 @@ All the RHCOS machines require network in `initramfs` during boot to fetch Ignit
 
 * Kubernetes API
 
-    OpenShift 4.x requires the DNS record `api.$cluster_name.$base_domain` to point to the Load balancer targeting the control plane machines. This record must be resolvable by both clients external to the cluster and from all the nodes within the cluster.
+    OpenShift 4.x requires the DNS records `api.$cluster_name.$base_domain` and `api-int.$cluster_name.$base_domain` to point to the Load balancer targeting the control plane machines. Both records must be resolvable from all the nodes within the cluster. The `api.$cluster_name.$base_domain` must also be resolvable by clients external to the cluster.
 
 * etcd
 
