@@ -176,7 +176,7 @@ then
 			--etcd-ca=/assets/tls/etcd-client-ca.crt \
 			--etcd-metric-ca=/assets/tls/etcd-metric-ca-bundle.crt \
 			--root-ca=/assets/tls/root-ca.crt \
-			--kube-ca=/assets/tls/kube-ca.crt \
+			--kube-ca=/assets/tls/kube-apiserver-complete-server-ca-bundle.crt \
 			--config-file=/assets/manifests/cluster-config.yaml \
 			--dest-dir=/assets/mco-bootstrap \
 			--pull-secret=/assets/manifests/openshift-config-secret-pull-secret.yaml \
