@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/elbv2"
@@ -99,6 +100,14 @@ func (o *ClusterUninstaller) Run() error {
 	}
 
 	deleted := map[string]struct{}{}
+
+	cloudFormationClient := cloudformation.New(awsSession)
+	cloudFormationStackSearch := &cloudFormationStackSearch{
+		client:  cloudFormationClient,
+		filters: o.Filters,
+		logger:  o.Logger,
+	}
+
 	iamClient := iam.New(awsSession)
 	iamRoleSearch := &iamRoleSearch{
 		client:  iamClient,
@@ -163,12 +172,20 @@ func (o *ClusterUninstaller) Run() error {
 			}
 			tagClients = nextTagClients
 
-			o.Logger.Debug("search for IAM roles")
-			arns, err := iamRoleSearch.arns()
+			o.Logger.Debug("search for CloudFormation stacks")
+			arns, err := cloudFormationStackSearch.arns()
 			if err != nil {
 				o.Logger.Info(err)
 				loopError = err
 			}
+
+			o.Logger.Debug("search for IAM roles")
+			roleARNs, err := iamRoleSearch.arns()
+			if err != nil {
+				o.Logger.Info(err)
+				loopError = err
+			}
+			arns = append(arns, roleARNs...)
 
 			o.Logger.Debug("search for IAM users")
 			userARNs, err := iamUserSearch.arns()
@@ -179,7 +196,7 @@ func (o *ClusterUninstaller) Run() error {
 			arns = append(arns, userARNs...)
 
 			if len(arns) > 0 {
-				o.Logger.Debug("delete IAM roles and users")
+				o.Logger.Debug("delete CloudFormation stacks, IAM roles, and users")
 			}
 			for _, arn := range arns {
 				if _, ok := deleted[arn]; !ok {
@@ -247,6 +264,34 @@ func tagsForFilter(filter Filter) []*ec2.Tag {
 		})
 	}
 	return tags
+}
+
+type cloudFormationStackSearch struct {
+	client  *cloudformation.CloudFormation
+	filters []Filter
+	logger  logrus.FieldLogger
+}
+
+func (search *cloudFormationStackSearch) arns() ([]string, error) {
+	arns := []string{}
+	err := search.client.DescribeStacksPages(
+		&cloudformation.DescribeStacksInput{},
+		func(results *cloudformation.DescribeStacksOutput, lastPage bool) bool {
+			for _, stack := range results.Stacks {
+				tags := make(map[string]string, len(stack.Tags))
+				for _, tag := range stack.Tags {
+					tags[*tag.Key] = *tag.Value
+				}
+				if tagMatch(search.filters, tags) {
+					arns = append(arns, *stack.StackId)
+				}
+			}
+
+			return !lastPage
+		},
+	)
+
+	return arns, err
 }
 
 type iamRoleSearch struct {
@@ -454,6 +499,8 @@ func deleteARN(session *session.Session, arnString string, filter Filter, logger
 	}
 
 	switch parsed.Service {
+	case "cloudformation":
+		return deleteCloudFormation(session, parsed, filter, logger)
 	case "ec2":
 		return deleteEC2(session, parsed, filter, logger)
 	case "elasticloadbalancing":
@@ -467,6 +514,35 @@ func deleteARN(session *session.Session, arnString string, filter Filter, logger
 	default:
 		return errors.Errorf("unrecognized ARN service %s (%s)", parsed.Service, arnString)
 	}
+}
+
+func deleteCloudFormation(session *session.Session, arn arn.ARN, filter Filter, logger logrus.FieldLogger) error {
+	client := cloudformation.New(session)
+
+	resourceType, id, err := splitSlash("resource", arn.Resource)
+	if err != nil {
+		return err
+	}
+	logger = logger.WithField("id", id)
+
+	switch resourceType {
+	case "stack":
+		return deleteCloudFormationStack(client, arn, logger)
+	default:
+		return errors.Errorf("unrecognized CloudFormation resource type %s", resourceType)
+	}
+}
+
+func deleteCloudFormationStack(client *cloudformation.CloudFormation, arn arn.ARN, logger logrus.FieldLogger) error {
+	_, err := client.DeleteStack(&cloudformation.DeleteStackInput{
+		StackName: aws.String(arn.String()),
+	})
+	if err != nil {
+		return err
+	}
+
+	logger.Info("Deleted")
+	return nil
 }
 
 func deleteEC2(session *session.Session, arn arn.ARN, filter Filter, logger logrus.FieldLogger) error {

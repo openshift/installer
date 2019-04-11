@@ -172,6 +172,8 @@ var installPermissions = []string{
 
 	// Uninstall-specific perms
 	"autoscaling:DescribeAutoScalingGroups",
+	"cloudformation:DeleteStack",
+	"cloudformation:DescribeStacks",
 	"ec2:DeleteNetworkInterface",
 	"ec2:DeleteVolume",
 	"ec2:DeleteVpcEndpoints",
