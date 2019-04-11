@@ -33,7 +33,7 @@
   version = "v2.0"
 
 [[projects]]
-  digest = "1:ef55f87a8efa6ed704f2477bd6ca696780ff56340d84cd4fc473b04134a03f1e"
+  digest = "1:a2048122a668f8ce169b51acb1d49d844a8986415257c9cc6944264ea4befc65"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -72,6 +72,7 @@
     "private/protocol/rest",
     "private/protocol/restxml",
     "private/protocol/xml/xmlutil",
+    "service/cloudformation",
     "service/ec2",
     "service/elb",
     "service/elbv2",
@@ -947,6 +948,7 @@
     "github.com/aws/aws-sdk-go/aws/defaults",
     "github.com/aws/aws-sdk-go/aws/request",
     "github.com/aws/aws-sdk-go/aws/session",
+    "github.com/aws/aws-sdk-go/service/cloudformation",
     "github.com/aws/aws-sdk-go/service/ec2",
     "github.com/aws/aws-sdk-go/service/elb",
     "github.com/aws/aws-sdk-go/service/elbv2",
