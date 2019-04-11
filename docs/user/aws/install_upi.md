@@ -241,6 +241,18 @@ The worker launch is provided within a CloudFormation template [here](../../../u
 You can launch a CloudFormation stack to manage each individual worker. A similar launch configuration could be used by
 outside automation or AWS auto scaling groups.
 
+#### Approving the CSR requests for nodes
+
+The CSR requests for client and server certificates for nodes joining the cluster will need to be approved by the administrator.
+
+Administrators should carefully examine each CSR request and approve only the ones that belong to the nodes created by them.
+
+The CSR can be approved by using
+
+```sh
+oc adm certificate approve <csr_name>
+```
+
 ## Configure Router for UPI DNS
 
 TODO: Identify changes needed to Router or Ingress for DNS `*.apps` registration or LoadBalancer creation.
