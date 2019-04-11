@@ -248,7 +248,7 @@ TODO: Identify changes needed to Router or Ingress for DNS `*.apps` registration
 ## Monitor for Cluster Completion
 
 ```console
-$ bin/openshift-install wait-for cluster-ready
+$ bin/openshift-install wait-for install-complete
 INFO Waiting up to 30m0s for the cluster to initialize...
 ```
 

@@ -213,10 +213,10 @@ INFO Waiting up to 30m0s for the bootstrap-complete event...
 
 ## Monitor for cluster completion
 
-The administrators can use the `wait-for cluster-ready` target of the OpenShift Installer to monitor cluster completion. The command succeeds when it notices that Cluster Version Operator has completed rolling out the OpenShift cluster from Kubernetes APIServer.
+The administrators can use the `wait-for install-complete` target of the OpenShift Installer to monitor cluster completion. The command succeeds when it notices that Cluster Version Operator has completed rolling out the OpenShift cluster from Kubernetes APIServer.
 
 ```console
-$ openshift-install wait-for cluster-ready
+$ openshift-install wait-for install-complete
 INFO Waiting up to 30m0s for the cluster to initialize...
 ```
 
