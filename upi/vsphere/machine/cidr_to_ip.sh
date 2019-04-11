@@ -32,13 +32,14 @@ is_ip_address() {
 }
 
 get_reservation() {
-  reserved_ip=$(curl -s "http://${ipam}/api/getIPs.php?apiapp=address&apitoken=${ipam_token}&domain=${hostname}" | \
-      jq -r ".\"${hostname}\"")
-  if [ "$(is_ip_address "${reserved_ip}")" == "false" ]
-  then
-    reserved_ip=""
+  reservation=$(curl -s "http://${ipam}/api/getIPs.php?apiapp=address&apitoken=${ipam_token}&domain=${hostname}")
+  if [[ "${reservation}" == "[]" ]]; then echo ""
+  else
+    reserved_ip=$(echo "${reservation}" | jq -r ".\"${hostname}\"")
+    if [ "$(is_ip_address "${reserved_ip}")" == "false" ]; then echo ""
+    else echo "$reserved_ip"
+    fi
   fi
-  echo $reserved_ip
 }
 
 function produce_output() {
@@ -50,11 +51,13 @@ function produce_output() {
 	exit 0
   fi
 
+  timeout=$((SECONDS + 60))
+
   # Request an IP address. Verify that the IP address reserved matches the IP
   # address returned. Loop until the reservation matches the address returned.
   # The verification and looping is a crude way of overcoming the lack of
   # currency safety in the IPAM server.
-  while true
+  while [[ $SECONDS -lt $timeout ]]
   do 
     ip_address=$(curl -s "http://$ipam/api/getFreeIP.php?apiapp=address&apitoken=$ipam_token&subnet=${network}&host=${hostname}")
 
@@ -66,8 +69,18 @@ function produce_output() {
         --arg ip_address "$ip_address" \
         '{"ip_address":$ip_address}'
       exit 0
-	fi
+    fi
+
+    sleep 3
   done
+
+  # IPAM server responds with 0.0.0.0 when there are no available addresses
+  if [[ "${ip_address}" =~ ^0 ]]
+  then
+    error_exit "could not reserve an IP address: no available addresses"
+  else
+    error_exit "could not reserve an IP address: timed out waiting for a reservation"
+  fi
 }
 
 # main()
