@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -317,17 +318,18 @@ func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset
 
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation
 // that the cluster has been initialized.
-func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
+func waitForInitializedCluster(ctx context.Context, config *rest.Config) (configv1.ClusterStatusConditionType, error) {
+	failing := configv1.ClusterStatusConditionType("Failing")
+	status := failing
 	timeout := 30 * time.Minute
 	logrus.Infof("Waiting up to %v for the cluster at %s to initialize...", timeout, config.Host)
 	cc, err := configclient.NewForConfig(config)
 	if err != nil {
-		return errors.Wrap(err, "failed to create a config client")
+		return status, errors.Wrap(err, "failed to create a config client")
 	}
 	clusterVersionContext, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	failing := configv1.ClusterStatusConditionType("Failing")
 	var lastError string
 	_, err = clientwatch.UntilWithSync(
 		clusterVersionContext,
@@ -343,11 +345,14 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 					return false, nil
 				}
 				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorAvailable) {
+					status = configv1.OperatorAvailable
 					return true, nil
 				}
 				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, failing) {
+					status = failing
 					lastError = cov1helpers.FindStatusCondition(cv.Status.Conditions, failing).Message
 				} else if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorProgressing) {
+					status = configv1.OperatorProgressing
 					lastError = cov1helpers.FindStatusCondition(cv.Status.Conditions, configv1.OperatorProgressing).Message
 				}
 				logrus.Debugf("Still waiting for the cluster to initialize: %s", lastError)
@@ -360,14 +365,17 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 
 	if err == nil {
 		logrus.Debug("Cluster is initialized")
-		return nil
+		return status, nil
 	}
 
 	if lastError != "" {
-		return errors.Wrapf(err, "failed to initialize the cluster: %s", lastError)
+		if status == configv1.OperatorProgressing {
+			return status, errors.Wrapf(err, "the cluster is still initializing: %s", lastError)
+		}
+		return status, errors.Wrapf(err, "failed to initialize the cluster: %s", lastError)
 	}
 
-	return errors.Wrap(err, "failed to initialize the cluster")
+	return status, errors.Wrap(err, "failed to initialize the cluster")
 }
 
 // waitForConsole returns the console URL from the route 'console' in namespace openshift-console
@@ -431,7 +439,7 @@ func waitForConsole(ctx context.Context, config *rest.Config, directory string, 
 }
 
 // logComplete prints info upon completion
-func logComplete(config *rest.Config, directory, consoleURL string, complete bool) error {
+func logComplete(config *rest.Config, directory string, clusterStatus configv1.ClusterStatusConditionType, consoleURL string, complete bool) error {
 	absDir, err := filepath.Abs(directory)
 	if err != nil {
 		return err
@@ -444,8 +452,10 @@ func logComplete(config *rest.Config, directory, consoleURL string, complete boo
 	}
 	if complete {
 		logrus.Info("Install complete!")
+		logrus.Infof("To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=%s'", kubeconfig)
+	} else if clusterStatus == configv1.OperatorProgressing {
+		logrus.Infof("To give the cluster more time to initialize, you can run '%s wait-for install-complete'.", os.Args[0])
 	}
-	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=%s'", kubeconfig)
 	if consoleURL != "" {
 		logrus.Infof("Access the OpenShift web-console here: %s", consoleURL)
 		logrus.Infof("Login to the console with user: kubeadmin, password: %s", pw)
@@ -455,7 +465,7 @@ func logComplete(config *rest.Config, directory, consoleURL string, complete boo
 
 func waitForInstallComplete(ctx context.Context, config *rest.Config, directory string) error {
 	errs := []error{}
-	err := waitForInitializedCluster(ctx, config)
+	clusterStatus, err := waitForInitializedCluster(ctx, config)
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -469,7 +479,7 @@ func waitForInstallComplete(ctx context.Context, config *rest.Config, directory 
 		errs = append(errs, err)
 	}
 
-	if err = logComplete(config, rootOpts.dir, consoleURL, utilerrors.NewAggregate(errs) == nil); err != nil {
+	if err = logComplete(config, rootOpts.dir, clusterStatus, consoleURL, utilerrors.NewAggregate(errs) == nil); err != nil {
 		errs = append(errs, err)
 	}
 
