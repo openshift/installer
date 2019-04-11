@@ -187,7 +187,8 @@ then
 			--machine-config-server-image=${MACHINE_CONFIG_SERVER_IMAGE} \
 			--machine-config-daemon-image=${MACHINE_CONFIG_DAEMON_IMAGE} \
 			--machine-config-oscontent-image=${MACHINE_CONFIG_OSCONTENT} \
-			--infra-image=${MACHINE_CONFIG_INFRA_IMAGE}
+			--infra-image=${MACHINE_CONFIG_INFRA_IMAGE} \
+			--etcd-quorum-guard-image=${MACHINE_CONFIG_ETCD_QUORUM_GUARD_IMAGE}
 
 	# Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to
 	# 1. read the controller config rendered by MachineConfigOperator
@@ -278,7 +279,7 @@ podman run \
 	--volume /etc/kubernetes:/etc/kubernetes:z \
 	--network=host \
 	"${CLUSTER_BOOTSTRAP_IMAGE}" \
-	start --asset-dir=/assets --required-pods="kube-apiserver:openshift-kube-apiserver/openshift-kube-apiserver|openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,kube-controller-manager:openshift-kube-controller-manager/openshift-kube-controller-manager|openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
+	start --asset-dir=/assets --required-pods="kube-apiserver:openshift-kube-apiserver/openshift-kube-apiserver|openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,kube-controller-manager:openshift-kube-controller-manager/openshift-kube-controller-manager|openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator,kube-system/etcd-quorum-guard"
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
