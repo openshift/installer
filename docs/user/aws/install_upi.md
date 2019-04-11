@@ -32,15 +32,15 @@ $ tree
 └── worker.ign
 ```
 
-### Extract Infrastructure ID from Ignition Metadata
+### Extract Infrastructure Name from Ignition Metadata
 
 Many of the operators and functions within OpenShift rely on tagging AWS resources. By default, Ignition
 generates a unique cluster identifier comprised of the cluster name specified during the invocation of the installer
-and a short string known internally as the infrastructure ID. These values are seeded in the initial manifests within
+and a short string known internally as the infrastructure name. These values are seeded in the initial manifests within
 the Ignition configuration. To use the output of the default, generated 
-`ignition-configs` extracting the internal infrastructure ID is necessary.
+`ignition-configs` extracting the internal infrastructure name is necessary.
 
-An example of a way to get this is below (`vw9j6` is the infrastructure ID): 
+An example of a way to get this is below: 
 
 ```
 $ jq -r .infraID metadata.json 

@@ -4,11 +4,17 @@ Description: Template for Openshift Cluster UPI Network Elements (Route53 & LBs)
 Parameters:
   ClusterName:
     AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,31})$
+    MaxLength: 32
+    MinLength: 1
     ConstraintDescription: Cluster name must be alphanumeric, start with a letter and a maximum of 32 characters
     Description: A short, representative cluster name to use for hostnames, etc.
     Type: String
-  InfrastructureID:
-    Description: Infrastructure ID must be alphanumeric and match the manifests generated for your cluster.
+  InfrastructureName:
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,31})$
+    MaxLength: 32
+    MinLength: 1
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 32 characters
+    Description: A short, unique cluster ID used to tag cloud resources and identify items owned/used by the cluster.
     Type: String
   HostedZoneId:
     Description: The Route53 public zone ID to register the targets with (e.g Z21IXYZABCZ2A4)
@@ -34,7 +40,7 @@ Metadata:
         default: "Cluster Information"
       Parameters:
       - ClusterName
-      - InfrastructureID
+      - InfrastructureName
     - Label:
         default: "Network Configuration"
       Parameters:
@@ -49,8 +55,8 @@ Metadata:
     ParameterLabels:
       ClusterName:
         default: "Cluster Name"
-      InfrastructureID:
-        default: "Infrastructure ID"
+      InfrastructureName:
+        default: "Infrastructure Name"
       VpcId:
         default: "VPC ID"
       PublicSubnets:
@@ -88,8 +94,8 @@ Resources:
       Name: !Join [".", [!Ref ClusterName, !Ref HostedZoneName]]
       HostedZoneTags:
       - Key: Name
-        Value: !Join ["-", [!Ref ClusterName, !Ref InfrastructureID, "int"]]
-      - Key: !Join ["", ["kubernetes.io/cluster/", !Join ["-", [!Ref ClusterName, !Ref InfrastructureID]]]]
+        Value: !Join ["-", [!Ref InfrastructureName, "int"]]
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
         Value: "owned"
       VPCs:
       - VPCId: !Ref VpcId
@@ -315,12 +321,12 @@ Resources:
             ec2_client = boto3.client('ec2')
             if event['RequestType'] == 'Delete':
               for subnet_id in event['ResourceProperties']['Subnets']:
-                ec2_client.delete_tags(Resources=[subnet_id], Tags=[{'Key': 'kubernetes.io/cluster/' + event['ResourceProperties']['ClusterID']}]);
+                ec2_client.delete_tags(Resources=[subnet_id], Tags=[{'Key': 'kubernetes.io/cluster/' + event['ResourceProperties']['InfrastructureName']}]);
             elif event['RequestType'] == 'Create':
               for subnet_id in event['ResourceProperties']['Subnets']:
-                ec2_client.create_tags(Resources=[subnet_id], Tags=[{'Key': 'kubernetes.io/cluster/' + event['ResourceProperties']['ClusterID'], 'Value': 'shared'}]);
+                ec2_client.create_tags(Resources=[subnet_id], Tags=[{'Key': 'kubernetes.io/cluster/' + event['ResourceProperties']['InfrastructureName'], 'Value': 'shared'}]);
             responseData = {}
-            cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, event['ResourceProperties']['ClusterID']+event['ResourceProperties']['Subnets'][0])
+            cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, event['ResourceProperties']['InfrastructureName']+event['ResourceProperties']['Subnets'][0])
       Runtime: "python3.7"
       Timeout: 120
 
@@ -328,14 +334,14 @@ Resources:
     Type: Custom::SubnetRegister
     Properties:
       ServiceToken: !GetAtt RegisterSubnetTags.Arn
-      ClusterID: !Join ["-", [!Ref ClusterName, !Ref InfrastructureID]]
+      InfrastructureName: !Ref InfrastructureName
       Subnets: !Ref PublicSubnets
 
   RegisterPrivateSubnetTags:
     Type: Custom::SubnetRegister
     Properties:
       ServiceToken: !GetAtt RegisterSubnetTags.Arn
-      ClusterID: !Join ["-", [!Ref ClusterName, !Ref InfrastructureID]]
+      InfrastructureName: !Ref InfrastructureName
       Subnets: !Ref PrivateSubnets
 
 Outputs:
