@@ -1,3 +1,10 @@
+# Pre-Requisites
+
+* terraform
+* jq
+
+# Build a Cluster
+
 1. Create an install-config.yaml.
 The machine CIDR for the dev cluster is 139.178.89.192/26.
 
@@ -35,12 +42,12 @@ The bootstrap ignition config must be placed in a location that will be accessib
 6. Run `terraform apply -auto-approve`.
 This will reserve IP addresses for the VMs.
 
-7. Run `openshift-install upi bootstrap-complete`. Wait for the bootstrapping to complete.
+7. Run `openshift-install wait-for bootstrap-complete`. Wait for the bootstrapping to complete.
 
 8. Run `terraform apply -auto-approve -var 'bootstrap_complete=true'`.
 This will destroy the bootstrap VM.
 
-9. Run `openshift-install upi finish`. Wait for the cluster install to finish.
+9. Run `openshift-install wait-for install-complete`. Wait for the cluster install to finish.
 
 10. Enjoy your new OpenShift cluster.
 
