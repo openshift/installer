@@ -25,6 +25,7 @@ MACHINE_CONFIG_ETCD_IMAGE=$(podman run --quiet --rm ${release} image etcd)
 MACHINE_CONFIG_SETUP_ETCD_ENV_IMAGE=$(podman run --quiet --rm ${release} image setup-etcd-environment)
 MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(podman run --quiet --rm ${release} image kube-client-agent)
 MACHINE_CONFIG_INFRA_IMAGE=$(podman run --quiet --rm ${release} image pod)
+MACHINE_CONFIG_ETCD_QUORUM_GUARD_IMAGE=$(podman run --quiet --rm ${release} image etcd-quorum-guard)
 
 KUBE_ETCD_SIGNER_SERVER_IMAGE=$(podman run --quiet --rm ${release} image kube-etcd-signer-server)
 
@@ -279,7 +280,7 @@ podman run \
 	--volume /etc/kubernetes:/etc/kubernetes:z \
 	--network=host \
 	"${CLUSTER_BOOTSTRAP_IMAGE}" \
-	start --asset-dir=/assets --required-pods="kube-apiserver:openshift-kube-apiserver/openshift-kube-apiserver|openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,kube-controller-manager:openshift-kube-controller-manager/openshift-kube-controller-manager|openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator,kube-system/etcd-quorum-guard"
+	start --asset-dir=/assets --required-pods="kube-apiserver:openshift-kube-apiserver/openshift-kube-apiserver|openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,kube-controller-manager:openshift-kube-controller-manager/openshift-kube-controller-manager|openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
