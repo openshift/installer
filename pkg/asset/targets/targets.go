@@ -54,6 +54,7 @@ var (
 	// IgnitionConfigs are the ignition-configs targeted assets.
 	IgnitionConfigs = []asset.WritableAsset{
 		&kubeconfig.AdminClient{},
+		&password.KubeadminPassword{},
 		&machine.Master{},
 		&machine.Worker{},
 		&bootstrap.Bootstrap{},
