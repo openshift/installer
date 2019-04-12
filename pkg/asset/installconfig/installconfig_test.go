@@ -42,7 +42,7 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 	clusterName := &clusterName{"test-cluster"}
 	pullSecret := &pullSecret{`{"auths":{"example.com":{"auth":"authorization value"}}}`}
 	platform := &platform{
-		None: &none.Platform{},
+		Platform: types.Platform{None: &none.Platform{}},
 	}
 	installConfig := &InstallConfig{}
 	parents := asset.Parents{}

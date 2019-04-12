@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
+	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
@@ -29,6 +30,8 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -136,6 +139,18 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		openstack.ConfigMasters(machines, clusterID.InfraID)
+	case azuretypes.Name:
+		mpool := defaultAzureMachinePoolPlatform()
+		mpool.InstanceType = azuredefaults.InstanceClass(installconfig.Config.Platform.Azure.Region)
+		mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.Azure)
+		pool.Platform.Azure = &mpool
+
+		machines, err = azure.Machines(clusterID.InfraID, ic, pool, string(*rhcosImage), "master", "master-user-data")
+		if err != nil {
+			return errors.Wrap(err, "failed to create master machine objects")
+		}
+		azure.ConfigMasters(machines, clusterID.InfraID)
 	case nonetypes.Name, vspheretypes.Name:
 	default:
 		return fmt.Errorf("invalid Platform")

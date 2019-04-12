@@ -3,6 +3,11 @@ ignored = [
   "github.com/openshift/installer/pkg/terraform/exec*"
 ]
 
+required = [
+  #needed in pkg/terraform/exec
+  "golang.org/x/net/html/charset"
+]
+
 [prune]
   non-go = true
   go-tests = true
@@ -15,6 +20,10 @@ ignored = [
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
   version = "1.16.14"
+
+[[constraint]]
+  name = "github.com/Azure/azure-sdk-for-go"
+  version = "25.1.0"
 
 [[constraint]]
   name = "github.com/coreos/ignition"
@@ -89,3 +98,8 @@ ignored = [
   branch = "master"
   name = "sigs.k8s.io/cluster-api-provider-openstack"
   source = "https://github.com/openshift/cluster-api-provider-openstack.git"
+
+[[constraint]]
+  branch = "openshiftnocluster"
+  name = "sigs.k8s.io/cluster-api-provider-azure"
+  source = "https://github.com/awesomenix/cluster-api-provider-azure.git"
