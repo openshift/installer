@@ -9,20 +9,6 @@ import (
 	libvirtapi "github.com/openshift/cluster-api-provider-libvirt/pkg/apis"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1"
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
-	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/ignition/machine"
-	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/machines/aws"
-	"github.com/openshift/installer/pkg/asset/machines/libvirt"
-	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
-	"github.com/openshift/installer/pkg/asset/machines/openstack"
-	"github.com/openshift/installer/pkg/asset/rhcos"
-	awstypes "github.com/openshift/installer/pkg/types/aws"
-	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
-	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
-	nonetypes "github.com/openshift/installer/pkg/types/none"
-	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
-	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,6 +17,22 @@ import (
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 	openstackapi "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
+
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/ignition/machine"
+	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/machines/aws"
+	"github.com/openshift/installer/pkg/asset/machines/libvirt"
+	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
+	"github.com/openshift/installer/pkg/asset/machines/openstack"
+	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/types"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
+	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
+	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
+	nonetypes "github.com/openshift/installer/pkg/types/none"
+	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // Master generates the machines for the `master` machine pool.
@@ -91,6 +93,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	dependencies.Get(clusterID, installconfig, rhcosImage, mign)
 
 	ic := installconfig.Config
+
 	pool := ic.ControlPlane
 	var err error
 	machines := []machineapi.Machine{}
@@ -150,6 +153,9 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	}
 
 	machineConfigs := []*mcfgv1.MachineConfig{}
+	if pool.Hyperthreading == types.HyperthreadingDisabled {
+		machineConfigs = append(machineConfigs, machineconfig.ForHyperthreadingDisabled("master"))
+	}
 	if ic.SSHKey != "" {
 		machineConfigs = append(machineConfigs, machineconfig.ForAuthorizedKeys(ic.SSHKey, "master"))
 	}

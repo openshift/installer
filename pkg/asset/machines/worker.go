@@ -26,6 +26,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
@@ -110,11 +111,16 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 	machineConfigs := []*mcfgv1.MachineConfig{}
 	machineSets := []runtime.Object{}
+	var err error
 	ic := installconfig.Config
 	for _, pool := range ic.Compute {
+		if pool.Hyperthreading == types.HyperthreadingDisabled {
+			machineConfigs = append(machineConfigs, machineconfig.ForHyperthreadingDisabled("worker"))
+		}
 		if ic.SSHKey != "" {
 			machineConfigs = append(machineConfigs, machineconfig.ForAuthorizedKeys(ic.SSHKey, "worker"))
 		}
+
 		switch ic.Platform.Name() {
 		case awstypes.Name:
 			mpool := defaultAWSMachinePoolPlatform()
@@ -196,7 +202,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			Data:     data,
 		}
 	}
-
 	return nil
 }
 
