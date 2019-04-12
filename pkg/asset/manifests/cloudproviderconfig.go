@@ -91,7 +91,10 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		}
 		cm.Data[cloudProviderConfigDataKey] = string(marshalled)
 	case vspheretypes.Name:
-		vsphereConfig, err := vspheremanifests.CloudProviderConfig(installConfig.Config.Platform.VSphere)
+		vsphereConfig, err := vspheremanifests.CloudProviderConfig(
+			installConfig.Config.ObjectMeta.Name,
+			installConfig.Config.Platform.VSphere,
+		)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}
