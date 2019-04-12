@@ -101,6 +101,18 @@ data "libvirt_network_dns_host_template" "masters" {
   hostname = "api.${var.cluster_domain}"
 }
 
+data "libvirt_network_dns_host_template" "bootstrap" {
+  count    = "${var.bootstrap_dns ? 1 : 0}"
+  ip       = "${var.libvirt_bootstrap_ip}"
+  hostname = "api-int.${var.cluster_domain}"
+}
+
+data "libvirt_network_dns_host_template" "masters" {
+  count    = "${var.master_count}"
+  ip       = "${var.libvirt_master_ips[count.index]}"
+  hostname = "api-int.${var.cluster_domain}"
+}
+
 data "libvirt_network_dns_host_template" "etcds" {
   count    = "${var.master_count}"
   ip       = "${var.libvirt_master_ips[count.index]}"
