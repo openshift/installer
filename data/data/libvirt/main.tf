@@ -51,7 +51,9 @@ resource "libvirt_network" "net" {
 
     hosts = ["${flatten(list(
       data.libvirt_network_dns_host_template.bootstrap.*.rendered,
+      data.libvirt_network_dns_host_template.bootstrap_int.*.rendered,
       data.libvirt_network_dns_host_template.masters.*.rendered,
+      data.libvirt_network_dns_host_template.masters_int.*.rendered,
       data.libvirt_network_dns_host_template.etcds.*.rendered,
     ))}"]
   }]
@@ -101,13 +103,13 @@ data "libvirt_network_dns_host_template" "masters" {
   hostname = "api.${var.cluster_domain}"
 }
 
-data "libvirt_network_dns_host_template" "bootstrap" {
+data "libvirt_network_dns_host_template" "bootstrap_int" {
   count    = "${var.bootstrap_dns ? 1 : 0}"
   ip       = "${var.libvirt_bootstrap_ip}"
   hostname = "api-int.${var.cluster_domain}"
 }
 
-data "libvirt_network_dns_host_template" "masters" {
+data "libvirt_network_dns_host_template" "masters_int" {
   count    = "${var.master_count}"
   ip       = "${var.libvirt_master_ips[count.index]}"
   hostname = "api-int.${var.cluster_domain}"
