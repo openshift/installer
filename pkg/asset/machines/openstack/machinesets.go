@@ -4,9 +4,9 @@ package openstack
 import (
 	"fmt"
 
+	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -14,7 +14,7 @@ import (
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]*clusterapi.MachineSet, error) {
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]*machineapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
 		return nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
@@ -30,7 +30,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	}
 
 	// TODO(flaper87): Add support for availability zones
-	var machinesets []*clusterapi.MachineSet
+	var machinesets []*machineapi.MachineSet
 	az := ""
 	trunk := config.Platform.OpenStack.TrunkSupport
 	provider, err := provider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunk)
@@ -40,7 +40,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	// TODO(flaper87): Implement AZ support sometime soon
 	//name := fmt.Sprintf("%s-%s-%s", clustername, pool.Name, az)
 	name := fmt.Sprintf("%s-%s", clusterID, pool.Name)
-	mset := &clusterapi.MachineSet{
+	mset := &machineapi.MachineSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
 			Kind:       "MachineSet",
@@ -54,7 +54,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 				"machine.openshift.io/cluster-api-machine-type": role,
 			},
 		},
-		Spec: clusterapi.MachineSetSpec{
+		Spec: machineapi.MachineSetSpec{
 			Replicas: &total,
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
@@ -62,7 +62,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 					"machine.openshift.io/cluster-api-cluster":    clusterID,
 				},
 			},
-			Template: clusterapi.MachineTemplateSpec{
+			Template: machineapi.MachineTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						"machine.openshift.io/cluster-api-machineset":   name,
@@ -71,8 +71,8 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 						"machine.openshift.io/cluster-api-machine-type": role,
 					},
 				},
-				Spec: clusterapi.MachineSpec{
-					ProviderSpec: clusterapi.ProviderSpec{
+				Spec: machineapi.MachineSpec{
+					ProviderSpec: machineapi.ProviderSpec{
 						Value: &runtime.RawExtension{Object: provider},
 					},
 					// we don't need to set Versions, because we control those via cluster operators.
