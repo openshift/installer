@@ -329,6 +329,7 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		os.Exit(1)
 	}
 	for _, router := range allRouters {
+		// Get non HA router interface ports
 		portListOpts := ports.ListOpts{
 			DeviceID:    router.ID,
 			DeviceOwner: "network:router_interface",
@@ -338,12 +339,31 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 			logger.Fatalf("%v", err)
 			os.Exit(1)
 		}
-
 		allPorts, err := ports.ExtractPorts(allPagesPort)
 		if err != nil {
 			logger.Fatalf("%v", err)
 			os.Exit(1)
 		}
+
+		// Get HA router interface ports
+		HAportListOpts := ports.ListOpts{
+			DeviceID:    router.ID,
+			DeviceOwner: "network:ha_router_replicated_interface",
+		}
+		HAallPagesPort, err := ports.List(conn, HAportListOpts).AllPages()
+		if err != nil {
+			logger.Fatalf("%v", err)
+			os.Exit(1)
+		}
+		HAPorts, err := ports.ExtractPorts(HAallPagesPort)
+		if err != nil {
+			logger.Fatalf("%v", err)
+			os.Exit(1)
+		}
+
+		// Catch all, since router may not be HA
+		allPorts = append(allPorts, HAPorts...)
+
 		for _, port := range allPorts {
 			for _, IP := range port.FixedIPs {
 				removeOpts := routers.RemoveInterfaceOpts{
