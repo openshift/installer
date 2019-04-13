@@ -51,7 +51,9 @@ OpenShift 4.x requires all nodes to have internet access to pull images for plat
 
 Before you install OpenShift, you must provision two load balancers.
 
-* A load balancer for the control plane machines that targets port 6443 (Kubernetes APIServer) and 22623([Machine Config server][machine-config-server]). Port 6443 must be accessible to both clients external to the cluster and nodes within the cluster, and port 22623 must be accessible to nodes within the cluster.
+* A load balancer for the control plane and bootstrap machines that targets port 6443 (Kubernetes APIServer) and 22623([Machine Config server][machine-config-server]). Port 6443 must be accessible to both clients external to the cluster and nodes within the cluster, and port 22623 must be accessible to nodes within the cluster.
+
+  NOTE: Bootstrap machine can be deleted as target after cluster installation is finished.
 
 * A load balancer for the machines that run the [ingress router][openshift-router] pods that balances ports 443 and 80. Both the ports must be accessible to both clients external to the cluster and nodes within the cluster.
 
