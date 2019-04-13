@@ -28,28 +28,22 @@ func GetBaseDomain() (string, error) {
 		return "", err
 	}
 
+	logrus.Debugf("listing AWS hosted zones")
 	client := route53.New(session)
 	publicZoneMap := map[string]struct{}{}
 	exists := struct{}{}
-	input := route53.ListHostedZonesInput{}
-	for i := 0; true; i++ {
-		logrus.Debugf("listing AWS hosted zones (page %d)", i)
-		response, err := client.ListHostedZones(&input)
-		if err != nil {
-			return "", errors.Wrap(err, "list hosted zones")
-		}
-
-		for _, zone := range response.HostedZones {
-			if !*zone.Config.PrivateZone {
-				publicZoneMap[strings.TrimSuffix(*zone.Name, ".")] = exists
+	if err := client.ListHostedZonesPages(
+		&route53.ListHostedZonesInput{},
+		func(resp *route53.ListHostedZonesOutput, lastPage bool) (shouldContinue bool) {
+			for _, zone := range resp.HostedZones {
+				if zone.Config != nil && !aws.BoolValue(zone.Config.PrivateZone) {
+					publicZoneMap[strings.TrimSuffix(*zone.Name, ".")] = exists
+				}
 			}
-		}
-
-		if !*response.IsTruncated {
-			break
-		}
-
-		input.Marker = response.NextMarker
+			return !lastPage
+		},
+	); err != nil {
+		return "", errors.Wrap(err, "list hosted zones")
 	}
 
 	publicZones := make([]string, 0, len(publicZoneMap))
