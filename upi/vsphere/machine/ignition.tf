@@ -13,7 +13,7 @@ data "ignition_file" "hostname" {
   mode       = "420"
 
   content {
-    content = "${var.name}-${count.index}.${var.cluster_domain}"
+    content = "${var.name}-${count.index}"
   }
 }
 
@@ -34,6 +34,7 @@ ONBOOT=yes
 IPADDR=${local.ip_addresses[count.index]}
 PREFIX=${local.mask}
 GATEWAY=${local.gw}
+DOMAIN=${var.cluster_domain}
 DNS1=8.8.8.8
 EOF
   }
