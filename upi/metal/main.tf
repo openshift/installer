@@ -175,6 +175,15 @@ resource "aws_route53_record" "ctrlp" {
   records = ["${local.ctrp_records}"]
 }
 
+resource "aws_route53_record" "ctrlp_int" {
+  zone_id = "${data.aws_route53_zone.public.zone_id}"
+  type    = "A"
+  ttl     = "60"
+  name    = "api-int.${var.cluster_domain}"
+
+  records = ["${local.ctrp_records}"]
+}
+
 resource "aws_route53_record" "apps" {
   zone_id = "${data.aws_route53_zone.public.zone_id}"
   type    = "A"
