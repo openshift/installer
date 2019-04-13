@@ -4,8 +4,17 @@ Description: Template for Openshift Cluster UPI Network Elements (Route53 & LBs)
 Parameters:
   ClusterName:
     AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,31})$
+    MaxLength: 32
+    MinLength: 1
     ConstraintDescription: Cluster name must be alphanumeric, start with a letter and a maximum of 32 characters
     Description: A short, representative cluster name to use for hostnames, etc.
+    Type: String
+  InfrastructureName:
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,31})$
+    MaxLength: 32
+    MinLength: 1
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 32 characters
+    Description: A short, unique cluster ID used to tag cloud resources and identify items owned/used by the cluster.
     Type: String
   HostedZoneId:
     Description: The Route53 public zone ID to register the targets with (e.g Z21IXYZABCZ2A4)
@@ -31,6 +40,7 @@ Metadata:
         default: "Cluster Information"
       Parameters:
       - ClusterName
+      - InfrastructureName
     - Label:
         default: "Network Configuration"
       Parameters:
@@ -45,6 +55,8 @@ Metadata:
     ParameterLabels:
       ClusterName:
         default: "Cluster Name"
+      InfrastructureName:
+        default: "Infrastructure Name"
       VpcId:
         default: "VPC ID"
       PublicSubnets:
@@ -80,6 +92,11 @@ Resources:
       HostedZoneConfig:
         Comment: "Managed by CloudFormation"
       Name: !Join [".", [!Ref ClusterName, !Ref HostedZoneName]]
+      HostedZoneTags:
+      - Key: Name
+        Value: !Join ["-", [!Ref InfrastructureName, "int"]]
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
+        Value: "owned"
       VPCs:
       - VPCId: !Ref VpcId
         VPCRegion: !Ref "AWS::Region"
@@ -252,6 +269,80 @@ Resources:
             cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, event['ResourceProperties']['TargetArn']+event['ResourceProperties']['TargetIp'])
       Runtime: "python3.7"
       Timeout: 120
+
+  RegisterSubnetTagsLambdaIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ["-", [!Ref ClusterName, "subnet-tags-lambda-role"]]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - "lambda.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+      - PolicyName: !Join ["-", [!Ref ClusterName, "subnet-tagging-policy"]]
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action:
+              [
+                "ec2:DeleteTags",
+                "ec2:CreateTags"
+              ]
+            Resource: "arn:aws:ec2:*:*:subnet/*"
+          - Effect: "Allow"
+            Action:
+              [
+                "ec2:DescribeSubnets",
+                "ec2:DescribeTags"
+              ]
+            Resource: "*"
+
+  RegisterSubnetTags:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Handler: "index.handler"
+      Role:
+        Fn::GetAtt:
+        - "RegisterSubnetTagsLambdaIamRole"
+        - "Arn"
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import cfnresponse
+          def handler(event, context):
+            ec2_client = boto3.client('ec2')
+            if event['RequestType'] == 'Delete':
+              for subnet_id in event['ResourceProperties']['Subnets']:
+                ec2_client.delete_tags(Resources=[subnet_id], Tags=[{'Key': 'kubernetes.io/cluster/' + event['ResourceProperties']['InfrastructureName']}]);
+            elif event['RequestType'] == 'Create':
+              for subnet_id in event['ResourceProperties']['Subnets']:
+                ec2_client.create_tags(Resources=[subnet_id], Tags=[{'Key': 'kubernetes.io/cluster/' + event['ResourceProperties']['InfrastructureName'], 'Value': 'shared'}]);
+            responseData = {}
+            cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, event['ResourceProperties']['InfrastructureName']+event['ResourceProperties']['Subnets'][0])
+      Runtime: "python3.7"
+      Timeout: 120
+
+  RegisterPublicSubnetTags:
+    Type: Custom::SubnetRegister
+    Properties:
+      ServiceToken: !GetAtt RegisterSubnetTags.Arn
+      InfrastructureName: !Ref InfrastructureName
+      Subnets: !Ref PublicSubnets
+
+  RegisterPrivateSubnetTags:
+    Type: Custom::SubnetRegister
+    Properties:
+      ServiceToken: !GetAtt RegisterSubnetTags.Arn
+      InfrastructureName: !Ref InfrastructureName
+      Subnets: !Ref PrivateSubnets
 
 Outputs:
   PrivateHostedZoneId:
