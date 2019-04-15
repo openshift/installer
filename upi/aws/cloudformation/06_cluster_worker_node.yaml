@@ -2,10 +2,12 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Template for Openshift Cluster UPI Node Launch (EC2 worker instance)
 
 Parameters:
-  ClusterName:
+  InfrastructureName:
     AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,31})$
-    ConstraintDescription: Cluster name must be alphanumeric, start with a letter and a maximum of 32 characters
-    Description: A short, representative cluster name to use for hostnames, etc.
+    MaxLength: 32
+    MinLength: 1
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 32 characters
+    Description: A short, unique cluster ID used to tag cloud resources and identify items owned/used by the cluster.
     Type: String
   RhcosAmi:
     Description: Current RHEL CoreOS AMI to use for boostrap
@@ -56,7 +58,7 @@ Metadata:
     - Label:
         default: "Cluster Information"
       Parameters:
-      - ClusterName
+      - InfrastructureName
     - Label:
         default: "Host Information"
       Parameters:
@@ -72,8 +74,8 @@ Metadata:
       - VpcId
       - WorkerSubnet
     ParameterLabels:
-      ClusterName:
-        default: "Cluster Name"
+      InfrastructureName:
+        default: "Infrastructure Name"
       VpcId:
         default: "VPC ID"
       WorkerSubnet:
@@ -113,8 +115,8 @@ Resources:
         }
       Tags:
       - Key: "Name"
-        Value: !Join ["-", [!Ref ClusterName, "worker"]]
-      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref ClusterName]]
+        Value: !Join ["-", [!Ref InfrastructureName, "worker"]]
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
         Value: "owned"
       - Key: "clusterid"
-        Value: !Ref ClusterName
+        Value: !Ref InfrastructureName

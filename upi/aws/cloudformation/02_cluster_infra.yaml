@@ -208,7 +208,7 @@ Resources:
   RegisterTargetLambdaIamRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Join ["-", [!Ref ClusterName, "nlb", "lambda", "role"]]
+      RoleName: !Join ["-", [!Ref InfrastructureName, "nlb", "lambda", "role"]]
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -220,7 +220,7 @@ Resources:
           - "sts:AssumeRole"
       Path: "/"
       Policies:
-      - PolicyName: !Join ["-", [!Ref ClusterName, "master", "policy"]]
+      - PolicyName: !Join ["-", [!Ref InfrastructureName, "master", "policy"]]
         PolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -273,7 +273,7 @@ Resources:
   RegisterSubnetTagsLambdaIamRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Join ["-", [!Ref ClusterName, "subnet-tags-lambda-role"]]
+      RoleName: !Join ["-", [!Ref InfrastructureName, "subnet-tags-lambda-role"]]
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -285,7 +285,7 @@ Resources:
           - "sts:AssumeRole"
       Path: "/"
       Policies:
-      - PolicyName: !Join ["-", [!Ref ClusterName, "subnet-tagging-policy"]]
+      - PolicyName: !Join ["-", [!Ref InfrastructureName, "subnet-tagging-policy"]]
         PolicyDocument:
           Version: "2012-10-17"
           Statement:
