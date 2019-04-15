@@ -2,10 +2,12 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Template for Openshift Cluster UPI Security Elements (Security Groups & IAM)
 
 Parameters:
-  ClusterName:
+  InfrastructureName:
     AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,31})$
-    ConstraintDescription: Cluster name must be alphanumeric, start with a letter and a maximum of 32 characters
-    Description: A short, representative cluster name to use for hostnames, etc.
+    MaxLength: 32
+    MinLength: 1
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 32 characters
+    Description: A short, unique cluster ID used to tag cloud resources and identify items owned/used by the cluster.
     Type: String
   VpcCidr:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-4]))$
@@ -26,7 +28,7 @@ Metadata:
     - Label:
         default: "Cluster Information"
       Parameters:
-      - ClusterName
+      - InfrastructureName
     - Label:
         default: "Network Configuration"
       Parameters:
@@ -34,8 +36,8 @@ Metadata:
       - VpcCidr
       - PrivateSubnets
     ParameterLabels:
-      ClusterName:
-        default: "Cluster Name"
+      InfrastructureName:
+        default: "Infrastructure Name"
       VpcId:
         default: "VPC ID"
       VpcCidr:
@@ -47,7 +49,7 @@ Resources:
   MasterSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Join ["-", ["master-sg", !Ref ClusterName]]
+      GroupName: !Join ["-", ["master-sg", !Ref InfrastructureName]]
       GroupDescription: Cluster Master Security Group
       SecurityGroupIngress:
       - IpProtocol: icmp
@@ -71,7 +73,7 @@ Resources:
   WorkerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Join ["-", ["worker-sg", !Ref ClusterName]]
+      GroupName: !Join ["-", ["worker-sg", !Ref InfrastructureName]]
       GroupDescription: Cluster Worker Security Group
       SecurityGroupIngress:
       - IpProtocol: icmp
@@ -257,7 +259,7 @@ Resources:
   MasterIamRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Join ["-", [!Ref ClusterName, "master", "role"]]
+      RoleName: !Join ["-", [!Ref InfrastructureName, "master", "role"]]
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -269,7 +271,7 @@ Resources:
           - "sts:AssumeRole"
       Path: "/"
       Policies:
-      - PolicyName: !Join ["-", [!Ref ClusterName, "master", "policy"]]
+      - PolicyName: !Join ["-", [!Ref InfrastructureName, "master", "policy"]]
         PolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -296,7 +298,7 @@ Resources:
   WorkerIamRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Join ["-", [!Ref ClusterName, "worker", "role"]]
+      RoleName: !Join ["-", [!Ref InfrastructureName, "worker", "role"]]
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -308,7 +310,7 @@ Resources:
           - "sts:AssumeRole"
       Path: "/"
       Policies:
-      - PolicyName: !Join ["-", [!Ref ClusterName, "worker", "policy"]]
+      - PolicyName: !Join ["-", [!Ref InfrastructureName, "worker", "policy"]]
         PolicyDocument:
           Version: "2012-10-17"
           Statement:

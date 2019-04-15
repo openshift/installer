@@ -2,10 +2,12 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Template for Openshift Cluster UPI Bootstrap (EC2 Instance, Security Groups and IAM)
 
 Parameters:
-  ClusterName:
+  InfrastructureName:
     AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,31})$
-    ConstraintDescription: Cluster name must be alphanumeric, start with a letter and a maximum of 32 characters
-    Description: A short, representative cluster name to use for hostnames, etc.
+    MaxLength: 32
+    MinLength: 1
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 32 characters
+    Description: A short, unique cluster ID used to tag cloud resources and identify items owned/used by the cluster.
     Type: String
   RhcosAmi:
     Description: Current RHEL CoreOS AMI to use for boostrap
@@ -55,7 +57,7 @@ Metadata:
     - Label:
         default: "Cluster Information"
       Parameters:
-      - ClusterName
+      - InfrastructureName
     - Label:
         default: "Host Information"
       Parameters:
@@ -77,8 +79,8 @@ Metadata:
       - InternalApiTargetGroupArn
       - InternalServiceTargetGroupArn
     ParameterLabels:
-      ClusterName:
-        default: "Cluster Name"
+      InfrastructureName:
+        default: "Infrastructure Name"
       VpcId:
         default: "VPC ID"
       AllowedBootstrapSshCidr:
@@ -101,7 +103,7 @@ Resources:
   BootstrapIamRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Join ["-", [!Ref ClusterName, "bootstrap", "role"]]
+      RoleName: !Join ["-", [!Ref InfrastructureName, "bootstrap", "role"]]
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -113,7 +115,7 @@ Resources:
           - "sts:AssumeRole"
       Path: "/"
       Policies:
-      - PolicyName: !Join ["-", [!Ref ClusterName, "bootstrap", "policy"]]
+      - PolicyName: !Join ["-", [!Ref InfrastructureName, "bootstrap", "policy"]]
         PolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -140,7 +142,7 @@ Resources:
   BootstrapSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Join ["-", ["bootstrap-sg", !Ref ClusterName]]
+      GroupName: !Join ["-", ["bootstrap-sg", !Ref InfrastructureName]]
       GroupDescription: Cluster Bootstrap Security Group
       SecurityGroupIngress:
       - IpProtocol: tcp
@@ -174,8 +176,8 @@ Resources:
         }
       Tags:
       - Key: "Name"
-        Value: !Join ["-", [!Ref ClusterName, "bootstrap"]]
-      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref ClusterName]]
+        Value: !Join ["-", [!Ref InfrastructureName, "bootstrap"]]
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
         Value: "Owned"
 
   RegisterBootstrapApiTarget:
