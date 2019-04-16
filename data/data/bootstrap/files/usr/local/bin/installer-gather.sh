@@ -52,7 +52,7 @@ queue resources/masters.list oc --config=/opt/openshift/auth/kubeconfig --reques
 # ShellCheck doesn't realize that $ns is for the Go template, not something we're trying to expand in the shell
 # shellcheck disable=2016
 queue resources/containers oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get pods --all-namespaces --template '{{ range .items }}{{ $name := .metadata.name }}{{ $ns := .metadata.namespace }}{{ range .spec.containers }}-n {{ $ns }} {{ $name }} -c {{ .name }}{{ "\n" }}{{ end }}{{ range .spec.initContainers }}-n {{ $ns }} {{ $name }} -c {{ .name }}{{ "\n" }}{{ end }}{{ end }}'
-queue resources/api-pods oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get pods -l openshift.io/component=api --all-namespaces --template '{{ range .items }}-n {{ .metadata.namespace }} {{ .metadata.name }}{{ "\n" }}{{ end }}'
+queue resources/api-pods oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get pods -l apiserver=true --all-namespaces --template '{{ range .items }}-n {{ .metadata.namespace }} {{ .metadata.name }}{{ "\n" }}{{ end }}'
 
 queue resources/apiservices.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get apiservices -o json
 queue resources/clusteroperators.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get clusteroperators -o json
