@@ -203,6 +203,8 @@ $ORIGIN ${var.cluster_domain}.
 ${length(var.lb_floating_ip) == 0 ? "api  IN  A  ${var.service_port_ip}" : "api  IN  A  ${var.lb_floating_ip}"}
 ${length(var.lb_floating_ip) == 0 ? "*.apps  IN  A  ${var.service_port_ip}" : "*.apps  IN  A  ${var.lb_floating_ip}"}
 
+api-int  IN  A  ${var.service_port_ip}
+
 bootstrap.${var.cluster_domain}  IN  A  ${var.bootstrap_ip}
 ${replace(join("\n", formatlist("%s  IN  A %s", var.master_port_names, var.master_ips)), "port-", "")}
 ${replace(join("\n", formatlist("master-%s  IN  A %s", var.master_port_names, var.master_ips)), "${var.cluster_id}-master-port-", "")}
