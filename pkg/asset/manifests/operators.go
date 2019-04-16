@@ -86,7 +86,6 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.OpenshiftConfigSecretEtcdMetricClient{},
 		&bootkube.OpenshiftConfigSecretPullSecret{},
 		&bootkube.OpenshiftMachineConfigOperator{},
-		&bootkube.Pull{},
 	}
 }
 
@@ -208,7 +207,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		&bootkube.OpenshiftConfigSecretEtcdMetricClient{},
 		&bootkube.OpenshiftConfigSecretPullSecret{},
 		&bootkube.OpenshiftMachineConfigOperator{},
-		&bootkube.Pull{},
 	} {
 		dependencies.Get(a)
 		for _, f := range a.Files() {
