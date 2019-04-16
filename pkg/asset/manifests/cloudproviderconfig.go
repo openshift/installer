@@ -12,9 +12,12 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
+	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -47,6 +50,8 @@ func (*CloudProviderConfig) Name() string {
 func (*CloudProviderConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		&installconfig.ClusterID{},
+
 		// PlatformCredsCheck just checks the creds (and asks, if needed)
 		// We do not actually use it in this asset directly, hence
 		// it is put in the dependencies but not fetched in Generate
@@ -57,7 +62,8 @@ func (*CloudProviderConfig) Dependencies() []asset.Asset {
 // Generate generates the CloudProviderConfig.
 func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	clusterID := &installconfig.ClusterID{}
+	dependencies.Get(installConfig, clusterID)
 
 	cm := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
@@ -90,6 +96,21 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return err
 		}
 		cm.Data[cloudProviderConfigDataKey] = string(marshalled)
+	case azuretypes.Name:
+		session, err := icazure.GetSession()
+		if err != nil {
+			return errors.Wrap(err, "could not get azure session")
+		}
+		azureConfig, err := azure.CloudProviderConfig{
+			GroupLocation:  installConfig.Config.Azure.Region,
+			ResourcePrefix: clusterID.InfraID,
+			SubscriptionID: session.Credentials.SubscriptionID,
+			TenantID:       session.Credentials.TenantID,
+		}.JSON()
+		if err != nil {
+			return errors.Wrap(err, "could not create cloud provider config")
+		}
+		cm.Data[cloudProviderConfigDataKey] = azureConfig
 	case vspheretypes.Name:
 		vsphereConfig, err := vspheremanifests.CloudProviderConfig(
 			installConfig.Config.ObjectMeta.Name,
