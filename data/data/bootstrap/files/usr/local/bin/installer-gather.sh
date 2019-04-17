@@ -25,6 +25,17 @@ do
     sudo podman inspect "${container}" >& "${ARTIFACTS}/bootstrap/pods/${container}.inspect"
 done
 
+echo "Gathering rendered assets..."
+mkdir -p "${ARTIFACTS}/rendered-assets"
+cp -r /var/opt/openshift/ "${ARTIFACTS}/rendered-assets"
+# remove sensitive information
+# TODO leave tls.crt inside of secret yaml files
+find "${ARTIFACTS}/rendered-assets" -name "*secret*" -print0 | xargs -0 rm
+find "${ARTIFACTS}/rendered-assets" -name "*kubeconfig*" -print0 | xargs -0 rm
+find "${ARTIFACTS}/rendered-assets" -name "*.key" -print0 | xargs -0 rm
+find "${ARTIFACTS}/rendered-assets" -name ".kube" -print0 | xargs -0 rm -rf
+
+
 # Collect cluster data
 function queue() {
     local TARGET="${ARTIFACTS}/${1}"
