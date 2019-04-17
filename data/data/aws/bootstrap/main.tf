@@ -134,7 +134,7 @@ resource "aws_lb_target_group_attachment" "bootstrap" {
   count = "${var.target_group_arns_length}"
 
   target_group_arn = "${var.target_group_arns[count.index]}"
-  target_id        = "${aws_instance.bootstrap.private_ip}"
+  target_id        = "${aws_instance.bootstrap.id}"
 }
 
 resource "aws_security_group" "bootstrap" {

@@ -120,5 +120,5 @@ resource "aws_lb_target_group_attachment" "master" {
   count = "${var.instance_count * var.target_group_arns_length}"
 
   target_group_arn = "${var.target_group_arns[count.index % var.target_group_arns_length]}"
-  target_id        = "${aws_instance.master.*.private_ip[count.index / var.target_group_arns_length]}"
+  target_id        = "${aws_instance.master.*.id[count.index / var.target_group_arns_length]}"
 }

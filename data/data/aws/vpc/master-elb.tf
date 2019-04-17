@@ -34,7 +34,7 @@ resource "aws_lb_target_group" "api_internal" {
   port     = 6443
   vpc_id   = "${local.vpc_id}"
 
-  target_type = "ip"
+  target_type = "instance"
 
   tags = "${merge(map(
     "Name", "${var.cluster_id}-aint",
@@ -56,7 +56,7 @@ resource "aws_lb_target_group" "api_external" {
   port     = 6443
   vpc_id   = "${local.vpc_id}"
 
-  target_type = "ip"
+  target_type = "instance"
 
   tags = "${merge(map(
     "Name", "${var.cluster_id}-aext",
@@ -78,7 +78,7 @@ resource "aws_lb_target_group" "services" {
   port     = 22623
   vpc_id   = "${local.vpc_id}"
 
-  target_type = "ip"
+  target_type = "instance"
 
   tags = "${merge(map(
     "Name", "${var.cluster_id}-sint",
