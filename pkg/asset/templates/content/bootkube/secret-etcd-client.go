@@ -9,8 +9,11 @@ import (
 )
 
 const (
-	kubeSystemSecretEtcdClientFileName = "kube-system-secret-etcd-client.yaml.template"
+	kubeSystemSecretEtcdClientFileName      = "kube-system-secret-etcd-client.yaml.template"
+	openshiftConfigSecretEtcdClientFileName = "openshift-config-secret-etcd-client.yaml.template"
 )
+
+var etcdClientCertFiles = []string{kubeSystemSecretEtcdClientFileName, openshiftConfigSecretEtcdClientFileName}
 
 var _ asset.WritableAsset = (*KubeSystemSecretEtcdClient)(nil)
 
@@ -26,22 +29,23 @@ func (t *KubeSystemSecretEtcdClient) Dependencies() []asset.Asset {
 
 // Name returns the human-friendly name of the asset.
 func (t *KubeSystemSecretEtcdClient) Name() string {
-	return "KubeSystemSecretEtcdClient"
+	return "SecretEtcdClient"
 }
 
 // Generate generates the actual files by this asset
 func (t *KubeSystemSecretEtcdClient) Generate(parents asset.Parents) error {
-	fileName := kubeSystemSecretEtcdClientFileName
-	data, err := content.GetBootkubeTemplate(fileName)
-	if err != nil {
-		return err
-	}
-	t.FileList = []*asset.File{
-		{
+	t.FileList = []*asset.File{}
+	for _, fileName := range etcdClientCertFiles {
+		data, err := content.GetBootkubeTemplate(fileName)
+		if err != nil {
+			return err
+		}
+		t.FileList = append(t.FileList, &asset.File{
 			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
-		},
+		})
 	}
+
 	return nil
 }
 
@@ -52,13 +56,17 @@ func (t *KubeSystemSecretEtcdClient) Files() []*asset.File {
 
 // Load returns the asset from disk.
 func (t *KubeSystemSecretEtcdClient) Load(f asset.FileFetcher) (bool, error) {
-	file, err := f.FetchByName(filepath.Join(content.TemplateDir, kubeSystemSecretEtcdClientFileName))
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
+	t.FileList = []*asset.File{}
+	for _, fileName := range etcdClientCertFiles {
+		file, err := f.FetchByName(filepath.Join(content.TemplateDir, fileName))
+		if err != nil {
+			if os.IsNotExist(err) {
+				return false, nil
+			}
+			return false, err
 		}
-		return false, err
+		t.FileList = append(t.FileList, file)
 	}
-	t.FileList = []*asset.File{file}
+
 	return true, nil
 }
