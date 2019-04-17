@@ -2,6 +2,7 @@
 
 * terraform
 * jq
+* curl
 
 # Build a Cluster
 
