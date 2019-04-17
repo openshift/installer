@@ -9,8 +9,11 @@ import (
 )
 
 const (
-	kubeSystemConfigmapEtcdServingCAFileName = "kube-system-configmap-etcd-serving-ca.yaml.template"
+	kubeSystemConfigmapEtcdServingCAFileName      = "kube-system-configmap-etcd-serving-ca.yaml.template"
+	openshiftConfigConfigmapEtcdServingCAFileName = "openshift-config-configmap-etcd-serving-ca.yaml.template"
 )
+
+var etcdServingCAFiles = []string{kubeSystemConfigmapEtcdServingCAFileName, openshiftConfigConfigmapEtcdServingCAFileName}
 
 var _ asset.WritableAsset = (*KubeSystemConfigmapEtcdServingCA)(nil)
 
@@ -26,22 +29,23 @@ func (t *KubeSystemConfigmapEtcdServingCA) Dependencies() []asset.Asset {
 
 // Name returns the human-friendly name of the asset.
 func (t *KubeSystemConfigmapEtcdServingCA) Name() string {
-	return "KubeSystemConfigmapEtcdServingCA"
+	return "ConfigmapEtcdServingCA"
 }
 
 // Generate generates the actual files by this asset
 func (t *KubeSystemConfigmapEtcdServingCA) Generate(parents asset.Parents) error {
-	fileName := kubeSystemConfigmapEtcdServingCAFileName
-	data, err := content.GetBootkubeTemplate(fileName)
-	if err != nil {
-		return err
-	}
-	t.FileList = []*asset.File{
-		{
+	t.FileList = []*asset.File{}
+	for _, fileName := range etcdServingCAFiles {
+		data, err := content.GetBootkubeTemplate(fileName)
+		if err != nil {
+			return err
+		}
+		t.FileList = append(t.FileList, &asset.File{
 			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
-		},
+		})
 	}
+
 	return nil
 }
 
@@ -52,13 +56,17 @@ func (t *KubeSystemConfigmapEtcdServingCA) Files() []*asset.File {
 
 // Load returns the asset from disk.
 func (t *KubeSystemConfigmapEtcdServingCA) Load(f asset.FileFetcher) (bool, error) {
-	file, err := f.FetchByName(filepath.Join(content.TemplateDir, kubeSystemConfigmapEtcdServingCAFileName))
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
+	t.FileList = []*asset.File{}
+	for _, fileName := range etcdServingCAFiles {
+		file, err := f.FetchByName(filepath.Join(content.TemplateDir, fileName))
+		if err != nil {
+			if os.IsNotExist(err) {
+				return false, nil
+			}
+			return false, err
 		}
-		return false, err
+		t.FileList = append(t.FileList, file)
 	}
-	t.FileList = []*asset.File{file}
+
 	return true, nil
 }
