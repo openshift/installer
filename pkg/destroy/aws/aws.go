@@ -56,6 +56,11 @@ type ClusterUninstaller struct {
 	Logger    logrus.FieldLogger
 	Region    string
 	ClusterID string
+
+	// Session is the AWS session to be used for deletion.  If nil, a
+	// new session will be created based on the usual credential
+	// configuration (AWS_PROFILE, AWS_ACCESS_KEY_ID, etc.).
+	Session *session.Session
 }
 
 func (o *ClusterUninstaller) validate() error {
@@ -73,11 +78,15 @@ func (o *ClusterUninstaller) Run() error {
 	}
 
 	awsConfig := &aws.Config{Region: aws.String(o.Region)}
-
-	// Relying on appropriate AWS ENV vars (eg AWS_PROFILE, AWS_ACCESS_KEY_ID, etc)
-	awsSession, err := session.NewSession(awsConfig)
-	if err != nil {
-		return err
+	awsSession := o.Session
+	if awsSession == nil {
+		// Relying on appropriate AWS ENV vars (eg AWS_PROFILE, AWS_ACCESS_KEY_ID, etc)
+		awsSession, err = session.NewSession(awsConfig)
+		if err != nil {
+			return err
+		}
+	} else {
+		awsSession = awsSession.Copy(awsConfig)
 	}
 	awsSession.Handlers.Build.PushBackNamed(request.NamedHandler{
 		Name: "openshiftInstaller.OpenshiftInstallerUserAgentHandler",

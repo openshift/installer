@@ -1,6 +1,7 @@
 package destroy
 
 import (
+	session "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/destroy/aws"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/sirupsen/logrus"
@@ -13,11 +14,17 @@ func NewAWS(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (Destroy
 		filters = append(filters, filter)
 	}
 
+	awsSession, err := session.GetSession()
+	if err != nil {
+		return nil, err
+	}
+
 	return &aws.ClusterUninstaller{
 		Filters:   filters,
 		Region:    metadata.ClusterPlatformMetadata.AWS.Region,
 		Logger:    logger,
 		ClusterID: metadata.InfraID,
+		Session:   awsSession,
 	}, nil
 }
 
