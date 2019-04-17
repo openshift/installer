@@ -31,27 +31,13 @@ func (a *APIServerCertKey) Dependencies() []asset.Asset {
 // Generate generates the cert/key pair based on its dependencies.
 func (a *APIServerCertKey) Generate(dependencies asset.Parents) error {
 	kubeCA := &KubeCA{}
-	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(kubeCA, installConfig)
-
-	apiServerAddress, err := cidrhost(installConfig.Config.Networking.ServiceNetwork[0].IPNet, 1)
-	if err != nil {
-		return errors.Wrap(err, "failed to get API Server address from InstallConfig")
-	}
+	dependencies.Get(kubeCA)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		Validity:     ValidityTenYears,
-		DNSNames: []string{
-			apiAddress(installConfig.Config),
-			"kubernetes", "kubernetes.default",
-			"kubernetes.default.svc",
-			"kubernetes.default.svc.cluster.local",
-			"localhost",
-		},
-		IPAddresses: []net.IP{net.ParseIP(apiServerAddress), net.ParseIP("127.0.0.1")},
 	}
 
 	return a.SignedCertKey.Generate(cfg, kubeCA, "apiserver", AppendParent)
@@ -538,12 +524,12 @@ var _ asset.Asset = (*KubeAPIServerCompleteClientCABundle)(nil)
 // Dependencies returns the dependency of the cert bundle.
 func (a *KubeAPIServerCompleteClientCABundle) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&KubeCA{},                              // TODO this should be removed once it never signs a client
-		&AdminKubeConfigCABundle{},             // admin.kubeconfig
-		&KubeletClientCABundle{},               // signed kubelet certs
-		&KubeControlPlaneCABundle{},            // controller-manager, scheduler
-		&KubeAPIServerToKubeletClientCertKey{}, // kube-apiserver to kubelet (kubelet piggy-backs on KAS client-ca)
-		&KubeletBootstrapCABundle{},            // used to create the kubelet kubeconfig files that are used to create CSRs
+		&KubeCA{},                         // TODO this should be removed once it never signs a client
+		&AdminKubeConfigCABundle{},        // admin.kubeconfig
+		&KubeletClientCABundle{},          // signed kubelet certs
+		&KubeControlPlaneCABundle{},       // controller-manager, scheduler
+		&KubeAPIServerToKubeletCABundle{}, // kube-apiserver to kubelet (kubelet piggy-backs on KAS client-ca)
+		&KubeletBootstrapCABundle{},       // used to create the kubelet kubeconfig files that are used to create CSRs
 	}
 }
 
