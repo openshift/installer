@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
@@ -31,6 +32,7 @@ import (
 	gcptfvars "github.com/openshift/installer/pkg/tfvars/gcp"
 	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
+	ovirttfvars "github.com/openshift/installer/pkg/tfvars/ovirt"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -40,6 +42,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/version"
 )
@@ -352,6 +355,29 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.BareMetal.ProvisioningBridge,
 			installConfig.Config.Platform.BareMetal.Hosts,
 			string(*rhcosImage),
+		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
+		}
+		t.FileList = append(t.FileList, &asset.File{
+			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Data:     data,
+		})
+	case ovirt.Name:
+		config, err := ovirtconfig.GetOvirtConfig()
+		if err != nil {
+			return err
+		}
+
+		data, err := ovirttfvars.TFVars(
+			config.URL,
+			config.Username,
+			config.Password,
+			config.CAFile,
+			installConfig.Config.Platform.Ovirt.ClusterID,
+			installConfig.Config.Platform.Ovirt.StorageDomainID,
+			string(*rhcosImage),
+			clusterID.InfraID,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

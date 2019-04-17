@@ -21,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -143,6 +144,13 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		}
 	case vsphere.Name:
 		config.Status.PlatformStatus.Type = configv1.VSpherePlatformType
+	case ovirt.Name:
+		config.Status.PlatformStatus.Type = configv1.OvirtPlatformType
+		config.Status.PlatformStatus.Ovirt = &configv1.OvirtPlatformStatus{
+			APIServerInternalIP: installConfig.Config.Ovirt.APIVIP,
+			NodeDNSIP:           installConfig.Config.Ovirt.DNSVIP,
+			IngressIP:           installConfig.Config.Ovirt.IngressVIP,
+		}
 	default:
 		config.Status.PlatformStatus.Type = configv1.NonePlatformType
 	}

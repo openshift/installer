@@ -11,6 +11,7 @@ import (
 	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
+	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -18,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -72,6 +74,19 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		_, err = azureconfig.GetSession()
 		if err != nil {
 			return errors.Wrap(err, "creating Azure session")
+		}
+	case ovirt.Name:
+		ovirtConfig, err := ovirtconfig.GetOvirtConfig()
+		if err != nil {
+			return errors.Wrap(err, "getting ovirt configuration")
+		}
+		con, err := ovirtconfig.GetConnection(ovirtConfig)
+		if err != nil {
+			return errors.Wrap(err, "establishing ovirt connection")
+		}
+		err = con.Test()
+		if err != nil {
+			return errors.Wrap(err, "testing ovirt connection")
 		}
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)

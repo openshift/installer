@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1beta1
 
 import (
 	"errors"
@@ -33,7 +33,7 @@ const GroupName = "ovirtclusterproviderconfig"
 
 var (
 	// SchemeGroupVersion is group version used to register these objects
-	SchemeGroupVersion = schema.GroupVersion{Group: fmt.Sprintf("%s.k8s.io", GroupName), Version: "v1alpha1"}
+	SchemeGroupVersion = schema.GroupVersion{Group: fmt.Sprintf("%s.machine.openshift.io", GroupName), Version: "v1beta1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}

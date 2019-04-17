@@ -3,6 +3,7 @@ package tls
 import (
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"github.com/openshift/installer/pkg/types/ovirt"
 	"net"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -54,6 +55,9 @@ func (a *MCSCertKey) Generate(dependencies asset.Parents) error {
 		}
 		cfg.IPAddresses = []net.IP{apiVIP}
 		cfg.DNSNames = []string{hostname, apiVIP.String()}
+	case ovirt.Name:
+		cfg.IPAddresses = []net.IP{net.ParseIP(installConfig.Config.Ovirt.APIVIP)}
+		cfg.DNSNames = []string{hostname, installConfig.Config.Ovirt.APIVIP}
 	default:
 		cfg.DNSNames = []string{hostname}
 	}

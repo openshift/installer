@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
@@ -20,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/openstack/validation/mock"
+	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -176,6 +178,13 @@ func validDualStackNetworkingConfig() *types.Networking {
 				HostPrefix: 28,
 			},
 		},
+	}
+}
+
+func validOvirtPlatform() *ovirt.Platform {
+	return &ovirt.Platform{
+		ClusterID:       uuid.NewRandom().String(),
+		StorageDomainID: uuid.NewRandom().String(),
 	}
 }
 
@@ -468,7 +477,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: "": must specify one of the platforms \(aws, azure, baremetal, gcp, none, openstack, vsphere\)$`,
+			expectedError: `^platform: Invalid value: "": must specify one of the platforms \(aws, azure, baremetal, gcp, none, openstack, ovirt, vsphere\)$`,
 		},
 		{
 			name: "multiple platforms",
@@ -499,7 +508,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: "libvirt": must specify one of the platforms \(aws, azure, baremetal, gcp, none, openstack, vsphere\)$`,
+			expectedError: `^platform: Invalid value: "libvirt": must specify one of the platforms \(aws, azure, baremetal, gcp, none, openstack, ovirt, vsphere\)$`,
 		},
 		{
 			name: "invalid libvirt platform",
@@ -511,7 +520,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.Libvirt.URI = ""
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: "libvirt": must specify one of the platforms \(aws, azure, baremetal, gcp, none, openstack, vsphere\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
+			expectedError: `^\[platform: Invalid value: "libvirt": must specify one of the platforms \(aws, azure, baremetal, gcp, none, openstack, ovirt, vsphere\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
 		},
 		{
 			name: "valid none platform",
@@ -883,6 +892,17 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `Invalid value: "DualStack": dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address`,
+		},
+
+		{
+			name: "valid ovirt platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Ovirt: validOvirtPlatform(),
+				}
+				return c
+			}(),
 		},
 	}
 	for _, tc := range cases {

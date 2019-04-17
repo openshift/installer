@@ -302,14 +302,20 @@ then
 	cp manifests/* /etc/mcc/bootstrap/
 	cp auth/kubeconfig-kubelet /etc/mcs/kubeconfig
 	cp mco-bootstrap/bootstrap/machineconfigoperator-bootstrap-pod.yaml /etc/kubernetes/manifests/
-	if [ -d mco-bootstrap/baremetal/manifests ]; then
-		cp mco-bootstrap/baremetal/manifests/* /etc/kubernetes/manifests/
-		cp --recursive mco-bootstrap/baremetal/static-pod-resources/* /etc/kubernetes/static-pod-resources/
-	fi
-	if [ -d mco-bootstrap/openstack/manifests ]; then
-		cp mco-bootstrap/openstack/manifests/* /etc/kubernetes/manifests/
-		cp --recursive mco-bootstrap/openstack/static-pod-resources/* /etc/kubernetes/static-pod-resources/
-	fi
+
+	copy_static_resources_for() {
+	  # copy static resources from mco based on platform folder
+	  local platform=$1
+	  if [ -d mco-bootstrap/${platform}/manifests ]; then
+	    cp mco-bootstrap/${platform}/manifests/* /etc/kubernetes/manifests/
+	    cp --recursive mco-bootstrap/${platform}/static-pod-resources/* /etc/kubernetes/static-pod-resources/
+	  fi
+	}
+
+	copy_static_resources_for baremetal
+	copy_static_resources_for openstack
+	copy_static_resources_for ovirt
+
 	cp mco-bootstrap/manifests/* manifests/
 
 	# /etc/ssl/mcs/tls.{crt, key} are locations for MachineConfigServer's tls assets.

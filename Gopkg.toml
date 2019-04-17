@@ -139,7 +139,7 @@ required = [
 
 [[constraint]]
   name = "github.com/ovirt/cluster-api-provider-ovirt"
-  revision = "289621fda7b8a07d59a31b1d3a378b801f0705a6"
+  revision ="6d813fcb29db90cfaa0a12f6713cd91d04583505"
 
 [[constraint]]
   name = "github.com/ovirt/go-ovirt"

@@ -15,6 +15,7 @@ import (
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
+	ovirtprovider "github.com/ovirt/cluster-api-provider-ovirt/pkg/apis"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -35,6 +36,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
+	"github.com/openshift/installer/pkg/asset/machines/ovirt"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
@@ -47,6 +49,7 @@ import (
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -99,6 +102,10 @@ func defaultOpenStackMachinePoolPlatform(flavor string) openstacktypes.MachinePo
 
 func defaultBareMetalMachinePoolPlatform() baremetaltypes.MachinePool {
 	return baremetaltypes.MachinePool{}
+}
+
+func defaultOvirtMachinePoolPlatform() ovirttypes.MachinePool {
+	return ovirttypes.MachinePool{}
 }
 
 // Worker generates the machinesets for `worker` machine pool.
@@ -287,6 +294,15 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
+		case ovirttypes.Name:
+			pool.Platform.Ovirt = &ovirttypes.MachinePool{}
+			sets, err := ovirt.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data")
+			if err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects for ovirt provider")
+			}
+			for _, set := range sets {
+				machineSets = append(machineSets, set)
+			}
 		case nonetypes.Name, vspheretypes.Name:
 		default:
 			return fmt.Errorf("invalid Platform")
@@ -369,6 +385,7 @@ func (w *Worker) MachineSets() ([]machineapi.MachineSet, error) {
 	gcpapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
+	ovirtprovider.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		awsprovider.SchemeGroupVersion,
 		azureprovider.SchemeGroupVersion,
