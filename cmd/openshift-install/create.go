@@ -269,40 +269,46 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 		return errors.Wrap(err, "waiting for Kubernetes API")
 	}
 
-	eventTimeout := 30 * time.Minute
-	logrus.Infof("Waiting up to %v for the bootstrap-complete event...", eventTimeout)
-	return waitForEvent(ctx, client.CoreV1().RESTClient(), "bootstrap-complete", eventTimeout)
+	return waitForBootstrapConfigMap(ctx, client)
 }
 
-// waitForEvent watches the events in the kube-system namespace, waits
-// for the event of the given name, and prints out all other events on
-// the way.
-func waitForEvent(ctx context.Context, client cache.Getter, name string, timeout time.Duration) error {
+// waitForBootstrapConfigMap watches the configmaps in the kube-system namespace
+// and waits for the bootstrap configmap to report that bootstrapping has
+// completed.
+func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset) error {
+	timeout := 30 * time.Minute
+	logrus.Infof("Waiting up to %v for bootstrapping to complete...", timeout)
+
 	waitCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	resource := "events"
-	namespace := "kube-system"
-
 	_, err := clientwatch.UntilWithSync(
 		waitCtx,
-		cache.NewListWatchFromClient(client, resource, namespace, fields.Everything()),
-		&corev1.Event{},
+		cache.NewListWatchFromClient(client.CoreV1().RESTClient(), "configmaps", "kube-system", fields.OneTermEqualSelector("metadata.name", "bootstrap")),
+		&corev1.ConfigMap{},
 		nil,
 		func(event watch.Event) (bool, error) {
-			ev, ok := event.Object.(*corev1.Event)
-			if !ok {
-				logrus.Warnf("Expected a core/v1.Event object but got a %q object instead", event.Object.GetObjectKind().GroupVersionKind())
+			switch event.Type {
+			case watch.Added, watch.Modified:
+			default:
 				return false, nil
 			}
-
-			logrus.Debugf("%s %s: %s", strings.ToLower(string(event.Type)), ev.Name, ev.Message)
-			found := ev.Name == name && (event.Type == watch.Added || event.Type == watch.Modified)
-			return found, nil
+			cm, ok := event.Object.(*corev1.ConfigMap)
+			if !ok {
+				logrus.Warnf("Expected a core/v1.ConfigMap object but got a %q object instead", event.Object.GetObjectKind().GroupVersionKind())
+				return false, nil
+			}
+			status, ok := cm.Data["status"]
+			if !ok {
+				logrus.Debugf("No status found in bootstrap configmap")
+				return false, nil
+			}
+			logrus.Debugf("Bootstrap status: %v", status)
+			return status == "complete", nil
 		},
 	)
 
-	return errors.Wrapf(err, "failed to wait for %s event", name)
+	return errors.Wrap(err, "failed to wait for bootstrapping to complete")
 }
 
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation

@@ -5,7 +5,7 @@ Wants=bootkube.service openshift.service
 After=bootkube.service openshift.service
 
 [Service]
-ExecStart=/usr/local/bin/report-progress.sh /opt/openshift/auth/kubeconfig bootstrap-complete "cluster bootstrapping has completed"
+ExecStart=/usr/local/bin/report-progress.sh /opt/openshift/auth/kubeconfig
 
 Restart=on-failure
 RestartSec=5s
