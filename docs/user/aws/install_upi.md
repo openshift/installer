@@ -6,17 +6,38 @@ resources through other methods; the CloudFormation templates are just an exampl
 
 ## Create Ignition Configs
 
-The machines will be started manually. Therefore, it is required to generate the bootstrap and machine Ignition configs
-and store them for later steps.
+The machines will be started manually.
+Therefore, it is required to generate the bootstrap and machine Ignition configs and store them for later steps.
+Use [a staged install](../overview.md#multiple-invocations) to remove the control-plane Machines and compute MachineSets, because we'll be providing those ourselves and don't want to involve [the machine-API operator][machine-api-operator].
 
 ```console
-$ openshift-install-linux-amd64 create ignition-configs
+$ openshift-install create install-config
 ? SSH Public Key /home/user_id/.ssh/id_rsa.pub
 ? Platform aws
-? Region us-east-1
+? Region us-east-2
 ? Base Domain example.com
 ? Cluster Name openshift
 ? Pull Secret [? for help]
+```
+
+Create manifests to get access to the control-plane Machines and compute MachineSets:
+
+```console
+$ openshift-install create manifests
+INFO Consuming "Install Config" from target directory
+```
+
+From the manifest assets, remove the control-plane Machines and the compute MachineSets:
+
+```console
+$ rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml openshift/99_openshift-cluster-api_worker-machinesets-*.yaml
+```
+
+You are free to leave the compute MachineSets in if you want to create compute machines via the machine API, but if you do you may need to update the various references (`subnet`, etc.) to match your environment.
+Now we can create the bootstrap Ignition configs:
+
+```console
+$ openshift-install create ignition-configs
 ```
 
 After running the command, several files will be available in the directory.
@@ -114,162 +135,35 @@ INFO Waiting up to 30m0s for the bootstrap-complete event...
 At this point, you should delete the bootstrap resources. If using the CloudFormation template, you would [delete the
 stack][delete-stack] created for the bootstrap to clean up all the temporary resources.
 
-## Cleanup Machine API Resources
+## Launch Additional Compute Nodes
 
-By querying the Machine API, you'll notice the cluster is attempting to reconcile the predefined
-Machine and MachineSet definitions. We will begin to correct that here. In this step, we delete
-the pre-defined master nodes. Our masters are not controlled by the Machine API.
-
-### Example: Deleting Master Machine Definitions
-
-```console
-$ export KUBECONFIG=auth/kubeconfig
-$ oc get machines --namespace openshift-machine-api
-NAME                                    INSTANCE   STATE     TYPE        REGION      ZONE         AGE
-test-tkh7l-master-0                                       m4.xlarge   us-east-2   us-east-2a   9m22s
-test-tkh7l-master-1                                       m4.xlarge   us-east-2   us-east-2b   9m22s
-test-tkh7l-master-2                                       m4.xlarge   us-east-2   us-east-2c   9m21s
-test-tkh7l-worker-us-east-2a-qjcxq                        m4.large    us-east-2   us-east-2a   8m6s
-test-tkh7l-worker-us-east-2b-nq8zs                        m4.large    us-east-2   us-east-2b   8m6s
-test-tkh7l-worker-us-east-2c-ww6c6                        m4.large    us-east-2   us-east-2c   8m7s
-$ oc delete machine --namespace openshift-machine-api test-tkh7l-master-0
-machine.machine.openshift.io "test-tkh7l-master-0" deleted
-$ oc delete machine --namespace openshift-machine-api test-tkh7l-master-1
-machine.machine.openshift.io "test-tkh7l-master-1" deleted
-$ oc delete machine --namespace openshift-machine-api test-tkh7l-master-2
-machine.machine.openshift.io "test-tkh7l-master-2" deleted
-```
-
-## Launch Additional Worker Nodes
-
-To launch workers, you are able to launch individual EC2 instances discretely or by automated processes outside the
-cluster (e.g. Auto Scaling Groups). However, you are also able to take advantage of the built in cluster scaling mechanisms
-and the machine API in OCP.
-
-### Option 1: Dynamic Compute using Machine API
-
-By default, MachineSets are created and will have failed to launch. We can correct the desired subnet filter,
-target security group, RHEL CoreOS AMI and EC2 instance profile.
-
-```console
-$ oc get machinesets --namespace openshift-machine-api
-NAME                           DESIRED   CURRENT   READY     AVAILABLE   AGE
-test-tkh7l-worker-us-east-2a   1         1                               11m
-test-tkh7l-worker-us-east-2b   1         1                               11m
-test-tkh7l-worker-us-east-2c   1         1                               11m
-```
-
-```console
-$ oc get machineset --namespace openshift-machine-api test-tkh7l-worker-us-east-2a -o yaml
-apiVersion: machine.openshift.io/v1beta1
-kind: MachineSet
-metadata:
-  creationTimestamp: 2019-03-14T14:03:03Z
-  generation: 1
-  labels:
-    machine.openshift.io/cluster-api-cluster: test-tkh7l
-    machine.openshift.io/cluster-api-machine-role: worker
-    machine.openshift.io/cluster-api-machine-type: worker
-  name: test-tkh7l-worker-us-east-2a
-  namespace: openshift-machine-api
-  resourceVersion: "2350"
-  selfLink: /apis/machine.openshift.io/v1beta1/namespaces/openshift-machine-api/machinesets/test-tkh7l-worker-us-east-2a
-  uid: e2a6c8a6-4661-11e9-a9b0-0296069fd3a2
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      machine.openshift.io/cluster-api-cluster: test-tkh7l
-      machine.openshift.io/cluster-api-machineset: test-tkh7l-worker-us-east-2a
-  template:
-    metadata:
-      creationTimestamp: null
-      labels:
-        machine.openshift.io/cluster-api-cluster: test-tkh7l
-        machine.openshift.io/cluster-api-machine-role: worker
-        machine.openshift.io/cluster-api-machine-type: worker
-        machine.openshift.io/cluster-api-machineset: test-tkh7l-worker-us-east-2a
-    spec:
-      metadata:
-        creationTimestamp: null
-      providerSpec:
-        value:
-          ami:
-            id: ami-0eecbb884c8b35b1e
-          apiVersion: awsproviderconfig.openshift.io/v1beta1
-          blockDevices:
-          - ebs:
-              iops: 0
-              volumeSize: 120
-              volumeType: gp2
-          credentialsSecret:
-            name: aws-cloud-credentials
-          deviceIndex: 0
-          iamInstanceProfile:
-            id: test-tkh7l-worker-profile
-          instanceType: m4.large
-          kind: AWSMachineProviderConfig
-          metadata:
-            creationTimestamp: null
-          placement:
-            availabilityZone: us-east-2a
-            region: us-east-2
-          publicIp: null
-          securityGroups:
-          - filters:
-            - name: tag:Name
-              values:
-              - test-tkh7l-worker-sg
-          subnet:
-            filters:
-            - name: tag:Name
-              values:
-              - test-tkh7l-private-us-east-2a
-          tags:
-          - name: kubernetes.io/cluster/test-tkh7l
-            value: owned
-          userDataSecret:
-            name: worker-user-data
-      versions:
-        kubelet: ""
-status:
-  fullyLabeledReplicas: 1
-  observedGeneration: 1
-  replicas: 1
-```
-
-At this point, you'd edit the YAML to update the relevant values to match your UPI installation.
-
-```console
-$ oc edit machineset --namespace openshift-machine-api test-tkh7l-worker-us-east-2a
-machineset.machine.openshift.io/test-tkh7l-worker-us-east-2a edited
-```
-
-Once the Machine API has a chance to reconcile and begin launching hosts with the correct attributes, you
-should start to see new output in your EC2 console and oc commands.
-
-```console
-$ oc get machines --namespace openshift-machine-api
-NAME                                 INSTANCE              STATE     TYPE         REGION      ZONE         AGE
-test-tkh7l-worker-us-east-2a-hxlqn   i-0e7f3a52b2919471e   pending   m4.4xlarge   us-east-2   us-east-2a   3s
-```
-
-### Option 2: Manually Launching Worker Instances
-
-The worker launch is provided within a CloudFormation template [here](../../../upi/aws/cloudformation/06_cluster_worker_node.yaml).
-You can launch a CloudFormation stack to manage each individual worker. A similar launch configuration could be used by
-outside automation or AWS auto scaling groups.
+You may create compute nodes by launching individual EC2 instances discretely or by automated processes outside the cluster (e.g. Auto Scaling Groups).
+You can also take advantage of the built in cluster scaling mechanisms and the machine API in OpenShift, as mentioned [above](#create-ignition-configs).
+In this example, we'll manually launch instances via the CloudFormatio template [here](../../../upi/aws/cloudformation/06_cluster_worker_node.yaml).
+You can launch a CloudFormation stack to manage each individual compute node (you should launch at least two for a high-availability ingress router).
+A similar launch configuration could be used by outside automation or AWS auto scaling groups.
 
 #### Approving the CSR requests for nodes
 
 The CSR requests for client and server certificates for nodes joining the cluster will need to be approved by the administrator.
+You can view them with:
+
+```console
+$ oc get csr
+NAME        AGE     REQUESTOR                                                                   CONDITION
+csr-8b2br   15m     system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
+csr-8vnps   15m     system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
+csr-b96j4   25s     system:node:ip-10-0-52-215.us-east-2.compute.internal                       Approved,Issued
+csr-bfd72   5m26s   system:node:ip-10-0-50-126.us-east-2.compute.internal                       Pending
+csr-c57lv   5m26s   system:node:ip-10-0-95-157.us-east-2.compute.internal                       Pending
+...
+```
 
 Administrators should carefully examine each CSR request and approve only the ones that belong to the nodes created by them.
-
-The CSR can be approved by using
+CSRs can be approved by name, for example:
 
 ```sh
-oc adm certificate approve <csr_name>
+oc adm certificate approve csr-bfd72
 ```
 
 ## Configure Router for UPI
@@ -343,3 +237,4 @@ openshift-service-catalog-controller-manager-operator   openshift-service-catalo
 
 [cloudformation]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html
 [delete-stack]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html
+[machine-api-operator]: https://github.com/openshift/machine-api-operator
