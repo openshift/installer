@@ -9,11 +9,10 @@ import (
 )
 
 const (
-	kubeSystemConfigmapEtcdServingCAFileName      = "kube-system-configmap-etcd-serving-ca.yaml.template"
 	openshiftConfigConfigmapEtcdServingCAFileName = "openshift-config-configmap-etcd-serving-ca.yaml.template"
 )
 
-var etcdServingCAFiles = []string{kubeSystemConfigmapEtcdServingCAFileName, openshiftConfigConfigmapEtcdServingCAFileName}
+var etcdServingCAFiles = []string{openshiftConfigConfigmapEtcdServingCAFileName}
 
 var _ asset.WritableAsset = (*KubeSystemConfigmapEtcdServingCA)(nil)
 

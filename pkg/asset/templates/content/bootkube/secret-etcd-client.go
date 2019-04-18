@@ -9,11 +9,10 @@ import (
 )
 
 const (
-	kubeSystemSecretEtcdClientFileName      = "kube-system-secret-etcd-client.yaml.template"
 	openshiftConfigSecretEtcdClientFileName = "openshift-config-secret-etcd-client.yaml.template"
 )
 
-var etcdClientCertFiles = []string{kubeSystemSecretEtcdClientFileName, openshiftConfigSecretEtcdClientFileName}
+var etcdClientCertFiles = []string{openshiftConfigSecretEtcdClientFileName}
 
 var _ asset.WritableAsset = (*KubeSystemSecretEtcdClient)(nil)
 
