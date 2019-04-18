@@ -96,6 +96,9 @@ var (
 
 				err = waitForBootstrapComplete(ctx, config, rootOpts.dir)
 				if err != nil {
+					if err2 := runGatherBootstrapCmd(rootOpts.dir); err2 != nil {
+						logrus.Error(err2)
+					}
 					logrus.Fatal(err)
 				}
 

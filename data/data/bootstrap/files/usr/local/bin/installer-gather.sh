@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-set -eo pipefail
 
-ARTIFACTS="${1:-/tmp/artifacts}"
+ARTIFACTS="/tmp/artifacts"
 
 echo "Gathering bootstrap journals ..."
 mkdir -p "${ARTIFACTS}/bootstrap/journals"
@@ -15,8 +14,8 @@ mkdir -p "${ARTIFACTS}/bootstrap/containers"
 sudo crictl ps --all --quiet | while read -r container
 do
     container_name="$(sudo crictl ps -a --id "${container}" -v | grep -oP "Name: \\K(.*)")"
-    sudo crictl logs "${container}" >& "${ARTIFACTS}/bootstrap/containers/${container_name}.log" || true
-    sudo crictl inspect "${container}" >& "${ARTIFACTS}/bootstrap/containers/${container_name}.inspect" || true
+    sudo crictl logs "${container}" >& "${ARTIFACTS}/bootstrap/containers/${container_name}.log"
+    sudo crictl inspect "${container}" >& "${ARTIFACTS}/bootstrap/containers/${container_name}.inspect"
 done
 mkdir -p "${ARTIFACTS}/bootstrap/pods"
 sudo podman ps --all --quiet | while read -r container
@@ -81,8 +80,9 @@ wait
 
 echo "Gather remote logs"
 export MASTERS=()
-if [ "$(stat --printf="%s" "${ARTIFACTS}/resources/masters.list")" -ne "0" ]
-then
+if [ "$#" -ne 0 ]; then
+    MASTERS=( "$@" )
+elif [ "$(stat --printf="%s" "${ARTIFACTS}/resources/masters.list")" -ne "0" ]; then
     # shellcheck disable=SC2030
     mapfile -t MASTERS < "${ARTIFACTS}/resources/masters.list"
 else
@@ -95,10 +95,10 @@ fi
 for master in "${MASTERS[@]}"
 do
   echo "Collecting info from ${master}"
-  scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null /usr/local/bin/installer-masters-gather.sh "core@${master}:" || true
+  scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null /usr/local/bin/installer-masters-gather.sh "core@${master}:"
   mkdir -p "${ARTIFACTS}/control-plane/${master}"
-  ssh -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null "core@${master}" -C 'sudo ./installer-masters-gather.sh' </dev/null  || true
-  ssh -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null "core@${master}" -C 'sudo tar c -C /tmp/artifacts/ .' </dev/null | tar -x -C "${ARTIFACTS}/control-plane/${master}/" || true
+  ssh -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null "core@${master}" -C 'sudo ./installer-masters-gather.sh' </dev/null
+  ssh -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null "core@${master}" -C 'sudo tar c -C /tmp/artifacts/ .' </dev/null | tar -x -C "${ARTIFACTS}/control-plane/${master}/"
 done
 tar cz -C /tmp/artifacts . > ~/log-bundle.tar.gz
 echo "Log bundle written to ~/log-bundle.tar.gz"
