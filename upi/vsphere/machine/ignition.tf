@@ -21,15 +21,15 @@ data "ignition_file" "static_ip" {
   count = "${var.instance_count}"
 
   filesystem = "root"
-  path       = "/etc/sysconfig/network-scripts/ifcfg-eth0"
+  path       = "/etc/sysconfig/network-scripts/ifcfg-ens192"
   mode       = "420"
 
   content {
     content = <<EOF
 TYPE=Ethernet
 BOOTPROTO=none
-NAME=eth0
-DEVICE=eth0
+NAME=ens192
+DEVICE=ens192
 ONBOOT=yes
 IPADDR=${local.ip_addresses[count.index]}
 PREFIX=${local.mask}
