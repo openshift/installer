@@ -52,6 +52,7 @@ func TestKubeconfigGenerate(t *testing.T) {
 		userName     string
 		filename     string
 		clientCert   tls.CertKeyInterface
+		apiURL       string
 		expectedData []byte
 	}{
 		{
@@ -59,10 +60,11 @@ func TestKubeconfigGenerate(t *testing.T) {
 			userName:   "admin",
 			filename:   "auth/kubeconfig",
 			clientCert: adminCert,
+			apiURL:     "https://api-int.test-cluster-name.test.example.com:6443",
 			expectedData: []byte(`clusters:
 - cluster:
     certificate-authority-data: VEhJUyBJUyBST09UIENBIENFUlQgREFUQQ==
-    server: https://api.test-cluster-name.test.example.com:6443
+    server: https://api-int.test-cluster-name.test.example.com:6443
   name: test-cluster-name
 contexts:
 - context:
@@ -83,10 +85,11 @@ users:
 			userName:   "kubelet",
 			filename:   "auth/kubeconfig-kubelet",
 			clientCert: kubeletCert,
+			apiURL:     "https://api-int.test-cluster-name.test.example.com:6443",
 			expectedData: []byte(`clusters:
 - cluster:
     certificate-authority-data: VEhJUyBJUyBST09UIENBIENFUlQgREFUQQ==
-    server: https://api.test-cluster-name.test.example.com:6443
+    server: https://api-int.test-cluster-name.test.example.com:6443
   name: test-cluster-name
 contexts:
 - context:
@@ -107,7 +110,7 @@ users:
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			kc := &kubeconfig{}
-			err := kc.generate(rootCA, tt.clientCert, installConfig, tt.userName, tt.filename)
+			err := kc.generate(rootCA, tt.clientCert, tt.apiURL, installConfig.GetName(), tt.userName, tt.filename)
 			assert.NoError(t, err, "unexpected error generating config")
 			actualFiles := kc.Files()
 			assert.Equal(t, 1, len(actualFiles), "unexpected number of files generated")
