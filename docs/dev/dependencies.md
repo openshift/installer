@@ -10,7 +10,7 @@ The following dependencies must be installed on your system before you can build
 sudo yum install golang-bin gcc-c++
 ```
 
-If you need support for [libvirt destroy](libvirt-howto.md#cleanup), you should also install `libvirt-devel`.
+If you need support for [libvirt destroy](libvirt/README.md#cleanup), you should also install `libvirt-devel`.
 
 ### Go
 

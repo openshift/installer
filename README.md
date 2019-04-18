@@ -3,7 +3,7 @@
 ## Supported Platforms
 
 * [AWS](docs/user/aws/README.md)
-* [Libvirt with KVM](docs/dev/libvirt-howto.md) (development only)
+* [Libvirt with KVM](docs/dev/libvirt/README.md) (development only)
 * [OpenStack (experimental)](docs/user/openstack/README.md)
 
 ## Quick Start

@@ -963,7 +963,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - etcd discovery now happens via `SRV` records.  On libvirt, this
   requires a new Terraform provider, so users with older providers
   should [install a newer
-  version](docs/dev/libvirt-howto.md#install-the-terraform-provider).
+  version](docs/dev/libvirt/README.md#install-the-terraform-provider).
   This also allows all masters to use a single Ignition file.
 - On AWS, the API and service load balancers have been changed from
   [classic load balancers][aws-elb] to [network load
@@ -1162,7 +1162,7 @@ The configuration and command-line interface are quite different, so
 previous `tectonic` users are encouraged to start from scratch when
 getting acquainted with `openshift-install`.  AWS users should look
 [here](README.md#quick-start).  Libvirt users should look
-[here](docs/dev/libvirt-howto.md).  The new `openshift-install` also
+[here](docs/dev/libvirt/README.md).  The new `openshift-install` also
 includes an interactive configuration generator, so you can launch the
 installer and follow along as it guides you through the process.
 
