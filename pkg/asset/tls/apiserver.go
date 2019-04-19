@@ -10,44 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// APIServerCertKey is the asset that generates the API server key/cert pair.
-// [DEPRECATED]
-type APIServerCertKey struct {
-	SignedCertKey
-}
-
-var _ asset.Asset = (*APIServerCertKey)(nil)
-
-// Dependencies returns the dependency of the the cert/key pair, which includes
-// the parent CA, and install config if it depends on the install config for
-// DNS names, etc.
-func (a *APIServerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{
-		&KubeCA{},
-		&installconfig.InstallConfig{},
-	}
-}
-
-// Generate generates the cert/key pair based on its dependencies.
-func (a *APIServerCertKey) Generate(dependencies asset.Parents) error {
-	kubeCA := &KubeCA{}
-	dependencies.Get(kubeCA)
-
-	cfg := &CertCfg{
-		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
-		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityTenYears,
-	}
-
-	return a.SignedCertKey.Generate(cfg, kubeCA, "apiserver", AppendParent)
-}
-
-// Name returns the human-friendly name of the asset.
-func (a *APIServerCertKey) Name() string {
-	return "Certificate (kube-apiaserver)"
-}
-
 // KubeAPIServerToKubeletSignerCertKey is a key/cert pair that signs the kube-apiserver to kubelet client certs.
 type KubeAPIServerToKubeletSignerCertKey struct {
 	SelfSignedCertKey
@@ -491,7 +453,6 @@ var _ asset.Asset = (*KubeAPIServerCompleteCABundle)(nil)
 // Dependencies returns the dependency of the cert bundle.
 func (a *KubeAPIServerCompleteCABundle) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&KubeCA{}, // TODO this should be removed once the KAS no longer serves with it
 		&KubeAPIServerLocalhostCABundle{},
 		&KubeAPIServerServiceNetworkCABundle{},
 		&KubeAPIServerLBCABundle{},
@@ -524,7 +485,6 @@ var _ asset.Asset = (*KubeAPIServerCompleteClientCABundle)(nil)
 // Dependencies returns the dependency of the cert bundle.
 func (a *KubeAPIServerCompleteClientCABundle) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&KubeCA{},                         // TODO this should be removed once it never signs a client
 		&AdminKubeConfigCABundle{},        // admin.kubeconfig
 		&KubeletClientCABundle{},          // signed kubelet certs
 		&KubeControlPlaneCABundle{},       // controller-manager, scheduler
