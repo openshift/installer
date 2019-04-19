@@ -41,8 +41,8 @@ resource "aws_lb_target_group" "api_internal" {
   ), var.tags)}"
 
   health_check {
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
     interval            = 10
     port                = 6443
     protocol            = "HTTPS"
@@ -63,8 +63,8 @@ resource "aws_lb_target_group" "api_external" {
   ), var.tags)}"
 
   health_check {
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
     interval            = 10
     port                = 6443
     protocol            = "HTTPS"
@@ -85,8 +85,8 @@ resource "aws_lb_target_group" "services" {
   ), var.tags)}"
 
   health_check {
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
     interval            = 10
     port                = 22623
     protocol            = "HTTPS"
