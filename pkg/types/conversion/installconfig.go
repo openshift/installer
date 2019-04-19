@@ -13,7 +13,7 @@ import (
 func ConvertInstallConfig(config *types.InstallConfig) error {
 	// check that the version is convertible
 	switch config.APIVersion {
-	case types.InstallConfigVersion, "v1beta3":
+	case types.InstallConfigVersion, "v1beta3", "v1beta4":
 		// works
 	default:
 		return errors.Errorf("cannot upconvert from version %s", config.APIVersion)

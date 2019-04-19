@@ -9,7 +9,7 @@
 The machine CIDR for the dev cluster is 139.178.89.192/26.
 
 ```
-apiVersion: v1beta4
+apiVersion: v1
 baseDomain: devcluster.openshift.com
 metadata:
   name: mstaeble
