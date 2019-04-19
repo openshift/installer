@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: etcd-serving-ca
-  namespace: kube-system
-data:
-  ca-bundle.crt: |
-    {{.EtcdCaCert | indent 4}}
