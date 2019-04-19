@@ -87,7 +87,7 @@ You must configure the network connectivity between machines to allow cluster co
 
 ### Connectivity during machine boot
 
-All the RHCOS machines require network in `initramfs` during boot to fetch Ignition config from the Machine Config Server [machine-config-server]. During the initial boot, the machines requires a DHCP server in order to establish a network connection to download their Ignition configs. After the initial boot, the machines can be configured to use a static IP address.
+All the RHCOS machines require network in `initramfs` during boot to fetch Ignition config from the Machine Config Server [machine-config-server]. During the initial boot, the machines requires a DHCP server in order to establish a network connection to download their Ignition configs. After the initial boot, the machines can be configured to use a static IP address, although it is recommended that you continue to use DHCP to configure IP addresses after the initial boot.
 
 ## DNS requirements
 
@@ -242,11 +242,88 @@ The Ignition config created by the OpenShift Installer cannot be used directly b
 ```
 ### Hostname
 
-TODO: Link to document on modifying the Ignition configs to set the hostnames.
+The hostname of each control plane and worker machine must be resolvable from all nodes within the cluster.
+
+Preferrably, the hostname will be set via DHCP. If you need to manually set a hostname, you can create a hostname file by adding an entry in the `.storage.files` list in an Ignition config.
+
+For example, the following Ignition config will create a hostname file that sets the hostname of a machine to `control-plane-0.
+
+```json
+{
+  "ignition": {
+    "config": {},
+    "timeouts": {},
+    "version": "2.1.0"
+  },
+  "networkd": {},
+  "passwd": {},
+  "storage": {
+    "files": [
+      {
+        "filesystem": "root",
+        "group": {},
+        "path": "/etc/hostname",
+        "user": {},
+        "contents": {
+          "source": "data:text/plain;charset=utf-8,control-plane-0",
+          "verification": {}
+        },
+        "mode": 420
+      }
+    ]
+  },
+  "systemd": {}
+}
+```
 
 ### Static IP Addresses
 
-TODO: Link to document on modifying the Ignition configs to set static IP addresses.
+Preferrably, the IP address for each machine will be set via DHCP. If you need to use a static IP address, you can be set one for a machine by creating an ifcfg file. You can create an ifcfg file by adding an entry in the `.storage.files` list in an Ignition config.
+
+For example, the following Ignition config will create an ifcfg file that sets the IP address of the ens192 device to 10.0.0.2.
+
+```json
+{
+  "ignition": {
+    "config": {},
+    "timeouts": {},
+    "version": "2.1.0"
+  },
+  "networkd": {},
+  "passwd": {},
+  "storage": {
+    "files": [
+      {
+        "filesystem": "root",
+        "group": {},
+        "path": "/etc/sysconfig/network-scripts/ifcfg-ens192",
+        "user": {},
+        "contents": {
+          "source": "data:text/plain;charset=utf-8;base64,VFlQRT1FdGhlcm5ldApCT09UUFJPVE89bm9uZQpOQU1FPWVuczE5MgpERVZJQ0U9ZW5zMTkyCk9OQk9PVD15ZXMKSVBfQUREUj0xMC4wLjAuMgpQUkVGSVg9MjQKR0FURVdBWT0xMC4wLjAuMQpET01BSU49bXlkb21haW4uY29tCkROUzE9OC44LjguOAo=",
+          "verification": {}
+        },
+        "mode": 420
+      }
+    ]
+  },
+  "systemd": {}
+}
+```
+
+The ifcfg file will have the following contents.
+
+```
+TYPE=Ethernet
+BOOTPROTO=none
+NAME=ens192
+DEVICE=ens192
+ONBOOT=yes
+IP_ADDR=10.0.0.2
+PREFIX=24
+GATEWAY=10.0.0.1
+DOMAIN=mydomain.com
+DNS1=8.8.8.8
+```
 
 ## Watching your installation
 
