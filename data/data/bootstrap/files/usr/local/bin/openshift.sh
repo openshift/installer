@@ -56,7 +56,7 @@ wait_for_pods() {
 }
 
 # Wait for Kubernetes pods
-wait_for_pods openshift-kube-apiserver
+wait_for_pods kube-system
 
 for file in $(find . -maxdepth 1 -type f | sort)
 do
