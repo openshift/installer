@@ -30,10 +30,10 @@ kubectl() {
 }
 
 wait_for_pods() {
-	echo "Waiting for pods in namespace $1..."
+	echo "Waiting for kube-apiserver pods in namespace $1..."
 	while true
 	do
-		out=$(kubectl --namespace "$1" get pods --output custom-columns=STATUS:.status.phase,NAME:.metadata.name --no-headers=true)
+		out=$(kubectl --namespace "$1" get pods --output custom-columns=STATUS:.status.phase,NAME:.metadata.name --no-headers=true | grep kube-apiserver)
 		echo "$out"
 
 		# make sure kubectl returns at least one status
@@ -56,7 +56,7 @@ wait_for_pods() {
 }
 
 # Wait for Kubernetes pods
-wait_for_pods kube-system
+wait_for_pods openshift-kube-apiserver
 
 for file in $(find . -maxdepth 1 -type f | sort)
 do
