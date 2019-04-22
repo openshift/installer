@@ -22,16 +22,17 @@ type kubeconfig struct {
 func (k *kubeconfig) generate(
 	ca tls.CertInterface,
 	clientCertKey tls.CertKeyInterface,
-	installConfig *types.InstallConfig,
+	apiURL string,
+	cluster string,
 	userName string,
 	kubeconfigPath string,
 ) error {
 	k.Config = &clientcmd.Config{
 		Clusters: []clientcmd.NamedCluster{
 			{
-				Name: installConfig.ObjectMeta.Name,
+				Name: cluster,
 				Cluster: clientcmd.Cluster{
-					Server: fmt.Sprintf("https://api.%s:6443", installConfig.ClusterDomain()),
+					Server: apiURL,
 					CertificateAuthorityData: ca.Cert(),
 				},
 			},
@@ -49,7 +50,7 @@ func (k *kubeconfig) generate(
 			{
 				Name: userName,
 				Context: clientcmd.Context{
-					Cluster:  installConfig.ObjectMeta.Name,
+					Cluster:  cluster,
 					AuthInfo: userName,
 				},
 			},
@@ -95,4 +96,12 @@ func (k *kubeconfig) load(f asset.FileFetcher, name string) (found bool, err err
 
 	k.File, k.Config = file, config
 	return true, nil
+}
+
+func getExtAPIServerURL(ic *types.InstallConfig) string {
+	return fmt.Sprintf("https://api.%s:6443", ic.ClusterDomain())
+}
+
+func getIntAPIServerURL(ic *types.InstallConfig) string {
+	return fmt.Sprintf("https://api-int.%s:6443", ic.ClusterDomain())
 }

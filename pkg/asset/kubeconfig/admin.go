@@ -38,7 +38,8 @@ func (k *AdminClient) Generate(parents asset.Parents) error {
 	return k.kubeconfig.generate(
 		ca,
 		clientCertKey,
-		installConfig.Config,
+		getExtAPIServerURL(installConfig.Config),
+		installConfig.Config.GetName(),
 		"admin",
 		kubeconfigAdminPath,
 	)

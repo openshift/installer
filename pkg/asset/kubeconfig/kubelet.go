@@ -38,7 +38,8 @@ func (k *Kubelet) Generate(parents asset.Parents) error {
 	return k.kubeconfig.generate(
 		ca,
 		clientcertkey,
-		installConfig.Config,
+		getIntAPIServerURL(installConfig.Config),
+		installConfig.Config.GetName(),
 		"kubelet",
 		kubeconfigKubeletPath,
 	)
