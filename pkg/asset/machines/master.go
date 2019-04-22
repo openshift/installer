@@ -15,6 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	awsapi "sigs.k8s.io/cluster-api-provider-aws/pkg/apis"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
+	azureapi "sigs.k8s.io/cluster-api-provider-azure/pkg/apis"
+	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1alpha1"
 	openstackapi "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
@@ -237,10 +239,12 @@ func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
 func (m *Master) Machines() ([]machineapi.Machine, error) {
 	scheme := runtime.NewScheme()
 	awsapi.AddToScheme(scheme)
+	azureapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		awsprovider.SchemeGroupVersion,
+		azureprovider.SchemeGroupVersion,
 		libvirtprovider.SchemeGroupVersion,
 		openstackprovider.SchemeGroupVersion,
 	)
