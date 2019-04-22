@@ -291,7 +291,7 @@ oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' |
 The Cluster Image Registry [Operator][cluster-image-registry-operator] does not pick an storage backend for `None` platform. Therefore, the cluster operator is will be stuck in progressing because it is waiting for administrator to [configure][cluster-image-registry-operator-configuration] a storage backend for the image-registry. You can pick `emptyDir` for non-production clusters by following:
 
 ```sh
-oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"filesystem":{"volumeSource": {"emptyDir":{}}}}}}'
+oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
 ```
 
 #### Monitoring cluster completion
