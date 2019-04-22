@@ -2,7 +2,6 @@
 
 aliases:
   installer-approvers:
-    - aaronlevy
     - abhinavdahiya
     - crawford
     - smarterclayton
@@ -10,7 +9,10 @@ aliases:
     - steveeJ
     - wking
   installer-reviewers:
-    - vikramsk
+    - jstuever
+    - mtnbikenc
+    - patrickdillon
+    - sdodson
   openstack-approvers:
     - flaper87
     - tomassedovic
