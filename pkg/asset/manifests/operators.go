@@ -70,9 +70,10 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&tls.MCSCertKey{},
 
 		&bootkube.CVOOverrides{},
-		&bootkube.EtcdServiceKubeSystem{},
-		&bootkube.HostEtcdServiceEndpointsKubeSystem{},
-		&bootkube.HostEtcdServiceKubeSystem{},
+		&bootkube.EtcdNamespaceOpenshiftEtcd{},
+		&bootkube.EtcdServiceOpenshiftEtcd{},
+		&bootkube.HostEtcdServiceEndpointsOpenshiftEtcd{},
+		&bootkube.HostEtcdServiceOpenshiftEtcd{},
 		&bootkube.KubeCloudConfig{},
 		&bootkube.KubeSystemConfigmapEtcdCA{},
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
@@ -191,9 +192,10 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	files := []*asset.File{}
 	for _, a := range []asset.WritableAsset{
 		&bootkube.CVOOverrides{},
-		&bootkube.EtcdServiceKubeSystem{},
-		&bootkube.HostEtcdServiceEndpointsKubeSystem{},
-		&bootkube.HostEtcdServiceKubeSystem{},
+		&bootkube.EtcdNamespaceOpenshiftEtcd{},
+		&bootkube.EtcdServiceOpenshiftEtcd{},
+		&bootkube.HostEtcdServiceEndpointsOpenshiftEtcd{},
+		&bootkube.HostEtcdServiceOpenshiftEtcd{},
 		&bootkube.KubeCloudConfig{},
 		&bootkube.KubeSystemConfigmapEtcdCA{},
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
