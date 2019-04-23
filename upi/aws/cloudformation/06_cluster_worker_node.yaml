@@ -118,5 +118,3 @@ Resources:
         Value: !Join ["-", [!Ref InfrastructureName, "worker"]]
       - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
         Value: "owned"
-      - Key: "clusterid"
-        Value: !Ref InfrastructureName
