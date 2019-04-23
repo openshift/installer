@@ -1,6 +1,7 @@
 ignored = [
   "github.com/libvirt/libvirt-go",
-  "github.com/hashicorp/terraform/*"
+  "github.com/hashicorp/terraform/*",
+  "golang.org/x/net*"
 ]
 
 [prune]
@@ -39,3 +40,15 @@ ignored = [
 [[override]]
   name = "github.com/gophercloud/gophercloud"
   revision = "0719c6b22f30132b0ae6c90b038e0d50992107b0"
+
+[[constraint]]
+  name = "github.com/terraform-providers/terraform-provider-azurerm"
+  version = "=1.25.0"
+
+[[override]]
+  name = "github.com/Azure/azure-sdk-for-go"
+  version = "26.7.0"
+
+[[override]]
+  name = "github.com/hashicorp/go-azure-helpers"
+  version = "0.3.2"

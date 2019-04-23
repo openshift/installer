@@ -666,7 +666,7 @@
   revision = "c20a0b1b1ea9eb8168bcdec0116688fa9254e449"
 
 [[projects]]
-  digest = "1:b13cb91eb10d3e42132f3a390a98e08ae890fa09351dd8b3a40cd24ad76d0587"
+  digest = "1:2d60db15d5ede876726bd1abba632a04fbf0a010e54a08e19bd052dd9e48c05e"
   name = "github.com/hashicorp/terraform"
   packages = [
     "backend",
@@ -704,6 +704,7 @@
     "config/module",
     "dag",
     "flatmap",
+    "helper/acctest",
     "helper/config",
     "helper/customdiff",
     "helper/encryption",
@@ -1163,35 +1164,17 @@
   revision = "70b957f3b65e069b4930ea94e2721eefa0f8f695"
 
 [[projects]]
-  digest = "1:8a12cbc891b7130d3f660f8a309e5c0b083f831e6ac38cdaa1f12e63c12d6bea"
+  digest = "1:a95288ef1ef4dfad6cba7fe30843e1683f71bc28c912ca1ba3f6a539d44db739"
   name = "golang.org/x/text"
   packages = [
-    "collate",
-    "collate/build",
-    "encoding",
-    "encoding/charmap",
-    "encoding/htmlindex",
-    "encoding/internal",
-    "encoding/internal/identifier",
-    "encoding/japanese",
-    "encoding/korean",
-    "encoding/simplifiedchinese",
-    "encoding/traditionalchinese",
-    "encoding/unicode",
-    "internal/colltab",
     "internal/gen",
     "internal/tag",
     "internal/triegen",
     "internal/ucd",
-    "internal/utf8internal",
     "language",
-    "runes",
-    "secure/bidirule",
     "transform",
-    "unicode/bidi",
     "unicode/cldr",
     "unicode/norm",
-    "unicode/rangetable",
   ]
   pruneopts = "NUT"
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
@@ -1305,6 +1288,7 @@
     "github.com/hashicorp/go-plugin",
     "github.com/hashicorp/logutils",
     "github.com/hashicorp/terraform/command",
+    "github.com/hashicorp/terraform/helper/acctest",
     "github.com/hashicorp/terraform/helper/logging",
     "github.com/mitchellh/cli",
   ]
