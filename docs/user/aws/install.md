@@ -56,9 +56,9 @@ The encryption uses the default EBS key for your target account and region
 (`aws kms describe-key --key-id alias/aws/ebs`).
 The encrypted AMI is deregistered by `destroy cluster`.
 
-The relationship of the EC2 instances, elastic load balancers (ELBs) and Route53 hosted zones is as depicted:
+An architecture diagram for the AWS elements created by the full installation is as depicted:
 
-![Architecture relationship of ELBs and instances](images/install_nodes_elbs.png)
+![Architecture relationship of ELBs and instances](images/install_upi.svg)
 
 The nodes within the VPC utilize the internal DNS and use the Router and Internal API load balancers. External/Internet
 access to the cluster use the Router and External API load balancers. Nodes are spread equally across 3 availability

@@ -73,7 +73,7 @@
     <ns0:rect height="136.766" style="fill: #ffffff" width="280" x="106.15" y="340" />
     <ns0:rect height="136.766" style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 20; stroke: #000000" width="280" x="106.15" y="340" />
   </ns0:g>
-  <ns0:use height="40" width="40" x="277.334" y="144.925" ns1:href="#Amazon-VPC_NAT-Gateway_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="246.15" y="169.925">
+  <ns0:use height="40" width="40" x="324.334" y="144.925" ns1:href="#Amazon-VPC_NAT-Gateway_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="246.15" y="169.925">
     <ns0:tspan x="246.15" y="169.925" />
   </ns0:text>
   <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="163.825" y="107.916">
@@ -85,8 +85,8 @@
   <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="246.15" y="169.925">
     <ns0:tspan x="246.15" y="169.925" />
   </ns0:text>
-  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="257.15" y="135.625">
-    <ns0:tspan x="257.15" y="135.625">NAT Gateway</ns0:tspan>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="297.15" y="135.625">
+    <ns0:tspan x="297.15" y="135.625">NAT Gateway</ns0:tspan>
   </ns0:text>
   <ns0:g>
     <ns0:rect height="153.25" style="fill: #ffffff" width="280" x="482.436" y="93.3" />
@@ -96,7 +96,7 @@
     <ns0:rect height="136.766" style="fill: #ffffff" width="280" x="482.436" y="337.8" />
     <ns0:rect height="136.766" style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 20; stroke: #000000" width="280" x="482.436" y="337.8" />
   </ns0:g>
-  <ns0:use height="40" width="40" x="660.62" y="145.925" ns1:href="#Amazon-VPC_NAT-Gateway_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="622.436" y="169.925">
+  <ns0:use height="40" width="40" x="691.62" y="145.925" ns1:href="#Amazon-VPC_NAT-Gateway_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="622.436" y="169.925">
     <ns0:tspan x="622.436" y="169.925" />
   </ns0:text>
   <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="539.11" y="108.716">
@@ -108,14 +108,14 @@
   <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="622.436" y="169.925">
     <ns0:tspan x="622.436" y="169.925" />
   </ns0:text>
-  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="637.436" y="135.425">
-    <ns0:tspan x="637.436" y="135.425">NAT Gateway</ns0:tspan>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="670.436" y="135.425">
+    <ns0:tspan x="670.436" y="135.425">NAT Gateway</ns0:tspan>
   </ns0:text>
   <ns0:g>
     <ns0:rect height="136.766" style="fill: #ffffff" width="280" x="840.036" y="336.6" />
     <ns0:rect height="136.766" style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 20; stroke: #000000" width="280" x="840.036" y="336.6" />
   </ns0:g>
-  <ns0:use height="40" width="40" x="1012.23" y="143.925" ns1:href="#Amazon-VPC_NAT-Gateway_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="980.036" y="169.925">
+  <ns0:use height="40" width="40" x="1056.23" y="145.925" ns1:href="#Amazon-VPC_NAT-Gateway_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="980.036" y="169.925">
     <ns0:tspan x="980.036" y="169.925" />
   </ns0:text>
   <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="897.71" y="108.516">
@@ -127,45 +127,45 @@
   <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="980.036" y="169.925">
     <ns0:tspan x="980.036" y="169.925" />
   </ns0:text>
-  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="991.036" y="135.225">
-    <ns0:tspan x="991.036" y="135.225">NAT Gateway</ns0:tspan>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1031.04" y="135.225">
+    <ns0:tspan x="1031.04" y="135.225">NAT Gateway</ns0:tspan>
   </ns0:text>
   <ns0:g>
     <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="1120.04" x2="1208.1" y1="169.925" y2="169.092" />
     <ns0:polygon points="1215.6,169.021 1205.65,174.116 1208.1,169.092 1205.55,164.116 " style="fill: #8b00ff" />
     <ns0:polygon points="1215.6,169.021 1205.65,174.116 1208.1,169.092 1205.55,164.116 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
   </ns0:g>
-  <ns0:use height="40" width="40" x="277.834" y="378" ns1:href="#Amazon-VPC_Router_light-bg.svg" /><ns0:use height="40" width="40" x="662.034" y="373.4" ns1:href="#Amazon-VPC_Router_light-bg.svg" /><ns0:use height="40" width="40" x="1012.23" y="370.8" ns1:href="#Amazon-VPC_Router_light-bg.svg" /><ns0:g>
-    <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="297.787" x2="297.402" y1="376" y2="196.661" />
-    <ns0:polygon points="297.386,189.161 302.407,199.15 297.402,196.661 292.407,199.172 " style="fill: #8b00ff" />
-    <ns0:polygon points="297.386,189.161 302.407,199.15 297.402,196.661 292.407,199.172 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+  <ns0:use height="40" width="40" x="324.834" y="388" ns1:href="#Amazon-VPC_Router_light-bg.svg" /><ns0:use height="40" width="40" x="693.034" y="385.4" ns1:href="#Amazon-VPC_Router_light-bg.svg" /><ns0:use height="40" width="40" x="1058.23" y="382.8" ns1:href="#Amazon-VPC_Router_light-bg.svg" /><ns0:g>
+    <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="344.789" x2="344.399" y1="386.013" y2="196.648" />
+    <ns0:polygon points="344.384,189.148 349.404,199.138 344.399,196.648 339.404,199.158 " style="fill: #8b00ff" />
+    <ns0:polygon points="344.384,189.148 349.404,199.138 344.399,196.648 339.404,199.158 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
   </ns0:g>
   <ns0:g>
-    <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="681.897" x2="680.817" y1="371.394" y2="197.667" />
-    <ns0:polygon points="680.771,190.167 685.833,200.136 680.817,197.667 675.833,200.198 " style="fill: #8b00ff" />
-    <ns0:polygon points="680.771,190.167 685.833,200.136 680.817,197.667 675.833,200.198 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+    <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="712.904" x2="711.807" y1="383.402" y2="197.659" />
+    <ns0:polygon points="711.763,190.159 716.822,200.129 711.807,197.659 706.822,200.188 " style="fill: #8b00ff" />
+    <ns0:polygon points="711.763,190.159 716.822,200.129 711.807,197.659 706.822,200.188 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
   </ns0:g>
   <ns0:g>
-    <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="1032.23" x2="1032.23" y1="368.797" y2="195.665" />
-    <ns0:polygon points="1032.23,188.165 1037.23,198.165 1032.23,195.665 1027.23,198.165 " style="fill: #8b00ff" />
-    <ns0:polygon points="1032.23,188.165 1037.23,198.165 1032.23,195.665 1027.23,198.165 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+    <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="1078.04" x2="1076.5" y1="380.81" y2="197.651" />
+    <ns0:polygon points="1076.43,190.151 1081.52,200.109 1076.5,197.651 1071.52,200.193 " style="fill: #8b00ff" />
+    <ns0:polygon points="1076.43,190.151 1081.52,200.109 1076.5,197.651 1071.52,200.193 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
   </ns0:g>
   <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="387.119" x2="481.467" y1="169.925" y2="169.925" />
   <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" x1="763.444" x2="839.028" y1="169.925" y2="169.925" />
   <ns0:g>
-    <ns0:polyline points="1032.23,368.801 1032.23,323 1238.83,323 1238.83,293.732 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+    <ns0:polyline points="1078.23,380.804 1078.23,323 1238.83,323 1238.83,293.732 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
     <ns0:polygon points="1238.83,286.232 1243.83,296.232 1238.83,293.732 1233.83,296.232 " style="fill: #8b00ff" />
     <ns0:polygon points="1238.83,286.232 1243.83,296.232 1238.83,293.732 1233.83,296.232 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
   </ns0:g>
   <ns0:g>
-    <ns0:polyline points="682.034,371.391 682.034,323 1238.83,323 1238.83,293.732 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+    <ns0:polyline points="713.034,383.412 713.034,323 1238.83,323 1238.83,293.732 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
     <ns0:polygon points="1238.83,286.232 1243.83,296.232 1238.83,293.732 1233.83,296.232 " style="fill: #8b00ff" />
     <ns0:polygon points="1238.83,286.232 1243.83,296.232 1238.83,293.732 1233.83,296.232 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
   </ns0:g>
   <ns0:g>
-    <ns0:polyline points="297.834,376.009 297.834,323 1238.83,323 1238.83,293.732 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
-    <ns0:polygon points="1238.83,286.232 1243.83,296.232 1238.83,293.732 1233.83,296.232 " style="fill: #8b00ff" />
-    <ns0:polygon points="1238.83,286.232 1243.83,296.232 1238.83,293.732 1233.83,296.232 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+    <ns0:polyline points="344.834,385.994 344.834,323.004 1238.83,323.004 1238.83,293.734 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
+    <ns0:polygon points="1238.83,286.234 1243.83,296.234 1238.83,293.734 1233.83,296.234 " style="fill: #8b00ff" />
+    <ns0:polygon points="1238.83,286.234 1243.83,296.234 1238.83,293.734 1233.83,296.234 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
   </ns0:g>
   <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="898.834" y="103">
     <ns0:tspan x="898.834" y="103" />
