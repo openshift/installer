@@ -31,6 +31,8 @@ RUN yum install --setopt=tsflags=nodocs -y \
 ENV TERRAFORM_VERSION=0.11.11
 RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /bin/
 
+RUN curl -L -O https://github.com/vmware/govmomi/releases/download/v0.20.0/govc_linux_amd64.gz && gzip -d govc_linux_amd64.gz && chmod +x govc_linux_amd64 && mv govc_linux_amd64 /bin/govc
+
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
 ENV PATH /bin
