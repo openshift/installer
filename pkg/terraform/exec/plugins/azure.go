@@ -6,10 +6,10 @@ import (
 )
 
 func init() {
-	exec := func() {
+	azurermProvider := func() {
 		plugin.Serve(&plugin.ServeOpts{
 			ProviderFunc: azurerm.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-azurerm"] = exec
+	KnownPlugins["terraform-provider-azurerm"] = azurermProvider
 }

@@ -359,6 +359,14 @@
   revision = "2ad0228349b2d3b487a2ada25d1a0eb40d73b7d1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:aa68b3bef22149ebfeb6e74d90792b22df1813d5acdf1932bf58a0af9598700e"
+  name = "github.com/dustinkirkland/golang-petname"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "d3c2ba80e75eeef10c5cf2fc76d2c809637376b3"
+
+[[projects]]
   digest = "1:a1b2a5e38f79688ee8250942d5fa960525fceb1024c855c7bc76fa77b0f3cca2"
   name = "github.com/gogo/protobuf"
   packages = [
@@ -730,12 +738,28 @@
   version = "v1.0.1"
 
 [[projects]]
+  digest = "1:bfecd0df078f00879e6f426baeb1a27e8f47fc94ad2ace6bc4be99bc13af7cfa"
+  name = "github.com/terraform-providers/terraform-provider-local"
+  packages = ["local"]
+  pruneopts = "NUT"
+  revision = "e0020eeb03638f35e374e9132271c1683231077e"
+  version = "v1.2.1"
+
+[[projects]]
   digest = "1:08d640f9d1ab3f57c30971280a3d02f868447a152e99c477d520d0e0c90e66f2"
   name = "github.com/terraform-providers/terraform-provider-openstack"
   packages = ["openstack"]
   pruneopts = "NUT"
   revision = "508765e66992e6c813f4ca7762d6e94c32379754"
   version = "v1.12.0"
+
+[[projects]]
+  digest = "1:31a7f8bae17ec284242aa6c319a5119619342ec8ecc7984214d04b4efb4860c4"
+  name = "github.com/terraform-providers/terraform-provider-random"
+  packages = ["random"]
+  pruneopts = "NUT"
+  revision = "3e67922aa0c67bae7b11d523175334f3dd3e1983"
+  version = "v2.1.1"
 
 [[projects]]
   branch = "master"
@@ -933,7 +957,9 @@
     "github.com/terraform-providers/terraform-provider-aws/aws",
     "github.com/terraform-providers/terraform-provider-azurerm/azurerm",
     "github.com/terraform-providers/terraform-provider-ignition/ignition",
+    "github.com/terraform-providers/terraform-provider-local/local",
     "github.com/terraform-providers/terraform-provider-openstack/openstack",
+    "github.com/terraform-providers/terraform-provider-random/random",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
