@@ -132,6 +132,15 @@ Resources:
         AliasTarget:
           HostedZoneId: !GetAtt IntApiElb.CanonicalHostedZoneID
           DNSName: !GetAtt IntApiElb.DNSName
+      - Name:
+          !Join [
+            ".",
+            ["api-int", !Ref ClusterName, !Join ["", [!Ref HostedZoneName, "."]]],
+          ]
+        Type: A
+        AliasTarget:
+          HostedZoneId: !GetAtt IntApiElb.CanonicalHostedZoneID
+          DNSName: !GetAtt IntApiElb.DNSName
 
   ExternalApiListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -356,7 +365,7 @@ Outputs:
     Value: !GetAtt IntApiElb.LoadBalancerFullName
   ApiServerDnsName:
     Description: Full hostname of the API server - Needed for ignition configs
-    Value: !Join [".", ["api", !Ref ClusterName, !Ref HostedZoneName]]
+    Value: !Join [".", ["api-int", !Ref ClusterName, !Ref HostedZoneName]]
   RegisterNlbIpTargetsLambda:
     Description: Lambda ARN useful to help register/deregister IP targets for these load balancers
     Value: !GetAtt RegisterNlbIpTargets.Arn

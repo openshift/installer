@@ -38,7 +38,7 @@ Parameters:
     Description: The master security group ID to associate with master nodes.
     Type: AWS::EC2::SecurityGroup::Id
   IgnitionLocation:
-    Default: https://api.$CLUSTER_NAME.$DOMAIN:22623/config/master
+    Default: https://api-int.$CLUSTER_NAME.$DOMAIN:22623/config/master
     Description: Location to fetch bootstrap ignition from. (Recommend to use the autocreated ignition config location.)
     Type: String
   CertificateAuthorities:

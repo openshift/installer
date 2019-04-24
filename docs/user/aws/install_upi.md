@@ -97,8 +97,8 @@ external to the cluster and nodes within the cluster. Port 22623 must be accessi
 
 ### Optional: Manually Create Route53 Hosted Zones & Records
 
-For the cluster name identified earlier in [Create Ignition Configs](#create-ignition-configs), you must create a DNS
-entry which resolves to your created load balancer. The entry `api.$clustername.$domain` should point to the load balancer.
+For the cluster name identified earlier in [Create Ignition Configs](#create-ignition-configs), you must create a DNS entry which resolves to your created load balancer.
+The entry `api.$clustername.$domain` should point to the external load balancer and `api-int.$clustername.$domain` should point to the internal load balancer.
 
 ## Create Security Groups and IAM Roles
 
