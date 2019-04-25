@@ -66,6 +66,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&tls.EtcdSignerClientCertKey{},
 		&tls.EtcdClientCertKey{},
 		&tls.EtcdMetricCABundle{},
+		&tls.EtcdMetricSignerCertKey{},
 		&tls.EtcdMetricSignerClientCertKey{},
 		&tls.MCSCertKey{},
 
@@ -76,6 +77,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.EtcdHostService{},
 		&bootkube.EtcdMetricClientSecret{},
 		&bootkube.EtcdMetricServingCAConfigMap{},
+		&bootkube.EtcdMetricSignerSecret{},
 		&bootkube.EtcdNamespace{},
 		&bootkube.EtcdService{},
 		&bootkube.EtcdSignerClientSecret{},
@@ -142,6 +144,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	etcdClientCertKey := &tls.EtcdClientCertKey{}
 	etcdMetricCABundle := &tls.EtcdMetricCABundle{}
 	etcdMetricSignerClientCertKey := &tls.EtcdMetricSignerClientCertKey{}
+	etcdMetricSignerCertKey := &tls.EtcdMetricSignerCertKey{}
 	rootCA := &tls.RootCA{}
 	etcdSignerCertKey := &tls.EtcdSignerCertKey{}
 	etcdCABundle := &tls.EtcdCABundle{}
@@ -156,6 +159,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		etcdClientCertKey,
 		etcdMetricCABundle,
 		etcdMetricSignerClientCertKey,
+		etcdMetricSignerCertKey,
 		mcsCertKey,
 		rootCA,
 	)
@@ -166,26 +170,28 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	}
 
 	templateData := &bootkubeTemplateData{
-		CVOClusterID:          clusterID.UUID,
-		EtcdCaBundle:          base64.StdEncoding.EncodeToString(etcdCABundle.Cert()),
-		EtcdCaCert:            string(etcdCA.Cert()),
-		EtcdClientCaCert:      base64.StdEncoding.EncodeToString(etcdCA.Cert()),
-		EtcdClientCaKey:       base64.StdEncoding.EncodeToString(etcdCA.Key()),
-		EtcdClientCert:        base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
-		EtcdClientKey:         base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
-		EtcdEndpointDNSSuffix: installConfig.Config.ClusterDomain(),
-		EtcdEndpointHostnames: etcdEndpointHostnames,
-		EtcdMetricCaCert:      string(etcdMetricCABundle.Cert()),
-		EtcdMetricClientCert:  base64.StdEncoding.EncodeToString(etcdMetricSignerClientCertKey.Cert()),
-		EtcdMetricClientKey:   base64.StdEncoding.EncodeToString(etcdMetricSignerClientCertKey.Key()),
-		EtcdSignerCert:        base64.StdEncoding.EncodeToString(etcdSignerCertKey.Cert()),
-		EtcdSignerClientCert:  base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Cert()),
-		EtcdSignerClientKey:   base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Key()),
-		EtcdSignerKey:         base64.StdEncoding.EncodeToString(etcdSignerCertKey.Key()),
-		McsTLSCert:            base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
-		McsTLSKey:             base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
-		PullSecretBase64:      base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
-		RootCaCert:            string(rootCA.Cert()),
+		CVOClusterID:               clusterID.UUID,
+		EtcdCaBundle:               base64.StdEncoding.EncodeToString(etcdCABundle.Cert()),
+		EtcdCaCert:                 string(etcdCA.Cert()),
+		EtcdClientCaCert:           base64.StdEncoding.EncodeToString(etcdCA.Cert()),
+		EtcdClientCaKey:            base64.StdEncoding.EncodeToString(etcdCA.Key()),
+		EtcdClientCert:             base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
+		EtcdClientKey:              base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
+		EtcdEndpointDNSSuffix:      installConfig.Config.ClusterDomain(),
+		EtcdEndpointHostnames:      etcdEndpointHostnames,
+		EtcdMetricCaCert:           string(etcdMetricCABundle.Cert()),
+		EtcdMetricSignerCert:       base64.StdEncoding.EncodeToString(etcdMetricSignerCertKey.Cert()),
+		EtcdMetricSignerClientCert: base64.StdEncoding.EncodeToString(etcdMetricSignerClientCertKey.Cert()),
+		EtcdMetricSignerClientKey:  base64.StdEncoding.EncodeToString(etcdMetricSignerClientCertKey.Key()),
+		EtcdMetricSignerKey:        base64.StdEncoding.EncodeToString(etcdMetricSignerCertKey.Key()),
+		EtcdSignerCert:             base64.StdEncoding.EncodeToString(etcdSignerCertKey.Cert()),
+		EtcdSignerClientCert:       base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Cert()),
+		EtcdSignerClientKey:        base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Key()),
+		EtcdSignerKey:              base64.StdEncoding.EncodeToString(etcdSignerCertKey.Key()),
+		McsTLSCert:                 base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
+		McsTLSKey:                  base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
+		PullSecretBase64:           base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
+		RootCaCert:                 string(rootCA.Cert()),
 	}
 
 	files := []*asset.File{}
@@ -196,6 +202,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		&bootkube.EtcdHostServiceEndpoints{},
 		&bootkube.EtcdHostService{},
 		&bootkube.EtcdMetricClientSecret{},
+		&bootkube.EtcdMetricSignerSecret{},
 		&bootkube.EtcdMetricServingCAConfigMap{},
 		&bootkube.EtcdNamespace{},
 		&bootkube.EtcdService{},
