@@ -37,27 +37,29 @@ type cloudCredsSecretData struct {
 }
 
 type bootkubeTemplateData struct {
-	CVOClusterID          string
-	EtcdCaBundle          string
-	EtcdCaCert            string
-	EtcdClientCaCert      string
-	EtcdClientCaKey       string
-	EtcdClientCert        string
-	EtcdClientKey         string
-	EtcdEndpointDNSSuffix string
-	EtcdEndpointHostnames []string
-	EtcdMetricCaCert      string
-	EtcdMetricClientCert  string
-	EtcdMetricClientKey   string
-	EtcdSignerCert        string
-	EtcdSignerClientCert  string
-	EtcdSignerClientKey   string
-	EtcdSignerKey         string
-	McsTLSCert            string
-	McsTLSKey             string
-	PullSecretBase64      string
-	RootCaCert            string
-	WorkerIgnConfig       string
+	CVOClusterID               string
+	EtcdCaBundle               string
+	EtcdCaCert                 string
+	EtcdClientCaCert           string
+	EtcdClientCaKey            string
+	EtcdClientCert             string
+	EtcdClientKey              string
+	EtcdEndpointDNSSuffix      string
+	EtcdEndpointHostnames      []string
+	EtcdMetricCaCert           string
+	EtcdMetricSignerCert       string
+	EtcdMetricSignerClientCert string
+	EtcdMetricSignerClientKey  string
+	EtcdMetricSignerKey        string
+	EtcdSignerCert             string
+	EtcdSignerClientCert       string
+	EtcdSignerClientKey        string
+	EtcdSignerKey              string
+	McsTLSCert                 string
+	McsTLSKey                  string
+	PullSecretBase64           string
+	RootCaCert                 string
+	WorkerIgnConfig            string
 }
 
 type openshiftTemplateData struct {

@@ -43,6 +43,7 @@ var (
 		&bootkube.EtcdService{},
 		&bootkube.EtcdHostService{},
 		&bootkube.EtcdMetricClientSecret{},
+		&bootkube.EtcdMetricSignerSecret{},
 		&bootkube.EtcdMetricServingCAConfigMap{},
 		&bootkube.OpenshiftConfigSecretPullSecret{},
 		&openshift.BindingDiscovery{},
