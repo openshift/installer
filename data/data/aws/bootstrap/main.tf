@@ -140,6 +140,10 @@ resource "aws_lb_target_group_attachment" "bootstrap" {
 resource "aws_security_group" "bootstrap" {
   vpc_id = "${var.vpc_id}"
 
+  timeouts {
+    create = "20m"
+  }
+
   tags = "${merge(map(
     "Name", "${var.cluster_id}-bootstrap-sg",
   ), var.tags)}"

@@ -13,6 +13,10 @@ resource "aws_route" "to_nat_gw" {
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id         = "${element(aws_nat_gateway.nat_gw.*.id, count.index)}"
   depends_on             = ["aws_route_table.private_routes"]
+
+  timeouts {
+    create = "20m"
+  }
 }
 
 resource "aws_subnet" "private_subnet" {
