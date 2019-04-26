@@ -1,7 +1,7 @@
 variable "addresses" {
   type        = "list"
   default     = []
-  description = "IP addresses to assign to the boostrap node."
+  description = "IP addresses to assign to the bootstrap node."
 }
 
 variable "base_volume_id" {
