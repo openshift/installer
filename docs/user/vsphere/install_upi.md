@@ -71,8 +71,6 @@ You must configure the network connectivity between machines to allow cluster co
 
     As the etcd members are located on the control plane machines, each control plane machine requires connectivity to [etcd server][etcd-ports], [etcd peer][etcd-ports] and [etcd-metrics][etcd-ports] on every other control plane machine.
 
-    All the worker machines should have connectivity to [etcd server][etcd-ports] and [etcd-metrics][etcd-ports] ports on the control plane machines.
-
 * OpenShift SDN
 
     All the machines require connectivity to certain reserved ports on every other machine to establish in-cluster networking. For more details refer [doc][snd-ports].
