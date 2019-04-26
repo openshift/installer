@@ -3,6 +3,10 @@ ignored = [
   "golang.org/x/net*"
 ]
 
+required = [
+  "github.com/hashicorp/terraform/helper/acctest"
+]
+
 [prune]
   go-tests = true
   unused-packages = true

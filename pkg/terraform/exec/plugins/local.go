@@ -1,0 +1,15 @@
+package plugins
+
+import (
+	"github.com/hashicorp/terraform/plugin"
+	"github.com/terraform-providers/terraform-provider-local/local"
+)
+
+func init() {
+	localProvider := func() {
+		plugin.Serve(&plugin.ServeOpts{
+			ProviderFunc: local.Provider,
+		})
+	}
+	KnownPlugins["terraform-provider-local"] = localProvider
+}
