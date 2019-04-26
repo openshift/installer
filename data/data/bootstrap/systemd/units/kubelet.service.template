@@ -5,6 +5,7 @@ Wants=rpc-statd.service
 [Service]
 Type=notify
 ExecStartPre=/bin/mkdir --parents /etc/kubernetes/manifests
+ExecStartPre=/bin/mkdir --parents /etc/kubernetes/kubelet-plugins/volume/exec
 Environment=KUBELET_RUNTIME_REQUEST_TIMEOUT=10m
 EnvironmentFile=-/etc/kubernetes/kubelet-env
 
@@ -20,6 +21,7 @@ ExecStart=/usr/bin/hyperkube \
     --cgroup-driver=systemd \
     --serialize-image-pulls=false \
     --v=2 \
+    --volume-plugin-dir=/etc/kubernetes/kubelet-plugins/volume/exec \
 
 Restart=always
 RestartSec=10
