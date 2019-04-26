@@ -278,7 +278,7 @@ podman run \
 	--volume /etc/kubernetes:/etc/kubernetes:z \
 	--network=host \
 	"${CLUSTER_BOOTSTRAP_IMAGE}" \
-	start --asset-dir=/assets --required-pods="kube-apiserver:openshift-kube-apiserver/openshift-kube-apiserver|openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,kube-controller-manager:openshift-kube-controller-manager/openshift-kube-controller-manager|openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
+	start --asset-dir=/assets --required-pods="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
