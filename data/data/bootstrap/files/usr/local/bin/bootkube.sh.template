@@ -232,6 +232,8 @@ podman run \
 	--cakey=/opt/openshift/tls/etcd-client-ca.key \
 	--metric-cacrt=/opt/openshift/tls/etcd-metric-signer.crt \
 	--metric-cakey=/opt/openshift/tls/etcd-metric-signer.key \
+	--servcrt=/opt/openshift/tls/kube-apiserver-lb-server.crt \
+	--servkey=/opt/openshift/tls/kube-apiserver-lb-server.key \
 	--servcrt=/opt/openshift/tls/kube-apiserver-internal-lb-server.crt \
 	--servkey=/opt/openshift/tls/kube-apiserver-internal-lb-server.key \
 	--address=0.0.0.0:6443 \
