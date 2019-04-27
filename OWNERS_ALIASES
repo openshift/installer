@@ -13,6 +13,12 @@ aliases:
     - mtnbikenc
     - patrickdillon
     - sdodson
+  libvirt-approvers:
+    - abhinavdahiya
+    - enxebre
+    - praveenkumar
+    - zeenix
+  libvirt-reviewers:
   openstack-approvers:
     - flaper87
     - tomassedovic
