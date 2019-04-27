@@ -208,14 +208,17 @@ This step allows installer and users to resolve cluster-internal hostnames from 
 3. Reload NetworkManager to pick up the `dns` configuration change: `sudo systemctl reload NetworkManager`
 
 
-## Build and run the installer
+## Build the installer
 
-With [libvirt configured](#install-and-enable-libvirt), you can proceed with [the usual quick-start](../../README.md#quick-start).
-Set `TAGS=libvirt` to add support for libvirt; this is not enabled by default because libvirt is [development only](../../README.md#supported-platforms).
+Set `TAGS=libvirt` to add support for libvirt; this is not enabled by default because libvirt is [development only](../../../README.md#supported-platforms).
 
 ```sh
 TAGS=libvirt hack/build.sh
 ```
+
+## Run the installer
+
+With [libvirt configured](#install-and-enable-libvirt), you can proceed with [the usual quick-start](../../../README.md#quick-start).
 
 ## Cleanup
 
@@ -225,7 +228,7 @@ To remove resources associated with your cluster, run:
 openshift-install destroy cluster
 ```
 
-You can also use [`virsh-cleanup.sh`](../../scripts/maintenance/virsh-cleanup.sh), but note that it will currently destroy *all* libvirt resources.
+You can also use [`virsh-cleanup.sh`](../../../scripts/maintenance/virsh-cleanup.sh), but note that it will currently destroy *all* libvirt resources.
 
 ### Firewall
 
@@ -259,11 +262,11 @@ virsh -c "${LIBVIRT_URI}" domifaddr "${CLUSTER_NAME}-master-0"  # to get the mas
 ssh core@$MASTER_IP
 ```
 
-Here `LIBVIRT_URI` is the libvirt connection URI which you [passed to the installer](../../README.md#quick-start).
+Here `LIBVIRT_URI` is the libvirt connection URI which you [passed to the installer](../../../README.md#quick-start).
 
 ### Inspect the cluster with kubectl
 
-You'll need a `kubectl` binary on your path and [the kubeconfig from your `cluster` call](../../README.md#kubeconfig).
+You'll need a `kubectl` binary on your path and [the kubeconfig from your `cluster` call](../../../README.md#connect-to-the-cluster).
 
 ```sh
 export KUBECONFIG="${DIR}/auth/kubeconfig"
