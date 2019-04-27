@@ -1,6 +1,6 @@
 # This Dockerfile is a used by CI to test a libvirt cluster launched in a gce instance
 # It builds an image containing google-cloud-sdk, ns_wrapper and scripts to launch a VM for a libvirt install.
-FROM openshift/origin-release:golang-1.10 AS build
+FROM registry.svc.ci.openshift.org/openshift/release:golang-1.10 AS builder
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN TAGS=libvirt hack/build.sh

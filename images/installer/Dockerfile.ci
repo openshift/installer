@@ -1,4 +1,4 @@
-# This Dockerfile is a used by CI to publish openshift/origin-v4.0:installer
+# This Dockerfile is used by CI to publish the installer image.
 # It builds an image containing only the openshift-install.
 
 FROM registry.svc.ci.openshift.org/openshift/release:golang-1.10 AS builder
@@ -7,7 +7,7 @@ COPY . .
 RUN hack/build.sh
 
 
-FROM registry.svc.ci.openshift.org/openshift/origin-v4.0:base
+FROM registry.svc.ci.openshift.org/origin/4.1:base
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
