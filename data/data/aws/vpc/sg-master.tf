@@ -1,6 +1,10 @@
 resource "aws_security_group" "master" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
+  timeouts {
+    create = "20m"
+  }
+
   tags = "${merge(map(
     "Name", "${var.cluster_id}-master-sg",
   ), var.tags)}"

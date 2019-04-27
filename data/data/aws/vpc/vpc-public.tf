@@ -23,6 +23,10 @@ resource "aws_route" "igw_route" {
   destination_cidr_block = "0.0.0.0/0"
   route_table_id         = "${aws_route_table.default.id}"
   gateway_id             = "${aws_internet_gateway.igw.id}"
+
+  timeouts {
+    create = "20m"
+  }
 }
 
 resource "aws_subnet" "public_subnet" {
