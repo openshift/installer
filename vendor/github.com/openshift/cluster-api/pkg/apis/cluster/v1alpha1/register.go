@@ -19,7 +19,7 @@ limitations under the License.
 // Package v1alpha1 contains API Schema definitions for the cluster v1alpha1 API group
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package,register
-// +k8s:conversion-gen=sigs.k8s.io/cluster-api/pkg/apis/cluster
+// +k8s:conversion-gen=github.com/openshift/cluster-api/pkg/apis/cluster
 // +k8s:defaulter-gen=TypeMeta
 // +groupName=cluster.k8s.io
 package v1alpha1
@@ -30,12 +30,13 @@ import (
 )
 
 var (
-	// SchemeGroupVersion is group version used to register these objects
+	// SchemeGroupVersion is group version used to register these objects.
 	SchemeGroupVersion = schema.GroupVersion{Group: "cluster.k8s.io", Version: "v1alpha1"}
 
-	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
+	// SchemeBuilder is used to add go types to the GroupVersionKind scheme.
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
 
+	// AddToScheme adds registered types to the builder.
 	// Required by pkg/client/...
 	// TODO(pwittrock): Remove this after removing pkg/client/...
 	AddToScheme = SchemeBuilder.AddToScheme

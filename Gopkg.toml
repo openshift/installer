@@ -63,7 +63,7 @@ required = [
 
 [[constraint]]
   name = "github.com/openshift/cluster-api"
-  revision = "91fca585a85b163ddfd119fd09c128c9feadddca"
+  revision = "d8958b539e331bf5ebb056b7f872541e13fb8e01"
 
 [[constraint]]
   name = "sigs.k8s.io/cluster-api-provider-aws"

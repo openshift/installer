@@ -521,7 +521,7 @@
   revision = "4b6d10a82cd4949ade8056e5fbbf29e0765a0f47"
 
 [[projects]]
-  digest = "1:5543d01772b4474e08f1554ea53cf3eb12660deed37470888cfc1cd66748cab0"
+  digest = "1:705c8e1100e31273e6c51367ea08b44e04c4f4687ef44c855f43f276f3ee7ec3"
   name = "github.com/openshift/cluster-api"
   packages = [
     "pkg/apis/cluster/common",
@@ -530,7 +530,7 @@
     "pkg/apis/machine/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "91fca585a85b163ddfd119fd09c128c9feadddca"
+  revision = "d8958b539e331bf5ebb056b7f872541e13fb8e01"
 
 [[projects]]
   digest = "1:64f129e3a0f9d8419e57ab6b65cceedc136d6dc5bcd9398545890bd4217bf6f2"

@@ -19,7 +19,7 @@ limitations under the License.
 // Package v1beta1 contains API Schema definitions for the machine v1beta1 API group
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package,register
-// +k8s:conversion-gen=sigs.k8s.io/cluster-api/pkg/apis/machine
+// +k8s:conversion-gen=github.com/openshift/cluster-api/pkg/apis/machine
 // +k8s:defaulter-gen=TypeMeta
 // +groupName=machine.openshift.io
 package v1beta1
@@ -30,12 +30,13 @@ import (
 )
 
 var (
-	// SchemeGroupVersion is group version used to register these objects
+	// SchemeGroupVersion is group version used to register these objects.
 	SchemeGroupVersion = schema.GroupVersion{Group: "machine.openshift.io", Version: "v1beta1"}
 
-	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
+	// SchemeBuilder is used to add go types to the GroupVersionKind scheme.
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
 
+	// AddToScheme adds registered types to the builder.
 	// Required by pkg/client/...
 	// TODO(pwittrock): Remove this after removing pkg/client/...
 	AddToScheme = SchemeBuilder.AddToScheme
