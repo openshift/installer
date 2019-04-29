@@ -17,10 +17,9 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/openshift/cluster-api/pkg/apis/cluster/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-
-	"github.com/openshift/cluster-api/pkg/apis/cluster/common"
 )
 
 /// [MachineDeploymentSpec]
