@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -102,10 +103,14 @@ var (
 					logrus.Fatal(err)
 				}
 
-				logrus.Info("Destroying the bootstrap resources...")
-				err = destroybootstrap.Destroy(rootOpts.dir)
-				if err != nil {
-					logrus.Fatal(err)
+				if keep, ok := os.LookupEnv("OPENSHIFT_INSTALL_KEEP_BOOTSTRAP_RESOURCES"); ok && keep != "" {
+					logrus.Info("Keeping bootstrap resources because OPENSHIFT_INSTALL_KEEP_BOOTSTRAP_RESOURCES is set.")
+				} else {
+					logrus.Info("Destroying the bootstrap resources...")
+					err = destroybootstrap.Destroy(rootOpts.dir)
+					if err != nil {
+						logrus.Fatal(err)
+					}
 				}
 
 				err = waitForInstallComplete(ctx, config, rootOpts.dir)
