@@ -350,3 +350,12 @@ Resources:
       - !GetAtt Master2.PrivateIp
       TTL: 60
       Type: A
+
+Outputs:
+  PrivateIPs:
+    Description: The control-plane node private IP addresses
+    Value:
+      !Join [
+        ",",
+        [!GetAtt Master0.PrivateIp, !GetAtt Master1.PrivateIp, !GetAtt Master2.PrivateIp]
+      ]

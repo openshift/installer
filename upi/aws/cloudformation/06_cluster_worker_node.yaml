@@ -107,3 +107,8 @@ Resources:
       Tags:
       - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
         Value: "shared"
+
+Outputs:
+  PrivateIP:
+    Description: The compute node private IP address
+    Value: !GetAtt Worker0.PrivateIp
