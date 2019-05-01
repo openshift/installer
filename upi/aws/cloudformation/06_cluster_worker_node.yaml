@@ -7,7 +7,7 @@ Parameters:
     MaxLength: 32
     MinLength: 1
     ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 32 characters
-    Description: A short, unique cluster ID used to tag cloud resources and identify items owned/used by the cluster.
+    Description: A short, unique cluster ID used to tag nodes for the kubelet cloud provider.
     Type: String
   RhcosAmi:
     Description: Current RHEL CoreOS AMI to use for boostrap
@@ -56,10 +56,6 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
-        default: "Cluster Information"
-      Parameters:
-      - InfrastructureName
-    - Label:
         default: "Host Information"
       Parameters:
       - WorkerInstanceType
@@ -71,13 +67,8 @@ Metadata:
     - Label:
         default: "Network Configuration"
       Parameters:
-      - VpcId
       - WorkerSubnet
     ParameterLabels:
-      InfrastructureName:
-        default: "Infrastructure Name"
-      VpcId:
-        default: "VPC ID"
       WorkerSubnet:
         default: "Worker Subnet"
       WorkerInstanceType:
@@ -86,7 +77,7 @@ Metadata:
         default: "Worker Instance Profile Name"
       RhcosAmi:
         default: "RHEL CoreOS AMI ID"
-      BootstrapIgnitionLocation:
+      IgnitionLocation:
         default: "Worker Ignition Source"
       CertificateAuthorities:
         default: "Ignition CA String"
@@ -114,7 +105,5 @@ Resources:
           CA_BUNDLE: !Ref CertificateAuthorities,
         }
       Tags:
-      - Key: "Name"
-        Value: !Join ["-", [!Ref InfrastructureName, "worker"]]
       - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
-        Value: "owned"
+        Value: "shared"

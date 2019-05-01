@@ -7,7 +7,7 @@ Parameters:
     MaxLength: 32
     MinLength: 1
     ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 32 characters
-    Description: A short, unique cluster ID used to tag cloud resources and identify items owned/used by the cluster.
+    Description: A short, unique cluster ID used to tag nodes for the kubelet cloud provider.
     Type: String
   RhcosAmi:
     Description: Current RHEL CoreOS AMI to use for boostrap
@@ -90,11 +90,6 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
-        default: "Cluster Information"
-      Parameters:
-      - ClusterName
-      - InfrastructureName
-    - Label:
         default: "Host Information"
       Parameters:
       - MasterInstanceType
@@ -126,10 +121,6 @@ Metadata:
       - InternalApiTargetGroupArn
       - InternalServiceTargetGroupArn
     ParameterLabels:
-      ClusterName:
-        default: "Cluster Name"
-      InfrastructureName:
-        default: "Infrastructure Name"
       VpcId:
         default: "VPC ID"
       Master0Subnet:
@@ -184,10 +175,8 @@ Resources:
           CA_BUNDLE: !Ref CertificateAuthorities,
         }
       Tags:
-      - Key: "Name"
-        Value: !Join ["-", [!Ref InfrastructureName, "master", "0"]]
       - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
-        Value: "owned"
+        Value: "shared"
 
   RegisterMaster0:
     Condition: DoRegistration
@@ -233,10 +222,8 @@ Resources:
           CA_BUNDLE: !Ref CertificateAuthorities,
         }
       Tags:
-      - Key: "Name"
-        Value: !Join ["-", [!Ref InfrastructureName, "master", "1"]]
       - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
-        Value: "owned"
+        Value: "shared"
 
   RegisterMaster1:
     Condition: DoRegistration
@@ -282,10 +269,8 @@ Resources:
           CA_BUNDLE: !Ref CertificateAuthorities,
         }
       Tags:
-      - Key: "Name"
-        Value: !Join ["-", [!Ref InfrastructureName, "master", "2"]]
       - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
-        Value: "owned"
+        Value: "shared"
 
   RegisterMaster2:
     Condition: DoRegistration
