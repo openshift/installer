@@ -31,7 +31,7 @@ func (a *MCSCertKey) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(ca, installConfig)
 
-	hostname := apiAddress(installConfig.Config)
+	hostname := internalAPIAddress(installConfig.Config)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: hostname},
