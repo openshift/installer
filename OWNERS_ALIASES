@@ -9,10 +9,13 @@ aliases:
     - steveeJ
     - wking
   installer-reviewers:
+    - jcpowermac
+    - jhixson74
     - jstuever
     - mtnbikenc
     - patrickdillon
     - sdodson
+    - vrutkovs
   libvirt-approvers:
     - abhinavdahiya
     - enxebre
