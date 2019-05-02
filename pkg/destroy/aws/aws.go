@@ -140,16 +140,23 @@ func (o *ClusterUninstaller) Run() error {
 						&resourcegroupstaggingapi.GetResourcesInput{TagFilters: tagFilters},
 						func(results *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
 							for _, resource := range results.ResourceTagMappingList {
-								arn := *resource.ResourceARN
-								if _, ok := deleted[arn]; !ok {
+								arnString := *resource.ResourceARN
+								if _, ok := deleted[arnString]; !ok {
+									arnLogger := o.Logger.WithField("arn", arnString)
 									matched = true
-									err := deleteARN(awsSession, arn, filter, o.Logger)
+									parsed, err := arn.Parse(arnString)
 									if err != nil {
-										err = errors.Wrapf(err, "deleting %s", arn)
-										o.Logger.Debug(err)
+										arnLogger.Debug(err)
 										continue
 									}
-									deleted[arn] = exists
+
+									err = deleteARN(awsSession, parsed, filter, arnLogger)
+									if err != nil {
+										arnLogger.Debug(err)
+										err = errors.Wrapf(err, "deleting %s", arnString)
+										continue
+									}
+									deleted[arnString] = exists
 								}
 							}
 
@@ -190,16 +197,24 @@ func (o *ClusterUninstaller) Run() error {
 			if len(arns) > 0 {
 				o.Logger.Debug("delete IAM roles and users")
 			}
-			for _, arn := range arns {
-				if _, ok := deleted[arn]; !ok {
-					err = deleteARN(awsSession, arn, nil, o.Logger)
+			for _, arnString := range arns {
+				if _, ok := deleted[arnString]; !ok {
+					arnLogger := o.Logger.WithField("arn", arnString)
+					parsed, err := arn.Parse(arnString)
 					if err != nil {
-						err = errors.Wrapf(err, "deleting %s", arn)
-						o.Logger.Debug(err)
+						arnLogger.Debug(err)
 						loopError = err
 						continue
 					}
-					deleted[arn] = exists
+
+					err = deleteARN(awsSession, parsed, nil, arnLogger)
+					if err != nil {
+						arnLogger.Debug(err)
+						err = errors.Wrapf(err, "deleting %s", arnString)
+						loopError = err
+						continue
+					}
+					deleted[arnString] = exists
 				}
 			}
 
@@ -454,27 +469,20 @@ func findPublicRoute53(client *route53.Route53, dnsName string, logger logrus.Fi
 	return "", nil
 }
 
-func deleteARN(session *session.Session, arnString string, filter Filter, logger logrus.FieldLogger) error {
-	logger = logger.WithField("arn", arnString)
-
-	parsed, err := arn.Parse(arnString)
-	if err != nil {
-		return err
-	}
-
-	switch parsed.Service {
+func deleteARN(session *session.Session, arn arn.ARN, filter Filter, logger logrus.FieldLogger) error {
+	switch arn.Service {
 	case "ec2":
-		return deleteEC2(session, parsed, filter, logger)
+		return deleteEC2(session, arn, filter, logger)
 	case "elasticloadbalancing":
-		return deleteElasticLoadBalancing(session, parsed, logger)
+		return deleteElasticLoadBalancing(session, arn, logger)
 	case "iam":
-		return deleteIAM(session, parsed, logger)
+		return deleteIAM(session, arn, logger)
 	case "route53":
-		return deleteRoute53(session, parsed, logger)
+		return deleteRoute53(session, arn, logger)
 	case "s3":
-		return deleteS3(session, parsed, logger)
+		return deleteS3(session, arn, logger)
 	default:
-		return errors.Errorf("unrecognized ARN service %s (%s)", parsed.Service, arnString)
+		return errors.Errorf("unrecognized ARN service %s (%s)", arn.Service, arn)
 	}
 }
 
