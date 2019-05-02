@@ -100,6 +100,6 @@ required = [
   source = "https://github.com/openshift/cluster-api-provider-openstack.git"
 
 [[constraint]]
-  branch = "openshiftnocluster"
+  branch = "master"
   name = "sigs.k8s.io/cluster-api-provider-azure"
-  source = "https://github.com/awesomenix/cluster-api-provider-azure.git"
+  source = "https://github.com/openshift/cluster-api-provider-azure.git"

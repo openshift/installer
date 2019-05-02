@@ -70,6 +70,8 @@ const (
 	ControlPlane string = "master"
 	// Node machine label
 	Node string = "worker"
+	// MachineRoleLabel machine label to determine the role
+	MachineRoleLabel = "machine.openshift.io/cluster-api-machine-role"
 )
 
 // Network encapsulates Azure networking resources.
@@ -89,6 +91,19 @@ type Network struct {
 // Tags defines resource tags.
 type Tags map[string]*string
 */
+
+// Subnets is a slice of Subnet.
+type Subnets []*SubnetSpec
+
+// TODO
+// ToMap returns a map from id to subnet.
+func (s Subnets) ToMap() map[string]*SubnetSpec {
+	res := make(map[string]*SubnetSpec)
+	for _, x := range s {
+		res[x.ID] = x
+	}
+	return res
+}
 
 // SecurityGroupRole defines the unique role of a security group.
 type SecurityGroupRole string
@@ -355,11 +370,14 @@ type VM struct {
 	//AvailabilitySet *SubResource `json:"availabilitySet,omitempty"`
 }
 
+// Image is a mirror of azure sdk compute.ImageReference
 type Image struct {
-	Publisher  string `json:"publisher"`
-	Offer      string `json:"offer"`
-	SKU        string `json:"sku"`
-	Version    string `json:"version"`
+	// Fields below refer to os images in marketplace
+	Publisher string `json:"publisher"`
+	Offer     string `json:"offer"`
+	SKU       string `json:"sku"`
+	Version   string `json:"version"`
+	// ResourceID represents the location of OS Image in azure subscription
 	ResourceID string `json:"resourceID"`
 }
 

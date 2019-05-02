@@ -1117,16 +1117,16 @@
   source = "https://github.com/openshift/cluster-api-provider-aws.git"
 
 [[projects]]
-  branch = "openshiftnocluster"
-  digest = "1:11da7b70c976e0b5eb337035eb62f2aa4a8bec102a23cc43fe89df459e15a903"
+  branch = "master"
+  digest = "1:1ec43d1093555bc7a4f63f0cec39c215d1c5754b90bd9741d7ded6c2110fc465"
   name = "sigs.k8s.io/cluster-api-provider-azure"
   packages = [
     "pkg/apis",
     "pkg/apis/azureprovider/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "5d24bf040dbd469e149dc54d938698a7be71e7c9"
-  source = "https://github.com/awesomenix/cluster-api-provider-azure.git"
+  revision = "106e77fea15a9a0a39776b3edbc5666aa337ca70"
+  source = "https://github.com/openshift/cluster-api-provider-azure.git"
 
 [[projects]]
   branch = "master"
