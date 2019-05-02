@@ -5,7 +5,7 @@ Launching clusters via libvirt is especially useful for operator development.
 ## One-time setup
 It's expected that you will create and destroy clusters often in the course of development. These steps only need to be run once.
 
-Before you begin, install the [build dependencies](dependencies.md).
+Before you begin, install the [build dependencies](../dependencies.md).
 
 ### Enable KVM
 
