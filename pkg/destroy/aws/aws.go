@@ -150,6 +150,11 @@ func (o *ClusterUninstaller) Run() error {
 										continue
 									}
 
+									if parsed.Service == "ec2" && strings.HasPrefix(parsed.Resource, "network-interface/") {
+										arnLogger.Debug("skip direct tag deletion, deleting the VPC should catch this")
+										continue
+									}
+
 									err = deleteARN(awsSession, parsed, filter, arnLogger)
 									if err != nil {
 										arnLogger.Debug(err)
@@ -714,7 +719,7 @@ func deleteEC2NATGateway(client *ec2.EC2, id string, logger logrus.FieldLogger) 
 	return nil
 }
 
-func deleteEC2NATGatewaysByVPC(client *ec2.EC2, vpc string, logger logrus.FieldLogger) error {
+func deleteEC2NATGatewaysByVPC(client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
 	var lastError error
 	err := client.DescribeNatGatewaysPages(
 		&ec2.DescribeNatGatewaysInput{
@@ -733,6 +738,9 @@ func deleteEC2NATGatewaysByVPC(client *ec2.EC2, vpc string, logger logrus.FieldL
 						logger.Debug(err)
 					}
 					lastError = errors.Wrapf(err, "deleting EC2 NAT gateway %s", *gateway.NatGatewayId)
+					if failFast {
+						return false
+					}
 				}
 			}
 
@@ -801,7 +809,7 @@ func deleteEC2RouteTableObject(client *ec2.EC2, table *ec2.RouteTable, logger lo
 	return nil
 }
 
-func deleteEC2RouteTablesByVPC(client *ec2.EC2, vpc string, logger logrus.FieldLogger) error {
+func deleteEC2RouteTablesByVPC(client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
 	var lastError error
 	err := client.DescribeRouteTablesPages(
 		&ec2.DescribeRouteTablesInput{
@@ -820,6 +828,9 @@ func deleteEC2RouteTablesByVPC(client *ec2.EC2, vpc string, logger logrus.FieldL
 						logger.Debug(err)
 					}
 					lastError = errors.Wrapf(err, "deleting EC2 route table %s", *table.RouteTableId)
+					if failFast {
+						return false
+					}
 				}
 			}
 
@@ -912,7 +923,7 @@ func deleteEC2NetworkInterface(client *ec2.EC2, id string, logger logrus.FieldLo
 	return nil
 }
 
-func deleteEC2NetworkInterfaceByVPC(client *ec2.EC2, vpc string, logger logrus.FieldLogger) error {
+func deleteEC2NetworkInterfaceByVPC(client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
 	var lastError error
 	err := client.DescribeNetworkInterfacesPages(
 		&ec2.DescribeNetworkInterfacesInput{
@@ -931,6 +942,9 @@ func deleteEC2NetworkInterfaceByVPC(client *ec2.EC2, vpc string, logger logrus.F
 						logger.Debug(lastError)
 					}
 					lastError = errors.Wrapf(err, "deleting EC2 network interface %s", *networkInterface.NetworkInterfaceId)
+					if failFast {
+						return false
+					}
 				}
 			}
 
@@ -987,13 +1001,13 @@ func deleteEC2VPC(ec2Client *ec2.EC2, elbClient *elb.ELB, elbv2Client *elbv2.ELB
 		return v2lbError
 	}
 
-	for _, helper := range [](func(client *ec2.EC2, vpc string, logger logrus.FieldLogger) error){
+	for _, helper := range [](func(client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error){
 		deleteEC2NATGatewaysByVPC,      // not always tagged
 		deleteEC2NetworkInterfaceByVPC, // not always tagged
 		deleteEC2RouteTablesByVPC,      // not always tagged
 		deleteEC2VPCEndpointsByVPC,     // not taggable
 	} {
-		err := helper(ec2Client, id, logger)
+		err := helper(ec2Client, id, true, logger)
 		if err != nil {
 			return err
 		}
@@ -1022,7 +1036,7 @@ func deleteEC2VPCEndpoint(client *ec2.EC2, id string, logger logrus.FieldLogger)
 	return nil
 }
 
-func deleteEC2VPCEndpointsByVPC(client *ec2.EC2, vpc string, logger logrus.FieldLogger) error {
+func deleteEC2VPCEndpointsByVPC(client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
 	response, err := client.DescribeVpcEndpoints(&ec2.DescribeVpcEndpointsInput{
 		Filters: []*ec2.Filter{
 			{
