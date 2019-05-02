@@ -20,6 +20,12 @@ $ openshift-install create install-config
 ? Pull Secret [? for help]
 ```
 
+Edit the resulting `openshift-install.yaml` to set `replicas` to 0 for the `compute` pool:
+
+```console
+$ sed -i '1,/replicas: / s/replicas: .*/replicas: 0/' install-config.yaml
+```
+
 Create manifests to get access to the control-plane Machines and compute MachineSets:
 
 ```console
