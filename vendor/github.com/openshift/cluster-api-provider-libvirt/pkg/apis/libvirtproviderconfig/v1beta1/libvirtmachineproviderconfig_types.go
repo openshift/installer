@@ -1,4 +1,4 @@
-package v1alpha1
+package v1beta1
 
 import (
 	corev1 "k8s.io/api/core/v1"
@@ -9,9 +9,9 @@ import (
 const (
 	// ClusterIDLabel is the label that a machineset must have to identify the
 	// cluster to which it belongs.
-	ClusterIDLabel   = "sigs.k8s.io/cluster-api-cluster"
-	MachineRoleLabel = "sigs.k8s.io/cluster-api-machine-role"
-	MachineTypeLabel = "sigs.k8s.io/cluster-api-machine-type"
+	ClusterIDLabel   = "machine.openshift.io/cluster-api-cluster"
+	MachineRoleLabel = "machine.openshift.io/cluster-api-machine-role"
+	MachineTypeLabel = "machine.openshift.io/cluster-api-machine-type"
 )
 
 // LibvirtMachineProviderConfig is the type that will be embedded in a Machine.Spec.ProviderSpec field

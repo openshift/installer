@@ -7,7 +7,7 @@ import (
 	"net"
 
 	"github.com/apparentlymart/go-cidr/cidr"
-	"github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1"
+	"github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	"github.com/pkg/errors"
 )
 
@@ -20,7 +20,7 @@ type config struct {
 }
 
 // TFVars generates libvirt-specific Terraform variables.
-func TFVars(masterConfig *v1alpha1.LibvirtMachineProviderConfig, osImage string, machineCIDR *net.IPNet, bridge string, masterCount int) ([]byte, error) {
+func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, machineCIDR *net.IPNet, bridge string, masterCount int) ([]byte, error) {
 	bootstrapIP, err := cidr.Host(machineCIDR, 10)
 	if err != nil {
 		return nil, errors.Errorf("failed to generate bootstrap IP: %v", err)

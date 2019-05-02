@@ -72,7 +72,7 @@ required = [
 
 [[constraint]]
   name = "github.com/openshift/cluster-api-provider-libvirt"
-  revision = "c23986b36a2521cd69ac22d7adb74a22bca9f7aa"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/pkg/errors"

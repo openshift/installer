@@ -533,14 +533,15 @@
   revision = "d8958b539e331bf5ebb056b7f872541e13fb8e01"
 
 [[projects]]
-  digest = "1:64f129e3a0f9d8419e57ab6b65cceedc136d6dc5bcd9398545890bd4217bf6f2"
+  branch = "master"
+  digest = "1:7996646bfd4a19e15e2e3828fc8c2c3c5d751e906f18a2820ffba9d08a394e27"
   name = "github.com/openshift/cluster-api-provider-libvirt"
   packages = [
     "pkg/apis",
-    "pkg/apis/libvirtproviderconfig/v1alpha1",
+    "pkg/apis/libvirtproviderconfig/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "c23986b36a2521cd69ac22d7adb74a22bca9f7aa"
+  revision = "8fd28ea50120786703f0a43a3e9177a8c98f754c"
 
 [[projects]]
   branch = "master"
@@ -1125,7 +1126,7 @@
     "pkg/apis/azureprovider/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "b49363c5b3247da8d7345904a3c95d4a28c66a61"
+  revision = "5d24bf040dbd469e149dc54d938698a7be71e7c9"
   source = "https://github.com/awesomenix/cluster-api-provider-azure.git"
 
 [[projects]]
@@ -1216,7 +1217,7 @@
     "github.com/openshift/cloud-credential-operator/pkg/aws",
     "github.com/openshift/cloud-credential-operator/pkg/controller/utils",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis",
-    "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
+    "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1",
     "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1",
     "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers",
     "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1",
@@ -1238,6 +1239,7 @@
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
+    "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
     "k8s.io/apimachinery/pkg/fields",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/serializer",

@@ -1,16 +1,18 @@
 // NOTE: Boilerplate only.  Ignore this file.
 
-// Package v1alpha1 contains API Schema definitions for the libvirtproviderconfig v1alpha1 API group
+// Package v1beta1 contains API Schema definitions for the libvirtproviderconfig v1beta1 API group
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package,register
 // +k8s:conversion-gen=github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig
 // +k8s:defaulter-gen=TypeMeta
-// +groupName=libvirtproviderconfig.k8s.io
-package v1alpha1
+// +groupName=libvirtproviderconfig.openshift.io
+package v1beta1
 
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/ghodss/yaml"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -22,7 +24,7 @@ import (
 
 var (
 	// SchemeGroupVersion is group version used to register these objects
-	SchemeGroupVersion = schema.GroupVersion{Group: "libvirtproviderconfig.k8s.io", Version: "v1alpha1"}
+	SchemeGroupVersion = schema.GroupVersion{Group: "libvirtproviderconfig.openshift.io", Version: "v1beta1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
@@ -61,8 +63,11 @@ func NewCodec() (*LibvirtProviderConfigCodec, error) {
 // DecodeFromProviderSpec decodes a serialised ProviderConfig into an object
 func (codec *LibvirtProviderConfigCodec) DecodeFromProviderSpec(providerConfig machinev1.ProviderSpec, out runtime.Object) error {
 	if providerConfig.Value != nil {
-		_, _, err := codec.decoder.Decode(providerConfig.Value.Raw, nil, out)
-		if err != nil {
+		// TODO(jchaloup): revert back to using `Decode` once installer and mao have started using
+		// libvirtprovider apis pivoted under openshift.io api group
+		// _, _, err := codec.decoder.Decode(providerConfig.Value.Raw, nil, out)
+		// if err != nil {
+		if err := yaml.Unmarshal(providerConfig.Value.Raw, out); err != nil {
 			return fmt.Errorf("decoding failure: %v", err)
 		}
 	}
@@ -93,8 +98,11 @@ func (codec *LibvirtProviderConfigCodec) EncodeProviderStatus(in runtime.Object)
 // DecodeProviderStatus decodes a serialised providerStatus into an object
 func (codec *LibvirtProviderConfigCodec) DecodeProviderStatus(providerStatus *runtime.RawExtension, out runtime.Object) error {
 	if providerStatus != nil {
-		_, _, err := codec.decoder.Decode(providerStatus.Raw, nil, out)
-		if err != nil {
+		// TODO(jchaloup): revert back to using `Decode` once installer and mao have started using
+		// libvirtprovider apis pivoted under openshift.io api group
+		// _, _, err := codec.decoder.Decode(providerStatus.Raw, nil, out)
+		// if err != nil {
+		if err := yaml.Unmarshal(providerStatus.Raw, out); err != nil {
 			return fmt.Errorf("decoding failure: %v", err)
 		}
 	}
