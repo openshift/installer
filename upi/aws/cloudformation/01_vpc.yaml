@@ -54,13 +54,6 @@ Resources:
       EnableDnsSupport: "true"
       EnableDnsHostnames: "true"
       CidrBlock: !Ref VpcCidr
-      Tags:
-      - Key: Application
-        Value: !Ref "AWS::StackName"
-      - Key: Network
-        Value: Public
-      - Key: Name
-        Value: !Ref "AWS::StackName"
   PublicSubnet:
     Type: "AWS::EC2::Subnet"
     Properties:
@@ -69,11 +62,6 @@ Resources:
       AvailabilityZone: !Select
       - 0
       - Fn::GetAZs: !Ref "AWS::Region"
-      Tags:
-      - Key: Application
-        Value: !Ref "AWS::StackName"
-      - Key: Network
-        Value: Public
   PublicSubnet2:
     Type: "AWS::EC2::Subnet"
     Condition: DoAz2
@@ -83,11 +71,6 @@ Resources:
       AvailabilityZone: !Select
       - 1
       - Fn::GetAZs: !Ref "AWS::Region"
-      Tags:
-      - Key: Application
-        Value: !Ref "AWS::StackName"
-      - Key: Network
-        Value: Public
   PublicSubnet3:
     Type: "AWS::EC2::Subnet"
     Condition: DoAz3
@@ -97,19 +80,8 @@ Resources:
       AvailabilityZone: !Select
       - 2
       - Fn::GetAZs: !Ref "AWS::Region"
-      Tags:
-      - Key: Application
-        Value: !Ref "AWS::StackName"
-      - Key: Network
-        Value: Public
   InternetGateway:
     Type: "AWS::EC2::InternetGateway"
-    Properties:
-      Tags:
-      - Key: Application
-        Value: !Ref "AWS::StackName"
-      - Key: Network
-        Value: Public
   GatewayToInternet:
     Type: "AWS::EC2::VPCGatewayAttachment"
     Properties:
@@ -119,11 +91,6 @@ Resources:
     Type: "AWS::EC2::RouteTable"
     Properties:
       VpcId: !Ref VPC
-      Tags:
-      - Key: Application
-        Value: !Ref "AWS::StackName"
-      - Key: Network
-        Value: Public
   PublicRoute:
     Type: "AWS::EC2::Route"
     DependsOn: GatewayToInternet
@@ -152,11 +119,6 @@ Resources:
     Type: "AWS::EC2::NetworkAcl"
     Properties:
       VpcId: !Ref VPC
-      Tags:
-      - Key: Application
-        Value: !Ref "AWS::StackName"
-      - Key: Network
-        Value: Public
   InboundHTTPPublicNetworkAclEntry:
     Type: "AWS::EC2::NetworkAclEntry"
     Properties:
@@ -242,22 +204,10 @@ Resources:
       AvailabilityZone: !Select
       - 0
       - Fn::GetAZs: !Ref "AWS::Region"
-      Tags:
-      - Key: Application
-        Value: !Ref "AWS::StackName"
-      - Key: Network
-        Value: Private
-      - Key: kubernetes.io/role/internal-elb
-        Value: ""
   PrivateRouteTable:
     Type: "AWS::EC2::RouteTable"
     Properties:
       VpcId: !Ref VPC
-      Tags:
-      - Key: Application
-        Value: !Ref "AWS::StackName"
-      - Key: Network
-        Value: Private
   PrivateSubnetRouteTableAssociation:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
@@ -294,23 +244,11 @@ Resources:
       AvailabilityZone: !Select
       - 1
       - Fn::GetAZs: !Ref "AWS::Region"
-      Tags:
-      - Key: Application
-        Value: !Ref "AWS::StackName"
-      - Key: Network
-        Value: Private
-      - Key: kubernetes.io/role/internal-elb
-        Value: ""
   PrivateRouteTable2:
     Type: "AWS::EC2::RouteTable"
     Condition: DoAz2
     Properties:
       VpcId: !Ref VPC
-      Tags:
-      - Key: Application
-        Value: !Ref "AWS::StackName"
-      - Key: Network
-        Value: Private
   PrivateSubnetRouteTableAssociation2:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Condition: DoAz2
@@ -351,23 +289,11 @@ Resources:
       AvailabilityZone: !Select
       - 2
       - Fn::GetAZs: !Ref "AWS::Region"
-      Tags:
-      - Key: Application
-        Value: !Ref "AWS::StackName"
-      - Key: Network
-        Value: Private
-      - Key: kubernetes.io/role/internal-elb
-        Value: ""
   PrivateRouteTable3:
     Type: "AWS::EC2::RouteTable"
     Condition: DoAz3
     Properties:
       VpcId: !Ref VPC
-      Tags:
-      - Key: Application
-        Value: !Ref "AWS::StackName"
-      - Key: Network
-        Value: Private
   PrivateSubnetRouteTableAssociation3:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Condition: DoAz3
