@@ -181,7 +181,7 @@ func (a *KubeletClientCertKey) Generate(dependencies asset.Parents) error {
 		Subject:      pkix.Name{CommonName: "system:serviceaccount:openshift-machine-config-operator:node-bootstrapper", Organization: []string{"system:serviceaccounts:openshift-machine-config-operator"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityOneDay,
+		Validity:     ValidityTenYears,
 	}
 
 	return a.SignedCertKey.Generate(cfg, ca, "kubelet-client", DoNotAppendParent)
