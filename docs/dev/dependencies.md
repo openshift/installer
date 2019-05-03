@@ -39,7 +39,7 @@ To add a new dependency:
 dep ensure
 ```
 
-This [guide](https://golang.github.io/dep/docs/daily-dep.html) a great source to learn more about using `dep` is .
+This [guide](https://golang.github.io/dep/docs/daily-dep.html) is a great source to learn more about using `dep`.
 
 For the sake of your fellow reviewers, commit vendored code separately from any other changes.
 
