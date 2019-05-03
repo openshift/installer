@@ -37,3 +37,7 @@ variable "service_vm_fixed_ip" {
   type = string
 }
 
+variable "master_vm_fixed_ip" {
+  type        = "string"
+  description = "Fixed IP for a master node to provide DNS to bootstrap during clustering."
+}

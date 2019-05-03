@@ -50,6 +50,7 @@ module "bootstrap" {
   ignition            = var.ignition_bootstrap
   bootstrap_port_id   = module.topology.bootstrap_port_id
   service_vm_fixed_ip = module.topology.service_vm_fixed_ip
+  master_vm_fixed_ip  = module.topology.master_ips[0]
 }
 
 module "masters" {
