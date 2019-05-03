@@ -61,7 +61,7 @@ required = [
   name = "k8s.io/client-go"
   version = "9.0.0"
 
-[[constraint]]
+[[override]]
   name = "github.com/openshift/cluster-api"
   revision = "d8958b539e331bf5ebb056b7f872541e13fb8e01"
 

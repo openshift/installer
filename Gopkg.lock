@@ -1125,7 +1125,7 @@
     "pkg/apis/azureprovider/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "b49363c5b3247da8d7345904a3c95d4a28c66a61"
+  revision = "5d24bf040dbd469e149dc54d938698a7be71e7c9"
   source = "https://github.com/awesomenix/cluster-api-provider-azure.git"
 
 [[projects]]
@@ -1238,6 +1238,7 @@
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
+    "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
     "k8s.io/apimachinery/pkg/fields",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/serializer",
