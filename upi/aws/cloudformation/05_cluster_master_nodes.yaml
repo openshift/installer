@@ -3,10 +3,10 @@ Description: Template for Openshift Cluster UPI Node Launch (EC2 master instance
 
 Parameters:
   InfrastructureName:
-    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,31})$
-    MaxLength: 32
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
+    MaxLength: 27
     MinLength: 1
-    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 32 characters
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 27 characters
     Description: A short, unique cluster ID used to tag nodes for the kubelet cloud provider.
     Type: String
   RhcosAmi:
