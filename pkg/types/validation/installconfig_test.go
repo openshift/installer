@@ -86,6 +86,18 @@ func validVSpherePlatform() *vsphere.Platform {
 	}
 }
 
+func validOpenStackPlatform() *openstack.Platform {
+	return &openstack.Platform{
+		Region:          "test-region",
+		Cloud:           "test-cloud",
+		ExternalNetwork: "test-network",
+		FlavorName:      "test-flavor",
+		APIVIP:          "10.0.128.5",
+		DNSVIP:          "10.0.128.6",
+		IngressVIP:      "10.0.128.7",
+	}
+}
+
 func TestValidateInstallConfig(t *testing.T) {
 	cases := []struct {
 		name          string
@@ -421,12 +433,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{
-					OpenStack: &openstack.Platform{
-						Region:          "test-region",
-						Cloud:           "test-cloud",
-						ExternalNetwork: "test-network",
-						FlavorName:      "test-flavor",
-					},
+					OpenStack: validOpenStackPlatform(),
 				}
 				return c
 			}(),
@@ -436,8 +443,9 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{
-					OpenStack: &openstack.Platform{},
+					OpenStack: validOpenStackPlatform(),
 				}
+				c.Platform.OpenStack.Cloud = ""
 				return c
 			}(),
 			expectedError: `^platform\.openstack\.cloud: Unsupported value: "": supported values: "test-cloud"$`,

@@ -253,6 +253,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.OpenStack.LbFloatingIP,
 			installConfig.Config.Platform.OpenStack.APIVIP,
 			installConfig.Config.Platform.OpenStack.DNSVIP,
+			installConfig.Config.Platform.OpenStack.IngressVIP,
 			installConfig.Config.Platform.OpenStack.TrunkSupport,
 			installConfig.Config.Platform.OpenStack.OctaviaSupport,
 		)

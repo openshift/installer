@@ -22,72 +22,45 @@ provider "openstack" {
   user_name           = var.openstack_credentials_user_name
 }
 
-module "service" {
-  source = "./service"
-
-  swift_container   = openstack_objectstorage_container_v1.container.name
-  cluster_id        = var.cluster_id
-  cluster_domain    = var.cluster_domain
-  image_name        = var.openstack_base_image
-  flavor_name       = var.openstack_master_flavor_name
-  ignition          = var.ignition_bootstrap
-  lb_floating_ip    = var.openstack_lb_floating_ip
-  service_port_id   = module.topology.service_port_id
-  service_port_ip   = module.topology.service_port_ip
-  master_ips        = module.topology.master_ips
-  master_port_names = module.topology.master_port_names
-  bootstrap_ip      = module.topology.bootstrap_port_ip
-}
-
 module "bootstrap" {
   source = "./bootstrap"
 
-  swift_container     = openstack_objectstorage_container_v1.container.name
-  cluster_id          = var.cluster_id
-  cluster_domain      = var.cluster_domain
-  image_name          = var.openstack_base_image
-  flavor_name         = var.openstack_master_flavor_name
-  ignition            = var.ignition_bootstrap
-  bootstrap_port_id   = module.topology.bootstrap_port_id
-  service_vm_fixed_ip = module.topology.service_vm_fixed_ip
+  swift_container   = openstack_objectstorage_container_v1.container.name
+  cluster_id        = var.cluster_id
+  image_name        = var.openstack_base_image
+  flavor_name       = var.openstack_master_flavor_name
+  ignition          = var.ignition_bootstrap
+  bootstrap_port_id = module.topology.bootstrap_port_id
 }
 
 module "masters" {
   source = "./masters"
 
-  base_image          = var.openstack_base_image
-  bootstrap_ip        = module.topology.bootstrap_port_ip
-  cluster_id          = var.cluster_id
-  cluster_domain      = var.cluster_domain
-  flavor_name         = var.openstack_master_flavor_name
-  instance_count      = var.master_count
-  lb_floating_ip      = var.openstack_lb_floating_ip
-  master_ips          = module.topology.master_ips
-  master_port_ids     = module.topology.master_port_ids
-  master_port_names   = module.topology.master_port_names
-  user_data_ign       = var.ignition_master
-  service_vm_fixed_ip = module.topology.service_vm_fixed_ip
-  api_int_ip          = var.openstack_api_int_ip
-  node_dns_ip         = var.openstack_node_dns_ip
+  base_image      = var.openstack_base_image
+  cluster_id      = var.cluster_id
+  flavor_name     = var.openstack_master_flavor_name
+  instance_count  = var.master_count
+  master_port_ids = module.topology.master_port_ids
+  user_data_ign   = var.ignition_master
   master_sg_ids = concat(
     var.openstack_master_extra_sg_ids,
     [module.topology.master_sg_id],
   )
 }
 
-# TODO(shadower) add a dns module here
-
 module "topology" {
   source = "./topology"
 
   cidr_block          = var.machine_cidr
   cluster_id          = var.cluster_id
+  cluster_domain      = var.cluster_domain
   external_network    = var.openstack_external_network
   external_network_id = var.openstack_external_network_id
   masters_count       = var.master_count
   lb_floating_ip      = var.openstack_lb_floating_ip
   api_int_ip          = var.openstack_api_int_ip
   node_dns_ip         = var.openstack_node_dns_ip
+  ingress_ip          = var.openstack_ingress_ip
   trunk_support       = var.openstack_trunk_support
   octavia_support     = var.openstack_octavia_support
 }
@@ -98,9 +71,11 @@ resource "openstack_objectstorage_container_v1" "container" {
   # "kubernetes.io/cluster/${var.cluster_id}" = "owned"
   metadata = merge(
     {
-      "Name"               = "${var.cluster_id}-ignition-master"
+      "Name"               = "${var.cluster_id}-ignition"
       "openshiftClusterID" = var.cluster_id
     },
+    # FIXME(mandre) the openstack_extra_tags should be applied to all resources
+    # created
     var.openstack_extra_tags,
   )
 }

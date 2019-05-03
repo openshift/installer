@@ -22,10 +22,7 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 		// way to configure DNS before Ignition runs.
 		ignitionHost = fmt.Sprintf("%s:22623", installConfig.BareMetal.APIVIP)
 	case openstacktypes.Name:
-		// We can't actually set this to the VIP until we have keepalived patches
-		// merged to machine-config-operator
-		// ignitionHost = fmt.Sprintf("%s:22623", installConfig.Config.OpenStack.APIVIP)
-		ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
+		ignitionHost = fmt.Sprintf("%s:22623", installConfig.OpenStack.APIVIP)
 	default:
 		ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
 	}

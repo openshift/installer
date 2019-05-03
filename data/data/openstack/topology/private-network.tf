@@ -1,6 +1,5 @@
 locals {
-  nodes_cidr_block   = cidrsubnet(var.cidr_block, 1, 0)
-  service_cidr_block = cidrsubnet(var.cidr_block, 1, 1)
+  nodes_cidr_block = var.cidr_block
 }
 
 data "openstack_networking_network_v2" "external_network" {
@@ -15,21 +14,12 @@ resource "openstack_networking_network_v2" "openshift-private" {
   tags           = ["openshiftClusterID=${var.cluster_id}"]
 }
 
-resource "openstack_networking_subnet_v2" "service" {
-  name       = "${var.cluster_id}-service"
-  cidr       = local.service_cidr_block
+resource "openstack_networking_subnet_v2" "nodes" {
+  name       = "${var.cluster_id}-nodes"
+  cidr       = local.nodes_cidr_block
   ip_version = 4
   network_id = openstack_networking_network_v2.openshift-private.id
   tags       = ["openshiftClusterID=${var.cluster_id}"]
-}
-
-resource "openstack_networking_subnet_v2" "nodes" {
-  name            = "${var.cluster_id}-nodes"
-  cidr            = local.nodes_cidr_block
-  ip_version      = 4
-  network_id      = openstack_networking_network_v2.openshift-private.id
-  tags            = ["openshiftClusterID=${var.cluster_id}"]
-  dns_nameservers = [openstack_networking_port_v2.service_port.all_fixed_ips[0]]
 
   # We reserve some space at the beginning of the CIDR to use for the VIPs
   # It would be good to make this more dynamic by calculating the number of
@@ -49,6 +39,11 @@ resource "openstack_networking_port_v2" "masters" {
   security_group_ids = [openstack_networking_secgroup_v2.master.id]
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
+  extra_dhcp_option {
+    name  = "domain-search"
+    value = var.cluster_domain
+  }
+
   fixed_ip {
     subnet_id = openstack_networking_subnet_v2.nodes.id
   }
@@ -59,6 +54,10 @@ resource "openstack_networking_port_v2" "masters" {
 
   allowed_address_pairs {
     ip_address = var.node_dns_ip
+  }
+
+  allowed_address_pairs {
+    ip_address = var.ingress_ip
   }
 }
 
@@ -78,28 +77,43 @@ resource "openstack_networking_port_v2" "bootstrap_port" {
   network_id         = openstack_networking_network_v2.openshift-private.id
   security_group_ids = [openstack_networking_secgroup_v2.master.id]
   tags               = ["openshiftClusterID=${var.cluster_id}"]
+  extra_dhcp_option {
+    name  = "domain-search"
+    value = var.cluster_domain
+  }
 
   fixed_ip {
     subnet_id = openstack_networking_subnet_v2.nodes.id
   }
-}
 
-resource "openstack_networking_port_v2" "service_port" {
-  name = "${var.cluster_id}-service-port"
+  allowed_address_pairs {
+    ip_address = var.api_int_ip
+  }
 
-  admin_state_up     = "true"
-  network_id         = openstack_networking_network_v2.openshift-private.id
-  security_group_ids = [openstack_networking_secgroup_v2.api.id]
-  tags               = ["openshiftClusterID=${var.cluster_id}"]
-
-  fixed_ip {
-    subnet_id = openstack_networking_subnet_v2.service.id
+  allowed_address_pairs {
+    ip_address = var.node_dns_ip
   }
 }
 
-resource "openstack_networking_floatingip_associate_v2" "service_fip" {
+// Assign the floating IP to one of the masters.
+//
+// Strictly speaking, this is not required to finish the installation. We
+// support environments without floating IPs. However, since the installer
+// is running outside of the nodes subnet (often outside of the OpenStack
+// cluster itself), it needs a floating IP to monitor the progress.
+//
+// This IP address is not expected to be the final solution for providing HA.
+// It is only here to let the installer finish without any errors. Configuring
+// a load balancer and providing external connectivity is a post-installation
+// step that can't always be automated (we need to support OpenStack clusters)
+// that do not have or do not want to use Octavia.
+//
+// If the floating IP is not provided, the installer will time out waiting for
+// bootstrapping to complete, but the OpenShift cluster itself should come up
+// as expected.
+resource "openstack_networking_floatingip_associate_v2" "api_fip" {
   count       = length(var.lb_floating_ip) == 0 ? 0 : 1
-  port_id     = openstack_networking_port_v2.service_port.id
+  port_id     = openstack_networking_port_v2.masters[0].id
   floating_ip = var.lb_floating_ip
 }
 
@@ -116,11 +130,6 @@ resource "openstack_networking_router_v2" "openshift-external-router" {
   admin_state_up      = true
   external_network_id = data.openstack_networking_network_v2.external_network.id
   tags                = ["openshiftClusterID=${var.cluster_id}"]
-}
-
-resource "openstack_networking_router_interface_v2" "service_router_interface" {
-  router_id = openstack_networking_router_v2.openshift-external-router.id
-  subnet_id = openstack_networking_subnet_v2.service.id
 }
 
 resource "openstack_networking_router_interface_v2" "nodes_router_interface" {

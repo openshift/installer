@@ -6,6 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/validate"
 )
 
 // ValidatePlatform checks that the specified platform is valid.
@@ -59,6 +60,20 @@ func ValidatePlatform(p *openstack.Platform, fldPath *field.Path, fetcher ValidV
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
+
+	// Validate VIP Values
+	if err := validate.IP(p.APIVIP); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
+	}
+
+	if err := validate.IP(p.IngressVIP); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
+	}
+
+	if err := validate.IP(p.DNSVIP); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsVIP"), p.DNSVIP, err.Error()))
+	}
+
 	return allErrs
 }
 
