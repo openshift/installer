@@ -49,7 +49,7 @@ var (
 func newGatherBootstrapCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bootstrap",
-		Short: "Gather debugging data for a failing to bootstrap control plane",
+		Short: "Gather debugging data for a failing-to-bootstrap control plane",
 		Args:  cobra.ExactArgs(0),
 		Run: func(_ *cobra.Command, _ []string) {
 			cleanup := setupFileHook(rootOpts.dir)
