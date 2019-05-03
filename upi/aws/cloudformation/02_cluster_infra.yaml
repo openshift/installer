@@ -3,17 +3,17 @@ Description: Template for Openshift Cluster UPI Network Elements (Route53 & LBs)
 
 Parameters:
   ClusterName:
-    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,31})$
-    MaxLength: 32
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
+    MaxLength: 27
     MinLength: 1
-    ConstraintDescription: Cluster name must be alphanumeric, start with a letter and a maximum of 32 characters
+    ConstraintDescription: Cluster name must be alphanumeric, start with a letter and a maximum of 27 characters
     Description: A short, representative cluster name to use for hostnames, etc.
     Type: String
   InfrastructureName:
-    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,31})$
-    MaxLength: 32
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
+    MaxLength: 27
     MinLength: 1
-    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 32 characters
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 27 characters
     Description: A short, unique cluster ID used to tag cloud resources and identify items owned/used by the cluster.
     Type: String
   HostedZoneId:
@@ -72,7 +72,7 @@ Resources:
   ExtApiElb:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Join ["-", ["api-ext", !Ref ClusterName, !Ref "AWS::Region"]]
+      Name: !Join ["-", [!Ref InfrastructureName, "ext"]]
       IpAddressType: ipv4
       Subnets: !Ref PublicSubnets
       Type: network
@@ -80,7 +80,7 @@ Resources:
   IntApiElb:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Join ["-", ["api-int", !Ref ClusterName, !Ref "AWS::Region"]]
+      Name: !Join ["-", [!Ref InfrastructureName, "int"]]
       Scheme: internal
       IpAddressType: ipv4
       Subnets: !Ref PrivateSubnets
