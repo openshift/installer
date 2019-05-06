@@ -56,6 +56,10 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
+        default: "Cluster Information"
+      Parameters:
+      - InfrastructureName
+    - Label:
         default: "Host Information"
       Parameters:
       - WorkerInstanceType
@@ -71,6 +75,8 @@ Metadata:
     ParameterLabels:
       Subnet:
         default: "Subnet"
+      InfrastructureName:
+        default: "Infrastructure Name"
       WorkerInstanceType:
         default: "Worker Instance Type"
       WorkerInstanceProfileName:
@@ -89,6 +95,11 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: !Ref RhcosAmi
+      BlockDeviceMappings:
+      - DeviceName: /dev/xvda
+        Ebs:
+          VolumeSize: "120"
+          VolumeType: "gp2"
       IamInstanceProfile: !Ref WorkerInstanceProfileName
       InstanceType: !Ref WorkerInstanceType
       NetworkInterfaces:

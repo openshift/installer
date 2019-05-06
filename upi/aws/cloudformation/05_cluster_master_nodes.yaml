@@ -90,6 +90,10 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
+        default: "Cluster Information"
+      Parameters:
+      - InfrastructureName
+    - Label:
         default: "Host Information"
       Parameters:
       - MasterInstanceType
@@ -121,6 +125,8 @@ Metadata:
       - InternalApiTargetGroupArn
       - InternalServiceTargetGroupArn
     ParameterLabels:
+      InfrastructureName:
+        default: "Infrastructure Name"
       VpcId:
         default: "VPC ID"
       Master0Subnet:
@@ -159,6 +165,11 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: !Ref RhcosAmi
+      BlockDeviceMappings:
+      - DeviceName: /dev/xvda
+        Ebs:
+          VolumeSize: "120"
+          VolumeType: "gp2"
       IamInstanceProfile: !Ref MasterInstanceProfileName
       InstanceType: !Ref MasterInstanceType
       NetworkInterfaces:
@@ -206,6 +217,11 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: !Ref RhcosAmi
+      BlockDeviceMappings:
+      - DeviceName: /dev/xvda
+        Ebs:
+          VolumeSize: "120"
+          VolumeType: "gp2"
       IamInstanceProfile: !Ref MasterInstanceProfileName
       InstanceType: !Ref MasterInstanceType
       NetworkInterfaces:
@@ -253,6 +269,11 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: !Ref RhcosAmi
+      BlockDeviceMappings:
+      - DeviceName: /dev/xvda
+        Ebs:
+          VolumeSize: "120"
+          VolumeType: "gp2"
       IamInstanceProfile: !Ref MasterInstanceProfileName
       InstanceType: !Ref MasterInstanceType
       NetworkInterfaces:
