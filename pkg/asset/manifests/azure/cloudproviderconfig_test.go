@@ -22,7 +22,7 @@ func TestCloudProviderConfig(t *testing.T) {
 	"aadClientCertPath": "",
 	"aadClientCertPassword": "",
 	"useManagedIdentityExtension": true,
-	"userAssignedIdentityID": "/subscriptions/subID/resourcegroups/clusterid-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/clusterid-identity",
+	"userAssignedIdentityID": "",
 	"subscriptionId": "subID",
 	"resourceGroup": "clusterid-rg",
 	"location": "westeurope",
