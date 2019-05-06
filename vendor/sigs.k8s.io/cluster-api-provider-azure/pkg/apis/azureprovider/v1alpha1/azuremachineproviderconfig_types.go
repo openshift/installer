@@ -37,14 +37,16 @@ type AzureMachineProviderSpec struct {
 	// UserDataSecret contains a local reference to a secret that contains the
 	// UserData to apply to the instance
 	UserDataSecret *corev1.SecretReference `json:"userDataSecret,omitempty"`
+
 	// CredentialsSecret is a reference to the secret with Azure credentials.
 	CredentialsSecret *corev1.SecretReference `json:"credentialsSecret,omitempty"`
-	Location          string                  `json:"location"`
-	VMSize            string                  `json:"vmSize"`
-	Image             Image                   `json:"image"`
-	OSDisk            OSDisk                  `json:"osDisk"`
-	SSHPublicKey      string                  `json:"sshPublicKey"`
-	SSHPrivateKey     string                  `json:"sshPrivateKey"`
+
+	Location      string `json:"location"`
+	VMSize        string `json:"vmSize"`
+	Image         Image  `json:"image"`
+	OSDisk        OSDisk `json:"osDisk"`
+	SSHPublicKey  string `json:"sshPublicKey"`
+	SSHPrivateKey string `json:"sshPrivateKey"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
