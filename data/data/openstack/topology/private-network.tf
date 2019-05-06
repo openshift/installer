@@ -16,12 +16,11 @@ resource "openstack_networking_network_v2" "openshift-private" {
 }
 
 resource "openstack_networking_subnet_v2" "service" {
-  name            = "${var.cluster_id}-service"
-  cidr            = "${local.service_cidr_block}"
-  ip_version      = 4
-  network_id      = "${openstack_networking_network_v2.openshift-private.id}"
-  tags            = ["openshiftClusterID=${var.cluster_id}"]
-  dns_nameservers = ["1.1.1.1", "208.67.222.222"]
+  name       = "${var.cluster_id}-service"
+  cidr       = "${local.service_cidr_block}"
+  ip_version = 4
+  network_id = "${openstack_networking_network_v2.openshift-private.id}"
+  tags       = ["openshiftClusterID=${var.cluster_id}"]
 }
 
 resource "openstack_networking_subnet_v2" "nodes" {
