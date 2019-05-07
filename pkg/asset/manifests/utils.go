@@ -34,6 +34,10 @@ func configMap(namespace, name string, data genericData) *configurationObject {
 }
 
 func getAPIServerURL(ic *types.InstallConfig) string {
+	return fmt.Sprintf("https://api.%s:6443", ic.ClusterDomain())
+}
+
+func getInternalAPIServerURL(ic *types.InstallConfig) string {
 	return fmt.Sprintf("https://api-int.%s:6443", ic.ClusterDomain())
 }
 

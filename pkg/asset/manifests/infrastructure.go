@@ -81,10 +81,11 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			// not namespaced
 		},
 		Status: configv1.InfrastructureStatus{
-			InfrastructureName:  clusterID.InfraID,
-			Platform:            platform,
-			APIServerURL:        getAPIServerURL(installConfig.Config),
-			EtcdDiscoveryDomain: getEtcdDiscoveryDomain(installConfig.Config),
+			InfrastructureName:   clusterID.InfraID,
+			Platform:             platform,
+			APIServerURL:         getInternalAPIServerURL(installConfig.Config),
+			APIServerInternalURL: getInternalAPIServerURL(installConfig.Config),
+			EtcdDiscoveryDomain:  getEtcdDiscoveryDomain(installConfig.Config),
 		},
 	}
 
