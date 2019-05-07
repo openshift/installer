@@ -53,24 +53,6 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	cloudproviderconfig := &CloudProviderConfig{}
 	dependencies.Get(clusterID, installConfig, cloudproviderconfig)
 
-	var platform configv1.PlatformType
-	switch installConfig.Config.Platform.Name() {
-	case aws.Name:
-		platform = configv1.AWSPlatformType
-	case none.Name:
-		platform = configv1.NonePlatformType
-	case libvirt.Name:
-		platform = configv1.LibvirtPlatformType
-	case openstack.Name:
-		platform = configv1.OpenStackPlatformType
-	case vsphere.Name:
-		platform = configv1.VSpherePlatformType
-	case azure.Name:
-		platform = configv1.AzurePlatformType
-	default:
-		platform = configv1.NonePlatformType
-	}
-
 	config := &configv1.Infrastructure{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: configv1.SchemeGroupVersion.String(),
@@ -82,12 +64,33 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		},
 		Status: configv1.InfrastructureStatus{
 			InfrastructureName:   clusterID.InfraID,
-			Platform:             platform,
 			APIServerURL:         getInternalAPIServerURL(installConfig.Config),
 			APIServerInternalURL: getInternalAPIServerURL(installConfig.Config),
 			EtcdDiscoveryDomain:  getEtcdDiscoveryDomain(installConfig.Config),
+			PlatformStatus:       &configv1.PlatformStatus{},
 		},
 	}
+
+	switch installConfig.Config.Platform.Name() {
+	case aws.Name:
+		config.Status.PlatformStatus.Type = configv1.AWSPlatformType
+		config.Status.PlatformStatus.AWS = &configv1.AWSPlatformStatus{
+			Region: installConfig.Config.Platform.AWS.Region,
+		}
+	case none.Name:
+		config.Status.PlatformStatus.Type = configv1.NonePlatformType
+	case libvirt.Name:
+		config.Status.PlatformStatus.Type = configv1.LibvirtPlatformType
+	case openstack.Name:
+		config.Status.PlatformStatus.Type = configv1.OpenStackPlatformType
+	case vsphere.Name:
+		config.Status.PlatformStatus.Type = configv1.VSpherePlatformType
+	case azure.Name:
+		config.Status.PlatformStatus.Type = configv1.AzurePlatformType
+	default:
+		config.Status.PlatformStatus.Type = configv1.NonePlatformType
+	}
+	config.Status.Platform = config.Status.PlatformStatus.Type
 
 	if cloudproviderconfig.ConfigMap != nil {
 		// set the configmap reference.
