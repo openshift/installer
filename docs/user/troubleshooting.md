@@ -98,7 +98,7 @@ The installer uses the [cluster-version-operator] to create all the components o
 1. Inspecting the `ClusterVersion` object.
 
     ```console
-    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusterversion -oyaml
+    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusterversion -o yaml
     apiVersion: config.openshift.io/v1
     kind: ClusterVersion
     metadata:
@@ -188,7 +188,7 @@ The installer uses the [cluster-version-operator] to create all the components o
     To get detailed information on why an individual cluster operator is `Failing` or not yet `Available`, you can check the status of that individual operator, for example `monitoring`:
 
     ```console
-    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusteroperator monitoring -oyaml
+    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusteroperator monitoring -o yaml
     apiVersion: config.openshift.io/v1
     kind: ClusterOperator
     metadata:
@@ -241,7 +241,7 @@ The installer fetches the URL for OpenShift console using the [route][route-obje
 1. Check if the console router is `Available` or `Failing`
 
     ```console
-    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusteroperator console -oyaml
+    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusteroperator console -o yaml
     apiVersion: config.openshift.io/v1
     kind: ClusterOperator
     metadata:
@@ -452,7 +452,7 @@ From a deployment perspective, the network operator is often the "canary in the 
 First, determine that the network configuration exists:
 
 ```console
-$ kubectl get network.config.openshift.io cluster -oyaml
+$ kubectl get network.config.openshift.io cluster -o yaml
 apiVersion: config.openshift.io/v1
 kind: Network
 metadata:
