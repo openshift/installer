@@ -96,7 +96,7 @@ then
 		--volume "$PWD:/assets:z" \
 		"${KUBE_APISERVER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-apiserver-operator render \
-		--manifest-etcd-serving-ca=etcd-client-ca.crt \
+		--manifest-etcd-serving-ca=etcd-ca-bundle.crt \
 		--manifest-etcd-server-urls={{.EtcdCluster}} \
 		--manifest-image=${OPENSHIFT_HYPERSHIFT_IMAGE} \
 		--asset-input-dir=/assets/tls \
@@ -173,7 +173,7 @@ then
 		--volume "$PWD:/assets:z" \
 		"${MACHINE_CONFIG_OPERATOR_IMAGE}" \
 		bootstrap \
-			--etcd-ca=/assets/tls/etcd-client-ca.crt \
+			--etcd-ca=/assets/tls/etcd-ca-bundle.crt \
 			--etcd-metric-ca=/assets/tls/etcd-metric-ca-bundle.crt \
 			--root-ca=/assets/tls/root-ca.crt \
 			--kube-ca=/assets/tls/kube-apiserver-complete-client-ca-bundle.crt \
@@ -228,8 +228,8 @@ podman run \
 	--network host \
 	"${KUBE_ETCD_SIGNER_SERVER_IMAGE}" \
 	serve \
-	--cacrt=/opt/openshift/tls/etcd-client-ca.crt \
-	--cakey=/opt/openshift/tls/etcd-client-ca.key \
+	--cacrt=/opt/openshift/tls/etcd-signer.crt \
+	--cakey=/opt/openshift/tls/etcd-signer.key \
 	--metric-cacrt=/opt/openshift/tls/etcd-metric-signer.crt \
 	--metric-cakey=/opt/openshift/tls/etcd-metric-signer.key \
 	--servcrt=/opt/openshift/tls/kube-apiserver-lb-server.crt \
@@ -256,7 +256,7 @@ until podman run \
 		--entrypoint etcdctl \
 		"${MACHINE_CONFIG_ETCD_IMAGE}" \
 		--dial-timeout=10m \
-		--cacert=/opt/openshift/tls/etcd-client-ca.crt \
+		--cacert=/opt/openshift/tls/etcd-ca-bundle.crt \
 		--cert=/opt/openshift/tls/etcd-client.crt \
 		--key=/opt/openshift/tls/etcd-client.key \
 		--endpoints={{.EtcdCluster}} \
