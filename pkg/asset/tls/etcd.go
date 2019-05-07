@@ -7,75 +7,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 )
 
-// EtcdCA is the asset that generates the etcd-ca key/cert pair.
-// [DEPRECATED]
-type EtcdCA struct {
-	SelfSignedCertKey
-}
-
-var _ asset.Asset = (*EtcdCA)(nil)
-
-// Dependencies returns the dependency of the the cert/key pair, which includes
-// the parent CA, and install config if it depends on the install config for
-// DNS names, etc.
-func (a *EtcdCA) Dependencies() []asset.Asset {
-	return []asset.Asset{}
-}
-
-// Generate generates the cert/key pair based on its dependencies.
-func (a *EtcdCA) Generate(dependencies asset.Parents) error {
-	cfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "etcd", OrganizationalUnit: []string{"etcd"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears,
-		IsCA:      true,
-	}
-
-	return a.SelfSignedCertKey.Generate(cfg, "etcd-client-ca")
-}
-
-// Name returns the human-friendly name of the asset.
-func (a *EtcdCA) Name() string {
-	return "Certificate (etcd)"
-}
-
-// EtcdClientCertKey is the asset that generates the etcd client key/cert pair.
-// [DEPRECATED]
-type EtcdClientCertKey struct {
-	SignedCertKey
-}
-
-var _ asset.Asset = (*EtcdClientCertKey)(nil)
-
-// Dependencies returns the dependency of the the cert/key pair, which includes
-// the parent CA, and install config if it depends on the install config for
-// DNS names, etc.
-func (a *EtcdClientCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{
-		&EtcdCA{},
-	}
-}
-
-// Generate generates the cert/key pair based on its dependencies.
-func (a *EtcdClientCertKey) Generate(dependencies asset.Parents) error {
-	etcdCA := &EtcdCA{}
-	dependencies.Get(etcdCA)
-
-	cfg := &CertCfg{
-		Subject:      pkix.Name{CommonName: "etcd", OrganizationalUnit: []string{"etcd"}},
-		KeyUsages:    x509.KeyUsageKeyEncipherment,
-		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityTenYears,
-	}
-
-	return a.SignedCertKey.Generate(cfg, etcdCA, "etcd-client", DoNotAppendParent)
-}
-
-// Name returns the human-friendly name of the asset.
-func (a *EtcdClientCertKey) Name() string {
-	return "Certificate (etcd)"
-}
-
 // EtcdSignerCertKey is a key/cert pair that signs the etcd client and peer certs.
 type EtcdSignerCertKey struct {
 	SelfSignedCertKey
@@ -163,10 +94,10 @@ func (a *EtcdSignerClientCertKey) Generate(dependencies asset.Parents) error {
 		Validity:     ValidityTenYears,
 	}
 
-	return a.SignedCertKey.Generate(cfg, ca, "etcd-signer-client", DoNotAppendParent)
+	return a.SignedCertKey.Generate(cfg, ca, "etcd-client", DoNotAppendParent)
 }
 
 // Name returns the human-friendly name of the asset.
 func (a *EtcdSignerClientCertKey) Name() string {
-	return "Certificate (etcd-signer-client)"
+	return "Certificate (etcd-client)"
 }

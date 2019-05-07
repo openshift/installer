@@ -12,11 +12,9 @@ const (
 	etcdClientSecretFileName = "etcd-client-secret.yaml.template"
 )
 
-var etcdClientCertFiles = []string{etcdClientSecretFileName}
-
 var _ asset.WritableAsset = (*EtcdClientSecret)(nil)
 
-// EtcdClientSecret is an asset for the etcd client secret
+// EtcdClientSecret is an asset for the etcd client signer
 type EtcdClientSecret struct {
 	FileList []*asset.File
 }
@@ -33,18 +31,17 @@ func (t *EtcdClientSecret) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *EtcdClientSecret) Generate(parents asset.Parents) error {
-	t.FileList = []*asset.File{}
-	for _, fileName := range etcdClientCertFiles {
-		data, err := content.GetBootkubeTemplate(fileName)
-		if err != nil {
-			return err
-		}
-		t.FileList = append(t.FileList, &asset.File{
+	fileName := etcdClientSecretFileName
+	data, err := content.GetBootkubeTemplate(fileName)
+	if err != nil {
+		return err
+	}
+	t.FileList = []*asset.File{
+		{
 			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
-		})
+		},
 	}
-
 	return nil
 }
 
@@ -55,17 +52,13 @@ func (t *EtcdClientSecret) Files() []*asset.File {
 
 // Load returns the asset from disk.
 func (t *EtcdClientSecret) Load(f asset.FileFetcher) (bool, error) {
-	t.FileList = []*asset.File{}
-	for _, fileName := range etcdClientCertFiles {
-		file, err := f.FetchByName(filepath.Join(content.TemplateDir, fileName))
-		if err != nil {
-			if os.IsNotExist(err) {
-				return false, nil
-			}
-			return false, err
+	file, err := f.FetchByName(filepath.Join(content.TemplateDir, etcdClientSecretFileName))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
 		}
-		t.FileList = append(t.FileList, file)
+		return false, err
 	}
-
+	t.FileList = []*asset.File{file}
 	return true, nil
 }
