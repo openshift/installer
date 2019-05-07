@@ -5,4 +5,4 @@ metadata:
   namespace: openshift-config
 data:
   ca-bundle.crt: |
-    {{.EtcdCaCert | indent 4}}
+    {{.EtcdSignerClientCert | indent 4}}

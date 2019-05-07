@@ -39,7 +39,6 @@ type cloudCredsSecretData struct {
 type bootkubeTemplateData struct {
 	CVOClusterID               string
 	EtcdCaBundle               string
-	EtcdCaCert                 string
 	EtcdClientCaCert           string
 	EtcdClientCaKey            string
 	EtcdClientCert             string

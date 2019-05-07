@@ -172,7 +172,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	templateData := &bootkubeTemplateData{
 		CVOClusterID:               clusterID.UUID,
 		EtcdCaBundle:               base64.StdEncoding.EncodeToString(etcdCABundle.Cert()),
-		EtcdCaCert:                 string(etcdCA.Cert()),
 		EtcdClientCaCert:           base64.StdEncoding.EncodeToString(etcdCA.Cert()),
 		EtcdClientCaKey:            base64.StdEncoding.EncodeToString(etcdCA.Key()),
 		EtcdClientCert:             base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
