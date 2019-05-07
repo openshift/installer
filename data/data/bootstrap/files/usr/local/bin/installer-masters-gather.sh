@@ -15,8 +15,8 @@ mkdir -p "${ARTIFACTS}/containers"
 for container in $(crictl ps --all --quiet)
 do
     container_name=$(crictl ps -a --id "${container}" -v | grep -oP "Name: \\K(.*)")
-    crictl logs "${container}" >& "${ARTIFACTS}/containers/${container_name}.log"
-    crictl inspect "${container}" >& "${ARTIFACTS}/containers/${container_name}.inspect"
+    crictl logs "${container}" >& "${ARTIFACTS}/containers/${container_name}-${container}.log"
+    crictl inspect "${container}" >& "${ARTIFACTS}/containers/${container_name}-${container}.inspect"
 done
 for container in $(podman ps --all --quiet)
 do

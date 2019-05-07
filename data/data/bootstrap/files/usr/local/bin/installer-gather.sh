@@ -14,8 +14,8 @@ mkdir -p "${ARTIFACTS}/bootstrap/containers"
 sudo crictl ps --all --quiet | while read -r container
 do
     container_name="$(sudo crictl ps -a --id "${container}" -v | grep -oP "Name: \\K(.*)")"
-    sudo crictl logs "${container}" >& "${ARTIFACTS}/bootstrap/containers/${container_name}.log"
-    sudo crictl inspect "${container}" >& "${ARTIFACTS}/bootstrap/containers/${container_name}.inspect"
+    sudo crictl logs "${container}" >& "${ARTIFACTS}/bootstrap/containers/${container_name}-${container}.log"
+    sudo crictl inspect "${container}" >& "${ARTIFACTS}/bootstrap/containers/${container_name}-${container}.inspect"
 done
 mkdir -p "${ARTIFACTS}/bootstrap/pods"
 sudo podman ps --all --quiet | while read -r container
