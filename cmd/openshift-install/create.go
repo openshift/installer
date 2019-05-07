@@ -326,6 +326,7 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 	clusterVersionContext, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
+	failing := configv1.ClusterStatusConditionType("Failing")
 	var lastError string
 	_, err = clientwatch.UntilWithSync(
 		clusterVersionContext,
@@ -343,8 +344,8 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorAvailable) {
 					return true, nil
 				}
-				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorFailing) {
-					lastError = cov1helpers.FindStatusCondition(cv.Status.Conditions, configv1.OperatorFailing).Message
+				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, failing) {
+					lastError = cov1helpers.FindStatusCondition(cv.Status.Conditions, failing).Message
 				} else if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorProgressing) {
 					lastError = cov1helpers.FindStatusCondition(cv.Status.Conditions, configv1.OperatorProgressing).Message
 				}
