@@ -329,10 +329,34 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		os.Exit(1)
 	}
 	for _, router := range allRouters {
-		// Get non HA router interface ports
+		// If a user provisioned floating ip was used, it needs to be dissociated
+		// Any floating Ip's associated with routers that are going to be deleted will be dissociated
+		fipOpts := floatingips.ListOpts{
+			RouterID: router.ID,
+		}
+
+		fipPages, err := floatingips.List(conn, fipOpts).AllPages()
+		if err != nil {
+			logger.Fatalf("%v", err)
+			os.Exit(1)
+		}
+
+		allFIPs, err := floatingips.ExtractFloatingIPs(fipPages)
+		if err != nil {
+			logger.Fatalf("%v", err)
+			os.Exit(1)
+		}
+
+		for _, fip := range allFIPs {
+			_, err := floatingips.Update(conn, fip.ID, floatingips.UpdateOpts{}).Extract()
+			if err != nil {
+				logger.Fatalf("%v", err)
+			}
+		}
+
+		// Get router interface ports
 		portListOpts := ports.ListOpts{
-			DeviceID:    router.ID,
-			DeviceOwner: "network:router_interface",
+			DeviceID: router.ID,
 		}
 		allPagesPort, err := ports.List(conn, portListOpts).AllPages()
 		if err != nil {
@@ -345,35 +369,21 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 			os.Exit(1)
 		}
 
-		// Get HA router interface ports
-		HAportListOpts := ports.ListOpts{
-			DeviceID:    router.ID,
-			DeviceOwner: "network:ha_router_replicated_interface",
-		}
-		HAallPagesPort, err := ports.List(conn, HAportListOpts).AllPages()
-		if err != nil {
-			logger.Fatalf("%v", err)
-			os.Exit(1)
-		}
-		HAPorts, err := ports.ExtractPorts(HAallPagesPort)
-		if err != nil {
-			logger.Fatalf("%v", err)
-			os.Exit(1)
-		}
-
-		// Catch all, since router may not be HA
-		allPorts = append(allPorts, HAPorts...)
-
+		// map to keep track of whethere interface for subnet was already removed
+		removedSubnets := make(map[string]bool)
 		for _, port := range allPorts {
 			for _, IP := range port.FixedIPs {
-				removeOpts := routers.RemoveInterfaceOpts{
-					SubnetID: IP.SubnetID,
-				}
-				logger.Debugf("Removing Subnet %v from Router %v\n", IP.SubnetID, router.ID)
-				_, err = routers.RemoveInterface(conn, router.ID, removeOpts).Extract()
-				if err != nil {
-					// This can fail when subnet is still in use
-					return false, nil
+				if !removedSubnets[IP.SubnetID] {
+					removeOpts := routers.RemoveInterfaceOpts{
+						SubnetID: IP.SubnetID,
+					}
+					logger.Debugf("Removing Subnet %v from Router %v\n", IP.SubnetID, router.ID)
+					_, err = routers.RemoveInterface(conn, router.ID, removeOpts).Extract()
+					if err != nil {
+						// This can fail when subnet is still in use
+						return false, nil
+					}
+					removedSubnets[IP.SubnetID] = true
 				}
 			}
 		}
