@@ -51,6 +51,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&openshift.CloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
 		&openshift.RoleCloudCredsSecretReader{},
+		&openshift.RoleBindingCloudCredsSecretReader{},
 	}
 }
 
@@ -137,10 +138,12 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	cloudCredsSecret := &openshift.CloudCredsSecret{}
 	kubeadminPasswordSecret := &openshift.KubeadminPasswordSecret{}
 	roleCloudCredsSecretReader := &openshift.RoleCloudCredsSecretReader{}
+	roleBindingCloudCredsSecretReader := &openshift.RoleBindingCloudCredsSecretReader{}
 	dependencies.Get(
 		cloudCredsSecret,
 		kubeadminPasswordSecret,
-		roleCloudCredsSecretReader)
+		roleCloudCredsSecretReader,
+		roleBindingCloudCredsSecretReader)
 
 	assetData := map[string][]byte{
 		"99_kubeadmin-password-secret.yaml": applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
@@ -150,6 +153,11 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	case awstypes.Name, openstacktypes.Name, vspheretypes.Name, azuretypes.Name:
 		assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
 		assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleCloudCredsSecretReader.Files()[0].Data, templateData)
+	}
+
+	switch platform {
+	case openstacktypes.Name:
+		assetData["99_rolebinding-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleBindingCloudCredsSecretReader.Files()[0].Data, templateData)
 	}
 
 	o.FileList = []*asset.File{}
