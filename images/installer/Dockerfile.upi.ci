@@ -7,14 +7,12 @@ FROM registry.svc.ci.openshift.org/ocp/builder:golang-1.10 AS builder
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN hack/build.sh
-RUN GOBIN=$(pwd)/bin go get -u github.com/coreos/terraform-provider-matchbox
 
 FROM registry.svc.ci.openshift.org/ocp/4.1:cli as cli
 
 FROM registry.svc.ci.openshift.org/ocp/4.1:base
 COPY --from=cli /usr/bin/oc /bin/oc
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
-COPY --from=builder /go/src/github.com/openshift/installer/bin/terraform-provider-matchbox /bin/terraform-provider-matchbox
 COPY --from=builder /go/src/github.com/openshift/installer/upi /var/lib/openshift-install/upi
 COPY --from=builder /go/src/github.com/openshift/installer/data/data/rhcos.json /var/lib/openshift-install/rhcos.json
 
@@ -30,9 +28,15 @@ RUN yum install --setopt=tsflags=nodocs -y \
     yum clean all && rm -rf /var/cache/yum/*
 
 ENV TERRAFORM_VERSION=0.11.11
-RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /bin/
-
-RUN curl -L -O https://github.com/vmware/govmomi/releases/download/v0.20.0/govc_linux_amd64.gz && gzip -d govc_linux_amd64.gz && chmod +x govc_linux_amd64 && mv govc_linux_amd64 /bin/govc
+RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
+    unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /bin/
+ENV MATCHBOX_VERSION=v0.2.3
+RUN curl -L -O https://github.com/poseidon/terraform-provider-matchbox/releases/download/${MATCHBOX_VERSION}/terraform-provider-matchbox-${MATCHBOX_VERSION}-linux-amd64.tar.gz && \
+    tar xzf terraform-provider-matchbox-${MATCHBOX_VERSION}-linux-amd64.tar.gz && \
+    mv terraform-provider-matchbox-${MATCHBOX_VERSION}-linux-amd64/terraform-provider-matchbox /bin/terraform-provider-matchbox
+RUN curl -L -O https://github.com/vmware/govmomi/releases/download/v0.20.0/govc_linux_amd64.gz && \
+    gzip -d govc_linux_amd64.gz && \
+    chmod +x govc_linux_amd64 && mv govc_linux_amd64 /bin/govc
 
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
