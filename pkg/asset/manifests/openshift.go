@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/machines"
+	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/password"
@@ -114,10 +115,17 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			return err
 		}
 
+		cloudProviderConf, err := openstackmanifests.CloudProviderConfigSecret(cloud)
+		if err != nil {
+			return err
+		}
+
 		credsEncoded := base64.StdEncoding.EncodeToString(marshalled)
+		credsINIEncoded := base64.StdEncoding.EncodeToString(cloudProviderConf)
 		cloudCreds = cloudCredsSecretData{
 			OpenStack: &OpenStackCredsSecretData{
-				Base64encodeCloudCreds: credsEncoded,
+				Base64encodeCloudCreds:    credsEncoded,
+				Base64encodeCloudCredsINI: credsINIEncoded,
 			},
 		}
 	case vspheretypes.Name:

@@ -19,7 +19,8 @@ type AzureCredsSecretData struct {
 
 // OpenStackCredsSecretData holds encoded credentials and is used to generate cloud-creds secret
 type OpenStackCredsSecretData struct {
-	Base64encodeCloudCreds string
+	Base64encodeCloudCreds    string
+	Base64encodeCloudCredsINI string
 }
 
 // VSphereCredsSecretData holds encoded credentials and is used to generated cloud-creds secret
