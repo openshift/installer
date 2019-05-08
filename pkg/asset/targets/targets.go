@@ -50,6 +50,7 @@ var (
 		&openshift.CloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
 		&openshift.RoleCloudCredsSecretReader{},
+		&openshift.RolebindingCloudCredsSecretReader{},
 	}
 
 	// IgnitionConfigs are the ignition-configs targeted assets.
