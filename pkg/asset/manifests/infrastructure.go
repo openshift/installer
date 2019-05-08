@@ -83,7 +83,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		Status: configv1.InfrastructureStatus{
 			InfrastructureName:   clusterID.InfraID,
 			Platform:             platform,
-			APIServerURL:         getInternalAPIServerURL(installConfig.Config),
+			APIServerURL:         getAPIServerURL(installConfig.Config),
 			APIServerInternalURL: getInternalAPIServerURL(installConfig.Config),
 			EtcdDiscoveryDomain:  getEtcdDiscoveryDomain(installConfig.Config),
 		},
