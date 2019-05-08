@@ -17,19 +17,15 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"github.com/openshift/cluster-api/pkg/apis/cluster/common"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/openshift/cluster-api/pkg/apis/cluster/common"
 )
 
-const (
-	// MachineFinalizer is set on PrepareForCreate callback.
-	MachineFinalizer = "machine.cluster.k8s.io"
-
-	// MachineClusterLabelName is the label set on machines linked to a cluster.
-	MachineClusterLabelName = "cluster.k8s.io/cluster-name"
-)
+// Finalizer is set on PrepareForCreate callback
+const MachineFinalizer = "machine.cluster.k8s.io"
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -83,19 +79,6 @@ type MachineSpec struct {
 	// as-is.
 	// +optional
 	ConfigSource *corev1.NodeConfigSource `json:"configSource,omitempty"`
-
-	// ProviderID is the identification ID of the machine provided by the provider.
-	// This field must match the provider ID as seen on the node object corresponding to this machine.
-	// This field is required by higher level consumers of cluster-api. Example use case is cluster autoscaler
-	// with cluster-api as provider. Clean-up login in the autoscaler compares machines v/s nodes to find out
-	// machines at provider which could not get registered as Kubernetes nodes. With cluster-api as a
-	// generic out-of-tree provider for autoscaler, this field is required by autoscaler to be
-	// able to have a provider view of the list of machines. Another list of nodes is queries from the k8s apiserver
-	// and then comparison is done to find out unregistered machines and are marked for delete.
-	// This field will be set by the actuators and consumed by higher level entities like autoscaler  who will
-	// be interfacing with cluster-api as generic provider.
-	// +optional
-	ProviderID *string `json:"providerID,omitempty"`
 }
 
 /// [MachineSpec]

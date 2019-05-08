@@ -4,7 +4,7 @@ package libvirt
 import (
 	"fmt"
 
-	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1"
+	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -60,7 +60,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 func provider(clusterID string, networkInterfaceAddress string, platform *libvirt.Platform, userDataSecret string) *libvirtprovider.LibvirtMachineProviderConfig {
 	return &libvirtprovider.LibvirtMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "libvirtproviderconfig.k8s.io/v1alpha1",
+			APIVersion: "libvirtproviderconfig.openshift.io/v1beta1",
 			Kind:       "LibvirtMachineProviderConfig",
 		},
 		DomainMemory: 4096,
