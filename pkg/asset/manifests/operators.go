@@ -55,6 +55,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
+		&installconfig.IgnitionAuth{},
 		&Ingress{},
 		&DNS{},
 		&Infrastructure{},
@@ -84,6 +85,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.KubeSystemConfigmapRootCA{},
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.OpenshiftConfigSecretPullSecret{},
+		&bootkube.OpenshiftConfigSecretIgnitionAuth{},
 		&bootkube.OpenshiftMachineConfigOperator{},
 	}
 }
@@ -136,6 +138,7 @@ func (m *Manifests) Files() []*asset.File {
 func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*asset.File {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
+	ignitionAuth := &installconfig.IgnitionAuth{}
 	mcsCertKey := &tls.MCSCertKey{}
 	etcdMetricCABundle := &tls.EtcdMetricCABundle{}
 	etcdMetricSignerClientCertKey := &tls.EtcdMetricSignerClientCertKey{}
@@ -147,6 +150,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	dependencies.Get(
 		clusterID,
 		installConfig,
+		ignitionAuth,
 		etcdSignerCertKey,
 		etcdCABundle,
 		etcdSignerClientCertKey,
@@ -179,6 +183,8 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		McsTLSCert:                 base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:                  base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
 		PullSecretBase64:           base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
+		IgnitionAuthMasterBase64:   base64.StdEncoding.EncodeToString([]byte(ignitionAuth.Master)),
+		IgnitionAuthWorkerBase64:   base64.StdEncoding.EncodeToString([]byte(ignitionAuth.Master)),
 		RootCaCert:                 string(rootCA.Cert()),
 	}
 
@@ -200,6 +206,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		&bootkube.KubeSystemConfigmapRootCA{},
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.OpenshiftConfigSecretPullSecret{},
+		&bootkube.OpenshiftConfigSecretIgnitionAuth{},
 		&bootkube.OpenshiftMachineConfigOperator{},
 	} {
 		dependencies.Get(a)

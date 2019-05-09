@@ -46,6 +46,7 @@ var (
 		&bootkube.EtcdMetricSignerSecret{},
 		&bootkube.EtcdMetricServingCAConfigMap{},
 		&bootkube.OpenshiftConfigSecretPullSecret{},
+		&bootkube.OpenshiftConfigSecretIgnitionAuth{},
 		&openshift.BindingDiscovery{},
 		&openshift.CloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},

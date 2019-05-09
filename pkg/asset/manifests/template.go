@@ -53,6 +53,8 @@ type bootkubeTemplateData struct {
 	McsTLSCert                 string
 	McsTLSKey                  string
 	PullSecretBase64           string
+	IgnitionAuthMasterBase64   string
+	IgnitionAuthWorkerBase64   string
 	RootCaCert                 string
 	WorkerIgnConfig            string
 }
