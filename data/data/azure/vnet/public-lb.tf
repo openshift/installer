@@ -28,6 +28,27 @@ resource "azurerm_lb" "public" {
   }
 }
 
+resource "azurerm_lb_nat_rule" "bootstrap_ssh" {
+  resource_group_name            = "${var.resource_group_name}"
+  name                           = "SSHBootstrap"
+  protocol                       = "Tcp"
+  frontend_port                  = 2200
+  backend_port                   = 22
+  frontend_ip_configuration_name = "${local.public_lb_frontend_ip_configuration_name}"
+  loadbalancer_id                = "${azurerm_lb.public.id}"
+}
+
+resource "azurerm_lb_nat_rule" "master_ssh" {
+  count                          = "${var.master_count}"
+  resource_group_name            = "${var.resource_group_name}"
+  name                           = "SSHMaster-${count.index}"
+  protocol                       = "Tcp"
+  frontend_port                  = "${count.index + 2201}"
+  backend_port                   = 22
+  frontend_ip_configuration_name = "${local.public_lb_frontend_ip_configuration_name}"
+  loadbalancer_id                = "${azurerm_lb.public.id}"
+}
+
 resource "azurerm_lb_backend_address_pool" "master_public_lb_pool" {
   resource_group_name = "${var.resource_group_name}"
   loadbalancer_id     = "${azurerm_lb.public.id}"

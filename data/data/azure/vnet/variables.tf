@@ -46,3 +46,9 @@ variable "dns_label" {
   type        = "string"
   description = "The label used to build the dns name. i.e. <label>.<region>.cloudapp.azure.com"
 }
+
+variable "master_count" {
+  type        = "string"
+  description = "number of masters. used to setup ssh nat rules"
+  default     = "3"
+}

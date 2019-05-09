@@ -37,6 +37,7 @@ module "vnet" {
   cluster_id          = "${var.cluster_id}"
   region              = "${var.azure_region}"
   dns_label           = "${var.cluster_id}"
+  master_count        = "${var.master_count}"
 }
 
 module "master" {
@@ -56,6 +57,7 @@ module "master" {
   instance_count          = "${var.master_count}"
   boot_diag_blob_endpoint = "${azurerm_storage_account.bootdiag.primary_blob_endpoint}"
   os_volume_size          = "${var.azure_master_root_volume_size}"
+  ssh_nat_rule_ids        = "${module.vnet.mmaster_ssh_nat_rule_ids}"
 }
 
 module "dns" {
