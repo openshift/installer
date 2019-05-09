@@ -81,7 +81,10 @@ queue resources/openshiftapiserver.json oc --config=/opt/openshift/auth/kubeconf
 queue resources/pods.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get pods --all-namespaces -o json
 queue resources/rolebindings.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get rolebindings --all-namespaces -o json
 queue resources/roles.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get roles --all-namespaces -o json
-#queue resources/secrets.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get secrets --all-namespaces -o json
+# this just lists names and number of keys
+queue resources/secrets-names.txt oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get secrets --all-namespaces
+# this adds annotations, but strips out the SA tokens and dockercfg secrets which are noisy and may contain secrets in the annotations
+queue resources/secrets-names-with-annotations.txt oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get secrets --all-namespaces -o=custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,TYPE:.type,ANNOTATIONS:.metadata.annotations | grep -v -- '-token-' | grep -v -- '-dockercfg-'
 queue resources/services.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get services --all-namespaces -o json
 
 FILTER=gzip queue resources/openapi.json.gz oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get --raw /openapi/v2
