@@ -26,7 +26,9 @@ done
 
 echo "Gathering rendered assets..."
 mkdir -p "${ARTIFACTS}/rendered-assets"
-cp -r /var/opt/openshift/ "${ARTIFACTS}/rendered-assets"
+sudo cp -r /var/opt/openshift/ "${ARTIFACTS}/rendered-assets"
+sudo chown -R "${USER}":"${USER}" "${ARTIFACTS}/rendered-assets"
+sudo find "${ARTIFACTS}/rendered-assets" -type d -print0 | xargs -0 sudo chmod u+x
 # remove sensitive information
 # TODO leave tls.crt inside of secret yaml files
 find "${ARTIFACTS}/rendered-assets" -name "*secret*" -print0 | xargs -0 rm
@@ -107,10 +109,10 @@ mapfile -t MASTERS < "${ARTIFACTS}/resources/masters.list"
 for master in "${MASTERS[@]}"
 do
   echo "Collecting info from ${master}"
-  scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null /usr/local/bin/installer-masters-gather.sh "core@${master}:"
+  scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null -q /usr/local/bin/installer-masters-gather.sh "core@${master}:"
   mkdir -p "${ARTIFACTS}/control-plane/${master}"
   ssh -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null "core@${master}" -C 'sudo ./installer-masters-gather.sh' </dev/null
-  ssh -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null "core@${master}" -C 'sudo tar c -C /tmp/artifacts/ .' </dev/null | tar -x -C "${ARTIFACTS}/control-plane/${master}/"
+  scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null -r -q "core@${master}:/tmp/artifacts/*" "${ARTIFACTS}/control-plane/${master}/"
 done
 tar cz -C /tmp/artifacts . > ~/log-bundle.tar.gz
 echo "Log bundle written to ~/log-bundle.tar.gz"
