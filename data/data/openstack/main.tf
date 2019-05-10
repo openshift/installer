@@ -1,26 +1,25 @@
 provider "openstack" {
-  auth_url            = "${var.openstack_credentials_auth_url}"
-  cert                = "${var.openstack_credentials_cert}"
-  cloud               = "${var.openstack_credentials_cloud}"
-  domain_id           = "${var.openstack_credentials_domain_id}"
-  domain_name         = "${var.openstack_credentials_domain_name}"
-  endpoint_type       = "${var.openstack_credentials_endpoint_type}"
-  insecure            = "${var.openstack_credentials_insecure}"
-  key                 = "${var.openstack_credentials_key}"
-  password            = "${var.openstack_credentials_password}"
-  project_domain_id   = "${var.openstack_credentials_project_domain_id}"
-  project_domain_name = "${var.openstack_credentials_project_domain_name}"
-  region              = "${var.openstack_region}"
-  region              = "${var.openstack_credentials_region}"
-  swauth              = "${var.openstack_credentials_swauth}"
-  tenant_id           = "${var.openstack_credentials_tenant_id}"
-  tenant_name         = "${var.openstack_credentials_tenant_name}"
-  token               = "${var.openstack_credentials_token}"
-  use_octavia         = "${var.openstack_credentials_use_octavia}"
-  user_domain_id      = "${var.openstack_credentials_user_domain_id}"
-  user_domain_name    = "${var.openstack_credentials_user_domain_name}"
-  user_id             = "${var.openstack_credentials_user_id}"
-  user_name           = "${var.openstack_credentials_user_name}"
+  auth_url            = var.openstack_credentials_auth_url
+  cert                = var.openstack_credentials_cert
+  cloud               = var.openstack_credentials_cloud
+  domain_id           = var.openstack_credentials_domain_id
+  domain_name         = var.openstack_credentials_domain_name
+  endpoint_type       = var.openstack_credentials_endpoint_type
+  insecure            = var.openstack_credentials_insecure
+  key                 = var.openstack_credentials_key
+  password            = var.openstack_credentials_password
+  project_domain_id   = var.openstack_credentials_project_domain_id
+  project_domain_name = var.openstack_credentials_project_domain_name
+  region              = var.openstack_credentials_region
+  swauth              = var.openstack_credentials_swauth
+  tenant_id           = var.openstack_credentials_tenant_id
+  tenant_name         = var.openstack_credentials_tenant_name
+  token               = var.openstack_credentials_token
+  use_octavia         = var.openstack_credentials_use_octavia
+  user_domain_id      = var.openstack_credentials_user_domain_id
+  user_domain_name    = var.openstack_credentials_user_domain_name
+  user_id             = var.openstack_credentials_user_id
+  user_name           = var.openstack_credentials_user_name
 }
 
 module "service" {
