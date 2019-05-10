@@ -16,7 +16,7 @@ Setup `default` AWS cli profile on the host that will run the example terraform 
 
 ### Packet
 
-Setup a Project in Packet.net that will be used to deploy servers, for example using this [guide](packet-deploy-server)
+Setup a Project in Packet.net that will be used to deploy servers, for example using this [guide][packet-deploy-server]
 
 Setup API keys for your Project in Packet.net using this [guide][packet-api-keys]
 
