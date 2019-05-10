@@ -116,7 +116,7 @@ resource "aws_instance" "bootstrap" {
   instance_type               = var.instance_type
   subnet_id                   = var.subnet_id
   user_data                   = data.ignition_config.redirect.rendered
-  vpc_security_group_ids      = [var.vpc_security_group_ids, aws_security_group.bootstrap.id]
+  vpc_security_group_ids      = flatten([var.vpc_security_group_ids, aws_security_group.bootstrap.id])
   associate_public_ip_address = true
 
   lifecycle {

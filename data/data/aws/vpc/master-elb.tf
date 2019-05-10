@@ -1,15 +1,7 @@
 resource "aws_lb" "api_internal" {
-  name               = "${var.cluster_id}-int"
-  load_balancer_type = "network"
-  # TF-UPGRADE-TODO: In Terraform v0.10 and earlier, it was sometimes necessary to
-  # force an interpolation expression to be interpreted as a list by wrapping it
-  # in an extra set of list brackets. That form was supported for compatibilty in
-  # v0.11, but is no longer supported in Terraform v0.12.
-  #
-  # If the expression in the following list itself returns a list, remove the
-  # brackets to avoid interpretation as a list of lists. If the expression
-  # returns a single list item then leave it as-is and remove this TODO comment.
-  subnets                          = [local.private_subnet_ids]
+  name                             = "${var.cluster_id}-int"
+  load_balancer_type               = "network"
+  subnets                          = local.private_subnet_ids
   internal                         = true
   enable_cross_zone_load_balancing = true
   idle_timeout                     = 3600
@@ -25,17 +17,9 @@ resource "aws_lb" "api_internal" {
 }
 
 resource "aws_lb" "api_external" {
-  name               = "${var.cluster_id}-ext"
-  load_balancer_type = "network"
-  # TF-UPGRADE-TODO: In Terraform v0.10 and earlier, it was sometimes necessary to
-  # force an interpolation expression to be interpreted as a list by wrapping it
-  # in an extra set of list brackets. That form was supported for compatibilty in
-  # v0.11, but is no longer supported in Terraform v0.12.
-  #
-  # If the expression in the following list itself returns a list, remove the
-  # brackets to avoid interpretation as a list of lists. If the expression
-  # returns a single list item then leave it as-is and remove this TODO comment.
-  subnets                          = [local.public_subnet_ids]
+  name                             = "${var.cluster_id}-ext"
+  load_balancer_type               = "network"
+  subnets                          = local.public_subnet_ids
   internal                         = false
   enable_cross_zone_load_balancing = true
   idle_timeout                     = 3600
