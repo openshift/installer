@@ -108,6 +108,14 @@
   version = "v2"
 
 [[projects]]
+  branch = "master"
+  digest = "1:82ebfdc7eb1a9f93e8edfaf5bc974c921364cf8dab78ca57f9b0789c386a258b"
+  name = "github.com/abhinavdahiya/terraform-provider-azurerm-srv"
+  packages = ["srv"]
+  pruneopts = "NUT"
+  revision = "b76400a3f181b7801de30c7cd6a11ac6361cf1e9"
+
+[[projects]]
   digest = "1:e6d97567e560cc54e59ca39eed9651a615ea0d31cd1b104d8a4e27043afea53b"
   name = "github.com/aws/aws-sdk-go"
   packages = [
@@ -953,6 +961,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/abhinavdahiya/terraform-provider-azurerm-srv/srv",
     "github.com/dmacvicar/terraform-provider-libvirt/libvirt",
     "github.com/terraform-providers/terraform-provider-aws/aws",
     "github.com/terraform-providers/terraform-provider-azurerm/azurerm",

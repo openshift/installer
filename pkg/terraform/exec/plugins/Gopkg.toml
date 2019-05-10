@@ -46,6 +46,10 @@ ignored = [
   version = "=1.25.0"
 
 [[constraint]]
+  name = "github.com/abhinavdahiya/terraform-provider-azurerm-srv"
+  branch = "master"
+
+[[constraint]]
   name = "github.com/terraform-providers/terraform-provider-random"
   version = "2.1.1"
 
