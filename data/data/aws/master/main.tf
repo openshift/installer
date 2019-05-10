@@ -131,6 +131,6 @@ resource "aws_lb_target_group_attachment" "master" {
   count = var.instance_count * var.target_group_arns_length
 
   target_group_arn = var.target_group_arns[count.index % var.target_group_arns_length]
-  target_id        = aws_instance.master[count.index / var.target_group_arns_length].private_ip
+  target_id        = aws_instance.master[floor(count.index / var.target_group_arns_length)].private_ip
 }
 
