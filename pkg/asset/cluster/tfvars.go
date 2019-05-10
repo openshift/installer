@@ -29,13 +29,13 @@ import (
 
 const (
 	// TfVarsFileName is the filename for Terraform variables.
-	TfVarsFileName = "terraform.tfvars"
+	TfVarsFileName = "terraform.tfvars.json"
 
 	// TfPlatformVarsFileName is a template for platform-specific
 	// Terraform variable files.
 	//
 	// https://www.terraform.io/docs/configuration/variables.html#variable-files
-	TfPlatformVarsFileName = "terraform.%s.auto.tfvars"
+	TfPlatformVarsFileName = "terraform.%s.auto.tfvars.json"
 
 	tfvarsAssetName = "Terraform Variables"
 )
