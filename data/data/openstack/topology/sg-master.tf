@@ -9,8 +9,8 @@ resource "openstack_networking_secgroup_rule_v2" "master_mcs" {
   protocol          = "tcp"
   port_range_min    = 22623
   port_range_max    = 22623
-  remote_ip_prefix  = "${var.cidr_block}"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  remote_ip_prefix  = var.cidr_block
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_icmp" {
@@ -19,8 +19,8 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_icmp" {
   protocol          = "icmp"
   port_range_min    = 0
   port_range_max    = 0
-  remote_ip_prefix  = "${var.cidr_block}"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  remote_ip_prefix  = var.cidr_block
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_ssh" {
@@ -30,7 +30,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_ssh" {
   port_range_min    = 22
   port_range_max    = 22
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_http" {
@@ -39,8 +39,8 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_http" {
   protocol          = "tcp"
   port_range_min    = 80
   port_range_max    = 80
-  remote_ip_prefix  = "${var.cidr_block}"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  remote_ip_prefix  = var.cidr_block
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
@@ -49,8 +49,8 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
   protocol          = "tcp"
   port_range_min    = 6443
   port_range_max    = 6445
-  remote_ip_prefix  = "${var.cidr_block}"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  remote_ip_prefix  = var.cidr_block
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_heapster" {
@@ -59,7 +59,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_heapster" {
   protocol          = "tcp"
   port_range_min    = 4194
   port_range_max    = 4194
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_heapster_from_worker" {
@@ -68,8 +68,8 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_heapster_from_w
   protocol          = "tcp"
   port_range_min    = 4194
   port_range_max    = 4194
-  remote_group_id   = "${openstack_networking_secgroup_v2.worker.id}"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_flannel" {
@@ -78,7 +78,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_flannel" {
   protocol          = "udp"
   port_range_min    = 4789
   port_range_max    = 4789
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_flannel_from_worker" {
@@ -87,8 +87,8 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_flannel_from_wo
   protocol          = "udp"
   port_range_min    = 4789
   port_range_max    = 4789
-  remote_group_id   = "${openstack_networking_secgroup_v2.worker.id}"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal" {
@@ -97,7 +97,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal" {
   protocol          = "tcp"
   port_range_min    = 9000
   port_range_max    = 9999
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_from_worker" {
@@ -106,8 +106,8 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_from_w
   protocol          = "tcp"
   port_range_min    = 9000
   port_range_max    = 9999
-  remote_group_id   = "${openstack_networking_secgroup_v2.worker.id}"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_udp" {
@@ -116,7 +116,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_udp" {
   protocol          = "udp"
   port_range_min    = 9000
   port_range_max    = 9999
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_from_worker_udp" {
@@ -125,8 +125,8 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_from_w
   protocol          = "udp"
   port_range_min    = 9000
   port_range_max    = 9999
-  remote_group_id   = "${openstack_networking_secgroup_v2.worker.id}"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_insecure" {
@@ -135,7 +135,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_insecur
   protocol          = "tcp"
   port_range_min    = 10250
   port_range_max    = 10250
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_insecure_from_worker" {
@@ -144,8 +144,8 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_insecur
   protocol          = "tcp"
   port_range_min    = 10250
   port_range_max    = 10250
-  remote_group_id   = "${openstack_networking_secgroup_v2.worker.id}"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_scheduler" {
@@ -154,7 +154,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_scheduler"
   protocol          = "tcp"
   port_range_min    = 10259
   port_range_max    = 10259
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_scheduler_from_worker" {
@@ -163,8 +163,8 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_scheduler_
   protocol          = "tcp"
   port_range_min    = 10259
   port_range_max    = 10259
-  remote_group_id   = "${openstack_networking_secgroup_v2.worker.id}"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller_manager" {
@@ -173,7 +173,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller
   protocol          = "tcp"
   port_range_min    = 10257
   port_range_max    = 10257
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller_manager_from_worker" {
@@ -182,8 +182,8 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller
   protocol          = "tcp"
   port_range_min    = 10257
   port_range_max    = 10257
-  remote_group_id   = "${openstack_networking_secgroup_v2.worker.id}"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_secure" {
@@ -192,7 +192,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_secure"
   protocol          = "tcp"
   port_range_min    = 10255
   port_range_max    = 10255
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_secure_from_worker" {
@@ -201,8 +201,8 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_secure_
   protocol          = "tcp"
   port_range_min    = 10255
   port_range_max    = 10255
-  remote_group_id   = "${openstack_networking_secgroup_v2.worker.id}"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_etcd" {
@@ -211,7 +211,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_etcd" {
   protocol          = "tcp"
   port_range_min    = 2379
   port_range_max    = 2380
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_bootstrap_etcd" {
@@ -220,7 +220,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_bootstrap_etcd"
   protocol          = "tcp"
   port_range_min    = 12379
   port_range_max    = 12380
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_services" {
@@ -229,5 +229,6 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_services" {
   protocol          = "tcp"
   port_range_min    = 30000
   port_range_max    = 32767
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
+

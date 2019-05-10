@@ -1,56 +1,57 @@
 variable "image_name" {
-  type        = "string"
+  type        = string
   description = "The name of the Glance image for the bootstrap node."
 }
 
 variable "swift_container" {
-  type        = "string"
+  type        = string
   description = "The Swift container name for bootstrap ignition file."
 }
 
 variable "cluster_id" {
-  type        = "string"
+  type        = string
   description = "The identifier for the cluster."
 }
 
 variable "cluster_domain" {
-  type        = "string"
+  type        = string
   description = "The domain name of the cluster. All DNS records must be under this domain."
 }
 
 variable "ignition" {
-  type        = "string"
+  type        = string
   description = "The content of the bootstrap ignition file."
 }
 
 variable "flavor_name" {
-  type        = "string"
+  type        = string
   default     = "m1.medium"
   description = "The Nova flavor for the bootstrap node."
 }
 
 variable "service_port_id" {
-  type        = "string"
+  type        = string
   description = "The subnet ID for the service node."
 }
 
 variable "service_port_ip" {
-  type        = "string"
+  type        = string
   description = "The subnet IP for the service node."
 }
 
 variable "master_ips" {
-  type = "list"
+  type = list(string)
 }
 
 variable "master_port_names" {
-  type = "list"
+  type = list(string)
 }
 
 variable "bootstrap_ip" {
-  type = "string"
+  type = string
 }
 
 variable "lb_floating_ip" {
-  type = "string"
+  type = string
 }
+
