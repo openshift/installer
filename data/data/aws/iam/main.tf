@@ -5,7 +5,7 @@ locals {
 resource "aws_iam_instance_profile" "worker" {
   name = "${var.cluster_id}-worker-profile"
 
-  role = "${aws_iam_role.worker_role.name}"
+  role = aws_iam_role.worker_role.name
 }
 
 resource "aws_iam_role" "worker_role" {
@@ -28,14 +28,18 @@ resource "aws_iam_role" "worker_role" {
 }
 EOF
 
-  tags = "${merge(map(
-    "Name", "${var.cluster_id}-worker-role",
-  ), var.tags)}"
+
+  tags = merge(
+    {
+      "Name" = "${var.cluster_id}-worker-role"
+    },
+    var.tags,
+  )
 }
 
 resource "aws_iam_role_policy" "worker_policy" {
   name = "${var.cluster_id}-worker-policy"
-  role = "${aws_iam_role.worker_role.id}"
+  role = aws_iam_role.worker_role.id
 
   policy = <<EOF
 {
@@ -49,4 +53,6 @@ resource "aws_iam_role_policy" "worker_policy" {
   ]
 }
 EOF
+
 }
+

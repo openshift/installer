@@ -1,9 +1,11 @@
 variable "cluster_id" {
-  type = "string"
+  type = string
 }
 
 variable "tags" {
-  type        = "map"
-  default     = {}
+  type = map(string)
+  default = {
+  }
   description = "AWS tags to be applied to created resources."
 }
+

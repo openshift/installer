@@ -4,26 +4,27 @@ variable "aws_config_version" {
 It has no impact on generated assets but declares the version contract of the configuration.
 EOF
 
+
   default = "1.0"
 }
 
 variable "aws_bootstrap_instance_type" {
-  type        = "string"
+  type = string
   description = "Instance type for the bootstrap node. Example: `m4.large`."
 }
 
 variable "aws_master_instance_type" {
-  type        = "string"
+  type = string
   description = "Instance type for the master node(s). Example: `m4.large`."
 }
 
 variable "aws_ami" {
-  type        = "string"
+  type = string
   description = "AMI for all nodes.  An encrypted copy of this AMI will be used.  Example: `ami-foobar123`."
 }
 
 variable "aws_extra_tags" {
-  type = "map"
+  type = map(string)
 
   description = <<EOF
 (optional) Extra AWS tags to be applied to created resources.
@@ -31,39 +32,43 @@ variable "aws_extra_tags" {
 Example: `{ "key" = "value", "foo" = "bar" }`
 EOF
 
-  default = {}
+
+default = {
+}
 }
 
 variable "aws_master_root_volume_type" {
-  type        = "string"
-  description = "The type of volume for the root block device of master nodes."
+type        = string
+description = "The type of volume for the root block device of master nodes."
 }
 
 variable "aws_master_root_volume_size" {
-  type        = "string"
-  description = "The size of the volume in gigabytes for the root block device of master nodes."
+type        = string
+description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
 variable "aws_master_root_volume_iops" {
-  type = "string"
+type = string
 
-  description = <<EOF
+description = <<EOF
 The amount of provisioned IOPS for the root block device of master nodes.
 Ignored if the volume type is not io1.
 EOF
+
 }
 
 variable "aws_region" {
-  type        = "string"
-  description = "The target AWS region for the cluster."
+type = string
+description = "The target AWS region for the cluster."
 }
 
 variable "aws_master_availability_zones" {
-  type        = "list"
-  description = "The availability zones in which to create the masters. The length of this list must match master_count."
+type = list(string)
+description = "The availability zones in which to create the masters. The length of this list must match master_count."
 }
 
 variable "aws_worker_availability_zones" {
-  type        = "list"
-  description = "The availability zones to provision for workers.  Worker instances are created by the machine-API operator, but this variable controls their supporting infrastructure (subnets, routing, etc.)."
+type = list(string)
+description = "The availability zones to provision for workers.  Worker instances are created by the machine-API operator, but this variable controls their supporting infrastructure (subnets, routing, etc.)."
 }
+
