@@ -44,45 +44,28 @@ resource "libvirt_network" "net" {
     local_only = true
 
     dynamic "srvs" {
-      for_each = [flatten(
-        [
-          data.libvirt_network_dns_srv_template.etcd_cluster.*.rendered,
-        ],
-      )]
+      for_each = data.libvirt_network_dns_srv_template.etcd_cluster.*.rendered
       content {
-        # TF-UPGRADE-TODO: The automatic upgrade tool can't predict
-        # which keys might be set in maps assigned here, so it has
-        # produced a comprehensive set here. Consider simplifying
-        # this after confirming which keys can be set in practice.
-
-        domain   = lookup(srvs.value, "domain", null)
-        port     = lookup(srvs.value, "port", null)
-        priority = lookup(srvs.value, "priority", null)
-        protocol = lookup(srvs.value, "protocol", null)
-        service  = lookup(srvs.value, "service", null)
-        target   = lookup(srvs.value, "target", null)
-        weight   = lookup(srvs.value, "weight", null)
+        domain   = srvs.value.domain
+        port     = srvs.value.port
+        protocol = srvs.value.protocol
+        service  = srvs.value.service
+        target   = srvs.value.target
+        weight   = srvs.value.weight
       }
     }
 
     dynamic "hosts" {
-      for_each = [flatten(
-        [
-          data.libvirt_network_dns_host_template.bootstrap.*.rendered,
-          data.libvirt_network_dns_host_template.bootstrap_int.*.rendered,
-          data.libvirt_network_dns_host_template.masters.*.rendered,
-          data.libvirt_network_dns_host_template.masters_int.*.rendered,
-          data.libvirt_network_dns_host_template.etcds.*.rendered,
-        ],
-      )]
+      for_each = concat(
+        data.libvirt_network_dns_host_template.bootstrap.*.rendered,
+        data.libvirt_network_dns_host_template.bootstrap_int.*.rendered,
+        data.libvirt_network_dns_host_template.masters.*.rendered,
+        data.libvirt_network_dns_host_template.masters_int.*.rendered,
+        data.libvirt_network_dns_host_template.etcds.*.rendered,
+      )
       content {
-        # TF-UPGRADE-TODO: The automatic upgrade tool can't predict
-        # which keys might be set in maps assigned here, so it has
-        # produced a comprehensive set here. Consider simplifying
-        # this after confirming which keys can be set in practice.
-
-        hostname = lookup(hosts.value, "hostname", null)
-        ip       = lookup(hosts.value, "ip", null)
+        hostname = hosts.value.hostname
+        ip       = hosts.value.ip
       }
     }
   }
@@ -116,15 +99,7 @@ resource "libvirt_domain" "master" {
   network_interface {
     network_id = libvirt_network.net.id
     hostname   = "${var.cluster_id}-master-${count.index}"
-    # TF-UPGRADE-TODO: In Terraform v0.10 and earlier, it was sometimes necessary to
-    # force an interpolation expression to be interpreted as a list by wrapping it
-    # in an extra set of list brackets. That form was supported for compatibilty in
-    # v0.11, but is no longer supported in Terraform v0.12.
-    #
-    # If the expression in the following list itself returns a list, remove the
-    # brackets to avoid interpretation as a list of lists. If the expression
-    # returns a single list item then leave it as-is and remove this TODO comment.
-    addresses = [var.libvirt_master_ips[count.index]]
+    addresses  = [var.libvirt_master_ips[count.index]]
   }
 }
 
