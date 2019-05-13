@@ -4,7 +4,7 @@ ARTIFACTS="/tmp/artifacts"
 
 echo "Gathering bootstrap journals ..."
 mkdir -p "${ARTIFACTS}/bootstrap/journals"
-for service in bootkube openshift kubelet crio
+for service in bootkube openshift kubelet crio approve-csr
 do
     journalctl --boot --no-pager --output=short --unit="${service}" > "${ARTIFACTS}/bootstrap/journals/${service}.log"
 done
