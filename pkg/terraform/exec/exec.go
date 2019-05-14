@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 
 	"github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/logutils"
@@ -62,7 +63,7 @@ func runner(cmd string, dir string, args []string, stdout, stderr io.Writer) int
 			ErrorWriter: stderr,
 		},
 
-		OverrideDataDir: dir,
+		OverrideDataDir: filepath.Join(dir, ".tf"),
 
 		ShutdownCh: sdCh,
 	}
