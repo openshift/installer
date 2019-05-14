@@ -25,20 +25,20 @@ EOF
 }
 
 variable "openstack_credentials_cloud" {
-type    = string
-default = ""
+  type    = string
+  default = ""
 
-description = <<EOF
+  description = <<EOF
 required if auth_url is not specified) An entry in a clouds.yaml file. See the OpenStack os-client-config documentation for more information about clouds.yaml files. If omitted, the OS_CLOUD environment variable is used.
 EOF
 
 }
 
 variable "openstack_credentials_domain_id" {
-type = string
-default = ""
+  type = string
+  default = ""
 
-description = <<EOF
+  description = <<EOF
 The ID of the Domain to scope to (Identity v3). If omitted, the OS_DOMAIN_ID environment variable is checked.
 EOF
 
@@ -65,19 +65,19 @@ EOF
 }
 
 variable "openstack_credentials_insecure" {
-default = false
+  default = false
 
-description = <<EOF
+  description = <<EOF
 Trust self-signed SSL certificates. If omitted, the OS_INSECURE environment variable is used.
 EOF
 
 }
 
 variable "openstack_credentials_key" {
-type = string
-default = ""
+  type = string
+  default = ""
 
-description = <<EOF
+  description = <<EOF
 Specify client private key file for SSL client authentication. You can specify either a path to the file or the contents of the key. If omitted the OS_KEY environment variable is used.
 EOF
 
@@ -104,20 +104,20 @@ EOF
 }
 
 variable "openstack_credentials_project_domain_name" {
-type    = string
-default = ""
+  type    = string
+  default = ""
 
-description = <<EOF
+  description = <<EOF
 The domain name where the project is located. If omitted, the OS_PROJECT_DOMAIN_NAME environment variable is checked.
 EOF
 
 }
 
 variable "openstack_credentials_region" {
-type = string
-default = ""
+  type = string
+  default = ""
 
-description = <<EOF
+  description = <<EOF
 The region of the OpenStack cloud to use. If omitted, the OS_REGION_NAME environment variable is used. If OS_REGION_NAME is not set, then no region will be used. It should be possible to omit the region in single-region OpenStack environments, but this behavior may vary depending on the OpenStack environment being used.
 EOF
 
@@ -143,20 +143,20 @@ EOF
 }
 
 variable "openstack_credentials_tenant_name" {
-type    = string
-default = ""
+  type    = string
+  default = ""
 
-description = <<EOF
+  description = <<EOF
 The Name of the Tenant (Identity v2) or Project (Identity v3) to login with. If omitted, the OS_TENANT_NAME or OS_PROJECT_NAME environment variable are used.
 EOF
 
 }
 
 variable "openstack_credentials_token" {
-type = string
-default = ""
+  type = string
+  default = ""
 
-description = <<EOF
+  description = <<EOF
 Required if not using user_name and password) A token is an expiring, temporary means of access issued via the Keystone service. By specifying a token, you do not have to specify a username/password combination, since the token was already created by a username/password out of band of Terraform. If omitted, the OS_TOKEN or OS_AUTH_TOKEN environment variables are used.
 EOF
 
@@ -182,20 +182,20 @@ EOF
 }
 
 variable "openstack_credentials_user_domain_name" {
-type    = string
-default = ""
+  type    = string
+  default = ""
 
-description = <<EOF
+  description = <<EOF
 The domain name where the user is located. If omitted, the OS_USER_DOMAIN_NAME environment variable is checked.
 EOF
 
 }
 
 variable "openstack_credentials_user_id" {
-type = string
-default = ""
+  type = string
+  default = ""
 
-description = <<EOF
+  description = <<EOF
 The User ID to login with. If omitted, the OS_USER_ID environment variable is used.
 EOF
 
@@ -224,10 +224,10 @@ EOF
 }
 
 variable "openstack_external_network_id" {
-type    = string
-default = ""
+  type    = string
+  default = ""
 
-description = <<EOF
+  description = <<EOF
 (optional) UUID of the external network. The network is used to provide
 Floating IP access to the deployed nodes. Optional, but either the Name
 or UUID option must be specified.
@@ -236,11 +236,10 @@ EOF
 }
 
 variable "openstack_extra_tags" {
-type = map(string)
-default = {
-}
+  type = map(string)
+  default = {}
 
-description = <<EOF
+  description = <<EOF
 (optional) Extra AWS tags to be applied to created resources.
 
 Example: `{ "key" = "value", "foo" = "bar" }`
@@ -271,19 +270,19 @@ EOF
 }
 
 variable "openstack_master_flavor_name" {
-type        = string
-description = "Instance size for the master node(s). Example: `m1.medium`."
+  type        = string
+  description = "Instance size for the master node(s). Example: `m1.medium`."
 }
 
 variable "openstack_region" {
-type        = string
-description = "The target OpenStack region for the cluster."
+  type        = string
+  description = "The target OpenStack region for the cluster."
 }
 
 variable "openstack_trunk_support" {
-type = string
+  type = string
 
-description = <<EOF
+  description = <<EOF
 Contains 0 if the OpenStack Neutron trunk extension is disabled and 1 if it is enabled.
 EOF
 
