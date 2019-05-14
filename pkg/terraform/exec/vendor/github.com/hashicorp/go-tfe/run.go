@@ -48,18 +48,24 @@ type RunStatus string
 
 //List all available run statuses.
 const (
-	RunApplied        RunStatus = "applied"
-	RunApplying       RunStatus = "applying"
-	RunCanceled       RunStatus = "canceled"
-	RunConfirmed      RunStatus = "confirmed"
-	RunDiscarded      RunStatus = "discarded"
-	RunErrored        RunStatus = "errored"
-	RunPending        RunStatus = "pending"
-	RunPlanned        RunStatus = "planned"
-	RunPlanning       RunStatus = "planning"
-	RunPolicyChecked  RunStatus = "policy_checked"
-	RunPolicyChecking RunStatus = "policy_checking"
-	RunPolicyOverride RunStatus = "policy_override"
+	RunApplied            RunStatus = "applied"
+	RunApplyQueued        RunStatus = "apply_queued"
+	RunApplying           RunStatus = "applying"
+	RunCanceled           RunStatus = "canceled"
+	RunConfirmed          RunStatus = "confirmed"
+	RunCostEstimated      RunStatus = "cost_estimated"
+	RunCostEstimating     RunStatus = "cost_estimating"
+	RunDiscarded          RunStatus = "discarded"
+	RunErrored            RunStatus = "errored"
+	RunPending            RunStatus = "pending"
+	RunPlanQueued         RunStatus = "plan_queued"
+	RunPlanned            RunStatus = "planned"
+	RunPlannedAndFinished RunStatus = "planned_and_finished"
+	RunPlanning           RunStatus = "planning"
+	RunPolicyChecked      RunStatus = "policy_checked"
+	RunPolicyChecking     RunStatus = "policy_checking"
+	RunPolicyOverride     RunStatus = "policy_override"
+	RunPolicySoftFailed   RunStatus = "policy_soft_failed"
 )
 
 // RunSource represents a source type of a run.
@@ -96,6 +102,7 @@ type Run struct {
 	// Relations
 	Apply                *Apply                `jsonapi:"relation,apply"`
 	ConfigurationVersion *ConfigurationVersion `jsonapi:"relation,configuration-version"`
+	CostEstimation       *CostEstimation       `jsonapi:"relation,cost-estimation"`
 	Plan                 *Plan                 `jsonapi:"relation,plan"`
 	PolicyChecks         []*PolicyCheck        `jsonapi:"relation,policy-checks"`
 	Workspace            *Workspace            `jsonapi:"relation,workspace"`
@@ -120,10 +127,16 @@ type RunPermissions struct {
 
 // RunStatusTimestamps holds the timestamps for individual run statuses.
 type RunStatusTimestamps struct {
-	ErroredAt  time.Time `json:"errored-at"`
-	FinishedAt time.Time `json:"finished-at"`
-	QueuedAt   time.Time `json:"queued-at"`
-	StartedAt  time.Time `json:"started-at"`
+	ErroredAt            time.Time `json:"errored-at"`
+	FinishedAt           time.Time `json:"finished-at"`
+	QueuedAt             time.Time `json:"queued-at"`
+	StartedAt            time.Time `json:"started-at"`
+	ApplyingAt           time.Time `json:"applying-at"`
+	AppliedAt            time.Time `json:"applied-at"`
+	PlanningAt           time.Time `json:"planning-at"`
+	PlannedAt            time.Time `json:"planned-at"`
+	PlannedAndFinishedAt time.Time `json:"planned-and-finished-at"`
+	PlanQueuabledAt      time.Time `json:"plan-queueable-at"`
 }
 
 // RunListOptions represents the options for listing runs.
@@ -134,7 +147,7 @@ type RunListOptions struct {
 // List all the runs of the given workspace.
 func (s *runs) List(ctx context.Context, workspaceID string, options RunListOptions) (*RunList, error) {
 	if !validStringID(&workspaceID) {
-		return nil, errors.New("Invalid value for workspace ID")
+		return nil, errors.New("invalid value for workspace ID")
 	}
 
 	u := fmt.Sprintf("workspaces/%s/runs", url.QueryEscape(workspaceID))
@@ -175,7 +188,7 @@ type RunCreateOptions struct {
 
 func (o RunCreateOptions) valid() error {
 	if o.Workspace == nil {
-		return errors.New("Workspace is required")
+		return errors.New("workspace is required")
 	}
 	return nil
 }
@@ -206,7 +219,7 @@ func (s *runs) Create(ctx context.Context, options RunCreateOptions) (*Run, erro
 // Read a run by its ID.
 func (s *runs) Read(ctx context.Context, runID string) (*Run, error) {
 	if !validStringID(&runID) {
-		return nil, errors.New("Invalid value for run ID")
+		return nil, errors.New("invalid value for run ID")
 	}
 
 	u := fmt.Sprintf("runs/%s", url.QueryEscape(runID))
@@ -233,7 +246,7 @@ type RunApplyOptions struct {
 // Apply a run by its ID.
 func (s *runs) Apply(ctx context.Context, runID string, options RunApplyOptions) error {
 	if !validStringID(&runID) {
-		return errors.New("Invalid value for run ID")
+		return errors.New("invalid value for run ID")
 	}
 
 	u := fmt.Sprintf("runs/%s/actions/apply", url.QueryEscape(runID))
@@ -254,7 +267,7 @@ type RunCancelOptions struct {
 // Cancel a run by its ID.
 func (s *runs) Cancel(ctx context.Context, runID string, options RunCancelOptions) error {
 	if !validStringID(&runID) {
-		return errors.New("Invalid value for run ID")
+		return errors.New("invalid value for run ID")
 	}
 
 	u := fmt.Sprintf("runs/%s/actions/cancel", url.QueryEscape(runID))
@@ -266,7 +279,7 @@ func (s *runs) Cancel(ctx context.Context, runID string, options RunCancelOption
 	return s.client.do(ctx, req, nil)
 }
 
-// RunCancelOptions represents the options for force-canceling a run.
+// RunForceCancelOptions represents the options for force-canceling a run.
 type RunForceCancelOptions struct {
 	// An optional comment explaining the reason for the force-cancel.
 	Comment *string `json:"comment,omitempty"`
@@ -275,7 +288,7 @@ type RunForceCancelOptions struct {
 // ForceCancel is used to forcefully cancel a run by its ID.
 func (s *runs) ForceCancel(ctx context.Context, runID string, options RunForceCancelOptions) error {
 	if !validStringID(&runID) {
-		return errors.New("Invalid value for run ID")
+		return errors.New("invalid value for run ID")
 	}
 
 	u := fmt.Sprintf("runs/%s/actions/force-cancel", url.QueryEscape(runID))
@@ -296,7 +309,7 @@ type RunDiscardOptions struct {
 // Discard a run by its ID.
 func (s *runs) Discard(ctx context.Context, runID string, options RunDiscardOptions) error {
 	if !validStringID(&runID) {
-		return errors.New("Invalid value for run ID")
+		return errors.New("invalid value for run ID")
 	}
 
 	u := fmt.Sprintf("runs/%s/actions/discard", url.QueryEscape(runID))

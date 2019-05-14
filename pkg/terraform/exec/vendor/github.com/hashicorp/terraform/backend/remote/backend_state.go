@@ -10,43 +10,34 @@ import (
 	tfe "github.com/hashicorp/go-tfe"
 	"github.com/hashicorp/terraform/state"
 	"github.com/hashicorp/terraform/state/remote"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform/states/statefile"
 )
 
 type remoteClient struct {
-	client       *tfe.Client
-	lockInfo     *state.LockInfo
-	organization string
-	runID        string
-	workspace    string
+	client         *tfe.Client
+	lockInfo       *state.LockInfo
+	organization   string
+	runID          string
+	stateUploadErr bool
+	workspace      *tfe.Workspace
 }
 
 // Get the remote state.
 func (r *remoteClient) Get() (*remote.Payload, error) {
 	ctx := context.Background()
 
-	// Retrieve the workspace for which to create a new state.
-	w, err := r.client.Workspaces.Read(ctx, r.organization, r.workspace)
+	sv, err := r.client.StateVersions.Current(ctx, r.workspace.ID)
 	if err != nil {
 		if err == tfe.ErrResourceNotFound {
 			// If no state exists, then return nil.
 			return nil, nil
 		}
-		return nil, fmt.Errorf("Error retrieving workspace: %v", err)
-	}
-
-	sv, err := r.client.StateVersions.Current(ctx, w.ID)
-	if err != nil {
-		if err == tfe.ErrResourceNotFound {
-			// If no state exists, then return nil.
-			return nil, nil
-		}
-		return nil, fmt.Errorf("Error retrieving remote state: %v", err)
+		return nil, fmt.Errorf("Error retrieving state: %v", err)
 	}
 
 	state, err := r.client.StateVersions.Download(ctx, sv.DownloadURL)
 	if err != nil {
-		return nil, fmt.Errorf("Error downloading remote state: %v", err)
+		return nil, fmt.Errorf("Error downloading state: %v", err)
 	}
 
 	// If the state is empty, then return nil.
@@ -67,21 +58,15 @@ func (r *remoteClient) Get() (*remote.Payload, error) {
 func (r *remoteClient) Put(state []byte) error {
 	ctx := context.Background()
 
-	// Retrieve the workspace for which to create a new state.
-	w, err := r.client.Workspaces.Read(ctx, r.organization, r.workspace)
-	if err != nil {
-		return fmt.Errorf("Error retrieving workspace: %v", err)
-	}
-
 	// Read the raw state into a Terraform state.
-	tfState, err := terraform.ReadState(bytes.NewReader(state))
+	stateFile, err := statefile.Read(bytes.NewReader(state))
 	if err != nil {
 		return fmt.Errorf("Error reading state: %s", err)
 	}
 
 	options := tfe.StateVersionCreateOptions{
-		Lineage: tfe.String(tfState.Lineage),
-		Serial:  tfe.Int64(tfState.Serial),
+		Lineage: tfe.String(stateFile.Lineage),
+		Serial:  tfe.Int64(int64(stateFile.Serial)),
 		MD5:     tfe.String(fmt.Sprintf("%x", md5.Sum(state))),
 		State:   tfe.String(base64.StdEncoding.EncodeToString(state)),
 	}
@@ -93,9 +78,10 @@ func (r *remoteClient) Put(state []byte) error {
 	}
 
 	// Create the new state.
-	_, err = r.client.StateVersions.Create(ctx, w.ID, options)
+	_, err = r.client.StateVersions.Create(ctx, r.workspace.ID, options)
 	if err != nil {
-		return fmt.Errorf("Error creating remote state: %v", err)
+		r.stateUploadErr = true
+		return fmt.Errorf("Error uploading state: %v", err)
 	}
 
 	return nil
@@ -103,9 +89,9 @@ func (r *remoteClient) Put(state []byte) error {
 
 // Delete the remote state.
 func (r *remoteClient) Delete() error {
-	err := r.client.Workspaces.Delete(context.Background(), r.organization, r.workspace)
+	err := r.client.Workspaces.Delete(context.Background(), r.organization, r.workspace.Name)
 	if err != nil && err != tfe.ErrResourceNotFound {
-		return fmt.Errorf("Error deleting workspace %s: %v", r.workspace, err)
+		return fmt.Errorf("Error deleting workspace %s: %v", r.workspace.Name, err)
 	}
 
 	return nil
@@ -117,25 +103,14 @@ func (r *remoteClient) Lock(info *state.LockInfo) (string, error) {
 
 	lockErr := &state.LockError{Info: r.lockInfo}
 
-	// Retrieve the workspace to lock.
-	w, err := r.client.Workspaces.Read(ctx, r.organization, r.workspace)
-	if err != nil {
-		lockErr.Err = err
-		return "", lockErr
-	}
-
-	// Check if the workspace is already locked.
-	if w.Locked {
-		lockErr.Err = fmt.Errorf(
-			"remote state already\nlocked (lock ID: \"%s/%s\")", r.organization, r.workspace)
-		return "", lockErr
-	}
-
 	// Lock the workspace.
-	w, err = r.client.Workspaces.Lock(ctx, w.ID, tfe.WorkspaceLockOptions{
+	_, err := r.client.Workspaces.Lock(ctx, r.workspace.ID, tfe.WorkspaceLockOptions{
 		Reason: tfe.String("Locked by Terraform"),
 	})
 	if err != nil {
+		if err == tfe.ErrWorkspaceLocked {
+			err = fmt.Errorf("%s (lock ID: \"%s/%s\")", err, r.organization, r.workspace.Name)
+		}
 		lockErr.Err = err
 		return "", lockErr
 	}
@@ -149,29 +124,46 @@ func (r *remoteClient) Lock(info *state.LockInfo) (string, error) {
 func (r *remoteClient) Unlock(id string) error {
 	ctx := context.Background()
 
+	// We first check if there was an error while uploading the latest
+	// state. If so, we will not unlock the workspace to prevent any
+	// changes from being applied until the correct state is uploaded.
+	if r.stateUploadErr {
+		return nil
+	}
+
 	lockErr := &state.LockError{Info: r.lockInfo}
 
-	// Verify the expected lock ID.
-	if r.lockInfo != nil && r.lockInfo.ID != id {
-		lockErr.Err = fmt.Errorf("lock ID does not match existing lock")
-		return lockErr
+	// With lock info this should be treated as a normal unlock.
+	if r.lockInfo != nil {
+		// Verify the expected lock ID.
+		if r.lockInfo.ID != id {
+			lockErr.Err = fmt.Errorf("lock ID does not match existing lock")
+			return lockErr
+		}
+
+		// Unlock the workspace.
+		_, err := r.client.Workspaces.Unlock(ctx, r.workspace.ID)
+		if err != nil {
+			lockErr.Err = err
+			return lockErr
+		}
+
+		return nil
 	}
 
 	// Verify the optional force-unlock lock ID.
-	if r.lockInfo == nil && r.organization+"/"+r.workspace != id {
-		lockErr.Err = fmt.Errorf("lock ID does not match existing lock")
+	if r.organization+"/"+r.workspace.Name != id {
+		lockErr.Err = fmt.Errorf(
+			"lock ID %q does not match existing lock ID \"%s/%s\"",
+			id,
+			r.organization,
+			r.workspace.Name,
+		)
 		return lockErr
 	}
 
-	// Retrieve the workspace to lock.
-	w, err := r.client.Workspaces.Read(ctx, r.organization, r.workspace)
-	if err != nil {
-		lockErr.Err = err
-		return lockErr
-	}
-
-	// Unlock the workspace.
-	w, err = r.client.Workspaces.Unlock(ctx, w.ID)
+	// Force unlock the workspace.
+	_, err := r.client.Workspaces.ForceUnlock(ctx, r.workspace.ID)
 	if err != nil {
 		lockErr.Err = err
 		return lockErr

@@ -10,7 +10,6 @@ import (
 	"crypto/dsa"
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/rsa"
 	"crypto/sha1"
 	_ "crypto/sha256"
 	_ "crypto/sha512"
@@ -29,6 +28,7 @@ import (
 	"github.com/keybase/go-crypto/openpgp/elgamal"
 	"github.com/keybase/go-crypto/openpgp/errors"
 	"github.com/keybase/go-crypto/openpgp/s2k"
+	"github.com/keybase/go-crypto/rsa"
 )
 
 var (
@@ -418,6 +418,9 @@ func (pk *PublicKey) parse(r io.Reader) (err error) {
 			return err
 		}
 		err = pk.edk.check()
+		if err == nil {
+			pk.PublicKey = ed25519.PublicKey(pk.edk.p.bytes[1:])
+		}
 	case PubKeyAlgoECDSA:
 		pk.ec = new(ecdsaKey)
 		if err = pk.ec.parse(r); err != nil {
@@ -482,9 +485,11 @@ func (pk *PublicKey) parseRSA(r io.Reader) (err error) {
 		N: new(big.Int).SetBytes(pk.n.bytes),
 		E: 0,
 	}
+	// Warning: incompatibility with crypto/rsa: keybase fork uses
+	// int64 public exponents instead of int32.
 	for i := 0; i < len(pk.e.bytes); i++ {
 		rsa.E <<= 8
-		rsa.E |= int(pk.e.bytes[i])
+		rsa.E |= int64(pk.e.bytes[i])
 	}
 	pk.PublicKey = rsa
 	return
