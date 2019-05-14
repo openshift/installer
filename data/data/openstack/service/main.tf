@@ -105,18 +105,7 @@ listen ${var.cluster_id}-api-masters
     balance roundrobin
     server bootstrap-22623 ${var.bootstrap_ip} check port 22623
     server bootstrap-6443 ${var.bootstrap_ip} check port 6443
-    ${replace(
-join(
-"\n    ",
-formatlist(
-"server master-%s %s check port 6443",
-var.master_port_names,
-var.master_ips,
-),
-),
-"master-port-",
-"",
-)}
+    ${replace(join("\n    ", formatlist("server master-%s %s check port 6443", var.master_port_names, var.master_ips)), "master-port-", "")}
 EOF
     update_cfg_and_restart
     exit 0
@@ -169,14 +158,7 @@ data "ignition_file" "corefile" {
 ${length(var.lb_floating_ip) == 0 ? "" : "    file /etc/coredns/db.${var.cluster_domain} api.${var.cluster_domain} {\n    }\n"}
 
     hosts {
-        ${replace(
-join(
-"\n",
-formatlist("%s %s", var.master_ips, var.master_port_names),
-),
-"port-",
-"",
-)}
+        ${replace(join("\n", formatlist("%s %s", var.master_ips, var.master_port_names)), "port-", "")}
         fallthrough
     }
 
@@ -188,29 +170,9 @@ formatlist("%s %s", var.master_ips, var.master_port_names),
         upstream /etc/resolv.conf
     }
 
-${replace(
-join(
-"\n",
-formatlist(
-"    file /etc/coredns/db.${var.cluster_domain} master-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n",
-var.master_port_names,
-),
-),
-"${var.cluster_id}-master-port-",
-"",
-)}
+${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} master-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.master_port_names)), "${var.cluster_id}-master-port-", "")}
 
-${replace(
-join(
-"\n",
-formatlist(
-"    file /etc/coredns/db.${var.cluster_domain} etcd-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n",
-var.master_port_names,
-),
-),
-"${var.cluster_id}-master-port-",
-"",
-)}
+${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} etcd-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.master_port_names)), "${var.cluster_id}-master-port-", "")}
 
 
     forward . /etc/resolv.conf {
@@ -229,16 +191,16 @@ ${var.cluster_domain} {
 
 EOF
 
-      }
-    }
+  }
+}
 
-    data "ignition_file" "coredb" {
-      filesystem = "root"
-      mode       = "420" // 0644
-      path       = "/etc/coredns/db.${var.cluster_domain}"
+data "ignition_file" "coredb" {
+  filesystem = "root"
+  mode = "420" // 0644
+  path = "/etc/coredns/db.${var.cluster_domain}"
 
-      content {
-        content = <<EOF
+  content {
+    content = <<EOF
 $ORIGIN ${var.cluster_domain}.
 @    3600 IN SOA host.${var.cluster_domain}. hostmaster (
                                 2017042752 ; serial
@@ -254,51 +216,21 @@ ${length(var.lb_floating_ip) == 0 ? "*.apps  IN  A  ${var.service_port_ip}" : "*
 api-int  IN  A  ${var.service_port_ip}
 
 bootstrap.${var.cluster_domain}  IN  A  ${var.bootstrap_ip}
-${replace(
-join(
-"\n",
-formatlist("%s  IN  A %s", var.master_port_names, var.master_ips),
-),
-"port-",
-"",
-)}
-${replace(
-join(
-"\n",
-formatlist("master-%s  IN  A %s", var.master_port_names, var.master_ips),
-),
-"${var.cluster_id}-master-port-",
-"",
-)}
+${replace(join("\n", formatlist("%s  IN  A %s", var.master_port_names, var.master_ips)), "port-", "")}
+${replace(join("\n", formatlist("master-%s  IN  A %s", var.master_port_names, var.master_ips)), "${var.cluster_id}-master-port-", "")}
 
-${replace(
-join(
-"\n",
-formatlist("etcd-%s  IN  A  %s", var.master_port_names, var.master_ips),
-),
-"${var.cluster_id}-master-port-",
-"",
-)}
-${replace(
-join(
-"\n",
-formatlist(
-"_etcd-server-ssl._tcp  8640  IN  SRV  0  10  2380   etcd-%s.${var.cluster_domain}.",
-var.master_port_names,
-),
-),
-"${var.cluster_id}-master-port-",
-"",
-)}
+${replace(join("\n", formatlist("etcd-%s  IN  A  %s", var.master_port_names, var.master_ips)), "${var.cluster_id}-master-port-", "")}
+${replace(join("\n", formatlist("_etcd-server-ssl._tcp  8640  IN  SRV  0  10  2380   etcd-%s.${var.cluster_domain}.", var.master_port_names)), "${var.cluster_id}-master-port-", "")}
+
 EOF
 
-          }
-        }
+  }
+}
 
-        data "ignition_systemd_unit" "local_dns" {
-          name = "local-dns.service"
+data "ignition_systemd_unit" "local_dns" {
+  name = "local-dns.service"
 
-          content = <<EOF
+  content = <<EOF
 [Unit]
 Description=Internal DNS serving the required OpenShift records
 
@@ -311,15 +243,15 @@ RestartSec=10
 WantedBy=multi-user.target
 EOF
 
-        }
+}
 
-        data "ignition_file" "hostname" {
-          filesystem = "root"
-          mode = "420" // 0644
-          path = "/etc/hostname"
+data "ignition_file" "hostname" {
+  filesystem = "root"
+  mode = "420" // 0644
+  path = "/etc/hostname"
 
-          content {
-            content = <<EOF
+  content {
+    content = <<EOF
 ${var.cluster_id}-api
 EOF
 
