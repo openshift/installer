@@ -21,7 +21,7 @@ func resourceObjectstorageTempurlV1() *schema.Resource {
 		Delete: schema.RemoveFromState,
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -40,7 +40,7 @@ func resourceObjectstorageTempurlV1() *schema.Resource {
 				ForceNew: true,
 			},
 
-			"method": &schema.Schema{
+			"method": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,

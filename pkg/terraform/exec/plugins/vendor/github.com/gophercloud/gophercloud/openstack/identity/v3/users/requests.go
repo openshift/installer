@@ -178,7 +178,7 @@ type UpdateOpts struct {
 	DefaultProjectID string `json:"default_project_id,omitempty"`
 
 	// Description is a description of the user.
-	Description string `json:"description,omitempty"`
+	Description *string `json:"description,omitempty"`
 
 	// DomainID is the ID of the domain the user belongs to.
 	DomainID string `json:"domain_id,omitempty"`

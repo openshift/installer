@@ -152,7 +152,7 @@ type UpdateOpts struct {
 	ParentID string `json:"parent_id,omitempty"`
 
 	// Description is the description of the project.
-	Description string `json:"description,omitempty"`
+	Description *string `json:"description,omitempty"`
 }
 
 // ToUpdateCreateMap formats a UpdateOpts into an update request.

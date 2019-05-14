@@ -13,13 +13,13 @@ func dataSourceIdentityAuthScopeV3() *schema.Resource {
 		Read: dataSourceIdentityAuthScopeV3Read,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -27,52 +27,56 @@ func dataSourceIdentityAuthScopeV3() *schema.Resource {
 			},
 
 			// computed attributes
-			"user_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"user_name": &schema.Schema{
+			"user_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"user_domain_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"user_domain_name": &schema.Schema{
+			"user_name": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"project_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"project_name": &schema.Schema{
+			"user_domain_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"project_domain_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"project_domain_name": &schema.Schema{
+			"user_domain_name": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"roles": &schema.Schema{
+			"project_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"project_name": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"project_domain_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"project_domain_name": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"roles": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"role_id": &schema.Schema{
+						"role_id": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"role_name": &schema.Schema{
+						"role_name": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -101,7 +105,7 @@ func dataSourceIdentityAuthScopeV3Read(d *schema.ResourceData, meta interface{})
 	}
 
 	d.Set("user_name", user.Name)
-	d.Set("user_id", user.Name)
+	d.Set("user_id", user.ID)
 	d.Set("user_domain_name", user.Domain.Name)
 	d.Set("user_domain_id", user.Domain.ID)
 
@@ -120,16 +124,9 @@ func dataSourceIdentityAuthScopeV3Read(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	var allRoles []map[string]string
-	for _, r := range roles {
-		allRoles = append(allRoles, map[string]string{
-			"role_name": r.Name,
-			"role_id":   r.ID,
-		})
-	}
-
+	allRoles := flattenIdentityAuthScopeV3Roles(roles)
 	if err := d.Set("roles", allRoles); err != nil {
-		log.Printf("[DEBUG] Unable to set roles: %s", err)
+		log.Printf("[DEBUG] Unable to set openstack_identity_auth_scope_v3 roles: %s", err)
 	}
 
 	d.Set("region", GetRegion(d, config))

@@ -29,35 +29,40 @@ func resourceNetworkingSecGroupV2() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
-			"tenant_id": &schema.Schema{
+			"tenant_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
-			"delete_default_rules": &schema.Schema{
+			"delete_default_rules": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
 			},
-			"tags": &schema.Schema{
+			"tags": {
 				Type:     schema.TypeSet,
 				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"all_tags": {
+				Type:     schema.TypeSet,
+				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 		},
@@ -136,7 +141,8 @@ func resourceNetworkingSecGroupV2Read(d *schema.ResourceData, meta interface{}) 
 	d.Set("tenant_id", security_group.TenantID)
 	d.Set("name", security_group.Name)
 	d.Set("region", GetRegion(d, config))
-	d.Set("tags", security_group.Tags)
+
+	networkV2ReadAttributesTags(d, security_group.Tags)
 
 	return nil
 }
@@ -158,7 +164,8 @@ func resourceNetworkingSecGroupV2Update(d *schema.ResourceData, meta interface{}
 
 	if d.HasChange("description") {
 		update = true
-		updateOpts.Description = d.Get("description").(string)
+		description := d.Get("description").(string)
+		updateOpts.Description = &description
 	}
 
 	if update {
@@ -170,7 +177,7 @@ func resourceNetworkingSecGroupV2Update(d *schema.ResourceData, meta interface{}
 	}
 
 	if d.HasChange("tags") {
-		tags := networkV2AttributesTags(d)
+		tags := networkV2UpdateAttributesTags(d)
 		tagOpts := attributestags.ReplaceAllOpts{Tags: tags}
 		tags, err := attributestags.ReplaceAll(networkingClient, "security-groups", d.Id(), tagOpts).Extract()
 		if err != nil {
@@ -228,10 +235,8 @@ func waitForSecGroupDelete(networkingClient *gophercloud.ServiceClient, secGroup
 				log.Printf("[DEBUG] Successfully deleted OpenStack Neutron Security Group %s", secGroupId)
 				return r, "DELETED", nil
 			}
-			if errCode, ok := err.(gophercloud.ErrUnexpectedResponseCode); ok {
-				if errCode.Actual == 409 {
-					return r, "ACTIVE", nil
-				}
+			if _, ok := err.(gophercloud.ErrDefault409); ok {
+				return r, "ACTIVE", nil
 			}
 			return r, "ACTIVE", err
 		}

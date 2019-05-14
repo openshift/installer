@@ -27,56 +27,56 @@ func resourceComputeSecGroupV2() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
 			},
 
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
 			},
 
-			"rule": &schema.Schema{
+			"rule": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
 				Set:      computeSecGroupV2RuleHash,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"id": &schema.Schema{
+						"id": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
 
-						"from_port": &schema.Schema{
+						"from_port": {
 							Type:     schema.TypeInt,
 							Required: true,
 							ForceNew: false,
 						},
 
-						"to_port": &schema.Schema{
+						"to_port": {
 							Type:     schema.TypeInt,
 							Required: true,
 							ForceNew: false,
 						},
 
-						"ip_protocol": &schema.Schema{
+						"ip_protocol": {
 							Type:     schema.TypeString,
 							Required: true,
 							ForceNew: false,
 						},
 
-						"cidr": &schema.Schema{
+						"cidr": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: false,
@@ -85,13 +85,13 @@ func resourceComputeSecGroupV2() *schema.Resource {
 							},
 						},
 
-						"from_group_id": &schema.Schema{
+						"from_group_id": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: false,
 						},
 
-						"self": &schema.Schema{
+						"self": {
 							Type:     schema.TypeBool,
 							Optional: true,
 							Default:  false,
@@ -182,9 +182,10 @@ func resourceComputeSecGroupV2Update(d *schema.ResourceData, meta interface{}) e
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
 
+	description := d.Get("description").(string)
 	updateOpts := secgroups.UpdateOpts{
 		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
+		Description: &description,
 	}
 
 	log.Printf("[DEBUG] openstack_compute_secgroup_v2 %s Update Options: %#v", d.Id(), updateOpts)
@@ -221,7 +222,7 @@ func resourceComputeSecGroupV2Update(d *schema.ResourceData, meta interface{}) e
 					continue
 				}
 
-				return fmt.Errorf("Error removing rule %s from openstack_compute_secgroup_v2 %s", rule.ID, d.Id())
+				return fmt.Errorf("Error removing rule %s from openstack_compute_secgroup_v2 %s: %s", rule.ID, d.Id(), err)
 			}
 		}
 	}
@@ -247,7 +248,7 @@ func resourceComputeSecGroupV2Delete(d *schema.ResourceData, meta interface{}) e
 
 	_, err = stateConf.WaitForState()
 	if err != nil {
-		return fmt.Errorf("Error deleting openstack_compute_secgroup_v2: %s", err)
+		return CheckDeleted(d, err, "Error deleting openstack_compute_secgroup_v2")
 	}
 
 	return nil

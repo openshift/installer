@@ -20,7 +20,7 @@ func resourceObjectStorageObjectV1() *schema.Resource {
 		Delete: resourceObjectStorageObjectV1Delete,
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -98,7 +98,7 @@ func resourceObjectStorageObjectV1() *schema.Resource {
 				Computed: true,
 			},
 
-			"metadata": &schema.Schema{
+			"metadata": {
 				Type:     schema.TypeMap,
 				Optional: true,
 			},

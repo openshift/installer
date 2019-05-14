@@ -133,7 +133,7 @@ type UpdateOpts struct {
 	Name string `json:"name,omitempty"`
 
 	// Description is a description of the group.
-	Description string `json:"description,omitempty"`
+	Description *string `json:"description,omitempty"`
 
 	// DomainID is the ID of the domain the group belongs to.
 	DomainID string `json:"domain_id,omitempty"`

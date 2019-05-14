@@ -108,7 +108,7 @@
   version = "v2"
 
 [[projects]]
-  digest = "1:e6d97567e560cc54e59ca39eed9651a615ea0d31cd1b104d8a4e27043afea53b"
+  digest = "1:b64410231651b7912fc7cbfed95cba05c5c61af1cc8c676e2accc79ea6c1d6ef"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -216,12 +216,14 @@
     "service/kinesis",
     "service/kinesisanalytics",
     "service/kinesisanalyticsv2",
+    "service/kinesisvideo",
     "service/kms",
     "service/lambda",
     "service/lexmodelbuildingservice",
     "service/licensemanager",
     "service/lightsail",
     "service/macie",
+    "service/managedblockchain",
     "service/mediaconnect",
     "service/mediaconvert",
     "service/medialive",
@@ -234,6 +236,7 @@
     "service/organizations",
     "service/pinpoint",
     "service/pricing",
+    "service/quicksight",
     "service/ram",
     "service/rds",
     "service/redshift",
@@ -263,10 +266,11 @@
     "service/wafregional",
     "service/worklink",
     "service/workspaces",
+    "service/xray",
   ]
   pruneopts = "NUT"
-  revision = "754d07f5dfb0a42be29df8da4a5428a321377cb3"
-  version = "v1.17.11"
+  revision = "bdd9cf7816bd404510114e712564cf76683b8355"
+  version = "v1.19.26"
 
 [[projects]]
   digest = "1:15e3271f463f2f40d98bf426aabb86941fc66b10272ccfdfebe548683e37acb1"
@@ -399,6 +403,14 @@
   version = "v1.3.1"
 
 [[projects]]
+  digest = "1:05f95ffdfcf651bdb0f05b40b69e7f5663047f8da75c72d58728acb59b5cc107"
+  name = "github.com/google/btree"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "4030bb1f1f0c35b30ca7009e9ebd06849dd45306"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   digest = "1:52c5834e2bebac9030c97cc0798ac11c3aa8a39f098aeb419f142533da6cd3cc"
   name = "github.com/google/gofuzz"
@@ -415,7 +427,7 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:54d36727a1d852a38be8b8dbcfbae6aa99130d793d63dabc865f150b690144af"
+  digest = "1:2be73edf7ec0748333e19ee06a303a54fd8926f215a063a253647dc49b22d191"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
@@ -423,7 +435,9 @@
     "openstack",
     "openstack/blockstorage/extensions/volumeactions",
     "openstack/blockstorage/v1/volumes",
+    "openstack/blockstorage/v2/snapshots",
     "openstack/blockstorage/v2/volumes",
+    "openstack/blockstorage/v3/snapshots",
     "openstack/blockstorage/v3/volumes",
     "openstack/compute/v2/extensions/attachinterfaces",
     "openstack/compute/v2/extensions/availabilityzones",
@@ -450,6 +464,7 @@
     "openstack/dns/v2/zones",
     "openstack/identity/v2/tenants",
     "openstack/identity/v2/tokens",
+    "openstack/identity/v3/applicationcredentials",
     "openstack/identity/v3/endpoints",
     "openstack/identity/v3/groups",
     "openstack/identity/v3/projects",
@@ -460,27 +475,34 @@
     "openstack/imageservice/v2/imagedata",
     "openstack/imageservice/v2/images",
     "openstack/networking/v2/extensions/attributestags",
+    "openstack/networking/v2/extensions/dns",
     "openstack/networking/v2/extensions/external",
     "openstack/networking/v2/extensions/extradhcpopts",
     "openstack/networking/v2/extensions/fwaas/firewalls",
     "openstack/networking/v2/extensions/fwaas/policies",
     "openstack/networking/v2/extensions/fwaas/routerinsertion",
     "openstack/networking/v2/extensions/fwaas/rules",
+    "openstack/networking/v2/extensions/layer3/addressscopes",
     "openstack/networking/v2/extensions/layer3/floatingips",
     "openstack/networking/v2/extensions/layer3/routers",
     "openstack/networking/v2/extensions/lbaas/members",
     "openstack/networking/v2/extensions/lbaas/monitors",
     "openstack/networking/v2/extensions/lbaas/pools",
     "openstack/networking/v2/extensions/lbaas/vips",
+    "openstack/networking/v2/extensions/lbaas_v2/l7policies",
     "openstack/networking/v2/extensions/lbaas_v2/listeners",
     "openstack/networking/v2/extensions/lbaas_v2/loadbalancers",
     "openstack/networking/v2/extensions/lbaas_v2/monitors",
     "openstack/networking/v2/extensions/lbaas_v2/pools",
+    "openstack/networking/v2/extensions/mtu",
+    "openstack/networking/v2/extensions/portsbinding",
+    "openstack/networking/v2/extensions/portsecurity",
     "openstack/networking/v2/extensions/provider",
     "openstack/networking/v2/extensions/security/groups",
     "openstack/networking/v2/extensions/security/rules",
     "openstack/networking/v2/extensions/subnetpools",
     "openstack/networking/v2/extensions/trunks",
+    "openstack/networking/v2/extensions/vlantransparent",
     "openstack/networking/v2/extensions/vpnaas/endpointgroups",
     "openstack/networking/v2/extensions/vpnaas/ikepolicies",
     "openstack/networking/v2/extensions/vpnaas/ipsecpolicies",
@@ -493,11 +515,19 @@
     "openstack/objectstorage/v1/containers",
     "openstack/objectstorage/v1/objects",
     "openstack/objectstorage/v1/swauth",
+    "openstack/sharedfilesystems/apiversions",
+    "openstack/sharedfilesystems/v2/availabilityzones",
+    "openstack/sharedfilesystems/v2/errors",
+    "openstack/sharedfilesystems/v2/messages",
+    "openstack/sharedfilesystems/v2/securityservices",
+    "openstack/sharedfilesystems/v2/sharenetworks",
+    "openstack/sharedfilesystems/v2/shares",
+    "openstack/sharedfilesystems/v2/snapshots",
     "openstack/utils",
     "pagination",
   ]
   pruneopts = "NUT"
-  revision = "0719c6b22f30132b0ae6c90b038e0d50992107b0"
+  revision = "7892efa714f10951c5483a28c7471d8051b12975"
 
 [[projects]]
   branch = "master"
@@ -536,7 +566,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:dda4f4691e18b5bdeaa99d2581644a12fee45f22b82f29a2a9919bd36ff811b1"
+  digest = "1:69e3c21f79805083c8422ca2a8e6297bcb537e04d3a00f707979adff8b7b5577"
   name = "github.com/hashicorp/go-azure-helpers"
   packages = [
     "authentication",
@@ -545,8 +575,8 @@
     "storage",
   ]
   pruneopts = "NUT"
-  revision = "166dfd221bb20c95f9db5be961c647a67646831e"
-  version = "v0.3.2"
+  revision = "5e51ac013932f1c9434224349e74d77be738739c"
+  version = "v0.4.1"
 
 [[projects]]
   digest = "1:fff05cb0c34d2decaeb27bb6ab6b73a6947c3009d725160070da55f9511fd410"
@@ -687,6 +717,22 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:3bf17a6e6eaa6ad24152148a631d18662f7212e21637c2699bff3369b7f00fa2"
+  name = "github.com/petar/GoLLRB"
+  packages = ["llrb"]
+  pruneopts = "NUT"
+  revision = "53be0d36a84c2a886ca057d34b6aa4468df9ccb4"
+
+[[projects]]
+  digest = "1:e1b94bd98c62fc2f905621fc6ba8209b7004e4513a1dfecb12a3de56ec2bb519"
+  name = "github.com/peterbourgon/diskv"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "0be1b92a6df0e4f5cb0a5d15fb7f643d0ad93ce6"
+  version = "v3.0.0"
+
+[[projects]]
   digest = "1:6bc0652ea6e39e22ccd522458b8bdd8665bf23bdc5a20eec90056e4dc7e273ca"
   name = "github.com/satori/go.uuid"
   packages = ["."]
@@ -703,15 +749,15 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:5e830986b16143dce1be1ce497124b7e0f5dc46f7033722ac4031b2224ca9bc3"
+  digest = "1:79b615b7115a6a52c5eea9ecfc2f69d275aa8fceb387327229b3620a23870e93"
   name = "github.com/terraform-providers/terraform-provider-aws"
   packages = ["aws"]
   pruneopts = "NUT"
-  revision = "3cf16f8b1a1386f7f046ae40fa397e902efd4839"
-  version = "v2.2.0"
+  revision = "4b894dbf13f642f43dce2bb13bdf70e93e75babe"
+  version = "v2.10.0"
 
 [[projects]]
-  digest = "1:5208cc23f3ac74a1a7e2bab0995d4602cecdfeb2716de315f5d736b9baca7e9b"
+  digest = "1:95e2fb03b69a29c7f843830c392f684f110da8ca83649c821c20bad61d9116b5"
   name = "github.com/terraform-providers/terraform-provider-azurerm"
   packages = [
     "azurerm",
@@ -726,16 +772,17 @@
     "version",
   ]
   pruneopts = "NUT"
-  revision = "43676594d80396e943cf6eff668cc596bd21688e"
-  version = "v1.25.0"
+  revision = "05662fd82a299fff148a6a31cc9c2ba9b5841064"
+  version = "v1.27.1"
 
 [[projects]]
-  digest = "1:600308f54a5a80fc98ee41e14ac6795b144562a6bfc3ef3e4c440cdda5e9c632"
+  branch = "disk_cache"
+  digest = "1:054839689ba9e8f5d85efc7ae6a2a2ac41adbb2a26385ef9242ead9cc3c4be19"
   name = "github.com/terraform-providers/terraform-provider-ignition"
   packages = ["ignition"]
   pruneopts = "NUT"
-  revision = "3168afa8c74263515839d645ec9b819d21fc20f0"
-  version = "v1.0.1"
+  revision = "18ce0b36dae1c3d14e4303ff89dd2e658c380758"
+  source = "https://github.com/abhinavdahiya/terraform-provider-ignition"
 
 [[projects]]
   digest = "1:bfecd0df078f00879e6f426baeb1a27e8f47fc94ad2ace6bc4be99bc13af7cfa"
@@ -746,12 +793,11 @@
   version = "v1.2.1"
 
 [[projects]]
-  digest = "1:08d640f9d1ab3f57c30971280a3d02f868447a152e99c477d520d0e0c90e66f2"
+  digest = "1:f3ae869d0de02432e1d3f96e898624db97a9f3fcb5adcb18bf84e2a3cfe45e5f"
   name = "github.com/terraform-providers/terraform-provider-openstack"
   packages = ["openstack"]
   pruneopts = "NUT"
-  revision = "508765e66992e6c813f4ca7762d6e94c32379754"
-  version = "v1.12.0"
+  revision = "b1406b8e4894faad993aff786f0bb50bfec8e281"
 
 [[projects]]
   digest = "1:31a7f8bae17ec284242aa6c319a5119619342ec8ecc7984214d04b4efb4860c4"

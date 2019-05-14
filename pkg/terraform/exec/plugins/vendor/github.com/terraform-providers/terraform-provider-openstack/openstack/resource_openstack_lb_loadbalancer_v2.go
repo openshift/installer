@@ -19,6 +19,9 @@ func resourceLoadBalancerV2() *schema.Resource {
 		Read:   resourceLoadBalancerV2Read,
 		Update: resourceLoadBalancerV2Update,
 		Delete: resourceLoadBalancerV2Delete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(10 * time.Minute),
@@ -27,68 +30,68 @@ func resourceLoadBalancerV2() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 
-			"vip_subnet_id": &schema.Schema{
+			"vip_subnet_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"tenant_id": &schema.Schema{
+			"tenant_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"vip_address": &schema.Schema{
+			"vip_address": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"vip_port_id": &schema.Schema{
+			"vip_port_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"admin_state_up": &schema.Schema{
+			"admin_state_up": {
 				Type:     schema.TypeBool,
 				Default:  true,
 				Optional: true,
 			},
 
-			"flavor": &schema.Schema{
+			"flavor": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"loadbalancer_provider": &schema.Schema{
+			"loadbalancer_provider": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"security_group_ids": &schema.Schema{
+			"security_group_ids": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
@@ -131,7 +134,7 @@ func resourceLoadBalancerV2Create(d *schema.ResourceData, meta interface{}) erro
 
 	// Wait for LoadBalancer to become active before continuing
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForLBV2LoadBalancer(lbClient, lb.ID, "ACTIVE", nil, timeout)
+	err = waitForLBV2LoadBalancer(lbClient, lb.ID, "ACTIVE", lbPendingStatuses, timeout)
 	if err != nil {
 		return err
 	}
@@ -203,36 +206,44 @@ func resourceLoadBalancerV2Update(d *schema.ResourceData, meta interface{}) erro
 
 	var updateOpts loadbalancers.UpdateOpts
 	if d.HasChange("name") {
-		updateOpts.Name = d.Get("name").(string)
+		name := d.Get("name").(string)
+		updateOpts.Name = &name
 	}
 	if d.HasChange("description") {
-		updateOpts.Description = d.Get("description").(string)
+		description := d.Get("description").(string)
+		updateOpts.Description = &description
 	}
 	if d.HasChange("admin_state_up") {
 		asu := d.Get("admin_state_up").(bool)
 		updateOpts.AdminStateUp = &asu
 	}
 
-	// Wait for LoadBalancer to become active before continuing
-	timeout := d.Timeout(schema.TimeoutUpdate)
-	err = waitForLBV2LoadBalancer(lbClient, d.Id(), "ACTIVE", nil, timeout)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("[DEBUG] Updating loadbalancer %s with options: %#v", d.Id(), updateOpts)
-	err = resource.Retry(timeout, func() *resource.RetryError {
-		_, err = loadbalancers.Update(lbClient, d.Id(), updateOpts).Extract()
+	if updateOpts != (loadbalancers.UpdateOpts{}) {
+		// Wait for LoadBalancer to become active before continuing
+		timeout := d.Timeout(schema.TimeoutUpdate)
+		err = waitForLBV2LoadBalancer(lbClient, d.Id(), "ACTIVE", lbPendingStatuses, timeout)
 		if err != nil {
-			return checkForRetryableError(err)
+			return err
 		}
-		return nil
-	})
 
-	// Wait for LoadBalancer to become active before continuing
-	err = waitForLBV2LoadBalancer(lbClient, d.Id(), "ACTIVE", nil, timeout)
-	if err != nil {
-		return err
+		log.Printf("[DEBUG] Updating loadbalancer %s with options: %#v", d.Id(), updateOpts)
+		err = resource.Retry(timeout, func() *resource.RetryError {
+			_, err = loadbalancers.Update(lbClient, d.Id(), updateOpts).Extract()
+			if err != nil {
+				return checkForRetryableError(err)
+			}
+			return nil
+		})
+
+		if err != nil {
+			return fmt.Errorf("Error updating loadbalancer %s: %s", d.Id(), err)
+		}
+
+		// Wait for LoadBalancer to become active before continuing
+		err = waitForLBV2LoadBalancer(lbClient, d.Id(), "ACTIVE", lbPendingStatuses, timeout)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Security Groups get updated separately
@@ -267,9 +278,12 @@ func resourceLoadBalancerV2Delete(d *schema.ResourceData, meta interface{}) erro
 		return nil
 	})
 
+	if err != nil {
+		return CheckDeleted(d, err, "Error deleting loadbalancer")
+	}
+
 	// Wait for LoadBalancer to become delete
-	pending := []string{"PENDING_UPDATE", "PENDING_DELETE", "ACTIVE"}
-	err = waitForLBV2LoadBalancer(lbClient, d.Id(), "DELETED", pending, timeout)
+	err = waitForLBV2LoadBalancer(lbClient, d.Id(), "DELETED", lbPendingDeleteStatuses, timeout)
 	if err != nil {
 		return err
 	}
@@ -280,7 +294,7 @@ func resourceLoadBalancerV2Delete(d *schema.ResourceData, meta interface{}) erro
 func resourceLoadBalancerV2SecurityGroups(networkingClient *gophercloud.ServiceClient, vipPortID string, d *schema.ResourceData) error {
 	if vipPortID != "" {
 		if v, ok := d.GetOk("security_group_ids"); ok {
-			securityGroups := resourcePortSecurityGroupsV2(v.(*schema.Set))
+			securityGroups := expandToStringSlice(v.(*schema.Set).List())
 			updateOpts := ports.UpdateOpts{
 				SecurityGroups: &securityGroups,
 			}

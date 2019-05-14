@@ -8,6 +8,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/endpoints"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/services"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
 func dataSourceIdentityEndpointV3() *schema.Resource {
@@ -15,42 +16,38 @@ func dataSourceIdentityEndpointV3() *schema.Resource {
 		Read: dataSourceIdentityEndpointV3Read,
 
 		Schema: map[string]*schema.Schema{
-			"service_name": &schema.Schema{
+			"region": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
+
+			"service_name": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"service_id": &schema.Schema{
+			"service_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"interface": &schema.Schema{
+			"interface": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Default:  "public",
-				ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
-					value := v.(string)
-					if value != "public" && value != "internal" && value != "admin" {
-						errors = append(errors, fmt.Errorf(
-							"Only 'public', 'internal', 'public'  are supported values for 'interface'"))
-					}
-					return
-				},
-			},
-			"url": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"public", "internal", "admin",
+				}, false),
 			},
 
-			"region": &schema.Schema{
+			"url": {
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
-				ForceNew: true,
 			},
 		},
 	}
@@ -77,31 +74,32 @@ func dataSourceIdentityEndpointV3Read(d *schema.ResourceData, meta interface{}) 
 		ServiceID:    d.Get("service_id").(string),
 	}
 
-	log.Printf("[DEBUG] List Options: %#v", listOpts)
+	log.Printf("[DEBUG] openstack_identity_endpoint_v3 list options: %#v", listOpts)
 
 	var endpoint endpoints.Endpoint
 	allPages, err := endpoints.List(identityClient, listOpts).AllPages()
 	if err != nil {
-		return fmt.Errorf("Unable to query endpoints: %s", err)
+		return fmt.Errorf("Unable to query openstack_identity_endpoint_v3: %s", err)
 	}
 
 	allEndpoints, err := endpoints.ExtractEndpoints(allPages)
 	if err != nil {
-		return fmt.Errorf("Unable to retrieve endpoints: %s", err)
+		return fmt.Errorf("Unable to retrieve openstack_identity_endpoint_v3: %s", err)
 	}
 
 	serviceName := d.Get("service_name").(string)
 	if len(allEndpoints) > 1 && serviceName != "" {
 		var filteredEndpoints []endpoints.Endpoint
+
 		// Query all services to further filter results
 		allServicePages, err := services.List(identityClient, nil).AllPages()
 		if err != nil {
-			return fmt.Errorf("Unable to query services: %s", err)
+			return fmt.Errorf("Unable to query openstack_identity_endpoint_v3 services: %s", err)
 		}
 
 		allServices, err := services.ExtractServices(allServicePages)
 		if err != nil {
-			return fmt.Errorf("Unable to retrieve services: %s", err)
+			return fmt.Errorf("Unable to retrieve openstack_identity_endpoint_v3 services: %s", err)
 		}
 
 		for _, endpoint := range allEndpoints {
@@ -114,21 +112,20 @@ func dataSourceIdentityEndpointV3Read(d *schema.ResourceData, meta interface{}) 
 				}
 			}
 		}
+
 		allEndpoints = filteredEndpoints
 	}
 
 	if len(allEndpoints) < 1 {
-		return fmt.Errorf("Your query returned no results. " +
+		return fmt.Errorf("Your openstack_identity_endpoint_v3 query returned no results. " +
 			"Please change your search criteria and try again.")
 	}
 
 	if len(allEndpoints) > 1 {
-		log.Printf("[DEBUG] Multiple results found: %#v", allEndpoints)
-		return fmt.Errorf("Your query returned more than one result")
+		return fmt.Errorf("Your openstack_identity_endpoint_v3 query returned more than one result")
 	}
 	endpoint = allEndpoints[0]
 
-	log.Printf("[DEBUG] Single endpoint found: %s", endpoint.ID)
 	return dataSourceIdentityEndpointV3Attributes(d, &endpoint)
 }
 

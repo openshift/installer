@@ -18,6 +18,7 @@ type ListOptsBuilder interface {
 // `asc' or `desc'. Marker and Limit are used for pagination.
 type ListOpts struct {
 	Name            string `q:"name"`
+	Description     string `q:"description"`
 	EnableDHCP      *bool  `q:"enable_dhcp"`
 	NetworkID       string `q:"network_id"`
 	TenantID        string `q:"tenant_id"`
@@ -89,6 +90,9 @@ type CreateOpts struct {
 	// Name is a human-readable name of the subnet.
 	Name string `json:"name,omitempty"`
 
+	// Description of the subnet.
+	Description string `json:"description,omitempty"`
+
 	// The UUID of the project who owns the Subnet. Only administrative users
 	// can specify a project UUID other than their own.
 	TenantID string `json:"tenant_id,omitempty"`
@@ -127,6 +131,10 @@ type CreateOpts struct {
 
 	// SubnetPoolID is the id of the subnet pool that subnet should be associated to.
 	SubnetPoolID string `json:"subnetpool_id,omitempty"`
+
+	// Prefixlen is used when user creates a subnet from the subnetpool. It will
+	// overwrite the "default_prefixlen" value of the referenced subnetpool.
+	Prefixlen int `json:"prefixlen,omitempty"`
 }
 
 // ToSubnetCreateMap builds a request body from CreateOpts.
@@ -165,7 +173,10 @@ type UpdateOptsBuilder interface {
 // UpdateOpts represents the attributes used when updating an existing subnet.
 type UpdateOpts struct {
 	// Name is a human-readable name of the subnet.
-	Name string `json:"name,omitempty"`
+	Name *string `json:"name,omitempty"`
+
+	// Description of the subnet.
+	Description *string `json:"description,omitempty"`
 
 	// AllocationPools are IP Address pools that will be available for DHCP.
 	AllocationPools []AllocationPool `json:"allocation_pools,omitempty"`
@@ -177,7 +188,7 @@ type UpdateOpts struct {
 	GatewayIP *string `json:"gateway_ip,omitempty"`
 
 	// DNSNameservers are the nameservers to be set via DHCP.
-	DNSNameservers []string `json:"dns_nameservers,omitempty"`
+	DNSNameservers *[]string `json:"dns_nameservers,omitempty"`
 
 	// HostRoutes are any static host routes to be set via DHCP.
 	HostRoutes *[]HostRoute `json:"host_routes,omitempty"`

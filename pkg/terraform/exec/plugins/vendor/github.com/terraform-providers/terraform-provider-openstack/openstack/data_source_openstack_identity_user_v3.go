@@ -3,7 +3,6 @@ package openstack
 import (
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/users"
@@ -15,51 +14,52 @@ func dataSourceIdentityUserV3() *schema.Resource {
 		Read: dataSourceIdentityUserV3Read,
 
 		Schema: map[string]*schema.Schema{
-			"default_project_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"domain_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-
-			"enabled": &schema.Schema{
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
-			},
-
-			"idp_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-
-			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-
-			"password_expires_at": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validatePasswordExpiresAtQuery,
-			},
-
-			"protocol_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"unique_id": &schema.Schema{
+			"default_project_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"domain_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
+			"enabled": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
+			},
+
+			"idp_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+
+			"name": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+
+			"password_expires_at": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validatePasswordExpiresAtQuery,
+			},
+
+			"protocol_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+
+			"unique_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -86,31 +86,30 @@ func dataSourceIdentityUserV3Read(d *schema.ResourceData, meta interface{}) erro
 		UniqueID:          d.Get("unique_id").(string),
 	}
 
-	log.Printf("[DEBUG] List Options: %#v", listOpts)
+	log.Printf("[DEBUG] openstack_identity_user_v3 list options: %#v", listOpts)
 
 	var user users.User
 	allPages, err := users.List(identityClient, listOpts).AllPages()
 	if err != nil {
-		return fmt.Errorf("Unable to query users: %s", err)
+		return fmt.Errorf("Unable to query openstack_identity_user_v3: %s", err)
 	}
 
 	allUsers, err := users.ExtractUsers(allPages)
 	if err != nil {
-		return fmt.Errorf("Unable to retrieve users: %s", err)
+		return fmt.Errorf("Unable to retrieve openstack_identity_user_v3: %s", err)
 	}
 
 	if len(allUsers) < 1 {
-		return fmt.Errorf("Your query returned no results. " +
+		return fmt.Errorf("Your openstack_identity_user_v3 query returned no results. " +
 			"Please change your search criteria and try again.")
 	}
 
 	if len(allUsers) > 1 {
-		log.Printf("[DEBUG] Multiple results found: %#v", allUsers)
-		return fmt.Errorf("Your query returned more than one result")
+		return fmt.Errorf("Your openstack_identity_user_v3 query returned more than one result.")
 	}
+
 	user = allUsers[0]
 
-	log.Printf("[DEBUG] Single user found: %s", user.ID)
 	return dataSourceIdentityUserV3Attributes(d, &user)
 }
 
@@ -127,37 +126,4 @@ func dataSourceIdentityUserV3Attributes(d *schema.ResourceData, user *users.User
 	d.Set("password_expires_at", user.PasswordExpiresAt.Format(time.RFC3339))
 
 	return nil
-}
-
-// Ensure that password_expires_at query matches format explained in
-// https://developer.openstack.org/api-ref/identity/v3/#list-users
-func validatePasswordExpiresAtQuery(v interface{}, k string) (ws []string, errors []error) {
-	value := v.(string)
-	values := strings.SplitN(value, ":", 2)
-	if len(values) != 2 {
-		err := fmt.Errorf("%s '%s' does not match expected format: {operator}:{timestamp}", k, value)
-		errors = append(errors, err)
-	}
-	operator, timestamp := values[0], values[1]
-
-	validOperators := map[string]bool{
-		"lt":  true,
-		"lte": true,
-		"gt":  true,
-		"gte": true,
-		"eq":  true,
-		"neq": true,
-	}
-	if !validOperators[operator] {
-		err := fmt.Errorf("'%s' is not a valid operator for %s. Choose one of 'lt', 'lte', 'gt', 'gte', 'eq', 'neq'", operator, k)
-		errors = append(errors, err)
-	}
-
-	_, err := time.Parse(time.RFC3339, timestamp)
-	if err != nil {
-		err = fmt.Errorf("'%s' is not a valid timestamp for %s. It should be in the form 'YYYY-MM-DDTHH:mm:ssZ'", timestamp, k)
-		errors = append(errors, err)
-	}
-
-	return
 }

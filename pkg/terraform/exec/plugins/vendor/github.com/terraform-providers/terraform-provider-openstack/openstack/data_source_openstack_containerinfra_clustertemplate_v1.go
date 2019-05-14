@@ -13,132 +13,163 @@ func dataSourceContainerInfraClusterTemplateV1() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceContainerInfraClusterTemplateV1Read,
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
-			"name": &schema.Schema{
+
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"project_id": &schema.Schema{
+
+			"project_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"user_id": &schema.Schema{
+
+			"user_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"created_at": &schema.Schema{
+
+			"created_at": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"updated_at": &schema.Schema{
+
+			"updated_at": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"apiserver_port": &schema.Schema{
+
+			"apiserver_port": {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			"coe": &schema.Schema{
+
+			"coe": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"cluster_distro": &schema.Schema{
+
+			"cluster_distro": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"dns_nameserver": &schema.Schema{
+
+			"dns_nameserver": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"docker_storage_driver": &schema.Schema{
+
+			"docker_storage_driver": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"docker_volume_size": &schema.Schema{
+
+			"docker_volume_size": {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
-			"external_network_id": &schema.Schema{
+
+			"external_network_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"fixed_network": &schema.Schema{
+
+			"fixed_network": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"fixed_subnet": &schema.Schema{
+
+			"fixed_subnet": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"flavor": &schema.Schema{
+
+			"flavor": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"master_flavor": &schema.Schema{
+
+			"master_flavor": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"floating_ip_enabled": &schema.Schema{
+
+			"floating_ip_enabled": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"http_proxy": &schema.Schema{
+
+			"http_proxy": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"https_proxy": &schema.Schema{
+
+			"https_proxy": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"image": &schema.Schema{
+
+			"image": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"insecure_registry": &schema.Schema{
+
+			"insecure_registry": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"keypair_id": &schema.Schema{
+
+			"keypair_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"labels": &schema.Schema{
+
+			"labels": {
 				Type:     schema.TypeMap,
 				Computed: true,
 			},
-			"master_lb_enabled": &schema.Schema{
+
+			"master_lb_enabled": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"network_driver": &schema.Schema{
+
+			"network_driver": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"no_proxy": &schema.Schema{
+
+			"no_proxy": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"public": &schema.Schema{
+
+			"public": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"registry_enabled": &schema.Schema{
+
+			"registry_enabled": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"server_type": &schema.Schema{
+
+			"server_type": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"tls_disabled": &schema.Schema{
+
+			"tls_disabled": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"volume_driver": &schema.Schema{
+
+			"volume_driver": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -156,7 +187,7 @@ func dataSourceContainerInfraClusterTemplateV1Read(d *schema.ResourceData, meta 
 	name := d.Get("name").(string)
 	ct, err := clustertemplates.Get(containerInfraClient, name).Extract()
 	if err != nil {
-		return fmt.Errorf("Error getting OpenStack container infra cluster template: %s", err)
+		return fmt.Errorf("Error getting openstack_containerinfra_clustertemplate_v1 %s: %s", name, err)
 	}
 
 	d.SetId(ct.UUID)
@@ -191,10 +222,10 @@ func dataSourceContainerInfraClusterTemplateV1Read(d *schema.ResourceData, meta 
 	d.Set("volume_driver", ct.VolumeDriver)
 
 	if err := d.Set("created_at", ct.CreatedAt.Format(time.RFC3339)); err != nil {
-		log.Printf("[DEBUG] created_at: %s", err)
+		log.Printf("[DEBUG] Unable to set openstack_containerinfra_clustertemplate_v1 created_at: %s", err)
 	}
 	if err := d.Set("updated_at", ct.UpdatedAt.Format(time.RFC3339)); err != nil {
-		log.Printf("[DEBUG] updated_at: %s", err)
+		log.Printf("[DEBUG] Unable to set openstack_containerinfra_clustertemplate_v1 updated_at: %s", err)
 	}
 
 	d.Set("region", GetRegion(d, config))

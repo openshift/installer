@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/external"
+	mtuext "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/mtu"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/vlantransparent"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 )
@@ -18,47 +21,88 @@ func dataSourceNetworkingNetworkV2() *schema.Resource {
 		Read: dataSourceNetworkingNetworkV2Read,
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
-			"network_id": &schema.Schema{
+
+			"network_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"name": &schema.Schema{
+
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"status": &schema.Schema{
+
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"matching_subnet_cidr": &schema.Schema{
+
+			"status": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"tenant_id": &schema.Schema{
+
+			"matching_subnet_cidr": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+
+			"tenant_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: descriptions["tenant_id"],
 			},
-			"admin_state_up": &schema.Schema{
+
+			"admin_state_up": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"shared": &schema.Schema{
+
+			"shared": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"external": &schema.Schema{
+
+			"external": {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
-			"availability_zone_hints": &schema.Schema{
+
+			"availability_zone_hints": {
 				Type:     schema.TypeList,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+
+			"transparent_vlan": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+
+			"tags": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+
+			"mtu": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+
+			"dns_domain": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"all_tags": {
+				Type:     schema.TypeSet,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
@@ -69,7 +113,11 @@ func dataSourceNetworkingNetworkV2() *schema.Resource {
 func dataSourceNetworkingNetworkV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	if err != nil {
+		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
+	}
 
+	// Prepare basic listOpts.
 	var listOpts networks.ListOptsBuilder
 
 	var status string
@@ -78,18 +126,42 @@ func dataSourceNetworkingNetworkV2Read(d *schema.ResourceData, meta interface{})
 	}
 
 	listOpts = networks.ListOpts{
-		ID:       d.Get("network_id").(string),
-		Name:     d.Get("name").(string),
-		TenantID: d.Get("tenant_id").(string),
-		Status:   status,
+		ID:          d.Get("network_id").(string),
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(string),
+		TenantID:    d.Get("tenant_id").(string),
+		Status:      status,
 	}
 
+	// Add the external attribute if specified.
 	if v, ok := d.GetOkExists("external"); ok {
 		isExternal := v.(bool)
 		listOpts = external.ListOptsExt{
 			ListOptsBuilder: listOpts,
 			External:        &isExternal,
 		}
+	}
+
+	// Add the transparent VLAN attribute if specified.
+	if v, ok := d.GetOkExists("transparent_vlan"); ok {
+		isVLANTransparent := v.(bool)
+		listOpts = vlantransparent.ListOptsExt{
+			ListOptsBuilder: listOpts,
+			VLANTransparent: &isVLANTransparent,
+		}
+	}
+
+	// Add the MTU attribute if specified.
+	if v, ok := d.GetOkExists("mtu"); ok {
+		listOpts = mtuext.ListOptsExt{
+			ListOptsBuilder: listOpts,
+			MTU:             v.(int),
+		}
+	}
+
+	tags := networkV2AttributesTags(d)
+	if len(tags) > 0 {
+		listOpts = networks.ListOpts{Tags: strings.Join(tags, ",")}
 	}
 
 	pages, err := networks.List(networkingClient, listOpts).AllPages()
@@ -109,17 +181,13 @@ func dataSourceNetworkingNetworkV2Read(d *schema.ResourceData, meta interface{})
 			"Please change your search criteria and try again.")
 	}
 
-	type networkWithExternalExt struct {
-		networks.Network
-		external.NetworkExternalExt
-	}
-	var allNetworks []networkWithExternalExt
+	var allNetworks []networkExtended
 	err = networks.ExtractNetworksInto(pages, &allNetworks)
 	if err != nil {
-		return fmt.Errorf("Unable to retrieve networks: %s", err)
+		return fmt.Errorf("Unable to retrieve openstack_networking_networks_v2: %s", err)
 	}
 
-	var refinedNetworks []networkWithExternalExt
+	var refinedNetworks []networkExtended
 	if cidr := d.Get("matching_subnet_cidr").(string); cidr != "" {
 		for _, n := range allNetworks {
 			for _, s := range n.Subnets {
@@ -128,7 +196,7 @@ func dataSourceNetworkingNetworkV2Read(d *schema.ResourceData, meta interface{})
 					if _, ok := err.(gophercloud.ErrDefault404); ok {
 						continue
 					}
-					return fmt.Errorf("Unable to retrieve network subnet: %s", err)
+					return fmt.Errorf("Unable to retrieve openstack_networking_network_v2 subnet: %s", err)
 				}
 				if cidr == subnet.CIDR {
 					refinedNetworks = append(refinedNetworks, n)
@@ -152,17 +220,22 @@ func dataSourceNetworkingNetworkV2Read(d *schema.ResourceData, meta interface{})
 	network := refinedNetworks[0]
 
 	if err = d.Set("availability_zone_hints", network.AvailabilityZoneHints); err != nil {
-		log.Printf("[DEBUG] Unable to set availability_zone_hints: %s", err)
+		log.Printf("[DEBUG] Unable to set availability_zone_hints for openstack_networking_network_v2 %s: %s", network.ID, err)
 	}
 
-	log.Printf("[DEBUG] Retrieved Network %s: %+v", network.ID, network)
+	log.Printf("[DEBUG] Retrieved openstack_networking_network_v2 %s: %+v", network.ID, network)
 	d.SetId(network.ID)
 
 	d.Set("name", network.Name)
+	d.Set("description", network.Description)
 	d.Set("admin_state_up", strconv.FormatBool(network.AdminStateUp))
 	d.Set("shared", strconv.FormatBool(network.Shared))
 	d.Set("external", network.External)
 	d.Set("tenant_id", network.TenantID)
+	d.Set("transparent_vlan", network.VLANTransparent)
+	d.Set("all_tags", network.Tags)
+	d.Set("mtu", network.MTU)
+	d.Set("dns_domain", network.DNSDomain)
 	d.Set("region", GetRegion(d, config))
 
 	return nil

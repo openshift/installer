@@ -26,64 +26,64 @@ func resourceIPSecPolicyV2() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"auth_algorithm": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-			"encapsulation_mode": &schema.Schema{
+			"auth_algorithm": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
-			"pfs": &schema.Schema{
+			"encapsulation_mode": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
-			"encryption_algorithm": &schema.Schema{
+			"pfs": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
-			"description": &schema.Schema{
+			"encryption_algorithm": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"transform_protocol": &schema.Schema{
+			"transform_protocol": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
 
-			"tenant_id": &schema.Schema{
+			"tenant_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
-			"lifetime": &schema.Schema{
+			"lifetime": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"units": &schema.Schema{
+						"units": {
 							Type:     schema.TypeString,
 							Computed: true,
 							Optional: true,
 						},
-						"value": &schema.Schema{
+						"value": {
 							Type:     schema.TypeInt,
 							Computed: true,
 							Optional: true,
@@ -91,7 +91,7 @@ func resourceIPSecPolicyV2() *schema.Resource {
 					},
 				},
 			},
-			"value_specs": &schema.Schema{
+			"value_specs": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
@@ -301,10 +301,8 @@ func waitForIPSecPolicyDeletion(networkingClient *gophercloud.ServiceClient, id 
 			return "", "DELETED", nil
 		}
 
-		if errCode, ok := err.(gophercloud.ErrUnexpectedResponseCode); ok {
-			if errCode.Actual == 409 {
-				return nil, "ACTIVE", nil
-			}
+		if _, ok := err.(gophercloud.ErrDefault409); ok {
+			return nil, "ACTIVE", nil
 		}
 
 		return nil, "ACTIVE", err

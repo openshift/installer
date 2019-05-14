@@ -19,22 +19,22 @@ func resourceIdentityRoleV3() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"domain_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-
-			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
-
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
+			},
+
+			"domain_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
+			"name": {
+				Type:     schema.TypeString,
+				Required: true,
 			},
 		},
 	}
@@ -52,10 +52,10 @@ func resourceIdentityRoleV3Create(d *schema.ResourceData, meta interface{}) erro
 		Name:     d.Get("name").(string),
 	}
 
-	log.Printf("[DEBUG] Create Options: %#v", createOpts)
+	log.Printf("[DEBUG] openstack_identity_role_v3 create options: %#v", createOpts)
 	role, err := roles.Create(identityClient, createOpts).Extract()
 	if err != nil {
-		return fmt.Errorf("Error creating OpenStack role: %s", err)
+		return fmt.Errorf("Error creating openstack_identity_role_v3: %s", err)
 	}
 
 	d.SetId(role.ID)
@@ -72,10 +72,10 @@ func resourceIdentityRoleV3Read(d *schema.ResourceData, meta interface{}) error 
 
 	role, err := roles.Get(identityClient, d.Id()).Extract()
 	if err != nil {
-		return CheckDeleted(d, err, "role")
+		return CheckDeleted(d, err, "Error retrieving openstack_identity_role_v3")
 	}
 
-	log.Printf("[DEBUG] Retrieved OpenStack role: %#v", role)
+	log.Printf("[DEBUG] Retrieved openstack_identity_role_v3: %#v", role)
 
 	d.Set("domain_id", role.DomainID)
 	d.Set("name", role.Name)
@@ -102,7 +102,7 @@ func resourceIdentityRoleV3Update(d *schema.ResourceData, meta interface{}) erro
 	if hasChange {
 		_, err := roles.Update(identityClient, d.Id(), updateOpts).Extract()
 		if err != nil {
-			return fmt.Errorf("Error updating OpenStack role: %s", err)
+			return fmt.Errorf("Error updating openstack_identity_role_v3 %s: %s", d.Id(), err)
 		}
 	}
 
@@ -118,7 +118,7 @@ func resourceIdentityRoleV3Delete(d *schema.ResourceData, meta interface{}) erro
 
 	err = roles.Delete(identityClient, d.Id()).ExtractErr()
 	if err != nil {
-		return fmt.Errorf("Error deleting OpenStack role: %s", err)
+		return CheckDeleted(d, err, "Error deleting openstack_identity_role_v3")
 	}
 
 	return nil

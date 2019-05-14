@@ -28,102 +28,102 @@ func resourceSiteConnectionV2() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"ikepolicy_id": &schema.Schema{
+			"ikepolicy_id": {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Required: true,
 			},
-			"peer_id": &schema.Schema{
+			"peer_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"peer_address": &schema.Schema{
+			"peer_address": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"peer_ep_group_id": &schema.Schema{
+			"peer_ep_group_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"local_id": &schema.Schema{
+			"local_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"vpnservice_id": &schema.Schema{
+			"vpnservice_id": {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Required: true,
 			},
-			"local_ep_group_id": &schema.Schema{
+			"local_ep_group_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"ipsecpolicy_id": &schema.Schema{
+			"ipsecpolicy_id": {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Required: true,
 			},
-			"admin_state_up": &schema.Schema{
+			"admin_state_up": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
 			},
-			"psk": &schema.Schema{
+			"psk": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"initiator": &schema.Schema{
+			"initiator": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
-			"mtu": &schema.Schema{
+			"mtu": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Computed: true,
 			},
-			"tenant_id": &schema.Schema{
+			"tenant_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
-			"peer_cidrs": &schema.Schema{
+			"peer_cidrs": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"dpd": &schema.Schema{
+			"dpd": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"action": &schema.Schema{
+						"action": {
 							Type:     schema.TypeString,
 							Computed: true,
 							Optional: true,
 						},
-						"timeout": &schema.Schema{
+						"timeout": {
 							Type:     schema.TypeInt,
 							Computed: true,
 							Optional: true,
 						},
-						"interval": &schema.Schema{
+						"interval": {
 							Type:     schema.TypeInt,
 							Computed: true,
 							Optional: true,
@@ -131,7 +131,7 @@ func resourceSiteConnectionV2() *schema.Resource {
 					},
 				},
 			},
-			"value_specs": &schema.Schema{
+			"value_specs": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,

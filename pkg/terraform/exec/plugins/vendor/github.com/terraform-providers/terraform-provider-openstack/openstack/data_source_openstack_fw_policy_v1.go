@@ -13,39 +13,46 @@ func dataSourceFWPolicyV1() *schema.Resource {
 		Read: dataSourceFWPolicyV1Read,
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
-			"policy_id": &schema.Schema{
+
+			"policy_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"name": &schema.Schema{
+
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"tenant_id": &schema.Schema{
+
+			"tenant_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
-			"description": &schema.Schema{
+
+			"description": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"audited": &schema.Schema{
+
+			"audited": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"shared": &schema.Schema{
+
+			"shared": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"rules": &schema.Schema{
+
+			"rules": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
@@ -57,6 +64,9 @@ func dataSourceFWPolicyV1() *schema.Resource {
 func dataSourceFWPolicyV1Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	if err != nil {
+		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
+	}
 
 	listOpts := policies.ListOpts{
 		ID:       d.Get("policy_id").(string),
@@ -71,20 +81,20 @@ func dataSourceFWPolicyV1Read(d *schema.ResourceData, meta interface{}) error {
 
 	allFWPolicies, err := policies.ExtractPolicies(pages)
 	if err != nil {
-		return fmt.Errorf("Unable to retrieve firewall policies: %s", err)
+		return fmt.Errorf("Unable to retrieve openstack_fw_policy_v1: %s", err)
 	}
 
 	if len(allFWPolicies) < 1 {
-		return fmt.Errorf("No firewall policies found with name: %s", d.Get("name"))
+		return fmt.Errorf("No openstack_fw_policy_v1 found with name: %s", d.Get("name"))
 	}
 
 	if len(allFWPolicies) > 1 {
-		return fmt.Errorf("More than one firewall policies found with name: %s", d.Get("name"))
+		return fmt.Errorf("More than one openstack_fw_policy_v1 found with name: %s", d.Get("name"))
 	}
 
 	policy := allFWPolicies[0]
 
-	log.Printf("[DEBUG] Retrieved firewall policies %s: %+v", policy.ID, policy)
+	log.Printf("[DEBUG] Retrieved openstack_fw_policy_v1 %s: %#v", policy.ID, policy)
 	d.SetId(policy.ID)
 
 	d.Set("name", policy.Name)

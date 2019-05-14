@@ -29,30 +29,35 @@ func resourceNetworkingRouterV2() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"admin_state_up": &schema.Schema{
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: false,
+			},
+			"admin_state_up": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: false,
 				Computed: true,
 			},
-			"distributed": &schema.Schema{
+			"distributed": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
-			"external_gateway": &schema.Schema{
+			"external_gateway": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      false,
@@ -60,63 +65,63 @@ func resourceNetworkingRouterV2() *schema.Resource {
 				Deprecated:    "use external_network_id instead",
 				ConflictsWith: []string{"external_network_id"},
 			},
-			"external_network_id": &schema.Schema{
+			"external_network_id": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      false,
 				Computed:      true,
 				ConflictsWith: []string{"external_gateway"},
 			},
-			"enable_snat": &schema.Schema{
+			"enable_snat": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: false,
 				Computed: true,
 			},
-			"external_fixed_ip": &schema.Schema{
+			"external_fixed_ip": {
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: false,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"subnet_id": &schema.Schema{
+						"subnet_id": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
-						"ip_address": &schema.Schema{
+						"ip_address": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
 					},
 				},
 			},
-			"tenant_id": &schema.Schema{
+			"tenant_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
-			"value_specs": &schema.Schema{
+			"value_specs": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
 			},
-			"availability_zone_hints": &schema.Schema{
+			"availability_zone_hints": {
 				Type:     schema.TypeList,
 				Computed: true,
 				ForceNew: true,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"vendor_options": &schema.Schema{
+			"vendor_options": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				MinItems: 1,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"set_router_gateway_after_create": &schema.Schema{
+						"set_router_gateway_after_create": {
 							Type:     schema.TypeBool,
 							Default:  false,
 							Optional: true,
@@ -124,9 +129,15 @@ func resourceNetworkingRouterV2() *schema.Resource {
 					},
 				},
 			},
-			"tags": &schema.Schema{
+			"tags": {
 				Type:     schema.TypeSet,
 				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+
+			"all_tags": {
+				Type:     schema.TypeSet,
+				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 		},
@@ -143,6 +154,7 @@ func resourceNetworkingRouterV2Create(d *schema.ResourceData, meta interface{}) 
 	createOpts := RouterCreateOpts{
 		routers.CreateOpts{
 			Name:                  d.Get("name").(string),
+			Description:           d.Get("description").(string),
 			TenantID:              d.Get("tenant_id").(string),
 			AvailabilityZoneHints: resourceNetworkingAvailabilityZoneHintsV2(d),
 		},
@@ -273,11 +285,13 @@ func resourceNetworkingRouterV2Read(d *schema.ResourceData, meta interface{}) er
 	log.Printf("[DEBUG] Retrieved Router %s: %+v", d.Id(), n)
 
 	d.Set("name", n.Name)
+	d.Set("description", n.Description)
 	d.Set("admin_state_up", n.AdminStateUp)
 	d.Set("distributed", n.Distributed)
 	d.Set("tenant_id", n.TenantID)
 	d.Set("region", GetRegion(d, config))
-	d.Set("tags", n.Tags)
+
+	networkV2ReadAttributesTags(d, n.Tags)
 
 	if err := d.Set("availability_zone_hints", n.AvailabilityZoneHints); err != nil {
 		log.Printf("[DEBUG] unable to set availability_zone_hints: %s", err)
@@ -314,11 +328,19 @@ func resourceNetworkingRouterV2Update(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
 
+	var hasChange bool
 	var updateOpts routers.UpdateOpts
 	if d.HasChange("name") {
+		hasChange = true
 		updateOpts.Name = d.Get("name").(string)
 	}
+	if d.HasChange("description") {
+		hasChange = true
+		description := d.Get("description").(string)
+		updateOpts.Description = &description
+	}
 	if d.HasChange("admin_state_up") {
+		hasChange = true
 		asu := d.Get("admin_state_up").(bool)
 		updateOpts.AdminStateUp = &asu
 	}
@@ -371,18 +393,20 @@ func resourceNetworkingRouterV2Update(d *schema.ResourceData, meta interface{}) 
 	}
 
 	if updateGatewaySettings {
+		hasChange = true
 		updateOpts.GatewayInfo = &gatewayInfo
 	}
 
-	log.Printf("[DEBUG] Updating Router %s with options: %+v", d.Id(), updateOpts)
-
-	_, err = routers.Update(networkingClient, d.Id(), updateOpts).Extract()
-	if err != nil {
-		return fmt.Errorf("Error updating OpenStack Neutron Router: %s", err)
+	if hasChange {
+		log.Printf("[DEBUG] Updating Router %s with options: %+v", d.Id(), updateOpts)
+		_, err = routers.Update(networkingClient, d.Id(), updateOpts).Extract()
+		if err != nil {
+			return fmt.Errorf("Error updating OpenStack Neutron Router: %s", err)
+		}
 	}
 
 	if d.HasChange("tags") {
-		tags := networkV2AttributesTags(d)
+		tags := networkV2UpdateAttributesTags(d)
 		tagOpts := attributestags.ReplaceAllOpts{Tags: tags}
 		tags, err := attributestags.ReplaceAll(networkingClient, "routers", d.Id(), tagOpts).Extract()
 		if err != nil {

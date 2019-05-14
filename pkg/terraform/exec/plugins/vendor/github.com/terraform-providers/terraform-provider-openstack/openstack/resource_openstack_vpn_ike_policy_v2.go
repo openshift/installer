@@ -26,57 +26,57 @@ func resourceIKEPolicyV2() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"auth_algorithm": &schema.Schema{
+			"auth_algorithm": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "sha1",
 			},
-			"encryption_algorithm": &schema.Schema{
+			"encryption_algorithm": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "aes-128",
 			},
-			"pfs": &schema.Schema{
+			"pfs": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "group5",
 			},
-			"phase1_negotiation_mode": &schema.Schema{
+			"phase1_negotiation_mode": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "main",
 			},
-			"ike_version": &schema.Schema{
+			"ike_version": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "v1",
 			},
-			"lifetime": &schema.Schema{
+			"lifetime": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"units": &schema.Schema{
+						"units": {
 							Type:     schema.TypeString,
 							Computed: true,
 							Optional: true,
 						},
-						"value": &schema.Schema{
+						"value": {
 							Type:     schema.TypeInt,
 							Computed: true,
 							Optional: true,
@@ -84,13 +84,13 @@ func resourceIKEPolicyV2() *schema.Resource {
 					},
 				},
 			},
-			"tenant_id": &schema.Schema{
+			"tenant_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
-			"value_specs": &schema.Schema{
+			"value_specs": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,

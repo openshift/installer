@@ -463,6 +463,11 @@ func flattenInstanceNetworks(
 	// Loop through all networks and addresses, merge relevant address details.
 	for _, instanceNetwork := range allInstanceNetworks {
 		for _, instanceAddresses := range allInstanceAddresses {
+			// Skip if instanceAddresses has no NICs
+			if len(instanceAddresses.InstanceNICs) == 0 {
+				continue
+			}
+
 			if instanceNetwork.Name == instanceAddresses.NetworkName {
 				// Only use one NIC since it's possible the user defined another NIC
 				// on this same network in another Terraform network block.

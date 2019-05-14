@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/containerinfra/v1/clustertemplates"
@@ -21,175 +20,208 @@ func resourceContainerInfraClusterTemplateV1() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
+
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(10 * time.Minute),
 			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
+
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
-			"name": &schema.Schema{
+
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
 			},
-			"project_id": &schema.Schema{
+
+			"project_id": {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Computed: true,
 			},
-			"user_id": &schema.Schema{
+
+			"user_id": {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Computed: true,
 			},
-			"created_at": &schema.Schema{
+
+			"created_at": {
 				Type:     schema.TypeString,
 				ForceNew: false,
 				Computed: true,
 			},
-			"updated_at": &schema.Schema{
+
+			"updated_at": {
 				Type:     schema.TypeString,
 				ForceNew: false,
 				Computed: true,
 			},
-			"apiserver_port": &schema.Schema{
+
+			"apiserver_port": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				ForceNew:     false,
 				ValidateFunc: validation.IntBetween(1024, 65535),
 			},
-			"coe": &schema.Schema{
+
+			"coe": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
 			},
-			"cluster_distro": &schema.Schema{
+
+			"cluster_distro": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 				Computed: true,
 			},
-			"dns_nameserver": &schema.Schema{
+
+			"dns_nameserver": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"docker_storage_driver": &schema.Schema{
+
+			"docker_storage_driver": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"docker_volume_size": &schema.Schema{
+
+			"docker_volume_size": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: false,
 			},
-			"external_network_id": &schema.Schema{
+
+			"external_network_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"fixed_network": &schema.Schema{
+
+			"fixed_network": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"fixed_subnet": &schema.Schema{
+
+			"fixed_subnet": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"flavor": &schema.Schema{
+
+			"flavor": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
 				DefaultFunc: schema.EnvDefaultFunc("OS_MAGNUM_FLAVOR", nil),
 			},
-			"master_flavor": &schema.Schema{
+
+			"master_flavor": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
 				DefaultFunc: schema.EnvDefaultFunc("OS_MAGNUM_MASTER_FLAVOR", nil),
 			},
-			"floating_ip_enabled": &schema.Schema{
+
+			"floating_ip_enabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: false,
 			},
-			"http_proxy": &schema.Schema{
+
+			"http_proxy": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"https_proxy": &schema.Schema{
+
+			"https_proxy": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"image": &schema.Schema{
+
+			"image": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    false,
 				DefaultFunc: schema.EnvDefaultFunc("OS_MAGNUM_IMAGE", nil),
 			},
-			"insecure_registry": &schema.Schema{
+
+			"insecure_registry": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"keypair_id": &schema.Schema{
+
+			"keypair_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"labels": &schema.Schema{
+
+			"labels": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: false,
 			},
-			"master_lb_enabled": &schema.Schema{
+
+			"master_lb_enabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: false,
 			},
-			"network_driver": &schema.Schema{
+
+			"network_driver": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 				Computed: true,
 			},
-			"no_proxy": &schema.Schema{
+
+			"no_proxy": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"public": &schema.Schema{
+
+			"public": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: false,
 			},
-			"registry_enabled": &schema.Schema{
+
+			"registry_enabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: false,
 			},
-			"server_type": &schema.Schema{
+
+			"server_type": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 				Computed: true,
 			},
-			"tls_disabled": &schema.Schema{
+
+			"tls_disabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: false,
 			},
-			"volume_driver": &schema.Schema{
+
+			"volume_driver": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
@@ -213,7 +245,8 @@ func resourceContainerInfraClusterTemplateV1Create(d *schema.ResourceData, meta 
 	tlsDisabled := d.Get("tls_disabled").(bool)
 
 	// Get and check labels map.
-	labels, err := containerInfraLabelsMapV1(d)
+	rawLabels := d.Get("labels").(map[string]interface{})
+	labels, err := expandContainerInfraV1LabelsMap(rawLabels)
 	if err != nil {
 		return err
 	}
@@ -255,14 +288,16 @@ func resourceContainerInfraClusterTemplateV1Create(d *schema.ResourceData, meta 
 		createOpts.DockerVolumeSize = &dockerVolumeSize
 	}
 
+	log.Printf("[DEBUG] openstack_containerinfra_clustertemplate_v1 create options: %#v", createOpts)
+
 	s, err := clustertemplates.Create(containerInfraClient, createOpts).Extract()
 	if err != nil {
-		return fmt.Errorf("Error creating OpenStack container infra Cluster template: %s", err)
+		return fmt.Errorf("Error creating openstack_containerinfra_clustertemplate_v1: %s", err)
 	}
 
 	d.SetId(s.UUID)
 
-	log.Printf("[DEBUG] Created Cluster template %s: %#v", s.UUID, s)
+	log.Printf("[DEBUG] Created openstack_containerinfra_clustertemplate_v1 %s: %#v", s.UUID, s)
 	return resourceContainerInfraClusterTemplateV1Read(d, meta)
 }
 
@@ -275,10 +310,10 @@ func resourceContainerInfraClusterTemplateV1Read(d *schema.ResourceData, meta in
 
 	s, err := clustertemplates.Get(containerInfraClient, d.Id()).Extract()
 	if err != nil {
-		return CheckDeleted(d, err, "clustertemplate")
+		return CheckDeleted(d, err, "Error retrieving openstack_containerinfra_clustertemplate_v1")
 	}
 
-	log.Printf("[DEBUG] Retrieved Clustertemplate %s: %#v", d.Id(), s)
+	log.Printf("[DEBUG] Retrieved openstack_containerinfra_clustertemplate_v1 %s: %#v", d.Id(), s)
 
 	if err := d.Set("labels", s.Labels); err != nil {
 		return fmt.Errorf("Unable to set labels: %s", err)
@@ -315,10 +350,10 @@ func resourceContainerInfraClusterTemplateV1Read(d *schema.ResourceData, meta in
 	d.Set("user_id", s.UserID)
 
 	if err := d.Set("created_at", s.CreatedAt.Format(time.RFC3339)); err != nil {
-		log.Printf("[DEBUG] created_at: %s", err)
+		log.Printf("[DEBUG] Unable to set openstack_containerinfra_clustertemplate_v1 created_at: %s", err)
 	}
 	if err := d.Set("updated_at", s.UpdatedAt.Format(time.RFC3339)); err != nil {
-		log.Printf("[DEBUG] updated_at: %s", err)
+		log.Printf("[DEBUG] Unable to set openstack_containerinfra_clustertemplate_v1 updated_at: %s", err)
 	}
 
 	return nil
@@ -335,128 +370,161 @@ func resourceContainerInfraClusterTemplateV1Update(d *schema.ResourceData, meta 
 
 	if d.HasChange("name") {
 		v := d.Get("name").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "name", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "name", v)
 	}
+
 	if d.HasChange("apiserver_port") {
 		v := d.Get("apiserver_port").(int)
 		apiServerPort := strconv.Itoa(v)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "apiserver_port", apiServerPort)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(
+			updateOpts, "apiserver_port", apiServerPort)
 	}
+
 	if d.HasChange("coe") {
 		v := d.Get("coe").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "coe", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "coe", v)
 	}
+
 	if d.HasChange("cluster_distro") {
 		v := d.Get("cluster_distro").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "cluster_distro", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "cluster_distro", v)
 	}
+
 	if d.HasChange("dns_nameserver") {
 		v := d.Get("dns_nameserver").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "dns_nameserver", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "dns_nameserver", v)
 	}
+
 	if d.HasChange("docker_storage_driver") {
 		v := d.Get("docker_storage_driver").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "docker_storage_driver", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "docker_storage_driver", v)
 	}
+
 	if d.HasChange("docker_volume_size") {
 		v := d.Get("docker_volume_size").(int)
 		dockerVolumeSize := strconv.Itoa(v)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "docker_volume_size", dockerVolumeSize)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(
+			updateOpts, "docker_volume_size", dockerVolumeSize)
 	}
+
 	if d.HasChange("external_network_id") {
 		v := d.Get("external_network_id").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "external_network_id", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "external_network_id", v)
 	}
+
 	if d.HasChange("fixed_network") {
 		v := d.Get("fixed_network").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "fixed_network", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "fixed_network", v)
 	}
+
 	if d.HasChange("fixed_subnet") {
 		v := d.Get("fixed_subnet").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "fixed_subnet", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "fixed_subnet", v)
 	}
+
 	if d.HasChange("flavor") {
 		v := d.Get("flavor").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "flavor_id", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "flavor_id", v)
 	}
+
 	if d.HasChange("master_flavor") {
 		v := d.Get("master_flavor").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "master_flavor_id", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "master_flavor_id", v)
 	}
+
 	if d.HasChange("floating_ip_enabled") {
 		v := d.Get("floating_ip_enabled").(bool)
 		floatingIPEnabled := strconv.FormatBool(v)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "floating_ip_enabled", floatingIPEnabled)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(
+			updateOpts, "floating_ip_enabled", floatingIPEnabled)
 	}
+
 	if d.HasChange("http_proxy") {
 		v := d.Get("http_proxy").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "http_proxy", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "http_proxy", v)
 	}
+
 	if d.HasChange("https_proxy") {
 		v := d.Get("https_proxy").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "https_proxy", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "https_proxy", v)
 	}
+
 	if d.HasChange("image") {
 		v := d.Get("image").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "image_id", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "image_id", v)
 	}
+
 	if d.HasChange("insecure_registry") {
 		v := d.Get("insecure_registry").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "insecure_registry", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "insecure_registry", v)
 	}
+
 	if d.HasChange("keypair_id") {
 		v := d.Get("keypair_id").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "keypair_id", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "keypair_id", v)
 	}
+
 	if d.HasChange("labels") {
-		v, err := containerInfraLabelsStringV1(d)
+		rawLabels := d.Get("labels").(map[string]interface{})
+		v, err := expandContainerInfraV1LabelsString(rawLabels)
 		if err != nil {
 			return err
 		}
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "labels", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "labels", v)
 	}
+
 	if d.HasChange("master_lb_enabled") {
 		v := d.Get("master_lb_enabled").(bool)
 		masterLBEnabled := strconv.FormatBool(v)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "master_lb_enabled", masterLBEnabled)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(
+			updateOpts, "master_lb_enabled", masterLBEnabled)
 	}
+
 	if d.HasChange("network_driver") {
 		v := d.Get("network_driver").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "network_driver", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "network_driver", v)
 	}
+
 	if d.HasChange("no_proxy") {
 		v := d.Get("no_proxy").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "no_proxy", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "no_proxy", v)
 	}
+
 	if d.HasChange("public") {
 		v := d.Get("public").(bool)
 		public := strconv.FormatBool(v)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "public", public)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "public", public)
 	}
+
 	if d.HasChange("registry_enabled") {
 		v := d.Get("registry_enabled").(bool)
 		registryEnabled := strconv.FormatBool(v)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "registry_enabled", registryEnabled)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(
+			updateOpts, "registry_enabled", registryEnabled)
 	}
+
 	if d.HasChange("server_type") {
 		v := d.Get("server_type").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "server_type", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "server_type", v)
 	}
+
 	if d.HasChange("tls_disabled") {
 		v := d.Get("tls_disabled").(bool)
 		tlsDisabled := strconv.FormatBool(v)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "tls_disabled", tlsDisabled)
-	}
-	if d.HasChange("volume_driver") {
-		v := d.Get("volume_driver").(string)
-		updateOpts = resourceClusterTemplateAppendUpdateOptsV1(updateOpts, "volume_driver", v)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "tls_disabled", tlsDisabled)
 	}
 
-	log.Printf("[DEBUG] Updating Cluster template %s with options: %+v", d.Id(), updateOpts)
+	if d.HasChange("volume_driver") {
+		v := d.Get("volume_driver").(string)
+		updateOpts = containerInfraClusterTemplateV1AppendUpdateOpts(updateOpts, "volume_driver", v)
+	}
+
+	log.Printf(
+		"[DEBUG] Updating openstack_containerinfra_clustertemplate_v1 %s with options: %#v", d.Id(), updateOpts)
 
 	_, err = clustertemplates.Update(containerInfraClient, d.Id(), updateOpts).Extract()
 	if err != nil {
-		return fmt.Errorf("Error updating OpenStack container infra Cluster template: %s", err)
+		return fmt.Errorf("Error updating openstack_containerinfra_clustertemplate_v1 %s: %s", d.Id(), err)
 	}
 
 	return resourceContainerInfraClusterTemplateV1Read(d, meta)
@@ -470,24 +538,8 @@ func resourceContainerInfraClusterTemplateV1Delete(d *schema.ResourceData, meta 
 	}
 
 	if err := clustertemplates.Delete(containerInfraClient, d.Id()).ExtractErr(); err != nil {
-		return fmt.Errorf("Error deleting Cluster template: %v", err)
+		return CheckDeleted(d, err, "Error deleting openstack_containerinfra_clustertemplate_v1")
 	}
 
 	return nil
-}
-
-func resourceClusterTemplateAppendUpdateOptsV1(updateOpts []clustertemplates.UpdateOptsBuilder, attribute string, value string) []clustertemplates.UpdateOptsBuilder {
-	if value == "" {
-		updateOpts = append(updateOpts, clustertemplates.UpdateOpts{
-			Op:   clustertemplates.RemoveOp,
-			Path: strings.Join([]string{"/", attribute}, ""),
-		})
-	} else {
-		updateOpts = append(updateOpts, clustertemplates.UpdateOpts{
-			Op:    clustertemplates.ReplaceOp,
-			Path:  strings.Join([]string{"/", attribute}, ""),
-			Value: value,
-		})
-	}
-	return updateOpts
 }

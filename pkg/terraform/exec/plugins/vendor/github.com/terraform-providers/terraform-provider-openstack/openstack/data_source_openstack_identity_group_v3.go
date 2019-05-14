@@ -13,22 +13,22 @@ func dataSourceIdentityGroupV3() *schema.Resource {
 		Read: dataSourceIdentityGroupV3Read,
 
 		Schema: map[string]*schema.Schema{
-			"domain_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-
-			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
-
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
+			},
+
+			"domain_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
+			"name": {
+				Type:     schema.TypeString,
+				Required: true,
 			},
 		},
 	}
@@ -47,32 +47,30 @@ func dataSourceIdentityGroupV3Read(d *schema.ResourceData, meta interface{}) err
 		Name:     d.Get("name").(string),
 	}
 
-	log.Printf("[DEBUG] List Options: %#v", listOpts)
+	log.Printf("[DEBUG] openstack_identity_group_v3 list options: %#v", listOpts)
 
 	var group groups.Group
 	allPages, err := groups.List(identityClient, listOpts).AllPages()
 	if err != nil {
-		return fmt.Errorf("Unable to query groups: %s", err)
+		return fmt.Errorf("Unable to query openstack_identity_group_v3: %s", err)
 	}
 
 	allGroups, err := groups.ExtractGroups(allPages)
 	if err != nil {
-		return fmt.Errorf("Unable to retrieve roles: %s", err)
+		return fmt.Errorf("Unable to retrieve openstack_identity_group_v3: %s", err)
 	}
 
 	if len(allGroups) < 1 {
-		return fmt.Errorf("Your query returned no results. " +
+		return fmt.Errorf("Your openstack_identity_group_v3 query returned no results. " +
 			"Please change your search criteria and try again.")
 	}
 
 	if len(allGroups) > 1 {
-		log.Printf("[DEBUG] Multiple results found: %#v", allGroups)
-		return fmt.Errorf("Your query returned more than one result. Please try a more " +
-			"specific search criteria, or set `most_recent` attribute to true.")
+		return fmt.Errorf("Your openstack_identity_group_v3 query returned more than one result.")
 	}
+
 	group = allGroups[0]
 
-	log.Printf("[DEBUG] Single group found: %s", group.ID)
 	return dataSourceIdentityGroupV3Attributes(d, config, &group)
 }
 

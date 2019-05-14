@@ -13,43 +13,44 @@ func dataSourceIdentityProjectV3() *schema.Resource {
 		Read: dataSourceIdentityProjectV3Read,
 
 		Schema: map[string]*schema.Schema{
-			"description": &schema.Schema{
+			"region": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
+
+			"description": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"domain_id": &schema.Schema{
+
+			"domain_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
 
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
 			},
 
-			"is_domain": &schema.Schema{
+			"is_domain": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
 			},
 
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 
-			"parent_id": &schema.Schema{
+			"parent_id": {
 				Type:     schema.TypeString,
 				Optional: true,
-			},
-
-			"region": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
 			},
 		},
 	}
@@ -73,31 +74,30 @@ func dataSourceIdentityProjectV3Read(d *schema.ResourceData, meta interface{}) e
 		ParentID: d.Get("parent_id").(string),
 	}
 
-	log.Printf("[DEBUG] List Options: %#v", listOpts)
+	log.Printf("[DEBUG] openstack_identity_project_v3 list options: %#v", listOpts)
 
 	var project projects.Project
 	allPages, err := projects.List(identityClient, listOpts).AllPages()
 	if err != nil {
-		return fmt.Errorf("Unable to query projects: %s", err)
+		return fmt.Errorf("Unable to query openstack_identity_project_v3: %s", err)
 	}
 
 	allProjects, err := projects.ExtractProjects(allPages)
 	if err != nil {
-		return fmt.Errorf("Unable to retrieve projects: %s", err)
+		return fmt.Errorf("Unable to retrieve openstack_identity_project_v3: %s", err)
 	}
 
 	if len(allProjects) < 1 {
-		return fmt.Errorf("Your query returned no results. " +
+		return fmt.Errorf("Your openstack_identity_project_v3 query returned no results. " +
 			"Please change your search criteria and try again.")
 	}
 
 	if len(allProjects) > 1 {
-		log.Printf("[DEBUG] Multiple results found: %#v", allProjects)
-		return fmt.Errorf("Your query returned more than one result")
+		return fmt.Errorf("Your openstack_identity_project_v3 query returned more than one result.")
 	}
+
 	project = allProjects[0]
 
-	log.Printf("[DEBUG] Single project found: %s", project.ID)
 	return dataSourceIdentityProjectV3Attributes(d, &project)
 }
 

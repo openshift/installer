@@ -9,6 +9,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects"
 	"github.com/gophercloud/gophercloud/pagination"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
 func resourceObjectStorageContainerV1() *schema.Resource {
@@ -19,43 +20,63 @@ func resourceObjectStorageContainerV1() *schema.Resource {
 		Delete: resourceObjectStorageContainerV1Delete,
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
 			},
-			"container_read": &schema.Schema{
+			"container_read": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"container_sync_to": &schema.Schema{
+			"container_sync_to": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"container_sync_key": &schema.Schema{
+			"container_sync_key": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"container_write": &schema.Schema{
+			"container_write": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"content_type": &schema.Schema{
+			"content_type": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
-			"metadata": &schema.Schema{
+			"versioning": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"versions", "history",
+							}, true),
+						},
+						"location": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
+			"metadata": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: false,
@@ -85,6 +106,19 @@ func resourceObjectStorageContainerV1Create(d *schema.ResourceData, meta interfa
 		ContainerWrite:   d.Get("container_write").(string),
 		ContentType:      d.Get("content_type").(string),
 		Metadata:         resourceContainerMetadataV2(d),
+	}
+
+	versioning := d.Get("versioning").(*schema.Set)
+	if versioning.Len() > 0 {
+		vParams := versioning.List()[0]
+		if vRaw, ok := vParams.(map[string]interface{}); ok {
+			switch vRaw["type"].(string) {
+			case "versions":
+				createOpts.VersionsLocation = vRaw["location"].(string)
+			case "history":
+				createOpts.HistoryLocation = vRaw["location"].(string)
+			}
+		}
 	}
 
 	log.Printf("[DEBUG] Create Options: %#v", createOpts)
@@ -134,6 +168,28 @@ func resourceObjectStorageContainerV1Update(d *schema.ResourceData, meta interfa
 		ContentType:      d.Get("content_type").(string),
 	}
 
+	if d.HasChange("versioning") {
+		versioning := d.Get("versioning").(*schema.Set)
+		if versioning.Len() == 0 {
+			updateOpts.RemoveVersionsLocation = "true"
+			updateOpts.RemoveHistoryLocation = "true"
+		} else {
+			vParams := versioning.List()[0]
+			if vRaw, ok := vParams.(map[string]interface{}); ok {
+				if len(vRaw["location"].(string)) == 0 || len(vRaw["type"].(string)) == 0 {
+					updateOpts.RemoveVersionsLocation = "true"
+					updateOpts.RemoveHistoryLocation = "true"
+				}
+				switch vRaw["type"].(string) {
+				case "versions":
+					updateOpts.VersionsLocation = vRaw["location"].(string)
+				case "history":
+					updateOpts.HistoryLocation = vRaw["location"].(string)
+				}
+			}
+		}
+	}
+
 	if d.HasChange("metadata") {
 		updateOpts.Metadata = resourceContainerMetadataV2(d)
 	}
@@ -155,8 +211,8 @@ func resourceObjectStorageContainerV1Delete(d *schema.ResourceData, meta interfa
 
 	_, err = containers.Delete(objectStorageClient, d.Id()).Extract()
 	if err != nil {
-		gopherErr, ok := err.(gophercloud.ErrUnexpectedResponseCode)
-		if ok && gopherErr.Actual == 409 && d.Get("force_destroy").(bool) {
+		_, ok := err.(gophercloud.ErrDefault409)
+		if ok && d.Get("force_destroy").(bool) {
 			// Container may have things. Delete them.
 			log.Printf("[DEBUG] Attempting to forceDestroy Openstack container %+v", err)
 

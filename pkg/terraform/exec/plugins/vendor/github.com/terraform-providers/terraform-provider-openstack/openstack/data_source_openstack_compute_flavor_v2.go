@@ -15,23 +15,32 @@ func dataSourceComputeFlavorV2() *schema.Resource {
 		Read: dataSourceComputeFlavorV2Read,
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
+			"flavor_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"name", "min_ram", "min_disk"},
+			},
+
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"flavor_id"},
 			},
 
 			"min_ram": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				ForceNew: true,
+				Type:          schema.TypeInt,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"flavor_id"},
 			},
 
 			"ram": {
@@ -47,9 +56,10 @@ func dataSourceComputeFlavorV2() *schema.Resource {
 			},
 
 			"min_disk": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				ForceNew: true,
+				Type:          schema.TypeInt,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"flavor_id"},
 			},
 
 			"disk": {
@@ -71,7 +81,7 @@ func dataSourceComputeFlavorV2() *schema.Resource {
 			},
 
 			// Computed values
-			"extra_specs": &schema.Schema{
+			"extra_specs": {
 				Type:     schema.TypeMap,
 				Computed: true,
 			},
@@ -92,27 +102,39 @@ func dataSourceComputeFlavorV2Read(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
 
-	listOpts := flavors.ListOpts{
-		MinDisk:    d.Get("min_disk").(int),
-		MinRAM:     d.Get("min_ram").(int),
-		AccessType: flavors.PublicAccess,
-	}
+	var allFlavors []flavors.Flavor
+	if v := d.Get("flavor_id").(string); v != "" {
+		flavor, err := flavors.Get(computeClient, v).Extract()
+		if err != nil {
+			if _, ok := err.(gophercloud.ErrDefault404); ok {
+				return fmt.Errorf("No Flavor found")
+			}
+			return fmt.Errorf("Unable to retrieve OpenStack %s flavor: %s", v, err)
+		}
 
-	log.Printf("[DEBUG] openstack_compute_flavor_v2 ListOpts: %#v", listOpts)
+		allFlavors = append(allFlavors, *flavor)
+	} else {
+		listOpts := flavors.ListOpts{
+			MinDisk:    d.Get("min_disk").(int),
+			MinRAM:     d.Get("min_ram").(int),
+			AccessType: flavors.PublicAccess,
+		}
 
-	var flavor flavors.Flavor
-	allPages, err := flavors.ListDetail(computeClient, listOpts).AllPages()
-	if err != nil {
-		return fmt.Errorf("Unable to query OpenStack flavors: %s", err)
-	}
+		log.Printf("[DEBUG] openstack_compute_flavor_v2 ListOpts: %#v", listOpts)
 
-	allFlavors, err := flavors.ExtractFlavors(allPages)
-	if err != nil {
-		return fmt.Errorf("Unable to retrieve OpenStack flavors: %s", err)
+		allPages, err := flavors.ListDetail(computeClient, listOpts).AllPages()
+		if err != nil {
+			return fmt.Errorf("Unable to query OpenStack flavors: %s", err)
+		}
+
+		allFlavors, err = flavors.ExtractFlavors(allPages)
+		if err != nil {
+			return fmt.Errorf("Unable to retrieve OpenStack flavors: %s", err)
+		}
 	}
 
 	// Loop through all flavors to find a more specific one.
-	if len(allFlavors) > 1 {
+	if len(allFlavors) > 0 {
 		var filteredFlavors []flavors.Flavor
 		for _, flavor := range allFlavors {
 			if v := d.Get("name").(string); v != "" {
@@ -169,9 +191,7 @@ func dataSourceComputeFlavorV2Read(d *schema.ResourceData, meta interface{}) err
 			"Please try a more specific search criteria")
 	}
 
-	flavor = allFlavors[0]
-
-	return dataSourceComputeFlavorV2Attributes(d, computeClient, &flavor)
+	return dataSourceComputeFlavorV2Attributes(d, computeClient, &allFlavors[0])
 }
 
 // dataSourceComputeFlavorV2Attributes populates the fields of a Flavor resource.
@@ -182,6 +202,7 @@ func dataSourceComputeFlavorV2Attributes(
 
 	d.SetId(flavor.ID)
 	d.Set("name", flavor.Name)
+	d.Set("flavor_id", flavor.ID)
 	d.Set("disk", flavor.Disk)
 	d.Set("ram", flavor.RAM)
 	d.Set("rx_tx_factor", flavor.RxTxFactor)

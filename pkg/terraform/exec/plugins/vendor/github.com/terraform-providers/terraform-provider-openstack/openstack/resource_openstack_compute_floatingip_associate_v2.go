@@ -3,16 +3,13 @@ package openstack
 import (
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 
-	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
-	nfloatingips "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 )
 
 func resourceComputeFloatingIPAssociateV2() *schema.Resource {
@@ -29,32 +26,32 @@ func resourceComputeFloatingIPAssociateV2() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"floating_ip": &schema.Schema{
+			"floating_ip": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"instance_id": &schema.Schema{
+			"instance_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"fixed_ip": &schema.Schema{
+			"fixed_ip": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"wait_until_associated": &schema.Schema{
+			"wait_until_associated": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
@@ -78,11 +75,11 @@ func resourceComputeFloatingIPAssociateV2Create(d *schema.ResourceData, meta int
 		FloatingIP: floatingIP,
 		FixedIP:    fixedIP,
 	}
-	log.Printf("[DEBUG] Associate Options: %#v", associateOpts)
+	log.Printf("[DEBUG] openstack_compute_floatingip_associate_v2 create options: %#v", associateOpts)
 
 	err = floatingips.AssociateInstance(computeClient, instanceId, associateOpts).ExtractErr()
 	if err != nil {
-		return fmt.Errorf("Error associating Floating IP: %s", err)
+		return fmt.Errorf("Error creating openstack_compute_floatingip_associate_v2: %s", err)
 	}
 
 	// This API call should be synchronous, but we've had reports where it isn't.
@@ -95,12 +92,10 @@ func resourceComputeFloatingIPAssociateV2Create(d *schema.ResourceData, meta int
 	}
 
 	if waitUntilAssociated {
-		log.Printf("[DEBUG] Waiting until %s is associated with %s", instanceId, floatingIP)
-
 		stateConf := &resource.StateChangeConf{
 			Pending:    []string{"NOT_ASSOCIATED"},
 			Target:     []string{"ASSOCIATED"},
-			Refresh:    resourceComputeFloatingIPAssociateV2CheckAssociation(computeClient, instanceId, floatingIP),
+			Refresh:    computeFloatingIPAssociateV2CheckAssociation(computeClient, instanceId, floatingIP),
 			Timeout:    d.Timeout(schema.TimeoutCreate),
 			Delay:      0,
 			MinTimeout: 3 * time.Second,
@@ -144,11 +139,11 @@ func resourceComputeFloatingIPAssociateV2Read(d *schema.ResourceData, meta inter
 
 	var exists bool
 	if networkEnabled {
-		log.Printf("[DEBUG] Checking for Floating IP existence via Network API")
-		exists, err = resourceComputeFloatingIPAssociateV2NetworkExists(networkClient, floatingIP)
+		log.Printf("[DEBUG] Checking for openstack_compute_floatingip_associate_v2 %s existence via Network API", d.Id())
+		exists, err = computeFloatingIPAssociateV2NetworkExists(networkClient, floatingIP)
 	} else {
-		log.Printf("[DEBUG] Checking for Floating IP existence via Compute API")
-		exists, err = resourceComputeFloatingIPAssociateV2ComputeExists(computeClient, floatingIP)
+		log.Printf("[DEBUG] Checking for openstack_compute_floatingip_associate_v2 %s existence via Compute API", d.Id())
+		exists, err = computeFloatingIPAssociateV2ComputeExists(computeClient, floatingIP)
 	}
 
 	if err != nil {
@@ -204,98 +199,12 @@ func resourceComputeFloatingIPAssociateV2Delete(d *schema.ResourceData, meta int
 	disassociateOpts := floatingips.DisassociateOpts{
 		FloatingIP: floatingIP,
 	}
-	log.Printf("[DEBUG] Disssociate Options: %#v", disassociateOpts)
+	log.Printf("[DEBUG] openstack_compute_floatingip_associate_v2 %s delete options: %#v", d.Id(), disassociateOpts)
 
 	err = floatingips.DisassociateInstance(computeClient, instanceId, disassociateOpts).ExtractErr()
 	if err != nil {
-		return CheckDeleted(d, err, "floating ip association")
+		return CheckDeleted(d, err, "Error deleting openstack_compute_floatingip_associate_v2")
 	}
 
 	return nil
-}
-
-func parseComputeFloatingIPAssociateId(id string) (string, string, string, error) {
-	idParts := strings.Split(id, "/")
-	if len(idParts) < 3 {
-		return "", "", "", fmt.Errorf("Unable to determine floating ip association ID")
-	}
-
-	floatingIP := idParts[0]
-	instanceId := idParts[1]
-	fixedIP := idParts[2]
-
-	return floatingIP, instanceId, fixedIP, nil
-}
-
-func resourceComputeFloatingIPAssociateV2NetworkExists(networkClient *gophercloud.ServiceClient, floatingIP string) (bool, error) {
-	listOpts := nfloatingips.ListOpts{
-		FloatingIP: floatingIP,
-	}
-	allPages, err := nfloatingips.List(networkClient, listOpts).AllPages()
-	if err != nil {
-		return false, err
-	}
-
-	allFips, err := nfloatingips.ExtractFloatingIPs(allPages)
-	if err != nil {
-		return false, err
-	}
-
-	if len(allFips) > 1 {
-		return false, fmt.Errorf("There was a problem retrieving the floating IP")
-	}
-
-	if len(allFips) == 0 {
-		return false, nil
-	}
-
-	return true, nil
-}
-
-func resourceComputeFloatingIPAssociateV2ComputeExists(computeClient *gophercloud.ServiceClient, floatingIP string) (bool, error) {
-	// If the Network API isn't available, fall back to the deprecated Compute API.
-	allPages, err := floatingips.List(computeClient).AllPages()
-	if err != nil {
-		return false, err
-	}
-
-	allFips, err := floatingips.ExtractFloatingIPs(allPages)
-	if err != nil {
-		return false, err
-	}
-
-	for _, f := range allFips {
-		if f.IP == floatingIP {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-func resourceComputeFloatingIPAssociateV2CheckAssociation(
-	computeClient *gophercloud.ServiceClient, instanceId, floatingIP string) resource.StateRefreshFunc {
-
-	return func() (interface{}, string, error) {
-		instance, err := servers.Get(computeClient, instanceId).Extract()
-		if err != nil {
-			return instance, "", err
-		}
-
-		var associated bool
-		for _, networkAddresses := range instance.Addresses {
-			for _, element := range networkAddresses.([]interface{}) {
-				address := element.(map[string]interface{})
-				if address["OS-EXT-IPS:type"] == "floating" && address["addr"] == floatingIP {
-					associated = true
-				}
-			}
-		}
-
-		if associated {
-			return instance, "ASSOCIATED", nil
-		}
-
-		return instance, "NOT_ASSOCIATED", nil
-	}
 }

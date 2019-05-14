@@ -19,44 +19,44 @@ func resourceIdentityProjectV3() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"description": &schema.Schema{
+			"region": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
+
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 
-			"domain_id": &schema.Schema{
+			"domain_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
 
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
 			},
 
-			"is_domain": &schema.Schema{
+			"is_domain": {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
 
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 
-			"parent_id": &schema.Schema{
+			"parent_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-			},
-
-			"region": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
 			},
 		},
 	}
@@ -80,10 +80,10 @@ func resourceIdentityProjectV3Create(d *schema.ResourceData, meta interface{}) e
 		ParentID:    d.Get("parent_id").(string),
 	}
 
-	log.Printf("[DEBUG] Create Options: %#v", createOpts)
+	log.Printf("[DEBUG] openstack_identity_project_v3 create options: %#v", createOpts)
 	project, err := projects.Create(identityClient, createOpts).Extract()
 	if err != nil {
-		return fmt.Errorf("Error creating OpenStack project: %s", err)
+		return fmt.Errorf("Error creating openstack_identity_project_v3: %s", err)
 	}
 
 	d.SetId(project.ID)
@@ -100,10 +100,10 @@ func resourceIdentityProjectV3Read(d *schema.ResourceData, meta interface{}) err
 
 	project, err := projects.Get(identityClient, d.Id()).Extract()
 	if err != nil {
-		return CheckDeleted(d, err, "project")
+		return CheckDeleted(d, err, "Error retrieving openstack_identity_project_v3")
 	}
 
-	log.Printf("[DEBUG] Retrieved OpenStack project: %#v", project)
+	log.Printf("[DEBUG] Retrieved openstack_identity_project_v3 %s: %#v", d.Id(), project)
 
 	d.Set("description", project.Description)
 	d.Set("domain_id", project.DomainID)
@@ -155,13 +155,14 @@ func resourceIdentityProjectV3Update(d *schema.ResourceData, meta interface{}) e
 
 	if d.HasChange("description") {
 		hasChange = true
-		updateOpts.Description = d.Get("description").(string)
+		description := d.Get("description").(string)
+		updateOpts.Description = &description
 	}
 
 	if hasChange {
 		_, err := projects.Update(identityClient, d.Id(), updateOpts).Extract()
 		if err != nil {
-			return fmt.Errorf("Error updating OpenStack project: %s", err)
+			return fmt.Errorf("Error updating openstack_identity_project_v3 %s: %s", d.Id(), err)
 		}
 	}
 
@@ -177,7 +178,7 @@ func resourceIdentityProjectV3Delete(d *schema.ResourceData, meta interface{}) e
 
 	err = projects.Delete(identityClient, d.Id()).ExtractErr()
 	if err != nil {
-		return fmt.Errorf("Error deleting OpenStack project: %s", err)
+		return CheckDeleted(d, err, "Error deleting openstack_identity_project_v3")
 	}
 
 	return nil

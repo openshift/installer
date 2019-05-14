@@ -13,22 +13,22 @@ func dataSourceIdentityRoleV3() *schema.Resource {
 		Read: dataSourceIdentityRoleV3Read,
 
 		Schema: map[string]*schema.Schema{
-			"domain_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-
-			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
-
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
+			},
+
+			"domain_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
+			"name": {
+				Type:     schema.TypeString,
+				Required: true,
 			},
 		},
 	}
@@ -47,32 +47,29 @@ func dataSourceIdentityRoleV3Read(d *schema.ResourceData, meta interface{}) erro
 		Name:     d.Get("name").(string),
 	}
 
-	log.Printf("[DEBUG] List Options: %#v", listOpts)
+	log.Printf("[DEBUG] openstack_identity_role_v3 list options: %#v", listOpts)
 
 	var role roles.Role
 	allPages, err := roles.List(identityClient, listOpts).AllPages()
 	if err != nil {
-		return fmt.Errorf("Unable to query roles: %s", err)
+		return fmt.Errorf("Unable to query openstack_identity_role_v3: %s", err)
 	}
 
 	allRoles, err := roles.ExtractRoles(allPages)
 	if err != nil {
-		return fmt.Errorf("Unable to retrieve roles: %s", err)
+		return fmt.Errorf("Unable to retrieve openstack_identity_role_v3: %s", err)
 	}
 
 	if len(allRoles) < 1 {
-		return fmt.Errorf("Your query returned no results. " +
-			"Please change your search criteria and try again.")
+		return fmt.Errorf("Your openstack_identity_role_v3 query returned no results.")
 	}
 
 	if len(allRoles) > 1 {
-		log.Printf("[DEBUG] Multiple results found: %#v", allRoles)
-		return fmt.Errorf("Your query returned more than one result. Please try a more " +
-			"specific search criteria, or set `most_recent` attribute to true.")
+		return fmt.Errorf("Your openstack_identity_role_v3 query returned more than one result.")
 	}
+
 	role = allRoles[0]
 
-	log.Printf("[DEBUG] Single Role found: %s", role.ID)
 	return dataSourceIdentityRoleV3Attributes(d, config, &role)
 }
 

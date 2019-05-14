@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 
@@ -15,7 +16,7 @@ func dataSourceImagesImageV2() *schema.Resource {
 		Read: dataSourceImagesImageV2Read,
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -133,6 +134,11 @@ func dataSourceImagesImageV2() *schema.Resource {
 				Computed: true,
 			},
 
+			"created_at": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			"updated_at": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -146,6 +152,13 @@ func dataSourceImagesImageV2() *schema.Resource {
 			"schema": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+
+			"tags": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Set:      schema.HashString,
 			},
 		},
 	}
@@ -262,8 +275,8 @@ func dataSourceImagesImageV2Attributes(d *schema.ResourceData, image *images.Ima
 	d.Set("checksum", image.Checksum)
 	d.Set("size_bytes", image.SizeBytes)
 	d.Set("metadata", image.Metadata)
-	d.Set("created_at", image.CreatedAt)
-	d.Set("updated_at", image.UpdatedAt)
+	d.Set("created_at", image.CreatedAt.Format(time.RFC3339))
+	d.Set("updated_at", image.UpdatedAt.Format(time.RFC3339))
 	d.Set("file", image.File)
 	d.Set("schema", image.Schema)
 

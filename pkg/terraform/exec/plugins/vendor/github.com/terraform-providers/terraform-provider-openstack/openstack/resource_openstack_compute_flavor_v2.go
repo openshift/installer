@@ -19,63 +19,63 @@ func resourceComputeFlavorV2() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"ram": &schema.Schema{
+			"ram": {
 				Type:     schema.TypeInt,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"vcpus": &schema.Schema{
+			"vcpus": {
 				Type:     schema.TypeInt,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"disk": &schema.Schema{
+			"disk": {
 				Type:     schema.TypeInt,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"swap": &schema.Schema{
+			"swap": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"rx_tx_factor": &schema.Schema{
+			"rx_tx_factor": {
 				Type:     schema.TypeFloat,
 				Optional: true,
 				ForceNew: true,
 				Default:  1,
 			},
 
-			"is_public": &schema.Schema{
+			"is_public": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"ephemeral": &schema.Schema{
+			"ephemeral": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"extra_specs": &schema.Schema{
+			"extra_specs": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
@@ -175,7 +175,7 @@ func resourceComputeFlavorV2Update(d *schema.ResourceData, meta interface{}) err
 		oldES, newES := d.GetChange("extra_specs")
 
 		// Delete all old extra specs.
-		for oldKey, _ := range oldES.(map[string]interface{}) {
+		for oldKey := range oldES.(map[string]interface{}) {
 			if err := flavors.DeleteExtraSpec(computeClient, d.Id(), oldKey).ExtractErr(); err != nil {
 				return fmt.Errorf("Error deleting extra_spec %s from openstack_compute_flavor_v2 %s: %s", oldKey, d.Id(), err)
 			}
@@ -205,7 +205,7 @@ func resourceComputeFlavorV2Delete(d *schema.ResourceData, meta interface{}) err
 
 	err = flavors.Delete(computeClient, d.Id()).ExtractErr()
 	if err != nil {
-		return fmt.Errorf("Error deleting openstack_compute_flavor_v2 %s: %s", d.Id(), err)
+		return CheckDeleted(d, err, "Error deleting openstack_compute_flavor_v2")
 	}
 
 	return nil

@@ -18,14 +18,14 @@ func resourceComputeFloatingIPV2() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"pool": &schema.Schema{
+			"pool": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -33,17 +33,17 @@ func resourceComputeFloatingIPV2() *schema.Resource {
 			},
 
 			// computed-only
-			"address": &schema.Schema{
+			"address": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"fixed_ip": &schema.Schema{
+			"fixed_ip": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"instance_id": &schema.Schema{
+			"instance_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -105,7 +105,7 @@ func resourceComputeFloatingIPV2Delete(d *schema.ResourceData, meta interface{})
 	}
 
 	if err := floatingips.Delete(computeClient, d.Id()).ExtractErr(); err != nil {
-		return fmt.Errorf("Error deleting openstack_compute_floatingip_v2: %s", err)
+		return CheckDeleted(d, err, "Error deleting openstack_compute_floatingip_v2")
 	}
 
 	return nil
