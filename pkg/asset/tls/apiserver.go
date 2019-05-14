@@ -293,6 +293,9 @@ func (a *KubeAPIServerServiceNetworkServerCertKey) Generate(dependencies asset.P
 			"kubernetes", "kubernetes.default",
 			"kubernetes.default.svc",
 			"kubernetes.default.svc.cluster.local",
+			"openshift", "openshift.default",
+			"openshift.default.svc",
+			"openshift.default.svc.cluster.local",
 		},
 		IPAddresses: []net.IP{net.ParseIP(serviceAddress)},
 	}
