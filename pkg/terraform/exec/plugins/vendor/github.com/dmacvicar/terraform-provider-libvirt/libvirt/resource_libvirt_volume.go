@@ -164,24 +164,25 @@ func resourceLibvirtVolumeCreate(d *schema.ResourceData, meta interface{}) error
 		volumeDef.Capacity.Unit = "B"
 		volumeDef.Capacity.Value = size
 	} else {
+		// the volume does not have a source image to upload
 
-		// the volume does not have a source image to upload, first handle
-		// whether it has a backing image
-		//
+		// if size is given, set it to the specified value
+		if _, ok := d.GetOk("size"); ok {
+			volumeDef.Capacity.Value = uint64(d.Get("size").(int))
+		}
+
+		//first handle whether it has a backing image
 		// backing images can be specified by either (id), or by (name, pool)
 		var baseVolume *libvirt.StorageVol
-
 		if baseVolumeID, ok := d.GetOk("base_volume_id"); ok {
 			if _, ok := d.GetOk("base_volume_name"); ok {
 				return fmt.Errorf("'base_volume_name' can't be specified when also 'base_volume_id' is given")
 			}
 			baseVolume, err = client.libvirt.LookupStorageVolByKey(baseVolumeID.(string))
 			if err != nil {
-				return fmt.Errorf("Can't retrieve volume %s: %v", baseVolumeID.(string), err)
+				return fmt.Errorf("Can't retrieve volume ID '%s': %v", baseVolumeID.(string), err)
 			}
-		}
-
-		if baseVolumeName, ok := d.GetOk("base_volume_name"); ok {
+		} else if baseVolumeName, ok := d.GetOk("base_volume_name"); ok {
 			baseVolumePool := pool
 			if _, ok := d.GetOk("base_volume_pool"); ok {
 				baseVolumePoolName := d.Get("base_volume_pool").(string)
@@ -193,33 +194,35 @@ func resourceLibvirtVolumeCreate(d *schema.ResourceData, meta interface{}) error
 			}
 			baseVolume, err = baseVolumePool.LookupStorageVolByName(baseVolumeName.(string))
 			if err != nil {
-				return fmt.Errorf("Can't retrieve volume %s: %v", baseVolumeName.(string), err)
+				return fmt.Errorf("Can't retrieve base volume with name '%s': %v", baseVolumeName.(string), err)
 			}
 		}
 
 		if baseVolume != nil {
-			backingStoreDef, err := newDefBackingStoreFromLibvirt(baseVolume)
+			backingStoreFragmentDef, err := newDefBackingStoreFromLibvirt(baseVolume)
 			if err != nil {
 				return fmt.Errorf("Could not retrieve backing store definition: %s", err.Error())
 			}
 
-			// does the backing store have some size information?, check at least that it is not smaller than the backing store
-			volumeDef.Capacity.Value = uint64(d.Get("size").(int))
-			if _, ok := d.GetOk("size"); ok {
-				backingStoreVolumeDef, err := newDefVolumeFromLibvirt(baseVolume)
-				if err != nil {
-					return err
-				}
-
-				if backingStoreVolumeDef.Capacity != nil && volumeDef.Capacity.Value < backingStoreVolumeDef.Capacity.Value {
-					return fmt.Errorf("When 'size' is specified, it shouldn't be smaller than the backing store specified with 'base_volume_id' or 'base_volume_name/base_volume_pool'")
-				}
+			backingStoreVolumeDef, err := newDefVolumeFromLibvirt(baseVolume)
+			if err != nil {
+				return err
 			}
-			volumeDef.BackingStore = &backingStoreDef
+
+			// if the volume does not specify size, set it to the size of the backing store
+			if _, ok := d.GetOk("size"); !ok {
+				volumeDef.Capacity.Value = backingStoreVolumeDef.Capacity.Value
+			}
+
+			// Always check that the size, specified or taken from the backing store
+			// is at least the size of the backing store itself
+			if backingStoreVolumeDef.Capacity != nil && volumeDef.Capacity.Value < backingStoreVolumeDef.Capacity.Value {
+				return fmt.Errorf("When 'size' is specified, it shouldn't be smaller than the backing store specified with 'base_volume_id' or 'base_volume_name/base_volume_pool'")
+			}
+			volumeDef.BackingStore = &backingStoreFragmentDef
 		}
 	}
 
-	volumeDef.Capacity.Value = uint64(d.Get("size").(int))
 	data, err := xmlMarshallIndented(volumeDef)
 	if err != nil {
 		return fmt.Errorf("Error serializing libvirt volume: %s", err)
@@ -261,9 +264,14 @@ func resourceLibvirtVolumeCreate(d *schema.ResourceData, meta interface{}) error
 		}
 	}
 
+	if err := volumeWaitForExists(client.libvirt, key); err != nil {
+		return err
+	}
+
 	return resourceLibvirtVolumeRead(d, meta)
 }
 
+// resourceLibvirtVolumeRead returns the current state for a volume resource
 func resourceLibvirtVolumeRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Client)
 	virConn := client.libvirt
@@ -271,7 +279,7 @@ func resourceLibvirtVolumeRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(LibVirtConIsNil)
 	}
 
-	volume, err := lookupVolumeReallyHard(client, d.Get("pool").(string), d.Id())
+	volume, err := volumeLookupReallyHard(client, d.Get("pool").(string), d.Id())
 	if err != nil {
 		return err
 	}
@@ -323,21 +331,23 @@ func resourceLibvirtVolumeRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
+// resourceLibvirtVolumeDelete removed a volume resource
 func resourceLibvirtVolumeDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Client)
 	if client.libvirt == nil {
 		return fmt.Errorf(LibVirtConIsNil)
 	}
 
-	return removeVolume(client, d.Id())
+	return volumeDelete(client, d.Id())
 }
 
+// resourceLibvirtVolumeExists returns True if the volume resource exists
 func resourceLibvirtVolumeExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	log.Printf("[DEBUG] Check if resource libvirt_volume exists")
 	client := meta.(*Client)
 
 	volPoolName := d.Get("pool").(string)
-	volume, err := lookupVolumeReallyHard(client, volPoolName, d.Id())
+	volume, err := volumeLookupReallyHard(client, volPoolName, d.Id())
 	if err != nil {
 		return false, err
 	}

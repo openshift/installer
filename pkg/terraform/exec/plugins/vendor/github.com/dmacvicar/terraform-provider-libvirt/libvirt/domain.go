@@ -202,7 +202,8 @@ func newDiskForCloudInit(virConn *libvirt.Connect, volumeKey string) (libvirtxml
 	disk := libvirtxml.DomainDisk{
 		Device: "cdrom",
 		Target: &libvirtxml.DomainDiskTarget{
-			Dev: "hda",
+			// Last device letter possible with a single IDE controller on i440FX
+			Dev: "hdd",
 			Bus: "ide",
 		},
 		Driver: &libvirtxml.DomainDiskDriver{
@@ -251,6 +252,19 @@ func setCoreOSIgnition(d *schema.ResourceData, domainDef *libvirtxml.Domain) err
 	return nil
 }
 
+func setVideo(d *schema.ResourceData, domainDef *libvirtxml.Domain) error {
+	prefix := "video.0"
+	if _, ok := d.GetOk(prefix); ok {
+		domainDef.Devices.Videos = append(domainDef.Devices.Videos, libvirtxml.DomainVideo{
+			Model: libvirtxml.DomainVideoModel{
+				Type: d.Get(prefix + ".type").(string),
+			},
+		})
+	}
+
+	return nil
+}
+
 func setGraphics(d *schema.ResourceData, domainDef *libvirtxml.Domain, arch string) error {
 	if arch == "s390x" || arch == "ppc64" {
 		domainDef.Devices.Graphics = nil
@@ -271,7 +285,10 @@ func setGraphics(d *schema.ResourceData, domainDef *libvirtxml.Domain, arch stri
 		if listenType, ok := d.GetOk(prefix + ".listen_type"); ok {
 			switch listenType {
 			case "address":
-				listener.Address = &libvirtxml.DomainGraphicListenerAddress{}
+				listenAddress := d.Get(prefix + ".listen_address")
+				listener.Address = &libvirtxml.DomainGraphicListenerAddress{
+					Address: listenAddress.(string),
+				}
 			case "network":
 				listener.Network = &libvirtxml.DomainGraphicListenerNetwork{}
 			case "socket":
@@ -392,6 +409,8 @@ func setConsoles(d *schema.ResourceData, domainDef *libvirtxml.Domain) {
 
 func setDisks(d *schema.ResourceData, domainDef *libvirtxml.Domain, virConn *libvirt.Connect) error {
 	var scsiDisk = false
+	var numOfISOs = 0
+
 	for i := 0; i < d.Get("disk.#").(int); i++ {
 		disk := newDefDisk(i)
 
@@ -496,13 +515,15 @@ func setDisks(d *schema.ResourceData, domainDef *libvirtxml.Domain, virConn *lib
 			if strings.HasSuffix(file.(string), ".iso") {
 				disk.Device = "cdrom"
 				disk.Target = &libvirtxml.DomainDiskTarget{
-					Dev: "hda",
+					Dev: fmt.Sprintf("hd%s", diskLetterForIndex(numOfISOs)),
 					Bus: "ide",
 				}
 				disk.Driver = &libvirtxml.DomainDiskDriver{
 					Name: "qemu",
 					Type: "raw",
 				}
+
+				numOfISOs++
 			}
 		}
 
@@ -660,17 +681,16 @@ func setNetworkInterfaces(d *schema.ResourceData, domainDef *libvirtxml.Domain,
 							break
 						}
 					}
-					if !wait {
-						return fmt.Errorf("Cannot map '%s': we are not waiting for DHCP lease and no IP has been provided", hostname)
-					}
-					// the resource specifies a hostname but not an IP, so we must wait until we
-					// have a valid lease and then read the IP we have been assigned, so we can
-					// do the mapping
-					log.Printf("[DEBUG] Do not have an IP for '%s' yet: will wait until DHCP provides one...", hostname)
-					partialNetIfaces[strings.ToUpper(mac)] = &pendingMapping{
-						mac:      strings.ToUpper(mac),
-						hostname: hostname,
-						network:  network,
+					if wait {
+						// the resource specifies a hostname but not an IP, so we must wait until we
+						// have a valid lease and then read the IP we have been assigned, so we can
+						// do the mapping
+						log.Printf("[DEBUG] Do not have an IP for '%s' yet: will wait until DHCP provides one...", hostname)
+						partialNetIfaces[strings.ToUpper(mac)] = &pendingMapping{
+							mac:      strings.ToUpper(mac),
+							hostname: hostname,
+							network:  network,
+						}
 					}
 				}
 			}
