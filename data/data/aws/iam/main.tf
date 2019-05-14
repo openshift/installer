@@ -28,7 +28,6 @@ resource "aws_iam_role" "worker_role" {
 }
 EOF
 
-
   tags = merge(
     {
       "Name" = "${var.cluster_id}-worker-role"
