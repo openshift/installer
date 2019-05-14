@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	noCrdFilename = filepath.Join(manifestDir, "cluster-network-01-crd.yml")
-	noCfgFilename = filepath.Join(manifestDir, "cluster-network-02-config.yml")
+	noCrdFilename = filepath.Join(manifestDir, "cluster-network-01-crd.yaml")
+	noCfgFilename = filepath.Join(manifestDir, "cluster-network-02-config.yaml")
 )
 
 // We need to manually create our CRDs first, so we can create the
@@ -29,7 +29,7 @@ var (
 // network in a more detailed manner with the operator-specific CR, which
 // also needs to be done before the installer is run, so we provide both.
 
-// Networking generates the cluster-network-*.yml files.
+// Networking generates the cluster-network-*.yaml files.
 type Networking struct {
 	Config   *configv1.Network
 	FileList []*asset.File

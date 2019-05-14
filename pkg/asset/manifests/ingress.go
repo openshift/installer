@@ -14,10 +14,10 @@ import (
 )
 
 var (
-	ingCfgFilename = filepath.Join(manifestDir, "cluster-ingress-02-config.yml")
+	ingCfgFilename = filepath.Join(manifestDir, "cluster-ingress-02-config.yaml")
 )
 
-// Ingress generates the cluster-ingress-*.yml files.
+// Ingress generates the cluster-ingress-*.yaml files.
 type Ingress struct {
 	FileList []*asset.File
 }

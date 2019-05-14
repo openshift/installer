@@ -88,7 +88,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the respective operator config.yml files
+// Generate generates the respective operator config.yaml files
 func (m *Manifests) Generate(dependencies asset.Parents) error {
 	ingress := &Ingress{}
 	dns := &DNS{}

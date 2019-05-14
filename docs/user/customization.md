@@ -67,11 +67,11 @@ For example:
     total 68
     -rw-r--r--. 1 xxxxx xxxxx  169 Feb 28 10:54 04-openshift-machine-config-operator.yaml
     -rw-r--r--. 1 xxxxx xxxxx 1589 Feb 28 10:54 cluster-config.yaml
-    -rw-r--r--. 1 xxxxx xxxxx  149 Feb 28 10:54 cluster-dns-02-config.yml
-    -rw-r--r--. 1 xxxxx xxxxx  243 Feb 28 10:54 cluster-infrastructure-02-config.yml
-    -rw-r--r--. 1 xxxxx xxxxx  154 Feb 28 10:54 cluster-ingress-02-config.yml
-    -rw-r--r--. 1 xxxxx xxxxx  557 Feb 28 10:54 cluster-network-01-crd.yml
-    -rw-r--r--. 1 xxxxx xxxxx  327 Feb 28 10:54 cluster-network-02-config.yml
+    -rw-r--r--. 1 xxxxx xxxxx  149 Feb 28 10:54 cluster-dns-02-config.yaml
+    -rw-r--r--. 1 xxxxx xxxxx  243 Feb 28 10:54 cluster-infrastructure-02-config.yaml
+    -rw-r--r--. 1 xxxxx xxxxx  154 Feb 28 10:54 cluster-ingress-02-config.yaml
+    -rw-r--r--. 1 xxxxx xxxxx  557 Feb 28 10:54 cluster-network-01-crd.yaml
+    -rw-r--r--. 1 xxxxx xxxxx  327 Feb 28 10:54 cluster-network-02-config.yaml
     -rw-r--r--. 1 xxxxx xxxxx  264 Feb 28 10:54 cvo-overrides.yaml
     -rw-r--r--. 1 xxxxx xxxxx  275 Feb 28 10:54 etcd-service.yaml
     -rw-r--r--. 1 xxxxx xxxxx  283 Feb 28 10:54 host-etcd-service-endpoints.yaml

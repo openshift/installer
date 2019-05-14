@@ -46,7 +46,7 @@ type deleteFunc func(opts *clientconfig.ClientOpts, filter Filter, logger logrus
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
 type ClusterUninstaller struct {
-	// Cloud is the cloud name as set in clouds.yml
+	// Cloud is the cloud name as set in clouds.yaml
 	Cloud string
 	// Filter contains the openshiftClusterID to filter tags
 	Filter Filter

@@ -55,7 +55,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the respective operator config.yml files
+// Generate generates the respective operator config.yaml files
 func (o *Openshift) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}

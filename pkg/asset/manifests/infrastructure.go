@@ -21,10 +21,10 @@ import (
 
 var (
 	infraCrdFilename = filepath.Join(manifestDir, "cluster-infrastructure-01-crd.yaml")
-	infraCfgFilename = filepath.Join(manifestDir, "cluster-infrastructure-02-config.yml")
+	infraCfgFilename = filepath.Join(manifestDir, "cluster-infrastructure-02-config.yaml")
 )
 
-// Infrastructure generates the cluster-infrastructure-*.yml files.
+// Infrastructure generates the cluster-infrastructure-*.yaml files.
 type Infrastructure struct {
 	FileList []*asset.File
 }

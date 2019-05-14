@@ -24,10 +24,10 @@ import (
 )
 
 var (
-	dnsCfgFilename = filepath.Join(manifestDir, "cluster-dns-02-config.yml")
+	dnsCfgFilename = filepath.Join(manifestDir, "cluster-dns-02-config.yaml")
 )
 
-// DNS generates the cluster-dns-*.yml files.
+// DNS generates the cluster-dns-*.yaml files.
 type DNS struct {
 	FileList []*asset.File
 }

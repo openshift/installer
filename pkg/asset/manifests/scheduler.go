@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	schedulerCfgFilename = filepath.Join(manifestDir, "cluster-scheduler-02-config.yml")
+	schedulerCfgFilename = filepath.Join(manifestDir, "cluster-scheduler-02-config.yaml")
 )
 
-// Scheduler generates the cluster-scheduler-*.yml files.
+// Scheduler generates the cluster-scheduler-*.yaml files.
 type Scheduler struct {
 	FileList []*asset.File
 }

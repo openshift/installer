@@ -60,7 +60,7 @@ func (c *installConf) readInstallConf(filePath string) *installConf {
 
 //ValidateInstallConfig check that the file content is the same of the env variables
 func ValidateInstallConfig(filePath string, expectedData DataToValidate) {
-	fileName := "install-config.yml"
+	fileName := "install-config.yaml"
 	var installConfiguration installConf
 	installConfiguration.readInstallConf(filePath)
 
