@@ -521,7 +521,7 @@
   revision = "4b6d10a82cd4949ade8056e5fbbf29e0765a0f47"
 
 [[projects]]
-  digest = "1:705c8e1100e31273e6c51367ea08b44e04c4f4687ef44c855f43f276f3ee7ec3"
+  digest = "1:03fe1745d2916b44cf208a1014a783ad9f1663ad16f03b939cd2e66e30bb3c74"
   name = "github.com/openshift/cluster-api"
   packages = [
     "pkg/apis/cluster/common",
@@ -530,17 +530,17 @@
     "pkg/apis/machine/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "d8958b539e331bf5ebb056b7f872541e13fb8e01"
+  revision = "cad0f8326cd26bd92fe2f0f90b5ca2e2cbc8a210"
 
 [[projects]]
-  digest = "1:64f129e3a0f9d8419e57ab6b65cceedc136d6dc5bcd9398545890bd4217bf6f2"
+  digest = "1:7996646bfd4a19e15e2e3828fc8c2c3c5d751e906f18a2820ffba9d08a394e27"
   name = "github.com/openshift/cluster-api-provider-libvirt"
   packages = [
     "pkg/apis",
-    "pkg/apis/libvirtproviderconfig/v1alpha1",
+    "pkg/apis/libvirtproviderconfig/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "c23986b36a2521cd69ac22d7adb74a22bca9f7aa"
+  revision = "2705e5265b62886d8df453b8d4a4601dc0c33084"
 
 [[projects]]
   branch = "master"
@@ -1216,7 +1216,7 @@
     "github.com/openshift/cloud-credential-operator/pkg/aws",
     "github.com/openshift/cloud-credential-operator/pkg/controller/utils",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis",
-    "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
+    "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1",
     "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1",
     "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers",
     "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1",

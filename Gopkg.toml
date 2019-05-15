@@ -61,9 +61,9 @@ required = [
   name = "k8s.io/client-go"
   version = "9.0.0"
 
-[[override]]
+[[constraint]]
   name = "github.com/openshift/cluster-api"
-  revision = "d8958b539e331bf5ebb056b7f872541e13fb8e01"
+  revision = "cad0f8326cd26bd92fe2f0f90b5ca2e2cbc8a210"
 
 [[constraint]]
   name = "sigs.k8s.io/cluster-api-provider-aws"
@@ -72,7 +72,7 @@ required = [
 
 [[constraint]]
   name = "github.com/openshift/cluster-api-provider-libvirt"
-  revision = "c23986b36a2521cd69ac22d7adb74a22bca9f7aa"
+  revision = "2705e5265b62886d8df453b8d4a4601dc0c33084"
 
 [[constraint]]
   name = "github.com/pkg/errors"
