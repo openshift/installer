@@ -5,13 +5,11 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/gregjones/httpcache"
-	"github.com/gregjones/httpcache/diskcache"
-	"github.com/peterbourgon/diskv"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
@@ -40,17 +38,14 @@ func cachedImage(uri string) (string, error) {
 
 	cacheDir := filepath.Join(baseCacheDir, "openshift-install", "libvirt")
 	httpCacheDir := filepath.Join(cacheDir, "http")
-	err := os.MkdirAll(httpCacheDir, 0777)
-	if err != nil {
-		return uri, err
+	// We used to use httpCacheDir, warn if it still exists since the user may
+	// want to delete it
+	_, err := os.Stat(httpCacheDir)
+	if err == nil || !os.IsNotExist(err) {
+		logrus.Infof("The installer no longer uses %q, it can be deleted", httpCacheDir)
 	}
 
-	cache := diskcache.NewWithDiskv(diskv.New(diskv.Options{
-		BasePath:     httpCacheDir,
-		CacheSizeMax: 0, // This stops the diskcache from caching the resp in memory.
-	}))
-	transport := httpcache.NewTransport(cache)
-	resp, err := transport.Client().Get(uri)
+	resp, err := http.Get(uri)
 	if err != nil {
 		return uri, err
 	}
