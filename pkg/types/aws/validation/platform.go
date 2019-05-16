@@ -13,6 +13,7 @@ var (
 	// the short name of the region. The value of the map is the long
 	// name of the region.
 	Regions = map[string]string{
+		//"ap-east-1":      "Hong Kong",
 		"ap-northeast-1": "Tokyo",
 		"ap-northeast-2": "Seoul",
 		//"ap-northeast-3": "Osaka-Local",
