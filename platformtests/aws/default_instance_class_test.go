@@ -76,8 +76,12 @@ func TestGetDefaultInstanceClass(t *testing.T) {
 	}
 
 	regions := map[string]string{ // seed with locations that don't match AWS's usual names
-		"South America (Sao Paulo)": "sa-east-1",
-		"AWS GovCloud (US)":         "us-gov-west-1",
+		"AWS GovCloud (US)":          "us-gov-west-1",
+		"AWS GovCloud (US-East)":     "us-gov-east-1",
+		"Asia Pacific (Hong Kong)":   "ap-east-1",
+		"Asia Pacific (Osaka-Local)": "ap-northeast-3",
+		"EU (Stockholm)":             "eu-north-1",
+		"South America (Sao Paulo)":  "sa-east-1",
 	}
 
 	for location, classes := range pricingInstanceClasses {
