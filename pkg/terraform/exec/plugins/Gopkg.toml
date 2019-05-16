@@ -15,23 +15,26 @@ ignored = [
 
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-aws"
-  version = "=2.2.0"
+  version = "=2.10.0"
 
 [[override]]
   name = "github.com/aws/aws-sdk-go"
-  version = "=1.17.11"
+  version = "=1.19.26"
 
 [[override]]
   name = "github.com/kubernetes-sigs/aws-iam-authenticator"
   version = "=0.4.0-alpha"
 
+# Using the forked source because 0.12 terraform requires https://github.com/terraform-providers/terraform-provider-ignition/pull/50
+# to make ignition provider.
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-ignition"
-  version = "=1.0.1"
+  source = "https://github.com/abhinavdahiya/terraform-provider-ignition"
+  branch = "disk_cache"
 
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-openstack"
-  version = "=1.12.0"
+  revision = "b1406b8e4894faad993aff786f0bb50bfec8e281"
 
 [[override]]
   name = "github.com/coreos/ignition"
@@ -39,11 +42,11 @@ ignored = [
 
 [[override]]
   name = "github.com/gophercloud/gophercloud"
-  revision = "0719c6b22f30132b0ae6c90b038e0d50992107b0"
+  revision = "7892efa714f10951c5483a28c7471d8051b12975"
 
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-azurerm"
-  version = "=1.25.0"
+  version = "=1.27.1"
 
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-random"
@@ -59,4 +62,4 @@ ignored = [
 
 [[override]]
   name = "github.com/hashicorp/go-azure-helpers"
-  version = "0.3.2"
+  version = "0.4.1"

@@ -5,22 +5,22 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-func resourceGroup() *schema.Resource {
+func dataSourceGroup() *schema.Resource {
 	return &schema.Resource{
 		Exists: resourceGroupExists,
 		Read:   resourceGroupRead,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"gid": &schema.Schema{
+			"gid": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: true,
 			},
-			"password_hash": &schema.Schema{
+			"password_hash": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,

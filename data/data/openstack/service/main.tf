@@ -1,10 +1,10 @@
 data "openstack_images_image_v2" "bootstrap_image" {
-  name        = "${var.image_name}"
+  name        = var.image_name
   most_recent = true
 }
 
 data "openstack_compute_flavor_v2" "bootstrap_flavor" {
-  name = "${var.flavor_name}"
+  name = var.flavor_name
 }
 
 data "ignition_systemd_unit" "haproxy_unit" {
@@ -26,10 +26,11 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 EOF
+
 }
 
 data "ignition_systemd_unit" "haproxy_unit_watcher" {
-  name    = "haproxy-watcher.service"
+  name = "haproxy-watcher.service"
   enabled = true
 
   content = <<EOF
@@ -43,6 +44,7 @@ ExecStart=/usr/local/bin/haproxy-watcher.sh
 [Install]
 WantedBy=multi-user.target
 EOF
+
 }
 
 data "ignition_systemd_unit" "haproxy_timer_watcher" {
@@ -56,12 +58,13 @@ OnCalendar=*:0/2
 [Install]
 WantedBy=timers.target
 EOF
+
 }
 
 data "ignition_file" "haproxy_watcher_script" {
   filesystem = "root"
-  mode       = "489"                               // 0755
-  path       = "/usr/local/bin/haproxy-watcher.sh"
+  mode = "489" // 0755
+  path = "/usr/local/bin/haproxy-watcher.sh"
 
   content {
     content = <<TFEOF
@@ -136,12 +139,13 @@ EOF
 
 update_cfg_and_restart
 TFEOF
-  }
+
+}
 }
 
 data "ignition_file" "corefile" {
   filesystem = "root"
-  mode       = "420"                   // 0644
+  mode       = "420" // 0644
   path       = "/etc/coredns/Corefile"
 
   content {
@@ -186,13 +190,14 @@ ${var.cluster_domain} {
 }
 
 EOF
+
   }
 }
 
 data "ignition_file" "coredb" {
   filesystem = "root"
-  mode       = "420"                                   // 0644
-  path       = "/etc/coredns/db.${var.cluster_domain}"
+  mode = "420" // 0644
+  path = "/etc/coredns/db.${var.cluster_domain}"
 
   content {
     content = <<EOF
@@ -216,7 +221,9 @@ ${replace(join("\n", formatlist("master-%s  IN  A %s", var.master_port_names, va
 
 ${replace(join("\n", formatlist("etcd-%s  IN  A  %s", var.master_port_names, var.master_ips)), "${var.cluster_id}-master-port-", "")}
 ${replace(join("\n", formatlist("_etcd-server-ssl._tcp  8640  IN  SRV  0  10  2380   etcd-%s.${var.cluster_domain}.", var.master_port_names)), "${var.cluster_id}-master-port-", "")}
+
 EOF
+
   }
 }
 
@@ -235,17 +242,19 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 EOF
+
 }
 
 data "ignition_file" "hostname" {
   filesystem = "root"
-  mode       = "420"           // 0644
-  path       = "/etc/hostname"
+  mode = "420" // 0644
+  path = "/etc/hostname"
 
   content {
     content = <<EOF
 ${var.cluster_id}-api
 EOF
+
   }
 }
 
@@ -254,58 +263,58 @@ data "ignition_user" "core" {
 }
 
 resource "openstack_objectstorage_object_v1" "service_ignition" {
-  container_name = "${var.swift_container}"
+  container_name = var.swift_container
   name           = "load-balancer.ign"
-  content        = "${var.ignition}"
+  content        = var.ignition
 }
 
 resource "openstack_objectstorage_tempurl_v1" "service_ignition_tmpurl" {
-  container = "${var.swift_container}"
+  container = var.swift_container
   method    = "get"
-  object    = "${openstack_objectstorage_object_v1.service_ignition.name}"
+  object    = openstack_objectstorage_object_v1.service_ignition.name
   ttl       = 3600
 }
 
 data "ignition_config" "service_redirect" {
   append {
-    source = "${openstack_objectstorage_tempurl_v1.service_ignition_tmpurl.url}"
+    source = openstack_objectstorage_tempurl_v1.service_ignition_tmpurl.url
   }
 
   files = [
-    "${data.ignition_file.hostname.id}",
-    "${data.ignition_file.haproxy_watcher_script.id}",
-    "${data.ignition_file.corefile.id}",
-    "${data.ignition_file.coredb.id}",
+    data.ignition_file.hostname.id,
+    data.ignition_file.haproxy_watcher_script.id,
+    data.ignition_file.corefile.id,
+    data.ignition_file.coredb.id,
   ]
 
   systemd = [
-    "${data.ignition_systemd_unit.haproxy_unit.id}",
-    "${data.ignition_systemd_unit.haproxy_unit_watcher.id}",
-    "${data.ignition_systemd_unit.haproxy_timer_watcher.id}",
-    "${data.ignition_systemd_unit.local_dns.id}",
+    data.ignition_systemd_unit.haproxy_unit.id,
+    data.ignition_systemd_unit.haproxy_unit_watcher.id,
+    data.ignition_systemd_unit.haproxy_timer_watcher.id,
+    data.ignition_systemd_unit.local_dns.id,
   ]
 
   users = [
-    "${data.ignition_user.core.id}",
+    data.ignition_user.core.id,
   ]
 }
 
 resource "openstack_compute_instance_v2" "load_balancer" {
   name      = "${var.cluster_id}-api"
-  flavor_id = "${data.openstack_compute_flavor_v2.bootstrap_flavor.id}"
-  image_id  = "${data.openstack_images_image_v2.bootstrap_image.id}"
+  flavor_id = data.openstack_compute_flavor_v2.bootstrap_flavor.id
+  image_id  = data.openstack_images_image_v2.bootstrap_image.id
 
-  user_data = "${data.ignition_config.service_redirect.rendered}"
+  user_data = data.ignition_config.service_redirect.rendered
 
   network {
-    port = "${var.service_port_id}"
+    port = var.service_port_id
   }
 
-  metadata {
+  metadata = {
     Name     = "${var.cluster_id}-api"
     Hostname = "${var.cluster_id}-api.${var.cluster_domain}"
-
     # "kubernetes.io/cluster/${var.cluster_id}" = "owned"
-    openshiftClusterID = "${var.cluster_id}"
+    openshiftClusterID = var.cluster_id
   }
 }
+

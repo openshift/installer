@@ -17,6 +17,9 @@ func resourceListenerV2() *schema.Resource {
 		Read:   resourceListenerV2Read,
 		Update: resourceListenerV2Update,
 		Delete: resourceListenerV2Delete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(10 * time.Minute),
@@ -25,14 +28,14 @@ func resourceListenerV2() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"protocol": &schema.Schema{
+			"protocol": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
@@ -46,61 +49,60 @@ func resourceListenerV2() *schema.Resource {
 				},
 			},
 
-			"protocol_port": &schema.Schema{
+			"protocol_port": {
 				Type:     schema.TypeInt,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"tenant_id": &schema.Schema{
+			"tenant_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"loadbalancer_id": &schema.Schema{
+			"loadbalancer_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
 
-			"default_pool_id": &schema.Schema{
+			"default_pool_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				ForceNew: true,
 			},
 
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 
-			"connection_limit": &schema.Schema{
+			"connection_limit": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Computed: true,
 			},
 
-			"default_tls_container_ref": &schema.Schema{
+			"default_tls_container_ref": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 
-			"sni_container_refs": &schema.Schema{
+			"sni_container_refs": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
-			"admin_state_up": &schema.Schema{
+			"admin_state_up": {
 				Type:     schema.TypeBool,
 				Default:  true,
 				Optional: true,
@@ -143,10 +145,11 @@ func resourceListenerV2Create(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[DEBUG] Create Options: %#v", createOpts)
 
-	// Wait for LoadBalancer to become active before continuing
 	lbID := createOpts.LoadbalancerID
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForLBV2LoadBalancer(lbClient, lbID, "ACTIVE", nil, timeout)
+
+	// Wait for LoadBalancer to become active before continuing
+	err = waitForLBV2LoadBalancer(lbClient, lbID, "ACTIVE", lbPendingStatuses, timeout)
 	if err != nil {
 		return err
 	}
@@ -160,12 +163,13 @@ func resourceListenerV2Create(d *schema.ResourceData, meta interface{}) error {
 		}
 		return nil
 	})
+
 	if err != nil {
 		return fmt.Errorf("Error creating listener: %s", err)
 	}
 
-	// Wait for LoadBalancer to become active again before continuing
-	err = waitForLBV2LoadBalancer(lbClient, lbID, "ACTIVE", nil, timeout)
+	// Wait for the listener to become ACTIVE.
+	err = waitForLBV2Listener(lbClient, listener, "ACTIVE", lbPendingStatuses, timeout)
 	if err != nil {
 		return err
 	}
@@ -189,6 +193,11 @@ func resourceListenerV2Read(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[DEBUG] Retrieved listener %s: %#v", d.Id(), listener)
 
+	// Required by import
+	if len(listener.Loadbalancers) > 0 {
+		d.Set("loadbalancer_id", listener.Loadbalancers[0].ID)
+	}
+
 	d.Set("name", listener.Name)
 	d.Set("protocol", listener.Protocol)
 	d.Set("tenant_id", listener.TenantID)
@@ -211,16 +220,28 @@ func resourceListenerV2Update(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
 
+	// Get a clean copy of the listener.
+	listener, err := listeners.Get(lbClient, d.Id()).Extract()
+	if err != nil {
+		return fmt.Errorf("Unable to retrieve listener %s: %s", d.Id(), err)
+	}
+
 	var updateOpts listeners.UpdateOpts
 	if d.HasChange("name") {
-		updateOpts.Name = d.Get("name").(string)
+		name := d.Get("name").(string)
+		updateOpts.Name = &name
 	}
 	if d.HasChange("description") {
-		updateOpts.Description = d.Get("description").(string)
+		description := d.Get("description").(string)
+		updateOpts.Description = &description
 	}
 	if d.HasChange("connection_limit") {
 		connLimit := d.Get("connection_limit").(int)
 		updateOpts.ConnLimit = &connLimit
+	}
+	if d.HasChange("default_pool_id") {
+		defaultPoolID := d.Get("default_pool_id").(string)
+		updateOpts.DefaultPoolID = &defaultPoolID
 	}
 	if d.HasChange("default_tls_container_ref") {
 		updateOpts.DefaultTlsContainerRef = d.Get("default_tls_container_ref").(string)
@@ -239,10 +260,9 @@ func resourceListenerV2Update(d *schema.ResourceData, meta interface{}) error {
 		updateOpts.AdminStateUp = &asu
 	}
 
-	// Wait for LoadBalancer to become active before continuing
-	lbID := d.Get("loadbalancer_id").(string)
+	// Wait for the listener to become ACTIVE.
 	timeout := d.Timeout(schema.TimeoutUpdate)
-	err = waitForLBV2LoadBalancer(lbClient, lbID, "ACTIVE", nil, timeout)
+	err = waitForLBV2Listener(lbClient, listener, "ACTIVE", lbPendingStatuses, timeout)
 	if err != nil {
 		return err
 	}
@@ -260,8 +280,8 @@ func resourceListenerV2Update(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error updating listener %s: %s", d.Id(), err)
 	}
 
-	// Wait for LoadBalancer to become active again before continuing
-	err = waitForLBV2LoadBalancer(lbClient, lbID, "ACTIVE", nil, timeout)
+	// Wait for the listener to become ACTIVE.
+	err = waitForLBV2Listener(lbClient, listener, "ACTIVE", lbPendingStatuses, timeout)
 	if err != nil {
 		return err
 	}
@@ -277,13 +297,13 @@ func resourceListenerV2Delete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
 
-	// Wait for LoadBalancer to become active before continuing
-	lbID := d.Get("loadbalancer_id").(string)
-	timeout := d.Timeout(schema.TimeoutDelete)
-	err = waitForLBV2LoadBalancer(lbClient, lbID, "ACTIVE", nil, timeout)
+	// Get a clean copy of the listener.
+	listener, err := listeners.Get(lbClient, d.Id()).Extract()
 	if err != nil {
-		return err
+		return CheckDeleted(d, err, "Unable to retrieve listener")
 	}
+
+	timeout := d.Timeout(schema.TimeoutDelete)
 
 	log.Printf("[DEBUG] Deleting listener %s", d.Id())
 	err = resource.Retry(timeout, func() *resource.RetryError {
@@ -295,17 +315,11 @@ func resourceListenerV2Delete(d *schema.ResourceData, meta interface{}) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("Error deleting listener %s: %s", d.Id(), err)
+		return CheckDeleted(d, err, "Error deleting listener")
 	}
 
-	// Wait for LoadBalancer to become active again before continuing
-	err = waitForLBV2LoadBalancer(lbClient, lbID, "ACTIVE", nil, timeout)
-	if err != nil {
-		return err
-	}
-
-	// Wait for Listener to delete
-	err = waitForLBV2Listener(lbClient, d.Id(), "DELETED", nil, timeout)
+	// Wait for the listener to become DELETED.
+	err = waitForLBV2Listener(lbClient, listener, "DELETED", lbPendingDeleteStatuses, timeout)
 	if err != nil {
 		return err
 	}

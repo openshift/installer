@@ -30,14 +30,14 @@ func Destroy(dir string) (err error) {
 	copyNames := []string{terraform.StateFileName, cluster.TfVarsFileName, tfPlatformVarsFileName}
 
 	if platform == libvirt.Name {
-		err = ioutil.WriteFile(filepath.Join(dir, "disable-bootstrap.tfvars"), []byte(`{
+		err = ioutil.WriteFile(filepath.Join(dir, "disable-bootstrap.tfvars.json"), []byte(`{
   "bootstrap_dns": false
 }
 `), 0666)
 		if err != nil {
 			return err
 		}
-		copyNames = append(copyNames, "disable-bootstrap.tfvars")
+		copyNames = append(copyNames, "disable-bootstrap.tfvars.json")
 	}
 
 	tempDir, err := ioutil.TempDir("", "openshift-install-")
@@ -57,7 +57,7 @@ func Destroy(dir string) (err error) {
 			}
 			return errors.Wrapf(err, "failed to copy %s to the temporary directory", filename)
 		}
-		if strings.HasSuffix(filename, ".tfvars") {
+		if strings.HasSuffix(filename, ".tfvars.json") {
 			extraArgs = append(extraArgs, fmt.Sprintf("-var-file=%s", targetPath))
 		}
 	}

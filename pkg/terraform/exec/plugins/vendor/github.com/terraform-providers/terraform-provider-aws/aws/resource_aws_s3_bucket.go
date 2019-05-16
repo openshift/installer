@@ -402,6 +402,7 @@ func resourceAwsS3Bucket() *schema.Resource {
 														s3.StorageClassOnezoneIa,
 														s3.StorageClassIntelligentTiering,
 														s3.StorageClassGlacier,
+														s3.StorageClassDeepArchive,
 													}, false),
 												},
 												"replica_kms_key_id": {
@@ -2279,9 +2280,9 @@ func removeNil(data map[string]interface{}) map[string]interface{} {
 			continue
 		}
 
-		switch v.(type) {
+		switch v := v.(type) {
 		case map[string]interface{}:
-			withoutNil[k] = removeNil(v.(map[string]interface{}))
+			withoutNil[k] = removeNil(v)
 		default:
 			withoutNil[k] = v
 		}

@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/monitors"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/pools"
 )
 
 func resourceMonitorV2() *schema.Resource {
@@ -17,6 +18,9 @@ func resourceMonitorV2() *schema.Resource {
 		Read:   resourceMonitorV2Read,
 		Update: resourceMonitorV2Update,
 		Delete: resourceMonitorV2Delete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(10 * time.Minute),
@@ -25,71 +29,71 @@ func resourceMonitorV2() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"pool_id": &schema.Schema{
+			"pool_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 
-			"tenant_id": &schema.Schema{
+			"tenant_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"type": &schema.Schema{
+			"type": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"delay": &schema.Schema{
+			"delay": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
 
-			"timeout": &schema.Schema{
+			"timeout": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
 
-			"max_retries": &schema.Schema{
+			"max_retries": {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
 
-			"url_path": &schema.Schema{
+			"url_path": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
 
-			"http_method": &schema.Schema{
+			"http_method": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
 
-			"expected_codes": &schema.Schema{
+			"expected_codes": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
 
-			"admin_state_up": &schema.Schema{
+			"admin_state_up": {
 				Type:     schema.TypeBool,
 				Default:  true,
 				Optional: true,
@@ -120,9 +124,16 @@ func resourceMonitorV2Create(d *schema.ResourceData, meta interface{}) error {
 		AdminStateUp:  &adminStateUp,
 	}
 
-	timeout := d.Timeout(schema.TimeoutCreate)
+	// Get a clean copy of the parent pool.
 	poolID := createOpts.PoolID
-	err = waitForLBV2viaPool(lbClient, poolID, "ACTIVE", timeout)
+	parentPool, err := pools.Get(lbClient, poolID).Extract()
+	if err != nil {
+		return fmt.Errorf("Unable to retrieve parent pool %s: %s", poolID, err)
+	}
+
+	// Wait for parent pool to become active before continuing
+	timeout := d.Timeout(schema.TimeoutCreate)
+	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", lbPendingStatuses, timeout)
 	if err != nil {
 		return err
 	}
@@ -142,7 +153,8 @@ func resourceMonitorV2Create(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Unable to create monitor: %s", err)
 	}
 
-	err = waitForLBV2viaPool(lbClient, poolID, "ACTIVE", timeout)
+	// Wait for monitor to become active before continuing
+	err = waitForLBV2Monitor(lbClient, parentPool, monitor, "ACTIVE", lbPendingStatuses, timeout)
 	if err != nil {
 		return err
 	}
@@ -165,6 +177,11 @@ func resourceMonitorV2Read(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[DEBUG] Retrieved monitor %s: %#v", d.Id(), monitor)
+
+	// Required by import
+	if len(monitor.Pools) > 0 {
+		d.Set("pool_id", monitor.Pools[0].ID)
+	}
 
 	d.Set("tenant_id", monitor.TenantID)
 	d.Set("type", monitor.Type)
@@ -209,20 +226,40 @@ func resourceMonitorV2Update(d *schema.ResourceData, meta interface{}) error {
 		updateOpts.AdminStateUp = &asu
 	}
 	if d.HasChange("name") {
-		updateOpts.Name = d.Get("name").(string)
+		name := d.Get("name").(string)
+		updateOpts.Name = &name
 	}
 	if d.HasChange("http_method") {
 		updateOpts.HTTPMethod = d.Get("http_method").(string)
 	}
 
-	log.Printf("[DEBUG] Updating monitor %s with options: %#v", d.Id(), updateOpts)
-	timeout := d.Timeout(schema.TimeoutUpdate)
+	// Get a clean copy of the parent pool.
 	poolID := d.Get("pool_id").(string)
-	err = waitForLBV2viaPool(lbClient, poolID, "ACTIVE", timeout)
+	parentPool, err := pools.Get(lbClient, poolID).Extract()
+	if err != nil {
+		return fmt.Errorf("Unable to retrieve parent pool %s: %s", poolID, err)
+	}
+
+	// Get a clean copy of the monitor.
+	monitor, err := monitors.Get(lbClient, d.Id()).Extract()
+	if err != nil {
+		return fmt.Errorf("Unable to retrieve monitor %s: %s", d.Id(), err)
+	}
+
+	// Wait for parent pool to become active before continuing
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", lbPendingStatuses, timeout)
 	if err != nil {
 		return err
 	}
 
+	// Wait for monitor to become active before continuing
+	err = waitForLBV2Monitor(lbClient, parentPool, monitor, "ACTIVE", lbPendingStatuses, timeout)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[DEBUG] Updating monitor %s with options: %#v", d.Id(), updateOpts)
 	err = resource.Retry(timeout, func() *resource.RetryError {
 		_, err = monitors.Update(lbClient, d.Id(), updateOpts).Extract()
 		if err != nil {
@@ -235,8 +272,8 @@ func resourceMonitorV2Update(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Unable to update monitor %s: %s", d.Id(), err)
 	}
 
-	// Wait for LB to become active before continuing
-	err = waitForLBV2viaPool(lbClient, poolID, "ACTIVE", timeout)
+	// Wait for monitor to become active before continuing
+	err = waitForLBV2Monitor(lbClient, parentPool, monitor, "ACTIVE", lbPendingStatuses, timeout)
 	if err != nil {
 		return err
 	}
@@ -251,14 +288,27 @@ func resourceMonitorV2Delete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
 
-	log.Printf("[DEBUG] Deleting monitor %s", d.Id())
-	timeout := d.Timeout(schema.TimeoutUpdate)
+	// Get a clean copy of the parent pool.
 	poolID := d.Get("pool_id").(string)
-	err = waitForLBV2viaPool(lbClient, poolID, "ACTIVE", timeout)
+	parentPool, err := pools.Get(lbClient, poolID).Extract()
+	if err != nil {
+		return fmt.Errorf("Unable to retrieve parent pool (%s) for the monitor: %s", poolID, err)
+	}
+
+	// Get a clean copy of the monitor.
+	monitor, err := monitors.Get(lbClient, d.Id()).Extract()
+	if err != nil {
+		return CheckDeleted(d, err, "Unable to retrieve monitor")
+	}
+
+	// Wait for parent pool to become active before continuing
+	timeout := d.Timeout(schema.TimeoutUpdate)
+	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", lbPendingStatuses, timeout)
 	if err != nil {
 		return err
 	}
 
+	log.Printf("[DEBUG] Deleting monitor %s", d.Id())
 	err = resource.Retry(timeout, func() *resource.RetryError {
 		err = monitors.Delete(lbClient, d.Id()).ExtractErr()
 		if err != nil {
@@ -268,10 +318,11 @@ func resourceMonitorV2Delete(d *schema.ResourceData, meta interface{}) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("Unable to delete monitor %s: %s", d.Id(), err)
+		return CheckDeleted(d, err, "Error deleting monitor")
 	}
 
-	err = waitForLBV2viaPool(lbClient, poolID, "ACTIVE", timeout)
+	// Wait for monitor to become DELETED
+	err = waitForLBV2Monitor(lbClient, parentPool, monitor, "DELETED", lbPendingDeleteStatuses, timeout)
 	if err != nil {
 		return err
 	}

@@ -38,7 +38,7 @@ func CheckDeleted(d *schema.ResourceData, err error, msg string) error {
 		return nil
 	}
 
-	return fmt.Errorf("%s: %s", msg, err)
+	return fmt.Errorf("%s %s: %s", msg, d.Id(), err)
 }
 
 // GetRegion returns the region that was specified in the resource. If a
@@ -103,16 +103,13 @@ func FormatHeaders(headers http.Header, seperator string) string {
 }
 
 func checkForRetryableError(err error) *resource.RetryError {
-	switch errCode := err.(type) {
+	switch err.(type) {
 	case gophercloud.ErrDefault500:
 		return resource.RetryableError(err)
-	case gophercloud.ErrUnexpectedResponseCode:
-		switch errCode.Actual {
-		case 409, 503:
-			return resource.RetryableError(err)
-		default:
-			return resource.NonRetryableError(err)
-		}
+	case gophercloud.ErrDefault409:
+		return resource.RetryableError(err)
+	case gophercloud.ErrDefault503:
+		return resource.RetryableError(err)
 	default:
 		return resource.NonRetryableError(err)
 	}
@@ -163,33 +160,25 @@ func expandVendorOptions(vendOptsRaw []interface{}) map[string]interface{} {
 	return vendorOptions
 }
 
-func containerInfraLabelsMapV1(d *schema.ResourceData) (map[string]string, error) {
-	m := make(map[string]string)
-	for key, val := range d.Get("labels").(map[string]interface{}) {
-		labelValue, ok := val.(string)
-		if !ok {
-			return nil, fmt.Errorf("label %s value should be string", key)
-		}
-		m[key] = labelValue
+func networkV2ReadAttributesTags(d *schema.ResourceData, tags []string) {
+	d.Set("all_tags", tags)
+
+	allTags := d.Get("all_tags").(*schema.Set)
+	desiredTags := d.Get("tags").(*schema.Set)
+	actualTags := allTags.Intersection(desiredTags)
+	if !actualTags.Equal(desiredTags) {
+		d.Set("tags", expandToStringSlice(actualTags.List()))
 	}
-	return m, nil
 }
 
-func containerInfraLabelsStringV1(d *schema.ResourceData) (string, error) {
-	var formattedLabels string
-	for key, val := range d.Get("labels").(map[string]interface{}) {
-		labelValue, ok := val.(string)
-		if !ok {
-			return "", fmt.Errorf("label %s value should be string", key)
-		}
-		formattedLabels = strings.Join([]string{
-			formattedLabels,
-			fmt.Sprintf("%s=%s", key, labelValue),
-		}, ",")
-	}
-	formattedLabels = strings.Trim(formattedLabels, ",")
+func networkV2UpdateAttributesTags(d *schema.ResourceData) (tags []string) {
+	allTags := d.Get("all_tags").(*schema.Set)
+	oldTagsRaw, newTagsRaw := d.GetChange("tags")
+	oldTags, newTags := oldTagsRaw.(*schema.Set), newTagsRaw.(*schema.Set)
 
-	return formattedLabels, nil
+	allWithoutOld := allTags.Difference(oldTags)
+
+	return expandToStringSlice(allWithoutOld.Union(newTags).List())
 }
 
 func networkV2AttributesTags(d *schema.ResourceData) (tags []string) {
@@ -234,4 +223,114 @@ func testAccCheckNetworkingV2Tags(name string, tags []string) resource.TestCheck
 		}
 		return nil
 	}
+}
+
+func expandToMapStringString(v map[string]interface{}) map[string]string {
+	m := make(map[string]string)
+	for key, val := range v {
+		if strVal, ok := val.(string); ok {
+			m[key] = strVal
+		}
+	}
+
+	return m
+}
+
+func expandToStringSlice(v []interface{}) []string {
+	s := make([]string, len(v))
+	for i, val := range v {
+		if strVal, ok := val.(string); ok {
+			s[i] = strVal
+		}
+	}
+
+	return s
+}
+
+// strSliceContains checks if a given string is contained in a slice
+// When anybody asks why Go needs generics, here you go.
+func strSliceContains(haystack []string, needle string) bool {
+	for _, s := range haystack {
+		if s == needle {
+			return true
+		}
+	}
+	return false
+}
+
+func sliceUnion(a, b []string) []string {
+	var res []string
+	for _, i := range a {
+		if !strSliceContains(res, i) {
+			res = append(res, i)
+		}
+	}
+	for _, k := range b {
+		if !strSliceContains(res, k) {
+			res = append(res, k)
+		}
+	}
+	return res
+}
+
+// compatibleMicroversion will determine if an obtained microversion is
+// compatible with a given microversion.
+func compatibleMicroversion(direction, required, given string) (bool, error) {
+	if direction != "min" && direction != "max" {
+		return false, fmt.Errorf("Invalid microversion direction %s. Must be min or max", direction)
+	}
+
+	if required == "" || given == "" {
+		return false, nil
+	}
+
+	requiredParts := strings.Split(required, ".")
+	if len(requiredParts) != 2 {
+		return false, fmt.Errorf("Not a valid microversion: %s", required)
+	}
+
+	givenParts := strings.Split(given, ".")
+	if len(givenParts) != 2 {
+		return false, fmt.Errorf("Not a valid microversion: %s", given)
+	}
+
+	requiredMajor, requiredMinor := requiredParts[0], requiredParts[1]
+	givenMajor, givenMinor := givenParts[0], givenParts[1]
+
+	requiredMajorInt, err := strconv.Atoi(requiredMajor)
+	if err != nil {
+		return false, fmt.Errorf("Unable to parse microversion: %s", required)
+	}
+
+	requiredMinorInt, err := strconv.Atoi(requiredMinor)
+	if err != nil {
+		return false, fmt.Errorf("Unable to parse microversion: %s", required)
+	}
+
+	givenMajorInt, err := strconv.Atoi(givenMajor)
+	if err != nil {
+		return false, fmt.Errorf("Unable to parse microversion: %s", given)
+	}
+
+	givenMinorInt, err := strconv.Atoi(givenMinor)
+	if err != nil {
+		return false, fmt.Errorf("Unable to parse microversion: %s", given)
+	}
+
+	switch direction {
+	case "min":
+		if requiredMajorInt == givenMajorInt {
+			if requiredMinorInt <= givenMinorInt {
+				return true, nil
+			}
+		}
+	case "max":
+		if requiredMajorInt == givenMajorInt {
+			if requiredMinorInt >= givenMinorInt {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
 }

@@ -5,12 +5,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"time"
 
 	tfe "github.com/hashicorp/go-tfe"
 	"github.com/hashicorp/terraform/backend"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform/tfdiags"
+)
+
+var (
+	errApplyDiscarded   = errors.New("Apply discarded.")
+	errDestroyDiscarded = errors.New("Destroy discarded.")
+	errRunApproved      = errors.New("approved using the UI or API")
+	errRunDiscarded     = errors.New("discarded using the UI or API")
+	errRunOverridden    = errors.New("overridden using the UI or API")
 )
 
 // backoff will perform exponential backoff based on the iteration and
@@ -39,7 +49,7 @@ func (b *Remote) waitForRun(stopCtx, cancelCtx context.Context, op *backend.Oper
 		// Retrieve the run to get its current status.
 		r, err := b.client.Runs.Read(stopCtx, r.ID)
 		if err != nil {
-			return r, generalError("error retrieving run", err)
+			return r, generalError("Failed to retrieve run", err)
 		}
 
 		// Return if the run is no longer pending.
@@ -70,7 +80,7 @@ func (b *Remote) waitForRun(stopCtx, cancelCtx context.Context, op *backend.Oper
 			// Retrieve the workspace used to run this operation in.
 			w, err = b.client.Workspaces.Read(stopCtx, b.organization, w.Name)
 			if err != nil {
-				return nil, generalError("error retrieving workspace", err)
+				return nil, generalError("Failed to retrieve workspace", err)
 			}
 
 			// If the workspace is locked the run will not be queued and we can
@@ -78,7 +88,7 @@ func (b *Remote) waitForRun(stopCtx, cancelCtx context.Context, op *backend.Oper
 			if w.Locked && w.CurrentRun != nil {
 				cr, err := b.client.Runs.Read(stopCtx, w.CurrentRun.ID)
 				if err != nil {
-					return r, generalError("error retrieving current run", err)
+					return r, generalError("Failed to retrieve current run", err)
 				}
 				if cr.Status == tfe.RunPending {
 					b.CLI.Output(b.Colorize().Color(
@@ -95,7 +105,7 @@ func (b *Remote) waitForRun(stopCtx, cancelCtx context.Context, op *backend.Oper
 				for {
 					rl, err := b.client.Runs.List(stopCtx, w.ID, options)
 					if err != nil {
-						return r, generalError("error retrieving run list", err)
+						return r, generalError("Failed to retrieve run list", err)
 					}
 
 					// Loop through all runs to calculate the workspace queue position.
@@ -150,7 +160,7 @@ func (b *Remote) waitForRun(stopCtx, cancelCtx context.Context, op *backend.Oper
 			for {
 				rq, err := b.client.Organizations.RunQueue(stopCtx, b.organization, options)
 				if err != nil {
-					return r, generalError("error retrieving queue", err)
+					return r, generalError("Failed to retrieve queue", err)
 				}
 
 				// Search through all queued items to find our run.
@@ -173,7 +183,7 @@ func (b *Remote) waitForRun(stopCtx, cancelCtx context.Context, op *backend.Oper
 			if position > 0 {
 				c, err := b.client.Organizations.Capacity(stopCtx, b.organization)
 				if err != nil {
-					return r, generalError("error retrieving capacity", err)
+					return r, generalError("Failed to retrieve capacity", err)
 				}
 				b.CLI.Output(b.Colorize().Color(fmt.Sprintf(
 					"Waiting for %d queued run(s) to finish before starting...%s",
@@ -189,6 +199,85 @@ func (b *Remote) waitForRun(stopCtx, cancelCtx context.Context, op *backend.Oper
 	}
 }
 
+func (b *Remote) parseVariableValues(op *backend.Operation) (terraform.InputValues, tfdiags.Diagnostics) {
+	var diags tfdiags.Diagnostics
+	result := make(terraform.InputValues)
+
+	// Load the configuration using the caller-provided configuration loader.
+	config, _, configDiags := op.ConfigLoader.LoadConfigWithSnapshot(op.ConfigDir)
+	diags = diags.Append(configDiags)
+	if diags.HasErrors() {
+		return nil, diags
+	}
+
+	variables, varDiags := backend.ParseVariableValues(op.Variables, config.Module.Variables)
+	diags = diags.Append(varDiags)
+	if diags.HasErrors() {
+		return nil, diags
+	}
+
+	// Save only the explicitly defined variables.
+	for k, v := range variables {
+		switch v.SourceType {
+		case terraform.ValueFromCLIArg, terraform.ValueFromNamedFile:
+			result[k] = v
+		}
+	}
+
+	return result, diags
+}
+
+func (b *Remote) costEstimation(stopCtx, cancelCtx context.Context, op *backend.Operation, r *tfe.Run) error {
+	if r.CostEstimation == nil {
+		return nil
+	}
+
+	if b.CLI != nil {
+		b.CLI.Output("\n------------------------------------------------------------------------\n")
+	}
+
+	logs, err := b.client.CostEstimations.Logs(stopCtx, r.CostEstimation.ID)
+	if err != nil {
+		return generalError("Failed to retrieve cost estimation logs", err)
+	}
+	scanner := bufio.NewScanner(logs)
+
+	// Retrieve the cost estimation to get its current status.
+	ce, err := b.client.CostEstimations.Read(stopCtx, r.CostEstimation.ID)
+	if err != nil {
+		return generalError("Failed to retrieve cost estimation", err)
+	}
+
+	msgPrefix := "Cost estimation"
+	if b.CLI != nil {
+		b.CLI.Output(b.Colorize().Color(msgPrefix + ":\n"))
+	}
+
+	for scanner.Scan() {
+		if b.CLI != nil {
+			b.CLI.Output(b.Colorize().Color(scanner.Text()))
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return generalError("Failed to read logs", err)
+	}
+
+	switch ce.Status {
+	case tfe.CostEstimationFinished:
+		if len(r.PolicyChecks) == 0 && r.HasChanges && op.Type == backend.OperationTypeApply && b.CLI != nil {
+			b.CLI.Output("\n------------------------------------------------------------------------")
+		}
+		return nil
+	case tfe.CostEstimationErrored:
+		return fmt.Errorf(msgPrefix + " errored.")
+	case tfe.CostEstimationCanceled:
+		return fmt.Errorf(msgPrefix + " canceled.")
+	default:
+		return fmt.Errorf("Unknown or unexpected cost estimation state: %s", ce.Status)
+	}
+}
+
 func (b *Remote) checkPolicy(stopCtx, cancelCtx context.Context, op *backend.Operation, r *tfe.Run) error {
 	if b.CLI != nil {
 		b.CLI.Output("\n------------------------------------------------------------------------\n")
@@ -196,14 +285,14 @@ func (b *Remote) checkPolicy(stopCtx, cancelCtx context.Context, op *backend.Ope
 	for i, pc := range r.PolicyChecks {
 		logs, err := b.client.PolicyChecks.Logs(stopCtx, pc.ID)
 		if err != nil {
-			return generalError("error retrieving policy check logs", err)
+			return generalError("Failed to retrieve policy check logs", err)
 		}
-		scanner := bufio.NewScanner(logs)
+		reader := bufio.NewReaderSize(logs, 64*1024)
 
 		// Retrieve the policy check to get its current status.
 		pc, err := b.client.PolicyChecks.Read(stopCtx, pc.ID)
 		if err != nil {
-			return generalError("error retrieving policy check", err)
+			return generalError("Failed to retrieve policy check", err)
 		}
 
 		var msgPrefix string
@@ -220,18 +309,30 @@ func (b *Remote) checkPolicy(stopCtx, cancelCtx context.Context, op *backend.Ope
 			b.CLI.Output(b.Colorize().Color(msgPrefix + ":\n"))
 		}
 
-		for scanner.Scan() {
-			if b.CLI != nil {
-				b.CLI.Output(b.Colorize().Color(scanner.Text()))
+		if b.CLI != nil {
+			for next := true; next; {
+				var l, line []byte
+
+				for isPrefix := true; isPrefix; {
+					l, isPrefix, err = reader.ReadLine()
+					if err != nil {
+						if err != io.EOF {
+							return generalError("Failed to read logs", err)
+						}
+						next = false
+					}
+					line = append(line, l...)
+				}
+
+				if next || len(line) > 0 {
+					b.CLI.Output(b.Colorize().Color(string(line)))
+				}
 			}
-		}
-		if err := scanner.Err(); err != nil {
-			return generalError("error reading logs", err)
 		}
 
 		switch pc.Status {
 		case tfe.PolicyPasses:
-			if (op.Type == backend.OperationTypeApply || i < len(r.PolicyChecks)-1) && b.CLI != nil {
+			if (r.HasChanges && op.Type == backend.OperationTypeApply || i < len(r.PolicyChecks)-1) && b.CLI != nil {
 				b.CLI.Output("\n------------------------------------------------------------------------")
 			}
 			continue
@@ -254,12 +355,15 @@ func (b *Remote) checkPolicy(stopCtx, cancelCtx context.Context, op *backend.Ope
 			Description: "Only 'override' will be accepted to override.",
 		}
 
-		if err = b.confirm(stopCtx, op, opts, r, "override"); err != nil {
+		err = b.confirm(stopCtx, op, opts, r, "override")
+		if err != nil && err != errRunOverridden {
 			return err
 		}
 
-		if _, err = b.client.PolicyChecks.Override(stopCtx, pc.ID); err != nil {
-			return generalError("error overriding policy check", err)
+		if err != errRunOverridden {
+			if _, err = b.client.PolicyChecks.Override(stopCtx, pc.ID); err != nil {
+				return generalError("Failed to override policy check", err)
+			}
 		}
 
 		if b.CLI != nil {
@@ -271,35 +375,115 @@ func (b *Remote) checkPolicy(stopCtx, cancelCtx context.Context, op *backend.Ope
 }
 
 func (b *Remote) confirm(stopCtx context.Context, op *backend.Operation, opts *terraform.InputOpts, r *tfe.Run, keyword string) error {
-	v, err := op.UIIn.Input(opts)
-	if err != nil {
-		return fmt.Errorf("Error asking %s: %v", opts.Id, err)
-	}
-	if v != keyword {
-		// Retrieve the run again to get its current status.
-		r, err = b.client.Runs.Read(stopCtx, r.ID)
-		if err != nil {
-			return generalError("error retrieving run", err)
-		}
+	doneCtx, cancel := context.WithCancel(stopCtx)
+	result := make(chan error, 2)
 
-		// Make sure we discard the run if possible.
-		if r.Actions.IsDiscardable {
-			err = b.client.Runs.Discard(stopCtx, r.ID, tfe.RunDiscardOptions{})
-			if err != nil {
-				if op.Destroy {
-					return generalError("error disarding destroy", err)
+	go func() {
+		// Make sure we cancel doneCtx before we return
+		// so the input command is also canceled.
+		defer cancel()
+
+		for {
+			select {
+			case <-doneCtx.Done():
+				return
+			case <-stopCtx.Done():
+				return
+			case <-time.After(3 * time.Second):
+				// Retrieve the run again to get its current status.
+				r, err := b.client.Runs.Read(stopCtx, r.ID)
+				if err != nil {
+					result <- generalError("Failed to retrieve run", err)
+					return
 				}
-				return generalError("error disarding apply", err)
+
+				switch keyword {
+				case "override":
+					if r.Status != tfe.RunPolicyOverride {
+						if r.Status == tfe.RunDiscarded {
+							err = errRunDiscarded
+						} else {
+							err = errRunOverridden
+						}
+					}
+				case "yes":
+					if !r.Actions.IsConfirmable {
+						if r.Status == tfe.RunDiscarded {
+							err = errRunDiscarded
+						} else {
+							err = errRunApproved
+						}
+					}
+				}
+
+				if err != nil {
+					if b.CLI != nil {
+						b.CLI.Output(b.Colorize().Color(
+							fmt.Sprintf("[reset][yellow]%s[reset]", err.Error())))
+					}
+
+					if err == errRunDiscarded {
+						if op.Destroy {
+							err = errDestroyDiscarded
+						}
+						err = errApplyDiscarded
+					}
+
+					result <- err
+					return
+				}
 			}
 		}
+	}()
 
-		// Even if the run was disarding successfully, we still
-		// return an error as the apply command was cancelled.
-		if op.Destroy {
-			return errors.New("Destroy discarded.")
+	result <- func() error {
+		v, err := op.UIIn.Input(doneCtx, opts)
+		if err != nil && err != context.Canceled && stopCtx.Err() != context.Canceled {
+			return fmt.Errorf("Error asking %s: %v", opts.Id, err)
 		}
-		return errors.New("Apply discarded.")
-	}
 
-	return nil
+		// We return the error of our parent channel as we don't
+		// care about the error of the doneCtx which is only used
+		// within this function. So if the doneCtx was canceled
+		// because stopCtx was canceled, this will properly return
+		// a context.Canceled error and otherwise it returns nil.
+		if doneCtx.Err() == context.Canceled || stopCtx.Err() == context.Canceled {
+			return stopCtx.Err()
+		}
+
+		// Make sure we cancel the context here so the loop that
+		// checks for external changes to the run is ended before
+		// we start to make changes ourselves.
+		cancel()
+
+		if v != keyword {
+			// Retrieve the run again to get its current status.
+			r, err = b.client.Runs.Read(stopCtx, r.ID)
+			if err != nil {
+				return generalError("Failed to retrieve run", err)
+			}
+
+			// Make sure we discard the run if possible.
+			if r.Actions.IsDiscardable {
+				err = b.client.Runs.Discard(stopCtx, r.ID, tfe.RunDiscardOptions{})
+				if err != nil {
+					if op.Destroy {
+						return generalError("Failed to discard destroy", err)
+					}
+					return generalError("Failed to discard apply", err)
+				}
+			}
+
+			// Even if the run was discarded successfully, we still
+			// return an error as the apply command was canceled.
+			if op.Destroy {
+				return errDestroyDiscarded
+			}
+			return errApplyDiscarded
+		}
+
+		return nil
+	}()
+
+	return <-result
 }

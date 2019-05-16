@@ -5,49 +5,49 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-func resourceFilesystem() *schema.Resource {
+func dataSourceFilesystem() *schema.Resource {
 	return &schema.Resource{
 		Exists: resourceFilesystemExists,
 		Read:   resourceFilesystemRead,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
-			"mount": &schema.Schema{
+			"mount": {
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"device": &schema.Schema{
+						"device": {
 							Type:     schema.TypeString,
 							Required: true,
 							ForceNew: true,
 						},
-						"format": &schema.Schema{
+						"format": {
 							Type:     schema.TypeString,
 							Required: true,
 							ForceNew: true,
 						},
-						"wipe_filesystem": &schema.Schema{
+						"wipe_filesystem": {
 							Type:     schema.TypeBool,
 							Optional: true,
 							ForceNew: true,
 						},
-						"label": &schema.Schema{
+						"label": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
-						"uuid": &schema.Schema{
+						"uuid": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
 						},
-						"options": &schema.Schema{
+						"options": {
 							Type:     schema.TypeList,
 							Optional: true,
 							ForceNew: true,
@@ -56,7 +56,7 @@ func resourceFilesystem() *schema.Resource {
 					},
 				},
 			},
-			"path": &schema.Schema{
+			"path": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,

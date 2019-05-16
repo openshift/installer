@@ -52,6 +52,9 @@ type Network struct {
 	// Human-readable name for the network. Might not be unique.
 	Name string `json:"name"`
 
+	// Description for the network
+	Description string `json:"description"`
+
 	// The administrative state of network. If false (down), the network does not
 	// forward packets.
 	AdminStateUp bool `json:"admin_state_up"`

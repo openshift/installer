@@ -9,7 +9,6 @@ import (
 	"crypto/cipher"
 	"crypto/dsa"
 	"crypto/ecdsa"
-	"crypto/rsa"
 	"crypto/sha1"
 	"fmt"
 	"io"
@@ -23,6 +22,7 @@ import (
 	"github.com/keybase/go-crypto/openpgp/elgamal"
 	"github.com/keybase/go-crypto/openpgp/errors"
 	"github.com/keybase/go-crypto/openpgp/s2k"
+	"github.com/keybase/go-crypto/rsa"
 )
 
 // PrivateKey represents a possibly encrypted private key. See RFC 4880,
@@ -42,6 +42,10 @@ type PrivateKey struct {
 type EdDSAPrivateKey struct {
 	PrivateKey
 	seed parsedMPI
+}
+
+func (e *EdDSAPrivateKey) Seed() []byte {
+	return e.seed.bytes
 }
 
 func (e *EdDSAPrivateKey) Sign(digest []byte) (R, S []byte, err error) {

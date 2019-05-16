@@ -5,32 +5,32 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-func resourceDirectory() *schema.Resource {
+func dataSourceDirectory() *schema.Resource {
 	return &schema.Resource{
 		Exists: resourceDirectoryExists,
 		Read:   resourceDirectoryRead,
 		Schema: map[string]*schema.Schema{
-			"filesystem": &schema.Schema{
+			"filesystem": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"path": &schema.Schema{
+			"path": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"mode": &schema.Schema{
+			"mode": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: true,
 			},
-			"uid": &schema.Schema{
+			"uid": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: true,
 			},
-			"gid": &schema.Schema{
+			"gid": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: true,

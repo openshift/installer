@@ -5,74 +5,74 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-func resourceUser() *schema.Resource {
+func dataSourceUser() *schema.Resource {
 	return &schema.Resource{
 		Exists: resourceUserExists,
 		Read:   resourceUserRead,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"password_hash": &schema.Schema{
+			"password_hash": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
-			"ssh_authorized_keys": &schema.Schema{
+			"ssh_authorized_keys": {
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"uid": &schema.Schema{
+			"uid": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				ForceNew: true,
 			},
-			"gecos": &schema.Schema{
+			"gecos": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
-			"home_dir": &schema.Schema{
+			"home_dir": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
-			"no_create_home": &schema.Schema{
+			"no_create_home": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
 			},
-			"primary_group": &schema.Schema{
+			"primary_group": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
-			"groups": &schema.Schema{
+			"groups": {
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"no_user_group": &schema.Schema{
+			"no_user_group": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
 			},
-			"no_log_init": &schema.Schema{
+			"no_log_init": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
 			},
-			"shell": &schema.Schema{
+			"shell": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
-			"system": &schema.Schema{
+			"system": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
