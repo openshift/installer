@@ -5,54 +5,55 @@ locals {
 }
 
 resource "azurerm_network_interface" "master" {
-  count               = "${var.instance_count}"
+  count               = var.instance_count
   name                = "${var.cluster_id}-master${count.index}-nic"
-  location            = "${var.region}"
-  resource_group_name = "${var.resource_group_name}"
+  location            = var.region
+  resource_group_name = var.resource_group_name
 
   ip_configuration {
-    subnet_id                     = "${var.subnet_id}"
-    name                          = "${local.ip_configuration_name}"
+    subnet_id                     = var.subnet_id
+    name                          = local.ip_configuration_name
     private_ip_address_allocation = "Dynamic"
   }
 }
 
 resource "azurerm_network_interface_nat_rule_association" "master_ssh" {
-  count                 = "${var.instance_count}"
-  network_interface_id  = "${element(azurerm_network_interface.master.*.id, count.index)}"
-  ip_configuration_name = "${local.ip_configuration_name}"
-  nat_rule_id           = "${element(var.ssh_nat_rule_ids, count.index)}"
+  count                 = var.instance_count
+  network_interface_id  = element(azurerm_network_interface.master.*.id, count.index)
+  ip_configuration_name = local.ip_configuration_name
+  nat_rule_id           = element(var.ssh_nat_rule_ids, count.index)
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "master" {
-  count                   = "${var.instance_count}"
-  network_interface_id    = "${element(azurerm_network_interface.master.*.id, count.index)}"
-  backend_address_pool_id = "${var.elb_backend_pool_id}"
-  ip_configuration_name   = "${local.ip_configuration_name}"                                 #must be the same as nic's ip configuration name.
+  count                   = var.instance_count
+  network_interface_id    = element(azurerm_network_interface.master.*.id, count.index)
+  backend_address_pool_id = var.elb_backend_pool_id
+  ip_configuration_name   = local.ip_configuration_name #must be the same as nic's ip configuration name.
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "master_internal" {
-  count                   = "${var.instance_count}"
-  network_interface_id    = "${element(azurerm_network_interface.master.*.id, count.index)}"
-  backend_address_pool_id = "${var.ilb_backend_pool_id}"
-  ip_configuration_name   = "${local.ip_configuration_name}"                                 #must be the same as nic's ip configuration name.
+  count                   = var.instance_count
+  network_interface_id    = element(azurerm_network_interface.master.*.id, count.index)
+  backend_address_pool_id = var.ilb_backend_pool_id
+  ip_configuration_name   = local.ip_configuration_name #must be the same as nic's ip configuration name.
 }
 
-data "azurerm_subscription" "current" {}
+data "azurerm_subscription" "current" {
+}
 
 resource "azurerm_virtual_machine" "master" {
-  count                 = "${var.instance_count}"
+  count                 = var.instance_count
   name                  = "${var.cluster_id}-master${count.index}"
-  location              = "${var.region}"
-  resource_group_name   = "${var.resource_group_name}"
-  network_interface_ids = ["${element(azurerm_network_interface.master.*.id, count.index)}"]
-  vm_size               = "${var.vm_size}"
+  location              = var.region
+  resource_group_name   = var.resource_group_name
+  network_interface_ids = [element(azurerm_network_interface.master.*.id, count.index)]
+  vm_size               = var.vm_size
 
   delete_os_disk_on_termination = true
 
   identity {
     type         = "UserAssigned"
-    identity_ids = ["${var.identity}"]
+    identity_ids = [var.identity]
   }
 
   storage_os_disk {
@@ -60,7 +61,7 @@ resource "azurerm_virtual_machine" "master" {
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Premium_LRS"
-    disk_size_gb      = "${var.os_volume_size}"
+    disk_size_gb      = var.os_volume_size
   }
 
   storage_image_reference {
@@ -73,7 +74,7 @@ resource "azurerm_virtual_machine" "master" {
     computer_name  = "${var.cluster_id}-master-${count.index}"
     admin_username = "core"
     admin_password = "P@ssword1234!"
-    custom_data    = "${var.ignition}"
+    custom_data    = var.ignition
   }
 
   os_profile_linux_config {
@@ -82,6 +83,7 @@ resource "azurerm_virtual_machine" "master" {
 
   boot_diagnostics {
     enabled     = true
-    storage_uri = "${var.boot_diag_blob_endpoint}"
+    storage_uri = var.boot_diag_blob_endpoint
   }
 }
+
