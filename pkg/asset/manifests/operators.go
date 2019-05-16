@@ -237,7 +237,7 @@ func (m *Manifests) Load(f asset.FileFetcher) (bool, error) {
 	for _, file := range fileList {
 		if file.Filename == kubeSysConfigPath {
 			if err := yaml.Unmarshal(file.Data, kubeSysConfig); err != nil {
-				return false, errors.Wrap(err, "failed to unmarshal cluster-config.yaml")
+				return false, errors.Wrapf(err, "failed to unmarshal %s", kubeSysConfigPath)
 			}
 			found = true
 		}

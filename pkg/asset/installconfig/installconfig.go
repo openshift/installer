@@ -117,7 +117,7 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 
 	config := &types.InstallConfig{}
 	if err := yaml.Unmarshal(file.Data, config); err != nil {
-		return false, errors.Wrap(err, "failed to unmarshal")
+		return false, errors.Wrapf(err, "failed to unmarshal %s", installConfigFilename)
 	}
 	a.Config = config
 
