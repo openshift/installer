@@ -15,6 +15,8 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 	switch config.APIVersion {
 	case types.InstallConfigVersion, "v1beta3", "v1beta4":
 		// works
+	case "":
+		return errors.Errorf("no version was provided")
 	default:
 		return errors.Errorf("cannot upconvert from version %s", config.APIVersion)
 	}
