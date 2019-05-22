@@ -29,8 +29,8 @@ variable "internal_lb_ipaddress" {
   type        = string
 }
 
-variable "internal_dns_resolution_vnet_id" {
-  description = "the vnet id to be attached to the private DNS zone"
+variable "private_dns_zone_name" {
+  description = "private DNS zone name that should be used for records"
   type        = string
 }
 

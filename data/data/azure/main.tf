@@ -32,6 +32,9 @@ module "bootstrap" {
   tags                    = local.tags
   boot_diag_blob_endpoint = azurerm_storage_account.bootdiag.primary_blob_endpoint
   ssh_nat_rule_id         = module.vnet.bootstrap_ssh_nat_rule_id
+
+  # This is to create explicit dependency on private zone to exist before VMs are created in the vnet. https://github.com/MicrosoftDocs/azure-docs/issues/13728
+  private_dns_zone_id = azurerm_dns_zone.private.id
 }
 
 module "vnet" {
@@ -64,6 +67,9 @@ module "master" {
   boot_diag_blob_endpoint = azurerm_storage_account.bootdiag.primary_blob_endpoint
   os_volume_size          = var.azure_master_root_volume_size
   ssh_nat_rule_ids        = module.vnet.mmaster_ssh_nat_rule_ids
+
+  # This is to create explicit dependency on private zone to exist before VMs are created in the vnet. https://github.com/MicrosoftDocs/azure-docs/issues/13728
+  private_dns_zone_id = azurerm_dns_zone.private.id
 }
 
 module "dns" {
@@ -74,7 +80,7 @@ module "dns" {
   internal_lb_ipaddress           = module.vnet.internal_lb_ip_address
   resource_group_name             = azurerm_resource_group.main.name
   base_domain_resource_group_name = var.azure_base_domain_resource_group_name
-  internal_dns_resolution_vnet_id = module.vnet.vnet_id
+  private_dns_zone_name           = azurerm_dns_zone.private.name
   etcd_count                      = var.master_count
   etcd_ip_addresses               = module.master.ip_addresses
 }
@@ -112,3 +118,10 @@ resource "azurerm_role_assignment" "main" {
   principal_id         = azurerm_user_assigned_identity.main.principal_id
 }
 
+# https://github.com/MicrosoftDocs/azure-docs/issues/13728
+resource "azurerm_dns_zone" "private" {
+  name                           = var.cluster_domain
+  resource_group_name            = azurerm_resource_group.main.name
+  zone_type                      = "Private"
+  resolution_virtual_network_ids = [module.vnet.vnet_id]
+}
