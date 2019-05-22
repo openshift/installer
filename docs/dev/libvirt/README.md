@@ -130,28 +130,25 @@ iptables -I INPUT -p tcp -s 192.168.126.0/24 -d 192.168.122.1 --dport 16509 -j A
 
 #### Firewalld
 
-If using `firewalld`, simply obtain the name of the existing active zone which
-can be used to integrate the appropriate source and ports to allow connections from
-the IP range used by your cluster nodes. An example is shown below.
+If using `firewalld`, the specifics will depend on how your distribution setup the
+various zones.
 
-```console
-$ sudo firewall-cmd --get-active-zones
-FedoraWorkstation
-  interfaces: enp0s25 tun0
-```
-With the name of the active zone, include the source and port to allow connections
-from the IP range used by your cluster nodes.
+On Fedora Workstation, as we don't want to expose the libvirt port externally,
+we'll need to actively block it. We then use the preexisting `dmz` zone for the
+traffic between VMs.
 
 ```sh
-sudo firewall-cmd --zone=FedoraWorkstation --add-source=192.168.126.0/24
-sudo firewall-cmd --zone=FedoraWorkstation --add-port=16509/tcp
+sudo firewall-cmd --add-rich-rule "rule service name="libvirt" reject"
+sudo firewall-cmd --zone=dmz --change-interface=virbr0
+sudo firewall-cmd --zone=dmz --change-interface=tt0
+sudo firewall-cmd --zone=dmz --add-service=libvirt
 ```
 
-Verification of the source and port can be done listing the zone
+On RHEL8, the bridges used by the VMs are already isolated in their own zones,
+so we only need to allow traffic on the libvirt port:
 
 ```sh
-sudo firewall-cmd --zone=FedoraWorkstation --list-ports
-sudo firewall-cmd --zone=FedoraWorkstation --list-sources
+sudo firewall-cmd --zone=libvirt --add-service=libvirt
 ```
 
 NOTE: When the firewall rules are no longer needed, `sudo firewall-cmd --reload`
