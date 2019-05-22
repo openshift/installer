@@ -322,6 +322,37 @@ AQ==
 
 You can then **prepend** that certificate to `client-certificate-authority-data` field in your `${INSTALL_DIR}/auth/kubeconfig`.
 
+### Installer fails to initialize the cluster
+
+The error message:
+
+> FATAL failed to initialize the cluster: Some cluster operators are still updating: authentication, console: timed out waiting for the condition
+
+This is due to request to OAuth issuer endpoint failure, it maybe caused by openshift-router issue.
+
+Check the router service to see if all good or not by:
+
+```console
+$ oc -n openshift-ingress get service
+NAME                      TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+router-default            LoadBalancer   172.30.151.151   <pending>     80:31958/TCP,443:30645/TCP   70m
+router-internal-default   ClusterIP      172.30.152.26    <none>        80/TCP,443/TCP,1936/TCP      70m
+```
+
+In above output, the router-default service EXTERNAL-IP is in `<pendding>` status, describe this service you will get more info by:
+
+```console
+$ oc -n openshift-ingress describe service router-default
+```
+
+which may show events with warning like:
+
+```
+Warning  CreatingLoadBalancerFailed  72m   service-controller  Error creating load balancer (will retry): failed to ensure load balancer for service openshift-ingress/router-default: TooManyLoadBalancers: Exceeded quota of account 675801125365
+```
+
+Then, increase the quota and retry, you will get a good OpenShift cluster.
+
 ## Generic Troubleshooting
 
 Here are some ideas if none of the [common failures](#common-failures) match your symptoms.
