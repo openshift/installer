@@ -51,3 +51,22 @@ type        = string
 description = "The resource id of the vm image used for all node."
 }
 
+variable "azure_subscription_id" {
+  type        = string
+  description = "The subscription that should be used to interact with Azure API"
+}
+
+variable "azure_client_id" {
+  type        = string
+  description = "The app ID that should be used to interact with Azure API"
+}
+
+variable "azure_client_secret" {
+  type        = string
+  description = "The password that should be used to interact with Azure API"
+}
+
+variable "azure_tenant_id" {
+  type        = string
+  description = "The tenant ID that should be used to interact with Azure API"
+}
