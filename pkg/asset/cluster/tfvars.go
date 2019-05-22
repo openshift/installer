@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
@@ -139,6 +140,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case azure.Name:
+		sess, err := azureconfig.GetSession()
+		if err != nil {
+			return err
+		}
+		auth := azuretfvars.Auth{
+			SubscriptionID: sess.Credentials.SubscriptionID,
+			ClientID:       sess.Credentials.ClientID,
+			ClientSecret:   sess.Credentials.ClientSecret,
+			TenantID:       sess.Credentials.TenantID,
+		}
 		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
@@ -148,6 +159,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*azureprovider.AzureMachineProviderSpec)
 		}
 		data, err := azuretfvars.TFVars(
+			auth,
 			installConfig.Config.Azure.BaseDomainResourceGroupName,
 			masterConfigs,
 		)
