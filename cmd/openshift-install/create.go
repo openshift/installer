@@ -120,6 +120,11 @@ var (
 	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget}
 )
 
+var timeoutBootstrap int
+var timeoutCluster int
+var timeoutConsole int
+var timeoutKubernetesAPI int
+
 func newCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -130,10 +135,15 @@ func newCreateCmd() *cobra.Command {
 	}
 
 	for _, t := range targets {
-		t.command.Args = cobra.ExactArgs(0)
+		t.command.Args = cobra.MaximumNArgs(4)
 		t.command.Run = runTargetCmd(t.assets...)
 		cmd.AddCommand(t.command)
 	}
+
+	cmd.PersistentFlags().IntVar(&timeoutBootstrap, "bootstrap-timeout", 30, "Minutes to wait for bootstrapping to complete")
+	cmd.PersistentFlags().IntVar(&timeoutCluster, "cluster-timeout", 30, "Minutes to wait timeout for the cluster to initialize")
+	cmd.PersistentFlags().IntVar(&timeoutConsole, "console-timeout", 15, "Minutes to wait timeout for the console to be up")
+	cmd.PersistentFlags().IntVar(&timeoutKubernetesAPI, "kubernetes-api-timeout", 30, "Minutes to wait for the Kubernetes API to be up")
 
 	return cmd
 }
@@ -238,7 +248,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 
 	discovery := client.Discovery()
 
-	apiTimeout := 30 * time.Minute
+	apiTimeout := time.Duration(timeoutKubernetesAPI) * time.Minute
 	logrus.Infof("Waiting up to %v for the Kubernetes API at %s...", apiTimeout, config.Host)
 	apiContext, cancel := context.WithTimeout(ctx, apiTimeout)
 	defer cancel()
@@ -279,7 +289,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 // and waits for the bootstrap configmap to report that bootstrapping has
 // completed.
 func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset) error {
-	timeout := 30 * time.Minute
+	timeout := time.Duration(timeoutBootstrap) * time.Minute
 	logrus.Infof("Waiting up to %v for bootstrapping to complete...", timeout)
 
 	waitCtx, cancel := context.WithTimeout(ctx, timeout)
@@ -317,7 +327,7 @@ func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation
 // that the cluster has been initialized.
 func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
-	timeout := 30 * time.Minute
+	timeout := time.Duration(timeoutCluster) * time.Minute
 	logrus.Infof("Waiting up to %v for the cluster at %s to initialize...", timeout, config.Host)
 	cc, err := configclient.NewForConfig(config)
 	if err != nil {
@@ -380,7 +390,7 @@ func waitForConsole(ctx context.Context, config *rest.Config, directory string) 
 		return "", errors.Wrap(err, "creating a route client")
 	}
 
-	consoleRouteTimeout := 10 * time.Minute
+	consoleRouteTimeout := time.Duration(timeoutConsole) * time.Minute
 	logrus.Infof("Waiting up to %v for the openshift-console route to be created...", consoleRouteTimeout)
 	consoleRouteContext, cancel := context.WithTimeout(ctx, consoleRouteTimeout)
 	defer cancel()
