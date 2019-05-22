@@ -14,7 +14,7 @@ Step 3: Download the Installer.
 ### Create Configuration
 
 ```console
-[~]$ openshift-install-linux-amd64 create install-config
+$ openshift-install create install-config
 ? SSH Public Key /home/user_id/.ssh/id_rsa.pub
 ? Platform aws
 ? Region us-east-1
@@ -26,7 +26,7 @@ Step 3: Download the Installer.
 ### Create Cluster
 
 ```console
-[~]$ openshift-install-linux-amd64 create cluster
+$ openshift-install create cluster
 INFO Waiting up to 30m0s for the Kubernetes API at https://api.test.example.com:6443...
 INFO API v1.11.0+85a0623 up
 INFO Waiting up to 30m0s for the bootstrap-complete event...
