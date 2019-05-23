@@ -69,3 +69,7 @@ variable "aws_worker_availability_zones" {
   description = "The availability zones to provision for workers.  Worker instances are created by the machine-API operator, but this variable controls their supporting infrastructure (subnets, routing, etc.)."
 }
 
+variable "aws_pod_network_type" {
+  type = string
+  description = "The pod networing type that will be used. Ensures the proper ports, protocols are allowed and needed features enabled/disabled."
+}

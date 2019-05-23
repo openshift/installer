@@ -73,6 +73,28 @@ resource "aws_security_group_rule" "master_ingress_vxlan" {
   self      = true
 }
 
+resource "aws_security_group_rule" "master_ingress_bgp" {
+  count             = "${var.allow_bgp}"
+  type              = "ingress"
+  security_group_id = aws_security_group.master.id
+
+  protocol  = "tcp"
+  from_port = 179
+  to_port   = 179
+  self      = true
+}
+
+resource "aws_security_group_rule" "master_ingress_ipip" {
+  count             = "${var.allow_ipip}"
+  type              = "ingress"
+  security_group_id = aws_security_group.master.id
+
+  protocol  = "4"
+  from_port = -1
+  to_port   = -1
+  self      = true
+}
+
 resource "aws_security_group_rule" "master_ingress_vxlan_from_worker" {
   type                     = "ingress"
   security_group_id        = aws_security_group.master.id
@@ -101,6 +123,28 @@ resource "aws_security_group_rule" "master_ingress_internal_from_worker" {
   protocol  = "tcp"
   from_port = 9000
   to_port   = 9999
+}
+
+resource "aws_security_group_rule" "master_ingress_bgp_from_worker" {
+  count                    = "${var.allow_bgp}"
+  type                     = "ingress"
+  security_group_id        = aws_security_group.master.id
+  source_security_group_id = aws_security_group.worker.id
+
+  protocol  = "tcp"
+  from_port = 179
+  to_port   = 179
+}
+
+resource "aws_security_group_rule" "master_ingress_ipip_from_worker" {
+  count             = "${var.allow_ipip}"
+  type              = "ingress"
+  security_group_id = aws_security_group.master.id
+  source_security_group_id = aws_security_group.worker.id
+
+  protocol  = "4"
+  from_port = -1
+  to_port   = -1
 }
 
 resource "aws_security_group_rule" "master_ingress_internal_udp" {

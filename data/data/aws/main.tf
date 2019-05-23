@@ -84,6 +84,8 @@ module "vpc" {
       var.aws_worker_availability_zones,
     ),
   )
+  allow_bgp = "${var.aws_pod_network_type == "Calico" ? 1 : 0 }"
+  allow_ipip = "${var.aws_pod_network_type == "Calico" ? 1 : 0 }"
 
   tags = local.tags
 }

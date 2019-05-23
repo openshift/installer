@@ -32,3 +32,14 @@ variable "tags" {
   description = "AWS tags to be applied to created resources."
 }
 
+variable "allow_bgp" {
+  type        = string
+  default     = "0"
+  description = "If true then bgp traffic is allowed between all machines"
+}
+
+variable "allow_ipip" {
+  type        = string
+  default     = "0"
+  description = "If true then ipip traffic is allowed between all machines"
+}
