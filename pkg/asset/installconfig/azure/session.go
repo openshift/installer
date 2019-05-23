@@ -16,7 +16,7 @@ import (
 
 const azureAuthEnv = "AZURE_AUTH_LOCATION"
 
-var authFilePath = os.Getenv("HOME") + "/.azure/osServicePrincipal.json"
+var defaultAuthFilePath = filepath.Join(os.Getenv("HOME"), ".azure", "osServicePrincipal.json")
 
 //Session is an object representing session for subscription
 type Session struct {
@@ -24,7 +24,7 @@ type Session struct {
 	Credentials Credentials
 }
 
-//Credentials is the data type for credentials as undestood by the azure sdk
+//Credentials is the data type for credentials as understood by the azure sdk
 type Credentials struct {
 	SubscriptionID string `json:"subscriptionId,omitempty"`
 	ClientID       string `json:"clientId,omitempty"`
@@ -35,18 +35,25 @@ type Credentials struct {
 // GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
 // and, if no creds are found, asks for them and stores them on disk in a config file
 func GetSession() (*Session, error) {
-	os.Setenv(azureAuthEnv, authFilePath)
-	return newSessionFromFile()
+	authFile := defaultAuthFilePath
+	if f := os.Getenv(azureAuthEnv); len(f) > 0 {
+		authFile = f
+	}
+	return newSessionFromFile(authFile)
 }
 
-func newSessionFromFile() (*Session, error) {
+func newSessionFromFile(authFilePath string) (*Session, error) {
+	// NewAuthorizerFromFileWithResource uses `auth.GetSettingsFromFile`, which uses the `azureAuthEnv` to fetch the auth credentials.
+	// therefore setting the local env here to authFilePath allows NewAuthorizerFromFileWithResource to load credentials.
+	os.Setenv(azureAuthEnv, authFilePath)
 	authorizer, err := auth.NewAuthorizerFromFileWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
 	if err != nil {
-		logrus.Debug("could not get an azure authorizer from file. Asking user to provide authentication info")
+		logrus.Debug("Could not get an azure authorizer from file. Asking user to provide authentication info")
 		credentials, err := askForCredentials()
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to retrieve credentials from user")
 		}
+		logrus.Infof("Saving user credentials to %q", authFilePath)
 		if err = saveCredentials(*credentials, authFilePath); err != nil {
 			return nil, errors.Wrap(err, "failed to save credentials")
 		}
