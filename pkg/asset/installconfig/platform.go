@@ -88,6 +88,7 @@ func (a *platform) queryUserForPlatform() (platform string, err error) {
 			Prompt: &survey.Select{
 				Message: "Platform",
 				Options: types.PlatformNames,
+				Help:    "The platform on which the cluster will run.  For a full list of platforms, including those not supported by this wizard, see https://github.com/openshift/installer",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
 				choice := ans.(string)
