@@ -113,3 +113,16 @@ func URI(uri string) error {
 	}
 	return nil
 }
+
+// URIWithProtocol validates that the URI specifies a certain
+// protocol scheme (e.g. "https")
+func URIWithProtocol(uri string, protocol string) error {
+	parsed, err := url.Parse(uri)
+	if err != nil {
+		return err
+	}
+	if parsed.Scheme != protocol {
+		return fmt.Errorf("must use %s protocol", protocol)
+	}
+	return nil
+}
