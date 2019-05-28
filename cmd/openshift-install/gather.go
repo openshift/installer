@@ -14,10 +14,12 @@ import (
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/terraform"
 	gatheraws "github.com/openshift/installer/pkg/terraform/gather/aws"
+	gatherazure "github.com/openshift/installer/pkg/terraform/gather/azure"
 	gatherlibvirt "github.com/openshift/installer/pkg/terraform/gather/libvirt"
 	gatheropenstack "github.com/openshift/installer/pkg/terraform/gather/openstack"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 )
@@ -89,7 +91,7 @@ func runGatherBootstrapCmd(directory string) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to read state from %q", tfStateFilePath)
 	}
-	bootstrap, masters, err := extractHostAddresses(config.Config, tfstate)
+	bootstrap, port, masters, err := extractHostAddresses(config.Config, tfstate)
 	if err != nil {
 		if err2, ok := err.(errUnSupportedGatherPlatform); ok {
 			logrus.Error(err2)
@@ -98,34 +100,53 @@ func runGatherBootstrapCmd(directory string) error {
 		return errors.Wrapf(err, "failed to get bootstrap and control plane host addresses from %q", tfStateFilePath)
 	}
 
-	logGatherBootstrap(bootstrap, masters)
+	logGatherBootstrap(bootstrap, port, masters)
 	return nil
 }
 
-func logGatherBootstrap(bootstrap string, masters []string) {
+func logGatherBootstrap(bootstrap string, port int, masters []string) {
+	var (
+		sshport string
+		scpport string
+	)
+	if port != 22 {
+		sshport = fmt.Sprintf(" -p %d", port)
+		scpport = fmt.Sprintf(" -P %d", port)
+	}
 	if s, ok := os.LookupEnv("SSH_AUTH_SOCK"); !ok || s == "" {
 		logrus.Info("Make sure ssh-agent is running, env SSH_AUTH_SOCK is set to the ssh-agent's UNIX socket and your private key is added to the agent.")
 	}
 	logrus.Info("Use the following commands to gather logs from the cluster")
-	logrus.Infof("ssh -A core@%s '/usr/local/bin/installer-gather.sh %s'", bootstrap, strings.Join(masters, " "))
-	logrus.Infof("scp core@%s:~/log-bundle.tar.gz .", bootstrap)
+	logrus.Infof("ssh -A%s core@%s '/usr/local/bin/installer-gather.sh %s'", sshport, bootstrap, strings.Join(masters, " "))
+	logrus.Infof("scp%s core@%s:~/log-bundle.tar.gz .", scpport, bootstrap)
 }
 
-func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State) (bootstrap string, masters []string, err error) {
+func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State) (bootstrap string, port int, masters []string, err error) {
+	port = 22
 	switch config.Platform.Name() {
 	case awstypes.Name:
 		bootstrap, err = gatheraws.BootstrapIP(tfstate)
 		if err != nil {
-			return bootstrap, masters, err
+			return bootstrap, port, masters, err
 		}
 		masters, err = gatheraws.ControlPlaneIPs(tfstate)
+		if err != nil {
+			logrus.Error(err)
+		}
+	case azuretypes.Name:
+		port = 2200
+		bootstrap, err = gatherazure.BootstrapIP(tfstate)
+		if err != nil {
+			return bootstrap, port, masters, err
+		}
+		masters, err = gatherazure.ControlPlaneIPs(tfstate)
 		if err != nil {
 			logrus.Error(err)
 		}
 	case libvirttypes.Name:
 		bootstrap, err = gatherlibvirt.BootstrapIP(tfstate)
 		if err != nil {
-			return bootstrap, masters, err
+			return bootstrap, port, masters, err
 		}
 		masters, err = gatherlibvirt.ControlPlaneIPs(tfstate)
 		if err != nil {
@@ -134,16 +155,16 @@ func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State)
 	case openstacktypes.Name:
 		bootstrap, err = gatheropenstack.BootstrapIP(tfstate)
 		if err != nil {
-			return bootstrap, masters, err
+			return bootstrap, port, masters, err
 		}
 		masters, err = gatheropenstack.ControlPlaneIPs(tfstate)
 		if err != nil {
 			logrus.Error(err)
 		}
 	default:
-		return "", nil, errUnSupportedGatherPlatform{Message: fmt.Sprintf("Cannot fetch the bootstrap and control plane host addresses from state file for %s platform", config.Platform.Name())}
+		return "", port, nil, errUnSupportedGatherPlatform{Message: fmt.Sprintf("Cannot fetch the bootstrap and control plane host addresses from state file for %s platform", config.Platform.Name())}
 	}
-	return bootstrap, masters, nil
+	return bootstrap, port, masters, nil
 }
 
 type errUnSupportedGatherPlatform struct {
@@ -159,6 +180,6 @@ func unSupportedPlatformGather() error {
 		return errors.New("boostrap host address and at least one control plane host address must be provided")
 	}
 
-	logGatherBootstrap(gatherBootstrapOpts.bootstrap, gatherBootstrapOpts.masters)
+	logGatherBootstrap(gatherBootstrapOpts.bootstrap, 22, gatherBootstrapOpts.masters)
 	return nil
 }

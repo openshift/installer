@@ -1,0 +1,45 @@
+// Package azure contains utilities that help gather Azure specific
+// information from terraform state.
+package azure
+
+import (
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+
+	"github.com/openshift/installer/pkg/terraform"
+)
+
+// BootstrapIP returns the ip address for bootstrap host.
+func BootstrapIP(tfs *terraform.State) (string, error) {
+	publicIP, err := terraform.LookupResource(tfs, "module.vnet", "azurerm_public_ip", "cluster_public_ip")
+	if err != nil {
+		return "", errors.Wrap(err, "failed to lookup public ip")
+	}
+	if len(publicIP.Instances) == 0 {
+		return "", errors.New("no public ip instance found")
+	}
+	bootstrap, _, err := unstructured.NestedString(publicIP.Instances[0].Attributes, "ip_address")
+	if err != nil {
+		return "", errors.New("no public_ip found for bootstrap")
+	}
+	return bootstrap, nil
+}
+
+// ControlPlaneIPs returns the ip addresses for control plane hosts.
+func ControlPlaneIPs(tfs *terraform.State) ([]string, error) {
+	mrs, err := terraform.LookupResource(tfs, "module.master", "azurerm_network_interface", "master")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to lookup masters")
+	}
+	var errs []error
+	var masters []string
+	for idx, inst := range mrs.Instances {
+		master, _, err := unstructured.NestedString(inst.Attributes, "private_ip_address")
+		if err != nil {
+			errs = append(errs, errors.Wrapf(err, "no private_ip for master.%d", idx))
+		}
+		masters = append(masters, master)
+	}
+	return masters, utilerrors.NewAggregate(errs)
+}
