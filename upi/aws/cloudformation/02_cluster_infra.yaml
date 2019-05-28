@@ -1,36 +1,36 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Template for Openshift Cluster UPI Network Elements (Route53 & LBs)
+Description: Template for OpenShift Cluster Network Elements (Route53 & LBs)
 
 Parameters:
   ClusterName:
     AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
     MaxLength: 27
     MinLength: 1
-    ConstraintDescription: Cluster name must be alphanumeric, start with a letter and a maximum of 27 characters
-    Description: A short, representative cluster name to use for hostnames, etc.
+    ConstraintDescription: Cluster name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
+    Description: A short, representative cluster name to use for host names and other identifying names.
     Type: String
   InfrastructureName:
     AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
     MaxLength: 27
     MinLength: 1
-    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 27 characters
-    Description: A short, unique cluster ID used to tag cloud resources and identify items owned/used by the cluster.
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
+    Description: A short, unique cluster ID used to tag cloud resources and identify items owned or used by the cluster.
     Type: String
   HostedZoneId:
-    Description: The Route53 public zone ID to register the targets with (e.g Z21IXYZABCZ2A4)
+    Description: The Route53 public zone ID to register the targets with, such as Z21IXYZABCZ2A4.
     Type: String
   HostedZoneName:
-    Description: The Route53 zone to register the targets with (No trailing dot - e.g. mycorp.com)
+    Description: The Route53 zone to register the targets with, such as example.com. Omit the trailing period.
     Type: String
     Default: "example.com"
   PublicSubnets:
-    Description: The internet-facing subnets
+    Description: The internet-facing subnets.
     Type: List<AWS::EC2::Subnet::Id>
   PrivateSubnets:
-    Description: The internal subnets
+    Description: The internal subnets.
     Type: List<AWS::EC2::Subnet::Id>
   VpcId:
-    Description: The VPC created resources will belong.
+    Description: The VPC-scoped resources will belong to this VPC.
     Type: AWS::EC2::VPC::Id
 
 Metadata:
@@ -355,7 +355,7 @@ Resources:
 
 Outputs:
   PrivateHostedZoneId:
-    Description: Hosted zone ID for the private DNS - needed for private records
+    Description: Hosted zone ID for the private DNS, which is required for private records.
     Value: !Ref IntDns
   ExternalApiLoadBalancerName:
     Description: Full name of the External API load balancer created.
@@ -364,17 +364,17 @@ Outputs:
     Description: Full name of the Internal API load balancer created.
     Value: !GetAtt IntApiElb.LoadBalancerFullName
   ApiServerDnsName:
-    Description: Full hostname of the API server - Needed for ignition configs
+    Description: Full hostname of the API server, which is required for the Ignition config files.
     Value: !Join [".", ["api-int", !Ref ClusterName, !Ref HostedZoneName]]
   RegisterNlbIpTargetsLambda:
-    Description: Lambda ARN useful to help register/deregister IP targets for these load balancers
+    Description: Lambda ARN useful to help register or deregister IP targets for these load balancers.
     Value: !GetAtt RegisterNlbIpTargets.Arn
   ExternalApiTargetGroupArn:
-    Description: ARN of External API target group
+    Description: ARN of External API target group.
     Value: !Ref ExternalApiTargetGroup
   InternalApiTargetGroupArn:
-    Description: ARN of Internal API target group
+    Description: ARN of Internal API target group.
     Value: !Ref InternalApiTargetGroup
   InternalServiceTargetGroupArn:
-    Description: ARN of internal service target group
+    Description: ARN of internal service target group.
     Value: !Ref InternalServiceTargetGroup

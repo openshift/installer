@@ -1,25 +1,25 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Template for Openshift Cluster UPI Security Elements (Security Groups & IAM)
+Description: Template for OpenShift Cluster Security Elements (Security Groups & IAM)
 
 Parameters:
   InfrastructureName:
     AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
     MaxLength: 27
     MinLength: 1
-    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 27 characters
-    Description: A short, unique cluster ID used to tag cloud resources and identify items owned/used by the cluster.
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
+    Description: A short, unique cluster ID used to tag cloud resources and identify items owned or used by the cluster.
     Type: String
   VpcCidr:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-4]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-24
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-24.
     Default: 10.0.0.0/16
-    Description: CIDR block for VPC
+    Description: CIDR block for VPC.
     Type: String
   VpcId:
-    Description: The VPC created resources will belong.
+    Description: The VPC-scoped resources will belong to this VPC.
     Type: AWS::EC2::VPC::Id
   PrivateSubnets:
-    Description: The internal subnets
+    Description: The internal subnets.
     Type: List<AWS::EC2::Subnet::Id>
 
 Metadata:

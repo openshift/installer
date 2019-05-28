@@ -1,54 +1,54 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Template for Openshift Cluster UPI Bootstrap (EC2 Instance, Security Groups and IAM)
+Description: Template for OpenShift Cluster Bootstrap (EC2 Instance, Security Groups and IAM)
 
 Parameters:
   InfrastructureName:
     AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
     MaxLength: 27
     MinLength: 1
-    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 27 characters
-    Description: A short, unique cluster ID used to tag cloud resources and identify items owned/used by the cluster.
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
+    Description: A short, unique cluster ID used to tag cloud resources and identify items owned or used by the cluster.
     Type: String
   RhcosAmi:
-    Description: Current RHEL CoreOS AMI to use for boostrap
+    Description: Current Red Hat Enterprise Linux CoreOS AMI to use for boostrap.
     Type: AWS::EC2::Image::Id
   AllowedBootstrapSshCidr:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|1[0-9]|2[0-9]|3[0-2]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/0-32
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/0-32.
     Default: 0.0.0.0/0
-    Description: CIDR block to allow SSH access to the bootstrap node
+    Description: CIDR block to allow SSH access to the bootstrap node.
     Type: String
   PublicSubnet:
-    Description: The public subnet to launch the bootstrap node into
+    Description: The public subnet to launch the bootstrap node into.
     Type: AWS::EC2::Subnet::Id
   MasterSecurityGroupId:
-    Description: The master security group ID (for registering temporary rules)
+    Description: The master security group ID for registering temporary rules.
     Type: AWS::EC2::SecurityGroup::Id
   VpcId:
-    Description: The VPC created resources will belong.
+    Description: The VPC-scoped resources will belong to this VPC.
     Type: AWS::EC2::VPC::Id
   BootstrapIgnitionLocation:
     Default: s3://my-s3-bucket/bootstrap.ign
-    Description: Location to fetch bootstrap ignition from. (Recommend to use the autocreated cf-templates bucket.)
+    Description: Ignition config file location.
     Type: String
   AutoRegisterELB:
     Default: "yes"
     AllowedValues:
     - "yes"
     - "no"
-    Description: Do you want to invoke NLB registration (requires Lambda ARN parameter to be supplied)?
+    Description: Do you want to invoke NLB registration, which requires a Lambda ARN parameter?
     Type: String
   RegisterNlbIpTargetsLambdaArn:
-    Description: ARN for NLB IP target registration lambda
+    Description: ARN for NLB IP target registration lambda.
     Type: String
   ExternalApiTargetGroupArn:
-    Description: ARN for external API load balancer target group
+    Description: ARN for external API load balancer target group.
     Type: String
   InternalApiTargetGroupArn:
-    Description: ARN for internal API load balancer target group
+    Description: ARN for internal API load balancer target group.
     Type: String
   InternalServiceTargetGroupArn:
-    Description: ARN for internal service load balancer target group
+    Description: ARN for internal service load balancer target group.
     Type: String
 
 Metadata:
@@ -88,7 +88,7 @@ Metadata:
       PublicSubnet:
         default: "Public Subnet"
       RhcosAmi:
-        default: "RHEL CoreOS AMI ID"
+        default: "Red Hat Enterprise Linux CoreOS AMI ID"
       BootstrapIgnitionLocation:
         default: "Bootstrap Ignition Source"
       MasterSecurityGroupId:
@@ -199,13 +199,13 @@ Resources:
 
 Outputs:
   BootstrapInstanceId:
-    Description: Bootstrap Instance ID
+    Description: Bootstrap Instance ID.
     Value: !Ref BootstrapInstance
 
   BootstrapPublicIp:
-    Description: The bootstrap node public IP address
+    Description: The bootstrap node public IP address.
     Value: !GetAtt BootstrapInstance.PublicIp
 
   BootstrapPrivateIp:
-    Description: The bootstrap node private IP address
+    Description: The bootstrap node private IP address.
     Value: !GetAtt BootstrapInstance.PrivateIp

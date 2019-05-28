@@ -1,45 +1,45 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Template for Openshift Cluster UPI Node Launch (EC2 master instances)
+Description: Template for OpenShift Cluster Node Launch (EC2 master instances)
 
 Parameters:
   InfrastructureName:
     AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
     MaxLength: 27
     MinLength: 1
-    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 27 characters
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
     Description: A short, unique cluster ID used to tag nodes for the kubelet cloud provider.
     Type: String
   RhcosAmi:
-    Description: Current RHEL CoreOS AMI to use for boostrap
+    Description: Current Red Hat Enterprise Linux CoreOS AMI to use for boostrap.
     Type: AWS::EC2::Image::Id
   AutoRegisterDNS:
     Default: "yes"
     AllowedValues:
     - "yes"
     - "no"
-    Description: Do you want to invoke DNS etcd registration (requires Hosted Zone info provided)?
+    Description: Do you want to invoke DNS etcd registration, which requires Hosted Zone information?
     Type: String
   PrivateHostedZoneId:
-    Description: The Route53 private zone ID to register the etcd targets with (e.g Z21IXYZABCZ2A4)
+    Description: The Route53 private zone ID to register the etcd targets with, such as Z21IXYZABCZ2A4.
     Type: String
   PrivateHostedZoneName:
-    Description: The Route53 zone to register the targets with (No trailing dot - e.g. cluster.mycorp.com)
+    Description: The Route53 zone to register the targets with, such as cluster.example.com. Omit the trailing period.
     Type: String
   Master0Subnet:
-    Description: The subnets (recommend private) to launch the master nodes into
+    Description: The subnets, recommend private, to launch the master nodes into.
     Type: AWS::EC2::Subnet::Id
   Master1Subnet:
-    Description: The subnets (recommend private) to launch the master nodes into
+    Description: The subnets, recommend private, to launch the master nodes into.
     Type: AWS::EC2::Subnet::Id
   Master2Subnet:
-    Description: The subnets (recommend private) to launch the master nodes into
+    Description: The subnets, recommend private, to launch the master nodes into.
     Type: AWS::EC2::Subnet::Id
   MasterSecurityGroupId:
     Description: The master security group ID to associate with master nodes.
     Type: AWS::EC2::SecurityGroup::Id
   IgnitionLocation:
     Default: https://api-int.$CLUSTER_NAME.$DOMAIN:22623/config/master
-    Description: Location to fetch bootstrap ignition from. (Recommend to use the autocreated ignition config location.)
+    Description: Ignition config file location.
     Type: String
   CertificateAuthorities:
     Default: data:text/plain;charset=utf-8;base64,ABC...xYz==
@@ -71,19 +71,19 @@ Parameters:
     AllowedValues:
     - "yes"
     - "no"
-    Description: Do you want to invoke NLB registration (requires Lambda ARN parameter to be supplied)?
+    Description: Do you want to invoke NLB registration, which requires a Lambda ARN parameter?
     Type: String
   RegisterNlbIpTargetsLambdaArn:
-    Description: ARN for NLB IP target registration lambda (from cluster_infra_upi.yaml; otherwise select "no" for AutoRegisterELB)
+    Description: ARN for NLB IP target registration lambda. Supply the value from the cluster infrastructure or select "no" for AutoRegisterELB.
     Type: String
   ExternalApiTargetGroupArn:
-    Description: ARN for external API load balancer target group (from cluster_infra_upi.yaml; otherwise select "no" for AutoRegisterELB)
+    Description: ARN for external API load balancer target group. Supply the value from the cluster infrastructure or select "no" for AutoRegisterELB.
     Type: String
   InternalApiTargetGroupArn:
-    Description: ARN for internal API load balancer target group (from cluster_infra_upi.yaml; otherwise select "no" for AutoRegisterELB)
+    Description: ARN for internal API load balancer target group. Supply the value from the cluster infrastructure or select "no" for AutoRegisterELB.
     Type: String
   InternalServiceTargetGroupArn:
-    Description: ARN for internal service load balancer target group (from cluster_infra_upi.yaml; otherwise select "no" for AutoRegisterELB)
+    Description: ARN for internal service load balancer target group. Supply the value from the cluster infrastructure or select "no" for AutoRegisterELB.
     Type: String
 
 Metadata:
@@ -134,7 +134,7 @@ Metadata:
       MasterInstanceProfileName:
         default: "Master Instance Profile Name"
       RhcosAmi:
-        default: "RHEL CoreOS AMI ID"
+        default: "Red Hat Enterprise Linux CoreOS AMI ID"
       BootstrapIgnitionLocation:
         default: "Master Ignition Source"
       CertificateAuthorities:
@@ -353,7 +353,7 @@ Resources:
 
 Outputs:
   PrivateIPs:
-    Description: The control-plane node private IP addresses
+    Description: The control-plane node private IP addresses.
     Value:
       !Join [
         ",",

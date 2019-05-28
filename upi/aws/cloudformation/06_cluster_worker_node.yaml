@@ -1,26 +1,26 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Template for Openshift Cluster UPI Node Launch (EC2 worker instance)
+Description: Template for OpenShift Cluster Node Launch (EC2 worker instance)
 
 Parameters:
   InfrastructureName:
     AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
     MaxLength: 27
     MinLength: 1
-    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter and a maximum of 27 characters
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
     Description: A short, unique cluster ID used to tag nodes for the kubelet cloud provider.
     Type: String
   RhcosAmi:
-    Description: Current RHEL CoreOS AMI to use for boostrap
+    Description: Current Red Hat Enterprise Linux CoreOS AMI to use for boostrap.
     Type: AWS::EC2::Image::Id
-  WorkerSubnet:
-    Description: The subnets (recommend private) to launch the master nodes into
+  Subnet:
+    Description: The subnets, recommend private, to launch the master nodes into.
     Type: AWS::EC2::Subnet::Id
   WorkerSecurityGroupId:
     Description: The master security group ID to associate with master nodes.
     Type: AWS::EC2::SecurityGroup::Id
   IgnitionLocation:
     Default: https://api-int.$CLUSTER_NAME.$DOMAIN:22623/config/worker
-    Description: Location to fetch bootstrap ignition from. (Recommend to use the autocreated ignition config location.)
+    Description: Ignition config file location.
     Type: String
   CertificateAuthorities:
     Default: data:text/plain;charset=utf-8;base64,ABC...xYz==
@@ -67,16 +67,16 @@ Metadata:
     - Label:
         default: "Network Configuration"
       Parameters:
-      - WorkerSubnet
+      - Subnet
     ParameterLabels:
-      WorkerSubnet:
-        default: "Worker Subnet"
+      Subnet:
+        default: "Subnet"
       WorkerInstanceType:
         default: "Worker Instance Type"
       WorkerInstanceProfileName:
         default: "Worker Instance Profile Name"
       RhcosAmi:
-        default: "RHEL CoreOS AMI ID"
+        default: "Red Hat Enterprise Linux CoreOS AMI ID"
       IgnitionLocation:
         default: "Worker Ignition Source"
       CertificateAuthorities:
@@ -96,7 +96,7 @@ Resources:
         DeviceIndex: "0"
         GroupSet:
         - !Ref "WorkerSecurityGroupId"
-        SubnetId: !Ref "WorkerSubnet"
+        SubnetId: !Ref "Subnet"
       UserData:
         Fn::Base64: !Sub
         - '{"ignition":{"config":{"append":[{"source":"${SOURCE}","verification":{}}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}","verification":{}}]}},"timeouts":{},"version":"2.2.0"},"networkd":{},"passwd":{},"storage":{},"systemd":{}}'
@@ -110,5 +110,5 @@ Resources:
 
 Outputs:
   PrivateIP:
-    Description: The compute node private IP address
+    Description: The compute node private IP address.
     Value: !GetAtt Worker0.PrivateIp
