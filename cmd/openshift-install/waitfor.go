@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -46,8 +47,13 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 
 			err = waitForBootstrapComplete(ctx, config, rootOpts.dir)
 			if err != nil {
-				logrus.Info("Use the following commands to gather logs from the cluster")
-				logrus.Info("openshift-install gather bootstrap --help")
+				_, _, err2 := getGatherBootstrapIPs(rootOpts.dir)
+				if err2 == nil {
+					logrus.Infof("Gather logs from the cluster with: %q --dir %q gather bootstrap", os.Args[0], rootOpts.dir)
+				} else {
+					logrus.Infof("Gather logs from the cluster with: %q gather bootstrap --bootstrap PUBLIC_BOOTSTRAP_IP [--master MASTER_IP ...]", os.Args[0])
+					logrus.Infof("See also: %q gather bootstrap --help", os.Args[0])
+				}
 				logrus.Fatal(err)
 			}
 

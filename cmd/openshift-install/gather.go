@@ -50,7 +50,16 @@ func newGatherBootstrapCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bootstrap",
 		Short: "Gather debugging data for a failing-to-bootstrap control plane",
-		Args:  cobra.ExactArgs(0),
+		Long: `Gather debugging data for a failing-to-bootstrap control plane.
+
+The installer will attempt to extract the bootstrap and control-plane
+IP addresses from the asset directory.  If the intaller is unable to
+extract the public bootstrap IP, you must set the public bootstrap IP
+via the --bootstrap option.  If the installer is unable to extract
+control-plane IP addresses, it will fall back to detecting them via
+the _etcd-server-ssl DNS discovery records, or you can supply them via
+the --master option.`,
+		Args: cobra.ExactArgs(0),
 		Run: func(_ *cobra.Command, _ []string) {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
@@ -66,40 +75,49 @@ func newGatherBootstrapCmd() *cobra.Command {
 }
 
 func runGatherBootstrapCmd(directory string) error {
-	tfStateFilePath := filepath.Join(directory, terraform.StateFileName)
-	_, err := os.Stat(tfStateFilePath)
-	if os.IsNotExist(err) {
-		return unSupportedPlatformGather()
-	}
+	bootstrap, masters, err := getGatherBootstrapIPs(directory)
 	if err != nil {
 		return err
 	}
 
+	logGatherBootstrap(bootstrap, masters)
+	return nil
+}
+
+func getGatherBootstrapIPs(directory string) (bootstrap string, masters []string, err error) {
+	tfStateFilePath := filepath.Join(directory, terraform.StateFileName)
+	_, err = os.Stat(tfStateFilePath)
+	if os.IsNotExist(err) {
+		return "", nil, unSupportedPlatformGather()
+	}
+	if err != nil {
+		return "", nil, err
+	}
+
 	assetStore, err := assetstore.NewStore(directory)
 	if err != nil {
-		return errors.Wrap(err, "failed to create asset store")
+		return "", nil, errors.Wrap(err, "failed to create asset store")
 	}
 
 	config := &installconfig.InstallConfig{}
 	if err := assetStore.Fetch(config); err != nil {
-		return errors.Wrapf(err, "failed to fetch %s", config.Name())
+		return "", nil, errors.Wrapf(err, "failed to fetch %s", config.Name())
 	}
 
 	tfstate, err := terraform.ReadState(tfStateFilePath)
 	if err != nil {
-		return errors.Wrapf(err, "failed to read state from %q", tfStateFilePath)
+		return "", nil, errors.Wrapf(err, "failed to read state from %q", tfStateFilePath)
 	}
-	bootstrap, masters, err := extractHostAddresses(config.Config, tfstate)
+	bootstrap, masters, err = extractHostAddresses(config.Config, tfstate)
 	if err != nil {
 		if err2, ok := err.(errUnSupportedGatherPlatform); ok {
 			logrus.Error(err2)
-			return unSupportedPlatformGather()
+			return bootstrap, masters, unSupportedPlatformGather()
 		}
-		return errors.Wrapf(err, "failed to get bootstrap and control plane host addresses from %q", tfStateFilePath)
+		return bootstrap, masters, errors.Wrapf(err, "failed to get bootstrap and control plane host addresses from %q", tfStateFilePath)
 	}
 
-	logGatherBootstrap(bootstrap, masters)
-	return nil
+	return bootstrap, masters, err
 }
 
 func logGatherBootstrap(bootstrap string, masters []string) {
