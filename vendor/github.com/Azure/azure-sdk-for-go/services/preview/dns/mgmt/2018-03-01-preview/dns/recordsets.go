@@ -105,7 +105,7 @@ func (client RecordSetsClient) CreateOrUpdatePreparer(ctx context.Context, resou
 		"zoneName":              autorest.Encode("path", zoneName),
 	}
 
-	const APIVersion = "2017-10-01"
+	const APIVersion = "2018-03-01-preview"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -212,7 +212,7 @@ func (client RecordSetsClient) DeletePreparer(ctx context.Context, resourceGroup
 		"zoneName":              autorest.Encode("path", zoneName),
 	}
 
-	const APIVersion = "2017-10-01"
+	const APIVersion = "2018-03-01-preview"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -306,7 +306,7 @@ func (client RecordSetsClient) GetPreparer(ctx context.Context, resourceGroupNam
 		"zoneName":              autorest.Encode("path", zoneName),
 	}
 
-	const APIVersion = "2017-10-01"
+	const APIVersion = "2018-03-01-preview"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -398,7 +398,7 @@ func (client RecordSetsClient) ListAllByDNSZonePreparer(ctx context.Context, res
 		"zoneName":          autorest.Encode("path", zoneName),
 	}
 
-	const APIVersion = "2017-10-01"
+	const APIVersion = "2018-03-01-preview"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -533,7 +533,7 @@ func (client RecordSetsClient) ListByDNSZonePreparer(ctx context.Context, resour
 		"zoneName":          autorest.Encode("path", zoneName),
 	}
 
-	const APIVersion = "2017-10-01"
+	const APIVersion = "2018-03-01-preview"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -670,7 +670,7 @@ func (client RecordSetsClient) ListByTypePreparer(ctx context.Context, resourceG
 		"zoneName":          autorest.Encode("path", zoneName),
 	}
 
-	const APIVersion = "2017-10-01"
+	const APIVersion = "2018-03-01-preview"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -807,7 +807,7 @@ func (client RecordSetsClient) UpdatePreparer(ctx context.Context, resourceGroup
 		"zoneName":              autorest.Encode("path", zoneName),
 	}
 
-	const APIVersion = "2017-10-01"
+	const APIVersion = "2018-03-01-preview"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}

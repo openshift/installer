@@ -10,21 +10,23 @@
   version = "v0.4.11"
 
 [[projects]]
-  digest = "1:43d8579bc621651f7290504d0204f8815cc1328b1fc34cb69549ab2dfa949ed5"
+  digest = "1:10262e67150b920c9eb818e235089b00040f848060c34606885476f731bbdb1a"
   name = "github.com/Azure/azure-sdk-for-go"
   packages = [
     "profiles/latest/dns/mgmt/dns",
     "profiles/latest/resources/mgmt/subscriptions",
     "services/dns/mgmt/2017-10-01/dns",
-    "services/resources/mgmt/2016-06-01/subscriptions",
+    "services/preview/dns/mgmt/2018-03-01-preview/dns",
+    "services/resources/mgmt/2018-05-01/resources",
+    "services/resources/mgmt/2018-06-01/subscriptions",
     "version",
   ]
   pruneopts = "NUT"
-  revision = "2ea98fc438b9d78aa2ab32bab44c7f68e506385e"
-  version = "v25.1.0"
+  revision = "77258e94d84ea36012a72c0e0a1e2faa409c6396"
+  version = "v29.0.0"
 
 [[projects]]
-  digest = "1:6c5cc479885a19f9425d5472e83740d3445a2b2dc96118da4ab95526de3b6795"
+  digest = "1:5bdc6288ed7890d169ec6a68e032bbf977449e25159ec57ed92f7533eb260284"
   name = "github.com/Azure/go-autorest"
   packages = [
     "autorest",
@@ -39,8 +41,8 @@
     "tracing",
   ]
   pruneopts = "NUT"
-  revision = "3b1641ed03046f2ee28d73f7a51e5b884d55b92a"
-  version = "v11.7.0"
+  revision = "f29a2eccaa178b367df0405778cd85e0af7b4225"
+  version = "v12.1.0"
 
 [[projects]]
   branch = "go15"
@@ -1166,6 +1168,8 @@
   input-imports = [
     "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns",
     "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions",
+    "github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns",
+    "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources",
     "github.com/Azure/go-autorest/autorest",
     "github.com/Azure/go-autorest/autorest/azure",
     "github.com/Azure/go-autorest/autorest/azure/auth",
