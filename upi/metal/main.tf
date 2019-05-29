@@ -96,7 +96,7 @@ locals {
 
 resource "packet_device" "masters" {
   count            = "${var.master_count}"
-  hostname         = "master-${count.index}.${var.cluster_domain}"
+  hostname         = "master-${count.index}"
   plan             = "c1.small.x86"
   facilities       = ["any"]
   operating_system = "custom_ipxe"
@@ -109,7 +109,7 @@ resource "packet_device" "masters" {
 
 resource "packet_device" "workers" {
   count            = "${var.worker_count}"
-  hostname         = "worker-${count.index}.${var.cluster_domain}"
+  hostname         = "worker-${count.index}"
   plan             = "c1.small.x86"
   facilities       = ["any"]
   operating_system = "custom_ipxe"
