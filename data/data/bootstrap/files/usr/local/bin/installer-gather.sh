@@ -98,13 +98,14 @@ echo "Gather remote logs"
 export MASTERS=()
 if [ "$#" -ne 0 ]; then
     MASTERS=( "$@" )
-elif test ! -s "${ARTIFACTS}/resources/masters.list"
-then
+elif test -s "${ARTIFACTS}/resources/masters.list"; then
+    mapfile -t MASTERS < "${ARTIFACTS}/resources/masters.list"
+else
     # Find out master IPs from etcd discovery record
     DOMAIN=$(sudo oc --config=/opt/openshift/auth/kubeconfig whoami --show-server | grep -oP "api.\\K([a-z\\.]*)")
     dig -t SRV "_etcd-server-ssl._tcp.${DOMAIN}" +short | cut -f 4 -d ' ' | sed 's/.$//' >"${ARTIFACTS}/resources/masters.list"
+    mapfile -t MASTERS < "${ARTIFACTS}/resources/masters.list"
 fi
-mapfile -t MASTERS < "${ARTIFACTS}/resources/masters.list"
 
 for master in "${MASTERS[@]}"
 do
