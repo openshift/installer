@@ -109,7 +109,7 @@ The installer uses the [cluster-version-operator] to create all the components o
       selfLink: /apis/config.openshift.io/v1/clusterversions/version
       uid: 6e0f4cf8-3ade-11e9-9034-0a923b47ded4
     spec:
-      channel: stable-4.1
+      channel: stable-4.2
       clusterID: 5ec312f9-f729-429d-a454-61d4906896ca
       upstream: https://api.openshift.com/api/upgrades_info/v1/graph
     status:
