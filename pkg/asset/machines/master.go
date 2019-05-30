@@ -53,19 +53,40 @@ type Master struct {
 	UserDataFile       *asset.File
 	MachineConfigFiles []*asset.File
 	MachineFiles       []*asset.File
+
+	// SecretFiles is used by the baremetal platform to register the
+	// credential information for communicating with management
+	// controllers on hosts.
+	SecretFiles []*asset.File
+
+	// HostFiles is the list of baremetal hosts provided in the
+	// installer configuration.
+	HostFiles []*asset.File
 }
 
 const (
 	directory = "openshift"
 
-	// masterMachineFileName is the format string for constucting the master Machine filenames.
+	// secretFileName is the format string for constructing the Secret
+	// filenames for baremetal clusters.
+	secretFileName = "99_openshift-cluster-api_host-bmc-secrets-%s.yaml"
+
+	// hostFileName is the format string for constucting the Host
+	// filenames for baremetal clusters.
+	hostFileName = "99_openshift-cluster-api_hosts-%s.yaml"
+
+	// masterMachineFileName is the format string for constucting the
+	// master Machine filenames.
 	masterMachineFileName = "99_openshift-cluster-api_master-machines-%s.yaml"
 
-	// masterUserDataFileName is the filename used for the master user-data secret.
+	// masterUserDataFileName is the filename used for the master
+	// user-data secret.
 	masterUserDataFileName = "99_openshift-cluster-api_master-user-data-secret.yaml"
 )
 
 var (
+	secretFileNamePattern        = fmt.Sprintf(secretFileName, "*")
+	hostFileNamePattern          = fmt.Sprintf(hostFileName, "*")
 	masterMachineFileNamePattern = fmt.Sprintf(masterMachineFileName, "*")
 
 	_ asset.WritableAsset = (*Master)(nil)
@@ -195,10 +216,51 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.Set(ic.Platform.BareMetal.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.BareMetal)
 		pool.Platform.BareMetal = &mpool
+
 		machines, err = baremetal.Machines(clusterID.InfraID, ic, pool, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
+
+		hostSettings, err := baremetal.Hosts(ic, machines)
+		if err != nil {
+			return errors.Wrap(err, "failed to assemble host data")
+		}
+
+		if len(hostSettings.Hosts) > 0 {
+			m.HostFiles = make([]*asset.File, len(hostSettings.Hosts))
+			padFormat := fmt.Sprintf("%%0%dd", len(fmt.Sprintf("%d", len(hostSettings.Hosts))))
+			for i, host := range hostSettings.Hosts {
+				data, err := yaml.Marshal(host)
+				if err != nil {
+					return errors.Wrapf(err, "marshal host %d", i)
+				}
+
+				padded := fmt.Sprintf(padFormat, i)
+				m.HostFiles[i] = &asset.File{
+					Filename: filepath.Join(directory, fmt.Sprintf(hostFileName, padded)),
+					Data:     data,
+				}
+			}
+		}
+
+		if len(hostSettings.Secrets) > 0 {
+			m.SecretFiles = make([]*asset.File, len(hostSettings.Secrets))
+			padFormat := fmt.Sprintf("%%0%dd", len(fmt.Sprintf("%d", len(hostSettings.Secrets))))
+			for i, secret := range hostSettings.Secrets {
+				data, err := yaml.Marshal(secret)
+				if err != nil {
+					return errors.Wrapf(err, "marshal secret %d", i)
+				}
+
+				padded := fmt.Sprintf(padFormat, i)
+				m.SecretFiles[i] = &asset.File{
+					Filename: filepath.Join(directory, fmt.Sprintf(secretFileName, padded)),
+					Data:     data,
+				}
+			}
+		}
+
 	case nonetypes.Name, vspheretypes.Name:
 	default:
 		return fmt.Errorf("invalid Platform")
@@ -242,7 +304,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			Data:     data,
 		}
 	}
-
 	return nil
 }
 
@@ -253,6 +314,13 @@ func (m *Master) Files() []*asset.File {
 		files = append(files, m.UserDataFile)
 	}
 	files = append(files, m.MachineConfigFiles...)
+	// Hosts refer to secrets, so place the secrets before the hosts
+	// to avoid unnecessary reconciliation errors.
+	files = append(files, m.SecretFiles...)
+	// Machines are linked to hosts via the machineRef, so we create
+	// the hosts first to ensure if the operator starts trying to
+	// reconcile a machine it can pick up the related host.
+	files = append(files, m.HostFiles...)
 	files = append(files, m.MachineFiles...)
 	return files
 }
@@ -273,12 +341,26 @@ func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
 		return true, err
 	}
 
-	fileList, err := f.FetchByPattern(filepath.Join(directory, masterMachineFileNamePattern))
+	var fileList []*asset.File
+
+	fileList, err = f.FetchByPattern(filepath.Join(directory, secretFileNamePattern))
 	if err != nil {
 		return true, err
 	}
+	m.SecretFiles = fileList
 
+	fileList, err = f.FetchByPattern(filepath.Join(directory, hostFileNamePattern))
+	if err != nil {
+		return true, err
+	}
+	m.HostFiles = fileList
+
+	fileList, err = f.FetchByPattern(filepath.Join(directory, masterMachineFileNamePattern))
+	if err != nil {
+		return true, err
+	}
 	m.MachineFiles = fileList
+
 	return true, nil
 }
 
