@@ -73,7 +73,10 @@ resource "azurerm_virtual_machine" "master" {
   os_profile {
     computer_name  = "${var.cluster_id}-master-${count.index}"
     admin_username = "core"
-    admin_password = "P@ssword1234!"
+    # The password is normally applied by WALA (the Azure agent), but this
+    # isn't installed in RHCOS. As a result, this password is never set. It is
+    # included here because it is required by the Azure ARM API.
+    admin_password = "NotActuallyApplied!"
     custom_data    = var.ignition
   }
 
