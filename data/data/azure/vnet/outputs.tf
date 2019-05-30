@@ -1,7 +1,3 @@
-output "vnet_id" {
-  value = local.vnet_id
-}
-
 output "cluster-pip" {
   value = azurerm_public_ip.cluster_public_ip.ip_address
 }

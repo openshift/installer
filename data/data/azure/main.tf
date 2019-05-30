@@ -39,6 +39,7 @@ module "bootstrap" {
 
 module "vnet" {
   source              = "./vnet"
+  vnet_name           = azurerm_virtual_network.cluster_vnet.name
   resource_group_name = azurerm_resource_group.main.name
   vnet_cidr           = var.machine_cidr
   master_subnet_cidr  = local.master_subnet_cidr
@@ -47,6 +48,9 @@ module "vnet" {
   region              = var.azure_region
   dns_label           = var.cluster_id
   master_count        = var.master_count
+
+  # This is to create explicit dependency on private zone to exist before VMs are created in the vnet. https://github.com/MicrosoftDocs/azure-docs/issues/13728
+  private_dns_zone_id = azurerm_dns_zone.private.id
 }
 
 module "master" {
@@ -123,5 +127,12 @@ resource "azurerm_dns_zone" "private" {
   name                           = var.cluster_domain
   resource_group_name            = azurerm_resource_group.main.name
   zone_type                      = "Private"
-  resolution_virtual_network_ids = [module.vnet.vnet_id]
+  resolution_virtual_network_ids = [azurerm_virtual_network.cluster_vnet.id]
+}
+
+resource "azurerm_virtual_network" "cluster_vnet" {
+  name                = "${var.cluster_id}-vnet"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = var.azure_region
+  address_space       = [var.machine_cidr]
 }

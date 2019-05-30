@@ -3,8 +3,6 @@
 
 // Only reference data sources which are guaranteed to exist at any time (above) in this locals{} block
 locals {
-  vnet_id = azurerm_virtual_network.cluster_vnet.id
-
   subnet_ids = azurerm_subnet.master_subnet.id
 
   lb_fqdn = azurerm_lb.public.id
