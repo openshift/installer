@@ -297,10 +297,10 @@ $ sudo systemctl restart NetworkManager
 $ openshift-install --dir $INSTALL_DIR create manifests
 ```
 
-- Domain entry for cluster-ingress-02-config.yml file should be following (here domain is what your created initially)
+- Domain entry in cluster-ingress-02-config.yml file should not contain cluster name
 ```console
-$ grep domain $INSTALL_DIR/manifests/cluster-ingress-02-config.yml
-domain: apps.tt.testing
+# Assuming `test1` as cluster name
+$ sed -i 's/test1.//' $INSTALL_DIR/manifests/cluster-ingress-02-config.yml
 ```
 
 - Start the installer to create the cluster
