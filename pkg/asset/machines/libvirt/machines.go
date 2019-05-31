@@ -70,7 +70,7 @@ func provider(clusterID string, networkInterfaceAddress string, platform *libvir
 		},
 		Volume: &libvirtprovider.Volume{
 			PoolName:     "default",
-			BaseVolumeID: fmt.Sprintf("/var/lib/libvirt/images/%s-base", clusterID),
+			BaseVolumeID: fmt.Sprintf("%s-base", clusterID),
 		},
 		NetworkInterfaceName:    clusterID,
 		NetworkInterfaceAddress: networkInterfaceAddress,
