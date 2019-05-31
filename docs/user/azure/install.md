@@ -8,6 +8,46 @@ IPI install.
 The steps for performing an IPI-based install are outlined [here][cloud-install]. Following this guide you may begin at
 Step 3: Download the Installer.
 
+### Setup your Red Hat Enterprise Linux CoreOS images
+
+OpenShift currently does not publish official build for [`Red Hat Enterprise Linux CoreOS`][rhcos] boot images. Therefore, currently users are required to import boot image to their subscription before using the installer to create clusters on Azure.
+
+1. Create a Storage Account to hold the blobs in a shared Resource Group.
+
+    ```sh
+    az storage account create --location centralus --name os4storage --kind StorageV2 --resource-group os4-common
+    ```
+
+1. Create a Resource Group for the image.
+
+    ```sh
+    az group create --location centralus --name rhcos_images
+    ```
+
+1. Copy the image blob into the storage container in the Storage Account.
+
+    ```sh
+    ACCOUNT_KEY=$(az storage account keys list --account-name os4storage --resource-group os4-common --query "[0].value" -o tsv)
+    ```
+
+    ```sh
+    VHD_NAME=rhcos-410.8.20190504.0-azure.vhd
+    ```
+
+    ```sh
+    az storage blob copy start --account-name "os4storage" --account-key "$ACCOUNT_KEY" --destination-blob "$VHD_NAME" --destination-container vhd --source-uri "https://openshifttechpreview.blob.core.windows.net/rhcos/$VHD_NAME"
+    ```
+
+1. Create an image from the copied VHD
+
+    ```sh
+    RHCOS_VHD=$(az storage blob url --account-name os4storage -c vhd --name "$VHD_NAME" -o tsv)
+    ```
+
+    ```sh
+    az image create --resource-group rhcos_images --name rhcostestimage --os-type Linux --storage-sku Premium_LRS --source "$RHCOS_VHD" --location centralus
+    ```
+
 ### Create Configuration
 
 ```console
@@ -58,3 +98,4 @@ The OpenShift console is available via the kubeadmin login provided by the insta
 ![OpenShift web console](images/install_console.png)
 
 [cloud-install]: https://cloud.openshift.com/clusters/install
+[rhcos]: https://github.com/openshift/os
