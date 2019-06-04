@@ -80,6 +80,32 @@ INFO Access the OpenShift web-console here: https://console-openshift-console.ap
 INFO Login to the console with user: kubeadmin, password: 5char-5char-5char-5char
 ```
 
+Note that Azure support is still in development and as a result, certificate signing requests (CSRs) for compute nodes will need to be manually approved before the cluster will complete installation. The list of CSRs can be viewed using the `oc` client tool:
+
+```console
+[~]$ oc get csr
+NAME        AGE     REQUESTOR                                                                   CONDITION
+csr-4f5cm   3m50s   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Pending
+csr-5pldl   13m     system:node:test-gbwvn-master-0                                             Approved,Issued
+csr-6ngbz   12m     system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
+csr-6rb9t   13m     system:node:test-gbwvn-master-1                                             Approved,Issued
+csr-9b4fx   13m     system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
+csr-hkswn   75s     system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Pending
+csr-rb8fh   13m     system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
+csr-s9pzp   13m     system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
+csr-tlq5m   12m     system:node:test-gbwvn-master-2                                             Approved,Issued
+csr-wgzhj   6m15s   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Pending
+```
+
+CSRs can be approved as follows:
+
+```console
+[~]$ oc adm certificate approve csr-4f5cm
+certificatesigningrequest.certificates.k8s.io/csr-4f5cm approve
+```
+
+It can be expected that three CSRs will need to be approved as part of the default installation. The following command can be used to approve all pending CSRs: `oc get csr --no-headers | grep Pending | awk '{print $1}' | xargs --no-run-if-empty oc adm certificate approve`.
+
 ### Running Cluster
 
 In your subscription, there will be a new Resource Group for your cluster:
