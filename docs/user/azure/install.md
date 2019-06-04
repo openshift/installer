@@ -18,6 +18,10 @@ OpenShift currently does not publish official build for [`Red Hat Enterprise Lin
     az storage account create --location centralus --name os4storage --kind StorageV2 --resource-group os4-common
     ```
 
+    ```sh
+    az storage container create --name vhd --account-name os4storage
+    ```
+
 1. Create a Resource Group for the image.
 
     ```sh
