@@ -55,7 +55,6 @@ func Platform() (*openstack.Platform, error) {
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The OpenStack region to be used for installation.",
-				Default: "regionOne",
 				Options: regionNames,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
