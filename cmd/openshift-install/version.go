@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/version"
 )
 
@@ -27,6 +28,9 @@ func runVersionCmd(cmd *cobra.Command, args []string) error {
 	}
 	if image, err := bootstrap.DefaultReleaseImage(); err == nil {
 		fmt.Printf("release image %s\n", image)
+	}
+	if rhcosver, err := rhcos.FetchVersion(); err == nil {
+		fmt.Printf("Red Hat Enterprise Linux CoreOS bootimage %s\n", rhcosver)
 	}
 	return nil
 }
