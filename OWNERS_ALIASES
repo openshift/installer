@@ -22,7 +22,7 @@ aliases:
     - zeenix
   libvirt-reviewers:
   openstack-approvers:
-    - flaper87
+    - mandre
     - tomassedovic
     - hardys
     - russellb
