@@ -103,3 +103,7 @@ required = [
   branch = "master"
   name = "sigs.k8s.io/cluster-api-provider-azure"
   source = "https://github.com/openshift/cluster-api-provider-azure.git"
+
+[[constraint]]
+  name = "github.com/pkg/sftp"
+  version = "1.10.0"
