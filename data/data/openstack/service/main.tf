@@ -87,7 +87,7 @@ WORKERS=$(oc get nodes -l node-role.kubernetes.io/worker -ogo-template="$TEMPLAT
 update_cfg_and_restart() {
     CHANGED=$(diff /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.new)
 
-    if [[ ! -f /etc/haproxy/haproxy.cfg ]] || [[ ! $CHANGED -eq "" ]];
+    if [[ ! -f /etc/haproxy/haproxy.cfg ]] || [[ ! -z "$CHANGED" ]];
     then
         cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.backup || true
         cp /etc/haproxy/haproxy.cfg.new /etc/haproxy/haproxy.cfg
@@ -95,7 +95,7 @@ update_cfg_and_restart() {
     fi
 }
 
-if [[ $MASTERS -eq "" ]];
+if [[ -z "$MASTERS" ]];
 then
 cat > /etc/haproxy/haproxy.cfg.new << EOF
 listen ${var.cluster_id}-api-masters
