@@ -428,6 +428,14 @@
   version = "v1.0.1"
 
 [[projects]]
+  digest = "1:47fa0ef6ae6b0387dacb77c7ab8827b4ef621650fd613e43ece61de4cb3f5019"
+  name = "github.com/kr/fs"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "1455def202f6e05b95cc7bfc7e8ae67ae5141eba"
+  version = "v0.1.0"
+
+[[projects]]
   digest = "1:1da9aa83870a429ce7127ced903a0b583012ed934682a5d5acaa12d74b92ebdc"
   name = "github.com/libvirt/libvirt-go"
   packages = ["."]
@@ -596,6 +604,14 @@
   version = "v0.8.0"
 
 [[projects]]
+  digest = "1:11a5954c7d1ffda43672b7dff106a4a32d632ae24496d9e52dc7d4e5fb70cde5"
+  name = "github.com/pkg/sftp"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "a713b07e6d90e1831d7fefcb69f1310edb3783ae"
+  version = "v1.10.0"
+
+[[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
@@ -696,7 +712,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:97ac65d1f1ec70b388991819382b5d270aa6a98a1588ddaf917fe8ca6f5bbfa7"
+  digest = "1:9054d9c2dd8ea3fa2e158afce69d7aa81dfc01813f24222a7fde34654c6db51c"
   name = "golang.org/x/crypto"
   packages = [
     "bcrypt",
@@ -710,6 +726,7 @@
     "pkcs12/internal/rc2",
     "poly1305",
     "ssh",
+    "ssh/agent",
     "ssh/terminal",
   ]
   pruneopts = "NUT"
@@ -1224,6 +1241,7 @@
     "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1",
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
+    "github.com/pkg/sftp",
     "github.com/shurcooL/vfsgen",
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
@@ -1231,6 +1249,7 @@
     "github.com/vincent-petithory/dataurl",
     "golang.org/x/crypto/bcrypt",
     "golang.org/x/crypto/ssh",
+    "golang.org/x/crypto/ssh/agent",
     "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/net/html/charset",
     "golang.org/x/sys/unix",
