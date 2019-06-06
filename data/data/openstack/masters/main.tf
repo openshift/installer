@@ -15,7 +15,7 @@ data "ignition_file" "hostname" {
 
   content {
     content = <<EOF
-${var.cluster_id}-master-${count.index}
+master-${count.index}
 EOF
 
   }

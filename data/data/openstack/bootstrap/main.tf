@@ -49,7 +49,7 @@ data "ignition_file" "hostname" {
 
   content {
     content = <<EOF
-${var.cluster_id}-bootstrap
+bootstrap
 EOF
 
   }
