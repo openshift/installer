@@ -47,6 +47,7 @@ var (
 	gatherBootstrapOpts struct {
 		bootstrap string
 		masters   []string
+		sshKeys   []string
 	}
 )
 
@@ -66,6 +67,7 @@ func newGatherBootstrapCmd() *cobra.Command {
 	}
 	cmd.PersistentFlags().StringVar(&gatherBootstrapOpts.bootstrap, "bootstrap", "", "Hostname or IP of the bootstrap host")
 	cmd.PersistentFlags().StringArrayVar(&gatherBootstrapOpts.masters, "master", []string{}, "Hostnames or IPs of all control plane hosts")
+	cmd.PersistentFlags().StringArrayVar(&gatherBootstrapOpts.sshKeys, "key", []string{}, "Path to SSH private keys that should be used for authentication. If no key was provided, SSH private keys from user's environment will be used")
 	return cmd
 }
 
@@ -105,10 +107,9 @@ func runGatherBootstrapCmd(directory string) error {
 	return logGatherBootstrap(bootstrap, port, masters, directory)
 }
 
-func logGatherBootstrap(bootstrap string, port int, masters []string, directory string) {
-	logrus.Info("Pulling logs from bootstrap for debugging")
-
-	client, err := ssh.NewClient("core", fmt.Sprintf("%s:%d", bootstrap, port), nil)
+func logGatherBootstrap(bootstrap string, port int, masters []string, directory string) error {
+	logrus.Info("Pulling debug logs from the bootstrap machine")
+	client, err := ssh.NewClient("core", fmt.Sprintf("%s:%d", bootstrap, port), gatherBootstrapOpts.sshKeys)
 	if err != nil {
 		return errors.Wrap(err, "failed to create SSH client")
 	}
