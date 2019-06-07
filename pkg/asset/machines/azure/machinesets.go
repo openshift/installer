@@ -29,7 +29,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	}
 
 	var machinesets []*clusterapi.MachineSet
-	provider, err := provider(platform, mpool, osImage, userDataSecret)
+	provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create provider")
 	}
