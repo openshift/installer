@@ -11,7 +11,7 @@ import (
 // Defaults for the baremetal platform.
 const (
 	LibvirtURI         = "qemu:///system"
-	IronicURI          = "http://localhost:6385/v1"
+	IronicURI          = "http://172.22.0.2:6385/v1"
 	ExternalBridge     = "baremetal"
 	ProvisioningBridge = "provisioning"
 	HardwareProfile    = "default"

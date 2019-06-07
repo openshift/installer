@@ -5,6 +5,7 @@ provider "libvirt" {
 provider "ironic" {
   url          = var.ironic_uri
   microversion = "1.52"
+  timeout      = 1500
 }
 
 module "bootstrap" {
