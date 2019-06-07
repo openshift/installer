@@ -15,18 +15,6 @@ deployments, see [install_upi.md](install_upi.md).
 
 ## Prerequisites
 
-### Ironic
-
-Currently, the `baremetal` platform requires an existing Ironic environment.
-This will eventually be handled by `openshift-install`, with Ironic being
-deployed onto the bootstrap node. Until then, users of the `baremetal` platform
-should use the
-[openshift-metal3/dev-scripts](https://github.com/openshift-metal3/dev-scripts)
-repository to handle configuration of Ironic.
-
-The following PR contains the WIP changes for automating Ironic from
-`openshift-install`: https://github.com/openshift-metal3/kni-installer/pull/100
-
 ### Network Requirements
 
 It is assumed that all hosts have at least 2 NICs, used for the following
@@ -227,3 +215,18 @@ When an installation fails, `openshift-install` will attempt to gather debug
 information from hosts.  This is not yet supported by the `baremetal` platform.
 
 https://github.com/openshift-metal3/kni-installer/issues/79
+
+### Provisioning subnet not fully configurable
+
+There are some install-config parameters to control templating of the provisioning
+network configuration, but fully supporting alternative subnets for the
+provisioning network is incomplete.
+
+https://github.com/openshift/installer/issues/2091
+
+### Ironic services are using upstream images
+
+We need to move to downstream openshift images for the Ironic containers that are
+started on the boostrap VM
+
+https://github.com/openshift/installer/issues/2090

@@ -293,6 +293,7 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 		// baremetal & openstack platform services
 		"keepalived.service": {},
 		"coredns.service":    {},
+		"ironic.service":     {},
 	}
 
 	directory, err := data.Assets.Open(uri)
