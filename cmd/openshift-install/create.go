@@ -238,7 +238,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 
 	discovery := client.Discovery()
 
-	apiTimeout := 30 * time.Minute
+	apiTimeout := time.Duration(rootOpts.timeout) * time.Minute
 	logrus.Infof("Waiting up to %v for the Kubernetes API at %s...", apiTimeout, config.Host)
 	apiContext, cancel := context.WithTimeout(ctx, apiTimeout)
 	defer cancel()
@@ -279,7 +279,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 // and waits for the bootstrap configmap to report that bootstrapping has
 // completed.
 func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset) error {
-	timeout := 30 * time.Minute
+	timeout := time.Duration(rootOpts.timeout) * time.Minute
 	logrus.Infof("Waiting up to %v for bootstrapping to complete...", timeout)
 
 	waitCtx, cancel := context.WithTimeout(ctx, timeout)
@@ -317,7 +317,7 @@ func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation
 // that the cluster has been initialized.
 func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
-	timeout := 30 * time.Minute
+	timeout := time.Duration(rootOpts.timeout) * time.Minute
 	logrus.Infof("Waiting up to %v for the cluster at %s to initialize...", timeout, config.Host)
 	cc, err := configclient.NewForConfig(config)
 	if err != nil {

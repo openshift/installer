@@ -19,6 +19,7 @@ var (
 	rootOpts struct {
 		dir      string
 		logLevel string
+		timeout  int
 	}
 )
 
@@ -71,6 +72,8 @@ func newRootCmd() *cobra.Command {
 	}
 	cmd.PersistentFlags().StringVar(&rootOpts.dir, "dir", ".", "assets directory")
 	cmd.PersistentFlags().StringVar(&rootOpts.logLevel, "log-level", "info", "log level (e.g. \"debug | info | warn | error\")")
+	cmd.PersistentFlags().IntVar(&rootOpts.timeout, "timeout", 30, "timeout")
+
 	return cmd
 }
 
