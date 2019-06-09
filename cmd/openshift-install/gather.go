@@ -113,11 +113,12 @@ func logGatherBootstrap(bootstrap string, port int, masters []string, directory 
 	if err != nil {
 		return errors.Wrap(err, "failed to create SSH client")
 	}
-	if err := ssh.Run(client, fmt.Sprintf("/usr/local/bin/installer-gather.sh %s", strings.Join(masters, " "))); err != nil {
+	gatherID := time.Now().Format("20060102150405")
+	if err := ssh.Run(client, fmt.Sprintf("/usr/local/bin/installer-gather.sh --id %s %s", gatherID, strings.Join(masters, " "))); err != nil {
 		return errors.Wrap(err, "failed to run remote command")
 	}
-	file := filepath.Join(directory, fmt.Sprintf("log-bundle-%s.tar.gz", time.Now().Format("20060102150405")))
-	if err := ssh.PullFileTo(client, "/home/core/log-bundle.tar.gz", file); err != nil {
+	file := filepath.Join(directory, fmt.Sprintf("log-bundle-%s.tar.gz", gatherID))
+	if err := ssh.PullFileTo(client, fmt.Sprintf("/home/core/log-bundle-%s.tar.gz", gatherID), file); err != nil {
 		return errors.Wrap(err, "failed to pull log file from remote")
 	}
 	logrus.Infof("Bootstrap gather logs captured here %q", file)
