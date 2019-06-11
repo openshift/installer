@@ -8,6 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/openshift/installer/pkg/wait"
 )
 
 func newWaitForCmd() *cobra.Command {
@@ -44,7 +46,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 				logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 			}
 
-			err = waitForBootstrapComplete(ctx, config, rootOpts.dir)
+			err = wait.BootstrapComplete(ctx, config, rootOpts.dir)
 			if err != nil {
 				logrus.Info("Use the following commands to gather logs from the cluster")
 				logrus.Info("openshift-install gather bootstrap --help")
@@ -72,7 +74,7 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 				logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 			}
 
-			err = waitForInstallComplete(ctx, config, rootOpts.dir)
+			err = wait.InstallComplete(ctx, config, rootOpts.dir)
 			if err != nil {
 				logrus.Fatal(err)
 			}
