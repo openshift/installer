@@ -26,8 +26,8 @@ output "internal_lb_ip_address" {
   value = azurerm_lb.internal.private_ip_address
 }
 
-output "master_nsg_id" {
-  value = azurerm_network_security_group.master.id
+output "master_nsg_name" {
+  value = azurerm_network_security_group.master.name
 }
 
 output "bootstrap_ssh_nat_rule_id" {

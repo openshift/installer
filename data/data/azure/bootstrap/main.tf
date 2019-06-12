@@ -81,6 +81,19 @@ data "ignition_config" "redirect" {
   }
 }
 
+resource "azurerm_public_ip" "bootstrap_public_ip" {
+  sku                 = "Standard"
+  location            = var.region
+  name                = "${var.cluster_id}-bootstrap-pip"
+  resource_group_name = var.resource_group_name
+  allocation_method   = "Static"
+}
+
+data "azurerm_public_ip" "bootstrap_public_ip" {
+  name                = azurerm_public_ip.bootstrap_public_ip.name
+  resource_group_name = var.resource_group_name
+}
+
 resource "azurerm_network_interface" "bootstrap" {
   name                = "${var.cluster_id}-bootstrap-nic"
   location            = var.region
@@ -90,6 +103,7 @@ resource "azurerm_network_interface" "bootstrap" {
     subnet_id                     = var.subnet_id
     name                          = local.bootstrap_nic_ip_configuration_name
     private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.bootstrap_public_ip.id
   }
 }
 
@@ -161,3 +175,16 @@ resource "azurerm_virtual_machine" "bootstrap" {
   }
 }
 
+resource "azurerm_network_security_rule" "bootstrap_ssh_in" {
+  name                        = "bootstrap_ssh_in"
+  priority                    = 103
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "22"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = var.resource_group_name
+  network_security_group_name = var.nsg_name
+}

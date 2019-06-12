@@ -31,7 +31,7 @@ module "bootstrap" {
   ilb_backend_pool_id     = module.vnet.internal_lb_backend_pool_id
   tags                    = local.tags
   boot_diag_blob_endpoint = azurerm_storage_account.bootdiag.primary_blob_endpoint
-  ssh_nat_rule_id         = module.vnet.bootstrap_ssh_nat_rule_id
+  nsg_name                = module.vnet.master_nsg_name
 
   # This is to create explicit dependency on private zone to exist before VMs are created in the vnet. https://github.com/MicrosoftDocs/azure-docs/issues/13728
   private_dns_zone_id = azurerm_dns_zone.private.id

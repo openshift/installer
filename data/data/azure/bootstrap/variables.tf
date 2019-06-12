@@ -68,3 +68,8 @@ variable "private_dns_zone_id" {
   type        = string
   description = "This is to create explicit dependency on private zone to exist before VMs are created in the vnet. https://github.com/MicrosoftDocs/azure-docs/issues/13728"
 }
+
+variable "nsg_name" {
+  type        = string
+  description = "The network security group for the subnet."
+}

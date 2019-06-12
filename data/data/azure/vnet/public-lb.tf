@@ -104,4 +104,3 @@ resource "azurerm_lb_probe" "public_lb_sint" {
   port                = 22623
   protocol            = "TCP"
 }
-
