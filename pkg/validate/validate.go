@@ -68,7 +68,13 @@ func ImagePullSecret(secret string) error {
 }
 
 // ClusterName checks if the given string is a valid name for a cluster and returns an error if not.
+// The max length of the DNS label is `DNS1123LabelMaxLength + 9` because the public DNS zones have records
+// `api.clustername`, `*.apps.clustername`, and *.apps is rendered as the nine-character \052.apps in DNS records.
 func ClusterName(v string) error {
+	maxlen := validation.DNS1123LabelMaxLength - 9
+	if len(v) > maxlen {
+		return errors.New(validation.MaxLenError(maxlen))
+	}
 	return validateSubdomain(v)
 }
 
