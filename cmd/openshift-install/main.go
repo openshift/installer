@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -24,6 +25,9 @@ var (
 )
 
 func main() {
+	// Do this extremely early before we could have multiple threads
+	cleanEnvironment()
+
 	// This attempts to configure klog (used by vendored Kubernetes code) not
 	// to log anything.
 	var fs flag.FlagSet
@@ -41,6 +45,29 @@ func main() {
 	}
 
 	installerMain()
+}
+
+// Drop all terraform environment variables that the user may have passed
+// so they can't use terraform directly.
+func cleanEnvironment() {
+	environ := os.Environ()
+	for _, env := range environ {
+		splits := strings.Split(env, "=")
+		key := splits[0]
+		if strings.HasPrefix(key, "TF_") {
+			switch key {
+			case "TF_LOG":
+				//Do Nothing
+			default:
+				// Using format because log hasn't been set up yet.
+				// and I don't want to do this after log is set up because
+				// then we might have multiple threads and messing with ENV
+				// is basically impossible then.
+				fmt.Printf("Ignoring unsupported environment variable: %s", key)
+				os.Unsetenv(key)
+			}
+		}
+	}
 }
 
 func installerMain() {
