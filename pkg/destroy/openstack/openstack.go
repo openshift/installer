@@ -53,6 +53,15 @@ type ClusterUninstaller struct {
 	Logger logrus.FieldLogger
 }
 
+// New returns an OpenStack destroyer from ClusterMetadata.
+func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
+	return &ClusterUninstaller{
+		Cloud:  metadata.ClusterPlatformMetadata.OpenStack.Cloud,
+		Filter: metadata.ClusterPlatformMetadata.OpenStack.Identifier,
+		Logger: logger,
+	}, nil
+}
+
 // Run is the entrypoint to start the uninstall process.
 func (o *ClusterUninstaller) Run() error {
 	deleteFuncs := map[string]deleteFunc{}
@@ -585,13 +594,4 @@ func deleteTrunks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 		}
 	}
 	return len(allTrunks) == 0, nil
-}
-
-// New returns an OpenStack destroyer from ClusterMetadata.
-func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
-	return &ClusterUninstaller{
-		Cloud:  metadata.ClusterPlatformMetadata.OpenStack.Cloud,
-		Filter: metadata.ClusterPlatformMetadata.OpenStack.Identifier,
-		Logger: logger,
-	}, nil
 }
