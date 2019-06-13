@@ -20,8 +20,8 @@ const (
 	// the environment more predictable. We expect there to a secret
 	// named `openstack-credentials` and a cloud named `openstack` in
 	// the clouds file stored in this secret.
-	cloudsSecret          = "openstack-credentials"
-	cloudsSecretNamespace = "kube-system"
+	cloudsSecret          = "openstack-cloud-credentials"
+	cloudsSecretNamespace = "openshift-machine-api"
 
 	// CloudName is a constant containing the name of the cloud used in the internal cloudsSecret
 	CloudName = "openstack"
