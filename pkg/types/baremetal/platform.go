@@ -63,4 +63,7 @@ type Platform struct {
 
 	// IngressVIP is the VIP to use for ingress traffic
 	IngressVIP string `json:"ingressVIP"`
+
+	// DNSVIP is the VIP to use for internal DNS communication
+	DNSVIP     string `json:"dnsVIP"`
 }
