@@ -70,6 +70,11 @@ type InstallConfig struct {
 
 	// PullSecret is the secret to use when pulling images.
 	PullSecret string `json:"pullSecret"`
+
+	// Proxy defines the proxy settings for the cluster.
+	// If unset, the cluster will not be configured to use a proxy.
+	// +optional
+	Proxy *Proxy `json:"proxy,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
@@ -181,4 +186,20 @@ type ClusterNetworkEntry struct {
 	// The size of blocks to allocate from the larger pool.
 	// This is the length in bits - so a 9 here will allocate a /23.
 	DeprecatedHostSubnetLength int32 `json:"hostSubnetLength,omitempty"`
+}
+
+// Proxy defines the proxy settings for the cluster.
+// At least one of HTTPProxy or HTTPSProxy is required.
+type Proxy struct {
+	// HTTPProxy is the URL of the proxy for HTTP requests.
+	// +optional
+	HTTPProxy string `json:"httpProxy,omitempty"`
+
+	// HTTPSProxy is the URL of the proxy for HTTPS requests.
+	// +optional
+	HTTPSProxy string `json:"httpsProxy,omitempty"`
+
+	// NoProxy is a comma-separated list of domains and CIDRs for which the proxy should not be used.
+	// +optional
+	NoProxy string `json:"noProxy,omitempty"`
 }

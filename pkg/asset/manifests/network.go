@@ -25,7 +25,7 @@ var (
 // their CRD created by the CVO, but we need to create the corresponding
 // CRs in the installer, so we need the CRD to be there.
 // The first CRD is the high-level Network.config.openshift.io object,
-// which is stable ahd minimal. Administrators can override configure the
+// which is stable and minimal. Administrators can configure the
 // network in a more detailed manner with the operator-specific CR, which
 // also needs to be done before the installer is run, so we provide both.
 

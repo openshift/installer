@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"net"
 	"sort"
 	"strings"
 
@@ -77,6 +78,9 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	allErrs = append(allErrs, validateCompute(&c.Platform, c.Compute, field.NewPath("compute"))...)
 	if err := validate.ImagePullSecret(c.PullSecret); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("pullSecret"), c.PullSecret, err.Error()))
+	}
+	if c.Proxy != nil {
+		allErrs = append(allErrs, validateProxy(c.Proxy, field.NewPath("proxy"))...)
 	}
 	return allErrs
 }
@@ -227,5 +231,35 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackVa
 	if platform.VSphere != nil {
 		validate(vsphere.Name, platform.VSphere, func(f *field.Path) field.ErrorList { return vspherevalidation.ValidatePlatform(platform.VSphere, f) })
 	}
+	return allErrs
+}
+
+func validateProxy(p *types.Proxy, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if p.HTTPProxy == "" && p.HTTPSProxy == "" {
+		allErrs = append(allErrs, field.Required(fldPath, "must include httpProxy or httpsProxy"))
+	}
+	if p.HTTPProxy != "" {
+		if err := validate.URIWithProtocol(p.HTTPProxy, "http"); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("HTTPProxy"), p.HTTPProxy, err.Error()))
+		}
+	}
+	if p.HTTPSProxy != "" {
+		if err := validate.URIWithProtocol(p.HTTPSProxy, "https"); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("HTTPSProxy"), p.HTTPSProxy, err.Error()))
+		}
+	}
+	if p.NoProxy != "" {
+		for _, v := range strings.Split(p.NoProxy, ",") {
+			v = strings.TrimSpace(v)
+			errDomain := validate.DomainName(v, false)
+			_, _, errCIDR := net.ParseCIDR(v)
+			if errDomain != nil && errCIDR != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("NoProxy"), v, "must be a CIDR or domain, without wildcard characters and without leading or trailing dots ('.')"))
+			}
+		}
+	}
+
 	return allErrs
 }

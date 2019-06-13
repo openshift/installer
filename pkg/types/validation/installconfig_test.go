@@ -45,6 +45,11 @@ func validInstallConfig() *types.InstallConfig {
 			AWS: validAWSPlatform(),
 		},
 		PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+		Proxy: &types.Proxy{
+			HTTPProxy:  "http://user:password@127.0.0.1:8080",
+			HTTPSProxy: "https://user:password@127.0.0.1:8080",
+			NoProxy:    "valid-proxy.com, 172.30.0.0/16",
+		},
 	}
 }
 
@@ -72,7 +77,6 @@ func validVSpherePlatform() *vsphere.Platform {
 		DefaultDatastore: "test-datastore",
 	}
 }
-
 func TestValidateInstallConfig(t *testing.T) {
 	cases := []struct {
 		name          string
@@ -450,6 +454,80 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^platform\.vsphere.vCenter: Required value: must specify the name of the vCenter$`,
+		},
+		{
+			name: "empty proxy settings",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = ""
+				c.Proxy.HTTPSProxy = ""
+				c.Proxy.NoProxy = ""
+				return c
+			}(),
+			expectedError: `^proxy: Required value: must include httpProxy or httpsProxy$`,
+		},
+		{
+			name: "invalid HTTPProxy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = "http://bad%20uri"
+				return c
+			}(),
+			expectedError: `^\QHTTPProxy: Invalid value: "http://bad%20uri": parse http://bad%20uri: invalid URL escape "%20"\E$`,
+		},
+		{
+			name: "invalid HTTPSProxy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPSProxy = "https://bad%20uri"
+				return c
+			}(),
+			expectedError: `^\QHTTPSProxy: Invalid value: "https://bad%20uri": parse https://bad%20uri: invalid URL escape "%20"\E$`,
+		},
+		{
+			name: "invalid NoProxy domain",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.NoProxy = "good-no-proxy.com, .bad-proxy."
+				return c
+			}(),
+			expectedError: `^\QNoProxy: Invalid value: ".bad-proxy.": must be a CIDR or domain, without wildcard characters and without leading or trailing dots ('.')\E$`,
+		},
+		{
+			name: "invalid NoProxy CIDR",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.NoProxy = "good-no-proxy.com, 172.bad.CIDR.0/16"
+				return c
+			}(),
+			expectedError: `^\QNoProxy: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters and without leading or trailing dots ('.')\E$`,
+		},
+		{
+			name: "invalid NoProxy domain & CIDR",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.NoProxy = "good-no-proxy.com, a-good-one, .bad-proxy., another,   172.bad.CIDR.0/16, good-end"
+				return c
+			}(),
+			expectedError: `^\Q[NoProxy: Invalid value: ".bad-proxy.": must be a CIDR or domain, without wildcard characters and without leading or trailing dots ('.'), NoProxy: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters and without leading or trailing dots ('.')]\E$`,
+		},
+		{
+			name: "invalid HTTP proxy, using HTTPS",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = "https://user:password@127.0.0.1:8080"
+				return c
+			}(),
+			expectedError: `^\QHTTPProxy: Invalid value: "https://user:password@127.0.0.1:8080": must use http protocol\E$`,
+		},
+		{
+			name: "invalid HTTPS proxy, using HTTP",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPSProxy = "http://user:password@127.0.0.1:8080"
+				return c
+			}(),
+			expectedError: `^\QHTTPSProxy: Invalid value: "http://user:password@127.0.0.1:8080": must use https protocol\E$`,
 		},
 	}
 	for _, tc := range cases {
