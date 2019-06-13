@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	cloudsSecret          = "azure-credentials"
-	cloudsSecretNamespace = "kube-system"
+	cloudsSecret          = "azure-cloud-credentials"
+	cloudsSecretNamespace = "openshift-machine-api"
 )
 
 // Machines returns a list of machines for a machinepool.
