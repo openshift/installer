@@ -10,7 +10,7 @@ import (
 )
 
 func TestClusterName(t *testing.T) {
-	maxSizeName := strings.Repeat("123456789.", 25) + "123"
+	maxSizeName := strings.Repeat("123456789.", 5) + "1234"
 
 	cases := []struct {
 		name        string

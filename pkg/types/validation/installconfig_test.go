@@ -127,11 +127,11 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "overly long cluster domain",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.ObjectMeta.Name = fmt.Sprintf("test-cluster%050d", 0)
-				c.BaseDomain = fmt.Sprintf("test-domain%050d.a%060d.b%060d.c%060d", 0, 0, 0, 0)
+				c.ObjectMeta.Name = fmt.Sprintf("test-cluster%042d", 0)
+				c.BaseDomain = fmt.Sprintf("test-domain%056d.a%060d.b%060d.c%060d", 0, 0, 0, 0)
 				return c
 			}(),
-			expectedError: `^baseDomain: Invalid value: "` + fmt.Sprintf("test-cluster%050d.test-domain%050d.a%060d.b%060d.c%060d", 0, 0, 0, 0, 0) + `": must be no more than 253 characters$`,
+			expectedError: `^baseDomain: Invalid value: "` + fmt.Sprintf("test-cluster%042d.test-domain%056d.a%060d.b%060d.c%060d", 0, 0, 0, 0, 0) + `": must be no more than 253 characters$`,
 		},
 		{
 			name: "missing networking",
