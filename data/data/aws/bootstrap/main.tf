@@ -194,3 +194,7 @@ resource "aws_security_group_rule" "bootstrap_journald_gateway" {
   to_port     = 19531
 }
 
+output "ip_address" {
+  value = "${aws_instance.bootstrap.private_ip}"
+}
+
