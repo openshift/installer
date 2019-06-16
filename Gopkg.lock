@@ -1137,14 +1137,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1ec43d1093555bc7a4f63f0cec39c215d1c5754b90bd9741d7ded6c2110fc465"
+  digest = "1:4271f208cbd48a3758384d61ae02c7fddb6b8dc8f8c01b946614e891709c9349"
   name = "sigs.k8s.io/cluster-api-provider-azure"
   packages = [
     "pkg/apis",
     "pkg/apis/azureprovider/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "106e77fea15a9a0a39776b3edbc5666aa337ca70"
+  revision = "702ef3a407263373a619b4df1be7fda77ef2a7e5"
   source = "https://github.com/openshift/cluster-api-provider-azure.git"
 
 [[projects]]
