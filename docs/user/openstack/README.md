@@ -30,6 +30,9 @@ clouds:
       username: 'devuser'
       password: XXX
       project_name: 'devonly'
+      project_id: <ID of the project. Get it from 'openstack project list'>
+      project_domain_name: Default
+      user_domain_name: Default         
       auth_url: 'https://10.10.14.22:5001/v2.0'
 ```
 
@@ -43,6 +46,69 @@ enough to store the ignition config files, so they are served by swift instead.
 
 * You may need to increase the security group related quotas from their default
   values. For example (as an OpenStack admin) `openstack quota set --secgroups 100 --secgroup-rules 1000 <project>`
+
+
+* A file `install-config.yaml` is required. It defines your cluster topology. Save it because a failed installation will delete it. It looks like this:
+
+```
+apiVersion: v1
+baseDomain: example.com
+controlPlane:
+  name: master
+  platform:
+    openstack:
+      type: m1.master
+  replicas: 3
+compute:
+- name: worker
+  platform:
+    openstack:
+      type: m1.master
+  replicas: 1
+metadata:
+  name: test-cluster
+networking:
+  clusterNetworks:
+  - cidr: 10.128.0.0/14
+    hostSubnetLength: 9
+  machineCIDR: 10.0.0.0/16
+  serviceCIDR: 172.30.0.0/16
+  type: OpenShiftSDN
+platform:
+  openstack:
+    cloud: openstack
+    region: RegionOne
+    externalNetwork: openshift-external
+    flavorName: m1.master
+    computeFlavor: m1.master
+    baseDomainResourceGroupName: os4-common
+    lbFloatingIP: "<FLOATING EXTERNAL IP ADDRESS>"
+pullSecret: '{"auths":{"cloud.openshift.com": ...}'
+sshKey: ssh-rsa AAAA...
+```
+### Pull secret
+The pull Secret [can be obtained here](https://cloud.redhat.com/openshift/install).
+
+### ssh
+
+The sshKey in the `install-config.yaml` is required for ssh'ing into the virtual machines.
+
+If you only have a private IP on your VMs you can do that to ssh into them from the OpenStack Controller:
+
+```
+sudo ip netns ls
+
+$ sudo ip netns ls
+qdhcp-d3904a4d-f25d-4145-bc85-f2be0573ffd7 (id: 12)
+qrouter-a34...
+...
+```
+
+Grab the ID **qdhcp**-`<YOUR OPENSHIFT NETWORK ID>` (in this case: qdhcp-d3904a4d-f25d-4145-bc85-f2be0573ffd7)
+
+```
+sudo ip netns exec qdhcp-<YOUR NETWORK ID> ssh -i <PRIVATE SSH KEY FILE> core@<PRIVATE IP OF YOUR VM>
+```
 
 * The installer requires a proper RHCOS image in the OpenStack cluster or project:
 `openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.qcow2 rhcos-${RHCOSVERSION}`
@@ -161,6 +227,43 @@ OpenShift API and as an internal DNS for the instances
 The installer should finish successfully, though it is still undergoing development and things might break from time to time.
 
 ### Workarounds
+
+#### Switch over from bootstrap control plane to production control plane
+
+During the installation a support VM will be spawned. It contains a load balancer (HAPROXY) and a DNS Server (CoreDNS).
+
+On this VM runs a service, which periodically checks the production cluster for its control plane being available. In this case the IP address of the bootstrap control plane will be removed from the load balancer's config, the load balancer will be restarted. 
+
+Sometimes this watcher service starts to flutter because during the installation process the API servers on the production control plane might be restarted. This can delay the installation procedure a lot.
+
+Workaround: Disable the watcher script on the support VM (with HAPROXY) immediately after it has been spawned by the installer until the control plane (all API servers on the master VMs) is available:
+
+```
+sudo systemctl stop haproxy-watcher.timer
+sudo systemctl stop haproxy-watcher
+sudo systemctl disable haproxy-watcher.timer
+sudo systemctl disable haproxy-watcher
+```
+
+SSH into the masters and try to get a 'not authorized' answer from the API servers:
+
+```
+curl -k https://localhost:6443
+```
+
+If the response is no `curl: (7) Failed connect to localhost:6443; Connection refused` you can enable the watcher on the support VM again:
+
+```
+sudo systemctl start haproxy-watcher.timer
+sudo systemctl start haproxy-watcher
+sudo systemctl enable haproxy-watcher.timer
+sudo systemctl enable haproxy-watcher
+```
+
+#### Increase timeouts
+
+If you are regulary are running into timeout problems you can increase the timeouts in `cmd/openshift-install/create.go`. In the future it might by better to make them configurable in the install-config.yaml script.
+
 
 #### External DNS
 
