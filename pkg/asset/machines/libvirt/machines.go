@@ -64,7 +64,7 @@ func provider(clusterID string, networkInterfaceAddress string, platform *libvir
 			Kind:       "LibvirtMachineProviderConfig",
 		},
 		DomainMemory: 6144,
-		DomainVcpu:   2,
+		DomainVcpu:   4,
 		Ignition: &libvirtprovider.Ignition{
 			UserDataSecret: userDataSecret,
 		},
