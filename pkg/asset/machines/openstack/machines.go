@@ -91,7 +91,7 @@ func provider(clusterID string, platform *openstack.Platform, mpool *openstack.M
 			Size:       pointer.Int64Ptr(int64(mpool.Size)),
 		},*/
 		Image:          osImage,
-		CloudName:      CloudName,
+		CloudName:      platform.Cloud,
 		CloudsSecret:   &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
 		UserDataSecret: &corev1.SecretReference{Name: userDataSecret},
 		Networks: []openstackprovider.NetworkParam{
