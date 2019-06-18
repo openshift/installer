@@ -232,10 +232,12 @@ if [ ! -d etcd-bootstrap.done ]
 then
        echo "Rendering etcd Operator Manifests..."
        rm -rf etcd-bootstrap
-       #ls -al /opt/openshift/tls
+       mkdir -p /etc/etcd
        podman run \
            --quiet \
            --volume "$PWD:/assets:z" \
+           --volume /etc/kubernetes:/etc/kubernetes:z \
+           --volume /etc/etcd:/etc/etcd:z \
            "${MACHINE_CONFIG_ETCD_OPERATOR_IMAGE}" \
            /usr/bin/cluster-etcd-operator render \
            --etcd-ca=/assets/tls/etcd-ca-bundle.crt \
