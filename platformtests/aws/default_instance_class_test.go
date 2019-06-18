@@ -1,10 +1,13 @@
 package aws
 
 import (
+	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/pricing"
 	awsutil "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types/aws/defaults"
@@ -13,17 +16,18 @@ import (
 )
 
 func TestGetDefaultInstanceClass(t *testing.T) {
+	preferredInstanceClasses := []string{"m4", "m5"} // decreasing precedence
+
 	ssn, err := awsutil.GetSession()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	exists := struct{}{}
-	instanceClasses := map[string]map[string]struct{}{}
+	pricingInstanceClasses := map[string]map[string]struct{}{}
 
-	client := pricing.New(ssn, aws.NewConfig().WithRegion("us-east-1"))
-
-	err = client.GetProductsPages(
+	pricingClient := pricing.New(ssn, aws.NewConfig().WithRegion("us-east-1"))
+	err = pricingClient.GetProductsPages(
 		&pricing.GetProductsInput{
 			ServiceCode: aws.String("AmazonEC2"),
 			Filters: []*pricing.Filter{
@@ -57,11 +61,11 @@ func TestGetDefaultInstanceClass(t *testing.T) {
 				instanceType := attr["instanceType"].(string)
 				instanceClassSlice := strings.Split(instanceType, ".")
 				instanceClass := instanceClassSlice[0]
-				_, ok := instanceClasses[location]
+				_, ok := pricingInstanceClasses[location]
 				if ok {
-					instanceClasses[location][instanceClass] = exists
+					pricingInstanceClasses[location][instanceClass] = exists
 				} else {
-					instanceClasses[location] = map[string]struct{}{instanceClass: exists}
+					pricingInstanceClasses[location] = map[string]struct{}{instanceClass: exists}
 				}
 			}
 			return !lastPage
@@ -76,7 +80,7 @@ func TestGetDefaultInstanceClass(t *testing.T) {
 		"AWS GovCloud (US)":         "us-gov-west-1",
 	}
 
-	for location, classes := range instanceClasses {
+	for location, classes := range pricingInstanceClasses {
 		t.Run(location, func(t *testing.T) {
 			region, ok := regions[location]
 			if !ok {
@@ -92,19 +96,81 @@ func TestGetDefaultInstanceClass(t *testing.T) {
 				}
 			}
 
-			class := ""
-			// ordered list of prefered instance classes
-			for _, preferredClass := range []string{"m4", "m5"} {
-				if _, ok := classes[preferredClass]; ok {
-					class = preferredClass
+			ec2Client := ec2.New(ssn, aws.NewConfig().WithRegion(region))
+			zonesResponse, err := ec2Client.DescribeAvailabilityZones(nil)
+			if err != nil {
+				t.Logf("no direct access to region, assuming full support: %v", err)
+
+				var match string
+				for _, instanceClass := range preferredInstanceClasses {
+					if _, ok := classes[instanceClass]; ok {
+						match = instanceClass
+						break
+					}
+				}
+
+				if match == "" {
+					t.Fatalf("none of the preferred instance classes are priced: %v", classes)
+				}
+
+				t.Log(classes)
+				assert.Equal(t, defaults.InstanceClass(region), match)
+				return
+			}
+
+			zones := make(map[string]struct{}, len(zonesResponse.AvailabilityZones))
+			for _, zone := range zonesResponse.AvailabilityZones {
+				zones[*zone.ZoneName] = exists
+			}
+
+			available := make(map[string]map[string]struct{}, len(preferredInstanceClasses))
+			var match string
+
+			for _, instanceClass := range preferredInstanceClasses {
+				if _, ok := classes[instanceClass]; !ok {
+					t.Logf("skip the unpriced %s", instanceClass)
+					continue
+				}
+
+				available[instanceClass] = make(map[string]struct{}, len(zones))
+				exampleInstanceType := fmt.Sprintf("%s.large", instanceClass)
+				err := ec2Client.DescribeReservedInstancesOfferingsPages(
+					&ec2.DescribeReservedInstancesOfferingsInput{
+						Filters: []*ec2.Filter{
+							{Name: aws.String("scope"), Values: []*string{aws.String("Availability Zone")}},
+						},
+						InstanceTenancy:    aws.String("default"),
+						InstanceType:       &exampleInstanceType,
+						ProductDescription: aws.String("Linux/UNIX"),
+					},
+					func(results *ec2.DescribeReservedInstancesOfferingsOutput, lastPage bool) bool {
+						for _, offering := range results.ReservedInstancesOfferings {
+							if offering.AvailabilityZone == nil {
+								continue
+							}
+
+							available[instanceClass][*offering.AvailabilityZone] = exists
+						}
+
+						return !lastPage
+					},
+				)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if reflect.DeepEqual(available[instanceClass], zones) {
+					match = instanceClass
 					break
 				}
 			}
-			if class == "" {
-				t.Fatalf("does not support any preferred classes: %v", classes)
+
+			if match == "" {
+				t.Fatalf("none of the preferred instance classes are fully supported: %v", available)
 			}
-			defaultClass := defaults.InstanceClass(region)
-			assert.Equal(t, defaultClass, class)
+
+			t.Log(available)
+			assert.Equal(t, defaults.InstanceClass(region), match)
 		})
 	}
 }
