@@ -356,6 +356,16 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 			}
 		}
 
+		// Clean Gateway interface
+		updateOpts := routers.UpdateOpts{
+			GatewayInfo: &routers.GatewayInfo{},
+		}
+
+		_, err = routers.Update(conn, router.ID, updateOpts).Extract()
+		if err != nil {
+			logger.Fatalf("%v", err)
+		}
+
 		// Get router interface ports
 		portListOpts := ports.ListOpts{
 			DeviceID: router.ID,
