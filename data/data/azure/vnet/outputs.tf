@@ -29,12 +29,3 @@ output "internal_lb_ip_address" {
 output "master_nsg_name" {
   value = azurerm_network_security_group.master.name
 }
-
-output "bootstrap_ssh_nat_rule_id" {
-  value = azurerm_lb_nat_rule.bootstrap_ssh.id
-}
-
-output "mmaster_ssh_nat_rule_ids" {
-  value = azurerm_lb_nat_rule.master_ssh.*.id
-}
-

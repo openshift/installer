@@ -53,11 +53,6 @@ variable "boot_diag_blob_endpoint" {
   description = "the blob endpoint where machines should store their boot diagnostics."
 }
 
-variable "ssh_nat_rule_id" {
-  type        = string
-  description = "ssh nat rule to make the bootstrap node reachable"
-}
-
 variable "tags" {
   type        = map(string)
   default     = {}

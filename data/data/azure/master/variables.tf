@@ -83,11 +83,6 @@ variable "master_subnet_cidr" {
   description = "the master subnet cidr"
 }
 
-variable "ssh_nat_rule_ids" {
-  type        = list(string)
-  description = "ssh nat rule to make the master nodes reachable"
-}
-
 variable "private_dns_zone_id" {
   type        = string
   description = "This is to create explicit dependency on private zone to exist before VMs are created in the vnet. https://github.com/MicrosoftDocs/azure-docs/issues/13728"

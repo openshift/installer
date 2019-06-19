@@ -47,7 +47,6 @@ module "vnet" {
   cluster_id          = var.cluster_id
   region              = var.azure_region
   dns_label           = var.cluster_id
-  master_count        = var.master_count
 
   # This is to create explicit dependency on private zone to exist before VMs are created in the vnet. https://github.com/MicrosoftDocs/azure-docs/issues/13728
   private_dns_zone_id = azurerm_dns_zone.private.id
@@ -70,7 +69,6 @@ module "master" {
   instance_count          = var.master_count
   boot_diag_blob_endpoint = azurerm_storage_account.bootdiag.primary_blob_endpoint
   os_volume_size          = var.azure_master_root_volume_size
-  ssh_nat_rule_ids        = module.vnet.mmaster_ssh_nat_rule_ids
 
   # This is to create explicit dependency on private zone to exist before VMs are created in the vnet. https://github.com/MicrosoftDocs/azure-docs/issues/13728
   private_dns_zone_id = azurerm_dns_zone.private.id

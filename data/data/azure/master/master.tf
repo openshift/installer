@@ -17,13 +17,6 @@ resource "azurerm_network_interface" "master" {
   }
 }
 
-resource "azurerm_network_interface_nat_rule_association" "master_ssh" {
-  count                 = var.instance_count
-  network_interface_id  = element(azurerm_network_interface.master.*.id, count.index)
-  ip_configuration_name = local.ip_configuration_name
-  nat_rule_id           = element(var.ssh_nat_rule_ids, count.index)
-}
-
 resource "azurerm_network_interface_backend_address_pool_association" "master" {
   count                   = var.instance_count
   network_interface_id    = element(azurerm_network_interface.master.*.id, count.index)
