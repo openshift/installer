@@ -28,13 +28,11 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/ghodss/yaml"
-
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
 var (
@@ -78,11 +76,7 @@ func NewCodec() (*AWSProviderConfigCodec, error) {
 // DecodeProviderSpec deserialises an object from the provider config
 func (codec *AWSProviderConfigCodec) DecodeProviderSpec(providerSpec *machinev1.ProviderSpec, out runtime.Object) error {
 	if providerSpec.Value != nil {
-		// TODO(vikasc): revert back to using `Decode` once installer and mao have started using
-		// awsprovider apis pivoted under openshift.io api group
-		// _, _, err := codec.decoder.Decode(providerSpec.Value.Raw, nil, out)
-		// if err != nil {
-		if err := yaml.Unmarshal(providerSpec.Value.Raw, out); err != nil {
+		if _, _, err := codec.decoder.Decode(providerSpec.Value.Raw, nil, out); err != nil {
 			return fmt.Errorf("decoding failure: %v", err)
 		}
 	}
@@ -112,11 +106,7 @@ func (codec *AWSProviderConfigCodec) EncodeProviderStatus(in runtime.Object) (*r
 // DecodeProviderStatus deserialises the provider status
 func (codec *AWSProviderConfigCodec) DecodeProviderStatus(providerStatus *runtime.RawExtension, out runtime.Object) error {
 	if providerStatus != nil {
-		// TODO(vikasc): revert back to using `Decode` once installer and mao have started using
-		// awsprovider apis pivoted under openshift.io api group
-		//_, _, err := codec.decoder.Decode(providerStatus.Raw, nil, out)
-		if err := yaml.Unmarshal(providerStatus.Raw, out); err != nil {
-
+		if _, _, err := codec.decoder.Decode(providerStatus.Raw, nil, out); err != nil {
 			return fmt.Errorf("decoding failure: %v", err)
 		}
 	}

@@ -63,16 +63,16 @@ required = [
 
 [[constraint]]
   name = "github.com/openshift/cluster-api"
-  revision = "cad0f8326cd26bd92fe2f0f90b5ca2e2cbc8a210"
+  branch = "openshift-4.2-cluster-api-0.1.0"
 
 [[constraint]]
   name = "sigs.k8s.io/cluster-api-provider-aws"
   source = "https://github.com/openshift/cluster-api-provider-aws.git"
-  revision = "15fe4b4ea5636f8516c238490fc6a85d44161181"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/openshift/cluster-api-provider-libvirt"
-  revision = "2705e5265b62886d8df453b8d4a4601dc0c33084"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/pkg/errors"

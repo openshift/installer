@@ -1,4 +1,4 @@
-package utils
+package aws
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	minterv1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1"
-	ccaws "github.com/openshift/cloud-credential-operator/pkg/aws"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -97,6 +96,10 @@ var (
 	credentialRequestCodec  = serializer.NewCodecFactory(credentailRequestScheme)
 )
 
+const (
+	infrastructureConfigName = "cluster"
+)
+
 func init() {
 	if err := minterv1.AddToScheme(credentailRequestScheme); err != nil {
 		panic(err)
@@ -104,14 +107,14 @@ func init() {
 }
 
 // CheckCloudCredCreation will see whether we have enough permissions to create new sub-creds
-func CheckCloudCredCreation(awsClient ccaws.Client, logger log.FieldLogger) (bool, error) {
+func CheckCloudCredCreation(awsClient Client, logger log.FieldLogger) (bool, error) {
 	return CheckPermissionsAgainstActions(awsClient, credMintingActions, logger)
 }
 
 // getClientDetails will return the *iam.User associated with the provided client's credentials,
 // a boolean indicating whether the user is the 'root' account, and any error encountered
 // while trying to gather the info.
-func getClientDetails(awsClient ccaws.Client) (*iam.User, bool, error) {
+func getClientDetails(awsClient Client) (*iam.User, bool, error) {
 	rootUser := false
 
 	user, err := awsClient.GetUser(nil)
@@ -133,7 +136,7 @@ func getClientDetails(awsClient ccaws.Client) (*iam.User, bool, error) {
 
 // CheckPermissionsUsingQueryClient will use queryClient to query whether the credentials in targetClient can perform the actions
 // listed in the statementEntries. queryClient will need iam:GetUser and iam:SimulatePrincipalPolicy
-func CheckPermissionsUsingQueryClient(queryClient, targetClient ccaws.Client, statementEntries []minterv1.StatementEntry, logger log.FieldLogger) (bool, error) {
+func CheckPermissionsUsingQueryClient(queryClient, targetClient Client, statementEntries []minterv1.StatementEntry, logger log.FieldLogger) (bool, error) {
 	targetUser, isRoot, err := getClientDetails(targetClient)
 	if err != nil {
 		return false, fmt.Errorf("error gathering AWS credentials details: %v", err)
@@ -181,14 +184,14 @@ func CheckPermissionsUsingQueryClient(queryClient, targetClient ccaws.Client, st
 
 // CheckPermissionsAgainstStatementList will test to see whether the list of actions in the provided
 // list of StatementEntries can work with the credentials used by the passed-in awsClient
-func CheckPermissionsAgainstStatementList(awsClient ccaws.Client, statementEntries []minterv1.StatementEntry, logger log.FieldLogger) (bool, error) {
+func CheckPermissionsAgainstStatementList(awsClient Client, statementEntries []minterv1.StatementEntry, logger log.FieldLogger) (bool, error) {
 	return CheckPermissionsUsingQueryClient(awsClient, awsClient, statementEntries, logger)
 }
 
 // CheckPermissionsAgainstActions will take the static list of Actions to check whether the provided
 // awsClient creds have sufficient permissions to perform the actions.
 // Will return true/false indicating whether the permissions are sufficient.
-func CheckPermissionsAgainstActions(awsClient ccaws.Client, actionList []string, logger log.FieldLogger) (bool, error) {
+func CheckPermissionsAgainstActions(awsClient Client, actionList []string, logger log.FieldLogger) (bool, error) {
 	statementList := []minterv1.StatementEntry{
 		{
 			Action:   actionList,
@@ -204,7 +207,7 @@ func CheckPermissionsAgainstActions(awsClient ccaws.Client, actionList []string,
 // to other components as-is based on the static list of permissions needed by the various
 // users of CredentialsRequests
 // TODO: move away from static list (to dynamic passthrough validation?)
-func CheckCloudCredPassthrough(awsClient ccaws.Client, logger log.FieldLogger) (bool, error) {
+func CheckCloudCredPassthrough(awsClient Client, logger log.FieldLogger) (bool, error) {
 	return CheckPermissionsAgainstActions(awsClient, credPassthroughActions, logger)
 }
 
@@ -230,7 +233,8 @@ func getCredentialRequestStatements(crBytes []byte) ([]minterv1.StatementEntry, 
 		return statementList, err
 	}
 
-	awsSpec, err := awsCodec.DecodeProviderSpec(cr.Spec.ProviderSpec, &minterv1.AWSProviderSpec{})
+	awsSpec := minterv1.AWSProviderSpec{}
+	err = awsCodec.DecodeProviderSpec(cr.Spec.ProviderSpec, &awsSpec)
 	if err != nil {
 		return statementList, fmt.Errorf("error decoding spec.ProviderSpec: %v", err)
 	}

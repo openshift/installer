@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/scheme"
 
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 )

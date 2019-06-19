@@ -60,6 +60,12 @@ type AzureMachineProviderSpec struct {
 
 	// NatRule to set inbound NAT rule of the load balancer
 	NatRule *int `json:"natRule"`
+
+	// ManagedIdentity to set managed identity name
+	ManagedIdentity string `json:"managedIdentity"`
+
+	// Vnet to set virtual network name
+	Vnet string `json:"vnet"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

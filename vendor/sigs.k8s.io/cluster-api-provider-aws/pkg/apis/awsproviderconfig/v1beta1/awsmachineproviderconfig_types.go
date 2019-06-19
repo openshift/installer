@@ -25,9 +25,7 @@ import (
 const (
 	// ClusterIDLabel is the label that a machineset must have to identify the
 	// cluster to which it belongs.
-	ClusterIDLabel   = "sigs.k8s.io/cluster-api-cluster"
-	MachineRoleLabel = "sigs.k8s.io/cluster-api-machine-role"
-	MachineTypeLabel = "sigs.k8s.io/cluster-api-machine-type"
+	ClusterIDLabel = "machine.openshift.io/cluster-api-cluster"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -190,8 +188,9 @@ type EBSBlockDeviceSpec struct {
 	// and bursting, see Amazon EBS Volume Types (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html)
 	// in the Amazon Elastic Compute Cloud User Guide.
 	//
-	// Constraint: Range is 100-20000 IOPS for io1 volumes and 100-10000 IOPS for
-	// gp2 volumes.
+	// Minimal and maximal IOPS for io1 and gp2 are constrained. Please, check
+	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html
+	// for precise boundaries for individual volumes.
 	//
 	// Condition: This parameter is required for requests to create io1 volumes;
 	// it is not used in requests to create gp2, st1, sc1, or standard volumes.
