@@ -2,6 +2,24 @@
 
 
 [[projects]]
+  digest = "1:05a9cb1a5eeaf2e8111957459b5eca270e0becc39f701ea663d0afcd6b9433f1"
+  name = "cloud.google.com/go"
+  packages = [
+    "bigtable",
+    "bigtable/internal/gax",
+    "bigtable/internal/option",
+    "compute/metadata",
+    "iam",
+    "internal/optional",
+    "internal/trace",
+    "longrunning",
+    "longrunning/autogen",
+  ]
+  pruneopts = "NUT"
+  revision = "457ea5c15ccf3b87db582c450e80101989da35f7"
+  version = "v0.40.0"
+
+[[projects]]
   digest = "1:3fb854fc35fafced21615a93db3c0e324c8cb1d5a89f39dd1e72db0c4200345a"
   name = "contrib.go.opencensus.io/exporter/ocagent"
   packages = ["."]
@@ -106,6 +124,14 @@
   pruneopts = "NUT"
   revision = "41959bdd855fb7db467f78865d5f9044507df1cd"
   version = "v2"
+
+[[projects]]
+  digest = "1:1929b21a34400d463a99336f8e2908d2a154dc525c52411a8d99bb519942dc4c"
+  name = "github.com/apparentlymart/go-cidr"
+  packages = ["cidr"]
+  pruneopts = "NUT"
+  revision = "b1115bf8e14a60131a196f908223e4506b0ddc35"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:b64410231651b7912fc7cbfed95cba05c5c61af1cc8c676e2accc79ea6c1d6ef"
@@ -374,6 +400,22 @@
   revision = "d3c2ba80e75eeef10c5cf2fc76d2c809637376b3"
 
 [[projects]]
+  branch = "master"
+  digest = "1:09c0a5767800a5cf29bb7dade4c3bcaa1fb43ddebad68d2fa98d037cf0f06a3b"
+  name = "github.com/gammazero/deque"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "46e4ffb7a622d58ccd5c73a7401afac7d5a8edee"
+
+[[projects]]
+  branch = "master"
+  digest = "1:686018990c164ceda3c45bdc782f8b984033737a1f64d09ab9f17934e049de45"
+  name = "github.com/gammazero/workerpool"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "0ed5e40ec55ef92598868a91818ebef436f4dcd0"
+
+[[projects]]
   digest = "1:a1b2a5e38f79688ee8250942d5fa960525fceb1024c855c7bc76fa77b0f3cca2"
   name = "github.com/gogo/protobuf"
   packages = [
@@ -385,7 +427,7 @@
   version = "v1.2.1"
 
 [[projects]]
-  digest = "1:27d8aff388ac8ea2d4057097ef4aad2f98a6a8796477213096160b72b6c87cf2"
+  digest = "1:b600790844378acb1272c24374fe27a413a4f080329b8434ef9833d6be1b6a14"
   name = "github.com/golang/protobuf"
   packages = [
     "jsonpb",
@@ -397,6 +439,7 @@
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
+    "ptypes/empty",
     "ptypes/struct",
     "ptypes/timestamp",
     "ptypes/wrappers",
@@ -428,6 +471,14 @@
   pruneopts = "NUT"
   revision = "0cd6bf5da1e1c83f8b45653022c74f71af0538a4"
   version = "v1.1.1"
+
+[[projects]]
+  digest = "1:4b76f3e067eed897a45242383a2aa4d0a2fdbf73a8d00c03167dba80c43630b1"
+  name = "github.com/googleapis/gax-go"
+  packages = ["v2"]
+  pruneopts = "NUT"
+  revision = "bd5b16380fd03dc758d11cef74ba2e3bc8b0e8c2"
+  version = "v2.0.5"
 
 [[projects]]
   digest = "1:2be73edf7ec0748333e19ee06a303a54fd8926f215a063a253647dc49b22d191"
@@ -696,6 +747,14 @@
   version = "v1.1.0"
 
 [[projects]]
+  digest = "1:e34decedbcec12332c5836d16a6838f864e0b43c5b4f9aa9d9a85101015f87c2"
+  name = "github.com/mitchellh/hashstructure"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "a38c50148365edc8df43c1580c48fb2b3a1e9cd7"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:a45ae66dea4c899d79fceb116accfa1892105c251f0dcd9a217ddc276b42ec68"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
@@ -752,6 +811,14 @@
   version = "v1.2.0"
 
 [[projects]]
+  digest = "1:232ab5b495f4faf58aea3d1c25042d6a557f4267d340b880d196864181a1d339"
+  name = "github.com/stoewer/go-strcase"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "9f4628dc69009a239427f342caccb0047c7aea01"
+  version = "v1.0.2"
+
+[[projects]]
   digest = "1:79b615b7115a6a52c5eea9ecfc2f69d275aa8fceb387327229b3620a23870e93"
   name = "github.com/terraform-providers/terraform-provider-aws"
   packages = ["aws"]
@@ -777,6 +844,17 @@
   pruneopts = "NUT"
   revision = "05662fd82a299fff148a6a31cc9c2ba9b5841064"
   version = "v1.27.1"
+
+[[projects]]
+  digest = "1:2daa3bddc630ead813a47149cdc429816c43f9423a7d6e2aeff7ca794b072548"
+  name = "github.com/terraform-providers/terraform-provider-google"
+  packages = [
+    "google",
+    "version",
+  ]
+  pruneopts = "NUT"
+  revision = "5550fc28ca27d695adb88dfde2478deb6ac4e111"
+  version = "v2.8.0"
 
 [[projects]]
   branch = "disk_cache"
@@ -858,6 +936,20 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:1519760444b90c560eb01373869bc66fd539e6fe1bf77af22047c43edc40ab35"
+  name = "golang.org/x/oauth2"
+  packages = [
+    ".",
+    "google",
+    "internal",
+    "jws",
+    "jwt",
+  ]
+  pruneopts = "NUT"
+  revision = "0f29369cfe4552d0e4bcddc57cc75f4d7e672a33"
+
+[[projects]]
+  branch = "master"
   digest = "1:382bb5a7fb4034db3b6a2d19e5a4a6bcf52f4750530603c01ca18a172fa3089b"
   name = "golang.org/x/sync"
   packages = ["semaphore"]
@@ -873,19 +965,90 @@
   revision = "953cdadca894cdc07be76fc99f95b40c28f06623"
 
 [[projects]]
-  digest = "1:5f003878aabe31d7f6b842d4de32b41c46c214bb629bb485387dbcce1edf5643"
+  digest = "1:43497bc2024018930950306dfb47802bcfd1aeb36890a70580dfa38bfc9214a7"
   name = "google.golang.org/api"
-  packages = ["support/bundler"]
+  packages = [
+    "appengine/v1",
+    "bigquery/v2",
+    "cloudbilling/v1",
+    "cloudbuild/v1",
+    "cloudfunctions/v1",
+    "cloudiot/v1",
+    "cloudkms/v1",
+    "cloudresourcemanager/v1",
+    "cloudresourcemanager/v2beta1",
+    "composer/v1beta1",
+    "compute/v0.beta",
+    "compute/v1",
+    "container/v1",
+    "container/v1beta1",
+    "dataflow/v1b3",
+    "dataproc/v1",
+    "dns/v1",
+    "dns/v1beta2",
+    "file/v1beta1",
+    "gensupport",
+    "googleapi",
+    "googleapi/internal/uritemplates",
+    "googleapi/transport",
+    "iam/v1",
+    "iamcredentials/v1",
+    "internal",
+    "iterator",
+    "logging/v2",
+    "option",
+    "pubsub/v1",
+    "runtimeconfig/v1beta1",
+    "servicemanagement/v1",
+    "serviceusage/v1",
+    "sourcerepo/v1",
+    "spanner/v1",
+    "sqladmin/v1beta4",
+    "storage/v1",
+    "storagetransfer/v1",
+    "support/bundler",
+    "transport",
+    "transport/grpc",
+    "transport/http",
+    "transport/http/internal/propagation",
+  ]
   pruneopts = "NUT"
   revision = "0cbcb99a9ea0c8023c794b2693cbe1def82ed4d7"
   version = "v0.3.2"
 
 [[projects]]
+  digest = "1:a955e7c44c2be14b61aa2ddda744edfdfbc6817e993703a16e303c277ba84449"
+  name = "google.golang.org/appengine"
+  packages = [
+    ".",
+    "internal",
+    "internal/app_identity",
+    "internal/base",
+    "internal/datastore",
+    "internal/log",
+    "internal/modules",
+    "internal/remote_api",
+    "internal/socket",
+    "internal/urlfetch",
+    "socket",
+    "urlfetch",
+  ]
+  pruneopts = "NUT"
+  revision = "b2f4a3cf3c67576a2ee09e1fe62656a5086ce880"
+  version = "v1.6.1"
+
+[[projects]]
   branch = "master"
-  digest = "1:5dc13cd8c0b417e12d187938d2ccb2348dda90f6d3d4a3d8402a40677a5ac982"
+  digest = "1:f13e55163bbec68310f96ce84f608547dc1b50c9abbaafadba93ccbfc3fbf442"
   name = "google.golang.org/genproto"
   packages = [
+    "googleapis/api/annotations",
     "googleapis/api/httpbody",
+    "googleapis/bigtable/admin/v2",
+    "googleapis/bigtable/v2",
+    "googleapis/iam/v1",
+    "googleapis/longrunning",
+    "googleapis/rpc/code",
     "googleapis/rpc/status",
     "protobuf/field_mask",
   ]
@@ -893,7 +1056,7 @@
   revision = "e7d98fc518a78c9f8b5ee77be7b0b317475d89e1"
 
 [[projects]]
-  digest = "1:ffb498178a6bbe5a877e715cc85a40d5a712883d85f5bf05acf26dbd6c8f71e2"
+  digest = "1:5929ef256f4dbc5b216cc0abd39b868526857fffaa1f917301a687c4c80797c2"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -905,6 +1068,7 @@
     "connectivity",
     "credentials",
     "credentials/internal",
+    "credentials/oauth",
     "encoding",
     "encoding/proto",
     "grpclog",
@@ -1005,6 +1169,7 @@
     "github.com/dmacvicar/terraform-provider-libvirt/libvirt",
     "github.com/terraform-providers/terraform-provider-aws/aws",
     "github.com/terraform-providers/terraform-provider-azurerm/azurerm",
+    "github.com/terraform-providers/terraform-provider-google/google",
     "github.com/terraform-providers/terraform-provider-ignition/ignition",
     "github.com/terraform-providers/terraform-provider-local/local",
     "github.com/terraform-providers/terraform-provider-openstack/openstack",
