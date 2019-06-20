@@ -17,14 +17,6 @@ limitations under the License.
 package aws
 
 import (
-	"context"
-	"fmt"
-
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -32,11 +24,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
 	"github.com/openshift/cloud-credential-operator/version"
-)
-
-const (
-	awsCredsSecretIDKey     = "aws_access_key_id"
-	awsCredsSecretAccessKey = "aws_secret_access_key"
 )
 
 //go:generate mockgen -source=./client.go -destination=./mock/client_generated.go -package=mock
@@ -110,7 +97,7 @@ func (c *awsClient) TagUser(input *iam.TagUserInput) (*iam.TagUserOutput, error)
 }
 
 // NewClient creates our client wrapper object for the actual AWS clients we use.
-func NewClient(accessKeyID, secretAccessKey []byte) (Client, error) {
+func NewClient(accessKeyID, secretAccessKey []byte, infraName string) (Client, error) {
 	awsConfig := &awssdk.Config{}
 
 	awsConfig.Credentials = credentials.NewStaticCredentials(
@@ -122,35 +109,10 @@ func NewClient(accessKeyID, secretAccessKey []byte) (Client, error) {
 	}
 	s.Handlers.Build.PushBackNamed(request.NamedHandler{
 		Name: "openshift.io/cloud-credential-operator",
-		Fn:   request.MakeAddToUserAgentHandler("openshift.io cloud-credential-operator", version.Version),
+		Fn:   request.MakeAddToUserAgentHandler("openshift.io cloud-credential-operator", version.Version, infraName),
 	})
 
 	return &awsClient{
 		iamClient: iam.New(s),
 	}, nil
-}
-
-func LoadCredsFromSecret(kubeClient client.Client, namespace, secretName string) ([]byte, []byte, error) {
-
-	secret := &corev1.Secret{}
-	err := kubeClient.Get(context.TODO(),
-		types.NamespacedName{
-			Name:      secretName,
-			Namespace: namespace,
-		},
-		secret)
-	if err != nil {
-		return nil, nil, err
-	}
-	accessKeyID, ok := secret.Data[awsCredsSecretIDKey]
-	if !ok {
-		return nil, nil, fmt.Errorf("AWS credentials secret %v did not contain key %v",
-			secretName, awsCredsSecretIDKey)
-	}
-	secretAccessKey, ok := secret.Data[awsCredsSecretAccessKey]
-	if !ok {
-		return nil, nil, fmt.Errorf("AWS credentials secret %v did not contain key %v",
-			secretName, awsCredsSecretAccessKey)
-	}
-	return accessKeyID, secretAccessKey, nil
 }

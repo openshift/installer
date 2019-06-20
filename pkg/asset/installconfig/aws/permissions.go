@@ -2,13 +2,15 @@
 package aws
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	ccaws "github.com/openshift/cloud-credential-operator/pkg/aws"
-	credvalidator "github.com/openshift/cloud-credential-operator/pkg/controller/utils"
+	"github.com/openshift/installer/pkg/version"
 )
 
 var installPermissions = []string{
@@ -193,14 +195,14 @@ func ValidateCreds(ssn *session.Session) error {
 		return errors.Wrap(err, "getting creds from session")
 	}
 
-	client, err := ccaws.NewClient([]byte(creds.AccessKeyID), []byte(creds.SecretAccessKey))
+	client, err := ccaws.NewClient([]byte(creds.AccessKeyID), []byte(creds.SecretAccessKey), fmt.Sprintf("OpenShift/4.x Installer/%s", version.Raw))
 	if err != nil {
 		return errors.Wrap(err, "initialize cloud-credentials client")
 	}
 
 	// Check whether we can do an installation
 	logger := logrus.StandardLogger()
-	canInstall, err := credvalidator.CheckPermissionsAgainstActions(client, installPermissions, logger)
+	canInstall, err := ccaws.CheckPermissionsAgainstActions(client, installPermissions, logger)
 	if err != nil {
 		return errors.Wrap(err, "checking install permissions")
 	}
@@ -209,7 +211,7 @@ func ValidateCreds(ssn *session.Session) error {
 	}
 
 	// Check whether we can mint new creds for cluster services needing to interact with the cloud
-	canMint, err := credvalidator.CheckCloudCredCreation(client, logger)
+	canMint, err := ccaws.CheckCloudCredCreation(client, logger)
 	if err != nil {
 		return errors.Wrap(err, "mint credentials check")
 	}
@@ -219,7 +221,7 @@ func ValidateCreds(ssn *session.Session) error {
 
 	// Check whether we can use the current credentials in passthrough mode to satisfy
 	// cluster services needing to interact with the cloud
-	canPassthrough, err := credvalidator.CheckCloudCredPassthrough(client, logger)
+	canPassthrough, err := ccaws.CheckCloudCredPassthrough(client, logger)
 	if err != nil {
 		return errors.Wrap(err, "passthrough credentials check")
 	}

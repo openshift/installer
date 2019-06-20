@@ -519,19 +519,19 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:476ab9e1d63eb879d1869f6876704646de0136a428ba7bba8f3804c1e6fb071b"
+  digest = "1:5449643b322144dad676e6c0efa0e554fc7b7552b5665468a48d8669b570ad1b"
   name = "github.com/openshift/cloud-credential-operator"
   packages = [
     "pkg/apis/cloudcredential/v1",
     "pkg/aws",
-    "pkg/controller/utils",
     "version",
   ]
   pruneopts = "NUT"
-  revision = "4b6d10a82cd4949ade8056e5fbbf29e0765a0f47"
+  revision = "c89dc7733001098f3b7de4bc58ce0f49db47009a"
 
 [[projects]]
-  digest = "1:03fe1745d2916b44cf208a1014a783ad9f1663ad16f03b939cd2e66e30bb3c74"
+  branch = "openshift-4.2-cluster-api-0.1.0"
+  digest = "1:e8a9dc53f9d4f267e55c67bb9f63fe5ac41dcfeca84a9ee339f7439d2d1c219f"
   name = "github.com/openshift/cluster-api"
   packages = [
     "pkg/apis/cluster/common",
@@ -540,17 +540,18 @@
     "pkg/apis/machine/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "cad0f8326cd26bd92fe2f0f90b5ca2e2cbc8a210"
+  revision = "046d74a3bd9143fb650cb894ece0f088a3b26de3"
 
 [[projects]]
-  digest = "1:7996646bfd4a19e15e2e3828fc8c2c3c5d751e906f18a2820ffba9d08a394e27"
+  branch = "master"
+  digest = "1:901bbe7525b02899e9762fa9a9474d2251de64cd05dceffeb3fddfee86edf8d1"
   name = "github.com/openshift/cluster-api-provider-libvirt"
   packages = [
     "pkg/apis",
     "pkg/apis/libvirtproviderconfig/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "2705e5265b62886d8df453b8d4a4601dc0c33084"
+  revision = "ecea5317a4ab6e24ef65ad4573d0a358e3585931"
 
 [[projects]]
   branch = "master"
@@ -1029,11 +1030,10 @@
   version = "kubernetes-1.12.2"
 
 [[projects]]
-  digest = "1:d4077b20d8ba3b64ff57af190a5aee42167d7cd6f3788ad0d67bdc7b427f4697"
+  digest = "1:08027a07c9a263deb5f51fcc801996e7d453b1ed1318c6c5eb7affd084bff3a9"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
-    "dynamic",
     "kubernetes",
     "kubernetes/scheme",
     "kubernetes/typed/admissionregistration/v1alpha1",
@@ -1074,7 +1074,6 @@
     "plugin/pkg/client/auth/exec",
     "rest",
     "rest/watch",
-    "restmapper",
     "tools/auth",
     "tools/cache",
     "tools/clientcmd",
@@ -1115,61 +1114,47 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b23a1b4063d7b3b60ad82fab0cb72b5048da29f880a3761b4e390cb659a0b11f"
-  name = "sigs.k8s.io/cluster-api"
-  packages = [
-    "pkg/apis/cluster/common",
-    "pkg/apis/cluster/v1alpha1",
-  ]
-  pruneopts = "NUT"
-  revision = "ef6f8fc12d32fc1646f231f6e39dbef59ad2e4dd"
-
-[[projects]]
-  digest = "1:3981a97e1e569cbbaaab702d2b44adfac402e923a2bb0984ef5fad93bcbf8c79"
+  digest = "1:8f4add5b7f90c1c3399316f70d600bc1a991f889945cd9e0dfa8f605962d0a1a"
   name = "sigs.k8s.io/cluster-api-provider-aws"
   packages = [
     "pkg/apis",
     "pkg/apis/awsproviderconfig/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "15fe4b4ea5636f8516c238490fc6a85d44161181"
+  revision = "cf06d47b6ceedfe48ecead44424245b86a423f4b"
   source = "https://github.com/openshift/cluster-api-provider-aws.git"
 
 [[projects]]
   branch = "master"
-  digest = "1:4271f208cbd48a3758384d61ae02c7fddb6b8dc8f8c01b946614e891709c9349"
+  digest = "1:8029344993a62e49ed41f78ead4b3499d74cb2d4e1a1c0dc36a00d2107837884"
   name = "sigs.k8s.io/cluster-api-provider-azure"
   packages = [
     "pkg/apis",
     "pkg/apis/azureprovider/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "702ef3a407263373a619b4df1be7fda77ef2a7e5"
+  revision = "12d3c939200e9d0c288311ec8122686fce5638a9"
   source = "https://github.com/openshift/cluster-api-provider-azure.git"
 
 [[projects]]
   branch = "master"
-  digest = "1:6c6e0025ef7af7e27646d2ebd5107b50044d8a1caf80735847fbe43d4d3d8381"
+  digest = "1:218907e65c91aef95d8f29a1bab723bf810d2fdc20e5e13400a9295d2bfefb87"
   name = "sigs.k8s.io/cluster-api-provider-openstack"
   packages = [
     "pkg/apis",
     "pkg/apis/openstackproviderconfig/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "137fd3c3610e5fc616337f952b9b717a7f32f5e4"
+  revision = "bedbef13faf2f0539164a8a19d755e59a905367b"
   source = "https://github.com/openshift/cluster-api-provider-openstack.git"
 
 [[projects]]
-  digest = "1:9b89872389bed1e6647547b868c3f9fa813f8adf098ba0984bc672e4b78ae235"
+  branch = "release-0.2"
+  digest = "1:c4e8f6509ee8cec911985a812ed3f9cc024404acc45ac613fa103f735cf3222a"
   name = "sigs.k8s.io/controller-runtime"
-  packages = [
-    "pkg/client",
-    "pkg/client/apiutil",
-    "pkg/runtime/scheme",
-  ]
+  packages = ["pkg/scheme"]
   pruneopts = "NUT"
-  revision = "12d98582e72927b6cd0123e2b4e819f9341ce62c"
-  version = "v0.1.10"
+  revision = "f60c87ec713cb8da81257228530605457ebf7220"
 
 [[projects]]
   digest = "1:8730e0150dfb2b7e173890c8b9868e7a273082ef8e39f4940e3506a481cf895c"
@@ -1233,7 +1218,6 @@
     "github.com/openshift/client-go/config/clientset/versioned",
     "github.com/openshift/client-go/route/clientset/versioned",
     "github.com/openshift/cloud-credential-operator/pkg/aws",
-    "github.com/openshift/cloud-credential-operator/pkg/controller/utils",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1",
     "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1",
@@ -1282,7 +1266,6 @@
     "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1alpha1",
     "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis",
     "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1",
-    "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

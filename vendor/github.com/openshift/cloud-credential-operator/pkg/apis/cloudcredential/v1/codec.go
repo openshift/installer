@@ -29,15 +29,15 @@ func NewScheme() (*runtime.Scheme, error) {
 	return SchemeBuilder.Build()
 }
 
-// AWSProviderCodec is a runtime codec for the AWS provider.
+// ProviderCodec is a runtime codec for providers.
 // +k8s:deepcopy-gen=false
-type AWSProviderCodec struct {
+type ProviderCodec struct {
 	encoder runtime.Encoder
 	decoder runtime.Decoder
 }
 
 // NewCodec creates a serializer/deserializer for the provider configuration
-func NewCodec() (*AWSProviderCodec, error) {
+func NewCodec() (*ProviderCodec, error) {
 	scheme, err := NewScheme()
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func NewCodec() (*AWSProviderCodec, error) {
 	if err != nil {
 		return nil, err
 	}
-	codec := AWSProviderCodec{
+	codec := ProviderCodec{
 		encoder: encoder,
 		decoder: codecFactory.UniversalDecoder(SchemeGroupVersion),
 	}
@@ -55,7 +55,7 @@ func NewCodec() (*AWSProviderCodec, error) {
 }
 
 // EncodeProvider serializes an object to the provider spec.
-func (codec *AWSProviderCodec) EncodeProviderSpec(in runtime.Object) (*runtime.RawExtension, error) {
+func (codec *ProviderCodec) EncodeProviderSpec(in runtime.Object) (*runtime.RawExtension, error) {
 	var buf bytes.Buffer
 	if err := codec.encoder.Encode(in, &buf); err != nil {
 		return nil, fmt.Errorf("encoding failed: %v", err)
@@ -64,20 +64,16 @@ func (codec *AWSProviderCodec) EncodeProviderSpec(in runtime.Object) (*runtime.R
 }
 
 // DecodeProviderSpec deserializes an object from the provider config.
-func (codec *AWSProviderCodec) DecodeProviderSpec(providerConfig *runtime.RawExtension, out runtime.Object) (*AWSProviderSpec, error) {
-	obj, _, err := codec.decoder.Decode(providerConfig.Raw, nil, out)
+func (codec *ProviderCodec) DecodeProviderSpec(providerConfig *runtime.RawExtension, out runtime.Object) error {
+	_, _, err := codec.decoder.Decode(providerConfig.Raw, nil, out)
 	if err != nil {
-		return nil, fmt.Errorf("decoding failure: %v", err)
+		return fmt.Errorf("decoding failure: %v", err)
 	}
-	s, ok := obj.(*AWSProviderSpec)
-	if !ok {
-		return nil, fmt.Errorf("error casting to AWSProviderSpec")
-	}
-	return s, nil
+	return nil
 }
 
 // EncodeProviderStatus serializes the provider status.
-func (codec *AWSProviderCodec) EncodeProviderStatus(in runtime.Object) (*runtime.RawExtension, error) {
+func (codec *ProviderCodec) EncodeProviderStatus(in runtime.Object) (*runtime.RawExtension, error) {
 	var buf bytes.Buffer
 	if err := codec.encoder.Encode(in, &buf); err != nil {
 		return nil, fmt.Errorf("encoding failed: %v", err)
@@ -86,19 +82,15 @@ func (codec *AWSProviderCodec) EncodeProviderStatus(in runtime.Object) (*runtime
 }
 
 // DecodeProviderStatus deserializes the provider status.
-func (codec *AWSProviderCodec) DecodeProviderStatus(providerStatus *runtime.RawExtension, out runtime.Object) (*AWSProviderStatus, error) {
+func (codec *ProviderCodec) DecodeProviderStatus(providerStatus *runtime.RawExtension, out runtime.Object) error {
 	if providerStatus != nil {
-		obj, _, err := codec.decoder.Decode(providerStatus.Raw, nil, out)
+		_, _, err := codec.decoder.Decode(providerStatus.Raw, nil, out)
 		if err != nil {
-			return nil, fmt.Errorf("decoding failure: %v", err)
+			return fmt.Errorf("decoding failure: %v", err)
 		}
-		s, ok := obj.(*AWSProviderStatus)
-		if !ok {
-			return nil, fmt.Errorf("error casting to AWSProviderStatus")
-		}
-		return s, nil
+		return nil
 	}
-	return &AWSProviderStatus{}, nil
+	return nil
 }
 
 func newEncoder(codecFactory *serializer.CodecFactory) (runtime.Encoder, error) {
