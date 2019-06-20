@@ -17,12 +17,8 @@ if ! release=$( podman inspect {{.ReleaseImage}} -f '{{"{{"}} index .RepoDigests
 fi
 
 MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image machine-config-operator)
-MACHINE_CONFIG_CONTROLLER_IMAGE=$(podman run --quiet --rm ${release} image machine-config-controller)
-MACHINE_CONFIG_SERVER_IMAGE=$(podman run --quiet --rm ${release} image machine-config-server)
-MACHINE_CONFIG_DAEMON_IMAGE=$(podman run --quiet --rm ${release} image machine-config-daemon)
 MACHINE_CONFIG_OSCONTENT=$(podman run --quiet --rm ${release} image machine-os-content)
 MACHINE_CONFIG_ETCD_IMAGE=$(podman run --quiet --rm ${release} image etcd)
-MACHINE_CONFIG_SETUP_ETCD_ENV_IMAGE=$(podman run --quiet --rm ${release} image setup-etcd-environment)
 MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(podman run --quiet --rm ${release} image kube-client-agent)
 MACHINE_CONFIG_INFRA_IMAGE=$(podman run --quiet --rm ${release} image pod)
 
@@ -194,11 +190,7 @@ then
 			--dest-dir=/assets/mco-bootstrap \
 			--pull-secret=/assets/manifests/openshift-config-secret-pull-secret.yaml \
 			--etcd-image=${MACHINE_CONFIG_ETCD_IMAGE} \
-			--setup-etcd-env-image=${MACHINE_CONFIG_SETUP_ETCD_ENV_IMAGE} \
 			--kube-client-agent-image=${MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE} \
-			--machine-config-controller-image=${MACHINE_CONFIG_CONTROLLER_IMAGE} \
-			--machine-config-server-image=${MACHINE_CONFIG_SERVER_IMAGE} \
-			--machine-config-daemon-image=${MACHINE_CONFIG_DAEMON_IMAGE} \
 			--machine-config-operator-image=${MACHINE_CONFIG_OPERATOR_IMAGE} \
 			--machine-config-oscontent-image=${MACHINE_CONFIG_OSCONTENT} \
 			--infra-image=${MACHINE_CONFIG_INFRA_IMAGE} \
