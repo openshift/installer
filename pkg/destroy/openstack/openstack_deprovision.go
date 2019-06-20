@@ -261,6 +261,7 @@ func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fie
 		err = ports.Delete(conn, port.ID).ExtractErr()
 		if err != nil {
 			// This can fail when port is still in use so return/retry
+			logger.Debugf("Deleting Port failed: %v", err)
 			return false, nil
 		}
 	}
@@ -297,6 +298,7 @@ func deleteSecurityGroups(opts *clientconfig.ClientOpts, filter Filter, logger l
 		err = sg.Delete(conn, group.ID).ExtractErr()
 		if err != nil {
 			// This can fail when sg is still in use by servers
+			logger.Debugf("Deleting Security Group failed: %v", err)
 			return false, nil
 		}
 	}
@@ -381,6 +383,7 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 					_, err = routers.RemoveInterface(conn, router.ID, removeOpts).Extract()
 					if err != nil {
 						// This can fail when subnet is still in use
+						logger.Debugf("Removing Subnet from Router failed: %v", err)
 						return false, nil
 					}
 					removedSubnets[IP.SubnetID] = true
@@ -427,6 +430,7 @@ func deleteSubnets(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		err = subnets.Delete(conn, subnet.ID).ExtractErr()
 		if err != nil {
 			// This can fail when subnet is still in use
+			logger.Debugf("Deleting Subnet failed: %v", err)
 			return false, nil
 		}
 	}
@@ -463,6 +467,7 @@ func deleteNetworks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.
 		err = networks.Delete(conn, network.ID).ExtractErr()
 		if err != nil {
 			// This can fail when network is still in use
+			logger.Debugf("Deleting Network failed: %v", err)
 			return false, nil
 		}
 	}
@@ -565,6 +570,7 @@ func deleteTrunks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 		err = trunks.Delete(conn, trunk.ID).ExtractErr()
 		if err != nil {
 			// This can fail when the trunk is still in use so return/retry
+			logger.Debugf("Deleting Trunk failed: %v", err)
 			return false, nil
 		}
 	}
