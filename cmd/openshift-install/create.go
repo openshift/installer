@@ -108,7 +108,7 @@ var (
 					logrus.Fatal(err)
 				}
 
-				err = waitForInstallComplete(ctx, config, rootOpts.dir)
+				err = waitForInstallComplete(ctx, config, rootOpts.dir, 30*time.Minute)
 				if err != nil {
 					logrus.Fatal(err)
 				}
@@ -316,8 +316,7 @@ func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset
 
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation
 // that the cluster has been initialized.
-func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
-	timeout := 30 * time.Minute
+func waitForInitializedCluster(ctx context.Context, config *rest.Config, timeout time.Duration) error {
 	logrus.Infof("Waiting up to %v for the cluster at %s to initialize...", timeout, config.Host)
 	cc, err := configclient.NewForConfig(config)
 	if err != nil {
@@ -447,8 +446,8 @@ func logComplete(directory, consoleURL string) error {
 	return nil
 }
 
-func waitForInstallComplete(ctx context.Context, config *rest.Config, directory string) error {
-	if err := waitForInitializedCluster(ctx, config); err != nil {
+func waitForInstallComplete(ctx context.Context, config *rest.Config, directory string, clusterInitTimeout time.Duration) error {
+	if err := waitForInitializedCluster(ctx, config, clusterInitTimeout); err != nil {
 		return err
 	}
 

@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -58,9 +60,9 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 
 func newWaitForInstallCompleteCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "install-complete",
+		Use:   "install-complete [TIMEOUT_IN_MINUTES]",
 		Short: "Wait until the cluster is ready",
-		Args:  cobra.ExactArgs(0),
+		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
 
@@ -72,7 +74,16 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 				logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 			}
 
-			err = waitForInstallComplete(ctx, config, rootOpts.dir)
+			timeout := 30 * time.Minute
+			if len(args) > 0 && args[0] != "" {
+				s := args[0]
+				if n, err := strconv.Atoi(s); err == nil {
+					timeout = time.Duration(n) * time.Minute
+				} else {
+					logrus.Warn("Invalid timeout value `%s`, using default: %d .", args[0], timeout)
+				}
+			}
+			err = waitForInstallComplete(ctx, config, rootOpts.dir, timeout)
 			if err != nil {
 				logrus.Fatal(err)
 			}
