@@ -363,6 +363,10 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 	}
 
 	if lastError != "" {
+		if err == wait.ErrWaitTimeout {
+			return errors.Errorf("failed to initialize the cluster: %s", lastError)
+		}
+
 		return errors.Wrapf(err, "failed to initialize the cluster: %s", lastError)
 	}
 
