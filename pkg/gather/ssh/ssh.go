@@ -20,7 +20,7 @@ import (
 //
 // if keys list is empty, it tries to load the keys from the user's environment.
 func NewClient(user, address string, keys []string) (*ssh.Client, error) {
-	ag, err := newAgent(keys)
+	ag, err := getAgent(keys)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to initialize the SSH agent")
 	}

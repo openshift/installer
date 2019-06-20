@@ -1,11 +1,28 @@
 package ssh
 
 import (
+	"net"
+	"os"
+
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh/agent"
 
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 )
+
+// getAgent attempts to connect to the running SSH agent, returning a newly
+// initialized static agent if that fails.
+func getAgent(keys []string) (agent.Agent, error) {
+	// Attempt to use the existing SSH agent if it's configured and no keys
+	// were explicitly passed.
+	if authSock := os.Getenv("SSH_AUTH_SOCK"); authSock != "" && len(keys) == 0 {
+		if conn, err := net.Dial("unix", authSock); err == nil {
+			return agent.NewClient(conn), nil
+		}
+	}
+
+	return newAgent(keys)
+}
 
 // newAgent initializes an SSH Agent with the keys.
 // If no keys are provided, it loads all the keys from the user's environment.
