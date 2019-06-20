@@ -102,6 +102,26 @@ func cacheKey(etag string) (key string, err error) {
 	return hex.EncodeToString(hashed[:]), nil
 }
 
+type progressWatcher struct {
+	total    uint64
+	oldTotal uint64
+}
+
+func (w *progressWatcher) Write(p []byte) (int, error) {
+	n := len(p)
+	w.total += uint64(n)
+	// Log progress every 3 MiB
+	if w.total-w.oldTotal > 3000000 {
+		logrus.Debugf("Read %d MiB of image", w.total/1000000)
+		w.oldTotal = w.total
+	}
+	return n, nil
+}
+
+func (w *progressWatcher) finish() {
+	logrus.Debugf("Read %d MiB of image", w.total/1000000)
+}
+
 func cacheImage(reader io.Reader, imagePath string) (err error) {
 	logrus.Debugf("Unpacking OS image into %q...", imagePath)
 
@@ -146,10 +166,12 @@ func cacheImage(reader io.Reader, imagePath string) (err error) {
 		}
 	}()
 
-	_, err = io.Copy(file, reader)
+	watcher := &progressWatcher{}
+	_, err = io.Copy(file, io.TeeReader(reader, watcher))
 	if err != nil {
 		return err
 	}
+	watcher.finish()
 
 	err = file.Close()
 	if err != nil {
