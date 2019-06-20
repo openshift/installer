@@ -306,7 +306,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:641224f7b8f1cea6916375f46c997c991902910af8860d4520642b7a69fe37a4"
+  digest = "1:fc872d4e11767301113bddded780fa5b44a3dec90afa6c26fcaaf641ff758dad"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
@@ -336,15 +336,15 @@
     "pagination",
   ]
   pruneopts = "NUT"
-  revision = "3a7818a07cfc862267a0b03635075a444c92dcda"
+  revision = "157432124aab520975efedb5e54b95287785578d"
 
 [[projects]]
   branch = "master"
-  digest = "1:33e4f758f5c56c37064d7f11c8014e81faa7bcf47295bbda5158f7101f0b1d55"
+  digest = "1:4a14c92687d36a3875744de509bae52334a00ba487eb285b8a57645ec46acc7e"
   name = "github.com/gophercloud/utils"
   packages = ["openstack/clientconfig"]
   pruneopts = "NUT"
-  revision = "3b35bcb43167f6d8080fa824c480f04b60311b51"
+  revision = "25f1b77b8c0367b43939dbb20f5dd12e3c9b0053"
 
 [[projects]]
   branch = "master"

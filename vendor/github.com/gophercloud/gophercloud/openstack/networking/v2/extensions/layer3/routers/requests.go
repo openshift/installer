@@ -13,6 +13,7 @@ import (
 type ListOpts struct {
 	ID           string `q:"id"`
 	Name         string `q:"name"`
+	Description  string `q:"description"`
 	AdminStateUp *bool  `q:"admin_state_up"`
 	Distributed  *bool  `q:"distributed"`
 	Status       string `q:"status"`
@@ -55,6 +56,7 @@ type CreateOptsBuilder interface {
 // no required values.
 type CreateOpts struct {
 	Name                  string       `json:"name,omitempty"`
+	Description           string       `json:"description,omitempty"`
 	AdminStateUp          *bool        `json:"admin_state_up,omitempty"`
 	Distributed           *bool        `json:"distributed,omitempty"`
 	TenantID              string       `json:"tenant_id,omitempty"`
@@ -101,6 +103,7 @@ type UpdateOptsBuilder interface {
 // UpdateOpts contains the values used when updating a router.
 type UpdateOpts struct {
 	Name         string       `json:"name,omitempty"`
+	Description  *string      `json:"description,omitempty"`
 	AdminStateUp *bool        `json:"admin_state_up,omitempty"`
 	Distributed  *bool        `json:"distributed,omitempty"`
 	GatewayInfo  *GatewayInfo `json:"external_gateway_info,omitempty"`
