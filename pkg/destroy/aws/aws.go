@@ -1597,7 +1597,7 @@ func deleteS3(session *session.Session, arn arn.ARN, logger logrus.FieldLogger) 
 		Bucket: aws.String(arn.Resource),
 	})
 	err := s3manager.NewBatchDeleteWithClient(client).Delete(aws.BackgroundContext(), iter)
-	if err != nil {
+	if err != nil && !isBucketNotFound(err) {
 		return err
 	}
 	logger.Debug("Emptied")
@@ -1605,10 +1605,32 @@ func deleteS3(session *session.Session, arn arn.ARN, logger logrus.FieldLogger) 
 	_, err = client.DeleteBucket(&s3.DeleteBucketInput{
 		Bucket: aws.String(arn.Resource),
 	})
-	if err != nil {
+	if err != nil && !isBucketNotFound(err) {
 		return err
 	}
 
 	logger.Info("Deleted")
 	return nil
+}
+
+func isBucketNotFound(err interface{}) bool {
+	switch s3Err := err.(type) {
+	case awserr.Error:
+		if s3Err.Code() == "NoSuchBucket" {
+			return true
+		}
+		origErr := s3Err.OrigErr()
+		if origErr != nil {
+			return isBucketNotFound(origErr)
+		}
+	case s3manager.Error:
+		if s3Err.OrigErr != nil {
+			return isBucketNotFound(s3Err.OrigErr)
+		}
+	case s3manager.Errors:
+		if len(s3Err) == 1 {
+			return isBucketNotFound(s3Err[0])
+		}
+	}
+	return false
 }
