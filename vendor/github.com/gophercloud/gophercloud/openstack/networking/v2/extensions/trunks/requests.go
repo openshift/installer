@@ -114,9 +114,9 @@ type UpdateOptsBuilder interface {
 }
 
 type UpdateOpts struct {
-	AdminStateUp *bool  `json:"admin_state_up,omitempty"`
-	Name         string `json:"name,omitempty"`
-	Description  string `json:"description,omitempty"`
+	AdminStateUp *bool   `json:"admin_state_up,omitempty"`
+	Name         *string `json:"name,omitempty"`
+	Description  *string `json:"description,omitempty"`
 }
 
 func (opts UpdateOpts) ToTrunkUpdateMap() (map[string]interface{}, error) {

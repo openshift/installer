@@ -68,6 +68,9 @@ type Port struct {
 	// Human-readable name for the port. Might not be unique.
 	Name string `json:"name"`
 
+	// Describes the port.
+	Description string `json:"description"`
+
 	// Administrative state of port. If false (down), port does not forward
 	// packets.
 	AdminStateUp bool `json:"admin_state_up"`
