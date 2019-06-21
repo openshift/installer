@@ -153,7 +153,7 @@ sudo firewall-cmd --zone=libvirt --add-service=libvirt
 
 NOTE: When the firewall rules are no longer needed, `sudo firewall-cmd --reload`
 will remove the changes made as they were not permanently added. For persistence,
-add `--permanent` to the `firewall-cmd` commands and run them a second time.
+add `--permanent` argument to the `firewall-cmd` commands and run them a second time.
 
 ### Configure default libvirt storage pool
 
@@ -183,7 +183,7 @@ This step allows installer and users to resolve cluster-internal hostnames from 
     echo -e "[main]\ndns=dnsmasq" | sudo tee /etc/NetworkManager/conf.d/openshift.conf
     ```
 
-2. Tell dnsmasq to use your cluster. The syntax is `server=/<baseDomain>/<firstIP>`.
+2. Tell dnsmasq to use your cluster. The syntax is `server=/<baseDomain>/<bridgeIP>`.
 
     For this example:
 
@@ -203,7 +203,7 @@ TAGS=libvirt hack/build.sh
 
 ## Run the installer
 
-With [libvirt configured](#install-and-enable-libvirt), you can proceed with [the usual quick-start](../../../README.md#quick-start).
+With [libvirt configured](#install-and-enable-libvirt), you can now proceed with [the usual quick-start](../../../README.md#quick-start).
 
 ## Cleanup
 
