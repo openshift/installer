@@ -110,7 +110,7 @@ then
 		/usr/bin/cluster-kube-apiserver-operator render \
 		--manifest-etcd-serving-ca=etcd-ca-bundle.crt \
 		--manifest-etcd-server-urls={{.EtcdCluster}} \
-		--manifest-image=${OPENSHIFT_HYPERSHIFT_IMAGE} \
+		--manifest-image=${OPENSHIFT_HYPERKUBE_IMAGE} \
 		--new-image=${OPENSHIFT_HYPERKUBE_IMAGE} \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
