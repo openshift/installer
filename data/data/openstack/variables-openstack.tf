@@ -29,7 +29,7 @@ variable "openstack_credentials_cloud" {
   default = ""
 
   description = <<EOF
-required if auth_url is not specified) An entry in a clouds.yaml file. See the OpenStack os-client-config documentation for more information about clouds.yaml files. If omitted, the OS_CLOUD environment variable is used.
+required if auth_url is not specified) An entry in a clouds.yaml file. See the openstacksdk(https://docs.openstack.org/openstacksdk/latest/user/config/configuration.html#config-files) documentation for more information about clouds.yaml files. If omitted, the OS_CLOUD environment variable is used.
 EOF
 
 }

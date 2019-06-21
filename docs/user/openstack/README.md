@@ -12,7 +12,7 @@ The installer assumes the following about the OpenStack cloud you run against:
 * You must create a `clouds.yaml` file with the auth URL and credentials
     necessary to access the OpenStack cloud you want to use.  Information on
     this file can be found at
-    https://docs.openstack.org/os-client-config/latest/user/configuration.html
+    https://docs.openstack.org/openstacksdk/latest/user/config/configuration.html#config-files
     and it looks like:
 ```
 clouds:
