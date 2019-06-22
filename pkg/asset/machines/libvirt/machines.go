@@ -63,8 +63,8 @@ func provider(clusterID string, networkInterfaceAddress string, platform *libvir
 			APIVersion: "libvirtproviderconfig.openshift.io/v1beta1",
 			Kind:       "LibvirtMachineProviderConfig",
 		},
-		DomainMemory: 4096,
-		DomainVcpu:   2,
+		DomainMemory: 6144,
+		DomainVcpu:   4,
 		Ignition: &libvirtprovider.Ignition{
 			UserDataSecret: userDataSecret,
 		},
