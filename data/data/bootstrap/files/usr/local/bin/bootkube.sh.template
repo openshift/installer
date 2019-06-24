@@ -111,7 +111,6 @@ then
 		--manifest-etcd-serving-ca=etcd-ca-bundle.crt \
 		--manifest-etcd-server-urls={{.EtcdCluster}} \
 		--manifest-image=${OPENSHIFT_HYPERKUBE_IMAGE} \
-		--new-image=${OPENSHIFT_HYPERKUBE_IMAGE} \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
 		--config-output-file=/assets/kube-apiserver-bootstrap/config \
