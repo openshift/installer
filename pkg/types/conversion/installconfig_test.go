@@ -12,9 +12,10 @@ import (
 
 func TestConvertInstallConfig(t *testing.T) {
 	cases := []struct {
-		name     string
-		config   *types.InstallConfig
-		expected *types.InstallConfig
+		name          string
+		config        *types.InstallConfig
+		expected      *types.InstallConfig
+		expectedError string
 	}{
 		{
 			name: "empty",
@@ -58,6 +59,7 @@ func TestConvertInstallConfig(t *testing.T) {
 					DeprecatedClusterNetworks: []types.ClusterNetworkEntry{
 						{
 							CIDR: *ipnet.MustParseCIDR("1.2.3.5/32"),
+
 							DeprecatedHostSubnetLength: 8,
 						},
 					},
@@ -129,15 +131,26 @@ func TestConvertInstallConfig(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "empty APIVersion",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "",
+				},
+			},
+			expectedError: "no version was provided",
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := ConvertInstallConfig(tc.config)
-			if err != nil {
-				t.Fatal("unexpected error", err)
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expected, tc.config, "unexpected install config")
+			} else {
+				assert.Regexp(t, tc.expectedError, err)
 			}
-			assert.Equal(t, tc.expected, tc.config, "unexpected install config")
 		})
 	}
 }
