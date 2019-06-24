@@ -14,6 +14,7 @@ import (
 
 	"github.com/coreos/ignition/config/util"
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -40,6 +41,7 @@ type bootstrapTemplateData struct {
 	EtcdCluster  string
 	PullSecret   string
 	ReleaseImage string
+	Proxy        *configv1.ProxyStatus
 }
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
@@ -60,6 +62,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&machines.Worker{},
 		&manifests.Manifests{},
 		&manifests.Openshift{},
+		&manifests.Proxy{},
 		&tls.AdminKubeConfigCABundle{},
 		&tls.AggregatorCA{},
 		&tls.AggregatorCABundle{},
@@ -106,9 +109,11 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 // Generate generates the ignition config for the Bootstrap asset.
 func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	proxy := &manifests.Proxy{}
+	dependencies.Get(installConfig, proxy)
 
-	templateData, err := a.getTemplateData(installConfig.Config)
+	templateData, err := a.getTemplateData(installConfig.Config, proxy.Config)
+
 	if err != nil {
 		return errors.Wrap(err, "failed to get bootstrap templates")
 	}
@@ -160,8 +165,9 @@ func (a *Bootstrap) Files() []*asset.File {
 }
 
 // getTemplateData returns the data to use to execute bootstrap templates.
-func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootstrapTemplateData, error) {
+func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, proxy *configv1.Proxy) (*bootstrapTemplateData, error) {
 	etcdEndpoints := make([]string, *installConfig.ControlPlane.Replicas)
+
 	for i := range etcdEndpoints {
 		etcdEndpoints[i] = fmt.Sprintf("https://etcd-%d.%s:2379", i, installConfig.ClusterDomain())
 	}
@@ -183,6 +189,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 		PullSecret:   installConfig.PullSecret,
 		ReleaseImage: releaseImage,
 		EtcdCluster:  strings.Join(etcdEndpoints, ","),
+		Proxy:        &proxy.Status,
 	}, nil
 }
 
