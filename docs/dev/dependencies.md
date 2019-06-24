@@ -11,6 +11,7 @@ sudo yum install golang-bin gcc-c++
 ```
 
 If you need support for [libvirt destroy](libvirt/README.md#cleanup), you should also install `libvirt-devel`.
+When using RHEL enable the rhel-7-server-optional-rpms repository to te able to install the golang-bin package.
 
 ### Go
 
