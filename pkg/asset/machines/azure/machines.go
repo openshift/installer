@@ -89,7 +89,9 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 				StorageAccountType: "Premium_LRS",
 			},
 		},
-		Subnet: fmt.Sprintf("%s-%s-subnet", clusterID, role),
+		Subnet:          fmt.Sprintf("%s-%s-subnet", clusterID, role),
+		ManagedIdentity: fmt.Sprintf("%s-identity", clusterID),
+		Vnet:            fmt.Sprintf("%s-vnet", clusterID),
 	}, nil
 }
 
