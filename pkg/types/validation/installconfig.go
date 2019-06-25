@@ -14,6 +14,8 @@ import (
 	awsvalidation "github.com/openshift/installer/pkg/types/aws/validation"
 	"github.com/openshift/installer/pkg/types/azure"
 	azurevalidation "github.com/openshift/installer/pkg/types/azure/validation"
+	"github.com/openshift/installer/pkg/types/gcp"
+	gcpvalidation "github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	libvirtvalidation "github.com/openshift/installer/pkg/types/libvirt/validation"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -219,6 +221,9 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackVa
 	}
 	if platform.Azure != nil {
 		validate(azure.Name, platform.Azure, func(f *field.Path) field.ErrorList { return azurevalidation.ValidatePlatform(platform.Azure, f) })
+	}
+	if platform.GCP != nil {
+		validate(gcp.Name, platform.GCP, func(f *field.Path) field.ErrorList { return gcpvalidation.ValidatePlatform(platform.GCP, f) })
 	}
 	if platform.Libvirt != nil {
 		validate(libvirt.Name, platform.Libvirt, func(f *field.Path) field.ErrorList { return libvirtvalidation.ValidatePlatform(platform.Libvirt, f) })

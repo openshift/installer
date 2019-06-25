@@ -3,6 +3,7 @@ package types
 import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -44,6 +45,12 @@ type MachinePoolPlatform struct {
 	// AWS is the configuration used when installing on AWS.
 	AWS *aws.MachinePool `json:"aws,omitempty"`
 
+	// Azure is the configuration used when installing on OpenStack.
+	Azure *azure.MachinePool `json:"azure,omitempty"`
+
+	// GCP is the configuration used when installing on GCP
+	GCP *gcp.MachinePool `json:"gcp,omitempty"`
+
 	// Libvirt is the configuration used when installing on libvirt.
 	Libvirt *libvirt.MachinePool `json:"libvirt,omitempty"`
 
@@ -52,9 +59,6 @@ type MachinePoolPlatform struct {
 
 	// VSphere is the configuration used when installing on vSphere.
 	VSphere *vsphere.MachinePool `json:"vsphere,omitempty"`
-
-	// Azure is the configuration used when installing on OpenStack.
-	Azure *azure.MachinePool `json:"azure,omitempty"`
 }
 
 // Name returns a string representation of the platform (e.g. "aws" if
@@ -66,14 +70,16 @@ func (p *MachinePoolPlatform) Name() string {
 		return ""
 	case p.AWS != nil:
 		return aws.Name
+	case p.Azure != nil:
+		return azure.Name
+	case p.GCP != nil:
+		return gcp.Name
 	case p.Libvirt != nil:
 		return libvirt.Name
 	case p.OpenStack != nil:
 		return openstack.Name
 	case p.VSphere != nil:
 		return vsphere.Name
-	case p.Azure != nil:
-		return azure.Name
 	default:
 		return ""
 	}
