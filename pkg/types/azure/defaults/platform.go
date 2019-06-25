@@ -4,12 +4,20 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 )
 
+var (
+	// Overrides
+	defaultMachineClass = map[string]string{}
+)
+
 // SetPlatformDefaults sets the defaults for the platform.
 func SetPlatformDefaults(p *azure.Platform) {
 }
 
-// InstanceClass returns the instance "class" we should use for a given
-// region.
-func InstanceClass(region string) string {
-	return "Standard_DS4_v2"
+// getInstanceClass returns the instance "class" we should use for a given region.
+func getInstanceClass(region string) string {
+	if class, ok := defaultMachineClass[region]; ok {
+		return class
+	}
+
+	return "Standard"
 }

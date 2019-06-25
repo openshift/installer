@@ -34,7 +34,7 @@ func TFVars(auth Auth, baseDomainResourceGroupName string, masterConfigs []*azur
 		Auth:   auth,
 		Region: region,
 		BaseDomainResourceGroupName: baseDomainResourceGroupName,
-		BootstrapInstanceType:       defaults.InstanceClass(region),
+		BootstrapInstanceType:       defaults.BootstrapInstanceType(region),
 		MasterInstanceType:          masterConfig.VMSize,
 		VolumeSize:                  masterConfig.OSDisk.DiskSizeGB,
 		VMImageID:                   masterConfig.Image.ResourceID,
