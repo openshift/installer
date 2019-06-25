@@ -17,7 +17,7 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	session "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	azuresession "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/destroy"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -45,6 +45,21 @@ func (o *ClusterUninstaller) configureClients() {
 
 	o.recordsClient = dns.NewRecordSetsClient(o.SubscriptionID)
 	o.recordsClient.Authorizer = o.Authorizer
+}
+
+// New returns an Azure destroyer from ClusterMetadata.
+func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
+	session, err := azuresession.GetSession()
+	if err != nil {
+		return nil, err
+	}
+
+	return &ClusterUninstaller{
+		SubscriptionID: session.Credentials.SubscriptionID,
+		Authorizer:     session.Authorizer,
+		InfraID:        metadata.InfraID,
+		Logger:         logger,
+	}, nil
 }
 
 // Run is the entrypoint to start the uninstall process.
@@ -197,21 +212,6 @@ func deleteResourceGroup(ctx context.Context, client resources.GroupsGroupClient
 	}
 	logger.Info("deleted")
 	return nil
-}
-
-// New returns azure Uninstaller from ClusterMetadata.
-func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
-	sess, err := session.GetSession()
-	if err != nil {
-		return nil, err
-	}
-
-	return &ClusterUninstaller{
-		SubscriptionID: sess.Credentials.SubscriptionID,
-		Authorizer:     sess.Authorizer,
-		InfraID:        metadata.InfraID,
-		Logger:         logger,
-	}, nil
 }
 
 func wasNotFound(resp *http.Response) bool {
