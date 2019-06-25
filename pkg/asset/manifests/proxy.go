@@ -21,6 +21,7 @@ var proxyCfgFilename = filepath.Join(manifestDir, "cluster-proxy-01-config.yaml"
 // Proxy generates the cluster-proxy-*.yml files.
 type Proxy struct {
 	FileList []*asset.File
+	Config   *configv1.Proxy
 }
 
 var _ asset.WritableAsset = (*Proxy)(nil)
@@ -45,7 +46,7 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 	network := &Networking{}
 	dependencies.Get(installConfig, network)
 
-	config := &configv1.Proxy{
+	p.Config = &configv1.Proxy{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: configv1.SchemeGroupVersion.String(),
 			Kind:       "Proxy",
@@ -57,26 +58,26 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 	}
 
 	if installConfig.Config.Proxy != nil {
-		config.Spec = configv1.ProxySpec{
+		p.Config.Spec = configv1.ProxySpec{
 			HTTPProxy:  installConfig.Config.Proxy.HTTPProxy,
 			HTTPSProxy: installConfig.Config.Proxy.HTTPSProxy,
 			NoProxy:    installConfig.Config.Proxy.NoProxy,
 		}
 	}
 
-	if config.Spec.HTTPProxy != "" || config.Spec.HTTPSProxy != "" {
+	if p.Config.Spec.HTTPProxy != "" || p.Config.Spec.HTTPSProxy != "" {
 		noProxy, err := createNoProxy(installConfig, network)
 		if err != nil {
 			return err
 		}
-		config.Status = configv1.ProxyStatus{
+		p.Config.Status = configv1.ProxyStatus{
 			HTTPProxy:  installConfig.Config.Proxy.HTTPProxy,
 			HTTPSProxy: installConfig.Config.Proxy.HTTPSProxy,
 			NoProxy:    noProxy,
 		}
 	}
 
-	configData, err := yaml.Marshal(config)
+	configData, err := yaml.Marshal(p.Config)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s manifests from InstallConfig", p.Name())
 	}
