@@ -137,7 +137,6 @@ func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State)
 			logrus.Error(err)
 		}
 	case azuretypes.Name:
-		port = 2200
 		bootstrap, err = gatherazure.BootstrapIP(tfstate)
 		if err != nil {
 			return bootstrap, port, masters, err

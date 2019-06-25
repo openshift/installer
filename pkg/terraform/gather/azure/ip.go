@@ -12,7 +12,7 @@ import (
 
 // BootstrapIP returns the ip address for bootstrap host.
 func BootstrapIP(tfs *terraform.State) (string, error) {
-	publicIP, err := terraform.LookupResource(tfs, "module.vnet", "azurerm_public_ip", "cluster_public_ip")
+	publicIP, err := terraform.LookupResource(tfs, "module.bootstrap", "azurerm_public_ip", "bootstrap_public_ip")
 	if err != nil {
 		return "", errors.Wrap(err, "failed to lookup public ip")
 	}
