@@ -241,12 +241,12 @@ func validateProxy(p *types.Proxy, fldPath *field.Path) field.ErrorList {
 		allErrs = append(allErrs, field.Required(fldPath, "must include httpProxy or httpsProxy"))
 	}
 	if p.HTTPProxy != "" {
-		if err := validate.URIWithProtocol(p.HTTPProxy, "http"); err != nil {
+		if err := validate.URI(p.HTTPProxy); err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("HTTPProxy"), p.HTTPProxy, err.Error()))
 		}
 	}
 	if p.HTTPSProxy != "" {
-		if err := validate.URIWithProtocol(p.HTTPSProxy, "https"); err != nil {
+		if err := validate.URI(p.HTTPSProxy); err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("HTTPSProxy"), p.HTTPSProxy, err.Error()))
 		}
 	}

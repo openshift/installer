@@ -511,24 +511,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `^\Q[NoProxy: Invalid value: ".bad-proxy.": must be a CIDR or domain, without wildcard characters and without leading or trailing dots ('.'), NoProxy: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters and without leading or trailing dots ('.')]\E$`,
 		},
-		{
-			name: "invalid HTTP proxy, using HTTPS",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Proxy.HTTPProxy = "https://user:password@127.0.0.1:8080"
-				return c
-			}(),
-			expectedError: `^\QHTTPProxy: Invalid value: "https://user:password@127.0.0.1:8080": must use http protocol\E$`,
-		},
-		{
-			name: "invalid HTTPS proxy, using HTTP",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Proxy.HTTPSProxy = "http://user:password@127.0.0.1:8080"
-				return c
-			}(),
-			expectedError: `^\QHTTPSProxy: Invalid value: "http://user:password@127.0.0.1:8080": must use https protocol\E$`,
-		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
