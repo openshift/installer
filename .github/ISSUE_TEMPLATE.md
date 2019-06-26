@@ -14,9 +14,10 @@ $ openshift-install version
 <your output here>
 ```
 
-# Platform (aws|libvirt|openstack):
-
-Enter text here.
+# Platform:
+<!--
+Please specify below either aws, libvirt or openstack below.
+-->
 
 # What happened?
 
