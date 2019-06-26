@@ -42,23 +42,24 @@ type ObjectWithTags struct {
 // deleteFunc type is the interface a function needs to implement to be called as a goroutine.
 // The (bool, error) return type mimics wait.ExponentialBackoff where the bool indicates successful
 // completion, and the error is for unrecoverable errors.
-type deleteFunc func(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error)
+type deleteFunc func(log *logrus.Entry, opts *clientconfig.ClientOpts, filter Filter) (bool, error)
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
 type ClusterUninstaller struct {
+	log *logrus.Entry
+
 	// Cloud is the cloud name as set in clouds.yml
 	Cloud string
 	// Filter contains the openshiftClusterID to filter tags
 	Filter Filter
-	Logger logrus.FieldLogger
 }
 
 // New returns an OpenStack destroyer from ClusterMetadata.
-func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
+func New(log *logrus.Entry, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
 	return &ClusterUninstaller{
 		Cloud:  metadata.ClusterPlatformMetadata.OpenStack.Cloud,
 		Filter: metadata.ClusterPlatformMetadata.OpenStack.Identifier,
-		Logger: logger,
+		log:    log,
 	}, nil
 }
 
@@ -74,21 +75,21 @@ func (o *ClusterUninstaller) Run() error {
 
 	// launch goroutines
 	for name, function := range deleteFuncs {
-		go deleteRunner(name, function, opts, o.Filter, o.Logger, returnChannel)
+		go deleteRunner(o.log, name, function, opts, o.Filter, returnChannel)
 	}
 
 	// wait for them to finish
 	for i := 0; i < len(deleteFuncs); i++ {
 		select {
 		case res := <-returnChannel:
-			o.Logger.Debugf("goroutine %v complete", res)
+			o.log.Debugf("goroutine %v complete", res)
 		}
 	}
 
 	return nil
 }
 
-func deleteRunner(deleteFuncName string, dFunction deleteFunc, opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger, channel chan string) {
+func deleteRunner(log *logrus.Entry, deleteFuncName string, dFunction deleteFunc, opts *clientconfig.ClientOpts, filter Filter, channel chan string) {
 	backoffSettings := wait.Backoff{
 		Duration: time.Second * 10,
 		Factor:   1.3,
@@ -96,11 +97,11 @@ func deleteRunner(deleteFuncName string, dFunction deleteFunc, opts *clientconfi
 	}
 
 	err := wait.ExponentialBackoff(backoffSettings, func() (bool, error) {
-		return dFunction(opts, filter, logger)
+		return dFunction(log, opts, filter)
 	})
 
 	if err != nil {
-		logger.Fatalf("Unrecoverable error/timed out: %v", err)
+		log.Fatalf("Unrecoverable error/timed out: %v", err)
 		os.Exit(1)
 	}
 
@@ -167,13 +168,13 @@ func filterTags(filters Filter) []string {
 	return tags
 }
 
-func deleteServers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
-	logger.Debug("Deleting openstack servers")
-	defer logger.Debugf("Exiting deleting openstack servers")
+func deleteServers(log *logrus.Entry, opts *clientconfig.ClientOpts, filter Filter) (bool, error) {
+	log.Debug("Deleting openstack servers")
+	defer log.Debugf("Exiting deleting openstack servers")
 
 	conn, err := clientconfig.NewServiceClient("compute", opts)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 
@@ -188,13 +189,13 @@ func deleteServers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 
 	allPages, err := servers.List(conn, listOpts).AllPages()
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 
 	allServers, err := servers.ExtractServers(allPages)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 
@@ -208,23 +209,23 @@ func deleteServers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 
 	filteredServers := filterObjects(serverObjects, filter)
 	for _, server := range filteredServers {
-		logger.Debugf("Deleting Server: %+v", server.ID)
+		log.Debugf("Deleting Server: %+v", server.ID)
 		err = servers.Delete(conn, server.ID).ExtractErr()
 		if err != nil {
-			logger.Fatalf("%v", err)
+			log.Fatalf("%v", err)
 			os.Exit(1)
 		}
 	}
 	return len(filteredServers) == 0, nil
 }
 
-func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
-	logger.Debug("Deleting openstack ports")
-	defer logger.Debugf("Exiting deleting openstack ports")
+func deletePorts(log *logrus.Entry, opts *clientconfig.ClientOpts, filter Filter) (bool, error) {
+	log.Debug("Deleting openstack ports")
+	defer log.Debugf("Exiting deleting openstack ports")
 
 	conn, err := clientconfig.NewServiceClient("network", opts)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 	tags := filterTags(filter)
@@ -234,13 +235,13 @@ func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fie
 
 	allPages, err := ports.List(conn, listOpts).AllPages()
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 
 	allPorts, err := ports.ExtractPorts(allPages)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 	for _, port := range allPorts {
@@ -249,41 +250,41 @@ func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fie
 		}
 		allPages, err := floatingips.List(conn, listOpts).AllPages()
 		if err != nil {
-			logger.Fatalf("%v", err)
+			log.Fatalf("%v", err)
 			os.Exit(1)
 		}
 		allFIPs, err := floatingips.ExtractFloatingIPs(allPages)
 		if err != nil {
-			logger.Fatalf("%v", err)
+			log.Fatalf("%v", err)
 			os.Exit(1)
 		}
 		for _, fip := range allFIPs {
-			logger.Debugf("Deleting Floating IP: %+v", fip.ID)
+			log.Debugf("Deleting Floating IP: %+v", fip.ID)
 			err = floatingips.Delete(conn, fip.ID).ExtractErr()
 			if err != nil {
-				logger.Fatalf("%v", err)
+				log.Fatalf("%v", err)
 				os.Exit(1)
 			}
 		}
 
-		logger.Debugf("Deleting Port: %+v", port.ID)
+		log.Debugf("Deleting Port: %+v", port.ID)
 		err = ports.Delete(conn, port.ID).ExtractErr()
 		if err != nil {
 			// This can fail when port is still in use so return/retry
-			logger.Debugf("Deleting Port failed: %v", err)
+			log.Debugf("Deleting Port failed: %v", err)
 			return false, nil
 		}
 	}
 	return len(allPorts) == 0, nil
 }
 
-func deleteSecurityGroups(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
-	logger.Debug("Deleting openstack security-groups")
-	defer logger.Debugf("Exiting deleting openstack security-groups")
+func deleteSecurityGroups(log *logrus.Entry, opts *clientconfig.ClientOpts, filter Filter) (bool, error) {
+	log.Debug("Deleting openstack security-groups")
+	defer log.Debugf("Exiting deleting openstack security-groups")
 
 	conn, err := clientconfig.NewServiceClient("network", opts)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 	tags := filterTags(filter)
@@ -293,34 +294,34 @@ func deleteSecurityGroups(opts *clientconfig.ClientOpts, filter Filter, logger l
 
 	allPages, err := sg.List(conn, listOpts).AllPages()
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 
 	allGroups, err := sg.ExtractGroups(allPages)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 	for _, group := range allGroups {
-		logger.Debugf("Deleting Security Group: %+v", group.ID)
+		log.Debugf("Deleting Security Group: %+v", group.ID)
 		err = sg.Delete(conn, group.ID).ExtractErr()
 		if err != nil {
 			// This can fail when sg is still in use by servers
-			logger.Debugf("Deleting Security Group failed: %v", err)
+			log.Debugf("Deleting Security Group failed: %v", err)
 			return false, nil
 		}
 	}
 	return len(allGroups) == 0, nil
 }
 
-func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
-	logger.Debug("Deleting openstack routers")
-	defer logger.Debugf("Exiting deleting openstack routers")
+func deleteRouters(log *logrus.Entry, opts *clientconfig.ClientOpts, filter Filter) (bool, error) {
+	log.Debug("Deleting openstack routers")
+	defer log.Debugf("Exiting deleting openstack routers")
 
 	conn, err := clientconfig.NewServiceClient("network", opts)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 	tags := filterTags(filter)
@@ -330,13 +331,13 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 
 	allPages, err := routers.List(conn, listOpts).AllPages()
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 
 	allRouters, err := routers.ExtractRouters(allPages)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 	for _, router := range allRouters {
@@ -348,20 +349,20 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 
 		fipPages, err := floatingips.List(conn, fipOpts).AllPages()
 		if err != nil {
-			logger.Fatalf("%v", err)
+			log.Fatalf("%v", err)
 			os.Exit(1)
 		}
 
 		allFIPs, err := floatingips.ExtractFloatingIPs(fipPages)
 		if err != nil {
-			logger.Fatalf("%v", err)
+			log.Fatalf("%v", err)
 			os.Exit(1)
 		}
 
 		for _, fip := range allFIPs {
 			_, err := floatingips.Update(conn, fip.ID, floatingips.UpdateOpts{}).Extract()
 			if err != nil {
-				logger.Fatalf("%v", err)
+				log.Fatalf("%v", err)
 			}
 		}
 
@@ -372,7 +373,7 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 
 		_, err = routers.Update(conn, router.ID, updateOpts).Extract()
 		if err != nil {
-			logger.Fatalf("%v", err)
+			log.Fatalf("%v", err)
 		}
 
 		// Get router interface ports
@@ -381,12 +382,12 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		}
 		allPagesPort, err := ports.List(conn, portListOpts).AllPages()
 		if err != nil {
-			logger.Fatalf("%v", err)
+			log.Fatalf("%v", err)
 			os.Exit(1)
 		}
 		allPorts, err := ports.ExtractPorts(allPagesPort)
 		if err != nil {
-			logger.Fatalf("%v", err)
+			log.Fatalf("%v", err)
 			os.Exit(1)
 		}
 
@@ -398,34 +399,34 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 					removeOpts := routers.RemoveInterfaceOpts{
 						SubnetID: IP.SubnetID,
 					}
-					logger.Debugf("Removing Subnet %v from Router %v\n", IP.SubnetID, router.ID)
+					log.Debugf("Removing Subnet %v from Router %v\n", IP.SubnetID, router.ID)
 					_, err = routers.RemoveInterface(conn, router.ID, removeOpts).Extract()
 					if err != nil {
 						// This can fail when subnet is still in use
-						logger.Debugf("Removing Subnet from Router failed: %v", err)
+						log.Debugf("Removing Subnet from Router failed: %v", err)
 						return false, nil
 					}
 					removedSubnets[IP.SubnetID] = true
 				}
 			}
 		}
-		logger.Debugf("Deleting Router: %+v\n", router.ID)
+		log.Debugf("Deleting Router: %+v\n", router.ID)
 		err = routers.Delete(conn, router.ID).ExtractErr()
 		if err != nil {
-			logger.Fatalf("%v", err)
+			log.Fatalf("%v", err)
 			os.Exit(1)
 		}
 	}
 	return len(allRouters) == 0, nil
 }
 
-func deleteSubnets(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
-	logger.Debug("Deleting openstack subnets")
-	defer logger.Debugf("Exiting deleting openstack subnets")
+func deleteSubnets(log *logrus.Entry, opts *clientconfig.ClientOpts, filter Filter) (bool, error) {
+	log.Debug("Deleting openstack subnets")
+	defer log.Debugf("Exiting deleting openstack subnets")
 
 	conn, err := clientconfig.NewServiceClient("network", opts)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 	tags := filterTags(filter)
@@ -435,34 +436,34 @@ func deleteSubnets(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 
 	allPages, err := subnets.List(conn, listOpts).AllPages()
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 
 	allSubnets, err := subnets.ExtractSubnets(allPages)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 	for _, subnet := range allSubnets {
-		logger.Debugf("Deleting Subnet: %+v", subnet.ID)
+		log.Debugf("Deleting Subnet: %+v", subnet.ID)
 		err = subnets.Delete(conn, subnet.ID).ExtractErr()
 		if err != nil {
 			// This can fail when subnet is still in use
-			logger.Debugf("Deleting Subnet failed: %v", err)
+			log.Debugf("Deleting Subnet failed: %v", err)
 			return false, nil
 		}
 	}
 	return len(allSubnets) == 0, nil
 }
 
-func deleteNetworks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
-	logger.Debug("Deleting openstack networks")
-	defer logger.Debugf("Exiting deleting openstack networks")
+func deleteNetworks(log *logrus.Entry, opts *clientconfig.ClientOpts, filter Filter) (bool, error) {
+	log.Debug("Deleting openstack networks")
+	defer log.Debugf("Exiting deleting openstack networks")
 
 	conn, err := clientconfig.NewServiceClient("network", opts)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 	tags := filterTags(filter)
@@ -472,53 +473,53 @@ func deleteNetworks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.
 
 	allPages, err := networks.List(conn, listOpts).AllPages()
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 
 	allNetworks, err := networks.ExtractNetworks(allPages)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 	for _, network := range allNetworks {
-		logger.Debugf("Deleting network: %+v", network.ID)
+		log.Debugf("Deleting network: %+v", network.ID)
 		err = networks.Delete(conn, network.ID).ExtractErr()
 		if err != nil {
 			// This can fail when network is still in use
-			logger.Debugf("Deleting Network failed: %v", err)
+			log.Debugf("Deleting Network failed: %v", err)
 			return false, nil
 		}
 	}
 	return len(allNetworks) == 0, nil
 }
 
-func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
-	logger.Debug("Deleting openstack containers")
-	defer logger.Debugf("Exiting deleting openstack containers")
+func deleteContainers(log *logrus.Entry, opts *clientconfig.ClientOpts, filter Filter) (bool, error) {
+	log.Debug("Deleting openstack containers")
+	defer log.Debugf("Exiting deleting openstack containers")
 
 	conn, err := clientconfig.NewServiceClient("object-store", opts)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 	listOpts := containers.ListOpts{Full: false}
 
 	allPages, err := containers.List(conn, listOpts).AllPages()
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 
 	allContainers, err := containers.ExtractNames(allPages)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 	for _, container := range allContainers {
 		metadata, err := containers.Get(conn, container, nil).ExtractMetadata()
 		if err != nil {
-			logger.Fatalf("%v", err)
+			log.Fatalf("%v", err)
 			os.Exit(1)
 		}
 		for key, val := range filter {
@@ -529,26 +530,26 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 				listOpts := objects.ListOpts{Full: false}
 				allPages, err := objects.List(conn, container, listOpts).AllPages()
 				if err != nil {
-					logger.Fatalf("%v", err)
+					log.Fatalf("%v", err)
 					os.Exit(1)
 				}
 				allObjects, err := objects.ExtractNames(allPages)
 				if err != nil {
-					logger.Fatalf("%v", err)
+					log.Fatalf("%v", err)
 					os.Exit(1)
 				}
 				for _, object := range allObjects {
-					logger.Debugf("Deleting object: %+v\n", object)
+					log.Debugf("Deleting object: %+v\n", object)
 					_, err = objects.Delete(conn, container, object, nil).Extract()
 					if err != nil {
-						logger.Fatalf("%v", err)
+						log.Fatalf("%v", err)
 						os.Exit(1)
 					}
 				}
-				logger.Debugf("Deleting container: %+v\n", container)
+				log.Debugf("Deleting container: %+v\n", container)
 				_, err = containers.Delete(conn, container).Extract()
 				if err != nil {
-					logger.Fatalf("%v", err)
+					log.Fatalf("%v", err)
 					os.Exit(1)
 				}
 				// If a metadata key matched, we're done so break from the loop
@@ -559,13 +560,13 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 	return true, nil
 }
 
-func deleteTrunks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
-	logger.Debug("Deleting openstack trunks")
-	defer logger.Debugf("Exiting deleting openstack trunks")
+func deleteTrunks(log *logrus.Entry, opts *clientconfig.ClientOpts, filter Filter) (bool, error) {
+	log.Debug("Deleting openstack trunks")
+	defer log.Debugf("Exiting deleting openstack trunks")
 
 	conn, err := clientconfig.NewServiceClient("network", opts)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 
@@ -575,21 +576,21 @@ func deleteTrunks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 	}
 	allPages, err := trunks.List(conn, listOpts).AllPages()
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 
 	allTrunks, err := trunks.ExtractTrunks(allPages)
 	if err != nil {
-		logger.Fatalf("%v", err)
+		log.Fatalf("%v", err)
 		os.Exit(1)
 	}
 	for _, trunk := range allTrunks {
-		logger.Debugf("Deleting Trunk: %+v", trunk.ID)
+		log.Debugf("Deleting Trunk: %+v", trunk.ID)
 		err = trunks.Delete(conn, trunk.ID).ExtractErr()
 		if err != nil {
 			// This can fail when the trunk is still in use so return/retry
-			logger.Debugf("Deleting Trunk failed: %v", err)
+			log.Debugf("Deleting Trunk failed: %v", err)
 			return false, nil
 		}
 	}

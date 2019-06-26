@@ -5,6 +5,8 @@ import (
 	"crypto/x509/pkix"
 	"net"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/pkg/errors"
@@ -23,7 +25,7 @@ func (c *KubeAPIServerToKubeletSignerCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the root-ca key and cert pair.
-func (c *KubeAPIServerToKubeletSignerCertKey) Generate(parents asset.Parents) error {
+func (c *KubeAPIServerToKubeletSignerCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kube-apiserver-to-kubelet-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -55,10 +57,10 @@ func (a *KubeAPIServerToKubeletCABundle) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert bundle based on its dependencies.
-func (a *KubeAPIServerToKubeletCABundle) Generate(deps asset.Parents) error {
+func (a *KubeAPIServerToKubeletCABundle) Generate(log *logrus.Entry, parents asset.Parents) error {
 	var certs []CertInterface
 	for _, asset := range a.Dependencies() {
-		deps.Get(asset)
+		parents.Get(asset)
 		certs = append(certs, asset.(CertInterface))
 	}
 	return a.CertBundle.Generate("kube-apiserver-to-kubelet-ca-bundle", certs...)
@@ -84,9 +86,9 @@ func (a *KubeAPIServerToKubeletClientCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *KubeAPIServerToKubeletClientCertKey) Generate(dependencies asset.Parents) error {
+func (a *KubeAPIServerToKubeletClientCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ca := &KubeAPIServerToKubeletSignerCertKey{}
-	dependencies.Get(ca)
+	parents.Get(ca)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
@@ -116,7 +118,7 @@ func (c *KubeAPIServerLocalhostSignerCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the root-ca key and cert pair.
-func (c *KubeAPIServerLocalhostSignerCertKey) Generate(parents asset.Parents) error {
+func (c *KubeAPIServerLocalhostSignerCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kube-apiserver-localhost-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -148,10 +150,10 @@ func (a *KubeAPIServerLocalhostCABundle) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert bundle based on its dependencies.
-func (a *KubeAPIServerLocalhostCABundle) Generate(deps asset.Parents) error {
+func (a *KubeAPIServerLocalhostCABundle) Generate(log *logrus.Entry, parents asset.Parents) error {
 	var certs []CertInterface
 	for _, asset := range a.Dependencies() {
-		deps.Get(asset)
+		parents.Get(asset)
 		certs = append(certs, asset.(CertInterface))
 	}
 	return a.CertBundle.Generate("kube-apiserver-localhost-ca-bundle", certs...)
@@ -177,9 +179,9 @@ func (a *KubeAPIServerLocalhostServerCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *KubeAPIServerLocalhostServerCertKey) Generate(dependencies asset.Parents) error {
+func (a *KubeAPIServerLocalhostServerCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ca := &KubeAPIServerLocalhostSignerCertKey{}
-	dependencies.Get(ca)
+	parents.Get(ca)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
@@ -213,7 +215,7 @@ func (c *KubeAPIServerServiceNetworkSignerCertKey) Dependencies() []asset.Asset 
 }
 
 // Generate generates the root-ca key and cert pair.
-func (c *KubeAPIServerServiceNetworkSignerCertKey) Generate(parents asset.Parents) error {
+func (c *KubeAPIServerServiceNetworkSignerCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kube-apiserver-service-network-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -245,10 +247,10 @@ func (a *KubeAPIServerServiceNetworkCABundle) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert bundle based on its dependencies.
-func (a *KubeAPIServerServiceNetworkCABundle) Generate(deps asset.Parents) error {
+func (a *KubeAPIServerServiceNetworkCABundle) Generate(log *logrus.Entry, parents asset.Parents) error {
 	var certs []CertInterface
 	for _, asset := range a.Dependencies() {
-		deps.Get(asset)
+		parents.Get(asset)
 		certs = append(certs, asset.(CertInterface))
 	}
 	return a.CertBundle.Generate("kube-apiserver-service-network-ca-bundle", certs...)
@@ -275,10 +277,10 @@ func (a *KubeAPIServerServiceNetworkServerCertKey) Dependencies() []asset.Asset 
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *KubeAPIServerServiceNetworkServerCertKey) Generate(dependencies asset.Parents) error {
+func (a *KubeAPIServerServiceNetworkServerCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ca := &KubeAPIServerServiceNetworkSignerCertKey{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(ca, installConfig)
+	parents.Get(ca, installConfig)
 	serviceAddress, err := cidrhost(installConfig.Config.Networking.ServiceNetwork[0].IPNet, 1)
 	if err != nil {
 		return errors.Wrap(err, "failed to get service address for kube-apiserver from InstallConfig")
@@ -321,7 +323,7 @@ func (c *KubeAPIServerLBSignerCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the root-ca key and cert pair.
-func (c *KubeAPIServerLBSignerCertKey) Generate(parents asset.Parents) error {
+func (c *KubeAPIServerLBSignerCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kube-apiserver-lb-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -353,10 +355,10 @@ func (a *KubeAPIServerLBCABundle) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert bundle based on its dependencies.
-func (a *KubeAPIServerLBCABundle) Generate(deps asset.Parents) error {
+func (a *KubeAPIServerLBCABundle) Generate(log *logrus.Entry, parents asset.Parents) error {
 	var certs []CertInterface
 	for _, asset := range a.Dependencies() {
-		deps.Get(asset)
+		parents.Get(asset)
 		certs = append(certs, asset.(CertInterface))
 	}
 	return a.CertBundle.Generate("kube-apiserver-lb-ca-bundle", certs...)
@@ -383,10 +385,10 @@ func (a *KubeAPIServerExternalLBServerCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *KubeAPIServerExternalLBServerCertKey) Generate(dependencies asset.Parents) error {
+func (a *KubeAPIServerExternalLBServerCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ca := &KubeAPIServerLBSignerCertKey{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(ca, installConfig)
+	parents.Get(ca, installConfig)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
@@ -422,10 +424,10 @@ func (a *KubeAPIServerInternalLBServerCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *KubeAPIServerInternalLBServerCertKey) Generate(dependencies asset.Parents) error {
+func (a *KubeAPIServerInternalLBServerCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ca := &KubeAPIServerLBSignerCertKey{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(ca, installConfig)
+	parents.Get(ca, installConfig)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
@@ -463,10 +465,10 @@ func (a *KubeAPIServerCompleteCABundle) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert bundle based on its dependencies.
-func (a *KubeAPIServerCompleteCABundle) Generate(deps asset.Parents) error {
+func (a *KubeAPIServerCompleteCABundle) Generate(log *logrus.Entry, parents asset.Parents) error {
 	var certs []CertInterface
 	for _, asset := range a.Dependencies() {
-		deps.Get(asset)
+		parents.Get(asset)
 		certs = append(certs, asset.(CertInterface))
 	}
 	return a.CertBundle.Generate("kube-apiserver-complete-server-ca-bundle", certs...)
@@ -497,10 +499,10 @@ func (a *KubeAPIServerCompleteClientCABundle) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert bundle based on its dependencies.
-func (a *KubeAPIServerCompleteClientCABundle) Generate(deps asset.Parents) error {
+func (a *KubeAPIServerCompleteClientCABundle) Generate(log *logrus.Entry, parents asset.Parents) error {
 	var certs []CertInterface
 	for _, asset := range a.Dependencies() {
-		deps.Get(asset)
+		parents.Get(asset)
 		certs = append(certs, asset.(CertInterface))
 	}
 	return a.CertBundle.Generate("kube-apiserver-complete-client-ca-bundle", certs...)

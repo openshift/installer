@@ -194,6 +194,7 @@ func validateCompute(platform *types.Platform, pools []types.MachinePool, fldPat
 		allErrs = append(allErrs, ValidateMachinePool(platform, &p, poolFldPath)...)
 	}
 	if !foundPositiveReplicas {
+		// FIXME: This is using global logger. Should report an error instead.
 		logrus.Warnf("There are no compute nodes specified. The cluster will not fully initialize without compute nodes.")
 	}
 	return allErrs

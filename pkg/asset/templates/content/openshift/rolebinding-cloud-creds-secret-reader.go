@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/templates/content"
 )
@@ -30,7 +32,7 @@ func (t *RoleBindingCloudCredsSecretReader) Name() string {
 }
 
 // Generate generates the actual files by this asset
-func (t *RoleBindingCloudCredsSecretReader) Generate(parents asset.Parents) error {
+func (t *RoleBindingCloudCredsSecretReader) Generate(log *logrus.Entry, parents asset.Parents) error {
 	fileName := roleBindingCloudCredsSecretReaderFileName
 	data, err := content.GetOpenshiftTemplate(fileName)
 	if err != nil {

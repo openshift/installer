@@ -11,6 +11,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -90,14 +91,14 @@ func (m *Manifests) Dependencies() []asset.Asset {
 }
 
 // Generate generates the respective operator config.yml files
-func (m *Manifests) Generate(dependencies asset.Parents) error {
+func (m *Manifests) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ingress := &Ingress{}
 	dns := &DNS{}
 	network := &Networking{}
 	infra := &Infrastructure{}
 	installConfig := &installconfig.InstallConfig{}
 	proxy := &Proxy{}
-	dependencies.Get(installConfig, ingress, dns, network, infra, proxy)
+	parents.Get(installConfig, ingress, dns, network, infra, proxy)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -118,7 +119,7 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 			Data:     kubeSysConfigData,
 		},
 	}
-	m.FileList = append(m.FileList, m.generateBootKubeManifests(dependencies)...)
+	m.FileList = append(m.FileList, m.generateBootKubeManifests(parents)...)
 
 	m.FileList = append(m.FileList, ingress.Files()...)
 	m.FileList = append(m.FileList, dns.Files()...)
@@ -136,7 +137,7 @@ func (m *Manifests) Files() []*asset.File {
 	return m.FileList
 }
 
-func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*asset.File {
+func (m *Manifests) generateBootKubeManifests(parents asset.Parents) []*asset.File {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	mcsCertKey := &tls.MCSCertKey{}
@@ -147,7 +148,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	etcdSignerCertKey := &tls.EtcdSignerCertKey{}
 	etcdCABundle := &tls.EtcdCABundle{}
 	etcdSignerClientCertKey := &tls.EtcdSignerClientCertKey{}
-	dependencies.Get(
+	parents.Get(
 		clusterID,
 		installConfig,
 		etcdSignerCertKey,
@@ -205,7 +206,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		&bootkube.OpenshiftConfigSecretPullSecret{},
 		&bootkube.OpenshiftMachineConfigOperator{},
 	} {
-		dependencies.Get(a)
+		parents.Get(a)
 		for _, f := range a.Files() {
 			files = append(files, &asset.File{
 				Filename: filepath.Join(manifestDir, strings.TrimSuffix(filepath.Base(f.Filename), ".template")),

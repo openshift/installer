@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"github.com/pborman/uuid"
+	"github.com/sirupsen/logrus"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -37,9 +38,9 @@ func (a *ClusterID) Dependencies() []asset.Asset {
 }
 
 // Generate generates a new ClusterID
-func (a *ClusterID) Generate(dep asset.Parents) error {
+func (a *ClusterID) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ica := &InstallConfig{}
-	dep.Get(ica)
+	parents.Get(ica)
 
 	// add random chars to the end to randomize
 	a.InfraID = generateInfraID(ica.Config.ObjectMeta.Name)

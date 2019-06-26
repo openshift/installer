@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -36,7 +37,7 @@ func (a *platform) Dependencies() []asset.Asset {
 }
 
 // Generate queries for input from the user.
-func (a *platform) Generate(asset.Parents) error {
+func (a *platform) Generate(log *logrus.Entry, parents asset.Parents) error {
 	platform, err := a.queryUserForPlatform()
 	if err != nil {
 		return err
@@ -54,7 +55,7 @@ func (a *platform) Generate(asset.Parents) error {
 			return err
 		}
 	case azure.Name:
-		a.Azure, err = azureconfig.Platform()
+		a.Azure, err = azureconfig.Platform(log)
 		if err != nil {
 			return err
 		}

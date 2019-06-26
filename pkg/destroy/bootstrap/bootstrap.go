@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -15,7 +17,7 @@ import (
 )
 
 // Destroy uses Terraform to remove bootstrap resources.
-func Destroy(dir string) (err error) {
+func Destroy(log *logrus.Entry, dir string) (err error) {
 	metadata, err := cluster.LoadMetadata(dir)
 	if err != nil {
 		return err
@@ -63,14 +65,14 @@ func Destroy(dir string) (err error) {
 	}
 
 	if platform == libvirt.Name {
-		_, err = terraform.Apply(tempDir, platform, extraArgs...)
+		_, err = terraform.Apply(log, tempDir, platform, extraArgs...)
 		if err != nil {
 			return errors.Wrap(err, "Terraform apply")
 		}
 	}
 
 	extraArgs = append(extraArgs, "-target=module.bootstrap")
-	err = terraform.Destroy(tempDir, platform, extraArgs...)
+	err = terraform.Destroy(log, tempDir, platform, extraArgs...)
 	if err != nil {
 		return errors.Wrap(err, "Terraform destroy")
 	}

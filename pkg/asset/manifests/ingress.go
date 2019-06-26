@@ -6,6 +6,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
@@ -38,9 +39,9 @@ func (*Ingress) Dependencies() []asset.Asset {
 }
 
 // Generate generates the ingress config and its CRD.
-func (ing *Ingress) Generate(dependencies asset.Parents) error {
+func (ing *Ingress) Generate(log *logrus.Entry, parents asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	parents.Get(installConfig)
 
 	config := &configv1.Ingress{
 		TypeMeta: metav1.TypeMeta{

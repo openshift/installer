@@ -76,7 +76,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 }
 
 // Generate generates the terraform.tfvars file.
-func (t *TerraformVariables) Generate(parents asset.Parents) error {
+func (t *TerraformVariables) Generate(log *logrus.Entry, parents asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
@@ -93,7 +93,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	}
 
 	masterIgn := string(masterIgnAsset.Files()[0].Data)
-	bootstrapIgn, err := injectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
+	bootstrapIgn, err := injectInstallInfo(log, bootstrapIgnAsset.Files()[0].Data)
 	if err != nil {
 		return errors.Wrap(err, "unable to inject installation info")
 	}
@@ -149,7 +149,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case azure.Name:
-		sess, err := azureconfig.GetSession()
+		sess, err := azureconfig.GetSession(log)
 		if err != nil {
 			return err
 		}
@@ -185,6 +185,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 		data, err = libvirttfvars.TFVars(
+			log,
 			masters[0].Spec.ProviderSpec.Value.Object.(*libvirtprovider.LibvirtMachineProviderConfig),
 			string(*rhcosImage),
 			&installConfig.Config.Networking.MachineCIDR.IPNet,
@@ -218,7 +219,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	default:
-		logrus.Warnf("unrecognized platform %s", platform)
+		log.Warnf("unrecognized platform %s", platform)
 	}
 
 	return nil
@@ -251,7 +252,7 @@ func (t *TerraformVariables) Load(f asset.FileFetcher) (found bool, err error) {
 
 // injectInstallInfo adds information about the installer and its invoker as a
 // ConfigMap to the provided bootstrap Ignition config.
-func injectInstallInfo(bootstrap []byte) (string, error) {
+func injectInstallInfo(log *logrus.Entry, bootstrap []byte) (string, error) {
 	config := &igntypes.Config{}
 	if err := json.Unmarshal(bootstrap, &config); err != nil {
 		return "", errors.Wrap(err, "failed to unmarshal bootstrap Ignition config")
@@ -263,7 +264,7 @@ func injectInstallInfo(bootstrap []byte) (string, error) {
 	} else if user, err := user.Current(); err == nil {
 		invoker = user.Username
 	} else {
-		logrus.Warnf("Unable to determine username: %v", err)
+		log.Warnf("Unable to determine username: %v", err)
 		invoker = "<unknown>"
 	}
 

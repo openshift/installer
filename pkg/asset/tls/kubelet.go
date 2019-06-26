@@ -4,6 +4,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 )
 
@@ -20,7 +22,7 @@ func (c *KubeletCSRSignerCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the root-ca key and cert pair.
-func (c *KubeletCSRSignerCertKey) Generate(parents asset.Parents) error {
+func (c *KubeletCSRSignerCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kubelet-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -52,10 +54,10 @@ func (a *KubeletClientCABundle) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert bundle based on its dependencies.
-func (a *KubeletClientCABundle) Generate(deps asset.Parents) error {
+func (a *KubeletClientCABundle) Generate(log *logrus.Entry, parents asset.Parents) error {
 	var certs []CertInterface
 	for _, asset := range a.Dependencies() {
-		deps.Get(asset)
+		parents.Get(asset)
 		certs = append(certs, asset.(CertInterface))
 	}
 	return a.CertBundle.Generate("kubelet-client-ca-bundle", certs...)
@@ -82,10 +84,10 @@ func (a *KubeletServingCABundle) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert bundle based on its dependencies.
-func (a *KubeletServingCABundle) Generate(deps asset.Parents) error {
+func (a *KubeletServingCABundle) Generate(log *logrus.Entry, parents asset.Parents) error {
 	var certs []CertInterface
 	for _, asset := range a.Dependencies() {
-		deps.Get(asset)
+		parents.Get(asset)
 		certs = append(certs, asset.(CertInterface))
 	}
 	return a.CertBundle.Generate("kubelet-serving-ca-bundle", certs...)
@@ -110,7 +112,7 @@ func (c *KubeletBootstrapCertSigner) Dependencies() []asset.Asset {
 }
 
 // Generate generates the root-ca key and cert pair.
-func (c *KubeletBootstrapCertSigner) Generate(parents asset.Parents) error {
+func (c *KubeletBootstrapCertSigner) Generate(log *logrus.Entry, parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kubelet-bootstrap-kubeconfig-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -142,10 +144,10 @@ func (a *KubeletBootstrapCABundle) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert bundle based on its dependencies.
-func (a *KubeletBootstrapCABundle) Generate(deps asset.Parents) error {
+func (a *KubeletBootstrapCABundle) Generate(log *logrus.Entry, parents asset.Parents) error {
 	var certs []CertInterface
 	for _, asset := range a.Dependencies() {
-		deps.Get(asset)
+		parents.Get(asset)
 		certs = append(certs, asset.(CertInterface))
 	}
 	return a.CertBundle.Generate("kubelet-bootstrap-kubeconfig-ca-bundle", certs...)
@@ -173,9 +175,9 @@ func (a *KubeletClientCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *KubeletClientCertKey) Generate(dependencies asset.Parents) error {
+func (a *KubeletClientCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ca := &KubeletBootstrapCertSigner{}
-	dependencies.Get(ca)
+	parents.Get(ca)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:serviceaccount:openshift-machine-config-operator:node-bootstrapper", Organization: []string{"system:serviceaccounts:openshift-machine-config-operator"}},

@@ -22,13 +22,13 @@ func IsForbidden(err error) bool {
 
 // GetBaseDomain returns a base domain chosen from among the account's
 // public routes.
-func GetBaseDomain() (string, error) {
+func GetBaseDomain(log *logrus.Entry) (string, error) {
 	session, err := GetSession()
 	if err != nil {
 		return "", err
 	}
 
-	logrus.Debugf("listing AWS hosted zones")
+	log.Debugf("listing AWS hosted zones")
 	client := route53.New(session)
 	publicZoneMap := map[string]struct{}{}
 	exists := struct{}{}

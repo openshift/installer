@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/templates/content"
 )
@@ -31,7 +33,7 @@ func (t *NetworkCRDs) Name() string {
 }
 
 // Generate generates the actual files by this asset
-func (t *NetworkCRDs) Generate(parents asset.Parents) error {
+func (t *NetworkCRDs) Generate(log *logrus.Entry, parents asset.Parents) error {
 	data, err := content.GetOpenshiftTemplate(netopCRDfilename)
 	if err != nil {
 		return err

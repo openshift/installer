@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/templates/content"
 )
@@ -33,7 +35,7 @@ func (t *CVOOverrides) Name() string {
 }
 
 // Generate generates the actual files by this asset
-func (t *CVOOverrides) Generate(parents asset.Parents) error {
+func (t *CVOOverrides) Generate(log *logrus.Entry, parents asset.Parents) error {
 	fileName := cVOOverridesFileName
 	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {

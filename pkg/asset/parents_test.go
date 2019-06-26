@@ -3,6 +3,7 @@ package asset
 import (
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +19,7 @@ func (a *parentsAsset) Dependencies() []Asset {
 	return []Asset{}
 }
 
-func (a *parentsAsset) Generate(Parents) error {
+func (a *parentsAsset) Generate(*logrus.Entry, Parents) error {
 	return nil
 }
 

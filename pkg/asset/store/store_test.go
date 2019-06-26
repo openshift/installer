@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -54,7 +55,7 @@ func (a *testStoreAssetA) Dependencies() []asset.Asset {
 	return dependenciesTestStoreAsset(a)
 }
 
-func (a *testStoreAssetA) Generate(asset.Parents) error {
+func (a *testStoreAssetA) Generate(*logrus.Entry, asset.Parents) error {
 	return generateTestStoreAsset(a)
 }
 
@@ -76,7 +77,7 @@ func (a *testStoreAssetB) Dependencies() []asset.Asset {
 	return dependenciesTestStoreAsset(a)
 }
 
-func (a *testStoreAssetB) Generate(asset.Parents) error {
+func (a *testStoreAssetB) Generate(*logrus.Entry, asset.Parents) error {
 	return generateTestStoreAsset(a)
 }
 
@@ -98,7 +99,7 @@ func (a *testStoreAssetC) Dependencies() []asset.Asset {
 	return dependenciesTestStoreAsset(a)
 }
 
-func (a *testStoreAssetC) Generate(asset.Parents) error {
+func (a *testStoreAssetC) Generate(*logrus.Entry, asset.Parents) error {
 	return generateTestStoreAsset(a)
 }
 
@@ -120,7 +121,7 @@ func (a *testStoreAssetD) Dependencies() []asset.Asset {
 	return dependenciesTestStoreAsset(a)
 }
 
-func (a *testStoreAssetD) Generate(asset.Parents) error {
+func (a *testStoreAssetD) Generate(*logrus.Entry, asset.Parents) error {
 	return generateTestStoreAsset(a)
 }
 
@@ -266,6 +267,7 @@ func TestStoreFetch(t *testing.T) {
 			}
 			defer os.RemoveAll(dir)
 			store := &storeImpl{
+				log:       logrus.NewEntry(logrus.StandardLogger()),
 				directory: dir,
 				assets:    map[reflect.Type]*assetState{},
 			}
@@ -365,6 +367,7 @@ func TestStoreFetchOnDiskAssets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			clearAssetBehaviors()
 			store := &storeImpl{
+				log:    logrus.NewEntry(logrus.StandardLogger()),
 				assets: map[reflect.Type]*assetState{},
 			}
 			assets := make(map[string]asset.Asset, len(tc.assets))
@@ -399,7 +402,7 @@ func TestStoreFetchIdempotency(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	for i := 0; i < 2; i++ {
-		store, err := newStore(tempDir)
+		store, err := newStore(logrus.NewEntry(logrus.StandardLogger()), tempDir)
 		if !assert.NoError(t, err, "(loop %d) unexpected error creating store", i) {
 			t.Fatal()
 		}

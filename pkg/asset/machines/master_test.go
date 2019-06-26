@@ -194,7 +194,7 @@ spec:
 				},
 			)
 			master := &Master{}
-			if err := master.Generate(parents); err != nil {
+			if err := master.Generate(nil, parents); err != nil {
 				t.Fatalf("failed to generate master machines: %v", err)
 			}
 			if tc.expectedMachineConfig != "" {

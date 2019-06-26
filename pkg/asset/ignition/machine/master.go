@@ -6,6 +6,7 @@ import (
 
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -33,10 +34,10 @@ func (a *Master) Dependencies() []asset.Asset {
 }
 
 // Generate generates the ignition config for the Master asset.
-func (a *Master) Generate(dependencies asset.Parents) error {
+func (a *Master) Generate(log *logrus.Entry, parents asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	rootCA := &tls.RootCA{}
-	dependencies.Get(installConfig, rootCA)
+	parents.Get(installConfig, rootCA)
 
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master")
 

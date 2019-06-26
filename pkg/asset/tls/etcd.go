@@ -4,6 +4,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 )
 
@@ -20,7 +22,7 @@ func (c *EtcdSignerCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the root-ca key and cert pair.
-func (c *EtcdSignerCertKey) Generate(parents asset.Parents) error {
+func (c *EtcdSignerCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "etcd-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -52,10 +54,10 @@ func (a *EtcdCABundle) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert bundle based on its dependencies.
-func (a *EtcdCABundle) Generate(deps asset.Parents) error {
+func (a *EtcdCABundle) Generate(log *logrus.Entry, parents asset.Parents) error {
 	var certs []CertInterface
 	for _, asset := range a.Dependencies() {
-		deps.Get(asset)
+		parents.Get(asset)
 		certs = append(certs, asset.(CertInterface))
 	}
 	return a.CertBundle.Generate("etcd-ca-bundle", certs...)
@@ -83,9 +85,9 @@ func (a *EtcdSignerClientCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *EtcdSignerClientCertKey) Generate(dependencies asset.Parents) error {
+func (a *EtcdSignerClientCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ca := &EtcdSignerCertKey{}
-	dependencies.Get(ca)
+	parents.Get(ca)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "etcd", OrganizationalUnit: []string{"etcd"}},

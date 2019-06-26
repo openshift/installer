@@ -3,6 +3,7 @@ package installconfig
 import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -27,21 +28,21 @@ func (a *baseDomain) Dependencies() []asset.Asset {
 }
 
 // Generate queries for the base domain from the user.
-func (a *baseDomain) Generate(parents asset.Parents) error {
+func (a *baseDomain) Generate(log *logrus.Entry, parents asset.Parents) error {
 	platform := &platform{}
 	parents.Get(platform)
 
 	switch platform.CurrentName() {
 	case aws.Name:
 		var err error
-		a.BaseDomain, err = awsconfig.GetBaseDomain()
+		a.BaseDomain, err = awsconfig.GetBaseDomain(log)
 		cause := errors.Cause(err)
 		if !(awsconfig.IsForbidden(cause) || request.IsErrorThrottle(cause)) {
 			return err
 		}
 	case azure.Name:
 		var err error
-		azureDNS, _ := azureconfig.NewDNSConfig()
+		azureDNS, _ := azureconfig.NewDNSConfig(log)
 		zone, err := azureDNS.GetDNSZone()
 		if err != nil {
 			return err

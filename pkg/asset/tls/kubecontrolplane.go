@@ -4,6 +4,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 )
 
@@ -20,7 +22,7 @@ func (c *KubeControlPlaneSignerCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the root-ca key and cert pair.
-func (c *KubeControlPlaneSignerCertKey) Generate(parents asset.Parents) error {
+func (c *KubeControlPlaneSignerCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kube-control-plane-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -55,10 +57,10 @@ func (a *KubeControlPlaneCABundle) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert bundle based on its dependencies.
-func (a *KubeControlPlaneCABundle) Generate(deps asset.Parents) error {
+func (a *KubeControlPlaneCABundle) Generate(log *logrus.Entry, parents asset.Parents) error {
 	var certs []CertInterface
 	for _, asset := range a.Dependencies() {
-		deps.Get(asset)
+		parents.Get(asset)
 		certs = append(certs, asset.(CertInterface))
 	}
 	return a.CertBundle.Generate("kube-control-plane-ca-bundle", certs...)
@@ -84,9 +86,9 @@ func (a *KubeControlPlaneKubeControllerManagerClientCertKey) Dependencies() []as
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *KubeControlPlaneKubeControllerManagerClientCertKey) Generate(dependencies asset.Parents) error {
+func (a *KubeControlPlaneKubeControllerManagerClientCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ca := &KubeControlPlaneSignerCertKey{}
-	dependencies.Get(ca)
+	parents.Get(ca)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
@@ -118,9 +120,9 @@ func (a *KubeControlPlaneKubeSchedulerClientCertKey) Dependencies() []asset.Asse
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *KubeControlPlaneKubeSchedulerClientCertKey) Generate(dependencies asset.Parents) error {
+func (a *KubeControlPlaneKubeSchedulerClientCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ca := &KubeControlPlaneSignerCertKey{}
-	dependencies.Get(ca)
+	parents.Get(ca)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},

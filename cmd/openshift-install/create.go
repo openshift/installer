@@ -103,7 +103,7 @@ var (
 				}
 
 				logrus.Info("Destroying the bootstrap resources...")
-				err = destroybootstrap.Destroy(rootOpts.dir)
+				err = destroybootstrap.Destroy(logrus.NewEntry(logrus.StandardLogger()), rootOpts.dir)
 				if err != nil {
 					logrus.Fatal(err)
 				}
@@ -140,7 +140,7 @@ func newCreateCmd() *cobra.Command {
 
 func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) {
 	runner := func(directory string) error {
-		assetStore, err := assetstore.NewStore(directory)
+		assetStore, err := assetstore.NewStore(logrus.NewEntry(logrus.StandardLogger()), directory)
 		if err != nil {
 			return errors.Wrap(err, "failed to create asset store")
 		}

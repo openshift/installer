@@ -8,6 +8,7 @@ import (
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
@@ -99,8 +100,8 @@ func (config DNSConfig) GetDNSZone() (*Zone, error) {
 //NewDNSConfig returns a new DNSConfig struct that helps configuring the DNS
 //by querying your subscription and letting you choose
 //which domain you wish to use for the cluster
-func NewDNSConfig() (*DNSConfig, error) {
-	session, err := GetSession()
+func NewDNSConfig(log *logrus.Entry) (*DNSConfig, error) {
+	session, err := GetSession(log)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not retrieve session information")
 	}

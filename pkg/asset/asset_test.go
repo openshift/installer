@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +21,7 @@ func (a *persistAsset) Dependencies() []Asset {
 	return []Asset{}
 }
 
-func (a *persistAsset) Generate(Parents) error {
+func (a *persistAsset) Generate(*logrus.Entry, Parents) error {
 	return nil
 }
 

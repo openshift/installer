@@ -11,6 +11,7 @@ import (
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	awsapi "sigs.k8s.io/cluster-api-provider-aws/pkg/apis"
@@ -90,12 +91,12 @@ func awsDefaultMasterMachineType(installconfig *installconfig.InstallConfig) str
 }
 
 // Generate generates the Master asset.
-func (m *Master) Generate(dependencies asset.Parents) error {
+func (m *Master) Generate(log *logrus.Entry, parents asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installconfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
 	mign := &machine.Master{}
-	dependencies.Get(clusterID, installconfig, rhcosImage, mign)
+	parents.Get(clusterID, installconfig, rhcosImage, mign)
 
 	ic := installconfig.Config
 

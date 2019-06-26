@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -65,8 +66,8 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 			if err := ioutil.WriteFile(filepath.Join(tempDir, stateFileName), []byte(userProvidedAssets), 0666); err != nil {
 				t.Fatalf("could not write the state file: %v", err)
 			}
-
-			assetStore, err := newStore(tempDir)
+			log := logrus.NewEntry(logrus.StandardLogger())
+			assetStore, err := newStore(log, tempDir)
 			if err != nil {
 				t.Fatalf("failed to create asset store: %v", err)
 			}
@@ -81,7 +82,7 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 				}
 			}
 
-			newAssetStore, err := newStore(tempDir)
+			newAssetStore, err := newStore(log, tempDir)
 			if err != nil {
 				t.Fatalf("failed to create new asset store: %v", err)
 			}

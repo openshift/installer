@@ -11,6 +11,7 @@ import (
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	awsapi "sigs.k8s.io/cluster-api-provider-aws/pkg/apis"
@@ -111,12 +112,12 @@ func awsDefaultWorkerMachineType(installconfig *installconfig.InstallConfig) str
 }
 
 // Generate generates the Worker asset.
-func (w *Worker) Generate(dependencies asset.Parents) error {
+func (w *Worker) Generate(log *logrus.Entry, parents asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installconfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
 	wign := &machine.Worker{}
-	dependencies.Get(clusterID, installconfig, rhcosImage, wign)
+	parents.Get(clusterID, installconfig, rhcosImage, wign)
 
 	machineConfigs := []*mcfgv1.MachineConfig{}
 	machineSets := []runtime.Object{}

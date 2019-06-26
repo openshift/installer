@@ -5,6 +5,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/validate"
+	"github.com/sirupsen/logrus"
 )
 
 type pullSecret struct {
@@ -19,7 +20,7 @@ func (a *pullSecret) Dependencies() []asset.Asset {
 }
 
 // Generate queries for the pull secret from the user.
-func (a *pullSecret) Generate(asset.Parents) error {
+func (a *pullSecret) Generate(log *logrus.Entry, parents asset.Parents) error {
 	return survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Password{

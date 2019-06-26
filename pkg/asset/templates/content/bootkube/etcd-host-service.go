@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/templates/content"
 )
@@ -30,7 +32,7 @@ func (t *EtcdHostService) Name() string {
 }
 
 // Generate generates the actual files by this asset
-func (t *EtcdHostService) Generate(parents asset.Parents) error {
+func (t *EtcdHostService) Generate(log *logrus.Entry, parents asset.Parents) error {
 	fileName := etcdHostServiceFileName
 	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {

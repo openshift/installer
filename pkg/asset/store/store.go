@@ -104,7 +104,7 @@ func (s *storeImpl) Destroy(a asset.Asset) error {
 	}
 
 	if wa, ok := a.(asset.WritableAsset); ok {
-		if err := asset.DeleteAssetFromDisk(wa, s.directory); err != nil {
+		if err := asset.DeleteAssetFromDisk(s.log, wa, s.directory); err != nil {
 			return err
 		}
 	}
@@ -227,7 +227,7 @@ func (s *storeImpl) fetch(a asset.Asset, indent string) error {
 		parents.Add(d)
 	}
 	s.log.Debugf("%sGenerating %q...", indent, a.Name())
-	if err := a.Generate(parents); err != nil {
+	if err := a.Generate(s.log, parents); err != nil {
 		return errors.Wrapf(err, "failed to generate asset %q", a.Name())
 	}
 	assetState.asset = a
@@ -349,7 +349,7 @@ func (s *storeImpl) purge(excluded []asset.WritableAsset) error {
 			continue
 		}
 		s.log.Infof("Consuming %q from target directory", assetState.asset.Name())
-		if err := asset.DeleteAssetFromDisk(assetState.asset.(asset.WritableAsset), s.directory); err != nil {
+		if err := asset.DeleteAssetFromDisk(s.log, assetState.asset.(asset.WritableAsset), s.directory); err != nil {
 			return err
 		}
 		assetState.presentOnDisk = false

@@ -34,26 +34,26 @@ type Credentials struct {
 
 // GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
 // and, if no creds are found, asks for them and stores them on disk in a config file
-func GetSession() (*Session, error) {
+func GetSession(log *logrus.Entry) (*Session, error) {
 	authFile := defaultAuthFilePath
 	if f := os.Getenv(azureAuthEnv); len(f) > 0 {
 		authFile = f
 	}
-	return newSessionFromFile(authFile)
+	return newSessionFromFile(log, authFile)
 }
 
-func newSessionFromFile(authFilePath string) (*Session, error) {
+func newSessionFromFile(log *logrus.Entry, authFilePath string) (*Session, error) {
 	// NewAuthorizerFromFileWithResource uses `auth.GetSettingsFromFile`, which uses the `azureAuthEnv` to fetch the auth credentials.
 	// therefore setting the local env here to authFilePath allows NewAuthorizerFromFileWithResource to load credentials.
 	os.Setenv(azureAuthEnv, authFilePath)
 	authorizer, err := auth.NewAuthorizerFromFileWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
 	if err != nil {
-		logrus.Debug("Could not get an azure authorizer from file. Asking user to provide authentication info")
+		log.Debug("Could not get an azure authorizer from file. Asking user to provide authentication info")
 		credentials, err := askForCredentials()
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to retrieve credentials from user")
 		}
-		logrus.Infof("Saving user credentials to %q", authFilePath)
+		log.Infof("Saving user credentials to %q", authFilePath)
 		if err = saveCredentials(*credentials, authFilePath); err != nil {
 			return nil, errors.Wrap(err, "failed to save credentials")
 		}

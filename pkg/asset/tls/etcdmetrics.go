@@ -5,6 +5,7 @@ import (
 	"crypto/x509/pkix"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/sirupsen/logrus"
 )
 
 // EtcdMetricSignerCertKey is a key/cert pair that signs the etcd-metrics client and server certs.
@@ -20,7 +21,7 @@ func (c *EtcdMetricSignerCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the root-ca key and cert pair.
-func (c *EtcdMetricSignerCertKey) Generate(parents asset.Parents) error {
+func (c *EtcdMetricSignerCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "etcd-metric-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -52,10 +53,10 @@ func (a *EtcdMetricCABundle) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert bundle based on its dependencies.
-func (a *EtcdMetricCABundle) Generate(deps asset.Parents) error {
+func (a *EtcdMetricCABundle) Generate(log *logrus.Entry, parents asset.Parents) error {
 	var certs []CertInterface
 	for _, asset := range a.Dependencies() {
-		deps.Get(asset)
+		parents.Get(asset)
 		certs = append(certs, asset.(CertInterface))
 	}
 	return a.CertBundle.Generate("etcd-metric-ca-bundle", certs...)
@@ -83,9 +84,9 @@ func (a *EtcdMetricSignerClientCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *EtcdMetricSignerClientCertKey) Generate(dependencies asset.Parents) error {
+func (a *EtcdMetricSignerClientCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ca := &EtcdMetricSignerCertKey{}
-	dependencies.Get(ca)
+	parents.Get(ca)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "etcd-metric", OrganizationalUnit: []string{"etcd-metric"}},

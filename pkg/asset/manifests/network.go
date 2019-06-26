@@ -6,6 +6,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
@@ -52,10 +53,10 @@ func (no *Networking) Dependencies() []asset.Asset {
 }
 
 // Generate generates the network operator config and its CRD.
-func (no *Networking) Generate(dependencies asset.Parents) error {
+func (no *Networking) Generate(log *logrus.Entry, parents asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	crds := &openshift.NetworkCRDs{}
-	dependencies.Get(installConfig, crds)
+	parents.Get(installConfig, crds)
 
 	netConfig := installConfig.Config.Networking
 

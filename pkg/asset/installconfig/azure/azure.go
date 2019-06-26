@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/types/azure"
 
@@ -22,8 +23,8 @@ const (
 )
 
 // Platform collects azure-specific configuration.
-func Platform() (*azure.Platform, error) {
-	regions, err := getRegions()
+func Platform(log *logrus.Entry) (*azure.Platform, error) {
+	regions, err := getRegions(log)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get list of regions")
 	}
@@ -74,8 +75,8 @@ func Platform() (*azure.Platform, error) {
 	}, nil
 }
 
-func getRegions() (map[string]string, error) {
-	session, err := GetSession()
+func getRegions(log *logrus.Entry) (map[string]string, error) {
+	session, err := GetSession(log)
 	if err != nil {
 		return nil, err
 	}

@@ -39,7 +39,7 @@ type Filter map[string]string
 
 // ClusterUninstaller holds the various options for the cluster we want to delete
 type ClusterUninstaller struct {
-
+	log *logrus.Entry
 	// Filters is a slice of filters for matching resources.  A
 	// resources matches the whole slice if it matches any of the
 	// entries.  For example:
@@ -56,7 +56,6 @@ type ClusterUninstaller struct {
 	//
 	// will match resources with (a:b and c:d) or d:e.
 	Filters   []Filter // filter(s) we will be searching for
-	Logger    logrus.FieldLogger
 	Region    string
 	ClusterID string
 
@@ -67,7 +66,7 @@ type ClusterUninstaller struct {
 }
 
 // New returns an AWS destroyer from ClusterMetadata.
-func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
+func New(log *logrus.Entry, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
 	filters := make([]Filter, 0, len(metadata.ClusterPlatformMetadata.AWS.Identifier))
 	for _, filter := range metadata.ClusterPlatformMetadata.AWS.Identifier {
 		filters = append(filters, filter)
@@ -81,9 +80,9 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.De
 	return &ClusterUninstaller{
 		Filters:   filters,
 		Region:    metadata.ClusterPlatformMetadata.AWS.Region,
-		Logger:    logger,
 		ClusterID: metadata.InfraID,
 		Session:   session,
+		log:       log,
 	}, nil
 }
 
@@ -136,12 +135,12 @@ func (o *ClusterUninstaller) Run() error {
 	iamRoleSearch := &iamRoleSearch{
 		client:  iamClient,
 		filters: o.Filters,
-		logger:  o.Logger,
+		log:     o.log,
 	}
 	iamUserSearch := &iamUserSearch{
 		client:  iamClient,
 		filters: o.Filters,
-		logger:  o.Logger,
+		log:     o.log,
 	}
 
 	err = wait.PollImmediateInfinite(
@@ -152,7 +151,7 @@ func (o *ClusterUninstaller) Run() error {
 			for _, tagClient := range tagClients {
 				matched := false
 				for _, filter := range o.Filters {
-					o.Logger.Debugf("search for and delete matching resources by tag in %s matching %#+v", tagClientNames[tagClient], filter)
+					o.log.Debugf("search for and delete matching resources by tag in %s matching %#+v", tagClientNames[tagClient], filter)
 					tagFilters := make([]*resourcegroupstaggingapi.TagFilter, 0, len(filter))
 					for key, value := range filter {
 						tagFilters = append(tagFilters, &resourcegroupstaggingapi.TagFilter{
@@ -166,7 +165,7 @@ func (o *ClusterUninstaller) Run() error {
 							for _, resource := range results.ResourceTagMappingList {
 								arnString := *resource.ResourceARN
 								if _, ok := deleted[arnString]; !ok {
-									arnLogger := o.Logger.WithField("arn", arnString)
+									arnLogger := o.log.WithField("arn", arnString)
 									matched = true
 									parsed, err := arn.Parse(arnString)
 									if err != nil {
@@ -194,7 +193,7 @@ func (o *ClusterUninstaller) Run() error {
 					)
 					if err != nil {
 						err = errors.Wrap(err, "get tagged resources")
-						o.Logger.Info(err)
+						o.log.Info(err)
 						matched = true
 						loopError = err
 					}
@@ -203,32 +202,32 @@ func (o *ClusterUninstaller) Run() error {
 				if matched {
 					nextTagClients = append(nextTagClients, tagClient)
 				} else {
-					o.Logger.Debugf("no deletions from %s, removing client", tagClientNames[tagClient])
+					o.log.Debugf("no deletions from %s, removing client", tagClientNames[tagClient])
 				}
 			}
 			tagClients = nextTagClients
 
-			o.Logger.Debug("search for IAM roles")
+			o.log.Debug("search for IAM roles")
 			arns, err := iamRoleSearch.arns()
 			if err != nil {
-				o.Logger.Info(err)
+				o.log.Info(err)
 				loopError = err
 			}
 
-			o.Logger.Debug("search for IAM users")
+			o.log.Debug("search for IAM users")
 			userARNs, err := iamUserSearch.arns()
 			if err != nil {
-				o.Logger.Info(err)
+				o.log.Info(err)
 				loopError = err
 			}
 			arns = append(arns, userARNs...)
 
 			if len(arns) > 0 {
-				o.Logger.Debug("delete IAM roles and users")
+				o.log.Debug("delete IAM roles and users")
 			}
 			for _, arnString := range arns {
 				if _, ok := deleted[arnString]; !ok {
-					arnLogger := o.Logger.WithField("arn", arnString)
+					arnLogger := o.log.WithField("arn", arnString)
 					parsed, err := arn.Parse(arnString)
 					if err != nil {
 						arnLogger.Debug(err)
@@ -254,9 +253,9 @@ func (o *ClusterUninstaller) Run() error {
 		return err
 	}
 
-	o.Logger.Debug("search for untaggable resources")
+	o.log.Debug("search for untaggable resources")
 	if err := o.deleteUntaggedResources(awsSession); err != nil {
-		o.Logger.Debug(err)
+		o.log.Debug(err)
 		return err
 	}
 	return nil
@@ -305,7 +304,7 @@ func tagsForFilter(filter Filter) []*ec2.Tag {
 type iamRoleSearch struct {
 	client    *iam.IAM
 	filters   []Filter
-	logger    logrus.FieldLogger
+	log       *logrus.Entry
 	unmatched map[string]struct{}
 }
 
@@ -331,7 +330,7 @@ func (search *iamRoleSearch) arns() ([]string, error) {
 						search.unmatched[*role.Arn] = exists
 					} else {
 						if lastError != nil {
-							search.logger.Debug(lastError)
+							search.log.Debug(lastError)
 						}
 						lastError = errors.Wrapf(err, "get tags for %s", *role.Arn)
 					}
@@ -362,7 +361,7 @@ func (search *iamRoleSearch) arns() ([]string, error) {
 type iamUserSearch struct {
 	client    *iam.IAM
 	filters   []Filter
-	logger    logrus.FieldLogger
+	log       *logrus.Entry
 	unmatched map[string]struct{}
 }
 
@@ -388,7 +387,7 @@ func (search *iamUserSearch) arns() ([]string, error) {
 						search.unmatched[*user.Arn] = exists
 					} else {
 						if lastError != nil {
-							search.logger.Debug(lastError)
+							search.log.Debug(lastError)
 						}
 						lastError = errors.Wrapf(err, "get tags for %s", *user.Arn)
 					}
@@ -680,11 +679,11 @@ func deleteEC2Instance(ec2Client *ec2.EC2, iamClient *iam.IAM, id string, logger
 func (o *ClusterUninstaller) deleteUntaggedResources(awsSession *session.Session) error {
 	iamClient := iam.New(awsSession)
 	masterProfile := fmt.Sprintf("%s-master-profile", o.ClusterID)
-	if err := deleteIAMInstanceProfileByName(iamClient, &masterProfile, o.Logger); err != nil {
+	if err := deleteIAMInstanceProfileByName(iamClient, &masterProfile, o.log); err != nil {
 		return err
 	}
 	workerProfile := fmt.Sprintf("%s-worker-profile", o.ClusterID)
-	if err := deleteIAMInstanceProfileByName(iamClient, &workerProfile, o.Logger); err != nil {
+	if err := deleteIAMInstanceProfileByName(iamClient, &workerProfile, o.log); err != nil {
 		return err
 	}
 

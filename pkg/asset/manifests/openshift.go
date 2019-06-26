@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/ghodss/yaml"
+	"github.com/sirupsen/logrus"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/asset"
@@ -57,11 +58,11 @@ func (o *Openshift) Dependencies() []asset.Asset {
 }
 
 // Generate generates the respective operator config.yml files
-func (o *Openshift) Generate(dependencies asset.Parents) error {
+func (o *Openshift) Generate(log *logrus.Entry, parents asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	kubeadminPassword := &password.KubeadminPassword{}
-	dependencies.Get(installConfig, kubeadminPassword, clusterID)
+	parents.Get(installConfig, kubeadminPassword, clusterID)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -82,7 +83,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 
 	case azuretypes.Name:
 		resourceGroupName := clusterID.InfraID + "-rg"
-		session, err := azure.GetSession()
+		session, err := azure.GetSession(log)
 		if err != nil {
 			return err
 		}
@@ -147,7 +148,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	kubeadminPasswordSecret := &openshift.KubeadminPasswordSecret{}
 	roleCloudCredsSecretReader := &openshift.RoleCloudCredsSecretReader{}
 	roleBindingCloudCredsSecretReader := &openshift.RoleBindingCloudCredsSecretReader{}
-	dependencies.Get(
+	parents.Get(
 		cloudCredsSecret,
 		kubeadminPasswordSecret,
 		roleCloudCredsSecretReader,

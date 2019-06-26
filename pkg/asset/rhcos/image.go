@@ -40,15 +40,15 @@ func (i *Image) Dependencies() []asset.Asset {
 }
 
 // Generate the RHCOS image location.
-func (i *Image) Generate(p asset.Parents) error {
+func (i *Image) Generate(log *logrus.Entry, parents asset.Parents) error {
 	if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE"); ok && oi != "" {
-		logrus.Warn("Found override for OS Image. Please be warned, this is not advised")
+		log.Warn("Found override for OS Image. Please be warned, this is not advised")
 		*i = Image(oi)
 		return nil
 	}
 
 	ic := &installconfig.InstallConfig{}
-	p.Get(ic)
+	parents.Get(ic)
 	config := ic.Config
 
 	var osimage string

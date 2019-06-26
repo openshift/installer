@@ -4,6 +4,9 @@ import (
 	"fmt"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
@@ -13,7 +16,6 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/vsphere"
-	"github.com/pkg/errors"
 )
 
 // PlatformCredsCheck is an asset that checks the platform credentials, asks for them or errors out if invalid
@@ -31,9 +33,9 @@ func (a *PlatformCredsCheck) Dependencies() []asset.Asset {
 }
 
 // Generate queries for input from the user.
-func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
+func (a *PlatformCredsCheck) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ic := &InstallConfig{}
-	dependencies.Get(ic)
+	parents.Get(ic)
 
 	var err error
 	platform := ic.Config.Platform.Name()
@@ -43,7 +45,7 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "creating AWS session")
 		}
-		err = awsconfig.ValidateCreds(ssn)
+		err = awsconfig.ValidateCreds(log, ssn)
 		if err != nil {
 			return errors.Wrap(err, "validate AWS credentials")
 		}
@@ -54,7 +56,7 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 	case libvirt.Name, none.Name, vsphere.Name:
 		// no creds to check
 	case azure.Name:
-		_, err = azureconfig.GetSession()
+		_, err = azureconfig.GetSession(log)
 		if err != nil {
 			return errors.Wrap(err, "creating Azure session")
 		}

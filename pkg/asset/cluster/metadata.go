@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
 	"github.com/openshift/installer/pkg/asset/cluster/azure"
@@ -47,7 +49,7 @@ func (m *Metadata) Dependencies() []asset.Asset {
 }
 
 // Generate generates the metadata asset.
-func (m *Metadata) Generate(parents asset.Parents) (err error) {
+func (m *Metadata) Generate(log *logrus.Entry, parents asset.Parents) (err error) {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(clusterID, installConfig)

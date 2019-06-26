@@ -5,8 +5,10 @@ import (
 	"math/big"
 	"path/filepath"
 
-	"github.com/openshift/installer/pkg/asset"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/openshift/installer/pkg/asset"
 )
 
 var (
@@ -29,7 +31,7 @@ func (a *KubeadminPassword) Dependencies() []asset.Asset {
 }
 
 // Generate the kubeadmin password
-func (a *KubeadminPassword) Generate(asset.Parents) error {
+func (a *KubeadminPassword) Generate(log *logrus.Entry, parents asset.Parents) error {
 	err := a.generateRandomPasswordHash(23)
 	if err != nil {
 		return err

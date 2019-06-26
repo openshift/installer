@@ -38,21 +38,22 @@ var AlwaysTrueFilter = func() filterFunc {
 }
 
 // deleteFunc is the interface a function needs to implement to be delete resources.
-type deleteFunc func(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) error
+type deleteFunc func(conn *libvirt.Connect, filter filterFunc) error
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
 type ClusterUninstaller struct {
+	log *logrus.Entry
+
 	LibvirtURI string
 	Filter     filterFunc
-	Logger     logrus.FieldLogger
 }
 
 // New returns libvirt Uninstaller from ClusterMetadata.
-func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
+func New(log *logrus.Entry, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
 	return &ClusterUninstaller{
 		LibvirtURI: metadata.ClusterPlatformMetadata.Libvirt.URI,
 		Filter:     ClusterIDPrefixFilter(metadata.InfraID),
-		Logger:     logger,
+		log:        log,
 	}, nil
 }
 
@@ -82,8 +83,8 @@ func (o *ClusterUninstaller) Run() error {
 // additional nodes after the initial list call.  We continue deleting
 // domains until we either hit an error or we have a list call with no
 // matching domains.
-func deleteDomains(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) error {
-	logger.Debug("Deleting libvirt domains")
+func deleteDomains(log *logrus.Entry, conn *libvirt.Connect, filter filterFunc) error {
+	log.Debug("Deleting libvirt domains")
 	var err error
 	nothingToDelete := false
 	for !nothingToDelete {
@@ -95,7 +96,7 @@ func deleteDomains(conn *libvirt.Connect, filter filterFunc, logger logrus.Field
 	return nil
 }
 
-func deleteDomainsSinglePass(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) (nothingToDelete bool, err error) {
+func deleteDomainsSinglePass(log *logrus.Entry, conn *libvirt.Connect, filter filterFunc) (nothingToDelete bool, err error) {
 	domains, err := conn.ListAllDomains(0)
 	if err != nil {
 		return false, errors.Wrap(err, "list domains")
@@ -126,14 +127,14 @@ func deleteDomainsSinglePass(conn *libvirt.Connect, filter filterFunc, logger lo
 		if err := domain.Undefine(); err != nil {
 			return false, errors.Wrapf(err, "undefine domain %q", dName)
 		}
-		logger.WithField("domain", dName).Info("Deleted domain")
+		log.WithField("domain", dName).Info("Deleted domain")
 	}
 
 	return nothingToDelete, nil
 }
 
-func deleteVolumes(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) error {
-	logger.Debug("Deleting libvirt volumes")
+func deleteVolumes(log *logrus.Entry, conn *libvirt.Connect, filter filterFunc) error {
+	log.Debug("Deleting libvirt volumes")
 
 	pools, err := conn.ListStoragePools()
 	if err != nil {
@@ -173,7 +174,7 @@ func deleteVolumes(conn *libvirt.Connect, filter filterFunc, logger logrus.Field
 			if err := vol.Delete(0); err != nil {
 				return errors.Wrapf(err, "delete volume %q from %q", vName, tpool)
 			}
-			logger.WithField("volume", vName).Info("Deleted volume")
+			log.WithField("volume", vName).Info("Deleted volume")
 		}
 	default:
 		// blow away entire pool.
@@ -184,14 +185,14 @@ func deleteVolumes(conn *libvirt.Connect, filter filterFunc, logger logrus.Field
 		if err := pool.Undefine(); err != nil {
 			return errors.Wrapf(err, "undefine pool %q", tpool)
 		}
-		logger.WithField("pool", tpool).Info("Deleted pool")
+		log.WithField("pool", tpool).Info("Deleted pool")
 	}
 
 	return nil
 }
 
-func deleteNetwork(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) error {
-	logger.Debug("Deleting libvirt network")
+func deleteNetwork(log *logrus.Entry, conn *libvirt.Connect, filter filterFunc) error {
+	log.Debug("Deleting libvirt network")
 
 	networks, err := conn.ListNetworks()
 	if err != nil {
@@ -215,7 +216,7 @@ func deleteNetwork(conn *libvirt.Connect, filter filterFunc, logger logrus.Field
 		if err := network.Undefine(); err != nil {
 			return errors.Wrapf(err, "undefine network %q", nName)
 		}
-		logger.WithField("network", nName).Info("Deleted network")
+		log.WithField("network", nName).Info("Deleted network")
 	}
 	return nil
 }

@@ -15,13 +15,13 @@ type Destroyer interface {
 }
 
 // NewFunc is an interface for creating platform-specific destroyers.
-type NewFunc func(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (Destroyer, error)
+type NewFunc func(log *logrus.Entry, metadata *types.ClusterMetadata) (Destroyer, error)
 
 // Registry maps ClusterMetadata.Platform() to per-platform Destroyer creators.
 var Registry = make(map[string]NewFunc)
 
 // New returns a Destroyer based on `metadata.json` in `rootDir`.
-func New(logger logrus.FieldLogger, rootDir string) (Destroyer, error) {
+func New(log *logrus.Entry, rootDir string) (Destroyer, error) {
 	metadata, err := cluster.LoadMetadata(rootDir)
 	if err != nil {
 		return nil, err
@@ -36,5 +36,5 @@ func New(logger logrus.FieldLogger, rootDir string) (Destroyer, error) {
 	if !ok {
 		return nil, errors.Errorf("no destroyers registered for %q", platform)
 	}
-	return creator(logger, metadata)
+	return creator(log, metadata)
 }

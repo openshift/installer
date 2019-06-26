@@ -5,6 +5,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
@@ -47,11 +48,11 @@ func (*Infrastructure) Dependencies() []asset.Asset {
 }
 
 // Generate generates the Infrastructure config and its CRD.
-func (i *Infrastructure) Generate(dependencies asset.Parents) error {
+func (i *Infrastructure) Generate(log *logrus.Entry, parents asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	cloudproviderconfig := &CloudProviderConfig{}
-	dependencies.Get(clusterID, installConfig, cloudproviderconfig)
+	parents.Get(clusterID, installConfig, cloudproviderconfig)
 
 	var platform configv1.PlatformType
 	switch installConfig.Config.Platform.Name() {

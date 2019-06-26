@@ -7,6 +7,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	configv1 "github.com/openshift/api/config/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,10 +54,10 @@ func (*DNS) Dependencies() []asset.Asset {
 }
 
 // Generate generates the DNS config and its CRD.
-func (d *DNS) Generate(dependencies asset.Parents) error {
+func (d *DNS) Generate(log *logrus.Entry, parents asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
-	dependencies.Get(installConfig, clusterID)
+	parents.Get(installConfig, clusterID)
 
 	config := &configv1.DNS{
 		TypeMeta: metav1.TypeMeta{
@@ -84,7 +85,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			"Name": fmt.Sprintf("%s-int", clusterID.InfraID),
 		}}
 	case azuretypes.Name:
-		dnsConfig, err := icazure.NewDNSConfig()
+		dnsConfig, err := icazure.NewDNSConfig(log)
 		if err != nil {
 			return err
 		}

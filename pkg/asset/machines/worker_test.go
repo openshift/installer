@@ -196,7 +196,7 @@ spec:
 				},
 			)
 			worker := &Worker{}
-			if err := worker.Generate(parents); err != nil {
+			if err := worker.Generate(nil, parents); err != nil {
 				t.Fatalf("failed to generate worker machines: %v", err)
 			}
 			if tc.expectedMachineConfig != "" {

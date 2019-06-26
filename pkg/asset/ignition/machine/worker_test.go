@@ -29,14 +29,14 @@ func TestWorkerGenerate(t *testing.T) {
 	}
 
 	rootCA := &tls.RootCA{}
-	err := rootCA.Generate(nil)
+	err := rootCA.Generate(nil, nil)
 	assert.NoError(t, err, "unexpected error generating root CA")
 
 	parents := asset.Parents{}
 	parents.Add(installConfig, rootCA)
 
 	worker := &Worker{}
-	err = worker.Generate(parents)
+	err = worker.Generate(nil, parents)
 	assert.NoError(t, err, "unexpected error generating worker asset")
 
 	actualFiles := worker.Files()

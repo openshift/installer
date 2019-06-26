@@ -3,6 +3,8 @@ package kubeconfig
 import (
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
@@ -29,7 +31,7 @@ func (k *AdminClient) Dependencies() []asset.Asset {
 }
 
 // Generate generates the kubeconfig.
-func (k *AdminClient) Generate(parents asset.Parents) error {
+func (k *AdminClient) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ca := &tls.KubeAPIServerCompleteCABundle{}
 	clientCertKey := &tls.AdminKubeConfigClientCertKey{}
 	installConfig := &installconfig.InstallConfig{}

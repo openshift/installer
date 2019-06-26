@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -46,7 +47,7 @@ func readSSHKey(path string) (string, error) {
 }
 
 // Generate generates the SSH public key asset.
-func (a *sshPublicKey) Generate(asset.Parents) error {
+func (a *sshPublicKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	pubKeys := map[string]string{
 		noSSHKey: "",
 	}

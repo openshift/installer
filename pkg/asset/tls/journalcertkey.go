@@ -5,6 +5,7 @@ import (
 	"crypto/x509/pkix"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/sirupsen/logrus"
 )
 
 // JournalCertKey is the asset that generates the key/cert pair that is used to
@@ -25,9 +26,9 @@ func (a *JournalCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *JournalCertKey) Generate(dependencies asset.Parents) error {
+func (a *JournalCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ca := &RootCA{}
-	dependencies.Get(ca)
+	parents.Get(ca)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "journal-gatewayd", Organization: []string{"OpenShift Bootstrap"}},

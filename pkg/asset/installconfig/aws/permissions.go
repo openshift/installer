@@ -189,7 +189,7 @@ var installPermissions = []string{
 // are sufficient to perform an installation, and that they can be used for cluster runtime
 // as either capable of creating new credentials for components that interact with the cloud or
 // being able to be passed through as-is to the components that need cloud credentials
-func ValidateCreds(ssn *session.Session) error {
+func ValidateCreds(log *logrus.Entry, ssn *session.Session) error {
 	creds, err := ssn.Config.Credentials.Get()
 	if err != nil {
 		return errors.Wrap(err, "getting creds from session")
@@ -201,8 +201,7 @@ func ValidateCreds(ssn *session.Session) error {
 	}
 
 	// Check whether we can do an installation
-	logger := logrus.StandardLogger()
-	canInstall, err := ccaws.CheckPermissionsAgainstActions(client, installPermissions, logger)
+	canInstall, err := ccaws.CheckPermissionsAgainstActions(client, installPermissions, log)
 	if err != nil {
 		return errors.Wrap(err, "checking install permissions")
 	}
@@ -211,7 +210,7 @@ func ValidateCreds(ssn *session.Session) error {
 	}
 
 	// Check whether we can mint new creds for cluster services needing to interact with the cloud
-	canMint, err := ccaws.CheckCloudCredCreation(client, logger)
+	canMint, err := ccaws.CheckCloudCredCreation(client, log)
 	if err != nil {
 		return errors.Wrap(err, "mint credentials check")
 	}
@@ -221,7 +220,7 @@ func ValidateCreds(ssn *session.Session) error {
 
 	// Check whether we can use the current credentials in passthrough mode to satisfy
 	// cluster services needing to interact with the cloud
-	canPassthrough, err := ccaws.CheckCloudCredPassthrough(client, logger)
+	canPassthrough, err := ccaws.CheckCloudCredPassthrough(client, log)
 	if err != nil {
 		return errors.Wrap(err, "passthrough credentials check")
 	}

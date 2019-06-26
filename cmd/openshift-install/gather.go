@@ -81,7 +81,7 @@ func runGatherBootstrapCmd(directory string) error {
 		return err
 	}
 
-	assetStore, err := assetstore.NewStore(directory)
+	assetStore, err := assetstore.NewStore(logrus.NewEntry(logrus.StandardLogger()), directory)
 	if err != nil {
 		return errors.Wrap(err, "failed to create asset store")
 	}

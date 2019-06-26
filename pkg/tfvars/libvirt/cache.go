@@ -22,12 +22,12 @@ import (
 // periodically blow away your cache.
 //
 // [1]: https://standards.freedesktop.org/basedir-spec/basedir-spec-0.7.html
-func cachedImage(uri string) (string, error) {
+func cachedImage(log *logrus.Entry, uri string) (string, error) {
 	if strings.HasPrefix(uri, "file://") {
 		return uri, nil
 	}
 
-	logrus.Infof("Fetching OS image: %s", filepath.Base(uri))
+	log.Infof("Fetching OS image: %s", filepath.Base(uri))
 
 	// FIXME: Use os.UserCacheDir() once we bump to Go 1.11
 	// baseCacheDir, err := os.UserCacheDir()
@@ -42,7 +42,7 @@ func cachedImage(uri string) (string, error) {
 	// want to delete it
 	_, err := os.Stat(httpCacheDir)
 	if err == nil || !os.IsNotExist(err) {
-		logrus.Infof("The installer no longer uses %q, it can be deleted", httpCacheDir)
+		log.Infof("The installer no longer uses %q, it can be deleted", httpCacheDir)
 	}
 
 	resp, err := http.Get(uri)
@@ -68,13 +68,13 @@ func cachedImage(uri string) (string, error) {
 	imagePath := filepath.Join(imageCacheDir, key)
 	_, err = os.Stat(imagePath)
 	if err == nil {
-		logrus.Debugf("Using cached OS image %q", imagePath)
+		log.Debugf("Using cached OS image %q", imagePath)
 	} else {
 		if !os.IsNotExist(err) {
 			return uri, err
 		}
 
-		err = cacheImage(resp.Body, imagePath)
+		err = cacheImage(log, resp.Body, imagePath)
 		if err != nil {
 			return uri, err
 		}
@@ -102,8 +102,8 @@ func cacheKey(etag string) (key string, err error) {
 	return hex.EncodeToString(hashed[:]), nil
 }
 
-func cacheImage(reader io.Reader, imagePath string) (err error) {
-	logrus.Debugf("Unpacking OS image into %q...", imagePath)
+func cacheImage(log *logrus.Entry, reader io.Reader, imagePath string) (err error) {
+	log.Debugf("Unpacking OS image into %q...", imagePath)
 
 	flockPath := fmt.Sprintf("%s.lock", imagePath)
 	flock, err := os.Create(flockPath)

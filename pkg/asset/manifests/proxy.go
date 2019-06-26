@@ -9,6 +9,7 @@ import (
 	"github.com/ghodss/yaml"
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -41,10 +42,10 @@ func (*Proxy) Dependencies() []asset.Asset {
 }
 
 // Generate generates the Proxy config and its CRD.
-func (p *Proxy) Generate(dependencies asset.Parents) error {
+func (p *Proxy) Generate(log *logrus.Entry, parents asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	network := &Networking{}
-	dependencies.Get(installConfig, network)
+	parents.Get(installConfig, network)
 
 	p.Config = &configv1.Proxy{
 		TypeMeta: metav1.TypeMeta{

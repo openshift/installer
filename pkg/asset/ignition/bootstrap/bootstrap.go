@@ -107,12 +107,12 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 }
 
 // Generate generates the ignition config for the Bootstrap asset.
-func (a *Bootstrap) Generate(dependencies asset.Parents) error {
+func (a *Bootstrap) Generate(log *logrus.Entry, parents asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	proxy := &manifests.Proxy{}
-	dependencies.Get(installConfig, proxy)
+	parents.Get(installConfig, proxy)
 
-	templateData, err := a.getTemplateData(installConfig.Config, proxy.Config)
+	templateData, err := a.getTemplateData(log, installConfig.Config, proxy.Config)
 
 	if err != nil {
 		return errors.Wrap(err, "failed to get bootstrap templates")
@@ -128,11 +128,11 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return err
 	}
-	err = a.addSystemdUnits("bootstrap/systemd/units", templateData)
+	err = a.addSystemdUnits(log, "bootstrap/systemd/units", templateData)
 	if err != nil {
 		return err
 	}
-	a.addParentFiles(dependencies)
+	a.addParentFiles(parents)
 
 	a.Config.Passwd.Users = append(
 		a.Config.Passwd.Users,
@@ -165,7 +165,7 @@ func (a *Bootstrap) Files() []*asset.File {
 }
 
 // getTemplateData returns the data to use to execute bootstrap templates.
-func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, proxy *configv1.Proxy) (*bootstrapTemplateData, error) {
+func (a *Bootstrap) getTemplateData(log *logrus.Entry, installConfig *types.InstallConfig, proxy *configv1.Proxy) (*bootstrapTemplateData, error) {
 	etcdEndpoints := make([]string, *installConfig.ControlPlane.Replicas)
 
 	for i := range etcdEndpoints {
@@ -174,7 +174,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, proxy *c
 
 	var releaseImage string
 	if ri, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && ri != "" {
-		logrus.Warn("Found override for ReleaseImage. Please be warned, this is not advised")
+		log.Warn("Found override for ReleaseImage. Please be warned, this is not advised")
 		releaseImage = ri
 	} else {
 		var err error
@@ -182,7 +182,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, proxy *c
 		if err != nil {
 			return nil, err
 		}
-		logrus.Debugf("Using internal constant for release image %s", releaseImage)
+		log.Debugf("Using internal constant for release image %s", releaseImage)
 	}
 
 	return &bootstrapTemplateData{
@@ -249,7 +249,7 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 	return nil
 }
 
-func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateData) (err error) {
+func (a *Bootstrap) addSystemdUnits(log *logrus.Entry, uri string, templateData *bootstrapTemplateData) (err error) {
 	enabled := map[string]struct{}{
 		"progress.service":                {},
 		"kubelet.service":                 {},
@@ -284,7 +284,7 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 
 		if info.IsDir() {
 			if dir := info.Name(); !strings.HasSuffix(dir, ".d") {
-				logrus.Tracef("Ignoring internal asset directory %q while looking for systemd drop-ins", dir)
+				log.Tracef("Ignoring internal asset directory %q while looking for systemd drop-ins", dir)
 				continue
 			}
 
@@ -367,7 +367,7 @@ func readFile(name string, reader io.Reader, templateData interface{}) (finalNam
 	return name, data, nil
 }
 
-func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
+func (a *Bootstrap) addParentFiles(parents asset.Parents) {
 	// These files are all added with mode 0644, i.e. readable
 	// by all processes on the system.
 	for _, asset := range []asset.WritableAsset{
@@ -376,7 +376,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 		&machines.Master{},
 		&machines.Worker{},
 	} {
-		dependencies.Get(asset)
+		parents.Get(asset)
 		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "root", 0644, asset)...)
 	}
 
@@ -424,12 +424,12 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 		&tls.ServiceAccountKeyPair{},
 		&tls.JournalCertKey{},
 	} {
-		dependencies.Get(asset)
+		parents.Get(asset)
 		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "root", 0600, asset)...)
 	}
 
 	rootCA := &tls.RootCA{}
-	dependencies.Get(rootCA)
+	parents.Get(rootCA)
 	a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
 }
 

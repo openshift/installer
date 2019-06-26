@@ -5,6 +5,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -59,10 +60,10 @@ func (*CloudProviderConfig) Dependencies() []asset.Asset {
 }
 
 // Generate generates the CloudProviderConfig.
-func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
+func (cpc *CloudProviderConfig) Generate(log *logrus.Entry, parents asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
-	dependencies.Get(installConfig, clusterID)
+	parents.Get(installConfig, clusterID)
 
 	cm := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
@@ -82,7 +83,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	case openstacktypes.Name:
 		cm.Data[cloudProviderConfigDataKey] = openstackmanifests.CloudProviderConfig()
 	case azuretypes.Name:
-		session, err := icazure.GetSession()
+		session, err := icazure.GetSession(log)
 		if err != nil {
 			return errors.Wrap(err, "could not get azure session")
 		}

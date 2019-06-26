@@ -27,8 +27,8 @@ const (
 // given directory and then runs 'terraform init' and 'terraform
 // apply'.  It returns the absolute path of the tfstate file, rooted
 // in the specified directory, along with any errors from Terraform.
-func Apply(dir string, platform string, extraArgs ...string) (path string, err error) {
-	err = unpackAndInit(dir, platform)
+func Apply(log *logrus.Entry, dir string, platform string, extraArgs ...string) (path string, err error) {
+	err = unpackAndInit(log, dir, platform)
 	if err != nil {
 		return "", err
 	}
@@ -59,8 +59,8 @@ func Apply(dir string, platform string, extraArgs ...string) (path string, err e
 // Destroy unpacks the platform-specific Terraform modules into the
 // given directory and then runs 'terraform init' and 'terraform
 // destroy'.
-func Destroy(dir string, platform string, extraArgs ...string) (err error) {
-	err = unpackAndInit(dir, platform)
+func Destroy(log *logrus.Entry, dir string, platform string, extraArgs ...string) (err error) {
+	err = unpackAndInit(log, dir, platform)
 	if err != nil {
 		return err
 	}
@@ -105,13 +105,13 @@ func unpack(dir string, platform string) (err error) {
 
 // unpackAndInit unpacks the platform-specific Terraform modules into
 // the given directory and then runs 'terraform init'.
-func unpackAndInit(dir string, platform string) (err error) {
+func unpackAndInit(log *logrus.Entry, dir string, platform string) (err error) {
 	err = unpack(dir, platform)
 	if err != nil {
 		return errors.Wrap(err, "failed to unpack Terraform modules")
 	}
 
-	if err := setupEmbeddedPlugins(dir); err != nil {
+	if err := setupEmbeddedPlugins(log, dir); err != nil {
 		return errors.Wrap(err, "failed to setup embedded Terraform plugins")
 	}
 
@@ -132,7 +132,7 @@ func unpackAndInit(dir string, platform string) (err error) {
 	return nil
 }
 
-func setupEmbeddedPlugins(dir string) error {
+func setupEmbeddedPlugins(log *logrus.Entry, dir string) error {
 	execPath, err := os.Executable()
 	if err != nil {
 		return errors.Wrap(err, "failed to find path for the executable")
@@ -151,7 +151,7 @@ func setupEmbeddedPlugins(dir string) error {
 			// stat succeeded, the plugin already exists.
 			continue
 		}
-		logrus.Debugf("Symlinking plugin %s src: %q dst: %q", name, execPath, dst)
+		log.Debugf("Symlinking plugin %s src: %q dst: %q", name, execPath, dst)
 		if err := os.Symlink(execPath, dst); err != nil {
 			return err
 		}

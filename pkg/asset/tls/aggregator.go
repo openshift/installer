@@ -4,6 +4,8 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 )
 
@@ -23,7 +25,7 @@ func (a *AggregatorCA) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *AggregatorCA) Generate(dependencies asset.Parents) error {
+func (a *AggregatorCA) Generate(log *logrus.Entry, parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -57,9 +59,9 @@ func (a *APIServerProxyCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *APIServerProxyCertKey) Generate(dependencies asset.Parents) error {
+func (a *APIServerProxyCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	aggregatorCA := &AggregatorCA{}
-	dependencies.Get(aggregatorCA)
+	parents.Get(aggregatorCA)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver-proxy", Organization: []string{"kube-master"}},
@@ -89,7 +91,7 @@ func (c *AggregatorSignerCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the root-ca key and cert pair.
-func (c *AggregatorSignerCertKey) Generate(parents asset.Parents) error {
+func (c *AggregatorSignerCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "aggregator-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -121,10 +123,10 @@ func (a *AggregatorCABundle) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert bundle based on its dependencies.
-func (a *AggregatorCABundle) Generate(deps asset.Parents) error {
+func (a *AggregatorCABundle) Generate(log *logrus.Entry, parents asset.Parents) error {
 	var certs []CertInterface
 	for _, asset := range a.Dependencies() {
-		deps.Get(asset)
+		parents.Get(asset)
 		certs = append(certs, asset.(CertInterface))
 	}
 	return a.CertBundle.Generate("aggregator-ca-bundle", certs...)
@@ -150,9 +152,9 @@ func (a *AggregatorClientCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *AggregatorClientCertKey) Generate(dependencies asset.Parents) error {
+func (a *AggregatorClientCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ca := &AggregatorSignerCertKey{}
-	dependencies.Get(ca)
+	parents.Get(ca)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver-proxy", Organization: []string{"kube-master"}},

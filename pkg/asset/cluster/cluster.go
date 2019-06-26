@@ -44,7 +44,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 }
 
 // Generate launches the cluster and generates the terraform state file on disk.
-func (c *Cluster) Generate(parents asset.Parents) (err error) {
+func (c *Cluster) Generate(log *logrus.Entry, parents asset.Parents) (err error) {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	terraformVariables := &TerraformVariables{}
@@ -69,8 +69,8 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		extraArgs = append(extraArgs, fmt.Sprintf("-var-file=%s", filepath.Join(tmpDir, file.Filename)))
 	}
 
-	logrus.Infof("Creating infrastructure resources...")
-	stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name(), extraArgs...)
+	log.Infof("Creating infrastructure resources...")
+	stateFile, err := terraform.Apply(log, tmpDir, installConfig.Config.Platform.Name(), extraArgs...)
 	if err != nil {
 		err = errors.Wrap(err, "failed to create cluster")
 		if stateFile == "" {
@@ -90,7 +90,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	} else if err == nil {
 		err = err2
 	} else {
-		logrus.Errorf("Failed to read tfstate: %v", err2)
+		log.Errorf("Failed to read tfstate: %v", err2)
 	}
 
 	return err

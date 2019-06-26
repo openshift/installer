@@ -9,6 +9,7 @@ import (
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 type config struct {
@@ -20,7 +21,7 @@ type config struct {
 }
 
 // TFVars generates libvirt-specific Terraform variables.
-func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, machineCIDR *net.IPNet, bridge string, masterCount int) ([]byte, error) {
+func TFVars(log *logrus.Entry, masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, machineCIDR *net.IPNet, bridge string, masterCount int) ([]byte, error) {
 	bootstrapIP, err := cidr.Host(machineCIDR, 10)
 	if err != nil {
 		return nil, errors.Errorf("failed to generate bootstrap IP: %v", err)
@@ -31,7 +32,7 @@ func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, 
 		return nil, err
 	}
 
-	osImage, err = cachedImage(osImage)
+	osImage, err = cachedImage(log, osImage)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to use cached libvirt image")
 	}

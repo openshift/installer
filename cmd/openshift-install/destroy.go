@@ -46,15 +46,14 @@ func newDestroyClusterCmd() *cobra.Command {
 }
 
 func runDestroyCmd(directory string) error {
-	destroyer, err := destroy.New(logrus.StandardLogger(), directory)
+	destroyer, err := destroy.New(logrus.NewEntry(logrus.StandardLogger()), directory)
 	if err != nil {
 		return errors.Wrap(err, "Failed while preparing to destroy cluster")
 	}
 	if err := destroyer.Run(); err != nil {
 		return errors.Wrap(err, "Failed to destroy cluster")
 	}
-
-	store, err := assetstore.NewStore(directory)
+	store, err := assetstore.NewStore(logrus.NewEntry(logrus.StandardLogger()), directory)
 	if err != nil {
 		return errors.Wrap(err, "failed to create asset store")
 	}
@@ -81,7 +80,7 @@ func newDestroyBootstrapCmd() *cobra.Command {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
 
-			err := bootstrap.Destroy(rootOpts.dir)
+			err := bootstrap.Destroy(logrus.NewEntry(logrus.StandardLogger()), rootOpts.dir)
 			if err != nil {
 				logrus.Fatal(err)
 			}

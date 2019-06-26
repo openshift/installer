@@ -1,6 +1,7 @@
 package installconfig
 
 import (
+	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -22,7 +23,7 @@ func (a *clusterName) Dependencies() []asset.Asset {
 }
 
 // Generate queries for the cluster name from the user.
-func (a *clusterName) Generate(parents asset.Parents) error {
+func (a *clusterName) Generate(log *logrus.Entry, parents asset.Parents) error {
 	bd := &baseDomain{}
 	parents.Get(bd)
 

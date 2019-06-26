@@ -6,6 +6,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/sirupsen/logrus"
 )
 
 // MCSCertKey is the asset that generates the MCS key/cert pair.
@@ -26,10 +27,10 @@ func (a *MCSCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *MCSCertKey) Generate(dependencies asset.Parents) error {
+func (a *MCSCertKey) Generate(log *logrus.Entry, parents asset.Parents) error {
 	ca := &RootCA{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(ca, installConfig)
+	parents.Get(ca, installConfig)
 
 	hostname := internalAPIAddress(installConfig.Config)
 

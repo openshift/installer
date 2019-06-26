@@ -5,6 +5,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -40,7 +41,7 @@ func (a *InstallConfig) Dependencies() []asset.Asset {
 }
 
 // Generate generates the install-config.yaml file.
-func (a *InstallConfig) Generate(parents asset.Parents) error {
+func (a *InstallConfig) Generate(log *logrus.Entry, parents asset.Parents) error {
 	sshPublicKey := &sshPublicKey{}
 	baseDomain := &baseDomain{}
 	clusterName := &clusterName{}

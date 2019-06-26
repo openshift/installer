@@ -29,7 +29,7 @@ type ClusterUninstaller struct {
 
 	InfraID string
 
-	Logger logrus.FieldLogger
+	log *logrus.Entry
 
 	resourceGroupsClient resources.GroupsGroupClient
 	zonesClient          dns.ZonesClient
@@ -48,8 +48,8 @@ func (o *ClusterUninstaller) configureClients() {
 }
 
 // New returns an Azure destroyer from ClusterMetadata.
-func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
-	session, err := azuresession.GetSession()
+func New(log *logrus.Entry, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
+	session, err := azuresession.GetSession(log)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.De
 		SubscriptionID: session.Credentials.SubscriptionID,
 		Authorizer:     session.Authorizer,
 		InfraID:        metadata.InfraID,
-		Logger:         logger,
+		log:            log,
 	}, nil
 }
 
@@ -66,21 +66,21 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.De
 func (o *ClusterUninstaller) Run() error {
 	o.configureClients()
 	group := o.InfraID + "-rg"
-	o.Logger.Debug("deleting public records")
-	if err := deletePublicRecords(context.TODO(), o.zonesClient, o.recordsClient, o.Logger, group); err != nil {
-		o.Logger.Debug(err)
+	o.log.Debug("deleting public records")
+	if err := deletePublicRecords(context.TODO(), o.log, o.zonesClient, o.recordsClient, group); err != nil {
+		o.log.Debug(err)
 		return errors.Wrap(err, "failed to delete public DNS records")
 	}
-	o.Logger.Debug("deleting resource group")
-	if err := deleteResourceGroup(context.TODO(), o.resourceGroupsClient, o.Logger, group); err != nil {
-		o.Logger.Debug(err)
+	o.log.Debug("deleting resource group")
+	if err := deleteResourceGroup(context.TODO(), o.log, o.resourceGroupsClient, group); err != nil {
+		o.log.Debug(err)
 		return errors.Wrap(err, "failed to delete resource group")
 	}
 
 	return nil
 }
 
-func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, logger logrus.FieldLogger, rgName string) error {
+func deletePublicRecords(ctx context.Context, log *logrus.Entry, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, rgName string) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 
@@ -93,7 +93,7 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 		}
 		for _, zone := range zonesPage.Values() {
 			if zone.ZoneType == dns.Private {
-				if err := deletePublicRecordsForZone(ctx, dnsClient, recordsClient, logger, rgName, to.String(zone.Name)); err != nil {
+				if err := deletePublicRecordsForZone(ctx, log, dnsClient, recordsClient, rgName, to.String(zone.Name)); err != nil {
 					errs = append(errs, errors.Wrapf(err, "failed to delete public records for %s", to.String(zone.Name)))
 					continue
 				}
@@ -103,7 +103,7 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 	return utilerrors.NewAggregate(errs)
 }
 
-func deletePublicRecordsForZone(ctx context.Context, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, logger logrus.FieldLogger, zoneGroup, zoneName string) error {
+func deletePublicRecordsForZone(ctx context.Context, log *logrus.Entry, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, zoneGroup, zoneName string) error {
 	// collect all the records from the zoneName
 	allPrivateRecords := sets.NewString()
 	for recordPages, err := recordsClient.ListByDNSZone(ctx, zoneGroup, zoneName, to.Int32Ptr(100), ""); recordPages.NotDone(); err = recordPages.NextWithContext(ctx) {
@@ -123,7 +123,7 @@ func deletePublicRecordsForZone(ctx context.Context, dnsClient dns.ZonesClient, 
 		return errors.Wrapf(err, "failed to find shared zone for %s", zoneName)
 	}
 	for _, sharedZone := range sharedZones {
-		logger.Debugf("removing matching private records from %s", sharedZone.Name)
+		log.Debugf("removing matching private records from %s", sharedZone.Name)
 		for recordPages, err := recordsClient.ListByDNSZone(ctx, sharedZone.Group, sharedZone.Name, to.Int32Ptr(100), ""); recordPages.NotDone(); err = recordPages.NextWithContext(ctx) {
 			if err != nil {
 				return err
@@ -133,12 +133,12 @@ func deletePublicRecordsForZone(ctx context.Context, dnsClient dns.ZonesClient, 
 					resp, err := recordsClient.Delete(ctx, sharedZone.Group, sharedZone.Name, to.String(record.Name), toRecordType(to.String(record.Type)), "")
 					if err != nil {
 						if wasNotFound(resp.Response) {
-							logger.WithField("record", to.String(record.Name)).Debug("already deleted")
+							log.WithField("record", to.String(record.Name)).Debug("already deleted")
 							continue
 						}
 						return errors.Wrapf(err, "failed to delete record %s in zone %s", to.String(record.Name), sharedZone.Name)
 					}
-					logger.WithField("record", to.String(record.Name)).Info("deleted")
+					log.WithField("record", to.String(record.Name)).Info("deleted")
 				}
 			}
 		}
@@ -192,8 +192,8 @@ func toRecordType(t string) dns.RecordType {
 	return dns.RecordType(strings.TrimPrefix(t, "Microsoft.Network/dnszones/"))
 }
 
-func deleteResourceGroup(ctx context.Context, client resources.GroupsGroupClient, logger logrus.FieldLogger, name string) error {
-	logger = logger.WithField("resource group", name)
+func deleteResourceGroup(ctx context.Context, log *logrus.Entry, client resources.GroupsGroupClient, name string) error {
+	log = log.WithField("resource group", name)
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
 
@@ -205,12 +205,12 @@ func deleteResourceGroup(ctx context.Context, client resources.GroupsGroupClient
 	err = delFuture.WaitForCompletionRef(ctx, client.Client)
 	if err != nil {
 		if wasNotFound(delFuture.Response()) {
-			logger.Debug("already deleted")
+			log.Debug("already deleted")
 			return nil
 		}
 		return errors.Wrapf(err, "failed to delete %s", name)
 	}
-	logger.Info("deleted")
+	log.Info("deleted")
 	return nil
 }
 
