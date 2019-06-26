@@ -69,3 +69,8 @@ variable "aws_worker_availability_zones" {
   description = "The availability zones to provision for workers.  Worker instances are created by the machine-API operator, but this variable controls their supporting infrastructure (subnets, routing, etc.)."
 }
 
+variable "aws_network_type" {
+  type = string
+
+  description = "For OCP 4.2 only! Configured network type."
+}

@@ -63,26 +63,6 @@ resource "aws_security_group_rule" "master_ingress_https" {
   to_port     = 6443
 }
 
-resource "aws_security_group_rule" "master_ingress_vxlan" {
-  type              = "ingress"
-  security_group_id = aws_security_group.master.id
-
-  protocol  = "udp"
-  from_port = 4789
-  to_port   = 4789
-  self      = true
-}
-
-resource "aws_security_group_rule" "master_ingress_vxlan_from_worker" {
-  type                     = "ingress"
-  security_group_id        = aws_security_group.master.id
-  source_security_group_id = aws_security_group.worker.id
-
-  protocol  = "udp"
-  from_port = 4789
-  to_port   = 4789
-}
-
 resource "aws_security_group_rule" "master_ingress_internal" {
   type              = "ingress"
   security_group_id = aws_security_group.master.id
@@ -213,3 +193,74 @@ resource "aws_security_group_rule" "master_ingress_services_udp" {
   self      = true
 }
 
+resource "aws_security_group_rule" "master_ingress_vxlan" {
+  count = var.open_vxlan_ports ? 1 : 0
+
+  type              = "ingress"
+  security_group_id = aws_security_group.master.id
+
+  protocol  = "udp"
+  from_port = 4789
+  to_port   = 4789
+  self      = true
+}
+
+resource "aws_security_group_rule" "master_ingress_vxlan_from_worker" {
+  count = var.open_vxlan_ports ? 1 : 0
+
+  type                     = "ingress"
+  security_group_id        = aws_security_group.master.id
+  source_security_group_id = aws_security_group.worker.id
+
+  protocol  = "udp"
+  from_port = 4789
+  to_port   = 4789
+}
+
+resource "aws_security_group_rule" "master_ingress_geneve" {
+  count = var.open_ovn_ports ? 1 : 0
+
+  type              = "ingress"
+  security_group_id = "${aws_security_group.master.id}"
+
+  protocol  = "udp"
+  from_port = 6081
+  to_port   = 6081
+  self      = true
+}
+
+resource "aws_security_group_rule" "master_ingress_geneve_from_worker" {
+  count = var.open_ovn_ports ? 1 : 0
+
+  type                     = "ingress"
+  security_group_id        = "${aws_security_group.master.id}"
+  source_security_group_id = "${aws_security_group.worker.id}"
+
+  protocol  = "udp"
+  from_port = 6081
+  to_port   = 6081
+}
+
+resource "aws_security_group_rule" "master_ingress_ovndb" {
+  count = var.open_ovn_ports ? 1 : 0
+
+  type              = "ingress"
+  security_group_id = "${aws_security_group.master.id}"
+
+  protocol  = "tcp"
+  from_port = 6641
+  to_port   = 6642
+  self      = true
+}
+
+resource "aws_security_group_rule" "master_ingress_ovnsb_from_worker" {
+  count = var.open_ovn_ports ? 1 : 0
+
+  type                     = "ingress"
+  security_group_id        = "${aws_security_group.master.id}"
+  source_security_group_id = "${aws_security_group.worker.id}"
+
+  protocol  = "tcp"
+  from_port = 6641
+  to_port   = 6642
+}

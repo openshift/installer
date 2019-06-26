@@ -32,3 +32,14 @@ variable "tags" {
   description = "AWS tags to be applied to created resources."
 }
 
+variable "open_vxlan_ports" {
+  type = bool
+
+  description = "For OCP 4.2 only! Causes VXLAN ports to be opened."
+}
+
+variable "open_ovn_ports" {
+  type = bool
+
+  description = "For OCP 4.2 only! Causes ovn-kubernetes-related ports to be opened."
+}

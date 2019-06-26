@@ -86,6 +86,9 @@ module "vpc" {
   )
 
   tags = local.tags
+
+  open_ovn_ports   = var.aws_network_type == "OVNKubernetes"
+  open_vxlan_ports = var.aws_network_type != "OVNKubernetes"
 }
 
 resource "aws_ami_copy" "main" {

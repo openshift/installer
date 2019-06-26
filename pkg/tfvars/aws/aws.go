@@ -21,10 +21,13 @@ type config struct {
 	Size                    int64             `json:"aws_master_root_volume_size,omitempty"`
 	Type                    string            `json:"aws_master_root_volume_type,omitempty"`
 	Region                  string            `json:"aws_region,omitempty"`
+
+	// Hack for 4.2 only
+	NetworkType string `json:"aws_network_type"`
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
-func TFVars(masterConfigs []*v1beta1.AWSMachineProviderConfig, workerConfigs []*v1beta1.AWSMachineProviderConfig) ([]byte, error) {
+func TFVars(masterConfigs []*v1beta1.AWSMachineProviderConfig, workerConfigs []*v1beta1.AWSMachineProviderConfig, networkType string) ([]byte, error) {
 	masterConfig := masterConfigs[0]
 
 	tags := make(map[string]string, len(masterConfig.Tags))
@@ -80,6 +83,7 @@ func TFVars(masterConfigs []*v1beta1.AWSMachineProviderConfig, workerConfigs []*
 		MasterInstanceType:      masterConfig.InstanceType,
 		Size:                    *rootVolume.EBS.VolumeSize,
 		Type:                    *rootVolume.EBS.VolumeType,
+		NetworkType:             networkType,
 	}
 
 	if rootVolume.EBS.Iops != nil {
