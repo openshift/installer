@@ -46,6 +46,8 @@ type assetState struct {
 
 // storeImpl is the implementation of Store.
 type storeImpl struct {
+	log *logrus.Entry
+
 	directory       string
 	assets          map[reflect.Type]*assetState
 	stateFileAssets map[string]json.RawMessage
@@ -53,12 +55,13 @@ type storeImpl struct {
 }
 
 // NewStore returns an asset store that implements the asset.Store interface.
-func NewStore(dir string) (asset.Store, error) {
-	return newStore(dir)
+func NewStore(log *logrus.Entry, dir string) (asset.Store, error) {
+	return newStore(log, dir)
 }
 
-func newStore(dir string) (*storeImpl, error) {
+func newStore(log *logrus.Entry, dir string) (*storeImpl, error) {
 	store := &storeImpl{
+		log:         log,
 		directory:   dir,
 		fileFetcher: &fileFetcher{directory: dir},
 		assets:      map[reflect.Type]*assetState{},
@@ -194,7 +197,7 @@ func (s *storeImpl) saveStateFile() error {
 // necessary, and returns whether or not the asset had to be regenerated and
 // any errors.
 func (s *storeImpl) fetch(a asset.Asset, indent string) error {
-	logrus.Debugf("%sFetching %q...", indent, a.Name())
+	s.log.Debugf("%sFetching %q...", indent, a.Name())
 
 	assetState, ok := s.assets[reflect.TypeOf(a)]
 	if !ok {
@@ -209,7 +212,7 @@ func (s *storeImpl) fetch(a asset.Asset, indent string) error {
 	// that we always fetch the parent before children, so we don't need
 	// to worry about invalidating anything in the cache.
 	if assetState.source != unfetched {
-		logrus.Debugf("%sReusing previously-fetched %q", indent, a.Name())
+		s.log.Debugf("%sReusing previously-fetched %q", indent, a.Name())
 		reflect.ValueOf(a).Elem().Set(reflect.ValueOf(assetState.asset).Elem())
 		return nil
 	}
@@ -223,7 +226,7 @@ func (s *storeImpl) fetch(a asset.Asset, indent string) error {
 		}
 		parents.Add(d)
 	}
-	logrus.Debugf("%sGenerating %q...", indent, a.Name())
+	s.log.Debugf("%sGenerating %q...", indent, a.Name())
 	if err := a.Generate(parents); err != nil {
 		return errors.Wrapf(err, "failed to generate asset %q", a.Name())
 	}
@@ -234,7 +237,7 @@ func (s *storeImpl) fetch(a asset.Asset, indent string) error {
 
 // load loads the asset and all of its ancestors from on-disk and the state file.
 func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
-	logrus.Debugf("%sLoading %q...", indent, a.Name())
+	s.log.Debugf("%sLoading %q...", indent, a.Name())
 
 	// Stop descent if the asset has already been loaded.
 	if state, ok := s.assets[reflect.TypeOf(a)]; ok {
@@ -285,13 +288,13 @@ func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 		}
 
 		if foundOnDisk && foundInStateFile {
-			logrus.Debugf("%sLoading %q from both state file and target directory", indent, a.Name())
+			s.log.Debugf("%sLoading %q from both state file and target directory", indent, a.Name())
 
 			// If the on-disk asset is the same as the one in the state file, there
 			// is no need to consider the one on disk and to mark the asset dirty.
 			onDiskMatchesStateFile = reflect.DeepEqual(onDiskAsset, stateFileAsset)
 			if onDiskMatchesStateFile {
-				logrus.Debugf("%sOn-disk %q matches asset in state file", indent, a.Name())
+				s.log.Debugf("%sOn-disk %q matches asset in state file", indent, a.Name())
 			}
 		}
 	}
@@ -304,18 +307,18 @@ func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 	// A parent is dirty. The asset must be re-generated.
 	case anyParentsDirty:
 		if foundOnDisk {
-			logrus.Warningf("%sDiscarding the %q that was provided in the target directory because its dependencies are dirty and it needs to be regenerated", indent, a.Name())
+			s.log.Warningf("%sDiscarding the %q that was provided in the target directory because its dependencies are dirty and it needs to be regenerated", indent, a.Name())
 		}
 		source = unfetched
 	// The asset is on disk and that differs from what is in the source file.
 	// The asset is sourced from on disk.
 	case foundOnDisk && !onDiskMatchesStateFile:
-		logrus.Debugf("%sUsing %q loaded from target directory", indent, a.Name())
+		s.log.Debugf("%sUsing %q loaded from target directory", indent, a.Name())
 		assetToStore = onDiskAsset
 		source = onDiskSource
 	// The asset is in the state file. The asset is sourced from state file.
 	case foundInStateFile:
-		logrus.Debugf("%sUsing %q loaded from state file", indent, a.Name())
+		s.log.Debugf("%sUsing %q loaded from state file", indent, a.Name())
 		assetToStore = stateFileAsset
 		source = stateFileSource
 	// There is no existing source for the asset. The asset will be generated.
@@ -345,7 +348,7 @@ func (s *storeImpl) purge(excluded []asset.WritableAsset) error {
 		if !assetState.presentOnDisk || excl[reflect.TypeOf(assetState.asset)] {
 			continue
 		}
-		logrus.Infof("Consuming %q from target directory", assetState.asset.Name())
+		s.log.Infof("Consuming %q from target directory", assetState.asset.Name())
 		if err := asset.DeleteAssetFromDisk(assetState.asset.(asset.WritableAsset), s.directory); err != nil {
 			return err
 		}
