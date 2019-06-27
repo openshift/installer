@@ -19,7 +19,7 @@ cd "$(dirname "$0")/.."
 PACKAGE_PATH="$(go list -e -f '{{.Dir}}' github.com/openshift/installer)"
 if test -z "${PACKAGE_PATH}"
 then
-	echo "build from your \${GOPATH} (${LAUNCH_PATH} is not in $(go env GOPATH))" 2>&1
+	echo "build from your \${GOPATH} (${LAUNCH_PATH} is not in $(go env GOPATH)/github.com/openshift/installer)" 2>&1
 	exit 1
 fi
 
