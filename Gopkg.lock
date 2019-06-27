@@ -306,7 +306,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:fc872d4e11767301113bddded780fa5b44a3dec90afa6c26fcaaf641ff758dad"
+  digest = "1:fafce8bcd6b10bcf75556a9649010fbfed5772302c1bf24fbc347558ccfa9c63"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
@@ -320,6 +320,12 @@
     "openstack/identity/v2/tokens",
     "openstack/identity/v3/regions",
     "openstack/identity/v3/tokens",
+    "openstack/loadbalancer/v2/apiversions",
+    "openstack/loadbalancer/v2/l7policies",
+    "openstack/loadbalancer/v2/listeners",
+    "openstack/loadbalancer/v2/loadbalancers",
+    "openstack/loadbalancer/v2/monitors",
+    "openstack/loadbalancer/v2/pools",
     "openstack/networking/v2/extensions",
     "openstack/networking/v2/extensions/layer3/floatingips",
     "openstack/networking/v2/extensions/layer3/routers",
@@ -1202,6 +1208,8 @@
     "github.com/gophercloud/gophercloud/openstack/compute/v2/flavors",
     "github.com/gophercloud/gophercloud/openstack/compute/v2/servers",
     "github.com/gophercloud/gophercloud/openstack/identity/v3/regions",
+    "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/apiversions",
+    "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/loadbalancers",
     "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions",
     "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips",
     "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/routers",
