@@ -178,7 +178,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 		case azuretypes.Name:
 			mpool := defaultAzureMachinePoolPlatform()
-			mpool.InstanceType = azuredefaults.InstanceClass(installconfig.Config.Platform.Azure.Region)
+			mpool.InstanceType = azuredefaults.ComputeInstanceType(installconfig.Config.Platform.Azure.Region)
 			mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.Azure)
 			pool.Platform.Azure = &mpool
