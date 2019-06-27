@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -78,11 +76,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
-		zone, err := icaws.GetPublicZone(installConfig.Config.BaseDomain)
-		if err != nil {
-			return errors.Wrapf(err, "getting public zone for %q", installConfig.Config.BaseDomain)
-		}
-		config.Spec.PublicZone = &configv1.DNSZone{ID: strings.TrimPrefix(*zone.Id, "/hostedzone/")}
+		config.Spec.PublicZone = &configv1.DNSZone{ID: installConfig.Config.AWS.PublicZoneID}
 		config.Spec.PrivateZone = &configv1.DNSZone{Tags: map[string]string{
 			fmt.Sprintf("kubernetes.io/cluster/%s", clusterID.InfraID): "owned",
 			"Name": fmt.Sprintf("%s-int", clusterID.InfraID),

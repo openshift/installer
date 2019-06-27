@@ -10,6 +10,9 @@ type Platform struct {
 	// Region specifies the AWS region where the cluster will be created.
 	Region string `json:"region"`
 
+	// PublicZoneID specifies the ID for the public DNS Zone
+	PublicZoneID string `json:"publicZoneID"`
+
 	// UserTags specifies additional tags for AWS resources created for the cluster.
 	// +optional
 	UserTags map[string]string `json:"userTags,omitempty"`
@@ -19,4 +22,10 @@ type Platform struct {
 	// platform configuration.
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
+}
+
+//SetBaseDomain parses the baseDomainID and sets the related fields on azure.Platform
+func (p *Platform) SetBaseDomain(baseDomainID string) error {
+	p.PublicZoneID = baseDomainID
+	return nil
 }

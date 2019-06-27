@@ -36,8 +36,10 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 	switch platform.CurrentName() {
 	case aws.Name:
 		var err error
-		a.BaseDomain, err = awsconfig.GetBaseDomain()
+		zone, err := awsconfig.GetBaseDomain()
 		cause := errors.Cause(err)
+		a.BaseDomain = zone.Name
+		platform.AWS.SetBaseDomain(zone.ID)
 		if !(awsconfig.IsForbidden(cause) || request.IsErrorThrottle(cause)) {
 			return err
 		}

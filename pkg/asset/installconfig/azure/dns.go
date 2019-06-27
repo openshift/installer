@@ -3,6 +3,7 @@ package azure
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns"
@@ -18,7 +19,7 @@ type DNSConfig struct {
 
 //ZonesGetter fetches the DNS zones available for the installer
 type ZonesGetter interface {
-	GetAllPublicZones() (map[string]string, error)
+	GetAllPublicZones() (map[string][]string, error)
 }
 
 //ZonesClient wraps the azure ZonesClient internal
@@ -74,8 +75,10 @@ func (config DNSConfig) GetDNSZone() (*Zone, error) {
 	for zoneName := range allZones {
 		zoneNames = append(zoneNames, zoneName)
 	}
+	sort.Strings(zoneNames)
 
-	var zoneName string
+	var publicZoneName string
+	var publicZoneID string
 	err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Select{
@@ -84,16 +87,41 @@ func (config DNSConfig) GetDNSZone() (*Zone, error) {
 				Options: zoneNames,
 			},
 		},
-	}, &zoneName)
+	}, &publicZoneName)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Zone{
-		ID:   allZones[zoneName],
-		Name: zoneName,
-	}, nil
+	zoneList, ok := allZones[publicZoneName]
+	if !ok {
+		return nil, errors.Errorf("invalid zone name %q", publicZoneName)
+	}
 
+	zoneListLen := len(zoneList)
+	if zoneListLen == 0 {
+		return nil, errors.Wrap(err, "zero length zone list")
+	}
+	if zoneListLen == 1 {
+		return &Zone{
+			ID:   zoneList[0],
+			Name: publicZoneName,
+		}, nil
+	}
+
+	// Should we only display resource group?
+	err = survey.AskOne(&survey.Select{
+		Message: "Zone ID",
+		Help:    "The zone ID for the base domain of the cluster",
+		Options: zoneList,
+	}, &publicZoneID, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed UserInput for zone ID")
+	}
+
+	return &Zone{
+		ID:   publicZoneID,
+		Name: publicZoneName,
+	}, nil
 }
 
 //NewDNSConfig returns a new DNSConfig struct that helps configuring the DNS
@@ -114,10 +142,10 @@ func newZonesClient(session *Session) ZonesGetter {
 }
 
 //GetAllPublicZones get all public zones from the current subscription
-func (client *ZonesClient) GetAllPublicZones() (map[string]string, error) {
+func (client *ZonesClient) GetAllPublicZones() (map[string][]string, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
-	allZones := map[string]string{}
+	allZones := map[string][]string{}
 	for zonesPage, err := client.azureClient.List(ctx, to.Int32Ptr(100)); zonesPage.NotDone(); err = zonesPage.NextWithContext(ctx) {
 		if err != nil {
 			return nil, err
@@ -126,7 +154,11 @@ func (client *ZonesClient) GetAllPublicZones() (map[string]string, error) {
 		//the property is present in the REST api response, but not mapped yet in the stable SDK (present in preview)
 		//https://github.com/Azure/azure-sdk-for-go/blob/07f918ba2d513bbc5b75bc4caac845e10f27449e/services/preview/dns/mgmt/2018-03-01-preview/dns/models.go#L857
 		for _, zone := range zonesPage.Values() {
-			allZones[to.String(zone.Name)] = to.String(zone.ID)
+			zoneName := to.String(zone.Name)
+
+			// Should we hash on resource group?
+			allZones[zoneName] = append(allZones[zoneName], to.String(zone.ID))
+
 		}
 	}
 	return allZones, nil
