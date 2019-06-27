@@ -84,7 +84,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		},
 		OSDisk: azureprovider.OSDisk{
 			OSType:     "Linux",
-			DiskSizeGB: 64,
+			DiskSizeGB: mpool.OSDisk.DiskSizeGB,
 			ManagedDisk: azureprovider.ManagedDisk{
 				StorageAccountType: "Premium_LRS",
 			},
