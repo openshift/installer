@@ -14,6 +14,11 @@ type Platform struct {
 	// installing on Azure for machine pools which do not define their own
 	// platform configuration.
 	// +optional
+
+	// UserTags specifies additional tags for Azure resources created for the cluster.
+	// +optional
+	UserTags map[string]string `json:"userTags,omitempty"`
+
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 }
 
