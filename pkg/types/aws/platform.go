@@ -24,6 +24,9 @@ type Platform struct {
 	// +optional
 	UserTags map[string]string `json:"userTags,omitempty"`
 
+	// PublicZoneID specifies the ID for the public DNS Zone
+	PublicZoneID string `json:"publicZoneID"`
+
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on AWS for machine pools which do not define their own
 	// platform configuration.
