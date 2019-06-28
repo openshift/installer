@@ -7,7 +7,10 @@ import (
 
 // ValidateMachinePool checks that the specified machine pool is valid.
 func ValidateMachinePool(p *azure.MachinePool, fldPath *field.Path) field.ErrorList {
-	//TODO: implement machine pool validation
 	allErrs := field.ErrorList{}
+
+	if p.OSDisk.DiskSizeGB < 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("diskSizeGB"), p.OSDisk.DiskSizeGB, "Storage DiskSizeGB must be positive"))
+	}
 	return allErrs
 }

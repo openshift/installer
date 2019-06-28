@@ -68,7 +68,11 @@ func defaultLibvirtMachinePoolPlatform() libvirttypes.MachinePool {
 }
 
 func defaultAzureMachinePoolPlatform() azuretypes.MachinePool {
-	return azuretypes.MachinePool{}
+	return azuretypes.MachinePool{
+		OSDisk: azuretypes.OSDisk{
+			DiskSizeGB: 128,
+		},
+	}
 }
 
 func defaultOpenStackMachinePoolPlatform(flavor string) openstacktypes.MachinePool {
