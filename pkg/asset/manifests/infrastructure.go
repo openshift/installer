@@ -13,6 +13,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -57,6 +58,10 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	switch installConfig.Config.Platform.Name() {
 	case aws.Name:
 		platform = configv1.AWSPlatformType
+	case azure.Name:
+		platform = configv1.AzurePlatformType
+	case gcp.Name:
+		platform = configv1.GCPPlatformType
 	case none.Name:
 		platform = configv1.NonePlatformType
 	case libvirt.Name:
@@ -65,8 +70,6 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		platform = configv1.OpenStackPlatformType
 	case vsphere.Name:
 		platform = configv1.VSpherePlatformType
-	case azure.Name:
-		platform = configv1.AzurePlatformType
 	default:
 		platform = configv1.NonePlatformType
 	}
