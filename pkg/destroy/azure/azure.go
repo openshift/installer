@@ -18,7 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	azuresession "github.com/openshift/installer/pkg/asset/installconfig/azure"
-	"github.com/openshift/installer/pkg/destroy"
+	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -48,7 +48,7 @@ func (o *ClusterUninstaller) configureClients() {
 }
 
 // New returns an Azure destroyer from ClusterMetadata.
-func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
+func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	session, err := azuresession.GetSession()
 	if err != nil {
 		return nil, err

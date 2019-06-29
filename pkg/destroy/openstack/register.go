@@ -2,9 +2,9 @@
 package openstack
 
 import (
-	"github.com/openshift/installer/pkg/destroy"
+	"github.com/openshift/installer/pkg/destroy/providers"
 )
 
 func init() {
-	destroy.Registry["openstack"] = New
+	providers.Registry["openstack"] = New
 }

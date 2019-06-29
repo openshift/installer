@@ -3,9 +3,9 @@
 package libvirt
 
 import (
-	"github.com/openshift/installer/pkg/destroy"
+	"github.com/openshift/installer/pkg/providers"
 )
 
 func init() {
-	destroy.Registry["libvirt"] = New
+	providers.Registry["libvirt"] = New
 }

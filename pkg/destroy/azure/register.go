@@ -1,9 +1,9 @@
 package azure
 
 import (
-	"github.com/openshift/installer/pkg/destroy"
+	"github.com/openshift/installer/pkg/destroy/providers"
 )
 
 func init() {
-	destroy.Registry["azure"] = New
+	providers.Registry["azure"] = New
 }
