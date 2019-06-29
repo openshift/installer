@@ -609,8 +609,8 @@ func deleteLoadBalancers(opts *clientconfig.ClientOpts, filter Filter, logger lo
 
 	conn, err := clientconfig.NewServiceClient("load-balancer", opts)
 	if err != nil {
-		logger.Fatalf("%v", err)
-		os.Exit(1)
+		logger.Debugf("%v", err)
+		return true, nil
 	}
 
 	newallPages, err := apiversions.List(conn).AllPages()
