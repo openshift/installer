@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -96,6 +97,22 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 				Base64encodeResourcePrefix: base64.StdEncoding.EncodeToString([]byte(clusterID.InfraID)),
 				Base64encodeResourceGroup:  base64.StdEncoding.EncodeToString([]byte(resourceGroupName)),
 				Base64encodeRegion:         base64.StdEncoding.EncodeToString([]byte(installConfig.Config.Azure.Region)),
+			},
+		}
+	case gcptypes.Name:
+		// TODO: Once we get can get creds from gcp session add here and replace empty strings below
+		cloudCreds = cloudCredsSecretData{
+			GCP: &GCPCredsSecretData{
+				Base64encodeType:                    base64.StdEncoding.EncodeToString([]byte("")),
+				Base64encodeProjectID:               base64.StdEncoding.EncodeToString([]byte("")),
+				Base64encodePrivateKeyID:            base64.StdEncoding.EncodeToString([]byte("")),
+				Base64encodePrivateKey:              base64.StdEncoding.EncodeToString([]byte("")),
+				Base64encodeClientEmail:             base64.StdEncoding.EncodeToString([]byte("")),
+				Base64encodeClientID:                base64.StdEncoding.EncodeToString([]byte("")),
+				Base64encodeAuthURI:                 base64.StdEncoding.EncodeToString([]byte("")),
+				Base64encodeTokenURI:                base64.StdEncoding.EncodeToString([]byte("")),
+				Base64encodeAuthProviderX509CertURL: base64.StdEncoding.EncodeToString([]byte("")),
+				Base64encodeClientX509CertURL:       base64.StdEncoding.EncodeToString([]byte("")),
 			},
 		}
 	case openstacktypes.Name:
