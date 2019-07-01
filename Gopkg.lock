@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:80004fcc5cf64e591486b3e11b406f1e0d17bf85d475d64203c8494f5da4fcd1"
+  name = "cloud.google.com/go"
+  packages = ["compute/metadata"]
+  pruneopts = "NUT"
+  revision = "457ea5c15ccf3b87db582c450e80101989da35f7"
+  version = "v0.40.0"
+
+[[projects]]
   digest = "1:3fb854fc35fafced21615a93db3c0e324c8cb1d5a89f39dd1e72db0c4200345a"
   name = "contrib.go.opencensus.io/exporter/ocagent"
   packages = ["."]
@@ -761,11 +769,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:274a6321a5a9f185eeb3fab5d7d8397e0e9f57737490d749f562c7e205ffbc2e"
+  digest = "1:4648e14100dfb6fde9b6caa98d3b486721dfdf895cca58e3950240d5ef051f7b"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
+    "google",
     "internal",
+    "jws",
+    "jwt",
   ]
   pruneopts = "NUT"
   revision = "232e45548389bd9357411a6922a07c5fd4068bda"
@@ -833,21 +844,36 @@
   revision = "fbb02b2291d28baffd63558aa44b4b56f178d650"
 
 [[projects]]
-  digest = "1:5f003878aabe31d7f6b842d4de32b41c46c214bb629bb485387dbcce1edf5643"
+  digest = "1:1fd52c8a0547e5f3867ad1d026efce60b28415bded399e604c61cf585b04be67"
   name = "google.golang.org/api"
-  packages = ["support/bundler"]
+  packages = [
+    "compute/v1",
+    "dns/v1",
+    "gensupport",
+    "googleapi",
+    "googleapi/internal/uritemplates",
+    "googleapi/transport",
+    "internal",
+    "option",
+    "support/bundler",
+    "transport/http",
+    "transport/http/internal/propagation",
+  ]
   pruneopts = "NUT"
   revision = "bce707a4d0ea3488942724b3bcc1c8338f38f991"
   version = "v0.3.0"
 
 [[projects]]
-  digest = "1:655acbef8faad33db29b6a35655341fb4a594e87e56635f05a3e70ed0bd7bd95"
+  digest = "1:b63b351b57e64ae8aec1af030dc5e74a2676fcda62102f006ae4411fac1b04c8"
   name = "google.golang.org/appengine"
   packages = [
+    ".",
     "internal",
+    "internal/app_identity",
     "internal/base",
     "internal/datastore",
     "internal/log",
+    "internal/modules",
     "internal/remote_api",
     "internal/urlfetch",
     "urlfetch",
@@ -1244,7 +1270,11 @@
     "golang.org/x/crypto/ssh/agent",
     "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/net/html/charset",
+    "golang.org/x/oauth2/google",
     "golang.org/x/sys/unix",
+    "google.golang.org/api/compute/v1",
+    "google.golang.org/api/dns/v1",
+    "google.golang.org/api/option",
     "gopkg.in/AlecAivazis/survey.v1",
     "gopkg.in/ini.v1",
     "k8s.io/api/core/v1",

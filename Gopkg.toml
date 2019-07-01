@@ -107,3 +107,11 @@ required = [
 [[constraint]]
   name = "github.com/pkg/sftp"
   version = "1.10.0"
+
+[[constraint]]
+  name = "google.golang.org/api"
+  version = "0.3.0"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/oauth2"
