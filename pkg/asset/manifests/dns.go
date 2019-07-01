@@ -15,8 +15,10 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -96,6 +98,14 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		config.Spec.PrivateZone = &configv1.DNSZone{
 			ID: dnsConfig.GetDNSZoneID(clusterID.InfraID+"-rg", installConfig.Config.ClusterDomain()),
 		}
+	case gcptypes.Name:
+		zone, err := icgcp.GetPublicZone(installConfig.Config.BaseDomain, installConfig.Config.Platform.GCP.ProjectID)
+		if err != nil {
+			return errors.Wrapf(err, "getting public zone for %q", installConfig.Config.BaseDomain)
+		}
+		//TODO determine if zone.Name is the correct ID for this config
+		config.Spec.PublicZone = &configv1.DNSZone{ID: fmt.Sprint(zone.Id)}
+		//TODO: Determine what will be the name/id of created private zone
 	case libvirttypes.Name, openstacktypes.Name, nonetypes.Name, vspheretypes.Name:
 	default:
 		return errors.New("invalid Platform")
