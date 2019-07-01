@@ -9,8 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/openshift/installer/pkg/destroy"
-	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/destroy/providers"
 )
 
 // filterFunc allows filtering based on names.
@@ -48,7 +47,7 @@ type ClusterUninstaller struct {
 }
 
 // New returns libvirt Uninstaller from ClusterMetadata.
-func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
+func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	return &ClusterUninstaller{
 		LibvirtURI: metadata.ClusterPlatformMetadata.Libvirt.URI,
 		Filter:     ClusterIDPrefixFilter(metadata.InfraID),

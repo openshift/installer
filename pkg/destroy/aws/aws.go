@@ -23,7 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	awssession "github.com/openshift/installer/pkg/asset/installconfig/aws"
-	"github.com/openshift/installer/pkg/destroy"
+	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/version"
 )
@@ -67,7 +67,7 @@ type ClusterUninstaller struct {
 }
 
 // New returns an AWS destroyer from ClusterMetadata.
-func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
+func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	filters := make([]Filter, 0, len(metadata.ClusterPlatformMetadata.AWS.Identifier))
 	for _, filter := range metadata.ClusterPlatformMetadata.AWS.Identifier {
 		filters = append(filters, filter)

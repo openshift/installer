@@ -1,7 +1,7 @@
 package aws
 
-import "github.com/openshift/installer/pkg/destroy"
+import "github.com/openshift/installer/pkg/destroy/providers"
 
 func init() {
-	destroy.Registry["aws"] = New
+	providers.Registry["aws"] = New
 }

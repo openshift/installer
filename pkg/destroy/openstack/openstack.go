@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/openshift/installer/pkg/destroy"
+	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
@@ -60,7 +60,7 @@ type ClusterUninstaller struct {
 }
 
 // New returns an OpenStack destroyer from ClusterMetadata.
-func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
+func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	return &ClusterUninstaller{
 		Cloud:  metadata.ClusterPlatformMetadata.OpenStack.Cloud,
 		Filter: metadata.ClusterPlatformMetadata.OpenStack.Identifier,
