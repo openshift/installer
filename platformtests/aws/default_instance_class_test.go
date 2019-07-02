@@ -128,7 +128,7 @@ func TestGetDefaultInstanceClass(t *testing.T) {
 			}
 
 			available := make(map[string]map[string]struct{}, len(preferredInstanceClasses))
-			var match string
+			var allowed []string
 
 			for _, instanceClass := range preferredInstanceClasses {
 				if _, ok := classes[instanceClass]; !ok {
@@ -164,17 +164,16 @@ func TestGetDefaultInstanceClass(t *testing.T) {
 				}
 
 				if reflect.DeepEqual(available[instanceClass], zones) {
-					match = instanceClass
-					break
+					allowed = append(allowed, instanceClass)
 				}
 			}
 
-			if match == "" {
+			if len(allowed) == 0 {
 				t.Fatalf("none of the preferred instance classes are fully supported: %v", available)
 			}
 
 			t.Log(available)
-			assert.Equal(t, defaults.InstanceClass(region), match)
+			assert.Contains(t, allowed, defaults.InstanceClass(region))
 		})
 	}
 }
