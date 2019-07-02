@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/destroy/providers"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // filterFunc allows filtering based on names.
