@@ -110,11 +110,34 @@ type PlatformStatus struct {
 	// AWS contains settings specific to the Amazon Web Services infrastructure provider.
 	// +optional
 	AWS *AWSPlatformStatus `json:"aws,omitempty"`
+
+	// Azure contains settings specific to the Azure infrastructure provider.
+	// +optional
+	Azure *AzurePlatformStatus `json:"azure,omitempty"`
+
+	// GCP contains settings specific to the Google Cloud Platform infrastructure provider.
+	// +optional
+	GCP *GCPPlatformStatus `json:"gcp,omitempty"`
 }
 
 // AWSPlatformStatus holds the current status of the Amazon Web Services infrastructure provider.
 type AWSPlatformStatus struct {
 	// region holds the default AWS region for new AWS resources created by the cluster.
+	Region string `json:"region"`
+}
+
+// AzurePlatformStatus holds the current status of the Azure infrastructure provider.
+type AzurePlatformStatus struct {
+	// resourceGroupName is the Resource Group for new Azure resources created for the cluster.
+	ResourceGroupName string `json:"resourceGroupName"`
+}
+
+// GCPPlatformStatus holds the current status of the Google Cloud Platform infrastructure provider.
+type GCPPlatformStatus struct {
+	// resourceGroupName is the Project ID for new GCP resources created for the cluster.
+	ProjectID string `json:"projectID"`
+
+	// region holds the region for new GCP resources created for the cluster.
 	Region string `json:"region"`
 }
 
