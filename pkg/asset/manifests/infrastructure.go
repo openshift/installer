@@ -75,35 +75,28 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 
 	switch installConfig.Config.Platform.Name() {
 	case aws.Name:
-		config.Status.Platform = configv1.AWSPlatformType
 		config.Status.PlatformStatus.Type = configv1.AWSPlatformType
 		config.Status.PlatformStatus.AWS = &configv1.AWSPlatformStatus{
 			Region: installConfig.Config.Platform.AWS.Region,
 		}
 	case azure.Name:
-		config.Status.Platform = configv1.AzurePlatformType
 		config.Status.PlatformStatus.Type = configv1.AzurePlatformType
 		config.Status.PlatformStatus.Azure = &configv1.AzurePlatformStatus{
 			ResourceGroupName: fmt.Sprintf("%s-rg", clusterID.InfraID),
 		}
 	case gcp.Name:
-		config.Status.Platform = configv1.GCPPlatformType
 		config.Status.PlatformStatus.Type = configv1.GCPPlatformType
 		config.Status.PlatformStatus.GCP = &configv1.GCPPlatformStatus{
 			ProjectID: installConfig.Config.Platform.GCP.ProjectID,
 			Region:    installConfig.Config.Platform.GCP.Region,
 		}
 	case libvirt.Name:
-		config.Status.Platform = configv1.LibvirtPlatformType
 		config.Status.PlatformStatus.Type = configv1.LibvirtPlatformType
 	case none.Name:
-		config.Status.Platform = configv1.NonePlatformType
 		config.Status.PlatformStatus.Type = configv1.NonePlatformType
 	case openstack.Name:
-		config.Status.Platform = configv1.OpenStackPlatformType
 		config.Status.PlatformStatus.Type = configv1.OpenStackPlatformType
 	case vsphere.Name:
-		config.Status.Platform = configv1.VSpherePlatformType
 		config.Status.PlatformStatus.Type = configv1.VSpherePlatformType
 	default:
 		config.Status.PlatformStatus.Type = configv1.NonePlatformType
