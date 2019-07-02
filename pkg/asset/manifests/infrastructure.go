@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -81,6 +83,16 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	case azure.Name:
 		config.Status.Platform = configv1.AzurePlatformType
 		config.Status.PlatformStatus.Type = configv1.AzurePlatformType
+		config.Status.PlatformStatus.Azure = &configv1.AzurePlatformStatus{
+			ResourceGroupName: fmt.Sprintf("%s-rg", clusterID.InfraID),
+		}
+	case gcp.Name:
+		config.Status.Platform = configv1.GCPPlatformType
+		config.Status.PlatformStatus.Type = configv1.GCPPlatformType
+		config.Status.PlatformStatus.GCP = &configv1.GCPPlatformStatus{
+			ProjectID: installConfig.Config.Platform.GCP.ProjectID,
+			Region:    installConfig.Config.Platform.GCP.Region,
+		}
 	case libvirt.Name:
 		config.Status.Platform = configv1.LibvirtPlatformType
 		config.Status.PlatformStatus.Type = configv1.LibvirtPlatformType
