@@ -3,7 +3,7 @@
 package libvirt
 
 import (
-	"github.com/openshift/installer/pkg/providers"
+	"github.com/openshift/installer/pkg/destroy/providers"
 )
 
 func init() {
