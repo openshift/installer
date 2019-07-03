@@ -1,5 +1,5 @@
-resource "google_compute_firewall" "control_ingress_icmp" {
-  name    = "${var.cluster_id}-control-ingress-icmp"
+resource "google_compute_firewall" "master_ingress_icmp" {
+  name    = "${var.cluster_id}-master-ingress-icmp"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -10,8 +10,8 @@ resource "google_compute_firewall" "control_ingress_icmp" {
   target_tags   = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_ssh" {
-  name    = "${var.cluster_id}-control-ingress-ssh"
+resource "google_compute_firewall" "master_ingress_ssh" {
+  name    = "${var.cluster_id}-master-ingress-ssh"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -23,8 +23,8 @@ resource "google_compute_firewall" "control_ingress_ssh" {
   target_tags   = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_https" {
-  name    = "${var.cluster_id}-control-ingress-https"
+resource "google_compute_firewall" "master_ingress_https" {
+  name    = "${var.cluster_id}-master-ingress-https"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -36,8 +36,8 @@ resource "google_compute_firewall" "control_ingress_https" {
   target_tags   = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_mcs" {
-  name    = "${var.cluster_id}-control-ingress-mcs"
+resource "google_compute_firewall" "master_ingress_mcs" {
+  name    = "${var.cluster_id}-master-ingress-mcs"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -49,8 +49,8 @@ resource "google_compute_firewall" "control_ingress_mcs" {
   target_tags   = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_vxlan" {
-  name    = "${var.cluster_id}-control-ingress-vxlan"
+resource "google_compute_firewall" "master_ingress_vxlan" {
+  name    = "${var.cluster_id}-master-ingress-vxlan"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -62,8 +62,8 @@ resource "google_compute_firewall" "control_ingress_vxlan" {
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_vxlan_from_compute" {
-  name    = "${var.cluster_id}-control-ingress-vxlan-from-compute"
+resource "google_compute_firewall" "master_ingress_vxlan_from_worker" {
+  name    = "${var.cluster_id}-master-ingress-vxlan-from-worker"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -75,8 +75,8 @@ resource "google_compute_firewall" "control_ingress_vxlan_from_compute" {
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_internal" {
-  name    = "${var.cluster_id}-control-ingress-internal"
+resource "google_compute_firewall" "master_ingress_internal" {
+  name    = "${var.cluster_id}-master-ingress-internal"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -88,8 +88,8 @@ resource "google_compute_firewall" "control_ingress_internal" {
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_internal_from_compute" {
-  name    = "${var.cluster_id}-control-ingress-internal-from-compute"
+resource "google_compute_firewall" "master_ingress_internal_from_worker" {
+  name    = "${var.cluster_id}-master-ingress-internal-from-worker"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -101,8 +101,8 @@ resource "google_compute_firewall" "control_ingress_internal_from_compute" {
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_internal_udp" {
-  name    = "${var.cluster_id}-control-ingress-internal-udp"
+resource "google_compute_firewall" "master_ingress_internal_udp" {
+  name    = "${var.cluster_id}-master-ingress-internal-udp"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -114,8 +114,8 @@ resource "google_compute_firewall" "control_ingress_internal_udp" {
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_internal_from_compute_udp" {
-  name    = "${var.cluster_id}-control-ingress-internal-from-compute-udp"
+resource "google_compute_firewall" "master_ingress_internal_from_worker_udp" {
+  name    = "${var.cluster_id}-master-ingress-internal-from-worker-udp"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -127,8 +127,8 @@ resource "google_compute_firewall" "control_ingress_internal_from_compute_udp" {
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_kube_scheduler" {
-  name    = "${var.cluster_id}-control-ingress-kube-scheduler"
+resource "google_compute_firewall" "master_ingress_kube_scheduler" {
+  name    = "${var.cluster_id}-master-ingress-kube-scheduler"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -140,8 +140,8 @@ resource "google_compute_firewall" "control_ingress_kube_scheduler" {
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_kube_scheduler_from_compute" {
-  name    = "${var.cluster_id}-control-ingress-kube-scheduler-from-compute"
+resource "google_compute_firewall" "master_ingress_kube_scheduler_from_worker" {
+  name    = "${var.cluster_id}-master-ingress-kube-scheduler-from-worker"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -153,8 +153,8 @@ resource "google_compute_firewall" "control_ingress_kube_scheduler_from_compute"
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_kube_controller_manager" {
-  name    = "${var.cluster_id}-control-ingress-kube-controller-manager"
+resource "google_compute_firewall" "master_ingress_kube_masterler_manager" {
+  name    = "${var.cluster_id}-master-ingress-kube-masterler-manager"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -166,8 +166,8 @@ resource "google_compute_firewall" "control_ingress_kube_controller_manager" {
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_kube_controller_manager_from_compute" {
-  name    = "${var.cluster_id}-control-ingress-kube-controller-manager-from-compute"
+resource "google_compute_firewall" "master_ingress_kube_masterler_manager_from_worker" {
+  name    = "${var.cluster_id}-master-ingress-kube-masterler-manager-from-worker"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -179,8 +179,8 @@ resource "google_compute_firewall" "control_ingress_kube_controller_manager_from
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_kubelet_secure" {
-  name    = "${var.cluster_id}-control-ingress-kubelet-secure"
+resource "google_compute_firewall" "master_ingress_kubelet_secure" {
+  name    = "${var.cluster_id}-master-ingress-kubelet-secure"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -192,8 +192,8 @@ resource "google_compute_firewall" "control_ingress_kubelet_secure" {
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_kubelet_secure_from_compute" {
-  name    = "${var.cluster_id}-control-ingress-kubelet-secure-from-compute"
+resource "google_compute_firewall" "master_ingress_kubelet_secure_from_worker" {
+  name    = "${var.cluster_id}-master-ingress-kubelet-secure-from-worker"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -205,8 +205,8 @@ resource "google_compute_firewall" "control_ingress_kubelet_secure_from_compute"
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_etcd" {
-  name    = "${var.cluster_id}-control-ingress-etcd"
+resource "google_compute_firewall" "master_ingress_etcd" {
+  name    = "${var.cluster_id}-master-ingress-etcd"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -218,8 +218,8 @@ resource "google_compute_firewall" "control_ingress_etcd" {
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_services_tcp" {
-  name    = "${var.cluster_id}-control-ingress-services-tcp"
+resource "google_compute_firewall" "master_ingress_services_tcp" {
+  name    = "${var.cluster_id}-master-ingress-services-tcp"
   network = google_compute_network.cluster_network.self_link
 
   allow {
@@ -231,8 +231,8 @@ resource "google_compute_firewall" "control_ingress_services_tcp" {
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "control_ingress_services_udp" {
-  name    = "${var.cluster_id}-control-ingress-services-udp"
+resource "google_compute_firewall" "master_ingress_services_udp" {
+  name    = "${var.cluster_id}-master-ingress-services-udp"
   network = google_compute_network.cluster_network.self_link
 
   allow {
