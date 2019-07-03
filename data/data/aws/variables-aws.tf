@@ -34,6 +34,19 @@ EOF
   default = {}
 }
 
+variable "custom_endpoints" {
+  type = map(string)
+
+  description = <<EOF
+(optional) Custom AWS endpoints to override existing services.
+Check - https://www.terraform.io/docs/providers/aws/guides/custom-service-endpoints.html
+
+Example: `{ "key" = "value", "foo" = "bar" }`
+EOF
+
+  default = {}
+}
+
 variable "aws_master_root_volume_type" {
   type        = string
   description = "The type of volume for the root block device of master nodes."

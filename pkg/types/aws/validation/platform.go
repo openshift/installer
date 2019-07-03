@@ -58,5 +58,8 @@ func ValidatePlatform(p *aws.Platform, fldPath *field.Path) field.ErrorList {
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
+	if p.CustomRegionOverride != nil {
+		allErrs = append(allErrs, ValidateCustomEndpoints(&(p.CustomRegionOverride), fldPath.Child("customRegionOverride"))...)
+	}
 	return allErrs
 }
