@@ -10,6 +10,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/aws"
 	_ "github.com/openshift/installer/pkg/destroy/azure"
 	"github.com/openshift/installer/pkg/destroy/bootstrap"
+	_ "github.com/openshift/installer/pkg/destroy/gcp"
 	_ "github.com/openshift/installer/pkg/destroy/libvirt"
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 )
