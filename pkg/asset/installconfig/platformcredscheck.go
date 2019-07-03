@@ -1,12 +1,14 @@
 package installconfig
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/gcp"
@@ -49,6 +51,10 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "validate AWS credentials")
 		}
 	case gcp.Name:
+		_, err = gcpconfig.GetSession(context.TODO())
+		if err != nil {
+			return errors.Wrap(err, "creating GCP session")
+		}
 	case openstack.Name:
 		opts := new(clientconfig.ClientOpts)
 		opts.Cloud = ic.Config.Platform.OpenStack.Cloud
