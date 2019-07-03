@@ -49,7 +49,7 @@ type File struct {
 func PersistToFile(asset WritableAsset, directory string) error {
 	for _, f := range asset.Files() {
 		path := filepath.Join(directory, f.Filename)
-		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
 			return errors.Wrap(err, "failed to create dir")
 		}
 		if err := ioutil.WriteFile(path, f.Data, 0644); err != nil {

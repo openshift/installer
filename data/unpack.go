@@ -21,7 +21,7 @@ func Unpack(base string, uri string) (err error) {
 	}
 
 	if info.IsDir() {
-		os.Mkdir(base, 0777)
+		os.Mkdir(base, 0750)
 		children, err := file.Readdir(0)
 		if err != nil {
 			return err
@@ -38,7 +38,7 @@ func Unpack(base string, uri string) (err error) {
 		return nil
 	}
 
-	out, err := os.OpenFile(base, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	out, err := os.OpenFile(base, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0660)
 	if err != nil {
 		return err
 	}

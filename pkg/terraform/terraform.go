@@ -139,7 +139,7 @@ func setupEmbeddedPlugins(dir string) error {
 	}
 
 	pdir := filepath.Join(dir, "plugins")
-	if err := os.MkdirAll(pdir, 0777); err != nil {
+	if err := os.MkdirAll(pdir, 0750); err != nil {
 		return err
 	}
 	for name := range plugins.KnownPlugins {

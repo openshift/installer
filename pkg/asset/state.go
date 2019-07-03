@@ -31,7 +31,7 @@ func (s *State) PersistToFile(directory string) error {
 			continue
 		}
 		path := filepath.Join(directory, c.Name)
-		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
 			return errors.Wrap(err, "failed to create dir")
 		}
 		if err := ioutil.WriteFile(path, c.Data, 0644); err != nil {

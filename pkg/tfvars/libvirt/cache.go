@@ -60,7 +60,7 @@ func cachedImage(uri string) (string, error) {
 	}
 
 	imageCacheDir := filepath.Join(cacheDir, "image")
-	err = os.MkdirAll(imageCacheDir, 0777)
+	err = os.MkdirAll(imageCacheDir, 0750)
 	if err != nil {
 		return uri, err
 	}
