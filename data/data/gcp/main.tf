@@ -6,14 +6,15 @@ locals {
 }
 
 provider "google" {
-  region  = var.gcp_region
-  project = var.gcp_project
+  credentials = var.gcp_service_account
+  project     = var.gcp_project_id
+  region      = var.gcp_region
 }
 
 module "bootstrap" {
   source = "./bootstrap"
 
-  image_name   = var.gcp_image_name_override
+  image_name   = var.gcp_image_id
   machine_type = var.gcp_bootstrap_machine_type
   cluster_id   = var.cluster_id
   ignition     = var.ignition_bootstrap
@@ -27,7 +28,7 @@ module "bootstrap" {
 module "master" {
   source = "./master"
 
-  image_name     = var.gcp_image_name_override
+  image_name     = var.gcp_image_id
   instance_count = var.master_count
   machine_type   = var.gcp_master_machine_type
   cluster_id     = var.cluster_id
