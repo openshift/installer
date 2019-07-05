@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -58,6 +59,7 @@ func (i *Image) Generate(p asset.Parents) error {
 	switch config.Platform.Name() {
 	case aws.Name:
 		osimage, err = rhcos.AMI(ctx, config.Platform.AWS.Region)
+	case gcp.Name:
 	case libvirt.Name:
 		osimage, err = rhcos.QEMU(ctx)
 	case openstack.Name:
