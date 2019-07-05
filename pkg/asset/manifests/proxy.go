@@ -95,6 +95,11 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 // createNoProxy combines user-provided & platform-specific values to create a comma-separated
 // list of unique NO_PROXY values. Platform values are: serviceCIDR, podCIDR, localhost,
 // 127.0.0.1, api.clusterdomain, api-int.clusterdomain, etcd-idx.clusterdomain
+// and 169.254.169.254 for aws, openstack, gcp and azure instance metadata:
+// https://docs.openstack.org/nova/latest/user/metadata.html
+// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
+// https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service
+// https://cloud.google.com/compute/docs/storing-retrieving-metadata
 func createNoProxy(installConfig *installconfig.InstallConfig, network *Networking) (string, error) {
 	apiServerURL, err := url.Parse(getAPIServerURL(installConfig.Config))
 	if err != nil {
@@ -108,6 +113,7 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 	set := sets.NewString(
 		"127.0.0.1",
 		"localhost",
+		"169.254.169.254",
 		network.Config.Spec.ServiceNetwork[0],
 		apiServerURL.Hostname(),
 		internalAPIServer.Hostname(),
