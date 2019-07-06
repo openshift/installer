@@ -14,6 +14,8 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 var proxyCfgFilename = filepath.Join(manifestDir, "cluster-proxy-01-config.yaml")
@@ -95,6 +97,12 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 // createNoProxy combines user-provided & platform-specific values to create a comma-separated
 // list of unique NO_PROXY values. Platform values are: serviceCIDR, podCIDR, localhost,
 // 127.0.0.1, api.clusterdomain, api-int.clusterdomain, etcd-idx.clusterdomain
+// If platform is not vSphere or None add 169.254.169.254 to the list of NO_PROXY
+// address. We should not proxy the instance metadata services:
+// https://docs.openstack.org/nova/latest/user/metadata.html
+// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
+// https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service
+// https://cloud.google.com/compute/docs/storing-retrieving-metadata
 func createNoProxy(installConfig *installconfig.InstallConfig, network *Networking) (string, error) {
 	apiServerURL, err := url.Parse(getAPIServerURL(installConfig.Config))
 	if err != nil {
@@ -112,6 +120,11 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 		apiServerURL.Hostname(),
 		internalAPIServer.Hostname(),
 	)
+	platform := installConfig.Config.Platform.Name()
+
+	if platform != vsphere.Name && platform != none.Name {
+		set.Insert("169.254.169.254")
+	}
 
 	for i := int64(0); i < *installConfig.Config.ControlPlane.Replicas; i++ {
 		etcdHost := fmt.Sprintf("etcd-%d.%s", i, installConfig.Config.ClusterDomain())
