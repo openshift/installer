@@ -1,0 +1,27 @@
+#!/usr/libexec/platform-python
+
+# Script to determine the network CIDR for a given VIP.
+
+import sys
+import socket
+import struct
+
+vip = sys.argv[1]
+iface_cidrs = sys.argv[2].split()
+vip_int = struct.unpack("!I", socket.inet_aton(vip))[0]
+
+for iface_cidr in iface_cidrs:
+    ip, prefix = iface_cidr.split('/')
+    ip_int = struct.unpack("!I", socket.inet_aton(ip))[0]
+    prefix_int = int(prefix)
+    mask = int('1' * prefix_int + '0' * (32 - prefix_int), 2)
+    subnet_ip_int_min = ip_int & mask
+    subnet_ip = socket.inet_ntoa(struct.pack("!I", subnet_ip_int_min))
+    subnet_ip_int_max = subnet_ip_int_min | int('1' * (32 - prefix_int), 2)
+    subnet_ip_max = socket.inet_ntoa(struct.pack("!I", subnet_ip_int_max))
+    sys.stderr.write('Is %s between %s and %s\n' % (vip, subnet_ip, subnet_ip_max))
+    if subnet_ip_int_min < vip_int < subnet_ip_int_max:
+        subnet_ip = socket.inet_ntoa(struct.pack("!I", subnet_ip_int_min))
+        print('%s/%s' % (subnet_ip, prefix))
+        sys.exit(0)
+sys.exit(1)
