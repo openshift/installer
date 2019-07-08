@@ -30,6 +30,12 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 	platform := config.Platform.Azure
 	mpool := pool.Platform.Azure
+	if len(mpool.Zones) == 0 {
+		// if no azs are given we set to []string{""} for convenience over later operations.
+		// It means no-zoned for the machine API
+		mpool.Zones = []string{""}
+	}
+	azs := mpool.Zones
 
 	total := int64(1)
 	if pool.Replicas != nil {
@@ -37,7 +43,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
-		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role)
+		var azIndex int
+		if len(azs) > 0 {
+			azIndex = int(idx) % len(azs)
+		}
+		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -69,7 +79,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string) (*azureprovider.AzureMachineProviderSpec, error) {
+func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int) (*azureprovider.AzureMachineProviderSpec, error) {
+	var az *string
+	if len(mpool.Zones) > 0 && azIdx != nil {
+		az = &mpool.Zones[*azIdx]
+	}
 	return &azureprovider.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "azureprovider.k8s.io/v1alpha1",
@@ -89,6 +103,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 				StorageAccountType: "Premium_LRS",
 			},
 		},
+		Zone:            az,
 		Subnet:          fmt.Sprintf("%s-%s-subnet", clusterID, role),
 		ManagedIdentity: fmt.Sprintf("%s-identity", clusterID),
 		Vnet:            fmt.Sprintf("%s-vnet", clusterID),

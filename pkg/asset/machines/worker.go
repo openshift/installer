@@ -165,6 +165,32 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
+		case azuretypes.Name:
+			mpool := defaultAzureMachinePoolPlatform()
+			mpool.InstanceType = azuredefaults.ComputeInstanceType(installconfig.Config.Platform.Azure.Region)
+			mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.Azure)
+			if len(mpool.Zones) == 0 {
+				azs, err := azure.AvailabilityZones(ic.Platform.Azure.Region, mpool.InstanceType)
+				if err != nil {
+					return errors.Wrap(err, "failed to fetch availability zones")
+				}
+				mpool.Zones = azs
+				if len(azs) == 0 {
+					// if no azs are given we set to []string{""} for convenience over later operations.
+					// It means no-zoned for the machine API
+					mpool.Zones = []string{""}
+				}
+			}
+
+			pool.Platform.Azure = &mpool
+			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+			if err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects")
+			}
+			for _, set := range sets {
+				machineSets = append(machineSets, set)
+			}
 		case gcptypes.Name:
 			mpool := defaultGCPMachinePoolPlatform()
 			mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
@@ -209,20 +235,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
-		case azuretypes.Name:
-			mpool := defaultAzureMachinePoolPlatform()
-			mpool.InstanceType = azuredefaults.ComputeInstanceType(installconfig.Config.Platform.Azure.Region)
-			mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
-			mpool.Set(pool.Platform.Azure)
-			pool.Platform.Azure = &mpool
-			//TODO: add support for availibility zones
-			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
-			if err != nil {
-				return errors.Wrap(err, "failed to create worker machine objects")
-			}
-			for _, set := range sets {
-				machineSets = append(machineSets, set)
-			}
+
 		case nonetypes.Name, vspheretypes.Name:
 		default:
 			return fmt.Errorf("invalid Platform")

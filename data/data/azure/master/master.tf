@@ -38,6 +38,7 @@ resource "azurerm_virtual_machine" "master" {
   count                 = var.instance_count
   name                  = "${var.cluster_id}-master-${count.index}"
   location              = var.region
+  zones                 = compact([var.availability_zones[count.index]])
   resource_group_name   = var.resource_group_name
   network_interface_ids = [element(azurerm_network_interface.master.*.id, count.index)]
   vm_size               = var.vm_size

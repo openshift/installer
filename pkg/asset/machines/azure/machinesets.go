@@ -22,61 +22,70 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	}
 	platform := config.Platform.Azure
 	mpool := pool.Platform.Azure
+	if len(mpool.Zones) == 0 {
+		// if no azs are given we set to []string{""} for convenience over later operations.
+		// It means no-zoned for the machine API
+		mpool.Zones = []string{""}
+	}
+	azs := mpool.Zones
 
-	total := int32(0)
+	total := int64(0)
 	if pool.Replicas != nil {
-		total = int32(*pool.Replicas)
+		total = *pool.Replicas
 	}
-
+	numOfAZs := int64(len(azs))
 	var machinesets []*clusterapi.MachineSet
-	provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create provider")
-	}
-	// TODO(serbrech): Implement AZ support
-	//name := fmt.Sprintf("%s-%s-%s", clustername, pool.Name, az)
-	name := fmt.Sprintf("%s-%s", clusterID, pool.Name)
-	mset := &clusterapi.MachineSet{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "machine.openshift.io/v1beta1",
-			Kind:       "MachineSet",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "openshift-machine-api",
-			Name:      name,
-			Labels: map[string]string{
-				"machine.openshift.io/cluster-api-cluster":      clusterID,
-				"machine.openshift.io/cluster-api-machine-role": role,
-				"machine.openshift.io/cluster-api-machine-type": role,
+	for idx, az := range azs {
+		replicas := int32(total / numOfAZs)
+		if int64(idx) < total%numOfAZs {
+			replicas++
+		}
+		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &idx)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to create provider")
+		}
+		name := fmt.Sprintf("%s-%s-%s%s", clusterID, pool.Name, platform.Region, az)
+		mset := &clusterapi.MachineSet{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "machine.openshift.io/v1beta1",
+				Kind:       "MachineSet",
 			},
-		},
-		Spec: clusterapi.MachineSetSpec{
-			Replicas: &total,
-			Selector: metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"machine.openshift.io/cluster-api-machineset": name,
-					"machine.openshift.io/cluster-api-cluster":    clusterID,
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "openshift-machine-api",
+				Name:      name,
+				Labels: map[string]string{
+					"machine.openshift.io/cluster-api-cluster":      clusterID,
+					"machine.openshift.io/cluster-api-machine-role": role,
+					"machine.openshift.io/cluster-api-machine-type": role,
 				},
 			},
-			Template: clusterapi.MachineTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"machine.openshift.io/cluster-api-machineset":   name,
-						"machine.openshift.io/cluster-api-cluster":      clusterID,
-						"machine.openshift.io/cluster-api-machine-role": role,
-						"machine.openshift.io/cluster-api-machine-type": role,
+			Spec: clusterapi.MachineSetSpec{
+				Replicas: &replicas,
+				Selector: metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"machine.openshift.io/cluster-api-machineset": name,
+						"machine.openshift.io/cluster-api-cluster":    clusterID,
 					},
 				},
-				Spec: clusterapi.MachineSpec{
-					ProviderSpec: clusterapi.ProviderSpec{
-						Value: &runtime.RawExtension{Object: provider},
+				Template: clusterapi.MachineTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{
+							"machine.openshift.io/cluster-api-machineset":   name,
+							"machine.openshift.io/cluster-api-cluster":      clusterID,
+							"machine.openshift.io/cluster-api-machine-role": role,
+							"machine.openshift.io/cluster-api-machine-type": role,
+						},
 					},
-					// we don't need to set Versions, because we control those via cluster operators.
+					Spec: clusterapi.MachineSpec{
+						ProviderSpec: clusterapi.ProviderSpec{
+							Value: &runtime.RawExtension{Object: provider},
+						},
+						// we don't need to set Versions, because we control those via cluster operators.
+					},
 				},
 			},
-		},
+		}
+		machinesets = append(machinesets, mset)
 	}
-	machinesets = append(machinesets, mset)
-
 	return machinesets, nil
 }

@@ -57,6 +57,7 @@ module "master" {
   resource_group_name     = azurerm_resource_group.main.name
   cluster_id              = var.cluster_id
   region                  = var.azure_region
+  availability_zones      = var.azure_master_availability_zones
   vm_size                 = var.azure_master_vm_type
   vm_image                = var.azure_image_id
   identity                = azurerm_user_assigned_identity.main.id

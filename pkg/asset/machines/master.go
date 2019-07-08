@@ -167,6 +167,18 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.InstanceType = azuredefaults.ControlPlaneInstanceType(installconfig.Config.Platform.Azure.Region)
 		mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Azure)
+		if len(mpool.Zones) == 0 {
+			azs, err := azure.AvailabilityZones(ic.Platform.Azure.Region, mpool.InstanceType)
+			if err != nil {
+				return errors.Wrap(err, "failed to fetch availability zones")
+			}
+			mpool.Zones = azs
+			if len(azs) == 0 {
+				// if no azs are given we set to []string{""} for convenience over later operations.
+				// It means no-zoned for the machine API
+				mpool.Zones = []string{""}
+			}
+		}
 		pool.Platform.Azure = &mpool
 
 		machines, err = azure.Machines(clusterID.InfraID, ic, pool, string(*rhcosImage), "master", "master-user-data")
