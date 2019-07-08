@@ -855,7 +855,7 @@
   revision = "fbb02b2291d28baffd63558aa44b4b56f178d650"
 
 [[projects]]
-  digest = "1:1fd52c8a0547e5f3867ad1d026efce60b28415bded399e604c61cf585b04be67"
+  digest = "1:4ac1037b7246e5234951872bb5db8a02d23663192ffdec8d82bc09cce1adf296"
   name = "google.golang.org/api"
   packages = [
     "compute/v1",
@@ -864,8 +864,10 @@
     "googleapi",
     "googleapi/internal/uritemplates",
     "googleapi/transport",
+    "iam/v1",
     "internal",
     "option",
+    "storage/v1",
     "support/bundler",
     "transport/http",
     "transport/http/internal/propagation",
@@ -1287,7 +1289,10 @@
     "golang.org/x/sys/unix",
     "google.golang.org/api/compute/v1",
     "google.golang.org/api/dns/v1",
+    "google.golang.org/api/googleapi",
+    "google.golang.org/api/iam/v1",
     "google.golang.org/api/option",
+    "google.golang.org/api/storage/v1",
     "gopkg.in/AlecAivazis/survey.v1",
     "gopkg.in/ini.v1",
     "k8s.io/api/core/v1",
