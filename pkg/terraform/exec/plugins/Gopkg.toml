@@ -67,3 +67,7 @@ ignored = [
 [[override]]
   name = "github.com/hashicorp/go-azure-helpers"
   version = "0.4.1"
+
+[[constraint]]
+  name = "github.com/openshift-metalkube/terraform-provider-ironic"
+  version = "v0.1.3"
