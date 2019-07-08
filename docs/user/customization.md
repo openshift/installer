@@ -234,3 +234,101 @@ An example `worker.ign` is shown below. It has been modified to increase the HTT
 ```
 
 [ignition]: https://coreos.com/ignition/docs/latest/
+
+## NTP
+
+RHCOS hosts will contain a sane default NTP configuration for an internet
+accessible NTP pool.  Some organizations block external NTP traffic.  In that
+case, NTP must be reconfigured as a post-install customization.  This can be
+accomplished using `MachineConfig` resources.  The following provides example
+`MachineConfig` resources to apply custom NTP configuration on both `master`
+and `worker` nodes.
+
+```yaml
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  generation: 1
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: 00-master-chronyd-custom
+spec:
+  config:
+    ignition:
+      version: 2.2.0
+    storage:
+      files:
+      - contents:
+          verification: {}
+          source: 'data:text/plain;charset=utf-8;base64,IyBSZWNvcmQgdGhlIHJhdGUgYXQgd2hpY2ggdGhlIHN5c3RlbSBjbG9jayBnYWlucy9sb3NzZXMgdGltZS4KZHJpZnRmaWxlIC92YXIvbGliL2Nocm9ueS9kcmlmdAoKIyBBbGxvdyB0aGUgc3lzdGVtIGNsb2NrIHRvIGJlIHN0ZXBwZWQgaW4gdGhlIGZpcnN0IHRocmVlIHVwZGF0ZXMKIyBpZiBpdHMgb2Zmc2V0IGlzIGxhcmdlciB0aGFuIDEgc2Vjb25kLgptYWtlc3RlcCAxLjAgMwoKIyBFbmFibGUga2VybmVsIHN5bmNocm9uaXphdGlvbiBvZiB0aGUgcmVhbC10aW1lIGNsb2NrIChSVEMpLgpydGNzeW5jCgojIEVuYWJsZSBoYXJkd2FyZSB0aW1lc3RhbXBpbmcgb24gYWxsIGludGVyZmFjZXMgdGhhdCBzdXBwb3J0IGl0LgojaHd0aW1lc3RhbXAgKgoKIyBJbmNyZWFzZSB0aGUgbWluaW11bSBudW1iZXIgb2Ygc2VsZWN0YWJsZSBzb3VyY2VzIHJlcXVpcmVkIHRvIGFkanVzdAojIHRoZSBzeXN0ZW0gY2xvY2suCiNtaW5zb3VyY2VzIDIKCiMgQWxsb3cgTlRQIGNsaWVudCBhY2Nlc3MgZnJvbSBsb2NhbCBuZXR3b3JrLgojYWxsb3cgMTkyLjE2OC4wLjAvMTYKCiMgU2VydmUgdGltZSBldmVuIGlmIG5vdCBzeW5jaHJvbml6ZWQgdG8gYSB0aW1lIHNvdXJjZS4KI2xvY2FsIHN0cmF0dW0gMTAKCiMgU3BlY2lmeSBmaWxlIGNvbnRhaW5pbmcga2V5cyBmb3IgTlRQIGF1dGhlbnRpY2F0aW9uLgprZXlmaWxlIC9ldGMvY2hyb255LmtleXMKCiMgR2V0IFRBSS1VVEMgb2Zmc2V0IGFuZCBsZWFwIHNlY29uZHMgZnJvbSB0aGUgc3lzdGVtIHR6IGRhdGFiYXNlLgpsZWFwc2VjdHogcmlnaHQvVVRDCgojIFNwZWNpZnkgZGlyZWN0b3J5IGZvciBsb2cgZmlsZXMuCmxvZ2RpciAvdmFyL2xvZy9jaHJvbnkKCiMgU2VsZWN0IHdoaWNoIGluZm9ybWF0aW9uIGlzIGxvZ2dlZC4KI2xvZyBtZWFzdXJlbWVudHMgc3RhdGlzdGljcyB0cmFja2luZwoKIyBVc2UgcHVibGljIHNlcnZlcnMgZnJvbSB0aGUgcG9vbC5udHAub3JnIHByb2plY3QuCiMgUGxlYXNlIGNvbnNpZGVyIGpvaW5pbmcgdGhlIHBvb2wgKGh0dHA6Ly93d3cucG9vbC5udHAub3JnL2pvaW4uaHRtbCkuCnBvb2wgY2xvY2sucmVkaGF0LmNvbSBpYnVyc3QK'
+        filesystem: root
+        mode: 0644
+        path: /etc/chrony.conf
+```
+
+```yaml
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  generation: 1
+  labels:
+    machineconfiguration.openshift.io/role: worker
+  name: 00-worker-chronyd-custom
+spec:
+  config:
+    ignition:
+      version: 2.2.0
+    storage:
+      files:
+      - contents:
+          verification: {}
+          source: 'data:text/plain;charset=utf-8;base64,IyBSZWNvcmQgdGhlIHJhdGUgYXQgd2hpY2ggdGhlIHN5c3RlbSBjbG9jayBnYWlucy9sb3NzZXMgdGltZS4KZHJpZnRmaWxlIC92YXIvbGliL2Nocm9ueS9kcmlmdAoKIyBBbGxvdyB0aGUgc3lzdGVtIGNsb2NrIHRvIGJlIHN0ZXBwZWQgaW4gdGhlIGZpcnN0IHRocmVlIHVwZGF0ZXMKIyBpZiBpdHMgb2Zmc2V0IGlzIGxhcmdlciB0aGFuIDEgc2Vjb25kLgptYWtlc3RlcCAxLjAgMwoKIyBFbmFibGUga2VybmVsIHN5bmNocm9uaXphdGlvbiBvZiB0aGUgcmVhbC10aW1lIGNsb2NrIChSVEMpLgpydGNzeW5jCgojIEVuYWJsZSBoYXJkd2FyZSB0aW1lc3RhbXBpbmcgb24gYWxsIGludGVyZmFjZXMgdGhhdCBzdXBwb3J0IGl0LgojaHd0aW1lc3RhbXAgKgoKIyBJbmNyZWFzZSB0aGUgbWluaW11bSBudW1iZXIgb2Ygc2VsZWN0YWJsZSBzb3VyY2VzIHJlcXVpcmVkIHRvIGFkanVzdAojIHRoZSBzeXN0ZW0gY2xvY2suCiNtaW5zb3VyY2VzIDIKCiMgQWxsb3cgTlRQIGNsaWVudCBhY2Nlc3MgZnJvbSBsb2NhbCBuZXR3b3JrLgojYWxsb3cgMTkyLjE2OC4wLjAvMTYKCiMgU2VydmUgdGltZSBldmVuIGlmIG5vdCBzeW5jaHJvbml6ZWQgdG8gYSB0aW1lIHNvdXJjZS4KI2xvY2FsIHN0cmF0dW0gMTAKCiMgU3BlY2lmeSBmaWxlIGNvbnRhaW5pbmcga2V5cyBmb3IgTlRQIGF1dGhlbnRpY2F0aW9uLgprZXlmaWxlIC9ldGMvY2hyb255LmtleXMKCiMgR2V0IFRBSS1VVEMgb2Zmc2V0IGFuZCBsZWFwIHNlY29uZHMgZnJvbSB0aGUgc3lzdGVtIHR6IGRhdGFiYXNlLgpsZWFwc2VjdHogcmlnaHQvVVRDCgojIFNwZWNpZnkgZGlyZWN0b3J5IGZvciBsb2cgZmlsZXMuCmxvZ2RpciAvdmFyL2xvZy9jaHJvbnkKCiMgU2VsZWN0IHdoaWNoIGluZm9ybWF0aW9uIGlzIGxvZ2dlZC4KI2xvZyBtZWFzdXJlbWVudHMgc3RhdGlzdGljcyB0cmFja2luZwoKIyBVc2UgcHVibGljIHNlcnZlcnMgZnJvbSB0aGUgcG9vbC5udHAub3JnIHByb2plY3QuCiMgUGxlYXNlIGNvbnNpZGVyIGpvaW5pbmcgdGhlIHBvb2wgKGh0dHA6Ly93d3cucG9vbC5udHAub3JnL2pvaW4uaHRtbCkuCnBvb2wgY2xvY2sucmVkaGF0LmNvbSBpYnVyc3QK'
+        filesystem: root
+        mode: 0644
+        path: /etc/chrony.conf
+```
+
+Note that the contents of the new `/etc/chrony.conf` configuration file are
+base64 encoded.  Here are the decoded contents.  Adjust and re-encode with
+base64 for your use.
+
+```
+# Record the rate at which the system clock gains/losses time.
+driftfile /var/lib/chrony/drift
+
+# Allow the system clock to be stepped in the first three updates
+# if its offset is larger than 1 second.
+makestep 1.0 3
+
+# Enable kernel synchronization of the real-time clock (RTC).
+rtcsync
+
+# Enable hardware timestamping on all interfaces that support it.
+#hwtimestamp *
+
+# Increase the minimum number of selectable sources required to adjust
+# the system clock.
+#minsources 2
+
+# Allow NTP client access from local network.
+#allow 192.168.0.0/16
+
+# Serve time even if not synchronized to a time source.
+#local stratum 10
+
+# Specify file containing keys for NTP authentication.
+keyfile /etc/chrony.keys
+
+# Get TAI-UTC offset and leap seconds from the system tz database.
+leapsectz right/UTC
+
+# Specify directory for log files.
+logdir /var/log/chrony
+
+# Select which information is logged.
+#log measurements statistics tracking
+
+# Use public servers from the pool.ntp.org project.
+# Please consider joining the pool (http://www.pool.ntp.org/join.html).
+pool clock.redhat.com iburst
+```
