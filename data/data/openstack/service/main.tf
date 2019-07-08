@@ -13,7 +13,7 @@ data "ignition_systemd_unit" "haproxy_unit" {
 
   content = <<EOF
 [Unit]
-Description=Load balancer for the OpenShift services
+Description=Load balancer for the OpenShift Services
 
 [Service]
 ExecStartPre=/sbin/setenforce 0
