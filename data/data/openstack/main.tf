@@ -55,18 +55,22 @@ module "bootstrap" {
 module "masters" {
   source = "./masters"
 
-  base_image     = var.openstack_base_image
-  cluster_id     = var.cluster_id
-  cluster_domain = var.cluster_domain
-  flavor_name    = var.openstack_master_flavor_name
-  instance_count = var.master_count
+  base_image          = var.openstack_base_image
+  bootstrap_ip        = module.topology.bootstrap_port_ip
+  cluster_id          = var.cluster_id
+  cluster_domain      = var.cluster_domain
+  flavor_name         = var.openstack_master_flavor_name
+  instance_count      = var.master_count
+  lb_floating_ip      = var.openstack_lb_floating_ip
+  master_ips          = module.topology.master_ips
+  master_port_ids     = module.topology.master_port_ids
+  master_port_names   = module.topology.master_port_names
+  user_data_ign       = var.ignition_master
+  service_vm_fixed_ip = module.topology.service_vm_fixed_ip
   master_sg_ids = concat(
     var.openstack_master_extra_sg_ids,
     [module.topology.master_sg_id],
   )
-  master_port_ids     = module.topology.master_port_ids
-  user_data_ign       = var.ignition_master
-  service_vm_fixed_ip = module.topology.service_vm_fixed_ip
 }
 
 # TODO(shadower) add a dns module here

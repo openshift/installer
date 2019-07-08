@@ -2,6 +2,10 @@ variable "base_image" {
   type = string
 }
 
+variable "bootstrap_ip" {
+  type = string
+}
+
 variable "cluster_id" {
   type        = string
   description = "The identifier for the cluster."
@@ -20,6 +24,14 @@ variable "instance_count" {
   type = string
 }
 
+variable "lb_floating_ip" {
+  type = string
+}
+
+variable "master_ips" {
+  type = list(string)
+}
+
 variable "master_sg_ids" {
   type        = list(string)
   default     = ["default"]
@@ -31,6 +43,10 @@ variable "master_port_ids" {
   description = "List of port ids for the master nodes"
 }
 
+variable "master_port_names" {
+  type = list(string)
+}
+
 variable "user_data_ign" {
   type = string
 }
@@ -38,4 +54,3 @@ variable "user_data_ign" {
 variable "service_vm_fixed_ip" {
   type = string
 }
-
