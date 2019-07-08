@@ -9,3 +9,18 @@ type MachinePool struct {
 	// eg. n1-standard-4
 	InstanceType string `json:"type"`
 }
+
+// Set sets the values from `required` to `a`.
+func (a *MachinePool) Set(required *MachinePool) {
+	if required == nil || a == nil {
+		return
+	}
+
+	if len(required.Zones) > 0 {
+		a.Zones = required.Zones
+	}
+
+	if required.InstanceType != "" {
+		a.InstanceType = required.InstanceType
+	}
+}

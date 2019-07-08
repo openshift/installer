@@ -6,8 +6,8 @@
   name = "cloud.google.com/go"
   packages = ["compute/metadata"]
   pruneopts = "NUT"
-  revision = "457ea5c15ccf3b87db582c450e80101989da35f7"
-  version = "v0.40.0"
+  revision = "cf81fad90a1a1de334c4fc27e23eb9a4224b627a"
+  version = "v0.41.0"
 
 [[projects]]
   digest = "1:3fb854fc35fafced21615a93db3c0e324c8cb1d5a89f39dd1e72db0c4200345a"
@@ -555,6 +555,17 @@
   ]
   pruneopts = "NUT"
   revision = "046d74a3bd9143fb650cb894ece0f088a3b26de3"
+
+[[projects]]
+  branch = "master"
+  digest = "1:b0a79e04b1f18b94b52c77000c119f0abdf6400ad8a13fbe8decdf79c179281e"
+  name = "github.com/openshift/cluster-api-provider-gcp"
+  packages = [
+    "pkg/apis",
+    "pkg/apis/gcpprovider/v1beta1",
+  ]
+  pruneopts = "NUT"
+  revision = "cb0305f3b986e67ff8d5bb0b375dd7bbb835db01"
 
 [[projects]]
   branch = "master"
@@ -1252,6 +1263,8 @@
     "github.com/openshift/client-go/config/clientset/versioned",
     "github.com/openshift/client-go/route/clientset/versioned",
     "github.com/openshift/cloud-credential-operator/pkg/aws",
+    "github.com/openshift/cluster-api-provider-gcp/pkg/apis",
+    "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1",
     "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1",
