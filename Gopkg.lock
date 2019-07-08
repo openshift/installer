@@ -18,11 +18,12 @@
   version = "v0.4.11"
 
 [[projects]]
-  digest = "1:10262e67150b920c9eb818e235089b00040f848060c34606885476f731bbdb1a"
+  digest = "1:75225b8c0420907aea70960a80ff4497111e9a85ed575c595e8dbb949aaeb84d"
   name = "github.com/Azure/azure-sdk-for-go"
   packages = [
     "profiles/latest/dns/mgmt/dns",
     "profiles/latest/resources/mgmt/subscriptions",
+    "services/compute/mgmt/2018-10-01/compute",
     "services/dns/mgmt/2017-10-01/dns",
     "services/preview/dns/mgmt/2018-03-01-preview/dns",
     "services/resources/mgmt/2018-05-01/resources",
@@ -1171,14 +1172,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8029344993a62e49ed41f78ead4b3499d74cb2d4e1a1c0dc36a00d2107837884"
+  digest = "1:c48a5a0e15e64c111f435e1db4aef7c48ceec1ca4f96f311c9eadcf525e36443"
   name = "sigs.k8s.io/cluster-api-provider-azure"
   packages = [
     "pkg/apis",
     "pkg/apis/azureprovider/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "12d3c939200e9d0c288311ec8122686fce5638a9"
+  revision = "b0bf44fb4ba34bc210571e9bc8961ee9fdf2aa4a"
   source = "https://github.com/openshift/cluster-api-provider-azure.git"
 
 [[projects]]
@@ -1215,6 +1216,7 @@
   input-imports = [
     "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns",
     "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions",
+    "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute",
     "github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns",
     "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources",
     "github.com/Azure/go-autorest/autorest",

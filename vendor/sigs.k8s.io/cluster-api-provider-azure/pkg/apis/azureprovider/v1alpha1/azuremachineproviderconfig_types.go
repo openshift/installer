@@ -21,6 +21,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Annotation constants
+const (
+	// ClusterIDLabel is the label that a machineset must have to identify the
+	// cluster to which it belongs.
+	ClusterIDLabel = "machine.openshift.io/cluster-api-cluster"
+)
+
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -66,6 +73,13 @@ type AzureMachineProviderSpec struct {
 
 	// Vnet to set virtual network name
 	Vnet string `json:"vnet"`
+
+	// Availability Zone for the virtual machine.
+	// If nil, the virtual machine should be deployed to no zone
+	Zone *string `json:"zone,omitempty"`
+
+	NetworkResourceGroup string `json:"networkResourceGroup"`
+	ResourceGroup        string `json:"resourceGroup"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
