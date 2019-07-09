@@ -3,7 +3,7 @@
 # in prow, already in container, so no 'podman run'
 if [ "$IS_CONTAINER" != "" ]; then
   if [ "${#N}" -eq 0 ]; then
-    set -- -list -check -write=false -recursive data/data/
+    set -- -list -check -diff -write=false -recursive data/data/
   fi
   set -x
   terraform fmt "${@}"
