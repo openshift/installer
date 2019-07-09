@@ -8,8 +8,10 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -48,9 +50,18 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 		}
 		a.BaseDomain = zone.Name
 		return platform.Azure.SetBaseDomain(zone.ID)
+	case gcp.Name:
+		var err error
+		a.BaseDomain, err = gcpconfig.GetBaseDomain(platform.GCP.ProjectID)
+
+		// We are done if success (err == nil) or an err besides forbidden/throttling
+		if !(gcpconfig.IsForbidden(err) || gcpconfig.IsThrottled(err)) {
+			return err
+		}
 	default:
 		//Do nothing
 	}
+
 	return survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{

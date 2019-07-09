@@ -54,7 +54,6 @@ func loadCredentials(ctx context.Context) (*googleoauth.Credentials, error) {
 	for _, l := range loaders {
 		creds, err := l.Load(ctx)
 		if err != nil {
-			logrus.Debug(errors.Wrapf(err, "failed to load credentials from %s", l))
 			continue
 		}
 		return creds, nil
@@ -160,8 +159,9 @@ func (u *userLoader) Load(ctx context.Context) (*googleoauth.Credentials, error)
 	err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Multiline{
-				Message: "service account",
-				Help:    "The location to file that contains the service account in JSON, or the service account in JSON format",
+				Message: "Service Account (absolute path to file or JSON content)",
+				// Due to a bug in survey pkg, help message is not rendered
+				Help: "The location to file that contains the service account in JSON, or the service account in JSON format",
 			},
 		},
 	}, &content)

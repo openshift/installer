@@ -12,21 +12,27 @@ var (
 	// the short name of the region. The value of the map is the long
 	// name of the region.
 	Regions = map[string]string{
-		"northamerica-northeast1": "Montréal",
-		"us-central":              "Iowa",
-		"us-west2":                "Los Angeles",
-		"us-east1":                "South Carolina",
-		"us-east4":                "Northern Virginia",
-		"southamerica-east1":      "São Paulo",
-		"europe-west":             "Belgium",
-		"europe-west2":            "London",
-		"europe-west3":            "Frankfurt",
-		"europe-west6":            "Zürich",
-		"asia-northeast1":         "Tokyo",
-		"asia-northeast2":         "Osaka",
+		// List from: https://cloud.google.com/compute/docs/regions-zones/
+		"asia-east1":              "Changhua County, Taiwan",
 		"asia-east2":              "Hong Kong",
-		"asia-south1":             "Mumbai",
-		"australia-southeast1":    "Sydney",
+		"asia-northeast1":         "Tokyo, Japan",
+		"asia-northeast2":         "Osaka, Japan",
+		"asia-south1":             "Mumbai, India",
+		"asia-southeast1":         "Jurong West, Singapore",
+		"australia-southeast1":    "Sydney, Australia",
+		"europe-north1":           "Hamina, Finland",
+		"europe-west1":            "St. Ghislain, Belgium",
+		"europe-west2":            "London, England, UK",
+		"europe-west3":            "Frankfurt, Germany",
+		"europe-west4":            "Eemshaven, Netherlands",
+		"europe-west6":            "Zürich, Switzerland",
+		"northamerica-northeast1": "Montréal, Québec, Canada",
+		"southamerica-east1":      "São Paulo, Brazil",
+		"us-central1":             "Council Bluffs, Iowa, USA",
+		"us-east1":                "Moncks Corner, South Carolina, USA",
+		"us-east4":                "Ashburn, Northern Virginia, USA",
+		"us-west1":                "The Dalles, Oregon, USA",
+		"us-west2":                "Los Angeles, California, USA",
 	}
 	validRegionValues = func() []string {
 		validValues := make([]string, len(Regions))
