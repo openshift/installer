@@ -8,3 +8,7 @@ variable "image" {
   type        = string
 }
 
+variable "pool" {
+  type        = string
+  description = "The name of the storage pool."
+}
