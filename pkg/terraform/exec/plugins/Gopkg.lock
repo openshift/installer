@@ -481,12 +481,18 @@
   version = "v2.0.5"
 
 [[projects]]
-  digest = "1:2be73edf7ec0748333e19ee06a303a54fd8926f215a063a253647dc49b22d191"
+  digest = "1:c1024fa089f6cf75ea25d2a6d10bb001643e8464d710fa4d8205f8edfa8454bb"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
     "internal",
     "openstack",
+    "openstack/baremetal/noauth",
+    "openstack/baremetal/v1/allocations",
+    "openstack/baremetal/v1/nodes",
+    "openstack/baremetal/v1/ports",
+    "openstack/baremetalintrospection/noauth",
+    "openstack/baremetalintrospection/v1/introspection",
     "openstack/blockstorage/extensions/volumeactions",
     "openstack/blockstorage/v1/volumes",
     "openstack/blockstorage/v2/snapshots",
@@ -585,9 +591,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4a14c92687d36a3875744de509bae52334a00ba487eb285b8a57645ec46acc7e"
+  digest = "1:19d4403f555e6d4e540c55f7050093f5e07e0c4174c4169826fb4d962d0e6240"
   name = "github.com/gophercloud/utils"
-  packages = ["openstack/clientconfig"]
+  packages = [
+    "openstack/baremetal/v1/nodes",
+    "openstack/clientconfig",
+  ]
   pruneopts = "NUT"
   revision = "0bcc8e728cb54c9dce9ed46924688b817ab14f31"
 
@@ -777,6 +786,14 @@
   pruneopts = "NUT"
   revision = "eecee6c969c02c8cc2ae48e1e269843ae8590796"
   version = "v1.0.0"
+
+[[projects]]
+  digest = "1:a0886267c60262a245d6eeb0be12bf8e165026ad088bce106b9c55c5d613144f"
+  name = "github.com/openshift-metalkube/terraform-provider-ironic"
+  packages = ["ironic"]
+  pruneopts = "NUT"
+  revision = "9f5bba54dad78c10ed572eb2541f8178a5500656"
+  version = "v0.1.4"
 
 [[projects]]
   branch = "master"
@@ -1167,6 +1184,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/dmacvicar/terraform-provider-libvirt/libvirt",
+    "github.com/openshift-metalkube/terraform-provider-ironic/ironic",
     "github.com/terraform-providers/terraform-provider-aws/aws",
     "github.com/terraform-providers/terraform-provider-azurerm/azurerm",
     "github.com/terraform-providers/terraform-provider-google/google",

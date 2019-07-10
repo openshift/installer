@@ -31,3 +31,9 @@ aliases:
     - abhinavdahiya
     - dav1x
     - staebler
+  baremetal-reviewers:
+    - celebdor
+    - markmc
+    - russellb
+    - hardys
+    - stbenjam
