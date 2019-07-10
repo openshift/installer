@@ -70,7 +70,7 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 	az := mpool.Zones[azIdx]
 	return &gcpprovider.GCPMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "gcpproviderconfig.openshift.io/v1beta1",
+			APIVersion: "gcpprovider.openshift.io/v1beta1",
 			Kind:       "GCPMachineProviderSpec",
 		},
 		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
