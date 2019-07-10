@@ -17,6 +17,9 @@ up, the VIP will move to the control plane machines.
 Relevant files:
 * **files/etc/keepalived/keepalived.conf.tmpl** - `keepalived` configuration
   template
+  * *NOTE:* The extension is `.tmpl` instead of `.template`, as the templating
+    is done by `envsubst` in `keepalived.sh` and not via go templating in the
+    installer.
 * **files/usr/local/bin/keepalived.sh** - This script runs before `keepalived`
   starts and generates the `keepalived` configuration file from the template.
 * **systemd/units/keepalived.service** - systemd unit file for `keepalived`.
@@ -37,13 +40,28 @@ Relevant files:
 The bootstrap assets relating to DNS automate as much of the DNS requirements
 internal to the cluster as possible.
 
-TODO - explain how this works ...
+There is a DNS VIP managed by `keepalived` in a manner similar to the API VIP
+discussed above.
+
+`coredns` runs with a custom `mdns` plugin (`coredns-mdns`) that can
+dynamically generate the DNS SRV record for `etcd`, as well as resolve the
+`etcd` hostnames.
 
 Relevant files:
-* files/etc/coredns/Corefile
-* files/etc/keepalived/keepalived.conf.tmpl
-* files/etc/dhcp/dhclient.conf
-* files/usr/local/bin/fletcher8
-* files/usr/local/bin/get_vip_subnet_cidr
-* files/usr/local/bin/coredns.sh
-* systemd/units/coredns.service
+* **files/etc/keepalived/keepalived.conf.tmpl** - `keepalived` configuration
+  template, includes configuration for the DNS VIP
+  * *NOTE:* The extension is `.tmpl` instead of `.template`, as the templating
+    is done by `envsubst` in `keepalived.sh` and not via go templating in the
+    installer.
+* **files/etc/dhcp/dhclient.conf** - Sepcify that the bootstrap VM should use
+  `localhost` as its primary DNS server.
+* **files/etc/coredns/Corefile** - This is a template for a CoreDNS
+  configuration file.
+  * Includes a static entry for `api-int`
+  * Enables the `mdns` plugin for dynamic `etcd` resolution
+  * Forwards other queries along to the originally configured DNS server for
+    that host
+* **files/usr/local/bin/coredns.sh** - A script to prepare the CoreDNS
+  configuration
+* **systemd/units/coredns.service** - systemd unit that launches CoreDNS via
+  podman after first running `coredns.sh` to prepare the configuration
