@@ -233,6 +233,15 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_bootstrap_etcd"
   security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_bootstrap_journal_gatewayd" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 19531
+  port_range_max    = 19531
+  security_group_id = openstack_networking_secgroup_v2.master.id
+}
+
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_services" {
   direction         = "ingress"
   ethertype         = "IPv4"
