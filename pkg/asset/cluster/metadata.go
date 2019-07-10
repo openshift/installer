@@ -8,12 +8,14 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
 	"github.com/openshift/installer/pkg/asset/cluster/azure"
+	"github.com/openshift/installer/pkg/asset/cluster/gcp"
 	"github.com/openshift/installer/pkg/asset/cluster/libvirt"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -67,6 +69,8 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 		metadata.ClusterPlatformMetadata.OpenStack = openstack.Metadata(clusterID.InfraID, installConfig.Config)
 	case azuretypes.Name:
 		metadata.ClusterPlatformMetadata.Azure = azure.Metadata(installConfig.Config)
+	case gcptypes.Name:
+		metadata.ClusterPlatformMetadata.GCP = gcp.Metadata(installConfig.Config)
 	case nonetypes.Name, vspheretypes.Name:
 	default:
 		return errors.Errorf("no known platform")
