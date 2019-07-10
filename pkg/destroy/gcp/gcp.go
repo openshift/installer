@@ -124,7 +124,7 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		err := f.destroy()
 		if err != nil {
 			hasErr = true
-			o.Logger.Errorf("%s: %v", f.name, err)
+			o.Logger.Debugf("%s: %v", f.name, err)
 		}
 	}
 	return !hasErr, nil
