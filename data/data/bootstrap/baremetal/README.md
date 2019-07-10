@@ -22,6 +22,15 @@ Relevant files:
 * **systemd/units/keepalived.service** - systemd unit file for `keepalived`.
   This runs `keepalived.sh` to generate the proper configuration from the
   template and then runs podman to launch `keepalived`.
+* **files/usr/local/bin/fletcher8** - Script that uses the
+  [fletcher8](https://en.wikipedia.org/wiki/Fletcher%27s_checksum) algorithm to
+  generate a hash from an input string. This is used by `keepalived.sh` to
+  generate a hash based on the cluster name to generate VRRP ids for
+  use with Keepalived and to ensure those IDs do not clash with another cluster
+  on the same network.
+* **files/usr/local/bin/get_vip_subnet_cidr** - Script to determine the network
+  CIDR for a given VIP.  This is used by `keepalived.sh` to determine which
+  local interface is on the VIP’s network.
 
 ## Internal DNS
 
