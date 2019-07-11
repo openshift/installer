@@ -49,3 +49,8 @@ variable "gcp_master_root_volume_size" {
   type = string
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
+
+variable "gcp_public_dns_zone_name" {
+  type = string
+  description = "The name of the public DNS zone to use for this cluster"
+}
