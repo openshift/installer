@@ -99,9 +99,6 @@ resource "azurerm_network_interface_backend_address_pool_association" "internal_
   ip_configuration_name   = local.bootstrap_nic_ip_configuration_name
 }
 
-data "azurerm_subscription" "current" {
-}
-
 resource "azurerm_virtual_machine" "bootstrap" {
   name                  = "${var.cluster_id}-bootstrap"
   location              = var.region
@@ -126,7 +123,7 @@ resource "azurerm_virtual_machine" "bootstrap" {
   }
 
   storage_image_reference {
-    id = "${data.azurerm_subscription.current.id}${var.vm_image}"
+    id = var.vm_image
   }
 
   os_profile {
