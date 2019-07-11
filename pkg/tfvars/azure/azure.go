@@ -22,15 +22,15 @@ type config struct {
 	ExtraTags                   map[string]string `json:"azure_extra_tags,omitempty"`
 	BootstrapInstanceType       string            `json:"azure_bootstrap_vm_type,omitempty"`
 	MasterInstanceType          string            `json:"azure_master_vm_type,omitempty"`
+	MasterAvailabilityZones     []string          `json:"azure_master_availability_zones"`
 	VolumeSize                  int32             `json:"azure_master_root_volume_size,omitempty"`
-	VMImageID                   string            `json:"azure_image_id,omitempty"`
+	ImageURL                    string            `json:"azure_image_url,omitempty"`
 	Region                      string            `json:"azure_region,omitempty"`
 	BaseDomainResourceGroupName string            `json:"azure_base_domain_resource_group_name,omitempty"`
-	MasterAvailabilityZones     []string          `json:"azure_master_availability_zones"`
 }
 
 // TFVars generates Azure-specific Terraform variables launching the cluster.
-func TFVars(auth Auth, baseDomainResourceGroupName string, masterConfigs []*azureprovider.AzureMachineProviderSpec) ([]byte, error) {
+func TFVars(auth Auth, baseDomainResourceGroupName string, imageURL string, masterConfigs []*azureprovider.AzureMachineProviderSpec) ([]byte, error) {
 	masterConfig := masterConfigs[0]
 	region := masterConfig.Location
 
@@ -45,9 +45,9 @@ func TFVars(auth Auth, baseDomainResourceGroupName string, masterConfigs []*azur
 		BaseDomainResourceGroupName: baseDomainResourceGroupName,
 		BootstrapInstanceType:       defaults.BootstrapInstanceType(region),
 		MasterInstanceType:          masterConfig.VMSize,
-		VolumeSize:                  masterConfig.OSDisk.DiskSizeGB,
-		VMImageID:                   masterConfig.Image.ResourceID,
 		MasterAvailabilityZones:     masterAvailabilityZones,
+		VolumeSize:                  masterConfig.OSDisk.DiskSizeGB,
+		ImageURL:                    imageURL,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
