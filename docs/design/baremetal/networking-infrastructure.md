@@ -4,6 +4,10 @@ The `baremetal` platform (IPI for Bare Metal hosts) automates a number
 of networking infrastructure requirements that are handled on other
 platforms by cloud infrastructure services.
 
+For an overview of the expected network environment that an administrator must
+prepare for a `baremetal` platform cluster, see the [install
+documentation](../../user/metal/install_ipi.md).
+
 ## Load-balanced control plane access
 
 Access to the Kubernetes API (port 6443) from clients both external
