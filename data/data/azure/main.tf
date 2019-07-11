@@ -18,20 +18,20 @@ provider "azurerm" {
 }
 
 module "bootstrap" {
-  source                  = "./bootstrap"
-  resource_group_name     = azurerm_resource_group.main.name
-  region                  = var.azure_region
-  vm_size                 = var.azure_bootstrap_vm_type
-  vm_image                = var.azure_image_id
-  identity                = azurerm_user_assigned_identity.main.id
-  cluster_id              = var.cluster_id
-  ignition                = var.ignition_bootstrap
-  subnet_id               = module.vnet.public_subnet_id
-  elb_backend_pool_id     = module.vnet.public_lb_backend_pool_id
-  ilb_backend_pool_id     = module.vnet.internal_lb_backend_pool_id
-  tags                    = local.tags
-  boot_diag_blob_endpoint = azurerm_storage_account.bootdiag.primary_blob_endpoint
-  nsg_name                = module.vnet.master_nsg_name
+  source              = "./bootstrap"
+  resource_group_name = azurerm_resource_group.main.name
+  region              = var.azure_region
+  vm_size             = var.azure_bootstrap_vm_type
+  vm_image            = var.azure_image_id
+  identity            = azurerm_user_assigned_identity.main.id
+  cluster_id          = var.cluster_id
+  ignition            = var.ignition_bootstrap
+  subnet_id           = module.vnet.public_subnet_id
+  elb_backend_pool_id = module.vnet.public_lb_backend_pool_id
+  ilb_backend_pool_id = module.vnet.internal_lb_backend_pool_id
+  tags                = local.tags
+  storage_account     = azurerm_storage_account.cluster
+  nsg_name            = module.vnet.master_nsg_name
 
   # This is to create explicit dependency on private zone to exist before VMs are created in the vnet. https://github.com/MicrosoftDocs/azure-docs/issues/13728
   private_dns_zone_id = azurerm_dns_zone.private.id
@@ -53,23 +53,23 @@ module "vnet" {
 }
 
 module "master" {
-  source                  = "./master"
-  resource_group_name     = azurerm_resource_group.main.name
-  cluster_id              = var.cluster_id
-  region                  = var.azure_region
-  availability_zones      = var.azure_master_availability_zones
-  vm_size                 = var.azure_master_vm_type
-  vm_image                = var.azure_image_id
-  identity                = azurerm_user_assigned_identity.main.id
-  ignition                = var.ignition_master
-  external_lb_id          = module.vnet.public_lb_id
-  elb_backend_pool_id     = module.vnet.public_lb_backend_pool_id
-  ilb_backend_pool_id     = module.vnet.internal_lb_backend_pool_id
-  subnet_id               = module.vnet.public_subnet_id
-  master_subnet_cidr      = local.master_subnet_cidr
-  instance_count          = var.master_count
-  boot_diag_blob_endpoint = azurerm_storage_account.bootdiag.primary_blob_endpoint
-  os_volume_size          = var.azure_master_root_volume_size
+  source              = "./master"
+  resource_group_name = azurerm_resource_group.main.name
+  cluster_id          = var.cluster_id
+  region              = var.azure_region
+  availability_zones  = var.azure_master_availability_zones
+  vm_size             = var.azure_master_vm_type
+  vm_image            = var.azure_image_id
+  identity            = azurerm_user_assigned_identity.main.id
+  ignition            = var.ignition_master
+  external_lb_id      = module.vnet.public_lb_id
+  elb_backend_pool_id = module.vnet.public_lb_backend_pool_id
+  ilb_backend_pool_id = module.vnet.internal_lb_backend_pool_id
+  subnet_id           = module.vnet.public_subnet_id
+  master_subnet_cidr  = local.master_subnet_cidr
+  instance_count      = var.master_count
+  storage_account     = azurerm_storage_account.cluster
+  os_volume_size      = var.azure_master_root_volume_size
 
   # This is to create explicit dependency on private zone to exist before VMs are created in the vnet. https://github.com/MicrosoftDocs/azure-docs/issues/13728
   private_dns_zone_id = azurerm_dns_zone.private.id
@@ -100,8 +100,8 @@ resource "azurerm_resource_group" "main" {
   tags     = local.tags
 }
 
-resource "azurerm_storage_account" "bootdiag" {
-  name                     = "bootdiagmasters${random_string.storage_suffix.result}"
+resource "azurerm_storage_account" "cluster" {
+  name                     = "cluster${random_string.storage_suffix.result}"
   resource_group_name      = azurerm_resource_group.main.name
   location                 = var.azure_region
   account_tier             = "Standard"

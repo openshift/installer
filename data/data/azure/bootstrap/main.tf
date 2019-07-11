@@ -2,27 +2,8 @@ locals {
   bootstrap_nic_ip_configuration_name = "bootstrap-nic-ip"
 }
 
-resource "random_string" "storage_suffix" {
-  length  = 5
-  upper   = false
-  special = false
-
-  keepers = {
-    # Generate a new ID only when a new resource group is defined
-    resource_group = var.resource_group_name
-  }
-}
-
-resource "azurerm_storage_account" "ignition" {
-  name                     = "ignitiondata${random_string.storage_suffix.result}"
-  resource_group_name      = var.resource_group_name
-  location                 = var.region
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-}
-
 data "azurerm_storage_account_sas" "ignition" {
-  connection_string = azurerm_storage_account.ignition.primary_connection_string
+  connection_string = var.storage_account.primary_connection_string
   https_only        = true
 
   resource_types {
@@ -56,7 +37,7 @@ data "azurerm_storage_account_sas" "ignition" {
 resource "azurerm_storage_container" "ignition" {
   resource_group_name   = var.resource_group_name
   name                  = "ignition"
-  storage_account_name  = azurerm_storage_account.ignition.name
+  storage_account_name  = var.storage_account.name
   container_access_type = "private"
 }
 
@@ -69,7 +50,7 @@ resource "azurerm_storage_blob" "ignition" {
   name                   = "bootstrap.ign"
   source                 = local_file.ignition_bootstrap.filename
   resource_group_name    = var.resource_group_name
-  storage_account_name   = azurerm_storage_account.ignition.name
+  storage_account_name   = var.storage_account.name
   storage_container_name = azurerm_storage_container.ignition.name
   type                   = "block"
 }
@@ -164,7 +145,7 @@ resource "azurerm_virtual_machine" "bootstrap" {
 
   boot_diagnostics {
     enabled     = true
-    storage_uri = var.boot_diag_blob_endpoint
+    storage_uri = var.storage_account.primary_blob_endpoint
   }
 }
 

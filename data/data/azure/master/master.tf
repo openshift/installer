@@ -80,7 +80,7 @@ resource "azurerm_virtual_machine" "master" {
 
   boot_diagnostics {
     enabled     = true
-    storage_uri = var.boot_diag_blob_endpoint
+    storage_uri = var.storage_account.primary_blob_endpoint
   }
 }
 

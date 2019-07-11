@@ -48,9 +48,9 @@ variable "ilb_backend_pool_id" {
   description = "The internal load balancer bakend pool id. used to attach the bootstrap NIC"
 }
 
-variable "boot_diag_blob_endpoint" {
-  type        = string
-  description = "the blob endpoint where machines should store their boot diagnostics."
+variable "storage_account" {
+  type        = any
+  description = "the storage account for the cluster. It can be used for boot diagnostics."
 }
 
 variable "tags" {
