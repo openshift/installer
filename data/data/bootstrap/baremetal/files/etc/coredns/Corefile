@@ -1,0 +1,15 @@
+# Configuration template for the CoreDNS instance used to provide DNS
+# resolution between nodes in the cluster.
+
+. {
+    errors
+    health
+    mdns {$CLUSTER_DOMAIN} {$NUM_DNS_MEMBERS} {$CLUSTER_NAME}
+    forward . /etc/coredns/resolv.conf
+    cache 30
+    reload
+    hosts /etc/coredns/api-int.hosts {$CLUSTER_DOMAIN} {
+        {$API_VIP} api-int.{$CLUSTER_DOMAIN}
+        fallthrough
+    }
+}

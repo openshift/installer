@@ -1,0 +1,23 @@
+# Systemd service file used to start the bootstrap Keepalived instance.
+#
+# For more information, see installer/data/data/bootstrap/baremetal/README.md
+#
+
+[Unit]
+Description=Manage node VIPs with keepalived
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+WorkingDirectory=/etc/keepalived
+ExecStartPre=/usr/local/bin/keepalived.sh
+ExecStart=/usr/bin/podman start -a keepalived
+ExecStop=/usr/bin/podman stop -t 10 keepalived
+ConditionPathExists=!/etc/pivot/image-pullspec
+
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target
