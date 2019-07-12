@@ -40,17 +40,19 @@ the `keepalived` configuration before launching the service using
 `podman`. See [here](../../../data/data/bootstrap/baremetal/README.md)
 for more information about the relevant bootstrap assets.
 
-Once the control plane machines come up, the VIP will move to the one
-of these machines. This happens because the `keepalived` instances on
-control plane machines are configured (in `keepalived.conf`) with a
-higher
+The VIP will move to one of the control plane nodes, but only after the
+bootstrap process has completed and the bootstrap VM is stopped. This happens
+because the `keepalived` instances on control plane machines are configured (in
+`keepalived.conf`) with a lower
 [VRRP](https://en.wikipedia.org/wiki/Virtual_Router_Redundancy_Protocol)
-priority. These `keepalived` instances are run as [static
-pods](https://kubernetes.io/docs/tasks/administer-cluster/static-pod/)
-and the relevant assets are [rendered by the Machine Config
+priority. This ensures that the API on the control plane nodes is fully
+functional before the API VIP moves.
+
+These `keepalived` instances are run as [static
+pods](https://kubernetes.io/docs/tasks/administer-cluster/static-pod/) and the
+relevant assets are [rendered by the Machine Config
 Operator](https://github.com/openshift/machine-config-operator/pull/795). See
-[here](FIXME: link to a README in MCO) for more information about
-these assets.
+[here](FIXME: link to a README in MCO) for more information about these assets.
 
 ### API load balancing
 
