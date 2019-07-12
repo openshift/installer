@@ -413,7 +413,7 @@ func (o *ClusterUninstaller) destroyNetworks() error {
 		}
 		for _, route := range routes {
 			if err = o.deleteRoute(route); err != nil {
-				return err
+				o.Logger.Debug("error deleting route %s: %v", route, err)
 			}
 		}
 
