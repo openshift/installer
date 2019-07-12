@@ -26,6 +26,8 @@ instructions](../../user/aws/install_upi.md)) an external
 load-balancer is required to be configured in advance in order to
 provide this access.
 
+### API VIP (Virtual IP)
+
 In the `baremetal` platform, a VIP (Virtual IP) is used to provide
 failover of the API server across the control plane machines
 (including the bootstrap VM). This "API VIP" is provided by the user
@@ -49,6 +51,21 @@ and the relevant assets are [rendered by the Machine Config
 Operator](https://github.com/openshift/machine-config-operator/pull/795). See
 [here](FIXME: link to a README in MCO) for more information about
 these assets.
+
+### API load balancing
+
+Once the API VIP has moved to one of the control plane nodes, traffic sent to
+this VIP first hits an `haproxy` load balancer running on that control plane
+node.  This instance of `haproxy` will load balance the API traffic across all
+of the control plane nodes.
+
+The configuration of `haproxy` will be done by MCO once the following PR is
+merged:
+
+https://github.com/openshift/machine-config-operator/pull/795
+
+See [here](FIXME: link to a README in MCO) for more detailed information about
+the `haproxy` configuration.
 
 ## Internal DNS
 
