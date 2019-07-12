@@ -13,11 +13,6 @@ variable "cluster_id" {
   description = "The identifier for the cluster."
 }
 
-variable "cluster_domain" {
-  type        = string
-  description = "The domain name of the cluster. All DNS records must be under this domain."
-}
-
 variable "ignition" {
   type        = string
   description = "The content of the bootstrap ignition file."
@@ -32,8 +27,3 @@ variable "bootstrap_port_id" {
   type        = string
   description = "The subnet ID for the bootstrap node."
 }
-
-variable "service_vm_fixed_ip" {
-  type = string
-}
-

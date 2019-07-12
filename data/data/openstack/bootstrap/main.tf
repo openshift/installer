@@ -18,45 +18,51 @@ data "ignition_config" "redirect" {
 
   files = [
     data.ignition_file.hostname.id,
-    data.ignition_file.bootstrap_ifcfg.id,
+    data.ignition_file.dns_conf.id,
+    data.ignition_file.dhcp_conf.id,
   ]
 }
 
-data "ignition_file" "bootstrap_ifcfg" {
+data "ignition_file" "dhcp_conf" {
   filesystem = "root"
-  mode       = "420" // 0644
-  path       = "/etc/sysconfig/network-scripts/ifcfg-eth0"
+  mode       = "420"
+  path       = "/etc/NetworkManager/conf.d/dhcp-client.conf"
 
   content {
     content = <<EOF
-DEVICE="eth0"
-BOOTPROTO="dhcp"
-ONBOOT="yes"
-TYPE="Ethernet"
-PERSISTENT_DHCLIENT="yes"
-DNS1="${var.service_vm_fixed_ip}"
-PEERDNS="no"
-NM_CONTROLLED="yes"
+[main]
+dhcp=dhclient
 EOF
+  }
+}
 
+data "ignition_file" "dns_conf" {
+  filesystem = "root"
+  mode = "420"
+  path = "/etc/dhcp/dhclient.conf"
+
+  content {
+    content = <<EOF
+send dhcp-client-identifier = hardware;
+prepend domain-name-servers 127.0.0.1;
+EOF
   }
 }
 
 data "ignition_file" "hostname" {
   filesystem = "root"
-  mode = "420" // 0644
-  path = "/etc/hostname"
+  mode       = "420" // 0644
+  path       = "/etc/hostname"
 
   content {
     content = <<EOF
 ${var.cluster_id}-bootstrap
 EOF
-
   }
 }
 
 data "openstack_images_image_v2" "bootstrap_image" {
-  name        = var.image_name
+  name = var.image_name
   most_recent = true
 }
 
@@ -65,9 +71,9 @@ data "openstack_compute_flavor_v2" "bootstrap_flavor" {
 }
 
 resource "openstack_compute_instance_v2" "bootstrap" {
-  name      = "${var.cluster_id}-bootstrap"
+  name = "${var.cluster_id}-bootstrap"
   flavor_id = data.openstack_compute_flavor_v2.bootstrap_flavor.id
-  image_id  = data.openstack_images_image_v2.bootstrap_image.id
+  image_id = data.openstack_images_image_v2.bootstrap_image.id
 
   user_data = data.ignition_config.redirect.rendered
 
@@ -81,4 +87,3 @@ resource "openstack_compute_instance_v2" "bootstrap" {
     openshiftClusterID = var.cluster_id
   }
 }
-
