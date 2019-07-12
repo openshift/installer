@@ -47,4 +47,10 @@ module "network" {
   master_subnet_cidr = local.master_subnet_cidr
   worker_subnet_cidr = local.worker_subnet_cidr
   network_cidr       = var.machine_cidr
+
+  bootstrap_instance = module.bootstrap.bootstrap_instance
+  master_instances   = module.master.master_instances
+
+  bootstrap_instance_group = module.bootstrap.bootstrap_instance_group
+  master_instance_groups   = module.master.master_instance_groups
 }

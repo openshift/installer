@@ -23,3 +23,21 @@ resource "google_compute_instance" "bootstrap" {
 
   labels = var.labels
 }
+
+resource "google_compute_instance_group" "bootstrap" {
+  name    = "${var.cluster_id}-bootstrap"
+  network = var.network
+  zone    = var.zone
+
+  named_port {
+    name = "ignition"
+    port = "22623"
+  }
+
+  named_port {
+    name = "https"
+    port = "6443"
+  }
+
+  instances = [google_compute_instance.bootstrap.self_link]
+}

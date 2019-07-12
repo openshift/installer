@@ -36,6 +36,19 @@ resource "google_compute_firewall" "master_ingress_https" {
   target_tags   = ["${var.cluster_id}-master"]
 }
 
+resource "google_compute_firewall" "master_ingress_https_from_health_checks" {
+  name    = "${var.cluster_id}-master-ingress-https-from-health-checks"
+  network = google_compute_network.cluster_network.self_link
+
+  allow {
+    protocol = "tcp"
+    ports    = ["6443"]
+  }
+
+  source_ranges = ["35.191.0.0/16", "130.211.0.0/22", "209.85.152.0/22", "209.85.204.0/22"]
+  target_tags   = ["${var.cluster_id}-master"]
+}
+
 resource "google_compute_firewall" "master_ingress_mcs" {
   name    = "${var.cluster_id}-master-ingress-mcs"
   network = google_compute_network.cluster_network.self_link
