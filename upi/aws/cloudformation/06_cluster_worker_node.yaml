@@ -118,6 +118,8 @@ Resources:
       Tags:
       - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
         Value: "shared"
+      - Key: "Name"
+        Value: !Join ["-", [!Ref InfrastructureName, "worker", "0"]]
 
 Outputs:
   PrivateIP:
