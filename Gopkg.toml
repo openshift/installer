@@ -105,6 +105,11 @@ required = [
   source = "https://github.com/openshift/cluster-api-provider-azure.git"
 
 [[constraint]]
+  branch = "aws-temporary-credentials"
+  name = "github.com/openshift/cloud-credential-operator"
+  source = "https://github.com/Vlatombe/cloud-credential-operator.git"
+
+[[constraint]]
   name = "github.com/pkg/sftp"
   version = "1.10.0"
 

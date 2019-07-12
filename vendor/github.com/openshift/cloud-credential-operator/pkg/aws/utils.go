@@ -2,6 +2,7 @@ package aws
 
 import (
 	"fmt"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -111,39 +112,42 @@ func CheckCloudCredCreation(awsClient Client, logger log.FieldLogger) (bool, err
 	return CheckPermissionsAgainstActions(awsClient, credMintingActions, logger)
 }
 
-// getClientDetails will return the *iam.User associated with the provided client's credentials,
-// a boolean indicating whether the user is the 'root' account, and any error encountered
-// while trying to gather the info.
-func getClientDetails(awsClient Client) (*iam.User, bool, error) {
-	rootUser := false
-
-	user, err := awsClient.GetUser(nil)
+// getCallerIdentity will return the Account, Arn and UserId associated with current client's credentials,
+// and any error encountered while trying to gather the info.
+func getCallerIdentity(awsClient Client) (*string, *string, *string, error) {
+	out, err := awsClient.GetCallerIdentity(nil)
 	if err != nil {
-		return nil, rootUser, fmt.Errorf("error querying username: %v", err)
+		return nil, nil, nil, fmt.Errorf("error querying caller's identity: %v", err)
 	}
+	return out.Account, out.Arn, out.UserId, nil
+}
 
-	// Detect whether the AWS account's root user is being used
-	parsed, err := arn.Parse(*user.User.Arn)
+func isAssumedRole(callerArn *string) (bool, error) {
+	parsed, err := arn.Parse(*callerArn)
 	if err != nil {
-		return nil, rootUser, fmt.Errorf("error parsing user's ARN: %v", err)
+		return false, fmt.Errorf("error parsing caller's ARN: %v", err)
 	}
-	if parsed.AccountID == *user.User.UserId {
-		rootUser = true
-	}
-
-	return user.User, rootUser, nil
+	return strings.HasPrefix(parsed.Resource, "assumed-role/"), nil
 }
 
 // CheckPermissionsUsingQueryClient will use queryClient to query whether the credentials in targetClient can perform the actions
 // listed in the statementEntries. queryClient will need iam:GetUser and iam:SimulatePrincipalPolicy
 func CheckPermissionsUsingQueryClient(queryClient, targetClient Client, statementEntries []minterv1.StatementEntry, logger log.FieldLogger) (bool, error) {
-	targetUser, isRoot, err := getClientDetails(targetClient)
+	accountID, arn, userID, err := getCallerIdentity(targetClient)
 	if err != nil {
 		return false, fmt.Errorf("error gathering AWS credentials details: %v", err)
 	}
-	if isRoot {
+	if *accountID == *userID {
 		// warn about using the root creds, and just return that the creds are good enough
 		logger.Warn("Using the AWS account root user is not recommended: https://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html")
+		return true, nil
+	}
+	assumedRole, err := isAssumedRole(arn)
+	if err != nil {
+		return false, fmt.Errorf("error checking arn: %v", err)
+	}
+	if assumedRole {
+		logger.Warnf("Using assumed role %s, cannot validate permissions beforehand.", *arn)
 		return true, nil
 	}
 
@@ -155,7 +159,7 @@ func CheckPermissionsUsingQueryClient(queryClient, targetClient Client, statemen
 	}
 
 	results, err := queryClient.SimulatePrincipalPolicy(&iam.SimulatePrincipalPolicyInput{
-		PolicySourceArn: targetUser.Arn,
+		PolicySourceArn: arn,
 		ActionNames:     allowList,
 	})
 	if err != nil {

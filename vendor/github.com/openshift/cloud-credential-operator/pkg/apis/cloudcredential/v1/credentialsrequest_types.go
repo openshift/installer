@@ -36,6 +36,9 @@ const (
 	// we successfully applied. It is used to compare if changes are necessary, without requiring
 	// AWS credentials to view the actual state.
 	AnnotationAWSPolicyLastApplied string = "cloudcredential.openshift.io/aws-policy-last-applied"
+
+	// CloudCredOperatorNamespace is the namespace where the credentials operator runs.
+	CloudCredOperatorNamespace = "openshift-cloud-credential-operator"
 )
 
 // NOTE: Run "make" to regenerate code after modifying this file
@@ -128,6 +131,12 @@ const (
 	// CredentialsDeprovisionFailure is true whenever there is an error when trying
 	// to clean up any previously-created cloud resources
 	CredentialsDeprovisionFailure CredentialsRequestConditionType = "CredentialsDeprovisionFailure"
+	// Ignored is true when the CredentialsRequest's ProviderSpec is for
+	// a different infrastructure platform than what the cluster has been
+	// deployed to. This is normal as the release image contains CredentialsRequests for all
+	// possible clouds/infrastructure, and cloud-credential-operator will only act on the
+	// CredentialsRequests where the cloud/infra matches.
+	Ignored CredentialsRequestConditionType = "Ignored"
 )
 
 func init() {
@@ -135,5 +144,6 @@ func init() {
 		&CredentialsRequest{}, &CredentialsRequestList{},
 		&AWSProviderStatus{}, &AWSProviderSpec{},
 		&AzureProviderStatus{}, &AzureProviderSpec{},
+		&GCPProviderStatus{}, &GCPProviderSpec{},
 	)
 }

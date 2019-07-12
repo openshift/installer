@@ -23,6 +23,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
+	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/aws/aws-sdk-go/service/sts/stsiface"
 	"github.com/openshift/cloud-credential-operator/version"
 )
 
@@ -36,6 +38,7 @@ type Client interface {
 	DeleteAccessKey(*iam.DeleteAccessKeyInput) (*iam.DeleteAccessKeyOutput, error)
 	DeleteUser(*iam.DeleteUserInput) (*iam.DeleteUserOutput, error)
 	DeleteUserPolicy(*iam.DeleteUserPolicyInput) (*iam.DeleteUserPolicyOutput, error)
+	GetCallerIdentity(*sts.GetCallerIdentityInput) (*sts.GetCallerIdentityOutput, error)
 	GetUser(*iam.GetUserInput) (*iam.GetUserOutput, error)
 	ListAccessKeys(*iam.ListAccessKeysInput) (*iam.ListAccessKeysOutput, error)
 	ListUserPolicies(*iam.ListUserPoliciesInput) (*iam.ListUserPoliciesOutput, error)
@@ -47,6 +50,7 @@ type Client interface {
 
 type awsClient struct {
 	iamClient iamiface.IAMAPI
+	stsClient stsiface.STSAPI
 }
 
 func (c *awsClient) CreateAccessKey(input *iam.CreateAccessKeyInput) (*iam.CreateAccessKeyOutput, error) {
@@ -68,6 +72,11 @@ func (c *awsClient) DeleteUser(input *iam.DeleteUserInput) (*iam.DeleteUserOutpu
 func (c *awsClient) DeleteUserPolicy(input *iam.DeleteUserPolicyInput) (*iam.DeleteUserPolicyOutput, error) {
 	return c.iamClient.DeleteUserPolicy(input)
 }
+
+func (c *awsClient) GetCallerIdentity(input *sts.GetCallerIdentityInput) (*sts.GetCallerIdentityOutput, error) {
+	return c.stsClient.GetCallerIdentity(input)
+}
+
 func (c *awsClient) GetUser(input *iam.GetUserInput) (*iam.GetUserOutput, error) {
 	return c.iamClient.GetUser(input)
 }
@@ -98,10 +107,18 @@ func (c *awsClient) TagUser(input *iam.TagUserInput) (*iam.TagUserOutput, error)
 
 // NewClient creates our client wrapper object for the actual AWS clients we use.
 func NewClient(accessKeyID, secretAccessKey []byte, infraName string) (Client, error) {
+	return NewClientWithCreds(&credentials.Value{
+		AccessKeyID:     string(accessKeyID),
+		SecretAccessKey: string(secretAccessKey),
+	}, infraName)
+}
+
+// NewClientWithCreds creates our client wrapper object for the actual AWS clients we use.
+func NewClientWithCreds(creds *credentials.Value, infraName string) (Client, error) {
 	awsConfig := &awssdk.Config{}
 
 	awsConfig.Credentials = credentials.NewStaticCredentials(
-		string(accessKeyID), string(secretAccessKey), "")
+		creds.AccessKeyID, creds.SecretAccessKey, creds.SessionToken)
 
 	s, err := session.NewSession(awsConfig)
 	if err != nil {
@@ -114,5 +131,6 @@ func NewClient(accessKeyID, secretAccessKey []byte, infraName string) (Client, e
 
 	return &awsClient{
 		iamClient: iam.New(s),
+		stsClient: sts.New(s),
 	}, nil
 }

@@ -93,7 +93,7 @@
   version = "v2.0"
 
 [[projects]]
-  digest = "1:ef55f87a8efa6ed704f2477bd6ca696780ff56340d84cd4fc473b04134a03f1e"
+  digest = "1:5ca633b060104e5eb08132ab6a5bbbcd714bf6438daf8e8abc4cb21ba031f8d4"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -144,6 +144,7 @@
     "service/s3/s3iface",
     "service/s3/s3manager",
     "service/sts",
+    "service/sts/stsiface",
   ]
   pruneopts = "NUT"
   revision = "fb5f514796fc4fdc6afdcf5a675a5b2baa714b9f"
@@ -598,8 +599,8 @@
   revision = "c44a8b61b9f46cd9e802384dfeda0bc9942db68a"
 
 [[projects]]
-  branch = "master"
-  digest = "1:5449643b322144dad676e6c0efa0e554fc7b7552b5665468a48d8669b570ad1b"
+  branch = "aws-temporary-credentials"
+  digest = "1:0fc9d657c6546f0122b298ad773c8482a0c75f925462e36bb02ca7d850a1e3d9"
   name = "github.com/openshift/cloud-credential-operator"
   packages = [
     "pkg/apis/cloudcredential/v1",
@@ -607,7 +608,8 @@
     "version",
   ]
   pruneopts = "NUT"
-  revision = "c89dc7733001098f3b7de4bc58ce0f49db47009a"
+  revision = "d7fc44565c9b279228ee69cd0f66f024bd564d5f"
+  source = "https://github.com/Vlatombe/cloud-credential-operator.git"
 
 [[projects]]
   branch = "openshift-4.2-cluster-api-0.1.0"
