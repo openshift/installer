@@ -177,6 +177,8 @@ Resources:
       Tags:
       - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
         Value: "shared"
+      - Key: "Name"
+        Value: !Join ["", [!Ref InfrastructureName, "-master-1"]]
 
   RegisterMaster0:
     Condition: DoRegistration
@@ -224,6 +226,8 @@ Resources:
       Tags:
       - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
         Value: "shared"
+      - Key: "Name"
+        Value: !Join ["", [!Ref InfrastructureName, "-master-2"]]
 
   RegisterMaster1:
     Condition: DoRegistration
@@ -271,6 +275,8 @@ Resources:
       Tags:
       - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
         Value: "shared"
+      - Key: "Name"
+        Value: !Join ["", [!Ref InfrastructureName, "-master-3"]]
 
   RegisterMaster2:
     Condition: DoRegistration

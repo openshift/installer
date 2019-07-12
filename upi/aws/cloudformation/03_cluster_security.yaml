@@ -68,6 +68,11 @@ Resources:
         ToPort: 22623
         CidrIp: !Ref VpcCidr
       VpcId: !Ref VpcId
+      Tags:
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
+        Value: "shared"
+      - Key: "Name"
+        Value: !Join ["-", [!Ref InfrastructureName, "sg-master"]]
 
   WorkerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -83,6 +88,11 @@ Resources:
         ToPort: 22
         CidrIp: !Ref VpcCidr
       VpcId: !Ref VpcId
+      Tags:
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
+        Value: "shared"
+      - Key: "Name"
+        Value: !Join ["-", [!Ref InfrastructureName, "sg-worker"]]
 
   MasterIngressEtcd:
     Type: AWS::EC2::SecurityGroupIngress
