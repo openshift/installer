@@ -199,3 +199,19 @@ perhaps be useful in the future.
 
 See [here](../../../data/data/bootstrap/baremetal/README.md)
 for more information about the relevant bootstrap assets.
+
+## Ingress High Availability
+
+There is a third VIP used by the `baremetal` platform, and that is for Ingress.
+The Ingress VIP will always reside on a node running an Ingress controller.
+This ensures that we provide high availability for ingress by default.
+
+The mechanism used to determine which nodes are running an ingress controller
+is that `keepalived` will try to reach the local `haproxy` stats port number
+using `curl`.  This makes assumptions about the default ingress controller
+behavior and may be improved in the future.
+
+The Ingress VIP is managed by `keepalived`.  The `keepalived` configuration for
+the Ingress VIP will be managed by MCO once the following PR is complete:
+
+https://github.com/openshift/machine-config-operator/pull/795
