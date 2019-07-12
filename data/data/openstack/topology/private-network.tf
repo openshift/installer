@@ -30,6 +30,14 @@ resource "openstack_networking_subnet_v2" "nodes" {
   network_id      = openstack_networking_network_v2.openshift-private.id
   tags            = ["openshiftClusterID=${var.cluster_id}"]
   dns_nameservers = [openstack_networking_port_v2.service_port.all_fixed_ips[0]]
+
+  # We reserve some space at the beginning of the CIDR to use for the VIPs
+  # It would be good to make this more dynamic by calculating the number of
+  # addresses in the provided CIDR. This currently assumes at least a /18.
+  allocation_pool {
+    start = cidrhost(local.nodes_cidr_block, 10)
+    end   = cidrhost(local.nodes_cidr_block, 16000)
+  }
 }
 
 resource "openstack_networking_port_v2" "masters" {
@@ -43,6 +51,14 @@ resource "openstack_networking_port_v2" "masters" {
 
   fixed_ip {
     subnet_id = openstack_networking_subnet_v2.nodes.id
+  }
+
+  allowed_address_pairs {
+    ip_address = var.api_int_ip
+  }
+
+  allowed_address_pairs {
+    ip_address = var.node_dns_ip
   }
 }
 

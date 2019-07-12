@@ -14,12 +14,14 @@ type config struct {
 	Cloud           string `json:"openstack_credentials_cloud,omitempty"`
 	FlavorName      string `json:"openstack_master_flavor_name,omitempty"`
 	LbFloatingIP    string `json:"openstack_lb_floating_ip,omitempty"`
+	APIVIP          string `json:"openstack_api_int_ip,omitempty"`
+	DNSVIP          string `json:"openstack_node_dns_ip,omitempty"`
 	TrunkSupport    string `json:"openstack_trunk_support,omitempty"`
 	OctaviaSupport  string `json:"openstack_octavia_support,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, region string, externalNetwork string, lbFloatingIP string, trunkSupport string, octaviaSupport string) ([]byte, error) {
+func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, region string, externalNetwork string, lbFloatingIP string, apiVIP string, dnsVIP string, trunkSupport string, octaviaSupport string) ([]byte, error) {
 	cfg := &config{
 		Region:          region,
 		BaseImage:       masterConfig.Image,
@@ -27,6 +29,8 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, region string, externa
 		Cloud:           masterConfig.CloudName,
 		FlavorName:      masterConfig.Flavor,
 		LbFloatingIP:    lbFloatingIP,
+		APIVIP:          apiVIP,
+		DNSVIP:          dnsVIP,
 		TrunkSupport:    trunkSupport,
 		OctaviaSupport:  octaviaSupport,
 	}

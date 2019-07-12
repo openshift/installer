@@ -67,6 +67,8 @@ module "masters" {
   master_port_names   = module.topology.master_port_names
   user_data_ign       = var.ignition_master
   service_vm_fixed_ip = module.topology.service_vm_fixed_ip
+  api_int_ip          = var.openstack_api_int_ip
+  node_dns_ip         = var.openstack_node_dns_ip
   master_sg_ids = concat(
     var.openstack_master_extra_sg_ids,
     [module.topology.master_sg_id],
@@ -84,6 +86,8 @@ module "topology" {
   external_network_id = var.openstack_external_network_id
   masters_count       = var.master_count
   lb_floating_ip      = var.openstack_lb_floating_ip
+  api_int_ip          = var.openstack_api_int_ip
+  node_dns_ip         = var.openstack_node_dns_ip
   trunk_support       = var.openstack_trunk_support
   octavia_support     = var.openstack_octavia_support
 }

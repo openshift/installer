@@ -28,6 +28,14 @@ type Platform struct {
 	// Existing Floating IP to associate with the OpenStack load balancer.
 	LbFloatingIP string `json:"lbFloatingIP"`
 
+	// APIVIP
+	// IP in the machineCIDR to use for api-int.
+	APIVIP string `json:"apiVIP"`
+
+	// DNSVIP
+	// IP in the machineCIDR to use for simulated route53.
+	DNSVIP string `json:"dnsVIP"`
+
 	// TrunkSupport
 	// Whether OpenStack ports can be trunked
 	TrunkSupport string `json:"trunkSupport"`

@@ -28,6 +28,8 @@ data "ignition_file" "clustervars" {
 
   content {
     content = <<EOF
+export API_VIP=${var.api_int_ip}
+export DNS_VIP=${var.node_dns_ip}
 export FLOATING_IP=${var.lb_floating_ip}
 export BOOTSTRAP_IP=${var.bootstrap_ip}
 ${replace(join("\n", formatlist("export MASTER_FIXED_IPS_%s=%s", var.master_port_names, var.master_ips)), "${var.cluster_id}-master-port-", "")}

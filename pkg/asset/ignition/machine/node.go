@@ -9,6 +9,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 )
 
 // pointerIgnitionConfig generates a config which references the remote config
@@ -20,6 +21,11 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 		// Baremetal needs to point directly at the VIP because we don't have a
 		// way to configure DNS before Ignition runs.
 		ignitionHost = fmt.Sprintf("%s:22623", installConfig.BareMetal.APIVIP)
+	case openstacktypes.Name:
+		// We can't actually set this to the VIP until we have keepalived patches
+		// merged to machine-config-operator
+		// ignitionHost = fmt.Sprintf("%s:22623", installConfig.Config.OpenStack.APIVIP)
+		ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
 	default:
 		ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
 	}
