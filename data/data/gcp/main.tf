@@ -15,7 +15,7 @@ module "bootstrap" {
   source = "./bootstrap"
 
   image_name   = var.gcp_image_id
-  machine_type = var.gcp_bootstrap_machine_type
+  machine_type = var.gcp_bootstrap_instance_type
   cluster_id   = var.cluster_id
   ignition     = var.ignition_bootstrap
   network      = module.network.network
@@ -30,7 +30,7 @@ module "master" {
 
   image_name     = var.gcp_image_id
   instance_count = var.master_count
-  machine_type   = var.gcp_master_machine_type
+  machine_type   = var.gcp_master_instance_type
   cluster_id     = var.cluster_id
   ignition       = var.ignition_master
   network        = module.network.network
