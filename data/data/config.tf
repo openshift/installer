@@ -41,7 +41,9 @@ variable "cluster_domain" {
   type = string
 
   description = <<EOF
-The domain of the cluster.
+The domain of the cluster. It must NOT contain a trailing period. Some
+DNS providers will automatically add this if necessary.
+
 All the records for the cluster are created under this domain.
 
 Note: This field MUST be set manually prior to creating the cluster.
