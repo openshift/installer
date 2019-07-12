@@ -248,6 +248,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.OpenStack.Region,
 			installConfig.Config.Platform.OpenStack.ExternalNetwork,
 			installConfig.Config.Platform.OpenStack.LbFloatingIP,
+			installConfig.Config.Platform.OpenStack.APIVIP,
+			installConfig.Config.Platform.OpenStack.DNSVIP,
 			installConfig.Config.Platform.OpenStack.TrunkSupport,
 		)
 		if err != nil {

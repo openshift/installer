@@ -51,6 +51,14 @@ variable "user_data_ign" {
   type = string
 }
 
+variable "api_int_ip" {
+  type = string
+}
+
+variable "node_dns_ip" {
+  type = string
+}
+
 variable "service_vm_fixed_ip" {
   type = string
 }

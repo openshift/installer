@@ -28,6 +28,14 @@ variable "masters_count" {
   type = string
 }
 
+variable "api_int_ip" {
+  type = string
+}
+
+variable "node_dns_ip" {
+  type = string
+}
+
 variable "trunk_support" {
   type = string
 }

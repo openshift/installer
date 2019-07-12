@@ -269,6 +269,16 @@ EOF
 
 }
 
+variable "openstack_api_int_ip" {
+  type        = string
+  description = "IP on the node subnet reserved for api-int VIP."
+}
+
+variable "openstack_node_dns_ip" {
+  type        = string
+  description = "IP on the nodes subnet reserved for node dns VIP."
+}
+
 variable "openstack_master_flavor_name" {
   type        = string
   description = "Instance size for the master node(s). Example: `m1.medium`."
