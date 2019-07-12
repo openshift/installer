@@ -9,12 +9,14 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"text/template"
 
 	"github.com/containers/image/pkg/sysregistriesv2"
 	"github.com/coreos/ignition/config/util"
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	"github.com/coreos/ignition/config/validate"
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -166,6 +168,11 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 		a.Config.Passwd.Users,
 		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{igntypes.SSHAuthorizedKey(installConfig.Config.SSHKey)}},
 	)
+
+	report := validate.ValidateWithoutSource(reflect.ValueOf(a.Config))
+	if report.IsFatal() {
+		return fmt.Errorf("invalid Ignition config, validation errors: %s", report.String())
+	}
 
 	data, err := json.Marshal(a.Config)
 	if err != nil {
@@ -489,6 +496,11 @@ func (a *Bootstrap) Load(f asset.FileFetcher) (found bool, err error) {
 	config := &igntypes.Config{}
 	if err := json.Unmarshal(file.Data, config); err != nil {
 		return false, errors.Wrapf(err, "failed to unmarshal %s", bootstrapIgnFilename)
+	}
+
+	report := validate.ValidateWithoutSource(reflect.ValueOf(config))
+	if report.IsFatal() {
+		return false, fmt.Errorf("invalid Ignition config, validation errors: %s", report.String())
 	}
 
 	a.File, a.Config = file, config

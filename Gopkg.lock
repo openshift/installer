@@ -1325,6 +1325,7 @@
     "github.com/containers/image/pkg/sysregistriesv2",
     "github.com/coreos/ignition/config/util",
     "github.com/coreos/ignition/config/v2_2/types",
+    "github.com/coreos/ignition/config/validate",
     "github.com/ghodss/yaml",
     "github.com/golang/mock/gomock",
     "github.com/gophercloud/gophercloud/openstack/common/extensions",
