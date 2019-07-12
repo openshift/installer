@@ -219,6 +219,10 @@ then
             cp mco-bootstrap/baremetal/manifests/* /etc/kubernetes/manifests/
             cp --recursive mco-bootstrap/baremetal/static-pod-resources/* /etc/kubernetes/static-pod-resources/
         fi
+	if [ -d mco-bootstrap/openstack/manifests ]; then
+		cp mco-bootstrap/openstack/manifests/* /etc/kubernetes/manifests/
+		cp --recursive mco-bootstrap/openstack/static-pod-resources/* /etc/kubernetes/static-pod-resources/
+	fi
 	cp mco-bootstrap/manifests/* manifests/
 
 	# /etc/ssl/mcs/tls.{crt, key} are locations for MachineConfigServer's tls assets.

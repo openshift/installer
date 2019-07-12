@@ -240,7 +240,7 @@ variable "openstack_extra_tags" {
   default = {}
 
   description = <<EOF
-(optional) Extra AWS tags to be applied to created resources.
+(optional) Extra tags to be applied to created resources.
 
 Example: `{ "key" = "value", "foo" = "bar" }`
 EOF
@@ -267,6 +267,21 @@ variable "openstack_lb_floating_ip" {
 (optional) Existing Floating IP to attach to the load balancer created by the installer.
 EOF
 
+}
+
+variable "openstack_api_int_ip" {
+  type        = string
+  description = "IP on the node subnet reserved for api-int VIP."
+}
+
+variable "openstack_node_dns_ip" {
+  type        = string
+  description = "IP on the nodes subnet reserved for node dns VIP."
+}
+
+variable "openstack_ingress_ip" {
+  type        = string
+  description = "IP on the nodes subnet reserved for the ingress VIP."
 }
 
 variable "openstack_master_flavor_name" {

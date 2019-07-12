@@ -232,7 +232,7 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackVa
 	}
 	if platform.OpenStack != nil {
 		validate(openstack.Name, platform.OpenStack, func(f *field.Path) field.ErrorList {
-			return openstackvalidation.ValidatePlatform(platform.OpenStack, f, openStackValidValuesFetcher)
+			return openstackvalidation.ValidatePlatform(platform.OpenStack, network, f, openStackValidValuesFetcher)
 		})
 	}
 	if platform.VSphere != nil {
