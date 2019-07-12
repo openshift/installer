@@ -201,9 +201,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, m := range masters {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
 		}
+		publicZone, err := gcpconfig.GetPublicZone(context.TODO(), installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get GCP public zone")
+		}
 		data, err := gcptfvars.TFVars(
 			auth,
 			masterConfigs,
+			publicZone.Name,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
