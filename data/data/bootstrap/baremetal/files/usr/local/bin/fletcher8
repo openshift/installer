@@ -2,6 +2,8 @@
 
 # Script that uses the fletcher8 algorithm to generate a hash from an input
 # string. This is used to generate VRRP ids for use with Keepalived.
+#
+# https://en.wikipedia.org/wiki/Fletcher%27s_checksum
 
 import sys
 

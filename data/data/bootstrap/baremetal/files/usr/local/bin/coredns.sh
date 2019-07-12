@@ -3,7 +3,9 @@ set -e
 
 # Script to configure and run the CoreDNS instance used to provide DNS
 # resolution between nodes in the cluster.
-
+#
+# For more information, see installer/data/data/bootstrap/baremetal/README.md
+#
 
 mkdir --parents /etc/keepalived
 

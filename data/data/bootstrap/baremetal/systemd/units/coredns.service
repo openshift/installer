@@ -1,4 +1,7 @@
 # Systemd service file used to start the bootstrap CoreDNS instance.
+#
+# For more information, see installer/data/data/bootstrap/baremetal/README.md
+#
 
 [Unit]
 Description=Serve cluster DNS gathered from mDNS
