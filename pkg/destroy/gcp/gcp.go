@@ -116,6 +116,7 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		{name: "Health checks", destroy: o.destroyHealthChecks},
 		{name: "Cloud controller internal LBs", destroy: o.destroyCloudControllerInternalLBs},
 		{name: "Cloud controller external LBs", destroy: o.destroyCloudControllerExternalLBs},
+		{name: "Cloud routers", destroy: o.destroyRouters},
 		{name: "Subnetworks", destroy: o.destroySubNetworks},
 		{name: "Networks", destroy: o.destroyNetworks},
 	}
