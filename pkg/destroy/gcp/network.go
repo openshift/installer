@@ -479,6 +479,52 @@ func (o *ClusterUninstaller) destroyRoutes() error {
 	return nil
 }
 
+func (o *ClusterUninstaller) listRouters() ([]string, error) {
+	o.Logger.Debug("Listing routers")
+	result := []string{}
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+	req := o.computeSvc.Routers.List(o.ProjectID, o.Region).Fields("items(name)").Filter(o.clusterIDFilter())
+	err := req.Pages(ctx, func(list *compute.RouterList) error {
+		for _, router := range list.Items {
+			o.Logger.Debugf("Found router: %s", router.Name)
+			result = append(result, router.Name)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list routers")
+	}
+	return result, nil
+}
+
+func (o *ClusterUninstaller) deleteRouter(name string) error {
+	o.Logger.Debugf("Deleting router %s", name)
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+	_, err := o.computeSvc.Routers.Delete(o.ProjectID, o.Region, name).Context(ctx).Do()
+	if err != nil && !isNoOp(err) {
+		return errors.Wrapf(err, "failed to delete router %s", name)
+	}
+	return nil
+}
+
+// destroyRouters removes all router resources that have a name prefixed with the
+// cluster's infra ID
+func (o *ClusterUninstaller) destroyRouters() error {
+	routers, err := o.listRouters()
+	if err != nil {
+		return err
+	}
+	for _, router := range routers {
+		err = o.deleteRouter(router)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // getInternalLBInstanceGroups finds instance groups created for kube cloud controller
 // internal load balancers. They should be named "k8s-ig--{clusterid}":
 // https://github.com/openshift/kubernetes/blob/1e5983903742f64bca36a464582178c940353e9a/pkg/cloudprovider/providers/gce/gce_loadbalancer_naming.go#L33-L40
