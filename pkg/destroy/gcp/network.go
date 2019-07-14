@@ -171,7 +171,7 @@ func (o *ClusterUninstaller) listBackendServicesWithFilter(fields string, filter
 	result := []string{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.BackendServices.List(o.ProjectID).Fields(googleapi.Field(fields))
+	req := o.computeSvc.RegionBackendServices.List(o.ProjectID, o.Region).Fields(googleapi.Field(fields))
 	if len(filter) > 0 {
 		req = req.Filter(filter)
 	}
@@ -194,7 +194,7 @@ func (o *ClusterUninstaller) deleteBackendService(name string) error {
 	o.Logger.Debugf("Deleting backend service %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	_, err := o.computeSvc.BackendServices.Delete(o.ProjectID, name).Context(ctx).Do()
+	_, err := o.computeSvc.RegionBackendServices.Delete(o.ProjectID, o.Region, name).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
 		return errors.Wrapf(err, "failed to delete backend service %s", name)
 	}
