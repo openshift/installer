@@ -17,7 +17,3 @@ output "worker_subnet" {
 output "master_subnet" {
   value = google_compute_subnetwork.master_subnet.self_link
 }
-
-output "zones" {
-  value = local.zones
-}
