@@ -40,6 +40,12 @@ module "master" {
   labels = local.labels
 }
 
+module "iam" {
+  source = "./iam"
+
+  cluster_id = var.cluster_id
+}
+
 module "network" {
   source = "./network"
 
