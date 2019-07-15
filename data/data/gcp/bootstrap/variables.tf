@@ -3,6 +3,12 @@ variable "cluster_id" {
   description = "The name of the cluster."
 }
 
+variable "bootstrap_enabled" {
+  type        = bool
+  description = "If the bootstrap instance and instance_group should exist."
+  default     = true
+}
+
 variable "ignition" {
   type        = string
   description = "The content of the bootstrap ignition file."

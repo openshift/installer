@@ -14,6 +14,8 @@ provider "google" {
 module "bootstrap" {
   source = "./bootstrap"
 
+  bootstrap_enabled = var.gcp_bootstrap_enabled
+
   image_name   = var.gcp_image_id
   machine_type = var.gcp_bootstrap_instance_type
   cluster_id   = var.cluster_id
@@ -48,11 +50,12 @@ module "network" {
   worker_subnet_cidr = local.worker_subnet_cidr
   network_cidr       = var.machine_cidr
 
-  bootstrap_instance = module.bootstrap.bootstrap_instance
-  master_instances   = module.master.master_instances
+  bootstrap_lb              = var.gcp_bootstrap_enabled && var.gcp_bootstrap_lb
+  bootstrap_instances       = module.bootstrap.bootstrap_instances
+  bootstrap_instance_groups = module.bootstrap.bootstrap_instance_groups
 
-  bootstrap_instance_group = module.bootstrap.bootstrap_instance_group
-  master_instance_groups   = module.master.master_instance_groups
+  master_instances       = module.master.master_instances
+  master_instance_groups = module.master.master_instance_groups
 }
 
 module "dns" {
