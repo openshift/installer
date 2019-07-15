@@ -89,6 +89,10 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 			ClusterNetwork: clusterNet,
 			ServiceNetwork: serviceNet,
 			NetworkType:    netConfig.NetworkType,
+			// Block all Service.ExternalIPs by default
+			ExternalIP: &configv1.ExternalIPConfig{
+				Policy: &configv1.ExternalIPPolicy{},
+			},
 		},
 	}
 
