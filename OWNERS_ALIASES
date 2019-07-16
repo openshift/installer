@@ -22,6 +22,7 @@ aliases:
     - zeenix
   libvirt-reviewers:
   openstack-approvers:
+    - Fedosin
     - mandre
     - tomassedovic
     - hardys
