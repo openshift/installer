@@ -99,9 +99,14 @@ func (o *ClusterUninstaller) deleteInstanceGroup(ig nameAndZone) error {
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	o.Logger.Debugf("Deleting instance group %s in zone %s", ig.name, ig.zone)
-	_, err := o.computeSvc.InstanceGroups.Delete(o.ProjectID, ig.zone, ig.name).Context(ctx).Do()
+	op, err := o.computeSvc.InstanceGroups.Delete(o.ProjectID, ig.zone, ig.name).RequestId(o.requestID("instancegroup", ig.zone, ig.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("instancegroup", ig.zone, ig.name)
 		return errors.Wrapf(err, "failed to delete instance group %s in zone %s", ig.name, ig.zone)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("instancegroup", ig.zone, ig.name)
+		return errors.Errorf("failed to delete instance group %s in zone %s with error: %s", ig.name, ig.zone, op.HttpErrorMessage)
 	}
 	return nil
 }
@@ -136,9 +141,14 @@ func (o *ClusterUninstaller) deleteComputeInstance(instance nameAndZone) error {
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	o.Logger.Debugf("Deleting compute instance %s in zone %s", instance.name, instance.zone)
-	_, err := o.computeSvc.Instances.Delete(o.ProjectID, instance.zone, instance.name).Context(ctx).Do()
+	op, err := o.computeSvc.Instances.Delete(o.ProjectID, instance.zone, instance.name).RequestId(o.requestID("instance", instance.zone, instance.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("instance", instance.zone, instance.name)
 		return errors.Wrapf(err, "failed to delete instance %s in zone %s", instance.name, instance.zone)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("instance", instance.zone, instance.name)
+		return errors.Errorf("failed to delete instance %s in zone %s with error: %s", instance.name, instance.zone, op.HttpErrorMessage)
 	}
 	return nil
 }
@@ -150,13 +160,20 @@ func (o *ClusterUninstaller) destroyComputeInstances() error {
 	if err != nil {
 		return err
 	}
+	errs := []error{}
+	found := make([]string, 0, len(instances))
 	for _, instance := range instances {
+		found = append(found, fmt.Sprintf("%s/%s", instance.zone, instance.name))
 		err := o.deleteComputeInstance(instance)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	deletedItems := o.setPendingItems("computeinstance", found)
+	for _, item := range deletedItems {
+		o.Logger.Infof("Deleted instance %s", item)
+	}
+	return aggregateError(errs, len(found))
 }
 
 func (o *ClusterUninstaller) listImages() ([]string, error) {
@@ -182,9 +199,14 @@ func (o *ClusterUninstaller) deleteImage(name string) error {
 	o.Logger.Debugf("Deleting image %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	_, err := o.computeSvc.Images.Delete(o.ProjectID, name).Context(ctx).Do()
+	op, err := o.computeSvc.Images.Delete(o.ProjectID, name).Context(ctx).RequestId(o.requestID("image", name)).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("image", name)
 		return errors.Wrapf(err, "failed to delete image %s", name)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("image", name)
+		return errors.Errorf("failed to delete image %s with error: %s", name, op.HttpErrorMessage)
 	}
 	return nil
 }
@@ -196,11 +218,18 @@ func (o *ClusterUninstaller) destroyImages() error {
 	if err != nil {
 		return err
 	}
+	errs := []error{}
+	found := make([]string, 0, len(images))
 	for _, image := range images {
+		found = append(found, image)
 		err := o.deleteImage(image)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	deletedImages := o.setPendingItems("image", found)
+	for _, item := range deletedImages {
+		o.Logger.Infof("Deleted image %s", item)
+	}
+	return aggregateError(errs, len(found))
 }

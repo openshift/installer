@@ -52,6 +52,9 @@ func (o *ClusterUninstaller) deleteStorageObject(bucket, object string) error {
 	if err != nil && !isNoOp(err) {
 		return errors.Wrapf(err, "failed to delete bucket object %s/%s", bucket, object)
 	}
+	if err == nil {
+		o.Logger.Infof("Deleted storage object %s/%s", bucket, object)
+	}
 	return nil
 }
 
@@ -63,6 +66,9 @@ func (o *ClusterUninstaller) deleteStorageBucket(bucket string) error {
 	if err != nil && !isNoOp(err) {
 		return errors.Wrapf(err, "failed to delete bucket %s", bucket)
 	}
+	if err == nil {
+		o.Logger.Infof("Deleted storage bucket %s", bucket)
+	}
 	return nil
 }
 
@@ -73,21 +79,23 @@ func (o *ClusterUninstaller) destroyObjectStorage() error {
 	if err != nil {
 		return err
 	}
+	errs := []error{}
 	for _, bucket := range buckets {
 		objects, err := o.listBucketObjects(bucket)
 		if err != nil {
-			return err
+			errs = append(errs, err)
+			continue
 		}
 		for _, object := range objects {
 			err = o.deleteStorageObject(bucket, object)
 			if err != nil {
-				return err
+				errs = append(errs, err)
 			}
 		}
 		err = o.deleteStorageBucket(bucket)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	return aggregateError(errs, len(buckets))
 }

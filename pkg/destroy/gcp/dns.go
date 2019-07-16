@@ -49,6 +49,7 @@ func (o *ClusterUninstaller) deleteDNSZone(name string) error {
 	if err != nil && !isNoOp(err) {
 		return errors.Wrapf(err, "failed to delete DNS zone %s", name)
 	}
+	o.Logger.Infof("Deleted DNS zone %s", name)
 	return nil
 }
 
@@ -81,10 +82,16 @@ func (o *ClusterUninstaller) deleteDNSZoneRecordSets(zoneName string, zoneDomain
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	o.Logger.Debugf("Deleting %d recordset(s) in zone %s", len(change.Deletions), zoneName)
-	_, err := o.dnsSvc.Changes.Create(o.ProjectID, zoneName, change).Context(ctx).Do()
+	change, err := o.dnsSvc.Changes.Create(o.ProjectID, zoneName, change).ClientOperationId(o.requestID("recordsets", zoneName)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("recordsets", zoneName)
 		return errors.Wrapf(err, "failed to delete DNS zone %s recordsets", zoneName)
 	}
+	if isErrorStatus(int64(change.ServerResponse.HTTPStatusCode)) {
+		o.resetRequestID("recordsets", zoneName)
+		return errors.Errorf("failed to delete DNS zone %s recordsets with code: %d", zoneName, change.ServerResponse.HTTPStatusCode)
+	}
+	o.Logger.Infof("Deleted %d recordset(s) in zone %s", len(change.Deletions), zoneName)
 	return nil
 }
 
