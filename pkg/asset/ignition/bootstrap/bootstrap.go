@@ -12,6 +12,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/containers/image/pkg/sysregistriesv2"
 	"github.com/coreos/ignition/config/util"
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	configv1 "github.com/openshift/api/config/v1"
@@ -25,6 +26,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
+	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -42,6 +44,7 @@ type bootstrapTemplateData struct {
 	PullSecret   string
 	ReleaseImage string
 	Proxy        *configv1.ProxyStatus
+	Registries   []sysregistriesv2.Registry
 }
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
@@ -103,6 +106,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&tls.MCSCertKey{},
 		&tls.RootCA{},
 		&tls.ServiceAccountKeyPair{},
+		&releaseimage.Image{},
 	}
 }
 
@@ -110,9 +114,10 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	proxy := &manifests.Proxy{}
-	dependencies.Get(installConfig, proxy)
+	releaseImage := &releaseimage.Image{}
+	dependencies.Get(installConfig, proxy, releaseImage)
 
-	templateData, err := a.getTemplateData(installConfig.Config, proxy.Config)
+	templateData, err := a.getTemplateData(installConfig.Config, releaseImage.PullSpec, installConfig.Config.ImageContentSources, proxy.Config)
 
 	if err != nil {
 		return errors.Wrap(err, "failed to get bootstrap templates")
@@ -188,24 +193,27 @@ func (a *Bootstrap) Files() []*asset.File {
 }
 
 // getTemplateData returns the data to use to execute bootstrap templates.
-func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, proxy *configv1.Proxy) (*bootstrapTemplateData, error) {
+func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseImage string, imageSources []types.ImageContentSource, proxy *configv1.Proxy) (*bootstrapTemplateData, error) {
 	etcdEndpoints := make([]string, *installConfig.ControlPlane.Replicas)
 
 	for i := range etcdEndpoints {
 		etcdEndpoints[i] = fmt.Sprintf("https://etcd-%d.%s:2379", i, installConfig.ClusterDomain())
 	}
 
-	var releaseImage string
-	if ri, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && ri != "" {
-		logrus.Warn("Found override for ReleaseImage. Please be warned, this is not advised")
-		releaseImage = ri
-	} else {
-		var err error
-		releaseImage, err = DefaultReleaseImage()
-		if err != nil {
-			return nil, err
+	registries := []sysregistriesv2.Registry{}
+	for _, group := range imageSources {
+		if len(group.Sources) <= 1 {
+			continue
 		}
-		logrus.Debugf("Using internal constant for release image %s", releaseImage)
+		for i := 0; i < len(group.Sources); i++ {
+			registry := sysregistriesv2.Registry{}
+			registry.Endpoint.Location = group.Sources[i]
+			registry.MirrorByDigestOnly = true
+			for j := 0; j < len(group.Sources); j++ {
+				registry.Mirrors = append(registry.Mirrors, sysregistriesv2.Endpoint{Location: group.Sources[j]})
+			}
+			registries = append(registries, registry)
+		}
 	}
 
 	return &bootstrapTemplateData{
@@ -213,6 +221,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, proxy *c
 		ReleaseImage: releaseImage,
 		EtcdCluster:  strings.Join(etcdEndpoints, ","),
 		Proxy:        &proxy.Status,
+		Registries:   registries,
 	}, nil
 }
 

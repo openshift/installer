@@ -1,0 +1,13 @@
+{{ range $r := .Registries -}}
+[[registry]]
+location = "{{ $r.Endpoint.Location }}"
+insecure = {{ $r.Endpoint.Insecure }}
+mirror-by-digest-only = {{ $r.MirrorByDigestOnly }}
+
+{{ range $m := $r.Mirrors -}}
+[[registry.mirror]]
+location = "{{ $m.Location }}"
+insecure = {{ $m.Insecure }}
+{{ end }}
+
+{{ end -}}

@@ -77,6 +77,10 @@ type InstallConfig struct {
 	// If unset, the cluster will not be configured to use a proxy.
 	// +optional
 	Proxy *Proxy `json:"proxy,omitempty"`
+
+	// ImageContentSources is the lists of sources/repositories that can be used to pull the same content.
+	// No two ImageContentSource in the list can include the same repository. Each ImageContentSource must be a disjoint set from the rest.
+	ImageContentSources []ImageContentSource `json:"imageContentSources,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
@@ -210,4 +214,9 @@ type Proxy struct {
 	// NoProxy is a comma-separated list of domains and CIDRs for which the proxy should not be used.
 	// +optional
 	NoProxy string `json:"noProxy,omitempty"`
+}
+
+// ImageContentSource defines a list of sources/repositories that can be used to pull a content.
+type ImageContentSource struct {
+	Sources []string `json:"sources,omitempty"`
 }

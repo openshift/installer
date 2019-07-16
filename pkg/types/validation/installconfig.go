@@ -6,7 +6,10 @@ import (
 	"sort"
 	"strings"
 
+	dockerref "github.com/containers/image/docker/reference"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -84,6 +87,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	if c.Proxy != nil {
 		allErrs = append(allErrs, validateProxy(c.Proxy, field.NewPath("proxy"))...)
 	}
+	allErrs = append(allErrs, validateImageContentSources(c.ImageContentSources, field.NewPath("imageContentSources"))...)
 	return allErrs
 }
 
@@ -266,5 +270,35 @@ func validateProxy(p *types.Proxy, fldPath *field.Path) field.ErrorList {
 		}
 	}
 
+	return allErrs
+}
+
+func validateImageContentSources(groups []types.ImageContentSource, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	for gidx, group := range groups {
+		for sidx, source := range group.Sources {
+			f := fldPath.Index(gidx).Child("source")
+			ref, err := dockerref.ParseNamed(source)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(f.Index(sidx), source, errors.Wrap(err, "failed to parse").Error()))
+				continue
+			}
+			if !dockerref.IsNameOnly(ref) {
+				allErrs = append(allErrs, field.Invalid(f.Index(sidx), source, "must be repository not a reference"))
+				continue
+			}
+		}
+	}
+
+	for i := 0; i < len(groups); i++ {
+		iset := sets.NewString(groups[i].Sources...)
+		for j := i + 1; j < len(groups); j++ {
+			jset := sets.NewString(groups[j].Sources...)
+			intset := iset.Intersection(jset)
+			if intset.Len() != 0 {
+				allErrs = append(allErrs, field.Invalid(fldPath.Index(i), groups[i], fmt.Sprintf("Overlapping sources other ImageContentSources is not allowed, overlapping sources found with %s: %s", fldPath.Index(j).String(), intset.List())))
+			}
+		}
+	}
 	return allErrs
 }
