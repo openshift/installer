@@ -44,7 +44,9 @@ func (s *Scheduler) Generate(dependencies asset.Parents) error {
 			Name: "cluster",
 			// not namespaced
 		},
-		Spec: configv1.SchedulerSpec{},
+		Spec: configv1.SchedulerSpec{
+			MastersSchedulable: false,
+		},
 	}
 
 	configData, err := yaml.Marshal(config)
