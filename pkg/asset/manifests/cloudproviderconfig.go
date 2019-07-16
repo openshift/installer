@@ -17,6 +17,7 @@ import (
 	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
@@ -78,7 +79,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	}
 
 	switch installConfig.Config.Platform.Name() {
-	case awstypes.Name, libvirttypes.Name, nonetypes.Name:
+	case awstypes.Name, libvirttypes.Name, nonetypes.Name, baremetaltypes.Name:
 		return nil
 	case openstacktypes.Name:
 		cm.Data[cloudProviderConfigDataKey] = openstackmanifests.CloudProviderConfig()

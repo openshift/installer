@@ -3,6 +3,7 @@ package types
 import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -27,6 +28,7 @@ type ClusterPlatformMetadata struct {
 	Libvirt   *libvirt.Metadata   `json:"libvirt,omitempty"`
 	Azure     *azure.Metadata     `json:"azure,omitempty"`
 	GCP       *gcp.Metadata       `json:"gcp,omitempty"`
+	BareMetal *baremetal.Metadata `json:"baremetal,omitempty"`
 }
 
 // Platform returns a string representation of the platform
@@ -50,6 +52,9 @@ func (cpm *ClusterPlatformMetadata) Platform() string {
 	}
 	if cpm.GCP != nil {
 		return gcp.Name
+	}
+	if cpm.BareMetal != nil {
+		return "baremetal"
 	}
 	return ""
 }

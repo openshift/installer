@@ -73,6 +73,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	a.Config.VSphere = platform.VSphere
 	a.Config.Azure = platform.Azure
 	a.Config.GCP = platform.GCP
+	a.Config.BareMetal = platform.BareMetal
 
 	if err := a.setDefaults(); err != nil {
 		return errors.Wrap(err, "failed to set defaults for install config")

@@ -28,11 +28,13 @@ import (
 	"github.com/openshift/installer/pkg/tfvars"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
 	azuretfvars "github.com/openshift/installer/pkg/tfvars/azure"
+	baremetaltfvars "github.com/openshift/installer/pkg/tfvars/baremetal"
 	gcptfvars "github.com/openshift/installer/pkg/tfvars/gcp"
 	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -247,6 +249,23 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.OpenStack.ExternalNetwork,
 			installConfig.Config.Platform.OpenStack.LbFloatingIP,
 			installConfig.Config.Platform.OpenStack.TrunkSupport,
+		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
+		}
+		t.FileList = append(t.FileList, &asset.File{
+			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Data:     data,
+		})
+	case baremetal.Name:
+		data, err = baremetaltfvars.TFVars(
+			installConfig.Config.Platform.BareMetal.LibvirtURI,
+			installConfig.Config.Platform.BareMetal.IronicURI,
+			string(*rhcosImage),
+			"baremetal",
+			"provisioning",
+			installConfig.Config.Platform.BareMetal.Hosts,
+			installConfig.Config.Platform.BareMetal.Image,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

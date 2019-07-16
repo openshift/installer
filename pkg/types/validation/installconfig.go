@@ -17,6 +17,8 @@ import (
 	awsvalidation "github.com/openshift/installer/pkg/types/aws/validation"
 	"github.com/openshift/installer/pkg/types/azure"
 	azurevalidation "github.com/openshift/installer/pkg/types/azure/validation"
+	"github.com/openshift/installer/pkg/types/baremetal"
+	baremetalvalidation "github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/types/gcp"
 	gcpvalidation "github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -239,6 +241,11 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackVa
 	}
 	if platform.VSphere != nil {
 		validate(vsphere.Name, platform.VSphere, func(f *field.Path) field.ErrorList { return vspherevalidation.ValidatePlatform(platform.VSphere, f) })
+	}
+	if platform.BareMetal != nil {
+		validate(baremetal.Name, platform.BareMetal, func(f *field.Path) field.ErrorList {
+			return baremetalvalidation.ValidatePlatform(platform.BareMetal, f)
+		})
 	}
 	return allErrs
 }
