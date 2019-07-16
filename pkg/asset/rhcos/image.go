@@ -58,6 +58,10 @@ func (i *Image) Generate(p asset.Parents) error {
 	defer cancel()
 	switch config.Platform.Name() {
 	case aws.Name:
+		if len(config.Platform.AWS.AMIID) > 0 {
+			osimage = config.Platform.AWS.AMIID
+			break
+		}
 		osimage, err = rhcos.AMI(ctx, config.Platform.AWS.Region)
 	case gcp.Name:
 	case libvirt.Name:
