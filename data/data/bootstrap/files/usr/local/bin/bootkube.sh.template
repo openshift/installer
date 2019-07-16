@@ -16,28 +16,38 @@ if ! release=$( podman inspect {{.ReleaseImage}} --format '{{"{{"}} index .RepoD
 	release="{{.ReleaseImage}}"
 fi
 
-MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image machine-config-operator)
-MACHINE_CONFIG_OSCONTENT=$(podman run --quiet --rm ${release} image machine-os-content)
-MACHINE_CONFIG_ETCD_IMAGE=$(podman run --quiet --rm ${release} image etcd)
-MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(podman run --quiet --rm ${release} image kube-client-agent)
-MACHINE_CONFIG_INFRA_IMAGE=$(podman run --quiet --rm ${release} image pod)
+bootkube_podman_run() {
+    # we run all commands in the host-network to prevent IP conflicts with
+    # end-user infrastructure.
+    podman run --quiet --net=host "${@}"
+}
 
-KUBE_ETCD_SIGNER_SERVER_IMAGE=$(podman run --quiet --rm ${release} image kube-etcd-signer-server)
+image_for() {
+    podman run --quiet --rm --net=none "${release}" image "${1}"
+}
 
-CONFIG_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image cluster-config-operator)
-KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image cluster-kube-apiserver-operator)
-KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image cluster-kube-controller-manager-operator)
-KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image cluster-kube-scheduler-operator)
+MACHINE_CONFIG_OPERATOR_IMAGE=$(image_for machine-config-operator)
+MACHINE_CONFIG_OSCONTENT=$(image_for machine-os-content)
+MACHINE_CONFIG_ETCD_IMAGE=$(image_for etcd)
+MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(image_for kube-client-agent)
+MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 
-OPENSHIFT_HYPERKUBE_IMAGE=$(podman run --quiet --rm ${release} image hyperkube)
+KUBE_ETCD_SIGNER_SERVER_IMAGE=$(image_for kube-etcd-signer-server)
 
-CLUSTER_BOOTSTRAP_IMAGE=$(podman run --quiet --rm ${release} image cluster-bootstrap)
+CONFIG_OPERATOR_IMAGE=$(image_for cluster-config-operator)
+KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)
+KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(image_for cluster-kube-controller-manager-operator)
+KUBE_SCHEDULER_OPERATOR_IMAGE=$(image_for cluster-kube-scheduler-operator)
 
-KEEPALIVED_IMAGE=$(podman run --quiet --rm ${release} image keepalived-ipfailover)
-COREDNS_IMAGE=$(podman run --quiet --rm ${release} image coredns)
-MDNS_PUBLISHER_IMAGE=$(podman run --quiet --rm ${release} image mdns-publisher)
-HAPROXY_IMAGE=$(podman run --quiet --rm ${release} image haproxy-router)
-BAREMETAL_RUNTIMECFG_IMAGE=$(podman run --quiet --rm ${release} image baremetal-runtimecfg)
+OPENSHIFT_HYPERKUBE_IMAGE=$(image_for hyperkube)
+
+CLUSTER_BOOTSTRAP_IMAGE=$(image_for cluster-bootstrap)
+
+KEEPALIVED_IMAGE=$(image_for keepalived-ipfailover)
+COREDNS_IMAGE=$(image_for coredns)
+MDNS_PUBLISHER_IMAGE=$(image_for mdns-publisher)
+HAPROXY_IMAGE=$(image_for haproxy-router)
+BAREMETAL_RUNTIMECFG_IMAGE=$(image_for baremetal-runtimecfg)
 
 # Now, as early as possible we replace the pause image and reload crio to use it, to ensure
 # that we're using the pause image from our payload just like the primary cluster.
@@ -59,9 +69,7 @@ then
 
 	rm --recursive --force cvo-bootstrap
 
-	# shellcheck disable=SC2154
-	podman run \
-		--quiet \
+	bootkube_podman_run \
 		--volume "$PWD:/assets:z" \
 		"${release}" \
 		render \
@@ -82,9 +90,7 @@ then
 
 	rm --recursive --force config-bootstrap
 
-	# shellcheck disable=SC2154
-	podman run \
-		--quiet \
+	bootkube_podman_run \
 		--volume "$PWD:/assets:z" \
 		"${CONFIG_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-config-operator render \
@@ -103,9 +109,7 @@ then
 
 	rm --recursive --force kube-apiserver-bootstrap
 
-	# shellcheck disable=SC2154
-	podman run \
-		--quiet \
+	bootkube_podman_run  \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_APISERVER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-apiserver-operator render \
@@ -131,9 +135,7 @@ then
 
 	rm --recursive --force kube-controller-manager-bootstrap
 
-	# shellcheck disable=SC2154
-	podman run \
-		--quiet \
+	bootkube_podman_run \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-controller-manager-operator render \
@@ -156,9 +158,7 @@ then
 
 	rm --recursive --force kube-scheduler-bootstrap
 
-	# shellcheck disable=SC2154
-	podman run \
-		--quiet \
+	bootkube_podman_run \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_SCHEDULER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-scheduler-operator render \
@@ -180,9 +180,7 @@ then
 
 	rm --recursive --force mco-bootstrap
 
-	# shellcheck disable=SC2154
-	podman run \
-		--quiet \
+	bootkube_podman_run \
 		--user 0 \
 		--volume "$PWD:/assets:z" \
 		"${MACHINE_CONFIG_OPERATOR_IMAGE}" \
@@ -241,9 +239,7 @@ echo "Starting etcd certificate signer..."
 
 trap "podman rm --force etcd-signer" ERR
 
-# shellcheck disable=SC2154
-podman run \
-	--quiet \
+bootkube_podman_run \
 	--name etcd-signer \
 	--detach \
 	--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
@@ -268,11 +264,8 @@ podman run \
 echo "Waiting for etcd cluster..."
 
 # Wait for the etcd cluster to come up.
-# shellcheck disable=SC2154,SC2086
-until podman run \
-		--quiet \
+until bootkube_podman_run \
 		--rm \
-		--network host \
 		--name etcdctl \
 		--env ETCDCTL_API=3 \
 		--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
@@ -296,9 +289,7 @@ rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
 
 echo "Starting cluster-bootstrap..."
 
-# shellcheck disable=SC2154
-podman run \
-	--quiet \
+bootkube_podman_run \
 	--rm \
 	--volume "$PWD:/assets:z" \
 	--volume /etc/kubernetes:/etc/kubernetes:z \
