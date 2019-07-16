@@ -124,6 +124,16 @@ func (in *AzureMachineProviderSpec) DeepCopyInto(out *AzureMachineProviderSpec) 
 	}
 	out.Image = in.Image
 	out.OSDisk = in.OSDisk
+	if in.NatRule != nil {
+		in, out := &in.NatRule, &out.NatRule
+		*out = new(int)
+		**out = **in
+	}
+	if in.Zone != nil {
+		in, out := &in.Zone, &out.Zone
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 

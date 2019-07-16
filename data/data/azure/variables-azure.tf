@@ -70,3 +70,9 @@ variable "azure_tenant_id" {
   type        = string
   description = "The tenant ID that should be used to interact with Azure API"
 }
+
+
+variable "azure_master_availability_zones" {
+  type        = list(string)
+  description = "The availability zones in which to create the masters. The length of this list must match master_count."
+}

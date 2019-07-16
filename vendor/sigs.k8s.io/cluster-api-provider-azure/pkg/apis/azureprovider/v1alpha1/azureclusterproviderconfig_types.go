@@ -32,8 +32,9 @@ type AzureClusterProviderSpec struct {
 	// NetworkSpec encapsulates all things related to Azure network.
 	NetworkSpec NetworkSpec `json:"networkSpec,omitempty"`
 
-	ResourceGroup string `json:"resourceGroup"`
-	Location      string `json:"location"`
+	ResourceGroup        string `json:"resourceGroup"`
+	NetworkResourceGroup string `json:"networkResourceGroup"`
+	Location             string `json:"location"`
 
 	// CAKeyPair is the key pair for CA certs.
 	CAKeyPair KeyPair `json:"caKeyPair,omitempty"`
