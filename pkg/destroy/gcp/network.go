@@ -263,6 +263,52 @@ func (o *ClusterUninstaller) destroyHealthChecks() error {
 	return nil
 }
 
+func (o *ClusterUninstaller) listHTTPHealthChecks() ([]string, error) {
+	o.Logger.Debugf("Listing HTTP health checks")
+	result := []string{}
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+	req := o.computeSvc.HttpHealthChecks.List(o.ProjectID).Fields("items(name)").Filter(o.clusterIDFilter())
+	err := req.Pages(ctx, func(list *compute.HttpHealthCheckList) error {
+		for _, healthCheck := range list.Items {
+			o.Logger.Debugf("Found HTTP health check: %s", healthCheck.Name)
+			result = append(result, healthCheck.Name)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list HTTP health checks")
+	}
+	return result, nil
+}
+
+func (o *ClusterUninstaller) deleteHTTPHealthCheck(name string) error {
+	o.Logger.Debugf("Deleting HTTP health check %s", name)
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+	_, err := o.computeSvc.HttpHealthChecks.Delete(o.ProjectID, name).Context(ctx).Do()
+	if err != nil && !isNoOp(err) {
+		return errors.Wrapf(err, "failed to delete HTTP health check %s", name)
+	}
+	return nil
+}
+
+// destroyHTTPHealthChecks removes all HTTP health check resources that have a name prefixed
+// with the cluster's infra ID
+func (o *ClusterUninstaller) destroyHTTPHealthChecks() error {
+	healthChecks, err := o.listHTTPHealthChecks()
+	if err != nil {
+		return err
+	}
+	for _, healthCheck := range healthChecks {
+		err = o.deleteHTTPHealthCheck(healthCheck)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (o *ClusterUninstaller) listTargetPools() ([]string, error) {
 	return o.listTargetPoolsWithFilter("items(name)", o.clusterIDFilter(), nil)
 }
