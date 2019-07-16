@@ -40,11 +40,12 @@ const (
 // bootstrapTemplateData is the data to use to replace values in bootstrap
 // template files.
 type bootstrapTemplateData struct {
-	EtcdCluster  string
-	PullSecret   string
-	ReleaseImage string
-	Proxy        *configv1.ProxyStatus
-	Registries   []sysregistriesv2.Registry
+	EtcdCluster   string
+	PullSecret    string
+	ReleaseImage  string
+	Proxy         *configv1.ProxyStatus
+	Registries    []sysregistriesv2.Registry
+	ClusterDomain string
 }
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
@@ -217,11 +218,12 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 	}
 
 	return &bootstrapTemplateData{
-		PullSecret:   installConfig.PullSecret,
-		ReleaseImage: releaseImage,
-		EtcdCluster:  strings.Join(etcdEndpoints, ","),
-		Proxy:        &proxy.Status,
-		Registries:   registries,
+		PullSecret:    installConfig.PullSecret,
+		ReleaseImage:  releaseImage,
+		EtcdCluster:   strings.Join(etcdEndpoints, ","),
+		Proxy:         &proxy.Status,
+		Registries:    registries,
+		ClusterDomain: installConfig.ClusterDomain(),
 	}, nil
 }
 
