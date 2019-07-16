@@ -56,9 +56,10 @@ Operator](https://github.com/openshift/machine-config-operator/pull/795). See
 
 ### API load balancing
 
-Once the API VIP has moved to one of the control plane nodes, traffic sent to
-this VIP first hits an `haproxy` load balancer running on that control plane
-node.  This instance of `haproxy` will load balance the API traffic across all
+Once the API VIP has moved to one of the control plane nodes, traffic sent from
+external clients to this VIP first hits an `haproxy` load balancer running on
+that control plane node.
+This instance of `haproxy` will load balance the API traffic across all
 of the control plane nodes.
 
 The configuration of `haproxy` will be done by MCO once the following PR is
