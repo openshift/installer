@@ -12,7 +12,7 @@ resource "google_compute_http_health_check" "api_external" {
 resource "google_compute_target_pool" "api_external" {
   name = "${var.cluster_id}-api-external"
 
-  instances     = concat(var.master_instances, [var.bootstrap_instance])
+  instances     = var.bootstrap_lb ? concat(var.master_instances, var.bootstrap_instances) : var.master_instances
   health_checks = [google_compute_http_health_check.api_external.self_link]
 }
 

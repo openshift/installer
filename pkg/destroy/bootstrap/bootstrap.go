@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/pkg/errors"
 )
@@ -62,7 +63,20 @@ func Destroy(dir string) (err error) {
 		}
 	}
 
-	if platform == libvirt.Name {
+	switch platform {
+	case gcp.Name:
+		// First remove the bootstrap node from the load balancers to avoid race condition.
+		_, err = terraform.Apply(tempDir, platform, append(extraArgs, "-var=gcp_bootstrap_lb=false")...)
+		if err != nil {
+			return errors.Wrap(err, "Terraform apply")
+		}
+
+		// Then destory the bootstrap instance and instance group so destroy runs cleanly.
+		_, err = terraform.Apply(tempDir, platform, append(extraArgs, "-var=gcp_bootstrap_enabled=false")...)
+		if err != nil {
+			return errors.Wrap(err, "Terraform apply")
+		}
+	case libvirt.Name:
 		_, err = terraform.Apply(tempDir, platform, extraArgs...)
 		if err != nil {
 			return errors.Wrap(err, "Terraform apply")
