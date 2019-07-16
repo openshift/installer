@@ -155,25 +155,6 @@ NOTE: When the firewall rules are no longer needed, `sudo firewall-cmd --reload`
 will remove the changes made as they were not permanently added. For persistence,
 add `--permanent` to the `firewall-cmd` commands and run them a second time.
 
-### Configure default libvirt storage pool
-
-Check to see if a default storage pool has been defined in Libvirt by running
-`virsh --connect qemu:///system pool-list`.  If it does not exist, create it:
-
-```sh
-sudo virsh pool-define /dev/stdin <<EOF
-<pool type='dir'>
-  <name>default</name>
-  <target>
-    <path>/var/lib/libvirt/images</path>
-  </target>
-</pool>
-EOF
-
-sudo virsh pool-start default
-sudo virsh pool-autostart default
-```
-
 ### Set up NetworkManager DNS overlay
 
 This step allows installer and users to resolve cluster-internal hostnames from your host.
@@ -322,21 +303,6 @@ FATA[0019] failed to run Terraform: exit status 1
 ```
 
 it is likely that your install configuration contains three backslashes after the protocol (e.g. `qemu+tcp:///...`), when it should only be two.
-
-### SELinux might prevent access to image files
-Configuring the storage pool to store images in a path incompatible with the SELinux policies (e.g. your home directory) might lead to the following errors:
-
-```
-Error: Error applying plan:
-
-1 error(s) occurred:
-
-* libvirt_domain.etcd: 1 error(s) occurred:
-
-* libvirt_domain.etcd: Error creating libvirt domain: virError(Code=1, Domain=10, Message='internal error: process exited while connecting to monitor: 2018-07-30T22:52:54.865806Z qemu-kvm: -fw_cfg name=opt/com.coreos/config,file=/home/user/VirtualMachines/etcd.ign: can't load /home/user/VirtualMachines/etcd.ign')
-```
-
-[As described here][libvirt_selinux_issues] you can workaround by disabling SELinux, or store the images in a place well-known to work, e.g. by using the default pool.
 
 ### Random domain creation errors due to libvirt race conditon
 Depending on your libvirt version you might encounter [a race condition][bugzilla_libvirt_race] leading to an error similar to:

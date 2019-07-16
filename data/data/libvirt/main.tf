@@ -2,11 +2,18 @@ provider "libvirt" {
   uri = var.libvirt_uri
 }
 
+resource "libvirt_pool" "storage_pool" {
+  name = var.cluster_id
+  type = "dir"
+  path = "/var/lib/libvirt/openshift-images/${var.cluster_id}"
+}
+
 module "volume" {
   source = "./volume"
 
   cluster_id = var.cluster_id
   image      = var.os_image
+  pool       = libvirt_pool.storage_pool.name
 }
 
 module "bootstrap" {
@@ -17,17 +24,20 @@ module "bootstrap" {
   cluster_id     = var.cluster_id
   ignition       = var.ignition_bootstrap
   network_id     = libvirt_network.net.id
+  pool           = libvirt_pool.storage_pool.name
 }
 
 resource "libvirt_volume" "master" {
   count          = var.master_count
   name           = "${var.cluster_id}-master-${count.index}"
   base_volume_id = module.volume.coreos_base_volume_id
+  pool           = libvirt_pool.storage_pool.name
 }
 
 resource "libvirt_ignition" "master" {
   name    = "${var.cluster_id}-master.ign"
   content = var.ignition_master
+  pool    = libvirt_pool.storage_pool.name
 }
 
 resource "libvirt_network" "net" {

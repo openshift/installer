@@ -390,18 +390,36 @@ func setConsoles(d *schema.ResourceData, domainDef *libvirtxml.Domain) {
 				Port: &consoleTargetPort,
 			}
 		}
-		if sourcePath, ok := d.GetOk(prefix + ".source_path"); ok {
-			console.Source = &libvirtxml.DomainChardevSource{
-				Dev: &libvirtxml.DomainChardevSourceDev{
-					Path: sourcePath.(string),
-				},
-			}
-		}
 		if targetType, ok := d.GetOk(prefix + ".target_type"); ok {
 			if console.Target == nil {
 				console.Target = &libvirtxml.DomainConsoleTarget{}
 			}
 			console.Target.Type = targetType.(string)
+		}
+		switch d.Get(prefix + ".type").(string) {
+		case "tcp":
+			sourceHost := d.Get(prefix + ".source_host")
+			sourceService := d.Get(prefix + ".source_service")
+			console.Source = &libvirtxml.DomainChardevSource{
+				TCP: &libvirtxml.DomainChardevSourceTCP{
+					Mode:    "bind",
+					Host:    sourceHost.(string),
+					Service: sourceService.(string),
+				},
+			}
+			console.Protocol = &libvirtxml.DomainChardevProtocol{
+				Type: "telnet",
+			}
+		case "pty":
+			fallthrough
+		default:
+			if sourcePath, ok := d.GetOk(prefix + ".source_path"); ok {
+				console.Source = &libvirtxml.DomainChardevSource{
+					Dev: &libvirtxml.DomainChardevSourceDev{
+						Path: sourcePath.(string),
+					},
+				}
+			}
 		}
 		domainDef.Devices.Consoles = append(domainDef.Devices.Consoles, console)
 	}
@@ -500,7 +518,16 @@ func setDisks(d *schema.ResourceData, domainDef *libvirtxml.Domain, virConn *lib
 
 			if strings.HasSuffix(url.Path, ".iso") {
 				disk.Device = "cdrom"
+				disk.Target = &libvirtxml.DomainDiskTarget{
+					Dev: fmt.Sprintf("hd%s", diskLetterForIndex(numOfISOs)),
+					Bus: "ide",
+				}
+				disk.Driver = &libvirtxml.DomainDiskDriver{
+					Name: "qemu",
+				}
+				numOfISOs++
 			}
+
 			if !strings.HasSuffix(url.Path, ".qcow2") {
 				disk.Driver.Type = "raw"
 			}
@@ -524,6 +551,10 @@ func setDisks(d *schema.ResourceData, domainDef *libvirtxml.Domain, virConn *lib
 				}
 
 				numOfISOs++
+			}
+
+			if !strings.HasSuffix(file.(string), ".qcow2") {
+				disk.Driver.Type = "raw"
 			}
 		}
 
