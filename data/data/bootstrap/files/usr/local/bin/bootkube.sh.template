@@ -16,6 +16,10 @@ if ! release=$( podman inspect {{.ReleaseImage}} -f '{{"{{"}} index .RepoDigests
 	release="{{.ReleaseImage}}"
 fi
 
+if host -t SRV _etcd-server-ssl._tcp.{{.ClusterDomain}} | grep -q etcd-bootstrap; then
+        ETCD_PIVOT=1
+fi
+
 MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image machine-config-operator)
 MACHINE_CONFIG_OSCONTENT=$(podman run --quiet --rm ${release} image machine-os-content)
 MACHINE_CONFIG_ETCD_IMAGE=$(podman run --quiet --rm ${release} image etcd)
