@@ -50,7 +50,11 @@ func resourcePortV1() *schema.Resource {
 }
 
 func resourcePortV1Create(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(Clients).Ironic
+	client, err := meta.(*Clients).GetIronicClient()
+	if err != nil {
+		return err
+	}
+
 	opts := portSchemaToCreateOpts(d)
 	result, err := ports.Create(client, opts).Extract()
 	if err != nil {
@@ -62,7 +66,11 @@ func resourcePortV1Create(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourcePortV1Read(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(Clients).Ironic
+	client, err := meta.(*Clients).GetIronicClient()
+	if err != nil {
+		return err
+	}
+
 	port, err := ports.Get(client, d.Id()).Extract()
 	if err != nil {
 		return err
