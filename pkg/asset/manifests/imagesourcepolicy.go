@@ -35,7 +35,7 @@ func (*ImageContentSourcePolicy) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the Proxy config and its CRD.
+// Generate generates the ImageContentSourcePolicy config and its CRD.
 func (p *ImageContentSourcePolicy) Generate(dependencies asset.Parents) error {
 	installconfig := &installconfig.InstallConfig{}
 	dependencies.Get(installconfig)
