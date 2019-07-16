@@ -5,9 +5,11 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -30,7 +32,9 @@ func (*Scheduler) Name() string {
 // Dependencies returns all of the dependencies directly needed to generate
 // the asset.
 func (*Scheduler) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{
+		&installconfig.InstallConfig{},
+	}
 }
 
 // Generate generates the scheduler config and its CRD.
@@ -47,6 +51,26 @@ func (s *Scheduler) Generate(dependencies asset.Parents) error {
 		Spec: configv1.SchedulerSpec{
 			MastersSchedulable: false,
 		},
+	}
+
+	installConfig := &installconfig.InstallConfig{}
+	dependencies.Get(installConfig)
+	computeReplicas := int64(0)
+	for _, pool := range installConfig.Config.Compute {
+		if pool.Replicas != nil {
+			computeReplicas += *pool.Replicas
+		}
+	}
+	if computeReplicas == 0 {
+		// A schedulable host is required for a successful install to complete.
+		// If the install config has 0 replicas for compute hosts, it's one of two cases:
+		//   1. An IPI deployment with no compute hosts.  The deployment can not succeed
+		//      without MastersSchedulable = true.
+		//   2. A UPI deployment.  The deployment may add compute hosts, but to ensure the
+		//      the highest probability of a successful deployment, we default to
+		//      schedulable masters.
+		logrus.Warningf("Making control-plane schedulable by setting MastersSchedulabe to true for Scheduler cluster settings")
+		config.Spec.MastersSchedulable = true
 	}
 
 	configData, err := yaml.Marshal(config)
