@@ -8,6 +8,7 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -30,7 +31,9 @@ func (*Scheduler) Name() string {
 // Dependencies returns all of the dependencies directly needed to generate
 // the asset.
 func (*Scheduler) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{
+		&installconfig.InstallConfig{},
+	}
 }
 
 // Generate generates the scheduler config and its CRD.
@@ -47,6 +50,12 @@ func (s *Scheduler) Generate(dependencies asset.Parents) error {
 		Spec: configv1.SchedulerSpec{
 			MastersSchedulable: false,
 		},
+	}
+
+	installConfig := &installconfig.InstallConfig{}
+	dependencies.Get(installConfig)
+	if installConfig.Config.ControlPlane.Schedulable == true {
+		config.Spec.MastersSchedulable = true
 	}
 
 	configData, err := yaml.Marshal(config)

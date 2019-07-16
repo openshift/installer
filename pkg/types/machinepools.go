@@ -38,6 +38,13 @@ type MachinePool struct {
 	// +optional
 	// Default is for hyperthreading to be enabled.
 	Hyperthreading HyperthreadingMode `json:"hyperthreading,omitempty"`
+
+	// Schedulable determines whether workloads can be scheduled to the
+	// machines in this MachinePool.  This option is only used for the "master"
+	// MachinePool and will be ignored for "worker" MachinePools.
+	// +optional
+	// Default for "master" MachinePool is "false".
+	Schedulable bool `json:"schedulable,omitempty"`
 }
 
 // MachinePoolPlatform is the platform-specific configuration for a machine

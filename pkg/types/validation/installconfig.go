@@ -82,7 +82,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("controlPlane"), "controlPlane is required"))
 	}
-	allErrs = append(allErrs, validateCompute(&c.Platform, c.Compute, field.NewPath("compute"))...)
+	allErrs = append(allErrs, validateCompute(&c.Platform, c.Compute, c.ControlPlane, field.NewPath("compute"))...)
 	if err := validate.ImagePullSecret(c.PullSecret); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("pullSecret"), c.PullSecret, err.Error()))
 	}
@@ -181,7 +181,7 @@ func validateControlPlane(platform *types.Platform, pool *types.MachinePool, fld
 	return allErrs
 }
 
-func validateCompute(platform *types.Platform, pools []types.MachinePool, fldPath *field.Path) field.ErrorList {
+func validateCompute(platform *types.Platform, pools []types.MachinePool, controlPlane *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	poolNames := map[string]bool{}
 	foundPositiveReplicas := false
@@ -199,7 +199,7 @@ func validateCompute(platform *types.Platform, pools []types.MachinePool, fldPat
 		}
 		allErrs = append(allErrs, ValidateMachinePool(platform, &p, poolFldPath)...)
 	}
-	if !foundPositiveReplicas {
+	if !foundPositiveReplicas && controlPlane.Schedulable == false {
 		logrus.Warnf("There are no compute nodes specified. The cluster will not fully initialize without compute nodes.")
 	}
 	return allErrs
