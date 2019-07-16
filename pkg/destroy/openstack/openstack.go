@@ -15,6 +15,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/routers"
 	sg "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/groups"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/subnetpools"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/trunks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
@@ -125,6 +126,7 @@ func populateDeleteFuncs(funcs map[string]deleteFunc) {
 	funcs["deleteSecurityGroups"] = deleteSecurityGroups
 	funcs["deleteRouters"] = deleteRouters
 	funcs["deleteSubnets"] = deleteSubnets
+	funcs["deleteSubnetPools"] = deleteSubnetPools
 	funcs["deleteNetworks"] = deleteNetworks
 	funcs["deleteContainers"] = deleteContainers
 }
@@ -681,4 +683,40 @@ func deleteLoadBalancers(opts *clientconfig.ClientOpts, filter Filter, logger lo
 	}
 
 	return len(allLoadBalancers) == 0, nil
+}
+
+func deleteSubnetPools(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+	logger.Debug("Deleting openstack subnet-pools")
+	defer logger.Debugf("Exiting deleting openstack subnet-pools")
+
+	conn, err := clientconfig.NewServiceClient("network", opts)
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+	tags := filterTags(filter)
+	listOpts := subnetpools.ListOpts{
+		TagsAny: strings.Join(tags, ","),
+	}
+
+	allPages, err := subnetpools.List(conn, listOpts).AllPages()
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+
+	allSubnetPools, err := subnetpools.ExtractSubnetPools(allPages)
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+	for _, subnetPool := range allSubnetPools {
+		logger.Debugf("Deleting Subnet Pool: %+v", subnetPool.ID)
+		err = subnetpools.Delete(conn, subnetPool.ID).ExtractErr()
+		if err != nil {
+			logger.Debugf("Deleting subnet pool failed: %v", err)
+			return false, nil
+		}
+	}
+	return len(allSubnetPools) == 0, nil
 }
