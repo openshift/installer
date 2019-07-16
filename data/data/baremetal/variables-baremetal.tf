@@ -8,9 +8,9 @@ variable "libvirt_uri" {
   description = "libvirt connection URI"
 }
 
-variable "os_image" {
+variable "bootstrap_os_image" {
   type        = string
-  description = "The URL of the OS disk image"
+  description = "The URL of the bootstrap OS disk image"
 }
 
 variable "external_bridge" {
