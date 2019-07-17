@@ -105,3 +105,7 @@ func getExtAPIServerURL(ic *types.InstallConfig) string {
 func getIntAPIServerURL(ic *types.InstallConfig) string {
 	return fmt.Sprintf("https://api-int.%s:6443", ic.ClusterDomain())
 }
+
+func getLoopbackAPIServerURL(ic *types.InstallConfig) string {
+	return fmt.Sprintf("https://localhost:6443")
+}

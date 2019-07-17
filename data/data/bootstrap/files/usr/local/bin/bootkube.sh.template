@@ -66,7 +66,7 @@ then
 	cp cvo-bootstrap/bootstrap/* bootstrap-manifests/
 	cp cvo-bootstrap/manifests/* manifests/
 	## FIXME: CVO should use `/etc/kubernetes/bootstrap-secrets/kubeconfig` instead
-	cp auth/kubeconfig /etc/kubernetes/kubeconfig
+	cp auth/kubeconfig-loopback /etc/kubernetes/kubeconfig
 
 	touch cvo-bootstrap.done
 fi
