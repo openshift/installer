@@ -9,8 +9,8 @@ IRONIC_INSPECTOR_IMAGE=${IRONIC_INSPECTOR_IMAGE:-"quay.io/metal3-io/ironic-inspe
 IPA_DOWNLOADER_IMAGE=${IPA_DOWNLOADER_IMAGE:-"quay.io/metal3-io/ironic-ipa-downloader:master"}
 COREOS_DOWNLOADER_IMAGE=${COREOS_DOWNLOADER_IMAGE:-"quay.io/openshift-metal3/rhcos-downloader:master"}
 
-# FIXME this should be provided by the installer
-RHCOS_IMAGE_URL="https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/ootpa/410.8.20190520.0"
+# This image is templated in via the installer pkg/asset/ignition/bootstrap/bootstrap.go
+RHCOS_BOOT_IMAGE_URL="{{.BootImage}}"
 
 # First we stop any previously started containers, because ExecStop only runs when the ExecStart process
 # e.g this script is still running, but we exit if *any* of the containers exits unexpectedly
@@ -74,7 +74,7 @@ podman run -d --net host --name ipa-downloader \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
 
 podman run -d --net host --name coreos-downloader \
-     -v $IRONIC_SHARED_VOLUME:/shared:z ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_IMAGE_URL
+     -v $IRONIC_SHARED_VOLUME:/shared:z ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_BOOT_IMAGE_URL
 
 # Wait for images to be downloaded/ready
 podman wait -i 1000 ipa-downloader
