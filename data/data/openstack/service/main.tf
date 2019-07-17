@@ -235,7 +235,7 @@ data "ignition_systemd_unit" "local_dns" {
 Description=Internal DNS serving the required OpenShift records
 
 [Service]
-ExecStart=/bin/podman run --rm -i -t -m 128m --net host --cap-add=NET_ADMIN -v /etc/coredns:/etc/coredns:Z openshift/origin-coredns:v4.0 -conf /etc/coredns/Corefile
+ExecStart=/bin/podman run --rm -i -t -m 128m --net host --cap-add=NET_ADMIN -v /etc/coredns:/etc/coredns:Z quay.io/openshift/origin-coredns:v4.0 -conf /etc/coredns/Corefile
 Restart=always
 RestartSec=10
 
