@@ -3,6 +3,7 @@ package types
 import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -48,6 +49,9 @@ type MachinePoolPlatform struct {
 	// Azure is the configuration used when installing on OpenStack.
 	Azure *azure.MachinePool `json:"azure,omitempty"`
 
+	// BareMetal is the configuration used when installing on bare metal.
+	BareMetal *baremetal.MachinePool `json:"baremetal,omitempty"`
+
 	// GCP is the configuration used when installing on GCP
 	GCP *gcp.MachinePool `json:"gcp,omitempty"`
 
@@ -72,6 +76,8 @@ func (p *MachinePoolPlatform) Name() string {
 		return aws.Name
 	case p.Azure != nil:
 		return azure.Name
+	case p.BareMetal != nil:
+		return baremetal.Name
 	case p.GCP != nil:
 		return gcp.Name
 	case p.Libvirt != nil:

@@ -1,0 +1,24 @@
+# This Dockerfile is a used by CI to publish an installer image
+# It builds an image containing only the openshift-install.
+
+FROM registry.svc.ci.openshift.org/openshift/release:golang-1.10 AS builder
+WORKDIR /go/src/github.com/openshift/installer
+COPY . .
+RUN TAGS="libvirt baremetal" hack/build.sh
+
+
+FROM registry.svc.ci.openshift.org/origin/4.1:base
+COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
+
+RUN yum install --setopt=tsflags=nodocs -y \
+    yum update -y && \
+    yum install --setopt=tsflags=nodocs -y \
+    libvirt-libs && \
+    yum clean all && rm -rf /var/cache/yum/*
+
+RUN mkdir /output && chown 1000:1000 /output
+USER 1000:1000
+ENV PATH /bin
+ENV HOME /output
+WORKDIR /output
+ENTRYPOINT ["/bin/openshift-install"]

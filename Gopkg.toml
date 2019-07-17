@@ -123,3 +123,12 @@ required = [
 [[constraint]]  
   name = "github.com/containers/image"
   version = "2.0.0"
+
+[[constraint]]
+  name = "github.com/metal3-io/cluster-api-provider-baremetal"
+  source = "https://github.com/openshift/cluster-api-provider-baremetal/pkg/apis"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/metal3-io/baremetal-operator"
+  source = "https://github.com/openshift/baremetal-operator"

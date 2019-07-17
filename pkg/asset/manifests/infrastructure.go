@@ -14,6 +14,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -84,6 +85,8 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		config.Status.PlatformStatus.Azure = &configv1.AzurePlatformStatus{
 			ResourceGroupName: fmt.Sprintf("%s-rg", clusterID.InfraID),
 		}
+	case baremetal.Name:
+		config.Status.PlatformStatus.Type = configv1.BareMetalPlatformType
 	case gcp.Name:
 		config.Status.PlatformStatus.Type = configv1.GCPPlatformType
 		config.Status.PlatformStatus.GCP = &configv1.GCPPlatformStatus{

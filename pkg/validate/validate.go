@@ -132,3 +132,26 @@ func URIWithProtocol(uri string, protocol string) error {
 	}
 	return nil
 }
+
+// IP validates if a string is a valid IP.
+func IP(ip string) error {
+	addr := net.ParseIP(ip)
+	if addr == nil {
+		return fmt.Errorf("'%s' is not a valid IP", ip)
+	}
+	return nil
+}
+
+// Interface validates if a string is a valid network interface
+func Interface(iface string) error {
+	if _, err := net.InterfaceByName(iface); err != nil {
+		return fmt.Errorf("%s is not a valid network interface: %s", iface, err)
+	}
+	return nil
+}
+
+// MAC validates that a value is a valid mac address
+func MAC(addr string) error {
+	_, err := net.ParseMAC(addr)
+	return err
+}

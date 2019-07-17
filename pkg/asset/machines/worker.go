@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
+	baremetalapi "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis"
+	baremetalprovider "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
 	gcpapi "github.com/openshift/cluster-api-provider-gcp/pkg/apis"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	libvirtapi "github.com/openshift/cluster-api-provider-libvirt/pkg/apis"
@@ -27,6 +29,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
+	"github.com/openshift/installer/pkg/asset/machines/baremetal"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
@@ -37,6 +40,7 @@ import (
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
+	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
@@ -89,6 +93,10 @@ func defaultOpenStackMachinePoolPlatform(flavor string) openstacktypes.MachinePo
 	return openstacktypes.MachinePool{
 		FlavorName: flavor,
 	}
+}
+
+func defaultBareMetalMachinePoolPlatform() baremetaltypes.MachinePool {
+	return baremetaltypes.MachinePool{}
 }
 
 // Worker generates the machinesets for `worker` machine pool.
@@ -191,6 +199,18 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
+		case baremetaltypes.Name:
+			mpool := defaultBareMetalMachinePoolPlatform()
+			mpool.Set(ic.Platform.BareMetal.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.BareMetal)
+			pool.Platform.BareMetal = &mpool
+			sets, err := baremetal.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data")
+			if err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects")
+			}
+			for _, set := range sets {
+				machineSets = append(machineSets, set)
+			}
 		case gcptypes.Name:
 			mpool := defaultGCPMachinePoolPlatform()
 			mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
@@ -235,7 +255,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
-
 		case nonetypes.Name, vspheretypes.Name:
 		default:
 			return fmt.Errorf("invalid Platform")
@@ -315,12 +334,14 @@ func (w *Worker) MachineSets() ([]machineapi.MachineSet, error) {
 	scheme := runtime.NewScheme()
 	awsapi.AddToScheme(scheme)
 	azureapi.AddToScheme(scheme)
+	baremetalapi.AddToScheme(scheme)
 	gcpapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		awsprovider.SchemeGroupVersion,
 		azureprovider.SchemeGroupVersion,
+		baremetalprovider.SchemeGroupVersion,
 		gcpprovider.SchemeGroupVersion,
 		libvirtprovider.SchemeGroupVersion,
 		openstackprovider.SchemeGroupVersion,

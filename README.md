@@ -3,7 +3,8 @@
 ## Supported Platforms
 
 * [AWS](docs/user/aws/README.md)
-* [Bare-metal](docs/user/metal/install_upi.md)
+* [Bare Metal (UPI)](docs/user/metal/install_upi.md)
+* [Bare Metal (IPI) (Experimental)](docs/user/metal/install_ipi.md)
 * [Libvirt with KVM](docs/dev/libvirt/README.md) (development only)
 * [OpenStack (experimental)](docs/user/openstack/README.md)
 * [vSphere](docs/user/vsphere/install_upi.md)

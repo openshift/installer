@@ -14,6 +14,12 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// CachedImage returns the location of the cached image.
+// FIXME: Exported for use by baremetal platform.
+func CachedImage(uri string) (string, error) {
+	return cachedImage(uri)
+}
+
 // cachedImage leaves non-file:// image URIs unalterered.
 // Other URIs are retrieved with a local cache at
 // $XDG_CACHE_HOME/openshift-install/libvirt [1].  This allows you to
