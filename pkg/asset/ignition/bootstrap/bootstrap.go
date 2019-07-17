@@ -45,6 +45,7 @@ type bootstrapTemplateData struct {
 	ReleaseImage string
 	Proxy        *configv1.ProxyStatus
 	Registries   []sysregistriesv2.Registry
+	RHCOSBaseURI string
 }
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
@@ -216,12 +217,26 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		}
 	}
 
+	var rhcosImageBaseURI string
+	if ri, ok := os.LookupEnv("OPENSHIFT_INSTALL_IMAGE_BASE_URI_OVERRIDE"); ok && ri != "" {
+		logrus.Warn("Found override for rhcosImageBaseURI. Please be warned, this is not advised")
+		rhcosImageBaseURI = ri
+	} else {
+		var err error
+		rhcosImageBaseURI, err = rhcos.BaseURI()
+		if err != nil {
+			return nil, err
+		}
+		logrus.Debugf("Using internal constant for release image base URI %s", rhcosImageBaseURI)
+	}
+
 	return &bootstrapTemplateData{
 		PullSecret:   installConfig.PullSecret,
 		ReleaseImage: releaseImage,
 		EtcdCluster:  strings.Join(etcdEndpoints, ","),
 		Proxy:        &proxy.Status,
 		Registries:   registries,
+		RHCOSBaseURI: rhcosImageBaseURI,
 	}, nil
 }
 
