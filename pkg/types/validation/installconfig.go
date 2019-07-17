@@ -284,7 +284,7 @@ func validateImageContentSources(groups []types.ImageContentSource, fldPath *fie
 				continue
 			}
 			if !dockerref.IsNameOnly(ref) {
-				allErrs = append(allErrs, field.Invalid(f.Index(sidx), source, "must be repository not a reference"))
+				allErrs = append(allErrs, field.Invalid(f.Index(sidx), source, "must be repository--not reference"))
 				continue
 			}
 		}
@@ -296,7 +296,7 @@ func validateImageContentSources(groups []types.ImageContentSource, fldPath *fie
 			jset := sets.NewString(groups[j].Sources...)
 			intset := iset.Intersection(jset)
 			if intset.Len() != 0 {
-				allErrs = append(allErrs, field.Invalid(fldPath.Index(i), groups[i], fmt.Sprintf("Overlapping sources other ImageContentSources is not allowed, overlapping sources found with %s: %s", fldPath.Index(j).String(), intset.List())))
+				allErrs = append(allErrs, field.Invalid(fldPath.Index(i), groups[i], fmt.Sprintf("all sources in ImageContentSources must be unique, overlapping sources found with %s: %s", fldPath.Index(j).String(), intset.List())))
 			}
 		}
 	}

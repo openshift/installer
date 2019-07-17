@@ -550,7 +550,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}}
 				return c
 			}(),
-			expectedError: `^imageContentSources\[0\].source\[0\]: Invalid value: "quay.io/ocp/release-x.y@sha256:397c867cc10bcc90cf05ae9b71dd3de6000535e27cb6c704d9f503879202582c": must be repository not a reference$`,
+			expectedError: `^imageContentSources\[0\].source\[0\]: Invalid value: "quay.io/ocp/release-x.y@sha256:397c867cc10bcc90cf05ae9b71dd3de6000535e27cb6c704d9f503879202582c": must be repository--not reference$`,
 		},
 		{
 			name: "release image source is not repository but reference by tag",
@@ -561,7 +561,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}}
 				return c
 			}(),
-			expectedError: `^imageContentSources\[0\].source\[0\]: Invalid value: "quay.io/ocp/release-x.y:latest": must be repository not a reference$`,
+			expectedError: `^imageContentSources\[0\].source\[0\]: Invalid value: "quay.io/ocp/release-x.y:latest": must be repository--not reference$`,
 		},
 		{
 			name: "valid release image source",
@@ -584,7 +584,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}}
 				return c
 			}(),
-			expectedError: `^imageContentSources\[0\]: Invalid value: types.ImageContentSource{Sources:\[\]string{"quay.io\/ocp\/release-x.y", "mirror.test\/ocp\/release-x.y"}}: Overlapping sources other ImageContentSources is not allowed, overlapping sources found with imageContentSources\[1\]: \[mirror.test\/ocp\/release-x.y\]$`,
+			expectedError: `^imageContentSources\[0\]: Invalid value: types.ImageContentSource{Sources:\[\]string{"quay.io\/ocp\/release-x.y", "mirror.test\/ocp\/release-x.y"}}: all sources in ImageContentSources must be unique, overlapping sources found with imageContentSources\[1\]: \[mirror.test\/ocp\/release-x.y\]$`,
 		},
 	}
 	for _, tc := range cases {
