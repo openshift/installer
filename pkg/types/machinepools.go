@@ -45,7 +45,7 @@ type MachinePoolPlatform struct {
 	// AWS is the configuration used when installing on AWS.
 	AWS *aws.MachinePool `json:"aws,omitempty"`
 
-	// Azure is the configuration used when installing on OpenStack.
+	// Azure is the configuration used when installing on Azure.
 	Azure *azure.MachinePool `json:"azure,omitempty"`
 
 	// GCP is the configuration used when installing on GCP
