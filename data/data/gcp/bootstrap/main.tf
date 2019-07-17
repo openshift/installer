@@ -21,7 +21,7 @@ data "ignition_config" "redirect" {
 }
 
 resource "google_compute_firewall" "bootstrap_ingress_ssh" {
-  name    = "${var.cluster_id}-bootstrap-ingress-ssh"
+  name    = "${var.cluster_id}-bootstrap-in-ssh"
   network = var.network
 
   allow {
