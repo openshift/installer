@@ -6,7 +6,7 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 
 	"github.com/openshift/installer/pkg/types/azure/defaults"
-	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1alpha1"
+	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 )
 
 // Auth is the collection of credentials that will be used by terrform.
