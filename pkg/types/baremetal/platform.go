@@ -33,10 +33,10 @@ type Platform struct {
 	// Default is qemu:///system
 	LibvirtURI string `json:"libvirtURI,omitempty"`
 
-	// IronicURI is the identifier for the Ironic connection.  It must be
-	// reachable from the host where the installer is run.
+	// BootstrapProvisioningIP is the IP used on the bootstrap VM to
+	// bring up provisioning services.
 	// +optional
-	IronicURI string `json:"ironicURI,omitempty"`
+	BootstrapProvisioningIP string `json:"bootstrapProvisioningIP,omitempty"`
 
 	// External bridge is used for external communication.
 	// +optional

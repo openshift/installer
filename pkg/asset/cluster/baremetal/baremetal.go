@@ -10,7 +10,7 @@ import (
 // Metadata converts an install configuration to bare metal metadata.
 func Metadata(config *types.InstallConfig) *baremetal.Metadata {
 	return &baremetal.Metadata{
-		LibvirtURI: config.Platform.BareMetal.LibvirtURI,
-		IronicURI:  config.Platform.BareMetal.IronicURI,
+		LibvirtURI:              config.Platform.BareMetal.LibvirtURI,
+		BootstrapProvisioningIP: config.Platform.BareMetal.BootstrapProvisioningIP,
 	}
 }
