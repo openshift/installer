@@ -114,7 +114,9 @@ func runGatherBootstrapCmd(directory string) error {
 func logGatherBootstrap(bootstrap string, port int, masters []string, directory string) error {
 	logrus.Info("Pulling debug logs from the bootstrap machine")
 	client, err := ssh.NewClient("core", fmt.Sprintf("%s:%d", bootstrap, port), gatherBootstrapOpts.sshKeys)
-	if err != nil {
+	if err != nil && len(gatherBootstrapOpts.sshKeys) == 0 {
+		return errors.Wrap(err, "failed to create SSH client, ensure the proper ssh key is in your keyring or specify with --key")
+	} else if err != nil {
 		return errors.Wrap(err, "failed to create SSH client")
 	}
 	if err := ssh.Run(client, fmt.Sprintf("/usr/local/bin/installer-gather.sh %s", strings.Join(masters, " "))); err != nil {
