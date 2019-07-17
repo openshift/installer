@@ -27,6 +27,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -46,6 +47,7 @@ type bootstrapTemplateData struct {
 	ReleaseImage          string
 	Proxy                 *configv1.ProxyStatus
 	Registries            []sysregistriesv2.Registry
+	BootImage             string
 }
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
@@ -109,6 +111,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&tls.RootCA{},
 		&tls.ServiceAccountKeyPair{},
 		&releaseimage.Image{},
+		new(rhcos.Image),
 	}
 }
 
@@ -117,9 +120,10 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	proxy := &manifests.Proxy{}
 	releaseImage := &releaseimage.Image{}
-	dependencies.Get(installConfig, proxy, releaseImage)
+	rhcosImage := new(rhcos.Image)
+	dependencies.Get(installConfig, proxy, releaseImage, rhcosImage)
 
-	templateData, err := a.getTemplateData(installConfig.Config, releaseImage.PullSpec, installConfig.Config.ImageContentSources, proxy.Config)
+	templateData, err := a.getTemplateData(installConfig.Config, releaseImage.PullSpec, installConfig.Config.ImageContentSources, proxy.Config, rhcosImage)
 
 	if err != nil {
 		return errors.Wrap(err, "failed to get bootstrap templates")
@@ -195,7 +199,7 @@ func (a *Bootstrap) Files() []*asset.File {
 }
 
 // getTemplateData returns the data to use to execute bootstrap templates.
-func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseImage string, imageSources []types.ImageContentSource, proxy *configv1.Proxy) (*bootstrapTemplateData, error) {
+func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseImage string, imageSources []types.ImageContentSource, proxy *configv1.Proxy, rhcosImage *rhcos.Image) (*bootstrapTemplateData, error) {
 	etcdEndpoints := make([]string, *installConfig.ControlPlane.Replicas)
 
 	for i := range etcdEndpoints {
@@ -224,6 +228,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		EtcdCluster:           strings.Join(etcdEndpoints, ","),
 		Proxy:                 &proxy.Status,
 		Registries:            registries,
+		BootImage:             string(*rhcosImage),
 	}, nil
 }
 
