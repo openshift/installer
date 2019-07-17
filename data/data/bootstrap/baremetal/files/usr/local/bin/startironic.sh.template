@@ -70,10 +70,16 @@ podman run -d --net host --privileged --name httpd \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 
+# Set CACHEURL to the default route, so we try to consume any images cached on the host
+# running the VM (dev-scripts configures a cache here), if none is found then the
+# downloader containers just skip and download from the internet location
+CACHEURL="http://$(ip r | grep default | head -n1 | awk '{print $3}')/images"
 podman run -d --net host --name ipa-downloader \
+     --env CACHEURL=${CACHEURL} \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
 
 podman run -d --net host --name coreos-downloader \
+     --env CACHEURL=${CACHEURL} \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_BOOT_IMAGE_URL
 
 # Wait for images to be downloaded/ready

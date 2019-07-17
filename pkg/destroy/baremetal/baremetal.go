@@ -13,9 +13,9 @@ import (
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
 type ClusterUninstaller struct {
-	LibvirtURI string
-	IronicURI  string
-	Logger     logrus.FieldLogger
+	LibvirtURI              string
+	BootstrapProvisioningIP string
+	Logger                  logrus.FieldLogger
 }
 
 // Run is the entrypoint to start the uninstall process.
@@ -36,8 +36,8 @@ func (o *ClusterUninstaller) Run() error {
 // New returns bare metal Uninstaller from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	return &ClusterUninstaller{
-		LibvirtURI: metadata.ClusterPlatformMetadata.BareMetal.LibvirtURI,
-		IronicURI:  metadata.ClusterPlatformMetadata.BareMetal.IronicURI,
-		Logger:     logger,
+		LibvirtURI:              metadata.ClusterPlatformMetadata.BareMetal.LibvirtURI,
+		BootstrapProvisioningIP: metadata.ClusterPlatformMetadata.BareMetal.BootstrapProvisioningIP,
+		Logger:                  logger,
 	}, nil
 }

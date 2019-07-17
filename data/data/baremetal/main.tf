@@ -3,7 +3,7 @@ provider "libvirt" {
 }
 
 provider "ironic" {
-  url          = var.ironic_uri
+  url          = "http://${var.bootstrap_provisioning_ip}:6385/v1"
   microversion = "1.52"
   timeout      = 1500
 }
