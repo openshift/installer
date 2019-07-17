@@ -21,6 +21,11 @@ MACHINE_CONFIG_OSCONTENT=$(podman run --quiet --rm ${release} image machine-os-c
 MACHINE_CONFIG_ETCD_IMAGE=$(podman run --quiet --rm ${release} image etcd)
 MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(podman run --quiet --rm ${release} image kube-client-agent)
 MACHINE_CONFIG_INFRA_IMAGE=$(podman run --quiet --rm ${release} image pod)
+MACHINE_CONFIG_KEEPALIVED_IMAGE=$(podman run --quiet --rm ${release} image keepalived-ipfailover)
+MACHINE_CONFIG_COREDNS_IMAGE=$(podman run --quiet --rm ${release} image coredns)
+MACHINE_CONFIG_MDNS_PUBLISHER_IMAGE=$(podman run --quiet --rm ${release} image mdns-publisher)
+MACHINE_CONFIG_HAPROXY_IMAGE=$(podman run --quiet --rm ${release} image haproxy-router)
+MACHINE_CONFIG_BAREMETAL_RUNTIMECFG_IMAGE=$(podman run --quiet --rm ${release} image baremetal-runtimecfg)
 
 KUBE_ETCD_SIGNER_SERVER_IMAGE=$(podman run --quiet --rm ${release} image kube-etcd-signer-server)
 
@@ -193,7 +198,12 @@ then
 			--machine-config-operator-image=${MACHINE_CONFIG_OPERATOR_IMAGE} \
 			--machine-config-oscontent-image=${MACHINE_CONFIG_OSCONTENT} \
 			--infra-image=${MACHINE_CONFIG_INFRA_IMAGE} \
-			--cloud-config-file=/assets/manifests/cloud-provider-config.yaml
+			--cloud-config-file=/assets/manifests/cloud-provider-config.yaml \
+			--keepalived-image=${MACHINE_CONFIG_KEEPALIVED_IMAGE} \
+			--coredns-image=${MACHINE_CONFIG_COREDNS_IMAGE} \
+			--mdns-publisher-image=${MACHINE_CONFIG_MDNS_PUBLISHER_IMAGE} \
+			--haproxy-image=${MACHINE_CONFIG_HAPROXY_IMAGE} \
+			--baremetal-runtimecfg-image=${MACHINE_CONFIG_BAREMETAL_RUNTIMECFG_IMAGE}
 
 	# Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to
 	# 1. read the controller config rendered by MachineConfigOperator
