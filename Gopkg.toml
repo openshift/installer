@@ -100,9 +100,9 @@ required = [
   source = "https://github.com/openshift/cluster-api-provider-openstack.git"
 
 [[constraint]]
-  branch = "master"
+  branch = "api"
   name = "sigs.k8s.io/cluster-api-provider-azure"
-  source = "https://github.com/openshift/cluster-api-provider-azure.git"
+  source = "https://github.com/enxebre/cluster-api-provider-azure.git"
 
 [[constraint]]
   name = "github.com/pkg/sftp"

@@ -1212,16 +1212,17 @@
   source = "https://github.com/openshift/cluster-api-provider-aws.git"
 
 [[projects]]
-  branch = "master"
-  digest = "1:c48a5a0e15e64c111f435e1db4aef7c48ceec1ca4f96f311c9eadcf525e36443"
+  branch = "api"
+  digest = "1:856becd1d89cf1c04b4187e245746cdaa7cbccbf982c410b8ae22fad52692c20"
   name = "sigs.k8s.io/cluster-api-provider-azure"
   packages = [
     "pkg/apis",
     "pkg/apis/azureprovider/v1alpha1",
+    "pkg/apis/azureprovider/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "b0bf44fb4ba34bc210571e9bc8961ee9fdf2aa4a"
-  source = "https://github.com/openshift/cluster-api-provider-azure.git"
+  revision = "5bb0c5bdf43b8c11843fd767eb1d4ac73f250280"
+  source = "https://github.com/enxebre/cluster-api-provider-azure.git"
 
 [[projects]]
   branch = "master"
@@ -1366,7 +1367,7 @@
     "sigs.k8s.io/cluster-api-provider-aws/pkg/apis",
     "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1",
     "sigs.k8s.io/cluster-api-provider-azure/pkg/apis",
-    "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1alpha1",
+    "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1",
     "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis",
     "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1",
   ]
