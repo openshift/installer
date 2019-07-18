@@ -24,13 +24,13 @@ The design is based on the assumption that all flows of using multiple sources/r
 ```go
 type InstallConfig struct {
     // ImageContentSources lists sources/repositories for the release-image content.
-    // No two ImageContentSource in the list can include the same repository. Each ImageContentSource must be a disjoint set from the rest.
     ImageContentSources []ImageContentSource `json:"imageContentSources"`
 }
 
 // ImageContentSource defines a list of sources/repositories that can be used to pull content.
 type ImageContentSource struct {
-    Sources []string `json:"Sources"`
+    Source  string   `json:"source"`
+    Mirrors []string `json:"mirrors"`
 }
 ```
 
@@ -39,10 +39,12 @@ If the release-image `q.io/ocp/release-x.y@sha256:abc` which has references to t
 ```yaml
 ...
 imageContentSources:
-- sources:
+- source: q.io/ocp/release-x.y
+  mirrors:
   - local.registry.com/ocp/release-x.y
-  - q.io/ocp/release-x.y
-  - q.io/openshift/x.y
+- source: q.io/openshift/x.y
+  mirrors:
+  - local.registry.com/ocp/release-x.y
 ...
 ```
 
@@ -55,10 +57,12 @@ Using the same `install-config.yaml` from above, the `ImageContentSourcePolicy` 
 ```yaml
 ...
 repositoryDigestMirrors:
-- sources:
+- source: q.io/ocp/release-x.y
+  mirrors:
   - local.registry.com/ocp/release-x.y
-  - q.io/ocp/release-x.y
-  - q.io/openshift/x.y
+- source: q.io/openshift/x.y
+  mirrors:
+  - local.registry.com/ocp/release-x.y
 ...
 ```
 
@@ -74,30 +78,11 @@ For example, our `install-config.yaml` will result in:
 
 ```toml
 [[registry]]
-location = "local.registry.com/ocp/release"
-mirror-by-digest-only = true
-
-[[registry.mirror]]
-location = "local.registry.com/ocp/release"
-
-[[registry.mirror]]
-location = "q.io/ocp/release-x.y"
-
-[[registry.mirror]]
-location = "q.io/openshift/x.y"
-
-[[registry]]
 location = "q.io/ocp/release-x.y"
 mirror-by-digest-only = true
 
 [[registry.mirror]]
 location = "local.registry.com/ocp/release"
-
-[[registry.mirror]]
-location = "q.io/ocp/release-x.y"
-
-[[registry.mirror]]
-location = "q.io/openshift/x.y"
 
 [[registry]]
 location = "q.io/openshift/x.y"
@@ -105,12 +90,6 @@ mirror-by-digest-only = true
 
 [[registry.mirror]]
 location = "local.registry.com/ocp/release"
-
-[[registry.mirror]]
-location = "q.io/ocp/release-x.y"
-
-[[registry.mirror]]
-location = "q.io/openshift/x.y"
 ```
 
 ### oc adm release mirror
@@ -124,11 +103,13 @@ Release Image q.io/ocp/release-x.y@sha256:abcd was successfully mirrored to loca
 
 Following section can be added to the install-config.yaml to create a cluster using new repository:
 imageContentSources:
-- sources:
+- source: q.io/ocp/release-x.y
+  mirrors:
   - local.registry.com/ocp/release-x.y
-  - q.io/ocp/release-x.y
-  - q.io/openshift/x.y
+- source: q.io/openshift/x.y
+  mirrors:
+  - local.registry.com/ocp/release-x.y
 ```
 
-[repository-digest-mirrors]: https://github.com/openshift/api/blob/de5ca909c7322bb8d06fa5a9e5604491b373da52/operator/v1alpha1/types_image_content_source_policy.go#L50
+[repository-digest-mirrors]: https://github.com/openshift/api/blob/9525304a0adb725ab4a4a54539a1a6bf6cc343d3/operator/v1alpha1/types_image_content_source_policy.go#L56
 [registry-containers-registries-conf]: https://github.com/containers/image/blob/v2.0.0/docs/containers-registries.conf.5.md#remapping-and-mirroring-registries
