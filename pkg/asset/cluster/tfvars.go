@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/user"
 
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
@@ -315,14 +314,9 @@ func injectInstallInfo(bootstrap []byte) (string, error) {
 		return "", errors.Wrap(err, "failed to unmarshal bootstrap Ignition config")
 	}
 
-	var invoker string
-	if env, ok := os.LookupEnv("OPENSHIFT_INSTALL_INVOKER"); ok {
+	invoker := "user"
+	if env := os.Getenv("OPENSHIFT_INSTALL_INVOKER"); env != "" {
 		invoker = env
-	} else if user, err := user.Current(); err == nil {
-		invoker = user.Username
-	} else {
-		logrus.Warnf("Unable to determine username: %v", err)
-		invoker = "<unknown>"
 	}
 
 	config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/opt/openshift/manifests/openshift-install.yml", "root", 0644, fmt.Sprintf(`---
