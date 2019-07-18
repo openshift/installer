@@ -48,7 +48,7 @@ resource "google_dns_record_set" "etcd_a_bootstrap" {
   ttl          = "60"
   managed_zone = google_dns_managed_zone.int.name
   name         = "etcd-${count.index}.${var.cluster_domain}."
-  rrdatas      = [ google_compute_instance.bootstrap[count.index].network_interface.0.network_ip ]
+  rrdatas      = [google_compute_instance.bootstrap[count.index].network_interface.0.network_ip]
 }
 
 resource "google_dns_record_set" "etcd_cluster" {
