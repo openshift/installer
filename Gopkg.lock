@@ -242,14 +242,6 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:4304cca260ab815326ca42d9c28fb843342748267034c51963e13f5e54e727d1"
-  name = "github.com/evanphx/json-patch"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "026c730a0dcc5d11f93f1cf1cc65b01247ea7b6f"
-  version = "v4.5.0"
-
-[[projects]]
   digest = "1:81466b4218bf6adddac2572a30ac733a9255919bc2f470b4827a317bd4ee1756"
   name = "github.com/ghodss/yaml"
   packages = ["."]
@@ -580,7 +572,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5c381a383597b30812e96eaaacda9489d4e221f3d94a2711dcb1761677b504bb"
+  digest = "1:3cb73adfd74fbb206bbc1d7a8a3772ce0427f7d85ac0832b887950a7bc9a313d"
   name = "github.com/openshift/api"
   packages = [
     "config/v1",
@@ -588,7 +580,7 @@
     "route/v1",
   ]
   pruneopts = "NUT"
-  revision = "25a4eebe16c8bcb53e28605f8d5b91df392daeba"
+  revision = "9525304a0adb725ab4a4a54539a1a6bf6cc343d3"
 
 [[projects]]
   branch = "master"
@@ -607,12 +599,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a0fe86cf6f3fca907a3aa850cd5f54e73fd2e915cc73367097c28408bfbc12ac"
+  digest = "1:5449643b322144dad676e6c0efa0e554fc7b7552b5665468a48d8669b570ad1b"
   name = "github.com/openshift/cloud-credential-operator"
   packages = [
     "pkg/apis/cloudcredential/v1",
     "pkg/aws",
-    "pkg/controller/utils",
     "version",
   ]
   pruneopts = "NUT"
@@ -1150,11 +1141,10 @@
   version = "kubernetes-1.12.2"
 
 [[projects]]
-  digest = "1:d4077b20d8ba3b64ff57af190a5aee42167d7cd6f3788ad0d67bdc7b427f4697"
+  digest = "1:08027a07c9a263deb5f51fcc801996e7d453b1ed1318c6c5eb7affd084bff3a9"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
-    "dynamic",
     "kubernetes",
     "kubernetes/scheme",
     "kubernetes/typed/admissionregistration/v1alpha1",
@@ -1195,7 +1185,6 @@
     "plugin/pkg/client/auth/exec",
     "rest",
     "rest/watch",
-    "restmapper",
     "tools/auth",
     "tools/cache",
     "tools/clientcmd",
@@ -1272,13 +1261,9 @@
 
 [[projects]]
   branch = "release-0.2"
-  digest = "1:44615562b7b4f5f638f9e56d0f51b787fdf0e24ad0dd90177d77d9cee0d0af27"
+  digest = "1:c4e8f6509ee8cec911985a812ed3f9cc024404acc45ac613fa103f735cf3222a"
   name = "sigs.k8s.io/controller-runtime"
-  packages = [
-    "pkg/client",
-    "pkg/client/apiutil",
-    "pkg/scheme",
-  ]
+  packages = ["pkg/scheme"]
   pruneopts = "NUT"
   revision = "f60c87ec713cb8da81257228530605457ebf7220"
 
