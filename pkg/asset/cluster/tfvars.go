@@ -251,6 +251,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.OpenStack.APIVIP,
 			installConfig.Config.Platform.OpenStack.DNSVIP,
 			installConfig.Config.Platform.OpenStack.TrunkSupport,
+			installConfig.Config.Platform.OpenStack.OctaviaSupport,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

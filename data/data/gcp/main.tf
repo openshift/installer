@@ -22,7 +22,7 @@ module "bootstrap" {
   ignition     = var.ignition_bootstrap
   network      = module.network.network
   subnet       = module.network.master_subnet
-  zone         = module.network.zones[0]
+  zone         = var.gcp_master_availability_zones[0]
 
   labels = local.labels
 }
@@ -37,7 +37,7 @@ module "master" {
   ignition       = var.ignition_master
   network        = module.network.network
   subnet         = module.network.master_subnet
-  zones          = module.network.zones
+  zones          = distinct(var.gcp_master_availability_zones)
 
   labels = local.labels
 }

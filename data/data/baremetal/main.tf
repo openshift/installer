@@ -20,7 +20,6 @@ module "bootstrap" {
 module "masters" {
   source = "./masters"
 
-  ironic_uri     = var.ironic_uri
   master_count   = var.master_count
   ignition       = var.ignition_master
   hosts          = var.hosts

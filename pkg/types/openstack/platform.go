@@ -39,4 +39,8 @@ type Platform struct {
 	// TrunkSupport
 	// Whether OpenStack ports can be trunked
 	TrunkSupport string `json:"trunkSupport"`
+
+	// OctaviaSupport
+	// Whether OpenStack has Octavia support
+	OctaviaSupport string `json:"octaviaSupport"`
 }
