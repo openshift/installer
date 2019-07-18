@@ -32,7 +32,7 @@ resource "google_compute_firewall" "master_ingress_https" {
     ports    = ["6443"]
   }
 
-  source_ranges = [var.network_cidr]
+  source_ranges = ["0.0.0.0/0"]
   target_tags   = ["${var.cluster_id}-master"]
 }
 
