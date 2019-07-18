@@ -36,6 +36,15 @@ resource "azurerm_dns_a_record" "etcd_a_nodes" {
   records             = [var.etcd_ip_addresses[count.index]]
 }
 
+resource "azurerm_dns_a_record" "etcd_a_bootstrap" {
+  count               = var.etcd_pivot ? 1 : 0
+  name                = "bootstrap"
+  zone_name           = var.private_dns_zone_name
+  resource_group_name = var.resource_group_name
+  ttl                 = 60
+  records             = [ azurerm_public_ip.bootstrap_public_ip.private_ip_address ]
+}
+
 resource "azurerm_dns_srv_record" "etcd_cluster" {
   name                = "_etcd-server-ssl._tcp"
   zone_name           = var.private_dns_zone_name
@@ -43,7 +52,7 @@ resource "azurerm_dns_srv_record" "etcd_cluster" {
   ttl                 = 60
 
   dynamic "record" {
-    for_each = azurerm_dns_a_record.etcd_a_nodes.*.name
+    for_each = concat(azurerm_dns_a_record.etcd_a_nodes.*.name, azurerm_dns_a_record.etcd_a_bootstrap.*.name)
     iterator = name
     content {
       target   = "${name.value}.${var.private_dns_zone_name}"
