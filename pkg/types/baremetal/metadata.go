@@ -4,4 +4,5 @@ package baremetal
 type Metadata struct {
 	LibvirtURI              string `json:"libvirtURI"`
 	BootstrapProvisioningIP string `json:"bootstrapProvisioningIP"`
+	ClusterProvisioningIP   string `json:"provisioningHostIP"`
 }

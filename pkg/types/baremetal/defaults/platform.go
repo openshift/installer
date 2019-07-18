@@ -12,6 +12,7 @@ import (
 const (
 	LibvirtURI              = "qemu:///system"
 	BootstrapProvisioningIP = "172.22.0.2"
+	ClusterProvisioningIP   = "172.22.0.3"
 	ExternalBridge          = "baremetal"
 	ProvisioningBridge      = "provisioning"
 	HardwareProfile         = "default"
@@ -27,6 +28,10 @@ func SetPlatformDefaults(p *baremetal.Platform, c *types.InstallConfig) {
 
 	if p.BootstrapProvisioningIP == "" {
 		p.BootstrapProvisioningIP = BootstrapProvisioningIP
+	}
+
+	if p.ClusterProvisioningIP == "" {
+		p.ClusterProvisioningIP = ClusterProvisioningIP
 	}
 
 	if p.ExternalBridge == "" {
