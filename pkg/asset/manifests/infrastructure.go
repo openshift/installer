@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -23,8 +24,9 @@ import (
 )
 
 var (
-	infraCrdFilename = filepath.Join(manifestDir, "cluster-infrastructure-01-crd.yaml")
-	infraCfgFilename = filepath.Join(manifestDir, "cluster-infrastructure-02-config.yml")
+	infraCrdFilename           = filepath.Join(manifestDir, "cluster-infrastructure-01-crd.yaml")
+	infraCfgFilename           = filepath.Join(manifestDir, "cluster-infrastructure-02-config.yml")
+	cloudControllerUIDFilename = filepath.Join(manifestDir, "cloud-controller-uid-config.yml")
 )
 
 // Infrastructure generates the cluster-infrastructure-*.yml files.
@@ -93,6 +95,15 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			ProjectID: installConfig.Config.Platform.GCP.ProjectID,
 			Region:    installConfig.Config.Platform.GCP.Region,
 		}
+		uidConfigMap := gcpmanifests.CloudControllerUID(clusterID.InfraID)
+		content, err := yaml.Marshal(uidConfigMap)
+		if err != nil {
+			return errors.Wrapf(err, "cannot marshal GCP cloud controller UID config map")
+		}
+		i.FileList = append(i.FileList, &asset.File{
+			Filename: cloudControllerUIDFilename,
+			Data:     content,
+		})
 	case libvirt.Name:
 		config.Status.PlatformStatus.Type = configv1.LibvirtPlatformType
 	case none.Name:
