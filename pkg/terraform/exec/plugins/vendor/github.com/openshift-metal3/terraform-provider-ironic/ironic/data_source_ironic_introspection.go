@@ -67,9 +67,9 @@ func dataSourceIronicIntrospection() *schema.Resource {
 }
 
 func dataSourceIronicIntrospectionRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(Clients).Inspector
-	if client == nil {
-		return fmt.Errorf("inspector endpoint was not defined")
+	client, err := meta.(*Clients).GetInspectorClient()
+	if err != nil {
+		return err
 	}
 
 	uuid := d.Get("uuid").(string)

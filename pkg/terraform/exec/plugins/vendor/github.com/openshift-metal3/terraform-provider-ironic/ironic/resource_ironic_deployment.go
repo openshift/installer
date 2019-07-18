@@ -59,7 +59,10 @@ func resourceDeployment() *schema.Resource {
 
 // Create an deployment, including driving Ironic's state machine
 func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(Clients).Ironic
+	client, err := meta.(*Clients).GetIronicClient()
+	if err != nil {
+		return err
+	}
 
 	// Reload the resource before returning
 	defer resourceDeploymentRead(d, meta)
@@ -94,7 +97,10 @@ func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 
 // Read the deployment's data from Ironic
 func resourceDeploymentRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(Clients).Ironic
+	client, err := meta.(*Clients).GetIronicClient()
+	if err != nil {
+		return err
+	}
 
 	// Ensure node exists first
 	id := d.Get("node_uuid").(string)
@@ -111,6 +117,10 @@ func resourceDeploymentRead(d *schema.ResourceData, meta interface{}) error {
 
 // Delete an deployment from Ironic - this cleans the node and returns it's state to 'available'
 func resourceDeploymentDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(Clients).Ironic
+	client, err := meta.(*Clients).GetIronicClient()
+	if err != nil {
+		return err
+	}
+
 	return ChangeProvisionStateToTarget(client, d.Id(), "deleted", nil)
 }

@@ -4,7 +4,7 @@ package plugins
 
 import (
 	"github.com/hashicorp/terraform/plugin"
-	"github.com/openshift-metalkube/terraform-provider-ironic/ironic"
+	"github.com/openshift-metal3/terraform-provider-ironic/ironic"
 )
 
 func init() {
