@@ -13,28 +13,34 @@ type Auth struct {
 }
 
 type config struct {
-	Auth                  `json:",inline"`
-	Region                string `json:"gcp_region,omitempty"`
-	BootstrapInstanceType string `json:"gcp_bootstrap_instance_type,omitempty"`
-	MasterInstanceType    string `json:"gcp_master_instance_type,omitempty"`
-	ImageID               string `json:"gcp_image_id,omitempty"`
-	VolumeType            string `json:"gcp_master_root_volume_type,omitempty"`
-	VolumeSize            int64  `json:"gcp_master_root_volume_size,omitempty"`
-	PublicZoneName        string `json:"gcp_public_dns_zone_name,omitempty"`
+	Auth                    `json:",inline"`
+	Region                  string   `json:"gcp_region,omitempty"`
+	BootstrapInstanceType   string   `json:"gcp_bootstrap_instance_type,omitempty"`
+	MasterInstanceType      string   `json:"gcp_master_instance_type,omitempty"`
+	MasterAvailabilityZones []string `json:"gcp_master_availability_zones"`
+	ImageID                 string   `json:"gcp_image_id,omitempty"`
+	VolumeType              string   `json:"gcp_master_root_volume_type,omitempty"`
+	VolumeSize              int64    `json:"gcp_master_root_volume_size,omitempty"`
+	PublicZoneName          string   `json:"gcp_public_dns_zone_name,omitempty"`
 }
 
 // TFVars generates gcp-specific Terraform variables launching the cluster.
 func TFVars(auth Auth, masterConfigs []*gcpprovider.GCPMachineProviderSpec, publicZoneName string) ([]byte, error) {
 	masterConfig := masterConfigs[0]
+	masterAvailabilityZones := make([]string, len(masterConfigs))
+	for i, c := range masterConfigs {
+		masterAvailabilityZones[i] = c.Zone
+	}
 	cfg := &config{
-		Auth:                  auth,
-		Region:                masterConfig.Region,
-		BootstrapInstanceType: masterConfig.MachineType,
-		MasterInstanceType:    masterConfig.MachineType,
-		VolumeType:            masterConfig.Disks[0].Type,
-		VolumeSize:            masterConfig.Disks[0].SizeGb,
-		ImageID:               masterConfig.Disks[0].Image,
-		PublicZoneName:        publicZoneName,
+		Auth:                    auth,
+		Region:                  masterConfig.Region,
+		BootstrapInstanceType:   masterConfig.MachineType,
+		MasterInstanceType:      masterConfig.MachineType,
+		MasterAvailabilityZones: masterAvailabilityZones,
+		VolumeType:              masterConfig.Disks[0].Type,
+		VolumeSize:              masterConfig.Disks[0].SizeGb,
+		ImageID:                 masterConfig.Disks[0].Image,
+		PublicZoneName:          publicZoneName,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

@@ -65,3 +65,8 @@ variable "gcp_public_dns_zone_name" {
   type = string
   description = "The name of the public DNS zone to use for this cluster"
 }
+
+variable "gcp_master_availability_zones" {
+  type = list(string)
+  description = "The availability zones in which to create the masters. The length of this list must match master_count."
+}
