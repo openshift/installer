@@ -20,6 +20,10 @@ data "ignition_config" "redirect" {
   }
 }
 
+resource "google_compute_address" "bootstrap" {
+  name = "${var.cluster_id}-bootstrap-public-ip"
+}
+
 resource "google_compute_firewall" "bootstrap_ingress_ssh" {
   name    = "${var.cluster_id}-bootstrap-in-ssh"
   network = var.network
@@ -52,6 +56,7 @@ resource "google_compute_instance" "bootstrap" {
     subnetwork = var.subnet
 
     access_config {
+      nat_ip = "${google_compute_address.bootstrap.address}"
     }
   }
 
