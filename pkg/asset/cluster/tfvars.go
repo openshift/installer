@@ -249,6 +249,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.OpenStack.ExternalNetwork,
 			installConfig.Config.Platform.OpenStack.LbFloatingIP,
 			installConfig.Config.Platform.OpenStack.TrunkSupport,
+			installConfig.Config.Platform.OpenStack.OctaviaSupport,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

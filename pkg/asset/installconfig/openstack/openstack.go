@@ -138,11 +138,25 @@ func Platform() (*openstack.Platform, error) {
 		trunkSupport = "1"
 	}
 
+	serviceCatalog, err := validValuesFetcher.GetServiceCatalog(cloud)
+	if err != nil {
+		return nil, err
+	}
+	sort.Strings(serviceCatalog)
+	i = sort.SearchStrings(serviceCatalog, "octavia")
+	var octaviaSupport string
+	if i == len(serviceCatalog) || serviceCatalog[i] != "octavia" {
+		octaviaSupport = "0"
+	} else {
+		octaviaSupport = "1"
+	}
+
 	return &openstack.Platform{
 		Region:          region,
 		Cloud:           cloud,
 		ExternalNetwork: extNet,
 		FlavorName:      flavor,
 		TrunkSupport:    trunkSupport,
+		OctaviaSupport:  octaviaSupport,
 	}, nil
 }

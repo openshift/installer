@@ -4,6 +4,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/common/extensions"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/regions"
+	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	netext "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/utils/openstack/clientconfig"
@@ -146,5 +147,50 @@ func (f realValidValuesFetcher) GetNetworkExtensionsAliases(cloud string) ([]str
 		extAliases[i] = ext.Alias
 	}
 
-	return extAliases, err
+	return extAliases, nil
+}
+
+func (f realValidValuesFetcher) GetServiceCatalog(cloud string) ([]string, error) {
+	opts := &clientconfig.ClientOpts{
+		Cloud: cloud,
+	}
+
+	conn, err := clientconfig.NewServiceClient("identity", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	cloudConfig, err := clientconfig.GetCloudFromYAML(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	domainName := cloudConfig.AuthInfo.DomainName
+	if domainName == "" {
+		domainName = "default"
+	}
+
+	scope := tokens.Scope{
+		ProjectName: cloudConfig.AuthInfo.ProjectName,
+		DomainName:  domainName,
+	}
+
+	authOptions := tokens.AuthOptions{
+		Scope:      scope,
+		Username:   cloudConfig.AuthInfo.Username,
+		Password:   cloudConfig.AuthInfo.Password,
+		DomainName: domainName,
+	}
+
+	allServices, err := tokens.Create(conn, &authOptions).ExtractServiceCatalog()
+	if err != nil {
+		return nil, err
+	}
+
+	serviceCatalogNames := make([]string, len(allServices.Entries))
+	for i, service := range allServices.Entries {
+		serviceCatalogNames[i] = service.Name
+	}
+
+	return serviceCatalogNames, nil
 }

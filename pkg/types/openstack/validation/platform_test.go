@@ -23,14 +23,15 @@ func validPlatform() *openstack.Platform {
 
 func TestValidatePlatform(t *testing.T) {
 	cases := []struct {
-		name       string
-		platform   *openstack.Platform
-		noClouds   bool
-		noRegions  bool
-		noNetworks bool
-		noFlavors  bool
-		noNetExts  bool
-		valid      bool
+		name             string
+		platform         *openstack.Platform
+		noClouds         bool
+		noRegions        bool
+		noNetworks       bool
+		noFlavors        bool
+		noNetExts        bool
+		noServiceCatalog bool
+		valid            bool
 	}{
 		{
 			name:     "minimal",
@@ -103,6 +104,12 @@ func TestValidatePlatform(t *testing.T) {
 			noNetExts: true,
 			valid:     false,
 		},
+		{
+			name:             "service catalog fetch failure",
+			platform:         validPlatform(),
+			noServiceCatalog: true,
+			valid:            false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -151,6 +158,15 @@ func TestValidatePlatform(t *testing.T) {
 			} else {
 				fetcher.EXPECT().GetNetworkExtensionsAliases(tc.platform.Cloud).
 					Return([]string{"trunk"}, nil).
+					MaxTimes(1)
+			}
+			if tc.noServiceCatalog {
+				fetcher.EXPECT().GetServiceCatalog(tc.platform.Cloud).
+					Return(nil, errors.New("no service catalog")).
+					MaxTimes(1)
+			} else {
+				fetcher.EXPECT().GetServiceCatalog(tc.platform.Cloud).
+					Return([]string{"octavia"}, nil).
 					MaxTimes(1)
 			}
 
