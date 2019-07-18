@@ -80,7 +80,7 @@ resource "aws_route53_record" "etcd_bootstrap_nodes" {
   zone_id = aws_route53_zone.int.zone_id
   name    = "etcd-bootstrap.${var.cluster_domain}"
   # The IP address here is not actually used by the system, only the name matters
-  records = [aws_instance.bootstrap.private_ip]
+  records = [module.master.ip_addresses[count.index]]
 }
 
 resource "aws_route53_record" "etcd_cluster" {
