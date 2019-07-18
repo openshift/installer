@@ -25,15 +25,18 @@ if ! podman inspect "$COREDNS_IMAGE" &>/dev/null; then
     podman pull "$COREDNS_IMAGE"
 fi
 MATCHES="$(sudo podman ps -a --format "{{.Names}}" | awk '/coredns$/ {print $0}')"
-if [[ -z "$MATCHES" ]]; then
-    /usr/bin/podman create \
-        --name coredns \
-        --volume /etc/coredns:/etc/coredns:z \
-        --network host \
-        --env CLUSTER_DOMAIN="$CLUSTER_DOMAIN" \
-        --env CLUSTER_NAME="$CLUSTER_NAME" \
-        --env NUM_DNS_MEMBERS="$NUM_DNS_MEMBERS" \
-        --env API_VIP="$API_VIP" \
-        "${COREDNS_IMAGE}" \
-            --conf /etc/coredns/Corefile
+if [[ ! -z "$MATCHES" ]]; then
+    # Remove old pod, or you can get storage for container removed
+    # errors on restart if the container exits unexpectedly
+    podman rm -f coredns
 fi
+/usr/bin/podman create --rm \
+    --name coredns \
+    --volume /etc/coredns:/etc/coredns:z \
+    --network host \
+    --env CLUSTER_DOMAIN="$CLUSTER_DOMAIN" \
+    --env CLUSTER_NAME="$CLUSTER_NAME" \
+    --env NUM_DNS_MEMBERS="$NUM_DNS_MEMBERS" \
+    --env API_VIP="$API_VIP" \
+    "${COREDNS_IMAGE}" \
+        --conf /etc/coredns/Corefile

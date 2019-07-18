@@ -40,16 +40,19 @@ export DNS_VRID
 export NET_MASK
 envsubst < /etc/keepalived/keepalived.conf.tmpl | sudo tee /etc/keepalived/keepalived.conf
 
-MATCHES="$(sudo podman ps -a --format "{{.Names}}" | awk '/keepalived$/ {print $0}')"
-if [[ -z "$MATCHES" ]]; then
-    # TODO(bnemec): Figure out how to run with less perms
-    podman create \
-            --name keepalived \
-            --volume /etc/keepalived:/etc/keepalived:z \
-            --network=host \
-            --privileged \
-            --cap-add=ALL \
-            "${KEEPALIVED_IMAGE}" \
-            /usr/sbin/keepalived -f /etc/keepalived/keepalived.conf \
-                --dont-fork -D -l -P
+MATCHES="$(podman ps -a --format "{{.Names}}" | awk '/keepalived$/ {print $0}')"
+if [[ ! -z "$MATCHES" ]]; then
+    # Remove old pod, or you can get storage for container removed
+    # errors on restart if the container exits unexpectedly
+    podman rm -f keepalived
 fi
+# TODO(bnemec): Figure out how to run with less perms
+podman create --rm \
+        --name keepalived \
+        --volume /etc/keepalived:/etc/keepalived:z \
+        --network=host \
+        --privileged \
+        --cap-add=ALL \
+        "${KEEPALIVED_IMAGE}" \
+        /usr/sbin/keepalived -f /etc/keepalived/keepalived.conf \
+            --dont-fork -D -l -P
