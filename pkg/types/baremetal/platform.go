@@ -33,6 +33,12 @@ type Platform struct {
 	// Default is qemu:///system
 	LibvirtURI string `json:"libvirtURI,omitempty"`
 
+	// ClusterProvisioningIP is the IP on the provisioning host private/provisioning
+	// network for the host running the installer, can be used to cache some
+	// downloaded content e.g RHCOS/IPA images
+	// +optional
+	ClusterProvisioningIP string `json:"provisioningHostIP,omitempty"`
+
 	// BootstrapProvisioningIP is the IP used on the bootstrap VM to
 	// bring up provisioning services.
 	// +optional
