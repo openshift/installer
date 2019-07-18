@@ -201,19 +201,18 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 	}
 
 	registries := []sysregistriesv2.Registry{}
-	for _, group := range imageSources {
-		if len(group.Sources) <= 1 {
+	for _, group := range mergedMirrorSets(imageSources) {
+		if len(group.Mirrors) == 0 {
 			continue
 		}
-		for i := 0; i < len(group.Sources); i++ {
-			registry := sysregistriesv2.Registry{}
-			registry.Endpoint.Location = group.Sources[i]
-			registry.MirrorByDigestOnly = true
-			for j := 0; j < len(group.Sources); j++ {
-				registry.Mirrors = append(registry.Mirrors, sysregistriesv2.Endpoint{Location: group.Sources[j]})
-			}
-			registries = append(registries, registry)
+
+		registry := sysregistriesv2.Registry{}
+		registry.Endpoint.Location = group.Source
+		registry.MirrorByDigestOnly = true
+		for _, mirror := range group.Mirrors {
+			registry.Mirrors = append(registry.Mirrors, sysregistriesv2.Endpoint{Location: mirror})
 		}
+		registries = append(registries, registry)
 	}
 
 	return &bootstrapTemplateData{
