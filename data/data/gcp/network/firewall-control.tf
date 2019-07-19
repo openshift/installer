@@ -36,16 +36,16 @@ resource "google_compute_firewall" "master_ingress_https" {
   target_tags   = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "master_ingress_https_from_health_checks" {
-  name    = "${var.cluster_id}-master-in-https-from-health-checks"
+resource "google_compute_firewall" "master_ingress_from_health_checks" {
+  name    = "${var.cluster_id}-master-in-from-health-checks"
   network = google_compute_network.cluster_network.self_link
 
   allow {
     protocol = "tcp"
-    ports    = ["6443", "6080"]
+    ports    = ["6080", "22624"]
   }
 
-  source_ranges = ["35.191.0.0/16", "130.211.0.0/22", "209.85.152.0/22", "209.85.204.0/22"]
+  source_ranges = ["35.191.0.0/16", "130.211.0.0/22"]
   target_tags   = ["${var.cluster_id}-master"]
 }
 
@@ -58,7 +58,7 @@ resource "google_compute_firewall" "master_ingress_mcs" {
     ports    = ["22623"]
   }
 
-  source_ranges = [var.network_cidr]
+  source_ranges = [var.network_cidr, google_compute_address.master_nat_ip.address, google_compute_address.worker_nat_ip.address]
   target_tags   = ["${var.cluster_id}-master"]
 }
 
