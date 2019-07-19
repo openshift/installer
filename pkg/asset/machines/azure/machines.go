@@ -12,7 +12,7 @@ import (
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
-	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1alpha1"
+	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 )
 
 const (
@@ -86,7 +86,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 	}
 	return &azureprovider.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "azureprovider.k8s.io/v1alpha1",
+			APIVersion: "azureproviderconfig.openshift.io/v1beta1",
 			Kind:       "AzureMachineProviderSpec",
 		},
 		UserDataSecret:    &corev1.SecretReference{Name: userDataSecret},
