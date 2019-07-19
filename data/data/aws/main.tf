@@ -69,6 +69,7 @@ module "dns" {
   etcd_pivot               = var.etcd_pivot
   etcd_count               = var.master_count
   etcd_ip_addresses        = flatten(module.masters.ip_addresses)
+  bootstrap_ip_addresses   = flatten(module.bootstrap.ip_addresses)
   tags                     = local.tags
   vpc_id                   = module.vpc.vpc_id
 }

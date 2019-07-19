@@ -1,4 +1,4 @@
 output "ip_addresses" {
-  value = aws_network_interface.bootstrap.*.private_ips
+  value = [aws_instance.bootstrap.private_ip]
 }
 

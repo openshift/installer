@@ -21,6 +21,12 @@ variable "etcd_ip_addresses" {
   default     = []
 }
 
+variable "bootstrap_ip_addresses" {
+  description = "List of string IPs for boostrap machines."
+  type        = list(string)
+  default     = []
+}
+
 variable "base_domain" {
   description = "The base domain used for public records."
   type        = string
