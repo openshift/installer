@@ -45,10 +45,6 @@ func (o *ClusterUninstaller) getInstanceNameAndZone(instanceURL string) (string,
 	return "", ""
 }
 
-func (o *ClusterUninstaller) listInstanceGroups() ([]nameAndZone, error) {
-	return o.listInstanceGroupsWithFilter(o.clusterIDFilter())
-}
-
 func (o *ClusterUninstaller) listInstanceGroupsWithFilter(filter string) ([]nameAndZone, error) {
 	o.Logger.Debugf("Listing instance groups")
 	result := []nameAndZone{}
@@ -106,22 +102,6 @@ func (o *ClusterUninstaller) deleteInstanceGroup(ig nameAndZone) error {
 	_, err := o.computeSvc.InstanceGroups.Delete(o.ProjectID, ig.zone, ig.name).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
 		return errors.Wrapf(err, "failed to delete instance group %s in zone %s", ig.name, ig.zone)
-	}
-	return nil
-}
-
-// destroyInstanceGroups removes any instance group with a name that starts with
-// the cluster's infra ID.
-func (o *ClusterUninstaller) destroyInstanceGroups() error {
-	instanceGroups, err := o.listInstanceGroups()
-	if err != nil {
-		return err
-	}
-	for _, ig := range instanceGroups {
-		err := o.deleteInstanceGroup(ig)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
