@@ -4,7 +4,7 @@ variable "cluster_domain" {
 }
 
 variable "etcd_pivot" {
-  type = string
+  type    = string
   default = "false"
 
   description = "(internal)(temporary) Should OpenShift pivot an etcd cluster from the boostrap node."
