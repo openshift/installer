@@ -243,6 +243,7 @@ podman run \
 	--servcrt=/opt/openshift/tls/kube-apiserver-internal-lb-server.crt \
 	--servkey=/opt/openshift/tls/kube-apiserver-internal-lb-server.key \
 	--address=0.0.0.0:6443 \
+	--insecure-health-check-address=0.0.0.0:6080 \
 	--csrdir=/tmp \
 	--peercertdur=26280h \
 	--servercertdur=26280h \

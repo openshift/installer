@@ -5,7 +5,7 @@ resource "google_compute_address" "cluster_public_ip" {
 resource "google_compute_http_health_check" "api_external" {
   name = "${var.cluster_id}-api-external"
 
-  port         = 6443
+  port         = 6080
   request_path = "/readyz"
 }
 

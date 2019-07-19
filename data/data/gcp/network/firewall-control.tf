@@ -32,7 +32,7 @@ resource "google_compute_firewall" "master_ingress_https" {
     ports    = ["6443"]
   }
 
-  source_ranges = [var.network_cidr]
+  source_ranges = ["0.0.0.0/0"]
   target_tags   = ["${var.cluster_id}-master"]
 }
 
@@ -42,7 +42,7 @@ resource "google_compute_firewall" "master_ingress_https_from_health_checks" {
 
   allow {
     protocol = "tcp"
-    ports    = ["6443"]
+    ports    = ["6443", "6080"]
   }
 
   source_ranges = ["35.191.0.0/16", "130.211.0.0/22", "209.85.152.0/22", "209.85.204.0/22"]
