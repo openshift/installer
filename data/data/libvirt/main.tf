@@ -72,6 +72,7 @@ resource "libvirt_network" "net" {
         data.libvirt_network_dns_host_template.masters.*.rendered,
         data.libvirt_network_dns_host_template.masters_int.*.rendered,
         data.libvirt_network_dns_host_template.etcds.*.rendered,
+        data.libvirt_network_dns_host_template.etcd_bootstrap.*.rendered,
       )
       content {
         hostname = hosts.value.hostname
@@ -141,6 +142,12 @@ data "libvirt_network_dns_host_template" "etcds" {
   count    = var.master_count
   ip       = var.libvirt_master_ips[count.index]
   hostname = "etcd-${count.index}.${var.cluster_domain}"
+}
+
+data "libvirt_network_dns_host_template" "etcd_bootstrap" {
+  count    = var.etcd_pivot ? 1 : 0
+  ip       = var.libvirt_bootstrap_ip
+  hostname = "etcd-bootstrap.${var.cluster_domain}"
 }
 
 data "libvirt_network_dns_srv_template" "etcd_cluster" {
