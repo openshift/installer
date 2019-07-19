@@ -56,7 +56,7 @@ module "network" {
   worker_subnet_cidr = local.worker_subnet_cidr
   network_cidr       = var.machine_cidr
 
-  bootstrap_lb        = var.gcp_bootstrap_enabled && var.gcp_bootstrap_lb
+  bootstrap_lb        = var.gcp_bootstrap_enabled
   bootstrap_instances = module.bootstrap.bootstrap_instances
 
   master_instances = module.master.master_instances
