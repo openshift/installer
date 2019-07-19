@@ -56,6 +56,8 @@ purposes:
     server is appropriate for this environment.
     * `api.<cluster-name>.<base-domain>` - pointing to the API VIP
     * `*.apps.<cluster-name>.<base-domain>` - pointing to the Ingress VIP
+    * `ns1.<cluster-name>.<base-domain>` - pointing to the DNS VIP. *Note: work
+      is underway to remove this required DNS entry.*
 
 * **NIC #2 - Provisioning Network**
   * A private, non-routed network, used for PXE based provisioning.
