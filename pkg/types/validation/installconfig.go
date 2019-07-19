@@ -56,6 +56,11 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 			allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, err.Error()))
 		}
 	}
+	if c.AdditionalTrustBundle != "" {
+		if err := validate.CABundle(c.AdditionalTrustBundle); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("additionalTrustBundle"), c.AdditionalTrustBundle, err.Error()))
+		}
+	}
 	nameErr := validate.ClusterName(c.ObjectMeta.Name)
 	if nameErr != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), c.ObjectMeta.Name, nameErr.Error()))

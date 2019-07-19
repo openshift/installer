@@ -2,7 +2,9 @@
 package validate
 
 import (
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"net"
@@ -21,6 +23,25 @@ var (
 	}()
 )
 
+// CABundle checks if the given string contains valid certificate(s) and returns an error if not.
+func CABundle(v string) error {
+	rest := []byte(v)
+	for {
+		var block *pem.Block
+		block, rest = pem.Decode(rest)
+		if block == nil {
+			return fmt.Errorf("invalid block")
+		}
+		_, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return err
+		}
+		if len(rest) == 0 {
+			break
+		}
+	}
+	return nil
+}
 func validateSubdomain(v string) error {
 	validationMessages := validation.IsDNS1123Subdomain(v)
 	if len(validationMessages) == 0 {
