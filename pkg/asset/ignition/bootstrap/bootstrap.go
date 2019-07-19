@@ -197,10 +197,15 @@ func (a *Bootstrap) Files() []*asset.File {
 
 // getTemplateData returns the data to use to execute bootstrap templates.
 func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseImage string, imageSources []types.ImageContentSource, proxy *configv1.Proxy) (*bootstrapTemplateData, error) {
-	etcdEndpoints := make([]string, *installConfig.ControlPlane.Replicas)
+	var etcdEndpoints []string
 
-	for i := range etcdEndpoints {
-		etcdEndpoints[i] = fmt.Sprintf("https://etcd-%d.%s:2379", i, installConfig.ClusterDomain())
+	if etcd_pivot, ok := os.LookupEnv("OPENSHIFT_INSTALL_ETCD_ENABLE_PIVOT"); ok && etcd_pivot != "" {
+		etcdEndpoints = []string{fmt.Sprintf("https://etcd-bootstrap.%s:2379", installConfig.ClusterDomain())}
+	} else {
+		etcdEndpoints = make([]string, *installConfig.ControlPlane.Replicas)
+		for i := range etcdEndpoints {
+			etcdEndpoints[i] = fmt.Sprintf("https://etcd-%d.%s:2379", i, installConfig.ClusterDomain())
+		}
 	}
 
 	registries := []sysregistriesv2.Registry{}
