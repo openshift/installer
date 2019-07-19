@@ -81,7 +81,6 @@ type InstallConfig struct {
 	Proxy *Proxy `json:"proxy,omitempty"`
 
 	// ImageContentSources lists sources/repositories for the release-image content.
-	// No two ImageContentSource in the list can include the same repository. Each ImageContentSource must be a disjoint set from the rest.
 	ImageContentSources []ImageContentSource `json:"imageContentSources,omitempty"`
 }
 
@@ -226,5 +225,10 @@ type Proxy struct {
 
 // ImageContentSource defines a list of sources/repositories that can be used to pull content.
 type ImageContentSource struct {
-	Sources []string `json:"sources,omitempty"`
+	// Source is the repository that users refer to, e.g. in image pull specifications.
+	Source string `json:"source"`
+
+	// Mirrors is one or more repositories that may also contain the same images.
+	// +optional
+	Mirrors []string `json:"mirrors,omitempty"`
 }

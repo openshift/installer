@@ -535,56 +535,55 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.ImageContentSources = []types.ImageContentSource{{
-					Sources: []string{"ocp/release-x.y"},
+					Source: "ocp/release-x.y",
 				}}
 				return c
 			}(),
-			expectedError: `^imageContentSources\[0\].source\[0\]: Invalid value: "ocp/release-x.y": failed to parse: repository name must be canonical$`,
+			expectedError: `^imageContentSources\[0\]\.source: Invalid value: "ocp/release-x\.y": failed to parse: repository name must be canonical$`,
+		},
+		{
+			name: "release image source's mirror is not canonical",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ImageContentSources = []types.ImageContentSource{{
+					Source:  "q.io/ocp/release-x.y",
+					Mirrors: []string{"ocp/openshift-x.y"},
+				}}
+				return c
+			}(),
+			expectedError: `^imageContentSources\[0\]\.mirrors\[0\]: Invalid value: "ocp/openshift-x\.y": failed to parse: repository name must be canonical$`,
 		},
 		{
 			name: "release image source is not repository but reference by digest",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.ImageContentSources = []types.ImageContentSource{{
-					Sources: []string{"quay.io/ocp/release-x.y@sha256:397c867cc10bcc90cf05ae9b71dd3de6000535e27cb6c704d9f503879202582c"},
+					Source: "quay.io/ocp/release-x.y@sha256:397c867cc10bcc90cf05ae9b71dd3de6000535e27cb6c704d9f503879202582c",
 				}}
 				return c
 			}(),
-			expectedError: `^imageContentSources\[0\].source\[0\]: Invalid value: "quay.io/ocp/release-x.y@sha256:397c867cc10bcc90cf05ae9b71dd3de6000535e27cb6c704d9f503879202582c": must be repository--not reference$`,
+			expectedError: `^imageContentSources\[0\]\.source: Invalid value: "quay\.io/ocp/release-x\.y@sha256:397c867cc10bcc90cf05ae9b71dd3de6000535e27cb6c704d9f503879202582c": must be repository--not reference$`,
 		},
 		{
 			name: "release image source is not repository but reference by tag",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.ImageContentSources = []types.ImageContentSource{{
-					Sources: []string{"quay.io/ocp/release-x.y:latest"},
+					Source: "quay.io/ocp/release-x.y:latest",
 				}}
 				return c
 			}(),
-			expectedError: `^imageContentSources\[0\].source\[0\]: Invalid value: "quay.io/ocp/release-x.y:latest": must be repository--not reference$`,
+			expectedError: `^imageContentSources\[0\]\.source: Invalid value: "quay\.io/ocp/release-x\.y:latest": must be repository--not reference$`,
 		},
 		{
 			name: "valid release image source",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.ImageContentSources = []types.ImageContentSource{{
-					Sources: []string{"quay.io/ocp/release-x.y"},
+					Source: "quay.io/ocp/release-x.y",
 				}}
 				return c
 			}(),
-		},
-		{
-			name: "overlapping sources between ImageContentSources",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.ImageContentSources = []types.ImageContentSource{{
-					Sources: []string{"quay.io/ocp/release-x.y", "mirror.test/ocp/release-x.y"},
-				}, {
-					Sources: []string{"quay.io/rhhi/release-x.y", "mirror.test/ocp/release-x.y"},
-				}}
-				return c
-			}(),
-			expectedError: `^imageContentSources\[0\]: Invalid value: types.ImageContentSource{Sources:\[\]string{"quay.io\/ocp\/release-x.y", "mirror.test\/ocp\/release-x.y"}}: all sources in ImageContentSources must be unique, overlapping sources found with imageContentSources\[1\]: \[mirror.test\/ocp\/release-x.y\]$`,
 		},
 	}
 	for _, tc := range cases {

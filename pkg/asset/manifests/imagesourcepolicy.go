@@ -54,7 +54,7 @@ func (p *ImageContentSourcePolicy) Generate(dependencies asset.Parents) error {
 				// not namespaced
 			},
 			Spec: operatorv1alpha1.ImageContentSourcePolicySpec{
-				RepositoryDigestMirrors: []operatorv1alpha1.RepositoryDigestMirrors{{Sources: group.Sources}},
+				RepositoryDigestMirrors: []operatorv1alpha1.RepositoryDigestMirrors{{Source: group.Source, Mirrors: group.Mirrors}},
 			},
 		})
 	}

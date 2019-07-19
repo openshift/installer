@@ -9,7 +9,6 @@ import (
 	dockerref "github.com/containers/image/docker/reference"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -283,29 +282,28 @@ func validateProxy(p *types.Proxy, fldPath *field.Path) field.ErrorList {
 func validateImageContentSources(groups []types.ImageContentSource, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for gidx, group := range groups {
-		for sidx, source := range group.Sources {
-			f := fldPath.Index(gidx).Child("source")
-			ref, err := dockerref.ParseNamed(source)
-			if err != nil {
-				allErrs = append(allErrs, field.Invalid(f.Index(sidx), source, errors.Wrap(err, "failed to parse").Error()))
-				continue
-			}
-			if !dockerref.IsNameOnly(ref) {
-				allErrs = append(allErrs, field.Invalid(f.Index(sidx), source, "must be repository--not reference"))
-				continue
-			}
+		groupf := fldPath.Index(gidx)
+		if err := validateNamedRepository(group.Source); err != nil {
+			allErrs = append(allErrs, field.Invalid(groupf.Child("source"), group.Source, err.Error()))
 		}
-	}
 
-	for i := 0; i < len(groups); i++ {
-		iset := sets.NewString(groups[i].Sources...)
-		for j := i + 1; j < len(groups); j++ {
-			jset := sets.NewString(groups[j].Sources...)
-			intset := iset.Intersection(jset)
-			if intset.Len() != 0 {
-				allErrs = append(allErrs, field.Invalid(fldPath.Index(i), groups[i], fmt.Sprintf("all sources in ImageContentSources must be unique, overlapping sources found with %s: %s", fldPath.Index(j).String(), intset.List())))
+		for midx, mirror := range group.Mirrors {
+			if err := validateNamedRepository(mirror); err != nil {
+				allErrs = append(allErrs, field.Invalid(groupf.Child("mirrors").Index(midx), mirror, err.Error()))
+				continue
 			}
 		}
 	}
 	return allErrs
+}
+
+func validateNamedRepository(r string) error {
+	ref, err := dockerref.ParseNamed(r)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse")
+	}
+	if !dockerref.IsNameOnly(ref) {
+		return errors.New("must be repository--not reference")
+	}
+	return nil
 }
