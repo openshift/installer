@@ -107,6 +107,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		Subnet:          fmt.Sprintf("%s-%s-subnet", clusterID, role),
 		ManagedIdentity: fmt.Sprintf("%s-identity", clusterID),
 		Vnet:            fmt.Sprintf("%s-vnet", clusterID),
+		ResourceGroup:   fmt.Sprintf("%s-rg", clusterID),
 	}, nil
 }
 
