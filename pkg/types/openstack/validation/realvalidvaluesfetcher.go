@@ -167,7 +167,7 @@ func (f realValidValuesFetcher) GetServiceCatalog(cloud string) ([]string, error
 
 	domainName := cloudConfig.AuthInfo.DomainName
 	if domainName == "" {
-		domainName = "default"
+		domainName = cloudConfig.AuthInfo.UserDomainName
 	}
 
 	scope := tokens.Scope{
