@@ -56,12 +56,10 @@ module "network" {
   worker_subnet_cidr = local.worker_subnet_cidr
   network_cidr       = var.machine_cidr
 
-  bootstrap_lb              = var.gcp_bootstrap_enabled && var.gcp_bootstrap_lb
-  bootstrap_instances       = module.bootstrap.bootstrap_instances
-  bootstrap_instance_groups = module.bootstrap.bootstrap_instance_groups
+  bootstrap_lb        = var.gcp_bootstrap_enabled
+  bootstrap_instances = module.bootstrap.bootstrap_instances
 
-  master_instances       = module.master.master_instances
-  master_instance_groups = module.master.master_instance_groups
+  master_instances = module.master.master_instances
 }
 
 module "dns" {
@@ -74,5 +72,4 @@ module "dns" {
   etcd_count           = var.master_count
   cluster_domain       = var.cluster_domain
   api_external_lb_ip   = module.network.cluster_public_ip
-  api_internal_lb_ip   = module.network.cluster_private_ip
 }

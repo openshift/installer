@@ -21,10 +21,15 @@ resource "google_compute_router" "router" {
   network = google_compute_network.cluster_network.self_link
 }
 
+resource "google_compute_address" "master_nat_ip" {
+  name = "${var.cluster_id}-master-nat-ip"
+}
+
 resource "google_compute_router_nat" "master_nat" {
   name                               = "${var.cluster_id}-nat-master"
   router                             = google_compute_router.router.name
-  nat_ip_allocate_option             = "AUTO_ONLY"
+  nat_ip_allocate_option             = "MANUAL_ONLY"
+  nat_ips                            = [google_compute_address.master_nat_ip.self_link]
   source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
 
   subnetwork {
@@ -33,10 +38,15 @@ resource "google_compute_router_nat" "master_nat" {
   }
 }
 
+resource "google_compute_address" "worker_nat_ip" {
+  name = "${var.cluster_id}-worker-nat-ip"
+}
+
 resource "google_compute_router_nat" "worker_nat" {
   name                               = "${var.cluster_id}-nat-worker"
   router                             = google_compute_router.router.name
-  nat_ip_allocate_option             = "AUTO_ONLY"
+  nat_ip_allocate_option             = "MANUAL_ONLY"
+  nat_ips                            = [google_compute_address.worker_nat_ip.self_link]
   source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
 
   subnetwork {

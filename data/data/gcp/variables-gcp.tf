@@ -26,13 +26,7 @@ EOF
 
 variable "gcp_bootstrap_enabled" {
   type = bool
-  description = "Setting this to false allows the bootstrap instance and instance_group to be destroyed."
-  default = true
-}
-
-variable "gcp_bootstrap_lb" {
-  type = bool
-  description = "Setting this to false allows the bootstrap resources to be removed from the cluster load balancers."
+  description = "Setting this to false allows the bootstrap resources to be disabled."
   default = true
 }
 
