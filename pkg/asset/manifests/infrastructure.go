@@ -89,6 +89,11 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		}
 	case baremetal.Name:
 		config.Status.PlatformStatus.Type = configv1.BareMetalPlatformType
+		config.Status.PlatformStatus.BareMetal = &configv1.BareMetalPlatformStatus{
+			APIServerInternalIP: installConfig.Config.Platform.BareMetal.APIVIP,
+			NodeDNSIP:           installConfig.Config.Platform.BareMetal.DNSVIP,
+			IngressIP:           installConfig.Config.Platform.BareMetal.IngressVIP,
+		}
 	case gcp.Name:
 		config.Status.PlatformStatus.Type = configv1.GCPPlatformType
 		config.Status.PlatformStatus.GCP = &configv1.GCPPlatformStatus{

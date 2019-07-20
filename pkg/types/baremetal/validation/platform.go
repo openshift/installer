@@ -40,5 +40,9 @@ func ValidatePlatform(p *baremetal.Platform, fldPath *field.Path) field.ErrorLis
 	if err := validate.IP(p.IngressVIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
 	}
+
+	if err := validate.IP(p.DNSVIP); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsVIP"), p.DNSVIP, err.Error()))
+	}
 	return allErrs
 }
