@@ -85,6 +85,7 @@ func GetBaseDomain(project string) (string, error) {
 	if len(publicZones) == 0 {
 		return "", errors.New("no domain names found in project")
 	}
+	sort.Strings(publicZones)
 
 	var domain string
 	if err := survey.AskOne(&survey.Select{
