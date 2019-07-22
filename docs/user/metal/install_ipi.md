@@ -139,6 +139,7 @@ controlPlane:
 platform:
   baremetal:
     apiVIP: 192.168.111.5
+    ingressVIP: 192.168.111.4
     hosts:
       - name: openshift-master-0
         role: master
