@@ -19,6 +19,10 @@ type metadata struct {
 			Path   string `json:"path"`
 			SHA256 string `json:"sha256"`
 		} `json:"qemu"`
+		OpenStack struct {
+			Path   string `json:"path"`
+			SHA256 string `json:"sha256"`
+		} `json:"openstack"`
 	} `json:"images"`
 	OSTreeVersion string `json:"ostree-version"`
 }
