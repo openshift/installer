@@ -43,9 +43,14 @@ func (o *ClusterUninstaller) deleteFirewall(name string) error {
 	o.Logger.Debugf("Deleting firewall rule %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	_, err := o.computeSvc.Firewalls.Delete(o.ProjectID, name).Context(ctx).Do()
+	op, err := o.computeSvc.Firewalls.Delete(o.ProjectID, name).RequestId(o.requestID("firewall", name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("firewall", name)
 		return errors.Wrapf(err, "failed to delete firewall %s", name)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("firewall", name)
+		return errors.Errorf("failed to delete firewall %s with erorr: %s", name, op.HttpErrorMessage)
 	}
 	return nil
 }
@@ -57,13 +62,20 @@ func (o *ClusterUninstaller) destroyFirewalls() error {
 	if err != nil {
 		return err
 	}
+	found := make([]string, 0, len(firewalls))
+	errs := []error{}
 	for _, firewall := range firewalls {
-		err = o.deleteFirewall(firewall)
+		found = append(found, firewall)
+		err := o.deleteFirewall(firewall)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	deleted := o.setPendingItems("firewall", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted firewall %s", item)
+	}
+	return aggregateError(errs, len(found))
 }
 
 func (o *ClusterUninstaller) listAddresses() ([]string, error) {
@@ -89,9 +101,14 @@ func (o *ClusterUninstaller) deleteAddress(name string) error {
 	o.Logger.Debugf("Deleting address %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	_, err := o.computeSvc.Addresses.Delete(o.ProjectID, o.Region, name).Context(ctx).Do()
+	op, err := o.computeSvc.Addresses.Delete(o.ProjectID, o.Region, name).RequestId(o.requestID("address", name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("address", name)
 		return errors.Wrapf(err, "failed to delete address %s", name)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("address", name)
+		return errors.Errorf("failed to delete address %s with erorr: %s", name, op.HttpErrorMessage)
 	}
 	return nil
 }
@@ -103,13 +120,20 @@ func (o *ClusterUninstaller) destroyAddresses() error {
 	if err != nil {
 		return err
 	}
+	found := make([]string, 0, len(addresses))
+	errs := []error{}
 	for _, address := range addresses {
-		err = o.deleteAddress(address)
+		found = append(found, address)
+		err := o.deleteAddress(address)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	deleted := o.setPendingItems("address", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted address %s", item)
+	}
+	return aggregateError(errs, len(found))
 }
 
 func (o *ClusterUninstaller) listForwardingRules() ([]string, error) {
@@ -135,9 +159,14 @@ func (o *ClusterUninstaller) deleteForwardingRule(name string) error {
 	o.Logger.Debugf("Deleting forwarding rule %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	_, err := o.computeSvc.ForwardingRules.Delete(o.ProjectID, o.Region, name).Context(ctx).Do()
+	op, err := o.computeSvc.ForwardingRules.Delete(o.ProjectID, o.Region, name).RequestId(o.requestID("forwardingrule", name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("forwardingrule", name)
 		return errors.Wrapf(err, "failed to delete forwarding rule %s", name)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("forwardingrule", name)
+		return errors.Errorf("failed to delete forwarding rule %s with erorr: %s", name, op.HttpErrorMessage)
 	}
 	return nil
 }
@@ -149,13 +178,20 @@ func (o *ClusterUninstaller) destroyForwardingRules() error {
 	if err != nil {
 		return err
 	}
+	found := make([]string, 0, len(forwardingRules))
+	errs := []error{}
 	for _, forwardingRule := range forwardingRules {
-		err = o.deleteForwardingRule(forwardingRule)
+		found = append(found, forwardingRule)
+		err := o.deleteForwardingRule(forwardingRule)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	deleted := o.setPendingItems("forwardingrule", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted forwarding rule %s", item)
+	}
+	return aggregateError(errs, len(found))
 }
 
 func (o *ClusterUninstaller) listBackendServices() ([]string, error) {
@@ -194,9 +230,14 @@ func (o *ClusterUninstaller) deleteBackendService(name string) error {
 	o.Logger.Debugf("Deleting backend service %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	_, err := o.computeSvc.RegionBackendServices.Delete(o.ProjectID, o.Region, name).Context(ctx).Do()
+	op, err := o.computeSvc.RegionBackendServices.Delete(o.ProjectID, o.Region, name).RequestId(o.requestID("backendservice", name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("backendservice", name)
 		return errors.Wrapf(err, "failed to delete backend service %s", name)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("backendservice", name)
+		return errors.Errorf("failed to delete backend service %s with erorr: %s", name, op.HttpErrorMessage)
 	}
 	return nil
 }
@@ -208,13 +249,20 @@ func (o *ClusterUninstaller) destroyBackendServices() error {
 	if err != nil {
 		return err
 	}
+	found := make([]string, 0, len(backendServices))
+	errs := []error{}
 	for _, backendService := range backendServices {
-		err = o.deleteBackendService(backendService)
+		found = append(found, backendService)
+		err := o.deleteBackendService(backendService)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	deleted := o.setPendingItems("backendservice", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted backend service %s", item)
+	}
+	return aggregateError(errs, len(found))
 }
 
 func (o *ClusterUninstaller) listHealthChecks() ([]string, error) {
@@ -240,9 +288,14 @@ func (o *ClusterUninstaller) deleteHealthCheck(name string) error {
 	o.Logger.Debugf("Deleting health check %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	_, err := o.computeSvc.HealthChecks.Delete(o.ProjectID, name).Context(ctx).Do()
+	op, err := o.computeSvc.HealthChecks.Delete(o.ProjectID, name).RequestId(o.requestID("healthcheck", name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("healthcheck", name)
 		return errors.Wrapf(err, "failed to delete health check %s", name)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("healthcheck", name)
+		return errors.Errorf("failed to delete health check %s with erorr: %s", name, op.HttpErrorMessage)
 	}
 	return nil
 }
@@ -254,13 +307,20 @@ func (o *ClusterUninstaller) destroyHealthChecks() error {
 	if err != nil {
 		return err
 	}
+	found := make([]string, 0, len(healthChecks))
+	errs := []error{}
 	for _, healthCheck := range healthChecks {
-		err = o.deleteHealthCheck(healthCheck)
+		found = append(found, healthCheck)
+		err := o.deleteHealthCheck(healthCheck)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	deleted := o.setPendingItems("healthcheck", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted health check %s", item)
+	}
+	return aggregateError(errs, len(found))
 }
 
 func (o *ClusterUninstaller) listHTTPHealthChecks() ([]string, error) {
@@ -286,9 +346,14 @@ func (o *ClusterUninstaller) deleteHTTPHealthCheck(name string) error {
 	o.Logger.Debugf("Deleting HTTP health check %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	_, err := o.computeSvc.HttpHealthChecks.Delete(o.ProjectID, name).Context(ctx).Do()
+	op, err := o.computeSvc.HttpHealthChecks.Delete(o.ProjectID, name).RequestId(o.requestID("httphealthcheck", name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("httphealthcheck", name)
 		return errors.Wrapf(err, "failed to delete HTTP health check %s", name)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("httphealthcheck", name)
+		return errors.Errorf("failed to delete HTTP health check %s with erorr: %s", name, op.HttpErrorMessage)
 	}
 	return nil
 }
@@ -300,13 +365,20 @@ func (o *ClusterUninstaller) destroyHTTPHealthChecks() error {
 	if err != nil {
 		return err
 	}
+	found := make([]string, 0, len(healthChecks))
+	errs := []error{}
 	for _, healthCheck := range healthChecks {
-		err = o.deleteHTTPHealthCheck(healthCheck)
+		found = append(found, healthCheck)
+		err := o.deleteHTTPHealthCheck(healthCheck)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	deleted := o.setPendingItems("httphealthcheck", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted HTTP health check %s", item)
+	}
+	return aggregateError(errs, len(found))
 }
 
 func (o *ClusterUninstaller) listTargetPools() ([]string, error) {
@@ -341,10 +413,16 @@ func (o *ClusterUninstaller) deleteTargetPool(name string) error {
 	o.Logger.Debugf("Deleting target pool %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	_, err := o.computeSvc.TargetPools.Delete(o.ProjectID, o.Region, name).Context(ctx).Do()
+	op, err := o.computeSvc.TargetPools.Delete(o.ProjectID, o.Region, name).RequestId(o.requestID("targetpool", name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("targetpool", name)
 		return errors.Wrapf(err, "failed to delete target pool %s", name)
 	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("targetpool", name)
+		return errors.Errorf("failed to delete route %s with erorr: %s", name, op.HttpErrorMessage)
+	}
+	o.Logger.Infof("Deleted target pool %s", name)
 	return nil
 }
 
@@ -356,13 +434,20 @@ func (o *ClusterUninstaller) destroyTargetPools() error {
 	if err != nil {
 		return err
 	}
+	found := make([]string, 0, len(targetPools))
+	errs := []error{}
 	for _, targetPool := range targetPools {
-		err = o.deleteTargetPool(targetPool)
+		found = append(found, targetPool)
+		err := o.deleteTargetPool(targetPool)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	deleted := o.setPendingItems("targetpool", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted target pool %s", item)
+	}
+	return aggregateError(errs, len(found))
 }
 
 func (o *ClusterUninstaller) listSubNetworks() ([]string, error) {
@@ -388,9 +473,14 @@ func (o *ClusterUninstaller) deleteSubNetwork(name string) error {
 	o.Logger.Debugf("Deleting subnetwork %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	_, err := o.computeSvc.Subnetworks.Delete(o.ProjectID, o.Region, name).Context(ctx).Do()
+	op, err := o.computeSvc.Subnetworks.Delete(o.ProjectID, o.Region, name).RequestId(o.requestID("subnetwork", name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("subnetwork", name)
 		return errors.Wrapf(err, "failed to delete subnetwork %s", name)
+	}
+	if isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("subnetwork", name)
+		return errors.Errorf("failed to delete subnetwork %s with erorr: %s", name, op.HttpErrorMessage)
 	}
 	return nil
 }
@@ -402,13 +492,20 @@ func (o *ClusterUninstaller) destroySubNetworks() error {
 	if err != nil {
 		return err
 	}
+	found := make([]string, 0, len(subNetworks))
+	errs := []error{}
 	for _, subNetwork := range subNetworks {
-		err = o.deleteSubNetwork(subNetwork)
+		found = append(found, subNetwork)
+		err := o.deleteSubNetwork(subNetwork)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	deleted := o.setPendingItems("subnetwork", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted subnetwork %s", item)
+	}
+	return aggregateError(errs, len(found))
 }
 
 func (o *ClusterUninstaller) listNetworks() ([]nameAndURL, error) {
@@ -434,12 +531,18 @@ func (o *ClusterUninstaller) listNetworks() ([]nameAndURL, error) {
 }
 
 func (o *ClusterUninstaller) deleteNetwork(name string) error {
-	o.Logger.Debugf("Deleting network %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	_, err := o.computeSvc.Networks.Delete(o.ProjectID, name).Context(ctx).Do()
+
+	o.Logger.Debugf("Deleting network %s", name)
+	op, err := o.computeSvc.Networks.Delete(o.ProjectID, name).RequestId(o.requestID("network", name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("network", name)
 		return errors.Wrapf(err, "failed to delete network %s", name)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("network", name)
+		return errors.Errorf("failed to delete network %s with erorr: %s", name, op.HttpErrorMessage)
 	}
 	return nil
 }
@@ -451,24 +554,33 @@ func (o *ClusterUninstaller) destroyNetworks() error {
 	if err != nil {
 		return err
 	}
+	found := make([]string, 0, len(networks))
+	errs := []error{}
 	for _, network := range networks {
+		found = append(found, network.name)
 		// destroy any network routes that are not named with the infra ID
 		routes, err := o.listNetworkRoutes(network.url)
 		if err != nil {
-			return err
+			errs = append(errs, err)
+			continue
 		}
 		for _, route := range routes {
-			if err = o.deleteRoute(route); err != nil {
+			err := o.deleteRoute(route)
+			if err != nil {
 				o.Logger.Debugf("Failed to delete route %s: %v", route, err)
 			}
 		}
 
 		err = o.deleteNetwork(network.name)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	deleted := o.setPendingItems("network", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted network %s", item)
+	}
+	return aggregateError(errs, len(found))
 }
 
 func (o *ClusterUninstaller) listNetworkRoutes(networkURL string) ([]string, error) {
@@ -502,9 +614,14 @@ func (o *ClusterUninstaller) deleteRoute(name string) error {
 	o.Logger.Debugf("Deleting route %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	_, err := o.computeSvc.Routes.Delete(o.ProjectID, name).Context(ctx).Do()
+	op, err := o.computeSvc.Routes.Delete(o.ProjectID, name).RequestId(o.requestID("route", name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("route", name)
 		return errors.Wrapf(err, "failed to delete route %s", name)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("route", name)
+		return errors.Errorf("failed to delete route %s with erorr: %s", name, op.HttpErrorMessage)
 	}
 	return nil
 }
@@ -516,13 +633,20 @@ func (o *ClusterUninstaller) destroyRoutes() error {
 	if err != nil {
 		return err
 	}
+	found := make([]string, 0, len(routes))
+	errs := []error{}
 	for _, route := range routes {
-		err = o.deleteRoute(route)
+		found = append(found, route)
+		err := o.deleteRoute(route)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	deleted := o.setPendingItems("route", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted route %s", item)
+	}
+	return aggregateError(errs, len(found))
 }
 
 func (o *ClusterUninstaller) listRouters() ([]string, error) {
@@ -548,9 +672,14 @@ func (o *ClusterUninstaller) deleteRouter(name string) error {
 	o.Logger.Debugf("Deleting router %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	_, err := o.computeSvc.Routers.Delete(o.ProjectID, o.Region, name).Context(ctx).Do()
+	op, err := o.computeSvc.Routers.Delete(o.ProjectID, o.Region, name).RequestId(o.requestID("router", name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
+		o.resetRequestID("router", name)
 		return errors.Wrapf(err, "failed to delete router %s", name)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("router", name)
+		return errors.Errorf("failed to delete router %s with erorr: %s", name, op.HttpErrorMessage)
 	}
 	return nil
 }
@@ -562,13 +691,20 @@ func (o *ClusterUninstaller) destroyRouters() error {
 	if err != nil {
 		return err
 	}
+	found := make([]string, 0, len(routers))
+	errs := []error{}
 	for _, router := range routers {
-		err = o.deleteRouter(router)
+		found = append(found, router)
+		err := o.deleteRouter(router)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	deleted := o.setPendingItems("router", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted router %s", item)
+	}
+	return aggregateError(errs, len(found))
 }
 
 // getInternalLBInstanceGroups finds instance groups created for kube cloud controller
@@ -712,23 +848,39 @@ func (o *ClusterUninstaller) destroyCloudControllerInternalLBs() error {
 		return err
 	}
 
+	errs := []error{}
+	found := make([]string, 0, len(backends))
 	// Each backend found represents an internal load balancer.
 	// For each, remove related resources
 	for _, backend := range backends {
+		found = append(found, backend)
 		err := o.deleteInternalLoadBalancer(clusterID, backend)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
+	}
+	deleted := o.setPendingItems("internallb", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted internal load balancer %s", item)
+	}
+	if len(errs) > 0 {
+		return aggregateError(errs)
 	}
 
 	// Finally, remove the instance groups {
+	found = make([]string, len(groups))
 	for _, group := range groups {
+		found = append(found, fmt.Sprintf("%s/%s", group.zone, group.name))
 		err := o.deleteInstanceGroup(group)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	deleted = o.setPendingItems("lbinstancegroup", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted instance group %s", item)
+	}
+	return aggregateError(errs, len(found))
 }
 
 // getExternalLBTargetPools returns all target pools that point to instances in the cluster
@@ -757,12 +909,18 @@ func (o *ClusterUninstaller) destroyCloudControllerExternalLBs() error {
 		return err
 	}
 
+	found := make([]string, 0, len(pools))
+	errs := []error{}
 	for _, loadBalancerName := range pools {
-		err = o.deleteExternalLoadBalancer(loadBalancerName)
+		found = append(found, loadBalancerName)
+		err := o.deleteExternalLoadBalancer(loadBalancerName)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-
-	return nil
+	deleted := o.setPendingItems("externallb", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted external load balancer %s", item)
+	}
+	return aggregateError(errs, len(found))
 }

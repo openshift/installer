@@ -39,6 +39,7 @@ func (o *ClusterUninstaller) deleteServiceAccount(serviceAccount string) error {
 	if err != nil && !isNoOp(err) {
 		return errors.Wrapf(err, "failed to delete service account %s", serviceAccount)
 	}
+	o.Logger.Infof("Deleted service account %s", serviceAccount)
 	return nil
 }
 
@@ -49,11 +50,12 @@ func (o *ClusterUninstaller) destroyServiceAccounts() error {
 	if err != nil {
 		return err
 	}
+	errs := []error{}
 	for _, serviceAccount := range serviceAccounts {
 		err := o.deleteServiceAccount(serviceAccount)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	return aggregateError(errs)
 }

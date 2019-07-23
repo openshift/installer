@@ -7,8 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pborman/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	compute "google.golang.org/api/compute/v1"
@@ -40,6 +43,9 @@ type ClusterUninstaller struct {
 	iamSvc     *iam.Service
 	dnsSvc     *dns.Service
 	storageSvc *storage.Service
+
+	requestIDTracker
+	pendingItemTracker
 }
 
 // New returns an AWS destroyer from ClusterMetadata.
@@ -50,6 +56,9 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		ProjectID: metadata.ClusterPlatformMetadata.GCP.ProjectID,
 		ClusterID: metadata.InfraID,
 		Context:   context.Background(),
+
+		requestIDTracker:   newRequestIDTracker(),
+		pendingItemTracker: newPendingItemTracker(),
 	}, nil
 }
 
@@ -120,15 +129,15 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		{name: "Subnetworks", destroy: o.destroySubNetworks},
 		{name: "Networks", destroy: o.destroyNetworks},
 	}
-	hasErr := false
+	done := true
 	for _, f := range destroyFuncs {
 		err := f.destroy()
 		if err != nil {
-			hasErr = true
 			o.Logger.Debugf("%s: %v", f.name, err)
+			done = false
 		}
 	}
-	return !hasErr, nil
+	return done, nil
 }
 
 func (o *ClusterUninstaller) isClusterResource(name string) bool {
@@ -147,6 +156,81 @@ func isNoOp(err error) bool {
 	return ok && (ae.Code == http.StatusNotFound || ae.Code == http.StatusNotModified)
 }
 
+// aggregateError is a utility function that takes a slice of errors and an
+// optional pending argument, and returns an error or nil
+func aggregateError(errs []error, pending ...int) error {
+	if len(errs) > 0 {
+		return utilerrors.NewAggregate(errs)
+	}
+	if len(pending) > 0 && pending[0] > 0 {
+		return errors.Errorf("%d items pending", pending[0])
+	}
+	return nil
+}
+
 func (o *ClusterUninstaller) contextWithTimeout() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(o.Context, defaultTimeout)
+}
+
+// requestIDTracker keeps track of a set of request IDs mapped to a unique resource
+// identifier
+type requestIDTracker struct {
+	requestIDs map[string]string
+}
+
+func newRequestIDTracker() requestIDTracker {
+	return requestIDTracker{
+		requestIDs: map[string]string{},
+	}
+}
+
+// requestID returns a UID for a given item identifier. Unless the ID is reset, the
+// same requestID will be returned every time for a given item.
+func (t requestIDTracker) requestID(identifier ...string) string {
+	key := strings.Join(identifier, "/")
+	id, exists := t.requestIDs[key]
+	if !exists {
+		id = uuid.New()
+		t.requestIDs[key] = id
+	}
+	return id
+}
+
+// resetRequestID resets the request ID used for a particular item. This
+// should be called whenever a request fails, and a brand new request should be
+// sent.
+func (t requestIDTracker) resetRequestID(identifier ...string) {
+	key := strings.Join(identifier, "/")
+	if _, exists := t.requestIDs[key]; exists {
+		delete(t.requestIDs, key)
+	}
+}
+
+// pendingItemTracker tracks a set of pending item names for a given type of resource
+type pendingItemTracker struct {
+	pendingItems map[string]sets.String
+}
+
+func newPendingItemTracker() pendingItemTracker {
+	return pendingItemTracker{
+		pendingItems: map[string]sets.String{},
+	}
+}
+
+// setPendingItems sets the list of items pending deletion for a particular item type.
+// It returns items that were previously pending that are no longer in the list
+// of pending items. These are items that have been deleted.
+func (t pendingItemTracker) setPendingItems(itemType string, items []string) []string {
+	found := sets.NewString(items...)
+	lastFound, exists := t.pendingItems[itemType]
+	if !exists {
+		lastFound = sets.NewString()
+	}
+	deletedItems := lastFound.Difference(found)
+	t.pendingItems[itemType] = found
+	return deletedItems.List()
+}
+
+func isErrorStatus(code int64) bool {
+	return code < 200 || code >= 300
 }
