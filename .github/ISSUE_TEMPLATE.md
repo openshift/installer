@@ -16,7 +16,7 @@ $ openshift-install version
 
 # Platform:
 <!--
-Please specify below either aws, libvirt or openstack below.
+Please specify the platform type: aws, libvirt, openstack, baremetal, or none (UPI)
 -->
 
 # What happened?
