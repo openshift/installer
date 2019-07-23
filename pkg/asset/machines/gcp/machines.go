@@ -79,7 +79,7 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			Boot:   true,
 			SizeGb: 128,
 			Type:   "pd-ssd",
-			Image:  osImage,
+			Image:  fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/global/images/%s", platform.ProjectID, osImage),
 		}},
 		NetworkInterfaces: []*gcpprovider.GCPNetworkInterface{{
 			Network:    fmt.Sprintf("%s-network", clusterID),
