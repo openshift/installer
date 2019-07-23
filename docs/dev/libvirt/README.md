@@ -2,6 +2,10 @@
 
 Launching clusters via libvirt is especially useful for operator development.
 
+**NOTE:** Some aspects of the installation can be customized through the
+`install-config.yaml` file. See
+[how to create an install-config.yaml file](docs/user/overview.md#multiple-invocations) and [the libvirt platform customization](docs/dev/libvirt/customization.md) documents.
+
 ## One-time setup
 It's expected that you will create and destroy clusters often in the course of development. These steps only need to be run once.
 
