@@ -145,7 +145,7 @@ func (f *contentLoader) String() string {
 type cliLoader struct{}
 
 func (c *cliLoader) Load(ctx context.Context) (*googleoauth.Credentials, error) {
-	return googleoauth.FindDefaultCredentials(ctx)
+	return googleoauth.FindDefaultCredentials(ctx, compute.CloudPlatformScope)
 }
 
 func (c *cliLoader) String() string {
