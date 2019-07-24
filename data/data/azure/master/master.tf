@@ -31,9 +31,6 @@ resource "azurerm_network_interface_backend_address_pool_association" "master_in
   ip_configuration_name   = local.ip_configuration_name #must be the same as nic's ip configuration name.
 }
 
-data "azurerm_subscription" "current" {
-}
-
 resource "azurerm_virtual_machine" "master" {
   count                 = var.instance_count
   name                  = "${var.cluster_id}-master-${count.index}"
@@ -59,7 +56,7 @@ resource "azurerm_virtual_machine" "master" {
   }
 
   storage_image_reference {
-    id = "${data.azurerm_subscription.current.id}${var.vm_image}"
+    id = var.vm_image
   }
 
   //we don't provide a ssh key, because it is set with ignition. 
@@ -80,7 +77,7 @@ resource "azurerm_virtual_machine" "master" {
 
   boot_diagnostics {
     enabled     = true
-    storage_uri = var.boot_diag_blob_endpoint
+    storage_uri = var.storage_account.primary_blob_endpoint
   }
 }
 

@@ -94,7 +94,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		Location:          platform.Region,
 		VMSize:            mpool.InstanceType,
 		Image: azureprovider.Image{
-			ResourceID: osImage,
+			ResourceID: fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", clusterID+"-rg", clusterID),
 		},
 		OSDisk: azureprovider.OSDisk{
 			OSType:     "Linux",

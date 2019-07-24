@@ -176,6 +176,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		data, err := azuretfvars.TFVars(
 			auth,
 			installConfig.Config.Azure.BaseDomainResourceGroupName,
+			string(*rhcosImage),
 			masterConfigs,
 		)
 		if err != nil {

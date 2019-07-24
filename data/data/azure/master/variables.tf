@@ -69,9 +69,9 @@ variable "tags" {
   description = "tags to be applied to created resources."
 }
 
-variable "boot_diag_blob_endpoint" {
-  type        = string
-  description = "the blob endpoint where machines should store their boot diagnostics."
+variable "storage_account" {
+  type        = any
+  description = "the storage account for the cluster. It can be used for boot diagnostics."
 }
 
 variable "ignition" {
