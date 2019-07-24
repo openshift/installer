@@ -66,7 +66,7 @@ func (o *ClusterUninstaller) Run() error {
 	for _, del := range []deleteFunc{
 		deleteDomains,
 		deleteNetwork,
-		deleteVolumes,
+		deleteStoragePool,
 	} {
 		err = del(conn, o.Filter, o.Logger)
 		if err != nil {
@@ -132,7 +132,7 @@ func deleteDomainsSinglePass(conn *libvirt.Connect, filter filterFunc, logger lo
 	return nothingToDelete, nil
 }
 
-func deleteVolumes(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) error {
+func deleteStoragePool(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) error {
 	logger.Debug("Deleting libvirt volumes")
 
 	pools, err := conn.ListStoragePools()
@@ -140,51 +140,48 @@ func deleteVolumes(conn *libvirt.Connect, filter filterFunc, logger logrus.Field
 		return errors.Wrap(err, "list storage pools")
 	}
 
-	tpool := "default"
 	for _, pname := range pools {
-		// pool name that returns true from filter, override default.
-		if filter(pname) {
-			tpool = pname
+		// pool name that returns true from filter
+		if !filter(pname) {
+			continue
 		}
-	}
-	pool, err := conn.LookupStoragePoolByName(tpool)
-	if err != nil {
-		return errors.Wrapf(err, "get storage pool %q", tpool)
-	}
-	defer pool.Free()
 
-	switch tpool {
-	case "default":
+		pool, err := conn.LookupStoragePoolByName(pname)
+		if err != nil {
+			return errors.Wrapf(err, "get storage pool %q", pname)
+		}
+		defer pool.Free()
+
 		// delete all vols that return true from filter.
 		vols, err := pool.ListAllStorageVolumes(0)
 		if err != nil {
-			return errors.Wrapf(err, "list volumes in %q", tpool)
+			return errors.Wrapf(err, "list volumes in %q", pname)
 		}
 
 		for _, vol := range vols {
 			defer vol.Free()
 			vName, err := vol.GetName()
 			if err != nil {
-				return errors.Wrapf(err, "get volume names in %q", tpool)
+				return errors.Wrapf(err, "get volume names in %q", pname)
 			}
 			if !filter(vName) {
 				continue
 			}
 			if err := vol.Delete(0); err != nil {
-				return errors.Wrapf(err, "delete volume %q from %q", vName, tpool)
+				return errors.Wrapf(err, "delete volume %q from %q", vName, pname)
 			}
 			logger.WithField("volume", vName).Info("Deleted volume")
 		}
-	default:
+
 		// blow away entire pool.
 		if err := pool.Destroy(); err != nil {
-			return errors.Wrapf(err, "destroy pool %q", tpool)
+			return errors.Wrapf(err, "destroy pool %q", pname)
 		}
 
 		if err := pool.Undefine(); err != nil {
-			return errors.Wrapf(err, "undefine pool %q", tpool)
+			return errors.Wrapf(err, "undefine pool %q", pname)
 		}
-		logger.WithField("pool", tpool).Info("Deleted pool")
+		logger.WithField("pool", pname).Info("Deleted pool")
 	}
 
 	return nil
