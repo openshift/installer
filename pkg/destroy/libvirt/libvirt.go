@@ -178,6 +178,10 @@ func deleteStoragePool(conn *libvirt.Connect, filter filterFunc, logger logrus.F
 			return errors.Wrapf(err, "destroy pool %q", pname)
 		}
 
+		if err := pool.Delete(0); err != nil {
+			return errors.Wrapf(err, "delete pool %q", pname)
+		}
+
 		if err := pool.Undefine(); err != nil {
 			return errors.Wrapf(err, "undefine pool %q", pname)
 		}
