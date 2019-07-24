@@ -99,8 +99,6 @@ platform should be considered experimental and still subject to change without
 backwards compatibility.  In particular, some items likely to change soon
 include:
 
-* The `image` section will get completely removed.
-
 * The `hardwareProfile` is currently exposed as a way to allow specifying
   different hardware parameters for deployment.  By default, we will deploy
   RHCOS to the first disk, but that may not be appropriate for all hardware.
@@ -162,11 +160,6 @@ platform:
           password: password
         bootMACAddress: 00:11:07:4e:f6:71
         hardwareProfile: default
-    image:
-      source: "http://172.22.0.1/images/rhcos-ootpa-latest.qcow2"
-      checksum: 2b3b1e19e18627d89da400b63430d5bb
-      deployKernel: http://172.22.0.1/images/ironic-python-agent.kernel
-      deployRamdisk: http://172.22.0.1/images/ironic-python-agent.initramfs
 pullSecret: ...
 sshKey: ...
 ```

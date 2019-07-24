@@ -16,15 +16,6 @@ type Host struct {
 	HardwareProfile string `json:"hardwareProfile"`
 }
 
-// Image stores details about the locations of various images needed for deployment.
-// FIXME: This should be determined by the installer once Ironic and image downloading occurs in bootstrap VM.
-type Image struct {
-	Source        string `json:"source"`
-	Checksum      string `json:"checksum"`
-	DeployKernel  string `json:"deployKernel"`
-	DeployRamdisk string `json:"deployRamdisk"`
-}
-
 // Platform stores all the global configuration that all machinesets use.
 type Platform struct {
 	// LibvirtURI is the identifier for the libvirtd connection.  It must be
@@ -54,9 +45,6 @@ type Platform struct {
 
 	// Hosts is the information needed to create the objects in Ironic.
 	Hosts []*Host `json:"hosts"`
-
-	// Images contains the information needed to provision a host
-	Image Image `json:"image"`
 
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on bare metal for machine pools which do not define their own
