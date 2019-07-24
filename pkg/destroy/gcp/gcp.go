@@ -111,6 +111,7 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		destroy func() error
 	}{
 		{name: "Compute instances", destroy: o.destroyComputeInstances},
+		{name: "Disks", destroy: o.destroyDisks},
 		{name: "Service accounts", destroy: o.destroyServiceAccounts},
 		{name: "Images", destroy: o.destroyImages},
 		{name: "DNS", destroy: o.destroyDNS},
