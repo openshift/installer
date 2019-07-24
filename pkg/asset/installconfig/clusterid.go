@@ -8,13 +8,11 @@ import (
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
 
 	"github.com/openshift/installer/pkg/asset"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 const (
-	// resource using InfraID usually have suffixes like `[-/_][a-z]{3,4}` eg. `_int`, `-ext` or `-ctlp`
-	maxNameLen = 32 - 5
-	randomLen  = 5
-	maxBaseLen = maxNameLen - randomLen - 1
+	randomLen = 5
 )
 
 // ClusterID is the unique ID of the cluster, immutable during the cluster's life
@@ -41,8 +39,17 @@ func (a *ClusterID) Generate(dep asset.Parents) error {
 	ica := &InstallConfig{}
 	dep.Get(ica)
 
+	// resource using InfraID usually have suffixes like `[-/_][a-z]{3,4}` eg. `_int`, `-ext` or `-ctlp`
+	// and the maximum length for most resources is approx 32.
+	maxLen := 27
+	switch ica.Config.Platform.Name() {
+	case gcptypes.Name:
+		// GCP has stricter limit on instance names which are prefixed with infra-id
+		maxLen = 12
+	}
+
 	// add random chars to the end to randomize
-	a.InfraID = generateInfraID(ica.Config.ObjectMeta.Name)
+	a.InfraID = generateInfraID(ica.Config.ObjectMeta.Name, maxLen)
 	a.UUID = uuid.New()
 	return nil
 }
@@ -53,9 +60,10 @@ func (a *ClusterID) Name() string {
 }
 
 // generateInfraID take base and returns a ID that
-// - is of length maxNameLen
+// - is of length maxLen
 // - only contains `alphanum` or `-`
-func generateInfraID(base string) string {
+func generateInfraID(base string, maxLen int) string {
+	maxBaseLen := maxLen - (randomLen + 1)
 	// truncate to maxBaseLen
 	if len(base) > maxBaseLen {
 		base = base[:maxBaseLen]
