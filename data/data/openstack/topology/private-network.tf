@@ -87,6 +87,11 @@ resource "openstack_networking_floatingip_associate_v2" "service_fip" {
   floating_ip = var.lb_floating_ip
 }
 
+resource "openstack_networking_floatingip_v2" "bootstrap_fip" {
+  pool    = "${var.external_network}"
+  port_id = "${openstack_networking_port_v2.bootstrap_port.id}"
+}
+
 resource "openstack_networking_router_v2" "openshift-external-router" {
   name                = "${var.cluster_id}-external-router"
   admin_state_up      = true
