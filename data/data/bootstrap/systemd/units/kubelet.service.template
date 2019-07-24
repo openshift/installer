@@ -21,7 +21,7 @@ ExecStart=/usr/bin/hyperkube \
     --cgroup-driver=systemd \
     --serialize-image-pulls=false \
     --v=2 \
-    --volume-plugin-dir=/etc/kubernetes/kubelet-plugins/volume/exec \
+    --volume-plugin-dir=/etc/kubernetes/kubelet-plugins/volume/exec
 
 Restart=always
 RestartSec=10
