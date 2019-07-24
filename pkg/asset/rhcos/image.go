@@ -65,6 +65,7 @@ func (i *Image) Generate(p asset.Parents) error {
 		}
 		osimage, err = rhcos.AMI(ctx, config.Platform.AWS.Region)
 	case gcp.Name:
+		osimage, err = rhcos.GCP(ctx)
 	case libvirt.Name:
 		osimage, err = rhcos.QEMU(ctx)
 	case openstack.Name:

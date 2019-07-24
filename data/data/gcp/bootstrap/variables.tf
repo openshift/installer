@@ -14,7 +14,7 @@ variable "ignition" {
   description = "The content of the bootstrap ignition file."
 }
 
-variable "image_name" {
+variable "image" {
   type        = string
   description = "The image for the bootstrap node."
 }

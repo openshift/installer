@@ -40,7 +40,7 @@ variable "gcp_master_instance_type" {
   description = "Instance type for the master node(s). Example: `n1-standard-4`"
 }
 
-variable "gcp_image_id" {
+variable "gcp_image_uri" {
   type = string
   description = "Image for all nodes."
 }

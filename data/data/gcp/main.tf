@@ -16,7 +16,7 @@ module "bootstrap" {
 
   bootstrap_enabled = var.gcp_bootstrap_enabled
 
-  image_name   = var.gcp_image_id
+  image        = google_compute_image.cluster.self_link
   machine_type = var.gcp_bootstrap_instance_type
   cluster_id   = var.cluster_id
   ignition     = var.ignition_bootstrap
@@ -30,7 +30,7 @@ module "bootstrap" {
 module "master" {
   source = "./master"
 
-  image_name     = var.gcp_image_id
+  image          = google_compute_image.cluster.self_link
   instance_count = var.master_count
   machine_type   = var.gcp_master_instance_type
   cluster_id     = var.cluster_id
@@ -72,4 +72,12 @@ module "dns" {
   etcd_count           = var.master_count
   cluster_domain       = var.cluster_domain
   api_external_lb_ip   = module.network.cluster_public_ip
+}
+
+resource "google_compute_image" "cluster" {
+  name = "${var.cluster_id}-rhcos-image"
+
+  raw_disk {
+    source = var.gcp_image_uri
+  }
 }
