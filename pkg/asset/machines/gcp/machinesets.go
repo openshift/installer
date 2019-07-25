@@ -3,6 +3,7 @@ package gcp
 
 import (
 	"fmt"
+	"strings"
 
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,7 +42,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
-		name := fmt.Sprintf("%s-%s-%s", clusterID, pool.Name, az)
+		name := fmt.Sprintf("%s-%s-%s", clusterID, pool.Name[:1], strings.TrimPrefix(az, fmt.Sprintf("%s-", platform.Region)))
 		mset := &machineapi.MachineSet{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",

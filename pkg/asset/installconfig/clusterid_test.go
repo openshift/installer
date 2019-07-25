@@ -18,7 +18,7 @@ func Test_generateInfraID(t *testing.T) {
 		expNonRand: "qwertyuiop",
 	}, {
 		input:      "qwertyuiopasdfghjklzxcvbnm",
-		expLen:     maxBaseLen + randomLen + 1,
+		expLen:     27,
 		expNonRand: "qwertyuiopasdfghjklzx",
 	}, {
 		input:      "qwe.rty.@iop!",
@@ -27,7 +27,7 @@ func Test_generateInfraID(t *testing.T) {
 	}}
 	for _, test := range tests {
 		t.Run("", func(t *testing.T) {
-			got := generateInfraID(test.input)
+			got := generateInfraID(test.input, 27)
 			t.Log("InfraID", got)
 			assert.Equal(t, test.expLen, len(got))
 			assert.Equal(t, test.expNonRand, got[:len(got)-randomLen-1])
