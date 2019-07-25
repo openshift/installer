@@ -70,7 +70,7 @@ func (i *Image) Generate(p asset.Parents) error {
 	case openstack.Name:
 		osimage = "rhcos"
 	case azure.Name:
-		osimage = "https://rhcospipelineimages2.blob.core.windows.net/imagebucket/rhcos-420devel.8.20190719.0.vhd"
+		osimage = "https://rhcos.blob.core.windows.net/imagebucket/rhcos-42.80.20190725.1.vhd"
 	case baremetal.Name:
 		osimage, err = rhcos.QEMU(ctx)
 	case none.Name, vsphere.Name:
