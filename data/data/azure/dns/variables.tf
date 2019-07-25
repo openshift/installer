@@ -34,6 +34,13 @@ variable "private_dns_zone_name" {
   type        = string
 }
 
+variable "etcd_pivot" {
+  type    = string
+  default = "false"
+
+  description = "(internal)(temporary) Should OpenShift pivot an etcd cluster from the boostrap node."
+}
+
 variable "etcd_count" {
   description = "The number of etcd members."
   type        = string
@@ -41,6 +48,12 @@ variable "etcd_count" {
 
 variable "etcd_ip_addresses" {
   description = "List of string IPs for machines running etcd members."
+  type        = list(string)
+  default     = []
+}
+
+variable "bootstrap_ip_addresses" {
+  description = "List of string IPs for boostrap machines."
   type        = list(string)
   default     = []
 }

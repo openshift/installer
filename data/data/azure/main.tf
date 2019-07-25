@@ -84,8 +84,10 @@ module "dns" {
   resource_group_name             = azurerm_resource_group.main.name
   base_domain_resource_group_name = var.azure_base_domain_resource_group_name
   private_dns_zone_name           = azurerm_dns_zone.private.name
+  etcd_pivot                      = var.etcd_pivot
   etcd_count                      = var.master_count
   etcd_ip_addresses               = module.master.ip_addresses
+  bootstrap_ip_addresses          = module.bootstrap.ip_addresses
 }
 
 resource "random_string" "storage_suffix" {
