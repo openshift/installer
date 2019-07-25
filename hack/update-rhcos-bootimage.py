@@ -15,7 +15,8 @@ with urllib.request.urlopen(args.meta) as f:
     meta = json.load(string_f)
 newmeta = {}
 for k in ['images', 'buildid', 'oscontainer',
-          'ostree-commit', 'ostree-version']:
+          'ostree-commit', 'ostree-version',
+          'azure', 'gcp']:
     newmeta[k] = meta[k]
 newmeta['amis'] = {
     entry['name']: {
