@@ -49,6 +49,7 @@ func installerMain() {
 		newWaitForCmd(),
 		newGatherCmd(),
 		newVersionCmd(),
+		newRhcosMetadataCmd(),
 		newGraphCmd(),
 		newCompletionCmd(),
 	} {
