@@ -13,6 +13,14 @@ type metadata struct {
 	AMIs map[string]struct {
 		HVM string `json:"hvm"`
 	} `json:"amis"`
+	Azure struct {
+		Image string `json:"image"`
+		URL string `json:"url"`
+	}
+	GCP struct {
+		Image string `json:"image"`
+		URL string `json:"url"`
+	}
 	BaseURI string `json:"baseURI"`
 	Images  struct {
 		QEMU struct {
