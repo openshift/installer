@@ -164,9 +164,6 @@ func deleteStoragePool(conn *libvirt.Connect, filter filterFunc, logger logrus.F
 			if err != nil {
 				return errors.Wrapf(err, "get volume names in %q", pname)
 			}
-			if !filter(vName) {
-				continue
-			}
 			if err := vol.Delete(0); err != nil {
 				return errors.Wrapf(err, "delete volume %q from %q", vName, pname)
 			}
