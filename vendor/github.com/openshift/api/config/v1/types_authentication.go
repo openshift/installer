@@ -6,7 +6,8 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Authentication holds cluster-wide information about Authentication.  The canonical name is `cluster`
+// Authentication specifies cluster-wide settings for authentication (like OAuth and
+// webhook token authenticators). The canonical name of an instance is `cluster`.
 type Authentication struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.

@@ -151,7 +151,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		if ic.SSHKey != "" {
 			machineConfigs = append(machineConfigs, machineconfig.ForAuthorizedKeys(ic.SSHKey, "worker"))
 		}
-
+		if ic.AdditionalTrustBundle != "" {
+			machineConfigs = append(machineConfigs, machineconfig.ForAdditionalTrustBundle(ic.AdditionalTrustBundle, "worker"))
+		}
 		switch ic.Platform.Name() {
 		case awstypes.Name:
 			mpool := defaultAWSMachinePoolPlatform()

@@ -49,6 +49,11 @@ type InstallConfig struct {
 
 	metav1.ObjectMeta `json:"metadata"`
 
+	// AdditionalTrustBundle is a certificate bundle that will be added to the nodes
+	// trusted certificate store.
+	// +optional
+	AdditionalTrustBundle string `json:"additionalTrustBundle,omitempty"`
+
 	// SSHKey is the public ssh key to provide access to instances.
 	// +optional
 	SSHKey string `json:"sshKey,omitempty"`

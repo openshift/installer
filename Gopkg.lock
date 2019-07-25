@@ -572,7 +572,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3cb73adfd74fbb206bbc1d7a8a3772ce0427f7d85ac0832b887950a7bc9a313d"
+  digest = "1:bbc32b242c1c5f01b2a67ddba4993e99c10fee3c940781c7a6f170a7fc032f9b"
   name = "github.com/openshift/api"
   packages = [
     "config/v1",
@@ -580,7 +580,7 @@
     "route/v1",
   ]
   pruneopts = "NUT"
-  revision = "9525304a0adb725ab4a4a54539a1a6bf6cc343d3"
+  revision = "acaf712b5c5cbe88bdffd569a3481cf9ebbfab7c"
 
 [[projects]]
   branch = "master"
