@@ -293,6 +293,25 @@ $ sed -i 's/test1.//' $INSTALL_DIR/manifests/cluster-ingress-02-config.yml
 $ openshift-install --dir $INSTALL_DIR create cluster
 ```
 
+### CSR don't get approved
+
+Due to https://github.com/openshift/cluster-machine-approver/issues/36, this is a pretty common problem now on slower
+hosts (e.g nested virt). If your cluster doesn't start successfully, check if any CSR are pending still:
+
+```console
+$ oc --config "$CLUSTER_DIR/auth/kubeconfig" get csr
+NAME        AGE    REQUESTOR                                                                   CONDITION
+csr-q2ppk   12m    system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
+csr-xbdkl   11m    system:node:pupu-tdcvn-master-0                                             Approved,Issued
+csr-xbwjw   5m7s   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Pending
+```
+
+If they are, use this command to manually approve them:
+
+```console
+oc --config "$CLUSTER_DIR/auth/kubeconfig" get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs oc --config "$CLUSTER_DIR/auth/kubeconfig" adm certificate approve
+```
+
 ### Install throws an `Unable to resolve address 'localhost'` error
 
 If you're seeing an error similar to
