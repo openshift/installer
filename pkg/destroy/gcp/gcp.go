@@ -24,6 +24,7 @@ import (
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/version"
 )
 
@@ -44,6 +45,11 @@ type ClusterUninstaller struct {
 	dnsSvc     *dns.Service
 	storageSvc *storage.Service
 
+	// cloudControllerUID is the cluster ID used by the cluster's cloud controller
+	// to generate load balancer related resources. It can be obtained either
+	// from metadata or by inferring it from existing cluster resources.
+	cloudControllerUID string
+
 	requestIDTracker
 	pendingItemTracker
 }
@@ -51,12 +57,12 @@ type ClusterUninstaller struct {
 // New returns an AWS destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	return &ClusterUninstaller{
-		Logger:    logger,
-		Region:    metadata.ClusterPlatformMetadata.GCP.Region,
-		ProjectID: metadata.ClusterPlatformMetadata.GCP.ProjectID,
-		ClusterID: metadata.InfraID,
-		Context:   context.Background(),
-
+		Logger:             logger,
+		Region:             metadata.ClusterPlatformMetadata.GCP.Region,
+		ProjectID:          metadata.ClusterPlatformMetadata.GCP.ProjectID,
+		ClusterID:          metadata.InfraID,
+		Context:            context.Background(),
+		cloudControllerUID: gcptypes.CloudControllerUID(metadata.InfraID),
 		requestIDTracker:   newRequestIDTracker(),
 		pendingItemTracker: newPendingItemTracker(),
 	}, nil
@@ -155,6 +161,14 @@ func isNoOp(err error) bool {
 	}
 	ae, ok := err.(*googleapi.Error)
 	return ok && (ae.Code == http.StatusNotFound || ae.Code == http.StatusNotModified)
+}
+
+func isNotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+	ae, ok := err.(*googleapi.Error)
+	return ok && ae.Code == http.StatusNotFound
 }
 
 // aggregateError is a utility function that takes a slice of errors and an
