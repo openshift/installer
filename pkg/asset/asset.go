@@ -1,11 +1,13 @@
 package asset
 
 import (
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -46,17 +48,80 @@ type File struct {
 
 // PersistToFile writes all of the files of the specified asset into the specified
 // directory.
-func PersistToFile(asset WritableAsset, directory string) error {
+func PersistToFile(asset WritableAsset, directory string, fcos bool) error {
 	for _, f := range asset.Files() {
 		path := filepath.Join(directory, f.Filename)
 		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 			return errors.Wrap(err, "failed to create dir")
+		}
+		if fcos && strings.HasSuffix(f.Filename, ".ign") {
+			// Run transpiler here
+			spec3data, err := convertSpec2ToSpec3(f.Data)
+			if err != nil {
+				return errors.Wrap(err, "failed to convert spec2 to spec3")
+			}
+			f.Data = spec3data
 		}
 		if err := ioutil.WriteFile(path, f.Data, 0644); err != nil {
 			return errors.Wrap(err, "failed to write file")
 		}
 	}
 	return nil
+}
+
+func convertSpec2ToSpec3(spec2data []byte) ([]byte, error) {
+	// Unmarshal
+	jsonMap := make(map[string]interface{})
+	err := json.Unmarshal(spec2data, &jsonMap)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to Marshal Ignition config")
+	}
+
+	// Replace ignition.version
+	ign := jsonMap["ignition"].(map[string]interface{})
+	ign["version"] = "3.0.0"
+
+	// ignition.config.append -> ignition.config.merge
+	config := ign["config"].(map[string]interface{})
+	if val, ok := config["append"]; ok {
+		config["merge"] = val
+		delete(config, "append")
+	}
+	ign["config"] = config
+	jsonMap["ignition"] = ign
+
+	// Delete networkd section
+	if _, ok := jsonMap["networkd"]; ok {
+		delete(jsonMap, "networkd")
+	}
+
+	// Remove filesystem in storage.files
+	if sval, ok := jsonMap["storage"]; ok {
+		storage := sval.(map[string]interface{})
+
+		if fval, ok := storage["files"]; ok {
+			files := fval.([]interface{})
+
+			updatedFiles := make([]interface{}, 0)
+
+			for i := range files {
+				file := files[i].(map[string]interface{})
+				if _, ok := file["filesystem"]; ok {
+					delete(file, "filesystem")
+				}
+				updatedFiles = append(updatedFiles, file)
+			}
+			storage["files"] = updatedFiles
+		}
+		jsonMap["storage"] = storage
+	}
+
+	// Convert to bytes
+	spec3data, err := json.Marshal(jsonMap)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to Marshal Ignition config")
+	}
+	return spec3data, nil
 }
 
 // DeleteAssetFromDisk removes all the files for asset from disk.

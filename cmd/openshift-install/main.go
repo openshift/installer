@@ -19,6 +19,7 @@ var (
 	rootOpts struct {
 		dir      string
 		logLevel string
+		fcos     bool
 	}
 )
 
@@ -71,6 +72,7 @@ func newRootCmd() *cobra.Command {
 	}
 	cmd.PersistentFlags().StringVar(&rootOpts.dir, "dir", ".", "assets directory")
 	cmd.PersistentFlags().StringVar(&rootOpts.logLevel, "log-level", "info", "log level (e.g. \"debug | info | warn | error\")")
+	cmd.PersistentFlags().BoolVar(&rootOpts.fcos, "fcos", false, "set to true to generate ignition v3 configs")
 	return cmd
 }
 

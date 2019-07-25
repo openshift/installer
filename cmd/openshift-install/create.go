@@ -139,7 +139,7 @@ func newCreateCmd() *cobra.Command {
 }
 
 func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) {
-	runner := func(directory string) error {
+	runner := func(fcos bool, directory string) error {
 		assetStore, err := assetstore.NewStore(directory)
 		if err != nil {
 			return errors.Wrap(err, "failed to create asset store")
@@ -151,7 +151,7 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 				err = errors.Wrapf(err, "failed to fetch %s", a.Name())
 			}
 
-			if err2 := asset.PersistToFile(a, directory); err2 != nil {
+			if err2 := asset.PersistToFile(a, directory, fcos); err2 != nil {
 				err2 = errors.Wrapf(err2, "failed to write asset (%s) to disk", a.Name())
 				if err != nil {
 					logrus.Error(err2)
@@ -171,7 +171,7 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 		cleanup := setupFileHook(rootOpts.dir)
 		defer cleanup()
 
-		err := runner(rootOpts.dir)
+		err := runner(rootOpts.fcos, rootOpts.dir)
 		if err != nil {
 			logrus.Fatal(err)
 		}
