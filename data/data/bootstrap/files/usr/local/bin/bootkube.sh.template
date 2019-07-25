@@ -295,23 +295,27 @@ if [ -v ETCD_PIVOT ]; then
 cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
 fi
 
+etcdctl () {
+    podman run \
+	--quiet \
+	--rm \
+	--network host \
+	--name etcdctl \
+	--env ETCDCTL_API=3 \
+	--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
+	--entrypoint etcdctl \
+	"${MACHINE_CONFIG_ETCD_IMAGE}" \
+	--dial-timeout=10m \
+	--cacert=/opt/openshift/tls/etcd-ca-bundle.crt \
+	--cert=/opt/openshift/tls/etcd-client.crt \
+	--key=/opt/openshift/tls/etcd-client.key \
+	--endpoints={{.EtcdCluster}} \
+        $*
+}
+
 # Wait for the etcd cluster to come up.
 # shellcheck disable=SC2154,SC2086
-until podman run \
-		--quiet \
-		--rm \
-		--network host \
-		--name etcdctl \
-		--env ETCDCTL_API=3 \
-		--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
-		--entrypoint etcdctl \
-		"${MACHINE_CONFIG_ETCD_IMAGE}" \
-		--dial-timeout=10m \
-		--cacert=/opt/openshift/tls/etcd-ca-bundle.crt \
-		--cert=/opt/openshift/tls/etcd-client.crt \
-		--key=/opt/openshift/tls/etcd-client.key \
-		--endpoints={{.EtcdCluster}} \
-		endpoint health
+until etcdctl endpoint health
 do
 	echo "etcdctl failed. Retrying in 5 seconds..."
 	sleep 5
@@ -333,6 +337,30 @@ podman run \
 	--network=host \
 	"${CLUSTER_BOOTSTRAP_IMAGE}" \
 	start --tear-down-early=false --asset-dir=/assets --required-pods="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
+
+if [ -v ETCD_PIVOT ]; then
+    echo "Pivoting etcd cluster..."
+
+    wanted_node_count=$(( 1 + {{.ControlPlaneReplicas}} ))
+
+    while true; do
+        current_node_count=$(etcdctl member list | grep started | wc -l)
+
+        echo "${current_node_count} of ${wanted_node_count} etcd nodes are started"
+
+        if [ $current_node_count -eq $wanted_node_count ]; then
+            break
+        fi
+
+        sleep 5
+    done
+
+    bootstrap_id=$(etcdctl member list | grep etcd-bootstrap | awk -F, '{print $1}')
+
+    echo "Removing etcd-bootstrap (${bootstrap_id}) from cluster"
+
+    etcdctl member remove "${bootstrap_id}"
+fi
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
