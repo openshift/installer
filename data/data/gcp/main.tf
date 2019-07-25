@@ -65,11 +65,13 @@ module "network" {
 module "dns" {
   source = "./dns"
 
-  cluster_id           = var.cluster_id
-  public_dns_zone_name = var.gcp_public_dns_zone_name
-  network              = module.network.network
-  etcd_ip_addresses    = flatten(module.master.ip_addresses)
-  etcd_count           = var.master_count
-  cluster_domain       = var.cluster_domain
-  api_external_lb_ip   = module.network.cluster_public_ip
+  cluster_id             = var.cluster_id
+  public_dns_zone_name   = var.gcp_public_dns_zone_name
+  network                = module.network.network
+  etcd_ip_addresses      = flatten(module.master.ip_addresses)
+  bootstrap_ip_addresses = flatten(module.bootstrap.bootstrap_instance_ips)
+  etcd_count             = var.master_count
+  etcd_pivot             = var.etcd_pivot
+  cluster_domain         = var.cluster_domain
+  api_external_lb_ip     = module.network.cluster_public_ip
 }

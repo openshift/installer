@@ -42,10 +42,19 @@ resource "google_dns_record_set" "etcd_a_nodes" {
   rrdatas      = [var.etcd_ip_addresses[count.index]]
 }
 
+resource "google_dns_record_set" "etcd_a_bootstrap" {
+  count        = var.etcd_pivot ? 1 : 0
+  type         = "A"
+  ttl          = "60"
+  managed_zone = google_dns_managed_zone.int.name
+  name         = "etcd-bootstrap.${var.cluster_domain}."
+  rrdatas      = [var.bootstrap_ip_addresses[count.index]]
+}
+
 resource "google_dns_record_set" "etcd_cluster" {
   type         = "SRV"
   ttl          = "60"
   managed_zone = google_dns_managed_zone.int.name
   name         = "_etcd-server-ssl._tcp.${var.cluster_domain}."
-  rrdatas      = formatlist("0 10 2380 %s", google_dns_record_set.etcd_a_nodes.*.name)
+  rrdatas      = formatlist("0 10 2380 %s", concat(google_dns_record_set.etcd_a_nodes.*.name, google_dns_record_set.etcd_a_bootstrap.*.name))
 }
