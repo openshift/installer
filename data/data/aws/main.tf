@@ -66,8 +66,10 @@ module "dns" {
   base_domain              = var.base_domain
   cluster_domain           = var.cluster_domain
   cluster_id               = var.cluster_id
+  etcd_pivot               = var.etcd_pivot
   etcd_count               = var.master_count
   etcd_ip_addresses        = flatten(module.masters.ip_addresses)
+  bootstrap_ip_addresses   = flatten(module.bootstrap.ip_addresses)
   tags                     = local.tags
   vpc_id                   = module.vpc.vpc_id
 }

@@ -54,7 +54,7 @@ resource "libvirt_network" "net" {
     local_only = true
 
     dynamic "srvs" {
-      for_each = data.libvirt_network_dns_srv_template.etcd_cluster.*.rendered
+      for_each = concat(data.libvirt_network_dns_srv_template.etcd_cluster.*.rendered, data.libvirt_network_dns_srv_template.etcd_bootstrap.*.rendered)
       content {
         domain   = srvs.value.domain
         port     = srvs.value.port
@@ -151,5 +151,15 @@ data "libvirt_network_dns_srv_template" "etcd_cluster" {
   port     = 2380
   weight   = 10
   target   = "etcd-${count.index}.${var.cluster_domain}"
+}
+
+data "libvirt_network_dns_srv_template" "etcd_bootstrap" {
+  count    = var.etcd_pivot ? 1 : 0
+  service  = "etcd-server-ssl"
+  protocol = "tcp"
+  domain   = var.cluster_domain
+  port     = 2380
+  weight   = 10
+  target   = "etcd-bootstrap.${var.cluster_domain}"
 }
 
