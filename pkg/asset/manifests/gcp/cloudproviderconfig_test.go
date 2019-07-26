@@ -11,7 +11,7 @@ func TestCloudProviderConfig(t *testing.T) {
 project-id = test-project-id
 regional   = true
 multizone  = true
-node-tags  = uid-master,uid-worker
+node-tags  = uid-worker
 
 `
 	actualConfig, err := CloudProviderConfig("uid", "test-project-id")
