@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
+	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -79,7 +80,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	}
 
 	switch installConfig.Config.Platform.Name() {
-	case awstypes.Name, libvirttypes.Name, nonetypes.Name, baremetaltypes.Name, gcptypes.Name:
+	case awstypes.Name, libvirttypes.Name, nonetypes.Name, baremetaltypes.Name:
 		return nil
 	case openstacktypes.Name:
 		cm.Data[cloudProviderConfigDataKey] = openstackmanifests.CloudProviderConfig()
@@ -98,6 +99,12 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}
 		cm.Data[cloudProviderConfigDataKey] = azureConfig
+	case gcptypes.Name:
+		gcpConfig, err := gcpmanifests.CloudProviderConfig(clusterID.InfraID, installConfig.Config.GCP.ProjectID)
+		if err != nil {
+			return errors.Wrap(err, "could not create cloud provider config")
+		}
+		cm.Data[cloudProviderConfigDataKey] = gcpConfig
 	case vspheretypes.Name:
 		vsphereConfig, err := vspheremanifests.CloudProviderConfig(
 			installConfig.Config.ObjectMeta.Name,
