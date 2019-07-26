@@ -62,6 +62,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&kubeconfig.AdminClient{},
 		&kubeconfig.Kubelet{},
+		&kubeconfig.LoopbackClient{},
 		&machines.Master{},
 		&machines.Worker{},
 		&manifests.Manifests{},
@@ -420,6 +421,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 	for _, asset := range []asset.WritableAsset{
 		&kubeconfig.AdminClient{},
 		&kubeconfig.Kubelet{},
+		&kubeconfig.LoopbackClient{},
 		&tls.AdminKubeConfigCABundle{},
 		&tls.AggregatorCA{},
 		&tls.AggregatorCABundle{},
