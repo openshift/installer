@@ -269,7 +269,7 @@ terraform apply -auto-approve
 Use the bootstrap [monitoring][#monitor-for-bootstrap-complete] to track when cluster bootstrapping has finished. After the Kubernetes APIServer has been bootstrapped on the control plane machines, the bootstrap machine can be removed from the API pool by following:
 
 ```sh
-terraform apply -auto-approve -var=boostrap_dns="false"
+terraform apply -auto-approve -var=bootstrap_dns="false"
 ```
 
 NOTE: The bootstrap resources like the bootstrap machines currently cannot be removed using terraform. You can use the Packet.net console to remove the bootstrap machine. All the resources will be cleaned up by `terraform destroy`

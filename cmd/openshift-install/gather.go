@@ -239,7 +239,7 @@ func (e errUnSupportedGatherPlatform) Error() string {
 
 func unSupportedPlatformGather(directory string) error {
 	if gatherBootstrapOpts.bootstrap == "" || len(gatherBootstrapOpts.masters) == 0 {
-		return errors.New("boostrap host address and at least one control plane host address must be provided")
+		return errors.New("bootstrap host address and at least one control plane host address must be provided")
 	}
 
 	return logGatherBootstrap(gatherBootstrapOpts.bootstrap, 22, gatherBootstrapOpts.masters, directory)

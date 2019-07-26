@@ -10,7 +10,7 @@ Parameters:
     Description: A short, unique cluster ID used to tag nodes for the kubelet cloud provider.
     Type: String
   RhcosAmi:
-    Description: Current RHEL CoreOS AMI to use for boostrap
+    Description: Current Red Hat Enterprise Linux CoreOS AMI to use for bootstrap.
     Type: AWS::EC2::Image::Id
   AutoRegisterDNS:
     Default: "yes"
