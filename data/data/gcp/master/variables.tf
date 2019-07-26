@@ -8,7 +8,7 @@ variable "ignition" {
   description = "The content of the masters ignition file."
 }
 
-variable "image_name" {
+variable "image" {
   type        = string
   description = "The image for the master instances."
 }

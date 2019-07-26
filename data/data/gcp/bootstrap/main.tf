@@ -48,7 +48,7 @@ resource "google_compute_instance" "bootstrap" {
     initialize_params {
       type  = var.root_volume_type
       size  = var.root_volume_size
-      image = var.image_name
+      image = var.image
     }
   }
 

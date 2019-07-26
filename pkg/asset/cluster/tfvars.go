@@ -210,6 +210,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		data, err := gcptfvars.TFVars(
 			auth,
 			masterConfigs,
+			string(*rhcosImage),
 			publicZone.Name,
 		)
 		if err != nil {
