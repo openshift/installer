@@ -3,7 +3,6 @@ resource "ironic_node_v1" "openshift-master-host" {
   name           = var.hosts[count.index]["name"]
   resource_class = "baremetal"
 
-  inspect   = true
   clean     = true
   available = true
 
