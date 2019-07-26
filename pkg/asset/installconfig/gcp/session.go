@@ -68,7 +68,7 @@ func getCredentials(ctx context.Context) (*googleoauth.Credentials, error) {
 	}
 
 	filePath := defaultAuthFilePath
-	logrus.Info("Saving the credentials to %q", filePath)
+	logrus.Infof("Saving the credentials to %q", filePath)
 	if err := os.MkdirAll(filepath.Dir(filePath), 0700); err != nil {
 		return nil, err
 	}
