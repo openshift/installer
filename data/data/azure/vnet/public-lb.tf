@@ -46,7 +46,6 @@ resource "azurerm_lb_rule" "public_lb_rule_api_internal" {
   enable_floating_ip             = false
   idle_timeout_in_minutes        = 30
   load_distribution              = "Default"
-  probe_id                       = azurerm_lb_probe.public_lb_probe_api_internal.id
 }
 
 resource "azurerm_lb_rule" "public_lb_rule_sint_internal" {
@@ -61,25 +60,4 @@ resource "azurerm_lb_rule" "public_lb_rule_sint_internal" {
   enable_floating_ip             = false
   idle_timeout_in_minutes        = 30
   load_distribution              = "Default"
-  probe_id                       = azurerm_lb_probe.public_lb_sint.id
-}
-
-resource "azurerm_lb_probe" "public_lb_probe_api_internal" {
-  name                = "api-internal-probe"
-  resource_group_name = var.resource_group_name
-  interval_in_seconds = 10
-  number_of_probes    = 3
-  loadbalancer_id     = azurerm_lb.public.id
-  port                = 6443
-  protocol            = "TCP"
-}
-
-resource "azurerm_lb_probe" "public_lb_sint" {
-  name                = "sint-probe"
-  resource_group_name = var.resource_group_name
-  interval_in_seconds = 10
-  number_of_probes    = 3
-  loadbalancer_id     = azurerm_lb.public.id
-  port                = 22623
-  protocol            = "TCP"
 }
