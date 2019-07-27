@@ -13,6 +13,11 @@ resource "google_project_iam_member" "master-network-admin" {
   member = "serviceAccount:${google_service_account.master-node-sa.email}"
 }
 
+resource "google_project_iam_member" "master-compute-security" {
+  role   = "roles/compute.securityAdmin"
+  member = "serviceAccount:${google_service_account.master-node-sa.email}"
+}
+
 resource "google_project_iam_member" "master-storage-admin" {
   role   = "roles/storage.admin"
   member = "serviceAccount:${google_service_account.master-node-sa.email}"
