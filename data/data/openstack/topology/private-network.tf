@@ -88,6 +88,7 @@ resource "openstack_networking_floatingip_associate_v2" "service_fip" {
 }
 
 resource "openstack_networking_floatingip_v2" "bootstrap_fip" {
+  count   = var.enable_bootstrap_floating_ip ? 1 : 0
   pool    = "${var.external_network}"
   port_id = "${openstack_networking_port_v2.bootstrap_port.id}"
 }
