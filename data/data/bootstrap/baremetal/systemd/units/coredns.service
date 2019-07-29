@@ -5,8 +5,8 @@
 
 [Unit]
 Description=Serve cluster DNS gathered from mDNS
-Wants=network-online.target
-After=network-online.target
+Wants=network-online.target crio.service
+After=network-online.target crio.service
 
 [Service]
 WorkingDirectory=/etc/coredns
