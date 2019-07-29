@@ -4,9 +4,8 @@ aliases:
   installer-approvers:
     - abhinavdahiya
     - crawford
+    - sdodson
     - smarterclayton
-    - staebler
-    - steveeJ
     - wking
   installer-reviewers:
     - jcpowermac
@@ -14,7 +13,6 @@ aliases:
     - jstuever
     - mtnbikenc
     - patrickdillon
-    - vrutkovs
   libvirt-approvers:
     - abhinavdahiya
     - enxebre
