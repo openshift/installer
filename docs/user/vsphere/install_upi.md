@@ -402,7 +402,7 @@ terraform apply -auto-approve
 Use the bootstrap [monitoring][#monitor-for-bootstrap-complete] to track when cluster bootstrapping has finished. After the Kubernetes APIServer has been bootstrapped on the control plane machines, the bootstrap VM can be destroyed by following:
 
 ```sh
-terraform apply -auto-approve -var 'boostrap_complete=true'
+terraform apply -auto-approve -var 'bootstrap_complete=true'
 ```
 
 ### Approving server certificates for nodes

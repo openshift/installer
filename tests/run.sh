@@ -116,7 +116,7 @@ export SMOKE_KUBECONFIG="${PWD}/${CLUSTER_NAME}/generated/auth/kubeconfig"
 export SMOKE_MANIFEST_PATHS="${PWD}/${CLUSTER_NAME}/generated"
 case "${BACKEND}" in
 aws)
-  export SMOKE_NODE_COUNT=5  # Sum of all nodes (boostrap + master + worker)
+  export SMOKE_NODE_COUNT=5  # Sum of all nodes (bootstrap + master + worker)
   ;;
 libvirt)
   export SMOKE_NODE_COUNT=4
