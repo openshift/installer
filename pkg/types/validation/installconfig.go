@@ -8,7 +8,6 @@ import (
 
 	dockerref "github.com/containers/image/docker/reference"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -188,7 +187,6 @@ func validateControlPlane(platform *types.Platform, pool *types.MachinePool, fld
 func validateCompute(platform *types.Platform, pools []types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	poolNames := map[string]bool{}
-	foundPositiveReplicas := false
 	for i, p := range pools {
 		poolFldPath := fldPath.Index(i)
 		if p.Name != "worker" {
@@ -198,13 +196,7 @@ func validateCompute(platform *types.Platform, pools []types.MachinePool, fldPat
 			allErrs = append(allErrs, field.Duplicate(poolFldPath.Child("name"), p.Name))
 		}
 		poolNames[p.Name] = true
-		if p.Replicas != nil && *p.Replicas > 0 {
-			foundPositiveReplicas = true
-		}
 		allErrs = append(allErrs, ValidateMachinePool(platform, &p, poolFldPath)...)
-	}
-	if !foundPositiveReplicas {
-		logrus.Warnf("There are no compute nodes specified. The cluster will not fully initialize without compute nodes.")
 	}
 	return allErrs
 }
