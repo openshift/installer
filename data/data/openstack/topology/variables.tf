@@ -24,6 +24,12 @@ variable "lb_floating_ip" {
   default     = ""
 }
 
+variable "enable_bootstrap_floating_ip" {
+  description = "(optional) If true the bootstrap machine gets a floating IP address that will be used to collect logs."
+  type        = bool
+  default     = true
+}
+
 variable "masters_count" {
   type = string
 }
