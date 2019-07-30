@@ -19,6 +19,7 @@ module "volume" {
 module "bootstrap" {
   source = "./bootstrap"
 
+  cluster_domain = var.cluster_domain
   addresses      = [var.libvirt_bootstrap_ip]
   base_volume_id = module.volume.coreos_base_volume_id
   cluster_id     = var.cluster_id
@@ -108,7 +109,7 @@ resource "libvirt_domain" "master" {
 
   network_interface {
     network_id = libvirt_network.net.id
-    hostname   = "${var.cluster_id}-master-${count.index}"
+    hostname   = "${var.cluster_id}-master-${count.index}.${var.cluster_domain}"
     addresses  = [var.libvirt_master_ips[count.index]]
   }
 }

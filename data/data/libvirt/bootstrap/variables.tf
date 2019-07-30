@@ -14,6 +14,11 @@ variable "cluster_id" {
   description = "The identifier for the cluster."
 }
 
+variable "cluster_domain" {
+  type        = string
+  description = "The domain for the cluster that all DNS records must belong"
+}
+
 variable "ignition" {
   type        = string
   description = "The content of the bootstrap ignition file."
