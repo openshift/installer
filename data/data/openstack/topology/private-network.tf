@@ -102,31 +102,6 @@ resource "openstack_networking_trunk_v2" "masters" {
   port_id        = openstack_networking_port_v2.masters[count.index].id
 }
 
-resource "openstack_networking_port_v2" "bootstrap_port" {
-  name = "${var.cluster_id}-bootstrap-port"
-
-  admin_state_up     = "true"
-  network_id         = openstack_networking_network_v2.openshift-private.id
-  security_group_ids = [openstack_networking_secgroup_v2.master.id]
-  tags               = ["openshiftClusterID=${var.cluster_id}"]
-  extra_dhcp_option {
-    name  = "domain-search"
-    value = var.cluster_domain
-  }
-
-  fixed_ip {
-    subnet_id = openstack_networking_subnet_v2.nodes.id
-  }
-
-  allowed_address_pairs {
-    ip_address = var.api_int_ip
-  }
-
-  allowed_address_pairs {
-    ip_address = var.node_dns_ip
-  }
-}
-
 // Assign the floating IP to one of the masters.
 //
 // Strictly speaking, this is not required to finish the installation. We
@@ -147,14 +122,6 @@ resource "openstack_networking_floatingip_associate_v2" "api_fip" {
   count       = length(var.lb_floating_ip) == 0 ? 0 : 1
   port_id     = openstack_networking_port_v2.api_port.id
   floating_ip = var.lb_floating_ip
-}
-
-resource "openstack_networking_floatingip_v2" "bootstrap_fip" {
-  description = "${var.cluster_id}-bootstrap-fip"
-  count       = var.enable_bootstrap_floating_ip ? 1 : 0
-  pool        = "${var.external_network}"
-  port_id     = "${openstack_networking_port_v2.bootstrap_port.id}"
-  tags        = ["openshiftClusterID=${var.cluster_id}"]
 }
 
 resource "openstack_networking_router_v2" "openshift-external-router" {
