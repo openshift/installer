@@ -25,12 +25,18 @@ provider "openstack" {
 module "bootstrap" {
   source = "./bootstrap"
 
-  swift_container   = openstack_objectstorage_container_v1.container.name
-  cluster_id        = var.cluster_id
-  image_name        = var.openstack_base_image
-  flavor_name       = var.openstack_master_flavor_name
-  ignition          = var.ignition_bootstrap
-  bootstrap_port_id = module.topology.bootstrap_port_id
+  swift_container    = openstack_objectstorage_container_v1.container.name
+  cluster_id         = var.cluster_id
+  image_name         = var.openstack_base_image
+  flavor_name        = var.openstack_master_flavor_name
+  ignition           = var.ignition_bootstrap
+  api_int_ip         = var.openstack_api_int_ip
+  node_dns_ip        = var.openstack_node_dns_ip
+  external_network   = var.openstack_external_network
+  cluster_domain     = var.cluster_domain
+  nodes_subnet_id    = module.topology.nodes_subnet_id
+  private_network_id = module.topology.private_network_id
+  master_sg_id       = module.topology.master_sg_id
 }
 
 module "masters" {
