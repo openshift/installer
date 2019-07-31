@@ -251,36 +251,6 @@ func (o *ClusterUninstaller) deleteBackendService(name string) error {
 	return nil
 }
 
-func (o *ClusterUninstaller) clearBackendServiceHealthChecks(name string) error {
-	o.Logger.Debugf("Clearing backend service %s health checks", name)
-	ctx, cancel := o.contextWithTimeout()
-	defer cancel()
-	backendService, err := o.computeSvc.RegionBackendServices.Get(o.ProjectID, o.Region, name).Context(ctx).Do()
-	if isNotFound(err) {
-		return nil
-	}
-	if err != nil {
-		return errors.Wrapf(err, "cannot retrieve backend service %s", name)
-	}
-	if len(backendService.HealthChecks) == 0 {
-		o.Logger.Debugf("Backend service %s has no health checks to clear", name)
-	}
-	backendService.HealthChecks = []string{}
-	op, err := o.computeSvc.RegionBackendServices.Patch(o.ProjectID, o.Region, name, backendService).Context(ctx).RequestId(o.requestID("clearbackendservice", name)).Context(ctx).Do()
-	if err != nil && !isNoOp(err) {
-		o.resetRequestID("clearbackendservice", name)
-		return errors.Wrapf(err, "failed to clear backend service %s health checks", name)
-	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID("backendservice", name)
-		return errors.Errorf("failed to clear backend service %s health checks with error: %s", name, operationErrorMessage(op))
-	}
-	if op != nil && op.Status != "DONE" {
-		return errors.Errorf("backend service pending to be cleared of health checks")
-	}
-	return nil
-}
-
 // destroyBackendServices removes backend services with a name prefixed by the
 // cluster's infra ID.
 func (o *ClusterUninstaller) destroyBackendServices() error {
@@ -480,7 +450,8 @@ func (o *ClusterUninstaller) clearTargetPoolHealthChecks(name string) error {
 		return errors.Wrapf(err, "cannot retrieve target pool %s", name)
 	}
 	if len(targetPool.HealthChecks) == 0 {
-		o.Logger.Debugf("Backend service %s has no health checks to clear", name)
+		o.Logger.Debugf("Target pool %s has no health checks to clear", name)
+		return nil
 	}
 	hcRemoveRequest := &compute.TargetPoolsRemoveHealthCheckRequest{}
 	for _, hc := range targetPool.HealthChecks {
@@ -857,6 +828,7 @@ func (o *ClusterUninstaller) listBackendServicesForInstanceGroups(igs []nameAndZ
 				return false
 			}
 		}
+		o.Logger.Debugf("Found backend service %s", item.Name)
 		return true
 	})
 }
@@ -865,14 +837,6 @@ func (o *ClusterUninstaller) listBackendServicesForInstanceGroups(igs []nameAndZ
 // https://github.com/openshift/kubernetes/blob/1e5983903742f64bca36a464582178c940353e9a/pkg/cloudprovider/providers/gce/gce_loadbalancer_internal.go#L222
 // TODO: add cleanup for shared mode resources (determine if it's supported in 4.2)
 func (o *ClusterUninstaller) deleteInternalLoadBalancer(loadBalancerName string) error {
-
-	// First, remove backend service health checks so that we can delete health checks first
-	// without having to delete the backend service. The backend service is the resource
-	// that tells us that there is an internal load balancer pending deletion. It should be
-	// deleted last.
-	if err := o.clearBackendServiceHealthChecks(loadBalancerName); err != nil {
-		return err
-	}
 	if err := o.deleteAddress(loadBalancerName, true); err != nil {
 		return err
 	}
@@ -1006,6 +970,7 @@ func (o *ClusterUninstaller) getExternalLBTargetPools() ([]string, error) {
 				return false
 			}
 		}
+		o.Logger.Debugf("Found external load balancer target pool: %s", pool.Name)
 		return true
 	})
 }
@@ -1037,7 +1002,7 @@ func (o *ClusterUninstaller) destroyCloudControllerExternalLBs() error {
 		if err := o.deleteHealthCheck(fmt.Sprintf("k8s-%s-node-hc", o.cloudControllerUID), true); err != nil {
 			return err
 		}
-		if err := o.deleteFirewall(fmt.Sprintf("k8s-%s-node--hc", o.cloudControllerUID), true); err != nil {
+		if err := o.deleteFirewall(fmt.Sprintf("k8s-%s-node-hc", o.cloudControllerUID), true); err != nil {
 			return err
 		}
 	}

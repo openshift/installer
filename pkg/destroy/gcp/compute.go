@@ -40,7 +40,7 @@ func (o *ClusterUninstaller) getInstanceNameAndZone(instanceURL string) (string,
 	path := strings.TrimLeft(instanceURL, o.computeSvc.BasePath)
 	parts := strings.Split(path, "/")
 	if len(parts) >= 5 {
-		return parts[2], parts[4]
+		return parts[4], parts[2]
 	}
 	return "", ""
 }
@@ -59,7 +59,7 @@ func (o *ClusterUninstaller) listInstanceGroupsWithFilter(filter string) ([]name
 					name: ig.Name,
 					zone: zoneName,
 				})
-				o.Logger.Debugf("Found instance group %s in zone %s\n", ig.Name, zoneName)
+				o.Logger.Debugf("Found instance group %s in zone %s", ig.Name, zoneName)
 			}
 		}
 		return nil

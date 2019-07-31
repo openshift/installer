@@ -259,7 +259,6 @@ func operationErrorMessage(op *compute.Operation) string {
 	}
 	if len(errs) == 0 {
 		return op.HttpErrorMessage
-	} else {
-		return strings.Join(errs, ", ")
 	}
+	return strings.Join(errs, ", ")
 }
