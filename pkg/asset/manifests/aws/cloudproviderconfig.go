@@ -18,30 +18,22 @@ type cloudConfig struct {
 
 // global struct of cloudConfig which is currently not inialized.
 type global struct {
-	Zone                        string `ini:"Zone,omitempty"`
-	VPC                         string `ini:"VPC,omitempty"`
-	SubnetID                    string `ini:"SubnetID,omitempty"`
-	RouteTableID                string `ini:"RouteTableID,omitempty"`
-	RoleARN                     string `ini:"RoleARN,omitempty"`
-	KubernetesClusterTag        string `ini:"KubernetesClusterTag,omitempty"`
-	KubernetesClusterID         string `ini:"KubernetesClusterID,omitempty"`
-	DisableSecurityGroupIngress bool   `ini:"DisableSecurityGroupIngress,omitempty"`
-	ElbSecurityGroup            string `ini:"ElbSecurityGroup,omitempty"`
-	DisableStrictZoneCheck      bool   `ini:"DisableStrictZoneCheck,omitempty"`
 }
 
 // serviceOverride struct used for AWS service endpoint override.
 type serviceOverride struct {
-	Service       string `ini:"Service"`
-	Region        string `ini:"Region"`
-	URL           string `ini:"URL"`
-	SigningRegion string `ini:"SigningRegion,omitempty"`
-	SigningMethod string `ini:"SigningMethod,omitempty"`
-	SigningName   string `ini:"SigningName,omitempty"`
+	// Service string describing the AWS service being overriden,
+	// Currently support ec2, elb, iam, s3 and route53.
+	Service string `ini:"Service"`
+	// Region where the service is overridden. In current implementation,
+	// its set to the cluster default region.
+	Region string `ini:"Region"`
+	// URL descibes the endpoint which will be used for service override.
+	URL string `ini:"URL"`
 }
 
 // CloudProviderConfig builds the cloud provider config and reflects to an ini file.
-func CloudProviderConfig(params *awstypes.Platform) (string, error) {
+func CloudProviderConfig(awsPlatform *awstypes.Platform) (string, error) {
 	file := ini.Empty()
 	config := &cloudConfig{
 		Global: global{},
@@ -50,18 +42,18 @@ func CloudProviderConfig(params *awstypes.Platform) (string, error) {
 		return "", errors.Wrap(err, "failed to reflect from config")
 	}
 
-	for index, t := range params.CustomRegionOverride {
+	for index, endpoint := range awsPlatform.CustomRegionOverride {
 		s, err := file.NewSection(fmt.Sprintf("ServiceOverride %q", strconv.Itoa(index)))
 		if err != nil {
 			return "", errors.Wrapf(err, "failed to create section for ServiceOverride")
 		}
 		if err := s.ReflectFrom(
 			&serviceOverride{
-				Service: t.Service,
-				Region:  params.Region,
-				URL:     t.URL,
+				Service: endpoint.Service,
+				Region:  awsPlatform.Region,
+				URL:     endpoint.URL,
 			}); err != nil {
-			return "", errors.Wrapf(err, "failed to reflect from  ServiceOverride")
+			return "", errors.Wrapf(err, "failed to reflect from ServiceOverride")
 		}
 	}
 

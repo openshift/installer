@@ -4,6 +4,10 @@ package aws
 type Metadata struct {
 	Region string `json:"region"`
 
+	// Map of all custom endpoints, where the keys hold all the
+	// services overriden and the values the respective custom URLs.
+	CustomEndpoints map[string]string `json:"customEndpoints"`
+
 	// Identifier holds a slice of filter maps.  The maps hold the
 	// key/value pairs for the tags we will be matching against.  A
 	// resource matches the map if all of the key/value pairs are in its

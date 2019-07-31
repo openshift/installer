@@ -9,7 +9,7 @@ import (
 
 func TestCloudProviderConfig(t *testing.T) {
 	customEndpoint := []aws.CustomEndpoint{
-		aws.CustomEndpoint{
+		{
 			Service: "ec2",
 			URL:     "https://ec2.foo.bar",
 		},
@@ -20,7 +20,7 @@ func TestCloudProviderConfig(t *testing.T) {
 	}
 	expected := `[Global]
 
-[ServiceOverride "1"]
+[ServiceOverride "0"]
 Service = ec2
 Region  = us-east-1
 URL     = https://ec2.foo.bar

@@ -75,7 +75,7 @@ func GetBaseDomain() (string, error) {
 }
 
 // GetPublicZone returns a public route53 zone that matches the name.
-func GetPublicZone(name string) (*route53.HostedZone, error) {
+func GetPublicZone(name string, customEndpoints map[string]string) (*route53.HostedZone, error) {
 	var res *route53.HostedZone
 	f := func(resp *route53.ListHostedZonesOutput, lastPage bool) (shouldContinue bool) {
 		for idx, zone := range resp.HostedZones {
@@ -91,7 +91,11 @@ func GetPublicZone(name string) (*route53.HostedZone, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "getting AWS session")
 	}
-	client := route53.New(session)
+	awsConfig := aws.NewConfig()
+	if endpoint, ok := customEndpoints["route53"]; ok {
+		awsConfig = awsConfig.WithEndpoint(endpoint)
+	}
+	client := route53.New(session, awsConfig)
 	if err := client.ListHostedZonesPages(&route53.ListHostedZonesInput{}, f); err != nil {
 		return nil, errors.Wrap(err, "listing hosted zones")
 	}

@@ -134,7 +134,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		customEndpointsMap := installConfig.Config.Platform.AWS.FetchCustomEndpointsMap()
+		customEndpoints := installConfig.Config.Platform.AWS.FetchCustomEndpoints()
 		masterConfigs := make([]*awsprovider.AWSMachineProviderConfig, len(masters))
 		for i, m := range masters {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
@@ -147,7 +147,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, m := range workers {
 			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
 		}
-		data, err := awstfvars.TFVars(masterConfigs, workerConfigs, customEndpointsMap)
+		data, err := awstfvars.TFVars(masterConfigs, workerConfigs, customEndpoints)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}

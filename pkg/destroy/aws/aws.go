@@ -55,10 +55,11 @@ type ClusterUninstaller struct {
 	//   }
 	//
 	// will match resources with (a:b and c:d) or d:e.
-	Filters   []Filter // filter(s) we will be searching for
-	Logger    logrus.FieldLogger
-	Region    string
-	ClusterID string
+	Filters         []Filter // filter(s) we will be searching for
+	Logger          logrus.FieldLogger
+	Region          string
+	CustomEndpoints map[string]string
+	ClusterID       string
 
 	// Session is the AWS session to be used for deletion.  If nil, a
 	// new session will be created based on the usual credential
@@ -79,11 +80,12 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	}
 
 	return &ClusterUninstaller{
-		Filters:   filters,
-		Region:    metadata.ClusterPlatformMetadata.AWS.Region,
-		Logger:    logger,
-		ClusterID: metadata.InfraID,
-		Session:   session,
+		Filters:         filters,
+		Region:          metadata.ClusterPlatformMetadata.AWS.Region,
+		CustomEndpoints: metadata.ClusterPlatformMetadata.AWS.CustomEndpoints,
+		Logger:          logger,
+		ClusterID:       metadata.InfraID,
+		Session:         session,
 	}, nil
 }
 
@@ -132,7 +134,7 @@ func (o *ClusterUninstaller) Run() error {
 	}
 
 	deleted := map[string]struct{}{}
-	iamClient := iam.New(awsSession)
+	iamClient := fetchClient(awsSession, "iam", o.CustomEndpoints).(*iam.IAM)
 	iamRoleSearch := &iamRoleSearch{
 		client:  iamClient,
 		filters: o.Filters,
@@ -179,7 +181,7 @@ func (o *ClusterUninstaller) Run() error {
 										continue
 									}
 
-									err = deleteARN(awsSession, parsed, filter, arnLogger)
+									err = deleteARN(awsSession, parsed, filter, arnLogger, o.CustomEndpoints)
 									if err != nil {
 										arnLogger.Debug(err)
 										err = errors.Wrapf(err, "deleting %s", arnString)
@@ -236,7 +238,7 @@ func (o *ClusterUninstaller) Run() error {
 						continue
 					}
 
-					err = deleteARN(awsSession, parsed, nil, arnLogger)
+					err = deleteARN(awsSession, parsed, nil, arnLogger, o.CustomEndpoints)
 					if err != nil {
 						arnLogger.Debug(err)
 						err = errors.Wrapf(err, "deleting %s", arnString)
@@ -255,7 +257,7 @@ func (o *ClusterUninstaller) Run() error {
 	}
 
 	o.Logger.Debug("search for untaggable resources")
-	if err := o.deleteUntaggedResources(awsSession); err != nil {
+	if err := o.deleteUntaggedResources(awsSession, o.CustomEndpoints); err != nil {
 		o.Logger.Debug(err)
 		return err
 	}
@@ -498,26 +500,46 @@ func findPublicRoute53(client *route53.Route53, dnsName string, logger logrus.Fi
 	return "", nil
 }
 
-func deleteARN(session *session.Session, arn arn.ARN, filter Filter, logger logrus.FieldLogger) error {
+func deleteARN(session *session.Session, arn arn.ARN, filter Filter, logger logrus.FieldLogger, customEndpoints map[string]string) error {
 	switch arn.Service {
 	case "ec2":
-		return deleteEC2(session, arn, filter, logger)
+		return deleteEC2(session, arn, filter, logger, customEndpoints)
 	case "elasticloadbalancing":
-		return deleteElasticLoadBalancing(session, arn, logger)
+		return deleteElasticLoadBalancing(session, arn, logger, customEndpoints)
 	case "iam":
-		return deleteIAM(session, arn, logger)
+		return deleteIAM(session, arn, logger, customEndpoints)
 	case "route53":
-		return deleteRoute53(session, arn, logger)
+		return deleteRoute53(session, arn, logger, customEndpoints)
 	case "s3":
-		return deleteS3(session, arn, logger)
+		return deleteS3(session, arn, logger, customEndpoints)
 	default:
 		return errors.Errorf("unrecognized ARN service %s (%s)", arn.Service, arn)
 	}
 }
 
-func deleteEC2(session *session.Session, arn arn.ARN, filter Filter, logger logrus.FieldLogger) error {
-	client := ec2.New(session)
+func fetchClient(session *session.Session, service string, customEndpoints map[string]string) interface{} {
+	awsConfig := aws.NewConfig()
+	if endpoint, ok := customEndpoints[service]; ok {
+		awsConfig = awsConfig.WithEndpoint(endpoint)
+	}
+	switch service {
+	case "ec2":
+		return (ec2.New(session, awsConfig))
+	case "elb":
+		return elb.New(session, awsConfig)
+	case "iam":
+		return iam.New(session, awsConfig)
+	case "route53":
+		return route53.New(session, awsConfig)
+	case "s3":
+		return s3.New(session, awsConfig)
+	default:
+		return nil
+	}
+}
 
+func deleteEC2(session *session.Session, arn arn.ARN, filter Filter, logger logrus.FieldLogger, customEndpoints map[string]string) error {
+	client := fetchClient(session, "ec2", customEndpoints).(*ec2.EC2)
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
 		return err
@@ -532,7 +554,8 @@ func deleteEC2(session *session.Session, arn arn.ARN, filter Filter, logger logr
 	case "image":
 		return deleteEC2Image(client, id, filter, logger)
 	case "instance":
-		return deleteEC2Instance(client, iam.New(session), id, logger)
+		iamClient := fetchClient(session, "iam", customEndpoints).(*iam.IAM)
+		return deleteEC2Instance(client, iamClient, id, logger)
 	case "internet-gateway":
 		return deleteEC2InternetGateway(client, id, logger)
 	case "natgateway":
@@ -550,7 +573,8 @@ func deleteEC2(session *session.Session, arn arn.ARN, filter Filter, logger logr
 	case "volume":
 		return deleteEC2Volume(client, id, logger)
 	case "vpc":
-		return deleteEC2VPC(client, elb.New(session), elbv2.New(session), id, logger)
+		elbClient := fetchClient(session, "elb", customEndpoints).(*elb.ELB)
+		return deleteEC2VPC(client, elbClient, elbv2.New(session), id, logger)
 	default:
 		return errors.Errorf("unrecognized EC2 resource type %s", resourceType)
 	}
@@ -677,8 +701,8 @@ func deleteEC2Instance(ec2Client *ec2.EC2, iamClient *iam.IAM, id string, logger
 // Profiles.
 //
 // This code is a place to find specific objects like this which might be dangling.
-func (o *ClusterUninstaller) deleteUntaggedResources(awsSession *session.Session) error {
-	iamClient := iam.New(awsSession)
+func (o *ClusterUninstaller) deleteUntaggedResources(awsSession *session.Session, customEndpoints map[string]string) error {
+	iamClient := fetchClient(awsSession, "iam", customEndpoints).(*iam.IAM)
 	masterProfile := fmt.Sprintf("%s-master-profile", o.ClusterID)
 	if err := deleteIAMInstanceProfileByName(iamClient, &masterProfile, o.Logger); err != nil {
 		return err
@@ -1087,7 +1111,7 @@ func deleteEC2VPCEndpointsByVPC(client *ec2.EC2, vpc string, failFast bool, logg
 	return nil
 }
 
-func deleteElasticLoadBalancing(session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
+func deleteElasticLoadBalancing(session *session.Session, arn arn.ARN, logger logrus.FieldLogger, customEndpoints map[string]string) error {
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
 		return err
@@ -1098,7 +1122,8 @@ func deleteElasticLoadBalancing(session *session.Session, arn arn.ARN, logger lo
 	case "loadbalancer":
 		segments := strings.SplitN(id, "/", 2)
 		if len(segments) == 1 {
-			return deleteElasticLoadBalancerClassic(elb.New(session), id, logger)
+			elbClient := fetchClient(session, "elb", customEndpoints).(*elb.ELB)
+			return deleteElasticLoadBalancerClassic(elbClient, id, logger)
 		} else if len(segments) != 2 {
 			return errors.Errorf("cannot parse subresource %q into {subtype}/{id}", id)
 		}
@@ -1275,8 +1300,8 @@ func deleteElasticLoadBalancerV2ByVPC(client *elbv2.ELBV2, vpc string, logger lo
 	return err
 }
 
-func deleteIAM(session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
-	client := iam.New(session)
+func deleteIAM(session *session.Session, arn arn.ARN, logger logrus.FieldLogger, customEndpoints map[string]string) error {
+	client := fetchClient(session, "iam", customEndpoints).(*iam.IAM)
 
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
@@ -1500,7 +1525,7 @@ func deleteIAMUser(client *iam.IAM, id string, logger logrus.FieldLogger) error 
 	return nil
 }
 
-func deleteRoute53(session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
+func deleteRoute53(session *session.Session, arn arn.ARN, logger logrus.FieldLogger, customEndpoints map[string]string) error {
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
 		return err
@@ -1510,8 +1535,7 @@ func deleteRoute53(session *session.Session, arn arn.ARN, logger logrus.FieldLog
 	if resourceType != "hostedzone" {
 		return errors.Errorf("unrecognized Route 53 resource type %s", resourceType)
 	}
-
-	client := route53.New(session)
+	client := fetchClient(session, "route53", customEndpoints).(*route53.Route53)
 
 	sharedZoneID, err := getSharedHostedZone(client, id, logger)
 	if err != nil {
@@ -1614,9 +1638,8 @@ func deleteRoute53RecordSet(client *route53.Route53, zoneID string, recordSet *r
 	return nil
 }
 
-func deleteS3(session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
-	client := s3.New(session)
-
+func deleteS3(session *session.Session, arn arn.ARN, logger logrus.FieldLogger, customEndpoints map[string]string) error {
+	client := fetchClient(session, "s3", customEndpoints).(*s3.S3)
 	iter := s3manager.NewDeleteListIterator(client, &s3.ListObjectsInput{
 		Bucket: aws.String(arn.Resource),
 	})

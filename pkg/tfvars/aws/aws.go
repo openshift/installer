@@ -25,7 +25,7 @@ type config struct {
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
-func TFVars(masterConfigs []*v1beta1.AWSMachineProviderConfig, workerConfigs []*v1beta1.AWSMachineProviderConfig, customEndpointsMap map[string]string) ([]byte, error) {
+func TFVars(masterConfigs []*v1beta1.AWSMachineProviderConfig, workerConfigs []*v1beta1.AWSMachineProviderConfig, customEndpoints map[string]string) ([]byte, error) {
 	masterConfig := masterConfigs[0]
 
 	tags := make(map[string]string, len(masterConfig.Tags))
@@ -68,15 +68,15 @@ func TFVars(masterConfigs []*v1beta1.AWSMachineProviderConfig, workerConfigs []*
 	if *rootVolume.EBS.VolumeType == "io1" && rootVolume.EBS.Iops == nil {
 		return nil, errors.New("EBS IOPS must be configured for the io1 root volume")
 	}
-	
 
 	instanceClass := defaults.InstanceClass(masterConfig.Placement.Region)
 
 	cfg := &config{
-		Region:    masterConfig.Placement.Region,
-		ExtraTags: tags,
-		CustomEndpoints: customEndpointsMap,
-		AMI:       *masterConfig.AMI.ID,
+		Region:          masterConfig.Placement.Region,
+		ExtraTags:       tags,
+		CustomEndpoints: customEndpoints,
+		AMI:             *masterConfig.AMI.ID,
+
 		MasterAvailabilityZones: masterAvailabilityZones,
 		WorkerAvailabilityZones: workerAvailabilityZones,
 		BootstrapInstanceType:   fmt.Sprintf("%s.large", instanceClass),

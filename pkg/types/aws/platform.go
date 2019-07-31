@@ -26,8 +26,8 @@ type Platform struct {
 	CustomRegionOverride []CustomEndpoint `json:"customRegionOverride,omitempty"`
 }
 
-// FetchCustomEndpointsMap converts List of custom endpoints to a map
-func (p *Platform) FetchCustomEndpointsMap() map[string]string {
+// FetchCustomEndpoints converts List of custom endpoints to a map
+func (p *Platform) FetchCustomEndpoints() map[string]string {
 	endpointMap := make(map[string]string)
 	if len(p.CustomRegionOverride) == 0 {
 		return nil

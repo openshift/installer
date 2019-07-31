@@ -78,7 +78,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
-		zone, err := icaws.GetPublicZone(installConfig.Config.BaseDomain)
+		zone, err := icaws.GetPublicZone(installConfig.Config.BaseDomain, installConfig.Config.Platform.AWS.FetchCustomEndpoints())
 		if err != nil {
 			return errors.Wrapf(err, "getting public zone for %q", installConfig.Config.BaseDomain)
 		}

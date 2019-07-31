@@ -9,8 +9,8 @@ import (
 )
 
 // AvailabilityZones retrieves a list of availability zones for the given region.
-func AvailabilityZones(region string) ([]string, error) {
-	ec2Client, err := ec2Client(region)
+func AvailabilityZones(region string, customEndpoints map[string]string) ([]string, error) {
+	ec2Client, err := ec2Client(region, customEndpoints)
 	if err != nil {
 		return nil, err
 	}
@@ -21,13 +21,16 @@ func AvailabilityZones(region string) ([]string, error) {
 	return zones, nil
 }
 
-func ec2Client(region string) (*ec2.EC2, error) {
+func ec2Client(region string, customEndpoints map[string]string) (*ec2.EC2, error) {
 	ssn, err := awsutil.GetSession()
 	if err != nil {
 		return nil, err
 	}
-
-	client := ec2.New(ssn, aws.NewConfig().WithRegion(region))
+	awsConfig := aws.NewConfig()
+	if endpoint, ok := customEndpoints["ec2"]; ok {
+		awsConfig = awsConfig.WithEndpoint(endpoint)
+	}
+	client := ec2.New(ssn, awsConfig.WithRegion(region))
 	return client, nil
 }
 
