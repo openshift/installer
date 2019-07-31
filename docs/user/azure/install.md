@@ -8,50 +8,6 @@ IPI install.
 The steps for performing an IPI-based install are outlined [here][cloud-install]. Following this guide you may begin at
 Step 3: Download the Installer.
 
-### Setup your Red Hat Enterprise Linux CoreOS images
-
-OpenShift currently does not publish official build for [`Red Hat Enterprise Linux CoreOS`][rhcos] boot images. Therefore, currently users are required to import boot image to their subscription before using the installer to create clusters on Azure.
-
-1. Create a Storage Account to hold the blobs in a shared Resource Group.
-
-    ```sh
-    az storage account create --location centralus --name os4storage --kind StorageV2 --resource-group os4-common
-    ```
-
-    ```sh
-    az storage container create --name vhd --account-name os4storage
-    ```
-
-1. Create a Resource Group for the image.
-
-    ```sh
-    az group create --location centralus --name rhcos_images
-    ```
-
-1. Copy the image blob into the storage container in the Storage Account.
-
-    ```sh
-    ACCOUNT_KEY=$(az storage account keys list --account-name os4storage --resource-group os4-common --query "[0].value" -o tsv)
-    ```
-
-    ```sh
-    VHD_NAME=rhcos-410.8.20190504.0-azure.vhd
-    ```
-
-    ```sh
-    az storage blob copy start --account-name "os4storage" --account-key "$ACCOUNT_KEY" --destination-blob "$VHD_NAME" --destination-container vhd --source-uri "https://openshifttechpreview.blob.core.windows.net/rhcos/$VHD_NAME"
-    ```
-
-1. Create an image from the copied VHD
-
-    ```sh
-    RHCOS_VHD=$(az storage blob url --account-name os4storage -c vhd --name "$VHD_NAME" -o tsv)
-    ```
-
-    ```sh
-    az image create --resource-group rhcos_images --name rhcostestimage --os-type Linux --storage-sku Premium_LRS --source "$RHCOS_VHD" --location centralus
-    ```
-
 ### Create Configuration
 
 ```console
@@ -83,32 +39,6 @@ INFO To access the cluster as the system:admin user when using 'oc', run 'export
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.test.example.com
 INFO Login to the console with user: kubeadmin, password: 5char-5char-5char-5char
 ```
-
-Note that Azure support is still in development and as a result, certificate signing requests (CSRs) for compute nodes will need to be manually approved before the cluster will complete installation. The list of CSRs can be viewed using the `oc` client tool:
-
-```console
-[~]$ oc get csr
-NAME        AGE     REQUESTOR                                                                   CONDITION
-csr-4f5cm   3m50s   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Pending
-csr-5pldl   13m     system:node:test-gbwvn-master-0                                             Approved,Issued
-csr-6ngbz   12m     system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
-csr-6rb9t   13m     system:node:test-gbwvn-master-1                                             Approved,Issued
-csr-9b4fx   13m     system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
-csr-hkswn   75s     system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Pending
-csr-rb8fh   13m     system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
-csr-s9pzp   13m     system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
-csr-tlq5m   12m     system:node:test-gbwvn-master-2                                             Approved,Issued
-csr-wgzhj   6m15s   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Pending
-```
-
-CSRs can be approved as follows:
-
-```console
-[~]$ oc adm certificate approve csr-4f5cm
-certificatesigningrequest.certificates.k8s.io/csr-4f5cm approve
-```
-
-It can be expected that three CSRs will need to be approved as part of the default installation. The following command can be used to approve all pending CSRs: `oc get csr --no-headers | grep Pending | awk '{print $1}' | xargs --no-run-if-empty oc adm certificate approve`.
 
 ### Running Cluster
 
