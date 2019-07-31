@@ -268,6 +268,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			masters[0].Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec),
 			installConfig.Config.Platform.OpenStack.Cloud,
 			installConfig.Config.Platform.OpenStack.ExternalNetwork,
+			installConfig.Config.Platform.OpenStack.ExternalDNS,
 			installConfig.Config.Platform.OpenStack.LbFloatingIP,
 			apiVIP.String(),
 			dnsVIP.String(),

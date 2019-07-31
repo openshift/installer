@@ -14,24 +14,25 @@ import (
 )
 
 type config struct {
-	BaseImageName   string `json:"openstack_base_image_name,omitempty"`
-	BaseImageURL    string `json:"openstack_base_image_url,omitempty"`
-	ExternalNetwork string `json:"openstack_external_network,omitempty"`
-	Cloud           string `json:"openstack_credentials_cloud,omitempty"`
-	FlavorName      string `json:"openstack_master_flavor_name,omitempty"`
-	LbFloatingIP    string `json:"openstack_lb_floating_ip,omitempty"`
-	APIVIP          string `json:"openstack_api_int_ip,omitempty"`
-	DNSVIP          string `json:"openstack_node_dns_ip,omitempty"`
-	IngressVIP      string `json:"openstack_ingress_ip,omitempty"`
-	TrunkSupport    string `json:"openstack_trunk_support,omitempty"`
-	OctaviaSupport  string `json:"openstack_octavia_support,omitempty"`
-	RootVolumeSize  int    `json:"openstack_master_root_volume_size,omitempty"`
-	RootVolumeType  string `json:"openstack_master_root_volume_type,omitempty"`
-	SwiftPublicURL  string `json:"openstack_swift_public_url,omitempty"`
+	BaseImageName   string   `json:"openstack_base_image_name,omitempty"`
+	BaseImageURL    string   `json:"openstack_base_image_url,omitempty"`
+	ExternalNetwork string   `json:"openstack_external_network,omitempty"`
+	Cloud           string   `json:"openstack_credentials_cloud,omitempty"`
+	FlavorName      string   `json:"openstack_master_flavor_name,omitempty"`
+	LbFloatingIP    string   `json:"openstack_lb_floating_ip,omitempty"`
+	APIVIP          string   `json:"openstack_api_int_ip,omitempty"`
+	DNSVIP          string   `json:"openstack_node_dns_ip,omitempty"`
+	IngressVIP      string   `json:"openstack_ingress_ip,omitempty"`
+	TrunkSupport    string   `json:"openstack_trunk_support,omitempty"`
+	OctaviaSupport  string   `json:"openstack_octavia_support,omitempty"`
+	RootVolumeSize  int      `json:"openstack_master_root_volume_size,omitempty"`
+	RootVolumeType  string   `json:"openstack_master_root_volume_type,omitempty"`
+	SwiftPublicURL  string   `json:"openstack_swift_public_url,omitempty"`
+	ExternalDNS     []string `json:"openstack_external_dns,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string, baseImage string, infraID string) ([]byte, error) {
+func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string, baseImage string, infraID string) ([]byte, error) {
 	swiftPublicURL, err := getSwiftPublicURL(cloud)
 	if err != nil {
 		return nil, err
@@ -45,6 +46,7 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		APIVIP:          apiVIP,
 		DNSVIP:          dnsVIP,
 		IngressVIP:      ingressVIP,
+		ExternalDNS:     externalDNS,
 		TrunkSupport:    trunkSupport,
 		OctaviaSupport:  octaviaSupport,
 		SwiftPublicURL:  swiftPublicURL,
