@@ -106,7 +106,7 @@ func (o *ClusterUninstaller) deleteInstanceGroup(ig nameAndZone) error {
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("instancegroup", ig.zone, ig.name)
-		return errors.Errorf("failed to delete instance group %s in zone %s with error: %s", ig.name, ig.zone, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete instance group %s in zone %s with error: %s", ig.name, ig.zone, operationErrorMessage(op))
 	}
 	return nil
 }
@@ -148,7 +148,7 @@ func (o *ClusterUninstaller) deleteComputeInstance(instance nameAndZone) error {
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("instance", instance.zone, instance.name)
-		return errors.Errorf("failed to delete instance %s in zone %s with error: %s", instance.name, instance.zone, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete instance %s in zone %s with error: %s", instance.name, instance.zone, operationErrorMessage(op))
 	}
 	return nil
 }
@@ -206,7 +206,7 @@ func (o *ClusterUninstaller) deleteImage(name string) error {
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("image", name)
-		return errors.Errorf("failed to delete image %s with error: %s", name, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete image %s with error: %s", name, operationErrorMessage(op))
 	}
 	return nil
 }
@@ -266,7 +266,7 @@ func (o *ClusterUninstaller) deleteDisk(disk nameAndZone) error {
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("disk", disk.zone, disk.name)
-		return errors.Errorf("failed to delete disk %s in zone %s with error: %s", disk.name, disk.zone, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete disk %s in zone %s with error: %s", disk.name, disk.zone, operationErrorMessage(op))
 	}
 	return nil
 }

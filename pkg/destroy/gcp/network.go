@@ -50,7 +50,7 @@ func (o *ClusterUninstaller) deleteFirewall(name string, errorOnPending bool) er
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("firewall", name)
-		return errors.Errorf("failed to delete firewall %s with erorr: %s", name, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete firewall %s with error: %s", name, operationErrorMessage(op))
 	}
 	if errorOnPending && op != nil && op.Status != "DONE" {
 		return errors.Errorf("deletion of firewall %s is pending", name)
@@ -111,7 +111,7 @@ func (o *ClusterUninstaller) deleteAddress(name string, errorOnPending bool) err
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("address", name)
-		return errors.Errorf("failed to delete address %s with erorr: %s", name, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete address %s with error: %s", name, operationErrorMessage(op))
 	}
 	if errorOnPending && op != nil && op.Status != "DONE" {
 		return errors.Errorf("deletion of address %s is pending", name)
@@ -172,7 +172,7 @@ func (o *ClusterUninstaller) deleteForwardingRule(name string, errorOnPending bo
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("forwardingrule", name)
-		return errors.Errorf("failed to delete forwarding rule %s with erorr: %s", name, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete forwarding rule %s with error: %s", name, operationErrorMessage(op))
 	}
 	if errorOnPending && op != nil && op.Status != "DONE" {
 		return errors.Errorf("deletion of forwarding rule %s is pending", name)
@@ -246,7 +246,7 @@ func (o *ClusterUninstaller) deleteBackendService(name string) error {
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("backendservice", name)
-		return errors.Errorf("failed to delete backend service %s with erorr: %s", name, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete backend service %s with error: %s", name, operationErrorMessage(op))
 	}
 	return nil
 }
@@ -273,7 +273,7 @@ func (o *ClusterUninstaller) clearBackendServiceHealthChecks(name string) error 
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("backendservice", name)
-		return errors.Errorf("failed to clear backend service %s health checks with erorr: %s", name, op.HttpErrorMessage)
+		return errors.Errorf("failed to clear backend service %s health checks with error: %s", name, operationErrorMessage(op))
 	}
 	if op != nil && op.Status != "DONE" {
 		return errors.Errorf("backend service pending to be cleared of health checks")
@@ -334,7 +334,7 @@ func (o *ClusterUninstaller) deleteHealthCheck(name string, errorOnPending bool)
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("healthcheck", name)
-		return errors.Errorf("failed to delete health check %s with erorr: %s", name, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete health check %s with error: %s", name, operationErrorMessage(op))
 	}
 	if errorOnPending && op != nil && op.Status != "DONE" {
 		return errors.Errorf("deletion of forwarding rule %s is pending", name)
@@ -395,7 +395,7 @@ func (o *ClusterUninstaller) deleteHTTPHealthCheck(name string) error {
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("httphealthcheck", name)
-		return errors.Errorf("failed to delete HTTP health check %s with erorr: %s", name, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete HTTP health check %s with error: %s", name, operationErrorMessage(op))
 	}
 	return nil
 }
@@ -462,7 +462,7 @@ func (o *ClusterUninstaller) deleteTargetPool(name string) error {
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("targetpool", name)
-		return errors.Errorf("failed to delete route %s with erorr: %s", name, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete route %s with error: %s", name, operationErrorMessage(op))
 	}
 	o.Logger.Infof("Deleted target pool %s", name)
 	return nil
@@ -495,7 +495,7 @@ func (o *ClusterUninstaller) clearTargetPoolHealthChecks(name string) error {
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("cleartargetpool", name)
-		return errors.Errorf("failed to clear target pool %s health checks with erorr: %s", name, op.HttpErrorMessage)
+		return errors.Errorf("failed to clear target pool %s health checks with error: %s", name, operationErrorMessage(op))
 	}
 	if op != nil && op.Status != "DONE" {
 		return errors.Errorf("target pool pending to be cleared of health checks")
@@ -557,7 +557,7 @@ func (o *ClusterUninstaller) deleteSubNetwork(name string) error {
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("subnetwork", name)
-		return errors.Errorf("failed to delete subnetwork %s with erorr: %s", name, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete subnetwork %s with error: %s", name, operationErrorMessage(op))
 	}
 	return nil
 }
@@ -619,7 +619,7 @@ func (o *ClusterUninstaller) deleteNetwork(name string) error {
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("network", name)
-		return errors.Errorf("failed to delete network %s with erorr: %s", name, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete network %s with error: %s", name, operationErrorMessage(op))
 	}
 	return nil
 }
@@ -698,7 +698,7 @@ func (o *ClusterUninstaller) deleteRoute(name string) error {
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("route", name)
-		return errors.Errorf("failed to delete route %s with erorr: %s", name, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete route %s with error: %s", name, operationErrorMessage(op))
 	}
 	return nil
 }
@@ -756,7 +756,7 @@ func (o *ClusterUninstaller) deleteRouter(name string) error {
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("router", name)
-		return errors.Errorf("failed to delete router %s with erorr: %s", name, op.HttpErrorMessage)
+		return errors.Errorf("failed to delete router %s with error: %s", name, operationErrorMessage(op))
 	}
 	return nil
 }
