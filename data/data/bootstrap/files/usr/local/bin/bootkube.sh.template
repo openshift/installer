@@ -46,7 +46,7 @@ BAREMETAL_RUNTIMECFG_IMAGE=$(podman run --quiet --rm ${release} image baremetal-
 # But for now we're just changing the key bits: image and command.
 # Perhaps down the line we change this to run something like:
 # podman run machine-config-daemon bootstrap ... (passing the release image and the host rootfs)
-sed --in-place --expression 's,pause_image *=.*,pause_image = "'${MACHINE_CONFIG_INFRA_IMAGE}'",' /etc/crio/crio.conf
+sed --in-place --expression "s,pause_image *=.*,pause_image = \"${MACHINE_CONFIG_INFRA_IMAGE}\"," /etc/crio/crio.conf
 sed --in-place --expression 's,pause_command *=.*,pause_command = "/usr/bin/pod",' /etc/crio/crio.conf
 # Note crio today has a reload command but it just dies from the SIGHUP sent...
 systemctl restart cri-o.service
@@ -111,8 +111,8 @@ then
 		/usr/bin/cluster-kube-apiserver-operator render \
 		--manifest-etcd-serving-ca=etcd-ca-bundle.crt \
 		--manifest-etcd-server-urls={{.EtcdCluster}} \
-		--manifest-image=${OPENSHIFT_HYPERKUBE_IMAGE} \
-		--manifest-operator-image=${KUBE_APISERVER_OPERATOR_IMAGE} \
+		--manifest-image="${OPENSHIFT_HYPERKUBE_IMAGE}" \
+		--manifest-operator-image="${KUBE_APISERVER_OPERATOR_IMAGE}" \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
 		--config-output-file=/assets/kube-apiserver-bootstrap/config \
@@ -137,7 +137,7 @@ then
 		--volume "$PWD:/assets:z" \
 		"${KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-controller-manager-operator render \
-		--manifest-image=${OPENSHIFT_HYPERKUBE_IMAGE} \
+		--manifest-image="${OPENSHIFT_HYPERKUBE_IMAGE}" \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
 		--config-output-file=/assets/kube-controller-manager-bootstrap/config \
@@ -162,7 +162,7 @@ then
 		--volume "$PWD:/assets:z" \
 		"${KUBE_SCHEDULER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-scheduler-operator render \
-		--manifest-image=${OPENSHIFT_HYPERKUBE_IMAGE} \
+		--manifest-image="${OPENSHIFT_HYPERKUBE_IMAGE}" \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-scheduler-bootstrap \
 		--config-output-file=/assets/kube-scheduler-bootstrap/config
@@ -194,16 +194,16 @@ then
 			--config-file=/assets/manifests/cluster-config.yaml \
 			--dest-dir=/assets/mco-bootstrap \
 			--pull-secret=/assets/manifests/openshift-config-secret-pull-secret.yaml \
-			--etcd-image=${MACHINE_CONFIG_ETCD_IMAGE} \
-			--kube-client-agent-image=${MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE} \
-			--machine-config-operator-image=${MACHINE_CONFIG_OPERATOR_IMAGE} \
-			--machine-config-oscontent-image=${MACHINE_CONFIG_OSCONTENT} \
-			--infra-image=${MACHINE_CONFIG_INFRA_IMAGE} \
-			--keepalived-image=${KEEPALIVED_IMAGE} \
-			--coredns-image=${COREDNS_IMAGE} \
-			--mdns-publisher-image=${MDNS_PUBLISHER_IMAGE} \
-			--haproxy-image=${HAPROXY_IMAGE} \
-			--baremetal-runtimecfg-image=${BAREMETAL_RUNTIMECFG_IMAGE} \
+			--etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
+			--kube-client-agent-image="${MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE}" \
+			--machine-config-operator-image="${MACHINE_CONFIG_OPERATOR_IMAGE}" \
+			--machine-config-oscontent-image="${MACHINE_CONFIG_OSCONTENT}" \
+			--infra-image="${MACHINE_CONFIG_INFRA_IMAGE}" \
+			--keepalived-image="${KEEPALIVED_IMAGE}" \
+			--coredns-image="${COREDNS_IMAGE}" \
+			--mdns-publisher-image="${MDNS_PUBLISHER_IMAGE}" \
+			--haproxy-image="${HAPROXY_IMAGE}" \
+			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
 			--cloud-config-file=/assets/manifests/cloud-provider-config.yaml
 
 	# Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to
