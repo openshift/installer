@@ -249,3 +249,16 @@ func (t pendingItemTracker) setPendingItems(itemType string, items []string) []s
 func isErrorStatus(code int64) bool {
 	return code < 200 || code >= 300
 }
+
+func operationErrorMessage(op *compute.Operation) string {
+	errs := []string{}
+	if op.Error != nil {
+		for _, e := range op.Error.Errors {
+			errs = append(errs, fmt.Sprintf("%s: %s", e.Code, e.Message))
+		}
+	}
+	if len(errs) == 0 {
+		return op.HttpErrorMessage
+	}
+	return strings.Join(errs, ", ")
+}
