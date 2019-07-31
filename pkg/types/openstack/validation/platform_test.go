@@ -18,9 +18,9 @@ func validPlatform() *openstack.Platform {
 		Cloud:           "test-cloud",
 		ExternalNetwork: "test-network",
 		FlavorName:      "test-flavor",
-		APIVIP:          "10.0.128.5",
-		DNSVIP:          "10.0.128.6",
-		IngressVIP:      "10.0.128.7",
+		APIVIP:          "10.0.0.5",
+		DNSVIP:          "10.0.0.6",
+		IngressVIP:      "10.0.0.7",
 	}
 }
 
@@ -173,7 +173,7 @@ func TestValidatePlatform(t *testing.T) {
 					MaxTimes(1)
 			}
 
-			err := ValidatePlatform(tc.platform, field.NewPath("test-path"), fetcher).ToAggregate()
+			err := ValidatePlatform(tc.platform, nil, field.NewPath("test-path"), fetcher).ToAggregate()
 			if tc.valid {
 				assert.NoError(t, err)
 			} else {

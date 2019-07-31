@@ -2,15 +2,18 @@ package validation
 
 import (
 	"errors"
+	"fmt"
 
+	"github.com/apparentlymart/go-cidr/cidr"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/validate"
 )
 
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *openstack.Platform, fldPath *field.Path, fetcher ValidValuesFetcher) field.ErrorList {
+func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field.Path, fetcher ValidValuesFetcher) field.ErrorList {
 	allErrs := field.ErrorList{}
 	validClouds, err := fetcher.GetCloudNames()
 	if err != nil {
@@ -64,14 +67,29 @@ func ValidatePlatform(p *openstack.Platform, fldPath *field.Path, fetcher ValidV
 	// Validate VIP Values
 	if err := validate.IP(p.APIVIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
-	}
-
-	if err := validate.IP(p.IngressVIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
+	} else if n != nil {
+		expectedAPIVIP, _ := cidr.Host(&n.MachineCIDR.IPNet, 5)
+		if p.APIVIP != expectedAPIVIP.String() {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, fmt.Errorf("the API VIP is expected to be %s", expectedAPIVIP).Error()))
+		}
 	}
 
 	if err := validate.IP(p.DNSVIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsVIP"), p.DNSVIP, err.Error()))
+	} else if n != nil {
+		expectedDNSVIP, _ := cidr.Host(&n.MachineCIDR.IPNet, 6)
+		if p.DNSVIP != expectedDNSVIP.String() {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsVIP"), p.DNSVIP, fmt.Errorf("the DNS VIP is expected to be %s", expectedDNSVIP).Error()))
+		}
+	}
+
+	if err := validate.IP(p.IngressVIP); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
+	} else if n != nil {
+		expectedIngressVIP, _ := cidr.Host(&n.MachineCIDR.IPNet, 7)
+		if p.IngressVIP != expectedIngressVIP.String() {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, fmt.Errorf("the Ingress VIP is expected to be %s", expectedIngressVIP).Error()))
+		}
 	}
 
 	return allErrs

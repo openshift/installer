@@ -79,7 +79,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
 	}
-	allErrs = append(allErrs, validatePlatform(&c.Platform, field.NewPath("platform"), openStackValidValuesFetcher)...)
+	allErrs = append(allErrs, validatePlatform(&c.Platform, c.Networking, field.NewPath("platform"), openStackValidValuesFetcher)...)
 	if c.ControlPlane != nil {
 		allErrs = append(allErrs, validateControlPlane(&c.Platform, c.ControlPlane, field.NewPath("controlPlane"))...)
 	} else {
@@ -201,7 +201,7 @@ func validateCompute(platform *types.Platform, pools []types.MachinePool, fldPat
 	return allErrs
 }
 
-func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackValidValuesFetcher openstackvalidation.ValidValuesFetcher) field.ErrorList {
+func validatePlatform(platform *types.Platform, networking *types.Networking, fldPath *field.Path, openStackValidValuesFetcher openstackvalidation.ValidValuesFetcher) field.ErrorList {
 	allErrs := field.ErrorList{}
 	activePlatform := platform.Name()
 	platforms := make([]string, len(types.PlatformNames))
@@ -232,7 +232,7 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackVa
 	}
 	if platform.OpenStack != nil {
 		validate(openstack.Name, platform.OpenStack, func(f *field.Path) field.ErrorList {
-			return openstackvalidation.ValidatePlatform(platform.OpenStack, f, openStackValidValuesFetcher)
+			return openstackvalidation.ValidatePlatform(platform.OpenStack, networking, f, openStackValidValuesFetcher)
 		})
 	}
 	if platform.VSphere != nil {

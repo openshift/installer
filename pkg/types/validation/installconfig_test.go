@@ -92,9 +92,9 @@ func validOpenStackPlatform() *openstack.Platform {
 		Cloud:           "test-cloud",
 		ExternalNetwork: "test-network",
 		FlavorName:      "test-flavor",
-		APIVIP:          "10.0.128.5",
-		DNSVIP:          "10.0.128.6",
-		IngressVIP:      "10.0.128.7",
+		APIVIP:          "10.0.0.5",
+		DNSVIP:          "10.0.0.6",
+		IngressVIP:      "10.0.0.7",
 	}
 }
 
@@ -449,6 +449,66 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^platform\.openstack\.cloud: Unsupported value: "": supported values: "test-cloud"$`,
+		},
+		{
+			name: "openstack API VIP not an IP",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					OpenStack: validOpenStackPlatform(),
+				}
+				c.Platform.OpenStack.APIVIP = "test"
+				return c
+			}(),
+			expectedError: `^platform\.openstack\.apiVIP: Invalid value: "test": 'test' is not a valid IP$`,
+		},
+		{
+			name: "empty openstack API VIP",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					OpenStack: validOpenStackPlatform(),
+				}
+				c.Platform.OpenStack.APIVIP = ""
+				return c
+			}(),
+			expectedError: `^platform\.openstack\.apiVIP: Invalid value: "": '' is not a valid IP$`,
+		},
+		{
+			name: "openstack API VIP set to an incorrect value",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					OpenStack: validOpenStackPlatform(),
+				}
+				c.Platform.OpenStack.APIVIP = "10.0.1.5"
+				return c
+			}(),
+			expectedError: `^platform\.openstack\.apiVIP: Invalid value: "10.0.1.5": the API VIP is expected to be 10.0.0.5$`,
+		},
+		{
+			name: "openstack DNS VIP set to an incorrect value",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					OpenStack: validOpenStackPlatform(),
+				}
+				c.Platform.OpenStack.DNSVIP = "10.0.1.6"
+				return c
+			}(),
+			expectedError: `^platform\.openstack\.dnsVIP: Invalid value: "10.0.1.6": the DNS VIP is expected to be 10.0.0.6$`,
+		},
+		{
+			name: "openstack Ingress VIP set to an incorrect value",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					OpenStack: validOpenStackPlatform(),
+				}
+				c.Platform.OpenStack.IngressVIP = "10.0.1.7"
+				return c
+			}(),
+			expectedError: `^platform\.openstack\.ingressVIP: Invalid value: "10.0.1.7": the Ingress VIP is expected to be 10.0.0.7$`,
 		},
 		{
 			name: "valid vsphere platform",
