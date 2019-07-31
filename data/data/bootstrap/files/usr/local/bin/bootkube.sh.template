@@ -11,7 +11,7 @@ fi
 # convert the release image pull spec to an "absolute" form if a digest is available - this is
 # safe to resolve after the actions above because podman will not pull the image once it is
 # locally available
-if ! release=$( podman inspect {{.ReleaseImage}} -f '{{"{{"}} index .RepoDigests 0 {{"}}"}}' ) || [[ -z "${release}" ]]; then
+if ! release=$( podman inspect {{.ReleaseImage}} --format '{{"{{"}} index .RepoDigests 0 {{"}}"}}' ) || [[ -z "${release}" ]]; then
 	echo "Warning: Could not resolve release image to pull by digest" 2>&1
 	release="{{.ReleaseImage}}"
 fi
@@ -47,8 +47,8 @@ BAREMETAL_RUNTIMECFG_IMAGE=$(podman run --quiet --rm ${release} image baremetal-
 # But for now we're just changing the key bits: image and command.
 # Perhaps down the line we change this to run something like:
 # podman run machine-config-daemon bootstrap ... (passing the release image and the host rootfs)
-sed -i -e 's,pause_image *=.*,pause_image = "'${MACHINE_CONFIG_INFRA_IMAGE}'",' /etc/crio/crio.conf
-sed -i -e 's,pause_command *=.*,pause_command = "/usr/bin/pod",' /etc/crio/crio.conf
+sed --in-place --expression 's,pause_image *=.*,pause_image = "'${MACHINE_CONFIG_INFRA_IMAGE}'",' /etc/crio/crio.conf
+sed --in-place --expression 's,pause_command *=.*,pause_command = "/usr/bin/pod",' /etc/crio/crio.conf
 # Note crio today has a reload command but it just dies from the SIGHUP sent...
 systemctl restart cri-o.service
 
@@ -58,7 +58,7 @@ if [ ! -f cvo-bootstrap.done ]
 then
 	echo "Rendering Cluster Version Operator Manifests..."
 
-	rm -rf cvo-bootstrap
+	rm --recursive --force cvo-bootstrap
 
 	# shellcheck disable=SC2154
 	podman run \
@@ -81,7 +81,7 @@ if [ ! -f config-bootstrap.done ]
 then
 	echo "Rendering cluster config manifests..."
 
-	rm -rf config-bootstrap
+	rm --recursive --force config-bootstrap
 
 	# shellcheck disable=SC2154
 	podman run \
@@ -102,7 +102,7 @@ if [ ! -f kube-apiserver-bootstrap.done ]
 then
 	echo "Rendering Kubernetes API server core manifests..."
 
-	rm -rf kube-apiserver-bootstrap
+	rm --recursive --force kube-apiserver-bootstrap
 
 	# shellcheck disable=SC2154
 	podman run \
@@ -130,7 +130,7 @@ if [ ! -f kube-controller-manager-bootstrap.done ]
 then
 	echo "Rendering Kubernetes Controller Manager core manifests..."
 
-	rm -rf kube-controller-manager-bootstrap
+	rm --recursive --force kube-controller-manager-bootstrap
 
 	# shellcheck disable=SC2154
 	podman run \
@@ -155,7 +155,7 @@ if [ ! -f kube-scheduler-bootstrap.done ]
 then
 	echo "Rendering Kubernetes Scheduler core manifests..."
 
-	rm -rf kube-scheduler-bootstrap
+	rm --recursive --force kube-scheduler-bootstrap
 
 	# shellcheck disable=SC2154
 	podman run \
@@ -179,7 +179,7 @@ if [ ! -f mco-bootstrap.done ]
 then
 	echo "Rendering MCO manifests..."
 
-	rm -rf mco-bootstrap
+	rm --recursive --force mco-bootstrap
 
 	# shellcheck disable=SC2154
 	podman run \
@@ -220,7 +220,7 @@ then
 	cp mco-bootstrap/bootstrap/machineconfigoperator-bootstrap-pod.yaml /etc/kubernetes/manifests/
         if [ -d mco-bootstrap/baremetal/manifests ]; then
             cp mco-bootstrap/baremetal/manifests/* /etc/kubernetes/manifests/
-            cp -r mco-bootstrap/baremetal/static-pod-resources/* /etc/kubernetes/static-pod-resources/
+            cp --recursive mco-bootstrap/baremetal/static-pod-resources/* /etc/kubernetes/static-pod-resources/
         fi
 	cp mco-bootstrap/manifests/* manifests/
 
