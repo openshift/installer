@@ -74,6 +74,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
 		new(rhcos.Image),
+		new(rhcos.BootstrapImage),
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
 		&machines.Master{},
@@ -90,7 +91,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	mastersAsset := &machines.Master{}
 	workersAsset := &machines.Worker{}
 	rhcosImage := new(rhcos.Image)
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, rhcosImage)
+	rhcosBootstrapImage := new(rhcos.BootstrapImage)
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, rhcosImage, rhcosBootstrapImage)
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -263,7 +265,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		data, err = baremetaltfvars.TFVars(
 			installConfig.Config.Platform.BareMetal.LibvirtURI,
 			installConfig.Config.Platform.BareMetal.IronicURI,
-			string(*rhcosImage),
+			string(*rhcosBootstrapImage),
 			"baremetal",
 			"provisioning",
 			installConfig.Config.Platform.BareMetal.Hosts,

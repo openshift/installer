@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -52,7 +53,15 @@ func (i *Image) Generate(p asset.Parents) error {
 	ic := &installconfig.InstallConfig{}
 	p.Get(ic)
 	config := ic.Config
+	osimage, err := osImage(config)
+	if err != nil {
+		return err
+	}
+	*i = Image(osimage)
+	return nil
+}
 
+func osImage(config *types.InstallConfig) (string, error) {
 	var osimage string
 	var err error
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
@@ -73,14 +82,16 @@ func (i *Image) Generate(p asset.Parents) error {
 	case azure.Name:
 		osimage, err = rhcos.VHD(ctx)
 	case baremetal.Name:
-		osimage, err = rhcos.QEMU(ctx)
+		// Note that baremetal IPI currently uses the OpenStack image
+		// because this contains the necessary ironic config drive
+		// ignition support, which isn't enabled in the UPI BM images
+		osimage, err = rhcos.OpenStack(ctx)
 	case none.Name, vsphere.Name:
 	default:
-		return errors.New("invalid Platform")
+		return "", errors.New("invalid Platform")
 	}
 	if err != nil {
-		return err
+		return "", err
 	}
-	*i = Image(osimage)
-	return nil
+	return osimage, nil
 }
