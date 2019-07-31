@@ -15,11 +15,12 @@ resource "openstack_networking_network_v2" "openshift-private" {
 }
 
 resource "openstack_networking_subnet_v2" "nodes" {
-  name       = "${var.cluster_id}-nodes"
-  cidr       = local.nodes_cidr_block
-  ip_version = 4
-  network_id = openstack_networking_network_v2.openshift-private.id
-  tags       = ["openshiftClusterID=${var.cluster_id}"]
+  name            = "${var.cluster_id}-nodes"
+  cidr            = local.nodes_cidr_block
+  ip_version      = 4
+  network_id      = openstack_networking_network_v2.openshift-private.id
+  tags            = ["openshiftClusterID=${var.cluster_id}"]
+  dns_nameservers = var.external_dns
 
   # We reserve some space at the beginning of the CIDR to use for the VIPs
   # It would be good to make this more dynamic by calculating the number of
