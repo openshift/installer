@@ -29,7 +29,6 @@ KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image cluster
 KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image cluster-kube-controller-manager-operator)
 KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image cluster-kube-scheduler-operator)
 
-OPENSHIFT_HYPERSHIFT_IMAGE=$(podman run --quiet --rm ${release} image hypershift)
 OPENSHIFT_HYPERKUBE_IMAGE=$(podman run --quiet --rm ${release} image hyperkube)
 
 CLUSTER_BOOTSTRAP_IMAGE=$(podman run --quiet --rm ${release} image cluster-bootstrap)
