@@ -28,6 +28,11 @@ resource "google_project_iam_member" "master-object-storage-admin" {
   member = "serviceAccount:${google_service_account.master-node-sa.email}"
 }
 
+resource "google_project_iam_member" "master-service-account-user" {
+  role   = "roles/iam.serviceAccountUser"
+  member = "serviceAccount:${google_service_account.master-node-sa.email}"
+}
+
 resource "google_compute_instance" "master" {
   count = var.instance_count
 
