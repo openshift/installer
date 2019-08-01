@@ -33,6 +33,7 @@ type GCPMachineProviderSpec struct {
 	MachineType        string                 `json:"machineType"`
 	Region             string                 `json:"region"`
 	Zone               string                 `json:"zone"`
+	ProjectID          string                 `json:"projectID,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -59,6 +60,7 @@ type GCPMetadata struct {
 
 // GCPNetworkInterface describes network interfaces for GCP
 type GCPNetworkInterface struct {
+	PublicIP   bool   `json:"publicIP,omitempty"`
 	Network    string `json:"network,omitempty"`
 	Subnetwork string `json:"subnetwork,omitempty"`
 }
