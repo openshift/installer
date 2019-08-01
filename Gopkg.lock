@@ -624,14 +624,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b0a79e04b1f18b94b52c77000c119f0abdf6400ad8a13fbe8decdf79c179281e"
+  digest = "1:dae599d7d65acefd73adebcfa2631c447da94ec9b1047beb2d887bbdd173ba27"
   name = "github.com/openshift/cluster-api-provider-gcp"
   packages = [
     "pkg/apis",
     "pkg/apis/gcpprovider/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "cb0305f3b986e67ff8d5bb0b375dd7bbb835db01"
+  revision = "f5146705932b14d468b59d90443d127c9003142b"
 
 [[projects]]
   branch = "master"
