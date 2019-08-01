@@ -93,6 +93,7 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 		MachineType: mpool.InstanceType,
 		Region:      platform.Region,
 		Zone:        az,
+		ProjectID:   platform.ProjectID,
 	}, nil
 }
 
