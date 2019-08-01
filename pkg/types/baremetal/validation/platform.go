@@ -44,5 +44,14 @@ func ValidatePlatform(p *baremetal.Platform, fldPath *field.Path) field.ErrorLis
 	if err := validate.IP(p.DNSVIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsVIP"), p.DNSVIP, err.Error()))
 	}
+
+	if p.ProvisioningInterface == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("provisioningInterface"), "provisioningInterface is required"))
+	}
+
+	if err := validate.URI(p.RhcosImage); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("rhcosImage"), p.RhcosImage, err.Error()))
+	}
+
 	return allErrs
 }

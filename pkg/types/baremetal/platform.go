@@ -66,4 +66,12 @@ type Platform struct {
 
 	// DNSVIP is the VIP to use for internal DNS communication
 	DNSVIP string `json:"dnsVIP"`
+
+	// ProvisioningInterface specifies the name of the interface on the
+	// baremetal platform to use for provisioning.  Specifies where ironic,
+	// dhcp, pxe etc runs.
+	ProvisioningInterface string `json:"provisioningInterface"`
+
+	// RhcosImage is the image to use for provisioning new workers/masters.
+	RhcosImage string `json:"rhcosImage"`
 }

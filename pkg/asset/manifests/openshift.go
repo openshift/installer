@@ -21,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -56,6 +57,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&openshift.KubeadminPasswordSecret{},
 		&openshift.RoleCloudCredsSecretReader{},
 		&openshift.RoleBindingCloudCredsSecretReader{},
+		&openshift.Metal3ConfigMap{},
 	}
 }
 
@@ -161,11 +163,13 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	kubeadminPasswordSecret := &openshift.KubeadminPasswordSecret{}
 	roleCloudCredsSecretReader := &openshift.RoleCloudCredsSecretReader{}
 	roleBindingCloudCredsSecretReader := &openshift.RoleBindingCloudCredsSecretReader{}
+	metal3ConfigMap := &openshift.Metal3ConfigMap{}
 	dependencies.Get(
 		cloudCredsSecret,
 		kubeadminPasswordSecret,
 		roleCloudCredsSecretReader,
-		roleBindingCloudCredsSecretReader)
+		roleBindingCloudCredsSecretReader,
+		metal3ConfigMap)
 
 	assetData := map[string][]byte{
 		"99_kubeadmin-password-secret.yaml": applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
@@ -180,6 +184,15 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	switch platform {
 	case openstacktypes.Name:
 		assetData["99_rolebinding-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleBindingCloudCredsSecretReader.Files()[0].Data, templateData)
+	}
+
+	switch platform {
+	case baremetaltypes.Name:
+		baremetalTemplateData := &baremetalTemplateData{
+			ProvisioningInterface: installConfig.Config.Platform.BareMetal.ProvisioningInterface,
+			RhcosImage:            installConfig.Config.Platform.BareMetal.RhcosImage,
+		}
+		assetData["99_metal3-configmap.yaml"] = applyTemplateData(metal3ConfigMap.Files()[0].Data, baremetalTemplateData)
 	}
 
 	o.FileList = []*asset.File{}

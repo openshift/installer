@@ -43,6 +43,11 @@ type cloudCredsSecretData struct {
 	VSphere   *VSphereCredsSecretData
 }
 
+type baremetalTemplateData struct {
+	ProvisioningInterface      string
+	RhcosImage                 string
+}
+
 type bootkubeTemplateData struct {
 	CVOClusterID               string
 	EtcdCaBundle               string
