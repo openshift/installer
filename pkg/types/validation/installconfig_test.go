@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"net"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -12,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -83,6 +85,22 @@ func validVSpherePlatform() *vsphere.Platform {
 		Password:         "test-password",
 		Datacenter:       "test-datacenter",
 		DefaultDatastore: "test-datastore",
+	}
+}
+
+func validBareMetalPlatform() *baremetal.Platform {
+	iface, _ := net.Interfaces()
+	return &baremetal.Platform{
+		LibvirtURI:             "qemu+tcp://192.168.122.1/system",
+		IronicURI:              "https://localhost:6385",
+		Hosts:                  []*baremetal.Host{},
+		Image:                  baremetal.Image{},
+		ExternalBridge:         iface[0].Name,
+		ProvisioningBridge:     iface[0].Name,
+		DefaultMachinePlatform: &baremetal.MachinePool{},
+		APIVIP:                 "10.0.0.5",
+		IngressVIP:             "10.0.0.4",
+		DNSVIP:                 "10.0.0.2",
 	}
 }
 
@@ -443,6 +461,99 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^platform\.openstack\.cloud: Unsupported value: "": supported values: "test-cloud"$`,
 		},
 		{
+			name: "valid baremetal platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				return c
+			}(),
+		},
+		{
+			name: "invalid baremetal platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIP = ""
+				return c
+			}(),
+			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "": '' is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
+		},
+		{
+			name: "baremetal API VIP not an IP",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIP = "test"
+				return c
+			}(),
+			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "test": 'test' is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "test": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
+		},
+		{
+			name: "baremetal API VIP set to an incorrect value",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.APIVIP = "10.1.0.5"
+				return c
+			}(),
+			expectedError: `^platform\.baremetal\.apiVIP: Invalid value: "10\.1\.0\.5": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet$`,
+		},
+		{
+			name: "baremetal DNS VIP not an IP",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.DNSVIP = "test"
+				return c
+			}(),
+			expectedError: `^\[platform\.baremetal\.dnsVIP: Invalid value: "test": 'test' is not a valid IP, platform\.baremetal\.dnsVIP: Invalid value: "test": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
+		},
+		{
+			name: "baremetal DNS VIP set to an incorrect value",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.DNSVIP = "10.1.0.6"
+				return c
+			}(),
+			expectedError: `^platform\.baremetal\.dnsVIP: Invalid value: "10\.1\.0\.6": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet$`,
+		},
+		{
+			name: "baremetal Ingress VIP not an IP",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIP = "test"
+				return c
+			}(),
+			expectedError: `^\[platform\.baremetal\.ingressVIP: Invalid value: "test": 'test' is not a valid IP, platform\.baremetal\.ingressVIP: Invalid value: "test": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
+		},
+		{
+			name: "baremetal Ingress VIP set to an incorrect value",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.IngressVIP = "10.1.0.7"
+				return c
+			}(),
+			expectedError: `^platform\.baremetal\.ingressVIP: Invalid value: "10\.1\.0\.7": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet$`,
+		}, {
 			name: "valid vsphere platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
