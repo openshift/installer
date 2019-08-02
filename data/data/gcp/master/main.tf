@@ -65,3 +65,17 @@ resource "google_compute_instance" "master" {
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
 }
+
+resource "google_compute_instance_group" "master" {
+  count = length(var.zones)
+
+  name = "${var.cluster_id}-master-${element(var.zones, count.index)}"
+  zone = var.zones[count.index]
+
+  named_port {
+    name = "tcp5222"
+    port = "5222"
+  }
+
+  instances = [for instance in google_compute_instance.master.* : instance.self_link if instance.zone == var.zones[count.index]]
+}

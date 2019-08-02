@@ -33,6 +33,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
+	gcpmachineconfig "github.com/openshift/installer/pkg/asset/machines/machineconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/types"
@@ -108,6 +109,15 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	ic := installconfig.Config
 
 	pool := ic.ControlPlane
+
+	machineConfigs := []*mcfgv1.MachineConfig{}
+	if pool.Hyperthreading == types.HyperthreadingDisabled {
+		machineConfigs = append(machineConfigs, machineconfig.ForHyperthreadingDisabled("master"))
+	}
+	if ic.SSHKey != "" {
+		machineConfigs = append(machineConfigs, machineconfig.ForAuthorizedKeys(ic.SSHKey, "master"))
+	}
+
 	var err error
 	machines := []machineapi.Machine{}
 	switch ic.Platform.Name() {
@@ -146,6 +156,11 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		gcp.ConfigMasters(machines, clusterID.InfraID)
+		cfg, err := gcpmachineconfig.ForPortRedirection("master", ic.ClusterDomain())
+		if err != nil {
+			return errors.Wrap(err, "failed to create port redirection machine config")
+		}
+		machineConfigs = append(machineConfigs, cfg)
 	case libvirttypes.Name:
 		mpool := defaultLibvirtMachinePoolPlatform()
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
@@ -213,14 +228,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	m.UserDataFile = &asset.File{
 		Filename: filepath.Join(directory, masterUserDataFileName),
 		Data:     data,
-	}
-
-	machineConfigs := []*mcfgv1.MachineConfig{}
-	if pool.Hyperthreading == types.HyperthreadingDisabled {
-		machineConfigs = append(machineConfigs, machineconfig.ForHyperthreadingDisabled("master"))
-	}
-	if ic.SSHKey != "" {
-		machineConfigs = append(machineConfigs, machineconfig.ForAuthorizedKeys(ic.SSHKey, "master"))
 	}
 
 	m.MachineConfigFiles, err = machineconfig.Manifests(machineConfigs, "master", directory)

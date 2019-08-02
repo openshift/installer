@@ -14,7 +14,7 @@ provider "google" {
 module "bootstrap" {
   source = "./bootstrap"
 
-  bootstrap_enabled = var.gcp_bootstrap_enabled
+  bootstrap_present = var.gcp_bootstrap_present
 
   image        = google_compute_image.cluster.self_link
   machine_type = var.gcp_bootstrap_instance_type
@@ -56,10 +56,12 @@ module "network" {
   worker_subnet_cidr = local.worker_subnet_cidr
   network_cidr       = var.machine_cidr
 
-  bootstrap_lb        = var.gcp_bootstrap_enabled
-  bootstrap_instances = module.bootstrap.bootstrap_instances
+  bootstrap_lb              = var.gcp_bootstrap_enabled && var.gcp_bootstrap_present
+  bootstrap_instances       = module.bootstrap.bootstrap_instances
+  bootstrap_instance_groups = module.bootstrap.bootstrap_instance_groups
 
-  master_instances = module.master.master_instances
+  master_instances       = module.master.master_instances
+  master_instance_groups = module.master.master_instance_groups
 }
 
 module "dns" {
@@ -72,6 +74,7 @@ module "dns" {
   etcd_count           = var.master_count
   cluster_domain       = var.cluster_domain
   api_external_lb_ip   = module.network.cluster_public_ip
+  api_internal_lb_ip   = module.network.cluster_private_ip
 }
 
 resource "google_compute_image" "cluster" {

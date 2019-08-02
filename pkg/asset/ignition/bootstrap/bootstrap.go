@@ -40,6 +40,8 @@ const (
 // bootstrapTemplateData is the data to use to replace values in bootstrap
 // template files.
 type bootstrapTemplateData struct {
+	ControlPlane          bool
+	ClusterDomain         string
 	AdditionalTrustBundle string
 	EtcdCluster           string
 	PullSecret            string
@@ -218,6 +220,8 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 	}
 
 	return &bootstrapTemplateData{
+		ControlPlane:          true,
+		ClusterDomain:         installConfig.ClusterDomain(),
 		AdditionalTrustBundle: installConfig.AdditionalTrustBundle,
 		PullSecret:            installConfig.PullSecret,
 		ReleaseImage:          releaseImage,
@@ -293,6 +297,8 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 		// baremetal platform services
 		"keepalived.service": {},
 		"coredns.service":    {},
+		// gcp platform services
+		"redirect-ports.service": {},
 	}
 
 	directory, err := data.Assets.Open(uri)

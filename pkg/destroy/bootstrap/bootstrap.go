@@ -53,10 +53,21 @@ func Destroy(dir string) (err error) {
 
 	switch platform {
 	case gcp.Name:
+		// For gcp, disabling of bootstrap-related resources needs to be done in 2 parts. The first phase
+		// bootstrap_enabled=false, switches load balancers from the bootstrap node to regular control plane
+		// machines. This can't be done at the same time that bootstrap instance and group are removed because
+		// that fails due to load balancer references. The second phase removes the bootstrap node and instance
+		// group. If those exist by the time destroy is called, then related load balancers are also removed.
+
 		// First remove the bootstrap from LB target and its instance so that bootstrap module is cleanly destroyed.
 		_, err = terraform.Apply(tempDir, platform, append(extraArgs, "-var=gcp_bootstrap_enabled=false")...)
 		if err != nil {
-			return errors.Wrap(err, "Terraform apply")
+			return errors.Wrap(err, "Terraform apply bootstrap enabled=false")
+		}
+		// Ensure that bootstrap instance and instance group are removed so they don't cause other resources to be destroyed.
+		_, err = terraform.Apply(tempDir, platform, append(extraArgs, "-var=gcp_bootstrap_present=false")...)
+		if err != nil {
+			return errors.Wrap(err, "Terraform apply bootstrap present=false")
 		}
 	case libvirt.Name:
 		// First remove the bootstrap node from DNS

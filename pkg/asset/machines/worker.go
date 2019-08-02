@@ -33,6 +33,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
+	gcpmachineconfig "github.com/openshift/installer/pkg/asset/machines/machineconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/types"
@@ -229,6 +230,11 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
+			cfg, err := gcpmachineconfig.ForPortRedirection("worker", ic.ClusterDomain())
+			if err != nil {
+				return errors.Wrap(err, "failed to create port redirection machine config")
+			}
+			machineConfigs = append(machineConfigs, cfg)
 		case libvirttypes.Name:
 			mpool := defaultLibvirtMachinePoolPlatform()
 			mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)

@@ -142,6 +142,64 @@ func (o *ClusterUninstaller) destroyAddresses() error {
 	return aggregateError(errs, len(found))
 }
 
+func (o *ClusterUninstaller) listGlobalAddresses() ([]string, error) {
+	o.Logger.Debugf("Listing global addresses")
+	result := []string{}
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+	req := o.computeSvc.GlobalAddresses.List(o.ProjectID).Fields("items(name)").Filter(o.clusterIDFilter())
+	err := req.Pages(ctx, func(list *compute.AddressList) error {
+		for _, address := range list.Items {
+			o.Logger.Debugf("Found global address: %s", address.Name)
+			result = append(result, address.Name)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list global addresses")
+	}
+	return result, nil
+}
+
+func (o *ClusterUninstaller) deleteGlobalAddress(name string) error {
+	o.Logger.Debugf("Deleting global address %s", name)
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+	op, err := o.computeSvc.GlobalAddresses.Delete(o.ProjectID, name).RequestId(o.requestID("globaladdress", name)).Context(ctx).Do()
+	if err != nil && !isNoOp(err) {
+		o.resetRequestID("globaladdress", name)
+		return errors.Wrapf(err, "failed to delete global address %s", name)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("globaladdress", name)
+		return errors.Errorf("failed to delete global address %s with error: %s", name, operationErrorMessage(op))
+	}
+	return nil
+}
+
+// destroyGlobalAddresses removes all address resources that have a name prefixed with the
+// cluster's infra ID
+func (o *ClusterUninstaller) destroyGlobalAddresses() error {
+	addresses, err := o.listGlobalAddresses()
+	if err != nil {
+		return err
+	}
+	found := make([]string, 0, len(addresses))
+	errs := []error{}
+	for _, address := range addresses {
+		found = append(found, address)
+		err := o.deleteGlobalAddress(address)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	deleted := o.setPendingItems("globaladdress", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted global address %s", item)
+	}
+	return aggregateError(errs, len(found))
+}
+
 func (o *ClusterUninstaller) listForwardingRules() ([]string, error) {
 	o.Logger.Debugf("Listing forwarding rules")
 	result := []string{}
@@ -203,16 +261,74 @@ func (o *ClusterUninstaller) destroyForwardingRules() error {
 	return aggregateError(errs, len(found))
 }
 
-func (o *ClusterUninstaller) listBackendServices() ([]string, error) {
-	return o.listBackendServicesWithFilter("items(name)", o.clusterIDFilter(), nil)
+func (o *ClusterUninstaller) listGlobalForwardingRules() ([]string, error) {
+	o.Logger.Debugf("Listing global forwarding rules")
+	result := []string{}
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+	req := o.computeSvc.GlobalForwardingRules.List(o.ProjectID).Fields(googleapi.Field("items(name)")).Filter(o.clusterIDFilter())
+	err := req.Pages(ctx, func(list *compute.ForwardingRuleList) error {
+		for _, globalForwardingRule := range list.Items {
+			o.Logger.Debugf("Found global forwarding rule: %s", globalForwardingRule.Name)
+			result = append(result, globalForwardingRule.Name)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list global forwarding rules")
+	}
+	return result, nil
 }
 
-// listBackendServicesWithFilter lists backend services in the project that satisfy the filter criteria.
+func (o *ClusterUninstaller) deleteGlobalForwardingRule(name string) error {
+	o.Logger.Debugf("Deleting global forwarding rule %s", name)
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+	op, err := o.computeSvc.GlobalForwardingRules.Delete(o.ProjectID, name).RequestId(o.requestID("globalforwardingrule", name)).Context(ctx).Do()
+	if err != nil && !isNoOp(err) {
+		o.resetRequestID("globalforwardingrule", name)
+		return errors.Wrapf(err, "failed to delete global forwarding rule %s", name)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("globalforwardingrule", name)
+		return errors.Errorf("failed to delete global forwarding rule %s with error: %s", name, operationErrorMessage(op))
+	}
+	return nil
+}
+
+// destroyGlobalForwardingRules removes global forwarding rules with a name prefixed by the
+// cluster's infra ID.
+func (o *ClusterUninstaller) destroyGlobalForwardingRules() error {
+	globalForwardingRules, err := o.listGlobalForwardingRules()
+	if err != nil {
+		return err
+	}
+	found := make([]string, 0, len(globalForwardingRules))
+	errs := []error{}
+	for _, globalForwardingRule := range globalForwardingRules {
+		found = append(found, globalForwardingRule)
+		err := o.deleteGlobalForwardingRule(globalForwardingRule)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	deleted := o.setPendingItems("globalforwardingrule", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted global forwarding rule %s", item)
+	}
+	return aggregateError(errs, len(found))
+}
+
+func (o *ClusterUninstaller) listRegionBackendServices() ([]string, error) {
+	return o.listRegionBackendServicesWithFilter("items(name)", o.clusterIDFilter(), nil)
+}
+
+// listRegionBackendServicesWithFilter lists backend services in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listBackendServicesWithFilter(fields string, filter string, filterFunc func(*compute.BackendService) bool) ([]string, error) {
-	o.Logger.Debugf("Listing backend services")
+func (o *ClusterUninstaller) listRegionBackendServicesWithFilter(fields string, filter string, filterFunc func(*compute.BackendService) bool) ([]string, error) {
+	o.Logger.Debugf("Listing region backend services")
 	result := []string{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
@@ -223,9 +339,67 @@ func (o *ClusterUninstaller) listBackendServicesWithFilter(fields string, filter
 	err := req.Pages(ctx, func(list *compute.BackendServiceList) error {
 		for _, backendService := range list.Items {
 			if filterFunc == nil || filterFunc != nil && filterFunc(backendService) {
-				o.Logger.Debugf("Found backend service: %s", backendService.Name)
+				o.Logger.Debugf("Found region backend service: %s", backendService.Name)
 				result = append(result, backendService.Name)
 			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list region backend services")
+	}
+	return result, nil
+}
+
+func (o *ClusterUninstaller) deleteRegionBackendService(name string) error {
+	o.Logger.Debugf("Deleting region backend service %s", name)
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+	op, err := o.computeSvc.RegionBackendServices.Delete(o.ProjectID, o.Region, name).RequestId(o.requestID("regionbackendservice", name)).Context(ctx).Do()
+	if err != nil && !isNoOp(err) {
+		o.resetRequestID("regionbackendservice", name)
+		return errors.Wrapf(err, "failed to delete region backend service %s", name)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("regionbackendservice", name)
+		return errors.Errorf("failed to delete region backend service %s with error: %s", name, operationErrorMessage(op))
+	}
+	return nil
+}
+
+// destroyRegionBackendServices removes backend services with a name prefixed by the
+// cluster's infra ID.
+func (o *ClusterUninstaller) destroyRegionBackendServices() error {
+	backendServices, err := o.listRegionBackendServices()
+	if err != nil {
+		return err
+	}
+	found := make([]string, 0, len(backendServices))
+	errs := []error{}
+	for _, backendService := range backendServices {
+		found = append(found, backendService)
+		err := o.deleteRegionBackendService(backendService)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	deleted := o.setPendingItems("regionbackendservice", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted region backend service %s", item)
+	}
+	return aggregateError(errs, len(found))
+}
+
+func (o *ClusterUninstaller) listBackendServices() ([]string, error) {
+	o.Logger.Debugf("Listing backend services")
+	result := []string{}
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+	req := o.computeSvc.BackendServices.List(o.ProjectID).Fields(googleapi.Field("items(name)")).Filter(o.clusterIDFilter())
+	err := req.Pages(ctx, func(list *compute.BackendServiceList) error {
+		for _, backendService := range list.Items {
+			o.Logger.Debugf("Found backend service: %s", backendService.Name)
+			result = append(result, backendService.Name)
 		}
 		return nil
 	})
@@ -239,7 +413,7 @@ func (o *ClusterUninstaller) deleteBackendService(name string) error {
 	o.Logger.Debugf("Deleting backend service %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	op, err := o.computeSvc.RegionBackendServices.Delete(o.ProjectID, o.Region, name).RequestId(o.requestID("backendservice", name)).Context(ctx).Do()
+	op, err := o.computeSvc.BackendServices.Delete(o.ProjectID, name).RequestId(o.requestID("backendservice", name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
 		o.resetRequestID("backendservice", name)
 		return errors.Wrapf(err, "failed to delete backend service %s", name)
@@ -270,6 +444,67 @@ func (o *ClusterUninstaller) destroyBackendServices() error {
 	deleted := o.setPendingItems("backendservice", found)
 	for _, item := range deleted {
 		o.Logger.Infof("Deleted backend service %s", item)
+	}
+	return aggregateError(errs, len(found))
+}
+
+func (o *ClusterUninstaller) listTargetTCPProxies() ([]string, error) {
+	o.Logger.Debugf("Listing tcp proxies")
+	result := []string{}
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+	req := o.computeSvc.TargetTcpProxies.List(o.ProjectID).Fields("items(name)").Filter(o.clusterIDFilter())
+	err := req.Pages(ctx, func(list *compute.TargetTcpProxyList) error {
+		for _, healthCheck := range list.Items {
+			o.Logger.Debugf("Found tcp proxy: %s", healthCheck.Name)
+			result = append(result, healthCheck.Name)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list tcp proxies")
+	}
+	return result, nil
+}
+
+func (o *ClusterUninstaller) deleteTargetTCPProxy(name string, errorOnPending bool) error {
+	o.Logger.Debugf("Deleting tcp proxy %s", name)
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+	op, err := o.computeSvc.TargetTcpProxies.Delete(o.ProjectID, name).RequestId(o.requestID("targettcpproxy", name)).Context(ctx).Do()
+	if err != nil && !isNoOp(err) {
+		o.resetRequestID("targettcpproxy", name)
+		return errors.Wrapf(err, "failed to delete tcp proxy %s", name)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("targettcpproxy", name)
+		return errors.Errorf("failed to delete tcp proxy %s with error: %s", name, operationErrorMessage(op))
+	}
+	if errorOnPending && op != nil && op.Status != "DONE" {
+		return errors.Errorf("deletion of tcp proxy %s is pending", name)
+	}
+	return nil
+}
+
+// destroyTargetTCPProxies removes all tcp proxy resources that have a name prefixed
+// with the cluster's infra ID
+func (o *ClusterUninstaller) destroyTargetTCPProxies() error {
+	tcpProxies, err := o.listTargetTCPProxies()
+	if err != nil {
+		return err
+	}
+	found := make([]string, 0, len(tcpProxies))
+	errs := []error{}
+	for _, tcpProxy := range tcpProxies {
+		found = append(found, tcpProxy)
+		err := o.deleteTargetTCPProxy(tcpProxy, false)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	deleted := o.setPendingItems("targettcpproxy", found)
+	for _, item := range deleted {
+		o.Logger.Infof("Deleted tcp proxy %s", item)
 	}
 	return aggregateError(errs, len(found))
 }
@@ -307,7 +542,7 @@ func (o *ClusterUninstaller) deleteHealthCheck(name string, errorOnPending bool)
 		return errors.Errorf("failed to delete health check %s with error: %s", name, operationErrorMessage(op))
 	}
 	if errorOnPending && op != nil && op.Status != "DONE" {
-		return errors.Errorf("deletion of forwarding rule %s is pending", name)
+		return errors.Errorf("deletion of health check %s is pending", name)
 	}
 	return nil
 }
@@ -819,7 +1054,7 @@ func (o *ClusterUninstaller) listBackendServicesForInstanceGroups(igs []nameAndZ
 	for _, ig := range igs {
 		urls.Insert(o.getInstanceGroupURL(ig))
 	}
-	return o.listBackendServicesWithFilter("items(name,backends)", "name eq \"a[0-9a-f]{30,50}\"", func(item *compute.BackendService) bool {
+	return o.listRegionBackendServicesWithFilter("items(name,backends)", "name eq \"a[0-9a-f]{30,50}\"", func(item *compute.BackendService) bool {
 		if len(item.Backends) == 0 {
 			return false
 		}

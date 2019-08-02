@@ -42,7 +42,7 @@ resource "google_compute_firewall" "master_ingress_from_health_checks" {
 
   allow {
     protocol = "tcp"
-    ports    = ["6080", "22624"]
+    ports    = ["6080", "22624", "5222"]
   }
 
   source_ranges = ["35.191.0.0/16", "130.211.0.0/22"]

@@ -3,7 +3,7 @@ variable "cluster_id" {
   description = "The name of the cluster."
 }
 
-variable "bootstrap_enabled" {
+variable "bootstrap_present" {
   type        = bool
   description = "If the bootstrap instance and instance_group should exist."
   default     = true

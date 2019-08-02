@@ -1,0 +1,13 @@
+[Unit]
+Description=Redirect load balancer port to internal port
+ConditionKernelCommandLine=ignition.platform.id=gce
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/local/bin/redirect-ports.sh
+User=root
+RestartSec=30
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

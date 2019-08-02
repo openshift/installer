@@ -1,0 +1,32 @@
+#/bin/bash
+
+# Script to redirect API traffic from<->to load balancer ports to internal ports on GCP
+
+# On control plane nodes:
+# Requests coming in to port 5222 will be redirected to port 6443
+
+# On all nodes:
+# Outgoing requests to the internal load balancer IP on port 6443 will be redirected to port 5222
+
+
+run() {
+  {{ if .ControlPlane }}
+  if ! iptables -t nat -C PREROUTING -i ens4 -p tcp -m tcp --dport 5222 -j REDIRECT --to-ports 6443 &> /dev/null; then
+    echo "Adding rule to redirect incoming traffic on port 5222 to port 6443"
+    iptables -t nat -A PREROUTING -i ens4 -p tcp -m tcp --dport 5222 -j REDIRECT --to-ports 6443
+  fi
+  {{ end }}
+
+  if getent hosts api-int.{{.ClusterDomain}} &> /dev/null; then
+    lb_ip="$(getent hosts api-int.{{.ClusterDomain}} | awk '{ print $1 }')"
+    if ! iptables -t nat -C OUTPUT -d ${lb_ip} -p tcp -m tcp --dport 6443 -j DNAT --to-destination ${lb_ip}:5222 &> /dev/null; then
+      echo "Adding rule to redirect outgoing traffic from ${lb_ip}:6443 to ${lb_ip}:5222"
+      iptables -t nat -A OUTPUT -d ${lb_ip} -p tcp -m tcp --dport 6443 -j DNAT --to-destination ${lb_ip}:5222
+    fi
+  fi
+}
+
+while :; do
+  run
+  sleep 30
+done

@@ -13,3 +13,7 @@ output "worker_subnet" {
 output "master_subnet" {
   value = google_compute_subnetwork.master_subnet.self_link
 }
+
+output "cluster_private_ip" {
+  value = google_compute_global_address.cluster_private_ip.address
+}

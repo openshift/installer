@@ -29,3 +29,13 @@ variable "network_cidr" {
 variable "worker_subnet_cidr" {
   type = string
 }
+
+variable "bootstrap_instance_groups" {
+  type        = list
+  description = "The instance group that hold the bootstrap instance in this region."
+}
+
+variable "master_instance_groups" {
+  type        = list
+  description = "The instance groups that hold the master instances in this region."
+}

@@ -8,6 +8,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 // MCSCertKey is the asset that generates the MCS key/cert pair.
@@ -34,6 +35,7 @@ func (a *MCSCertKey) Generate(dependencies asset.Parents) error {
 	dependencies.Get(ca, installConfig)
 
 	hostname := internalAPIAddress(installConfig.Config)
+	publicHostname := apiAddress(installConfig.Config)
 
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: hostname},
@@ -45,6 +47,8 @@ func (a *MCSCertKey) Generate(dependencies asset.Parents) error {
 	case baremetaltypes.Name:
 		cfg.IPAddresses = []net.IP{net.ParseIP(installConfig.Config.BareMetal.APIVIP)}
 		cfg.DNSNames = []string{hostname, installConfig.Config.BareMetal.APIVIP}
+	case gcptypes.Name:
+		cfg.DNSNames = []string{publicHostname}
 	default:
 		cfg.DNSNames = []string{hostname}
 	}

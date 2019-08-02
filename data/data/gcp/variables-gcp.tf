@@ -30,6 +30,12 @@ variable "gcp_bootstrap_enabled" {
   default = true
 }
 
+variable "gcp_bootstrap_present" {
+  type = bool
+  description = "Setting this to false allows the bootstrap instance and instance group to be removed."
+  default = true
+}
+
 variable "gcp_bootstrap_instance_type" {
   type = string
   description = "Instance type for the bootstrap node. Example: `n1-standard-4`"

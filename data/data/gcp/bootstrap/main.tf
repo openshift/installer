@@ -38,7 +38,7 @@ resource "google_compute_firewall" "bootstrap_ingress_ssh" {
 }
 
 resource "google_compute_instance" "bootstrap" {
-  count = var.bootstrap_enabled ? 1 : 0
+  count = var.bootstrap_present ? 1 : 0
 
   name         = "${var.cluster_id}-b"
   machine_type = var.machine_type
@@ -67,4 +67,18 @@ resource "google_compute_instance" "bootstrap" {
   tags = ["${var.cluster_id}-master", "${var.cluster_id}-bootstrap"]
 
   labels = var.labels
+}
+
+resource "google_compute_instance_group" "bootstrap" {
+  count = var.bootstrap_present ? 1 : 0
+
+  name = "${var.cluster_id}-bootstrap"
+  zone = var.zone
+
+  named_port {
+    name = "tcp5222"
+    port = "5222"
+  }
+
+  instances = google_compute_instance.bootstrap.*.self_link
 }
