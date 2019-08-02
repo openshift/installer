@@ -70,4 +70,4 @@ ignored = [
 
 [[constraint]]
   name = "github.com/openshift-metal3/terraform-provider-ironic"
-  version = "v0.1.5"
+  version = "v0.1.6"

@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/baremetal/noauth"
+	"github.com/gophercloud/gophercloud/openstack/baremetal/v1/drivers"
 	noauthintrospection "github.com/gophercloud/gophercloud/openstack/baremetalintrospection/noauth"
+	"github.com/gophercloud/gophercloud/pagination"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	"log"
@@ -206,8 +208,22 @@ func waitForAPI(timeout int, client *gophercloud.ServiceClient) error {
 			statusCode := r.StatusCode
 			r.Body.Close()
 			if statusCode == http.StatusOK {
-				log.Printf("[DEBUG] API successfully connected.")
-				return nil
+				log.Printf("[DEBUG] API successfully connected, waiting for conductor...")
+				driverCount := 0
+				drivers.ListDrivers(client, drivers.ListDriversOpts{
+					Detail: false,
+				}).EachPage(func(page pagination.Page) (bool, error) {
+					actual, err := drivers.ExtractDrivers(page)
+					if err != nil {
+						return false, err
+					}
+					driverCount += len(actual)
+					return true, nil
+				})
+				// If we have any drivers, conductor is up.
+				if driverCount > 0 {
+					return nil
+				}
 			}
 		}
 
