@@ -41,22 +41,47 @@ func TestPersistToFile(t *testing.T) {
 	cases := []struct {
 		name      string
 		filenames []string
+		fcos      bool
 	}{
 		{
 			name:      "no files",
 			filenames: []string{},
+			fcos:      false,
 		},
 		{
 			name:      "single file",
 			filenames: []string{"file1"},
+			fcos:      false,
 		},
 		{
 			name:      "multiple files",
 			filenames: []string{"file1", "file2"},
+			fcos:      false,
 		},
 		{
 			name:      "new directory",
 			filenames: []string{"dir1/file1"},
+			fcos:      false,
+		},
+		{
+			name:      "no files spec3",
+			filenames: []string{},
+			fcos:      true,
+		},
+		{
+			name:      "single file spec3",
+			filenames: []string{"file1"},
+			fcos:      true,
+		},
+		{
+			name:      "multiple files spec3",
+			filenames: []string{"file1", "file2"},
+			fcos:      true,
+		},
+		{
+			name:      "new directory",
+			filenames: []string{"dir1/file1"},
+			fcos:      true,
 		},
 	}
 	for _, tc := range cases {
@@ -79,7 +104,7 @@ func TestPersistToFile(t *testing.T) {
 				}
 				expectedFiles[filepath.Join(dir, filename)] = data
 			}
-			err = PersistToFile(asset, dir)
+			err = PersistToFile(asset, dir, tc.fcos)
 			assert.NoError(t, err, "unexpected error persisting state to file")
 			verifyFilesCreated(t, dir, expectedFiles)
 		})

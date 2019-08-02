@@ -36,22 +36,27 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 	cases := []struct {
 		name    string
 		targets []asset.WritableAsset
+		fcos    bool
 	}{
 		{
 			name:    "install config",
 			targets: targets.InstallConfig,
+			fcos:    false,
 		},
 		{
 			name:    "manifest templates",
 			targets: targets.ManifestTemplates,
+			fcos:    false,
 		},
 		{
 			name:    "manifests",
 			targets: targets.Manifests,
+			fcos:    false,
 		},
 		{
 			name:    "ignition configs",
 			targets: targets.IgnitionConfigs,
+			fcos:    false,
 		},
 	}
 	for _, tc := range cases {
@@ -76,7 +81,7 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 					t.Fatalf("failed to fetch %q: %v", a.Name(), err)
 				}
 
-				if err := asset.PersistToFile(a, tempDir); err != nil {
+				if err := asset.PersistToFile(a, tempDir, tc.fcos); err != nil {
 					t.Fatalf("failed to write asset %q to disk: %v", a.Name(), err)
 				}
 			}
