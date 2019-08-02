@@ -5,14 +5,18 @@ Support for launching clusters on OpenStack is **experimental**.
 This document discusses the requirements, current expected behavior, and how to
 try out what exists so far.
 
-## OpenStack Requirements
+## Openstack Credentials
 
-The installer assumes the following about the OpenStack cloud you run against:
+There are two ways to pass your credentials to the installer, with a clouds.yaml file or with environment variables. You can also use a combination of the two, but be aware that clouds.yaml file has precident over the environment variables you set.
 
-* You must create a `clouds.yaml` file with the auth URL and credentials
-    necessary to access the OpenStack cloud you want to use.  Information on
-    this file can be found at
-    https://docs.openstack.org/openstacksdk/latest/user/config/configuration.html#config-files
+The installer will look for a clouds.yaml file in the following locations in order:
+1. OS_CLIENT_CONFIG_FILE
+2. Current directory
+3. unix-specific user_config_dir (~/.config/openstack/clouds.yaml)
+4. unix-specific site_config_dir (/etc/openstack/clouds.yaml)
+
+In many openstack distributions, you can get a clouds.yaml file through Horizon. If you cant, then you can make a `clouds.yaml` file yourself, Information on
+    this file can be found at https://docs.openstack.org/openstacksdk/latest/user/config/configuration.html#config-files
     and it looks like:
 ```
 clouds:
@@ -33,7 +37,42 @@ clouds:
       auth_url: 'https://10.10.14.22:5001/v2.0'
 ```
 
-* Swift must be enabled.  The user must have `swiftoperator` permissions and
+If you choose to use environment variables in place of a clouds.yaml, or along side it, consult the following doccumentation:
+https://www.terraform.io/docs/providers/openstack/#configuration-reference
+
+
+## OpenStack Requirements
+
+### Recommended Minimums
+
+With the latest version of the installer, we recommend the following minimums in order to get a succesful deployment.
+
+   * OpenStack Quota
+     * Networking
+       * Floating IPs: 2
+       * Security Groups: 2
+       * Security Group Rules: 44
+       * Routers: 1
+       * Subnets: 1
+     * Compute
+       * RAM: 80 Gb
+       * Instances: 6
+   * Masters:
+     * 16 Gb RAM each
+     * Minimum: 3
+     * Default: 3
+   * Workers:
+     * 8 Gb RAM each
+     * Minimum: 2
+     * Default: 3
+   * Bootstrap Node:
+     * 16 Gb RAM
+     * Used to configure nodes during deployment
+     * Will be deleted automatically after the cluster bootstrapping phase completes
+
+### Swift
+
+Swift must be enabled.  The user must have `swiftoperator` permissions and
   `temp-url` support must be enabled. As an OpenStack admin:
   * `openstack role add --user <user> --project <project> swiftoperator`
   * `openstack object store account set --property Temp-URL-Key=superkey`
@@ -44,7 +83,9 @@ enough to store the ignition config files, so they are served by swift instead.
 * You may need to increase the security group related quotas from their default
   values. For example (as an OpenStack admin) `openstack quota set --secgroups 100 --secgroup-rules 1000 <project>`
 
-* The installer requires a proper RHCOS image in the OpenStack cluster or project:
+### RHCOS Image
+
+The installer requires a proper RHCOS image in the OpenStack cluster or project:
 `openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.qcow2 rhcos`
 
 **NOTE:** Depending on your OpenStack environment you can upload the RHCOS image
