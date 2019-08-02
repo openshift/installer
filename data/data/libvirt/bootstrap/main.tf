@@ -34,7 +34,7 @@ resource "libvirt_domain" "bootstrap" {
 
   network_interface {
     network_id = var.network_id
-    hostname   = "${var.cluster_id}-bootstrap"
+    hostname   = "${var.cluster_id}-bootstrap.${var.cluster_domain}"
     addresses  = var.addresses
   }
 }
