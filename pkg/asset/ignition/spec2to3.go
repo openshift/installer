@@ -33,7 +33,7 @@ func ConvertSpec2ToSpec3(spec2data []byte) ([]byte, error) {
 		delete(jsonMap, "networkd")
 	}
 
-	// Remove filesystem in storage.files
+	// Modify storage.files
 	if sval, ok := jsonMap["storage"]; ok {
 		storage := sval.(map[string]interface{})
 
@@ -44,9 +44,20 @@ func ConvertSpec2ToSpec3(spec2data []byte) ([]byte, error) {
 
 			for i := range files {
 				file := files[i].(map[string]interface{})
+				// Remove filesystem
 				if _, ok := file["filesystem"]; ok {
 					delete(file, "filesystem")
 				}
+				// append is no longer a flag
+				if val, ok := file["append"]; ok {
+					if val == "true" {
+						if contentsval, ok := file["contents"]; ok {
+							file["append"] = contentsval
+							delete(file, "contents")
+						}
+					}
+				}
+
 				updatedFiles = append(updatedFiles, file)
 			}
 			storage["files"] = updatedFiles
