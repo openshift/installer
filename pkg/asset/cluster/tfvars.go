@@ -1,11 +1,19 @@
 package cluster
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
+	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
+	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
+
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -21,10 +29,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/vsphere"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
-	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
+	"github.com/openshift/installer/pkg/version"
 )
 
 const (
@@ -83,8 +88,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		return errors.Errorf("cannot create the cluster because %q is a UPI platform", platform)
 	}
 
-	bootstrapIgn := string(bootstrapIgnAsset.Files()[0].Data)
 	masterIgn := string(masterIgnAsset.Files()[0].Data)
+	bootstrapIgn, err := injectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
+	if err != nil {
+		return errors.Wrap(err, "unable to inject installation info")
+	}
 
 	masterCount := len(mastersAsset.MachineFiles)
 	data, err := tfvars.TFVars(
@@ -206,4 +214,36 @@ func (t *TerraformVariables) Load(f asset.FileFetcher) (found bool, err error) {
 	t.FileList = append(t.FileList, fileList...)
 
 	return true, nil
+}
+
+// injectInstallInfo adds information about the installer and its invoker as a
+// ConfigMap to the provided bootstrap Ignition config.
+func injectInstallInfo(bootstrap []byte) (string, error) {
+	config := &igntypes.Config{}
+	if err := json.Unmarshal(bootstrap, &config); err != nil {
+		return "", errors.Wrap(err, "failed to unmarshal bootstrap Ignition config")
+	}
+
+	invoker := "user"
+	if env := os.Getenv("OPENSHIFT_INSTALL_INVOKER"); env != "" {
+		invoker = env
+	}
+
+	config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/opt/openshift/manifests/openshift-install.yml", "root", 0644, fmt.Sprintf(`---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openshift-install
+  namespace: openshift-config
+data:
+  version: "%s"
+  invoker: "%s"
+`, version.Raw, invoker)))
+
+	ign, err := json.Marshal(config)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to marshal bootstrap Ignition config")
+	}
+
+	return string(ign), nil
 }
