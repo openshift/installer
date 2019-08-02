@@ -173,6 +173,14 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to Marshal Ignition config")
 	}
+
+	if installConfig.Config.Spec3 == true {
+		data, err = ignition.ConvertSpec2ToSpec3(data)
+		if err != nil {
+			return err
+		}
+	}
+
 	a.File = &asset.File{
 		Filename: bootstrapIgnFilename,
 		Data:     data,

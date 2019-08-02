@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
 )
@@ -44,6 +45,14 @@ func (a *Master) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal Ignition config")
 	}
+
+	if installConfig.Config.Spec3 == true {
+		data, err = ignition.ConvertSpec2ToSpec3(data)
+		if err != nil {
+			return err
+		}
+	}
+
 	a.File = &asset.File{
 		Filename: masterIgnFilename,
 		Data:     data,

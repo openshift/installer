@@ -87,6 +87,10 @@ type InstallConfig struct {
 
 	// ImageContentSources lists sources/repositories for the release-image content.
 	ImageContentSources []ImageContentSource `json:"imageContentSources,omitempty"`
+
+	// Spec3 is a flag to convert Ignition in spec3
+	// +optional
+	Spec3 bool `json:"spec3,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
