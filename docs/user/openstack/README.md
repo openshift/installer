@@ -12,8 +12,8 @@ There are two ways to pass your credentials to the installer, with a clouds.yaml
 The installer will look for a clouds.yaml file in the following locations in order:
 1. OS_CLIENT_CONFIG_FILE
 2. Current directory
-3. unix-specific user_config_dir (~/.config/openstack/clouds.yaml)
-4. unix-specific site_config_dir (/etc/openstack/clouds.yaml)
+3. unix-specific user config directory (~/.config/openstack/clouds.yaml)
+4. unix-specific site config directory (/etc/openstack/clouds.yaml)
 
 In many openstack distributions, you can get a clouds.yaml file through Horizon. If you cant, then you can make a `clouds.yaml` file yourself, Information on
     this file can be found at https://docs.openstack.org/openstacksdk/latest/user/config/configuration.html#config-files
