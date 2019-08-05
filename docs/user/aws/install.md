@@ -49,12 +49,9 @@ In EC2, there will be 6 running instances:
 
 ![EC2 instances after install](images/install_nodes.png)
 
-The installation creates an encrypted AMI for the bootstrap and control-plane machines.
-The encrypted AMI is [copied][encrypted-copy] from the AMI configured in the control-plane machine-API provider spec,
-which is RHCOS by default.
+Instance root volumes for the bootstrap and contro-plane machines are encrypted.
 The encryption uses the default EBS key for your target account and region
 (`aws kms describe-key --key-id alias/aws/ebs`).
-The encrypted AMI is deregistered by `destroy cluster`.
 
 An architecture diagram for the AWS elements created by the full installation is as depicted:
 
@@ -69,4 +66,3 @@ The OpenShift console is available via the kubeadmin login provided by the insta
 ![OpenShift web console](images/install_console.png)
 
 [cloud-install]: https://cloud.openshift.com/clusters/install
-[encrypted-copy]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIEncryption.html#create-ami-encrypted-root-snapshot

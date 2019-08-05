@@ -19,7 +19,7 @@ variable "aws_master_instance_type" {
 
 variable "aws_ami" {
   type = string
-  description = "AMI for all nodes.  An encrypted copy of this AMI will be used.  Example: `ami-foobar123`."
+  description = "AMI for all nodes.  Example: `ami-foobar123`."
 }
 
 variable "aws_extra_tags" {
