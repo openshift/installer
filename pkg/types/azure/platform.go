@@ -8,7 +8,7 @@ type Platform struct {
 	// Region specifies the Azure region where the cluster will be created.
 	Region string `json:"region"`
 
-	// BaseDomainResourceGroupName specifies the resource group where the azure DNS zone for the base domain is found
+	// BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found.
 	BaseDomainResourceGroupName string `json:"baseDomainResourceGroupName,omitempty"`
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on Azure for machine pools which do not define their own

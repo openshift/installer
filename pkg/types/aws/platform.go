@@ -10,7 +10,9 @@ type Platform struct {
 	// Region specifies the AWS region where the cluster will be created.
 	Region string `json:"region"`
 
-	// UserTags specifies additional tags for AWS resources created for the cluster.
+	// UserTags additional keys and values that the installer will add
+	// as tags to all resources that it creates. Resources created by the
+	// cluster itself may not include these tags.
 	// +optional
 	UserTags map[string]string `json:"userTags,omitempty"`
 

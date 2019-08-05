@@ -10,7 +10,7 @@ type MachinePool struct {
 	// eg. m4-large
 	InstanceType string `json:"type"`
 
-	// EC2RootVolume defines the storage for ec2 instance.
+	// EC2RootVolume defines the root volume for EC2 instances in the machine pool.
 	EC2RootVolume `json:"rootVolume"`
 }
 
@@ -41,10 +41,11 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 // EC2RootVolume defines the storage for an ec2 instance.
 type EC2RootVolume struct {
-	// IOPS defines the iops for the storage.
+	// IOPS defines the amount of provisioned IOPS. This is only valid
+	// for type io1.
 	IOPS int `json:"iops"`
-	// Size defines the size of the storage.
+	// Size defines the size of the volume in gibibytes (GiB).
 	Size int `json:"size"`
-	// Type defines the type of the storage.
+	// Type defines the type of the volume.
 	Type string `json:"type"`
 }
