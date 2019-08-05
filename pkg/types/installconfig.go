@@ -49,8 +49,8 @@ type InstallConfig struct {
 
 	metav1.ObjectMeta `json:"metadata"`
 
-	// AdditionalTrustBundle is a certificate bundle that will be added to the nodes
-	// trusted certificate store.
+	// AdditionalTrustBundle is a PEM-encoded X.509 certificate bundle
+	// that will be added to the nodes' trusted certificate store.
 	// +optional
 	AdditionalTrustBundle string `json:"additionalTrustBundle,omitempty"`
 
