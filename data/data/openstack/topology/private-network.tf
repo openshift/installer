@@ -64,7 +64,7 @@ resource "openstack_networking_port_v2" "masters" {
 }
 
 resource "openstack_networking_port_v2" "api_port" {
-  name  = "${var.cluster_id}-api-port"
+  name = "${var.cluster_id}-api-port"
 
   admin_state_up     = "true"
   network_id         = openstack_networking_network_v2.openshift-private.id
@@ -79,7 +79,7 @@ resource "openstack_networking_port_v2" "api_port" {
 }
 
 resource "openstack_networking_port_v2" "ingress_port" {
-  name  = "${var.cluster_id}-ingress-port"
+  name = "${var.cluster_id}-ingress-port"
 
   admin_state_up     = "true"
   network_id         = openstack_networking_network_v2.openshift-private.id
