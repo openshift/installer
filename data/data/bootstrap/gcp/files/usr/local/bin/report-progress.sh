@@ -2,23 +2,19 @@
 
 KUBECONFIG="${1}"
 
-wait_for_existance_file() {
+wait_for_existance() {
 	while [ ! -e "${1}" ]
 	do
 		sleep 5
 	done
 }
 
-wait_for_existance_k8s_object() {
-	while ! oc --config="$KUBECONFIG" -n "${1}" get "${2}"
-	do
-		sleep 5
-	done
-}
-
 echo "Waiting for bootstrap to complete..."
-wait_for_existance_file /opt/openshift/.openshift.done
-wait_for_existance_k8s_object kube-system event/bootstrap-success
+wait_for_existance /opt/openshift/.bootkube.done
+wait_for_existance /opt/openshift/.openshift.done
+
+## remove the routes setup so that we can open up the blackhole
+systemctl stop gcp-routes.service
 
 echo "Reporting install progress..."
 while ! oc --config="$KUBECONFIG" create -f - <<-EOF
