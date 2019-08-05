@@ -122,7 +122,7 @@ The OpenShift Installer provides administrators various assets that are required
 
 ### Setting up install-config for installer
 
-The OpenShift installer uses an [Install Config][install-config] to drive all install time configuration.
+The OpenShift installer uses an [Install Config](../customization.md#platform-customization) to drive all install time configuration.
 
 An example install config for vSphere UPI is as follows:
 
@@ -438,7 +438,6 @@ terraform destroy -auto-approve
 [aws-route53]: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/Welcome.html
 [csr-request]: https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/#requesting-a-certificate
 [etcd-ports]: https://github.com/openshift/origin/pull/21520
-[install-config]: https://godoc.org/github.com/openshift/installer/pkg/types#InstallConfig
 [machine-config-server]: https://github.com/openshift/machine-config-operator/blob/master/docs/MachineConfigServer.md
 [openshift-router]: https://github.com/openshift/cluster-ingress-operator#openshift-ingress-operator
 [rrdns]: https://tools.ietf.org/html/rfc1794
