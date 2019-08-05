@@ -85,7 +85,10 @@ podman run -d --net host --name coreos-downloader \
 # Wait for images to be downloaded/ready
 podman wait -i 1000 ipa-downloader
 podman wait -i 1000 coreos-downloader
-while ! curl --fail http://localhost:80/images/rhcos-ootpa-latest.qcow2.md5sum ; do sleep 1 ; done
+while ! curl --fail http://localhost/images/rhcos-ootpa-latest.qcow2.md5sum ; do sleep 1; done
+while ! curl --fail --head http://localhost/images/ironic-python-agent.initramfs ; do sleep 1; done
+while ! curl --fail --head http://localhost/images/ironic-python-agent.tar.headers ; do sleep 1; done
+while ! curl --fail --head http://localhost/images/ironic-python-agent.kernel ; do sleep 1; done
 
 sudo podman run -d --net host --privileged --name ironic-conductor \
      --env MARIADB_PASSWORD=$mariadb_password \
