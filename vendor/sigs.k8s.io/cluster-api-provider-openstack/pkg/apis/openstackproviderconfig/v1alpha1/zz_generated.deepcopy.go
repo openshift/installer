@@ -111,6 +111,11 @@ func (in *OpenstackClusterProviderSpec) DeepCopyInto(out *OpenstackClusterProvid
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Tags != nil {
+		in, out := &in.Tags, &out.Tags
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
@@ -137,16 +142,6 @@ func (in *OpenstackClusterProviderStatus) DeepCopyInto(out *OpenstackClusterProv
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	if in.CACertificate != nil {
-		in, out := &in.CACertificate, &out.CACertificate
-		*out = make([]byte, len(*in))
-		copy(*out, *in)
-	}
-	if in.CAPrivateKey != nil {
-		in, out := &in.CAPrivateKey, &out.CAPrivateKey
-		*out = make([]byte, len(*in))
-		copy(*out, *in)
-	}
 	if in.Network != nil {
 		in, out := &in.Network, &out.Network
 		*out = new(Network)
@@ -210,15 +205,27 @@ func (in *OpenstackProviderSpec) DeepCopyInto(out *OpenstackProviderSpec) {
 		*out = new(v1.SecretReference)
 		**out = **in
 	}
-	out.RootVolume = in.RootVolume
-	out.Tags = in.Tags
-
+	if in.Tags != nil {
+		in, out := &in.Tags, &out.Tags
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.ServerMetadata != nil {
 		in, out := &in.ServerMetadata, &out.ServerMetadata
 		*out = make(map[string]string, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}
+	}
+	if in.ConfigDrive != nil {
+		in, out := &in.ConfigDrive, &out.ConfigDrive
+		*out = new(bool)
+		**out = **in
+	}
+	if in.RootVolume != nil {
+		in, out := &in.RootVolume, &out.RootVolume
+		*out = new(RootVolume)
+		**out = **in
 	}
 	return
 }
