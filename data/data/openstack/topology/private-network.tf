@@ -24,6 +24,8 @@ resource "openstack_networking_subnet_v2" "nodes" {
   # We reserve some space at the beginning of the CIDR to use for the VIPs
   # It would be good to make this more dynamic by calculating the number of
   # addresses in the provided CIDR. This currently assumes at least a /18.
+  # FIXME(mandre) if we let the ports pick up VIPs automatically, we don't have
+  # to do any of this.
   allocation_pool {
     start = cidrhost(local.nodes_cidr_block, 10)
     end   = cidrhost(local.nodes_cidr_block, 16000)
@@ -57,6 +59,36 @@ resource "openstack_networking_port_v2" "masters" {
   }
 
   allowed_address_pairs {
+    ip_address = var.ingress_ip
+  }
+}
+
+resource "openstack_networking_port_v2" "api_port" {
+  name  = "${var.cluster_id}-api-port"
+
+  admin_state_up     = "true"
+  network_id         = openstack_networking_network_v2.openshift-private.id
+  security_group_ids = [openstack_networking_secgroup_v2.master.id]
+  tags               = ["openshiftClusterID=${var.cluster_id}"]
+
+  fixed_ip {
+    subnet_id = openstack_networking_subnet_v2.nodes.id
+    # FIXME(mandre) we could let the installer automatically pick up the address
+    ip_address = var.api_int_ip
+  }
+}
+
+resource "openstack_networking_port_v2" "ingress_port" {
+  name  = "${var.cluster_id}-ingress-port"
+
+  admin_state_up     = "true"
+  network_id         = openstack_networking_network_v2.openshift-private.id
+  security_group_ids = [openstack_networking_secgroup_v2.master.id]
+  tags               = ["openshiftClusterID=${var.cluster_id}"]
+
+  fixed_ip {
+    subnet_id = openstack_networking_subnet_v2.nodes.id
+    # FIXME(mandre) we could let the installer automatically pick up the address
     ip_address = var.ingress_ip
   }
 }
@@ -113,7 +145,7 @@ resource "openstack_networking_port_v2" "bootstrap_port" {
 // as expected.
 resource "openstack_networking_floatingip_associate_v2" "api_fip" {
   count       = length(var.lb_floating_ip) == 0 ? 0 : 1
-  port_id     = openstack_networking_port_v2.masters[0].id
+  port_id     = openstack_networking_port_v2.api_port.id
   floating_ip = var.lb_floating_ip
 }
 
