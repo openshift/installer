@@ -239,18 +239,19 @@ func (o *ClusterUninstaller) listDisks() ([]nameAndZone, error) {
 	result := []nameAndZone{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.Disks.AggregatedList(o.ProjectID).Fields("items(name,zone)").Filter(o.clusterIDFilter())
+	req := o.computeSvc.Disks.AggregatedList(o.ProjectID).Fields("items/*/disks(name,zone)").Filter(o.clusterIDFilter())
 	err := req.Pages(ctx, func(aggregatedList *compute.DiskAggregatedList) error {
 		for _, scopedList := range aggregatedList.Items {
 			for _, disk := range scopedList.Disks {
-				result = append(result, nameAndZone{name: disk.Name, zone: disk.Zone})
-				o.Logger.Debugf("Found disk %s in zone %s", disk.Name, disk.Zone)
+				zone := o.getZoneName(disk.Zone)
+				result = append(result, nameAndZone{name: disk.Name, zone: zone})
+				o.Logger.Debugf("Found disk %s in zone %s", disk.Name, zone)
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to fetch images")
+		return nil, errors.Wrapf(err, "failed to fetch disks")
 	}
 	return result, nil
 }
