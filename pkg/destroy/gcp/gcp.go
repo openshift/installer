@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	resourcemanager "google.golang.org/api/cloudresourcemanager/v1"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"
@@ -44,6 +45,7 @@ type ClusterUninstaller struct {
 	iamSvc     *iam.Service
 	dnsSvc     *dns.Service
 	storageSvc *storage.Service
+	rmSvc      *resourcemanager.Service
 
 	// cloudControllerUID is the cluster ID used by the cluster's cloud controller
 	// to generate load balancer related resources. It can be obtained either
@@ -103,6 +105,11 @@ func (o *ClusterUninstaller) Run() error {
 		return errors.Wrap(err, "failed to create storage service")
 	}
 
+	o.rmSvc, err = resourcemanager.NewService(ctx, options...)
+	if err != nil {
+		return errors.Wrap(err, "failed to create resourcemanager service")
+	}
+
 	err = wait.PollImmediateInfinite(
 		time.Second*10,
 		o.destroyCluster,
@@ -119,6 +126,7 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		{name: "Compute instances", destroy: o.destroyComputeInstances},
 		{name: "Disks", destroy: o.destroyDisks},
 		{name: "Service accounts", destroy: o.destroyServiceAccounts},
+		{name: "Policy bindings", destroy: o.destroyIAMPolicyBindings},
 		{name: "Images", destroy: o.destroyImages},
 		{name: "DNS", destroy: o.destroyDNS},
 		{name: "Object storage", destroy: o.destroyObjectStorage},
