@@ -144,6 +144,11 @@ func (o *ClusterUninstaller) Run() error {
 		logger:  o.Logger,
 	}
 
+	err = terminateEC2InstancesByTags(ec2.New(awsSession), iamClient, o.Filters, o.Logger)
+	if err != nil {
+		return err
+	}
+
 	err = wait.PollImmediateInfinite(
 		time.Second*10,
 		func() (done bool, err error) {
@@ -532,7 +537,7 @@ func deleteEC2(session *session.Session, arn arn.ARN, filter Filter, logger logr
 	case "image":
 		return deleteEC2Image(client, id, filter, logger)
 	case "instance":
-		return deleteEC2Instance(client, iam.New(session), id, logger)
+		return terminateEC2Instance(client, iam.New(session), id, logger)
 	case "internet-gateway":
 		return deleteEC2InternetGateway(client, id, logger)
 	case "natgateway":
@@ -628,7 +633,7 @@ func deleteEC2ElasticIP(client *ec2.EC2, id string, logger logrus.FieldLogger) e
 	return nil
 }
 
-func deleteEC2Instance(ec2Client *ec2.EC2, iamClient *iam.IAM, id string, logger logrus.FieldLogger) error {
+func terminateEC2Instance(ec2Client *ec2.EC2, iamClient *iam.IAM, id string, logger logrus.FieldLogger) error {
 	response, err := ec2Client.DescribeInstances(&ec2.DescribeInstancesInput{
 		InstanceIds: []*string{aws.String(id)},
 	})
@@ -641,33 +646,104 @@ func deleteEC2Instance(ec2Client *ec2.EC2, iamClient *iam.IAM, id string, logger
 
 	for _, reservation := range response.Reservations {
 		for _, instance := range reservation.Instances {
-			// Skip 'terminated' instances since they take a while to really get cleaned up
-			if *instance.State.Name == "terminated" {
-				continue
-			}
-			if instance.IamInstanceProfile != nil {
-				parsed, err := arn.Parse(*instance.IamInstanceProfile.Arn)
-				if err != nil {
-					return errors.Wrap(err, "parse ARN for IAM instance profile")
-				}
-
-				err = deleteIAMInstanceProfile(iamClient, parsed, logger)
-				if err != nil {
-					return errors.Wrapf(err, "deleting %s", parsed.String())
-				}
-			}
-
-			_, err := ec2Client.TerminateInstances(&ec2.TerminateInstancesInput{
-				InstanceIds: []*string{instance.InstanceId},
-			})
+			err = terminateEC2InstanceByInstance(ec2Client, iamClient, instance, logger)
 			if err != nil {
 				return err
 			}
-
-			logger.Info("Deleted")
 		}
 	}
 	return nil
+}
+
+func terminateEC2InstanceByInstance(ec2Client *ec2.EC2, iamClient *iam.IAM, instance *ec2.Instance, logger logrus.FieldLogger) error {
+	// Skip 'shutting-down' and 'terminated' instances since they take a while to get cleaned up
+	if instance.State == nil || *instance.State.Name == "shutting-down" || *instance.State.Name == "terminated" {
+		return nil
+	}
+
+	if instance.IamInstanceProfile != nil {
+		parsed, err := arn.Parse(*instance.IamInstanceProfile.Arn)
+		if err != nil {
+			return errors.Wrap(err, "parse ARN for IAM instance profile")
+		}
+
+		err = deleteIAMInstanceProfile(iamClient, parsed, logger)
+		if err != nil {
+			return errors.Wrapf(err, "deleting %s", parsed.String())
+		}
+	}
+
+	_, err := ec2Client.TerminateInstances(&ec2.TerminateInstancesInput{
+		InstanceIds: []*string{instance.InstanceId},
+	})
+	if err != nil {
+		return err
+	}
+
+	logger.Info("Terminating")
+	return nil
+}
+
+// terminateEC2InstancesByTags loops until there all instances which
+// match the given tags are terminated.
+func terminateEC2InstancesByTags(ec2Client *ec2.EC2, iamClient *iam.IAM, filters []Filter, logger logrus.FieldLogger) error {
+	terminated := map[string]struct{}{}
+	return wait.PollImmediateInfinite(
+		time.Second*10,
+		func() (done bool, err error) {
+			var loopError error
+			matched := false
+			for _, filter := range filters {
+				logger.Debugf("search for and delete matching instances by tag matching %#+v", filter)
+				instanceFilters := make([]*ec2.Filter, 0, len(filter))
+				for key, value := range filter {
+					instanceFilters = append(instanceFilters, &ec2.Filter{
+						Name:   aws.String("tag:" + key),
+						Values: []*string{aws.String(value)},
+					})
+				}
+				err = ec2Client.DescribeInstancesPages(
+					&ec2.DescribeInstancesInput{Filters: instanceFilters},
+					func(results *ec2.DescribeInstancesOutput, lastPage bool) bool {
+						for _, reservation := range results.Reservations {
+							for _, instance := range reservation.Instances {
+								if instance.InstanceId == nil || instance.State == nil {
+									continue
+								}
+
+								instanceLogger := logger.WithField("instance", *instance.InstanceId)
+								if *instance.State.Name == "terminated" {
+									if _, ok := terminated[*instance.InstanceId]; !ok {
+										instanceLogger.Debug("Terminated")
+										terminated[*instance.InstanceId] = exists
+									}
+									continue
+								}
+
+								matched = true
+								err := terminateEC2InstanceByInstance(ec2Client, iamClient, instance, instanceLogger)
+								if err != nil {
+									instanceLogger.Debug(err)
+									loopError = errors.Wrapf(err, "terminating %s", *instance.InstanceId)
+									continue
+								}
+							}
+						}
+
+						return !lastPage
+					},
+				)
+				if err != nil {
+					err = errors.Wrap(err, "describe instances")
+					logger.Info(err)
+					matched = true
+					loopError = err
+				}
+			}
+
+			return !matched && loopError == nil, nil
+		},
+	)
 }
 
 // This is a bit of hack. Some objects, like Instance Profiles, can not be tagged in AWS.
