@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -117,10 +118,22 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		config.Status.PlatformStatus.Type = configv1.NonePlatformType
 	case openstack.Name:
 		config.Status.PlatformStatus.Type = configv1.OpenStackPlatformType
+		apiVIP, err := openstackdefaults.APIVIP(installConfig.Config.Networking)
+		if err != nil {
+			return err
+		}
+		dnsVIP, err := openstackdefaults.DNSVIP(installConfig.Config.Networking)
+		if err != nil {
+			return err
+		}
+		ingressVIP, err := openstackdefaults.IngressVIP(installConfig.Config.Networking)
+		if err != nil {
+			return err
+		}
 		config.Status.PlatformStatus.OpenStack = &configv1.OpenStackPlatformStatus{
-			APIServerInternalIP: installConfig.Config.Platform.OpenStack.APIVIP,
-			NodeDNSIP:           installConfig.Config.Platform.OpenStack.DNSVIP,
-			IngressIP:           installConfig.Config.Platform.OpenStack.IngressVIP,
+			APIServerInternalIP: apiVIP.String(),
+			NodeDNSIP:           dnsVIP.String(),
+			IngressIP:           ingressVIP.String(),
 		}
 	case vsphere.Name:
 		config.Status.PlatformStatus.Type = configv1.VSpherePlatformType

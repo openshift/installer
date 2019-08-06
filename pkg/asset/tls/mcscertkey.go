@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
 // MCSCertKey is the asset that generates the MCS key/cert pair.
@@ -47,8 +48,12 @@ func (a *MCSCertKey) Generate(dependencies asset.Parents) error {
 		cfg.IPAddresses = []net.IP{net.ParseIP(installConfig.Config.BareMetal.APIVIP)}
 		cfg.DNSNames = []string{hostname, installConfig.Config.BareMetal.APIVIP}
 	case openstacktypes.Name:
-		cfg.IPAddresses = []net.IP{net.ParseIP(installConfig.Config.OpenStack.APIVIP)}
-		cfg.DNSNames = []string{hostname, installConfig.Config.OpenStack.APIVIP}
+		apiVIP, err := openstackdefaults.APIVIP(installConfig.Config.Networking)
+		if err != nil {
+			return err
+		}
+		cfg.IPAddresses = []net.IP{apiVIP}
+		cfg.DNSNames = []string{hostname, apiVIP.String()}
 	default:
 		cfg.DNSNames = []string{hostname}
 	}

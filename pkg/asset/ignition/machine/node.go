@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
 // pointerIgnitionConfig generates a config which references the remote config
@@ -22,7 +23,12 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 		// way to configure DNS before Ignition runs.
 		ignitionHost = fmt.Sprintf("%s:22623", installConfig.BareMetal.APIVIP)
 	case openstacktypes.Name:
-		ignitionHost = fmt.Sprintf("%s:22623", installConfig.OpenStack.APIVIP)
+		apiVIP, err := openstackdefaults.APIVIP(installConfig.Networking)
+		if err == nil {
+			ignitionHost = fmt.Sprintf("%s:22623", apiVIP.String())
+		} else {
+			ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
+		}
 	default:
 		ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
 	}

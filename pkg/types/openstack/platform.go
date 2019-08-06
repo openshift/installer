@@ -28,33 +28,6 @@ type Platform struct {
 	// Existing Floating IP to associate with the OpenStack load balancer.
 	LbFloatingIP string `json:"lbFloatingIP"`
 
-	// APIVIP
-	// The internal virtual IP address (VIP) put in front of the
-	// Kubernetes API server for use by components inside the cluster.
-	// The DNS static pods running on the nodes resolve the api-int
-	// record to APIVIP.
-	//
-	// The value is set by the installer from the MachineCIDR range.
-	APIVIP string `json:"apiVIP"`
-
-	// DNSVIP
-	// The internal virtual IP address (VIP) put in front of the DNS
-	// static pods running on the nodes. Unlike the DNS operator these
-	// services provide name resolution for the nodes themselves.
-	//
-	// The value is set by the installer from the MachineCIDR range.
-	DNSVIP string `json:"dnsVIP"`
-
-	// IngressVIP
-	// The internal virtual IP address (VIP) put in front of the
-	// OpenShift router pods. This provides the internal accessibility
-	// to the internal pods running on the worker nodes, e.g.
-	// `console`. The DNS static pods running on the nodes resolve the
-	// wildcard apps record to IngressVIP.
-	//
-	// The value is set by the installer from the MachineCIDR range.
-	IngressVIP string `json:"ingressVIP"`
-
 	// TrunkSupport
 	// Whether OpenStack ports can be trunked
 	TrunkSupport string `json:"trunkSupport"`
