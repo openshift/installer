@@ -3,20 +3,20 @@ locals {
   api_external_name = "api.${replace(var.cluster_domain, ".${var.base_domain}", "")}"
 }
 
-resource "azurerm_dns_cname_record" "apiint_internal" {
+resource "azurerm_dns_a_record" "apiint_internal" {
   name                = "api-int"
   zone_name           = var.private_dns_zone_name
   resource_group_name = var.resource_group_name
   ttl                 = 300
-  record              = var.external_lb_fqdn
+  records             = [var.internal_lb_ipaddress]
 }
 
-resource "azurerm_dns_cname_record" "api_internal" {
+resource "azurerm_dns_a_record" "api_internal" {
   name                = "api"
   zone_name           = var.private_dns_zone_name
   resource_group_name = var.resource_group_name
   ttl                 = 300
-  record              = var.external_lb_fqdn
+  records             = [var.internal_lb_ipaddress]
 }
 
 resource "azurerm_dns_cname_record" "api_external" {

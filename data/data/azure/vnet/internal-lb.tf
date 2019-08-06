@@ -59,8 +59,7 @@ resource "azurerm_lb_probe" "internal_lb_probe_sint" {
   number_of_probes    = 3
   loadbalancer_id     = azurerm_lb.internal.id
   port                = 22623
-  request_path        = "/healthz"
-  protocol            = "Https"
+  protocol            = "TCP"
 }
 
 resource "azurerm_lb_probe" "internal_lb_probe_api_internal" {
@@ -70,7 +69,6 @@ resource "azurerm_lb_probe" "internal_lb_probe_api_internal" {
   number_of_probes    = 3
   loadbalancer_id     = azurerm_lb.internal.id
   port                = 6443
-  request_path        = "/readyz"
-  protocol            = "Https"
+  protocol            = "TCP"
 }
 
