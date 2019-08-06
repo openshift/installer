@@ -22,12 +22,12 @@ type config struct {
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, region string, externalNetwork string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string) ([]byte, error) {
+func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, region string, externalNetwork string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string) ([]byte, error) {
 	cfg := &config{
 		Region:          region,
 		BaseImage:       masterConfig.Image,
 		ExternalNetwork: externalNetwork,
-		Cloud:           masterConfig.CloudName,
+		Cloud:           cloud,
 		FlavorName:      masterConfig.Flavor,
 		LbFloatingIP:    lbFloatingIP,
 		APIVIP:          apiVIP,
