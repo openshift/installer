@@ -18,9 +18,6 @@ func validPlatform() *openstack.Platform {
 		Cloud:           "test-cloud",
 		ExternalNetwork: "test-network",
 		FlavorName:      "test-flavor",
-		APIVIP:          "10.0.0.5",
-		DNSVIP:          "10.0.0.6",
-		IngressVIP:      "10.0.0.7",
 	}
 }
 

@@ -65,7 +65,7 @@ func defaultLibvirtInstallConfig() *types.InstallConfig {
 func defaultOpenStackInstallConfig() *types.InstallConfig {
 	c := defaultInstallConfig()
 	c.Platform.OpenStack = &openstack.Platform{}
-	openstackdefaults.SetPlatformDefaults(c.Platform.OpenStack, c.Networking)
+	openstackdefaults.SetPlatformDefaults(c.Platform.OpenStack)
 	return c
 }
 
