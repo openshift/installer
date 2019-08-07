@@ -45,7 +45,7 @@ Memory
 Storage
 Networking
 
-[todo-link-to-minimum-resource-requirements]
+https://docs.openshift.com/container-platform/4.1/installing/installing_vsphere/installing-vsphere.html#minimum-resource-requirements_installing-vsphere
 
 ## Network Topology Requirements
 
