@@ -67,7 +67,7 @@ func (atbc *AdditionalTrustBundleConfig) Generate(dependencies asset.Parents) er
 			Kind:       "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "openshift-config-managed",
+			Namespace: "openshift-config",
 			Name:      additionalTrustBundleConfigMapName,
 		},
 		Data: data,
