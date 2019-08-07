@@ -83,7 +83,7 @@ resource "openstack_networking_port_v2" "ingress_port" {
 
   admin_state_up     = "true"
   network_id         = openstack_networking_network_v2.openshift-private.id
-  security_group_ids = [openstack_networking_secgroup_v2.master.id]
+  security_group_ids = [openstack_networking_secgroup_v2.worker.id]
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
   fixed_ip {
@@ -145,7 +145,7 @@ resource "openstack_networking_port_v2" "bootstrap_port" {
 // as expected.
 resource "openstack_networking_floatingip_associate_v2" "api_fip" {
   count       = length(var.lb_floating_ip) == 0 ? 0 : 1
-  port_id     = openstack_networking_port_v2.api_port.id
+  port_id     = openstack_networking_port_v2.masters[0].id
   floating_ip = var.lb_floating_ip
 }
 
