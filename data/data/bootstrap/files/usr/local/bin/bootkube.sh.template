@@ -243,7 +243,6 @@ bootkube_podman_run \
 	--name etcd-signer \
 	--detach \
 	--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
-	--network host \
 	"${KUBE_ETCD_SIGNER_SERVER_IMAGE}" \
 	serve \
 	--cacrt=/opt/openshift/tls/etcd-signer.crt \
@@ -293,7 +292,6 @@ bootkube_podman_run \
 	--rm \
 	--volume "$PWD:/assets:z" \
 	--volume /etc/kubernetes:/etc/kubernetes:z \
-	--network=host \
 	"${CLUSTER_BOOTSTRAP_IMAGE}" \
 	start --tear-down-early=false --asset-dir=/assets --required-pods="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
 
