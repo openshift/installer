@@ -70,15 +70,21 @@ const (
 	directory = "openshift"
 
 	// secretFileName is the format string for constructing the Secret
-	// filenames for baremetal clusters.
-	secretFileName = "99_openshift-cluster-api_host-bmc-secrets-%s.yaml"
+	// filenames for baremetal clusters. Host data refers to the
+	// secrets, so we use a prefix of "90" to ensure the secrets are
+	// installed before the hosts.
+	secretFileName = "90_openshift-cluster-api_host-bmc-secrets-%s.yaml"
 
 	// hostFileName is the format string for constucting the Host
-	// filenames for baremetal clusters.
-	hostFileName = "99_openshift-cluster-api_hosts-%s.yaml"
+	// filenames for baremetal clusters.  Machines are linked to hosts
+	// via the consumerRef, so we use a prefix of "95" to ensure the
+	// hosts are created first to so that when the operator starts
+	// trying to reconcile a machine it can pick up the related host.
+	hostFileName = "95_openshift-cluster-api_hosts-%s.yaml"
 
 	// masterMachineFileName is the format string for constucting the
-	// master Machine filenames.
+	// master Machine filenames. Machines must be created after hosts
+	// and secrets, so use a late prefix "99".
 	masterMachineFileName = "99_openshift-cluster-api_master-machines-%s.yaml"
 
 	// masterUserDataFileName is the filename used for the master
@@ -348,12 +354,7 @@ func (m *Master) Files() []*asset.File {
 		files = append(files, m.UserDataFile)
 	}
 	files = append(files, m.MachineConfigFiles...)
-	// Hosts refer to secrets, so place the secrets before the hosts
-	// to avoid unnecessary reconciliation errors.
 	files = append(files, m.SecretFiles...)
-	// Machines are linked to hosts via the machineRef, so we create
-	// the hosts first to ensure if the operator starts trying to
-	// reconcile a machine it can pick up the related host.
 	files = append(files, m.HostFiles...)
 	files = append(files, m.MachineFiles...)
 	return files
