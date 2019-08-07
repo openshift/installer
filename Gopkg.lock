@@ -497,14 +497,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e1dc7d07ec1dd382dd1e3710d0ff9eec0815375fb5eebb748426413aeeb5b703"
+  digest = "1:bc8ce73a5f7228ab32f6afe2b62b8ac6e1e520bd5d99736d918fec537c53a68a"
   name = "github.com/metal3-io/baremetal-operator"
   packages = [
+    "pkg/apis/metal3/v1alpha1",
     "pkg/bmc",
     "pkg/hardware",
   ]
   pruneopts = "NUT"
-  revision = "0cd412515cf97e2943ca823bc5db630b2ecdc340"
+  revision = "7fa47751bf92fe5efe4d7c3fe4dd75ea980424bc"
   source = "https://github.com/openshift/baremetal-operator"
 
 [[projects]]
@@ -1334,6 +1335,7 @@
     "github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects",
     "github.com/gophercloud/utils/openstack/clientconfig",
     "github.com/libvirt/libvirt-go",
+    "github.com/metal3-io/baremetal-operator/pkg/apis/metal3/v1alpha1",
     "github.com/metal3-io/baremetal-operator/pkg/bmc",
     "github.com/metal3-io/baremetal-operator/pkg/hardware",
     "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis",
