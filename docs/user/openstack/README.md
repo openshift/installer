@@ -15,7 +15,7 @@ The installer will look for a clouds.yaml file in the following locations in ord
 3. unix-specific user config directory (~/.config/openstack/clouds.yaml)
 4. unix-specific site config directory (/etc/openstack/clouds.yaml)
 
-In many openstack distributions, you can get a clouds.yaml file through Horizon. If you cant, then you can make a `clouds.yaml` file yourself, Information on
+In many openstack distributions, you can get a clouds.yaml file through Horizon. If you cant, then you can make a `clouds.yaml` file yourself. Information on
     this file can be found at https://docs.openstack.org/openstacksdk/latest/user/config/configuration.html#config-files
     and it looks like:
 ```
@@ -48,24 +48,33 @@ https://www.terraform.io/docs/providers/openstack/#configuration-reference
 With the latest version of the installer, we recommend the following minimums in order to get a succesful deployment.
 
    * OpenStack Quota
-     * Networking
-       * Floating IPs: 2
-       * Security Groups: 2
-       * Security Group Rules: 44
-       * Routers: 1
-       * Subnets: 1
-     * Compute
-       * RAM: 80 Gb
-       * Instances: 6
-   * Masters:
+     * Floating IPs
+       * Minimum: 2
+       * Recommended: 3
+     * Security Groups
+       * Minimum: 3
+       * Recommended: 8
+     * Security Group Rules
+       * Minimum: 60
+       * Recommended: 100
+     * Routers
+       * Minimum: 1
+     * Subnets
+       * Minimum: 1
+     * RAM
+       * Minimum: 80 Gb
+     * Instances
+       * Minimum: 5
+       * Recommended: 6
+   * Master Nodes
      * 16 Gb RAM each
      * Minimum: 3
      * Default: 3
-   * Workers:
+   * Worker Nodes
      * 8 Gb RAM each
      * Minimum: 2
      * Default: 3
-   * Bootstrap Node:
+   * Bootstrap Node
      * 16 Gb RAM
      * Used to configure nodes during deployment
      * Will be deleted automatically after the cluster bootstrapping phase completes
@@ -81,7 +90,7 @@ Swift must be enabled.  The user must have `swiftoperator` permissions and
 enough to store the ignition config files, so they are served by swift instead.
 
 * You may need to increase the security group related quotas from their default
-  values. For example (as an OpenStack admin) `openstack quota set --secgroups 100 --secgroup-rules 1000 <project>`
+  values. For example (as an OpenStack admin) `openstack quota set --secgroups 8 --secgroup-rules 100 <project>`
 
 ### RHCOS Image
 
@@ -113,37 +122,27 @@ documentation in that repository for further details.
 
 * https://github.com/shiftstack-dev-tools/ocp-doit
 
-## OpenShift API Access
+## API Access
 
-All the OpenShift nodes are created in an OpenStack tenant network and as such, can't be accessed directly. The installer does not create any floating IP addresses.
+All the OpenShift nodes are created in an OpenStack tenant network and as such, can't be accessed directly in most openstack deployments. The installer does not create any floating IP addresses, but does need access to the OpenShift's API as it is being deployed. We will briefly explain how to set up access to the openshift api with and without floating IP addresses.
 
-However, the installer does need access to the OpenShift's API as it is being deployed.
+### Using Floating IPs
 
-There are two ways you can handle this.
+This method allows you to attach two floating IP addresses to endpoints in OpenShift.
 
-### Bring Your Own Cluster IP
-
-We recommend you create a floating IP address ahead of time, add the
-API record to your own DNS and let the installer use that address.
-
-First, create the floating IP:
+First, create a floating IP address for the API:
 
     $ openstack floating ip create <external network>
-
-Note the actual IP address. We will use `10.19.115.117` throughout this
-document.
 
 Next, add the `api.<cluster name>.<cluster domain>` and `*.apps.<cluster
 name>.<cluster domain>` name records pointing to that floating IP to your DNS:
 
-    api.ostest.shiftstack.com IN A 10.19.115.117
-    *.apps.ostest.shiftstack.com  IN  A  10.19.115.117
+    api.example.shiftstack.com IN A <API FIP>
 
 If you don't have a DNS server under your control, you finish the installation
 by adding the following to your `/etc/hosts`:
 
-    10.19.115.117 api.ostest.shiftstack.com
-    10.19.115.117 console-openshift-console.apps.ostest.shiftstack.com
+    <API FIP> api.example.shiftstack.com
 
 **NOTE:** *this will make the API accessible only to you. This is fine for your
 own testing (and it is enough for the installation to succeed), but it is not
@@ -163,29 +162,47 @@ platform:
     cloud:            standalone
     externalNetwork:  public
     region:           regionOne
-    computeFlavor:    m1.medium
-    lbFloatingIP:     "10.19.115.117"
+    computeFlavor:    m1.large
+    lbFloatingIP:     "<API FIP>"
 ```
 
-This will let you do a fully unattended end to end deployment.
+At the time of writing, you will have to create a second floating ip and attach it to the ingress-port if you want to be able to reach *.apps externally.
+This can be done after the install completes in three steps:
 
+Get the ID of the ingress port:
 
-### No Floating IP
+```sh
+openstack port list | grep "ingress-port"
+```
+
+Create and associate a floating IP to the ingress port:
+
+```sh
+openstack floating ip create --port <ingress port id> <external network>
+```
+
+Add A record in your dns for *apps. in your DNS:
+
+```
+*.apps.example.shiftstack.com  IN  A  <ingress FIP>
+```
+OR add A record in `/etc/hosts`:
+
+```
+    <ingress FIP> console-openshift-console.apps.example.shiftstack.com
+```
+
+### Without Floating IPs
 
 If you don't want to pre-create a floating IP address, you will still want to create the API DNS record or the installer will fail waiting for the API.
-
 Without the floating IP, you won't know the right IP address of the server ahead of time, so you will have to wait for it to come up and create the DNS records then:
 
     $ watch openstack server list
 
 Wait for the `<cluster name>-api` server comes up and you can make your changes then.
-
 **WARNING:** The installer will fail if it can't reach the bootstrap OpenShift API in 30 minutes.
-
 Even if the installer times out, the OpenShift cluster should still come up. Once the bootstrapping process is in place, it should all run to completion.
-
 So you should be able to deploy OpenShift without any floating IP addresses and DNS records and create everything yourself after the cluster is up.
-
 
 ## Current Expected Behavior
 
@@ -200,51 +217,6 @@ OpenShift API and as an internal DNS for the instances
 * The OpenShift UI is served at `https://<cluster name>-api.<cluster domain>` (but you need to create that DNS record yourself)
 
 The installer should finish successfully, though it is still undergoing development and things might break from time to time.
-
-### Workarounds
-
-#### External DNS
-
-While deploying the cluster, the installer will hang trying to reach the API as
-the node running the installer cannot resolve the service VM (the cluster
-should still come up successfully within the isolated network).
-
-You can add the service VM floating IP address at the top of your `/etc/resolv.conf`:
-
-```
-$ cat /etc/resolv.conf
-# Generated by NetworkManager
-search example.com
-# OpenShift Service VM DNS:
-nameserver 10.19.115.117
-
-# Your previous DNS servers:
-nameserver 83.240.0.215
-nameserver 83.240.0.136
-```
-
-(the service VM floating IP is `10.19.115.117` in this example)
-
-If you don't want to update your DNS config, you can add a couple of entries in your `/etc/hosts` file instead:
-
-```
-$ cat /etc/hosts
-127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
-::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
-10.19.115.117 <cluster-name>-api.<domain>
-10.19.115.117 console-openshift-console.apps.<cluster-name>.<domain>
-```
-
-If you do expose the cluster, the installer should complete successfully.
-
-It will print the console URL, username and password and you should be able to go there and log in.
-
-```
-INFO Install complete!
-INFO To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=/path/to/installer/auth/kubeconfig'
-INFO Access the OpenShift web-console here: https://console-openshift-console.apps.ostest.shiftstack.com
-INFO Login to the console with user: kubeadmin, password: 5char-5char-5char-5char
-```
 
 ## Using an External Load Balancer
 
