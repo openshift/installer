@@ -26,7 +26,8 @@ image_for() {
     podman run --quiet --rm --net=none "${release}" image "${1}"
 }
 
-MACHINE_CONFIG_OPERATOR_IMAGE=$(image_for machine-config-operator)
+#MACHINE_CONFIG_OPERATOR_IMAGE=$(image_for machine-config-operator)
+MACHINE_CONFIG_OPERATOR_IMAGE="quay.io/dprince/machine-config-operator:fix"
 MACHINE_CONFIG_OSCONTENT=$(image_for machine-os-content)
 MACHINE_CONFIG_ETCD_IMAGE=$(image_for etcd)
 MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(image_for kube-client-agent)
