@@ -82,7 +82,7 @@ func provider(clusterID string, platform *openstack.Platform, mpool *openstack.M
 
 	return &openstackprovider.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "openstackproviderconfig.k8s.io/v1alpha1",
+			APIVersion: openstackprovider.SchemeGroupVersion.String(),
 			Kind:       "OpenstackProviderSpec",
 		},
 		Flavor: mpool.FlavorName,
