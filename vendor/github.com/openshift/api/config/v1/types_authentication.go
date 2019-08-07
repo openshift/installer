@@ -26,6 +26,7 @@ type AuthenticationSpec struct {
 	// type identifies the cluster managed, user facing authentication mode in use.
 	// Specifically, it manages the component that responds to login attempts.
 	// The default is IntegratedOAuth.
+	// +optional
 	Type AuthenticationType `json:"type"`
 
 	// oauthMetadata contains the discovery endpoint data for OAuth 2.0
