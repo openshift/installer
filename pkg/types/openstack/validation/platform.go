@@ -5,11 +5,12 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *openstack.Platform, fldPath *field.Path, fetcher ValidValuesFetcher) field.ErrorList {
+func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field.Path, fetcher ValidValuesFetcher) field.ErrorList {
 	allErrs := field.ErrorList{}
 	validClouds, err := fetcher.GetCloudNames()
 	if err != nil {
@@ -59,6 +60,7 @@ func ValidatePlatform(p *openstack.Platform, fldPath *field.Path, fetcher ValidV
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
+
 	return allErrs
 }
 
