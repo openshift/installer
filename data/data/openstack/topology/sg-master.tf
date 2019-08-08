@@ -3,6 +3,26 @@ resource "openstack_networking_secgroup_v2" "master" {
   tags = ["openshiftClusterID=${var.cluster_id}"]
 }
 
+resource "openstack_networking_secgroup_rule_v2" "master_all_tcp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 1
+  port_range_max    = 65535
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.master.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "master_all_udp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 1
+  port_range_max    = 65535
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.master.id
+}
+
 resource "openstack_networking_secgroup_rule_v2" "master_mcs" {
   direction         = "ingress"
   ethertype         = "IPv4"
