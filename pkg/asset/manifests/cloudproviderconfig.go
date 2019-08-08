@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
+	ospclientconfig "github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
 
 	corev1 "k8s.io/api/core/v1"
@@ -83,7 +84,14 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	case awstypes.Name, libvirttypes.Name, nonetypes.Name, baremetaltypes.Name:
 		return nil
 	case openstacktypes.Name:
-		cm.Data[cloudProviderConfigDataKey] = openstackmanifests.CloudProviderConfig()
+		opts := &ospclientconfig.ClientOpts{}
+		opts.Cloud = installConfig.Config.Platform.OpenStack.Cloud
+		cloud, err := ospclientconfig.GetCloudFromYAML(opts)
+		if err != nil {
+			return errors.Wrap(err, "failed to get cloud config for openstack")
+		}
+
+		cm.Data[cloudProviderConfigDataKey] = openstackmanifests.CloudProviderConfig(cloud)
 	case azuretypes.Name:
 		session, err := icazure.GetSession()
 		if err != nil {

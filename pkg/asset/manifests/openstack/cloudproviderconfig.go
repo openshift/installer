@@ -26,12 +26,17 @@ type global struct {
 }
 
 // CloudProviderConfig generates the cloud provider config for the OpenStack platform.
-func CloudProviderConfig() string {
-	return `[Global]
+func CloudProviderConfig(cloud *clientconfig.Cloud) string {
+	res := `[Global]
 secret-name = openstack-credentials
 secret-namespace = kube-system
 kubeconfig-path = /var/lib/kubelet/kubeconfig
 `
+	if cloud.RegionName != "" {
+		res += "region = " + cloud.RegionName + "\n"
+	}
+
+	return res
 }
 
 // CloudProviderConfigSecret generates the cloud provider config for the OpenStack
