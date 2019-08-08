@@ -584,7 +584,7 @@ func (ConsoleStatus) SwaggerDoc() map[string]string {
 }
 
 var map_DNS = map[string]string{
-	"":         "DNS holds cluster-wide information about DNS.  The canonical name is `cluster`",
+	"":         "DNS holds cluster-wide information about DNS. The canonical name is `cluster`",
 	"metadata": "Standard object's metadata.",
 	"spec":     "spec holds user settable values for configuration",
 	"status":   "status holds observed values from the cluster. They may not be overridden.",
@@ -603,7 +603,7 @@ func (DNSList) SwaggerDoc() map[string]string {
 }
 
 var map_DNSSpec = map[string]string{
-	"baseDomain":  "baseDomain is the base domain of the cluster. All managed DNS records will be sub-domains of this base.\n\nFor example, given the base domain `openshift.example.com`, an API server DNS record may be created for `cluster-api.openshift.example.com`.",
+	"baseDomain":  "baseDomain is the base domain of the cluster. All managed DNS records will be sub-domains of this base.\n\nFor example, given the base domain `openshift.example.com`, an API server DNS record may be created for `cluster-api.openshift.example.com`.\n\nOnce set, this field cannot be changed.",
 	"publicZone":  "publicZone is the location where all the DNS records that are publicly accessible to the internet exist.\n\nIf this field is nil, no public records should be created.\n\nOnce set, this field cannot be changed.",
 	"privateZone": "privateZone is the location where all the DNS records that are only available internally to the cluster exist.\n\nIf this field is nil, no private records should be created.\n\nOnce set, this field cannot be changed.",
 }
@@ -1146,6 +1146,62 @@ func (TokenConfig) SwaggerDoc() map[string]string {
 	return map_TokenConfig
 }
 
+var map_HubSource = map[string]string{
+	"":         "HubSource is used to specify the OperatorSource and its configuration",
+	"name":     "name is the name of one of the default OperatorSources",
+	"disabled": "disabled is used to disable a default OperatorSource on cluster",
+}
+
+func (HubSource) SwaggerDoc() map[string]string {
+	return map_HubSource
+}
+
+var map_HubSourceStatus = map[string]string{
+	"":              "HubSourceStatus is used to reflect the current state of applying the configuration to a default source",
+	"name":          "name is the name of one of the default OperatorSources",
+	"configuration": "configuration is the state of the default OperatorSources configuration",
+	"status":        "status indicates success or failure in applying the configuration",
+	"message":       "message provides more information regarding failures",
+}
+
+func (HubSourceStatus) SwaggerDoc() map[string]string {
+	return map_HubSourceStatus
+}
+
+var map_OperatorHub = map[string]string{
+	"": "OperatorHub is the Schema for the operatorhubs API",
+}
+
+func (OperatorHub) SwaggerDoc() map[string]string {
+	return map_OperatorHub
+}
+
+var map_OperatorHubList = map[string]string{
+	"": "OperatorHubList contains a list of OperatorHub",
+}
+
+func (OperatorHubList) SwaggerDoc() map[string]string {
+	return map_OperatorHubList
+}
+
+var map_OperatorHubSpec = map[string]string{
+	"":           "OperatorHubSpec defines the desired state of OperatorHub",
+	"hubSources": "hubSources is the list of default OperatorSources and their configuration",
+}
+
+func (OperatorHubSpec) SwaggerDoc() map[string]string {
+	return map_OperatorHubSpec
+}
+
+var map_OperatorHubStatus = map[string]string{
+	"":                 "OperatorHubStatus defines the observed state of OperatorHub",
+	"hubSourcesStatus": "hubSourcesStatus encapsulates the result applying the configuration",
+}
+
+func (OperatorHubStatus) SwaggerDoc() map[string]string {
+	return map_OperatorHubStatus
+}
+
 var map_Project = map[string]string{
 	"":         "Project holds cluster-wide information about Project.  The canonical name is `cluster`",
 	"metadata": "Standard object's metadata.",
@@ -1208,7 +1264,7 @@ var map_ProxySpec = map[string]string{
 	"httpsProxy":         "httpsProxy is the URL of the proxy for HTTPS requests.  Empty means unset and will not result in an env var.",
 	"noProxy":            "noProxy is a comma-separated list of hostnames and/or CIDRs for which the proxy should not be used. Empty means unset and will not result in an env var.",
 	"readinessEndpoints": "readinessEndpoints is a list of endpoints used to verify readiness of the proxy.",
-	"trustedCA":          "trustedCA is a reference to a ConfigMap containing a CA certificate bundle used for client egress HTTPS connections. The certificate bundle must be from the CA that signed the proxy's certificate and be signed for everything. trustedCA should only be consumed by a proxy validator. The validator is responsible for reading ConfigMapNameReference, validating the certificate and copying \"ca-bundle.crt\" from data to a ConfigMap in the namespace of an operator configured for proxy. The namespace for this ConfigMap is \"openshift-config-managed\". Here is an example ConfigMap (in yaml):\n\napiVersion: v1 kind: ConfigMap metadata:\n name: proxy-ca\n namespace: openshift-config-managed\n data:\n   ca-bundle.crt: |",
+	"trustedCA":          "trustedCA is a reference to a ConfigMap containing a CA certificate bundle used for client egress HTTPS connections. The certificate bundle must be from the CA that signed the proxy's certificate and be signed for everything. trustedCA should only be consumed by a proxy validator. The validator is responsible for reading ConfigMapNameReference, validating the certificate and copying \"ca-bundle.crt\" from data to a ConfigMap in the namespace of an operator configured for proxy. The namespace for this ConfigMap is \"openshift-config\". Here is an example ConfigMap (in yaml):\n\napiVersion: v1 kind: ConfigMap metadata:\n name: trusted-ca-bundle\n namespace: openshift-config\n data:\n   ca-bundle.crt: |",
 }
 
 func (ProxySpec) SwaggerDoc() map[string]string {
