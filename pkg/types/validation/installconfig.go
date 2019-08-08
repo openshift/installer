@@ -79,7 +79,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
 	}
-	allErrs = append(allErrs, validatePlatform(&c.Platform, field.NewPath("platform"), openStackValidValuesFetcher)...)
+	allErrs = append(allErrs, validatePlatform(&c.Platform, field.NewPath("platform"), openStackValidValuesFetcher, c.Networking)...)
 	if c.ControlPlane != nil {
 		allErrs = append(allErrs, validateControlPlane(&c.Platform, c.ControlPlane, field.NewPath("controlPlane"))...)
 	} else {
@@ -201,7 +201,7 @@ func validateCompute(platform *types.Platform, pools []types.MachinePool, fldPat
 	return allErrs
 }
 
-func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackValidValuesFetcher openstackvalidation.ValidValuesFetcher) field.ErrorList {
+func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackValidValuesFetcher openstackvalidation.ValidValuesFetcher, network *types.Networking) field.ErrorList {
 	allErrs := field.ErrorList{}
 	activePlatform := platform.Name()
 	platforms := make([]string, len(types.PlatformNames))
@@ -240,7 +240,7 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackVa
 	}
 	if platform.BareMetal != nil {
 		validate(baremetal.Name, platform.BareMetal, func(f *field.Path) field.ErrorList {
-			return baremetalvalidation.ValidatePlatform(platform.BareMetal, f)
+			return baremetalvalidation.ValidatePlatform(platform.BareMetal, network, f)
 		})
 	}
 	return allErrs
