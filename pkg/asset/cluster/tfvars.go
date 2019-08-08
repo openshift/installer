@@ -38,7 +38,6 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
-	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/version"
 )
@@ -247,26 +246,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		apiVIP, err := openstackdefaults.APIVIP(installConfig.Config.Networking)
-		if err != nil {
-			return err
-		}
-		dnsVIP, err := openstackdefaults.DNSVIP(installConfig.Config.Networking)
-		if err != nil {
-			return err
-		}
-		ingressVIP, err := openstackdefaults.IngressVIP(installConfig.Config.Networking)
-		if err != nil {
-			return err
-		}
 		data, err = openstacktfvars.TFVars(
 			masters[0].Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec),
 			installConfig.Config.Platform.OpenStack.Region,
 			installConfig.Config.Platform.OpenStack.ExternalNetwork,
 			installConfig.Config.Platform.OpenStack.LbFloatingIP,
-			apiVIP.String(),
-			dnsVIP.String(),
-			ingressVIP.String(),
+			installConfig.Config.Platform.OpenStack.APIVIP,
+			installConfig.Config.Platform.OpenStack.DNSVIP,
+			installConfig.Config.Platform.OpenStack.IngressVIP,
 			installConfig.Config.Platform.OpenStack.TrunkSupport,
 			installConfig.Config.Platform.OpenStack.OctaviaSupport,
 		)
