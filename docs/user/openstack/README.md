@@ -45,39 +45,31 @@ https://www.terraform.io/docs/providers/openstack/#configuration-reference
 
 ### Recommended Minimums
 
-With the latest version of the installer, we recommend the following minimums in order to get a succesful deployment.
+In order to run the latest version of the installer in OpenStack, at a bare minimum you need the following quota to run a *default* cluster. While it is possible to run the cluster with fewer resources than this, it is not recommended. Certian edge cases, such as deploying [without FIPs](#without-floating-ips), or deploying with an [external loadbalancer](#using-an-external-load-balancer) are documented below, and are not included in the scope of this recomendation.
 
    * OpenStack Quota
-     * Floating IPs
-       * Minimum: 2
-       * Recommended: 3
-     * Security Groups
-       * Minimum: 3
-       * Recommended: 8
-     * Security Group Rules
-       * Minimum: 60
-       * Recommended: 100
-     * Routers
-       * Minimum: 1
-     * Subnets
-       * Minimum: 1
-     * RAM
-       * Minimum: 80 Gb
-     * Instances
-       * Minimum: 5
-       * Recommended: 6
-   * Master Nodes
-     * 16 Gb RAM each
-     * Minimum: 3
-     * Default: 3
-   * Worker Nodes
-     * 8 Gb RAM each
-     * Minimum: 2
-     * Default: 3
-   * Bootstrap Node
-     * 16 Gb RAM
-     * Used to configure nodes during deployment
-     * Will be deleted automatically after the cluster bootstrapping phase completes
+     * Floating IPs: 3
+     * Security Groups: 3
+     * Security Group Rules: 60
+     * Routers: 1
+     * Subnets: 1
+     * RAM: 112 Gb
+     * VCPU: 28
+     * Volume Storage: 175 Gb
+     * Instances: 7
+
+#### Master Nodes
+
+The default deployment stands up 3 master nodes, which is the minimum amount required for a cluster. For each master node you stand up, you will need 1 instance, and 1 port available in your quota. They should be assigned a flavor with at least 16 Gb RAM, 4 VCPu, and 25 Gb Disk. It is theoretically possible to run with a smaller flavor, but be aware that if it takes too long to stand up services, or certian essential services crash, the installer could time out, leading to a failed install.
+
+#### Worker Nodes
+
+The default deployment stands up 3 worker nodes. In our testing we determined that 2 was the minimum number of workers you could have to get a succesful install, but we don't recommend running with that few. Worker nodes host the apps you run on OpenShift, so it is in your best interest to have more of them. See [here](https://docs.openshift.com/enterprise/3.0/architecture/infrastructure_components/kubernetes_infrastructure.html#node) for more information. The flavor assigned to the worker nodes should have at least 2 VCPUs, 8 Gb RAM and 25 Gb Disk. However, if you are experiencing `Out Of Memory` issues, or your installs are timing out, you should increase the size of your flavor to match the masters: 4 VCPUs and 16 Gb RAM.
+
+#### Bootstrap Node
+
+The bootstrap node is a temporary node that is responsable for standing up the control plane on the masters. Only one bootstrap node will be stood up. To do so, you need 1 instance, and 1 port. We recommend a flavor with a minimum of 16 Gb RAM, 4 VCPUs, and 25 Gb Disk.
+
 
 ### Swift
 
@@ -93,6 +85,9 @@ enough to store the ignition config files, so they are served by swift instead.
   values. For example (as an OpenStack admin) `openstack quota set --secgroups 8 --secgroup-rules 100 <project>`
 
 ### RHCOS Image
+
+If you do not have a Red Hat Core OS image already, or are looking for the latest,
+ [click here](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/latest/).
 
 The installer requires a proper RHCOS image in the OpenStack cluster or project:
 `openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.qcow2 rhcos`
