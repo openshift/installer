@@ -182,8 +182,9 @@ func isNotFound(err error) bool {
 // aggregateError is a utility function that takes a slice of errors and an
 // optional pending argument, and returns an error or nil
 func aggregateError(errs []error, pending ...int) error {
-	if len(errs) > 0 {
-		return utilerrors.NewAggregate(errs)
+	err := utilerrors.NewAggregate(errs)
+	if err != nil {
+		return err
 	}
 	if len(pending) > 0 && pending[0] > 0 {
 		return errors.Errorf("%d items pending", pending[0])
