@@ -17,7 +17,7 @@ func BootstrapInstanceType(region string) string {
 // D4s v3 gives us 4 CPU's, 16GiB ram and 32GiB of temporary storage
 func ControlPlaneInstanceType(region string) string {
 	instanceClass := getInstanceClass(region)
-	return fmt.Sprintf("%s_D4s_v3", instanceClass)
+	return fmt.Sprintf("%s_D8s_v3", instanceClass)
 }
 
 // ComputeInstanceType sets the defaults for compute instances.
