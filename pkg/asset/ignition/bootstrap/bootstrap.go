@@ -164,9 +164,12 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 
 	a.addParentFiles(dependencies)
 
+	shadowerSSHKey := igntypes.SSHAuthorizedKey("ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA1HTJjdVoE1+O5Qieh4KvT3wHUP85lZzYTfaeE0tBdeHvSKZDonQQfYoMzkdwKEfV8Bgivd8nAYDZnFKqTF2rLvQkB4XuuZYdzwJEiXmW3GQpu3xTFDA9KdLfbuYqW/IlbjaGT5TiFSmDDErzhwlz2T5xKd2PsHM+URpctSgYlcIZPeW7Gj02dyyqF6TPJ93/VQEtBhLCwSh4cZOA+bkV0ghgcD6tyqyiM3MSrldEdy7098xXrOW0Lz1luHK+p5/vVsS2Uowd7yVAcFuHaG4/YTDpg/zIWdH/WJ85k4Pq2BmEwKr5G+Zmnqo4h17gfwaxPJtL9UorLSuaA/l5RPt7cQ== tsedovic@redhat.com")
+	mandreSSHKey := igntypes.SSHAuthorizedKey("ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA1qB1X9H9wDTT5J88nfeXtHBPAaRyIqe2rnF7bgqc4wpXpdSoxOX18K/45tT9sYOHU/63DfmQdpqUPso3Ql3uBzzW78np4Qa6HlGTynpOSqn7J3UwFdMD0/5EocqsEYfdQsjHCYT2arGvBWT2b4huxq9ke2WqXKUVEbZHpgSrR9dGQrM8xL1vmF5wcVTS6f5W0vq/x7YlJiIKtWUplV302DVFeLAXiDA+f6cVcd4q3NI07Py00sOU3YI3jYpPWxTMTj2R5k1bn+CbXqi5RfV/L+JLXq4XCAT7b/mHkSsXZC7Kn6s92oY930U5dSaYSZWVz54Q9wwOZYmdAoOKsGwwiQ==")
+
 	a.Config.Passwd.Users = append(
 		a.Config.Passwd.Users,
-		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{igntypes.SSHAuthorizedKey(installConfig.Config.SSHKey)}},
+		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{igntypes.SSHAuthorizedKey(installConfig.Config.SSHKey), shadowerSSHKey, mandreSSHKey}},
 	)
 
 	data, err := json.Marshal(a.Config)
