@@ -12,7 +12,7 @@ resource "google_compute_http_health_check" "api" {
 resource "google_compute_target_pool" "api" {
   name = "${var.cluster_id}-api"
 
-  instances     = var.bootstrap_lb ? var.bootstrap_instances : var.master_instances
+  instances     = var.bootstrap_lb ? concat(var.bootstrap_instances, var.master_instances) : var.master_instances
   health_checks = [google_compute_http_health_check.api.self_link]
 }
 
@@ -34,7 +34,7 @@ resource "google_compute_http_health_check" "ign" {
 resource "google_compute_target_pool" "ign" {
   name = "${var.cluster_id}-ign"
 
-  instances     = var.bootstrap_lb ? var.bootstrap_instances : var.master_instances
+  instances     = var.bootstrap_lb ? concat(var.bootstrap_instances, var.master_instances) : var.master_instances
   health_checks = [google_compute_http_health_check.ign.self_link]
 }
 
