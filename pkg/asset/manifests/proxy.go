@@ -142,7 +142,9 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 	}
 
 	for _, userValue := range strings.Split(installConfig.Config.Proxy.NoProxy, ",") {
-		set.Insert(userValue)
+		if userValue != "" {
+			set.Insert(userValue)
+		}
 	}
 
 	return strings.Join(set.List(), ","), nil
