@@ -39,7 +39,28 @@ Installer.
 [GCP: Creating a service account key][sa-key]
 
 
+## Step 4: Enable API Services needed by your cluster
+
+You will need to enable the following API services in your project:
+
+- Compute Engine API (`compute.googleapis.com`)
+- Google Cloud APIs (`cloudapis.googleapis.com`)
+- Cloud Resource Manager API (`cloudresourcemanager.googleapis.com`)
+- Google DNS API (`dns.googleapis.com`)
+- Identity and Access Management (IAM) API (`iam.googleapis.com`)
+- IAM Service Account Credentials API (`iamcredentials.googleapis.com`)
+- Service Management API (`servicemanagement.googleapis.com`)
+- Service Usage API (`serviceusage.googleapis.com`)
+- Google Cloud Storage JSON API (`storage-api.googleapis.com`)
+- Cloud Storage (`storage-component.googleapis.com`)
+
+You can enable these services using the console or the CLI (console service names in parentheses)
+
+[GCP: Enable Services][enable-svc]
+
+
 [sa-create]: https://cloud.google.com/iam/docs/creating-managing-service-accounts#creating_a_service_account
 [gcp-roles]: https://cloud.google.com/iam/docs/understanding-roles#predefined_roles
 [sa-assign]: https://cloud.google.com/iam/docs/granting-roles-to-service-accounts#granting_access_to_a_service_account_for_a_resource
 [sa-key]: https://cloud.google.com/iam/docs/creating-managing-service-account-keys#creating_service_account_keys
+[enable-svc]: https://cloud.google.com/service-usage/docs/enable-disable#enabling
