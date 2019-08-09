@@ -84,6 +84,9 @@ then
 	touch cvo-bootstrap.done
 fi
 
+echo "This is going to fail so we can test bootstrap log gathering"
+exit 1
+
 if [ ! -f config-bootstrap.done ]
 then
 	echo "Rendering cluster config manifests..."

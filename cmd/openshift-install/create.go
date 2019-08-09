@@ -238,7 +238,8 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 
 	discovery := client.Discovery()
 
-	apiTimeout := 30 * time.Minute
+	// NOTE(shadower): shorten the timeout so we can see the bootstrap failure more quickly:
+	apiTimeout := 5 * time.Minute
 	logrus.Infof("Waiting up to %v for the Kubernetes API at %s...", apiTimeout, config.Host)
 	apiContext, cancel := context.WithTimeout(ctx, apiTimeout)
 	defer cancel()
