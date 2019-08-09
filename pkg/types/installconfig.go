@@ -30,6 +30,7 @@ var (
 		aws.Name,
 		azure.Name,
 		gcp.Name,
+		openstack.Name,
 	}
 	// HiddenPlatformNames is a slice with all the
 	// hidden-but-supported platform names. This list isn't presented
@@ -37,7 +38,6 @@ var (
 	HiddenPlatformNames = []string{
 		baremetal.Name,
 		none.Name,
-		openstack.Name,
 		vsphere.Name,
 	}
 )
