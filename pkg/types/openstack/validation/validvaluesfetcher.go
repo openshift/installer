@@ -16,4 +16,6 @@ type ValidValuesFetcher interface {
 	GetNetworkExtensionsAliases(cloud string) ([]string, error)
 	// GetServiceCatalog gets the catalog service names
 	GetServiceCatalog(cloud string) ([]string, error)
+	// GetFloatingIPNames gets the floating IPs
+	GetFloatingIPNames(cloud string, floatingNetwork string) ([]string, error)
 }
