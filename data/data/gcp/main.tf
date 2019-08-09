@@ -24,6 +24,9 @@ module "bootstrap" {
   subnet       = module.network.master_subnet
   zone         = var.gcp_master_availability_zones[0]
 
+  root_volume_size = var.gcp_master_root_volume_size
+  root_volume_type = var.gcp_master_root_volume_type
+
   labels = local.labels
 }
 
@@ -38,6 +41,9 @@ module "master" {
   network        = module.network.network
   subnet         = module.network.master_subnet
   zones          = distinct(var.gcp_master_availability_zones)
+
+  root_volume_size = var.gcp_master_root_volume_size
+  root_volume_type = var.gcp_master_root_volume_type
 
   labels = local.labels
 }
