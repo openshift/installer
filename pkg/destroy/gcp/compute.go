@@ -114,8 +114,7 @@ func (o *ClusterUninstaller) deleteInstanceGroup(ig nameAndZone) error {
 func (o *ClusterUninstaller) listComputeInstances() ([]nameAndZone, error) {
 	o.Logger.Debugf("Listing compute instances")
 	result := []nameAndZone{}
-	filter := fmt.Sprintf("(status ne TERMINATED)(%s)", o.clusterIDFilter())
-	req := o.computeSvc.Instances.AggregatedList(o.ProjectID).Filter(filter).Fields("items/*/instances(name,zone,status)")
+	req := o.computeSvc.Instances.AggregatedList(o.ProjectID).Filter(o.clusterIDFilter()).Fields("items/*/instances(name,zone,status)")
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	err := req.Pages(ctx, func(list *compute.InstanceAggregatedList) error {

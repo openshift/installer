@@ -42,7 +42,6 @@ func (o *ClusterUninstaller) deleteServiceAccount(serviceAccount string) error {
 	if err != nil && !isNoOp(err) {
 		return errors.Wrapf(err, "failed to delete service account %s", serviceAccount)
 	}
-	o.Logger.Infof("Deleted service account %s", serviceAccount)
 	return nil
 }
 
@@ -60,7 +59,11 @@ func (o *ClusterUninstaller) destroyServiceAccounts() error {
 			errs = append(errs, err)
 		}
 	}
-	return aggregateError(errs)
+	deletedItems := o.setPendingItems("serviceaccount", serviceAccounts)
+	for _, item := range deletedItems {
+		o.Logger.Infof("Deleted service account %s", item)
+	}
+	return aggregateError(errs, len(serviceAccounts))
 }
 
 func (o *ClusterUninstaller) getProjectIAMPolicy() (*resourcemanager.Policy, error) {
@@ -111,14 +114,14 @@ func (o *ClusterUninstaller) destroyIAMPolicyBindings() error {
 	if err != nil {
 		return err
 	}
-	if !clearIAMPolicyBindings(policy, o.ProjectID, o.Logger) {
-		// If nothing to clear, exit here
+	if !clearIAMPolicyBindings(policy, o.ClusterID, o.Logger) {
+		deletedPolicy := o.setPendingItems("iampolicy", []string{})
+		if len(deletedPolicy) > 0 {
+			o.Logger.Infof("Deleted IAM project role bindings")
+		}
 		return nil
 	}
+	o.setPendingItems("iampolicy", []string{"policy"})
 	err = o.setProjectIAMPolicy(policy)
-	if err != nil {
-		return err
-	}
-	o.Logger.Infof("Cleared IAM project role bindings")
-	return nil
+	return aggregateError([]error{err}, 1)
 }
