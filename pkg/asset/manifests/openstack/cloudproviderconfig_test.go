@@ -62,3 +62,26 @@ region      = my_region
 	assert.NoError(t, err, "failed to create cloud provider config")
 	assert.Equal(t, expectedConfig, string(actualConfig), "unexpected cloud provider config")
 }
+
+func TestCloudProviderConfig(t *testing.T) {
+	cloud := clientconfig.Cloud{
+		AuthInfo: &clientconfig.AuthInfo{
+			Username:   "my_user",
+			Password:   "my_secret_password",
+			AuthURL:    "https://my_auth_url.com/v3/",
+			ProjectID:  "f12f928576ae4d21bdb984da5dd1d3bf",
+			DomainID:   "default",
+			DomainName: "Default",
+		},
+		RegionName: "my_region",
+	}
+
+	expectedConfig := `[Global]
+secret-name = openstack-credentials
+secret-namespace = kube-system
+kubeconfig-path = /var/lib/kubelet/kubeconfig
+region = my_region
+`
+	actualConfig := CloudProviderConfig(&cloud)
+	assert.Equal(t, expectedConfig, string(actualConfig), "unexpected cloud provider config")
+}
