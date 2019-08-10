@@ -1,6 +1,6 @@
-# Install: User Provided Infrastructure (UPI)
+# Install: User-Provided Infrastructure
 
-The steps for performing a UPI-based install are outlined here. Several
+The steps for performing a user-provided infrastructure install are outlined here. Several
 [Deployment Manager][deploymentmanager] templates are provided to assist in
 completing these steps or to help model your own. You are also free to create
 the required resources through other methods; the templates are just an

@@ -1,9 +1,12 @@
 # Cluster Installation
 
-At this point, you are ready to perform the OpenShift installation. See below for an example of an
-IPI install.
+At this point, you are ready to perform the OpenShift installation.
+You have two choices for installing your cluster on GCP, installer-provided infrastructure or user-provided infrastructure.
+See below for an example of an installer-provided infrastructure install.
 
-## Example: Installer-Provided Infrastructure (IPI)
+To see a guided example of a user-provided infrastructure install, please see [Install: User-Provided Infrastructure](install_upi.md)
+
+## Example: Installer-Provided Infrastructure
 
 The steps for performing an IPI-based install are outlined [here][cloud-install]. Following this guide you may begin at
 Step 3: Download the Installer.
