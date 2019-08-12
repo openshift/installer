@@ -9,6 +9,7 @@ FROM registry.svc.ci.openshift.org/origin/4.1:base
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/images/openstack/rdo-stein.repo /etc/yum.repos.d/rdo-stein.repo
 COPY --from=builder /go/src/github.com/openshift/installer/images/openstack/rdo-stein.gpg /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-Cloud
+COPY --from=builder /go/src/github.com/openshift/installer/images/openstack/sudoers_sshuttle /etc/sudoers.d/sshuttle
 COPY --from=registry.svc.ci.openshift.org/origin/4.1:cli /usr/bin/oc /bin/oc
 
 RUN yum install --setopt=tsflags=nodocs -y \
@@ -16,7 +17,8 @@ RUN yum install --setopt=tsflags=nodocs -y \
     yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
     python-openstackclient \
-    sshuttle && \
+    sshuttle \
+    sudo && \
     yum clean all && rm -rf /var/cache/yum/*
 
 RUN mkdir /output && chown 1000:1000 /output
