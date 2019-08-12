@@ -15,7 +15,8 @@ RUN yum install --setopt=tsflags=nodocs -y \
     https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm &&\
     yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
-    python-openstackclient && \
+    python-openstackclient \
+    sshuttle && \
     yum clean all && rm -rf /var/cache/yum/*
 
 RUN mkdir /output && chown 1000:1000 /output
