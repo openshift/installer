@@ -16,10 +16,8 @@ COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/upi /var/lib/openshift-install/upi
 COPY --from=builder /go/src/github.com/openshift/installer/data/data/rhcos.json /var/lib/openshift-install/rhcos.json
 
-## epel-release is required for jq
 ## gettext is required for envsubst
 RUN yum install --setopt=tsflags=nodocs -y \
-    epel-release \
     gettext \
     openssh-clients && \
     yum update -y && \
