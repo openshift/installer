@@ -18,10 +18,10 @@ func (o *ClusterUninstaller) listServiceAccounts() ([]string, error) {
 	result := []string{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.iamSvc.Projects.ServiceAccounts.List(fmt.Sprintf("projects/%s", o.ProjectID)).Fields("accounts(name,displayName)")
+	req := o.iamSvc.Projects.ServiceAccounts.List(fmt.Sprintf("projects/%s", o.ProjectID)).Fields("accounts(name,email)")
 	err := req.Pages(ctx, func(response *iam.ListServiceAccountsResponse) error {
 		for _, account := range response.Accounts {
-			if o.isClusterResource(account.DisplayName) {
+			if o.isClusterResource(account.Email) {
 				o.Logger.Debugf("Found service account %s", account.Name)
 				result = append(result, account.Name)
 			}
