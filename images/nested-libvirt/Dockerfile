@@ -11,7 +11,6 @@ COPY --from=builder /go/src/github.com/openshift/installer/images/nested-libvirt
 COPY --from=builder /go/src/github.com/openshift/installer/images/nested-libvirt/mock-nss.sh /bin/mock-nss.sh
 
 RUN yum install -y \
-    epel-release \
     gettext \
     google-cloud-sdk \
     openssh-clients \
