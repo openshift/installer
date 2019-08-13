@@ -131,7 +131,6 @@ func (o *ClusterUninstaller) Run() error {
 		tagClientNames[tagClient] = "us-east-1"
 	}
 
-	deleted := map[string]struct{}{}
 	iamClient := iam.New(awsSession)
 	iamRoleSearch := &iamRoleSearch{
 		client:  iamClient,
@@ -144,7 +143,7 @@ func (o *ClusterUninstaller) Run() error {
 		logger:  o.Logger,
 	}
 
-	err = terminateEC2InstancesByTags(ec2.New(awsSession), iamClient, o.Filters, o.Logger)
+	deleted, err := terminateEC2InstancesByTags(ec2.New(awsSession), iamClient, o.Filters, o.Logger)
 	if err != nil {
 		return err
 	}
@@ -686,9 +685,13 @@ func terminateEC2InstanceByInstance(ec2Client *ec2.EC2, iamClient *iam.IAM, inst
 
 // terminateEC2InstancesByTags loops until there all instances which
 // match the given tags are terminated.
-func terminateEC2InstancesByTags(ec2Client *ec2.EC2, iamClient *iam.IAM, filters []Filter, logger logrus.FieldLogger) error {
+func terminateEC2InstancesByTags(ec2Client *ec2.EC2, iamClient *iam.IAM, filters []Filter, logger logrus.FieldLogger) (map[string]struct{}, error) {
+	if ec2Client.Config.Region == nil {
+		return nil, errors.New("EC2 client does not have region configured")
+	}
+
 	terminated := map[string]struct{}{}
-	return wait.PollImmediateInfinite(
+	err := wait.PollImmediateInfinite(
 		time.Second*10,
 		func() (done bool, err error) {
 			var loopError error
@@ -706,6 +709,10 @@ func terminateEC2InstancesByTags(ec2Client *ec2.EC2, iamClient *iam.IAM, filters
 					&ec2.DescribeInstancesInput{Filters: instanceFilters},
 					func(results *ec2.DescribeInstancesOutput, lastPage bool) bool {
 						for _, reservation := range results.Reservations {
+							if reservation.OwnerId == nil {
+								continue
+							}
+
 							for _, instance := range reservation.Instances {
 								if instance.InstanceId == nil || instance.State == nil {
 									continue
@@ -713,9 +720,10 @@ func terminateEC2InstancesByTags(ec2Client *ec2.EC2, iamClient *iam.IAM, filters
 
 								instanceLogger := logger.WithField("instance", *instance.InstanceId)
 								if *instance.State.Name == "terminated" {
-									if _, ok := terminated[*instance.InstanceId]; !ok {
+									arn := fmt.Sprintf("arn:aws:ec2:%s:%s:instance/%s", *ec2Client.Config.Region, *reservation.OwnerId, *instance.InstanceId)
+									if _, ok := terminated[arn]; !ok {
 										instanceLogger.Debug("Terminated")
-										terminated[*instance.InstanceId] = exists
+										terminated[arn] = exists
 									}
 									continue
 								}
@@ -744,6 +752,7 @@ func terminateEC2InstancesByTags(ec2Client *ec2.EC2, iamClient *iam.IAM, filters
 			return !matched && loopError == nil, nil
 		},
 	)
+	return terminated, err
 }
 
 // This is a bit of hack. Some objects, like Instance Profiles, can not be tagged in AWS.
