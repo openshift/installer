@@ -1,0 +1,120 @@
+#!/bin/bash
+
+set -ex
+
+# We should switch to openshift builds of these images when ready ref
+# https://github.com/openshift/installer/issues/2090
+IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metal3-io/ironic:master"}
+IRONIC_INSPECTOR_IMAGE=${IRONIC_INSPECTOR_IMAGE:-"quay.io/metal3-io/ironic-inspector:master"}
+IPA_DOWNLOADER_IMAGE=${IPA_DOWNLOADER_IMAGE:-"quay.io/metal3-io/ironic-ipa-downloader:master"}
+COREOS_DOWNLOADER_IMAGE=${COREOS_DOWNLOADER_IMAGE:-"quay.io/openshift-metal3/rhcos-downloader:master"}
+
+# This image is templated in via the installer pkg/asset/ignition/bootstrap/bootstrap.go
+RHCOS_BOOT_IMAGE_URL="{{.BootImage}}"
+
+# First we stop any previously started containers, because ExecStop only runs when the ExecStart process
+# e.g this script is still running, but we exit if *any* of the containers exits unexpectedly
+for name in ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
+    podman ps | grep -w "$name$" && podman kill $name
+    podman ps --all | grep -w "$name$" && podman rm $name -f
+done
+
+# Start the provisioning nic if not already started
+# Note removal of the hard-coded subnet tracked via https://github.com/openshift/installer/issues/2091
+PROVISIONING_NIC=ens4
+if ! nmcli -t device | grep "$PROVISIONING_NIC:ethernet:connected:provisioning"; then
+    nmcli c add type ethernet ifname $PROVISIONING_NIC con-name provisioning ip4 172.22.0.2/24 gw4 172.22.0.1
+    nmcli c up provisioning
+fi
+
+# Wait for the interface to come up
+# This is how the ironic container currently detects IRONIC_IP, this could probably be improved by using
+# nmcli show provisioning there instead, but we need to confirm that works with the static-ip-manager
+while [ -z "$(ip -4 address show dev "$PROVISIONING_NIC" | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -n 1)" ]; do
+    sleep 1
+done
+
+# set password for mariadb
+mariadb_password=$(uuidgen -r  | sed "s/-//g")
+
+IRONIC_SHARED_VOLUME="ironic"
+# Ignore errors here so we reuse any existing volume on pod restart
+# this is helpful if an API service causes restart after the images
+# have been downloaded
+podman volume create $IRONIC_SHARED_VOLUME || true
+
+# Apparently network-online doesn't necessarily mean iptables is ready, so wait until it is..
+while ! iptables -L; do
+  sleep 1
+done
+
+# Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
+for port in 80 5050 6385 ; do
+    if ! sudo iptables -C INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
+        sudo iptables -I INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT
+    fi
+done
+
+# Start dnsmasq, http, mariadb, and ironic containers using same image
+# Currently we do this outside of a pod because we need to ensure the images
+# are downloaded before starting the API pods
+podman run -d --net host --privileged --name mariadb \
+     -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/runmariadb \
+     --env MARIADB_PASSWORD=$mariadb_password ${IRONIC_IMAGE}
+
+podman run -d --net host --privileged --name dnsmasq \
+     --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/rundnsmasq ${IRONIC_IMAGE}
+
+podman run -d --net host --privileged --name httpd \
+     --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
+
+# Set CACHEURL to the default route, so we try to consume any images cached on the host
+# running the VM (dev-scripts configures a cache here), if none is found then the
+# downloader containers just skip and download from the internet location
+CACHEURL="http://$(ip r | grep default | head -n1 | awk '{print $3}')/images"
+podman run -d --net host --name ipa-downloader \
+     --env CACHEURL=${CACHEURL} \
+     -v $IRONIC_SHARED_VOLUME:/shared:z ${IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
+
+podman run -d --net host --name coreos-downloader \
+     --env CACHEURL=${CACHEURL} \
+     -v $IRONIC_SHARED_VOLUME:/shared:z ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_BOOT_IMAGE_URL
+
+# Wait for images to be downloaded/ready
+podman wait -i 1000 ipa-downloader
+podman wait -i 1000 coreos-downloader
+while ! curl --fail http://localhost/images/rhcos-ootpa-latest.qcow2.md5sum ; do sleep 1; done
+while ! curl --fail --head http://localhost/images/ironic-python-agent.initramfs ; do sleep 1; done
+while ! curl --fail --head http://localhost/images/ironic-python-agent.tar.headers ; do sleep 1; done
+while ! curl --fail --head http://localhost/images/ironic-python-agent.kernel ; do sleep 1; done
+
+sudo podman run -d --net host --privileged --name ironic-conductor \
+     --env MARIADB_PASSWORD=$mariadb_password \
+     --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     --env OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120 \
+     --entrypoint /bin/runironic-conductor \
+     -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
+
+# We need a better way to wait for the DB sync to happen..
+sleep 10
+
+podman run -d --net host --privileged --name ironic-inspector \
+     --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     -v $IRONIC_SHARED_VOLUME:/shared:z "${IRONIC_INSPECTOR_IMAGE}"
+
+sudo podman run -d --net host --privileged --name ironic-api \
+     --env MARIADB_PASSWORD=$mariadb_password \
+     --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     --entrypoint /bin/runironic-api \
+     -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
+
+# Now loop so the service remains active and restart everything should one of the containers exit unexpectedly.
+# The alternative would be RemainAfterExit=yes but then we lose the ability to restart if something crashes.
+while true; do
+    for name in ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb; do
+        podman ps | grep -w "$name$" || exit 1
+    done
+    sleep 10
+done

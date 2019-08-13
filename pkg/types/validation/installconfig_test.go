@@ -91,10 +91,10 @@ func validVSpherePlatform() *vsphere.Platform {
 func validBareMetalPlatform() *baremetal.Platform {
 	iface, _ := net.Interfaces()
 	return &baremetal.Platform{
-		LibvirtURI:             "qemu+tcp://192.168.122.1/system",
-		IronicURI:              "https://localhost:6385",
+		LibvirtURI:              "qemu+tcp://192.168.122.1/system",
+		BootstrapProvisioningIP: "127.0.0.1",
+		ClusterProvisioningIP:   "192.168.111.1",
 		Hosts:                  []*baremetal.Host{},
-		Image:                  baremetal.Image{},
 		ExternalBridge:         iface[0].Name,
 		ProvisioningBridge:     iface[0].Name,
 		DefaultMachinePlatform: &baremetal.MachinePool{},

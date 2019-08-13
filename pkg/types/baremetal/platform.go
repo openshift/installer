@@ -16,15 +16,6 @@ type Host struct {
 	HardwareProfile string `json:"hardwareProfile"`
 }
 
-// Image stores details about the locations of various images needed for deployment.
-// FIXME: This should be determined by the installer once Ironic and image downloading occurs in bootstrap VM.
-type Image struct {
-	Source        string `json:"source"`
-	Checksum      string `json:"checksum"`
-	DeployKernel  string `json:"deployKernel"`
-	DeployRamdisk string `json:"deployRamdisk"`
-}
-
 // Platform stores all the global configuration that all machinesets use.
 type Platform struct {
 	// LibvirtURI is the identifier for the libvirtd connection.  It must be
@@ -33,10 +24,17 @@ type Platform struct {
 	// Default is qemu:///system
 	LibvirtURI string `json:"libvirtURI,omitempty"`
 
-	// IronicURI is the identifier for the Ironic connection.  It must be
-	// reachable from the host where the installer is run.
+	// ClusterProvisioningIP is the IP on the dedicated provisioning network
+	// where the baremetal-operator pod runs provisioning services,
+	// and an http server to cache some downloaded content e.g RHCOS/IPA images
 	// +optional
-	IronicURI string `json:"ironicURI,omitempty"`
+	ClusterProvisioningIP string `json:"provisioningHostIP,omitempty"`
+
+	// BootstrapProvisioningIP is the IP used on the bootstrap VM to
+	// bring up provisioning services that are used to create the
+	// control-plane machines
+	// +optional
+	BootstrapProvisioningIP string `json:"bootstrapProvisioningIP,omitempty"`
 
 	// External bridge is used for external communication.
 	// +optional
@@ -48,9 +46,6 @@ type Platform struct {
 
 	// Hosts is the information needed to create the objects in Ironic.
 	Hosts []*Host `json:"hosts"`
-
-	// Images contains the information needed to provision a host
-	Image Image `json:"image"`
 
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on bare metal for machine pools which do not define their own

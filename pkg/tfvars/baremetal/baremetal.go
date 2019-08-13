@@ -3,19 +3,22 @@ package baremetal
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/metal3-io/baremetal-operator/pkg/bmc"
 	"github.com/metal3-io/baremetal-operator/pkg/hardware"
 	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/pkg/errors"
+	"path"
+	"strings"
 )
 
 type config struct {
-	LibvirtURI         string `json:"libvirt_uri,omitempty"`
-	IronicURI          string `json:"ironic_uri,omitempty"`
-	BootstrapOSImage   string `json:"bootstrap_os_image,omitempty"`
-	ExternalBridge     string `json:"external_bridge,omitempty"`
-	ProvisioningBridge string `json:"provisioning_bridge,omitempty"`
+	LibvirtURI              string `json:"libvirt_uri,omitempty"`
+	BootstrapProvisioningIP string `json:"bootstrap_provisioning_ip,omitempty"`
+	BootstrapOSImage        string `json:"bootstrap_os_image,omitempty"`
+	ExternalBridge          string `json:"external_bridge,omitempty"`
+	ProvisioningBridge      string `json:"provisioning_bridge,omitempty"`
 
 	// Data required for control plane deployment - several maps per host, because of terraform's limitations
 	Hosts         []map[string]interface{} `json:"hosts"`
@@ -26,7 +29,7 @@ type config struct {
 }
 
 // TFVars generates bare metal specific Terraform variables.
-func TFVars(libvirtURI, ironicURI, bootstrapOSImage, externalBridge, provisioningBridge string, platformHosts []*baremetal.Host, image baremetal.Image) ([]byte, error) {
+func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridge, provisioningBridge string, platformHosts []*baremetal.Host, image string) ([]byte, error) {
 	bootstrapOSImage, err := libvirttfvars.CachedImage(bootstrapOSImage)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to use cached bootstrap libvirt image")
@@ -55,8 +58,8 @@ func TFVars(libvirtURI, ironicURI, bootstrapOSImage, externalBridge, provisionin
 			Password: host.BMC.Password,
 		}
 		driverInfo := accessDetails.DriverInfo(credentials)
-		driverInfo["deploy_kernel"] = image.DeployKernel
-		driverInfo["deploy_ramdisk"] = image.DeployRamdisk
+		driverInfo["deploy_kernel"] = fmt.Sprintf("http://%s/images/ironic-python-agent.kernel", bootstrapProvisioningIP)
+		driverInfo["deploy_ramdisk"] = fmt.Sprintf("http://%s/images/ironic-python-agent.initramfs", bootstrapProvisioningIP)
 
 		// Host Details
 		hostMap := map[string]interface{}{
@@ -80,10 +83,16 @@ func TFVars(libvirtURI, ironicURI, bootstrapOSImage, externalBridge, provisionin
 		}
 
 		// Instance Info
+		// The rhcos-downloader container downloads the image, compresses it to speed up deployments
+		// and then makes it available on bootstrapProvisioningIP via http
+		imageFilename := path.Base(image)
+		compressedImageFilename := strings.Replace(imageFilename, "openstack", "compressed", 1)
+		cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", bootstrapProvisioningIP, imageFilename, compressedImageFilename)
+		cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
 		instanceInfo := map[string]interface{}{
 			"root_gb":        25, // FIXME(stbenjam): Needed until https://storyboard.openstack.org/#!/story/2005165
-			"image_source":   image.Source,
-			"image_checksum": image.Checksum,
+			"image_source":   cacheImageURL,
+			"image_checksum": cacheChecksumURL,
 		}
 
 		hosts = append(hosts, hostMap)
@@ -94,16 +103,16 @@ func TFVars(libvirtURI, ironicURI, bootstrapOSImage, externalBridge, provisionin
 	}
 
 	cfg := &config{
-		LibvirtURI:         libvirtURI,
-		IronicURI:          ironicURI,
-		BootstrapOSImage:   bootstrapOSImage,
-		ExternalBridge:     externalBridge,
-		ProvisioningBridge: provisioningBridge,
-		Hosts:              hosts,
-		Properties:         properties,
-		DriverInfos:        driverInfos,
-		RootDevices:        rootDevices,
-		InstanceInfos:      instanceInfos,
+		LibvirtURI:              libvirtURI,
+		BootstrapProvisioningIP: bootstrapProvisioningIP,
+		BootstrapOSImage:        bootstrapOSImage,
+		ExternalBridge:          externalBridge,
+		ProvisioningBridge:      provisioningBridge,
+		Hosts:                   hosts,
+		Properties:              properties,
+		DriverInfos:             driverInfos,
+		RootDevices:             rootDevices,
+		InstanceInfos:           instanceInfos,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

@@ -1,0 +1,16 @@
+[Unit]
+Description=Baremetal Deployment Ironic Services
+Wants=network-online.target crio.service
+After=network-online.target crio.service
+
+[Service]
+Type=exec
+ExecStart=/usr/local/bin/startironic.sh
+ExecStop=/usr/local/bin/stopironic.sh
+
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

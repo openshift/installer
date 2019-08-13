@@ -15,18 +15,6 @@ deployments, see [install_upi.md](install_upi.md).
 
 ## Prerequisites
 
-### Ironic
-
-Currently, the `baremetal` platform requires an existing Ironic environment.
-This will eventually be handled by `openshift-install`, with Ironic being
-deployed onto the bootstrap node. Until then, users of the `baremetal` platform
-should use the
-[openshift-metal3/dev-scripts](https://github.com/openshift-metal3/dev-scripts)
-repository to handle configuration of Ironic.
-
-The following PR contains the WIP changes for automating Ironic from
-`openshift-install`: https://github.com/openshift-metal3/kni-installer/pull/100
-
 ### Network Requirements
 
 It is assumed that all hosts have at least 2 NICs, used for the following
@@ -111,8 +99,6 @@ platform should be considered experimental and still subject to change without
 backwards compatibility.  In particular, some items likely to change soon
 include:
 
-* The `image` section will get completely removed.
-
 * The `hardwareProfile` is currently exposed as a way to allow specifying
   different hardware parameters for deployment.  By default, we will deploy
   RHCOS to the first disk, but that may not be appropriate for all hardware.
@@ -174,11 +160,6 @@ platform:
           password: password
         bootMACAddress: 00:11:07:4e:f6:71
         hardwareProfile: default
-    image:
-      source: "http://172.22.0.1/images/rhcos-ootpa-latest.qcow2"
-      checksum: 2b3b1e19e18627d89da400b63430d5bb
-      deployKernel: http://172.22.0.1/images/ironic-python-agent.kernel
-      deployRamdisk: http://172.22.0.1/images/ironic-python-agent.initramfs
 pullSecret: ...
 sshKey: ...
 ```
@@ -227,3 +208,18 @@ When an installation fails, `openshift-install` will attempt to gather debug
 information from hosts.  This is not yet supported by the `baremetal` platform.
 
 https://github.com/openshift-metal3/kni-installer/issues/79
+
+### Provisioning subnet not fully configurable
+
+There are some install-config parameters to control templating of the provisioning
+network configuration, but fully supporting alternative subnets for the
+provisioning network is incomplete.
+
+https://github.com/openshift/installer/issues/2091
+
+### Ironic services are using upstream images
+
+We need to move to downstream openshift images for the Ironic containers that are
+started on the boostrap VM
+
+https://github.com/openshift/installer/issues/2090

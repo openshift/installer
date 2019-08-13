@@ -481,7 +481,7 @@
   version = "v2.0.5"
 
 [[projects]]
-  digest = "1:c1024fa089f6cf75ea25d2a6d10bb001643e8464d710fa4d8205f8edfa8454bb"
+  digest = "1:ce9cf77f57551c62d4af395cc26c4aaac7a4b901cd8ccff5981b4867ae7c68b8"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
@@ -489,6 +489,7 @@
     "openstack",
     "openstack/baremetal/noauth",
     "openstack/baremetal/v1/allocations",
+    "openstack/baremetal/v1/drivers",
     "openstack/baremetal/v1/nodes",
     "openstack/baremetal/v1/ports",
     "openstack/baremetalintrospection/noauth",
@@ -788,15 +789,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:25ec929333575de2487c7107a4452f41d2a06ad165014d0b610de92541cfcf98"
+  digest = "1:80b145e3cfe196d8f4de68afd2632aab3cc1feb93571c0998d01e5e1ab244c52"
   name = "github.com/openshift-metal3/terraform-provider-ironic"
-  packages = [
-    ".",
-    "ironic",
-  ]
+  packages = ["ironic"]
   pruneopts = "NUT"
-  revision = "392753730a1dbbcc1ae580905e40590c196a13f9"
-  version = "v0.1.5"
+  revision = "c8fa7040d10d6cd0abdf6084687723517712abb1"
+  version = "v0.1.6"
 
 [[projects]]
   branch = "master"
@@ -1187,7 +1185,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/dmacvicar/terraform-provider-libvirt/libvirt",
-    "github.com/openshift-metal3/terraform-provider-ironic",
     "github.com/openshift-metal3/terraform-provider-ironic/ironic",
     "github.com/terraform-providers/terraform-provider-aws/aws",
     "github.com/terraform-providers/terraform-provider-azurerm/azurerm",
