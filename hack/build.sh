@@ -42,10 +42,6 @@ case "${MODE}" in
 release)
 	LDFLAGS="${LDFLAGS} -s -w"
 	TAGS="${TAGS} release"
-	if test -n "${RELEASE_IMAGE}"
-	then
-		LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/asset/ignition/bootstrap.defaultReleaseImageOriginal=${RELEASE_IMAGE}"
-	fi
 	if test "${SKIP_GENERATION}" != y
 	then
 		go generate ./data
