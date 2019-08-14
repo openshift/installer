@@ -997,6 +997,35 @@ func deleteEC2Subnet(client *ec2.EC2, id string, logger logrus.FieldLogger) erro
 	return nil
 }
 
+func deleteEC2SubnetsByVPC(client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
+	// FIXME: port to DescribeSubnetsPages once we bump our vendored AWS package past v1.19.30
+	results, err := client.DescribeSubnets(
+		&ec2.DescribeSubnetsInput{
+			Filters: []*ec2.Filter{
+				{
+					Name:   aws.String("vpc-id"),
+					Values: []*string{&vpc},
+				},
+			},
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, subnet := range results.Subnets {
+		err := deleteEC2Subnet(client, *subnet.SubnetId, logger.WithField("subnet", *subnet.SubnetId))
+		if err != nil {
+			err = errors.Wrapf(err, "deleting EC2 subnet %s", *subnet.SubnetId)
+			if failFast {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func deleteEC2Volume(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
 	_, err := client.DeleteVolume(&ec2.DeleteVolumeInput{
 		VolumeId: aws.String(id),
@@ -1029,6 +1058,7 @@ func deleteEC2VPC(ec2Client *ec2.EC2, elbClient *elb.ELB, elbv2Client *elbv2.ELB
 		deleteEC2NATGatewaysByVPC,      // not always tagged
 		deleteEC2NetworkInterfaceByVPC, // not always tagged
 		deleteEC2RouteTablesByVPC,      // not always tagged
+		deleteEC2SubnetsByVPC,          // not always tagged
 		deleteEC2VPCEndpointsByVPC,     // not taggable
 	} {
 		err := helper(ec2Client, id, true, logger)
