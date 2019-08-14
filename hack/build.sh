@@ -2,6 +2,8 @@
 
 set -ex
 
+export GO111MODULE=off
+
 # shellcheck disable=SC2068
 version() { IFS="."; printf "%03d%03d%03d\\n" $@; unset IFS;}
 
