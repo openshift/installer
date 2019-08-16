@@ -69,7 +69,7 @@ func (s *Scheduler) Generate(dependencies asset.Parents) error {
 		//   2. A UPI deployment.  The deployment may add compute hosts, but to ensure the
 		//      the highest probability of a successful deployment, we default to
 		//      schedulable masters.
-		logrus.Warningf("Making control-plane schedulable by setting MastersSchedulabe to true for Scheduler cluster settings")
+		logrus.Warningf("Making control-plane schedulable by setting MastersSchedulable to true for Scheduler cluster settings")
 		config.Spec.MastersSchedulable = true
 	}
 
