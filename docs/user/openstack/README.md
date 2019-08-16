@@ -5,6 +5,30 @@ Support for launching clusters on OpenStack is **experimental**.
 This document discusses the requirements, current expected behavior, and how to
 try out what exists so far.
 
+In addition, it covers the installation with the default CNI (OpenShiftSDN),
+as well as with the Kuryr SDN
+
+## Kuryr SDN
+
+Kuryr is a CNI plug-in that uses Neutron and Octavia to provide networking
+for pods and services. It is primarily designed for OpenShift clusters that
+run on OpenStack virtual machines. Kuryr improves the network performance by
+plugging OCP pods into OpenStack SDN. In addition, it provides
+interconnectivity between OCP pods and OpenStack virtual instances.
+
+Kuryr is recommended for OpenShift Container Platform deployments on
+encapsulated OpenStack tenant networks in order to avoid double encapsulation,
+such as running an encapsulated OpenShift SDN over an OpenStack network.
+
+Conversely, using Kuryr does not make sense in the following cases:
+
+   * You use provider networks or tenant VLANs.
+   * The deployment will use many services on a few hypervisors. Each
+   OpenShift service creates an Octavia Amphora virtual machine in OpenStack
+   that hosts a required load balancer.
+   * UDP services are needed.
+
+
 ## Openstack Credentials
 
 There are two ways to pass your credentials to the installer, with a clouds.yaml file or with environment variables. You can also use a combination of the two, but be aware that clouds.yaml file has precident over the environment variables you set.
@@ -58,6 +82,26 @@ In order to run the latest version of the installer in OpenStack, at a bare mini
      * Volume Storage: 175 Gb
      * Instances: 7
 
+### Recommended Minimums with Kuryr SDN
+
+When using Kuryr SDN, as the pods, services, namespaces, network policies, etc.,
+are using resources from the OpenStack Quota, the minimum requirements are
+higher:
+
+   * OpenStack Quota
+     * Floating IPs: 3 (plus the expected number of services of LoadBalancer
+       type)
+     * Security Groups: 100 (1 needed per network policy)
+     * Security Group Rules: 500
+     * Routers: 1
+     * Subnets: 100 (1 needed per namespace)
+     * Networks: 100 (1 needed per namespace)
+     * Ports: 500
+     * RAM: 112 Gb
+     * VCPU: 28
+     * Volume Storage: 175 Gb
+     * Instances: 7
+
 #### Master Nodes
 
 The default deployment stands up 3 master nodes, which is the minimum amount required for a cluster. For each master node you stand up, you will need 1 instance, and 1 port available in your quota. They should be assigned a flavor with at least 16 Gb RAM, 4 VCPu, and 25 Gb Disk. It is theoretically possible to run with a smaller flavor, but be aware that if it takes too long to stand up services, or certian essential services crash, the installer could time out, leading to a failed install.
@@ -95,7 +139,9 @@ The installer requires a proper RHCOS image in the OpenStack cluster or project:
 **NOTE:** Depending on your OpenStack environment you can upload the RHCOS image
 as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/image-formats.html) for more information. The installer looks for an image named rhcos. This could be overridden via the `OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE` environment variable if for instance your cloud operator provides the image under a different name.
 
-* The public network should be created by the OSP admin. Verify the name/ID of the 'External' network:
+### Neutron Public Network
+
+The public network should be created by the OSP admin. Verify the name/ID of the 'External' network:
 ```
 openstack network list --long -c ID -c Name -c "Router Type"
 +--------------------------------------+----------------+-------------+
@@ -106,6 +152,40 @@ openstack network list --long -c ID -c Name -c "Router Type"
 ```
 
 **NOTE:** If the `neutron` `trunk` service plugin is enabled, trunk port will be created by default. for more information, please refer to [neutron trunk port](https://wiki.openstack.org/wiki/Neutron/TrunkPort).
+
+### Extra requirements when enabling Kuryr SDN
+
+
+#### Increase Quota
+
+As highlighted in the minimum quota recommendations, when using Kuryr SDN, there
+is a need for increasing the quotas as pods, services, namespaces, network
+policies are using OpenStack resources. So, as an admin, the next
+quotas should be increased for the selected project:
+
+```
+openstack quota set --secgroups 100 --secgroup-rules 500 --ports 500 --subnets 100 --networks 100 <project>
+```
+
+#### Neutron Configuration
+
+Kuryr CNI makes use of the Neutron Trunks extension to plug containers into the
+OpenStack SDN, so the `trunks` extension must be enabled for Kuryr to properly
+work.
+
+In addition, if the default ML2/OVS Neutron driver is used, the firewall must be
+set to `openvswitch` instead of `ovs_hybrid` so that security groups are
+enforced on trunk subports and Kuryr can properly handle Network Policies.
+
+#### Octavia
+
+Kuryr SDN uses Octavia OpenStack LBaaS to implement OpenShift services.
+Thus the OpenStack enviroment must have Octavia components installled and
+configured if Kuryr SDN is used.
+
+**NOTE:** Depending on your OpenStack environment Octavia may not support UDP
+listeners, which means there is no support for UDP services if kuryr SDN is
+used.
 
 ### Isolated Development
 
@@ -198,6 +278,53 @@ Wait for the `<cluster name>-api` server comes up and you can make your changes 
 **WARNING:** The installer will fail if it can't reach the bootstrap OpenShift API in 30 minutes.
 Even if the installer times out, the OpenShift cluster should still come up. Once the bootstrapping process is in place, it should all run to completion.
 So you should be able to deploy OpenShift without any floating IP addresses and DNS records and create everything yourself after the cluster is up.
+
+## Installing with Kuryr SDN
+
+To deploy with Kuryr SDN instead of the default OpenShift SDN, you simply need
+to modify the `install-config.yaml` file to include `Kuryr` as the desired
+`networking.networkType` and proceed with the same steps as with the default
+OpenShift SDN:
+
+```yaml
+apiVersion: v1
+...
+networking:
+  networkType: Kuryr
+  ...
+platform:
+  openstack:
+    ...
+    trunkSupport: true
+    octaviaSupport: true
+    ...
+```
+
+
+**NOTE:** both trunkSupport and octaviaSupport are automatically discovered
+by the installer, so there is no need to set them. But if your env don't meet
+both requirements Kuryr SDN will not properly work, as trunks are needed to
+connect the pods to the OpenStack network and Octavia to create the OpenShift
+services.
+
+### Known limitations of installing with Kuryr SDN
+
+There are known limitations when using Kuryr SDN:
+
+   * There is an amphora load balancer VM being deployed per OpenShift svc
+   with the default Octavia load balancer driver (amphora driver). If the
+   environment is resource constrained it could be a problem to create a large
+   amount of services.
+   * Depending on the Octavia OpenStack version, UDP listeners are not
+   supported. This means that OpenShift UDP services are not supported.
+   * There is a known limitation of Octavia not supporting listeners on UDP
+   and TCP on the same port. Thus services expose the same port for UDP and TCP
+   are not supported -- only the TCP listener will be created.
+   * Due to the above UDP limitations of Octavia, Kuryr is forcing pods to
+   use TCP for DNS resolution (`use-vc` option at `resolv.conf`). This may be a
+   problem for pods running go applications compiled with `CGO_DEBUG` flag
+   disabled as that forces to use the `go` resolver that is only using UDP and
+   is not considering the `use-vc` option added by kuryr to the `resolv.conf`.
 
 ## Current Expected Behavior
 
