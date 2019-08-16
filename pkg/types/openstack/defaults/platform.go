@@ -23,6 +23,10 @@ func SetPlatformDefaults(p *openstack.Platform) {
 			p.Cloud = DefaultCloudName
 		}
 	}
+
+	if p.BaseImage == "" {
+		p.BaseImage = "rhcos"
+	}
 }
 
 // APIVIP returns the internal virtual IP address (VIP) put in front

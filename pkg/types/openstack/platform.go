@@ -28,6 +28,10 @@ type Platform struct {
 	// Existing Floating IP to associate with the OpenStack load balancer.
 	LbFloatingIP string `json:"lbFloatingIP"`
 
+	// BaseImage
+	// Name of the Red Hat CoreOS image in Glance.
+	BaseImage string `json:"baseImage"`
+
 	// TrunkSupport
 	// Whether OpenStack ports can be trunked
 	TrunkSupport string `json:"trunkSupport"`
