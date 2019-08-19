@@ -1,13 +1,12 @@
 #!/bin/bash
-
 set -ex
 
-# We should switch to openshift builds of these images when ready ref
-# https://github.com/openshift/installer/issues/2090
-IRONIC_IMAGE=${IRONIC_IMAGE:-"quay.io/metal3-io/ironic:master"}
-IRONIC_INSPECTOR_IMAGE=${IRONIC_INSPECTOR_IMAGE:-"quay.io/metal3-io/ironic-inspector:master"}
-IPA_DOWNLOADER_IMAGE=${IPA_DOWNLOADER_IMAGE:-"quay.io/metal3-io/ironic-ipa-downloader:master"}
-COREOS_DOWNLOADER_IMAGE=${COREOS_DOWNLOADER_IMAGE:-"quay.io/openshift-metal3/rhcos-downloader:master"}
+. /usr/local/bin/release-image.sh
+
+IRONIC_IMAGE=$(image_for ironic)
+IRONIC_INSPECTOR_IMAGE=$(image_for ironic-inspector)
+IPA_DOWNLOADER_IMAGE=$(image_for ironic-ipa-downloader)
+COREOS_DOWNLOADER_IMAGE=$(image_for ironic-rhcos-downloader)
 
 # This image is templated in via the installer pkg/asset/ignition/bootstrap/bootstrap.go
 RHCOS_BOOT_IMAGE_URL="{{.BootImage}}"
@@ -87,7 +86,6 @@ podman wait -i 1000 ipa-downloader
 podman wait -i 1000 coreos-downloader
 while ! curl --fail http://localhost/images/rhcos-ootpa-latest.qcow2.md5sum ; do sleep 1; done
 while ! curl --fail --head http://localhost/images/ironic-python-agent.initramfs ; do sleep 1; done
-while ! curl --fail --head http://localhost/images/ironic-python-agent.tar.headers ; do sleep 1; done
 while ! curl --fail --head http://localhost/images/ironic-python-agent.kernel ; do sleep 1; done
 
 sudo podman run -d --net host --privileged --name ironic-conductor \
