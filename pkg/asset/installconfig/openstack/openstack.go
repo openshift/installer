@@ -98,6 +98,33 @@ func Platform() (*openstack.Platform, error) {
 		return nil, err
 	}
 
+	floatingIPNames, err := validValuesFetcher.GetFloatingIPNames(cloud, extNet)
+	if err != nil {
+		return nil, err
+	}
+	sort.Strings(floatingIPNames)
+	var lbFloatingIP string
+	err = survey.Ask([]*survey.Question{
+		{
+			Prompt: &survey.Select{
+				Message: "APIFloatingIPAddress",
+				Help:    "The Floating IP address used for external access to the OpenShift API.",
+				Options: floatingIPNames,
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				value := ans.(string)
+				i := sort.SearchStrings(floatingIPNames, value)
+				if i == len(floatingIPNames) || floatingIPNames[i] != value {
+					return errors.Errorf("invalid floating IP %q, should be one of %+v", value, strings.Join(floatingIPNames, ", "))
+				}
+				return nil
+			}),
+		},
+	}, &lbFloatingIP)
+	if err != nil {
+		return nil, err
+	}
+
 	flavorNames, err := validValuesFetcher.GetFlavorNames(cloud)
 	if err != nil {
 		return nil, err
@@ -156,6 +183,7 @@ func Platform() (*openstack.Platform, error) {
 		Cloud:           cloud,
 		ExternalNetwork: extNet,
 		FlavorName:      flavor,
+		LbFloatingIP:    lbFloatingIP,
 		TrunkSupport:    trunkSupport,
 		OctaviaSupport:  octaviaSupport,
 	}, nil

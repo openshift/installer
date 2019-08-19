@@ -73,7 +73,7 @@ podman run -d --net host --privileged --name httpd \
 # Set CACHEURL to the default route, so we try to consume any images cached on the host
 # running the VM (dev-scripts configures a cache here), if none is found then the
 # downloader containers just skip and download from the internet location
-CACHEURL="http://$(ip r | grep $PROVISIONING_NIC | head -n1 | awk '{print $3}')/images"
+CACHEURL="http://$(ip r | grep $PROVISIONING_NIC | awk '/default/ {print $3};')/images"
 podman run -d --net host --name ipa-downloader \
      --env CACHEURL=${CACHEURL} \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
