@@ -121,3 +121,18 @@ func (mr *MockValidValuesFetcherMockRecorder) GetServiceCatalog(cloud interface{
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceCatalog", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetServiceCatalog), cloud)
 }
+
+// GetFloatingIPNames mocks base method
+func (m *MockValidValuesFetcher) GetFloatingIPNames(cloud, floatingNetwork string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFloatingIPNames", cloud, floatingNetwork)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFloatingIPNames indicates an expected call of GetFloatingIPNames
+func (mr *MockValidValuesFetcherMockRecorder) GetFloatingIPNames(cloud, floatingNetwork interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFloatingIPNames", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetFloatingIPNames), cloud, floatingNetwork)
+}
