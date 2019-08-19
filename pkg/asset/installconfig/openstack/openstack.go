@@ -108,7 +108,7 @@ func Platform() (*openstack.Platform, error) {
 		{
 			Prompt: &survey.Select{
 				Message: "FlavorName",
-				Help:    "The OpenStack compute flavor to use for servers. A flavor with at least 4 GB RAM is recommended.",
+				Help:    "The OpenStack flavor to use for control-plane and compute nodes. A flavor with at least 16 GB RAM is recommended.",
 				Options: flavorNames,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
