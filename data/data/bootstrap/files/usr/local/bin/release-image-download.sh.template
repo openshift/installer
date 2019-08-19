@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Download the release image. This script is executed as a oneshot
+# service by systemd, because we cannot make use of Requires and a
+# simple service: https://github.com/systemd/systemd/issues/1312.
+#
+# This script continues trying to download the release image until
+# successful because we cannot use Restart=on-failure with a oneshot
+# service: https://github.com/systemd/systemd/issues/2582.
+#
+
+RELEASE_IMAGE={{.ReleaseImage}}
+
+echo "Pulling $RELEASE_IMAGE..."
+while ! podman pull --quiet "$RELEASE_IMAGE"
+do
+    echo "Pull failed. Retrying $RELEASE_IMAGE..."
+done

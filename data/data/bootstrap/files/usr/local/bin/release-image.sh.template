@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# This library provides an `image_for` helper function which can get the
+# pull spec for a specific image in a release.
+
+# Convert the release image pull spec to an "absolute" form if a digest is available
+if ! RELEASE_IMAGE_DIGEST=$( podman inspect {{.ReleaseImage}} --format '{{"{{"}} index .RepoDigests 0 {{"}}"}}' ) || [[ -z "${RELEASE_IMAGE_DIGEST}" ]]; then
+	echo "Warning: Could not resolve release image to pull by digest" 2>&1
+	RELEASE_IMAGE_DIGEST="{{.ReleaseImage}}"
+fi
+
+image_for() {
+    podman run --quiet --rm --net=none "${RELEASE_IMAGE_DIGEST}" image "${1}"
+}
