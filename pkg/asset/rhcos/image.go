@@ -80,7 +80,7 @@ func osImage(config *types.InstallConfig) (string, error) {
 	case openstack.Name:
 		osimage = "rhcos"
 	case azure.Name:
-		osimage, err = rhcos.VHD(ctx)
+		osimage = "https://rhcoshorcruxes.blob.core.windows.net/imagebucket/rhcos-42devel.80.20190820.0.vhd"
 	case baremetal.Name:
 		// Note that baremetal IPI currently uses the OpenStack image
 		// because this contains the necessary ironic config drive
