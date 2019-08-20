@@ -257,6 +257,8 @@ bootkube_podman_run \
 	--servkey=/opt/openshift/tls/kube-apiserver-lb-server.key \
 	--servcrt=/opt/openshift/tls/kube-apiserver-internal-lb-server.crt \
 	--servkey=/opt/openshift/tls/kube-apiserver-internal-lb-server.key \
+	--servcrt=/opt/openshift/tls/kube-apiserver-localhost-server.crt \
+	--servkey=/opt/openshift/tls/kube-apiserver-localhost-server.key \
 	--address=0.0.0.0:6443 \
 	--insecure-health-check-address=0.0.0.0:6080 \
 	--csrdir=/tmp \
