@@ -6,10 +6,11 @@ import (
 
 var (
 	defaultMachineClass = map[string]string{
-		"eu-north-1":    "m5",
-		"eu-west-3":     "m5",
-		"us-gov-east-1": "m5",
-		"us-west-2":     "m5",
+		"eu-north-1":     "m5",
+		"ap-northeast-2": "m5",
+		"eu-west-3":      "m5",
+		"us-gov-east-1":  "m5",
+		"us-west-2":      "m5",
 	}
 )
 
