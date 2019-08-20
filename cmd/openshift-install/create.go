@@ -97,9 +97,9 @@ var (
 				err = waitForBootstrapComplete(ctx, config, rootOpts.dir)
 				if err != nil {
 					if err2 := runGatherBootstrapCmd(rootOpts.dir); err2 != nil {
-						logrus.Error(err2)
+						logrus.Error("Attempted to gather debug logs after installation failure: ", err2)
 					}
-					logrus.Fatal(err)
+					logrus.Fatal("Bootstrap failed to complete: ", err)
 				}
 
 				logrus.Info("Destroying the bootstrap resources...")
