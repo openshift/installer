@@ -348,7 +348,7 @@ func resourceNodeV1Update(d *schema.ResourceData, meta interface{}) error {
 				},
 			}
 
-			if _, err := nodes.Update(client, d.Id(), opts).Extract(); err != nil {
+			if _, err := UpdateNode(client, d.Id(), opts); err != nil {
 				return err
 			}
 		}
@@ -400,7 +400,7 @@ func resourceNodeV1Update(d *schema.ResourceData, meta interface{}) error {
 				Value: properties,
 			},
 		}
-		if _, err := nodes.Update(client, d.Id(), opts).Extract(); err != nil {
+		if _, err := UpdateNode(client, d.Id(), opts); err != nil {
 			return err
 		}
 	}
@@ -457,6 +457,23 @@ func schemaToCreateOpts(d *schema.ResourceData) *nodes.CreateOpts {
 	}
 }
 
+// UpdateNode wraps gophercloud's update function, so we are able to retry on 409 when Ironic is busy.
+func UpdateNode(client *gophercloud.ServiceClient, uuid string, opts nodes.UpdateOpts) (node *nodes.Node, err error) {
+	interval := 5 * time.Second
+	for retries := 0; retries < 5; retries++ {
+		node, err = nodes.Update(client, uuid, opts).Extract()
+		if _, ok := err.(gophercloud.ErrDefault409); ok {
+			log.Printf("[DEBUG] Failed to update node: ironic is busy, will try again in %s", interval.String())
+			time.Sleep(interval)
+			interval *= 2
+		} else {
+			return
+		}
+	}
+
+	return
+}
+
 // Call Ironic's API and change the power state of the node
 func changePowerState(client *gophercloud.ServiceClient, d *schema.ResourceData, target nodes.TargetPowerState) error {
 	opts := nodes.PowerStateOpts{
@@ -470,8 +487,16 @@ func changePowerState(client *gophercloud.ServiceClient, d *schema.ResourceData,
 		timeout = 300 // used below for how long to wait for Ironic to finish
 	}
 
-	if err := nodes.ChangePowerState(client, d.Id(), opts).ExtractErr(); err != nil {
-		return err
+	interval := 5 * time.Second
+	for retries := 0; retries < 5; retries++ {
+		err := nodes.ChangePowerState(client, d.Id(), opts).ExtractErr()
+		if _, ok := err.(gophercloud.ErrDefault409); ok {
+			log.Printf("[DEBUG] Failed to change power state: ironic is busy, will try again in %s", interval.String())
+			time.Sleep(interval)
+			interval *= 2
+		} else {
+			break
+		}
 	}
 
 	// Wait for target_power_state to be empty, i.e. Ironic thinks it's finished

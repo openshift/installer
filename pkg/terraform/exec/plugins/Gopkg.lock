@@ -789,12 +789,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:80b145e3cfe196d8f4de68afd2632aab3cc1feb93571c0998d01e5e1ab244c52"
+  digest = "1:eba01da9d7286b80ecfb6b6ea6299b57f7a74ada8c94534e35eb9573816cfefc"
   name = "github.com/openshift-metal3/terraform-provider-ironic"
   packages = ["ironic"]
   pruneopts = "NUT"
-  revision = "c8fa7040d10d6cd0abdf6084687723517712abb1"
-  version = "v0.1.6"
+  revision = "c68a8212f13053ab7b45f66f7c6deded348bcd23"
+  version = "v0.1.7"
 
 [[projects]]
   branch = "master"

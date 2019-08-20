@@ -70,13 +70,13 @@ func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 	// Set instance info
 	instanceInfo := d.Get("instance_info").(map[string]interface{})
 	if instanceInfo != nil {
-		_, err := nodes.Update(client, d.Get("node_uuid").(string), nodes.UpdateOpts{
+		_, err := UpdateNode(client, d.Get("node_uuid").(string), nodes.UpdateOpts{
 			nodes.UpdateOperation{
 				Op:    nodes.AddOp,
 				Path:  "/instance_info",
 				Value: instanceInfo,
 			},
-		}).Extract()
+		})
 		if err != nil {
 			return fmt.Errorf("could not update instance info: %s", err)
 		}
