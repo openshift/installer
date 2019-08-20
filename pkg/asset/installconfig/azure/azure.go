@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
 
 	"github.com/openshift/installer/pkg/types/azure"
@@ -25,6 +26,12 @@ const (
 func Platform() (*azure.Platform, error) {
 	regions, err := getRegions()
 	if err != nil {
+		if dErr, ok := err.(autorest.DetailedError); ok {
+			if dErr.StatusCode == 401 {
+				return nil, errors.Wrapf(err, "auth failed whilst getting a list of regions, please check %s", getAuthFilePath())
+			}
+		}
+
 		return nil, errors.Wrap(err, "failed to get list of regions")
 	}
 	longRegions := make([]string, 0, len(regions))

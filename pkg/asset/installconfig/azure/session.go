@@ -35,11 +35,15 @@ type Credentials struct {
 // GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
 // and, if no creds are found, asks for them and stores them on disk in a config file
 func GetSession() (*Session, error) {
+	return newSessionFromFile(getAuthFilePath())
+}
+
+func getAuthFilePath() string {
 	authFile := defaultAuthFilePath
 	if f := os.Getenv(azureAuthEnv); len(f) > 0 {
 		authFile = f
 	}
-	return newSessionFromFile(authFile)
+	return authFile
 }
 
 func newSessionFromFile(authFilePath string) (*Session, error) {
