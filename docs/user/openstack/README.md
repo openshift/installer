@@ -41,7 +41,7 @@ When using Kuryr SDN, as the pods, services, namespaces, network policies, etc.,
 * Routers: 1
 * Subnets: 100 (1 needed per namespace)
 * Networks: 100 (1 needed per namespace)
-* Ports: 500
+* Ports: 1000
 * RAM: 112 GB
 * vCPUs: 28
 * Volume Storage: 175 GB
@@ -153,7 +153,7 @@ In addition, if the default ML2/OVS Neutron driver is used, the firewall must be
 
 ### Octavia
 
-Kuryr SDN uses Octavia OpenStack LBaaS to implement OpenShift services. Thus the OpenStack environment must have Octavia components installed and configured if Kuryr SDN is used.
+Kuryr SDN uses OpenStack Octavia LBaaS to implement OpenShift services. Thus the OpenStack environment must have Octavia components installed and configured if Kuryr SDN is used.
 
 **NOTE:** Depending on your OpenStack environment Octavia may not support UDP listeners, which means there is no support for UDP services if Kuryr SDN is used.
 
@@ -268,8 +268,8 @@ There are known limitations when using Kuryr SDN:
 
 * There is an amphora load balancer VM being deployed per OpenShift service with the default Octavia load balancer driver (amphora driver). If the environment is resource constrained it could be a problem to create a large amount of services.
 * Depending on the Octavia version, UDP listeners are not supported. This means that OpenShift UDP services are not supported.
-* There is a known limitation of Octavia not supporting listeners on UDP and TCP on the same port. Thus services expose the same port for UDP and TCP are not supported -- only the TCP listener will be created.
-* Due to the above UDP limitations of Octavia, Kuryr is forcing pods to use TCP for DNS resolution (`use-vc` option at `resolv.conf`). This may be a problem for pods running Go applications compiled with `CGO_DEBUG` flag disabled as that forces to use the `go` resolver that is only using UDP and is not considering the `use-vc` option added by Kuryr to the `resolv.conf`.
+* There is a known limitation of Octavia not supporting listeners on different protocols (e.g., UDP and TCP) on the same port. Thus services exposing the same port for different protocols are not supported.
+* Due to the above UDP limitations of Octavia, Kuryr is forcing pods to use TCP for DNS resolution (`use-vc` option at `resolv.conf`). This may be a problem for pods running Go applications compiled with `CGO_DEBUG` flag disabled as that forces to use the `go` resolver that is only using UDP and is not considering the `use-vc` option added by Kuryr to the `resolv.conf`. This is a problem also for musl-based containers as it's resolver does not support `use-vc` option. This would include e.g., images build from `alpine`.
 
 ## Running The Installer
 
