@@ -10,7 +10,7 @@ func (o *ClusterUninstaller) listStorageBuckets() ([]string, error) {
 	o.Logger.Debug("Listing storage buckets")
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.storageSvc.Buckets.List(o.ProjectID).Fields("items(name)").Prefix(o.ClusterID + "-")
+	req := o.storageSvc.Buckets.List(o.ProjectID).Fields("items(name),nextPageToken").Prefix(o.ClusterID + "-")
 	result := []string{}
 	err := req.Pages(ctx, func(buckets *storage.Buckets) error {
 		for _, bucket := range buckets.Items {
@@ -30,7 +30,7 @@ func (o *ClusterUninstaller) listBucketObjects(bucket string) ([]string, error) 
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	result := []string{}
-	req := o.storageSvc.Objects.List(bucket).Fields("items(name)")
+	req := o.storageSvc.Objects.List(bucket).Fields("items(name),nextPageToken")
 	err := req.Pages(ctx, func(objects *storage.Objects) error {
 		for _, object := range objects.Items {
 			o.Logger.Debugf("Found storage object %s/%s", bucket, object.Name)

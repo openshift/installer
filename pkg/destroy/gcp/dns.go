@@ -20,7 +20,7 @@ func (o *ClusterUninstaller) listDNSZones() (private *dnsZone, public []dnsZone,
 	o.Logger.Debugf("Listing DNS Zones")
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.dnsSvc.ManagedZones.List(o.ProjectID).Fields("managedZones(name,dnsName,visibility)")
+	req := o.dnsSvc.ManagedZones.List(o.ProjectID).Fields("managedZones(name,dnsName,visibility),nextPageToken")
 	err = req.Pages(ctx, func(response *dns.ManagedZonesListResponse) error {
 		for _, zone := range response.ManagedZones {
 			switch zone.Visibility {
