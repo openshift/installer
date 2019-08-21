@@ -42,6 +42,8 @@ func (workflow *provisionStateWorkflow) run() error {
 	log.Printf("[INFO] Beginning provisioning workflow, will try to change node to state '%s'", workflow.target)
 
 	for {
+		log.Printf("[DEBUG] Node is in state '%s'", workflow.node.ProvisionState)
+
 		done, err := workflow.next()
 		if done || err != nil {
 			return err
@@ -60,7 +62,7 @@ func (workflow *provisionStateWorkflow) next() (done bool, err error) {
 		return true, err
 	}
 
-	log.Printf("[DEBUG] Node current state is '%s'", workflow.node.ProvisionState)
+	log.Printf("[DEBUG] Node current state is '%s', target is %s", workflow.node.ProvisionState, workflow.target)
 
 	switch target := nodes.TargetProvisionState(workflow.target); target {
 	case nodes.TargetManage:
@@ -285,7 +287,19 @@ func (workflow *provisionStateWorkflow) changeProvisionState(target nodes.Target
 		return true, err
 	}
 
-	return false, nodes.ChangeProvisionState(workflow.client, workflow.uuid, *opts).ExtractErr()
+	interval := 5 * time.Second
+	for retries := 0; retries < 5; retries++ {
+		err = nodes.ChangeProvisionState(workflow.client, workflow.uuid, *opts).ExtractErr()
+		if _, ok := err.(gophercloud.ErrDefault409); ok {
+			log.Printf("[DEBUG] Failed to change provision state: ironic is busy, will retry in %s.", interval.String())
+			time.Sleep(interval)
+			interval *= 2
+		} else {
+			break
+		}
+	}
+
+	return false, err
 }
 
 // Call Ironic's API and reload the node's current state
