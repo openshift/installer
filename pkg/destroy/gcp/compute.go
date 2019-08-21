@@ -50,7 +50,7 @@ func (o *ClusterUninstaller) listInstanceGroupsWithFilter(filter string) ([]name
 	result := []nameAndZone{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.InstanceGroups.AggregatedList(o.ProjectID).Fields("items/*/instanceGroups(name,zone)").Filter(filter)
+	req := o.computeSvc.InstanceGroups.AggregatedList(o.ProjectID).Fields("items/*/instanceGroups(name,zone),nextPageToken").Filter(filter)
 	err := req.Pages(ctx, func(list *compute.InstanceGroupAggregatedList) error {
 		for _, scopedList := range list.Items {
 			for _, ig := range scopedList.InstanceGroups {
@@ -75,7 +75,7 @@ func (o *ClusterUninstaller) listInstanceGroupInstances(ig nameAndZone) ([]nameA
 	result := []nameAndZone{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.InstanceGroups.ListInstances(o.ProjectID, ig.zone, ig.name, &compute.InstanceGroupsListInstancesRequest{}).Fields("items(instance)")
+	req := o.computeSvc.InstanceGroups.ListInstances(o.ProjectID, ig.zone, ig.name, &compute.InstanceGroupsListInstancesRequest{}).Fields("items(instance),nextPageToken")
 	err := req.Pages(ctx, func(list *compute.InstanceGroupsListInstances) error {
 		for _, item := range list.Items {
 			name, zone := o.getInstanceNameAndZone(item.Instance)
@@ -114,7 +114,7 @@ func (o *ClusterUninstaller) deleteInstanceGroup(ig nameAndZone) error {
 func (o *ClusterUninstaller) listComputeInstances() ([]nameAndZone, error) {
 	o.Logger.Debugf("Listing compute instances")
 	result := []nameAndZone{}
-	req := o.computeSvc.Instances.AggregatedList(o.ProjectID).Filter(o.clusterIDFilter()).Fields("items/*/instances(name,zone,status)")
+	req := o.computeSvc.Instances.AggregatedList(o.ProjectID).Filter(o.clusterIDFilter()).Fields("items/*/instances(name,zone,status),nextPageToken")
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	err := req.Pages(ctx, func(list *compute.InstanceAggregatedList) error {
@@ -180,7 +180,7 @@ func (o *ClusterUninstaller) listImages() ([]string, error) {
 	result := []string{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.Images.List(o.ProjectID).Fields("items(name)").Filter(o.clusterIDFilter())
+	req := o.computeSvc.Images.List(o.ProjectID).Fields("items(name),nextPageToken").Filter(o.clusterIDFilter())
 	err := req.Pages(ctx, func(imageList *compute.ImageList) error {
 		for _, image := range imageList.Items {
 			result = append(result, image.Name)
@@ -238,7 +238,7 @@ func (o *ClusterUninstaller) listDisks() ([]nameAndZone, error) {
 	result := []nameAndZone{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.Disks.AggregatedList(o.ProjectID).Fields("items/*/disks(name,zone)").Filter(o.clusterIDFilter())
+	req := o.computeSvc.Disks.AggregatedList(o.ProjectID).Fields("items/*/disks(name,zone),nextPageToken").Filter(o.clusterIDFilter())
 	err := req.Pages(ctx, func(aggregatedList *compute.DiskAggregatedList) error {
 		for _, scopedList := range aggregatedList.Items {
 			for _, disk := range scopedList.Disks {

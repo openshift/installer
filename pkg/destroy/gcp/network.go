@@ -25,7 +25,7 @@ func (o *ClusterUninstaller) listFirewalls() ([]string, error) {
 	result := []string{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.Firewalls.List(o.ProjectID).Fields("items(name)").Filter(o.clusterIDFilter())
+	req := o.computeSvc.Firewalls.List(o.ProjectID).Fields("items(name),nextPageToken").Filter(o.clusterIDFilter())
 	err := req.Pages(ctx, func(list *compute.FirewallList) error {
 		for _, firewall := range list.Items {
 			o.Logger.Debugf("Found firewall rule: %s", firewall.Name)
@@ -86,7 +86,7 @@ func (o *ClusterUninstaller) listAddresses() ([]string, error) {
 	result := []string{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.Addresses.List(o.ProjectID, o.Region).Fields("items(name)").Filter(o.clusterIDFilter())
+	req := o.computeSvc.Addresses.List(o.ProjectID, o.Region).Fields("items(name),nextPageToken").Filter(o.clusterIDFilter())
 	err := req.Pages(ctx, func(list *compute.AddressList) error {
 		for _, address := range list.Items {
 			o.Logger.Debugf("Found address: %s", address.Name)
@@ -147,7 +147,7 @@ func (o *ClusterUninstaller) listForwardingRules() ([]string, error) {
 	result := []string{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.ForwardingRules.List(o.ProjectID, o.Region).Fields("items(name)").Filter(o.clusterIDFilter())
+	req := o.computeSvc.ForwardingRules.List(o.ProjectID, o.Region).Fields("items(name),nextPageToken").Filter(o.clusterIDFilter())
 	err := req.Pages(ctx, func(list *compute.ForwardingRuleList) error {
 		for _, forwardingRule := range list.Items {
 			o.Logger.Debugf("Found forwarding rule: %s", forwardingRule.Name)
@@ -279,7 +279,7 @@ func (o *ClusterUninstaller) listHealthChecks() ([]string, error) {
 	result := []string{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.HealthChecks.List(o.ProjectID).Fields("items(name)").Filter(o.clusterIDFilter())
+	req := o.computeSvc.HealthChecks.List(o.ProjectID).Fields("items(name),nextPageToken").Filter(o.clusterIDFilter())
 	err := req.Pages(ctx, func(list *compute.HealthCheckList) error {
 		for _, healthCheck := range list.Items {
 			o.Logger.Debugf("Found health check: %s", healthCheck.Name)
@@ -340,7 +340,7 @@ func (o *ClusterUninstaller) listHTTPHealthChecks() ([]string, error) {
 	result := []string{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.HttpHealthChecks.List(o.ProjectID).Fields("items(name)").Filter(o.clusterIDFilter())
+	req := o.computeSvc.HttpHealthChecks.List(o.ProjectID).Fields("items(name),nextPageToken").Filter(o.clusterIDFilter())
 	err := req.Pages(ctx, func(list *compute.HttpHealthCheckList) error {
 		for _, healthCheck := range list.Items {
 			o.Logger.Debugf("Found HTTP health check: %s", healthCheck.Name)
@@ -503,7 +503,7 @@ func (o *ClusterUninstaller) listSubNetworks() ([]string, error) {
 	result := []string{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.Subnetworks.List(o.ProjectID, o.Region).Fields("items(name)").Filter(o.clusterIDFilter())
+	req := o.computeSvc.Subnetworks.List(o.ProjectID, o.Region).Fields("items(name),nextPageToken").Filter(o.clusterIDFilter())
 	err := req.Pages(ctx, func(list *compute.SubnetworkList) error {
 		for _, subNetwork := range list.Items {
 			o.Logger.Debugf("Found subnetwork: %s", subNetwork.Name)
@@ -561,7 +561,7 @@ func (o *ClusterUninstaller) listNetworks() ([]nameAndURL, error) {
 	result := []nameAndURL{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.Networks.List(o.ProjectID).Fields("items(name,selfLink)").Filter(o.clusterIDFilter())
+	req := o.computeSvc.Networks.List(o.ProjectID).Fields("items(name,selfLink),nextPageToken").Filter(o.clusterIDFilter())
 	err := req.Pages(ctx, func(list *compute.NetworkList) error {
 		for _, network := range list.Items {
 			o.Logger.Debugf("Found network: %s", network.Name)
@@ -644,7 +644,7 @@ func (o *ClusterUninstaller) listRoutesWithFilter(filter string) ([]string, erro
 	result := []string{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.Routes.List(o.ProjectID).Fields("items(name)").Filter(filter)
+	req := o.computeSvc.Routes.List(o.ProjectID).Fields("items(name),nextPageToken").Filter(filter)
 	err := req.Pages(ctx, func(list *compute.RouteList) error {
 		for _, route := range list.Items {
 			o.Logger.Debugf("Found route: %s", route.Name)
@@ -702,7 +702,7 @@ func (o *ClusterUninstaller) listRouters() ([]string, error) {
 	result := []string{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.Routers.List(o.ProjectID, o.Region).Fields("items(name)").Filter(o.clusterIDFilter())
+	req := o.computeSvc.Routers.List(o.ProjectID, o.Region).Fields("items(name),nextPageToken").Filter(o.clusterIDFilter())
 	err := req.Pages(ctx, func(list *compute.RouterList) error {
 		for _, router := range list.Items {
 			o.Logger.Debugf("Found router: %s", router.Name)
