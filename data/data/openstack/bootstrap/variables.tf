@@ -23,7 +23,30 @@ variable "flavor_name" {
   description = "The Nova flavor for the bootstrap node."
 }
 
-variable "bootstrap_port_id" {
-  type        = string
-  description = "The subnet ID for the bootstrap node."
+variable "api_int_ip" {
+  type = string
+}
+
+variable "node_dns_ip" {
+  type = string
+}
+
+variable "external_network" {
+  type = string
+}
+
+variable "private_network_id" {
+  type = string
+}
+
+variable "master_sg_id" {
+  type = string
+}
+
+variable "nodes_subnet_id" {
+  type = string
+}
+
+variable "cluster_domain" {
+  type = string
 }
