@@ -3,6 +3,7 @@
 The following options are available when using Azure:
 
 - `machines.platform.azure.type` - the VM instance type
+- `machines.platform.azure.osDisk.diskSizeGB` - The Azure OS disk size in Gigabytes
 - `platform.azure.region` - the Azure region (location) that the installer will use when creating resource group and resources
 - `platform.azure.baseDomainResourceGroupName` - the Azure Resource Group that has the public DNS zone for base domain
 
@@ -18,12 +19,16 @@ controlPlane:
   platform:
     azure:
       type: Standard_DS4_v2
+      osDisk:
+        diskSizeGB: 512
   replicas: 3
 compute:
 - name: worker
   platform:
     azure:
       type: Standard_DS4_v2
+      osDisk:
+        diskSizeGB: 512
   replicas: 5
 metadata:
   name: test-cluster
