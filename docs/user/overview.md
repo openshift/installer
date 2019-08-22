@@ -36,8 +36,6 @@ The OpenShift Installer operates on the notion of creating and destroying target
 The following targets can be created by the installer:
 
 - `install-config` - The install config contains the main parameters for the installation process. This configuration provides the user with more options than the interactive prompts and comes pre-populated with default values.
-- `manifest-templates` - These are the unrendered Kubernetes manifest templates that feed the `manifests` target.
-    This target is [unstable](versioning.md).
 - `manifests` - This target outputs all of the Kubernetes manifests that will be installed on the cluster.
     This target is [unstable](versioning.md).
 - `ignition-configs` - These are the three Ignition Configs for the bootstrap, master, and worker machines.

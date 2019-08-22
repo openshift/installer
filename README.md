@@ -3,6 +3,7 @@
 ## Supported Platforms
 
 * [AWS](docs/user/aws/README.md)
+* [Azure](docs/user/azure/README.md)
 * [Bare Metal (UPI)](docs/user/metal/install_upi.md)
 * [Bare Metal (IPI) (Experimental)](docs/user/metal/install_ipi.md)
 * [Libvirt with KVM](docs/dev/libvirt/README.md) (development only)

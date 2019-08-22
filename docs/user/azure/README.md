@@ -5,8 +5,10 @@ This document is a guide for preparing a new Azure account for use with OpenShif
 Follow along with the steps and links below to configure your Azure account and provision an OpenShift cluster:
 
 1. [DNS Zone](dnszone.md)
-2. [Credentials](credentials.md)
-3. [Cluster Installation](install.md)
+2. [Limits](limits.md)
+3. [Account](account.md)
+4. [Credentials](credentials.md)
+5. [Cluster Installation](install.md)
 
 ## Reporting Issues
 
