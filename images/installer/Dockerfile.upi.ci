@@ -18,7 +18,8 @@ COPY --from=builder /go/src/github.com/openshift/installer/data/data/rhcos.json 
 
 RUN yum install --setopt=tsflags=nodocs -y \
     gettext \
-    openssh-clients && \
+    openssh-clients \
+    openssl && \
     yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
     unzip gzip jq util-linux && \
