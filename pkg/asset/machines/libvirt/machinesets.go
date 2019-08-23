@@ -23,15 +23,14 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		return nil, fmt.Errorf("non-Libvirt machine-pool: %q", poolPlatform)
 	}
 	platform := config.Platform.Libvirt
-	// FIXME: libvirt actuator does not support any options from machinepool.
-	// mpool := pool.Platform.Libvirt
+	mpool := pool.Platform.Libvirt
 
 	total := int64(0)
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
 
-	provider := provider(clusterID, config.Networking.MachineCIDR.String(), platform, userDataSecret)
+	provider := provider(clusterID, config.Networking.MachineCIDR.String(), platform, mpool, userDataSecret)
 	name := fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, 0)
 	mset := &machineapi.MachineSet{
 		TypeMeta: metav1.TypeMeta{

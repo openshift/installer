@@ -22,12 +22,13 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		return nil, fmt.Errorf("non-Libvirt machine-pool: %q", poolPlatform)
 	}
 	platform := config.Platform.Libvirt
+	mpool := pool.Platform.Libvirt
 
 	total := int64(1)
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider := provider(clusterID, config.Networking.MachineCIDR.String(), platform, userDataSecret)
+	provider := provider(clusterID, config.Networking.MachineCIDR.String(), platform, mpool, userDataSecret)
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		machine := machineapi.Machine{
@@ -57,14 +58,14 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID string, networkInterfaceAddress string, platform *libvirt.Platform, userDataSecret string) *libvirtprovider.LibvirtMachineProviderConfig {
+func provider(clusterID string, networkInterfaceAddress string, platform *libvirt.Platform, mpool *libvirt.MachinePool, userDataSecret string) *libvirtprovider.LibvirtMachineProviderConfig {
 	return &libvirtprovider.LibvirtMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "libvirtproviderconfig.openshift.io/v1beta1",
 			Kind:       "LibvirtMachineProviderConfig",
 		},
-		DomainMemory: 6144,
-		DomainVcpu:   4,
+		DomainMemory: mpool.DomainMemoryMiB,
+		DomainVcpu:   mpool.DomainVcpuCount,
 		Ignition: &libvirtprovider.Ignition{
 			UserDataSecret: userDataSecret,
 		},

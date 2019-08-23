@@ -72,7 +72,12 @@ func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
 }
 
 func defaultLibvirtMachinePoolPlatform() libvirttypes.MachinePool {
-	return libvirttypes.MachinePool{}
+	return libvirttypes.MachinePool{
+		// legacy defaults up until 605fa00f7 included, preserved
+		// for backward compatibility.
+		DomainMemoryMiB: 6144,
+		DomainVcpuCount: 4,
+	}
 }
 
 func defaultAzureMachinePoolPlatform() azuretypes.MachinePool {
