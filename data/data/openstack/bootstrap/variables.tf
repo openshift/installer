@@ -3,23 +3,30 @@ variable "image_name" {
   description = "The name of the Glance image for the bootstrap node."
 }
 
-variable "swift_container" {
-  type        = string
-  description = "The Swift container name for bootstrap ignition file."
+variable "extra_tags" {
+  type    = map(string)
+  default = {}
+
+  description = <<EOF
+(optional) Extra tags to be applied to created resources.
+
+Example: `{ "key" = "value", "foo" = "bar" }`
+EOF
+
 }
 
 variable "cluster_id" {
-  type        = string
+  type = string
   description = "The identifier for the cluster."
 }
 
 variable "ignition" {
-  type        = string
+  type = string
   description = "The content of the bootstrap ignition file."
 }
 
 variable "flavor_name" {
-  type        = string
+  type = string
   description = "The Nova flavor for the bootstrap node."
 }
 
