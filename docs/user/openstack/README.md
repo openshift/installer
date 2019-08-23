@@ -1,51 +1,54 @@
 # OpenStack Platform Support
 
 This document discusses the requirements, current expected behavior, and how to try out what exists so far.
-
 In addition, it covers the installation with the default CNI (OpenShiftSDN), as well as with the Kuryr SDN.
 
-## Kuryr SDN
+## Table of Contents
 
-Kuryr is a CNI plug-in that uses Neutron and Octavia to provide networking for pods and services. It is primarily designed for OpenShift clusters that run on OpenStack virtual machines. Kuryr improves the network performance by plugging
-OpenShift pods into OpenStack SDN. In addition, it provides interconnectivity between OpenShift pods and OpenStack virtual instances.
+- [OpenStack Platform Support](#openstack-platform-support)
+  - [Table of Contents](#table-of-contents)
+  - [Reference Documents](#reference-documents)
+  - [OpenStack Requirements](#openstack-requirements)
+    - [Master Nodes](#master-nodes)
+    - [Worker Nodes](#worker-nodes)
+    - [Bootstrap Node](#bootstrap-node)
+    - [Swift](#swift)
+    - [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-rhcos)
+    - [Neutron Public Network](#neutron-public-network)
+  - [OpenStack Credentials](#openstack-credentials)
+  - [Standalone Single-Node Development Environment](#standalone-single-node-development-environment)
+  - [Running The Installer](#running-the-installer)
+    - [Initial Setup](#initial-setup)
+    - [API Access](#api-access)
+      - [Using Floating IPs](#using-floating-ips)
+      - [Without Floating IPs](#without-floating-ips)
+    - [Running a Deployment](#running-a-deployment)
+    - [Current Expected Behavior](#current-expected-behavior)
+    - [Checking Cluster Status](#checking-cluster-status)
+    - [Destroying The Cluster](#destroying-the-cluster)
+  - [Using an External Load Balancer](#using-an-external-load-balancer)
+  - [Reporting Issues](#reporting-issues)
 
-Kuryr is recommended for OpenShift deployments on encapsulated OpenStack tenant networks in order to avoid double encapsulation, such as running an encapsulated OpenShift SDN over an OpenStack network.
+## Reference Documents
 
-Conversely, using Kuryr does not make sense in the following cases:
-
-* You use provider networks or tenant VLANs.
-* The deployment will use many services on a few hypervisors. Each OpenShift service creates an Octavia Amphora virtual machine in OpenStack that hosts a required load balancer.
-* UDP services are needed.
+- [Using the OSP 4 installer with Kuryr](kuryr.md)
+- [Troubleshooting your cluster](troubleshooting.md)
+- [Customizing your install](customization.md)
+- [Learn about the OpenShift on OpenStack networking infrastructure design](../../design/openstack/networking-infrastructure.md)
 
 ## OpenStack Requirements
 
 In order to run the latest version of the installer in OpenStack, at a bare minimum you need the following quota to run a *default* cluster. While it is possible to run the cluster with fewer resources than this, it is not recommended. Certain cases, such as deploying [without FIPs](#without-floating-ips), or deploying with an [external load balancer](#using-an-external-load-balancer) are documented below, and are not included in the scope of this recommendation. **NOTE: The installer has been tested and developed on Red Hat OSP 13.**
 
-* Floating IPs: 2
-* Security Groups: 3
-* Security Group Rules: 60
-* Routers: 1
-* Subnets: 1
-* RAM: 112 GB
-* vCPUs: 28
-* Volume Storage: 175 GB
-* Instances: 7
-
-### Recommended Minimums with Kuryr SDN
-
-When using Kuryr SDN, as the pods, services, namespaces, network policies, etc., are using resources from the OpenStack Quota, the minimum requirements are higher:
-
-* Floating IPs: 3 (plus the expected number of services of LoadBalancer type)
-* Security Groups: 100 (1 needed per network policy)
-* Security Group Rules: 500
-* Routers: 1
-* Subnets: 100 (1 needed per namespace)
-* Networks: 100 (1 needed per namespace)
-* Ports: 1000
-* RAM: 112 GB
-* vCPUs: 28
-* Volume Storage: 175 GB
-* Instances: 7
+- Floating IPs: 2
+- Security Groups: 3
+- Security Group Rules: 60
+- Routers: 1
+- Subnets: 1
+- RAM: 112 GB
+- vCPUs: 28
+- Volume Storage: 175 GB
+- Instances: 7
 
 ### Master Nodes
 
@@ -59,9 +62,9 @@ The default deployment stands up 3 worker nodes. In our testing we determined th
 
 The bootstrap node is a temporary node that is responsible for standing up the control plane on the masters. Only one bootstrap node will be stood up and it will be deprovisioned once the production control plane is ready. To do so, you need 1 instance, and 1 port. We recommend a flavor with a minimum of 16 GB RAM, 4 vCPUs, and 25 GB Disk.
 
-## Swift
+### Swift
 
-Swift must be enabled.  The user must have `swiftoperator` permissions and `temp-url` support must be enabled. As an OpenStack administrator:
+Swift must be enabled. The user must have `swiftoperator` permissions and `temp-url` support must be enabled. As an OpenStack administrator:
 
 ```sh
 openstack role add --user <user> --project <project> swiftoperator
@@ -70,11 +73,36 @@ openstack object store account set --property Temp-URL-Key=superkey
 
 **NOTE:** Swift is required as the user-data provided by OpenStack is not big enough to store the ignition config files, so they are served by Swift instead.
 
-* You may need to increase the security group related quotas from their default   values. For example (as an OpenStack administrator):
+- You may need to increase the security group related quotas from their default   values. For example (as an OpenStack administrator):
 
 ```sh
 openstack quota set --secgroups 8 --secgroup-rules 100 <project>`
 ```
+
+### Red Hat Enterprise Linux CoreOS (RHCOS)
+
+Get the latest RHCOS image [here](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/latest/). The installer requires a proper RHCOS image in the OpenStack cluster or project:
+
+```sh
+openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.qcow2 rhcos
+```
+
+**NOTE:** Depending on your OpenStack environment you can upload the RHCOS image as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/image-formats.html) for more information. At the time of writing, the installer looks for an image named `rhcos`.
+
+### Neutron Public Network
+
+The public network should be created by the OpenStack administrator. Verify the name/ID of the 'External' network:
+
+```sh
+openstack network list --long -c ID -c Name -c "Router Type"
++--------------------------------------+----------------+-------------+
+| ID                                   | Name           | Router Type |
++--------------------------------------+----------------+-------------+
+| 148a8023-62a7-4672-b018-003462f8d7dc | public_network | External    |
++--------------------------------------+----------------+-------------+
+```
+
+**NOTE:** If the `neutron` `trunk` service plug-in is enabled, trunk port will be created by default. For more information, please refer to [neutron trunk port](https://wiki.openstack.org/wiki/Neutron/TrunkPort).
 
 ## OpenStack Credentials
 
@@ -110,58 +138,13 @@ clouds:
 The file can contain information about several clouds. For instance, the example above describes two clouds: `shiftstack` and `dev-evn`.
 In order to determine which cloud to use, the user can either specify it in the `install-config.yaml` file under `platform.openstack.cloud` or with `OS_CLOUD` environment variable. If both are omitted, then the cloud name defaults to `openstack`.
 
-## Red Hat Enterprise Linux CoreOS (RHCOS)
-
-Get the latest RHCOS image [here](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/latest/). The installer requires a proper RHCOS image in the OpenStack cluster or project:
-
-```sh
-openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.qcow2 rhcos
-```
-
-**NOTE:** Depending on your OpenStack environment you can upload the RHCOS image as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/image-formats.html) for more information. At the time of writing, the installer looks for an image named `rhcos`.
-
-## Neutron Public Network
-
-The public network should be created by the OpenStack administrator. Verify the name/ID of the 'External' network:
-
-```sh
-openstack network list --long -c ID -c Name -c "Router Type"
-+--------------------------------------+----------------+-------------+
-| ID                                   | Name           | Router Type |
-+--------------------------------------+----------------+-------------+
-| 148a8023-62a7-4672-b018-003462f8d7dc | public_network | External    |
-+--------------------------------------+----------------+-------------+
-```
-
-**NOTE:** If the `neutron` `trunk` service plug-in is enabled, trunk port will be created by default. For more information, please refer to [neutron trunk port](https://wiki.openstack.org/wiki/Neutron/TrunkPort).
-
-## Extra requirements when enabling Kuryr SDN
-
-### Increase Quota
-
-As highlighted in the minimum quota recommendations, when using Kuryr SDN, there is a need for increasing the quotas as pods, services, namespaces, network policies are using OpenStack resources. So, as an administrator,the next quotas should be increased for the selected project:
-
-```sh
-openstack quota set --secgroups 100 --secgroup-rules 500 --ports 500 --subnets 100 --networks 100 <project>
-```
-
-### Neutron Configuration
-
-Kuryr CNI makes use of the Neutron Trunks extension to plug containers into the OpenStack SDN, so the `trunks` extension must be enabled for Kuryr to properly work.
-
-In addition, if the default ML2/OVS Neutron driver is used, the firewall must be set to `openvswitch` instead of `ovs_hybrid` so that security groups are enforced on trunk subports and Kuryr can properly handle Network Policies.
-
-### Octavia
-
-Kuryr SDN uses OpenStack Octavia LBaaS to implement OpenShift services. Thus the OpenStack environment must have Octavia components installed and configured if Kuryr SDN is used.
-
-**NOTE:** Depending on your OpenStack environment Octavia may not support UDP listeners, which means there is no support for UDP services if Kuryr SDN is used.
-
-## Isolated Development Environment
+## Standalone Single-Node Development Environment
 
 If you would like to set up an isolated development environment, you may use a bare metal host running CentOS 7. The following repository includes some instructions and scripts to help with creating a single-node OpenStack development environment for running the installer. Please refer to [this documentation](https://github.com/shiftstack-dev-tools/ocp-doit) for further details.
 
-## Initial Setup
+## Running The Installer
+
+### Initial Setup
 
 Download the [latest versions](https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/) of the OpenShift Client and installer and uncompress the tarballs with the `tar` command:
 
@@ -178,11 +161,11 @@ mkdir ostest
 cp install-config.yaml ostest/install-config.yaml
 ```
 
-## API Access
+### API Access
 
 All the OpenShift nodes get created in an OpenStack tenant network and as such, can't be accessed directly in most OpenStack deployments. We will briefly explain how to set up access to the OpenShift API with and without floating IP addresses.
 
-### Using Floating IPs
+#### Using Floating IPs
 
 This method allows you to attach two floating IP (FIP) addresses to endpoints in OpenShift.
 
@@ -202,19 +185,16 @@ If you don't have a DNS server under your control, you should add the records to
 
 **NOTE:** *this will make the API accessible only to you. This is fine for your own testing (and it is enough for the installation to succeed), but it is not enough for a production deployment.*
 
-At the time of writing, you need to create a second floating IP and attach it to the ingress-port if you want to be able to reach the provisioned workload externally.
-This can be done after the install completes in three steps:
-
-Get the ID of the ingress port:
+In order to reach the applications running on your worker nodes, you should attach a floating IP to the `ingress-port` at the end of your install. That can be done in the following steps: 
 
 ```sh
-openstack port list | grep "ingress-port"
+openstack port show <cluster name>-<clusterID>-ingress-port
 ```
 
-Create and associate a floating IP to the ingress port:
+Then attach the FIP to it:
 
 ```sh
-openstack floating ip create --port <ingress port id> <external network>
+openstack floating ip set --port <ingress port id> <apps FIP>
 ```
 
 Add a wildcard A record for `*apps.` in your DNS:
@@ -234,7 +214,7 @@ Alternatively, if you don't control the DNS, you can add the hostnames in `/etc/
 <apps FIP> <app name>.apps.<cluster name>.<base domain>
 ```
 
-### Without Floating IPs
+#### Without Floating IPs
 
 If you cannot or don't want to pre-create a floating IP address, the installation should still succeed, however the installer will fail waiting for the API.
 
@@ -242,64 +222,29 @@ If you cannot or don't want to pre-create a floating IP address, the installatio
 
 Even if the installer times out, the OpenShift cluster should still come up. Once the bootstrapping process is in place, it should all run to completion. So you should be able to deploy OpenShift without any floating IP addresses and DNS records and create everything yourself after the cluster is up.
 
-## Installing with Kuryr SDN
+### Running a Deployment
 
-To deploy with Kuryr SDN instead of the default OpenShift SDN, you simply need to modify the `install-config.yaml` file to include `Kuryr` as the desired `networking.networkType` and proceed with the same steps as with the default OpenShift SDN:
-
-```yaml
-apiVersion: v1
-...
-networking:
-  networkType: Kuryr
-  ...
-platform:
-  openstack:
-    ...
-    trunkSupport: true
-    octaviaSupport: true
-    ...
-```
-
-**NOTE:** both `trunkSupport` and `octaviaSupport` are automatically discovered by the installer, so there is no need to set them. But if your environment doesn't meet both requirements Kuryr SDN will not properly work, as trunks are needed to connect the pods to the OpenStack network and Octavia to create the OpenShift services.
-
-### Known limitations of installing with Kuryr SDN
-
-There are known limitations when using Kuryr SDN:
-
-* There is an amphora load balancer VM being deployed per OpenShift service with the default Octavia load balancer driver (amphora driver). If the environment is resource constrained it could be a problem to create a large amount of services.
-* Depending on the Octavia version, UDP listeners are not supported. This means that OpenShift UDP services are not supported.
-* There is a known limitation of Octavia not supporting listeners on different protocols (e.g., UDP and TCP) on the same port. Thus services exposing the same port for different protocols are not supported.
-* Due to the above UDP limitations of Octavia, Kuryr is forcing pods to use TCP for DNS resolution (`use-vc` option at `resolv.conf`). This may be a problem for pods running Go applications compiled with `CGO_DEBUG` flag disabled as that forces to use the `go` resolver that is only using UDP and is not considering the `use-vc` option added by Kuryr to the `resolv.conf`. This is a problem also for musl-based containers as it's resolver does not support `use-vc` option. This would include e.g., images build from `alpine`.
-
-## Running The Installer
-
-Finally, you can run the installer with the following command:
+The following instructions are for how to run a default cluster. If your want to customize your install, see the [customizing docs](customization.md). For information on running the installer with Kuryr, see the [Kuryr docs](kuryr.md).
 
 ```sh
 ./openshift-install create cluster --dir ostest
 ```
 
-**NOTE:** At the time of writing, once your `ingress-port` comes up, you will need to attach the apps FIP to it. First, find the ingress port like this:
+If you want to create an install config without deploying a cluster, you can use the command:
 
 ```sh
-openstack port show <cluster name>-<clusterID>-ingress-port
+./openshift-install create install-config --dir ostest
 ```
 
-Then attach the FIP to it:
-
-```sh
-openstack floating ip set --port <ingress port id> <apps FIP>
-```
-
-## Current Expected Behavior
+### Current Expected Behavior
 
 Currently:
 
-* Deploys an isolated tenant network
-* Deploys a bootstrap instance to bootstrap the OpenShift cluster
-* Deploys 3 master nodes
-* Once the masters are deployed, the bootstrap instance is destroyed
-* Deploys 3 worker nodes
+- Deploys an isolated tenant network
+- Deploys a bootstrap instance to bootstrap the OpenShift cluster
+- Deploys 3 master nodes
+- Once the masters are deployed, the bootstrap instance is destroyed
+- Deploys 3 worker nodes
 
 Look for a message like this to verify that your install succeeded:
 
@@ -310,7 +255,7 @@ INFO Access the OpenShift web-console here: https://console-openshift-console.ap
 INFO Login to the console with user: kubeadmin, password: xxx
 ```
 
-## Checking Cluster Status
+### Checking Cluster Status
 
 If you want to see the status of the apps and services in your cluster during, or after a deployment, first export your administrator's kubeconfig:
 
@@ -342,7 +287,7 @@ Finally, to see all the running pods in your cluster, you can do:
 oc get pods -A
 ```
 
-## Destroying The Cluster
+### Destroying The Cluster
 
 Destroying the cluster has been noticed to [sometimes fail](https://github.com/openshift/installer/issues/1985). We are working on patching this, but in a mean time the workaround is to simply run it again. To do so, point it to your cluster with this command:
 
@@ -435,10 +380,6 @@ Another useful thing to check is that the ignition configurations are only avail
 ```sh
 curl https://<loadbalancer ip>:22623/config/master --insecure
 ```
-
-## Troubleshooting
-
-See the [troubleshooting installer issues in OpenStack](./troubleshooting.md) guide.
 
 ## Reporting Issues
 
