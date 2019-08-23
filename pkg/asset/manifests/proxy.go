@@ -122,6 +122,8 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 	set := sets.NewString(
 		"127.0.0.1",
 		"localhost",
+		".svc",
+		".cluster.local",
 		network.Config.Spec.ServiceNetwork[0],
 		apiServerURL.Hostname(),
 		internalAPIServer.Hostname(),
