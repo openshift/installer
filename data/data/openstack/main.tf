@@ -25,8 +25,8 @@ provider "openstack" {
 module "bootstrap" {
   source = "./bootstrap"
 
-  swift_container    = openstack_objectstorage_container_v1.container.name
   cluster_id         = var.cluster_id
+  extra_tags         = var.openstack_extra_tags
   image_name         = var.openstack_base_image
   flavor_name        = var.openstack_master_flavor_name
   ignition           = var.ignition_bootstrap
@@ -70,19 +70,3 @@ module "topology" {
   trunk_support       = var.openstack_trunk_support
   octavia_support     = var.openstack_octavia_support
 }
-
-resource "openstack_objectstorage_container_v1" "container" {
-  name = var.cluster_id
-
-  # "kubernetes.io/cluster/${var.cluster_id}" = "owned"
-  metadata = merge(
-    {
-      "Name"               = "${var.cluster_id}-ignition"
-      "openshiftClusterID" = var.cluster_id
-    },
-    # FIXME(mandre) the openstack_extra_tags should be applied to all resources
-    # created
-    var.openstack_extra_tags,
-  )
-}
-
