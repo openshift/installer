@@ -40,6 +40,8 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
 
 In order to run the latest version of the installer in OpenStack, at a bare minimum you need the following quota to run a *default* cluster. While it is possible to run the cluster with fewer resources than this, it is not recommended. Certain cases, such as deploying [without FIPs](#without-floating-ips), or deploying with an [external load balancer](#using-an-external-load-balancer) are documented below, and are not included in the scope of this recommendation. **NOTE: The installer has been tested and developed on Red Hat OSP 13.**
 
+For a successful installation it is required:
+
 - Floating IPs: 2
 - Security Groups: 3
 - Security Group Rules: 60
@@ -49,6 +51,17 @@ In order to run the latest version of the installer in OpenStack, at a bare mini
 - vCPUs: 28
 - Volume Storage: 175 GB
 - Instances: 7
+- Swift containers: 2
+- Swift objects: 1
+- Available space in Swift: at least 10 MB
+
+**NOTE:** Size depends on the size of the bootstrap ignition file.
+
+You may need to increase the security group related quotas from their default values. For example (as an OpenStack administrator):
+
+```sh
+openstack quota set --secgroups 8 --secgroup-rules 100 <project>`
+```
 
 ### Master Nodes
 
@@ -64,19 +77,15 @@ The bootstrap node is a temporary node that is responsible for standing up the c
 
 ### Swift
 
-Swift must be enabled. The user must have `swiftoperator` permissions and `temp-url` support must be enabled. As an OpenStack administrator:
+Swift is required for installation as the user-data provided by OpenStack Metadata service is not big enough to store the ignition config files, so they are served by Swift instead.
+
+Swift is also used as a backend for the OpenShift image registry, but at the time of installation only an empty container is created without loading any data. Later on, for the system to work properly, you need to have enough free space to store the container images.
+
+The user must have `swiftoperator` permissions and `temp-url` support must be enabled. As an OpenStack administrator:
 
 ```sh
 openstack role add --user <user> --project <project> swiftoperator
 openstack object store account set --property Temp-URL-Key=superkey
-```
-
-**NOTE:** Swift is required as the user-data provided by OpenStack is not big enough to store the ignition config files, so they are served by Swift instead.
-
-- You may need to increase the security group related quotas from their default   values. For example (as an OpenStack administrator):
-
-```sh
-openstack quota set --secgroups 8 --secgroup-rules 100 <project>`
 ```
 
 ### Red Hat Enterprise Linux CoreOS (RHCOS)
