@@ -1,7 +1,7 @@
 variable "path" {
-  type = "string"
+  type = string
 }
 
 variable "datacenter_id" {
-  type = "string"
+  type = string
 }

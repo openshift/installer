@@ -1,5 +1,5 @@
 resource "vsphere_folder" "folder" {
-  path          = "${var.path}"
+  path          = var.path
   type          = "vm"
-  datacenter_id = "${var.datacenter_id}"
+  datacenter_id = var.datacenter_id
 }

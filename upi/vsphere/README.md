@@ -1,7 +1,8 @@
 # Pre-Requisites
 
-* terraform
-* jq
+* Terraform >= 0.12
+* Jq
+* AWS profile set and a region specified. The installation will create AWS route53 resources for routing to the OpenShift cluster.
 
 # Build a Cluster
 
@@ -30,30 +31,29 @@ sshKey: YOUR_SSH_KEY
 
 3. Fill out a terraform.tfvars file with the ignition configs generated.
 There is an example terraform.tfvars file in this directory named terraform.tfvars.example. The example file is set up for use with the dev cluster running at vcsa.vmware.devcluster.openshift.com. At a minimum, you need to set values for the following variables.
+
 * cluster_id
 * cluster_domain
 * vsphere_user
 * vsphere_password
 * ipam_token
-* bootstrap_ignition_url
+* bootstrap_ignition_url => The bootstrap ignition config must be placed in a location that will be accessible by the bootstrap machine. For example, you could store the bootstrap ignition config in a gist.
 * control_plane_ignition
 * compute_ignition
-The bootstrap ignition config must be placed in a location that will be accessible by the bootstrap machine. For example, you could store the bootstrap ignition config in a gist.
+
 
 4. Run `terraform init`.
 
-5. Ensure that you have you AWS profile set and a region specified. The installation will use create AWS route53 resources for routing to the OpenShift cluster.
-
-6. Run `terraform apply -auto-approve`.
+5. Run `terraform apply -auto-approve`.
 This will reserve IP addresses for the VMs.
 
-7. Run `openshift-install wait-for bootstrap-complete`. Wait for the bootstrapping to complete.
+6. Run `openshift-install wait-for bootstrap-complete`. Wait for the bootstrapping to complete.
 
-8. Run `terraform apply -auto-approve -var 'bootstrap_complete=true'`.
+7. Run `terraform apply -auto-approve -var 'bootstrap_complete=true'`.
 This will destroy the bootstrap VM.
 
-9. Run `openshift-install wait-for install-complete`. Wait for the cluster install to finish.
+8. Run `openshift-install wait-for install-complete`. Wait for the cluster install to finish.
 
-10. Enjoy your new OpenShift cluster.
+9. Enjoy your new OpenShift cluster.
 
-11. Run `terraform destroy -auto-approve`.
+10. Run `terraform destroy -auto-approve`.
