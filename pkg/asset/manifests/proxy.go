@@ -14,6 +14,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -101,10 +102,12 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 }
 
 // createNoProxy combines user-provided & platform-specific values to create a comma-separated
-// list of unique NO_PROXY values. Platform values are: serviceCIDR, podCIDR, localhost,
-// 127.0.0.1, api.clusterdomain, api-int.clusterdomain, etcd-idx.clusterdomain
-// If platform is not vSphere or None add 169.254.169.254 to the list of NO_PROXY
-// address. We should not proxy the instance metadata services:
+// list of unique NO_PROXY values. Platform values are: serviceCIDR, podCIDR, machineCIDR,
+// localhost, 127.0.0.1, api.clusterdomain, api-int.clusterdomain, etcd-idx.clusterdomain
+// If platform is not vSphere or None add 169.254.169.254 to the list of NO_PROXY addresses.
+// If platform is AWS, add ".ec2.internal" for region us-east-1 or for all other regions add
+// ".<aws_region>.compute.internal" to the list of NO_PROXY addresses. We should not proxy
+// the instance metadata services:
 // https://docs.openstack.org/nova/latest/user/metadata.html
 // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
 // https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service
@@ -127,11 +130,22 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 		network.Config.Spec.ServiceNetwork[0],
 		apiServerURL.Hostname(),
 		internalAPIServer.Hostname(),
+		installConfig.Config.Networking.MachineCIDR.String(),
 	)
 	platform := installConfig.Config.Platform.Name()
 
 	if platform != vsphere.Name && platform != none.Name {
 		set.Insert("169.254.169.254")
+	}
+
+	// TODO: Add support for additional cloud providers.
+	if platform == aws.Name {
+		region := installConfig.Config.AWS.Region
+		if region == "us-east-1" {
+			set.Insert(".ec2.internal")
+		} else {
+			set.Insert(fmt.Sprintf(".%s.compute.internal", region))
+		}
 	}
 
 	for i := int64(0); i < *installConfig.Config.ControlPlane.Replicas; i++ {
