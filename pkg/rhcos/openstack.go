@@ -2,10 +2,16 @@ package rhcos
 
 import (
 	"context"
+	"math/rand"
 	"net/url"
+	"time"
 
 	"github.com/pkg/errors"
 )
+
+const charset = "abcdefghijklmnopqrstuvwxyz"
+
+var seededRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // OpenStack fetches the URL of the Red Hat Enterprise Linux CoreOS release,
 // for the openstack platform
@@ -26,4 +32,16 @@ func OpenStack(ctx context.Context) (string, error) {
 	}
 
 	return base.ResolveReference(relOpenStack).String(), nil
+}
+
+// OpenStackGlanceImageName generates the name for RHCOS image in Glance
+// in format "<random_8_chars>-rhcos".
+// Example: fbekjlba-rhcos
+func OpenStackGlanceImageName() string {
+	prefix := make([]byte, 8)
+	for i := range prefix {
+		prefix[i] = charset[seededRand.Intn(len(charset))]
+	}
+
+	return string(prefix) + "-rhcos"
 }

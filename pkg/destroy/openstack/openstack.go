@@ -12,6 +12,7 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/apiversions"
 	"github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/loadbalancers"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
@@ -133,6 +134,7 @@ func populateDeleteFuncs(funcs map[string]deleteFunc) {
 	funcs["deleteContainers"] = deleteContainers
 	funcs["deleteVolumes"] = deleteVolumes
 	funcs["deleteFloatingIPs"] = deleteFloatingIPs
+	funcs["deleteImages"] = deleteImages
 }
 
 // filterObjects will do client-side filtering given an appropriately filled out
@@ -607,6 +609,44 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 				// If a metadata key matched, we're done so break from the loop
 				break
 			}
+		}
+	}
+	return true, nil
+}
+
+func deleteImages(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+	logger.Debug("Deleting openstack base image")
+	defer logger.Debugf("Exiting deleting openstack base image")
+
+	conn, err := clientconfig.NewServiceClient("image", opts)
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+
+	listOpts := images.ListOpts{
+		Tags: filterTags(filter),
+	}
+
+	allPages, err := images.List(conn, listOpts).AllPages()
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+
+	allImages, err := images.ExtractImages(allPages)
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+
+	for _, image := range allImages {
+		logger.Debugf("Deleting image: %+v", image.ID)
+		err := images.Delete(conn, image.ID).ExtractErr()
+		if err != nil {
+			// This can fail if the image is still in use by other VMs
+			logger.Debugf("Deleting Image failed: %v", err)
+			return false, nil
 		}
 	}
 	return true, nil

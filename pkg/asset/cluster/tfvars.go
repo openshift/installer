@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
@@ -24,6 +25,7 @@ import (
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	rhcosplatforms "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
 	azuretfvars "github.com/openshift/installer/pkg/tfvars/azure"
@@ -254,6 +256,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case openstack.Name:
+		ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+		defer cancel()
+
 		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
@@ -270,6 +275,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		baseImageURL, err := rhcosplatforms.OpenStack(ctx)
+		if err != nil {
+			return err
+		}
 		data, err = openstacktfvars.TFVars(
 			masters[0].Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec),
 			installConfig.Config.Platform.OpenStack.Cloud,
@@ -280,6 +289,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			ingressVIP.String(),
 			installConfig.Config.Platform.OpenStack.TrunkSupport,
 			installConfig.Config.Platform.OpenStack.OctaviaSupport,
+			baseImageURL,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

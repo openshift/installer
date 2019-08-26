@@ -78,7 +78,7 @@ func osImage(config *types.InstallConfig) (string, error) {
 	case libvirt.Name:
 		osimage, err = rhcos.QEMU(ctx)
 	case openstack.Name:
-		osimage = "rhcos"
+		osimage = rhcos.OpenStackGlanceImageName()
 	case azure.Name:
 		osimage, err = rhcos.VHD(ctx)
 	case baremetal.Name:

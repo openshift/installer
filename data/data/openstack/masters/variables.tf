@@ -1,5 +1,6 @@
-variable "base_image" {
-  type = string
+variable "base_image_id" {
+  type        = string
+  description = "The identifier of the Glance image for masters node."
 }
 
 variable "cluster_id" {

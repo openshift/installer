@@ -9,6 +9,7 @@ import (
 
 type config struct {
 	BaseImage       string `json:"openstack_base_image,omitempty"`
+	BaseImageURL    string `json:"openstack_base_image_url,omitempty"`
 	ExternalNetwork string `json:"openstack_external_network,omitempty"`
 	Cloud           string `json:"openstack_credentials_cloud,omitempty"`
 	FlavorName      string `json:"openstack_master_flavor_name,omitempty"`
@@ -23,9 +24,10 @@ type config struct {
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string) ([]byte, error) {
+func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string, baseImageURL string) ([]byte, error) {
 	cfg := &config{
 		BaseImage:       masterConfig.Image,
+		BaseImageURL:    baseImageURL,
 		ExternalNetwork: externalNetwork,
 		Cloud:           cloud,
 		FlavorName:      masterConfig.Flavor,
