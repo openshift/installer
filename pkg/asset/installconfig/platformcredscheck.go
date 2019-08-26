@@ -5,7 +5,6 @@ import (
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/asset"
-	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -39,14 +38,6 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 	platform := ic.Config.Platform.Name()
 	switch platform {
 	case aws.Name:
-		ssn, err := awsconfig.GetSession()
-		if err != nil {
-			return errors.Wrap(err, "creating AWS session")
-		}
-		err = awsconfig.ValidateCreds(ssn)
-		if err != nil {
-			return errors.Wrap(err, "validate AWS credentials")
-		}
 	case openstack.Name:
 		opts := new(clientconfig.ClientOpts)
 		opts.Cloud = ic.Config.Platform.OpenStack.Cloud
