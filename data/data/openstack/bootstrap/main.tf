@@ -1,3 +1,17 @@
+resource "openstack_objectstorage_container_v1" "container" {
+  name = var.cluster_id
+
+  # "kubernetes.io/cluster/${var.cluster_id}" = "owned"
+  metadata = merge(
+    {
+      "Name"               = "${var.cluster_id}-ignition"
+      "openshiftClusterID" = var.cluster_id
+    },
+
+    var.extra_tags,
+  )
+}
+
 resource "openstack_networking_port_v2" "bootstrap_port" {
   name = "${var.cluster_id}-bootstrap-port"
 
@@ -33,13 +47,13 @@ resource "openstack_networking_floatingip_v2" "bootstrap_fip" {
 
 
 resource "openstack_objectstorage_object_v1" "ignition" {
-  container_name = var.swift_container
+  container_name = openstack_objectstorage_container_v1.container.name
   name           = "bootstrap.ign"
   content        = var.ignition
 }
 
 resource "openstack_objectstorage_tempurl_v1" "ignition_tmpurl" {
-  container = var.swift_container
+  container = openstack_objectstorage_container_v1.container.name
   method    = "get"
   object    = openstack_objectstorage_object_v1.ignition.name
   ttl       = 3600
