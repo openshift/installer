@@ -63,6 +63,14 @@ func DomainName(v string, acceptTrailingDot bool) error {
 	return validateSubdomain(v)
 }
 
+// NoProxyDomainName checks if the given string is a valid proxy noProxy domain name
+// and returns an error if not. Example valid noProxy domains are ".foo.com", "bar.com",
+// but not "*.foo.com", "bar.com."
+func NoProxyDomainName(v string) error {
+	v = strings.TrimPrefix(v, ".")
+	return validateSubdomain(v)
+}
+
 type imagePullSecret struct {
 	Auths map[string]map[string]interface{} `json:"auths"`
 }
