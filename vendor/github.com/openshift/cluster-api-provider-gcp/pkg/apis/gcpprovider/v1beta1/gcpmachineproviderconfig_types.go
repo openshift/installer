@@ -30,6 +30,7 @@ type GCPMachineProviderSpec struct {
 	NetworkInterfaces  []*GCPNetworkInterface `json:"networkInterfaces,omitempty"`
 	ServiceAccounts    []GCPServiceAccount    `json:"serviceAccounts"`
 	Tags               []string               `json:"tags,omitempty"`
+	TargetPools        []string               `json:"targetPools,omitempty"`
 	MachineType        string                 `json:"machineType"`
 	Region             string                 `json:"region"`
 	Zone               string                 `json:"zone"`
