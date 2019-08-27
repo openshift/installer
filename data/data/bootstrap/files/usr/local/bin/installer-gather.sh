@@ -23,6 +23,7 @@ do
     sudo crictl logs "${container}" >& "${ARTIFACTS}/bootstrap/containers/${container_name}-${container}.log"
     sudo crictl inspect "${container}" >& "${ARTIFACTS}/bootstrap/containers/${container_name}-${container}.inspect"
 done
+sudo cp -r /var/log/bootstrap-control-plane/ "${ARTIFACTS}/bootstrap/containers"
 mkdir -p "${ARTIFACTS}/bootstrap/pods"
 sudo podman ps --all --quiet | while read -r container
 do
