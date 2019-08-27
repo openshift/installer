@@ -3,7 +3,7 @@ package machineconfig
 import (
 	"fmt"
 
-	ignv2_2types "github.com/coreos/ignition/config/v2_2/types"
+	ignv2_2types "github.com/coreos/ignition/v2/config/v3_0/types"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

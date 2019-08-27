@@ -1,3 +1,18 @@
-go: converting Gopkg.lock: stat github.com/terraform-providers/terraform-provider-random@v2.1.1: github.com/terraform-providers/terraform-provider-random@v2.1.1: invalid version: module contains a go.mod file, so major version must be compatible: should be v0 or v1, not v2
-go: converting Gopkg.lock: stat github.com/terraform-providers/terraform-provider-google@v2.8.0: github.com/terraform-providers/terraform-provider-google@v2.8.0: invalid version: module contains a go.mod file, so major version must be compatible: should be v0 or v1, not v2
-go: converting Gopkg.lock: stat github.com/terraform-providers/terraform-provider-aws@v2.10.0: github.com/terraform-providers/terraform-provider-aws@v2.10.0: invalid version: module contains a go.mod file, so major version must be compatible: should be v0 or v1, not v2
++ go build -ldflags ' -X github.com/openshift/installer/pkg/version.Raw=unreleased-master-2001-gbfc9b65a88b6393cccdac28e91cf4ec648c8317b-dirty -X github.com/openshift/installer/pkg/version.Commit=bfc9b65a88b6393cccdac28e91cf4ec648c8317b -s -w' -tags ' release' -o bin/openshift-install ./cmd/openshift-install
+# github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1
+../../../../pkg/mod/github.com/metal3-io/cluster-api-provider-baremetal@v0.0.0-20191010235856-134c3b78ec63/pkg/apis/baremetal/v1alpha1/register.go:37:19: undefined: scheme.Builder
+# k8s.io/client-go/rest
+../../../../pkg/mod/k8s.io/client-go@v11.0.1-0.20190409021438-1a26190bd76a+incompatible/rest/request.go:598:31: not enough arguments in call to watch.NewStreamWatcher
+	have (*versioned.Decoder)
+	want (watch.Decoder, watch.Reporter)
+# github.com/hashicorp/terraform/backend/remote-state/azure
+../../../../pkg/mod/github.com/hashicorp/terraform@v0.12.12/backend/remote-state/azure/arm_client.go:83:46: not enough arguments in call to armConfig.GetAuthorizationToken
+	have (*adal.OAuthConfig, string)
+	want (autorest.Sender, *adal.OAuthConfig, string)
+note: module requires Go 1.13
+# github.com/openshift/installer/pkg/terraform/exec/plugins/azureprivatedns
+pkg/terraform/exec/plugins/azureprivatedns/client.go:40:18: undefined: "github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure".BuildSender
+pkg/terraform/exec/plugins/azureprivatedns/client.go:88:12: undefined: "github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure".BuildSender
+pkg/terraform/exec/plugins/azureprivatedns/client.go:92:38: cannot use oauthConfig (type *adal.OAuthConfig) as type *authentication.OAuthConfig in argument to c.GetAuthorizationToken
+# github.com/openshift/installer/pkg/destroy/azure
+pkg/destroy/azure/azure.go:38:26: undefined: resources.GroupsGroupClient
