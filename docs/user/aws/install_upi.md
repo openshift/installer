@@ -4,11 +4,9 @@ The steps for performing a UPI-based install are outlined here. Several [CloudFo
 provided to assist in completing these steps or to help model your own.  You are also free to create the required
 resources through other methods; the CloudFormation templates are just an example.
 
-## Create Ignition Configs
+## Create Configuration
 
-The machines will be started manually.
-Therefore, it is required to generate the bootstrap and machine Ignition configs and store them for later steps.
-Use [a staged install](../overview.md#multiple-invocations) to remove the control-plane Machines and compute MachineSets, because we'll be providing those ourselves and don't want to involve [the machine-API operator][machine-api-operator].
+Create an install configuration as for [the usual approach](install.md#create-configuration):
 
 ```console
 $ openshift-install create install-config
@@ -20,26 +18,56 @@ $ openshift-install create install-config
 ? Pull Secret [? for help]
 ```
 
-Edit the resulting `openshift-install.yaml` to set `replicas` to 0 for the `compute` pool:
+### Empty Compute Pools
 
-```console
-$ sed -i '1,/replicas: / s/replicas: .*/replicas: 0/' install-config.yaml
+We'll be providing the control-plane and compute machines ourselves, so edit the resulting `install-config.yaml` to set `replicas` to 0 for the `compute` pool:
+
+```sh
+python -c '
+import yaml;
+path = "install-config.yaml";
+data = yaml.load(open(path));
+data["compute"][0]["replicas"] = 0;
+open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
-Create manifests to get access to the control-plane Machines and compute MachineSets:
+## Edit Manifests
+
+Use [a staged install](../overview.md#multiple-invocations) to make some adjustments which are not exposed via the install configuration.
 
 ```console
 $ openshift-install create manifests
 INFO Consuming "Install Config" from target directory
 ```
 
-From the manifest assets, remove the control-plane Machines and the compute MachineSets:
+### Remove Machines and MachineSets
+
+Remove the control-plane Machines and compute MachineSets, because we'll be providing those ourselves and don't want to involve [the machine-API operator][machine-api-operator]:
 
 ```console
 $ rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml openshift/99_openshift-cluster-api_worker-machinesets-*.yaml
 ```
 
 You are free to leave the compute MachineSets in if you want to create compute machines via the machine API, but if you do you may need to update the various references (`subnet`, etc.) to match your environment.
+
+### Remove DNS Zones
+
+If you don't want [the ingress operator][ingress-operator] to create DNS records on your behalf, remove the `privateZone` and `publicZone` sections from the DNS configuration:
+
+```sh
+python -c '
+import yaml;
+path = "manifests/cluster-dns-02-config.yml";
+data = yaml.load(open(path));
+del data["spec"]["publicZone"];
+del data["spec"]["privateZone"];
+open(path, "w").write(yaml.dump(data, default_flow_style=False))'
+```
+
+If you do so, you'll need to [add ingress DNS records manually](#add-the-ingress-dns-records) later on.
+
+## Create Ignition Configs
+
 Now we can create the bootstrap Ignition configs:
 
 ```console
@@ -241,6 +269,78 @@ openshift-service-catalog-apiserver-operator            openshift-service-catalo
 openshift-service-catalog-controller-manager-operator   openshift-service-catalog-controller-manager-operator-b78cr2lnm     1/1       Running     0          31m
 ```
 
+## Add the Ingress DNS Records
+
+If you removed the DNS Zone configuration [earlier](#remove-dns-zones), you'll need to manually create some DNS records pointing at the ingress load balancer.
+You can create either a wildcard `*.apps.{baseDomain}.` or specific records (more on the specific records below).
+You can use A, CNAME, [alias][route53-alias], etc. records, as you see fit.
+For example, you can create wildcard alias records by retrieving the ingress load balancer status:
+
+```console
+$ oc -n openshift-ingress get service router-default
+NAME             TYPE           CLUSTER-IP      EXTERNAL-IP                                                              PORT(S)                      AGE
+router-default   LoadBalancer   172.30.62.215   ab37f072ec51d11e98a7a02ae97362dd-240922428.us-east-2.elb.amazonaws.com   80:31499/TCP,443:30693/TCP   5m
+```
+
+Then find the hosted zone ID for the load balancer (or use [this table][route53-zones-for-load-balancers]):
+
+```console
+$ aws elb describe-load-balancers | jq -r '.LoadBalancerDescriptions[] | select(.DNSName == "ab37f072ec51d11e98a7a02ae97362dd-240922428.us-east-2.elb.amazonaws.com").CanonicalHostedZoneNameID'
+Z3AADJGX6KTTL2
+```
+
+And finally, add the alias records to your private and public zones:
+
+```console
+$ aws route53 change-resource-record-sets --hosted-zone-id "${YOUR_PRIVATE_ZONE}" --change-batch '{
+>   "Changes": [
+>     {
+>       "Action": "CREATE",
+>       "ResourceRecordSet": {
+>         "Name": "\\052.apps.your.cluster.domain.example.com",
+>         "Type": "A",
+>         "AliasTarget":{
+>           "HostedZoneId": "Z3AADJGX6KTTL2",
+>           "DNSName": "ab37f072ec51d11e98a7a02ae97362dd-240922428.us-east-2.elb.amazonaws.com.",
+>           "EvaluateTargetHealth": false
+>         }
+>       }
+>     }
+>   ]
+> }'
+$ aws route53 change-resource-record-sets --hosted-zone-id "${YOUR_PUBLIC_ZONE}" --change-batch '{
+>   "Changes": [
+>     {
+>       "Action": "CREATE",
+>       "ResourceRecordSet": {
+>         "Name": "\\052.apps.your.cluster.domain.example.com",
+>         "Type": "A",
+>         "AliasTarget":{
+>           "HostedZoneId": "Z3AADJGX6KTTL2",
+>           "DNSName": "ab37f072ec51d11e98a7a02ae97362dd-240922428.us-east-2.elb.amazonaws.com.",
+>           "EvaluateTargetHealth": false
+>         }
+>       }
+>     }
+>   ]
+> }'
+```
+
+If you prefer to add explicit domains instead of using a wildcard, you can create entries for each of the cluster's current routes:
+
+```console
+$ oc get --all-namespaces -o jsonpath='{range .items[*]}{range .status.ingress[*]}{.host}{"\n"}{end}{end}' routes
+oauth-openshift.apps.your.cluster.domain.example.com
+console-openshift-console.apps.your.cluster.domain.example.com
+downloads-openshift-console.apps.your.cluster.domain.example.com
+alertmanager-main-openshift-monitoring.apps.your.cluster.domain.example.com
+grafana-openshift-monitoring.apps.your.cluster.domain.example.com
+prometheus-k8s-openshift-monitoring.apps.your.cluster.domain.example.com
+```
+
 [cloudformation]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html
 [delete-stack]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html
+[ingress-operator]: https://github.com/openshift/cluster-ingress-operator
 [machine-api-operator]: https://github.com/openshift/machine-api-operator
+[route53-alias]: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-choosing-alias-non-alias.html
+[route53-zones-for-load-balancers]: https://docs.aws.amazon.com/general/latest/gr/rande.html#elb_region
