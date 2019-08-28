@@ -112,8 +112,9 @@ sudo podman run -d --net host --privileged --name ironic-api \
 # The alternative would be RemainAfterExit=yes but then we lose the ability to restart if something crashes.
 while true; do
     for name in ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb; do
-        # Note it would be nicer to use the --format option here but it breaks the go templating
-        # in the installer and escaping the template appears difficult
+        # Note there are two levels of go templating here, the outer braces
+        # are for the templating done in openshift-install, to escape the
+        # templating input to the --format option of podman inspect
         state=$(podman inspect ${name} --format  {{ "{{.State.Status}}" }})
         if [[ $state != "running" ]]; then
             echo "ERROR: Unexpected service status for $name"
