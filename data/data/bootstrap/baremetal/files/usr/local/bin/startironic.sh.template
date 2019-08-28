@@ -112,7 +112,14 @@ sudo podman run -d --net host --privileged --name ironic-api \
 # The alternative would be RemainAfterExit=yes but then we lose the ability to restart if something crashes.
 while true; do
     for name in ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb; do
-        podman ps | grep -w "$name$" || exit 1
+        # Note it would be nicer to use the --format option here but it breaks the go templating
+        # in the installer and escaping the template appears difficult
+        state=$(podman inspect ${name} --format  {{ "{{.State.Status}}" }})
+        if [[ $state != "running" ]]; then
+            echo "ERROR: Unexpected service status for $name"
+            podman inspect ${name}
+            exit 1
+        fi
     done
     sleep 10
 done
