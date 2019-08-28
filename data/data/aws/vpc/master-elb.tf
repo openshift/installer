@@ -12,6 +12,10 @@ resource "aws_lb" "api_internal" {
     var.tags,
   )
 
+  timeouts {
+    create = "20m"
+  }
+
   depends_on = [aws_internet_gateway.igw]
 }
 
@@ -28,6 +32,10 @@ resource "aws_lb" "api_external" {
     },
     var.tags,
   )
+
+  timeouts {
+    create = "20m"
+  }
 
   depends_on = [aws_internet_gateway.igw]
 }
