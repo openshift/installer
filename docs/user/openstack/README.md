@@ -298,7 +298,7 @@ oc get pods -A
 
 ### Destroying The Cluster
 
-Destroying the cluster has been noticed to [sometimes fail](https://github.com/openshift/installer/issues/1985). We are working on patching this, but in a mean time the workaround is to simply run it again. To do so, point it to your cluster with this command:
+To destroy the cluster, point it to your cluster with this command:
 
 ```sh
 ./openshift-install --log-level debug destroy cluster --dir ostest
