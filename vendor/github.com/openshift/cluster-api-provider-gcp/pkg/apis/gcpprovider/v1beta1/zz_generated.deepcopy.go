@@ -133,6 +133,11 @@ func (in *GCPMachineProviderSpec) DeepCopyInto(out *GCPMachineProviderSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.TargetPools != nil {
+		in, out := &in.TargetPools, &out.TargetPools
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
