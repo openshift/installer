@@ -273,7 +273,7 @@ Copy [`04_bootstrap.py`](../../../upi/gcp/04_bootstrap.py) locally.
 Export variables needed by the resource definition.
 
 ```sh
-export CONTROL_SUBNET=`gcloud compute networks subnets describe ${INFRA_ID}-master-subnet --format json | jq -r .selfLink`
+export CONTROL_SUBNET=`gcloud compute networks subnets describe ${INFRA_ID}-master-subnet --region=${REGION} --format json | jq -r .selfLink`
 export CLUSTER_IMAGE=`gcloud compute images describe ${INFRA_ID}-rhcos-image --format json | jq -r .selfLink`
 ```
 
@@ -332,8 +332,8 @@ The templates do not manage load balancer membership due to limitations of Deplo
 Manager, so we must add the bootstrap node manually.
 
 ```sh
-gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances=${INFRA_ID}-bootstrap
-gcloud compute target-pools add-instances ${INFRA_ID}-ign-target-pool --instances=${INFRA_ID}-bootstrap
+gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone="${REGION}-a" --instances=${INFRA_ID}-bootstrap
+gcloud compute target-pools add-instances ${INFRA_ID}-ign-target-pool --instances-zone="${REGION}-a" --instances=${INFRA_ID}-bootstrap
 ```
 
 ## Launch permanent control plane
@@ -430,8 +430,8 @@ INFO Waiting up to 30m0s for the bootstrap-complete event...
 At this point, you should delete the bootstrap resources.
 
 ```sh
-gcloud compute target-pools remove-instances ${INFRA_ID}-api-target-pool --instances=${INFRA_ID}-bootstrap
-gcloud compute target-pools remove-instances ${INFRA_ID}-ign-target-pool --instances=${INFRA_ID}-bootstrap
+gcloud compute target-pools remove-instances ${INFRA_ID}-api-target-pool --instances-zone="${REGION}-a" --instances=${INFRA_ID}-bootstrap
+gcloud compute target-pools remove-instances ${INFRA_ID}-ign-target-pool --instances-zone="${REGION}-a" --instances=${INFRA_ID}-bootstrap
 gsutil rm gs://${INFRA_ID}-bootstrap-ignition/bootstrap.ign
 gsutil rb gs://${INFRA_ID}-bootstrap-ignition
 gcloud deployment-manager deployments delete ${INFRA_ID}-bootstrap
@@ -452,7 +452,7 @@ Copy [`06_worker.py`](../../../upi/gcp/06_worker.py) locally.
 Export variables needed by the resource definition.
 
 ```sh
-export COMPUTE_SUBNET=`gcloud compute networks subnets describe ${INFRA_ID}-worker-subnet --format json | jq -r .selfLink`
+export COMPUTE_SUBNET=`gcloud compute networks subnets describe ${INFRA_ID}-worker-subnet --region=${REGION} --format json | jq -r .selfLink`
 export WORKER_SERVICE_ACCOUNT_EMAIL=`gcloud iam service-accounts list | grep "^${INFRA_ID}-worker-node " | awk '{print $2}'`
 export WORKER_IGNITION=`cat worker.ign`
 ```
