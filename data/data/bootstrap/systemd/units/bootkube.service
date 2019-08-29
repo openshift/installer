@@ -1,8 +1,8 @@
 [Unit]
 Description=Bootstrap a Kubernetes cluster
-Requires=release-image.service
+Requires=crio-configure.service
 Wants=kubelet.service
-After=kubelet.service release-image.service
+After=kubelet.service crio-configure.service
 ConditionPathExists=!/opt/openshift/.bootkube.done
 
 [Service]
