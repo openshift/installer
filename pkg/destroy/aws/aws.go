@@ -922,7 +922,7 @@ func deleteEC2Snapshot(client *ec2.EC2, id string, logger logrus.FieldLogger) er
 		SnapshotId: &id,
 	})
 	if err != nil {
-		if err.(awserr.Error).Code() == "InvalidSnapshotID.NotFound" {
+		if err.(awserr.Error).Code() == "InvalidSnapshot.NotFound" {
 			return nil
 		}
 		return err
