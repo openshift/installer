@@ -164,6 +164,46 @@ func TestDomainName_RejectingTrailingDot(t *testing.T) {
 	}
 }
 
+func TestNoProxyDomainName(t *testing.T) {
+	cases := []struct {
+		domain string
+		valid  bool
+	}{
+		{"", false},
+		{" ", false},
+		{"a", true},
+		{".", false},
+		{"日本語", false},
+		{"日本語.com", false},
+		{"abc.日本語.com", false},
+		{"a日本語a.com", false},
+		{"abc", true},
+		{"ABC", false},
+		{"ABC123", false},
+		{"ABC123.COM123", false},
+		{"1", true},
+		{"0.0", true},
+		{"1.2.3.4", true},
+		{"1.2.3.4.", false},
+		{"abc.", false},
+		{"abc.com", true},
+		{"abc.com.", false},
+		{"a.b.c.d.e.f", true},
+		{".abc", true},
+		{".abc.com", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.domain, func(t *testing.T) {
+			err := NoProxyDomainName(tc.domain)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
 func TestDoCIDRsOverlap(t *testing.T) {
 	cases := []struct {
 		a       string
