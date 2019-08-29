@@ -16,3 +16,4 @@ while ! podman pull --quiet "$RELEASE_IMAGE"
 do
     echo "Pull failed. Retrying $RELEASE_IMAGE..."
 done
+
