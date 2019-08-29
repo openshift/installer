@@ -6,14 +6,26 @@ completing these steps or to help model your own. You are also free to create
 the required resources through other methods; the templates are just an
 example.
 
+## Prerequisites
+
+* all prerequisites from [README](README.md)
+* the following binaries installed and in $PATH:
+  * gcloud
+  * gsutil
+* gcloud authenticated to an account with [additional](iam.md) roles:
+  * Deployment Manager Editor
+* the following API Services enabled:
+  * Cloud Deployment Manager V2 API (deploymentmanager.googleapis.com)
+
 ## Create Ignition configs
 
 The machines will be started manually. Therefore, it is required to generate
 the bootstrap and machine Ignition configs and store them for later steps.
-Use [a staged install](../overview.md#multiple-invocations) to remove the
-control-plane Machines and compute MachineSets, because we'll be providing
-those ourselves and don't want to involve
-[the machine-API operator][machine-api-operator].
+Use a [staged install](../overview.md#multiple-invocations) to enable desired customizations.
+
+### Create an install config
+
+Create an install configuration as for [the usual approach](install.md#create-configuration).
 
 ```console
 $ openshift-install create install-config
@@ -26,29 +38,61 @@ $ openshift-install create install-config
 ? Pull Secret [? for help]
 ```
 
-Edit the resulting `openshift-install.yaml` to set `replicas` to 0 for the `compute` pool:
+### Empty the compute pool (optional)
 
-```console
-$ sed -i '1,/replicas: / s/replicas: .*/replicas: 0/' install-config.yaml
+If you do not want the cluster to provision compute machines, edit the resulting `install-config.yaml` to set `replicas` to 0 for the `compute` pool.
+
+```sh
+python -c '
+import yaml;
+path = "install-config.yaml";
+data = yaml.full_load(open(path));
+data["compute"][0]["replicas"] = 0;
+open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
-Create manifests to get access to the control-plane Machines and compute MachineSets:
+### Create manifests
+
+Create manifest to enable customizations which are not exposed via the install configuration.
 
 ```console
 $ openshift-install create manifests
 INFO Consuming "Install Config" from target directory
 ```
 
-From the manifest assets, remove the control-plane Machines and the compute MachineSets:
+### Remove control plane machines
 
-```console
-$ rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml
-$ rm -f openshift/99_openshift-cluster-api_worker-machineset-*.yaml
+Remove the control plane machines from the manifests.
+We'll be providing those ourselves and don't want to involve [the machine-API operator][machine-api-operator].
+
+```sh
+rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml
 ```
 
-You are free to leave the compute MachineSets in if you want to create compute
-machines via the machine API, but if you do you may need to update the various
-references (`subnetwork`, etc.) to match your environment.
+### Remove compute machinesets (Optional)
+
+If you do not want the cluster to provision compute machines, remove the compute machinesets from the manifests as well.
+
+```sh
+rm -f openshift/99_openshift-cluster-api_worker-machineset-*.yaml
+```
+
+### Remove DNS Zones (Optional)
+
+If you don't want [the ingress operator][ingress-operator] to create DNS records on your behalf, remove the `privateZone` and `publicZone` sections from the DNS configuration.
+If you do so, you'll need to [add ingress DNS records manually](#add-the-ingress-dns-records-optional) later on.
+
+```sh
+python -c '
+import yaml;
+path = "manifests/cluster-dns-02-config.yml";
+data = yaml.full_load(open(path));
+del data["spec"]["publicZone"];
+del data["spec"]["privateZone"];
+open(path, "w").write(yaml.dump(data, default_flow_style=False))'
+```
+
+### Create Ignition configs
 
 Now we can create the bootstrap Ignition configs.
 
@@ -69,7 +113,7 @@ $ tree
 └── worker.ign
 ```
 
-### Extract infrastructure name from Ignition metadata
+## Extract infrastructure name from Ignition metadata
 
 By default, Ignition generates a unique cluster identifier comprised of the
 cluster name specified during the invocation of the installer and a short
@@ -94,6 +138,7 @@ export NETWORK_CIDR='10.0.0.0/16'
 export MASTER_SUBNET_CIDR='10.0.0.0/19'
 export WORKER_SUBNET_CIDR='10.0.32.0/19'
 
+export KUBECONFIG=auth/kubeconfig
 export CLUSTER_NAME=`jq -r .clusterName metadata.json`
 export INFRA_ID=`jq -r .infraID metadata.json`
 export PROJECT_NAME=`jq -r .gcp.projectID metadata.json`
@@ -496,13 +541,13 @@ Create the deployment using gcloud.
 gcloud deployment-manager deployments create ${INFRA_ID}-worker --config 06_worker.yaml
 ```
 
-#### Approving the CSR requests for nodes
+### Approving the CSR requests for nodes
 
 The CSR requests for client and server certificates for nodes joining the cluster will need to be approved by the administrator.
+Nodes that have not been provisioned by the cluster need their associated `system:serviceaccount` certificate approved to join the cluster.
 You can view them with:
 
 ```console
-$ export KUBECONFIG=./auth/kubeconfig
 $ oc get csr
 NAME        AGE     REQUESTOR                                                                   CONDITION
 csr-8b2br   15m     system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
@@ -520,6 +565,48 @@ CSRs can be approved by name, for example:
 oc adm certificate approve csr-bfd72
 ```
 
+## Add the Ingress DNS Records (Optional)
+
+If you removed the DNS Zone configuration [earlier](#remove-dns-zones), you'll need to manually create some DNS records pointing at the ingress load balancer.
+You can create either a wildcard `*.apps.{baseDomain}.` or specific records (more on the specific records below).
+You can use A, CNAME, etc. records, as you see fit.
+
+You must wait for the ingress-router to create a load balancer and populate the `EXTERNAL-IP`
+
+```console
+$ oc -n openshift-ingress get service router-default
+NAME             TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)                      AGE
+router-default   LoadBalancer   172.30.18.154   35.233.157.184   80:32288/TCP,443:31215/TCP   98
+```
+
+Then create the A record to your public and private zones.
+
+```sh
+export ROUTER_IP=`oc -n openshift-ingress get service router-default --no-headers | awk '{print $4}'`
+
+if [ -f transaction.yaml ]; then rm transaction.yaml; fi
+gcloud dns record-sets transaction start --zone ${BASE_DOMAIN_ZONE_NAME}
+gcloud dns record-sets transaction add ${ROUTER_IP} --name \*.apps.${CLUSTER_NAME}.${BASE_DOMAIN}. --ttl 300 --type A --zone ${BASE_DOMAIN_ZONE_NAME}
+gcloud dns record-sets transaction execute --zone ${BASE_DOMAIN_ZONE_NAME}
+
+if [ -f transaction.yaml ]; then rm transaction.yaml; fi
+gcloud dns record-sets transaction start --zone ${INFRA_ID}-private-zone
+gcloud dns record-sets transaction add ${ROUTER_IP} --name \*.apps.${CLUSTER_NAME}.${BASE_DOMAIN}. --ttl 300 --type A --zone ${INFRA_ID}-private-zone
+gcloud dns record-sets transaction execute --zone ${INFRA_ID}-private-zone
+```
+
+If you prefer to add explicit domains instead of using a wildcard, you can create entries for each of the cluster's current routes:
+
+```console
+$ oc get --all-namespaces -o jsonpath='{range .items[*]}{range .status.ingress[*]}{.host}{"\n"}{end}{end}' routes
+oauth-openshift.apps.your.cluster.domain.example.com
+console-openshift-console.apps.your.cluster.domain.example.com
+downloads-openshift-console.apps.your.cluster.domain.example.com
+alertmanager-main-openshift-monitoring.apps.your.cluster.domain.example.com
+grafana-openshift-monitoring.apps.your.cluster.domain.example.com
+prometheus-k8s-openshift-monitoring.apps.your.cluster.domain.example.com
+```
+
 ## Monitor for cluster completion
 
 ```console
@@ -530,7 +617,6 @@ INFO Waiting up to 30m0s for the cluster to initialize...
 Also, you can observe the running state of your cluster pods:
 
 ```console
-$ export KUBECONFIG=./auth/kubeconfig
 $ oc get clusterversion
 NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
 version             False       True          24m     Working towards 4.2.0-0.okd-2019-08-05-204819: 99% complete
@@ -584,4 +670,5 @@ openshift-service-catalog-controller-manager-operator   openshift-service-catalo
 ```
 
 [deploymentmanager]: https://cloud.google.com/deployment-manager/docs
+[ingress-operator]: https://github.com/openshift/cluster-ingress-operator
 [machine-api-operator]: https://github.com/openshift/machine-api-operator
