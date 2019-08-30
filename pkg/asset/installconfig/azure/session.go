@@ -20,8 +20,9 @@ var defaultAuthFilePath = filepath.Join(os.Getenv("HOME"), ".azure", "osServiceP
 
 //Session is an object representing session for subscription
 type Session struct {
-	Authorizer  autorest.Authorizer
-	Credentials Credentials
+	GraphAuthorizer autorest.Authorizer
+	Authorizer      autorest.Authorizer
+	Credentials     Credentials
 }
 
 //Credentials is the data type for credentials as understood by the azure sdk
@@ -46,7 +47,7 @@ func newSessionFromFile(authFilePath string) (*Session, error) {
 	// NewAuthorizerFromFileWithResource uses `auth.GetSettingsFromFile`, which uses the `azureAuthEnv` to fetch the auth credentials.
 	// therefore setting the local env here to authFilePath allows NewAuthorizerFromFileWithResource to load credentials.
 	os.Setenv(azureAuthEnv, authFilePath)
-	authorizer, err := auth.NewAuthorizerFromFileWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
+	_, err := auth.NewAuthorizerFromFileWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
 	if err != nil {
 		logrus.Debug("Could not get an azure authorizer from file. Asking user to provide authentication info")
 		credentials, err := askForCredentials()
@@ -70,14 +71,20 @@ func newSessionFromFile(authFilePath string) (*Session, error) {
 		return nil, errors.Wrap(err, "failed to map authsettings to credentials")
 	}
 
-	authorizer, err = authSettings.ClientCredentialsAuthorizerWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
+	authorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get client credentials authorizer from saved azure auth settings")
 	}
 
+	graphAuthorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(azureenv.PublicCloud.GraphEndpoint)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get GraphEndpoint authorizer from saved azure auth settings")
+	}
+
 	return &Session{
-		Authorizer:  authorizer,
-		Credentials: *credentials,
+		GraphAuthorizer: graphAuthorizer,
+		Authorizer:      authorizer,
+		Credentials:     *credentials,
 	}, nil
 }
 
