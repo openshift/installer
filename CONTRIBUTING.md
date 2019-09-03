@@ -96,7 +96,6 @@ hack/go-genmock.sh
 ```
 
 [golang-style]: https://github.com/golang/go/wiki/CodeReviewComments
-[disclosure]: https://coreos.com/security/disclosure/
 [new-issue]: https://github.com/openshift/installer/issues/new
 [prow-review]: https://github.com/kubernetes/community/blob/master/contributors/guide/owners.md#the-code-review-process
 [security]: https://access.redhat.com/security/team/contact
