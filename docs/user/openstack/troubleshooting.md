@@ -15,6 +15,30 @@ OpenStack CLI tools should be installed, then:
 
 Destroying the cluster has been noticed to [sometimes fail](https://github.com/openshift/installer/issues/1985). We are working on patching this, but in a mean time the workaround is to simply restart the destroying process of the cluster.
 
+## Machine has ERROR state
+
+This could be because the machine's instance was accidentally destroyed and the cluster API provider cannot recreate it.
+
+You can check the status of machines with the help of the command
+
+```sh
+oc get machines -n openshift-machine-api
+```
+
+If the broken machine is a master then follow the instructions in the [disaster recovery documentation](https://docs.openshift.com/container-platform/4.1/disaster_recovery/scenario-1-infra-recovery.html).
+
+For workers, you should delete the machine manually with
+
+```sh
+oc delete machine -n openshift-machine-api <machine_name>
+```
+
+The operation can take up to 5 minutes, during which time the machine will be gracefully removed and all its resources returned to the pool.
+
+A new worker machine for the cluster will soon be created automatically by the [machine-api-operator](https://github.com/openshift/machine-api-operator).
+
+**NOTE**: in future versions of OpenShift all broken machines will be automatically deleted and recovered by the machine-api-operator.
+
 ## SSH access to the instances
 
 Get the IP address of the node on the private network:
