@@ -72,7 +72,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_heapster_from_m
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_flannel" {
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vxlan" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "udp"
@@ -81,7 +81,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_flannel" {
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_flannel_from_master" {
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vxlan_from_master" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "udp"
@@ -91,21 +91,59 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_flannel_from_ma
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_node_exporter" {
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_geneve" {
   direction         = "ingress"
   ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 9100
-  port_range_max    = 9100
+  protocol          = "udp"
+  port_range_min    = 6081
+  port_range_max    = 6081
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_node_exporter_from_master" {
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_geneve_from_master" {
   direction         = "ingress"
-  protocol          = "tcp"
   ethertype         = "IPv4"
-  port_range_min    = 9100
-  port_range_max    = 9100
+  protocol          = "udp"
+  port_range_min    = 6081
+  port_range_max    = 6081
+  remote_group_id   = openstack_networking_secgroup_v2.master.id
+  security_group_id = openstack_networking_secgroup_v2.worker.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 9000
+  port_range_max    = 9999
+  security_group_id = openstack_networking_secgroup_v2.worker.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal_from_master" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 9000
+  port_range_max    = 9999
+  remote_group_id   = openstack_networking_secgroup_v2.master.id
+  security_group_id = openstack_networking_secgroup_v2.worker.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal_udp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 9000
+  port_range_max    = 9999
+  security_group_id = openstack_networking_secgroup_v2.worker.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal_from_master_udp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 9000
+  port_range_max    = 9999
   remote_group_id   = openstack_networking_secgroup_v2.master.id
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
@@ -148,10 +186,19 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_kubelet_secure_
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services" {
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_tcp" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
+  port_range_min    = 30000
+  port_range_max    = 32767
+  security_group_id = openstack_networking_secgroup_v2.worker.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_udp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
   port_range_min    = 30000
   port_range_max    = 32767
   security_group_id = openstack_networking_secgroup_v2.worker.id
