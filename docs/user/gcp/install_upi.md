@@ -14,6 +14,7 @@ example.
   * gsutil
 * gcloud authenticated to an account with [additional](iam.md) roles:
   * Deployment Manager Editor
+  * Service Account Key Admin
 * the following API Services enabled:
   * Cloud Deployment Manager V2 API (deploymentmanager.googleapis.com)
 
