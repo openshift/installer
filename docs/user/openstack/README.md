@@ -84,16 +84,12 @@ Swift is required for installation as the user-data provided by OpenStack Metada
 
 Swift is also used as a backend for the OpenShift image registry, but at the time of installation only an empty container is created without loading any data. Later on, for the system to work properly, you need to have enough free space to store the container images.
 
-The user must have `swiftoperator` permissions and `temp-url` support must be enabled. As an OpenStack administrator:
+The user must have `swiftoperator` permissions. As an OpenStack administrator:
 
 ```sh
 openstack role add --user <user> --project <project> swiftoperator
 ```
 
-As the user for installation
-```sh
-openstack object store account set --property Temp-URL-Key=superkey
-```
 ### Disk Requirements
 
 Etcd runs on the control plane nodes, and has disk requirements that need to be met to ensure the stability of the cluster. If the ephemeral disk that gets attached to instances of the chosen flavor does not meet [etcd requirements](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/hardware.md#disks), check if the cloud has a more performant volume type and use a [custom `install-config.yaml`](customization.md) to deploy the control plane with root volumes.
