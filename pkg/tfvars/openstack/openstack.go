@@ -4,6 +4,7 @@ package openstack
 import (
 	"encoding/json"
 
+	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/rhcos"
@@ -26,10 +27,16 @@ type config struct {
 	OctaviaSupport  string `json:"openstack_octavia_support,omitempty"`
 	RootVolumeSize  int    `json:"openstack_master_root_volume_size,omitempty"`
 	RootVolumeType  string `json:"openstack_master_root_volume_type,omitempty"`
+	SwiftPublicURL  string `json:"openstack_swift_public_url,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
 func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string, baseImage string, infraID string) ([]byte, error) {
+	swiftPublicURL, err := getSwiftPublicURL(cloud)
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := &config{
 		ExternalNetwork: externalNetwork,
 		Cloud:           cloud,
@@ -40,6 +47,7 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		IngressVIP:      ingressVIP,
 		TrunkSupport:    trunkSupport,
 		OctaviaSupport:  octaviaSupport,
+		SwiftPublicURL:  swiftPublicURL,
 	}
 
 	// Normally baseImage contains a URL that we will use to create a new Glance image, but for testing
@@ -102,4 +110,84 @@ func validateOverriddenImageName(imageName, cloud string) error {
 	}
 
 	return nil
+}
+
+// We need to obtain Swift public endpoint that will be used by Ignition to download bootstrap ignition files.
+// By design this should be done by using https://www.terraform.io/docs/providers/openstack/d/identity_endpoint_v3.html
+// but OpenStack default policies forbid to use this API for regular users.
+// On the other hand when a user authenticates in OpenStack (i.e. gets a token), it includes the whole service
+// catalog in the output json. So we are able to parse the data and get the endpoint from there
+// https://docs.openstack.org/api-ref/identity/v3/?expanded=token-authentication-with-scoped-authorization-detail#token-authentication-with-scoped-authorization
+// Unfortunately this feature is not currently supported by Terraform, so we had to implement it here.
+// We do next:
+// 1. In "getServiceCatalog" we authenticate in OpenStack (tokens.Create(..)),
+//    parse the token and extract the service catalog: (ExtractServiceCatalog())
+// 2. In getSwiftPublicURL we iterate through the catalog and find "public" endpoint for "object-store".
+
+// getSwiftPublicURL obtains Swift public endpoint URL
+func getSwiftPublicURL(cloud string) (string, error) {
+	var swiftPublicURL string
+	serviceCatalog, err := getServiceCatalog(cloud)
+	if err != nil {
+		return "", err
+	}
+
+	for _, svc := range serviceCatalog.Entries {
+		if svc.Type == "object-store" {
+			for _, e := range svc.Endpoints {
+				if e.Interface == "public" {
+					swiftPublicURL = e.URL
+					break
+				}
+			}
+			break
+		}
+	}
+
+	if swiftPublicURL == "" {
+		return "", errors.Errorf("cannot retrieve Swift URL from the service catalog")
+	}
+
+	return swiftPublicURL, nil
+}
+
+// getServiceCatalog fetches OpenStack service catalog with service endpoints
+func getServiceCatalog(cloud string) (*tokens.ServiceCatalog, error) {
+	opts := &clientconfig.ClientOpts{
+		Cloud: cloud,
+	}
+
+	conn, err := clientconfig.NewServiceClient("identity", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	cloudConfig, err := clientconfig.GetCloudFromYAML(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	domainName := cloudConfig.AuthInfo.DomainName
+	if domainName == "" {
+		domainName = cloudConfig.AuthInfo.UserDomainName
+	}
+
+	scope := tokens.Scope{
+		ProjectName: cloudConfig.AuthInfo.ProjectName,
+		DomainName:  domainName,
+	}
+
+	authOptions := tokens.AuthOptions{
+		Scope:      scope,
+		Username:   cloudConfig.AuthInfo.Username,
+		Password:   cloudConfig.AuthInfo.Password,
+		DomainName: domainName,
+	}
+
+	serviceCatalog, err := tokens.Create(conn, &authOptions).ExtractServiceCatalog()
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceCatalog, nil
 }
