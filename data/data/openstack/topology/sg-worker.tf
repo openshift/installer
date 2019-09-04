@@ -53,25 +53,6 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_https" {
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_heapster" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  port_range_min    = 4194
-  port_range_max    = 4194
-  protocol          = "tcp"
-  security_group_id = openstack_networking_secgroup_v2.worker.id
-}
-
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_heapster_from_master" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 4194
-  port_range_max    = 4194
-  remote_group_id   = openstack_networking_secgroup_v2.master.id
-  security_group_id = openstack_networking_secgroup_v2.worker.id
-}
-
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vxlan" {
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -163,25 +144,6 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_kubelet_insecur
   protocol          = "tcp"
   port_range_min    = 10250
   port_range_max    = 10250
-  remote_group_id   = openstack_networking_secgroup_v2.master.id
-  security_group_id = openstack_networking_secgroup_v2.worker.id
-}
-
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_kubelet_secure" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 10255
-  port_range_max    = 10255
-  security_group_id = openstack_networking_secgroup_v2.worker.id
-}
-
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_kubelet_secure_from_master" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 10255
-  port_range_max    = 10255
   remote_group_id   = openstack_networking_secgroup_v2.master.id
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }

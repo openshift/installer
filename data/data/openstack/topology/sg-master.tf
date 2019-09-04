@@ -63,16 +63,6 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_mdns_udp" {
   security_group_id = "${openstack_networking_secgroup_v2.master.id}"
 }
 
-resource "openstack_networking_secgroup_rule_v2" "master_ingress_http" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 80
-  port_range_max    = 80
-  remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.master.id
-}
-
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -80,25 +70,6 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
   port_range_min    = 6443
   port_range_max    = 6443
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.master.id
-}
-
-resource "openstack_networking_secgroup_rule_v2" "master_ingress_heapster" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 4194
-  port_range_max    = 4194
-  security_group_id = openstack_networking_secgroup_v2.master.id
-}
-
-resource "openstack_networking_secgroup_rule_v2" "master_ingress_heapster_from_worker" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 4194
-  port_range_max    = 4194
-  remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
@@ -260,15 +231,6 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_etcd" {
   protocol          = "tcp"
   port_range_min    = 2379
   port_range_max    = 2380
-  security_group_id = openstack_networking_secgroup_v2.master.id
-}
-
-resource "openstack_networking_secgroup_rule_v2" "master_ingress_bootstrap_etcd" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 12379
-  port_range_max    = 12380
   security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
