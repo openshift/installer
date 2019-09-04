@@ -40,7 +40,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_tcp" {
   port_range_min    = 53
   port_range_max    = 53
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_udp" {
@@ -50,7 +50,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_udp" {
   port_range_min    = 53
   port_range_max    = 53
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_mdns_udp" {
@@ -60,7 +60,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_mdns_udp" {
   port_range_min    = 5353
   port_range_max    = 5353
   remote_ip_prefix  = "${var.cidr_block}"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
