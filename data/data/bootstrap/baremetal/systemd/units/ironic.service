@@ -5,7 +5,6 @@ Wants=network-online.target crio.service
 After=network-online.target crio.service release-image.service
 
 [Service]
-Type=exec
 ExecStart=/usr/local/bin/startironic.sh
 ExecStop=/usr/local/bin/stopironic.sh
 
