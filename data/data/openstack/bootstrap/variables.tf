@@ -57,3 +57,7 @@ variable "nodes_subnet_id" {
 variable "cluster_domain" {
   type = string
 }
+
+variable "swift_url" {
+  type = string
+}
