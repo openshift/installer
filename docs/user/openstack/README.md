@@ -18,6 +18,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
   - [OpenStack Credentials](#openstack-credentials)
   - [Standalone Single-Node Development Environment](#standalone-single-node-development-environment)
   - [Running The Installer](#running-the-installer)
+    - [Known Issues](#known-issues)
     - [Initial Setup](#initial-setup)
     - [API Access](#api-access)
       - [Using Floating IPs](#using-floating-ips)
@@ -31,6 +32,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
 
 ## Reference Documents
 
+- [Known Issues and Workarounds](known-issues.md)
 - [Using the OSP 4 installer with Kuryr](kuryr.md)
 - [Troubleshooting your cluster](troubleshooting.md)
 - [Customizing your install](customization.md)
@@ -38,7 +40,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
 
 ## OpenStack Requirements
 
-In order to run the latest version of the installer in OpenStack, at a bare minimum you need the following quota to run a *default* cluster. While it is possible to run the cluster with fewer resources than this, it is not recommended. Certain cases, such as deploying [without FIPs](#without-floating-ips), or deploying with an [external load balancer](#using-an-external-load-balancer) are documented below, and are not included in the scope of this recommendation. **NOTE: The installer has been tested and developed on Red Hat OSP 13.**
+In order to run the latest version of the installer in OpenStack, at a bare minimum you need the following quota to run a *default* cluster. While it is possible to run the cluster with fewer resources than this, it is not recommended. Certain cases, such as deploying [without FIPs](#without-floating-ips), or deploying with an [external load balancer](#using-an-external-load-balancer) are documented below, and are not included in the scope of this recommendation. If you are planning on using Kuryr, or want to learn more about it, please read through the [Kuryr documentation](kuryr.md). **NOTE: The installer has been tested and developed on Red Hat OSP 13.**
 
 For a successful installation it is required:
 
@@ -153,17 +155,15 @@ If you would like to set up an isolated development environment, you may use a b
 
 ## Running The Installer
 
+### Known Issues
+
+OpenStack support has [known issues](known-issues.md). We will be documenting workarounds until we are able to resolve these bugs in the upcoming releases. To see the latest status of any bug, read through bugzilla or github link provided in that bug's description. If you know of a possible workaround that hasn't been documented yet, please comment in that bug's tracking link so we can address it as soon as possible. Also note that any bug listed in these documents is already a top priority issue for the dev team, and will be resolved as soon as possible. If you find more bugs during your runs, please read the section on [issue reporting](#reporting-issues).
+
 ### Initial Setup
 
-Download the [latest versions](https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/) of the OpenShift Client and installer and uncompress the tarballs with the `tar` command:
+Please head to [try.openshift.com](https://try.openshift.com) to get the latest versions of the installer, and instructions to run it.
 
-```sh
-tar -xvf openshift-install-OS-VERSION.tar.gz
-```
-
-You could either use the interactive wizard to configure the installation or provide an `install-config.yaml` file for it. See [all possible customization](customization.md) via the `install-config.yaml` file.
-
-If you choose to create yourself an `install-config.yaml` file, we recommend you create a directory for your cluster, and copy the configuration file into it. See the documents on the [recommended workflow](../overview.md#multiple-invocations) for more information about why you should do it this way.
+Before running the installer, we recommend you create a directory for each cluster you plan to deploy. See the documents on the [recommended workflow](../overview.md#multiple-invocations) for more information about why you should do it this way.
 
 ```sh
 mkdir ostest
@@ -194,7 +194,7 @@ If you don't have a DNS server under your control, you should add the records to
 
 **NOTE:** *this will make the API accessible only to you. This is fine for your own testing (and it is enough for the installation to succeed), but it is not enough for a production deployment.*
 
-In order to reach the applications running on your worker nodes, you should attach a floating IP to the `ingress-port` at the end of your install. That can be done in the following steps: 
+In order to reach the applications running on your worker nodes, you should attach a floating IP to the `ingress-port` at the end of your install. That can be done in the following steps:
 
 ```sh
 openstack port show <cluster name>-<clusterID>-ingress-port
@@ -233,7 +233,7 @@ Even if the installer times out, the OpenShift cluster should still come up. Onc
 
 ### Running a Deployment
 
-The following instructions are for how to run a default cluster. If your want to customize your install, see the [customizing docs](customization.md). For information on running the installer with Kuryr, see the [Kuryr docs](kuryr.md).
+To run the installer, you have the option of using the interactive wizard, or providing your own `install-config.yaml` file for it. The wizard is the easier way to run the installer, but passing your own `install-config.yaml` enables you to use more fine grained customizations. If you are going to create your own `install-config.yaml`, read through the available [OpenStack customizations](customization.md). For information on running the installer with Kuryr, see the [Kuryr docs](kuryr.md).
 
 ```sh
 ./openshift-install create cluster --dir ostest
