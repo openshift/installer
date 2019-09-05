@@ -42,6 +42,7 @@ type Client interface {
 	PutUserPolicy(*iam.PutUserPolicyInput) (*iam.PutUserPolicyOutput, error)
 	GetUserPolicy(*iam.GetUserPolicyInput) (*iam.GetUserPolicyOutput, error)
 	SimulatePrincipalPolicy(*iam.SimulatePrincipalPolicyInput) (*iam.SimulatePolicyResponse, error)
+	SimulatePrincipalPolicyPages(*iam.SimulatePrincipalPolicyInput, func(*iam.SimulatePolicyResponse, bool) bool) error
 	TagUser(*iam.TagUserInput) (*iam.TagUserOutput, error)
 }
 
@@ -90,6 +91,10 @@ func (c *awsClient) GetUserPolicy(input *iam.GetUserPolicyInput) (*iam.GetUserPo
 
 func (c *awsClient) SimulatePrincipalPolicy(input *iam.SimulatePrincipalPolicyInput) (*iam.SimulatePolicyResponse, error) {
 	return c.iamClient.SimulatePrincipalPolicy(input)
+}
+
+func (c *awsClient) SimulatePrincipalPolicyPages(input *iam.SimulatePrincipalPolicyInput, fn func(*iam.SimulatePolicyResponse, bool) bool) error {
+	return c.iamClient.SimulatePrincipalPolicyPages(input, fn)
 }
 
 func (c *awsClient) TagUser(input *iam.TagUserInput) (*iam.TagUserOutput, error) {
