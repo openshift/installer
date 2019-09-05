@@ -20,7 +20,7 @@ You can request permissions using the Azure portal or the Azure cli.
 Find the AppId for your service principal by using,
 
 ```console
-$ az ad sp list --show-mine -otable
+$ az ad sp list --show-mine -o table
 AccountEnabled    AppDisplayName     AppId                                 AppOwnerTenantId                      AppRoleAssignmentRequired    DisplayName        Homepage                   ObjectId                              ObjectType        Odata.type                                    PublisherName    ServicePrincipalType    SignInAudience
 ----------------  -----------------  ------------------------------------  ------------------------------------  ---------------------------  -----------------  -------------------------  ------------------------------------  ----------------  --------------------------------------------  ---------------  ----------------------  ----------------
 ...
