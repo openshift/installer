@@ -147,6 +147,38 @@ func TestValidatePlatform(t *testing.T) {
 			network:  network,
 			expected: "Invalid value: \"noexist\": noexist is not a valid network interface",
 		},
+		{
+			name: "invalid_clusterprovip",
+			platform: &baremetal.Platform{
+				APIVIP:                  "192.168.111.2",
+				DNSVIP:                  "192.168.111.3",
+				IngressVIP:              "192.168.111.4",
+				Hosts:                   []*baremetal.Host{},
+				LibvirtURI:              "qemu://system",
+				ClusterProvisioningIP:   "192.168.111.5",
+				BootstrapProvisioningIP: "172.22.0.2",
+				ExternalBridge:          iface[0].Name,
+				ProvisioningBridge:      iface[0].Name,
+			},
+			network:  network,
+			expected: "Invalid value: \"192.168.111.5\": the IP must not be in 192.168.111.0/24 subnet",
+		},
+		{
+			name: "invalid_bootstrapprovip",
+			platform: &baremetal.Platform{
+				APIVIP:                  "192.168.111.2",
+				DNSVIP:                  "192.168.111.3",
+				IngressVIP:              "192.168.111.4",
+				Hosts:                   []*baremetal.Host{},
+				LibvirtURI:              "qemu://system",
+				ClusterProvisioningIP:   "172.22.0.3",
+				BootstrapProvisioningIP: "192.168.111.5",
+				ExternalBridge:          iface[0].Name,
+				ProvisioningBridge:      iface[0].Name,
+			},
+			network:  network,
+			expected: "Invalid value: \"192.168.111.5\": the IP must not be in 192.168.111.0/24 subnet",
+		},
 	}
 
 	for _, tc := range cases {
