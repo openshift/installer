@@ -26,6 +26,7 @@ var installPermissions = []string{
 	"ec2:CreateDhcpOptions",
 	"ec2:CreateInternetGateway",
 	"ec2:CreateNatGateway",
+	"ec2:CreateNetworkInterface",
 	"ec2:CreateRoute",
 	"ec2:CreateRouteTable",
 	"ec2:CreateSecurityGroup",

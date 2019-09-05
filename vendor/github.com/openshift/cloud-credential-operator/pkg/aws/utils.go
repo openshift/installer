@@ -154,23 +154,28 @@ func CheckPermissionsUsingQueryClient(queryClient, targetClient Client, statemen
 		}
 	}
 
-	results, err := queryClient.SimulatePrincipalPolicy(&iam.SimulatePrincipalPolicyInput{
+	input := &iam.SimulatePrincipalPolicyInput{
 		PolicySourceArn: targetUser.Arn,
 		ActionNames:     allowList,
+	}
+
+	// Either all actions are allowed and we'll return 'true', or it's a failure
+	allClear := true
+
+	err = queryClient.SimulatePrincipalPolicyPages(input, func(response *iam.SimulatePolicyResponse, lastPage bool) bool {
+
+		for _, result := range response.EvaluationResults {
+			if *result.EvalDecision != "allowed" {
+				// Don't bail out after the first failure, so we can log the full list
+				// of failed/denied actions
+				logger.WithField("action", *result.EvalActionName).Warning("Action not allowed with tested creds")
+				allClear = false
+			}
+		}
+		return !lastPage
 	})
 	if err != nil {
 		return false, fmt.Errorf("error simulating policy: %v", err)
-	}
-
-	// Either they are all allowed and we return 'true', or it's a failure
-	allClear := true
-	for _, result := range results.EvaluationResults {
-		if *result.EvalDecision != "allowed" {
-			// Don't return on the first failure, so we can log the full list
-			// of failed/denied actions
-			logger.WithField("action", *result.EvalActionName).Warning("Action not allowed with tested creds")
-			allClear = false
-		}
 	}
 
 	if !allClear {

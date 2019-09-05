@@ -37,9 +37,6 @@ type AzureProviderSpec struct {
 type RoleBinding struct {
 	// Role defines a set of permissions that should be associated with the minted credential.
 	Role string `json:"role"`
-
-	// Scope specifies the resource(s) this binding should apply to. (or "*" for the azure subscription)
-	Scope string `json:"scope"`
 }
 
 // AzureProviderStatus contains the status of the credentials request in Azure.
@@ -52,4 +49,9 @@ type AzureProviderStatus struct {
 
 	// AppID is the application id of the service principal created in Azure for these credentials.
 	AppID string `json:"appID"`
+
+	// SecretLastResourceVersion is the resource version of the secret resource
+	// that was last synced. Used to determine if the object has changed and
+	// requires a sync.
+	SecretLastResourceVersion string `json:"secretLastResourceVersion"`
 }
