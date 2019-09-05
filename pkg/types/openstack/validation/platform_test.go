@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/openstack/validation/mock"
 )
@@ -170,7 +171,10 @@ func TestValidatePlatform(t *testing.T) {
 					MaxTimes(1)
 			}
 
-			err := ValidatePlatform(tc.platform, nil, field.NewPath("test-path"), fetcher).ToAggregate()
+			testConfig := types.InstallConfig{}
+			testConfig.ObjectMeta.Name = "test"
+
+			err := ValidatePlatform(tc.platform, nil, field.NewPath("test-path"), fetcher, &testConfig).ToAggregate()
 			if tc.valid {
 				assert.NoError(t, err)
 			} else {
