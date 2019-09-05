@@ -10,7 +10,7 @@ import (
 )
 
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field.Path, fetcher ValidValuesFetcher) field.ErrorList {
+func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field.Path, fetcher ValidValuesFetcher, c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	validClouds, err := fetcher.GetCloudNames()
 	if err != nil {
@@ -59,6 +59,10 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
+	}
+
+	if len(c.ObjectMeta.Name) > 14 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), c.ObjectMeta.Name, "metadata name is too long, please restrict it to 14 characters"))
 	}
 
 	return allErrs
