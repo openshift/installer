@@ -10,6 +10,10 @@ resource "aws_lb" "api_internal" {
     "Name", "${var.cluster_id}-int",
   ), var.tags)}"
 
+  timeouts {
+    create = "20m"
+  }
+
   depends_on = ["aws_internet_gateway.igw"]
 }
 
@@ -24,6 +28,10 @@ resource "aws_lb" "api_external" {
   tags = "${merge(map(
     "Name", "${var.cluster_id}-ext",
   ), var.tags)}"
+
+  timeouts {
+    create = "20m"
+  }
 
   depends_on = ["aws_internet_gateway.igw"]
 }
