@@ -108,7 +108,7 @@ include:
   https://github.com/metal3-io/baremetal-operator/blob/master/pkg/hardware/profile.go#L48
 
 ```yaml
-apiVersion: v1beta4
+apiVersion: v1
 baseDomain: test.metalkube.org
 metadata:
   name: ostest
