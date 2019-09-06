@@ -336,12 +336,13 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c75010dd8aa8622064eb44b7639e0b80b2aaf031c6462219fc94391c3fb6a303"
+  digest = "1:215e0c79e138993bdcc6914d5488284fd04c4b9ab2e15a6b432c49acbed62577"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
     "internal",
     "openstack",
+    "openstack/blockstorage/v3/volumes",
     "openstack/common/extensions",
     "openstack/compute/v2/flavors",
     "openstack/compute/v2/images",
@@ -1318,6 +1319,7 @@
     "github.com/ghodss/yaml",
     "github.com/golang/mock/gomock",
     "github.com/gophercloud/gophercloud",
+    "github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes",
     "github.com/gophercloud/gophercloud/openstack/common/extensions",
     "github.com/gophercloud/gophercloud/openstack/compute/v2/flavors",
     "github.com/gophercloud/gophercloud/openstack/compute/v2/servers",
