@@ -59,4 +59,11 @@ resource "google_compute_instance" "master" {
     email  = google_service_account.master-node-sa.email
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
+
+  lifecycle {
+    # In GCP TF apply is run a second time to remove bootstrap node from LB.
+    # If machine_type = n2-standard series, install will error as TF tries to
+    # switch min_cpu_platform = "Intel Cascade Lake" -> null. BZ-1746119.
+    ignore_changes = [min_cpu_platform]
+  }
 }
