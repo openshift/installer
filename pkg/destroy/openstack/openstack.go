@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 
 	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/apiversions"
 	"github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/loadbalancers"
@@ -130,6 +131,7 @@ func populateDeleteFuncs(funcs map[string]deleteFunc) {
 	funcs["deleteSubnetPools"] = deleteSubnetPools
 	funcs["deleteNetworks"] = deleteNetworks
 	funcs["deleteContainers"] = deleteContainers
+	funcs["deleteVolumes"] = deleteVolumes
 }
 
 // filterObjects will do client-side filtering given an appropriately filled out
@@ -767,4 +769,65 @@ func deleteSubnetPools(opts *clientconfig.ClientOpts, filter Filter, logger logr
 		}
 	}
 	return len(allSubnetPools) == 0, nil
+}
+
+func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+	logger.Debug("Deleting OpenStack volumes")
+	defer logger.Debugf("Exiting deleting OpenStack volumes")
+
+	// We need to delete all volumes that have names with the cluster ID as a prefix
+	var clusterID string
+	for k, v := range filter {
+		if strings.ToLower(k) == "openshiftclusterid" {
+			clusterID = v
+			break
+		}
+	}
+
+	conn, err := clientconfig.NewServiceClient("volume", opts)
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+
+	listOpts := volumes.ListOpts{}
+
+	allPages, err := volumes.List(conn, listOpts).AllPages()
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+
+	allVolumes, err := volumes.ExtractVolumes(allPages)
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+
+	volumeIDs := []string{}
+	prefix := clusterID + "-dynamic-pvc-"
+	for _, volume := range allVolumes {
+		if strings.HasPrefix(volume.Name, prefix) {
+			volumeIDs = append(volumeIDs, volume.ID)
+		}
+	}
+
+	deleteOpts := volumes.DeleteOpts{
+		Cascade: false,
+	}
+
+	for _, volumeID := range volumeIDs {
+		logger.Debugf("Deleting volume: %+v", volumeID)
+		err = volumes.Delete(conn, volumeID, deleteOpts).ExtractErr()
+		if err != nil {
+			// Ignore the error if the server cannot be found
+			if _, ok := err.(gophercloud.ErrDefault404); !ok {
+				logger.Debugf("Deleting volume failed: %v", err)
+				return false, nil
+			}
+			logger.Debugf("Cannot find volume %v. It's probably already been deleted.", volumeID)
+		}
+	}
+
+	return true, nil
 }
