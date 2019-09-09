@@ -289,11 +289,6 @@ variable "openstack_master_flavor_name" {
   description = "Instance size for the master node(s). Example: `m1.medium`."
 }
 
-variable "openstack_region" {
-  type        = string
-  description = "The target OpenStack region for the cluster."
-}
-
 variable "openstack_trunk_support" {
   type = string
 

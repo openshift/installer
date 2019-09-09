@@ -47,21 +47,6 @@ func (mr *MockValidValuesFetcherMockRecorder) GetCloudNames() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCloudNames", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetCloudNames))
 }
 
-// GetRegionNames mocks base method
-func (m *MockValidValuesFetcher) GetRegionNames(cloud string) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRegionNames", cloud)
-	ret0, _ := ret[0].([]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetRegionNames indicates an expected call of GetRegionNames
-func (mr *MockValidValuesFetcherMockRecorder) GetRegionNames(cloud interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRegionNames", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetRegionNames), cloud)
-}
-
 // GetNetworkNames mocks base method
 func (m *MockValidValuesFetcher) GetNetworkNames(cloud string) ([]string, error) {
 	m.ctrl.T.Helper()

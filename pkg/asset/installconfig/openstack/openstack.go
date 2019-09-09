@@ -44,33 +44,6 @@ func Platform() (*openstack.Platform, error) {
 		return nil, err
 	}
 
-	regionNames, err := validValuesFetcher.GetRegionNames(cloud)
-	if err != nil {
-		return nil, err
-	}
-	sort.Strings(regionNames)
-	var region string
-	err = survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Select{
-				Message: "Region",
-				Help:    "The OpenStack region to be used for installation.",
-				Options: regionNames,
-			},
-			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				value := ans.(string)
-				i := sort.SearchStrings(regionNames, value)
-				if i == len(regionNames) || regionNames[i] != value {
-					return errors.Errorf("invalid region name %q, should be one of %+v", value, strings.Join(regionNames, ", "))
-				}
-				return nil
-			}),
-		},
-	}, &region)
-	if err != nil {
-		return nil, err
-	}
-
 	networkNames, err := validValuesFetcher.GetNetworkNames(cloud)
 	if err != nil {
 		return nil, err
@@ -179,7 +152,6 @@ func Platform() (*openstack.Platform, error) {
 	}
 
 	return &openstack.Platform{
-		Region:          region,
 		Cloud:           cloud,
 		ExternalNetwork: extNet,
 		FlavorName:      flavor,

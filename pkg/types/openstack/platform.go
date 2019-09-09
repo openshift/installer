@@ -4,6 +4,7 @@ package openstack
 // machinesets use.
 type Platform struct {
 	// Region specifies the OpenStack region where the cluster will be created.
+	// Deprecated: this value is not used by the installer.
 	Region string `json:"region"`
 
 	// DefaultMachinePlatform is the default configuration used when

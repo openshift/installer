@@ -6,8 +6,6 @@ package validation
 type ValidValuesFetcher interface {
 	// GetCloudNames gets the valid cloud names.
 	GetCloudNames() ([]string, error)
-	// GetRegionNames gets the valid region names.
-	GetRegionNames(cloud string) ([]string, error)
 	// GetNetworkNames gets the valid network names.
 	GetNetworkNames(cloud string) ([]string, error)
 	// GetFlavorNames gets the valid flavor names.
