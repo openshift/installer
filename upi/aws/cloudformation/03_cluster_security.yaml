@@ -114,6 +114,26 @@ Resources:
       ToPort: 4789
       IpProtocol: udp
 
+  MasterIngressGeneve:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Geneve packets
+      FromPort: 6081
+      ToPort: 6081
+      IpProtocol: udp
+
+  MasterIngressWorkerGeneve:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Geneve packets
+      FromPort: 6081
+      ToPort: 6081
+      IpProtocol: udp
+
   MasterIngressInternal:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -184,7 +204,7 @@ Resources:
       ToPort: 4789
       IpProtocol: udp
 
-  WorkerIngressWorkerVxlan:
+  WorkerIngressMasterVxlan:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId: !GetAtt WorkerSecurityGroup.GroupId
@@ -192,6 +212,26 @@ Resources:
       Description: Vxlan packets
       FromPort: 4789
       ToPort: 4789
+      IpProtocol: udp
+
+  WorkerIngressGeneve:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Geneve packets
+      FromPort: 6081
+      ToPort: 6081
+      IpProtocol: udp
+
+  WorkerIngressMasterGeneve:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Geneve packets
+      FromPort: 6081
+      ToPort: 6081
       IpProtocol: udp
 
   WorkerIngressInternal:
