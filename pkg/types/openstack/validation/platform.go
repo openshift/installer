@@ -18,12 +18,6 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 	} else if !isValidValue(p.Cloud, validClouds) {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("cloud"), p.Cloud, validClouds))
 	} else {
-		validRegions, err := fetcher.GetRegionNames(p.Cloud)
-		if err != nil {
-			allErrs = append(allErrs, field.InternalError(fldPath.Child("region"), errors.New("could not retrieve valid regions")))
-		} else if !isValidValue(p.Region, validRegions) {
-			allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, validRegions))
-		}
 		validNetworks, err := fetcher.GetNetworkNames(p.Cloud)
 		if err != nil {
 			allErrs = append(allErrs, field.InternalError(fldPath.Child("externalNetwork"), errors.New("could not retrieve valid networks")))

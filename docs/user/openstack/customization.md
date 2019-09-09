@@ -10,7 +10,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `externalNetwork` (required string): The OpenStack external network name to be used for installation.
 * `lbFloatingIP` (required string): Existing Floating IP to associate with the API load balancer.
 * `octaviaSupport` (optional string): Whether OpenStack supports Octavia (`1` for true or `0` for false)
-* `region` (required string): The OpenStack region where the cluster will be created.
+* `region` (deprecated string): The OpenStack region where the cluster will be created. Currently this value is not used by the installer.
 * `trunkSupport` (optional string): Whether OpenStack ports can be trunked (`1` for true or `0` for false)
 
 ## Machine pools

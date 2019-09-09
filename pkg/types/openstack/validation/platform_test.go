@@ -15,7 +15,6 @@ import (
 
 func validPlatform() *openstack.Platform {
 	return &openstack.Platform{
-		Region:          "test-region",
 		Cloud:           "test-cloud",
 		ExternalNetwork: "test-network",
 		FlavorName:      "test-flavor",
@@ -27,7 +26,6 @@ func TestValidatePlatform(t *testing.T) {
 		name             string
 		platform         *openstack.Platform
 		noClouds         bool
-		noRegions        bool
 		noNetworks       bool
 		noFlavors        bool
 		noNetExts        bool
@@ -38,15 +36,6 @@ func TestValidatePlatform(t *testing.T) {
 			name:     "minimal",
 			platform: validPlatform(),
 			valid:    true,
-		},
-		{
-			name: "missing region",
-			platform: func() *openstack.Platform {
-				p := validPlatform()
-				p.Region = ""
-				return p
-			}(),
-			valid: false,
 		},
 		{
 			name: "missing cloud",
@@ -80,12 +69,6 @@ func TestValidatePlatform(t *testing.T) {
 			platform: validPlatform(),
 			noClouds: true,
 			valid:    false,
-		},
-		{
-			name:      "regions fetch failure",
-			platform:  validPlatform(),
-			noRegions: true,
-			valid:     false,
 		},
 		{
 			name:       "networks fetch failure",
@@ -124,15 +107,6 @@ func TestValidatePlatform(t *testing.T) {
 			} else {
 				fetcher.EXPECT().GetCloudNames().
 					Return([]string{"test-cloud"}, nil)
-			}
-			if tc.noRegions {
-				fetcher.EXPECT().GetRegionNames(tc.platform.Cloud).
-					Return(nil, errors.New("no regions")).
-					MaxTimes(1)
-			} else {
-				fetcher.EXPECT().GetRegionNames(tc.platform.Cloud).
-					Return([]string{"test-region"}, nil).
-					MaxTimes(1)
 			}
 			if tc.noNetworks {
 				fetcher.EXPECT().GetNetworkNames(tc.platform.Cloud).

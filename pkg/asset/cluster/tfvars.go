@@ -262,7 +262,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		data, err = openstacktfvars.TFVars(
 			masters[0].Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec),
 			installConfig.Config.Platform.OpenStack.Cloud,
-			installConfig.Config.Platform.OpenStack.Region,
 			installConfig.Config.Platform.OpenStack.ExternalNetwork,
 			installConfig.Config.Platform.OpenStack.LbFloatingIP,
 			apiVIP.String(),

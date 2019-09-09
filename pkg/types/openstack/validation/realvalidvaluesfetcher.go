@@ -5,7 +5,6 @@ import (
 
 	"github.com/gophercloud/gophercloud/openstack/common/extensions"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
-	"github.com/gophercloud/gophercloud/openstack/identity/v3/regions"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	netext "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
@@ -33,36 +32,6 @@ func (f realValidValuesFetcher) GetCloudNames() ([]string, error) {
 		i++
 	}
 	return cloudNames, nil
-}
-
-// GetRegionNames gets the valid region names.
-func (f realValidValuesFetcher) GetRegionNames(cloud string) ([]string, error) {
-	opts := &clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
-
-	conn, err := clientconfig.NewServiceClient("identity", opts)
-	if err != nil {
-		return nil, err
-	}
-
-	listOpts := regions.ListOpts{}
-	allPages, err := regions.List(conn, listOpts).AllPages()
-	if err != nil {
-		return nil, err
-	}
-
-	allRegions, err := regions.ExtractRegions(allPages)
-	if err != nil {
-		return nil, err
-	}
-
-	regionNames := make([]string, len(allRegions))
-	for x, region := range allRegions {
-		regionNames[x] = region.ID
-	}
-
-	return regionNames, nil
 }
 
 // GetNetworkNames gets the valid network names.
