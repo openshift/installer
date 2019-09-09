@@ -27,13 +27,13 @@ type MachinePool struct {
 	// For the compute machine pools, the only valid name is "worker".
 	Name string `json:"name"`
 
-	// Replicas is the count of machines for this machine pool.
+	// Replicas is the machine count for the machine pool.
 	Replicas *int64 `json:"replicas,omitempty"`
 
 	// Platform is configuration for machine pool specific to the platform.
 	Platform MachinePoolPlatform `json:"platform"`
 
-	// Hyperthreading determines the mode of hyperthreading that machines in this
+	// Hyperthreading determines the mode of hyperthreading that machines in the
 	// pool will utilize.
 	// +optional
 	// Default is for hyperthreading to be enabled.

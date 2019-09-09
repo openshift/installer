@@ -1,18 +1,50 @@
 # AWS Platform Customization
 
-The following options are available when using AWS:
+Beyond the [platform-agnostic `install-config.yaml` properties](../customization.md#platform-customization), the installer supports additional, AWS-specific properties.
 
-- `machines.platform.aws.rootVolume.iops` - the reserved IOPS of the root volume
-- `machines.platform.aws.rootVolume.size` - the size (in GiB) of the root volume
-- `machines.platform.aws.rootVolume.type` - the storage type of the root volume
-- `machines.platform.aws.type` - the EC2 instance type
-- `machines.platform.aws.zones` - a list of the availability zones that the installer will use when creating machines of this pool
-- `platform.aws.region` - the AWS region that the installer will use when creating resources
-- `platform.aws.userTags` - a map of keys and values that the installer will add as tags to all resources it creates
+## Cluster-scoped properties
+
+* `amiID` (optional string): The AMI that should be used to boot machines for the cluster.
+    If set, the AMI should belong to the same region as the cluster.
+* `region` (required string): The AWS region where the cluster will be created.
+* `userTags` (optional object): Additional keys and values that the installer will add as tags to all resources that it creates.
+    Resources created by the cluster itself may not include these tags.
+* `defaultMachinePlatform` (optional object): Default [AWS-specific machine pool properties](#machine-pools) which applies to [machine pools](../customization.md#machine-pools) that do not define their own AWS-specific properties.
+
+## Machine pools
+
+* `rootVolume` (optional object): Defines the root volume for EC2 instances in the machine pool.
+    * `iops` (optional integer): The amount of provisioned [IOPS][volume-iops].
+        This is only valid for `type` `io1`.
+    * `size` (optional integer): Size of the root volume in gibibytes (GiB).
+    * `type` (optional string):  The [type of volume][volume-type].
+* `type` (optional string): The [EC2 instance type][instance-type].
+* `zones` (optional array of strings): The availability zones used for machines in the pool.
 
 ## Examples
 
-An example `install-config.yaml` is shown below. This configuration has been modified to show the customization that is possible via the install config.
+Some example `install-config.yaml` are shown below.
+For examples of platform-agnostic configuration fragments, see [here](../customization.md#examples).
+
+### Minimal
+
+An example minimal AWS install config is:
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+metadata:
+  name: test-cluster
+platform:
+  aws:
+    region: us-west-2
+pullSecret: '{"auths": ...}'
+sshKey: ssh-ed25519 AAAA...
+```
+
+### Custom machine pools
+
+An example AWS install config with custom machine pools:
 
 ```yaml
 apiVersion: v1
@@ -40,20 +72,14 @@ compute:
   replicas: 5
 metadata:
   name: test-cluster
-networking:
-  clusterNetwork:
-  - cidr: 10.128.0.0/14
-    hostPrefix: 23
-  machineCIDR: 10.0.0.0/16
-  serviceNetwork:
-  - 172.30.0.0/16
-  networkType: OpenShiftSDN
 platform:
   aws:
     region: us-west-2
-    userTags:
-      adminContact: jdoe
-      costCenter: 7536
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
+
+[availablity-zones]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html
+[instance-type]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html
+[volume-iops]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-io-characteristics.html
+[volume-type]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html

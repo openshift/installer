@@ -1,15 +1,46 @@
 # Azure Platform Customization
 
+Beyond the [platform-agnostic `install-config.yaml` properties](../customization.md#platform-customization), the installer supports additional, Azure-specific properties.
+
+## Cluster-scoped properties
+
 The following options are available when using Azure:
 
-- `machines.platform.azure.type` - the VM instance type
-- `machines.platform.azure.osDisk.diskSizeGB` - The Azure OS disk size in Gigabytes
-- `platform.azure.region` - the Azure region (location) that the installer will use when creating resource group and resources
-- `platform.azure.baseDomainResourceGroupName` - the Azure Resource Group that has the public DNS zone for base domain
+* `region` (required string): The Azure region where the cluster will be created.
+* `baseDomainResourceGroupName` (required string): The resource group where the Azure DNS zone for the base domain is found.
+* `defaultMachinePlatform` (optional object): Default [Azure-specific machine pool properties](#machine-pools) which applies to [machine pools](../customization.md#machine-pools) that do not define their own Azure-specific properties.
+
+## Machine pools
+
+* `osDisk` (optional object):
+    * `diskSizeGB` (optional integer): The size of the disk in gigabytes (GB).
+* `type` (optional string): The Azure instance type.
 
 ## Examples
 
-An example `install-config.yaml` is shown below. This configuration has been modified to show the customization that is possible via the install config.
+Some example `install-config.yaml` are shown below.
+For examples of platform-agnostic configuration fragments, see [here](../customization.md#examples).
+
+### Minimal
+
+An example minimal Azure install config is:
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+metadata:
+  name: test-cluster
+platform:
+  azure:
+    region: centralus
+    baseDomainResourceGroupName: os4-common
+pullSecret: '{"auths": ...}'
+sshKey: ssh-ed25519 AAAA...
+```
+
+### Custom machine pools
+
+An example Azure install config with custom machine pools:
 
 ```yaml
 apiVersion: v1
@@ -32,14 +63,6 @@ compute:
   replicas: 5
 metadata:
   name: test-cluster
-networking:
-  clusterNetwork:
-  - cidr: 10.128.0.0/14
-    hostPrefix: 23
-  machineCIDR: 10.0.0.0/16
-  serviceNetwork:
-  - 172.30.0.0/16
-  networkType: OpenShiftSDN
 platform:
   azure:
     region: centralus

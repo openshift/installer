@@ -54,14 +54,15 @@ type InstallConfig struct {
 	// +optional
 	AdditionalTrustBundle string `json:"additionalTrustBundle,omitempty"`
 
-	// SSHKey is the public ssh key to provide access to instances.
+	// SSHKey is the public Secure Shell (SSH) key to provide access to instances.
 	// +optional
 	SSHKey string `json:"sshKey,omitempty"`
 
 	// BaseDomain is the base domain to which the cluster should belong.
 	BaseDomain string `json:"baseDomain"`
 
-	// Networking defines the pod network provider in the cluster.
+	// Networking is the configuration for the pod network provider in
+	// the cluster.
 	*Networking `json:"networking,omitempty"`
 
 	// ControlPlane is the configuration for the machines that comprise the
@@ -69,7 +70,8 @@ type InstallConfig struct {
 	// +optional
 	ControlPlane *MachinePool `json:"controlPlane,omitempty"`
 
-	// Compute is the list of compute MachinePools that need to be installed.
+	// Compute is the configuration for the machines that comprise the
+	// compute nodes.
 	// +optional
 	Compute []MachinePool `json:"compute,omitempty"`
 
@@ -86,6 +88,7 @@ type InstallConfig struct {
 	Proxy *Proxy `json:"proxy,omitempty"`
 
 	// ImageContentSources lists sources/repositories for the release-image content.
+	// +optional
 	ImageContentSources []ImageContentSource `json:"imageContentSources,omitempty"`
 }
 
@@ -160,10 +163,10 @@ func (p *Platform) Name() string {
 
 // Networking defines the pod network provider in the cluster.
 type Networking struct {
-	// MachineCIDR is the IP address space from which to assign machine IPs.
+	// MachineCIDR is the IP address pool for machines.
 	// +optional
-	// Default is 10.0.0.0/16 for all platforms other than Libvirt.
-	// For Libvirt, the default is 192.168.126.0/24.
+	// Default is 10.0.0.0/16 for all platforms other than libvirt.
+	// For libvirt, the default is 192.168.126.0/24.
 	MachineCIDR *ipnet.IPNet `json:"machineCIDR,omitempty"`
 
 	// NetworkType is the type of network to install.
@@ -171,14 +174,14 @@ type Networking struct {
 	// Default is OpenShiftSDN.
 	NetworkType string `json:"networkType,omitempty"`
 
-	// ClusterNetwork is the IP address pool to use for pod IPs.
+	// ClusterNetwork is the IP address pool for pods.
 	// +optional
-	// Default is 10.128.0.0/14 and a host prefix of /23
+	// Default is 10.128.0.0/14 and a host prefix of /23.
 	ClusterNetwork []ClusterNetworkEntry `json:"clusterNetwork,omitempty"`
 
-	// ServiceNetwork is the IP address pool to use for service IPs.
+	// ServiceNetwork is the IP address pool for services.
 	// +optional
-	// Default is 172.30.0.0/16
+	// Default is 172.30.0.0/16.
 	// NOTE: currently only one entry is supported.
 	ServiceNetwork []ipnet.IPNet `json:"serviceNetwork,omitempty"`
 
@@ -200,7 +203,7 @@ type Networking struct {
 // ClusterNetworkEntry is a single IP address block for pod IP blocks. IP blocks
 // are allocated with size 2^HostSubnetLength.
 type ClusterNetworkEntry struct {
-	// The IP block address pool
+	// CIDR is the IP block address pool.
 	CIDR ipnet.IPNet `json:"cidr"`
 
 	// HostPrefix is the prefix size to allocate to each node from the CIDR.
