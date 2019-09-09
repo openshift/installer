@@ -2,6 +2,7 @@ package openstack
 
 import (
 	"bytes"
+	"strconv"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
@@ -59,7 +60,7 @@ func CloudProviderConfigSecret(cloud *clientconfig.Cloud) ([]byte, error) {
 			AuthURL:    cloud.AuthInfo.AuthURL,
 			Username:   cloud.AuthInfo.Username,
 			UserID:     cloud.AuthInfo.UserID,
-			Password:   cloud.AuthInfo.Password,
+			Password:   strconv.Quote(cloud.AuthInfo.Password),
 			TenantID:   cloud.AuthInfo.ProjectID,
 			TenantName: cloud.AuthInfo.ProjectName,
 			DomainID:   domainID,
