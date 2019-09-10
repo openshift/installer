@@ -5,8 +5,8 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 ## Cluster-scoped properties
 
 * `cloud` (required string): The name of the OpenStack cloud to use from `clouds.yaml`.
-* `computeFlavor` (required string): The OpenStack compute flavor to use for control-plane machines.
-    This is currently required, but has lower precedence than [the `type` property](#machine-pools) on [the `controlPlane` machine-pool](../customization.md#platform-customization).
+* `computeFlavor` (required string): The OpenStack flavor to use for compute and control-plane machines.
+    This is currently required, but has lower precedence than [the `type` property](#machine-pools) on [the `compute` and `controlPlane` machine-pools](../customization.md#platform-customization).
 * `externalNetwork` (required string): The OpenStack external network name to be used for installation.
 * `lbFloatingIP` (required string): Existing Floating IP to associate with the API load balancer.
 * `octaviaSupport` (optional string): Whether OpenStack supports Octavia (`1` for true or `0` for false)
