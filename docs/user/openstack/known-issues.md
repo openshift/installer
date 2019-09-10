@@ -16,7 +16,7 @@ Due to Terraform not being up to date with Ignition v2.2.0, we are unable to use
 
 ## External Network Overlap
 
-If your external network's CIDR range is the same as one of the default network ranges, then you will need to change the matching network range by running the installer with a custom install-config.yaml. If users are experiencing unusual networking problems, please contact your cluster administrator and validate that none of your network CIDRs are overlapping with the external network. We were unfortunately unable to support validation for this due to a lack of support in gophercloud, and even if we were, it is likely that the CIDR range of the floating ip would only be accessable cluster administrators. The default network CIDR
+If your external network's CIDR range is the same as one of the default network ranges, then you will need to change the matching network range by running the installer with a custom `install-config.yaml`. If users are experiencing unusual networking problems, please contact your cluster administrator and validate that none of your network CIDRs are overlapping with the external network. We were unfortunately unable to support validation for this due to a lack of support in gophercloud, and even if we were, it is likely that the CIDR range of the floating ip would only be accessable cluster administrators. The default network CIDR
 are as follows:
 
 ```txt
@@ -24,3 +24,9 @@ machineCIDR:    10.0.0.0/16
 serviceNetwork: 172.30.0.0/16
 clusterNetwork: 10.128.0.0/14
 ```
+
+## Ceph RGW and Swift temp-url
+
+The [account in url](https://docs.ceph.com/docs/master/radosgw/config-ref/#swift-settings) option must be enabled in Ceph RGW in order to use public-readable containers needed for temporary URLs.
+
+This setting wasn't enabled by default [prior to OSP15](https://bugs.launchpad.net/tripleo/+bug/1826894). We are working on removing the need for Swift temp-url in [PR #2311](https://github.com/openshift/installer/pull/2311).
