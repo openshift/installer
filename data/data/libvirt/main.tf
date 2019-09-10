@@ -55,7 +55,7 @@ resource "libvirt_network" "net" {
     local_only = true
 
     dynamic "srvs" {
-      for_each = concat(data.libvirt_network_dns_srv_template.etcd_masters.*.rendered, data.libvirt_network_dns_srv_template.etcd_bootstrap.*.rendered)
+      for_each = data.libvirt_network_dns_srv_template.etcd_masters.*.rendered
       content {
         domain   = srvs.value.domain
         port     = srvs.value.port
@@ -74,6 +74,7 @@ resource "libvirt_network" "net" {
         data.libvirt_network_dns_host_template.masters.*.rendered,
         data.libvirt_network_dns_host_template.masters_int.*.rendered,
         data.libvirt_network_dns_host_template.etcds.*.rendered,
+        data.libvirt_network_dns_host_template.etcd_bootstrap.*.rendered,
       )
       content {
         hostname = hosts.value.hostname
@@ -118,7 +119,7 @@ resource "libvirt_domain" "master" {
 data "libvirt_network_dns_host_template" "bootstrap" {
   count    = var.bootstrap_dns ? 1 : 0
   ip       = var.libvirt_bootstrap_ip
-  hostname = "bootstrap.${var.cluster_domain}"
+  hostname = "api.${var.cluster_domain}"
 }
 
 data "libvirt_network_dns_host_template" "bootstrap_api" {
@@ -151,6 +152,12 @@ data "libvirt_network_dns_host_template" "etcds" {
   hostname = "etcd-${count.index}.${var.cluster_domain}"
 }
 
+data "libvirt_network_dns_host_template" "etcd_bootstrap" {
+  count    = var.bootstrap_dns ? 1 : 0
+  ip       = var.libvirt_bootstrap_ip
+  hostname = "etcd-bootstrap.${var.cluster_domain}"
+}
+
 data "libvirt_network_dns_srv_template" "etcd_masters" {
   count    = var.master_count
   service  = "etcd-server-ssl"
@@ -160,14 +167,3 @@ data "libvirt_network_dns_srv_template" "etcd_masters" {
   weight   = 10
   target   = "etcd-${count.index}.${var.cluster_domain}"
 }
-
-data "libvirt_network_dns_srv_template" "etcd_bootstrap" {
-  count    = 1
-  service  = "etcd-server-ssl"
-  protocol = "tcp"
-  domain   = var.cluster_domain
-  port     = 2380
-  weight   = 10
-  target   = "bootstrap.${var.cluster_domain}"
-}
-
