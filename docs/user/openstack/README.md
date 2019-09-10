@@ -281,7 +281,7 @@ oc get nodes
 To see the version of your OpenShift cluster, do:
 
 ```sh
-oc get cluster version
+oc get clusterversion
 ```
 
 To see the status of you operators, do:
