@@ -965,31 +965,45 @@ func deleteEC2SecurityGroup(client *ec2.EC2, id string, logger logrus.FieldLogge
 	}
 
 	for _, group := range response.SecurityGroups {
-		if len(group.IpPermissions) > 0 {
-			_, err := client.RevokeSecurityGroupIngress(&ec2.RevokeSecurityGroupIngressInput{
-				GroupId:       group.GroupId,
-				IpPermissions: group.IpPermissions,
-			})
-			if err != nil {
-				return errors.Wrap(err, "revoking ingress permissions")
-			}
-			logger.Debug("Revoked ingress permissions")
-		}
-
-		if len(group.IpPermissionsEgress) > 0 {
-			_, err := client.RevokeSecurityGroupEgress(&ec2.RevokeSecurityGroupEgressInput{
-				GroupId:       group.GroupId,
-				IpPermissions: group.IpPermissionsEgress,
-			})
-			if err != nil {
-				return errors.Wrap(err, "revoking egress permissions")
-			}
-			logger.Debug("Revoked egress permissions")
+		err = deleteEC2SecurityGroupObject(client, group, logger)
+		if err != nil {
+			return err
 		}
 	}
 
-	_, err = client.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
-		GroupId: aws.String(id),
+	return nil
+}
+
+func deleteEC2SecurityGroupObject(client *ec2.EC2, group *ec2.SecurityGroup, logger logrus.FieldLogger) error {
+	if group.GroupName != nil && *group.GroupName == "default" {
+		logger.Debug("Skipping default security group")
+		return nil
+	}
+
+	if len(group.IpPermissions) > 0 {
+		_, err := client.RevokeSecurityGroupIngress(&ec2.RevokeSecurityGroupIngressInput{
+			GroupId:       group.GroupId,
+			IpPermissions: group.IpPermissions,
+		})
+		if err != nil {
+			return errors.Wrap(err, "revoking ingress permissions")
+		}
+		logger.Debug("Revoked ingress permissions")
+	}
+
+	if len(group.IpPermissionsEgress) > 0 {
+		_, err := client.RevokeSecurityGroupEgress(&ec2.RevokeSecurityGroupEgressInput{
+			GroupId:       group.GroupId,
+			IpPermissions: group.IpPermissionsEgress,
+		})
+		if err != nil {
+			return errors.Wrap(err, "revoking egress permissions")
+		}
+		logger.Debug("Revoked egress permissions")
+	}
+
+	_, err := client.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
+		GroupId: group.GroupId,
 	})
 	if err != nil {
 		if err.(awserr.Error).Code() == "InvalidGroup.NotFound" {
@@ -1000,6 +1014,41 @@ func deleteEC2SecurityGroup(client *ec2.EC2, id string, logger logrus.FieldLogge
 
 	logger.Info("Deleted")
 	return nil
+}
+
+func deleteEC2SecurityGroupsByVPC(client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
+	var lastError error
+	err := client.DescribeSecurityGroupsPages(
+		&ec2.DescribeSecurityGroupsInput{
+			Filters: []*ec2.Filter{
+				{
+					Name:   aws.String("vpc-id"),
+					Values: []*string{&vpc},
+				},
+			},
+		},
+		func(results *ec2.DescribeSecurityGroupsOutput, lastPage bool) bool {
+			for _, group := range results.SecurityGroups {
+				err := deleteEC2SecurityGroupObject(client, group, logger.WithField("security group", *group.GroupId))
+				if err != nil {
+					if lastError != nil {
+						logger.Debug(err)
+					}
+					lastError = errors.Wrapf(err, "deleting EC2 security group %s", *group.GroupId)
+					if failFast {
+						return false
+					}
+				}
+			}
+
+			return !lastPage
+		},
+	)
+
+	if lastError != nil {
+		return lastError
+	}
+	return err
 }
 
 func deleteEC2Snapshot(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
@@ -1082,6 +1131,35 @@ func deleteEC2Subnet(client *ec2.EC2, id string, logger logrus.FieldLogger) erro
 	return nil
 }
 
+func deleteEC2SubnetsByVPC(client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
+	// FIXME: port to DescribeSubnetsPages once we bump our vendored AWS package past v1.19.30
+	results, err := client.DescribeSubnets(
+		&ec2.DescribeSubnetsInput{
+			Filters: []*ec2.Filter{
+				{
+					Name:   aws.String("vpc-id"),
+					Values: []*string{&vpc},
+				},
+			},
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, subnet := range results.Subnets {
+		err := deleteEC2Subnet(client, *subnet.SubnetId, logger.WithField("subnet", *subnet.SubnetId))
+		if err != nil {
+			err = errors.Wrapf(err, "deleting EC2 subnet %s", *subnet.SubnetId)
+			if failFast {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func deleteEC2Volume(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
 	_, err := client.DeleteVolume(&ec2.DeleteVolumeInput{
 		VolumeId: aws.String(id),
@@ -1114,6 +1192,8 @@ func deleteEC2VPC(ec2Client *ec2.EC2, elbClient *elb.ELB, elbv2Client *elbv2.ELB
 		deleteEC2NATGatewaysByVPC,      // not always tagged
 		deleteEC2NetworkInterfaceByVPC, // not always tagged
 		deleteEC2RouteTablesByVPC,      // not always tagged
+		deleteEC2SecurityGroupsByVPC,   // not always tagged
+		deleteEC2SubnetsByVPC,          // not always tagged
 		deleteEC2VPCEndpointsByVPC,     // not taggable
 	} {
 		err := helper(ec2Client, id, true, logger)
