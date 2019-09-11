@@ -10,8 +10,7 @@ import (
 // Metadata converts an install configuration to OpenStack metadata.
 func Metadata(infraID string, config *types.InstallConfig) *openstack.Metadata {
 	return &openstack.Metadata{
-		Region: config.Platform.OpenStack.Region,
-		Cloud:  config.Platform.OpenStack.Cloud,
+		Cloud: config.Platform.OpenStack.Cloud,
 		Identifier: map[string]string{
 			"openshiftClusterID": infraID,
 		},
