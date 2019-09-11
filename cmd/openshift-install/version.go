@@ -25,8 +25,9 @@ func runVersionCmd(cmd *cobra.Command, args []string) error {
 	if version.Commit != "" {
 		fmt.Printf("built from commit %s\n", version.Commit)
 	}
-	if image, err := releaseimage.Default(); err == nil {
+	if image, releaseName, err := releaseimage.Default(); err == nil {
 		fmt.Printf("release image %s\n", image)
+		fmt.Printf("release %s\n", releaseName)
 	}
 	return nil
 }

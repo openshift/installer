@@ -31,7 +31,7 @@ func (a *Image) Generate(dependencies asset.Parents) error {
 		pullSpec = ri
 	} else {
 		var err error
-		pullSpec, err = Default()
+		pullSpec, _, err = Default()
 		if err != nil {
 			return errors.Wrap(err, "failed to load default release image")
 		}
