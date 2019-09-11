@@ -1188,15 +1188,18 @@ func deleteEC2VPC(ec2Client *ec2.EC2, elbClient *elb.ELB, elbv2Client *elbv2.ELB
 		return v2lbError
 	}
 
-	for _, helper := range [](func(client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error){
-		deleteEC2NATGatewaysByVPC,      // not always tagged
-		deleteEC2NetworkInterfaceByVPC, // not always tagged
-		deleteEC2RouteTablesByVPC,      // not always tagged
-		deleteEC2SecurityGroupsByVPC,   // not always tagged
-		deleteEC2SubnetsByVPC,          // not always tagged
-		deleteEC2VPCEndpointsByVPC,     // not taggable
+	for _, child := range []struct {
+		helper   func(client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error
+		failFast bool
+	}{
+		{helper: deleteEC2NATGatewaysByVPC, failFast: true},      // not always tagged
+		{helper: deleteEC2NetworkInterfaceByVPC, failFast: true}, // not always tagged
+		{helper: deleteEC2RouteTablesByVPC, failFast: true},      // not always tagged
+		{helper: deleteEC2SecurityGroupsByVPC, failFast: false},  // not always tagged
+		{helper: deleteEC2SubnetsByVPC, failFast: true},          // not always tagged
+		{helper: deleteEC2VPCEndpointsByVPC, failFast: true},     // not taggable
 	} {
-		err := helper(ec2Client, id, true, logger)
+		err := child.helper(ec2Client, id, child.failFast, logger)
 		if err != nil {
 			return err
 		}
