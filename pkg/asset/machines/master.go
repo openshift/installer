@@ -266,8 +266,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		return fmt.Errorf("invalid Platform")
 	}
 
-	userDataMap := map[string][]byte{"master-user-data": mign.File.Data}
-	data, err := userDataList(userDataMap)
+	data, err := userDataSecret("master-user-data", mign.File.Data)
 	if err != nil {
 		return errors.Wrap(err, "failed to create user-data secret for master machines")
 	}

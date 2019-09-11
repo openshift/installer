@@ -260,8 +260,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 	}
 
-	userDataMap := map[string][]byte{"worker-user-data": wign.File.Data}
-	data, err := userDataList(userDataMap)
+	data, err := userDataSecret("worker-user-data", wign.File.Data)
 	if err != nil {
 		return errors.Wrap(err, "failed to create user-data secret for worker machines")
 	}
