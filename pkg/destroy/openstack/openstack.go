@@ -132,6 +132,7 @@ func populateDeleteFuncs(funcs map[string]deleteFunc) {
 	funcs["deleteNetworks"] = deleteNetworks
 	funcs["deleteContainers"] = deleteContainers
 	funcs["deleteVolumes"] = deleteVolumes
+	funcs["deleteFloatingIPs"] = deleteFloatingIPs
 }
 
 // filterObjects will do client-side filtering given an appropriately filled out
@@ -830,4 +831,44 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	}
 
 	return true, nil
+}
+
+func deleteFloatingIPs(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+	logger.Debug("Deleting openstack floating ips")
+	defer logger.Debugf("Exiting deleting openstack floating ips")
+
+	conn, err := clientconfig.NewServiceClient("network", opts)
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+	tags := filterTags(filter)
+	listOpts := floatingips.ListOpts{
+		TagsAny: strings.Join(tags, ","),
+	}
+
+	allPages, err := floatingips.List(conn, listOpts).AllPages()
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+
+	allFloatingIPs, err := floatingips.ExtractFloatingIPs(allPages)
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+	for _, floatinIP := range allFloatingIPs {
+		logger.Debugf("Deleting Floating IP: %+v", floatinIP.ID)
+		err = floatingips.Delete(conn, floatinIP.ID).ExtractErr()
+		if err != nil {
+			// Ignore the error if the floating ip cannot be found
+			if _, ok := err.(gophercloud.ErrDefault404); !ok {
+				logger.Debugf("Deleting floating ip failed: %v", err)
+				return false, nil
+			}
+			logger.Debugf("Cannot find floating ip %v. It's probably already been deleted.", floatinIP.ID)
+		}
+	}
+	return len(allFloatingIPs) == 0, nil
 }
