@@ -62,26 +62,28 @@ resource "google_compute_firewall" "master_ingress_mcs" {
   target_tags   = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "master_ingress_vxlan" {
-  name    = "${var.cluster_id}-master-in-vxlan"
+resource "google_compute_firewall" "master_ingress_overlay" {
+  name    = "${var.cluster_id}-master-in-overlay"
   network = google_compute_network.cluster_network.self_link
 
+  # allow VXLAN and GENEVE
   allow {
     protocol = "udp"
-    ports    = ["4789"]
+    ports    = ["4789", "6081"]
   }
 
   source_tags = ["${var.cluster_id}-master"]
   target_tags = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "master_ingress_vxlan_from_worker" {
-  name    = "${var.cluster_id}-master-in-vxlan-from-worker"
+resource "google_compute_firewall" "master_ingress_overlay_from_worker" {
+  name    = "${var.cluster_id}-master-in-overlay-from-worker"
   network = google_compute_network.cluster_network.self_link
 
+  # allow VXLAN and GENEVE
   allow {
     protocol = "udp"
-    ports    = ["4789"]
+    ports    = ["4789", "6081"]
   }
 
   source_tags = ["${var.cluster_id}-worker"]

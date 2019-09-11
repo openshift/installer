@@ -64,25 +64,25 @@ def GenerateConfig(context):
             'targetTags': [context.properties['infra_id'] + '-master']
         }
     }, {
-        'name': context.properties['infra_id'] + '-master-in-vxlan',
+        'name': context.properties['infra_id'] + '-master-in-overlay',
         'type': 'compute.v1.firewall',
         'properties': {
             'network': context.properties['cluster_network'],
             'allowed': [{
                 'IPProtocol': 'udp',
-                'ports': ['4789']
+                'ports': ['4789', '6081']
             }],
             'sourceTags': [context.properties['infra_id'] + '-master'],
             'targetTags': [context.properties['infra_id'] + '-master']
         }
     }, {
-        'name': context.properties['infra_id'] + '-master-in-vxlan-from-worker',
+        'name': context.properties['infra_id'] + '-master-in-overlay-from-worker',
         'type': 'compute.v1.firewall',
         'properties': {
             'network': context.properties['cluster_network'],
             'allowed': [{
                 'IPProtocol': 'udp',
-                'ports': ['4789']
+                'ports': ['4789', '6081']
             }],
             'sourceTags': [context.properties['infra_id'] + '-worker'],
             'targetTags': [context.properties['infra_id'] + '-master']
@@ -267,25 +267,25 @@ def GenerateConfig(context):
             'targetTags': [context.properties['infra_id'] + '-worker']
         }
     }, {
-        'name': context.properties['infra_id'] + '-worker-in-vxlan',
+        'name': context.properties['infra_id'] + '-worker-in-overlay',
         'type': 'compute.v1.firewall',
         'properties': {
             'network': context.properties['cluster_network'],
             'allowed': [{
                 'IPProtocol': 'udp',
-                'ports': ['4789']
+                'ports': ['4789', '6081']
             }],
             'sourceTags': [context.properties['infra_id'] + '-worker'],
             'targetTags': [context.properties['infra_id'] + '-worker']
         }
     }, {
-        'name': context.properties['infra_id'] + '-worker-in-vxlan-from-master',
+        'name': context.properties['infra_id'] + '-worker-in-overlay-from-master',
         'type': 'compute.v1.firewall',
         'properties': {
             'network': context.properties['cluster_network'],
             'allowed': [{
                 'IPProtocol': 'udp',
-                'ports': ['4789']
+                'ports': ['4789', '6081']
             }],
             'sourceTags': [context.properties['infra_id'] + '-master'],
             'targetTags': [context.properties['infra_id'] + '-worker']
