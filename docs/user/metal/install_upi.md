@@ -71,7 +71,7 @@ You must configure the network connectivity between machines to allow cluster co
 
 * OpenShift SDN
 
-    All the machines require connectivity to certain reserved ports on every other machine to establish in-cluster networking. For more details refer [doc][snd-ports].
+    All the machines require connectivity to certain reserved ports on every other machine to establish in-cluster networking. For more details refer [doc][sdn-ports].
 
 * Kubernetes NodePort
 
