@@ -23,7 +23,8 @@ RUN yum install --setopt=tsflags=nodocs -y \
     yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
     unzip gzip jq util-linux && \
-    yum clean all && rm -rf /var/cache/yum/*
+    yum clean all && rm -rf /var/cache/yum/* && \
+    chmod g+w /etc/passwd
 
 ENV TERRAFORM_VERSION=0.11.11
 RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
