@@ -53,6 +53,16 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_https" {
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_router" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 1936
+  port_range_max    = 1936
+  remote_ip_prefix  = var.cidr_block
+  security_group_id = openstack_networking_secgroup_v2.worker.id
+}
+
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vxlan" {
   direction         = "ingress"
   ethertype         = "IPv4"
