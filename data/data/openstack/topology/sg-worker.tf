@@ -3,22 +3,26 @@ resource "openstack_networking_secgroup_v2" "worker" {
   tags = ["openshiftClusterID=${var.cluster_id}"]
 }
 
+# TODO(mandre) Explicitely enable egress
+
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_icmp" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "icmp"
-  port_range_min    = 0
-  port_range_max    = 0
+  direction      = "ingress"
+  ethertype      = "IPv4"
+  protocol       = "icmp"
+  port_range_min = 0
+  port_range_max = 0
+  # FIXME(mandre) AWS only allows ICMP from cidr_block
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_ssh" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 22
-  port_range_max    = 22
+  direction      = "ingress"
+  ethertype      = "IPv4"
+  protocol       = "tcp"
+  port_range_min = 22
+  port_range_max = 22
+  # FIXME(mandre) AWS only allows SSH from cidr_block
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
@@ -69,6 +73,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vxlan" {
   protocol          = "udp"
   port_range_min    = 4789
   port_range_max    = 4789
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
@@ -88,6 +93,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_geneve" {
   protocol          = "udp"
   port_range_min    = 6081
   port_range_max    = 6081
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
@@ -107,6 +113,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal" {
   protocol          = "tcp"
   port_range_min    = 9000
   port_range_max    = 9999
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
@@ -126,6 +133,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal_udp" {
   protocol          = "udp"
   port_range_min    = 9000
   port_range_max    = 9999
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
@@ -145,6 +153,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_kubelet_insecur
   protocol          = "tcp"
   port_range_min    = 10250
   port_range_max    = 10250
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
@@ -164,6 +173,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_tcp" {
   protocol          = "tcp"
   port_range_min    = 30000
   port_range_max    = 32767
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
@@ -173,12 +183,14 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_udp" {
   protocol          = "udp"
   port_range_min    = 30000
   port_range_max    = 32767
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vrrp" {
   direction         = "ingress"
   ethertype         = "IPv4"
-  protocol          = 112
+  protocol          = "vrrp"
+  remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
