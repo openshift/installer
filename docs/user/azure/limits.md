@@ -69,14 +69,13 @@ The specs for the VM sizes (Dsv3-series) are as follows:
 
 More details on VM sizes can be found [here][sizes-general].
 
-The default subscription only allows for 20 vCPU's and will need to be [increased](#increasing_limits) to at least 22.
+The default subscription only allows for 20 vCPU's and will need to be [increased](#increasing-limits) to at least 22.
 If you intend to start with a higher number of workers, enable autoscaling and large workloads
 or a different instance type, please ensure you have the necessary remaining instance count within the instance type's
 limit to satisfy the need. If not, please ask Azure to increase the limit via a support case.
 
-<a href="load-balancing">
+
 ## Load Balancing
-</a>
 
 By default, each cluster will create 3 network load balancers. The default limit per region is 1000. The following load balancers are created:
 
@@ -89,9 +88,9 @@ By default, each cluster will create 3 network load balancers. The default limit
 
 Additional Kuberntes LoadBalancer Service objects will create additional [load balancers][load-balancing]. 
 
-<a name="increasing_limits">
+
 ## Increasing limits
-</a>
+
 
 To increase a limit beyond the maximum, a suppport request will need to be filed.
 
