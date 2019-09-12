@@ -142,6 +142,53 @@ pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
 
+### Image content sources
+
+An example install config with custom image content sources:
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+metadata:
+  name: test-cluster
+imageContentSources:
+- mirrors:
+  - registry.example.com/ocp4/openshift4
+  source: quay.io/openshift-release-dev/ocp-release-nightly
+- mirrors:
+  - registry.example.com/ocp4/openshift4
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+platform: ...
+pullSecret: '{"auths": ...}'
+sshKey: ssh-ed25519 AAAA...
+```
+
+That configuration is compatible with mirrored releases created with `mirror` commands like:
+
+```console
+$ oc adm release mirror \
+>   --from=quay.io/openshift-release-dev/ocp-release-nightly:4.2.0-0.nightly-XXXXXX \
+>   --to=registry.example.com/ocp4/openshift4 \
+>   --to-release-image=registry.example.com/ocp4/openshift4:4.2.0-0.nightly-XXXXXX
+...
+Success
+Update image:  registry.example.com/ocp4/openshift4:4.2.0-0.nightly-2019-09-11-114314
+Mirror prefix: registry.example.com/ocp4/openshift4
+
+To use the new mirrored repository to install, add the following section to the install-config.yaml:
+
+imageContentSources:
+- mirrors:
+  - registry.example.com/ocp4/openshift4
+  source: quay.io/openshift-release-dev/ocp-release-nightly
+- mirrors:
+  - registry.example.com/ocp4/openshift4
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+...
+```
+
+If your mirror(s) are signed by a certificate authority which RHCOS does not trust by default, you may also wish to configure [an additional trust bundle](#additional-trust-bundle).
+
 ### Proxy
 
 An example install config routing outgoing traffic through a proxy:
