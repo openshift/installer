@@ -144,6 +144,11 @@ resource "azurerm_virtual_machine" "bootstrap" {
     enabled     = true
     storage_uri = var.storage_account.primary_blob_endpoint
   }
+
+  depends_on = [
+    azurerm_network_interface_backend_address_pool_association.public_lb_bootstrap,
+    azurerm_network_interface_backend_address_pool_association.internal_lb_bootstrap
+  ]
 }
 
 resource "azurerm_network_security_rule" "bootstrap_ssh_in" {
