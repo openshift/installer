@@ -11,6 +11,13 @@ COPY --from=builder /go/src/github.com/openshift/installer/images/openstack/rdo-
 COPY --from=builder /go/src/github.com/openshift/installer/images/openstack/rdo-stein.gpg /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-Cloud
 COPY --from=registry.svc.ci.openshift.org/origin/4.1:cli /usr/bin/oc /bin/oc
 
+# Install Dependendencies for tests
+# https://github.com/openshift/origin/blob/6114cbc507bf18890f009f16ee424a62007bc390/images/tests/Dockerfile.rhel
+RUN yum install --setopt=tsflags=nodocs -y git gzip util-linux && yum clean all && rm -rf /var/cache/yum/* && \
+    git config --system user.name test && \
+    git config --system user.email test@test.com && \
+    chmod g+w /etc/passwd
+
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
     python-openstackclient && \
