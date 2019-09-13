@@ -144,6 +144,10 @@ resource "aws_instance" "bootstrap" {
     },
     var.tags,
   )
+
+  timeouts {
+    create = "20m"
+  }
 }
 
 resource "aws_lb_target_group_attachment" "bootstrap" {

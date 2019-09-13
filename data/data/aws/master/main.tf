@@ -125,6 +125,10 @@ resource "aws_instance" "master" {
     },
     var.tags,
   )
+
+  timeouts {
+    create = "20m"
+  }
 }
 
 resource "aws_lb_target_group_attachment" "master" {
