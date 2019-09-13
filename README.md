@@ -3,9 +3,12 @@
 ## Supported Platforms
 
 * [AWS](docs/user/aws/README.md)
+* [AWS (UPI)](docs/user/aws/install_upi.md)
 * [Azure](docs/user/azure/README.md)
 * [Bare Metal (UPI)](docs/user/metal/install_upi.md)
 * [Bare Metal (IPI) (Experimental)](docs/user/metal/install_ipi.md)
+* [GCP](docs/user/gcp/README.md)
+* [GCP (UPI)](docs/user/gcp/install_upi.md)
 * [Libvirt with KVM](docs/dev/libvirt/README.md) (development only)
 * [OpenStack (experimental)](docs/user/openstack/README.md)
 * [vSphere](docs/user/vsphere/install_upi.md)

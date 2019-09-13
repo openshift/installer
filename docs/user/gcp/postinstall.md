@@ -1,7 +1,7 @@
 # Service Account: Post Install
 
 If the service account used to create the cluster was given the Owner role or included the Service Account Key Admin role, 
-the service account no longer requires elevated permissions after install. You may change its role to Reader or 
+the service account no longer requires elevated permissions after install. You may change its role to Viewer or 
 remove all roles bound to it. You can perform these steps by revisiting the service account role binding step you performed
 earlier.
 
