@@ -39,11 +39,19 @@ authoritative nameservers from the DNS zone records.
 
 ![GCP: Get registrar setup for DNS zone](images/zone_nameserver_records.png)
 
-## Step 4: Update Registrar
+## Step 4a: Root Domain - Update Registrar
 
 Each registrar requires a slightly different procedure. Using the four nameserver values from the previous step,
 you will update the registrar records to the Google Cloud DNS nameservers.
 
+If you are migrating your root domain to Google Cloud DNS, you should migrate existing DNS records:
+
+[GCP: Migrating to Cloud DNS][migrate]
+
+## Step 4b: Subdomain - Perform DNS Delegation
+
+For a subdomain of example.com (e.g. clusters.example.com), you must add delegation records to the parent/root domain. This may require a request to your company's IT department or the division which controls the root domain and DNS services for your company.
 
 [create-dns-zone]: https://cloud.google.com/dns/docs/quickstart
 [lookup-name-servers]: https://cloud.google.com/dns/docs/update-name-servers#look_up_your_name_servers
+[migrate]: https://cloud.google.com/dns/docs/migrating
