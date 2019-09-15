@@ -27,7 +27,7 @@ func (a *Image) Dependencies() []asset.Asset {
 func (a *Image) Generate(dependencies asset.Parents) error {
 	var pullSpec string
 	if ri, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && ri != "" {
-		logrus.Warn("Found override for ReleaseImage. Please be warned, this is not advised")
+		logrus.Warn("Found override for release image. Please be warned, this is not advised")
 		pullSpec = ri
 	} else {
 		var err error
