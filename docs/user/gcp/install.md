@@ -49,10 +49,12 @@ In your GCP project, there will be a new private DNS zone (for internal lookups)
 
 There will be six running VM instances in the Project.
 
-The nodes within the Virtual Network utilize the internal DNS and use the Router and Internal API load balancers. External/Internet
+The nodes within the Virtual Network utilize the internal DNS and use the Router and External API load balancers. External/Internet
 access to the cluster use the Router and External API load balancers. Compute instances are spread equally across all running availability
 zones for the region.
 
 The OpenShift console is available via the kubeadmin login provided by the installer.
+
+![OpenShift web console](images/install_console.png)
 
 [cloud-install]: https://cloud.openshift.com/clusters/install
