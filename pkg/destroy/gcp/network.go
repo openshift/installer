@@ -204,7 +204,7 @@ func (o *ClusterUninstaller) destroyForwardingRules() error {
 }
 
 func (o *ClusterUninstaller) listBackendServices() ([]string, error) {
-	return o.listBackendServicesWithFilter("items(name)", o.clusterIDFilter(), nil)
+	return o.listBackendServicesWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listBackendServicesWithFilter lists backend services in the project that satisfy the filter criteria.
@@ -394,7 +394,7 @@ func (o *ClusterUninstaller) destroyHTTPHealthChecks() error {
 }
 
 func (o *ClusterUninstaller) listTargetPools() ([]string, error) {
-	return o.listTargetPoolsWithFilter("items(name)", o.clusterIDFilter(), nil)
+	return o.listTargetPoolsWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listTargetPoolsWithFilter lists target pools in the project. The field parameter allows
@@ -819,7 +819,7 @@ func (o *ClusterUninstaller) listBackendServicesForInstanceGroups(igs []nameAndZ
 	for _, ig := range igs {
 		urls.Insert(o.getInstanceGroupURL(ig))
 	}
-	return o.listBackendServicesWithFilter("items(name,backends)", "name eq \"a[0-9a-f]{30,50}\"", func(item *compute.BackendService) bool {
+	return o.listBackendServicesWithFilter("items(name,backends),nextPageToken", "name eq \"a[0-9a-f]{30,50}\"", func(item *compute.BackendService) bool {
 		if len(item.Backends) == 0 {
 			return false
 		}
@@ -960,7 +960,7 @@ func (o *ClusterUninstaller) destroyCloudControllerInternalLBs() error {
 
 // getExternalLBTargetPools returns all target pools that point to instances in the cluster
 func (o *ClusterUninstaller) getExternalLBTargetPools() ([]string, error) {
-	return o.listTargetPoolsWithFilter("items(name,instances)", "", func(pool *compute.TargetPool) bool {
+	return o.listTargetPoolsWithFilter("items(name,instances),nextPageToken", "", func(pool *compute.TargetPool) bool {
 		if len(pool.Instances) == 0 {
 			return false
 		}
