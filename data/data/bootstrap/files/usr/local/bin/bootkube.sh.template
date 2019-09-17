@@ -24,6 +24,8 @@ KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)
 KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(image_for cluster-kube-controller-manager-operator)
 KUBE_SCHEDULER_OPERATOR_IMAGE=$(image_for cluster-kube-scheduler-operator)
 
+CLOUD_CREDENTIAL_OPERATOR_IMAGE=$(image_for cloud-credential-operator)
+
 OPENSHIFT_HYPERKUBE_IMAGE=$(image_for hyperkube)
 
 CLUSTER_BOOTSTRAP_IMAGE=$(image_for cluster-bootstrap)
@@ -223,6 +225,28 @@ then
 	cp tls/machine-config-server.key /etc/ssl/mcs/tls.key
 
 	touch mco-bootstrap.done
+fi
+
+if [ ! -f cco-bootstrap.done ]
+then
+	echo "Rendering CCO manifests..."
+
+	rm --recursive --force cco-bootstrap
+
+	# shellcheck disable=SC2154
+	bootkube_podman_run \
+		--quiet \
+		--user 0 \
+		--volume "$PWD:/assets:z" \
+		${CLOUD_CREDENTIAL_OPERATOR_IMAGE} \
+		render \
+			--dest-dir=/assets/cco-bootstrap \
+			--cloud-credential-operator-image=${CLOUD_CREDENTIAL_OPERATOR_IMAGE}
+
+	cp cco-bootstrap/manifests/* manifests/
+	cp cco-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+
+	touch cco-bootstrap.done
 fi
 
 # We originally wanted to run the etcd cert signer as
