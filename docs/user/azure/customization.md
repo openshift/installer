@@ -15,6 +15,7 @@ The following options are available when using Azure:
 * `osDisk` (optional object):
     * `diskSizeGB` (optional integer): The size of the disk in gigabytes (GB).
 * `type` (optional string): The Azure instance type.
+* `zones` (optional string slice): List of Azure availability zones that can be used (for example, `["1", "2", "3"]`).
 
 ## Examples
 
@@ -60,6 +61,10 @@ compute:
       type: Standard_DS4_v2
       osDisk:
         diskSizeGB: 512
+      zones:
+      - "1"
+      - "2"
+      - "3"
   replicas: 5
 metadata:
   name: test-cluster
