@@ -10,6 +10,8 @@ resource "azurerm_network_interface" "master" {
   location            = var.region
   resource_group_name = var.resource_group_name
 
+  enable_accelerated_networking = true
+
   ip_configuration {
     subnet_id                     = var.subnet_id
     name                          = local.ip_configuration_name
