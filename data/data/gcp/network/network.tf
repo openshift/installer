@@ -30,7 +30,7 @@ resource "google_compute_router_nat" "master_nat" {
   router                             = google_compute_router.router.name
   nat_ip_allocate_option             = "MANUAL_ONLY"
   nat_ips                            = [google_compute_address.master_nat_ip.self_link]
-  min_ports_per_vm                   = 256
+  min_ports_per_vm                   = 7168
   source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
 
   subnetwork {
