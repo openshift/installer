@@ -45,10 +45,18 @@ allows for many clusters to be created. The network security groups which exist 
 By default, a cluster will create:
 
 * One Standard_D4s_v3 bootstrap machine (removed after install)
-* Three Standard_D4s_v3 master nodes.
+* Three Standard_D8s_v3 master nodes.
 * Three Standard_D2s_v3 worker nodes.
 
 The specs for the VM sizes (Dsv3-series) are as follows:
+
+* Standard_D8s_v3
+   * 8 vCPU's, 32GiB ram
+   * IOPs / Throughput (Mbps): (cached) 16000 / 128
+   * IOPs / Throughput (Mbps): (uncached) 12800 / 192
+   * NICs / Bandwidth (Mbps): 4 / 4000
+   * 64 GiB temp storage (SSD)
+   * 16 data disks max
 
 * Standard_D4s_v3
    * 4 vCPU's, 16GiB ram
