@@ -32,17 +32,33 @@ data "ignition_config" "master_ignition_config" {
   ]
 }
 
+resource "openstack_blockstorage_volume_v3" "master_volume" {
+  name  = "${var.cluster_id}-master-${count.index}"
+  count = var.instance_count
+
+  size        = 25
+  volume_type = "performance"
+  image_id    = data.openstack_images_image_v2.masters_img.id
+}
+
 resource "openstack_compute_instance_v2" "master_conf" {
   name = "${var.cluster_id}-master-${count.index}"
   count = var.instance_count
 
   flavor_id = data.openstack_compute_flavor_v2.masters_flavor.id
-  image_id = data.openstack_images_image_v2.masters_img.id
   security_groups = var.master_sg_ids
   user_data = element(
     data.ignition_config.master_ignition_config.*.rendered,
     count.index,
   )
+
+  block_device {
+    uuid                  = openstack_blockstorage_volume_v3.master_volume.*.id[count.index]
+    source_type           = "volume"
+    boot_index            = 0
+    destination_type      = "volume"
+    delete_on_termination = true
+  }
 
   network {
     port = var.master_port_ids[count.index]
