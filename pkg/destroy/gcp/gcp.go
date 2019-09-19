@@ -134,6 +134,7 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		{name: "Firewalls", destroy: o.destroyFirewalls},
 		{name: "Addresses", destroy: o.destroyAddresses},
 		{name: "Target Pools", destroy: o.destroyTargetPools},
+		{name: "Compute instance groups", destroy: o.destroyInstanceGroups},
 		{name: "Forwarding rules", destroy: o.destroyForwardingRules},
 		{name: "Backend services", destroy: o.destroyBackendServices},
 		{name: "Health checks", destroy: o.destroyHealthChecks},
