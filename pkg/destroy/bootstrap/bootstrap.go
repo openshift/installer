@@ -54,6 +54,7 @@ func Destroy(dir string) (err error) {
 	switch platform {
 	case gcp.Name:
 		// First remove the bootstrap from LB target and its instance so that bootstrap module is cleanly destroyed.
+		fmt.Println("RUNNING TF APPLY GCP_BOOTSTRAP_ENABLED FALSE")
 		_, err = terraform.Apply(tempDir, platform, append(extraArgs, "-var=gcp_bootstrap_enabled=false")...)
 		if err != nil {
 			return errors.Wrap(err, "Terraform apply")

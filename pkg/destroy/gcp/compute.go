@@ -111,6 +111,29 @@ func (o *ClusterUninstaller) deleteInstanceGroup(ig nameAndZone) error {
 	return nil
 }
 
+// destroyInstanceGroups searches for instance groups across all zones that have a name that starts with
+// the infra ID prefix, and then deletes each instance found.
+func (o *ClusterUninstaller) destroyInstanceGroups() error {
+	groups, err := o.listInstanceGroupsWithFilter(o.clusterIDFilter())
+	if err != nil {
+		return err
+	}
+	errs := []error{}
+	found := make([]string, 0, len(groups))
+	for _, group := range groups {
+		found = append(found, fmt.Sprintf("%s/%s", group.zone, group.name))
+		err := o.deleteInstanceGroup(group)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	deletedItems := o.setPendingItems("computeinstancegroup", found)
+	for _, item := range deletedItems {
+		o.Logger.Infof("Deleted instance group %s", item)
+	}
+	return aggregateError(errs, len(found))
+}
+
 func (o *ClusterUninstaller) listComputeInstances() ([]nameAndZone, error) {
 	o.Logger.Debugf("Listing compute instances")
 	result := []nameAndZone{}
