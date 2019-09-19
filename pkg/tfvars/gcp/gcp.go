@@ -19,8 +19,8 @@ type config struct {
 	MasterInstanceType      string   `json:"gcp_master_instance_type,omitempty"`
 	MasterAvailabilityZones []string `json:"gcp_master_availability_zones"`
 	ImageURI                string   `json:"gcp_image_uri,omitempty"`
-	VolumeType              string   `json:"gcp_master_root_volume_type,omitempty"`
-	VolumeSize              int64    `json:"gcp_master_root_volume_size,omitempty"`
+	VolumeType              string   `json:"gcp_master_root_volume_type"`
+	VolumeSize              int64    `json:"gcp_master_root_volume_size"`
 	PublicZoneName          string   `json:"gcp_public_dns_zone_name,omitempty"`
 }
 
