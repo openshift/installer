@@ -43,13 +43,11 @@ variable "subnet" {
 variable "root_volume_size" {
   type        = string
   description = "The volume size (in gibibytes) for the bootstrap node's root volume."
-  default     = "128"
 }
 
 variable "root_volume_type" {
   type        = string
   description = "The volume type for the bootstrap node's root volume."
-  default     = "pd-standard"
 }
 
 variable "zone" {
