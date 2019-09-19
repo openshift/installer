@@ -29,3 +29,13 @@ variable "master_port_ids" {
 variable "user_data_ign" {
   type = string
 }
+
+variable "root_volume_size" {
+  type        = number
+  description = "The size of the volume in gigabytes for the root block device."
+}
+
+variable "root_volume_type" {
+  type        = string
+  description = "The type of volume for the root block device."
+}
