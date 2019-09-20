@@ -65,7 +65,6 @@ A standard OpenShift installation creates 2 routes.
 
 ### Subnetworks
 A standard OpenShift installation creates 2 subnetworks.
-427052
 
 ## Increasing limits
 To adjust quotas visit the [GCP Console][gcp-console-quota], select the quotas you wish to edit, and click Edit Quotas. A form will ask for your contact info and the new quota limits. Documentation states most requests are handled within 24 to 48 hours, but it is best to plan ahead and submit these requests as early as possible. Note that requests can only be made through the GCP Console--and not the CLI.
