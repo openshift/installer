@@ -13,6 +13,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
     - [Worker Nodes](#worker-nodes)
     - [Bootstrap Node](#bootstrap-node)
     - [Swift](#swift)
+    - [Disk Requirements](#disk-requirements)
     - [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-rhcos)
     - [Neutron Public Network](#neutron-public-network)
   - [OpenStack Credentials](#openstack-credentials)
@@ -89,6 +90,10 @@ The user must have `swiftoperator` permissions and `temp-url` support must be en
 openstack role add --user <user> --project <project> swiftoperator
 openstack object store account set --property Temp-URL-Key=superkey
 ```
+
+### Disk Requirements
+
+Etcd is run on your control plane nodes, and it has disk requirements that need to be met to ensure the stability of your cluster. It is important that you make sure that the ephemeral disk that gets attached to instances of your chosen flavor meets [these requirements](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/hardware.md#disks). If this is not the case, then please refer to the known issue documentation [here](known-issues.md#boot-from-volume-support).
 
 ### Red Hat Enterprise Linux CoreOS (RHCOS)
 
