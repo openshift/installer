@@ -1,3 +1,15 @@
+variable "openstack_master_root_volume_type" {
+  type        = string
+  default     = null
+  description = "The type of volume for the root block device of master nodes."
+}
+
+variable "openstack_master_root_volume_size" {
+  type        = number
+  default     = null
+  description = "The size of the volume in gigabytes for the root block device of master nodes."
+}
+
 variable "openstack_base_image" {
   type        = string
   default     = "rhcos"
