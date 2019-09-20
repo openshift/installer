@@ -307,7 +307,7 @@ func (o *ClusterUninstaller) deleteHealthCheck(name string, errorOnPending bool)
 		return errors.Errorf("failed to delete health check %s with error: %s", name, operationErrorMessage(op))
 	}
 	if errorOnPending && op != nil && op.Status != "DONE" {
-		return errors.Errorf("deletion of forwarding rule %s is pending", name)
+		return errors.Errorf("deletion of health check %s is pending", name)
 	}
 	return nil
 }
@@ -354,7 +354,7 @@ func (o *ClusterUninstaller) listHTTPHealthChecks() ([]string, error) {
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteHTTPHealthCheck(name string) error {
+func (o *ClusterUninstaller) deleteHTTPHealthCheck(name string, errorOnPending bool) error {
 	o.Logger.Debugf("Deleting HTTP health check %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
@@ -366,6 +366,9 @@ func (o *ClusterUninstaller) deleteHTTPHealthCheck(name string) error {
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID("httphealthcheck", name)
 		return errors.Errorf("failed to delete HTTP health check %s with error: %s", name, operationErrorMessage(op))
+	}
+	if errorOnPending && op != nil && op.Status != "DONE" {
+		return errors.Errorf("deletion of HTTP health check %s is pending", name)
 	}
 	return nil
 }
@@ -381,7 +384,7 @@ func (o *ClusterUninstaller) destroyHTTPHealthChecks() error {
 	errs := []error{}
 	for _, healthCheck := range healthChecks {
 		found = append(found, healthCheck)
-		err := o.deleteHTTPHealthCheck(healthCheck)
+		err := o.deleteHTTPHealthCheck(healthCheck, false)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -884,7 +887,7 @@ func (o *ClusterUninstaller) deleteExternalLoadBalancer(loadBalancerName string)
 	if err := o.deleteFirewall(fmt.Sprintf("k8s-%s-http-hc", loadBalancerName), true); err != nil {
 		return err
 	}
-	if err := o.deleteHealthCheck(loadBalancerName, true); err != nil {
+	if err := o.deleteHTTPHealthCheck(loadBalancerName, true); err != nil {
 		return err
 	}
 	if err := o.deleteTargetPool(loadBalancerName); err != nil {
@@ -999,7 +1002,7 @@ func (o *ClusterUninstaller) destroyCloudControllerExternalLBs() error {
 		o.Logger.Infof("Deleted external load balancer %s", item)
 	}
 	if len(o.cloudControllerUID) != 0 {
-		if err := o.deleteHealthCheck(fmt.Sprintf("k8s-%s-node-hc", o.cloudControllerUID), true); err != nil {
+		if err := o.deleteHTTPHealthCheck(fmt.Sprintf("k8s-%s-node", o.cloudControllerUID), true); err != nil {
 			return err
 		}
 		if err := o.deleteFirewall(fmt.Sprintf("k8s-%s-node-hc", o.cloudControllerUID), true); err != nil {
