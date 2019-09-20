@@ -18,6 +18,7 @@ Step 3: Download the Installer.
 ? azure tenant id xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ? azure service principal client id xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ? azure service principal client secret xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+INFO Saving user credentials to "/home/user_id/.azure/osServicePrincipal.json"
 ? Region centralus
 ? Base Domain example.com
 ? Cluster Name test
