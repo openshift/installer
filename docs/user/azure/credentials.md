@@ -49,7 +49,7 @@ You can get client secret for your service principal using the Azure [portal][sp
 The default location of the service principal file is in ${HOME}/.azure/osServicePrincipal.json. An alternative location can be specified by setting the AZURE_AUTH_LOCATION environmental variable. You can generate a service principal file by running the following commands from a shell:
 
 ````console
-$ az ad sp create-for-rbac --role Owner --name team-installer | jq --arg sub_id "$(az account show | jq -r '.id')" '{subscriptionId:$sub_id,clientId:.appId, clientSecret:.password,tenantId:.tenant}' > ~/.azure/osServicePrincipal.json
+$ az ad sp create-for-rbac --role Owner --name <ServicePrincipalName> | jq --arg sub_id "$(az account show | jq -r '.id')" '{subscriptionId:$sub_id,clientId:.appId, clientSecret:.password,tenantId:.tenant}' > ~/.azure/osServicePrincipal.json
 ````
 
 Once a credentials file has been generated, and the proper permissions have been set for your account, you can [install an OpenShift cluster](install.md).
