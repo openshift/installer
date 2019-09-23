@@ -806,9 +806,8 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	}
 
 	volumeIDs := []string{}
-	prefix := clusterID + "-dynamic-pvc-"
 	for _, volume := range allVolumes {
-		if strings.HasPrefix(volume.Name, prefix) {
+		if strings.HasPrefix(volume.Name, clusterID) {
 			volumeIDs = append(volumeIDs, volume.ID)
 		}
 	}
