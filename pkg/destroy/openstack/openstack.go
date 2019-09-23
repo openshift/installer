@@ -121,6 +121,7 @@ func deleteRunner(deleteFuncName string, dFunction deleteFunc, opts *clientconfi
 // populateDeleteFuncs is the list of functions that will be launched as
 // goroutines.
 func populateDeleteFuncs(funcs map[string]deleteFunc) {
+	funcs["deleteFloatingIPs"] = deleteFloatingIPs
 	funcs["deleteServers"] = deleteServers
 	funcs["deleteTrunks"] = deleteTrunks
 	funcs["deleteLoadBalancers"] = deleteLoadBalancers
@@ -132,7 +133,6 @@ func populateDeleteFuncs(funcs map[string]deleteFunc) {
 	funcs["deleteNetworks"] = deleteNetworks
 	funcs["deleteContainers"] = deleteContainers
 	funcs["deleteVolumes"] = deleteVolumes
-	funcs["deleteFloatingIPs"] = deleteFloatingIPs
 }
 
 // filterObjects will do client-side filtering given an appropriately filled out
