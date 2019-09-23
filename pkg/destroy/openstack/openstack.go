@@ -99,9 +99,9 @@ func (o *ClusterUninstaller) Run() error {
 
 func deleteRunner(deleteFuncName string, dFunction deleteFunc, opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger, channel chan string) {
 	backoffSettings := wait.Backoff{
-		Duration: time.Second * 10,
+		Duration: time.Second * 15,
 		Factor:   1.3,
-		Steps:    100,
+		Steps:    10,
 	}
 
 	err := wait.ExponentialBackoff(backoffSettings, func() (bool, error) {
