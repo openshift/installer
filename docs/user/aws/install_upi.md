@@ -18,19 +18,6 @@ $ openshift-install create install-config
 ? Pull Secret [? for help]
 ```
 
-### Empty Compute Pools
-
-We'll be providing the control-plane and compute machines ourselves, so edit the resulting `install-config.yaml` to set `replicas` to 0 for the `compute` pool:
-
-```sh
-python -c '
-import yaml;
-path = "install-config.yaml";
-data = yaml.load(open(path));
-data["compute"][0]["replicas"] = 0;
-open(path, "w").write(yaml.dump(data, default_flow_style=False))'
-```
-
 ## Edit Manifests
 
 Use [a staged install](../overview.md#multiple-invocations) to make some adjustments which are not exposed via the install configuration.

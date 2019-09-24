@@ -39,19 +39,6 @@ $ openshift-install create install-config
 ? Pull Secret [? for help]
 ```
 
-### Empty the compute pool (optional)
-
-If you do not want the cluster to provision compute machines, edit the resulting `install-config.yaml` to set `replicas` to 0 for the `compute` pool.
-
-```sh
-python -c '
-import yaml;
-path = "install-config.yaml";
-data = yaml.full_load(open(path));
-data["compute"][0]["replicas"] = 0;
-open(path, "w").write(yaml.dump(data, default_flow_style=False))'
-```
-
 ### Create manifests
 
 Create manifest to enable customizations which are not exposed via the install configuration.
