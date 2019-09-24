@@ -35,7 +35,8 @@ IPADDR=${local.ip_addresses[count.index]}
 PREFIX=${local.mask}
 GATEWAY=${local.gw}
 DOMAIN=${var.cluster_domain}
-DNS1=8.8.8.8
+DNS1=1.1.1.1
+DNS2=9.9.9.9
 EOF
   }
 }
