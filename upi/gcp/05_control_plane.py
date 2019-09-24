@@ -12,7 +12,7 @@ def GenerateConfig(context):
                     'sourceImage': context.properties['image']
                 }
             }],
-            'machineType': 'zones/' + context.properties['region'] + '-a/machineTypes/' + context.properties['machine_type'],
+            'machineType': 'zones/' + context.properties['zones'][0] + '/machineTypes/' + context.properties['machine_type'],
             'metadata': {
                 'items': [{
                     'key': 'user-data',
@@ -31,7 +31,7 @@ def GenerateConfig(context):
                     context.properties['infra_id'] + '-master',
                 ]
             },
-            'zone': context.properties['region'] + '-a'
+            'zone': context.properties['zones'][0]
         }
     }, {
         'name': context.properties['infra_id'] + '-m-1',
@@ -45,7 +45,7 @@ def GenerateConfig(context):
                     'sourceImage': context.properties['image']
                 }
             }],
-            'machineType': 'zones/' + context.properties['region'] + '-b/machineTypes/' + context.properties['machine_type'],
+            'machineType': 'zones/' + context.properties['zones'][1] + '/machineTypes/' + context.properties['machine_type'],
             'metadata': {
                 'items': [{
                     'key': 'user-data',
@@ -64,7 +64,7 @@ def GenerateConfig(context):
                     context.properties['infra_id'] + '-master',
                 ]
             },
-            'zone': context.properties['region'] + '-b'
+            'zone': context.properties['zones'][1]
         }
     }, {
         'name': context.properties['infra_id'] + '-m-2',
@@ -78,7 +78,7 @@ def GenerateConfig(context):
                     'sourceImage': context.properties['image']
                 }
             }],
-            'machineType': 'zones/' + context.properties['region'] + '-c/machineTypes/' + context.properties['machine_type'],
+            'machineType': 'zones/' + context.properties['zones'][2] + '/machineTypes/' + context.properties['machine_type'],
             'metadata': {
                 'items': [{
                     'key': 'user-data',
@@ -97,7 +97,7 @@ def GenerateConfig(context):
                     context.properties['infra_id'] + '-master',
                 ]
             },
-            'zone': context.properties['region'] + '-c'
+            'zone': context.properties['zones'][2]
         }
     }]
 
