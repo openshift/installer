@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"strconv"
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
@@ -12,11 +13,13 @@ import (
 )
 
 type config struct {
-	URI         string   `json:"libvirt_uri,omitempty"`
-	Image       string   `json:"os_image,omitempty"`
-	IfName      string   `json:"libvirt_network_if"`
-	MasterIPs   []string `json:"libvirt_master_ips,omitempty"`
-	BootstrapIP string   `json:"libvirt_bootstrap_ip,omitempty"`
+	URI          string   `json:"libvirt_uri,omitempty"`
+	Image        string   `json:"os_image,omitempty"`
+	IfName       string   `json:"libvirt_network_if"`
+	MasterIPs    []string `json:"libvirt_master_ips,omitempty"`
+	BootstrapIP  string   `json:"libvirt_bootstrap_ip,omitempty"`
+	MasterMemory string   `json:"libvirt_master_memory,omitempty"`
+	MasterVcpu   string   `json:"libvirt_master_vcpu,omitempty"`
 }
 
 // TFVars generates libvirt-specific Terraform variables.
@@ -37,11 +40,13 @@ func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, 
 	}
 
 	cfg := &config{
-		URI:         masterConfig.URI,
-		Image:       osImage,
-		IfName:      bridge,
-		BootstrapIP: bootstrapIP.String(),
-		MasterIPs:   masterIPs,
+		URI:          masterConfig.URI,
+		Image:        osImage,
+		IfName:       bridge,
+		BootstrapIP:  bootstrapIP.String(),
+		MasterIPs:    masterIPs,
+		MasterMemory: strconv.Itoa(masterConfig.DomainMemory),
+		MasterVcpu:   strconv.Itoa(masterConfig.DomainVcpu),
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
