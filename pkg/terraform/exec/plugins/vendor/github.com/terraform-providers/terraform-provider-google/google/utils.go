@@ -156,13 +156,6 @@ func isConflictError(err error) bool {
 	return false
 }
 
-func linkDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
-	if GetResourceNameFromSelfLink(old) == new {
-		return true
-	}
-	return false
-}
-
 func optionalPrefixSuppress(prefix string) schema.SchemaDiffSuppressFunc {
 	return func(k, old, new string, d *schema.ResourceData) bool {
 		return prefix+old == new || prefix+new == old
@@ -309,6 +302,15 @@ func golangSetFromStringSlice(strings []string) map[string]struct{} {
 	return set
 }
 
+func stringSliceFromGolangSet(sset map[string]struct{}) []string {
+	ls := make([]string, 0, len(sset))
+	for s := range sset {
+		ls = append(ls, s)
+	}
+
+	return ls
+}
+
 func mergeSchemas(a, b map[string]*schema.Schema) map[string]*schema.Schema {
 	merged := make(map[string]*schema.Schema)
 
@@ -353,14 +355,14 @@ func retryTime(retryFunc func() error, minutes int) error {
 	return retryTimeDuration(retryFunc, time.Duration(minutes)*time.Minute)
 }
 
-func retryTimeDuration(retryFunc func() error, duration time.Duration) error {
+func retryTimeDuration(retryFunc func() error, duration time.Duration, errorRetryPredicates ...func(e error) (bool, string)) error {
 	return resource.Retry(duration, func() *resource.RetryError {
 		err := retryFunc()
 		if err == nil {
 			return nil
 		}
-		for _, e := range errwrap.GetAllType(err, &googleapi.Error{}) {
-			if isRetryableError(e) {
+		for _, e := range getAllTypes(err, &googleapi.Error{}, &url.Error{}) {
+			if isRetryableError(e, errorRetryPredicates) {
 				return resource.RetryableError(e)
 			}
 		}
@@ -368,29 +370,52 @@ func retryTimeDuration(retryFunc func() error, duration time.Duration) error {
 	})
 }
 
-func isRetryableError(err error) bool {
-	if gerr, ok := err.(*googleapi.Error); ok && (gerr.Code == 429 || gerr.Code == 500 || gerr.Code == 502 || gerr.Code == 503) {
-		log.Printf("[DEBUG] Dismissed an error as retryable based on error code: %s", err)
-		return true
+func getAllTypes(err error, args ...interface{}) []error {
+	var result []error
+	for _, v := range args {
+		subResult := errwrap.GetAllType(err, v)
+		if subResult != nil {
+			result = append(result, subResult...)
+		}
 	}
+	return result
+}
+
+func isRetryableError(err error, retryPredicates []func(e error) (bool, string)) bool {
+
 	// These operations are always hitting googleapis.com - they should rarely
 	// time out, and if they do, that timeout is retryable.
 	if urlerr, ok := err.(*url.Error); ok && urlerr.Timeout() {
 		log.Printf("[DEBUG] Dismissed an error as retryable based on googleapis.com target: %s", err)
 		return true
 	}
-	if gerr, ok := err.(*googleapi.Error); ok && gerr.Code == 409 && strings.Contains(gerr.Body, "operationInProgress") {
-		// 409's are retried because cloud sql throws a 409 when concurrent calls are made.
-		// The only way right now to determine it is a SQL 409 due to concurrent calls is to
-		// look at the contents of the error message.
-		// See https://github.com/terraform-providers/terraform-provider-google/issues/3279
-		log.Printf("[DEBUG] Dismissed an error as retryable based on error code 409 and error reason 'operationInProgress': %s", err)
-		return true
-	}
 
-	if gerr, ok := err.(*googleapi.Error); ok && (gerr.Code == 412) && isFingerprintError(err) {
-		log.Printf("[DEBUG] Dismissed an error as retryable as a fingerprint mismatch: %s", err)
-		return true
+	if gerr, ok := err.(*googleapi.Error); ok {
+		if gerr.Code == 429 || gerr.Code == 500 || gerr.Code == 502 || gerr.Code == 503 {
+			log.Printf("[DEBUG] Dismissed an error as retryable based on error code: %s", err)
+			return true
+		}
+
+		if gerr.Code == 409 && strings.Contains(gerr.Body, "operationInProgress") {
+			// 409's are retried because cloud sql throws a 409 when concurrent calls are made.
+			// The only way right now to determine it is a SQL 409 due to concurrent calls is to
+			// look at the contents of the error message.
+			// See https://github.com/terraform-providers/terraform-provider-google/issues/3279
+			log.Printf("[DEBUG] Dismissed an error as retryable based on error code 409 and error reason 'operationInProgress': %s", err)
+			return true
+		}
+
+		if gerr.Code == 412 && isFingerprintError(err) {
+			log.Printf("[DEBUG] Dismissed an error as retryable as a fingerprint mismatch: %s", err)
+			return true
+		}
+
+	}
+	for _, pred := range retryPredicates {
+		if retry, reason := (pred(err)); retry {
+			log.Printf("[DEBUG] Dismissed an error as retryable. %s - %s", reason, err)
+			return true
+		}
 	}
 
 	return false
@@ -448,8 +473,8 @@ func serviceAccountFQN(serviceAccount string, d TerraformResourceData, config *C
 	return fmt.Sprintf("projects/-/serviceAccounts/%s@%s.iam.gserviceaccount.com", serviceAccount, project), nil
 }
 
-func paginatedListRequest(baseUrl string, config *Config, flattener func(map[string]interface{}) []interface{}) ([]interface{}, error) {
-	res, err := sendRequest(config, "GET", baseUrl, nil)
+func paginatedListRequest(project, baseUrl string, config *Config, flattener func(map[string]interface{}) []interface{}) ([]interface{}, error) {
+	res, err := sendRequest(config, "GET", project, baseUrl, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -461,7 +486,7 @@ func paginatedListRequest(baseUrl string, config *Config, flattener func(map[str
 			break
 		}
 		url := fmt.Sprintf("%s?pageToken=%s", baseUrl, pageToken.(string))
-		res, err = sendRequest(config, "GET", url, nil)
+		res, err = sendRequest(config, "GET", project, url, nil)
 		if err != nil {
 			return nil, err
 		}

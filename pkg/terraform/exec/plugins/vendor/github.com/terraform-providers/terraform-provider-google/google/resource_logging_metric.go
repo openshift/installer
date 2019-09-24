@@ -37,9 +37,9 @@ func resourceLoggingMetric() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(240 * time.Second),
-			Update: schema.DefaultTimeout(240 * time.Second),
-			Delete: schema.DefaultTimeout(240 * time.Second),
+			Create: schema.DefaultTimeout(4 * time.Minute),
+			Update: schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(4 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -85,6 +85,11 @@ func resourceLoggingMetric() *schema.Resource {
 								},
 							},
 						},
+						"unit": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Default:  "1",
+						},
 					},
 				},
 			},
@@ -98,7 +103,7 @@ func resourceLoggingMetric() *schema.Resource {
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"explicit": {
+						"explicit_buckets": {
 							Type:     schema.TypeList,
 							Optional: true,
 							MaxItems: 1,
@@ -108,7 +113,7 @@ func resourceLoggingMetric() *schema.Resource {
 										Type:     schema.TypeList,
 										Optional: true,
 										Elem: &schema.Schema{
-											Type: schema.TypeString,
+											Type: schema.TypeFloat,
 										},
 									},
 								},
@@ -236,13 +241,17 @@ func resourceLoggingMetricCreate(d *schema.ResourceData, meta interface{}) error
 	mutexKV.Lock(lockName)
 	defer mutexKV.Unlock(lockName)
 
-	url, err := replaceVars(d, config, "https://logging.googleapis.com/v2/projects/{{project}}/metrics")
+	url, err := replaceVars(d, config, "{{LoggingBasePath}}projects/{{project}}/metrics")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Creating new Metric: %#v", obj)
-	res, err := sendRequestWithTimeout(config, "POST", url, obj, d.Timeout(schema.TimeoutCreate))
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Metric: %s", err)
 	}
@@ -270,20 +279,20 @@ func resourceLoggingMetricCreate(d *schema.ResourceData, meta interface{}) error
 func resourceLoggingMetricRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://logging.googleapis.com/v2/projects/{{project}}/metrics/{{%name}}")
+	url, err := replaceVars(d, config, "{{LoggingBasePath}}projects/{{project}}/metrics/{{%name}}")
 	if err != nil {
 		return err
-	}
-
-	res, err := sendRequest(config, "GET", url, nil)
-	if err != nil {
-		return handleNotFoundError(err, d, fmt.Sprintf("LoggingMetric %q", d.Id()))
 	}
 
 	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
+	res, err := sendRequest(config, "GET", project, url, nil)
+	if err != nil {
+		return handleNotFoundError(err, d, fmt.Sprintf("LoggingMetric %q", d.Id()))
+	}
+
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading Metric: %s", err)
 	}
@@ -315,6 +324,11 @@ func resourceLoggingMetricRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceLoggingMetricUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
 
 	obj := make(map[string]interface{})
 	nameProp, err := expandLoggingMetricName(d.Get("name"), d, config)
@@ -367,13 +381,13 @@ func resourceLoggingMetricUpdate(d *schema.ResourceData, meta interface{}) error
 	mutexKV.Lock(lockName)
 	defer mutexKV.Unlock(lockName)
 
-	url, err := replaceVars(d, config, "https://logging.googleapis.com/v2/projects/{{project}}/metrics/{{%name}}")
+	url, err := replaceVars(d, config, "{{LoggingBasePath}}projects/{{project}}/metrics/{{%name}}")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Updating Metric %q: %#v", d.Id(), obj)
-	_, err = sendRequestWithTimeout(config, "PUT", url, obj, d.Timeout(schema.TimeoutUpdate))
+	_, err = sendRequestWithTimeout(config, "PUT", project, url, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Metric %q: %s", d.Id(), err)
@@ -385,6 +399,11 @@ func resourceLoggingMetricUpdate(d *schema.ResourceData, meta interface{}) error
 func resourceLoggingMetricDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
 	lockName, err := replaceVars(d, config, "customMetric/{{project}}")
 	if err != nil {
 		return err
@@ -392,14 +411,15 @@ func resourceLoggingMetricDelete(d *schema.ResourceData, meta interface{}) error
 	mutexKV.Lock(lockName)
 	defer mutexKV.Unlock(lockName)
 
-	url, err := replaceVars(d, config, "https://logging.googleapis.com/v2/projects/{{project}}/metrics/{{%name}}")
+	url, err := replaceVars(d, config, "{{LoggingBasePath}}projects/{{project}}/metrics/{{%name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting Metric %q", d.Id())
-	res, err := sendRequestWithTimeout(config, "DELETE", url, obj, d.Timeout(schema.TimeoutDelete))
+
+	res, err := sendRequestWithTimeout(config, "DELETE", project, url, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Metric")
 	}
@@ -441,6 +461,8 @@ func flattenLoggingMetricMetricDescriptor(v interface{}, d *schema.ResourceData)
 		return nil
 	}
 	transformed := make(map[string]interface{})
+	transformed["unit"] =
+		flattenLoggingMetricMetricDescriptorUnit(original["unit"], d)
 	transformed["value_type"] =
 		flattenLoggingMetricMetricDescriptorValueType(original["valueType"], d)
 	transformed["metric_kind"] =
@@ -449,6 +471,10 @@ func flattenLoggingMetricMetricDescriptor(v interface{}, d *schema.ResourceData)
 		flattenLoggingMetricMetricDescriptorLabels(original["labels"], d)
 	return []interface{}{transformed}
 }
+func flattenLoggingMetricMetricDescriptorUnit(v interface{}, d *schema.ResourceData) interface{} {
+	return v
+}
+
 func flattenLoggingMetricMetricDescriptorValueType(v interface{}, d *schema.ResourceData) interface{} {
 	return v
 }
@@ -513,8 +539,8 @@ func flattenLoggingMetricBucketOptions(v interface{}, d *schema.ResourceData) in
 		flattenLoggingMetricBucketOptionsLinearBuckets(original["linearBuckets"], d)
 	transformed["exponential_buckets"] =
 		flattenLoggingMetricBucketOptionsExponentialBuckets(original["exponentialBuckets"], d)
-	transformed["explicit"] =
-		flattenLoggingMetricBucketOptionsExplicit(original["explicit"], d)
+	transformed["explicit_buckets"] =
+		flattenLoggingMetricBucketOptionsExplicitBuckets(original["explicitBuckets"], d)
 	return []interface{}{transformed}
 }
 func flattenLoggingMetricBucketOptionsLinearBuckets(v interface{}, d *schema.ResourceData) interface{} {
@@ -599,7 +625,7 @@ func flattenLoggingMetricBucketOptionsExponentialBucketsScale(v interface{}, d *
 	return v
 }
 
-func flattenLoggingMetricBucketOptionsExplicit(v interface{}, d *schema.ResourceData) interface{} {
+func flattenLoggingMetricBucketOptionsExplicitBuckets(v interface{}, d *schema.ResourceData) interface{} {
 	if v == nil {
 		return nil
 	}
@@ -609,10 +635,10 @@ func flattenLoggingMetricBucketOptionsExplicit(v interface{}, d *schema.Resource
 	}
 	transformed := make(map[string]interface{})
 	transformed["bounds"] =
-		flattenLoggingMetricBucketOptionsExplicitBounds(original["bounds"], d)
+		flattenLoggingMetricBucketOptionsExplicitBucketsBounds(original["bounds"], d)
 	return []interface{}{transformed}
 }
-func flattenLoggingMetricBucketOptionsExplicitBounds(v interface{}, d *schema.ResourceData) interface{} {
+func flattenLoggingMetricBucketOptionsExplicitBucketsBounds(v interface{}, d *schema.ResourceData) interface{} {
 	return v
 }
 
@@ -637,6 +663,13 @@ func expandLoggingMetricMetricDescriptor(v interface{}, d TerraformResourceData,
 	original := raw.(map[string]interface{})
 	transformed := make(map[string]interface{})
 
+	transformedUnit, err := expandLoggingMetricMetricDescriptorUnit(original["unit"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedUnit); val.IsValid() && !isEmptyValue(val) {
+		transformed["unit"] = transformedUnit
+	}
+
 	transformedValueType, err := expandLoggingMetricMetricDescriptorValueType(original["value_type"], d, config)
 	if err != nil {
 		return nil, err
@@ -659,6 +692,10 @@ func expandLoggingMetricMetricDescriptor(v interface{}, d TerraformResourceData,
 	}
 
 	return transformed, nil
+}
+
+func expandLoggingMetricMetricDescriptorUnit(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
 }
 
 func expandLoggingMetricMetricDescriptorValueType(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
@@ -755,11 +792,11 @@ func expandLoggingMetricBucketOptions(v interface{}, d TerraformResourceData, co
 		transformed["exponentialBuckets"] = transformedExponentialBuckets
 	}
 
-	transformedExplicit, err := expandLoggingMetricBucketOptionsExplicit(original["explicit"], d, config)
+	transformedExplicitBuckets, err := expandLoggingMetricBucketOptionsExplicitBuckets(original["explicit_buckets"], d, config)
 	if err != nil {
 		return nil, err
-	} else if val := reflect.ValueOf(transformedExplicit); val.IsValid() && !isEmptyValue(val) {
-		transformed["explicit"] = transformedExplicit
+	} else if val := reflect.ValueOf(transformedExplicitBuckets); val.IsValid() && !isEmptyValue(val) {
+		transformed["explicitBuckets"] = transformedExplicitBuckets
 	}
 
 	return transformed, nil
@@ -855,7 +892,7 @@ func expandLoggingMetricBucketOptionsExponentialBucketsScale(v interface{}, d Te
 	return v, nil
 }
 
-func expandLoggingMetricBucketOptionsExplicit(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+func expandLoggingMetricBucketOptionsExplicitBuckets(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -864,7 +901,7 @@ func expandLoggingMetricBucketOptionsExplicit(v interface{}, d TerraformResource
 	original := raw.(map[string]interface{})
 	transformed := make(map[string]interface{})
 
-	transformedBounds, err := expandLoggingMetricBucketOptionsExplicitBounds(original["bounds"], d, config)
+	transformedBounds, err := expandLoggingMetricBucketOptionsExplicitBucketsBounds(original["bounds"], d, config)
 	if err != nil {
 		return nil, err
 	} else if val := reflect.ValueOf(transformedBounds); val.IsValid() && !isEmptyValue(val) {
@@ -874,6 +911,6 @@ func expandLoggingMetricBucketOptionsExplicit(v interface{}, d TerraformResource
 	return transformed, nil
 }
 
-func expandLoggingMetricBucketOptionsExplicitBounds(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+func expandLoggingMetricBucketOptionsExplicitBucketsBounds(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }

@@ -125,11 +125,13 @@ func resourceSqlUserRead(d *schema.ResourceData, meta interface{}) error {
 
 	var user *sqladmin.User
 	for _, currentUser := range users.Items {
-		// The second part of this conditional is irrelevant for postgres instances because
-		// host and currentUser.Host will always both be empty.
-		if currentUser.Name == name && currentUser.Host == host {
-			user = currentUser
-			break
+		if currentUser.Name == name {
+			// Host can only be empty for postgres instances,
+			// so don't compare the host if the API host is empty.
+			if currentUser.Host == "" || currentUser.Host == host {
+				user = currentUser
+				break
+			}
 		}
 	}
 
@@ -159,20 +161,19 @@ func resourceSqlUserUpdate(d *schema.ResourceData, meta interface{}) error {
 
 		name := d.Get("name").(string)
 		instance := d.Get("instance").(string)
-		host := d.Get("host").(string)
 		password := d.Get("password").(string)
+		host := d.Get("host").(string)
 
 		user := &sqladmin.User{
 			Name:     name,
 			Instance: instance,
 			Password: password,
-			Host:     host,
 		}
 
 		mutexKV.Lock(instanceMutexKey(project, instance))
 		defer mutexKV.Unlock(instanceMutexKey(project, instance))
 		op, err := config.clientSqlAdmin.Users.Update(project, instance, name,
-			user).Do()
+			user).Host(host).Do()
 
 		if err != nil {
 			return fmt.Errorf("Error, failed to update"+

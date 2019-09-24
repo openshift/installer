@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -35,8 +36,8 @@ func resourceComputeVpnGateway() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(240 * time.Second),
-			Delete: schema.DefaultTimeout(240 * time.Second),
+			Create: schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(4 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -65,6 +66,10 @@ func resourceComputeVpnGateway() *schema.Resource {
 			},
 			"creation_timestamp": {
 				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"gateway_id": {
+				Type:     schema.TypeInt,
 				Computed: true,
 			},
 			"project": {
@@ -110,13 +115,17 @@ func resourceComputeVpnGatewayCreate(d *schema.ResourceData, meta interface{}) e
 		obj["region"] = regionProp
 	}
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/regions/{{region}}/targetVpnGateways")
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/targetVpnGateways")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Creating new VpnGateway: %#v", obj)
-	res, err := sendRequestWithTimeout(config, "POST", url, obj, d.Timeout(schema.TimeoutCreate))
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating VpnGateway: %s", err)
 	}
@@ -128,10 +137,6 @@ func resourceComputeVpnGatewayCreate(d *schema.ResourceData, meta interface{}) e
 	}
 	d.SetId(id)
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -156,20 +161,20 @@ func resourceComputeVpnGatewayCreate(d *schema.ResourceData, meta interface{}) e
 func resourceComputeVpnGatewayRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/regions/{{region}}/targetVpnGateways/{{name}}")
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/targetVpnGateways/{{name}}")
 	if err != nil {
 		return err
-	}
-
-	res, err := sendRequest(config, "GET", url, nil)
-	if err != nil {
-		return handleNotFoundError(err, d, fmt.Sprintf("ComputeVpnGateway %q", d.Id()))
 	}
 
 	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
+	res, err := sendRequest(config, "GET", project, url, nil)
+	if err != nil {
+		return handleNotFoundError(err, d, fmt.Sprintf("ComputeVpnGateway %q", d.Id()))
+	}
+
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading VpnGateway: %s", err)
 	}
@@ -181,6 +186,9 @@ func resourceComputeVpnGatewayRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error reading VpnGateway: %s", err)
 	}
 	if err := d.Set("name", flattenComputeVpnGatewayName(res["name"], d)); err != nil {
+		return fmt.Errorf("Error reading VpnGateway: %s", err)
+	}
+	if err := d.Set("gateway_id", flattenComputeVpnGatewayGatewayId(res["id"], d)); err != nil {
 		return fmt.Errorf("Error reading VpnGateway: %s", err)
 	}
 	if err := d.Set("network", flattenComputeVpnGatewayNetwork(res["network"], d)); err != nil {
@@ -199,22 +207,24 @@ func resourceComputeVpnGatewayRead(d *schema.ResourceData, meta interface{}) err
 func resourceComputeVpnGatewayDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/regions/{{region}}/targetVpnGateways/{{name}}")
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/targetVpnGateways/{{name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting VpnGateway %q", d.Id())
-	res, err := sendRequestWithTimeout(config, "DELETE", url, obj, d.Timeout(schema.TimeoutDelete))
+
+	res, err := sendRequestWithTimeout(config, "DELETE", project, url, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "VpnGateway")
 	}
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -235,7 +245,12 @@ func resourceComputeVpnGatewayDelete(d *schema.ResourceData, meta interface{}) e
 
 func resourceComputeVpnGatewayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
-	if err := parseImportId([]string{"projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/targetVpnGateways/(?P<name>[^/]+)", "(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)", "(?P<name>[^/]+)"}, d, config); err != nil {
+	if err := parseImportId([]string{
+		"projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/targetVpnGateways/(?P<name>[^/]+)",
+		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
+		"(?P<region>[^/]+)/(?P<name>[^/]+)",
+		"(?P<name>[^/]+)",
+	}, d, config); err != nil {
 		return nil, err
 	}
 
@@ -258,6 +273,16 @@ func flattenComputeVpnGatewayDescription(v interface{}, d *schema.ResourceData) 
 }
 
 func flattenComputeVpnGatewayName(v interface{}, d *schema.ResourceData) interface{} {
+	return v
+}
+
+func flattenComputeVpnGatewayGatewayId(v interface{}, d *schema.ResourceData) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+			return intVal
+		} // let terraform core handle it if we can't convert the string to an int.
+	}
 	return v
 }
 

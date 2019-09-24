@@ -38,9 +38,9 @@ func resourceMonitoringUptimeCheckConfig() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(240 * time.Second),
-			Update: schema.DefaultTimeout(240 * time.Second),
-			Delete: schema.DefaultTimeout(240 * time.Second),
+			Create: schema.DefaultTimeout(4 * time.Minute),
+			Update: schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(4 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -114,38 +114,6 @@ func resourceMonitoringUptimeCheckConfig() *schema.Resource {
 					},
 				},
 				ConflictsWith: []string{"tcp_check"},
-			},
-			"internal_checkers": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"display_name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"gcp_zone": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"network": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"peer_project_id": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
-				},
-			},
-			"is_internal": {
-				Type:     schema.TypeBool,
-				Optional: true,
 			},
 			"monitored_resource": {
 				Type:     schema.TypeList,
@@ -227,6 +195,47 @@ func resourceMonitoringUptimeCheckConfig() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"is_internal": {
+				Type:       schema.TypeBool,
+				Optional:   true,
+				Computed:   true,
+				Deprecated: "This field never worked, and will be removed in 3.0.0.",
+			},
+			"internal_checkers": {
+				Type:       schema.TypeList,
+				Optional:   true,
+				Computed:   true,
+				Deprecated: "This field never worked, and will be removed in 3.0.0.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"display_name": {
+							Type:       schema.TypeString,
+							Optional:   true,
+							Deprecated: "This field never worked, and will be removed in 3.0.0.",
+						},
+						"gcp_zone": {
+							Type:       schema.TypeString,
+							Optional:   true,
+							Deprecated: "This field never worked, and will be removed in 3.0.0.",
+						},
+						"name": {
+							Type:       schema.TypeString,
+							Optional:   true,
+							Deprecated: "This field never worked, and will be removed in 3.0.0.",
+						},
+						"network": {
+							Type:       schema.TypeString,
+							Optional:   true,
+							Deprecated: "This field never worked, and will be removed in 3.0.0.",
+						},
+						"peer_project_id": {
+							Type:       schema.TypeString,
+							Optional:   true,
+							Deprecated: "This field never worked, and will be removed in 3.0.0.",
+						},
+					},
+				},
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -271,18 +280,6 @@ func resourceMonitoringUptimeCheckConfigCreate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("selected_regions"); !isEmptyValue(reflect.ValueOf(selectedRegionsProp)) && (ok || !reflect.DeepEqual(v, selectedRegionsProp)) {
 		obj["selectedRegions"] = selectedRegionsProp
 	}
-	isInternalProp, err := expandMonitoringUptimeCheckConfigIsInternal(d.Get("is_internal"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("is_internal"); !isEmptyValue(reflect.ValueOf(isInternalProp)) && (ok || !reflect.DeepEqual(v, isInternalProp)) {
-		obj["isInternal"] = isInternalProp
-	}
-	internalCheckersProp, err := expandMonitoringUptimeCheckConfigInternalCheckers(d.Get("internal_checkers"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("internal_checkers"); !isEmptyValue(reflect.ValueOf(internalCheckersProp)) && (ok || !reflect.DeepEqual(v, internalCheckersProp)) {
-		obj["internalCheckers"] = internalCheckersProp
-	}
 	httpCheckProp, err := expandMonitoringUptimeCheckConfigHttpCheck(d.Get("http_check"), d, config)
 	if err != nil {
 		return err
@@ -308,13 +305,17 @@ func resourceMonitoringUptimeCheckConfigCreate(d *schema.ResourceData, meta inte
 		obj["monitoredResource"] = monitoredResourceProp
 	}
 
-	url, err := replaceVars(d, config, "https://monitoring.googleapis.com/v3/projects/{{project}}/uptimeCheckConfigs")
+	url, err := replaceVars(d, config, "{{MonitoringBasePath}}projects/{{project}}/uptimeCheckConfigs")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Creating new UptimeCheckConfig: %#v", obj)
-	res, err := sendRequestWithTimeout(config, "POST", url, obj, d.Timeout(schema.TimeoutCreate))
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating UptimeCheckConfig: %s", err)
 	}
@@ -342,20 +343,32 @@ func resourceMonitoringUptimeCheckConfigCreate(d *schema.ResourceData, meta inte
 func resourceMonitoringUptimeCheckConfigRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://monitoring.googleapis.com/v3/{{name}}")
+	url, err := replaceVars(d, config, "{{MonitoringBasePath}}{{name}}")
 	if err != nil {
 		return err
-	}
-
-	res, err := sendRequest(config, "GET", url, nil)
-	if err != nil {
-		return handleNotFoundError(err, d, fmt.Sprintf("MonitoringUptimeCheckConfig %q", d.Id()))
 	}
 
 	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
+	res, err := sendRequest(config, "GET", project, url, nil)
+	if err != nil {
+		return handleNotFoundError(err, d, fmt.Sprintf("MonitoringUptimeCheckConfig %q", d.Id()))
+	}
+
+	res, err = resourceMonitoringUptimeCheckConfigDecoder(d, meta, res)
+	if err != nil {
+		return err
+	}
+
+	if res == nil {
+		// Decoding the object has resulted in it being gone. It may be marked deleted
+		log.Printf("[DEBUG] Removing MonitoringUptimeCheckConfig because it no longer exists.")
+		d.SetId("")
+		return nil
+	}
+
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading UptimeCheckConfig: %s", err)
 	}
@@ -381,12 +394,6 @@ func resourceMonitoringUptimeCheckConfigRead(d *schema.ResourceData, meta interf
 	if err := d.Set("selected_regions", flattenMonitoringUptimeCheckConfigSelectedRegions(res["selectedRegions"], d)); err != nil {
 		return fmt.Errorf("Error reading UptimeCheckConfig: %s", err)
 	}
-	if err := d.Set("is_internal", flattenMonitoringUptimeCheckConfigIsInternal(res["isInternal"], d)); err != nil {
-		return fmt.Errorf("Error reading UptimeCheckConfig: %s", err)
-	}
-	if err := d.Set("internal_checkers", flattenMonitoringUptimeCheckConfigInternalCheckers(res["internalCheckers"], d)); err != nil {
-		return fmt.Errorf("Error reading UptimeCheckConfig: %s", err)
-	}
 	if err := d.Set("http_check", flattenMonitoringUptimeCheckConfigHttpCheck(res["httpCheck"], d)); err != nil {
 		return fmt.Errorf("Error reading UptimeCheckConfig: %s", err)
 	}
@@ -405,6 +412,11 @@ func resourceMonitoringUptimeCheckConfigRead(d *schema.ResourceData, meta interf
 
 func resourceMonitoringUptimeCheckConfigUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
 
 	obj := make(map[string]interface{})
 	displayNameProp, err := expandMonitoringUptimeCheckConfigDisplayName(d.Get("display_name"), d, config)
@@ -431,18 +443,6 @@ func resourceMonitoringUptimeCheckConfigUpdate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("selected_regions"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, selectedRegionsProp)) {
 		obj["selectedRegions"] = selectedRegionsProp
 	}
-	isInternalProp, err := expandMonitoringUptimeCheckConfigIsInternal(d.Get("is_internal"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("is_internal"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, isInternalProp)) {
-		obj["isInternal"] = isInternalProp
-	}
-	internalCheckersProp, err := expandMonitoringUptimeCheckConfigInternalCheckers(d.Get("internal_checkers"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("internal_checkers"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, internalCheckersProp)) {
-		obj["internalCheckers"] = internalCheckersProp
-	}
 	httpCheckProp, err := expandMonitoringUptimeCheckConfigHttpCheck(d.Get("http_check"), d, config)
 	if err != nil {
 		return err
@@ -456,7 +456,7 @@ func resourceMonitoringUptimeCheckConfigUpdate(d *schema.ResourceData, meta inte
 		obj["tcpCheck"] = tcpCheckProp
 	}
 
-	url, err := replaceVars(d, config, "https://monitoring.googleapis.com/v3/{{name}}")
+	url, err := replaceVars(d, config, "{{MonitoringBasePath}}{{name}}")
 	if err != nil {
 		return err
 	}
@@ -480,14 +480,6 @@ func resourceMonitoringUptimeCheckConfigUpdate(d *schema.ResourceData, meta inte
 		updateMask = append(updateMask, "selectedRegions")
 	}
 
-	if d.HasChange("is_internal") {
-		updateMask = append(updateMask, "isInternal")
-	}
-
-	if d.HasChange("internal_checkers") {
-		updateMask = append(updateMask, "internalCheckers")
-	}
-
 	if d.HasChange("http_check") {
 		updateMask = append(updateMask, "httpCheck")
 	}
@@ -501,7 +493,7 @@ func resourceMonitoringUptimeCheckConfigUpdate(d *schema.ResourceData, meta inte
 	if err != nil {
 		return err
 	}
-	_, err = sendRequestWithTimeout(config, "PATCH", url, obj, d.Timeout(schema.TimeoutUpdate))
+	_, err = sendRequestWithTimeout(config, "PATCH", project, url, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating UptimeCheckConfig %q: %s", d.Id(), err)
@@ -513,14 +505,20 @@ func resourceMonitoringUptimeCheckConfigUpdate(d *schema.ResourceData, meta inte
 func resourceMonitoringUptimeCheckConfigDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://monitoring.googleapis.com/v3/{{name}}")
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
+	url, err := replaceVars(d, config, "{{MonitoringBasePath}}{{name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting UptimeCheckConfig %q", d.Id())
-	res, err := sendRequestWithTimeout(config, "DELETE", url, obj, d.Timeout(schema.TimeoutDelete))
+
+	res, err := sendRequestWithTimeout(config, "DELETE", project, url, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "UptimeCheckConfig")
 	}
@@ -585,52 +583,6 @@ func flattenMonitoringUptimeCheckConfigContentMatchersContent(v interface{}, d *
 }
 
 func flattenMonitoringUptimeCheckConfigSelectedRegions(v interface{}, d *schema.ResourceData) interface{} {
-	return v
-}
-
-func flattenMonitoringUptimeCheckConfigIsInternal(v interface{}, d *schema.ResourceData) interface{} {
-	return v
-}
-
-func flattenMonitoringUptimeCheckConfigInternalCheckers(v interface{}, d *schema.ResourceData) interface{} {
-	if v == nil {
-		return v
-	}
-	l := v.([]interface{})
-	transformed := make([]interface{}, 0, len(l))
-	for _, raw := range l {
-		original := raw.(map[string]interface{})
-		if len(original) < 1 {
-			// Do not include empty json objects coming back from the api
-			continue
-		}
-		transformed = append(transformed, map[string]interface{}{
-			"gcp_zone":        flattenMonitoringUptimeCheckConfigInternalCheckersGcpZone(original["gcpZone"], d),
-			"peer_project_id": flattenMonitoringUptimeCheckConfigInternalCheckersPeerProjectId(original["peerProjectId"], d),
-			"name":            flattenMonitoringUptimeCheckConfigInternalCheckersName(original["name"], d),
-			"network":         flattenMonitoringUptimeCheckConfigInternalCheckersNetwork(original["network"], d),
-			"display_name":    flattenMonitoringUptimeCheckConfigInternalCheckersDisplayName(original["displayName"], d),
-		})
-	}
-	return transformed
-}
-func flattenMonitoringUptimeCheckConfigInternalCheckersGcpZone(v interface{}, d *schema.ResourceData) interface{} {
-	return v
-}
-
-func flattenMonitoringUptimeCheckConfigInternalCheckersPeerProjectId(v interface{}, d *schema.ResourceData) interface{} {
-	return v
-}
-
-func flattenMonitoringUptimeCheckConfigInternalCheckersName(v interface{}, d *schema.ResourceData) interface{} {
-	return v
-}
-
-func flattenMonitoringUptimeCheckConfigInternalCheckersNetwork(v interface{}, d *schema.ResourceData) interface{} {
-	return v
-}
-
-func flattenMonitoringUptimeCheckConfigInternalCheckersDisplayName(v interface{}, d *schema.ResourceData) interface{} {
 	return v
 }
 
@@ -815,80 +767,6 @@ func expandMonitoringUptimeCheckConfigContentMatchersContent(v interface{}, d Te
 }
 
 func expandMonitoringUptimeCheckConfigSelectedRegions(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandMonitoringUptimeCheckConfigIsInternal(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandMonitoringUptimeCheckConfigInternalCheckers(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
-	l := v.([]interface{})
-	req := make([]interface{}, 0, len(l))
-	for _, raw := range l {
-		if raw == nil {
-			continue
-		}
-		original := raw.(map[string]interface{})
-		transformed := make(map[string]interface{})
-
-		transformedGcpZone, err := expandMonitoringUptimeCheckConfigInternalCheckersGcpZone(original["gcp_zone"], d, config)
-		if err != nil {
-			return nil, err
-		} else if val := reflect.ValueOf(transformedGcpZone); val.IsValid() && !isEmptyValue(val) {
-			transformed["gcpZone"] = transformedGcpZone
-		}
-
-		transformedPeerProjectId, err := expandMonitoringUptimeCheckConfigInternalCheckersPeerProjectId(original["peer_project_id"], d, config)
-		if err != nil {
-			return nil, err
-		} else if val := reflect.ValueOf(transformedPeerProjectId); val.IsValid() && !isEmptyValue(val) {
-			transformed["peerProjectId"] = transformedPeerProjectId
-		}
-
-		transformedName, err := expandMonitoringUptimeCheckConfigInternalCheckersName(original["name"], d, config)
-		if err != nil {
-			return nil, err
-		} else if val := reflect.ValueOf(transformedName); val.IsValid() && !isEmptyValue(val) {
-			transformed["name"] = transformedName
-		}
-
-		transformedNetwork, err := expandMonitoringUptimeCheckConfigInternalCheckersNetwork(original["network"], d, config)
-		if err != nil {
-			return nil, err
-		} else if val := reflect.ValueOf(transformedNetwork); val.IsValid() && !isEmptyValue(val) {
-			transformed["network"] = transformedNetwork
-		}
-
-		transformedDisplayName, err := expandMonitoringUptimeCheckConfigInternalCheckersDisplayName(original["display_name"], d, config)
-		if err != nil {
-			return nil, err
-		} else if val := reflect.ValueOf(transformedDisplayName); val.IsValid() && !isEmptyValue(val) {
-			transformed["displayName"] = transformedDisplayName
-		}
-
-		req = append(req, transformed)
-	}
-	return req, nil
-}
-
-func expandMonitoringUptimeCheckConfigInternalCheckersGcpZone(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandMonitoringUptimeCheckConfigInternalCheckersPeerProjectId(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandMonitoringUptimeCheckConfigInternalCheckersName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandMonitoringUptimeCheckConfigInternalCheckersNetwork(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandMonitoringUptimeCheckConfigInternalCheckersDisplayName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1103,4 +981,9 @@ func expandMonitoringUptimeCheckConfigMonitoredResourceLabels(v interface{}, d T
 		m[k] = val.(string)
 	}
 	return m, nil
+}
+
+func resourceMonitoringUptimeCheckConfigDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
+	d.Set("internal_checkers", nil)
+	return res, nil
 }

@@ -49,7 +49,7 @@ func computeInstanceFromTemplateSchema() map[string]*schema.Schema {
 	}
 
 	// Remove deprecated/removed fields that are never d.Set. We can't
-	// programatically remove all of them, because some of them still have d.Set
+	// programmatically remove all of them, because some of them still have d.Set
 	// calls.
 	for _, field := range []string{"disk", "network"} {
 		delete(s, field)
@@ -106,7 +106,7 @@ func resourceComputeInstanceFromTemplateCreate(d *schema.ResourceData, meta inte
 		return fmt.Errorf("Error loading zone '%s': %s", z, err)
 	}
 
-	instance, err := expandComputeInstance(project, zone, d, config)
+	instance, err := expandComputeInstance(project, d, config)
 	if err != nil {
 		return err
 	}
@@ -172,7 +172,7 @@ func resourceComputeInstanceFromTemplateCreate(d *schema.ResourceData, meta inte
 func adjustInstanceFromTemplateDisks(d *schema.ResourceData, config *Config, it *computeBeta.InstanceTemplate, zone *compute.Zone, project string) ([]*computeBeta.AttachedDisk, error) {
 	disks := []*computeBeta.AttachedDisk{}
 	if _, hasBootDisk := d.GetOk("boot_disk"); hasBootDisk {
-		bootDisk, err := expandBootDisk(d, config, zone, project)
+		bootDisk, err := expandBootDisk(d, config, project)
 		if err != nil {
 			return nil, err
 		}
@@ -181,10 +181,12 @@ func adjustInstanceFromTemplateDisks(d *schema.ResourceData, config *Config, it 
 		// boot disk was not overridden, so use the one from the instance template
 		for _, disk := range it.Properties.Disks {
 			if disk.Boot {
-				if dt := disk.InitializeParams.DiskType; dt != "" {
-					// Instances need a URL for the disk type, but instance templates
-					// only have the name (since they're global).
-					disk.InitializeParams.DiskType = fmt.Sprintf("zones/%s/diskTypes/%s", zone.Name, dt)
+				if disk.InitializeParams != nil {
+					if dt := disk.InitializeParams.DiskType; dt != "" {
+						// Instances need a URL for the disk type, but instance templates
+						// only have the name (since they're global).
+						disk.InitializeParams.DiskType = fmt.Sprintf("zones/%s/diskTypes/%s", zone.Name, dt)
+					}
 				}
 				disks = append(disks, disk)
 				break
@@ -193,7 +195,7 @@ func adjustInstanceFromTemplateDisks(d *schema.ResourceData, config *Config, it 
 	}
 
 	if _, hasScratchDisk := d.GetOk("scratch_disk"); hasScratchDisk {
-		scratchDisks, err := expandScratchDisks(d, config, zone, project)
+		scratchDisks, err := expandScratchDisks(d, config, project)
 		if err != nil {
 			return nil, err
 		}
@@ -202,6 +204,13 @@ func adjustInstanceFromTemplateDisks(d *schema.ResourceData, config *Config, it 
 		// scratch disks were not overridden, so use the ones from the instance template
 		for _, disk := range it.Properties.Disks {
 			if disk.Type == "SCRATCH" {
+				if disk.InitializeParams != nil {
+					if dt := disk.InitializeParams.DiskType; dt != "" {
+						// Instances need a URL for the disk type, but instance templates
+						// only have the name (since they're global).
+						disk.InitializeParams.DiskType = fmt.Sprintf("zones/%s/diskTypes/%s", zone.Name, dt)
+					}
+				}
 				disks = append(disks, disk)
 			}
 		}
@@ -226,6 +235,13 @@ func adjustInstanceFromTemplateDisks(d *schema.ResourceData, config *Config, it 
 					// Instances need a URL for the disk source, but instance templates
 					// only have the name (since they're global).
 					disk.Source = fmt.Sprintf("zones/%s/disks/%s", zone.Name, s)
+				}
+				if disk.InitializeParams != nil {
+					if dt := disk.InitializeParams.DiskType; dt != "" {
+						// Instances need a URL for the disk type, but instance templates
+						// only have the name (since they're global).
+						disk.InitializeParams.DiskType = fmt.Sprintf("zones/%s/diskTypes/%s", zone.Name, dt)
+					}
 				}
 				disks = append(disks, disk)
 			}

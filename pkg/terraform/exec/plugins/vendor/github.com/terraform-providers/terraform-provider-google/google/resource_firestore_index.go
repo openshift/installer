@@ -36,8 +36,8 @@ func resourceFirestoreIndex() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(600 * time.Second),
-			Delete: schema.DefaultTimeout(600 * time.Second),
+			Create: schema.DefaultTimeout(10 * time.Minute),
+			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -83,7 +83,7 @@ func resourceFirestoreIndex() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"COLLECTION", ""}, false),
+				ValidateFunc: validation.StringInSlice([]string{"COLLECTION", "COLLECTION_GROUP", ""}, false),
 				Default:      "COLLECTION",
 			},
 			"name": {
@@ -134,13 +134,17 @@ func resourceFirestoreIndexCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	url, err := replaceVars(d, config, "https://firestore.googleapis.com/v1/projects/{{project}}/databases/{{database}}/collectionGroups/{{collection}}/indexes")
+	url, err := replaceVars(d, config, "{{FirestoreBasePath}}projects/{{project}}/databases/{{database}}/collectionGroups/{{collection}}/indexes")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Creating new Index: %#v", obj)
-	res, err := sendRequestWithTimeout(config, "POST", url, obj, d.Timeout(schema.TimeoutCreate))
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Index: %s", err)
 	}
@@ -152,10 +156,6 @@ func resourceFirestoreIndexCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 	d.SetId(id)
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	waitErr := firestoreOperationWaitTime(
 		config, res, project, "Creating Index",
 		int(d.Timeout(schema.TimeoutCreate).Minutes()))
@@ -182,20 +182,20 @@ func resourceFirestoreIndexCreate(d *schema.ResourceData, meta interface{}) erro
 func resourceFirestoreIndexRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://firestore.googleapis.com/v1/{{name}}")
+	url, err := replaceVars(d, config, "{{FirestoreBasePath}}{{name}}")
 	if err != nil {
 		return err
-	}
-
-	res, err := sendRequest(config, "GET", url, nil)
-	if err != nil {
-		return handleNotFoundError(err, d, fmt.Sprintf("FirestoreIndex %q", d.Id()))
 	}
 
 	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
+	res, err := sendRequest(config, "GET", project, url, nil)
+	if err != nil {
+		return handleNotFoundError(err, d, fmt.Sprintf("FirestoreIndex %q", d.Id()))
+	}
+
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading Index: %s", err)
 	}
@@ -216,21 +216,22 @@ func resourceFirestoreIndexRead(d *schema.ResourceData, meta interface{}) error 
 func resourceFirestoreIndexDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://firestore.googleapis.com/v1/{{name}}")
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
+	url, err := replaceVars(d, config, "{{FirestoreBasePath}}{{name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting Index %q", d.Id())
-	res, err := sendRequestWithTimeout(config, "DELETE", url, obj, d.Timeout(schema.TimeoutDelete))
+
+	res, err := sendRequestWithTimeout(config, "DELETE", project, url, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Index")
-	}
-
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
 	}
 
 	err = firestoreOperationWaitTime(

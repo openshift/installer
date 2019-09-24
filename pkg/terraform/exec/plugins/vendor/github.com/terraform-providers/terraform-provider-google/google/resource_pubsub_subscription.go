@@ -50,9 +50,9 @@ func resourcePubsubSubscription() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(240 * time.Second),
-			Update: schema.DefaultTimeout(240 * time.Second),
-			Delete: schema.DefaultTimeout(240 * time.Second),
+			Create: schema.DefaultTimeout(4 * time.Minute),
+			Update: schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(4 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -187,13 +187,22 @@ func resourcePubsubSubscriptionCreate(d *schema.ResourceData, meta interface{}) 
 		obj["expirationPolicy"] = expirationPolicyProp
 	}
 
-	url, err := replaceVars(d, config, "https://pubsub.googleapis.com/v1/projects/{{project}}/subscriptions/{{name}}")
+	obj, err = resourcePubsubSubscriptionEncoder(d, meta, obj)
+	if err != nil {
+		return err
+	}
+
+	url, err := replaceVars(d, config, "{{PubsubBasePath}}projects/{{project}}/subscriptions/{{name}}")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Creating new Subscription: %#v", obj)
-	res, err := sendRequestWithTimeout(config, "PUT", url, obj, d.Timeout(schema.TimeoutCreate))
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequestWithTimeout(config, "PUT", project, url, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Subscription: %s", err)
 	}
@@ -213,12 +222,16 @@ func resourcePubsubSubscriptionCreate(d *schema.ResourceData, meta interface{}) 
 func resourcePubsubSubscriptionRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://pubsub.googleapis.com/v1/projects/{{project}}/subscriptions/{{name}}")
+	url, err := replaceVars(d, config, "{{PubsubBasePath}}projects/{{project}}/subscriptions/{{name}}")
 	if err != nil {
 		return err
 	}
 
-	res, err := sendRequest(config, "GET", url, nil)
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequest(config, "GET", project, url, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("PubsubSubscription %q", d.Id()))
 	}
@@ -228,10 +241,13 @@ func resourcePubsubSubscriptionRead(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
+	if res == nil {
+		// Decoding the object has resulted in it being gone. It may be marked deleted
+		log.Printf("[DEBUG] Removing PubsubSubscription because it no longer exists.")
+		d.SetId("")
+		return nil
 	}
+
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading Subscription: %s", err)
 	}
@@ -266,6 +282,11 @@ func resourcePubsubSubscriptionRead(d *schema.ResourceData, meta interface{}) er
 
 func resourcePubsubSubscriptionUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
 
 	obj := make(map[string]interface{})
 	labelsProp, err := expandPubsubSubscriptionLabels(d.Get("labels"), d, config)
@@ -310,7 +331,7 @@ func resourcePubsubSubscriptionUpdate(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 
-	url, err := replaceVars(d, config, "https://pubsub.googleapis.com/v1/projects/{{project}}/subscriptions/{{name}}")
+	url, err := replaceVars(d, config, "{{PubsubBasePath}}projects/{{project}}/subscriptions/{{name}}")
 	if err != nil {
 		return err
 	}
@@ -347,7 +368,7 @@ func resourcePubsubSubscriptionUpdate(d *schema.ResourceData, meta interface{}) 
 	if err != nil {
 		return err
 	}
-	_, err = sendRequestWithTimeout(config, "PATCH", url, obj, d.Timeout(schema.TimeoutUpdate))
+	_, err = sendRequestWithTimeout(config, "PATCH", project, url, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Subscription %q: %s", d.Id(), err)
@@ -359,14 +380,20 @@ func resourcePubsubSubscriptionUpdate(d *schema.ResourceData, meta interface{}) 
 func resourcePubsubSubscriptionDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://pubsub.googleapis.com/v1/projects/{{project}}/subscriptions/{{name}}")
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
+	url, err := replaceVars(d, config, "{{PubsubBasePath}}projects/{{project}}/subscriptions/{{name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting Subscription %q", d.Id())
-	res, err := sendRequestWithTimeout(config, "DELETE", url, obj, d.Timeout(schema.TimeoutDelete))
+
+	res, err := sendRequestWithTimeout(config, "DELETE", project, url, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Subscription")
 	}
@@ -377,7 +404,11 @@ func resourcePubsubSubscriptionDelete(d *schema.ResourceData, meta interface{}) 
 
 func resourcePubsubSubscriptionImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
-	if err := parseImportId([]string{"projects/(?P<project>[^/]+)/subscriptions/(?P<name>[^/]+)", "(?P<project>[^/]+)/(?P<name>[^/]+)", "(?P<name>[^/]+)"}, d, config); err != nil {
+	if err := parseImportId([]string{
+		"projects/(?P<project>[^/]+)/subscriptions/(?P<name>[^/]+)",
+		"(?P<project>[^/]+)/(?P<name>[^/]+)",
+		"(?P<name>[^/]+)",
+	}, d, config); err != nil {
 		return nil, err
 	}
 
@@ -479,7 +510,7 @@ func expandPubsubSubscriptionName(v interface{}, d TerraformResourceData, config
 		// however we need it to be stored as the short form since it's used for the replaceVars in the URL.
 		// The unintuitive behavior is that if the user provides the long form, we use the project from there, not the one
 		// specified on the resource or provider.
-		// TODO(drebes): consider depracating the long form behavior for 3.0
+		// TODO(drebes): consider deprecating the long form behavior for 3.0
 		d.Set("project", match[1])
 		d.Set("name", match[2])
 		return subscription, nil
@@ -597,6 +628,11 @@ func expandPubsubSubscriptionExpirationPolicy(v interface{}, d TerraformResource
 
 func expandPubsubSubscriptionExpirationPolicyTtl(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
+}
+
+func resourcePubsubSubscriptionEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
+	delete(obj, "name")
+	return obj, nil
 }
 
 func resourcePubsubSubscriptionUpdateEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {

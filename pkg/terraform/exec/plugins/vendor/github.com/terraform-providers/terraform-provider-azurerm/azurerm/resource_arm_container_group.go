@@ -2,12 +2,18 @@ package azurerm
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-06-01/network"
 	"github.com/hashicorp/terraform/helper/hashcode"
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
 
 	"github.com/Azure/azure-sdk-for-go/services/containerinstance/mgmt/2018-10-01/containerinstance"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -35,9 +41,9 @@ func resourceArmContainerGroup() *schema.Resource {
 				ValidateFunc: validate.NoEmptyStrings,
 			},
 
-			"location": locationSchema(),
+			"location": azure.SchemaLocation(),
 
-			"resource_group_name": resourceGroupNameSchema(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"ip_address_type": {
 				Type:             schema.TypeString,
@@ -47,7 +53,21 @@ func resourceArmContainerGroup() *schema.Resource {
 				DiffSuppressFunc: suppress.CaseDifference,
 				ValidateFunc: validation.StringInSlice([]string{
 					string(containerinstance.Public),
+					string(containerinstance.Private),
 				}, true),
+			},
+
+			"network_profile_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validate.NoEmptyStrings,
+				/* Container groups deployed to a virtual network don't currently support exposing containers directly to the internet with a public IP address or a fully qualified domain name.
+				 * Name resolution for Azure resources in the virtual network via the internal Azure DNS is not supported
+				 * You cannot use a managed identity in a container group deployed to a virtual network.
+				 * https://docs.microsoft.com/en-us/azure/container-instances/container-instances-vnet#virtual-network-deployment-limitations
+				 * https://docs.microsoft.com/en-us/azure/container-instances/container-instances-vnet#preview-limitations */
+				ConflictsWith: []string{"dns_name_label", "identity"},
 			},
 
 			"os_type": {
@@ -116,6 +136,7 @@ func resourceArmContainerGroup() *schema.Resource {
 							Type:     schema.TypeList,
 							Optional: true,
 							MinItems: 1,
+							ForceNew: true,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
 								ValidateFunc: validation.NoZeroValues,
@@ -125,7 +146,7 @@ func resourceArmContainerGroup() *schema.Resource {
 				},
 			},
 
-			"tags": tagsForceNewSchema(),
+			"tags": tags.ForceNewSchema(),
 
 			"restart_policy": {
 				Type:             schema.TypeString,
@@ -267,6 +288,9 @@ func resourceArmContainerGroup() *schema.Resource {
 							Type:     schema.TypeMap,
 							ForceNew: true,
 							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
 						},
 
 						"secure_environment_variables": {
@@ -274,11 +298,15 @@ func resourceArmContainerGroup() *schema.Resource {
 							Optional:  true,
 							ForceNew:  true,
 							Sensitive: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
 						},
 
 						"command": {
 							Type:       schema.TypeString,
 							Optional:   true,
+							ForceNew:   true,
 							Computed:   true,
 							Deprecated: "Use `commands` instead.",
 						},
@@ -287,6 +315,7 @@ func resourceArmContainerGroup() *schema.Resource {
 							Type:     schema.TypeList,
 							Optional: true,
 							Computed: true,
+							ForceNew: true,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 						},
 
@@ -334,6 +363,7 @@ func resourceArmContainerGroup() *schema.Resource {
 									"storage_account_key": {
 										Type:         schema.TypeString,
 										Required:     true,
+										Sensitive:    true,
 										ForceNew:     true,
 										ValidateFunc: validate.NoEmptyStrings,
 									},
@@ -379,7 +409,7 @@ func resourceArmContainerGroup() *schema.Resource {
 
 									"log_type": {
 										Type:     schema.TypeString,
-										Required: true,
+										Optional: true,
 										ForceNew: true,
 										ValidateFunc: validation.StringInSlice([]string{
 											string(containerinstance.ContainerInsights),
@@ -416,13 +446,13 @@ func resourceArmContainerGroup() *schema.Resource {
 }
 
 func resourceArmContainerGroupCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ArmClient).containerGroupsClient
+	client := meta.(*ArmClient).containers.GroupsClient
 	ctx := meta.(*ArmClient).StopContext
 
 	resGroup := d.Get("resource_group_name").(string)
 	name := d.Get("name").(string)
 
-	if requireResourcesToBeImported && d.IsNewResource() {
+	if features.ShouldResourcesBeImported() && d.IsNewResource() {
 		existing, err := client.Get(ctx, resGroup, name)
 		if err != nil {
 			if !utils.ResponseWasNotFound(existing.Response) {
@@ -435,12 +465,11 @@ func resourceArmContainerGroupCreate(d *schema.ResourceData, meta interface{}) e
 		}
 	}
 
-	location := azureRMNormalizeLocation(d.Get("location").(string))
+	location := azure.NormalizeLocation(d.Get("location").(string))
 	OSType := d.Get("os_type").(string)
 	IPAddressType := d.Get("ip_address_type").(string)
-	tags := d.Get("tags").(map[string]interface{})
+	t := d.Get("tags").(map[string]interface{})
 	restartPolicy := d.Get("restart_policy").(string)
-
 	diagnosticsRaw := d.Get("diagnostics").([]interface{})
 	diagnostics := expandContainerGroupDiagnostics(diagnosticsRaw)
 
@@ -448,7 +477,7 @@ func resourceArmContainerGroupCreate(d *schema.ResourceData, meta interface{}) e
 	containerGroup := containerinstance.ContainerGroup{
 		Name:     &name,
 		Location: &location,
-		Tags:     expandTags(tags),
+		Tags:     tags.Expand(t),
 		Identity: expandContainerGroupIdentity(d),
 		ContainerGroupProperties: &containerinstance.ContainerGroupProperties{
 			Containers:    containers,
@@ -466,6 +495,17 @@ func resourceArmContainerGroupCreate(d *schema.ResourceData, meta interface{}) e
 
 	if dnsNameLabel := d.Get("dns_name_label").(string); dnsNameLabel != "" {
 		containerGroup.ContainerGroupProperties.IPAddress.DNSNameLabel = &dnsNameLabel
+	}
+
+	// https://docs.microsoft.com/en-us/azure/container-instances/container-instances-vnet#virtual-network-deployment-limitations
+	// https://docs.microsoft.com/en-us/azure/container-instances/container-instances-vnet#preview-limitations
+	if networkProfileID := d.Get("network_profile_id").(string); networkProfileID != "" {
+		if strings.ToLower(OSType) != "linux" {
+			return fmt.Errorf("Currently only Linux containers can be deployed to virtual networks")
+		}
+		containerGroup.ContainerGroupProperties.NetworkProfile = &containerinstance.ContainerGroupNetworkProfile{
+			ID: &networkProfileID,
+		}
 	}
 
 	future, err := client.CreateOrUpdate(ctx, resGroup, name, containerGroup)
@@ -493,9 +533,9 @@ func resourceArmContainerGroupCreate(d *schema.ResourceData, meta interface{}) e
 
 func resourceArmContainerGroupRead(d *schema.ResourceData, meta interface{}) error {
 	ctx := meta.(*ArmClient).StopContext
-	client := meta.(*ArmClient).containerGroupsClient
+	client := meta.(*ArmClient).containers.GroupsClient
 
-	id, err := parseAzureResourceID(d.Id())
+	id, err := azure.ParseAzureResourceID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -517,10 +557,10 @@ func resourceArmContainerGroupRead(d *schema.ResourceData, meta interface{}) err
 	d.Set("name", name)
 	d.Set("resource_group_name", resourceGroup)
 	if location := resp.Location; location != nil {
-		d.Set("location", azureRMNormalizeLocation(*location))
+		d.Set("location", azure.NormalizeLocation(*location))
 	}
 
-	if err := d.Set("identity", flattenContainerGroupIdentity(d, resp.Identity)); err != nil {
+	if err := d.Set("identity", flattenContainerGroupIdentity(resp.Identity)); err != nil {
 		return fmt.Errorf("Error setting `identity`: %+v", err)
 	}
 
@@ -549,16 +589,14 @@ func resourceArmContainerGroupRead(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
-	flattenAndSetTags(d, resp.Tags)
-
-	return nil
+	return tags.FlattenAndSet(d, resp.Tags)
 }
 
 func resourceArmContainerGroupDelete(d *schema.ResourceData, meta interface{}) error {
 	ctx := meta.(*ArmClient).StopContext
-	client := meta.(*ArmClient).containerGroupsClient
+	client := meta.(*ArmClient).containers.GroupsClient
 
-	id, err := parseAzureResourceID(d.Id())
+	id, err := azure.ParseAzureResourceID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -566,14 +604,107 @@ func resourceArmContainerGroupDelete(d *schema.ResourceData, meta interface{}) e
 	resourceGroup := id.ResourceGroup
 	name := id.Path["containerGroups"]
 
+	networkProfileId := ""
+	existing, err := client.Get(ctx, resourceGroup, name)
+	if err != nil {
+		if utils.ResponseWasNotFound(existing.Response) {
+			// already deleted
+			return nil
+		}
+
+		return fmt.Errorf("Error retrieving Container Group %q (Resource Group %q): %+v", name, resourceGroup, err)
+	}
+
+	if props := existing.ContainerGroupProperties; props != nil {
+		if profile := props.NetworkProfile; profile != nil {
+			if profile.ID != nil {
+				networkProfileId = *profile.ID
+			}
+		}
+	}
+
 	resp, err := client.Delete(ctx, resourceGroup, name)
 	if err != nil {
-		if !utils.ResponseWasNotFound(resp.Response) {
-			return fmt.Errorf("Error deleting Container Group %q (Resource Group %q): %+v", name, resourceGroup, err)
+		if utils.ResponseWasNotFound(resp.Response) {
+			return nil
+		}
+
+		return fmt.Errorf("Error deleting Container Group %q (Resource Group %q): %+v", name, resourceGroup, err)
+	}
+
+	if networkProfileId != "" {
+		parsedProfileId, err := azure.ParseAzureResourceID(networkProfileId)
+		if err != nil {
+			return err
+		}
+
+		networkProfileClient := meta.(*ArmClient).network.ProfileClient
+		networkProfileResourceGroup := parsedProfileId.ResourceGroup
+		networkProfileName := parsedProfileId.Path["networkProfiles"]
+
+		// TODO: remove when https://github.com/Azure/azure-sdk-for-go/issues/5082 has been fixed
+		log.Printf("[DEBUG] Waiting for Container Group %q (Resource Group %q) to be finish deleting", name, resourceGroup)
+		stateConf := &resource.StateChangeConf{
+			Pending:                   []string{"Attached"},
+			Target:                    []string{"Detached"},
+			Refresh:                   containerGroupEnsureDetachedFromNetworkProfileRefreshFunc(ctx, networkProfileClient, networkProfileResourceGroup, networkProfileName, resourceGroup, name),
+			Timeout:                   10 * time.Minute,
+			MinTimeout:                15 * time.Second,
+			ContinuousTargetOccurence: 5,
+		}
+		if _, err := stateConf.WaitForState(); err != nil {
+			return fmt.Errorf("Error waiting for Container Group %q (Resource Group %q) to finish deleting: %s", name, resourceGroup, err)
 		}
 	}
 
 	return nil
+}
+
+func containerGroupEnsureDetachedFromNetworkProfileRefreshFunc(ctx context.Context,
+	client *network.ProfilesClient,
+	networkProfileResourceGroup, networkProfileName,
+	containerResourceGroupName, containerName string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		profile, err := client.Get(ctx, networkProfileResourceGroup, networkProfileName, "")
+		if err != nil {
+			return nil, "Error", fmt.Errorf("Error retrieving Network Profile %q (Resource Group %q): %s", networkProfileName, networkProfileResourceGroup, err)
+		}
+
+		exists := false
+		if props := profile.ProfilePropertiesFormat; props != nil {
+			if nics := props.ContainerNetworkInterfaces; nics != nil {
+				for _, nic := range *nics {
+					nicProps := nic.ContainerNetworkInterfacePropertiesFormat
+					if nicProps == nil || nicProps.Container == nil || nicProps.Container.ID == nil {
+						continue
+					}
+
+					parsedId, err := azure.ParseAzureResourceID(*nicProps.Container.ID)
+					if err != nil {
+						return nil, "", err
+					}
+
+					if parsedId.ResourceGroup != containerResourceGroupName {
+						continue
+					}
+
+					name := parsedId.Path["containerGroups"]
+					if name == "" || name != containerName {
+						continue
+					}
+
+					exists = true
+					break
+				}
+			}
+		}
+
+		if exists {
+			return nil, "Attached", nil
+		}
+
+		return profile, "Detached", nil
+	}
 }
 
 func expandContainerGroupContainers(d *schema.ResourceData) (*[]containerinstance.Container, *[]containerinstance.Port, *[]containerinstance.Volume) {
@@ -718,12 +849,10 @@ func expandContainerGroupContainers(d *schema.ResourceData) (*[]containerinstanc
 }
 
 func expandContainerEnvironmentVariables(input interface{}, secure bool) *[]containerinstance.EnvironmentVariable {
-
 	envVars := input.(map[string]interface{})
 	output := make([]containerinstance.EnvironmentVariable, 0, len(envVars))
 
 	if secure {
-
 		for k, v := range envVars {
 			ev := containerinstance.EnvironmentVariable{
 				Name:        utils.String(k),
@@ -732,9 +861,7 @@ func expandContainerEnvironmentVariables(input interface{}, secure bool) *[]cont
 
 			output = append(output, ev)
 		}
-
 	} else {
-
 		for k, v := range envVars {
 			ev := containerinstance.EnvironmentVariable{
 				Name:  utils.String(k),
@@ -871,14 +998,13 @@ func expandContainerProbe(input interface{}) *containerinstance.ContainerProbe {
 		commands := probeConfig["exec"].([]interface{})
 		if len(commands) > 0 {
 			exec := containerinstance.ContainerExec{
-				Command: utils.ExpandStringArray(commands),
+				Command: utils.ExpandStringSlice(commands),
 			}
 			probe.Exec = &exec
 		}
 
 		httpRaw := probeConfig["http_get"].([]interface{})
 		if len(httpRaw) > 0 {
-
 			for _, httpget := range httpRaw {
 				x := httpget.(map[string]interface{})
 
@@ -897,7 +1023,7 @@ func expandContainerProbe(input interface{}) *containerinstance.ContainerProbe {
 	return &probe
 }
 
-func flattenContainerGroupIdentity(d *schema.ResourceData, identity *containerinstance.ContainerGroupIdentity) []interface{} {
+func flattenContainerGroupIdentity(identity *containerinstance.ContainerGroupIdentity) []interface{} {
 	if identity == nil {
 		return make([]interface{}, 0)
 	}
@@ -959,7 +1085,6 @@ func flattenContainerImageRegistryCredentials(d *schema.ResourceData, input *[]c
 }
 
 func flattenContainerGroupContainers(d *schema.ResourceData, containers *[]containerinstance.Container, containerGroupPorts *[]containerinstance.Port, containerGroupVolumes *[]containerinstance.Volume) []interface{} {
-
 	//map old container names to index so we can look up things up
 	nameIndexMap := map[string]int{}
 	for i, c := range d.Get("container").([]interface{}) {
@@ -969,7 +1094,6 @@ func flattenContainerGroupContainers(d *schema.ResourceData, containers *[]conta
 
 	containerCfg := make([]interface{}, 0, len(*containers))
 	for _, container := range *containers {
-
 		//TODO fix this crash point
 		name := *container.Name
 
@@ -1090,7 +1214,6 @@ func flattenContainerEnvironmentVariables(input *[]containerinstance.Environment
 
 	if isSecure {
 		for _, envVar := range *input {
-
 			if envVar.Name != nil && envVar.Value == nil {
 				if v, ok := d.GetOk(fmt.Sprintf("container.%d.secure_environment_variables.%s", oldContainerIndex, *envVar.Name)); ok {
 					log.Printf("[DEBUG] SECURE    : Name: %s - Value: %s", *envVar.Name, v.(string))
@@ -1238,23 +1361,26 @@ func expandContainerGroupDiagnostics(input []interface{}) *containerinstance.Con
 
 	workspaceId := analyticsV["workspace_id"].(string)
 	workspaceKey := analyticsV["workspace_key"].(string)
-	logType := containerinstance.LogAnalyticsLogType(analyticsV["log_type"].(string))
 
-	metadataMap := analyticsV["metadata"].(map[string]interface{})
-	metadata := make(map[string]*string)
-	for k, v := range metadataMap {
-		strValue := v.(string)
-		metadata[k] = &strValue
+	logAnalytics := containerinstance.LogAnalytics{
+		WorkspaceID:  utils.String(workspaceId),
+		WorkspaceKey: utils.String(workspaceKey),
 	}
 
-	return &containerinstance.ContainerGroupDiagnostics{
-		LogAnalytics: &containerinstance.LogAnalytics{
-			WorkspaceID:  utils.String(workspaceId),
-			WorkspaceKey: utils.String(workspaceKey),
-			LogType:      logType,
-			Metadata:     metadata,
-		},
+	if logType := analyticsV["log_type"].(string); logType != "" {
+		logAnalytics.LogType = containerinstance.LogAnalyticsLogType(logType)
+
+		metadataMap := analyticsV["metadata"].(map[string]interface{})
+		metadata := make(map[string]*string)
+		for k, v := range metadataMap {
+			strValue := v.(string)
+			metadata[k] = &strValue
+		}
+
+		logAnalytics.Metadata = metadata
 	}
+
+	return &containerinstance.ContainerGroupDiagnostics{LogAnalytics: &logAnalytics}
 }
 
 func flattenContainerGroupDiagnostics(d *schema.ResourceData, input *containerinstance.ContainerGroupDiagnostics) []interface{} {

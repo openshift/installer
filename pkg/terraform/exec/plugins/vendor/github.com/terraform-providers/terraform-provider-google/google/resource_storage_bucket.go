@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gammazero/workerpool"
+	"github.com/hashicorp/terraform/helper/customdiff"
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -29,6 +31,8 @@ func resourceStorageBucket() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceStorageBucketStateImporter,
 		},
+		CustomizeDiff: customdiff.All(
+			customdiff.ForceNewIfChange("retention_policy.0.is_locked", isPolicyLocked)),
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -196,6 +200,7 @@ func resourceStorageBucket() *schema.Resource {
 			"website": {
 				Type:     schema.TypeList,
 				Optional: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"main_page_suffix": {
@@ -205,6 +210,26 @@ func resourceStorageBucket() *schema.Resource {
 						"not_found_page": {
 							Type:     schema.TypeString,
 							Optional: true,
+						},
+					},
+				},
+			},
+
+			"retention_policy": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"is_locked": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  false,
+						},
+						"retention_period": {
+							Type:         schema.TypeInt,
+							Required:     true,
+							ValidateFunc: validation.IntBetween(1, math.MaxInt32),
 						},
 					},
 				},
@@ -261,8 +286,27 @@ func resourceStorageBucket() *schema.Resource {
 					},
 				},
 			},
+			"bucket_policy_only": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
 		},
 	}
+}
+
+// Is the old bucket retention policy locked?
+func isPolicyLocked(old, new, _ interface{}) bool {
+	if old == nil || new == nil {
+		return false
+	}
+
+	// if the old policy is locked, but the new policy is not
+	if old.(bool) && !new.(bool) {
+		return true
+	}
+
+	return false
 }
 
 func resourceStorageBucketCreate(d *schema.ResourceData, meta interface{}) error {
@@ -279,9 +323,10 @@ func resourceStorageBucketCreate(d *schema.ResourceData, meta interface{}) error
 
 	// Create a bucket, setting the labels, location and name.
 	sb := &storage.Bucket{
-		Name:     bucket,
-		Labels:   expandLabels(d),
-		Location: location,
+		Name:             bucket,
+		Labels:           expandLabels(d),
+		Location:         location,
+		IamConfiguration: expandIamConfiguration(d),
 	}
 
 	if v, ok := d.GetOk("storage_class"); ok {
@@ -299,22 +344,18 @@ func resourceStorageBucketCreate(d *schema.ResourceData, meta interface{}) error
 	}
 
 	if v, ok := d.GetOk("website"); ok {
-		websites := v.([]interface{})
+		sb.Website = expandBucketWebsite(v.([]interface{}))
+	}
 
-		if len(websites) > 1 {
-			return fmt.Errorf("At most one website block is allowed")
-		}
+	if v, ok := d.GetOk("retention_policy"); ok {
+		retention_policies := v.([]interface{})
 
-		sb.Website = &storage.BucketWebsite{}
+		sb.RetentionPolicy = &storage.BucketRetentionPolicy{}
 
-		website := websites[0].(map[string]interface{})
+		retentionPolicy := retention_policies[0].(map[string]interface{})
 
-		if v, ok := website["not_found_page"]; ok {
-			sb.Website.NotFoundPage = v.(string)
-		}
-
-		if v, ok := website["main_page_suffix"]; ok {
-			sb.Website.MainPageSuffix = v.(string)
+		if v, ok := retentionPolicy["retention_period"]; ok {
+			sb.RetentionPolicy.RetentionPeriod = int64(v.(int))
 		}
 	}
 
@@ -349,8 +390,25 @@ func resourceStorageBucketCreate(d *schema.ResourceData, meta interface{}) error
 	}
 
 	log.Printf("[DEBUG] Created bucket %v at location %v\n\n", res.Name, res.SelfLink)
-
 	d.SetId(res.Id)
+
+	if v, ok := d.GetOk("retention_policy"); ok {
+		retention_policies := v.([]interface{})
+
+		sb.RetentionPolicy = &storage.BucketRetentionPolicy{}
+
+		retentionPolicy := retention_policies[0].(map[string]interface{})
+
+		if locked, ok := retentionPolicy["is_locked"]; ok && locked.(bool) {
+			err = lockRetentionPolicy(config.clientStorage.Buckets, bucket, res.Metageneration)
+			if err != nil {
+				return err
+			}
+
+			log.Printf("[DEBUG] Locked bucket %v at location %v\n\n", res.Name, res.SelfLink)
+		}
+	}
+
 	return resourceStorageBucketRead(d, meta)
 }
 
@@ -382,34 +440,14 @@ func resourceStorageBucketUpdate(d *schema.ResourceData, meta interface{}) error
 	}
 
 	if d.HasChange("website") {
-		if v, ok := d.GetOk("website"); ok {
-			websites := v.([]interface{})
+		sb.Website = expandBucketWebsite(d.Get("website"))
+	}
 
-			if len(websites) > 1 {
-				return fmt.Errorf("At most one website block is allowed")
-			}
-
-			sb.Website = &storage.BucketWebsite{}
-
-			// Setting fields to "" to be explicit that the PATCH call will
-			// delete this field.
-			if len(websites) == 0 || websites[0] == nil {
-				sb.Website.NotFoundPage = ""
-				sb.Website.MainPageSuffix = ""
-			} else {
-				website := websites[0].(map[string]interface{})
-				if v, ok := website["not_found_page"]; ok {
-					sb.Website.NotFoundPage = v.(string)
-				} else {
-					sb.Website.NotFoundPage = ""
-				}
-
-				if v, ok := website["main_page_suffix"]; ok {
-					sb.Website.MainPageSuffix = v.(string)
-				} else {
-					sb.Website.MainPageSuffix = ""
-				}
-			}
+	if d.HasChange("retention_policy") {
+		if v, ok := d.GetOk("retention_policy"); ok {
+			sb.RetentionPolicy = expandBucketRetentionPolicy(v.([]interface{}))
+		} else {
+			sb.NullFields = append(sb.NullFields, "RetentionPolicy")
 		}
 	}
 
@@ -455,16 +493,38 @@ func resourceStorageBucketUpdate(d *schema.ResourceData, meta interface{}) error
 		}
 	}
 
+	if d.HasChange("bucket_policy_only") {
+		sb.IamConfiguration = expandIamConfiguration(d)
+	}
+
 	res, err := config.clientStorage.Buckets.Patch(d.Get("name").(string), sb).Do()
 
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[DEBUG] Patched bucket %v at location %v\n\n", res.Name, res.SelfLink)
-
 	// Assign the bucket ID as the resource ID
 	d.Set("self_link", res.SelfLink)
+
+	if d.HasChange("retention_policy") {
+		if v, ok := d.GetOk("retention_policy"); ok {
+			retention_policies := v.([]interface{})
+
+			sb.RetentionPolicy = &storage.BucketRetentionPolicy{}
+
+			retentionPolicy := retention_policies[0].(map[string]interface{})
+
+			if locked, ok := retentionPolicy["is_locked"]; ok && locked.(bool) {
+				err = lockRetentionPolicy(config.clientStorage.Buckets, d.Get("name").(string), res.Metageneration)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	log.Printf("[DEBUG] Patched bucket %v at location %v\n\n", res.Name, res.SelfLink)
+
 	d.SetId(res.Id)
 
 	return nil
@@ -514,6 +574,14 @@ func resourceStorageBucketRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("versioning", flattenBucketVersioning(res.Versioning))
 	d.Set("lifecycle_rule", flattenBucketLifecycle(res.Lifecycle))
 	d.Set("labels", res.Labels)
+	d.Set("website", flattenBucketWebsite(res.Website))
+	d.Set("retention_policy", flattenBucketRetentionPolicy(res.RetentionPolicy))
+
+	if res.IamConfiguration != nil && res.IamConfiguration.BucketPolicyOnly != nil {
+		d.Set("bucket_policy_only", res.IamConfiguration.BucketPolicyOnly.Enabled)
+	} else {
+		d.Set("bucket_policy_only", false)
+	}
 
 	if res.Billing == nil {
 		d.Set("requester_pays", nil)
@@ -539,6 +607,20 @@ func resourceStorageBucketDelete(d *schema.ResourceData, meta interface{}) error
 		}
 
 		if len(res.Items) != 0 {
+			if d.Get("retention_policy.0.is_locked").(bool) {
+				for _, item := range res.Items {
+					expiration, err := time.Parse(time.RFC3339, item.RetentionExpirationTime)
+					if err != nil {
+						return err
+					}
+					if expiration.After(time.Now()) {
+						deleteErr := errors.New("Bucket '" + d.Get("name").(string) + "' contains objects that have not met the retention period yet and cannot be deleted.")
+						log.Printf("Error! %s : %s\n\n", bucket, deleteErr)
+						return deleteErr
+					}
+				}
+			}
+
 			if d.Get("force_destroy").(bool) {
 				// GCS requires that a bucket be empty (have no objects or object
 				// versions) before it can be deleted.
@@ -712,6 +794,34 @@ func flattenBucketLogging(bucketLogging *storage.BucketLogging) []map[string]int
 	return loggings
 }
 
+func expandBucketRetentionPolicy(configured interface{}) *storage.BucketRetentionPolicy {
+	retentionPolicies := configured.([]interface{})
+	retentionPolicy := retentionPolicies[0].(map[string]interface{})
+
+	bucketRetentionPolicy := &storage.BucketRetentionPolicy{
+		IsLocked:        retentionPolicy["is_locked"].(bool),
+		RetentionPeriod: int64(retentionPolicy["retention_period"].(int)),
+	}
+
+	return bucketRetentionPolicy
+}
+
+func flattenBucketRetentionPolicy(bucketRetentionPolicy *storage.BucketRetentionPolicy) []map[string]interface{} {
+	bucketRetentionPolicies := make([]map[string]interface{}, 0, 1)
+
+	if bucketRetentionPolicy == nil {
+		return bucketRetentionPolicies
+	}
+
+	retentionPolicy := map[string]interface{}{
+		"is_locked":        bucketRetentionPolicy.IsLocked,
+		"retention_period": bucketRetentionPolicy.RetentionPeriod,
+	}
+
+	bucketRetentionPolicies = append(bucketRetentionPolicies, retentionPolicy)
+	return bucketRetentionPolicies
+}
+
 func expandBucketVersioning(configured interface{}) *storage.BucketVersioning {
 	versionings := configured.([]interface{})
 	versioning := versionings[0].(map[string]interface{})
@@ -781,6 +891,53 @@ func flattenBucketLifecycleRuleCondition(condition *storage.BucketLifecycleRuleC
 		}
 	}
 	return ruleCondition
+}
+
+func flattenBucketWebsite(website *storage.BucketWebsite) []map[string]interface{} {
+	if website == nil {
+		return nil
+	}
+	websites := make([]map[string]interface{}, 0, 1)
+	websites = append(websites, map[string]interface{}{
+		"main_page_suffix": website.MainPageSuffix,
+		"not_found_page":   website.NotFoundPage,
+	})
+
+	return websites
+}
+
+func expandBucketWebsite(v interface{}) *storage.BucketWebsite {
+	if v == nil {
+		return nil
+	}
+	vs := v.([]interface{})
+
+	if len(vs) < 1 || vs[0] == nil {
+		return nil
+	}
+
+	website := vs[0].(map[string]interface{})
+	w := &storage.BucketWebsite{}
+
+	if v := website["not_found_page"]; v != "" {
+		w.NotFoundPage = v.(string)
+	}
+
+	if v := website["main_page_suffix"]; v != "" {
+		w.MainPageSuffix = v.(string)
+	}
+
+	return w
+}
+
+func expandIamConfiguration(d *schema.ResourceData) *storage.BucketIamConfiguration {
+	return &storage.BucketIamConfiguration{
+		ForceSendFields: []string{"BucketPolicyOnly"},
+		BucketPolicyOnly: &storage.BucketIamConfigurationBucketPolicyOnly{
+			Enabled:         d.Get("bucket_policy_only").(bool),
+			ForceSendFields: []string{"Enabled"},
+		},
+	}
 }
 
 func expandStorageBucketLifecycle(v interface{}) (*storage.BucketLifecycle, error) {
@@ -1006,4 +1163,13 @@ func resourceGCSBucketLifecycleRuleConditionHash(v interface{}) int {
 	}
 
 	return hashcode.String(buf.String())
+}
+
+func lockRetentionPolicy(bucketsService *storage.BucketsService, bucketName string, metageneration int64) error {
+	lockPolicyCall := bucketsService.LockRetentionPolicy(bucketName, metageneration)
+	if _, err := lockPolicyCall.Do(); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -37,9 +37,9 @@ func resourceAccessContextManagerServicePerimeter() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(360 * time.Second),
-			Update: schema.DefaultTimeout(360 * time.Second),
-			Delete: schema.DefaultTimeout(360 * time.Second),
+			Create: schema.DefaultTimeout(6 * time.Minute),
+			Update: schema.DefaultTimeout(6 * time.Minute),
+			Delete: schema.DefaultTimeout(6 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -156,13 +156,13 @@ func resourceAccessContextManagerServicePerimeterCreate(d *schema.ResourceData, 
 		return err
 	}
 
-	url, err := replaceVars(d, config, "https://accesscontextmanager.googleapis.com/v1/{{parent}}/servicePerimeters")
+	url, err := replaceVars(d, config, "{{AccessContextManagerBasePath}}{{parent}}/servicePerimeters")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Creating new ServicePerimeter: %#v", obj)
-	res, err := sendRequestWithTimeout(config, "POST", url, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := sendRequestWithTimeout(config, "POST", "", url, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating ServicePerimeter: %s", err)
 	}
@@ -192,12 +192,12 @@ func resourceAccessContextManagerServicePerimeterCreate(d *schema.ResourceData, 
 func resourceAccessContextManagerServicePerimeterRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://accesscontextmanager.googleapis.com/v1/{{name}}")
+	url, err := replaceVars(d, config, "{{AccessContextManagerBasePath}}{{name}}")
 	if err != nil {
 		return err
 	}
 
-	res, err := sendRequest(config, "GET", url, nil)
+	res, err := sendRequest(config, "GET", "", url, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("AccessContextManagerServicePerimeter %q", d.Id()))
 	}
@@ -255,7 +255,7 @@ func resourceAccessContextManagerServicePerimeterUpdate(d *schema.ResourceData, 
 		return err
 	}
 
-	url, err := replaceVars(d, config, "https://accesscontextmanager.googleapis.com/v1/{{name}}")
+	url, err := replaceVars(d, config, "{{AccessContextManagerBasePath}}{{name}}")
 	if err != nil {
 		return err
 	}
@@ -280,7 +280,7 @@ func resourceAccessContextManagerServicePerimeterUpdate(d *schema.ResourceData, 
 	if err != nil {
 		return err
 	}
-	res, err := sendRequestWithTimeout(config, "PATCH", url, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := sendRequestWithTimeout(config, "PATCH", "", url, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating ServicePerimeter %q: %s", d.Id(), err)
@@ -300,14 +300,15 @@ func resourceAccessContextManagerServicePerimeterUpdate(d *schema.ResourceData, 
 func resourceAccessContextManagerServicePerimeterDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://accesscontextmanager.googleapis.com/v1/{{name}}")
+	url, err := replaceVars(d, config, "{{AccessContextManagerBasePath}}{{name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting ServicePerimeter %q", d.Id())
-	res, err := sendRequestWithTimeout(config, "DELETE", url, obj, d.Timeout(schema.TimeoutDelete))
+
+	res, err := sendRequestWithTimeout(config, "DELETE", "", url, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "ServicePerimeter")
 	}
@@ -332,6 +333,9 @@ func resourceAccessContextManagerServicePerimeterImport(d *schema.ResourceData, 
 		return nil, err
 	}
 	stringParts := strings.Split(d.Get("name").(string), "/")
+	if len(stringParts) < 2 {
+		return nil, fmt.Errorf("Error parsing parent name. Should be in form accessPolicies/{{policy_id}}/servicePerimeters/{{short_name}}")
+	}
 	d.Set("parent", fmt.Sprintf("%s/%s", stringParts[0], stringParts[1]))
 	return []*schema.ResourceData{d}, nil
 }

@@ -90,6 +90,12 @@ func validateResourceCloudFunctionsFunctionName(v interface{}, k string) (ws []s
 	return
 }
 
+// based on compareSelfLinkOrResourceName, but less reusable and allows multi-/
+// strings in the new state (config) part
+func compareSelfLinkOrResourceNameWithMultipleParts(_, old, new string, _ *schema.ResourceData) bool {
+	return strings.HasSuffix(old, new)
+}
+
 func resourceCloudFunctionsFunction() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceCloudFunctionsCreate,
@@ -195,6 +201,12 @@ func resourceCloudFunctionsFunction() *schema.Resource {
 				ForceNew: true,
 			},
 
+			"vpc_connector": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: compareSelfLinkOrResourceName,
+			},
+
 			"environment_variables": {
 				Type:     schema.TypeMap,
 				Optional: true,
@@ -237,8 +249,9 @@ func resourceCloudFunctionsFunction() *schema.Resource {
 							Required: true,
 						},
 						"resource": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:             schema.TypeString,
+							Required:         true,
+							DiffSuppressFunc: compareSelfLinkOrResourceNameWithMultipleParts,
 						},
 						"failure_policy": {
 							Type:     schema.TypeList,
@@ -360,6 +373,10 @@ func resourceCloudFunctionsCreate(d *schema.ResourceData, meta interface{}) erro
 		function.EnvironmentVariables = expandEnvironmentVariables(d)
 	}
 
+	if v, ok := d.GetOk("vpc_connector"); ok {
+		function.VpcConnector = v.(string)
+	}
+
 	if v, ok := d.GetOk("max_instances"); ok {
 		function.MaxInstances = int64(v.(int))
 	}
@@ -410,6 +427,7 @@ func resourceCloudFunctionsRead(d *schema.ResourceData, meta interface{}) error 
 	d.Set("runtime", function.Runtime)
 	d.Set("service_account_email", function.ServiceAccountEmail)
 	d.Set("environment_variables", function.EnvironmentVariables)
+	d.Set("vpc_connector", function.VpcConnector)
 	if function.SourceArchiveUrl != "" {
 		// sourceArchiveUrl should always be a Google Cloud Storage URL (e.g. gs://bucket/object)
 		// https://cloud.google.com/functions/docs/reference/rest/v1/projects.locations.functions
@@ -562,26 +580,38 @@ func expandEventTrigger(configured []interface{}, project string) *cloudfunction
 
 	data := configured[0].(map[string]interface{})
 	eventType := data["event_type"].(string)
-	shape := ""
-	switch {
-	case strings.HasPrefix(eventType, "google.storage.object."):
-		shape = "projects/%s/buckets/%s"
-	case strings.HasPrefix(eventType, "google.pubsub.topic."):
-		shape = "projects/%s/topics/%s"
-	// Legacy style triggers
-	case strings.HasPrefix(eventType, "providers/cloud.storage/eventTypes/"):
-		shape = "projects/%s/buckets/%s"
-	case strings.HasPrefix(eventType, "providers/cloud.pubsub/eventTypes/"):
-		shape = "projects/%s/topics/%s"
-	case strings.HasPrefix(eventType, "providers/cloud.firestore/eventTypes/"):
-		// Firestore doesn't not yet support multiple databases, so "(default)" is assumed.
-		// https://cloud.google.com/functions/docs/calling/cloud-firestore#deploying_your_function
-		shape = "projects/%s/databases/(default)/documents/%s"
+	resource := data["resource"].(string)
+
+	// if resource starts with "projects/", we can reasonably assume it's a
+	// partial URI. Otherwise, it's a shortname. Construct a partial URI based
+	// on the event type if so.
+	if !strings.HasPrefix(resource, "projects/") {
+		shape := ""
+		switch {
+		case strings.HasPrefix(eventType, "google.storage.object."):
+			shape = "projects/%s/buckets/%s"
+		case strings.HasPrefix(eventType, "google.pubsub.topic."):
+			shape = "projects/%s/topics/%s"
+		// Legacy style triggers
+		case strings.HasPrefix(eventType, "providers/cloud.storage/eventTypes/"):
+			// Note that this is an uncommon way to refer to buckets; normally,
+			// you'd use to the global URL of the bucket and not the project
+			// scoped one.
+			shape = "projects/%s/buckets/%s"
+		case strings.HasPrefix(eventType, "providers/cloud.pubsub/eventTypes/"):
+			shape = "projects/%s/topics/%s"
+		case strings.HasPrefix(eventType, "providers/cloud.firestore/eventTypes/"):
+			// Firestore doesn't not yet support multiple databases, so "(default)" is assumed.
+			// https://cloud.google.com/functions/docs/calling/cloud-firestore#deploying_your_function
+			shape = "projects/%s/databases/(default)/documents/%s"
+		}
+
+		resource = fmt.Sprintf(shape, project, resource)
 	}
 
 	return &cloudfunctions.EventTrigger{
 		EventType:     eventType,
-		Resource:      fmt.Sprintf(shape, project, data["resource"].(string)),
+		Resource:      resource,
 		FailurePolicy: expandFailurePolicy(data["failure_policy"].([]interface{})),
 	}
 }
@@ -592,28 +622,9 @@ func flattenEventTrigger(eventTrigger *cloudfunctions.EventTrigger) []map[string
 		return result
 	}
 
-	resource := ""
-	switch {
-	case strings.HasPrefix(eventTrigger.EventType, "google.storage.object."):
-		resource = GetResourceNameFromSelfLink(eventTrigger.Resource)
-	case strings.HasPrefix(eventTrigger.EventType, "google.pubsub.topic."):
-		resource = GetResourceNameFromSelfLink(eventTrigger.Resource)
-		// Legacy style triggers
-	case strings.HasPrefix(eventTrigger.EventType, "providers/cloud.storage/eventTypes/"):
-		resource = GetResourceNameFromSelfLink(eventTrigger.Resource)
-	case strings.HasPrefix(eventTrigger.EventType, "providers/cloud.pubsub/eventTypes/"):
-		resource = GetResourceNameFromSelfLink(eventTrigger.Resource)
-	case strings.HasPrefix(eventTrigger.EventType, "providers/cloud.firestore/eventTypes/"):
-		// Simply taking the substring after the last "/" is not sufficient for firestore as resources may have slashes.
-		// For the eventTrigger.Resource "projects/my-project/databases/(default)/documents/messages/{messageId}" we extract
-		// the resource "messages/{messageId}" by taking the everything after the 5th "/"
-		parts := strings.SplitN(eventTrigger.Resource, "/", 6)
-		resource = parts[len(parts)-1]
-	}
-
 	result = append(result, map[string]interface{}{
 		"event_type":     eventTrigger.EventType,
-		"resource":       resource,
+		"resource":       eventTrigger.Resource,
 		"failure_policy": flattenFailurePolicy(eventTrigger.FailurePolicy),
 	})
 

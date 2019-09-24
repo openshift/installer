@@ -34,14 +34,20 @@ func isEmptyValue(v reflect.Value) bool {
 	return false
 }
 
-func sendRequest(config *Config, method, rawurl string, body map[string]interface{}) (map[string]interface{}, error) {
-	return sendRequestWithTimeout(config, method, rawurl, body, DefaultRequestTimeout)
+func sendRequest(config *Config, method, project, rawurl string, body map[string]interface{}) (map[string]interface{}, error) {
+	return sendRequestWithTimeout(config, method, project, rawurl, body, DefaultRequestTimeout)
 }
 
-func sendRequestWithTimeout(config *Config, method, rawurl string, body map[string]interface{}, timeout time.Duration) (map[string]interface{}, error) {
+func sendRequestWithTimeout(config *Config, method, project, rawurl string, body map[string]interface{}, timeout time.Duration, errorRetryPredicates ...func(e error) (bool, string)) (map[string]interface{}, error) {
 	reqHeaders := make(http.Header)
 	reqHeaders.Set("User-Agent", config.userAgent)
 	reqHeaders.Set("Content-Type", "application/json")
+
+	if config.UserProjectOverride && project != "" {
+		// Pass the project into this fn instead of parsing it from the URL because
+		// both project names and URLs can have colons in them.
+		reqHeaders.Set("X-Goog-User-Project", project)
+	}
 
 	if timeout == 0 {
 		timeout = time.Duration(1) * time.Hour
@@ -81,6 +87,7 @@ func sendRequestWithTimeout(config *Config, method, rawurl string, body map[stri
 			return nil
 		},
 		timeout,
+		errorRetryPredicates...,
 	)
 	if err != nil {
 		return nil, err
@@ -179,6 +186,15 @@ func buildReplacementFunc(re *regexp.Regexp, d TerraformResourceData, config *Co
 				return fmt.Sprintf("%v", v)
 			}
 		}
+
+		// terraform-google-conversion doesn't provide a provider config in tests.
+		if config != nil {
+			// Attempt to draw values from the provider config if it's present.
+			if f := reflect.Indirect(reflect.ValueOf(config)).FieldByName(m); f.IsValid() {
+				return f.String()
+			}
+		}
+
 		return ""
 	}
 

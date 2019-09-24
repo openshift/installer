@@ -37,9 +37,9 @@ func resourceAccessContextManagerAccessLevel() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(360 * time.Second),
-			Update: schema.DefaultTimeout(360 * time.Second),
-			Delete: schema.DefaultTimeout(360 * time.Second),
+			Create: schema.DefaultTimeout(6 * time.Minute),
+			Update: schema.DefaultTimeout(6 * time.Minute),
+			Delete: schema.DefaultTimeout(6 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -198,13 +198,13 @@ func resourceAccessContextManagerAccessLevelCreate(d *schema.ResourceData, meta 
 		return err
 	}
 
-	url, err := replaceVars(d, config, "https://accesscontextmanager.googleapis.com/v1/{{parent}}/accessLevels")
+	url, err := replaceVars(d, config, "{{AccessContextManagerBasePath}}{{parent}}/accessLevels")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Creating new AccessLevel: %#v", obj)
-	res, err := sendRequestWithTimeout(config, "POST", url, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := sendRequestWithTimeout(config, "POST", "", url, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating AccessLevel: %s", err)
 	}
@@ -234,12 +234,12 @@ func resourceAccessContextManagerAccessLevelCreate(d *schema.ResourceData, meta 
 func resourceAccessContextManagerAccessLevelRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://accesscontextmanager.googleapis.com/v1/{{name}}")
+	url, err := replaceVars(d, config, "{{AccessContextManagerBasePath}}{{name}}")
 	if err != nil {
 		return err
 	}
 
-	res, err := sendRequest(config, "GET", url, nil)
+	res, err := sendRequest(config, "GET", "", url, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("AccessContextManagerAccessLevel %q", d.Id()))
 	}
@@ -288,7 +288,7 @@ func resourceAccessContextManagerAccessLevelUpdate(d *schema.ResourceData, meta 
 		return err
 	}
 
-	url, err := replaceVars(d, config, "https://accesscontextmanager.googleapis.com/v1/{{name}}")
+	url, err := replaceVars(d, config, "{{AccessContextManagerBasePath}}{{name}}")
 	if err != nil {
 		return err
 	}
@@ -313,7 +313,7 @@ func resourceAccessContextManagerAccessLevelUpdate(d *schema.ResourceData, meta 
 	if err != nil {
 		return err
 	}
-	res, err := sendRequestWithTimeout(config, "PATCH", url, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := sendRequestWithTimeout(config, "PATCH", "", url, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating AccessLevel %q: %s", d.Id(), err)
@@ -333,14 +333,15 @@ func resourceAccessContextManagerAccessLevelUpdate(d *schema.ResourceData, meta 
 func resourceAccessContextManagerAccessLevelDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://accesscontextmanager.googleapis.com/v1/{{name}}")
+	url, err := replaceVars(d, config, "{{AccessContextManagerBasePath}}{{name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting AccessLevel %q", d.Id())
-	res, err := sendRequestWithTimeout(config, "DELETE", url, obj, d.Timeout(schema.TimeoutDelete))
+
+	res, err := sendRequestWithTimeout(config, "DELETE", "", url, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "AccessLevel")
 	}
@@ -365,6 +366,9 @@ func resourceAccessContextManagerAccessLevelImport(d *schema.ResourceData, meta 
 		return nil, err
 	}
 	stringParts := strings.Split(d.Get("name").(string), "/")
+	if len(stringParts) < 2 {
+		return nil, fmt.Errorf("Error parsing parent name. Should be in form accessPolicies/{{policy_id}}/accessLevels/{{short_name}}")
+	}
 	d.Set("parent", fmt.Sprintf("%s/%s", stringParts[0], stringParts[1]))
 	return []*schema.ResourceData{d}, nil
 }

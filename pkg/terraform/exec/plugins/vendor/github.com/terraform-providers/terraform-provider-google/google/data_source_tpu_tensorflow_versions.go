@@ -45,12 +45,12 @@ func dataSourceTpuTensorFlowVersionsRead(d *schema.ResourceData, meta interface{
 		return err
 	}
 
-	url, err := replaceVars(d, config, "https://tpu.googleapis.com/v1/projects/{{project}}/locations/{{zone}}/tensorflowVersions")
+	url, err := replaceVars(d, config, "{{TPUBasePath}}projects/{{project}}/locations/{{zone}}/tensorflowVersions")
 	if err != nil {
 		return err
 	}
 
-	versionsRaw, err := paginatedListRequest(url, config, flattenTpuTensorflowVersions)
+	versionsRaw, err := paginatedListRequest(project, url, config, flattenTpuTensorflowVersions)
 	if err != nil {
 		return fmt.Errorf("Error listing TPU Tensorflow versions: %s", err)
 	}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/go-version"
+	"github.com/hashicorp/terraform/helper/customdiff"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -54,11 +55,15 @@ func resourceContainerCluster() *schema.Resource {
 		Update: resourceContainerClusterUpdate,
 		Delete: resourceContainerClusterDelete,
 
-		CustomizeDiff: resourceContainerClusterIpAllocationCustomizeDiff,
+		CustomizeDiff: customdiff.All(
+			resourceContainerClusterIpAllocationCustomizeDiff,
+			resourceNodeConfigEmptyGuestAccelerator,
+			containerClusterPrivateClusterConfigCustomDiff,
+		),
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(30 * time.Minute),
-			Update: schema.DefaultTimeout(30 * time.Minute),
+			Update: schema.DefaultTimeout(60 * time.Minute),
 			Delete: schema.DefaultTimeout(30 * time.Minute),
 		},
 
@@ -183,6 +188,7 @@ func resourceContainerCluster() *schema.Resource {
 									"disabled": {
 										Type:     schema.TypeBool,
 										Optional: true,
+										Default:  true,
 									},
 								},
 							},
@@ -207,9 +213,9 @@ func resourceContainerCluster() *schema.Resource {
 
 			"cluster_autoscaling": {
 				Type:     schema.TypeList,
-				Computed: true,
 				MaxItems: 1,
 				Removed:  "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enabled": {
@@ -626,8 +632,71 @@ func resourceContainerCluster() *schema.Resource {
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
+
+			"enable_intranode_visibility": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Removed:  "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
+			},
 		},
 	}
+}
+
+// Setting a guest accelerator block to count=0 is the equivalent to omitting the block: it won't get
+// sent to the API and it won't be stored in state. This diffFunc will try to compare the old + new state
+// by only comparing the blocks with a positive count and ignoring those with count=0
+//
+// One quirk with this approach is that configs with mixed count=0 and count>0 accelerator blocks will
+// show a confusing diff if one of there are config changes that result in a legitimate diff as the count=0
+// blocks will not be in state.
+//
+// This could also be modelled by setting `guest_accelerator = []` in the config. However since the
+// previous syntax requires that schema.SchemaConfigModeAttr is set on the field it is advisable that
+// we have a work around for removing guest accelerators. Also Terraform 0.11 cannot use dynamic blocks
+// so this isn't a solution for module authors who want to dynamically omit guest accelerators
+// See https://github.com/terraform-providers/terraform-provider-google/issues/3786
+func resourceNodeConfigEmptyGuestAccelerator(diff *schema.ResourceDiff, meta interface{}) error {
+	old, new := diff.GetChange("node_config.0.guest_accelerator")
+	oList := old.([]interface{})
+	nList := new.([]interface{})
+
+	if len(nList) == len(oList) || len(nList) == 0 {
+		return nil
+	}
+	var hasAcceleratorWithEmptyCount bool
+	// the list of blocks in a desired state with count=0 accelerator blocks in it
+	// will be longer than the current state.
+	// this index tracks the location of positive count accelerator blocks
+	index := 0
+	for i, item := range nList {
+		accel := item.(map[string]interface{})
+		if accel["count"].(int) == 0 {
+			hasAcceleratorWithEmptyCount = true
+			// Ignore any 'empty' accelerators because they aren't sent to the API
+			continue
+		}
+		if index >= len(oList) {
+			// Return early if there are more positive count accelerator blocks in the desired state
+			// than the current state since a difference in 'legit' blocks is a valid diff.
+			// This will prevent array index overruns
+			return nil
+		}
+		if !reflect.DeepEqual(nList[i], oList[index]) {
+			return nil
+		}
+		index += 1
+	}
+
+	if hasAcceleratorWithEmptyCount && index == len(oList) {
+		// If the number of count>0 blocks match, there are count=0 blocks present and we
+		// haven't already returned due to a legitimate diff
+		err := diff.Clear("node_config.0.guest_accelerator")
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func resourceContainerClusterIpAllocationCustomizeDiff(diff *schema.ResourceDiff, meta interface{}) error {
@@ -813,17 +882,18 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 		// Try a GET on the cluster so we can see the state in debug logs. This will help classify error states.
 		_, getErr := config.clientContainerBeta.Projects.Locations.Clusters.Get(containerClusterFullName(project, location, clusterName)).Do()
 		if getErr != nil {
-			// Make errcheck happy
 			log.Printf("[WARN] Cluster %s was created in an error state and not found", clusterName)
+			d.SetId("")
 		}
 
 		if deleteErr := cleanFailedContainerCluster(d, meta); deleteErr != nil {
 			log.Printf("[WARN] Unable to clean up cluster from failed creation: %s", deleteErr)
+			// Leave ID set as the cluster likely still exists and should not be removed from state yet.
 		} else {
 			log.Printf("[WARN] Verified failed creation of cluster %s was cleaned up", d.Id())
+			d.SetId("")
 		}
 		// The resource didn't actually create
-		d.SetId("")
 		return waitErr
 	}
 
@@ -844,7 +914,14 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 
-	return resourceContainerClusterRead(d, meta)
+	if err := resourceContainerClusterRead(d, meta); err != nil {
+		return err
+	}
+
+	if err := waitForContainerClusterReady(config, project, location, clusterName, d.Timeout(schema.TimeoutCreate)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) error {
@@ -860,20 +937,14 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	cluster := &containerBeta.Cluster{}
-	err = resource.Retry(2*time.Minute, func() *resource.RetryError {
-		name := containerClusterFullName(project, location, d.Get("name").(string))
-		cluster, err = config.clientContainerBeta.Projects.Locations.Clusters.Get(name).Do()
-		if err != nil {
-			return resource.NonRetryableError(err)
-		}
-		if cluster.Status != "RUNNING" {
-			return resource.RetryableError(fmt.Errorf("Cluster %q has status %q with message %q", d.Get("name"), cluster.Status, cluster.StatusMessage))
-		}
-		return nil
-	})
+	clusterName := d.Get("name").(string)
+	name := containerClusterFullName(project, location, clusterName)
+	cluster, err := config.clientContainerBeta.Projects.Locations.Clusters.Get(name).Do()
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("Container Cluster %q", d.Get("name").(string)))
+	}
+	if cluster.Status == "ERROR" || cluster.Status == "DEGRADED" {
+		return fmt.Errorf("Cluster %q has status %q with message %q", d.Get("name"), cluster.Status, cluster.StatusMessage)
 	}
 
 	d.Set("name", cluster.Name)
@@ -950,6 +1021,7 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	d.Set("resource_labels", cluster.ResourceLabels)
+
 	return nil
 }
 
@@ -968,6 +1040,10 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 
 	clusterName := d.Get("name").(string)
 	timeoutInMinutes := int(d.Timeout(schema.TimeoutUpdate).Minutes())
+
+	if err := waitForContainerClusterReady(config, project, location, clusterName, d.Timeout(schema.TimeoutUpdate)); err != nil {
+		return err
+	}
 
 	d.Partial(true)
 
@@ -1189,41 +1265,25 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		d.SetPartial("enable_legacy_abac")
 	}
 
-	if d.HasChange("monitoring_service") {
-		desiredMonitoringService := d.Get("monitoring_service").(string)
-
-		req := &containerBeta.UpdateClusterRequest{
-			Update: &containerBeta.ClusterUpdate{
-				DesiredMonitoringService: desiredMonitoringService,
-			},
-		}
-
-		updateF := updateFunc(req, "updating GKE cluster monitoring service")
-		// Call update serially.
-		if err := lockedCall(lockKey, updateF); err != nil {
-			return err
-		}
-		log.Printf("[INFO] Monitoring service for GKE cluster %s has been updated to %s", d.Id(),
-			desiredMonitoringService)
-
-		d.SetPartial("monitoring_service")
-	}
-
-	if d.HasChange("logging_service") {
+	if d.HasChange("monitoring_service") || d.HasChange("logging_service") {
 		logging := d.Get("logging_service").(string)
+		monitoring := d.Get("monitoring_service").(string)
 
-		req := &containerBeta.SetLoggingServiceRequest{
-			LoggingService: logging,
-		}
 		updateF := func() error {
 			name := containerClusterFullName(project, location, clusterName)
-			op, err := config.clientContainerBeta.Projects.Locations.Clusters.SetLogging(name, req).Do()
+			req := &containerBeta.UpdateClusterRequest{
+				Update: &containerBeta.ClusterUpdate{
+					DesiredMonitoringService: monitoring,
+					DesiredLoggingService:    logging,
+				},
+			}
+			op, err := config.clientContainerBeta.Projects.Locations.Clusters.Update(name, req).Do()
 			if err != nil {
 				return err
 			}
 
 			// Wait until it's updated
-			return containerOperationWait(config, op, project, location, "updating GKE logging service", timeoutInMinutes)
+			return containerOperationWait(config, op, project, location, "updating GKE logging+monitoring service", timeoutInMinutes)
 		}
 
 		// Call update serially.
@@ -1231,9 +1291,9 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 			return err
 		}
 
-		log.Printf("[INFO] GKE cluster %s: logging service has been updated to %s", d.Id(),
-			logging)
+		log.Printf("[INFO] GKE cluster %s: logging service has been updated to %s, monitoring service has been updated to %s", d.Id(), logging, monitoring)
 		d.SetPartial("logging_service")
+		d.SetPartial("monitoring_service")
 	}
 
 	if d.HasChange("network_policy") {
@@ -1473,6 +1533,10 @@ func resourceContainerClusterDelete(d *schema.ResourceData, meta interface{}) er
 	clusterName := d.Get("name").(string)
 	timeoutInMinutes := int(d.Timeout(schema.TimeoutDelete).Minutes())
 
+	if err := waitForContainerClusterReady(config, project, location, clusterName, d.Timeout(schema.TimeoutDelete)); err != nil {
+		return err
+	}
+
 	log.Printf("[DEBUG] Deleting GKE cluster %s", d.Get("name").(string))
 	mutexKV.Lock(containerClusterMutexKey(project, location, clusterName))
 	defer mutexKV.Unlock(containerClusterMutexKey(project, location, clusterName))
@@ -1549,6 +1613,24 @@ func cleanFailedContainerCluster(d *schema.ResourceData, meta interface{}) error
 	log.Printf("[INFO] GKE cluster %s has been deleted", d.Id())
 	d.SetId("")
 	return nil
+}
+
+func waitForContainerClusterReady(config *Config, project, location, clusterName string, timeout time.Duration) error {
+	return resource.Retry(timeout, func() *resource.RetryError {
+		name := containerClusterFullName(project, location, clusterName)
+		cluster, err := config.clientContainerBeta.Projects.Locations.Clusters.Get(name).Do()
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+		if cluster.Status == "PROVISIONING" || cluster.Status == "RECONCILING" || cluster.Status == "STOPPING" {
+			return resource.RetryableError(fmt.Errorf("Cluster %q has status %q with message %q", clusterName, cluster.Status, cluster.StatusMessage))
+		} else if cluster.Status == "RUNNING" {
+			log.Printf("Cluster %q has status 'RUNNING'.", clusterName)
+			return nil
+		} else {
+			return resource.NonRetryableError(fmt.Errorf("Cluster %q has terminal state %q with message %q.", clusterName, cluster.Status, cluster.StatusMessage))
+		}
+	})
 }
 
 // container engine's API currently mistakenly returns the instance group manager's
@@ -1689,7 +1771,9 @@ func expandMasterAuth(configured interface{}) *containerBeta.MasterAuth {
 func expandMasterAuthorizedNetworksConfig(configured interface{}) *containerBeta.MasterAuthorizedNetworksConfig {
 	l := configured.([]interface{})
 	if len(l) == 0 {
-		return nil
+		return &containerBeta.MasterAuthorizedNetworksConfig{
+			Enabled: false,
+		}
 	}
 	result := &containerBeta.MasterAuthorizedNetworksConfig{
 		Enabled: true,
@@ -1864,7 +1948,7 @@ func flattenIPAllocationPolicy(c *containerBeta.Cluster, d *schema.ResourceData,
 }
 
 func flattenMaintenancePolicy(mp *containerBeta.MaintenancePolicy) []map[string]interface{} {
-	if mp == nil {
+	if mp == nil || mp.Window == nil || mp.Window.DailyMaintenanceWindow == nil {
 		return nil
 	}
 	return []map[string]interface{}{
@@ -1908,7 +1992,7 @@ func flattenMasterAuth(ma *containerBeta.MasterAuth) []map[string]interface{} {
 }
 
 func flattenMasterAuthorizedNetworksConfig(c *containerBeta.MasterAuthorizedNetworksConfig) []map[string]interface{} {
-	if c == nil {
+	if c == nil || !c.Enabled {
 		return nil
 	}
 	result := make(map[string]interface{})
@@ -1960,6 +2044,9 @@ func resourceContainerClusterStateImporter(d *schema.ResourceData, meta interfac
 
 	d.Set("name", clusterName)
 	d.SetId(clusterName)
+	if err := waitForContainerClusterReady(config, project, location, clusterName, d.Timeout(schema.TimeoutCreate)); err != nil {
+		return nil, err
+	}
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -2011,4 +2098,23 @@ func containerClusterPrivateClusterConfigSuppress(k, old, new string, d *schema.
 		return suppressEndpoint && suppressNodes
 	}
 	return false
+}
+
+func containerClusterPrivateClusterConfigCustomDiff(d *schema.ResourceDiff, meta interface{}) error {
+	pcc, ok := d.GetOk("private_cluster_config")
+	if !ok {
+		return nil
+	}
+	pccList := pcc.([]interface{})
+	if len(pccList) == 0 {
+		return nil
+	}
+	config := pccList[0].(map[string]interface{})
+	if config["enable_private_nodes"].(bool) == true {
+		block := config["master_ipv4_cidr_block"]
+		if block == nil || block == "" {
+			return fmt.Errorf("master_ipv4_cidr_block must be set if enable_private_nodes == true")
+		}
+	}
+	return nil
 }

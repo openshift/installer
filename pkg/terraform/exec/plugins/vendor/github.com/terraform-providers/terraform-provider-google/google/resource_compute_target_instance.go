@@ -37,8 +37,8 @@ func resourceComputeTargetInstance() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(240 * time.Second),
-			Delete: schema.DefaultTimeout(240 * time.Second),
+			Create: schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(4 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -125,13 +125,17 @@ func resourceComputeTargetInstanceCreate(d *schema.ResourceData, meta interface{
 		obj["zone"] = zoneProp
 	}
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/zones/{{zone}}/targetInstances")
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/targetInstances")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Creating new TargetInstance: %#v", obj)
-	res, err := sendRequestWithTimeout(config, "POST", url, obj, d.Timeout(schema.TimeoutCreate))
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating TargetInstance: %s", err)
 	}
@@ -143,10 +147,6 @@ func resourceComputeTargetInstanceCreate(d *schema.ResourceData, meta interface{
 	}
 	d.SetId(id)
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -171,20 +171,20 @@ func resourceComputeTargetInstanceCreate(d *schema.ResourceData, meta interface{
 func resourceComputeTargetInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/zones/{{zone}}/targetInstances/{{name}}")
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/targetInstances/{{name}}")
 	if err != nil {
 		return err
-	}
-
-	res, err := sendRequest(config, "GET", url, nil)
-	if err != nil {
-		return handleNotFoundError(err, d, fmt.Sprintf("ComputeTargetInstance %q", d.Id()))
 	}
 
 	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
+	res, err := sendRequest(config, "GET", project, url, nil)
+	if err != nil {
+		return handleNotFoundError(err, d, fmt.Sprintf("ComputeTargetInstance %q", d.Id()))
+	}
+
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading TargetInstance: %s", err)
 	}
@@ -217,22 +217,24 @@ func resourceComputeTargetInstanceRead(d *schema.ResourceData, meta interface{})
 func resourceComputeTargetInstanceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/zones/{{zone}}/targetInstances/{{name}}")
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/targetInstances/{{name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting TargetInstance %q", d.Id())
-	res, err := sendRequestWithTimeout(config, "DELETE", url, obj, d.Timeout(schema.TimeoutDelete))
+
+	res, err := sendRequestWithTimeout(config, "DELETE", project, url, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "TargetInstance")
 	}
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -253,7 +255,12 @@ func resourceComputeTargetInstanceDelete(d *schema.ResourceData, meta interface{
 
 func resourceComputeTargetInstanceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
-	if err := parseImportId([]string{"projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/targetInstances/(?P<name>[^/]+)", "(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<name>[^/]+)", "(?P<name>[^/]+)"}, d, config); err != nil {
+	if err := parseImportId([]string{
+		"projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/targetInstances/(?P<name>[^/]+)",
+		"(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<name>[^/]+)",
+		"(?P<zone>[^/]+)/(?P<name>[^/]+)",
+		"(?P<name>[^/]+)",
+	}, d, config); err != nil {
 		return nil, err
 	}
 
@@ -318,7 +325,7 @@ func expandComputeTargetInstanceInstance(v interface{}, d TerraformResourceData,
 		return "https://www.googleapis.com/compute/v1/" + v.(string), nil
 	} else if strings.HasPrefix(v.(string), "regions/") || strings.HasPrefix(v.(string), "zones/") {
 		// For regional or zonal resources which include their region or zone, just put the project in front.
-		url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/")
+		url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/")
 		if err != nil {
 			return nil, err
 		}
@@ -327,7 +334,7 @@ func expandComputeTargetInstanceInstance(v interface{}, d TerraformResourceData,
 	// Anything else is assumed to be a regional resource, with a partial link that begins with the resource name.
 	// This isn't very likely - it's a last-ditch effort to extract something useful here.  We can do a better job
 	// as soon as MultiResourceRefs are working since we'll know the types that this field is supposed to point to.
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/regions/{{region}}/")
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/")
 	if err != nil {
 		return nil, err
 	}

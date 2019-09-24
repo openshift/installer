@@ -12,8 +12,10 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 
-	"google.golang.org/api/dataproc/v1"
+	dataproc "google.golang.org/api/dataproc/v1beta2"
 )
+
+var resolveDataprocImageVersion = regexp.MustCompile(`(?P<Major>[^\s.-]+)\.(?P<Minor>[^\s.-]+)(?:\.(?P<Subminor>[^\s.-]+))?(?:\-(?P<Distr>[^\s.-]+))?`)
 
 func resourceDataprocCluster() *schema.Resource {
 	return &schema.Resource{
@@ -23,9 +25,9 @@ func resourceDataprocCluster() *schema.Resource {
 		Delete: resourceDataprocClusterDelete,
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(15 * time.Minute),
-			Update: schema.DefaultTimeout(5 * time.Minute),
-			Delete: schema.DefaultTimeout(5 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -206,7 +208,6 @@ func resourceDataprocCluster() *schema.Resource {
 									// API does not honour this if set ...
 									// It always uses whatever is specified for the worker_config
 									// "machine_type": { ... }
-
 									"disk_config": {
 										Type:     schema.TypeList,
 										Optional: true,
@@ -259,10 +260,11 @@ func resourceDataprocCluster() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"image_version": {
-										Type:     schema.TypeString,
-										Optional: true,
-										Computed: true,
-										ForceNew: true,
+										Type:             schema.TypeString,
+										Optional:         true,
+										Computed:         true,
+										ForceNew:         true,
+										DiffSuppressFunc: dataprocImageVersionDiffSuppress,
 									},
 
 									"override_properties": {
@@ -285,6 +287,16 @@ func resourceDataprocCluster() *schema.Resource {
 									// values (including overrides) for all properties, whilst override_properties
 									// is only for properties the user specifically wants to override. If nothing
 									// is overridden, this will be empty.
+
+									"optional_components": {
+										Type:     schema.TypeSet,
+										Optional: true,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+											ValidateFunc: validation.StringInSlice([]string{"COMPONENT_UNSPECIFIED", "ANACONDA", "DRUID", "HIVE_WEBHCAT",
+												"JUPYTER", "KERBEROS", "PRESTO", "ZEPPELIN", "ZOOKEEPER"}, false),
+										},
+									},
 								},
 							},
 						},
@@ -459,7 +471,7 @@ func resourceDataprocClusterCreate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	// Create the cluster
-	op, err := config.clientDataproc.Projects.Regions.Clusters.Create(
+	op, err := config.clientDataprocBeta.Projects.Regions.Clusters.Create(
 		project, region, cluster).Do()
 	if err != nil {
 		return fmt.Errorf("Error creating Dataproc cluster: %s", err)
@@ -530,7 +542,7 @@ func expandClusterConfig(d *schema.ResourceData, config *Config) (*dataproc.Clus
 	}
 
 	if cfg, ok := configOptions(d, "cluster_config.0.preemptible_worker_config"); ok {
-		log.Println("[INFO] got preemtible worker config")
+		log.Println("[INFO] got preemptible worker config")
 		conf.SecondaryWorkerConfig = expandPreemptibleInstanceGroupConfig(cfg)
 		if conf.SecondaryWorkerConfig.NumInstances > 0 {
 			conf.SecondaryWorkerConfig.IsPreemptible = true
@@ -601,6 +613,14 @@ func expandSoftwareConfig(cfg map[string]interface{}) *dataproc.SoftwareConfig {
 	}
 	if v, ok := cfg["image_version"]; ok {
 		conf.ImageVersion = v.(string)
+	}
+	if components, ok := cfg["optional_components"]; ok {
+		compSet := components.(*schema.Set)
+		components := make([]string, compSet.Len())
+		for i, component := range compSet.List() {
+			components[i] = component.(string)
+		}
+		conf.OptionalComponents = components
 	}
 	return conf
 }
@@ -757,7 +777,7 @@ func resourceDataprocClusterUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	if len(updMask) > 0 {
-		patch := config.clientDataproc.Projects.Regions.Clusters.Patch(
+		patch := config.clientDataprocBeta.Projects.Regions.Clusters.Patch(
 			project, region, clusterName, cluster)
 		op, err := patch.UpdateMask(strings.Join(updMask, ",")).Do()
 		if err != nil {
@@ -787,7 +807,7 @@ func resourceDataprocClusterRead(d *schema.ResourceData, meta interface{}) error
 	region := d.Get("region").(string)
 	clusterName := d.Get("name").(string)
 
-	cluster, err := config.clientDataproc.Projects.Regions.Clusters.Get(
+	cluster, err := config.clientDataprocBeta.Projects.Regions.Clusters.Get(
 		project, region, clusterName).Do()
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("Dataproc Cluster %q", clusterName))
@@ -837,6 +857,7 @@ func flattenClusterConfig(d *schema.ResourceData, cfg *dataproc.ClusterConfig) (
 func flattenSoftwareConfig(d *schema.ResourceData, sc *dataproc.SoftwareConfig) []map[string]interface{} {
 	data := map[string]interface{}{
 		"image_version":       sc.ImageVersion,
+		"optional_components": sc.OptionalComponents,
 		"properties":          sc.Properties,
 		"override_properties": d.Get("cluster_config.0.software_config.0.override_properties").(map[string]interface{}),
 	}
@@ -975,7 +996,7 @@ func resourceDataprocClusterDelete(d *schema.ResourceData, meta interface{}) err
 	timeoutInMinutes := int(d.Timeout(schema.TimeoutDelete).Minutes())
 
 	log.Printf("[DEBUG] Deleting Dataproc cluster %s", clusterName)
-	op, err := config.clientDataproc.Projects.Regions.Clusters.Delete(
+	op, err := config.clientDataprocBeta.Projects.Regions.Clusters.Delete(
 		project, region, clusterName).Do()
 	if err != nil {
 		return err
@@ -1005,4 +1026,52 @@ func configOptions(d *schema.ResourceData, option string) (map[string]interface{
 		}
 	}
 	return nil, false
+}
+
+func dataprocImageVersionDiffSuppress(_, old, new string, _ *schema.ResourceData) bool {
+	oldV, err := parseDataprocImageVersion(old)
+	if err != nil {
+		return false
+	}
+	newV, err := parseDataprocImageVersion(new)
+	if err != nil {
+		return false
+	}
+
+	if newV.major != oldV.major {
+		return false
+	}
+	if newV.minor != oldV.minor {
+		return false
+	}
+	// Only compare subminor version if set in config version.
+	if newV.subminor != "" && newV.subminor != oldV.subminor {
+		return false
+	}
+	// Only compare os if it is set in config version.
+	if newV.osName != "" && newV.osName != oldV.osName {
+		return false
+	}
+	return true
+}
+
+type dataprocImageVersion struct {
+	major    string
+	minor    string
+	subminor string
+	osName   string
+}
+
+func parseDataprocImageVersion(version string) (*dataprocImageVersion, error) {
+	matches := resolveDataprocImageVersion.FindStringSubmatch(version)
+	if len(matches) != 5 {
+		return nil, fmt.Errorf("invalid image version %q", version)
+	}
+
+	return &dataprocImageVersion{
+		major:    matches[1],
+		minor:    matches[2],
+		subminor: matches[3],
+		osName:   matches[4],
+	}, nil
 }

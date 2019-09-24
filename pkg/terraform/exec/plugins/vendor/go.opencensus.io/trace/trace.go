@@ -42,20 +42,6 @@ type Span struct {
 	data        *SpanData
 	mu          sync.Mutex // protects the contents of *data (but not the pointer value.)
 	spanContext SpanContext
-
-	// lruAttributes are capped at configured limit. When the capacity is reached an oldest entry
-	// is removed to create room for a new entry.
-	lruAttributes *lruMap
-
-	// annotations are stored in FIFO queue capped by configured limit.
-	annotations *evictedQueue
-
-	// messageEvents are stored in FIFO queue capped by configured limit.
-	messageEvents *evictedQueue
-
-	// links are stored in FIFO queue capped by configured limit.
-	links *evictedQueue
-
 	// spanStore is the spanStore this span belongs to, if any, otherwise it is nil.
 	*spanStore
 	endOnce sync.Once
@@ -170,7 +156,6 @@ func StartSpan(ctx context.Context, name string, o ...StartOption) (context.Cont
 	var opts StartOptions
 	var parent SpanContext
 	if p := FromContext(ctx); p != nil {
-		p.addChild()
 		parent = p.spanContext
 	}
 	for _, op := range o {
@@ -241,11 +226,6 @@ func startSpanInternal(name string, hasParent bool, parent SpanContext, remotePa
 		Name:            name,
 		HasRemoteParent: remoteParent,
 	}
-	span.lruAttributes = newLruMap(cfg.MaxAttributesPerSpan)
-	span.annotations = newEvictedQueue(cfg.MaxAnnotationEventsPerSpan)
-	span.messageEvents = newEvictedQueue(cfg.MaxMessageEventsPerSpan)
-	span.links = newEvictedQueue(cfg.MaxLinksPerSpan)
-
 	if hasParent {
 		span.data.ParentSpanID = parent.SpanID
 	}
@@ -296,21 +276,11 @@ func (s *Span) makeSpanData() *SpanData {
 	var sd SpanData
 	s.mu.Lock()
 	sd = *s.data
-	if s.lruAttributes.simpleLruMap.Len() > 0 {
-		sd.Attributes = s.lruAttributesToAttributeMap()
-		sd.DroppedAttributeCount = s.lruAttributes.droppedCount
-	}
-	if len(s.annotations.queue) > 0 {
-		sd.Annotations = s.interfaceArrayToAnnotationArray()
-		sd.DroppedAnnotationCount = s.annotations.droppedCount
-	}
-	if len(s.messageEvents.queue) > 0 {
-		sd.MessageEvents = s.interfaceArrayToMessageEventArray()
-		sd.DroppedMessageEventCount = s.messageEvents.droppedCount
-	}
-	if len(s.links.queue) > 0 {
-		sd.Links = s.interfaceArrayToLinksArray()
-		sd.DroppedLinkCount = s.links.droppedCount
+	if s.data.Attributes != nil {
+		sd.Attributes = make(map[string]interface{})
+		for k, v := range s.data.Attributes {
+			sd.Attributes[k] = v
+		}
 	}
 	s.mu.Unlock()
 	return &sd
@@ -344,57 +314,6 @@ func (s *Span) SetStatus(status Status) {
 	s.mu.Unlock()
 }
 
-func (s *Span) interfaceArrayToLinksArray() []Link {
-	linksArr := make([]Link, 0)
-	for _, value := range s.links.queue {
-		linksArr = append(linksArr, value.(Link))
-	}
-	return linksArr
-}
-
-func (s *Span) interfaceArrayToMessageEventArray() []MessageEvent {
-	messageEventArr := make([]MessageEvent, 0)
-	for _, value := range s.messageEvents.queue {
-		messageEventArr = append(messageEventArr, value.(MessageEvent))
-	}
-	return messageEventArr
-}
-
-func (s *Span) interfaceArrayToAnnotationArray() []Annotation {
-	annotationArr := make([]Annotation, 0)
-	for _, value := range s.annotations.queue {
-		annotationArr = append(annotationArr, value.(Annotation))
-	}
-	return annotationArr
-}
-
-func (s *Span) lruAttributesToAttributeMap() map[string]interface{} {
-	attributes := make(map[string]interface{})
-	for _, key := range s.lruAttributes.simpleLruMap.Keys() {
-		value, ok := s.lruAttributes.simpleLruMap.Get(key)
-		if ok {
-			keyStr := key.(string)
-			attributes[keyStr] = value
-		}
-	}
-	return attributes
-}
-
-func (s *Span) copyToCappedAttributes(attributes []Attribute) {
-	for _, a := range attributes {
-		s.lruAttributes.add(a.key, a.value)
-	}
-}
-
-func (s *Span) addChild() {
-	if !s.IsRecordingEvents() {
-		return
-	}
-	s.mu.Lock()
-	s.data.ChildSpanCount++
-	s.mu.Unlock()
-}
-
 // AddAttributes sets attributes in the span.
 //
 // Existing attributes whose keys appear in the attributes parameter are overwritten.
@@ -403,7 +322,10 @@ func (s *Span) AddAttributes(attributes ...Attribute) {
 		return
 	}
 	s.mu.Lock()
-	s.copyToCappedAttributes(attributes)
+	if s.data.Attributes == nil {
+		s.data.Attributes = make(map[string]interface{})
+	}
+	copyAttributes(s.data.Attributes, attributes)
 	s.mu.Unlock()
 }
 
@@ -423,7 +345,7 @@ func (s *Span) lazyPrintfInternal(attributes []Attribute, format string, a ...in
 		m = make(map[string]interface{})
 		copyAttributes(m, attributes)
 	}
-	s.annotations.add(Annotation{
+	s.data.Annotations = append(s.data.Annotations, Annotation{
 		Time:       now,
 		Message:    msg,
 		Attributes: m,
@@ -439,7 +361,7 @@ func (s *Span) printStringInternal(attributes []Attribute, str string) {
 		a = make(map[string]interface{})
 		copyAttributes(a, attributes)
 	}
-	s.annotations.add(Annotation{
+	s.data.Annotations = append(s.data.Annotations, Annotation{
 		Time:       now,
 		Message:    str,
 		Attributes: a,
@@ -476,7 +398,7 @@ func (s *Span) AddMessageSendEvent(messageID, uncompressedByteSize, compressedBy
 	}
 	now := time.Now()
 	s.mu.Lock()
-	s.messageEvents.add(MessageEvent{
+	s.data.MessageEvents = append(s.data.MessageEvents, MessageEvent{
 		Time:                 now,
 		EventType:            MessageEventTypeSent,
 		MessageID:            messageID,
@@ -498,7 +420,7 @@ func (s *Span) AddMessageReceiveEvent(messageID, uncompressedByteSize, compresse
 	}
 	now := time.Now()
 	s.mu.Lock()
-	s.messageEvents.add(MessageEvent{
+	s.data.MessageEvents = append(s.data.MessageEvents, MessageEvent{
 		Time:                 now,
 		EventType:            MessageEventTypeRecv,
 		MessageID:            messageID,
@@ -514,7 +436,7 @@ func (s *Span) AddLink(l Link) {
 		return
 	}
 	s.mu.Lock()
-	s.links.add(l)
+	s.data.Links = append(s.data.Links, l)
 	s.mu.Unlock()
 }
 
@@ -546,12 +468,8 @@ func init() {
 	gen.spanIDInc |= 1
 
 	config.Store(&Config{
-		DefaultSampler:             ProbabilitySampler(defaultSamplingProbability),
-		IDGenerator:                gen,
-		MaxAttributesPerSpan:       DefaultMaxAttributesPerSpan,
-		MaxAnnotationEventsPerSpan: DefaultMaxAnnotationEventsPerSpan,
-		MaxMessageEventsPerSpan:    DefaultMaxMessageEventsPerSpan,
-		MaxLinksPerSpan:            DefaultMaxLinksPerSpan,
+		DefaultSampler: ProbabilitySampler(defaultSamplingProbability),
+		IDGenerator:    gen,
 	})
 }
 

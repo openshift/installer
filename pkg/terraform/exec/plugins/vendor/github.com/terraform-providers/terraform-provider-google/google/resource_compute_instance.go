@@ -33,9 +33,9 @@ func resourceComputeInstance() *schema.Resource {
 		MigrateState:  resourceComputeInstanceMigrateState,
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(6 * time.Minute),
-			Update: schema.DefaultTimeout(6 * time.Minute),
-			Delete: schema.DefaultTimeout(6 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		// A compute instance is more or less a superset of a compute instance
@@ -81,6 +81,7 @@ func resourceComputeInstance() *schema.Resource {
 							ForceNew:         true,
 							ConflictsWith:    []string{"boot_disk.0.disk_encryption_key_raw"},
 							DiffSuppressFunc: compareSelfLinkRelativePaths,
+							Computed:         true,
 						},
 
 						"initialize_params": {
@@ -114,8 +115,23 @@ func resourceComputeInstance() *schema.Resource {
 										ForceNew:         true,
 										DiffSuppressFunc: diskImageDiffSuppress,
 									},
+
+									"labels": {
+										Type:     schema.TypeMap,
+										Optional: true,
+										Computed: true,
+										ForceNew: true,
+									},
 								},
 							},
+						},
+
+						"mode": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ForceNew:     true,
+							Default:      "READ_WRITE",
+							ValidateFunc: validation.StringInSlice([]string{"READ_WRITE", "READ_ONLY"}, false),
 						},
 
 						"source": {
@@ -124,7 +140,7 @@ func resourceComputeInstance() *schema.Resource {
 							Computed:         true,
 							ForceNew:         true,
 							ConflictsWith:    []string{"boot_disk.initialize_params"},
-							DiffSuppressFunc: linkDiffSuppress,
+							DiffSuppressFunc: compareSelfLinkOrResourceName,
 						},
 					},
 				},
@@ -282,6 +298,7 @@ func resourceComputeInstance() *schema.Resource {
 							Type:             schema.TypeString,
 							Optional:         true,
 							DiffSuppressFunc: compareSelfLinkRelativePaths,
+							Computed:         true,
 						},
 
 						"disk_encryption_key_sha256": {
@@ -394,7 +411,7 @@ func resourceComputeInstance() *schema.Resource {
 							Type:             schema.TypeString,
 							Required:         true,
 							ForceNew:         true,
-							DiffSuppressFunc: linkDiffSuppress,
+							DiffSuppressFunc: compareSelfLinkOrResourceName,
 						},
 					},
 				},
@@ -632,26 +649,24 @@ func getDisk(diskUri string, d *schema.ResourceData, config *Config) (*compute.D
 	return disk, err
 }
 
-func expandComputeInstance(project string, zone *compute.Zone, d *schema.ResourceData, config *Config) (*computeBeta.Instance, error) {
+func expandComputeInstance(project string, d *schema.ResourceData, config *Config) (*computeBeta.Instance, error) {
 	// Get the machine type
 	var machineTypeUrl string
 	if mt, ok := d.GetOk("machine_type"); ok {
-		log.Printf("[DEBUG] Loading machine type: %s", mt.(string))
-		machineType, err := config.clientCompute.MachineTypes.Get(
-			project, zone.Name, mt.(string)).Do()
+		machineType, err := ParseMachineTypesFieldValue(mt.(string), d, config)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"Error loading machine type: %s",
 				err)
 		}
-		machineTypeUrl = machineType.SelfLink
+		machineTypeUrl = machineType.RelativeLink()
 	}
 
 	// Build up the list of disks
 
 	disks := []*computeBeta.AttachedDisk{}
 	if _, hasBootDisk := d.GetOk("boot_disk"); hasBootDisk {
-		bootDisk, err := expandBootDisk(d, config, zone, project)
+		bootDisk, err := expandBootDisk(d, config, project)
 		if err != nil {
 			return nil, err
 		}
@@ -659,7 +674,7 @@ func expandComputeInstance(project string, zone *compute.Zone, d *schema.Resourc
 	}
 
 	if _, hasScratchDisk := d.GetOk("scratch_disk"); hasScratchDisk {
-		scratchDisks, err := expandScratchDisks(d, config, zone, project)
+		scratchDisks, err := expandScratchDisks(d, config, project)
 		if err != nil {
 			return nil, err
 		}
@@ -740,7 +755,7 @@ func resourceComputeInstanceCreate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error loading zone '%s': %s", z, err)
 	}
 
-	instance, err := expandComputeInstance(project, zone, d, config)
+	instance, err := expandComputeInstance(project, d, config)
 	if err != nil {
 		return err
 	}
@@ -945,6 +960,7 @@ func resourceComputeInstanceRead(d *schema.ResourceData, meta interface{}) error
 	d.Set("project", project)
 	d.Set("zone", GetResourceNameFromSelfLink(instance.Zone))
 	d.Set("name", instance.Name)
+	d.Set("description", instance.Description)
 	d.Set("hostname", instance.Hostname)
 	d.SetId(instance.Name)
 
@@ -1153,7 +1169,7 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 				if err != nil {
 					return errwrap.Wrapf("Error removing alias_ip_range: {{err}}", err)
 				}
-				opErr := computeSharedOperationWaitTime(config.clientCompute, op, project, int(d.Timeout(schema.TimeoutUpdate).Minutes()), "updaing alias ip ranges")
+				opErr := computeSharedOperationWaitTime(config.clientCompute, op, project, int(d.Timeout(schema.TimeoutUpdate).Minutes()), "updating alias ip ranges")
 				if opErr != nil {
 					return opErr
 				}
@@ -1177,7 +1193,7 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 				if err != nil {
 					return errwrap.Wrapf("Error adding alias_ip_range: {{err}}", err)
 				}
-				opErr := computeSharedOperationWaitTime(config.clientCompute, op, project, int(d.Timeout(schema.TimeoutUpdate).Minutes()), "updaing alias ip ranges")
+				opErr := computeSharedOperationWaitTime(config.clientCompute, op, project, int(d.Timeout(schema.TimeoutUpdate).Minutes()), "updating alias ip ranges")
 				if opErr != nil {
 					return opErr
 				}
@@ -1591,7 +1607,7 @@ func resourceComputeInstanceImportState(d *schema.ResourceData, meta interface{}
 	return []*schema.ResourceData{d}, nil
 }
 
-func expandBootDisk(d *schema.ResourceData, config *Config, zone *compute.Zone, project string) (*computeBeta.AttachedDisk, error) {
+func expandBootDisk(d *schema.ResourceData, config *Config, project string) (*computeBeta.AttachedDisk, error) {
 	disk := &computeBeta.AttachedDisk{
 		AutoDelete: d.Get("boot_disk.0.auto_delete").(bool),
 		Boot:       true,
@@ -1634,11 +1650,11 @@ func expandBootDisk(d *schema.ResourceData, config *Config, zone *compute.Zone, 
 
 		if v, ok := d.GetOk("boot_disk.0.initialize_params.0.type"); ok {
 			diskTypeName := v.(string)
-			diskType, err := readDiskType(config, zone, project, diskTypeName)
+			diskType, err := readDiskType(config, d, diskTypeName)
 			if err != nil {
 				return nil, fmt.Errorf("Error loading disk type '%s': %s", diskTypeName, err)
 			}
-			disk.InitializeParams.DiskType = diskType.SelfLink
+			disk.InitializeParams.DiskType = diskType.RelativeLink()
 		}
 
 		if v, ok := d.GetOk("boot_disk.0.initialize_params.0.image"); ok {
@@ -1650,6 +1666,14 @@ func expandBootDisk(d *schema.ResourceData, config *Config, zone *compute.Zone, 
 
 			disk.InitializeParams.SourceImage = imageUrl
 		}
+
+		if _, ok := d.GetOk("boot_disk.0.initialize_params.0.labels"); ok {
+			disk.InitializeParams.Labels = expandStringMap(d, "boot_disk.0.initialize_params.0.labels")
+		}
+	}
+
+	if v, ok := d.GetOk("boot_disk.0.mode"); ok {
+		disk.Mode = v.(string)
 	}
 
 	return disk, nil
@@ -1659,6 +1683,7 @@ func flattenBootDisk(d *schema.ResourceData, disk *computeBeta.AttachedDisk, con
 	result := map[string]interface{}{
 		"auto_delete": disk.AutoDelete,
 		"device_name": disk.DeviceName,
+		"mode":        disk.Mode,
 		"source":      ConvertSelfLinkToV1(disk.Source),
 		// disk_encryption_key_raw is not returned from the API, so copy it from what the user
 		// originally specified to avoid diffs.
@@ -1680,8 +1705,9 @@ func flattenBootDisk(d *schema.ResourceData, disk *computeBeta.AttachedDisk, con
 			"type": GetResourceNameFromSelfLink(diskDetails.Type),
 			// If the config specifies a family name that doesn't match the image name, then
 			// the diff won't be properly suppressed. See DiffSuppressFunc for this field.
-			"image": diskDetails.SourceImage,
-			"size":  diskDetails.SizeGb,
+			"image":  diskDetails.SourceImage,
+			"size":   diskDetails.SizeGb,
+			"labels": diskDetails.Labels,
 		}}
 	}
 
@@ -1699,8 +1725,8 @@ func flattenBootDisk(d *schema.ResourceData, disk *computeBeta.AttachedDisk, con
 	return []map[string]interface{}{result}
 }
 
-func expandScratchDisks(d *schema.ResourceData, config *Config, zone *compute.Zone, project string) ([]*computeBeta.AttachedDisk, error) {
-	diskType, err := readDiskType(config, zone, project, "local-ssd")
+func expandScratchDisks(d *schema.ResourceData, config *Config, project string) ([]*computeBeta.AttachedDisk, error) {
+	diskType, err := readDiskType(config, d, "local-ssd")
 	if err != nil {
 		return nil, fmt.Errorf("Error loading disk type 'local-ssd': %s", err)
 	}
@@ -1713,7 +1739,7 @@ func expandScratchDisks(d *schema.ResourceData, config *Config, zone *compute.Zo
 			Type:       "SCRATCH",
 			Interface:  d.Get(fmt.Sprintf("scratch_disk.%d.interface", i)).(string),
 			InitializeParams: &computeBeta.AttachedDiskInitializeParams{
-				DiskType: diskType.SelfLink,
+				DiskType: diskType.RelativeLink(),
 			},
 		})
 	}

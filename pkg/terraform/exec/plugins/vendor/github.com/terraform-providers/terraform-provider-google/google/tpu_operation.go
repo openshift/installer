@@ -17,18 +17,19 @@ import (
 	"fmt"
 )
 
-type TpuOperationWaiter struct {
-	Config *Config
+type TPUOperationWaiter struct {
+	Config  *Config
+	Project string
 	CommonOperationWaiter
 }
 
-func (w *TpuOperationWaiter) QueryOp() (interface{}, error) {
+func (w *TPUOperationWaiter) QueryOp() (interface{}, error) {
 	if w == nil {
 		return nil, fmt.Errorf("Cannot query operation, it's unset or nil.")
 	}
 	// Returns the proper get.
 	url := fmt.Sprintf("https://tpu.googleapis.com/v1/%s", w.CommonOperationWaiter.Op.Name)
-	return sendRequest(w.Config, "GET", url, nil)
+	return sendRequest(w.Config, "GET", w.Project, url, nil)
 }
 
 func tpuOperationWaitTime(config *Config, op map[string]interface{}, project, activity string, timeoutMinutes int) error {
@@ -36,8 +37,9 @@ func tpuOperationWaitTime(config *Config, op map[string]interface{}, project, ac
 		// This was a synchronous call - there is no operation to wait for.
 		return nil
 	}
-	w := &TpuOperationWaiter{
-		Config: config,
+	w := &TPUOperationWaiter{
+		Config:  config,
+		Project: project,
 	}
 	if err := w.CommonOperationWaiter.SetOp(op); err != nil {
 		return err

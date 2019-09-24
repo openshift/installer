@@ -38,9 +38,9 @@ func resourceRedisInstance() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(600 * time.Second),
-			Update: schema.DefaultTimeout(600 * time.Second),
-			Delete: schema.DefaultTimeout(600 * time.Second),
+			Create: schema.DefaultTimeout(10 * time.Minute),
+			Update: schema.DefaultTimeout(10 * time.Minute),
+			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -208,13 +208,22 @@ func resourceRedisInstanceCreate(d *schema.ResourceData, meta interface{}) error
 		obj["tier"] = tierProp
 	}
 
-	url, err := replaceVars(d, config, "https://redis.googleapis.com/v1/projects/{{project}}/locations/{{region}}/instances?instanceId={{name}}")
+	obj, err = resourceRedisInstanceEncoder(d, meta, obj)
+	if err != nil {
+		return err
+	}
+
+	url, err := replaceVars(d, config, "{{RedisBasePath}}projects/{{project}}/locations/{{region}}/instances?instanceId={{name}}")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Creating new Instance: %#v", obj)
-	res, err := sendRequestWithTimeout(config, "POST", url, obj, d.Timeout(schema.TimeoutCreate))
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Instance: %s", err)
 	}
@@ -226,10 +235,6 @@ func resourceRedisInstanceCreate(d *schema.ResourceData, meta interface{}) error
 	}
 	d.SetId(id)
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	waitErr := redisOperationWaitTime(
 		config, res, project, "Creating Instance",
 		int(d.Timeout(schema.TimeoutCreate).Minutes()))
@@ -248,20 +253,20 @@ func resourceRedisInstanceCreate(d *schema.ResourceData, meta interface{}) error
 func resourceRedisInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://redis.googleapis.com/v1/projects/{{project}}/locations/{{region}}/instances/{{name}}")
+	url, err := replaceVars(d, config, "{{RedisBasePath}}projects/{{project}}/locations/{{region}}/instances/{{name}}")
 	if err != nil {
 		return err
-	}
-
-	res, err := sendRequest(config, "GET", url, nil)
-	if err != nil {
-		return handleNotFoundError(err, d, fmt.Sprintf("RedisInstance %q", d.Id()))
 	}
 
 	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
+	res, err := sendRequest(config, "GET", project, url, nil)
+	if err != nil {
+		return handleNotFoundError(err, d, fmt.Sprintf("RedisInstance %q", d.Id()))
+	}
+
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
@@ -326,6 +331,11 @@ func resourceRedisInstanceRead(d *schema.ResourceData, meta interface{}) error {
 func resourceRedisInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
 	obj := make(map[string]interface{})
 	displayNameProp, err := expandRedisInstanceDisplayName(d.Get("display_name"), d, config)
 	if err != nil {
@@ -352,7 +362,12 @@ func resourceRedisInstanceUpdate(d *schema.ResourceData, meta interface{}) error
 		obj["memorySizeGb"] = memorySizeGbProp
 	}
 
-	url, err := replaceVars(d, config, "https://redis.googleapis.com/v1/projects/{{project}}/locations/{{region}}/instances/{{name}}")
+	obj, err = resourceRedisInstanceEncoder(d, meta, obj)
+	if err != nil {
+		return err
+	}
+
+	url, err := replaceVars(d, config, "{{RedisBasePath}}projects/{{project}}/locations/{{region}}/instances/{{name}}")
 	if err != nil {
 		return err
 	}
@@ -381,15 +396,10 @@ func resourceRedisInstanceUpdate(d *schema.ResourceData, meta interface{}) error
 	if err != nil {
 		return err
 	}
-	res, err := sendRequestWithTimeout(config, "PATCH", url, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := sendRequestWithTimeout(config, "PATCH", project, url, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Instance %q: %s", d.Id(), err)
-	}
-
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
 	}
 
 	err = redisOperationWaitTime(
@@ -406,21 +416,22 @@ func resourceRedisInstanceUpdate(d *schema.ResourceData, meta interface{}) error
 func resourceRedisInstanceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://redis.googleapis.com/v1/projects/{{project}}/locations/{{region}}/instances/{{name}}")
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
+	url, err := replaceVars(d, config, "{{RedisBasePath}}projects/{{project}}/locations/{{region}}/instances/{{name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting Instance %q", d.Id())
-	res, err := sendRequestWithTimeout(config, "DELETE", url, obj, d.Timeout(schema.TimeoutDelete))
+
+	res, err := sendRequestWithTimeout(config, "DELETE", project, url, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Instance")
-	}
-
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
 	}
 
 	err = redisOperationWaitTime(
@@ -437,7 +448,12 @@ func resourceRedisInstanceDelete(d *schema.ResourceData, meta interface{}) error
 
 func resourceRedisInstanceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
-	if err := parseImportId([]string{"projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/instances/(?P<name>[^/]+)", "(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)", "(?P<name>[^/]+)"}, d, config); err != nil {
+	if err := parseImportId([]string{
+		"projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/instances/(?P<name>[^/]+)",
+		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
+		"(?P<region>[^/]+)/(?P<name>[^/]+)",
+		"(?P<name>[^/]+)",
+	}, d, config); err != nil {
 		return nil, err
 	}
 
@@ -596,4 +612,14 @@ func expandRedisInstanceReservedIpRange(v interface{}, d TerraformResourceData, 
 
 func expandRedisInstanceTier(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
+}
+
+func resourceRedisInstanceEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
+	config := meta.(*Config)
+	region, err := getRegionFromSchema("region", "location_id", d, config)
+	if err != nil {
+		return nil, err
+	}
+	d.Set("region", region)
+	return obj, nil
 }

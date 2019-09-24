@@ -37,8 +37,8 @@ func resourceComputeSslCertificate() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(240 * time.Second),
-			Delete: schema.DefaultTimeout(240 * time.Second),
+			Create: schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(4 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -135,13 +135,17 @@ func resourceComputeSslCertificateCreate(d *schema.ResourceData, meta interface{
 		obj["privateKey"] = privateKeyProp
 	}
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/sslCertificates")
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/sslCertificates")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Creating new SslCertificate: %#v", obj)
-	res, err := sendRequestWithTimeout(config, "POST", url, obj, d.Timeout(schema.TimeoutCreate))
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating SslCertificate: %s", err)
 	}
@@ -153,10 +157,6 @@ func resourceComputeSslCertificateCreate(d *schema.ResourceData, meta interface{
 	}
 	d.SetId(id)
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -181,20 +181,20 @@ func resourceComputeSslCertificateCreate(d *schema.ResourceData, meta interface{
 func resourceComputeSslCertificateRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/sslCertificates/{{name}}")
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/sslCertificates/{{name}}")
 	if err != nil {
 		return err
-	}
-
-	res, err := sendRequest(config, "GET", url, nil)
-	if err != nil {
-		return handleNotFoundError(err, d, fmt.Sprintf("ComputeSslCertificate %q", d.Id()))
 	}
 
 	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
+	res, err := sendRequest(config, "GET", project, url, nil)
+	if err != nil {
+		return handleNotFoundError(err, d, fmt.Sprintf("ComputeSslCertificate %q", d.Id()))
+	}
+
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading SslCertificate: %s", err)
 	}
@@ -208,7 +208,7 @@ func resourceComputeSslCertificateRead(d *schema.ResourceData, meta interface{})
 	if err := d.Set("description", flattenComputeSslCertificateDescription(res["description"], d)); err != nil {
 		return fmt.Errorf("Error reading SslCertificate: %s", err)
 	}
-	if err := d.Set("certificate_id", flattenComputeSslCertificateCertificate_id(res["id"], d)); err != nil {
+	if err := d.Set("certificate_id", flattenComputeSslCertificateCertificateId(res["id"], d)); err != nil {
 		return fmt.Errorf("Error reading SslCertificate: %s", err)
 	}
 	if err := d.Set("name", flattenComputeSslCertificateName(res["name"], d)); err != nil {
@@ -224,22 +224,24 @@ func resourceComputeSslCertificateRead(d *schema.ResourceData, meta interface{})
 func resourceComputeSslCertificateDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/sslCertificates/{{name}}")
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/sslCertificates/{{name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting SslCertificate %q", d.Id())
-	res, err := sendRequestWithTimeout(config, "DELETE", url, obj, d.Timeout(schema.TimeoutDelete))
+
+	res, err := sendRequestWithTimeout(config, "DELETE", project, url, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "SslCertificate")
 	}
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -260,7 +262,11 @@ func resourceComputeSslCertificateDelete(d *schema.ResourceData, meta interface{
 
 func resourceComputeSslCertificateImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
-	if err := parseImportId([]string{"projects/(?P<project>[^/]+)/global/sslCertificates/(?P<name>[^/]+)", "(?P<project>[^/]+)/(?P<name>[^/]+)", "(?P<name>[^/]+)"}, d, config); err != nil {
+	if err := parseImportId([]string{
+		"projects/(?P<project>[^/]+)/global/sslCertificates/(?P<name>[^/]+)",
+		"(?P<project>[^/]+)/(?P<name>[^/]+)",
+		"(?P<name>[^/]+)",
+	}, d, config); err != nil {
 		return nil, err
 	}
 
@@ -286,7 +292,7 @@ func flattenComputeSslCertificateDescription(v interface{}, d *schema.ResourceDa
 	return v
 }
 
-func flattenComputeSslCertificateCertificate_id(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeSslCertificateCertificateId(v interface{}, d *schema.ResourceData) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
 		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {

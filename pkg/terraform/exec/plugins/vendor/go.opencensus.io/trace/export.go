@@ -85,13 +85,6 @@ type SpanData struct {
 	Annotations   []Annotation
 	MessageEvents []MessageEvent
 	Status
-	Links                    []Link
-	HasRemoteParent          bool
-	DroppedAttributeCount    int
-	DroppedAnnotationCount   int
-	DroppedMessageEventCount int
-	DroppedLinkCount         int
-
-	// ChildSpanCount holds the number of child span created for this span.
-	ChildSpanCount int
+	Links           []Link
+	HasRemoteParent bool
 }

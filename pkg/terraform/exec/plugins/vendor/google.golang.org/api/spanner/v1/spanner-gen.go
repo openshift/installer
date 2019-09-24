@@ -255,9 +255,8 @@ func (s *BeginTransactionRequest) MarshalJSON() ([]byte, error) {
 
 // Binding: Associates `members` with a `role`.
 type Binding struct {
-	// Condition: Unimplemented. The condition that is associated with this
-	// binding.
-	// NOTE: an unsatisfied condition will not allow user access via
+	// Condition: The condition that is associated with this binding.
+	// NOTE: An unsatisfied condition will not allow user access via
 	// current
 	// binding. Different bindings, including their conditions, are
 	// examined
@@ -291,7 +290,7 @@ type Binding struct {
 	//    For example, `admins@example.com`.
 	//
 	//
-	// * `domain:{domain}`: A Google Apps domain name that represents all
+	// * `domain:{domain}`: The G Suite domain (primary) that represents all
 	// the
 	//    users of that domain. For example, `google.com` or
 	// `example.com`.
@@ -591,7 +590,7 @@ type CreateInstanceRequest struct {
 
 	// InstanceId: Required. The ID of the instance to create.  Valid
 	// identifiers are of the
-	// form `a-z*[a-z0-9]` and must be between 6 and 30 characters
+	// form `a-z*[a-z0-9]` and must be between 2 and 64 characters
 	// in
 	// length.
 	InstanceId string `json:"instanceId,omitempty"`
@@ -766,7 +765,7 @@ type ExecuteBatchDmlRequest struct {
 	// first failed statement; the remaining statements will not
 	// run.
 	//
-	// REQUIRES: statements_size() > 0.
+	// REQUIRES: `statements_size()` > 0.
 	Statements []*Statement `json:"statements,omitempty"`
 
 	// Transaction: The transaction to use. A ReadWrite transaction is
@@ -809,24 +808,27 @@ func (s *ExecuteBatchDmlRequest) MarshalJSON() ([]byte, error) {
 // successfully, or if
 // a statement failed, using one of the following approaches:
 //
-//   1. Check if 'status' field is OkStatus.
-//   2. Check if result_sets_size() equals the number of statements in
+//   1. Check if `'status'` field is `OkStatus`.
+//   2. Check if `result_sets_size()` equals the number of statements
+// in
 //      ExecuteBatchDmlRequest.
 //
 // Example 1: A request with 5 DML statements, all executed
 // successfully.
+//
 // Result: A response with 5 ResultSets, one for each statement in the
 // same
-// order, and an OK status.
+// order, and an `OkStatus`.
 //
 // Example 2: A request with 5 DML statements. The 3rd statement has a
 // syntax
 // error.
+//
 // Result: A response with 2 ResultSets, for the first 2 statements
 // that
-// run successfully, and a syntax error (INVALID_ARGUMENT) status.
+// run successfully, and a syntax error (`INVALID_ARGUMENT`) status.
 // From
-// result_set_size() client can determine that the 3rd statement has
+// `result_set_size()` client can determine that the 3rd statement has
 // failed.
 type ExecuteBatchDmlResponse struct {
 	// ResultSets: ResultSets, one for each statement in the request that
@@ -1199,7 +1201,7 @@ type Instance struct {
 	// after the instance is created. Values are of the
 	// form
 	// `projects/<project>/instances/a-z*[a-z0-9]`. The final
-	// segment of the name must be between 6 and 30 characters in length.
+	// segment of the name must be between 2 and 64 characters in length.
 	Name string `json:"name,omitempty"`
 
 	// NodeCount: Required. The number of nodes allocated to this instance.
@@ -1207,9 +1209,10 @@ type Instance struct {
 	// in API responses for instances that are not yet in state
 	// `READY`.
 	//
-	// See [the
-	// documentation](https://cloud.google.com/spanner/docs/instances#node_co
-	// unt)
+	// See
+	// [the
+	// documentation](https://cloud.google.com/spanner/docs/instances#no
+	// de_count)
 	// for more information about nodes.
 	NodeCount int64 `json:"nodeCount,omitempty"`
 
@@ -1270,6 +1273,11 @@ type InstanceConfig struct {
 	// `projects/<project>/instanceConfigs/a-z*`
 	Name string `json:"name,omitempty"`
 
+	// Replicas: The geographic placement of nodes in this instance
+	// configuration and their
+	// replication properties.
+	Replicas []*ReplicaInfo `json:"replicas,omitempty"`
+
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
 	googleapi.ServerResponse `json:"-"`
@@ -1307,7 +1315,8 @@ func (s *InstanceConfig) MarshalJSON() ([]byte, error) {
 // list
 // corresponds to the ith component of the table or index primary
 // key.
-// Individual values are encoded as described here.
+// Individual values are encoded as described
+// here.
 //
 // For example, consider the following table definition:
 //
@@ -1770,7 +1779,8 @@ type Operation struct {
 	// service that
 	// originally returns it. If you use the default HTTP mapping,
 	// the
-	// `name` should have the format of `operations/some/unique/name`.
+	// `name` should be a resource name ending with
+	// `operations/{unique_id}`.
 	Name string `json:"name,omitempty"`
 
 	// Response: The normal response of the operation in case of success.
@@ -2659,6 +2669,71 @@ func (s *ReadRequest) MarshalJSON() ([]byte, error) {
 type ReadWrite struct {
 }
 
+type ReplicaInfo struct {
+	// DefaultLeaderLocation: If true, this location is designated as the
+	// default leader location where
+	// leader replicas are placed. See the [region
+	// types
+	// documentation](https://cloud.google.com/spanner/docs/instances#r
+	// egion_types)
+	// for more details.
+	DefaultLeaderLocation bool `json:"defaultLeaderLocation,omitempty"`
+
+	// Location: The location of the serving resources, e.g. "us-central1".
+	Location string `json:"location,omitempty"`
+
+	// Type: The type of replica.
+	//
+	// Possible values:
+	//   "TYPE_UNSPECIFIED" - Not specified.
+	//   "READ_WRITE" - Read-write replicas support both reads and writes.
+	// These replicas:
+	// * Maintain a full copy of your data.
+	// * Serve reads.
+	// * Can vote whether to commit a write.
+	// * Participate in leadership election.
+	// * Are eligible to become a leader.
+	//   "READ_ONLY" - Read-only replicas only support reads (not writes).
+	// Read-only replicas:
+	// * Maintain a full copy of your data.
+	// * Serve reads.
+	// * Do not participate in voting to commit writes.
+	// * Are not eligible to become a leader.
+	//   "WITNESS" - Witness replicas don’t support reads but do
+	// participate in voting to
+	// commit writes. Witness replicas:
+	// * Do not maintain a full copy of data.
+	// * Do not serve reads.
+	// * Vote whether to commit writes.
+	// * Participate in leader election but are not eligible to become
+	// leader.
+	Type string `json:"type,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "DefaultLeaderLocation") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DefaultLeaderLocation") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ReplicaInfo) MarshalJSON() ([]byte, error) {
+	type NoMethod ReplicaInfo
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // ResultSet: Results from Read or
 // ExecuteSql.
 type ResultSet struct {
@@ -3032,20 +3107,20 @@ func (s *Statement) MarshalJSON() ([]byte, error) {
 }
 
 // Status: The `Status` type defines a logical error model that is
-// suitable for different
-// programming environments, including REST APIs and RPC APIs. It is
-// used by
-// [gRPC](https://github.com/grpc). The error model is designed to
-// be:
+// suitable for
+// different programming environments, including REST APIs and RPC APIs.
+// It is
+// used by [gRPC](https://github.com/grpc). The error model is designed
+// to be:
 //
 // - Simple to use and understand for most users
 // - Flexible enough to meet unexpected needs
 //
 // # Overview
 //
-// The `Status` message contains three pieces of data: error code, error
-// message,
-// and error details. The error code should be an enum value
+// The `Status` message contains three pieces of data: error code,
+// error
+// message, and error details. The error code should be an enum value
 // of
 // google.rpc.Code, but it may accept additional error codes if needed.
 // The
@@ -3819,7 +3894,8 @@ type Type struct {
 	// section 4.
 	//   "ARRAY" - Encoded as `list`, where the list elements are
 	// represented
-	// according to array_element_type.
+	// according to
+	// array_element_type.
 	//   "STRUCT" - Encoded as `list`, where list element `i` is represented
 	// according
 	// to [struct_type.fields[i]][google.spanner.v1.StructType.fields].
@@ -5449,7 +5525,7 @@ func (c *ProjectsInstancesPatchCall) Do(opts ...googleapi.CallOption) (*Operatio
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Required. A unique identifier for the instance, which cannot be changed\nafter the instance is created. Values are of the form\n`projects/\u003cproject\u003e/instances/a-z*[a-z0-9]`. The final\nsegment of the name must be between 6 and 30 characters in length.",
+	//       "description": "Required. A unique identifier for the instance, which cannot be changed\nafter the instance is created. Values are of the form\n`projects/\u003cproject\u003e/instances/a-z*[a-z0-9]`. The final\nsegment of the name must be between 2 and 64 characters in length.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/instances/[^/]+$",
 	//       "required": true,

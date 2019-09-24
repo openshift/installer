@@ -52,15 +52,15 @@ func (c *EKS) CreateClusterRequest(input *CreateClusterInput) (req *request.Requ
 	return
 }
 
-// CreateCluster API operation for Amazon Elastic Container Service for Kubernetes.
+// CreateCluster API operation for Amazon Elastic Kubernetes Service.
 //
 // Creates an Amazon EKS control plane.
 //
 // The Amazon EKS control plane consists of control plane instances that run
-// the Kubernetes software, like etcd and the API server. The control plane
+// the Kubernetes software, such as etcd and the API server. The control plane
 // runs in an account managed by AWS, and the Kubernetes API is exposed via
 // the Amazon EKS API server endpoint. Each Amazon EKS cluster control plane
-// is single-tenant and unique, and runs on its own set of Amazon EC2 instances.
+// is single-tenant and unique and runs on its own set of Amazon EC2 instances.
 //
 // The cluster control plane is provisioned across multiple Availability Zones
 // and fronted by an Elastic Load Balancing Network Load Balancer. Amazon EKS
@@ -74,16 +74,16 @@ func (c *EKS) CreateClusterRequest(input *CreateClusterInput) (req *request.Requ
 //
 // You can use the endpointPublicAccess and endpointPrivateAccess parameters
 // to enable or disable public and private access to your cluster's Kubernetes
-// API server endpoint. By default, public access is enabled and private access
+// API server endpoint. By default, public access is enabled, and private access
 // is disabled. For more information, see Amazon EKS Cluster Endpoint Access
 // Control (https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html)
-// in the Amazon EKS User Guide.
+// in the Amazon EKS User Guide .
 //
 // You can use the logging parameter to enable or disable exporting the Kubernetes
 // control plane logs for your cluster to CloudWatch Logs. By default, cluster
-// control plane logs are not exported to CloudWatch Logs. For more information,
+// control plane logs aren't exported to CloudWatch Logs. For more information,
 // see Amazon EKS Cluster Control Plane Logs (https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
-// in the Amazon EKS User Guide.
+// in the Amazon EKS User Guide .
 //
 // CloudWatch Logs ingestion, archive storage, and data scanning rates apply
 // to exported control plane logs. For more information, see Amazon CloudWatch
@@ -100,7 +100,7 @@ func (c *EKS) CreateClusterRequest(input *CreateClusterInput) (req *request.Requ
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
 //
-// See the AWS API reference guide for Amazon Elastic Container Service for Kubernetes's
+// See the AWS API reference guide for Amazon Elastic Kubernetes Service's
 // API operation CreateCluster for usage and error information.
 //
 // Returned Error Codes:
@@ -195,7 +195,7 @@ func (c *EKS) DeleteClusterRequest(input *DeleteClusterInput) (req *request.Requ
 	return
 }
 
-// DeleteCluster API operation for Amazon Elastic Container Service for Kubernetes.
+// DeleteCluster API operation for Amazon Elastic Kubernetes Service.
 //
 // Deletes the Amazon EKS cluster control plane.
 //
@@ -210,7 +210,7 @@ func (c *EKS) DeleteClusterRequest(input *DeleteClusterInput) (req *request.Requ
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
 //
-// See the AWS API reference guide for Amazon Elastic Container Service for Kubernetes's
+// See the AWS API reference guide for Amazon Elastic Kubernetes Service's
 // API operation DeleteCluster for usage and error information.
 //
 // Returned Error Codes:
@@ -296,7 +296,7 @@ func (c *EKS) DescribeClusterRequest(input *DescribeClusterInput) (req *request.
 	return
 }
 
-// DescribeCluster API operation for Amazon Elastic Container Service for Kubernetes.
+// DescribeCluster API operation for Amazon Elastic Kubernetes Service.
 //
 // Returns descriptive information about an Amazon EKS cluster.
 //
@@ -305,14 +305,14 @@ func (c *EKS) DescribeClusterRequest(input *DescribeClusterInput) (req *request.
 // API server. For more information, see Create a kubeconfig for Amazon EKS
 // (https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html).
 //
-// The API server endpoint and certificate authority data are not available
-// until the cluster reaches the ACTIVE state.
+// The API server endpoint and certificate authority data aren't available until
+// the cluster reaches the ACTIVE state.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
 //
-// See the AWS API reference guide for Amazon Elastic Container Service for Kubernetes's
+// See the AWS API reference guide for Amazon Elastic Kubernetes Service's
 // API operation DescribeCluster for usage and error information.
 //
 // Returned Error Codes:
@@ -395,7 +395,7 @@ func (c *EKS) DescribeUpdateRequest(input *DescribeUpdateInput) (req *request.Re
 	return
 }
 
-// DescribeUpdate API operation for Amazon Elastic Container Service for Kubernetes.
+// DescribeUpdate API operation for Amazon Elastic Kubernetes Service.
 //
 // Returns descriptive information about an update against your Amazon EKS cluster.
 //
@@ -407,7 +407,7 @@ func (c *EKS) DescribeUpdateRequest(input *DescribeUpdateInput) (req *request.Re
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
 //
-// See the AWS API reference guide for Amazon Elastic Container Service for Kubernetes's
+// See the AWS API reference guide for Amazon Elastic Kubernetes Service's
 // API operation DescribeUpdate for usage and error information.
 //
 // Returned Error Codes:
@@ -480,6 +480,12 @@ func (c *EKS) ListClustersRequest(input *ListClustersInput) (req *request.Reques
 		Name:       opListClusters,
 		HTTPMethod: "GET",
 		HTTPPath:   "/clusters",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"nextToken"},
+			OutputTokens:    []string{"nextToken"},
+			LimitToken:      "maxResults",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -491,7 +497,7 @@ func (c *EKS) ListClustersRequest(input *ListClustersInput) (req *request.Reques
 	return
 }
 
-// ListClusters API operation for Amazon Elastic Container Service for Kubernetes.
+// ListClusters API operation for Amazon Elastic Kubernetes Service.
 //
 // Lists the Amazon EKS clusters in your AWS account in the specified Region.
 //
@@ -499,7 +505,7 @@ func (c *EKS) ListClustersRequest(input *ListClustersInput) (req *request.Reques
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
 //
-// See the AWS API reference guide for Amazon Elastic Container Service for Kubernetes's
+// See the AWS API reference guide for Amazon Elastic Kubernetes Service's
 // API operation ListClusters for usage and error information.
 //
 // Returned Error Codes:
@@ -540,6 +546,56 @@ func (c *EKS) ListClustersWithContext(ctx aws.Context, input *ListClustersInput,
 	return out, req.Send()
 }
 
+// ListClustersPages iterates over the pages of a ListClusters operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListClusters method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListClusters operation.
+//    pageNum := 0
+//    err := client.ListClustersPages(params,
+//        func(page *eks.ListClustersOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *EKS) ListClustersPages(input *ListClustersInput, fn func(*ListClustersOutput, bool) bool) error {
+	return c.ListClustersPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListClustersPagesWithContext same as ListClustersPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EKS) ListClustersPagesWithContext(ctx aws.Context, input *ListClustersInput, fn func(*ListClustersOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListClustersInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListClustersRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListClustersOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opListUpdates = "ListUpdates"
 
 // ListUpdatesRequest generates a "aws/request.Request" representing the
@@ -571,6 +627,12 @@ func (c *EKS) ListUpdatesRequest(input *ListUpdatesInput) (req *request.Request,
 		Name:       opListUpdates,
 		HTTPMethod: "GET",
 		HTTPPath:   "/clusters/{name}/updates",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"nextToken"},
+			OutputTokens:    []string{"nextToken"},
+			LimitToken:      "maxResults",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -582,7 +644,7 @@ func (c *EKS) ListUpdatesRequest(input *ListUpdatesInput) (req *request.Request,
 	return
 }
 
-// ListUpdates API operation for Amazon Elastic Container Service for Kubernetes.
+// ListUpdates API operation for Amazon Elastic Kubernetes Service.
 //
 // Lists the updates associated with an Amazon EKS cluster in your AWS account,
 // in the specified Region.
@@ -591,7 +653,7 @@ func (c *EKS) ListUpdatesRequest(input *ListUpdatesInput) (req *request.Request,
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
 //
-// See the AWS API reference guide for Amazon Elastic Container Service for Kubernetes's
+// See the AWS API reference guide for Amazon Elastic Kubernetes Service's
 // API operation ListUpdates for usage and error information.
 //
 // Returned Error Codes:
@@ -631,6 +693,56 @@ func (c *EKS) ListUpdatesWithContext(ctx aws.Context, input *ListUpdatesInput, o
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+// ListUpdatesPages iterates over the pages of a ListUpdates operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListUpdates method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListUpdates operation.
+//    pageNum := 0
+//    err := client.ListUpdatesPages(params,
+//        func(page *eks.ListUpdatesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *EKS) ListUpdatesPages(input *ListUpdatesInput, fn func(*ListUpdatesOutput, bool) bool) error {
+	return c.ListUpdatesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListUpdatesPagesWithContext same as ListUpdatesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EKS) ListUpdatesPagesWithContext(ctx aws.Context, input *ListUpdatesInput, fn func(*ListUpdatesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListUpdatesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListUpdatesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListUpdatesOutput), !p.HasNextPage())
+	}
+	return p.Err()
 }
 
 const opUpdateClusterConfig = "UpdateClusterConfig"
@@ -675,28 +787,31 @@ func (c *EKS) UpdateClusterConfigRequest(input *UpdateClusterConfigInput) (req *
 	return
 }
 
-// UpdateClusterConfig API operation for Amazon Elastic Container Service for Kubernetes.
+// UpdateClusterConfig API operation for Amazon Elastic Kubernetes Service.
 //
 // Updates an Amazon EKS cluster configuration. Your cluster continues to function
 // during the update. The response output includes an update ID that you can
 // use to track the status of your cluster update with the DescribeUpdate API
 // operation.
 //
-// You can use this API operation to enable or disable public and private access
-// to your cluster's Kubernetes API server endpoint. By default, public access
-// is enabled and private access is disabled. For more information, see Amazon
-// EKS Cluster Endpoint Access Control (https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html)
-// in the Amazon EKS User Guide.
-//
-// You can also use this API operation to enable or disable exporting the Kubernetes
+// You can use this API operation to enable or disable exporting the Kubernetes
 // control plane logs for your cluster to CloudWatch Logs. By default, cluster
-// control plane logs are not exported to CloudWatch Logs. For more information,
+// control plane logs aren't exported to CloudWatch Logs. For more information,
 // see Amazon EKS Cluster Control Plane Logs (https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
-// in the Amazon EKS User Guide.
+// in the Amazon EKS User Guide .
 //
 // CloudWatch Logs ingestion, archive storage, and data scanning rates apply
 // to exported control plane logs. For more information, see Amazon CloudWatch
 // Pricing (http://aws.amazon.com/cloudwatch/pricing/).
+//
+// You can also use this API operation to enable or disable public and private
+// access to your cluster's Kubernetes API server endpoint. By default, public
+// access is enabled, and private access is disabled. For more information,
+// see Amazon EKS Cluster Endpoint Access Control (https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html)
+// in the Amazon EKS User Guide .
+//
+// At this time, you can not update the subnets or security group IDs for an
+// existing cluster.
 //
 // Cluster updates are asynchronous, and they should finish within a few minutes.
 // During an update, the cluster status moves to UPDATING (this status transition
@@ -707,7 +822,7 @@ func (c *EKS) UpdateClusterConfigRequest(input *UpdateClusterConfigInput) (req *
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
 //
-// See the AWS API reference guide for Amazon Elastic Container Service for Kubernetes's
+// See the AWS API reference guide for Amazon Elastic Kubernetes Service's
 // API operation UpdateClusterConfig for usage and error information.
 //
 // Returned Error Codes:
@@ -798,7 +913,7 @@ func (c *EKS) UpdateClusterVersionRequest(input *UpdateClusterVersionInput) (req
 	return
 }
 
-// UpdateClusterVersion API operation for Amazon Elastic Container Service for Kubernetes.
+// UpdateClusterVersion API operation for Amazon Elastic Kubernetes Service.
 //
 // Updates an Amazon EKS cluster to the specified Kubernetes version. Your cluster
 // continues to function during the update. The response output includes an
@@ -814,7 +929,7 @@ func (c *EKS) UpdateClusterVersionRequest(input *UpdateClusterVersionInput) (req
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
 //
-// See the AWS API reference guide for Amazon Elastic Container Service for Kubernetes's
+// See the AWS API reference guide for Amazon Elastic Kubernetes Service's
 // API operation UpdateClusterVersion for usage and error information.
 //
 // Returned Error Codes:
@@ -867,7 +982,7 @@ func (c *EKS) UpdateClusterVersionWithContext(ctx aws.Context, input *UpdateClus
 type Certificate struct {
 	_ struct{} `type:"structure"`
 
-	// The base64 encoded certificate data required to communicate with your cluster.
+	// The Base64-encoded certificate data required to communicate with your cluster.
 	// Add this to the certificate-authority-data section of the kubeconfig file
 	// for your cluster.
 	Data *string `locationName:"data" type:"string"`
@@ -909,6 +1024,9 @@ type Cluster struct {
 	// The endpoint for your Kubernetes API server.
 	Endpoint *string `locationName:"endpoint" type:"string"`
 
+	// The identity provider information for the cluster.
+	Identity *Identity `locationName:"identity" type:"structure"`
+
 	// The logging configuration for your cluster.
 	Logging *Logging `locationName:"logging" type:"structure"`
 
@@ -917,7 +1035,7 @@ type Cluster struct {
 
 	// The platform version of your Amazon EKS cluster. For more information, see
 	// Platform Versions (https://docs.aws.amazon.com/eks/latest/userguide/platform-versions.html)
-	// in the Amazon EKS User Guide.
+	// in the Amazon EKS User Guide .
 	PlatformVersion *string `locationName:"platformVersion" type:"string"`
 
 	// The VPC configuration used by the cluster control plane. Amazon EKS VPC resources
@@ -979,6 +1097,12 @@ func (s *Cluster) SetEndpoint(v string) *Cluster {
 	return s
 }
 
+// SetIdentity sets the Identity field's value.
+func (s *Cluster) SetIdentity(v *Identity) *Cluster {
+	s.Identity = v
+	return s
+}
+
 // SetLogging sets the Logging field's value.
 func (s *Cluster) SetLogging(v *Logging) *Cluster {
 	s.Logging = v
@@ -1029,10 +1153,10 @@ type CreateClusterInput struct {
 	ClientRequestToken *string `locationName:"clientRequestToken" type:"string" idempotencyToken:"true"`
 
 	// Enable or disable exporting the Kubernetes control plane logs for your cluster
-	// to CloudWatch Logs. By default, cluster control plane logs are not exported
+	// to CloudWatch Logs. By default, cluster control plane logs aren't exported
 	// to CloudWatch Logs. For more information, see Amazon EKS Cluster Control
 	// Plane Logs (https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
-	// in the Amazon EKS User Guide.
+	// in the Amazon EKS User Guide .
 	//
 	// CloudWatch Logs ingestion, archive storage, and data scanning rates apply
 	// to exported control plane logs. For more information, see Amazon CloudWatch
@@ -1049,7 +1173,7 @@ type CreateClusterInput struct {
 	// see Cluster VPC Considerations (https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html)
 	// and Cluster Security Group Considerations (https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html)
 	// in the Amazon EKS User Guide. You must specify at least two subnets. You
-	// may specify up to five security groups, but we recommend that you use a dedicated
+	// can specify up to five security groups, but we recommend that you use a dedicated
 	// security group for your cluster control plane.
 	//
 	// ResourcesVpcConfig is a required field
@@ -1058,13 +1182,13 @@ type CreateClusterInput struct {
 	// The Amazon Resource Name (ARN) of the IAM role that provides permissions
 	// for Amazon EKS to make calls to other AWS API operations on your behalf.
 	// For more information, see Amazon EKS Service IAM Role (https://docs.aws.amazon.com/eks/latest/userguide/service_IAM_role.html)
-	// in the Amazon EKS User Guide.
+	// in the Amazon EKS User Guide .
 	//
 	// RoleArn is a required field
 	RoleArn *string `locationName:"roleArn" type:"string" required:"true"`
 
-	// The desired Kubernetes version for your cluster. If you do not specify a
-	// value here, the latest version available in Amazon EKS is used.
+	// The desired Kubernetes version for your cluster. If you don't specify a value
+	// here, the latest version available in Amazon EKS is used.
 	Version *string `locationName:"version" type:"string"`
 }
 
@@ -1374,24 +1498,24 @@ type ErrorDetail struct {
 
 	// A brief description of the error.
 	//
-	//    * SubnetNotFound: One of the subnets associated with the cluster could
-	//    not be found.
+	//    * SubnetNotFound: We couldn't find one of the subnets associated with
+	//    the cluster.
 	//
-	//    * SecurityGroupNotFound: One of the security groups associated with the
-	//    cluster could not be found.
+	//    * SecurityGroupNotFound: We couldn't find one of the security groups associated
+	//    with the cluster.
 	//
 	//    * EniLimitReached: You have reached the elastic network interface limit
 	//    for your account.
 	//
-	//    * IpNotAvailable: A subnet associated with the cluster does not have any
+	//    * IpNotAvailable: A subnet associated with the cluster doesn't have any
 	//    free IP addresses.
 	//
-	//    * AccessDenied: You do not have permissions to perform the specified operation.
+	//    * AccessDenied: You don't have permissions to perform the specified operation.
 	//
 	//    * OperationNotPermitted: The service role associated with the cluster
-	//    does not have the required access permissions for Amazon EKS.
+	//    doesn't have the required access permissions for Amazon EKS.
 	//
-	//    * VpcIdNotFound: The VPC associated with the cluster could not be found.
+	//    * VpcIdNotFound: We couldn't find the VPC associated with the cluster.
 	ErrorCode *string `locationName:"errorCode" type:"string" enum:"ErrorCode"`
 
 	// A more complete description of the error.
@@ -1429,15 +1553,40 @@ func (s *ErrorDetail) SetResourceIds(v []*string) *ErrorDetail {
 	return s
 }
 
+// An object representing an identity provider for authentication credentials.
+type Identity struct {
+	_ struct{} `type:"structure"`
+
+	// The OpenID Connect (https://openid.net/connect/) identity provider information
+	// for the cluster.
+	Oidc *OIDC `locationName:"oidc" type:"structure"`
+}
+
+// String returns the string representation
+func (s Identity) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Identity) GoString() string {
+	return s.String()
+}
+
+// SetOidc sets the Oidc field's value.
+func (s *Identity) SetOidc(v *OIDC) *Identity {
+	s.Oidc = v
+	return s
+}
+
 type ListClustersInput struct {
 	_ struct{} `type:"structure"`
 
 	// The maximum number of cluster results returned by ListClusters in paginated
-	// output. When this parameter is used, ListClusters only returns maxResults
-	// results in a single page along with a nextToken response element. The remaining
-	// results of the initial request can be seen by sending another ListClusters
+	// output. When you use this parameter, ListClusters returns only maxResults
+	// results in a single page along with a nextToken response element. You can
+	// see the remaining results of the initial request by sending another ListClusters
 	// request with the returned nextToken value. This value can be between 1 and
-	// 100. If this parameter is not used, then ListClusters returns up to 100 results
+	// 100. If you don't use this parameter, ListClusters returns up to 100 results
 	// and a nextToken value if applicable.
 	MaxResults *int64 `location:"querystring" locationName:"maxResults" min:"1" type:"integer"`
 
@@ -1446,7 +1595,7 @@ type ListClustersInput struct {
 	// Pagination continues from the end of the previous results that returned the
 	// nextToken value.
 	//
-	// This token should be treated as an opaque identifier that is only used to
+	// This token should be treated as an opaque identifier that is used only to
 	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string `location:"querystring" locationName:"nextToken" type:"string"`
 }
@@ -1493,7 +1642,7 @@ type ListClustersOutput struct {
 	Clusters []*string `locationName:"clusters" type:"list"`
 
 	// The nextToken value to include in a future ListClusters request. When the
-	// results of a ListClusters request exceed maxResults, this value can be used
+	// results of a ListClusters request exceed maxResults, you can use this value
 	// to retrieve the next page of results. This value is null when there are no
 	// more results to return.
 	NextToken *string `locationName:"nextToken" type:"string"`
@@ -1525,15 +1674,15 @@ type ListUpdatesInput struct {
 	_ struct{} `type:"structure"`
 
 	// The maximum number of update results returned by ListUpdates in paginated
-	// output. When this parameter is used, ListUpdates only returns maxResults
-	// results in a single page along with a nextToken response element. The remaining
-	// results of the initial request can be seen by sending another ListUpdates
+	// output. When you use this parameter, ListUpdates returns only maxResults
+	// results in a single page along with a nextToken response element. You can
+	// see the remaining results of the initial request by sending another ListUpdates
 	// request with the returned nextToken value. This value can be between 1 and
-	// 100. If this parameter is not used, then ListUpdates returns up to 100 results
+	// 100. If you don't use this parameter, ListUpdates returns up to 100 results
 	// and a nextToken value if applicable.
 	MaxResults *int64 `location:"querystring" locationName:"maxResults" min:"1" type:"integer"`
 
-	// The name of the Amazon EKS cluster for which to list updates.
+	// The name of the Amazon EKS cluster to list updates for.
 	//
 	// Name is a required field
 	Name *string `location:"uri" locationName:"name" type:"string" required:"true"`
@@ -1596,7 +1745,7 @@ type ListUpdatesOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The nextToken value to include in a future ListUpdates request. When the
-	// results of a ListUpdates request exceed maxResults, this value can be used
+	// results of a ListUpdates request exceed maxResults, you can use this value
 	// to retrieve the next page of results. This value is null when there are no
 	// more results to return.
 	NextToken *string `locationName:"nextToken" type:"string"`
@@ -1632,10 +1781,10 @@ func (s *ListUpdatesOutput) SetUpdateIds(v []*string) *ListUpdatesOutput {
 type LogSetup struct {
 	_ struct{} `type:"structure"`
 
-	// If a log type is enabled, then that log type exports its control plane logs
-	// to CloudWatch Logs. If a log type is not enabled, then that log type does
-	// not export its control plane logs. Each individual log type can be enabled
-	// or disabled independently.
+	// If a log type is enabled, that log type exports its control plane logs to
+	// CloudWatch Logs. If a log type isn't enabled, that log type doesn't export
+	// its control plane logs. Each individual log type can be enabled or disabled
+	// independently.
 	Enabled *bool `locationName:"enabled" type:"boolean"`
 
 	// The available cluster control plane log types.
@@ -1685,6 +1834,31 @@ func (s Logging) GoString() string {
 // SetClusterLogging sets the ClusterLogging field's value.
 func (s *Logging) SetClusterLogging(v []*LogSetup) *Logging {
 	s.ClusterLogging = v
+	return s
+}
+
+// An object representing the OpenID Connect (https://openid.net/connect/) identity
+// provider information for the cluster.
+type OIDC struct {
+	_ struct{} `type:"structure"`
+
+	// The issuer URL for the OpenID Connect identity provider.
+	Issuer *string `locationName:"issuer" type:"string"`
+}
+
+// String returns the string representation
+func (s OIDC) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s OIDC) GoString() string {
+	return s.String()
+}
+
+// SetIssuer sets the Issuer field's value.
+func (s *OIDC) SetIssuer(v string) *OIDC {
+	s.Issuer = &v
 	return s
 }
 
@@ -1765,10 +1939,10 @@ type UpdateClusterConfigInput struct {
 	ClientRequestToken *string `locationName:"clientRequestToken" type:"string" idempotencyToken:"true"`
 
 	// Enable or disable exporting the Kubernetes control plane logs for your cluster
-	// to CloudWatch Logs. By default, cluster control plane logs are not exported
+	// to CloudWatch Logs. By default, cluster control plane logs aren't exported
 	// to CloudWatch Logs. For more information, see Amazon EKS Cluster Control
 	// Plane Logs (https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
-	// in the Amazon EKS User Guide.
+	// in the Amazon EKS User Guide .
 	//
 	// CloudWatch Logs ingestion, archive storage, and data scanning rates apply
 	// to exported control plane logs. For more information, see Amazon CloudWatch
@@ -1984,25 +2158,25 @@ type VpcConfigRequest struct {
 
 	// Set this value to true to enable private access for your cluster's Kubernetes
 	// API server endpoint. If you enable private access, Kubernetes API requests
-	// from within your cluster's VPC will use the private VPC endpoint. The default
+	// from within your cluster's VPC use the private VPC endpoint. The default
 	// value for this parameter is false, which disables private access for your
 	// Kubernetes API server. For more information, see Amazon EKS Cluster Endpoint
 	// Access Control (https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html)
-	// in the Amazon EKS User Guide.
+	// in the Amazon EKS User Guide .
 	EndpointPrivateAccess *bool `locationName:"endpointPrivateAccess" type:"boolean"`
 
 	// Set this value to false to disable public access for your cluster's Kubernetes
 	// API server endpoint. If you disable public access, your cluster's Kubernetes
-	// API server can only receive requests from within the cluster VPC. The default
+	// API server can receive only requests from within the cluster VPC. The default
 	// value for this parameter is true, which enables public access for your Kubernetes
 	// API server. For more information, see Amazon EKS Cluster Endpoint Access
 	// Control (https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html)
-	// in the Amazon EKS User Guide.
+	// in the Amazon EKS User Guide .
 	EndpointPublicAccess *bool `locationName:"endpointPublicAccess" type:"boolean"`
 
 	// Specify one or more security groups for the cross-account elastic network
 	// interfaces that Amazon EKS creates to use to allow communication between
-	// your worker nodes and the Kubernetes control plane. If you do not specify
+	// your worker nodes and the Kubernetes control plane. If you don't specify
 	// a security group, the default security group for your VPC is used.
 	SecurityGroupIds []*string `locationName:"securityGroupIds" type:"list"`
 
@@ -2052,13 +2226,13 @@ type VpcConfigResponse struct {
 
 	// This parameter indicates whether the Amazon EKS private API server endpoint
 	// is enabled. If the Amazon EKS private API server endpoint is enabled, Kubernetes
-	// API requests that originate from within your cluster's VPC will use the private
+	// API requests that originate from within your cluster's VPC use the private
 	// VPC endpoint instead of traversing the internet.
 	EndpointPrivateAccess *bool `locationName:"endpointPrivateAccess" type:"boolean"`
 
 	// This parameter indicates whether the Amazon EKS public API server endpoint
 	// is enabled. If the Amazon EKS public API server endpoint is disabled, your
-	// cluster's Kubernetes API server can only receive requests that originate
+	// cluster's Kubernetes API server can receive only requests that originate
 	// from within the cluster VPC.
 	EndpointPublicAccess *bool `locationName:"endpointPublicAccess" type:"boolean"`
 

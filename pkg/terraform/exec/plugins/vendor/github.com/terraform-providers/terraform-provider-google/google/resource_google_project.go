@@ -3,7 +3,7 @@ package google
 import (
 	"fmt"
 	"log"
-	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -28,6 +28,14 @@ func resourceGoogleProject() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceProjectImportState,
 		},
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(4 * time.Minute),
+			Update: schema.DefaultTimeout(4 * time.Minute),
+			Read:   schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(4 * time.Minute),
+		},
+
 		MigrateState: resourceGoogleProjectMigrateState,
 
 		Schema: map[string]*schema.Schema{
@@ -215,7 +223,11 @@ func resourceGoogleProjectCreate(d *schema.ResourceData, meta interface{}) error
 		project.Labels = expandLabels(d)
 	}
 
-	op, err := config.clientResourceManager.Projects.Create(project).Do()
+	var op *cloudresourcemanager.Operation
+	err = retryTimeDuration(func() (reqErr error) {
+		op, reqErr = config.clientResourceManager.Projects.Create(project).Do()
+		return reqErr
+	}, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("error creating project %s (%s): %s. "+
 			"If you received a 403 error, make sure you have the"+
@@ -257,12 +269,16 @@ func resourceGoogleProjectCreate(d *schema.ResourceData, meta interface{}) error
 	// a network and deleting it in the background.
 	if !d.Get("auto_create_network").(bool) {
 		// The compute API has to be enabled before we can delete a network.
-		if err = enableService("compute.googleapis.com", project.ProjectId, config); err != nil {
+		if err = enableServiceUsageProjectServices([]string{"compute.googleapis.com"}, project.ProjectId, config, d.Timeout(schema.TimeoutCreate)); err != nil {
 			return fmt.Errorf("Error enabling the Compute Engine API required to delete the default network: %s", err)
 		}
 
 		if err = forceDeleteComputeNetwork(project.ProjectId, "default", config); err != nil {
-			return fmt.Errorf("Error deleting default network in project %s: %s", project.ProjectId, err)
+			if isGoogleApiErrorWithCode(err, 404) {
+				log.Printf("[DEBUG] Default network not found for project %q, no need to delete it", project.ProjectId)
+			} else {
+				return fmt.Errorf("Error deleting default network in project %s: %s", project.ProjectId, err)
+			}
 		}
 	}
 	return nil
@@ -272,8 +288,7 @@ func resourceGoogleProjectRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	pid := d.Id()
 
-	// Read the project
-	p, err := config.clientResourceManager.Projects.Get(pid).Do()
+	p, err := readGoogleProject(d, config)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("Project %q", pid))
 	}
@@ -305,8 +320,12 @@ func resourceGoogleProjectRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	var ba *cloudbilling.ProjectBillingInfo
+	err = retryTimeDuration(func() (reqErr error) {
+		ba, reqErr = config.clientBilling.Projects.GetBillingInfo(prefixedProject(pid)).Do()
+		return reqErr
+	}, d.Timeout(schema.TimeoutRead))
 	// Read the billing account
-	ba, err := config.clientBilling.Projects.GetBillingInfo(prefixedProject(pid)).Do()
 	if err != nil && !isApiNotEnabledError(err) {
 		return fmt.Errorf("Error reading billing account for project %q: %v", prefixedProject(pid), err)
 	} else if isApiNotEnabledError(err) {
@@ -373,9 +392,9 @@ func resourceGoogleProjectUpdate(d *schema.ResourceData, meta interface{}) error
 	// Read the project
 	// we need the project even though refresh has already been called
 	// because the API doesn't support patch, so we need the actual object
-	p, err := config.clientResourceManager.Projects.Get(pid).Do()
+	p, err := readGoogleProject(d, config)
 	if err != nil {
-		if v, ok := err.(*googleapi.Error); ok && v.Code == http.StatusNotFound {
+		if isGoogleApiErrorWithCode(err, 404) {
 			return fmt.Errorf("Project %q does not exist.", pid)
 		}
 		return fmt.Errorf("Error checking project %q: %s", pid, err)
@@ -387,10 +406,13 @@ func resourceGoogleProjectUpdate(d *schema.ResourceData, meta interface{}) error
 	if ok := d.HasChange("name"); ok {
 		p.Name = project_name
 		// Do update on project
-		p, err = config.clientResourceManager.Projects.Update(p.ProjectId, p).Do()
-		if err != nil {
+		if err = retryTimeDuration(func() (updateErr error) {
+			p, updateErr = config.clientResourceManager.Projects.Update(p.ProjectId, p).Do()
+			return updateErr
+		}, d.Timeout(schema.TimeoutUpdate)); err != nil {
 			return fmt.Errorf("Error updating project %q: %s", project_name, err)
 		}
+
 		d.SetPartial("name")
 	}
 
@@ -401,8 +423,10 @@ func resourceGoogleProjectUpdate(d *schema.ResourceData, meta interface{}) error
 		}
 
 		// Do update on project
-		p, err = config.clientResourceManager.Projects.Update(p.ProjectId, p).Do()
-		if err != nil {
+		if err = retryTimeDuration(func() (updateErr error) {
+			p, updateErr = config.clientResourceManager.Projects.Update(p.ProjectId, p).Do()
+			return updateErr
+		}, d.Timeout(schema.TimeoutUpdate)); err != nil {
 			return fmt.Errorf("Error updating project %q: %s", project_name, err)
 		}
 		d.SetPartial("org_id")
@@ -422,8 +446,10 @@ func resourceGoogleProjectUpdate(d *schema.ResourceData, meta interface{}) error
 		p.Labels = expandLabels(d)
 
 		// Do Update on project
-		p, err = config.clientResourceManager.Projects.Update(p.ProjectId, p).Do()
-		if err != nil {
+		if err = retryTimeDuration(func() (updateErr error) {
+			p, updateErr = config.clientResourceManager.Projects.Update(p.ProjectId, p).Do()
+			return updateErr
+		}, d.Timeout(schema.TimeoutUpdate)); err != nil {
 			return fmt.Errorf("Error updating project %q: %s", project_name, err)
 		}
 		d.SetPartial("labels")
@@ -438,9 +464,11 @@ func resourceGoogleProjectDelete(d *schema.ResourceData, meta interface{}) error
 	// Only delete projects if skip_delete isn't set
 	if !d.Get("skip_delete").(bool) {
 		pid := d.Id()
-		_, err := config.clientResourceManager.Projects.Delete(pid).Do()
-		if err != nil {
-			return fmt.Errorf("Error deleting project %q: %s", pid, err)
+		if err := retryTimeDuration(func() error {
+			_, delErr := config.clientResourceManager.Projects.Delete(pid).Do()
+			return delErr
+		}, d.Timeout(schema.TimeoutDelete)); err != nil {
+			return handleNotFoundError(err, d, fmt.Sprintf("Project %s", pid))
 		}
 	}
 	d.SetId("")
@@ -448,6 +476,17 @@ func resourceGoogleProjectDelete(d *schema.ResourceData, meta interface{}) error
 }
 
 func resourceProjectImportState(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	pid := d.Id()
+	// Prevent importing via project number, this will cause issues later
+	matched, err := regexp.MatchString("^\\d+$", pid)
+	if err != nil {
+		return nil, fmt.Errorf("Error matching project %q: %s", pid, err)
+	}
+
+	if matched {
+		return nil, fmt.Errorf("Error importing project %q, please use project_id", pid)
+	}
+
 	// Explicitly set to default as a workaround for `ImportStateVerify` tests, and so that users
 	// don't see a diff immediately after import.
 	d.Set("auto_create_network", true)
@@ -529,4 +568,14 @@ func deleteComputeNetwork(project, network string, config *Config) error {
 		return err
 	}
 	return nil
+}
+
+func readGoogleProject(d *schema.ResourceData, config *Config) (*cloudresourcemanager.Project, error) {
+	var p *cloudresourcemanager.Project
+	// Read the project
+	err := retryTimeDuration(func() (reqErr error) {
+		p, reqErr = config.clientResourceManager.Projects.Get(d.Id()).Do()
+		return reqErr
+	}, d.Timeout(schema.TimeoutRead))
+	return p, err
 }

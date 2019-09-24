@@ -8,16 +8,18 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/datafactory/mgmt/2018-06-01/datafactory"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
 func resourceArmDataFactoryDatasetSQLServerTable() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceArmDataFactoryDatasetSQLServerTableCreateOrUpdate,
+		Create: resourceArmDataFactoryDatasetSQLServerTableCreateUpdate,
 		Read:   resourceArmDataFactoryDatasetSQLServerTableRead,
-		Update: resourceArmDataFactoryDatasetSQLServerTableCreateOrUpdate,
+		Update: resourceArmDataFactoryDatasetSQLServerTableCreateUpdate,
 		Delete: resourceArmDataFactoryDatasetSQLServerTableDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -42,7 +44,9 @@ func resourceArmDataFactoryDatasetSQLServerTable() *schema.Resource {
 				),
 			},
 
-			"resource_group_name": resourceGroupNameSchema(),
+			// There's a bug in the Azure API where this is returned in lower-case
+			// BUG: https://github.com/Azure/azure-rest-api-specs/issues/5788
+			"resource_group_name": azure.SchemaResourceGroupNameDiffSuppress(),
 
 			"linked_service_name": {
 				Type:         schema.TypeString,
@@ -59,6 +63,9 @@ func resourceArmDataFactoryDatasetSQLServerTable() *schema.Resource {
 			"parameters": {
 				Type:     schema.TypeMap,
 				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 
 			"description": {
@@ -84,6 +91,9 @@ func resourceArmDataFactoryDatasetSQLServerTable() *schema.Resource {
 			"additional_properties": {
 				Type:     schema.TypeMap,
 				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 
 			"schema_column": {
@@ -129,15 +139,15 @@ func resourceArmDataFactoryDatasetSQLServerTable() *schema.Resource {
 	}
 }
 
-func resourceArmDataFactoryDatasetSQLServerTableCreateOrUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ArmClient).dataFactoryDatasetClient
+func resourceArmDataFactoryDatasetSQLServerTableCreateUpdate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*ArmClient).dataFactory.DatasetClient
 	ctx := meta.(*ArmClient).StopContext
 
 	name := d.Get("name").(string)
 	dataFactoryName := d.Get("data_factory_name").(string)
 	resourceGroup := d.Get("resource_group_name").(string)
 
-	if requireResourcesToBeImported && d.IsNewResource() {
+	if features.ShouldResourcesBeImported() && d.IsNewResource() {
 		existing, err := client.Get(ctx, resourceGroup, dataFactoryName, name, "")
 		if err != nil {
 			if !utils.ResponseWasNotFound(existing.Response) {
@@ -217,10 +227,10 @@ func resourceArmDataFactoryDatasetSQLServerTableCreateOrUpdate(d *schema.Resourc
 }
 
 func resourceArmDataFactoryDatasetSQLServerTableRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ArmClient).dataFactoryDatasetClient
+	client := meta.(*ArmClient).dataFactory.DatasetClient
 	ctx := meta.(*ArmClient).StopContext
 
-	id, err := parseAzureResourceID(d.Id())
+	id, err := azure.ParseAzureResourceID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -293,10 +303,10 @@ func resourceArmDataFactoryDatasetSQLServerTableRead(d *schema.ResourceData, met
 }
 
 func resourceArmDataFactoryDatasetSQLServerTableDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ArmClient).dataFactoryDatasetClient
+	client := meta.(*ArmClient).dataFactory.DatasetClient
 	ctx := meta.(*ArmClient).StopContext
 
-	id, err := parseAzureResourceID(d.Id())
+	id, err := azure.ParseAzureResourceID(d.Id())
 	if err != nil {
 		return err
 	}

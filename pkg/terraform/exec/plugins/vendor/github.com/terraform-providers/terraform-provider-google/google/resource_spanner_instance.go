@@ -39,9 +39,9 @@ func resourceSpannerInstance() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(240 * time.Second),
-			Update: schema.DefaultTimeout(240 * time.Second),
-			Delete: schema.DefaultTimeout(240 * time.Second),
+			Create: schema.DefaultTimeout(4 * time.Minute),
+			Update: schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(4 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -107,7 +107,7 @@ func resourceSpannerInstanceCreate(d *schema.ResourceData, meta interface{}) err
 	} else if v, ok := d.GetOkExists("display_name"); !isEmptyValue(reflect.ValueOf(displayNameProp)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
 	}
-	nodeCountProp, err := expandSpannerInstanceNum_nodes(d.Get("num_nodes"), d, config)
+	nodeCountProp, err := expandSpannerInstanceNumNodes(d.Get("num_nodes"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("num_nodes"); !isEmptyValue(reflect.ValueOf(nodeCountProp)) && (ok || !reflect.DeepEqual(v, nodeCountProp)) {
@@ -125,13 +125,17 @@ func resourceSpannerInstanceCreate(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	url, err := replaceVars(d, config, "https://spanner.googleapis.com/v1/projects/{{project}}/instances")
+	url, err := replaceVars(d, config, "{{SpannerBasePath}}projects/{{project}}/instances")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Creating new Instance: %#v", obj)
-	res, err := sendRequestWithTimeout(config, "POST", url, obj, d.Timeout(schema.TimeoutCreate))
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Instance: %s", err)
 	}
@@ -143,10 +147,6 @@ func resourceSpannerInstanceCreate(d *schema.ResourceData, meta interface{}) err
 	}
 	d.SetId(id)
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	waitErr := spannerOperationWaitTime(
 		config, res, project, "Creating Instance",
 		int(d.Timeout(schema.TimeoutCreate).Minutes()))
@@ -170,12 +170,16 @@ func resourceSpannerInstanceCreate(d *schema.ResourceData, meta interface{}) err
 func resourceSpannerInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://spanner.googleapis.com/v1/projects/{{project}}/instances/{{name}}")
+	url, err := replaceVars(d, config, "{{SpannerBasePath}}projects/{{project}}/instances/{{name}}")
 	if err != nil {
 		return err
 	}
 
-	res, err := sendRequest(config, "GET", url, nil)
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequest(config, "GET", project, url, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("SpannerInstance %q", d.Id()))
 	}
@@ -185,10 +189,13 @@ func resourceSpannerInstanceRead(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
+	if res == nil {
+		// Decoding the object has resulted in it being gone. It may be marked deleted
+		log.Printf("[DEBUG] Removing SpannerInstance because it no longer exists.")
+		d.SetId("")
+		return nil
 	}
+
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
@@ -202,7 +209,7 @@ func resourceSpannerInstanceRead(d *schema.ResourceData, meta interface{}) error
 	if err := d.Set("display_name", flattenSpannerInstanceDisplayName(res["displayName"], d)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
-	if err := d.Set("num_nodes", flattenSpannerInstanceNum_nodes(res["nodeCount"], d)); err != nil {
+	if err := d.Set("num_nodes", flattenSpannerInstanceNumNodes(res["nodeCount"], d)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
 	if err := d.Set("labels", flattenSpannerInstanceLabels(res["labels"], d)); err != nil {
@@ -218,6 +225,11 @@ func resourceSpannerInstanceRead(d *schema.ResourceData, meta interface{}) error
 func resourceSpannerInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
 	obj := make(map[string]interface{})
 	configProp, err := expandSpannerInstanceConfig(d.Get("config"), d, config)
 	if err != nil {
@@ -231,7 +243,7 @@ func resourceSpannerInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 	} else if v, ok := d.GetOkExists("display_name"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
 	}
-	nodeCountProp, err := expandSpannerInstanceNum_nodes(d.Get("num_nodes"), d, config)
+	nodeCountProp, err := expandSpannerInstanceNumNodes(d.Get("num_nodes"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("num_nodes"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nodeCountProp)) {
@@ -249,21 +261,16 @@ func resourceSpannerInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	url, err := replaceVars(d, config, "https://spanner.googleapis.com/v1/projects/{{project}}/instances/{{name}}")
+	url, err := replaceVars(d, config, "{{SpannerBasePath}}projects/{{project}}/instances/{{name}}")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Updating Instance %q: %#v", d.Id(), obj)
-	res, err := sendRequestWithTimeout(config, "PATCH", url, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := sendRequestWithTimeout(config, "PATCH", project, url, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Instance %q: %s", d.Id(), err)
-	}
-
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
 	}
 
 	err = spannerOperationWaitTime(
@@ -280,29 +287,22 @@ func resourceSpannerInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 func resourceSpannerInstanceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://spanner.googleapis.com/v1/projects/{{project}}/instances/{{name}}")
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
+	url, err := replaceVars(d, config, "{{SpannerBasePath}}projects/{{project}}/instances/{{name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting Instance %q", d.Id())
-	res, err := sendRequestWithTimeout(config, "DELETE", url, obj, d.Timeout(schema.TimeoutDelete))
+
+	res, err := sendRequestWithTimeout(config, "DELETE", project, url, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Instance")
-	}
-
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
-
-	err = spannerOperationWaitTime(
-		config, res, project, "Deleting Instance",
-		int(d.Timeout(schema.TimeoutDelete).Minutes()))
-
-	if err != nil {
-		return err
 	}
 
 	log.Printf("[DEBUG] Finished deleting Instance %q: %#v", d.Id(), res)
@@ -311,7 +311,11 @@ func resourceSpannerInstanceDelete(d *schema.ResourceData, meta interface{}) err
 
 func resourceSpannerInstanceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
-	if err := parseImportId([]string{"projects/(?P<project>[^/]+)/instances/(?P<name>[^/]+)", "(?P<project>[^/]+)/(?P<name>[^/]+)", "(?P<name>[^/]+)"}, d, config); err != nil {
+	if err := parseImportId([]string{
+		"projects/(?P<project>[^/]+)/instances/(?P<name>[^/]+)",
+		"(?P<project>[^/]+)/(?P<name>[^/]+)",
+		"(?P<name>[^/]+)",
+	}, d, config); err != nil {
 		return nil, err
 	}
 
@@ -340,7 +344,7 @@ func flattenSpannerInstanceDisplayName(v interface{}, d *schema.ResourceData) in
 	return v
 }
 
-func flattenSpannerInstanceNum_nodes(v interface{}, d *schema.ResourceData) interface{} {
+func flattenSpannerInstanceNumNodes(v interface{}, d *schema.ResourceData) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
 		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
@@ -380,7 +384,7 @@ func expandSpannerInstanceDisplayName(v interface{}, d TerraformResourceData, co
 	return v, nil
 }
 
-func expandSpannerInstanceNum_nodes(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+func expandSpannerInstanceNumNodes(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

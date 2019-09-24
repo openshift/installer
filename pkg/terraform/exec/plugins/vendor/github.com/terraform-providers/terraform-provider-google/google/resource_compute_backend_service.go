@@ -111,6 +111,23 @@ func resourceGoogleComputeBackendServiceBackendHash(v interface{}) int {
 		// the hash function doesn't return something else.
 		buf.WriteString(fmt.Sprintf("%f-", v.(float64)))
 	}
+	if v, ok := m["max_connections_per_endpoint"]; ok {
+		if v == nil {
+			v = 0
+		}
+
+		buf.WriteString(fmt.Sprintf("%v-", v))
+	}
+	if v, ok := m["max_rate_per_endpoint"]; ok {
+		if v == nil {
+			v = 0.0
+		}
+
+		// floats can't be added to the hash with %v as the other values are because
+		// %v and %f are not equivalent strings so this must remain as a float so that
+		// the hash function doesn't return something else.
+		buf.WriteString(fmt.Sprintf("%f-", v.(float64)))
+	}
 
 	log.Printf("[DEBUG] computed hash value of %v from %v", hashcode.String(buf.String()), buf.String())
 	return hashcode.String(buf.String())
@@ -128,9 +145,9 @@ func resourceComputeBackendService() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(240 * time.Second),
-			Update: schema.DefaultTimeout(240 * time.Second),
-			Delete: schema.DefaultTimeout(240 * time.Second),
+			Create: schema.DefaultTimeout(4 * time.Minute),
+			Update: schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(4 * time.Minute),
 		},
 
 		SchemaVersion: 1,
@@ -333,12 +350,20 @@ func computeBackendServiceBackendSchema() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
+			"max_connections_per_endpoint": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 			"max_connections_per_instance": {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
 			"max_rate": {
 				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"max_rate_per_endpoint": {
+				Type:     schema.TypeFloat,
 				Optional: true,
 			},
 			"max_rate_per_instance": {
@@ -460,13 +485,17 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 		return err
 	}
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/backendServices")
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/backendServices")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Creating new BackendService: %#v", obj)
-	res, err := sendRequestWithTimeout(config, "POST", url, obj, d.Timeout(schema.TimeoutCreate))
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating BackendService: %s", err)
 	}
@@ -478,10 +507,6 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 	}
 	d.SetId(id)
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -501,8 +526,8 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 	log.Printf("[DEBUG] Finished creating BackendService %q: %#v", d.Id(), res)
 
 	// security_policy isn't set by Create / Update
-	if v, ok := d.GetOk("security_policy"); ok {
-		pol, err := ParseSecurityPolicyFieldValue(v.(string), d, config)
+	if o, n := d.GetChange("security_policy"); o.(string) != n.(string) {
+		pol, err := ParseSecurityPolicyFieldValue(n.(string), d, config)
 		if err != nil {
 			return errwrap.Wrapf("Error parsing Backend Service security policy: {{err}}", err)
 		}
@@ -525,12 +550,16 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 func resourceComputeBackendServiceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/backendServices/{{name}}")
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/backendServices/{{name}}")
 	if err != nil {
 		return err
 	}
 
-	res, err := sendRequest(config, "GET", url, nil)
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequest(config, "GET", project, url, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeBackendService %q", d.Id()))
 	}
@@ -540,10 +569,13 @@ func resourceComputeBackendServiceRead(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
+	if res == nil {
+		// Decoding the object has resulted in it being gone. It may be marked deleted
+		log.Printf("[DEBUG] Removing ComputeBackendService because it no longer exists.")
+		d.SetId("")
+		return nil
 	}
+
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading BackendService: %s", err)
 	}
@@ -615,6 +647,11 @@ func resourceComputeBackendServiceRead(d *schema.ResourceData, meta interface{})
 
 func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
 
 	obj := make(map[string]interface{})
 	affinityCookieTtlSecProp, err := expandComputeBackendServiceAffinityCookieTtlSec(d.Get("affinity_cookie_ttl_sec"), d, config)
@@ -719,22 +756,18 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 		return err
 	}
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/backendServices/{{name}}")
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/backendServices/{{name}}")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Updating BackendService %q: %#v", d.Id(), obj)
-	res, err := sendRequestWithTimeout(config, "PUT", url, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := sendRequestWithTimeout(config, "PUT", project, url, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating BackendService %q: %s", d.Id(), err)
 	}
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -750,8 +783,8 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 	}
 
 	// security_policy isn't set by Create / Update
-	if v, ok := d.GetOk("security_policy"); ok {
-		pol, err := ParseSecurityPolicyFieldValue(v.(string), d, config)
+	if o, n := d.GetChange("security_policy"); o.(string) != n.(string) {
+		pol, err := ParseSecurityPolicyFieldValue(n.(string), d, config)
 		if err != nil {
 			return errwrap.Wrapf("Error parsing Backend Service security policy: {{err}}", err)
 		}
@@ -773,22 +806,24 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 func resourceComputeBackendServiceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/backendServices/{{name}}")
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/backendServices/{{name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting BackendService %q", d.Id())
-	res, err := sendRequestWithTimeout(config, "DELETE", url, obj, d.Timeout(schema.TimeoutDelete))
+
+	res, err := sendRequestWithTimeout(config, "DELETE", project, url, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "BackendService")
 	}
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -809,7 +844,11 @@ func resourceComputeBackendServiceDelete(d *schema.ResourceData, meta interface{
 
 func resourceComputeBackendServiceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
-	if err := parseImportId([]string{"projects/(?P<project>[^/]+)/global/backendServices/(?P<name>[^/]+)", "(?P<project>[^/]+)/(?P<name>[^/]+)", "(?P<name>[^/]+)"}, d, config); err != nil {
+	if err := parseImportId([]string{
+		"projects/(?P<project>[^/]+)/global/backendServices/(?P<name>[^/]+)",
+		"(?P<project>[^/]+)/(?P<name>[^/]+)",
+		"(?P<name>[^/]+)",
+	}, d, config); err != nil {
 		return nil, err
 	}
 
@@ -852,8 +891,10 @@ func flattenComputeBackendServiceBackend(v interface{}, d *schema.ResourceData) 
 			"group":                        flattenComputeBackendServiceBackendGroup(original["group"], d),
 			"max_connections":              flattenComputeBackendServiceBackendMaxConnections(original["maxConnections"], d),
 			"max_connections_per_instance": flattenComputeBackendServiceBackendMaxConnectionsPerInstance(original["maxConnectionsPerInstance"], d),
+			"max_connections_per_endpoint": flattenComputeBackendServiceBackendMaxConnectionsPerEndpoint(original["maxConnectionsPerEndpoint"], d),
 			"max_rate":                     flattenComputeBackendServiceBackendMaxRate(original["maxRate"], d),
 			"max_rate_per_instance":        flattenComputeBackendServiceBackendMaxRatePerInstance(original["maxRatePerInstance"], d),
+			"max_rate_per_endpoint":        flattenComputeBackendServiceBackendMaxRatePerEndpoint(original["maxRatePerEndpoint"], d),
 			"max_utilization":              flattenComputeBackendServiceBackendMaxUtilization(original["maxUtilization"], d),
 		})
 	}
@@ -898,6 +939,16 @@ func flattenComputeBackendServiceBackendMaxConnectionsPerInstance(v interface{},
 	return v
 }
 
+func flattenComputeBackendServiceBackendMaxConnectionsPerEndpoint(v interface{}, d *schema.ResourceData) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+			return intVal
+		} // let terraform core handle it if we can't convert the string to an int.
+	}
+	return v
+}
+
 func flattenComputeBackendServiceBackendMaxRate(v interface{}, d *schema.ResourceData) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
@@ -909,6 +960,10 @@ func flattenComputeBackendServiceBackendMaxRate(v interface{}, d *schema.Resourc
 }
 
 func flattenComputeBackendServiceBackendMaxRatePerInstance(v interface{}, d *schema.ResourceData) interface{} {
+	return v
+}
+
+func flattenComputeBackendServiceBackendMaxRatePerEndpoint(v interface{}, d *schema.ResourceData) interface{} {
 	return v
 }
 
@@ -998,10 +1053,10 @@ func flattenComputeBackendServiceConnectionDraining(v interface{}, d *schema.Res
 	}
 	transformed := make(map[string]interface{})
 	transformed["connection_draining_timeout_sec"] =
-		flattenComputeBackendServiceConnectionDrainingConnection_draining_timeout_sec(original["drainingTimeoutSec"], d)
+		flattenComputeBackendServiceConnectionDrainingConnectionDrainingTimeoutSec(original["drainingTimeoutSec"], d)
 	return []interface{}{transformed}
 }
-func flattenComputeBackendServiceConnectionDrainingConnection_draining_timeout_sec(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeBackendServiceConnectionDrainingConnectionDrainingTimeoutSec(v interface{}, d *schema.ResourceData) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
 		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
@@ -1122,7 +1177,7 @@ func expandComputeBackendServiceBackend(v interface{}, d TerraformResourceData, 
 		transformedCapacityScaler, err := expandComputeBackendServiceBackendCapacityScaler(original["capacity_scaler"], d, config)
 		if err != nil {
 			return nil, err
-		} else if val := reflect.ValueOf(transformedCapacityScaler); val.IsValid() && !isEmptyValue(val) {
+		} else {
 			transformed["capacityScaler"] = transformedCapacityScaler
 		}
 
@@ -1154,6 +1209,13 @@ func expandComputeBackendServiceBackend(v interface{}, d TerraformResourceData, 
 			transformed["maxConnectionsPerInstance"] = transformedMaxConnectionsPerInstance
 		}
 
+		transformedMaxConnectionsPerEndpoint, err := expandComputeBackendServiceBackendMaxConnectionsPerEndpoint(original["max_connections_per_endpoint"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedMaxConnectionsPerEndpoint); val.IsValid() && !isEmptyValue(val) {
+			transformed["maxConnectionsPerEndpoint"] = transformedMaxConnectionsPerEndpoint
+		}
+
 		transformedMaxRate, err := expandComputeBackendServiceBackendMaxRate(original["max_rate"], d, config)
 		if err != nil {
 			return nil, err
@@ -1168,10 +1230,17 @@ func expandComputeBackendServiceBackend(v interface{}, d TerraformResourceData, 
 			transformed["maxRatePerInstance"] = transformedMaxRatePerInstance
 		}
 
+		transformedMaxRatePerEndpoint, err := expandComputeBackendServiceBackendMaxRatePerEndpoint(original["max_rate_per_endpoint"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedMaxRatePerEndpoint); val.IsValid() && !isEmptyValue(val) {
+			transformed["maxRatePerEndpoint"] = transformedMaxRatePerEndpoint
+		}
+
 		transformedMaxUtilization, err := expandComputeBackendServiceBackendMaxUtilization(original["max_utilization"], d, config)
 		if err != nil {
 			return nil, err
-		} else if val := reflect.ValueOf(transformedMaxUtilization); val.IsValid() && !isEmptyValue(val) {
+		} else {
 			transformed["maxUtilization"] = transformedMaxUtilization
 		}
 
@@ -1204,11 +1273,19 @@ func expandComputeBackendServiceBackendMaxConnectionsPerInstance(v interface{}, 
 	return v, nil
 }
 
+func expandComputeBackendServiceBackendMaxConnectionsPerEndpoint(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandComputeBackendServiceBackendMaxRate(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
 func expandComputeBackendServiceBackendMaxRatePerInstance(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendServiceBackendMaxRatePerEndpoint(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1317,17 +1394,17 @@ func expandComputeBackendServiceCdnPolicySignedUrlCacheMaxAgeSec(v interface{}, 
 
 func expandComputeBackendServiceConnectionDraining(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	transformed := make(map[string]interface{})
-	transformedConnection_draining_timeout_sec, err := expandComputeBackendServiceConnectionDrainingConnection_draining_timeout_sec(d.Get("connection_draining_timeout_sec"), d, config)
+	transformedConnectionDrainingTimeoutSec, err := expandComputeBackendServiceConnectionDrainingConnectionDrainingTimeoutSec(d.Get("connection_draining_timeout_sec"), d, config)
 	if err != nil {
 		return nil, err
-	} else if val := reflect.ValueOf(transformedConnection_draining_timeout_sec); val.IsValid() && !isEmptyValue(val) {
-		transformed["drainingTimeoutSec"] = transformedConnection_draining_timeout_sec
+	} else if val := reflect.ValueOf(transformedConnectionDrainingTimeoutSec); val.IsValid() && !isEmptyValue(val) {
+		transformed["drainingTimeoutSec"] = transformedConnectionDrainingTimeoutSec
 	}
 
 	return transformed, nil
 }
 
-func expandComputeBackendServiceConnectionDrainingConnection_draining_timeout_sec(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+func expandComputeBackendServiceConnectionDrainingConnectionDrainingTimeoutSec(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

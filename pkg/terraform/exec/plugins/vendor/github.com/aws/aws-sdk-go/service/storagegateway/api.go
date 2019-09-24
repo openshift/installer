@@ -475,6 +475,96 @@ func (c *StorageGateway) AddWorkingStorageWithContext(ctx aws.Context, input *Ad
 	return out, req.Send()
 }
 
+const opAssignTapePool = "AssignTapePool"
+
+// AssignTapePoolRequest generates a "aws/request.Request" representing the
+// client's request for the AssignTapePool operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See AssignTapePool for more information on using the AssignTapePool
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the AssignTapePoolRequest method.
+//    req, resp := client.AssignTapePoolRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AssignTapePool
+func (c *StorageGateway) AssignTapePoolRequest(input *AssignTapePoolInput) (req *request.Request, output *AssignTapePoolOutput) {
+	op := &request.Operation{
+		Name:       opAssignTapePool,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &AssignTapePoolInput{}
+	}
+
+	output = &AssignTapePoolOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// AssignTapePool API operation for AWS Storage Gateway.
+//
+// Assigns a tape to a tape pool for archiving. The tape assigned to a pool
+// is archived in the S3 storage class that is associated with the pool. When
+// you use your backup application to eject the tape, the tape is archived directly
+// into the S3 storage class (Glacier or Deep Archive) that corresponds to the
+// pool.
+//
+// Valid values: "GLACIER", "DEEP_ARCHIVE"
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Storage Gateway's
+// API operation AssignTapePool for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInvalidGatewayRequestException "InvalidGatewayRequestException"
+//   An exception occurred because an invalid gateway request was issued to the
+//   service. For more information, see the error and message fields.
+//
+//   * ErrCodeInternalServerError "InternalServerError"
+//   An internal server error has occurred during the request. For more information,
+//   see the error and message fields.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/AssignTapePool
+func (c *StorageGateway) AssignTapePool(input *AssignTapePoolInput) (*AssignTapePoolOutput, error) {
+	req, out := c.AssignTapePoolRequest(input)
+	return out, req.Send()
+}
+
+// AssignTapePoolWithContext is the same as AssignTapePool with the addition of
+// the ability to pass a context and additional request options.
+//
+// See AssignTapePool for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *StorageGateway) AssignTapePoolWithContext(ctx aws.Context, input *AssignTapePoolInput, opts ...request.Option) (*AssignTapePoolOutput, error) {
+	req, out := c.AssignTapePoolRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opAttachVolume = "AttachVolume"
 
 // AttachVolumeRequest generates a "aws/request.Request" representing the
@@ -1831,10 +1921,10 @@ func (c *StorageGateway) DeleteGatewayRequest(input *DeleteGatewayInput) (req *r
 //
 // You no longer pay software charges after the gateway is deleted; however,
 // your existing Amazon EBS snapshots persist and you will continue to be billed
-// for these snapshots. You can choose to remove all remaining Amazon EBS snapshots
-// by canceling your Amazon EC2 subscription.  If you prefer not to cancel your
+// for these snapshots. You can choose to remove all remaining Amazon EBS snapshots
+// by canceling your Amazon EC2 subscription. If you prefer not to cancel your
 // Amazon EC2 subscription, you can delete your snapshots using the Amazon EC2
-// console. For more information, see the  AWS Storage Gateway Detail Page (http://aws.amazon.com/storagegateway).
+// console. For more information, see the AWS Storage Gateway Detail Page (http://aws.amazon.com/storagegateway).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3294,7 +3384,7 @@ func (c *StorageGateway) DescribeTapeArchivesWithContext(ctx aws.Context, input 
 //    // Example iterating over at most 3 pages of a DescribeTapeArchives operation.
 //    pageNum := 0
 //    err := client.DescribeTapeArchivesPages(params,
-//        func(page *DescribeTapeArchivesOutput, lastPage bool) bool {
+//        func(page *storagegateway.DescribeTapeArchivesOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -3440,7 +3530,7 @@ func (c *StorageGateway) DescribeTapeRecoveryPointsWithContext(ctx aws.Context, 
 //    // Example iterating over at most 3 pages of a DescribeTapeRecoveryPoints operation.
 //    pageNum := 0
 //    err := client.DescribeTapeRecoveryPointsPages(params,
-//        func(page *DescribeTapeRecoveryPointsOutput, lastPage bool) bool {
+//        func(page *storagegateway.DescribeTapeRecoveryPointsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -3583,7 +3673,7 @@ func (c *StorageGateway) DescribeTapesWithContext(ctx aws.Context, input *Descri
 //    // Example iterating over at most 3 pages of a DescribeTapes operation.
 //    pageNum := 0
 //    err := client.DescribeTapesPages(params,
-//        func(page *DescribeTapesOutput, lastPage bool) bool {
+//        func(page *storagegateway.DescribeTapesOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -3814,7 +3904,7 @@ func (c *StorageGateway) DescribeVTLDevicesWithContext(ctx aws.Context, input *D
 //    // Example iterating over at most 3 pages of a DescribeVTLDevices operation.
 //    pageNum := 0
 //    err := client.DescribeVTLDevicesPages(params,
-//        func(page *DescribeVTLDevicesOutput, lastPage bool) bool {
+//        func(page *storagegateway.DescribeVTLDevicesOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -4312,7 +4402,7 @@ func (c *StorageGateway) ListFileSharesWithContext(ctx aws.Context, input *ListF
 //    // Example iterating over at most 3 pages of a ListFileShares operation.
 //    pageNum := 0
 //    err := client.ListFileSharesPages(params,
-//        func(page *ListFileSharesOutput, lastPage bool) bool {
+//        func(page *storagegateway.ListFileSharesOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -4462,7 +4552,7 @@ func (c *StorageGateway) ListGatewaysWithContext(ctx aws.Context, input *ListGat
 //    // Example iterating over at most 3 pages of a ListGateways operation.
 //    pageNum := 0
 //    err := client.ListGatewaysPages(params,
-//        func(page *ListGatewaysOutput, lastPage bool) bool {
+//        func(page *storagegateway.ListGatewaysOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -4696,7 +4786,7 @@ func (c *StorageGateway) ListTagsForResourceWithContext(ctx aws.Context, input *
 //    // Example iterating over at most 3 pages of a ListTagsForResource operation.
 //    pageNum := 0
 //    err := client.ListTagsForResourcePages(params,
-//        func(page *ListTagsForResourceOutput, lastPage bool) bool {
+//        func(page *storagegateway.ListTagsForResourceOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -4846,7 +4936,7 @@ func (c *StorageGateway) ListTapesWithContext(ctx aws.Context, input *ListTapesI
 //    // Example iterating over at most 3 pages of a ListTapes operation.
 //    pageNum := 0
 //    err := client.ListTapesPages(params,
-//        func(page *ListTapesOutput, lastPage bool) bool {
+//        func(page *storagegateway.ListTapesOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -5174,7 +5264,7 @@ func (c *StorageGateway) ListVolumesWithContext(ctx aws.Context, input *ListVolu
 //    // Example iterating over at most 3 pages of a ListVolumes operation.
 //    pageNum := 0
 //    err := client.ListVolumesPages(params,
-//        func(page *ListVolumesOutput, lastPage bool) bool {
+//        func(page *storagegateway.ListVolumesOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -5258,12 +5348,12 @@ func (c *StorageGateway) NotifyWhenUploadedRequest(input *NotifyWhenUploadedInpu
 // NotifyWhenUploaded API operation for AWS Storage Gateway.
 //
 // Sends you notification through CloudWatch Events when all files written to
-// your NFS file share have been uploaded to Amazon S3.
+// your file share have been uploaded to Amazon S3.
 //
 // AWS Storage Gateway can send a notification through Amazon CloudWatch Events
 // when all files written to your file share up to that point in time have been
-// uploaded to Amazon S3. These files include files written to the NFS file
-// share up to the time that you make a request for notification. When the upload
+// uploaded to Amazon S3. These files include files written to the file share
+// up to the time that you make a request for notification. When the upload
 // is done, Storage Gateway sends you notification through an Amazon CloudWatch
 // Event. You can configure CloudWatch Events to send the notification through
 // event targets such as Amazon SNS or AWS Lambda function. This operation is
@@ -6798,6 +6888,95 @@ func (c *StorageGateway) UpdateSMBFileShareWithContext(ctx aws.Context, input *U
 	return out, req.Send()
 }
 
+const opUpdateSMBSecurityStrategy = "UpdateSMBSecurityStrategy"
+
+// UpdateSMBSecurityStrategyRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateSMBSecurityStrategy operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateSMBSecurityStrategy for more information on using the UpdateSMBSecurityStrategy
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateSMBSecurityStrategyRequest method.
+//    req, resp := client.UpdateSMBSecurityStrategyRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateSMBSecurityStrategy
+func (c *StorageGateway) UpdateSMBSecurityStrategyRequest(input *UpdateSMBSecurityStrategyInput) (req *request.Request, output *UpdateSMBSecurityStrategyOutput) {
+	op := &request.Operation{
+		Name:       opUpdateSMBSecurityStrategy,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateSMBSecurityStrategyInput{}
+	}
+
+	output = &UpdateSMBSecurityStrategyOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateSMBSecurityStrategy API operation for AWS Storage Gateway.
+//
+// Updates the SMB security strategy on a file gateway. This action is only
+// supported in file gateways.
+//
+// This API is called Security level in the User Guide.
+//
+// A higher security level can affect performance of the gateway.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Storage Gateway's
+// API operation UpdateSMBSecurityStrategy for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInvalidGatewayRequestException "InvalidGatewayRequestException"
+//   An exception occurred because an invalid gateway request was issued to the
+//   service. For more information, see the error and message fields.
+//
+//   * ErrCodeInternalServerError "InternalServerError"
+//   An internal server error has occurred during the request. For more information,
+//   see the error and message fields.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/storagegateway-2013-06-30/UpdateSMBSecurityStrategy
+func (c *StorageGateway) UpdateSMBSecurityStrategy(input *UpdateSMBSecurityStrategyInput) (*UpdateSMBSecurityStrategyOutput, error) {
+	req, out := c.UpdateSMBSecurityStrategyRequest(input)
+	return out, req.Send()
+}
+
+// UpdateSMBSecurityStrategyWithContext is the same as UpdateSMBSecurityStrategy with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateSMBSecurityStrategy for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *StorageGateway) UpdateSMBSecurityStrategyWithContext(ctx aws.Context, input *UpdateSMBSecurityStrategyInput, opts ...request.Option) (*UpdateSMBSecurityStrategyOutput, error) {
+	req, out := c.UpdateSMBSecurityStrategyRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateSnapshotSchedule = "UpdateSnapshotSchedule"
 
 // UpdateSnapshotScheduleRequest generates a "aws/request.Request" representing the
@@ -7556,6 +7735,95 @@ func (s *AddWorkingStorageOutput) SetGatewayARN(v string) *AddWorkingStorageOutp
 	return s
 }
 
+type AssignTapePoolInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the pool that you want to add your tape to for archiving. The tape
+	// in this pool is archived in the S3 storage class that is associated with
+	// the pool. When you use your backup application to eject the tape, the tape
+	// is archived directly into the storage class (Glacier or Deep Archive) that
+	// corresponds to the pool.
+	//
+	// Valid values: "GLACIER", "DEEP_ARCHIVE"
+	//
+	// PoolId is a required field
+	PoolId *string `min:"1" type:"string" required:"true"`
+
+	// The unique Amazon Resource Name (ARN) of the virtual tape that you want to
+	// add to the tape pool.
+	//
+	// TapeARN is a required field
+	TapeARN *string `min:"50" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s AssignTapePoolInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AssignTapePoolInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AssignTapePoolInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AssignTapePoolInput"}
+	if s.PoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("PoolId"))
+	}
+	if s.PoolId != nil && len(*s.PoolId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("PoolId", 1))
+	}
+	if s.TapeARN == nil {
+		invalidParams.Add(request.NewErrParamRequired("TapeARN"))
+	}
+	if s.TapeARN != nil && len(*s.TapeARN) < 50 {
+		invalidParams.Add(request.NewErrParamMinLen("TapeARN", 50))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetPoolId sets the PoolId field's value.
+func (s *AssignTapePoolInput) SetPoolId(v string) *AssignTapePoolInput {
+	s.PoolId = &v
+	return s
+}
+
+// SetTapeARN sets the TapeARN field's value.
+func (s *AssignTapePoolInput) SetTapeARN(v string) *AssignTapePoolInput {
+	s.TapeARN = &v
+	return s
+}
+
+type AssignTapePoolOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique Amazon Resource Names (ARN) of the virtual tape that was added
+	// to the tape pool.
+	TapeARN *string `min:"50" type:"string"`
+}
+
+// String returns the string representation
+func (s AssignTapePoolOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AssignTapePoolOutput) GoString() string {
+	return s.String()
+}
+
+// SetTapeARN sets the TapeARN field's value.
+func (s *AssignTapePoolOutput) SetTapeARN(v string) *AssignTapePoolOutput {
+	s.TapeARN = &v
+	return s
+}
+
 // AttachVolumeInput
 type AttachVolumeInput struct {
 	_ struct{} `type:"structure"`
@@ -8036,11 +8304,11 @@ type ChapInfo struct {
 
 	// The secret key that the initiator (for example, the Windows client) must
 	// provide to participate in mutual CHAP with the target.
-	SecretToAuthenticateInitiator *string `min:"1" type:"string"`
+	SecretToAuthenticateInitiator *string `min:"1" type:"string" sensitive:"true"`
 
 	// The secret key that the target must provide to participate in mutual CHAP
 	// with the initiator (e.g. Windows client).
-	SecretToAuthenticateTarget *string `min:"1" type:"string"`
+	SecretToAuthenticateTarget *string `min:"1" type:"string" sensitive:"true"`
 
 	// The Amazon Resource Name (ARN) of the volume.
 	//
@@ -8585,9 +8853,12 @@ func (s *CreateNFSFileShareOutput) SetFileShareARN(v string) *CreateNFSFileShare
 type CreateSMBFileShareInput struct {
 	_ struct{} `type:"structure"`
 
-	// A list of users or groups in the Active Directory that have administrator
-	// rights to the file share. A group must be prefixed with the @ character.
-	// For example @group1. Can only be set if Authentication is set to ActiveDirectory.
+	// A list of users in the Active Directory that will be granted administrator
+	// privileges on the file share. These users can do all file operations as the
+	// super-user.
+	//
+	// Use this option very carefully, because any user in this list can do anything
+	// they like on the file share, regardless of file permissions.
 	AdminUserList []*string `type:"list"`
 
 	// The authentication method that users use to access the file share.
@@ -8662,6 +8933,9 @@ type CreateSMBFileShareInput struct {
 	// Set this value to "true to enable ACL (access control list) on the SMB file
 	// share. Set it to "false" to map file and directory permissions to the POSIX
 	// permissions.
+	//
+	// For more information, see https://docs.aws.amazon.com/storagegateway/latest/userguide/smb-acl.html
+	// in the Storage Gateway User Guide.
 	SMBACLEnabled *bool `type:"boolean"`
 
 	// A list of up to 50 tags that can be assigned to the NFS file share. Each
@@ -8878,6 +9152,15 @@ type CreateSnapshotFromVolumeRecoveryPointInput struct {
 	// SnapshotDescription is a required field
 	SnapshotDescription *string `min:"1" type:"string" required:"true"`
 
+	// A list of up to 50 tags that can be assigned to a snapshot. Each tag is a
+	// key-value pair.
+	//
+	// Valid characters for key and value are letters, spaces, and numbers representable
+	// in UTF-8 format, and the following special characters: + - = . _ : / @. The
+	// maximum length of a tag's key is 128 characters, and the maximum length for
+	// a tag's value is 256.
+	Tags []*Tag `type:"list"`
+
 	// The Amazon Resource Name (ARN) of the iSCSI volume target. Use the DescribeStorediSCSIVolumes
 	// operation to return to retrieve the TargetARN for specified VolumeARN.
 	//
@@ -8910,6 +9193,16 @@ func (s *CreateSnapshotFromVolumeRecoveryPointInput) Validate() error {
 	if s.VolumeARN != nil && len(*s.VolumeARN) < 50 {
 		invalidParams.Add(request.NewErrParamMinLen("VolumeARN", 50))
 	}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -8920,6 +9213,12 @@ func (s *CreateSnapshotFromVolumeRecoveryPointInput) Validate() error {
 // SetSnapshotDescription sets the SnapshotDescription field's value.
 func (s *CreateSnapshotFromVolumeRecoveryPointInput) SetSnapshotDescription(v string) *CreateSnapshotFromVolumeRecoveryPointInput {
 	s.SnapshotDescription = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *CreateSnapshotFromVolumeRecoveryPointInput) SetTags(v []*Tag) *CreateSnapshotFromVolumeRecoveryPointInput {
+	s.Tags = v
 	return s
 }
 
@@ -8986,6 +9285,15 @@ type CreateSnapshotInput struct {
 	// SnapshotDescription is a required field
 	SnapshotDescription *string `min:"1" type:"string" required:"true"`
 
+	// A list of up to 50 tags that can be assigned to a snapshot. Each tag is a
+	// key-value pair.
+	//
+	// Valid characters for key and value are letters, spaces, and numbers representable
+	// in UTF-8 format, and the following special characters: + - = . _ : / @. The
+	// maximum length of a tag's key is 128 characters, and the maximum length for
+	// a tag's value is 256.
+	Tags []*Tag `type:"list"`
+
 	// The Amazon Resource Name (ARN) of the volume. Use the ListVolumes operation
 	// to return a list of gateway volumes.
 	//
@@ -9018,6 +9326,16 @@ func (s *CreateSnapshotInput) Validate() error {
 	if s.VolumeARN != nil && len(*s.VolumeARN) < 50 {
 		invalidParams.Add(request.NewErrParamMinLen("VolumeARN", 50))
 	}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -9028,6 +9346,12 @@ func (s *CreateSnapshotInput) Validate() error {
 // SetSnapshotDescription sets the SnapshotDescription field's value.
 func (s *CreateSnapshotInput) SetSnapshotDescription(v string) *CreateSnapshotInput {
 	s.SnapshotDescription = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *CreateSnapshotInput) SetTags(v []*Tag) *CreateSnapshotInput {
+	s.Tags = v
 	return s
 }
 
@@ -10760,6 +11084,10 @@ type DescribeGatewayInformationOutput struct {
 	// key name. Each tag is a key-value pair. For a gateway with more than 10 tags
 	// assigned, you can view all tags using the ListTagsForResource API operation.
 	Tags []*Tag `type:"list"`
+
+	// The configuration settings for the virtual private cloud (VPC) endpoint for
+	// your gateway.
+	VPCEndpoint *string `type:"string"`
 }
 
 // String returns the string representation
@@ -10841,6 +11169,12 @@ func (s *DescribeGatewayInformationOutput) SetNextUpdateAvailabilityDate(v strin
 // SetTags sets the Tags field's value.
 func (s *DescribeGatewayInformationOutput) SetTags(v []*Tag) *DescribeGatewayInformationOutput {
 	s.Tags = v
+	return s
+}
+
+// SetVPCEndpoint sets the VPCEndpoint field's value.
+func (s *DescribeGatewayInformationOutput) SetVPCEndpoint(v string) *DescribeGatewayInformationOutput {
+	s.VPCEndpoint = &v
 	return s
 }
 
@@ -11164,9 +11498,25 @@ type DescribeSMBSettingsOutput struct {
 	// to return a list of gateways for your account and region.
 	GatewayARN *string `min:"50" type:"string"`
 
-	// This value is true if a password for the guest user “smbguest” is set, and
-	// otherwise false.
+	// This value is true if a password for the guest user “smbguest” is set,
+	// and otherwise false.
 	SMBGuestPasswordSet *bool `type:"boolean"`
+
+	// The type of security strategy that was specified for file gateway.
+	//
+	// ClientSpecified: if you use this option, requests are established based on
+	// what is negotiated by the client. This option is recommended when you want
+	// to maximize compatibility across different clients in your environment.
+	//
+	// MandatorySigning: if you use this option, file gateway only allows connections
+	// from SMBv2 or SMBv3 clients that have signing enabled. This option works
+	// with SMB clients on Microsoft Windows Vista, Windows Server 2008 or newer.
+	//
+	// MandatoryEncryption: if you use this option, file gateway only allows connections
+	// from SMBv3 clients that have encryption enabled. This option is highly recommended
+	// for environments that handle sensitive data. This option works with SMB clients
+	// on Microsoft Windows 8, Windows Server 2012 or newer.
+	SMBSecurityStrategy *string `type:"string" enum:"SMBSecurityStrategy"`
 }
 
 // String returns the string representation
@@ -11194,6 +11544,12 @@ func (s *DescribeSMBSettingsOutput) SetGatewayARN(v string) *DescribeSMBSettings
 // SetSMBGuestPasswordSet sets the SMBGuestPasswordSet field's value.
 func (s *DescribeSMBSettingsOutput) SetSMBGuestPasswordSet(v bool) *DescribeSMBSettingsOutput {
 	s.SMBGuestPasswordSet = &v
+	return s
+}
+
+// SetSMBSecurityStrategy sets the SMBSecurityStrategy field's value.
+func (s *DescribeSMBSettingsOutput) SetSMBSecurityStrategy(v string) *DescribeSMBSettingsOutput {
+	s.SMBSecurityStrategy = &v
 	return s
 }
 
@@ -11255,6 +11611,11 @@ type DescribeSnapshotScheduleOutput struct {
 	// of the gateway.
 	StartAt *int64 `type:"integer"`
 
+	// A list of up to 50 tags assigned to the snapshot schedule, sorted alphabetically
+	// by key name. Each tag is a key-value pair. For a gateway with more than 10
+	// tags assigned, you can view all tags using the ListTagsForResource API operation.
+	Tags []*Tag `type:"list"`
+
 	// A value that indicates the time zone of the gateway.
 	Timezone *string `min:"3" type:"string"`
 
@@ -11287,6 +11648,12 @@ func (s *DescribeSnapshotScheduleOutput) SetRecurrenceInHours(v int64) *Describe
 // SetStartAt sets the StartAt field's value.
 func (s *DescribeSnapshotScheduleOutput) SetStartAt(v int64) *DescribeSnapshotScheduleOutput {
 	s.StartAt = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *DescribeSnapshotScheduleOutput) SetTags(v []*Tag) *DescribeSnapshotScheduleOutput {
+	s.Tags = v
 	return s
 }
 
@@ -12565,8 +12932,8 @@ type JoinDomainInput struct {
 	// GatewayARN is a required field
 	GatewayARN *string `min:"50" type:"string" required:"true"`
 
-	// The organizational unit (OU) is a container with an Active Directory that
-	// can hold users, groups, computers, and other OUs and this parameter specifies
+	// The organizational unit (OU) is a container in an Active Directory that can
+	// hold users, groups, computers, and other OUs and this parameter specifies
 	// the OU that the gateway will join within the AD domain.
 	OrganizationalUnit *string `min:"1" type:"string"`
 
@@ -14373,6 +14740,9 @@ type SMBFileShareInfo struct {
 	// If this value is set to "true", indicates that ACL (access control list)
 	// is enabled on the SMB file share. If it is set to "false", it indicates that
 	// file and directory permissions are mapped to the POSIX permission.
+	//
+	// For more information, see https://docs.aws.amazon.com/storagegateway/latest/userguide/smb-acl.html
+	// in the Storage Gateway User Guide.
 	SMBACLEnabled *bool `type:"boolean"`
 
 	// A list of up to 50 tags assigned to the SMB file share, sorted alphabetically
@@ -15540,7 +15910,7 @@ type UpdateChapCredentialsInput struct {
 	// The secret key must be between 12 and 16 bytes when encoded in UTF-8.
 	//
 	// SecretToAuthenticateInitiator is a required field
-	SecretToAuthenticateInitiator *string `min:"1" type:"string" required:"true"`
+	SecretToAuthenticateInitiator *string `min:"1" type:"string" required:"true" sensitive:"true"`
 
 	// The secret key that the target must provide to participate in mutual CHAP
 	// with the initiator (e.g. Windows client).
@@ -15548,7 +15918,7 @@ type UpdateChapCredentialsInput struct {
 	// Byte constraints: Minimum bytes of 12. Maximum bytes of 16.
 	//
 	// The secret key must be between 12 and 16 bytes when encoded in UTF-8.
-	SecretToAuthenticateTarget *string `min:"1" type:"string"`
+	SecretToAuthenticateTarget *string `min:"1" type:"string" sensitive:"true"`
 
 	// The Amazon Resource Name (ARN) of the iSCSI volume target. Use the DescribeStorediSCSIVolumes
 	// operation to return the TargetARN for specified VolumeARN.
@@ -16159,9 +16529,9 @@ func (s *UpdateNFSFileShareOutput) SetFileShareARN(v string) *UpdateNFSFileShare
 type UpdateSMBFileShareInput struct {
 	_ struct{} `type:"structure"`
 
-	// A list of users or groups in the Active Directory that have administrator
-	// rights to the file share. A group must be prefixed with the @ character.
-	// For example @group1. Can only be set if Authentication is set to ActiveDirectory.
+	// A list of users in the Active Directory that have administrator rights to
+	// the file share. A group must be prefixed with the @ character. For example
+	// @group1. Can only be set if Authentication is set to ActiveDirectory.
 	AdminUserList []*string `type:"list"`
 
 	// The default storage class for objects put into an Amazon S3 bucket by the
@@ -16213,6 +16583,9 @@ type UpdateSMBFileShareInput struct {
 	// Set this value to "true to enable ACL (access control list) on the SMB file
 	// share. Set it to "false" to map file and directory permissions to the POSIX
 	// permissions.
+	//
+	// For more information, see https://docs.aws.amazon.com/storagegateway/latest/userguide/smb-acl.htmlin
+	// the Storage Gateway User Guide.
 	SMBACLEnabled *bool `type:"boolean"`
 
 	// A list of users or groups in the Active Directory that are allowed to access
@@ -16349,6 +16722,99 @@ func (s *UpdateSMBFileShareOutput) SetFileShareARN(v string) *UpdateSMBFileShare
 	return s
 }
 
+type UpdateSMBSecurityStrategyInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the gateway. Use the ListGateways operation
+	// to return a list of gateways for your account and region.
+	//
+	// GatewayARN is a required field
+	GatewayARN *string `min:"50" type:"string" required:"true"`
+
+	// Specifies the type of security strategy.
+	//
+	// ClientSpecified: if you use this option, requests are established based on
+	// what is negotiated by the client. This option is recommended when you want
+	// to maximize compatibility across different clients in your environment.
+	//
+	// MandatorySigning: if you use this option, file gateway only allows connections
+	// from SMBv2 or SMBv3 clients that have signing enabled. This option works
+	// with SMB clients on Microsoft Windows Vista, Windows Server 2008 or newer.
+	//
+	// MandatoryEncryption: if you use this option, file gateway only allows connections
+	// from SMBv3 clients that have encryption enabled. This option is highly recommended
+	// for environments that handle sensitive data. This option works with SMB clients
+	// on Microsoft Windows 8, Windows Server 2012 or newer.
+	//
+	// SMBSecurityStrategy is a required field
+	SMBSecurityStrategy *string `type:"string" required:"true" enum:"SMBSecurityStrategy"`
+}
+
+// String returns the string representation
+func (s UpdateSMBSecurityStrategyInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateSMBSecurityStrategyInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateSMBSecurityStrategyInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateSMBSecurityStrategyInput"}
+	if s.GatewayARN == nil {
+		invalidParams.Add(request.NewErrParamRequired("GatewayARN"))
+	}
+	if s.GatewayARN != nil && len(*s.GatewayARN) < 50 {
+		invalidParams.Add(request.NewErrParamMinLen("GatewayARN", 50))
+	}
+	if s.SMBSecurityStrategy == nil {
+		invalidParams.Add(request.NewErrParamRequired("SMBSecurityStrategy"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetGatewayARN sets the GatewayARN field's value.
+func (s *UpdateSMBSecurityStrategyInput) SetGatewayARN(v string) *UpdateSMBSecurityStrategyInput {
+	s.GatewayARN = &v
+	return s
+}
+
+// SetSMBSecurityStrategy sets the SMBSecurityStrategy field's value.
+func (s *UpdateSMBSecurityStrategyInput) SetSMBSecurityStrategy(v string) *UpdateSMBSecurityStrategyInput {
+	s.SMBSecurityStrategy = &v
+	return s
+}
+
+type UpdateSMBSecurityStrategyOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the gateway. Use the ListGateways operation
+	// to return a list of gateways for your account and region.
+	GatewayARN *string `min:"50" type:"string"`
+}
+
+// String returns the string representation
+func (s UpdateSMBSecurityStrategyOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateSMBSecurityStrategyOutput) GoString() string {
+	return s.String()
+}
+
+// SetGatewayARN sets the GatewayARN field's value.
+func (s *UpdateSMBSecurityStrategyOutput) SetGatewayARN(v string) *UpdateSMBSecurityStrategyOutput {
+	s.GatewayARN = &v
+	return s
+}
+
 // A JSON object containing one or more of the following fields:
 //
 //    * UpdateSnapshotScheduleInput$Description
@@ -16375,6 +16841,15 @@ type UpdateSnapshotScheduleInput struct {
 	//
 	// StartAt is a required field
 	StartAt *int64 `type:"integer" required:"true"`
+
+	// A list of up to 50 tags that can be assigned to a snapshot. Each tag is a
+	// key-value pair.
+	//
+	// Valid characters for key and value are letters, spaces, and numbers representable
+	// in UTF-8 format, and the following special characters: + - = . _ : / @. The
+	// maximum length of a tag's key is 128 characters, and the maximum length for
+	// a tag's value is 256.
+	Tags []*Tag `type:"list"`
 
 	// The Amazon Resource Name (ARN) of the volume. Use the ListVolumes operation
 	// to return a list of gateway volumes.
@@ -16414,6 +16889,16 @@ func (s *UpdateSnapshotScheduleInput) Validate() error {
 	if s.VolumeARN != nil && len(*s.VolumeARN) < 50 {
 		invalidParams.Add(request.NewErrParamMinLen("VolumeARN", 50))
 	}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -16436,6 +16921,12 @@ func (s *UpdateSnapshotScheduleInput) SetRecurrenceInHours(v int64) *UpdateSnaps
 // SetStartAt sets the StartAt field's value.
 func (s *UpdateSnapshotScheduleInput) SetStartAt(v int64) *UpdateSnapshotScheduleInput {
 	s.StartAt = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *UpdateSnapshotScheduleInput) SetTags(v []*Tag) *UpdateSnapshotScheduleInput {
+	s.Tags = v
 	return s
 }
 
@@ -17043,4 +17534,15 @@ const (
 
 	// ObjectACLAwsExecRead is a ObjectACL enum value
 	ObjectACLAwsExecRead = "aws-exec-read"
+)
+
+const (
+	// SMBSecurityStrategyClientSpecified is a SMBSecurityStrategy enum value
+	SMBSecurityStrategyClientSpecified = "ClientSpecified"
+
+	// SMBSecurityStrategyMandatorySigning is a SMBSecurityStrategy enum value
+	SMBSecurityStrategyMandatorySigning = "MandatorySigning"
+
+	// SMBSecurityStrategyMandatoryEncryption is a SMBSecurityStrategy enum value
+	SMBSecurityStrategyMandatoryEncryption = "MandatoryEncryption"
 )

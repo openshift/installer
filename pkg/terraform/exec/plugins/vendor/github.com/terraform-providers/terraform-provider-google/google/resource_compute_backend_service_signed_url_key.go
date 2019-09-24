@@ -31,8 +31,8 @@ func resourceComputeBackendServiceSignedUrlKey() *schema.Resource {
 		Delete: resourceComputeBackendServiceSignedUrlKeyDelete,
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(240 * time.Second),
-			Delete: schema.DefaultTimeout(240 * time.Second),
+			Create: schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(4 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -94,13 +94,17 @@ func resourceComputeBackendServiceSignedUrlKeyCreate(d *schema.ResourceData, met
 	mutexKV.Lock(lockName)
 	defer mutexKV.Unlock(lockName)
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/backendServices/{{backend_service}}/addSignedUrlKey")
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/backendServices/{{backend_service}}/addSignedUrlKey")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Creating new BackendServiceSignedUrlKey: %#v", obj)
-	res, err := sendRequestWithTimeout(config, "POST", url, obj, d.Timeout(schema.TimeoutCreate))
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating BackendServiceSignedUrlKey: %s", err)
 	}
@@ -112,10 +116,6 @@ func resourceComputeBackendServiceSignedUrlKeyCreate(d *schema.ResourceData, met
 	}
 	d.SetId(id)
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -140,12 +140,16 @@ func resourceComputeBackendServiceSignedUrlKeyCreate(d *schema.ResourceData, met
 func resourceComputeBackendServiceSignedUrlKeyRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/backendServices/{{backend_service}}")
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/backendServices/{{backend_service}}")
 	if err != nil {
 		return err
 	}
 
-	res, err := sendRequest(config, "GET", url, nil)
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+	res, err := sendRequest(config, "GET", project, url, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeBackendServiceSignedUrlKey %q", d.Id()))
 	}
@@ -162,10 +166,6 @@ func resourceComputeBackendServiceSignedUrlKeyRead(d *schema.ResourceData, meta 
 		return nil
 	}
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading BackendServiceSignedUrlKey: %s", err)
 	}
@@ -180,6 +180,11 @@ func resourceComputeBackendServiceSignedUrlKeyRead(d *schema.ResourceData, meta 
 func resourceComputeBackendServiceSignedUrlKeyDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
 	lockName, err := replaceVars(d, config, "signedUrlKey/{{project}}/backendServices/{{backend_service}}/")
 	if err != nil {
 		return err
@@ -187,22 +192,19 @@ func resourceComputeBackendServiceSignedUrlKeyDelete(d *schema.ResourceData, met
 	mutexKV.Lock(lockName)
 	defer mutexKV.Unlock(lockName)
 
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/backendServices/{{backend_service}}/deleteSignedUrlKey?keyName={{name}}")
+	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/backendServices/{{backend_service}}/deleteSignedUrlKey?keyName={{name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting BackendServiceSignedUrlKey %q", d.Id())
-	res, err := sendRequestWithTimeout(config, "POST", url, obj, d.Timeout(schema.TimeoutDelete))
+
+	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "BackendServiceSignedUrlKey")
 	}
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -266,14 +268,21 @@ func flattenNestedComputeBackendServiceSignedUrlKey(d *schema.ResourceData, meta
 		return nil, fmt.Errorf("expected list or map for value cdnPolicy.signedUrlKeyNames. Actual value: %v", v)
 	}
 
-	expectedName, err := expandComputeBackendServiceSignedUrlKeyName(d.Get("name"), d, meta.(*Config))
+	_, item, err := resourceComputeBackendServiceSignedUrlKeyFindNestedObjectInList(d, meta, v.([]interface{}))
 	if err != nil {
 		return nil, err
 	}
+	return item, nil
+}
+
+func resourceComputeBackendServiceSignedUrlKeyFindNestedObjectInList(d *schema.ResourceData, meta interface{}, items []interface{}) (index int, item map[string]interface{}, err error) {
+	expectedName, err := expandComputeBackendServiceSignedUrlKeyName(d.Get("name"), d, meta.(*Config))
+	if err != nil {
+		return -1, nil, err
+	}
 
 	// Search list for this resource.
-	items := v.([]interface{})
-	for _, itemRaw := range items {
+	for idx, itemRaw := range items {
 		if itemRaw == nil {
 			continue
 		}
@@ -288,8 +297,7 @@ func flattenNestedComputeBackendServiceSignedUrlKey(d *schema.ResourceData, meta
 			continue
 		}
 		log.Printf("[DEBUG] Found item for resource %q: %#v)", d.Id(), item)
-		return item, nil
+		return idx, item, nil
 	}
-
-	return nil, nil
+	return -1, nil, nil
 }
