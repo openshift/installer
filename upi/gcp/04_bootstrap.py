@@ -30,7 +30,7 @@ def GenerateConfig(context):
                     'sourceImage': context.properties['image']
                 }
             }],
-            'machineType': 'zones/' + context.properties['region'] + '-a/machineTypes/' + context.properties['machine_type'],
+            'machineType': 'zones/' + context.properties['zone'] + '/machineTypes/' + context.properties['machine_type'],
             'metadata': {
                 'items': [{
                     'key': 'user-data',
@@ -49,7 +49,7 @@ def GenerateConfig(context):
                     context.properties['infra_id'] + '-bootstrap'
                 ]
             },
-            'zone': context.properties['region'] + '-a'
+            'zone': context.properties['zone']
         }
     }]
 
