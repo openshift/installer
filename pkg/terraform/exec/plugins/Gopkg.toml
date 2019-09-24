@@ -15,11 +15,11 @@ ignored = [
 
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-aws"
-  version = "=2.10.0"
+  version = "=2.29.0"
 
 [[override]]
   name = "github.com/aws/aws-sdk-go"
-  version = "=1.19.26"
+  version = "=1.23.15"
 
 [[override]]
   name = "github.com/kubernetes-sigs/aws-iam-authenticator"
@@ -46,11 +46,12 @@ ignored = [
 
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-azurerm"
-  version = "=1.27.1"
+  source = "https://github.com/abhinavdahiya/terraform-provider-azurerm"
+  branch = "release-1.36.0"
 
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-google"
-  version = "=2.8.0"
+  version = "=2.15.0"
 
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-random"
@@ -62,11 +63,23 @@ ignored = [
 
 [[override]]
   name = "github.com/Azure/azure-sdk-for-go"
-  version = "26.7.0"
+  version = "=33.2.0"
+
+[[override]]
+  name = "github.com/Azure/go-autorest"
+  version = "=13.0.0"
+
+[[override]]
+  name = "contrib.go.opencensus.io/exporter/ocagent"
+  version = "=0.5.0"
 
 [[override]]
   name = "github.com/hashicorp/go-azure-helpers"
-  version = "0.4.1"
+  version = "=0.9.0"
+
+[[override]]
+  name = "google.golang.org/api"
+  version = "=0.6.0"
 
 [[constraint]]
   name = "github.com/openshift-metal3/terraform-provider-ironic"
