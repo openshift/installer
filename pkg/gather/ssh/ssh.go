@@ -91,7 +91,7 @@ func PullFileTo(client *ssh.Client, remotePath, localPath string) error {
 
 // defaultPrivateSSHKeys returns a list of all the PRIVATE SSH keys from user's home directory.
 // It does not return any intermediate errors if at least one private key was loaded.
-func defaultPrivateSSHKeys() ([]interface{}, error) {
+func defaultPrivateSSHKeys() (map[string]interface{}, error) {
 	d := filepath.Join(os.Getenv("HOME"), ".ssh")
 	paths, err := ioutil.ReadDir(d)
 	if err != nil {
@@ -113,9 +113,9 @@ func defaultPrivateSSHKeys() ([]interface{}, error) {
 }
 
 // LoadPrivateSSHKeys try to optimistically load PRIVATE SSH keys from the all paths.
-func LoadPrivateSSHKeys(paths []string) ([]interface{}, error) {
+func LoadPrivateSSHKeys(paths []string) (map[string]interface{}, error) {
 	var errs []error
-	var keys []interface{}
+	keys := make(map[string]interface{})
 	for _, path := range paths {
 		data, err := ioutil.ReadFile(path)
 		if err != nil {
@@ -127,7 +127,7 @@ func LoadPrivateSSHKeys(paths []string) ([]interface{}, error) {
 			errs = append(errs, errors.Wrapf(err, "failed to parse SSH private key from %q", path))
 			continue
 		}
-		keys = append(keys, key)
+		keys[path] = key
 	}
 	if err := utilerrors.NewAggregate(errs); err != nil {
 		return keys, err

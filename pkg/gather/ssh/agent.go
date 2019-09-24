@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh/agent"
 
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -16,6 +17,7 @@ func getAgent(keys []string) (agent.Agent, error) {
 	// Attempt to use the existing SSH agent if it's configured and no keys
 	// were explicitly passed.
 	if authSock := os.Getenv("SSH_AUTH_SOCK"); authSock != "" && len(keys) == 0 {
+		logrus.Debugf("Using SSH_AUTH_SOCK %s to connect to an existing agent", authSock)
 		if conn, err := net.Dial("unix", authSock); err == nil {
 			return agent.NewClient(conn), nil
 		}
@@ -37,10 +39,11 @@ func newAgent(keyPaths []string) (agent.Agent, error) {
 
 	ag := agent.NewKeyring()
 	var errs []error
-	for idx := range keys {
-		if err := ag.Add(agent.AddedKey{PrivateKey: keys[idx]}); err != nil {
-			errs = append(errs, errors.Wrap(err, "failed to add key to agent"))
+	for name, key := range keys {
+		if err := ag.Add(agent.AddedKey{PrivateKey: key}); err != nil {
+			errs = append(errs, errors.Wrapf(err, "failed to add %s to agent", name))
 		}
+		logrus.Debugf("Added %s to installer's internal agent", name)
 	}
 	if agg := utilerrors.NewAggregate(errs); agg != nil {
 		return nil, agg
@@ -48,7 +51,7 @@ func newAgent(keyPaths []string) (agent.Agent, error) {
 	return ag, nil
 }
 
-func loadKeys(paths []string) ([]interface{}, error) {
+func loadKeys(paths []string) (map[string]interface{}, error) {
 	if len(paths) > 0 {
 		return LoadPrivateSSHKeys(paths)
 	}
