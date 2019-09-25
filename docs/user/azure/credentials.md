@@ -46,14 +46,6 @@ You need to save the client secret values to configure your local machine to run
 
 You can get client secret for your service principal using the Azure [portal][sp-creds-portal] or the Azure [cli][sp-creds-cli]
 
-The default location of the service principal file is in ${HOME}/.azure/osServicePrincipal.json. An alternative location can be specified by setting the AZURE_AUTH_LOCATION environmental variable. You can generate a service principal file by running the following commands from a shell:
-
-````console
-$ az ad sp create-for-rbac --role Owner --name team-installer | jq --arg sub_id "$(az account show | jq -r '.id')" '{subscriptionId:$sub_id,clientId:.appId, clientSecret:.password,tenantId:.tenant}' > ~/.azure/osServicePrincipal.json
-````
-
-Once a credentials file has been generated, and the proper permissions have been set for your account, you can [install an OpenShift cluster](install.md).
-
 [ad-admin-consent]: https://docs.microsoft.com/en-us/azure/active-directory/develop/v1-permissions-and-consent#types-of-consent
 [ad-permissions]: https://docs.microsoft.com/en-us/azure/active-directory/develop/v1-permissions-and-consent
 [sp-create]: https://docs.microsoft.com/en-us/azure-stack/user/azure-stack-create-service-principals
