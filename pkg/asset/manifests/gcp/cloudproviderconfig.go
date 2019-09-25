@@ -25,7 +25,7 @@ type global struct {
 }
 
 // CloudProviderConfig generates the cloud provider config for the GCP platform.
-func CloudProviderConfig(infraID, projectID string) (string, error) {
+func CloudProviderConfig(infraID, projectID, subnet string) (string, error) {
 	file := ini.Empty()
 	config := &config{
 		Global: global{
@@ -39,7 +39,7 @@ func CloudProviderConfig(infraID, projectID string) (string, error) {
 			NodeTags: []string{fmt.Sprintf("%s-worker", infraID)},
 
 			// Used for internal load balancers
-			SubnetworkName: fmt.Sprintf("%s-worker-subnet", infraID),
+			SubnetworkName: subnet,
 		},
 	}
 	if err := file.ReflectFrom(config); err != nil {

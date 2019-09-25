@@ -68,6 +68,12 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, osImage string, azIdx int, role, userDataSecret string) (*gcpprovider.GCPMachineProviderSpec, error) {
 	az := mpool.Zones[azIdx]
+
+	network, subnetwork, err := getNetworks(platform, clusterID, role)
+	if err != nil {
+		return nil, err
+	}
+
 	return &gcpprovider.GCPMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "gcpprovider.openshift.io/v1beta1",
@@ -83,8 +89,8 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			Image:      fmt.Sprintf("%s-rhcos-image", clusterID),
 		}},
 		NetworkInterfaces: []*gcpprovider.GCPNetworkInterface{{
-			Network:    fmt.Sprintf("%s-network", clusterID),
-			Subnetwork: fmt.Sprintf("%s-%s-subnet", clusterID, role),
+			Network:    network,
+			Subnetwork: subnetwork,
 		}},
 		ServiceAccounts: []gcpprovider.GCPServiceAccount{{
 			Email:  fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], platform.ProjectID),
@@ -106,5 +112,19 @@ func ConfigMasters(machines []machineapi.Machine, clusterID string) {
 			fmt.Sprintf("%s-ign", clusterID),
 			fmt.Sprintf("%s-api", clusterID),
 		}
+	}
+}
+func getNetworks(platform *gcp.Platform, clusterID, role string) (string, string, error) {
+	if platform.Network == "" {
+		return fmt.Sprintf("%s-network", clusterID), fmt.Sprintf("%s-%s-subnet", clusterID, role), nil
+	}
+
+	switch role {
+	case "worker":
+		return platform.Network, platform.ComputeSubnet, nil
+	case "master":
+		return platform.Network, platform.ControlPlaneSubnet, nil
+	default:
+		return "", "", fmt.Errorf("unrecognized machine role %s", role)
 	}
 }
