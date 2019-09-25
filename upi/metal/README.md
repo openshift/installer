@@ -45,6 +45,6 @@ terraform-examples config.tf > terraform.tfvars.example
 [coreos-matchbox-getting-started]: https://github.com/coreos/matchbox#matchbox----
 [packet-api-keys]: https://www.packet.com/developers/changelog/project-only-api-keys/
 [packet-deploy-server]: https://support.packet.com/kb/articles/deploy-a-server
-[terafform-examples]: https://github.com/s-urbaniak/terraform-examples#terraform-examples
-[terrafom-getting-started]: https://learn.hashicorp.com/terraform/getting-started/install.html
+[terraform-examples]: https://github.com/s-urbaniak/terraform-examples#terraform-examples
+[terraform-getting-started]: https://learn.hashicorp.com/terraform/getting-started/install.html
 [terraform-provider-packet-auth]: https://www.terraform.io/docs/providers/packet/index.html#auth_token
