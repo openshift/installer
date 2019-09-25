@@ -29,11 +29,6 @@ variable "machine_type" {
   description = "The machine type for the master instances."
 }
 
-variable "network" {
-  type        = string
-  description = "The network the master instances will be added to."
-}
-
 variable "subnet" {
   type        = string
   description = "The subnetwork the master instances will be added to."

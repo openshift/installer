@@ -38,7 +38,6 @@ module "master" {
   machine_type   = var.gcp_master_instance_type
   cluster_id     = var.cluster_id
   ignition       = var.ignition_master
-  network        = module.network.network
   subnet         = module.network.master_subnet
   zones          = distinct(var.gcp_master_availability_zones)
 
@@ -66,6 +65,11 @@ module "network" {
   bootstrap_instances = module.bootstrap.bootstrap_instances
 
   master_instances = module.master.master_instances
+
+  preexisting_network = var.gcp_preexisting_network
+  cluster_network     = var.gcp_cluster_network
+  master_subnet       = var.gcp_control_plane_subnet
+  worker_subnet       = var.gcp_compute_subnet
 }
 
 module "dns" {

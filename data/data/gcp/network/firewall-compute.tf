@@ -1,6 +1,6 @@
 resource "google_compute_firewall" "worker_ingress_icmp" {
   name    = "${var.cluster_id}-worker-in-icmp"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "icmp"
@@ -12,7 +12,7 @@ resource "google_compute_firewall" "worker_ingress_icmp" {
 
 resource "google_compute_firewall" "worker_ingress_ssh" {
   name    = "${var.cluster_id}-worker-in-ssh"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -25,7 +25,7 @@ resource "google_compute_firewall" "worker_ingress_ssh" {
 
 resource "google_compute_firewall" "worker_ingress_overlay" {
   name    = "${var.cluster_id}-worker-in-overlay"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   # allow VXLAN and GENEVE
   allow {
@@ -39,7 +39,7 @@ resource "google_compute_firewall" "worker_ingress_overlay" {
 
 resource "google_compute_firewall" "worker_ingress_overlay_from_master" {
   name    = "${var.cluster_id}-worker-in-overlay-from-master"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   # allow VXLAN and GENEVE
   allow {
@@ -53,7 +53,7 @@ resource "google_compute_firewall" "worker_ingress_overlay_from_master" {
 
 resource "google_compute_firewall" "worker_ingress_internal" {
   name    = "${var.cluster_id}-worker-in-internal"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -66,7 +66,7 @@ resource "google_compute_firewall" "worker_ingress_internal" {
 
 resource "google_compute_firewall" "worker_ingress_internal_from_master" {
   name    = "${var.cluster_id}-worker-in-internal-from-master"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -79,7 +79,7 @@ resource "google_compute_firewall" "worker_ingress_internal_from_master" {
 
 resource "google_compute_firewall" "worker_ingress_internal_udp" {
   name    = "${var.cluster_id}-worker-in-udp"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "udp"
@@ -92,7 +92,7 @@ resource "google_compute_firewall" "worker_ingress_internal_udp" {
 
 resource "google_compute_firewall" "worker_ingress_internal_from_master_udp" {
   name    = "${var.cluster_id}-worker-in-from-master-udp"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "udp"
@@ -105,7 +105,7 @@ resource "google_compute_firewall" "worker_ingress_internal_from_master_udp" {
 
 resource "google_compute_firewall" "worker_ingress_kubelet_insecure" {
   name    = "${var.cluster_id}-worker-in-kubelet-insecure"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -118,7 +118,7 @@ resource "google_compute_firewall" "worker_ingress_kubelet_insecure" {
 
 resource "google_compute_firewall" "worker_ingress_kubelet_insecure_from_master" {
   name    = "${var.cluster_id}-worker-in-kubelet-insecure-fr-mast"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -131,7 +131,7 @@ resource "google_compute_firewall" "worker_ingress_kubelet_insecure_from_master"
 
 resource "google_compute_firewall" "worker_ingress_services_tcp" {
   name    = "${var.cluster_id}-worker-in-services-tcp"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -144,7 +144,7 @@ resource "google_compute_firewall" "worker_ingress_services_tcp" {
 
 resource "google_compute_firewall" "worker_ingress_services_udp" {
   name    = "${var.cluster_id}-worker-in-services-udp"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "udp"

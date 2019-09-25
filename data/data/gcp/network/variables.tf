@@ -29,3 +29,20 @@ variable "network_cidr" {
 variable "worker_subnet_cidr" {
   type = string
 }
+
+variable "cluster_network" {
+  type = string
+}
+
+variable "master_subnet" {
+  type = string
+}
+
+variable "worker_subnet" {
+  type = string
+}
+
+variable "preexisting_network" {
+  type    = bool
+  default = false
+}

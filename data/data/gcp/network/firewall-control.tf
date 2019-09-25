@@ -1,6 +1,6 @@
 resource "google_compute_firewall" "master_ingress_icmp" {
   name    = "${var.cluster_id}-master-in-icmp"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "icmp"
@@ -12,7 +12,7 @@ resource "google_compute_firewall" "master_ingress_icmp" {
 
 resource "google_compute_firewall" "master_ingress_ssh" {
   name    = "${var.cluster_id}-master-in-ssh"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -25,7 +25,7 @@ resource "google_compute_firewall" "master_ingress_ssh" {
 
 resource "google_compute_firewall" "master_ingress_https" {
   name    = "${var.cluster_id}-master-in-https"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -38,7 +38,7 @@ resource "google_compute_firewall" "master_ingress_https" {
 
 resource "google_compute_firewall" "master_ingress_from_health_checks" {
   name    = "${var.cluster_id}-master-in-from-health-checks"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -51,20 +51,20 @@ resource "google_compute_firewall" "master_ingress_from_health_checks" {
 
 resource "google_compute_firewall" "master_ingress_mcs" {
   name    = "${var.cluster_id}-master-in-mcs"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
     ports    = ["22623"]
   }
 
-  source_ranges = [var.network_cidr, google_compute_address.master_nat_ip.address, google_compute_address.worker_nat_ip.address]
+  source_ranges = var.preexisting_network ? ["0.0.0.0/0"] : [var.network_cidr, google_compute_address.master_nat_ip[0].address, google_compute_address.worker_nat_ip[0].address]
   target_tags   = ["${var.cluster_id}-master"]
 }
 
 resource "google_compute_firewall" "master_ingress_overlay" {
   name    = "${var.cluster_id}-master-in-overlay"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   # allow VXLAN and GENEVE
   allow {
@@ -78,7 +78,7 @@ resource "google_compute_firewall" "master_ingress_overlay" {
 
 resource "google_compute_firewall" "master_ingress_overlay_from_worker" {
   name    = "${var.cluster_id}-master-in-overlay-from-worker"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   # allow VXLAN and GENEVE
   allow {
@@ -92,7 +92,7 @@ resource "google_compute_firewall" "master_ingress_overlay_from_worker" {
 
 resource "google_compute_firewall" "master_ingress_internal" {
   name    = "${var.cluster_id}-master-in-internal"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -105,7 +105,7 @@ resource "google_compute_firewall" "master_ingress_internal" {
 
 resource "google_compute_firewall" "master_ingress_internal_from_worker" {
   name    = "${var.cluster_id}-master-in-internal-from-worker"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -118,7 +118,7 @@ resource "google_compute_firewall" "master_ingress_internal_from_worker" {
 
 resource "google_compute_firewall" "master_ingress_internal_udp" {
   name    = "${var.cluster_id}-master-in-internal-udp"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "udp"
@@ -131,7 +131,7 @@ resource "google_compute_firewall" "master_ingress_internal_udp" {
 
 resource "google_compute_firewall" "master_ingress_internal_from_worker_udp" {
   name    = "${var.cluster_id}-master-in-internal-from-worker-udp"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "udp"
@@ -144,7 +144,7 @@ resource "google_compute_firewall" "master_ingress_internal_from_worker_udp" {
 
 resource "google_compute_firewall" "master_ingress_kube_scheduler" {
   name    = "${var.cluster_id}-master-in-kube-scheduler"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -157,7 +157,7 @@ resource "google_compute_firewall" "master_ingress_kube_scheduler" {
 
 resource "google_compute_firewall" "master_ingress_kube_scheduler_from_worker" {
   name    = "${var.cluster_id}-master-in-kube-scheduler-fr-worker"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -170,7 +170,7 @@ resource "google_compute_firewall" "master_ingress_kube_scheduler_from_worker" {
 
 resource "google_compute_firewall" "master_ingress_kube_master_manager" {
   name    = "${var.cluster_id}-master-in-kube-master-manager"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -183,7 +183,7 @@ resource "google_compute_firewall" "master_ingress_kube_master_manager" {
 
 resource "google_compute_firewall" "master_ingress_kube_master_manager_from_worker" {
   name    = "${var.cluster_id}-master-in-kube-master-mgr-fr-work"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -196,7 +196,7 @@ resource "google_compute_firewall" "master_ingress_kube_master_manager_from_work
 
 resource "google_compute_firewall" "master_ingress_kubelet_secure" {
   name    = "${var.cluster_id}-master-in-kubelet-secure"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -209,7 +209,7 @@ resource "google_compute_firewall" "master_ingress_kubelet_secure" {
 
 resource "google_compute_firewall" "master_ingress_kubelet_secure_from_worker" {
   name    = "${var.cluster_id}-master-in-kubelet-secure-fr-worker"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -222,7 +222,7 @@ resource "google_compute_firewall" "master_ingress_kubelet_secure_from_worker" {
 
 resource "google_compute_firewall" "master_ingress_etcd" {
   name    = "${var.cluster_id}-master-in-etcd"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -235,7 +235,7 @@ resource "google_compute_firewall" "master_ingress_etcd" {
 
 resource "google_compute_firewall" "master_ingress_services_tcp" {
   name    = "${var.cluster_id}-master-in-services-tcp"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "tcp"
@@ -248,7 +248,7 @@ resource "google_compute_firewall" "master_ingress_services_tcp" {
 
 resource "google_compute_firewall" "master_ingress_services_udp" {
   name    = "${var.cluster_id}-master-in-services-udp"
-  network = google_compute_network.cluster_network.self_link
+  network = local.cluster_network
 
   allow {
     protocol = "udp"

@@ -3,13 +3,13 @@ output "cluster_public_ip" {
 }
 
 output "network" {
-  value = google_compute_network.cluster_network.self_link
+  value = local.cluster_network
 }
 
 output "worker_subnet" {
-  value = google_compute_subnetwork.worker_subnet.self_link
+  value = var.preexisting_network ? data.google_compute_subnetwork.preexisting_worker_subnet[0].self_link : google_compute_subnetwork.worker_subnet[0].self_link
 }
 
 output "master_subnet" {
-  value = google_compute_subnetwork.master_subnet.self_link
+  value = var.preexisting_network ? data.google_compute_subnetwork.preexisting_master_subnet[0].self_link : google_compute_subnetwork.master_subnet[0].self_link
 }
