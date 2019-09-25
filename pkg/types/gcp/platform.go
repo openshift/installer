@@ -14,4 +14,19 @@ type Platform struct {
 	// platform configuration.
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
+
+	// Network specifies an existing VPC where the cluster should be created
+	// rather than provisioning a new one.
+	// +optional
+	Network string `json:"network,omitempty"`
+
+	// ControlPlaneSubnet is an existing subnet where the control plane will be deployed.
+	// The value should be the name of the subnet.
+	// +optional
+	ControlPlaneSubnet string `json:"controlPlaneSubnet,omitempty"`
+
+	// ComputeSubnet is an existing subnet where the compute nodes will be deployed.
+	// The value should be the name of the subnet.
+	// +optional
+	ComputeSubnet string `json:"computeSubnet,omitempty"`
 }
