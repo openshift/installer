@@ -336,11 +336,10 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:cefed4accadc52d320ac8aed4fc0cd3abb3d9b01045ad42e7531e5e19774bf81"
+  digest = "1:721fd76934b8bef9c9cb85ac5e4a1b8505347ce384f292eadaecfa1b33cb32e6"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
-    "internal",
     "openstack",
     "openstack/blockstorage/v3/volumes",
     "openstack/common/extensions",
@@ -1253,14 +1252,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7580b2faadd6de6748de7a43a16d9223a70411973d549287c4cf0128a9b42389"
+  digest = "1:05a7f2cd98fff2057b1455e48893325bf65173ecbbfbcee33b327b02e9117a68"
   name = "sigs.k8s.io/cluster-api-provider-openstack"
   packages = [
     "pkg/apis",
     "pkg/apis/openstackproviderconfig/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "076f2c35a0307178f4d6c32bd2f185d8e35d5a84"
+  revision = "945cf044115f82be8578f9b0e57de480e3844da6"
   source = "https://github.com/openshift/cluster-api-provider-openstack.git"
 
 [[projects]]
