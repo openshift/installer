@@ -22,25 +22,43 @@ type config struct {
 	VolumeType              string   `json:"gcp_master_root_volume_type,omitempty"`
 	VolumeSize              int64    `json:"gcp_master_root_volume_size,omitempty"`
 	PublicZoneName          string   `json:"gcp_public_dns_zone_name,omitempty"`
+	PreexistingNetwork      bool     `json:"gcp_preexisting_network,omitempty"`
+	ClusterNetwork          string   `json:"gcp_cluster_network,omitempty"`
+	ControlPlaneSubnet      string   `json:"gcp_control_plane_subnet,omitempty"`
+	ComputeSubnet           string   `json:"gcp_compute_subnet,omitempty"`
+}
+
+// TFVarsSources contains the parameters to be converted into Terraform variables
+type TFVarsSources struct {
+	Auth                     Auth
+	MasterConfigs            []*gcpprovider.GCPMachineProviderSpec
+	WorkerConfigs            []*gcpprovider.GCPMachineProviderSpec
+	ImageURI, PublicZoneName string
+	PreexistingNetwork       bool
 }
 
 // TFVars generates gcp-specific Terraform variables launching the cluster.
-func TFVars(auth Auth, masterConfigs []*gcpprovider.GCPMachineProviderSpec, imageURI, publicZoneName string) ([]byte, error) {
-	masterConfig := masterConfigs[0]
-	masterAvailabilityZones := make([]string, len(masterConfigs))
-	for i, c := range masterConfigs {
+func TFVars(sources TFVarsSources) ([]byte, error) {
+	masterConfig := sources.MasterConfigs[0]
+	workerConfig := sources.WorkerConfigs[0]
+	masterAvailabilityZones := make([]string, len(sources.MasterConfigs))
+	for i, c := range sources.MasterConfigs {
 		masterAvailabilityZones[i] = c.Zone
 	}
 	cfg := &config{
-		Auth:                    auth,
+		Auth:                    sources.Auth,
 		Region:                  masterConfig.Region,
 		BootstrapInstanceType:   masterConfig.MachineType,
 		MasterInstanceType:      masterConfig.MachineType,
 		MasterAvailabilityZones: masterAvailabilityZones,
 		VolumeType:              masterConfig.Disks[0].Type,
 		VolumeSize:              masterConfig.Disks[0].SizeGb,
-		ImageURI:                imageURI,
-		PublicZoneName:          publicZoneName,
+		ImageURI:                sources.ImageURI,
+		PublicZoneName:          sources.PublicZoneName,
+		ClusterNetwork:          masterConfig.NetworkInterfaces[0].Network,
+		ControlPlaneSubnet:      masterConfig.NetworkInterfaces[0].Subnetwork,
+		ComputeSubnet:           workerConfig.NetworkInterfaces[0].Subnetwork,
+		PreexistingNetwork:      sources.PreexistingNetwork,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
