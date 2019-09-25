@@ -42,13 +42,11 @@ variable "subnet" {
 variable "root_volume_size" {
   type        = string
   description = "The size of the volume in gigabytes for the root block device."
-  default     = "128"
 }
 
 variable "root_volume_type" {
   type        = string
   description = "The type of volume for the root block device."
-  default     = "pd-standard"
 }
 
 variable "zones" {
