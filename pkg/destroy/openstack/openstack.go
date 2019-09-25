@@ -386,7 +386,12 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		for _, fip := range allFIPs {
 			_, err := floatingips.Update(conn, fip.ID, floatingips.UpdateOpts{}).Extract()
 			if err != nil {
-				logger.Fatalf("%v", err)
+				// Ignore the error if the resource cannot be found and exit with an appropriate message if it's another type of error
+				if _, ok := err.(gophercloud.ErrDefault404); !ok {
+					logger.Fatalf("Updating floating IP %q for Router %q failed: %v", fip.ID, router.ID, err)
+					os.Exit(1)
+				}
+				logger.Debugf("Cannot find floating ip %q. It's probably already been deleted.", fip.ID)
 			}
 		}
 
