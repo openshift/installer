@@ -175,6 +175,7 @@ type RootVolume struct {
 	SourceType string `json:"sourceType,omitempty"`
 	SourceUUID string `json:"sourceUUID,omitempty"`
 	DeviceType string `json:"deviceType"`
+	VolumeType string `json:"volumeType,omitempty"`
 	Size       int    `json:"diskSize,omitempty"`
 }
 
