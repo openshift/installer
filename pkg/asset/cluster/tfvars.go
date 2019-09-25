@@ -198,6 +198,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			ProjectID:      installConfig.Config.GCP.ProjectID,
 			ServiceAccount: string(sess.Credentials.JSON),
 		}
+
 		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
@@ -206,15 +207,25 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, m := range masters {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
 		}
+		workers, err := workersAsset.MachineSets()
+		workerConfigs := make([]*gcpprovider.GCPMachineProviderSpec, len(workers))
+		for i, w := range workers {
+			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
+		}
 		publicZone, err := gcpconfig.GetPublicZone(context.TODO(), installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get GCP public zone")
 		}
+		preexistingnetwork := installConfig.Config.GCP.Network != ""
 		data, err := gcptfvars.TFVars(
-			auth,
-			masterConfigs,
-			string(*rhcosImage),
-			publicZone.Name,
+			gcptfvars.TFVarsSources{
+				Auth:               auth,
+				MasterConfigs:      masterConfigs,
+				WorkerConfigs:      workerConfigs,
+				ImageURI:           string(*rhcosImage),
+				PublicZoneName:     publicZone.Name,
+				PreexistingNetwork: preexistingnetwork,
+			},
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
