@@ -141,6 +141,10 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 
 	// TODO: Add support for additional cloud providers.
 	if platform == aws.Name {
+		// Bypass proxy to aws service api endpoints: https://docs.aws.amazon.com/general/latest/gr/rande.html
+		// Note: Can't be region scoped due to Route53.
+		set.Insert(".amazonaws.com")
+		// AWS doesn't have a consistent naming scheme for all regions.
 		region := installConfig.Config.AWS.Region
 		if region == "us-east-1" {
 			set.Insert(".ec2.internal")
