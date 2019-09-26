@@ -1,30 +1,7 @@
 def GenerateConfig(context):
 
     resources = [{
-        'name': context.properties['infra_id'] + '-master-in-icmp',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'icmp'
-            }],
-            'sourceRanges':  [context.properties['network_cidr']],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-in-ssh',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['22']
-            }],
-            'sourceRanges':  [context.properties['network_cidr']],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-in-https',
+        'name': context.properties['infra_id'] + '-api',
         'type': 'compute.v1.firewall',
         'properties': {
             'network': context.properties['cluster_network'],
@@ -36,19 +13,7 @@ def GenerateConfig(context):
             'targetTags': [context.properties['infra_id'] + '-master']
         }
     }, {
-        'name': context.properties['infra_id'] + '-master-in-from-health-checks',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['6080', '22624']
-            }],
-            'sourceRanges':  ['35.191.0.0/16', '130.211.0.0/22'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-in-mcs',
+        'name': context.properties['infra_id'] + '-mcs',
         'type': 'compute.v1.firewall',
         'properties': {
             'network': context.properties['cluster_network'],
@@ -64,151 +29,19 @@ def GenerateConfig(context):
             'targetTags': [context.properties['infra_id'] + '-master']
         }
     }, {
-        'name': context.properties['infra_id'] + '-master-in-overlay',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'udp',
-                'ports': ['4789', '6081']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-master'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-in-overlay-from-worker',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'udp',
-                'ports': ['4789', '6081']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-worker'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-in-internal',
+        'name': context.properties['infra_id'] + '-health-checks',
         'type': 'compute.v1.firewall',
         'properties': {
             'network': context.properties['cluster_network'],
             'allowed': [{
                 'IPProtocol': 'tcp',
-                'ports': ['9000-9999']
+                'ports': ['6080', '22624']
             }],
-            'sourceTags': [context.properties['infra_id'] + '-master'],
+            'sourceRanges':  ['35.191.0.0/16', '130.211.0.0/22'],
             'targetTags': [context.properties['infra_id'] + '-master']
         }
     }, {
-        'name': context.properties['infra_id'] + '-master-in-internal-from-worker',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['9000-9999']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-worker'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-in-internal-udp',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'udp',
-                'ports': ['9000-9999']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-master'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-in-internal-from-worker-udp',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'udp',
-                'ports': ['9000-9999']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-worker'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-in-kube-scheduler',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['10259']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-master'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-in-kube-scheduler-fr-worker',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['10259']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-worker'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-in-kube-master-manager',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['10257']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-master'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-in-kube-master-mgr-fr-work',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['10257']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-worker'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-in-kubelet-secure',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['10250']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-master'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-in-kubelet-secure-fr-worker',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['10250']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-worker'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-in-etcd',
+        'name': context.properties['infra_id'] + '-etcd',
         'type': 'compute.v1.firewall',
         'properties': {
             'network': context.properties['cluster_network'],
@@ -220,166 +53,91 @@ def GenerateConfig(context):
             'targetTags': [context.properties['infra_id'] + '-master']
         }
     }, {
-        'name': context.properties['infra_id'] + '-master-in-services-tcp',
+        'name': context.properties['infra_id'] + '-control-plane',
         'type': 'compute.v1.firewall',
         'properties': {
             'network': context.properties['cluster_network'],
             'allowed': [{
                 'IPProtocol': 'tcp',
-                'ports': ['30000-32767']
+                'ports': ['10257']
+            },{
+                'IPProtocol': 'tcp',
+                'ports': ['10259']
             }],
-            'sourceTags': [context.properties['infra_id'] + '-master'],
+            'sourceTags': [
+                context.properties['infra_id'] + '-master',
+                context.properties['infra_id'] + '-worker'
+            ],
             'targetTags': [context.properties['infra_id'] + '-master']
         }
     }, {
-        'name': context.properties['infra_id'] + '-master-in-services-udp',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'udp',
-                'ports': ['30000-32767']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-master'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-worker-in-icmp',
+        'name': context.properties['infra_id'] + '-internal-network',
         'type': 'compute.v1.firewall',
         'properties': {
             'network': context.properties['cluster_network'],
             'allowed': [{
                 'IPProtocol': 'icmp'
-            }],
-            'sourceRanges':  [context.properties['network_cidr']],
-            'targetTags': [context.properties['infra_id'] + '-worker']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-worker-in-ssh',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
+            },{
                 'IPProtocol': 'tcp',
                 'ports': ['22']
             }],
             'sourceRanges':  [context.properties['network_cidr']],
-            'targetTags': [context.properties['infra_id'] + '-worker']
+            'targetTags': [
+                context.properties['infra_id'] + '-master',
+                context.properties['infra_id'] + '-worker'
+            ]
         }
     }, {
-        'name': context.properties['infra_id'] + '-worker-in-overlay',
+        'name': context.properties['infra_id'] + '-internal-cluster',
         'type': 'compute.v1.firewall',
         'properties': {
             'network': context.properties['cluster_network'],
             'allowed': [{
                 'IPProtocol': 'udp',
                 'ports': ['4789', '6081']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-worker'],
-            'targetTags': [context.properties['infra_id'] + '-worker']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-worker-in-overlay-from-master',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'udp',
-                'ports': ['4789', '6081']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-master'],
-            'targetTags': [context.properties['infra_id'] + '-worker']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-worker-in-ineternal',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
+            },{
                 'IPProtocol': 'tcp',
                 'ports': ['9000-9999']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-worker'],
-            'targetTags': [context.properties['infra_id'] + '-worker']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-worker-in-internal-from-master',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['9000-9999']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-master'],
-            'targetTags': [context.properties['infra_id'] + '-worker']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-worker-in-ineternal-udp',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
+            },{
                 'IPProtocol': 'udp',
                 'ports': ['9000-9999']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-worker'],
-            'targetTags': [context.properties['infra_id'] + '-worker']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-worker-in-internal-from-master-udp',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'udp',
-                'ports': ['9000-9999']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-master'],
-            'targetTags': [context.properties['infra_id'] + '-worker']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-worker-in-kubelet-insecure',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
+            },{
                 'IPProtocol': 'tcp',
                 'ports': ['10250']
             }],
-            'sourceTags': [context.properties['infra_id'] + '-worker'],
-            'targetTags': [context.properties['infra_id'] + '-worker']
+            'sourceTags': [
+                context.properties['infra_id'] + '-master',
+                context.properties['infra_id'] + '-worker'
+            ],
+            'targetTags': [
+                context.properties['infra_id'] + '-master',
+                context.properties['infra_id'] + '-worker'
+            ]
         }
     }, {
-        'name': context.properties['infra_id'] + '-worker-in-kubelet-insecure-fr-mast',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['10250']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-master'],
-            'targetTags': [context.properties['infra_id'] + '-worker']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-worker-in-services-tcp',
+        'name': context.properties['infra_id'] + '-internal-services-master',
         'type': 'compute.v1.firewall',
         'properties': {
             'network': context.properties['cluster_network'],
             'allowed': [{
                 'IPProtocol': 'tcp',
                 'ports': ['30000-32767']
+            },{
+                'IPProtocol': 'udp',
+                'ports': ['30000-32767']
             }],
-            'sourceTags': [context.properties['infra_id'] + '-worker'],
-            'targetTags': [context.properties['infra_id'] + '-worker']
+            'sourceTags': [context.properties['infra_id'] + '-master'],
+            'targetTags': [context.properties['infra_id'] + '-master']
         }
     }, {
-        'name': context.properties['infra_id'] + '-worker-in-services-udp',
+        'name': context.properties['infra_id'] + '-internal-services-worker',
         'type': 'compute.v1.firewall',
         'properties': {
             'network': context.properties['cluster_network'],
             'allowed': [{
+                'IPProtocol': 'tcp',
+                'ports': ['30000-32767']
+            },{
                 'IPProtocol': 'udp',
                 'ports': ['30000-32767']
             }],
