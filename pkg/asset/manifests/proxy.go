@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -146,6 +147,12 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 		} else {
 			set.Insert(fmt.Sprintf(".%s.compute.internal", region))
 		}
+	}
+
+	// From https://cloud.google.com/vpc/docs/special-configurations add GCP metadata.
+	// "metadata.google.internal." added due to https://bugzilla.redhat.com/show_bug.cgi?id=1754049
+	if platform == gcp.Name {
+		set.Insert("metadata", "metadata.google.internal", "metadata.google.internal.")
 	}
 
 	for i := int64(0); i < *installConfig.Config.ControlPlane.Replicas; i++ {
