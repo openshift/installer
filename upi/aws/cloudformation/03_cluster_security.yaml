@@ -51,10 +51,6 @@ Resources:
     Properties:
       GroupDescription: Cluster Master Security Group
       SecurityGroupIngress:
-      - IpProtocol: icmp
-        FromPort: 0
-        ToPort: 0
-        CidrIp: !Ref VpcCidr
       - IpProtocol: tcp
         FromPort: 22
         ToPort: 22
@@ -83,6 +79,16 @@ Resources:
         ToPort: 22
         CidrIp: !Ref VpcCidr
       VpcId: !Ref VpcId
+
+  MasterIngressICMP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: ICMP from workers
+      FromPort: -1
+      ToPort: -1
+      IpProtocol: icmp
 
   MasterIngressEtcd:
     Type: AWS::EC2::SecurityGroupIngress
@@ -193,6 +199,16 @@ Resources:
       FromPort: 30000
       ToPort: 32767
       IpProtocol: tcp
+
+  WorkerIngressICMP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: ICMP from masters
+      FromPort: -1
+      ToPort: -1
+      IpProtocol: icmp
 
   WorkerIngressVxlan:
     Type: AWS::EC2::SecurityGroupIngress

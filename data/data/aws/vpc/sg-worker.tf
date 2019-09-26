@@ -23,14 +23,14 @@ resource "aws_security_group_rule" "worker_egress" {
   cidr_blocks = ["0.0.0.0/0"]
 }
 
-resource "aws_security_group_rule" "worker_ingress_icmp" {
-  type              = "ingress"
-  security_group_id = aws_security_group.worker.id
+resource "aws_security_group_rule" "worker_ingress_icmp_from_master" {
+  type                     = "ingress"
+  security_group_id        = aws_security_group.worker.id
+  source_security_group_id = aws_security_group.master.id
 
-  protocol    = "icmp"
-  cidr_blocks = [data.aws_vpc.cluster_vpc.cidr_block]
-  from_port   = -1
-  to_port     = -1
+  protocol  = "icmp"
+  from_port = -1
+  to_port   = -1
 }
 
 resource "aws_security_group_rule" "worker_ingress_ssh" {
