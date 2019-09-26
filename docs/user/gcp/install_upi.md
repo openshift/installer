@@ -321,6 +321,9 @@ Export variables needed by the resource definition.
 ```sh
 export CONTROL_SUBNET=`gcloud compute networks subnets describe ${INFRA_ID}-master-subnet --region=${REGION} --format json | jq -r .selfLink`
 export CLUSTER_IMAGE=`gcloud compute images describe ${INFRA_ID}-rhcos-image --format json | jq -r .selfLink`
+export ZONE_0=`gcloud compute regions describe ${REGION} --format=json | jq -r .zones[0] | cut -d "/" -f9`
+export ZONE_1=`gcloud compute regions describe ${REGION} --format=json | jq -r .zones[1] | cut -d "/" -f9`
+export ZONE_2=`gcloud compute regions describe ${REGION} --format=json | jq -r .zones[2] | cut -d "/" -f9`
 ```
 
 Create a bucket and upload the bootstrap.ign file.
@@ -350,6 +353,7 @@ resources:
   properties:
     infra_id: '${INFRA_ID}'
     region: '${REGION}'
+    zone: '${ZONE_0}'
 
     cluster_network: '${CLUSTER_NETWORK}'
     control_subnet: '${CONTROL_SUBNET}'
@@ -362,6 +366,7 @@ EOF
 ```
 - `infra_id`: the infrastructure name (INFRA_ID above)
 - `region`: the region to deploy the cluster into (for example us-east1)
+- `zone`: the zone to deploy the bootstrap instance into (for example us-east1-b)
 - `cluster_network`: the URI to the cluster network
 - `control_subnet`: the URI to the control subnet
 - `image`: the URI to the RHCOS image
@@ -378,8 +383,8 @@ The templates do not manage load balancer membership due to limitations of Deplo
 Manager, so we must add the bootstrap node manually.
 
 ```sh
-gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone="${REGION}-a" --instances=${INFRA_ID}-bootstrap
-gcloud compute target-pools add-instances ${INFRA_ID}-ign-target-pool --instances-zone="${REGION}-a" --instances=${INFRA_ID}-bootstrap
+gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone="${ZONE_0}" --instances=${INFRA_ID}-bootstrap
+gcloud compute target-pools add-instances ${INFRA_ID}-ign-target-pool --instances-zone="${ZONE_0}" --instances=${INFRA_ID}-bootstrap
 ```
 
 ## Launch permanent control plane
@@ -406,6 +411,10 @@ resources:
   properties:
     infra_id: '${INFRA_ID}'
     region: '${REGION}'
+    zones:
+    - '${ZONE_0}'
+    - '${ZONE_1}'
+    - '${ZONE_2}'
 
     control_subnet: '${CONTROL_SUBNET}'
     image: '${CLUSTER_IMAGE}'
@@ -418,6 +427,7 @@ EOF
 ```
 - `infra_id`: the infrastructure name (INFRA_ID above)
 - `region`: the region to deploy the cluster into (for example us-east1)
+- `zones`: the zones to deploy the control plane instances into (for example us-east1-b, us-east1-c, us-east1-d)
 - `control_subnet`: the URI to the control subnet
 - `image`: the URI to the RHCOS image
 - `machine_type`: the machine type of the instance (for example n1-standard-4)
@@ -434,9 +444,9 @@ The templates do not manage DNS entries due to limitations of Deployment
 Manager, so we must add the etcd entries manually.
 
 ```sh
-export MASTER0_IP=`gcloud compute instances describe ${INFRA_ID}-m-0 --zone ${REGION}-a --format json | jq -r .networkInterfaces[0].networkIP`
-export MASTER1_IP=`gcloud compute instances describe ${INFRA_ID}-m-1 --zone ${REGION}-b --format json | jq -r .networkInterfaces[0].networkIP`
-export MASTER2_IP=`gcloud compute instances describe ${INFRA_ID}-m-2 --zone ${REGION}-c --format json | jq -r .networkInterfaces[0].networkIP`
+export MASTER0_IP=`gcloud compute instances describe ${INFRA_ID}-m-0 --zone ${ZONE_0} --format json | jq -r .networkInterfaces[0].networkIP`
+export MASTER1_IP=`gcloud compute instances describe ${INFRA_ID}-m-1 --zone ${ZONE_1} --format json | jq -r .networkInterfaces[0].networkIP`
+export MASTER2_IP=`gcloud compute instances describe ${INFRA_ID}-m-2 --zone ${ZONE_2} --format json | jq -r .networkInterfaces[0].networkIP`
 if [ -f transaction.yaml ]; then rm transaction.yaml; fi
 gcloud dns record-sets transaction start --zone ${INFRA_ID}-private-zone
 gcloud dns record-sets transaction add ${MASTER0_IP} --name etcd-0.${CLUSTER_NAME}.${BASE_DOMAIN}. --ttl 60 --type A --zone ${INFRA_ID}-private-zone
@@ -454,12 +464,12 @@ The templates do not manage load balancer membership due to limitations of Deplo
 Manager, so we must add the control plane nodes manually.
 
 ```sh
-gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone="${REGION}-a" --instances=${INFRA_ID}-m-0
-gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone="${REGION}-b" --instances=${INFRA_ID}-m-1
-gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone="${REGION}-c" --instances=${INFRA_ID}-m-2
-gcloud compute target-pools add-instances ${INFRA_ID}-ign-target-pool --instances-zone="${REGION}-a" --instances=${INFRA_ID}-m-0
-gcloud compute target-pools add-instances ${INFRA_ID}-ign-target-pool --instances-zone="${REGION}-b" --instances=${INFRA_ID}-m-1
-gcloud compute target-pools add-instances ${INFRA_ID}-ign-target-pool --instances-zone="${REGION}-c" --instances=${INFRA_ID}-m-2
+gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone="${ZONE_0}" --instances=${INFRA_ID}-m-0
+gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone="${ZONE_1}" --instances=${INFRA_ID}-m-1
+gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone="${ZONE_2}" --instances=${INFRA_ID}-m-2
+gcloud compute target-pools add-instances ${INFRA_ID}-ign-target-pool --instances-zone="${ZONE_0}" --instances=${INFRA_ID}-m-0
+gcloud compute target-pools add-instances ${INFRA_ID}-ign-target-pool --instances-zone="${ZONE_1}" --instances=${INFRA_ID}-m-1
+gcloud compute target-pools add-instances ${INFRA_ID}-ign-target-pool --instances-zone="${ZONE_2}" --instances=${INFRA_ID}-m-2
 ```
 
 ## Monitor for `bootstrap-complete`
@@ -476,8 +486,8 @@ INFO Waiting up to 30m0s for the bootstrap-complete event...
 At this point, you should delete the bootstrap resources.
 
 ```sh
-gcloud compute target-pools remove-instances ${INFRA_ID}-api-target-pool --instances-zone="${REGION}-a" --instances=${INFRA_ID}-bootstrap
-gcloud compute target-pools remove-instances ${INFRA_ID}-ign-target-pool --instances-zone="${REGION}-a" --instances=${INFRA_ID}-bootstrap
+gcloud compute target-pools remove-instances ${INFRA_ID}-api-target-pool --instances-zone="${ZONE_0}" --instances=${INFRA_ID}-bootstrap
+gcloud compute target-pools remove-instances ${INFRA_ID}-ign-target-pool --instances-zone="${ZONE_0}" --instances=${INFRA_ID}-bootstrap
 gsutil rm gs://${INFRA_ID}-bootstrap-ignition/bootstrap.ign
 gsutil rb gs://${INFRA_ID}-bootstrap-ignition
 gcloud deployment-manager deployments delete ${INFRA_ID}-bootstrap
@@ -515,13 +525,13 @@ resources:
   properties:
     infra_id: '${INFRA_ID}'
     region: '${REGION}'
+    zone: '${ZONE_0}'
 
     compute_subnet: '${COMPUTE_SUBNET}'
     image: '${CLUSTER_IMAGE}'
     machine_type: 'n1-standard-4'
     root_volume_size: '128'
     service_account_email: '${WORKER_SERVICE_ACCOUNT_EMAIL}'
-    zone: '${REGION}-a'
 
     ignition: '${WORKER_IGNITION}'
 EOF
@@ -529,11 +539,11 @@ EOF
 - `name`: the name of the compute node (for example w-a-0)
 - `infra_id`: the infrastructure name (INFRA_ID above)
 - `region`: the region to deploy the cluster into (for example us-east1)
+- `zone`: the zone to deploy the worker node into (for example us-east1-b)
 - `compute_subnet`: the URI to the compute subnet
 - `image`: the URI to the RHCOS image
 - `machine_type`: The machine type of the instance (for example n1-standard-4)
 - `service_account_email`: the email address for the worker service account created above
-- `zone`: the zone for the worker node (for example us-east1-b)
 - `ignition`: the contents of the worker.ign file
 
 Create the deployment using gcloud.
