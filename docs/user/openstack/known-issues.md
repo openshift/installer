@@ -30,7 +30,3 @@ clusterNetwork: 10.128.0.0/14
 The [account in url](https://docs.ceph.com/docs/master/radosgw/config-ref/#swift-settings) option must be enabled in Ceph RGW in order to use public-readable containers needed for temporary URLs.
 
 This setting wasn't enabled by default [prior to OSP15](https://bugs.launchpad.net/tripleo/+bug/1826894). We are working on removing the need for Swift temp-url in [PR #2311](https://github.com/openshift/installer/pull/2311).
-
-## Boot From Volume Support
-
-OpenStack clouds may have disk pools of various speeds, and the pool that the ephemeral disk is assigned from may not be ideal for customers to deploy OpenShift on. In order to address this, and the issues that may arise from it, we plan to support booting instances from volumes in an upcoming release. If this issue affects you, you can track the lates progress in [this bugzilla](https://bugzilla.redhat.com/show_bug.cgi?id=1754070).

@@ -16,6 +16,9 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 ## Machine pools
 
 * `type` (optional string): The OpenStack flavor name for machines in the pool.
+* `rootVolume` (optional object): Defines the root volume for instances in the machine pool. The instances use ephemeral disks if not set.
+  * `size` (required integer): Size of the root volume in GB.
+  * `type` (required string): The volume pool to create the volume from.
 
 ## Examples
 
@@ -57,6 +60,9 @@ compute:
   platform:
     openstack:
       type: ml.large
+      rootVolume:
+        size: 30
+        type: performance
   replicas: 3
 metadata:
   name: test-cluster
