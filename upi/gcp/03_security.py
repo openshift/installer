@@ -104,6 +104,12 @@ def GenerateConfig(context):
             },{
                 'IPProtocol': 'tcp',
                 'ports': ['10250']
+            },{
+                'IPProtocol': 'tcp',
+                'ports': ['30000-32767']
+            },{
+                'IPProtocol': 'udp',
+                'ports': ['30000-32767']
             }],
             'sourceTags': [
                 context.properties['infra_id'] + '-master',
@@ -113,36 +119,6 @@ def GenerateConfig(context):
                 context.properties['infra_id'] + '-master',
                 context.properties['infra_id'] + '-worker'
             ]
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-internal-services-master',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['30000-32767']
-            },{
-                'IPProtocol': 'udp',
-                'ports': ['30000-32767']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-master'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-internal-services-worker',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['30000-32767']
-            },{
-                'IPProtocol': 'udp',
-                'ports': ['30000-32767']
-            }],
-            'sourceTags': [context.properties['infra_id'] + '-worker'],
-            'targetTags': [context.properties['infra_id'] + '-worker']
         }
     }, {
         'name': context.properties['infra_id'] + '-master-node-sa',
