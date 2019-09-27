@@ -7,10 +7,14 @@ import (
 
 //CloudProviderConfig is the azure cloud provider config
 type CloudProviderConfig struct {
-	TenantID       string
-	SubscriptionID string
-	GroupLocation  string
-	ResourcePrefix string
+	TenantID                 string
+	SubscriptionID           string
+	GroupLocation            string
+	ResourcePrefix           string
+	NetworkResourceGroupName string
+	NetworkSecurityGroupName string
+	VirtualNetworkName       string
+	SubnetName               string
 }
 
 // JSON generates the cloud provider json config for the azure platform.
@@ -32,10 +36,10 @@ func (params CloudProviderConfig) JSON() (string, error) {
 		},
 		ResourceGroup:          resourceGroupName,
 		Location:               params.GroupLocation,
-		SubnetName:             params.ResourcePrefix + "-node-subnet",
-		SecurityGroupName:      params.ResourcePrefix + "-node-nsg",
-		VnetName:               params.ResourcePrefix + "-vnet",
-		VnetResourceGroup:      resourceGroupName,
+		SubnetName:             params.SubnetName,
+		SecurityGroupName:      params.NetworkSecurityGroupName,
+		VnetName:               params.VirtualNetworkName,
+		VnetResourceGroup:      params.NetworkResourceGroupName,
 		RouteTableName:         params.ResourcePrefix + "-node-routetable",
 		CloudProviderBackoff:   true,
 		CloudProviderRateLimit: true,

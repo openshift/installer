@@ -10,11 +10,24 @@ type Platform struct {
 
 	// BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found.
 	BaseDomainResourceGroupName string `json:"baseDomainResourceGroupName,omitempty"`
+
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on Azure for machine pools which do not define their own
 	// platform configuration.
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
+
+	// NetworkResourceGroupName specifies the network resource group that contains an existing VNet
+	NetworkResourceGroupName string `json:"networkResourceGroupName,omitempty"`
+
+	// VirtualNetwork specifies the name of an existing VNet for the installer to use
+	VirtualNetwork string `json:"virtualNetwork,omitempty"`
+
+	// ControlPlaneSubnet specifies an existing subnet for use by the control plane nodes
+	ControlPlaneSubnet string `json:"controlPlaneSubnet,omitempty"`
+
+	// ComputeSubnet specifies an existing subnet for use by compute nodes
+	ComputeSubnet string `json:"computeSubnet,omitempty"`
 }
 
 //SetBaseDomain parses the baseDomainID and sets the related fields on azure.Platform

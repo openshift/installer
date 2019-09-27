@@ -28,28 +28,50 @@ type config struct {
 	ImageURL                    string            `json:"azure_image_url,omitempty"`
 	Region                      string            `json:"azure_region,omitempty"`
 	BaseDomainResourceGroupName string            `json:"azure_base_domain_resource_group_name,omitempty"`
+	NetworkResourceGroupName    string            `json:"azure_network_resource_group_name"`
+	VirtualNetwork              string            `json:"azure_virtual_network"`
+	ControlPlaneSubnet          string            `json:"azure_control_plane_subnet"`
+	ComputeSubnet               string            `json:"azure_compute_subnet"`
+	PreexistingNetwork          bool              `json:"azure_preexisting_network"`
+}
+
+// TFVarsSources contains the parameters to be converted into Terraform variables
+type TFVarsSources struct {
+	Auth                        Auth
+	BaseDomainResourceGroupName string
+	MasterConfigs               []*azureprovider.AzureMachineProviderSpec
+	WorkerConfigs               []*azureprovider.AzureMachineProviderSpec
+	ImageURL                    string
+	PreexistingNetwork          bool
 }
 
 // TFVars generates Azure-specific Terraform variables launching the cluster.
-func TFVars(auth Auth, baseDomainResourceGroupName string, imageURL string, masterConfigs []*azureprovider.AzureMachineProviderSpec) ([]byte, error) {
-	masterConfig := masterConfigs[0]
+func TFVars(sources TFVarsSources) ([]byte, error) {
+	masterConfig := sources.MasterConfigs[0]
+	workerConfig := sources.WorkerConfigs[0]
+
 	region := masterConfig.Location
 
-	masterAvailabilityZones := make([]string, len(masterConfigs))
-	for i, c := range masterConfigs {
+	masterAvailabilityZones := make([]string, len(sources.MasterConfigs))
+	for i, c := range sources.MasterConfigs {
 		masterAvailabilityZones[i] = to.String(c.Zone)
 	}
 
 	cfg := &config{
-		Auth:   auth,
-		Region: region,
-		BaseDomainResourceGroupName: baseDomainResourceGroupName,
+		Auth:                        sources.Auth,
+		Region:                      region,
 		BootstrapInstanceType:       defaults.BootstrapInstanceType(region),
 		MasterInstanceType:          masterConfig.VMSize,
 		MasterAvailabilityZones:     masterAvailabilityZones,
 		VolumeType:                  masterConfig.OSDisk.ManagedDisk.StorageAccountType,
 		VolumeSize:                  masterConfig.OSDisk.DiskSizeGB,
-		ImageURL:                    imageURL,
+		ImageURL:                    sources.ImageURL,
+		BaseDomainResourceGroupName: sources.BaseDomainResourceGroupName,
+		NetworkResourceGroupName:    masterConfig.NetworkResourceGroup,
+		VirtualNetwork:              masterConfig.Vnet,
+		ControlPlaneSubnet:          masterConfig.Subnet,
+		ComputeSubnet:               workerConfig.Subnet,
+		PreexistingNetwork:          sources.PreexistingNetwork,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

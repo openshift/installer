@@ -9,10 +9,14 @@ import (
 func TestCloudProviderConfig(t *testing.T) {
 
 	config := CloudProviderConfig{
-		GroupLocation:  "westeurope",
-		ResourcePrefix: "clusterid",
-		SubscriptionID: "subID",
-		TenantID:       "tenantID",
+		GroupLocation:            "westeurope",
+		ResourcePrefix:           "clusterid",
+		SubscriptionID:           "subID",
+		TenantID:                 "tenantID",
+		NetworkResourceGroupName: "clusterid-rg",
+		NetworkSecurityGroupName: "clusterid-node-nsg",
+		VirtualNetworkName:       "clusterid-vnet",
+		SubnetName:               "clusterid-node-subnet",
 	}
 	expected := `{
 	"cloud": "AzurePublicCloud",

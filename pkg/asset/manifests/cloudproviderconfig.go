@@ -98,11 +98,30 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "could not get azure session")
 		}
+
+		nsg := fmt.Sprintf("%s-node-nsg", clusterID.InfraID)
+		nrg := fmt.Sprintf("%s-rg", clusterID.InfraID)
+		if installConfig.Config.Azure.NetworkResourceGroupName != "" {
+			nrg = installConfig.Config.Azure.NetworkResourceGroupName
+		}
+		vnet := fmt.Sprintf("%s-vnet", clusterID.InfraID)
+		if installConfig.Config.Azure.VirtualNetwork != "" {
+			vnet = installConfig.Config.Azure.VirtualNetwork
+		}
+		subnet := fmt.Sprintf("%s-node-subnet", clusterID.InfraID)
+		if installConfig.Config.Azure.ComputeSubnet != "" {
+			subnet = installConfig.Config.Azure.ComputeSubnet
+		}
+
 		azureConfig, err := azure.CloudProviderConfig{
-			GroupLocation:  installConfig.Config.Azure.Region,
-			ResourcePrefix: clusterID.InfraID,
-			SubscriptionID: session.Credentials.SubscriptionID,
-			TenantID:       session.Credentials.TenantID,
+			GroupLocation:            installConfig.Config.Azure.Region,
+			ResourcePrefix:           clusterID.InfraID,
+			SubscriptionID:           session.Credentials.SubscriptionID,
+			TenantID:                 session.Credentials.TenantID,
+			NetworkResourceGroupName: nrg,
+			NetworkSecurityGroupName: nsg,
+			VirtualNetworkName:       vnet,
+			SubnetName:               subnet,
 		}.JSON()
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")

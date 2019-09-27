@@ -176,11 +176,24 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, m := range masters {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*azureprovider.AzureMachineProviderSpec)
 		}
+		workers, err := workersAsset.MachineSets()
+		if err != nil {
+			return err
+		}
+		workerConfigs := make([]*azureprovider.AzureMachineProviderSpec, len(masters))
+		for i, w := range workers {
+			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*azureprovider.AzureMachineProviderSpec)
+		}
+		preexistingnetwork := installConfig.Config.Azure.VirtualNetwork != ""
 		data, err := azuretfvars.TFVars(
-			auth,
-			installConfig.Config.Azure.BaseDomainResourceGroupName,
-			string(*rhcosImage),
-			masterConfigs,
+			azuretfvars.TFVarsSources{
+				Auth: auth,
+				BaseDomainResourceGroupName: installConfig.Config.Azure.BaseDomainResourceGroupName,
+				MasterConfigs:               masterConfigs,
+				WorkerConfigs:               workerConfigs,
+				ImageURL:                    string(*rhcosImage),
+				PreexistingNetwork:          preexistingnetwork,
+			},
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

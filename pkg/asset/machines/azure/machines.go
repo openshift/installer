@@ -84,6 +84,12 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 	if len(mpool.Zones) > 0 && azIdx != nil {
 		az = &mpool.Zones[*azIdx]
 	}
+
+	networkResourceGroup, virtualNetwork, subnet, err := getNetworkInfo(platform, clusterID, role)
+	if err != nil {
+		return nil, err
+	}
+
 	return &azureprovider.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "azureproviderconfig.openshift.io/v1beta1",
@@ -103,15 +109,31 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 				StorageAccountType: "Premium_LRS",
 			},
 		},
-		Zone:            az,
-		Subnet:          fmt.Sprintf("%s-%s-subnet", clusterID, role),
-		ManagedIdentity: fmt.Sprintf("%s-identity", clusterID),
-		Vnet:            fmt.Sprintf("%s-vnet", clusterID),
-		ResourceGroup:   fmt.Sprintf("%s-rg", clusterID),
+		Zone:                 az,
+		Subnet:               subnet,
+		ManagedIdentity:      fmt.Sprintf("%s-identity", clusterID),
+		Vnet:                 virtualNetwork,
+		ResourceGroup:        fmt.Sprintf("%s-rg", clusterID),
+		NetworkResourceGroup: networkResourceGroup,
 	}, nil
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
 func ConfigMasters(machines []machineapi.Machine, clusterID string) {
 	//TODO
+}
+
+func getNetworkInfo(platform *azure.Platform, clusterID, role string) (string, string, string, error) {
+	if platform.VirtualNetwork == "" {
+		return fmt.Sprintf("%s-rg", clusterID), fmt.Sprintf("%s-vnet", clusterID), fmt.Sprintf("%s-%s-subnet", clusterID, role), nil
+	}
+
+	switch role {
+	case "worker":
+		return platform.NetworkResourceGroupName, platform.VirtualNetwork, platform.ComputeSubnet, nil
+	case "master":
+		return platform.NetworkResourceGroupName, platform.VirtualNetwork, platform.ControlPlaneSubnet, nil
+	default:
+		return "", "", "", fmt.Errorf("unrecognized machine role %s", role)
+	}
 }
