@@ -88,9 +88,12 @@ The user must have `swiftoperator` permissions and `temp-url` support must be en
 
 ```sh
 openstack role add --user <user> --project <project> swiftoperator
-openstack object store account set --property Temp-URL-Key=superkey
 ```
 
+As the user for installation
+```sh
+openstack object store account set --property Temp-URL-Key=superkey
+```
 ### Disk Requirements
 
 Etcd is run on your control plane nodes, and it has disk requirements that need to be met to ensure the stability of your cluster. It is important that you make sure that the ephemeral disk that gets attached to instances of your chosen flavor meets [these requirements](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/hardware.md#disks). If this is not the case, then please refer to the known issue documentation [here](known-issues.md#boot-from-volume-support).
