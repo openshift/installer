@@ -65,7 +65,7 @@ For example, 10.0.0.0/16 represents IP addresses 10.0.0.0 through 10.0.255.255.
 
 The following machine-pool properties are available:
 
-* `hyperthreading` (optional string): Determines the mode of hyperthreading that machines in the pool will utalize.
+* `hyperthreading` (optional string): Determines the mode of hyperthreading that machines in the pool will utilize.
     Valid values are `Enabled` (the default) and `Disabled`.
 * `name` (required string): The name of the machine pool.
 * `platform` (optional object): Platform-specific machine-pool configuration.
