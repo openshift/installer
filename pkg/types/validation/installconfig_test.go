@@ -612,10 +612,10 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid NoProxy domain",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Proxy.NoProxy = "good-no-proxy.com, .bad-proxy."
+				c.Proxy.NoProxy = "good-no-proxy.com, *.bad-proxy"
 				return c
 			}(),
-			expectedError: `^\QNoProxy: Invalid value: ".bad-proxy.": must be a CIDR or domain, without wildcard characters and without trailing dots ('.')\E$`,
+			expectedError: `^\QNoProxy: Invalid value: "*.bad-proxy": must be a CIDR or domain, without wildcard characters\E$`,
 		},
 		{
 			name: "invalid NoProxy CIDR",
@@ -624,16 +624,16 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.NoProxy = "good-no-proxy.com, 172.bad.CIDR.0/16"
 				return c
 			}(),
-			expectedError: `^\QNoProxy: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters and without trailing dots ('.')\E$`,
+			expectedError: `^\QNoProxy: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters\E$`,
 		},
 		{
 			name: "invalid NoProxy domain & CIDR",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Proxy.NoProxy = "good-no-proxy.com, a-good-one, .bad-proxy., another,   172.bad.CIDR.0/16, good-end"
+				c.Proxy.NoProxy = "good-no-proxy.com, a-good-one, *.bad-proxy., another,   172.bad.CIDR.0/16, good-end"
 				return c
 			}(),
-			expectedError: `^\Q[NoProxy: Invalid value: ".bad-proxy.": must be a CIDR or domain, without wildcard characters and without trailing dots ('.'), NoProxy: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters and without trailing dots ('.')]\E$`,
+			expectedError: `^\Q[NoProxy: Invalid value: "*.bad-proxy.": must be a CIDR or domain, without wildcard characters, NoProxy: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters]\E$`,
 		},
 		{
 			name: "valid GCP platform",
