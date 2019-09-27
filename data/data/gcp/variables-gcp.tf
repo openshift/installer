@@ -64,3 +64,26 @@ variable "gcp_master_availability_zones" {
   type = list(string)
   description = "The availability zones in which to create the masters. The length of this list must match master_count."
 }
+
+variable "gcp_preexisting_network" {
+  type = bool
+  default = false
+  description = "Specifies whether an existing network should be used or a new one created for installation."
+}
+
+variable "gcp_cluster_network" {
+  type = string
+  description = "The name of the cluster network, either existing or to be created."
+}
+
+variable "gcp_control_plane_subnet" {
+  type = string
+  description = "The name of the subnet for the control plane, either existing or to be created."
+}
+
+variable "gcp_compute_subnet" {
+  type = string
+  description = "The name of the subnet for worker nodes, either existing or to be created"
+}
+
+

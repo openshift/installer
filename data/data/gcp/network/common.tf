@@ -1,2 +1,24 @@
 # Canonical internal state definitions for this module.
 # read only: only locals and data source definitions allowed. No resources or module blocks in this file
+
+data "google_compute_network" "preexisting_cluster_network" {
+  count = var.preexisting_network ? 1 : 0
+
+  name = var.cluster_network
+}
+
+data "google_compute_subnetwork" "preexisting_master_subnet" {
+  count = var.preexisting_network ? 1 : 0
+
+  name = var.master_subnet
+}
+
+data "google_compute_subnetwork" "preexisting_worker_subnet" {
+  count = var.preexisting_network ? 1 : 0
+
+  name = var.worker_subnet
+}
+
+locals {
+  cluster_network = var.preexisting_network ? data.google_compute_network.preexisting_cluster_network[0].self_link : google_compute_network.cluster_network[0].self_link
+}

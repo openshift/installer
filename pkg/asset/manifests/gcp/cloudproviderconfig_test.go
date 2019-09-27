@@ -15,7 +15,7 @@ node-tags       = uid-worker
 subnetwork-name = uid-worker-subnet
 
 `
-	actualConfig, err := CloudProviderConfig("uid", "test-project-id")
+	actualConfig, err := CloudProviderConfig("uid", "test-project-id", "uid-worker-subnet")
 	assert.NoError(t, err, "failed to create cloud provider config")
 	assert.Equal(t, expectedConfig, actualConfig, "unexpected cloud provider config")
 }
