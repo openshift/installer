@@ -30,7 +30,7 @@ module "bootstrap" {
   identity            = azurerm_user_assigned_identity.main.id
   cluster_id          = var.cluster_id
   ignition            = var.ignition_bootstrap
-  subnet_id           = module.vnet.public_subnet_id
+  subnet_id           = module.vnet.master_subnet_id
   elb_backend_pool_id = module.vnet.public_lb_backend_pool_id
   ilb_backend_pool_id = module.vnet.internal_lb_backend_pool_id
   tags                = local.tags
@@ -45,6 +45,12 @@ module "vnet" {
   cluster_id          = var.cluster_id
   region              = var.azure_region
   dns_label           = var.cluster_id
+
+  preexisting_network         = var.azure_preexisting_network
+  network_resource_group_name = var.azure_network_resource_group_name
+  virtual_network_name        = var.azure_virtual_network
+  master_subnet               = var.azure_control_plane_subnet
+  worker_subnet               = var.azure_compute_subnet
 }
 
 module "master" {
@@ -60,7 +66,7 @@ module "master" {
   external_lb_id      = module.vnet.public_lb_id
   elb_backend_pool_id = module.vnet.public_lb_backend_pool_id
   ilb_backend_pool_id = module.vnet.internal_lb_backend_pool_id
-  subnet_id           = module.vnet.public_subnet_id
+  subnet_id           = module.vnet.master_subnet_id
   instance_count      = var.master_count
   storage_account     = azurerm_storage_account.cluster
   os_volume_type      = var.azure_master_root_volume_type
@@ -72,7 +78,7 @@ module "dns" {
   cluster_domain                  = var.cluster_domain
   cluster_id                      = var.cluster_id
   base_domain                     = var.base_domain
-  virtual_network                 = module.vnet.network_id
+  virtual_network_id              = module.vnet.virtual_network_id
   external_lb_fqdn                = module.vnet.public_lb_pip_fqdn
   internal_lb_ipaddress           = module.vnet.internal_lb_ip_address
   resource_group_name             = azurerm_resource_group.main.name
@@ -93,6 +99,12 @@ resource "azurerm_resource_group" "main" {
   tags     = local.tags
 }
 
+data "azurerm_resource_group" "network" {
+  count = var.azure_preexisting_network ? 1 : 0
+
+  name = var.azure_network_resource_group_name
+}
+
 resource "azurerm_storage_account" "cluster" {
   name                     = "cluster${random_string.storage_suffix.result}"
   resource_group_name      = azurerm_resource_group.main.name
@@ -110,6 +122,14 @@ resource "azurerm_user_assigned_identity" "main" {
 
 resource "azurerm_role_assignment" "main" {
   scope                = azurerm_resource_group.main.id
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_user_assigned_identity.main.principal_id
+}
+
+resource "azurerm_role_assignment" "network" {
+  count = var.azure_preexisting_network ? 1 : 0
+
+  scope                = data.azurerm_resource_group.network[0].id
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.main.principal_id
 }

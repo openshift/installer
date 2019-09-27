@@ -34,7 +34,7 @@ variable "internal_lb_ipaddress" {
   type        = string
 }
 
-variable "virtual_network" {
+variable "virtual_network_id" {
   description = "The ID for Virtual Network that will be linked to the Private DNS zone."
   type        = string
 }
@@ -54,4 +54,3 @@ variable "resource_group_name" {
   type        = string
   description = "Resource group for the deployment"
 }
-

@@ -5,7 +5,8 @@ locals {
 }
 
 resource "azurerm_network_interface" "master" {
-  count               = var.instance_count
+  count = var.instance_count
+
   name                = "${var.cluster_id}-master${count.index}-nic"
   location            = var.region
   resource_group_name = var.resource_group_name
