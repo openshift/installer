@@ -80,17 +80,12 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 func provider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunk string) (*openstackprovider.OpenstackProviderSpec, error) {
 
-	return &openstackprovider.OpenstackProviderSpec{
+	spec := openstackprovider.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: openstackprovider.SchemeGroupVersion.String(),
 			Kind:       "OpenstackProviderSpec",
 		},
-		Flavor: mpool.FlavorName,
-		/*RootVolume: openstackprovider.RootVolume{
-			VolumeType: pointer.StringPtr(mpool.Type),
-			Size:       pointer.Int64Ptr(int64(mpool.Size)),
-		},*/
-		Image:          osImage,
+		Flavor:         mpool.FlavorName,
 		CloudName:      CloudName,
 		CloudsSecret:   &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
 		UserDataSecret: &corev1.SecretReference{Name: userDataSecret},
@@ -120,7 +115,18 @@ func provider(clusterID string, platform *openstack.Platform, mpool *openstack.M
 			"Name":               fmt.Sprintf("%s-%s", clusterID, role),
 			"openshiftClusterID": clusterID,
 		},
-	}, nil
+	}
+	if mpool.RootVolume != nil {
+		spec.RootVolume = &openstackprovider.RootVolume{
+			Size:       mpool.RootVolume.Size,
+			SourceType: "image",
+			SourceUUID: osImage,
+			VolumeType: mpool.RootVolume.Type,
+		}
+	} else {
+		spec.Image = osImage
+	}
+	return &spec, nil
 }
 
 func trunkSupportBoolean(trunkSupport string) (result bool) {

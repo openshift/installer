@@ -18,6 +18,8 @@ type config struct {
 	IngressVIP      string `json:"openstack_ingress_ip,omitempty"`
 	TrunkSupport    string `json:"openstack_trunk_support,omitempty"`
 	OctaviaSupport  string `json:"openstack_octavia_support,omitempty"`
+	RootVolumeSize  int    `json:"openstack_master_root_volume_size,omitempty"`
+	RootVolumeType  string `json:"openstack_master_root_volume_type,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
@@ -33,6 +35,10 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		IngressVIP:      ingressVIP,
 		TrunkSupport:    trunkSupport,
 		OctaviaSupport:  octaviaSupport,
+	}
+	if masterConfig.RootVolume != nil {
+		cfg.RootVolumeSize = masterConfig.RootVolume.Size
+		cfg.RootVolumeType = masterConfig.RootVolume.VolumeType
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
