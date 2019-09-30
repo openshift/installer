@@ -65,7 +65,7 @@ func TestValidateMachinePool(t *testing.T) {
 					Size: -10,
 				},
 			},
-			expected: `^test-path\.size: Invalid value: 0: Storage size must be positive$`,
+			expected: `^test-path\.size: Invalid value: -10: Storage size must be positive$`,
 		},
 	}
 	for _, tc := range cases {
