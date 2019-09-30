@@ -100,7 +100,19 @@ Etcd runs on the control plane nodes, and has disk requirements that need to be 
 
 ### Red Hat Enterprise Linux CoreOS (RHCOS)
 
-Get the latest RHCOS image [here](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/latest/). The installer requires a proper RHCOS image in the OpenStack cluster or project:
+Get the latest RHCOS image [here](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/latest/).
+
+**NOTE:** The OpenStack QCOW2 image is delivered in compressed format.  You will need to provide the necessary options to `curl` or `wget` when downloading the image, otherwise your image may appear corrupted.
+
+For example:
+
+```sh
+curl --compressed -J -L -O <url of OpenStack QCOW2>
+
+wget --compresion=auto <url of OpenStack QCOW2>
+```
+
+The installer requires a proper RHCOS image in the OpenStack cluster or project:
 
 ```sh
 openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.qcow2 rhcos
