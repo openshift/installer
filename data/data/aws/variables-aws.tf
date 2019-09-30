@@ -69,3 +69,20 @@ variable "aws_worker_availability_zones" {
   description = "The availability zones to provision for workers.  Worker instances are created by the machine-API operator, but this variable controls their supporting infrastructure (subnets, routing, etc.)."
 }
 
+variable "aws_vpc" {
+  type = string
+  default = null
+  description = "(optional) An existing network (VPC ID) into which the cluster should be installed."
+}
+
+variable "aws_public_subnets" {
+  type = list(string)
+  default = null
+  description = "(optional) Existing public subnets into which the cluster should be installed."
+}
+
+variable "aws_private_subnets" {
+  type = list(string)
+  default = null
+  description = "(optional) Existing private subnets into which the cluster should be installed."
+}
