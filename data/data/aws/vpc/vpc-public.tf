@@ -1,4 +1,6 @@
 resource "aws_internet_gateway" "igw" {
+  count = var.vpc == null ? 1 : 0
+
   vpc_id = data.aws_vpc.cluster_vpc.id
 
   tags = merge(
@@ -10,6 +12,8 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_route_table" "default" {
+  count = var.vpc == null ? 1 : 0
+
   vpc_id = data.aws_vpc.cluster_vpc.id
 
   tags = merge(
@@ -21,14 +25,18 @@ resource "aws_route_table" "default" {
 }
 
 resource "aws_main_route_table_association" "main_vpc_routes" {
+  count = var.vpc == null ? 1 : 0
+
   vpc_id         = data.aws_vpc.cluster_vpc.id
-  route_table_id = aws_route_table.default.id
+  route_table_id = aws_route_table.default[0].id
 }
 
 resource "aws_route" "igw_route" {
+  count = var.vpc == null ? 1 : 0
+
   destination_cidr_block = "0.0.0.0/0"
-  route_table_id         = aws_route_table.default.id
-  gateway_id             = aws_internet_gateway.igw.id
+  route_table_id         = aws_route_table.default[0].id
+  gateway_id             = aws_internet_gateway.igw[0].id
 
   timeouts {
     create = "20m"
@@ -36,11 +44,10 @@ resource "aws_route" "igw_route" {
 }
 
 resource "aws_subnet" "public_subnet" {
-  count  = length(var.availability_zones)
-  vpc_id = data.aws_vpc.cluster_vpc.id
+  count = var.public_subnets == null ? length(var.availability_zones) : 0
 
-  cidr_block = cidrsubnet(local.new_public_cidr_range, 3, count.index)
-
+  vpc_id            = data.aws_vpc.cluster_vpc.id
+  cidr_block        = cidrsubnet(local.new_public_cidr_range, 3, count.index)
   availability_zone = var.availability_zones[count.index]
 
   tags = merge(
@@ -52,13 +59,14 @@ resource "aws_subnet" "public_subnet" {
 }
 
 resource "aws_route_table_association" "route_net" {
-  count          = length(var.availability_zones)
-  route_table_id = aws_route_table.default.id
+  count = var.public_subnets == null ? length(var.availability_zones) : 0
+
+  route_table_id = aws_route_table.default[0].id
   subnet_id      = aws_subnet.public_subnet[count.index].id
 }
 
 resource "aws_eip" "nat_eip" {
-  count = length(var.availability_zones)
+  count = var.public_subnets == null ? length(var.availability_zones) : 0
   vpc   = true
 
   tags = merge(
@@ -75,7 +83,8 @@ resource "aws_eip" "nat_eip" {
 }
 
 resource "aws_nat_gateway" "nat_gw" {
-  count         = length(var.availability_zones)
+  count = var.public_subnets == null ? length(var.availability_zones) : 0
+
   allocation_id = aws_eip.nat_eip[count.index].id
   subnet_id     = aws_subnet.public_subnet[count.index].id
 
@@ -86,4 +95,3 @@ resource "aws_nat_gateway" "nat_gw" {
     var.tags,
   )
 }
-

@@ -1,7 +1,7 @@
 resource "aws_lb" "api_internal" {
   name                             = "${var.cluster_id}-int"
   load_balancer_type               = "network"
-  subnets                          = local.private_subnet_ids
+  subnets                          = data.aws_subnet.private.*.id
   internal                         = true
   enable_cross_zone_load_balancing = true
 
@@ -22,7 +22,7 @@ resource "aws_lb" "api_internal" {
 resource "aws_lb" "api_external" {
   name                             = "${var.cluster_id}-ext"
   load_balancer_type               = "network"
-  subnets                          = local.public_subnet_ids
+  subnets                          = data.aws_subnet.public.*.id
   internal                         = false
   enable_cross_zone_load_balancing = true
 
