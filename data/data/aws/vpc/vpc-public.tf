@@ -36,7 +36,7 @@ resource "aws_route" "igw_route" {
 }
 
 resource "aws_subnet" "public_subnet" {
-  count  = local.new_az_count
+  count  = length(var.availability_zones)
   vpc_id = data.aws_vpc.cluster_vpc.id
 
   cidr_block = cidrsubnet(local.new_public_cidr_range, 3, count.index)
@@ -52,13 +52,13 @@ resource "aws_subnet" "public_subnet" {
 }
 
 resource "aws_route_table_association" "route_net" {
-  count          = local.new_az_count
+  count          = length(var.availability_zones)
   route_table_id = aws_route_table.default.id
   subnet_id      = aws_subnet.public_subnet[count.index].id
 }
 
 resource "aws_eip" "nat_eip" {
-  count = local.new_az_count
+  count = length(var.availability_zones)
   vpc   = true
 
   tags = merge(
@@ -75,7 +75,7 @@ resource "aws_eip" "nat_eip" {
 }
 
 resource "aws_nat_gateway" "nat_gw" {
-  count         = local.new_az_count
+  count         = length(var.availability_zones)
   allocation_id = aws_eip.nat_eip[count.index].id
   subnet_id     = aws_subnet.public_subnet[count.index].id
 

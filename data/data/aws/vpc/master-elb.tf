@@ -44,7 +44,7 @@ resource "aws_lb_target_group" "api_internal" {
   name     = "${var.cluster_id}-aint"
   protocol = "TCP"
   port     = 6443
-  vpc_id   = local.vpc_id
+  vpc_id   = data.aws_vpc.cluster_vpc.id
 
   target_type = "ip"
 
@@ -69,7 +69,7 @@ resource "aws_lb_target_group" "api_external" {
   name     = "${var.cluster_id}-aext"
   protocol = "TCP"
   port     = 6443
-  vpc_id   = local.vpc_id
+  vpc_id   = data.aws_vpc.cluster_vpc.id
 
   target_type = "ip"
 
@@ -94,7 +94,7 @@ resource "aws_lb_target_group" "services" {
   name     = "${var.cluster_id}-sint"
   protocol = "TCP"
   port     = 22623
-  vpc_id   = local.vpc_id
+  vpc_id   = data.aws_vpc.cluster_vpc.id
 
   target_type = "ip"
 
