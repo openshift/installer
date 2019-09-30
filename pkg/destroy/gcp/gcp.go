@@ -92,7 +92,7 @@ func (o *ClusterUninstaller) Run() error {
 
 	o.iamSvc, err = iam.NewService(ctx, options...)
 	if err != nil {
-		return errors.Wrap(err, "failed to create compute service")
+		return errors.Wrap(err, "failed to create iam service")
 	}
 
 	o.dnsSvc, err = dns.NewService(ctx, options...)
