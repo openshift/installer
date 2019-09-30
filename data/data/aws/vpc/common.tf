@@ -3,12 +3,6 @@
 
 // Only reference data sources which are guaranteed to exist at any time (above) in this locals{} block
 locals {
-  // How many AZs to create subnets in
-  new_az_count = length(var.availability_zones)
-
-  // The VPC ID to use to build the rest of the vpc data sources
-  vpc_id = aws_vpc.new_vpc.id
-
   private_subnet_ids = aws_subnet.private_subnet.*.id
   public_subnet_ids  = aws_subnet.public_subnet.*.id
 }
@@ -17,6 +11,6 @@ locals {
 # (ie: we don't want "aws.new_vpc" and "data.aws_vpc.cluster_vpc", just "data.aws_vpc.cluster_vpc" used everwhere).
 
 data "aws_vpc" "cluster_vpc" {
-  id = local.vpc_id
+  id = aws_vpc.new_vpc.id
 }
 
