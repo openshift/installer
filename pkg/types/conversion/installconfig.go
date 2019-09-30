@@ -1,9 +1,12 @@
 package conversion
 
 import (
+	"fmt"
+
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/pkg/errors"
 )
 
 // ConvertInstallConfig is modeled after the k8s conversion schemes, which is
@@ -16,9 +19,9 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 	case types.InstallConfigVersion, "v1beta3", "v1beta4":
 		// works
 	case "":
-		return errors.Errorf("no version was provided")
+		return field.Required(field.NewPath("apiVersion"), "no version was provided")
 	default:
-		return errors.Errorf("cannot upconvert from version %s", config.APIVersion)
+		return field.Invalid(field.NewPath("apiVersion"), config.APIVersion, fmt.Sprintf("cannot upconvert from version %s", config.APIVersion))
 	}
 	ConvertNetworking(config)
 
