@@ -22,7 +22,7 @@ func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, fldPath *fi
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("iops"), p.IOPS, "Storage IOPS must be positive"))
 	}
 	if p.Size < 0 {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("size"), p.IOPS, "Storage size must be positive"))
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("size"), p.Size, "Storage size must be positive"))
 	}
 	return allErrs
 }
