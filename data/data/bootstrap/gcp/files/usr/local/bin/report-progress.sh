@@ -11,7 +11,6 @@ wait_for_existance() {
 
 echo "Waiting for bootstrap to complete..."
 wait_for_existance /opt/openshift/.bootkube.done
-wait_for_existance /opt/openshift/.openshift.done
 
 ## remove the routes setup so that we can open up the blackhole
 systemctl stop gcp-routes.service

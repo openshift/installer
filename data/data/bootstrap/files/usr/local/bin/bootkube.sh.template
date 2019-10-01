@@ -48,6 +48,13 @@ systemctl restart cri-o.service
 
 mkdir --parents ./{bootstrap-manifests,manifests}
 
+if [ ! -f openshift-manifests.done ]
+then
+	echo "Moving OpenShift manifests in with the rest of them"
+	cp openshift/* manifests/
+	touch openshift-manifests.done
+fi
+
 if [ ! -f cvo-bootstrap.done ]
 then
 	echo "Rendering Cluster Version Operator Manifests..."
