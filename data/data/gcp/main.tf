@@ -44,6 +44,8 @@ module "master" {
   root_volume_size = var.gcp_master_root_volume_size
   root_volume_type = var.gcp_master_root_volume_type
 
+  bootstrap_instances = module.bootstrap.bootstrap_instances
+
   labels = local.labels
 }
 
@@ -64,7 +66,8 @@ module "network" {
   bootstrap_lb        = var.gcp_bootstrap_enabled
   bootstrap_instances = module.bootstrap.bootstrap_instances
 
-  master_instances = module.master.master_instances
+  master_instances       = module.master.master_instances
+  master_instance_groups = module.master.master_instance_groups
 
   preexisting_network = var.gcp_preexisting_network
   cluster_network     = var.gcp_cluster_network
@@ -82,6 +85,7 @@ module "dns" {
   etcd_count           = var.master_count
   cluster_domain       = var.cluster_domain
   api_external_lb_ip   = module.network.cluster_public_ip
+  api_internal_lb_ip   = module.network.cluster_ip
 }
 
 resource "google_compute_image" "cluster" {

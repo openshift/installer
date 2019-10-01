@@ -29,6 +29,11 @@ variable "api_external_lb_ip" {
   type        = string
 }
 
+variable "api_internal_lb_ip" {
+  description = "Internal API's LB IP"
+  type        = string
+}
+
 variable "cluster_domain" {
   description = "The domain for the cluster that all DNS records must belong"
   type        = string

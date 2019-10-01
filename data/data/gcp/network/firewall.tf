@@ -22,12 +22,8 @@ resource "google_compute_firewall" "mcs" {
     ports    = ["22623"]
   }
 
-  source_ranges = var.preexisting_network ? ["0.0.0.0/0"] : [
-    var.network_cidr,
-    google_compute_address.master_nat_ip[0].address,
-    google_compute_address.worker_nat_ip[0].address
-  ]
-  target_tags = ["${var.cluster_id}-master"]
+  source_ranges = [var.network_cidr]
+  target_tags   = ["${var.cluster_id}-master"]
 }
 
 resource "google_compute_firewall" "health_checks" {

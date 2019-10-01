@@ -1,3 +1,7 @@
+output "cluster_ip" {
+  value = google_compute_forwarding_rule.api_internal.ip_address
+}
+
 output "cluster_public_ip" {
   value = google_compute_forwarding_rule.api.ip_address
 }

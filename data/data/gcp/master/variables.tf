@@ -47,3 +47,8 @@ variable "root_volume_type" {
 variable "zones" {
   type = list
 }
+
+variable "bootstrap_instances" {
+  type        = list
+  description = "A list containing the bootstrap node."
+}
