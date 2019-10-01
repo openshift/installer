@@ -67,3 +67,23 @@ resource "google_compute_instance" "master" {
     ignore_changes = [min_cpu_platform]
   }
 }
+
+resource "google_compute_instance_group" "master" {
+  count = length(var.zones)
+
+  name = "${var.cluster_id}-master-${var.zones[count.index]}"
+  #network = var.network
+  zone = var.zones[count.index]
+
+  named_port {
+    name = "ignition"
+    port = "22623"
+  }
+
+  named_port {
+    name = "https"
+    port = "6443"
+  }
+
+  instances = [for instance in concat(google_compute_instance.master.*, var.bootstrap_instances) : instance.self_link if instance.zone == var.zones[count.index]]
+}

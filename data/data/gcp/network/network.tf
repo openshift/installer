@@ -29,19 +29,12 @@ resource "google_compute_router" "router" {
   network = google_compute_network.cluster_network[0].self_link
 }
 
-resource "google_compute_address" "master_nat_ip" {
-  count = var.preexisting_network ? 0 : 1
-
-  name = "${var.cluster_id}-master-nat-ip"
-}
-
 resource "google_compute_router_nat" "master_nat" {
   count = var.preexisting_network ? 0 : 1
 
   name                               = "${var.cluster_id}-nat-master"
   router                             = google_compute_router.router[0].name
-  nat_ip_allocate_option             = "MANUAL_ONLY"
-  nat_ips                            = [google_compute_address.master_nat_ip[0].self_link]
+  nat_ip_allocate_option             = "AUTO_ONLY"
   min_ports_per_vm                   = 7168
   source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
 
@@ -51,20 +44,13 @@ resource "google_compute_router_nat" "master_nat" {
   }
 }
 
-resource "google_compute_address" "worker_nat_ip" {
-  count = var.preexisting_network ? 0 : 1
-
-  name = "${var.cluster_id}-worker-nat-ip"
-}
-
 resource "google_compute_router_nat" "worker_nat" {
   count = var.preexisting_network ? 0 : 1
 
   name                               = "${var.cluster_id}-nat-worker"
   router                             = google_compute_router.router[0].name
-  nat_ip_allocate_option             = "MANUAL_ONLY"
-  nat_ips                            = [google_compute_address.worker_nat_ip[0].self_link]
-  min_ports_per_vm                   = 128
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  min_ports_per_vm                   = 512
   source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
 
   subnetwork {

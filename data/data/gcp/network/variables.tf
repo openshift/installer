@@ -18,6 +18,11 @@ variable "master_instances" {
   description = "The master instances."
 }
 
+variable "master_instance_groups" {
+  type        = list
+  description = "The master instance groups."
+}
+
 variable "master_subnet_cidr" {
   type = string
 }
