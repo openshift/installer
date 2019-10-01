@@ -78,6 +78,21 @@ If you do not want the cluster to provision compute machines, remove the compute
 rm -f openshift/99_openshift-cluster-api_worker-machineset-*.yaml
 ```
 
+### Make control-plane nodes unschedulable
+
+Currently [emptying the compute pools](#empty-compute-pools) makes control-plane nodes schedulable.
+But due to a [Kubernetes limitation][kubernetes-service-load-balancers-exclude-masters], router pods running on control-plane nodes will not be reachable by the ingress load balancer.
+Update the scheduler configuration to keep router pods and other workloads off the control-plane nodes:
+
+```sh
+python -c '
+import yaml;
+path = "manifests/cluster-scheduler-02-config.yml"
+data = yaml.load(open(path));
+data["spec"]["mastersSchedulable"] = False;
+open(path, "w").write(yaml.dump(data, default_flow_style=False))'
+```
+
 ### Remove DNS Zones (Optional)
 
 If you don't want [the ingress operator][ingress-operator] to create DNS records on your behalf, remove the `privateZone` and `publicZone` sections from the DNS configuration.
@@ -682,4 +697,5 @@ openshift-service-catalog-controller-manager-operator   openshift-service-catalo
 
 [deploymentmanager]: https://cloud.google.com/deployment-manager/docs
 [ingress-operator]: https://github.com/openshift/cluster-ingress-operator
+[kubernetes-service-load-balancers-exclude-masters]: https://github.com/kubernetes/kubernetes/issues/65618
 [machine-api-operator]: https://github.com/openshift/machine-api-operator
