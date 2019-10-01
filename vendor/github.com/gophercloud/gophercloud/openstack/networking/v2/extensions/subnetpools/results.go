@@ -67,10 +67,10 @@ type SubnetPool struct {
 	ProjectID string `json:"project_id"`
 
 	// CreatedAt is the time at which subnetpool has been created.
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"-"`
 
 	// UpdatedAt is the time at which subnetpool has been created.
-	UpdatedAt time.Time `json:"updated_at"`
+	UpdatedAt time.Time `json:"-"`
 
 	// Prefixes is the list of subnet prefixes to assign to the subnetpool.
 	// Neutron API merges adjacent prefixes and treats them as a single prefix.
@@ -118,20 +118,83 @@ type SubnetPool struct {
 
 func (r *SubnetPool) UnmarshalJSON(b []byte) error {
 	type tmp SubnetPool
-	var s struct {
+
+	// Support for older neutron time format
+	var s1 struct {
 		tmp
 		DefaultPrefixLen interface{} `json:"default_prefixlen"`
 		MinPrefixLen     interface{} `json:"min_prefixlen"`
 		MaxPrefixLen     interface{} `json:"max_prefixlen"`
+
+		CreatedAt gophercloud.JSONRFC3339NoZ `json:"created_at"`
+		UpdatedAt gophercloud.JSONRFC3339NoZ `json:"updated_at"`
 	}
-	err := json.Unmarshal(b, &s)
+
+	err := json.Unmarshal(b, &s1)
+	if err == nil {
+		*r = SubnetPool(s1.tmp)
+
+		r.CreatedAt = time.Time(s1.CreatedAt)
+		r.UpdatedAt = time.Time(s1.UpdatedAt)
+
+		switch t := s1.DefaultPrefixLen.(type) {
+		case string:
+			if r.DefaultPrefixLen, err = strconv.Atoi(t); err != nil {
+				return err
+			}
+		case float64:
+			r.DefaultPrefixLen = int(t)
+		default:
+			return fmt.Errorf("DefaultPrefixLen has unexpected type: %T", t)
+		}
+
+		switch t := s1.MinPrefixLen.(type) {
+		case string:
+			if r.MinPrefixLen, err = strconv.Atoi(t); err != nil {
+				return err
+			}
+		case float64:
+			r.MinPrefixLen = int(t)
+		default:
+			return fmt.Errorf("MinPrefixLen has unexpected type: %T", t)
+		}
+
+		switch t := s1.MaxPrefixLen.(type) {
+		case string:
+			if r.MaxPrefixLen, err = strconv.Atoi(t); err != nil {
+				return err
+			}
+		case float64:
+			r.MaxPrefixLen = int(t)
+		default:
+			return fmt.Errorf("MaxPrefixLen has unexpected type: %T", t)
+		}
+
+		return nil
+	}
+
+	// Support for newer neutron time format
+	var s2 struct {
+		tmp
+		DefaultPrefixLen interface{} `json:"default_prefixlen"`
+		MinPrefixLen     interface{} `json:"min_prefixlen"`
+		MaxPrefixLen     interface{} `json:"max_prefixlen"`
+
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+	}
+
+	err = json.Unmarshal(b, &s2)
 	if err != nil {
 		return err
 	}
 
-	*r = SubnetPool(s.tmp)
+	*r = SubnetPool(s2.tmp)
 
-	switch t := s.DefaultPrefixLen.(type) {
+	r.CreatedAt = time.Time(s2.CreatedAt)
+	r.UpdatedAt = time.Time(s2.UpdatedAt)
+
+	switch t := s2.DefaultPrefixLen.(type) {
 	case string:
 		if r.DefaultPrefixLen, err = strconv.Atoi(t); err != nil {
 			return err
@@ -142,7 +205,7 @@ func (r *SubnetPool) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("DefaultPrefixLen has unexpected type: %T", t)
 	}
 
-	switch t := s.MinPrefixLen.(type) {
+	switch t := s2.MinPrefixLen.(type) {
 	case string:
 		if r.MinPrefixLen, err = strconv.Atoi(t); err != nil {
 			return err
@@ -153,7 +216,7 @@ func (r *SubnetPool) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("MinPrefixLen has unexpected type: %T", t)
 	}
 
-	switch t := s.MaxPrefixLen.(type) {
+	switch t := s2.MaxPrefixLen.(type) {
 	case string:
 		if r.MaxPrefixLen, err = strconv.Atoi(t); err != nil {
 			return err
