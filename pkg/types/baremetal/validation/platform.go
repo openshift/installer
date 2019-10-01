@@ -17,6 +17,13 @@ func validateIPinMachineCIDR(vip string, n *types.Networking) error {
 	return nil
 }
 
+func validateIPNotinMachineCIDR(ip string, n *types.Networking) error {
+	if n.MachineCIDR.Contains(net.ParseIP(ip)) {
+		return fmt.Errorf("the IP must not be in %s subnet", n.MachineCIDR.String())
+	}
+	return nil
+}
+
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -70,6 +77,12 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 
 	if err := validateIPinMachineCIDR(p.DNSVIP, n); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsVIP"), p.DNSVIP, err.Error()))
+	}
+	if err := validateIPNotinMachineCIDR(p.ClusterProvisioningIP, n); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningHostIP"), p.ClusterProvisioningIP, err.Error()))
+	}
+	if err := validateIPNotinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapHostIP"), p.BootstrapProvisioningIP, err.Error()))
 	}
 
 	return allErrs
