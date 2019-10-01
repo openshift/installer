@@ -108,7 +108,6 @@ type CreateOpts struct {
 	MaxRetries int `json:"max_retries" required:"true"`
 
 	// URI path that will be accessed if Monitor type is HTTP or HTTPS.
-	// Required for HTTP(S) types.
 	URLPath string `json:"url_path,omitempty"`
 
 	// The HTTP method used for requests by the Monitor. If this attribute
@@ -116,8 +115,8 @@ type CreateOpts struct {
 	HTTPMethod string `json:"http_method,omitempty"`
 
 	// Expected HTTP codes for a passing HTTP(S) Monitor. You can either specify
-	// a single status like "200", or a range like "200-202". Required for HTTP(S)
-	// types.
+	// a single status like "200", a range like "200-202", or a combination like
+	// "200-202, 401".
 	ExpectedCodes string `json:"expected_codes,omitempty"`
 
 	// TenantID is the UUID of the project who owns the Monitor.
@@ -138,24 +137,7 @@ type CreateOpts struct {
 
 // ToMonitorCreateMap builds a request body from CreateOpts.
 func (opts CreateOpts) ToMonitorCreateMap() (map[string]interface{}, error) {
-	b, err := gophercloud.BuildRequestBody(opts, "healthmonitor")
-	if err != nil {
-		return nil, err
-	}
-
-	switch opts.Type {
-	case TypeHTTP, TypeHTTPS:
-		switch opts.URLPath {
-		case "":
-			return nil, fmt.Errorf("URLPath must be provided for HTTP and HTTPS")
-		}
-		switch opts.ExpectedCodes {
-		case "":
-			return nil, fmt.Errorf("ExpectedCodes must be provided for HTTP and HTTPS")
-		}
-	}
-
-	return b, nil
+	return gophercloud.BuildRequestBody(opts, "healthmonitor")
 }
 
 /*
