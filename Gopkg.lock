@@ -336,10 +336,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1d318d726b1fe59a7719a571f28b899fd608bd8e7a7b09b88c7be6d96eea0852"
+  digest = "1:f57b7ddc21b0593c06ce50d1b32ec2fcb91617cb7ee4f94b7a04d86377b3d708"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
+    "internal",
     "openstack",
     "openstack/blockstorage/v3/volumes",
     "openstack/common/extensions",
@@ -349,6 +350,7 @@
     "openstack/identity/v2/tenants",
     "openstack/identity/v2/tokens",
     "openstack/identity/v3/tokens",
+    "openstack/imageservice/v2/images",
     "openstack/loadbalancer/v2/apiversions",
     "openstack/loadbalancer/v2/l7policies",
     "openstack/loadbalancer/v2/listeners",
@@ -1322,6 +1324,7 @@
     "github.com/gophercloud/gophercloud/openstack/compute/v2/flavors",
     "github.com/gophercloud/gophercloud/openstack/compute/v2/servers",
     "github.com/gophercloud/gophercloud/openstack/identity/v3/tokens",
+    "github.com/gophercloud/gophercloud/openstack/imageservice/v2/images",
     "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/apiversions",
     "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/loadbalancers",
     "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions",
