@@ -221,7 +221,7 @@ The `manifest-templates` target will output the unrendered manifest templates in
 
 **IMPORTANT**:
 
-- These customizations require using the `manifests` target that does not provide compatibility guarantees, for more information [check here](versioning.md#versioning).
+- These customizations require using the `manifests` target that does not provide compatibility guarantees.
 - This can affect upgradability of your cluster as the `machine-config-operator` can mark clusters tainted when user defined [MachineConfig][machine-config] objects are present in the cluster.
 
 In most cases, user applications should be run on the cluster via Kubernetes workload objects (e.g. DaemonSet, Deployment, etc). For example, DaemonSets are the most stable way to run a logging agent on all hosts. However, there may be some cases where these workloads need to be executed prior to the node joining the Kubernetes cluster. For example, a compliance mandate like "the user must run auditing tools as soon as the operating system comes up" might require a custom systemd unit for an auditing container in the Ignition config for some or all nodes.
