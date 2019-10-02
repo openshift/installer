@@ -358,10 +358,10 @@ Outputs:
     Description: Hosted zone ID for the private DNS, which is required for private records.
     Value: !Ref IntDns
   ExternalApiLoadBalancerName:
-    Description: Full name of the External API load balancer created.
+    Description: Full name of the external API load balancer.
     Value: !GetAtt ExtApiElb.LoadBalancerFullName
   InternalApiLoadBalancerName:
-    Description: Full name of the Internal API load balancer created.
+    Description: Full name of the internal API load balancer.
     Value: !GetAtt IntApiElb.LoadBalancerFullName
   ApiServerDnsName:
     Description: Full hostname of the API server, which is required for the Ignition config files.
@@ -370,11 +370,11 @@ Outputs:
     Description: Lambda ARN useful to help register or deregister IP targets for these load balancers.
     Value: !GetAtt RegisterNlbIpTargets.Arn
   ExternalApiTargetGroupArn:
-    Description: ARN of External API target group.
+    Description: ARN of the external API target group.
     Value: !Ref ExternalApiTargetGroup
   InternalApiTargetGroupArn:
-    Description: ARN of Internal API target group.
+    Description: ARN of the internal API target group.
     Value: !Ref InternalApiTargetGroup
   InternalServiceTargetGroupArn:
-    Description: ARN of internal service target group.
+    Description: ARN of the internal service target group.
     Value: !Ref InternalServiceTargetGroup
