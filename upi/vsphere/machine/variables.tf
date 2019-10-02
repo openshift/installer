@@ -62,3 +62,7 @@ variable "ip_addresses" {
 variable "memory" {
   type = "string"
 }
+
+variable "num_cpu" {
+  type = "string"
+}
