@@ -1,5 +1,5 @@
 resource "aws_route_table" "private_routes" {
-  count  = local.new_az_count
+  count  = length(var.availability_zones)
   vpc_id = data.aws_vpc.cluster_vpc.id
 
   tags = merge(
@@ -11,7 +11,7 @@ resource "aws_route_table" "private_routes" {
 }
 
 resource "aws_route" "to_nat_gw" {
-  count                  = local.new_az_count
+  count                  = length(var.availability_zones)
   route_table_id         = aws_route_table.private_routes[count.index].id
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id         = element(aws_nat_gateway.nat_gw.*.id, count.index)
@@ -23,7 +23,7 @@ resource "aws_route" "to_nat_gw" {
 }
 
 resource "aws_subnet" "private_subnet" {
-  count = local.new_az_count
+  count = length(var.availability_zones)
 
   vpc_id = data.aws_vpc.cluster_vpc.id
 
@@ -41,7 +41,7 @@ resource "aws_subnet" "private_subnet" {
 }
 
 resource "aws_route_table_association" "private_routing" {
-  count          = local.new_az_count
+  count          = length(var.availability_zones)
   route_table_id = aws_route_table.private_routes[count.index].id
   subnet_id      = aws_subnet.private_subnet[count.index].id
 }
