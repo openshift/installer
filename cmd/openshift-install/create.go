@@ -96,6 +96,9 @@ var (
 
 				err = waitForBootstrapComplete(ctx, config, rootOpts.dir)
 				if err != nil {
+					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
+						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
+					}
 					if err2 := runGatherBootstrapCmd(rootOpts.dir); err2 != nil {
 						logrus.Error("Attempted to gather debug logs after installation failure: ", err2)
 					}
@@ -110,6 +113,9 @@ var (
 
 				err = waitForInstallComplete(ctx, config, rootOpts.dir)
 				if err != nil {
+					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
+						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
+					}
 					logrus.Fatal(err)
 				}
 			},

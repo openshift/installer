@@ -46,6 +46,10 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 
 			err = waitForBootstrapComplete(ctx, config, rootOpts.dir)
 			if err != nil {
+				if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
+					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
+				}
+
 				logrus.Info("Use the following commands to gather logs from the cluster")
 				logrus.Info("openshift-install gather bootstrap --help")
 				logrus.Fatal(err)
@@ -74,6 +78,10 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 
 			err = waitForInstallComplete(ctx, config, rootOpts.dir)
 			if err != nil {
+				if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
+					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
+				}
+
 				logrus.Fatal(err)
 			}
 		},

@@ -1,15 +1,20 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	configv1 "github.com/openshift/api/config/v1"
+	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
@@ -196,4 +201,35 @@ func unSupportedPlatformGather(directory string) error {
 	}
 
 	return logGatherBootstrap(gatherBootstrapOpts.bootstrap, 22, gatherBootstrapOpts.masters, directory)
+}
+
+func logClusterOperatorConditions(ctx context.Context, config *rest.Config) error {
+	client, err := configclient.NewForConfig(config)
+	if err != nil {
+		return errors.Wrap(err, "creating a config client")
+	}
+
+	operators, err := client.ConfigV1().ClusterOperators().List(metav1.ListOptions{})
+	if err != nil {
+		return errors.Wrap(err, "listing ClusterOperator objects")
+	}
+
+	for _, operator := range operators.Items {
+		for _, condition := range operator.Status.Conditions {
+			if condition.Type == configv1.OperatorUpgradeable {
+				continue
+			} else if condition.Type == configv1.OperatorAvailable && condition.Status == configv1.ConditionTrue {
+				continue
+			} else if (condition.Type == configv1.OperatorDegraded || condition.Type == configv1.OperatorProgressing) && condition.Status == configv1.ConditionFalse {
+				continue
+			}
+			if condition.Type == configv1.OperatorDegraded {
+				logrus.Errorf("Cluster operator {} {} is {} with {}: {}", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
+			} else {
+				logrus.Infof("Cluster operator {} {} is {} with {}: {}", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
+			}
+		}
+	}
+
+	return nil
 }
