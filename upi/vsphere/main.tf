@@ -42,6 +42,7 @@ module "bootstrap" {
   ip_addresses     = ["${compact(list(var.bootstrap_ip))}"]
   machine_cidr     = "${var.machine_cidr}"
   memory           = "8192"
+  num_cpu          = "4"
 }
 
 module "control_plane" {
@@ -62,6 +63,7 @@ module "control_plane" {
   ip_addresses     = ["${var.control_plane_ips}"]
   machine_cidr     = "${var.machine_cidr}"
   memory           = "16384"
+  num_cpu          = "4"
 }
 
 module "compute" {
@@ -82,6 +84,7 @@ module "compute" {
   ip_addresses     = ["${var.compute_ips}"]
   machine_cidr     = "${var.machine_cidr}"
   memory           = "8192"
+  num_cpu          = "4"
 }
 
 module "dns" {
