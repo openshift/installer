@@ -27,12 +27,14 @@ type Platform struct {
 	// ClusterProvisioningIP is the IP on the dedicated provisioning network
 	// where the baremetal-operator pod runs provisioning services,
 	// and an http server to cache some downloaded content e.g RHCOS/IPA images
+	// Defaults to the .3 address of ProvisioningNetworkCIDR
 	// +optional
 	ClusterProvisioningIP string `json:"provisioningHostIP,omitempty"`
 
 	// BootstrapProvisioningIP is the IP used on the bootstrap VM to
 	// bring up provisioning services that are used to create the
 	// control-plane machines
+	// Defaults to the .2 address of ProvisioningNetworkCIDR
 	// +optional
 	BootstrapProvisioningIP string `json:"bootstrapProvisioningIP,omitempty"`
 
@@ -61,4 +63,27 @@ type Platform struct {
 
 	// DNSVIP is the VIP to use for internal DNS communication
 	DNSVIP string `json:"dnsVIP"`
+
+	// ProvisioningInterface is the network interface used to provision new hosts.
+	// +optional
+	ProvisioningInterface string `json:"provisioningInterface"`
+
+	// ProvisioningNetworkCIDR defines the network to use for provisioning.
+	// +optional
+	ProvisioningNetworkCIDR string `json:"provisioningNetworkCIDR"`
+
+	// ProvisioningDHCPStart is the start of the DHCP range to use to assign hosts during provisioning.
+	// Defaults to the .20 address of ProvisioningNetworkCIDR
+	// +optional
+	ProvisioningDHCPStart string `json:"provisioningDHCPStart"`
+
+	// ProvisioningDHCPEnd is the end of the DHCP range to use to assign hosts during provisioning.
+	// Defaults to the .200 address of ProvisioningNetworkCIDR
+	// +optional
+	ProvisioningDHCPEnd string `json:"provisioningDHCPEnd"`
+
+	// An HTTP server URL which contains a cached image of the RHCOS image to deploy.
+	// Defaults to http://192.168.111.1/images for VM based testing
+	// +optional
+	CachedImageURL string `json:"cachedImageURL"`
 }

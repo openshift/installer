@@ -85,5 +85,44 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapHostIP"), p.BootstrapProvisioningIP, err.Error()))
 	}
 
+	// Make sure the provisioning interface is set.  Very little we can do to validate this
+	// as it's not on this machine.
+	if p.ProvisioningInterface == "" {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningInterface"), p.ProvisioningInterface, "Baremetal provisioning interface unset."))
+	}
+
+	_, provNetwork, err := net.ParseCIDR(p.ProvisioningNetworkCIDR)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkCIDR"), p.ProvisioningNetworkCIDR, err.Error()))
+	}
+
+	if provNetwork.Contains(net.ParseIP(p.ClusterProvisioningIP)) != true {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningHostIP"), p.ClusterProvisioningIP, "IP not in provisioning network."))
+	}
+
+	if provNetwork.Contains(net.ParseIP(p.BootstrapProvisioningIP)) != true {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapHostIP"), p.BootstrapProvisioningIP, "IP not in provisioning network."))
+	}
+
+	if err := validate.IP(p.ProvisioningDHCPStart); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPStart"), p.ProvisioningDHCPStart, err.Error()))
+	}
+
+	if provNetwork.Contains(net.ParseIP(p.ProvisioningDHCPStart)) != true {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPStart"), p.ProvisioningDHCPStart, "IP not in provisioning network."))
+	}
+
+	if err := validate.IP(p.ProvisioningDHCPEnd); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPEnd"), p.ProvisioningDHCPEnd, err.Error()))
+	}
+
+	if provNetwork.Contains(net.ParseIP(p.ProvisioningDHCPEnd)) != true {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPEnd"), p.ProvisioningDHCPEnd, "IP not in provisioning network."))
+	}
+
+	if err := validate.URI(p.CachedImageURL); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("cachedImageURL"), p.CachedImageURL, err.Error()))
+	}
+
 	return allErrs
 }

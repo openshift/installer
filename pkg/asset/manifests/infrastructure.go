@@ -2,7 +2,9 @@ package manifests
 
 import (
 	"fmt"
+	"net"
 	"path/filepath"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -13,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -50,6 +53,7 @@ func (*Infrastructure) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&CloudProviderConfig{},
 		&AdditionalTrustBundleConfig{},
+		new(rhcos.Image),
 	}
 }
 
@@ -59,7 +63,8 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	cloudproviderconfig := &CloudProviderConfig{}
 	trustbundleconfig := &AdditionalTrustBundleConfig{}
-	dependencies.Get(clusterID, installConfig, cloudproviderconfig, trustbundleconfig)
+	rhcosImage := new(rhcos.Image)
+	dependencies.Get(clusterID, installConfig, cloudproviderconfig, trustbundleconfig, rhcosImage)
 
 	config := &configv1.Infrastructure{
 		TypeMeta: metav1.TypeMeta{
@@ -98,10 +103,22 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		}
 	case baremetal.Name:
 		config.Status.PlatformStatus.Type = configv1.BareMetalPlatformType
+		// The MAO expects the ProvisioiningDHCPRange in comma-separated format
+		provDHCPArr := []string{
+			installConfig.Config.Platform.BareMetal.ProvisioningDHCPStart,
+			installConfig.Config.Platform.BareMetal.ProvisioningDHCPEnd,
+		}
+		provDHCPRange := strings.Join(provDHCPArr, ",")
 		config.Status.PlatformStatus.BareMetal = &configv1.BareMetalPlatformStatus{
-			APIServerInternalIP: installConfig.Config.Platform.BareMetal.APIVIP,
-			NodeDNSIP:           installConfig.Config.Platform.BareMetal.DNSVIP,
-			IngressIP:           installConfig.Config.Platform.BareMetal.IngressVIP,
+			APIServerInternalIP:     installConfig.Config.Platform.BareMetal.APIVIP,
+			NodeDNSIP:               installConfig.Config.Platform.BareMetal.DNSVIP,
+			IngressIP:               installConfig.Config.Platform.BareMetal.IngressVIP,
+			ProvisioningInterface:   installConfig.Config.Platform.BareMetal.ProvisioningInterface,
+			ProvisioningNetworkCIDR: installConfig.Config.Platform.BareMetal.ProvisioningNetworkCIDR,
+			ProvisioningIP:          installConfig.Config.Platform.BareMetal.ClusterProvisioningIP,
+			ProvisioningDHCPRange:   provDHCPRange,
+			CachedImageURL:          installConfig.Config.Platform.BareMetal.CachedImageURL,
+			RhcosImageURL:           string(*rhcosImage),
 		}
 	case gcp.Name:
 		config.Status.PlatformStatus.Type = configv1.GCPPlatformType
