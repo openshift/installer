@@ -9,6 +9,7 @@ def GenerateConfig(context):
                 'boot': True,
                 'initializeParams': {
                     'diskSizeGb': context.properties['root_volume_size'],
+                    'diskType': 'zones/' + context.properties['zones'][0] + '/diskTypes/pd-ssd',
                     'sourceImage': context.properties['image']
                 }
             }],
@@ -42,6 +43,7 @@ def GenerateConfig(context):
                 'boot': True,
                 'initializeParams': {
                     'diskSizeGb': context.properties['root_volume_size'],
+                    'diskType': 'zones/' + context.properties['zones'][1] + '/diskTypes/pd-ssd',
                     'sourceImage': context.properties['image']
                 }
             }],
@@ -75,6 +77,7 @@ def GenerateConfig(context):
                 'boot': True,
                 'initializeParams': {
                     'diskSizeGb': context.properties['root_volume_size'],
+                    'diskType': 'zones/' + context.properties['zones'][2] + '/diskTypes/pd-ssd',
                     'sourceImage': context.properties['image']
                 }
             }],
