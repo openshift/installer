@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"strings"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -69,6 +70,46 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 
 	if err := validate.IP(p.BootstrapProvisioningIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, err.Error()))
+	}
+
+	// Make sure the provisioning interface is set.  Very little we can do to validate this
+	// as it's not on this machine.
+	if p.ProvisioningInterface == "" {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningInterface"), p.ProvisioningInterface, "Baremetal provisioning interface unset."))
+	}
+
+	// FIXME: Need to have better checking here.
+	if p.ProvisioningDHCPManagementState == "" {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningInterface"), p.ProvisioningInterface, "Baremetal provisioning interface unset."))
+	}
+
+	_, provNetwork, err := net.ParseCIDR(p.ProvisioningNetworkCIDR)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkCIDR"), p.ProvisioningNetworkCIDR, err.Error()))
+	}
+
+	ranges := strings.Split(p.ProvisioningDHCPRange, ",")
+	if len(ranges) != 2 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPRange"), p.ProvisioningDHCPRange, "DHCP Range must be two IPs separated by a comma"))
+	} else {
+		provisioningDHCPStart := ranges[0]
+		provisioningDHCPEnd := ranges[1]
+
+		if err := validate.IP(provisioningDHCPStart); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPRange"), p.ProvisioningDHCPRange, err.Error()))
+		}
+
+		if provNetwork.Contains(net.ParseIP(provisioningDHCPStart)) != true {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPRange"), p.ProvisioningDHCPRange, "First IP not in provisioning network."))
+		}
+
+		if err := validate.IP(provisioningDHCPEnd); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPRange"), p.ProvisioningDHCPRange, err.Error()))
+		}
+
+		if provNetwork.Contains(net.ParseIP(provisioningDHCPEnd)) != true {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPRange"), p.ProvisioningDHCPRange, "Second IP not in provisioning network."))
+		}
 	}
 
 	if p.Hosts == nil {

@@ -1,5 +1,9 @@
 package baremetal
 
+import (
+	operatorv1 "github.com/openshift/api/operator/v1"
+)
+
 // BMC stores the information about a baremetal host's management controller.
 type BMC struct {
 	Username string `json:"username"`
@@ -29,6 +33,25 @@ type Platform struct {
 	// and an http server to cache some downloaded content e.g RHCOS/IPA images
 	// +optional
 	ClusterProvisioningIP string `json:"provisioningHostIP,omitempty"`
+
+	// ProvisioningInterface is the network interface used to provision new hosts.
+	// +optional
+	ProvisioningInterface string `json:"provisioningInterface"`
+
+	// ProvisioningNetworkCIDR defines the network to use for provisioning.
+	// +optional
+	ProvisioningNetworkCIDR string `json:"provisioningNetworkCIDR"`
+
+	// ProvisioningDHCPOperatorStatus defines whether or not we should be running
+	// DHCP on the provisioning network or if it will be handled by an outside source
+	// +optional
+	ProvisioningDHCPManagementState operatorv1.ManagementState `json:"provisioningDHCPManagementState"`
+
+	// ProvisioningDHCPRange is a comma separated start,end of the DHCP range used to
+	// assign hosts during provisioning.
+	// Defaults to the .20 address of ProvisioningNetworkCIDR
+	// +optional
+	ProvisioningDHCPRange string `json:"provisioningDHCPRange"`
 
 	// BootstrapProvisioningIP is the IP used on the bootstrap VM to
 	// bring up provisioning services that are used to create the
