@@ -139,19 +139,16 @@ resource "azurerm_virtual_network" "cluster_vnet" {
 # copy over the vhd to cluster resource group and create an image using that
 resource "azurerm_storage_container" "vhd" {
   name                 = "vhd"
-  resource_group_name  = azurerm_resource_group.main.name
   storage_account_name = azurerm_storage_account.cluster.name
 }
 
 resource "azurerm_storage_blob" "rhcos_image" {
   name                   = "rhcos${random_string.storage_suffix.result}.vhd"
-  resource_group_name    = azurerm_resource_group.main.name
   storage_account_name   = azurerm_storage_account.cluster.name
   storage_container_name = azurerm_storage_container.vhd.name
   type                   = "block"
   source_uri             = var.azure_image_url
-  metadata               = map("source_uri", "var.azure_image_url")
-  attempts               = 2
+  metadata               = map("source_uri", var.azure_image_url)
 }
 
 resource "azurerm_image" "cluster" {
