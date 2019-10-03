@@ -25,7 +25,7 @@ Regions with a default limit of 500 GB are:
 If you must install to one of these regions and cannot install to a region with a higher quota, you will need to request a quota increase, as described in [the example below](#increasing-limits).
 
 ### Firewall Rules
-An OpenShift cluster utilizes ~10 firewall rules. Some projects may have a quota as low as 200 firewall rules, which would limit the project to a maximum of five cluster installations. You can [check the firewall quota for your project here](https://console.cloud.google.com/iam-admin/quotas?service=compute.googleapis.com&metric=Firewall%20rules&_ga=2.10895548.-966099186.1563042928).
+An OpenShift cluster utilizes ~10 firewall rules. Some projects may have a quota as low as 200 firewall rules. You can [check the firewall quota for your project here](https://console.cloud.google.com/iam-admin/quotas?service=compute.googleapis.com&metric=Firewall%20rules&_ga=2.10895548.-966099186.1563042928).
 
 ### Compute
 A standard OpenShift installation uses 24 CPUs: each machine (both control-plane and compute) is allotted 4 CPUs. 
