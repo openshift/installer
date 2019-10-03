@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -690,6 +691,11 @@ func terminateEC2InstancesByTags(ec2Client *ec2.EC2, iamClient *iam.IAM, filters
 		return nil, errors.New("EC2 client does not have region configured")
 	}
 
+	partition, ok := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), *ec2Client.Config.Region)
+	if !ok {
+		return nil, errors.Errorf("no partition found for region %q", *ec2Client.Config.Region)
+	}
+
 	terminated := map[string]struct{}{}
 	err := wait.PollImmediateInfinite(
 		time.Second*10,
@@ -720,7 +726,7 @@ func terminateEC2InstancesByTags(ec2Client *ec2.EC2, iamClient *iam.IAM, filters
 
 								instanceLogger := logger.WithField("instance", *instance.InstanceId)
 								if *instance.State.Name == "terminated" {
-									arn := fmt.Sprintf("arn:aws:ec2:%s:%s:instance/%s", *ec2Client.Config.Region, *reservation.OwnerId, *instance.InstanceId)
+									arn := fmt.Sprintf("arn:%s:ec2:%s:%s:instance/%s", partition.ID(), *ec2Client.Config.Region, *reservation.OwnerId, *instance.InstanceId)
 									if _, ok := terminated[arn]; !ok {
 										instanceLogger.Debug("Terminated")
 										terminated[arn] = exists
