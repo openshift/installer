@@ -109,7 +109,6 @@ func ConfigMasters(machines []machineapi.Machine, clusterID string) {
 	for _, machine := range machines {
 		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
 		providerSpec.TargetPools = []string{
-			fmt.Sprintf("%s-ign", clusterID),
 			fmt.Sprintf("%s-api", clusterID),
 		}
 	}
