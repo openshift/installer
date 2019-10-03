@@ -28,7 +28,7 @@ OPENSHIFT_HYPERKUBE_IMAGE=$(image_for hyperkube)
 
 CLUSTER_BOOTSTRAP_IMAGE=$(image_for cluster-bootstrap)
 
-KEEPALIVED_IMAGE=$(image_for keepalived-ipfailover)
+KEEPALIVED_IMAGE=$(image_for keepalived-ipfailover || echo "no-keepalived-image")
 COREDNS_IMAGE=$(image_for coredns)
 MDNS_PUBLISHER_IMAGE=$(image_for mdns-publisher)
 HAPROXY_IMAGE=$(image_for haproxy-router)
