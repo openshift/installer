@@ -136,16 +136,17 @@ func awsDefaultWorkerMachineType(installconfig *installconfig.InstallConfig) str
 
 // Generate generates the Worker asset.
 func (w *Worker) Generate(dependencies asset.Parents) error {
+	ctx := context.TODO()
 	clusterID := &installconfig.ClusterID{}
-	installconfig := &installconfig.InstallConfig{}
+	installConfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
 	wign := &machine.Worker{}
-	dependencies.Get(clusterID, installconfig, rhcosImage, wign)
+	dependencies.Get(clusterID, installConfig, rhcosImage, wign)
 
 	machineConfigs := []*mcfgv1.MachineConfig{}
 	machineSets := []runtime.Object{}
 	var err error
-	ic := installconfig.Config
+	ic := installConfig.Config
 	for _, pool := range ic.Compute {
 		if pool.Hyperthreading == types.HyperthreadingDisabled {
 			machineConfigs = append(machineConfigs, machineconfig.ForHyperthreadingDisabled("worker"))
@@ -155,18 +156,44 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 		switch ic.Platform.Name() {
 		case awstypes.Name:
-			mpool := defaultAWSMachinePoolPlatform()
-			mpool.InstanceType = awsDefaultWorkerMachineType(installconfig)
-			mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
-			mpool.Set(pool.Platform.AWS)
-			if len(mpool.Zones) == 0 {
-				mpool.Zones, err = installconfig.AWS.AvailabilityZones(context.TODO())
+			subnets := map[string]string{}
+			if len(ic.Platform.AWS.Subnets) > 0 {
+				subnetMeta, err := installConfig.AWS.PrivateSubnets(ctx)
 				if err != nil {
 					return err
 				}
+				for id, subnet := range subnetMeta {
+					subnets[subnet.Zone] = id
+				}
+			}
+
+			mpool := defaultAWSMachinePoolPlatform()
+			mpool.InstanceType = awsDefaultWorkerMachineType(installConfig)
+			mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.AWS)
+			if len(mpool.Zones) == 0 {
+				if len(subnets) > 0 {
+					for zone := range subnets {
+						mpool.Zones = append(mpool.Zones, zone)
+					}
+				} else {
+					mpool.Zones, err = installConfig.AWS.AvailabilityZones(ctx)
+					if err != nil {
+						return err
+					}
+				}
 			}
 			pool.Platform.AWS = &mpool
-			sets, err := aws.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+			sets, err := aws.MachineSets(
+				clusterID.InfraID,
+				installConfig.Config.Platform.AWS.Region,
+				subnets,
+				&pool,
+				string(*rhcosImage),
+				"worker",
+				"worker-user-data",
+				installConfig.Config.Platform.AWS.UserTags,
+			)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -175,7 +202,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 		case azuretypes.Name:
 			mpool := defaultAzureMachinePoolPlatform()
-			mpool.InstanceType = azuredefaults.ComputeInstanceType(installconfig.Config.Platform.Azure.Region)
+			mpool.InstanceType = azuredefaults.ComputeInstanceType(installConfig.Config.Platform.Azure.Region)
 			mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.Azure)
 			if len(mpool.Zones) == 0 {

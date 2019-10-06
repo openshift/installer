@@ -18,16 +18,11 @@ import (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, error) {
-	if configPlatform := config.Platform.Name(); configPlatform != aws.Name {
-		return nil, fmt.Errorf("non-AWS configuration: %q", configPlatform)
-	}
+func Machines(clusterID string, region string, subnets map[string]string, pool *types.MachinePool, osImage, role, userDataSecret string, userTags map[string]string) ([]machineapi.Machine, error) {
 	if poolPlatform := pool.Platform.Name(); poolPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
 	}
-	platform := config.Platform.AWS
 	mpool := pool.Platform.AWS
-	azs := mpool.Zones
 
 	total := int64(1)
 	if pool.Replicas != nil {
@@ -35,8 +30,23 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
-		azIndex := int(idx) % len(azs)
-		provider, err := provider(clusterID, platform, mpool, osImage, azIndex, role, userDataSecret)
+		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
+		subnet, ok := subnets[zone]
+		if len(subnets) > 0 && !ok {
+			return nil, errors.Errorf("no subnet for zone %s", zone)
+		}
+		provider, err := provider(
+			clusterID,
+			region,
+			subnet,
+			mpool.InstanceType,
+			&mpool.EC2RootVolume,
+			osImage,
+			zone,
+			role,
+			userDataSecret,
+			userTags,
+		)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -68,25 +78,25 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID string, platform *aws.Platform, mpool *aws.MachinePool, osImage string, azIdx int, role, userDataSecret string) (*awsprovider.AWSMachineProviderConfig, error) {
-	az := mpool.Zones[azIdx]
+func provider(clusterID string, region string, subnet string, instanceType string, root *aws.EC2RootVolume, osImage string, zone, role, userDataSecret string, userTags map[string]string) (*awsprovider.AWSMachineProviderConfig, error) {
 	amiID := osImage
-	tags, err := tagsFromUserTags(clusterID, platform.UserTags)
+	tags, err := tagsFromUserTags(clusterID, userTags)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create awsprovider.TagSpecifications from UserTags")
 	}
-	return &awsprovider.AWSMachineProviderConfig{
+
+	config := &awsprovider.AWSMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "awsproviderconfig.openshift.io/v1beta1",
 			Kind:       "AWSMachineProviderConfig",
 		},
-		InstanceType: mpool.InstanceType,
+		InstanceType: instanceType,
 		BlockDevices: []awsprovider.BlockDeviceMappingSpec{
 			{
 				EBS: &awsprovider.EBSBlockDeviceSpec{
-					VolumeType: pointer.StringPtr(mpool.Type),
-					VolumeSize: pointer.Int64Ptr(int64(mpool.Size)),
-					Iops:       pointer.Int64Ptr(int64(mpool.IOPS)),
+					VolumeType: pointer.StringPtr(root.Type),
+					VolumeSize: pointer.Int64Ptr(int64(root.Size)),
+					Iops:       pointer.Int64Ptr(int64(root.IOPS)),
 				},
 			},
 		},
@@ -95,20 +105,25 @@ func provider(clusterID string, platform *aws.Platform, mpool *aws.MachinePool, 
 		IAMInstanceProfile: &awsprovider.AWSResourceReference{ID: pointer.StringPtr(fmt.Sprintf("%s-%s-profile", clusterID, role))},
 		UserDataSecret:     &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret:  &corev1.LocalObjectReference{Name: "aws-cloud-credentials"},
-		Subnet: awsprovider.AWSResourceReference{
-			Filters: []awsprovider.Filter{{
-				Name:   "tag:Name",
-				Values: []string{fmt.Sprintf("%s-private-%s", clusterID, az)},
-			}},
-		},
-		Placement: awsprovider.Placement{Region: platform.Region, AvailabilityZone: az},
+		Placement:          awsprovider.Placement{Region: region, AvailabilityZone: zone},
 		SecurityGroups: []awsprovider.AWSResourceReference{{
 			Filters: []awsprovider.Filter{{
 				Name:   "tag:Name",
 				Values: []string{fmt.Sprintf("%s-%s-sg", clusterID, role)},
 			}},
 		}},
-	}, nil
+	}
+
+	if subnet == "" {
+		config.Subnet.Filters = []awsprovider.Filter{{
+			Name:   "tag:Name",
+			Values: []string{fmt.Sprintf("%s-private-%s", clusterID, zone)},
+		}}
+	} else {
+		config.Subnet.ID = pointer.StringPtr(subnet)
+	}
+
+	return config, nil
 }
 
 func tagsFromUserTags(clusterID string, usertags map[string]string) ([]awsprovider.TagSpecification, error) {
