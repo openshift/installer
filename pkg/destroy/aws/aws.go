@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -149,12 +150,13 @@ func (o *ClusterUninstaller) Run() error {
 		return err
 	}
 
+	tagClientStack := append([]*resourcegroupstaggingapi.ResourceGroupsTaggingAPI(nil), tagClients...)
 	err = wait.PollImmediateInfinite(
 		time.Second*10,
 		func() (done bool, err error) {
 			var loopError error
 			nextTagClients := tagClients[:0]
-			for _, tagClient := range tagClients {
+			for _, tagClient := range tagClientStack {
 				matched := false
 				for _, filter := range o.Filters {
 					o.Logger.Debugf("search for and delete matching resources by tag in %s matching %#+v", tagClientNames[tagClient], filter)
@@ -206,7 +208,7 @@ func (o *ClusterUninstaller) Run() error {
 					o.Logger.Debugf("no deletions from %s, removing client", tagClientNames[tagClient])
 				}
 			}
-			tagClients = nextTagClients
+			tagClientStack = nextTagClients
 
 			o.Logger.Debug("search for IAM roles")
 			arns, err := iamRoleSearch.arns()
@@ -247,7 +249,7 @@ func (o *ClusterUninstaller) Run() error {
 				}
 			}
 
-			return len(tagClients) == 0 && loopError == nil, nil
+			return len(tagClientStack) == 0 && loopError == nil, nil
 		},
 	)
 	if err != nil {
@@ -259,6 +261,12 @@ func (o *ClusterUninstaller) Run() error {
 		o.Logger.Debug(err)
 		return err
 	}
+
+	err = removeSharedTags(context.TODO(), tagClients, tagClientNames, o.Filters, o.Logger)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -1831,4 +1839,86 @@ func isBucketNotFound(err interface{}) bool {
 		}
 	}
 	return false
+}
+
+func removeSharedTags(ctx context.Context, tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI, tagClientNames map[*resourcegroupstaggingapi.ResourceGroupsTaggingAPI]string, filters []Filter, logger logrus.FieldLogger) error {
+	for _, filter := range filters {
+		for key, value := range filter {
+			if strings.HasPrefix(key, "kubernetes.io/cluster/") {
+				if value == "owned" {
+					if err := removeSharedTag(ctx, tagClients, tagClientNames, key, logger); err != nil {
+						return err
+					}
+				} else {
+					logger.Warnf("Ignoring non-owned cluster key %s: %s for shared-tag removal", key, value)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func removeSharedTag(ctx context.Context, tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI, tagClientNames map[*resourcegroupstaggingapi.ResourceGroupsTaggingAPI]string, key string, logger logrus.FieldLogger) error {
+	request := &resourcegroupstaggingapi.UntagResourcesInput{
+		TagKeys: []*string{aws.String(key)},
+	}
+
+	removed := map[string]struct{}{}
+	tagClients = append([]*resourcegroupstaggingapi.ResourceGroupsTaggingAPI(nil), tagClients...)
+	for len(tagClients) > 0 {
+		nextTagClients := tagClients[:0]
+		for _, tagClient := range tagClients {
+			logger.Debugf("Search for and remove tags in %s matching %s: shared", tagClientNames[tagClient], key)
+			arns := []string{}
+			err := tagClient.GetResourcesPages(
+				&resourcegroupstaggingapi.GetResourcesInput{TagFilters: []*resourcegroupstaggingapi.TagFilter{{
+					Key:    aws.String(key),
+					Values: []*string{aws.String("shared")},
+				}}},
+				func(results *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
+					for _, resource := range results.ResourceTagMappingList {
+						arn := *resource.ResourceARN
+						if _, ok := removed[arn]; !ok {
+							arns = append(arns, arn)
+						}
+					}
+
+					return !lastPage
+				},
+			)
+			if err != nil {
+				err = errors.Wrap(err, "get tagged resources")
+				logger.Info(err)
+				nextTagClients = append(nextTagClients, tagClient)
+				continue
+			}
+			if len(arns) == 0 {
+				logger.Debugf("No matches in %s for %s: shared, removing client", tagClientNames[tagClient], key)
+				continue
+			}
+			nextTagClients = append(nextTagClients, tagClient)
+
+			for i := 0; i < len(arns); i += 20 {
+				request.ResourceARNList = make([]*string, 0, 20)
+				for j := 0; i+j < len(arns) && j < 20; j++ {
+					request.ResourceARNList = append(request.ResourceARNList, aws.String(arns[i+j]))
+				}
+				_, err = tagClient.UntagResourcesWithContext(ctx, request)
+				if err != nil {
+					err = errors.Wrap(err, "untag shared resources")
+					logger.Info(err)
+					continue
+				}
+				for j := 0; i+j < len(arns) && j < 20; j++ {
+					arn := arns[i+j]
+					logger.WithField("arn", arn).Infof("Removed tag %s: shared", key)
+					removed[arn] = exists
+				}
+			}
+		}
+		tagClients = nextTagClients
+	}
+
+	return nil
 }
