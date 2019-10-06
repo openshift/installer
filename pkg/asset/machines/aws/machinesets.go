@@ -14,14 +14,10 @@ import (
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]*machineapi.MachineSet, error) {
-	if configPlatform := config.Platform.Name(); configPlatform != aws.Name {
-		return nil, fmt.Errorf("non-AWS configuration: %q", configPlatform)
-	}
+func MachineSets(clusterID string, region string, subnets map[string]string, pool *types.MachinePool, osImage, role, userDataSecret string, userTags map[string]string) ([]*machineapi.MachineSet, error) {
 	if poolPlatform := pool.Platform.Name(); poolPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
 	}
-	platform := config.Platform.AWS
 	mpool := pool.Platform.AWS
 	azs := mpool.Zones
 
@@ -31,13 +27,28 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	}
 	numOfAZs := int64(len(azs))
 	var machinesets []*machineapi.MachineSet
-	for idx, az := range azs {
+	for idx, az := range mpool.Zones {
 		replicas := int32(total / numOfAZs)
 		if int64(idx) < total%numOfAZs {
 			replicas++
 		}
 
-		provider, err := provider(clusterID, platform, mpool, osImage, idx, role, userDataSecret)
+		subnet, ok := subnets[az]
+		if len(subnets) > 0 && !ok {
+			return nil, errors.Errorf("no subnet for zone %s", az)
+		}
+		provider, err := provider(
+			clusterID,
+			region,
+			subnet,
+			mpool.InstanceType,
+			&mpool.EC2RootVolume,
+			osImage,
+			az,
+			role,
+			userDataSecret,
+			userTags,
+		)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
