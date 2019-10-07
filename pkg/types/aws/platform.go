@@ -13,6 +13,11 @@ type Platform struct {
 	// PublicZoneID specifies the ID for the public DNS Zone
 	PublicZoneID string `json:"publicZoneID"`
 
+	// Subnets specifies existing subnets (by ID) where cluster
+	// resources will be created.  Leave unset to have the installer
+	// create subnets in a new VPC on your behalf.
+	Subnets []string `json:"subnets,omitempty"`
+
 	// UserTags additional keys and values that the installer will add
 	// as tags to all resources that it creates. Resources created by the
 	// cluster itself may not include these tags.

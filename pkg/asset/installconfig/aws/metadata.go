@@ -14,13 +14,17 @@ import (
 type Metadata struct {
 	session           *session.Session
 	availabilityZones []string
+	privateSubnets    map[string]Subnet
+	publicSubnets     map[string]Subnet
 	region            string
+	subnets           []string
+	vpc               string
 	mutex             sync.Mutex
 }
 
 // NewMetadata initializes a new Metadata object.
-func NewMetadata(region string) *Metadata {
-	return &Metadata{region: region}
+func NewMetadata(region string, subnets []string) *Metadata {
+	return &Metadata{region: region, subnets: subnets}
 }
 
 // Session holds an AWS session which can be used for AWS API calls
@@ -62,4 +66,71 @@ func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
 	}
 
 	return m.availabilityZones, nil
+}
+
+// PrivateSubnets retrieves subnet metadata indexed by subnet ID, for
+// subnets that the cloud-provider logic considers to be private
+// (i.e. not public).
+func (m *Metadata) PrivateSubnets(ctx context.Context) (map[string]Subnet, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	err := m.populateSubnets(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.privateSubnets, nil
+}
+
+// PublicSubnets retrieves subnet metadata indexed by subnet ID, for
+// subnets that the cloud-provider logic considers to be public
+// (e.g. with suitable routing for hosting public load balancers).
+func (m *Metadata) PublicSubnets(ctx context.Context) (map[string]Subnet, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	err := m.populateSubnets(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.publicSubnets, nil
+}
+
+func (m *Metadata) populateSubnets(ctx context.Context) error {
+	if len(m.publicSubnets) > 0 || len(m.privateSubnets) > 0 {
+		return nil
+	}
+
+	if len(m.subnets) == 0 {
+		return errors.New("no subnets configured")
+	}
+
+	session, err := m.unlockedSession(ctx)
+	if err != nil {
+		return err
+	}
+
+	m.vpc, m.privateSubnets, m.publicSubnets, err = subnets(ctx, session, m.subnets)
+	return err
+}
+
+// VPC retrieves the VPC ID containing PublicSubnets and PrivateSubnets.
+func (m *Metadata) VPC(ctx context.Context) (string, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if m.vpc == "" {
+		if len(m.subnets) == 0 {
+			return "", errors.New("cannot calculate VPC without configured subnets")
+		}
+
+		err := m.populateSubnets(ctx)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return m.vpc, nil
 }
