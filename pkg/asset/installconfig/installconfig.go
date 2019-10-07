@@ -128,7 +128,7 @@ func (a *InstallConfig) finish(filename string) error {
 	defaults.SetInstallConfigDefaults(a.Config)
 
 	if a.Config.AWS != nil {
-		a.AWS = aws.NewMetadata(a.Config.Platform.AWS.Region)
+		a.AWS = aws.NewMetadata(a.Config.Platform.AWS.Region, a.Config.Platform.AWS.Subnets)
 	}
 
 	if err := validation.ValidateInstallConfig(a.Config, openstackvalidation.NewValidValuesFetcher()).ToAggregate(); err != nil {

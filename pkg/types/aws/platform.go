@@ -10,6 +10,11 @@ type Platform struct {
 	// Region specifies the AWS region where the cluster will be created.
 	Region string `json:"region"`
 
+	// Subnets specifies existing subnets (by ID) where cluster
+	// resources will be created.  Leave unset to have the installer
+	// create subnets in a new VPC on your behalf.
+	Subnets []string `json:"subnets,omitempty"`
+
 	// UserTags additional keys and values that the installer will add
 	// as tags to all resources that it creates. Resources created by the
 	// cluster itself may not include these tags.
