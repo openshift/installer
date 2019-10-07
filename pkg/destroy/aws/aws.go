@@ -179,11 +179,6 @@ func (o *ClusterUninstaller) Run() error {
 										continue
 									}
 
-									if parsed.Service == "ec2" && strings.HasPrefix(parsed.Resource, "network-interface/") {
-										arnLogger.Debug("skip direct tag deletion, deleting the VPC should catch this")
-										continue
-									}
-
 									err = deleteARN(awsSession, parsed, filter, arnLogger)
 									if err != nil {
 										arnLogger.Debug(err)
