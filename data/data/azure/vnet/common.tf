@@ -3,15 +3,11 @@
 
 // Only reference data sources which are guaranteed to exist at any time (above) in this locals{} block
 locals {
-  subnet_ids = azurerm_subnet.master_subnet.id
-
-  lb_fqdn = azurerm_lb.public.id
-
-  elb_backend_pool_id = azurerm_lb_backend_address_pool.master_public_lb_pool.id
-
-  internal_lb_controlplane_pool_id = azurerm_lb_backend_address_pool.internal_lb_controlplane_pool.id
-
-  public_lb_id   = azurerm_lb.public.id
-  internal_lb_id = azurerm_lb.internal.id
+  master_subnet_cidr = cidrsubnet(var.vnet_cidr, 3, 0) #master subnet is a smaller subnet within the vnet. i.e from /21 to /24
+  node_subnet_cidr   = cidrsubnet(var.vnet_cidr, 3, 1) #node subnet is a smaller subnet within the vnet. i.e from /21 to /24
 }
 
+data "azurerm_virtual_network" "cluster_vnet" {
+  name                = azurerm_virtual_network.cluster_vnet.name
+  resource_group_name = var.resource_group_name
+}
