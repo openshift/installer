@@ -127,7 +127,7 @@ resource "azurerm_storage_blob" "rhcos_image" {
   storage_container_name = azurerm_storage_container.vhd.name
   type                   = "block"
   source_uri             = var.azure_image_url
-  metadata               = map("source_uri", "var.azure_image_url")
+  metadata               = map("source_uri", var.azure_image_url)
   attempts               = 2
 }
 
