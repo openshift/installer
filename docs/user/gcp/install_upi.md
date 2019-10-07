@@ -605,7 +605,7 @@ NAME             TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)        
 router-default   LoadBalancer   172.30.18.154   35.233.157.184   80:32288/TCP,443:31215/TCP   98
 ```
 
-Then create the A record to your public and private zones.
+Then add the A record to your public and private zones.
 
 ```sh
 export ROUTER_IP=`oc -n openshift-ingress get service router-default --no-headers | awk '{print $4}'`
