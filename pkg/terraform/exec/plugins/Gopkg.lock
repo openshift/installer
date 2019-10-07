@@ -28,7 +28,7 @@
   version = "v0.4.12"
 
 [[projects]]
-  digest = "1:74ca8b7e8f86402cf38e1c5f1fdf5c85a83298abf9afa2cbbed116a6109d6947"
+  digest = "1:8021e3abefedd67a86d9653d9d0c8a3233f3f8877557b893f0a7a78dbdc6f02a"
   name = "github.com/Azure/azure-sdk-for-go"
   packages = [
     "profiles/2017-03-09/resources/mgmt/resources",
@@ -75,6 +75,7 @@
     "services/preview/signalr/mgmt/2018-03-01-preview/signalr",
     "services/preview/sql/mgmt/2015-05-01-preview/sql",
     "services/preview/sql/mgmt/2017-10-01-preview/sql",
+    "services/privatedns/mgmt/2018-09-01/privatedns",
     "services/recoveryservices/mgmt/2016-06-01/recoveryservices",
     "services/recoveryservices/mgmt/2017-07-01/backup",
     "services/redis/mgmt/2018-03-01/redis",
@@ -1184,10 +1185,22 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns",
+    "github.com/Azure/go-autorest/autorest",
+    "github.com/Azure/go-autorest/autorest/adal",
+    "github.com/Azure/go-autorest/autorest/azure",
     "github.com/dmacvicar/terraform-provider-libvirt/libvirt",
+    "github.com/hashicorp/go-azure-helpers/authentication",
     "github.com/openshift-metal3/terraform-provider-ironic/ironic",
     "github.com/terraform-providers/terraform-provider-aws/aws",
     "github.com/terraform-providers/terraform-provider-azurerm/azurerm",
+    "github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure",
+    "github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/response",
+    "github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress",
+    "github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf",
+    "github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate",
+    "github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils",
+    "github.com/terraform-providers/terraform-provider-azurerm/version",
     "github.com/terraform-providers/terraform-provider-google/google",
     "github.com/terraform-providers/terraform-provider-ignition/ignition",
     "github.com/terraform-providers/terraform-provider-local/local",
