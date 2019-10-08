@@ -32,3 +32,17 @@ variable "tags" {
   description = "AWS tags to be applied to created resources."
 }
 
+variable "vpc" {
+  type        = string
+  description = "An existing network (VPC ID) into which the cluster should be installed."
+}
+
+variable "public_subnets" {
+  type        = list(string)
+  description = "Existing public subnets into which the cluster should be installed."
+}
+
+variable "private_subnets" {
+  type        = list(string)
+  description = "Existing private subnets into which the cluster should be installed."
+}

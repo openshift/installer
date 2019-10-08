@@ -3,19 +3,19 @@ output "vpc_id" {
 }
 
 output "az_to_private_subnet_id" {
-  value = zipmap(var.availability_zones, local.private_subnet_ids)
+  value = zipmap(data.aws_subnet.private.*.availability_zone, data.aws_subnet.private.*.id)
 }
 
 output "az_to_public_subnet_id" {
-  value = zipmap(var.availability_zones, local.public_subnet_ids)
+  value = zipmap(data.aws_subnet.public.*.availability_zone, data.aws_subnet.public.*.id)
 }
 
 output "public_subnet_ids" {
-  value = local.public_subnet_ids
+  value = data.aws_subnet.public.*.id
 }
 
 output "private_subnet_ids" {
-  value = local.private_subnet_ids
+  value = data.aws_subnet.private.*.id
 }
 
 output "master_sg_id" {

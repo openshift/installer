@@ -75,9 +75,13 @@ module "dns" {
 module "vpc" {
   source = "./vpc"
 
-  cidr_block = var.machine_cidr
-  cluster_id = var.cluster_id
-  region     = var.aws_region
+  cidr_block      = var.machine_cidr
+  cluster_id      = var.cluster_id
+  region          = var.aws_region
+  vpc             = var.aws_vpc
+  public_subnets  = var.aws_public_subnets
+  private_subnets = var.aws_private_subnets
+
   availability_zones = distinct(
     concat(
       var.aws_master_availability_zones,
