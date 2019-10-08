@@ -45,6 +45,7 @@ def GenerateConfig(context):
                 'name': context.properties['infra_id'] + '-nat-master',
                 'natIpAllocateOption': 'MANUAL_ONLY',
                 'natIps': ['$(ref.' + context.properties['infra_id'] + '-master-nat-ip.selfLink)'],
+                'minPortsPerVm': 7168,
                 'sourceSubnetworkIpRangesToNat': 'LIST_OF_SUBNETWORKS',
                 'subnetworks': [{
                     'name': '$(ref.' + context.properties['infra_id'] + '-master-subnet.selfLink)',
@@ -54,6 +55,7 @@ def GenerateConfig(context):
                 'name': context.properties['infra_id'] + '-nat-worker',
                 'natIpAllocateOption': 'MANUAL_ONLY',
                 'natIps': ['$(ref.' + context.properties['infra_id'] + '-worker-nat-ip.selfLink)'],
+                'minPortsPerVm': 128,
                 'sourceSubnetworkIpRangesToNat': 'LIST_OF_SUBNETWORKS',
                 'subnetworks': [{
                     'name': '$(ref.' + context.properties['infra_id'] + '-worker-subnet.selfLink)',
