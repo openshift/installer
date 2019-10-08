@@ -53,7 +53,7 @@
         "image": "rhcos-42.80.20191002.0.vhd",
         "url": "https://rhcos.blob.core.windows.net/imagebucket/rhcos-42.80.20191002.0.vhd"
     },
-    "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.2/42.80.20191002.0/",
+    "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.2/42.80.20191002.0/TEST",
     "buildid": "42.80.20191002.0",
     "gcp": {
         "image": "rhcos-42-80-20191002-0",
