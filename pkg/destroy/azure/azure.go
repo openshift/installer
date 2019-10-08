@@ -10,6 +10,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
 	"github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns"
+	"github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
@@ -37,6 +38,8 @@ type ClusterUninstaller struct {
 	resourceGroupsClient    resources.GroupsGroupClient
 	zonesClient             dns.ZonesClient
 	recordsClient           dns.RecordSetsClient
+	privateRecordSetsClient privatedns.RecordSetsClient
+	privateZonesClient      privatedns.PrivateZonesClient
 	serviceprincipalsClient graphrbac.ServicePrincipalsClient
 	applicationsClient      graphrbac.ApplicationsClient
 }
@@ -50,6 +53,12 @@ func (o *ClusterUninstaller) configureClients() {
 
 	o.recordsClient = dns.NewRecordSetsClient(o.SubscriptionID)
 	o.recordsClient.Authorizer = o.Authorizer
+
+	o.privateZonesClient = privatedns.NewPrivateZonesClient(o.SubscriptionID)
+	o.privateZonesClient.Authorizer = o.Authorizer
+
+	o.privateRecordSetsClient = privatedns.NewRecordSetsClient(o.SubscriptionID)
+	o.privateRecordSetsClient.Authorizer = o.Authorizer
 
 	o.serviceprincipalsClient = graphrbac.NewServicePrincipalsClient(o.TenantID)
 	o.serviceprincipalsClient.Authorizer = o.GraphAuthorizer
@@ -80,7 +89,7 @@ func (o *ClusterUninstaller) Run() error {
 	o.configureClients()
 	group := o.InfraID + "-rg"
 	o.Logger.Debug("deleting public records")
-	if err := deletePublicRecords(context.TODO(), o.zonesClient, o.recordsClient, o.Logger, group); err != nil {
+	if err := deletePublicRecords(context.TODO(), o.zonesClient, o.recordsClient, o.privateZonesClient, o.privateRecordSetsClient, o.Logger, group); err != nil {
 		o.Logger.Debug(err)
 		return errors.Wrap(err, "failed to delete public DNS records")
 	}
@@ -98,7 +107,7 @@ func (o *ClusterUninstaller) Run() error {
 	return nil
 }
 
-func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, logger logrus.FieldLogger, rgName string) error {
+func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, privateDNSClient privatedns.PrivateZonesClient, privateRecordsClient privatedns.RecordSetsClient, logger logrus.FieldLogger, rgName string) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 
@@ -106,7 +115,7 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 	var errs []error
 	for zonesPage, err := dnsClient.ListByResourceGroup(ctx, rgName, to.Int32Ptr(100)); zonesPage.NotDone(); err = zonesPage.NextWithContext(ctx) {
 		if err != nil {
-			errs = append(errs, errors.Wrap(err, "failed to list private zone"))
+			errs = append(errs, errors.Wrap(err, "failed to list dns zone"))
 			continue
 		}
 		for _, zone := range zonesPage.Values() {
@@ -115,6 +124,18 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 					errs = append(errs, errors.Wrapf(err, "failed to delete public records for %s", to.String(zone.Name)))
 					continue
 				}
+			}
+		}
+	}
+	for zonesPage, err := privateDNSClient.ListByResourceGroup(ctx, rgName, to.Int32Ptr(100)); zonesPage.NotDone(); err = zonesPage.NextWithContext(ctx) {
+		if err != nil {
+			errs = append(errs, errors.Wrap(err, "failed to list private dns zone"))
+			continue
+		}
+		for _, zone := range zonesPage.Values() {
+			if err := deletePublicRecordsForPrivateZone(ctx, privateRecordsClient, dnsClient, recordsClient, logger, rgName, to.String(zone.Name)); err != nil {
+				errs = append(errs, errors.Wrapf(err, "failed to delete public records for %s", to.String(zone.Name)))
+				continue
 			}
 		}
 	}
@@ -136,6 +157,28 @@ func deletePublicRecordsForZone(ctx context.Context, dnsClient dns.ZonesClient, 
 		}
 	}
 
+	return deletePublicRecordsMatchingZoneName(ctx, dnsClient, recordsClient, logger, allPrivateRecords, zoneName)
+}
+
+func deletePublicRecordsForPrivateZone(ctx context.Context, privateRecordsClient privatedns.RecordSetsClient, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, logger logrus.FieldLogger, zoneGroup, zoneName string) error {
+	// collect all the records from the zoneName
+	allPrivateRecords := sets.NewString()
+	for recordPages, err := privateRecordsClient.List(ctx, zoneGroup, zoneName, to.Int32Ptr(100), ""); recordPages.NotDone(); err = recordPages.NextWithContext(ctx) {
+		if err != nil {
+			return err
+		}
+		for _, record := range recordPages.Values() {
+			if t := toRecordType(to.String(record.Type)); t == dns.SOA || t == dns.NS {
+				continue
+			}
+			allPrivateRecords.Insert(fmt.Sprintf("%s.%s", to.String(record.Name), zoneName))
+		}
+	}
+
+	return deletePublicRecordsMatchingZoneName(ctx, dnsClient, recordsClient, logger, allPrivateRecords, zoneName)
+}
+
+func deletePublicRecordsMatchingZoneName(ctx context.Context, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, logger logrus.FieldLogger, privateRecords sets.String, zoneName string) error {
 	sharedZones, err := getSharedDNSZones(ctx, dnsClient, zoneName)
 	if err != nil {
 		return errors.Wrapf(err, "failed to find shared zone for %s", zoneName)
@@ -147,7 +190,7 @@ func deletePublicRecordsForZone(ctx context.Context, dnsClient dns.ZonesClient, 
 				return err
 			}
 			for _, record := range recordPages.Values() {
-				if allPrivateRecords.Has(fmt.Sprintf("%s.%s", to.String(record.Name), sharedZone.Name)) {
+				if privateRecords.Has(fmt.Sprintf("%s.%s", to.String(record.Name), sharedZone.Name)) {
 					resp, err := recordsClient.Delete(ctx, sharedZone.Group, sharedZone.Name, to.String(record.Name), toRecordType(to.String(record.Type)), "")
 					if err != nil {
 						if wasNotFound(resp.Response) {

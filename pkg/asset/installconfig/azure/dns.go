@@ -62,6 +62,16 @@ func (config DNSConfig) GetDNSZoneID(rgName string, zoneName string) string {
 		zoneName)
 }
 
+//GetPrivateDNSZoneID returns the Azure Private DNS zone resourceID
+//by interpolating the subscriptionID, the resource group and the zone name
+func (config DNSConfig) GetPrivateDNSZoneID(rgName string, zoneName string) string {
+	return fmt.Sprintf(
+		"/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/privateDnsZones/%s",
+		config.Session.Credentials.SubscriptionID,
+		rgName,
+		zoneName)
+}
+
 //GetDNSZone returns a DNS zone selected by survey
 func (config DNSConfig) GetDNSZone() (*Zone, error) {
 	//call azure api using the session to retrieve available base domain
