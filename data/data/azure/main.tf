@@ -63,6 +63,7 @@ module "master" {
   subnet_id           = module.vnet.public_subnet_id
   instance_count      = var.master_count
   storage_account     = azurerm_storage_account.cluster
+  os_volume_type      = var.azure_master_root_volume_type
   os_volume_size      = var.azure_master_root_volume_size
 }
 
