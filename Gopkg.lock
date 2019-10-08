@@ -18,7 +18,7 @@
   version = "v0.4.11"
 
 [[projects]]
-  digest = "1:935d0d8d2e432e3ab8a86d095ac5cd9fb2795170c472c1ebdd4a525f13c123c1"
+  digest = "1:0e1b77a659461596e0b6ab8187c0672082452135e7d842cab03c89fe35a5b3d9"
   name = "github.com/Azure/azure-sdk-for-go"
   packages = [
     "profiles/latest/dns/mgmt/dns",
@@ -27,6 +27,7 @@
     "services/dns/mgmt/2017-10-01/dns",
     "services/graphrbac/1.6/graphrbac",
     "services/preview/dns/mgmt/2018-03-01-preview/dns",
+    "services/privatedns/mgmt/2018-09-01/privatedns",
     "services/resources/mgmt/2018-05-01/resources",
     "services/resources/mgmt/2018-06-01/subscriptions",
     "version",
@@ -1289,6 +1290,7 @@
     "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute",
     "github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac",
     "github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns",
+    "github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns",
     "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources",
     "github.com/Azure/go-autorest/autorest",
     "github.com/Azure/go-autorest/autorest/azure",
