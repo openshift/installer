@@ -36,19 +36,24 @@ EOF
 default = {}
 }
 
+variable "azure_master_root_volume_type" {
+  type        = string
+  description = "The type of the volume the root block device of master nodes."
+}
+
 variable "azure_master_root_volume_size" {
-type        = string
-description = "The size of the volume in gigabytes for the root block device of master nodes."
+  type        = string
+  description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
 variable "azure_base_domain_resource_group_name" {
-type        = string
-description = "The resource group that contains the dns zone used as base domain for the cluster."
+  type        = string
+  description = "The resource group that contains the dns zone used as base domain for the cluster."
 }
 
 variable "azure_image_url" {
-type        = string
-description = "The URL of the vm image used for all nodes."
+  type        = string
+  description = "The URL of the vm image used for all nodes."
 }
 
 variable "azure_subscription_id" {
