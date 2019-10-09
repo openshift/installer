@@ -3,10 +3,23 @@ provider "ignition" {
 }
 
 locals {
-  mask = "${element(split("/", var.machine_cidr), 1)}"
-  gw   = "${cidrhost(var.machine_cidr,1)}"
+  mask                   = "${element(split("/", var.machine_cidr), 1)}"
+  gw                     = "${cidrhost(var.machine_cidr,1)}"
+  dns_addresses_rendered = "${join("\n", formatlist("%s=%s", null_resource.generate_nm_dns_addresses.*.triggers.dns_item, var.dns_addresses))}"
 
   ignition_encoded = "data:text/plain;charset=utf-8;base64,${base64encode(var.ignition)}"
+}
+
+/* generate_nm_dns_addresses just creates
+ * DNS1 and DNS2 to be
+ * used in local dns_addresses_rendered
+ */
+resource "null_resource" "generate_nm_dns_addresses" {
+  count = "${length(var.dns_addresses)}"
+
+  triggers {
+    dns_item = "DNS${count.index + 1}"
+  }
 }
 
 data "ignition_file" "hostname" {
@@ -35,42 +48,21 @@ BOOTPROTO=none
 NAME=ens192
 DEVICE=ens192
 ONBOOT=yes
-IPADDR=${local.ip_addresses[count.index]}
+IPADDR=${var.ip_addresses[count.index]}
 PREFIX=${local.mask}
 GATEWAY=${local.gw}
 DOMAIN=${var.cluster_domain}
-DNS1=1.1.1.1
-DNS2=9.9.9.9
+${local.dns_addresses_rendered}
 EOF
   }
-}
-
-data "ignition_systemd_unit" "restart" {
-  count = "${var.instance_count}"
-
-  name = "restart.service"
-
-  content = <<EOF
-[Unit]
-ConditionFirstBoot=yes
-[Service]
-Type=idle
-ExecStart=/sbin/reboot
-[Install]
-WantedBy=multi-user.target
-EOF
 }
 
 data "ignition_config" "ign" {
   count = "${var.instance_count}"
 
   append {
-    source = "${var.ignition_url != "" ? var.ignition_url : local.ignition_encoded}"
+    source = "${local.ignition_encoded}"
   }
-
-  systemd = [
-    "${data.ignition_systemd_unit.restart.*.id[count.index]}",
-  ]
 
   files = [
     "${data.ignition_file.hostname.*.id[count.index]}",

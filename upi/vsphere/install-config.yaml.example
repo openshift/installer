@@ -1,0 +1,15 @@
+apiVersion: v1
+baseDomain: example.com
+metadata:
+  name: test-cluster
+networking:
+  machineCIDR: ""
+platform:
+  vsphere:
+    vCenter: your.vcenter.example.com
+    username: username
+    password: password
+    datacenter: datacenter
+    defaultDatastore: datastore
+pullSecret: '{"auths": ...}'
+sshKey: ssh-ed25519 AAAA...

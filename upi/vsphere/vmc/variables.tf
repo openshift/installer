@@ -1,3 +1,51 @@
+// phpIPAM variables
+
+variable "ipam" {
+  type        = "string"
+  description = "The IPAM server to use for IP management."
+  default     = ""
+}
+
+variable "ipam_token" {
+  type        = "string"
+  description = "The IPAM token to use for requests."
+  default     = ""
+}
+
+// AWS-Specific variables
+
+variable "aws_region" {
+  type        = "string"
+  description = "The target AWS region for the cluster."
+}
+
+variable "aws_control_plane_availability_zones" {
+  type        = "list"
+  description = "The availability zones in which to create the control plane. The length of this list must match control_plane_count."
+}
+
+variable "aws_compute_availability_zones" {
+  type        = "list"
+  description = "The availability zones to provision for computes.  Compute instances are created by the machine-API operator, but this variable controls their supporting infrastructure (subnets, routing, etc.)."
+}
+
+variable "vpc_id" {
+  type = "string"
+}
+
+variable "aws_public_subnet_id" {
+  type = "list"
+}
+
+variable "aws_private_subnet_id" {
+  type = "list"
+}
+
+// TODO: this might need to be a list...but may not work right with vsphere on aws
+variable "aws_availability_zone" {
+  type = "string"
+}
+
 //////
 // vSphere variables
 //////
@@ -43,18 +91,6 @@ variable "vm_network" {
   default     = "VM Network"
 }
 
-variable "ipam" {
-  type        = "string"
-  description = "The IPAM server to use for IP management."
-  default     = ""
-}
-
-variable "ipam_token" {
-  type        = "string"
-  description = "The IPAM token to use for requests."
-  default     = ""
-}
-
 /////////
 // OpenShift cluster variables
 /////////
@@ -82,52 +118,57 @@ variable "machine_cidr" {
 // Bootstrap machine variables
 /////////
 
+variable "bootstrap_ignition_path" {
+  type = "string"
+}
+
 variable "bootstrap_complete" {
   type    = "string"
   default = "false"
 }
 
-variable "bootstrap_ignition_url" {
-  type = "string"
-}
-
-variable "bootstrap_ip" {
+variable "bootstrap_ip_address" {
   type    = "string"
   default = ""
 }
 
 ///////////
-// Control Plane machine variables
+// control plane machine variables
 ///////////
+
+variable "control_plane_ignition_path" {
+  type = "string"
+}
 
 variable "control_plane_count" {
   type    = "string"
   default = "3"
 }
 
-variable "control_plane_ignition" {
-  type = "string"
-}
-
-variable "control_plane_ips" {
+variable "control_plane_ip_addresses" {
   type    = "list"
   default = []
 }
 
 //////////
-// Compute machine variables
+// compute machine variables
 //////////
+
+variable "compute_ignition_path" {
+  type = "string"
+}
 
 variable "compute_count" {
   type    = "string"
   default = "3"
 }
 
-variable "compute_ignition" {
-  type = "string"
-}
-
-variable "compute_ips" {
+variable "compute_ip_addresses" {
   type    = "list"
   default = []
+}
+
+variable "vm_dns_addresses" {
+  type    = "list"
+  default = ["1.1.1.1", "9.9.9.9"]
 }

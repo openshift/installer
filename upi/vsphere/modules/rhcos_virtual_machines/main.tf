@@ -28,8 +28,8 @@ module "bootstrap" {
   source = "./machine"
 
   name             = "bootstrap"
-  instance_count   = "${var.bootstrap_complete ? 0 : 1}"
-  ignition_url     = "${var.bootstrap_ignition_url}"
+  instance_count   = "${var.bootstrap_count}"
+  ignition         = "${file("${var.bootstrap_ignition_path}")}"
   resource_pool_id = "${module.resource_pool.pool_id}"
   datastore        = "${var.vsphere_datastore}"
   folder           = "${module.folder.path}"
@@ -37,20 +37,19 @@ module "bootstrap" {
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
   cluster_domain   = "${var.cluster_domain}"
-  ipam             = "${var.ipam}"
-  ipam_token       = "${var.ipam_token}"
-  ip_addresses     = ["${compact(list(var.bootstrap_ip))}"]
+  ip_addresses     = ["${compact(list(var.bootstrap_ip_address))}"]
   machine_cidr     = "${var.machine_cidr}"
   memory           = "8192"
   num_cpu          = "4"
+  dns_addresses    = "${var.vm_dns_addresses}"
 }
 
-module "control_plane" {
+module "control-plane" {
   source = "./machine"
 
-  name             = "control-plane"
+  name             = "controlplane"
   instance_count   = "${var.control_plane_count}"
-  ignition         = "${var.control_plane_ignition}"
+  ignition         = "${file("${var.control_plane_ignition_path}")}"
   resource_pool_id = "${module.resource_pool.pool_id}"
   folder           = "${module.folder.path}"
   datastore        = "${var.vsphere_datastore}"
@@ -58,12 +57,11 @@ module "control_plane" {
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
   cluster_domain   = "${var.cluster_domain}"
-  ipam             = "${var.ipam}"
-  ipam_token       = "${var.ipam_token}"
-  ip_addresses     = ["${var.control_plane_ips}"]
+  ip_addresses     = "${var.control_plane_ip_addresses}"
   machine_cidr     = "${var.machine_cidr}"
   memory           = "16384"
   num_cpu          = "4"
+  dns_addresses    = "${var.vm_dns_addresses}"
 }
 
 module "compute" {
@@ -71,7 +69,7 @@ module "compute" {
 
   name             = "compute"
   instance_count   = "${var.compute_count}"
-  ignition         = "${var.compute_ignition}"
+  ignition         = "${file("${var.compute_ignition_path}")}"
   resource_pool_id = "${module.resource_pool.pool_id}"
   folder           = "${module.folder.path}"
   datastore        = "${var.vsphere_datastore}"
@@ -79,23 +77,9 @@ module "compute" {
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
   cluster_domain   = "${var.cluster_domain}"
-  ipam             = "${var.ipam}"
-  ipam_token       = "${var.ipam_token}"
-  ip_addresses     = ["${var.compute_ips}"]
+  ip_addresses     = "${var.compute_ip_addresses}"
   machine_cidr     = "${var.machine_cidr}"
   memory           = "8192"
   num_cpu          = "4"
-}
-
-module "dns" {
-  source = "./route53"
-
-  base_domain         = "${var.base_domain}"
-  cluster_domain      = "${var.cluster_domain}"
-  bootstrap_count     = "${var.bootstrap_complete ? 0 : 1}"
-  bootstrap_ips       = ["${module.bootstrap.ip_addresses}"]
-  control_plane_count = "${var.control_plane_count}"
-  control_plane_ips   = ["${module.control_plane.ip_addresses}"]
-  compute_count       = "${var.compute_count}"
-  compute_ips         = ["${module.compute.ip_addresses}"]
+  dns_addresses    = "${var.vm_dns_addresses}"
 }

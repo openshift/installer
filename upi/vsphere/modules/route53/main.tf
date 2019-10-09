@@ -25,7 +25,7 @@ resource "aws_route53_record" "api-external" {
   zone_id        = "${aws_route53_zone.cluster.zone_id}"
   name           = "api.${var.cluster_domain}"
   set_identifier = "api"
-  records        = ["${concat(var.bootstrap_ips, var.control_plane_ips)}"]
+  records        = ["${concat(var.bootstrap_ip_addresses, var.control_plane_ip_addresses)}"]
 
   weighted_routing_policy {
     weight = 90
@@ -38,7 +38,7 @@ resource "aws_route53_record" "api-internal" {
   zone_id        = "${aws_route53_zone.cluster.zone_id}"
   name           = "api-int.${var.cluster_domain}"
   set_identifier = "api"
-  records        = ["${concat(var.bootstrap_ips, var.control_plane_ips)}"]
+  records        = ["${concat(var.bootstrap_ip_addresses, var.control_plane_ip_addresses)}"]
 
   weighted_routing_policy {
     weight = 90
@@ -52,7 +52,7 @@ resource "aws_route53_record" "etcd_a_nodes" {
   ttl     = "60"
   zone_id = "${aws_route53_zone.cluster.zone_id}"
   name    = "etcd-${count.index}.${var.cluster_domain}"
-  records = ["${element(var.control_plane_ips, count.index)}"]
+  records = ["${element(var.control_plane_ip_addresses, count.index)}"]
 }
 
 resource "aws_route53_record" "etcd_cluster" {
@@ -68,7 +68,7 @@ resource "aws_route53_record" "ingress" {
   ttl     = "60"
   zone_id = "${aws_route53_zone.cluster.zone_id}"
   name    = "*.apps.${var.cluster_domain}"
-  records = ["${var.compute_ips}"]
+  records = ["${var.compute_ip_addresses}"]
 }
 
 resource "aws_route53_record" "control_plane_nodes" {
@@ -77,8 +77,8 @@ resource "aws_route53_record" "control_plane_nodes" {
   type    = "A"
   ttl     = "60"
   zone_id = "${aws_route53_zone.cluster.zone_id}"
-  name    = "control-plane-${count.index}.${var.cluster_domain}"
-  records = ["${element(var.control_plane_ips, count.index)}"]
+  name    = "controlplane-${count.index}.${var.cluster_domain}"
+  records = ["${element(var.control_plane_ip_addresses, count.index)}"]
 }
 
 resource "aws_route53_record" "compute_nodes" {
@@ -88,5 +88,5 @@ resource "aws_route53_record" "compute_nodes" {
   ttl     = "60"
   zone_id = "${aws_route53_zone.cluster.zone_id}"
   name    = "compute-${count.index}.${var.cluster_domain}"
-  records = ["${element(var.compute_ips, count.index)}"]
+  records = ["${element(var.compute_ip_addresses, count.index)}"]
 }

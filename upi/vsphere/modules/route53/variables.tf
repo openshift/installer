@@ -12,7 +12,7 @@ variable "bootstrap_count" {
   type = "string"
 }
 
-variable "bootstrap_ips" {
+variable "bootstrap_ip_addresses" {
   type = "list"
 }
 
@@ -20,7 +20,7 @@ variable "control_plane_count" {
   type = "string"
 }
 
-variable "control_plane_ips" {
+variable "control_plane_ip_addresses" {
   type = "list"
 }
 
@@ -28,6 +28,6 @@ variable "compute_count" {
   type = "string"
 }
 
-variable "compute_ips" {
+variable "compute_ip_addresses" {
   type = "list"
 }

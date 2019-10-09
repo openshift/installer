@@ -1,0 +1,106 @@
+// AWS-specific (infrastructure)
+// The terraform within ./aws/ was modified from AWS IPI
+// Using AWS ELB(s) in network mode (in replacement of a onsite enterprise LB)
+// Using Route53 for external / internal DNS (in replacement of an internal [and potentially external] DNS records)
+// *****************************************************************************************
+
+// VPC ID
+vpc_id = "vpc-0b5912f3db15f56f3"
+
+// AWS Region
+aws_region = "us-west-2"
+
+// AWS availability zone
+// This should be a list unsure of VMware on AWS supports this
+aws_availability_zone = "us-west-2a"
+aws_control_plane_availability_zones = ["us-west-2a"]
+aws_compute_availability_zones = ["us-west-2a"]
+
+// AWS public and private subnets
+// Make sure the public has IGW
+// Both public and private subnets _MUST_ contain a routing table entry
+// for vSphere/NSX subnet
+aws_public_subnet_id = ["subnet-011c2a9515cdc7ef7"]
+aws_private_subnet_id = ["subnet-05a236c1d9af24452"]
+
+// vSphere-Specific
+// The terraform within ./vmware can be used independently to rollout RHCOS
+// nodes for a OpenShift cluster deployment.
+// *****************************************************************************************
+
+// Name of the vSphere server. The dev cluster is on "vcsa.vmware.devcluster.openshift.com".
+vsphere_server = "vcsa.vmware.devcluster.openshift.com"
+
+// User on the vSphere server.
+vsphere_user = "YOUR_USER"
+
+// Password of the user on the vSphere server.
+vsphere_password = "YOUR_PASSWORD"
+
+// Name of the vSphere cluster. The dev cluster is "devel".
+vsphere_cluster = "devel"
+
+// Name of the vSphere data center. The dev cluster is "dc1".
+vsphere_datacenter = "dc1"
+
+// Name of the vSphere data store to use for the VMs. The dev cluster uses "nvme-ds1".
+vsphere_datastore = "nvme-ds1"
+
+// Name of the VM template to clone to create VMs for the cluster. The dev cluster has a template named "rhcos-latest".
+vm_template = "rhcos-latest"
+
+// vm_dns_addresses = ["",""]
+
+// Path to the bootstrap ignition file
+bootstrap_ignition_path = "./bootstrap.ign"
+
+// Path to the control plane ignition file
+control_plane_ignition_path = "./master.ign"
+
+// Path to the compute/compute ignition file
+compute_ignition_path = "./compute.ign"
+
+// AWS / vSphere shared variables
+// *****************************************************************************************
+
+// ID identifying the cluster to create. Use your username so that resources created can be tracked back to you.
+cluster_id = "example-cluster"
+
+// Domain of the cluster. This should be "${cluster_id}.${base_domain}".
+cluster_domain = "example-cluster.devcluster.openshift.com"
+
+// Base domain from which the cluster domain is a subdomain.
+base_domain = "devcluster.openshift.com"
+
+// The machine_cidr where IP addresses will be assigned for cluster nodes.
+// Additionally, IPAM will assign IPs based on the network ID.
+machine_cidr = "10.0.0.0/24"
+
+// The number of control plane VMs to create. Default is 3.
+control_plane_count = 3
+
+// The number of compute VMs to create. Default is 3.
+compute_count = 3
+
+// Set ipam and ipam_token if you want to use the IPAM server to reserve IP
+// addresses for the VMs.
+
+// Address or hostname of the IPAM server from which to reserve IP addresses for the cluster machines.
+// ipam = "139.178.89.254"
+
+// Token to use to authenticate with the IPAM server.
+// ipam_token = "TOKEN_FOR_THE_IPAM_SERVER"
+
+// Set bootstrap_ip, control_plane_ip, and compute_ip if you want to use static
+// IPs reserved someone else, rather than the IPAM server.
+
+// The IP address to assign to the bootstrap VM.
+bootstrap_ip_address = "192.168.1.100"
+
+// The IP addresses to assign to the control plane VMs. The length of this list
+// must match the value of control_plane_count.
+control_plane_ip_addresses = ["192.168.1.101", "192.168.1.102", "192.168.1.103"]
+
+// The IP addresses to assign to the compute VMs. The length of this list must
+// match the value of compute_count.
+compute_ip_addresses = ["192.168.1.104", "192.168.1.105", "192.168.1.106"]

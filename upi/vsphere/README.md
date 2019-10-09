@@ -1,59 +1,47 @@
-# Pre-Requisites
+# Installing OpenShift on VMware
 
-* terraform
-* jq
+The Terraform examples provided require a AWS account.  AWS is used
+for its API interface to network load balancing and DNS.
+The `./modules/rhcos_virtual_machines` can be used independently if so desired.
 
-# Build a Cluster
+We will begin with using `openshift-install` as each Terraform example
+starts with creating the Ignition files.
 
-1. Create an install-config.yaml.
-The machine CIDR for the dev cluster is 139.178.89.192/26.
+## Create Ignition Configs
 
-```
-apiVersion: v1
-baseDomain: devcluster.openshift.com
-metadata:
-  name: mstaeble
-networking:
-  machineCIDR: "139.178.89.192/26"
-platform:
-  vsphere:
-    vCenter: vcsa.vmware.devcluster.openshift.com
-    username: YOUR_VSPHERE_USER
-    password: YOUR_VSPHERE_PASSWORD
-    datacenter: dc1
-    defaultDatastore: nvme-ds1
-pullSecret: YOUR_PULL_SECRET
-sshKey: YOUR_SSH_KEY
+You can create a `install-config.yaml` file by copying the example provided:
+
+```sh
+cd upi/vsphere/
+cp install-config.yaml.example install-config.yaml
 ```
 
-2. Run `openshift-install create ignition-configs`.
+All of the following variables must be configured:
+* baseDomain
+* metadata.name
+* networking.machineCIDR
+* platform.vsphere.vCenter
+* platform.vsphere.username
+* platform.vsphere.password
+* platform.vsphere.datacenter
+* platform.vsphere.defaultDatastore
+* pullSecret
+* sshKey
 
-3. Fill out a terraform.tfvars file with the ignition configs generated.
-There is an example terraform.tfvars file in this directory named terraform.tfvars.example. The example file is set up for use with the dev cluster running at vcsa.vmware.devcluster.openshift.com. At a minimum, you need to set values for the following variables.
-* cluster_id
-* cluster_domain
-* vsphere_user
-* vsphere_password
-* ipam_token
-* bootstrap_ignition_url
-* control_plane_ignition
-* compute_ignition
-The bootstrap ignition config must be placed in a location that will be accessible by the bootstrap machine. For example, you could store the bootstrap ignition config in a gist.
+**NOTE**: Keep track of the `baseDomain`, `metadata.name`, `networking.machineCIDR` values.
+They **must** match the values within `terraform.tfvars`.
 
-4. Run `terraform init`.
+Once configured please run:
 
-5. Ensure that you have you AWS profile set and a region specified. The installation will use create AWS route53 resources for routing to the OpenShift cluster.
+```sh
+openshift-install create ignition-configs
+```
 
-6. Run `terraform apply -auto-approve`.
-This will reserve IP addresses for the VMs.
+This will generate the Ignition files: `bootstrap.ign`, `master.ign` and
+`compute.ign` that you will use in the Terraform examples below.
 
-7. Run `openshift-install wait-for bootstrap-complete`. Wait for the bootstrapping to complete.
+## VMware Cloud on AWS Example
+Please review the [README](./vmc/README.md)
 
-8. Run `terraform apply -auto-approve -var 'bootstrap_complete=true'`.
-This will destroy the bootstrap VM.
-
-9. Run `openshift-install wait-for install-complete`. Wait for the cluster install to finish.
-
-10. Enjoy your new OpenShift cluster.
-
-11. Run `terraform destroy -auto-approve`.
+## Packet w/Route53 Example
+Please review the [README](./packet/README.md)
