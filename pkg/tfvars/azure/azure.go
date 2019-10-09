@@ -23,7 +23,8 @@ type config struct {
 	BootstrapInstanceType       string            `json:"azure_bootstrap_vm_type,omitempty"`
 	MasterInstanceType          string            `json:"azure_master_vm_type,omitempty"`
 	MasterAvailabilityZones     []string          `json:"azure_master_availability_zones"`
-	VolumeSize                  int32             `json:"azure_master_root_volume_size,omitempty"`
+	VolumeType                  string            `json:"azure_master_root_volume_type"`
+	VolumeSize                  int32             `json:"azure_master_root_volume_size"`
 	ImageURL                    string            `json:"azure_image_url,omitempty"`
 	Region                      string            `json:"azure_region,omitempty"`
 	BaseDomainResourceGroupName string            `json:"azure_base_domain_resource_group_name,omitempty"`
@@ -46,6 +47,7 @@ func TFVars(auth Auth, baseDomainResourceGroupName string, imageURL string, mast
 		BootstrapInstanceType:       defaults.BootstrapInstanceType(region),
 		MasterInstanceType:          masterConfig.VMSize,
 		MasterAvailabilityZones:     masterAvailabilityZones,
+		VolumeType:                  masterConfig.OSDisk.ManagedDisk.StorageAccountType,
 		VolumeSize:                  masterConfig.OSDisk.DiskSizeGB,
 		ImageURL:                    imageURL,
 	}
