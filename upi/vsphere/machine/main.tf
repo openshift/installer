@@ -41,11 +41,8 @@ resource "vsphere_virtual_machine" "vm" {
   clone {
     template_uuid = "${data.vsphere_virtual_machine.template.id}"
   }
-
-  vapp {
-    properties {
+  extra_config {
       "guestinfo.ignition.config.data"          = "${base64encode(data.ignition_config.ign.*.rendered[count.index])}"
       "guestinfo.ignition.config.data.encoding" = "base64"
-    }
   }
 }

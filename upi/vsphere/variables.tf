@@ -87,10 +87,6 @@ variable "bootstrap_complete" {
   default = "false"
 }
 
-variable "bootstrap_ignition_url" {
-  type = "string"
-}
-
 variable "bootstrap_ip" {
   type    = "string"
   default = ""
@@ -105,10 +101,6 @@ variable "control_plane_count" {
   default = "3"
 }
 
-variable "control_plane_ignition" {
-  type = "string"
-}
-
 variable "control_plane_ips" {
   type    = "list"
   default = []
@@ -121,10 +113,6 @@ variable "control_plane_ips" {
 variable "compute_count" {
   type    = "string"
   default = "3"
-}
-
-variable "compute_ignition" {
-  type = "string"
 }
 
 variable "compute_ips" {

@@ -29,7 +29,7 @@ module "bootstrap" {
 
   name             = "bootstrap"
   instance_count   = "${var.bootstrap_complete ? 0 : 1}"
-  ignition_url     = "${var.bootstrap_ignition_url}"
+  ignition         = "${file("${path.module}/ignition/bootstrap.ign")}"
   resource_pool_id = "${module.resource_pool.pool_id}"
   datastore        = "${var.vsphere_datastore}"
   folder           = "${module.folder.path}"
@@ -50,7 +50,7 @@ module "control_plane" {
 
   name             = "control-plane"
   instance_count   = "${var.control_plane_count}"
-  ignition         = "${var.control_plane_ignition}"
+  ignition         = "${file("${path.module}/ignition/master.ign")}"
   resource_pool_id = "${module.resource_pool.pool_id}"
   folder           = "${module.folder.path}"
   datastore        = "${var.vsphere_datastore}"
@@ -71,7 +71,7 @@ module "compute" {
 
   name             = "compute"
   instance_count   = "${var.compute_count}"
-  ignition         = "${var.compute_ignition}"
+  ignition         = "${file("${path.module}/ignition/worker.ign")}"
   resource_pool_id = "${module.resource_pool.pool_id}"
   folder           = "${module.folder.path}"
   datastore        = "${var.vsphere_datastore}"
