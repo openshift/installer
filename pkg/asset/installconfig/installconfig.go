@@ -1,14 +1,17 @@
 package installconfig
 
 import (
+	"context"
 	"os"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig/aws"
+	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/conversion"
 	"github.com/openshift/installer/pkg/types/defaults"
@@ -135,6 +138,10 @@ func (a *InstallConfig) finish(filename string) error {
 		return errors.Wrapf(err, "invalid %q file", filename)
 	}
 
+	if err := a.platformValidation(); err != nil {
+		return err
+	}
+
 	data, err := yaml.Marshal(a.Config)
 	if err != nil {
 		return errors.Wrap(err, "failed to Marshal InstallConfig")
@@ -144,4 +151,15 @@ func (a *InstallConfig) finish(filename string) error {
 		Data:     data,
 	}
 	return nil
+}
+
+func (a *InstallConfig) platformValidation() error {
+	if a.Config.Platform.GCP != nil {
+		client, err := icgcp.NewClient(context.TODO())
+		if err != nil {
+			return err
+		}
+		return icgcp.Validate(client, a.Config)
+	}
+	return field.ErrorList{}.ToAggregate()
 }
