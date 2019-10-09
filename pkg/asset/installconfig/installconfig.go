@@ -6,8 +6,10 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/asset"
+	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/conversion"
 	"github.com/openshift/installer/pkg/types/defaults"
@@ -83,6 +85,10 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		return errors.Wrap(err, "invalid install config")
 	}
 
+	if err := a.platformValidation().ToAggregate(); err != nil {
+		return errors.Wrap(err, "invalid install config")
+	}
+
 	data, err := yaml.Marshal(a.Config)
 	if err != nil {
 		return errors.Wrap(err, "failed to Marshal InstallConfig")
@@ -136,6 +142,10 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 		return false, errors.Wrapf(err, "invalid %q file", installConfigFilename)
 	}
 
+	if err := a.platformValidation().ToAggregate(); err != nil {
+		return false, errors.Wrap(err, "invalid install config")
+	}
+
 	data, err := yaml.Marshal(a.Config)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to Marshal InstallConfig")
@@ -157,4 +167,15 @@ func (a *InstallConfig) setDefaults() error {
 // the current version, relocating deprecated fields.
 func (a *InstallConfig) convert() error {
 	return conversion.ConvertInstallConfig(a.Config)
+}
+
+func (a *InstallConfig) platformValidation() field.ErrorList {
+	if a.Config.Platform.GCP != nil {
+		validator := icgcp.Validator{
+			Client:        &icgcp.Client{},
+			InstallConfig: a.Config,
+		}
+		return validator.Validate()
+	}
+	return field.ErrorList{}
 }
