@@ -22,9 +22,9 @@
     <ns0:polygon points="1238.82,-52.764 1243.75,-42.7309 1238.77,-45.2641 1233.75,-42.7975 " style="fill: #8b00ff" />
     <ns0:polygon points="1238.82,-52.764 1243.75,-42.7309 1238.77,-45.2641 1233.75,-42.7975 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #8b00ff" />
   </ns0:g>
-  <ns0:use height="40" width="40" x="1218.83" y="242" ns1:href="#Amazon-VPC_Endpoints_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1275.43" y="259">
-    <ns0:tspan x="1275.43" y="259">S3 VPC</ns0:tspan>
-    <ns0:tspan x="1275.43" y="275">Endpoint</ns0:tspan>
+  <ns0:use height="40" width="40" x="1218.83" y="242" ns1:href="#Amazon-VPC_Endpoints_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1303.43" y="258">
+    <ns0:tspan x="1303.43" y="258">S3 VPC</ns0:tspan>
+    <ns0:tspan x="1303.43" y="274">Endpoint</ns0:tspan>
   </ns0:text>
   <ns0:use height="40" width="40" x="1218.43" y="150.2" ns1:href="#Amazon-VPC_Router_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1275.43" y="172.2">
     <ns0:tspan x="1275.43" y="172.2">Route Table</ns0:tspan>
@@ -44,6 +44,10 @@
   </ns0:text>
   <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1275.33" y="505.5">
     <ns0:tspan x="1275.33" y="505.5">10.0.0.0/16</ns0:tspan>
+  </ns0:text>
+  <ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1295.5" y="318">
+    <ns0:tspan x="1295.5" y="318">ELB VPC</ns0:tspan>
+    <ns0:tspan x="1295.5" y="334">Endpoint</ns0:tspan>
   </ns0:text>
   <ns0:use height="42.3" width="42.3" x="8.1" y="276.7" ns1:href="#Amazon-Route-53.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="30.1" y="334.6">
     <ns0:tspan x="30.1" y="334.6">Private</ns0:tspan>
@@ -326,5 +330,13 @@
     <ns0:polyline points="266.984,426.216 265.834,426.216 265.834,497 83.834,497 83.834,400.386 -38.9018,400.386 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 20; stroke: #a52a2a" />
     <ns0:polygon points="-46.4018,400.386 -36.4018,395.386 -38.9018,400.386 -36.4018,405.386 " style="fill: #a52a2a" />
     <ns0:polygon points="-46.4018,400.386 -36.4018,395.386 -38.9018,400.386 -36.4018,405.386 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #a52a2a" />
+  </ns0:g>
+  <ns0:use height="40" width="40" x="1417.13" y="317.1" ns1:href="#Elastic-Load-Balancing-ELB_light-bg.svg" /><ns0:text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1364" y="376">
+    <ns0:tspan x="1364" y="376">Elastic Load Balancing</ns0:tspan>
+  </ns0:text>
+  <ns0:g>
+    <ns0:line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x1="1261" x2="1408.27" y1="266" y2="333.065" />
+    <ns0:polygon points="1415.1,336.173 1403.92,336.579 1408.27,333.065 1408.07,327.479 " style="fill: #000000" />
+    <ns0:polygon points="1415.1,336.173 1403.92,336.579 1408.27,333.065 1408.07,327.479 " style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" />
   </ns0:g>
 </ns0:svg>
