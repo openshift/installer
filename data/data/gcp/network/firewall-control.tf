@@ -45,7 +45,7 @@ resource "google_compute_firewall" "master_ingress_from_health_checks" {
     ports    = ["6080", "22624"]
   }
 
-  source_ranges = ["35.191.0.0/16", "130.211.0.0/22"]
+  source_ranges = ["35.191.0.0/16", "209.85.152.0/22", "209.85.204.0/22"]
   target_tags   = ["${var.cluster_id}-master"]
 }
 
