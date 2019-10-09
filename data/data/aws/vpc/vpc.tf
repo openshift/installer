@@ -18,6 +18,17 @@ resource "aws_vpc" "new_vpc" {
   )
 }
 
+resource "aws_vpc_endpoint" "elasticloadbalancing" {
+  count = var.vpc == null ? 1 : 0
+
+  vpc_id       = data.aws_vpc.cluster_vpc.id
+  service_name = "com.amazonaws.${var.region}.elasticloadbalancing"
+  route_table_ids = concat(
+    aws_route_table.private_routes.*.id,
+    aws_route_table.default.*.id,
+  )
+}
+
 resource "aws_vpc_endpoint" "s3" {
   count = var.vpc == null ? 1 : 0
 
