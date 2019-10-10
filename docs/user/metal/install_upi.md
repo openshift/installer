@@ -240,7 +240,7 @@ Refer to the pre-requisites for using the example [here][upi-metal-example-pre-r
 
 #### Installer assets
 
-Use the OpenShift Installer to create [Ignition configs][#getting-ignition-configs-for-machines] that will be used to create bootstrap, control plane and worker machines.
+Use the OpenShift Installer to create [Ignition configs](#getting-ignition-configs-for-machines) that will be used to create bootstrap, control plane and worker machines.
 
 #### Terraform variable file
 
@@ -266,7 +266,7 @@ terraform apply -auto-approve
 
 #### Monitoring bootstrap-complete and removing bootstrap resources
 
-Use the bootstrap [monitoring][#monitor-for-bootstrap-complete] to track when cluster bootstrapping has finished. After the Kubernetes APIServer has been bootstrapped on the control plane machines, the bootstrap machine can be removed from the API pool by following:
+Use the bootstrap [monitoring](#monitor-for-bootstrap-complete) to track when cluster bootstrapping has finished. After the Kubernetes APIServer has been bootstrapped on the control plane machines, the bootstrap machine can be removed from the API pool by following:
 
 ```sh
 terraform apply -auto-approve -var=bootstrap_dns="false"
@@ -294,7 +294,7 @@ oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patc
 
 #### Monitoring cluster completion
 
-Use the cluster finish [monitoring][#monitor-for-cluster-completion] to track when cluster has completely finished deploying.
+Use the cluster finish [monitoring](#monitor-for-cluster-completion) to track when cluster has completely finished deploying.
 
 #### Destroying the cluster
 
@@ -310,7 +310,7 @@ terraform destroy -auto-approve
 [coreos-installer-args]: https://github.com/coreos/coreos-installer#kernel-command-line-options-for-coreos-installer-running-in-the-initramfs
 [coreos-installer]: https://github.com/coreos/coreos-installer#coreos-installer
 [coreos-matchbox]: https://github.com/coreos/matchbox#matchbox----
-[csr-request]: https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/#requesting-a-certificate
+[csr-requests]: https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/#requesting-a-certificate
 [etcd-ports]: https://github.com/openshift/origin/pull/21520
 [machine-config-server]: https://github.com/openshift/machine-config-operator/blob/master/docs/MachineConfigServer.md
 [openshift-router]: https://github.com/openshift/cluster-ingress-operator#openshift-ingress-operator
