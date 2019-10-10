@@ -73,7 +73,7 @@ You must configure the network connectivity between machines to allow cluster co
 
 * OpenShift SDN
 
-    All the machines require connectivity to certain reserved ports on every other machine to establish in-cluster networking. For more details refer [doc][snd-ports].
+    All the machines require connectivity to certain reserved ports on every other machine to establish in-cluster networking. For more details, see [this documentation][sdn-ports].
 
 * Kubernetes NodePort
 
@@ -347,7 +347,7 @@ INFO Waiting up to 30m0s for the cluster to initialize...
 
 ## Example vSphere UPI deployment
 
-Terraform [templates][upi-vsphere] provides an example of using OpenShift Installer to create a vSphere UPI OpenShift cluster.
+Terraform [templates][upi-vsphere-example] are provided as an example of using OpenShift Installer to create a vSphere UPI OpenShift cluster.
 
 ### Overview
 
@@ -364,7 +364,7 @@ Refer to the pre-requisites for using the example [here][upi-vsphere-example-pre
 
 #### Installer assets
 
-Use the OpenShift Installer to create [Ignition configs][#getting-ignition-configs-for-machines] that will be used to create bootstrap, control plane and worker machines.
+Use the OpenShift Installer to create [Ignition configs](#getting-ignition-configs-for-machines) that will be used to create bootstrap, control plane and worker machines.
 
 #### Terraform variable file
 
@@ -381,7 +381,7 @@ At a minimum, you will need to provide values for the following variables.
 * control_plane_ips
 * compute_ips
 
-Move the `tfvars` file to the directory where the example terraform is.
+Move the `tfvars` file to the directory with the example Terraform.
 
 #### Creating resources
 
@@ -399,7 +399,7 @@ terraform apply -auto-approve
 
 #### Monitoring bootstrap-complete and removing bootstrap resources
 
-Use the bootstrap [monitoring][#monitor-for-bootstrap-complete] to track when cluster bootstrapping has finished. After the Kubernetes APIServer has been bootstrapped on the control plane machines, the bootstrap VM can be destroyed by following:
+Use the bootstrap [monitoring](#monitor-for-bootstrap-complete) to track when cluster bootstrapping has finished. After the Kubernetes APIServer has been bootstrapped on the control plane machines, the bootstrap VM can be destroyed by following:
 
 ```sh
 terraform apply -auto-approve -var 'bootstrap_complete=true'
@@ -425,7 +425,7 @@ oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patc
 
 #### Monitoring cluster completion
 
-Use the cluster finish [monitoring][#monitor-for-cluster-completion] to track when cluster has completely finished deploying.
+Use the cluster finish [monitoring](#monitor-for-install-completion) to track when cluster has completely finished deploying.
 
 #### Destroying the cluster
 
@@ -436,7 +436,9 @@ terraform destroy -auto-approve
 ```
 
 [aws-route53]: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/Welcome.html
-[csr-request]: https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/#requesting-a-certificate
+[cluster-image-registry-operator-configuration]: https://github.com/openshift/cluster-image-registry-operator#registry-resource
+[cluster-image-registry-operator]: https://github.com/openshift/cluster-image-registry-operator#image-registry-operator
+[csr-requests]: https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/#requesting-a-certificate
 [etcd-ports]: https://github.com/openshift/origin/pull/21520
 [machine-config-server]: https://github.com/openshift/machine-config-operator/blob/master/docs/MachineConfigServer.md
 [openshift-router]: https://github.com/openshift/cluster-ingress-operator#openshift-ingress-operator
