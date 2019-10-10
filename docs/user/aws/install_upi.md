@@ -45,7 +45,7 @@ INFO Consuming "Install Config" from target directory
 Remove the control-plane Machines and compute MachineSets, because we'll be providing those ourselves and don't want to involve [the machine-API operator][machine-api-operator]:
 
 ```console
-$ rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml openshift/99_openshift-cluster-api_worker-machinesets-*.yaml
+$ rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml openshift/99_openshift-cluster-api_worker-machineset-*.yaml
 ```
 
 You are free to leave the compute MachineSets in if you want to create compute machines via the machine API, but if you do you may need to update the various references (`subnet`, etc.) to match your environment.
@@ -128,13 +128,13 @@ $ tree
 Many of the operators and functions within OpenShift rely on tagging AWS resources. By default, Ignition
 generates a unique cluster identifier comprised of the cluster name specified during the invocation of the installer
 and a short string known internally as the infrastructure name. These values are seeded in the initial manifests within
-the Ignition configuration. To use the output of the default, generated 
+the Ignition configuration. To use the output of the default, generated
 `ignition-configs` extracting the internal infrastructure name is necessary.
 
-An example of a way to get this is below: 
+An example of a way to get this is below:
 
 ```
-$ jq -r .infraID metadata.json 
+$ jq -r .infraID metadata.json
 openshift-vw9j6
 ```
 
@@ -153,9 +153,9 @@ A created VPC via the template or manually should approximate a setup similar to
 
 The DNS and load balancer configuration within a CloudFormation template is provided
 [here](../../../upi/aws/cloudformation/02_cluster_infra.yaml). It uses a public hosted zone and creates a private hosted
-zone similar to the IPI installation method. 
+zone similar to the IPI installation method.
 It also creates load balancers, listeners, as well as hosted zone and subnet tags the same way as the IPI
-installation method. 
+installation method.
 This template can be run multiple times within a single VPC and in combination with the VPC
 template provided above.
 
