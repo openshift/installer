@@ -1148,6 +1148,7 @@ func deleteEC2SubnetsByVPC(client *ec2.EC2, vpc string, failFast bool, logger lo
 		return err
 	}
 
+	var lastError error
 	for _, subnet := range results.Subnets {
 		err := deleteEC2Subnet(client, *subnet.SubnetId, logger.WithField("subnet", *subnet.SubnetId))
 		if err != nil {
@@ -1155,10 +1156,14 @@ func deleteEC2SubnetsByVPC(client *ec2.EC2, vpc string, failFast bool, logger lo
 			if failFast {
 				return err
 			}
+			if lastError != nil {
+				logger.Debug(lastError)
+			}
+			lastError = err
 		}
 	}
 
-	return nil
+	return lastError
 }
 
 func deleteEC2Volume(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
