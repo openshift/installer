@@ -31,7 +31,6 @@ func CloudProviderConfig(cloud *clientconfig.Cloud) string {
 	res := `[Global]
 secret-name = openstack-credentials
 secret-namespace = kube-system
-kubeconfig-path = /var/lib/kubelet/kubeconfig
 `
 	if cloud.RegionName != "" {
 		res += "region = " + cloud.RegionName + "\n"
