@@ -256,34 +256,6 @@ metadata:
 
 ```
 
-## Monitor for Cluster Completion
-
-```console
-$ bin/openshift-install wait-for install-complete
-INFO Waiting up to 30m0s for the cluster to initialize...
-```
-
-Also, you can observe the running state of your cluster pods:
-
-```console
-$ oc get pods --all-namespaces
-NAMESPACE                                               NAME                                                                READY     STATUS      RESTARTS   AGE
-kube-system                                             etcd-member-ip-10-0-3-111.us-east-2.compute.internal                1/1       Running     0          35m
-kube-system                                             etcd-member-ip-10-0-3-239.us-east-2.compute.internal                1/1       Running     0          37m
-kube-system                                             etcd-member-ip-10-0-3-24.us-east-2.compute.internal                 1/1       Running     0          35m
-openshift-apiserver-operator                            openshift-apiserver-operator-6d6674f4f4-h7t2t                       1/1       Running     1          37m
-openshift-apiserver                                     apiserver-fm48r                                                     1/1       Running     0          30m
-openshift-apiserver                                     apiserver-fxkvv                                                     1/1       Running     0          29m
-openshift-apiserver                                     apiserver-q85nm                                                     1/1       Running     0          29m
-...
-openshift-service-ca-operator                           openshift-service-ca-operator-66ff6dc6cd-9r257                      1/1       Running     0          37m
-openshift-service-ca                                    apiservice-cabundle-injector-695b6bcbc-cl5hm                        1/1       Running     0          35m
-openshift-service-ca                                    configmap-cabundle-injector-8498544d7-25qn6                         1/1       Running     0          35m
-openshift-service-ca                                    service-serving-cert-signer-6445fc9c6-wqdqn                         1/1       Running     0          35m
-openshift-service-catalog-apiserver-operator            openshift-service-catalog-apiserver-operator-549f44668b-b5q2w       1/1       Running     0          32m
-openshift-service-catalog-controller-manager-operator   openshift-service-catalog-controller-manager-operator-b78cr2lnm     1/1       Running     0          31m
-```
-
 ## Add the Ingress DNS Records
 
 If you removed the DNS Zone configuration [earlier](#remove-dns-zones), you'll need to manually create some DNS records pointing at the ingress load balancer.
@@ -351,6 +323,34 @@ downloads-openshift-console.apps.your.cluster.domain.example.com
 alertmanager-main-openshift-monitoring.apps.your.cluster.domain.example.com
 grafana-openshift-monitoring.apps.your.cluster.domain.example.com
 prometheus-k8s-openshift-monitoring.apps.your.cluster.domain.example.com
+```
+
+## Monitor for Cluster Completion
+
+```console
+$ bin/openshift-install wait-for install-complete
+INFO Waiting up to 30m0s for the cluster to initialize...
+```
+
+Also, you can observe the running state of your cluster pods:
+
+```console
+$ oc get pods --all-namespaces
+NAMESPACE                                               NAME                                                                READY     STATUS      RESTARTS   AGE
+kube-system                                             etcd-member-ip-10-0-3-111.us-east-2.compute.internal                1/1       Running     0          35m
+kube-system                                             etcd-member-ip-10-0-3-239.us-east-2.compute.internal                1/1       Running     0          37m
+kube-system                                             etcd-member-ip-10-0-3-24.us-east-2.compute.internal                 1/1       Running     0          35m
+openshift-apiserver-operator                            openshift-apiserver-operator-6d6674f4f4-h7t2t                       1/1       Running     1          37m
+openshift-apiserver                                     apiserver-fm48r                                                     1/1       Running     0          30m
+openshift-apiserver                                     apiserver-fxkvv                                                     1/1       Running     0          29m
+openshift-apiserver                                     apiserver-q85nm                                                     1/1       Running     0          29m
+...
+openshift-service-ca-operator                           openshift-service-ca-operator-66ff6dc6cd-9r257                      1/1       Running     0          37m
+openshift-service-ca                                    apiservice-cabundle-injector-695b6bcbc-cl5hm                        1/1       Running     0          35m
+openshift-service-ca                                    configmap-cabundle-injector-8498544d7-25qn6                         1/1       Running     0          35m
+openshift-service-ca                                    service-serving-cert-signer-6445fc9c6-wqdqn                         1/1       Running     0          35m
+openshift-service-catalog-apiserver-operator            openshift-service-catalog-apiserver-operator-549f44668b-b5q2w       1/1       Running     0          32m
+openshift-service-catalog-controller-manager-operator   openshift-service-catalog-controller-manager-operator-b78cr2lnm     1/1       Running     0          31m
 ```
 
 [cloudformation]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html
