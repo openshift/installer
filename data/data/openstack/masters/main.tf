@@ -20,6 +20,25 @@ EOF
   }
 }
 
+data "ignition_systemd_unit" "etcd_ramdisk" {
+  name = "var-lib-etcd.mount"
+
+  content = <<EOF
+[Unit]
+Description=Mount etcd as a ramdisk
+Before=local-fs.target
+
+[Mount]
+What=none
+Where=/var/lib/etcd
+Type=tmpfs
+Options=size=2G
+
+[Install]
+WantedBy=local-fs.target
+EOF
+}
+
 data "ignition_config" "master_ignition_config" {
   count = var.instance_count
 
@@ -29,6 +48,10 @@ data "ignition_config" "master_ignition_config" {
 
   files = [
     element(data.ignition_file.hostname.*.id, count.index)
+  ]
+
+  systemd = [
+    data.ignition_systemd_unit.etcd_ramdisk.id,
   ]
 }
 
