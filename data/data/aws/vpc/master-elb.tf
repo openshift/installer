@@ -4,7 +4,6 @@ resource "aws_lb" "api_internal" {
   subnets                          = data.aws_subnet.private.*.id
   internal                         = true
   enable_cross_zone_load_balancing = true
-  idle_timeout                     = 3600
 
   tags = merge(
     {
@@ -26,7 +25,6 @@ resource "aws_lb" "api_external" {
   subnets                          = data.aws_subnet.public.*.id
   internal                         = false
   enable_cross_zone_load_balancing = true
-  idle_timeout                     = 3600
 
   tags = merge(
     {
