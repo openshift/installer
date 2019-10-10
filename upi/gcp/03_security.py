@@ -37,7 +37,7 @@ def GenerateConfig(context):
                 'IPProtocol': 'tcp',
                 'ports': ['6080', '22624']
             }],
-            'sourceRanges':  ['35.191.0.0/16', '130.211.0.0/22'],
+            'sourceRanges': ['35.191.0.0/16', '130.211.0.0/22', '209.85.152.0/22', '209.85.204.0/22'],
             'targetTags': [context.properties['infra_id'] + '-master']
         }
     }, {
