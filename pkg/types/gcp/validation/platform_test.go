@@ -37,6 +37,32 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			valid: true,
 		},
+		{
+			name: "valid subnets & network",
+			platform: &gcp.Platform{
+				Region:             "us-east1",
+				Network:            "valid-vpc",
+				ComputeSubnet:      "valid-compute-subnet",
+				ControlPlaneSubnet: "valid-cp-subnet",
+			},
+			valid: true,
+		},
+		{
+			name: "missing subnets",
+			platform: &gcp.Platform{
+				Region:  "us-east1",
+				Network: "valid-vpc",
+			},
+			valid: false,
+		},
+		{
+			name: "subnets missing network",
+			platform: &gcp.Platform{
+				Region:        "us-east1",
+				ComputeSubnet: "valid-compute-subnet",
+			},
+			valid: false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
