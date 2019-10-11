@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
-ARTIFACTS="/tmp/artifacts"
+if test "x${1}" = 'x--id'
+then
+	GATHER_ID="${2}"
+	shift 2
+fi
+
+ARTIFACTS="/tmp/artifacts-${GATHER_ID}"
 
 echo "Gathering bootstrap journals ..."
 mkdir -p "${ARTIFACTS}/bootstrap/journals"
@@ -113,8 +119,9 @@ do
   echo "Collecting info from ${master}"
   scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null -q /usr/local/bin/installer-masters-gather.sh "core@${master}:"
   mkdir -p "${ARTIFACTS}/control-plane/${master}"
-  ssh -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null "core@${master}" -C 'sudo ./installer-masters-gather.sh' </dev/null
-  scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null -r -q "core@${master}:/tmp/artifacts/*" "${ARTIFACTS}/control-plane/${master}/"
+  ssh -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null "core@${master}" -C "sudo ./installer-masters-gather.sh --id '${GATHER_ID}'" </dev/null
+  scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null -r -q "core@${master}:/tmp/artifacts-${GATHER_ID}/*" "${ARTIFACTS}/control-plane/${master}/"
 done
-tar cz -C /tmp/artifacts . > ~/log-bundle.tar.gz
-echo "Log bundle written to ~/log-bundle.tar.gz"
+TAR_FILE="${TAR_FILE:-${HOME}/log-bundle-${GATHER_ID}.tar.gz}"
+tar cz -C "${ARTIFACTS}" . >"${TAR_FILE}"
+echo "Log bundle written to ${TAR_FILE}"

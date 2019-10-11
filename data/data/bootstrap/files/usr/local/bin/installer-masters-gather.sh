@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
-ARTIFACTS="${1:-/tmp/artifacts}"
+if test "x${1}" = 'x--id'
+then
+	GATHER_ID="${2}"
+	shift 2
+fi
+
+ARTIFACTS="/tmp/artifacts-${GATHER_ID}"
 mkdir -p "${ARTIFACTS}"
 
 echo "Gathering master journals ..."
