@@ -1075,6 +1075,29 @@ func deleteEC2NetworkInterface(client *ec2.EC2, id string, logger logrus.FieldLo
 		if err.(awserr.Error).Code() == "InvalidNetworkInterfaceID.NotFound" {
 			return nil
 		}
+		if err.(awserr.Error).Code() == "InvalidParameterValue" && strings.Contains(err.(awserr.Error).Message(), "currently in use") {
+			result, err2 := client.DescribeNetworkInterfaces(&ec2.DescribeNetworkInterfacesInput{
+				NetworkInterfaceIds: []*string{aws.String(id)},
+			})
+			if err2 != nil {
+				if err2.(awserr.Error).Code() == "InvalidNetworkInterfaceID.NotFound" {
+					return nil
+				}
+				logger.Debug(errors.Wrap(err2, "describing the network interface"))
+				return err
+			}
+			for _, net := range result.NetworkInterfaces {
+				if net.Description != nil {
+					logger = logger.WithField("description", *net.Description)
+				}
+				if net.Attachment != nil && net.Attachment.InstanceOwnerId != nil {
+					logger = logger.WithField("owner", *net.Attachment.InstanceOwnerId)
+				}
+				if net.InterfaceType != nil {
+					logger.Debugf("Failed to delete type %s network interface", *net.InterfaceType)
+				}
+			}
+		}
 		return err
 	}
 
