@@ -13,21 +13,20 @@ func TestValidatePlatform(t *testing.T) {
 	cases := []struct {
 		name     string
 		platform *aws.Platform
-		valid    bool
+		expected string
 	}{
 		{
 			name: "minimal",
 			platform: &aws.Platform{
 				Region: "us-east-1",
 			},
-			valid: true,
 		},
 		{
 			name: "invalid region",
 			platform: &aws.Platform{
 				Region: "bad-region",
 			},
-			valid: false,
+			expected: "^test-path.region: Unsupported value: \"bad-region\": supported values: .*\"us-east-1\"",
 		},
 		{
 			name: "valid machine pool",
@@ -35,7 +34,6 @@ func TestValidatePlatform(t *testing.T) {
 				Region:                 "us-east-1",
 				DefaultMachinePlatform: &aws.MachinePool{},
 			},
-			valid: true,
 		},
 		{
 			name: "invalid machine pool",
@@ -47,16 +45,16 @@ func TestValidatePlatform(t *testing.T) {
 					},
 				},
 			},
-			valid: false,
+			expected: "^test-path.defaultMachinePlatform.iops: Invalid value: -10: Storage IOPS must be positive$",
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := ValidatePlatform(tc.platform, field.NewPath("test-path")).ToAggregate()
-			if tc.valid {
+			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
-				assert.Error(t, err)
+				assert.Regexp(t, tc.expected, err)
 			}
 		})
 	}
