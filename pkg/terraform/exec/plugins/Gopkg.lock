@@ -383,14 +383,15 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:1e1c7b87d9c9d66cc9bc11e96924ec0016a20f427f001106f1eed659f51704aa"
+  digest = "1:d24d68b5a2409dfd1436784c3f992ddc53c5afd0ac0bb700d4378aa56b26a0ed"
   name = "github.com/dmacvicar/terraform-provider-libvirt"
   packages = [
     "libvirt",
     "libvirt/helper/suppress",
   ]
   pruneopts = "NUT"
-  revision = "c0e46b59df8718cdd905b1a3fb9738b0d4905143"
+  revision = "1c8597df6630ceeca4765d08ab49c596768dd45c"
+  version = "v0.6.0"
 
 [[projects]]
   branch = "master"
@@ -1197,7 +1198,6 @@
     "github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure",
     "github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/response",
     "github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress",
-    "github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf",
     "github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate",
     "github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils",
     "github.com/terraform-providers/terraform-provider-azurerm/version",
