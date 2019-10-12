@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/conversion"
 	"github.com/openshift/installer/pkg/types/defaults"
@@ -23,6 +24,7 @@ const (
 type InstallConfig struct {
 	Config *types.InstallConfig `json:"config"`
 	File   *asset.File          `json:"file"`
+	AWS    *aws.Metadata
 }
 
 var _ asset.WritableAsset = (*InstallConfig)(nil)
@@ -121,6 +123,8 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 
 func (a *InstallConfig) finish(filename string) error {
 	defaults.SetInstallConfigDefaults(a.Config)
+
+	a.AWS = &aws.Metadata{}
 
 	if err := validation.ValidateInstallConfig(a.Config, openstackvalidation.NewValidValuesFetcher()).ToAggregate(); err != nil {
 		if filename == "" {
