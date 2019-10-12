@@ -1,6 +1,7 @@
 package machines
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -158,11 +159,10 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.AWS)
 			if len(mpool.Zones) == 0 {
-				azs, err := aws.AvailabilityZones(ic.Platform.AWS.Region)
+				mpool.Zones, err = installconfig.AWS.AvailabilityZones(context.TODO())
 				if err != nil {
-					return errors.Wrap(err, "failed to fetch availability zones")
+					return err
 				}
-				mpool.Zones = azs
 			}
 			pool.Platform.AWS = &mpool
 			sets, err := aws.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
