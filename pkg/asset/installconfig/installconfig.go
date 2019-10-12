@@ -75,23 +75,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	a.Config.GCP = platform.GCP
 	a.Config.BareMetal = platform.BareMetal
 
-	if err := a.setDefaults(); err != nil {
-		return errors.Wrap(err, "failed to set defaults for install config")
-	}
-
-	if err := validation.ValidateInstallConfig(a.Config, openstackvalidation.NewValidValuesFetcher()).ToAggregate(); err != nil {
-		return errors.Wrap(err, "invalid install config")
-	}
-
-	data, err := yaml.Marshal(a.Config)
-	if err != nil {
-		return errors.Wrap(err, "failed to Marshal InstallConfig")
-	}
-	a.File = &asset.File{
-		Filename: installConfigFilename,
-		Data:     data,
-	}
-	return nil
+	return a.finish("")
 }
 
 // Name returns the human-friendly name of the asset.
@@ -124,37 +108,34 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 	a.Config = config
 
 	// Upconvert any deprecated fields
-	if err := a.convert(); err != nil {
+	if err := conversion.ConvertInstallConfig(a.Config); err != nil {
 		return false, errors.Wrap(err, "failed to upconvert install config")
 	}
 
-	if err := a.setDefaults(); err != nil {
-		return false, errors.Wrap(err, "failed to set defaults for install config")
+	err = a.finish(installConfigFilename)
+	if err != nil {
+		return false, err
 	}
+	return true, nil
+}
+
+func (a *InstallConfig) finish(filename string) error {
+	defaults.SetInstallConfigDefaults(a.Config)
 
 	if err := validation.ValidateInstallConfig(a.Config, openstackvalidation.NewValidValuesFetcher()).ToAggregate(); err != nil {
-		return false, errors.Wrapf(err, "invalid %q file", installConfigFilename)
+		if filename == "" {
+			return errors.Wrap(err, "invalid install config")
+		}
+		return errors.Wrapf(err, "invalid %q file", filename)
 	}
 
 	data, err := yaml.Marshal(a.Config)
 	if err != nil {
-		return false, errors.Wrap(err, "failed to Marshal InstallConfig")
+		return errors.Wrap(err, "failed to Marshal InstallConfig")
 	}
 	a.File = &asset.File{
 		Filename: installConfigFilename,
 		Data:     data,
 	}
-
-	return true, nil
-}
-
-func (a *InstallConfig) setDefaults() error {
-	defaults.SetInstallConfigDefaults(a.Config)
 	return nil
-}
-
-// convert converts possibly older versions of the install config to
-// the current version, relocating deprecated fields.
-func (a *InstallConfig) convert() error {
-	return conversion.ConvertInstallConfig(a.Config)
 }
