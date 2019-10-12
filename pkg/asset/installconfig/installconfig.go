@@ -124,7 +124,9 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 func (a *InstallConfig) finish(filename string) error {
 	defaults.SetInstallConfigDefaults(a.Config)
 
-	a.AWS = &aws.Metadata{}
+	if a.Config.AWS != nil {
+		a.AWS = aws.NewMetadata(a.Config.Platform.AWS.Region)
+	}
 
 	if err := validation.ValidateInstallConfig(a.Config, openstackvalidation.NewValidValuesFetcher()).ToAggregate(); err != nil {
 		if filename == "" {
