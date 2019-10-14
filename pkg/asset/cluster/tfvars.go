@@ -293,6 +293,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			ingressVIP.String(),
 			installConfig.Config.Platform.OpenStack.TrunkSupport,
 			installConfig.Config.Platform.OpenStack.OctaviaSupport,
+			string(*rhcosImage),
+			clusterID.InfraID,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

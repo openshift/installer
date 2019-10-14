@@ -4,11 +4,14 @@ package openstack
 import (
 	"encoding/json"
 
+	"github.com/openshift/installer/pkg/rhcos"
+
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 )
 
 type config struct {
-	BaseImage       string `json:"openstack_base_image,omitempty"`
+	BaseImageName   string `json:"openstack_base_image_name,omitempty"`
+	BaseImageURL    string `json:"openstack_base_image_url,omitempty"`
 	ExternalNetwork string `json:"openstack_external_network,omitempty"`
 	Cloud           string `json:"openstack_credentials_cloud,omitempty"`
 	FlavorName      string `json:"openstack_master_flavor_name,omitempty"`
@@ -23,9 +26,8 @@ type config struct {
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string) ([]byte, error) {
+func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string, baseImage string, infraID string) ([]byte, error) {
 	cfg := &config{
-		BaseImage:       masterConfig.Image,
 		ExternalNetwork: externalNetwork,
 		Cloud:           cloud,
 		FlavorName:      masterConfig.Flavor,
@@ -36,6 +38,23 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		TrunkSupport:    trunkSupport,
 		OctaviaSupport:  octaviaSupport,
 	}
+
+	// Normally baseImage contains a URL that we will use to create a new Glance image, but for testing
+	// purposes we also allow to set a custom Glance image name to skip the uploading. Here we check
+	// whether baseImage is a URL or not. If this is the first case, it means that the image should be
+	// created by the installer from the URL. Otherwise, it means that we are given the name of the pre-created
+	// Glance image, which we should use for instances.
+	imageName, isURL := rhcos.GenerateOpenStackImageName(baseImage, infraID)
+	cfg.BaseImageName = imageName
+	if isURL {
+		// Valid URL -> use baseImage as a URL that will be used to create new Glance image with name "<infraID>-rhcos".
+		cfg.BaseImageURL = baseImage
+	} else {
+		// Not a URL -> use baseImage value as a Glance image name.
+
+		// TODO(mfedosin): add validations that this image exists and there are no other images with this name.
+	}
+
 	if masterConfig.RootVolume != nil {
 		cfg.RootVolumeSize = masterConfig.RootVolume.Size
 		cfg.RootVolumeType = masterConfig.RootVolume.VolumeType

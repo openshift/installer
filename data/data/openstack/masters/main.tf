@@ -1,8 +1,3 @@
-data "openstack_images_image_v2" "masters_img" {
-  name        = var.base_image
-  most_recent = true
-}
-
 data "openstack_compute_flavor_v2" "masters_flavor" {
   name = var.flavor_name
 }
@@ -38,7 +33,7 @@ resource "openstack_blockstorage_volume_v3" "master_volume" {
 
   size = var.root_volume_size
   volume_type = var.root_volume_type
-  image_id = data.openstack_images_image_v2.masters_img.id
+  image_id = var.base_image_id
 }
 
 resource "openstack_compute_instance_v2" "master_conf" {
@@ -46,7 +41,7 @@ resource "openstack_compute_instance_v2" "master_conf" {
   count = var.instance_count
 
   flavor_id = data.openstack_compute_flavor_v2.masters_flavor.id
-  image_id = var.root_volume_size == null ? data.openstack_images_image_v2.masters_img.id : null
+  image_id = var.root_volume_size == null ? var.base_image_id : null
   security_groups = var.master_sg_ids
   user_data = element(
     data.ignition_config.master_ignition_config.*.rendered,
