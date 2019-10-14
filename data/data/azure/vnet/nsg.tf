@@ -5,7 +5,9 @@ resource "azurerm_network_security_group" "master" {
 }
 
 resource "azurerm_subnet_network_security_group_association" "master" {
-  subnet_id                 = azurerm_subnet.master_subnet.id
+  count = var.preexisting_network ? 0 : 1
+
+  subnet_id                 = azurerm_subnet.master_subnet[0].id
   network_security_group_id = azurerm_network_security_group.master.id
 }
 
@@ -16,7 +18,9 @@ resource "azurerm_network_security_group" "worker" {
 }
 
 resource "azurerm_subnet_network_security_group_association" "worker" {
-  subnet_id                 = azurerm_subnet.node_subnet.id
+  count = var.preexisting_network ? 0 : 1
+
+  subnet_id                 = azurerm_subnet.worker_subnet[0].id
   network_security_group_id = azurerm_network_security_group.worker.id
 }
 

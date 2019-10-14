@@ -76,8 +76,33 @@ variable "azure_tenant_id" {
   description = "The tenant ID that should be used to interact with Azure API"
 }
 
-
 variable "azure_master_availability_zones" {
   type        = list(string)
   description = "The availability zones in which to create the masters. The length of this list must match master_count."
+}
+
+variable "azure_preexisting_network" {
+  type        = bool
+  default     = false
+  description = "Specifies whether an existing network should be used or a new one created for installation."
+}
+
+variable "azure_network_resource_group_name" {
+  type        = string
+  description = "The name of the network resource group, either existing or to be created."
+}
+
+variable "azure_virtual_network" {
+  type        = string
+  description = "The name of the virtual network, either existing or to be created."
+}
+
+variable "azure_control_plane_subnet" {
+  type        = string
+  description = "The name of the subnet for the control plane, either existing or to be created."
+}
+
+variable "azure_compute_subnet" {
+  type        = string
+  description = "The name of the subnet for worker nodes, either existing or to be created"
 }
