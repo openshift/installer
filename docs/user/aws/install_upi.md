@@ -65,9 +65,30 @@ data["spec"]["mastersSchedulable"] = False;
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
-### Remove DNS Zones
+### Adjust DNS Zones
 
-If you don't want [the ingress operator][ingress-operator] to create DNS records on your behalf, remove the `privateZone` and `publicZone` sections from the DNS configuration:
+[The ingress operator][ingress-operator] is able to manage DNS records on your behalf.
+Depending on whether you want operator-managed DNS or user-managed DNS, you can choose to [identify the internal DNS zone](#identify-the-internal-dns-zone) or [remove DNS zones](#remove-dns-zones) from the DNS configuration.
+
+#### Identify the internal DNS zone
+
+If you want [the ingress operator][ingress-operator] to manage DNS records on your behalf, adjust the `privateZone` section in the DNS configuration to identify the zone it should use.
+By default it will use a `kubernetes.io/cluster/{infrastructureName}: owned` tag, but that tag is only appropriate if `openshift-install destroy cluster` should remove the zone.
+For user-provided zones, you can remove `tags` completely and use the zone ID instead:
+
+```sh
+python -c '
+import yaml;
+path = "manifests/cluster-dns-02-config.yml";
+data = yaml.load(open(path));
+del data["spec"]["privateZone"]["tags"];
+data["spec"]["privateZone"]["id"] = "Z21IZ5YJJMZ2A4";
+open(path, "w").write(yaml.dump(data, default_flow_style=False))'
+```
+
+#### Remove DNS zones
+
+If you don't want [the ingress operator][ingress-operator] to manage DNS records on your behalf, remove the `privateZone` and `publicZone` sections from the DNS configuration:
 
 ```sh
 python -c '
@@ -213,47 +234,6 @@ CSRs can be approved by name, for example:
 
 ```sh
 oc adm certificate approve csr-bfd72
-```
-
-## Configure Router for UPI
-
-The Ingress operator manages DNS and LoadBalancers. It makes use of tags on HostedZones to identify which public and 
-private zones are to be updated from the cluster by the operator as objects are created in the cluster. It makes use
-of tags on subnets to identify those to associate with Service objects of type LoadBalancer created in the cluster.
-
-The tags used for finding HostedZones used by the operator
-are fulfilled by the CloudFormation template [here](../../../upi/aws/cloudformation/02_cluster_infra.yaml).
-
-An example of the `spec` for DNS configuration is below:
-
-```
-$ oc get dns -o yaml
-apiVersion: v1
-items:
-- apiVersion: config.openshift.io/v1
-  kind: DNS
-  metadata:
-    creationTimestamp: 2019-03-28T12:31:10Z
-    generation: 1
-    name: cluster
-    namespace: ""
-    resourceVersion: "395"
-    selfLink: /apis/config.openshift.io/v1/dnses/cluster
-    uid: 5e51dd25-5155-11e9-befc-02d75ce1a902
-  spec:
-    baseDomain: test.example.com
-    privateZone:
-      tags:
-        Name: test-r69hh-int
-        kubernetes.io/cluster/test-r69hh: owned
-    publicZone:
-      id: Z21IZ5YJJMZ2A4
-  status: {}
-kind: List
-metadata:
-  resourceVersion: ""
-  selfLink: ""
-
 ```
 
 ## Add the Ingress DNS Records
