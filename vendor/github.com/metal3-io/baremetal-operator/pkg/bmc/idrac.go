@@ -2,7 +2,23 @@ package bmc
 
 import (
 	"strings"
+	"net/url"
 )
+
+func init() {
+	registerFactory("idrac", newIDRACAccessDetails)
+	registerFactory("idrac+http", newIDRACAccessDetails)
+	registerFactory("idrac+https", newIDRACAccessDetails)
+}
+
+func newIDRACAccessDetails(parsedURL *url.URL) (AccessDetails, error) {
+	return &iDracAccessDetails{
+		bmcType:  parsedURL.Scheme,
+		portNum:  parsedURL.Port(),
+		hostname: parsedURL.Hostname(),
+		path:     parsedURL.Path,
+	}, nil
+}
 
 type iDracAccessDetails struct {
 	bmcType  string

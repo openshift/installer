@@ -1,5 +1,21 @@
 package bmc
 
+import (
+	"net/url"
+)
+
+func init() {
+	registerFactory("irmc", newIRMCAccessDetails)
+}
+
+func newIRMCAccessDetails(parsedURL *url.URL) (AccessDetails, error) {
+	return &iRMCAccessDetails{
+		bmcType:  parsedURL.Scheme,
+		portNum:  parsedURL.Port(),
+		hostname: parsedURL.Hostname(),
+	}, nil
+}
+
 type iRMCAccessDetails struct {
 	bmcType  string
 	portNum  string
@@ -35,7 +51,7 @@ func (a *iRMCAccessDetails) DriverInfo(bmcCreds Credentials) map[string]interfac
 	if a.portNum != "" {
 		result["irmc_port"] = a.portNum
 	}
-	
+
 	return result
 }
 
