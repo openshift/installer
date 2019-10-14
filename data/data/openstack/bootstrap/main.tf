@@ -109,11 +109,6 @@ EOF
   }
 }
 
-data "openstack_images_image_v2" "bootstrap_image" {
-  name = var.image_name
-  most_recent = true
-}
-
 data "openstack_compute_flavor_v2" "bootstrap_flavor" {
   name = var.flavor_name
 }
@@ -121,7 +116,7 @@ data "openstack_compute_flavor_v2" "bootstrap_flavor" {
 resource "openstack_compute_instance_v2" "bootstrap" {
   name = "${var.cluster_id}-bootstrap"
   flavor_id = data.openstack_compute_flavor_v2.bootstrap_flavor.id
-  image_id = data.openstack_images_image_v2.bootstrap_image.id
+  image_id = var.base_image_id
 
   user_data = data.ignition_config.redirect.rendered
 

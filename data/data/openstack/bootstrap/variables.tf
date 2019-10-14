@@ -1,6 +1,6 @@
-variable "image_name" {
+variable "base_image_id" {
   type        = string
-  description = "The name of the Glance image for the bootstrap node."
+  description = "The identifier of the Glance image for the bootstrap node."
 }
 
 variable "extra_tags" {
