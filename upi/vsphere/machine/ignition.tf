@@ -51,6 +51,7 @@ data "ignition_systemd_unit" "restart" {
 ConditionFirstBoot=yes
 [Service]
 Type=idle
+ExecStartPre=/usr/sbin/dhclient -r ens192
 ExecStart=/sbin/reboot
 [Install]
 WantedBy=multi-user.target
