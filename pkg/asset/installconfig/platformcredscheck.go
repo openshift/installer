@@ -36,6 +36,7 @@ func (a *PlatformCredsCheck) Dependencies() []asset.Asset {
 
 // Generate queries for input from the user.
 func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
+	ctx := context.TODO()
 	ic := &InstallConfig{}
 	dependencies.Get(ic)
 
@@ -43,16 +44,16 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 	platform := ic.Config.Platform.Name()
 	switch platform {
 	case aws.Name:
-		ssn, err := awsconfig.GetSession()
+		ssn, err := ic.AWS.Session(ctx)
 		if err != nil {
-			return errors.Wrap(err, "creating AWS session")
+			return err
 		}
 		err = awsconfig.ValidateCreds(ssn)
 		if err != nil {
 			return errors.Wrap(err, "validate AWS credentials")
 		}
 	case gcp.Name:
-		_, err = gcpconfig.GetSession(context.TODO())
+		_, err = gcpconfig.GetSession(ctx)
 		if err != nil {
 			return errors.Wrap(err, "creating GCP session")
 		}
