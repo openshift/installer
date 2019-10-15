@@ -47,7 +47,7 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "creating AWS session")
 		}
-		err = awsconfig.ValidateCreds(ssn)
+		err = awsconfig.ValidateCreds(ssn, ic.Config.Platform.AWS.Region)
 		if err != nil {
 			return errors.Wrap(err, "validate AWS credentials")
 		}
