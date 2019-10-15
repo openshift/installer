@@ -10,77 +10,42 @@ import (
 	"github.com/pkg/errors"
 	dns "google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"
-	"google.golang.org/api/option"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 )
-
-func getDNSService(ctx context.Context) (*dns.Service, error) {
-	ssn, err := GetSession(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get session")
-	}
-
-	svc, err := dns.NewService(ctx, option.WithCredentials(ssn.Credentials))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create compute service")
-	}
-	return svc, nil
-}
 
 // GetPublicZone returns a DNS managed zone from the provided project which matches the baseDomain
 // If multiple zones match the basedomain, it uses the last public zone in the list as provided by the GCP API.
 func GetPublicZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error) {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
-	svc, err := getDNSService(ctx)
+	client, err := NewClient(context.TODO())
 	if err != nil {
 		return nil, err
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
 
 	if !strings.HasSuffix(baseDomain, ".") {
 		baseDomain = fmt.Sprintf("%s.", baseDomain)
 	}
-	req := svc.ManagedZones.List(project).DnsName(baseDomain).Context(ctx)
 
-	var res *dns.ManagedZone
-	if err := req.Pages(ctx, func(page *dns.ManagedZonesListResponse) error {
-		for idx, v := range page.ManagedZones {
-			if v.Visibility != "private" {
-				res = page.ManagedZones[idx]
-			}
-		}
-		return nil
-	}); err != nil {
-		return nil, errors.Wrap(err, "failed to list DNS Zones")
+	dnsZone, err := client.GetPublicDNSZone(ctx, project, baseDomain)
+	if err != nil {
+		return nil, err
 	}
-	if res == nil {
-		return nil, errors.New("no matching public DNS Zone found")
-	}
-	return res, nil
+	return dnsZone, nil
 }
 
 // GetBaseDomain returns a base domain chosen from among the project's public DNS zones.
 func GetBaseDomain(project string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
-	defer cancel()
-
-	svc, err := getDNSService(ctx)
+	client, err := NewClient(context.TODO())
 	if err != nil {
 		return "", err
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
 
-	var publicZones []string
-	req := svc.ManagedZones.List(project).Context(ctx)
-	if err := req.Pages(ctx, func(page *dns.ManagedZonesListResponse) error {
-		for _, v := range page.ManagedZones {
-			if v.Visibility != "private" {
-				publicZones = append(publicZones, strings.TrimSuffix(v.DnsName, "."))
-			}
-		}
-		return nil
-	}); err != nil {
-		return "", err
+	publicZones, err := client.GetPublicDomains(ctx, project)
+	if err != nil {
+		return "", errors.Wrap(err, "could not retrieve base domains")
 	}
 	if len(publicZones) == 0 {
 		return "", errors.New("no domain names found in project")
