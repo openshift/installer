@@ -55,7 +55,8 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		err = awsconfig.ValidateCreds(ssn, permissionGroups)
+
+		err = awsconfig.ValidateCreds(ssn, permissionGroups, ic.Config.Platform.AWS.Region)
 		if err != nil {
 			return errors.Wrap(err, "validate AWS credentials")
 		}
