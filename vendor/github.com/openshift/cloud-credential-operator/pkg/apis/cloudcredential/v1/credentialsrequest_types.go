@@ -39,6 +39,9 @@ const (
 
 	// CloudCredOperatorNamespace is the namespace where the credentials operator runs.
 	CloudCredOperatorNamespace = "openshift-cloud-credential-operator"
+
+	// CloudCredOperatorConfigMap is an optional ConfigMap that can be used to alter behavior of the operator.
+	CloudCredOperatorConfigMap = "cloud-credential-operator-config"
 )
 
 // NOTE: Run "make" to regenerate code after modifying this file
@@ -145,5 +148,6 @@ func init() {
 		&AWSProviderStatus{}, &AWSProviderSpec{},
 		&AzureProviderStatus{}, &AzureProviderSpec{},
 		&GCPProviderStatus{}, &GCPProviderSpec{},
+		&VSphereProviderStatus{}, &VSphereProviderSpec{},
 	)
 }
