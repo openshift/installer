@@ -10,10 +10,15 @@ variable "openstack_master_root_volume_size" {
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
-variable "openstack_base_image" {
+variable "openstack_base_image_name" {
   type        = string
-  default     = "rhcos"
   description = "Name of the base image to use for the nodes."
+}
+
+variable "openstack_base_image_url" {
+  type        = string
+  default     = ""
+  description = "URL of the base image to use for the nodes."
 }
 
 variable "openstack_credentials_auth_url" {
