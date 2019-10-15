@@ -1,9 +1,10 @@
 # GCP Project Setup
 
-This document is a guide for preparing a new GCP project for use with OpenShift. 
+This document is a guide for preparing a new GCP project for use with OpenShift.
 
 Follow along with the steps and links below to configure your GCP project and provision an OpenShift cluster:
 
+1. [Enable Service APIs](apis.md)
 1. [Setup DNS](dns.md)
 1. [Ensure sufficient quota](limits.md)
 1. [Create Installer Service Account](iam.md)
