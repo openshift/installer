@@ -55,5 +55,17 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path) field.ErrorList {
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
+	if p.Network != "" {
+		if p.ComputeSubnet == "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("computeSubnet"), "must provide a compute subnet when a network is specified"))
+		}
+		if p.ControlPlaneSubnet == "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("controlPlaneSubnet"), "must provide a control plane subnet when a network is specified"))
+		}
+	}
+	if (p.ComputeSubnet != "" || p.ControlPlaneSubnet != "") && p.Network == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("network"), "must provide a VPC network when supplying subnets"))
+	}
+
 	return allErrs
 }
