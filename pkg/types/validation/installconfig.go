@@ -78,7 +78,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 		}
 	}
 	if c.Networking != nil {
-		allErrs = append(allErrs, validateNetworking(c.Networking, field.NewPath("networking"))...)
+		allErrs = append(allErrs, validateNetworking(c.Networking, field.NewPath("networking"), &c.Platform)...)
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
 	}
@@ -102,14 +102,21 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	return allErrs
 }
 
-func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorList {
+func validateNetworking(n *types.Networking, fldPath *field.Path, platform *types.Platform) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if n.NetworkType == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("networkType"), "network provider type required"))
 	}
 
+	// IPv6 CIDRs are only allowed for:
+	//  - baremetal platform
+	allowIPv6 := false
+	if platform.BareMetal != nil {
+		allowIPv6 = true
+	}
+
 	if n.MachineCIDR != nil {
-		if err := validate.SubnetCIDR(&n.MachineCIDR.IPNet); err != nil {
+		if err := validate.SubnetCIDR(&n.MachineCIDR.IPNet, allowIPv6); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("machineCIDR"), n.MachineCIDR.String(), err.Error()))
 		}
 	} else {
@@ -117,7 +124,7 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 	}
 
 	for i, sn := range n.ServiceNetwork {
-		if err := validate.SubnetCIDR(&sn.IPNet); err != nil {
+		if err := validate.SubnetCIDR(&sn.IPNet, allowIPv6); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork").Index(i), sn.String(), err.Error()))
 		}
 		if n.MachineCIDR != nil && validate.DoCIDRsOverlap(&sn.IPNet, &n.MachineCIDR.IPNet) {
@@ -143,7 +150,7 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 	}
 
 	for i, cn := range n.ClusterNetwork {
-		allErrs = append(allErrs, validateClusterNetwork(n, &cn, i, fldPath.Child("clusterNetwork").Index(i))...)
+		allErrs = append(allErrs, validateClusterNetwork(n, &cn, i, fldPath.Child("clusterNetwork").Index(i), allowIPv6)...)
 	}
 	if len(n.ClusterNetwork) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("clusterNetwork"), "cluster network required"))
@@ -151,9 +158,9 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 	return allErrs
 }
 
-func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, idx int, fldPath *field.Path) field.ErrorList {
+func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, idx int, fldPath *field.Path, allowIPv6 bool) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if err := validate.SubnetCIDR(&cn.CIDR.IPNet); err != nil {
+	if err := validate.SubnetCIDR(&cn.CIDR.IPNet, allowIPv6); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR.IPNet.String(), err.Error()))
 	}
 	if n.MachineCIDR != nil && validate.DoCIDRsOverlap(&cn.CIDR.IPNet, &n.MachineCIDR.IPNet) {
