@@ -35,6 +35,8 @@ resource "azurerm_lb_backend_address_pool" "master_public_lb_pool" {
 }
 
 resource "azurerm_lb_rule" "public_lb_rule_api_internal" {
+  count = var.private ? 0 : 1
+
   name                           = "api-internal"
   resource_group_name            = var.resource_group_name
   protocol                       = "Tcp"
@@ -46,10 +48,28 @@ resource "azurerm_lb_rule" "public_lb_rule_api_internal" {
   enable_floating_ip             = false
   idle_timeout_in_minutes        = 30
   load_distribution              = "Default"
-  probe_id                       = azurerm_lb_probe.public_lb_probe_api_internal.id
+  probe_id                       = azurerm_lb_probe.public_lb_probe_api_internal[0].id
+}
+
+resource "azurerm_lb_rule" "internal_outbound_rule" {
+  count = var.private ? 1 : 0
+
+  name                           = "internal_outbound_rule"
+  resource_group_name            = var.resource_group_name
+  protocol                       = "Tcp"
+  backend_address_pool_id        = azurerm_lb_backend_address_pool.master_public_lb_pool.id
+  loadbalancer_id                = azurerm_lb.public.id
+  frontend_port                  = 27627
+  backend_port                   = 27627
+  frontend_ip_configuration_name = local.public_lb_frontend_ip_configuration_name
+  enable_floating_ip             = false
+  idle_timeout_in_minutes        = 30
+  load_distribution              = "Default"
 }
 
 resource "azurerm_lb_probe" "public_lb_probe_api_internal" {
+  count = var.private ? 0 : 1
+
   name                = "api-internal-probe"
   resource_group_name = var.resource_group_name
   interval_in_seconds = 10

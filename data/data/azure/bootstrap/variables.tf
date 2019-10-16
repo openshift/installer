@@ -63,3 +63,8 @@ variable "nsg_name" {
   type        = string
   description = "The network security group for the subnet."
 }
+
+variable "private" {
+  type        = bool
+  description = "This value determines if this is a private cluster or not."
+}

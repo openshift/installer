@@ -54,3 +54,8 @@ variable "resource_group_name" {
   type        = string
   description = "Resource group for the deployment"
 }
+
+variable "private" {
+  type        = bool
+  description = "This value determines if this is a private cluster or not."
+}

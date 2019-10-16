@@ -223,6 +223,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				WorkerConfigs:               workerConfigs,
 				ImageURL:                    string(*rhcosImage),
 				PreexistingNetwork:          preexistingnetwork,
+				Publish:                     installConfig.Config.Publish,
 			},
 		)
 		if err != nil {

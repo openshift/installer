@@ -19,6 +19,7 @@ import (
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
+	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
@@ -55,6 +56,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&openshift.CloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
 		&openshift.RoleCloudCredsSecretReader{},
+		&openshift.PrivateClusterOutbound{},
 	}
 }
 
@@ -172,6 +174,12 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	case awstypes.Name, openstacktypes.Name, vspheretypes.Name, azuretypes.Name, gcptypes.Name:
 		assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
 		assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleCloudCredsSecretReader.Files()[0].Data, templateData)
+	}
+
+	if platform == azuretypes.Name && installConfig.Config.Publish == types.InternalPublishingStrategy {
+		privateClusterOutbound := &openshift.PrivateClusterOutbound{}
+		dependencies.Get(privateClusterOutbound)
+		assetData["99_private-cluster-outbound-service.yaml"] = applyTemplateData(privateClusterOutbound.Files()[0].Data, templateData)
 	}
 
 	o.FileList = []*asset.File{}
