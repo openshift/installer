@@ -4,7 +4,10 @@ package openstack
 import (
 	"encoding/json"
 
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
+	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/rhcos"
+	"github.com/pkg/errors"
 
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 )
@@ -50,9 +53,12 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		// Valid URL -> use baseImage as a URL that will be used to create new Glance image with name "<infraID>-rhcos".
 		cfg.BaseImageURL = baseImage
 	} else {
-		// Not a URL -> use baseImage value as a Glance image name.
-
-		// TODO(mfedosin): add validations that this image exists and there are no other images with this name.
+		// Not a URL -> use baseImage value as an overridden Glance image name.
+		// Need to check if this image exists and there are no other images with this name.
+		err := validateOverriddenImageName(imageName, cloud)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if masterConfig.RootVolume != nil {
@@ -61,4 +67,39 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
+}
+
+func validateOverriddenImageName(imageName, cloud string) error {
+	opts := &clientconfig.ClientOpts{
+		Cloud: cloud,
+	}
+
+	client, err := clientconfig.NewServiceClient("image", opts)
+	if err != nil {
+		return err
+	}
+
+	listOpts := images.ListOpts{
+		Name: imageName,
+	}
+
+	allPages, err := images.List(client, listOpts).AllPages()
+	if err != nil {
+		return err
+	}
+
+	allImages, err := images.ExtractImages(allPages)
+	if err != nil {
+		return err
+	}
+
+	if len(allImages) == 0 {
+		return errors.Errorf("image '%v' doesn't exist", imageName)
+	}
+
+	if len(allImages) > 1 {
+		return errors.Errorf("there's more than one image with the name '%v'", imageName)
+	}
+
+	return nil
 }
