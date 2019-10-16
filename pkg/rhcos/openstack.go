@@ -25,7 +25,17 @@ func OpenStack(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	return base.ResolveReference(relOpenStack).String(), nil
+	// Attach uncompressed sha256 checksum to the URL
+	checkSuffix := "?sha256=" + meta.Images.OpenStack.UncompressedSHA256
+	baseURL := base.ResolveReference(relOpenStack).String() + checkSuffix
+
+	// Check that we have generated a valid URL
+	_, err = url.ParseRequestURI(baseURL)
+	if err != nil {
+		return "", err
+	}
+
+	return baseURL, nil
 }
 
 // GenerateOpenStackImageName returns Glance image name for instances.
