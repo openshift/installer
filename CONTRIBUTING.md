@@ -35,7 +35,7 @@ For contributors who want to work up pull requests, the workflow is roughly:
 4. Push your changes to a topic branch in your fork of the repository.
 5. Make sure the tests pass, and add any new tests as appropriate.
 6. We run a number of linters and tests on each pull request.
-    You may wish to run these locally before submitting your pull request:
+    You may wish to run these locally before submitting your pull request (Make sure you have [podman][podman-install] installed):
     ```sh
     hack/go-fmt.sh .
     hack/go-lint.sh $(go list -f '{{ .ImportPath }}' ./...)
@@ -97,5 +97,6 @@ hack/go-genmock.sh
 
 [golang-style]: https://github.com/golang/go/wiki/CodeReviewComments
 [new-issue]: https://github.com/openshift/installer/issues/new
+[podman-install]: https://podman.io/getting-started/installation
 [prow-review]: https://github.com/kubernetes/community/blob/master/contributors/guide/owners.md#the-code-review-process
 [security]: https://access.redhat.com/security/team/contact
