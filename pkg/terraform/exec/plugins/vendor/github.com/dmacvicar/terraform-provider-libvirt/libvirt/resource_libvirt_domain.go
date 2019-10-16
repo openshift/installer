@@ -13,7 +13,7 @@ import (
 	"github.com/dmacvicar/terraform-provider-libvirt/libvirt/helper/suppress"
 	"github.com/hashicorp/terraform/helper/schema"
 	libvirt "github.com/libvirt/libvirt-go"
-	"github.com/libvirt/libvirt-go-xml"
+	libvirtxml "github.com/libvirt/libvirt-go-xml"
 )
 
 type pendingMapping struct {
@@ -104,6 +104,12 @@ func resourceLibvirtDomain() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 				Default:  "",
+			},
+			"fw_cfg_name": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Default:  "opt/com.coreos/config",
 			},
 			"filesystem": {
 				Type:     schema.TypeList,
@@ -469,7 +475,7 @@ func resourceLibvirtDomainCreate(d *schema.ResourceData, meta interface{}) error
 	setFirmware(d, &domainDef)
 	setBootDevices(d, &domainDef)
 
-	if err := setCoreOSIgnition(d, &domainDef); err != nil {
+	if err := updateCoreOSIgnition(d, &domainDef, virConn); err != nil {
 		return err
 	}
 
