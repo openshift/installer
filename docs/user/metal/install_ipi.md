@@ -174,27 +174,6 @@ Note that once this work moves into the `openshift/installer` repository, new
 issues will get created or existing issues will be moved to track these gaps
 instead of the leaving the existing issues against the KNI fork of the installer.
 
-### Deployment of the `baremetal-operator`
-
-The `baremetal-operator` provides the server side of the API used by the
-`baremetal` platform `Machine` actuator
-([cluster-api-provider-baremetal](https://github.com/metal3-io/cluster-api-provider-baremetal)).
-This is currently handled by the
-[08_deploy_bmo.sh](https://github.com/openshift-metal3/dev-scripts/blob/master/08_deploy_bmo.sh)
-script.
-
-This will be replaced by `machine-api-operator` integration and the following
-PR: https://github.com/openshift/machine-api-operator/pull/302
-
-### `BareMetalHost` registration by the Installer
-
-`openshift-install` needs to create the `BareMetalHost` objects that represent
-the inventory of hardware under management.  This is currently handled by the
-[11_register_hosts.sh](https://github.com/openshift-metal3/dev-scripts/blob/master/11_register_hosts.sh)
-script.
-
-https://github.com/openshift-metal3/kni-installer/issues/46
-
 ### `destroy cluster` support
 
 `openshift-install destroy cluster` is not supported for the `baremetal`
@@ -216,10 +195,3 @@ network configuration, but fully supporting alternative subnets for the
 provisioning network is incomplete.
 
 https://github.com/openshift/installer/issues/2091
-
-### Ironic services are using upstream images
-
-We need to move to downstream openshift images for the Ironic containers that are
-started on the boostrap VM
-
-https://github.com/openshift/installer/issues/2090
