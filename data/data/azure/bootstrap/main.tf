@@ -62,6 +62,8 @@ data "ignition_config" "redirect" {
 }
 
 resource "azurerm_public_ip" "bootstrap_public_ip" {
+  count = var.private ? 0 : 1
+
   sku                 = "Standard"
   location            = var.region
   name                = "${var.cluster_id}-bootstrap-pip"
@@ -70,7 +72,9 @@ resource "azurerm_public_ip" "bootstrap_public_ip" {
 }
 
 data "azurerm_public_ip" "bootstrap_public_ip" {
-  name                = azurerm_public_ip.bootstrap_public_ip.name
+  count = var.private ? 0 : 1
+
+  name                = azurerm_public_ip.bootstrap_public_ip[0].name
   resource_group_name = var.resource_group_name
 }
 
@@ -83,7 +87,7 @@ resource "azurerm_network_interface" "bootstrap" {
     subnet_id                     = var.subnet_id
     name                          = local.bootstrap_nic_ip_configuration_name
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.bootstrap_public_ip.id
+    public_ip_address_id          = var.private ? null : azurerm_public_ip.bootstrap_public_ip[0].id
   }
 }
 

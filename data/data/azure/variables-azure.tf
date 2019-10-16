@@ -106,3 +106,8 @@ variable "azure_compute_subnet" {
   type        = string
   description = "The name of the subnet for worker nodes, either existing or to be created"
 }
+
+variable "azure_private" {
+  type        = bool
+  description = "This determines if this is a private cluster or not."
+}

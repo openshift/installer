@@ -86,3 +86,8 @@ variable "availability_zones" {
   type        = list(string)
   description = "List of the availability zones in which to create the masters. The length of this list must match instance_count."
 }
+
+variable "private" {
+  type        = bool
+  description = "This value determines if this is a private cluster or not."
+}

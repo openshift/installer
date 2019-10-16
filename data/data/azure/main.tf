@@ -36,6 +36,7 @@ module "bootstrap" {
   tags                = local.tags
   storage_account     = azurerm_storage_account.cluster
   nsg_name            = module.vnet.master_nsg_name
+  private             = module.vnet.private
 }
 
 module "vnet" {
@@ -51,6 +52,7 @@ module "vnet" {
   virtual_network_name        = var.azure_virtual_network
   master_subnet               = var.azure_control_plane_subnet
   worker_subnet               = var.azure_compute_subnet
+  private                     = var.azure_private
 }
 
 module "master" {
@@ -71,6 +73,7 @@ module "master" {
   storage_account     = azurerm_storage_account.cluster
   os_volume_type      = var.azure_master_root_volume_type
   os_volume_size      = var.azure_master_root_volume_size
+  private             = module.vnet.private
 }
 
 module "dns" {
@@ -85,6 +88,7 @@ module "dns" {
   base_domain_resource_group_name = var.azure_base_domain_resource_group_name
   etcd_count                      = var.master_count
   etcd_ip_addresses               = module.master.ip_addresses
+  private                         = module.vnet.private
 }
 
 resource "random_string" "storage_suffix" {

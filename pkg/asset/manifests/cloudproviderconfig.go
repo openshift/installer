@@ -112,7 +112,6 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		if installConfig.Config.Azure.ComputeSubnet != "" {
 			subnet = installConfig.Config.Azure.ComputeSubnet
 		}
-
 		azureConfig, err := azure.CloudProviderConfig{
 			GroupLocation:            installConfig.Config.Azure.Region,
 			ResourcePrefix:           clusterID.InfraID,

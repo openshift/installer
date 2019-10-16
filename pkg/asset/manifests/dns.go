@@ -94,9 +94,11 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			return err
 		}
 
-		//currently, this guesses the azure resource IDs from known parameter.
-		config.Spec.PublicZone = &configv1.DNSZone{
-			ID: dnsConfig.GetDNSZoneID(installConfig.Config.Azure.BaseDomainResourceGroupName, installConfig.Config.BaseDomain),
+		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+			//currently, this guesses the azure resource IDs from known parameter.
+			config.Spec.PublicZone = &configv1.DNSZone{
+				ID: dnsConfig.GetDNSZoneID(installConfig.Config.Azure.BaseDomainResourceGroupName, installConfig.Config.BaseDomain),
+			}
 		}
 		config.Spec.PrivateZone = &configv1.DNSZone{
 			ID: dnsConfig.GetPrivateDNSZoneID(clusterID.InfraID+"-rg", installConfig.Config.ClusterDomain()),

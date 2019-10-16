@@ -5,6 +5,7 @@ import (
 
 	"github.com/Azure/go-autorest/autorest/to"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure/defaults"
 	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 )
@@ -33,6 +34,7 @@ type config struct {
 	ControlPlaneSubnet          string            `json:"azure_control_plane_subnet"`
 	ComputeSubnet               string            `json:"azure_compute_subnet"`
 	PreexistingNetwork          bool              `json:"azure_preexisting_network"`
+	Private                     bool              `json:"azure_private"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -43,6 +45,7 @@ type TFVarsSources struct {
 	WorkerConfigs               []*azureprovider.AzureMachineProviderSpec
 	ImageURL                    string
 	PreexistingNetwork          bool
+	Publish                     types.PublishingStrategy
 }
 
 // TFVars generates Azure-specific Terraform variables launching the cluster.
@@ -66,6 +69,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VolumeType:                  masterConfig.OSDisk.ManagedDisk.StorageAccountType,
 		VolumeSize:                  masterConfig.OSDisk.DiskSizeGB,
 		ImageURL:                    sources.ImageURL,
+		Private:                     sources.Publish == types.InternalPublishingStrategy,
 		BaseDomainResourceGroupName: sources.BaseDomainResourceGroupName,
 		NetworkResourceGroupName:    masterConfig.NetworkResourceGroup,
 		VirtualNetwork:              masterConfig.Vnet,

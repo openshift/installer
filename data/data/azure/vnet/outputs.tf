@@ -1,5 +1,5 @@
 output "cluster-pip" {
-  value = azurerm_public_ip.cluster_public_ip.ip_address
+  value = var.private ? null : azurerm_public_ip.cluster_public_ip.ip_address
 }
 
 output "public_lb_backend_pool_id" {
@@ -11,11 +11,11 @@ output "internal_lb_backend_pool_id" {
 }
 
 output "public_lb_id" {
-  value = azurerm_lb.public.id
+  value = var.private ? null : azurerm_lb.public.id
 }
 
 output "public_lb_pip_fqdn" {
-  value = data.azurerm_public_ip.cluster_public_ip.fqdn
+  value = var.private ? null : data.azurerm_public_ip.cluster_public_ip.fqdn
 }
 
 output "internal_lb_ip_address" {
@@ -36,4 +36,8 @@ output "master_subnet_id" {
 
 output "worker_subnet_id" {
   value = local.worker_subnet_id
+}
+
+output "private" {
+  value = var.private
 }

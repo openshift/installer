@@ -225,7 +225,9 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackVa
 		validate(aws.Name, platform.AWS, func(f *field.Path) field.ErrorList { return awsvalidation.ValidatePlatform(platform.AWS, f) })
 	}
 	if platform.Azure != nil {
-		validate(azure.Name, platform.Azure, func(f *field.Path) field.ErrorList { return azurevalidation.ValidatePlatform(platform.Azure, f) })
+		validate(azure.Name, platform.Azure, func(f *field.Path) field.ErrorList {
+			return azurevalidation.ValidatePlatform(platform.Azure, c.Publish, f)
+		})
 	}
 	if platform.GCP != nil {
 		validate(gcp.Name, platform.GCP, func(f *field.Path) field.ErrorList { return gcpvalidation.ValidatePlatform(platform.GCP, f) })

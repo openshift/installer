@@ -32,6 +32,8 @@ resource "azureprivatedns_a_record" "api_internal" {
 }
 
 resource "azurerm_dns_cname_record" "api_external" {
+  count = var.private ? 0 : 1
+
   name                = local.api_external_name
   zone_name           = var.base_domain
   resource_group_name = var.base_domain_resource_group_name
