@@ -22,6 +22,13 @@ Parameters:
     Default: 12
     Description: "Size of each subnet to create within the availability zones. (Min: 5 = /27, Max: 13 = /19)"
     Type: Number
+  EnableBlackhole:
+    AllowedValues:
+    - "true"
+    - "false"
+    Default: "false"
+    Description: "Whether or not to set up VPC with private subnet blackhole. Defaults to 'false'."
+    Type: String
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -46,6 +53,9 @@ Metadata:
 Conditions:
   DoAz3: !Equals [3, !Ref AvailabilityZoneCount]
   DoAz2: !Or [!Equals [2, !Ref AvailabilityZoneCount], Condition: DoAz3]
+  DoNAT: !Not [!Equals ["true", !Ref EnableBlackhole]]
+  DoNAT2: !And [Condition: DoNAT, Condition: DoAz2]
+  DoNAT3: !And [Condition: DoNAT, Condition: DoAz3]
 
 Resources:
   VPC:
@@ -136,6 +146,7 @@ Resources:
     DependsOn:
     - GatewayToInternet
     Type: "AWS::EC2::NatGateway"
+    Condition: DoNAT
     Properties:
       AllocationId:
         "Fn::GetAtt":
@@ -144,10 +155,12 @@ Resources:
       SubnetId: !Ref PublicSubnet
   EIP:
     Type: "AWS::EC2::EIP"
+    Condition: DoNAT
     Properties:
       Domain: vpc
   Route:
     Type: "AWS::EC2::Route"
+    Condition: DoNAT
     Properties:
       RouteTableId:
         Ref: PrivateRouteTable
@@ -178,7 +191,7 @@ Resources:
     DependsOn:
     - GatewayToInternet
     Type: "AWS::EC2::NatGateway"
-    Condition: DoAz2
+    Condition: DoNAT2
     Properties:
       AllocationId:
         "Fn::GetAtt":
@@ -187,12 +200,12 @@ Resources:
       SubnetId: !Ref PublicSubnet2
   EIP2:
     Type: "AWS::EC2::EIP"
-    Condition: DoAz2
+    Condition: DoNAT2
     Properties:
       Domain: vpc
   Route2:
     Type: "AWS::EC2::Route"
-    Condition: DoAz2
+    Condition: DoNAT2
     Properties:
       RouteTableId:
         Ref: PrivateRouteTable2
@@ -223,7 +236,7 @@ Resources:
     DependsOn:
     - GatewayToInternet
     Type: "AWS::EC2::NatGateway"
-    Condition: DoAz3
+    Condition: DoNAT3
     Properties:
       AllocationId:
         "Fn::GetAtt":
@@ -232,12 +245,12 @@ Resources:
       SubnetId: !Ref PublicSubnet3
   EIP3:
     Type: "AWS::EC2::EIP"
-    Condition: DoAz3
+    Condition: DoNAT3
     Properties:
       Domain: vpc
   Route3:
     Type: "AWS::EC2::Route"
-    Condition: DoAz3
+    Condition: DoNAT3
     Properties:
       RouteTableId:
         Ref: PrivateRouteTable3

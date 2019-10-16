@@ -32,6 +32,13 @@ Parameters:
   VpcId:
     Description: The VPC-scoped resources will belong to this VPC.
     Type: AWS::EC2::VPC::Id
+  EnableProxyTargets:
+    AllowedValues:
+    - "true"
+    - "false"
+    Default: "false"
+    Description: "Whether or not to set up Infra with proxy ELB Target Groups. Defaults to 'false'."
+    Type: String
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -67,6 +74,9 @@ Metadata:
         default: "Public Hosted Zone Name"
       HostedZoneId:
         default: "Public Hosted Zone ID"
+
+Conditions:
+  DoProxy: !Not [!Equals ["true", !Ref EnableProxyTargets]]
 
 Resources:
   ExtApiElb:
@@ -214,6 +224,106 @@ Resources:
       - Key: deregistration_delay.timeout_seconds
         Value: 60
 
+  ExternalSquidTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 3128
+      Protocol: TCP
+      TargetType: ip
+      VpcId:
+        Ref: VpcId
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: 60
+
+  ExternalSquidTLSTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 3130
+      Protocol: TCP
+      TargetType: ip
+      VpcId:
+        Ref: VpcId
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: 60
+
+  InternalSquidTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 3128
+      Protocol: TCP
+      TargetType: ip
+      VpcId:
+        Ref: VpcId
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: 60
+
+  InternalSquidTLSTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 3130
+      Protocol: TCP
+      TargetType: ip
+      VpcId:
+        Ref: VpcId
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: 60
+
+  IntLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: DoProxy
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: InternalSquidTargetGroup
+      LoadBalancerArn:
+        Ref: IntApiElb
+      Port: 3128
+      Protocol: TCP
+
+  IntLoadBalancerListenerTLS:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: DoProxy
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: InternalSquidTLSTargetGroup
+      LoadBalancerArn:
+        Ref: IntApiElb
+      Port: 3130
+      Protocol: TCP
+
+  ExtLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: DoProxy
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: ExternalSquidTargetGroup
+      LoadBalancerArn:
+        Ref: ExtApiElb
+      Port: 3128
+      Protocol: TCP
+
+  ExtLoadBalancerListenerTLS:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: DoProxy
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: ExternalSquidTLSTargetGroup
+      LoadBalancerArn:
+        Ref: ExtApiElb
+      Port: 3130
+      Protocol: TCP
+
   RegisterTargetLambdaIamRole:
     Type: AWS::IAM::Role
     Properties:
@@ -254,6 +364,34 @@ Resources:
                 "elasticloadbalancing:DeregisterTargets",
               ]
             Resource: !Ref ExternalApiTargetGroup
+          - Effect: "Allow"
+            Action:
+              [
+                "elasticloadbalancing:RegisterTargets",
+                "elasticloadbalancing:DeregisterTargets",
+              ]
+            Resource: !Ref ExternalSquidTargetGroup
+          - Effect: "Allow"
+            Action:
+              [
+                "elasticloadbalancing:RegisterTargets",
+                "elasticloadbalancing:DeregisterTargets",
+              ]
+            Resource: !Ref ExternalSquidTLSTargetGroup
+          - Effect: "Allow"
+            Action:
+              [
+                "elasticloadbalancing:RegisterTargets",
+                "elasticloadbalancing:DeregisterTargets",
+              ]
+            Resource: !Ref InternalSquidTargetGroup
+          - Effect: "Allow"
+            Action:
+              [
+                "elasticloadbalancing:RegisterTargets",
+                "elasticloadbalancing:DeregisterTargets",
+              ]
+            Resource: !Ref InternalSquidTLSTargetGroup
 
   RegisterNlbIpTargets:
     Type: "AWS::Lambda::Function"
@@ -378,3 +516,15 @@ Outputs:
   InternalServiceTargetGroupArn:
     Description: ARN of the internal service target group.
     Value: !Ref InternalServiceTargetGroup
+  ExternalSquidTargetGroupArn:
+    Description: ARN of the external squid target group.
+    Value: !Ref ExternalSquidTargetGroup
+  ExternalSquidTLSTargetGroupArn:
+    Description: ARN of the external squid tls target group.
+    Value: !Ref ExternalSquidTLSTargetGroup
+  InternalSquidTargetGroupArn:
+    Description: ARN of the internal squid target group.
+    Value: !Ref InternalSquidTargetGroup
+  InternalSquidTLSTargetGroupArn:
+    Description: ARN of the internal squid tls target group.
+    Value: !Ref InternalSquidTLSTargetGroup

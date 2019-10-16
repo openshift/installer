@@ -1,0 +1,216 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template for OpenShift Cluster Proxy (EC2 Instance, Security Groups and IAM)
+
+Parameters:
+  InfrastructureName:
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
+    MaxLength: 27
+    MinLength: 1
+    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
+    Description: A short, unique cluster ID used to tag cloud resources and identify items owned or used by the cluster.
+    Type: String
+  RhcosAmi:
+    Description: Current Red Hat Enterprise Linux CoreOS AMI to use for proxy.
+    Type: AWS::EC2::Image::Id
+  AllowedProxyCidr:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|1[0-9]|2[0-9]|3[0-2]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/0-32.
+    Default: 0.0.0.0/0
+    Description: CIDR block to allow access to the proxy node.
+    Type: String
+  PublicSubnet:
+    Description: The public subnet to launch the proxy node into.
+    Type: AWS::EC2::Subnet::Id
+  MasterSecurityGroupId:
+    Description: The master security group ID for registering temporary rules.
+    Type: AWS::EC2::SecurityGroup::Id
+  VpcId:
+    Description: The VPC-scoped resources will belong to this VPC.
+    Type: AWS::EC2::VPC::Id
+  ProxyIgnitionLocation:
+    Default: s3://my-s3-bucket/proxy.ign
+    Description: Ignition config file location.
+    Type: String
+  AutoRegisterELB:
+    Default: "yes"
+    AllowedValues:
+    - "yes"
+    - "no"
+    Description: Do you want to invoke NLB registration, which requires a Lambda ARN parameter?
+    Type: String
+  RegisterNlbIpTargetsLambdaArn:
+    Description: ARN for NLB IP target registration lambda.
+    Type: String
+  ExternalSquidTargetGroupArn:
+    Description: ARN for external API load balancer target group.
+    Type: String
+  ExternalSquidTLSTargetGroupArn:
+    Description: ARN for external API load balancer target group.
+    Type: String
+  InternalSquidTargetGroupArn:
+    Description: ARN for external API load balancer target group.
+    Type: String
+  InternalSquidTLSTargetGroupArn:
+    Description: ARN for external API load balancer target group.
+    Type: String
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "Cluster Information"
+      Parameters:
+      - InfrastructureName
+    - Label:
+        default: "Host Information"
+      Parameters:
+      - RhcosAmi
+      - ProxyIgnitionLocation
+      - MasterSecurityGroupId
+    - Label:
+        default: "Network Configuration"
+      Parameters:
+      - VpcId
+      - AllowedProxyCidr
+      - PublicSubnet
+      - PrivateSubnets
+      - ClusterName
+    - Label:
+        default: "Load Balancer Automation"
+      Parameters:
+      - AutoRegisterELB
+      - RegisterNlbIpTargetsLambdaArn
+      - ExternalSquidTargetGroupArn
+      - ExternalSquidTLSTargetGroupArn
+      - InternalSquidTargetGroupArn
+      - InternalSquidTLSTargetGroupArn
+    ParameterLabels:
+      InfrastructureName:
+        default: "Infrastructure Name"
+      VpcId:
+        default: "VPC ID"
+      AllowedProxyCidr:
+        default: "Allowed ingress Source"
+      PublicSubnet:
+        default: "Public Subnet"
+      RhcosAmi:
+        default: "Red Hat Enterprise Linux CoreOS AMI ID"
+      ProxyIgnitionLocation:
+        default: "Bootstrap Ignition Source"
+      MasterSecurityGroupId:
+        default: "Master Security Group ID"
+      AutoRegisterDNS:
+        default: "Use Provided DNS Automation"
+
+Conditions:
+  DoRegistration: !Equals ["yes", !Ref AutoRegisterELB]
+
+Resources:
+  ProxyIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - "ec2.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+      - PolicyName: !Join ["-", [!Ref InfrastructureName, "proxy", "policy"]]
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action: "ec2:Describe*"
+            Resource: "*"
+
+  ProxyInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      Roles:
+      - Ref: "ProxyIamRole"
+
+  ProxySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Cluster Proxy Security Group
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        ToPort: 3128
+        FromPort: 3128
+        CidrIp: !Ref AllowedProxyCidr
+      - IpProtocol: tcp
+        ToPort: 3130
+        FromPort: 3130
+        CidrIp: !Ref AllowedProxyCidr
+      - IpProtocol: tcp
+        ToPort: 19531
+        FromPort: 19531
+        CidrIp: !Ref AllowedProxyCidr
+      VpcId: !Ref VpcId
+
+  ProxyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref RhcosAmi
+      IamInstanceProfile: !Ref ProxyInstanceProfile
+      InstanceType: "i3.large"
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: "true"
+        DeviceIndex: "0"
+        GroupSet:
+        - !Ref "ProxySecurityGroup"
+        - !Ref "MasterSecurityGroupId"
+        SubnetId: !Ref "PublicSubnet"
+      UserData:
+        Fn::Base64: !Sub
+        - '{"ignition":{"config":{"replace":{"source":"\${S3Loc}","verification":{}}},"timeouts":{},"version":"2.1.0"},"networkd":{},"passwd":{},"storage":{},"systemd":{}}'
+        - {
+          S3Loc: !Ref ProxyIgnitionLocation
+        }
+
+  RegisterExternalProxyTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref ExternalSquidTargetGroupArn
+      TargetIp: !GetAtt ProxyInstance.PrivateIp
+
+  RegisterExternalProxyTLSTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref ExternalSquidTLSTargetGroupArn
+      TargetIp: !GetAtt ProxyInstance.PrivateIp
+
+  RegisterInternalProxyTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalSquidTargetGroupArn
+      TargetIp: !GetAtt ProxyInstance.PrivateIp
+
+  RegisterInternalProxyTLSTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalSquidTLSTargetGroupArn
+      TargetIp: !GetAtt ProxyInstance.PrivateIp
+
+Outputs:
+  ProxyPublicIp:
+    Description: The proxy node public IP address.
+    Value: !GetAtt ProxyInstance.PublicIp
