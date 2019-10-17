@@ -50,6 +50,11 @@ resource "aws_subnet" "public_subnet" {
   cidr_block        = cidrsubnet(local.new_public_cidr_range, 3, count.index)
   availability_zone = var.availability_zones[count.index]
 
+  # TODO - Make this conditional if ipv6 support is made optional
+  # We add length(var.availability_zones) here to skip over the subnets allocated to the private_subnet (vpc-private.tf)
+  ipv6_cidr_block                 = cidrsubnet(data.aws_vpc.cluster_vpc.ipv6_cidr_block, 8, count.index + length(var.availability_zones))
+  assign_ipv6_address_on_creation = true
+
   tags = merge(
     {
       "Name" = "${var.cluster_id}-public-${var.availability_zones[count.index]}"

@@ -10,6 +10,9 @@ resource "aws_vpc" "new_vpc" {
   enable_dns_hostnames = true
   enable_dns_support   = true
 
+  # TODO - This should probably be optional
+  assign_generated_ipv6_cidr_block = true
+
   tags = merge(
     {
       "Name" = "${var.cluster_id}-vpc"

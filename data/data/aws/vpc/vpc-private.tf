@@ -33,6 +33,10 @@ resource "aws_subnet" "private_subnet" {
 
   availability_zone = var.availability_zones[count.index]
 
+  # TODO - Make this conditional if ipv6 support is made optional
+  ipv6_cidr_block                 = cidrsubnet(data.aws_vpc.cluster_vpc.ipv6_cidr_block, 8, count.index)
+  assign_ipv6_address_on_creation = true
+
   tags = merge(
     {
       "Name"                            = "${var.cluster_id}-private-${var.availability_zones[count.index]}"
