@@ -15,10 +15,10 @@ variable "openstack_base_image_name" {
   description = "Name of the base image to use for the nodes."
 }
 
-variable "openstack_base_image_url" {
+variable "openstack_base_image_local_file_path" {
   type        = string
   default     = ""
-  description = "URL of the base image to use for the nodes."
+  description = "Local file path of the base image file to use for the nodes."
 }
 
 variable "openstack_bootstrap_shim_ignition" {
