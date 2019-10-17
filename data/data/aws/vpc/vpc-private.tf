@@ -24,6 +24,21 @@ resource "aws_route" "to_nat_gw" {
   }
 }
 
+# We can't target the NAT gw for our "private" IPv6 subnet.  Instead, we target the internet gateway,
+# since we want our private IPv6 addresses to be able to talk out to the internet, too.
+resource "aws_route" "private_igw_v6" {
+  count = var.private_subnets == null ? length(var.availability_zones) : 0
+
+  route_table_id              = aws_route_table.private_routes[count.index].id
+  destination_ipv6_cidr_block = "::/0"
+  gateway_id                  = aws_internet_gateway.igw[0].id
+  depends_on                  = [aws_route_table.private_routes]
+
+  timeouts {
+    create = "20m"
+  }
+}
+
 resource "aws_subnet" "private_subnet" {
   count = var.private_subnets == null ? length(var.availability_zones) : 0
 
