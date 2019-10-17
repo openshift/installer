@@ -122,31 +122,59 @@ func awsDefaultMasterMachineType(installconfig *installconfig.InstallConfig) str
 
 // Generate generates the Master asset.
 func (m *Master) Generate(dependencies asset.Parents) error {
+	ctx := context.TODO()
 	clusterID := &installconfig.ClusterID{}
-	installconfig := &installconfig.InstallConfig{}
+	installConfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
 	mign := &machine.Master{}
-	dependencies.Get(clusterID, installconfig, rhcosImage, mign)
+	dependencies.Get(clusterID, installConfig, rhcosImage, mign)
 
-	ic := installconfig.Config
+	ic := installConfig.Config
 
 	pool := ic.ControlPlane
 	var err error
 	machines := []machineapi.Machine{}
 	switch ic.Platform.Name() {
 	case awstypes.Name:
-		mpool := defaultAWSMachinePoolPlatform()
-		mpool.InstanceType = awsDefaultMasterMachineType(installconfig)
-		mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
-		mpool.Set(pool.Platform.AWS)
-		if len(mpool.Zones) == 0 {
-			mpool.Zones, err = installconfig.AWS.AvailabilityZones(context.TODO())
+		subnets := map[string]string{}
+		if len(ic.Platform.AWS.Subnets) > 0 {
+			subnetMeta, err := installConfig.AWS.PrivateSubnets(ctx)
 			if err != nil {
 				return err
 			}
+			for id, subnet := range subnetMeta {
+				subnets[subnet.Zone] = id
+			}
 		}
+
+		mpool := defaultAWSMachinePoolPlatform()
+		mpool.InstanceType = awsDefaultMasterMachineType(installConfig)
+		mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.AWS)
+		if len(mpool.Zones) == 0 {
+			if len(subnets) > 0 {
+				for zone := range subnets {
+					mpool.Zones = append(mpool.Zones, zone)
+				}
+			} else {
+				mpool.Zones, err = installConfig.AWS.AvailabilityZones(ctx)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
 		pool.Platform.AWS = &mpool
-		machines, err = aws.Machines(clusterID.InfraID, ic, pool, string(*rhcosImage), "master", "master-user-data")
+		machines, err = aws.Machines(
+			clusterID.InfraID,
+			installConfig.Config.Platform.AWS.Region,
+			subnets,
+			pool,
+			string(*rhcosImage),
+			"master",
+			"master-user-data",
+			installConfig.Config.Platform.AWS.UserTags,
+		)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
@@ -192,7 +220,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		openstack.ConfigMasters(machines, clusterID.InfraID)
 	case azuretypes.Name:
 		mpool := defaultAzureMachinePoolPlatform()
-		mpool.InstanceType = azuredefaults.ControlPlaneInstanceType(installconfig.Config.Platform.Azure.Region)
+		mpool.InstanceType = azuredefaults.ControlPlaneInstanceType(installConfig.Config.Platform.Azure.Region)
 		mpool.OSDisk.DiskSizeGB = 1024
 		mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Azure)

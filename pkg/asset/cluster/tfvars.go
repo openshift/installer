@@ -85,6 +85,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 
 // Generate generates the terraform.tfvars file.
 func (t *TerraformVariables) Generate(parents asset.Parents) error {
+	ctx := context.TODO()
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
@@ -133,6 +134,35 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 	switch platform {
 	case aws.Name:
+		var vpc string
+		var privateSubnets []string
+		var publicSubnets []string
+
+		if len(installConfig.Config.Platform.AWS.Subnets) > 0 {
+			subnets, err := installConfig.AWS.PrivateSubnets(ctx)
+			if err != nil {
+				return err
+			}
+
+			for id := range subnets {
+				privateSubnets = append(privateSubnets, id)
+			}
+
+			subnets, err = installConfig.AWS.PublicSubnets(ctx)
+			if err != nil {
+				return err
+			}
+
+			for id := range subnets {
+				publicSubnets = append(publicSubnets, id)
+			}
+
+			vpc, err = installConfig.AWS.VPC(ctx)
+			if err != nil {
+				return err
+			}
+		}
+
 		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
@@ -149,7 +179,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, m := range workers {
 			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
 		}
-		data, err := awstfvars.TFVars(masterConfigs, workerConfigs)
+		data, err := awstfvars.TFVars(vpc, privateSubnets, publicSubnets, masterConfigs, workerConfigs)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
@@ -203,7 +233,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case gcp.Name:
-		sess, err := gcpconfig.GetSession(context.TODO())
+		sess, err := gcpconfig.GetSession(ctx)
 		if err != nil {
 			return err
 		}
@@ -225,7 +255,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
 		}
-		publicZone, err := gcpconfig.GetPublicZone(context.TODO(), installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
+		publicZone, err := gcpconfig.GetPublicZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get GCP public zone")
 		}
