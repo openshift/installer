@@ -70,3 +70,13 @@ variable "user_data_ign" {
   type = string
 }
 
+variable "publish_strategy" {
+  type        = string
+  description = <<EOF
+The publishing strategy for endpoints like load balancers.
+
+Because of the issue https://github.com/hashicorp/terraform/issues/12570, the consumers cannot use a dynamic list for count
+and therefore are force to implicitly assume that the list is of aws_lb_target_group_arns_length - 1, in case there is no api_external. And that's where this variable
+helps to decide if the target_group_arns is of length (target_group_arns_length) or (target_group_arns_length - 1)
+EOF
+}

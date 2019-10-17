@@ -20,6 +20,8 @@ resource "aws_lb" "api_internal" {
 }
 
 resource "aws_lb" "api_external" {
+  count = local.public_endpoints ? 1 : 0
+
   name                             = "${var.cluster_id}-ext"
   load_balancer_type               = "network"
   subnets                          = data.aws_subnet.public.*.id
@@ -66,6 +68,8 @@ resource "aws_lb_target_group" "api_internal" {
 }
 
 resource "aws_lb_target_group" "api_external" {
+  count = local.public_endpoints ? 1 : 0
+
   name     = "${var.cluster_id}-aext"
   protocol = "TCP"
   port     = 6443
@@ -138,14 +142,14 @@ resource "aws_lb_listener" "api_internal_services" {
 }
 
 resource "aws_lb_listener" "api_external_api" {
-  count = var.public_master_endpoints ? 1 : 0
+  count = local.public_endpoints ? 1 : 0
 
-  load_balancer_arn = aws_lb.api_external.arn
+  load_balancer_arn = aws_lb.api_external[0].arn
   protocol          = "TCP"
   port              = "6443"
 
   default_action {
-    target_group_arn = aws_lb_target_group.api_external.arn
+    target_group_arn = aws_lb_target_group.api_external[0].arn
     type             = "forward"
   }
 }

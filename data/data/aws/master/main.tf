@@ -1,5 +1,9 @@
 locals {
   arn = "aws"
+
+  // Because of the issue https://github.com/hashicorp/terraform/issues/12570, the consumers cannot use a dynamic list for count
+  // and therefore are force to implicitly assume that the list is of aws_lb_target_group_arns_length - 1, in case there is no api_external
+  target_group_arns_length = var.publish_strategy == "External" ? var.target_group_arns_length : var.target_group_arns_length - 1
 }
 
 resource "aws_iam_instance_profile" "master" {
@@ -128,9 +132,9 @@ resource "aws_instance" "master" {
 }
 
 resource "aws_lb_target_group_attachment" "master" {
-  count = var.instance_count * var.target_group_arns_length
+  count = var.instance_count * local.target_group_arns_length
 
-  target_group_arn = var.target_group_arns[count.index % var.target_group_arns_length]
-  target_id        = aws_instance.master[floor(count.index / var.target_group_arns_length)].private_ip
+  target_group_arn = var.target_group_arns[count.index % local.target_group_arns_length]
+  target_id        = aws_instance.master[floor(count.index / local.target_group_arns_length)].private_ip
 }
 

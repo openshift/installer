@@ -1,3 +1,7 @@
+locals {
+  public_endpoints = var.publish_strategy == "External" ? true : false
+}
+
 resource "aws_s3_bucket" "ignition" {
   acl = "private"
 
@@ -117,7 +121,7 @@ resource "aws_instance" "bootstrap" {
   subnet_id                   = var.subnet_id
   user_data                   = data.ignition_config.redirect.rendered
   vpc_security_group_ids      = flatten([var.vpc_security_group_ids, aws_security_group.bootstrap.id])
-  associate_public_ip_address = true
+  associate_public_ip_address = local.public_endpoints
 
   lifecycle {
     # Ignore changes in the AMI which force recreation of the resource. This
@@ -147,7 +151,9 @@ resource "aws_instance" "bootstrap" {
 }
 
 resource "aws_lb_target_group_attachment" "bootstrap" {
-  count = var.target_group_arns_length
+  // Because of the issue https://github.com/hashicorp/terraform/issues/12570, the consumers cannot use a dynamic list for count
+  // and therefore are force to implicitly assume that the list is of aws_lb_target_group_arns_length - 1, in case there is no api_external
+  count = local.public_endpoints ? var.target_group_arns_length : var.target_group_arns_length - 1
 
   target_group_arn = var.target_group_arns[count.index]
   target_id        = aws_instance.bootstrap.private_ip
@@ -173,7 +179,7 @@ resource "aws_security_group_rule" "ssh" {
   security_group_id = aws_security_group.bootstrap.id
 
   protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
+  cidr_blocks = local.public_endpoints ? ["0.0.0.0/0"] : var.vpc_cidrs
   from_port   = 22
   to_port     = 22
 }
@@ -183,7 +189,7 @@ resource "aws_security_group_rule" "bootstrap_journald_gateway" {
   security_group_id = aws_security_group.bootstrap.id
 
   protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
+  cidr_blocks = local.public_endpoints ? ["0.0.0.0/0"] : var.vpc_cidrs
   from_port   = 19531
   to_port     = 19531
 }
