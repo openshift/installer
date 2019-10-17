@@ -1,7 +1,7 @@
 resource "google_compute_address" "cluster_ip" {
   name         = "${var.cluster_id}-cluster-ip"
   address_type = "INTERNAL"
-  subnetwork   = google_compute_subnetwork.master_subnet[0].self_link
+  subnetwork   = local.master_subnet
 }
 
 resource "google_compute_health_check" "api_internal" {
@@ -37,7 +37,8 @@ resource "google_compute_forwarding_rule" "api_internal" {
   ip_address      = google_compute_address.cluster_ip.address
   backend_service = google_compute_region_backend_service.api_internal.self_link
   ports           = ["6443", "22623"]
-  subnetwork      = google_compute_subnetwork.master_subnet[0].self_link
+  subnetwork      = local.master_subnet
+  network         = local.cluster_network
 
   load_balancing_scheme = "INTERNAL"
 }

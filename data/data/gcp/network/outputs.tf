@@ -15,5 +15,5 @@ output "worker_subnet" {
 }
 
 output "master_subnet" {
-  value = var.preexisting_network ? data.google_compute_subnetwork.preexisting_master_subnet[0].self_link : google_compute_subnetwork.master_subnet[0].self_link
+  value = local.master_subnet
 }
