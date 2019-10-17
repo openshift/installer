@@ -91,6 +91,7 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 			None: &none.Platform{},
 		},
 		PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+		Publish:    types.ExternalPublishingStrategy,
 	}
 	assert.Equal(t, expected, installConfig.Config, "unexpected config generated")
 }
@@ -154,6 +155,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 					},
 				},
 				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				Publish:    types.ExternalPublishingStrategy,
 			},
 		},
 		{
@@ -235,6 +237,7 @@ network:
 					},
 				},
 				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				Publish:    types.ExternalPublishingStrategy,
 			},
 		},
 	}

@@ -93,6 +93,9 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 		allErrs = append(allErrs, validateProxy(c.Proxy, field.NewPath("proxy"))...)
 	}
 	allErrs = append(allErrs, validateImageContentSources(c.ImageContentSources, field.NewPath("imageContentSources"))...)
+	if _, ok := validPublishingStrategies[c.Publish]; !ok {
+		allErrs = append(allErrs, field.NotSupported(field.NewPath("publish"), c.Publish, validPublishingStrategyValues))
+	}
 	return allErrs
 }
 
@@ -304,3 +307,19 @@ func validateNamedRepository(r string) error {
 	}
 	return nil
 }
+
+var (
+	validPublishingStrategies = map[types.PublishingStrategy]struct{}{
+		types.ExternalPublishingStrategy: {},
+		types.InternalPublishingStrategy: {},
+	}
+
+	validPublishingStrategyValues = func() []string {
+		v := make([]string, 0, len(validPublishingStrategies))
+		for m := range validPublishingStrategies {
+			v = append(v, string(m))
+		}
+		sort.Strings(v)
+		return v
+	}()
+)

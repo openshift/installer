@@ -46,6 +46,11 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 			},
 		}
 	}
+
+	if c.Publish == "" {
+		c.Publish = types.ExternalPublishingStrategy
+	}
+
 	if c.ControlPlane == nil {
 		c.ControlPlane = &types.MachinePool{}
 	}
