@@ -264,7 +264,7 @@ then
 			--dest-dir=/assets/mco-bootstrap \
 			--pull-secret=/assets/manifests/openshift-config-secret-pull-secret.yaml \
 			--etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
-			--kube-client-agent-image="${MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE}" \
+			--kube-client-agent-image="${CLUSTER_ETCD_OPERATOR_IMAGE}" \
 			--machine-config-operator-image="${MACHINE_CONFIG_OPERATOR_IMAGE}" \
 			--machine-config-oscontent-image="${MACHINE_CONFIG_OSCONTENT}" \
 			--infra-image="${MACHINE_CONFIG_INFRA_IMAGE}" \
