@@ -86,3 +86,8 @@ variable "aws_private_subnets" {
   default = null
   description = "(optional) Existing private subnets into which the cluster should be installed."
 }
+
+variable "aws_publish_strategy" {
+  type = string
+  description = "The cluster publishing strategy, either Internal or External"
+}
