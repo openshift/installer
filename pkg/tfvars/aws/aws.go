@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/openshift/installer/pkg/types/aws/defaults"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
+
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws/defaults"
 )
 
 type config struct {
@@ -23,11 +25,12 @@ type config struct {
 	Region                  string            `json:"aws_region,omitempty"`
 	VPC                     string            `json:"aws_vpc,omitempty"`
 	PrivateSubnets          []string          `json:"aws_private_subnets,omitempty"`
-	PublicSubnets           []string          `json:"aws_public_subnets,omitempty"`
+	PublicSubnets           *[]string         `json:"aws_public_subnets,omitempty"`
+	PublishStrategy         string            `json:"aws_publish_strategy,omitempty"`
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
-func TFVars(vpc string, privateSubnets []string, publicSubnets []string, masterConfigs []*v1beta1.AWSMachineProviderConfig, workerConfigs []*v1beta1.AWSMachineProviderConfig) ([]byte, error) {
+func TFVars(vpc string, privateSubnets []string, publicSubnets []string, publish types.PublishingStrategy, masterConfigs []*v1beta1.AWSMachineProviderConfig, workerConfigs []*v1beta1.AWSMachineProviderConfig) ([]byte, error) {
 	masterConfig := masterConfigs[0]
 
 	tags := make(map[string]string, len(masterConfig.Tags))
@@ -85,7 +88,15 @@ func TFVars(vpc string, privateSubnets []string, publicSubnets []string, masterC
 		Type:                    *rootVolume.EBS.VolumeType,
 		VPC:                     vpc,
 		PrivateSubnets:          privateSubnets,
-		PublicSubnets:           publicSubnets,
+		PublishStrategy:         string(publish),
+	}
+
+	if len(publicSubnets) == 0 {
+		if cfg.VPC != "" {
+			cfg.PublicSubnets = &[]string{}
+		}
+	} else {
+		cfg.PublicSubnets = &publicSubnets
 	}
 
 	if rootVolume.EBS.Iops != nil {
