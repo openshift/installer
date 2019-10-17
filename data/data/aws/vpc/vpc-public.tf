@@ -43,6 +43,18 @@ resource "aws_route" "igw_route" {
   }
 }
 
+resource "aws_route" "igw_route_v6" {
+  count = var.vpc == null ? 1 : 0
+
+  destination_ipv6_cidr_block = "::/0"
+  route_table_id              = aws_route_table.default[0].id
+  gateway_id                  = aws_internet_gateway.igw[0].id
+
+  timeouts {
+    create = "20m"
+  }
+}
+
 resource "aws_subnet" "public_subnet" {
   count = var.public_subnets == null ? length(var.availability_zones) : 0
 
