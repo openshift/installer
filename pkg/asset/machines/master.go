@@ -178,7 +178,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		aws.ConfigMasters(machines, clusterID.InfraID)
+		aws.ConfigMasters(machines, clusterID.InfraID, ic.Publish)
 	case gcptypes.Name:
 		mpool := defaultGCPMachinePoolPlatform()
 		mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
