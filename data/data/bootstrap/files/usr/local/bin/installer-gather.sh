@@ -8,6 +8,16 @@ fi
 
 ARTIFACTS="/tmp/artifacts-${GATHER_ID}"
 
+echo "Gathering bootstrap systemd summary ..."
+LANG=POSIX systemctl list-units --state=failed >& "${ARTIFACTS}/failed-units.txt"
+
+echo "Gathering bootstrap failed systemd unit status ..."
+mkdir -p "${ARTIFACTS}/unit-status"
+sed -n 's/^\* \([^ ]*\) .*/\1/p' < "${ARTIFACTS}/failed-units.txt" | while read -r UNIT
+do
+    systemctl status "${UNIT}" >& "${ARTIFACTS}/unit-status/${UNIT}.txt"
+done
+
 echo "Gathering bootstrap journals ..."
 mkdir -p "${ARTIFACTS}/bootstrap/journals"
 for service in release-image bootkube kubelet crio approve-csr
