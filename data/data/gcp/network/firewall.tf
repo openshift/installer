@@ -8,7 +8,7 @@ resource "google_compute_firewall" "api" {
     ports    = ["6443"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = [var.public_endpoints ? "0.0.0.0/0" : var.network_cidr]
   target_tags   = ["${var.cluster_id}-master"]
 }
 
@@ -19,7 +19,7 @@ resource "google_compute_firewall" "health_checks" {
   # API, MCS (http)
   allow {
     protocol = "tcp"
-    ports    = ["6080", "22624"]
+    ports    = ["6080", "6443", "22624"]
   }
 
   source_ranges = ["35.191.0.0/16", "130.211.0.0/22", "209.85.152.0/22", "209.85.204.0/22"]

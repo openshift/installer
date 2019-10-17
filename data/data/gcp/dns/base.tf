@@ -11,6 +11,8 @@ resource "google_dns_managed_zone" "int" {
 }
 
 resource "google_dns_record_set" "api_external" {
+  count = var.public_endpoints ? 1 : 0
+
   name         = "api.${var.cluster_domain}."
   type         = "A"
   ttl          = "60"
