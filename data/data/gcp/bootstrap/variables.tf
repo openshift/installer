@@ -35,6 +35,15 @@ variable "network" {
   description = "The network the bootstrap node will be added to."
 }
 
+variable "network_cidr" {
+  type = string
+}
+
+variable "public_endpoints" {
+  type        = bool
+  description = "If the bootstrap instance should have externally accessible resources."
+}
+
 variable "subnet" {
   type        = string
   description = "The subnetwork the bootstrap node will be added to."

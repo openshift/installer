@@ -38,3 +38,8 @@ variable "cluster_domain" {
   description = "The domain for the cluster that all DNS records must belong"
   type        = string
 }
+
+variable "public_endpoints" {
+  type        = bool
+  description = "If the cluster should have externally accessible resources."
+}

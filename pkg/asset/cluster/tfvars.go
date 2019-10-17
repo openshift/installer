@@ -31,6 +31,7 @@ import (
 	gcptfvars "github.com/openshift/installer/pkg/tfvars/gcp"
 	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -233,6 +234,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case gcp.Name:
+		var publicZoneName string
 		sess, err := gcpconfig.GetSession(ctx)
 		if err != nil {
 			return err
@@ -255,9 +257,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
 		}
-		publicZone, err := gcpconfig.GetPublicZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get GCP public zone")
+		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+			publicZone, err := gcpconfig.GetPublicZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
+			if err != nil {
+				return errors.Wrapf(err, "failed to get GCP public zone")
+			}
+			publicZoneName = publicZone.Name
 		}
 		preexistingnetwork := installConfig.Config.GCP.Network != ""
 		data, err := gcptfvars.TFVars(
@@ -266,7 +271,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				MasterConfigs:      masterConfigs,
 				WorkerConfigs:      workerConfigs,
 				ImageURI:           string(*rhcosImage),
-				PublicZoneName:     publicZone.Name,
+				PublicZoneName:     publicZoneName,
+				PublishStrategy:    installConfig.Config.Publish,
 				PreexistingNetwork: preexistingnetwork,
 			},
 		)
