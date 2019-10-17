@@ -89,7 +89,16 @@ resource "aws_network_interface" "master" {
     var.tags,
   )
 }
-  
+
+# NOTE(russellb) For some reason, I was not able to access get IPv6 addresses
+# on the resource, but was able to get them using the network interface data
+# source.
+data "aws_network_interface" "master" {
+  count = var.instance_count
+
+  id = aws_network_interface.master[count.index].id
+}
+
 resource "aws_instance" "master" {
   count = var.instance_count
   ami   = var.ec2_ami

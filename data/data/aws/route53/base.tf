@@ -44,6 +44,18 @@ resource "aws_route53_record" "api_external" {
   }
 }
 
+resource "aws_route53_record" "api_external_v6" {
+  zone_id = data.aws_route53_zone.public[0].zone_id
+  name    = "api.${var.cluster_domain}"
+  type    = "AAAA"
+
+  alias {
+    name                   = var.api_external_lb_dns_name
+    zone_id                = var.api_external_lb_zone_id
+    evaluate_target_health = false
+  }
+}
+
 resource "aws_route53_record" "api_internal" {
   zone_id = aws_route53_zone.int.zone_id
   name    = "api-int.${var.cluster_domain}"
@@ -56,10 +68,36 @@ resource "aws_route53_record" "api_internal" {
   }
 }
 
+# TODO make this conditional if IPv6 is optional
+resource "aws_route53_record" "api_internal_v6" {
+  zone_id = aws_route53_zone.int.zone_id
+  name    = "api-int.${var.cluster_domain}"
+  type    = "AAAA"
+
+  alias {
+    name                   = var.api_internal_lb_dns_name
+    zone_id                = var.api_internal_lb_zone_id
+    evaluate_target_health = false
+  }
+}
+
 resource "aws_route53_record" "api_external_internal_zone" {
   zone_id = aws_route53_zone.int.zone_id
   name    = "api.${var.cluster_domain}"
   type    = "A"
+
+  alias {
+    name                   = var.api_internal_lb_dns_name
+    zone_id                = var.api_internal_lb_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# TODO make this conditional if IPv6 is optional
+resource "aws_route53_record" "api_external_internal_zone_v6" {
+  zone_id = aws_route53_zone.int.zone_id
+  name    = "api.${var.cluster_domain}"
+  type    = "AAAA"
 
   alias {
     name                   = var.api_internal_lb_dns_name
@@ -83,6 +121,24 @@ resource "aws_route53_record" "etcd_a_nodes" {
   # brackets to avoid interpretation as a list of lists. If the expression
   # returns a single list item then leave it as-is and remove this TODO comment.
   records = [var.etcd_ip_addresses[count.index]]
+}
+
+# TODO make this conditional if IPv6 is optional
+resource "aws_route53_record" "etcd_a_nodes_v6" {
+  count   = var.etcd_count
+  type    = "AAAA"
+  ttl     = "60"
+  zone_id = aws_route53_zone.int.zone_id
+  name    = "etcd-${count.index}.${var.cluster_domain}"
+  # TF-UPGRADE-TODO: In Terraform v0.10 and earlier, it was sometimes necessary to
+  # force an interpolation expression to be interpreted as a list by wrapping it
+  # in an extra set of list brackets. That form was supported for compatibilty in
+  # v0.11, but is no longer supported in Terraform v0.12.
+  #
+  # If the expression in the following list itself returns a list, remove the
+  # brackets to avoid interpretation as a list of lists. If the expression
+  # returns a single list item then leave it as-is and remove this TODO comment.
+  records = [var.etcd_ipv6_addresses[count.index]]
 }
 
 resource "aws_route53_record" "etcd_cluster" {

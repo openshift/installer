@@ -14,6 +14,12 @@ variable "etcd_ip_addresses" {
   default     = []
 }
 
+variable "etcd_ipv6_addresses" {
+  description = "List of string IPs (IPv6) for machines running etcd members."
+  type        = list(string)
+  default     = []
+}
+
 variable "base_domain" {
   description = "The base domain used for public records."
   type        = string
