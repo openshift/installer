@@ -51,3 +51,8 @@ variable "preexisting_network" {
   type    = bool
   default = false
 }
+
+variable "public_endpoints" {
+  type        = bool
+  description = "If the bootstrap instance should have externally accessible resources."
+}

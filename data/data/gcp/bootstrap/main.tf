@@ -21,7 +21,10 @@ data "ignition_config" "redirect" {
 }
 
 resource "google_compute_address" "bootstrap" {
-  name = "${var.cluster_id}-bootstrap-public-ip"
+  name = "${var.cluster_id}-bootstrap-ip"
+
+  address_type = var.public_endpoints ? "EXTERNAL" : "INTERNAL"
+  subnetwork   = var.public_endpoints ? null : var.subnet
 }
 
 resource "google_compute_firewall" "bootstrap_ingress_ssh" {
@@ -33,7 +36,7 @@ resource "google_compute_firewall" "bootstrap_ingress_ssh" {
     ports    = ["22"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = [var.public_endpoints ? "0.0.0.0/0" : var.network_cidr]
   target_tags   = ["${var.cluster_id}-bootstrap"]
 }
 
@@ -55,9 +58,14 @@ resource "google_compute_instance" "bootstrap" {
   network_interface {
     subnetwork = var.subnet
 
-    access_config {
-      nat_ip = "${google_compute_address.bootstrap.address}"
+    dynamic "access_config" {
+      for_each = local.external_ip
+      content {
+        nat_ip = access_config.value
+      }
     }
+
+    network_ip = var.public_endpoints ? null : google_compute_address.bootstrap.address
   }
 
   metadata = {
