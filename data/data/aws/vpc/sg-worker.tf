@@ -23,6 +23,17 @@ resource "aws_security_group_rule" "worker_egress" {
   cidr_blocks = ["0.0.0.0/0"]
 }
 
+# TODO make this conditional on ipv6 being enabled
+resource "aws_security_group_rule" "worker_egress_v6" {
+  type              = "egress"
+  security_group_id = aws_security_group.worker.id
+
+  from_port        = 0
+  to_port          = 0
+  protocol         = "-1"
+  ipv6_cidr_blocks = ["::/0"]
+}
+
 resource "aws_security_group_rule" "worker_ingress_icmp" {
   type              = "ingress"
   security_group_id = aws_security_group.worker.id
@@ -33,6 +44,16 @@ resource "aws_security_group_rule" "worker_ingress_icmp" {
   to_port     = -1
 }
 
+resource "aws_security_group_rule" "worker_ingress_icmp_v6" {
+  type              = "ingress"
+  security_group_id = aws_security_group.worker.id
+
+  protocol         = "icmp"
+  ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
+  from_port        = -1
+  to_port          = -1
+}
+
 resource "aws_security_group_rule" "worker_ingress_ssh" {
   type              = "ingress"
   security_group_id = aws_security_group.worker.id
@@ -41,6 +62,16 @@ resource "aws_security_group_rule" "worker_ingress_ssh" {
   cidr_blocks = [data.aws_vpc.cluster_vpc.cidr_block]
   from_port   = 22
   to_port     = 22
+}
+
+resource "aws_security_group_rule" "worker_ingress_ssh_v6" {
+  type              = "ingress"
+  security_group_id = aws_security_group.worker.id
+
+  protocol         = "tcp"
+  ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
+  from_port        = 22
+  to_port          = 22
 }
 
 resource "aws_security_group_rule" "worker_ingress_vxlan" {

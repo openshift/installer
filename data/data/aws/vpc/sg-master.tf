@@ -23,6 +23,16 @@ resource "aws_security_group_rule" "master_mcs" {
   to_port     = 22623
 }
 
+resource "aws_security_group_rule" "master_mcs_v6" {
+  type              = "ingress"
+  security_group_id = aws_security_group.master.id
+
+  protocol         = "tcp"
+  ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
+  from_port        = 22623
+  to_port          = 22623
+}
+
 resource "aws_security_group_rule" "master_egress" {
   type              = "egress"
   security_group_id = aws_security_group.master.id
@@ -31,6 +41,17 @@ resource "aws_security_group_rule" "master_egress" {
   to_port     = 0
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
+}
+
+# TODO make this conditional on ipv6 being enabled
+resource "aws_security_group_rule" "master_egress_v6" {
+  type              = "egress"
+  security_group_id = aws_security_group.master.id
+
+  from_port        = 0
+  to_port          = 0
+  protocol         = "-1"
+  ipv6_cidr_blocks = ["::/0"]
 }
 
 resource "aws_security_group_rule" "master_ingress_icmp" {
@@ -43,6 +64,16 @@ resource "aws_security_group_rule" "master_ingress_icmp" {
   to_port     = -1
 }
 
+resource "aws_security_group_rule" "master_ingress_icmp_v6" {
+  type              = "ingress"
+  security_group_id = aws_security_group.master.id
+
+  protocol         = "icmp"
+  ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
+  from_port        = -1
+  to_port          = -1
+}
+
 resource "aws_security_group_rule" "master_ingress_ssh" {
   type              = "ingress"
   security_group_id = aws_security_group.master.id
@@ -53,6 +84,16 @@ resource "aws_security_group_rule" "master_ingress_ssh" {
   to_port     = 22
 }
 
+resource "aws_security_group_rule" "master_ingress_ssh_v6" {
+  type              = "ingress"
+  security_group_id = aws_security_group.master.id
+
+  protocol         = "tcp"
+  ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
+  from_port        = 22
+  to_port          = 22
+}
+
 resource "aws_security_group_rule" "master_ingress_https" {
   type              = "ingress"
   security_group_id = aws_security_group.master.id
@@ -61,6 +102,16 @@ resource "aws_security_group_rule" "master_ingress_https" {
   cidr_blocks = [data.aws_vpc.cluster_vpc.cidr_block]
   from_port   = 6443
   to_port     = 6443
+}
+
+resource "aws_security_group_rule" "master_ingress_https_v6" {
+  type              = "ingress"
+  security_group_id = aws_security_group.master.id
+
+  protocol         = "tcp"
+  ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
+  from_port        = 6443
+  to_port          = 6443
 }
 
 resource "aws_security_group_rule" "master_ingress_vxlan" {

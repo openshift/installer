@@ -184,6 +184,16 @@ resource "aws_security_group_rule" "ssh" {
   to_port     = 22
 }
 
+resource "aws_security_group_rule" "ssh_v6" {
+  type              = "ingress"
+  security_group_id = aws_security_group.bootstrap.id
+
+  protocol         = "tcp"
+  ipv6_cidr_blocks = ["::/0"]
+  from_port        = 22
+  to_port          = 22
+}
+
 resource "aws_security_group_rule" "bootstrap_journald_gateway" {
   type              = "ingress"
   security_group_id = aws_security_group.bootstrap.id
@@ -194,3 +204,12 @@ resource "aws_security_group_rule" "bootstrap_journald_gateway" {
   to_port     = 19531
 }
 
+resource "aws_security_group_rule" "bootstrap_journald_gateway_v6" {
+  type              = "ingress"
+  security_group_id = aws_security_group.bootstrap.id
+
+  protocol         = "tcp"
+  ipv6_cidr_blocks = ["::/0"]
+  from_port        = 19531
+  to_port          = 19531
+}
