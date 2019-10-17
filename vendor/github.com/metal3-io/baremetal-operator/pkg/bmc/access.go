@@ -8,6 +8,18 @@ import (
 	"github.com/pkg/errors"
 )
 
+// AccessDetailsFactory describes a callable that returns a new
+// AccessDetails based on the input parameters.
+type AccessDetailsFactory func(parsedURL *url.URL) (AccessDetails, error)
+
+var factories = map[string]AccessDetailsFactory{}
+
+// We could make this function public if we want to support
+// out-of-tree factories.
+func registerFactory(name string, factory AccessDetailsFactory) {
+	factories[name] = factory
+}
+
 // AccessDetails contains the information about how to get to a BMC.
 //
 // NOTE(dhellmann): This structure is very likely to change as we
@@ -31,14 +43,14 @@ type AccessDetails interface {
 	// expected to add any other information that might be needed
 	// (such as the kernel and ramdisk locations).
 	DriverInfo(bmcCreds Credentials) map[string]interface{}
-	
+
 	// Boot interface to set
 	BootInterface() string
 }
 
-func getTypeHostPort(address string) (bmcType, host, port, path string, err error) {
+func getParsedURL(address string) (parsedURL *url.URL, err error) {
 	// Start by assuming "type://host:port"
-	parsedURL, err := url.Parse(address)
+	parsedURL, err = url.Parse(address)
 	if err != nil {
 		// We failed to parse the URL, but it may just be a host or
 		// host:port string (which the URL parser rejects because ":"
@@ -48,75 +60,51 @@ func getTypeHostPort(address string) (bmcType, host, port, path string, err erro
 		if strings.Contains(address, ":") {
 			// If we can parse host:port, carry on with those
 			// values. Otherwise, report the original parser error.
-			var err2 error
-			host, port, err2 = net.SplitHostPort(address)
+			_, _, err2 := net.SplitHostPort(address)
 			if err2 != nil {
-				return "", "", "", "", errors.Wrap(err, "failed to parse BMC address information")
+				return nil, errors.Wrap(err, "failed to parse BMC address information")
 			}
-			bmcType = "ipmi"
-		} else {
-			bmcType = "ipmi"
-			host = address
+		}
+		parsedURL = &url.URL{
+			Scheme: "ipmi",
+			Host: address,
 		}
 	} else {
 		// Successfully parsed the URL
-		bmcType = parsedURL.Scheme
 		if parsedURL.Opaque != "" {
 			parsedURL, err = url.Parse(strings.Replace(address, ":", "://", 1))
 			if err != nil {
-				return "", "", "", "", errors.Wrap(err, "failed to parse BMC address information")
+				return nil, errors.Wrap(err, "failed to parse BMC address information")
 
 			}
 		}
-		port = parsedURL.Port()
-		host = parsedURL.Hostname()
 		if parsedURL.Scheme == "" {
-			bmcType = "ipmi"
-			if host == "" {
+			if parsedURL.Hostname() == "" {
 				// If there was no scheme at all, the hostname was
 				// interpreted as a path.
-				host = parsedURL.Path
+				parsedURL, err = url.Parse(strings.Join([]string{"ipmi://", address}, ""))
+				if err != nil {
+					return nil, errors.Wrap(err, "failed to parse BMC address information")
+				}
 			}
-		} else {
-			path = parsedURL.Path
 		}
 	}
-	return bmcType, host, port, path, nil
+	return parsedURL, nil
 }
 
 // NewAccessDetails creates an AccessDetails structure from the URL
 // for a BMC.
 func NewAccessDetails(address string) (AccessDetails, error) {
 
-	bmcType, host, port, path, err := getTypeHostPort(address)
+	parsedURL, err := getParsedURL(address)
 	if err != nil {
 		return nil, err
 	}
 
-	var addr AccessDetails
-	switch bmcType {
-	case "ipmi", "libvirt":
-		addr = &ipmiAccessDetails{
-			bmcType:  bmcType,
-			portNum:  port,
-			hostname: host,
-		}
-	case "irmc":
-		addr = &iRMCAccessDetails{
-			bmcType:  bmcType,
-			portNum:  port,
-			hostname: host,
-		}
-	case "idrac", "idrac+http", "idrac+https":
-		addr = &iDracAccessDetails{
-			bmcType:  bmcType,
-			portNum:  port,
-			hostname: host,
-			path:     path,
-		}
-	default:
-		err = &UnknownBMCTypeError{address, bmcType}
+	factory, ok := factories[parsedURL.Scheme]
+	if !ok {
+		return nil, &UnknownBMCTypeError{address, parsedURL.Scheme}
 	}
 
-	return addr, err
+	return factory(parsedURL)
 }
