@@ -16,6 +16,6 @@ else
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/go/src/github.com/openshift/installer:z" \
     --workdir /go/src/github.com/openshift/installer \
-    docker.io/openshift/origin-release:golang-1.10 \
+    docker.io/openshift/origin-release:golang-1.12 \
     ./hack/run-bdd-suite.sh "${@}"
 fi;
