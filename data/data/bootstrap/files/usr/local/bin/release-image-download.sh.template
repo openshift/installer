@@ -10,6 +10,20 @@
 
 RELEASE_IMAGE={{.ReleaseImage}}
 
+# Verify the OS here
+. /etc/os-release
+case "${ID}" in
+    rhcos) ;;
+    *) echo "ERROR: Unsupported OS ID=${ID}" 1>&2
+       exit 1 ;;
+esac
+openshift=$(echo ${VERSION} | cut -f 1 -d '.')
+case "${openshift}" in
+    43) ;;
+    *) echo "ERROR: Unsupported RHCOS OpenShift version ${openshift}"
+       exit 1;;
+esac
+
 echo "Pulling $RELEASE_IMAGE..."
 while ! podman pull --quiet "$RELEASE_IMAGE"
 do
