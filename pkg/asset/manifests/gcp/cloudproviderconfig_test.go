@@ -11,6 +11,7 @@ func TestCloudProviderConfig(t *testing.T) {
 project-id      = test-project-id
 regional        = true
 multizone       = true
+node-tags       = uid-master
 node-tags       = uid-worker
 subnetwork-name = uid-worker-subnet
 
