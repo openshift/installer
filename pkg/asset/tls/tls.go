@@ -66,12 +66,12 @@ func SelfSignedCertificate(cfg *CertCfg, key *rsa.PrivateKey) (*x509.Certificate
 	}
 	cert := x509.Certificate{
 		BasicConstraintsValid: true,
-		IsCA:         cfg.IsCA,
-		KeyUsage:     cfg.KeyUsages,
-		NotAfter:     time.Now().Add(cfg.Validity),
-		NotBefore:    time.Now(),
-		SerialNumber: serial,
-		Subject:      cfg.Subject,
+		IsCA:                  cfg.IsCA,
+		KeyUsage:              cfg.KeyUsages,
+		NotAfter:              time.Now().Add(cfg.Validity),
+		NotBefore:             time.Now(),
+		SerialNumber:          serial,
+		Subject:               cfg.Subject,
 	}
 	// verifies that the CN and/or OU for the cert is set
 	if len(cfg.Subject.CommonName) == 0 || len(cfg.Subject.OrganizationalUnit) == 0 {
