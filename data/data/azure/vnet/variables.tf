@@ -11,16 +11,6 @@ variable "cluster_id" {
   type = string
 }
 
-variable "private_master_endpoints" {
-  description = "If set to true, private-facing ingress resources are created."
-  default     = true
-}
-
-variable "public_master_endpoints" {
-  description = "If set to true, public-facing ingress resources are created."
-  default     = true
-}
-
 variable "region" {
   type        = string
   description = "The target Azure region for the cluster."
