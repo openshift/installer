@@ -31,7 +31,7 @@ resource "aws_route53_zone" "int" {
 }
 
 resource "aws_route53_record" "api_external" {
-  count = local.public_endpoints ? 1 : 0
+  count = local.public_endpoints && var.use_ipv6 == false ? 1 : 0
 
   zone_id = data.aws_route53_zone.public[0].zone_id
   name    = "api.${var.cluster_domain}"
@@ -54,6 +54,8 @@ resource "aws_route53_record" "api_external_v6" {
     zone_id                = var.api_external_lb_zone_id
     evaluate_target_health = false
   }
+
+  count = local.public_endpoints && var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_route53_record" "api_internal" {
@@ -66,6 +68,8 @@ resource "aws_route53_record" "api_internal" {
     zone_id                = var.api_internal_lb_zone_id
     evaluate_target_health = false
   }
+
+  count = var.use_ipv6 == false ? 1 : 0
 }
 
 # TODO make this conditional if IPv6 is optional
@@ -79,6 +83,8 @@ resource "aws_route53_record" "api_internal_v6" {
     zone_id                = var.api_internal_lb_zone_id
     evaluate_target_health = false
   }
+
+  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_route53_record" "api_external_internal_zone" {
@@ -91,6 +97,8 @@ resource "aws_route53_record" "api_external_internal_zone" {
     zone_id                = var.api_internal_lb_zone_id
     evaluate_target_health = false
   }
+
+  count = var.use_ipv6 == false ? 1 : 0
 }
 
 # TODO make this conditional if IPv6 is optional
@@ -104,10 +112,12 @@ resource "aws_route53_record" "api_external_internal_zone_v6" {
     zone_id                = var.api_internal_lb_zone_id
     evaluate_target_health = false
   }
+
+  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_route53_record" "etcd_a_nodes" {
-  count   = var.etcd_count
+  count   = var.use_ipv6 == false ? var.etcd_count : 0
   type    = "A"
   ttl     = "60"
   zone_id = aws_route53_zone.int.zone_id
@@ -124,8 +134,8 @@ resource "aws_route53_record" "etcd_a_nodes" {
 }
 
 # TODO make this conditional if IPv6 is optional
-resource "aws_route53_record" "etcd_a_nodes_v6" {
-  count   = var.etcd_count
+resource "aws_route53_record" "etcd_aaaa_nodes" {
+  count   = var.use_ipv6 == true ? var.etcd_count : 0
   type    = "AAAA"
   ttl     = "60"
   zone_id = aws_route53_zone.int.zone_id
@@ -146,6 +156,6 @@ resource "aws_route53_record" "etcd_cluster" {
   ttl     = "60"
   zone_id = aws_route53_zone.int.zone_id
   name    = "_etcd-server-ssl._tcp"
-  records = formatlist("0 10 2380 %s", aws_route53_record.etcd_a_nodes.*.fqdn)
+  records = var.use_ipv6 == false ? formatlist("0 10 2380 %s", aws_route53_record.etcd_a_nodes.*.fqdn) : formatlist("0 10 2380 %s", aws_route53_record.etcd_aaaa_nodes.*.fqdn)
 }
 

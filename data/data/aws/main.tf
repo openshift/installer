@@ -5,6 +5,9 @@ locals {
     },
     var.aws_extra_tags,
   )
+
+  # Use IPv6 instead of IPv4
+  use_ipv6 = true
 }
 
 provider "aws" {
@@ -75,6 +78,8 @@ module "dns" {
   tags                     = local.tags
   vpc_id                   = module.vpc.vpc_id
   publish_strategy         = var.aws_publish_strategy
+
+  use_ipv6 = local.use_ipv6
 }
 
 module "vpc" {
