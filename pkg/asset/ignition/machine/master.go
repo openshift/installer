@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
 )
@@ -38,7 +39,7 @@ func (a *Master) Generate(dependencies asset.Parents) error {
 	rootCA := &tls.RootCA{}
 	dependencies.Get(installConfig, rootCA)
 
-	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master")
+	a.Config = ignition.PointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master")
 
 	data, err := json.Marshal(a.Config)
 	if err != nil {
