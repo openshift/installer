@@ -7,6 +7,8 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `amiID` (optional string): The AMI that should be used to boot machines for the cluster.
     If set, the AMI should belong to the same region as the cluster.
 * `region` (required string): The AWS region where the cluster will be created.
+* `subnets` (optional array of strings): Existing subnets (by ID) where cluster resources will be created.
+    Leave unset to have the installer create subnets in a new VPC on your behalf.
 * `userTags` (optional object): Additional keys and values that the installer will add as tags to all resources that it creates.
     Resources created by the cluster itself may not include these tags.
 * `defaultMachinePlatform` (optional object): Default [AWS-specific machine pool properties](#machine-pools) which applies to [machine pools](../customization.md#machine-pools) that do not define their own AWS-specific properties.
