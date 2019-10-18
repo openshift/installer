@@ -16,20 +16,6 @@ fi
 LAUNCH_PATH="${PWD}"
 cd "$(dirname "$0")/.."
 
-PACKAGE_PATH="$(go list -e -f '{{.Dir}}' github.com/openshift/installer)"
-if test -z "${PACKAGE_PATH}"
-then
-	echo "build from your \${GOPATH} (${LAUNCH_PATH} is not in $(go env GOPATH))" 2>&1
-	exit 1
-fi
-
-LOCAL_PATH="${PWD}"
-if test "${PACKAGE_PATH}" != "${LOCAL_PATH}"
-then
-	echo "build from your \${GOPATH} (${PACKAGE_PATH}, not ${LAUNCH_PATH})" 2>&1
-	exit 1
-fi
-
 MODE="${MODE:-release}"
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
 GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty)}"
