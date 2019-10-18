@@ -9,6 +9,16 @@ fi
 ARTIFACTS="/tmp/artifacts-${GATHER_ID}"
 mkdir -p "${ARTIFACTS}"
 
+echo "Gathering master systemd summary ..."
+LANG=POSIX systemctl list-units --state=failed >& "${ARTIFACTS}/failed-units.txt"
+
+echo "Gathering master failed systemd unit status ..."
+mkdir -p "${ARTIFACTS}/unit-status"
+sed -n 's/^\* \([^ ]*\) .*/\1/p' < "${ARTIFACTS}/failed-units.txt" | while read -r UNIT
+do
+    systemctl status "${UNIT}" >& "${ARTIFACTS}/unit-status/${UNIT}.txt"
+done
+
 echo "Gathering master journals ..."
 mkdir -p "${ARTIFACTS}/journals"
 for service in kubelet crio machine-config-daemon-host pivot
