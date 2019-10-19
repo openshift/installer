@@ -1,7 +1,6 @@
 package manifests
 
 import (
-	"fmt"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"

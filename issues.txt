@@ -1,9 +1,0 @@
-+ go build -ldflags ' -X github.com/openshift/installer/pkg/version.Raw=unreleased-master-2006-g3a79d310f27021d7f66282efceece0408db574bf-dirty -X github.com/openshift/installer/pkg/version.Commit=3a79d310f27021d7f66282efceece0408db574bf -s -w' -tags ' release' -o bin/openshift-install ./cmd/openshift-install
-# k8s.io/client-go/rest
-../../../../pkg/mod/k8s.io/client-go@v11.0.1-0.20190409021438-1a26190bd76a+incompatible/rest/request.go:598:31: not enough arguments in call to watch.NewStreamWatcher
-	have (*versioned.Decoder)
-	want (watch.Decoder, watch.Reporter)
-# github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1
-../../../../pkg/mod/github.com/metal3-io/cluster-api-provider-baremetal@v0.0.0-20191010235856-134c3b78ec63/pkg/apis/baremetal/v1alpha1/register.go:37:19: undefined: scheme.Builder
-# github.com/openshift/installer/pkg/terraform/exec/plugins
-pkg/terraform/exec/plugins/local.go:11:4: cannot use local.Provider (type func() "github.com/hashicorp/terraform-plugin-sdk/terraform".ResourceProvider) as type "github.com/hashicorp/terraform/plugin".ProviderFunc in field value
