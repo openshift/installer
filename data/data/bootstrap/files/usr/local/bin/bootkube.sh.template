@@ -23,6 +23,7 @@ CONFIG_OPERATOR_IMAGE=$(image_for cluster-config-operator)
 KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)
 KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(image_for cluster-kube-controller-manager-operator)
 KUBE_SCHEDULER_OPERATOR_IMAGE=$(image_for cluster-kube-scheduler-operator)
+INGRESS_OPERATOR_IMAGE=$(image_for cluster-ingress-operator)
 
 OPENSHIFT_HYPERKUBE_IMAGE=$(image_for hyperkube)
 
@@ -164,6 +165,24 @@ then
 	cp kube-scheduler-bootstrap/manifests/* manifests/
 
 	touch kube-scheduler-bootstrap.done
+fi
+
+if [ ! -f ingress-operator-bootstrap.done ]
+then
+	echo "Rendering Ingress Operator core manifests..."
+
+	rm --recursive --force ingress-operator-bootstrap
+
+	bootkube_podman_run \
+		--volume "$PWD:/assets:z" \
+		"${INGRESS_OPERATOR_IMAGE}" \
+		render \
+		--prefix=cluster-ingress- \
+		--output-dir=/assets/ingress-operator-manifests
+
+	cp ingress-operator-manifests/* manifests/
+
+	touch ingress-operator-bootstrap.done
 fi
 
 if [ ! -f mco-bootstrap.done ]
