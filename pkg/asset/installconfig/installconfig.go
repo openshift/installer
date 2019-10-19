@@ -161,5 +161,8 @@ func (a *InstallConfig) platformValidation() error {
 		}
 		return icgcp.Validate(client, a.Config)
 	}
+	if a.Config.Platform.AWS != nil {
+		return aws.Validate(context.TODO(), a.AWS, a.Config)
+	}
 	return field.ErrorList{}.ToAggregate()
 }
