@@ -62,9 +62,19 @@ variable "vpc_id" {
   description = "VPC ID is used to create resources like security group rules for bootstrap machine."
 }
 
+variable "vpc_cidrs" {
+  type        = list(string)
+  default     = []
+  description = "VPC CIDR blocks."
+}
+
 variable "vpc_security_group_ids" {
   type        = list(string)
   default     = []
   description = "VPC security group IDs for the bootstrap node."
 }
 
+variable "publish_strategy" {
+  type        = string
+  description = "The publishing strategy for endpoints like load balancers"
+}

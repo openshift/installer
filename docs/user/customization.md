@@ -21,6 +21,8 @@ The following `install-config.yaml` properties are available:
     The installer may also support older API versions.
 * `additionalTrustBundle` (optional string): a PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted certificate store.
 * `baseDomain` (required string): The base domain to which the cluster should belong.
+* `publish` (optional string): This controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
+    Valid values are `External` (the default) and `Internal`.
 * `controlPlane` (optional [machine-pool](#machine-pools)): The configuration for the machines that comprise the control plane.
 * `compute` (optional array of [machine-pools](#machine-pools)): The configuration for the machines that comprise the compute nodes.
 * `imageContentSources` (optional array of objects): Sources and repositories for the release-image content.

@@ -1,6 +1,10 @@
 # Canonical internal state definitions for this module.
 # read only: only locals and data source definitions allowed. No resources or module blocks in this file
 
+locals {
+  public_endpoints = var.publish_strategy == "External" ? true : false
+}
+
 # all data sources should be input variable-agnostic and used as canonical source for querying "state of resources" and building outputs
 # (ie: we don't want "aws.new_vpc" and "data.aws_vpc.cluster_vpc", just "data.aws_vpc.cluster_vpc" used everwhere).
 

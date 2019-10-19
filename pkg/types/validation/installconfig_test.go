@@ -48,6 +48,7 @@ func validInstallConfig() *types.InstallConfig {
 			AWS: validAWSPlatform(),
 		},
 		PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+		Publish:    types.ExternalPublishingStrategy,
 		Proxy: &types.Proxy{
 			HTTPProxy:  "http://user:password@127.0.0.1:8080",
 			HTTPSProxy: "https://user:password@127.0.0.1:8080",
@@ -699,6 +700,15 @@ func TestValidateInstallConfig(t *testing.T) {
 				}}
 				return c
 			}(),
+		},
+		{
+			name: "invalid publishing strategy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Publish = types.PublishingStrategy("ExternalInternalDoNotCare")
+				return c
+			}(),
+			expectedError: `^publish: Unsupported value: \"ExternalInternalDoNotCare\": supported values: \"External\", \"Internal\"`,
 		},
 	}
 	for _, tc := range cases {

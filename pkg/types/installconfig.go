@@ -42,6 +42,16 @@ var (
 	}
 )
 
+// PublishingStrategy is a strategy for how various endpoints for the cluster are exposed.
+type PublishingStrategy string
+
+const (
+	// ExternalPublishingStrategy exposes endpoints for the cluster to the Internet.
+	ExternalPublishingStrategy PublishingStrategy = "External"
+	// InternalPublishingStrategy exposes the endpoints for the cluster to the private network only.
+	InternalPublishingStrategy PublishingStrategy = "Internal"
+)
+
 // InstallConfig is the configuration for an OpenShift install.
 type InstallConfig struct {
 	// +optional
@@ -90,6 +100,11 @@ type InstallConfig struct {
 	// ImageContentSources lists sources/repositories for the release-image content.
 	// +optional
 	ImageContentSources []ImageContentSource `json:"imageContentSources,omitempty"`
+
+	// Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
+	// When no strategy is specified, the strategy is `External`.
+	// +optional
+	Publish PublishingStrategy `json:"publish,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
