@@ -19,6 +19,9 @@ type Subnet struct {
 
 	// Zone is the subnet's availability zone.
 	Zone string
+
+	// CIDR is the subnet's CIDR block.
+	CIDR string
 }
 
 // subnets retrieves metadata for the given subnet(s).
@@ -64,6 +67,7 @@ func subnets(ctx context.Context, session *session.Session, ids []string) (vpc s
 		metas[*subnet.SubnetId] = Subnet{
 			ARN:  *subnet.SubnetArn,
 			Zone: *subnet.AvailabilityZone,
+			CIDR: *subnet.CidrBlock,
 		}
 	}
 
