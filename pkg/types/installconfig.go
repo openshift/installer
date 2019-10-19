@@ -5,7 +5,6 @@ import (
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
-	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -28,7 +27,6 @@ var (
 	// platforms presented to the user in the interactive wizard.
 	PlatformNames = []string{
 		aws.Name,
-		azure.Name,
 		gcp.Name,
 		openstack.Name,
 	}
@@ -119,10 +117,6 @@ type Platform struct {
 	// +optional
 	AWS *aws.Platform `json:"aws,omitempty"`
 
-	// Azure is the configuration used when installing on Azure.
-	// +optional
-	Azure *azure.Platform `json:"azure,omitempty"`
-
 	// BareMetal is the configuration used when installing on bare metal.
 	// +optional
 	BareMetal *baremetal.Platform `json:"baremetal,omitempty"`
@@ -157,8 +151,6 @@ func (p *Platform) Name() string {
 		return ""
 	case p.AWS != nil:
 		return aws.Name
-	case p.Azure != nil:
-		return azure.Name
 	case p.BareMetal != nil:
 		return baremetal.Name
 	case p.GCP != nil:

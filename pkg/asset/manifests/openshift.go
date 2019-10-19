@@ -11,7 +11,6 @@ import (
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/machines"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
@@ -20,7 +19,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
-	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -79,25 +77,6 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			AWS: &AwsCredsSecretData{
 				Base64encodeAccessKeyID:     base64.StdEncoding.EncodeToString([]byte(creds.AccessKeyID)),
 				Base64encodeSecretAccessKey: base64.StdEncoding.EncodeToString([]byte(creds.SecretAccessKey)),
-			},
-		}
-
-	case azuretypes.Name:
-		resourceGroupName := clusterID.InfraID + "-rg"
-		session, err := azure.GetSession()
-		if err != nil {
-			return err
-		}
-		creds := session.Credentials
-		cloudCreds = cloudCredsSecretData{
-			Azure: &AzureCredsSecretData{
-				Base64encodeSubscriptionID: base64.StdEncoding.EncodeToString([]byte(creds.SubscriptionID)),
-				Base64encodeClientID:       base64.StdEncoding.EncodeToString([]byte(creds.ClientID)),
-				Base64encodeClientSecret:   base64.StdEncoding.EncodeToString([]byte(creds.ClientSecret)),
-				Base64encodeTenantID:       base64.StdEncoding.EncodeToString([]byte(creds.TenantID)),
-				Base64encodeResourcePrefix: base64.StdEncoding.EncodeToString([]byte(clusterID.InfraID)),
-				Base64encodeResourceGroup:  base64.StdEncoding.EncodeToString([]byte(resourceGroupName)),
-				Base64encodeRegion:         base64.StdEncoding.EncodeToString([]byte(installConfig.Config.Azure.Region)),
 			},
 		}
 	case gcptypes.Name:
@@ -169,7 +148,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	}
 
 	switch platform {
-	case awstypes.Name, openstacktypes.Name, vspheretypes.Name, azuretypes.Name, gcptypes.Name:
+	case awstypes.Name, openstacktypes.Name, vspheretypes.Name, gcptypes.Name:
 		assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
 		assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleCloudCredsSecretReader.Files()[0].Data, templateData)
 	}

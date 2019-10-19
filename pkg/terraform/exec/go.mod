@@ -6,7 +6,6 @@ require (
 	github.com/dimchansky/utfbom v1.1.0 // indirect
 	github.com/hashicorp/aws-sdk-go-base v0.3.0 // indirect
 	github.com/hashicorp/consul v1.0.1-0.20171026175957-610f3c86a089 // indirect
-	github.com/hashicorp/go-azure-helpers v0.3.2 // indirect
 	github.com/hashicorp/go-plugin v1.0.1-0.20190430211030-5692942914bb
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/hashicorp/hcl2 v0.0.0-20190503213020-640445e16309 // indirect

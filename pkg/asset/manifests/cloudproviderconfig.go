@@ -13,13 +13,10 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
-	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
-	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
@@ -93,40 +90,6 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		}
 
 		cm.Data[cloudProviderConfigDataKey] = openstackmanifests.CloudProviderConfig(cloud)
-	case azuretypes.Name:
-		session, err := icazure.GetSession()
-		if err != nil {
-			return errors.Wrap(err, "could not get azure session")
-		}
-
-		nsg := fmt.Sprintf("%s-node-nsg", clusterID.InfraID)
-		nrg := fmt.Sprintf("%s-rg", clusterID.InfraID)
-		if installConfig.Config.Azure.NetworkResourceGroupName != "" {
-			nrg = installConfig.Config.Azure.NetworkResourceGroupName
-		}
-		vnet := fmt.Sprintf("%s-vnet", clusterID.InfraID)
-		if installConfig.Config.Azure.VirtualNetwork != "" {
-			vnet = installConfig.Config.Azure.VirtualNetwork
-		}
-		subnet := fmt.Sprintf("%s-node-subnet", clusterID.InfraID)
-		if installConfig.Config.Azure.ComputeSubnet != "" {
-			subnet = installConfig.Config.Azure.ComputeSubnet
-		}
-
-		azureConfig, err := azure.CloudProviderConfig{
-			GroupLocation:            installConfig.Config.Azure.Region,
-			ResourcePrefix:           clusterID.InfraID,
-			SubscriptionID:           session.Credentials.SubscriptionID,
-			TenantID:                 session.Credentials.TenantID,
-			NetworkResourceGroupName: nrg,
-			NetworkSecurityGroupName: nsg,
-			VirtualNetworkName:       vnet,
-			SubnetName:               subnet,
-		}.JSON()
-		if err != nil {
-			return errors.Wrap(err, "could not create cloud provider config")
-		}
-		cm.Data[cloudProviderConfigDataKey] = azureConfig
 	case gcptypes.Name:
 		subnet := fmt.Sprintf("%s-worker-subnet", clusterID.InfraID)
 		if installConfig.Config.GCP.ComputeSubnet != "" {

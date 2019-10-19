@@ -14,7 +14,6 @@ import (
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
-	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -79,8 +78,6 @@ func osImage(config *types.InstallConfig) (string, error) {
 		osimage, err = rhcos.QEMU(ctx)
 	case openstack.Name:
 		osimage, err = rhcos.OpenStack(ctx)
-	case azure.Name:
-		osimage, err = rhcos.VHD(ctx)
 	case baremetal.Name:
 		// Note that baremetal IPI currently uses the OpenStack image
 		// because this contains the necessary ironic config drive

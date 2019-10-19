@@ -20,8 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	awsapi "sigs.k8s.io/cluster-api-provider-aws/pkg/apis"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
-	azureapi "sigs.k8s.io/cluster-api-provider-azure/pkg/apis"
-	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 	openstackapi "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
@@ -29,7 +27,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
-	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
@@ -40,8 +37,6 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
-	azuretypes "github.com/openshift/installer/pkg/types/azure"
-	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
@@ -218,31 +213,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		openstack.ConfigMasters(machines, clusterID.InfraID)
-	case azuretypes.Name:
-		mpool := defaultAzureMachinePoolPlatform()
-		mpool.InstanceType = azuredefaults.ControlPlaneInstanceType(installConfig.Config.Platform.Azure.Region)
-		mpool.OSDisk.DiskSizeGB = 1024
-		mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
-		mpool.Set(pool.Platform.Azure)
-		if len(mpool.Zones) == 0 {
-			azs, err := azure.AvailabilityZones(ic.Platform.Azure.Region, mpool.InstanceType)
-			if err != nil {
-				return errors.Wrap(err, "failed to fetch availability zones")
-			}
-			mpool.Zones = azs
-			if len(azs) == 0 {
-				// if no azs are given we set to []string{""} for convenience over later operations.
-				// It means no-zoned for the machine API
-				mpool.Zones = []string{""}
-			}
-		}
-		pool.Platform.Azure = &mpool
-
-		machines, err = azure.Machines(clusterID.InfraID, ic, pool, string(*rhcosImage), "master", "master-user-data")
-		if err != nil {
-			return errors.Wrap(err, "failed to create master machine objects")
-		}
-		azure.ConfigMasters(machines, clusterID.InfraID)
 	case baremetaltypes.Name:
 		mpool := defaultBareMetalMachinePoolPlatform()
 		mpool.Set(ic.Platform.BareMetal.DefaultMachinePlatform)
@@ -399,14 +369,12 @@ func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
 func (m *Master) Machines() ([]machineapi.Machine, error) {
 	scheme := runtime.NewScheme()
 	awsapi.AddToScheme(scheme)
-	azureapi.AddToScheme(scheme)
 	baremetalapi.AddToScheme(scheme)
 	gcpapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		awsprovider.SchemeGroupVersion,
-		azureprovider.SchemeGroupVersion,
 		baremetalprovider.SchemeGroupVersion,
 		gcpprovider.SchemeGroupVersion,
 		libvirtprovider.SchemeGroupVersion,
