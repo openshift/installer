@@ -19,11 +19,14 @@ func BootstrapIP(tfs *terraform.State) (string, error) {
 	if len(br.Instances) == 0 {
 		return "", errors.New("no bootstrap instance found")
 	}
-	bootstrap, _, err := unstructured.NestedString(br.Instances[0].Attributes, "public_ip")
-	if err != nil {
-		return "", errors.New("no public_ip found for bootstrap")
+
+	for _, att := range []string{"public_ip", "private_ip"} {
+		ip, _, _ := unstructured.NestedString(br.Instances[0].Attributes, att)
+		if ip != "" {
+			return ip, nil
+		}
 	}
-	return bootstrap, nil
+	return "", errors.New("no usable IP found for bootstrap instance")
 }
 
 // ControlPlaneIPs returns the ip addresses for control plane hosts.
