@@ -1149,6 +1149,10 @@ github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728/go.mod h1:x9o
 github.com/vmware/vmw-ovflib v0.0.0-20170608004843-1f217b9dc714/go.mod h1:jiPk45kn7klhByRvUq5i2vo1RtHKBHj+iWGFpxbXuuI=
 github.com/vrutkovs/machine-config-operator v0.0.0-20191019120328-fbe213551387 h1:8lYNFC3vU1E0ogaRLAa+R9cjqGt+WgpodoRoRgrPqQY=
 github.com/vrutkovs/machine-config-operator v0.0.0-20191019120328-fbe213551387/go.mod h1:fVs2Lsms4GWKHXnRVT6xGqSMQHWz8zqJZKgUBAgcIjE=
+github.com/vrutkovs/machine-config-operator v0.0.0-20191021105801-eeca4cfab646 h1:pQMUQSaA4AliDY62ul5W1TIRVOu6k4y0dYZEQEsQmsc=
+github.com/vrutkovs/machine-config-operator v0.0.0-20191021105801-eeca4cfab646/go.mod h1:fVs2Lsms4GWKHXnRVT6xGqSMQHWz8zqJZKgUBAgcIjE=
+github.com/vrutkovs/machine-config-operator v0.0.0-20191021113908-b6af01302153 h1:NC0M8pTS7Y0N+4tdhoGTBfv6JkYfypvUpGpUeVf/sFk=
+github.com/vrutkovs/machine-config-operator v0.0.0-20191021113908-b6af01302153/go.mod h1:fVs2Lsms4GWKHXnRVT6xGqSMQHWz8zqJZKgUBAgcIjE=
 github.com/vrutkovs/terraform-provider-aws/v3 v3.0.0 h1:6PsHrA+jYMSFxKKmsHYU0yclyEdt3i+nxRJvTa0ghMQ=
 github.com/vrutkovs/terraform-provider-aws/v3 v3.0.0/go.mod h1:f1vk0tL3UC4HgZTSR+GOlqwIdCzE4p7gZI+VFhp6CHA=
 github.com/vrutkovs/terraform-provider-google/v2 v2.8.0 h1:JAkS6r/SO+qW0kG66kgy7Isq6HyZkHOPCRcpwFCHk8w=

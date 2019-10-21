@@ -76,7 +76,7 @@ replace (
 	github.com/Azure/go-autorest v10.15.4+incompatible => github.com/Azure/go-autorest/autorest v0.9.2
 	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20191001171423-cd2cdd14084a
 	github.com/mitchellh/packer => github.com/hashicorp/packer v1.3.5
-	github.com/openshift/machine-config-operator => github.com/vrutkovs/machine-config-operator v0.0.0-20191019120328-fbe213551387
+	github.com/openshift/machine-config-operator => github.com/vrutkovs/machine-config-operator v0.0.0-20191021113908-b6af01302153
 	github.com/terraform-providers/terraform-provider-google/v2 => github.com/vrutkovs/terraform-provider-google/v2 v2.8.0
 	github.com/terraform-providers/terraform-provider-ignition => github.com/vrutkovs/terraform-provider-ignition v1.0.2-0.20190819094334-ac54201ee306
 	github.com/terraform-providers/terraform-provider-random/v2 => github.com/vrutkovs/terraform-provider-random/v2 v2.1.1
