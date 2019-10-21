@@ -30,6 +30,7 @@ module "bootstrap" {
   base_image_id      = data.openstack_images_image_v2.base_image.id
   flavor_name        = var.openstack_master_flavor_name
   ignition           = var.ignition_bootstrap
+  ignition_shim      = var.ignition_bootstrap_shim
   api_int_ip         = var.openstack_api_int_ip
   node_dns_ip        = var.openstack_node_dns_ip
   external_network   = var.openstack_external_network

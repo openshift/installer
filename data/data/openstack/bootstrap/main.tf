@@ -64,6 +64,10 @@ resource "openstack_objectstorage_object_v1" "ignition" {
 
 data "ignition_config" "redirect" {
   append {
+    source = "data:text/plain;charset=utf-8;base64,${base64encode(var.ignition_shim)}"
+  }
+
+  append {
     source = "${var.swift_url}/${openstack_objectstorage_container_v1.container.name}/${random_password.random.result}"
   }
 

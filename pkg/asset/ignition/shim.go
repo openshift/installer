@@ -18,18 +18,21 @@ import (
 func PointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string) *ignition.Config {
 	var ignitionHost string
 	CAReferences := []ignition.CaReference{}
+	configReference := []ignition.ConfigReference{}
+
+	CAReferences = append(CAReferences, ignition.CaReference{
+		Source: dataurl.EncodeBytes(rootCA),
+	})
 
 	// TODO(egarcia): Move this logic to the master/worker/bootstrap ignition config generation code
 	// and add parameters to service it
 	if role == "bootstrap" {
-		CAReferences = append(CAReferences, ignition.CaReference{
-			Source: installConfig.AdditionalTrustBundle,
-		})
+		if installConfig.AdditionalTrustBundle != "" {
+			CAReferences = append(CAReferences, ignition.CaReference{
+				Source: installConfig.AdditionalTrustBundle,
+			})
+		}
 	} else {
-		CAReferences = append(CAReferences, ignition.CaReference{
-			Source: dataurl.EncodeBytes(rootCA),
-		})
-
 		switch installConfig.Platform.Name() {
 		case baremetaltypes.Name:
 			// Baremetal needs to point directly at the VIP because we don't have a
@@ -45,21 +48,23 @@ func PointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 		default:
 			ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
 		}
+
+		configReference = []ignition.ConfigReference{{
+			Source: func() *url.URL {
+				return &url.URL{
+					Scheme: "https",
+					Host:   ignitionHost,
+					Path:   fmt.Sprintf("/config/%s", role),
+				}
+			}().String(),
+		}}
 	}
 
 	return &ignition.Config{
 		Ignition: ignition.Ignition{
 			Version: ignition.MaxVersion.String(),
 			Config: ignition.IgnitionConfig{
-				Append: []ignition.ConfigReference{{
-					Source: func() *url.URL {
-						return &url.URL{
-							Scheme: "https",
-							Host:   ignitionHost,
-							Path:   fmt.Sprintf("/config/%s", role),
-						}
-					}().String(),
-				}},
+				Append: configReference,
 			},
 			Security: ignition.Security{
 				TLS: ignition.TLS{

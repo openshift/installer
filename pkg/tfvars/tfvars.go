@@ -14,20 +14,22 @@ type config struct {
 	MachineCIDR   string `json:"machine_cidr"`
 	Masters       int    `json:"master_count,omitempty"`
 
-	IgnitionBootstrap string `json:"ignition_bootstrap,omitempty"`
-	IgnitionMaster    string `json:"ignition_master,omitempty"`
+	IgnitionBootstrap     string `json:"ignition_bootstrap,omitempty"`
+	IgnitionBootstrapShim string `json:"ignition_bootstrap_shim,omitempty"`
+	IgnitionMaster        string `json:"ignition_master,omitempty"`
 }
 
 // TFVars generates terraform.tfvar JSON for launching the cluster.
-func TFVars(clusterID string, clusterDomain string, baseDomain string, machineCIDR *net.IPNet, bootstrapIgn string, masterIgn string, masterCount int) ([]byte, error) {
+func TFVars(clusterID string, clusterDomain string, baseDomain string, machineCIDR *net.IPNet, bootstrapIgn string, bootstrapIgnShim string, masterIgn string, masterCount int) ([]byte, error) {
 	config := &config{
-		ClusterID:         clusterID,
-		ClusterDomain:     strings.TrimSuffix(clusterDomain, "."),
-		BaseDomain:        strings.TrimSuffix(baseDomain, "."),
-		MachineCIDR:       machineCIDR.String(),
-		Masters:           masterCount,
-		IgnitionBootstrap: bootstrapIgn,
-		IgnitionMaster:    masterIgn,
+		ClusterID:             clusterID,
+		ClusterDomain:         strings.TrimSuffix(clusterDomain, "."),
+		BaseDomain:            strings.TrimSuffix(baseDomain, "."),
+		MachineCIDR:           machineCIDR.String(),
+		Masters:               masterCount,
+		IgnitionBootstrap:     bootstrapIgn,
+		IgnitionBootstrapShim: bootstrapIgnShim,
+		IgnitionMaster:        masterIgn,
 	}
 
 	return json.MarshalIndent(config, "", "  ")

@@ -50,6 +50,7 @@ type bootstrapTemplateData struct {
 	BootImage             string
 }
 
+// Bootstrap is an asset that generates the ignition config for bootstrap nodes.
 type Bootstrap struct {
 	Config *igntypes.Config
 	File   *asset.File

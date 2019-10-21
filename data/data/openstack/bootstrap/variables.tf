@@ -25,6 +25,11 @@ variable "ignition" {
   description = "The content of the bootstrap ignition file."
 }
 
+variable "ignition_shim" {
+  type = string
+  description = "A pointer to the bootstrap ignition file."
+}
+
 variable "flavor_name" {
   type = string
   description = "The Nova flavor for the bootstrap node."

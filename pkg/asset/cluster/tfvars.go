@@ -77,6 +77,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		new(rhcos.Image),
 		new(rhcos.BootstrapImage),
 		&bootstrap.Bootstrap{},
+		&bootstrap.Shim{},
 		&machine.Master{},
 		&machines.Master{},
 		&machines.Worker{},
@@ -89,12 +90,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
+	bootstrapIgnShimAsset := &bootstrap.Shim{}
 	masterIgnAsset := &machine.Master{}
 	mastersAsset := &machines.Master{}
 	workersAsset := &machines.Worker{}
 	rhcosImage := new(rhcos.Image)
 	rhcosBootstrapImage := new(rhcos.BootstrapImage)
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, rhcosImage, rhcosBootstrapImage)
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, bootstrapIgnShimAsset, masterIgnAsset, mastersAsset, workersAsset, rhcosImage, rhcosBootstrapImage)
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -103,6 +105,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	}
 
 	masterIgn := string(masterIgnAsset.Files()[0].Data)
+	bootstrapShim := string(bootstrapIgnShimAsset.Files()[0].Data)
 	bootstrapIgn, err := injectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
 	if err != nil {
 		return errors.Wrap(err, "unable to inject installation info")
@@ -115,6 +118,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		installConfig.Config.BaseDomain,
 		&installConfig.Config.Networking.MachineCIDR.IPNet,
 		bootstrapIgn,
+		bootstrapShim,
 		masterIgn,
 		masterCount,
 	)
