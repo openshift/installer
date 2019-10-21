@@ -102,6 +102,14 @@ tcp_port = "16509"
 
 Note that authentication is not currently supported, but should be soon.
 
+#### Configure qemu.conf
+
+On Debian/Ubuntu it might be needed to configure security driver for qemu.
+Installer uses terraform libvirt, and it has a known issue, that might cause
+unexpected `Could not open '/var/lib/libvirt/images/<FILE_NAME>': Permission denied`
+errors. Double check that `security_driver = "none"` line is present in 
+`/etc/libvirt/qemu.conf` and not commented out.
+
 #### Configure the service runner to pass `--listen` to libvirtd
 In addition to the config, you'll have to pass an additional command-line
 argument to libvirtd. On Fedora, modify `/etc/sysconfig/libvirtd` and set:
