@@ -51,15 +51,15 @@ required = [
 
 [[override]]
   name = "k8s.io/api"
-  version = "kubernetes-1.12.2"
+  version = "kubernetes-1.16.0"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.12.2"
+  version = "kubernetes-1.16.0"
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "9.0.0"
+  version = "kubernetes-1.16.0"
 
 [[constraint]]
   name = "github.com/openshift/cluster-api"
@@ -84,7 +84,7 @@ required = [
 
 [[constraint]]
   name = "k8s.io/utils"
-  revision = "4c3feeb576b06ef8fea769809bd3db5e5e78dc23"
+  revision = "8d271d903fe4c290aa361acfb242cff7bcee96f1"
 
 [[constraint]]
   name = "github.com/gophercloud/utils"
