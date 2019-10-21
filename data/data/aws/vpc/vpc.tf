@@ -10,8 +10,7 @@ resource "aws_vpc" "new_vpc" {
   enable_dns_hostnames = true
   enable_dns_support   = true
 
-  # TODO - This should probably be optional
-  assign_generated_ipv6_cidr_block = true
+  assign_generated_ipv6_cidr_block = var.use_ipv6
 
   tags = merge(
     {

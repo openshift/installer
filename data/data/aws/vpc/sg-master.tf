@@ -43,7 +43,6 @@ resource "aws_security_group_rule" "master_egress" {
   cidr_blocks = ["0.0.0.0/0"]
 }
 
-# TODO make this conditional on ipv6 being enabled
 resource "aws_security_group_rule" "master_egress_v6" {
   type              = "egress"
   security_group_id = aws_security_group.master.id
@@ -52,6 +51,8 @@ resource "aws_security_group_rule" "master_egress_v6" {
   to_port          = 0
   protocol         = "-1"
   ipv6_cidr_blocks = ["::/0"]
+
+  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_security_group_rule" "master_ingress_icmp" {

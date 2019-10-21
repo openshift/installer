@@ -44,7 +44,7 @@ resource "aws_route" "igw_route" {
 }
 
 resource "aws_route" "igw_route_v6" {
-  count = var.vpc == null ? 1 : 0
+  count = var.use_ipv6 == true && var.vpc == null ? 1 : 0
 
   destination_ipv6_cidr_block = "::/0"
   route_table_id              = aws_route_table.default[0].id
@@ -62,10 +62,8 @@ resource "aws_subnet" "public_subnet" {
   cidr_block        = cidrsubnet(local.new_public_cidr_range, 3, count.index)
   availability_zone = var.availability_zones[count.index]
 
-  # TODO - Make this conditional if ipv6 support is made optional
-  # We add length(var.availability_zones) here to skip over the subnets allocated to the private_subnet (vpc-private.tf)
-  ipv6_cidr_block                 = cidrsubnet(data.aws_vpc.cluster_vpc.ipv6_cidr_block, 8, count.index + length(var.availability_zones))
-  assign_ipv6_address_on_creation = true
+  ipv6_cidr_block                 = var.use_ipv6 == true ? cidrsubnet(data.aws_vpc.cluster_vpc.ipv6_cidr_block, 8, count.index + length(var.availability_zones)) : ""
+  assign_ipv6_address_on_creation = var.use_ipv6
 
   tags = merge(
     {

@@ -27,7 +27,7 @@ resource "aws_route" "to_nat_gw" {
 # We can't target the NAT gw for our "private" IPv6 subnet.  Instead, we target the internet gateway,
 # since we want our private IPv6 addresses to be able to talk out to the internet, too.
 resource "aws_route" "private_igw_v6" {
-  count = var.private_subnets == null ? length(var.availability_zones) : 0
+  count = var.use_ipv6 == true && var.private_subnets == null ? length(var.availability_zones) : 0
 
   route_table_id              = aws_route_table.private_routes[count.index].id
   destination_ipv6_cidr_block = "::/0"
@@ -48,9 +48,8 @@ resource "aws_subnet" "private_subnet" {
 
   availability_zone = var.availability_zones[count.index]
 
-  # TODO - Make this conditional if ipv6 support is made optional
-  ipv6_cidr_block                 = cidrsubnet(data.aws_vpc.cluster_vpc.ipv6_cidr_block, 8, count.index)
-  assign_ipv6_address_on_creation = true
+  ipv6_cidr_block                 = var.use_ipv6 == true ? cidrsubnet(data.aws_vpc.cluster_vpc.ipv6_cidr_block, 8, count.index) : ""
+  assign_ipv6_address_on_creation = var.use_ipv6
 
   tags = merge(
     {
