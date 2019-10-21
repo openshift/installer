@@ -30,6 +30,11 @@ module "bootstrap" {
   publish_strategy         = var.aws_publish_strategy
 
   tags = local.tags
+
+  use_ipv6 = local.use_ipv6
+
+  aws_elb_api_internal_id = module.vpc.aws_elb_api_internal_id
+  aws_elb_api_external_id = module.vpc.aws_elb_api_external_id
 }
 
 module "masters" {
@@ -52,6 +57,11 @@ module "masters" {
   ec2_ami                  = aws_ami_copy.main.id
   user_data_ign            = var.ignition_master
   publish_strategy         = var.aws_publish_strategy
+
+  use_ipv6 = local.use_ipv6
+
+  aws_elb_api_internal_id = module.vpc.aws_elb_api_internal_id
+  aws_elb_api_external_id = module.vpc.aws_elb_api_external_id
 }
 
 module "iam" {
@@ -101,6 +111,8 @@ module "vpc" {
   )
 
   tags = local.tags
+
+  use_ipv6 = local.use_ipv6
 }
 
 resource "aws_ami_copy" "main" {

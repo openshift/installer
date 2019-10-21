@@ -50,7 +50,7 @@ resource "aws_route53_record" "api_external_v6" {
   type    = "AAAA"
 
   alias {
-    name                   = var.api_external_lb_dns_name
+    name                   = "ipv6.${var.api_external_lb_dns_name}"
     zone_id                = var.api_external_lb_zone_id
     evaluate_target_health = false
   }
@@ -72,14 +72,13 @@ resource "aws_route53_record" "api_internal" {
   count = var.use_ipv6 == false ? 1 : 0
 }
 
-# TODO make this conditional if IPv6 is optional
 resource "aws_route53_record" "api_internal_v6" {
   zone_id = aws_route53_zone.int.zone_id
   name    = "api-int.${var.cluster_domain}"
   type    = "AAAA"
 
   alias {
-    name                   = var.api_internal_lb_dns_name
+    name                   = "ipv6.${var.api_internal_lb_dns_name}"
     zone_id                = var.api_internal_lb_zone_id
     evaluate_target_health = false
   }
@@ -101,14 +100,13 @@ resource "aws_route53_record" "api_external_internal_zone" {
   count = var.use_ipv6 == false ? 1 : 0
 }
 
-# TODO make this conditional if IPv6 is optional
 resource "aws_route53_record" "api_external_internal_zone_v6" {
   zone_id = aws_route53_zone.int.zone_id
   name    = "api.${var.cluster_domain}"
   type    = "AAAA"
 
   alias {
-    name                   = var.api_internal_lb_dns_name
+    name                   = "ipv6.${var.api_internal_lb_dns_name}"
     zone_id                = var.api_internal_lb_zone_id
     evaluate_target_health = false
   }
@@ -133,7 +131,6 @@ resource "aws_route53_record" "etcd_a_nodes" {
   records = [var.etcd_ip_addresses[count.index]]
 }
 
-# TODO make this conditional if IPv6 is optional
 resource "aws_route53_record" "etcd_aaaa_nodes" {
   count   = var.use_ipv6 == true ? var.etcd_count : 0
   type    = "AAAA"

@@ -141,9 +141,20 @@ resource "aws_instance" "master" {
 }
 
 resource "aws_lb_target_group_attachment" "master" {
-  count = var.instance_count * local.target_group_arns_length
+  count = var.use_ipv6 == false ? var.instance_count * local.target_group_arns_length : 0
 
   target_group_arn = var.target_group_arns[count.index % local.target_group_arns_length]
   target_id        = aws_instance.master[floor(count.index / local.target_group_arns_length)].private_ip
 }
 
+resource "aws_elb_attachment" "masters_internal_v6" {
+  count    = var.use_ipv6 == true ? var.instance_count : 0
+  elb      = var.aws_elb_api_internal_id
+  instance = aws_instance.master.*.id[count.index]
+}
+
+resource "aws_elb_attachment" "masters_external_v6" {
+  count    = var.use_ipv6 == true ? var.instance_count : 0
+  elb      = var.aws_elb_api_external_id
+  instance = aws_instance.master.*.id[count.index]
+}

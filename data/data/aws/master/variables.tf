@@ -80,3 +80,18 @@ and therefore are force to implicitly assume that the list is of aws_lb_target_g
 helps to decide if the target_group_arns is of length (target_group_arns_length) or (target_group_arns_length - 1)
 EOF
 }
+
+variable "use_ipv6" {
+  description = "Use IPv6 instead of IPv4"
+  type = bool
+}
+
+variable "aws_elb_api_internal_id" {
+  description = "ID of the internal IPv6 load balancer"
+  type = string
+}
+
+variable "aws_elb_api_external_id" {
+  description = "ID of the external IPv6 load balancer"
+  type = string
+}

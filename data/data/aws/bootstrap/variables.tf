@@ -78,3 +78,18 @@ variable "publish_strategy" {
   type        = string
   description = "The publishing strategy for endpoints like load balancers"
 }
+
+variable "use_ipv6" {
+  description = "Use IPv6 instead of IPv4"
+  type        = bool
+}
+
+variable "aws_elb_api_internal_id" {
+  description = "ID of the internal IPv6 load balancer"
+  type        = string
+}
+
+variable "aws_elb_api_external_id" {
+  description = "ID of the external IPv6 load balancer"
+  type        = string
+}

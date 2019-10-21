@@ -41,3 +41,8 @@ variable "private_subnets" {
   type        = list(string)
   description = "Existing private subnets into which the cluster should be installed."
 }
+
+variable "use_ipv6" {
+  description = "Use IPv6 instead of IPv4"
+  type        = bool
+}
