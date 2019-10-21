@@ -57,6 +57,7 @@ type ClusterOperatorStatus struct {
 	// operator which owns this status object.
 	// +nullable
 	// +optional
+	// +kubebuilder:validation:PreserveUnknownFields
 	Extension runtime.RawExtension `json:"extension"`
 }
 
