@@ -22,12 +22,12 @@ type Subnet struct {
 }
 
 // subnets retrieves metadata for the given subnet(s).
-func subnets(ctx context.Context, session *session.Session, ids []string) (vpc string, private map[string]Subnet, public map[string]Subnet, err error) {
+func subnets(ctx context.Context, session *session.Session, region string, ids []string) (vpc string, private map[string]Subnet, public map[string]Subnet, err error) {
 	metas := make(map[string]Subnet, len(ids))
 	private = map[string]Subnet{}
 	public = map[string]Subnet{}
 	var vpcFromSubnet string
-	client := ec2.New(session)
+	client := ec2.New(session, aws.NewConfig().WithRegion(region))
 
 	idPointers := make([]*string, len(ids))
 	for _, id := range ids {
