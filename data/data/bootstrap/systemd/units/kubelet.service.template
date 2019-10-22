@@ -1,6 +1,8 @@
 [Unit]
 Description=Kubernetes Kubelet
-Wants=rpc-statd.service
+Wants=rpc-statd.service network-online.target crio.service
+After=network-online.target crio.service
+
 
 [Service]
 Type=notify
