@@ -12,20 +12,6 @@ resource "google_compute_firewall" "api" {
   target_tags   = ["${var.cluster_id}-master"]
 }
 
-resource "google_compute_firewall" "mcs" {
-  name    = "${var.cluster_id}-mcs"
-  network = local.cluster_network
-
-  # MCS
-  allow {
-    protocol = "tcp"
-    ports    = ["22623"]
-  }
-
-  source_ranges = [var.network_cidr]
-  target_tags   = ["${var.cluster_id}-master"]
-}
-
 resource "google_compute_firewall" "health_checks" {
   name    = "${var.cluster_id}-health-checks"
   network = local.cluster_network
@@ -68,6 +54,12 @@ resource "google_compute_firewall" "control_plane" {
   allow {
     protocol = "tcp"
     ports    = ["10259"]
+  }
+
+  # MCS
+  allow {
+    protocol = "tcp"
+    ports    = ["22623"]
   }
 
   source_tags = [
