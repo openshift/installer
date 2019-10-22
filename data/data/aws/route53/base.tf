@@ -69,7 +69,10 @@ resource "aws_route53_record" "api_internal" {
     evaluate_target_health = false
   }
 
-  count = var.use_ipv6 == false ? 1 : 0
+  # TODO - We must leave the A record enabled, even when trying to test IPv6, because
+  # RHCOS doesn't get an IPv6 address during boot, so ignition will fail trying to reach
+  # the machine config server.
+  #count = var.use_ipv6 == false ? 1 : 0
 }
 
 resource "aws_route53_record" "api_internal_v6" {
