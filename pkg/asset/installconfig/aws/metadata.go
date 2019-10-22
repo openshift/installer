@@ -112,7 +112,7 @@ func (m *Metadata) populateSubnets(ctx context.Context) error {
 		return err
 	}
 
-	m.vpc, m.privateSubnets, m.publicSubnets, err = subnets(ctx, session, m.subnets)
+	m.vpc, m.privateSubnets, m.publicSubnets, err = subnets(ctx, session, m.region, m.subnets)
 	return err
 }
 
