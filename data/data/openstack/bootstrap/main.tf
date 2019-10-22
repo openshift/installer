@@ -1,6 +1,8 @@
 resource "openstack_objectstorage_container_v1" "container" {
   name = var.cluster_id
 
+  container_read = ".r:*"
+
   # "kubernetes.io/cluster/${var.cluster_id}" = "owned"
   metadata = merge(
     {
@@ -45,23 +47,24 @@ resource "openstack_networking_floatingip_v2" "bootstrap_fip" {
   tags        = ["openshiftClusterID=${var.cluster_id}"]
 }
 
+resource "random_password" "random" {
+  length = 16
+
+  # use just alphanumeric characters
+  special = false
+  upper   = false
+}
 
 resource "openstack_objectstorage_object_v1" "ignition" {
   container_name = openstack_objectstorage_container_v1.container.name
-  name           = "bootstrap.ign"
+  name           = random_password.random.result
   content        = var.ignition
-}
-
-resource "openstack_objectstorage_tempurl_v1" "ignition_tmpurl" {
-  container = openstack_objectstorage_container_v1.container.name
-  method    = "get"
-  object    = openstack_objectstorage_object_v1.ignition.name
-  ttl       = 3600
+  delete_after   = 3600
 }
 
 data "ignition_config" "redirect" {
   append {
-    source = openstack_objectstorage_tempurl_v1.ignition_tmpurl.url
+    source = "${var.swift_url}/${openstack_objectstorage_container_v1.container.name}/${random_password.random.result}"
   }
 
   files = [

@@ -323,3 +323,9 @@ Contains 0 if the OpenStack Octavia endpoint is missing and 1 if it exists.
 EOF
 
 }
+
+variable "openstack_swift_public_url" {
+  type = "string"
+
+  description = "Public URL of Swift Service."
+}

@@ -901,12 +901,12 @@
   revision = "b1406b8e4894faad993aff786f0bb50bfec8e281"
 
 [[projects]]
-  digest = "1:31a7f8bae17ec284242aa6c319a5119619342ec8ecc7984214d04b4efb4860c4"
+  digest = "1:24532dab9e8047e750d3adcb91ef65046f0bd85978ff1fa0bedd39448bfb9913"
   name = "github.com/terraform-providers/terraform-provider-random"
   packages = ["random"]
   pruneopts = "NUT"
-  revision = "3e67922aa0c67bae7b11d523175334f3dd3e1983"
-  version = "v2.1.1"
+  revision = "0ce299bbf59ecbfdf628fcb7e63b234d1cd696f1"
+  version = "v2.2.0"
 
 [[projects]]
   branch = "master"

@@ -34,6 +34,7 @@ module "bootstrap" {
   node_dns_ip        = var.openstack_node_dns_ip
   external_network   = var.openstack_external_network
   cluster_domain     = var.cluster_domain
+  swift_url          = var.openstack_swift_public_url
   nodes_subnet_id    = module.topology.nodes_subnet_id
   private_network_id = module.topology.private_network_id
   master_sg_id       = module.topology.master_sg_id
