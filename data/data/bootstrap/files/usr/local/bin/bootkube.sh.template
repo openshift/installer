@@ -44,6 +44,33 @@ MDNS_PUBLISHER_IMAGE=$(image_for mdns-publisher)
 HAPROXY_IMAGE=$(image_for haproxy-router)
 BAREMETAL_RUNTIMECFG_IMAGE=$(image_for baremetal-runtimecfg)
 
+# Copy machine-config-daemon binary from payload and run pivot
+if [ ! -f .pivot-done ]; then
+  mkdir --parents /run/pivot /etc/pivot
+  touch /run/pivot/reboot-needed
+  echo "${MACHINE_CONFIG_OSCONTENT}" > /etc/pivot/image-pullspec
+
+  echo "ADD systemd.unified_cgroup_hierarchy=0" > /etc/pivot/kernel-args
+  echo "DELETE mitigations=auto,nosmt" >> /etc/pivot/kernel-args
+
+  mkdir --parents bin/
+  bootkube_podman_run --entrypoint=cat "${MACHINE_CONFIG_OPERATOR_IMAGE}" \
+    /usr/bin/machine-config-daemon > /usr/local/bin/machine-config-daemon
+  chmod +x /usr/local/bin/machine-config-daemon
+  restorecon /usr/local/bin/machine-config-daemon
+
+  # Disable zincati
+  systemctl disable zincati.service
+
+  # GCP: enable gcp-routes
+  systemctl enable gcp-routes.service || true
+
+  touch .pivot-done
+  /usr/local/bin/machine-config-daemon pivot
+fi
+
+# Run crio-configure after the pivot
+/usr/local/bin/crio-configure.sh
 mkdir --parents ./{bootstrap-manifests,manifests}
 
 if [ ! -f openshift-manifests.done ]
