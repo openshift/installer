@@ -213,7 +213,7 @@ resource "aws_elb" "api_internal" {
   name            = "${var.cluster_id}-int"
   subnets         = data.aws_subnet.private.*.id
   internal        = true
-  security_groups = ["${aws_security_group.master.id}", "${aws_security_group.api[0].id}"]
+  security_groups = ["${aws_security_group.master.id}"]
 
   idle_timeout                = 3600
   connection_draining         = true
