@@ -217,7 +217,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		preexistingnetwork := installConfig.Config.Azure.VirtualNetwork != ""
 		data, err := azuretfvars.TFVars(
 			azuretfvars.TFVarsSources{
-				Auth: auth,
+				Auth:                        auth,
 				BaseDomainResourceGroupName: installConfig.Config.Azure.BaseDomainResourceGroupName,
 				MasterConfigs:               masterConfigs,
 				WorkerConfigs:               workerConfigs,

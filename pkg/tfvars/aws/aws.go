@@ -77,9 +77,9 @@ func TFVars(vpc string, privateSubnets []string, publicSubnets []string, publish
 	instanceClass := defaults.InstanceClass(masterConfig.Placement.Region)
 
 	cfg := &config{
-		Region:    masterConfig.Placement.Region,
-		ExtraTags: tags,
-		AMI:       *masterConfig.AMI.ID,
+		Region:                  masterConfig.Placement.Region,
+		ExtraTags:               tags,
+		AMI:                     *masterConfig.AMI.ID,
 		MasterAvailabilityZones: masterAvailabilityZones,
 		WorkerAvailabilityZones: workerAvailabilityZones,
 		BootstrapInstanceType:   fmt.Sprintf("%s.large", instanceClass),
