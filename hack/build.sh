@@ -13,7 +13,6 @@ if [ "$(version "${current_go_version#go}")" -lt "$(version "$minimum_go_version
      exit 1
 fi
 
-LAUNCH_PATH="${PWD}"
 cd "$(dirname "$0")/.."
 
 MODE="${MODE:-release}"
