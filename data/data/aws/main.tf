@@ -5,9 +5,6 @@ locals {
     },
     var.aws_extra_tags,
   )
-
-  # Use IPv6 instead of IPv4
-  use_ipv6 = true
 }
 
 provider "aws" {
@@ -32,7 +29,7 @@ module "bootstrap" {
 
   tags = local.tags
 
-  use_ipv6 = local.use_ipv6
+  use_ipv6 = var.aws_use_ipv6
 
   aws_elb_api_internal_id = module.vpc.aws_elb_api_internal_id
   aws_elb_api_external_id = module.vpc.aws_elb_api_external_id
@@ -59,7 +56,7 @@ module "masters" {
   user_data_ign            = var.ignition_master
   publish_strategy         = var.aws_publish_strategy
 
-  use_ipv6 = local.use_ipv6
+  use_ipv6 = var.aws_use_ipv6
 
   aws_elb_api_internal_id = module.vpc.aws_elb_api_internal_id
   aws_elb_api_external_id = module.vpc.aws_elb_api_external_id
@@ -90,7 +87,7 @@ module "dns" {
   vpc_id                   = module.vpc.vpc_id
   publish_strategy         = var.aws_publish_strategy
 
-  use_ipv6 = local.use_ipv6
+  use_ipv6 = var.aws_use_ipv6
 }
 
 module "vpc" {
@@ -113,7 +110,7 @@ module "vpc" {
 
   tags = local.tags
 
-  use_ipv6 = local.use_ipv6
+  use_ipv6 = var.aws_use_ipv6
 }
 
 resource "aws_ami_copy" "main" {

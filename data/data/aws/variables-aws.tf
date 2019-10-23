@@ -91,3 +91,9 @@ variable "aws_publish_strategy" {
   type = string
   description = "The cluster publishing strategy, either Internal or External"
 }
+
+variable "aws_use_ipv6" {
+  type = bool
+  default = false
+  description = "Enable an experimental IPv6 environment"
+}
