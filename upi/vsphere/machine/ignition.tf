@@ -49,6 +49,7 @@ data "ignition_systemd_unit" "restart" {
   content = <<EOF
 [Unit]
 ConditionFirstBoot=yes
+After=ignition-firstboot-complete.service
 [Service]
 Type=idle
 ExecStart=/sbin/reboot
