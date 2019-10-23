@@ -37,6 +37,21 @@ MDNS_PUBLISHER_IMAGE=$(image_for mdns-publisher)
 HAPROXY_IMAGE=$(image_for haproxy-router)
 BAREMETAL_RUNTIMECFG_IMAGE=$(image_for baremetal-runtimecfg)
 
+# Copy machine-config-daemon binary from payload and run pivot
+if [ ! -f .pivot-done ]; then
+  mkdir /run/pivot /etc/pivot
+  touch /run/pivot/reboot-needed
+  echo "${MACHINE_CONFIG_OSCONTENT}" > /etc/pivot/image-pullspec
+
+  hostmcd=/usr/local/bin/machine-config-daemon
+  bootkube_podman_run --entrypoint=sh "${MACHINE_CONFIG_OPERATOR_IMAGE}" \
+    cat /usr/bin/machine-config-daemon > ${hostmcd}
+  chmod a+x ${hostmcd}
+  restorecon ${hostmcd}
+  touch .pivot-done
+  ${hostmcd} pivot
+fi
+
 mkdir --parents ./{bootstrap-manifests,manifests}
 
 if [ ! -f openshift-manifests.done ]
