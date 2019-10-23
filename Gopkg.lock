@@ -634,10 +634,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:aefa56ca1b7d691f8f8ae940cee1dc35d3102bf83639eb15ab967a2a84663683"
+  digest = "1:268b53af9bd5f714d90e4940d008d40c134816510029bac186ea8ff894217056"
   name = "github.com/openshift/api"
   packages = [
     "config/v1",
+    "operator/v1",
     "operator/v1alpha1",
     "route/v1",
   ]
@@ -1418,6 +1419,7 @@
     "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis",
     "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1",
     "github.com/openshift/api/config/v1",
+    "github.com/openshift/api/operator/v1",
     "github.com/openshift/api/operator/v1alpha1",
     "github.com/openshift/client-go/config/clientset/versioned",
     "github.com/openshift/client-go/route/clientset/versioned",
