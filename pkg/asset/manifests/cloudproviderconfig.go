@@ -108,7 +108,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		if installConfig.Config.Azure.VirtualNetwork != "" {
 			vnet = installConfig.Config.Azure.VirtualNetwork
 		}
-		subnet := fmt.Sprintf("%s-node-subnet", clusterID.InfraID)
+		subnet := fmt.Sprintf("%s-worker-subnet", clusterID.InfraID)
 		if installConfig.Config.Azure.ComputeSubnet != "" {
 			subnet = installConfig.Config.Azure.ComputeSubnet
 		}
