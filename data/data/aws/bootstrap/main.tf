@@ -160,7 +160,7 @@ resource "aws_lb_target_group_attachment" "bootstrap" {
 }
 
 resource "aws_elb_attachment" "bootstrap_api_internal" {
-  count    = var.use_ipv6 == true ? 1 : 0
+  count    = var.use_ipv6 == true && local.public_endpoints ? 1 : 0
   elb      = var.aws_elb_api_internal_id
   instance = aws_instance.bootstrap.id
 }
@@ -201,7 +201,7 @@ resource "aws_security_group_rule" "ssh_v6" {
   security_group_id = aws_security_group.bootstrap.id
 
   protocol         = "tcp"
-  ipv6_cidr_blocks = ["::/0"]
+  ipv6_cidr_blocks = local.public_endpoints ? ["::/0"] : var.vpc_ipv6_cidrs
   from_port        = 22
   to_port          = 22
 }
@@ -221,7 +221,7 @@ resource "aws_security_group_rule" "bootstrap_journald_gateway_v6" {
   security_group_id = aws_security_group.bootstrap.id
 
   protocol         = "tcp"
-  ipv6_cidr_blocks = ["::/0"]
+  ipv6_cidr_blocks = local.public_endpoints ? ["::/0"] : var.vpc_ipv6_cidrs
   from_port        = 19531
   to_port          = 19531
 }

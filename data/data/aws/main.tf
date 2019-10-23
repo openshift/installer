@@ -26,6 +26,7 @@ module "bootstrap" {
   target_group_arns_length = module.vpc.aws_lb_target_group_arns_length
   vpc_id                   = module.vpc.vpc_id
   vpc_cidrs                = module.vpc.vpc_cidrs
+  vpc_ipv6_cidrs           = module.vpc.vpc_ipv6_cidrs
   vpc_security_group_ids   = [module.vpc.master_sg_id]
   publish_strategy         = var.aws_publish_strategy
 

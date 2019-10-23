@@ -6,6 +6,10 @@ output "vpc_cidrs" {
   value = [data.aws_vpc.cluster_vpc.cidr_block]
 }
 
+output "vpc_ipv6_cidrs" {
+  value = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
+}
+
 output "az_to_private_subnet_id" {
   value = zipmap(data.aws_subnet.private.*.availability_zone, data.aws_subnet.private.*.id)
 }
@@ -69,5 +73,5 @@ output "aws_elb_api_internal_id" {
 }
 
 output "aws_elb_api_external_id" {
-  value = var.use_ipv6 == true ? aws_elb.api_external[0].id : ""
+  value = local.public_endpoints && var.use_ipv6 == true ? aws_elb.api_external[0].id : ""
 }

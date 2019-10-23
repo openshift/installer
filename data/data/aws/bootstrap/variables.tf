@@ -68,6 +68,12 @@ variable "vpc_cidrs" {
   description = "VPC CIDR blocks."
 }
 
+variable "vpc_ipv6_cidrs" {
+  type        = list(string)
+  default     = []
+  description = "VPC IPv6 CIDR blocks."
+}
+
 variable "vpc_security_group_ids" {
   type        = list(string)
   default     = []
