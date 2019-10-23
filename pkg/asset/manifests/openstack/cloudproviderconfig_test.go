@@ -107,7 +107,6 @@ func TestCloudProviderConfig(t *testing.T) {
 	expectedConfig := `[Global]
 secret-name = openstack-credentials
 secret-namespace = kube-system
-kubeconfig-path = /var/lib/kubelet/kubeconfig
 region = my_region
 `
 	actualConfig := CloudProviderConfig(&cloud)
