@@ -137,43 +137,6 @@ func populateDeleteFuncs(funcs map[string]deleteFunc) {
 	funcs["deleteImages"] = deleteImages
 }
 
-// filterObjects will do client-side filtering given an appropriately filled out
-// list of ObjectWithTags.
-func filterObjects(osObjects []ObjectWithTags, filters Filter) []ObjectWithTags {
-	objectsWithTags := []ObjectWithTags{}
-	filteredObjects := []ObjectWithTags{}
-
-	// first find the objects that have all the desired tags
-	for _, object := range osObjects {
-		allTagsFound := true
-		for key := range filters {
-			if _, ok := object.Tags[key]; !ok {
-				// doesn't have one of the tags we're looking for so skip it
-				allTagsFound = false
-				break
-			}
-		}
-		if allTagsFound {
-			objectsWithTags = append(objectsWithTags, object)
-		}
-	}
-
-	// now check that the values match
-	for _, object := range objectsWithTags {
-		valuesMatch := true
-		for key, val := range filters {
-			if object.Tags[key] != val {
-				valuesMatch = false
-				break
-			}
-		}
-		if valuesMatch {
-			filteredObjects = append(filteredObjects, object)
-		}
-	}
-	return filteredObjects
-}
-
 func filterTags(filters Filter) []string {
 	tags := []string{}
 	for k, v := range filters {
@@ -192,13 +155,22 @@ func deleteServers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		os.Exit(1)
 	}
 
-	listOpts := servers.ListOpts{
-		// FIXME(shardy) when gophercloud supports tags we should
-		// filter by tag here
-		// https://github.com/gophercloud/gophercloud/pull/1115
-		// and Nova doesn't seem to support filter by Metadata, so for
-		// now we do client side filtering below based on the
-		// Metadata key (which matches the server properties).
+	type ServerListOptsTagsExt struct {
+		TagsAny string `q:"tags-any"`
+	}
+
+	// ListOpts with tags ext
+	type listOptsWithTagsExt struct {
+		servers.ListOpts
+		ServerListOptsTagsExt
+	}
+
+	tags := filterTags(filter)
+	listOpts := listOptsWithTagsExt{
+		servers.ListOpts{},
+		ServerListOptsTagsExt{
+			TagsAny: strings.Join(tags, ","),
+		},
 	}
 
 	allPages, err := servers.List(conn, listOpts).AllPages()
@@ -213,16 +185,7 @@ func deleteServers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		os.Exit(1)
 	}
 
-	serverObjects := []ObjectWithTags{}
 	for _, server := range allServers {
-		serverObjects = append(
-			serverObjects, ObjectWithTags{
-				ID:   server.ID,
-				Tags: server.Metadata})
-	}
-
-	filteredServers := filterObjects(serverObjects, filter)
-	for _, server := range filteredServers {
 		logger.Debugf("Deleting Server %q", server.ID)
 		err = servers.Delete(conn, server.ID).ExtractErr()
 		if err != nil {
@@ -234,7 +197,7 @@ func deleteServers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 			logger.Debugf("Cannot find server %q. It's probably already been deleted.", server.ID)
 		}
 	}
-	return len(filteredServers) == 0, nil
+	return len(allServers) == 0, nil
 }
 
 func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
