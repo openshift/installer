@@ -32,6 +32,15 @@ vm_template = "rhcos-latest"
 // Additionally, IPAM will assign IPs based on the network ID.
 machine_cidr = "10.0.0.0/24"
 
+// Path to the bootstrap ignition file
+bootstrap_ignition_path = "${path.module}/bootstrap.ign"
+
+// Path to the master/control plane ignition file
+control_plane_ignition_path = "${path.module}/master.ign"
+
+// Path to the compute/worker ignition file
+compute_ignition_path = "${path.module}/compute.ign"
+
 // The number of control plane VMs to create. Default is 3.
 control_plane_count = 3
 
