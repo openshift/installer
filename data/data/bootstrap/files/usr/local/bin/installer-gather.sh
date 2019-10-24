@@ -7,6 +7,7 @@ then
 fi
 
 ARTIFACTS="/tmp/artifacts-${GATHER_ID}"
+mkdir -p "${ARTIFACTS}"
 
 echo "Gathering bootstrap systemd summary ..."
 LANG=POSIX systemctl list-units --state=failed >& "${ARTIFACTS}/failed-units.txt"
