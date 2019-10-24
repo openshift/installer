@@ -24,9 +24,3 @@ machineCIDR:    10.0.0.0/16
 serviceNetwork: 172.30.0.0/16
 clusterNetwork: 10.128.0.0/14
 ```
-
-## Ceph RGW and Swift temp-url
-
-The [account in url](https://docs.ceph.com/docs/master/radosgw/config-ref/#swift-settings) option must be enabled in Ceph RGW in order to use public-readable containers needed for temporary URLs.
-
-This setting wasn't enabled by default [prior to OSP15](https://bugs.launchpad.net/tripleo/+bug/1826894). We are working on removing the need for Swift temp-url in [PR #2311](https://github.com/openshift/installer/pull/2311).
