@@ -105,7 +105,7 @@ For example:
 ```sh
 curl --compressed -J -L -O <url of OpenStack QCOW2>
 
-wget --compresion=auto <url of OpenStack QCOW2>
+wget --compression=auto <url of OpenStack QCOW2>
 ```
 
 The installer requires a proper RHCOS image in the OpenStack cluster or project:
