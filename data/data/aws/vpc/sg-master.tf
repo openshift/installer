@@ -31,6 +31,8 @@ resource "aws_security_group_rule" "master_mcs_v6" {
   ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
   from_port        = 22623
   to_port          = 22623
+
+  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_security_group_rule" "master_egress" {
@@ -73,6 +75,8 @@ resource "aws_security_group_rule" "master_ingress_icmp_v6" {
   ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
   from_port        = -1
   to_port          = -1
+
+  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_security_group_rule" "master_ingress_ssh" {
@@ -93,6 +97,8 @@ resource "aws_security_group_rule" "master_ingress_ssh_v6" {
   ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
   from_port        = 22
   to_port          = 22
+
+  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_security_group_rule" "master_ingress_https" {
@@ -113,6 +119,8 @@ resource "aws_security_group_rule" "master_ingress_https_v6" {
   ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
   from_port        = 6443
   to_port          = 6443
+
+  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_security_group_rule" "master_ingress_vxlan" {
