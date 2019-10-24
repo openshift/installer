@@ -4,6 +4,7 @@ package aws
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
@@ -27,6 +28,7 @@ type config struct {
 	PrivateSubnets          []string          `json:"aws_private_subnets,omitempty"`
 	PublicSubnets           *[]string         `json:"aws_public_subnets,omitempty"`
 	PublishStrategy         string            `json:"aws_publish_strategy,omitempty"`
+	UseIPv6                 bool              `json:"aws_use_ipv6,omitempty"`
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
@@ -76,6 +78,11 @@ func TFVars(vpc string, privateSubnets []string, publicSubnets []string, publish
 
 	instanceClass := defaults.InstanceClass(masterConfig.Placement.Region)
 
+	useIPv6 := false
+	if os.Getenv("OPENSHIFT_AWS_USE_IPV6") == "true" {
+		useIPv6 = true
+	}
+
 	cfg := &config{
 		Region:                  masterConfig.Placement.Region,
 		ExtraTags:               tags,
@@ -89,6 +96,7 @@ func TFVars(vpc string, privateSubnets []string, publicSubnets []string, publish
 		VPC:                     vpc,
 		PrivateSubnets:          privateSubnets,
 		PublishStrategy:         string(publish),
+		UseIPv6:                 useIPv6,
 	}
 
 	if len(publicSubnets) == 0 {
