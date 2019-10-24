@@ -485,7 +485,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.APIVIP = ""
 				return c
 			}(),
-			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "": '' is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
+			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "": "" is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
 		},
 		{
 			name: "baremetal API VIP not an IP",
@@ -497,7 +497,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.APIVIP = "test"
 				return c
 			}(),
-			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "test": 'test' is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "test": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
+			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "test": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
 		},
 		{
 			name: "baremetal API VIP set to an incorrect value",
@@ -521,7 +521,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.DNSVIP = "test"
 				return c
 			}(),
-			expectedError: `^\[platform\.baremetal\.dnsVIP: Invalid value: "test": 'test' is not a valid IP, platform\.baremetal\.dnsVIP: Invalid value: "test": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
+			expectedError: `^\[platform\.baremetal\.dnsVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.dnsVIP: Invalid value: "test": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
 		},
 		{
 			name: "baremetal DNS VIP set to an incorrect value",
@@ -545,7 +545,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.IngressVIP = "test"
 				return c
 			}(),
-			expectedError: `^\[platform\.baremetal\.ingressVIP: Invalid value: "test": 'test' is not a valid IP, platform\.baremetal\.ingressVIP: Invalid value: "test": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
+			expectedError: `^\[platform\.baremetal\.ingressVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.ingressVIP: Invalid value: "test": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
 		},
 		{
 			name: "baremetal Ingress VIP set to an incorrect value",
