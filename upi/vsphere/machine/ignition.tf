@@ -48,10 +48,6 @@ data "ignition_config" "ign" {
     source = "${local.ignition_encoded}"
   }
 
-  systemd = [
-    "${data.ignition_systemd_unit.restart.*.id[count.index]}",
-  ]
-
   files = [
     "${data.ignition_file.hostname.*.id[count.index]}",
     "${data.ignition_file.static_ip.*.id[count.index]}",
