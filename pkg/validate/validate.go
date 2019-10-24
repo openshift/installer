@@ -166,7 +166,7 @@ func URIWithProtocol(uri string, protocol string) error {
 func IP(ip string) error {
 	addr := net.ParseIP(ip)
 	if addr == nil {
-		return fmt.Errorf("'%s' is not a valid IP", ip)
+		return fmt.Errorf("%q is not a valid IP", ip)
 	}
 	return nil
 }
