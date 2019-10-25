@@ -3,6 +3,7 @@ package openstack
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
@@ -27,13 +28,24 @@ type config struct {
 	OctaviaSupport  string   `json:"openstack_octavia_support,omitempty"`
 	RootVolumeSize  int      `json:"openstack_master_root_volume_size,omitempty"`
 	RootVolumeType  string   `json:"openstack_master_root_volume_type,omitempty"`
-	SwiftPublicURL  string   `json:"openstack_swift_public_url,omitempty"`
+	BootstrapShim   string   `json:"openstack_bootstrap_shim_ignition,omitempty"`
 	ExternalDNS     []string `json:"openstack_external_dns,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string, baseImage string, infraID string) ([]byte, error) {
+func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string, baseImage string, infraID string, userCA string, bootstrapIgn string) ([]byte, error) {
 	swiftPublicURL, err := getSwiftPublicURL(cloud)
+	if err != nil {
+		return nil, err
+	}
+
+	objectID, err := CreateBootstrapSwiftObject(cloud, bootstrapIgn, infraID)
+	if err != nil {
+		return nil, err
+	}
+
+	objectAddress := fmt.Sprintf("%s/%s/%s", swiftPublicURL, infraID, objectID)
+	userCAIgnition, err := GenerateIgnitionShim(userCA, infraID, objectAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +61,7 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		ExternalDNS:     externalDNS,
 		TrunkSupport:    trunkSupport,
 		OctaviaSupport:  octaviaSupport,
-		SwiftPublicURL:  swiftPublicURL,
+		BootstrapShim:   userCAIgnition,
 	}
 
 	// Normally baseImage contains a URL that we will use to create a new Glance image, but for testing

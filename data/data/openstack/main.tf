@@ -25,19 +25,19 @@ provider "openstack" {
 module "bootstrap" {
   source = "./bootstrap"
 
-  cluster_id         = var.cluster_id
-  extra_tags         = var.openstack_extra_tags
-  base_image_id      = data.openstack_images_image_v2.base_image.id
-  flavor_name        = var.openstack_master_flavor_name
-  ignition           = var.ignition_bootstrap
-  api_int_ip         = var.openstack_api_int_ip
-  node_dns_ip        = var.openstack_node_dns_ip
-  external_network   = var.openstack_external_network
-  cluster_domain     = var.cluster_domain
-  swift_url          = var.openstack_swift_public_url
-  nodes_subnet_id    = module.topology.nodes_subnet_id
-  private_network_id = module.topology.private_network_id
-  master_sg_id       = module.topology.master_sg_id
+  cluster_id              = var.cluster_id
+  extra_tags              = var.openstack_extra_tags
+  base_image_id           = data.openstack_images_image_v2.base_image.id
+  flavor_name             = var.openstack_master_flavor_name
+  ignition                = var.ignition_bootstrap
+  api_int_ip              = var.openstack_api_int_ip
+  node_dns_ip             = var.openstack_node_dns_ip
+  external_network        = var.openstack_external_network
+  cluster_domain          = var.cluster_domain
+  nodes_subnet_id         = module.topology.nodes_subnet_id
+  private_network_id      = module.topology.private_network_id
+  master_sg_id            = module.topology.master_sg_id
+  bootstrap_shim_ignition = var.openstack_bootstrap_shim_ignition
 }
 
 module "masters" {
