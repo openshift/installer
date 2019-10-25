@@ -81,6 +81,7 @@ func TestGetDefaultInstanceClass(t *testing.T) {
 		"Asia Pacific (Hong Kong)":   "ap-east-1",
 		"Asia Pacific (Osaka-Local)": "ap-northeast-3",
 		"EU (Stockholm)":             "eu-north-1",
+		"Middle East (Bahrain)":      "me-south-1",
 		"South America (Sao Paulo)":  "sa-east-1",
 	}
 
