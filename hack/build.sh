@@ -29,6 +29,7 @@ release)
 	TAGS="${TAGS} release"
 	if test "${SKIP_GENERATION}" != y
 	then
+    go get github.com/shurcooL/vfsgen
 		go generate ./data
 	fi
 	;;
