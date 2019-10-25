@@ -70,6 +70,7 @@ module "topology" {
   api_int_ip          = var.openstack_api_int_ip
   node_dns_ip         = var.openstack_node_dns_ip
   ingress_ip          = var.openstack_ingress_ip
+  external_dns        = var.openstack_external_dns
   trunk_support       = var.openstack_trunk_support
   octavia_support     = var.openstack_octavia_support
 }

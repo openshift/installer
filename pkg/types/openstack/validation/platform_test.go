@@ -65,6 +65,28 @@ func TestValidatePlatform(t *testing.T) {
 			valid: true,
 		},
 		{
+			name: "non IP external dns",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.ExternalDNS = []string{
+					"invalid",
+				}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "valid external dns",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.ExternalDNS = []string{
+					"192.168.1.1",
+				}
+				return p
+			}(),
+			valid: true,
+		},
+		{
 			name:     "clouds fetch failure",
 			platform: validPlatform(),
 			noClouds: true,
