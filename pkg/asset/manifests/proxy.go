@@ -114,10 +114,6 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 // https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service
 // https://cloud.google.com/compute/docs/storing-retrieving-metadata
 func createNoProxy(installConfig *installconfig.InstallConfig, network *Networking) (string, error) {
-	apiServerURL, err := url.Parse(getAPIServerURL(installConfig.Config))
-	if err != nil {
-		return "", errors.New("failed parsing API server when creating Proxy manifest")
-	}
 	internalAPIServer, err := url.Parse(getInternalAPIServerURL(installConfig.Config))
 	if err != nil {
 		return "", errors.New("failed parsing internal API server when creating Proxy manifest")
@@ -129,7 +125,6 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 		".svc",
 		".cluster.local",
 		network.Config.Spec.ServiceNetwork[0],
-		apiServerURL.Hostname(),
 		internalAPIServer.Hostname(),
 		installConfig.Config.Networking.MachineCIDR.String(),
 	)
