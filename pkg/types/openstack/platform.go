@@ -13,20 +13,17 @@ type Platform struct {
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
-	// Cloud
-	// Name of OpenStack cloud to use from clouds.yaml
+	// Cloud is the name of OpenStack cloud to use from clouds.yaml.
 	Cloud string `json:"cloud"`
 
-	// ExternalNetwork
-	// The OpenStack external network name to be used for installation.
+	// ExternalNetwork is name of the external network in your OpenStack cluster.
 	ExternalNetwork string `json:"externalNetwork"`
 
-	// FlavorName
-	// The OpenStack compute flavor to use for servers.
+	// FlavorName is the name of the compute flavor to use for instances in this cluster.
 	FlavorName string `json:"computeFlavor"`
 
-	// LbFloatingIP
-	// Existing Floating IP to associate with the OpenStack load balancer.
+	// LbFloatingIP is the IP address of an available floating IP in your OpenStack cluster
+	// to associate with the OpenShift load balancer.
 	LbFloatingIP string `json:"lbFloatingIP"`
 
 	// ExternalDNS holds the IP addresses of dns servers that will
@@ -34,11 +31,11 @@ type Platform struct {
 	// +optional
 	ExternalDNS []string `json:"externalDNS"`
 
-	// TrunkSupport
-	// Whether OpenStack ports can be trunked
+	// TrunkSupport holds a `0` or `1` value that indicates whether or not to use trunk ports
+	// in your OpenShift cluster.
 	TrunkSupport string `json:"trunkSupport"`
 
-	// OctaviaSupport
-	// Whether OpenStack has Octavia support
+	// OctaviaSupport holds a `0` or `1` value that indicates whether your OpenStack
+	// cluster supports Octavia Loadbalancing.
 	OctaviaSupport string `json:"octaviaSupport"`
 }
