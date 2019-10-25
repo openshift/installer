@@ -1,6 +1,18 @@
 def GenerateConfig(context):
 
     resources = [{
+        'name': context.properties['infra_id'] + '-bootstrap-in-ssh',
+        'type': 'compute.v1.firewall',
+        'properties': {
+            'network': context.properties['cluster_network'],
+            'allowed': [{
+                'IPProtocol': 'tcp',
+                'ports': ['22']
+            }],
+            'sourceRanges':  ['0.0.0.0/0'],
+            'targetTags': [context.properties['infra_id'] + '-bootstrap']
+        }
+    }, {
         'name': context.properties['infra_id'] + '-api',
         'type': 'compute.v1.firewall',
         'properties': {
@@ -119,20 +131,6 @@ def GenerateConfig(context):
                 context.properties['infra_id'] + '-master',
                 context.properties['infra_id'] + '-worker'
             ]
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-master-node-sa',
-        'type': 'iam.v1.serviceAccount',
-        'properties': {
-            'accountId': context.properties['infra_id'] + '-m',
-            'displayName': context.properties['infra_id'] + '-master-node'
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-worker-node-sa',
-        'type': 'iam.v1.serviceAccount',
-        'properties': {
-            'accountId': context.properties['infra_id'] + '-w',
-            'displayName': context.properties['infra_id'] + '-worker-node'
         }
     }]
 

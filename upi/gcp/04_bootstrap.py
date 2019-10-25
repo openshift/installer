@@ -7,18 +7,6 @@ def GenerateConfig(context):
             'region': context.properties['region']
         }
     }, {
-        'name': context.properties['infra_id'] + '-bootstrap-in-ssh',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['22']
-            }],
-            'sourceRanges':  ['0.0.0.0/0'],
-            'targetTags': [context.properties['infra_id'] + '-bootstrap']
-        }
-    }, {
         'name': context.properties['infra_id'] + '-bootstrap',
         'type': 'compute.v1.instance',
         'properties': {
