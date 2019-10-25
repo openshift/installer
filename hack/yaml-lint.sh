@@ -1,6 +1,6 @@
 #!/bin/sh
 if [ "$IS_CONTAINER" != "" ]; then
-  yamllint .
+  yamllint pkg/
 else
   podman run --rm \
     --env IS_CONTAINER=TRUE \
