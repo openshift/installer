@@ -25,6 +25,11 @@ variable "ignition" {
   description = "The content of the bootstrap ignition file."
 }
 
+variable "bootstrap_shim_ignition" {
+  type = string
+  description = "The content of the ignition file with user ca bundle."
+}
+
 variable "flavor_name" {
   type = string
   description = "The Nova flavor for the bootstrap node."
@@ -58,6 +63,3 @@ variable "cluster_domain" {
   type = string
 }
 
-variable "swift_url" {
-  type = string
-}
