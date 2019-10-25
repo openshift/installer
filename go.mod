@@ -70,6 +70,7 @@ require (
 	k8s.io/api v0.0.0-20191016225839-816a9b7df678
 	k8s.io/apimachinery v0.0.0-20191017185446-6e68a40eebf9
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
+	k8s.io/klog v1.0.0
 	k8s.io/kube-openapi v0.0.0-20190918143330-0270cf2f1c1d // indirect
 	k8s.io/utils v0.0.0-20191010214722-8d271d903fe4
 	sigs.k8s.io/cluster-api-provider-aws v0.0.0-00010101000000-000000000000
