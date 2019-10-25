@@ -82,6 +82,10 @@ variable "machine_cidr" {
 // Bootstrap machine variables
 /////////
 
+variable "bootstrap_ignition_path" {
+  type    = "string"
+}
+
 variable "bootstrap_complete" {
   type    = "string"
   default = "false"
@@ -96,6 +100,10 @@ variable "bootstrap_ip" {
 // Control Plane machine variables
 ///////////
 
+variable "control_plane_ignition_path" {
+  type    = "string"
+}
+
 variable "control_plane_count" {
   type    = "string"
   default = "3"
@@ -109,6 +117,10 @@ variable "control_plane_ips" {
 //////////
 // Compute machine variables
 //////////
+
+variable "compute_ignition_path" {
+  type = "string"
+}
 
 variable "compute_count" {
   type    = "string"
