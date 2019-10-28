@@ -420,7 +420,7 @@ $ openstack subnet create --subnet-range <192.0.2.0/24> --allocation-pool start=
 
 During deployment, the OpenShift nodes will need to be able to resolve public name records to download the OpenShift images and so on. They will also need to resolve the OpenStack API endpoint.
 
-The default resolvers are an often set up by the OpenStack administrator in Neutron. However, some deployments do not have default DNS servers set, meaning the servers are not able to resolve any records when they boot.
+The default resolvers are often set up by the OpenStack administrator in Neutron. However, some deployments do not have default DNS servers set, meaning the servers are not able to resolve any records when they boot.
 
 If you are in this situation, you can add resolvers to your Neutron subnet (`openshift-qlvwv-subnet`). These will be put into `/etc/resolv.conf` on your servers post-boot.
 
