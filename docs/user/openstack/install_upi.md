@@ -106,7 +106,7 @@ $ openshift-install create install-config
 ? Cluster Name <openshift>
 ```
 
-Most of these are self-explanatoray. `Cloud` is the cloud name in your `clouds.yaml` i.e. what's set as your `OS_CLOUD` environment variable.
+Most of these are self-explanatory. `Cloud` is the cloud name in your `clouds.yaml` i.e. what's set as your `OS_CLOUD` environment variable.
 
 *Cluster Name* and *Base Domain* will together form the fully qualified domain name which the API interface will expect to the called, and the default name with which OpenShift will expose newly created applications.
 
@@ -484,7 +484,7 @@ openstack security group rule create --description "VXLAN from worker" --protoco
 openstack security group rule create --description "Geneve" --protocol udp --dst-port 6081 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
 openstack security group rule create --description "Geneve from worker" --protocol udp --dst-port 6081 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
 openstack security group rule create --description "ovndb" --protocol tcp --dst-port 6641:6642 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
-openstack security group rule create --description "ovndb" --protocol tcp --dst-port 6641:6642 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
+openstack security group rule create --description "ovndb from worker" --protocol tcp --dst-port 6641:6642 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
 openstack security group rule create --description "master ingress internal (TCP)" --protocol tcp --dst-port 9000:9999 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
 openstack security group rule create --description "master ingress internal from worker (TCP)" --protocol tcp --dst-port 9000:9999 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
 openstack security group rule create --description "master ingress internal (UDP)" --protocol udp --dst-port 9000:9999 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
@@ -492,7 +492,7 @@ openstack security group rule create --description "master ingress internal from
 openstack security group rule create --description "kube scheduler" --protocol tcp --dst-port 10259 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
 openstack security group rule create --description "kube scheduler from worker" --protocol tcp --dst-port 10259 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
 openstack security group rule create --description "kube controller manager" --protocol tcp --dst-port 10257 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
-openstack security group rule create --description "kube controller manager" --protocol tcp --dst-port 10257 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
+openstack security group rule create --description "kube controller manager from worker" --protocol tcp --dst-port 10257 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
 openstack security group rule create --description "master ingress kubelet secure" --protocol tcp --dst-port 10250 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
 openstack security group rule create --description "master ingress kubelet secure from worker" --protocol tcp --dst-port 10250 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
 openstack security group rule create --description "etcd" --protocol tcp --dst-port 2379:2380 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
