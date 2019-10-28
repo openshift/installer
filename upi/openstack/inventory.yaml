@@ -18,3 +18,8 @@ all:
       # os_network is the name of the OpenStack network that will contain the
       # OpenShift cluster.
       os_network: "{{ os_infra_id }}-network"
+
+      # os_sg_* are the names of the security groups that will be assigned to
+      # the respective nodes.
+      os_sg_master: "{{ os_infra_id }}-master"
+      os_sg_worker: "{{ os_infra_id }}-worker"

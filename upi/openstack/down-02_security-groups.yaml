@@ -1,0 +1,17 @@
+# Required Python packages:
+#
+# ansible
+# openstacksdk
+
+- hosts: all
+
+  tasks:
+  - name: 'Remove the master security group'
+    os_security_group:
+      name: "{{ os_sg_master }}"
+      state: absent
+
+  - name: 'Remove the worker security group'
+    os_security_group:
+      name: "{{ os_sg_worker }}"
+      state: absent
