@@ -62,7 +62,7 @@ EOF
 }
 
 variable "ignition_bootstrap" {
-  type = string
+  type    = string
   default = ""
 
   description = <<EOF
