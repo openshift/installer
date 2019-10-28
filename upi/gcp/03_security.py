@@ -13,22 +13,6 @@ def GenerateConfig(context):
             'targetTags': [context.properties['infra_id'] + '-master']
         }
     }, {
-        'name': context.properties['infra_id'] + '-mcs',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['22623']
-            }],
-            'sourceRanges':  [
-                context.properties['network_cidr'],
-                context.properties['master_nat_ip'],
-                context.properties['worker_nat_ip']
-            ],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
         'name': context.properties['infra_id'] + '-health-checks',
         'type': 'compute.v1.firewall',
         'properties': {
@@ -63,6 +47,9 @@ def GenerateConfig(context):
             },{
                 'IPProtocol': 'tcp',
                 'ports': ['10259']
+            },{
+                'IPProtocol': 'tcp',
+                'ports': ['22623']
             }],
             'sourceTags': [
                 context.properties['infra_id'] + '-master',
