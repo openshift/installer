@@ -731,6 +731,24 @@
   revision = "e8050812d5068866f61f052cc7c96e45d626776e"
 
 [[projects]]
+  digest = "1:1a40f5d6ecef5c50a28435d7c292318eb0a6f87c4fced69bbb612057f4e8edcb"
+  name = "github.com/ovirt/cluster-api-provider-ovirt"
+  packages = [
+    "pkg/apis",
+    "pkg/apis/ovirtclusterproviderconfig/v1alpha1",
+  ]
+  pruneopts = "NUT"
+  revision = "289621fda7b8a07d59a31b1d3a378b801f0705a6"
+
+[[projects]]
+  digest = "1:796faaf419fdbc002e2c4db8ca582c4203bd638e65124f10458fd4d7b231f019"
+  name = "github.com/ovirt/go-ovirt"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "4b8d743feec5a6bca4503f4f96bb9db55e4999bd"
+  version = "v4.3.9"
+
+[[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
   name = "github.com/pborman/uuid"
   packages = ["."]
@@ -1095,12 +1113,12 @@
   version = "v1.41.0"
 
 [[projects]]
-  digest = "1:7c95b35057a0ff2e19f707173cc1a947fa43a6eb5c4d300d196ece0334046082"
+  digest = "1:accc3bfe4e404aa53ac3621470e7cf9fce1efe48f0fabcfe6d12a72579d9d91f"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
+  revision = "f221b8435cfb71e54062f6c6e99e9ade30b124d5"
+  version = "v2.2.4"
 
 [[projects]]
   digest = "1:061024a203efbf02654d4aa55d69cd10d1f8985dada4cbafe5d6ce1b6914d22a"
@@ -1396,6 +1414,7 @@
     "github.com/coreos/ignition/config/v2_2/types",
     "github.com/ghodss/yaml",
     "github.com/golang/mock/gomock",
+    "github.com/google/uuid",
     "github.com/gophercloud/gophercloud",
     "github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes",
     "github.com/gophercloud/gophercloud/openstack/common/extensions",
@@ -1436,6 +1455,9 @@
     "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1",
     "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers",
     "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1",
+    "github.com/ovirt/cluster-api-provider-ovirt/pkg/apis",
+    "github.com/ovirt/cluster-api-provider-ovirt/pkg/apis/ovirtclusterproviderconfig/v1alpha1",
+    "github.com/ovirt/go-ovirt",
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
     "github.com/pkg/sftp",
@@ -1460,6 +1482,7 @@
     "google.golang.org/api/storage/v1",
     "gopkg.in/AlecAivazis/survey.v1",
     "gopkg.in/ini.v1",
+    "gopkg.in/yaml.v2",
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",

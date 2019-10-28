@@ -61,6 +61,10 @@ ignored = [
   version = "1.2.1"
 
 [[override]]
+  name = "github.com/oVirt/terraform-provider-master"
+  branch = "master"
+
+[[override]]
   name = "github.com/Azure/azure-sdk-for-go"
   version = "26.7.0"
 
@@ -71,3 +75,7 @@ ignored = [
 [[constraint]]
   name = "github.com/openshift-metal3/terraform-provider-ironic"
   version = "v0.1.8"
+
+[[constraint]]
+  name = "github.com/ovirt/terraform-provider-ovirt"
+  revision = "aaa6ce5ab3595c654bacc6525bc7b27329297c4e"
