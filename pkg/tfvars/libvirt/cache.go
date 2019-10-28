@@ -35,18 +35,16 @@ func cachedImage(uri string) (string, error) {
 
 	logrus.Infof("Fetching OS image: %s", filepath.Base(uri))
 
-	// FIXME: Use os.UserCacheDir() once we bump to Go 1.11
-	// baseCacheDir, err := os.UserCacheDir()
-	// if err != nil {
-	// 	return uri, err
-	// }
-	baseCacheDir := filepath.Join(os.Getenv("HOME"), ".cache")
+	baseCacheDir, err := os.UserCacheDir()
+	if err != nil {
+		return uri, err
+	}
 
 	cacheDir := filepath.Join(baseCacheDir, "openshift-install", "libvirt")
 	httpCacheDir := filepath.Join(cacheDir, "http")
 	// We used to use httpCacheDir, warn if it still exists since the user may
 	// want to delete it
-	_, err := os.Stat(httpCacheDir)
+	_, err = os.Stat(httpCacheDir)
 	if err == nil || !os.IsNotExist(err) {
 		logrus.Infof("The installer no longer uses %q, it can be deleted", httpCacheDir)
 	}
