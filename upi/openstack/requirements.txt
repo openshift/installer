@@ -1,0 +1,3 @@
+ansible>=2.9
+netaddr>=0.7
+openstacksdk>=0.37.0
