@@ -76,7 +76,7 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "creating Azure session")
 		}
 	case ovirt.Name:
-		ovirtConfig, err := ovirtconfig.GetOvirtConfig()
+		ovirtConfig, err := ovirtconfig.NewConfig()
 		if err != nil {
 			return errors.Wrap(err, "getting ovirt configuration")
 		}

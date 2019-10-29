@@ -410,7 +410,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case ovirt.Name:
-		config, err := ovirtconfig.GetOvirtConfig()
+		config, err := ovirtconfig.NewConfig()
 		if err != nil {
 			return err
 		}

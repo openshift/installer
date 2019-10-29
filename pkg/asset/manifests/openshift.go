@@ -10,6 +10,7 @@ import (
 	"github.com/ghodss/yaml"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/installconfig/azure"
@@ -160,7 +161,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			},
 		}
 	case ovirttypes.Name:
-		conf, err := ovirt.GetOvirtConfig()
+		conf, err := ovirt.NewConfig()
 		if err != nil {
 			return err
 		}

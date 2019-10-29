@@ -6,13 +6,13 @@ import (
 
 // GetConnection is a convenience method to get a connection to ovirt api
 // form a Config Object.
-func GetConnection(config Config) (*ovirtsdk.Connection, error) {
+func GetConnection(ovirtConfig Config) (*ovirtsdk.Connection, error) {
 	con, err := ovirtsdk.NewConnectionBuilder().
-		URL(config.URL).
-		Username(config.Username).
-		Password(config.Password).
-		CAFile(config.CAFile).
-		Insecure(config.Insecure).
+		URL(ovirtConfig.URL).
+		Username(ovirtConfig.Username).
+		Password(ovirtConfig.Password).
+		CAFile(ovirtConfig.CAFile).
+		Insecure(ovirtConfig.Insecure).
 		Build()
 	if err != nil {
 		return nil, err

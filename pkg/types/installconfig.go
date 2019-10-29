@@ -32,6 +32,7 @@ var (
 		azure.Name,
 		gcp.Name,
 		openstack.Name,
+		ovirt.Name,
 	}
 	// HiddenPlatformNames is a slice with all the
 	// hidden-but-supported platform names. This list isn't presented
@@ -40,7 +41,6 @@ var (
 		baremetal.Name,
 		none.Name,
 		vsphere.Name,
-		ovirt.Name,
 	}
 )
 
