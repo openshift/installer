@@ -3,7 +3,7 @@ output "cluster_ip" {
 }
 
 output "cluster_public_ip" {
-  value = google_compute_forwarding_rule.api.ip_address
+  value = var.public_endpoints ? google_compute_forwarding_rule.api[0].ip_address : null
 }
 
 output "network" {
