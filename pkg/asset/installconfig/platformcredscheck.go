@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/pkg/errors"
+
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
@@ -15,7 +17,6 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/vsphere"
-	"github.com/pkg/errors"
 )
 
 // PlatformCredsCheck is an asset that checks the platform credentials, asks for them or errors out if invalid
@@ -42,11 +43,17 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 	platform := ic.Config.Platform.Name()
 	switch platform {
 	case aws.Name:
+		permissionGroups := []awsconfig.PermissionGroup{awsconfig.PermissionCreateBase, awsconfig.PermissionDeleteBase}
+		// If subnets are not provided in install-config.yaml, include network permissions
+		if len(ic.Config.AWS.Subnets) == 0 {
+			permissionGroups = append(permissionGroups, awsconfig.PermissionCreateNetworking, awsconfig.PermissionDeleteNetworking)
+		}
+
 		ssn, err := ic.AWS.Session(ctx)
 		if err != nil {
 			return err
 		}
-		err = awsconfig.ValidateCreds(ssn)
+		err = awsconfig.ValidateCreds(ssn, permissionGroups)
 		if err != nil {
 			return errors.Wrap(err, "validate AWS credentials")
 		}
