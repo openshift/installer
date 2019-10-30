@@ -8,11 +8,16 @@ all:
       os_subnet_range: '10.0.0.0/16'
       os_cluster_name: 'openshift'
       os_flavor_master: 'm1.xlarge'
+      os_flavor_worker: 'm1.large'
       os_image_rhcos: 'rhcos'
 
       # Number of provisioned Control Plane nodes
       # 3 is the minimum number for a fully-functional cluster.
       os_cp_nodes_number: 3
+
+      # Number of provisioned Compute nodes.
+      # 2 is the minimum number for a fully-functional cluster.
+      os_compute_nodes_number: 2
 
       # Computed values
 

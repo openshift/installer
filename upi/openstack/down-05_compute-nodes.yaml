@@ -1,0 +1,28 @@
+# Required Python packages:
+#
+# ansible
+# openstacksdk
+
+- hosts: all
+
+  vars:
+    compute_server: "{{ os_infra_id }}-worker"
+    compute_port: "{{ os_infra_id }}-worker-port"
+
+    # These computed lists are used to feed the Ansible loops with the number
+    # of iterations specified in the Inventory.
+    compute_servers: "{{ [compute_server] * os_compute_nodes_number }}"
+    compute_ports: "{{ [compute_port] * os_compute_nodes_number }}"
+
+  tasks:
+  - name: 'Remove the Compute servers'
+    os_server:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      state: absent
+    with_indexed_items: "{{ compute_servers }}"
+
+  - name: 'Remove the Compute ports'
+    os_port:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      state: absent
+    with_indexed_items: "{{ compute_ports }}"
