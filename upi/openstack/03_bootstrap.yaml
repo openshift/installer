@@ -1,0 +1,35 @@
+# Required Python packages:
+#
+# ansible
+# openstacksdk
+# netaddr
+
+- hosts: all
+
+  vars:
+    bootstrap_data: "{{ os_infra_id }}-bootstrap-ignition.json"
+
+    bootstrap_server: "{{ os_infra_id }}-bootstrap"
+    bootstrap_port: "{{ os_infra_id }}-bootstrap-port"
+
+  tasks:
+  - name: 'Create the bootstrap server port'
+    os_port:
+      name: "{{ bootstrap_port }}"
+      network: "{{ os_network }}"
+      security_groups:
+      - "{{ os_sg_master }}"
+      allowed_address_pairs:
+      - ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
+      - ip_address: "{{ os_subnet_range | next_nth_usable(6) }}"
+      - ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
+
+  - name: 'Create the bootstrap server'
+    os_server:
+      name: "{{ bootstrap_server }}"
+      image: "{{ os_image_rhcos }}"
+      flavor: "{{ os_flavor_master }}"
+      userdata: "{{ lookup('file', bootstrap_data) | string }}"
+      auto_ip: yes
+      nics:
+      - port-name: "{{ bootstrap_port }}"
