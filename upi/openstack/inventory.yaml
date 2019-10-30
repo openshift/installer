@@ -1,0 +1,30 @@
+all:
+  hosts:
+    localhost:
+      ansible_connection: local
+      ansible_python_interpreter: "{{ansible_playbook_python}}"
+
+      # User-provided values
+      os_subnet_range: '192.0.2.0/24'
+      os_cluster_name: 'openstack'
+      os_flavor_master: 'm1.xlarge'
+      os_image_rhcos: 'rhcos'
+
+
+      # Computed values
+
+      # os_infra_id is the unique string we will use to tag the OpenShift
+      # cluster resources. It is built in the form of:
+      #
+      #     "{{ os_cluster_name }}{{ installer-generated random string }}"
+      #
+      # The string "upi" is used as a placeholder here.
+      os_infra_id: "{{ os_cluster_name }}-upi"
+
+      # os_network is the name of the OpenStack network that will contain the
+      # OpenShift cluster.
+      os_network: "{{ os_infra_id }}-network"
+
+      # os_sg_* are the names of the security groups that will be assigned to
+      # the respective nodes.
+      os_sg_master: "{{ os_infra_id }}-master"
