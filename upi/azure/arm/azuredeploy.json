@@ -194,10 +194,10 @@
     }
   },
   "variables" : {
-    "gituser" : "glennswest",
+    "gituser" : "openshift",
     "branch" : "master",
     "version" : "arm",
-    "baseTemplateUrl" : "[concat('https://raw.githubusercontent.com/',variables('gituser'),'/ocpupi4azure/',variables('branch'),'/',variables('version'),'/')]",
+    "baseTemplateUrl" : "[concat('https://raw.githubusercontent.com/',variables('gituser'),'/installer/',variables('branch'),'/upi/azure/',variables('version'),'/')]",
     "baseVMachineTemplateUriNode" : "[concat(variables('baseTemplateUrl'), 'node.json')]",
     "baseVMachineTemplateUriMaster" : "[concat(variables('baseTemplateUrl'), 'master.json')]",
     "location" : "[resourceGroup().location]",
