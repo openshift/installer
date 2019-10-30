@@ -1,0 +1,21 @@
+# Required Python packages:
+#
+# ansible
+# openstacksdk
+
+- hosts: all
+
+  vars:
+    bootstrap_server: "{{ os_infra_id }}-bootstrap"
+    bootstrap_port: "{{ os_infra_id }}-bootstrap-port"
+
+  tasks:
+  - name: 'Remove the bootstrap server'
+    os_server:
+      name: "{{ bootstrap_server }}"
+      state: absent
+
+  - name: 'Remove the bootstrap server port'
+    os_port:
+      name: "{{ bootstrap_port }}"
+      state: absent

@@ -4,8 +4,11 @@ all:
       ansible_connection: local
       ansible_python_interpreter: "{{ansible_playbook_python}}"
 
+      # User-provided values
       os_subnet_range: '10.0.0.0/16'
       os_cluster_name: 'openshift'
+      os_flavor_master: 'm1.xlarge'
+      os_image_rhcos: 'rhcos'
 
       # Computed values
 
