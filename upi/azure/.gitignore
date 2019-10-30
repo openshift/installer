@@ -1,0 +1,16 @@
+arm/auth/*
+arm/openshift-installer
+arm/.openshift_install.log
+arm/.openshift_install_state.json
+arm/.*
+doc/~*
+~*
+arm/~*
+registry.json
+wip/*
+openshift-install
+arm/gw
+arm/gw/*
+arm/runit.parameters.json
+arm/install-config.yaml
+
