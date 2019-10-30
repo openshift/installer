@@ -54,6 +54,8 @@ spec:
         - 'ssh-rsa: dummy-key'
     storage: {}
     systemd: {}
+  fips: false
+  kernelArguments: null
   osImageURL: ""
 `,
 		},
@@ -89,6 +91,8 @@ spec:
         user:
           name: root
     systemd: {}
+  fips: false
+  kernelArguments: null
   osImageURL: ""
 `,
 		},
@@ -125,6 +129,8 @@ spec:
         user:
           name: root
     systemd: {}
+  fips: false
+  kernelArguments: null
   osImageURL: ""
 ---
 apiVersion: machineconfiguration.openshift.io/v1
@@ -150,6 +156,8 @@ spec:
         - 'ssh-rsa: dummy-key'
     storage: {}
     systemd: {}
+  fips: false
+  kernelArguments: null
   osImageURL: ""
 `,
 		},
