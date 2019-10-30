@@ -45,8 +45,8 @@ if [ ! -f .pivot-done ]; then
   echo "DELETE mitigations=auto,nosmt" >> /etc/pivot/kernel-args
 
   mkdir bin/
-  bootkube_podman_run --entrypoint "${MACHINE_CONFIG_OPERATOR_IMAGE}" \
-    cat /usr/bin/machine-config-daemon > /usr/local/bin/machine-config-daemon
+  bootkube_podman_run --entrypoint=cat "${MACHINE_CONFIG_OPERATOR_IMAGE}" \
+    /usr/bin/machine-config-daemon > /usr/local/bin/machine-config-daemon
   chmod +x /usr/local/bin/machine-config-daemon
   restorecon /usr/local/bin/machine-config-daemon
 
