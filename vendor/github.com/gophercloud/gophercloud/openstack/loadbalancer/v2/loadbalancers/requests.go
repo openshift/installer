@@ -28,7 +28,7 @@ type ListOpts struct {
 	ID                 string   `q:"id"`
 	OperatingStatus    string   `q:"operating_status"`
 	Name               string   `q:"name"`
-	Flavor             string   `q:"flavor"`
+	FlavorID           string   `q:"flavor_id"`
 	Provider           string   `q:"provider"`
 	Limit              int      `q:"limit"`
 	Marker             string   `q:"marker"`
@@ -109,7 +109,7 @@ type CreateOpts struct {
 	AdminStateUp *bool `json:"admin_state_up,omitempty"`
 
 	// The UUID of a flavor.
-	Flavor string `json:"flavor,omitempty"`
+	FlavorID string `json:"flavor_id,omitempty"`
 
 	// The name of the provider.
 	Provider string `json:"provider,omitempty"`
