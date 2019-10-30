@@ -2,9 +2,11 @@ package cache
 
 import (
 	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -50,7 +52,7 @@ func getCacheDir(dataType string) (string, error) {
 }
 
 // cacheFile puts data in the cache
-func cacheFile(reader io.Reader, filePath string) (err error) {
+func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err error) {
 	logrus.Debugf("Unpacking file into %q...", filePath)
 
 	flockPath := fmt.Sprintf("%s.lock", filePath)
@@ -94,6 +96,12 @@ func cacheFile(reader io.Reader, filePath string) (err error) {
 		}
 	}()
 
+	// Wrap the reader in TeeReader to calculate sha256 checksum on the fly
+	hasher := sha256.New()
+	if sha256Checksum != "" {
+		reader = io.TeeReader(reader, hasher)
+	}
+
 	_, err = io.Copy(file, reader)
 	if err != nil {
 		return err
@@ -105,11 +113,24 @@ func cacheFile(reader io.Reader, filePath string) (err error) {
 	}
 	closed = true
 
+	// Validate sha256 checksum
+	if sha256Checksum != "" {
+		foundChecksum := fmt.Sprintf("%x", hasher.Sum(nil))
+		if sha256Checksum != foundChecksum {
+			logrus.Error("File sha256 checksum is invalid.")
+			return errors.Errorf("Checksum mismatch for %s; expected=%s found=%s", filePath, sha256Checksum, foundChecksum)
+		}
+
+		logrus.Debug("Checksum validation is complete...")
+	}
+
 	return os.Rename(tempPath, filePath)
 }
 
-// DownloadFile obtains a file from a given URL, puts it in the cache and returns
-// the local file path.
+// DownloadFile obtains a file from a given URL, puts it in the cache folder, defined by dataType parameter,
+// and returns the local file path.
+// If the query string contains sha256 parameter (i.e. https://example.com/data.bin?sha256=098a5a...),
+// then the downloaded data checksum will be compared with the provided value.
 func DownloadFile(baseURL string, dataType string) (string, error) {
 	// Convert the given URL into a file name using md5 algorithm
 	fileName := fmt.Sprintf("%x", md5.Sum([]byte(baseURL)))
@@ -124,27 +145,37 @@ func DownloadFile(baseURL string, dataType string) (string, error) {
 	_, err = os.Stat(filePath)
 	if err == nil {
 		logrus.Infof("The file was found in cache: %v. Reusing...", filePath)
-	} else {
-		if !os.IsNotExist(err) {
-			return "", err
-		}
+		return filePath, nil
+	}
+	if !os.IsNotExist(err) {
+		return "", err
+	}
 
-		// Send a request
-		resp, err := http.Get(baseURL)
-		if err != nil {
-			return "", err
-		}
-		defer resp.Body.Close()
+	// Send a request
+	resp, err := http.Get(baseURL)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
 
-		// Check server response
-		if resp.StatusCode != http.StatusOK {
-			return "", errors.Errorf("bad status: %s", resp.Status)
-		}
+	// Check server response
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.Errorf("bad status: %s", resp.Status)
+	}
 
-		err = cacheFile(resp.Body, filePath)
-		if err != nil {
-			return "", err
-		}
+	// Get sha256 checksum if it was provided as a part of the URL
+	var sha256Checksum string
+	parsedURL, err := url.ParseRequestURI(baseURL)
+	if err != nil {
+		return "", err
+	}
+	if sha256Checksums, ok := parsedURL.Query()["sha256"]; ok {
+		sha256Checksum = sha256Checksums[0]
+	}
+
+	err = cacheFile(resp.Body, filePath, sha256Checksum)
+	if err != nil {
+		return "", err
 	}
 
 	return filePath, nil
