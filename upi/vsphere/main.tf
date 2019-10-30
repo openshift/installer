@@ -5,6 +5,17 @@ provider "vsphere" {
   allow_unverified_ssl = true
 }
 
+provider "nsxt" {
+  host                     = "${var.nsx_manager}"
+  username                 = "${var.nsx_user}"
+  password                 = "${var.nsx_password}"
+  allow_unverified_ssl     = true
+  max_retries              = 10
+  retry_min_delay          = 500
+  retry_max_delay          = 5000
+  retry_on_status_codes    = [429]
+}
+
 data "vsphere_datacenter" "dc" {
   name = "${var.vsphere_datacenter}"
 }
@@ -98,4 +109,26 @@ module "dns" {
   control_plane_ips   = ["${module.control_plane.ip_addresses}"]
   compute_count       = "${var.compute_count}"
   compute_ips         = ["${module.compute.ip_addresses}"]
+}
+
+module "nsx_network" {
+  source = "./nsx_network"
+
+  base_domain         = "${var.base_domain}"
+  datacenter_id = "${data.vsphere_datacenter.dc.id}"
+  dhcp_server_ip = "${var.dhcp_server_ip}"
+  dns_nameservers = "${var.dns_nameservers}"
+  gateway_ip = "${var.gateway_ip}"
+  ip_block_cidr = "${var.ip_block_cidr}"
+  ip_pool_cidr = "${var.ip_block_cidr}"
+  ip_pool_start = "${var.ip_pool_start}"
+  ip_pool_end = "${var.ip_pool_end}"
+  logical_switch = "${var.logical_switch}"
+  nsx_edge_cluster = "${var.nsx_edge_cluster}"
+  nsx_manager = "${var.nsx_manager}"
+  nsx_user = "${var.nsx_user}"
+  nsx_password = "${var.nsx_password}"
+  overlay_tz = "${var.overlay_tz}"
+  t0_router = "${var.t0_router}"
+  t1_router = "${var.t1_router}"
 }

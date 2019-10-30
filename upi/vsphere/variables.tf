@@ -69,6 +69,15 @@ variable "base_domain" {
   description = "The base DNS zone to add the sub zone to."
 }
 
+variable "dhcp_server_ip" {
+  type = "string"
+}
+
+variable "dns_nameservers" {
+  type = "string"
+}
+
+
 variable "cluster_domain" {
   type        = "string"
   description = "The base DNS zone to add the sub zone to."
@@ -130,4 +139,59 @@ variable "compute_ignition" {
 variable "compute_ips" {
   type    = "list"
   default = []
+}
+
+variable "gateway_ip" {
+  type = "string"
+}
+
+variable "nsx_manager" {
+  type        = "string"
+  description = "This is the NSX manager for the environment."
+}
+
+variable "nsx_user" {
+  type        = "string"
+  description = "NSX manager user for the environment."
+}
+
+variable "nsx_password" {
+  type        = "string"
+  description = "NSX manager password"
+}
+
+variable "ip_block_cidr" {
+  type = "string"
+}
+
+variable "ip_pool_start" {
+  type = "string"
+}
+
+variable "ip_pool_end" {
+  type = "string"
+}
+
+variable "ip_pool_cidr" {
+  type = "string"
+}
+
+variable "t0_router" {
+  type = "string"
+}
+
+variable "t1_router" {
+  type = "string"
+}
+
+variable "logical_switch" {
+  type = "string"
+}
+
+variable "nsx_edge_cluster" {
+  type = "string"
+}
+
+variable "overlay_tz" {
+  type = "string"
 }
