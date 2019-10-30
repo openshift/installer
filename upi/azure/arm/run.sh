@@ -1,4 +1,4 @@
-./setup_azarm.sh gswx1
+./setup_azarm.sh $1
 read -p "Press [Enter] to start deploy"
-./deploy_azarm.sh	gswx1
+./deploy_azarm.sh	$1
 
