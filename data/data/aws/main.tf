@@ -17,7 +17,10 @@ module "bootstrap" {
   ami                      = aws_ami_copy.main.id
   instance_type            = var.aws_bootstrap_instance_type
   cluster_id               = var.cluster_id
+  etcd_count               = var.master_count
+  etcd_ip_addresses        = flatten(module.masters.ip_addresses)
   ignition                 = var.ignition_bootstrap
+	internal_hosted_zone     = module.route53.internal_hosted_zone
   subnet_id                = var.aws_publish_strategy == "External" ? module.vpc.az_to_public_subnet_id[var.aws_master_availability_zones[0]] : module.vpc.az_to_private_subnet_id[var.aws_master_availability_zones[0]]
   target_group_arns        = module.vpc.aws_lb_target_group_arns
   target_group_arns_length = module.vpc.aws_lb_target_group_arns_length
@@ -59,7 +62,7 @@ module "iam" {
   tags = local.tags
 }
 
-module "dns" {
+module "route53" {
   source = "./route53"
 
   api_external_lb_dns_name = module.vpc.aws_lb_api_external_dns_name
@@ -69,8 +72,6 @@ module "dns" {
   base_domain              = var.base_domain
   cluster_domain           = var.cluster_domain
   cluster_id               = var.cluster_id
-  etcd_count               = var.master_count
-  etcd_ip_addresses        = flatten(module.masters.ip_addresses)
   tags                     = local.tags
   vpc_id                   = module.vpc.vpc_id
   publish_strategy         = var.aws_publish_strategy

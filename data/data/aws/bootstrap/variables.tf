@@ -8,6 +8,17 @@ variable "cluster_id" {
   description = "The identifier for the cluster."
 }
 
+variable "etcd_count" {
+  description = "The number of etcd members."
+  type        = string
+}
+
+variable "etcd_ip_addresses" {
+  description = "List of string IPs for machines running etcd members."
+  type        = list(string)
+  default     = []
+}
+
 variable "ignition" {
   type        = string
   description = "The content of the bootstrap ignition file."
@@ -16,6 +27,11 @@ variable "ignition" {
 variable "instance_type" {
   type        = string
   description = "The instance type of the bootstrap node."
+}
+
+variable "internal_hosted_zone" {
+  type        = string
+  description = "The ID of the internal Route 53 hosted zone."
 }
 
 variable "subnet_id" {
