@@ -54,6 +54,9 @@ if [ ! -f .pivot-done ]; then
   /usr/local/bin/machine-config-daemon pivot
 fi
 
+# Run crio-configure after the pivot
+/usr/local/bin/crio-configure.sh
+
 mkdir --parents ./{bootstrap-manifests,manifests}
 
 if [ ! -f openshift-manifests.done ]
