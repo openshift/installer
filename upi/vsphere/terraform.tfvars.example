@@ -38,6 +38,9 @@ control_plane_count = 3
 // The number of compute VMs to create. Default is 3.
 compute_count = 3
 
+// Network should be the logical switch name
+vm_network = "logical_switch_name"
+
 // URL of the bootstrap ignition. This needs to be publicly accessible so that the bootstrap machine can pull the ignition.
 bootstrap_ignition_url = "URL_FOR_YOUR_BOOTSTRAP_IGNITION"
 
@@ -75,3 +78,18 @@ ipam_token = "TOKEN_FOR_THE_IPAM_SERVER"
 // The IP addresses to assign to the compute VMs. The length of this list must
 // match the value of compute_count.
 //compute_ips = ["10.0.0.30", "10.0.0.31", "10.0.0.32"]
+
+// NSX part for NSX-T network.
+nsx_manager = "nsx_manager_ip"
+nsx_user = "admin"
+nsx_password = "password"
+overlay_tz = "overlay_tz_if"
+t0_router = "t0_id"
+t1_router = "t1_id"
+logical_switch = "logical_switch_name_for_ocp4_upi"
+nsx_edge_cluster = "nsx_edge_cluster_id"
+dhcp_server_ip = "dhcp_server_ip"
+gateway_ip = "gateway_ip"
+ip_block_cidr = "ip_block_cidr"
+ip_pool = "ip_pool"
+logical_switch_ip_address = "port IP address in a CIDR format, i.e. 192.168.10.1/24"
