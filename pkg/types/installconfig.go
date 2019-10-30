@@ -103,6 +103,9 @@ type InstallConfig struct {
 	// When no strategy is specified, the strategy is `External`.
 	// +optional
 	Publish PublishingStrategy `json:"publish,omitempty"`
+
+	// FIPS configures https://www.nist.gov/itl/fips-general-information
+	FIPS bool `json:"fips,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
