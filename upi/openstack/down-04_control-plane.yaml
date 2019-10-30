@@ -1,0 +1,28 @@
+# Required Python packages:
+#
+# ansible
+# openstacksdk
+
+- hosts: all
+
+  vars:
+    cp_server: "{{ os_infra_id }}-master"
+    cp_port: "{{ os_infra_id }}-master-port"
+
+    # These computed lists are used to feed the Ansible loops with the number
+    # of iterations specified in the Inventory.
+    cp_servers: "{{ [cp_server] * os_cp_nodes_number }}"
+    cp_ports: "{{ [cp_port] * os_cp_nodes_number }}"
+
+  tasks:
+  - name: 'Remove the Control Plane servers'
+    os_server:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      state: absent
+    with_indexed_items: "{{ cp_servers }}"
+
+  - name: 'Remove the Control Plane ports'
+    os_port:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      state: absent
+    with_indexed_items: "{{ cp_ports }}"

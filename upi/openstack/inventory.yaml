@@ -10,6 +10,10 @@ all:
       os_flavor_master: 'm1.xlarge'
       os_image_rhcos: 'rhcos'
 
+      # Number of provisioned Control Plane nodes
+      # 3 is the minimum number for a fully-functional cluster.
+      os_cp_nodes_number: 3
+
       # Computed values
 
       # os_infra_id is the string we will use as a prefix for the names of the
