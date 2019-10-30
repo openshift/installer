@@ -19,21 +19,24 @@ resource "azurerm_network_interface" "master" {
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "master" {
-  count                   = var.instance_count
+  count = var.instance_count
+
   network_interface_id    = element(azurerm_network_interface.master.*.id, count.index)
   backend_address_pool_id = var.elb_backend_pool_id
   ip_configuration_name   = local.ip_configuration_name #must be the same as nic's ip configuration name.
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "master_internal" {
-  count                   = var.instance_count
+  count = var.instance_count
+
   network_interface_id    = element(azurerm_network_interface.master.*.id, count.index)
   backend_address_pool_id = var.ilb_backend_pool_id
   ip_configuration_name   = local.ip_configuration_name #must be the same as nic's ip configuration name.
 }
 
 resource "azurerm_virtual_machine" "master" {
-  count                 = var.instance_count
+  count = var.instance_count
+
   name                  = "${var.cluster_id}-master-${count.index}"
   location              = var.region
   zones                 = compact([var.availability_zones[count.index]])

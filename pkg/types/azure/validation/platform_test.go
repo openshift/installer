@@ -3,6 +3,7 @@ package validation
 import (
 	"testing"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -50,7 +51,7 @@ func TestValidatePlatform(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidatePlatform(tc.platform, field.NewPath("test-path")).ToAggregate()
+			err := ValidatePlatform(tc.platform, types.ExternalPublishingStrategy, field.NewPath("test-path")).ToAggregate()
 			if tc.valid {
 				assert.NoError(t, err)
 			} else {

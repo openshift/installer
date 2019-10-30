@@ -12,17 +12,29 @@ import (
 
 // BootstrapIP returns the ip address for bootstrap host.
 func BootstrapIP(tfs *terraform.State) (string, error) {
+	var bootstrap string
+
 	publicIP, err := terraform.LookupResource(tfs, "module.bootstrap", "azurerm_public_ip", "bootstrap_public_ip")
+	if err == nil && len(publicIP.Instances) > 0 {
+		bootstrap, _, err = unstructured.NestedString(publicIP.Instances[0].Attributes, "ip_address")
+		if err != nil {
+			return "", errors.New("no public_ip found for bootstrap")
+		}
+		return bootstrap, nil
+	}
+
+	br, err := terraform.LookupResource(tfs, "module.bootstrap", "azurerm_network_interface", "bootstrap")
 	if err != nil {
-		return "", errors.Wrap(err, "failed to lookup public ip")
+		return "", errors.Wrap(err, "failed to lookup bootstrap network interface")
 	}
-	if len(publicIP.Instances) == 0 {
-		return "", errors.New("no public ip instance found")
+	if len(br.Instances) == 0 {
+		return "", errors.New("no bootstrap instance found")
 	}
-	bootstrap, _, err := unstructured.NestedString(publicIP.Instances[0].Attributes, "ip_address")
+	bootstrap, _, err = unstructured.NestedString(br.Instances[0].Attributes, "private_ip_address")
 	if err != nil {
-		return "", errors.New("no public_ip found for bootstrap")
+		return "", errors.New("no private_ip_address found for bootstrap")
 	}
+
 	return bootstrap, nil
 }
 

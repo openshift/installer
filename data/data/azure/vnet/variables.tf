@@ -52,3 +52,8 @@ variable "worker_subnet" {
   type        = string
   description = "This is the name of the subnet used for the compute nodes, new or existing"
 }
+
+variable "private" {
+  type        = bool
+  description = "The determines if this is a private/internal cluster or not."
+}
