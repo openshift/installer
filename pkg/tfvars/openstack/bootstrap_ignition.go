@@ -4,19 +4,18 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
-	"math/rand"
-	"strconv"
 	"strings"
 
 	ignition "github.com/coreos/ignition/config/v2_2/types"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects"
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/kubernetes/apimachinery/pkg/util/rand"
 	"github.com/vincent-petithory/dataurl"
 )
 
-// CreateBootstrapSwiftObject creates a container and object in swift with the bootstrap ignition config.
-func CreateBootstrapSwiftObject(cloud string, bootstrapIgn string, clusterID string) (string, error) {
+// createBootstrapSwiftObject creates a container and object in swift with the bootstrap ignition config.
+func createBootstrapSwiftObject(cloud string, bootstrapIgn string, clusterID string) (string, error) {
 	opts := clientconfig.ClientOpts{
 		Cloud: cloud,
 	}
@@ -47,7 +46,7 @@ func CreateBootstrapSwiftObject(cloud string, bootstrapIgn string, clusterID str
 		DeleteAfter: 3600,
 	}
 
-	objID := strconv.Itoa(rand.Intn(1000000000000000))
+	objID := rand.String(16)
 
 	_, err = objects.Create(conn, clusterID, objID, objectCreateOpts).Extract()
 	if err != nil {
@@ -64,9 +63,9 @@ func CreateBootstrapSwiftObject(cloud string, bootstrapIgn string, clusterID str
 // We can't do it directly in Terraform, because Ignition provider suppors only 2.1 version, but
 // Security section was added in 2.2 only.
 
-// GenerateIgnitionShim is used to generate an ignition file that contains a user ca bundle
+// generateIgnitionShim is used to generate an ignition file that contains a user ca bundle
 // in its Security section.
-func GenerateIgnitionShim(userCA string, clusterID string, swiftObject string) (string, error) {
+func generateIgnitionShim(userCA string, clusterID string, swiftObject string) (string, error) {
 	fileMode := 420
 
 	// DHCP Config
