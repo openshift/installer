@@ -199,3 +199,8 @@ func DownloadImageFile(baseURL string) (string, error) {
 
 	return DownloadFile(baseURL, imageDataType)
 }
+
+// PathToURI converts a local file path into a URI
+func PathToURI(filePath string) string {
+	return fmt.Sprintf("file://%s", filepath.ToSlash(filePath))
+}

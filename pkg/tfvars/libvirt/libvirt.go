@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
+	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/pkg/errors"
 )
 
@@ -34,9 +36,13 @@ func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, 
 		return nil, err
 	}
 
-	osImage, err = cachedImage(osImage)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to use cached libvirt image")
+	// Reuse osImage if it is already a local path URI
+	if !strings.HasPrefix(osImage, "file://") {
+		osImage, err = cache.DownloadImageFile(osImage)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to use cached libvirt image")
+		}
+		osImage = cache.PathToURI(osImage)
 	}
 
 	cfg := &config{
