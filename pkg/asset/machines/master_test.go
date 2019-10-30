@@ -20,13 +20,12 @@ func TestMasterGenerateMachineConfigs(t *testing.T) {
 		name                  string
 		key                   string
 		hyperthreading        types.HyperthreadingMode
-		expectedMachineConfig string
+		expectedMachineConfig []string
 	}{
 		{
 			name:           "no key hyperthreading disabled",
 			hyperthreading: types.HyperthreadingDisabled,
-			expectedMachineConfig: `---
-apiVersion: machineconfiguration.openshift.io/v1
+			expectedMachineConfig: []string{`apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
   creationTimestamp: null
@@ -59,14 +58,13 @@ spec:
   fips: false
   kernelArguments: null
   osImageURL: ""
-`,
+`},
 		},
 		{
 			name:           "key present hyperthreading disabled",
 			key:            "ssh-rsa: dummy-key",
 			hyperthreading: types.HyperthreadingDisabled,
-			expectedMachineConfig: `---
-apiVersion: machineconfiguration.openshift.io/v1
+			expectedMachineConfig: []string{`apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
   creationTimestamp: null
@@ -99,8 +97,7 @@ spec:
   fips: false
   kernelArguments: null
   osImageURL: ""
----
-apiVersion: machineconfiguration.openshift.io/v1
+`, `apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
   creationTimestamp: null
@@ -128,7 +125,7 @@ spec:
   fips: false
   kernelArguments: null
   osImageURL: ""
-`,
+`},
 		},
 	}
 	for _, tc := range cases {
@@ -174,11 +171,10 @@ spec:
 			if err := master.Generate(parents); err != nil {
 				t.Fatalf("failed to generate master machines: %v", err)
 			}
-			if tc.expectedMachineConfig != "" {
-				if assert.Equal(t, 1, len(master.MachineConfigFiles), "expected one machine config file") {
-					file := master.MachineConfigFiles[0]
-					assert.Equal(t, "openshift/99_openshift-machineconfig_master.yaml", file.Filename, "unexpected machine config filename")
-					assert.Equal(t, tc.expectedMachineConfig, string(file.Data), "unexepcted machine config contents")
+			expectedLen := len(tc.expectedMachineConfig)
+			if assert.Equal(t, expectedLen, len(master.MachineConfigFiles)) {
+				for i := 0; i < expectedLen; i++ {
+					assert.Equal(t, tc.expectedMachineConfig[i], string(master.MachineConfigFiles[i].Data), "unexepcted machine config contents")
 				}
 			} else {
 				assert.Equal(t, 0, len(master.MachineConfigFiles), "expected no machine config files")

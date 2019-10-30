@@ -20,13 +20,12 @@ func TestWorkerGenerate(t *testing.T) {
 		name                  string
 		key                   string
 		hyperthreading        types.HyperthreadingMode
-		expectedMachineConfig string
+		expectedMachineConfig []string
 	}{
 		{
 			name:           "no key hyperthreading disabled",
 			hyperthreading: types.HyperthreadingDisabled,
-			expectedMachineConfig: `---
-apiVersion: machineconfiguration.openshift.io/v1
+			expectedMachineConfig: []string{`apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
   creationTimestamp: null
@@ -59,7 +58,7 @@ spec:
   fips: false
   kernelArguments: null
   osImageURL: ""
-`,
+`},
 		},
 	}
 	for _, tc := range cases {
@@ -107,11 +106,10 @@ spec:
 			if err := worker.Generate(parents); err != nil {
 				t.Fatalf("failed to generate worker machines: %v", err)
 			}
-			if tc.expectedMachineConfig != "" {
-				if assert.Equal(t, 1, len(worker.MachineConfigFiles), "expected one machine config file") {
-					file := worker.MachineConfigFiles[0]
-					assert.Equal(t, "openshift/99_openshift-machineconfig_worker.yaml", file.Filename, "unexpected machine config filename")
-					assert.Equal(t, tc.expectedMachineConfig, string(file.Data), "unexepcted machine config contents")
+			expectedLen := len(tc.expectedMachineConfig)
+			if assert.Equal(t, expectedLen, len(worker.MachineConfigFiles)) {
+				for i := 0; i < expectedLen; i++ {
+					assert.Equal(t, tc.expectedMachineConfig[i], string(worker.MachineConfigFiles[i].Data), "unexepcted machine config contents")
 				}
 			} else {
 				assert.Equal(t, 0, len(worker.MachineConfigFiles), "expected no machine config files")
