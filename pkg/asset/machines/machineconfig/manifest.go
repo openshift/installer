@@ -2,7 +2,6 @@ package machineconfig
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
@@ -22,7 +21,7 @@ var (
 
 // Manifests creates manifest files containing the MachineConfigs.
 func Manifests(configs []*mcfgv1.MachineConfig, role, directory string) ([]*asset.File, error) {
-	data := []byte{}
+	var ret []*asset.File
 	for _, c := range configs {
 		if c == nil {
 			continue
@@ -31,18 +30,17 @@ func Manifests(configs []*mcfgv1.MachineConfig, role, directory string) ([]*asse
 		if err != nil {
 			return nil, err
 		}
-		data = append(data, []byte("---\n")...)
-		data = append(data, configData...)
+		ret = append(ret, &asset.File{
+			// Note that we should always be generating the role name in our MCs,
+			// but just to ensure uniqueness we add the array index and the role too.
+			Filename: filepath.Join(directory, fmt.Sprintf(machineConfigFileName, c.ObjectMeta.Name)),
+			Data:     configData,
+		})
 	}
-	if len(data) == 0 {
+	if len(ret) == 0 {
 		return nil, nil
 	}
-	return []*asset.File{
-		{
-			Filename: filepath.Join(directory, fmt.Sprintf(machineConfigFileName, role)),
-			Data:     data,
-		},
-	}, nil
+	return ret, nil
 }
 
 // IsManifest tests whether the specified filename is a MachineConfig manifest.
@@ -56,12 +54,5 @@ func IsManifest(filename string) (bool, error) {
 
 // Load loads the MachineConfig manifests.
 func Load(f asset.FileFetcher, role, directory string) ([]*asset.File, error) {
-	file, err := f.FetchByName(filepath.Join(directory, fmt.Sprintf(machineConfigFileName, role)))
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return []*asset.File{file}, nil
+	return f.FetchByPattern(filepath.Join(directory, machineConfigFileNamePattern))
 }
