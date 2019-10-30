@@ -39,13 +39,13 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		return nil, err
 	}
 
-	objectID, err := CreateBootstrapSwiftObject(cloud, bootstrapIgn, infraID)
+	objectID, err := createBootstrapSwiftObject(cloud, bootstrapIgn, infraID)
 	if err != nil {
 		return nil, err
 	}
 
 	objectAddress := fmt.Sprintf("%s/%s/%s", swiftPublicURL, infraID, objectID)
-	userCAIgnition, err := GenerateIgnitionShim(userCA, infraID, objectAddress)
+	userCAIgnition, err := generateIgnitionShim(userCA, infraID, objectAddress)
 	if err != nil {
 		return nil, err
 	}
