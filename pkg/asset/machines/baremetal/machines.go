@@ -32,7 +32,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider := provider(clustername, config.Networking.MachineCIDR.String(), platform, osImage, userDataSecret)
+	provider := provider(clustername, platform, osImage, userDataSecret)
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		machine := machineapi.Machine{
@@ -62,7 +62,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterName string, networkInterfaceAddress string, platform *baremetal.Platform, osImage string, userDataSecret string) *baremetalprovider.BareMetalMachineProviderSpec {
+func provider(clusterName string, platform *baremetal.Platform, osImage string, userDataSecret string) *baremetalprovider.BareMetalMachineProviderSpec {
 	// The rhcos-downloader container launched by the baremetal-operator downloads the image,
 	// compresses it to speed up deployments and makes it available on platform.ClusterProvisioningIP, via http
 	// osImage looks like:
