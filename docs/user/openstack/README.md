@@ -92,7 +92,55 @@ openstack role add --user <user> --project <project> swiftoperator
 
 ### Disk Requirements
 
-Etcd runs on the control plane nodes, and has disk requirements that need to be met to ensure the stability of the cluster. If the ephemeral disk that gets attached to instances of the chosen flavor does not meet [etcd requirements](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/hardware.md#disks), check if the cloud has a more performant volume type and use a [custom `install-config.yaml`](customization.md) to deploy the control plane with root volumes.
+Etcd, which runs on the control plane nodes, has [disk requirements](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/hardware.md#disks) that need to be met to ensure the stability of the cluster.
+
+Generally speaking, it is advised to choose for the control plane nodes a flavour that is backed by SSD in order to reduce latency.
+
+If the ephemeral disk that gets attached to instances of the chosen flavor does not meet etcd requirements, check if the cloud has a more performant volume type and use a [custom `install-config.yaml`](customization.md) to deploy the control plane with root volumes. However, please note that Ceph RBD (and any other network-attached storage) can result in unpredictable network latencies. Prefer PCI passthrough of an NVM device instead.
+
+In order to **measure the performance of your disk**, you can use [fio](https://github.com/axboe/fio):
+
+```shell
+sudo podman run \
+	--volume "/var/lib/etcd:/mount:z" \
+	docker.io/ljishen/fio \
+		--directory=/mount \
+		--name=iotest \
+		--size=22m \
+		--bs=2300 \
+		--fdatasync=1 \
+		--ioengine=sync \
+		--rw=write
+```
+
+Look for the 99th percentile under `fsync/fdatasync/sync_file_range` -> `sync percentiles`.
+
+Caution about the measurement units: fio fluidly adjusts the scale between ms/µs/ns depending on the numbers.
+
+**Look for spikes.** Even if the baseline latency looks good, there may be spikes where it comes up, triggering issues that result in API being unavailable.
+
+**Prometheus collects etcd-specific metrics.**
+
+Once the cluster is up, Prometheus provides useful metrics here:
+
+```
+https://prometheus-k8s-openshift-monitoring.apps.<cluster name>.<domain name>/graph?g0.range_input=2h&g0.stacked=0&g0.expr=histogram_quantile(0.99%2C%20rate(etcd_disk_wal_fsync_duration_seconds_bucket%5B5m%5D))&g0.tab=0&g1.range_input=2h&g1.expr=histogram_quantile(0.99%2C%20rate(etcd_disk_backend_commit_duration_seconds_bucket%5B5m%5D))&g1.tab=0&g2.range_input=2h&g2.expr=etcd_server_health_failures&g2.tab=0
+```
+
+Click "Login with OpenShift", enter `kubeadmin` and the password printed out by the installer.
+
+The units are in seconds and should stay under 10ms (0.01s) at all times. The `etcd_health` graph should remain at 0.
+
+In order to collect relevant information interactively, **run the conformance tests**:
+
+```
+git clone https://github.com/openshift/origin/
+make WHAT=cmd/openshift-tests
+export KUBECONFIG=<path/to/kubeconfig>
+_output/local/bin/linux/amd64/openshift-tests run openshift/conformance/parallel
+```
+
+The entire test suite takes over an hour to complete. Run it and check the Prometheus logs afterwards.
 
 ### Red Hat Enterprise Linux CoreOS (RHCOS)
 
