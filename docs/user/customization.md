@@ -25,6 +25,7 @@ The following `install-config.yaml` properties are available:
     Valid values are `External` (the default) and `Internal`.
 * `controlPlane` (optional [machine-pool](#machine-pools)): The configuration for the machines that comprise the control plane.
 * `compute` (optional array of [machine-pools](#machine-pools)): The configuration for the machines that comprise the compute nodes.
+* `fips` (optional boolean): Enables FIPS mode (default false).
 * `imageContentSources` (optional array of objects): Sources and repositories for the release-image content.
     Each entry in the array is an object with the following properties:
     * `source` (required string): The repository that users refer to, e.g. in image pull specifications.
