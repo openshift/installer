@@ -394,7 +394,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f57b7ddc21b0593c06ce50d1b32ec2fcb91617cb7ee4f94b7a04d86377b3d708"
+  digest = "1:67551c599e04b31fe799b4bd4de0e101d3c022057213ef7af014bdce5f525b18"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
@@ -432,7 +432,7 @@
     "pagination",
   ]
   pruneopts = "NUT"
-  revision = "863d5406e68f374ee607452672b18a177134bbbc"
+  revision = "6ad562af8c1fd8a69397a13caf58fa184d115b56"
 
 [[projects]]
   branch = "master"
@@ -519,6 +519,14 @@
   pruneopts = "NUT"
   revision = "1455def202f6e05b95cc7bfc7e8ae67ae5141eba"
   version = "v0.1.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:c26b841ff18d8b7fa1606f869ec66eedd6327469e33f9ee3dcb8bef800fdad50"
+  name = "github.com/kubernetes/apimachinery"
+  packages = ["pkg/util/rand"]
+  pruneopts = "NUT"
+  revision = "af6325b3a843fc0c4c448b1bd770ebab40e9acc4"
 
 [[projects]]
   digest = "1:1da9aa83870a429ce7127ced903a0b583012ed934682a5d5acaa12d74b92ebdc"
@@ -1409,6 +1417,7 @@
     "github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers",
     "github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects",
     "github.com/gophercloud/utils/openstack/clientconfig",
+    "github.com/kubernetes/apimachinery/pkg/util/rand",
     "github.com/libvirt/libvirt-go",
     "github.com/metal3-io/baremetal-operator/pkg/apis/metal3/v1alpha1",
     "github.com/metal3-io/baremetal-operator/pkg/bmc",

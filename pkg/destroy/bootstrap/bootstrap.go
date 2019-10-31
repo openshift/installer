@@ -9,9 +9,11 @@ import (
 	"strings"
 
 	"github.com/openshift/installer/pkg/asset/cluster"
+	osp "github.com/openshift/installer/pkg/destroy/openstack"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
+	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/pkg/errors"
 )
 
@@ -63,6 +65,11 @@ func Destroy(dir string) (err error) {
 		_, err = terraform.Apply(tempDir, platform, append(extraArgs, "-var=bootstrap_dns=false")...)
 		if err != nil {
 			return errors.Wrap(err, "Terraform apply")
+		}
+	case openstack.Name:
+		err = osp.DeleteSwiftContainer(metadata.InfraID, metadata.OpenStack.Cloud)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to delete swift container %s", metadata.InfraID)
 		}
 	}
 
