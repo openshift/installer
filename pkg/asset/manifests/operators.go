@@ -167,6 +167,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	)
 
 	etcdEndpointHostnames := make([]string, *installConfig.Config.ControlPlane.Replicas+1)
+	etcdEndpointHostnames[0] = "etcd-bootstrap"
 	for i := range etcdEndpointHostnames {
 		etcdEndpointHostnames[i] = fmt.Sprintf("etcd-%d", i-1)
 	}

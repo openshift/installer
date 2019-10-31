@@ -20,7 +20,11 @@ MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(image_for kube-client-agent)
 MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 
 KUBE_ETCD_SIGNER_SERVER_IMAGE=$(image_for kube-etcd-signer-server)
-CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator)
+if image_for cluster-etcd-operator; then
+    CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator)
+else
+    CLUSTER_ETCD_OPERATOR_IMAGE=""
+fi
 CONFIG_OPERATOR_IMAGE=$(image_for cluster-config-operator)
 KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)
 KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(image_for cluster-kube-controller-manager-operator)
@@ -127,8 +131,11 @@ then
            --asset-output-dir /assets/etcd-bootstrap \
            --config-output-file /assets/etcd-bootstrap/config
 
-       cp etcd-bootstrap/manifests/* manifests/
-       cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
+       if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
+       then
+              cp etcd-bootstrap/manifests/* manifests/
+              cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
+       fi
        touch etcd-bootstrap.done
 fi
 
