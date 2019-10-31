@@ -3,6 +3,7 @@ package manifests
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -78,6 +79,12 @@ func (ing *Ingress) Generate(dependencies asset.Parents) error {
 }
 
 func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, error) {
+	domain := config.ClusterDomain()
+	if config.Platform.Libvirt != nil {
+		// Domain entry in cluster-ingress-02-config.yml file should not contain cluster name
+		domain = strings.Replace(domain, config.ObjectMeta.Name+".", "", 1)
+	}
+
 	obj := &configv1.Ingress{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: configv1.GroupVersion.String(),
@@ -88,7 +95,7 @@ func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, 
 			// not namespaced
 		},
 		Spec: configv1.IngressSpec{
-			Domain: fmt.Sprintf("apps.%s", config.ClusterDomain()),
+			Domain: fmt.Sprintf("apps.%s", domain),
 		},
 	}
 	return yaml.Marshal(obj)

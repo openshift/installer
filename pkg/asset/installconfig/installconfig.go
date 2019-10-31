@@ -2,6 +2,7 @@ package installconfig
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/ghodss/yaml"
@@ -12,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	"github.com/openshift/installer/pkg/asset/installconfig/libvirt"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/conversion"
 	"github.com/openshift/installer/pkg/types/defaults"
@@ -129,6 +131,13 @@ func (a *InstallConfig) finish(filename string) error {
 
 	if a.Config.AWS != nil {
 		a.AWS = aws.NewMetadata(a.Config.Platform.AWS.Region, a.Config.Platform.AWS.Subnets)
+	}
+
+	if a.Config.Libvirt != nil {
+		err := libvirt.AddWildcardDNS(a.Config.BaseDomain)
+		if err != nil {
+			fmt.Print(err)
+		}
 	}
 
 	if err := validation.ValidateInstallConfig(a.Config, openstackvalidation.NewValidValuesFetcher()).ToAggregate(); err != nil {
