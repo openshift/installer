@@ -7,12 +7,16 @@ aliases:
     - sdodson
     - smarterclayton
     - wking
+    - vrutkovs
+    - LorbusChris
   installer-reviewers:
     - jcpowermac
     - jhixson74
     - jstuever
     - mtnbikenc
     - patrickdillon
+    - vrutkovs
+    - LorbusChris
   libvirt-approvers:
     - abhinavdahiya
     - enxebre
