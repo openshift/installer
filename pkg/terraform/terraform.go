@@ -5,11 +5,13 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
-	"github.com/openshift/installer/data"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
 
+	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/lineprinter"
 	texec "github.com/openshift/installer/pkg/terraform/exec"
 	"github.com/openshift/installer/pkg/terraform/exec/plugins"
@@ -43,16 +45,25 @@ func Apply(dir string, platform string, extraArgs ...string) (path string, err e
 	args = append(args, dir)
 	sf := filepath.Join(dir, StateFileName)
 
-	tDebug := &lineprinter.Trimmer{WrappedPrint: logrus.Debug}
-	tError := &lineprinter.Trimmer{WrappedPrint: logrus.Error}
-	lpDebug := &lineprinter.LinePrinter{Print: tDebug.Print}
-	lpError := &lineprinter.LinePrinter{Print: tError.Print}
+	lpDebug := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Debug}).Print}
+	lpError := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Error}).Print}
 	defer lpDebug.Close()
 	defer lpError.Close()
 
-	if exitCode := texec.Apply(dir, args, lpDebug, lpError); exitCode != 0 {
-		return sf, errors.New("failed to apply using Terraform")
+	err = wait.ExponentialBackoff(wait.Backoff{
+		Duration: time.Second * 10,
+		Factor:   1.3,
+		Steps:    3,
+	}, func() (bool, error) {
+		if exitCode := texec.Apply(dir, args, lpDebug, lpError); exitCode != 0 {
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		return sf, errors.New("failed to apply resources using Terraform")
 	}
+
 	return sf, nil
 }
 
@@ -74,10 +85,8 @@ func Destroy(dir string, platform string, extraArgs ...string) (err error) {
 	args := append(defaultArgs, extraArgs...)
 	args = append(args, dir)
 
-	tDebug := &lineprinter.Trimmer{WrappedPrint: logrus.Debug}
-	tError := &lineprinter.Trimmer{WrappedPrint: logrus.Error}
-	lpDebug := &lineprinter.LinePrinter{Print: tDebug.Print}
-	lpError := &lineprinter.LinePrinter{Print: tError.Print}
+	lpDebug := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Debug}).Print}
+	lpError := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Error}).Print}
 	defer lpDebug.Close()
 	defer lpError.Close()
 
@@ -115,10 +124,8 @@ func unpackAndInit(dir string, platform string) (err error) {
 		return errors.Wrap(err, "failed to setup embedded Terraform plugins")
 	}
 
-	tDebug := &lineprinter.Trimmer{WrappedPrint: logrus.Debug}
-	tError := &lineprinter.Trimmer{WrappedPrint: logrus.Error}
-	lpDebug := &lineprinter.LinePrinter{Print: tDebug.Print}
-	lpError := &lineprinter.LinePrinter{Print: tError.Print}
+	lpDebug := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Debug}).Print}
+	lpError := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Error}).Print}
 	defer lpDebug.Close()
 	defer lpError.Close()
 
