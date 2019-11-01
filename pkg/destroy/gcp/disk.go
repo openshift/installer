@@ -9,9 +9,9 @@ import (
 )
 
 
-func (o *ClusterUninstaller) listDisks() ([]nameAndZone, error) {
+func (o *ClusterUninstaller) listDisks() ([]cloudResource, error) {
 	o.Logger.Debug("Listing disks")
-	result := []nameAndZone{}
+	result := []cloudResource{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	req := o.computeSvc.Disks.AggregatedList(o.ProjectID).Fields("items/*/disks(name,zone),nextPageToken").Filter(o.clusterIDFilter())
@@ -19,7 +19,12 @@ func (o *ClusterUninstaller) listDisks() ([]nameAndZone, error) {
 		for _, scopedList := range aggregatedList.Items {
 			for _, disk := range scopedList.Disks {
 				zone := o.getZoneName(disk.Zone)
-				result = append(result, nameAndZone{name: disk.Name, zone: zone})
+				result = append(result, cloudResource{
+					key:      fmt.Sprintf("%s/%s", zone, disk.Name),
+					name:     disk.Name,
+					typeName: "disk",
+					zone:     zone,
+				})
 				o.Logger.Debugf("Found disk %s in zone %s", disk.Name, zone)
 			}
 		}
@@ -31,18 +36,18 @@ func (o *ClusterUninstaller) listDisks() ([]nameAndZone, error) {
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteDisk(disk nameAndZone) error {
+func (o *ClusterUninstaller) deleteDisk(item cloudResource) error {
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	o.Logger.Debugf("Deleting disk %s in zone %s", disk.name, disk.zone)
-	op, err := o.computeSvc.Disks.Delete(o.ProjectID, disk.zone, disk.name).RequestId(o.requestID("disk", disk.zone, disk.name)).Context(ctx).Do()
+	o.Logger.Debugf("Deleting disk %s in zone %s", item.name, item.zone)
+	op, err := o.computeSvc.Disks.Delete(o.ProjectID, item.zone, item.name).RequestId(o.requestID(item.typeName, item.zone, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
-		o.resetRequestID("disk", disk.zone, disk.name)
-		return errors.Wrapf(err, "failed to delete disk %s in zone %s", disk.name, disk.zone)
+		o.resetRequestID(item.typeName, item.zone, item.name)
+		return errors.Wrapf(err, "failed to delete disk %s in zone %s", item.name, item.zone)
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID("disk", disk.zone, disk.name)
-		return errors.Errorf("failed to delete disk %s in zone %s with error: %s", disk.name, disk.zone, operationErrorMessage(op))
+		o.resetRequestID(item.typeName, item.zone, item.name)
+		return errors.Errorf("failed to delete disk %s in zone %s with error: %s", item.name, item.zone, operationErrorMessage(op))
 	}
 	return nil
 }
@@ -55,9 +60,9 @@ func (o *ClusterUninstaller) destroyDisks() error {
 		return err
 	}
 	errs := []error{}
-	found := make([]string, 0, len(disks))
+	found := cloudResources{}
 	for _, disk := range disks {
-		found = append(found, fmt.Sprintf("%s/%s", disk.zone, disk.name))
+		found.insert(disk)
 		err := o.deleteDisk(disk)
 		if err != nil {
 			errs = append(errs, err)
@@ -65,7 +70,7 @@ func (o *ClusterUninstaller) destroyDisks() error {
 	}
 	deletedItems := o.setPendingItems("disk", found)
 	for _, item := range deletedItems {
-		o.Logger.Infof("Deleted disk %s", item)
+		o.Logger.Infof("Deleted disk %s", item.name)
 	}
 	return aggregateError(errs, len(found))
 }

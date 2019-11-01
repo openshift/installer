@@ -6,18 +6,20 @@ import (
 	compute "google.golang.org/api/compute/v1"
 )
 
-func (o *ClusterUninstaller) listNetworks() ([]nameAndURL, error) {
+func (o *ClusterUninstaller) listNetworks() ([]cloudResource, error) {
 	o.Logger.Debugf("Listing networks")
-	result := []nameAndURL{}
+	result := []cloudResource{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	req := o.computeSvc.Networks.List(o.ProjectID).Fields("items(name,selfLink),nextPageToken").Filter(o.clusterIDFilter())
 	err := req.Pages(ctx, func(list *compute.NetworkList) error {
 		for _, network := range list.Items {
 			o.Logger.Debugf("Found network: %s", network.Name)
-			result = append(result, nameAndURL{
-				name: network.Name,
-				url:  network.SelfLink,
+			result = append(result, cloudResource{
+				key:      network.Name,
+				name:     network.Name,
+				typeName: "network",
+				url:      network.SelfLink,
 			})
 		}
 		return nil
@@ -28,19 +30,19 @@ func (o *ClusterUninstaller) listNetworks() ([]nameAndURL, error) {
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteNetwork(name string) error {
+func (o *ClusterUninstaller) deleteNetwork(item cloudResource) error {
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 
-	o.Logger.Debugf("Deleting network %s", name)
-	op, err := o.computeSvc.Networks.Delete(o.ProjectID, name).RequestId(o.requestID("network", name)).Context(ctx).Do()
+	o.Logger.Debugf("Deleting network %s", item.name)
+	op, err := o.computeSvc.Networks.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
-		o.resetRequestID("network", name)
-		return errors.Wrapf(err, "failed to delete network %s", name)
+		o.resetRequestID(item.typeName, item.name)
+		return errors.Wrapf(err, "failed to delete network %s", item.name)
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID("network", name)
-		return errors.Errorf("failed to delete network %s with error: %s", name, operationErrorMessage(op))
+		o.resetRequestID(item.typeName, item.name)
+		return errors.Errorf("failed to delete network %s with error: %s", item.name, operationErrorMessage(op))
 	}
 	return nil
 }
@@ -52,10 +54,10 @@ func (o *ClusterUninstaller) destroyNetworks() error {
 	if err != nil {
 		return err
 	}
-	found := make([]string, 0, len(networks))
+	found := cloudResources{}
 	errs := []error{}
 	for _, network := range networks {
-		found = append(found, network.name)
+		found.insert(network)
 		// destroy any network routes that are not named with the infra ID
 		routes, err := o.listNetworkRoutes(network.url)
 		if err != nil {
@@ -69,14 +71,14 @@ func (o *ClusterUninstaller) destroyNetworks() error {
 			}
 		}
 
-		err = o.deleteNetwork(network.name)
+		err = o.deleteNetwork(network)
 		if err != nil {
 			errs = append(errs, err)
 		}
 	}
 	deleted := o.setPendingItems("network", found)
 	for _, item := range deleted {
-		o.Logger.Infof("Deleted network %s", item)
+		o.Logger.Infof("Deleted network %s", item.name)
 	}
 	return aggregateError(errs, len(found))
 }
