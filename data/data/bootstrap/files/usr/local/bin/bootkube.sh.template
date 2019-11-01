@@ -20,7 +20,8 @@ MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(image_for kube-client-agent)
 MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 
 KUBE_ETCD_SIGNER_SERVER_IMAGE=$(image_for kube-etcd-signer-server)
-if image_for cluster-etcd-operator; then
+if image_for cluster-etcd-operator
+then
     CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator)
 else
     CLUSTER_ETCD_OPERATOR_IMAGE=""
@@ -133,10 +134,16 @@ then
                --asset-output-dir /assets/etcd-bootstrap \
                --config-output-file /assets/etcd-bootstrap/config
 
-           cp etcd-bootstrap/manifests/* manifests/
-           cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
+           if podman run --quiet "$CLUSTER_ETCD_OPERATOR_IMAGE" grep Managed /manifests/0000_12_etcd-operator_01_operator.cr.yaml > /dev/null
+           then
+                cp etcd-bootstrap/manifests/* manifests/
 
-           touch etcd-bootstrap.done
+                cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
+
+                touch etcd-bootstrap.done
+           else
+                CLUSTER_ETCD_OPERATOR_IMAGE=""
+           fi
     fi
 fi
 
@@ -287,8 +294,8 @@ then
 			--mdns-publisher-image="${MDNS_PUBLISHER_IMAGE}" \
 			--haproxy-image="${HAPROXY_IMAGE}" \
 			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
-			--cloud-config-file=/assets/manifests/cloud-provider-config.yaml
-			#--cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}"
+			--cloud-config-file=/assets/manifests/cloud-provider-config.yaml \
+			--cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}"
 
 	# Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to
 	# 1. read the controller config rendered by MachineConfigOperator

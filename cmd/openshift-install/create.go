@@ -105,17 +105,17 @@ var (
 					logrus.Fatal("Bootstrap failed to complete: ", err)
 				}
 
-				logrus.Info("Destroying the bootstrap resources...")
-				err = destroybootstrap.Destroy(rootOpts.dir)
-				if err != nil {
-					logrus.Fatal(err)
-				}
-
 				err = waitForInstallComplete(ctx, config, rootOpts.dir)
 				if err != nil {
 					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
 					}
+					logrus.Fatal(err)
+				}
+
+				logrus.Info("Destroying the bootstrap resources...")
+				err = destroybootstrap.Destroy(rootOpts.dir)
+				if err != nil {
 					logrus.Fatal(err)
 				}
 			},
