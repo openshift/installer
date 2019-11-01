@@ -50,6 +50,15 @@ resource "azureprivatedns_a_record" "etcd_a_nodes" {
   records             = [var.etcd_ip_addresses[count.index]]
 }
 
+source "azurerm_dns_a_record" "etcd_a_bootstrap" {
+  count               = 1
+  name                = "bootstrap"
+  zone_name           = var.private_dns_zone_name
+  resource_group_name = var.resource_group_name
+  ttl                 = 60
+  records             = [azurerm_public_ip.bootstrap_public_ip.private_ip_address]
+}
+
 resource "azureprivatedns_srv_record" "etcd_cluster" {
   name                = "_etcd-server-ssl._tcp"
   zone_name           = azureprivatedns_zone.private.name

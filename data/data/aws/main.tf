@@ -71,7 +71,7 @@ module "dns" {
   cluster_id               = var.cluster_id
   etcd_count               = var.master_count
   etcd_ip_addresses        = flatten(module.masters.ip_addresses)
-  bootstrap_ip_address     = module.bootstrap.ip_address 
+  bootstrap_ip_address     = module.bootstrap.ip_address
   tags                     = local.tags
   vpc_id                   = module.vpc.vpc_id
   publish_strategy         = var.aws_publish_strategy

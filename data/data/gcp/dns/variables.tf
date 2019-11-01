@@ -19,6 +19,11 @@ variable "etcd_ip_addresses" {
   default     = []
 }
 
+variable "bootstrap_ip_address" {
+  description = "The IP address of the bootstrap node."
+  type        = string
+}
+
 variable "cluster_id" {
   type        = string
   description = "The identifier for the cluster."
