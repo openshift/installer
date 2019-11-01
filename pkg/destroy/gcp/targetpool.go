@@ -7,16 +7,16 @@ import (
 	"google.golang.org/api/googleapi"
 )
 
-func (o *ClusterUninstaller) listTargetPools() ([]string, error) {
+func (o *ClusterUninstaller) listTargetPools() ([]cloudResource, error) {
 	return o.listTargetPoolsWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listTargetPoolsWithFilter lists target pools in the project. The field parameter allows
 // specifying which fields to return. The filter parameter specifies a server-side filter for the
 // GCP API (preferred). The filterFunc specifies a client-side filtering function for each TargetPool.
-func (o *ClusterUninstaller) listTargetPoolsWithFilter(field string, filter string, filterFunc func(*compute.TargetPool) bool) ([]string, error) {
+func (o *ClusterUninstaller) listTargetPoolsWithFilter(field string, filter string, filterFunc func(*compute.TargetPool) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing target pools")
-	result := []string{}
+	result := []cloudResource{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	req := o.computeSvc.TargetPools.List(o.ProjectID, o.Region).Fields(googleapi.Field(field)).Filter(filter)
@@ -24,7 +24,11 @@ func (o *ClusterUninstaller) listTargetPoolsWithFilter(field string, filter stri
 		for _, targetPool := range list.Items {
 			if filterFunc == nil || (filterFunc != nil && filterFunc(targetPool)) {
 				o.Logger.Debugf("Found target pool: %s", targetPool.Name)
-				result = append(result, targetPool.Name)
+				result = append(result, cloudResource{
+					key:      targetPool.Name,
+					name:     targetPool.Name,
+					typeName: "targetpool",
+				})
 			}
 		}
 		return nil
@@ -35,20 +39,20 @@ func (o *ClusterUninstaller) listTargetPoolsWithFilter(field string, filter stri
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteTargetPool(name string) error {
-	o.Logger.Debugf("Deleting target pool %s", name)
+func (o *ClusterUninstaller) deleteTargetPool(item cloudResource) error {
+	o.Logger.Debugf("Deleting target pool %s", item.name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	op, err := o.computeSvc.TargetPools.Delete(o.ProjectID, o.Region, name).RequestId(o.requestID("targetpool", name)).Context(ctx).Do()
+	op, err := o.computeSvc.TargetPools.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
-		o.resetRequestID("targetpool", name)
-		return errors.Wrapf(err, "failed to delete target pool %s", name)
+		o.resetRequestID(item.typeName, item.name)
+		return errors.Wrapf(err, "failed to delete target pool %s", item.name)
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID("targetpool", name)
-		return errors.Errorf("failed to delete route %s with error: %s", name, operationErrorMessage(op))
+		o.resetRequestID(item.typeName, item.name)
+		return errors.Errorf("failed to delete route %s with error: %s", item.name, operationErrorMessage(op))
 	}
-	o.Logger.Infof("Deleted target pool %s", name)
+	o.Logger.Infof("Deleted target pool %s", item.name)
 	return nil
 }
 
@@ -96,10 +100,10 @@ func (o *ClusterUninstaller) destroyTargetPools() error {
 	if err != nil {
 		return err
 	}
-	found := make([]string, 0, len(targetPools))
+	found := cloudResources{}
 	errs := []error{}
 	for _, targetPool := range targetPools {
-		found = append(found, targetPool)
+		found.insert(targetPool)
 		err := o.deleteTargetPool(targetPool)
 		if err != nil {
 			errs = append(errs, err)
@@ -107,7 +111,7 @@ func (o *ClusterUninstaller) destroyTargetPools() error {
 	}
 	deleted := o.setPendingItems("targetpool", found)
 	for _, item := range deleted {
-		o.Logger.Infof("Deleted target pool %s", item)
+		o.Logger.Infof("Deleted target pool %s", item.name)
 	}
 	return aggregateError(errs, len(found))
 }

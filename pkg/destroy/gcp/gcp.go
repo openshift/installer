@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	resourcemanager "google.golang.org/api/cloudresourcemanager/v1"
@@ -156,25 +155,6 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 	return done, nil
 }
 
-type nameAndURL struct {
-	name string
-	url  string
-}
-
-func (n nameAndURL) String() string {
-	return fmt.Sprintf("Name: %s, URL: %s\n", n.name, n.url)
-}
-
-type nameAndZone struct {
-	name   string
-	zone   string
-	status string
-}
-
-func (n nameAndZone) String() string {
-	return fmt.Sprintf("Name: %s, Zone: %s", n.name, n.zone)
-}
-
 // getZoneName extracts a zone name from a zone URL of the form:
 // https://www.googleapis.com/compute/v1/projects/project-id/zones/us-central1-a
 // where the compute service's basepath is:
@@ -189,7 +169,7 @@ func (o *ClusterUninstaller) getZoneName(zoneURL string) string {
 	return ""
 }
 
-func (o *ClusterUninstaller) areAllClusterInstances(instances []nameAndZone) bool {
+func (o *ClusterUninstaller) areAllClusterInstances(instances []cloudResource) bool {
 	for _, instance := range instances {
 		if !o.isClusterResource(instance.name) {
 			return false
@@ -198,7 +178,7 @@ func (o *ClusterUninstaller) areAllClusterInstances(instances []nameAndZone) boo
 	return true
 }
 
-func (o *ClusterUninstaller) getInstanceGroupURL(ig nameAndZone) string {
+func (o *ClusterUninstaller) getInstanceGroupURL(ig cloudResource) string {
 	return fmt.Sprintf("%s%s/zones/%s/instanceGroups/%s", o.computeSvc.BasePath, o.ProjectID, ig.zone, ig.name)
 }
 
@@ -279,27 +259,26 @@ func (t requestIDTracker) resetRequestID(identifier ...string) {
 
 // pendingItemTracker tracks a set of pending item names for a given type of resource
 type pendingItemTracker struct {
-	pendingItems map[string]sets.String
+	pendingItems map[string]cloudResources
 }
 
 func newPendingItemTracker() pendingItemTracker {
 	return pendingItemTracker{
-		pendingItems: map[string]sets.String{},
+		pendingItems: map[string]cloudResources{},
 	}
 }
 
 // setPendingItems sets the list of items pending deletion for a particular item type.
 // It returns items that were previously pending that are no longer in the list
 // of pending items. These are items that have been deleted.
-func (t pendingItemTracker) setPendingItems(itemType string, items []string) []string {
-	found := sets.NewString(items...)
+func (t pendingItemTracker) setPendingItems(itemType string, items cloudResources) []cloudResource {
 	lastFound, exists := t.pendingItems[itemType]
 	if !exists {
-		lastFound = sets.NewString()
+		lastFound = cloudResources{}
 	}
-	deletedItems := lastFound.Difference(found)
-	t.pendingItems[itemType] = found
-	return deletedItems.List()
+	deletedItems := lastFound.Difference(items)
+	t.pendingItems[itemType] = items
+	return deletedItems.list()
 }
 
 func isErrorStatus(code int64) bool {

@@ -22,9 +22,9 @@ func (o *ClusterUninstaller) getInstanceNameAndZone(instanceURL string) (string,
 	return "", ""
 }
 
-func (o *ClusterUninstaller) listComputeInstances() ([]nameAndZone, error) {
+func (o *ClusterUninstaller) listComputeInstances() ([]cloudResource, error) {
 	o.Logger.Debugf("Listing compute instances")
-	result := []nameAndZone{}
+	result := []cloudResource{}
 	req := o.computeSvc.Instances.AggregatedList(o.ProjectID).Filter(o.clusterIDFilter()).Fields("items/*/instances(name,zone,status),nextPageToken")
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
@@ -32,10 +32,12 @@ func (o *ClusterUninstaller) listComputeInstances() ([]nameAndZone, error) {
 		for _, scopedList := range list.Items {
 			for _, instance := range scopedList.Instances {
 				zoneName := o.getZoneName(instance.Zone)
-				result = append(result, nameAndZone{
-					name:   instance.Name,
-					zone:   zoneName,
-					status: instance.Status,
+				result = append(result, cloudResource{
+					key:      fmt.Sprintf("%s/%s", zoneName, instance.Name),
+					name:     instance.Name,
+					status:   instance.Status,
+					typeName: "instance",
+					zone:     zoneName,
 				})
 				o.Logger.Debugf("Found instance %s in zone %s, status %s", instance.Name, zoneName, instance.Status)
 			}
@@ -48,18 +50,18 @@ func (o *ClusterUninstaller) listComputeInstances() ([]nameAndZone, error) {
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteComputeInstance(instance nameAndZone) error {
+func (o *ClusterUninstaller) deleteComputeInstance(item cloudResource) error {
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	o.Logger.Debugf("Deleting compute instance %s in zone %s", instance.name, instance.zone)
-	op, err := o.computeSvc.Instances.Delete(o.ProjectID, instance.zone, instance.name).RequestId(o.requestID("instance", instance.zone, instance.name)).Context(ctx).Do()
+	o.Logger.Debugf("Deleting compute instance %s in zone %s", item.name, item.zone)
+	op, err := o.computeSvc.Instances.Delete(o.ProjectID, item.zone, item.name).RequestId(o.requestID(item.typeName, item.zone, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
-		o.resetRequestID("instance", instance.zone, instance.name)
-		return errors.Wrapf(err, "failed to delete instance %s in zone %s", instance.name, instance.zone)
+		o.resetRequestID(item.typeName, item.zone, item.name)
+		return errors.Wrapf(err, "failed to delete instance %s in zone %s", item.name, item.zone)
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID("instance", instance.zone, instance.name)
-		return errors.Errorf("failed to delete instance %s in zone %s with error: %s", instance.name, instance.zone, operationErrorMessage(op))
+		o.resetRequestID(item.typeName, item.zone, item.name)
+		return errors.Errorf("failed to delete instance %s in zone %s with error: %s", item.name, item.zone, operationErrorMessage(op))
 	}
 	return nil
 }
@@ -72,9 +74,9 @@ func (o *ClusterUninstaller) destroyComputeInstances() error {
 		return err
 	}
 	errs := []error{}
-	found := make([]string, 0, len(instances))
+	found := cloudResources{}
 	for _, instance := range instances {
-		found = append(found, fmt.Sprintf("%s/%s", instance.zone, instance.name))
+		found.insert(instance)
 		err := o.deleteComputeInstance(instance)
 		if err != nil {
 			errs = append(errs, err)
@@ -82,7 +84,7 @@ func (o *ClusterUninstaller) destroyComputeInstances() error {
 	}
 	deletedItems := o.setPendingItems("computeinstance", found)
 	for _, item := range deletedItems {
-		o.Logger.Infof("Deleted instance %s", item)
+		o.Logger.Infof("Deleted instance %s", item.name)
 	}
 	return aggregateError(errs, len(found))
 }

@@ -6,16 +6,20 @@ import (
 	storage "google.golang.org/api/storage/v1"
 )
 
-func (o *ClusterUninstaller) listStorageBuckets() ([]string, error) {
+func (o *ClusterUninstaller) listStorageBuckets() ([]cloudResource, error) {
 	o.Logger.Debug("Listing storage buckets")
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	req := o.storageSvc.Buckets.List(o.ProjectID).Fields("items(name),nextPageToken").Prefix(o.ClusterID + "-")
-	result := []string{}
+	result := []cloudResource{}
 	err := req.Pages(ctx, func(buckets *storage.Buckets) error {
 		for _, bucket := range buckets.Items {
 			o.Logger.Debugf("Found storage bucket %s", bucket.Name)
-			result = append(result, bucket.Name)
+			result = append(result, cloudResource{
+				key:      bucket.Name,
+				name:     bucket.Name,
+				typeName: "storgebucket",
+			})
 		}
 		return nil
 	})
@@ -25,16 +29,16 @@ func (o *ClusterUninstaller) listStorageBuckets() ([]string, error) {
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteStorageBucket(bucket string) error {
-	o.Logger.Debugf("Deleting storate bucket %s", bucket)
+func (o *ClusterUninstaller) deleteStorageBucket(item cloudResource) error {
+	o.Logger.Debugf("Deleting storate bucket %s", item.name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	err := o.storageSvc.Buckets.Delete(bucket).Context(ctx).Do()
+	err := o.storageSvc.Buckets.Delete(item.name).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
-		return errors.Wrapf(err, "failed to delete bucket %s", bucket)
+		return errors.Wrapf(err, "failed to delete bucket %s", item.name)
 	}
 	if err == nil {
-		o.Logger.Infof("Deleted storage bucket %s", bucket)
+		o.Logger.Infof("Deleted storage bucket %s", item.name)
 	}
 	return nil
 }
