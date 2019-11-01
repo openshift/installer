@@ -156,6 +156,52 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 	return done, nil
 }
 
+type nameAndURL struct {
+	name string
+	url  string
+}
+
+func (n nameAndURL) String() string {
+	return fmt.Sprintf("Name: %s, URL: %s\n", n.name, n.url)
+}
+
+type nameAndZone struct {
+	name   string
+	zone   string
+	status string
+}
+
+func (n nameAndZone) String() string {
+	return fmt.Sprintf("Name: %s, Zone: %s", n.name, n.zone)
+}
+
+// getZoneName extracts a zone name from a zone URL of the form:
+// https://www.googleapis.com/compute/v1/projects/project-id/zones/us-central1-a
+// where the compute service's basepath is:
+// https://www.googleapis.com/compute/v1/projects/
+// Trimming the URL, leaves a string like: project-id/zones/us-central1-a
+func (o *ClusterUninstaller) getZoneName(zoneURL string) string {
+	path := strings.TrimLeft(zoneURL, o.computeSvc.BasePath)
+	parts := strings.Split(path, "/")
+	if len(parts) >= 3 {
+		return parts[2]
+	}
+	return ""
+}
+
+func (o *ClusterUninstaller) areAllClusterInstances(instances []nameAndZone) bool {
+	for _, instance := range instances {
+		if !o.isClusterResource(instance.name) {
+			return false
+		}
+	}
+	return true
+}
+
+func (o *ClusterUninstaller) getInstanceGroupURL(ig nameAndZone) string {
+	return fmt.Sprintf("%s%s/zones/%s/instanceGroups/%s", o.computeSvc.BasePath, o.ProjectID, ig.zone, ig.name)
+}
+
 func (o *ClusterUninstaller) isClusterResource(name string) bool {
 	return strings.HasPrefix(name, o.ClusterID+"-")
 }
