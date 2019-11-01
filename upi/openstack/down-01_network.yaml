@@ -1,0 +1,12 @@
+# Required Python packages:
+#
+# ansible
+# openstacksdk
+
+- hosts: all
+
+  tasks:
+  - name: 'Remove the cluster network'
+    os_network:
+      name: "{{ os_network }}"
+      state: absent
