@@ -217,18 +217,26 @@ func logClusterOperatorConditions(ctx context.Context, config *rest.Config) erro
 
 	for _, operator := range operators.Items {
 		for _, condition := range operator.Status.Conditions {
-			if condition.Type == configv1.OperatorUpgradeable {
-				continue
-			} else if condition.Type == configv1.OperatorAvailable && condition.Status == configv1.ConditionTrue {
-				continue
-			} else if (condition.Type == configv1.OperatorDegraded || condition.Type == configv1.OperatorProgressing) && condition.Status == configv1.ConditionFalse {
-				continue
-			}
-			if condition.Type == configv1.OperatorDegraded {
+			switch condition.Type {
+			case configv1.OperatorAvailable:
+				if condition.Status == configv1.ConditionTrue {
+					continue
+				}
+			case configv1.OperatorDegraded:
+				if condition.Status == configv1.ConditionFalse {
+					continue
+				}
 				logrus.Errorf("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
-			} else {
-				logrus.Infof("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
+				continue
+			case configv1.OperatorProgressing:
+				if condition.Status == configv1.ConditionFalse {
+					continue
+				}
+			default:
+				logrus.Debugf("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
+				continue
 			}
+			logrus.Infof("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
 		}
 	}
 
