@@ -7,7 +7,7 @@ import (
 	"google.golang.org/api/googleapi"
 )
 
-func (o *ClusterUninstaller) listBackendServices() ([]string, error) {
+func (o *ClusterUninstaller) listBackendServices() ([]cloudResource, error) {
 	return o.listBackendServicesWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
@@ -15,9 +15,9 @@ func (o *ClusterUninstaller) listBackendServices() ([]string, error) {
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listBackendServicesWithFilter(fields string, filter string, filterFunc func(*compute.BackendService) bool) ([]string, error) {
+func (o *ClusterUninstaller) listBackendServicesWithFilter(fields string, filter string, filterFunc func(*compute.BackendService) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing backend services")
-	result := []string{}
+	result := []cloudResource{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	req := o.computeSvc.RegionBackendServices.List(o.ProjectID, o.Region).Fields(googleapi.Field(fields))
@@ -28,7 +28,11 @@ func (o *ClusterUninstaller) listBackendServicesWithFilter(fields string, filter
 		for _, backendService := range list.Items {
 			if filterFunc == nil || filterFunc != nil && filterFunc(backendService) {
 				o.Logger.Debugf("Found backend service: %s", backendService.Name)
-				result = append(result, backendService.Name)
+				result = append(result, cloudResource{
+					key:      backendService.Name,
+					name:     backendService.Name,
+					typeName: "backendservice",
+				})
 			}
 		}
 		return nil
@@ -39,18 +43,18 @@ func (o *ClusterUninstaller) listBackendServicesWithFilter(fields string, filter
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteBackendService(name string) error {
-	o.Logger.Debugf("Deleting backend service %s", name)
+func (o *ClusterUninstaller) deleteBackendService(item cloudResource) error {
+	o.Logger.Debugf("Deleting backend service %s", item.name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	op, err := o.computeSvc.RegionBackendServices.Delete(o.ProjectID, o.Region, name).RequestId(o.requestID("backendservice", name)).Context(ctx).Do()
+	op, err := o.computeSvc.RegionBackendServices.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
-		o.resetRequestID("backendservice", name)
-		return errors.Wrapf(err, "failed to delete backend service %s", name)
+		o.resetRequestID(item.typeName, item.name)
+		return errors.Wrapf(err, "failed to delete backend service %s", item.name)
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID("backendservice", name)
-		return errors.Errorf("failed to delete backend service %s with error: %s", name, operationErrorMessage(op))
+		o.resetRequestID(item.typeName, item.name)
+		return errors.Errorf("failed to delete backend service %s with error: %s", item.name, operationErrorMessage(op))
 	}
 	return nil
 }
@@ -62,10 +66,10 @@ func (o *ClusterUninstaller) destroyBackendServices() error {
 	if err != nil {
 		return err
 	}
-	found := make([]string, 0, len(backendServices))
+	found := cloudResources{}
 	errs := []error{}
 	for _, backendService := range backendServices {
-		found = append(found, backendService)
+		found.insert(backendService)
 		err := o.deleteBackendService(backendService)
 		if err != nil {
 			errs = append(errs, err)
@@ -73,7 +77,7 @@ func (o *ClusterUninstaller) destroyBackendServices() error {
 	}
 	deleted := o.setPendingItems("backendservice", found)
 	for _, item := range deleted {
-		o.Logger.Infof("Deleted backend service %s", item)
+		o.Logger.Infof("Deleted backend service %s", item.name)
 	}
 	return aggregateError(errs, len(found))
 }

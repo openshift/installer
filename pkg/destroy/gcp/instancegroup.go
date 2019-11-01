@@ -8,9 +8,9 @@ import (
 	compute "google.golang.org/api/compute/v1"
 )
 
-func (o *ClusterUninstaller) listInstanceGroupsWithFilter(filter string) ([]nameAndZone, error) {
+func (o *ClusterUninstaller) listInstanceGroupsWithFilter(filter string) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing instance groups")
-	result := []nameAndZone{}
+	result := []cloudResource{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	req := o.computeSvc.InstanceGroups.AggregatedList(o.ProjectID).Fields("items/*/instanceGroups(name,zone),nextPageToken").Filter(filter)
@@ -18,9 +18,11 @@ func (o *ClusterUninstaller) listInstanceGroupsWithFilter(filter string) ([]name
 		for _, scopedList := range list.Items {
 			for _, ig := range scopedList.InstanceGroups {
 				zoneName := o.getZoneName(ig.Zone)
-				result = append(result, nameAndZone{
-					name: ig.Name,
-					zone: zoneName,
+				result = append(result, cloudResource{
+					key:      fmt.Sprintf("%s/%s", zoneName, ig.Name),
+					name:     ig.Name,
+					typeName: "instancegroup",
+					zone:     zoneName,
 				})
 				o.Logger.Debugf("Found instance group %s in zone %s", ig.Name, zoneName)
 			}
@@ -33,9 +35,9 @@ func (o *ClusterUninstaller) listInstanceGroupsWithFilter(filter string) ([]name
 	return result, nil
 }
 
-func (o *ClusterUninstaller) listInstanceGroupInstances(ig nameAndZone) ([]nameAndZone, error) {
+func (o *ClusterUninstaller) listInstanceGroupInstances(ig cloudResource) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing instance group instances for %v", ig)
-	result := []nameAndZone{}
+	result := []cloudResource{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	req := o.computeSvc.InstanceGroups.ListInstances(o.ProjectID, ig.zone, ig.name, &compute.InstanceGroupsListInstancesRequest{}).Fields("items(instance),nextPageToken")
@@ -45,9 +47,11 @@ func (o *ClusterUninstaller) listInstanceGroupInstances(ig nameAndZone) ([]nameA
 			if len(name) == 0 {
 				continue
 			}
-			result = append(result, nameAndZone{
-				name: name,
-				zone: zone,
+			result = append(result, cloudResource{
+				key:      fmt.Sprintf("%s/%s", zone, name),
+				name:     name,
+				typeName: "instance",
+				zone:     zone,
 			})
 		}
 		return nil
@@ -58,18 +62,18 @@ func (o *ClusterUninstaller) listInstanceGroupInstances(ig nameAndZone) ([]nameA
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteInstanceGroup(ig nameAndZone) error {
+func (o *ClusterUninstaller) deleteInstanceGroup(item cloudResource) error {
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	o.Logger.Debugf("Deleting instance group %s in zone %s", ig.name, ig.zone)
-	op, err := o.computeSvc.InstanceGroups.Delete(o.ProjectID, ig.zone, ig.name).RequestId(o.requestID("instancegroup", ig.zone, ig.name)).Context(ctx).Do()
+	o.Logger.Debugf("Deleting instance group %s in zone %s", item.name, item.zone)
+	op, err := o.computeSvc.InstanceGroups.Delete(o.ProjectID, item.zone, item.name).RequestId(o.requestID(item.typeName, item.zone, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
-		o.resetRequestID("instancegroup", ig.zone, ig.name)
-		return errors.Wrapf(err, "failed to delete instance group %s in zone %s", ig.name, ig.zone)
+		o.resetRequestID(item.typeName, item.zone, item.name)
+		return errors.Wrapf(err, "failed to delete instance group %s in zone %s", item.name, item.zone)
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID("instancegroup", ig.zone, ig.name)
-		return errors.Errorf("failed to delete instance group %s in zone %s with error: %s", ig.name, ig.zone, operationErrorMessage(op))
+		o.resetRequestID("instancegroup", item.zone, item.name)
+		return errors.Errorf("failed to delete instance group %s in zone %s with error: %s", item.name, item.zone, operationErrorMessage(op))
 	}
 	return nil
 }
@@ -82,9 +86,9 @@ func (o *ClusterUninstaller) destroyInstanceGroups() error {
 		return err
 	}
 	errs := []error{}
-	found := make([]string, 0, len(groups))
+	found := cloudResources{}
 	for _, group := range groups {
-		found = append(found, fmt.Sprintf("%s/%s", group.zone, group.name))
+		found.insert(group)
 		err := o.deleteInstanceGroup(group)
 		if err != nil {
 			errs = append(errs, err)
@@ -92,7 +96,7 @@ func (o *ClusterUninstaller) destroyInstanceGroups() error {
 	}
 	deletedItems := o.setPendingItems("computeinstancegroup", found)
 	for _, item := range deletedItems {
-		o.Logger.Infof("Deleted instance group %s", item)
+		o.Logger.Infof("Deleted instance group %s", item.name)
 	}
 	return aggregateError(errs, len(found))
 }
