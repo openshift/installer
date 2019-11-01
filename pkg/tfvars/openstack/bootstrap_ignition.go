@@ -68,42 +68,8 @@ func createBootstrapSwiftObject(cloud string, bootstrapIgn string, clusterID str
 func generateIgnitionShim(userCA string, clusterID string, swiftObject string) (string, error) {
 	fileMode := 420
 
-	// DHCP Config
-	contents := `[main]
-dhcp=dhclient`
-
-	dhcpConfigFile := ignition.File{
-		Node: ignition.Node{
-			Filesystem: "root",
-			Path:       "/etc/NetworkManager/conf.d/dhcp-client.conf",
-		},
-		FileEmbedded1: ignition.FileEmbedded1{
-			Mode: &fileMode,
-			Contents: ignition.FileContents{
-				Source: fmt.Sprintf("data:text/plain;base64,%s", b64.StdEncoding.EncodeToString([]byte(contents))),
-			},
-		},
-	}
-
-	// DNS Config
-	contents = `send dhcp-client-identifier = hardware;
-prepend domain-name-servers 127.0.0.1;`
-
-	dnsConfigFile := ignition.File{
-		Node: ignition.Node{
-			Filesystem: "root",
-			Path:       "/etc/dhcp/dhclient.conf",
-		},
-		FileEmbedded1: ignition.FileEmbedded1{
-			Mode: &fileMode,
-			Contents: ignition.FileContents{
-				Source: fmt.Sprintf("data:text/plain;base64,%s", b64.StdEncoding.EncodeToString([]byte(contents))),
-			},
-		},
-	}
-
 	// Hostname Config
-	contents = fmt.Sprintf("%s-bootstrap", clusterID)
+	contents := fmt.Sprintf("%s-bootstrap", clusterID)
 
 	hostnameConfigFile := ignition.File{
 		Node: ignition.Node{
@@ -143,8 +109,6 @@ prepend domain-name-servers 127.0.0.1;`
 		},
 		Storage: ignition.Storage{
 			Files: []ignition.File{
-				dhcpConfigFile,
-				dnsConfigFile,
 				hostnameConfigFile,
 			},
 		},
