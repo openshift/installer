@@ -41,15 +41,17 @@ if [ ! -f .pivot-done ]; then
   touch /run/pivot/reboot-needed
   echo "${MACHINE_CONFIG_OSCONTENT}" > /etc/pivot/image-pullspec
 
+  echo "ADD systemd.unified_cgroup_hierarchy=0" > /etc/pivot/kernel-args
+  echo "DELETE mitigations=auto,nosmt" >> /etc/pivot/kernel-args
+
   mkdir bin/
-  bootkube_podman_run \
-		--volume "$PWD/bin:/host/usr/local/bin:z" \
-    --entrypoint=sh \
-		"${MACHINE_CONFIG_OPERATOR_IMAGE}" \
-    -c "cp /usr/bin/machine-config-daemon /host/usr/local/bin"
+  bootkube_podman_run --entrypoint "${MACHINE_CONFIG_OPERATOR_IMAGE}" \
+    cat /usr/bin/machine-config-daemon > /usr/local/bin/machine-config-daemon
+  chmod +x /usr/local/bin/machine-config-daemon
+  restorecon /usr/local/bin/machine-config-daemon
 
   touch .pivot-done
-  ./bin/machine-config-daemon pivot
+  /usr/local/bin/machine-config-daemon pivot
 fi
 
 # Now, as early as possible we replace the pause image and reload crio to use it, to ensure
