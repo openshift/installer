@@ -13,6 +13,8 @@ regional        = true
 multizone       = true
 node-tags       = uid-master
 node-tags       = uid-worker
+node-instance-prefix = uid
+external-instance-groups-prefix = uid
 subnetwork-name = uid-worker-subnet
 
 `

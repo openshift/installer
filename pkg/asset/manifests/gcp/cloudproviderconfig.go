@@ -17,7 +17,9 @@ type global struct {
 	Regional  bool `gcfg:"regional"`
 	Multizone bool `gcfg:"multizone"`
 
-	NodeTags []string `gcfg:"node-tags"`
+	NodeTags                     []string `gcfg:"node-tags"`
+	NodeInstancePrefix           string   `gcfg:"node-instance-prefix"`
+	ExternalInstanceGroupsPrefix string   `gcfg:"external-instance-groups-prefix"`
 
 	SubnetworkName string `gcfg:"subnetwork-name"`
 }
@@ -33,7 +35,9 @@ func CloudProviderConfig(infraID, projectID, subnet string) (string, error) {
 			Multizone: true,
 
 			// To make sure k8s cloud provide has tags for firewal for load balancer.
-			NodeTags: []string{fmt.Sprintf("%s-master", infraID), fmt.Sprintf("%s-worker", infraID)},
+			NodeTags:                     []string{fmt.Sprintf("%s-master", infraID), fmt.Sprintf("%s-worker", infraID)},
+			NodeInstancePrefix:           infraID,
+			ExternalInstanceGroupsPrefix: infraID,
 
 			// Used for internal load balancers
 			SubnetworkName: subnet,
@@ -54,6 +58,8 @@ multizone       = {{.Global.Multizone}}
 {{range $idx, $tag := .Global.NodeTags -}}
 node-tags       = {{$tag}}
 {{end -}}
+node-instance-prefix = {{.Global.NodeInstancePrefix}}
+external-instance-groups-prefix = {{.Global.ExternalInstanceGroupsPrefix}}
 subnetwork-name = {{.Global.SubnetworkName}}
 
 `
