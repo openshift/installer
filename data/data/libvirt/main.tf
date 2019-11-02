@@ -73,6 +73,13 @@ resource "libvirt_network" "net" {
         data.libvirt_network_dns_host_template.masters.*.rendered,
         data.libvirt_network_dns_host_template.masters_int.*.rendered,
         data.libvirt_network_dns_host_template.etcds.*.rendered,
+        
+        data.libvirt_network_dns_host_template.worker-oauth-openshift.*.rendered,
+        data.libvirt_network_dns_host_template.worker-console-openshift-console.*.rendered,
+        data.libvirt_network_dns_host_template.worker-downloads-openshift-console.*.rendered,
+        data.libvirt_network_dns_host_template.worker-alertmanager-main-openshift-monitoring.*.rendered,
+        data.libvirt_network_dns_host_template.worker-grafana-openshift-monitoring.*.rendered,
+        data.libvirt_network_dns_host_template.worker-prometheus-k8s-openshift-monitoring.*.rendered,
       )
       content {
         hostname = hosts.value.hostname
@@ -142,6 +149,42 @@ data "libvirt_network_dns_host_template" "etcds" {
   count    = var.master_count
   ip       = var.libvirt_master_ips[count.index]
   hostname = "etcd-${count.index}.${var.cluster_domain}"
+}
+
+data "libvirt_network_dns_host_template" "worker-oauth-openshift" {
+  count    = 1
+  ip       = "192.168.126.51"
+  hostname = "oauth-openshift.apps.${var.cluster_domain}"
+}
+
+data "libvirt_network_dns_host_template" "worker-console-openshift-console" {
+  count    = 1
+  ip       = "192.168.126.51"
+  hostname = "console-openshift-console.apps.${var.cluster_domain}"
+}
+
+data "libvirt_network_dns_host_template" "worker-downloads-openshift-console" {
+  count    = 1
+  ip       = "192.168.126.51"
+  hostname = "downloads-openshift-console.apps.${var.cluster_domain}"
+}
+
+data "libvirt_network_dns_host_template" "worker-alertmanager-main-openshift-monitoring" {
+  count    = 1
+  ip       = "192.168.126.51"
+  hostname = "alertmanager-main-openshift-monitoring.apps.${var.cluster_domain}"
+}
+
+data "libvirt_network_dns_host_template" "worker-grafana-openshift-monitoring" {
+  count    = 1
+  ip       = "192.168.126.51"
+  hostname = "grafana-openshift-monitoring.apps.${var.cluster_domain}"
+}
+
+data "libvirt_network_dns_host_template" "worker-prometheus-k8s-openshift-monitoring" {
+  count    = 1
+  ip       = "192.168.126.51"
+  hostname = "prometheus-k8s-openshift-monitoring.apps.${var.cluster_domain}"
 }
 
 data "libvirt_network_dns_srv_template" "etcd_cluster" {
