@@ -9,6 +9,7 @@ import (
 	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/pkg/errors"
+	"net/url"
 	"path"
 	"strings"
 )
@@ -85,7 +86,15 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		// Instance Info
 		// The rhcos-downloader container downloads the image, compresses it to speed up deployments
 		// and then makes it available on bootstrapProvisioningIP via http
-		imageFilename := path.Base(image)
+		// The image is now formatted with a query string containing the sha256sum, we strip that here
+		// and it will be consumed for validation in https://github.com/openshift/ironic-rhcos-downloader
+		imageURL, err := url.Parse(image)
+		if err != nil {
+			return nil, err
+		}
+		imageURL.RawQuery = ""
+		imageURL.Fragment = ""
+		imageFilename := path.Base(imageURL.String())
 		compressedImageFilename := strings.Replace(imageFilename, "openstack", "compressed", 1)
 		cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", bootstrapProvisioningIP, imageFilename, compressedImageFilename)
 		cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
