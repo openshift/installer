@@ -21,14 +21,6 @@ variable "nsx_tag" {
   default = "terraform-demo"
 }
 
-variable "overlay_tz" {
-  type = "string"
-}
-
-variable "t0_router" {
-  type = "string"
-}
-
 variable "t1_router" {
   type = "string"
 }
