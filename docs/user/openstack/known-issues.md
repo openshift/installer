@@ -12,7 +12,7 @@ Since the installer requires the *Name* of your external network and Red Hat Cor
 
 ## Self Signed Certificates
 
-Due to Terraform not being up to date with Ignition v2.2.0, we are unable to use the installer infrastructure to pass Certificate Authority Bundles to Ignition on Master Nodes. This means that the bootstrap node will be unable to retrieve the ignition configs from swift if your endpoint uses self-signed certificates. As a result, using the AdditionalTrustBundle Field in the install config will not automatically work. What we have observed in testing is that the cert bundles are in fact put in the correct file directories, however, it seems that ignition fails to detect/utilize them. This bug is currently being tracked in [this bugzilla]( https://bugzilla.redhat.com/show_bug.cgi?id=1735192).
+Support for Certificate Bundles has been fixed in 4.3. If your OpenStack cluster uses self signed certificates, you will need to add them using the AdditionalTrustBundle field in your `install-config.yaml`. For more information on how to do this, please see the [customizations doc](../customization.md).
 
 ## External Network Overlap
 
