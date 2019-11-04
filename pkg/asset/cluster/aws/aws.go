@@ -59,7 +59,7 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 		},
 	}
 
-	tagClient := resourcegroupstaggingapi.New(session)
+	tagClient := resourcegroupstaggingapi.New(session, aws.NewConfig().WithRegion(installConfig.Config.Platform.AWS.Region))
 	for i := 0; i < len(arns); i += 20 {
 		request.ResourceARNList = make([]*string, 0, 20)
 		for j := 0; i+j < len(arns) && j < 20; j++ {
