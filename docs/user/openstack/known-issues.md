@@ -1,6 +1,6 @@
 # Known Issues and Workarounds
 
-During this release, we are shipping with a few known issues. We are documenting them here, along with whatever workarounds we are aware of, and have attached the links to where the engineering team is tracking the issues. As changes occur, we will update both this document and the issue trackers with the latest information.
+We have been tracking a few issues and FAQs from our users, and are documenting them here along with the known workarounds and solutions. For issues that still have open bugs, we have attached the links to where the engineering team is tracking their progress. As changes occur, we will update both this document and the issue trackers with the latest information.
 
 ## Long Cluster Names
 
