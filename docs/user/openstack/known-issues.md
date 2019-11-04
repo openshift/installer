@@ -28,7 +28,7 @@ clusterNetwork: 10.128.0.0/14
 
 Some OpenStack clouds do not set default DNS servers for the newly created subnets. In this case, the bootstrap node may fail to resolve public name records to download the OpenShift images or resolve the OpenStack API endpoints.
 
-If you are in this situation, you can add resolvers to the provisioned subnet by setting the [`externalDNS` property in `install-config.yaml`](./customization.md#cluster-scoped-properties).
+If you are having this problem in the IPI installer, you will need to set the [`externalDNS` property in `install-config.yaml`](./customization.md#cluster-scoped-properties).
 
 Alternatively, for UPI, you will need to [set the subnet DNS resolvers](./install_upi.md#subnet-dns-optional).
 
