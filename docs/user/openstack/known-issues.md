@@ -1,6 +1,6 @@
 # Known Issues and Workarounds
 
-During this release, we are shipping with a few known issues. We are documenting them here, along with whatever workarounds we are aware of, and have attached the links to where the engineering team is tracking the issues. As changes occur, we will update both this document and the issue trackers with the latest information.
+We have been tracking a few issues and FAQs from our users, and are documenting them here along with the known workarounds and solutions. For issues that still have open bugs, we have attached the links to where the engineering team is tracking their progress. As changes occur, we will update both this document and the issue trackers with the latest information.
 
 ## Long Cluster Names
 
@@ -12,7 +12,7 @@ Since the installer requires the *Name* of your external network and Red Hat Cor
 
 ## Self Signed Certificates
 
-Due to Terraform not being up to date with Ignition v2.2.0, we are unable to use the installer infrastructure to pass Certificate Authority Bundles to Ignition on Master Nodes. This means that the bootstrap node will be unable to retrieve the ignition configs from swift if your endpoint uses self-signed certificates. As a result, using the AdditionalTrustBundle Field in the install config will not automatically work. What we have observed in testing is that the cert bundles are in fact put in the correct file directories, however, it seems that ignition fails to detect/utilize them. This bug is currently being tracked in [this bugzilla]( https://bugzilla.redhat.com/show_bug.cgi?id=1735192).
+Support for Certificate Bundles has been fixed in 4.3. If your OpenStack cluster uses self signed certificates, you will need to add them using the AdditionalTrustBundle field in your `install-config.yaml`. For more information on how to do this, please see the [customizations doc](../customization.md).
 
 ## External Network Overlap
 
@@ -28,7 +28,7 @@ clusterNetwork: 10.128.0.0/14
 
 Some OpenStack clouds do not set default DNS servers for the newly created subnets. In this case, the bootstrap node may fail to resolve public name records to download the OpenShift images or resolve the OpenStack API endpoints.
 
-If you are in this situation, you can add resolvers to the provisioned subnet by setting the [`externalDNS` property in `install-config.yaml`](./customization.md#cluster-scoped-properties).
+If you are having this problem in the IPI installer, you will need to set the [`externalDNS` property in `install-config.yaml`](./customization.md#cluster-scoped-properties).
 
 Alternatively, for UPI, you will need to [set the subnet DNS resolvers](./install_upi.md#subnet-dns-optional).
 
