@@ -6,26 +6,39 @@ import (
 	"github.com/pkg/errors"
 
 	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/googleapi"
 )
 
-
 func (o *ClusterUninstaller) listDisks() ([]cloudResource, error) {
+	return o.listDisksWithFilter("items/*/disks(name,zone),nextPageToken", o.clusterIDFilter(), nil)
+}
+
+// listDisksWithFilter lists disks in the project that satisfy the filter criteria.
+// The fields parameter specifies which fields should be returned in the result, the filter string contains
+// a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
+// that determines whether a particular result should be returned or not.
+func (o *ClusterUninstaller) listDisksWithFilter(fields string, filter string, filterFunc func(*compute.Disk) bool) ([]cloudResource, error) {
 	o.Logger.Debug("Listing disks")
-	result := []cloudResource{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.Disks.AggregatedList(o.ProjectID).Fields("items/*/disks(name,zone),nextPageToken").Filter(o.clusterIDFilter())
-	err := req.Pages(ctx, func(aggregatedList *compute.DiskAggregatedList) error {
-		for _, scopedList := range aggregatedList.Items {
-			for _, disk := range scopedList.Disks {
-				zone := o.getZoneName(disk.Zone)
-				result = append(result, cloudResource{
-					key:      fmt.Sprintf("%s/%s", zone, disk.Name),
-					name:     disk.Name,
-					typeName: "disk",
-					zone:     zone,
-				})
-				o.Logger.Debugf("Found disk %s in zone %s", disk.Name, zone)
+	result := []cloudResource{}
+	req := o.computeSvc.Disks.AggregatedList(o.ProjectID).Fields(googleapi.Field(fields))
+	if len(filter) > 0 {
+		req = req.Filter(filter)
+	}
+	err := req.Pages(ctx, func(list *compute.DiskAggregatedList) error {
+		for _, scopedList := range list.Items {
+			for _, item := range scopedList.Disks {
+				if filterFunc == nil || filterFunc != nil && filterFunc(item) {
+					zone := o.getZoneName(item.Zone)
+					o.Logger.Debugf("Found disk: %s in zone %s", item.Name, zone)
+					result = append(result, cloudResource{
+						key:      fmt.Sprintf("%s/%s", zone, item.Name),
+						name:     item.Name,
+						typeName: "disk",
+						zone:     zone,
+					})
+				}
 			}
 		}
 		return nil
@@ -37,9 +50,9 @@ func (o *ClusterUninstaller) listDisks() ([]cloudResource, error) {
 }
 
 func (o *ClusterUninstaller) deleteDisk(item cloudResource) error {
+	o.Logger.Debugf("Deleting disk %s in zone %s", item.name, item.zone)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	o.Logger.Debugf("Deleting disk %s in zone %s", item.name, item.zone)
 	op, err := o.computeSvc.Disks.Delete(o.ProjectID, item.zone, item.name).RequestId(o.requestID(item.typeName, item.zone, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
 		o.resetRequestID(item.typeName, item.zone, item.name)
@@ -49,28 +62,29 @@ func (o *ClusterUninstaller) deleteDisk(item cloudResource) error {
 		o.resetRequestID(item.typeName, item.zone, item.name)
 		return errors.Errorf("failed to delete disk %s in zone %s with error: %s", item.name, item.zone, operationErrorMessage(op))
 	}
+	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
+		o.resetRequestID(item.typeName, item.name)
+		o.deletePendingItems(item.typeName, []cloudResource{item})
+		o.Logger.Infof("Deleted disk %s", item.name)
+	}
 	return nil
 }
 
-// destroyDisks searches for disks across all zones that have a name that starts with
-// the infra ID prefix. It then deletes each disk found.
+// destroyDisks removes all disk resources that have a name prefixed
+// with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyDisks() error {
-	disks, err := o.listDisks()
+	found, err := o.listDisks()
 	if err != nil {
 		return err
 	}
+	items := o.insertPendingItems("disk", found)
 	errs := []error{}
-	found := cloudResources{}
-	for _, disk := range disks {
-		found.insert(disk)
-		err := o.deleteDisk(disk)
+	for _, item := range items {
+		err := o.deleteDisk(item)
 		if err != nil {
 			errs = append(errs, err)
 		}
 	}
-	deletedItems := o.setPendingItems("disk", found)
-	for _, item := range deletedItems {
-		o.Logger.Infof("Deleted disk %s", item.name)
-	}
-	return aggregateError(errs, len(found))
+	items = o.getPendingItems("disk")
+	return aggregateError(errs, len(items))
 }

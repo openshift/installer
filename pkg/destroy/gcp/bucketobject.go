@@ -18,7 +18,7 @@ func (o *ClusterUninstaller) listBucketObjects(bucket cloudResource) ([]cloudRes
 			result = append(result, cloudResource{
 				key:      object.Name,
 				name:     object.Name,
-				typeName: "storageobject",
+				typeName: "bucketobject",
 			})
 		}
 		return nil
@@ -29,7 +29,7 @@ func (o *ClusterUninstaller) listBucketObjects(bucket cloudResource) ([]cloudRes
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteStorageObject(bucket cloudResource, item cloudResource) error {
+func (o *ClusterUninstaller) deleteBucketObject(bucket cloudResource, item cloudResource) error {
 	o.Logger.Debugf("Deleting storate object %s/%s", bucket.name, item.name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
@@ -37,8 +37,7 @@ func (o *ClusterUninstaller) deleteStorageObject(bucket cloudResource, item clou
 	if err != nil && !isNoOp(err) {
 		return errors.Wrapf(err, "failed to delete bucket object %s/%s", bucket.name, item.name)
 	}
-	if err == nil {
-		o.Logger.Infof("Deleted storage object %s/%s", bucket.name, item.name)
-	}
+	o.deletePendingItems(item.typeName, []cloudResource{item})
+	o.Logger.Infof("Deleted bucket object %s", item.name)
 	return nil
 }

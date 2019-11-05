@@ -122,13 +122,15 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		name    string
 		destroy func() error
 	}{
-		{name: "Compute instances", destroy: o.destroyComputeInstances},
+		{name: "Cloud controller internal LBs", destroy: o.destroyCloudControllerInternalLBs},
+		{name: "Cloud controller external LBs", destroy: o.destroyCloudControllerExternalLBs},
+		{name: "Compute instances", destroy: o.destroyInstances},
 		{name: "Disks", destroy: o.destroyDisks},
 		{name: "Service accounts", destroy: o.destroyServiceAccounts},
 		{name: "Policy bindings", destroy: o.destroyIAMPolicyBindings},
 		{name: "Images", destroy: o.destroyImages},
 		{name: "DNS", destroy: o.destroyDNS},
-		{name: "Object storage", destroy: o.destroyObjectStorage},
+		{name: "Object storage", destroy: o.destroyBuckets},
 		{name: "Routes", destroy: o.destroyRoutes},
 		{name: "Firewalls", destroy: o.destroyFirewalls},
 		{name: "Addresses", destroy: o.destroyAddresses},
@@ -137,11 +139,9 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		{name: "Forwarding rules", destroy: o.destroyForwardingRules},
 		{name: "Backend services", destroy: o.destroyBackendServices},
 		{name: "Health checks", destroy: o.destroyHealthChecks},
-		{name: "HTTP Health checks", destroy: o.destroyHTTPHealthChecks},
-		{name: "Cloud controller internal LBs", destroy: o.destroyCloudControllerInternalLBs},
-		{name: "Cloud controller external LBs", destroy: o.destroyCloudControllerExternalLBs},
+		{name: "HTTP Health checks", destroy: o.destroyHttpHealthChecks},
 		{name: "Cloud routers", destroy: o.destroyRouters},
-		{name: "Subnetworks", destroy: o.destroySubNetworks},
+		{name: "Subnetworks", destroy: o.destroySubnetworks},
 		{name: "Networks", destroy: o.destroyNetworks},
 	}
 	done := true
@@ -268,21 +268,39 @@ func newPendingItemTracker() pendingItemTracker {
 	}
 }
 
-// setPendingItems sets the list of items pending deletion for a particular item type.
-// It returns items that were previously pending that are no longer in the list
-// of pending items. These are items that have been deleted.
-func (t pendingItemTracker) setPendingItems(itemType string, items cloudResources) []cloudResource {
+// getPendingItems returns the list of resources to be deleted.
+func (t pendingItemTracker) getPendingItems(itemType string) []cloudResource {
 	lastFound, exists := t.pendingItems[itemType]
 	if !exists {
 		lastFound = cloudResources{}
 	}
-	deletedItems := lastFound.Difference(items)
-	t.pendingItems[itemType] = items
-	return deletedItems.list()
+	return lastFound.list()
+}
+
+// insertPendingItems adds to the list of resources to be deleted.
+func (t pendingItemTracker) insertPendingItems(itemType string, items []cloudResource) []cloudResource {
+	lastFound, exists := t.pendingItems[itemType]
+	if !exists {
+		lastFound = cloudResources{}
+	}
+	lastFound = lastFound.insert(items...)
+	t.pendingItems[itemType] = lastFound
+	return lastFound.list()
+}
+
+// deletePendingItems removes from the list of resources to be deleted.
+func (t pendingItemTracker) deletePendingItems(itemType string, items []cloudResource) []cloudResource {
+	lastFound, exists := t.pendingItems[itemType]
+	if !exists {
+		lastFound = cloudResources{}
+	}
+	lastFound = lastFound.delete(items...)
+	t.pendingItems[itemType] = lastFound
+	return lastFound.list()
 }
 
 func isErrorStatus(code int64) bool {
-	return code < 200 || code >= 300
+	return code != 0 && (code < 200 || code >= 300)
 }
 
 func operationErrorMessage(op *compute.Operation) string {

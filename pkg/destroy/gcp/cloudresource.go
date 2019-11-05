@@ -26,16 +26,6 @@ func (r cloudResources) delete(resources ...cloudResource) cloudResources {
 	return r
 }
 
-func (r cloudResources) Difference(r2 cloudResources) cloudResources{
-	result := cloudResources{}
-	for key := range r {
-		if _, contained := r2[key]; !contained {
-			result.insert(r[key])
-		}
-	}
-	return result
-}
-
 func (r cloudResources) list() []cloudResource {
 	values := []cloudResource{}
 	for _, value := range r {
