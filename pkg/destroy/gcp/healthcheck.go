@@ -4,22 +4,36 @@ import (
 	"github.com/pkg/errors"
 
 	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/googleapi"
 )
 
 func (o *ClusterUninstaller) listHealthChecks() ([]cloudResource, error) {
+	return o.listHealthChecksWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
+}
+
+// listHealthChecksWithFilter lists health checks in the project that satisfy the filter criteria.
+// The fields parameter specifies which fields should be returned in the result, the filter string contains
+// a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
+// that determines whether a particular result should be returned or not.
+func (o *ClusterUninstaller) listHealthChecksWithFilter(fields string, filter string, filterFunc func(*compute.HealthCheck) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing health checks")
-	result := []cloudResource{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.HealthChecks.List(o.ProjectID).Fields("items(name),nextPageToken").Filter(o.clusterIDFilter())
+	result := []cloudResource{}
+	req := o.computeSvc.HealthChecks.List(o.ProjectID).Fields(googleapi.Field(fields))
+	if len(filter) > 0 {
+		req = req.Filter(filter)
+	}
 	err := req.Pages(ctx, func(list *compute.HealthCheckList) error {
-		for _, healthCheck := range list.Items {
-			o.Logger.Debugf("Found health check: %s", healthCheck.Name)
-			result = append(result, cloudResource{
-				key:      healthCheck.Name,
-				name:     healthCheck.Name,
-				typeName: "healthcheck",
-			})
+		for _, item := range list.Items {
+			if filterFunc == nil || filterFunc != nil && filterFunc(item) {
+				o.Logger.Debugf("Found health check: %s", item.Name)
+				result = append(result, cloudResource{
+					key:      item.Name,
+					name:     item.Name,
+					typeName: "healthcheck",
+				})
+			}
 		}
 		return nil
 	})
@@ -29,8 +43,8 @@ func (o *ClusterUninstaller) listHealthChecks() ([]cloudResource, error) {
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteHealthCheck(item cloudResource, errorOnPending bool) error {
-	o.Logger.Debugf("Deleting health check %s", item)
+func (o *ClusterUninstaller) deleteHealthCheck(item cloudResource) error {
+	o.Logger.Debugf("Deleting health check %s", item.name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	op, err := o.computeSvc.HealthChecks.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
@@ -42,31 +56,29 @@ func (o *ClusterUninstaller) deleteHealthCheck(item cloudResource, errorOnPendin
 		o.resetRequestID(item.typeName, item.name)
 		return errors.Errorf("failed to delete health check %s with error: %s", item.name, operationErrorMessage(op))
 	}
-	if errorOnPending && op != nil && op.Status != "DONE" {
-		return errors.Errorf("deletion of health check %s is pending", item.name)
+	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
+		o.resetRequestID(item.typeName, item.name)
+		o.deletePendingItems(item.typeName, []cloudResource{item})
+		o.Logger.Infof("Deleted health check %s", item.name)
 	}
 	return nil
 }
 
 // destroyHealthChecks removes all health check resources that have a name prefixed
-// with the cluster's infra ID
+// with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyHealthChecks() error {
-	healthChecks, err := o.listHealthChecks()
+	found, err := o.listHealthChecks()
 	if err != nil {
 		return err
 	}
-	found := cloudResources{}
+	items := o.insertPendingItems("healthcheck", found)
 	errs := []error{}
-	for _, healthCheck := range healthChecks {
-		found.insert(healthCheck)
-		err := o.deleteHealthCheck(healthCheck, false)
+	for _, item := range items {
+		err := o.deleteHealthCheck(item)
 		if err != nil {
 			errs = append(errs, err)
 		}
 	}
-	deleted := o.setPendingItems("healthcheck", found)
-	for _, item := range deleted {
-		o.Logger.Infof("Deleted health check %s", item.name)
-	}
-	return aggregateError(errs, len(found))
+	items = o.getPendingItems("healthcheck")
+	return aggregateError(errs, len(items))
 }

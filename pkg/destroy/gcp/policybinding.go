@@ -59,13 +59,14 @@ func (o *ClusterUninstaller) destroyIAMPolicyBindings() error {
 		return err
 	}
 	if !clearIAMPolicyBindings(policy, o.ClusterID, o.Logger) {
-		deletedPolicy := o.setPendingItems("iampolicy", cloudResources{})
-		if len(deletedPolicy) > 0 {
+		pendingPolicy := o.getPendingItems("iampolicy")
+		if len(pendingPolicy) > 0 {
 			o.Logger.Infof("Deleted IAM project role bindings")
+			o.deletePendingItems("iampolicy", pendingPolicy)
 		}
 		return nil
 	}
-	o.setPendingItems("iampolicy", cloudResources{"policy": {key: "policy", name: "policy", typeName: "iampolicy"}})
+	o.insertPendingItems("iampolicy", []cloudResource{{key: "policy", name: "policy", typeName: "iampolicy"}})
 	err = o.setProjectIAMPolicy(policy)
 	return aggregateError([]error{err}, 1)
 }

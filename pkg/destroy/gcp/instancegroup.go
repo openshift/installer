@@ -6,25 +6,39 @@ import (
 	"github.com/pkg/errors"
 
 	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/googleapi"
 )
 
-func (o *ClusterUninstaller) listInstanceGroupsWithFilter(filter string) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listInstanceGroups() ([]cloudResource, error) {
+	return o.listInstanceGroupsWithFilter("items/*/instanceGroups(name,zone),nextPageToken", o.clusterIDFilter(), nil)
+}
+
+// listInstanceGroupsWithFilter lists addresses in the project that satisfy the filter criteria.
+// The fields parameter specifies which fields should be returned in the result, the filter string contains
+// a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
+// that determines whether a particular result should be returned or not.
+func (o *ClusterUninstaller) listInstanceGroupsWithFilter(fields string, filter string, filterFunc func(*compute.InstanceGroup) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing instance groups")
-	result := []cloudResource{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.InstanceGroups.AggregatedList(o.ProjectID).Fields("items/*/instanceGroups(name,zone),nextPageToken").Filter(filter)
+	result := []cloudResource{}
+	req := o.computeSvc.InstanceGroups.AggregatedList(o.ProjectID).Fields(googleapi.Field(fields))
+	if len(filter) > 0 {
+		req = req.Filter(filter)
+	}
 	err := req.Pages(ctx, func(list *compute.InstanceGroupAggregatedList) error {
 		for _, scopedList := range list.Items {
-			for _, ig := range scopedList.InstanceGroups {
-				zoneName := o.getZoneName(ig.Zone)
-				result = append(result, cloudResource{
-					key:      fmt.Sprintf("%s/%s", zoneName, ig.Name),
-					name:     ig.Name,
-					typeName: "instancegroup",
-					zone:     zoneName,
-				})
-				o.Logger.Debugf("Found instance group %s in zone %s", ig.Name, zoneName)
+			for _, item := range scopedList.InstanceGroups {
+				if filterFunc == nil || filterFunc != nil && filterFunc(item) {
+					zoneName := o.getZoneName(item.Zone)
+					o.Logger.Debugf("Found instance group: %s in zone %s", item.Name, zoneName)
+					result = append(result, cloudResource{
+						key:      fmt.Sprintf("%s/%s", zoneName, item.Name),
+						name:     item.Name,
+						typeName: "instancegroup",
+						zone:     zoneName,
+					})
+				}
 			}
 		}
 		return nil
@@ -37,9 +51,9 @@ func (o *ClusterUninstaller) listInstanceGroupsWithFilter(filter string) ([]clou
 
 func (o *ClusterUninstaller) listInstanceGroupInstances(ig cloudResource) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing instance group instances for %v", ig)
-	result := []cloudResource{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
+	result := []cloudResource{}
 	req := o.computeSvc.InstanceGroups.ListInstances(o.ProjectID, ig.zone, ig.name, &compute.InstanceGroupsListInstancesRequest{}).Fields("items(instance),nextPageToken")
 	err := req.Pages(ctx, func(list *compute.InstanceGroupsListInstances) error {
 		for _, item := range list.Items {
@@ -63,9 +77,9 @@ func (o *ClusterUninstaller) listInstanceGroupInstances(ig cloudResource) ([]clo
 }
 
 func (o *ClusterUninstaller) deleteInstanceGroup(item cloudResource) error {
+	o.Logger.Debugf("Deleting instance group %s in zone %s", item.name, item.zone)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	o.Logger.Debugf("Deleting instance group %s in zone %s", item.name, item.zone)
 	op, err := o.computeSvc.InstanceGroups.Delete(o.ProjectID, item.zone, item.name).RequestId(o.requestID(item.typeName, item.zone, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
 		o.resetRequestID(item.typeName, item.zone, item.name)
@@ -75,28 +89,29 @@ func (o *ClusterUninstaller) deleteInstanceGroup(item cloudResource) error {
 		o.resetRequestID("instancegroup", item.zone, item.name)
 		return errors.Errorf("failed to delete instance group %s in zone %s with error: %s", item.name, item.zone, operationErrorMessage(op))
 	}
+	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
+		o.resetRequestID(item.typeName, item.name)
+		o.deletePendingItems(item.typeName, []cloudResource{item})
+		o.Logger.Infof("Deleted instance group %s", item.name)
+	}
 	return nil
 }
 
-// destroyInstanceGroups searches for instance groups across all zones that have a name that starts with
-// the infra ID prefix, and then deletes each instance found.
+// destroyInstanceGroups searches for instance groups that have a name prefixed
+// with the cluster's infra ID, and then deletes each instance found.
 func (o *ClusterUninstaller) destroyInstanceGroups() error {
-	groups, err := o.listInstanceGroupsWithFilter(o.clusterIDFilter())
+	found, err := o.listInstanceGroups()
 	if err != nil {
 		return err
 	}
+	items := o.insertPendingItems("instancegroup", found)
 	errs := []error{}
-	found := cloudResources{}
-	for _, group := range groups {
-		found.insert(group)
-		err := o.deleteInstanceGroup(group)
+	for _, item := range items {
+		err := o.deleteInstanceGroup(item)
 		if err != nil {
 			errs = append(errs, err)
 		}
 	}
-	deletedItems := o.setPendingItems("computeinstancegroup", found)
-	for _, item := range deletedItems {
-		o.Logger.Infof("Deleted instance group %s", item.name)
-	}
-	return aggregateError(errs, len(found))
+	items = o.getPendingItems("instancegroup")
+	return aggregateError(errs, len(items))
 }

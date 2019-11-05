@@ -4,23 +4,37 @@ import (
 	"github.com/pkg/errors"
 
 	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/googleapi"
 )
 
 func (o *ClusterUninstaller) listNetworks() ([]cloudResource, error) {
+	return o.listNetworksWithFilter("items(name,selfLink),nextPageToken", o.clusterIDFilter(), nil)
+}
+
+// listNetworksWithFilter lists addresses in the project that satisfy the filter criteria.
+// The fields parameter specifies which fields should be returned in the result, the filter string contains
+// a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
+// that determines whether a particular result should be returned or not.
+func (o *ClusterUninstaller) listNetworksWithFilter(fields string, filter string, filterFunc func(*compute.Network) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing networks")
-	result := []cloudResource{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.Networks.List(o.ProjectID).Fields("items(name,selfLink),nextPageToken").Filter(o.clusterIDFilter())
+	result := []cloudResource{}
+	req := o.computeSvc.Networks.List(o.ProjectID).Fields(googleapi.Field(fields))
+	if len(filter) > 0 {
+		req = req.Filter(filter)
+	}
 	err := req.Pages(ctx, func(list *compute.NetworkList) error {
-		for _, network := range list.Items {
-			o.Logger.Debugf("Found network: %s", network.Name)
-			result = append(result, cloudResource{
-				key:      network.Name,
-				name:     network.Name,
-				typeName: "network",
-				url:      network.SelfLink,
-			})
+		for _, item := range list.Items {
+			if filterFunc == nil || filterFunc != nil && filterFunc(item) {
+				o.Logger.Debugf("Found network: %s", item.Name)
+				result = append(result, cloudResource{
+					key:      item.Name,
+					name:     item.Name,
+					typeName: "network",
+					url:      item.SelfLink,
+				})
+			}
 		}
 		return nil
 	})
@@ -31,10 +45,9 @@ func (o *ClusterUninstaller) listNetworks() ([]cloudResource, error) {
 }
 
 func (o *ClusterUninstaller) deleteNetwork(item cloudResource) error {
+	o.Logger.Debugf("Deleting network %s", item.name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-
-	o.Logger.Debugf("Deleting network %s", item.name)
 	op, err := o.computeSvc.Networks.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
 		o.resetRequestID(item.typeName, item.name)
@@ -44,41 +57,41 @@ func (o *ClusterUninstaller) deleteNetwork(item cloudResource) error {
 		o.resetRequestID(item.typeName, item.name)
 		return errors.Errorf("failed to delete network %s with error: %s", item.name, operationErrorMessage(op))
 	}
+	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
+		o.resetRequestID(item.typeName, item.name)
+		o.deletePendingItems(item.typeName, []cloudResource{item})
+		o.Logger.Infof("Deleted network %s", item.name)
+	}
 	return nil
 }
 
-// destroyNetworks removes all vpc network resources prefixed with the
-// cluster's infra ID
+// destroyNetworks removes all vpc network resources prefixed
+// with the cluster's infra ID, and deletes all of the routes.
 func (o *ClusterUninstaller) destroyNetworks() error {
-	networks, err := o.listNetworks()
+	found, err := o.listNetworks()
 	if err != nil {
 		return err
 	}
-	found := cloudResources{}
+	items := o.insertPendingItems("network", found)
 	errs := []error{}
-	for _, network := range networks {
-		found.insert(network)
-		// destroy any network routes that are not named with the infra ID
-		routes, err := o.listNetworkRoutes(network.url)
+	for _, item := range items {
+		foundRoutes, err := o.listNetworkRoutes(item.url)
 		if err != nil {
 			errs = append(errs, err)
 			continue
 		}
+		routes := o.insertPendingItems("route", foundRoutes)
 		for _, route := range routes {
 			err := o.deleteRoute(route)
 			if err != nil {
 				o.Logger.Debugf("Failed to delete route %s: %v", route, err)
 			}
 		}
-
-		err = o.deleteNetwork(network)
+		err = o.deleteNetwork(item)
 		if err != nil {
 			errs = append(errs, err)
 		}
 	}
-	deleted := o.setPendingItems("network", found)
-	for _, item := range deleted {
-		o.Logger.Infof("Deleted network %s", item.name)
-	}
-	return aggregateError(errs, len(found))
+	items = o.getPendingItems("network")
+	return aggregateError(errs, len(items))
 }

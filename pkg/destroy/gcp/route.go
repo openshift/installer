@@ -6,30 +6,40 @@ import (
 	"github.com/pkg/errors"
 
 	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/googleapi"
 )
 
 func (o *ClusterUninstaller) listNetworkRoutes(networkURL string) ([]cloudResource, error) {
-	return o.listRoutesWithFilter(fmt.Sprintf("network eq %q", networkURL))
+	return o.listRoutesWithFilter("items(name),nextPageToken", fmt.Sprintf("network eq %q", networkURL), nil)
 }
 
 func (o *ClusterUninstaller) listRoutes() ([]cloudResource, error) {
-	return o.listRoutesWithFilter(o.clusterIDFilter())
+	return o.listRoutesWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
-func (o *ClusterUninstaller) listRoutesWithFilter(filter string) ([]cloudResource, error) {
+// listRoutesWithFilter lists routes in the project that satisfy the filter criteria.
+// The fields parameter specifies which fields should be returned in the result, the filter string contains
+// a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
+// that determines whether a particular result should be returned or not.
+func (o *ClusterUninstaller) listRoutesWithFilter(fields string, filter string, filterFunc func(*compute.Route) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing routes")
-	result := []cloudResource{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.Routes.List(o.ProjectID).Fields("items(name),nextPageToken").Filter(filter)
+	result := []cloudResource{}
+	req := o.computeSvc.Routes.List(o.ProjectID).Fields(googleapi.Field(fields))
+	if len(filter) > 0 {
+		req = req.Filter(filter)
+	}
 	err := req.Pages(ctx, func(list *compute.RouteList) error {
-		for _, route := range list.Items {
-			o.Logger.Debugf("Found route: %s", route.Name)
-			result = append(result, cloudResource{
-				key:      route.Name,
-				name:     route.Name,
-				typeName: "route",
-			})
+		for _, item := range list.Items {
+			if filterFunc == nil || filterFunc != nil && filterFunc(item) {
+				o.Logger.Debugf("Found route: %s", item.Name)
+				result = append(result, cloudResource{
+					key:      item.Name,
+					name:     item.Name,
+					typeName: "route",
+				})
+			}
 		}
 		return nil
 	})
@@ -52,28 +62,29 @@ func (o *ClusterUninstaller) deleteRoute(item cloudResource) error {
 		o.resetRequestID(item.typeName, item.name)
 		return errors.Errorf("failed to delete route %s with error: %s", item.name, operationErrorMessage(op))
 	}
+	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
+		o.resetRequestID(item.typeName, item.name)
+		o.deletePendingItems(item.typeName, []cloudResource{item})
+		o.Logger.Infof("Deleted route %s", item.name)
+	}
 	return nil
 }
 
-// destroyRutes removes all route resources that have a name prefixed with the
-// cluster's infra ID
+// destroyRutes removes all route resources that have a name prefixed
+// with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyRoutes() error {
-	routes, err := o.listRoutes()
+	found, err := o.listRoutes()
 	if err != nil {
 		return err
 	}
-	found := cloudResources{}
+	items := o.insertPendingItems("route", found)
 	errs := []error{}
-	for _, route := range routes {
-		found.insert(route)
-		err := o.deleteRoute(route)
+	for _, item := range items {
+		err := o.deleteRoute(item)
 		if err != nil {
 			errs = append(errs, err)
 		}
 	}
-	deleted := o.setPendingItems("route", found)
-	for _, item := range deleted {
-		o.Logger.Infof("Deleted route %s", item.name)
-	}
-	return aggregateError(errs, len(found))
+	items = o.getPendingItems("route")
+	return aggregateError(errs, len(items))
 }
