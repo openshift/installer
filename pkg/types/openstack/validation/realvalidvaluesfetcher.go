@@ -86,6 +86,10 @@ func (f realValidValuesFetcher) GetFlavorNames(cloud string) ([]string, error) {
 		return nil, err
 	}
 
+	if len(allFlavors) == 0 {
+		return nil, errors.New("no OpenStack flavors were found")
+	}
+
 	flavorNames := make([]string, len(allFlavors))
 	for i, flavor := range allFlavors {
 		flavorNames[i] = flavor.Name
