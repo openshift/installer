@@ -4,22 +4,36 @@ import (
 	"github.com/pkg/errors"
 
 	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/googleapi"
 )
 
-func (o *ClusterUninstaller) listSubNetworks() ([]cloudResource, error) {
+func (o *ClusterUninstaller) listSubnetworks() ([]cloudResource, error) {
+	return o.listSubnetworksWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
+}
+
+// listSubnetworksWithFilter lists subnetworks in the project that satisfy the filter criteria.
+// The fields parameter specifies which fields should be returned in the result, the filter string contains
+// a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
+// that determines whether a particular result should be returned or not.
+func (o *ClusterUninstaller) listSubnetworksWithFilter(fields string, filter string, filterFunc func(*compute.Subnetwork) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing subnetworks")
-	result := []cloudResource{}
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	req := o.computeSvc.Subnetworks.List(o.ProjectID, o.Region).Fields("items(name),nextPageToken").Filter(o.clusterIDFilter())
+	result := []cloudResource{}
+	req := o.computeSvc.Subnetworks.List(o.ProjectID, o.Region).Fields(googleapi.Field(fields))
+	if len(filter) > 0 {
+		req = req.Filter(filter)
+	}
 	err := req.Pages(ctx, func(list *compute.SubnetworkList) error {
-		for _, subNetwork := range list.Items {
-			o.Logger.Debugf("Found subnetwork: %s", subNetwork.Name)
-			result = append(result, cloudResource{
-				key:      subNetwork.Name,
-				name:     subNetwork.Name,
-				typeName: "subnetwork",
-			})
+		for _, item := range list.Items {
+			if filterFunc == nil || filterFunc != nil && filterFunc(item) {
+				o.Logger.Debugf("Found subnetwork: %s", item.Name)
+				result = append(result, cloudResource{
+					key:      item.Name,
+					name:     item.Name,
+					typeName: "subnetwork",
+				})
+			}
 		}
 		return nil
 	})
@@ -29,7 +43,7 @@ func (o *ClusterUninstaller) listSubNetworks() ([]cloudResource, error) {
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteSubNetwork(item cloudResource) error {
+func (o *ClusterUninstaller) deleteSubnetwork(item cloudResource) error {
 	o.Logger.Debugf("Deleting subnetwork %s", item.name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
@@ -42,28 +56,29 @@ func (o *ClusterUninstaller) deleteSubNetwork(item cloudResource) error {
 		o.resetRequestID(item.typeName, item.name)
 		return errors.Errorf("failed to delete subnetwork %s with error: %s", item.name, operationErrorMessage(op))
 	}
+	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
+		o.resetRequestID(item.typeName, item.name)
+		o.deletePendingItems(item.typeName, []cloudResource{item})
+		o.Logger.Infof("Deleted subnetwork %s", item.name)
+	}
 	return nil
 }
 
 // destroySubNetworks removes all subnetwork resources that have a name prefixed
-// with the cluster's infra ID
-func (o *ClusterUninstaller) destroySubNetworks() error {
-	subNetworks, err := o.listSubNetworks()
+// with the cluster's infra ID.
+func (o *ClusterUninstaller) destroySubnetworks() error {
+	found, err := o.listSubnetworks()
 	if err != nil {
 		return err
 	}
-	found := cloudResources{}
+	items := o.insertPendingItems("subnetwork", found)
 	errs := []error{}
-	for _, subNetwork := range subNetworks {
-		found.insert(subNetwork)
-		err := o.deleteSubNetwork(subNetwork)
+	for _, item := range items {
+		err := o.deleteSubnetwork(item)
 		if err != nil {
 			errs = append(errs, err)
 		}
 	}
-	deleted := o.setPendingItems("subnetwork", found)
-	for _, item := range deleted {
-		o.Logger.Infof("Deleted subnetwork %s", item.name)
-	}
-	return aggregateError(errs, len(found))
+	items = o.getPendingItems("subnetwork")
+	return aggregateError(errs, len(items))
 }

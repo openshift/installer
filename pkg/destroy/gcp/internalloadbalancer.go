@@ -2,66 +2,31 @@ package gcp
 
 import (
 	"fmt"
-	"strings"
-
-	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/util/sets"
 
 	compute "google.golang.org/api/compute/v1"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-// getInternalLBInstanceGroups finds instance groups created for kube cloud controller
-// internal load balancers. They should be named "k8s-ig--{clusterid}":
+// listCloudControllerInstanceGroups returns instance groups created by the cloud controller.
+// It list all instance groups matching the cloud controller name convention.
 // https://github.com/openshift/kubernetes/blob/1e5983903742f64bca36a464582178c940353e9a/pkg/cloudprovider/providers/gce/gce_loadbalancer_naming.go#L33-L40
-// where clusterid is an 8-char id generated and saved in a configmap named
-// "ingress-uid" in kube-system, key "uid":
 // https://github.com/openshift/kubernetes/blob/1e5983903742f64bca36a464582178c940353e9a/pkg/cloudprovider/providers/gce/gce_clusterid.go#L210-L238
-// If no clusterID is set, we look into each instance group and determine if it contains instances prefixed with the cluster's infra ID
-func (o *ClusterUninstaller) getInternalLBInstanceGroups() ([]cloudResource, error) {
-	filter := "name eq \"k8s-ig--.*\""
-	if len(o.cloudControllerUID) > 0 {
-		filter = fmt.Sprintf("name eq \"k8s-ig--%s\"", o.cloudControllerUID)
-	}
-	candidates, err := o.listInstanceGroupsWithFilter(filter)
-	if err != nil {
-		return nil, err
-	}
-	if len(candidates) == 0 {
-		return nil, nil
-	}
-
-	igName := ""
-	if len(o.cloudControllerUID) > 0 {
-		igName = fmt.Sprintf("k8s-ig--%s", o.cloudControllerUID)
-	} else {
-		for _, ig := range candidates {
-			instances, err := o.listInstanceGroupInstances(ig)
-			if err != nil {
-				return nil, errors.Wrapf(err, "failed to get internal LB instance group instances for %s", ig.name)
-			}
-			if o.areAllClusterInstances(instances) {
-				igName = ig.name
-				break
-			}
-		}
-	}
-	igs := []cloudResource{}
-	if len(igName) > 0 {
-		for _, ig := range candidates {
-			if ig.name == igName {
-				igs = append(igs, ig)
-			}
-		}
-	}
-	return igs, nil
+func (o *ClusterUninstaller) listCloudControllerInstanceGroups() ([]cloudResource, error) {
+	filter := fmt.Sprintf("name eq \"k8s-ig--%s\"", o.cloudControllerUID)
+	return o.listInstanceGroupsWithFilter("items/*/instanceGroups(name,zone),nextPageToken", filter, nil)
 }
 
-func (o *ClusterUninstaller) listBackendServicesForInstanceGroups(igs []cloudResource) ([]cloudResource, error) {
+// listBackendServicesForInstanceGroups returns backend services created by the cloud controller.
+// It list all backend services matching the cloud controller name convention that contain
+// only cluster instance groups.
+func (o *ClusterUninstaller) listBackendServicesForInstanceGroups(instanceGroups []cloudResource) ([]cloudResource, error) {
 	urls := sets.NewString()
-	for _, ig := range igs {
-		urls.Insert(o.getInstanceGroupURL(ig))
+	for _, instanceGroup := range instanceGroups {
+		urls.Insert(o.getInstanceGroupURL(instanceGroup))
 	}
-	return o.listBackendServicesWithFilter("items(name,backends),nextPageToken", "name eq \"a[0-9a-f]{30,50}\"", func(item *compute.BackendService) bool {
+	filter := fmt.Sprintf("name eq \"a[0-9a-f]{30,50}\"", o.cloudControllerUID)
+	return o.listBackendServicesWithFilter("items(name,backends),nextPageToken", filter, func(item *compute.BackendService) bool {
 		if len(item.Backends) == 0 {
 			return false
 		}
@@ -70,80 +35,87 @@ func (o *ClusterUninstaller) listBackendServicesForInstanceGroups(igs []cloudRes
 				return false
 			}
 		}
-		o.Logger.Debugf("Found backend service %s", item.Name)
 		return true
 	})
 }
 
 // deleteInternalLoadBalancer follows a similar cleanup procedure as:
 // https://github.com/openshift/kubernetes/blob/1e5983903742f64bca36a464582178c940353e9a/pkg/cloudprovider/providers/gce/gce_loadbalancer_internal.go#L222
-// TODO: add cleanup for shared mode resources (determine if it's supported in 4.2)
 func (o *ClusterUninstaller) deleteInternalLoadBalancer(loadBalancerName string) error {
-	item := cloudResource{
-		key:      loadBalancerName,
-		name:     loadBalancerName,
-		typeName: "address",
-	}
-	if err := o.deleteAddress(item, true); err != nil {
+	loadBalancerNameFilter := fmt.Sprintf("name eq \"%s\"", loadBalancerName)
+	errs := []error{}
+
+	// Delete associated address
+	found, err := o.listAddressesWithFilter("items(name),nextPageToken", loadBalancerNameFilter, nil)
+	if err != nil {
 		return err
 	}
-	item = cloudResource{
-		key:      loadBalancerName,
-		name:     loadBalancerName,
-		typeName: "forwardingrule",
+	items := o.insertPendingItems("address", found)
+	for _, item := range items {
+		err := o.deleteAddress(item)
+		if err != nil {
+			errs = append(errs, err)
+		}
 	}
-	if err := o.deleteForwardingRule(item, true); err != nil {
+
+	// Delete associated firwall rules
+	found, err = o.listFirewallsWithFilter("items(name),nextPageToken", loadBalancerNameFilter, nil)
+	if err != nil {
 		return err
 	}
-	item = cloudResource{
-		key:      loadBalancerName,
-		name:     loadBalancerName,
-		typeName: "healthcheck",
-	}
-	if err := o.deleteHealthCheck(item, true); err != nil {
+	items = o.insertPendingItems("firewall", found)
+	filter := fmt.Sprintf("name eq \"%s-hc\"", loadBalancerName)
+	found, err = o.listFirewallsWithFilter("items(name),nextPageToken", filter, nil)
+	if err != nil {
 		return err
 	}
-	item = cloudResource{
-		key:      loadBalancerName+"-hc",
-		name:     loadBalancerName+"-hc",
-		typeName: "healthcheck",
+	items = o.insertPendingItems("firewall", found)
+	for _, item := range items {
+		err = o.deleteFirewall(item)
+		if err != nil {
+			errs = append(errs, err)
+		}
 	}
-	if err := o.deleteHealthCheck(item, true); err != nil {
+
+	// Delete associated forwarding rules
+	found, err = o.listForwardingRulesWithFilter("items(name),nextPageToken", loadBalancerNameFilter, nil)
+	if err != nil {
 		return err
 	}
-	item = cloudResource{
-		key:      loadBalancerName+"-hc",
-		name:     loadBalancerName+"-hc",
-		typeName: "healthcheck",
+	items = o.insertPendingItems("forwardingrule", found)
+	for _, item := range items {
+		err = o.deleteForwardingRule(item)
+		if err != nil {
+			errs = append(errs, err)
+		}
 	}
-	if err := o.deleteHealthCheck(item, true); err != nil {
+
+	// Delete associated http health checks
+	found, err = o.listHttpHealthChecksWithFilter("items(name),nextPageToken", loadBalancerNameFilter, nil)
+	if err != nil {
 		return err
 	}
-	item = cloudResource{
-		key:      loadBalancerName,
-		name:     loadBalancerName,
-		typeName: "firewall",
+	items = o.insertPendingItems("httphealthcheck", found)
+	for _, item := range items {
+		err = o.deleteHttpHealthCheck(item)
+		if err != nil {
+			errs = append(errs, err)
+		}
 	}
-	if err := o.deleteFirewall(item, true); err != nil {
+
+	// Delete associated backend services
+	found, err = o.listBackendServicesWithFilter("items(name),nextPageToken", loadBalancerNameFilter, nil)
+	if err != nil {
 		return err
 	}
-	item = cloudResource{
-		key:      loadBalancerName+"-hc",
-		name:     loadBalancerName+"-hc",
-		typeName: "firewall",
+	items = o.insertPendingItems("backendservice", found)
+	for _, item := range items {
+		err := o.deleteBackendService(item)
+		if err != nil {
+			errs = append(errs, err)
+		}
 	}
-	if err := o.deleteFirewall(item, true); err != nil {
-		return err
-	}
-	item = cloudResource{
-		key:      loadBalancerName,
-		name:     loadBalancerName,
-		typeName: "backendservice",
-	}
-	if err := o.deleteBackendService(item); err != nil {
-		return err
-	}
-	return nil
+	return utilerrors.NewAggregate(errs)
 }
 
 // destroyCloudControllerInternalLBs removes resources associated with internal load balancers
@@ -152,71 +124,57 @@ func (o *ClusterUninstaller) deleteInternalLoadBalancer(loadBalancerName string)
 // For each of those backend services, resources like forwarding rules, firewalls, health checks and
 // backend services are removed.
 func (o *ClusterUninstaller) destroyCloudControllerInternalLBs() error {
-	groups, err := o.getInternalLBInstanceGroups()
+	errs := []error{}
+	groups, err := o.listCloudControllerInstanceGroups()
 	if err != nil {
 		return err
 	}
 	if len(groups) == 0 {
-		o.Logger.Debugf("Did not find any internal load balancer instance groups")
 		return nil
-	}
-	if o.cloudControllerUID == "" {
-		o.cloudControllerUID = strings.TrimPrefix(groups[0].name, "k8s-ig--")
 	}
 	backends, err := o.listBackendServicesForInstanceGroups(groups)
 	if err != nil {
 		return err
 	}
-
-	errs := []error{}
-	found := cloudResources{}
-	// Each backend found represents an internal load balancer.
-	// For each, remove related resources
 	for _, backend := range backends {
-		found.insert(backend)
 		err := o.deleteInternalLoadBalancer(backend.name)
 		if err != nil {
 			errs = append(errs, err)
 		}
 	}
-	deleted := o.setPendingItems("internallb", found)
-	for _, item := range deleted {
-		o.Logger.Infof("Deleted internal load balancer %s", item.name)
-	}
-	if len(errs) > 0 {
-		return aggregateError(errs)
-	}
-
-	// Finally, remove the instance groups {
-	found = cloudResources{}
 	for _, group := range groups {
-		found.insert(group)
 		err := o.deleteInstanceGroup(group)
 		if err != nil {
 			errs = append(errs, err)
 		}
 	}
-	deleted = o.setPendingItems("lbinstancegroup", found)
-	for _, item := range deleted {
-		o.Logger.Infof("Deleted instance group %s", item.name)
-	}
 	if len(o.cloudControllerUID) > 0 {
-		item := cloudResource{
-			key:      fmt.Sprintf("k8s-%s-node", o.cloudControllerUID),
-			name:     fmt.Sprintf("k8s-%s-node", o.cloudControllerUID),
-			typeName: "healthcheck",
-		}
-		if err := o.deleteHealthCheck(item, true); err != nil {
+		// Delete Cloud Controller http health checks
+		filter := fmt.Sprintf("name eq \"k8s-%s-node\"", o.cloudControllerUID)
+		found, err := o.listHttpHealthChecksWithFilter("items(name),nextPageToken", filter, nil)
+		if err != nil {
 			return err
 		}
-		item = cloudResource{
-			key:      fmt.Sprintf("k8s-%s-node-http-hc", o.cloudControllerUID),
-			name:     fmt.Sprintf("k8s-%s-node-http-hc", o.cloudControllerUID),
-			typeName: "firewall",
+		items := o.insertPendingItems("httphealthcheck", found)
+		for _, item := range items {
+			err = o.deleteHttpHealthCheck(item)
+			if err != nil {
+				errs = append(errs, err)
+			}
 		}
-		if err := o.deleteFirewall(item, true); err != nil {
+		// Delete Cloud Controller firewall rules
+		filter = fmt.Sprintf("name eq \"k8s-%s-node-hc\"", o.cloudControllerUID)
+		found, err = o.listFirewallsWithFilter("items(name),nextPageToken", filter, nil)
+		if err != nil {
 			return err
+		}
+		items = o.insertPendingItems("firewall", found)
+		for _, item := range items {
+			err = o.deleteFirewall(item)
+			if err != nil {
+				errs = append(errs, err)
+			}
 		}
 	}
-	return aggregateError(errs, len(found))
+	return aggregateError(errs, 0)
 }
