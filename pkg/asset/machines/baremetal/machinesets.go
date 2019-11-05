@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
@@ -32,7 +33,10 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		total = *pool.Replicas
 	}
 
-	provider := provider(clustername, platform, osImage, userDataSecret)
+	provider, err := provider(clustername, platform, osImage, userDataSecret)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create provider")
+	}
 	name := fmt.Sprintf("%s-%s-%d", clustername, pool.Name, 0)
 	mset := &machineapi.MachineSet{
 		TypeMeta: metav1.TypeMeta{
