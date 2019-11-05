@@ -185,7 +185,6 @@ This step allows installer and users to resolve cluster-internal hostnames from 
     ```
 3. Reload NetworkManager to pick up the `dns` configuration change: `sudo systemctl reload NetworkManager`
 
-
 ## Build the installer
 
 Set `TAGS=libvirt` to add support for libvirt; this is not enabled by default because libvirt is [development only](../../../README.md#supported-platforms).
@@ -196,7 +195,18 @@ TAGS=libvirt hack/build.sh
 
 ## Run the installer
 
-With [libvirt configured](#install-and-enable-libvirt), you can proceed with [the usual quick-start](../../../README.md#quick-start).
+Once you had [libvirt configured](#install-and-enable-libvirt):
+
+- If you want to have reproducible installs (which is quite common during development), you can follow the [multiple invokations](../../user/overview.md#multiple-invocations) setup
+- Otherwise you can proceed with [the usual quick-start](../../../README.md#quick-start)
+
+During the setup you will need to choose, among the others:
+
+- `libvirt` as a platform
+- the base domain you chose while configuring `libvirt` and `dnsmasq` (`tt.testing` in the example)
+- a pull secret: just press `? + enter`, follow the link, choose bare metal and then `copy pull secret`. Paste the secret in the console.
+
+Once the setup is finished, you can [interact with the cluster with kubectl](#inspect-the-cluster-with-kubectl) or [ssh into the nodes](https://github.com/openshift/installer/blob/master/docs/dev/libvirt/README.md#ssh-access).
 
 ## Cleanup
 
@@ -207,6 +217,8 @@ openshift-install destroy cluster
 ```
 
 You can also use [`virsh-cleanup.sh`](../../../scripts/maintenance/virsh-cleanup.sh), but note that it will currently destroy *all* libvirt resources.
+
+Note that this might leave some unused images in your disk. To remove them and restore some disk space, clean the `/var/lib/libvirt/openshift-images` folder.
 
 ### Firewall
 
