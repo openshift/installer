@@ -85,6 +85,17 @@ func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err er
 	}
 
 	tempPath := fmt.Sprintf("%s.tmp", filePath)
+
+	// Delete the temporary file that may have been left over from previous launches.
+	err = os.Remove(tempPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return errors.Errorf("failed to clean up %s: %v", tempPath, err)
+		}
+	} else {
+		logrus.Debugf("Temporary file %v that remained after the previous launches was deleted", tempPath)
+	}
+
 	file, err := os.OpenFile(tempPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0444)
 	if err != nil {
 		return err
