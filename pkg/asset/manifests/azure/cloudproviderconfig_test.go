@@ -16,7 +16,7 @@ func TestCloudProviderConfig(t *testing.T) {
 		NetworkResourceGroupName: "clusterid-rg",
 		NetworkSecurityGroupName: "clusterid-node-nsg",
 		VirtualNetworkName:       "clusterid-vnet",
-		SubnetName:               "clusterid-node-subnet",
+		SubnetName:               "clusterid-worker-subnet",
 	}
 	expected := `{
 	"cloud": "AzurePublicCloud",
@@ -32,7 +32,7 @@ func TestCloudProviderConfig(t *testing.T) {
 	"location": "westeurope",
 	"vnetName": "clusterid-vnet",
 	"vnetResourceGroup": "clusterid-rg",
-	"subnetName": "clusterid-node-subnet",
+	"subnetName": "clusterid-worker-subnet",
 	"securityGroupName": "clusterid-node-nsg",
 	"routeTableName": "clusterid-node-routetable",
 	"primaryAvailabilitySetName": "",
