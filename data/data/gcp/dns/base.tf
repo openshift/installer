@@ -1,3 +1,9 @@
+resource "google_dns_managed_zone" "public" {
+  name       = "${var.cluster_id}-public-zone"
+  dns_name   = "${var.cluster_domain}."
+  visibility = "public"
+}
+
 resource "google_dns_managed_zone" "int" {
   name       = "${var.cluster_id}-private-zone"
   dns_name   = "${var.cluster_domain}."
@@ -16,7 +22,7 @@ resource "google_dns_record_set" "api_external" {
   name         = "api.${var.cluster_domain}."
   type         = "A"
   ttl          = "60"
-  managed_zone = var.public_dns_zone_name
+  managed_zone = google_dns_managed_zone.public.name
   rrdatas      = [var.api_external_lb_ip]
 }
 
