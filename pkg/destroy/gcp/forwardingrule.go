@@ -27,6 +27,7 @@ func (o *ClusterUninstaller) listForwardingRulesWithFilter(fields string, filter
 	err := req.Pages(ctx, func(list *compute.ForwardingRuleList) error {
 		for _, item := range list.Items {
 			if filterFunc == nil || filterFunc != nil && filterFunc(item) {
+				o.Logger.Debugf("Found forwarding rule: %s", item.Name)
 				result = append(result, cloudResource{
 					key:      item.Name,
 					name:     item.Name,
