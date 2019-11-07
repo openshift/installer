@@ -103,3 +103,48 @@ func (o *ClusterUninstaller) destroyInstances() error {
 	items = o.getPendingItems("instance")
 	return aggregateError(errs, len(items))
 }
+
+func (o *ClusterUninstaller) stopInstance(item cloudResource) error {
+	o.Logger.Debugf("Stopping compute instance %s in zone %s", item.name, item.zone)
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+	op, err := o.computeSvc.Instances.Stop(o.ProjectID, item.zone, item.name).RequestId(o.requestID("stopinstance", item.zone, item.name)).Context(ctx).Do()
+	if err != nil && !isNoOp(err) {
+		o.resetRequestID("stopinstance", item.zone, item.name)
+		return errors.Wrapf(err, "failed to stop instance %s in zone %s", item.name, item.zone)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID("stopinstance", item.zone, item.name)
+		return errors.Errorf("failed to stop instance %s in zone %s with error: %s", item.name, item.zone, operationErrorMessage(op))
+	}
+	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
+		o.resetRequestID("stopinstance", item.name)
+		o.deletePendingItems("stopinstance", []cloudResource{item})
+		o.Logger.Infof("Stopped instance %s", item.name)
+	}
+	return nil
+}
+
+// stopComputeInstances searches for instances across all zones that have a name that starts with
+// the infra ID prefix and are not yet stopped. It then stops each instance found.
+func (o *ClusterUninstaller) stopInstances() error {
+	found, err := o.listInstances()
+	if err != nil {
+		return err
+	}
+	for _, item := range found {
+		if item.status != "TERMINATED" {
+			o.insertPendingItems("stopinstance", []cloudResource{item})
+		}
+	}
+	items := o.getPendingItems("stopinstance")
+	errs := []error{}
+	for _, item := range items {
+		err := o.stopInstance(item)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	items = o.getPendingItems("stopinstance")
+	return aggregateError(errs, len(items))
+}
