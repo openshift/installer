@@ -17,6 +17,14 @@ import (
 // served by the machine config server.
 func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string) *ignition.Config {
 	var ignitionHost string
+	CAs := []ignition.CaReference{{
+		Source: dataurl.EncodeBytes(rootCA),
+	}}
+	if installConfig.AdditionalTrustBundle != "" {
+		CAs = append(CAs, ignition.CaReference{
+			Source: dataurl.EncodeBytes([]byte(installConfig.AdditionalTrustBundle)),
+		})
+	}
 	switch installConfig.Platform.Name() {
 	case baremetaltypes.Name:
 		// Baremetal needs to point directly at the VIP because we don't have a
@@ -49,9 +57,7 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 			},
 			Security: ignition.Security{
 				TLS: ignition.TLS{
-					CertificateAuthorities: []ignition.CaReference{{
-						Source: dataurl.EncodeBytes(rootCA),
-					}},
+					CertificateAuthorities: CAs,
 				},
 			},
 		},
