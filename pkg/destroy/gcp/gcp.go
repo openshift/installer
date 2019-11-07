@@ -118,38 +118,45 @@ func (o *ClusterUninstaller) Run() error {
 }
 
 func (o *ClusterUninstaller) destroyCluster() (bool, error) {
-	destroyFuncs := []struct {
+	stagedFuncs := [][]struct {
 		name    string
-		destroy func() error
-	}{
+		execute func() error
+	}{{
+		{name: "Stop instances", execute: o.stopInstances},
+	}, {
 		{name: "Cloud controller internal LBs", destroy: o.destroyCloudControllerInternalLBs},
 		{name: "Cloud controller external LBs", destroy: o.destroyCloudControllerExternalLBs},
-		{name: "Compute instances", destroy: o.destroyInstances},
-		{name: "Disks", destroy: o.destroyDisks},
-		{name: "Service accounts", destroy: o.destroyServiceAccounts},
-		{name: "Policy bindings", destroy: o.destroyIAMPolicyBindings},
-		{name: "Images", destroy: o.destroyImages},
-		{name: "DNS", destroy: o.destroyDNS},
-		{name: "Object storage", destroy: o.destroyBuckets},
-		{name: "Routes", destroy: o.destroyRoutes},
-		{name: "Firewalls", destroy: o.destroyFirewalls},
-		{name: "Addresses", destroy: o.destroyAddresses},
-		{name: "Target Pools", destroy: o.destroyTargetPools},
-		{name: "Compute instance groups", destroy: o.destroyInstanceGroups},
-		{name: "Forwarding rules", destroy: o.destroyForwardingRules},
-		{name: "Backend services", destroy: o.destroyBackendServices},
-		{name: "Health checks", destroy: o.destroyHealthChecks},
-		{name: "HTTP Health checks", destroy: o.destroyHttpHealthChecks},
-		{name: "Cloud routers", destroy: o.destroyRouters},
-		{name: "Subnetworks", destroy: o.destroySubnetworks},
-		{name: "Networks", destroy: o.destroyNetworks},
-	}
+	}, {
+		{name: "Instances", execute: o.destroyInstances},
+		{name: "Disks", execute: o.destroyDisks},
+		{name: "Service accounts", execute: o.destroyServiceAccounts},
+		{name: "Policy bindings", execute: o.destroyIAMPolicyBindings},
+		{name: "Images", execute: o.destroyImages},
+		{name: "DNS", execute: o.destroyDNS},
+		{name: "Buckets", execute: o.destroyBuckets},
+		{name: "Routes", execute: o.destroyRoutes},
+		{name: "Firewalls", execute: o.destroyFirewalls},
+		{name: "Addresses", execute: o.destroyAddresses},
+		{name: "Target Pools", execute: o.destroyTargetPools},
+		{name: "Instance groups", execute: o.destroyInstanceGroups},
+		{name: "Forwarding rules", execute: o.destroyForwardingRules},
+		{name: "Backend services", execute: o.destroyBackendServices},
+		{name: "Health checks", execute: o.destroyHealthChecks},
+		{name: "HTTP Health checks", execute: o.destroyHttpHealthChecks},
+		{name: "Routers", execute: o.destroyRouters},
+		{name: "Subnetworks", execute: o.destroySubnetworks},
+		{name: "Networks", execute: o.destroyNetworks},
+	}}
 	done := true
-	for _, f := range destroyFuncs {
-		err := f.destroy()
-		if err != nil {
-			o.Logger.Debugf("%s: %v", f.name, err)
-			done = false
+	for _, stage := range stagedFuncs {
+		if done {
+			for _, f := range stage {
+				err := f.execute()
+				if err != nil {
+					o.Logger.Debugf("%s: %v", f.name, err)
+					done = false
+				}
+			}
 		}
 	}
 	return done, nil
