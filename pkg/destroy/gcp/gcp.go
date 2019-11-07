@@ -124,8 +124,7 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 	}{{
 		{name: "Stop instances", execute: o.stopInstances},
 	}, {
-		{name: "Cloud controller internal LBs", destroy: o.destroyCloudControllerInternalLBs},
-		{name: "Cloud controller external LBs", destroy: o.destroyCloudControllerExternalLBs},
+		{name: "Cloud controller resources", execute: o.discoverCloudControllerResources},
 	}, {
 		{name: "Instances", execute: o.destroyInstances},
 		{name: "Disks", execute: o.destroyDisks},
@@ -142,7 +141,7 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		{name: "Forwarding rules", execute: o.destroyForwardingRules},
 		{name: "Backend services", execute: o.destroyBackendServices},
 		{name: "Health checks", execute: o.destroyHealthChecks},
-		{name: "HTTP Health checks", execute: o.destroyHttpHealthChecks},
+		{name: "HTTP Health checks", execute: o.destroyHTTPHealthChecks},
 		{name: "Routers", execute: o.destroyRouters},
 		{name: "Subnetworks", execute: o.destroySubnetworks},
 		{name: "Networks", execute: o.destroyNetworks},
