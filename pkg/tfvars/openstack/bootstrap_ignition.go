@@ -11,11 +11,13 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/kubernetes/apimachinery/pkg/util/rand"
+	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
 )
 
 // createBootstrapSwiftObject creates a container and object in swift with the bootstrap ignition config.
 func createBootstrapSwiftObject(cloud string, bootstrapIgn string, clusterID string) (string, error) {
+	logrus.Debugln("Creating a Swift container for your bootstrap ignition...")
 	opts := clientconfig.ClientOpts{
 		Cloud: cloud,
 	}
@@ -39,7 +41,9 @@ func createBootstrapSwiftObject(cloud string, bootstrapIgn string, clusterID str
 	if err != nil {
 		return "", err
 	}
+	logrus.Debugf("Container %s was created.", clusterID)
 
+	logrus.Debugf("Creating a Swift object in container %s containing your bootstrap ignition...", clusterID)
 	objectCreateOpts := objects.CreateOpts{
 		ContentType: "text/plain",
 		Content:     strings.NewReader(bootstrapIgn),
@@ -52,6 +56,7 @@ func createBootstrapSwiftObject(cloud string, bootstrapIgn string, clusterID str
 	if err != nil {
 		return "", err
 	}
+	logrus.Debugf("The object was created.")
 
 	return objID, nil
 }
