@@ -10,7 +10,7 @@
 * [GCP](docs/user/gcp/README.md)
 * [GCP (UPI)](docs/user/gcp/install_upi.md)
 * [Libvirt with KVM](docs/dev/libvirt/README.md) (development only)
-* [OpenStack (experimental)](docs/user/openstack/README.md)
+* [OpenStack](docs/user/openstack/README.md)
 * [vSphere](docs/user/vsphere/install_upi.md)
 
 ## Quick Start
