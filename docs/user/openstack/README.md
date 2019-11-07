@@ -242,23 +242,73 @@ All the OpenShift nodes get created in an OpenStack tenant network and as such, 
 
 This method allows you to attach two floating IP (FIP) addresses to endpoints in OpenShift.
 
-You will need to create two floating IP addresses, one to attach to the API load balancer (lb FIP), and one for the OpenShift applications (apps FIP). Note that the LB FIP is the same floating IP as the one you added to your `install-config.yaml`. The following command is an example of how to create floating IPs:
+A standard deployment uses three floating IP addresses in total:
+
+1. External access to the OpenShift API
+2. External access to the workloads (apps) running on the OpenShift cluster
+3. Temporary IP address for bootstrap log collection
+
+The first two addresses (API and Ingress) are generally created up-front and have the corresponding DNS records resolve to them.
+
+The third floating IP is created automatically by the installer and will be destroyed along with all the other bootstrap resources. If the bootstrapping process fails, the installer will try to SSH into the bootstrap node and collect the logs.
+
+##### Create API and Ingress Floating IP Addresses
+
+The deployed OpenShift cluster will need two floating IP addresses, one to attach to the API load balancer (lb FIP), and one for the OpenShift applications (apps FIP). Note that the LB FIP is the IP address you will add to your `install-config.yaml` or select in the interactive installer prompt.
+
+You can create them like so:
 
 ```sh
-openstack floating ip create <external network>
+openstack floating ip create --description "API <cluster name>.<base domain>" <external network>
+# => <lb FIP>
+openstack floating ip create --description "Ingress <cluster name>.<base domain>" <external network>
+# => <apps FIP>
 ```
+
+**NOTE:** These IP addresses will **not** show up attached to any particular server (e.g. when running `openstack server list`). Similarly, the API and Ingress ports will always be in the `DOWN` state.
+
+This is because the ports are not attached to the servers directly. Instead, their fixed IP addresses are managed by keepalived. This has no record in Neutron's database and as such, is not visible to OpenStack.
+
+*The network traffic will flow through even though the IPs and ports do not show up in the servers*.
+
+For more details, read the [OpenShift on OpenStack networking infrastructure design document](../../design/openstack/networking-infrastructure.md).
+
+##### Create API and Ingress DNS Records
 
 You will also need to add the following records to your DNS:
 
 ```dns
-api.<cluster name>.<base domain>  IN  A  <lb FIP>
+api.<cluster name>.<base domain>.  IN  A  <lb FIP>
+*.apps.<cluster name>.<base domain>.  IN  A  <apps FIP>
 ```
 
-If you don't have a DNS server under your control, you should add the records to your `/etc/hosts` file.
+If you're unable to create and publish these DNS records, you can add them to your `/etc/hosts` file.
 
-**NOTE:** *this will make the API accessible only to you. This is fine for your own testing (and it is enough for the installation to succeed), but it is not enough for a production deployment.*
+```dns
+<lb FIP> api.<cluster name>.<base domain>
+<apps FIP> console-openshift-console.apps.<cluster name>.<base domain>
+<apps FIP> integrated-oauth-server-openshift-authentication.apps.<cluster name>.<base domain>
+<apps FIP> oauth-openshift.apps.<cluster name>.<base domain>
+<apps FIP> prometheus-k8s-openshift-monitoring.apps.<cluster name>.<base domain>
+<apps FIP> grafana-openshift-monitoring.apps.<cluster name>.<base domain>
+<apps FIP> <app name>.apps.<cluster name>.<base domain>
+```
 
-In order to reach the applications running on your worker nodes, you should attach a floating IP to the `ingress-port` at the end of your install. That can be done in the following steps:
+**WARNING:** *this workaround will make the API accessible only to the computer with these `/etc/hosts` entries. This is fine for your own testing (and it is enough for the installation to succeed), but it is not enough for a production deployment. In addition, if you create new OpenShift apps or routes, you will have to add their entries too, because `/etc/hosts` does not support wildcard entries.*
+
+##### External API Access
+
+If you have specified the API floating IP (either via the installer prompt or by adding the `lbFloatingIP` entry in your `install-config.yaml`) the installer will attach the Floating IP address to the `api-port` automatically.
+
+If you have created the API DNS record, you should be able access the OpenShift API.
+
+##### External Ingress (apps) Access
+
+The installer doesn't currently handle the Ingress floating IP address the same way it does the API one.
+
+To make the OpenShift Ingress access available (this includes logging into the deployed cluster), you will need to attach the Ingress floating IP to the `ingress-port` after the cluster is created.
+
+That can be done in the following steps:
 
 ```sh
 openstack port show <cluster name>-<clusterID>-ingress-port
@@ -267,25 +317,11 @@ openstack port show <cluster name>-<clusterID>-ingress-port
 Then attach the FIP to it:
 
 ```sh
-openstack floating ip set --port <ingress port id> <apps FIP>
+openstack floating ip set --port <cluster name>-<clusterID>-ingress-port <apps FIP>
 ```
 
-Add a wildcard A record for `*apps.` in your DNS:
+This assumes the floating IP and corresponding `*.apps` DNS record exists.
 
-```dns
-*.apps.<cluster name>.<base domain>  IN  A  <apps FIP>
-```
-
-Alternatively, if you don't control the DNS, you can add the hostnames in `/etc/hosts`:
-
-```dns
-<apps FIP> console-openshift-console.apps.<cluster name>.<base domain>
-<apps FIP> integrated-oauth-server-openshift-authentication.apps.<cluster name>.<base domain>
-<apps FIP> oauth-openshift.apps.<cluster name>.<base domain>
-<apps FIP> prometheus-k8s-openshift-monitoring.apps.<cluster name>.<base domain>
-<apps FIP> grafana-openshift-monitoring.apps.<cluster name>.<base domain>
-<apps FIP> <app name>.apps.<cluster name>.<base domain>
-```
 
 #### Without Floating IPs
 
