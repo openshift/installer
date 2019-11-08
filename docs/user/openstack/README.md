@@ -162,7 +162,7 @@ The installer requires a proper RHCOS image in the OpenStack cluster or project:
 openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.qcow2 rhcos
 ```
 
-**NOTE:** Depending on your OpenStack environment you can upload the RHCOS image as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/image-formats.html) for more information. At the time of writing, the installer looks for an image named `rhcos`.
+**NOTE:** Depending on your OpenStack environment you can upload the RHCOS image as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/introduction.html#disk-and-container-formats-for-images) for more information. At the time of writing, the installer looks for an image named `rhcos`.
 
 ### Neutron Public Network
 
