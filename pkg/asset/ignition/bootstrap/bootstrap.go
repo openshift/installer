@@ -62,7 +62,7 @@ var _ asset.WritableAsset = (*Bootstrap)(nil)
 func (a *Bootstrap) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
-		&kubeconfig.AdminClient{},
+		&kubeconfig.AdminInternalClient{},
 		&kubeconfig.Kubelet{},
 		&kubeconfig.LoopbackClient{},
 		&machines.Master{},
@@ -425,7 +425,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 
 	// These files are all added with mode 0600; use for secret keys and the like.
 	for _, asset := range []asset.WritableAsset{
-		&kubeconfig.AdminClient{},
+		&kubeconfig.AdminInternalClient{},
 		&kubeconfig.Kubelet{},
 		&kubeconfig.LoopbackClient{},
 		&tls.AdminKubeConfigCABundle{},
