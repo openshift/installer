@@ -11,6 +11,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig/aws"
+	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/conversion"
@@ -154,6 +155,13 @@ func (a *InstallConfig) finish(filename string) error {
 }
 
 func (a *InstallConfig) platformValidation() error {
+	if a.Config.Platform.Azure != nil {
+		client, err := icazure.NewClient(context.TODO())
+		if err != nil {
+			return err
+		}
+		return icazure.Validate(client, a.Config)
+	}
 	if a.Config.Platform.GCP != nil {
 		client, err := icgcp.NewClient(context.TODO())
 		if err != nil {

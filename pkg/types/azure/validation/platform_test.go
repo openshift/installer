@@ -48,6 +48,46 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			valid: true,
 		},
+		{
+			name: "valid subnets & virtual network",
+			platform: &azure.Platform{
+				Region:                      "eastus",
+				BaseDomainResourceGroupName: "group",
+				NetworkResourceGroupName:    "networkresourcegroup",
+				VirtualNetwork:              "virtualnetwork",
+				ComputeSubnet:               "computesubnet",
+				ControlPlaneSubnet:          "controlplanesubnet",
+			},
+			valid: true,
+		},
+		{
+			name: "missing subnets",
+			platform: &azure.Platform{
+				Region:                   "eastus",
+				NetworkResourceGroupName: "networkresourcegroup",
+				VirtualNetwork:           "virtualnetwork",
+			},
+			valid: false,
+		},
+		{
+			name: "subnets missing virtual network",
+			platform: &azure.Platform{
+				Region:                   "eastus",
+				NetworkResourceGroupName: "networkresourcegroup",
+				ComputeSubnet:            "computesubnet",
+			},
+			valid: false,
+		},
+		{
+			name: "missing network resource group",
+			platform: &azure.Platform{
+				Region:             "eastus",
+				VirtualNetwork:     "virtualnetwork",
+				ComputeSubnet:      "computesubnet",
+				ControlPlaneSubnet: "controlplanesubnet",
+			},
+			valid: false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
