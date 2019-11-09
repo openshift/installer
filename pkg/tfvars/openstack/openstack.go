@@ -35,21 +35,6 @@ type config struct {
 
 // TFVars generates OpenStack-specific Terraform variables.
 func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string, baseImage string, infraID string, userCA string, bootstrapIgn string) ([]byte, error) {
-	swiftPublicURL, err := getSwiftPublicURL(cloud)
-	if err != nil {
-		return nil, err
-	}
-
-	objectID, err := createBootstrapSwiftObject(cloud, bootstrapIgn, infraID)
-	if err != nil {
-		return nil, err
-	}
-
-	objectAddress := fmt.Sprintf("%s/%s/%s", swiftPublicURL, infraID, objectID)
-	userCAIgnition, err := generateIgnitionShim(userCA, infraID, objectAddress)
-	if err != nil {
-		return nil, err
-	}
 
 	cfg := &config{
 		ExternalNetwork: externalNetwork,
@@ -62,7 +47,6 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		ExternalDNS:     externalDNS,
 		TrunkSupport:    trunkSupport,
 		OctaviaSupport:  octaviaSupport,
-		BootstrapShim:   userCAIgnition,
 	}
 
 	// Normally baseImage contains a URL that we will use to create a new Glance image, but for testing
@@ -88,6 +72,24 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 			return nil, err
 		}
 	}
+
+	swiftPublicURL, err := getSwiftPublicURL(cloud)
+	if err != nil {
+		return nil, err
+	}
+
+	objectID, err := createBootstrapSwiftObject(cloud, bootstrapIgn, infraID)
+	if err != nil {
+		return nil, err
+	}
+
+	objectAddress := fmt.Sprintf("%s/%s/%s", swiftPublicURL, infraID, objectID)
+	userCAIgnition, err := generateIgnitionShim(userCA, infraID, objectAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg.BootstrapShim = userCAIgnition
 
 	if masterConfig.RootVolume != nil {
 		cfg.RootVolumeSize = masterConfig.RootVolume.Size
