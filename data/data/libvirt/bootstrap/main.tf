@@ -2,6 +2,8 @@ resource "libvirt_volume" "bootstrap" {
   name           = "${var.cluster_id}-bootstrap"
   base_volume_id = var.base_volume_id
   pool           = var.pool
+  # If you change this, you probably want to change the control plane/workers too
+  size = 16000000000
 }
 
 resource "libvirt_ignition" "bootstrap" {
