@@ -9,12 +9,11 @@ import (
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/openstack"
-	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
 )
 
 // Platform collects OpenStack-specific configuration.
 func Platform() (*openstack.Platform, error) {
-	validValuesFetcher := openstackvalidation.NewValidValuesFetcher()
+	validValuesFetcher := NewValidValuesFetcher()
 
 	cloudNames, err := validValuesFetcher.GetCloudNames()
 	if err != nil {

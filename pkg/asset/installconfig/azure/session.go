@@ -44,6 +44,8 @@ func GetSession() (*Session, error) {
 }
 
 func newSessionFromFile(authFilePath string) (*Session, error) {
+	logrus.Debugf("Trying to load credentials from file %q", authFilePath)
+
 	// NewAuthorizerFromFileWithResource uses `auth.GetSettingsFromFile`, which uses the `azureAuthEnv` to fetch the auth credentials.
 	// therefore setting the local env here to authFilePath allows NewAuthorizerFromFileWithResource to load credentials.
 	os.Setenv(azureAuthEnv, authFilePath)
@@ -70,6 +72,8 @@ func newSessionFromFile(authFilePath string) (*Session, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to map authsettings to credentials")
 	}
+
+	logrus.Infof("Credentials loaded from file %q", authFilePath)
 
 	authorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
 	if err != nil {
