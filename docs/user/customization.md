@@ -25,6 +25,7 @@ The following `install-config.yaml` properties are available:
     Valid values are `External` (the default) and `Internal`.
 * `controlPlane` (optional [machine-pool](#machine-pools)): The configuration for the machines that comprise the control plane.
 * `compute` (optional array of [machine-pools](#machine-pools)): The configuration for the machines that comprise the compute nodes.
+* `fips` (optional boolean): Enables FIPS mode (default false).
 * `imageContentSources` (optional array of objects): Sources and repositories for the release-image content.
     Each entry in the array is an object with the following properties:
     * `source` (required string): The repository that users refer to, e.g. in image pull specifications.
@@ -382,6 +383,67 @@ For example:
     master-55491738d7cd1ad6c72891e77c35e024                     3.11.0-744-g5b05d9d3-dirty   2.2.0             137m
     worker-edab0895c59dba7a566f4b955d87d964                     3.11.0-744-g5b05d9d3-dirty   2.2.0             137m
     ```
+
+#### Nodes with Custom Kernel Arguments
+
+Custom kernel arguments can be applied to through manifests as an installer operation, and can also be applied as a [MachineConfig][machine-config] as a day 2 operation. The kernel arguments are applied upon boot and will be honored by the Machine-Config-Operator from then on.
+
+Example application of `loglevel=7` (change Linux kernel log level to KERN_DEBUG) for master nodes:
+
+1. Run `manifests` target to create all the manifests.
+
+    ```console
+    $ mkdir log_debug_cluster
+
+    $ openshift-install --dir log_debug_cluster create manifests
+    ...
+
+    $ ls -l log_debug_cluster/openshift
+    ...
+    99_openshift-machineconfig_99-master-ssh.yaml
+    99_openshift-machineconfig_99-worker-ssh.yaml
+    ...
+    ```
+
+2. . Create a `MachineConfig` that adds a kernel argument to change log level:
+
+    ```sh
+    cat > log_debug_cluster/openshift/99-master-kargs-loglevel.yaml <<EOF
+    apiVersion: machineconfiguration.openshift.io/v1
+    kind: MachineConfig
+    metadata:
+      labels:
+        machineconfiguration.openshift.io/role: "master"
+      name: 99-master-kargs-loglevel
+    spec:
+      kernelArguments:
+        - 'loglevel=7'
+    EOF
+    ```
+
+3. Run `cluster` target to create the cluster using the custom manifests.
+
+    ```console
+    $ openshift-install --dir log_debug_cluster create cluster
+    ...
+    ```
+
+    Check that the machineconfig has the kernel arguments applied
+
+    ```console
+    $ oc --config log_debug_cluster/auth/kubeconfig get machineconfigs
+    NAME                                                        GENERATEDBYCONTROLLER                      IGNITIONVERSION   CREATED
+    99-master-kargs-loglevel                                    bd846958bc95d049547164046a962054fca093df   2.2.0             26h
+    99-master-ssh                                               bd846958bc95d049547164046a962054fca093df   2.2.0             26h
+    ...
+    rendered-master-5f4a5bd806567871be1b608474eca373            bd846958bc95d049547164046a962054fca093df   2.2.0             26h
+
+    $ oc describe machineconfig/rendered-master-5f4a5bd806567871be1b608474eca373 | grep -A 1 "Kernel Arguments"
+      Kernel Arguments:
+        loglevel=7
+    ```
+
+    If you wish to confirm the kernel argument is indeed being applied on the system, you can `oc debug` into a node and check with `rpm-ostree kargs`.
 
 ## OS Customization (unvalidated)
 

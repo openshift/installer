@@ -1,0 +1,20 @@
+all:
+  hosts:
+    localhost:
+      ansible_connection: local
+      ansible_python_interpreter: "{{ansible_playbook_python}}"
+
+      os_subnet_range: '10.0.0.0/16'
+      os_cluster_name: 'openshift'
+
+      # Computed values
+
+      # os_infra_id is the string we will use as a prefix for the names of the
+      # OpenShift cluster resources. It is built in the form of:
+      #
+      #     "{{ os_cluster_name }}{{ installation-specific string }}"
+      os_infra_id: "{{ os_cluster_name }}-upi"
+
+      # os_network is the name of the OpenStack network that will contain the
+      # OpenShift cluster.
+      os_network: "{{ os_infra_id }}-network"

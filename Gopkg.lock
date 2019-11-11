@@ -18,7 +18,7 @@
   version = "v0.4.11"
 
 [[projects]]
-  digest = "1:0e1b77a659461596e0b6ab8187c0672082452135e7d842cab03c89fe35a5b3d9"
+  digest = "1:30bf7932616fd30848ac8f869c9bdf158ce4d099944f13d8dd8a15243c2cb1ea"
   name = "github.com/Azure/azure-sdk-for-go"
   packages = [
     "profiles/latest/dns/mgmt/dns",
@@ -26,6 +26,7 @@
     "services/compute/mgmt/2018-10-01/compute",
     "services/dns/mgmt/2017-10-01/dns",
     "services/graphrbac/1.6/graphrbac",
+    "services/network/mgmt/2018-12-01/network",
     "services/preview/dns/mgmt/2018-03-01-preview/dns",
     "services/privatedns/mgmt/2018-09-01/privatedns",
     "services/resources/mgmt/2018-05-01/resources",
@@ -394,7 +395,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f57b7ddc21b0593c06ce50d1b32ec2fcb91617cb7ee4f94b7a04d86377b3d708"
+  digest = "1:67551c599e04b31fe799b4bd4de0e101d3c022057213ef7af014bdce5f525b18"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
@@ -432,7 +433,7 @@
     "pagination",
   ]
   pruneopts = "NUT"
-  revision = "863d5406e68f374ee607452672b18a177134bbbc"
+  revision = "6ad562af8c1fd8a69397a13caf58fa184d115b56"
 
 [[projects]]
   branch = "master"
@@ -519,6 +520,14 @@
   pruneopts = "NUT"
   revision = "1455def202f6e05b95cc7bfc7e8ae67ae5141eba"
   version = "v0.1.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:c26b841ff18d8b7fa1606f869ec66eedd6327469e33f9ee3dcb8bef800fdad50"
+  name = "github.com/kubernetes/apimachinery"
+  packages = ["pkg/util/rand"]
+  pruneopts = "NUT"
+  revision = "af6325b3a843fc0c4c448b1bd770ebab40e9acc4"
 
 [[projects]]
   digest = "1:1da9aa83870a429ce7127ced903a0b583012ed934682a5d5acaa12d74b92ebdc"
@@ -716,15 +725,12 @@
   revision = "4b9f6ceb6598ebd4dd6c9385ef024abf7a18159b"
 
 [[projects]]
-  digest = "1:5bfff65eba275066cdf304a0faf91c7709e0f612ebb9760046adf6035d63ef5c"
+  branch = "master"
+  digest = "1:984213011d5efba011f598ddb50f39e1207d1bb04cc354c9877b4fecf1ab1c09"
   name = "github.com/openshift/machine-config-operator"
-  packages = [
-    "pkg/apis",
-    "pkg/apis/machineconfiguration.openshift.io/v1",
-  ]
+  packages = ["pkg/apis/machineconfiguration.openshift.io/v1"]
   pruneopts = "NUT"
-  revision = "7efcbbbcada2af39a505c7a0305c7b32acec0af3"
-  version = "v3.11.0"
+  revision = "e8050812d5068866f61f052cc7c96e45d626776e"
 
 [[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
@@ -1359,6 +1365,7 @@
     "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions",
     "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute",
     "github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac",
+    "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network",
     "github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns",
     "github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns",
     "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources",
@@ -1412,6 +1419,7 @@
     "github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers",
     "github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects",
     "github.com/gophercloud/utils/openstack/clientconfig",
+    "github.com/kubernetes/apimachinery/pkg/util/rand",
     "github.com/libvirt/libvirt-go",
     "github.com/metal3-io/baremetal-operator/pkg/apis/metal3/v1alpha1",
     "github.com/metal3-io/baremetal-operator/pkg/bmc",

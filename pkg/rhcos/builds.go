@@ -24,12 +24,14 @@ type metadata struct {
 	BaseURI string `json:"baseURI"`
 	Images  struct {
 		QEMU struct {
-			Path   string `json:"path"`
-			SHA256 string `json:"sha256"`
+			Path               string `json:"path"`
+			SHA256             string `json:"sha256"`
+			UncompressedSHA256 string `json:"uncompressed-sha256"`
 		} `json:"qemu"`
 		OpenStack struct {
-			Path   string `json:"path"`
-			SHA256 string `json:"sha256"`
+			Path               string `json:"path"`
+			SHA256             string `json:"sha256"`
+			UncompressedSHA256 string `json:"uncompressed-sha256"`
 		} `json:"openstack"`
 	} `json:"images"`
 	OSTreeVersion string `json:"ostree-version"`

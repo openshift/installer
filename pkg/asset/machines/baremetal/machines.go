@@ -3,12 +3,13 @@ package baremetal
 
 import (
 	"fmt"
+	"net/url"
 	"path"
 	"strings"
 
 	baremetalprovider "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
-
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,7 +33,10 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider := provider(clustername, config.Networking.MachineCIDR.String(), platform, osImage, userDataSecret)
+	provider, err := provider(clustername, platform, osImage, userDataSecret)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create provider")
+	}
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		machine := machineapi.Machine{
@@ -62,23 +66,32 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterName string, networkInterfaceAddress string, platform *baremetal.Platform, osImage string, userDataSecret string) *baremetalprovider.BareMetalMachineProviderSpec {
+func provider(clusterName string, platform *baremetal.Platform, osImage string, userDataSecret string) (*baremetalprovider.BareMetalMachineProviderSpec, error) {
 	// The rhcos-downloader container launched by the baremetal-operator downloads the image,
 	// compresses it to speed up deployments and makes it available on platform.ClusterProvisioningIP, via http
 	// osImage looks like:
-	//   https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.2/42.80.20190725.1/rhcos-42.80.20190725.1-openstack.qcow2
+	//   https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.2/42.80.20190725.1/rhcos-42.80.20190725.1-openstack.qcow2?sha256sum=123
 	// But the cached URL looks like:
 	//   http://172.22.0.3:6180/images/rhcos-42.80.20190725.1-openstack.qcow2/rhcos-42.80.20190725.1-compressed.qcow2
 	// See https://github.com/openshift/ironic-rhcos-downloader for more details
-	imageFilename := path.Base(osImage)
+	// The image is now formatted with a query string containing the sha256sum, we strip that here
+	// and it will be consumed for validation in ironic-rhcos-downloader
+	imageURL, err := url.Parse(osImage)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid osImage URL format")
+	}
+	imageURL.RawQuery = ""
+	imageURL.Fragment = ""
+	imageFilename := path.Base(imageURL.String())
 	compressedImageFilename := strings.Replace(imageFilename, "openstack", "compressed", 1)
 	cacheImageURL := fmt.Sprintf("http://%s:6180/images/%s/%s", platform.ClusterProvisioningIP, imageFilename, compressedImageFilename)
 	cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
-	return &baremetalprovider.BareMetalMachineProviderSpec{
+	config := &baremetalprovider.BareMetalMachineProviderSpec{
 		Image: baremetalprovider.Image{
 			URL:      cacheImageURL,
 			Checksum: cacheChecksumURL,
 		},
 		UserData: &corev1.SecretReference{Name: userDataSecret},
 	}
+	return config, nil
 }

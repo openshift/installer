@@ -15,10 +15,16 @@ variable "openstack_base_image_name" {
   description = "Name of the base image to use for the nodes."
 }
 
-variable "openstack_base_image_url" {
+variable "openstack_base_image_local_file_path" {
   type        = string
   default     = ""
-  description = "URL of the base image to use for the nodes."
+  description = "Local file path of the base image file to use for the nodes."
+}
+
+variable "openstack_bootstrap_shim_ignition" {
+  type        = string
+  default     = ""
+  description = "Generated pointer/shim ignition config with user ca bundle."
 }
 
 variable "openstack_credentials_auth_url" {
@@ -328,10 +334,4 @@ variable "openstack_octavia_support" {
 Contains 0 if the OpenStack Octavia endpoint is missing and 1 if it exists.
 EOF
 
-}
-
-variable "openstack_swift_public_url" {
-  type = "string"
-
-  description = "Public URL of Swift Service."
 }

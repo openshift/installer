@@ -333,6 +333,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.OpenStack.OctaviaSupport,
 			string(*rhcosImage),
 			clusterID.InfraID,
+			installConfig.Config.AdditionalTrustBundle,
+			bootstrapIgn,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
@@ -346,8 +348,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.BareMetal.LibvirtURI,
 			installConfig.Config.Platform.BareMetal.BootstrapProvisioningIP,
 			string(*rhcosBootstrapImage),
-			"baremetal",
-			"provisioning",
+			installConfig.Config.Platform.BareMetal.ExternalBridge,
+			installConfig.Config.Platform.BareMetal.ProvisioningBridge,
 			installConfig.Config.Platform.BareMetal.Hosts,
 			string(*rhcosImage),
 		)
