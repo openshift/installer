@@ -2,6 +2,7 @@
 Description=Configure CRI-O to use the pause image
 After=release-image.service
 Requires=release-image.service
+Before=crio.service
 
 [Service]
 Type=oneshot
