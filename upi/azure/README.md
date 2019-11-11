@@ -16,14 +16,17 @@ This creates:
 
 ### Prerequisites:
 1. Clone the installer repo: git clone https://github.com/openshift/installer
-1. Download the installer and place it in the upi/azure/arm directory
+1. Download the installer and place it in the upi/azure directory
 2. Make sure python3 is installed 
 3. Execute: pip install dotmap 
+4. Using the provided example(install-config.yaml.example), 
+   create a install-config.yaml, including your  
+   ssh key, and the pull secret. 
+5. Choose a unique name for the resource group, and use it in the commands below, instead of [UniqueResourceGroupName]
 
 
-./setup_azarm.sh UniqueResourceGroupName  
-read -p "Press [Enter] to start deploy"  
-./deploy_azarm.sh UniqueResourceGroupNaem  
+./setup_azarm.sh [UniqueResourceGroupName] 
+./deploy_azarm.sh [UniqueResourceGroupName]   
  
 
 ### Customizatiion:

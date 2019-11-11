@@ -6,10 +6,13 @@ cp install-config.yaml gw
 ./openshift-install create manifests --dir=gw
 mkdir -p gw/archive/manifests/original
 cp gw/manifests/* gw/archive/manifests/original
+rm -f gw/openshift/99_openshift-cluster-api_master-machines-*
+rm -f gw/openshift/99_openshift-cluster-api_worker-machineset-*
 python3 setup-manifests.py $1
+./setup-host-network.sh
 cp gw/manifests/* gw/archive/manifests/
-read -p "Press [Enter] to start after manifests"
 ./openshift-install create ignition-configs --dir=gw
+mkdir -p ~/.kube/config
 cp gw/auth/kubeconfig ~/.kube/config
 echo "Delete old resource group"
 az group delete --name $1 --yes
@@ -25,7 +28,6 @@ export ACCOUNT_KEY=$(az storage account keys list --account-name sa${1} --resour
 az storage blob copy start --account-name "sa${1}" --account-key "$ACCOUNT_KEY" --destination-blob "rhcos.vhd" --destination-container vhd --source-uri ${VHD_URL}${VHD_NAME}
 echo "Waiting on copy of vhd"
 status="unknown"
-echo $status
 while [ "$status" != "success" ]
     do
     status=$(az storage blob show --container-name vhd --name "rhcos.vhd" --account-name "sa${1}"  --account-key "$ACCOUNT_KEY" -o json --query properties.copy.status | sed -e 's/^"//' -e 's/"$//')

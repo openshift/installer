@@ -1,10 +1,14 @@
 echo "Start Deployment"
-export arm_template_path=`./gitpath.sh upi/azure/arm/azuredeploy.json`
 az group deployment create \
    --name $1 \
    --resource-group $1 \
-   --template-uri ${arm_template_path} \
+   --template-uri "https://raw.githubusercontent.com/glennswest/ocpupi4azure/master/arm/azuredeploy.json" \
      --parameters "runit.parameters.json"
+if [ $? -ne 0 ]
+then 
+   echo "Deployment Failed"
+   exit $?
+fi
 ./openshift-install --dir=gw wait-for bootstrap-complete --log-level debug
 az vm stop --resource-group $1 --name bootstrap-0
 az vm deallocate --resource-group $1 --name bootstrap-0 --no-wait
