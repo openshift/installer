@@ -21,17 +21,29 @@ func GetSession() (*session.Session, error) {
 	ssn := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
+
+	sharedCredentialsProvider := &credentials.SharedCredentialsProvider{}
 	ssn.Config.Credentials = credentials.NewChainCredentials([]credentials.Provider{
 		&credentials.EnvProvider{},
-		&credentials.SharedCredentialsProvider{},
+		sharedCredentialsProvider,
 	})
-	_, err := ssn.Config.Credentials.Get()
+
+	creds, err := ssn.Config.Credentials.Get()
+	if err == nil {
+		switch creds.ProviderName {
+		case "SharedCredentialsProvider":
+			logrus.Infof("Credentials loaded from the %q profile in file %q", sharedCredentialsProvider.Profile, sharedCredentialsProvider.Filename)
+		case "EnvProvider":
+			logrus.Info("Credentials loaded from default AWS environment variables")
+		}
+	}
 	if err == credentials.ErrNoValidProvidersFoundInChain {
 		err = getCredentials()
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	ssn.Handlers.Build.PushBackNamed(request.NamedHandler{
 		Name: "openshiftInstaller.OpenshiftInstallerUserAgentHandler",
 		Fn:   request.MakeAddToUserAgentHandler("OpenShift/4.x Installer", version.Raw),
