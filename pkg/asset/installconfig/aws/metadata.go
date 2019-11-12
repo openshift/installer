@@ -16,15 +16,15 @@ type Metadata struct {
 	availabilityZones []string
 	privateSubnets    map[string]Subnet
 	publicSubnets     map[string]Subnet
-	region            string
-	subnets           []string
+	Region            string   `json:"region,omitempty"`
+	Subnets           []string `json:"subnets,omitempty"`
 	vpc               string
 	mutex             sync.Mutex
 }
 
 // NewMetadata initializes a new Metadata object.
 func NewMetadata(region string, subnets []string) *Metadata {
-	return &Metadata{region: region, subnets: subnets}
+	return &Metadata{Region: region, Subnets: subnets}
 }
 
 // Session holds an AWS session which can be used for AWS API calls
@@ -59,7 +59,7 @@ func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
 			return nil, err
 		}
 
-		m.availabilityZones, err = availabilityZones(ctx, session, m.region)
+		m.availabilityZones, err = availabilityZones(ctx, session, m.Region)
 		if err != nil {
 			return nil, errors.Wrap(err, "creating AWS session")
 		}
@@ -103,7 +103,7 @@ func (m *Metadata) populateSubnets(ctx context.Context) error {
 		return nil
 	}
 
-	if len(m.subnets) == 0 {
+	if len(m.Subnets) == 0 {
 		return errors.New("no subnets configured")
 	}
 
@@ -112,7 +112,7 @@ func (m *Metadata) populateSubnets(ctx context.Context) error {
 		return err
 	}
 
-	m.vpc, m.privateSubnets, m.publicSubnets, err = subnets(ctx, session, m.region, m.subnets)
+	m.vpc, m.privateSubnets, m.publicSubnets, err = subnets(ctx, session, m.Region, m.Subnets)
 	return err
 }
 
@@ -122,7 +122,7 @@ func (m *Metadata) VPC(ctx context.Context) (string, error) {
 	defer m.mutex.Unlock()
 
 	if m.vpc == "" {
-		if len(m.subnets) == 0 {
+		if len(m.Subnets) == 0 {
 			return "", errors.New("cannot calculate VPC without configured subnets")
 		}
 
