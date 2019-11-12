@@ -14,7 +14,7 @@ python3 setup-manifests.py $1
 ./setup-host-network.sh
 cp gw/manifests/* gw/archive/manifests/
 ./openshift-install create ignition-configs --dir=gw
-mkdir -p ~/.kube/config
+mkdir -p ~/.kube
 cp gw/auth/kubeconfig ~/.kube/config
 echo "Delete old resource group"
 az group delete --name $1 --yes
