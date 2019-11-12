@@ -2,13 +2,8 @@
 package openstack
 
 import (
-	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/url"
-	"os"
-	"strings"
 
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
@@ -16,7 +11,6 @@ import (
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 )
@@ -68,33 +62,7 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		if err != nil {
 			return nil, err
 		}
-
-		// Compressed image support was added to OpenStack Glance only in Train release. Unfortunately previous
-		// versions do not have this feature, so we have to check whether or not we need to decompress the file.
-		// For more information: https://docs.openstack.org/glance/latest/user/formats.html
-		// TODO(mfedosin): Allow to skip this step if Glance supports compressed images.
-		baseImageURL, err := url.ParseRequestURI(baseImage)
-		// If the file has ".gz" extension, then its data is compressed
-		if strings.HasSuffix(baseImageURL.Path, ".gz") {
-			localFilePathUncompressed := localFilePath + ".uncompressed"
-
-			// Do nothing if we already have the uncompressed file in cache, otherwise decompress the data
-			_, err = os.Stat(localFilePathUncompressed)
-			if err != nil {
-				if os.IsNotExist(err) {
-					logrus.Infof("Decompress image data from %v to %v", localFilePath, localFilePathUncompressed)
-					err = decompressFile(localFilePath, localFilePathUncompressed)
-					if err != nil {
-						return nil, err
-					}
-				} else {
-					return nil, err
-				}
-			}
-			cfg.BaseImageLocalFilePath = localFilePathUncompressed
-		} else {
-			cfg.BaseImageLocalFilePath = localFilePath
-		}
+		cfg.BaseImageLocalFilePath = localFilePath
 	} else {
 		// Not a URL -> use baseImage value as an overridden Glance image name.
 		// Need to check if this image exists and there are no other images with this name.
@@ -128,32 +96,6 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
-}
-
-// decompressFile decompresses data in the cache
-func decompressFile(src, dest string) error {
-	gzipfile, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-
-	reader, err := gzip.NewReader(gzipfile)
-	defer reader.Close()
-	if err != nil {
-		return err
-	}
-
-	writer, err := os.Create(dest)
-	defer writer.Close()
-	if err != nil {
-		return err
-	}
-
-	if _, err = io.Copy(writer, reader); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func validateOverriddenImageName(imageName, cloud string) error {

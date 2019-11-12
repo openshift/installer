@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"bytes"
+	"compress/gzip"
 	"crypto/md5"
 	"crypto/sha256"
 	"fmt"
@@ -19,6 +21,7 @@ import (
 const (
 	applicationName = "openshift-installer"
 	imageDataType   = "image"
+	gzipFileType    = "application/x-gzip"
 )
 
 // getCacheDir returns a local path of the cache, where the installer should put the data:
@@ -107,6 +110,29 @@ func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err er
 		}
 	}()
 
+	// Detect whether we know how to decompress the file
+	// See http://golang.org/pkg/net/http/#DetectContentType for why we use 512
+	buf := make([]byte, 512)
+	_, err = reader.Read(buf)
+	if err != nil {
+		return err
+	}
+
+	reader = io.MultiReader(bytes.NewReader(buf), reader)
+	fileType := http.DetectContentType(buf)
+	logrus.Debugf("content type of %s is %s", filePath, fileType)
+	switch fileType {
+	case gzipFileType:
+		uncompressor, err := gzip.NewReader(reader)
+		if err != nil {
+			return err
+		}
+		defer uncompressor.Close()
+		reader = uncompressor
+	default:
+		// No need for an interposer otherwise
+	}
+
 	// Wrap the reader in TeeReader to calculate sha256 checksum on the fly
 	hasher := sha256.New()
 	if sha256Checksum != "" {
@@ -193,7 +219,8 @@ func DownloadFile(baseURL string, dataType string) (string, error) {
 }
 
 // DownloadImageFile is a helper function that obtains an image file from a given URL,
-// puts it in the cache and returns the local file path.
+// puts it in the cache and returns the local file path.  If the file is compressed
+// by a known compressor, the file is uncompressed prior to being returned.
 func DownloadImageFile(baseURL string) (string, error) {
 	logrus.Infof("Obtaining RHCOS image file from '%v'", baseURL)
 
