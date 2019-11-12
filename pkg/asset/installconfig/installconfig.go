@@ -28,7 +28,7 @@ const (
 type InstallConfig struct {
 	Config *types.InstallConfig `json:"config"`
 	File   *asset.File          `json:"file"`
-	AWS    *aws.Metadata
+	AWS    *aws.Metadata        `json:"aws,omitempty"`
 }
 
 var _ asset.WritableAsset = (*InstallConfig)(nil)
