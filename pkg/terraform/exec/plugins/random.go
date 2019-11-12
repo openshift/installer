@@ -2,7 +2,7 @@ package plugins
 
 import (
 	"github.com/hashicorp/terraform/plugin"
-	"github.com/terraform-providers/terraform-provider-random/random"
+	"github.com/terraform-providers/terraform-provider-random/v2/random"
 )
 
 func init() {

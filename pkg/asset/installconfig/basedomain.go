@@ -7,10 +7,8 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
-	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types/aws"
-	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/validate"
 )
@@ -41,15 +39,6 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 		if !(awsconfig.IsForbidden(cause) || request.IsErrorThrottle(cause)) {
 			return err
 		}
-	case azure.Name:
-		var err error
-		azureDNS, _ := azureconfig.NewDNSConfig()
-		zone, err := azureDNS.GetDNSZone()
-		if err != nil {
-			return err
-		}
-		a.BaseDomain = zone.Name
-		return platform.Azure.SetBaseDomain(zone.ID)
 	case gcp.Name:
 		var err error
 		a.BaseDomain, err = gcpconfig.GetBaseDomain(platform.GCP.ProjectID)

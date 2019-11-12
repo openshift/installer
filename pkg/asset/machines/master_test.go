@@ -23,41 +23,6 @@ func TestMasterGenerateMachineConfigs(t *testing.T) {
 		expectedMachineConfig string
 	}{
 		{
-			name:           "no key hyperthreading enabled",
-			hyperthreading: types.HyperthreadingEnabled,
-		},
-		{
-			name:           "key present hyperthreading enabled",
-			key:            "ssh-rsa: dummy-key",
-			hyperthreading: types.HyperthreadingEnabled,
-			expectedMachineConfig: `---
-apiVersion: machineconfiguration.openshift.io/v1
-kind: MachineConfig
-metadata:
-  creationTimestamp: null
-  labels:
-    machineconfiguration.openshift.io/role: master
-  name: 99-master-ssh
-spec:
-  config:
-    ignition:
-      config: {}
-      security:
-        tls: {}
-      timeouts: {}
-      version: 2.2.0
-    networkd: {}
-    passwd:
-      users:
-      - name: core
-        sshAuthorizedKeys:
-        - 'ssh-rsa: dummy-key'
-    storage: {}
-    systemd: {}
-  osImageURL: ""
-`,
-		},
-		{
 			name:           "no key hyperthreading disabled",
 			hyperthreading: types.HyperthreadingDisabled,
 			expectedMachineConfig: `---
@@ -71,24 +36,28 @@ metadata:
 spec:
   config:
     ignition:
-      config: {}
+      config:
+        replace:
+          source: null
+          verification: {}
       security:
         tls: {}
       timeouts: {}
-      version: 2.2.0
-    networkd: {}
+      version: 3.0.0
     passwd: {}
     storage:
       files:
       - contents:
           source: data:text/plain;charset=utf-8;base64,QUREIG5vc210
           verification: {}
-        filesystem: root
+        group: {}
         mode: 384
         path: /etc/pivot/kernel-args
         user:
           name: root
     systemd: {}
+  fips: false
+  kernelArguments: null
   osImageURL: ""
 `,
 		},
@@ -107,24 +76,28 @@ metadata:
 spec:
   config:
     ignition:
-      config: {}
+      config:
+        replace:
+          source: null
+          verification: {}
       security:
         tls: {}
       timeouts: {}
-      version: 2.2.0
-    networkd: {}
+      version: 3.0.0
     passwd: {}
     storage:
       files:
       - contents:
           source: data:text/plain;charset=utf-8;base64,QUREIG5vc210
           verification: {}
-        filesystem: root
+        group: {}
         mode: 384
         path: /etc/pivot/kernel-args
         user:
           name: root
     systemd: {}
+  fips: false
+  kernelArguments: null
   osImageURL: ""
 ---
 apiVersion: machineconfiguration.openshift.io/v1
@@ -137,12 +110,14 @@ metadata:
 spec:
   config:
     ignition:
-      config: {}
+      config:
+        replace:
+          source: null
+          verification: {}
       security:
         tls: {}
       timeouts: {}
-      version: 2.2.0
-    networkd: {}
+      version: 3.0.0
     passwd:
       users:
       - name: core
@@ -150,6 +125,8 @@ spec:
         - 'ssh-rsa: dummy-key'
     storage: {}
     systemd: {}
+  fips: false
+  kernelArguments: null
   osImageURL: ""
 `,
 		},

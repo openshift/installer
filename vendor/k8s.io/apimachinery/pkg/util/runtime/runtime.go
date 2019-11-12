@@ -18,7 +18,6 @@ package runtime
 
 import (
 	"fmt"
-	"net/http"
 	"runtime"
 	"sync"
 	"time"
@@ -57,16 +56,8 @@ func HandleCrash(additionalHandlers ...func(interface{})) {
 	}
 }
 
-// logPanic logs the caller tree when a panic occurs (except in the special case of http.ErrAbortHandler).
+// logPanic logs the caller tree when a panic occurs.
 func logPanic(r interface{}) {
-	if r == http.ErrAbortHandler {
-		// honor the http.ErrAbortHandler sentinel panic value:
-		//   ErrAbortHandler is a sentinel panic value to abort a handler.
-		//   While any panic from ServeHTTP aborts the response to the client,
-		//   panicking with ErrAbortHandler also suppresses logging of a stack trace to the server's error log.
-		return
-	}
-
 	// Same as stdlib http server code. Manually allocate stack trace buffer size
 	// to prevent excessively large logs
 	const size = 64 << 10

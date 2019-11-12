@@ -3,7 +3,7 @@ package ignition
 import (
 	"path/filepath"
 
-	ignition "github.com/coreos/ignition/config/v2_2/types"
+	ignition "github.com/coreos/ignition/v2/config/v3_0/types"
 	"github.com/vincent-petithory/dataurl"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -26,18 +26,18 @@ func FileFromString(path string, username string, mode int, contents string) ign
 
 // FileFromBytes creates an ignition-config file with the given contents.
 func FileFromBytes(path string, username string, mode int, contents []byte) ignition.File {
+	contentsString := dataurl.EncodeBytes(contents)
 	return ignition.File{
 		Node: ignition.Node{
-			Filesystem: "root",
-			Path:       path,
-			User: &ignition.NodeUser{
-				Name: username,
+			Path: path,
+			User: ignition.NodeUser{
+				Name: &username,
 			},
 		},
 		FileEmbedded1: ignition.FileEmbedded1{
 			Mode: &mode,
 			Contents: ignition.FileContents{
-				Source: dataurl.EncodeBytes(contents),
+				Source: &contentsString,
 			},
 		},
 	}

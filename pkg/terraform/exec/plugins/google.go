@@ -2,7 +2,7 @@ package plugins
 
 import (
 	"github.com/hashicorp/terraform/plugin"
-	"github.com/terraform-providers/terraform-provider-google/google"
+	"github.com/terraform-providers/terraform-provider-google/v2/google"
 )
 
 func init() {

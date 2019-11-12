@@ -6,17 +6,6 @@ type AwsCredsSecretData struct {
 	Base64encodeSecretAccessKey string
 }
 
-// AzureCredsSecretData holds encoded credentials and is used to generate cloud-creds secret
-type AzureCredsSecretData struct {
-	Base64encodeSubscriptionID string
-	Base64encodeClientID       string
-	Base64encodeClientSecret   string
-	Base64encodeTenantID       string
-	Base64encodeResourcePrefix string
-	Base64encodeResourceGroup  string
-	Base64encodeRegion         string
-}
-
 // GCPCredsSecretData holds encoded credentials and is used to generate cloud-creds secret
 type GCPCredsSecretData struct {
 	Base64encodeServiceAccount string
@@ -37,7 +26,6 @@ type VSphereCredsSecretData struct {
 
 type cloudCredsSecretData struct {
 	AWS       *AwsCredsSecretData
-	Azure     *AzureCredsSecretData
 	GCP       *GCPCredsSecretData
 	OpenStack *OpenStackCredsSecretData
 	VSphere   *VSphereCredsSecretData

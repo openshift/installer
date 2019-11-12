@@ -5,7 +5,7 @@ set -ex
 # shellcheck disable=SC2068
 version() { IFS="."; printf "%03d%03d%03d\\n" $@; unset IFS;}
 
-minimum_go_version=1.10
+minimum_go_version=1.12
 current_go_version=$(go version | cut -d " " -f 3)
 
 if [ "$(version "${current_go_version#go}")" -lt "$(version "$minimum_go_version")" ]; then
@@ -13,22 +13,7 @@ if [ "$(version "${current_go_version#go}")" -lt "$(version "$minimum_go_version
      exit 1
 fi
 
-LAUNCH_PATH="${PWD}"
 cd "$(dirname "$0")/.."
-
-PACKAGE_PATH="$(go list -e -f '{{.Dir}}' github.com/openshift/installer)"
-if test -z "${PACKAGE_PATH}"
-then
-	echo "build from your \${GOPATH} (${LAUNCH_PATH} is not in $(go env GOPATH))" 2>&1
-	exit 1
-fi
-
-LOCAL_PATH="${PWD}"
-if test "${PACKAGE_PATH}" != "${LOCAL_PATH}"
-then
-	echo "build from your \${GOPATH} (${PACKAGE_PATH}, not ${LAUNCH_PATH})" 2>&1
-	exit 1
-fi
 
 MODE="${MODE:-release}"
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
@@ -44,6 +29,7 @@ release)
 	TAGS="${TAGS} release"
 	if test "${SKIP_GENERATION}" != y
 	then
+    go get github.com/shurcooL/vfsgen
 		go generate ./data
 	fi
 	;;

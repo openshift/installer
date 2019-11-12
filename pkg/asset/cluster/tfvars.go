@@ -6,13 +6,12 @@ import (
 	"fmt"
 	"os"
 
-	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_0/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
-	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -20,19 +19,16 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
-	azuretfvars "github.com/openshift/installer/pkg/tfvars/azure"
 	baremetaltfvars "github.com/openshift/installer/pkg/tfvars/baremetal"
 	gcptfvars "github.com/openshift/installer/pkg/tfvars/gcp"
 	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
 	"github.com/openshift/installer/pkg/types/aws"
-	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -180,51 +176,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
 		}
 		data, err := awstfvars.TFVars(vpc, privateSubnets, publicSubnets, installConfig.Config.Publish, masterConfigs, workerConfigs)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
-		}
-		t.FileList = append(t.FileList, &asset.File{
-			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
-			Data:     data,
-		})
-	case azure.Name:
-		sess, err := azureconfig.GetSession()
-		if err != nil {
-			return err
-		}
-		auth := azuretfvars.Auth{
-			SubscriptionID: sess.Credentials.SubscriptionID,
-			ClientID:       sess.Credentials.ClientID,
-			ClientSecret:   sess.Credentials.ClientSecret,
-			TenantID:       sess.Credentials.TenantID,
-		}
-		masters, err := mastersAsset.Machines()
-		if err != nil {
-			return err
-		}
-		masterConfigs := make([]*azureprovider.AzureMachineProviderSpec, len(masters))
-		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*azureprovider.AzureMachineProviderSpec)
-		}
-		workers, err := workersAsset.MachineSets()
-		if err != nil {
-			return err
-		}
-		workerConfigs := make([]*azureprovider.AzureMachineProviderSpec, len(masters))
-		for i, w := range workers {
-			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*azureprovider.AzureMachineProviderSpec)
-		}
-		preexistingnetwork := installConfig.Config.Azure.VirtualNetwork != ""
-		data, err := azuretfvars.TFVars(
-			azuretfvars.TFVarsSources{
-				Auth: auth,
-				BaseDomainResourceGroupName: installConfig.Config.Azure.BaseDomainResourceGroupName,
-				MasterConfigs:               masterConfigs,
-				WorkerConfigs:               workerConfigs,
-				ImageURL:                    string(*rhcosImage),
-				PreexistingNetwork:          preexistingnetwork,
-			},
-		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}

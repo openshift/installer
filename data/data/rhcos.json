@@ -1,52 +1,52 @@
 {
     "amis": {
         "ap-northeast-1": {
-            "hvm": "ami-0a8324066353ef1d9"
+            "hvm": "ami-08debc07f1d03d2e5"
         },
         "ap-northeast-2": {
-            "hvm": "ami-07cb62f73a0fa6318"
+            "hvm": "ami-01a5070e861c43276"
         },
         "ap-south-1": {
-            "hvm": "ami-0f79eb0d6ebb820aa"
+            "hvm": "ami-0fb168b0a2e65b877"
         },
         "ap-southeast-1": {
-            "hvm": "ami-03b105b8c0b957e86"
+            "hvm": "ami-0e98fd1ba284d54a4"
         },
         "ap-southeast-2": {
-            "hvm": "ami-0bc95c30ff7bec6d9"
+            "hvm": "ami-05d864d2d17faf0e4"
         },
         "ca-central-1": {
-            "hvm": "ami-0514f28f2707f566f"
+            "hvm": "ami-0eb15314aaedc1c30"
         },
         "eu-central-1": {
-            "hvm": "ami-0c778c8effd8c0d58"
+            "hvm": "ami-057a6dbb233475464"
         },
         "eu-north-1": {
-            "hvm": "ami-07b48d5ffa0c25295"
+            "hvm": "ami-00aeb862c876c2f73"
         },
         "eu-west-1": {
-            "hvm": "ami-01effd1076c8cbb9f"
+            "hvm": "ami-0439404636b47207d"
         },
         "eu-west-2": {
-            "hvm": "ami-00801675c587fe451"
+            "hvm": "ami-0898dbc0c2cb5a386"
         },
         "eu-west-3": {
-            "hvm": "ami-026c1105fdc6f994a"
+            "hvm": "ami-01b26f53f74c05808"
         },
         "sa-east-1": {
-            "hvm": "ami-05b9d1336268fed90"
+            "hvm": "ami-0ee6a625ee9e78337"
         },
         "us-east-1": {
-            "hvm": "ami-0a8a5bd1afb530885"
+            "hvm": "ami-0d0f7bfedaf8ef2db"
         },
         "us-east-2": {
-            "hvm": "ami-0bb333ebb5562bc77"
+            "hvm": "ami-0edd5d840c0c9d013"
         },
         "us-west-1": {
-            "hvm": "ami-0addc017ba982b754"
+            "hvm": "ami-0a413d1c4664c5204"
         },
         "us-west-2": {
-            "hvm": "ami-0b0e1613f2ac28245"
+            "hvm": "ami-02180b9013732fd9e"
         }
     },
     "azure": {
@@ -124,9 +124,9 @@
         }
     },
     "oscontainer": {
-        "digest": "sha256:30857847ade065a57e02c9297cafdd6b2a95d086d0d99480980a3a6eaba2a95b",
-        "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+        "digest": "sha256:742100cd1e0a457cef7f370292999e6dad6694acd49280fc437af2b6087fd3f7",
+        "image": "registry.svc.openshift.org/fcos/machine-os-content"
     },
-    "ostree-commit": "da67d201b394913ffdd959141bb93ca3a0f31f7b19e4007a02bef6bc7d9392ef",
-    "ostree-version": "43.80.20191002.1"
+    "ostree-commit": "371c321908cea6d1ad225f7ed3c094ed0bab601783e25192ee86a813414a6a52",
+    "ostree-version": "30.20191021.okd.2"
 }

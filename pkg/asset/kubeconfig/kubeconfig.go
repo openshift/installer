@@ -32,7 +32,7 @@ func (k *kubeconfig) generate(
 			{
 				Name: cluster,
 				Cluster: clientcmd.Cluster{
-					Server: apiURL,
+					Server:                   apiURL,
 					CertificateAuthorityData: ca.Cert(),
 				},
 			},

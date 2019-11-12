@@ -1,8 +1,6 @@
 [Unit]
 Description=Bootstrap a Kubernetes cluster
-Requires=release-image.service
-Wants=kubelet.service
-After=kubelet.service release-image.service
+After=release-image.service
 ConditionPathExists=!/opt/openshift/.bootkube.done
 
 [Service]
