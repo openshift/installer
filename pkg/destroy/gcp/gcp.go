@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	resourcemanager "google.golang.org/api/cloudresourcemanager/v1"
@@ -119,41 +118,74 @@ func (o *ClusterUninstaller) Run() error {
 }
 
 func (o *ClusterUninstaller) destroyCluster() (bool, error) {
-	destroyFuncs := []struct {
+	stagedFuncs := [][]struct {
 		name    string
-		destroy func() error
-	}{
-		{name: "Compute instances", destroy: o.destroyComputeInstances},
-		{name: "Disks", destroy: o.destroyDisks},
-		{name: "Service accounts", destroy: o.destroyServiceAccounts},
-		{name: "Policy bindings", destroy: o.destroyIAMPolicyBindings},
-		{name: "Images", destroy: o.destroyImages},
-		{name: "DNS", destroy: o.destroyDNS},
-		{name: "Object storage", destroy: o.destroyObjectStorage},
-		{name: "Routes", destroy: o.destroyRoutes},
-		{name: "Firewalls", destroy: o.destroyFirewalls},
-		{name: "Addresses", destroy: o.destroyAddresses},
-		{name: "Target Pools", destroy: o.destroyTargetPools},
-		{name: "Compute instance groups", destroy: o.destroyInstanceGroups},
-		{name: "Forwarding rules", destroy: o.destroyForwardingRules},
-		{name: "Backend services", destroy: o.destroyBackendServices},
-		{name: "Health checks", destroy: o.destroyHealthChecks},
-		{name: "HTTP Health checks", destroy: o.destroyHTTPHealthChecks},
-		{name: "Cloud controller internal LBs", destroy: o.destroyCloudControllerInternalLBs},
-		{name: "Cloud controller external LBs", destroy: o.destroyCloudControllerExternalLBs},
-		{name: "Cloud routers", destroy: o.destroyRouters},
-		{name: "Subnetworks", destroy: o.destroySubNetworks},
-		{name: "Networks", destroy: o.destroyNetworks},
-	}
+		execute func() error
+	}{{
+		{name: "Stop instances", execute: o.stopInstances},
+	}, {
+		{name: "Cloud controller resources", execute: o.discoverCloudControllerResources},
+	}, {
+		{name: "Instances", execute: o.destroyInstances},
+		{name: "Disks", execute: o.destroyDisks},
+		{name: "Service accounts", execute: o.destroyServiceAccounts},
+		{name: "Policy bindings", execute: o.destroyIAMPolicyBindings},
+		{name: "Images", execute: o.destroyImages},
+		{name: "DNS", execute: o.destroyDNS},
+		{name: "Buckets", execute: o.destroyBuckets},
+		{name: "Routes", execute: o.destroyRoutes},
+		{name: "Firewalls", execute: o.destroyFirewalls},
+		{name: "Addresses", execute: o.destroyAddresses},
+		{name: "Target Pools", execute: o.destroyTargetPools},
+		{name: "Instance groups", execute: o.destroyInstanceGroups},
+		{name: "Forwarding rules", execute: o.destroyForwardingRules},
+		{name: "Backend services", execute: o.destroyBackendServices},
+		{name: "Health checks", execute: o.destroyHealthChecks},
+		{name: "HTTP Health checks", execute: o.destroyHTTPHealthChecks},
+		{name: "Routers", execute: o.destroyRouters},
+		{name: "Subnetworks", execute: o.destroySubnetworks},
+		{name: "Networks", execute: o.destroyNetworks},
+	}}
 	done := true
-	for _, f := range destroyFuncs {
-		err := f.destroy()
-		if err != nil {
-			o.Logger.Debugf("%s: %v", f.name, err)
-			done = false
+	for _, stage := range stagedFuncs {
+		if done {
+			for _, f := range stage {
+				err := f.execute()
+				if err != nil {
+					o.Logger.Debugf("%s: %v", f.name, err)
+					done = false
+				}
+			}
 		}
 	}
 	return done, nil
+}
+
+// getZoneName extracts a zone name from a zone URL of the form:
+// https://www.googleapis.com/compute/v1/projects/project-id/zones/us-central1-a
+// where the compute service's basepath is:
+// https://www.googleapis.com/compute/v1/projects/
+// Trimming the URL, leaves a string like: project-id/zones/us-central1-a
+func (o *ClusterUninstaller) getZoneName(zoneURL string) string {
+	path := strings.TrimLeft(zoneURL, o.computeSvc.BasePath)
+	parts := strings.Split(path, "/")
+	if len(parts) >= 3 {
+		return parts[2]
+	}
+	return ""
+}
+
+func (o *ClusterUninstaller) areAllClusterInstances(instances []cloudResource) bool {
+	for _, instance := range instances {
+		if !o.isClusterResource(instance.name) {
+			return false
+		}
+	}
+	return true
+}
+
+func (o *ClusterUninstaller) getInstanceGroupURL(ig cloudResource) string {
+	return fmt.Sprintf("%s%s/zones/%s/instanceGroups/%s", o.computeSvc.BasePath, o.ProjectID, ig.zone, ig.name)
 }
 
 func (o *ClusterUninstaller) isClusterResource(name string) bool {
@@ -233,31 +265,48 @@ func (t requestIDTracker) resetRequestID(identifier ...string) {
 
 // pendingItemTracker tracks a set of pending item names for a given type of resource
 type pendingItemTracker struct {
-	pendingItems map[string]sets.String
+	pendingItems map[string]cloudResources
 }
 
 func newPendingItemTracker() pendingItemTracker {
 	return pendingItemTracker{
-		pendingItems: map[string]sets.String{},
+		pendingItems: map[string]cloudResources{},
 	}
 }
 
-// setPendingItems sets the list of items pending deletion for a particular item type.
-// It returns items that were previously pending that are no longer in the list
-// of pending items. These are items that have been deleted.
-func (t pendingItemTracker) setPendingItems(itemType string, items []string) []string {
-	found := sets.NewString(items...)
+// getPendingItems returns the list of resources to be deleted.
+func (t pendingItemTracker) getPendingItems(itemType string) []cloudResource {
 	lastFound, exists := t.pendingItems[itemType]
 	if !exists {
-		lastFound = sets.NewString()
+		lastFound = cloudResources{}
 	}
-	deletedItems := lastFound.Difference(found)
-	t.pendingItems[itemType] = found
-	return deletedItems.List()
+	return lastFound.list()
+}
+
+// insertPendingItems adds to the list of resources to be deleted.
+func (t pendingItemTracker) insertPendingItems(itemType string, items []cloudResource) []cloudResource {
+	lastFound, exists := t.pendingItems[itemType]
+	if !exists {
+		lastFound = cloudResources{}
+	}
+	lastFound = lastFound.insert(items...)
+	t.pendingItems[itemType] = lastFound
+	return lastFound.list()
+}
+
+// deletePendingItems removes from the list of resources to be deleted.
+func (t pendingItemTracker) deletePendingItems(itemType string, items []cloudResource) []cloudResource {
+	lastFound, exists := t.pendingItems[itemType]
+	if !exists {
+		lastFound = cloudResources{}
+	}
+	lastFound = lastFound.delete(items...)
+	t.pendingItems[itemType] = lastFound
+	return lastFound.list()
 }
 
 func isErrorStatus(code int64) bool {
-	return code < 200 || code >= 300
+	return code != 0 && (code < 200 || code >= 300)
 }
 
 func operationErrorMessage(op *compute.Operation) string {
