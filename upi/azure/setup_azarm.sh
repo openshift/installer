@@ -1,3 +1,5 @@
+#!/bin/bash
+set -e
 echo "Using resource group $1"
 export AZREGION="centralus"
 rm -r -f gw

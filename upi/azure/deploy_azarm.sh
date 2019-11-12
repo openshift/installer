@@ -1,3 +1,5 @@
+#!/bin/bash
+set -e
 echo "Start Deployment"
 az group deployment create \
    --name $1 \

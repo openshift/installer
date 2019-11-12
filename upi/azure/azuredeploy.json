@@ -5,7 +5,7 @@
     "image" : {
       "type" : "string",
       "metadata" : {
-        "description" : "OS to use.Red Hat Enterprise Linux"
+        "description" : "OS to use."
       }
     },
     "BootstrapIgnition" : {
