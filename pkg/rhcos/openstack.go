@@ -3,7 +3,6 @@ package rhcos
 import (
 	"context"
 	"net/url"
-	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -28,14 +27,10 @@ func OpenStack(ctx context.Context) (string, error) {
 
 	baseURL := base.ResolveReference(relOpenStack).String()
 
-	// Attach sha256 checksum to the URL. If the file has the ".gz" extension, then the
-	// data is compressed and we use SHA256 value; otherwise we work with uncompressed
-	// data and therefore need UncompressedSHA256.
-	if strings.HasSuffix(baseURL, ".gz") {
-		baseURL += "?sha256=" + meta.Images.OpenStack.SHA256
-	} else {
-		baseURL += "?sha256=" + meta.Images.OpenStack.UncompressedSHA256
-	}
+	// Attach sha256 checksum to the URL.  Always provide the
+	// uncompressed SHA256; the cache will take care of
+	// uncompressing before checksumming.
+	baseURL += "?sha256=" + meta.Images.OpenStack.UncompressedSHA256
 
 	// Check that we have generated a valid URL
 	_, err = url.ParseRequestURI(baseURL)

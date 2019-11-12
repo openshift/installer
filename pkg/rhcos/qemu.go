@@ -24,5 +24,18 @@ func QEMU(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	return base.ResolveReference(relQEMU).String(), nil
+	baseURL := base.ResolveReference(relQEMU).String()
+
+	// Attach sha256 checksum to the URL.  Always provide the
+	// uncompressed SHA256; the cache will take care of
+	// uncompressing before checksumming.
+	baseURL += "?sha256=" + meta.Images.QEMU.UncompressedSHA256
+
+	// Check that we have generated a valid URL
+	_, err = url.ParseRequestURI(baseURL)
+	if err != nil {
+		return "", err
+	}
+
+	return baseURL, nil
 }
