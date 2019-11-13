@@ -13,10 +13,14 @@ COPY --from=registry.svc.ci.openshift.org/origin/4.2:cli /usr/bin/oc /bin/oc
 
 # Install Dependendencies for tests
 # https://github.com/openshift/origin/blob/6114cbc507bf18890f009f16ee424a62007bc390/images/tests/Dockerfile.rhel
-RUN yum install --setopt=tsflags=nodocs -y git gzip util-linux && yum clean all && rm -rf /var/cache/yum/* && \
+RUN yum install --setopt=tsflags=nodocs -y git gzip unzip util-linux && yum clean all && rm -rf /var/cache/yum/* && \
     git config --system user.name test && \
     git config --system user.email test@test.com && \
     chmod g+w /etc/passwd
+RUN \
+    curl 'https://s3.amazonaws.com/aws-cli/awscli-bundle.zip' -o 'awscli-bundle.zip' && \
+    unzip awscli-bundle.zip && \
+    ./awscli-bundle/install -i /usr/local/aws -b /bin/aws
 
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
