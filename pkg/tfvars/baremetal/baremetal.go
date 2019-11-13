@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/metal3-io/baremetal-operator/pkg/bmc"
 	"github.com/metal3-io/baremetal-operator/pkg/hardware"
-	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
+	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/pkg/errors"
 	"path"
@@ -30,9 +30,9 @@ type config struct {
 
 // TFVars generates bare metal specific Terraform variables.
 func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridge, provisioningBridge string, platformHosts []*baremetal.Host, image string) ([]byte, error) {
-	bootstrapOSImage, err := libvirttfvars.CachedImage(bootstrapOSImage)
+	bootstrapOSImage, err := cache.DownloadImageFile(bootstrapOSImage)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to use cached bootstrap libvirt image")
+		return nil, errors.Wrap(err, "failed to use cached bootstrap local image")
 	}
 
 	var hosts, rootDevices, properties, driverInfos, instanceInfos []map[string]interface{}

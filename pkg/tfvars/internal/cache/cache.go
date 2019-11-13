@@ -22,6 +22,10 @@ const (
 	imageDataType   = "image"
 )
 
+var compressorMap = map[string](func(string, string) error){
+	"application/x-gzip": decompressFileGzip,
+}
+
 // getCacheDir returns a local path of the cache, where the installer should put the data:
 // <user_cache_dir>/openshift-installer/<dataType>_cache
 // If the directory doesn't exist, it will be automatically created.
@@ -136,7 +140,7 @@ func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err er
 		logrus.Debug("Checksum validation is complete...")
 	}
 
-	return os.Rename(tempPath, filePath)
+	return decompressFile(tempPath, filePath)
 }
 
 // DownloadFile obtains a file from a given URL, puts it in the cache folder, defined by dataType parameter,
@@ -157,6 +161,7 @@ func DownloadFile(baseURL string, dataType string) (string, error) {
 	_, err = os.Stat(filePath)
 	if err == nil {
 		logrus.Infof("The file was found in cache: %v. Reusing...", filePath)
+		decompressFile(filePath, filePath)
 		return filePath, nil
 	}
 	if !os.IsNotExist(err) {
@@ -194,35 +199,90 @@ func DownloadFile(baseURL string, dataType string) (string, error) {
 }
 
 // DownloadImageFile is a helper function that obtains an image file from a given URL,
-// puts it in the cache and returns the local file path.
+// puts it in the cache and returns the local file path.  If the file is compressed
+// by a known compressor, the file is uncompressed prior to being returned.
 func DownloadImageFile(baseURL string) (string, error) {
 	logrus.Infof("Obtaining RHCOS image file from '%v'", baseURL)
 
 	return DownloadFile(baseURL, imageDataType)
 }
 
-// DecompressFile decompresses data in the cache
-func DecompressFile(src, dest string) error {
+func detectContentType(file string) (string, error) {
+	logrus.Debugf("Detecting content type for %s", file)
+	fd, err := os.Open(file)
+	if err != nil {
+		logrus.Errorf("detectContentType unable to open file %s: %v", file, err)
+		return "", err
+	}
+	defer fd.Close()
+
+	// See http://golang.org/pkg/net/http/#DetectContentType for why we use 512
+	buf := make([]byte, 512)
+	_, err = fd.Read(buf)
+	if err != nil {
+		logrus.Errorf("detectContentType unable to read file %s: %v", file, err)
+		return "", err
+	}
+	filetype := http.DetectContentType(buf)
+	logrus.Debugf("detectContentType %s is %s", file, filetype)
+	return filetype, nil
+}
+
+func decompressFileGzip(src, dest string) error {
+	logrus.Debugf("decompressFileGzip %s %s", src, dest)
 	gzipfile, err := os.Open(src)
 	if err != nil {
 		return err
 	}
 
 	reader, err := gzip.NewReader(gzipfile)
-	defer reader.Close()
 	if err != nil {
 		return err
 	}
+	defer reader.Close()
 
 	writer, err := os.Create(dest)
-	defer writer.Close()
 	if err != nil {
 		return err
 	}
+	defer writer.Close()
 
 	if _, err = io.Copy(writer, reader); err != nil {
+		os.Remove(dest)
 		return err
 	}
 
+	return nil
+}
+
+// decompressFile decompresses data in the cache
+func decompressFile(src, dest string) error {
+	filetype, err := detectContentType(src)
+	if err != nil {
+		return err
+	}
+	if decompressor, exists := compressorMap[filetype]; exists {
+		if src == dest {
+			tmpSrc := src + ".tmp"
+			err = os.Rename(src, tmpSrc)
+			if err != nil {
+				return err
+			}
+			src = tmpSrc
+		}
+		uncompressTmp := src + "_uncompressed"
+		err = decompressor(src, uncompressTmp)
+		if err != nil {
+			return err
+		}
+		err = os.Remove(src)
+		if err != nil {
+			return err
+		}
+		err = os.Rename(uncompressTmp, src)
+	}
+	if src != dest {
+		return os.Rename(src, dest)
+	}
 	return nil
 }

@@ -5,16 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"net/url"
-	"os"
-	"strings"
 	"strconv"
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 type config struct {
@@ -39,42 +35,19 @@ func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, 
 		return nil, err
 	}
 
+	osImage, err = cache.DownloadImageFile(osImage)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to use cached libvirt image")
+	}
+
 	cfg := &config{
 		URI:          masterConfig.URI,
+		Image:        osImage,
 		IfName:       bridge,
 		BootstrapIP:  bootstrapIP.String(),
 		MasterIPs:    masterIPs,
 		MasterMemory: strconv.Itoa(masterConfig.DomainMemory),
 		MasterVcpu:   strconv.Itoa(masterConfig.DomainVcpu),
-	}
-
-	baseImageURL, err := url.ParseRequestURI(osImage)
-	osImage, err = cachedImage(osImage)
-	if strings.HasSuffix(baseImageURL.Path, ".gz") {
-		osImageUncompressed := osImage + ".uncompressed"
-		// Do nothing if we already have the uncompressed file in cache, otherwise decompress the data
-		_, err = os.Stat(strings.TrimPrefix(osImageUncompressed, "file://"))
-		if err != nil {
-			if os.IsNotExist(err) {
-				logrus.Infof("Decompress image data from %v to %v", osImage, osImageUncompressed)
-				err = cache.DecompressFile(strings.TrimPrefix(osImage, "file://"), strings.TrimPrefix(osImageUncompressed, "file://"))
-				if err != nil {
-					logrus.Infof("Decompress %v %v failed: %v", osImage, osImageUncompressed, err)
-					return nil, err
-				}
-			} else {
-				logrus.Infof("Misc failure looking for %v: %v", osImageUncompressed, err)
-				return nil, err
-			}
-		}
-		fmt.Printf("Using uncompressed image %s\n", osImageUncompressed)
-		cfg.Image = osImageUncompressed
-	} else {
-		cfg.Image = osImage
-	}
-
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to use cached libvirt image")
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
