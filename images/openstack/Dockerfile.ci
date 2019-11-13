@@ -21,7 +21,7 @@ RUN yum install --setopt=tsflags=nodocs -y git gzip util-linux && yum clean all 
 
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
-    python-openstackclient ansible python-openstacksdk python-netaddr && \
+    python-openstackclient ansible python-openstacksdk python-netaddr awscli && \
     yum clean all && rm -rf /var/cache/yum/*
 
 RUN mkdir /output && chown 1000:1000 /output
