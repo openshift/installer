@@ -14,7 +14,6 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
     - [Bootstrap Node](#bootstrap-node)
     - [Swift](#swift)
     - [Disk Requirements](#disk-requirements)
-    - [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-rhcos)
     - [Neutron Public Network](#neutron-public-network)
   - [OpenStack Credentials](#openstack-credentials)
   - [Standalone Single-Node Development Environment](#standalone-single-node-development-environment)
@@ -141,28 +140,6 @@ _output/local/bin/linux/amd64/openshift-tests run openshift/conformance/parallel
 ```
 
 The entire test suite takes over an hour to complete. Run it and check the Prometheus logs afterwards.
-
-### Red Hat Enterprise Linux CoreOS (RHCOS)
-
-Get the latest RHCOS image [here](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/latest/).
-
-**NOTE:** The OpenStack QCOW2 image is delivered in compressed format.  You will need to provide the necessary options to `curl` or `wget` when downloading the image, otherwise your image may appear corrupted.
-
-For example:
-
-```sh
-curl --compressed -J -L -O <url of OpenStack QCOW2>
-
-wget --compression=auto <url of OpenStack QCOW2>
-```
-
-The installer requires a proper RHCOS image in the OpenStack cluster or project:
-
-```sh
-openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.qcow2 rhcos
-```
-
-**NOTE:** Depending on your OpenStack environment you can upload the RHCOS image as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/introduction.html#disk-and-container-formats-for-images) for more information. At the time of writing, the installer looks for an image named `rhcos`.
 
 ### Neutron Public Network
 
