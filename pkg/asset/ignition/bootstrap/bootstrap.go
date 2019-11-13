@@ -42,6 +42,7 @@ const (
 // template files.
 type bootstrapTemplateData struct {
 	AdditionalTrustBundle string
+	FIPS                  bool
 	EtcdCluster           string
 	PullSecret            string
 	ReleaseImage          string
@@ -223,6 +224,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 
 	return &bootstrapTemplateData{
 		AdditionalTrustBundle: installConfig.AdditionalTrustBundle,
+		FIPS:                  installConfig.FIPS,
 		PullSecret:            installConfig.PullSecret,
 		ReleaseImage:          releaseImage,
 		EtcdCluster:           strings.Join(etcdEndpoints, ","),

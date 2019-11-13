@@ -1,0 +1,14 @@
+{
+  "metadata": {
+    "name": "bootstrap-fips"
+  },
+  "spec": {
+    "config": {
+      "ignition": {
+        "version": "2.2.0"
+      }
+    },
+    "kernelArguments": [],
+    "fips": {{ .FIPS }}
+  }
+}
