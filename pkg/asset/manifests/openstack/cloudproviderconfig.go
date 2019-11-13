@@ -1,12 +1,10 @@
 package openstack
 
 import (
-	"bytes"
 	"strconv"
+	"strings"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
-	"github.com/pkg/errors"
-	ini "gopkg.in/ini.v1"
 )
 
 type config struct {
@@ -42,8 +40,6 @@ secret-namespace = kube-system
 // CloudProviderConfigSecret generates the cloud provider config for the OpenStack
 // platform, that will be stored in the system secret.
 func CloudProviderConfigSecret(cloud *clientconfig.Cloud) ([]byte, error) {
-	file := ini.Empty()
-
 	domainID := cloud.AuthInfo.DomainID
 	if domainID == "" {
 		domainID = cloud.AuthInfo.UserDomainID
@@ -54,27 +50,41 @@ func CloudProviderConfigSecret(cloud *clientconfig.Cloud) ([]byte, error) {
 		domainName = cloud.AuthInfo.UserDomainName
 	}
 
-	config := &config{
-		Global: global{
-			AuthURL:    cloud.AuthInfo.AuthURL,
-			Username:   cloud.AuthInfo.Username,
-			UserID:     cloud.AuthInfo.UserID,
-			Password:   strconv.Quote(cloud.AuthInfo.Password),
-			TenantID:   cloud.AuthInfo.ProjectID,
-			TenantName: cloud.AuthInfo.ProjectName,
-			DomainID:   domainID,
-			DomainName: domainName,
-			Region:     cloud.RegionName,
-			CAFile:     cloud.CACertFile,
-		},
+	// We have to generate this config manually without "go-ini" library, because its
+	// output data is incompatible with "gcfg".
+	// For instance, if there is a string with a # character, then "go-ini" wraps it in bacticks,
+	// like `aaa#bbb`, but gcfg doesn't recognize it and  parses the data as `aaa, skipping
+	// everything after the #.
+	// For more information: https://bugzilla.redhat.com/show_bug.cgi?id=1771358
+	var res strings.Builder
+	res.WriteString("[Global]\n")
+	if cloud.AuthInfo.AuthURL != "" {
+		res.WriteString("auth-url = " + strconv.Quote(cloud.AuthInfo.AuthURL) + "\n")
 	}
-	if err := file.ReflectFrom(config); err != nil {
-		return nil, errors.Wrap(err, "failed to reflect from config")
+	if cloud.AuthInfo.Username != "" {
+		res.WriteString("username = " + strconv.Quote(cloud.AuthInfo.Username) + "\n")
+	}
+	if cloud.AuthInfo.Password != "" {
+		res.WriteString("password = " + strconv.Quote(cloud.AuthInfo.Password) + "\n")
+	}
+	if cloud.AuthInfo.ProjectID != "" {
+		res.WriteString("tenant-id = " + strconv.Quote(cloud.AuthInfo.ProjectID) + "\n")
+	}
+	if cloud.AuthInfo.ProjectName != "" {
+		res.WriteString("tenant-name = " + strconv.Quote(cloud.AuthInfo.ProjectName) + "\n")
+	}
+	if domainID != "" {
+		res.WriteString("domain-id = " + strconv.Quote(domainID) + "\n")
+	}
+	if domainName != "" {
+		res.WriteString("domain-name = " + strconv.Quote(domainName) + "\n")
+	}
+	if cloud.RegionName != "" {
+		res.WriteString("region = " + strconv.Quote(cloud.RegionName) + "\n")
+	}
+	if cloud.CACertFile != "" {
+		res.WriteString("ca-file = " + strconv.Quote(cloud.CACertFile) + "\n")
 	}
 
-	buf := &bytes.Buffer{}
-	if _, err := file.WriteTo(buf); err != nil {
-		return nil, errors.Wrap(err, "failed to write out cloud provider config")
-	}
-	return buf.Bytes(), nil
+	return []byte(res.String()), nil
 }
