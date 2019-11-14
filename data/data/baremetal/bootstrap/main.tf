@@ -1,6 +1,12 @@
-resource "libvirt_volume" "bootstrap" {
-  name   = "${var.cluster_id}-bootstrap"
+resource "libvirt_volume" "coreos_orig" {
+  name   = "${var.cluster_id}-orig"
   source = var.image
+}
+
+resource "libvirt_volume" "bootstrap" {
+  name           = "${var.cluster_id}-bootstrap"
+  base_volume_id = libvirt_volume.coreos_orig.id
+  size           = 17179869184
 }
 
 resource "libvirt_ignition" "bootstrap" {
