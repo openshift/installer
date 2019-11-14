@@ -63,7 +63,9 @@ $ which openshift-install
 They should all succeed.
 
 For an installation with Kuryr SDN on UPI, you should also check the requirements which are the same
-needed for [OpenStack IPI with Kuryr][ipi-reqs-kuryr].
+needed for [OpenStack IPI with Kuryr][ipi-reqs-kuryr]. Please also note that **RHEL 7 nodes are not 
+supported on deployments configured with Kuryr**. This is because Kuryr container images are based on
+RHEL 8 and may not work properly when run on RHEL 7.
 
 [ipi-reqs-kuryr]: ./kuryr.md#requirements-when-enabling-kuryr
 
