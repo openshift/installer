@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
+	"k8s.io/klog"
 
 	"github.com/openshift/installer/pkg/terraform/exec/plugins"
 )
@@ -23,10 +24,12 @@ var (
 )
 
 func main() {
-	// This attempts to configure glog (used by vendored Kubernetes code) not
-	// to log anything. Nobody likes you, glog. Go away.
-	flag.CommandLine.Parse([]string{})
-	flag.CommandLine.Set("stderrthreshold", "4")
+	// This attempts to configure klog (used by vendored Kubernetes code) not
+	// to log anything.
+	var fs flag.FlagSet
+	klog.InitFlags(&fs)
+	fs.Set("stderrthreshold", "4")
+	klog.SetOutput(ioutil.Discard)
 
 	if len(os.Args) > 0 {
 		base := filepath.Base(os.Args[0])
