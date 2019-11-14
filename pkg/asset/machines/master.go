@@ -458,7 +458,14 @@ func IsMachineManifest(file *asset.File) bool {
 	}
 	if matched, err := filepath.Match(workerMachineSetFileNamePattern, filename); err != nil {
 		panic("bad format for worker machine file name pattern")
-	} else {
-		return matched
+	} else if matched {
+		return true
 	}
+	if matched, err := filepath.Match(healthCheckFileNamePattern, filename); err != nil {
+		panic("bad format for health check file name pattern")
+	} else if matched {
+		return true
+	}
+
+	return false
 }

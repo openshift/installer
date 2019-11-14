@@ -67,6 +67,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&kubeconfig.LoopbackClient{},
 		&machines.Master{},
 		&machines.Worker{},
+		&machines.HealthChecks{},
 		&manifests.Manifests{},
 		&manifests.Openshift{},
 		&manifests.Proxy{},
@@ -418,6 +419,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 		&manifests.Openshift{},
 		&machines.Master{},
 		&machines.Worker{},
+		&machines.HealthChecks{},
 	} {
 		dependencies.Get(asset)
 		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "root", 0644, asset)...)
