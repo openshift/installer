@@ -14,6 +14,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/ulikunitz/xz"
 
 	"golang.org/x/sys/unix"
 )
@@ -23,6 +24,11 @@ const (
 	imageDataType   = "image"
 	gzipFileType    = "application/x-gzip"
 )
+
+var compressorMap = map[string](func(string, string) error){
+	"application/x-gzip":       decompressFileGzip,
+	"application/octet-stream": decompressFileXZ,
+}
 
 // getCacheDir returns a local path of the cache, where the installer should put the data:
 // <user_cache_dir>/openshift-installer/<dataType>_cache
@@ -225,4 +231,111 @@ func DownloadImageFile(baseURL string) (string, error) {
 	logrus.Infof("Obtaining RHCOS image file from '%v'", baseURL)
 
 	return DownloadFile(baseURL, imageDataType)
+}
+
+func detectContentType(file string) (string, error) {
+	logrus.Debugf("Detecting content type for %s", file)
+	fd, err := os.Open(file)
+	if err != nil {
+		logrus.Errorf("detectContentType unable to open file %s: %v", file, err)
+		return "", err
+	}
+	defer fd.Close()
+
+	// See http://golang.org/pkg/net/http/#DetectContentType for why we use 512
+	buf := make([]byte, 512)
+	_, err = fd.Read(buf)
+	if err != nil {
+		logrus.Errorf("detectContentType unable to read file %s: %v", file, err)
+		return "", err
+	}
+	filetype := http.DetectContentType(buf)
+	logrus.Debugf("detectContentType %s is %s", file, filetype)
+	return filetype, nil
+}
+
+func decompressFileGzip(src, dest string) error {
+	logrus.Debugf("decompressFileGzip %s %s", src, dest)
+	gzipfile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+
+	reader, err := gzip.NewReader(gzipfile)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	writer, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer writer.Close()
+	//defer os.Remove(dest)
+
+	if _, err = io.Copy(writer, reader); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func decompressFileXZ(src, dest string) error {
+	logrus.Debugf("decompressFileXZ %s %s", src, dest)
+	xzfile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer xzfile.Close()
+
+	reader, err := xz.NewReader(xzfile)
+	if err != nil {
+		return err
+	}
+
+	writer, err := os.Create(dest)
+	defer writer.Close()
+	if err != nil {
+		return err
+	}
+
+	if _, err = io.Copy(writer, reader); err != nil {
+		os.Remove(dest)
+		return err
+	}
+
+	return nil
+}
+
+// decompressFile decompresses data in the cache
+func decompressFile(src, dest string) error {
+	filetype, err := detectContentType(src)
+	if err != nil {
+		return err
+	}
+	if decompressor, exists := compressorMap[filetype]; exists {
+		if src == dest {
+			tmpSrc := src + ".tmp"
+			err = os.Rename(src, tmpSrc)
+			if err != nil {
+				return err
+			}
+			src = tmpSrc
+		}
+		uncompressTmp := src + "_uncompressed"
+		err = decompressor(src, uncompressTmp)
+		if err != nil {
+			return err
+		}
+		err = os.Remove(src)
+		if err != nil {
+			return err
+		}
+		err = os.Rename(uncompressTmp, src)
+	}
+	if src != dest {
+		return os.Rename(src, dest)
+	}
+	return nil
 }

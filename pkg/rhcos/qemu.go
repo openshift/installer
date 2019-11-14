@@ -3,6 +3,7 @@ package rhcos
 import (
 	"context"
 	"net/url"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -28,10 +29,12 @@ func QEMU(ctx context.Context, arch types.Architecture) (string, error) {
 
 	baseURL := base.ResolveReference(relQEMU).String()
 
-	// Attach sha256 checksum to the URL.  Always provide the
-	// uncompressed SHA256; the cache will take care of
-	// uncompressing before checksumming.
-	baseURL += "?sha256=" + meta.Images.QEMU.UncompressedSHA256
+	// Attach sha256 checksum to the URL. Use compressed SHA256 for known decompressors
+	if strings.HasSuffix(baseURL, ".gz") || strings.HasSuffix(baseURL, ".xz") {
+		baseURL += "?sha256=" + meta.Images.QEMU.SHA256
+	} else {
+		baseURL += "?sha256=" + meta.Images.QEMU.UncompressedSHA256
+	}
 
 	// Check that we have generated a valid URL
 	_, err = url.ParseRequestURI(baseURL)
