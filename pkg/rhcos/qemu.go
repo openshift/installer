@@ -30,7 +30,7 @@ func QEMU(ctx context.Context) (string, error) {
 	// Attach sha256 checksum to the URL. If the file has the ".gz" extension, then the
 	// data is compressed and we use SHA256 value; otherwise we work with uncompressed
 	// data and therefore need UncompressedSHA256.
-	if strings.HasSuffix(baseURL, ".gz") {
+	if strings.HasSuffix(baseURL, ".gz") || strings.HasSuffix(baseURL, ".xz") {
 		baseURL += "?sha256=" + meta.Images.QEMU.SHA256
 	} else {
 		baseURL += "?sha256=" + meta.Images.QEMU.UncompressedSHA256

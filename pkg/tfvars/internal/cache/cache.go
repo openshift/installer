@@ -13,6 +13,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/ulikunitz/xz"
 
 	"golang.org/x/sys/unix"
 )
@@ -23,7 +24,8 @@ const (
 )
 
 var compressorMap = map[string](func(string, string) error){
-	"application/x-gzip": decompressFileGzip,
+	"application/x-gzip":       decompressFileGzip,
+	"application/octet-stream": decompressFileXZ,
 }
 
 // getCacheDir returns a local path of the cache, where the installer should put the data:
@@ -246,6 +248,33 @@ func decompressFileGzip(src, dest string) error {
 		return err
 	}
 	defer writer.Close()
+	//defer os.Remove(dest)
+
+	if _, err = io.Copy(writer, reader); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func decompressFileXZ(src, dest string) error {
+	logrus.Debugf("decompressFileXZ %s %s", src, dest)
+	xzfile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer xzfile.Close()
+
+	reader, err := xz.NewReader(xzfile)
+	if err != nil {
+		return err
+	}
+
+	writer, err := os.Create(dest)
+	defer writer.Close()
+	if err != nil {
+		return err
+	}
 
 	if _, err = io.Copy(writer, reader); err != nil {
 		os.Remove(dest)

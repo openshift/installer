@@ -54,6 +54,7 @@ require (
 	github.com/terraform-providers/terraform-provider-local v1.2.1
 	github.com/terraform-providers/terraform-provider-openstack v1.18.1-0.20190515162737-b1406b8e4894
 	github.com/terraform-providers/terraform-provider-random/v2 v2.1.1
+	github.com/ulikunitz/xz v0.5.5
 	github.com/vincent-petithory/dataurl v0.0.0-20160330182126-9a301d65acbb
 	github.com/vrutkovs/terraform-provider-aws/v3 v3.0.0
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
