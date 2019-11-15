@@ -8,7 +8,6 @@ locals {
 data "ignition_file" "hostname" {
   count = "${var.instance_count}"
 
-  filesystem = "root"
   path       = "/etc/hostname"
   mode       = "420"
 
@@ -20,7 +19,6 @@ data "ignition_file" "hostname" {
 data "ignition_file" "static_ip" {
   count = "${var.instance_count}"
 
-  filesystem = "root"
   path       = "/etc/sysconfig/network-scripts/ifcfg-ens192"
   mode       = "420"
 
@@ -60,7 +58,7 @@ EOF
 data "ignition_config" "ign" {
   count = "${var.instance_count}"
 
-  append {
+  merge {
     source = "${var.ignition_url != "" ? var.ignition_url : local.ignition_encoded}"
   }
 
