@@ -33,6 +33,9 @@ ENV MATCHBOX_VERSION=v0.2.3
 RUN curl -L -O https://github.com/poseidon/terraform-provider-matchbox/releases/download/${MATCHBOX_VERSION}/terraform-provider-matchbox-${MATCHBOX_VERSION}-linux-amd64.tar.gz && \
     tar xzf terraform-provider-matchbox-${MATCHBOX_VERSION}-linux-amd64.tar.gz && \
     mv terraform-provider-matchbox-${MATCHBOX_VERSION}-linux-amd64/terraform-provider-matchbox /bin/terraform-provider-matchbox
+RUN curl -L -O https://github.com/vrutkovs/terraform-provider-ignition/releases/download/v2.0.0/terraform-provider-ignition.tar.gz &&\
+    tar xzf terraform-provider-ignition.tar.gz && \
+    mv terraform-provider-ignition /bin/terraform-provider-ignition
 RUN curl -L -O https://github.com/vmware/govmomi/releases/download/v0.20.0/govc_linux_amd64.gz && \
     gzip -d govc_linux_amd64.gz && \
     chmod +x govc_linux_amd64 && mv govc_linux_amd64 /bin/govc
