@@ -559,6 +559,8 @@ func deleteEC2(session *session.Session, arn arn.ARN, filter Filter, logger logr
 		return deleteEC2Volume(client, id, logger)
 	case "vpc":
 		return deleteEC2VPC(client, elb.New(session), elbv2.New(session), id, logger)
+	case "vpc-endpoint":
+		return deleteEC2VPCEndpoint(client, id, logger)
 	default:
 		return errors.Errorf("unrecognized EC2 resource type %s", resourceType)
 	}
