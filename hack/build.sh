@@ -22,6 +22,8 @@ LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/version.Raw=${GIT_TAG}
 TAGS="${TAGS:-}"
 OUTPUT="${OUTPUT:-bin/openshift-install}"
 export CGO_ENABLED=0
+# Set GO111MODULE for when installer repo is in $GOPATH
+export GO111MODULE=on
 
 case "${MODE}" in
 release)
