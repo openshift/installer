@@ -1153,7 +1153,7 @@ func (c *ManagedBlockchain) ListInvitationsWithContext(ctx aws.Context, input *L
 //    // Example iterating over at most 3 pages of a ListInvitations operation.
 //    pageNum := 0
 //    err := client.ListInvitationsPages(params,
-//        func(page *ListInvitationsOutput, lastPage bool) bool {
+//        func(page *managedblockchain.ListInvitationsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -1185,10 +1185,12 @@ func (c *ManagedBlockchain) ListInvitationsPagesWithContext(ctx aws.Context, inp
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListInvitationsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListInvitationsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1302,7 +1304,7 @@ func (c *ManagedBlockchain) ListMembersWithContext(ctx aws.Context, input *ListM
 //    // Example iterating over at most 3 pages of a ListMembers operation.
 //    pageNum := 0
 //    err := client.ListMembersPages(params,
-//        func(page *ListMembersOutput, lastPage bool) bool {
+//        func(page *managedblockchain.ListMembersOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -1334,10 +1336,12 @@ func (c *ManagedBlockchain) ListMembersPagesWithContext(ctx aws.Context, input *
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListMembersOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListMembersOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1452,7 +1456,7 @@ func (c *ManagedBlockchain) ListNetworksWithContext(ctx aws.Context, input *List
 //    // Example iterating over at most 3 pages of a ListNetworks operation.
 //    pageNum := 0
 //    err := client.ListNetworksPages(params,
-//        func(page *ListNetworksOutput, lastPage bool) bool {
+//        func(page *managedblockchain.ListNetworksOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -1484,10 +1488,12 @@ func (c *ManagedBlockchain) ListNetworksPagesWithContext(ctx aws.Context, input 
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListNetworksOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListNetworksOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1601,7 +1607,7 @@ func (c *ManagedBlockchain) ListNodesWithContext(ctx aws.Context, input *ListNod
 //    // Example iterating over at most 3 pages of a ListNodes operation.
 //    pageNum := 0
 //    err := client.ListNodesPages(params,
-//        func(page *ListNodesOutput, lastPage bool) bool {
+//        func(page *managedblockchain.ListNodesOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -1633,10 +1639,12 @@ func (c *ManagedBlockchain) ListNodesPagesWithContext(ctx aws.Context, input *Li
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListNodesOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListNodesOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1751,7 +1759,7 @@ func (c *ManagedBlockchain) ListProposalVotesWithContext(ctx aws.Context, input 
 //    // Example iterating over at most 3 pages of a ListProposalVotes operation.
 //    pageNum := 0
 //    err := client.ListProposalVotesPages(params,
-//        func(page *ListProposalVotesOutput, lastPage bool) bool {
+//        func(page *managedblockchain.ListProposalVotesOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -1783,10 +1791,12 @@ func (c *ManagedBlockchain) ListProposalVotesPagesWithContext(ctx aws.Context, i
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListProposalVotesOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListProposalVotesOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1904,7 +1914,7 @@ func (c *ManagedBlockchain) ListProposalsWithContext(ctx aws.Context, input *Lis
 //    // Example iterating over at most 3 pages of a ListProposals operation.
 //    pageNum := 0
 //    err := client.ListProposalsPages(params,
-//        func(page *ListProposalsOutput, lastPage bool) bool {
+//        func(page *managedblockchain.ListProposalsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -1936,10 +1946,12 @@ func (c *ManagedBlockchain) ListProposalsPagesWithContext(ctx aws.Context, input
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListProposalsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListProposalsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -4031,13 +4043,13 @@ type Member struct {
 	//
 	//    * DELETING - The member and all associated resources are in the process
 	//    of being deleted. Either the AWS account that owns the member deleted
-	//    it, or the member is being deleted as the result of an APPROVEDPROPOSAL
+	//    it, or the member is being deleted as the result of an APPROVED PROPOSAL
 	//    to remove the member.
 	//
 	//    * DELETED - The member can no longer participate on the network and all
 	//    associated resources are deleted. Either the AWS account that owns the
 	//    member deleted it, or the member is being deleted as the result of an
-	//    APPROVEDPROPOSAL to remove the member.
+	//    APPROVED PROPOSAL to remove the member.
 	Status *string `type:"string" enum:"MemberStatus"`
 }
 
@@ -4359,13 +4371,13 @@ type MemberSummary struct {
 	//
 	//    * DELETING - The member and all associated resources are in the process
 	//    of being deleted. Either the AWS account that owns the member deleted
-	//    it, or the member is being deleted as the result of an APPROVEDPROPOSAL
+	//    it, or the member is being deleted as the result of an APPROVED PROPOSAL
 	//    to remove the member.
 	//
 	//    * DELETED - The member can no longer participate on the network and all
 	//    associated resources are deleted. Either the AWS account that owns the
 	//    member deleted it, or the member is being deleted as the result of an
-	//    APPROVEDPROPOSAL to remove the member.
+	//    APPROVED PROPOSAL to remove the member.
 	Status *string `type:"string" enum:"MemberStatus"`
 }
 

@@ -601,7 +601,7 @@ func (c *ResourceGroups) ListGroupResourcesWithContext(ctx aws.Context, input *L
 //    // Example iterating over at most 3 pages of a ListGroupResources operation.
 //    pageNum := 0
 //    err := client.ListGroupResourcesPages(params,
-//        func(page *ListGroupResourcesOutput, lastPage bool) bool {
+//        func(page *resourcegroups.ListGroupResourcesOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -633,10 +633,12 @@ func (c *ResourceGroups) ListGroupResourcesPagesWithContext(ctx aws.Context, inp
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListGroupResourcesOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListGroupResourcesOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -749,7 +751,7 @@ func (c *ResourceGroups) ListGroupsWithContext(ctx aws.Context, input *ListGroup
 //    // Example iterating over at most 3 pages of a ListGroups operation.
 //    pageNum := 0
 //    err := client.ListGroupsPages(params,
-//        func(page *ListGroupsOutput, lastPage bool) bool {
+//        func(page *resourcegroups.ListGroupsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -781,10 +783,12 @@ func (c *ResourceGroups) ListGroupsPagesWithContext(ctx aws.Context, input *List
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListGroupsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListGroupsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -903,7 +907,7 @@ func (c *ResourceGroups) SearchResourcesWithContext(ctx aws.Context, input *Sear
 //    // Example iterating over at most 3 pages of a SearchResources operation.
 //    pageNum := 0
 //    err := client.SearchResourcesPages(params,
-//        func(page *SearchResourcesOutput, lastPage bool) bool {
+//        func(page *resourcegroups.SearchResourcesOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -935,10 +939,12 @@ func (c *ResourceGroups) SearchResourcesPagesWithContext(ctx aws.Context, input 
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*SearchResourcesOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*SearchResourcesOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -2290,14 +2296,14 @@ type ResourceQuery struct {
 	// The type of the query. The valid values in this release are TAG_FILTERS_1_0
 	// and CLOUDFORMATION_STACK_1_0.
 	//
-	// TAG_FILTERS_1_0: A JSON syntax that lets you specify a collection of simple
-	// tag filters for resource types and tags, as supported by the AWS Tagging
-	// API GetResources (https://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/API_GetResources.html)
-	// operation. If you specify more than one tag key, only resources that match
-	// all tag keys, and at least one value of each specified tag key, are returned
-	// in your query. If you specify more than one value for a tag key, a resource
-	// matches the filter if it has a tag key value that matches any of the specified
-	// values.
+	//  TAG_FILTERS_1_0: A JSON syntax that lets you specify a collection of simple
+	//  tag filters for resource types and tags, as supported by the AWS Tagging
+	//  API GetResources (https://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/API_GetResources.html)
+	//  operation. If you specify more than one tag key, only resources that match
+	//  all tag keys, and at least one value of each specified tag key, are returned
+	//  in your query. If you specify more than one value for a tag key, a resource
+	//  matches the filter if it has a tag key value that matches any of the specified
+	//  values.
 	//
 	// For example, consider the following sample query for resources that have
 	// two tags, Stage and Version, with two values each. ([{"Key":"Stage","Values":["Test","Deploy"]},{"Key":"Version","Values":["1","2"]}])
@@ -2319,8 +2325,8 @@ type ResourceQuery struct {
 	//    * An RDS database that has the following two tags: {"Key":"Stage","Value":"Archived"},
 	//    and {"Key":"Version","Value":"4"}
 	//
-	// CLOUDFORMATION_STACK_1_0: A JSON syntax that lets you specify a CloudFormation
-	// stack ARN.
+	//  CLOUDFORMATION_STACK_1_0: A JSON syntax that lets you specify a CloudFormation
+	//  stack ARN.
 	//
 	// Type is a required field
 	Type *string `min:"1" type:"string" required:"true" enum:"QueryType"`

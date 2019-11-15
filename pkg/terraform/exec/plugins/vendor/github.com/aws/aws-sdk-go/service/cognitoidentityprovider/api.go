@@ -160,7 +160,7 @@ func (c *CognitoIdentityProvider) AdminAddUserToGroupRequest(input *AdminAddUser
 //
 // Adds the specified user to the specified group.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -261,7 +261,7 @@ func (c *CognitoIdentityProvider) AdminConfirmSignUpRequest(input *AdminConfirmS
 // Confirms user registration as an admin without using a confirmation code.
 // Works on any user.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -532,7 +532,7 @@ func (c *CognitoIdentityProvider) AdminDeleteUserRequest(input *AdminDeleteUserI
 //
 // Deletes a user as an administrator. Works on any user.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -633,7 +633,7 @@ func (c *CognitoIdentityProvider) AdminDeleteUserAttributesRequest(input *AdminD
 // Deletes the user attributes in a user pool as an administrator. Works on
 // any user.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -863,9 +863,9 @@ func (c *CognitoIdentityProvider) AdminDisableUserRequest(input *AdminDisableUse
 
 // AdminDisableUser API operation for Amazon Cognito Identity Provider.
 //
-// Disables the specified user as an administrator. Works on any user.
+// Disables the specified user.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -965,7 +965,7 @@ func (c *CognitoIdentityProvider) AdminEnableUserRequest(input *AdminEnableUserI
 //
 // Enables the specified user as an administrator. Works on any user.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1065,7 +1065,7 @@ func (c *CognitoIdentityProvider) AdminForgetDeviceRequest(input *AdminForgetDev
 //
 // Forgets the device, as an administrator.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1167,7 +1167,7 @@ func (c *CognitoIdentityProvider) AdminGetDeviceRequest(input *AdminGetDeviceInp
 //
 // Gets the device, as an administrator.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1267,7 +1267,7 @@ func (c *CognitoIdentityProvider) AdminGetUserRequest(input *AdminGetUserInput) 
 // Gets the specified user by user name in a user pool as an administrator.
 // Works on any user.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1366,7 +1366,7 @@ func (c *CognitoIdentityProvider) AdminInitiateAuthRequest(input *AdminInitiateA
 //
 // Initiates the authentication flow, as an administrator.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1622,7 +1622,7 @@ func (c *CognitoIdentityProvider) AdminListDevicesRequest(input *AdminListDevice
 //
 // Lists devices, as an administrator.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1727,7 +1727,7 @@ func (c *CognitoIdentityProvider) AdminListGroupsForUserRequest(input *AdminList
 //
 // Lists the groups that the user belongs to.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1791,7 +1791,7 @@ func (c *CognitoIdentityProvider) AdminListGroupsForUserWithContext(ctx aws.Cont
 //    // Example iterating over at most 3 pages of a AdminListGroupsForUser operation.
 //    pageNum := 0
 //    err := client.AdminListGroupsForUserPages(params,
-//        func(page *AdminListGroupsForUserOutput, lastPage bool) bool {
+//        func(page *cognitoidentityprovider.AdminListGroupsForUserOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -1823,10 +1823,12 @@ func (c *CognitoIdentityProvider) AdminListGroupsForUserPagesWithContext(ctx aws
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*AdminListGroupsForUserOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*AdminListGroupsForUserOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -1948,7 +1950,7 @@ func (c *CognitoIdentityProvider) AdminListUserAuthEventsWithContext(ctx aws.Con
 //    // Example iterating over at most 3 pages of a AdminListUserAuthEvents operation.
 //    pageNum := 0
 //    err := client.AdminListUserAuthEventsPages(params,
-//        func(page *AdminListUserAuthEventsOutput, lastPage bool) bool {
+//        func(page *cognitoidentityprovider.AdminListUserAuthEventsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -1980,10 +1982,12 @@ func (c *CognitoIdentityProvider) AdminListUserAuthEventsPagesWithContext(ctx aw
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*AdminListUserAuthEventsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*AdminListUserAuthEventsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -2034,7 +2038,7 @@ func (c *CognitoIdentityProvider) AdminRemoveUserFromGroupRequest(input *AdminRe
 //
 // Removes the specified user from the specified group.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2145,7 +2149,7 @@ func (c *CognitoIdentityProvider) AdminResetUserPasswordRequest(input *AdminRese
 // also result in sending a message to the end user with the code to change
 // their password.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2274,7 +2278,7 @@ func (c *CognitoIdentityProvider) AdminRespondToAuthChallengeRequest(input *Admi
 //
 // Responds to an authentication challenge, as an administrator.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2428,7 +2432,12 @@ func (c *CognitoIdentityProvider) AdminSetUserMFAPreferenceRequest(input *AdminS
 
 // AdminSetUserMFAPreference API operation for Amazon Cognito Identity Provider.
 //
-// Sets the user's multi-factor authentication (MFA) preference.
+// Sets the user's multi-factor authentication (MFA) preference, including which
+// MFA options are enabled and if any are preferred. Only one factor can be
+// set as preferred. The preferred MFA factor will be used to authenticate a
+// user if multiple factors are enabled. If multiple options are enabled and
+// no preference is set, a challenge to choose an MFA option will be returned
+// during sign in.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2527,6 +2536,19 @@ func (c *CognitoIdentityProvider) AdminSetUserPasswordRequest(input *AdminSetUse
 }
 
 // AdminSetUserPassword API operation for Amazon Cognito Identity Provider.
+//
+// Sets the specified user's password in a user pool as an administrator. Works
+// on any user.
+//
+// The password can be temporary or permanent. If it is temporary, the user
+// status will be placed into the FORCE_CHANGE_PASSWORD state. When the user
+// next tries to sign in, the InitiateAuth/AdminInitiateAuth response will contain
+// the NEW_PASSWORD_REQUIRED challenge. If the user does not sign in before
+// it expires, the user will not be able to sign in and their password will
+// need to be reset by an administrator.
+//
+// Once the user has set a new password, or the password is permanent, the user
+// status will be set to Confirmed.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2628,9 +2650,9 @@ func (c *CognitoIdentityProvider) AdminSetUserSettingsRequest(input *AdminSetUse
 
 // AdminSetUserSettings API operation for Amazon Cognito Identity Provider.
 //
-// Sets all the user settings for a specified user name. Works on any user.
-//
-// Requires developer credentials.
+// This action is no longer supported. You can use it to configure only SMS
+// MFA. You can't use it to configure TOTP software token MFA. To configure
+// either type of MFA, use the AdminSetUserMFAPreference action instead.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2829,7 +2851,7 @@ func (c *CognitoIdentityProvider) AdminUpdateDeviceStatusRequest(input *AdminUpd
 //
 // Updates the device status as an administrator.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2939,7 +2961,7 @@ func (c *CognitoIdentityProvider) AdminUpdateUserAttributesRequest(input *AdminU
 // In addition to updating user attributes, this API can also be used to mark
 // phone and email as verified.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3071,7 +3093,7 @@ func (c *CognitoIdentityProvider) AdminUserGlobalSignOutRequest(input *AdminUser
 //
 // Signs out users from all devices, as an administrator.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3763,7 +3785,7 @@ func (c *CognitoIdentityProvider) CreateGroupRequest(input *CreateGroupInput) (r
 //
 // Creates a new group in the specified user pool.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4479,7 +4501,7 @@ func (c *CognitoIdentityProvider) DeleteGroupRequest(input *DeleteGroupInput) (r
 //
 // Deletes a group. Currently only groups with no members can be deleted.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -6037,8 +6059,7 @@ func (c *CognitoIdentityProvider) ForgotPasswordRequest(input *ForgotPasswordInp
 // for the user, the confirmation code is sent to the phone number. Otherwise,
 // if a verified email exists, the confirmation code is sent to the email. If
 // neither a verified phone number nor a verified email exists, InvalidParameterException
-// is thrown. To use the confirmation code for resetting the password, call
-// .
+// is thrown. To use the confirmation code for resetting the password, call .
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -6374,7 +6395,7 @@ func (c *CognitoIdentityProvider) GetGroupRequest(input *GetGroupInput) (req *re
 //
 // Gets a group.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -6574,6 +6595,10 @@ func (c *CognitoIdentityProvider) GetSigningCertificateRequest(input *GetSigning
 // Returned Error Codes:
 //   * ErrCodeInternalErrorException "InternalErrorException"
 //   This exception is thrown when Amazon Cognito encounters an internal error.
+//
+//   * ErrCodeInvalidParameterException "InvalidParameterException"
+//   This exception is thrown when the Amazon Cognito service encounters an invalid
+//   parameter.
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   This exception is thrown when the Amazon Cognito service cannot find the
@@ -7230,6 +7255,16 @@ func (c *CognitoIdentityProvider) InitiateAuthRequest(input *InitiateAuthInput) 
 //   * ErrCodeInternalErrorException "InternalErrorException"
 //   This exception is thrown when Amazon Cognito encounters an internal error.
 //
+//   * ErrCodeInvalidSmsRoleAccessPolicyException "InvalidSmsRoleAccessPolicyException"
+//   This exception is returned when the role provided for SMS configuration does
+//   not have permission to publish using Amazon SNS.
+//
+//   * ErrCodeInvalidSmsRoleTrustRelationshipException "InvalidSmsRoleTrustRelationshipException"
+//   This exception is thrown when the trust relationship is invalid for the role
+//   provided for SMS configuration. This can happen if you do not trust cognito-idp.amazonaws.com
+//   or the external ID provided in the role does not match what is provided in
+//   the SMS configuration for the user pool.
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-idp-2016-04-18/InitiateAuth
 func (c *CognitoIdentityProvider) InitiateAuth(input *InitiateAuthInput) (*InitiateAuthOutput, error) {
 	req, out := c.InitiateAuthRequest(input)
@@ -7410,7 +7445,7 @@ func (c *CognitoIdentityProvider) ListGroupsRequest(input *ListGroupsInput) (req
 //
 // Lists the groups associated with a user pool.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -7471,7 +7506,7 @@ func (c *CognitoIdentityProvider) ListGroupsWithContext(ctx aws.Context, input *
 //    // Example iterating over at most 3 pages of a ListGroups operation.
 //    pageNum := 0
 //    err := client.ListGroupsPages(params,
-//        func(page *ListGroupsOutput, lastPage bool) bool {
+//        func(page *cognitoidentityprovider.ListGroupsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -7503,10 +7538,12 @@ func (c *CognitoIdentityProvider) ListGroupsPagesWithContext(ctx aws.Context, in
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListGroupsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListGroupsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -7621,7 +7658,7 @@ func (c *CognitoIdentityProvider) ListIdentityProvidersWithContext(ctx aws.Conte
 //    // Example iterating over at most 3 pages of a ListIdentityProviders operation.
 //    pageNum := 0
 //    err := client.ListIdentityProvidersPages(params,
-//        func(page *ListIdentityProvidersOutput, lastPage bool) bool {
+//        func(page *cognitoidentityprovider.ListIdentityProvidersOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -7653,10 +7690,12 @@ func (c *CognitoIdentityProvider) ListIdentityProvidersPagesWithContext(ctx aws.
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListIdentityProvidersOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListIdentityProvidersOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -7771,7 +7810,7 @@ func (c *CognitoIdentityProvider) ListResourceServersWithContext(ctx aws.Context
 //    // Example iterating over at most 3 pages of a ListResourceServers operation.
 //    pageNum := 0
 //    err := client.ListResourceServersPages(params,
-//        func(page *ListResourceServersOutput, lastPage bool) bool {
+//        func(page *cognitoidentityprovider.ListResourceServersOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -7803,10 +7842,12 @@ func (c *CognitoIdentityProvider) ListResourceServersPagesWithContext(ctx aws.Co
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListResourceServersOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListResourceServersOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -8115,7 +8156,7 @@ func (c *CognitoIdentityProvider) ListUserPoolClientsWithContext(ctx aws.Context
 //    // Example iterating over at most 3 pages of a ListUserPoolClients operation.
 //    pageNum := 0
 //    err := client.ListUserPoolClientsPages(params,
-//        func(page *ListUserPoolClientsOutput, lastPage bool) bool {
+//        func(page *cognitoidentityprovider.ListUserPoolClientsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -8147,10 +8188,12 @@ func (c *CognitoIdentityProvider) ListUserPoolClientsPagesWithContext(ctx aws.Co
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListUserPoolClientsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListUserPoolClientsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -8261,7 +8304,7 @@ func (c *CognitoIdentityProvider) ListUserPoolsWithContext(ctx aws.Context, inpu
 //    // Example iterating over at most 3 pages of a ListUserPools operation.
 //    pageNum := 0
 //    err := client.ListUserPoolsPages(params,
-//        func(page *ListUserPoolsOutput, lastPage bool) bool {
+//        func(page *cognitoidentityprovider.ListUserPoolsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -8293,10 +8336,12 @@ func (c *CognitoIdentityProvider) ListUserPoolsPagesWithContext(ctx aws.Context,
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListUserPoolsOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListUserPoolsOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -8331,6 +8376,12 @@ func (c *CognitoIdentityProvider) ListUsersRequest(input *ListUsersInput) (req *
 		Name:       opListUsers,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"PaginationToken"},
+			OutputTokens:    []string{"PaginationToken"},
+			LimitToken:      "Limit",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -8394,6 +8445,58 @@ func (c *CognitoIdentityProvider) ListUsersWithContext(ctx aws.Context, input *L
 	return out, req.Send()
 }
 
+// ListUsersPages iterates over the pages of a ListUsers operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListUsers method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListUsers operation.
+//    pageNum := 0
+//    err := client.ListUsersPages(params,
+//        func(page *cognitoidentityprovider.ListUsersOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *CognitoIdentityProvider) ListUsersPages(input *ListUsersInput, fn func(*ListUsersOutput, bool) bool) error {
+	return c.ListUsersPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListUsersPagesWithContext same as ListUsersPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CognitoIdentityProvider) ListUsersPagesWithContext(ctx aws.Context, input *ListUsersInput, fn func(*ListUsersOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListUsersInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListUsersRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListUsersOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListUsersInGroup = "ListUsersInGroup"
 
 // ListUsersInGroupRequest generates a "aws/request.Request" representing the
@@ -8446,7 +8549,7 @@ func (c *CognitoIdentityProvider) ListUsersInGroupRequest(input *ListUsersInGrou
 //
 // Lists the users in the specified group.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -8507,7 +8610,7 @@ func (c *CognitoIdentityProvider) ListUsersInGroupWithContext(ctx aws.Context, i
 //    // Example iterating over at most 3 pages of a ListUsersInGroup operation.
 //    pageNum := 0
 //    err := client.ListUsersInGroupPages(params,
-//        func(page *ListUsersInGroupOutput, lastPage bool) bool {
+//        func(page *cognitoidentityprovider.ListUsersInGroupOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -8539,10 +8642,12 @@ func (c *CognitoIdentityProvider) ListUsersInGroupPagesWithContext(ctx aws.Conte
 		},
 	}
 
-	cont := true
-	for p.Next() && cont {
-		cont = fn(p.Page().(*ListUsersInGroupOutput), !p.HasNextPage())
+	for p.Next() {
+		if !fn(p.Page().(*ListUsersInGroupOutput), !p.HasNextPage()) {
+			break
+		}
 	}
+
 	return p.Err()
 }
 
@@ -9091,7 +9196,12 @@ func (c *CognitoIdentityProvider) SetUserMFAPreferenceRequest(input *SetUserMFAP
 
 // SetUserMFAPreference API operation for Amazon Cognito Identity Provider.
 //
-// Set the user's multi-factor authentication (MFA) method preference.
+// Set the user's multi-factor authentication (MFA) method preference, including
+// which MFA factors are enabled and if any are preferred. Only one factor can
+// be set as preferred. The preferred MFA factor will be used to authenticate
+// a user if multiple factors are enabled. If multiple options are enabled and
+// no preference is set, a challenge to choose an MFA option will be returned
+// during sign in.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -9190,7 +9300,7 @@ func (c *CognitoIdentityProvider) SetUserPoolMfaConfigRequest(input *SetUserPool
 
 // SetUserPoolMfaConfig API operation for Amazon Cognito Identity Provider.
 //
-// Set the user pool MFA configuration.
+// Set the user pool multi-factor authentication (MFA) configuration.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -9296,9 +9406,9 @@ func (c *CognitoIdentityProvider) SetUserSettingsRequest(input *SetUserSettingsI
 
 // SetUserSettings API operation for Amazon Cognito Identity Provider.
 //
-// Sets the user settings like multi-factor authentication (MFA). If MFA is
-// to be removed for a particular attribute pass the attribute with code delivery
-// as null. If null list is passed, all MFA options are removed.
+// This action is no longer supported. You can use it to configure only SMS
+// MFA. You can't use it to configure TOTP software token MFA. To configure
+// either type of MFA, use the SetUserMFAPreference action instead.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -10144,7 +10254,10 @@ func (c *CognitoIdentityProvider) UpdateGroupRequest(input *UpdateGroupInput) (r
 //
 // Updates the specified group with the specified attributes.
 //
-// Requires developer credentials.
+// Calling this action requires developer credentials.
+//
+// If you don't provide a value for an attribute, it will be set to the default
+// value.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -10336,6 +10449,9 @@ func (c *CognitoIdentityProvider) UpdateResourceServerRequest(input *UpdateResou
 // UpdateResourceServer API operation for Amazon Cognito Identity Provider.
 //
 // Updates the name and scopes of resource server. All other fields are read-only.
+//
+// If you don't provide a value for an attribute, it will be set to the default
+// value.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -10576,9 +10692,11 @@ func (c *CognitoIdentityProvider) UpdateUserPoolRequest(input *UpdateUserPoolInp
 
 // UpdateUserPool API operation for Amazon Cognito Identity Provider.
 //
-// Updates the specified user pool with the specified attributes. If you don't
-// provide a value for an attribute, it will be set to the default value. You
-// can get a list of the current user pool settings with .
+// Updates the specified user pool with the specified attributes. You can get
+// a list of the current user pool settings with .
+//
+// If you don't provide a value for an attribute, it will be set to the default
+// value.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -10697,9 +10815,10 @@ func (c *CognitoIdentityProvider) UpdateUserPoolClientRequest(input *UpdateUserP
 // UpdateUserPoolClient API operation for Amazon Cognito Identity Provider.
 //
 // Updates the specified user pool app client with the specified attributes.
+// You can get a list of the current user pool app client settings with .
+//
 // If you don't provide a value for an attribute, it will be set to the default
-// value. You can get a list of the current user pool app client settings with
-// .
+// value.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -11485,6 +11604,36 @@ func (s AdminAddUserToGroupOutput) GoString() string {
 type AdminConfirmSignUpInput struct {
 	_ struct{} `type:"structure"`
 
+	// A map of custom key-value pairs that you can provide as input for any custom
+	// workflows that this action triggers.
+	//
+	// If your user pool configuration includes triggers, the AdminConfirmSignUp
+	// API action invokes the AWS Lambda function that is specified for the post
+	// confirmation trigger. When Amazon Cognito invokes this function, it passes
+	// a JSON payload, which the function receives as input. In this payload, the
+	// clientMetadata attribute provides the data that you assigned to the ClientMetadata
+	// parameter in your AdminConfirmSignUp request. In your function code in AWS
+	// Lambda, you can process the ClientMetadata value to enhance your workflow
+	// for your specific needs.
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
+	ClientMetadata map[string]*string `type:"map"`
+
 	// The user pool ID for which you want to confirm user registration.
 	//
 	// UserPoolId is a required field
@@ -11528,6 +11677,12 @@ func (s *AdminConfirmSignUpInput) Validate() error {
 	return nil
 }
 
+// SetClientMetadata sets the ClientMetadata field's value.
+func (s *AdminConfirmSignUpInput) SetClientMetadata(v map[string]*string) *AdminConfirmSignUpInput {
+	s.ClientMetadata = v
+	return s
+}
+
 // SetUserPoolId sets the UserPoolId field's value.
 func (s *AdminConfirmSignUpInput) SetUserPoolId(v string) *AdminConfirmSignUpInput {
 	s.UserPoolId = &v
@@ -11565,7 +11720,7 @@ type AdminCreateUserConfigType struct {
 
 	// The message template to be used for the welcome message to new users.
 	//
-	// See also Customizing User Invitation Messages (http://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-message-customizations.html#cognito-user-pool-settings-user-invitation-message-customization).
+	// See also Customizing User Invitation Messages (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-message-customizations.html#cognito-user-pool-settings-user-invitation-message-customization).
 	InviteMessageTemplate *MessageTemplateType `type:"structure"`
 
 	// The user account expiration limit, in days, after which the account is no
@@ -11625,6 +11780,36 @@ func (s *AdminCreateUserConfigType) SetUnusedAccountValidityDays(v int64) *Admin
 // Represents the request to create a user in the specified user pool.
 type AdminCreateUserInput struct {
 	_ struct{} `type:"structure"`
+
+	// A map of custom key-value pairs that you can provide as input for any custom
+	// workflows that this action triggers.
+	//
+	// You create custom workflows by assigning AWS Lambda functions to user pool
+	// triggers. When you use the AdminCreateUser API action, Amazon Cognito invokes
+	// the function that is assigned to the pre sign-up trigger. When Amazon Cognito
+	// invokes this function, it passes a JSON payload, which the function receives
+	// as input. This payload contains a clientMetadata attribute, which provides
+	// the data that you assigned to the ClientMetadata parameter in your AdminCreateUser
+	// request. In your function code in AWS Lambda, you can process the clientMetadata
+	// value to enhance your workflow for your specific needs.
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
+	ClientMetadata map[string]*string `type:"map"`
 
 	// Specify "EMAIL" if email will be used to send the welcome message. Specify
 	// "SMS" if the phone number will be used. The default value is "SMS". More
@@ -11775,6 +11960,12 @@ func (s *AdminCreateUserInput) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetClientMetadata sets the ClientMetadata field's value.
+func (s *AdminCreateUserInput) SetClientMetadata(v map[string]*string) *AdminCreateUserInput {
+	s.ClientMetadata = v
+	return s
 }
 
 // SetDesiredDeliveryMediums sets the DesiredDeliveryMediums field's value.
@@ -12495,7 +12686,10 @@ type AdminGetUserOutput struct {
 	// Indicates that the status is enabled.
 	Enabled *bool `type:"boolean"`
 
-	// Specifies the options for MFA (e.g., email or phone number).
+	// This response parameter is no longer supported. It provides information only
+	// about SMS MFA configurations. It doesn't provide information about TOTP software
+	// token MFA configurations. To look up information about either type of MFA
+	// configuration, use the AdminGetUserResponse$UserMFASettingList response instead.
 	MFAOptions []*MFAOptionType `type:"list"`
 
 	// The user's preferred MFA setting.
@@ -12510,7 +12704,8 @@ type AdminGetUserOutput struct {
 	// The date the user was last modified.
 	UserLastModifiedDate *time.Time `type:"timestamp"`
 
-	// The list of the user's MFA settings.
+	// The MFA options that are enabled for the user. The possible values in this
+	// list are SMS_MFA and SOFTWARE_TOKEN_MFA.
 	UserMFASettingList []*string `type:"list"`
 
 	// The user status. Can be one of the following:
@@ -12642,6 +12837,11 @@ type AdminInitiateAuthInput struct {
 	//    will invoke the user migration Lambda if the USERNAME is not found in
 	//    the user pool.
 	//
+	//    * ADMIN_USER_PASSWORD_AUTH: Admin-based user password authentication.
+	//    This replaces the ADMIN_NO_SRP_AUTH authentication flow. In this flow,
+	//    Cognito receives the password in the request instead of using the SRP
+	//    process to verify passwords.
+	//
 	// AuthFlow is a required field
 	AuthFlow *string `type:"string" required:"true" enum:"AuthFlowType"`
 
@@ -12666,9 +12866,59 @@ type AdminInitiateAuthInput struct {
 	// ClientId is a required field
 	ClientId *string `min:"1" type:"string" required:"true" sensitive:"true"`
 
-	// This is a random key-value pair map which can contain any key and will be
-	// passed to your PreAuthentication Lambda trigger as-is. It can be used to
-	// implement additional validations around authentication.
+	// A map of custom key-value pairs that you can provide as input for certain
+	// custom workflows that this action triggers.
+	//
+	// You create custom workflows by assigning AWS Lambda functions to user pool
+	// triggers. When you use the AdminInitiateAuth API action, Amazon Cognito invokes
+	// the AWS Lambda functions that are specified for various triggers. The ClientMetadata
+	// value is passed as input to the functions for only the following triggers:
+	//
+	//    * Pre signup
+	//
+	//    * Pre authentication
+	//
+	//    * User migration
+	//
+	// When Amazon Cognito invokes the functions for these triggers, it passes a
+	// JSON payload, which the function receives as input. This payload contains
+	// a validationData attribute, which provides the data that you assigned to
+	// the ClientMetadata parameter in your AdminInitiateAuth request. In your function
+	// code in AWS Lambda, you can process the validationData value to enhance your
+	// workflow for your specific needs.
+	//
+	// When you use the AdminInitiateAuth API action, Amazon Cognito also invokes
+	// the functions for the following triggers, but it does not provide the ClientMetadata
+	// value as input:
+	//
+	//    * Post authentication
+	//
+	//    * Custom message
+	//
+	//    * Pre token generation
+	//
+	//    * Create auth challenge
+	//
+	//    * Define auth challenge
+	//
+	//    * Verify auth challenge
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
 	ClientMetadata map[string]*string `type:"map"`
 
 	// Contextual data such as the user's device fingerprint, IP address, or location
@@ -12898,10 +13148,12 @@ type AdminLinkProviderForUserInput struct {
 	// respectively. The ProviderAttributeValue for the user must be the same value
 	// as the id, sub, or user_id value found in the social identity provider token.
 	//
-	// For SAML, the ProviderAttributeNamecan be any value that matches a claim in the SAML assertion. If you wish
-	// to link SAML users based on the subject of the SAML assertion, you should
-	// map the subject to a claim through the SAML identity provider and submit
-	// that claim name as the ProviderAttributeName. If you set ProviderAttributeNameto Cognito_Subject
+	// For SAML, the ProviderAttributeName can be any value that matches a claim
+	// in the SAML assertion. If you wish to link SAML users based on the subject
+	// of the SAML assertion, you should map the subject to a claim through the
+	// SAML identity provider and submit that claim name as the ProviderAttributeName.
+	// If you set ProviderAttributeName to Cognito_Subject, Cognito will automatically
+	// parse the default unique identifier found in the subject from the SAML token.
 	//
 	// SourceUser is a required field
 	SourceUser *ProviderUserIdentifierType `type:"structure" required:"true"`
@@ -13414,6 +13666,37 @@ func (s AdminRemoveUserFromGroupOutput) GoString() string {
 type AdminResetUserPasswordInput struct {
 	_ struct{} `type:"structure"`
 
+	// A map of custom key-value pairs that you can provide as input for any custom
+	// workflows that this action triggers.
+	//
+	// You create custom workflows by assigning AWS Lambda functions to user pool
+	// triggers. When you use the AdminResetUserPassword API action, Amazon Cognito
+	// invokes the function that is assigned to the custom message trigger. When
+	// Amazon Cognito invokes this function, it passes a JSON payload, which the
+	// function receives as input. This payload contains a clientMetadata attribute,
+	// which provides the data that you assigned to the ClientMetadata parameter
+	// in your AdminResetUserPassword request. In your function code in AWS Lambda,
+	// you can process the clientMetadata value to enhance your workflow for your
+	// specific needs.
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
+	ClientMetadata map[string]*string `type:"map"`
+
 	// The user pool ID for the user pool where you want to reset the user's password.
 	//
 	// UserPoolId is a required field
@@ -13455,6 +13738,12 @@ func (s *AdminResetUserPasswordInput) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetClientMetadata sets the ClientMetadata field's value.
+func (s *AdminResetUserPasswordInput) SetClientMetadata(v map[string]*string) *AdminResetUserPasswordInput {
+	s.ClientMetadata = v
+	return s
 }
 
 // SetUserPoolId sets the UserPoolId field's value.
@@ -13513,7 +13802,6 @@ type AdminRespondToAuthChallengeInput struct {
 	//    * NEW_PASSWORD_REQUIRED: NEW_PASSWORD, any other required attributes,
 	//    USERNAME, SECRET_HASH (if app client is configured with client secret).
 	//
-	//
 	// The value of the USERNAME attribute must be the user's actual username, not
 	// an alias (such as email address or phone number). To make this easier, the
 	// AdminInitiateAuth response includes the actual username value in the USERNAMEUSER_ID_FOR_SRP
@@ -13524,6 +13812,39 @@ type AdminRespondToAuthChallengeInput struct {
 	//
 	// ClientId is a required field
 	ClientId *string `min:"1" type:"string" required:"true" sensitive:"true"`
+
+	// A map of custom key-value pairs that you can provide as input for any custom
+	// workflows that this action triggers.
+	//
+	// You create custom workflows by assigning AWS Lambda functions to user pool
+	// triggers. When you use the AdminRespondToAuthChallenge API action, Amazon
+	// Cognito invokes any functions that are assigned to the following triggers:
+	// pre sign-up, custom message, post authentication, user migration, pre token
+	// generation, define auth challenge, create auth challenge, and verify auth
+	// challenge response. When Amazon Cognito invokes any of these functions, it
+	// passes a JSON payload, which the function receives as input. This payload
+	// contains a clientMetadata attribute, which provides the data that you assigned
+	// to the ClientMetadata parameter in your AdminRespondToAuthChallenge request.
+	// In your function code in AWS Lambda, you can process the clientMetadata value
+	// to enhance your workflow for your specific needs.
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
+	ClientMetadata map[string]*string `type:"map"`
 
 	// Contextual data such as the user's device fingerprint, IP address, or location
 	// used for evaluating the risk of an unexpected event by Amazon Cognito advanced
@@ -13607,6 +13928,12 @@ func (s *AdminRespondToAuthChallengeInput) SetChallengeResponses(v map[string]*s
 // SetClientId sets the ClientId field's value.
 func (s *AdminRespondToAuthChallengeInput) SetClientId(v string) *AdminRespondToAuthChallengeInput {
 	s.ClientId = &v
+	return s
+}
+
+// SetClientMetadata sets the ClientMetadata field's value.
+func (s *AdminRespondToAuthChallengeInput) SetClientMetadata(v map[string]*string) *AdminRespondToAuthChallengeInput {
+	s.ClientMetadata = v
 	return s
 }
 
@@ -13776,14 +14103,21 @@ func (s AdminSetUserMFAPreferenceOutput) GoString() string {
 type AdminSetUserPasswordInput struct {
 	_ struct{} `type:"structure"`
 
+	// The password for the user.
+	//
 	// Password is a required field
 	Password *string `min:"6" type:"string" required:"true" sensitive:"true"`
 
+	// True if the password is permanent, False if it is temporary.
 	Permanent *bool `type:"boolean"`
 
+	// The user pool ID for the user pool where you want to set the user's password.
+	//
 	// UserPoolId is a required field
 	UserPoolId *string `min:"1" type:"string" required:"true"`
 
+	// The user name of the user whose password you wish to set.
+	//
 	// Username is a required field
 	Username *string `min:"1" type:"string" required:"true" sensitive:"true"`
 }
@@ -13864,22 +14198,24 @@ func (s AdminSetUserPasswordOutput) GoString() string {
 	return s.String()
 }
 
-// Represents the request to set user settings as an administrator.
+// You can use this parameter to set an MFA configuration that uses the SMS
+// delivery medium.
 type AdminSetUserSettingsInput struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies the options for MFA (e.g., email or phone number).
+	// You can use this parameter only to set an SMS configuration that uses SMS
+	// for delivery.
 	//
 	// MFAOptions is a required field
 	MFAOptions []*MFAOptionType `type:"list" required:"true"`
 
-	// The user pool ID for the user pool where you want to set the user's settings,
-	// such as MFA options.
+	// The ID of the user pool that contains the user that you are setting options
+	// for.
 	//
 	// UserPoolId is a required field
 	UserPoolId *string `min:"1" type:"string" required:"true"`
 
-	// The user name of the user for whom you wish to set user settings.
+	// The user name of the user that you are setting options for.
 	//
 	// Username is a required field
 	Username *string `min:"1" type:"string" required:"true" sensitive:"true"`
@@ -14170,6 +14506,37 @@ func (s AdminUpdateDeviceStatusOutput) GoString() string {
 type AdminUpdateUserAttributesInput struct {
 	_ struct{} `type:"structure"`
 
+	// A map of custom key-value pairs that you can provide as input for any custom
+	// workflows that this action triggers.
+	//
+	// You create custom workflows by assigning AWS Lambda functions to user pool
+	// triggers. When you use the AdminUpdateUserAttributes API action, Amazon Cognito
+	// invokes the function that is assigned to the custom message trigger. When
+	// Amazon Cognito invokes this function, it passes a JSON payload, which the
+	// function receives as input. This payload contains a clientMetadata attribute,
+	// which provides the data that you assigned to the ClientMetadata parameter
+	// in your AdminUpdateUserAttributes request. In your function code in AWS Lambda,
+	// you can process the clientMetadata value to enhance your workflow for your
+	// specific needs.
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
+	ClientMetadata map[string]*string `type:"map"`
+
 	// An array of name-value pairs representing user attributes.
 	//
 	// For custom attributes, you must prepend the custom: prefix to the attribute
@@ -14232,6 +14599,12 @@ func (s *AdminUpdateUserAttributesInput) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetClientMetadata sets the ClientMetadata field's value.
+func (s *AdminUpdateUserAttributesInput) SetClientMetadata(v map[string]*string) *AdminUpdateUserAttributesInput {
+	s.ClientMetadata = v
+	return s
 }
 
 // SetUserAttributes sets the UserAttributes field's value.
@@ -15113,6 +15486,37 @@ type ConfirmForgotPasswordInput struct {
 	// ClientId is a required field
 	ClientId *string `min:"1" type:"string" required:"true" sensitive:"true"`
 
+	// A map of custom key-value pairs that you can provide as input for any custom
+	// workflows that this action triggers.
+	//
+	// You create custom workflows by assigning AWS Lambda functions to user pool
+	// triggers. When you use the ConfirmForgotPassword API action, Amazon Cognito
+	// invokes the function that is assigned to the post confirmation trigger. When
+	// Amazon Cognito invokes this function, it passes a JSON payload, which the
+	// function receives as input. This payload contains a clientMetadata attribute,
+	// which provides the data that you assigned to the ClientMetadata parameter
+	// in your ConfirmForgotPassword request. In your function code in AWS Lambda,
+	// you can process the clientMetadata value to enhance your workflow for your
+	// specific needs.
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
+	ClientMetadata map[string]*string `type:"map"`
+
 	// The confirmation code sent by a user's request to retrieve a forgotten password.
 	// For more information, see
 	//
@@ -15199,6 +15603,12 @@ func (s *ConfirmForgotPasswordInput) SetClientId(v string) *ConfirmForgotPasswor
 	return s
 }
 
+// SetClientMetadata sets the ClientMetadata field's value.
+func (s *ConfirmForgotPasswordInput) SetClientMetadata(v map[string]*string) *ConfirmForgotPasswordInput {
+	s.ClientMetadata = v
+	return s
+}
+
 // SetConfirmationCode sets the ConfirmationCode field's value.
 func (s *ConfirmForgotPasswordInput) SetConfirmationCode(v string) *ConfirmForgotPasswordInput {
 	s.ConfirmationCode = &v
@@ -15257,6 +15667,36 @@ type ConfirmSignUpInput struct {
 	//
 	// ClientId is a required field
 	ClientId *string `min:"1" type:"string" required:"true" sensitive:"true"`
+
+	// A map of custom key-value pairs that you can provide as input for any custom
+	// workflows that this action triggers.
+	//
+	// You create custom workflows by assigning AWS Lambda functions to user pool
+	// triggers. When you use the ConfirmSignUp API action, Amazon Cognito invokes
+	// the function that is assigned to the post confirmation trigger. When Amazon
+	// Cognito invokes this function, it passes a JSON payload, which the function
+	// receives as input. This payload contains a clientMetadata attribute, which
+	// provides the data that you assigned to the ClientMetadata parameter in your
+	// ConfirmSignUp request. In your function code in AWS Lambda, you can process
+	// the clientMetadata value to enhance your workflow for your specific needs.
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
+	ClientMetadata map[string]*string `type:"map"`
 
 	// The confirmation code sent by a user's request to confirm registration.
 	//
@@ -15336,6 +15776,12 @@ func (s *ConfirmSignUpInput) SetAnalyticsMetadata(v *AnalyticsMetadataType) *Con
 // SetClientId sets the ClientId field's value.
 func (s *ConfirmSignUpInput) SetClientId(v string) *ConfirmSignUpInput {
 	s.ClientId = &v
+	return s
+}
+
+// SetClientMetadata sets the ClientMetadata field's value.
+func (s *ConfirmSignUpInput) SetClientMetadata(v map[string]*string) *ConfirmSignUpInput {
+	s.ClientMetadata = v
 	return s
 }
 
@@ -15969,7 +16415,8 @@ type CreateUserPoolClientInput struct {
 	AllowedOAuthFlowsUserPoolClient *bool `type:"boolean"`
 
 	// A list of allowed OAuth scopes. Currently supported values are "phone", "email",
-	// "openid", and "Cognito".
+	// "openid", and "Cognito". In addition to these values, custom scopes created
+	// in Resource Servers are also supported.
 	AllowedOAuthScopes []*string `type:"list"`
 
 	// The Amazon Pinpoint analytics configuration for collecting metrics for this
@@ -16017,7 +16464,28 @@ type CreateUserPoolClientInput struct {
 	// App callback URLs such as myapp://example are also supported.
 	DefaultRedirectURI *string `min:"1" type:"string"`
 
-	// The explicit authentication flows.
+	// The authentication flows that are supported by the user pool clients. Flow
+	// names without the ALLOW_ prefix are deprecated in favor of new names with
+	// the ALLOW_ prefix. Note that values with ALLOW_ prefix cannot be used along
+	// with values without ALLOW_ prefix.
+	//
+	// Valid values include:
+	//
+	//    * ALLOW_ADMIN_USER_PASSWORD_AUTH: Enable admin based user password authentication
+	//    flow ADMIN_USER_PASSWORD_AUTH. This setting replaces the ADMIN_NO_SRP_AUTH
+	//    setting. With this authentication flow, Cognito receives the password
+	//    in the request instead of using the SRP (Secure Remote Password protocol)
+	//    protocol to verify passwords.
+	//
+	//    * ALLOW_CUSTOM_AUTH: Enable Lambda trigger based authentication.
+	//
+	//    * ALLOW_USER_PASSWORD_AUTH: Enable user password-based authentication.
+	//    In this flow, Cognito receives the password in the request instead of
+	//    using the SRP protocol to verify passwords.
+	//
+	//    * ALLOW_USER_SRP_AUTH: Enable SRP based authentication.
+	//
+	//    * ALLOW_REFRESH_TOKEN_AUTH: Enable authflow to refresh tokens.
 	ExplicitAuthFlows []*string `type:"list"`
 
 	// Boolean to specify whether you want to generate a secret for the user pool
@@ -16026,6 +16494,44 @@ type CreateUserPoolClientInput struct {
 
 	// A list of allowed logout URLs for the identity providers.
 	LogoutURLs []*string `type:"list"`
+
+	// Use this setting to choose which errors and responses are returned by Cognito
+	// APIs during authentication, account confirmation, and password recovery when
+	// the user does not exist in the user pool. When set to ENABLED and the user
+	// does not exist, authentication returns an error indicating either the username
+	// or password was incorrect, and account confirmation and password recovery
+	// return a response indicating a code was sent to a simulated destination.
+	// When set to LEGACY, those APIs will return a UserNotFoundException exception
+	// if the user does not exist in the user pool.
+	//
+	// Valid values include:
+	//
+	//    * ENABLED - This prevents user existence-related errors.
+	//
+	//    * LEGACY - This represents the old behavior of Cognito where user existence
+	//    related errors are not prevented.
+	//
+	// This setting affects the behavior of following APIs:
+	//
+	//    * AdminInitiateAuth
+	//
+	//    * AdminRespondToAuthChallenge
+	//
+	//    * InitiateAuth
+	//
+	//    * RespondToAuthChallenge
+	//
+	//    * ForgotPassword
+	//
+	//    * ConfirmForgotPassword
+	//
+	//    * ConfirmSignUp
+	//
+	//    * ResendConfirmationCode
+	//
+	// After January 1st 2020, the value of PreventUserExistenceErrors will default
+	// to ENABLED for newly created user pool clients if no value is provided.
+	PreventUserExistenceErrors *string `type:"string" enum:"PreventUserExistenceErrorTypes"`
 
 	// The read attributes.
 	ReadAttributes []*string `type:"list"`
@@ -16152,6 +16658,12 @@ func (s *CreateUserPoolClientInput) SetGenerateSecret(v bool) *CreateUserPoolCli
 // SetLogoutURLs sets the LogoutURLs field's value.
 func (s *CreateUserPoolClientInput) SetLogoutURLs(v []*string) *CreateUserPoolClientInput {
 	s.LogoutURLs = v
+	return s
+}
+
+// SetPreventUserExistenceErrors sets the PreventUserExistenceErrors field's value.
+func (s *CreateUserPoolClientInput) SetPreventUserExistenceErrors(v string) *CreateUserPoolClientInput {
+	s.PreventUserExistenceErrors = &v
 	return s
 }
 
@@ -16345,10 +16857,10 @@ type CreateUserPoolInput struct {
 	// need permission to invoke a function. So you will need to make an extra call
 	// to add permission for these event sources to invoke your Lambda function.
 	//
-	// For more information on using the Lambda API to add permission, see  AddPermission
-	//  (https://docs.aws.amazon.com/lambda/latest/dg/API_AddPermission.html).
+	// For more information on using the Lambda API to add permission, see AddPermission
+	// (https://docs.aws.amazon.com/lambda/latest/dg/API_AddPermission.html).
 	//
-	// For adding permission using the AWS CLI, see  add-permission  (https://docs.aws.amazon.com/cli/latest/reference/lambda/add-permission.html).
+	// For adding permission using the AWS CLI, see add-permission (https://docs.aws.amazon.com/cli/latest/reference/lambda/add-permission.html).
 	LambdaConfig *LambdaConfigType `type:"structure"`
 
 	// Specifies MFA configuration details.
@@ -17968,12 +18480,14 @@ type EmailConfigurationType struct {
 	// email functionality or your Amazon SES email configuration. Specify one of
 	// the following values:
 	//
-	// COGNITO_DEFAULTWhen Amazon Cognito emails your users, it uses its built-in
-	// email functionality. When you use the default option, Amazon Cognito allows
-	// only a limited number of emails each day for your user pool. For typical
-	// production environments, the default email limit is below the required delivery
-	// volume. To achieve a higher delivery volume, specify DEVELOPER to use your
-	// Amazon SES email configuration.
+	// COGNITO_DEFAULT
+	//
+	// When Amazon Cognito emails your users, it uses its built-in email functionality.
+	// When you use the default option, Amazon Cognito allows only a limited number
+	// of emails each day for your user pool. For typical production environments,
+	// the default email limit is below the required delivery volume. To achieve
+	// a higher delivery volume, specify DEVELOPER to use your Amazon SES email
+	// configuration.
 	//
 	// To look up the email delivery limit for the default option, see Limits in
 	// Amazon Cognito (https://docs.aws.amazon.com/cognito/latest/developerguide/limits.html)
@@ -17983,7 +18497,9 @@ type EmailConfigurationType struct {
 	// the FROM address, provide the ARN of an Amazon SES verified email address
 	// for the SourceArn parameter.
 	//
-	// DEVELOPERWhen Amazon Cognito emails your users, it uses your Amazon SES configuration.
+	// DEVELOPER
+	//
+	// When Amazon Cognito emails your users, it uses your Amazon SES configuration.
 	// Amazon Cognito calls Amazon SES on your behalf to send email from your verified
 	// email address. When you use this option, the email delivery limits are the
 	// same limits that apply to your Amazon SES verified email address in your
@@ -18276,6 +18792,37 @@ type ForgotPasswordInput struct {
 	// ClientId is a required field
 	ClientId *string `min:"1" type:"string" required:"true" sensitive:"true"`
 
+	// A map of custom key-value pairs that you can provide as input for any custom
+	// workflows that this action triggers.
+	//
+	// You create custom workflows by assigning AWS Lambda functions to user pool
+	// triggers. When you use the ForgotPassword API action, Amazon Cognito invokes
+	// any functions that are assigned to the following triggers: pre sign-up, custom
+	// message, and user migration. When Amazon Cognito invokes any of these functions,
+	// it passes a JSON payload, which the function receives as input. This payload
+	// contains a clientMetadata attribute, which provides the data that you assigned
+	// to the ClientMetadata parameter in your ForgotPassword request. In your function
+	// code in AWS Lambda, you can process the clientMetadata value to enhance your
+	// workflow for your specific needs.
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
+	ClientMetadata map[string]*string `type:"map"`
+
 	// A keyed-hash message authentication code (HMAC) calculated using the secret
 	// key of a user pool client and username plus the client ID in the message.
 	SecretHash *string `min:"1" type:"string" sensitive:"true"`
@@ -18336,6 +18883,12 @@ func (s *ForgotPasswordInput) SetAnalyticsMetadata(v *AnalyticsMetadataType) *Fo
 // SetClientId sets the ClientId field's value.
 func (s *ForgotPasswordInput) SetClientId(v string) *ForgotPasswordInput {
 	s.ClientId = &v
+	return s
+}
+
+// SetClientMetadata sets the ClientMetadata field's value.
+func (s *ForgotPasswordInput) SetClientMetadata(v map[string]*string) *ForgotPasswordInput {
+	s.ClientMetadata = v
 	return s
 }
 
@@ -18860,6 +19413,37 @@ type GetUserAttributeVerificationCodeInput struct {
 	//
 	// AttributeName is a required field
 	AttributeName *string `min:"1" type:"string" required:"true"`
+
+	// A map of custom key-value pairs that you can provide as input for any custom
+	// workflows that this action triggers.
+	//
+	// You create custom workflows by assigning AWS Lambda functions to user pool
+	// triggers. When you use the GetUserAttributeVerificationCode API action, Amazon
+	// Cognito invokes the function that is assigned to the custom message trigger.
+	// When Amazon Cognito invokes this function, it passes a JSON payload, which
+	// the function receives as input. This payload contains a clientMetadata attribute,
+	// which provides the data that you assigned to the ClientMetadata parameter
+	// in your GetUserAttributeVerificationCode request. In your function code in
+	// AWS Lambda, you can process the clientMetadata value to enhance your workflow
+	// for your specific needs.
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
+	ClientMetadata map[string]*string `type:"map"`
 }
 
 // String returns the string representation
@@ -18900,6 +19484,12 @@ func (s *GetUserAttributeVerificationCodeInput) SetAccessToken(v string) *GetUse
 // SetAttributeName sets the AttributeName field's value.
 func (s *GetUserAttributeVerificationCodeInput) SetAttributeName(v string) *GetUserAttributeVerificationCodeInput {
 	s.AttributeName = &v
+	return s
+}
+
+// SetClientMetadata sets the ClientMetadata field's value.
+func (s *GetUserAttributeVerificationCodeInput) SetClientMetadata(v map[string]*string) *GetUserAttributeVerificationCodeInput {
+	s.ClientMetadata = v
 	return s
 }
 
@@ -18974,7 +19564,11 @@ func (s *GetUserInput) SetAccessToken(v string) *GetUserInput {
 type GetUserOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies the options for MFA (e.g., email or phone number).
+	// This response parameter is no longer supported. It provides information only
+	// about SMS MFA configurations. It doesn't provide information about TOTP software
+	// token MFA configurations. To look up information about either type of MFA
+	// configuration, use the use the GetUserResponse$UserMFASettingList response
+	// instead.
 	MFAOptions []*MFAOptionType `type:"list"`
 
 	// The user's preferred MFA setting.
@@ -18988,7 +19582,8 @@ type GetUserOutput struct {
 	// UserAttributes is a required field
 	UserAttributes []*AttributeType `type:"list" required:"true"`
 
-	// The list of the user's MFA settings.
+	// The MFA options that are enabled for the user. The possible values in this
+	// list are SMS_MFA and SOFTWARE_TOKEN_MFA.
 	UserMFASettingList []*string `type:"list"`
 
 	// The user name of the user you wish to retrieve from the get user request.
@@ -19081,7 +19676,14 @@ func (s *GetUserPoolMfaConfigInput) SetUserPoolId(v string) *GetUserPoolMfaConfi
 type GetUserPoolMfaConfigOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The multi-factor (MFA) configuration.
+	// The multi-factor (MFA) configuration. Valid values include:
+	//
+	//    * OFF MFA will not be used for any users.
+	//
+	//    * ON MFA is required for all users to sign in.
+	//
+	//    * OPTIONAL MFA will be required only for individual users who have an
+	//    MFA factor enabled.
 	MfaConfiguration *string `type:"string" enum:"UserPoolMfaType"`
 
 	// The SMS text message multi-factor (MFA) configuration.
@@ -19420,6 +20022,11 @@ type InitiateAuthInput struct {
 	//    will invoke the user migration Lambda if the USERNAME is not found in
 	//    the user pool.
 	//
+	//    * ADMIN_USER_PASSWORD_AUTH: Admin-based user password authentication.
+	//    This replaces the ADMIN_NO_SRP_AUTH authentication flow. In this flow,
+	//    Cognito receives the password in the request instead of using the SRP
+	//    process to verify passwords.
+	//
 	// ADMIN_NO_SRP_AUTH is not a valid value.
 	//
 	// AuthFlow is a required field
@@ -19443,9 +20050,59 @@ type InitiateAuthInput struct {
 	// ClientId is a required field
 	ClientId *string `min:"1" type:"string" required:"true" sensitive:"true"`
 
-	// This is a random key-value pair map which can contain any key and will be
-	// passed to your PreAuthentication Lambda trigger as-is. It can be used to
-	// implement additional validations around authentication.
+	// A map of custom key-value pairs that you can provide as input for certain
+	// custom workflows that this action triggers.
+	//
+	// You create custom workflows by assigning AWS Lambda functions to user pool
+	// triggers. When you use the InitiateAuth API action, Amazon Cognito invokes
+	// the AWS Lambda functions that are specified for various triggers. The ClientMetadata
+	// value is passed as input to the functions for only the following triggers:
+	//
+	//    * Pre signup
+	//
+	//    * Pre authentication
+	//
+	//    * User migration
+	//
+	// When Amazon Cognito invokes the functions for these triggers, it passes a
+	// JSON payload, which the function receives as input. This payload contains
+	// a validationData attribute, which provides the data that you assigned to
+	// the ClientMetadata parameter in your InitiateAuth request. In your function
+	// code in AWS Lambda, you can process the validationData value to enhance your
+	// workflow for your specific needs.
+	//
+	// When you use the InitiateAuth API action, Amazon Cognito also invokes the
+	// functions for the following triggers, but it does not provide the ClientMetadata
+	// value as input:
+	//
+	//    * Post authentication
+	//
+	//    * Custom message
+	//
+	//    * Pre token generation
+	//
+	//    * Create auth challenge
+	//
+	//    * Define auth challenge
+	//
+	//    * Verify auth challenge
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
 	ClientMetadata map[string]*string `type:"map"`
 
 	// Contextual data such as the user's device fingerprint, IP address, or location
@@ -20622,7 +21279,7 @@ type ListUsersInput struct {
 	// attributes are returned.
 	AttributesToGet []*string `type:"list"`
 
-	// A filter string of the form "AttributeNameFilter-Type "AttributeValue"".
+	// A filter string of the form "AttributeName Filter-Type "AttributeValue"".
 	// Quotation marks within the filter string must be escaped using the backslash
 	// (\) character. For example, "family_name = \"Reddy\"".
 	//
@@ -20661,8 +21318,8 @@ type ListUsersInput struct {
 	//
 	// Custom attributes are not searchable.
 	//
-	// For more information, see Searching for Users Using the ListUsers API (http://docs.aws.amazon.com/cognito/latest/developerguide/how-to-manage-user-accounts.html#cognito-user-pools-searching-for-users-using-listusers-api)
-	// and Examples of Using the ListUsers API (http://docs.aws.amazon.com/cognito/latest/developerguide/how-to-manage-user-accounts.html#cognito-user-pools-searching-for-users-listusers-api-examples)
+	// For more information, see Searching for Users Using the ListUsers API (https://docs.aws.amazon.com/cognito/latest/developerguide/how-to-manage-user-accounts.html#cognito-user-pools-searching-for-users-using-listusers-api)
+	// and Examples of Using the ListUsers API (https://docs.aws.amazon.com/cognito/latest/developerguide/how-to-manage-user-accounts.html#cognito-user-pools-searching-for-users-listusers-api-examples)
 	// in the Amazon Cognito Developer Guide.
 	Filter *string `type:"string"`
 
@@ -20772,14 +21429,22 @@ func (s *ListUsersOutput) SetUsers(v []*UserType) *ListUsersOutput {
 	return s
 }
 
-// Specifies the different settings for multi-factor authentication (MFA).
+// This data type is no longer supported. You can use it only for SMS MFA configurations.
+// You can't use it for TOTP software token MFA configurations.
+//
+// To set either type of MFA configuration, use the AdminSetUserMFAPreference
+// or SetUserMFAPreference actions.
+//
+// To look up information about either type of MFA configuration, use the AdminGetUserResponse$UserMFASettingList
+// or GetUserResponse$UserMFASettingList responses.
 type MFAOptionType struct {
 	_ struct{} `type:"structure"`
 
-	// The attribute name of the MFA option type.
+	// The attribute name of the MFA option type. The only valid value is phone_number.
 	AttributeName *string `min:"1" type:"string"`
 
-	// The delivery medium (email message or SMS message) to send the MFA code.
+	// The delivery medium to send the MFA code. You can use this parameter to set
+	// only the SMS delivery medium value.
 	DeliveryMedium *string `type:"string" enum:"DeliveryMediumType"`
 }
 
@@ -21143,6 +21808,13 @@ type PasswordPolicyType struct {
 	// users to use at least one uppercase letter in their password.
 	RequireUppercase *bool `type:"boolean"`
 
+	// In the password policy you have set, refers to the number of days a temporary
+	// password is valid. If the user does not sign-in during this time, their password
+	// will need to be reset by an administrator.
+	//
+	// When you set TemporaryPasswordValidityDays for a user pool, you will no longer
+	// be able to set the deprecated UnusedAccountValidityDays value for that user
+	// pool.
 	TemporaryPasswordValidityDays *int64 `type:"integer"`
 }
 
@@ -21324,6 +21996,37 @@ type ResendConfirmationCodeInput struct {
 	// ClientId is a required field
 	ClientId *string `min:"1" type:"string" required:"true" sensitive:"true"`
 
+	// A map of custom key-value pairs that you can provide as input for any custom
+	// workflows that this action triggers.
+	//
+	// You create custom workflows by assigning AWS Lambda functions to user pool
+	// triggers. When you use the ResendConfirmationCode API action, Amazon Cognito
+	// invokes the function that is assigned to the custom message trigger. When
+	// Amazon Cognito invokes this function, it passes a JSON payload, which the
+	// function receives as input. This payload contains a clientMetadata attribute,
+	// which provides the data that you assigned to the ClientMetadata parameter
+	// in your ResendConfirmationCode request. In your function code in AWS Lambda,
+	// you can process the clientMetadata value to enhance your workflow for your
+	// specific needs.
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
+	ClientMetadata map[string]*string `type:"map"`
+
 	// A keyed-hash message authentication code (HMAC) calculated using the secret
 	// key of a user pool client and username plus the client ID in the message.
 	SecretHash *string `min:"1" type:"string" sensitive:"true"`
@@ -21383,6 +22086,12 @@ func (s *ResendConfirmationCodeInput) SetAnalyticsMetadata(v *AnalyticsMetadataT
 // SetClientId sets the ClientId field's value.
 func (s *ResendConfirmationCodeInput) SetClientId(v string) *ResendConfirmationCodeInput {
 	s.ClientId = &v
+	return s
+}
+
+// SetClientMetadata sets the ClientMetadata field's value.
+func (s *ResendConfirmationCodeInput) SetClientMetadata(v map[string]*string) *ResendConfirmationCodeInput {
+	s.ClientMetadata = v
 	return s
 }
 
@@ -21558,21 +22267,62 @@ type RespondToAuthChallengeInput struct {
 	// The challenge responses. These are inputs corresponding to the value of ChallengeName,
 	// for example:
 	//
-	//    * SMS_MFA: SMS_MFA_CODE, USERNAME, SECRET_HASH (if app client is configured
-	//    with client secret).
+	// SECRET_HASH (if app client is configured with client secret) applies to all
+	// inputs below (including SOFTWARE_TOKEN_MFA).
+	//
+	//    * SMS_MFA: SMS_MFA_CODE, USERNAME.
 	//
 	//    * PASSWORD_VERIFIER: PASSWORD_CLAIM_SIGNATURE, PASSWORD_CLAIM_SECRET_BLOCK,
-	//    TIMESTAMP, USERNAME, SECRET_HASH (if app client is configured with client
-	//    secret).
+	//    TIMESTAMP, USERNAME.
 	//
 	//    * NEW_PASSWORD_REQUIRED: NEW_PASSWORD, any other required attributes,
-	//    USERNAME, SECRET_HASH (if app client is configured with client secret).
+	//    USERNAME.
+	//
+	//    * SOFTWARE_TOKEN_MFA: USERNAME and SOFTWARE_TOKEN_MFA_CODE are required
+	//    attributes.
+	//
+	//    * DEVICE_SRP_AUTH requires USERNAME, DEVICE_KEY, SRP_A (and SECRET_HASH).
+	//
+	//    * DEVICE_PASSWORD_VERIFIER requires everything that PASSWORD_VERIFIER
+	//    requires plus DEVICE_KEY.
 	ChallengeResponses map[string]*string `type:"map"`
 
 	// The app client ID.
 	//
 	// ClientId is a required field
 	ClientId *string `min:"1" type:"string" required:"true" sensitive:"true"`
+
+	// A map of custom key-value pairs that you can provide as input for any custom
+	// workflows that this action triggers.
+	//
+	// You create custom workflows by assigning AWS Lambda functions to user pool
+	// triggers. When you use the RespondToAuthChallenge API action, Amazon Cognito
+	// invokes any functions that are assigned to the following triggers: post authentication,
+	// pre token generation, define auth challenge, create auth challenge, and verify
+	// auth challenge. When Amazon Cognito invokes any of these functions, it passes
+	// a JSON payload, which the function receives as input. This payload contains
+	// a clientMetadata attribute, which provides the data that you assigned to
+	// the ClientMetadata parameter in your RespondToAuthChallenge request. In your
+	// function code in AWS Lambda, you can process the clientMetadata value to
+	// enhance your workflow for your specific needs.
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
+	ClientMetadata map[string]*string `type:"map"`
 
 	// The session which should be passed both ways in challenge-response calls
 	// to the service. If InitiateAuth or RespondToAuthChallenge API call determines
@@ -21640,6 +22390,12 @@ func (s *RespondToAuthChallengeInput) SetChallengeResponses(v map[string]*string
 // SetClientId sets the ClientId field's value.
 func (s *RespondToAuthChallengeInput) SetClientId(v string) *RespondToAuthChallengeInput {
 	s.ClientId = &v
+	return s
+}
+
+// SetClientMetadata sets the ClientMetadata field's value.
+func (s *RespondToAuthChallengeInput) SetClientMetadata(v map[string]*string) *RespondToAuthChallengeInput {
+	s.ClientMetadata = v
 	return s
 }
 
@@ -21818,14 +22574,14 @@ func (s *RiskExceptionConfigurationType) SetSkippedIPRangeList(v []*string) *Ris
 	return s
 }
 
-// The SMS multi-factor authentication (MFA) settings type.
+// The type used for enabling SMS MFA at the user level.
 type SMSMfaSettingsType struct {
 	_ struct{} `type:"structure"`
 
 	// Specifies whether SMS text message MFA is enabled.
 	Enabled *bool `type:"boolean"`
 
-	// The preferred MFA method.
+	// Specifies whether SMS is the preferred MFA method.
 	PreferredMfa *bool `type:"boolean"`
 }
 
@@ -22173,7 +22929,7 @@ func (s *SetUICustomizationOutput) SetUICustomization(v *UICustomizationType) *S
 type SetUserMFAPreferenceInput struct {
 	_ struct{} `type:"structure"`
 
-	// The access token.
+	// The access token for the user.
 	//
 	// AccessToken is a required field
 	AccessToken *string `type:"string" required:"true" sensitive:"true"`
@@ -22243,7 +22999,14 @@ func (s SetUserMFAPreferenceOutput) GoString() string {
 type SetUserPoolMfaConfigInput struct {
 	_ struct{} `type:"structure"`
 
-	// The MFA configuration.
+	// The MFA configuration. Valid values include:
+	//
+	//    * OFF MFA will not be used for any users.
+	//
+	//    * ON MFA is required for all users to sign in.
+	//
+	//    * OPTIONAL MFA will be required only for individual users who have an
+	//    MFA factor enabled.
 	MfaConfiguration *string `type:"string" enum:"UserPoolMfaType"`
 
 	// The SMS text message MFA configuration.
@@ -22316,7 +23079,14 @@ func (s *SetUserPoolMfaConfigInput) SetUserPoolId(v string) *SetUserPoolMfaConfi
 type SetUserPoolMfaConfigOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The MFA configuration.
+	// The MFA configuration. Valid values include:
+	//
+	//    * OFF MFA will not be used for any users.
+	//
+	//    * ON MFA is required for all users to sign in.
+	//
+	//    * OPTIONAL MFA will be required only for individual users who have an
+	//    MFA factor enabled.
 	MfaConfiguration *string `type:"string" enum:"UserPoolMfaType"`
 
 	// The SMS text message MFA configuration.
@@ -22363,7 +23133,8 @@ type SetUserSettingsInput struct {
 	// AccessToken is a required field
 	AccessToken *string `type:"string" required:"true" sensitive:"true"`
 
-	// Specifies the options for MFA (e.g., email or phone number).
+	// You can use this parameter only to set an SMS configuration that uses SMS
+	// for delivery.
 	//
 	// MFAOptions is a required field
 	MFAOptions []*MFAOptionType `type:"list" required:"true"`
@@ -22444,6 +23215,37 @@ type SignUpInput struct {
 	//
 	// ClientId is a required field
 	ClientId *string `min:"1" type:"string" required:"true" sensitive:"true"`
+
+	// A map of custom key-value pairs that you can provide as input for any custom
+	// workflows that this action triggers.
+	//
+	// You create custom workflows by assigning AWS Lambda functions to user pool
+	// triggers. When you use the SignUp API action, Amazon Cognito invokes any
+	// functions that are assigned to the following triggers: pre sign-up, custom
+	// message, and post confirmation. When Amazon Cognito invokes any of these
+	// functions, it passes a JSON payload, which the function receives as input.
+	// This payload contains a clientMetadata attribute, which provides the data
+	// that you assigned to the ClientMetadata parameter in your SignUp request.
+	// In your function code in AWS Lambda, you can process the clientMetadata value
+	// to enhance your workflow for your specific needs.
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
+	ClientMetadata map[string]*string `type:"map"`
 
 	// The password of the user you wish to register.
 	//
@@ -22547,6 +23349,12 @@ func (s *SignUpInput) SetClientId(v string) *SignUpInput {
 	return s
 }
 
+// SetClientMetadata sets the ClientMetadata field's value.
+func (s *SignUpInput) SetClientMetadata(v map[string]*string) *SignUpInput {
+	s.ClientMetadata = v
+	return s
+}
+
 // SetPassword sets the Password field's value.
 func (s *SignUpInput) SetPassword(v string) *SignUpInput {
 	s.Password = &v
@@ -22630,15 +23438,25 @@ func (s *SignUpOutput) SetUserSub(v string) *SignUpOutput {
 	return s
 }
 
-// The SMS configuration type.
+// The SMS configuration type that includes the settings the Cognito User Pool
+// needs to call for the Amazon SNS service to send an SMS message from your
+// AWS account. The Cognito User Pool makes the request to the Amazon SNS Service
+// by using an AWS IAM role that you provide for your AWS account.
 type SmsConfigurationType struct {
 	_ struct{} `type:"structure"`
 
-	// The external ID.
+	// The external ID is a value that we recommend you use to add security to your
+	// IAM role which is used to call Amazon SNS to send SMS messages for your user
+	// pool. If you provide an ExternalId, the Cognito User Pool will include it
+	// when attempting to assume your IAM role, so that you can set your roles trust
+	// policy to require the ExternalID. If you use the Cognito Management Console
+	// to create a role for SMS MFA, Cognito will create a role with the required
+	// permissions and a trust policy that demonstrates use of the ExternalId.
 	ExternalId *string `type:"string"`
 
 	// The Amazon Resource Name (ARN) of the Amazon Simple Notification Service
-	// (SNS) caller.
+	// (SNS) caller. This is the ARN of the IAM role in your AWS account which Cognito
+	// will use to send SMS messages.
 	//
 	// SnsCallerArn is a required field
 	SnsCallerArn *string `min:"20" type:"string" required:"true"`
@@ -22686,7 +23504,10 @@ func (s *SmsConfigurationType) SetSnsCallerArn(v string) *SmsConfigurationType {
 type SmsMfaConfigType struct {
 	_ struct{} `type:"structure"`
 
-	// The SMS authentication message.
+	// The SMS authentication message that will be sent to users with the code they
+	// need to sign in. The message must contain the ‘{####}’ placeholder, which
+	// will be replaced with the code. If the message is not included, and default
+	// message will be used.
 	SmsAuthenticationMessage *string `min:"6" type:"string"`
 
 	// The SMS configuration.
@@ -22764,7 +23585,7 @@ type SoftwareTokenMfaSettingsType struct {
 	// Specifies whether software token MFA is enabled.
 	Enabled *bool `type:"boolean"`
 
-	// The preferred MFA method.
+	// Specifies whether software token MFA is the preferred MFA method.
 	PreferredMfa *bool `type:"boolean"`
 }
 
@@ -23000,7 +23821,9 @@ type TagResourceInput struct {
 	ResourceArn *string `min:"20" type:"string" required:"true"`
 
 	// The tags to assign to the user pool.
-	Tags map[string]*string `type:"map"`
+	//
+	// Tags is a required field
+	Tags map[string]*string `type:"map" required:"true"`
 }
 
 // String returns the string representation
@@ -23021,6 +23844,9 @@ func (s *TagResourceInput) Validate() error {
 	}
 	if s.ResourceArn != nil && len(*s.ResourceArn) < 20 {
 		invalidParams.Add(request.NewErrParamMinLen("ResourceArn", 20))
+	}
+	if s.Tags == nil {
+		invalidParams.Add(request.NewErrParamRequired("Tags"))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -23144,7 +23970,9 @@ type UntagResourceInput struct {
 	ResourceArn *string `min:"20" type:"string" required:"true"`
 
 	// The keys of the tags to remove from the user pool.
-	TagKeys []*string `type:"list"`
+	//
+	// TagKeys is a required field
+	TagKeys []*string `type:"list" required:"true"`
 }
 
 // String returns the string representation
@@ -23165,6 +23993,9 @@ func (s *UntagResourceInput) Validate() error {
 	}
 	if s.ResourceArn != nil && len(*s.ResourceArn) < 20 {
 		invalidParams.Add(request.NewErrParamMinLen("ResourceArn", 20))
+	}
+	if s.TagKeys == nil {
+		invalidParams.Add(request.NewErrParamRequired("TagKeys"))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -23747,6 +24578,37 @@ type UpdateUserAttributesInput struct {
 	// AccessToken is a required field
 	AccessToken *string `type:"string" required:"true" sensitive:"true"`
 
+	// A map of custom key-value pairs that you can provide as input for any custom
+	// workflows that this action triggers.
+	//
+	// You create custom workflows by assigning AWS Lambda functions to user pool
+	// triggers. When you use the UpdateUserAttributes API action, Amazon Cognito
+	// invokes the function that is assigned to the custom message trigger. When
+	// Amazon Cognito invokes this function, it passes a JSON payload, which the
+	// function receives as input. This payload contains a clientMetadata attribute,
+	// which provides the data that you assigned to the ClientMetadata parameter
+	// in your UpdateUserAttributes request. In your function code in AWS Lambda,
+	// you can process the clientMetadata value to enhance your workflow for your
+	// specific needs.
+	//
+	// For more information, see Customizing User Pool Workflows with Lambda Triggers
+	// (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html)
+	// in the Amazon Cognito Developer Guide.
+	//
+	// Take the following limitations into consideration when you use the ClientMetadata
+	// parameter:
+	//
+	//    * Amazon Cognito does not store the ClientMetadata value. This data is
+	//    available only to AWS Lambda triggers that are assigned to a user pool
+	//    to support custom workflows. If your user pool configuration does not
+	//    include triggers, the ClientMetadata parameter serves no purpose.
+	//
+	//    * Amazon Cognito does not validate the ClientMetadata value.
+	//
+	//    * Amazon Cognito does not encrypt the the ClientMetadata value, so don't
+	//    use it to provide sensitive information.
+	ClientMetadata map[string]*string `type:"map"`
+
 	// An array of name-value pairs representing user attributes.
 	//
 	// For custom attributes, you must prepend the custom: prefix to the attribute
@@ -23798,6 +24660,12 @@ func (s *UpdateUserAttributesInput) SetAccessToken(v string) *UpdateUserAttribut
 	return s
 }
 
+// SetClientMetadata sets the ClientMetadata field's value.
+func (s *UpdateUserAttributesInput) SetClientMetadata(v map[string]*string) *UpdateUserAttributesInput {
+	s.ClientMetadata = v
+	return s
+}
+
 // SetUserAttributes sets the UserAttributes field's value.
 func (s *UpdateUserAttributesInput) SetUserAttributes(v []*AttributeType) *UpdateUserAttributesInput {
 	s.UserAttributes = v
@@ -23843,7 +24711,8 @@ type UpdateUserPoolClientInput struct {
 	AllowedOAuthFlowsUserPoolClient *bool `type:"boolean"`
 
 	// A list of allowed OAuth scopes. Currently supported values are "phone", "email",
-	// "openid", and "Cognito".
+	// "openid", and "Cognito". In addition to these values, custom scopes created
+	// in Resource Servers are also supported.
 	AllowedOAuthScopes []*string `type:"list"`
 
 	// The Amazon Pinpoint analytics configuration for collecting metrics for this
@@ -23894,11 +24763,70 @@ type UpdateUserPoolClientInput struct {
 	// App callback URLs such as myapp://example are also supported.
 	DefaultRedirectURI *string `min:"1" type:"string"`
 
-	// Explicit authentication flows.
+	// The authentication flows that are supported by the user pool clients. Flow
+	// names without the ALLOW_ prefix are deprecated in favor of new names with
+	// the ALLOW_ prefix. Note that values with ALLOW_ prefix cannot be used along
+	// with values without ALLOW_ prefix.
+	//
+	// Valid values include:
+	//
+	//    * ALLOW_ADMIN_USER_PASSWORD_AUTH: Enable admin based user password authentication
+	//    flow ADMIN_USER_PASSWORD_AUTH. This setting replaces the ADMIN_NO_SRP_AUTH
+	//    setting. With this authentication flow, Cognito receives the password
+	//    in the request instead of using the SRP (Secure Remote Password protocol)
+	//    protocol to verify passwords.
+	//
+	//    * ALLOW_CUSTOM_AUTH: Enable Lambda trigger based authentication.
+	//
+	//    * ALLOW_USER_PASSWORD_AUTH: Enable user password-based authentication.
+	//    In this flow, Cognito receives the password in the request instead of
+	//    using the SRP protocol to verify passwords.
+	//
+	//    * ALLOW_USER_SRP_AUTH: Enable SRP based authentication.
+	//
+	//    * ALLOW_REFRESH_TOKEN_AUTH: Enable authflow to refresh tokens.
 	ExplicitAuthFlows []*string `type:"list"`
 
 	// A list of allowed logout URLs for the identity providers.
 	LogoutURLs []*string `type:"list"`
+
+	// Use this setting to choose which errors and responses are returned by Cognito
+	// APIs during authentication, account confirmation, and password recovery when
+	// the user does not exist in the user pool. When set to ENABLED and the user
+	// does not exist, authentication returns an error indicating either the username
+	// or password was incorrect, and account confirmation and password recovery
+	// return a response indicating a code was sent to a simulated destination.
+	// When set to LEGACY, those APIs will return a UserNotFoundException exception
+	// if the user does not exist in the user pool.
+	//
+	// Valid values include:
+	//
+	//    * ENABLED - This prevents user existence-related errors.
+	//
+	//    * LEGACY - This represents the old behavior of Cognito where user existence
+	//    related errors are not prevented.
+	//
+	// This setting affects the behavior of following APIs:
+	//
+	//    * AdminInitiateAuth
+	//
+	//    * AdminRespondToAuthChallenge
+	//
+	//    * InitiateAuth
+	//
+	//    * RespondToAuthChallenge
+	//
+	//    * ForgotPassword
+	//
+	//    * ConfirmForgotPassword
+	//
+	//    * ConfirmSignUp
+	//
+	//    * ResendConfirmationCode
+	//
+	// After January 1st 2020, the value of PreventUserExistenceErrors will default
+	// to ENABLED for newly created user pool clients if no value is provided.
+	PreventUserExistenceErrors *string `type:"string" enum:"PreventUserExistenceErrorTypes"`
 
 	// The read-only attributes of the user pool.
 	ReadAttributes []*string `type:"list"`
@@ -24021,6 +24949,12 @@ func (s *UpdateUserPoolClientInput) SetExplicitAuthFlows(v []*string) *UpdateUse
 // SetLogoutURLs sets the LogoutURLs field's value.
 func (s *UpdateUserPoolClientInput) SetLogoutURLs(v []*string) *UpdateUserPoolClientInput {
 	s.LogoutURLs = v
+	return s
+}
+
+// SetPreventUserExistenceErrors sets the PreventUserExistenceErrors field's value.
+func (s *UpdateUserPoolClientInput) SetPreventUserExistenceErrors(v string) *UpdateUserPoolClientInput {
+	s.PreventUserExistenceErrors = &v
 	return s
 }
 
@@ -24726,7 +25660,8 @@ type UserPoolClientType struct {
 	AllowedOAuthFlowsUserPoolClient *bool `type:"boolean"`
 
 	// A list of allowed OAuth scopes. Currently supported values are "phone", "email",
-	// "openid", and "Cognito".
+	// "openid", and "Cognito". In addition to these values, custom scopes created
+	// in Resource Servers are also supported.
 	AllowedOAuthScopes []*string `type:"list"`
 
 	// The Amazon Pinpoint analytics configuration for the user pool client.
@@ -24780,7 +25715,28 @@ type UserPoolClientType struct {
 	// App callback URLs such as myapp://example are also supported.
 	DefaultRedirectURI *string `min:"1" type:"string"`
 
-	// The explicit authentication flows.
+	// The authentication flows that are supported by the user pool clients. Flow
+	// names without the ALLOW_ prefix are deprecated in favor of new names with
+	// the ALLOW_ prefix. Note that values with ALLOW_ prefix cannot be used along
+	// with values without ALLOW_ prefix.
+	//
+	// Valid values include:
+	//
+	//    * ALLOW_ADMIN_USER_PASSWORD_AUTH: Enable admin based user password authentication
+	//    flow ADMIN_USER_PASSWORD_AUTH. This setting replaces the ADMIN_NO_SRP_AUTH
+	//    setting. With this authentication flow, Cognito receives the password
+	//    in the request instead of using the SRP (Secure Remote Password protocol)
+	//    protocol to verify passwords.
+	//
+	//    * ALLOW_CUSTOM_AUTH: Enable Lambda trigger based authentication.
+	//
+	//    * ALLOW_USER_PASSWORD_AUTH: Enable user password-based authentication.
+	//    In this flow, Cognito receives the password in the request instead of
+	//    using the SRP protocol to verify passwords.
+	//
+	//    * ALLOW_USER_SRP_AUTH: Enable SRP based authentication.
+	//
+	//    * ALLOW_REFRESH_TOKEN_AUTH: Enable authflow to refresh tokens.
 	ExplicitAuthFlows []*string `type:"list"`
 
 	// The date the user pool client was last modified.
@@ -24788,6 +25744,44 @@ type UserPoolClientType struct {
 
 	// A list of allowed logout URLs for the identity providers.
 	LogoutURLs []*string `type:"list"`
+
+	// Use this setting to choose which errors and responses are returned by Cognito
+	// APIs during authentication, account confirmation, and password recovery when
+	// the user does not exist in the user pool. When set to ENABLED and the user
+	// does not exist, authentication returns an error indicating either the username
+	// or password was incorrect, and account confirmation and password recovery
+	// return a response indicating a code was sent to a simulated destination.
+	// When set to LEGACY, those APIs will return a UserNotFoundException exception
+	// if the user does not exist in the user pool.
+	//
+	// Valid values include:
+	//
+	//    * ENABLED - This prevents user existence-related errors.
+	//
+	//    * LEGACY - This represents the old behavior of Cognito where user existence
+	//    related errors are not prevented.
+	//
+	// This setting affects the behavior of following APIs:
+	//
+	//    * AdminInitiateAuth
+	//
+	//    * AdminRespondToAuthChallenge
+	//
+	//    * InitiateAuth
+	//
+	//    * RespondToAuthChallenge
+	//
+	//    * ForgotPassword
+	//
+	//    * ConfirmForgotPassword
+	//
+	//    * ConfirmSignUp
+	//
+	//    * ResendConfirmationCode
+	//
+	// After January 1st 2020, the value of PreventUserExistenceErrors will default
+	// to ENABLED for newly created user pool clients if no value is provided.
+	PreventUserExistenceErrors *string `type:"string" enum:"PreventUserExistenceErrorTypes"`
 
 	// The Read-only attributes.
 	ReadAttributes []*string `type:"list"`
@@ -24892,6 +25886,12 @@ func (s *UserPoolClientType) SetLastModifiedDate(v time.Time) *UserPoolClientTyp
 // SetLogoutURLs sets the LogoutURLs field's value.
 func (s *UserPoolClientType) SetLogoutURLs(v []*string) *UserPoolClientType {
 	s.LogoutURLs = v
+	return s
+}
+
+// SetPreventUserExistenceErrors sets the PreventUserExistenceErrors field's value.
+func (s *UserPoolClientType) SetPreventUserExistenceErrors(v string) *UserPoolClientType {
+	s.PreventUserExistenceErrors = &v
 	return s
 }
 
@@ -25777,6 +26777,9 @@ const (
 
 	// AuthFlowTypeUserPasswordAuth is a AuthFlowType enum value
 	AuthFlowTypeUserPasswordAuth = "USER_PASSWORD_AUTH"
+
+	// AuthFlowTypeAdminUserPasswordAuth is a AuthFlowType enum value
+	AuthFlowTypeAdminUserPasswordAuth = "ADMIN_USER_PASSWORD_AUTH"
 )
 
 const (
@@ -25923,6 +26926,21 @@ const (
 
 	// ExplicitAuthFlowsTypeUserPasswordAuth is a ExplicitAuthFlowsType enum value
 	ExplicitAuthFlowsTypeUserPasswordAuth = "USER_PASSWORD_AUTH"
+
+	// ExplicitAuthFlowsTypeAllowAdminUserPasswordAuth is a ExplicitAuthFlowsType enum value
+	ExplicitAuthFlowsTypeAllowAdminUserPasswordAuth = "ALLOW_ADMIN_USER_PASSWORD_AUTH"
+
+	// ExplicitAuthFlowsTypeAllowCustomAuth is a ExplicitAuthFlowsType enum value
+	ExplicitAuthFlowsTypeAllowCustomAuth = "ALLOW_CUSTOM_AUTH"
+
+	// ExplicitAuthFlowsTypeAllowUserPasswordAuth is a ExplicitAuthFlowsType enum value
+	ExplicitAuthFlowsTypeAllowUserPasswordAuth = "ALLOW_USER_PASSWORD_AUTH"
+
+	// ExplicitAuthFlowsTypeAllowUserSrpAuth is a ExplicitAuthFlowsType enum value
+	ExplicitAuthFlowsTypeAllowUserSrpAuth = "ALLOW_USER_SRP_AUTH"
+
+	// ExplicitAuthFlowsTypeAllowRefreshTokenAuth is a ExplicitAuthFlowsType enum value
+	ExplicitAuthFlowsTypeAllowRefreshTokenAuth = "ALLOW_REFRESH_TOKEN_AUTH"
 )
 
 const (
@@ -25967,6 +26985,14 @@ const (
 
 	// OAuthFlowTypeClientCredentials is a OAuthFlowType enum value
 	OAuthFlowTypeClientCredentials = "client_credentials"
+)
+
+const (
+	// PreventUserExistenceErrorTypesLegacy is a PreventUserExistenceErrorTypes enum value
+	PreventUserExistenceErrorTypesLegacy = "LEGACY"
+
+	// PreventUserExistenceErrorTypesEnabled is a PreventUserExistenceErrorTypes enum value
+	PreventUserExistenceErrorTypesEnabled = "ENABLED"
 )
 
 const (
