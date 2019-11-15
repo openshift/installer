@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "Intentional error test observe bootkube failure"
+exit 1
+
 . /usr/local/bin/release-image.sh
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
