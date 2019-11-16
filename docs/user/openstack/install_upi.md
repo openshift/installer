@@ -662,7 +662,7 @@ Generally, it's not necessary to create a port explicitly -- `openstack server c
 So we will be creating the ports separately from the servers:
 
 ```sh
-$ openstack port create --network "$INFRA_ID-network" --security-group "$INFRA_ID-master" --allowed-address ip-address=192.0.2.5 --allowed-address ip-address=192.0.2.6 --allowed-address ip-address=192.0.2.7 --tag openshiftClusterID="$INFRA_ID" "$INFRA_ID-bootstrap-port"
+$ openstack port create --network "$INFRA_ID-network" --security-group "$INFRA_ID-master" --allowed-address ip-address=192.0.2.5 --allowed-address ip-address=192.0.2.6 --tag openshiftClusterID="$INFRA_ID" "$INFRA_ID-bootstrap-port"
 ```
 
 Since the keepalived-managed IP addresses are not attached to any specific server, Neutron would block their traffic by default. By passing them to `--allowed-address` the traffic can flow freely through.
@@ -806,7 +806,7 @@ The workers need no ignition override -- we can pass the unmodified `worker.ign`
 
 ```sh
 for index in $(seq 0 2); do
-    openstack port create --network "$INFRA_ID-network" --security-group "$INFRA_ID-worker" --allowed-address ip-address=192.0.2.5 --allowed-address ip-address=192.0.2.6 --allowed-address ip-address=192.0.2.7 --tag openshiftClusterID="$INFRA_ID" "$INFRA_ID-worker-port-$index"
+    openstack port create --network "$INFRA_ID-network" --security-group "$INFRA_ID-worker" --allowed-address ip-address=192.0.2.7 --tag openshiftClusterID="$INFRA_ID" "$INFRA_ID-worker-port-$index"
 done
 ```
 
