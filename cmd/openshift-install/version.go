@@ -21,7 +21,12 @@ func newVersionCmd() *cobra.Command {
 }
 
 func runVersionCmd(cmd *cobra.Command, args []string) error {
-	fmt.Printf("%s %s\n", os.Args[0], version.Raw)
+	versionString, err := version.Version()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s %s\n", os.Args[0], versionString)
 	if version.Commit != "" {
 		fmt.Printf("built from commit %s\n", version.Commit)
 	}
