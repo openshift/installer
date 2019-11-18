@@ -31,7 +31,17 @@ func BootstrapIP(tfs *terraform.State) (string, error) {
 		return "", errors.Wrap(err, "failed to lookup access config")
 	}
 	if !found {
-		return "", errors.New("bootstrap's network interface does not contain access_config")
+		return "", errors.New("could not find a usable IP address in accessConfigs")
+	}
+	if len(accessConfigs) == 0 {
+		networkIP, found, err := unstructured.NestedString(networkInterfaces[0].(map[string]interface{}), "network_ip")
+		if err != nil {
+			return "", errors.Wrap(err, "failed to lookup network_ip for bootstrap")
+		}
+		if !found {
+			return "", errors.New("could not find a usable network_ip address")
+		}
+		return networkIP, nil
 	}
 
 	bootstrap, found, err := unstructured.NestedString(accessConfigs[0].(map[string]interface{}), "nat_ip")
