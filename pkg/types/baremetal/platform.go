@@ -61,4 +61,13 @@ type Platform struct {
 
 	// DNSVIP is the VIP to use for internal DNS communication
 	DNSVIP string `json:"dnsVIP"`
+
+	// UseMDNS indicates whether the deployer wants to use our mDNS services
+	// to provide internal DNS or if they will be providing DNS records in
+	// their external DNS system. It takes one of the strings in
+	// ["all", "none", "master"].
+	// +optional
+	// Default is "all", which means mDNS services will be deployed to all
+	// node types.
+	UseMDNS string `json:"useMDNS,omitempty"`
 }

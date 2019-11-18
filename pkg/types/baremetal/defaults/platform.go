@@ -18,6 +18,7 @@ const (
 	HardwareProfile         = "default"
 	APIVIP                  = ""
 	IngressVIP              = ""
+	UseMDNS                 = "all"
 )
 
 // SetPlatformDefaults sets the defaults for the platform.
@@ -68,5 +69,9 @@ func SetPlatformDefaults(p *baremetal.Platform, c *types.InstallConfig) {
 		} else {
 			p.IngressVIP = vip[0]
 		}
+	}
+
+	if p.UseMDNS == "" {
+		p.UseMDNS = UseMDNS
 	}
 }

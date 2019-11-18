@@ -84,6 +84,12 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 	if err := validateIPNotinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapHostIP"), p.BootstrapProvisioningIP, err.Error()))
 	}
+	switch p.UseMDNS {
+		case "all", "none", "master":
+			// Valid values, no error
+		default:
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("useMDNS"), p.UseMDNS, "Invalid value for UseMDNS"))
+	}
 
 	for _, validator := range dynamicValidators {
 		allErrs = append(allErrs, validator(p, fldPath)...)

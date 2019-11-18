@@ -102,6 +102,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			APIServerInternalIP: installConfig.Config.Platform.BareMetal.APIVIP,
 			NodeDNSIP:           installConfig.Config.Platform.BareMetal.DNSVIP,
 			IngressIP:           installConfig.Config.Platform.BareMetal.IngressVIP,
+			UseMDNS:             installConfig.Config.Platform.BareMetal.UseMDNS,
 		}
 	case gcp.Name:
 		config.Status.PlatformStatus.Type = configv1.GCPPlatformType
