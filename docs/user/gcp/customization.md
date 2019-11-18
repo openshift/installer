@@ -94,7 +94,7 @@ metadata:
   name: example-cluster
 platform:
   gcp:
-    project: example-project
+    projectID: example-project
     region: us-east1
     computeSubnet: example-worker-subnet
     controlPlaneSubnet: example-controlplane-subnet
