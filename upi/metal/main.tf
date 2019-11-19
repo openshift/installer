@@ -12,6 +12,7 @@ locals {
     "coreos.inst.image_url=${var.pxe_os_image_url}",
     "coreos.inst.install_dev=sda",
     "coreos.inst.skip_media_check",
+    "ip=enp1s0f0:dhcp",
   ]
 
   pxe_kernel = "${var.pxe_kernel_url}"
