@@ -18,19 +18,18 @@ func TestCloudProviderConfig(t *testing.T) {
 		DefaultDatastore: "test-datastore",
 	}
 	expectedConfig := `[Global]
-secret-name      = vsphere-creds
-secret-namespace = kube-system
-insecure-flag    = 1
+secret-name = "vsphere-creds"
+secret-namespace = "kube-system"
+insecure-flag = "1"
 
 [Workspace]
-server            = test-name
-datacenter        = test-datacenter
-default-datastore = test-datastore
-folder            = test-cluster
+server = "test-name"
+datacenter = "test-datacenter"
+default-datastore = "test-datastore"
+folder = "test-cluster"
 
 [VirtualCenter "test-name"]
-datacenters = test-datacenter
-
+datacenters = "test-datacenter"
 `
 	actualConfig, err := CloudProviderConfig(clusterName, platform)
 	assert.NoError(t, err, "failed to create cloud provider config")
