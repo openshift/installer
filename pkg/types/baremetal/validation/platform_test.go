@@ -1,7 +1,6 @@
 package validation
 
 import (
-	"net"
 	"testing"
 
 	"github.com/openshift/installer/pkg/ipnet"
@@ -12,7 +11,23 @@ import (
 )
 
 func TestValidatePlatform(t *testing.T) {
-	iface, _ := net.Interfaces()
+	interfaceValidator := func(p *baremetal.Platform, fldPath *field.Path) field.ErrorList {
+		errorList := field.ErrorList{}
+
+		if p.ExternalBridge != "br0" {
+			errorList = append(errorList, field.Invalid(fldPath.Child("externalBridge"), p.ExternalBridge,
+				"invalid external bridge"))
+		}
+
+		if p.ProvisioningBridge != "br1" {
+			errorList = append(errorList, field.Invalid(fldPath.Child("provisioningBridge"), p.ProvisioningBridge,
+				"invalid provisioning bridge"))
+		}
+
+		return errorList
+	}
+
+	dynamicValidators = append(dynamicValidators, interfaceValidator)
 	network := &types.Networking{MachineCIDR: ipnet.MustParseCIDR("192.168.111.0/24")}
 	cases := []struct {
 		name     string
@@ -30,8 +45,8 @@ func TestValidatePlatform(t *testing.T) {
 				LibvirtURI:              "qemu://system",
 				ClusterProvisioningIP:   "172.22.0.3",
 				BootstrapProvisioningIP: "172.22.0.2",
-				ExternalBridge:          iface[0].Name,
-				ProvisioningBridge:      iface[0].Name,
+				ExternalBridge:          "br0",
+				ProvisioningBridge:      "br1",
 			},
 			network: network,
 		},
@@ -45,8 +60,8 @@ func TestValidatePlatform(t *testing.T) {
 				LibvirtURI:              "qemu://system",
 				ClusterProvisioningIP:   "172.22.0.3",
 				BootstrapProvisioningIP: "172.22.0.2",
-				ExternalBridge:          iface[0].Name,
-				ProvisioningBridge:      iface[0].Name,
+				ExternalBridge:          "br0",
+				ProvisioningBridge:      "br1",
 			},
 			network:  network,
 			expected: "Invalid value: \"192.168.222.2\": the virtual IP is expected to be in 192.168.111.0/24 subnet",
@@ -61,8 +76,8 @@ func TestValidatePlatform(t *testing.T) {
 				LibvirtURI:              "qemu://system",
 				ClusterProvisioningIP:   "172.22.0.3",
 				BootstrapProvisioningIP: "172.22.0.2",
-				ExternalBridge:          iface[0].Name,
-				ProvisioningBridge:      iface[0].Name,
+				ExternalBridge:          "br0",
+				ProvisioningBridge:      "br1",
 			},
 			network:  network,
 			expected: "Invalid value: \"192.168.222.3\": the virtual IP is expected to be in 192.168.111.0/24 subnet",
@@ -77,8 +92,8 @@ func TestValidatePlatform(t *testing.T) {
 				LibvirtURI:              "qemu://system",
 				ClusterProvisioningIP:   "172.22.0.3",
 				BootstrapProvisioningIP: "172.22.0.2",
-				ExternalBridge:          iface[0].Name,
-				ProvisioningBridge:      iface[0].Name,
+				ExternalBridge:          "br0",
+				ProvisioningBridge:      "br1",
 			},
 			network:  network,
 			expected: "Invalid value: \"192.168.222.4\": the virtual IP is expected to be in 192.168.111.0/24 subnet",
@@ -93,8 +108,8 @@ func TestValidatePlatform(t *testing.T) {
 				LibvirtURI:              "qemu://system",
 				ClusterProvisioningIP:   "172.22.0.3",
 				BootstrapProvisioningIP: "172.22.0.2",
-				ExternalBridge:          iface[0].Name,
-				ProvisioningBridge:      iface[0].Name,
+				ExternalBridge:          "br0",
+				ProvisioningBridge:      "br1",
 			},
 			network:  network,
 			expected: "bare metal hosts are missing",
@@ -109,8 +124,8 @@ func TestValidatePlatform(t *testing.T) {
 				LibvirtURI:              "",
 				ClusterProvisioningIP:   "172.22.0.3",
 				BootstrapProvisioningIP: "172.22.0.2",
-				ExternalBridge:          iface[0].Name,
-				ProvisioningBridge:      iface[0].Name,
+				ExternalBridge:          "br0",
+				ProvisioningBridge:      "br1",
 			},
 			network:  network,
 			expected: "invalid URI \"\"",
@@ -126,10 +141,10 @@ func TestValidatePlatform(t *testing.T) {
 				ClusterProvisioningIP:   "172.22.0.3",
 				BootstrapProvisioningIP: "172.22.0.2",
 				ExternalBridge:          "noexist",
-				ProvisioningBridge:      iface[0].Name,
+				ProvisioningBridge:      "br1",
 			},
 			network:  network,
-			expected: "Invalid value: \"noexist\": noexist is not a valid network interface",
+			expected: "Invalid value: \"noexist\": invalid external bridge",
 		},
 		{
 			name: "invalid_provbridge",
@@ -141,12 +156,13 @@ func TestValidatePlatform(t *testing.T) {
 				LibvirtURI:              "qemu://system",
 				ClusterProvisioningIP:   "172.22.0.3",
 				BootstrapProvisioningIP: "172.22.0.2",
-				ExternalBridge:          iface[0].Name,
+				ExternalBridge:          "br0",
 				ProvisioningBridge:      "noexist",
 			},
 			network:  network,
-			expected: "Invalid value: \"noexist\": noexist is not a valid network interface",
+			expected: "Invalid value: \"noexist\": invalid provisioning bridge",
 		},
+
 		{
 			name: "invalid_clusterprovip",
 			platform: &baremetal.Platform{
@@ -157,8 +173,8 @@ func TestValidatePlatform(t *testing.T) {
 				LibvirtURI:              "qemu://system",
 				ClusterProvisioningIP:   "192.168.111.5",
 				BootstrapProvisioningIP: "172.22.0.2",
-				ExternalBridge:          iface[0].Name,
-				ProvisioningBridge:      iface[0].Name,
+				ExternalBridge:          "br0",
+				ProvisioningBridge:      "br1",
 			},
 			network:  network,
 			expected: "Invalid value: \"192.168.111.5\": the IP must not be in 192.168.111.0/24 subnet",
@@ -173,8 +189,8 @@ func TestValidatePlatform(t *testing.T) {
 				LibvirtURI:              "qemu://system",
 				ClusterProvisioningIP:   "172.22.0.3",
 				BootstrapProvisioningIP: "192.168.111.5",
-				ExternalBridge:          iface[0].Name,
-				ProvisioningBridge:      iface[0].Name,
+				ExternalBridge:          "br0",
+				ProvisioningBridge:      "br1",
 			},
 			network:  network,
 			expected: "Invalid value: \"192.168.111.5\": the IP must not be in 192.168.111.0/24 subnet",
