@@ -150,6 +150,7 @@ func (o *ClusterUninstaller) discoverCloudControllerResources() error {
 			return err
 		}
 		for _, backend := range backends {
+			o.Logger.Debugf("Discovering cloud controller resources for %s", backend.name)
 			err := o.discoverCloudControllerLoadBalancerResources(backend.name)
 			if err != nil {
 				errs = append(errs, err)
@@ -165,6 +166,7 @@ func (o *ClusterUninstaller) discoverCloudControllerResources() error {
 		return err
 	}
 	for _, pool := range pools {
+		o.Logger.Debugf("Discovering cloud controller resources for %s", pool.name)
 		err := o.discoverCloudControllerLoadBalancerResources(pool.name)
 		if err != nil {
 			errs = append(errs, err)
@@ -174,16 +176,30 @@ func (o *ClusterUninstaller) discoverCloudControllerResources() error {
 
 	// cloudControllerUID related items
 	if len(o.cloudControllerUID) > 0 {
-		// Discover Cloud Controller http health checks: k8s-cloudControllerUID-node
+		// Discover Cloud Controller health checks: k8s-cloudControllerUID-node
 		filter := fmt.Sprintf("name eq \"k8s-%s-node\"", o.cloudControllerUID)
-		found, err := o.listHTTPHealthChecksWithFilter("items(name),nextPageToken", filter, nil)
+		found, err := o.listHealthChecksWithFilter("items(name),nextPageToken", filter, nil)
+		if err != nil {
+			return err
+		}
+		o.insertPendingItems("healthcheck", found)
+
+		// Discover Cloud Controller http health checks: k8s-cloudControllerUID-node
+		found, err = o.listHTTPHealthChecksWithFilter("items(name),nextPageToken", filter, nil)
 		if err != nil {
 			return err
 		}
 		o.insertPendingItems("httphealthcheck", found)
 
-		// Discover Cloud Controller firewall rules: k8s-cloudControllerUID-node-hc
+		// Discover Cloud Controller firewall rules: k8s-cloudControllerUID-node-hc, k8s-cloudControllerUID-node-http-hc
 		filter = fmt.Sprintf("name eq \"k8s-%s-node-hc\"", o.cloudControllerUID)
+		found, err = o.listFirewallsWithFilter("items(name),nextPageToken", filter, nil)
+		if err != nil {
+			return err
+		}
+		o.insertPendingItems("firewall", found)
+
+		filter = fmt.Sprintf("name eq \"k8s-%s-node-http-hc\"", o.cloudControllerUID)
 		found, err = o.listFirewallsWithFilter("items(name),nextPageToken", filter, nil)
 		if err != nil {
 			return err
