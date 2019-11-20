@@ -24,8 +24,6 @@ The requirements for UPI are broadly similar to the [ones for OpenStack IPI][ipi
 - An external subnet you want to use for floating IP addresses
   - *This document* will use `external`
 - The `openshift-install` binary in your `$PATH`
-- The [Red Hat CoreOS][rhcos] image in Glance
-  - *This document* will use `rhcos` as the image name
 - A subnet range for the Nova servers / OpenShift Nodes
   - This range must not conflict with your existing network
   - *This document* will use `192.0.2.0/24`
@@ -53,7 +51,6 @@ You can validate most of the above by running the following commands:
 
 ```sh
 $ export OS_CLOUD=openstack
-$ openstack image show rhcos
 $ openstack network show external
 $ openstack flavor show m1.xlarge
 $ openstack flavor show m1.large
@@ -77,6 +74,34 @@ All the configuration files, logs and installation state are kept in a single di
 ```sh
 $ mkdir -p openstack-upi
 $ cd openstack-upi
+```
+
+### Red Hat Enterprise Linux CoreOS (RHCOS)
+
+A proper RHCOS image in the OpenStack cluster or project is required for successful installation.
+
+Get the RHCOS image for your OpenShift version [here](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/). You should download images with the highest version that is less than or equal to the OpenShift version that you install. Use the image versions that match your OpenShift version if they are available.
+
+The OpenStack QCOW2 image is delivered in compressed format and therefore has the `.gz` extension. Unfortunately, compressed image support is not supported in OpenStack. So, you have to decompress the data before uploading it into Glance. The following command will unpack the image and create `rhcos-${RHCOSVERSION}-openstack.qcow2` file without `.gz` extension.
+
+```sh
+$ gunzip rhcos-${RHCOSVERSION}-openstack.qcow2.gz
+```
+
+Next step is to create a Glance image.
+
+**NOTE:** *This document* will use `rhcos` as the Glance image name, but it's not mandatory.
+
+```sh
+$ openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.qcow2 rhcos
+```
+
+**NOTE:** Depending on your OpenStack environment you can upload the RHCOS image as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/introduction.html#disk-and-container-formats-for-images) for more information.
+
+Finally validate that the image was successfully created:
+
+```sh
+$ openstack image show rhcos
 ```
 
 ## API and Ingress Floating IP Addresses
