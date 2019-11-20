@@ -21,9 +21,13 @@ func Test_generateInfraID(t *testing.T) {
 		expLen:     27,
 		expNonRand: "qwertyuiopasdfghjklzx",
 	}, {
+		input:      "qwertyuiopasdfghjklz-cvbnm",
+		expLen:     26,
+		expNonRand: "qwertyuiopasdfghjklz",
+	}, {
 		input:      "qwe.rty.@iop!",
-		expLen:     13 + randomLen + 1,
-		expNonRand: "qwe-rty--iop-",
+		expLen:     11 + randomLen + 1,
+		expNonRand: "qwe-rty-iop",
 	}}
 	for _, test := range tests {
 		t.Run("", func(t *testing.T) {
