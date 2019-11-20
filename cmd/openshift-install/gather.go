@@ -79,10 +79,16 @@ func newGatherBootstrapCmd() *cobra.Command {
 }
 
 func runGatherBootstrapCmd(directory string) error {
+	// Always prefer user-supplied addresses over other mechanisms
+	if gatherBootstrapOpts.bootstrap != "" && len(gatherBootstrapOpts.masters) > 0 {
+		return logGatherBootstrap(gatherBootstrapOpts.bootstrap, 22, gatherBootstrapOpts.masters, directory)
+	}
+
+	// Otherwise we look at terraform state
 	tfStateFilePath := filepath.Join(directory, terraform.StateFileName)
 	_, err := os.Stat(tfStateFilePath)
 	if os.IsNotExist(err) {
-		return unSupportedPlatformGather(directory)
+		return errors.New("no terraform state file found, please provide bootstrap host address and at least one control plane host address")
 	}
 	if err != nil {
 		return err
@@ -103,11 +109,9 @@ func runGatherBootstrapCmd(directory string) error {
 		return errors.Wrapf(err, "failed to read state from %q", tfStateFilePath)
 	}
 	bootstrap, port, masters, err := extractHostAddresses(config.Config, tfstate)
-	if err != nil {
-		if err2, ok := err.(errUnSupportedGatherPlatform); ok {
-			logrus.Error(err2)
-			return unSupportedPlatformGather(directory)
-		}
+	if _, ok := err.(errUnSupportedGatherPlatform); err != nil && ok {
+		return err
+	} else if err != nil {
 		return errors.Wrapf(err, "failed to get bootstrap and control plane host addresses from %q", tfStateFilePath)
 	}
 
@@ -183,7 +187,7 @@ func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State)
 			logrus.Error(err)
 		}
 	default:
-		return "", port, nil, errUnSupportedGatherPlatform{Message: fmt.Sprintf("Cannot fetch the bootstrap and control plane host addresses from state file for %s platform", config.Platform.Name())}
+		return "", port, nil, errUnSupportedGatherPlatform{Message: fmt.Sprintf("%q platform is not supported for automatic log gathering", config.Platform.Name())}
 	}
 	return bootstrap, port, masters, nil
 }
@@ -194,14 +198,6 @@ type errUnSupportedGatherPlatform struct {
 
 func (e errUnSupportedGatherPlatform) Error() string {
 	return e.Message
-}
-
-func unSupportedPlatformGather(directory string) error {
-	if gatherBootstrapOpts.bootstrap == "" || len(gatherBootstrapOpts.masters) == 0 {
-		return errors.New("bootstrap host address and at least one control plane host address must be provided")
-	}
-
-	return logGatherBootstrap(gatherBootstrapOpts.bootstrap, 22, gatherBootstrapOpts.masters, directory)
 }
 
 func logClusterOperatorConditions(ctx context.Context, config *rest.Config) error {
