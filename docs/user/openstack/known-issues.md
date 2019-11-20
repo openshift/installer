@@ -12,7 +12,7 @@ Since the installer requires the *Name* of your external network and Red Hat Cor
 
 ## Self Signed Certificates
 
-Support for Certificate Bundles has been fixed in 4.3. If your OpenStack cluster uses self signed certificates, you will need to add them using the AdditionalTrustBundle field in your `install-config.yaml`. For more information on how to do this, please see the [customizations doc](../customization.md).
+A partial fix for Self Signed Certificates has been merged, enabling the bootstrap node to get its ignition configs. However, this revealed another bug with CA bundle distrubution within OpenShift that is being tracked here: https://bugzilla.redhat.com/show_bug.cgi?id=1769879. Unfortunately, we are not able to resolve this bug in the current release, so clusters with self signed certificates will remain unsupported. This bug is a top priority for the team, and the necessary trackers will be updated frequently with the latest information.
 
 ## External Network Overlap
 
