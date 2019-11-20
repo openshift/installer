@@ -32,7 +32,6 @@
       allowed_address_pairs:
       - ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
       - ip_address: "{{ os_subnet_range | next_nth_usable(6) }}"
-      - ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
     with_indexed_items: "{{ cp_ports }}"
 
   - name: 'Create the Control Plane servers'
