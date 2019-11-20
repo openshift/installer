@@ -47,8 +47,6 @@ module "master" {
   root_volume_size = var.gcp_master_root_volume_size
   root_volume_type = var.gcp_master_root_volume_type
 
-  bootstrap_instances = module.bootstrap.bootstrap_instances
-
   labels = local.labels
 }
 
@@ -67,8 +65,9 @@ module "network" {
   network_cidr       = var.machine_cidr
   public_endpoints   = local.public_endpoints
 
-  bootstrap_lb        = var.gcp_bootstrap_enabled
-  bootstrap_instances = module.bootstrap.bootstrap_instances
+  bootstrap_lb              = var.gcp_bootstrap_enabled && var.gcp_bootstrap_lb
+  bootstrap_instances       = module.bootstrap.bootstrap_instances
+  bootstrap_instance_groups = module.bootstrap.bootstrap_instance_groups
 
   master_instances       = module.master.master_instances
   master_instance_groups = module.master.master_instance_groups
