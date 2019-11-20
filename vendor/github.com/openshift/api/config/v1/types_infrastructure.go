@@ -182,6 +182,12 @@ type BareMetalPlatformStatus struct {
 	// datacenter DNS, a DNS service is hosted as a static pod to serve those hostnames
 	// to the nodes in the cluster.
 	NodeDNSIP string `json:"nodeDNSIP,omitempty"`
+
+	// UseMDNS indicates where baremetal mDNS services should be deployed.
+	// See the documentation of the corresponding install-config member at
+	// https://github.com/openshift/installer/blob/master/pkg/types/baremetal/platform.go
+	// for details on which values are recognized.
+	UseMDNS string `json:"useMDNS,omitempty"`
 }
 
 // OpenStackPlatformStatus holds the current status of the OpenStack infrastructure provider.
