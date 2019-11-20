@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -23,6 +24,11 @@ var (
 )
 
 func main() {
+	// This attempts to configure klog (used by vendored Kubernetes code) not
+	// to log anything.
+	var fs flag.FlagSet
+	klog.InitFlags(&fs)
+	fs.Set("stderrthreshold", "4")
 	klog.SetOutput(ioutil.Discard)
 
 	if len(os.Args) > 0 {
