@@ -85,5 +85,5 @@ resource "google_compute_instance_group" "master" {
     port = "6443"
   }
 
-  instances = [for instance in concat(google_compute_instance.master.*, var.bootstrap_instances) : instance.self_link if instance.zone == var.zones[count.index]]
+  instances = [for instance in google_compute_instance.master.* : instance.self_link if instance.zone == var.zones[count.index]]
 }
