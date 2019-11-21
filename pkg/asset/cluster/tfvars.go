@@ -109,6 +109,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		return errors.Wrap(err, "unable to inject installation info")
 	}
 
+	// tell terraform use config-drive iso to inject ingniton into images
+	if os.Getenv("USE_IGNITION_CONFIG_DRIVE") == "True" {
+		masterIgn = "/tmp/master.iso"
+		bootstrapIgn = "/tmp/bootstrap.iso"
+	}
+
 	masterCount := len(mastersAsset.MachineFiles)
 	data, err := tfvars.TFVars(
 		clusterID.InfraID,

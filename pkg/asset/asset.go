@@ -4,8 +4,10 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -100,4 +102,55 @@ func isDirEmpty(name string) (bool, error) {
 // SortFiles sorts the specified files by file name.
 func SortFiles(files []*File) {
 	sort.Slice(files, func(i, j int) bool { return files[i].Filename < files[j].Filename })
+}
+
+// ConfigDriveImage create config drive iso with ignition-config file
+// refer to https://coreos.com/os/docs/latest/config-drive.html
+func ConfigDriveImage(directory string, asset WritableAsset) error {
+	// On the s390x/s390 platform, the igniton-config file will be converted to config iso
+	if strings.Contains(asset.Name(), "Ignition Config") {
+		name := strings.ToLower(asset.Name())
+		filename := strings.Split(name, " ")[0] + ".ign"
+		isoname := strings.Split(name, " ")[0] + ".iso"
+
+		logrus.Infof("Starting create config-drive image for %s", asset.Name())
+
+		logrus.Debugf("Creating tmp dir /tmp/new-drive/openstack/latest for %s", filename)
+		if err := os.MkdirAll("/tmp/new-drive/openstack/latest", 0755); err != nil {
+			return err
+		}
+
+		// copy the config file as /openstack/latest/user_data
+		if err := os.Chdir(directory); err != nil {
+			return err
+		}
+		src, err := os.Open(filename)
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+		dst, err := os.Create("/tmp/new-drive/openstack/latest/user_data")
+		if err != nil {
+			return err
+		}
+		defer dst.Close()
+		if _, err := io.Copy(dst, src); err != nil {
+			return err
+		}
+
+		logrus.Debugf("Creating config-drive image for %s", filename)
+		// mkisofs will create an ISO 9660 filesystem labeled 'config-2'
+		cmd := exec.Command("mkisofs", "-R", "-V", "config-2", "-o", "/tmp/"+isoname, "/tmp/new-drive/")
+		_, err = cmd.Output()
+		if err != nil {
+			return err
+		}
+		logrus.Debugf("remove tmp dir /tmp/new-drive/openstack")
+		if err := os.RemoveAll("/tmp/new-drive/openstack"); err != nil {
+			return err
+		}
+		logrus.Debugf("Config drive image for %s created", filename)
+		return nil
+	}
+	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -168,6 +169,13 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 
 			if err != nil {
 				return err
+			}
+
+			if os.Getenv("USE_IGNITION_CONFIG_DRIVE") == "True" {
+				if err = asset.ConfigDriveImage(directory, a); err != nil {
+					err = errors.Wrapf(err, "failed to create config-drive image for %s", a.Name())
+
+				}
 			}
 		}
 		return nil
