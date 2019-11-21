@@ -102,6 +102,16 @@ tcp_port = "16509"
 
 Note that authentication is not currently supported, but should be soon.
 
+On Fedora 31, you also need to enable and start the libvirtd TCP
+socket, which is managed by systemd:
+
+```sh
+sudo systemctl enable libvirtd-tcp.socket
+sudo systemctl start libvirtd-tcp.socket
+```
+
+after which you need to restart libvirtd.
+
 #### Configure qemu.conf
 
 On Debian/Ubuntu it might be needed to configure security driver for qemu.
