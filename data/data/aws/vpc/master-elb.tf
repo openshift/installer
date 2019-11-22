@@ -237,8 +237,16 @@ resource "aws_elb" "api_internal" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
-    target              = "SSL:6443"
-    interval            = 5
+    # TODO
+    # If you use an SSL health check here, you'll get this error in the kube-apiserver log:
+    # ... http: TLS handshake error from 10.0.31.152:64414: tls: no cipher suite supported by both client and server
+    # and this results in the load balancer consider the backend down.
+    # A TCP health check completes successfully, though still results in some noise in the log:
+    # ... http: TLS handshake error from 10.0.10.44:9902: EOF
+    # Adding this cipher suite to the kube-apiserver would allow an SSL or HTTPS health check
+    # without any noise in the log: TLS_RSA_WITH_AES_256_GCM_SHA384
+    target   = "TCP:6443"
+    interval = 5
   }
 
   tags = "${merge(map(
@@ -269,8 +277,16 @@ resource "aws_elb" "api_external" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
-    target              = "SSL:6443"
-    interval            = 5
+    # TODO
+    # If you use an SSL health check here, you'll get this error in the kube-apiserver log:
+    # ... http: TLS handshake error from 10.0.31.152:64414: tls: no cipher suite supported by both client and server
+    # and this results in the load balancer consider the backend down.
+    # A TCP health check completes successfully, though still results in some noise in the log:
+    # ... http: TLS handshake error from 10.0.10.44:9902: EOF
+    # Adding this cipher suite to the kube-apiserver would allow an SSL or HTTPS health check
+    # without any noise in the log: TLS_RSA_WITH_AES_256_GCM_SHA384
+    target   = "TCP:6443"
+    interval = 5
   }
 
   tags = "${merge(map(
