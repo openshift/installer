@@ -3,7 +3,10 @@ package rhcos
 
 import (
 	"context"
+	"os"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -33,6 +36,12 @@ func (i *BootstrapImage) Dependencies() []asset.Asset {
 
 // Generate the RHCOS Bootstrap image location.
 func (i *BootstrapImage) Generate(p asset.Parents) error {
+	if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_BOOTSTRAP_OS_IMAGE_OVERRIDE"); ok && oi != "" {
+		logrus.Warn("Found override for Bootstrap OS Image. Please be warned, this is not advised")
+		*i = BootstrapImage(oi)
+		return nil
+	}
+
 	ic := &installconfig.InstallConfig{}
 	p.Get(ic)
 	config := ic.Config
