@@ -449,5 +449,5 @@ terraform destroy -auto-approve
 [terraform-init]: https://www.terraform.io/docs/commands/init.html
 [terraform-providers]: https://www.terraform.io/docs/providers/
 [upi-vsphere-example-pre-req]: ../../../upi/vsphere/README.md#pre-requisites
-[upi-vsphere-example-tfvar]: ../../../upi/vsphere/terraform.tfvar.example
+[upi-vsphere-example-tfvar]: ../../../upi/vsphere/terraform.tfvars.example
 [upi-vsphere-example]: ../../../upi/vsphere/README.md
