@@ -97,12 +97,13 @@ locals {
 resource "packet_device" "masters" {
   count            = "${var.master_count}"
   hostname         = "master-${count.index}.${var.cluster_domain}"
-  plan             = "c1.small.x86"
+  plan             = "c2.medium.x86"
   facilities       = ["${local.packet_facility}"]
   operating_system = "custom_ipxe"
   ipxe_script_url  = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=master"
   billing_cycle    = "hourly"
   project_id       = "${var.packet_project_id}"
+  hardware_reservation_id = "next-available"
 
   depends_on = ["matchbox_group.master"]
 }
@@ -110,12 +111,13 @@ resource "packet_device" "masters" {
 resource "packet_device" "workers" {
   count            = "${var.worker_count}"
   hostname         = "worker-${count.index}.${var.cluster_domain}"
-  plan             = "c1.small.x86"
+  plan             = "c2.medium.x86"
   facilities       = ["${local.packet_facility}"]
   operating_system = "custom_ipxe"
   ipxe_script_url  = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=worker"
   billing_cycle    = "hourly"
   project_id       = "${var.packet_project_id}"
+  hardware_reservation_id = "next-available"
 
   depends_on = ["matchbox_group.worker"]
 }
