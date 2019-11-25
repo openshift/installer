@@ -45,7 +45,7 @@ Networking
 
 ## Network Topology Requirements
 
-OpenShift 4.x requires all nodes to have internet access to pull images for platform containers and provide telemetry data to Red Hat.
+OpenShift 4.x on Z currently requires all nodes to have internet access to pull images for platform containers and provide telemetry data to Red Hat.  OpenShift generally supports air-gapped installs, but this feature is not yet available for z/VM.
 
 ### Load balancers
 
@@ -65,7 +65,7 @@ Before you install OpenShift, you must provision two load balancers.
 
 You must configure the network connectivity between machines to allow cluster components to communicate.
 
-* Etcd
+* etcd
 
     As the etcd members are located on the control plane machines. Each control plane machine requires connectivity to [etcd server][etcd-ports], [etcd peer][etcd-ports] and [etcd-metrics][etcd-ports] on every other control plane machine.
 
@@ -80,10 +80,6 @@ You must configure the network connectivity between machines to allow cluster co
 * OpenShift reserved
 
     All the machines require connectivity to reserved port ranges 10250-12252 and 9000-9999 on every other machine for OpenShift platform components.
-
-### Connectivity during machine boot
-
-All the RHCOS machines require network in `initramfs` during boot to fetch Ignition config from the Machine Config Server [machine-config-server].
 
 ## DNS requirements
 
@@ -108,7 +104,7 @@ All the RHCOS machines require network in `initramfs` during boot to fetch Ignit
 
     OpenShift 4.x requires the DNS record `*.apps.$cluster_name.$base_domain` to point to the Load balancer targeting the machines running the ingress router pods. This record must be resolvable by both clients external to the cluster and from all the nodes within the cluster.
 
-## Getting ignition configs for machines
+## Getting Ignition configs for machines
 
 The OpenShift Installer provides administrators various assets that are required to create an OpenShift cluster, namely:
 
@@ -130,10 +126,10 @@ apiVersion: v1
 baseDomain: example.com
 compute:
 - name: worker
-  replicas: 1
+  replicas: 3
 controlPlane:
   name: master
-  replicas: 1
+  replicas: 2
 metadata:
   ## The name for the cluster
   name: test
@@ -288,7 +284,7 @@ topology.
 * DNS
 * Load Balancing
 * DHCP
-* File Server (for ignition configs)
+* File Server (for Ignition configs)
 
 [cluster-image-registry-operator-configuration]: https://github.com/openshift/cluster-image-registry-operator#registry-resource
 [cluster-image-registry-operator]: https://github.com/openshift/cluster-image-registry-operator#image-registry-operator
@@ -305,3 +301,4 @@ topology.
 [openshift-nfs]: https://docs.openshift.com/container-platform/4.2/storage/persistent-storage/persistent-storage-nfs.html
 [nfs-storage-backend]: https://docs.openshift.com/container-platform/4.2/registry/configuring-registry-storage/configuring-registry-storage-baremetal.html
 [multiarch-upi-playbooks]: https://github.com/multi-arch/multiarch-upi-playbooks
+[upi-zvm-example]: ./install_upi.md#example-zvm-upi-configuration
