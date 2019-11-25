@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -euoE pipefail ## -E option will cause functions to inherit trap
 
 . /usr/local/bin/release-image.sh
 
