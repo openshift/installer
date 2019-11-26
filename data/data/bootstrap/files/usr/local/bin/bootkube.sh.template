@@ -20,11 +20,9 @@ MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(image_for kube-client-agent)
 MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 
 KUBE_ETCD_SIGNER_SERVER_IMAGE=$(image_for kube-etcd-signer-server)
-if image_for cluster-etcd-operator
+if ! CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator 2> /dev/null)
 then
-    CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator)
-else
-    CLUSTER_ETCD_OPERATOR_IMAGE=""
+	CLUSTER_ETCD_OPERATOR_IMAGE=
 fi
 CONFIG_OPERATOR_IMAGE=$(image_for cluster-config-operator)
 KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)
@@ -138,26 +136,25 @@ then
 		CLUSTER_ETCD_OPERATOR_MANAGED=$(bootkube_podman_run \
 			--quiet \
 			"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
-			/usr/bin/grep \
-			Managed /manifests/0000_12_etcd-operator_01_operator.cr.yaml > /dev/null)
+			/usr/bin/grep -oP \
+			Managed /manifests/0000_12_etcd-operator_01_operator.cr.yaml 2> /dev/null)
 
 		if [ ! -z "$CLUSTER_ETCD_OPERATOR_MANAGED" ]
 		then
 			cp etcd-bootstrap/manifests/* manifests/
 
 			cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
-
-			touch etcd-bootstrap.done
 		else
 			CLUSTER_ETCD_OPERATOR_IMAGE=""
 		fi
+		touch etcd-bootstrap.done
 	fi
 fi
 
 #TODO: bootstrap endpoint will be IP based vs FQDN
 if [ -f /etc/kubernetes/manifests/etcd-member-pod.yaml ]
 then
-	ETCD_ENDPOINTS=$(printf "https://etcd-bootstrap.%s:2379" "{{.ClusterDomain}}")
+	ETCD_ENDPOINTS="https://etcd-bootstrap.{{.ClusterDomain}}:2379"
 fi
 "z"
 if [ ! -f config-bootstrap.done ]
@@ -182,7 +179,7 @@ fi
 # TODO: host-etcd endpoint needs to be rendered by cluster-etcd-operator
 if [ -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
 then
-    sed -i '/etcd-bootstrap/I,+1 d' /opt/openshift/manifests/etcd-host-service-endpoints.yaml
+	sed -i '/etcd-bootstrap/I,+1 d' /opt/openshift/manifests/etcd-host-service-endpoints.yaml
 fi
 
 if [ ! -f kube-apiserver-bootstrap.done ]
