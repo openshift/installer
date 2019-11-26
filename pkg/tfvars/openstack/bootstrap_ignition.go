@@ -10,9 +10,9 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects"
 	"github.com/gophercloud/utils/openstack/clientconfig"
-	"github.com/kubernetes/apimachinery/pkg/util/rand"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 // createBootstrapSwiftObject creates a container and object in swift with the bootstrap ignition config.

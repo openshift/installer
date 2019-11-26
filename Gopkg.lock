@@ -522,14 +522,6 @@
   version = "v0.1.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:c26b841ff18d8b7fa1606f869ec66eedd6327469e33f9ee3dcb8bef800fdad50"
-  name = "github.com/kubernetes/apimachinery"
-  packages = ["pkg/util/rand"]
-  pruneopts = "NUT"
-  revision = "af6325b3a843fc0c4c448b1bd770ebab40e9acc4"
-
-[[projects]]
   digest = "1:1da9aa83870a429ce7127ced903a0b583012ed934682a5d5acaa12d74b92ebdc"
   name = "github.com/libvirt/libvirt-go"
   packages = ["."]
@@ -1419,7 +1411,6 @@
     "github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers",
     "github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects",
     "github.com/gophercloud/utils/openstack/clientconfig",
-    "github.com/kubernetes/apimachinery/pkg/util/rand",
     "github.com/libvirt/libvirt-go",
     "github.com/metal3-io/baremetal-operator/pkg/apis/metal3/v1alpha1",
     "github.com/metal3-io/baremetal-operator/pkg/bmc",
