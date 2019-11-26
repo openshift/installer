@@ -195,7 +195,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		gcp.ConfigMasters(machines, clusterID.InfraID)
+		gcp.ConfigMasters(machines, clusterID.InfraID, ic.Publish)
 	case libvirttypes.Name:
 		mpool := defaultLibvirtMachinePoolPlatform()
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
