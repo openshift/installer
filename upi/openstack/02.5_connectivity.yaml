@@ -1,0 +1,42 @@
+# Required Python packages:
+#
+# ansible
+# openstacksdk
+# netaddr
+
+- hosts: all
+
+  vars:
+    external_router: "{{ os_infra_id }}-external-router"
+    api_port: "{{ os_infra_id }}-api-port"
+    ingress_port: "{{ os_infra_id }}-ingress-port"
+
+  tasks:
+  - name: 'Create the external router'
+    os_router:
+      name: "{{ external_router }}"
+      network: "{{ os_external_network_name }}"
+      interfaces:
+      - "{{ os_subnet }}"
+
+  - name: 'Create the API port'
+    os_port:
+      name: "{{ api_port }}"
+      network: "{{ os_network }}"
+      security_groups:
+      - "{{ os_sg_master }}"
+      allowed_address_pairs:
+      - ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
+
+  - name: 'Create the Ingress port'
+    os_port:
+      name: "{{ ingress_port }}"
+      network: "{{ os_network }}"
+      security_groups:
+      - "{{ os_sg_worker }}"
+      allowed_address_pairs:
+      - ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
+
+  - debug: msg="Attach the API Floating IP address to '{{ api_port }}'"
+
+  - debug: msg="Attach the Ingress Floating IP address to '{{ ingress_port }}'"

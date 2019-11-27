@@ -1,0 +1,13 @@
+# Required Python packages:
+#
+# ansible
+# openstacksdk
+# netaddr
+
+- hosts: all
+
+  tasks:
+  - name: "Delete everything in the install config directory"
+    shell:
+      chdir: "{{ install_config_directory }}"
+      cmd: "rm -rf .openshift_install* *.ign *.json auth manifests openshift"

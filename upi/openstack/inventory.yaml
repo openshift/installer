@@ -3,21 +3,22 @@ all:
     localhost:
       ansible_connection: local
       ansible_python_interpreter: "{{ansible_playbook_python}}"
+      # TODO: change this to the absolute path where your install-config.yaml is
+      # TODO(shadower): if we have the playbooks and install-config in the same
+      # directory, this and the `chdir` nonsense is not necessary. Test that!
+      install_config_directory: "."
 
       os_subnet_range: '10.0.0.0/16'
-      os_cluster_name: 'openshift'
+      # TODO: set this to your infraID (see `metadata.json`).
+      os_infra_id: 'openshift-2r74r'
+      os_external_network_name: 'external'
 
       # Computed values
-
-      # os_infra_id is the string we will use as a prefix for the names of the
-      # OpenShift cluster resources. It is built in the form of:
-      #
-      #     "{{ os_cluster_name }}{{ installation-specific string }}"
-      os_infra_id: "{{ os_cluster_name }}-upi"
 
       # os_network is the name of the OpenStack network that will contain the
       # OpenShift cluster.
       os_network: "{{ os_infra_id }}-network"
+      os_subnet: "{{ os_infra_id }}-nodes"
 
       # os_sg_* are the names of the security groups that will be assigned to
       # the respective nodes.

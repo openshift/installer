@@ -1,0 +1,28 @@
+# Required Python packages:
+#
+# ansible
+# openstacksdk
+# netaddr
+
+- hosts: all
+
+  vars:
+    external_router: "{{ os_infra_id }}-external-router"
+    api_port: "{{ os_infra_id }}-api-port"
+    ingress_port: "{{ os_infra_id }}-ingress-port"
+
+  tasks:
+  - name: 'Remove the API port'
+    os_port:
+      name: "{{ api_port }}"
+      state: absent
+
+  - name: 'Remove the Ingress port'
+    os_port:
+      name: "{{ ingress_port }}"
+      state: absent
+
+  - name: 'Remove the external router'
+    os_router:
+      name: "{{ external_router }}"
+      state: absent

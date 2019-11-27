@@ -6,9 +6,6 @@
 
 - hosts: all
 
-  vars:
-    cluster_subnet: "{{ os_infra_id }}-nodes"
-
   tasks:
   - name: 'Create the cluster network'
     os_network:
@@ -16,7 +13,7 @@
 
   - name: 'Create a subnet'
     os_subnet:
-      name: "{{ cluster_subnet }}"
+      name: "{{ os_subnet }}"
       network_name: "{{ os_network }}"
       cidr: "{{ os_subnet_range }}"
       allocation_pool_start: "{{ os_subnet_range | next_nth_usable(10) }}"
