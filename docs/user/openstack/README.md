@@ -16,6 +16,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
     - [Disk Requirements](#disk-requirements)
     - [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-rhcos)
     - [Neutron Public Network](#neutron-public-network)
+    - [Nova Metadata Service](#nova-metadata-service)
   - [OpenStack Credentials](#openstack-credentials)
   - [Standalone Single-Node Development Environment](#standalone-single-node-development-environment)
   - [Running The Installer](#running-the-installer)
@@ -119,6 +120,10 @@ openstack network list --long -c ID -c Name -c "Router Type"
 ```
 
 **NOTE:** If the `neutron` `trunk` service plug-in is enabled, trunk port will be created by default. For more information, please refer to [neutron trunk port](https://wiki.openstack.org/wiki/Neutron/TrunkPort).
+
+### Nova Metadata Service
+
+Nova [metadata service](https://docs.openstack.org/nova/latest/user/metadata.html#metadata-service) must be enabled and available at `http://169.254.169.254`. Currently the service is used to deliver Ignition config files to Nova instances and provide information about the machine to `kubelet`.
 
 ## OpenStack Credentials
 
