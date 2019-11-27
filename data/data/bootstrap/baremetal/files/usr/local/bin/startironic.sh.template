@@ -29,7 +29,7 @@ fi
 # Wait for the interface to come up
 # This is how the ironic container currently detects IRONIC_IP, this could probably be improved by using
 # nmcli show provisioning there instead, but we need to confirm that works with the static-ip-manager
-while [ -z "$(ip -4 address show dev "$PROVISIONING_NIC" | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -n 1)" ]; do
+while [ -z "$(ip -o addr show dev $PROVISIONING_NIC | grep -v link)" ]; do
     sleep 1
 done
 
@@ -47,13 +47,6 @@ while ! iptables -L; do
   sleep 1
 done
 
-# Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
-for port in 80 5050 6385 ; do
-    if ! sudo iptables -C INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
-        sudo iptables -I INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT
-    fi
-done
-
 # Start dnsmasq, http, mariadb, and ironic containers using same image
 # Currently we do this outside of a pod because we need to ensure the images
 # are downloaded before starting the API pods
@@ -69,10 +62,18 @@ podman run -d --net host --privileged --name httpd \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 
-# Set CACHEURL to the default route, so we try to consume any images cached on the host
-# running the VM (dev-scripts configures a cache here), if none is found then the
-# downloader containers just skip and download from the internet location
-CACHEURL="http://$(ip r | grep $PROVISIONING_NIC | awk '/default/ {print $3};')/images"
+{{ if .PlatformData.BareMetal.ProvisioningIPv6 }}
+IPTABLES=ip6tables
+{{ else }}
+IPTABLES=iptables
+{{ end }}
+
+
+# Set CACHEURL to the the same IP as is used in RHCOS_BOOT_IMAGE_URL, assuming any cache would
+# be the same host, if none is found then the downloader containers just skip and download
+# from the internet location ( IP=n.n.n.n:nn or [x:x::x]:nn )
+IP=$(echo $RHCOS_BOOT_IMAGE_URL | sed -e 's/.*:\/\/\([^/]*\)\/.*/\1/g' )
+CACHEURL="http://$IP/images"
 podman run -d --net host --name ipa-downloader \
      --env CACHEURL=${CACHEURL} \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
@@ -80,6 +81,16 @@ podman run -d --net host --name ipa-downloader \
 podman run -d --net host --name coreos-downloader \
      --env CACHEURL=${CACHEURL} \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_BOOT_IMAGE_URL
+
+
+# Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
+for port in 80 5050 6385 ; do
+    if ! sudo $IPTABLES -C INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
+        sudo $IPTABLES -I INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT
+    fi
+done
+
+
 
 # Wait for images to be downloaded/ready
 podman wait -i 1000 ipa-downloader
