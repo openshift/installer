@@ -136,29 +136,13 @@ func (f realValidValuesFetcher) GetServiceCatalog(cloud string) ([]string, error
 		return nil, err
 	}
 
-	cloudConfig, err := clientconfig.GetCloudFromYAML(opts)
-	if err != nil {
-		return nil, err
+	authResult := conn.GetAuthResult()
+	auth, ok := authResult.(tokens.CreateResult)
+	if !ok {
+		return nil, errors.New("unable to extract service catalog")
 	}
 
-	domainName := cloudConfig.AuthInfo.DomainName
-	if domainName == "" {
-		domainName = cloudConfig.AuthInfo.UserDomainName
-	}
-
-	scope := tokens.Scope{
-		ProjectName: cloudConfig.AuthInfo.ProjectName,
-		DomainName:  domainName,
-	}
-
-	authOptions := tokens.AuthOptions{
-		Scope:      scope,
-		Username:   cloudConfig.AuthInfo.Username,
-		Password:   cloudConfig.AuthInfo.Password,
-		DomainName: domainName,
-	}
-
-	allServices, err := tokens.Create(conn, &authOptions).ExtractServiceCatalog()
+	allServices, err := auth.ExtractServiceCatalog()
 	if err != nil {
 		return nil, err
 	}
