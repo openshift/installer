@@ -22,10 +22,15 @@ here.  This is a summary of the changes to the network environment:
 * The VPC has IPv6 enabled and a `/56` IPv6 CIDR will be allocated by AWS.
 * Each Subnet will have an IPv6 `/64` subnet allocated to it.
 * All IPv4 specific security group rules have corresponding IPv6 rules created.
-* AWS Network Load Balancers (NLBs) do not support IPv6, so classic Elasic Load
-  Balancers (ELBs) are created, instead.
-* The IPv4 NLBs are disabled.
-* IPv6 DNS records (AAAA) are created and the IPv4 (A) records are disabled.
+* AWS Network Load Balancers (NLBs) do not support IPv6, so external API access
+  is still over IPv4.  AWS does not have a TCP load balancer that supports
+  IPv6, other than classic load balancers with EC2-Classic, and not EC2-VPC.
+  AWS Application Load Balancers supposedly support IPv6, but that would
+  require doing HTTPS load balancing for the API instead of just TCP load
+  balancing, so we just use the IPv4 NLBs.  API access within the cluster is
+  still exercising IPv6.
+* IPv6 DNS records (AAAA) are created and the IPv4 (A) records are disabled,
+  except for the API.
 * IPv6 routing is configured.  Since all instances get global IPv6 addresses,
   NAT is not used from the instances out to the internet.
 
