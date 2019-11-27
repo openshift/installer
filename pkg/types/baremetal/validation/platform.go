@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"net"
+	"net/url"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -28,6 +29,29 @@ func validateIPinMachineCIDR(vip string, n *types.Networking) error {
 func validateIPNotinMachineCIDR(ip string, n *types.Networking) error {
 	if n.MachineCIDR.Contains(net.ParseIP(ip)) {
 		return fmt.Errorf("the IP must not be in %s subnet", n.MachineCIDR.String())
+	}
+	return nil
+}
+
+func validateOSImageURI(uri string) error {
+	// Check for valid URI and sha256 checksum part of the URL
+	parsedURL, err := url.ParseRequestURI(uri)
+	if err != nil {
+		return fmt.Errorf("the URI provided: %s is invalid", uri)
+	}
+	if parsedURL.Scheme == "http" || parsedURL.Scheme == "https" {
+		var sha256Checksum string
+		if sha256Checksums, ok := parsedURL.Query()["sha256"]; ok {
+			sha256Checksum = sha256Checksums[0]
+		}
+		if sha256Checksum == "" {
+			return fmt.Errorf("the sha256 parameter in the %s URI is missing", uri)
+		}
+		if len(sha256Checksum) != 64 {
+			return fmt.Errorf("the sha256 parameter in the %s URI is invalid", uri)
+		}
+	} else {
+		return fmt.Errorf("the URI provided: %s must begin with http/https", uri)
 	}
 	return nil
 }
@@ -83,6 +107,16 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 	}
 	if err := validateIPNotinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapHostIP"), p.BootstrapProvisioningIP, err.Error()))
+	}
+	if p.BootstrapOSImage != "" {
+		if err := validateOSImageURI(p.BootstrapOSImage); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapOSImage"), p.BootstrapOSImage, err.Error()))
+		}
+	}
+	if p.ClusterOSImage != "" {
+		if err := validateOSImageURI(p.ClusterOSImage); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), p.ClusterOSImage, err.Error()))
+		}
 	}
 
 	for _, validator := range dynamicValidators {

@@ -43,6 +43,12 @@ func (i *BootstrapImage) Generate(p asset.Parents) error {
 	defer cancel()
 	switch config.Platform.Name() {
 	case baremetal.Name:
+		// Check for RHCOS image URL override
+		if boi := config.Platform.BareMetal.BootstrapOSImage; boi != "" {
+			osimage = boi
+			break
+		}
+
 		// Baremetal IPI launches a local VM for the bootstrap node
 		// Hence requires the QEMU image to use the libvirt backend
 		osimage, err = rhcos.QEMU(ctx)
