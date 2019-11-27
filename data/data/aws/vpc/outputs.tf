@@ -53,25 +53,17 @@ output "aws_lb_target_group_arns_length" {
 }
 
 output "aws_lb_api_external_dns_name" {
-  value = local.public_endpoints && var.use_ipv6 == false ? aws_lb.api_external[0].dns_name : aws_elb.api_external[0].dns_name
+  value = local.public_endpoints ? aws_lb.api_external[0].dns_name : null
 }
 
 output "aws_lb_api_external_zone_id" {
-  value = local.public_endpoints && var.use_ipv6 == false ? aws_lb.api_external[0].zone_id : aws_elb.api_external[0].zone_id
+  value = local.public_endpoints ? aws_lb.api_external[0].zone_id : null
 }
 
 output "aws_lb_api_internal_dns_name" {
-  value = var.use_ipv6 == false ? aws_lb.api_internal[0].dns_name : aws_elb.api_internal[0].dns_name
+  value = aws_lb.api_internal.dns_name
 }
 
 output "aws_lb_api_internal_zone_id" {
-  value = var.use_ipv6 == false ? aws_lb.api_internal[0].zone_id : aws_elb.api_internal[0].zone_id
-}
-
-output "aws_elb_api_internal_id" {
-  value = var.use_ipv6 == true ? aws_elb.api_internal[0].id : ""
-}
-
-output "aws_elb_api_external_id" {
-  value = local.public_endpoints && var.use_ipv6 == true ? aws_elb.api_external[0].id : ""
+  value = aws_lb.api_internal.zone_id
 }

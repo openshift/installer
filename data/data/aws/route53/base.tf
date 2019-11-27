@@ -31,7 +31,7 @@ resource "aws_route53_zone" "int" {
 }
 
 resource "aws_route53_record" "api_external" {
-  count = local.public_endpoints && var.use_ipv6 == false ? 1 : 0
+  count = local.public_endpoints ? 1 : 0
 
   zone_id = data.aws_route53_zone.public[0].zone_id
   name    = "api.${var.cluster_domain}"
@@ -44,20 +44,6 @@ resource "aws_route53_record" "api_external" {
   }
 }
 
-resource "aws_route53_record" "api_external_v6" {
-  zone_id = data.aws_route53_zone.public[0].zone_id
-  name    = "api.${var.cluster_domain}"
-  type    = "AAAA"
-
-  alias {
-    name                   = "ipv6.${var.api_external_lb_dns_name}"
-    zone_id                = var.api_external_lb_zone_id
-    evaluate_target_health = false
-  }
-
-  count = local.public_endpoints && var.use_ipv6 == true ? 1 : 0
-}
-
 resource "aws_route53_record" "api_internal" {
   zone_id = aws_route53_zone.int.zone_id
   name    = "api-int.${var.cluster_domain}"
@@ -68,25 +54,6 @@ resource "aws_route53_record" "api_internal" {
     zone_id                = var.api_internal_lb_zone_id
     evaluate_target_health = false
   }
-
-  # TODO - We must leave the A record enabled, even when trying to test IPv6, because
-  # RHCOS doesn't get an IPv6 address during boot, so ignition will fail trying to reach
-  # the machine config server.
-  #count = var.use_ipv6 == false ? 1 : 0
-}
-
-resource "aws_route53_record" "api_internal_v6" {
-  zone_id = aws_route53_zone.int.zone_id
-  name    = "api-int.${var.cluster_domain}"
-  type    = "AAAA"
-
-  alias {
-    name                   = "ipv6.${var.api_internal_lb_dns_name}"
-    zone_id                = var.api_internal_lb_zone_id
-    evaluate_target_health = false
-  }
-
-  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_route53_record" "api_external_internal_zone" {
@@ -99,22 +66,6 @@ resource "aws_route53_record" "api_external_internal_zone" {
     zone_id                = var.api_internal_lb_zone_id
     evaluate_target_health = false
   }
-
-  count = var.use_ipv6 == false ? 1 : 0
-}
-
-resource "aws_route53_record" "api_external_internal_zone_v6" {
-  zone_id = aws_route53_zone.int.zone_id
-  name    = "api.${var.cluster_domain}"
-  type    = "AAAA"
-
-  alias {
-    name                   = "ipv6.${var.api_internal_lb_dns_name}"
-    zone_id                = var.api_internal_lb_zone_id
-    evaluate_target_health = false
-  }
-
-  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_route53_record" "etcd_a_nodes" {

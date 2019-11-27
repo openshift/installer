@@ -153,22 +153,10 @@ resource "aws_instance" "bootstrap" {
 resource "aws_lb_target_group_attachment" "bootstrap" {
   // Because of the issue https://github.com/hashicorp/terraform/issues/12570, the consumers cannot use a dynamic list for count
   // and therefore are force to implicitly assume that the list is of aws_lb_target_group_arns_length - 1, in case there is no api_external
-  count = var.use_ipv6 == true ? 0 : (local.public_endpoints ? var.target_group_arns_length : var.target_group_arns_length - 1)
+  count = local.public_endpoints ? var.target_group_arns_length : var.target_group_arns_length - 1
 
   target_group_arn = var.target_group_arns[count.index]
   target_id        = aws_instance.bootstrap.private_ip
-}
-
-resource "aws_elb_attachment" "bootstrap_api_internal" {
-  count    = var.use_ipv6 == true && local.public_endpoints ? 1 : 0
-  elb      = var.aws_elb_api_internal_id
-  instance = aws_instance.bootstrap.id
-}
-
-resource "aws_elb_attachment" "bootstrap_api_external" {
-  count    = var.use_ipv6 == true ? 1 : 0
-  elb      = var.aws_elb_api_external_id
-  instance = aws_instance.bootstrap.id
 }
 
 resource "aws_security_group" "bootstrap" {

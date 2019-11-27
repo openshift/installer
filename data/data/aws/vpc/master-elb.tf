@@ -1,6 +1,3 @@
-# AWS NLBs (Network Load Balancers, or the aws_lb resource) do not support
-# IPv6.  Instead, we must use class load balancers (the aws_elb resource).
-
 resource "aws_lb" "api_internal" {
   name                             = "${var.cluster_id}-int"
   load_balancer_type               = "network"
@@ -20,12 +17,10 @@ resource "aws_lb" "api_internal" {
   }
 
   depends_on = [aws_internet_gateway.igw]
-
-  count = var.use_ipv6 == false ? 1 : 0
 }
 
 resource "aws_lb" "api_external" {
-  count = local.public_endpoints && var.use_ipv6 == false ? 1 : 0
+  count = local.public_endpoints ? 1 : 0
 
   name                             = "${var.cluster_id}-ext"
   load_balancer_type               = "network"
@@ -70,12 +65,10 @@ resource "aws_lb_target_group" "api_internal" {
     protocol            = "HTTPS"
     path                = "/readyz"
   }
-
-  count = var.use_ipv6 == false ? 1 : 0
 }
 
 resource "aws_lb_target_group" "api_external" {
-  count = local.public_endpoints && var.use_ipv6 == false ? 1 : 0
+  count = local.public_endpoints ? 1 : 0
 
   name     = "${var.cluster_id}-aext"
   protocol = "TCP"
@@ -124,38 +117,32 @@ resource "aws_lb_target_group" "services" {
     protocol            = "HTTPS"
     path                = "/healthz"
   }
-
-  count = var.use_ipv6 == false ? 1 : 0
 }
 
 resource "aws_lb_listener" "api_internal_api" {
-  load_balancer_arn = aws_lb.api_internal[0].arn
+  load_balancer_arn = aws_lb.api_internal.arn
   protocol          = "TCP"
   port              = "6443"
 
   default_action {
-    target_group_arn = aws_lb_target_group.api_internal[0].arn
+    target_group_arn = aws_lb_target_group.api_internal.arn
     type             = "forward"
   }
-
-  count = var.use_ipv6 == false ? 1 : 0
 }
 
 resource "aws_lb_listener" "api_internal_services" {
-  load_balancer_arn = aws_lb.api_internal[0].arn
+  load_balancer_arn = aws_lb.api_internal.arn
   protocol          = "TCP"
   port              = "22623"
 
   default_action {
-    target_group_arn = aws_lb_target_group.services[0].arn
+    target_group_arn = aws_lb_target_group.services.arn
     type             = "forward"
   }
-
-  count = var.use_ipv6 == false ? 1 : 0
 }
 
 resource "aws_lb_listener" "api_external_api" {
-  count = local.public_endpoints && var.use_ipv6 == false ? 1 : 0
+  count = local.public_endpoints ? 1 : 0
 
   load_balancer_arn = aws_lb.api_external[0].arn
   protocol          = "TCP"
@@ -166,133 +153,3 @@ resource "aws_lb_listener" "api_external_api" {
     type             = "forward"
   }
 }
-
-#################################
-### Begin IPv6 load balancers ###
-#################################
-
-resource "aws_security_group" "api" {
-  vpc_id = "${data.aws_vpc.cluster_vpc.id}"
-
-  timeouts {
-    create = "20m"
-  }
-
-  tags = "${merge(map(
-    "Name", "${var.cluster_id}_api_sg",
-  ), var.tags)}"
-
-  count = var.use_ipv6 == true ? 1 : 0
-}
-
-resource "aws_security_group_rule" "api_ingress_api_v6" {
-  type              = "ingress"
-  security_group_id = "${aws_security_group.api[0].id}"
-
-  protocol         = "tcp"
-  ipv6_cidr_blocks = ["::/0"]
-  from_port        = 6443
-  to_port          = 6443
-
-  count = var.use_ipv6 == true ? 1 : 0
-}
-
-resource "aws_security_group_rule" "api_ingress_mcs_v6" {
-  type              = "ingress"
-  security_group_id = "${aws_security_group.api[0].id}"
-
-  protocol         = "tcp"
-  ipv6_cidr_blocks = ["::/0"]
-  from_port        = 22623
-  to_port          = 22623
-
-  count = var.use_ipv6 == true ? 1 : 0
-}
-
-resource "aws_elb" "api_internal" {
-  name            = "${var.cluster_id}-int"
-  subnets         = data.aws_subnet.private.*.id
-  internal        = true
-  security_groups = ["${aws_security_group.master.id}"]
-
-  idle_timeout                = 3600
-  connection_draining         = true
-  connection_draining_timeout = 300
-
-  listener {
-    instance_port     = 6443
-    instance_protocol = "tcp"
-    lb_port           = 6443
-    lb_protocol       = "tcp"
-  }
-
-  listener {
-    instance_port     = 22623
-    instance_protocol = "tcp"
-    lb_port           = 22623
-    lb_protocol       = "tcp"
-  }
-
-  health_check {
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 3
-    # TODO
-    # If you use an SSL health check here, you'll get this error in the kube-apiserver log:
-    # ... http: TLS handshake error from 10.0.31.152:64414: tls: no cipher suite supported by both client and server
-    # and this results in the load balancer consider the backend down.
-    # A TCP health check completes successfully, though still results in some noise in the log:
-    # ... http: TLS handshake error from 10.0.10.44:9902: EOF
-    # Adding this cipher suite to the kube-apiserver would allow an SSL or HTTPS health check
-    # without any noise in the log: TLS_RSA_WITH_AES_256_GCM_SHA384
-    target   = "TCP:6443"
-    interval = 5
-  }
-
-  tags = "${merge(map(
-    "Name", "${var.cluster_id}-int",
-  ), var.tags)}"
-
-  count = var.use_ipv6 == true ? 1 : 0
-}
-
-resource "aws_elb" "api_external" {
-  name            = "${var.cluster_id}-ext"
-  subnets         = data.aws_subnet.public.*.id
-  internal        = false
-  security_groups = ["${aws_security_group.master.id}", "${aws_security_group.api[0].id}"]
-
-  idle_timeout                = 3600
-  connection_draining         = true
-  connection_draining_timeout = 300
-
-  listener {
-    instance_port     = 6443
-    instance_protocol = "tcp"
-    lb_port           = 6443
-    lb_protocol       = "tcp"
-  }
-
-  health_check {
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 3
-    # TODO
-    # If you use an SSL health check here, you'll get this error in the kube-apiserver log:
-    # ... http: TLS handshake error from 10.0.31.152:64414: tls: no cipher suite supported by both client and server
-    # and this results in the load balancer consider the backend down.
-    # A TCP health check completes successfully, though still results in some noise in the log:
-    # ... http: TLS handshake error from 10.0.10.44:9902: EOF
-    # Adding this cipher suite to the kube-apiserver would allow an SSL or HTTPS health check
-    # without any noise in the log: TLS_RSA_WITH_AES_256_GCM_SHA384
-    target   = "TCP:6443"
-    interval = 5
-  }
-
-  tags = "${merge(map(
-    "Name", "${var.cluster_id}-api-external",
-  ), var.tags)}"
-
-  count = local.public_endpoints && var.use_ipv6 == true ? 1 : 0
-}
-
