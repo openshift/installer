@@ -8,8 +8,8 @@ metadata:
 subsets:
 - addresses:
 {{- range $idx, $member := .EtcdEndpointHostnames }}
-  - ip: 192.0.2.{{ add $idx 1 }}
-    hostname: {{ $member }}
+  - hostname: {{ $member }}
+    ip: {{if eq $member "etcd-bootstrap"}}__BOOTSTRAP_IP__{{else}}192.0.2.{{ add $idx 1 }}{{end}}
 {{- end }}
   ports:
   - name: etcd
