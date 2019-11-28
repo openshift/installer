@@ -325,7 +325,6 @@ resource "aws_security_group_rule" "master_dns_udp" {
   protocol  = "udp"
   from_port = 5353
   to_port   = 5353
-  self      = true
 
   count = var.use_ipv6 == true ? 1 : 0
 }
@@ -339,7 +338,6 @@ resource "aws_security_group_rule" "master_dns_tcp" {
   protocol  = "tcp"
   from_port = 5353
   to_port   = 5353
-  self      = true
 
   count = var.use_ipv6 == true ? 1 : 0
 }

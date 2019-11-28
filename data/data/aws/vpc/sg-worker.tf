@@ -199,3 +199,31 @@ resource "aws_security_group_rule" "worker_ingress_services_udp" {
   self      = true
 }
 
+# For our AWS IPv6 environment, we run CoreDNS with host networking,
+# because it must use IPv4 to reach AWS DNS, so it can't be on our
+# IPv6 only SDN.
+resource "aws_security_group_rule" "worker_dns_udp" {
+  type              = "ingress"
+  security_group_id = aws_security_group.worker.id
+
+  ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
+
+  protocol  = "udp"
+  from_port = 5353
+  to_port   = 5353
+
+  count = var.use_ipv6 == true ? 1 : 0
+}
+
+resource "aws_security_group_rule" "worker_dns_tcp" {
+  type              = "ingress"
+  security_group_id = aws_security_group.worker.id
+
+  ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
+
+  protocol  = "tcp"
+  from_port = 5353
+  to_port   = 5353
+
+  count = var.use_ipv6 == true ? 1 : 0
+}
