@@ -14,6 +14,7 @@ COPY --from=registry.svc.ci.openshift.org/origin/4.2:cli /usr/bin/oc /bin/oc
 # Install Dependendencies for tests
 # https://github.com/openshift/origin/blob/6114cbc507bf18890f009f16ee424a62007bc390/images/tests/Dockerfile.rhel
 RUN yum install --setopt=tsflags=nodocs -y git gzip unzip util-linux && yum clean all && rm -rf /var/cache/yum/* && \
+    localedef -c -f UTF-8 -i en_US en_US.UTF-8 && \
     git config --system user.name test && \
     git config --system user.email test@test.com && \
     chmod g+w /etc/passwd
@@ -31,5 +32,6 @@ RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
 ENV PATH /bin
 ENV HOME /output
+ENV LC_ALL en_US.UTF-8
 WORKDIR /output
 ENTRYPOINT ["/bin/openshift-install"]
