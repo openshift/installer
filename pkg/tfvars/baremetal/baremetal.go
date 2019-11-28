@@ -66,7 +66,7 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		hostMap := map[string]interface{}{
 			"name":         host.Name,
 			"port_address": host.BootMACAddress,
-			"driver":       accessDetails.Type(),
+			"driver":       accessDetails.Driver(),
 		}
 
 		// Properties
