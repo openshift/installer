@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -18,6 +19,8 @@ import (
 var (
 	authEnvs            = []string{"GOOGLE_CREDENTIALS", "GOOGLE_CLOUD_KEYFILE_JSON", "GCLOUD_KEYFILE_JSON"}
 	defaultAuthFilePath = filepath.Join(os.Getenv("HOME"), ".gcp", "osServiceAccount.json")
+	credLoaders         = []credLoader{}
+	onceLoggers         = map[credLoader]*sync.Once{}
 )
 
 // Session is an object representing session for GCP API.
@@ -44,20 +47,26 @@ func GetSession(ctx context.Context) (*Session, error) {
 }
 
 func loadCredentials(ctx context.Context) (*googleoauth.Credentials, error) {
-	var loaders []credLoader
-	for _, env := range authEnvs {
-		loaders = append(loaders, &envLoader{env: env})
-	}
-	loaders = append(loaders, &fileLoader{path: defaultAuthFilePath})
-	loaders = append(loaders, &cliLoader{})
+	if len(credLoaders) == 0 {
+		for _, authEnv := range authEnvs {
+			credLoaders = append(credLoaders, &envLoader{env: authEnv})
+		}
+		credLoaders = append(credLoaders, &fileLoader{path: defaultAuthFilePath})
+		credLoaders = append(credLoaders, &cliLoader{})
 
-	for _, l := range loaders {
-		logrus.Debugf("Trying to load credentials from %s", l)
-		creds, err := l.Load(ctx)
+		for _, credLoader := range credLoaders {
+			onceLoggers[credLoader] = new(sync.Once)
+		}
+	}
+
+	for _, loader := range credLoaders {
+		creds, err := loader.Load(ctx)
 		if err != nil {
 			continue
 		}
-		logrus.Infof("Credentials loaded from %s", l)
+		onceLoggers[loader].Do(func() {
+			logrus.Infof("Credentials loaded from %s", loader)
+		})
 		return creds, nil
 	}
 	return getCredentials(ctx)

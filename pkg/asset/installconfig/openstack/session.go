@@ -2,12 +2,16 @@
 package openstack
 
 import (
+	"sync"
+
 	"github.com/pkg/errors"
 
 	"github.com/ghodss/yaml"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/sirupsen/logrus"
 )
+
+var onceLoggers = map[string]*sync.Once{}
 
 // Session is an object representing session for OpenStack.
 type Session struct {
@@ -73,7 +77,12 @@ func loadAndLog(fn func() (string, []byte, error)) (map[string]clientconfig.Clou
 		return nil, errors.Wrap(err, "failed to unmarshal yaml")
 	}
 
-	logrus.Infof("Credentials loaded from file %q", filename)
+	if _, has := onceLoggers[filename]; !has {
+		onceLoggers[filename] = new(sync.Once)
+	}
+	onceLoggers[filename].Do(func() {
+		logrus.Infof("Credentials loaded from file %q", filename)
+	})
 
 	return clouds.Clouds, nil
 }
