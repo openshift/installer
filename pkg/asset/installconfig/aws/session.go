@@ -3,6 +3,7 @@ package aws
 import (
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/defaults"
@@ -13,6 +14,18 @@ import (
 	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 	ini "gopkg.in/ini.v1"
+)
+
+const (
+	sharedCredentialsProviderName = "SharedCredentialsProvider"
+	envProviderName               = "EnvProvider"
+)
+
+var (
+	onceLoggers = map[string]*sync.Once{
+		sharedCredentialsProviderName: new(sync.Once),
+		envProviderName:               new(sync.Once),
+	}
 )
 
 // GetSession returns an AWS session by checking credentials
@@ -31,10 +44,14 @@ func GetSession() (*session.Session, error) {
 	creds, err := ssn.Config.Credentials.Get()
 	if err == nil {
 		switch creds.ProviderName {
-		case "SharedCredentialsProvider":
-			logrus.Infof("Credentials loaded from the %q profile in file %q", sharedCredentialsProvider.Profile, sharedCredentialsProvider.Filename)
-		case "EnvProvider":
-			logrus.Info("Credentials loaded from default AWS environment variables")
+		case sharedCredentialsProviderName:
+			onceLoggers[sharedCredentialsProviderName].Do(func() {
+				logrus.Infof("Credentials loaded from the %q profile in file %q", sharedCredentialsProvider.Profile, sharedCredentialsProvider.Filename)
+			})
+		case envProviderName:
+			onceLoggers[envProviderName].Do(func() {
+				logrus.Info("Credentials loaded from default AWS environment variables")
+			})
 		}
 	}
 	if err == credentials.ErrNoValidProvidersFoundInChain {

@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/Azure/go-autorest/autorest"
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
@@ -16,7 +17,10 @@ import (
 
 const azureAuthEnv = "AZURE_AUTH_LOCATION"
 
-var defaultAuthFilePath = filepath.Join(os.Getenv("HOME"), ".azure", "osServicePrincipal.json")
+var (
+	defaultAuthFilePath = filepath.Join(os.Getenv("HOME"), ".azure", "osServicePrincipal.json")
+	onceLoggers         = map[string]*sync.Once{}
+)
 
 //Session is an object representing session for subscription
 type Session struct {
@@ -44,8 +48,6 @@ func GetSession() (*Session, error) {
 }
 
 func newSessionFromFile(authFilePath string) (*Session, error) {
-	logrus.Debugf("Trying to load credentials from file %q", authFilePath)
-
 	// NewAuthorizerFromFileWithResource uses `auth.GetSettingsFromFile`, which uses the `azureAuthEnv` to fetch the auth credentials.
 	// therefore setting the local env here to authFilePath allows NewAuthorizerFromFileWithResource to load credentials.
 	os.Setenv(azureAuthEnv, authFilePath)
@@ -73,7 +75,12 @@ func newSessionFromFile(authFilePath string) (*Session, error) {
 		return nil, errors.Wrap(err, "failed to map authsettings to credentials")
 	}
 
-	logrus.Infof("Credentials loaded from file %q", authFilePath)
+	if _, has := onceLoggers[authFilePath]; !has {
+		onceLoggers[authFilePath] = new(sync.Once)
+	}
+	onceLoggers[authFilePath].Do(func() {
+		logrus.Infof("Credentials loaded from file %q", authFilePath)
+	})
 
 	authorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
 	if err != nil {
