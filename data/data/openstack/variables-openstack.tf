@@ -21,10 +21,10 @@ variable "openstack_base_image_local_file_path" {
   description = "Local file path of the base image file to use for the nodes."
 }
 
-variable "openstack_bootstrap_shim_ignition" {
+variable "openstack_bootstrap_ignition" {
   type        = string
   default     = ""
-  description = "Generated pointer/shim ignition config with user ca bundle."
+  description = "Generated ignition config."
 }
 
 variable "openstack_credentials_auth_url" {

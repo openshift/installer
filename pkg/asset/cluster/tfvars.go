@@ -2,9 +2,11 @@ package cluster
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
@@ -82,6 +84,15 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		&machines.Master{},
 		&machines.Worker{},
 	}
+}
+
+func inSlice(slice []string, val string) bool {
+	for _, item := range slice {
+		if item == val {
+			return true
+		}
+	}
+	return false
 }
 
 // Generate generates the terraform.tfvars file.
@@ -320,6 +331,46 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+
+		// We don't need all these files in the bootstrap ignition config. To keep the config
+		// small we extract them except ones listed in keptFileNames, and upload them later
+		// using the sftp client.
+		keptFiles := []igntypes.File{}
+		keptFileNames := []string{
+			"/etc/ignition-machine-config-encapsulated.json",
+			"/etc/systemd/system.conf.d/10-default-env.conf",
+			"/root/.docker/config.json",
+			"/etc/NetworkManager/conf.d/dhcp-client.conf",
+			"/etc/dhcp/dhclient.conf",
+		}
+		bootstrapFiles := make(map[string]string, len(bootstrapIgnAsset.Config.Storage.Files))
+		for _, f := range bootstrapIgnAsset.Config.Storage.Files {
+			if inSlice(keptFileNames, f.Path) {
+				keptFiles = append(keptFiles, f)
+			} else {
+				data, err := base64.StdEncoding.DecodeString(strings.SplitN(f.Contents.Source, ",", 2)[1])
+				if err != nil {
+					return err
+				}
+				bootstrapFiles[f.Path] = string(data)
+			}
+		}
+		bootstrapFilesData, err := json.Marshal(bootstrapFiles)
+		if err != nil {
+			return err
+		}
+		bootstrapIgnAsset.Config.Storage.Files = keptFiles
+
+		renderedBootstrapIgn, err := json.Marshal(bootstrapIgnAsset.Config)
+		if err != nil {
+			return err
+		}
+
+		renderedBootstrapIgnWithInjection, err := injectInstallInfo(renderedBootstrapIgn)
+		if err != nil {
+			return err
+		}
+
 		data, err = openstacktfvars.TFVars(
 			masters[0].Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec),
 			installConfig.Config.Platform.OpenStack.Cloud,
@@ -334,7 +385,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			string(*rhcosImage),
 			clusterID.InfraID,
 			installConfig.Config.AdditionalTrustBundle,
-			bootstrapIgn,
+			renderedBootstrapIgnWithInjection,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
@@ -343,6 +394,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
 			Data:     data,
 		})
+
+		// Create a file with bootstrap data we need to upload to the machine.
+		f, err := os.Create("/tmp/bootstrap_files.json")
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		_, err = f.Write(bootstrapFilesData)
+		if err != nil {
+			return err
+		}
 	case baremetal.Name:
 		data, err = baremetaltfvars.TFVars(
 			installConfig.Config.Platform.BareMetal.LibvirtURI,

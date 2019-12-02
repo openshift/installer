@@ -40,7 +40,7 @@ resource "openstack_compute_instance_v2" "bootstrap" {
   flavor_id = data.openstack_compute_flavor_v2.bootstrap_flavor.id
   image_id  = var.base_image_id
 
-  user_data = var.bootstrap_shim_ignition
+  user_data = var.bootstrap_ignition
 
   network {
     port = openstack_networking_port_v2.bootstrap_port.id

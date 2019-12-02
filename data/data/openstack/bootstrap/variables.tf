@@ -25,9 +25,9 @@ variable "ignition" {
   description = "The content of the bootstrap ignition file."
 }
 
-variable "bootstrap_shim_ignition" {
+variable "bootstrap_ignition" {
   type = string
-  description = "The content of the ignition file with user ca bundle."
+  description = "The content of the ignition file."
 }
 
 variable "flavor_name" {
