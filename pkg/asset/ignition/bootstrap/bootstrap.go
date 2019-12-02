@@ -49,6 +49,7 @@ type bootstrapTemplateData struct {
 	Proxy                 *configv1.ProxyStatus
 	Registries            []sysregistriesv2.Registry
 	BootImage             string
+	ClusterDomain         string
 }
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
@@ -231,6 +232,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		Proxy:                 &proxy.Status,
 		Registries:            registries,
 		BootImage:             string(*rhcosImage),
+		ClusterDomain:         installConfig.ClusterDomain(),
 	}, nil
 }
 

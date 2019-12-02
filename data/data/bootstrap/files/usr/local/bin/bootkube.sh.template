@@ -5,6 +5,8 @@ set -euoE pipefail ## -E option will cause functions to inherit trap
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
+ETCD_ENDPOINTS={{.EtcdCluster}}
+
 bootkube_podman_run() {
     # we run all commands in the host-network to prevent IP conflicts with
     # end-user infrastructure.
@@ -18,6 +20,11 @@ MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(image_for kube-client-agent)
 MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 
 KUBE_ETCD_SIGNER_SERVER_IMAGE=$(image_for kube-etcd-signer-server)
+CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator || echo "no-ceo-image")
+CLUSTER_ETCD_OPERATOR_MANAGED=${CLUSTER_ETCD_OPERATOR_IMAGE:+$(bootkube_podman_run \
+	"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+	/usr/bin/grep -oP Managed \
+	/manifests/0000_12_etcd-operator_01_operator.cr.yaml)} || echo "CEO is Unmanaged"
 
 CONFIG_OPERATOR_IMAGE=$(image_for cluster-config-operator)
 KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)
@@ -67,6 +74,75 @@ then
 	touch cvo-bootstrap.done
 fi
 
+# We originally wanted to run the etcd cert signer as
+# a static pod, but kubelet could't remove static pod
+# when API server is not up, so we have to run this as
+# podman container.
+# See https://github.com/kubernetes/kubernetes/issues/43292
+
+echo "Starting etcd certificate signer..."
+
+trap "podman rm --force etcd-signer" ERR
+
+bootkube_podman_run \
+	--name etcd-signer \
+	--detach \
+	--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
+	"${KUBE_ETCD_SIGNER_SERVER_IMAGE}" \
+	serve \
+	--cacrt=/opt/openshift/tls/etcd-signer.crt \
+	--cakey=/opt/openshift/tls/etcd-signer.key \
+	--metric-cacrt=/opt/openshift/tls/etcd-metric-signer.crt \
+	--metric-cakey=/opt/openshift/tls/etcd-metric-signer.key \
+	--servcrt=/opt/openshift/tls/kube-apiserver-lb-server.crt \
+	--servkey=/opt/openshift/tls/kube-apiserver-lb-server.key \
+	--servcrt=/opt/openshift/tls/kube-apiserver-internal-lb-server.crt \
+	--servkey=/opt/openshift/tls/kube-apiserver-internal-lb-server.key \
+	--servcrt=/opt/openshift/tls/kube-apiserver-localhost-server.crt \
+	--servkey=/opt/openshift/tls/kube-apiserver-localhost-server.key \
+	--address=0.0.0.0:6443 \
+	--insecure-health-check-address=0.0.0.0:6080 \
+	--csrdir=/tmp \
+	--peercertdur=26280h \
+	--servercertdur=26280h \
+	--metriccertdur=26280h
+
+# during initial operator rollout phase this logic allows us to deploy the operator via CVO
+# in an `Unmanaged` no-op state. after all of the pieces have merged and the operator is
+# deemed stable we can remove this logic and the operator will be `Managed` by default.
+if [ ! -z "$CLUSTER_ETCD_OPERATOR_MANAGED" ] && [ ! -f etcd-bootstrap.done ]
+then
+	echo "Rendering CEO Manifests..."
+	mkdir -p /etc/etcd
+	bootkube_podman_run \
+		--volume "$PWD:/assets:z" \
+		"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-etcd-operator render \
+		--etcd-ca=/assets/tls/etcd-ca-bundle.crt \
+		--etcd-metric-ca=/assets/tls/etcd-metric-ca-bundle.crt \
+		--manifest-etcd-image "${MACHINE_CONFIG_ETCD_IMAGE}" \
+		--etcd-discovery-domain {{.ClusterDomain}} \
+		--manifest-cluster-etcd-operator-image "${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+		--manifest-setup-etcd-env-image "${MACHINE_CONFIG_OPERATOR_IMAGE}" \
+		--manifest-kube-client-agent-image "${MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE}" \
+		--asset-input-dir /assets/tls \
+		--asset-output-dir /assets/etcd-bootstrap \
+		--config-output-file /assets/etcd-bootstrap/config
+
+	# TODO: host-etcd endpoint rendered by cluster-etcd-operator
+	BOOTSTRAP_IP=$(hostname -I | awk '{ print $1 }')
+	ETCD_ENDPOINTS=https://"${BOOTSTRAP_IP}":2379
+	sed -i "/__BOOTSTRAP_IP__/${BOOTSTRAP_IP}/"  /opt/openshift/manifests/etcd-host-service-endpoints.yaml
+
+	cp etcd-bootstrap/manifests/* manifests/
+	cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
+
+	touch etcd-bootstrap.done
+else
+	CLUSTER_ETCD_OPERATOR_IMAGE=
+	sed -i '/etcd-bootstrap/I,+1 d' /opt/openshift/manifests/etcd-host-service-endpoints.yaml
+fi
+
 if [ ! -f config-bootstrap.done ]
 then
 	echo "Rendering cluster config manifests..."
@@ -97,7 +173,7 @@ then
 		"${KUBE_APISERVER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-apiserver-operator render \
 		--manifest-etcd-serving-ca=etcd-ca-bundle.crt \
-		--manifest-etcd-server-urls={{.EtcdCluster}} \
+		--manifest-etcd-server-urls="${ETCD_ENDPOINTS}" \
 		--manifest-image="${OPENSHIFT_HYPERKUBE_IMAGE}" \
 		--manifest-operator-image="${KUBE_APISERVER_OPERATOR_IMAGE}" \
 		--asset-input-dir=/assets/tls \
@@ -203,7 +279,8 @@ then
 			--mdns-publisher-image="${MDNS_PUBLISHER_IMAGE}" \
 			--haproxy-image="${HAPROXY_IMAGE}" \
 			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
-			--cloud-config-file=/assets/manifests/cloud-provider-config.yaml
+			--cloud-config-file=/assets/manifests/cloud-provider-config.yaml \
+			--cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}"
 
 	# Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to
 	# 1. read the controller config rendered by MachineConfigOperator
@@ -216,10 +293,10 @@ then
 	cp manifests/* /etc/mcc/bootstrap/
 	cp auth/kubeconfig-kubelet /etc/mcs/kubeconfig
 	cp mco-bootstrap/bootstrap/machineconfigoperator-bootstrap-pod.yaml /etc/kubernetes/manifests/
-        if [ -d mco-bootstrap/baremetal/manifests ]; then
-            cp mco-bootstrap/baremetal/manifests/* /etc/kubernetes/manifests/
-            cp --recursive mco-bootstrap/baremetal/static-pod-resources/* /etc/kubernetes/static-pod-resources/
-        fi
+	if [ -d mco-bootstrap/baremetal/manifests ]; then
+		cp mco-bootstrap/baremetal/manifests/* /etc/kubernetes/manifests/
+		cp --recursive mco-bootstrap/baremetal/static-pod-resources/* /etc/kubernetes/static-pod-resources/
+	fi
 	if [ -d mco-bootstrap/openstack/manifests ]; then
 		cp mco-bootstrap/openstack/manifests/* /etc/kubernetes/manifests/
 		cp --recursive mco-bootstrap/openstack/static-pod-resources/* /etc/kubernetes/static-pod-resources/
@@ -256,41 +333,6 @@ then
 	touch cco-bootstrap.done
 fi
 
-# We originally wanted to run the etcd cert signer as
-# a static pod, but kubelet could't remove static pod
-# when API server is not up, so we have to run this as
-# podman container.
-# See https://github.com/kubernetes/kubernetes/issues/43292
-
-echo "Starting etcd certificate signer..."
-
-trap "podman rm --force etcd-signer" ERR
-
-bootkube_podman_run \
-	--name etcd-signer \
-	--detach \
-	--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
-	"${KUBE_ETCD_SIGNER_SERVER_IMAGE}" \
-	serve \
-	--cacrt=/opt/openshift/tls/etcd-signer.crt \
-	--cakey=/opt/openshift/tls/etcd-signer.key \
-	--metric-cacrt=/opt/openshift/tls/etcd-metric-signer.crt \
-	--metric-cakey=/opt/openshift/tls/etcd-metric-signer.key \
-	--servcrt=/opt/openshift/tls/kube-apiserver-lb-server.crt \
-	--servkey=/opt/openshift/tls/kube-apiserver-lb-server.key \
-	--servcrt=/opt/openshift/tls/kube-apiserver-internal-lb-server.crt \
-	--servkey=/opt/openshift/tls/kube-apiserver-internal-lb-server.key \
-	--servcrt=/opt/openshift/tls/kube-apiserver-localhost-server.crt \
-	--servkey=/opt/openshift/tls/kube-apiserver-localhost-server.key \
-	--address=0.0.0.0:6443 \
-	--insecure-health-check-address=0.0.0.0:6080 \
-	--csrdir=/tmp \
-	--peercertdur=26280h \
-	--servercertdur=26280h \
-	--metriccertdur=26280h
-
-echo "Waiting for etcd cluster..."
-
 # Wait for the etcd cluster to come up.
 until bootkube_podman_run \
 		--rm \
@@ -303,7 +345,7 @@ until bootkube_podman_run \
 		--cacert=/opt/openshift/tls/etcd-ca-bundle.crt \
 		--cert=/opt/openshift/tls/etcd-client.crt \
 		--key=/opt/openshift/tls/etcd-client.key \
-		--endpoints={{.EtcdCluster}} \
+		--endpoints="${ETCD_ENDPOINTS}" \
 		endpoint health
 do
 	echo "etcdctl failed. Retrying in 5 seconds..."
@@ -323,6 +365,17 @@ bootkube_podman_run \
 	--volume /etc/kubernetes:/etc/kubernetes:z \
 	"${CLUSTER_BOOTSTRAP_IMAGE}" \
 	start --tear-down-early=false --asset-dir=/assets --required-pods="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
+
+if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
+then
+	echo "Waiting for CEO to finish..."
+	bootkube_podman_run \
+		--volume "$PWD:/assets:z" \
+		"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-etcd-operator \
+			wait-for-ceo \
+			--kubeconfig /assets/auth/kubeconfig
+fi
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
