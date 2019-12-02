@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gophercloud/gophercloud/openstack/baremetal/v1/nodes"
 	utils "github.com/gophercloud/utils/openstack/baremetal/v1/nodes"
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -82,17 +83,48 @@ func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	// Create config drive
-	configDrive := utils.ConfigDrive{
-		UserData:    utils.UserDataString(d.Get("user_data").(string)),
-		NetworkData: d.Get("network_data").(map[string]interface{}),
-		MetaData:    d.Get("metadata").(map[string]interface{}),
-	}
-
 	d.SetId(d.Get("node_uuid").(string))
+
+	configDrive, err := buildConfigDrive(client.Microversion,
+		d.Get("user_data").(string),
+		d.Get("network_data").(map[string]interface{}),
+		d.Get("metadata").(map[string]interface{}))
+	if err != nil {
+		return err
+	}
 
 	// Deploy the node - drive Ironic state machine until node is 'active'
 	return ChangeProvisionStateToTarget(client, d.Id(), "active", &configDrive)
+}
+
+// buildConfigDrive handles building a config drive appropriate for the Ironic version we are using.  Newer versions
+// support sending the user data directly, otherwise we need to build an ISO image
+func buildConfigDrive(apiVersion, userData string, networkData, metaData map[string]interface{}) (configDrive interface{}, err error) {
+	actual, err := version.NewVersion(apiVersion)
+	minimum, err := version.NewVersion("1.56")
+
+	if minimum.GreaterThan(actual) {
+		// Create config drive ISO directly with gophercloud/utils
+		configDriveData := utils.ConfigDrive{
+			UserData:    utils.UserDataString(userData),
+			NetworkData: networkData,
+			MetaData:    metaData,
+		}
+		configDriveISO, err := configDriveData.ToConfigDrive()
+		if err != nil {
+			return nil, err
+		}
+		configDrive = &configDriveISO
+	} else {
+		// Let Ironic handle creating the config drive
+		configDrive = &nodes.ConfigDrive{
+			UserData:    userData,
+			NetworkData: networkData,
+			MetaData:    metaData,
+		}
+	}
+
+	return
 }
 
 // Read the deployment's data from Ironic
