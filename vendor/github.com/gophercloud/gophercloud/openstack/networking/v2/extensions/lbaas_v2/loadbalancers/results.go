@@ -45,7 +45,7 @@ type LoadBalancer struct {
 	Name string `json:"name"`
 
 	// The UUID of a flavor if set.
-	FlavorID string `json:"flavor_id"`
+	Flavor string `json:"flavor"`
 
 	// The name of the provider.
 	Provider string `json:"provider"`

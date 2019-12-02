@@ -21,7 +21,7 @@ require (
 	github.com/dustinkirkland/golang-petname v0.0.0-20190613200456-11339a705ed2 // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/mock v1.3.1
-	github.com/gophercloud/gophercloud v0.6.1-0.20191025185032-6ad562af8c1f
+	github.com/gophercloud/gophercloud v0.4.1-0.20190930034851-863d5406e68f
 	github.com/gophercloud/utils v0.0.0-20190527093828-25f1b77b8c03
 	github.com/hashicorp/go-plugin v1.0.1-0.20190610192547-a1bc61569a26
 	github.com/hashicorp/logutils v1.0.0
