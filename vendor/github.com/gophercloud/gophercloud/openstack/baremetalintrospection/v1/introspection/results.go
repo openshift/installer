@@ -234,6 +234,7 @@ type RootDiskType struct {
 	Hctl               string `json:"hctl"`
 	Model              string `json:"model"`
 	Name               string `json:"name"`
+	ByPath             string `json:"by_path"`
 	Rotational         bool   `json:"rotational"`
 	Serial             string `json:"serial"`
 	Size               int    `json:"size"`

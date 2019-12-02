@@ -21,7 +21,7 @@ require (
 	github.com/dustinkirkland/golang-petname v0.0.0-20190613200456-11339a705ed2 // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/mock v1.3.1
-	github.com/gophercloud/gophercloud v0.4.1-0.20190930034851-863d5406e68f
+	github.com/gophercloud/gophercloud v0.6.1-0.20191025185032-6ad562af8c1f
 	github.com/gophercloud/utils v0.0.0-20190527093828-25f1b77b8c03
 	github.com/hashicorp/go-plugin v1.0.1-0.20190610192547-a1bc61569a26
 	github.com/hashicorp/logutils v1.0.0
@@ -31,7 +31,7 @@ require (
 	github.com/metal3-io/baremetal-operator v0.0.0-00010101000000-000000000000
 	github.com/metal3-io/cluster-api-provider-baremetal v0.0.0-20191010235856-134c3b78ec63
 	github.com/mitchellh/cli v1.0.0
-	github.com/openshift-metal3/terraform-provider-ironic v0.1.7
+	github.com/openshift-metal3/terraform-provider-ironic v0.1.8
 	github.com/openshift/api v3.9.1-0.20191018132714-d0b31d707c46+incompatible
 	github.com/openshift/client-go v0.0.0-20191001081553-3b0e988f8cb0
 	github.com/openshift/cloud-credential-operator v0.0.0-20190905120421-44ed18ef8496
@@ -87,7 +87,7 @@ replace (
 	github.com/terraform-providers/terraform-provider-ignition => github.com/vrutkovs/terraform-provider-ignition v1.0.2-0.20190819094334-ac54201ee306
 	github.com/terraform-providers/terraform-provider-random/v2 => github.com/vrutkovs/terraform-provider-random/v2 v2.1.1
 	k8s.io/api => k8s.io/api v0.0.0-20190904195148-bacad065d7c3
-	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190831152136-93cd198ca677
+	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20191025225532-af6325b3a843
 	k8s.io/client-go => k8s.io/client-go v0.0.0-20190904195533-1592ba1f99b8
 	sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20190619152724-cf06d47b6cee
 	sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.0.0-20190925224209-945cf044115f

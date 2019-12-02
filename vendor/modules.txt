@@ -308,6 +308,7 @@ github.com/coreos/go-systemd/unit
 github.com/coreos/go-systemd/journal
 # github.com/coreos/ignition v0.33.0
 github.com/coreos/ignition/config/util
+github.com/coreos/ignition/config/v2_2/types
 github.com/coreos/ignition/config/shared/errors
 github.com/coreos/ignition/config/v2_4_experimental/types
 github.com/coreos/ignition/config/validate/report
@@ -390,7 +391,7 @@ github.com/googleapis/gax-go/v2
 github.com/googleapis/gnostic/OpenAPIv2
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
-# github.com/gophercloud/gophercloud v0.4.1-0.20190930034851-863d5406e68f
+# github.com/gophercloud/gophercloud v0.6.1-0.20191025185032-6ad562af8c1f
 github.com/gophercloud/gophercloud
 github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes
 github.com/gophercloud/gophercloud/openstack/compute/v2/servers
@@ -407,9 +408,9 @@ github.com/gophercloud/gophercloud/openstack/networking/v2/ports
 github.com/gophercloud/gophercloud/openstack/networking/v2/subnets
 github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers
 github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects
+github.com/gophercloud/gophercloud/openstack/identity/v3/tokens
 github.com/gophercloud/gophercloud/openstack/common/extensions
 github.com/gophercloud/gophercloud/openstack/compute/v2/flavors
-github.com/gophercloud/gophercloud/openstack/identity/v3/tokens
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions
 github.com/gophercloud/gophercloud/openstack
 github.com/gophercloud/gophercloud/pagination
@@ -804,10 +805,11 @@ github.com/opencontainers/go-digest
 # github.com/opencontainers/image-spec v1.0.1
 github.com/opencontainers/image-spec/specs-go/v1
 github.com/opencontainers/image-spec/specs-go
-# github.com/openshift-metal3/terraform-provider-ironic v0.1.7
+# github.com/openshift-metal3/terraform-provider-ironic v0.1.8
 github.com/openshift-metal3/terraform-provider-ironic/ironic
 # github.com/openshift/api v3.9.1-0.20191018132714-d0b31d707c46+incompatible
 github.com/openshift/api/config/v1
+github.com/openshift/api/operator/v1
 github.com/openshift/api/operator/v1alpha1
 github.com/openshift/api/route/v1
 # github.com/openshift/client-go v0.0.0-20191001081553-3b0e988f8cb0
@@ -1228,7 +1230,7 @@ k8s.io/api/settings/v1alpha1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apimachinery v0.0.0-20191017185446-6e68a40eebf9 => k8s.io/apimachinery v0.0.0-20190831152136-93cd198ca677
+# k8s.io/apimachinery v0.0.0-20191017185446-6e68a40eebf9 => k8s.io/apimachinery v0.0.0-20191025225532-af6325b3a843
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/apis/meta/v1
 k8s.io/apimachinery/pkg/fields
