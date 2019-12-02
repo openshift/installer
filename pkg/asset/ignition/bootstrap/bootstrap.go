@@ -30,6 +30,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/version"
 )
 
 const (
@@ -173,6 +174,23 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 		a.Config.Passwd.Users,
 		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{igntypes.SSHAuthorizedKey(installConfig.Config.SSHKey)}},
 	)
+
+	// Add information about the installer and its invoker as a ConfigMap to the bootstrap Ignition config
+	invoker := "user"
+	if env := os.Getenv("OPENSHIFT_INSTALL_INVOKER"); env != "" {
+		invoker = env
+	}
+
+	a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FileFromString("/opt/openshift/manifests/openshift-install.yml", "root", 0644, fmt.Sprintf(`---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openshift-install
+  namespace: openshift-config
+data:
+  version: "%s"
+  invoker: "%s"
+`, version.Raw, invoker)))
 
 	data, err := json.Marshal(a.Config)
 	if err != nil {
