@@ -1,0 +1,46 @@
+# Required Python packages:
+#
+# ansible
+# openstacksdk
+# netaddr
+
+- hosts: all
+
+  vars:
+    # The provided filename will be concatenated with the Control Plane node
+    # name and its 0-indexed serial number.
+    #
+    # In this case, the first node will look for this filename:
+    #    "{{ os_infra_id }}-master-0-ignition.json"
+    cp_data: "ignition.json"
+
+    cp_server: "{{ os_infra_id }}-master"
+    cp_port: "{{ os_infra_id }}-master-port"
+
+    # These computed lists are used to feed the Ansible loops with the number
+    # of iterations specified in the Inventory.
+    cp_servers: "{{ [cp_server] * os_cp_nodes_number }}"
+    cp_ports: "{{ [cp_port] * os_cp_nodes_number }}"
+
+  tasks:
+  - name: 'Create the Control Plane ports'
+    os_port:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      network: "{{ os_network }}"
+      security_groups:
+      - "{{ os_sg_master }}"
+      allowed_address_pairs:
+      - ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
+      - ip_address: "{{ os_subnet_range | next_nth_usable(6) }}"
+    with_indexed_items: "{{ cp_ports }}"
+
+  - name: 'Create the Control Plane servers'
+    os_server:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      image: "{{ os_image_rhcos }}"
+      flavor: "{{ os_flavor_master }}"
+      auto_ip: no
+      userdata: "{{ lookup('file', [item.1, item.0, cp_data] | join('-')) | string }}"
+      nics:
+      - port-name: "{{ cp_port }}-{{ item.0 }}"
+    with_indexed_items: "{{ cp_servers }}"
