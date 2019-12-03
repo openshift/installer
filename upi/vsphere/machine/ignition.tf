@@ -46,14 +46,18 @@ EOF
 data "ignition_systemd_unit" "restart" {
   count = "${var.instance_count}"
 
-  name = "restart.service"
+  name = "static-ip.service"
 
   content = <<EOF
 [Unit]
 ConditionFirstBoot=yes
+Before=machine-config-daemon-pull.service
+After=network.target
 [Service]
-Type=idle
-ExecStart=/sbin/reboot
+Type=oneshot
+ExecStart=/usr/bin/nmcli device disconnect eth0
+ExecStart=/usr/bin/systemctl restart NetworkManager
+ExecStart=/usr/bin/nmcli device connect eth0
 [Install]
 WantedBy=multi-user.target
 EOF
