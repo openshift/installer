@@ -41,11 +41,36 @@ Memory
 Storage
 Networking
 
-[todo-link-to-minimum-resource-requirements]
+z/VM requirements
+
+These are the **minimum** requirements for one z/VM:
+* 3 IFLs in z/VM with SMT to have 6 virtual cores
+* 4 vIFL or cores for each control plane machine. 2 cores if SMT is enabled.
+* 2 vIFL or cores for each compute machine (worker node). 1 core if SMT is enabled.
+* 1 LPAR
+
+A **fuller installation**, for production:
+* 6 IFLs in z/VM with SMT to have 12 virtual cores
+* 4 IFLs or cores for each control plane machine.
+* 2 IFLs or cores for each compute machine (worker node), workload dependent for each node.
+* 2 - 3 LPARs for high availability.
 
 ## Network Topology Requirements
 
 OpenShift 4.x on Z currently requires all nodes to have internet access to pull images for platform containers and provide telemetry data to Red Hat.  OpenShift generally supports air-gapped installs, but this feature is not yet available for z/VM.
+
+A minimal network includes:
+* 1 OSA or RoCE cards (n ports shared ?)
+* Shared OSA and or
+* Using a z/VM VSWITCH.
+
+Promiscuous mode is not required.
+
+A somewhat larger network includes:
+* 2 OSA or RoCE cards (n ports shared ?)
+* Shared OSA and or
+* Using a z/VM VSWITCH.
+
 
 ### Load balancers
 
