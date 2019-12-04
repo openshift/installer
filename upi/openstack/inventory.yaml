@@ -15,6 +15,11 @@ all:
       # OpenShift Ingress floating IP address
       os_ingress_fip: '203.0.113.19'
 
+      os_region_name: ''
+      # Name of the SDN.
+      # Possible values are OpenshiftSDN or Kuryr.
+      os_networking_type: 'OpenshiftSDN'
+
       # Number of provisioned Control Plane nodes
       # 3 is the minimum number for a fully-functional cluster.
       os_cp_nodes_number: 3

@@ -35,6 +35,8 @@ pip install -r requirements.txt
 
 Customize the cluster properties in the [Inventory](./inventory.yaml) file.
 
+**NOTE:** To deploy with Kuryr SDN, update the `os_networking_type` field to `Kuryr`.
+
 The playbooks are designed to reproduce an installation equivalent to IPI. Customize them as needed. It is advised to customize the teardown playbooks symmetrically.
 
 Every step can be run like this:
