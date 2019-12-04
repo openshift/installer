@@ -1,3 +1,7 @@
+provider "ignition" {
+  version = "1.1.0"
+}
+
 locals {
   mask = "${element(split("/", var.machine_cidr), 1)}"
   gw   = "${cidrhost(var.machine_cidr,1)}"
