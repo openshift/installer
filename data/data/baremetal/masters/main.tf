@@ -18,6 +18,12 @@ resource "ironic_node_v1" "openshift-master-host" {
 
   driver      = var.hosts[count.index]["driver"]
   driver_info = var.driver_infos[count.index]
+
+  boot_interface       = var.hosts[count.index]["boot_interface"]
+  management_interface = var.hosts[count.index]["management_interface"]
+  power_interface      = var.hosts[count.index]["power_interface"]
+  raid_interface       = var.hosts[count.index]["raid_interface"]
+  vendor_interface     = var.hosts[count.index]["vendor_interface"]
 }
 
 resource "ironic_allocation_v1" "openshift-master-allocation" {
