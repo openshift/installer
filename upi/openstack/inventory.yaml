@@ -9,6 +9,7 @@ all:
       os_cluster_name: 'openshift'
       os_flavor_master: 'm1.xlarge'
       os_image_rhcos: 'rhcos'
+      os_external_network: 'external'
 
       # Computed values
 
@@ -21,6 +22,10 @@ all:
       # os_network is the name of the OpenStack network that will contain the
       # OpenShift cluster.
       os_network: "{{ os_infra_id }}-network"
+
+      # os_router is the name of the router that connects the os_network to your
+      # cluster's external network (os_external_network)
+      os_router: "{{ os_infra_id }}-router"
 
       # os_sg_* are the names of the security groups that will be assigned to
       # the respective nodes.
