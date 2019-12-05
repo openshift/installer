@@ -1,0 +1,40 @@
+# Required Python packages:
+#
+# ansible
+# openstacksdk
+# netaddr
+
+- hosts: all
+
+  vars:
+    compute_data: "worker.ign"
+
+    compute_server: "{{ os_infra_id }}-worker"
+    compute_port: "{{ os_infra_id }}-worker-port"
+
+    # These computed lists are used to feed the Ansible loops with the number
+    # of iterations specified in the Inventory.
+    compute_servers: "{{ [compute_server] * os_compute_nodes_number }}"
+    compute_ports: "{{ [compute_port] * os_compute_nodes_number }}"
+
+  tasks:
+  - name: 'Create the Compute ports'
+    os_port:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      network: "{{ os_network }}"
+      security_groups:
+      - "{{ os_sg_worker }}"
+      allowed_address_pairs:
+      - ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
+    with_indexed_items: "{{ compute_ports }}"
+
+  - name: 'Create the Compute servers'
+    os_server:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      image: "{{ os_image_rhcos }}"
+      flavor: "{{ os_flavor_worker }}"
+      auto_ip: no
+      userdata: "{{ lookup('file', compute_data) | string }}"
+      nics:
+      - port-name: "{{ compute_port }}-{{ item.0 }}"
+    with_indexed_items: "{{ compute_servers }}"
