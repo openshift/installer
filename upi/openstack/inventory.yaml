@@ -16,8 +16,8 @@ all:
       os_cp_nodes_number: 3
 
       # Number of provisioned Compute nodes.
-      # 2 is the minimum number for a fully-functional cluster.
-      os_compute_nodes_number: 2
+      # 3 is the minimum number for a fully-functional cluster.
+      os_compute_nodes_number: 3
 
       # Computed values
 
