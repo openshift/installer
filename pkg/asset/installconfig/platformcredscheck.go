@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -65,9 +65,7 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "creating GCP session")
 		}
 	case openstack.Name:
-		opts := new(clientconfig.ClientOpts)
-		opts.Cloud = ic.Config.Platform.OpenStack.Cloud
-		_, err = clientconfig.GetCloudFromYAML(opts)
+		_, err = openstackconfig.GetSession(ic.Config.Platform.OpenStack.Cloud)
 	case baremetal.Name, libvirt.Name, none.Name, vsphere.Name:
 		// no creds to check
 	case azure.Name:

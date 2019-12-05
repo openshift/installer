@@ -1,4 +1,4 @@
-package validation
+package openstack
 
 import (
 	"github.com/pkg/errors"
@@ -10,21 +10,24 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/utils/openstack/clientconfig"
+
+	"github.com/openshift/installer/pkg/types/openstack/validation"
 )
 
 type realValidValuesFetcher struct{}
 
 // NewValidValuesFetcher returns a new ValidValuesFetcher.
-func NewValidValuesFetcher() ValidValuesFetcher {
+func NewValidValuesFetcher() validation.ValidValuesFetcher {
 	return realValidValuesFetcher{}
 }
 
 // GetCloudNames gets the valid cloud names. These are read from clouds.yaml.
 func (f realValidValuesFetcher) GetCloudNames() ([]string, error) {
-	clouds, err := clientconfig.LoadCloudsYAML()
+	clouds, err := new(yamlLoadOpts).LoadCloudsYAML()
 	if err != nil {
 		return nil, err
 	}
+
 	i := 0
 	cloudNames := make([]string, len(clouds))
 	for k := range clouds {
@@ -36,9 +39,7 @@ func (f realValidValuesFetcher) GetCloudNames() ([]string, error) {
 
 // GetNetworkNames gets the valid network names.
 func (f realValidValuesFetcher) GetNetworkNames(cloud string) ([]string, error) {
-	opts := &clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
+	opts := defaultClientOpts(cloud)
 
 	conn, err := clientconfig.NewServiceClient("network", opts)
 	if err != nil {
@@ -66,9 +67,7 @@ func (f realValidValuesFetcher) GetNetworkNames(cloud string) ([]string, error) 
 
 // GetFlavorNames gets a list of valid flavor names.
 func (f realValidValuesFetcher) GetFlavorNames(cloud string) ([]string, error) {
-	opts := &clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
+	opts := defaultClientOpts(cloud)
 
 	conn, err := clientconfig.NewServiceClient("compute", opts)
 	if err != nil {
@@ -99,9 +98,7 @@ func (f realValidValuesFetcher) GetFlavorNames(cloud string) ([]string, error) {
 }
 
 func (f realValidValuesFetcher) GetNetworkExtensionsAliases(cloud string) ([]string, error) {
-	opts := &clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
+	opts := defaultClientOpts(cloud)
 
 	conn, err := clientconfig.NewServiceClient("network", opts)
 	if err != nil {
@@ -127,9 +124,7 @@ func (f realValidValuesFetcher) GetNetworkExtensionsAliases(cloud string) ([]str
 }
 
 func (f realValidValuesFetcher) GetServiceCatalog(cloud string) ([]string, error) {
-	opts := &clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
+	opts := defaultClientOpts(cloud)
 
 	conn, err := clientconfig.NewServiceClient("identity", opts)
 	if err != nil {
@@ -156,9 +151,7 @@ func (f realValidValuesFetcher) GetServiceCatalog(cloud string) ([]string, error
 }
 
 func (f realValidValuesFetcher) GetFloatingIPNames(cloud string, floatingNetworkName string) ([]string, error) {
-	opts := &clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
+	opts := defaultClientOpts(cloud)
 
 	conn, err := clientconfig.NewServiceClient("network", opts)
 	if err != nil {

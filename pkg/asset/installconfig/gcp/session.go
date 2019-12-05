@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -18,6 +19,8 @@ import (
 var (
 	authEnvs            = []string{"GOOGLE_CREDENTIALS", "GOOGLE_CLOUD_KEYFILE_JSON", "GCLOUD_KEYFILE_JSON"}
 	defaultAuthFilePath = filepath.Join(os.Getenv("HOME"), ".gcp", "osServiceAccount.json")
+	credLoaders         = []credLoader{}
+	onceLoggers         = map[credLoader]*sync.Once{}
 )
 
 // Session is an object representing session for GCP API.
@@ -44,18 +47,26 @@ func GetSession(ctx context.Context) (*Session, error) {
 }
 
 func loadCredentials(ctx context.Context) (*googleoauth.Credentials, error) {
-	var loaders []credLoader
-	for _, env := range authEnvs {
-		loaders = append(loaders, &envLoader{env: env})
-	}
-	loaders = append(loaders, &fileLoader{path: defaultAuthFilePath})
-	loaders = append(loaders, &cliLoader{})
+	if len(credLoaders) == 0 {
+		for _, authEnv := range authEnvs {
+			credLoaders = append(credLoaders, &envLoader{env: authEnv})
+		}
+		credLoaders = append(credLoaders, &fileLoader{path: defaultAuthFilePath})
+		credLoaders = append(credLoaders, &cliLoader{})
 
-	for _, l := range loaders {
-		creds, err := l.Load(ctx)
+		for _, credLoader := range credLoaders {
+			onceLoggers[credLoader] = new(sync.Once)
+		}
+	}
+
+	for _, loader := range credLoaders {
+		creds, err := loader.Load(ctx)
 		if err != nil {
 			continue
 		}
+		onceLoggers[loader].Do(func() {
+			logrus.Infof("Credentials loaded from %s", loader)
+		})
 		return creds, nil
 	}
 	return getCredentials(ctx)
@@ -83,35 +94,49 @@ type credLoader interface {
 }
 
 type envLoader struct {
-	env string
+	env      string
+	delegate credLoader
 }
 
 func (e *envLoader) Load(ctx context.Context) (*googleoauth.Credentials, error) {
 	if val := os.Getenv(e.env); len(val) > 0 {
-		return (&fileOrContentLoader{pathOrContent: val}).Load(ctx)
+		e.delegate = &fileOrContentLoader{pathOrContent: val}
+		return e.delegate.Load(ctx)
 	}
 	return nil, errors.New("empty environment variable")
 }
 
 func (e *envLoader) String() string {
-	return fmt.Sprintf("loading from environment variable %q", e.env)
+	path := []string{
+		fmt.Sprintf("environment variable %q", e.env),
+	}
+	if e.delegate != nil {
+		path = append(path, fmt.Sprintf("%s", e.delegate))
+	}
+	return strings.Join(path, ", ")
 }
 
 type fileOrContentLoader struct {
 	pathOrContent string
+	delegate      credLoader
 }
 
 func (fc *fileOrContentLoader) Load(ctx context.Context) (*googleoauth.Credentials, error) {
 	// if this is a path and we can stat it, assume it's ok
 	if _, err := os.Stat(fc.pathOrContent); err == nil {
-		return (&fileLoader{path: fc.pathOrContent}).Load(ctx)
+		fc.delegate = &fileLoader{path: fc.pathOrContent}
+	} else {
+		fc.delegate = &contentLoader{content: fc.pathOrContent}
 	}
 
-	return (&contentLoader{content: fc.pathOrContent}).Load(ctx)
+	return fc.delegate.Load(ctx)
 }
 
 func (fc *fileOrContentLoader) String() string {
-	return fmt.Sprintf("loading from file or content %q", fc.pathOrContent)
+	if fc.delegate != nil {
+		return fmt.Sprintf("%s", fc.delegate)
+	}
+	return "file or content"
 }
 
 type fileLoader struct {
@@ -127,7 +152,7 @@ func (f *fileLoader) Load(ctx context.Context) (*googleoauth.Credentials, error)
 }
 
 func (f *fileLoader) String() string {
-	return fmt.Sprintf("loading from file %q", f.path)
+	return fmt.Sprintf("file %q", f.path)
 }
 
 type contentLoader struct {
@@ -139,7 +164,7 @@ func (f *contentLoader) Load(ctx context.Context) (*googleoauth.Credentials, err
 }
 
 func (f *contentLoader) String() string {
-	return fmt.Sprintf("loading from content %q", f.content)
+	return fmt.Sprintf("content <redacted>")
 }
 
 type cliLoader struct{}
@@ -149,7 +174,7 @@ func (c *cliLoader) Load(ctx context.Context) (*googleoauth.Credentials, error) 
 }
 
 func (c *cliLoader) String() string {
-	return fmt.Sprintf("loading from gcloud defaults")
+	return fmt.Sprintf("gcloud CLI defaults")
 }
 
 type userLoader struct{}

@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/Azure/go-autorest/autorest"
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
@@ -16,7 +17,10 @@ import (
 
 const azureAuthEnv = "AZURE_AUTH_LOCATION"
 
-var defaultAuthFilePath = filepath.Join(os.Getenv("HOME"), ".azure", "osServicePrincipal.json")
+var (
+	defaultAuthFilePath = filepath.Join(os.Getenv("HOME"), ".azure", "osServicePrincipal.json")
+	onceLoggers         = map[string]*sync.Once{}
+)
 
 //Session is an object representing session for subscription
 type Session struct {
@@ -70,6 +74,13 @@ func newSessionFromFile(authFilePath string) (*Session, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to map authsettings to credentials")
 	}
+
+	if _, has := onceLoggers[authFilePath]; !has {
+		onceLoggers[authFilePath] = new(sync.Once)
+	}
+	onceLoggers[authFilePath].Do(func() {
+		logrus.Infof("Credentials loaded from file %q", authFilePath)
+	})
 
 	authorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
 	if err != nil {
