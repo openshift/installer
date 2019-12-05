@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
 	"io"
 	"io/ioutil"
 	"os"
@@ -30,6 +31,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 )
 
 const (
@@ -49,6 +51,13 @@ type bootstrapTemplateData struct {
 	Proxy                 *configv1.ProxyStatus
 	Registries            []sysregistriesv2.Registry
 	BootImage             string
+	PlatformData          platformTemplateData
+}
+
+// platformTemplateData is the data to use to replace values in bootstrap
+// template files that are specific to one platform.
+type platformTemplateData struct {
+	BareMetal *baremetal.TemplateData
 }
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
@@ -222,6 +231,14 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		registries = append(registries, registry)
 	}
 
+	// Generate platform-specific baremetal data
+	var platformData platformTemplateData
+
+	switch installConfig.Platform.Name() {
+	case baremetaltypes.Name:
+		platformData.BareMetal = baremetal.GetTemplateData(installConfig.Platform.BareMetal)
+	}
+
 	return &bootstrapTemplateData{
 		AdditionalTrustBundle: installConfig.AdditionalTrustBundle,
 		FIPS:                  installConfig.FIPS,
@@ -231,6 +248,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		Proxy:                 &proxy.Status,
 		Registries:            registries,
 		BootImage:             string(*rhcosImage),
+		PlatformData:          platformData,
 	}, nil
 }
 
