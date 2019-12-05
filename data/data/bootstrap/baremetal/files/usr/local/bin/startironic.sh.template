@@ -11,6 +11,10 @@ COREOS_DOWNLOADER_IMAGE=$(image_for ironic-machine-os-downloader || image_for ir
 # This image is templated in via the installer pkg/asset/ignition/bootstrap/bootstrap.go
 RHCOS_BOOT_IMAGE_URL="{{.BootImage}}"
 
+# This DHCP range is used by dnsmasq to serve DHCP to the cluster. If empty
+# dnsmasq will only serve TFTP, and DHCP will be disabled.
+DHCP_RANGE="{{.PlatformData.BareMetal.ProvisioningDHCPRange}}"
+
 # First we stop any previously started containers, because ExecStop only runs when the ExecStart process
 # e.g this script is still running, but we exit if *any* of the containers exits unexpectedly
 for name in ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
@@ -19,10 +23,9 @@ for name in ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb i
 done
 
 # Start the provisioning nic if not already started
-# Note removal of the hard-coded subnet tracked via https://github.com/openshift/installer/issues/2091
 PROVISIONING_NIC=ens4
 if ! nmcli -t device | grep "$PROVISIONING_NIC:ethernet:connected:provisioning"; then
-    nmcli c add type ethernet ifname $PROVISIONING_NIC con-name provisioning ip4 172.22.0.2/24 gw4 172.22.0.1
+    nmcli c add type ethernet ifname $PROVISIONING_NIC con-name provisioning {{ if .PlatformData.BareMetal.ProvisioningIPv6 }} ip6 {{ else }} ip4 {{ end }} {{.PlatformData.BareMetal.ProvisioningIP}}/{{.PlatformData.BareMetal.ProvisioningCIDR}}
     nmcli c up provisioning
 fi
 
@@ -63,6 +66,7 @@ podman run -d --net host --privileged --name mariadb \
 
 podman run -d --net host --privileged --name dnsmasq \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     --env DHCP_RANGE=$DHCP_RANGE \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/rundnsmasq ${IRONIC_IMAGE}
 
 podman run -d --net host --privileged --name httpd \

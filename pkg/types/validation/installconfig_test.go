@@ -92,16 +92,18 @@ func validVSpherePlatform() *vsphere.Platform {
 func validBareMetalPlatform() *baremetal.Platform {
 	iface, _ := net.Interfaces()
 	return &baremetal.Platform{
-		LibvirtURI:              "qemu+tcp://192.168.122.1/system",
-		BootstrapProvisioningIP: "127.0.0.1",
-		ClusterProvisioningIP:   "192.168.111.1",
-		Hosts:                   []*baremetal.Host{},
-		ExternalBridge:          iface[0].Name,
-		ProvisioningBridge:      iface[0].Name,
-		DefaultMachinePlatform:  &baremetal.MachinePool{},
-		APIVIP:                  "10.0.0.5",
-		IngressVIP:              "10.0.0.4",
-		DNSVIP:                  "10.0.0.2",
+		LibvirtURI:                   "qemu+tcp://192.168.122.1/system",
+		ProvisioningNetworkInterface: "ens3",
+		ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("192.168.111.0/24"),
+		BootstrapProvisioningIP:      "192.168.111.1",
+		ClusterProvisioningIP:        "192.168.111.2",
+		Hosts:                        []*baremetal.Host{},
+		ExternalBridge:               iface[0].Name,
+		ProvisioningBridge:           iface[0].Name,
+		DefaultMachinePlatform:       &baremetal.MachinePool{},
+		APIVIP:                       "10.0.0.5",
+		IngressVIP:                   "10.0.0.4",
+		DNSVIP:                       "10.0.0.2",
 	}
 }
 
