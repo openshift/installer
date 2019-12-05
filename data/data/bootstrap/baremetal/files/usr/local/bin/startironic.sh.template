@@ -11,6 +11,10 @@ COREOS_DOWNLOADER_IMAGE=$(image_for ironic-rhcos-downloader)
 # This image is templated in via the installer pkg/asset/ignition/bootstrap/bootstrap.go
 RHCOS_BOOT_IMAGE_URL="{{.BootImage}}"
 
+# This DHCP range is used by dnsmasq to serve DHCP to the cluster. If empty
+# dnsmasq will only serve TFTP and DHCP will be disabled.
+DHCP_RANGE="{{.PlatformData.BareMetal.ProvisioningDHCPRange}}"
+
 # First we stop any previously started containers, because ExecStop only runs when the ExecStart process
 # e.g this script is still running, but we exit if *any* of the containers exits unexpectedly
 for name in ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
@@ -63,6 +67,7 @@ podman run -d --net host --privileged --name mariadb \
 
 podman run -d --net host --privileged --name dnsmasq \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     --env DHCP_RANGE=$DHCP_RANGE \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/rundnsmasq ${IRONIC_IMAGE}
 
 podman run -d --net host --privileged --name httpd \

@@ -44,6 +44,16 @@ type Platform struct {
 	// +optional
 	ProvisioningBridge string `json:"provisioningBridge,omitempty"`
 
+	// ProvisioningNetworkCIDR defines the network to use for provisioning.
+	// +optional
+	ProvisioningNetworkCIDR string `json:"provisioningNetworkCIDR"`
+
+	// ProvisioningDHCPRange is used to provide DHCP services to hosts
+	// for provisioning. Leave blank if external DHCP is used. Format is
+	// "start_ip,end_ip", e.g. "172.22.0.2,172.22.0.50"
+	// +optional
+	ProvisioningDHCPRange string `json:"provisioningDHCPRange,omitempty"`
+
 	// Hosts is the information needed to create the objects in Ironic.
 	Hosts []*Host `json:"hosts"`
 

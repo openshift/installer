@@ -93,8 +93,9 @@ func validBareMetalPlatform() *baremetal.Platform {
 	iface, _ := net.Interfaces()
 	return &baremetal.Platform{
 		LibvirtURI:              "qemu+tcp://192.168.122.1/system",
-		BootstrapProvisioningIP: "127.0.0.1",
-		ClusterProvisioningIP:   "192.168.111.1",
+		ProvisioningNetworkCIDR: "192.168.111.0/24",
+		BootstrapProvisioningIP: "192.168.111.1",
+		ClusterProvisioningIP:   "192.168.111.2",
 		Hosts:                   []*baremetal.Host{},
 		ExternalBridge:          iface[0].Name,
 		ProvisioningBridge:      iface[0].Name,
