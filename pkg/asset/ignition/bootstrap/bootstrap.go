@@ -241,8 +241,10 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 
 	switch installConfig.Platform.Name() {
 	case baremetaltypes.Name:
-		platformData.BareMetal = &baremetalTemplateData{
-			ProvisioningDHCPRange: installConfig.Platform.BareMetal.ProvisioningDHCPRange,
+		platformData.BareMetal = &baremetalTemplateData{}
+
+		if dhcpRange := installConfig.Platform.BareMetal.ProvisioningDHCPRange; dhcpRange != nil {
+			platformData.BareMetal.ProvisioningDHCPRange = *dhcpRange
 		}
 	}
 
