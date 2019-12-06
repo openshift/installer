@@ -64,6 +64,9 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	if nameErr != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), c.ObjectMeta.Name, nameErr.Error()))
 	}
+	if gcpNameErr := gcpvalidation.ValidateClusterName(c.ObjectMeta.Name); c.Platform.GCP != nil && gcpNameErr != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), c.ObjectMeta.Name, gcpNameErr.Error()))
+	}
 	baseDomainErr := validate.DomainName(c.BaseDomain, true)
 	if baseDomainErr != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("baseDomain"), c.BaseDomain, baseDomainErr.Error()))
