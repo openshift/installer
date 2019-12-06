@@ -28,11 +28,37 @@ here.  This is a summary of the changes to the network environment:
   AWS Application Load Balancers supposedly support IPv6, but that would
   require doing HTTPS load balancing for the API instead of just TCP load
   balancing, so we just use the IPv4 NLBs.  API access within the cluster is
-  still exercising IPv6.
+  still exercising IPv6 when using its Service IP..
 * IPv6 DNS records (AAAA) are created and the IPv4 (A) records are disabled,
-  except for the API.
+  except for the API since the API is still accessed via an IPv4 only load
+  balancer.
 * IPv6 routing is configured.  Since all instances get global IPv6 addresses,
   NAT is not used from the instances out to the internet.
+
+## Node Addresses
+
+Each AWS instance will receive both a private IPv4 address and a globally
+routeable IPv6 address.
+
+Kubelet is configured to use the IPv6 address for the Node object.
+
+etcd and all other services running with host networking will be configured to
+use the IPv6 address.
+
+## Hack for IPv4 Access Where Necessary
+
+There are some pods that still require IPv4 access on AWS to be functional.
+For example, the CoreDNS pods must have IPv4 connectivity since the AWS DNS
+server is only available via IPv4.  This also means we have to add a security
+group rule allowing DNS traffic to our CoreDNS pods over the AWS network (they
+use port 5353).
+
+Another case where this hack is required is several pods that need to access
+AWS APIs.  The AWS APIs are IPv4-only.
+
+Since this is an AWS-IPv6 specific hack, it is currently centralized into one
+place: ovn-kubernetes.  It will automatically add a second interface with IPv4
+access to the set of affected pods.
 
 ## Install Configuration
 
@@ -52,6 +78,8 @@ networking:
 Note that an IPv4 CIDR is still used for `machineCIDR` since AWS will provide a
 dual-stack (IPv4 and IPv6) environment.  We must specify the IPv4 CIDR and AWS
 will automatically allocate an IPv6 CIDR.
+
+`OVNKubernetes` is the only `networkType` supported in this environment.
 
 ## Current Status of IPv6
 
