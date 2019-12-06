@@ -68,7 +68,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 			name: "alternate_cidr_dhcp_disabled",
 			platform: &baremetal.Platform{
 				ProvisioningNetworkCIDR: "172.23.0.0/24",
-				ProvisioningDHCPRange:   &[]string{"",}[0],
+				ProvisioningDHCPRange:   &[]string{""}[0],
 			},
 			expected: &baremetal.Platform{
 				LibvirtURI:              "qemu:///system",
