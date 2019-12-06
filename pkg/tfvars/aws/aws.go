@@ -79,7 +79,7 @@ func TFVars(vpc string, privateSubnets []string, publicSubnets []string, publish
 	instanceClass := defaults.InstanceClass(masterConfig.Placement.Region)
 
 	useIPv6 := false
-	if os.Getenv("OPENSHIFT_AWS_USE_IPV6") == "true" {
+	if os.Getenv("OPENSHIFT_INSTALL_AWS_USE_IPV6") == "true" {
 		useIPv6 = true
 	}
 

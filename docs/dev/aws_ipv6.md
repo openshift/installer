@@ -10,7 +10,7 @@ To enable IPv6 in your AWS environment, set the following environment variable
 before running the installer:
 
 ```bash
-    export OPENSHIFT_AWS_USE_IPV6=”true”
+    export OPENSHIFT_INSTALL_AWS_USE_IPV6=”true”
 ```
 
 ## AWS Network Environment
