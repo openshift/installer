@@ -26,6 +26,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 			return nil, errors.New("Unknown Host " + host)
 		}
 	}
+
 	cases := []struct {
 		name     string
 		platform *baremetal.Platform
@@ -43,7 +44,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				APIVIP:                  "192.168.111.2",
 				IngressVIP:              "192.168.111.3",
 				ProvisioningNetworkCIDR: "172.22.0.0/24",
-				ProvisioningDHCPRange:   "",
+				ProvisioningDHCPRange:   &[]string{"172.22.0.10,172.22.0.100"}[0],
 			},
 		},
 		{
@@ -60,14 +61,14 @@ func TestSetPlatformDefaults(t *testing.T) {
 				APIVIP:                  "192.168.111.2",
 				IngressVIP:              "192.168.111.3",
 				ProvisioningNetworkCIDR: "172.23.0.0/24",
-				ProvisioningDHCPRange:   "",
+				ProvisioningDHCPRange:   &[]string{"172.23.0.10,172.23.0.100"}[0],
 			},
 		},
 		{
-			name: "alternate_cidr_dhcp_range",
+			name: "alternate_cidr_dhcp_disabled",
 			platform: &baremetal.Platform{
 				ProvisioningNetworkCIDR: "172.23.0.0/24",
-				ProvisioningDHCPRange:   "172.23.0.10,172.23.0.100",
+				ProvisioningDHCPRange:   &[]string{"",}[0],
 			},
 			expected: &baremetal.Platform{
 				LibvirtURI:              "qemu:///system",
@@ -78,7 +79,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				APIVIP:                  "192.168.111.2",
 				IngressVIP:              "192.168.111.3",
 				ProvisioningNetworkCIDR: "172.23.0.0/24",
-				ProvisioningDHCPRange:   "172.23.0.10,172.23.0.100",
+				ProvisioningDHCPRange:   &[]string{""}[0],
 			},
 		},
 	}

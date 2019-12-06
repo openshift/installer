@@ -37,6 +37,16 @@ func SetPlatformDefaults(p *baremetal.Platform, c *types.InstallConfig) {
 
 	_, provNet, _ := net.ParseCIDR(p.ProvisioningNetworkCIDR)
 
+	// If the ProvisioningDHCPRange is unspecified, then we enable DHCP with a default
+	// range.  If it is set to "", that means there is no DHCP range, and we should not
+	// enable DHCP at all.
+	if p.ProvisioningDHCPRange == nil {
+		startIP, _ := cidr.Host(provNet, 10)
+		endIP, _ := cidr.Host(provNet, 100)
+		ipRange := fmt.Sprintf("%s,%s", startIP, endIP)
+		p.ProvisioningDHCPRange = &ipRange
+	}
+
 	if p.BootstrapProvisioningIP == "" {
 		// Default to .2 address for CIDR e.g 172.22.0.2
 		ip, err := cidr.Host(provNet, 2)

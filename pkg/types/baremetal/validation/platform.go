@@ -60,8 +60,8 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, fmt.Sprintf("%q is not in the provisioning network", p.BootstrapProvisioningIP)))
 	}
 
-	if p.ProvisioningDHCPRange != "" {
-		dhcpRange := strings.Split(p.ProvisioningDHCPRange, ",")
+	if p.ProvisioningDHCPRange != nil && *p.ProvisioningDHCPRange != "" {
+		dhcpRange := strings.Split(*p.ProvisioningDHCPRange, ",")
 		if len(dhcpRange) != 2 {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPRange"), p.ProvisioningDHCPRange, "provisioning dhcp range should be in format: start_ip,end_ip"))
 		} else {
