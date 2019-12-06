@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/heap"
 	"context"
 	"fmt"
 	"os"
@@ -204,6 +205,37 @@ func unSupportedPlatformGather(directory string) error {
 	return logGatherBootstrap(gatherBootstrapOpts.bootstrap, 22, gatherBootstrapOpts.masters, directory)
 }
 
+type operatorConditionType int
+
+const (
+	conditionUnknown     operatorConditionType = -1
+	conditionAvailable   operatorConditionType = 0
+	conditionDegraded    operatorConditionType = 1
+	conditionProgressing operatorConditionType = 2
+	conditionUpgradeable operatorConditionType = 3
+)
+
+type OperatorCondition struct {
+	priority         operatorConditionType
+	operatorName     string
+	conditionType    configv1.ClusterStatusConditionType
+	conditionStatus  configv1.ConditionStatus
+	conditionReason  string
+	conditionMessage string
+}
+
+type OperatorConditions []OperatorCondition
+
+func (o OperatorConditions) Len() int                 { return len(o) }
+func (o OperatorConditions) Less(i, j int) bool       { return o[i].priority > o[j].priority }
+func (o OperatorConditions) Swap(i, j int)            { o[i], o[j] = o[j], o[i] }
+func (o *OperatorConditions) Push(pushed interface{}) { *o = append(*o, pushed.(OperatorCondition)) }
+func (o *OperatorConditions) Pop() (popped interface{}) {
+	popped = (*o)[len(*o)-1]
+	*o = (*o)[:len(*o)-1]
+	return
+}
+
 func logClusterOperatorConditions(ctx context.Context, config *rest.Config) error {
 	client, err := configclient.NewForConfig(config)
 	if err != nil {
@@ -215,20 +247,80 @@ func logClusterOperatorConditions(ctx context.Context, config *rest.Config) erro
 		return errors.Wrap(err, "listing ClusterOperator objects")
 	}
 
+	m := make(map[string]*OperatorConditions)
 	for _, operator := range operators.Items {
 		for _, condition := range operator.Status.Conditions {
-			if condition.Type == configv1.OperatorUpgradeable {
-				continue
-			} else if condition.Type == configv1.OperatorAvailable && condition.Status == configv1.ConditionTrue {
-				continue
-			} else if (condition.Type == configv1.OperatorDegraded || condition.Type == configv1.OperatorProgressing) && condition.Status == configv1.ConditionFalse {
+			if condition.Reason == "" {
+				condition.Reason = "noreason"
+			}
+			if condition.Message == "" {
+				condition.Message = "nomessage"
+			}
+
+			switch condition.Type {
+			case configv1.OperatorAvailable:
+				if condition.Status == configv1.ConditionTrue {
+					continue
+				}
+			case configv1.OperatorDegraded:
+				if condition.Status == configv1.ConditionFalse {
+					continue
+				}
+				oc := OperatorCondition{conditionDegraded, operator.ObjectMeta.Name,
+					condition.Type, condition.Status, condition.Reason, condition.Message}
+				if m[operator.ObjectMeta.Name] == nil {
+					heap.Init(m[operator.ObjectMeta.Name])
+				}
+				heap.Push(m[operator.ObjectMeta.Name], oc)
+			case configv1.OperatorProgressing:
+				if condition.Status == configv1.ConditionFalse {
+					continue
+				}
+				oc := OperatorCondition{conditionProgressing, operator.ObjectMeta.Name,
+					condition.Type, condition.Status, condition.Reason, condition.Message}
+				if m[operator.ObjectMeta.Name] == nil {
+					heap.Init(m[operator.ObjectMeta.Name])
+				}
+				heap.Push(m[operator.ObjectMeta.Name], oc)
+			default:
+				oc := OperatorCondition{conditionUnknown, operator.ObjectMeta.Name,
+					condition.Type, condition.Status, condition.Reason, condition.Message}
+				if m[operator.ObjectMeta.Name] == nil {
+					heap.Init(m[operator.ObjectMeta.Name])
+				}
+				heap.Push(m[operator.ObjectMeta.Name], oc)
 				continue
 			}
-			if condition.Type == configv1.OperatorDegraded {
-				logrus.Errorf("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
-			} else {
-				logrus.Infof("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
+			oc := OperatorCondition{conditionUnknown, operator.ObjectMeta.Name,
+				condition.Type, condition.Status, condition.Reason, condition.Message}
+			if m[operator.ObjectMeta.Name] == nil {
+				heap.Init(m[operator.ObjectMeta.Name])
 			}
+			heap.Push(m[operator.ObjectMeta.Name], oc)
+		}
+	}
+
+	for key, _ := range m {
+		logfunc := logrus.Infof
+		err := false
+
+		for m[key].Len() != 0 {
+			oc := heap.Pop(m[key]).(OperatorCondition)
+			switch oc.priority {
+			case conditionDegraded:
+				logfunc = logrus.Errorf
+				err = true
+			case conditionProgressing:
+				logfunc = logrus.Debugf
+			case conditionUnknown:
+				logfunc = logrus.Infof
+				if err {
+					logfunc = logrus.Debugf
+				}
+			}
+
+			logfunc("Cluster-operator %s has %s=%s with %s: %s", oc.operatorName,
+				oc.conditionType, oc.conditionStatus, oc.conditionReason, oc.conditionMessage)
 		}
 	}
 
