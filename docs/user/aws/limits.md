@@ -67,18 +67,18 @@ to be created. The security groups which exist after the default install are:
   1. Worker
   1. Router/Ingress
 
-## Instance Limits
+## vCPU Limits
 
 By default, a cluster will create:
 
-* One m4.large bootstrap machine (removed after install)
-* Three m4.xlarge master nodes.
-* Three m4.large worker nodes.
+* One m4.large bootstrap machine (2 vCPUs but removed after install)
+* Three m4.xlarge master nodes (4 vCPUs each).
+* Three m4.large worker nodes (2 vCPUs each).
 
-Currently, these instance type counts are within a new account's default limit.
+Currently, these vCPU counts are not within a new account's default limit. The default limit is 1 but for all these instances you will need 20. To increase the limit you have to [contact the AWS support](https://console.aws.amazon.com/support/cases?#/create?issueType=service-limit-increase&limitType=ec2-instances).
 If you intend to start with a higher number of workers, enable autoscaling and large workloads
-or a different instance type, please ensure you have the necessary remaining instance count within the instance type's
-limit to satisfy the need. If not, please ask AWS to increase the limit via a support case.
+or a different instance type, please ensure you have the necessary remaining vCPU count within the vCPU
+limit to satisfy the need. To calculate the vCPU limit you can use the limits calculator in the EC2 console (EC2 -> Limits -> Limits calculator).
 
 ## Elastic Load Balancing (ELB/NLB)
 
