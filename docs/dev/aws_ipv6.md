@@ -33,7 +33,11 @@ here.  This is a summary of the changes to the network environment:
   except for the API since the API is still accessed via an IPv4 only load
   balancer.
 * IPv6 routing is configured.  Since all instances get global IPv6 addresses,
-  NAT is not used from the instances out to the internet.
+  NAT is not used from the instances out to the internet.  The current
+  implementation uses security groups to block incoming traffic sent directly
+  to any of the instances, but will move to using an egress-only internet
+  gateway which will make this isolation more explicit.
+
 
 ## Node Addresses
 
