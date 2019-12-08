@@ -296,7 +296,8 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 		case ovirttypes.Name:
 			pool.Platform.Ovirt = &ovirttypes.MachinePool{}
-			sets, err := ovirt.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data")
+			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
+			sets, err := ovirt.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects for ovirt provider")
 			}

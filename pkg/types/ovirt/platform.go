@@ -14,9 +14,6 @@ type Platform struct {
 	// IngressIP is an external IP which routes to the default ingress controller.
 	// The IP is a suitable target of a wildcard DNS record used to resolve default route host names.
 	IngressVIP string `json:"ingress_vip"`
-	// The target storage domain under which all VM disk would be created
-	// +optional
-	StorageDomainName string `json:"storage_domain_name,omitempty"`
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on ovirt for machine pools which do not define their
 	// own platform configuration.

@@ -298,7 +298,9 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	case ovirttypes.Name:
 		mpool := defaultOvirtMachinePoolPlatform()
 		pool.Platform.Ovirt = &mpool
-		machines, err = ovirt.Machines(clusterID.InfraID, ic, pool, "master", "master-user-data")
+		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
+
+		machines, err = ovirt.Machines(clusterID.InfraID, ic, pool, imageName, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects for ovirt provider")
 		}

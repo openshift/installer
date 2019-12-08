@@ -12,11 +12,11 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/ovirt"
 
-	ovirtprovider "github.com/ovirt/cluster-api-provider-ovirt/pkg/apis/ovirtclusterproviderconfig/v1beta1"
+	ovirtprovider "github.com/ovirt/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != ovirt.Name {
 		return nil, fmt.Errorf("non-ovirt configuration: %q", configPlatform)
 	}
@@ -29,7 +29,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider := provider(platform, userDataSecret)
+	provider := provider(platform, userDataSecret, osImage)
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		machine := machineapi.Machine{
@@ -59,7 +59,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(platform *ovirt.Platform, userDataSecret string) *ovirtprovider.OvirtMachineProviderSpec {
+func provider(platform *ovirt.Platform, userDataSecret string, osImage string) *ovirtprovider.OvirtMachineProviderSpec {
 	return &ovirtprovider.OvirtMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "ovirtproviderconfig.openshift.io/v1beta1",
@@ -68,6 +68,6 @@ func provider(platform *ovirt.Platform, userDataSecret string) *ovirtprovider.Ov
 		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret: &corev1.LocalObjectReference{Name: "ovirt-credentials"},
 		ClusterId:         platform.ClusterID,
-		TemplateId:        platform.TemplateID,
+		TemplateName:      osImage,
 	}
 }

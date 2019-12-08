@@ -14,7 +14,7 @@ import (
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role,
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role,
 	userDataSecret string) ([]*machineapi.MachineSet, error) {
 
 	if configPlatform := config.Platform.Name(); configPlatform != ovirt.Name {
@@ -30,7 +30,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		total = *pool.Replicas
 	}
 
-	provider := provider(platform, userDataSecret)
+	provider := provider(platform, userDataSecret, osImage)
 	name := fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, 0)
 	mset := &machineapi.MachineSet{
 		TypeMeta: metav1.TypeMeta{

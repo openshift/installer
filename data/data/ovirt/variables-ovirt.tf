@@ -24,7 +24,18 @@ variable "ovirt_cluster_id" {
   description = "The ID of oVirt's cluster"
 }
 
-variable "ovirt_template_id" {
+variable "ovirt_storage_domain_id" {
   type        = string
-  description = "The ID of oVirt's template"
+  description = "The ID of oVirt's stoage domain for the template"
+}
+
+variable "openstack_base_image_name" {
+  type        = string
+  description = "Name of the base image to use for the nodes."
+}
+
+variable "openstack_base_image_local_file_path" {
+  type        = string
+  default     = ""
+  description = "Local file path of the base image file to use for the nodes."
 }
