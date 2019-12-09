@@ -79,6 +79,10 @@ type imagePullSecret struct {
 
 // ImagePullSecret checks if the given string is a valid image pull secret and returns an error if not.
 func ImagePullSecret(secret string) error {
+	if secret == "" {
+		// Empty pull secrets are allowed, so return blank error
+		return *new(error)
+	}
 	var s imagePullSecret
 	err := json.Unmarshal([]byte(secret), &s)
 	if err != nil {
