@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"reflect"
 
+	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/utils/env"
 )
 
@@ -159,4 +160,16 @@ func fileExists(filename string) bool {
 		return true
 	}
 	return false
+}
+
+// GetEndpointType is a helper method to determine the endpoint type
+// requested by the user.
+func GetEndpointType(endpointType string) gophercloud.Availability {
+	if endpointType == "internal" || endpointType == "internalURL" {
+		return gophercloud.AvailabilityInternal
+	}
+	if endpointType == "admin" || endpointType == "adminURL" {
+		return gophercloud.AvailabilityAdmin
+	}
+	return gophercloud.AvailabilityPublic
 }
