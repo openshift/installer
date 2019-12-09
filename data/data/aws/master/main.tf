@@ -4,8 +4,6 @@ locals {
   // Because of the issue https://github.com/hashicorp/terraform/issues/12570, the consumers cannot use a dynamic list for count
   // and therefore are force to implicitly assume that the list is of aws_lb_target_group_arns_length - 1, in case there is no api_external
   target_group_arns_length = var.publish_strategy == "External" ? var.target_group_arns_length : var.target_group_arns_length - 1
-
-  public_endpoints = var.publish_strategy == "External" ? true : false
 }
 
 resource "aws_iam_instance_profile" "master" {
