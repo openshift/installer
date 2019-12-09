@@ -253,12 +253,53 @@ INFO Waiting up to 30m0s for the bootstrap-complete event...
 The Cluster Image Registry [Operator][cluster-image-registry-operator] does not pick an storage backend for `None` platform. Therefore, the cluster operator will be stuck in progressing because it is waiting for the administrator to [configure][cluster-image-registry-operator-configuration] a storage backend for the image-registry.
 [NFS][openshift-nfs] should be picked as a [storage-backend][nfs-storage-backend].
 
-TODO - document NFS backend setup.
 
-Alternatively, for non-production clusters, emptyDir can be used for testing.
+#### Configuring NFS
+
+NFS is currently the only supported persistent storage option for OpenShift on Z.  To make an existing NFS share accessible for OpenShift to use as persistent storage, users must first attach it as a Persistent Volume.  At least 100GB of NFS storage space must be available for the image registry claim.
+
+```
+apiVersion: v1
+kind: PersistentVolume
+spec:
+  accessModes:
+  - ReadWriteMany
+  - ReadWriteOnce
+  capacity:
+    storage: 100Gi
+  nfs:
+    path: <NFS export path>
+    server: <ip of NFS server>
+  persistentVolumeReclaimPolicy: Recycle
+  volumeMode: Filesystem
+status: {}
+```
+
+Once the persistent volume is created, the image registry must be patched to use it.
+
+```
+oc patch configs.imageregistry.operator.openshift.io/cluster --type merge --patch '{"spec":{"storage":{"pvc":{"claim":""}}}}'
+```
+
+#### Configuring Local Storage (testing/development only)
+
+Alternatively, for non-production clusters, `emptyDir` can be used for testing instead of NFS.
 
 ```sh
 oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
+```
+
+### Disabling Control Plane Schedulability
+
+By default, when the OpenShift installer creates a cluster without any managed
+workers (as is the default in a UPI installation), it configures the scheduler
+to allow user-created application pods to be scheduled to the master nodes.  In a
+production cluster, the master nodes should not be schedulable so that user-created
+applications can not consume resources dedicated to the control plane.  Users should
+configure the cluster to disable master schedulability.
+
+```
+oc patch schedulers.config.openshift.io/cluster --type merge --patch '{"spec":{"mastersSchedulable": false}}'
 ```
 
 ## Monitor for cluster completion
