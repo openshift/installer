@@ -6,6 +6,10 @@
 - hosts: all
 
   tasks:
+  - name: 'Remove the cluster router'
+    os_router:
+      name: "{{ os_router }}"
+      state: absent
   - name: 'Remove the cluster network'
     os_network:
       name: "{{ os_network }}"

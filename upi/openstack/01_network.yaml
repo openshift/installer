@@ -21,3 +21,10 @@
       cidr: "{{ os_subnet_range }}"
       allocation_pool_start: "{{ os_subnet_range | next_nth_usable(10) }}"
       allocation_pool_end: "{{ os_subnet_range | ipaddr('last_usable') }}"
+
+  - name: 'Create external router'
+    os_router:
+      name: "{{ os_router }}"
+      network: "{{ os_external_network }}"
+      interfaces:
+      - "{{ cluster_subnet }}"
