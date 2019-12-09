@@ -91,6 +91,6 @@ resource "aws_route53_record" "etcd_cluster" {
   ttl     = "60"
   zone_id = aws_route53_zone.int.zone_id
   name    = "_etcd-server-ssl._tcp"
-  records = var.use_ipv6 == false ? formatlist("0 10 2380 %s", aws_route53_record.etcd_a_nodes.*.fqdn) : formatlist("0 10 2380 %s", aws_route53_record.etcd_aaaa_nodes.*.fqdn)
+  records = formatlist("0 10 2380 %s", var.use_ipv6 == false ? aws_route53_record.etcd_a_nodes.*.fqdn : aws_route53_record.etcd_aaaa_nodes.*.fqdn)
 }
 
