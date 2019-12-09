@@ -58,3 +58,19 @@ func (a *iRMCAccessDetails) DriverInfo(bmcCreds Credentials) map[string]interfac
 func (a *iRMCAccessDetails) BootInterface() string {
 	return "pxe"
 }
+
+func (a *iRMCAccessDetails) ManagementInterface() string {
+	return ""
+}
+
+func (a *iRMCAccessDetails) PowerInterface() string {
+	return ""
+}
+
+func (a *iRMCAccessDetails) RAIDInterface() string {
+	return ""
+}
+
+func (a *iRMCAccessDetails) VendorInterface() string {
+	return ""
+}

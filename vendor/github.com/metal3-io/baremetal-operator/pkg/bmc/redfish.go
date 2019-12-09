@@ -9,20 +9,47 @@ func init() {
 	registerFactory("redfish", newRedfishAccessDetails)
 	registerFactory("redfish+http", newRedfishAccessDetails)
 	registerFactory("redfish+https", newRedfishAccessDetails)
+	registerFactory("redfish-virtualmedia", newRedfishVirtualMediaAccessDetails)
+	registerFactory("ilo5-virtualmedia", newRedfishVirtualMediaAccessDetails)
+	registerFactory("idrac-virtualmedia", newRedfishiDracVirtualMediaAccessDetails)
+}
+
+func redfishDetails(parsedURL *url.URL) *redfishAccessDetails {
+	return &redfishAccessDetails{
+		bmcType: parsedURL.Scheme,
+		host:    parsedURL.Host,
+		path:    parsedURL.Path,
+	}
 }
 
 func newRedfishAccessDetails(parsedURL *url.URL) (AccessDetails, error) {
-	return &redfishAccessDetails{
-		bmcType:  parsedURL.Scheme,
-		host:     parsedURL.Host,
-		path:     parsedURL.Path,
+	return redfishDetails(parsedURL), nil
+}
+
+func newRedfishVirtualMediaAccessDetails(parsedURL *url.URL) (AccessDetails, error) {
+	return &redfishVirtualMediaAccessDetails{
+		*redfishDetails(parsedURL),
+	}, nil
+}
+
+func newRedfishiDracVirtualMediaAccessDetails(parsedURL *url.URL) (AccessDetails, error) {
+	return &redfishiDracVirtualMediaAccessDetails{
+		*redfishDetails(parsedURL),
 	}, nil
 }
 
 type redfishAccessDetails struct {
-	bmcType  string
-	host     string
-	path     string
+	bmcType string
+	host    string
+	path    string
+}
+
+type redfishVirtualMediaAccessDetails struct {
+	redfishAccessDetails
+}
+
+type redfishiDracVirtualMediaAccessDetails struct {
+	redfishAccessDetails
 }
 
 const redfishDefaultScheme = "https"
@@ -60,10 +87,10 @@ func (a *redfishAccessDetails) DriverInfo(bmcCreds Credentials) map[string]inter
 	redfishAddress = append(redfishAddress, a.host)
 
 	result := map[string]interface{}{
-		"redfish_system_id":     a.path,
-		"redfish_username": bmcCreds.Username,
-		"redfish_password": bmcCreds.Password,
-		"redfish_address": strings.Join(redfishAddress, ""),
+		"redfish_system_id": a.path,
+		"redfish_username":  bmcCreds.Username,
+		"redfish_password":  bmcCreds.Password,
+		"redfish_address":   strings.Join(redfishAddress, ""),
 	}
 
 	return result
@@ -71,5 +98,53 @@ func (a *redfishAccessDetails) DriverInfo(bmcCreds Credentials) map[string]inter
 
 // That can be either pxe or redfish-virtual-media
 func (a *redfishAccessDetails) BootInterface() string {
-	return "pxe"
+	return "ipxe"
+}
+
+func (a *redfishAccessDetails) ManagementInterface() string {
+	return ""
+}
+
+func (a *redfishAccessDetails) PowerInterface() string {
+	return ""
+}
+
+func (a *redfishAccessDetails) RAIDInterface() string {
+	return ""
+}
+
+func (a *redfishAccessDetails) VendorInterface() string {
+	return ""
+}
+
+// Virtual Media Overrides
+
+func (a *redfishVirtualMediaAccessDetails) BootInterface() string {
+	return "redfish-virtual-media"
+}
+
+// iDrac Virtual Media Overrides
+
+func (a *redfishiDracVirtualMediaAccessDetails) Driver() string {
+	return "idrac"
+}
+
+func (a *redfishiDracVirtualMediaAccessDetails) BootInterface() string {
+	return "idrac-redfish-virtual-media"
+}
+
+func (a *redfishiDracVirtualMediaAccessDetails) ManagementInterface() string {
+	return "idrac-redfish"
+}
+
+func (a *redfishiDracVirtualMediaAccessDetails) PowerInterface() string {
+	return "idrac-redfish"
+}
+
+func (a *redfishiDracVirtualMediaAccessDetails) RAIDInterface() string {
+	return "no-raid"
+}
+
+func (a *redfishiDracVirtualMediaAccessDetails) VendorInterface() string {
+	return "no-vendor"
 }

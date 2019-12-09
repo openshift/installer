@@ -46,6 +46,11 @@ type AccessDetails interface {
 
 	// Boot interface to set
 	BootInterface() string
+
+	ManagementInterface() string
+	PowerInterface() string
+	RAIDInterface() string
+	VendorInterface() string
 }
 
 func getParsedURL(address string) (parsedURL *url.URL, err error) {
@@ -67,7 +72,7 @@ func getParsedURL(address string) (parsedURL *url.URL, err error) {
 		}
 		parsedURL = &url.URL{
 			Scheme: "ipmi",
-			Host: address,
+			Host:   address,
 		}
 	} else {
 		// Successfully parsed the URL
