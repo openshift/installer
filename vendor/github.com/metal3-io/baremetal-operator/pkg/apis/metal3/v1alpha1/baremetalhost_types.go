@@ -327,6 +327,8 @@ func (cs CredentialsStatus) Match(secret corev1.Secret) bool {
 		return false
 	case cs.Reference.Name != secret.ObjectMeta.Name:
 		return false
+	case cs.Reference.Namespace != secret.ObjectMeta.Namespace:
+		return false
 	case cs.Version != secret.ObjectMeta.ResourceVersion:
 		return false
 	}
@@ -355,10 +357,10 @@ type BareMetalHostStatus struct {
 	Provisioning ProvisionStatus `json:"provisioning"`
 
 	// the last credentials we were able to validate as working
-	GoodCredentials CredentialsStatus `json:"goodCredentials"`
+	GoodCredentials CredentialsStatus `json:"goodCredentials,omitempty"`
 
 	// the last credentials we sent to the provisioning backend
-	TriedCredentials CredentialsStatus `json:"triedCredentials"`
+	TriedCredentials CredentialsStatus `json:"triedCredentials,omitempty"`
 
 	// the last error message reported by the provisioning subsystem
 	ErrorMessage string `json:"errorMessage"`
