@@ -8,6 +8,7 @@ aliases:
     - smarterclayton
     - wking
   installer-reviewers:
+    - fabianofranz
     - jcpowermac
     - jhixson74
     - jstuever
@@ -25,13 +26,31 @@ aliases:
     - tomassedovic
     - iamemilio
     - pierreprinetti
+  openstack-reviewers:
   vsphere-approvers:
     - abhinavdahiya
     - dav1x
+    - mtnbikenc
+    - jcpowermac
     - staebler
+  vsphere-reviewers:
+  baremetal-approvers:
+    - hardys
+    - stbenjam
   baremetal-reviewers:
     - celebdor
     - markmc
     - russellb
     - hardys
     - stbenjam
+  aws-approvers:
+    - patrickdillon
+  aws-reviewers:
+  gcp-approvers:
+    - jstuever
+    - patrickdillon
+  gcp-reviewers:
+  azure-approvers:
+    - fabianofranz
+    - jhixson74
+  azure-reviewers:
