@@ -11,7 +11,7 @@ ignored = [
 
 [[constraint]]
   name = "github.com/dmacvicar/terraform-provider-libvirt"
-  version = "=0.6.0"
+  revision = "40b0cda5333a29dd9f33d1cfdc206bfad3a8af96"
 
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-aws"
