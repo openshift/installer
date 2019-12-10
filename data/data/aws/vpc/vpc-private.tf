@@ -48,6 +48,7 @@ resource "aws_subnet" "private_subnet" {
 
   availability_zone = var.availability_zones[count.index]
 
+  # AWS gives us a /56 and we need to carve out /64 subnets.
   ipv6_cidr_block                 = var.use_ipv6 == true ? cidrsubnet(data.aws_vpc.cluster_vpc.ipv6_cidr_block, 8, count.index) : ""
   assign_ipv6_address_on_creation = var.use_ipv6
 
