@@ -24,6 +24,8 @@ resource "aws_security_group_rule" "master_mcs" {
 }
 
 resource "aws_security_group_rule" "master_mcs_v6" {
+  count = var.use_ipv6 == true ? 1 : 0
+
   type              = "ingress"
   security_group_id = aws_security_group.master.id
 
@@ -31,8 +33,6 @@ resource "aws_security_group_rule" "master_mcs_v6" {
   ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
   from_port        = 22623
   to_port          = 22623
-
-  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_security_group_rule" "master_egress" {
@@ -46,6 +46,8 @@ resource "aws_security_group_rule" "master_egress" {
 }
 
 resource "aws_security_group_rule" "master_egress_v6" {
+  count = var.use_ipv6 == true ? 1 : 0
+
   type              = "egress"
   security_group_id = aws_security_group.master.id
 
@@ -53,8 +55,6 @@ resource "aws_security_group_rule" "master_egress_v6" {
   to_port          = 0
   protocol         = "-1"
   ipv6_cidr_blocks = ["::/0"]
-
-  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_security_group_rule" "master_ingress_icmp" {
@@ -68,6 +68,8 @@ resource "aws_security_group_rule" "master_ingress_icmp" {
 }
 
 resource "aws_security_group_rule" "master_ingress_icmp_v6" {
+  count = var.use_ipv6 == true ? 1 : 0
+
   type              = "ingress"
   security_group_id = aws_security_group.master.id
 
@@ -75,8 +77,6 @@ resource "aws_security_group_rule" "master_ingress_icmp_v6" {
   ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
   from_port        = -1
   to_port          = -1
-
-  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_security_group_rule" "master_ingress_ssh" {
@@ -90,6 +90,8 @@ resource "aws_security_group_rule" "master_ingress_ssh" {
 }
 
 resource "aws_security_group_rule" "master_ingress_ssh_v6" {
+  count = var.use_ipv6 == true ? 1 : 0
+
   type              = "ingress"
   security_group_id = aws_security_group.master.id
 
@@ -97,8 +99,6 @@ resource "aws_security_group_rule" "master_ingress_ssh_v6" {
   ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
   from_port        = 22
   to_port          = 22
-
-  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_security_group_rule" "master_ingress_https" {
@@ -112,6 +112,8 @@ resource "aws_security_group_rule" "master_ingress_https" {
 }
 
 resource "aws_security_group_rule" "master_ingress_https_v6" {
+  count = var.use_ipv6 == true ? 1 : 0
+
   type              = "ingress"
   security_group_id = aws_security_group.master.id
 
@@ -119,8 +121,6 @@ resource "aws_security_group_rule" "master_ingress_https_v6" {
   ipv6_cidr_blocks = [data.aws_vpc.cluster_vpc.ipv6_cidr_block]
   from_port        = 6443
   to_port          = 6443
-
-  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_security_group_rule" "master_ingress_vxlan" {
@@ -317,6 +317,8 @@ resource "aws_security_group_rule" "master_ingress_services_udp" {
 # because it must use IPv4 to reach AWS DNS, so it can't be on our
 # IPv6 only SDN.
 resource "aws_security_group_rule" "master_dns_udp" {
+  count = var.use_ipv6 == true ? 1 : 0
+
   type              = "ingress"
   security_group_id = aws_security_group.master.id
 
@@ -325,11 +327,11 @@ resource "aws_security_group_rule" "master_dns_udp" {
   protocol  = "udp"
   from_port = 5353
   to_port   = 5353
-
-  count = var.use_ipv6 == true ? 1 : 0
 }
 
 resource "aws_security_group_rule" "master_dns_tcp" {
+  count = var.use_ipv6 == true ? 1 : 0
+
   type              = "ingress"
   security_group_id = aws_security_group.master.id
 
@@ -338,6 +340,4 @@ resource "aws_security_group_rule" "master_dns_tcp" {
   protocol  = "tcp"
   from_port = 5353
   to_port   = 5353
-
-  count = var.use_ipv6 == true ? 1 : 0
 }

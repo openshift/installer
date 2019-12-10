@@ -26,6 +26,7 @@ module "bootstrap" {
   vpc_ipv6_cidrs           = module.vpc.vpc_ipv6_cidrs
   vpc_security_group_ids   = [module.vpc.master_sg_id]
   publish_strategy         = var.aws_publish_strategy
+  use_ipv6                 = var.aws_use_ipv6
 
   tags = local.tags
 }

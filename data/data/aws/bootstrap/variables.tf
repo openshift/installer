@@ -84,3 +84,8 @@ variable "publish_strategy" {
   type        = string
   description = "The publishing strategy for endpoints like load balancers"
 }
+
+variable "use_ipv6" {
+  description = "Use IPv6 instead of IPv4"
+  type        = bool
+}

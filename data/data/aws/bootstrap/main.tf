@@ -185,6 +185,8 @@ resource "aws_security_group_rule" "ssh" {
 }
 
 resource "aws_security_group_rule" "ssh_v6" {
+  count = var.use_ipv6 == true ? 1 : 0
+
   type              = "ingress"
   security_group_id = aws_security_group.bootstrap.id
 
@@ -205,6 +207,8 @@ resource "aws_security_group_rule" "bootstrap_journald_gateway" {
 }
 
 resource "aws_security_group_rule" "bootstrap_journald_gateway_v6" {
+  count = var.use_ipv6 == true ? 1 : 0
+
   type              = "ingress"
   security_group_id = aws_security_group.bootstrap.id
 
