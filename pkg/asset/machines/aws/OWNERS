@@ -2,6 +2,6 @@
 # This file just uses aliases defined in OWNERS_ALIASES.
 
 approvers:
-  - baremetal-approvers
+  - aws-approvers
 reviewers:
-  - baremetal-reviewers
+  - aws-reviewers
