@@ -108,7 +108,13 @@ func ClusterName(v string) error {
 }
 
 // SubnetCIDR checks if the given IP net is a valid CIDR.
-func SubnetCIDR(cidr *net.IPNet) error {
+func SubnetCIDR(cidr *net.IPNet, allowIPv6, requireIPv6 bool) error {
+	if allowIPv6 == false && cidr.IP.To4() == nil {
+		return errors.New("must use IPv4")
+	}
+	if requireIPv6 == true && cidr.IP.To4() != nil {
+		return errors.New("must use IPv6")
+	}
 	if cidr.IP.IsUnspecified() {
 		return errors.New("address must be specified")
 	}

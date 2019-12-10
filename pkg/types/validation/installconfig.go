@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"net"
+	"os"
 	"sort"
 	"strings"
 
@@ -75,7 +76,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 		}
 	}
 	if c.Networking != nil {
-		allErrs = append(allErrs, validateNetworking(c.Networking, field.NewPath("networking"))...)
+		allErrs = append(allErrs, validateNetworking(c.Networking, field.NewPath("networking"), &c.Platform)...)
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
 	}
@@ -99,14 +100,32 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	return allErrs
 }
 
-func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorList {
+func validateNetworking(n *types.Networking, fldPath *field.Path, platform *types.Platform) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if n.NetworkType == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("networkType"), "network provider type required"))
 	}
 
+	// IPv6 CIDRs are only allowed for:
+	//  - baremetal platform
+	//  - AWS IPv6 dev/test env, with OPENSHIFT_INSTALL_AWS_USE_IPV6 set
+	allowIPv6 := false
+	requireIPv6 := false
+	if platform.BareMetal != nil {
+		allowIPv6 = true
+	}
+	if platform.AWS != nil && os.Getenv("OPENSHIFT_INSTALL_AWS_USE_IPV6") == "true" {
+		allowIPv6 = true
+		requireIPv6 = true
+		if n.NetworkType != "OVNKubernetes" {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType must be OVNKubernetes for AWS IPv6"))
+		}
+	}
+
 	if n.MachineCIDR != nil {
-		if err := validate.SubnetCIDR(&n.MachineCIDR.IPNet); err != nil {
+		// MachineCIDR should still be IPv4 for AWS IPv6, because AWS only does
+		// dual-stack, and the IPv6 CIDR will be assigned by AWS.
+		if err := validate.SubnetCIDR(&n.MachineCIDR.IPNet, allowIPv6, false); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("machineCIDR"), n.MachineCIDR.String(), err.Error()))
 		}
 	} else {
@@ -114,7 +133,7 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 	}
 
 	for i, sn := range n.ServiceNetwork {
-		if err := validate.SubnetCIDR(&sn.IPNet); err != nil {
+		if err := validate.SubnetCIDR(&sn.IPNet, allowIPv6, requireIPv6); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork").Index(i), sn.String(), err.Error()))
 		}
 		if n.MachineCIDR != nil && validate.DoCIDRsOverlap(&sn.IPNet, &n.MachineCIDR.IPNet) {
@@ -140,7 +159,7 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 	}
 
 	for i, cn := range n.ClusterNetwork {
-		allErrs = append(allErrs, validateClusterNetwork(n, &cn, i, fldPath.Child("clusterNetwork").Index(i))...)
+		allErrs = append(allErrs, validateClusterNetwork(n, &cn, i, fldPath.Child("clusterNetwork").Index(i), allowIPv6, requireIPv6)...)
 	}
 	if len(n.ClusterNetwork) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("clusterNetwork"), "cluster network required"))
@@ -148,9 +167,9 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 	return allErrs
 }
 
-func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, idx int, fldPath *field.Path) field.ErrorList {
+func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, idx int, fldPath *field.Path, allowIPv6, requireIPv6 bool) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if err := validate.SubnetCIDR(&cn.CIDR.IPNet); err != nil {
+	if err := validate.SubnetCIDR(&cn.CIDR.IPNet, allowIPv6, requireIPv6); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR.IPNet.String(), err.Error()))
 	}
 	if n.MachineCIDR != nil && validate.DoCIDRsOverlap(&cn.CIDR.IPNet, &n.MachineCIDR.IPNet) {
@@ -223,6 +242,8 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackVa
 	}
 	if platform.AWS != nil {
 		validate(aws.Name, platform.AWS, func(f *field.Path) field.ErrorList { return awsvalidation.ValidatePlatform(platform.AWS, f) })
+	} else if os.Getenv("OPENSHIFT_INSTALL_AWS_USE_IPV6") == "true" {
+		allErrs = append(allErrs, field.Invalid(fldPath, activePlatform, "OPENSHIFT_INSTALL_AWS_USE_IPV6 only valid for AWS"))
 	}
 	if platform.Azure != nil {
 		validate(azure.Name, platform.Azure, func(f *field.Path) field.ErrorList {
