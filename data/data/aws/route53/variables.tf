@@ -9,13 +9,7 @@ variable "etcd_count" {
 }
 
 variable "etcd_ip_addresses" {
-  description = "List of string IPs for machines running etcd members."
-  type        = list(string)
-  default     = []
-}
-
-variable "etcd_ipv6_addresses" {
-  description = "List of string IPs (IPv6) for machines running etcd members."
+  description = "List of string IPs (IPv4 or IPv6) for machines running etcd members."
   type        = list(string)
   default     = []
 }

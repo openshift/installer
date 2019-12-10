@@ -72,8 +72,7 @@ module "dns" {
   cluster_domain           = var.cluster_domain
   cluster_id               = var.cluster_id
   etcd_count               = var.master_count
-  etcd_ip_addresses        = flatten(module.masters.ip_addresses)
-  etcd_ipv6_addresses      = flatten(module.masters.ipv6_addresses)
+  etcd_ip_addresses        = var.aws_use_ipv6 == true ? flatten(module.masters.ipv6_addresses) : flatten(module.masters.ip_addresses)
   tags                     = local.tags
   vpc_id                   = module.vpc.vpc_id
   publish_strategy         = var.aws_publish_strategy

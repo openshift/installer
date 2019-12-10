@@ -83,7 +83,7 @@ resource "aws_route53_record" "etcd_aaaa_nodes" {
   ttl     = "60"
   zone_id = aws_route53_zone.int.zone_id
   name    = "etcd-${count.index}.${var.cluster_domain}"
-  records = [var.etcd_ipv6_addresses[count.index]]
+  records = [var.etcd_ip_addresses[count.index]]
 }
 
 resource "aws_route53_record" "etcd_cluster" {
