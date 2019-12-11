@@ -95,7 +95,7 @@ func clearIAMPolicyBindings(policy *resourcemanager.Policy, clusterID string, lo
 	for _, binding := range policy.Bindings {
 		members := []string{}
 		for _, member := range binding.Members {
-			if strings.HasPrefix(member, fmt.Sprintf("serviceAccount:%s", clusterID)) {
+			if strings.HasPrefix(strings.TrimPrefix(member, "deleted:"), fmt.Sprintf("serviceAccount:%s", clusterID)) {
 				logger.Debugf("IAM: removing %s from role %s", member, binding.Role)
 				removedBindings = true
 				continue
