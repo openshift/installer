@@ -33,4 +33,3 @@ variable "instance_infos" {
   type        = list(map(string))
   description = "Instance information for hosts"
 }
-
