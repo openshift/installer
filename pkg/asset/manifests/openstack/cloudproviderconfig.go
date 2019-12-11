@@ -7,23 +7,6 @@ import (
 	"github.com/gophercloud/utils/openstack/clientconfig"
 )
 
-type config struct {
-	Global global
-}
-
-type global struct {
-	AuthURL    string `ini:"auth-url,omitempty"`
-	Username   string `ini:"username,omitempty"`
-	UserID     string `ini:"user-id,omitempty"`
-	Password   string `ini:"password,omitempty"`
-	TenantID   string `ini:"tenant-id,omitempty"`
-	TenantName string `ini:"tenant-name,omitempty"`
-	DomainID   string `ini:"domain-id,omitempty"`
-	DomainName string `ini:"domain-name,omitempty"`
-	Region     string `ini:"region,omitempty"`
-	CAFile     string `ini:"ca-file,omitempty"`
-}
-
 // CloudProviderConfig generates the cloud provider config for the OpenStack platform.
 func CloudProviderConfig(cloud *clientconfig.Cloud) string {
 	res := `[Global]
