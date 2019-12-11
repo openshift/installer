@@ -1,0 +1,247 @@
+{
+  "$schema" : "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion" : "1.0.0.0",
+  "parameters" : {
+    "masterIgnition" : {
+      "type" : "string",
+      "metadata" : {
+        "description" : "Ignition content for the master nodes"
+      }
+    },
+    "numberOfMasters" : {
+      "type" : "int",
+      "defaultValue" : 3,
+      "minValue" : 2,
+      "maxValue" : 30,
+      "metadata" : {
+        "description" : "Number of OpenShift masters to deploy"
+      }
+    },
+    "sshKeyData" : {
+      "type" : "securestring",
+      "metadata" : {
+        "description" : "SSH RSA public key file as a string"
+      }
+    },
+    "privateDNSZoneName" : {
+      "type" : "string",
+      "metadata" : {
+        "description" : "Name of the private DNS zone the master nodes are going to be attached to"
+      }
+    },
+    "masterVMSize" : {
+      "type" : "string",
+      "defaultValue" : "Standard_D8s_v3",
+      "allowedValues" : [
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A9",
+        "Standard_A10",
+        "Standard_A11",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D11",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D8_v3",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2",
+        "Standard_E2_v3",
+        "Standard_E4_v3",
+        "Standard_E8_v3",
+        "Standard_E16_v3",
+        "Standard_E32_v3",
+        "Standard_E64_v3",
+        "Standard_E2s_v3",
+        "Standard_E4s_v3",
+        "Standard_E8s_v3",
+        "Standard_E16s_v3",
+        "Standard_E32s_v3",
+        "Standard_E64s_v3",
+        "Standard_G1",
+        "Standard_G2",
+        "Standard_G3",
+        "Standard_G4",
+        "Standard_G5",
+        "Standard_DS2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_DS11",
+        "Standard_DS12",
+        "Standard_DS13",
+        "Standard_DS14",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_DS11_v2",
+        "Standard_DS12_v2",
+        "Standard_DS13_v2",
+        "Standard_DS14_v2",
+        "Standard_GS1",
+        "Standard_GS2",
+        "Standard_GS3",
+        "Standard_GS4",
+        "Standard_GS5",
+        "Standard_D2s_v3",
+        "Standard_D4s_v3",
+        "Standard_D8s_v3"
+      ],
+      "metadata" : {
+        "description" : "The size of the Master Virtual Machines"
+      }
+    }
+  },
+  "variables" : {
+    "location" : "[resourceGroup().location]",
+    "virtualNetworkName" : "[concat(resourceGroup().name, '-vnet')]",
+    "virtualNetworkID" : "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "masterSubnetName" : "[concat(resourceGroup().name, '-master-subnet')]",
+    "masterSubnetRef" : "[concat(variables('virtualNetworkID'), '/subnets/', variables('masterSubnetName'))]",
+    "masterLoadBalancerName" : "[concat(resourceGroup().name, '-public-lb')]",
+    "internalLoadBalancerName" : "[concat(resourceGroup().name, '-internal-lb')]",
+    "sshKeyPath" : "/home/core/.ssh/authorized_keys",
+    "identityName" : "[concat(resourceGroup().name, '-identity')]",
+    "copy" : [
+      {
+        "name" : "vmNames",
+        "count" :  "[parameters('numberOfMasters')]",
+        "input" : "[concat(resourceGroup().name, '-master-', copyIndex('vmNames'))]"
+      }
+    ]
+  },
+  "resources" : [
+    {
+      "apiVersion" : "2018-06-01",
+      "type" : "Microsoft.Network/networkInterfaces",
+      "copy" : {
+        "name" : "nicCopy",
+        "count" : "[length(variables('vmNames'))]"
+      },
+      "name" : "[concat(variables('vmNames')[copyIndex()], '-nic')]",
+      "location" : "[variables('location')]",
+      "properties" : {
+        "ipConfigurations" : [
+          {
+            "name" : "pipConfig",
+            "properties" : {
+              "privateIPAllocationMethod" : "Dynamic",
+              "subnet" : {
+                "id" : "[variables('masterSubnetRef')]"
+              },
+              "loadBalancerBackendAddressPools" : [
+                {
+                  "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('masterLoadBalancerName'), '/backendAddressPools/public-lb-backend')]"
+                },
+                {
+                  "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('internalLoadBalancerName'), '/backendAddressPools/internal-lb-backend')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2018-09-01",
+      "type": "Microsoft.Network/privateDnsZones/A",
+      "copy" : {
+        "name" : "dnsCopy",
+        "count" : "[length(variables('vmNames'))]"
+      },
+      "name": "[concat(parameters('privateDNSZoneName'), '/etcd-', copyIndex())]",
+      "location" : "[variables('location')]",
+      "dependsOn" : [
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('vmNames')[copyIndex()], '-nic'))]"
+      ],
+      "properties": {
+        "ttl": 60,
+        "aRecords": [
+          {
+            "ipv4Address": "[reference(concat(variables('vmNames')[copyIndex()], '-nic')).ipConfigurations[0].properties.privateIPAddress]"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion" : "2018-06-01",
+      "type" : "Microsoft.Compute/virtualMachines",
+      "copy" : {
+        "name" : "vmCopy",
+        "count" : "[length(variables('vmNames'))]"
+      },
+      "name" : "[variables('vmNames')[copyIndex()]]",
+      "location" : "[variables('location')]",
+      "identity" : {
+        "type" : "userAssigned",
+        "userAssignedIdentities" : {
+          "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities/', variables('identityName'))]" : {}
+        }
+      },
+      "dependsOn" : [
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('vmNames')[copyIndex()], '-nic'))]",
+        "[concat('Microsoft.Network/privateDnsZones/', parameters('privateDNSZoneName'), '/A/etcd-', copyIndex())]"
+      ],
+      "properties" : {
+        "hardwareProfile" : {
+          "vmSize" : "[parameters('masterVMSize')]"
+        },
+        "osProfile" : {
+          "computerName" : "[variables('vmNames')[copyIndex()]]",
+          "adminUsername" : "core",
+          "customData" : "[parameters('masterIgnition')]",
+          "linuxConfiguration" : {
+            "disablePasswordAuthentication" : true,
+            "ssh" : {
+              "publicKeys" : [
+                {
+                  "path" : "[variables('sshKeyPath')]",
+                  "keyData" : "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile" : {
+          "imageReference": {
+            "id": "[resourceId('Microsoft.Compute/images', concat(resourceGroup().name, '-image'))]"
+          },
+          "osDisk" : {
+            "name": "[concat(variables('vmNames')[copyIndex()], '_OSDisk')]",
+            "osType" : "Linux",
+            "createOption" : "FromImage",
+            "caching": "ReadOnly",
+            "writeAcceleratorEnabled": false,
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "diskSizeGB" : 128
+          }
+        },
+        "networkProfile" : {
+          "networkInterfaces" : [
+            {
+              "id" : "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmNames')[copyIndex()], '-nic'))]",
+              "properties": {
+                "primary": false
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
