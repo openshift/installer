@@ -3,11 +3,8 @@ package machineconfig
 import (
 	"fmt"
 
-	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/openshift/installer/pkg/asset/ignition"
 )
 
 // ForHyperthreadingDisabled creates the MachineConfig to disable hyperthreading.
@@ -25,15 +22,8 @@ func ForHyperthreadingDisabled(role string) *mcfgv1.MachineConfig {
 			},
 		},
 		Spec: mcfgv1.MachineConfigSpec{
-			Config: igntypes.Config{
-				Ignition: igntypes.Ignition{
-					Version: igntypes.MaxVersion.String(),
-				},
-				Storage: igntypes.Storage{
-					Files: []igntypes.File{
-						ignition.FileFromString("/etc/pivot/kernel-args", "root", 0600, "ADD nosmt"),
-					},
-				},
+			KernelArguments: []string{
+				"nosmt",
 			},
 		},
 	}

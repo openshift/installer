@@ -75,22 +75,13 @@ spec:
       security:
         tls: {}
       timeouts: {}
-      version: 2.2.0
     networkd: {}
     passwd: {}
-    storage:
-      files:
-      - contents:
-          source: data:text/plain;charset=utf-8;base64,QUREIG5vc210
-          verification: {}
-        filesystem: root
-        mode: 384
-        path: /etc/pivot/kernel-args
-        user:
-          name: root
+    storage: {}
     systemd: {}
   fips: false
-  kernelArguments: null
+  kernelArguments:
+  - nosmt
   osImageURL: ""
 `},
 		},
@@ -112,22 +103,13 @@ spec:
       security:
         tls: {}
       timeouts: {}
-      version: 2.2.0
     networkd: {}
     passwd: {}
-    storage:
-      files:
-      - contents:
-          source: data:text/plain;charset=utf-8;base64,QUREIG5vc210
-          verification: {}
-        filesystem: root
-        mode: 384
-        path: /etc/pivot/kernel-args
-        user:
-          name: root
+    storage: {}
     systemd: {}
   fips: false
-  kernelArguments: null
+  kernelArguments:
+  - nosmt
   osImageURL: ""
 `, `apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
