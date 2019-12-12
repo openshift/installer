@@ -7,9 +7,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// ForHyperthreadingDisabled creates the MachineConfig to disable hyperthreading.
-// RHCOS ships with pivot.service that uses the `/etc/pivot/kernel-args` to override the kernel arguments for hosts.
-func ForHyperthreadingDisabled(role string) *mcfgv1.MachineConfig {
+// ForTSXEnabled is an ugly hack.
+func ForTSXEnabled(role string) *mcfgv1.MachineConfig {
 	return &mcfgv1.MachineConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machineconfiguration.openshift.io/v1",
@@ -23,7 +22,7 @@ func ForHyperthreadingDisabled(role string) *mcfgv1.MachineConfig {
 		},
 		Spec: mcfgv1.MachineConfigSpec{
 			KernelArguments: []string{
-				"nosmt",
+				"tsx=on",
 			},
 		},
 	}

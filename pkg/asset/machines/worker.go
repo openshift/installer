@@ -37,7 +37,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
-	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -148,9 +147,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	var err error
 	ic := installConfig.Config
 	for _, pool := range ic.Compute {
-		if pool.Hyperthreading == types.HyperthreadingDisabled {
-			machineConfigs = append(machineConfigs, machineconfig.ForHyperthreadingDisabled("worker"))
-		}
+		machineConfigs = append(machineConfigs, machineconfig.ForTSXEnabled("worker"))
 		if ic.SSHKey != "" {
 			machineConfigs = append(machineConfigs, machineconfig.ForAuthorizedKeys(ic.SSHKey, "worker"))
 		}
