@@ -71,6 +71,9 @@ The following machine-pool properties are available:
 * `hyperthreading` (optional string): Determines the mode of hyperthreading that machines in the pool will utilize.
     Valid values are `Enabled` (the default) and `Disabled`.
 * `name` (required string): The name of the machine pool.
+* `osEncryption` (optional string): The OS Encryption policy to be used.
+    Valid values are `Disabled` (default), `TPM2`, or a custom string to be placed into `/etc/clevis.json`
+    For gcp, the default is TPM2.
 * `platform` (optional object): Platform-specific machine-pool configuration.
     * `aws` (optional object): [AWS-specific properties](aws/customization.md#machine-pools).
     * `azure` (optional object): [Azure-specific properties](azure/customization.md#machine-pools).

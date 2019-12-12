@@ -148,6 +148,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	var err error
 	ic := installConfig.Config
 	for _, pool := range ic.Compute {
+		machineConfigs = append(machineConfigs, machineconfig.ForOSEncryptionPolicy(pool.OSEncryption, "worker"))
 		if pool.Hyperthreading == types.HyperthreadingDisabled {
 			machineConfigs = append(machineConfigs, machineconfig.ForHyperthreadingDisabled("worker"))
 		}

@@ -309,6 +309,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	}
 
 	machineConfigs := []*mcfgv1.MachineConfig{}
+	machineConfigs = append(machineConfigs, machineconfig.ForOSEncryptionPolicy(pool.OSEncryption, "master"))
 	if pool.Hyperthreading == types.HyperthreadingDisabled {
 		machineConfigs = append(machineConfigs, machineconfig.ForHyperthreadingDisabled("master"))
 	}

@@ -10,6 +10,16 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
+// OSEncryptionPolicy is a policy for how the OS disks will be encrypted.
+type OSEncryptionPolicy string
+
+const (
+	// OSEncryptionPolicyDisabled explicitly disables encryption.
+	OSEncryptionPolicyDisabled = "Disabled"
+	// OSEncryptionPolicyTPM2 configures Clevis to use TPM2.
+	OSEncryptionPolicyTPM2 = "TPM2"
+)
+
 // HyperthreadingMode is the mode of hyperthreading for a machine.
 type HyperthreadingMode string
 
@@ -38,6 +48,11 @@ type MachinePool struct {
 	// +optional
 	// Default is for hyperthreading to be enabled.
 	Hyperthreading HyperthreadingMode `json:"hyperthreading,omitempty"`
+
+	// OSEncryption determins the method used to encrypt the os disks.
+	// +optional
+	// Default is platform specific.
+	OSEncryption OSEncryptionPolicy `json:"osEncryption,omitempty"`
 }
 
 // MachinePoolPlatform is the platform-specific configuration for a machine

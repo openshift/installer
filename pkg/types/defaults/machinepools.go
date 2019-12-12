@@ -2,6 +2,8 @@ package defaults
 
 import (
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/gcp"
+	gcpdefaults "github.com/openshift/installer/pkg/types/gcp/defaults"
 	"github.com/openshift/installer/pkg/types/libvirt"
 )
 
@@ -16,5 +18,10 @@ func SetMachinePoolDefaults(p *types.MachinePool, platform string) {
 	}
 	if p.Hyperthreading == "" {
 		p.Hyperthreading = types.HyperthreadingEnabled
+	}
+	switch platform {
+	case gcp.Name:
+		gcpdefaults.SetMachinePoolDefaults(p)
+	default:
 	}
 }
