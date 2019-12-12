@@ -23,6 +23,7 @@ func ForTSXEnabled(role string) *mcfgv1.MachineConfig {
 		Spec: mcfgv1.MachineConfigSpec{
 			KernelArguments: []string{
 				"tsx=on",
+				"tsx_async_abort=off",
 			},
 		},
 	}
