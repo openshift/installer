@@ -24,13 +24,6 @@ resource "openstack_networking_port_v2" "bootstrap_port" {
   }
 }
 
-resource "openstack_networking_floatingip_v2" "bootstrap_fip" {
-  description = "${var.cluster_id}-bootstrap-fip"
-  pool        = var.external_network
-  port_id     = openstack_networking_port_v2.bootstrap_port.id
-  tags        = ["openshiftClusterID=${var.cluster_id}"]
-}
-
 data "openstack_compute_flavor_v2" "bootstrap_flavor" {
   name = var.flavor_name
 }
@@ -51,4 +44,13 @@ resource "openstack_compute_instance_v2" "bootstrap" {
     # "kubernetes.io/cluster/${var.cluster_id}" = "owned"
     openshiftClusterID = var.cluster_id
   }
+}
+
+resource "openstack_networking_floatingip_v2" "bootstrap_fip" {
+  description = "${var.cluster_id}-bootstrap-fip"
+  pool        = var.external_network
+  port_id     = openstack_networking_port_v2.bootstrap_port.id
+  tags        = ["openshiftClusterID=${var.cluster_id}"]
+
+  depends_on = ["openstack_compute_instance_v2.bootstrap"]
 }
