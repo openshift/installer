@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,13 +20,14 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
+	gatheraws "github.com/openshift/installer/pkg/gather/aws"
 	"github.com/openshift/installer/pkg/gather/ssh"
 	"github.com/openshift/installer/pkg/terraform"
-	gatheraws "github.com/openshift/installer/pkg/terraform/gather/aws"
-	gatherazure "github.com/openshift/installer/pkg/terraform/gather/azure"
-	gathergcp "github.com/openshift/installer/pkg/terraform/gather/gcp"
-	gatherlibvirt "github.com/openshift/installer/pkg/terraform/gather/libvirt"
-	gatheropenstack "github.com/openshift/installer/pkg/terraform/gather/openstack"
+	terraformgatheraws "github.com/openshift/installer/pkg/terraform/gather/aws"
+	terraformgatherazure "github.com/openshift/installer/pkg/terraform/gather/azure"
+	terraformgathergcp "github.com/openshift/installer/pkg/terraform/gather/gcp"
+	terraformgatherlibvirt "github.com/openshift/installer/pkg/terraform/gather/libvirt"
+	terraformgatheropenstack "github.com/openshift/installer/pkg/terraform/gather/openstack"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -112,7 +114,17 @@ func runGatherBootstrapCmd(directory string) error {
 		return errors.Wrapf(err, "failed to get bootstrap and control plane host addresses from %q", tfStateFilePath)
 	}
 
-	return logGatherBootstrap(bootstrap, port, masters, directory)
+	err = logGatherBootstrap(bootstrap, port, masters, directory)
+	if err != nil {
+		if errno, ok := errors.Cause(err).(syscall.Errno); ok && errno == syscall.ECONNREFUSED {
+			err2 := gatherConsoleLogs(context.TODO(), config, bootstrap, directory)
+			if err2 != nil {
+				logrus.Error(err2)
+			}
+		}
+	}
+
+	return err
 }
 
 func logGatherBootstrap(bootstrap string, port int, masters []string, directory string) error {
@@ -139,51 +151,81 @@ func logGatherBootstrap(bootstrap string, port int, masters []string, directory 
 	return nil
 }
 
+func gatherConsoleLogs(ctx context.Context, installConfig *installconfig.InstallConfig, ip string, directory string) error {
+	var data []byte
+	platform := installConfig.Config.Platform.Name()
+	switch platform {
+	case awstypes.Name:
+		session, err := installConfig.AWS.Session(ctx)
+		if err != nil {
+			return err
+		}
+
+		data, err = gatheraws.ConsoleLogs(ctx, session, ip)
+		if err != nil {
+			return err
+		}
+	default:
+		logrus.Debug("Unable to gather console logs on %q", platform)
+		return nil
+	}
+
+	gatherID := time.Now().Format("20060102150405")
+	file := filepath.Join(directory, fmt.Sprintf("bootstrap-%s-console.log", gatherID))
+	err := ioutil.WriteFile(file, data, 0666)
+	if err != nil {
+		return err
+	}
+
+	logrus.Infof("Bootstrap gather logs captured here %q", file)
+	return nil
+}
+
 func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State) (bootstrap string, port int, masters []string, err error) {
 	port = 22
 	switch config.Platform.Name() {
 	case awstypes.Name:
-		bootstrap, err = gatheraws.BootstrapIP(tfstate)
+		bootstrap, err = terraformgatheraws.BootstrapIP(tfstate)
 		if err != nil {
 			return bootstrap, port, masters, err
 		}
-		masters, err = gatheraws.ControlPlaneIPs(tfstate)
+		masters, err = terraformgatheraws.ControlPlaneIPs(tfstate)
 		if err != nil {
 			logrus.Error(err)
 		}
 	case azuretypes.Name:
-		bootstrap, err = gatherazure.BootstrapIP(tfstate)
+		bootstrap, err = terraformgatherazure.BootstrapIP(tfstate)
 		if err != nil {
 			return bootstrap, port, masters, err
 		}
-		masters, err = gatherazure.ControlPlaneIPs(tfstate)
+		masters, err = terraformgatherazure.ControlPlaneIPs(tfstate)
 		if err != nil {
 			logrus.Error(err)
 		}
 	case gcptypes.Name:
-		bootstrap, err = gathergcp.BootstrapIP(tfstate)
+		bootstrap, err = terraformgathergcp.BootstrapIP(tfstate)
 		if err != nil {
 			return bootstrap, port, masters, err
 		}
-		masters, err = gathergcp.ControlPlaneIPs(tfstate)
+		masters, err = terraformgathergcp.ControlPlaneIPs(tfstate)
 		if err != nil {
 			logrus.Error(err)
 		}
 	case libvirttypes.Name:
-		bootstrap, err = gatherlibvirt.BootstrapIP(tfstate)
+		bootstrap, err = terraformgatherlibvirt.BootstrapIP(tfstate)
 		if err != nil {
 			return bootstrap, port, masters, err
 		}
-		masters, err = gatherlibvirt.ControlPlaneIPs(tfstate)
+		masters, err = terraformgatherlibvirt.ControlPlaneIPs(tfstate)
 		if err != nil {
 			logrus.Error(err)
 		}
 	case openstacktypes.Name:
-		bootstrap, err = gatheropenstack.BootstrapIP(tfstate)
+		bootstrap, err = terraformgatheropenstack.BootstrapIP(tfstate)
 		if err != nil {
 			return bootstrap, port, masters, err
 		}
-		masters, err = gatheropenstack.ControlPlaneIPs(tfstate)
+		masters, err = terraformgatheropenstack.ControlPlaneIPs(tfstate)
 		if err != nil {
 			logrus.Error(err)
 		}
