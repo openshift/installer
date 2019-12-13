@@ -1,7 +1,7 @@
 package plugins
 
 import (
-	"github.com/hashicorp/terraform/plugin"
+	"github.com/hashicorp/terraform-plugin-sdk/plugin"
 	"github.com/openshift/installer/pkg/terraform/exec/plugins/azureprivatedns"
 )
 
