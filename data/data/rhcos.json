@@ -1,53 +1,8 @@
 {
     "amis": {
-        "ap-northeast-1": {
-            "hvm": "ami-0afb10d03bbb5c2d7"
-        },
-        "ap-northeast-2": {
-            "hvm": "ami-0626ca9496be1943e"
-        },
-        "ap-south-1": {
-            "hvm": "ami-09f86e87cf87f0baa"
-        },
-        "ap-southeast-1": {
-            "hvm": "ami-0c2f29b4bfd323414"
-        },
-        "ap-southeast-2": {
-            "hvm": "ami-0884cbd9cdb58fc05"
-        },
-        "ca-central-1": {
-            "hvm": "ami-099f45b9016d2381c"
-        },
-        "eu-central-1": {
-            "hvm": "ami-0cce1b0da1ada8687"
-        },
-        "eu-north-1": {
-            "hvm": "ami-02a635301838351d9"
-        },
-        "eu-west-1": {
-            "hvm": "ami-0f3219cc77034c608"
-        },
-        "eu-west-2": {
-            "hvm": "ami-023549dc17b3e913b"
-        },
-        "eu-west-3": {
-            "hvm": "ami-03a57cd3ac282874a"
-        },
-        "sa-east-1": {
-            "hvm": "ami-0575a4791e03f4d25"
-        },
         "us-east-1": {
-            "hvm": "ami-0aea6a5be0fc2b3fc"
+            "hvm": "ami-07626856760136f5f"
         },
-        "us-east-2": {
-            "hvm": "ami-02b88883d49c41e94"
-        },
-        "us-west-1": {
-            "hvm": "ami-0fd33deb765c27822"
-        },
-        "us-west-2": {
-            "hvm": "ami-0dd66dd9f4c0155b5"
-        }
     },
     "azure": {
         "image": "rhcos-43.81.201912131630.0-azure.x86_64.vhd",
