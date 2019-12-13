@@ -559,6 +559,8 @@ func deleteEC2(session *session.Session, arn arn.ARN, filter Filter, logger logr
 		return deleteEC2Volume(client, id, logger)
 	case "vpc":
 		return deleteEC2VPC(client, elb.New(session), elbv2.New(session), id, logger)
+	case "vpc-peering-connection":
+		return deleteEC2VPCPeeringConnection(client, id, logger)
 	default:
 		return errors.Errorf("unrecognized EC2 resource type %s", resourceType)
 	}
@@ -1266,6 +1268,20 @@ func deleteEC2VPCEndpointsByVPC(client *ec2.EC2, vpc string, failFast bool, logg
 		}
 	}
 
+	return nil
+}
+
+func deleteEC2VPCPeeringConnection(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
+	_, err := client.DeleteVpcPeeringConnection(&ec2.DeleteVpcPeeringConnectionInput{
+		VpcPeeringConnectionId: &id,
+	})
+	if err != nil {
+		if err.(awserr.Error).Code() == "InvalidVpcPeeringConnectionID.NotFound" {
+			return nil
+		}
+		return errors.Wrapf(err, "cannot delete VPC Peering Connection %s", id)
+	}
+	logger.Info("Deleted")
 	return nil
 }
 
