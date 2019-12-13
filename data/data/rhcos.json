@@ -2,7 +2,7 @@
     "amis": {
         "us-east-1": {
             "hvm": "ami-07626856760136f5f"
-        },
+        }
     },
     "azure": {
         "image": "rhcos-43.81.201912131630.0-azure.x86_64.vhd",
