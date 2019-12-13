@@ -13,13 +13,12 @@ import (
 
 // getAgent attempts to connect to the running SSH agent, returning a newly
 // initialized static agent if that fails.
-func getAgent(keys []string) (agent.Agent, error) {
-	// Attempt to use the existing SSH agent if it's configured and no keys
-	// were explicitly passed.
-	if authSock := os.Getenv("SSH_AUTH_SOCK"); authSock != "" && len(keys) == 0 {
+func getAgent(keys []string) (agent.Agent, string, error) {
+	// Attempt to use the existing SSH agent if it's configured or use the default ssh pair generated.
+	if authSock := os.Getenv("SSH_AUTH_SOCK"); authSock != "" {
 		logrus.Debugf("Using SSH_AUTH_SOCK %s to connect to an existing agent", authSock)
 		if conn, err := net.Dial("unix", authSock); err == nil {
-			return agent.NewClient(conn), nil
+			return agent.NewClient(conn), "agent", nil
 		}
 	}
 
@@ -28,13 +27,10 @@ func getAgent(keys []string) (agent.Agent, error) {
 
 // newAgent initializes an SSH Agent with the keys.
 // If no keys are provided, it loads all the keys from the user's environment.
-func newAgent(keyPaths []string) (agent.Agent, error) {
+func newAgent(keyPaths []string) (agent.Agent, string, error) {
 	keys, err := loadKeys(keyPaths)
 	if err != nil {
-		return nil, err
-	}
-	if len(keys) == 0 {
-		return nil, errors.New("no keys found for SSH agent")
+		return nil, "", err
 	}
 
 	ag := agent.NewKeyring()
@@ -46,9 +42,9 @@ func newAgent(keyPaths []string) (agent.Agent, error) {
 		logrus.Debugf("Added %s to installer's internal agent", name)
 	}
 	if agg := utilerrors.NewAggregate(errs); agg != nil {
-		return nil, agg
+		return nil, "", agg
 	}
-	return ag, nil
+	return ag, "keys", nil
 }
 
 func loadKeys(paths []string) (map[string]interface{}, error) {
