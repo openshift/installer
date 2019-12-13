@@ -115,7 +115,7 @@ func runGatherBootstrapCmd(directory string) error {
 	}
 
 	err = logGatherBootstrap(bootstrap, port, masters, directory)
-	if err != nil {
+	if err != nil || true {
 		if errno, ok := errors.Cause(err).(syscall.Errno); ok && errno == syscall.ECONNREFUSED {
 			err2 := gatherConsoleLogs(context.TODO(), config, bootstrap, directory)
 			if err2 != nil {

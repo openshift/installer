@@ -95,7 +95,7 @@ var (
 				}
 
 				err = waitForBootstrapComplete(ctx, config, rootOpts.dir)
-				if err != nil {
+				if err != nil || true {
 					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
 					}
