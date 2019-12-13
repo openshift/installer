@@ -18,6 +18,18 @@ $ openshift-install create install-config
 ? Pull Secret [? for help]
 ```
 
+### Optional: Create Encrypted AMIs
+
+The IPI-based installer creates an encrypted AMI by default. If you wish to have an encrypted AMI for UPI-based
+installs, you will need to create it directly. You can find a list of the appropriate base AMIs 
+[here](../../../data/data/rhcos.json).
+
+You will make an encrypted copy of the AMI according to the [AWS documentation][encrypted-copy].
+
+With the new AMI, you can [customize](customization.md) the install-config created on the previous step to override
+the default. Additionally, you would pass it to the templates or EC2 launch instance commands according to how
+you intend to launch your hosts.
+
 ### Empty Compute Pools
 
 We'll be providing the control-plane and compute machines ourselves, so edit the resulting `install-config.yaml` to set `replicas` to 0 for the `compute` pool:
@@ -340,3 +352,4 @@ openshift-service-catalog-controller-manager-operator   openshift-service-catalo
 [machine-api-operator]: https://github.com/openshift/machine-api-operator
 [route53-alias]: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-choosing-alias-non-alias.html
 [route53-zones-for-load-balancers]: https://docs.aws.amazon.com/general/latest/gr/rande.html#elb_region
+[encrypted-copy]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIEncryption.html#create-ami-encrypted-root-snapshot
