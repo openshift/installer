@@ -383,14 +383,15 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:151f72934298019168adb99a7d17dfa203a65eb49af5da41429775284ea8ce3f"
+  digest = "1:d24d68b5a2409dfd1436784c3f992ddc53c5afd0ac0bb700d4378aa56b26a0ed"
   name = "github.com/dmacvicar/terraform-provider-libvirt"
   packages = [
     "libvirt",
     "libvirt/helper/suppress",
   ]
   pruneopts = "NUT"
-  revision = "40b0cda5333a29dd9f33d1cfdc206bfad3a8af96"
+  revision = "1c8597df6630ceeca4765d08ab49c596768dd45c"
+  version = "v0.6.0"
 
 [[projects]]
   branch = "master"
@@ -790,12 +791,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:de93c160e5063276cb3e8ade27944446a759d0c8f7ae738b85e5ecde3999d71d"
+  digest = "1:eba01da9d7286b80ecfb6b6ea6299b57f7a74ada8c94534e35eb9573816cfefc"
   name = "github.com/openshift-metal3/terraform-provider-ironic"
   packages = ["ironic"]
   pruneopts = "NUT"
-  revision = "2fa3321d8fd1d15d988fb9503392d7f071bb2454"
-  version = "v0.1.8"
+  revision = "c68a8212f13053ab7b45f66f7c6deded348bcd23"
+  version = "v0.1.7"
 
 [[projects]]
   branch = "master"

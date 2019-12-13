@@ -38,6 +38,7 @@ func volumeWaitForExists(virConn *libvirt.Connect, key string) error {
 		Target:     []string{volExistsID},
 		Refresh:    volumeExists(virConn, key),
 		Timeout:    1 * time.Minute,
+		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
 
@@ -55,6 +56,7 @@ func volumeWaitDeleted(virConn *libvirt.Connect, key string) error {
 		Target:     []string{volNotExistsID},
 		Refresh:    volumeExists(virConn, key),
 		Timeout:    1 * time.Minute,
+		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
 

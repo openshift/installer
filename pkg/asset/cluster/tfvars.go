@@ -211,7 +211,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		workerConfigs := make([]*azureprovider.AzureMachineProviderSpec, len(workers))
+		workerConfigs := make([]*azureprovider.AzureMachineProviderSpec, len(masters))
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*azureprovider.AzureMachineProviderSpec)
 		}

@@ -3,7 +3,6 @@ package installconfig
 import (
 	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/pborman/uuid"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
@@ -65,20 +64,14 @@ func (a *ClusterID) Name() string {
 // - only contains `alphanum` or `-`
 func generateInfraID(base string, maxLen int) string {
 	maxBaseLen := maxLen - (randomLen + 1)
-
-	// replace all characters that are not `alphanum` or `-` with `-`
-	re := regexp.MustCompile("[^A-Za-z0-9-]")
-	base = re.ReplaceAllString(base, "-")
-
-	// replace all multiple dashes in a sequence with single one.
-	re = regexp.MustCompile(`-{2,}`)
-	base = re.ReplaceAllString(base, "-")
-
 	// truncate to maxBaseLen
 	if len(base) > maxBaseLen {
 		base = base[:maxBaseLen]
 	}
-	base = strings.TrimRight(base, "-")
+
+	// replace all characters that are not `alphanum` or `-` with `-`
+	re := regexp.MustCompile("[^A-Za-z0-9-]")
+	base = re.ReplaceAllString(base, "-")
 
 	// add random chars to the end to randomize
 	return fmt.Sprintf("%s-%s", base, utilrand.String(randomLen))

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/baremetal/v1/nodes"
+	utils "github.com/gophercloud/utils/openstack/baremetal/v1/nodes"
 	"log"
 	"time"
 )
@@ -16,12 +17,12 @@ type provisionStateWorkflow struct {
 	target nodes.TargetProvisionState
 	wait   time.Duration
 
-	configDrive interface{}
+	configDrive *utils.ConfigDrive
 }
 
 // ChangeProvisionStateToTarget drives Ironic's state machine through the process to reach our desired end state. This requires multiple
 // possibly long-running steps.  If required, we'll build a config drive ISO for deployment.
-func ChangeProvisionStateToTarget(client *gophercloud.ServiceClient, uuid string, target nodes.TargetProvisionState, configDrive interface{}) error {
+func ChangeProvisionStateToTarget(client *gophercloud.ServiceClient, uuid string, target nodes.TargetProvisionState, configDrive *utils.ConfigDrive) error {
 
 	// Run the provisionStateWorkflow - this could take a while
 	wf := provisionStateWorkflow{
@@ -268,7 +269,11 @@ func (workflow *provisionStateWorkflow) buildProvisionStateOpts(target nodes.Tar
 
 	// If we're deploying, then build a config drive to send to Ironic
 	if target == "active" {
-		opts.ConfigDrive = workflow.configDrive
+		configDriveData, err := workflow.configDrive.ToConfigDrive()
+		if err != nil {
+			return nil, err
+		}
+		opts.ConfigDrive = configDriveData
 	}
 
 	return &opts, nil

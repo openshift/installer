@@ -105,15 +105,12 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 }
 
 // ConfigMasters assigns a set of load balancers to the given machines
-func ConfigMasters(machines []machineapi.Machine, clusterID string, publish types.PublishingStrategy) {
-	var targetPools []string
-	if publish == types.ExternalPublishingStrategy {
-		targetPools = append(targetPools, fmt.Sprintf("%s-api", clusterID))
-	}
-
+func ConfigMasters(machines []machineapi.Machine, clusterID string) {
 	for _, machine := range machines {
 		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
-		providerSpec.TargetPools = targetPools
+		providerSpec.TargetPools = []string{
+			fmt.Sprintf("%s-api", clusterID),
+		}
 	}
 }
 func getNetworks(platform *gcp.Platform, clusterID, role string) (string, string, error) {

@@ -55,17 +55,10 @@ func Destroy(dir string) (err error) {
 
 	switch platform {
 	case gcp.Name:
-		// First remove the bootstrap node from the load balancers to avoid race condition.
-		_, err = terraform.Apply(tempDir, platform, append(extraArgs, "-var=gcp_bootstrap_lb=false")...)
-		if err != nil {
-			return errors.Wrap(err, "failed disabling bootstrap load balancing")
-		}
-
-		// Then destory the bootstrap instance and instance group so destroy runs cleanly.
 		// First remove the bootstrap from LB target and its instance so that bootstrap module is cleanly destroyed.
 		_, err = terraform.Apply(tempDir, platform, append(extraArgs, "-var=gcp_bootstrap_enabled=false")...)
 		if err != nil {
-			return errors.Wrap(err, "failed disabling bootstrap")
+			return errors.Wrap(err, "Terraform apply")
 		}
 	case libvirt.Name:
 		// First remove the bootstrap node from DNS

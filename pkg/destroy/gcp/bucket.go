@@ -1,17 +1,10 @@
 package gcp
 
 import (
-	"regexp"
-
 	"github.com/pkg/errors"
 
 	"google.golang.org/api/googleapi"
 	storage "google.golang.org/api/storage/v1"
-)
-
-var (
-	// multiDashes is a regexp matching multiple dashes in a sequence.
-	multiDashes = regexp.MustCompile(`-{2,}`)
 )
 
 func (o *ClusterUninstaller) listBuckets() ([]cloudResource, error) {
@@ -29,7 +22,6 @@ func (o *ClusterUninstaller) listBucketsWithFilter(fields string, prefix string,
 	result := []cloudResource{}
 	req := o.storageSvc.Buckets.List(o.ProjectID).Fields(googleapi.Field(fields))
 	if len(prefix) > 0 {
-		prefix = multiDashes.ReplaceAllString(prefix, "-")
 		req = req.Prefix(prefix)
 	}
 	err := req.Pages(ctx, func(list *storage.Buckets) error {

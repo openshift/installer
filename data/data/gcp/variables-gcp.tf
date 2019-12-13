@@ -30,12 +30,6 @@ variable "gcp_bootstrap_enabled" {
   default = true
 }
 
-variable "gcp_bootstrap_lb" {
-  type = bool
-  description = "Setting this to false allows the bootstrap resources to be removed from the cluster load balancers."
-  default = true
-}
-
 variable "gcp_bootstrap_instance_type" {
   type = string
   description = "Instance type for the bootstrap node. Example: `n1-standard-4`"
