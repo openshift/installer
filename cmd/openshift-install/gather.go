@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -117,11 +118,15 @@ func runGatherBootstrapCmd(directory string) error {
 func logGatherBootstrap(bootstrap string, port int, masters []string, directory string) error {
 	logrus.Info("Pulling debug logs from the bootstrap machine")
 	client, err := ssh.NewClient("core", fmt.Sprintf("%s:%d", bootstrap, port), gatherBootstrapOpts.sshKeys)
-	if err != nil && len(gatherBootstrapOpts.sshKeys) == 0 {
-		return errors.Wrap(err, "failed to create SSH client, ensure the proper ssh key is in your keyring or specify with --key")
-	} else if err != nil {
+	if err != nil {
+		if errno, ok := err.(syscall.Errno); ok && errno == syscall.ECONNREFUSED {
+			return errors.Wrap(err, "failed to connect to the bootstrap machine")
+		} else if len(gatherBootstrapOpts.sshKeys) == 0 {
+			return errors.Wrap(err, "failed to create SSH client, ensure the proper ssh key is in your keyring or specify with --key")
+		}
 		return errors.Wrap(err, "failed to create SSH client")
 	}
+
 	gatherID := time.Now().Format("20060102150405")
 	if err := ssh.Run(client, fmt.Sprintf("/usr/local/bin/installer-gather.sh --id %s %s", gatherID, strings.Join(masters, " "))); err != nil {
 		return errors.Wrap(err, "failed to run remote command")
