@@ -14,3 +14,4 @@ MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 
 sed --in-place --expression "s,pause_image *=.*,pause_image = \"${MACHINE_CONFIG_INFRA_IMAGE}\"," /etc/crio/crio.conf
 sed --in-place --expression 's,pause_command *=.*,pause_command = "/usr/bin/pod",' /etc/crio/crio.conf
+sed --in-place --expression 's,^# conmon_cgroup.*,conmon_cgroup = "pod",' /etc/crio/crio.conf
