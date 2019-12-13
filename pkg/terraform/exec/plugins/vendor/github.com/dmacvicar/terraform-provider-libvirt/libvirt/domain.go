@@ -198,14 +198,26 @@ func domainGetIfacesInfo(domain libvirt.Domain, rd *schema.ResourceData) ([]libv
 	return interfaces, nil
 }
 
-func newDiskForCloudInit(virConn *libvirt.Connect, volumeKey string) (libvirtxml.DomainDisk, error) {
-	disk := libvirtxml.DomainDisk{
-		Device: "cdrom",
-		Target: &libvirtxml.DomainDiskTarget{
+func newDiskForCloudInit(virConn *libvirt.Connect, volumeKey string, arch string) (libvirtxml.DomainDisk, error) {
+	var target *libvirtxml.DomainDiskTarget
+	switch arch {
+	case "s390", "s390x":
+		target = &libvirtxml.DomainDiskTarget{
+			// s390 platform doesn't support IDE controllers
+			Dev: "vdb",
+			Bus: "scsi",
+		}
+	default:
+		target = &libvirtxml.DomainDiskTarget{
 			// Last device letter possible with a single IDE controller on i440FX
 			Dev: "hdd",
 			Bus: "ide",
-		},
+		}
+	}
+
+	disk := libvirtxml.DomainDisk{
+		Device: "cdrom",
+		Target: target,
 		Driver: &libvirtxml.DomainDiskDriver{
 			Name: "qemu",
 			Type: "raw",
@@ -230,22 +242,47 @@ func newDiskForCloudInit(virConn *libvirt.Connect, volumeKey string) (libvirtxml
 	return disk, nil
 }
 
-func setCoreOSIgnition(d *schema.ResourceData, domainDef *libvirtxml.Domain) error {
+func setCoreOSIgnition(d *schema.ResourceData, domainDef *libvirtxml.Domain, virConn *libvirt.Connect, arch string) error {
 	if ignition, ok := d.GetOk("coreos_ignition"); ok {
 		ignitionKey, err := getIgnitionVolumeKeyFromTerraformID(ignition.(string))
 		if err != nil {
 			return err
 		}
 
-		domainDef.QEMUCommandline = &libvirtxml.DomainQEMUCommandline{
-			Args: []libvirtxml.DomainQEMUCommandlineArg{
-				{
-					Value: "-fw_cfg",
-				},
-				{
-					Value: fmt.Sprintf("name=opt/com.coreos/config,file=%s", ignitionKey),
-				},
-			},
+		switch arch {
+		case "i686", "x86_64", "aarch64":
+			// QEMU and the Linux kernel support the use of the Firmware
+			// Configuration Device on these architectures. Ignition will use
+			// this mechanism to read its configuration from the hypervisor.
+
+			// `fw_cfg_name` stands for firmware config is defined by a key and a value
+			// credits for this cryptic name: https://github.com/qemu/qemu/commit/81b2b81062612ebeac4cd5333a3b15c7d79a5a3d
+			if fwCfg, ok := d.GetOk("fw_cfg_name"); ok {
+				domainDef.QEMUCommandline = &libvirtxml.DomainQEMUCommandline{
+					Args: []libvirtxml.DomainQEMUCommandlineArg{
+						{
+							Value: "-fw_cfg",
+						},
+						{
+							Value: fmt.Sprintf("name=%s,file=%s", fwCfg, ignitionKey),
+						},
+					},
+				}
+			}
+		case "s390", "s390x":
+			// System Z does not support any of the same pass-through
+			// mechanisms as Ignition. As a temporary workaround, the OpenStack
+			// Config Drive can be used instead. The Ignition volume already
+			// contains a Config Drive at this point.
+
+			disk, err := newDiskForCloudInit(virConn, ignitionKey, arch)
+			if err != nil {
+				return err
+			}
+
+			domainDef.Devices.Disks = append(domainDef.Devices.Disks, disk)
+		default:
+			return fmt.Errorf("Ignition not supported on %q", arch)
 		}
 	}
 
@@ -556,6 +593,14 @@ func setDisks(d *schema.ResourceData, domainDef *libvirtxml.Domain, virConn *lib
 			if !strings.HasSuffix(file.(string), ".qcow2") {
 				disk.Driver.Type = "raw"
 			}
+		} else if blockDev, ok := d.GetOk(prefix + ".block_device"); ok {
+			disk.Source = &libvirtxml.DomainDiskSource{
+				Block: &libvirtxml.DomainDiskSourceBlock{
+					Dev: blockDev.(string),
+				},
+			}
+
+			disk.Driver.Type = "raw"
 		}
 
 		domainDef.Devices.Disks = append(domainDef.Devices.Disks, disk)
@@ -609,13 +654,13 @@ func setFilesystems(d *schema.ResourceData, domainDef *libvirtxml.Domain) error 
 	return nil
 }
 
-func setCloudinit(d *schema.ResourceData, domainDef *libvirtxml.Domain, virConn *libvirt.Connect) error {
+func setCloudinit(d *schema.ResourceData, domainDef *libvirtxml.Domain, virConn *libvirt.Connect, arch string) error {
 	if cloudinit, ok := d.GetOk("cloudinit"); ok {
 		cloudinitID, err := getCloudInitVolumeKeyFromTerraformID(cloudinit.(string))
 		if err != nil {
 			return err
 		}
-		disk, err := newDiskForCloudInit(virConn, cloudinitID)
+		disk, err := newDiskForCloudInit(virConn, cloudinitID, arch)
 		if err != nil {
 			return err
 		}
