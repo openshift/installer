@@ -44,6 +44,7 @@ aliases:
     - hardys
     - stbenjam
   aws-approvers:
+    - jstuever
     - patrickdillon
   aws-reviewers:
   gcp-approvers:
