@@ -2,6 +2,10 @@ variable "vnet_cidr" {
   type = string
 }
 
+variable "vnet_cidr_v6" {
+  type = string
+}
+
 variable "resource_group_name" {
   type        = string
   description = "Resource group for the deployment"
@@ -56,4 +60,9 @@ variable "worker_subnet" {
 variable "private" {
   type        = bool
   description = "The determines if this is a private/internal cluster or not."
+}
+
+variable "use_ipv6" {
+  description = "Use IPv6 as well as IPv4"
+  type        = bool
 }

@@ -26,8 +26,11 @@ data "azurerm_virtual_network" "preexisting_virtual_network" {
 
 // Only reference data sources which are guaranteed to exist at any time (above) in this locals{} block
 locals {
-  master_subnet_cidr = cidrsubnet(var.vnet_cidr, 3, 0) #master subnet is a smaller subnet within the vnet. i.e from /21 to /24
-  worker_subnet_cidr = cidrsubnet(var.vnet_cidr, 3, 1) #node subnet is a smaller subnet within the vnet. i.e from /21 to /24
+  master_subnet_cidr    = cidrsubnet(var.vnet_cidr, 3, 0)     #master subnet is a smaller subnet within the vnet. i.e from /21 to /24
+  master_subnet_cidr_v6 = cidrsubnet(var.vnet_cidr_v6, 16, 0) #master subnet is a smaller subnet within the vnet. i.e from /48 to /64
+
+  worker_subnet_cidr    = cidrsubnet(var.vnet_cidr, 3, 1)     #node subnet is a smaller subnet within the vnet. i.e from /21 to /24
+  worker_subnet_cidr_v6 = cidrsubnet(var.vnet_cidr_v6, 16, 1) #node subnet is a smaller subnet within the vnet. i.e from /48 to /64
 
   master_subnet_id = var.preexisting_network ? data.azurerm_subnet.preexisting_master_subnet[0].id : azurerm_subnet.master_subnet[0].id
   worker_subnet_id = var.preexisting_network ? data.azurerm_subnet.preexisting_worker_subnet[0].id : azurerm_subnet.worker_subnet[0].id

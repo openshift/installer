@@ -38,7 +38,15 @@ variable "elb_backend_pool_id" {
   type = string
 }
 
+variable "elb_backend_pool_v6_id" {
+  type = string
+}
+
 variable "ilb_backend_pool_id" {
+  type = string
+}
+
+variable "ilb_backend_pool_v6_id" {
   type = string
 }
 
@@ -90,4 +98,9 @@ variable "availability_zones" {
 variable "private" {
   type        = bool
   description = "This value determines if this is a private cluster or not."
+}
+
+variable "use_ipv6" {
+  description = "Use IPv6 as well as IPv4"
+  type        = bool
 }

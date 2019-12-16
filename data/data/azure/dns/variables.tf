@@ -29,8 +29,18 @@ variable "external_lb_fqdn" {
   type        = string
 }
 
+variable "external_lb_fqdn_v6" {
+  description = "External API's LB fqdn for IPv6"
+  type        = string
+}
+
 variable "internal_lb_ipaddress" {
-  description = "External API's LB Ip address"
+  description = "External API's LB IP address"
+  type        = string
+}
+
+variable "internal_lb_ipaddress_v6" {
+  description = "External API's LB IP v6 address"
   type        = string
 }
 
@@ -50,6 +60,12 @@ variable "etcd_ip_addresses" {
   default     = []
 }
 
+variable "etcd_ip_v6_addresses" {
+  description = "List of string IPs for machines running etcd members."
+  type        = list(string)
+  default     = []
+}
+
 variable "resource_group_name" {
   type        = string
   description = "Resource group for the deployment"
@@ -58,4 +74,9 @@ variable "resource_group_name" {
 variable "private" {
   type        = bool
   description = "This value determines if this is a private cluster or not."
+}
+
+variable "use_ipv6" {
+  description = "Use IPv6 as well as IPv4"
+  type        = bool
 }

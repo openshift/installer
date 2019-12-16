@@ -2,6 +2,7 @@ package azure
 
 import (
 	"encoding/json"
+	"os"
 
 	"github.com/Azure/go-autorest/autorest/to"
 
@@ -35,6 +36,8 @@ type config struct {
 	ComputeSubnet               string            `json:"azure_compute_subnet"`
 	PreexistingNetwork          bool              `json:"azure_preexisting_network"`
 	Private                     bool              `json:"azure_private"`
+	MachineCIDRv6               string            `json:"azure_machine_cidr_v6"`
+	UseIPv6                     bool              `json:"azure_use_ipv6,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -60,6 +63,13 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		masterAvailabilityZones[i] = to.String(c.Zone)
 	}
 
+	useIPv6 := false
+	// TODO: make configurable
+	machineCIDRv6 := "fd00::/48"
+	if os.Getenv("OPENSHIFT_INSTALL_AZURE_USE_IPV6") == "true" {
+		useIPv6 = true
+	}
+
 	cfg := &config{
 		Auth:                        sources.Auth,
 		Region:                      region,
@@ -76,6 +86,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ControlPlaneSubnet:          masterConfig.Subnet,
 		ComputeSubnet:               workerConfig.Subnet,
 		PreexistingNetwork:          sources.PreexistingNetwork,
+		MachineCIDRv6:               machineCIDRv6,
+		UseIPv6:                     useIPv6,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

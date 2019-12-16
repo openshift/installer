@@ -121,6 +121,12 @@ func validateNetworking(n *types.Networking, fldPath *field.Path, platform *type
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType must be OVNKubernetes for AWS IPv6"))
 		}
 	}
+	if platform.Azure != nil && os.Getenv("OPENSHIFT_INSTALL_AZURE_USE_IPV6") == "true" {
+		allowIPv6 = true
+		if n.NetworkType != "OVNKubernetes" {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType must be OVNKubernetes for AWS IPv6"))
+		}
+	}
 
 	if n.MachineCIDR != nil {
 		// MachineCIDR should still be IPv4 for AWS IPv6, because AWS only does
@@ -249,6 +255,8 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackVa
 		validate(azure.Name, platform.Azure, func(f *field.Path) field.ErrorList {
 			return azurevalidation.ValidatePlatform(platform.Azure, c.Publish, f)
 		})
+	} else if os.Getenv("OPENSHIFT_INSTALL_AZURE_USE_IPV6") == "true" {
+		allErrs = append(allErrs, field.Invalid(fldPath, activePlatform, "OPENSHIFT_INSTALL_AZURE_USE_IPV6 only valid for Azure"))
 	}
 	if platform.GCP != nil {
 		validate(gcp.Name, platform.GCP, func(f *field.Path) field.ErrorList { return gcpvalidation.ValidatePlatform(platform.GCP, f) })

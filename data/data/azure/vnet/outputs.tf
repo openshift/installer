@@ -6,8 +6,16 @@ output "public_lb_backend_pool_id" {
   value = azurerm_lb_backend_address_pool.master_public_lb_pool.id
 }
 
+output "public_lb_backend_pool_v6_id" {
+  value = var.use_ipv6 ? azurerm_lb_backend_address_pool.master_public_lb_pool_v6[0].id : null
+}
+
 output "internal_lb_backend_pool_id" {
   value = azurerm_lb_backend_address_pool.internal_lb_controlplane_pool.id
+}
+
+output "internal_lb_backend_pool_v6_id" {
+  value = var.use_ipv6 ? azurerm_lb_backend_address_pool.internal_lb_controlplane_pool_v6[0].id : null
 }
 
 output "public_lb_id" {
@@ -18,8 +26,16 @@ output "public_lb_pip_fqdn" {
   value = var.private ? null : data.azurerm_public_ip.cluster_public_ip.fqdn
 }
 
+output "public_lb_pip_v6_fqdn" {
+  value = var.private || ! var.use_ipv6 ? null : data.azurerm_public_ip.cluster_public_ip_v6[0].fqdn
+}
+
 output "internal_lb_ip_address" {
   value = azurerm_lb.internal.private_ip_address
+}
+
+output "internal_lb_ip_v6_address" {
+  value = var.use_ipv6 ? azurerm_lb.internal.private_ip_addresses[1] : null
 }
 
 output "master_nsg_name" {

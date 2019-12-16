@@ -111,3 +111,13 @@ variable "azure_private" {
   type        = bool
   description = "This determines if this is a private cluster or not."
 }
+
+variable "azure_use_ipv6" {
+  type        = bool
+  default     = false
+  description = "Enable an experimental IPv6 environment"
+}
+variable "azure_machine_cidr_v6" {
+  type        = string
+  description = "The machine CIDR for the virtual network when IPv6 is in use."
+}
