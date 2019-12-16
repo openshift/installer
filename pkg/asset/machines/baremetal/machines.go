@@ -67,7 +67,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 }
 
 func provider(clusterName string, platform *baremetal.Platform, osImage string, userDataSecret string) (*baremetalprovider.BareMetalMachineProviderSpec, error) {
-	// The rhcos-downloader container launched by the baremetal-operator downloads the image,
+	// The machine-os-downloader container launched by the baremetal-operator downloads the image,
 	// compresses it to speed up deployments and makes it available on platform.ClusterProvisioningIP, via http
 	// osImage looks like:
 	//   https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.2/42.80.20190725.1/rhcos-42.80.20190725.1-openstack.qcow2?sha256sum=123
@@ -75,14 +75,14 @@ func provider(clusterName string, platform *baremetal.Platform, osImage string, 
 	//   http://172.22.0.3:6180/images/rhcos-42.80.20190725.1-openstack.qcow2/rhcos-42.80.20190725.1-compressed.qcow2
 	// See https://github.com/openshift/ironic-rhcos-downloader for more details
 	// The image is now formatted with a query string containing the sha256sum, we strip that here
-	// and it will be consumed for validation in ironic-rhcos-downloader
+	// and it will be consumed for validation in ironic-machine-os-downloader
 	imageURL, err := url.Parse(osImage)
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid osImage URL format")
 	}
 	imageURL.RawQuery = ""
 	imageURL.Fragment = ""
-	// We strip any .gz suffix because ironic-rhcos-downloader unzips the image
+	// We strip any .gz suffix because ironic-machine-os-downloader unzips the image
 	// ref https://github.com/openshift/ironic-rhcos-downloader/pull/12
 	imageFilename := path.Base(strings.TrimSuffix(imageURL.String(), ".gz"))
 	compressedImageFilename := strings.Replace(imageFilename, "openstack", "compressed", 1)
