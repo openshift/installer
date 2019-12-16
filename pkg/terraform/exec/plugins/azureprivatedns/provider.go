@@ -55,6 +55,7 @@ func Provider() terraform.ResourceProvider {
 		ResourcesMap: map[string]*schema.Resource{
 			"azureprivatedns_zone":                      resourceArmPrivateDNSZone(),
 			"azureprivatedns_a_record":                  resourceArmPrivateDNSARecord(),
+			"azureprivatedns_aaaa_record":               resourceArmPrivateDNSAAAARecord(),
 			"azureprivatedns_srv_record":                resourceArmPrivateDNSSrvRecord(),
 			"azureprivatedns_zone_virtual_network_link": resourceArmPrivateDNSZoneVirtualNetworkLink(),
 		},
