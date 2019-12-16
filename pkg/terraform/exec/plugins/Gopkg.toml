@@ -89,3 +89,7 @@ ignored = [
 [[override]]
   name = "github.com/vmware/govmomi"
   revision = "68980704b1ae7161556b72f69d5cb8358dcbc9ae"
+
+[[override]]
+  name = "github.com/apparentlymart/go-cidr"
+  version = "v1.0.1"
