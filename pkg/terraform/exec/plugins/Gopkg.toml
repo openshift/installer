@@ -46,7 +46,8 @@ ignored = [
 
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-azurerm"
-  version = "=1.27.1"
+  source = "https://github.com/smarterclayton/terraform-provider-azurerm"
+  branch = "allow_subnet_backport"
 
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-google"

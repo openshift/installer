@@ -847,7 +847,8 @@
   version = "v2.10.0"
 
 [[projects]]
-  digest = "1:95e2fb03b69a29c7f843830c392f684f110da8ca83649c821c20bad61d9116b5"
+  branch = "allow_subnet_backport"
+  digest = "1:3dbe6c639cd70f179cf91bbd5168b61bd6c14c484ee6b008d35d8a6d6d6c7b3b"
   name = "github.com/terraform-providers/terraform-provider-azurerm"
   packages = [
     "azurerm",
@@ -862,8 +863,8 @@
     "version",
   ]
   pruneopts = "NUT"
-  revision = "05662fd82a299fff148a6a31cc9c2ba9b5841064"
-  version = "v1.27.1"
+  revision = "459bdfe309d805db7907512dd8c5a4a68662105a"
+  source = "https://github.com/smarterclayton/terraform-provider-azurerm"
 
 [[projects]]
   digest = "1:2daa3bddc630ead813a47149cdc429816c43f9423a7d6e2aeff7ca794b072548"
