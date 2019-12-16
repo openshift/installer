@@ -77,3 +77,7 @@ ignored = [
 [[constraint]]
   name = "github.com/openshift-metal3/terraform-provider-ironic"
   version = "v0.1.8"
+
+[[override]]
+  name = "github.com/apparentlymart/go-cidr"
+  version = "v1.0.1"
