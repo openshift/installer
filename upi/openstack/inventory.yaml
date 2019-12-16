@@ -26,7 +26,7 @@ all:
       # OpenShift cluster resources. It is built in the form of:
       #
       #     "{{ os_cluster_name }}{{ installation-specific string }}"
-      os_infra_id: "{{ os_cluster_name }}-upi"
+      os_infra_id: "{{ os_cluster_name }}"
 
       # os_network is the name of the OpenStack network that will contain the
       # OpenShift cluster.
