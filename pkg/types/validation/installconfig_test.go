@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -30,22 +31,8 @@ func validInstallConfig() *types.InstallConfig {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-cluster",
 		},
-		BaseDomain: "test-domain",
-		Networking: &types.Networking{
-			NetworkType: "OpenShiftSDN",
-			MachineNetwork: []types.MachineNetworkEntry{
-				{
-					CIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
-				},
-			},
-			ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-			ClusterNetwork: []types.ClusterNetworkEntry{
-				{
-					CIDR:       *ipnet.MustParseCIDR("192.168.1.0/24"),
-					HostPrefix: 28,
-				},
-			},
-		},
+		BaseDomain:   "test-domain",
+		Networking:   validIPv4NetworkingConfig(),
 		ControlPlane: validMachinePool("master"),
 		Compute:      []types.MachinePool{*validMachinePool("worker")},
 		Platform: types.Platform{
@@ -64,6 +51,13 @@ func validInstallConfig() *types.InstallConfig {
 func validAWSPlatform() *aws.Platform {
 	return &aws.Platform{
 		Region: "us-east-1",
+	}
+}
+
+func validAzurePlatform() *azure.Platform {
+	return &azure.Platform{
+		Region:                      "us-east-1",
+		BaseDomainResourceGroupName: "my-resource-group",
 	}
 }
 
@@ -114,6 +108,74 @@ func validOpenStackPlatform() *openstack.Platform {
 		Cloud:           "test-cloud",
 		ExternalNetwork: "test-network",
 		FlavorName:      "test-flavor",
+	}
+}
+
+func validIPv4NetworkingConfig() *types.Networking {
+	return &types.Networking{
+		NetworkType: "OpenShiftSDN",
+		MachineNetwork: []types.MachineNetworkEntry{
+			{
+				CIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
+			},
+		},
+		ServiceNetwork: []ipnet.IPNet{
+			*ipnet.MustParseCIDR("172.30.0.0/16"),
+		},
+		ClusterNetwork: []types.ClusterNetworkEntry{
+			{
+				CIDR:       *ipnet.MustParseCIDR("192.168.1.0/24"),
+				HostPrefix: 28,
+			},
+		},
+	}
+}
+
+func validIPv6NetworkingConfig() *types.Networking {
+	return &types.Networking{
+		NetworkType: "OVNKubernetes",
+		MachineNetwork: []types.MachineNetworkEntry{
+			{
+				CIDR: *ipnet.MustParseCIDR("ffd0::/48"),
+			},
+		},
+		ServiceNetwork: []ipnet.IPNet{
+			*ipnet.MustParseCIDR("ffd1::/48"),
+		},
+		ClusterNetwork: []types.ClusterNetworkEntry{
+			{
+				CIDR:       *ipnet.MustParseCIDR("ffd2::/48"),
+				HostPrefix: 64,
+			},
+		},
+	}
+}
+
+func validDualStackNetworkingConfig() *types.Networking {
+	return &types.Networking{
+		NetworkType: "OVNKubernetes",
+		MachineNetwork: []types.MachineNetworkEntry{
+			{
+				CIDR: *ipnet.MustParseCIDR("ffd0::/48"),
+			},
+			{
+				CIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
+			},
+		},
+		ServiceNetwork: []ipnet.IPNet{
+			*ipnet.MustParseCIDR("ffd1::/48"),
+			*ipnet.MustParseCIDR("172.30.0.0/16"),
+		},
+		ClusterNetwork: []types.ClusterNetworkEntry{
+			{
+				CIDR:       *ipnet.MustParseCIDR("ffd2::/48"),
+				HostPrefix: 64,
+			},
+			{
+				CIDR:       *ipnet.MustParseCIDR("192.168.1.0/24"),
+				HostPrefix: 28,
+			},
+		},
 	}
 }
 
@@ -739,6 +801,88 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^publish: Unsupported value: \"ExternalInternalDoNotCare\": supported values: \"External\", \"Internal\"`,
+		},
+
+		{
+			name: "valid dual-stack configuration",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				return c
+			}(),
+		},
+		{
+			name: "valid single-stack IPv6 configuration",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validIPv6NetworkingConfig()
+				return c
+			}(),
+		},
+		{
+			name: "invalid dual-stack configuration, bad platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Networking = validDualStackNetworkingConfig()
+				return c
+			}(),
+			expectedError: `Invalid value: "DualStack": dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address`,
+		},
+		{
+			name: "invalid single-stack IPv6 configuration, bad platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Networking = validIPv6NetworkingConfig()
+				return c
+			}(),
+			expectedError: `Invalid value: "IPv6": IPv6 is not supported for this platform`,
+		},
+		{
+			name: "invalid dual-stack configuration, bad plugin",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.NetworkType = "OpenShiftSDN"
+				return c
+			}(),
+			expectedError: `IPv6 is not supported for this networking plugin`,
+		},
+		{
+			name: "invalid single-stack IPv6 configuration, bad plugin",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validIPv6NetworkingConfig()
+				c.Networking.NetworkType = "OpenShiftSDN"
+				return c
+			}(),
+			expectedError: `IPv6 is not supported for this networking plugin`,
+		},
+		{
+			name: "invalid dual-stack configuration, machine has no IPv6",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.MachineNetwork = c.Networking.MachineNetwork[1:]
+				return c
+			}(),
+			expectedError: `Invalid value: "10.0.0.0": dual-stack IPv4/IPv6 requires an IPv6 address in this list`,
+		},
+		{
+			name: "valid dual-stack configuration, machine has no IPv6 but is on AWS",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.MachineNetwork = c.Networking.MachineNetwork[1:]
+				return c
+			}(),
+			expectedError: `Invalid value: "DualStack": dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address`,
 		},
 	}
 	for _, tc := range cases {

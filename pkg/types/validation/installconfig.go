@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	awsvalidation "github.com/openshift/installer/pkg/types/aws/validation"
@@ -79,6 +80,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	}
 	if c.Networking != nil {
 		allErrs = append(allErrs, validateNetworking(c.Networking, field.NewPath("networking"))...)
+		allErrs = append(allErrs, validateNetworkingIPVersion(c.Networking, &c.Platform)...)
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
 	}
@@ -99,6 +101,122 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	if _, ok := validPublishingStrategies[c.Publish]; !ok {
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("publish"), c.Publish, validPublishingStrategyValues))
 	}
+
+	return allErrs
+}
+
+// ipAddressTypeByField is a map of field path to whether they request IPv4 or IPv6.
+type ipAddressTypeByField map[string]struct{ IPv4, IPv6 bool }
+
+// ipByField is a map of field path to the net.IPs in sorted order.
+type ipByField map[string][]net.IP
+
+// inferIPVersionFromInstallConfig infers the user's desired ip version from the networking config.
+// Presence field names match the field path of the struct within the Networking type. This function
+// assumes a valid install config.
+func inferIPVersionFromInstallConfig(n *types.Networking) (hasIPv4, hasIPv6 bool, presence ipAddressTypeByField, addresses ipByField) {
+	if n == nil {
+		return
+	}
+	addresses = make(ipByField)
+	for _, network := range n.MachineNetwork {
+		addresses["machineNetwork"] = append(addresses["machineNetwork"], network.CIDR.IP)
+	}
+	for _, network := range n.ServiceNetwork {
+		addresses["serviceNetwork"] = append(addresses["serviceNetwork"], network.IP)
+	}
+	for _, network := range n.ClusterNetwork {
+		addresses["clusterNetwork"] = append(addresses["clusterNetwork"], network.CIDR.IP)
+	}
+	presence = make(ipAddressTypeByField)
+	for k, ips := range addresses {
+		for _, ip := range ips {
+			has := presence[k]
+			if ip.To4() != nil {
+				has.IPv4 = true
+				hasIPv4 = true
+			} else {
+				has.IPv6 = true
+				hasIPv6 = true
+			}
+			presence[k] = has
+		}
+	}
+	return
+}
+
+func ipSliceToStrings(ips []net.IP) []string {
+	var s []string
+	for _, ip := range ips {
+		s = append(s, ip.String())
+	}
+	return s
+}
+
+func ipnetworksToStrings(networks []ipnet.IPNet) []string {
+	var diag []string
+	for _, sn := range networks {
+		diag = append(diag, sn.String())
+	}
+	sort.Strings(diag)
+	return diag
+}
+
+// validateNetworkingIPVersion checks parameters for consistency when the user
+// requests single-stack IPv6 or dual-stack modes.
+func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.ErrorList {
+	var allErrs field.ErrorList
+
+	hasIPv4, hasIPv6, presence, addresses := inferIPVersionFromInstallConfig(n)
+
+	switch {
+	case hasIPv4 && hasIPv6:
+		if n.NetworkType == "OpenShiftSDN" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "networkType"), n.NetworkType, "dual-stack IPv4/IPv6 is not supported for this networking plugin"))
+		}
+
+		if len(n.ServiceNetwork) != 2 {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type"))
+		}
+
+		switch {
+		case p.BareMetal != nil:
+		case p.None != nil:
+		default:
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "DualStack", "dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address"))
+		}
+		for k, v := range presence {
+			switch {
+			case k == "machineNetwork" && p.AWS != nil:
+				// AWS can default an ipv6 subnet
+			case v.IPv4 && !v.IPv6:
+				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipSliceToStrings(addresses[k]), ", "), "dual-stack IPv4/IPv6 requires an IPv6 address in this list"))
+			case !v.IPv4 && v.IPv6:
+				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipSliceToStrings(addresses[k]), ", "), "dual-stack IPv4/IPv6 requires an IPv4 address in this list"))
+			}
+		}
+
+	case hasIPv6:
+		if n.NetworkType == "OpenShiftSDN" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "networkType"), n.NetworkType, "IPv6 is not supported for this networking plugin"))
+		}
+
+		switch {
+		case p.BareMetal != nil:
+		case p.None != nil:
+		default:
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "IPv6 is not supported for this platform"))
+		}
+
+	case hasIPv4:
+		if len(n.ServiceNetwork) > 1 {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "only one service network can be specified"))
+		}
+
+	default:
+		// we should have a validation error for no specified machineNetwork, serviceNetwork, or clusterNetwork
+	}
+
 	return allErrs
 }
 
@@ -140,15 +258,6 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 	}
 	if len(n.ServiceNetwork) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("serviceNetwork"), "a service network is required"))
-	}
-	// Until kubernetes supports multiple service networks e.g. dual stack
-	if len(n.ServiceNetwork) > 1 {
-		// the default stringification of this type is unreadable
-		diag := []string{}
-		for _, sn := range n.ServiceNetwork {
-			diag = append(diag, sn.String())
-		}
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork"), strings.Join(diag, ", "), "only one service network can be specified"))
 	}
 
 	for i, cn := range n.ClusterNetwork {
