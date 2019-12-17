@@ -1176,6 +1176,28 @@ spec:
                           type: string
                         type: array
                     type: object
+                  image:
+                    description: Image specifies the image parameters with which a
+                      cluster should be built. Either ResourceID or Publisher/Offer/SKU/Version
+                      should be set.
+                    properties:
+                      offer:
+                        description: Offer is the image offer
+                        type: string
+                      publisher:
+                        description: Publisher is the image publisher
+                        type: string
+                      resourceId:
+                        description: ResourceID is the resource ID of an existing
+                          Image resource
+                        type: string
+                      sku:
+                        description: SKU is the image SKU
+                        type: string
+                      version:
+                        description: Version is the image version
+                        type: string
+                    type: object
                   networkResourceGroupName:
                     description: NetworkResourceGroupName specifies the network resource
                       group that contains an existing VNet

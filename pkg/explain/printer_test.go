@@ -162,6 +162,9 @@ func Test_PrintFields(t *testing.T) {
     defaultMachinePlatform <object>
       DefaultMachinePlatform is the default configuration used when installing on Azure for machine pools which do not define their own platform configuration.
 
+    image <object>
+      Image specifies the image parameters with which a cluster should be built. Either ResourceID or Publisher/Offer/SKU/Version should be set.
+
     networkResourceGroupName <string>
       NetworkResourceGroupName specifies the network resource group that contains an existing VNet
 

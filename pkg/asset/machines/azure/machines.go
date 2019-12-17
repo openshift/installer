@@ -106,6 +106,24 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		managedIdentity = ""
 	}
 
+	image := azureprovider.Image{
+		ResourceID: fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID),
+	}
+	if platform.Image != nil {
+		if platform.Image.ResourceID != "" {
+			image = azureprovider.Image{
+				ResourceID: platform.Image.ResourceID,
+			}
+		} else {
+			image = azureprovider.Image{
+				Publisher: platform.Image.Publisher,
+				Offer:     platform.Image.Offer,
+				SKU:       platform.Image.SKU,
+				Version:   platform.Image.Version,
+			}
+		}
+	}
+
 	return &azureprovider.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "azureproviderconfig.openshift.io/v1beta1",
@@ -115,9 +133,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		CredentialsSecret: &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
 		Location:          platform.Region,
 		VMSize:            mpool.InstanceType,
-		Image: azureprovider.Image{
-			ResourceID: fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID),
-		},
+		Image:             image,
 		OSDisk: azureprovider.OSDisk{
 			OSType:     "Linux",
 			DiskSizeGB: mpool.OSDisk.DiskSizeGB,
