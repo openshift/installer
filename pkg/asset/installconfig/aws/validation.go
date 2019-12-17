@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
@@ -18,6 +17,7 @@ import (
 // Validate executes platform-specific validation.
 func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
+
 	if config.Platform.AWS == nil {
 		return errors.New(field.Required(field.NewPath("platform", "aws"), "AWS validation requires an AWS platform configuration").Error())
 	}
@@ -73,8 +73,8 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, s
 		}
 	}
 
-	allErrs = append(allErrs, validateSubnetCIDR(fldPath, privateSubnets, privateSubnetsIdx, networking.MachineCIDR)...)
-	allErrs = append(allErrs, validateSubnetCIDR(fldPath, publicSubnets, publicSubnetsIdx, networking.MachineCIDR)...)
+	allErrs = append(allErrs, validateSubnetCIDR(fldPath, privateSubnets, privateSubnetsIdx, networking.MachineNetwork)...)
+	allErrs = append(allErrs, validateSubnetCIDR(fldPath, publicSubnets, publicSubnetsIdx, networking.MachineNetwork)...)
 	allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, privateSubnets, privateSubnetsIdx, "private")...)
 	allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, publicSubnets, publicSubnetsIdx, "public")...)
 
@@ -122,7 +122,7 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 	return allErrs
 }
 
-func validateSubnetCIDR(fldPath *field.Path, subnets map[string]Subnet, idxMap map[string]int, machineCIDR *ipnet.IPNet) field.ErrorList {
+func validateSubnetCIDR(fldPath *field.Path, subnets map[string]Subnet, idxMap map[string]int, networks []types.MachineNetworkEntry) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for id, v := range subnets {
 		fp := fldPath.Index(idxMap[id])
@@ -131,13 +131,18 @@ func validateSubnetCIDR(fldPath *field.Path, subnets map[string]Subnet, idxMap m
 			allErrs = append(allErrs, field.Invalid(fp, id, err.Error()))
 			continue
 		}
-		if !machineCIDR.Contains(cidr) {
-			errMsg := fmt.Sprintf("CIDR range %s is outside of the MachineCIDR %s", v.CIDR, machineCIDR)
-			allErrs = append(allErrs, field.Invalid(fp, id, errMsg))
-			continue
-		}
+		allErrs = append(allErrs, validateMachineNetworksContainIP(fp, networks, id, cidr)...)
 	}
 	return allErrs
+}
+
+func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.MachineNetworkEntry, subnetName string, ip net.IP) field.ErrorList {
+	for _, network := range networks {
+		if network.CIDR.Contains(ip) {
+			return nil
+		}
+	}
+	return field.ErrorList{field.Invalid(fldPath, subnetName, fmt.Sprintf("subnet's CIDR range start %s is outside of the specified machine networks", ip))}
 }
 
 func validateDuplicateSubnetZones(fldPath *field.Path, subnets map[string]Subnet, idxMap map[string]int, typ string) field.ErrorList {

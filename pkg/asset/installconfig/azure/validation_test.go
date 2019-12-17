@@ -28,7 +28,9 @@ var (
 
 	invalidateMachineCIDR = func(ic *types.InstallConfig) {
 		_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
-		ic.MachineCIDR = &ipnet.IPNet{IPNet: *newCidr}
+		ic.MachineNetwork = []types.MachineNetworkEntry{
+			{CIDR: ipnet.IPNet{IPNet: *newCidr}},
+		}
 	}
 
 	invalidateNetworkResourceGroup = func(ic *types.InstallConfig) {
@@ -61,7 +63,9 @@ var (
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		Networking: &types.Networking{
-			MachineCIDR: ipnet.MustParseCIDR(validCIDR),
+			MachineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR(validCIDR)},
+			},
 		},
 		Platform: types.Platform{
 			Azure: &azure.Platform{
@@ -94,7 +98,7 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 		{
 			name:     "Invalid subnet range",
 			edits:    editFunctions{invalidateMachineCIDR},
-			errorMsg: "subnet .+ has an IP address range .+ outside of the MachineCIDR",
+			errorMsg: "subnet .+ address prefix is outside of the specified machine networks",
 		},
 		{
 			name:     "Invalid virtual network",
