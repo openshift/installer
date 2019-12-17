@@ -116,7 +116,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		clusterID.InfraID,
 		installConfig.Config.ClusterDomain(),
 		installConfig.Config.BaseDomain,
-		&installConfig.Config.Networking.MachineCIDR.IPNet,
+		&installConfig.Config.Networking.MachineNetwork[0].CIDR.IPNet,
 		bootstrapIgn,
 		masterIgn,
 		masterCount,
@@ -294,7 +294,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		data, err = libvirttfvars.TFVars(
 			masters[0].Spec.ProviderSpec.Value.Object.(*libvirtprovider.LibvirtMachineProviderConfig),
 			string(*rhcosImage),
-			&installConfig.Config.Networking.MachineCIDR.IPNet,
+			&installConfig.Config.Networking.MachineNetwork[0].CIDR.IPNet,
 			installConfig.Config.Platform.Libvirt.Network.IfName,
 			masterCount,
 		)

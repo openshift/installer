@@ -108,20 +108,29 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 		allErrs = append(allErrs, field.Required(fldPath.Child("networkType"), "network provider type required"))
 	}
 
-	if n.MachineCIDR != nil {
-		if err := validate.SubnetCIDR(&n.MachineCIDR.IPNet); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("machineCIDR"), n.MachineCIDR.String(), err.Error()))
+	if len(n.MachineNetwork) > 0 {
+		for i, network := range n.MachineNetwork {
+			if err := validate.SubnetCIDR(&network.CIDR.IPNet); err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("machineNetwork").Index(i), network.CIDR.String(), err.Error()))
+			}
+			for j, subNetwork := range n.MachineNetwork[0:i] {
+				if validate.DoCIDRsOverlap(&network.CIDR.IPNet, &subNetwork.CIDR.IPNet) {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("machineNetwork").Index(i), network.CIDR.String(), fmt.Sprintf("machine network must not overlap with machine network %d", j)))
+				}
+			}
 		}
 	} else {
-		allErrs = append(allErrs, field.Required(fldPath.Child("machineCIDR"), "a machine CIDR is required"))
+		allErrs = append(allErrs, field.Required(fldPath.Child("machineNetwork"), "at least one machine network is required"))
 	}
 
 	for i, sn := range n.ServiceNetwork {
 		if err := validate.SubnetCIDR(&sn.IPNet); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork").Index(i), sn.String(), err.Error()))
 		}
-		if n.MachineCIDR != nil && validate.DoCIDRsOverlap(&sn.IPNet, &n.MachineCIDR.IPNet) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork").Index(i), sn.String(), "service network must not overlap with machineCIDR"))
+		for _, network := range n.MachineNetwork {
+			if validate.DoCIDRsOverlap(&sn.IPNet, &network.CIDR.IPNet) {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork").Index(i), sn.String(), "service network must not overlap with any of the machine networks"))
+			}
 		}
 		for j, snn := range n.ServiceNetwork[0:i] {
 			if validate.DoCIDRsOverlap(&sn.IPNet, &snn.IPNet) {
@@ -156,8 +165,10 @@ func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, 
 	if err := validate.SubnetCIDR(&cn.CIDR.IPNet); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR.IPNet.String(), err.Error()))
 	}
-	if n.MachineCIDR != nil && validate.DoCIDRsOverlap(&cn.CIDR.IPNet, &n.MachineCIDR.IPNet) {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR.String(), "cluster network must not overlap with machine CIDR"))
+	for _, network := range n.MachineNetwork {
+		if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, &network.CIDR.IPNet) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR.String(), "cluster network must not overlap with any of the machine networks"))
+		}
 	}
 	for i, sn := range n.ServiceNetwork {
 		if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, &sn.IPNet) {
