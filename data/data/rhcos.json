@@ -37,7 +37,7 @@
             "hvm": "ami-08c7dc43c89946086"
         },
         "us-east-1": {
-            "hvm": "ami-04357755de991a68e"
+            "hvm": "ami-0f1ed776787549924"
         },
         "us-east-2": {
             "hvm": "ami-0a4a6bfc3acd09106"
