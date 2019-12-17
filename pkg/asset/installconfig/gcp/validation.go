@@ -44,7 +44,6 @@ func validateNetworks(client API, ic *types.InstallConfig, fieldPath *field.Path
 
 func validateSubnet(client API, ic *types.InstallConfig, fieldPath *field.Path, subnets []*compute.Subnetwork, name string) field.ErrorList {
 	allErrs := field.ErrorList{}
-	machineCIDR := ic.Networking.MachineCIDR
 
 	subnet, errMsg := findSubnet(subnets, name, ic.GCP.Network, ic.GCP.Region)
 	if subnet == nil {
@@ -56,11 +55,8 @@ func validateSubnet(client API, ic *types.InstallConfig, fieldPath *field.Path, 
 		return append(allErrs, field.Invalid(fieldPath, name, "unable to parse subnet CIDR"))
 	}
 
-	if !machineCIDR.Contains(subnetIP) {
-		errMsg := fmt.Sprintf("subnet %v has an IP address range %v outside of the MachineCIDR %v", name, subnet.IpCidrRange, machineCIDR)
-		return append(allErrs, field.Invalid(fieldPath, name, errMsg))
-	}
-	return nil
+	allErrs = append(allErrs, validateMachineNetworksContainIP(fieldPath, ic.Networking.MachineNetwork, name, subnetIP)...)
+	return allErrs
 }
 
 // findSubnet checks that the subnets are in the provided VPC and region.
@@ -71,4 +67,13 @@ func findSubnet(subnets []*compute.Subnetwork, userSubnet, network, region strin
 		}
 	}
 	return nil, fmt.Sprintf("could not find subnet %s in network %s and region %s", userSubnet, network, region)
+}
+
+func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.MachineNetworkEntry, subnetName string, ip net.IP) field.ErrorList {
+	for _, network := range networks {
+		if network.CIDR.Contains(ip) {
+			return nil
+		}
+	}
+	return field.ErrorList{field.Invalid(fldPath, subnetName, fmt.Sprintf("subnet CIDR range start %s is outside of the specified machine networks", ip))}
 }

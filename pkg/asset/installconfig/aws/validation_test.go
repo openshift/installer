@@ -18,7 +18,9 @@ var (
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		Networking: &types.Networking{
-			MachineCIDR: ipnet.MustParseCIDR(validCIDR),
+			MachineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR(validCIDR)},
+			},
 		},
 		Publish: types.ExternalPublishingStrategy,
 		Platform: types.Platform{
@@ -184,7 +186,7 @@ func TestValidate(t *testing.T) {
 			}
 			return s
 		}(),
-		exptectErr: `^platform\.aws\.subnets\[6\]: Invalid value: \"invalid-cidr-subnet\": CIDR range 192\.168\.126\.0/24 is outside of the MachineCIDR 10\.0\.0\.0/16$`,
+		exptectErr: `^platform\.aws\.subnets\[6\]: Invalid value: \"invalid-cidr-subnet\": subnet's CIDR range start 192.168.126.0 is outside of the specified machine networks$`,
 	}, {
 		name: "invalid cidr does not belong to machine CIDR",
 		installConfig: func() *types.InstallConfig {
@@ -207,7 +209,7 @@ func TestValidate(t *testing.T) {
 			}
 			return s
 		}(),
-		exptectErr: `^\[platform\.aws\.subnets\[6\]: Invalid value: \"invalid-private-cidr-subnet\": CIDR range 192\.168\.126\.0/24 is outside of the MachineCIDR 10\.0\.0\.0/16, platform\.aws\.subnets\[7\]: Invalid value: \"invalid-public-cidr-subnet\": CIDR range 192\.168\.127\.0/24 is outside of the MachineCIDR 10\.0\.0\.0/16\]$`,
+		exptectErr: `^\[platform\.aws\.subnets\[6\]: Invalid value: \"invalid-private-cidr-subnet\": subnet's CIDR range start 192.168.126.0 is outside of the specified machine networks, platform\.aws\.subnets\[7\]: Invalid value: \"invalid-public-cidr-subnet\": subnet's CIDR range start 192.168.127.0 is outside of the specified machine networks\]$`,
 	}, {
 		name: "invalid missing public subnet in a zone",
 		installConfig: func() *types.InstallConfig {

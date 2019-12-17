@@ -124,10 +124,9 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 		"localhost",
 		".svc",
 		".cluster.local",
-		network.Config.Spec.ServiceNetwork[0],
 		internalAPIServer.Hostname(),
-		installConfig.Config.Networking.MachineCIDR.String(),
 	)
+
 	platform := installConfig.Config.Platform.Name()
 
 	if platform != vsphere.Name && platform != none.Name {
@@ -153,6 +152,14 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 	for i := int64(0); i < *installConfig.Config.ControlPlane.Replicas; i++ {
 		etcdHost := fmt.Sprintf("etcd-%d.%s", i, installConfig.Config.ClusterDomain())
 		set.Insert(etcdHost)
+	}
+
+	for _, network := range installConfig.Config.Networking.ServiceNetwork {
+		set.Insert(network.String())
+	}
+
+	for _, network := range installConfig.Config.Networking.MachineNetwork {
+		set.Insert(network.CIDR.String())
 	}
 
 	for _, clusterNetwork := range network.Config.Spec.ClusterNetwork {
