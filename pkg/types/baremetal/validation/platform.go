@@ -20,15 +20,19 @@ type dynamicValidator func(*baremetal.Platform, *field.Path) field.ErrorList
 var dynamicValidators []dynamicValidator
 
 func validateIPinMachineCIDR(vip string, n *types.Networking) error {
-	if !n.MachineCIDR.Contains(net.ParseIP(vip)) {
-		return fmt.Errorf("the virtual IP is expected to be in %s subnet", n.MachineCIDR.String())
+	for _, network := range n.MachineNetwork {
+		if network.CIDR.Contains(net.ParseIP(vip)) {
+			return nil
+		}
 	}
-	return nil
+	return fmt.Errorf("the virtual IP is expected to be in one of the machine networks")
 }
 
 func validateIPNotinMachineCIDR(ip string, n *types.Networking) error {
-	if n.MachineCIDR.Contains(net.ParseIP(ip)) {
-		return fmt.Errorf("the IP must not be in %s subnet", n.MachineCIDR.String())
+	for _, network := range n.MachineNetwork {
+		if network.CIDR.Contains(net.ParseIP(ip)) {
+			return fmt.Errorf("the IP must not be in one of the machine networks")
+		}
 	}
 	return nil
 }

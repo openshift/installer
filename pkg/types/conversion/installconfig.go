@@ -41,6 +41,12 @@ func ConvertNetworking(config *types.InstallConfig) {
 		netconf.ClusterNetwork = netconf.DeprecatedClusterNetworks
 	}
 
+	if len(netconf.MachineNetwork) == 0 && netconf.DeprecatedMachineCIDR != nil {
+		netconf.MachineNetwork = []types.MachineNetworkEntry{
+			{CIDR: *netconf.DeprecatedMachineCIDR},
+		}
+	}
+
 	if len(netconf.ServiceNetwork) == 0 && netconf.DeprecatedServiceCIDR != nil {
 		netconf.ServiceNetwork = []ipnet.IPNet{*netconf.DeprecatedServiceCIDR}
 	}
