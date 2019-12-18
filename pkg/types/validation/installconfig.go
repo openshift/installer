@@ -111,7 +111,7 @@ func validateNetworking(n *types.Networking, fldPath *field.Path, platform *type
 	//  - AWS IPv6 dev/test env, with OPENSHIFT_INSTALL_AWS_USE_IPV6 set
 	allowIPv6 := false
 	requireIPv6 := false
-	if platform.BareMetal != nil {
+	if platform.BareMetal != nil || platform.None != nil {
 		allowIPv6 = true
 	}
 	if platform.AWS != nil && os.Getenv("OPENSHIFT_INSTALL_AWS_USE_IPV6") == "true" {
