@@ -116,7 +116,7 @@ required = [
   branch = "master"
   name = "golang.org/x/oauth2"
 
-[[constraint]]  
+[[constraint]]
   branch = "master"
   name = "github.com/openshift/cluster-api-provider-gcp"
 
@@ -124,7 +124,7 @@ required = [
   branch = "master"
   name = "github.com/openshift/machine-config-operator"
 
-[[constraint]]  
+[[constraint]]
   name = "github.com/containers/image"
   version = "2.0.0"
 
@@ -136,3 +136,13 @@ required = [
   branch = "master"
   name = "github.com/metal3-io/baremetal-operator"
   source = "https://github.com/openshift/baremetal-operator"
+
+[[constraint]]
+  # TODO: Change to OpenShift fork once available
+  branch = "master"
+  name = "github.com/kubernetes-sigs/cluster-api-provider-vsphere"
+  source = "https://github.com/kubernetes-sigs/cluster-api-provider-vsphere"
+
+[[override]]
+  name = "gopkg.in/fsnotify.v1"
+  source = "https://github.com/fsnotify/fsnotify"
