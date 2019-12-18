@@ -23,7 +23,7 @@ data "ignition_config" "master_ignition_config" {
   }
 
   files = [
-    element(data.ignition_file.hostname.*.id, count.index)
+    element(data.ignition_file.hostname.*.rendered, count.index)
   ]
 }
 

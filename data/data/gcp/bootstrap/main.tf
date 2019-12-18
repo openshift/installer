@@ -3,20 +3,20 @@ resource "google_storage_bucket" "ignition" {
 }
 
 resource "google_storage_bucket_object" "ignition" {
-  bucket  = "${google_storage_bucket.ignition.name}"
+  bucket  = google_storage_bucket.ignition.name
   name    = "bootstrap.ign"
   content = var.ignition
 }
 
 data "google_storage_object_signed_url" "ignition_url" {
-  bucket   = "${google_storage_bucket.ignition.name}"
+  bucket   = google_storage_bucket.ignition.name
   path     = "bootstrap.ign"
   duration = "1h"
 }
 
 data "ignition_config" "redirect" {
   replace {
-    source = "${data.google_storage_object_signed_url.ignition_url.signed_url}"
+    source = data.google_storage_object_signed_url.ignition_url.signed_url
   }
 }
 

@@ -90,5 +90,5 @@ resource "openstack_images_image_v2" "base_image" {
 data "openstack_images_image_v2" "base_image" {
   name = var.openstack_base_image_name
 
-  depends_on = ["openstack_images_image_v2.base_image"]
+  depends_on = [openstack_images_image_v2.base_image]
 }
