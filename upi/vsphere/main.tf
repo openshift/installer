@@ -62,8 +62,8 @@ module "control_plane" {
   ipam_token       = "${var.ipam_token}"
   ip_addresses     = ["${var.control_plane_ips}"]
   machine_cidr     = "${var.machine_cidr}"
-  memory           = "16384"
-  num_cpu          = "4"
+  memory           = "${var.master_memory}"
+  num_cpu          = "${var.master_num_cpus}"
 }
 
 module "compute" {
@@ -83,8 +83,8 @@ module "compute" {
   ipam_token       = "${var.ipam_token}"
   ip_addresses     = ["${var.compute_ips}"]
   machine_cidr     = "${var.machine_cidr}"
-  memory           = "8192"
-  num_cpu          = "4"
+  memory           = "${var.compute_memory}"
+  num_cpu          = "${var.compute_num_cpus}"
 }
 
 module "dns" {
