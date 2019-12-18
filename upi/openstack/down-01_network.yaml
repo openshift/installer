@@ -5,6 +5,13 @@
 
 - hosts: all
 
+  vars_files:
+  - metadata.json
+  vars:
+    os_network: "{{ infraID }}-network"
+    os_router: "{{ infraID }}-router"
+
+
   tasks:
   - name: 'Remove the cluster router'
     os_router:

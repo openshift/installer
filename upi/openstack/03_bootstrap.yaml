@@ -6,11 +6,14 @@
 
 - hosts: all
 
+  vars_files:
+  - metadata.json
   vars:
-    bootstrap_data: "{{ os_infra_id }}-bootstrap-ignition.json"
-
-    bootstrap_server: "{{ os_infra_id }}-bootstrap"
-    bootstrap_port: "{{ os_infra_id }}-bootstrap-port"
+    bootstrap_data: "{{ infraID }}-bootstrap-ignition.json"
+    bootstrap_server: "{{ infraID }}-bootstrap"
+    bootstrap_port: "{{ infraID }}-bootstrap-port"
+    os_network: "{{ infraID }}-network"
+    os_sg_master: "{{ infraID }}-master"
 
   tasks:
   - name: 'Create the bootstrap server port'
@@ -22,7 +25,6 @@
       allowed_address_pairs:
       - ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
       - ip_address: "{{ os_subnet_range | next_nth_usable(6) }}"
-      - ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
 
   - name: 'Create the bootstrap server'
     os_server:

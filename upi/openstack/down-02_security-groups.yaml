@@ -5,6 +5,12 @@
 
 - hosts: all
 
+  vars_files:
+  - metadata.json
+  vars:
+    os_sg_master: "{{ infraID }}-master"
+    os_sg_worker: "{{ infraID }}-worker"
+
   tasks:
   - name: 'Remove the master security group'
     os_security_group:

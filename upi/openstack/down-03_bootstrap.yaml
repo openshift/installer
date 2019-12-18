@@ -5,9 +5,11 @@
 
 - hosts: all
 
+  vars_files:
+  - metadata.json
   vars:
-    bootstrap_server: "{{ os_infra_id }}-bootstrap"
-    bootstrap_port: "{{ os_infra_id }}-bootstrap-port"
+    bootstrap_server: "{{ infraID }}-bootstrap"
+    bootstrap_port: "{{ infraID }}-bootstrap-port"
 
   tasks:
   - name: 'Remove the bootstrap server'

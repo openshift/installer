@@ -6,21 +6,25 @@
 
 - hosts: all
 
+  vars_files:
+  - metadata.json
   vars:
     # The provided filename will be concatenated with the Control Plane node
     # name and its 0-indexed serial number.
     #
     # In this case, the first node will look for this filename:
-    #    "{{ os_infra_id }}-master-0-ignition.json"
+    #    "{{ infraID }}-master-0-ignition.json"
     cp_data: "ignition.json"
 
-    cp_server: "{{ os_infra_id }}-master"
-    cp_port: "{{ os_infra_id }}-master-port"
+    cp_server: "{{ infraID }}-master"
+    cp_port: "{{ infraID }}-master-port"
 
     # These computed lists are used to feed the Ansible loops with the number
     # of iterations specified in the Inventory.
     cp_servers: "{{ [cp_server] * os_cp_nodes_number }}"
     cp_ports: "{{ [cp_port] * os_cp_nodes_number }}"
+    os_network: "{{ infraID }}-network"
+    os_sg_master: "{{ infraID }}-master"
 
   tasks:
   - name: 'Create the Control Plane ports'
@@ -32,6 +36,7 @@
       allowed_address_pairs:
       - ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
       - ip_address: "{{ os_subnet_range | next_nth_usable(6) }}"
+      - ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
     with_indexed_items: "{{ cp_ports }}"
 
   - name: 'Create the Control Plane servers'
