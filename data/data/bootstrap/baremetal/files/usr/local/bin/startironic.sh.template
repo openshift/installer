@@ -6,7 +6,7 @@ set -ex
 IRONIC_IMAGE=$(image_for ironic)
 IRONIC_INSPECTOR_IMAGE=$(image_for ironic-inspector)
 IPA_DOWNLOADER_IMAGE=$(image_for ironic-ipa-downloader)
-COREOS_DOWNLOADER_IMAGE=$(image_for ironic-rhcos-downloader)
+MACHINE_OS_DOWNLOADER_IMAGE=$(image_for ironic-machine-os-downloader)
 
 # This image is templated in via the installer pkg/asset/ignition/bootstrap/bootstrap.go
 RHCOS_BOOT_IMAGE_URL="{{.BootImage}}"
@@ -79,7 +79,7 @@ podman run -d --net host --name ipa-downloader \
 
 podman run -d --net host --name coreos-downloader \
      --env CACHEURL=${CACHEURL} \
-     -v $IRONIC_SHARED_VOLUME:/shared:z ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_BOOT_IMAGE_URL
+     -v $IRONIC_SHARED_VOLUME:/shared:z ${MACHINE_OS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_BOOT_IMAGE_URL
 
 # Wait for images to be downloaded/ready
 podman wait -i 1000 ipa-downloader
