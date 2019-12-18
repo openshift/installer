@@ -37,7 +37,7 @@ func (a *Image) Generate(dependencies asset.Parents) error {
 		}
 		logrus.Debugf("Using internal constant for release image %s", pullSpec)
 	}
-	a.PullSpec = pullSpec
+	a.PullSpec = "quay.io/redhat/behoward-testing:43darkmuggle.81.201912172258.0"
 
 	ref, err := dockerref.ParseNamed(pullSpec)
 	if err != nil {
