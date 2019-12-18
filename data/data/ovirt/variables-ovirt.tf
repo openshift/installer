@@ -39,3 +39,23 @@ variable "openstack_base_image_local_file_path" {
   default     = ""
   description = "Local file path of the base image file to use for the nodes."
 }
+
+variable "ovirt_master_mem" {
+  type    = string
+  default = "8192"
+}
+
+variable "ovirt_master_cpu" {
+  type    = number
+  default = 4
+}
+
+variable "ovirt_template_mem" {
+  type    = string
+  default = "16384"
+}
+
+variable "ovirt_template_cpu" {
+  type    = number
+  default = 4
+}

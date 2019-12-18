@@ -3,8 +3,8 @@ resource "ovirt_vm" "master" {
   name        = "${var.cluster_id}-master-${count.index}"
   cluster_id  = var.ovirt_cluster_id
   template_id = var.ovirt_template_id
-  memory      = "8192"
-  cores       = "4"
+  cores       = var.ovirt_master_cpu
+  memory      = var.ovirt_master_mem
 
   initialization {
     host_name     = "${var.cluster_id}-master-${count.index}"

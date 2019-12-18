@@ -12,6 +12,8 @@ module "template" {
   cluster_id                           = var.cluster_id
   openstack_base_image_name            = var.openstack_base_image_name
   openstack_base_image_local_file_path = var.openstack_base_image_local_file_path
+  ovirt_template_cpu                   = var.ovirt_template_cpu
+  ovirt_template_mem                   = var.ovirt_template_mem
 }
 
 module "bootstrap" {
@@ -32,4 +34,6 @@ module "masters" {
   ignition_master   = var.ignition_master
   cluster_domain    = var.cluster_domain
   cluster_id        = var.cluster_id
+  ovirt_master_cpu  = var.ovirt_master_cpu
+  ovirt_master_mem  = var.ovirt_master_mem
 }

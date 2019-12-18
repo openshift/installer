@@ -26,3 +26,11 @@ variable "ignition_master" {
   type        = string
   description = "master ignition config"
 }
+
+variable "ovirt_master_mem" {
+  type = string
+}
+
+variable "ovirt_master_cpu" {
+  type = string
+}

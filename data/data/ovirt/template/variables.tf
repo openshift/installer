@@ -27,3 +27,16 @@ variable "openstack_base_image_local_file_path" {
   default     = ""
   description = "Local file path of the base image file to use for the nodes."
 }
+
+variable "ovirt_template_mem" {
+  type = string
+}
+
+variable "ovirt_template_cpu" {
+  type = string
+}
+
+variable "disk_size_gib" {
+  type        = number
+  description = "The size of the template disk for worker/nodes in GiB."
+}
