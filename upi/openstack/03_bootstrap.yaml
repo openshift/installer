@@ -30,6 +30,12 @@
       image: "{{ os_image_rhcos }}"
       flavor: "{{ os_flavor_master }}"
       userdata: "{{ lookup('file', bootstrap_data) | string }}"
-      auto_ip: yes
+      auto_ip: no
       nics:
       - port-name: "{{ bootstrap_port }}"
+
+  - name: 'Create the bootstrap floating IP'
+    os_floating_ip:
+      state: present
+      network: "{{ os_external_network }}"
+      server: "{{ bootstrap_server }}"
