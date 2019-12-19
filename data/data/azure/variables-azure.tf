@@ -51,6 +51,24 @@ variable "azure_base_domain_resource_group_name" {
   description = "The resource group that contains the dns zone used as base domain for the cluster."
 }
 
+variable "azure_preexisting_resource_group" {
+  type        = bool
+  default     = false
+  description = "Specifies whether an existing resource group should be used for cluster resources or a new created."
+}
+
+variable "azure_resource_group_name" {
+  type        = string
+  default     = ""
+  description = "The name of the existing resource group to be used for cluster resources."
+}
+
+variable "azure_user_assigned_identity_id" {
+  type        = string
+  default     = ""
+  description = "ID of precreated user assigned identity if using existing resource group"
+}
+
 variable "azure_image_url" {
   type        = string
   description = "The URL of the vm image used for all nodes."

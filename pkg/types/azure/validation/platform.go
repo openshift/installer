@@ -39,5 +39,11 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 			allErrs = append(allErrs, field.Required(fldPath.Child("networkResourceGroupName"), "must provide a network resource group when supplying subnets"))
 		}
 	}
+	if (p.ResourceGroupName != "" && p.UserAssignedIdentity == "") {
+		allErrs = append(allErrs, field.Required(fldPath.Child("userAssignedIdentity"), "must provide user assigned identity when supplying resource group"))
+	}
+	if (p.ResourceGroupName == "" && p.UserAssignedIdentity != "") {
+		allErrs = append(allErrs, field.Required(fldPath.Child("resourceGroupName"), "must provide resource group name when supplying user assigned identity"))
+	}
 	return allErrs
 }

@@ -35,6 +35,10 @@ type config struct {
 	ComputeSubnet               string            `json:"azure_compute_subnet"`
 	PreexistingNetwork          bool              `json:"azure_preexisting_network"`
 	Private                     bool              `json:"azure_private"`
+	PreexistingResourceGroup    bool              `json:"azure_preexisting_resource_group",omitempty`
+	ResourceGroupName           string            `json:"azure_resource_group_name",omitempty`
+	UserAssignedIdentity        string            `json:"azure_user_assigned_identity_id",omitempty`
+	
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -46,6 +50,9 @@ type TFVarsSources struct {
 	ImageURL                    string
 	PreexistingNetwork          bool
 	Publish                     types.PublishingStrategy
+	PreexistingResourceGroup    bool 
+	ResourceGroupName           string
+	UserAssignedIdentity        string
 }
 
 // TFVars generates Azure-specific Terraform variables launching the cluster.
@@ -76,6 +83,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ControlPlaneSubnet:          masterConfig.Subnet,
 		ComputeSubnet:               workerConfig.Subnet,
 		PreexistingNetwork:          sources.PreexistingNetwork,
+		PreexistingResourceGroup:		 sources.PreexistingResourceGroup,
+		ResourceGroupName:					 sources.ResourceGroupName,
+		UserAssignedIdentity: 			 sources.UserAssignedIdentity,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

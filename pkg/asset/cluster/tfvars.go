@@ -216,6 +216,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*azureprovider.AzureMachineProviderSpec)
 		}
 		preexistingnetwork := installConfig.Config.Azure.VirtualNetwork != ""
+		preexistingresourcegroup := installConfig.Config.Azure.ResourceGroupName != ""
+		
+		
 		data, err := azuretfvars.TFVars(
 			azuretfvars.TFVarsSources{
 				Auth:                        auth,
@@ -224,6 +227,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				WorkerConfigs:               workerConfigs,
 				ImageURL:                    string(*rhcosImage),
 				PreexistingNetwork:          preexistingnetwork,
+				PreexistingResourceGroup:    preexistingresourcegroup,
+				ResourceGroupName:           installConfig.Config.Azure.ResourceGroupName,
+				UserAssignedIdentity:        installConfig.Config.Azure.UserAssignedIdentity,
 				Publish:                     installConfig.Config.Publish,
 			},
 		)

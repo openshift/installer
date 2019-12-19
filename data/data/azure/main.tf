@@ -5,6 +5,8 @@ locals {
     },
     var.azure_extra_tags,
   )
+  resource_group_name = var.azure_preexisting_resource_group ? var.azure_resource_group_name : azurerm_resource_group.main[0].name
+  identity            = var.azure_preexisting_resource_group ? "/subscriptions/${var.azure_subscription_id}/resourcegroups/${var.azure_resource_group_name}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${var.azure_user_assigned_identity_id}" : azurerm_user_assigned_identity.main[0].id
 }
 
 provider "azurerm" {
@@ -23,11 +25,11 @@ provider "azureprivatedns" {
 
 module "bootstrap" {
   source              = "./bootstrap"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = local.resource_group_name
   region              = var.azure_region
   vm_size             = var.azure_bootstrap_vm_type
   vm_image            = azurerm_image.cluster.id
-  identity            = azurerm_user_assigned_identity.main.id
+  identity            = local.identity
   cluster_id          = var.cluster_id
   ignition            = var.ignition_bootstrap
   subnet_id           = module.vnet.master_subnet_id
@@ -41,7 +43,7 @@ module "bootstrap" {
 
 module "vnet" {
   source              = "./vnet"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = local.resource_group_name
   vnet_cidr           = var.machine_cidr
   cluster_id          = var.cluster_id
   region              = var.azure_region
@@ -57,13 +59,13 @@ module "vnet" {
 
 module "master" {
   source              = "./master"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = local.resource_group_name
   cluster_id          = var.cluster_id
   region              = var.azure_region
   availability_zones  = var.azure_master_availability_zones
   vm_size             = var.azure_master_vm_type
   vm_image            = azurerm_image.cluster.id
-  identity            = azurerm_user_assigned_identity.main.id
+  identity            = local.identity
   ignition            = var.ignition_master
   external_lb_id      = module.vnet.public_lb_id
   elb_backend_pool_id = module.vnet.public_lb_backend_pool_id
@@ -84,7 +86,7 @@ module "dns" {
   virtual_network_id              = module.vnet.virtual_network_id
   external_lb_fqdn                = module.vnet.public_lb_pip_fqdn
   internal_lb_ipaddress           = module.vnet.internal_lb_ip_address
-  resource_group_name             = azurerm_resource_group.main.name
+  resource_group_name             = local.resource_group_name
   base_domain_resource_group_name = var.azure_base_domain_resource_group_name
   etcd_count                      = var.master_count
   etcd_ip_addresses               = module.master.ip_addresses
@@ -98,6 +100,7 @@ resource "random_string" "storage_suffix" {
 }
 
 resource "azurerm_resource_group" "main" {
+  count    = var.azure_preexisting_resource_group ? 0 : 1
   name     = "${var.cluster_id}-rg"
   location = var.azure_region
   tags     = local.tags
@@ -111,43 +114,47 @@ data "azurerm_resource_group" "network" {
 
 resource "azurerm_storage_account" "cluster" {
   name                     = "cluster${random_string.storage_suffix.result}"
-  resource_group_name      = azurerm_resource_group.main.name
+  resource_group_name      = local.resource_group_name
   location                 = var.azure_region
   account_tier             = "Standard"
   account_replication_type = "LRS"
 }
 
 resource "azurerm_user_assigned_identity" "main" {
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  count               = var.azure_preexisting_resource_group ? 0 : 1
+  
+  resource_group_name = local.resource_group_name
+  location            = azurerm_resource_group.main[0].location
 
   name = "${var.cluster_id}-identity"
 }
 
 resource "azurerm_role_assignment" "main" {
-  scope                = azurerm_resource_group.main.id
+  count                = var.azure_preexisting_resource_group ? 0 : 1
+  
+  scope                = azurerm_resource_group.main[0].id
   role_definition_name = "Contributor"
-  principal_id         = azurerm_user_assigned_identity.main.principal_id
+  principal_id         = azurerm_user_assigned_identity.main[0].principal_id
 }
 
 resource "azurerm_role_assignment" "network" {
-  count = var.azure_preexisting_network ? 1 : 0
-
+  count = var.azure_preexisting_network && var.azure_preexisting_resource_group == false ? 1 : 0
+  
   scope                = data.azurerm_resource_group.network[0].id
   role_definition_name = "Contributor"
-  principal_id         = azurerm_user_assigned_identity.main.principal_id
+  principal_id         = azurerm_user_assigned_identity.main[0].principal_id
 }
 
 # copy over the vhd to cluster resource group and create an image using that
 resource "azurerm_storage_container" "vhd" {
   name                 = "vhd"
-  resource_group_name  = azurerm_resource_group.main.name
+  resource_group_name  = local.resource_group_name
   storage_account_name = azurerm_storage_account.cluster.name
 }
 
 resource "azurerm_storage_blob" "rhcos_image" {
   name                   = "rhcos${random_string.storage_suffix.result}.vhd"
-  resource_group_name    = azurerm_resource_group.main.name
+  resource_group_name    = local.resource_group_name
   storage_account_name   = azurerm_storage_account.cluster.name
   storage_container_name = azurerm_storage_container.vhd.name
   type                   = "block"
@@ -158,7 +165,7 @@ resource "azurerm_storage_blob" "rhcos_image" {
 
 resource "azurerm_image" "cluster" {
   name                = var.cluster_id
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = local.resource_group_name
   location            = var.azure_region
 
   os_disk {

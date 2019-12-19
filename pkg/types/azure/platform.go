@@ -28,6 +28,12 @@ type Platform struct {
 
 	// ComputeSubnet specifies an existing subnet for use by compute nodes
 	ComputeSubnet string `json:"computeSubnet,omitempty"`
+	
+	// ResourceGroupName specifies an existing resource group to deploy to
+	ResourceGroupName string `json:"resourceGroupName,omitempty"`
+	
+	// UserAssignedIdentity specifies an existing identity that has appropriate access to existing resource group
+	UserAssignedIdentity string `json:"userAssignedIdentity,omitempty"`
 }
 
 //SetBaseDomain parses the baseDomainID and sets the related fields on azure.Platform

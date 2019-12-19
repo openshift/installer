@@ -88,7 +88,13 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	case azure.Name:
 		config.Status.PlatformStatus.Type = configv1.AzurePlatformType
 
-		rg := fmt.Sprintf("%s-rg", clusterID.InfraID)
+		var rg string
+		
+		if installConfig.Config.Platform.Azure.ResourceGroupName != "" {
+			rg = installConfig.Config.Platform.Azure.ResourceGroupName
+		} else {
+			rg = fmt.Sprintf("%s-rg", clusterID.InfraID)
+		}
 		config.Status.PlatformStatus.Azure = &configv1.AzurePlatformStatus{
 			ResourceGroupName:        rg,
 			NetworkResourceGroupName: rg,

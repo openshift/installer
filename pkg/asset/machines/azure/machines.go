@@ -81,11 +81,22 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int) (*azureprovider.AzureMachineProviderSpec, error) {
 	var az *string
+	var rg string
+	var mi string
+	
 	if len(mpool.Zones) > 0 && azIdx != nil {
 		az = &mpool.Zones[*azIdx]
 	}
 
-	networkResourceGroup, virtualNetwork, subnet, err := getNetworkInfo(platform, clusterID, role)
+	if rg := platform.ResourceGroupName; rg == "" {
+		rg = fmt.Sprintf("%s-rg", clusterID)
+	}
+
+	if mi := platform.UserAssignedIdentity; mi == "" {
+		mi = fmt.Sprintf("%s-identity", clusterID)
+	}
+	
+	networkResourceGroup, virtualNetwork, subnet, err := getNetworkInfo(platform, clusterID, role, rg)
 	if err != nil {
 		return nil, err
 	}
@@ -111,9 +122,9 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		},
 		Zone:                 az,
 		Subnet:               subnet,
-		ManagedIdentity:      fmt.Sprintf("%s-identity", clusterID),
+		ManagedIdentity:      mi,
 		Vnet:                 virtualNetwork,
-		ResourceGroup:        fmt.Sprintf("%s-rg", clusterID),
+		ResourceGroup:        rg,
 		NetworkResourceGroup: networkResourceGroup,
 	}, nil
 }
@@ -123,9 +134,9 @@ func ConfigMasters(machines []machineapi.Machine, clusterID string) {
 	//TODO
 }
 
-func getNetworkInfo(platform *azure.Platform, clusterID, role string) (string, string, string, error) {
+func getNetworkInfo(platform *azure.Platform, clusterID, role string, rg string) (string, string, string, error) {
 	if platform.VirtualNetwork == "" {
-		return fmt.Sprintf("%s-rg", clusterID), fmt.Sprintf("%s-vnet", clusterID), fmt.Sprintf("%s-%s-subnet", clusterID, role), nil
+		return rg, fmt.Sprintf("%s-vnet", clusterID), fmt.Sprintf("%s-%s-subnet", clusterID, role), nil
 	}
 
 	switch role {
