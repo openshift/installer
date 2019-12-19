@@ -5,6 +5,7 @@
 # netaddr
 
 - hosts: all
+  gather_facts: no
 
   vars:
     # The provided filename will be concatenated with the Control Plane node
