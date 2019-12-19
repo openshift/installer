@@ -14,6 +14,7 @@ module "template" {
   openstack_base_image_local_file_path = var.openstack_base_image_local_file_path
   ovirt_template_cpu                   = var.ovirt_template_cpu
   ovirt_template_mem                   = var.ovirt_template_mem
+  disk_size_gib                        = var.ovirt_template_disk_size_gib
 }
 
 module "bootstrap" {

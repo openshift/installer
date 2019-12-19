@@ -59,3 +59,8 @@ variable "ovirt_template_cpu" {
   type    = number
   default = 4
 }
+
+variable "ovirt_template_disk_size_gib" {
+  type    = number
+  default = 25
+}
