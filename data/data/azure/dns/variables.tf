@@ -24,13 +24,23 @@ variable "base_domain_resource_group_name" {
   type        = string
 }
 
-variable "external_lb_fqdn" {
-  description = "External API's LB fqdn"
+variable "external_lb_fqdn_v4" {
+  description = "External API's LB fqdn for IPv4"
   type        = string
 }
 
-variable "internal_lb_ipaddress" {
-  description = "External API's LB Ip address"
+variable "external_lb_fqdn_v6" {
+  description = "External API's LB fqdn for IPv6"
+  type        = string
+}
+
+variable "internal_lb_ipaddress_v4" {
+  description = "External API's LB IP v4 address"
+  type        = string
+}
+
+variable "internal_lb_ipaddress_v6" {
+  description = "External API's LB IP v6 address"
   type        = string
 }
 
@@ -44,8 +54,14 @@ variable "etcd_count" {
   type        = string
 }
 
-variable "etcd_ip_addresses" {
-  description = "List of string IPs for machines running etcd members."
+variable "etcd_ip_v4_addresses" {
+  description = "List of string IPs in IPv4 for machines running etcd members."
+  type        = list(string)
+  default     = []
+}
+
+variable "etcd_ip_v6_addresses" {
+  description = "List of string IPs in IPv6 for machines running etcd members."
   type        = list(string)
   default     = []
 }
@@ -58,4 +74,19 @@ variable "resource_group_name" {
 variable "private" {
   type        = bool
   description = "This value determines if this is a private cluster or not."
+}
+
+variable "use_ipv4" {
+  type        = bool
+  description = "This value determines if this is cluster should use IPv4 networking."
+}
+
+variable "use_ipv6" {
+  type        = bool
+  description = "This value determines if this is cluster should use IPv6 networking."
+}
+
+variable "emulate_single_stack_ipv6" {
+  type        = bool
+  description = "This determines whether a dual-stack cluster is configured to emulate single-stack IPv6."
 }

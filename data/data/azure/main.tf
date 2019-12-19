@@ -22,27 +22,34 @@ provider "azureprivatedns" {
 }
 
 module "bootstrap" {
-  source              = "./bootstrap"
-  resource_group_name = azurerm_resource_group.main.name
-  region              = var.azure_region
-  vm_size             = var.azure_bootstrap_vm_type
-  vm_image            = azurerm_image.cluster.id
-  identity            = azurerm_user_assigned_identity.main.id
-  cluster_id          = var.cluster_id
-  ignition            = var.ignition_bootstrap
-  subnet_id           = module.vnet.master_subnet_id
-  elb_backend_pool_id = module.vnet.public_lb_backend_pool_id
-  ilb_backend_pool_id = module.vnet.internal_lb_backend_pool_id
-  tags                = local.tags
-  storage_account     = azurerm_storage_account.cluster
-  nsg_name            = module.vnet.master_nsg_name
-  private             = module.vnet.private
+  source                 = "./bootstrap"
+  resource_group_name    = azurerm_resource_group.main.name
+  region                 = var.azure_region
+  vm_size                = var.azure_bootstrap_vm_type
+  vm_image               = azurerm_image.cluster.id
+  identity               = azurerm_user_assigned_identity.main.id
+  cluster_id             = var.cluster_id
+  ignition               = var.ignition_bootstrap
+  subnet_id              = module.vnet.master_subnet_id
+  elb_backend_pool_v4_id = module.vnet.public_lb_backend_pool_v4_id
+  elb_backend_pool_v6_id = module.vnet.public_lb_backend_pool_v6_id
+  ilb_backend_pool_v4_id = module.vnet.internal_lb_backend_pool_v4_id
+  ilb_backend_pool_v6_id = module.vnet.internal_lb_backend_pool_v6_id
+  tags                   = local.tags
+  storage_account        = azurerm_storage_account.cluster
+  nsg_name               = module.vnet.master_nsg_name
+  private                = module.vnet.private
+
+  use_ipv4                  = var.use_ipv4 || var.azure_emulate_single_stack_ipv6
+  use_ipv6                  = var.use_ipv6
+  emulate_single_stack_ipv6 = var.azure_emulate_single_stack_ipv6
 }
 
 module "vnet" {
   source              = "./vnet"
   resource_group_name = azurerm_resource_group.main.name
-  vnet_cidr           = var.machine_cidr
+  vnet_v4_cidrs       = var.azure_machine_v4_cidrs
+  vnet_v6_cidrs       = var.azure_machine_v6_cidrs
   cluster_id          = var.cluster_id
   region              = var.azure_region
   dns_label           = var.cluster_id
@@ -53,27 +60,37 @@ module "vnet" {
   master_subnet               = var.azure_control_plane_subnet
   worker_subnet               = var.azure_compute_subnet
   private                     = var.azure_private
+
+  use_ipv4                  = var.use_ipv4 || var.azure_emulate_single_stack_ipv6
+  use_ipv6                  = var.use_ipv6
+  emulate_single_stack_ipv6 = var.azure_emulate_single_stack_ipv6
 }
 
 module "master" {
-  source              = "./master"
-  resource_group_name = azurerm_resource_group.main.name
-  cluster_id          = var.cluster_id
-  region              = var.azure_region
-  availability_zones  = var.azure_master_availability_zones
-  vm_size             = var.azure_master_vm_type
-  vm_image            = azurerm_image.cluster.id
-  identity            = azurerm_user_assigned_identity.main.id
-  ignition            = var.ignition_master
-  external_lb_id      = module.vnet.public_lb_id
-  elb_backend_pool_id = module.vnet.public_lb_backend_pool_id
-  ilb_backend_pool_id = module.vnet.internal_lb_backend_pool_id
-  subnet_id           = module.vnet.master_subnet_id
-  instance_count      = var.master_count
-  storage_account     = azurerm_storage_account.cluster
-  os_volume_type      = var.azure_master_root_volume_type
-  os_volume_size      = var.azure_master_root_volume_size
-  private             = module.vnet.private
+  source                 = "./master"
+  resource_group_name    = azurerm_resource_group.main.name
+  cluster_id             = var.cluster_id
+  region                 = var.azure_region
+  availability_zones     = var.azure_master_availability_zones
+  vm_size                = var.azure_master_vm_type
+  vm_image               = azurerm_image.cluster.id
+  identity               = azurerm_user_assigned_identity.main.id
+  ignition               = var.ignition_master
+  external_lb_id         = module.vnet.public_lb_id
+  elb_backend_pool_v4_id = module.vnet.public_lb_backend_pool_v4_id
+  elb_backend_pool_v6_id = module.vnet.public_lb_backend_pool_v6_id
+  ilb_backend_pool_v4_id = module.vnet.internal_lb_backend_pool_v4_id
+  ilb_backend_pool_v6_id = module.vnet.internal_lb_backend_pool_v6_id
+  subnet_id              = module.vnet.master_subnet_id
+  instance_count         = var.master_count
+  storage_account        = azurerm_storage_account.cluster
+  os_volume_type         = var.azure_master_root_volume_type
+  os_volume_size         = var.azure_master_root_volume_size
+  private                = module.vnet.private
+
+  use_ipv4                  = var.use_ipv4 || var.azure_emulate_single_stack_ipv6
+  use_ipv6                  = var.use_ipv6
+  emulate_single_stack_ipv6 = var.azure_emulate_single_stack_ipv6
 }
 
 module "dns" {
@@ -82,13 +99,20 @@ module "dns" {
   cluster_id                      = var.cluster_id
   base_domain                     = var.base_domain
   virtual_network_id              = module.vnet.virtual_network_id
-  external_lb_fqdn                = module.vnet.public_lb_pip_fqdn
-  internal_lb_ipaddress           = module.vnet.internal_lb_ip_address
+  external_lb_fqdn_v4             = module.vnet.public_lb_pip_v4_fqdn
+  external_lb_fqdn_v6             = module.vnet.public_lb_pip_v6_fqdn
+  internal_lb_ipaddress_v4        = module.vnet.internal_lb_ip_v4_address
+  internal_lb_ipaddress_v6        = module.vnet.internal_lb_ip_v6_address
   resource_group_name             = azurerm_resource_group.main.name
   base_domain_resource_group_name = var.azure_base_domain_resource_group_name
   etcd_count                      = var.master_count
-  etcd_ip_addresses               = module.master.ip_addresses
+  etcd_ip_v4_addresses            = module.master.ip_v4_addresses
+  etcd_ip_v6_addresses            = module.master.ip_v6_addresses
   private                         = module.vnet.private
+
+  use_ipv4                  = var.use_ipv4 || var.azure_emulate_single_stack_ipv6
+  use_ipv6                  = var.use_ipv6
+  emulate_single_stack_ipv6 = var.azure_emulate_single_stack_ipv6
 }
 
 resource "random_string" "storage_suffix" {

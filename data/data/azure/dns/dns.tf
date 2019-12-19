@@ -16,38 +16,85 @@ resource "azureprivatedns_zone_virtual_network_link" "network" {
 }
 
 resource "azureprivatedns_a_record" "apiint_internal" {
+  // TODO: internal LB should block v4 for better single stack emulation (&& ! var.emulate_single_stack_ipv6)
+  //   but RHCoS initramfs can't do v6 and so fails to ignite. https://issues.redhat.com/browse/GRPA-1343 
+  count = var.use_ipv4 ? 1 : 0
+
   name                = "api-int"
   zone_name           = azureprivatedns_zone.private.name
   resource_group_name = var.resource_group_name
   ttl                 = 300
-  records             = [var.internal_lb_ipaddress]
+  records             = [var.internal_lb_ipaddress_v4]
+}
+
+resource "azureprivatedns_aaaa_record" "apiint_internal_v6" {
+  count = var.use_ipv6 ? 1 : 0
+
+  name                = "api-int"
+  zone_name           = azureprivatedns_zone.private.name
+  resource_group_name = var.resource_group_name
+  ttl                 = 300
+  records             = [var.internal_lb_ipaddress_v6]
 }
 
 resource "azureprivatedns_a_record" "api_internal" {
+  // TODO: internal LB should block v4 for better single stack emulation (&& ! var.emulate_single_stack_ipv6)
+  //   but RHCoS initramfs can't do v6 and so fails to ignite. https://issues.redhat.com/browse/GRPA-1343 
+  count = var.use_ipv4 ? 1 : 0
+
   name                = "api"
   zone_name           = azureprivatedns_zone.private.name
   resource_group_name = var.resource_group_name
   ttl                 = 300
-  records             = [var.internal_lb_ipaddress]
+  records             = [var.internal_lb_ipaddress_v4]
 }
 
-resource "azurerm_dns_cname_record" "api_external" {
-  count = var.private ? 0 : 1
+resource "azureprivatedns_aaaa_record" "api_internal_v6" {
+  count = var.use_ipv6 ? 1 : 0
+
+  name                = "api"
+  zone_name           = azureprivatedns_zone.private.name
+  resource_group_name = var.resource_group_name
+  ttl                 = 300
+  records             = [var.internal_lb_ipaddress_v6]
+}
+
+resource "azurerm_dns_cname_record" "api_external_v4" {
+  count = var.private || ! var.use_ipv4 ? 0 : 1
 
   name                = local.api_external_name
   zone_name           = var.base_domain
   resource_group_name = var.base_domain_resource_group_name
   ttl                 = 300
-  record              = var.external_lb_fqdn
+  record              = var.external_lb_fqdn_v4
+}
+
+resource "azurerm_dns_cname_record" "api_external_v6" {
+  count = var.private || ! var.use_ipv6 ? 0 : 1
+
+  name                = "v6-${local.api_external_name}"
+  zone_name           = var.base_domain
+  resource_group_name = var.base_domain_resource_group_name
+  ttl                 = 300
+  record              = var.external_lb_fqdn_v6
 }
 
 resource "azureprivatedns_a_record" "etcd_a_nodes" {
-  count               = var.etcd_count
+  count               = var.use_ipv4 && ! var.emulate_single_stack_ipv6 ? var.etcd_count : 0
   name                = "etcd-${count.index}"
   zone_name           = azureprivatedns_zone.private.name
   resource_group_name = var.resource_group_name
   ttl                 = 60
-  records             = [var.etcd_ip_addresses[count.index]]
+  records             = [var.etcd_ip_v4_addresses[count.index]]
+}
+
+resource "azureprivatedns_aaaa_record" "etcd_aaaa_nodes" {
+  count               = var.use_ipv6 ? var.etcd_count : 0
+  name                = "etcd-${count.index}"
+  zone_name           = azureprivatedns_zone.private.name
+  resource_group_name = var.resource_group_name
+  ttl                 = 60
+  records             = [var.etcd_ip_v6_addresses[count.index]]
 }
 
 resource "azureprivatedns_srv_record" "etcd_cluster" {
@@ -57,7 +104,7 @@ resource "azureprivatedns_srv_record" "etcd_cluster" {
   ttl                 = 60
 
   dynamic "record" {
-    for_each = azureprivatedns_a_record.etcd_a_nodes.*.name
+    for_each = concat(azureprivatedns_a_record.etcd_a_nodes.*.name, azureprivatedns_aaaa_record.etcd_aaaa_nodes.*.name)
     iterator = name
     content {
       target   = "${name.value}.${azureprivatedns_zone.private.name}"

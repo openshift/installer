@@ -83,3 +83,20 @@ EOF
 
 }
 
+variable "use_ipv4" {
+  type = bool
+
+  description = <<EOF
+Should the cluster be created with ipv4 networking.
+EOF
+
+}
+
+variable "use_ipv6" {
+  type = bool
+
+  description = <<EOF
+Should the cluster be created with ipv6 networking.
+EOF
+
+}
