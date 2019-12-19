@@ -5,6 +5,7 @@
 # netaddr
 
 - hosts: all
+  gather_facts: no
 
   vars:
     cluster_subnet: "{{ os_infra_id }}-nodes"

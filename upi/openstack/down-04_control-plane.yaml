@@ -4,6 +4,7 @@
 # openstacksdk
 
 - hosts: all
+  gather_facts: no
 
   vars:
     cp_server: "{{ os_infra_id }}-master"

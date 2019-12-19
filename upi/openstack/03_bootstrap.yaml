@@ -5,6 +5,7 @@
 # netaddr
 
 - hosts: all
+  gather_facts: no
 
   vars:
     bootstrap_data: "{{ os_infra_id }}-bootstrap-ignition.json"

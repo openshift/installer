@@ -4,6 +4,7 @@
 # openstacksdk
 
 - hosts: all
+  gather_facts: no
 
   tasks:
   - name: 'Remove the cluster router'
