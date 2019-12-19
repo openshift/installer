@@ -825,7 +825,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid dual-stack configuration, bad platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
 				c.Networking = validDualStackNetworkingConfig()
 				return c
 			}(),
@@ -835,11 +835,11 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid single-stack IPv6 configuration, bad platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Platform = types.Platform{Azure: validAzurePlatform()}
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
 				c.Networking = validIPv6NetworkingConfig()
 				return c
 			}(),
-			expectedError: `Invalid value: "IPv6": IPv6 is not supported for this platform`,
+			expectedError: `Invalid value: "IPv6": single-stack IPv6 is not supported for this platform`,
 		},
 		{
 			name: "invalid dual-stack configuration, bad plugin",

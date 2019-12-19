@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"net"
+	"os"
 	"sort"
 	"strings"
 
@@ -134,10 +135,14 @@ func inferIPVersionFromInstallConfig(n *types.Networking) (hasIPv4, hasIPv6 bool
 			has := presence[k]
 			if ip.To4() != nil {
 				has.IPv4 = true
-				hasIPv4 = true
+				if k == "serviceNetwork" {
+					hasIPv4 = true
+				}
 			} else {
 				has.IPv6 = true
-				hasIPv6 = true
+				if k == "serviceNetwork" {
+					hasIPv6 = true
+				}
 			}
 			presence[k] = has
 		}
@@ -180,6 +185,7 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		}
 
 		switch {
+		case p.Azure != nil:
 		case p.BareMetal != nil:
 		case p.None != nil:
 		default:
@@ -204,8 +210,9 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		switch {
 		case p.BareMetal != nil:
 		case p.None != nil:
+		case p.Azure != nil && os.Getenv("OPENSHIFT_INSTALL_AZURE_EMULATE_SINGLESTACK_IPV6") == "true":
 		default:
-			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "IPv6 is not supported for this platform"))
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "single-stack IPv6 is not supported for this platform"))
 		}
 
 	case hasIPv4:
