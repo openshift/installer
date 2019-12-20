@@ -5,6 +5,7 @@
 # netaddr
 
 - hosts: all
+  gather_facts: no
 
   vars:
     compute_data: "worker.ign"
