@@ -7,11 +7,14 @@
 - hosts: all
   gather_facts: no
 
+  vars_files:
+  - metadata.json
   vars:
-    bootstrap_data: "{{ os_infra_id }}-bootstrap-ignition.json"
-
-    bootstrap_server: "{{ os_infra_id }}-bootstrap"
-    bootstrap_port: "{{ os_infra_id }}-bootstrap-port"
+    bootstrap_data: "{{ infraID }}-bootstrap-ignition.json"
+    bootstrap_server: "{{ infraID }}-bootstrap"
+    bootstrap_port: "{{ infraID }}-bootstrap-port"
+    os_network: "{{ infraID }}-network"
+    os_sg_master: "{{ infraID }}-master"
 
   tasks:
   - name: 'Create the bootstrap server port'
