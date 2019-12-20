@@ -13,6 +13,10 @@
     nodes_subnet: "{{ infraID }}-nodes"
     os_network: "{{ infraID }}-network"
     os_router: "{{ infraID }}-router"
+    os_port_api: "{{ infraID }}-api-port"
+    os_port_ingress: "{{ infraID }}-ingress-port"
+    os_sg_master: "{{ infraID }}-master"
+    os_sg_worker: "{{ infraID }}-worker"
 
   tasks:
   - name: 'Create the cluster network'
@@ -33,3 +37,35 @@
       network: "{{ os_external_network }}"
       interfaces:
       - "{{ nodes_subnet }}"
+
+  - name: 'Create the API port'
+    os_port:
+      name: "{{ os_port_api }}"
+      network: "{{ os_network }}"
+      security_groups:
+      - "{{ os_sg_master }}"
+      fixed_ips:
+      - subnet: "{{ nodes_subnet }}"
+        ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
+
+  - name: 'Create the Ingress port'
+    os_port:
+      name: "{{ os_port_ingress }}"
+      network: "{{ os_network }}"
+      security_groups:
+      - "{{ os_sg_worker }}"
+      fixed_ips:
+      - subnet: "{{ nodes_subnet }}"
+        ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
+
+  # NOTE: openstack ansible module doesn't allow attaching Floating IPs to
+  # ports, let's use the CLI instead
+  - name: 'Attach the API floating IP to API port'
+    command:
+      cmd: "openstack floating ip set --port {{ os_port_api }} {{ os_api_fip }}"
+
+  # NOTE: openstack ansible module doesn't allow attaching Floating IPs to
+  # ports, let's use the CLI instead
+  - name: 'Attach the Ingress floating IP to Ingress port'
+    command:
+      cmd: "openstack floating ip set --port {{ os_port_ingress }} {{ os_ingress_fip }}"
