@@ -5,12 +5,16 @@
 # netaddr
 
 - hosts: all
+  gather_facts: no
 
+  vars_files:
+  - metadata.json
   vars:
     compute_data: "worker.ign"
-
-    compute_server: "{{ os_infra_id }}-worker"
-    compute_port: "{{ os_infra_id }}-worker-port"
+    compute_server: "{{ infraID }}-worker"
+    compute_port: "{{ infraID }}-worker-port"
+    os_network: "{{ infraID }}-network"
+    os_sg_worker: "{{ infraID }}-worker"
 
     # These computed lists are used to feed the Ansible loops with the number
     # of iterations specified in the Inventory.

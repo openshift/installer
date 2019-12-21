@@ -3,7 +3,15 @@
 # ansible
 # openstacksdk
 
+
 - hosts: all
+  gather_facts: no
+
+  vars_files:
+  - metadata.json
+  vars:
+    os_sg_master: "{{ infraID }}-master"
+    os_sg_worker: "{{ infraID }}-worker"
 
   tasks:
   - name: 'Create the master security group'

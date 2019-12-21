@@ -64,9 +64,14 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 
 		// Host Details
 		hostMap := map[string]interface{}{
-			"name":         host.Name,
-			"port_address": host.BootMACAddress,
-			"driver":       accessDetails.Driver(),
+			"name":                 host.Name,
+			"port_address":         host.BootMACAddress,
+			"driver":               accessDetails.Driver(),
+			"boot_interface":       accessDetails.BootInterface(),
+			"management_interface": accessDetails.ManagementInterface(),
+			"power_interface":      accessDetails.PowerInterface(),
+			"raid_interface":       accessDetails.RAIDInterface(),
+			"vendor_interface":     accessDetails.VendorInterface(),
 		}
 
 		// Properties
@@ -84,7 +89,7 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		}
 
 		// Instance Info
-		// The rhcos-downloader container downloads the image, compresses it to speed up deployments
+		// The machine-os-downloader container downloads the image, compresses it to speed up deployments
 		// and then makes it available on bootstrapProvisioningIP via http
 		// The image is now formatted with a query string containing the sha256sum, we strip that here
 		// and it will be consumed for validation in https://github.com/openshift/ironic-rhcos-downloader
@@ -94,7 +99,7 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		}
 		imageURL.RawQuery = ""
 		imageURL.Fragment = ""
-		// We strip any .gz suffix because ironic-rhcos-downloader unzips the image
+		// We strip any .gz suffix because ironic-machine-os-downloader unzips the image
 		// ref https://github.com/openshift/ironic-rhcos-downloader/pull/12
 		imageFilename := path.Base(strings.TrimSuffix(imageURL.String(), ".gz"))
 		compressedImageFilename := strings.Replace(imageFilename, "openstack", "compressed", 1)

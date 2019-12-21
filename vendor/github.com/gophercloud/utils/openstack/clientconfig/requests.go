@@ -57,6 +57,10 @@ type ClientOpts struct {
 	// when authenticating directly with AuthInfo.
 	RegionName string
 
+	// EndpointType specifies whether to use the public, internal, or
+	// admin endpoint of a service.
+	EndpointType string
+
 	// YAMLOpts provides the ability to pass a customized set
 	// of options and methods for loading the YAML file.
 	// It takes a YAMLOptsBuilder interface that is defined
@@ -283,6 +287,17 @@ func GetCloudFromYAML(opts *ClientOpts) (*Cloud, error) {
 	// TODO: this is where reading vendor files should go be considered when not found in
 	// clouds-public.yml
 	// https://github.com/openstack/openstacksdk/tree/master/openstack/config/vendors
+
+	// Both Interface and EndpointType are valid settings in clouds.yaml,
+	// but we want to standardize on EndpointType for simplicity.
+	//
+	// If only Interface was set, we copy that to EndpointType to use as the setting.
+	// But in all other cases, EndpointType is used and Interface is cleared.
+	if cloud.Interface != "" && cloud.EndpointType == "" {
+		cloud.EndpointType = cloud.Interface
+	}
+
+	cloud.Interface = ""
 
 	return cloud, nil
 }
@@ -738,8 +753,27 @@ func NewServiceClient(service string, opts *ClientOpts) (*gophercloud.ServiceCli
 		region = v
 	}
 
+	// Determine the endpoint type to use.
+	// First, check if the OS_INTERFACE environment variable is set.
+	var endpointType string
+	if v := env.Getenv(envPrefix + "INTERFACE"); v != "" {
+		endpointType = v
+	}
+
+	// Next, check if the cloud entry sets an endpoint type.
+	if v := cloud.EndpointType; v != "" {
+		endpointType = v
+	}
+
+	// Finally, see if one was specified in the ClientOpts.
+	// If so, this takes precedence.
+	if v := opts.EndpointType; v != "" {
+		endpointType = v
+	}
+
 	eo := gophercloud.EndpointOpts{
-		Region: region,
+		Region:       region,
+		Availability: GetEndpointType(endpointType),
 	}
 
 	switch service {

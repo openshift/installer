@@ -195,3 +195,82 @@ network configuration, but fully supporting alternative subnets for the
 provisioning network is incomplete.
 
 https://github.com/openshift/installer/issues/2091
+
+## Troubleshooting
+
+General troubleshooting for OpenShift installations can be found
+[here](/docs/user/troubleshooting.md).
+
+### Bootstrap
+
+The bootstrap VM by default runs on the same host as the installer. This
+bootstrap VM runs the Ironic services needed to provision the control
+plane. Ironic being available is dependent on having successfully
+downloaded the machine OS and Ironic agent images. In some cases, this
+may fail, and the installer will report a timeout waiting for the Ironic
+API.
+
+To login to the bootstrap VM, you will need to ssh to the VM using the
+`core` user, and the SSH key defined in your install config.
+
+The VM obtains an IP address from your DHCP server on the external
+network. When using a development environment with
+[dev-scripts](https://github.com/openshift-metal3/dev-scripts), it uses
+the `baremetal` libvirt network unless an override is specified. The IP
+can be retrieved with `virsh net-dhcp-leases baremetal`. If the install
+is far enough along to have brought up the provisioning network, you may
+use the provisioning bootstrap IP which defaults to 172.22.0.2.
+
+Viewing the virtual machine's console with virt-manager may also be
+helpful.
+
+You can view the Ironic logs by sshing to the bootstrap VM, and
+examining the logs of the `ironic` service, `journalctl -u ironic`. You
+may also view the logs of the individual containers:
+
+  - `podman logs ipa-downloader`
+  - `podman logs coreos-downloader`
+  - `podman logs ironic`
+  - `podman logs ironic-inspector`
+  - `podman logs ironic-dnsmasq`
+
+
+
+### Control Plane
+
+Once Ironic is available, the installer will provision the three control
+plane hosts. For early failures, it may be useful to look at the console
+(using virt-manager if emulating baremetal with vbmc, or through the BMC
+like iDRAC) and see if there are any errors reported.
+
+Additionally, if the cluster comes up enough that the bootstrap is destroyed,
+but commands like `oc get clusteroperators` shows degraded operators, it
+may be useful to examine the logs of the pods within the
+`openshift-kni-infra` namespace.
+
+### Ironic
+
+You may want to examine Ironic itself and look at the state of the
+hosts. The below file, when named clouds.yaml and placed in the current
+working directory, can be used to communicate with Ironic using the
+openstack commandline utilities.
+
+```yaml
+clouds:
+  metal3-bootstrap:
+    auth_type: none
+    baremetal_endpoint_override: http://172.22.0.2:6385
+    baremetal_introspection_endpoint_override: http://172.22.0.2:5050
+  metal3:
+    auth_type: none
+    baremetal_endpoint_override: http://172.22.0.3:6385
+    baremetal_introspection_endpoint_override: http://172.22.0.3:5050
+```
+
+If bootstrap is still up, you can use metal3-bootstrap, otherwise use
+metal3 to examine Ironic running in the control plane:
+
+```
+export OS_CLOUD=metal3-bootstrap
+/usr/local/bin/openstack baremetal node list
+```

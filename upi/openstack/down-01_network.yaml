@@ -4,6 +4,14 @@
 # openstacksdk
 
 - hosts: all
+  gather_facts: no
+
+  vars_files:
+  - metadata.json
+  vars:
+    os_network: "{{ infraID }}-network"
+    os_router: "{{ infraID }}-router"
+
 
   tasks:
   - name: 'Remove the cluster router'

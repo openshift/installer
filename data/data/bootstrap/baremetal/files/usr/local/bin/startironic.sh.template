@@ -6,7 +6,7 @@ set -ex
 IRONIC_IMAGE=$(image_for ironic)
 IRONIC_INSPECTOR_IMAGE=$(image_for ironic-inspector)
 IPA_DOWNLOADER_IMAGE=$(image_for ironic-ipa-downloader)
-COREOS_DOWNLOADER_IMAGE=$(image_for ironic-rhcos-downloader)
+COREOS_DOWNLOADER_IMAGE=$(image_for ironic-machine-os-downloader || image_for ironic-rhcos-downloader)
 
 # This image is templated in via the installer pkg/asset/ignition/bootstrap/bootstrap.go
 RHCOS_BOOT_IMAGE_URL="{{.BootImage}}"
