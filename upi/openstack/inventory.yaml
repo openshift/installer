@@ -10,6 +10,10 @@ all:
       os_flavor_worker: 'm1.large'
       os_image_rhcos: 'rhcos'
       os_external_network: 'external'
+      # OpenShift API floating IP address
+      os_api_fip: '203.0.113.23'
+      # OpenShift Ingress floating IP address
+      os_ingress_fip: '203.0.113.19'
 
       # Number of provisioned Control Plane nodes
       # 3 is the minimum number for a fully-functional cluster.

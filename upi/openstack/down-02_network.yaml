@@ -11,13 +11,26 @@
   vars:
     os_network: "{{ infraID }}-network"
     os_router: "{{ infraID }}-router"
+    os_port_api: "{{ infraID }}-api-port"
+    os_port_ingress: "{{ infraID }}-ingress-port"
 
 
   tasks:
+  - name: 'Remove the API port'
+    os_port:
+      name: "{{ os_port_api }}"
+      state: absent
+
+  - name: 'Remove the Ingress port'
+    os_port:
+      name: "{{ os_port_ingress }}"
+      state: absent
+
   - name: 'Remove the cluster router'
     os_router:
       name: "{{ os_router }}"
       state: absent
+
   - name: 'Remove the cluster network'
     os_network:
       name: "{{ os_network }}"
