@@ -15,9 +15,12 @@ Since the installer requires the *Name* of your external network and Red Hat Cor
 If your external network's CIDR range is the same as one of the default network ranges, then you will need to change the matching network range by running the installer with a custom `install-config.yaml`. If users are experiencing unusual networking problems, please contact your cluster administrator and validate that none of your network CIDRs are overlapping with the external network. We were unfortunately unable to support validation for this due to a lack of support in gophercloud, and even if we were, it is likely that the CIDR range of the floating ip would only be accessible cluster administrators. The default network CIDR are as follows:
 
 ```txt
-machineCIDR:    10.0.0.0/16
-serviceNetwork: 172.30.0.0/16
-clusterNetwork: 10.128.0.0/14
+machineNetwork:
+- cidr: "10.0.0.0/16"
+serviceNetwork:
+- "172.30.0.0/16"
+clusterNetwork:
+- cidr: "10.128.0.0/14"
 ```
 
 ## Lack of default DNS servers on created subnets

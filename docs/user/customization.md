@@ -34,17 +34,18 @@ The following `install-config.yaml` properties are available:
     * `name` (required string): The name of the cluster.
         DNS records for the cluster are all subdomains of `{{.metadata.name}}.{{.baseDomain}}`.
 * `networking` (optional object): The configuration for the pod network provider in the cluster.
-    * `clusterNetwork` (optional array of objects): The IP address pool for pods.
+    * `clusterNetwork` (optional array of objects): The IP address pools for pods.
         The default is 10.128.0.0/14 with a host prefix of /23.
         * `cidr` (required [IP network](#ip-networks)): The IP block address pool.
         * `hostPrefix` (required integer): The prefix size to allocate to each node from the CIDR.
         For example, 24 would allocate 2^8=256 adresses to each node.
-    * `machineCIDR` (optional [IP network](#ip-networks)): The IP address pool for machines.
-        The default is 10.0.0.0/16 for all platforms other than libvirt.
-        For libvirt, the default is 192.168.126.0/24.
+    * `machineNetwork` (optional array of objects): The IP address pools for machines.
+        * `cidr` (required [IP network](#ip-networks)): The IP block address pool.
+            The default is 10.0.0.0/16 for all platforms other than libvirt.
+            For libvirt, the default is 192.168.126.0/24.
     * `networkType` (optional string): The type of network to install.
         The default is [OpenShiftSDN][openshift-sdn].
-    * `serviceNetwork` (optional array of [IP networks](#ip-networks)): The IP address pool for services.
+    * `serviceNetwork` (optional array of [IP networks](#ip-networks)): The IP address pools for services.
         The default is 172.30.0.0/16.
 * `platform` (required object): The configuration for the specific platform upon which to perform the installation.
     * `aws` (optional object): [AWS-specific properties](aws/customization.md#cluster-scoped-properties).
@@ -137,7 +138,8 @@ networking:
   clusterNetworks:
   - cidr: 10.128.0.0/14
     hostPrefix: 23
-  machineCIDR: 10.0.0.0/16
+  machineNetwork:
+  - cidr: 10.0.0.0/16
   networkType: OpenShiftSDN
   serviceNetwork:
   - 172.30.0.0/16
