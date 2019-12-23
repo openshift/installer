@@ -10,7 +10,7 @@
   vars_files:
   - metadata.json
   vars:
-    nodes_subnet: "{{ infraID }}-nodes"
+    os_subnet: "{{ infraID }}-nodes"
     os_network: "{{ infraID }}-network"
     os_router: "{{ infraID }}-router"
     os_port_api: "{{ infraID }}-api-port"
@@ -25,7 +25,7 @@
 
   - name: 'Create a subnet'
     os_subnet:
-      name: "{{ nodes_subnet }}"
+      name: "{{ os_subnet }}"
       network_name: "{{ os_network }}"
       cidr: "{{ os_subnet_range }}"
       allocation_pool_start: "{{ os_subnet_range | next_nth_usable(10) }}"
@@ -36,7 +36,7 @@
       name: "{{ os_router }}"
       network: "{{ os_external_network }}"
       interfaces:
-      - "{{ nodes_subnet }}"
+      - "{{ os_subnet }}"
 
   - name: 'Create the API port'
     os_port:
@@ -45,7 +45,7 @@
       security_groups:
       - "{{ os_sg_master }}"
       fixed_ips:
-      - subnet: "{{ nodes_subnet }}"
+      - subnet: "{{ os_subnet }}"
         ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
 
   - name: 'Create the Ingress port'
@@ -55,7 +55,7 @@
       security_groups:
       - "{{ os_sg_worker }}"
       fixed_ips:
-      - subnet: "{{ nodes_subnet }}"
+      - subnet: "{{ os_subnet }}"
         ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
 
   # NOTE: openstack ansible module doesn't allow attaching Floating IPs to
