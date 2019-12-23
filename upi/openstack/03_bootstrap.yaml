@@ -4,22 +4,15 @@
 # openstacksdk
 # netaddr
 
+- import_playbook: common.yaml
+
 - hosts: all
   gather_facts: no
-
-  vars_files:
-  - metadata.json
-  vars:
-    bootstrap_data: "{{ infraID }}-bootstrap-ignition.json"
-    bootstrap_server: "{{ infraID }}-bootstrap"
-    bootstrap_port: "{{ infraID }}-bootstrap-port"
-    os_network: "{{ infraID }}-network"
-    os_sg_master: "{{ infraID }}-master"
 
   tasks:
   - name: 'Create the bootstrap server port'
     os_port:
-      name: "{{ bootstrap_port }}"
+      name: "{{ os_port_bootstrap }}"
       network: "{{ os_network }}"
       security_groups:
       - "{{ os_sg_master }}"
@@ -29,16 +22,16 @@
 
   - name: 'Create the bootstrap server'
     os_server:
-      name: "{{ bootstrap_server }}"
+      name: "{{ os_bootstrap_server_name }}"
       image: "{{ os_image_rhcos }}"
       flavor: "{{ os_flavor_master }}"
-      userdata: "{{ lookup('file', bootstrap_data) | string }}"
+      userdata: "{{ lookup('file', os_bootstrap_ignition) | string }}"
       auto_ip: no
       nics:
-      - port-name: "{{ bootstrap_port }}"
+      - port-name: "{{ os_port_bootstrap }}"
 
   - name: 'Create the bootstrap floating IP'
     os_floating_ip:
       state: present
       network: "{{ os_external_network }}"
-      server: "{{ bootstrap_server }}"
+      server: "{{ os_bootstrap_server_name }}"

@@ -4,19 +4,10 @@
 # openstacksdk
 # netaddr
 
+- import_playbook: common.yaml
+
 - hosts: all
   gather_facts: no
-
-  vars_files:
-  - metadata.json
-  vars:
-    os_subnet: "{{ infraID }}-nodes"
-    os_network: "{{ infraID }}-network"
-    os_router: "{{ infraID }}-router"
-    os_port_api: "{{ infraID }}-api-port"
-    os_port_ingress: "{{ infraID }}-ingress-port"
-    os_sg_master: "{{ infraID }}-master"
-    os_sg_worker: "{{ infraID }}-worker"
 
   tasks:
   - name: 'Create the cluster network'

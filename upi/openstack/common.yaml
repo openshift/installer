@@ -1,0 +1,27 @@
+- hosts: localhost
+  gather_facts: no
+
+  vars_files:
+  - metadata.json
+
+  tasks:
+  - name: 'Compute resource names'
+    set_fact:
+      os_network: "{{ infraID }}-network"
+      os_subnet: "{{ infraID }}-nodes"
+      os_router: "{{ infraID }}-router"
+      # Port names
+      os_port_api: "{{ infraID }}-api-port"
+      os_port_ingress: "{{ infraID }}-ingress-port"
+      os_port_bootstrap: "{{ infraID }}-bootstrap-port"
+      os_port_master: "{{ infraID }}-master-port"
+      os_port_worker: "{{ infraID }}-worker-port"
+      # Security groups names
+      os_sg_master: "{{ infraID }}-master"
+      os_sg_worker: "{{ infraID }}-worker"
+      # Server names
+      os_bootstrap_server_name: "{{ infraID }}-bootstrap"
+      os_cp_server_name: "{{ infraID }}-master"
+      os_compute_server_name: "{{ infraID }}-worker"
+      # Ignition files
+      os_bootstrap_ignition: "{{ infraID }}-bootstrap-ignition.json"

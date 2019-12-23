@@ -3,29 +3,20 @@
 # ansible
 # openstacksdk
 
+- import_playbook: common.yaml
+
 - hosts: all
   gather_facts: no
-
-  vars_files:
-  - metadata.json
-  vars:
-    compute_server: "{{ infraID }}-worker"
-    compute_port: "{{ infraID }}-worker-port"
-
-    # These computed lists are used to feed the Ansible loops with the number
-    # of iterations specified in the Inventory.
-    compute_servers: "{{ [compute_server] * os_compute_nodes_number }}"
-    compute_ports: "{{ [compute_port] * os_compute_nodes_number }}"
 
   tasks:
   - name: 'Remove the Compute servers'
     os_server:
       name: "{{ item.1 }}-{{ item.0 }}"
       state: absent
-    with_indexed_items: "{{ compute_servers }}"
+    with_indexed_items: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
 
   - name: 'Remove the Compute ports'
     os_port:
       name: "{{ item.1 }}-{{ item.0 }}"
       state: absent
-    with_indexed_items: "{{ compute_ports }}"
+    with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"

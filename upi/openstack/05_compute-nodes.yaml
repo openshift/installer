@@ -4,22 +4,10 @@
 # openstacksdk
 # netaddr
 
+- import_playbook: common.yaml
+
 - hosts: all
   gather_facts: no
-
-  vars_files:
-  - metadata.json
-  vars:
-    compute_data: "worker.ign"
-    compute_server: "{{ infraID }}-worker"
-    compute_port: "{{ infraID }}-worker-port"
-    os_network: "{{ infraID }}-network"
-    os_sg_worker: "{{ infraID }}-worker"
-
-    # These computed lists are used to feed the Ansible loops with the number
-    # of iterations specified in the Inventory.
-    compute_servers: "{{ [compute_server] * os_compute_nodes_number }}"
-    compute_ports: "{{ [compute_port] * os_compute_nodes_number }}"
 
   tasks:
   - name: 'Create the Compute ports'
@@ -30,7 +18,7 @@
       - "{{ os_sg_worker }}"
       allowed_address_pairs:
       - ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
-    with_indexed_items: "{{ compute_ports }}"
+    with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"
 
   - name: 'Create the Compute servers'
     os_server:
@@ -38,7 +26,7 @@
       image: "{{ os_image_rhcos }}"
       flavor: "{{ os_flavor_worker }}"
       auto_ip: no
-      userdata: "{{ lookup('file', compute_data) | string }}"
+      userdata: "{{ lookup('file', 'worker.ign') | string }}"
       nics:
-      - port-name: "{{ compute_port }}-{{ item.0 }}"
-    with_indexed_items: "{{ compute_servers }}"
+      - port-name: "{{ os_port_worker }}-{{ item.0 }}"
+    with_indexed_items: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
