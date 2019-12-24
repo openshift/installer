@@ -14,8 +14,9 @@ import (
 // https://www.googleapis.com/compute/v1/projects/project-id/zones/us-central1-a/instances/instance-name
 // After trimming the service's base path, you get:
 // project-id/zones/us-central1-a/instances/instance-name
+// TODO: Find a better way to get the instance name and zone to account for changes in base path
 func (o *ClusterUninstaller) getInstanceNameAndZone(instanceURL string) (string, string) {
-	path := strings.TrimLeft(instanceURL, o.computeSvc.BasePath)
+	path := strings.TrimLeft(instanceURL, "https://www.googleapis.com/compute/v1/projects/")
 	parts := strings.Split(path, "/")
 	if len(parts) >= 5 {
 		return parts[4], parts[2]
