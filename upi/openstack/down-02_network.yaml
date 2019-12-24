@@ -3,17 +3,10 @@
 # ansible
 # openstacksdk
 
+- import_playbook: common.yaml
+
 - hosts: all
   gather_facts: no
-
-  vars_files:
-  - metadata.json
-  vars:
-    os_network: "{{ infraID }}-network"
-    os_router: "{{ infraID }}-router"
-    os_port_api: "{{ infraID }}-api-port"
-    os_port_ingress: "{{ infraID }}-ingress-port"
-
 
   tasks:
   - name: 'Remove the API port'

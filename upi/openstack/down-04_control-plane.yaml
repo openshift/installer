@@ -3,29 +3,20 @@
 # ansible
 # openstacksdk
 
+- import_playbook: common.yaml
+
 - hosts: all
   gather_facts: no
-
-  vars_files:
-  - metadata.json
-  vars:
-    cp_server: "{{ infraID }}-master"
-    cp_port: "{{ infraID }}-master-port"
-
-    # These computed lists are used to feed the Ansible loops with the number
-    # of iterations specified in the Inventory.
-    cp_servers: "{{ [cp_server] * os_cp_nodes_number }}"
-    cp_ports: "{{ [cp_port] * os_cp_nodes_number }}"
 
   tasks:
   - name: 'Remove the Control Plane servers'
     os_server:
       name: "{{ item.1 }}-{{ item.0 }}"
       state: absent
-    with_indexed_items: "{{ cp_servers }}"
+    with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
 
   - name: 'Remove the Control Plane ports'
     os_port:
       name: "{{ item.1 }}-{{ item.0 }}"
       state: absent
-    with_indexed_items: "{{ cp_ports }}"
+    with_indexed_items: "{{ [os_port_master] * os_cp_nodes_number }}"
