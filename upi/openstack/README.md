@@ -16,17 +16,13 @@ These Ansible playbooks in this directory automate some of those steps. They are
 
 * Python
 * Ansible
-* Python dependencies listed in the playbooks. Namely:
+* Python modules required in the playbooks. Namely:
   * openstacksdk
   * netaddr
+  * openstackclient
 
-This command installs all required rependencies on a Fedora-derived Linux distribution:
 
-```shell
-yum install python-openstackclient ansible python-openstacksdk python-netaddr
-```
-
-Alternatively, the included `requirements.txt` helps using `pip` for gathering the required dependencies in a Python virtual environment:
+The included `requirements.txt` helps using `pip` for gathering the required dependencies in a Python virtual environment:
 
 ```shell
 python3 -m venv venv

@@ -3,6 +3,7 @@
 # ansible
 # openstacksdk
 # netaddr
+# openstackclient
 
 - import_playbook: common.yaml
 
