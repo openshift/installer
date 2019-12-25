@@ -16,6 +16,7 @@ type Auth struct {
 	ClientID       string `json:"azure_client_id,omitempty"`
 	ClientSecret   string `json:"azure_client_secret,omitempty"`
 	TenantID       string `json:"azure_tenant_id,omitempty"`
+	Environment	   string `json:"azure_environment,omitempty"`
 }
 
 type config struct {

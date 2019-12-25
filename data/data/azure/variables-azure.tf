@@ -111,3 +111,8 @@ variable "azure_private" {
   type        = bool
   description = "This determines if this is a private cluster or not."
 }
+
+variable "azure_environment" {
+  type = string
+  description = "The azure environment"
+}

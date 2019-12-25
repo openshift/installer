@@ -36,7 +36,7 @@ type Credentials struct {
 	ClientSecret   			string `json:"clientSecret,omitempty"`
 	TenantID       			string `json:"tenantId,omitempty"`
 	ActiveDirectoryEndpoint string `json:"activeDirectoryEndpointUrl,omitempty"`
-	ResourceManagerEndpoint string `json:"activeDirectoryEndpointUrl,omitempty"`
+	ResourceManagerEndpoint string `json:"resourceManagerEndpointUrl,omitempty"`
 }
 
 // GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
@@ -57,6 +57,7 @@ func newSessionFromFile(authFilePath string) (*Session, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to retrieve credentials from user")
 		}
+		logrus.Debugln("Gathered Credentials ", credentials)
 		logrus.Infof("Saving user credentials to %q", authFilePath)
 		if err = saveCredentials(*credentials, authFilePath); err != nil {
 			return nil, errors.Wrap(err, "failed to save credentials")
@@ -133,12 +134,12 @@ func getCredentials(fs auth.FileSettings) (*Credentials, error) {
 		return nil, errors.New("could not retrieve tenantId from auth file")
 	}
 	activeDirectoryEndpoint := fs.Values[auth.ActiveDirectoryEndpoint]
-	if tenantID == "" {
+	if activeDirectoryEndpoint == "" {
 		return nil, errors.New("could not retrieve active directory endpoint from auth file")
 	}
 
 	resourceManagerEndpoint := fs.Values[auth.ResourceManagerEndpoint]
-	if tenantID == "" {
+	if resourceManagerEndpoint == "" {
 		return nil, errors.New("could not retrieve Resource Manager Endpoint from auth file")
 	}
 
@@ -216,9 +217,7 @@ func askForCredentials() (*Credentials, error) {
 			},
 		},
 	}, &clientSecret)
-	if err != nil {
-		return nil, err
-	}
+
 
 	environmentADEndpoint := ""
 	environmentResourceManagerEndpoint := ""
@@ -227,13 +226,17 @@ func askForCredentials() (*Credentials, error) {
 	case "public":
 		environmentADEndpoint = azureenv.PublicCloud.ActiveDirectoryEndpoint
 		environmentResourceManagerEndpoint = azureenv.PublicCloud.ResourceManagerEndpoint
-		break
 	case "usgovernment":
 		environmentADEndpoint = azureenv.USGovernmentCloud.ActiveDirectoryEndpoint
 		environmentResourceManagerEndpoint = azureenv.USGovernmentCloud.ResourceManagerEndpoint
-		break
 	default:
 		err = errors.New("Supported environment not selected")
+	}
+
+	logrus.Debugln("AD Endpoint ", environmentADEndpoint)
+	logrus.Debugln("Resource Manager Endpoint ", environmentResourceManagerEndpoint)	
+
+	if err != nil {
 		return nil, err
 	}
 

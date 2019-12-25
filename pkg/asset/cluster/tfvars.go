@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
+	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -193,12 +194,29 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+
+		//Determine user selected terraform environment from stored Azure active directory endpoint
+
+		env := ""
+		switch sess.Credentials.ActiveDirectoryEndpoint {
+		case azureenv.USGovernmentCloud.ActiveDirectoryEndpoint:
+			env = "usgovernment"
+			break
+		case azureenv.PublicCloud.ActiveDirectoryEndpoint:
+			env = "public"
+			break
+		default :
+			return errors.New("Unsupported Azure cloud detected, check Active Directory Endpoint")
+		}
+
 		auth := azuretfvars.Auth{
 			SubscriptionID: sess.Credentials.SubscriptionID,
 			ClientID:       sess.Credentials.ClientID,
 			ClientSecret:   sess.Credentials.ClientSecret,
 			TenantID:       sess.Credentials.TenantID,
+			Environment:	env,
 		}
+
 		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
