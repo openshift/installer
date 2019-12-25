@@ -50,12 +50,9 @@ func GetSession() (*Session, error) {
 }
 
 func newSessionFromFile(authFilePath string) (*Session, error) {
-	// NewAuthorizerFromFileWithResource uses `auth.GetSettingsFromFile`, which uses the `azureAuthEnv` to fetch the auth credentials.
-	// therefore setting the local env here to authFilePath allows NewAuthorizerFromFileWithResource to load credentials.
-	os.Setenv(azureAuthEnv, authFilePath)
-	_, err := auth.NewAuthorizerFromFileWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
+	_, err := os.Stat(authFilePath)
 	if err != nil {
-		logrus.Debug("Could not get an azure authorizer from file. Asking user to provide authentication info")
+		logrus.Debug("Azure configuration file not found, asking user to provide authentication info")
 		credentials, err := askForCredentials()
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to retrieve credentials from user")
@@ -65,6 +62,8 @@ func newSessionFromFile(authFilePath string) (*Session, error) {
 			return nil, errors.Wrap(err, "failed to save credentials")
 		}
 	}
+
+	os.Setenv(azureAuthEnv, authFilePath)
 
 	//If the authorizer worked right away, we need to read credentials details
 	authSettings, err := auth.GetSettingsFromFile()
