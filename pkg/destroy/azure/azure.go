@@ -45,25 +45,29 @@ type ClusterUninstaller struct {
 }
 
 func (o *ClusterUninstaller) configureClients() {
-	o.resourceGroupsClient = resources.NewGroupsGroupClient(o.SubscriptionID)
+	session, err := azuresession.GetSession()
+	if err != nil {
+		errors.New("Unable to get azure session")
+	}
+	o.resourceGroupsClient = resources.NewGroupsGroupClientWithBaseURI(session.Credentials.ResourceManagerEndpoint,o.SubscriptionID)
 	o.resourceGroupsClient.Authorizer = o.Authorizer
 
-	o.zonesClient = dns.NewZonesClient(o.SubscriptionID)
+	o.zonesClient = dns.NewZonesClientWithBaseURI(session.Credentials.ResourceManagerEndpoint,o.SubscriptionID)
 	o.zonesClient.Authorizer = o.Authorizer
 
-	o.recordsClient = dns.NewRecordSetsClient(o.SubscriptionID)
+	o.recordsClient = dns.NewRecordSetsClientWithBaseURI(session.Credentials.ResourceManagerEndpoint,o.SubscriptionID)
 	o.recordsClient.Authorizer = o.Authorizer
 
-	o.privateZonesClient = privatedns.NewPrivateZonesClient(o.SubscriptionID)
+	o.privateZonesClient = privatedns.NewPrivateZonesClientWithBaseURI(session.Credentials.ResourceManagerEndpoint,o.SubscriptionID)
 	o.privateZonesClient.Authorizer = o.Authorizer
 
-	o.privateRecordSetsClient = privatedns.NewRecordSetsClient(o.SubscriptionID)
+	o.privateRecordSetsClient = privatedns.NewRecordSetsClientWithBaseURI(session.Credentials.ResourceManagerEndpoint,o.SubscriptionID)
 	o.privateRecordSetsClient.Authorizer = o.Authorizer
 
-	o.serviceprincipalsClient = graphrbac.NewServicePrincipalsClient(o.TenantID)
+	o.serviceprincipalsClient = graphrbac.NewServicePrincipalsClientWithBaseURI(session.Credentials.ResourceManagerEndpoint,o.TenantID)
 	o.serviceprincipalsClient.Authorizer = o.GraphAuthorizer
 
-	o.applicationsClient = graphrbac.NewApplicationsClient(o.TenantID)
+	o.applicationsClient = graphrbac.NewApplicationsClientWithBaseURI(session.Credentials.ActiveDirectoryEndpoint,o.TenantID)
 	o.applicationsClient.Authorizer = o.GraphAuthorizer
 }
 
