@@ -31,10 +31,12 @@ type Session struct {
 
 //Credentials is the data type for credentials as understood by the azure sdk
 type Credentials struct {
-	SubscriptionID string `json:"subscriptionId,omitempty"`
-	ClientID       string `json:"clientId,omitempty"`
-	ClientSecret   string `json:"clientSecret,omitempty"`
-	TenantID       string `json:"tenantId,omitempty"`
+	SubscriptionID 			string `json:"subscriptionId,omitempty"`
+	ClientID       			string `json:"clientId,omitempty"`
+	ClientSecret   			string `json:"clientSecret,omitempty"`
+	TenantID       			string `json:"tenantId,omitempty"`
+	ActiveDirectoryEndpoint string `json:"activeDirectoryEndpointUrl,omitempty"`
+	ResourceManagerEndpoint string `json:"activeDirectoryEndpointUrl,omitempty"`
 }
 
 // GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
