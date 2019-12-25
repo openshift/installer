@@ -70,7 +70,7 @@ func getRegions() (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	client := azsub.NewClient()
+	client := azsub.NewClientWithBaseURI(session.Credentials.ResourceManagerEndpoint)
 	client.Authorizer = session.Authorizer
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()

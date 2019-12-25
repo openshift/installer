@@ -83,12 +83,26 @@ func newSessionFromFile(authFilePath string) (*Session, error) {
 		logrus.Infof("Credentials loaded from file %q", authFilePath)
 	})
 
-	authorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
+	//The struct use to store credentials doesn't have a suitable field to store the graph endpoint
+	//determining graph endpoint from active directory endpoint.
+	graphEndpoint := ""
+	switch credentials.ActiveDirectoryEndpoint {
+	case azureenv.PublicCloud.ActiveDirectoryEndpoint:
+		graphEndpoint = azureenv.PublicCloud.GraphEndpoint
+		break
+	case azureenv.USGovernmentCloud.ActiveDirectoryEndpoint:
+		graphEndpoint = azureenv.USGovernmentCloud.GraphEndpoint
+		break
+	default:
+		return nil, errors.Wrap(err, "Active directory endpoint doesn't match supported clouds")
+	}
+
+	authorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(credentials.ResourceManagerEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get client credentials authorizer from saved azure auth settings")
 	}
 
-	graphAuthorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(azureenv.PublicCloud.GraphEndpoint)
+	graphAuthorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(graphEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get GraphEndpoint authorizer from saved azure auth settings")
 	}
