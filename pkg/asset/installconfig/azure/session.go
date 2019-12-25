@@ -118,18 +118,47 @@ func getCredentials(fs auth.FileSettings) (*Credentials, error) {
 	if tenantID == "" {
 		return nil, errors.New("could not retrieve tenantId from auth file")
 	}
+	activeDirectoryEndpoint := fs.Values[auth.ActiveDirectoryEndpoint]
+	if tenantID == "" {
+		return nil, errors.New("could not retrieve active directory endpoint from auth file")
+	}
+
+	resourceManagerEndpoint := fs.Values[auth.ResourceManagerEndpoint]
+	if tenantID == "" {
+		return nil, errors.New("could not retrieve Resource Manager Endpoint from auth file")
+	}
+
+	
+
 	return &Credentials{
 		SubscriptionID: subscriptionID,
-		ClientID:       clientID,
-		ClientSecret:   clientSecret,
-		TenantID:       tenantID,
+		ClientID:       			clientID,
+		ClientSecret:   			clientSecret,
+		TenantID:       			tenantID,
+		ActiveDirectoryEndpoint: 	activeDirectoryEndpoint,
+		ResourceManagerEndpoint: 	resourceManagerEndpoint,
 	}, nil
 }
 
 func askForCredentials() (*Credentials, error) {
-	var subscriptionID, tenantID, clientID, clientSecret string
+	var subscriptionID, tenantID, clientID, clientSecret, environmentName string
+
+	environmentOptions := []string{"public","usgovernment"}
 
 	err := survey.Ask([]*survey.Question{
+		{
+			Prompt: &survey.Select {
+				Message: "azure environment name",
+				Help: "The Azure environment you are deploying to, most likely public",
+				Options: environmentOptions,
+			},
+		},
+	}, &environmentName)
+	if err != nil {		
+		return nil, err
+	}
+
+	err = survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
 				Message: "azure subscription id",
@@ -177,11 +206,30 @@ func askForCredentials() (*Credentials, error) {
 		return nil, err
 	}
 
+	environmentADEndpoint := ""
+	environmentResourceManagerEndpoint := ""
+
+	switch environmentName {
+	case "public":
+		environmentADEndpoint = azureenv.PublicCloud.ActiveDirectoryEndpoint
+		environmentResourceManagerEndpoint = azureenv.PublicCloud.ResourceManagerEndpoint
+		break
+	case "usgovernment":
+		environmentADEndpoint = azureenv.USGovernmentCloud.ActiveDirectoryEndpoint
+		environmentResourceManagerEndpoint = azureenv.USGovernmentCloud.ResourceManagerEndpoint
+		break
+	default:
+		err = errors.New("Supported environment not selected")
+		return nil, err
+	}
+
 	return &Credentials{
 		SubscriptionID: subscriptionID,
-		ClientID:       clientID,
-		ClientSecret:   clientSecret,
-		TenantID:       tenantID,
+		ClientID:       			clientID,
+		ClientSecret:   			clientSecret,
+		TenantID:       			tenantID,
+		ActiveDirectoryEndpoint:	environmentADEndpoint,
+		ResourceManagerEndpoint:	environmentResourceManagerEndpoint,
 	}, nil
 }
 
