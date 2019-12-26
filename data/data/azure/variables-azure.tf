@@ -113,6 +113,11 @@ variable "azure_private" {
 }
 
 variable "azure_environment" {
-  type = string
+  type        = string
   description = "The azure environment"
+}
+
+variable "azure_supports_private_dns" {
+  type        = bool
+  description = "Does the targeted environment support private dns zones"
 }

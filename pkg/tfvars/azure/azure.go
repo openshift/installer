@@ -36,6 +36,7 @@ type config struct {
 	ComputeSubnet               string            `json:"azure_compute_subnet"`
 	PreexistingNetwork          bool              `json:"azure_preexisting_network"`
 	Private                     bool              `json:"azure_private"`
+	PrivateDNSSupported			bool			  `json:"azure_supports_private_dns"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -61,6 +62,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		masterAvailabilityZones[i] = to.String(c.Zone)
 	}
 
+	privateDNSSupport := sources.Auth.Environment == "public"
+
 	cfg := &config{
 		Auth:                        sources.Auth,
 		Region:                      region,
@@ -71,6 +74,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VolumeSize:                  masterConfig.OSDisk.DiskSizeGB,
 		ImageURL:                    sources.ImageURL,
 		Private:                     sources.Publish == types.InternalPublishingStrategy,
+		PrivateDNSSupported:		 privateDNSSupport,
 		BaseDomainResourceGroupName: sources.BaseDomainResourceGroupName,
 		NetworkResourceGroupName:    masterConfig.NetworkResourceGroup,
 		VirtualNetwork:              masterConfig.Vnet,

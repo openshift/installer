@@ -59,3 +59,13 @@ variable "private" {
   type        = bool
   description = "This value determines if this is a private cluster or not."
 }
+
+variable "azure_supports_private_dns" {
+  type        = bool
+  description = "Determines how dns records are created"
+}
+
+variable "azure_cluster_dns_zone_name"{
+  type        = string
+  description = "Name of dns zone created to store internal cluster records"
+}
