@@ -113,20 +113,6 @@ func resourceArmBatchPool() *schema.Resource {
 					},
 				},
 			},
-			"container_configuration": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"type": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							ValidateFunc: validate.NoEmptyStrings,
-						},
-					},
-				},
-			},
 			"storage_image_reference": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -399,17 +385,10 @@ func resourceArmBatchPoolCreate(d *schema.ResourceData, meta interface{}) error 
 		parameters.PoolProperties.StartTask = startTask
 	}
 
-	containerConfigurationSet := d.Get("container_configuration").([]interface{})
-	containerConfiguration, err := azure.ExpandBatchPoolContainerConfiguration(containerConfigurationSet)
-	if err != nil {
-		return fmt.Errorf("Error creating Batch pool %q (Resource Group %q): %+v", poolName, resourceGroup, err)
-	}
-
 	parameters.PoolProperties.DeploymentConfiguration = &batch.DeploymentConfiguration{
 		VirtualMachineConfiguration: &batch.VirtualMachineConfiguration{
-			NodeAgentSkuID:         &nodeAgentSkuID,
-			ImageReference:         imageReference,
-			ContainerConfiguration: containerConfiguration,
+			NodeAgentSkuID: &nodeAgentSkuID,
+			ImageReference: imageReference,
 		},
 	}
 
@@ -586,12 +565,6 @@ func resourceArmBatchPoolRead(d *schema.ResourceData, meta interface{}) error {
 
 			d.Set("storage_image_reference", azure.FlattenBatchPoolImageReference(imageReference))
 			d.Set("node_agent_sku_id", props.DeploymentConfiguration.VirtualMachineConfiguration.NodeAgentSkuID)
-		}
-
-		if dcfg := props.DeploymentConfiguration; dcfg != nil {
-			if vmcfg := dcfg.VirtualMachineConfiguration; vmcfg != nil {
-				d.Set("container_configuration", azure.FlattenBatchPoolContainerConfiguration(vmcfg.ContainerConfiguration))
-			}
 		}
 
 		if err := d.Set("certificate", azure.FlattenBatchPoolCertificateReferences(props.Certificates)); err != nil {

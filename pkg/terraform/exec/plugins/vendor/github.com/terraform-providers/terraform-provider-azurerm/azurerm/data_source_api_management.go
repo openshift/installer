@@ -255,8 +255,8 @@ func flattenDataSourceApiManagementHostnameConfigurations(input *[]apimanagement
 	return []interface{}{
 		map[string]interface{}{
 			"management": managementResults,
-			"portal":     portalResults,
-			"proxy":      proxyResults,
+			"portal":     proxyResults,
+			"proxy":      portalResults,
 			"scm":        scmResults,
 		},
 	}

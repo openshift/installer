@@ -2,7 +2,7 @@ package ironic
 
 import (
 	"github.com/gophercloud/gophercloud/openstack/baremetal/v1/ports"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func resourcePortV1() *schema.Resource {

@@ -3,7 +3,7 @@ package ironic
 import (
 	"fmt"
 	"github.com/gophercloud/gophercloud/openstack/baremetalintrospection/v1/introspection"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform/helper/schema"
 	"time"
 )
 

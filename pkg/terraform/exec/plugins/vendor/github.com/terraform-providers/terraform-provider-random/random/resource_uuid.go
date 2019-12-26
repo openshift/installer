@@ -3,13 +3,13 @@ package random
 import (
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/go-uuid"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func resourceUuid() *schema.Resource {
 	return &schema.Resource{
 		Create: CreateUuid,
-		Read:   schema.Noop,
+		Read:   RepopulateUuid,
 		Delete: schema.RemoveFromState,
 		Importer: &schema.ResourceImporter{
 			State: ImportUuid,
@@ -37,6 +37,10 @@ func CreateUuid(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.Set("result", result)
 	d.SetId(result)
+	return nil
+}
+
+func RepopulateUuid(d *schema.ResourceData, _ interface{}) error {
 	return nil
 }
 

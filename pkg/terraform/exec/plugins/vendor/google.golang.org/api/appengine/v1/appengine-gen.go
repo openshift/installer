@@ -53,8 +53,8 @@ import (
 	"strconv"
 	"strings"
 
+	gensupport "google.golang.org/api/gensupport"
 	googleapi "google.golang.org/api/googleapi"
-	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
 	htransport "google.golang.org/api/transport/http"
 )
@@ -2420,8 +2420,8 @@ type Operation struct {
 
 	// Name: The server-assigned name, which is only unique within the same
 	// service that originally returns it. If you use the default HTTP
-	// mapping, the name should be a resource name ending with
-	// operations/{unique_id}.
+	// mapping, the name should have the format of
+	// operations/some/unique/name.
 	Name string `json:"name,omitempty"`
 
 	// Response: The normal response of the operation in case of success. If
@@ -3072,11 +3072,43 @@ func (s *StaticFilesHandler) MarshalJSON() ([]byte, error) {
 
 // Status: The Status type defines a logical error model that is
 // suitable for different programming environments, including REST APIs
-// and RPC APIs. It is used by gRPC (https://github.com/grpc). Each
-// Status message contains three pieces of data: error code, error
-// message, and error details.You can find out more about this error
-// model and how to work with it in the API Design Guide
-// (https://cloud.google.com/apis/design/errors).
+// and RPC APIs. It is used by gRPC (https://github.com/grpc). The error
+// model is designed to be:
+// Simple to use and understand for most users
+// Flexible enough to meet unexpected needsOverviewThe Status message
+// contains three pieces of data: error code, error message, and error
+// details. The error code should be an enum value of google.rpc.Code,
+// but it may accept additional error codes if needed. The error message
+// should be a developer-facing English message that helps developers
+// understand and resolve the error. If a localized user-facing error
+// message is needed, put the localized message in the error details or
+// localize it in the client. The optional error details may contain
+// arbitrary information about the error. There is a predefined set of
+// error detail types in the package google.rpc that can be used for
+// common error conditions.Language mappingThe Status message is the
+// logical representation of the error model, but it is not necessarily
+// the actual wire format. When the Status message is exposed in
+// different client libraries and different wire protocols, it can be
+// mapped differently. For example, it will likely be mapped to some
+// exceptions in Java, but more likely mapped to some error codes in
+// C.Other usesThe error model and the Status message can be used in a
+// variety of environments, either with or without APIs, to provide a
+// consistent developer experience across different environments.Example
+// uses of this error model include:
+// Partial errors. If a service needs to return partial errors to the
+// client, it may embed the Status in the normal response to indicate
+// the partial errors.
+// Workflow errors. A typical workflow has multiple steps. Each step may
+// have a Status message for error reporting.
+// Batch operations. If a client uses batch request and batch response,
+// the Status message should be used directly inside batch response, one
+// for each error sub-response.
+// Asynchronous operations. If an API call embeds asynchronous operation
+// results in its response, the status of those operations should be
+// represented directly using the Status message.
+// Logging. If some API errors are stored in logs, the message Status
+// could be used directly after any stripping needed for
+// security/privacy reasons.
 type Status struct {
 	// Code: The status code, which should be an enum value of
 	// google.rpc.Code.
@@ -3704,7 +3736,6 @@ func (c *AppsCreateCall) Header() http.Header {
 
 func (c *AppsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3840,7 +3871,6 @@ func (c *AppsGetCall) Header() http.Header {
 
 func (c *AppsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3988,7 +4018,6 @@ func (c *AppsPatchCall) Header() http.Header {
 
 func (c *AppsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4102,11 +4131,7 @@ type AppsRepairCall struct {
 // App Engine application, for example a Cloud Storage bucket or App
 // Engine service account. Use this method if you receive an error
 // message about a missing feature, for example, Error retrieving the
-// App Engine service account. If you have deleted your App Engine
-// service account, this will not be able to recreate it. Instead, you
-// should attempt to use the IAM undelete API if possible at
-// https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/undelete?apix_params=%7B"name"%3A"projects%2F-%2FserviceAccounts%2Funique_id"%2C"resource"%3A%7B%7D%7D . If the deletion was recent, the numeric ID can be found in the Cloud Console Activity
-// Log.
+// App Engine service account.
 func (r *AppsService) Repair(appsId string, repairapplicationrequest *RepairApplicationRequest) *AppsRepairCall {
 	c := &AppsRepairCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -4141,7 +4166,6 @@ func (c *AppsRepairCall) Header() http.Header {
 
 func (c *AppsRepairCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4205,7 +4229,7 @@ func (c *AppsRepairCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
 	}
 	return ret, nil
 	// {
-	//   "description": "Recreates the required App Engine features for the specified App Engine application, for example a Cloud Storage bucket or App Engine service account. Use this method if you receive an error message about a missing feature, for example, Error retrieving the App Engine service account. If you have deleted your App Engine service account, this will not be able to recreate it. Instead, you should attempt to use the IAM undelete API if possible at https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/undelete?apix_params=%7B\"name\"%3A\"projects%2F-%2FserviceAccounts%2Funique_id\"%2C\"resource\"%3A%7B%7D%7D . If the deletion was recent, the numeric ID can be found in the Cloud Console Activity Log.",
+	//   "description": "Recreates the required App Engine features for the specified App Engine application, for example a Cloud Storage bucket or App Engine service account. Use this method if you receive an error message about a missing feature, for example, Error retrieving the App Engine service account.",
 	//   "flatPath": "v1/apps/{appsId}:repair",
 	//   "httpMethod": "POST",
 	//   "id": "appengine.apps.repair",
@@ -4280,7 +4304,6 @@ func (c *AppsAuthorizedCertificatesCreateCall) Header() http.Header {
 
 func (c *AppsAuthorizedCertificatesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4419,7 +4442,6 @@ func (c *AppsAuthorizedCertificatesDeleteCall) Header() http.Header {
 
 func (c *AppsAuthorizedCertificatesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4580,7 +4602,6 @@ func (c *AppsAuthorizedCertificatesGetCall) Header() http.Header {
 
 func (c *AppsAuthorizedCertificatesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4768,7 +4789,6 @@ func (c *AppsAuthorizedCertificatesListCall) Header() http.Header {
 
 func (c *AppsAuthorizedCertificatesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4960,7 +4980,6 @@ func (c *AppsAuthorizedCertificatesPatchCall) Header() http.Header {
 
 func (c *AppsAuthorizedCertificatesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5136,7 +5155,6 @@ func (c *AppsAuthorizedDomainsListCall) Header() http.Header {
 
 func (c *AppsAuthorizedDomainsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5320,7 +5338,6 @@ func (c *AppsDomainMappingsCreateCall) Header() http.Header {
 
 func (c *AppsDomainMappingsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5471,7 +5488,6 @@ func (c *AppsDomainMappingsDeleteCall) Header() http.Header {
 
 func (c *AppsDomainMappingsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5621,7 +5637,6 @@ func (c *AppsDomainMappingsGetCall) Header() http.Header {
 
 func (c *AppsDomainMappingsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5788,7 +5803,6 @@ func (c *AppsDomainMappingsListCall) Header() http.Header {
 
 func (c *AppsDomainMappingsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5969,7 +5983,6 @@ func (c *AppsDomainMappingsPatchCall) Header() http.Header {
 
 func (c *AppsDomainMappingsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6126,7 +6139,6 @@ func (c *AppsFirewallIngressRulesBatchUpdateCall) Header() http.Header {
 
 func (c *AppsFirewallIngressRulesBatchUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6265,7 +6277,6 @@ func (c *AppsFirewallIngressRulesCreateCall) Header() http.Header {
 
 func (c *AppsFirewallIngressRulesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6404,7 +6415,6 @@ func (c *AppsFirewallIngressRulesDeleteCall) Header() http.Header {
 
 func (c *AppsFirewallIngressRulesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6554,7 +6564,6 @@ func (c *AppsFirewallIngressRulesGetCall) Header() http.Header {
 
 func (c *AppsFirewallIngressRulesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6730,7 +6739,6 @@ func (c *AppsFirewallIngressRulesListCall) Header() http.Header {
 
 func (c *AppsFirewallIngressRulesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6912,7 +6920,6 @@ func (c *AppsFirewallIngressRulesPatchCall) Header() http.Header {
 
 func (c *AppsFirewallIngressRulesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7076,7 +7083,6 @@ func (c *AppsLocationsGetCall) Header() http.Header {
 
 func (c *AppsLocationsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7251,7 +7257,6 @@ func (c *AppsLocationsListCall) Header() http.Header {
 
 func (c *AppsLocationsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7437,7 +7442,6 @@ func (c *AppsOperationsGetCall) Header() http.Header {
 
 func (c *AppsOperationsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7620,7 +7624,6 @@ func (c *AppsOperationsListCall) Header() http.Header {
 
 func (c *AppsOperationsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7793,7 +7796,6 @@ func (c *AppsServicesDeleteCall) Header() http.Header {
 
 func (c *AppsServicesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7943,7 +7945,6 @@ func (c *AppsServicesGetCall) Header() http.Header {
 
 func (c *AppsServicesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8110,7 +8111,6 @@ func (c *AppsServicesListCall) Header() http.Header {
 
 func (c *AppsServicesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8307,7 +8307,6 @@ func (c *AppsServicesPatchCall) Header() http.Header {
 
 func (c *AppsServicesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8467,7 +8466,6 @@ func (c *AppsServicesVersionsCreateCall) Header() http.Header {
 
 func (c *AppsServicesVersionsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8616,7 +8614,6 @@ func (c *AppsServicesVersionsDeleteCall) Header() http.Header {
 
 func (c *AppsServicesVersionsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8789,7 +8786,6 @@ func (c *AppsServicesVersionsGetCall) Header() http.Header {
 
 func (c *AppsServicesVersionsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8986,7 +8982,6 @@ func (c *AppsServicesVersionsListCall) Header() http.Header {
 
 func (c *AppsServicesVersionsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9236,7 +9231,6 @@ func (c *AppsServicesVersionsPatchCall) Header() http.Header {
 
 func (c *AppsServicesVersionsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9409,7 +9403,6 @@ func (c *AppsServicesVersionsInstancesDebugCall) Header() http.Header {
 
 func (c *AppsServicesVersionsInstancesDebugCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9539,18 +9532,7 @@ type AppsServicesVersionsInstancesDeleteCall struct {
 	header_     http.Header
 }
 
-// Delete: Stops a running instance.The instance might be automatically
-// recreated based on the scaling settings of the version. For more
-// information, see "How Instances are Managed" (standard environment
-// (https://cloud.google.com/appengine/docs/standard/python/how-instances
-// -are-managed) | flexible environment
-// (https://cloud.google.com/appengine/docs/flexible/python/how-instances
-// -are-managed)).To ensure that instances are not re-created and avoid
-// getting billed, you can stop all instances within the target version
-// by changing the serving status of the version to STOPPED with the
-// apps.services.versions.patch
-// (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/a
-// pps.services.versions/patch) method.
+// Delete: Stops a running instance.
 func (r *AppsServicesVersionsInstancesService) Delete(appsId string, servicesId string, versionsId string, instancesId string) *AppsServicesVersionsInstancesDeleteCall {
 	c := &AppsServicesVersionsInstancesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -9587,7 +9569,6 @@ func (c *AppsServicesVersionsInstancesDeleteCall) Header() http.Header {
 
 func (c *AppsServicesVersionsInstancesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9649,7 +9630,7 @@ func (c *AppsServicesVersionsInstancesDeleteCall) Do(opts ...googleapi.CallOptio
 	}
 	return ret, nil
 	// {
-	//   "description": "Stops a running instance.The instance might be automatically recreated based on the scaling settings of the version. For more information, see \"How Instances are Managed\" (standard environment (https://cloud.google.com/appengine/docs/standard/python/how-instances-are-managed) | flexible environment (https://cloud.google.com/appengine/docs/flexible/python/how-instances-are-managed)).To ensure that instances are not re-created and avoid getting billed, you can stop all instances within the target version by changing the serving status of the version to STOPPED with the apps.services.versions.patch (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.services.versions/patch) method.",
+	//   "description": "Stops a running instance.",
 	//   "flatPath": "v1/apps/{appsId}/services/{servicesId}/versions/{versionsId}/instances/{instancesId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "appengine.apps.services.versions.instances.delete",
@@ -9757,7 +9738,6 @@ func (c *AppsServicesVersionsInstancesGetCall) Header() http.Header {
 
 func (c *AppsServicesVersionsInstancesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9947,7 +9927,6 @@ func (c *AppsServicesVersionsInstancesListCall) Header() http.Header {
 
 func (c *AppsServicesVersionsInstancesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

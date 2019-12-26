@@ -8,7 +8,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/preview/operationalinsights/mgmt/2015-11-01-preview/operationalinsights"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
@@ -41,14 +40,14 @@ func resourceArmLogAnalyticsWorkspace() *schema.Resource {
 				ForceNew: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					string(operationalinsights.Free),
-					string(operationalinsights.PerGB2018),
 					string(operationalinsights.PerNode),
 					string(operationalinsights.Premium),
 					string(operationalinsights.Standalone),
 					string(operationalinsights.Standard),
-					string("Unlimited"), // TODO check if this is actually no longer valid, removed in v28.0.0 of the SDK
+					string(operationalinsights.Unlimited),
+					string(operationalinsights.PerGB2018),
 				}, true),
-				DiffSuppressFunc: suppress.CaseDifference,
+				DiffSuppressFunc: ignoreCaseDiffSuppressFunc,
 			},
 
 			"retention_in_days": {

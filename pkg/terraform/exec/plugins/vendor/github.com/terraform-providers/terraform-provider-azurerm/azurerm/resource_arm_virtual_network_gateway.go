@@ -80,15 +80,21 @@ func resourceArmVirtualNetworkGateway() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				DiffSuppressFunc: suppress.CaseDifference,
-				// This validator checks for all possible values for the SKU regardless of the attributes vpn_type and
-				// type. For a validation which depends on the attributes vpn_type and type, refer to the special case
-				// validators validateArmVirtualNetworkGatewayPolicyBasedVpnSku, validateArmVirtualNetworkGatewayRouteBasedVpnSku
-				// and validateArmVirtualNetworkGatewayExpressRouteSku.
-				ValidateFunc: validation.Any(
-					validateArmVirtualNetworkGatewayPolicyBasedVpnSku(),
-					validateArmVirtualNetworkGatewayRouteBasedVpnSku(),
-					validateArmVirtualNetworkGatewayExpressRouteSku(),
-				),
+				ValidateFunc: validation.StringInSlice([]string{
+					string(network.VirtualNetworkGatewaySkuTierBasic),
+					string(network.VirtualNetworkGatewaySkuTierStandard),
+					string(network.VirtualNetworkGatewaySkuTierHighPerformance),
+					string(network.VirtualNetworkGatewaySkuTierUltraPerformance),
+					string(network.VirtualNetworkGatewaySkuNameVpnGw1),
+					string(network.VirtualNetworkGatewaySkuNameVpnGw2),
+					string(network.VirtualNetworkGatewaySkuNameVpnGw3),
+					string(network.VirtualNetworkGatewaySkuNameErGw1AZ),
+					string(network.VirtualNetworkGatewaySkuNameErGw2AZ),
+					string(network.VirtualNetworkGatewaySkuNameErGw3AZ),
+					string(network.VirtualNetworkGatewaySkuNameVpnGw1AZ),
+					string(network.VirtualNetworkGatewaySkuNameVpnGw2AZ),
+					string(network.VirtualNetworkGatewaySkuNameVpnGw3AZ),
+				}, true),
 			},
 
 			"ip_configuration": {
@@ -368,11 +374,13 @@ func resourceArmVirtualNetworkGatewayRead(d *schema.ResourceData, meta interface
 			return fmt.Errorf("Error setting `ip_configuration`: %+v", err)
 		}
 
-		if err := d.Set("vpn_client_configuration", flattenArmVirtualNetworkGatewayVpnClientConfig(gw.VpnClientConfiguration)); err != nil {
+		vpnConfigFlat := flattenArmVirtualNetworkGatewayVpnClientConfig(gw.VpnClientConfiguration)
+		if err := d.Set("vpn_client_configuration", vpnConfigFlat); err != nil {
 			return fmt.Errorf("Error setting `vpn_client_configuration`: %+v", err)
 		}
 
-		if err := d.Set("bgp_settings", flattenArmVirtualNetworkGatewayBgpSettings(gw.BgpSettings)); err != nil {
+		bgpSettingsFlat := flattenArmVirtualNetworkGatewayBgpSettings(gw.BgpSettings)
+		if err := d.Set("bgp_settings", bgpSettingsFlat); err != nil {
 			return fmt.Errorf("Error setting `bgp_settings`: %+v", err)
 		}
 	}
@@ -638,13 +646,18 @@ func flattenArmVirtualNetworkGatewayVpnClientConfig(cfg *network.VpnClientConfig
 	if cfg == nil {
 		return []interface{}{}
 	}
+
 	flat := make(map[string]interface{})
 
+	addressSpace := make([]interface{}, 0)
 	if pool := cfg.VpnClientAddressPool; pool != nil {
-		flat["address_space"] = utils.FlattenStringSlice(pool.AddressPrefixes)
-	} else {
-		flat["address_space"] = []interface{}{}
+		if prefixes := pool.AddressPrefixes; prefixes != nil {
+			for _, addr := range *prefixes {
+				addressSpace = append(addressSpace, addr)
+			}
+		}
 	}
+	flat["address_space"] = addressSpace
 
 	rootCerts := make([]interface{}, 0)
 	if certs := cfg.VpnClientRootCertificates; certs != nil {
@@ -760,9 +773,6 @@ func validateArmVirtualNetworkGatewayRouteBasedVpnSku() schema.SchemaValidateFun
 		string(network.VirtualNetworkGatewaySkuNameVpnGw1),
 		string(network.VirtualNetworkGatewaySkuNameVpnGw2),
 		string(network.VirtualNetworkGatewaySkuNameVpnGw3),
-		string(network.VirtualNetworkGatewaySkuNameVpnGw1AZ),
-		string(network.VirtualNetworkGatewaySkuNameVpnGw2AZ),
-		string(network.VirtualNetworkGatewaySkuNameVpnGw3AZ),
 	}, true)
 }
 

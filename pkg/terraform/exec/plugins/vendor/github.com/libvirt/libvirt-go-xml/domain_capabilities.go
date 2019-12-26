@@ -37,7 +37,7 @@ type DomainCaps struct {
 	Arch      string               `xml:"arch"`
 	VCPU      *DomainCapsVCPU      `xml:"vcpu"`
 	IOThreads *DomainCapsIOThreads `xml:"iothreads"`
-	OS        *DomainCapsOS        `xml:"os"`
+	OS        DomainCapsOS         `xml:"os"`
 	CPU       *DomainCapsCPU       `xml:"cpu"`
 	Devices   *DomainCapsDevices   `xml:"devices"`
 	Features  *DomainCapsFeatures  `xml:"features"`
@@ -50,7 +50,6 @@ type DomainCapsVCPU struct {
 type DomainCapsOS struct {
 	Supported string              `xml:"supported,attr"`
 	Loader    *DomainCapsOSLoader `xml:"loader"`
-	Enums     []DomainCapsEnum    `xml:"enum"`
 }
 
 type DomainCapsOSLoader struct {
@@ -96,7 +95,6 @@ type DomainCapsDevices struct {
 	Graphics *DomainCapsDevice `xml:"graphics"`
 	Video    *DomainCapsDevice `xml:"video"`
 	HostDev  *DomainCapsDevice `xml:"hostdev"`
-	RNG      *DomainCapsDevice `xml:"rng"`
 }
 
 type DomainCapsDevice struct {
@@ -105,11 +103,10 @@ type DomainCapsDevice struct {
 }
 
 type DomainCapsFeatures struct {
-	GIC               *DomainCapsFeatureGIC               `xml:"gic"`
-	VMCoreInfo        *DomainCapsFeatureVMCoreInfo        `xml:"vmcoreinfo"`
-	GenID             *DomainCapsFeatureGenID             `xml:"genid"`
-	BackingStoreInput *DomainCapsFeatureBackingStoreInput `xml:"backingStoreInput"`
-	SEV               *DomainCapsFeatureSEV               `xml:"sev"`
+	GIC        *DomainCapsFeatureGIC        `xml:"gic"`
+	VMCoreInfo *DomainCapsFeatureVMCoreInfo `xml:"vmcoreinfo"`
+	GenID      *DomainCapsFeatureGenID      `xml:"genid"`
+	SEV        *DomainCapsFeatureSEV        `xml:"sev"`
 }
 
 type DomainCapsFeatureGIC struct {
@@ -122,10 +119,6 @@ type DomainCapsFeatureVMCoreInfo struct {
 }
 
 type DomainCapsFeatureGenID struct {
-	Supported string `xml:"supported,attr"`
-}
-
-type DomainCapsFeatureBackingStoreInput struct {
 	Supported string `xml:"supported,attr"`
 }
 

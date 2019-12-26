@@ -612,7 +612,7 @@ func expandKeyVaultCertificatePolicy(d *schema.ResourceData) keyvault.Certificat
 		cert := v.(map[string]interface{})
 
 		ekus := cert["extended_key_usage"].([]interface{})
-		extendedKeyUsage := utils.ExpandStringSlice(ekus)
+		extendedKeyUsage := utils.ExpandStringArray(ekus)
 
 		keyUsage := make([]keyvault.KeyUsageType, 0)
 		keys := cert["key_usage"].([]interface{})
@@ -629,17 +629,17 @@ func expandKeyVaultCertificatePolicy(d *schema.ResourceData) keyvault.Certificat
 
 					emails := san["emails"].([]interface{})
 					if len(emails) > 0 {
-						subjectAlternativeNames.Emails = utils.ExpandStringSlice(emails)
+						subjectAlternativeNames.Emails = utils.ExpandStringArray(emails)
 					}
 
 					dnsNames := san["dns_names"].([]interface{})
 					if len(dnsNames) > 0 {
-						subjectAlternativeNames.DNSNames = utils.ExpandStringSlice(dnsNames)
+						subjectAlternativeNames.DNSNames = utils.ExpandStringArray(dnsNames)
 					}
 
 					upns := san["upns"].([]interface{})
 					if len(upns) > 0 {
-						subjectAlternativeNames.Upns = utils.ExpandStringSlice(upns)
+						subjectAlternativeNames.Upns = utils.ExpandStringArray(upns)
 					}
 				}
 			}
@@ -726,9 +726,9 @@ func flattenKeyVaultCertificatePolicy(input *keyvault.CertificatePolicy) []inter
 		if san := props.SubjectAlternativeNames; san != nil {
 			sanOutput := make(map[string]interface{})
 
-			sanOutput["emails"] = utils.FlattenStringSlice(san.Emails)
-			sanOutput["dns_names"] = utils.FlattenStringSlice(san.DNSNames)
-			sanOutput["upns"] = utils.FlattenStringSlice(san.Upns)
+			sanOutput["emails"] = utils.FlattenStringArray(san.Emails)
+			sanOutput["dns_names"] = utils.FlattenStringArray(san.DNSNames)
+			sanOutput["upns"] = utils.FlattenStringArray(san.Upns)
 
 			sanOutputs = append(sanOutputs, sanOutput)
 		}

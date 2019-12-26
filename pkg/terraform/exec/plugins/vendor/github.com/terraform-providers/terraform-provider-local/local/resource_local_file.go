@@ -2,14 +2,12 @@ package local
 
 import (
 	"crypto/sha1"
-	"encoding/base64"
 	"encoding/hex"
 	"io/ioutil"
 	"os"
 	"path"
-	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func resourceLocalFile() *schema.Resource {
@@ -23,42 +21,20 @@ func resourceLocalFile() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      true,
-				ConflictsWith: []string{"sensitive_content", "content_base64"},
+				ConflictsWith: []string{"sensitive_content"},
 			},
 			"sensitive_content": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      true,
 				Sensitive:     true,
-				ConflictsWith: []string{"content", "content_base64"},
-			},
-			"content_base64": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"sensitive_content", "content"},
+				ConflictsWith: []string{"content"},
 			},
 			"filename": {
 				Type:        schema.TypeString,
 				Description: "Path to the output file",
 				Required:    true,
 				ForceNew:    true,
-			},
-			"file_permission": {
-				Type:         schema.TypeString,
-				Description:  "Permissions to set for the output file",
-				Optional:     true,
-				ForceNew:     true,
-				Default:      "0777",
-				ValidateFunc: validateMode,
-			},
-			"directory_permission": {
-				Type:         schema.TypeString,
-				Description:  "Permissions to set for directories created",
-				Optional:     true,
-				ForceNew:     true,
-				Default:      "0777",
-				ValidateFunc: validateMode,
 			},
 		},
 	}
@@ -89,40 +65,29 @@ func resourceLocalFileRead(d *schema.ResourceData, _ interface{}) error {
 	return nil
 }
 
-func resourceLocalFileContent(d *schema.ResourceData) ([]byte, error) {
-	if content, sensitiveSpecified := d.GetOk("sensitive_content"); sensitiveSpecified {
-		return []byte(content.(string)), nil
-	}
-	if b64Content, b64Specified := d.GetOk("content_base64"); b64Specified {
-		return base64.StdEncoding.DecodeString(b64Content.(string))
+func resourceLocalFileContent(d *schema.ResourceData) string {
+	content := d.Get("content")
+	sensitiveContent, sensitiveSpecified := d.GetOk("sensitive_content")
+	useContent := content.(string)
+	if sensitiveSpecified {
+		useContent = sensitiveContent.(string)
 	}
 
-	content := d.Get("content")
-	return []byte(content.(string)), nil
+	return useContent
 }
 
 func resourceLocalFileCreate(d *schema.ResourceData, _ interface{}) error {
-	content, err := resourceLocalFileContent(d)
-	if err != nil {
-		return err
-	}
-
+	content := resourceLocalFileContent(d)
 	destination := d.Get("filename").(string)
 
 	destinationDir := path.Dir(destination)
 	if _, err := os.Stat(destinationDir); err != nil {
-		dirPerm := d.Get("directory_permission").(string)
-		dirMode, _ := strconv.ParseInt(dirPerm, 8, 64)
-		if err := os.MkdirAll(destinationDir, os.FileMode(dirMode)); err != nil {
+		if err := os.MkdirAll(destinationDir, 0777); err != nil {
 			return err
 		}
 	}
 
-	filePerm := d.Get("file_permission").(string)
-
-	fileMode, _ := strconv.ParseInt(filePerm, 8, 64)
-
-	if err := ioutil.WriteFile(destination, []byte(content), os.FileMode(fileMode)); err != nil {
+	if err := ioutil.WriteFile(destination, []byte(content), 0777); err != nil {
 		return err
 	}
 

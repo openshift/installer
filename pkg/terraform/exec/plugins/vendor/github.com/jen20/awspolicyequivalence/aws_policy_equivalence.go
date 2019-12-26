@@ -383,10 +383,6 @@ func newAWSStringSet(members interface{}) awsStringSet {
 		}
 		actions := make([]string, len(multiple))
 		for i, action := range multiple {
-			if _, ok := action.(string); !ok {
-				return nil
-			}
-
 			actions[i] = action.(string)
 		}
 		return awsStringSet(actions)
@@ -400,10 +396,6 @@ func newAWSPrincipalStringSet(members interface{}) awsPrincipalStringSet {
 }
 
 func (actions awsStringSet) equals(other awsStringSet) bool {
-	if actions == nil || other == nil {
-		return false
-	}
-
 	if len(actions) != len(other) {
 		return false
 	}

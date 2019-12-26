@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"net/url"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -46,8 +45,6 @@ func defaultOperationsClientOptions() []option.ClientOption {
 	return []option.ClientOption{
 		option.WithEndpoint("longrunning.googleapis.com:443"),
 		option.WithScopes(DefaultAuthScopes()...),
-		option.WithGRPCDialOption(grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(math.MaxInt32))),
 	}
 }
 
@@ -141,7 +138,7 @@ func (c *OperationsClient) SetGoogleClientInfo(keyval ...string) {
 // method to poll the operation result at intervals as recommended by the API
 // service.
 func (c *OperationsClient) GetOperation(ctx context.Context, req *longrunningpb.GetOperationRequest, opts ...gax.CallOption) (*longrunningpb.Operation, error) {
-	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", req.GetName()))
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.GetOperation[0:len(c.CallOptions.GetOperation):len(c.CallOptions.GetOperation)], opts...)
 	var resp *longrunningpb.Operation
@@ -167,7 +164,7 @@ func (c *OperationsClient) GetOperation(ctx context.Context, req *longrunningpb.
 // collection id, however overriding users must ensure the name binding
 // is the parent resource, without the operations collection id.
 func (c *OperationsClient) ListOperations(ctx context.Context, req *longrunningpb.ListOperationsRequest, opts ...gax.CallOption) *OperationIterator {
-	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", req.GetName()))
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.ListOperations[0:len(c.CallOptions.ListOperations):len(c.CallOptions.ListOperations)], opts...)
 	it := &OperationIterator{}
@@ -215,7 +212,7 @@ func (c *OperationsClient) ListOperations(ctx context.Context, req *longrunningp
 // an [Operation.error][google.longrunning.Operation.error] value with a [google.rpc.Status.code][google.rpc.Status.code] of 1,
 // corresponding to Code.CANCELLED.
 func (c *OperationsClient) CancelOperation(ctx context.Context, req *longrunningpb.CancelOperationRequest, opts ...gax.CallOption) error {
-	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", req.GetName()))
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.CancelOperation[0:len(c.CallOptions.CancelOperation):len(c.CallOptions.CancelOperation)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -231,7 +228,7 @@ func (c *OperationsClient) CancelOperation(ctx context.Context, req *longrunning
 // operation. If the server doesn't support this method, it returns
 // google.rpc.Code.UNIMPLEMENTED.
 func (c *OperationsClient) DeleteOperation(ctx context.Context, req *longrunningpb.DeleteOperationRequest, opts ...gax.CallOption) error {
-	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", req.GetName()))
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append(c.CallOptions.DeleteOperation[0:len(c.CallOptions.DeleteOperation):len(c.CallOptions.DeleteOperation)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {

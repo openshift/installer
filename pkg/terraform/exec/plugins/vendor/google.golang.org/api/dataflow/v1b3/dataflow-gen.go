@@ -53,8 +53,8 @@ import (
 	"strconv"
 	"strings"
 
+	gensupport "google.golang.org/api/gensupport"
 	googleapi "google.golang.org/api/googleapi"
-	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
 	htransport "google.golang.org/api/transport/http"
 )
@@ -212,7 +212,6 @@ type ProjectsJobsWorkItemsService struct {
 func NewProjectsLocationsService(s *Service) *ProjectsLocationsService {
 	rs := &ProjectsLocationsService{s: s}
 	rs.Jobs = NewProjectsLocationsJobsService(s)
-	rs.Sql = NewProjectsLocationsSqlService(s)
 	rs.Templates = NewProjectsLocationsTemplatesService(s)
 	return rs
 }
@@ -221,8 +220,6 @@ type ProjectsLocationsService struct {
 	s *Service
 
 	Jobs *ProjectsLocationsJobsService
-
-	Sql *ProjectsLocationsSqlService
 
 	Templates *ProjectsLocationsTemplatesService
 }
@@ -269,15 +266,6 @@ func NewProjectsLocationsJobsWorkItemsService(s *Service) *ProjectsLocationsJobs
 }
 
 type ProjectsLocationsJobsWorkItemsService struct {
-	s *Service
-}
-
-func NewProjectsLocationsSqlService(s *Service) *ProjectsLocationsSqlService {
-	rs := &ProjectsLocationsSqlService{s: s}
-	return rs
-}
-
-type ProjectsLocationsSqlService struct {
 	s *Service
 }
 
@@ -1709,29 +1697,6 @@ type Environment struct {
 	// specified in order for the job to have workers.
 	WorkerPools []*WorkerPool `json:"workerPools,omitempty"`
 
-	// WorkerRegion: The Compute Engine
-	// region
-	// (https://cloud.google.com/compute/docs/regions-zones/regions-zo
-	// nes) in
-	// which worker processing should occur, e.g. "us-west1". Mutually
-	// exclusive
-	// with worker_zone. If neither worker_region nor worker_zone is
-	// specified,
-	// default to the control plane's region.
-	WorkerRegion string `json:"workerRegion,omitempty"`
-
-	// WorkerZone: The Compute Engine
-	// zone
-	// (https://cloud.google.com/compute/docs/regions-zones/regions-zone
-	// s) in
-	// which worker processing should occur, e.g. "us-west1-a". Mutually
-	// exclusive
-	// with worker_region. If neither worker_region nor worker_zone is
-	// specified,
-	// a zone in the control plane's region is chosen based on available
-	// capacity.
-	WorkerZone string `json:"workerZone,omitempty"`
-
 	// ForceSendFields is a list of field names (e.g.
 	// "ClusterManagerApiService") to unconditionally include in API
 	// requests. By default, fields with empty values are omitted from API
@@ -2260,45 +2225,6 @@ type Histogram struct {
 
 func (s *Histogram) MarshalJSON() ([]byte, error) {
 	type NoMethod Histogram
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// HotKeyDetection: Proto describing a hot key detected on a given
-// WorkItem.
-type HotKeyDetection struct {
-	// HotKeyAge: The age of the hot key measured from when it was first
-	// detected.
-	HotKeyAge string `json:"hotKeyAge,omitempty"`
-
-	// SystemName: System-defined name of the step containing this hot
-	// key.
-	// Unique across the workflow.
-	SystemName string `json:"systemName,omitempty"`
-
-	// UserStepName: User-provided name of the step that contains this hot
-	// key.
-	UserStepName string `json:"userStepName,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "HotKeyAge") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "HotKeyAge") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *HotKeyDetection) MarshalJSON() ([]byte, error) {
-	type NoMethod HotKeyDetection
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3197,17 +3123,6 @@ type LaunchTemplateParameters struct {
 
 	// Parameters: The runtime parameters to pass to the job.
 	Parameters map[string]string `json:"parameters,omitempty"`
-
-	// TransformNameMapping: Only applicable when updating a pipeline. Map
-	// of transform name prefixes of
-	// the job to be replaced to the corresponding name prefixes of the new
-	// job.
-	TransformNameMapping map[string]string `json:"transformNameMapping,omitempty"`
-
-	// Update: If set, replace the existing pipeline with the name specified
-	// by jobName
-	// with this pipeline, preserving state.
-	Update bool `json:"update,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Environment") to
 	// unconditionally include in API requests. By default, fields with
@@ -4471,35 +4386,13 @@ type RuntimeEnvironment struct {
 	// AdditionalExperiments: Additional experiment flags for the job.
 	AdditionalExperiments []string `json:"additionalExperiments,omitempty"`
 
-	// AdditionalUserLabels: Additional user labels to be specified for the
-	// job.
-	// Keys and values should follow the restrictions specified in the
-	// [labeling
-	// restrictions](https://cloud.google.com/compute/docs/labeling
-	// -resources#restrictions)
-	// page.
+	// AdditionalUserLabels: Additional user labels attached to the job.
 	AdditionalUserLabels map[string]string `json:"additionalUserLabels,omitempty"`
 
 	// BypassTempDirValidation: Whether to bypass the safety checks for the
 	// job's temporary directory.
 	// Use with caution.
 	BypassTempDirValidation bool `json:"bypassTempDirValidation,omitempty"`
-
-	// IpConfiguration: Configuration for VM IPs.
-	//
-	// Possible values:
-	//   "WORKER_IP_UNSPECIFIED" - The configuration is unknown, or
-	// unspecified.
-	//   "WORKER_IP_PUBLIC" - Workers should have public IP addresses.
-	//   "WORKER_IP_PRIVATE" - Workers should have private IP addresses.
-	IpConfiguration string `json:"ipConfiguration,omitempty"`
-
-	// KmsKeyName: Optional. Name for the Cloud KMS key for the job.
-	// Key format
-	// is:
-	// projects/<project>/locations/<location>/keyRings/<keyring>/cryptoK
-	// eys/<key>
-	KmsKeyName string `json:"kmsKeyName,omitempty"`
 
 	// MachineType: The machine type to use for the job. Defaults to the
 	// value from the
@@ -4533,37 +4426,11 @@ type RuntimeEnvironment struct {
 	// Must be a valid Cloud Storage URL, beginning with `gs://`.
 	TempLocation string `json:"tempLocation,omitempty"`
 
-	// WorkerRegion: The Compute Engine
-	// region
-	// (https://cloud.google.com/compute/docs/regions-zones/regions-zo
-	// nes) in
-	// which worker processing should occur, e.g. "us-west1". Mutually
-	// exclusive
-	// with worker_zone. If neither worker_region nor worker_zone is
-	// specified,
-	// default to the control plane's region.
-	WorkerRegion string `json:"workerRegion,omitempty"`
-
-	// WorkerZone: The Compute Engine
-	// zone
-	// (https://cloud.google.com/compute/docs/regions-zones/regions-zone
-	// s) in
-	// which worker processing should occur, e.g. "us-west1-a". Mutually
-	// exclusive
-	// with worker_region. If neither worker_region nor worker_zone is
-	// specified,
-	// a zone in the control plane's region is chosen based on available
-	// capacity.
-	// If both `worker_zone` and `zone` are set, `worker_zone` takes
-	// precedence.
-	WorkerZone string `json:"workerZone,omitempty"`
-
 	// Zone: The Compute Engine
 	// [availability
 	// zone](https://cloud.google.com/compute/docs/regions-zone
 	// s/regions-zones)
 	// for launching worker instances to run your pipeline.
-	// In the future, worker_zone will take precedence.
 	Zone string `json:"zone,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g.
@@ -4937,6 +4804,82 @@ type Sink struct {
 
 func (s *Sink) MarshalJSON() ([]byte, error) {
 	type NoMethod Sink
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Snapshot: Represents a snapshot of a job.
+type Snapshot struct {
+	// CreationTime: The time this snapshot was created.
+	CreationTime string `json:"creationTime,omitempty"`
+
+	// Id: The unique ID of this snapshot.
+	Id string `json:"id,omitempty"`
+
+	// ProjectId: The project this snapshot belongs to.
+	ProjectId string `json:"projectId,omitempty"`
+
+	// SourceJobId: The job this snapshot was created from.
+	SourceJobId string `json:"sourceJobId,omitempty"`
+
+	// Ttl: The time after which this snapshot will be automatically
+	// deleted.
+	Ttl string `json:"ttl,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "CreationTime") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CreationTime") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Snapshot) MarshalJSON() ([]byte, error) {
+	type NoMethod Snapshot
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// SnapshotJobRequest: Request to create a snapshot of a job.
+type SnapshotJobRequest struct {
+	// Location: The location that contains this job.
+	Location string `json:"location,omitempty"`
+
+	// Ttl: TTL for the snapshot.
+	Ttl string `json:"ttl,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Location") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Location") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *SnapshotJobRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod SnapshotJobRequest
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -5577,14 +5520,81 @@ func (s *StateFamilyConfig) MarshalJSON() ([]byte, error) {
 // suitable for
 // different programming environments, including REST APIs and RPC APIs.
 // It is
-// used by [gRPC](https://github.com/grpc). Each `Status` message
-// contains
-// three pieces of data: error code, error message, and error
-// details.
+// used by [gRPC](https://github.com/grpc). The error model is designed
+// to be:
 //
-// You can find out more about this error model and how to work with it
-// in the
-// [API Design Guide](https://cloud.google.com/apis/design/errors).
+// - Simple to use and understand for most users
+// - Flexible enough to meet unexpected needs
+//
+// # Overview
+//
+// The `Status` message contains three pieces of data: error code,
+// error
+// message, and error details. The error code should be an enum value
+// of
+// google.rpc.Code, but it may accept additional error codes if needed.
+// The
+// error message should be a developer-facing English message that
+// helps
+// developers *understand* and *resolve* the error. If a localized
+// user-facing
+// error message is needed, put the localized message in the error
+// details or
+// localize it in the client. The optional error details may contain
+// arbitrary
+// information about the error. There is a predefined set of error
+// detail types
+// in the package `google.rpc` that can be used for common error
+// conditions.
+//
+// # Language mapping
+//
+// The `Status` message is the logical representation of the error
+// model, but it
+// is not necessarily the actual wire format. When the `Status` message
+// is
+// exposed in different client libraries and different wire protocols,
+// it can be
+// mapped differently. For example, it will likely be mapped to some
+// exceptions
+// in Java, but more likely mapped to some error codes in C.
+//
+// # Other uses
+//
+// The error model and the `Status` message can be used in a variety
+// of
+// environments, either with or without APIs, to provide a
+// consistent developer experience across different
+// environments.
+//
+// Example uses of this error model include:
+//
+// - Partial errors. If a service needs to return partial errors to the
+// client,
+//     it may embed the `Status` in the normal response to indicate the
+// partial
+//     errors.
+//
+// - Workflow errors. A typical workflow has multiple steps. Each step
+// may
+//     have a `Status` message for error reporting.
+//
+// - Batch operations. If a client uses batch request and batch
+// response, the
+//     `Status` message should be used directly inside batch response,
+// one for
+//     each error sub-response.
+//
+// - Asynchronous operations. If an API call embeds asynchronous
+// operation
+//     results in its response, the status of those operations should
+// be
+//     represented directly using the `Status` message.
+//
+// - Logging. If some API errors are stored in logs, the message
+// `Status` could
+//     be used directly after any stripping needed for security/privacy
+// reasons.
 type Status struct {
 	// Code: The status code, which should be an enum value of
 	// google.rpc.Code.
@@ -5896,14 +5906,6 @@ func (s *StreamingComputationTask) MarshalJSON() ([]byte, error) {
 // StreamingConfigTask: A task that carries configuration information
 // for streaming computations.
 type StreamingConfigTask struct {
-	// CommitStreamChunkSizeBytes: Chunk size for commit streams from the
-	// harness to windmill.
-	CommitStreamChunkSizeBytes int64 `json:"commitStreamChunkSizeBytes,omitempty,string"`
-
-	// GetDataStreamChunkSizeBytes: Chunk size for get data streams from the
-	// harness to windmill.
-	GetDataStreamChunkSizeBytes int64 `json:"getDataStreamChunkSizeBytes,omitempty,string"`
-
 	// MaxWorkItemCommitBytes: Maximum size for work item commit supported
 	// windmill storage layer.
 	MaxWorkItemCommitBytes int64 `json:"maxWorkItemCommitBytes,omitempty,string"`
@@ -5931,21 +5933,21 @@ type StreamingConfigTask struct {
 	WindmillServicePort int64 `json:"windmillServicePort,omitempty,string"`
 
 	// ForceSendFields is a list of field names (e.g.
-	// "CommitStreamChunkSizeBytes") to unconditionally include in API
-	// requests. By default, fields with empty values are omitted from API
-	// requests. However, any non-pointer, non-interface field appearing in
+	// "MaxWorkItemCommitBytes") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
 	// ForceSendFields will be sent to the server regardless of whether the
 	// field is empty or not. This may be used to include empty fields in
 	// Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g.
-	// "CommitStreamChunkSizeBytes") to include in API requests with the
-	// JSON null value. By default, fields with empty values are omitted
-	// from API requests. However, any field with an empty value appearing
-	// in NullFields will be sent to the server as null. It is an error if a
-	// field in this list has a non-empty value. This may be used to include
-	// null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "MaxWorkItemCommitBytes")
+	// to include in API requests with the JSON null value. By default,
+	// fields with empty values are omitted from API requests. However, any
+	// field with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
@@ -6395,38 +6397,6 @@ func (s *TransformSummary) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// ValidateResponse: Response to the validation request.
-type ValidateResponse struct {
-	// ErrorMessage: Will be empty if validation succeeds.
-	ErrorMessage string `json:"errorMessage,omitempty"`
-
-	// ServerResponse contains the HTTP response code and headers from the
-	// server.
-	googleapi.ServerResponse `json:"-"`
-
-	// ForceSendFields is a list of field names (e.g. "ErrorMessage") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "ErrorMessage") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *ValidateResponse) MarshalJSON() ([]byte, error) {
-	type NoMethod ValidateResponse
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
 // WorkItem: WorkItem represents basic information about a WorkItem to
 // be executed
 // in the cloud.
@@ -6514,13 +6484,6 @@ type WorkItemServiceState struct {
 	// particular
 	// worker harness.
 	HarnessData googleapi.RawMessage `json:"harnessData,omitempty"`
-
-	// HotKeyDetection: A hot key is a symptom of poor data distribution in
-	// which there are enough
-	// elements mapped to a single key to impact pipeline performance.
-	// When
-	// present, this field includes metadata associated with any hot key.
-	HotKeyDetection *HotKeyDetection `json:"hotKeyDetection,omitempty"`
 
 	// LeaseExpireTime: Time at which the current lease will expire.
 	LeaseExpireTime string `json:"leaseExpireTime,omitempty"`
@@ -6734,9 +6697,6 @@ func (s *WorkItemStatus) UnmarshalJSON(data []byte) error {
 // WorkerMessage that
 // this health ping belongs to.
 type WorkerHealthReport struct {
-	// Msg: A message describing any unusual health reports.
-	Msg string `json:"msg,omitempty"`
-
 	// Pods: The pods running on the worker.
 	// See:
 	// http://kubernetes.io/v1.1/docs/api-reference/v1/definitions.html#
@@ -6754,19 +6714,13 @@ type WorkerHealthReport struct {
 	// explicitly set by the worker.
 	ReportInterval string `json:"reportInterval,omitempty"`
 
-	// VmIsBroken: Whether the VM is in a permanently broken state.
-	// Broken VMs should be abandoned or deleted ASAP to avoid assigning
-	// or
-	// completing any work.
-	VmIsBroken bool `json:"vmIsBroken,omitempty"`
-
-	// VmIsHealthy: Whether the VM is currently healthy.
+	// VmIsHealthy: Whether the VM is healthy.
 	VmIsHealthy bool `json:"vmIsHealthy,omitempty"`
 
 	// VmStartupTime: The time the VM was booted.
 	VmStartupTime string `json:"vmStartupTime,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Msg") to
+	// ForceSendFields is a list of field names (e.g. "Pods") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -6774,7 +6728,7 @@ type WorkerHealthReport struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Msg") to include in API
+	// NullFields is a list of field names (e.g. "Pods") to include in API
 	// requests with the JSON null value. By default, fields with empty
 	// values are omitted from API requests. However, any field with an
 	// empty value appearing in NullFields will be sent to the server as
@@ -7438,7 +7392,6 @@ func (c *ProjectsWorkerMessagesCall) Header() http.Header {
 
 func (c *ProjectsWorkerMessagesCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7643,7 +7596,6 @@ func (c *ProjectsJobsAggregatedCall) Header() http.Header {
 
 func (c *ProjectsJobsAggregatedCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7879,7 +7831,6 @@ func (c *ProjectsJobsCreateCall) Header() http.Header {
 
 func (c *ProjectsJobsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8086,7 +8037,6 @@ func (c *ProjectsJobsGetCall) Header() http.Header {
 
 func (c *ProjectsJobsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8286,7 +8236,6 @@ func (c *ProjectsJobsGetMetricsCall) Header() http.Header {
 
 func (c *ProjectsJobsGetMetricsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8517,7 +8466,6 @@ func (c *ProjectsJobsListCall) Header() http.Header {
 
 func (c *ProjectsJobsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8667,6 +8615,157 @@ func (c *ProjectsJobsListCall) Pages(ctx context.Context, f func(*ListJobsRespon
 	}
 }
 
+// method id "dataflow.projects.jobs.snapshot":
+
+type ProjectsJobsSnapshotCall struct {
+	s                  *Service
+	projectId          string
+	jobId              string
+	snapshotjobrequest *SnapshotJobRequest
+	urlParams_         gensupport.URLParams
+	ctx_               context.Context
+	header_            http.Header
+}
+
+// Snapshot: Snapshot the state of a streaming job.
+func (r *ProjectsJobsService) Snapshot(projectId string, jobId string, snapshotjobrequest *SnapshotJobRequest) *ProjectsJobsSnapshotCall {
+	c := &ProjectsJobsSnapshotCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.projectId = projectId
+	c.jobId = jobId
+	c.snapshotjobrequest = snapshotjobrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsJobsSnapshotCall) Fields(s ...googleapi.Field) *ProjectsJobsSnapshotCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsJobsSnapshotCall) Context(ctx context.Context) *ProjectsJobsSnapshotCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsJobsSnapshotCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsJobsSnapshotCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.snapshotjobrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1b3/projects/{projectId}/jobs/{jobId}:snapshot")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"projectId": c.projectId,
+		"jobId":     c.jobId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "dataflow.projects.jobs.snapshot" call.
+// Exactly one of *Snapshot or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Snapshot.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *ProjectsJobsSnapshotCall) Do(opts ...googleapi.CallOption) (*Snapshot, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Snapshot{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Snapshot the state of a streaming job.",
+	//   "flatPath": "v1b3/projects/{projectId}/jobs/{jobId}:snapshot",
+	//   "httpMethod": "POST",
+	//   "id": "dataflow.projects.jobs.snapshot",
+	//   "parameterOrder": [
+	//     "projectId",
+	//     "jobId"
+	//   ],
+	//   "parameters": {
+	//     "jobId": {
+	//       "description": "The job to be snapshotted.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "projectId": {
+	//       "description": "The project which owns the job to be snapshotted.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1b3/projects/{projectId}/jobs/{jobId}:snapshot",
+	//   "request": {
+	//     "$ref": "SnapshotJobRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "Snapshot"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/compute",
+	//     "https://www.googleapis.com/auth/compute.readonly",
+	//     "https://www.googleapis.com/auth/userinfo.email"
+	//   ]
+	// }
+
+}
+
 // method id "dataflow.projects.jobs.update":
 
 type ProjectsJobsUpdateCall struct {
@@ -8735,7 +8834,6 @@ func (c *ProjectsJobsUpdateCall) Header() http.Header {
 
 func (c *ProjectsJobsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8893,7 +8991,6 @@ func (c *ProjectsJobsDebugGetConfigCall) Header() http.Header {
 
 func (c *ProjectsJobsDebugGetConfigCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9045,7 +9142,6 @@ func (c *ProjectsJobsDebugSendCaptureCall) Header() http.Header {
 
 func (c *ProjectsJobsDebugSendCaptureCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9276,7 +9372,6 @@ func (c *ProjectsJobsMessagesListCall) Header() http.Header {
 
 func (c *ProjectsJobsMessagesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9485,7 +9580,6 @@ func (c *ProjectsJobsWorkItemsLeaseCall) Header() http.Header {
 
 func (c *ProjectsJobsWorkItemsLeaseCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9638,7 +9732,6 @@ func (c *ProjectsJobsWorkItemsReportStatusCall) Header() http.Header {
 
 func (c *ProjectsJobsWorkItemsReportStatusCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9790,7 +9883,6 @@ func (c *ProjectsLocationsWorkerMessagesCall) Header() http.Header {
 
 func (c *ProjectsLocationsWorkerMessagesCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9972,7 +10064,6 @@ func (c *ProjectsLocationsJobsCreateCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10174,7 +10265,6 @@ func (c *ProjectsLocationsJobsGetCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10369,7 +10459,6 @@ func (c *ProjectsLocationsJobsGetMetricsCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsGetMetricsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10595,7 +10684,6 @@ func (c *ProjectsLocationsJobsListCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10748,6 +10836,167 @@ func (c *ProjectsLocationsJobsListCall) Pages(ctx context.Context, f func(*ListJ
 	}
 }
 
+// method id "dataflow.projects.locations.jobs.snapshot":
+
+type ProjectsLocationsJobsSnapshotCall struct {
+	s                  *Service
+	projectId          string
+	location           string
+	jobId              string
+	snapshotjobrequest *SnapshotJobRequest
+	urlParams_         gensupport.URLParams
+	ctx_               context.Context
+	header_            http.Header
+}
+
+// Snapshot: Snapshot the state of a streaming job.
+func (r *ProjectsLocationsJobsService) Snapshot(projectId string, location string, jobId string, snapshotjobrequest *SnapshotJobRequest) *ProjectsLocationsJobsSnapshotCall {
+	c := &ProjectsLocationsJobsSnapshotCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.projectId = projectId
+	c.location = location
+	c.jobId = jobId
+	c.snapshotjobrequest = snapshotjobrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsLocationsJobsSnapshotCall) Fields(s ...googleapi.Field) *ProjectsLocationsJobsSnapshotCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsLocationsJobsSnapshotCall) Context(ctx context.Context) *ProjectsLocationsJobsSnapshotCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsLocationsJobsSnapshotCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsJobsSnapshotCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.snapshotjobrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1b3/projects/{projectId}/locations/{location}/jobs/{jobId}:snapshot")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"projectId": c.projectId,
+		"location":  c.location,
+		"jobId":     c.jobId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "dataflow.projects.locations.jobs.snapshot" call.
+// Exactly one of *Snapshot or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Snapshot.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *ProjectsLocationsJobsSnapshotCall) Do(opts ...googleapi.CallOption) (*Snapshot, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Snapshot{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Snapshot the state of a streaming job.",
+	//   "flatPath": "v1b3/projects/{projectId}/locations/{location}/jobs/{jobId}:snapshot",
+	//   "httpMethod": "POST",
+	//   "id": "dataflow.projects.locations.jobs.snapshot",
+	//   "parameterOrder": [
+	//     "projectId",
+	//     "location",
+	//     "jobId"
+	//   ],
+	//   "parameters": {
+	//     "jobId": {
+	//       "description": "The job to be snapshotted.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "location": {
+	//       "description": "The location that contains this job.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "projectId": {
+	//       "description": "The project which owns the job to be snapshotted.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1b3/projects/{projectId}/locations/{location}/jobs/{jobId}:snapshot",
+	//   "request": {
+	//     "$ref": "SnapshotJobRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "Snapshot"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/compute",
+	//     "https://www.googleapis.com/auth/compute.readonly",
+	//     "https://www.googleapis.com/auth/userinfo.email"
+	//   ]
+	// }
+
+}
+
 // method id "dataflow.projects.locations.jobs.update":
 
 type ProjectsLocationsJobsUpdateCall struct {
@@ -10808,7 +11057,6 @@ func (c *ProjectsLocationsJobsUpdateCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10971,7 +11219,6 @@ func (c *ProjectsLocationsJobsDebugGetConfigCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsDebugGetConfigCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11133,7 +11380,6 @@ func (c *ProjectsLocationsJobsDebugSendCaptureCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsDebugSendCaptureCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11364,7 +11610,6 @@ func (c *ProjectsLocationsJobsMessagesListCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsMessagesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11578,7 +11823,6 @@ func (c *ProjectsLocationsJobsWorkItemsLeaseCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsWorkItemsLeaseCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11741,7 +11985,6 @@ func (c *ProjectsLocationsJobsWorkItemsReportStatusCall) Header() http.Header {
 
 func (c *ProjectsLocationsJobsWorkItemsReportStatusCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11853,177 +12096,6 @@ func (c *ProjectsLocationsJobsWorkItemsReportStatusCall) Do(opts ...googleapi.Ca
 
 }
 
-// method id "dataflow.projects.locations.sql.validate":
-
-type ProjectsLocationsSqlValidateCall struct {
-	s            *Service
-	projectId    string
-	location     string
-	urlParams_   gensupport.URLParams
-	ifNoneMatch_ string
-	ctx_         context.Context
-	header_      http.Header
-}
-
-// Validate: Validates a GoogleSQL query for Cloud Dataflow syntax. Will
-// always
-// confirm the given query parses correctly, and if able to look
-// up
-// schema information from DataCatalog, will validate that the
-// query
-// analyzes properly as well.
-func (r *ProjectsLocationsSqlService) Validate(projectId string, location string) *ProjectsLocationsSqlValidateCall {
-	c := &ProjectsLocationsSqlValidateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.projectId = projectId
-	c.location = location
-	return c
-}
-
-// Query sets the optional parameter "query": The sql query to validate.
-func (c *ProjectsLocationsSqlValidateCall) Query(query string) *ProjectsLocationsSqlValidateCall {
-	c.urlParams_.Set("query", query)
-	return c
-}
-
-// Fields allows partial responses to be retrieved. See
-// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
-// for more information.
-func (c *ProjectsLocationsSqlValidateCall) Fields(s ...googleapi.Field) *ProjectsLocationsSqlValidateCall {
-	c.urlParams_.Set("fields", googleapi.CombineFields(s))
-	return c
-}
-
-// IfNoneMatch sets the optional parameter which makes the operation
-// fail if the object's ETag matches the given value. This is useful for
-// getting updates only after the object has changed since the last
-// request. Use googleapi.IsNotModified to check whether the response
-// error from Do is the result of In-None-Match.
-func (c *ProjectsLocationsSqlValidateCall) IfNoneMatch(entityTag string) *ProjectsLocationsSqlValidateCall {
-	c.ifNoneMatch_ = entityTag
-	return c
-}
-
-// Context sets the context to be used in this call's Do method. Any
-// pending HTTP request will be aborted if the provided context is
-// canceled.
-func (c *ProjectsLocationsSqlValidateCall) Context(ctx context.Context) *ProjectsLocationsSqlValidateCall {
-	c.ctx_ = ctx
-	return c
-}
-
-// Header returns an http.Header that can be modified by the caller to
-// add HTTP headers to the request.
-func (c *ProjectsLocationsSqlValidateCall) Header() http.Header {
-	if c.header_ == nil {
-		c.header_ = make(http.Header)
-	}
-	return c.header_
-}
-
-func (c *ProjectsLocationsSqlValidateCall) doRequest(alt string) (*http.Response, error) {
-	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
-	for k, v := range c.header_ {
-		reqHeaders[k] = v
-	}
-	reqHeaders.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	var body io.Reader = nil
-	c.urlParams_.Set("alt", alt)
-	c.urlParams_.Set("prettyPrint", "false")
-	urls := googleapi.ResolveRelative(c.s.BasePath, "v1b3/projects/{projectId}/locations/{location}/sql:validate")
-	urls += "?" + c.urlParams_.Encode()
-	req, err := http.NewRequest("GET", urls, body)
-	if err != nil {
-		return nil, err
-	}
-	req.Header = reqHeaders
-	googleapi.Expand(req.URL, map[string]string{
-		"projectId": c.projectId,
-		"location":  c.location,
-	})
-	return gensupport.SendRequest(c.ctx_, c.s.client, req)
-}
-
-// Do executes the "dataflow.projects.locations.sql.validate" call.
-// Exactly one of *ValidateResponse or error will be non-nil. Any
-// non-2xx status code is an error. Response headers are in either
-// *ValidateResponse.ServerResponse.Header or (if a response was
-// returned at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
-// because http.StatusNotModified was returned.
-func (c *ProjectsLocationsSqlValidateCall) Do(opts ...googleapi.CallOption) (*ValidateResponse, error) {
-	gensupport.SetOptions(c.urlParams_, opts...)
-	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, &googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer googleapi.CloseBody(res)
-	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
-	}
-	ret := &ValidateResponse{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	if err := gensupport.DecodeResponse(target, res); err != nil {
-		return nil, err
-	}
-	return ret, nil
-	// {
-	//   "description": "Validates a GoogleSQL query for Cloud Dataflow syntax. Will always\nconfirm the given query parses correctly, and if able to look up\nschema information from DataCatalog, will validate that the query\nanalyzes properly as well.",
-	//   "flatPath": "v1b3/projects/{projectId}/locations/{location}/sql:validate",
-	//   "httpMethod": "GET",
-	//   "id": "dataflow.projects.locations.sql.validate",
-	//   "parameterOrder": [
-	//     "projectId",
-	//     "location"
-	//   ],
-	//   "parameters": {
-	//     "location": {
-	//       "description": "The [regional endpoint]\n(https://cloud.google.com/dataflow/docs/concepts/regional-endpoints) to\nwhich to direct the request.",
-	//       "location": "path",
-	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "projectId": {
-	//       "description": "Required. The ID of the Cloud Platform project that the job belongs to.",
-	//       "location": "path",
-	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "query": {
-	//       "description": "The sql query to validate.",
-	//       "location": "query",
-	//       "type": "string"
-	//     }
-	//   },
-	//   "path": "v1b3/projects/{projectId}/locations/{location}/sql:validate",
-	//   "response": {
-	//     "$ref": "ValidateResponse"
-	//   },
-	//   "scopes": [
-	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/userinfo.email"
-	//   ]
-	// }
-
-}
-
 // method id "dataflow.projects.locations.templates.create":
 
 type ProjectsLocationsTemplatesCreateCall struct {
@@ -12072,7 +12144,6 @@ func (c *ProjectsLocationsTemplatesCreateCall) Header() http.Header {
 
 func (c *ProjectsLocationsTemplatesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12252,7 +12323,6 @@ func (c *ProjectsLocationsTemplatesGetCall) Header() http.Header {
 
 func (c *ProjectsLocationsTemplatesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12447,7 +12517,6 @@ func (c *ProjectsLocationsTemplatesLaunchCall) Header() http.Header {
 
 func (c *ProjectsLocationsTemplatesLaunchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12617,7 +12686,6 @@ func (c *ProjectsTemplatesCreateCall) Header() http.Header {
 
 func (c *ProjectsTemplatesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12797,7 +12865,6 @@ func (c *ProjectsTemplatesGetCall) Header() http.Header {
 
 func (c *ProjectsTemplatesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12997,7 +13064,6 @@ func (c *ProjectsTemplatesLaunchCall) Header() http.Header {
 
 func (c *ProjectsTemplatesLaunchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/1.11.0 gdcl/20191216")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

@@ -51,8 +51,6 @@ func (t *LLRB) ascendGreaterOrEqual(h *Node, pivot Item, iterator ItemIterator) 
 	return t.ascendGreaterOrEqual(h.Right, pivot, iterator)
 }
 
-// AscendLessThan will call iterator once for each element lower than
-// pivot in ascending order. It will stop whenever the iterator returns false.
 func (t *LLRB) AscendLessThan(pivot Item, iterator ItemIterator) {
 	t.ascendLessThan(t.root, pivot, iterator)
 }
@@ -64,11 +62,11 @@ func (t *LLRB) ascendLessThan(h *Node, pivot Item, iterator ItemIterator) bool {
 	if !t.ascendLessThan(h.Left, pivot, iterator) {
 		return false
 	}
+	if !iterator(h.Item) {
+		return false
+	}
 	if less(h.Item, pivot) {
-		if !iterator(h.Item) {
-			return false
-		}
-		return t.ascendLessThan(h.Right, pivot, iterator)
+		return t.ascendLessThan(h.Left, pivot, iterator)
 	}
 	return true
 }

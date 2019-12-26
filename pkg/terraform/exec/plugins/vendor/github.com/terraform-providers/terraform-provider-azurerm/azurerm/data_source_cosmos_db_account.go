@@ -10,9 +10,9 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
-func dataSourceArmCosmosDbAccount() *schema.Resource {
+func dataSourceArmCosmosDBAccount() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceArmCosmosDbAccountRead,
+		Read: dataSourceArmCosmosDBAccountRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -176,8 +176,8 @@ func dataSourceArmCosmosDbAccount() *schema.Resource {
 	}
 }
 
-func dataSourceArmCosmosDbAccountRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*ArmClient).cosmosAccountsClient
+func dataSourceArmCosmosDBAccountRead(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*ArmClient).cosmosDBClient
 	ctx := meta.(*ArmClient).StopContext
 
 	resourceGroup := d.Get("resource_group_name").(string)

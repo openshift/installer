@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -45,18 +44,8 @@ func (mt *MediaType) ContentType() string {
 //
 // Params values are escaped with the Escape function, rather than in a quoted string.
 func (mt *MediaType) String() string {
-	var (
-		buf  bytes.Buffer
-		keys = make([]string, len(mt.Params))
-		i    int
-	)
-	for k := range mt.Params {
-		keys[i] = k
-		i++
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		v := mt.Params[k]
+	var buf bytes.Buffer
+	for k, v := range mt.Params {
 		fmt.Fprintf(&buf, ";%s=%s", k, EscapeString(v))
 	}
 	return mt.ContentType() + (&buf).String()

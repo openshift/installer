@@ -1,7 +1,7 @@
 package random
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func resourcePassword() *schema.Resource {

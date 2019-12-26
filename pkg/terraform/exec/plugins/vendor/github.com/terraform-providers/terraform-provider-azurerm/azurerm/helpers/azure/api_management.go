@@ -253,7 +253,7 @@ func ExpandApiManagementOperationParameterContract(input []interface{}) *[]apima
 			Type:         utils.String(paramType),
 			Required:     utils.Bool(required),
 			DefaultValue: utils.String(defaultValue),
-			Values:       utils.ExpandStringSlice(valuesRaw),
+			Values:       utils.ExpandStringArray(valuesRaw),
 		}
 		outputs = append(outputs, output)
 	}
@@ -290,7 +290,7 @@ func FlattenApiManagementOperationParameterContract(input *[]apimanagement.Param
 			output["default_value"] = *v.DefaultValue
 		}
 
-		output["values"] = schema.NewSet(schema.HashString, utils.FlattenStringSlice(v.Values))
+		output["values"] = schema.NewSet(schema.HashString, utils.FlattenStringArray(v.Values))
 
 		outputs = append(outputs, output)
 	}

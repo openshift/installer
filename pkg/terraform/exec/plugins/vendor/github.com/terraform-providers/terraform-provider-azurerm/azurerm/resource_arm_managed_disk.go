@@ -149,8 +149,6 @@ func resourceArmManagedDiskCreateUpdate(d *schema.ResourceData, meta interface{}
 		skuName = compute.StandardLRS
 	} else if strings.EqualFold(storageAccountType, string(compute.StandardSSDLRS)) {
 		skuName = compute.StandardSSDLRS
-	} else if strings.EqualFold(storageAccountType, string(compute.UltraSSDLRS)) {
-		skuName = compute.UltraSSDLRS
 	}
 
 	createDisk := compute.Disk{

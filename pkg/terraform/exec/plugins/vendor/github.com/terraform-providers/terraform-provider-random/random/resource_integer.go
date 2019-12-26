@@ -6,13 +6,13 @@ import (
 	"strings"
 
 	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func resourceInteger() *schema.Resource {
 	return &schema.Resource{
 		Create: CreateInteger,
-		Read:   schema.Noop,
+		Read:   RepopulateInteger,
 		Delete: schema.RemoveFromState,
 		Importer: &schema.ResourceImporter{
 			State: ImportInteger,
@@ -65,6 +65,10 @@ func CreateInteger(d *schema.ResourceData, meta interface{}) error {
 	d.Set("result", number)
 	d.SetId(strconv.Itoa(number))
 
+	return nil
+}
+
+func RepopulateInteger(d *schema.ResourceData, _ interface{}) error {
 	return nil
 }
 
