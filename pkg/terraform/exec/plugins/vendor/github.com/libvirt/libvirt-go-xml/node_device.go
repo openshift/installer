@@ -93,6 +93,7 @@ type NodeDeviceNUMA struct {
 }
 
 type NodeDevicePCICapability struct {
+	Class        string                       `xml:"class,omitempty"`
 	Domain       *uint                        `xml:"domain"`
 	Bus          *uint                        `xml:"bus"`
 	Slot         *uint                        `xml:"slot"`

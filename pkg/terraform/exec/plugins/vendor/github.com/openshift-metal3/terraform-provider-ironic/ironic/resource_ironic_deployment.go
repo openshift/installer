@@ -5,7 +5,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/baremetal/v1/nodes"
 	utils "github.com/gophercloud/utils/openstack/baremetal/v1/nodes"
 	"github.com/hashicorp/go-version"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 // Schema resource definition for an Ironic deployment.

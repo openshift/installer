@@ -116,6 +116,7 @@ func resourceArmContainerGroup() *schema.Resource {
 							Type:     schema.TypeList,
 							Optional: true,
 							MinItems: 1,
+							ForceNew: true,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
 								ValidateFunc: validation.NoZeroValues,
@@ -279,6 +280,7 @@ func resourceArmContainerGroup() *schema.Resource {
 						"command": {
 							Type:       schema.TypeString,
 							Optional:   true,
+							ForceNew:   true,
 							Computed:   true,
 							Deprecated: "Use `commands` instead.",
 						},
@@ -287,6 +289,7 @@ func resourceArmContainerGroup() *schema.Resource {
 							Type:     schema.TypeList,
 							Optional: true,
 							Computed: true,
+							ForceNew: true,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 						},
 
@@ -871,7 +874,7 @@ func expandContainerProbe(input interface{}) *containerinstance.ContainerProbe {
 		commands := probeConfig["exec"].([]interface{})
 		if len(commands) > 0 {
 			exec := containerinstance.ContainerExec{
-				Command: utils.ExpandStringArray(commands),
+				Command: utils.ExpandStringSlice(commands),
 			}
 			probe.Exec = &exec
 		}

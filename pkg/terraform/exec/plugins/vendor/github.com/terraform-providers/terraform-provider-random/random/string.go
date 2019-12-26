@@ -9,7 +9,7 @@ import (
 	"sort"
 
 	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func stringSchemaV1(sensitive bool) map[string]*schema.Schema {

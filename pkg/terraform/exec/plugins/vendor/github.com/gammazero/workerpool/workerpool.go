@@ -3,6 +3,7 @@ package workerpool
 import (
 	"github.com/gammazero/deque"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -51,8 +52,9 @@ type WorkerPool struct {
 	readyWorkers chan chan func()
 	stoppedChan  chan struct{}
 	waitingQueue deque.Deque
-	stopMutex    sync.Mutex
-	stopped      bool
+	stopOnce     sync.Once
+	stopped      int32
+	waiting      int32
 }
 
 // Stop stops the worker pool and waits for only currently running tasks to
@@ -75,9 +77,7 @@ func (p *WorkerPool) StopWait() {
 
 // Stopped returns true if this worker pool has been stopped.
 func (p *WorkerPool) Stopped() bool {
-	p.stopMutex.Lock()
-	defer p.stopMutex.Unlock()
-	return p.stopped
+	return atomic.LoadInt32(&p.stopped) != 0
 }
 
 // Submit enqueues a function for a worker to execute.
@@ -122,7 +122,7 @@ func (p *WorkerPool) SubmitWait(task func()) {
 
 // WaitingQueueSize will return the size of the waiting queue
 func (p *WorkerPool) WaitingQueueSize() int {
-	return p.waitingQueue.Len()
+	return int(atomic.LoadInt32(&p.waiting))
 }
 
 // dispatch sends the next queued task to an available worker.
@@ -157,6 +157,7 @@ Loop:
 				// A worker is ready, so give task to worker.
 				workerTaskChan <- p.waitingQueue.PopFront().(func())
 			}
+			atomic.StoreInt32(&p.waiting, int32(p.waitingQueue.Len()))
 			continue
 		}
 		timeout.Reset(p.timeout)
@@ -184,6 +185,7 @@ Loop:
 				} else {
 					// Enqueue task to be executed by next available worker.
 					p.waitingQueue.PushBack(task)
+					atomic.StoreInt32(&p.waiting, int32(p.waitingQueue.Len()))
 				}
 			}
 		case <-timeout.C:
@@ -208,6 +210,7 @@ Loop:
 			workerTaskChan = <-p.readyWorkers
 			// A worker is ready, so give task to worker.
 			workerTaskChan <- p.waitingQueue.PopFront().(func())
+			atomic.StoreInt32(&p.waiting, int32(p.waitingQueue.Len()))
 		}
 	}
 
@@ -261,16 +264,13 @@ func startWorker(startReady, readyWorkers chan chan func()) {
 // stop tells the dispatcher to exit, and whether or not to complete queued
 // tasks.
 func (p *WorkerPool) stop(wait bool) {
-	p.stopMutex.Lock()
-	defer p.stopMutex.Unlock()
-	if p.stopped {
-		return
-	}
-	p.stopped = true
-	if wait {
-		p.taskQueue <- nil
-	}
-	// Close task queue and wait for currently running tasks to finish.
-	close(p.taskQueue)
-	<-p.stoppedChan
+	p.stopOnce.Do(func() {
+		atomic.StoreInt32(&p.stopped, 1)
+		if wait {
+			p.taskQueue <- nil
+		}
+		// Close task queue and wait for currently running tasks to finish.
+		close(p.taskQueue)
+		<-p.stoppedChan
+	})
 }
