@@ -116,7 +116,7 @@ required = [
   branch = "master"
   name = "golang.org/x/oauth2"
 
-[[constraint]]  
+[[constraint]]
   branch = "master"
   name = "github.com/openshift/cluster-api-provider-gcp"
 
@@ -124,7 +124,7 @@ required = [
   branch = "master"
   name = "github.com/openshift/machine-config-operator"
 
-[[constraint]]  
+[[constraint]]
   name = "github.com/containers/image"
   version = "2.0.0"
 
@@ -144,3 +144,8 @@ required = [
 [[constraint]]
   name = "github.com/ovirt/go-ovirt"
   version = "v4.3.9"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/openshift/machine-api-operator"
+  source = "github.com/openshift/machine-api-operator"
