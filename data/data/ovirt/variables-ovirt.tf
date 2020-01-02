@@ -40,6 +40,12 @@ variable "openstack_base_image_local_file_path" {
   description = "Local file path of the base image file to use for the nodes."
 }
 
+variable "ovirt_network_name" {
+  type        = string
+  default     = "ovirtmgmt"
+  description = "The name of ovirt's logical network for the selected ovirt cluster."
+}
+
 variable "ovirt_master_mem" {
   type    = string
   default = "8192"

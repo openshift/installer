@@ -376,6 +376,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			config.CAFile,
 			installConfig.Config.Platform.Ovirt.ClusterID,
 			installConfig.Config.Platform.Ovirt.StorageDomainID,
+			installConfig.Config.Platform.Ovirt.NetworkName,
 			string(*rhcosImage),
 			clusterID.InfraID,
 		)

@@ -15,6 +15,7 @@ type config struct {
 	Cafile                 string `json:"ovirt_cafile,omitempty"`
 	ClusterID              string `json:"ovirt_cluster_id"`
 	StorageDomainID        string `json:"ovirt_storage_domain_id"`
+	NetworkName            string `json:"ovirt_network_name,omitempty"`
 	BaseImageName          string `json:"openstack_base_image_name,omitempty"`
 	BaseImageLocalFilePath string `json:"openstack_base_image_local_file_path,omitempty"`
 }
@@ -27,17 +28,19 @@ func TFVars(
 	engineCafile string,
 	clusterID string,
 	stoarageDomainID string,
+	networkName string,
 	baseImage string,
 	infraID string) ([]byte, error) {
 
 	cfg := config{
-		URL:           engineURL,
-		Username:      engineUser,
-		Password:      enginePass,
-		Cafile:        engineCafile,
-		ClusterID:     clusterID,
+		URL:             engineURL,
+		Username:        engineUser,
+		Password:        enginePass,
+		Cafile:          engineCafile,
+		ClusterID:       clusterID,
 		StorageDomainID: stoarageDomainID,
-		BaseImageName: baseImage,
+		NetworkName:     networkName,
+		BaseImageName:   baseImage,
 	}
 
 	imageName, isURL := rhcos.GenerateOpenStackImageName(baseImage, infraID)

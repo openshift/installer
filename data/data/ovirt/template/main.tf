@@ -22,9 +22,9 @@ data "ovirt_clusters" "clusters" {
   }
 }
 
-// default vnic profile of ovirtmgmt
+// default vnic profile of ovirt's cluster network
 data "ovirt_vnic_profiles" "vnic_profiles" {
-  name_regex = "ovirtmgmt"
+  name_regex = var.ovirt_network_name
   network_id = local.network_id
 }
 
@@ -34,7 +34,7 @@ locals {
   existing_id = [for t in data.ovirt_templates.osImage.templates : t.id if substr(t.name, 0, 5) != "Blank"]
   // if we don't find the cluster this should fail
   cluster    = [for c in data.ovirt_clusters.clusters.clusters : c if c.id == var.ovirt_cluster_id][0]
-  network_id = [for n in local.cluster.networks : n.id if n.name == "ovirtmgmt"][0]
+  network_id = [for n in local.cluster.networks : n.id if n.name == var.ovirt_network_name][0]
 }
 
 // upload the disk if we don't have an existing template
