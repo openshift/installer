@@ -12,4 +12,17 @@ type Platform struct {
 	Datacenter string `json:"datacenter"`
 	// DefaultDatastore is the default datastore to use for provisioning volumes.
 	DefaultDatastore string `json:"defaultDatastore"`
+	// Folder is the name of the folder that will be used and/or created for
+	// virtual machines.
+	Folder string `json:"folder,omitempty"`
+	// Cluster is the name of the cluster virtual machines will be cloned into.
+	Cluster string `json:"cluster,omitempty"`
+	// ClusterOSImage overrides the url provided in rhcos.json to download the RHCOS OVA
+	ClusterOSImage string `json:"clusterOSImage,omitempty"`
+	// APIVIP is the virtual IP address for the api endpoint
+	APIVIP string `json:"apiVIP,omitempty"`
+	// IngressVIP is the virtual IP address for ingress
+	IngressVIP string `json:"ingressVIP,omitempty"`
+	// DNSVIP is the virtual IP address for DNS
+	DNSVIP string `json:"dnsVIP,omitempty"`
 }
