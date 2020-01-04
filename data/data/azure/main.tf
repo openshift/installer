@@ -13,7 +13,13 @@ provider "azurerm" {
   client_secret   = var.azure_client_secret
   tenant_id       = var.azure_tenant_id
   environment     = var.azure_environment
-  version         = "=1.39.0"
+}
+
+provider "azureprivatedns" {
+  subscription_id = var.azure_subscription_id
+  client_id       = var.azure_client_id
+  client_secret   = var.azure_client_secret
+  tenant_id       = var.azure_tenant_id
 }
 
 module "bootstrap" {
@@ -107,7 +113,7 @@ data "azurerm_resource_group" "network" {
 }
 
 resource "azurerm_dns_zone" "private" {
-  count = var.azure_supports_private_dns ? 0 : 1
+  count = var.azure_supports_private_dns ? 1 : 0
 
   name                = var.cluster_domain
   resource_group_name = azurerm_resource_group.main.name
@@ -115,22 +121,22 @@ resource "azurerm_dns_zone" "private" {
 }
 
 resource "azurerm_dns_zone" "cluster_record_zone" {
-  count = var.azure_supports_private_dns ? 1 : 0
+  count = var.azure_supports_private_dns ? 0 : 1
 
   name                = var.cluster_domain
   resource_group_name = azurerm_resource_group.main.name  
 }
 
 resource "azurerm_dns_ns_record" "api_middle" {
-  count = var.azure_supports_private_dns ? 1 : 0
+  count = var.azure_supports_private_dns ? 0 : 1
 
   name                = var.cluster_domain
   zone_name           = var.base_domain
-  resource_group_name = var.base_domain_resource_group_name
-  records             = azurerm_dns_zone.cluster_record_zone.name_servers
+  resource_group_name = var.azure_base_domain_resource_group_name
+  records             = azurerm_dns_zone.cluster_record_zone.0.name_servers
   ttl                 = 300
   depends_on = [
-    azurerm_dns_zone.cluster_record_zone
+    azurerm_dns_zone.cluster_record_zone.0
   ]
 }
 

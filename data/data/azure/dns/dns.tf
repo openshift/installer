@@ -3,8 +3,8 @@ locals {
   api_external_name = "api.${replace(var.cluster_domain, ".${var.base_domain}", "")}"
 }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "network" {
-  count = var.azure_supports_private_dns ? 0 : 1
+resource "azureprivatedns_zone_virtual_network_link" "network" {
+  count = var.azure_supports_private_dns ? 1 : 0
 
   name                  = "${var.cluster_id}-network-link"
   resource_group_name   = var.resource_group_name
