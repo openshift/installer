@@ -5,6 +5,7 @@ locals {
     },
     var.azure_extra_tags,
   )
+  tempClusterName = "${replace(var.cluster_domain, ".${var.base_domain}", "")}"
 }
 
 provider "azurerm" {
@@ -130,7 +131,7 @@ resource "azurerm_dns_zone" "cluster_record_zone" {
 resource "azurerm_dns_ns_record" "api_middle" {
   count = var.azure_supports_private_dns ? 0 : 1
 
-  name                = var.cluster_domain
+  name                = local.tempClusterName
   zone_name           = var.base_domain
   resource_group_name = var.azure_base_domain_resource_group_name
   records             = azurerm_dns_zone.cluster_record_zone.0.name_servers
