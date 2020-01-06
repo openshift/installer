@@ -56,8 +56,8 @@
     "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.3/43.80.20191002.1/x86_64/",
     "buildid": "43.80.20191002.1",
     "gcp": {
-        "image": "rhcos-43-80-20191002-1",
-        "url": "https://storage.googleapis.com/rhcos/rhcos/43.80.20191002.1.tar.gz"
+        "image": "fedora-coreos-31.20191217.2.0",
+        "url": "https://builds.coreos.fedoraproject.org/prod/streams/testing/builds/31.20191217.2.0/x86_64/fedora-coreos-31.20191217.2.0-gcp.x86_64.tar.gz.xz"
     },
     "images": {
         "aws": {
