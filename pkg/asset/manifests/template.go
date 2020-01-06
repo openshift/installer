@@ -15,6 +15,7 @@ type AzureCredsSecretData struct {
 	Base64encodeResourcePrefix string
 	Base64encodeResourceGroup  string
 	Base64encodeRegion         string
+	Base64encodeEnvironment	   string
 }
 
 // GCPCredsSecretData holds encoded credentials and is used to generate cloud-creds secret
