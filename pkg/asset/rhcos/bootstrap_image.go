@@ -45,7 +45,7 @@ func (i *BootstrapImage) Generate(p asset.Parents) error {
 	case baremetal.Name:
 		// Baremetal IPI launches a local VM for the bootstrap node
 		// Hence requires the QEMU image to use the libvirt backend
-		osimage, err = rhcos.QEMU(ctx)
+		osimage, err = rhcos.QEMU(ctx, config.ControlPlane.Architecture)
 	default:
 		// other platforms use the same image for all nodes
 		osimage, err = osImage(config)

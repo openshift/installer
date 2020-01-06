@@ -79,12 +79,14 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 			Name:           "master",
 			Replicas:       pointer.Int64Ptr(3),
 			Hyperthreading: types.HyperthreadingEnabled,
+			Architecture:   types.ArchitectureAMD64,
 		},
 		Compute: []types.MachinePool{
 			{
 				Name:           "worker",
 				Replicas:       pointer.Int64Ptr(3),
 				Hyperthreading: types.HyperthreadingEnabled,
+				Architecture:   types.ArchitectureAMD64,
 			},
 		},
 		Platform: types.Platform{
@@ -140,12 +142,14 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 					Name:           "master",
 					Replicas:       pointer.Int64Ptr(3),
 					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
 				},
 				Compute: []types.MachinePool{
 					{
 						Name:           "worker",
 						Replicas:       pointer.Int64Ptr(3),
 						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
 					},
 				},
 				Platform: types.Platform{
@@ -221,12 +225,14 @@ network:
 					Name:           "master",
 					Replicas:       pointer.Int64Ptr(3),
 					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
 				},
 				Compute: []types.MachinePool{
 					{
 						Name:           "worker",
 						Replicas:       pointer.Int64Ptr(3),
 						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
 					},
 				},
 				Platform: types.Platform{
