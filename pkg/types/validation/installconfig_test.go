@@ -884,6 +884,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `Invalid value: "DualStack": dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address`,
 		},
+		// TODO(crawford): add a test to validate that homogeneous clusters are enforced once an additional architecture is added
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

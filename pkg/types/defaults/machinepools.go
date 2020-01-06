@@ -17,4 +17,7 @@ func SetMachinePoolDefaults(p *types.MachinePool, platform string) {
 	if p.Hyperthreading == "" {
 		p.Hyperthreading = types.HyperthreadingEnabled
 	}
+	if p.Architecture == "" {
+		p.Architecture = types.ArchitectureAMD64
+	}
 }
