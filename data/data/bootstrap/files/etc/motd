@@ -1,5 +1,5 @@
 This is the bootstrap node; it will be destroyed when the master is fully up.
 
-The primary service is "bootkube.service". To watch its status, run e.g.
+The primary services are release-image.service followed by bootkube.service. To watch their status, run e.g.
 
-  journalctl -b -f -u bootkube.service
+  journalctl -b -f -u release-image.service -u bootkube.service
