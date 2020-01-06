@@ -289,7 +289,31 @@ then
 			--haproxy-image="${HAPROXY_IMAGE}" \
 			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
 			--cloud-config-file=/assets/manifests/cloud-provider-config.yaml \
-			--cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}"
+			--cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}" ||	
+	#Work around for runtime images that are not up to date
+	bootkube_podman_run \
+		--user 0 \
+		--volume "$PWD:/assets:z" \
+		"${MACHINE_CONFIG_OPERATOR_IMAGE}" \
+		bootstrap \
+			--etcd-ca=/assets/tls/etcd-ca-bundle.crt \
+			--etcd-metric-ca=/assets/tls/etcd-metric-ca-bundle.crt \
+			--root-ca=/assets/tls/root-ca.crt \
+			--kube-ca=/assets/tls/kube-apiserver-complete-client-ca-bundle.crt \
+			--config-file=/assets/manifests/cluster-config.yaml \
+			--dest-dir=/assets/mco-bootstrap \
+			--pull-secret=/assets/manifests/openshift-config-secret-pull-secret.yaml \
+			--etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
+			--kube-client-agent-image="${MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE}" \
+			--machine-config-operator-image="${MACHINE_CONFIG_OPERATOR_IMAGE}" \
+			--machine-config-oscontent-image="${MACHINE_CONFIG_OSCONTENT}" \
+			--infra-image="${MACHINE_CONFIG_INFRA_IMAGE}" \
+			--keepalived-image="${KEEPALIVED_IMAGE}" \
+			--coredns-image="${COREDNS_IMAGE}" \
+			--mdns-publisher-image="${MDNS_PUBLISHER_IMAGE}" \
+			--haproxy-image="${HAPROXY_IMAGE}" \
+			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
+			--cloud-config-file=/assets/manifests/cloud-provider-config.yaml
 
 	# Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to
 	# 1. read the controller config rendered by MachineConfigOperator
