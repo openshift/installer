@@ -3,10 +3,18 @@ package rhcos
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"os"
 
 	"github.com/openshift/installer/data"
 	"github.com/pkg/errors"
+
+	"github.com/openshift/installer/pkg/types"
+)
+
+var (
+	errInvalidArch = fmt.Errorf("no build metadata for given architecture")
 )
 
 type metadata struct {
@@ -37,15 +45,17 @@ type metadata struct {
 	OSTreeVersion string `json:"ostree-version"`
 }
 
-func fetchRHCOSBuild(ctx context.Context) (*metadata, error) {
-	file, err := data.Assets.Open("rhcos.json")
+func fetchRHCOSBuild(ctx context.Context, arch types.Architecture) (*metadata, error) {
+	file, err := data.Assets.Open(fmt.Sprintf("rhcos-%s.json", arch))
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
 	body, err := ioutil.ReadAll(file)
-	if err != nil {
+	if os.IsNotExist(err) {
+		return nil, errInvalidArch
+	} else if err != nil {
 		return nil, err
 	}
 

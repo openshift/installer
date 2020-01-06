@@ -904,6 +904,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 		},
+		// TODO(crawford): add a test to validate that homogeneous clusters are enforced once an additional architecture is added
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

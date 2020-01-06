@@ -63,6 +63,8 @@ func (i *Image) Generate(p asset.Parents) error {
 }
 
 func osImage(config *types.InstallConfig) (string, error) {
+	arch := config.ControlPlane.Architecture
+
 	var osimage string
 	var err error
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
@@ -73,15 +75,15 @@ func osImage(config *types.InstallConfig) (string, error) {
 			osimage = config.Platform.AWS.AMIID
 			break
 		}
-		osimage, err = rhcos.AMI(ctx, config.Platform.AWS.Region)
+		osimage, err = rhcos.AMI(ctx, arch, config.Platform.AWS.Region)
 	case gcp.Name:
-		osimage, err = rhcos.GCP(ctx)
+		osimage, err = rhcos.GCP(ctx, arch)
 	case libvirt.Name:
-		osimage, err = rhcos.QEMU(ctx)
+		osimage, err = rhcos.QEMU(ctx, arch)
 	case openstack.Name, ovirt.Name:
-		osimage, err = rhcos.OpenStack(ctx)
+		osimage, err = rhcos.OpenStack(ctx, arch)
 	case azure.Name:
-		osimage, err = rhcos.VHD(ctx)
+		osimage, err = rhcos.VHD(ctx, arch)
 	case baremetal.Name:
 		// Check for RHCOS image URL override
 		if oi := config.Platform.BareMetal.ClusterOSImage; oi != "" {
@@ -92,7 +94,7 @@ func osImage(config *types.InstallConfig) (string, error) {
 		// Note that baremetal IPI currently uses the OpenStack image
 		// because this contains the necessary ironic config drive
 		// ignition support, which isn't enabled in the UPI BM images
-		osimage, err = rhcos.OpenStack(ctx)
+		osimage, err = rhcos.OpenStack(ctx, arch)
 	case none.Name, vsphere.Name:
 
 	default:

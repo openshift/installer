@@ -35,13 +35,15 @@ func TestRedactedInstallConfig(t *testing.T) {
 				ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("1.2.3.4/5")},
 			},
 			ControlPlane: &types.MachinePool{
-				Name:     "control-plane",
-				Replicas: pointer.Int64Ptr(3),
+				Name:         "control-plane",
+				Replicas:     pointer.Int64Ptr(3),
+				Architecture: types.ArchitectureAMD64,
 			},
 			Compute: []types.MachinePool{
 				{
-					Name:     "compute",
-					Replicas: pointer.Int64Ptr(3),
+					Name:         "compute",
+					Replicas:     pointer.Int64Ptr(3),
+					Architecture: types.ArchitectureAMD64,
 				},
 			},
 			Platform: types.Platform{
@@ -59,10 +61,12 @@ func TestRedactedInstallConfig(t *testing.T) {
 	expectedConfig := createInstallConfig()
 	expectedYaml := `baseDomain: test-domain
 compute:
-- name: compute
+- architecture: amd64
+  name: compute
   platform: {}
   replicas: 3
 controlPlane:
+  architecture: amd64
   name: control-plane
   platform: {}
   replicas: 3
