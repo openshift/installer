@@ -27,6 +27,8 @@ type Architecture string
 const (
 	// ArchitectureAMD64 indicates AMD64 (x86_64).
 	ArchitectureAMD64 = "amd64"
+	// ArchitectureS390X indicates s390x (IBM System Z).
+	ArchitectureS390X = "s390x"
 )
 
 // MachinePool is a pool of machines to be installed.
