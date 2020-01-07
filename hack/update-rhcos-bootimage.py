@@ -10,7 +10,7 @@ RHCOS_RELEASES_APP = 'https://releases-art-rhcos.svc.ci.openshift.org'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("meta", action='store')
-parser.add_argument("arch", action='store', choices=['amd64'])
+parser.add_argument("arch", action='store', choices=['amd64', 's390x'])
 args = parser.parse_args()
 
 metadata_dir = os.path.join(os.path.dirname(sys.argv[0]), "../data/data")
@@ -25,13 +25,15 @@ newmeta = {}
 for k in ['images', 'buildid', 'oscontainer',
           'ostree-commit', 'ostree-version',
           'azure', 'gcp']:
-    newmeta[k] = meta[k]
-newmeta['amis'] = {
-    entry['name']: {
-        'hvm': entry['hvm'],
+    if meta.get(k):
+        newmeta[k] = meta[k]
+if meta.get(k):
+    newmeta['amis'] = {
+        entry['name']: {
+            'hvm': entry['hvm'],
+        }
+        for entry in meta['amis']
     }
-    for entry in meta['amis']
-}
 newmeta['baseURI'] = urllib.parse.urljoin(args.meta, '.')
 
 with open(os.path.join(metadata_dir, f"rhcos-{args.arch}.json"), 'w') as f:
