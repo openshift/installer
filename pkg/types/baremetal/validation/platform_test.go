@@ -28,7 +28,7 @@ func TestValidatePlatform(t *testing.T) {
 	}
 
 	dynamicValidators = append(dynamicValidators, interfaceValidator)
-	network := &types.Networking{MachineCIDR: ipnet.MustParseCIDR("192.168.111.0/24")}
+	network := &types.Networking{MachineNetwork: []types.MachineNetworkEntry{{CIDR: *ipnet.MustParseCIDR("192.168.111.0/24")}}}
 	cases := []struct {
 		name     string
 		platform *baremetal.Platform
@@ -81,7 +81,7 @@ func TestValidatePlatform(t *testing.T) {
 				ProvisioningBridge:      "br1",
 			},
 			network:  network,
-			expected: "Invalid value: \"192.168.222.2\": the virtual IP is expected to be in 192.168.111.0/24 subnet",
+			expected: "Invalid value: \"192.168.222.2\": the virtual IP is expected to be in one of the machine networks",
 		},
 		{
 			name: "invalid_dnsvip",
@@ -97,7 +97,7 @@ func TestValidatePlatform(t *testing.T) {
 				ProvisioningBridge:      "br1",
 			},
 			network:  network,
-			expected: "Invalid value: \"192.168.222.3\": the virtual IP is expected to be in 192.168.111.0/24 subnet",
+			expected: "Invalid value: \"192.168.222.3\": the virtual IP is expected to be in one of the machine networks",
 		},
 		{
 			name: "invalid_ingressvip",
@@ -113,7 +113,7 @@ func TestValidatePlatform(t *testing.T) {
 				ProvisioningBridge:      "br1",
 			},
 			network:  network,
-			expected: "Invalid value: \"192.168.222.4\": the virtual IP is expected to be in 192.168.111.0/24 subnet",
+			expected: "Invalid value: \"192.168.222.4\": the virtual IP is expected to be in one of the machine networks",
 		},
 		{
 			name: "invalid_hosts",
@@ -194,7 +194,7 @@ func TestValidatePlatform(t *testing.T) {
 				ProvisioningBridge:      "br1",
 			},
 			network:  network,
-			expected: "Invalid value: \"192.168.111.5\": the IP must not be in 192.168.111.0/24 subnet",
+			expected: "Invalid value: \"192.168.111.5\": the IP must not be in one of the machine networks",
 		},
 		{
 			name: "invalid_bootstrapprovip",
@@ -210,7 +210,7 @@ func TestValidatePlatform(t *testing.T) {
 				ProvisioningBridge:      "br1",
 			},
 			network:  network,
-			expected: "Invalid value: \"192.168.111.5\": the IP must not be in 192.168.111.0/24 subnet",
+			expected: "Invalid value: \"192.168.111.5\": the IP must not be in one of the machine networks",
 		},
 		{
 			name: "invalid_bootstraposimage",

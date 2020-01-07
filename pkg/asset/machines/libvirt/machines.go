@@ -27,7 +27,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider := provider(clusterID, config.Networking.MachineCIDR.String(), platform, userDataSecret)
+	provider := provider(clusterID, config.Networking.MachineNetwork[0].CIDR.String(), platform, userDataSecret)
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		machine := machineapi.Machine{

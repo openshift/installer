@@ -23,7 +23,9 @@ import (
 func defaultInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		Networking: &types.Networking{
-			MachineCIDR:    defaultMachineCIDR,
+			MachineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *defaultMachineCIDR},
+			},
 			NetworkType:    defaultNetworkType,
 			ServiceNetwork: []ipnet.IPNet{*defaultServiceNetwork},
 			ClusterNetwork: []types.ClusterNetworkEntry{
@@ -55,7 +57,7 @@ func defaultAzureInstallConfig() *types.InstallConfig {
 
 func defaultLibvirtInstallConfig() *types.InstallConfig {
 	c := defaultInstallConfig()
-	c.Networking.MachineCIDR = libvirtdefaults.DefaultMachineCIDR
+	c.Networking.MachineNetwork[0].CIDR = *libvirtdefaults.DefaultMachineCIDR
 	c.Platform.Libvirt = &libvirt.Platform{}
 	libvirtdefaults.SetPlatformDefaults(c.Platform.Libvirt)
 	c.ControlPlane.Replicas = pointer.Int64Ptr(1)

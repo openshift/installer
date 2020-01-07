@@ -53,7 +53,7 @@ func TestConvertInstallConfig(t *testing.T) {
 					APIVersion: "v1beta3",
 				},
 				Networking: &types.Networking{
-					MachineCIDR:           ipnet.MustParseCIDR("1.1.1.1/24"),
+					DeprecatedMachineCIDR: ipnet.MustParseCIDR("1.1.1.1/24"),
 					DeprecatedType:        "foo",
 					DeprecatedServiceCIDR: ipnet.MustParseCIDR("1.2.3.4/32"),
 					DeprecatedClusterNetworks: []types.ClusterNetworkEntry{
@@ -70,8 +70,10 @@ func TestConvertInstallConfig(t *testing.T) {
 					APIVersion: types.InstallConfigVersion,
 				},
 				Networking: &types.Networking{
-					MachineCIDR:    ipnet.MustParseCIDR("1.1.1.1/24"),
-					NetworkType:    "foo",
+					NetworkType: "foo",
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("1.1.1.1/24")},
+					},
 					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("1.2.3.4/32")},
 					ClusterNetwork: []types.ClusterNetworkEntry{
 						{
@@ -84,6 +86,7 @@ func TestConvertInstallConfig(t *testing.T) {
 
 					// deprecated fields are preserved
 					DeprecatedType:        "foo",
+					DeprecatedMachineCIDR: ipnet.MustParseCIDR("1.1.1.1/24"),
 					DeprecatedServiceCIDR: ipnet.MustParseCIDR("1.2.3.4/32"),
 					DeprecatedClusterNetworks: []types.ClusterNetworkEntry{
 						{
@@ -103,7 +106,9 @@ func TestConvertInstallConfig(t *testing.T) {
 					APIVersion: types.InstallConfigVersion,
 				},
 				Networking: &types.Networking{
-					MachineCIDR:    ipnet.MustParseCIDR("1.1.1.1/24"),
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("1.1.1.1/24")},
+					},
 					NetworkType:    "foo",
 					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("1.2.3.4/32")},
 					ClusterNetwork: []types.ClusterNetworkEntry{
@@ -119,7 +124,9 @@ func TestConvertInstallConfig(t *testing.T) {
 					APIVersion: types.InstallConfigVersion,
 				},
 				Networking: &types.Networking{
-					MachineCIDR:    ipnet.MustParseCIDR("1.1.1.1/24"),
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("1.1.1.1/24")},
+					},
 					NetworkType:    "foo",
 					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("1.2.3.4/32")},
 					ClusterNetwork: []types.ClusterNetworkEntry{

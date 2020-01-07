@@ -29,7 +29,6 @@ The installer can use an existing VNet and subnets when provisioning an OpenShif
 
 When pre-existing subnets are provided, the installer will not create a network security group (NSG) or alter an existing one attached to the subnet. This restriction means that no security rules are created. If multiple clusters are installed to the same VNet and isolation is desired, it must be enforced through an administrative task after the cluster is installed.
 
-
 ## Examples
 
 Some example `install-config.yaml` are shown below.

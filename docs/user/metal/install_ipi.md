@@ -113,7 +113,8 @@ baseDomain: test.metalkube.org
 metadata:
   name: ostest
 networking:
-  machineCIDR: 192.168.111.0/24
+  machineNetwork:
+  - cidr: 192.168.111.0/24
 compute:
 - name: worker
   replicas: 1
