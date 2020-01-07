@@ -34,6 +34,7 @@ var (
 
 	validArchitectures = map[types.Architecture]bool{
 		types.ArchitectureAMD64: true,
+		types.ArchitectureS390X: true,
 	}
 
 	validArchitectureValues = func() []string {
