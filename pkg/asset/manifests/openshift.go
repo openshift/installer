@@ -53,6 +53,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&openshift.CloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
 		&openshift.RoleCloudCredsSecretReader{},
+		&openshift.CommunityOperators{},
 	}
 }
 
@@ -138,13 +139,16 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	cloudCredsSecret := &openshift.CloudCredsSecret{}
 	kubeadminPasswordSecret := &openshift.KubeadminPasswordSecret{}
 	roleCloudCredsSecretReader := &openshift.RoleCloudCredsSecretReader{}
+	communityOperatorsSetting := &openshift.CommunityOperators{}
 	dependencies.Get(
 		cloudCredsSecret,
 		kubeadminPasswordSecret,
+		communityOperatorsSetting,
 		roleCloudCredsSecretReader)
 
 	assetData := map[string][]byte{
 		"99_kubeadmin-password-secret.yaml": applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
+		"99_community_operators.yaml":       applyTemplateData(communityOperatorsSetting.Files()[0].Data, templateData),
 	}
 
 	switch platform {
