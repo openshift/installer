@@ -925,7 +925,15 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 		},
-		// TODO(crawford): add a test to validate that homogeneous clusters are enforced once an additional architecture is added
+		{
+			name: "cluster is not heteregenous",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute[0].Architecture = types.ArchitectureS390X
+				return c
+			}(),
+			expectedError: `^compute\[0\].architecture: Invalid value: "s390x": heteregeneous multi-arch is not supported; compute pool architecture must match control plane$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
