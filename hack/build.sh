@@ -5,7 +5,7 @@ set -ex
 # shellcheck disable=SC2068
 version() { IFS="."; printf "%03d%03d%03d\\n" $@; unset IFS;}
 
-minimum_go_version=1.12
+minimum_go_version=1.13
 current_go_version=$(go version | cut -d " " -f 3)
 
 if [ "$(version "${current_go_version#go}")" -lt "$(version "$minimum_go_version")" ]; then
@@ -13,26 +13,10 @@ if [ "$(version "${current_go_version#go}")" -lt "$(version "$minimum_go_version
      exit 1
 fi
 
-LAUNCH_PATH="${PWD}"
-cd "$(dirname "$0")/.."
-
-PACKAGE_PATH="$(go list -e -f '{{.Dir}}' github.com/openshift/installer)"
-if test -z "${PACKAGE_PATH}"
-then
-	echo "build from your \${GOPATH} (${LAUNCH_PATH} is not in $(go env GOPATH))" 2>&1
-	exit 1
-fi
-
-LOCAL_PATH="${PWD}"
-if test "${PACKAGE_PATH}" != "${LOCAL_PATH}"
-then
-	echo "build from your \${GOPATH} (${PACKAGE_PATH}, not ${LAUNCH_PATH})" 2>&1
-	exit 1
-fi
-
 MODE="${MODE:-release}"
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
 GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty)}"
+GOFLAGS="${GOFLAGS:--mod=vendor}"
 LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/version.Raw=${GIT_TAG} -X github.com/openshift/installer/pkg/version.Commit=${GIT_COMMIT}"
 TAGS="${TAGS:-}"
 OUTPUT="${OUTPUT:-bin/openshift-install}"
@@ -59,4 +43,4 @@ then
 	export CGO_ENABLED=1
 fi
 
-go build -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install
+go build "${GOFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install

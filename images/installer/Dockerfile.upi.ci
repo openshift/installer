@@ -3,7 +3,7 @@
 # It also contains the `upi` directory that contains various terraform and cloud formation templates that are used to create infrastructure resources.
 
 
-FROM registry.svc.ci.openshift.org/ocp/builder:golang-1.12 AS builder
+FROM registry.svc.ci.openshift.org/ocp/builder:golang-1.13 AS builder
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN hack/build.sh
