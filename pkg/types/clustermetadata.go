@@ -8,6 +8,7 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // ClusterMetadata contains information
@@ -31,6 +32,7 @@ type ClusterPlatformMetadata struct {
 	GCP       *gcp.Metadata       `json:"gcp,omitempty"`
 	BareMetal *baremetal.Metadata `json:"baremetal,omitempty"`
 	Ovirt     *ovirt.Metadata     `json:"ovirt,omitempty"`
+	VSphere   *vsphere.Metadata   `json:"vsphere,omitempty"`
 }
 
 // Platform returns a string representation of the platform
@@ -60,6 +62,9 @@ func (cpm *ClusterPlatformMetadata) Platform() string {
 	}
 	if cpm.Ovirt != nil {
 		return ovirt.Name
+	}
+	if cpm.VSphere != nil {
+		return vsphere.Name
 	}
 	return ""
 }

@@ -15,6 +15,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/libvirt"
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
+	_ "github.com/openshift/installer/pkg/destroy/vsphere"
 )
 
 func newDestroyCmd() *cobra.Command {
