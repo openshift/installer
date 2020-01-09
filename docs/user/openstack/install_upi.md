@@ -157,7 +157,7 @@ We're going to use a custom subnet to illustrate how that can be done.
 
 
 Our range will be `192.0.2.0/24` so we need to add that value to
-`install-config.yaml`. Look under `networking` -> `clusterNetwork` -> network -> `cidr`.
+`install-config.yaml`. Look under `networking` -> `machineNetwork` -> network -> `cidr`.
 
 This command will do it for you:
 
@@ -165,7 +165,7 @@ This command will do it for you:
 $ python3 -c 'import yaml;
 path = "install-config.yaml";
 data = yaml.safe_load(open(path));
-data["networking"]["clusterNetwork"][0]["cidr"] = "192.0.2.0/24";
+data["networking"]["machineNetwork"][0]["cidr"] = "192.0.2.0/24";
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
