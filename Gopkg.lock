@@ -1371,7 +1371,7 @@
     "pkg/apis/openstackproviderconfig/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "945cf044115f82be8578f9b0e57de480e3844da6"
+  revision = "db51683ce60713c22ebd9da14e8a515e3662535e"
   source = "https://github.com/openshift/cluster-api-provider-openstack.git"
 
 [[projects]]

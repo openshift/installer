@@ -46,7 +46,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	for idx := int64(0); idx < total; idx++ {
 		az := ""
 		trunk := config.Platform.OpenStack.TrunkSupport
-		provider, err := provider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunk)
+		provider, err := provider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunk, config.AdditionalTrustBundle)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -78,7 +78,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunk string) (*openstackprovider.OpenstackProviderSpec, error) {
+func provider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunk string, certBundle string) (*openstackprovider.OpenstackProviderSpec, error) {
 
 	spec := openstackprovider.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
@@ -115,6 +115,7 @@ func provider(clusterID string, platform *openstack.Platform, mpool *openstack.M
 			"Name":               fmt.Sprintf("%s-%s", clusterID, role),
 			"openshiftClusterID": clusterID,
 		},
+		CertBundle: certBundle,
 	}
 	if mpool.RootVolume != nil {
 		spec.RootVolume = &openstackprovider.RootVolume{

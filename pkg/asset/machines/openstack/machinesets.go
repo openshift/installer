@@ -33,7 +33,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	var machinesets []*clusterapi.MachineSet
 	az := ""
 	trunk := config.Platform.OpenStack.TrunkSupport
-	provider, err := provider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunk)
+	provider, err := provider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunk, config.AdditionalTrustBundle)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create provider")
 	}
