@@ -166,6 +166,7 @@ func askForCredentials() (*Credentials, error) {
 				Message: "azure environment name",
 				Help: "The Azure environment you are deploying to, most likely public",
 				Options: environmentOptions,
+				Default: environmentOptions[0],
 			},
 		},
 	}, &environmentName)
