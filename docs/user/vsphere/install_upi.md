@@ -142,7 +142,7 @@ metadata:
 platform:
   vsphere:
     ## The hostname or IP address of the vCenter
-    vcenter: your.vcenter.server
+    vCenter: your.vcenter.server
     ## The name of the user for accessing the vCenter
     username: your_vsphere_username
     ## The password associated with the user

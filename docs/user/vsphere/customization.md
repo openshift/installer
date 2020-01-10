@@ -30,7 +30,7 @@ metadata:
   name: test-cluster
 platform:
   vSphere:
-    vcenter: your.vcenter.example.com
+    vCenter: your.vcenter.example.com
     username: username
     password: password
     datacenter: datacenter
