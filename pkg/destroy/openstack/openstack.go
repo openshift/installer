@@ -101,7 +101,7 @@ func deleteRunner(deleteFuncName string, dFunction deleteFunc, opts *clientconfi
 	backoffSettings := wait.Backoff{
 		Duration: time.Second * 15,
 		Factor:   1.3,
-		Steps:    10,
+		Steps:    25,
 	}
 
 	err := wait.ExponentialBackoff(backoffSettings, func() (bool, error) {
