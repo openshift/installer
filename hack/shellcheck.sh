@@ -7,6 +7,7 @@ if [ "$IS_CONTAINER" != "" ]; then
     -o -path "${TOP_DIR}/tests/smoke/vendor" -prune \
     -o -path "${TOP_DIR}/tests/bdd-smoke/vendor" -prune \
     -o -path "${TOP_DIR}/tests/smoke/.build" -prune \
+    -o -path "${TOP_DIR}/pkg/terraform/exec/plugins/vendor" -prune \
     -o -type f -name '*.sh' -exec shellcheck --format=gcc {} \+
 else
   podman run --rm \
