@@ -114,6 +114,16 @@ variable "control_plane_ips" {
   default = []
 }
 
+variable "master_memory" {
+  type = "string"
+  default = "16384"
+}
+
+variable "master_num_cpus" {
+  type = "string"
+  default = "4"
+}
+
 //////////
 // Compute machine variables
 //////////
@@ -130,4 +140,14 @@ variable "compute_ignition" {
 variable "compute_ips" {
   type    = "list"
   default = []
+}
+
+variable "compute_memory" {
+  type = "string"
+  default = "8192"
+}
+
+variable "compute_num_cpus" {
+  type = "string"
+  default = "4"
 }
