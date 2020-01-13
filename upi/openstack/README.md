@@ -2,16 +2,6 @@
 
 This directory contains the Ansible scripts that automate part of the work in the [UPI installation](../../docs/user/openstack/install_upi.md).
 
-## Rationale
-
-The tool for automated installation (IPI - Installer-Provided Infrastructure) cover the general case where all the OpenStack resources can be created ad-hoc.
-
-The UPI case (User-Provided Infrastructure) instead lets complete freedom to the end-user of customizing the cluster and its underpinning OpenStack resources.
-
-The installation process is detailed step by step in the relative [documentation](../../docs/user/openstack/install_upi.md).
-
-These Ansible playbooks in this directory automate some of those steps. They are provided as a template: edit them to match your needs.
-
 ## Requirements
 
 * Python
@@ -25,7 +15,7 @@ These Ansible playbooks in this directory automate some of those steps. They are
 The included `requirements.txt` helps using `pip` for gathering the required dependencies in a Python virtual environment:
 
 ```shell
-python3 -m venv venv
+python -m venv venv
 source venv/bin/activate
 pip install -U pip
 pip install -r requirements.txt
@@ -37,7 +27,7 @@ Customize the cluster properties in the [Inventory](./inventory.yaml) file.
 
 **NOTE:** To deploy with Kuryr SDN, update the `os_networking_type` field to `Kuryr`.
 
-The playbooks are designed to reproduce an installation equivalent to IPI. Customize them as needed. It is advised to customize the teardown playbooks symmetrically.
+The playbooks in this directory are designed to reproduce an IPI installation (that is, the opinionated installation achieved with the `openshift-install` binary). The reason why they are here is that they might be easier to customise. Depending on the change, it is advised to change the teardown playbooks (`down-*`) accordingly.
 
 Every step can be run like this:
 
@@ -52,3 +42,6 @@ For every script, a symmetrical teardown playbook is provided:
 ```
 
 A full teardown can be achieved by running all the `down` scripts in reverse order.
+
+
+Please refer to the [UPI documentation](../../docs/user/openstack/install_upi.md) for step-by-step instructions.
