@@ -32,7 +32,7 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		BaseDomain: "test-domain",
 		Networking: &types.Networking{
-			NetworkType:    "OpenShiftSDN",
+			NetworkType:    "OVNKubernetes",
 			MachineCIDR:    ipnet.MustParseCIDR("10.0.0.0/16"),
 			ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
 			ClusterNetwork: []types.ClusterNetworkEntry{

@@ -178,7 +178,7 @@ type Networking struct {
 
 	// NetworkType is the type of network to install.
 	// +optional
-	// Default is OpenShiftSDN.
+	// Default is OVNKubernetes.
 	NetworkType string `json:"networkType,omitempty"`
 
 	// ClusterNetwork is the IP address pool for pods.
