@@ -18,7 +18,7 @@ var (
 	defaultServiceNetwork = ipnet.MustParseCIDR("172.30.0.0/16")
 	defaultClusterNetwork = ipnet.MustParseCIDR("10.128.0.0/14")
 	defaultHostPrefix     = 23
-	defaultNetworkType    = "OpenShiftSDN"
+	defaultNetworkType    = "OVNKubernetes"
 )
 
 // SetInstallConfigDefaults sets the defaults for the install config.
