@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 
+	uuid "github.com/google/uuid"
 	"golang.org/x/crypto/ssh"
 	k8serrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -171,5 +172,11 @@ func IP(ip string) error {
 // MAC validates that a value is a valid mac address
 func MAC(addr string) error {
 	_, err := net.ParseMAC(addr)
+	return err
+}
+
+// UUID validates that a uuid is non-empty and a valid uuid.
+func UUID(val string) error {
+	_, err := uuid.Parse(val)
 	return err
 }

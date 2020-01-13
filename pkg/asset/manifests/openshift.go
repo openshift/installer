@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"path/filepath"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/ghodss/yaml"
@@ -13,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 
@@ -24,6 +26,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -151,6 +154,21 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 				Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.VSphere.Password)),
 			},
 		}
+	case ovirttypes.Name:
+		conf, err := ovirt.GetOvirtConfig()
+		if err != nil {
+			return err
+		}
+
+		cloudCreds = cloudCredsSecretData{
+			Ovirt: &OvirtCredsSecretData{
+				Base64encodeURL:      base64.StdEncoding.EncodeToString([]byte(conf.URL)),
+				Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(conf.Username)),
+				Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(conf.Password)),
+				Base64encodeCAFile:   base64.StdEncoding.EncodeToString([]byte(conf.CAFile)),
+				Base64encodeInsecure: base64.StdEncoding.EncodeToString([]byte(strconv.FormatBool(conf.Insecure))),
+			},
+		}
 	}
 
 	templateData := &openshiftTemplateData{
@@ -171,7 +189,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	}
 
 	switch platform {
-	case awstypes.Name, openstacktypes.Name, vspheretypes.Name, azuretypes.Name, gcptypes.Name:
+	case awstypes.Name, openstacktypes.Name, vspheretypes.Name, azuretypes.Name, gcptypes.Name, ovirttypes.Name:
 		assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
 		assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleCloudCredsSecretReader.Files()[0].Data, templateData)
 	}

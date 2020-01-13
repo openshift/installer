@@ -35,12 +35,22 @@ type VSphereCredsSecretData struct {
 	Base64encodePassword string
 }
 
+// OvirtCredsSecretData holds encoded credentials and is used to generated cloud-creds secret
+type OvirtCredsSecretData struct {
+	Base64encodeURL      string
+	Base64encodeUsername string
+	Base64encodePassword string
+	Base64encodeCAFile   string
+	Base64encodeInsecure string
+}
+
 type cloudCredsSecretData struct {
 	AWS       *AwsCredsSecretData
 	Azure     *AzureCredsSecretData
 	GCP       *GCPCredsSecretData
 	OpenStack *OpenStackCredsSecretData
 	VSphere   *VSphereCredsSecretData
+	Ovirt     *OvirtCredsSecretData
 }
 
 type bootkubeTemplateData struct {

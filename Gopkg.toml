@@ -136,3 +136,11 @@ required = [
   branch = "master"
   name = "github.com/metal3-io/baremetal-operator"
   source = "https://github.com/openshift/baremetal-operator"
+
+[[constraint]]
+  name = "github.com/ovirt/cluster-api-provider-ovirt"
+  revision ="f7b0ebc7f9ae17c0d5d5b4f5795a1b70972a5570"
+
+[[constraint]]
+  name = "github.com/ovirt/go-ovirt"
+  version = "v4.3.9"

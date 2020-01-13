@@ -11,6 +11,7 @@ import (
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+	"github.com/openshift/installer/pkg/types/ovirt"
 )
 
 // pointerIgnitionConfig generates a config which references the remote config
@@ -29,6 +30,8 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 		} else {
 			ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
 		}
+	case ovirt.Name:
+		ignitionHost = fmt.Sprintf("%s:22623", installConfig.Ovirt.APIVIP)
 	default:
 		ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
 	}

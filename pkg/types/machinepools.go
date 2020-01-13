@@ -7,6 +7,7 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -63,6 +64,9 @@ type MachinePoolPlatform struct {
 
 	// VSphere is the configuration used when installing on vSphere.
 	VSphere *vsphere.MachinePool `json:"vsphere,omitempty"`
+
+	// Ovirt is the configuration used when installing on oVirt.
+	Ovirt *ovirt.MachinePool `json:"ovirt,omitempty"`
 }
 
 // Name returns a string representation of the platform (e.g. "aws" if
@@ -86,6 +90,8 @@ func (p *MachinePoolPlatform) Name() string {
 		return openstack.Name
 	case p.VSphere != nil:
 		return vsphere.Name
+	case p.Ovirt != nil:
+		return ovirt.Name
 	default:
 		return ""
 	}

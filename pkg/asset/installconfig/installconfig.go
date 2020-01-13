@@ -80,6 +80,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	a.Config.Azure = platform.Azure
 	a.Config.GCP = platform.GCP
 	a.Config.BareMetal = platform.BareMetal
+	a.Config.Ovirt = platform.Ovirt
 
 	return a.finish("")
 }
