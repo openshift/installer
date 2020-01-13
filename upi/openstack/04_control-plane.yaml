@@ -23,6 +23,13 @@
     with_indexed_items: "{{ [os_port_master] * os_cp_nodes_number }}"
     register: ports
 
+  - name: 'Set Control Plane ports tag'
+    os_tag:
+      resource: "port"
+      name: "{{ item.1 }}-{{ item.0 }}"
+      tags: "{{ [cluster_id_tag] }}"
+    with_indexed_items: "{{ [os_port_master] * os_cp_nodes_number }}"
+
   - name: 'Create the Control Plane trunks'
     os_trunk:
       name: "{{ os_cp_trunk_name }}-{{ item.0 }}"

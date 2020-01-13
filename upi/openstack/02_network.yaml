@@ -15,6 +15,12 @@
     os_network:
       name: "{{ os_network }}"
 
+  - name: 'Set the cluster network tag'
+    os_tag:
+      resource: "network"
+      name: "{{ os_network }}"
+      tags: "{{ [cluster_id_tag] }}"
+
   - name: 'Create a subnet'
     os_subnet:
       name: "{{ os_subnet }}"
@@ -23,12 +29,24 @@
       allocation_pool_start: "{{ os_subnet_range | next_nth_usable(10) }}"
       allocation_pool_end: "{{ os_subnet_range | ipaddr('last_usable') }}"
 
+  - name: 'Set the cluster subnet tag'
+    os_tag:
+      resource: "subnet"
+      name: "{{ os_subnet }}"
+      tags: "{{ [cluster_id_tag] }}"
+
   - name: 'Create external router'
     os_router:
       name: "{{ os_router }}"
       network: "{{ os_external_network }}"
       interfaces:
       - "{{ os_subnet }}"
+
+  - name: 'Set external router tag'
+    os_tag:
+      resource: "router"
+      name: "{{ os_router }}"
+      tags: "{{ [cluster_id_tag] }}"
 
   - name: 'Create the API port'
     os_port:
@@ -40,6 +58,12 @@
       - subnet: "{{ os_subnet }}"
         ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
 
+  - name: 'Set API port tag'
+    os_tag:
+      resource: "port"
+      name: "{{ os_port_api }}"
+      tags: "{{ [cluster_id_tag] }}"
+
   - name: 'Create the Ingress port'
     os_port:
       name: "{{ os_port_ingress }}"
@@ -49,6 +73,12 @@
       fixed_ips:
       - subnet: "{{ os_subnet }}"
         ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
+
+  - name: 'Set the Ingress port tag'
+    os_tag:
+      resource: "port"
+      name: "{{ os_port_ingress }}"
+      tags: "{{ [cluster_id_tag] }}"
 
   # NOTE: openstack ansible module doesn't allow attaching Floating IPs to
   # ports, let's use the CLI instead
