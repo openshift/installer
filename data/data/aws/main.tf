@@ -105,7 +105,11 @@ resource "aws_ami_copy" "main" {
   name              = "${var.cluster_id}-master"
   source_ami_id     = var.aws_ami
   source_ami_region = var.aws_region
-  encrypted         = true
+  # RHCOS includes the ena driver.
+  # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking-ena.html#enhanced-networking-ena-linux
+  ena_support = true
+  # We want a per-customer encrypted disk.
+  encrypted = true
 
   tags = merge(
     {
