@@ -191,7 +191,7 @@ func (p *Platform) Name() string {
 type Networking struct {
 	// NetworkType is the type of network to install.
 	// +optional
-	// Default is OpenShiftSDN.
+	// Default is OVNKubernetes.
 	NetworkType string `json:"networkType,omitempty"`
 
 	// MachineNetwork is the list of IP address pools for machines.
