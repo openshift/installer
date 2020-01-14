@@ -38,6 +38,9 @@ type OpenstackProviderSpec struct {
 	// The name of the cloud to use from the clouds secret
 	CloudName string `json:"cloudName"`
 
+	// A plaintext string of PEM(s)
+	CertBundle string `json:"caCert,omitempty"`
+
 	// The flavor reference for the flavor for your server instance.
 	Flavor string `json:"flavor"`
 

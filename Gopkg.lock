@@ -1364,14 +1364,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:05a7f2cd98fff2057b1455e48893325bf65173ecbbfbcee33b327b02e9117a68"
+  digest = "1:dc1e45201dec50fff7961e62d762e6d8899a7f02c01d4d3cd2d927a7351d3c22"
   name = "sigs.k8s.io/cluster-api-provider-openstack"
   packages = [
     "pkg/apis",
     "pkg/apis/openstackproviderconfig/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "db51683ce60713c22ebd9da14e8a515e3662535e"
+  revision = "ffbc0f0cf8236f398ae48abffd662f01b0d1a876"
   source = "https://github.com/openshift/cluster-api-provider-openstack.git"
 
 [[projects]]
