@@ -12772,6 +12772,8 @@ type FrontendIPConfigurationPropertiesFormat struct {
 	LoadBalancingRules *[]SubResource `json:"loadBalancingRules,omitempty"`
 	// PrivateIPAddress - The private IP address of the IP configuration.
 	PrivateIPAddress *string `json:"privateIPAddress,omitempty"`
+	// PrivateIPAddressVersion - The private IP address version of the IP configuration.
+	PrivateIPAddressVersion *string `json:"privateIPAddressVersion,omitempty"`
 	// PrivateIPAllocationMethod - The Private IP allocation method. Possible values are: 'Static' and 'Dynamic'. Possible values include: 'Static', 'Dynamic'
 	PrivateIPAllocationMethod IPAllocationMethod `json:"privateIPAllocationMethod,omitempty"`
 	// Subnet - The reference of the subnet resource.

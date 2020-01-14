@@ -74,6 +74,17 @@ func resourceArmLoadBalancer() *schema.Resource {
 							ValidateFunc: validate.IPv4AddressOrEmpty,
 						},
 
+						"private_ip_address_version": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Default:  string(network.IPv4),
+							ForceNew: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								string(network.IPv4),
+								string(network.IPv6),
+							}, false),
+						},
+
 						"public_ip_address_id": {
 							Type:         schema.TypeString,
 							Optional:     true,
@@ -305,6 +316,10 @@ func expandAzureRmLoadBalancerFrontendIpConfigurations(d *schema.ResourceData) *
 			properties.PrivateIPAddress = &v
 		}
 
+		if v := data["private_ip_address_version"].(string); v != "" {
+			properties.PrivateIPAddressVersion = &v
+		}
+
 		if v := data["public_ip_address_id"].(string); v != "" {
 			properties.PublicIPAddress = &network.PublicIPAddress{
 				ID: &v,
@@ -359,6 +374,10 @@ func flattenLoadBalancerFrontendIpConfiguration(ipConfigs *[]network.FrontendIPC
 
 			if pip := props.PrivateIPAddress; pip != nil {
 				ipConfig["private_ip_address"] = *pip
+			}
+
+			if pip := props.PrivateIPAddressVersion; pip != nil {
+				ipConfig["private_ip_address_version"] = *pip
 			}
 
 			if pip := props.PublicIPAddress; pip != nil {
