@@ -3,6 +3,7 @@ package baremetal
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"path"
 	"strings"
@@ -86,7 +87,7 @@ func provider(clusterName string, platform *baremetal.Platform, osImage string, 
 	// ref https://github.com/openshift/ironic-rhcos-downloader/pull/12
 	imageFilename := path.Base(strings.TrimSuffix(imageURL.String(), ".gz"))
 	compressedImageFilename := strings.Replace(imageFilename, "openstack", "compressed", 1)
-	cacheImageURL := fmt.Sprintf("http://%s:6180/images/%s/%s", platform.ClusterProvisioningIP, imageFilename, compressedImageFilename)
+	cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(platform.ClusterProvisioningIP, "6180"), imageFilename, compressedImageFilename)
 	cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
 	config := &baremetalprovider.BareMetalMachineProviderSpec{
 		Image: baremetalprovider.Image{
