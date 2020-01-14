@@ -10,62 +10,100 @@ The installer is still used to generate the ignition files and monitor the insta
 
 This provides a greater flexibility at the cost of a more explicit and interactive process.
 
+Below is a step-by-step guide to a UPI installation that mimics an automated IPI installation; prerequisites and steps described below should be adapted to the constraints of the target infrastructure.
+
+## Table of Contents
+
+* [Prerequisites](#prerequisites)
+* [Install Ansible](#install-ansible)
+* [OpenShift Configuration Directory](#openshift-configuration-directory)
+* [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-rhcos)
+* [API and Ingress Floating IP Addresses](#api-and-ingress-floating-ip-addresses)
+* [Install Config](#install-config)
+  * [Fix the Node Subnet](#fix-the-node-subnet)
+  * [Empty Compute Pools](#empty-compute-pools)
+  * [Modify NetworkType (Required for Kuryr SDN)](#modify-networktype-required-for-kuryr-sdn)
+* [Edit Manifests](#edit-manifests)
+  * [Remove Machines and MachineSets](#remove-machines-and-machinesets)
+  * [Make control-plane nodes unschedulable](#make-control-plane-nodes-unschedulable)
+* [Ignition Config](#ignition-config)
+  * [Infra ID](#infra-id)
+  * [Bootstrap Ignition](#bootstrap-ignition)
+  * [Master Ignition](#master-ignition)
+* [Network Topology](#network-topology)
+  * [Security Groups](#security-groups)
+  * [Network, Subnet and external router](#network-subnet-and-external-router)
+  * [Subnet DNS (optional)](#subnet-dns-optional)
+* [Bootstrap](#bootstrap)
+* [Control Plane](#control-plane)
+  * [Control Plane Trunks (Kuryr SDN)](#control-plane-trunks-kuryr-sdn)
+  * [Wait for the Control Plane to Complete](#wait-for-the-control-plane-to-complete)
+  * [Access the OpenShift API](#access-the-openshift-api)
+  * [Delete the Bootstrap Resources](#delete-the-bootstrap-resources)
+* [Compute Nodes](#compute-nodes)
+  * [Compute Nodes Trunks (Kuryr SDN)](#compute-nodes-trunks-kuryr-sdn)
+  * [Approve the worker CSRs](#approve-the-worker-csrs)
+  * [Wait for the OpenShift Installation to Complete](#wait-for-the-openshift-installation-to-complete)
+* [Destroy the OpenShift Cluster](#destroy-the-openshift-cluster)
 
 ## Prerequisites
+
+The file `inventory.yaml` contains the variables most likely to need customisation.
+**NOTE**: some of the default pods (e.g. the `openshift-router`) require at least two nodes so that is the effective minimum.
 
 The requirements for UPI are broadly similar to the [ones for OpenStack IPI][ipi-reqs]:
 
 [ipi-reqs]: ./README.md#openstack-requirements
 
 - OpenStack account with `clouds.yaml`
-  - *This document* will use a cloud called `openstack`
+  - input in the `openshift-install` wizard
 - Nova flavors
-  - *This document* will use `m1.xlarge` for masters and `m1.large` for workers
+  - inventory: `os_flavor_master` and `os_flavor_worker`
 - An external subnet you want to use for floating IP addresses
-  - *This document* will use `external`
-- The `openshift-install` binary in your `$PATH`
-- A subnet range for the Nova servers / OpenShift Nodes
-  - This range must not conflict with your existing network
-  - *This document* will use `192.0.2.0/24`
-  - **WARNING**: `192.0.2.0/24` is an IP block range reserved for documentation (in [RFC 5737](https://tools.ietf.org/html/rfc5737))
-  - Traffic to this range should be blocked by firewalls etc.
-  - You must pick your own range -- one that is routable
+  - inventory: `os_external_network`
+- The `openshift-install` binary
+- A subnet range for the Nova servers / OpenShift Nodes, that does not conflict with your existing network
+  - inventory: `os_subnet_range`
 - A cluster name you will want to use
-  - *This document* will use `openshift`
+  - input in the `openshift-install` wizard
 - A base domain
-  - *This document* will use `example.com`
+  - input in the `openshift-install` wizard
 - OpenShift Pull Secret
-- DNS infrastructure you can configure (you'll need to add two records there)
+  - input in the `openshift-install` wizard
 - A DNS zone you can configure
-  - It must be resolvable by the installer and end-user machines
-  - You will need to create two DNS records there (for API and apps access)
-  - See the [Create Public DNS Records][dns-details] section for more details
-
-[rhcos]: https://www.openshift.com/learn/coreos/
-[dns-details]: #create-public-dns-records
-
-The OpenShift API URL will be generated from the cluster name and base domain. E.g.: `https://api.openshift.example.com:6443/`
-
-
-You can validate most of the above by running the following commands:
-
-```sh
-$ export OS_CLOUD=openstack
-$ openstack network show external
-$ openstack flavor show m1.xlarge
-$ openstack flavor show m1.large
-$ which openshift-install
-```
-
-They should all succeed.
+  - it must be the resolver for the base domain, for the installer and for the end-user machines
+  - it will host two records: for API and apps access
 
 For an installation with Kuryr SDN on UPI, you should also check the requirements which are the same
-needed for [OpenStack IPI with Kuryr][ipi-reqs-kuryr]. Please also note that **RHEL 7 nodes are not 
+needed for [OpenStack IPI with Kuryr][ipi-reqs-kuryr]. Please also note that **RHEL 7 nodes are not
 supported on deployments configured with Kuryr**. This is because Kuryr container images are based on
 RHEL 8 and may not work properly when run on RHEL 7.
 
 [ipi-reqs-kuryr]: ./kuryr.md#requirements-when-enabling-kuryr
 
+## Install Ansible
+
+This repository contains [Ansible playbooks][ansible-upi] to deploy OpenShift on OpenStack.
+
+**Requirements:**
+
+* Python
+* Ansible
+* Python modules required in the playbooks. Namely:
+  * openstacksdk
+  * netaddr
+  * openstackclient
+
+The file `requirements.txt` included in the playbook directory helps using `pip` for gathering the required dependencies in a Python virtual environment:
+
+```sh
+python -m venv venv
+source venv/bin/activate
+pip install -U pip
+pip install -r requirements.txt
+```
+
+[ansible-upi]: ../../../upi/openstack "Ansible Playbooks for Openstack UPI"
 
 ## OpenShift Configuration Directory
 
@@ -76,11 +114,11 @@ $ mkdir -p openstack-upi
 $ cd openstack-upi
 ```
 
-### Red Hat Enterprise Linux CoreOS (RHCOS)
+## Red Hat Enterprise Linux CoreOS (RHCOS)
 
-A proper RHCOS image in the OpenStack cluster or project is required for successful installation.
+A proper [RHCOS][rhcos] image in the OpenStack cluster or project is required for successful installation.
 
-Get the RHCOS image for your OpenShift version [here](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/). You should download images with the highest version that is less than or equal to the OpenShift version that you install. Use the image versions that match your OpenShift version if they are available.
+Get the RHCOS image for your OpenShift version [here][rhcos-image]. You should download images with the highest version that is less than or equal to the OpenShift version that you install. Use the image versions that match your OpenShift version if they are available.
 
 The OpenStack QCOW2 image is delivered in compressed format and therefore has the `.gz` extension. Unfortunately, compressed image support is not supported in OpenStack. So, you have to decompress the data before uploading it into Glance. The following command will unpack the image and create `rhcos-${RHCOSVERSION}-openstack.qcow2` file without `.gz` extension.
 
@@ -104,7 +142,12 @@ Finally validate that the image was successfully created:
 $ openstack image show rhcos
 ```
 
+[rhcos]: https://www.openshift.com/learn/coreos/
+[rhcos-image]: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/
+
 ## API and Ingress Floating IP Addresses
+
+**NOTE**: throughout this document, we will use `203.0.113.23` as the public IP address for the OpenShift API endpoint and `203.0.113.19` as the public IP for the ingress (`*.apps`) endpoint.
 
 ```sh
 $ openstack floating ip create --description "OpenShift API" <external>
@@ -113,7 +156,16 @@ $ openstack floating ip create --description "OpenShift Ingress" <external>
 => 203.0.113.19
 ```
 
-**NOTE**: throughout this document, we will use `203.0.113.23` as the public IP address for the OpenShift API endpoint and `203.0.113.19` as the public IP for the ingress (`*.apps`) endpoint.
+The OpenShift API (for the OpenShift administrators and app developers) will be at `api.<cluster name>.<cluster domain>` and the Ingress (for the apps' end users) at `*.apps.<cluster name>.<cluster domain>`.
+
+Create these two records in your DNS zone:
+
+```plaintext
+api.openshift.example.com.    A 203.0.113.23
+*.apps.openshift.example.com. A 203.0.113.19
+```
+
+They will need to be available to your developers, end users as well as the OpenShift installer process later in this guide.
 
 ## Install Config
 
@@ -137,7 +189,7 @@ Most of these are self-explanatory. `Cloud` is the cloud name in your `clouds.ya
 
 Given the values above, the OpenShift API will be available at:
 
-```
+```plaintext
 https://api.openshift.example.com:6443/
 ```
 
@@ -162,7 +214,7 @@ Our range will be `192.0.2.0/24` so we need to add that value to
 This command will do it for you:
 
 ```sh
-$ python3 -c 'import yaml;
+$ python -c 'import yaml;
 path = "install-config.yaml";
 data = yaml.safe_load(open(path));
 data["networking"]["machineNetwork"][0]["cidr"] = "192.0.2.0/24";
@@ -180,7 +232,7 @@ We will set their count to `0` in `install-config.yaml`. Look under `compute` ->
 This command will do it for you:
 
 ```sh
-$ python3 -c '
+$ python -c '
 import yaml;
 path = "install-config.yaml";
 data = yaml.safe_load(open(path));
@@ -197,13 +249,15 @@ If an installation with Kuryr is desired, you must modify the `networkType` fiel
 This command will do it for you:
 
 ```sh
-$ python3 -c '
+$ python -c '
 import yaml;
 path = "install-config.yaml";
 data = yaml.safe_load(open(path));
 data["networking"]["networkType"] = "Kuryr";
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
+
+Also set `os_networking_type` to `Kuryr` in `inventory.yaml`.
 
 ## Edit Manifests
 
@@ -267,22 +321,19 @@ $ tree
 Remove the control-plane Machines and compute MachineSets, because we'll be providing those ourselves and don't want to involve the
 [machine-API operator][mao]:
 
-[mao]: https://github.com/openshift/machine-api-operator
-
 ```sh
 $ rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml openshift/99_openshift-cluster-api_worker-machineset-*.yaml
 ```
 You are free to leave the compute MachineSets in if you want to create compute machines via the machine API, but if you do you may need to update the various references (`subnet`, etc.) to match your environment.
 
+[mao]: https://github.com/openshift/machine-api-operator
+
 ### Make control-plane nodes unschedulable
 
 Currently [emptying the compute pools][empty-compute-pools] makes control-plane nodes schedulable. But due to a [Kubernetes limitation][kubebug], router pods running on control-plane nodes will not be reachable by the ingress load balancer. Update the scheduler configuration to keep router pods and other workloads off the control-plane nodes:
 
-[empty-compute-pools]: #empty-compute-pools
-[kubebug]: https://github.com/kubernetes/kubernetes/issues/65618
-
 ```sh
-$ python3 -c '
+$ python -c '
 import yaml;
 path = "manifests/cluster-scheduler-02-config.yml"
 data = yaml.safe_load(open(path));
@@ -290,12 +341,12 @@ data["spec"]["mastersSchedulable"] = False;
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
+[empty-compute-pools]: #empty-compute-pools
+[kubebug]: https://github.com/kubernetes/kubernetes/issues/65618
 
 ## Ignition Config
 
 Next, we will turn these manifests into [Ignition][ignition] files. These will be used to configure the Nova servers on boot (Ignition performs a similar function as cloud-init).
-
-[ignition]: https://coreos.com/ignition/docs/latest/
 
 ```sh
 $ openshift-install create ignition-configs
@@ -310,6 +361,7 @@ $ tree
 └── worker.ign
 ```
 
+[ignition]: https://coreos.com/ignition/docs/latest/
 
 ### Infra ID
 
@@ -328,6 +380,70 @@ We'll use the `infraID` as the prefix for all the OpenStack resources we'll crea
 
 Make sure your shell session has the `$INFRA_ID` environment variable set when you run the commands later in this document.
 
+### Bootstrap Ignition
+
+The generated boostrap ignition file (`bootstrap.ign`) tends to be quite large (around 300KB -- it contains all the manifests, master and worker ignitions etc.). This is generally too big to be passed to the server directly (the OpenStack Nova user data limit is 64KB).
+
+To boot it up, we will create a smaller Ignition file that will be passed to Nova as user data and that will download the main ignition file upon execution.
+
+The main file needs to be uploaded to an HTTP(S) location the Bootstrap node will be able to access.
+
+You are free to choose any storage you want. For example:
+
+* Swift Object Storage
+  Create the `<container_name>` container and upload the `bootstrap.ign` file:
+  ```sh
+  $ swift upload <container_name> bootstrap.ign
+  ```
+  Make the container accessible:
+  ```sh
+  $ swift post <container_name> --read-acl ".r:*,.rlistings"
+  ```
+  Get the `StorageURL` from the output:
+  ```sh
+  $ swift stat -v
+  ```
+* Amazon S3
+* Internal HTTP server inside your organisation
+* A short-lived Nova server in `$INFRA_ID-nodes` hosting the file for bootstrapping
+
+In this guide, we will assume the file is at the following URL:
+
+https://static.example.com/bootstrap.ign
+
+**NOTE**: In case the Swift object storage option was chosen the URL will have the following format: `<StorageURL>/<container_name>/bootstrap.ign`
+
+**IMPORTANT**: The `bootstrap.ign` contains sensitive information such as your `clouds.yaml` credentials and TLS certificates. It should **not** be accessible by the public! It will only be used once during the Nova boot of the Bootstrap server. We strongly recommend you restrict the access to that server only and delete the file afterwards.
+
+### Bootstrap Ignition Shim
+
+As mentioned before due to Nova user data size limit, we will need to create a new Ignition file that will load the bulk of the Bootstrap node configuration. This will be similar to the existing `master.ign` and `worker.ign` files.
+
+Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`) with the following contents:
+
+```json
+{
+  "ignition": {
+    "config": {
+      "append": [
+        {
+          "source": "https://static.example.com/bootstrap.ign",
+          "verification": {}
+        }
+      ]
+    },
+    "security": {},
+    "timeouts": {},
+    "version": "2.2.0"
+  },
+  "networkd": {},
+  "passwd": {},
+  "storage": {},
+  "systemd": {}
+}
+```
+
+Change the `ignition.config.append.source` field to the URL hosting the `bootstrap.ign` file you've uploaded previously.
 
 ### Update Bootstrap Ignition
 
@@ -337,7 +453,7 @@ We will update the ignition to create the following file:
 
 **`/etc/hostname`**:
 
-```
+```plaintext
 openshift-qlvwv-bootstrap
 ```
 
@@ -378,7 +494,7 @@ with open('bootstrap.ign', 'w') as f:
 
 Feel free to make any other changes.
 
-### Update Master Ignition
+### Master Ignition
 
 Similar to bootstrap, we need to make sure the hostname is set to the expected value (it must match the name of the Nova server exactly).
 
@@ -389,7 +505,7 @@ We will deploy three Control plane (master) nodes. Their Ignition configs can be
 ```sh
 $ for index in $(seq 0 2); do
     MASTER_HOSTNAME="$INFRA_ID-master-$index\n"
-    python3 -c "import base64, json, sys;
+    python -c "import base64, json, sys;
 ignition = json.load(sys.stdin);
 files = ignition['storage'].get('files', []);
 files.append({'path': '/etc/hostname', 'mode': 420, 'contents': {'source': 'data:text/plain;charset=utf-8;base64,' + base64.standard_b64encode(b'$MASTER_HOSTNAME').decode().strip(), 'verification': {}}, 'filesystem': 'root'});
@@ -406,26 +522,33 @@ You can make your own changes here.
 
 **NOTE**: The worker nodes do not require any changes to their Ignition, but you can make your own by editing `worker.ign`.
 
-
 ## Network Topology
 
-In this section we'll create all the networking pieces necessary to host the OpenShift cluster: network, subnet, router etc.
+In this section we'll create all the networking pieces necessary to host the OpenShift cluster: security groups, network, subnet, router, ports.
 
+### Security Groups
 
-### Network and Subnet
+```sh
+$ ansible-playbook -i inventory.yaml 01_security-groups.yaml
+```
 
-We will use the `192.0.2.0/24` subnet range, but remove the first ten IP addresses from the allocation pool.
+The playbook creates one Security group for the Control Plane and one for the Compute nodes, then attaches rules for enabling communication between the nodes.
 
-These addresses will be used for the VRRP addresses managed by keepalived for high availability. For more information, read the [networking infrastructure design document][net-infra].
+### Network, Subnet and external router
+
+```sh
+$ ansible-playbook -i inventory.yaml 02_network.yaml
+```
+
+The playbook creates a network and a subnet. The subnet obeys `os_subnet_range`; however the first ten IP addresses are removed from the allocation pool. These addresses will be used for the VRRP addresses managed by keepalived for high availability. For more information, read the [networking infrastructure design document][net-infra].
+
+Outside connectivity will be provided by attaching the floating IP addresses (IPs in the inventory) to the corresponding routers.
 
 [net-infra]: https://github.com/openshift/installer/blob/master/docs/design/openstack/networking-infrastructure.md
 
-```sh
-$ openstack network create "$INFRA_ID-network" --tag openshiftClusterID="$INFRA_ID"
-$ openstack subnet create --subnet-range <192.0.2.0/24> --allocation-pool start=192.0.2.10,end=192.0.2.254 --network "$INFRA_ID-network" --tag openshiftClusterID="$INFRA_ID" "$INFRA_ID-nodes"
-```
-
 ### Subnet DNS (optional)
+
+**NOTE**: This step is optional and only necessary if you want to control the default resolvers your Nova servers will use.
 
 During deployment, the OpenShift nodes will need to be able to resolve public name records to download the OpenShift images and so on. They will also need to resolve the OpenStack API endpoint.
 
@@ -439,241 +562,21 @@ For example, if you want to add the following nameservers: `198.51.100.86` and `
 $ openstack subnet set --dns-nameserver <198.51.100.86> --dns-nameserver <198.51.100.87> "$INFRA_ID-nodes"
 ```
 
-**NOTE**: This step is optional and only necessary if you want to control the default resolvers your Nova servers will use.
-
-### Security Groups
-
-We will need two security groups: one for the master nodes (the control plane) and a separate one for the worker (compute) nodes.
-
-
-#### Master and Worker Security Groups
-
-```sh
-$ openstack security group create "$INFRA_ID-master" --tag openshiftClusterID="$INFRA_ID"
-$ openstack security group create "$INFRA_ID-worker" --tag openshiftClusterID="$INFRA_ID"
-```
-**NOTE**: Tagging security groups is supported from 3.16.0 version of OpenStackClient
-
-#### Master Security Group Rules
-
-```sh
-openstack security group rule create --description "ICMP" --protocol icmp "$INFRA_ID-master"
-openstack security group rule create --description "machine config server" --protocol tcp --dst-port 22623 --remote-ip 192.0.2.0/24 "$INFRA_ID-master"
-openstack security group rule create --description "SSH" --protocol tcp --dst-port 22 "$INFRA_ID-master"
-openstack security group rule create --description "DNS (TCP)" --protocol tcp --dst-port 53 --remote-ip 192.0.2.0/24 "$INFRA_ID-master"
-openstack security group rule create --description "DNS (UDP)" --protocol udp --dst-port 53 --remote-ip 192.0.2.0/24 "$INFRA_ID-master"
-openstack security group rule create --description "mDNS" --protocol udp --dst-port 5353 --remote-ip 192.0.2.0/24 "$INFRA_ID-master"
-openstack security group rule create --description "OpenShift API" --protocol tcp --dst-port 6443 "$INFRA_ID-master"
-openstack security group rule create --description "VXLAN" --protocol udp --dst-port 4789 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
-openstack security group rule create --description "VXLAN from worker" --protocol udp --dst-port 4789 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
-openstack security group rule create --description "Geneve" --protocol udp --dst-port 6081 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
-openstack security group rule create --description "Geneve from worker" --protocol udp --dst-port 6081 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
-openstack security group rule create --description "ovndb" --protocol tcp --dst-port 6641:6642 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
-openstack security group rule create --description "ovndb from worker" --protocol tcp --dst-port 6641:6642 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
-openstack security group rule create --description "master ingress internal (TCP)" --protocol tcp --dst-port 9000:9999 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
-openstack security group rule create --description "master ingress internal from worker (TCP)" --protocol tcp --dst-port 9000:9999 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
-openstack security group rule create --description "master ingress internal (UDP)" --protocol udp --dst-port 9000:9999 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
-openstack security group rule create --description "master ingress internal from worker (UDP)" --protocol udp --dst-port 9000:9999 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
-openstack security group rule create --description "kube scheduler" --protocol tcp --dst-port 10259 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
-openstack security group rule create --description "kube scheduler from worker" --protocol tcp --dst-port 10259 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
-openstack security group rule create --description "kube controller manager" --protocol tcp --dst-port 10257 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
-openstack security group rule create --description "kube controller manager from worker" --protocol tcp --dst-port 10257 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
-openstack security group rule create --description "master ingress kubelet secure" --protocol tcp --dst-port 10250 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
-openstack security group rule create --description "master ingress kubelet secure from worker" --protocol tcp --dst-port 10250 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
-openstack security group rule create --description "etcd" --protocol tcp --dst-port 2379:2380 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
-openstack security group rule create --description "master ingress services (TCP)" --protocol tcp --dst-port 30000:32767 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
-openstack security group rule create --description "master ingress services (UDP)" --protocol udp --dst-port 30000:32767 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
-openstack security group rule create --description "VRRP" --protocol vrrp --remote-ip 192.0.2.0/24 "$INFRA_ID-master"
-```
-
-
-#### Worker Security Group Rules
-
-```sh
-openstack security group rule create --description "ICMP" --protocol icmp "$INFRA_ID-worker"
-openstack security group rule create --description "SSH" --protocol tcp --dst-port 22 "$INFRA_ID-worker"
-openstack security group rule create --description "mDNS" --protocol udp --dst-port 5353 --remote-ip 192.0.2.0/24 "$INFRA_ID-worker"
-openstack security group rule create --description "Ingress HTTP" --protocol tcp --dst-port 80 "$INFRA_ID-worker"
-openstack security group rule create --description "Ingress HTTPS" --protocol tcp --dst-port 443 "$INFRA_ID-worker"
-openstack security group rule create --description "router" --protocol tcp --dst-port 1936 --remote-ip 192.0.2.0/24 "$INFRA_ID-worker"
-openstack security group rule create --description "VXLAN" --protocol udp --dst-port 4789 --remote-group "$INFRA_ID-worker" "$INFRA_ID-worker"
-openstack security group rule create --description "VXLAN from master" --protocol udp --dst-port 4789 --remote-group "$INFRA_ID-master" "$INFRA_ID-worker"
-openstack security group rule create --description "Geneve" --protocol udp --dst-port 6081 --remote-group "$INFRA_ID-worker" "$INFRA_ID-worker"
-openstack security group rule create --description "Geneve from master" --protocol udp --dst-port 6081 --remote-group "$INFRA_ID-master" "$INFRA_ID-worker"
-openstack security group rule create --description "worker ingress internal (TCP)" --protocol tcp --dst-port 9000:9999 --remote-group "$INFRA_ID-worker" "$INFRA_ID-worker"
-openstack security group rule create --description "worker ingress internal from master (TCP)" --protocol tcp --dst-port 9000:9999 --remote-group "$INFRA_ID-master" "$INFRA_ID-worker"
-openstack security group rule create --description "worker ingress internal (UDP)" --protocol udp --dst-port 9000:9999 --remote-group "$INFRA_ID-worker" "$INFRA_ID-worker"
-openstack security group rule create --description "worker ingress internal from master (UDP)" --protocol udp --dst-port 9000:9999 --remote-group "$INFRA_ID-master" "$INFRA_ID-worker"
-openstack security group rule create --description "worker ingress kubelet secure" --protocol tcp --dst-port 10250 --remote-group "$INFRA_ID-worker" "$INFRA_ID-worker"
-openstack security group rule create --description "worker ingress kubelet secure from master" --protocol tcp --dst-port 10250 --remote-group "$INFRA_ID-master" "$INFRA_ID-worker"
-openstack security group rule create --description "worker ingress services (TCP)" --protocol tcp --dst-port 30000:32767 --remote-group "$INFRA_ID-worker" "$INFRA_ID-worker"
-openstack security group rule create --description "worker ingress services (UDP)" --protocol udp --dst-port 30000:32767 --remote-group "$INFRA_ID-worker" "$INFRA_ID-worker"
-openstack security group rule create --description "VRRP" --protocol vrrp --remote-ip 192.0.2.0/24 "$INFRA_ID-worker"
-```
-
-
-### Router
-
-The outside connectivity will be provided by floating IP addresses. Your subnet needs to have a router set up for this to work.
-
-```sh
-$ openstack router create "$INFRA_ID-external-router" --tag openshiftClusterID="$INFRA_ID"
-$ openstack router set --external-gateway <external> "$INFRA_ID-external-router"
-$ openstack router add subnet "$INFRA_ID-external-router" "$INFRA_ID-nodes"
-```
-
-**NOTE**: Pass in the same external network name (`external` in the `router create` command above) that you used in the install config and that you used in `openstack floating ip create`.
-
-
-### Public API and Ingress Access
-
-To provide access to the OpenShift cluster, we will need to create two ports, attach our API and Ingress Floating IPs and publish the appropriate DNS records.
-
-**IMPORTANT:** these ports will need to have specific fixed (i.e. private) IP addresses. They have to be the fifth and seventh addresses from the subnet range. For example:
-
-#### API and Ingress Ports
-
-```sh
-$ openstack port create --network "$INFRA_ID-network" --security-group "$INFRA_ID-master" --fixed-ip "subnet=$INFRA_ID-nodes,ip-address=192.0.2.5" --tag openshiftClusterID="$INFRA_ID" "$INFRA_ID-api-port"
-$ openstack port create --network "$INFRA_ID-network" --security-group "$INFRA_ID-worker" --fixed-ip "subnet=$INFRA_ID-nodes,ip-address=192.0.2.7" --tag openshiftClusterID="$INFRA_ID" "$INFRA_ID-ingress-port"
-```
-
-The fixed IP addresses might differ if you're using a different subnet range.
-
-These ports will always stay `DOWN`. They will never be attached to any Nova server directly. Rather, their fixed IP addresses will be managed by keepalived and moved around if the backing service goes down, providing high availability.
-
-There is another fixed IP address (`192.0.2.6`) which will be used for internal DNS records necessary to install and run the OpenShift cluster. These do not need to be exposed to the outside (they only contain internal IPs) and therefore do not need their own Neutron port either. This address will be managed by keepalived as well.
-
-
-#### Assign Floating IPs to the Ports
-
-We have created two floating IP addresses at the beginning. We need to add them to the ports:
-
-```sh
-$ openstack floating ip set --port "$INFRA_ID-api-port" <203.0.113.23>
-$ openstack floating ip set --port "$INFRA_ID-ingress-port" <203.0.113.19>
-```
-
-#### Create Public DNS Records
-
-The OpenShift API (for the OpenShift administrators and app developers) will be at `api.<cluster name>.<cluster domain>` and the Ingress (for the apps' end users) at `*.apps.<cluster name>.<cluster domain>`.
-
-Create these two records:
-
-```
-api.openshift.example.com.   A 203.0.113.23
-*.apps.openshift.example.com. A 203.0.113.19
-```
-
-
-They will need to be available to your developers, end users as well as the OpenShift installer process later in this guide.
-
-
-
 ## Bootstrap
 
-### Bootstrap Ignition
-
-The generated boostrap ignition file (`bootstrap.ign`) tends to be quite large (around 300KB -- it contains all the manifests, master and worker ignitions etc.). This is generally too big to be passed to the server directly (the OpenStack Nova user data limit is 64KB).
-
-To boot it up, we will need to create a smaller Ignition file that will be passed to Nova as user data and that will download the main ignition file upon execution.
-
-The main file needs to be uploaded to an HTTP(S) location the Bootstrap node will be able to access.
-
-You are free to choose any storage you want. For example:
-
-* Swift Object Storage
-  Create the `<container_name>` container and upload the `bootstrap.ign` file:
-  ```sh
-  $ swift upload <container_name> bootstrap.ign
-  ```
-  Make the container accessible:
-  ```sh
-  $ swift post <container_name> --read-acl ".r:*,.rlistings"
-  ```
-  Get the `StorageURL` from the output:
-  ```sh
-  $ swift stat -v
-  ```
-* Amazon S3
-* Internal HTTP server inside your organisation
-* A short-lived Nova server in `$INFRA_ID-nodes` hosting the file for bootstrapping
-
-In this guide, we will assume the file is at the following URL:
-
-https://static.example.com/bootstrap.ign
-
-**NOTE**: In case the Swift object storage option was chosen the URL will have the following format: `<StorageURL>/<container_name>/bootstrap.ign`
-
-**IMPORTANT**: The `bootstrap.ign` contains sensitive information such as your `clouds.yaml` credentials and TLS certificates. It should **not** be accessible to the public! It will only be used once during the Nova boot of the Bootstrap server. We strongly recommend
-you restrict the access to that server only and delete the file afterwards.
-
-
-### Bootstrap Ignition Shim
-
-As mentioned before due to Nova user data size limit, we will need to create a new Ignition file that will load the bulk of the Bootstrap node configuration. This will be similar to the existing `master.ign` and `worker.ign` files.
-
-Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`) with the following contents:
-
-```json
-{
-  "ignition": {
-    "config": {
-      "append": [
-        {
-          "source": "https://static.example.com/bootstrap.ign",
-          "verification": {}
-        }
-      ]
-    },
-    "security": {},
-    "timeouts": {},
-    "version": "2.2.0"
-  },
-  "networkd": {},
-  "passwd": {},
-  "storage": {},
-  "systemd": {}
-}
-```
-
-Change the `ignition.config.append.source` field to the URL hosting the `bootstrap.ign` file you've uploaded previously.
-
-
-### Bootstrap Port
-
-Generally, it's not necessary to create a port explicitly -- `openstack server create` can do it in one step. However, we need to set the *allowed address pairs* on each port attached to our OpenShift nodes and that cannot be done via the `server create` subcommand.
-
-So we will be creating the ports separately from the servers:
-
 ```sh
-$ openstack port create --network "$INFRA_ID-network" --security-group "$INFRA_ID-master" --allowed-address ip-address=192.0.2.5 --allowed-address ip-address=192.0.2.6 --tag openshiftClusterID="$INFRA_ID" "$INFRA_ID-bootstrap-port"
+$ ansible-playbook -i inventory.yaml 03_bootstrap.yaml
 ```
+
+The playbook sets the *allowed address pairs* on each port attached to our OpenShift nodes.
 
 Since the keepalived-managed IP addresses are not attached to any specific server, Neutron would block their traffic by default. By passing them to `--allowed-address` the traffic can flow freely through.
 
-We will also add attach an additional Floating IP address to the bootstrap port:
+An additional Floating IP is also attached to the bootstrap port. This is not necessary for the deployment (and we will delete the bootstrap resources afterwards). However, if the bootstrapping phase fails for any reason, the installer will try to SSH in and download the bootstrap log. That will only succeed if the node is reachable (which in general means a floating IP).
+
+After the bootstrap server is active, you can check the console log to see that it is getting the ignition correctly:
 
 ```sh
-$ openstack floating ip create --description "Bootstrap IP" external
-=> 203.0.113.24
-$ openstack floating ip set --port "$INFRA_ID-bootstrap-port" <203.0.113.24>
-```
-
-This is not necessary for the deployment (and we will delete the bootstrap resources afterwards). However, if the bootstrapping phase fails for any reason, the installer will try to SSH in and download the bootstrap log. That will only succeed if the node is reachable (which in general means a floating IP).
-
-
-### Bootstrap Server
-
-Now we can create the bootstrap server which will help us configure up the control plane:
-
-```sh
-$ openstack server create --image <rhcos> --flavor <m1.xlarge> --user-data "$INFRA_ID-bootstrap-ignition.json" --port "$INFRA_ID-bootstrap-port" --wait "$INFRA_ID-bootstrap" --property openshiftClusterID="$INFRA_ID"
-```
-
-After the server is active, you can check the console log to see that it is getting the ignition correctly:
-
-```
 $ openstack console log show "$INFRA_ID-bootstrap"
 ```
 
@@ -684,46 +587,19 @@ $ ssh core@203.0.113.24
 [core@openshift-qlvwv-bootstrap ~]$ journalctl -b -f -u bootkube.service
 ```
 
-
 ## Control Plane
 
-Similar to the bootstrap, the control plane nodes will need to have their allowed address pairs set which means we have to create the ports separately.
-
-Our control plane will consist of three nodes.
-
-### Control Plane Ports
-
 ```sh
-for index in $(seq 0 2); do
-    openstack port create --network "$INFRA_ID-network" --security-group "$INFRA_ID-master" --allowed-address ip-address=192.0.2.5 --allowed-address ip-address=192.0.2.6 --allowed-address ip-address=192.0.2.7 --tag openshiftClusterID="$INFRA_ID" "$INFRA_ID-master-port-$index"
-done
+$ ansible-playbook -i inventory.yaml 04_control-plane.yaml
 ```
 
-### Control Plane Trunks (Required for Kuryr SDN)
-
-We will create the Trunks for Kuryr to plug the containers into the OpenStack SDN.
-
-```sh
-for index in $(seq 0 2); do
-    openstack network trunk create --parent-port "$INFRA_ID-master-port-$index" "$INFRA_ID-master-trunk-$index"
-done
-```
-
-
-### Control Plane Servers
-
-We will create the servers, passing in the `master-?-ignition.json` files prepared earlier:
-
-```sh
-for index in $(seq 0 2); do
-    openstack server create --image rhcos --flavor m1.xlarge --user-data "$INFRA_ID-master-$index-ignition.json" --port "$INFRA_ID-master-port-$index" --property openshiftClusterID="$INFRA_ID" "$INFRA_ID-master-$index"
-done
-```
-
-**NOTE**: You might want to do things such as boot from volume, attach specific volumes, etc. instead of the command above. Feel free to adapt it to your needs.
-
+Our control plane will consist of three nodes. The servers will be passed the `master-?-ignition.json` files prepared earlier.
 
 The master nodes should load the initial Ignition and then keep waiting until the bootstrap node stands up the Machine Config Server which will provide the rest of the configuration.
+
+### Control Plane Trunks (Kuryr SDN)
+
+If `os_networking_type` is set to `Kuryr` in the Ansible inventory, the playbook creates the Trunks for Kuryr to plug the containers into the OpenStack SDN.
 
 ### Wait for the Control Plane to Complete
 
@@ -737,7 +613,7 @@ $ openshift-install wait-for bootstrap-complete
 
 Eventually, it should output the following:
 
-```
+```plaintext
 INFO API v1.14.6+f9b5405 up
 INFO Waiting up to 30m0s for bootstrapping to complete...
 ```
@@ -746,7 +622,7 @@ This means the masters have come up successfully and are joining the cluster.
 
 Eventually, the `wait-for` command should end with:
 
-```
+```plaintext
 INFO It is now safe to remove the bootstrap resources
 ```
 
@@ -762,56 +638,30 @@ $ oc get pods -A
 
 **NOTE**: Only the API will be up at this point. The OpenShift UI will run on the compute nodes.
 
-
 ### Delete the Bootstrap Resources
 
-You can now safely delete the bootstrap port, server and floating IP address:
-
 ```sh
-$ openstack server delete "$INFRA_ID-bootstrap"
-$ openstack port delete "$INFRA_ID-bootstrap-port"
-$ openstack floating ip delete 203.0.113.24
+$ ansible-playbook -i inventory.yaml down-03_bootstrap.yaml
 ```
 
-If you hadn't done so already, you should also disable the bootstrap Ignition URL:
+The teardown playbook deletes the bootstrap port, server and floating IP address.
 
-https://example.com/bootstrap.ign
+If you haven't done so already, you should also disable the bootstrap Ignition URL.
 
 ## Compute Nodes
 
+```sh
+$ ansible-playbook -i inventory.yaml 05_compute-nodes.yaml
+```
+
 This process is similar to the masters, but the workers need to be approved before they're allowed to join the cluster.
 
-We will create three worker nodes here.
 
-**NOTE**: some of the default pods (e.g. the `openshift-router`) require at least two nodes so that is the effective minimum.
+The workers need no ignition override.
 
-The workers need no ignition override -- we can pass the unmodified `worker.ign` as their user data:
+### Compute Nodes Trunks (Kuryr SDN)
 
-### Compute Nodes ports
-
-```sh
-for index in $(seq 0 2); do
-    openstack port create --network "$INFRA_ID-network" --security-group "$INFRA_ID-worker" --allowed-address ip-address=192.0.2.7 --tag openshiftClusterID="$INFRA_ID" "$INFRA_ID-worker-port-$index"
-done
-```
-
-### Compute Nodes Trunks (Required for Kuryr SDN)
-
-We will create the Trunks for Kuryr to plug the containers into the OpenStack SDN.
-
-```sh
-for index in $(seq 0 2); do
-    openstack network trunk create --parent-port "$INFRA_ID-worker-port-$index" "$INFRA_ID-worker-trunk-$index"
-done
-```
-
-### Compute Nodes server
-
-```sh
-for index in $(seq 0 2); do
-    openstack server create --image rhcos --flavor m1.large --user-data "worker.ign" --port "$INFRA_ID-worker-port-$index" --property openshiftClusterID="$INFRA_ID" "$INFRA_ID-worker-$index"
-done
-```
+If `os_networking_type` is set to `Kuryr` in the Ansible inventory, the playbook creates the Trunks for Kuryr to plug the containers into the OpenStack SDN.
 
 ### Approve the worker CSRs
 
@@ -842,7 +692,7 @@ csr-wkm94   16m    system:serviceaccount:openshift-machine-config-operator:node-
 
 You should inspect each pending CSR and verify that it comes from a node you recognise:
 
-```
+```sh
 $ oc describe csr csr-88jp8
 Name:               csr-88jp8
 Labels:             <none>
@@ -903,41 +753,18 @@ $ openshift-install --log-level debug wait-for install-complete
 
 Upon success, it will print the URL to the OpenShift Console (the web UI) as well as admin username and password to log in.
 
-
 ## Destroy the OpenShift Cluster
 
-First, remove the `api` and `*.apps` DNS records.
-
-Then run the following commands to delete all the OpenStack resources we've created:
-
 ```sh
-$ openstack floating ip delete 203.0.113.23 203.0.113.19
-$ openstack server list --column Name --format value | grep "$INFRA_ID" | xargs --no-run-if-empty openstack server delete
+$ ansible-playbook -i inventory.yaml  \
+	down-06_load-balancers.yaml \
+	down-05_compute-nodes.yaml  \
+	down-04_control-plane.yaml  \
+	down-03_bootstrap.yaml      \
+	down-02_network.yaml        \
+	down-01_security-groups.yaml
 ```
 
-If Kuryr SDN is used, delete the Trunks and Load Balancers created:
-```sh
-$ openstack network trunk list --column Name --format value | grep "$INFRA_ID" | xargs --no-run-if-empty openstack network trunk delete
+The playbook `down-06_load-balancers.yaml` idempotently deletes the load balancers created by the Kuryr installation, if any.
 
-$ for id in $(openstack loadbalancer list -f value -c id); do
-    lb=$(openstack loadbalancer show $id |grep openshiftClusterID="$INFRA_ID");
-    if [ -n "$lb" ]; then
-        openstack loadbalancer delete --cascade $id
-    fi
-done
-```
-
-Proceed with the deletion of the remaining OpenStack resources:
-```sh
-$ openstack port list --device-owner 'network:router_interface' -c ID -f value | xargs --no-run-if-empty -I {} openstack router remove port "$INFRA_ID"-external-router {}
-$ openstack port list --column id  --format value --tags openshiftClusterID="$INFRA_ID" | xargs --no-run-if-empty openstack port delete
-
-$ openstack router unset --external-gateway "$INFRA_ID-external-router"
-$ openstack router remove subnet "$INFRA_ID-extrenal-router" "$INFRA_ID-nodes"
-$ openstack router delete "$INFRA_ID-external-router"
-
-$ openstack subnet list --c ID --format value --tags openshiftClusterID="$INFRA_ID" | xargs --no-run-if-empty openstack subnet delete
-$ openstack subnet pool list --c ID --format value --tags openshiftClusterID="$INFRA_ID" | xargs --no-run-if-empty openstack subnet pool delete
-$ openstack network list --c ID --format value --tags openshiftClusterID="$INFRA_ID" | xargs --no-run-if-empty openstack network delete
-$ openstack security group list --c ID --format value --tags openshiftClusterID="$INFRA_ID" | xargs --no-run-if-empty openstack security group delete
-```
+Then, remove the `api` and `*.apps` DNS records.

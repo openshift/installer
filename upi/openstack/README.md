@@ -1,25 +1,6 @@
-# Openstack User Provided Infrastructure installation
+# Ansible Playbooks for Openstack UPI
 
-This directory contains Ansible scripts that automate the command-line work in the [User-Provided-Infrastructure installation](../../docs/user/openstack/install_upi.md).
-
-## Requirements
-
-* Python
-* Ansible
-* Python modules required in the playbooks. Namely:
-  * openstacksdk
-  * netaddr
-  * openstackclient
-
-
-The included `requirements.txt` helps using `pip` for gathering the required dependencies in a Python virtual environment:
-
-```shell
-python3 -m venv venv
-source venv/bin/activate
-pip install -U pip
-pip install -r requirements.txt
-```
+This directory contains the Ansible scripts expected to automate most of the command-line work in the [User-Provided-Infrastructure installation](../../docs/user/openstack/install_upi.md).
 
 ## How to use
 
@@ -42,6 +23,5 @@ For every script, a symmetrical teardown playbook is provided:
 ```
 
 A full teardown can be achieved by running all the `down` scripts in reverse order.
-
 
 Please refer to the [UPI documentation](../../docs/user/openstack/install_upi.md) for step-by-step instructions.
