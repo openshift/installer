@@ -806,12 +806,9 @@
   version = "v4.3.8"
 
 [[projects]]
-  digest = "1:54cafa8a6821dbfe1aa81dbe5e1bbf148d64560542e60ac65e4486ae4f4be581"
+  digest = "1:8d9a8cb8a9a95fa144a58384faf43b9e4b40f85678629b4dc8079cc4c3b43d0c"
   name = "github.com/ovirt/terraform-provider-ovirt"
-  packages = [
-    ".",
-    "ovirt",
-  ]
+  packages = ["ovirt"]
   pruneopts = "NUT"
   revision = "aaa6ce5ab3595c654bacc6525bc7b27329297c4e"
 
@@ -1210,7 +1207,7 @@
     "github.com/dmacvicar/terraform-provider-libvirt/libvirt",
     "github.com/hashicorp/go-azure-helpers/authentication",
     "github.com/openshift-metal3/terraform-provider-ironic/ironic",
-    "github.com/ovirt/terraform-provider-ovirt",
+    "github.com/ovirt/terraform-provider-ovirt/ovirt",
     "github.com/terraform-providers/terraform-provider-aws/aws",
     "github.com/terraform-providers/terraform-provider-azurerm/azurerm",
     "github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure",
