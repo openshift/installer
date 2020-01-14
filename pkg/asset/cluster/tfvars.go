@@ -425,17 +425,20 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, c := range controlPlanes {
 			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*vsphereprovider.VSphereMachineProviderSpec)
 		}
-		data, err = vspheretfvars.TFVars(
+		data, cachedImage, err := vspheretfvars.TFVars(
 			vspheretfvars.TFVarsSources{
 				ControlPlaneConfigs: controlPlaneConfigs,
 				Username:            installConfig.Config.VSphere.Username,
 				Password:            installConfig.Config.VSphere.Password,
 				Cluster:             installConfig.Config.VSphere.Cluster,
+				ImageURI:            string(*rhcosImage),
 			},
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
+		installConfig.Config.VSphere.ClusterOSImage = cachedImage
+
 		t.FileList = append(t.FileList, &asset.File{
 			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
 			Data:     data,

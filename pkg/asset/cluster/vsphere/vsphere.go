@@ -1,6 +1,9 @@
 package vsphere
 
 import (
+	"context"
+
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -12,4 +15,11 @@ func Metadata(config *types.InstallConfig) *vsphere.Metadata {
 		Username: config.VSphere.Username,
 		Password: config.VSphere.Password,
 	}
+}
+
+// PreTerraform performs any infrastructure initialization which must
+// happen before Terraform creates the remaining infrastructure.
+func PreTerraform(ctx context.Context, infraID string, installConfig *installconfig.InstallConfig) error {
+	// TODO: create VM Template using cachedImage
+	return nil
 }
