@@ -13,6 +13,7 @@ This provides a greater flexibility at the cost of a more explicit and interacti
 ## Table of Contents
 
 * [Prerequisites](#prerequisites)
+* [Ansible](#ansible)
 * [OpenShift Configuration Directory](#openshift-configuration-directory)
 * [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-(rhcos))
 * [API and Ingress Floating IP Addresses](#api-and-ingress-floating-ip-addresses)
@@ -28,9 +29,9 @@ This provides a greater flexibility at the cost of a more explicit and interacti
   * [Update Bootstrap Ignition](#update-bootstrap-ignition)
   * [Update Master Ignition](#update-master-ignition)
 * [Network Topology](#network-topology)
+  * [Security Groups](#security-groups)
   * [Network and Subnet](#network-and-subnet)
   * [Subnet DNS (optional)](#subnet-dns-(optional))
-  * [Security Groups](#security-groups)
   * [Router](#router)
   * [Public API and Ingress Access](#public-api-and-ingress-access)
 * [Bootstrap](#bootstrap)
@@ -105,6 +106,12 @@ RHEL 8 and may not work properly when run on RHEL 7.
 [rfc-5737]: https://tools.ietf.org/html/rfc5737 "IPv4 Address Blocks Reserved for Documentation"
 [dns-details]: #create-public-dns-records
 [ipi-reqs-kuryr]: ./kuryr.md#requirements-when-enabling-kuryr
+
+## Ansible
+
+This repository contains [Ansible playbooks][ansible-upi] that are expected to automate most of the the command-line work. Refer to the linked README for preparing the Ansible environment.
+
+[ansible-upi]: ../../../upi/openstack "Ansible Playbooks for Openstack UPI"
 
 ## OpenShift Configuration Directory
 
@@ -447,38 +454,11 @@ You can make your own changes here.
 
 ## Network Topology
 
-In this section we'll create all the networking pieces necessary to host the OpenShift cluster: network, subnet, router etc.
-
-### Network and Subnet
-
-We will use the `192.0.2.0/24` subnet range, but remove the first ten IP addresses from the allocation pool.
-
-These addresses will be used for the VRRP addresses managed by keepalived for high availability. For more information, read the [networking infrastructure design document][net-infra].
-
-[net-infra]: https://github.com/openshift/installer/blob/master/docs/design/openstack/networking-infrastructure.md
-
-```sh
-$ openstack network create "$INFRA_ID-network" --tag openshiftClusterID="$INFRA_ID"
-$ openstack subnet create --subnet-range <192.0.2.0/24> --allocation-pool start=192.0.2.10,end=192.0.2.254 --network "$INFRA_ID-network" --tag openshiftClusterID="$INFRA_ID" "$INFRA_ID-nodes"
-```
-
-### Subnet DNS (optional)
-
-During deployment, the OpenShift nodes will need to be able to resolve public name records to download the OpenShift images and so on. They will also need to resolve the OpenStack API endpoint.
-
-The default resolvers are often set up by the OpenStack administrator in Neutron. However, some deployments do not have default DNS servers set, meaning the servers are not able to resolve any records when they boot.
-
-If you are in this situation, you can add resolvers to your Neutron subnet (`openshift-qlvwv-nodes`). These will be put into `/etc/resolv.conf` on your servers post-boot.
-
-For example, if you want to add the following nameservers: `198.51.100.86` and `198.51.100.87`, you can run this command:
-
-```sh
-$ openstack subnet set --dns-nameserver <198.51.100.86> --dns-nameserver <198.51.100.87> "$INFRA_ID-nodes"
-```
-
-**NOTE**: This step is optional and only necessary if you want to control the default resolvers your Nova servers will use.
+In this section we'll create all the networking pieces necessary to host the OpenShift cluster: security groups, network, subnet, router, ports.
 
 ### Security Groups
+
+**_Ansible playbook: `01_security-groups.yaml`_**
 
 We will need two security groups: one for the master nodes (the control plane) and a separate one for the worker (compute) nodes.
 
@@ -546,7 +526,40 @@ openstack security group rule create --description "worker ingress services (UDP
 openstack security group rule create --description "VRRP" --protocol vrrp --remote-ip 192.0.2.0/24 "$INFRA_ID-worker"
 ```
 
+### Network and Subnet
+
+**_Ansible playbook: `02_network.yaml`_**
+
+We will use the `192.0.2.0/24` subnet range, but remove the first ten IP addresses from the allocation pool.
+
+These addresses will be used for the VRRP addresses managed by keepalived for high availability. For more information, read the [networking infrastructure design document][net-infra].
+
+[net-infra]: https://github.com/openshift/installer/blob/master/docs/design/openstack/networking-infrastructure.md
+
+```sh
+$ openstack network create "$INFRA_ID-network" --tag openshiftClusterID="$INFRA_ID"
+$ openstack subnet create --subnet-range <192.0.2.0/24> --allocation-pool start=192.0.2.10,end=192.0.2.254 --network "$INFRA_ID-network" --tag openshiftClusterID="$INFRA_ID" "$INFRA_ID-nodes"
+```
+
+### Subnet DNS (optional)
+
+During deployment, the OpenShift nodes will need to be able to resolve public name records to download the OpenShift images and so on. They will also need to resolve the OpenStack API endpoint.
+
+The default resolvers are often set up by the OpenStack administrator in Neutron. However, some deployments do not have default DNS servers set, meaning the servers are not able to resolve any records when they boot.
+
+If you are in this situation, you can add resolvers to your Neutron subnet (`openshift-qlvwv-nodes`). These will be put into `/etc/resolv.conf` on your servers post-boot.
+
+For example, if you want to add the following nameservers: `198.51.100.86` and `198.51.100.87`, you can run this command:
+
+```sh
+$ openstack subnet set --dns-nameserver <198.51.100.86> --dns-nameserver <198.51.100.87> "$INFRA_ID-nodes"
+```
+
+**NOTE**: This step is optional and only necessary if you want to control the default resolvers your Nova servers will use.
+
 ### Router
+
+**_Ansible playbook: `02_network.yaml`_**
 
 The outside connectivity will be provided by floating IP addresses. Your subnet needs to have a router set up for this to work.
 
@@ -559,6 +572,8 @@ $ openstack router add subnet "$INFRA_ID-external-router" "$INFRA_ID-nodes"
 **NOTE**: Pass in the same external network name (`external` in the `router create` command above) that you used in the install config and that you used in `openstack floating ip create`.
 
 ### Public API and Ingress Access
+
+**_Ansible playbook: `02_network.yaml`_**
 
 To provide access to the OpenShift cluster, we will need to create two ports, attach our API and Ingress Floating IPs and publish the appropriate DNS records.
 
@@ -669,6 +684,8 @@ Change the `ignition.config.append.source` field to the URL hosting the `bootstr
 
 ### Bootstrap Port
 
+**_Ansible playbook: `03_bootstrap.yaml`_**
+
 Generally, it's not necessary to create a port explicitly -- `openstack server create` can do it in one step. However, we need to set the *allowed address pairs* on each port attached to our OpenShift nodes and that cannot be done via the `server create` subcommand.
 
 So we will be creating the ports separately from the servers:
@@ -690,6 +707,8 @@ $ openstack floating ip set --port "$INFRA_ID-bootstrap-port" <203.0.113.24>
 This is not necessary for the deployment (and we will delete the bootstrap resources afterwards). However, if the bootstrapping phase fails for any reason, the installer will try to SSH in and download the bootstrap log. That will only succeed if the node is reachable (which in general means a floating IP).
 
 ### Bootstrap Server
+
+**_Ansible playbook: `03_bootstrap.yaml`_**
 
 Now we can create the bootstrap server which will help us configure up the control plane:
 
@@ -718,6 +737,8 @@ Our control plane will consist of three nodes.
 
 ### Control Plane Ports
 
+**_Ansible playbook: `04_control-plane.yaml`_**
+
 ```sh
 for index in $(seq 0 2); do
     openstack port create --network "$INFRA_ID-network" --security-group "$INFRA_ID-master" --allowed-address ip-address=192.0.2.5 --allowed-address ip-address=192.0.2.6 --allowed-address ip-address=192.0.2.7 --tag openshiftClusterID="$INFRA_ID" "$INFRA_ID-master-port-$index"
@@ -725,6 +746,8 @@ done
 ```
 
 ### Control Plane Trunks (Required for Kuryr SDN)
+
+**_Ansible playbook: `04_control-plane.yaml`_**
 
 We will create the Trunks for Kuryr to plug the containers into the OpenStack SDN.
 
@@ -735,6 +758,8 @@ done
 ```
 
 ### Control Plane Servers
+
+**_Ansible playbook: `04_control-plane.yaml`_**
 
 We will create the servers, passing in the `master-?-ignition.json` files prepared earlier:
 
@@ -788,6 +813,8 @@ $ oc get pods -A
 
 ### Delete the Bootstrap Resources
 
+**_Ansible playbook: `down-03_bootstrap.yaml`_**
+
 You can now safely delete the bootstrap port, server and floating IP address:
 
 ```sh
@@ -812,6 +839,8 @@ The workers need no ignition override -- we can pass the unmodified `worker.ign`
 
 ### Compute Nodes ports
 
+**_Ansible playbook: `05_compute-nodes.yaml`_**
+
 ```sh
 for index in $(seq 0 2); do
     openstack port create --network "$INFRA_ID-network" --security-group "$INFRA_ID-worker" --allowed-address ip-address=192.0.2.7 --tag openshiftClusterID="$INFRA_ID" "$INFRA_ID-worker-port-$index"
@@ -819,6 +848,8 @@ done
 ```
 
 ### Compute Nodes Trunks (Required for Kuryr SDN)
+
+**_Ansible playbook: `05_compute-nodes.yaml`_**
 
 We will create the Trunks for Kuryr to plug the containers into the OpenStack SDN.
 
@@ -829,6 +860,8 @@ done
 ```
 
 ### Compute Nodes server
+
+**_Ansible playbook: `05_compute-nodes.yaml`_**
 
 ```sh
 for index in $(seq 0 2); do
@@ -927,6 +960,8 @@ $ openshift-install --log-level debug wait-for install-complete
 Upon success, it will print the URL to the OpenShift Console (the web UI) as well as admin username and password to log in.
 
 ## Destroy the OpenShift Cluster
+
+**_Ansible playbooks: `down-05_compute-nodes.yaml`, `down-04_control-plane.yaml`,`down-03_bootstrap.yaml`, `down-02_network.yaml`, `down-01_security-groups.yaml`_**
 
 First, remove the `api` and `*.apps` DNS records.
 
