@@ -27,6 +27,22 @@ func (ipnet *IPNet) String() string {
 	return ipnet.IPNet.String()
 }
 
+// Version returns the IP version for an IPNet.
+func (ipnet *IPNet) Version() int {
+	// Per go documentation, To4() returns nil when using IPv6
+	if ipnet.IP.To4() == nil {
+		return 6
+	}
+
+	return 4
+}
+
+// CIDR returns the CIDR notation for a network, e.g. 255.255.255.0 would return 24.
+func (ipnet IPNet) CIDR() int {
+	cidr, _ := ipnet.IPNet.Mask.Size()
+	return cidr
+}
+
 // MarshalJSON interface for an IPNet
 func (ipnet IPNet) MarshalJSON() (data []byte, err error) {
 	if reflect.DeepEqual(ipnet.IPNet, emptyIPNet) {
