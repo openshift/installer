@@ -12,7 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/ovirt"
 
-	ovirtprovider "github.com/ovirt/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
+	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 )
 
 // Machines returns a list of machines for a machinepool.

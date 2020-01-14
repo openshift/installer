@@ -138,8 +138,8 @@ required = [
   source = "https://github.com/openshift/baremetal-operator"
 
 [[constraint]]
-  name = "github.com/ovirt/cluster-api-provider-ovirt"
-  revision ="f7b0ebc7f9ae17c0d5d5b4f5795a1b70972a5570"
+  name = "github.com/openshift/cluster-api-provider-ovirt"
+  revision ="0966db28bce37ca97ada41c69f48ffa7c4d02493"
 
 [[constraint]]
   name = "github.com/ovirt/go-ovirt"
