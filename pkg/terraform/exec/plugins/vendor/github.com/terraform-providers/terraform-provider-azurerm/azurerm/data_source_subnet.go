@@ -31,6 +31,12 @@ func dataSourceArmSubnet() *schema.Resource {
 				Computed: true,
 			},
 
+			"address_prefixes": {
+				Type:     schema.TypeList,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Computed: true,
+			},
+
 			"network_security_group_id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -81,7 +87,18 @@ func dataSourceArmSubnetRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("virtual_network_name", virtualNetworkName)
 
 	if props := resp.SubnetPropertiesFormat; props != nil {
-		d.Set("address_prefix", props.AddressPrefix)
+		if props.AddressPrefix != nil {
+			d.Set("address_prefix", props.AddressPrefix)
+		}
+		if props.AddressPrefixes == nil {
+			if props.AddressPrefix != nil && len(*props.AddressPrefix) > 0 {
+				d.Set("address_prefixes", []string{*props.AddressPrefix})
+			} else {
+				d.Set("address_prefixes", []string{})
+			}
+		} else {
+			d.Set("address_prefixes", props.AddressPrefixes)
+		}
 
 		if props.NetworkSecurityGroup != nil {
 			d.Set("network_security_group_id", props.NetworkSecurityGroup.ID)
