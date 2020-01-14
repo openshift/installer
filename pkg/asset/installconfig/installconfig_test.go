@@ -66,7 +66,7 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 		BaseDomain: "test-domain",
 		Networking: &types.Networking{
 			MachineCIDR:    ipnet.MustParseCIDR("10.0.0.0/16"),
-			NetworkType:    "OpenShiftSDN",
+			NetworkType:    "OVNKubernetes",
 			ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
 			ClusterNetwork: []types.ClusterNetworkEntry{
 				{
@@ -128,7 +128,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				BaseDomain: "test-domain",
 				Networking: &types.Networking{
 					MachineCIDR:    ipnet.MustParseCIDR("10.0.0.0/16"),
-					NetworkType:    "OpenShiftSDN",
+					NetworkType:    "OVNKubernetes",
 					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
 					ClusterNetwork: []types.ClusterNetworkEntry{
 						{
@@ -197,7 +197,7 @@ platform:
     region: us-east-1
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 network:
-  type: OpenShiftSDN
+  type: OVNKubernetes
 `,
 			expectedFound: true,
 			expectedConfig: &types.InstallConfig{
@@ -210,7 +210,7 @@ network:
 				BaseDomain: "test-domain",
 				Networking: &types.Networking{
 					MachineCIDR:    ipnet.MustParseCIDR("10.0.0.0/16"),
-					NetworkType:    "OpenShiftSDN",
+					NetworkType:    "OVNKubernetes",
 					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
 					ClusterNetwork: []types.ClusterNetworkEntry{
 						{
