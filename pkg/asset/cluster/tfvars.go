@@ -447,6 +447,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				Username:            installConfig.Config.VSphere.Username,
 				Password:            installConfig.Config.VSphere.Password,
 				Cluster:             installConfig.Config.VSphere.Cluster,
+				ImageURL:            string(*rhcosImage),
 			},
 		)
 		if err != nil {

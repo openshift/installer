@@ -22,7 +22,7 @@ data "ignition_config" "ign" {
   }
 
   files = [
-    data.ignition_file.hostname[count.index].id
+    data.ignition_file.hostname[count.index].rendered
   ]
 }
 
