@@ -41,6 +41,10 @@ type metadata struct {
 			SHA256             string `json:"sha256"`
 			UncompressedSHA256 string `json:"uncompressed-sha256"`
 		} `json:"openstack"`
+		VMware struct {
+			Path   string `json:"path"`
+			SHA256 string `json:"sha256"`
+		} `json:"vmware"`
 	} `json:"images"`
 	OSTreeVersion string `json:"ostree-version"`
 }

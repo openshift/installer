@@ -12,6 +12,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
+	"github.com/openshift/installer/pkg/asset/cluster/vsphere"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/terraform"
@@ -74,6 +75,11 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	logrus.Infof("Creating infrastructure resources...")
 	if installConfig.Config.Platform.AWS != nil {
 		if err := aws.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
+			return err
+		}
+	}
+	if installConfig.Config.Platform.VSphere != nil {
+		if err := vsphere.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
 			return err
 		}
 	}
