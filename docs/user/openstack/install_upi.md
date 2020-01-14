@@ -10,6 +10,48 @@ The installer is still used to generate the ignition files and monitor the insta
 
 This provides a greater flexibility at the cost of a more explicit and interactive process.
 
+## Table of Contents
+
+* [Prerequisites](#prerequisites)
+* [OpenShift Configuration Directory](#openshift-configuration-directory)
+* [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-(rhcos))
+* [API and Ingress Floating IP Addresses](#api-and-ingress-floating-ip-addresses)
+* [Install Config](#install-config)
+  * [Fix the Node Subnet](#fix-the-node-subnet)
+  * [Empty Compute Pools](#empty-compute-pools)
+  * [Modify NetworkType (Required for Kuryr SDN)](#modify-networktype-(required-for-kuryr-sdn))
+* [Edit Manifests](#edit-manifests)
+  * [Remove Machines and MachineSets](#remove-machines-and-machinesets)
+  * [Make control-plane nodes unschedulable](#make-control-plane-nodes-unschedulable)
+* [Ignition Config](#ignition-config)
+  * [Infra ID](#infra-id)
+  * [Update Bootstrap Ignition](#update-bootstrap-ignition)
+  * [Update Master Ignition](#update-master-ignition)
+* [Network Topology](#network-topology)
+  * [Network and Subnet](#network-and-subnet)
+  * [Subnet DNS (optional)](#subnet-dns-(optional))
+  * [Security Groups](#security-groups)
+  * [Router](#router)
+  * [Public API and Ingress Access](#public-api-and-ingress-access)
+* [Bootstrap](#bootstrap)
+  * [Bootstrap Ignition](#bootstrap-ignition)
+  * [Bootstrap Ignition Shim](#bootstrap-ignition-shim)
+  * [Bootstrap Port](#bootstrap-port)
+  * [Bootstrap Server](#bootstrap-server)
+* [Control Plane](#control-plane)
+  * [Control Plane Ports](#control-plane-ports)
+  * [Control Plane Trunks (Required for Kuryr SDN)](#control-plane-trunks-(required-for-kuryr-sdn))
+  * [Control Plane Servers](#control-plane-servers)
+  * [Wait for the Control Plane to Complete](#wait-for-the-control-plane-to-complete)
+  * [Access the OpenShift API](#access-the-openshift-api)
+  * [Delete the Bootstrap Resources](#delete-the-bootstrap-resources)
+* [Compute Nodes](#compute-nodes)
+  * [Compute Nodes ports](#compute-nodes-ports)
+  * [Compute Nodes Trunks (Required for Kuryr SDN)](#compute-nodes-trunks-(required-for-kuryr-sdn))
+  * [Compute Nodes server](#compute-nodes-server)
+  * [Approve the worker CSRs](#approve-the-worker-csrs)
+  * [Wait for the OpenShift Installation to Complete](#wait-for-the-openshift-installation-to-complete)
+* [Destroy the OpenShift Cluster](#destroy-the-openshift-cluster)
 
 ## Prerequisites
 
@@ -27,7 +69,7 @@ The requirements for UPI are broadly similar to the [ones for OpenStack IPI][ipi
 - A subnet range for the Nova servers / OpenShift Nodes
   - This range must not conflict with your existing network
   - *This document* will use `192.0.2.0/24`
-  - **WARNING**: `192.0.2.0/24` is an IP block range reserved for documentation (in [RFC 5737](https://tools.ietf.org/html/rfc5737))
+  - **WARNING**: `192.0.2.0/24` is an IP block range reserved for documentation (in [RFC 5737][rfc-5737])
   - Traffic to this range should be blocked by firewalls etc.
   - You must pick your own range -- one that is routable
 - A cluster name you will want to use
@@ -41,11 +83,7 @@ The requirements for UPI are broadly similar to the [ones for OpenStack IPI][ipi
   - You will need to create two DNS records there (for API and apps access)
   - See the [Create Public DNS Records][dns-details] section for more details
 
-[rhcos]: https://www.openshift.com/learn/coreos/
-[dns-details]: #create-public-dns-records
-
 The OpenShift API URL will be generated from the cluster name and base domain. E.g.: `https://api.openshift.example.com:6443/`
-
 
 You can validate most of the above by running the following commands:
 
@@ -60,12 +98,13 @@ $ which openshift-install
 They should all succeed.
 
 For an installation with Kuryr SDN on UPI, you should also check the requirements which are the same
-needed for [OpenStack IPI with Kuryr][ipi-reqs-kuryr]. Please also note that **RHEL 7 nodes are not 
+needed for [OpenStack IPI with Kuryr][ipi-reqs-kuryr]. Please also note that **RHEL 7 nodes are not
 supported on deployments configured with Kuryr**. This is because Kuryr container images are based on
 RHEL 8 and may not work properly when run on RHEL 7.
 
+[rfc-5737]: https://tools.ietf.org/html/rfc5737 "IPv4 Address Blocks Reserved for Documentation"
+[dns-details]: #create-public-dns-records
 [ipi-reqs-kuryr]: ./kuryr.md#requirements-when-enabling-kuryr
-
 
 ## OpenShift Configuration Directory
 
@@ -76,11 +115,11 @@ $ mkdir -p openstack-upi
 $ cd openstack-upi
 ```
 
-### Red Hat Enterprise Linux CoreOS (RHCOS)
+## Red Hat Enterprise Linux CoreOS (RHCOS)
 
-A proper RHCOS image in the OpenStack cluster or project is required for successful installation.
+A proper [RHCOS][rhcos] image in the OpenStack cluster or project is required for successful installation.
 
-Get the RHCOS image for your OpenShift version [here](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/). You should download images with the highest version that is less than or equal to the OpenShift version that you install. Use the image versions that match your OpenShift version if they are available.
+Get the RHCOS image for your OpenShift version [here][rhcos-image]. You should download images with the highest version that is less than or equal to the OpenShift version that you install. Use the image versions that match your OpenShift version if they are available.
 
 The OpenStack QCOW2 image is delivered in compressed format and therefore has the `.gz` extension. Unfortunately, compressed image support is not supported in OpenStack. So, you have to decompress the data before uploading it into Glance. The following command will unpack the image and create `rhcos-${RHCOSVERSION}-openstack.qcow2` file without `.gz` extension.
 
@@ -103,6 +142,9 @@ Finally validate that the image was successfully created:
 ```sh
 $ openstack image show rhcos
 ```
+
+[rhcos]: https://www.openshift.com/learn/coreos/
+[rhcos-image]: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/
 
 ## API and Ingress Floating IP Addresses
 
@@ -290,7 +332,6 @@ data["spec"]["mastersSchedulable"] = False;
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
-
 ## Ignition Config
 
 Next, we will turn these manifests into [Ignition][ignition] files. These will be used to configure the Nova servers on boot (Ignition performs a similar function as cloud-init).
@@ -310,7 +351,6 @@ $ tree
 └── worker.ign
 ```
 
-
 ### Infra ID
 
 The OpenShift cluster has been assigned an identifier in the form of `<cluster name>-<random string>`. You do not need this for anything, but it is a good idea to keep it around.
@@ -327,7 +367,6 @@ openshift-qlvwv
 We'll use the `infraID` as the prefix for all the OpenStack resources we'll create. That way, you'll be able to have multiple deployments in the same OpenStack project without name conflicts.
 
 Make sure your shell session has the `$INFRA_ID` environment variable set when you run the commands later in this document.
-
 
 ### Update Bootstrap Ignition
 
@@ -406,11 +445,9 @@ You can make your own changes here.
 
 **NOTE**: The worker nodes do not require any changes to their Ignition, but you can make your own by editing `worker.ign`.
 
-
 ## Network Topology
 
 In this section we'll create all the networking pieces necessary to host the OpenShift cluster: network, subnet, router etc.
-
 
 ### Network and Subnet
 
@@ -444,7 +481,6 @@ $ openstack subnet set --dns-nameserver <198.51.100.86> --dns-nameserver <198.51
 ### Security Groups
 
 We will need two security groups: one for the master nodes (the control plane) and a separate one for the worker (compute) nodes.
-
 
 #### Master and Worker Security Groups
 
@@ -486,7 +522,6 @@ openstack security group rule create --description "master ingress services (UDP
 openstack security group rule create --description "VRRP" --protocol vrrp --remote-ip 192.0.2.0/24 "$INFRA_ID-master"
 ```
 
-
 #### Worker Security Group Rules
 
 ```sh
@@ -511,7 +546,6 @@ openstack security group rule create --description "worker ingress services (UDP
 openstack security group rule create --description "VRRP" --protocol vrrp --remote-ip 192.0.2.0/24 "$INFRA_ID-worker"
 ```
 
-
 ### Router
 
 The outside connectivity will be provided by floating IP addresses. Your subnet needs to have a router set up for this to work.
@@ -523,7 +557,6 @@ $ openstack router add subnet "$INFRA_ID-external-router" "$INFRA_ID-nodes"
 ```
 
 **NOTE**: Pass in the same external network name (`external` in the `router create` command above) that you used in the install config and that you used in `openstack floating ip create`.
-
 
 ### Public API and Ingress Access
 
@@ -543,7 +576,6 @@ The fixed IP addresses might differ if you're using a different subnet range.
 These ports will always stay `DOWN`. They will never be attached to any Nova server directly. Rather, their fixed IP addresses will be managed by keepalived and moved around if the backing service goes down, providing high availability.
 
 There is another fixed IP address (`192.0.2.6`) which will be used for internal DNS records necessary to install and run the OpenShift cluster. These do not need to be exposed to the outside (they only contain internal IPs) and therefore do not need their own Neutron port either. This address will be managed by keepalived as well.
-
 
 #### Assign Floating IPs to the Ports
 
@@ -565,10 +597,7 @@ api.openshift.example.com.   A 203.0.113.23
 *.apps.openshift.example.com. A 203.0.113.19
 ```
 
-
 They will need to be available to your developers, end users as well as the OpenShift installer process later in this guide.
-
-
 
 ## Bootstrap
 
@@ -608,7 +637,6 @@ https://static.example.com/bootstrap.ign
 **IMPORTANT**: The `bootstrap.ign` contains sensitive information such as your `clouds.yaml` credentials and TLS certificates. It should **not** be accessible to the public! It will only be used once during the Nova boot of the Bootstrap server. We strongly recommend
 you restrict the access to that server only and delete the file afterwards.
 
-
 ### Bootstrap Ignition Shim
 
 As mentioned before due to Nova user data size limit, we will need to create a new Ignition file that will load the bulk of the Bootstrap node configuration. This will be similar to the existing `master.ign` and `worker.ign` files.
@@ -639,7 +667,6 @@ Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`
 
 Change the `ignition.config.append.source` field to the URL hosting the `bootstrap.ign` file you've uploaded previously.
 
-
 ### Bootstrap Port
 
 Generally, it's not necessary to create a port explicitly -- `openstack server create` can do it in one step. However, we need to set the *allowed address pairs* on each port attached to our OpenShift nodes and that cannot be done via the `server create` subcommand.
@@ -662,7 +689,6 @@ $ openstack floating ip set --port "$INFRA_ID-bootstrap-port" <203.0.113.24>
 
 This is not necessary for the deployment (and we will delete the bootstrap resources afterwards). However, if the bootstrapping phase fails for any reason, the installer will try to SSH in and download the bootstrap log. That will only succeed if the node is reachable (which in general means a floating IP).
 
-
 ### Bootstrap Server
 
 Now we can create the bootstrap server which will help us configure up the control plane:
@@ -683,7 +709,6 @@ You can also SSH into the server (using its floating IP address) and check on th
 $ ssh core@203.0.113.24
 [core@openshift-qlvwv-bootstrap ~]$ journalctl -b -f -u bootkube.service
 ```
-
 
 ## Control Plane
 
@@ -708,7 +733,6 @@ for index in $(seq 0 2); do
     openstack network trunk create --parent-port "$INFRA_ID-master-port-$index" "$INFRA_ID-master-trunk-$index"
 done
 ```
-
 
 ### Control Plane Servers
 
@@ -761,7 +785,6 @@ $ oc get pods -A
 ```
 
 **NOTE**: Only the API will be up at this point. The OpenShift UI will run on the compute nodes.
-
 
 ### Delete the Bootstrap Resources
 
@@ -902,7 +925,6 @@ $ openshift-install --log-level debug wait-for install-complete
 ```
 
 Upon success, it will print the URL to the OpenShift Console (the web UI) as well as admin username and password to log in.
-
 
 ## Destroy the OpenShift Cluster
 
