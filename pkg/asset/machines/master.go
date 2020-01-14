@@ -15,6 +15,8 @@ import (
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
+	vsphereapi "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider"
+	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -37,6 +39,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/machines/ovirt"
+	"github.com/openshift/installer/pkg/asset/machines/vsphere"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
@@ -304,8 +307,18 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects for ovirt provider")
 		}
+	case vspheretypes.Name:
+		mpool := defaultVSphereMachinePoolPlatform()
+		mpool.Set(ic.Platform.VSphere.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.VSphere)
+		pool.Platform.VSphere = &mpool
 
-	case nonetypes.Name, vspheretypes.Name:
+		machines, err = vsphere.Machines(clusterID.InfraID, ic, pool, string(*rhcosImage), "master", "master-user-data")
+		if err != nil {
+			return errors.Wrap(err, "failed to create master machine objects")
+		}
+		vsphere.ConfigMasters(machines, clusterID.InfraID)
+	case nonetypes.Name:
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
@@ -420,6 +433,7 @@ func (m *Master) Machines() ([]machineapi.Machine, error) {
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
 	ovirtprovider.AddToScheme(scheme)
+	vsphereapi.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		awsprovider.SchemeGroupVersion,
 		azureprovider.SchemeGroupVersion,
@@ -427,6 +441,7 @@ func (m *Master) Machines() ([]machineapi.Machine, error) {
 		gcpprovider.SchemeGroupVersion,
 		libvirtprovider.SchemeGroupVersion,
 		openstackprovider.SchemeGroupVersion,
+		vsphereprovider.SchemeGroupVersion,
 	)
 
 	machines := []machineapi.Machine{}

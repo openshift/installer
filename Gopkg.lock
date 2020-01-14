@@ -734,9 +734,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:03edd2a5dd0223f295350eb81a0111ec3418b19c2d0ea8a6bb48537d80ceb2f5"
+  digest = "1:ddd6281b2d1c35d02c87ec192bec901a40bb93608eab3eef52c3a0a703dbed7b"
   name = "github.com/openshift/machine-api-operator"
-  packages = ["pkg/apis/vsphereprovider/v1alpha1"]
+  packages = [
+    "pkg/apis/vsphereprovider",
+    "pkg/apis/vsphereprovider/v1alpha1",
+  ]
   pruneopts = "NUT"
   revision = "463c63d746da60d953060af0f9846d89d9521105"
   source = "github.com/openshift/machine-api-operator"
@@ -1473,6 +1476,7 @@
     "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1",
     "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1",
     "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers",
+    "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider",
     "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1",
     "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1",
     "github.com/ovirt/go-ovirt",
