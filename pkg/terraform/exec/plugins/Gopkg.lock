@@ -119,6 +119,14 @@
   version = "v11.9.0"
 
 [[projects]]
+  digest = "1:f4aaa07a6c33f2b354726d0571acbc8ca118837c75709f6353203ae1a3f8eeab"
+  name = "github.com/Sirupsen/logrus"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "839c75faf7f98a33d445d181f3018b5c3409a45e"
+  version = "v1.4.2"
+
+[[projects]]
   digest = "1:074551979ff3363545bf927dd9cbe2ddca50ef2efecac993f667e917929ddc5a"
   name = "github.com/Unknwon/com"
   packages = ["."]
@@ -715,6 +723,14 @@
   revision = "c2b33e84"
 
 [[projects]]
+  digest = "1:58999a98719fddbac6303cb17e8d85b945f60b72f48e3a2df6b950b97fa926f1"
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
+  version = "v1.0.2"
+
+[[projects]]
   digest = "1:92819c3dc15d822e470ba6ddddc4b3790a8bb902f65e273f7ad5a1b288e39a60"
   name = "github.com/kubernetes-sigs/aws-iam-authenticator"
   packages = [
@@ -829,6 +845,14 @@
   version = "v3.0.0"
 
 [[projects]]
+  digest = "1:4047c378584616813d610c9f993bf90dd0d07aed8d94bd3bc299cd35ececdcba"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "614d223910a179a466c1767a985424175c39b465"
+  version = "v0.9.1"
+
+[[projects]]
   digest = "1:6bc0652ea6e39e22ccd522458b8bdd8665bf23bdc5a20eec90056e4dc7e273ca"
   name = "github.com/satori/go.uuid"
   packages = ["."]
@@ -923,12 +947,77 @@
   version = "v2.2.0"
 
 [[projects]]
+  digest = "1:67eee5249f67c4398c13512b27e0094e5e3086530603b0b1c8a326f3bda92af3"
+  name = "github.com/terraform-providers/terraform-provider-vsphere"
+  packages = [
+    "vsphere",
+    "vsphere/internal/helper/clustercomputeresource",
+    "vsphere/internal/helper/computeresource",
+    "vsphere/internal/helper/customattribute",
+    "vsphere/internal/helper/datacenter",
+    "vsphere/internal/helper/datastore",
+    "vsphere/internal/helper/dvportgroup",
+    "vsphere/internal/helper/envbrowse",
+    "vsphere/internal/helper/folder",
+    "vsphere/internal/helper/hostsystem",
+    "vsphere/internal/helper/network",
+    "vsphere/internal/helper/nsx",
+    "vsphere/internal/helper/provider",
+    "vsphere/internal/helper/resourcepool",
+    "vsphere/internal/helper/storagepod",
+    "vsphere/internal/helper/structure",
+    "vsphere/internal/helper/vappcontainer",
+    "vsphere/internal/helper/viapi",
+    "vsphere/internal/helper/virtualmachine",
+    "vsphere/internal/virtualdevice",
+    "vsphere/internal/vmworkflow",
+  ]
+  pruneopts = "NUT"
+  revision = "d282e62b132d6d1160e5811232ee8236de1a14d5"
+  version = "v1.14.0"
+
+[[projects]]
   branch = "master"
   digest = "1:c9b456727ce4101594aabddaa816c80464cd21a1e5fcd145297a902303be0085"
   name = "github.com/vincent-petithory/dataurl"
   packages = ["."]
   pruneopts = "NUT"
   revision = "9a301d65acbb728fcc3ace14f45f511a4cfeea9c"
+
+[[projects]]
+  digest = "1:d8e247a1bf21c14af88521cd7966b45216817947c4d47265b495a28b52252a86"
+  name = "github.com/vmware/govmomi"
+  packages = [
+    ".",
+    "event",
+    "find",
+    "license",
+    "list",
+    "nfc",
+    "object",
+    "property",
+    "session",
+    "task",
+    "view",
+    "vim25",
+    "vim25/debug",
+    "vim25/methods",
+    "vim25/mo",
+    "vim25/progress",
+    "vim25/soap",
+    "vim25/types",
+    "vim25/xml",
+  ]
+  pruneopts = "NUT"
+  revision = "68980704b1ae7161556b72f69d5cb8358dcbc9ae"
+
+[[projects]]
+  digest = "1:5b797079b46063ff1559845ac963fe89e67bcdb5356f3e0d10ab91d8e72a21e7"
+  name = "github.com/vmware/vic"
+  packages = ["pkg/vsphere/tags"]
+  pruneopts = "NUT"
+  revision = "b3d3b06f935a3fef3eb8700fbc34730550e04c5c"
+  version = "v1.5.4"
 
 [[projects]]
   digest = "1:58f2854b50ff8862eb6a347f20dedaac83e1166f4040472e17bc37736841a12f"
@@ -1221,6 +1310,7 @@
     "github.com/terraform-providers/terraform-provider-local/local",
     "github.com/terraform-providers/terraform-provider-openstack/openstack",
     "github.com/terraform-providers/terraform-provider-random/random",
+    "github.com/terraform-providers/terraform-provider-vsphere/vsphere",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
