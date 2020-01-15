@@ -15,6 +15,13 @@
       state: absent
     with_indexed_items: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
 
+  - name: 'Remove the Compute trunks'
+    os_trunk:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      state: absent
+    with_indexed_items: "{{ [os_compute_trunk_name] * os_compute_nodes_number }}"
+    when: os_networking_type == "Kuryr"
+
   - name: 'Remove the Compute ports'
     os_port:
       name: "{{ item.1 }}-{{ item.0 }}"

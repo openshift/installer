@@ -1,0 +1,19 @@
+# Required Python packages:
+#
+# ansible
+# openstacksdk
+
+- import_playbook: common.yaml
+
+- hosts: all
+  gather_facts: no
+
+  tasks:
+  # NOTE: Kuryr creates an Octavia load balancer
+  # for each service present on the cluster. Let's make
+  # sure to remove the resources generated.
+  - name: 'Remove the cluster load balancers'
+    os_delete_lb_resources:
+      tags: "{{ [cluster_id_tag] }}"
+      region_name: "{{ os_region_name }}"
+    when: os_networking_type == "Kuryr"

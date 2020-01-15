@@ -7,9 +7,10 @@
   tasks:
   - name: 'Compute resource names'
     set_fact:
+      cluster_id_tag: "openshiftClusterID={{ infraID }}"
       os_network: "{{ infraID }}-network"
       os_subnet: "{{ infraID }}-nodes"
-      os_router: "{{ infraID }}-router"
+      os_router: "{{ infraID }}-external-router"
       # Port names
       os_port_api: "{{ infraID }}-api-port"
       os_port_ingress: "{{ infraID }}-ingress-port"
@@ -23,5 +24,10 @@
       os_bootstrap_server_name: "{{ infraID }}-bootstrap"
       os_cp_server_name: "{{ infraID }}-master"
       os_compute_server_name: "{{ infraID }}-worker"
+      # Trunk names
+      os_cp_trunk_name: "{{ infraID }}-master-trunk"
+      os_compute_trunk_name: "{{ infraID }}-worker-trunk"
+      # Subnet pool names
+      subnet_pool: "{{ infraID }}-kuryr-pod-subnetpool"
       # Ignition files
       os_bootstrap_ignition: "{{ infraID }}-bootstrap-ignition.json"

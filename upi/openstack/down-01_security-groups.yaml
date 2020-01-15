@@ -9,12 +9,7 @@
   gather_facts: no
 
   tasks:
-  - name: 'Remove the master security group'
-    os_security_group:
-      name: "{{ os_sg_master }}"
-      state: absent
-
-  - name: 'Remove the worker security group'
-    os_security_group:
-      name: "{{ os_sg_worker }}"
-      state: absent
+  - name: 'Remove the cluster security groups'
+    os_delete_network_resources:
+      resource: "security_group"
+      tags: "{{ [cluster_id_tag] }}"

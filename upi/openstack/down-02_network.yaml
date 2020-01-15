@@ -9,22 +9,29 @@
   gather_facts: no
 
   tasks:
-  - name: 'Remove the API port'
-    os_port:
-      name: "{{ os_port_api }}"
-      state: absent
+  - name: 'Remove the ports from router'
+    os_delete_ports_on_router:
+      router: "{{ os_router }}"
+      tags: "{{ [cluster_id_tag] }}"
+    when: os_networking_type == "Kuryr"
 
-  - name: 'Remove the Ingress port'
-    os_port:
-      name: "{{ os_port_ingress }}"
-      state: absent
+  - name: 'Remove the cluster ports'
+    os_delete_network_resources:
+      resource: "port"
+      tags: "{{ [cluster_id_tag] }}"
 
   - name: 'Remove the cluster router'
     os_router:
       name: "{{ os_router }}"
       state: absent
 
-  - name: 'Remove the cluster network'
-    os_network:
-      name: "{{ os_network }}"
-      state: absent
+  - name: 'Remove the cluster networks'
+    os_delete_network_resources:
+      resource: "network"
+      tags: "{{ [cluster_id_tag] }}"
+
+  - name: 'Remove the cluster subnet pool'
+    os_delete_network_resources:
+      resource: "subnet_pool"
+      tags: "{{ [cluster_id_tag] }}"
+    when: os_networking_type == "Kuryr"
