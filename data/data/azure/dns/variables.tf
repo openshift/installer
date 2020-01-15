@@ -65,7 +65,7 @@ variable "azure_supports_private_dns" {
   description = "Determines how dns records are created"
 }
 
-variable "azure_cluster_dns_zone_name"{
+variable "azure_cluster_dns_zone_name" {
   type        = string
   description = "Name of dns zone created to store internal cluster records"
 }
