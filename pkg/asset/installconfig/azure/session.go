@@ -228,7 +228,7 @@ func askForCredentials() (*Credentials, error) {
 		environmentADEndpoint = azureenv.USGovernmentCloud.ActiveDirectoryEndpoint
 		environmentResourceManagerEndpoint = azureenv.USGovernmentCloud.ResourceManagerEndpoint
 	default:
-		err = errors.New("Supported environment not selected")
+		err = errors.New("supported environment not selected")
 	}
 
 	logrus.Debugln("AD Endpoint ", environmentADEndpoint)

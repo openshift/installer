@@ -47,7 +47,7 @@ type ClusterUninstaller struct {
 func (o *ClusterUninstaller) configureClients() {
 	session, err := azuresession.GetSession()
 	if err != nil {
-		errors.New("Unable to get azure session")
+		errors.New("unable to get azure session")
 	}
 	o.resourceGroupsClient = resources.NewGroupsGroupClientWithBaseURI(session.Credentials.ResourceManagerEndpoint, o.SubscriptionID)
 	o.resourceGroupsClient.Authorizer = o.Authorizer

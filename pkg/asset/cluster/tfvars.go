@@ -206,7 +206,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			env = "public"
 			break
 		default:
-			return errors.New("Unsupported Azure cloud detected, check Active Directory Endpoint")
+			return errors.New("unsupported azure cloud detected, check active directory endpoint")
 		}
 
 		auth := azuretfvars.Auth{

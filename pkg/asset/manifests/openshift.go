@@ -101,7 +101,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			environment = "AZUREPUBLICCLOUD"
 			break
 		default:
-			return errors.New("Unsupported Azure cloud detected, check Active Directory Endpoint")
+			return errors.New("unsupported azure cloud detected, check active directory endpoint")
 		}
 		cloudCreds = cloudCredsSecretData{
 			Azure: &AzureCredsSecretData{
