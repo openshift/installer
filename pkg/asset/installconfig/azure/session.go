@@ -31,10 +31,10 @@ type Session struct {
 
 //Credentials is the data type for credentials as understood by the azure sdk
 type Credentials struct {
-	SubscriptionID 			string `json:"subscriptionId,omitempty"`
-	ClientID       			string `json:"clientId,omitempty"`
-	ClientSecret   			string `json:"clientSecret,omitempty"`
-	TenantID       			string `json:"tenantId,omitempty"`
+	SubscriptionID          string `json:"subscriptionId,omitempty"`
+	ClientID                string `json:"clientId,omitempty"`
+	ClientSecret            string `json:"clientSecret,omitempty"`
+	TenantID                string `json:"tenantId,omitempty"`
 	ActiveDirectoryEndpoint string `json:"activeDirectoryEndpointUrl,omitempty"`
 	ResourceManagerEndpoint string `json:"resourceManagerEndpointUrl,omitempty"`
 }
@@ -143,34 +143,32 @@ func getCredentials(fs auth.FileSettings) (*Credentials, error) {
 		return nil, errors.New("could not retrieve Resource Manager Endpoint from auth file")
 	}
 
-	
-
 	return &Credentials{
-		SubscriptionID: subscriptionID,
-		ClientID:       			clientID,
-		ClientSecret:   			clientSecret,
-		TenantID:       			tenantID,
-		ActiveDirectoryEndpoint: 	activeDirectoryEndpoint,
-		ResourceManagerEndpoint: 	resourceManagerEndpoint,
+		SubscriptionID:          subscriptionID,
+		ClientID:                clientID,
+		ClientSecret:            clientSecret,
+		TenantID:                tenantID,
+		ActiveDirectoryEndpoint: activeDirectoryEndpoint,
+		ResourceManagerEndpoint: resourceManagerEndpoint,
 	}, nil
 }
 
 func askForCredentials() (*Credentials, error) {
 	var subscriptionID, tenantID, clientID, clientSecret, environmentName string
 
-	environmentOptions := []string{"public","usgovernment"}
+	environmentOptions := []string{"public", "usgovernment"}
 
 	err := survey.Ask([]*survey.Question{
 		{
-			Prompt: &survey.Select {
+			Prompt: &survey.Select{
 				Message: "azure environment name",
-				Help: "The Azure environment you are deploying to, most likely public",
+				Help:    "The Azure environment you are deploying to, most likely public",
 				Options: environmentOptions,
 				Default: environmentOptions[0],
 			},
 		},
 	}, &environmentName)
-	if err != nil {		
+	if err != nil {
 		return nil, err
 	}
 
@@ -219,7 +217,6 @@ func askForCredentials() (*Credentials, error) {
 		},
 	}, &clientSecret)
 
-
 	environmentADEndpoint := ""
 	environmentResourceManagerEndpoint := ""
 
@@ -235,19 +232,19 @@ func askForCredentials() (*Credentials, error) {
 	}
 
 	logrus.Debugln("AD Endpoint ", environmentADEndpoint)
-	logrus.Debugln("Resource Manager Endpoint ", environmentResourceManagerEndpoint)	
+	logrus.Debugln("Resource Manager Endpoint ", environmentResourceManagerEndpoint)
 
 	if err != nil {
 		return nil, err
 	}
 
 	return &Credentials{
-		SubscriptionID: subscriptionID,
-		ClientID:       			clientID,
-		ClientSecret:   			clientSecret,
-		TenantID:       			tenantID,
-		ActiveDirectoryEndpoint:	environmentADEndpoint,
-		ResourceManagerEndpoint:	environmentResourceManagerEndpoint,
+		SubscriptionID:          subscriptionID,
+		ClientID:                clientID,
+		ClientSecret:            clientSecret,
+		TenantID:                tenantID,
+		ActiveDirectoryEndpoint: environmentADEndpoint,
+		ResourceManagerEndpoint: environmentResourceManagerEndpoint,
 	}, nil
 }
 

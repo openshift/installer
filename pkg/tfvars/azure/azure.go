@@ -16,7 +16,7 @@ type Auth struct {
 	ClientID       string `json:"azure_client_id,omitempty"`
 	ClientSecret   string `json:"azure_client_secret,omitempty"`
 	TenantID       string `json:"azure_tenant_id,omitempty"`
-	Environment	   string `json:"azure_environment,omitempty"`
+	Environment    string `json:"azure_environment,omitempty"`
 }
 
 type config struct {
@@ -36,7 +36,7 @@ type config struct {
 	ComputeSubnet               string            `json:"azure_compute_subnet"`
 	PreexistingNetwork          bool              `json:"azure_preexisting_network"`
 	Private                     bool              `json:"azure_private"`
-	PrivateDNSSupported			bool			  `json:"azure_supports_private_dns"`
+	PrivateDNSSupported         bool              `json:"azure_supports_private_dns"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -74,7 +74,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VolumeSize:                  masterConfig.OSDisk.DiskSizeGB,
 		ImageURL:                    sources.ImageURL,
 		Private:                     sources.Publish == types.InternalPublishingStrategy,
-		PrivateDNSSupported:		 privateDNSSupport,
+		PrivateDNSSupported:         privateDNSSupport,
 		BaseDomainResourceGroupName: sources.BaseDomainResourceGroupName,
 		NetworkResourceGroupName:    masterConfig.NetworkResourceGroup,
 		VirtualNetwork:              masterConfig.Vnet,

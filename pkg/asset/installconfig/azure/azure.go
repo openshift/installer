@@ -17,7 +17,6 @@ import (
 	azsub "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 )
 
-
 // Platform collects azure-specific configuration.
 func Platform() (*azure.Platform, error) {
 	regions, err := getRegions()
@@ -42,7 +41,7 @@ func Platform() (*azure.Platform, error) {
 		{
 			Prompt: &survey.Select{
 				Message: "Region",
-				Help:    "The azure region to be used for installation.",				
+				Help:    "The azure region to be used for installation.",
 				Options: longRegions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {

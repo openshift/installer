@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
@@ -13,7 +14,6 @@ import (
 	"github.com/sirupsen/logrus"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
-	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -205,7 +205,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		case azureenv.PublicCloud.ActiveDirectoryEndpoint:
 			env = "public"
 			break
-		default :
+		default:
 			return errors.New("Unsupported Azure cloud detected, check Active Directory Endpoint")
 		}
 
@@ -214,7 +214,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			ClientID:       sess.Credentials.ClientID,
 			ClientSecret:   sess.Credentials.ClientSecret,
 			TenantID:       sess.Credentials.TenantID,
-			Environment:	env,
+			Environment:    env,
 		}
 
 		masters, err := mastersAsset.Machines()

@@ -8,15 +8,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/ghodss/yaml"
 
+	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/machines"
-	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
-	"github.com/pkg/errors"
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
+	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
 	"github.com/openshift/installer/pkg/types"
@@ -25,7 +25,7 @@ import (
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
-	azureenv "github.com/Azure/go-autorest/autorest/azure"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -90,7 +90,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		session, err := azure.GetSession()
 		if err != nil {
 			return err
-		}		
+		}
 		creds := session.Credentials
 		environment := ""
 		switch creds.ActiveDirectoryEndpoint {
@@ -100,7 +100,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		case azureenv.PublicCloud.ActiveDirectoryEndpoint:
 			environment = "AZUREPUBLICCLOUD"
 			break
-		default :
+		default:
 			return errors.New("Unsupported Azure cloud detected, check Active Directory Endpoint")
 		}
 		cloudCreds = cloudCredsSecretData{
@@ -112,7 +112,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 				Base64encodeResourcePrefix: base64.StdEncoding.EncodeToString([]byte(clusterID.InfraID)),
 				Base64encodeResourceGroup:  base64.StdEncoding.EncodeToString([]byte(resourceGroupName)),
 				Base64encodeRegion:         base64.StdEncoding.EncodeToString([]byte(installConfig.Config.Azure.Region)),
-				Base64encodeEnvironment:	base64.StdEncoding.EncodeToString([]byte(environment)),
+				Base64encodeEnvironment:    base64.StdEncoding.EncodeToString([]byte(environment)),
 			},
 		}
 	case gcptypes.Name:
