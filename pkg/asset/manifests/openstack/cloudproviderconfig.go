@@ -17,6 +17,10 @@ secret-namespace = kube-system
 		res += "region = " + cloud.RegionName + "\n"
 	}
 
+	if cloud.CACertFile != "" {
+		res += "ca-file = /etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem\n"
+	}
+
 	return res
 }
 
@@ -66,7 +70,7 @@ func CloudProviderConfigSecret(cloud *clientconfig.Cloud) ([]byte, error) {
 		res.WriteString("region = " + strconv.Quote(cloud.RegionName) + "\n")
 	}
 	if cloud.CACertFile != "" {
-		res.WriteString("ca-file = " + strconv.Quote(cloud.CACertFile) + "\n")
+		res.WriteString("ca-file = /etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem\n")
 	}
 
 	return []byte(res.String()), nil
