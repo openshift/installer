@@ -62,6 +62,20 @@
       tags: "{{ [cluster_id_tag] }}"
     when: os_networking_type == "Kuryr"
 
+  - name: 'Create pods subnet pool'
+    os_create_subnet_pool:
+      name: "{{ subnet_pool }}"
+      prefix_lenght: "{{ host_prefix }}"
+      prefixes: "{{ cluster_network_cidrs }}"
+    when: os_networking_type == "Kuryr"
+
+  - name: 'Set subnet pool tag'
+    os_tag:
+      resource: "subnet_pool"
+      name: "{{ subnet_pool }}"
+      tags: "{{ [cluster_id_tag] }}"
+    when: os_networking_type == "Kuryr"
+
   - name: 'Create external router'
     os_router:
       name: "{{ os_router }}"
