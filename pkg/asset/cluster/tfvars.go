@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_0/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
@@ -25,6 +26,7 @@ import (
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
+	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
@@ -46,7 +48,6 @@ import (
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/vsphere"
-	"github.com/openshift/installer/pkg/version"
 )
 
 const (
@@ -448,26 +449,28 @@ func (t *TerraformVariables) Load(f asset.FileFetcher) (found bool, err error) {
 // injectInstallInfo adds information about the installer and its invoker as a
 // ConfigMap to the provided bootstrap Ignition config.
 func injectInstallInfo(bootstrap []byte) (string, error) {
+	openshiftInstallPath := filepath.Join("/", "opt", "openshift", openshiftinstall.ConfigPath)
 	config := &igntypes.Config{}
 	if err := json.Unmarshal(bootstrap, &config); err != nil {
 		return "", errors.Wrap(err, "failed to unmarshal bootstrap Ignition config")
 	}
 
-	invoker := "user"
-	if env := os.Getenv("OPENSHIFT_INSTALL_INVOKER"); env != "" {
-		invoker = env
+	// If the openshift-install ConfigMap is already present, don't bother
+	// injecting another. In fact, while it's okay in Ignition v0s2 for a file
+	// to be defined multiple times (the last occurrence takes precedence), it
+	// is an error in Ignition v2s3, which is used by OKD.
+	for _, file := range config.Storage.Files {
+		if file.Path == openshiftInstallPath {
+			return string(bootstrap), nil
+		}
 	}
 
-	config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/opt/openshift/manifests/openshift-install.yml", "root", 0644, fmt.Sprintf(`---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: openshift-install
-  namespace: openshift-config
-data:
-  version: "%s"
-  invoker: "%s"
-`, version.Raw, invoker)))
+	cm, err := openshiftinstall.CreateInstallConfig("user")
+	if err != nil {
+		return "", errors.Wrap(err, "failed to generate openshift-install config")
+	}
+
+	config.Storage.Files = append(config.Storage.Files, ignition.FileFromString(openshiftInstallPath, "root", 0644, cm))
 
 	ign, err := json.Marshal(config)
 	if err != nil {
