@@ -19,6 +19,7 @@ func validMachinePool(name string) *types.MachinePool {
 		Name:           name,
 		Replicas:       pointer.Int64Ptr(1),
 		Hyperthreading: types.HyperthreadingDisabled,
+		Architecture:   types.ArchitectureAMD64,
 	}
 }
 

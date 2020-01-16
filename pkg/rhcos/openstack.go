@@ -5,12 +5,14 @@ import (
 	"net/url"
 
 	"github.com/pkg/errors"
+
+	"github.com/openshift/installer/pkg/types"
 )
 
 // OpenStack fetches the URL of the Red Hat Enterprise Linux CoreOS release,
 // for the openstack platform
-func OpenStack(ctx context.Context) (string, error) {
-	meta, err := fetchRHCOSBuild(ctx)
+func OpenStack(ctx context.Context, arch types.Architecture) (string, error) {
+	meta, err := fetchRHCOSBuild(ctx, arch)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to fetch RHCOS metadata")
 	}
