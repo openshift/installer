@@ -46,10 +46,18 @@ purposes:
     * `*.apps.<cluster-name>.<base-domain>` - pointing to the Ingress VIP
 
 * **NIC #2 - Provisioning Network**
-  * A private, non-routed network, used for PXE based provisioning.
-  * DHCP is automated for this network.
-  * Addressing for this network is currently hard coded as `172.22.0.0/24`, but
-    will be made configurable in the future.
+  * A private network used for PXE based provisioning.
+  * DHCP is automated for this network by default, to rely on external
+    DHCP, set the platform's `provisioningDHCPExternal` option to `true`
+  * Addressing for this network defaults to `172.22.0.0/24`, but is
+    configurable by setting the `provisioningNetworkCIDR` option.
+  * Two IP's are required to be available for use, one for the bootstrap
+    host, and one as a provisioning IP in the running cluster. By
+    default, these are the 2nd and 3rd addresses in the
+    `provisioningNetworkCIDR` (e.g. 172.22.0.2, and 172.22.0.3).
+  * To specify the name of the provisioning network interface,
+    set the `provisioningNetworkInterface` option. This is the network interface
+    on a master that is connected to the provisioning network.
 
 * **Out-of-band Management Network**
   * Servers will typically have an additional NIC used by the onboard
