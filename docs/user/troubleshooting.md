@@ -109,37 +109,37 @@ The installer uses the [cluster-version-operator] to create all the components o
       selfLink: /apis/config.openshift.io/v1/clusterversions/version
       uid: 6e0f4cf8-3ade-11e9-9034-0a923b47ded4
     spec:
-      channel: stable-4.3
+      channel: stable-4.1
       clusterID: 5ec312f9-f729-429d-a454-61d4906896ca
       upstream: https://api.openshift.com/api/upgrades_info/v1/graph
     status:
       availableUpdates: null
       conditions:
       - lastTransitionTime: 2019-02-27T22:50:30Z
-        message: Done applying 4.0.0-0.alpha-2019-02-27-131049
+        message: Done applying 4.1.1
         status: "True"
         type: Available
       - lastTransitionTime: 2019-02-27T22:50:30Z
         status: "False"
         type: Failing
       - lastTransitionTime: 2019-02-27T22:50:30Z
-        message: Cluster version is 4.0.0-0.alpha-2019-02-27-131049
+        message: Cluster version is 4.1.1
         status: "False"
         type: Progressing
       - lastTransitionTime: 2019-02-27T22:24:31Z
-        message: 'Unable to retrieve available updates: unknown version 4.0.0-0.alpha-2019-02-27-131049'
+        message: 'Unable to retrieve available updates: unknown version 4.1.1
         reason: RemoteFailed
         status: "False"
         type: RetrievedUpdates
       desired:
         image: registry.svc.ci.openshift.org/openshift/origin-release@sha256:91e6f754975963e7db1a9958075eb609ad226968623939d262d1cf45e9dbc39a
-        version: 4.0.0-0.alpha-2019-02-27-131049
+        version: 4.1.1
       history:
       - completionTime: 2019-02-27T22:50:30Z
         image: registry.svc.ci.openshift.org/openshift/origin-release@sha256:91e6f754975963e7db1a9958075eb609ad226968623939d262d1cf45e9dbc39a
         startedTime: 2019-02-27T22:24:31Z
         state: Completed
-        version: 4.0.0-0.alpha-2019-02-27-131049
+        version: 4.1.1
       observedGeneration: 1
       versionHash: Wa7as_ik1qE=
     ```
@@ -148,10 +148,10 @@ The installer uses the [cluster-version-operator] to create all the components o
 
     ```console
     $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusterversion version -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'
-    Available True Done applying 4.0.0-0.alpha-2019-02-26-194020
+    Available True Done applying 4.1.1
     Failing False
     Progressing False Cluster version is 4.0.0-0.alpha-2019-02-26-194020
-    RetrievedUpdates False Unable to retrieve available updates: unknown version 4.0.0-0.alpha-2019-02-26-194020
+    RetrievedUpdates False Unable to retrieve available updates: unknown version 4.1.1
     ```
 
 2. Inspecting the `ClusterOperator` object.
