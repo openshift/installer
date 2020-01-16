@@ -88,10 +88,11 @@ module "master" {
   guest_id      = data.vsphere_virtual_machine.template.guest_id
   tags          = [vsphere_tag.tag.id]
 
-  cluster_domain = var.cluster_domain
-  cluster_id     = var.cluster_id
-  memory         = var.control_plane_memory_mib
-  num_cpus       = var.control_plane_num_cpus
-  disk_size      = var.control_plane_disk_gib
+  cluster_domain   = var.cluster_domain
+  cluster_id       = var.cluster_id
+  memory           = var.vsphere_control_plane_memory_mib
+  num_cpus         = var.vsphere_control_plane_num_cpus
+  cores_per_socket = var.vsphere_control_plane_cores_per_socket
+  disk_size        = var.vsphere_control_plane_disk_gib
 }
 

@@ -50,14 +50,18 @@ variable "vsphere_folder" {
 // Control Plane machine variables
 ///////////
 
-variable "control_plane_memory_mib" {
+variable "vsphere_control_plane_memory_mib" {
   type = number
 }
 
-variable "control_plane_disk_gib" {
+variable "vsphere_control_plane_disk_gib" {
   type = number
 }
 
-variable "control_plane_num_cpus" {
+variable "vsphere_control_plane_num_cpus" {
+  type = number
+}
+
+variable "vsphere_control_plane_cores_per_socket" {
   type = number
 }

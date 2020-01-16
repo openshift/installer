@@ -51,6 +51,10 @@ variable "num_cpus" {
   type = number
 }
 
+variable "cores_per_socket" {
+  type = number
+}
+
 variable "disk_size" {
   type = number
 }
