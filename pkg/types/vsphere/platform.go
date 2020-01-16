@@ -22,7 +22,7 @@ type Platform struct {
 	Folder string `json:"folder,omitempty"`
 
 	// Cluster is the name of the cluster virtual machines will be cloned into.
-	Cluster string `json:"cluster,omitempty"`
+	Cluster string `json:"cluster"`
 
 	// ClusterOSImage overrides the url provided in rhcos.json to download the RHCOS OVA
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`

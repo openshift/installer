@@ -41,5 +41,8 @@ func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 		}
 	}
 
+	if len(p.Cluster) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("cluster"), "must specify the cluster"))
+	}
 	return allErrs
 }

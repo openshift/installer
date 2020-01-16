@@ -16,6 +16,7 @@ func validPlatform() *vsphere.Platform {
 		Password:         "test-password",
 		Datacenter:       "test-datacenter",
 		DefaultDatastore: "test-datastore",
+		Cluster:          "test-cluster",
 	}
 }
 
@@ -73,6 +74,15 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expectedError: `^test-path\.defaultDatastore: Required value: must specify the default datastore$`,
+		},
+		{
+			name: "missing cluster",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Cluster = ""
+				return p
+			}(),
+			expectedError: `^test-path\.cluster: Required value: must specify the cluster$`,
 		},
 		{
 			name: "valid VIPs",

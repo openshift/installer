@@ -23,6 +23,7 @@ platform:
     password: YOUR_VSPHERE_PASSWORD
     datacenter: dc1
     defaultDatastore: nvme-ds1
+    cluster: devel
 pullSecret: YOUR_PULL_SECRET
 sshKey: YOUR_SSH_KEY
 ```

@@ -48,6 +48,7 @@ func TestRedactedInstallConfig(t *testing.T) {
 			},
 			Platform: types.Platform{
 				VSphere: &vspheretypes.Platform{
+					Cluster:          "test-cluster",
 					VCenter:          "test-server-1",
 					Username:         "test-user-1",
 					Password:         "test-pass-1",
@@ -84,6 +85,7 @@ networking:
   - 1.2.3.4/5
 platform:
   vsphere:
+    cluster: test-cluster
     datacenter: test-datacenter
     defaultDatastore: test-datastore
     password: ""

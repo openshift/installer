@@ -86,6 +86,7 @@ func validVSpherePlatform() *vsphere.Platform {
 		Password:         "test-password",
 		Datacenter:       "test-datacenter",
 		DefaultDatastore: "test-datastore",
+		Cluster:          "test-cluster",
 	}
 }
 
