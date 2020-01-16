@@ -67,3 +67,10 @@ variable "cluster_id" {
   type = string
 }
 
+variable "thin_disk" {
+  type = bool
+}
+
+variable "scrub_disk" {
+  type = bool
+}
