@@ -74,6 +74,50 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			expectedError: `^test-path\.defaultDatastore: Required value: must specify the default datastore$`,
 		},
+		{
+			name: "valid VIPs",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.APIVIP = "192.168.111.2"
+				p.IngressVIP = "192.168.111.3"
+				p.DNSVIP = "192.168.111.4"
+				return p
+			}(),
+			// expectedError: `^test-path\.apiVIP: Invalid value: "": "" is not a valid IP`,
+		},
+		{
+			name: "missing API VIP",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.APIVIP = ""
+				p.IngressVIP = "192.168.111.3"
+				p.DNSVIP = "192.168.111.4"
+				return p
+			}(),
+			expectedError: `^test-path\.apiVIP: Invalid value: "": "" is not a valid IP`,
+		},
+		{
+			name: "missing Ingress VIP",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.APIVIP = "192.168.111.2"
+				p.IngressVIP = ""
+				p.DNSVIP = "192.168.111.4"
+				return p
+			}(),
+			expectedError: `^test-path\.ingressVIP: Invalid value: "": "" is not a valid IP`,
+		},
+		{
+			name: "missing DNS VIP",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.APIVIP = "192.168.111.2"
+				p.IngressVIP = "192.168.111.3"
+				p.DNSVIP = ""
+				return p
+			}(),
+			expectedError: `^test-path\.dnsVIP: Invalid value: "": "" is not a valid IP`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
