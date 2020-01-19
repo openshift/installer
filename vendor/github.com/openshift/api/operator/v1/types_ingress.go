@@ -75,6 +75,7 @@ type IngressControllerSpec struct {
 	//   AWS:      LoadBalancerService (with External scope)
 	//   Azure:    LoadBalancerService (with External scope)
 	//   GCP:      LoadBalancerService (with External scope)
+	//   IBMCloud: LoadBalancerService (with External scope)
 	//   Libvirt:  HostNetwork
 	//
 	// Any other platform types (including None) default to HostNetwork.
@@ -149,7 +150,7 @@ type IngressControllerSpec struct {
 	// routeAdmission defines a policy for handling new route claims (for example,
 	// to allow or deny claims across namespaces).
 	//
-	// The empty, defaults will be applied. See specific routeAdmission fields
+	// If empty, defaults will be applied. See specific routeAdmission fields
 	// for details about their defaults.
 	//
 	// +optional
@@ -326,7 +327,7 @@ type RouteAdmissionPolicy struct {
 	//
 	// - Strict: Do not allow routes in different namespaces to claim the same host.
 	//
-	// - InterNamespaceAllowed: allow routes to claim different paths of the same
+	// - InterNamespaceAllowed: Allow routes to claim different paths of the same
 	//   host name across namespaces.
 	//
 	// If empty, the default is Strict.

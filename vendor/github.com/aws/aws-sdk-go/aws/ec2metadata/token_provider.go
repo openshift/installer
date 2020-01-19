@@ -62,7 +62,7 @@ func (t *tokenProvider) fetchTokenHandler(r *request.Request) {
 
 			// Check if request timed out while waiting for response
 			if e, ok := requestFailureError.OrigErr().(awserr.Error); ok {
-				if e.Code() == request.ErrCodeRequestError {
+				if e.Code() == "RequestError" {
 					atomic.StoreUint32(&t.disabled, 1)
 				}
 			}

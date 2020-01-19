@@ -28,7 +28,7 @@ import (
 	"bytes"
 	"fmt"
 
-	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
+	machinev1 "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"

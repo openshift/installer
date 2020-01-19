@@ -60,6 +60,13 @@ func (in *AzureMachineProviderSpec) DeepCopyInto(out *AzureMachineProviderSpec) 
 	}
 	out.Image = in.Image
 	out.OSDisk = in.OSDisk
+	if in.Tags != nil {
+		in, out := &in.Tags, &out.Tags
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.NatRule != nil {
 		in, out := &in.NatRule, &out.NatRule
 		*out = new(int)
