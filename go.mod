@@ -49,7 +49,7 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/terraform-providers/terraform-provider-google v1.20.0 // indirect
 	github.com/terraform-providers/terraform-provider-google/v2 v2.8.0
-	github.com/terraform-providers/terraform-provider-ignition v1.0.1
+	github.com/terraform-providers/terraform-provider-ignition/v2 v2.0.0-00010101000000-000000000000
 	github.com/terraform-providers/terraform-provider-local v1.2.1
 	github.com/terraform-providers/terraform-provider-openstack v1.18.1-0.20190515162737-b1406b8e4894
 	github.com/terraform-providers/terraform-provider-random/v2 v2.1.1
@@ -83,7 +83,7 @@ replace (
 	github.com/mitchellh/packer => github.com/hashicorp/packer v1.3.5
 	github.com/openshift/machine-config-operator => github.com/vrutkovs/machine-config-operator v0.0.0-20191021113908-b6af01302153
 	github.com/terraform-providers/terraform-provider-google/v2 => github.com/vrutkovs/terraform-provider-google/v2 v2.8.0
-	github.com/terraform-providers/terraform-provider-ignition => github.com/vrutkovs/terraform-provider-ignition v1.0.2-0.20190819094334-ac54201ee306
+	github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/vrutkovs/terraform-provider-ignition/v2 v2.0.0
 	github.com/terraform-providers/terraform-provider-random/v2 => github.com/vrutkovs/terraform-provider-random/v2 v2.1.1
 	k8s.io/api => k8s.io/api v0.0.0-20190904195148-bacad065d7c3
 	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190831152136-93cd198ca677

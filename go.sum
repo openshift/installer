@@ -237,6 +237,7 @@ github.com/coreos/go-systemd v0.0.0-20181031085051-9002847aa142/go.mod h1:F5haX7
 github.com/coreos/go-systemd v0.0.0-20190212144455-93d5ec2c7f76/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e h1:Wf6HqHfScWJN9/ZjdUKyjop4mf3Qdd+1TvvltAvM3m8=
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
+github.com/coreos/ignition v0.0.0-20170904171445-ea573e121f72/go.mod h1:WJQapxzEn9DE0ryxsGvm8QnBajm/XsS/PkrDqSpz+bA=
 github.com/coreos/ignition v0.23.0/go.mod h1:WJQapxzEn9DE0ryxsGvm8QnBajm/XsS/PkrDqSpz+bA=
 github.com/coreos/ignition v0.33.0 h1:rYJoGv5v/5rCJAzyMaE9gU8pn7w7pv0M4rDzHvDK6T4=
 github.com/coreos/ignition v0.33.0/go.mod h1:WJQapxzEn9DE0ryxsGvm8QnBajm/XsS/PkrDqSpz+bA=
@@ -1100,6 +1101,9 @@ github.com/tencentcloud/tencentcloud-sdk-go v0.0.0-20181220135002-f1744d40d346/g
 github.com/tent/http-link-go v0.0.0-20130702225549-ac974c61c2f9/go.mod h1:RHkNRtSLfOK7qBTHaeSX1D6BNpI3qw7NTxsmNr4RvN8=
 github.com/terraform-providers/terraform-provider-google v1.20.0 h1:GCVLdJ49gSQxrI3b9Hu8BrNXKSyfGvLrlTJFyuWzsa4=
 github.com/terraform-providers/terraform-provider-google v1.20.0/go.mod h1:Ay9UTdQsm6vHYRjhyFRLPis39XspOYHmgy5pwNrgsco=
+github.com/terraform-providers/terraform-provider-ignition v1.0.1/go.mod h1:/jec8KAuvNwBGQmK9BgrVMxXirVdAFDtcNpqmjC35z4=
+github.com/terraform-providers/terraform-provider-ignition v1.1.0 h1:0bfrbbWhWGKJvdaqejiYvadeb1YtppUsfsYtr+blKLc=
+github.com/terraform-providers/terraform-provider-ignition v1.1.0/go.mod h1:3VBsmXyurrPXMrpseGkbCG7nRItEAZ+ZUnHEwwaNInY=
 github.com/terraform-providers/terraform-provider-local v1.2.1 h1:D4peyRQ34nRD6rhv7GnErkN1K9Meo7NVwb8J1ZereDE=
 github.com/terraform-providers/terraform-provider-local v1.2.1/go.mod h1:lJo9BVJigBiseOe96et44AZjRgJcMJbJbW4uvbH19OI=
 github.com/terraform-providers/terraform-provider-openstack v1.15.0 h1:adpjqej+F8BAX9dHmuPF47sUIkgifeqBu6p7iCsyj0Y=
@@ -1151,8 +1155,8 @@ github.com/vrutkovs/terraform-provider-aws/v3 v3.0.0 h1:6PsHrA+jYMSFxKKmsHYU0ycl
 github.com/vrutkovs/terraform-provider-aws/v3 v3.0.0/go.mod h1:f1vk0tL3UC4HgZTSR+GOlqwIdCzE4p7gZI+VFhp6CHA=
 github.com/vrutkovs/terraform-provider-google/v2 v2.8.0 h1:JAkS6r/SO+qW0kG66kgy7Isq6HyZkHOPCRcpwFCHk8w=
 github.com/vrutkovs/terraform-provider-google/v2 v2.8.0/go.mod h1:L727CCoozoKDaFDOMpYl5JjFLv+rNcRU85zYBstAOjk=
-github.com/vrutkovs/terraform-provider-ignition v1.0.2-0.20190819094334-ac54201ee306 h1:24lW7qiFUglnyAuvwd0K+5p0/zG4mk8zVnLqKlGUT28=
-github.com/vrutkovs/terraform-provider-ignition v1.0.2-0.20190819094334-ac54201ee306/go.mod h1:2t5H3XmPpIBOQ9lyYyCx2LJKNCbYEf8JdTSo89LlZao=
+github.com/vrutkovs/terraform-provider-ignition/v2 v2.0.0 h1:Df7OsNxPiFm83ibQldoIp/+sS6fQbtz3Nip/5vpCLPU=
+github.com/vrutkovs/terraform-provider-ignition/v2 v2.0.0/go.mod h1:oDZ2HQpXJyNq21f0p6vVdxHwyawn7w5a/lZ471vfRds=
 github.com/vrutkovs/terraform-provider-random/v2 v2.1.1 h1:O2fQFxbPcQhogayrXRa0mQWkGOWiPMSooBRZiM2HYzg=
 github.com/vrutkovs/terraform-provider-random/v2 v2.1.1/go.mod h1:zFz9igxagykmX5OKfxi0LSwaSg52nK9Rkcd9vGlcKjw=
 github.com/xanzy/go-cloudstack v2.4.1+incompatible/go.mod h1:s3eL3z5pNXF5FVybcT+LIVdId8pYn709yv6v5mrkrQE=
