@@ -3,7 +3,7 @@ package machineconfig
 import (
 	"fmt"
 
-	ignv2_2types "github.com/coreos/ignition/config/v2_2/types"
+	ignv3_0types "github.com/coreos/ignition/v2/config/v3_0/types"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -22,13 +22,13 @@ func ForAuthorizedKeys(key string, role string) *mcfgv1.MachineConfig {
 			},
 		},
 		Spec: mcfgv1.MachineConfigSpec{
-			Config: ignv2_2types.Config{
-				Ignition: ignv2_2types.Ignition{
-					Version: ignv2_2types.MaxVersion.String(),
+			Config: ignv3_0types.Config{
+				Ignition: ignv3_0types.Ignition{
+					Version: ignv3_0types.MaxVersion.String(),
 				},
-				Passwd: ignv2_2types.Passwd{
-					Users: []ignv2_2types.PasswdUser{{
-						Name: "core", SSHAuthorizedKeys: []ignv2_2types.SSHAuthorizedKey{ignv2_2types.SSHAuthorizedKey(key)},
+				Passwd: ignv3_0types.Passwd{
+					Users: []ignv3_0types.PasswdUser{{
+						Name: "core", SSHAuthorizedKeys: []ignv3_0types.SSHAuthorizedKey{ignv3_0types.SSHAuthorizedKey(key)},
 					}},
 				},
 			},

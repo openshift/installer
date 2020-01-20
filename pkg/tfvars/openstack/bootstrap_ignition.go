@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	ignition "github.com/coreos/ignition/config/v2_2/types"
+	ignition "github.com/coreos/ignition/v2/config/v3_0/types"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects"
 	"github.com/gophercloud/utils/openstack/clientconfig"
@@ -74,17 +74,17 @@ func generateIgnitionShim(userCA string, clusterID string, swiftObject string) (
 	fileMode := 420
 
 	// Hostname Config
-	contents := fmt.Sprintf("%s-bootstrap", clusterID)
+	contents := fmt.Sprintf("data:text/plain;base64,%s", b64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s-bootstrap", clusterID))))
 
+	// TODO
 	hostnameConfigFile := ignition.File{
 		Node: ignition.Node{
-			Filesystem: "root",
-			Path:       "/etc/hostname",
+			Path: "/etc/hostname",
 		},
 		FileEmbedded1: ignition.FileEmbedded1{
 			Mode: &fileMode,
 			Contents: ignition.FileContents{
-				Source: fmt.Sprintf("data:text/plain;base64,%s", b64.StdEncoding.EncodeToString([]byte(contents))),
+				Source: &contents,
 			},
 		},
 	}
@@ -105,9 +105,9 @@ func generateIgnitionShim(userCA string, clusterID string, swiftObject string) (
 			Version:  ignition.MaxVersion.String(),
 			Security: security,
 			Config: ignition.IgnitionConfig{
-				Append: []ignition.ConfigReference{
+				Merge: []ignition.ConfigReference{
 					{
-						Source: swiftObject,
+						Source: &swiftObject,
 					},
 				},
 			},
