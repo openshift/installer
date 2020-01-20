@@ -26,7 +26,7 @@ require (
 	github.com/containers/image v3.0.2+incompatible
 	github.com/coreos/etcd v3.3.18+incompatible // indirect
 	github.com/coreos/go-systemd v0.0.0-20191111152658-2d78030078ef // indirect
-	github.com/coreos/ignition v0.34.0
+	github.com/coreos/ignition/v2 v2.1.1
 	github.com/dmacvicar/terraform-provider-libvirt v0.6.1-0.20191216113711-1a01934a7d20
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/gammazero/workerpool v0.0.0-20191005194639-971bc780f6d7 // indirect
@@ -95,7 +95,7 @@ require (
 	github.com/terraform-providers/terraform-provider-azuread v0.7.0 // indirect
 	github.com/terraform-providers/terraform-provider-azurerm v1.41.0
 	github.com/terraform-providers/terraform-provider-google v1.20.1-0.20191217221207-85d4b5989b26
-	github.com/terraform-providers/terraform-provider-ignition v1.2.1
+	github.com/terraform-providers/terraform-provider-ignition/v2 v2.0.0
 	github.com/terraform-providers/terraform-provider-local v1.4.0
 	github.com/terraform-providers/terraform-provider-openstack v1.24.0
 	github.com/terraform-providers/terraform-provider-random v1.3.2-0.20191204175905-53436297444a
@@ -136,8 +136,9 @@ replace (
 	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20191209182400-81ee99999340 // Use OpenShift fork
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200117162508-e7ccdda6ba67 // Pin API
-	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20200102225717-04cd2198cae2 // Pin MCO so it doesn't get downgraded
+	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20200118054812-d0ff651e69ab
 	github.com/ovirt/terraform-provider-ovirt => github.com/LorbusChris/terraform-provider-ovirt v0.4.3-0.20200120052059-a925cff29011
+	github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/LorbusChris/terraform-provider-ignition/v2 v2.0.0-20200118034038-6e413297dc57
 	github.com/terraform-providers/terraform-provider-vsphere => github.com/LorbusChris/terraform-provider-vsphere v1.14.1-0.20200120024642-670c2d04a2a2 // Pin to fork that uses tf-plugin-sdk
 	github.com/vmware/vic => github.com/LorbusChris/vic v1.5.5-0.20200120002717-4f75eaa93104 // Pin to fork with fixed sirupsen/logrus import, pulled in by tf-vsphere-provider
 	google.golang.org/api => google.golang.org/api v0.11.1-0.20191012001332-5e0e3f4a3bb8 // Pin to version required by tf-provider-google
