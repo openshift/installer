@@ -1,8 +1,8 @@
 package v1
 
 import (
-	ign "github.com/coreos/ignition/config/v2_2"
-	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	ign "github.com/coreos/ignition/v2/config/v3_0"
+	igntypes "github.com/coreos/ignition/v2/config/v3_0/types"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -43,7 +43,7 @@ func deepCopyIgnConfig(in igntypes.Config) igntypes.Config {
 	// https://github.com/coreos/ignition/blob/d19b2021cf397de7c31774c13805bbc3aa655646/config/v2_2/append.go#L41
 	out.Ignition.Version = in.Ignition.Version
 
-	return ign.Append(out, in)
+	return ign.Merge(out, in)
 }
 
 // DeepCopy copying the receiver, creating a new MachineConfigSpec.
