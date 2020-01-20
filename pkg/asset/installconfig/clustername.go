@@ -29,12 +29,14 @@ func (a *clusterName) Generate(parents asset.Parents) error {
 	platform := &platform{}
 	parents.Get(bd, platform)
 
-	validator := survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-		return validate.DomainName(validation.ClusterDomain(bd.BaseDomain, ans.(string)), false)
-	})
+	validator := survey.Required
+
 	if platform.GCP != nil {
 		validator = survey.ComposeValidators(validator, func(ans interface{}) error { return gcpvalidation.ValidateClusterName(ans.(string)) })
 	}
+	validator = survey.ComposeValidators(validator, func(ans interface{}) error {
+		return validate.DomainName(validation.ClusterDomain(bd.BaseDomain, ans.(string)), false)
+	})
 
 	return survey.Ask([]*survey.Question{
 		{
