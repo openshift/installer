@@ -181,10 +181,10 @@ func (s *storeImpl) saveStateFile() error {
 	}
 
 	path := filepath.Join(s.directory, stateFileName)
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(path, data, 0644); err != nil {
+	if err := ioutil.WriteFile(path, data, 0640); err != nil {
 		return err
 	}
 	return nil
