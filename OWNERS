@@ -3,5 +3,7 @@
 
 approvers:
   - installer-approvers
+  - vrutkovs
+  - LorbusChris
 reviewers:
   - installer-reviewers
