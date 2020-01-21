@@ -1,0 +1,52 @@
+{
+    "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.2-s390x/42s390x.81.20191224.0/",
+    "buildid": "42s390x.81.20191224.0",
+    "images": {
+        "initramfs": {
+            "path": "rhcos-42s390x.81.20191224.0-installer-initramfs.img",
+            "sha256": "ff9aa34dd37c43081b469529faf60d4ebc4cde396305634cdf8e480f7793b387"
+        },
+        "iso": {
+            "path": "rhcos-42s390x.81.20191224.0-installer.iso",
+            "sha256": "829864fee624cb3e99196b79d3818fa3ba01ce7bb061be82de99349a63732608"
+        },
+        "kernel": {
+            "path": "rhcos-42s390x.81.20191224.0-installer-kernel",
+            "sha256": "930921428eb3d815c698fb34a1d6203747558f591992461727a4973fb0f48547"
+        },
+        "metal-dasd": {
+            "path": "rhcos-42s390x.81.20191224.0-metal-dasd.raw.gz",
+            "sha256": "308bd932dd84359c92009ccc18eaab33934204aaea1f5dee7ee1e7c3c10b00d5",
+            "size": 630440448,
+            "uncompressed-sha256": "2604ff12b0e7bf7e6307c4383928024a8ecaface702a3fafe6650bd632c5e075",
+            "uncompressed-size": 3155165184
+        },
+        "metal-zfcp": {
+            "path": "rhcos-42s390x.81.20191224.0-metal-zfcp.raw.gz",
+            "sha256": "335d8cc1acb469e3e96f5425199b355afc4596d721abe1ed2b0e8f8cf2e7f78c",
+            "size": 630418089,
+            "uncompressed-sha256": "ea08f2bcfdefbbea0e318bc915e933a820951ba67b87b8dc330262f492aec074",
+            "uncompressed-size": 3155165184
+        },
+        "openstack": {
+            "path": "rhcos-42s390x.81.20191224.0-openstack.qcow2",
+            "sha256": "c28ec6a6c33074fe4f3daee565093dbc855b4d322ac4b03bc6d63e41311bcd64",
+            "size": 629819070,
+            "uncompressed-sha256": "2ecd3ab1d600c5a4c2cbd1abc272cfec81ef08deb9ba09d54d9011d8cae59a2d",
+            "uncompressed-size": 1864564736
+        },
+        "qemu": {
+            "path": "rhcos-42s390x.81.20191224.0-qemu.qcow2",
+            "sha256": "469605b08839339821524385c31022bacddeca67ae0206102910e335471c63f1",
+            "size": 629819608,
+            "uncompressed-sha256": "e6747945e805bc627a21a4f2d9ccc104b096410ed0d6256e27e91450a5bbe3d7",
+            "uncompressed-size": 1864499200
+        }
+    },
+    "oscontainer": {
+        "digest": "sha256:37498b2eae0f317a444ebb01c399e69c6571e845b008e51f52b4b45eeb2ee2df",
+        "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+    },
+    "ostree-commit": "018c6d74da09e1bd34281bb2ccaea752f26f08db07af52e036374c13761067a7",
+    "ostree-version": "42s390x.81.20191224.0"
+}
