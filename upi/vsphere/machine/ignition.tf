@@ -1,5 +1,5 @@
 provider "ignition" {
-  version = "1.1.0"
+  version = "2.0.0"
 }
 
 locals {
@@ -72,11 +72,11 @@ data "ignition_config" "ign" {
   }
 
   systemd = [
-    "${data.ignition_systemd_unit.restart.*.id[count.index]}",
+    "${data.ignition_systemd_unit.restart.*.rendered[count.index]}",
   ]
 
   files = [
-    "${data.ignition_file.hostname.*.id[count.index]}",
-    "${data.ignition_file.static_ip.*.id[count.index]}",
+    "${data.ignition_file.hostname.*.rendered[count.index]}",
+    "${data.ignition_file.static_ip.*.rendered[count.index]}",
   ]
 }
