@@ -27,7 +27,11 @@
       # Trunk names
       os_cp_trunk_name: "{{ infraID }}-master-trunk"
       os_compute_trunk_name: "{{ infraID }}-worker-trunk"
-      # Subnet pool names
+      # Subnet pool name
       subnet_pool: "{{ infraID }}-kuryr-pod-subnetpool"
+      # Service network name
+      os_svc_network: "{{ infraID }}-kuryr-service-network"
+      # Service subnet name
+      os_svc_subnet: "{{ infraID }}-kuryr-service-subnet"
       # Ignition files
       os_bootstrap_ignition: "{{ infraID }}-bootstrap-ignition.json"
