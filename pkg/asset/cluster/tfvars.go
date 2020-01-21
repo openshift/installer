@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 
@@ -25,6 +26,7 @@ import (
 	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
@@ -336,6 +338,20 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case openstack.Name:
+		cloud, err := openstackconfig.GetSession(installConfig.Config.Platform.OpenStack.Cloud)
+		if err != nil {
+			return errors.Wrap(err, "failed to get cloud config for openstack")
+		}
+		var caCert string
+		// Get the ca-cert-bundle key if there is a value for cacert in clouds.yaml
+		if caPath := cloud.CloudConfig.CACertFile; caPath != "" {
+			caFile, err := ioutil.ReadFile(caPath)
+			if err != nil {
+				return errors.Wrap(err, "failed to read clouds.yaml ca-cert from disk")
+			}
+			caCert = string(caFile)
+		}
+
 		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
@@ -365,7 +381,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.OpenStack.OctaviaSupport,
 			string(*rhcosImage),
 			clusterID.InfraID,
-			installConfig.Config.AdditionalTrustBundle,
+			caCert,
 			bootstrapIgn,
 		)
 		if err != nil {
