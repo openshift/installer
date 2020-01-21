@@ -4,6 +4,11 @@ variable "tags" {
   description = "tags to be applied to created resources."
 }
 
+variable "cluster_id" {
+  description = "The identifier for the cluster."
+  type        = string
+}
+
 variable "cluster_domain" {
   description = "The domain for the cluster that all DNS records must belong"
   type        = string
@@ -29,8 +34,8 @@ variable "internal_lb_ipaddress" {
   type        = string
 }
 
-variable "private_dns_zone_name" {
-  description = "private DNS zone name that should be used for records"
+variable "virtual_network" {
+  description = "The ID for Virtual Network that will be linked to the Private DNS zone."
   type        = string
 }
 
