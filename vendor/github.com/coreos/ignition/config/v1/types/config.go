@@ -14,8 +14,16 @@
 
 package types
 
+import "github.com/coreos/go-semver/semver"
+
 const (
 	Version = 1
+)
+
+var (
+	MaxVersion = semver.Version{
+		Major: Version,
+	}
 )
 
 type Config struct {
