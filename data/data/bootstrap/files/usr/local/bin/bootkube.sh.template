@@ -181,6 +181,11 @@ then
 
 	rm --recursive --force mco-bootstrap
 
+	ADDITIONAL_FLAGS=""
+	if [ -f "/opt/openshift/tls/cloud-ca-cert.pem" ]; then
+		ADDITIONAL_FLAGS="--cloud-provider-ca-file=/assets/tls/cloud-ca-cert.pem"
+	fi
+
 	bootkube_podman_run \
 		--user 0 \
 		--volume "$PWD:/assets:z" \
@@ -203,7 +208,8 @@ then
 			--mdns-publisher-image="${MDNS_PUBLISHER_IMAGE}" \
 			--haproxy-image="${HAPROXY_IMAGE}" \
 			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
-			--cloud-config-file=/assets/manifests/cloud-provider-config.yaml
+			--cloud-config-file=/assets/manifests/cloud-provider-config.yaml \
+			${ADDITIONAL_FLAGS}
 
 	# Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to
 	# 1. read the controller config rendered by MachineConfigOperator
