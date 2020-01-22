@@ -1,25 +1,39 @@
-output "cluster-pip" {
-  value = var.private ? null : azurerm_public_ip.cluster_public_ip.ip_address
+output "public_lb_backend_pool_v4_id" {
+  value = var.use_ipv4 ? azurerm_lb_backend_address_pool.master_public_lb_pool_v4[0].id : null
 }
 
-output "public_lb_backend_pool_id" {
-  value = azurerm_lb_backend_address_pool.master_public_lb_pool.id
+output "public_lb_backend_pool_v6_id" {
+  value = var.use_ipv6 ? azurerm_lb_backend_address_pool.master_public_lb_pool_v6[0].id : null
 }
 
-output "internal_lb_backend_pool_id" {
-  value = azurerm_lb_backend_address_pool.internal_lb_controlplane_pool.id
+output "internal_lb_backend_pool_v4_id" {
+  value = var.use_ipv4 ? azurerm_lb_backend_address_pool.internal_lb_controlplane_pool_v4[0].id : null
+}
+
+output "internal_lb_backend_pool_v6_id" {
+  value = var.use_ipv6 ? azurerm_lb_backend_address_pool.internal_lb_controlplane_pool_v6[0].id : null
 }
 
 output "public_lb_id" {
   value = var.private ? null : azurerm_lb.public.id
 }
 
-output "public_lb_pip_fqdn" {
-  value = var.private ? null : data.azurerm_public_ip.cluster_public_ip.fqdn
+output "public_lb_pip_v4_fqdn" {
+  value = var.private || ! var.use_ipv4 ? null : data.azurerm_public_ip.cluster_public_ip_v4[0].fqdn
 }
 
-output "internal_lb_ip_address" {
-  value = azurerm_lb.internal.private_ip_address
+output "public_lb_pip_v6_fqdn" {
+  value = var.private || ! var.use_ipv6 ? null : data.azurerm_public_ip.cluster_public_ip_v6[0].fqdn
+}
+
+output "internal_lb_ip_v4_address" {
+  value = var.use_ipv4 ? azurerm_lb.internal.private_ip_addresses[0] : null
+}
+
+output "internal_lb_ip_v6_address" {
+  // TODO: internal LB should block v4 for better single stack emulation (&& ! var.emulate_single_stack_ipv6)
+  //   but RHCoS initramfs can't do v6 and so fails to ignite. https://issues.redhat.com/browse/GRPA-1343 
+  value = var.use_ipv6 ? azurerm_lb.internal.private_ip_addresses[1] : null
 }
 
 output "master_nsg_name" {

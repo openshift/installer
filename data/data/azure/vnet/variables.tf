@@ -1,5 +1,9 @@
-variable "vnet_cidr" {
-  type = string
+variable "vnet_v4_cidrs" {
+  type = list(string)
+}
+
+variable "vnet_v6_cidrs" {
+  type = list(string)
 }
 
 variable "resource_group_name" {
@@ -56,4 +60,19 @@ variable "worker_subnet" {
 variable "private" {
   type        = bool
   description = "The determines if this is a private/internal cluster or not."
+}
+
+variable "use_ipv4" {
+  type        = bool
+  description = "This value determines if this is cluster should use IPv4 networking."
+}
+
+variable "use_ipv6" {
+  type        = bool
+  description = "This value determines if this is cluster should use IPv6 networking."
+}
+
+variable "emulate_single_stack_ipv6" {
+  type        = bool
+  description = "This determines whether a dual-stack cluster is configured to emulate single-stack IPv6."
 }
