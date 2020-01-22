@@ -28,9 +28,33 @@ const (
 )
 
 func (p Partition) Validate() report.Report {
+	r := report.Report{}
+	if (p.Start != nil || p.Size != nil) && (p.StartMiB != nil || p.SizeMiB != nil) {
+		r.Add(report.Entry{
+			Message: errors.ErrPartitionsUnitsMismatch.Error(),
+			Kind:    report.EntryError,
+		})
+	}
 	if p.ShouldExist != nil && !*p.ShouldExist &&
 		(p.Label != nil || p.TypeGUID != "" || p.GUID != "" || p.Start != nil || p.Size != nil) {
-		return report.ReportFromError(errors.ErrShouldNotExistWithOthers, report.EntryError)
+		r.Add(report.Entry{
+			Message: errors.ErrShouldNotExistWithOthers.Error(),
+			Kind:    report.EntryError,
+		})
+	}
+	return r
+}
+
+func (p Partition) ValidateSize() report.Report {
+	if p.Size != nil {
+		return report.ReportFromError(errors.ErrSizeDeprecated, report.EntryDeprecated)
+	}
+	return report.Report{}
+}
+
+func (p Partition) ValidateStart() report.Report {
+	if p.Start != nil {
+		return report.ReportFromError(errors.ErrStartDeprecated, report.EntryDeprecated)
 	}
 	return report.Report{}
 }

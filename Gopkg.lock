@@ -215,7 +215,7 @@
   version = "v18"
 
 [[projects]]
-  digest = "1:fb5b2aed0d774e210c1f2c0893e620cb3fa98957d3b925d0378f93b9613eb605"
+  digest = "1:b3ff820a2b867b5140ac8e6c84a1124affe7d671296b7648d06b61d0834617cf"
   name = "github.com/coreos/ignition"
   packages = [
     "config/shared/errors",
@@ -229,15 +229,16 @@
     "config/v2_1/types",
     "config/v2_2",
     "config/v2_2/types",
-    "config/v2_3_experimental/types",
+    "config/v2_4/types",
+    "config/v2_5_experimental/types",
     "config/validate",
     "config/validate/astjson",
     "config/validate/astnode",
     "config/validate/report",
   ]
   pruneopts = "NUT"
-  revision = "76107251acd117c6d3e5b4dae2b47f82f944984b"
-  version = "v0.26.0"
+  revision = "7afbeba044a8bf5762609fbb5f352291eeb7ad9a"
+  version = "v0.35.0"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -398,7 +399,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:67551c599e04b31fe799b4bd4de0e101d3c022057213ef7af014bdce5f525b18"
+  digest = "1:0989b632c84399624334e9ed9b8157319cf01d211140c0a4f78f780564caeeb0"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
@@ -412,6 +413,7 @@
     "openstack/identity/v2/tenants",
     "openstack/identity/v2/tokens",
     "openstack/identity/v3/tokens",
+    "openstack/imageservice/v2/imagedata",
     "openstack/imageservice/v2/images",
     "openstack/loadbalancer/v2/apiversions",
     "openstack/loadbalancer/v2/l7policies",
@@ -1459,6 +1461,7 @@
     "github.com/containers/image/pkg/sysregistriesv2",
     "github.com/coreos/ignition/config/util",
     "github.com/coreos/ignition/config/v2_2/types",
+    "github.com/coreos/ignition/config/v2_4/types",
     "github.com/ghodss/yaml",
     "github.com/golang/mock/gomock",
     "github.com/google/uuid",
@@ -1468,6 +1471,7 @@
     "github.com/gophercloud/gophercloud/openstack/compute/v2/flavors",
     "github.com/gophercloud/gophercloud/openstack/compute/v2/servers",
     "github.com/gophercloud/gophercloud/openstack/identity/v3/tokens",
+    "github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata",
     "github.com/gophercloud/gophercloud/openstack/imageservice/v2/images",
     "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/apiversions",
     "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/loadbalancers",
