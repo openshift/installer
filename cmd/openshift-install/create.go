@@ -25,13 +25,16 @@ import (
 	clientwatch "k8s.io/client-go/tools/watch"
 
 	configv1 "github.com/openshift/api/config/v1"
+	operatorv1 "github.com/openshift/api/operator/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
+	operatorversionedclient "github.com/openshift/client-go/operator/clientset/versioned"
 	routeclient "github.com/openshift/client-go/route/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
+	operatorv1helpers "github.com/openshift/library-go/pkg/operator/v1helpers"
 )
 
 type target struct {
@@ -103,6 +106,11 @@ var (
 						logrus.Error("Attempted to gather debug logs after installation failure: ", err2)
 					}
 					logrus.Fatal("Bootstrap failed to complete: ", err)
+				}
+
+				err = waitForClusterEtcdOperator(ctx, config)
+				if err != nil {
+					logrus.Fatal(err)
 				}
 
 				logrus.Info("Destroying the bootstrap resources...")
@@ -318,6 +326,82 @@ func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset
 	)
 
 	return errors.Wrap(err, "failed to wait for bootstrapping to complete")
+}
+
+// waitForClusterEtcdOperator watches the resource kind, if it exists, and waits for
+// the all the masters to join the etcd cluster.
+func waitForClusterEtcdOperator(ctx context.Context, config *rest.Config) error {
+	operatorClient, err := operatorversionedclient.NewForConfig(config)
+	if err != nil {
+		logrus.Errorf("error getting operator client config: %#v", err)
+		return err
+	}
+
+	operatorGroups, err := operatorClient.Discovery().ServerResourcesForGroupVersion("operator.openshift.io/v1")
+	if err != nil {
+		// TODO: figure out if we need to a way to get around transient apiserver errors
+		logrus.Errorf("unable to get operatorGroups: %#v", err)
+		return err
+	}
+
+	for _, o := range operatorGroups.APIResources {
+		if o.Kind == "Etcd" {
+			// etcd resource found, cluster-etcd-operator enabled cluster, need to wait
+			apiTimeout := 30 * time.Minute
+			logrus.Infof("Waiting up to %v for the cluster to bootstrap", apiTimeout)
+			ceoContext, cancel := context.WithTimeout(ctx, apiTimeout)
+			defer cancel()
+
+			return waitForEtcdBootstrap(ceoContext, operatorClient.RESTClient())
+		}
+	}
+
+	// could not find the etcd resource
+	return nil
+}
+
+func waitForEtcdBootstrap(ctx context.Context, operatorRestClient rest.Interface) error {
+	_, err := clientwatch.UntilWithSync(
+		ctx,
+		cache.NewListWatchFromClient(operatorRestClient, "etcds", "", fields.OneTermEqualSelector("metadata.name", "cluster")),
+		&operatorv1.Etcd{},
+		nil,
+		func(event watch.Event) (bool, error) {
+			switch event.Type {
+			case watch.Added, watch.Modified:
+				etcd, ok := event.Object.(*operatorv1.Etcd)
+				if !ok {
+					logrus.Warningf("Expected an Etcd object but got a %q object instead", event.Object.GetObjectKind().GroupVersionKind())
+					return false, nil
+				}
+				return etcdDoneScaling(etcd)
+			}
+			logrus.Info("Still waiting for the cluster to bootstrap...")
+			return false, nil
+		},
+	)
+
+	if err != nil {
+		logrus.Errorf("error waiting for etcd CR: %#v", err)
+		return err
+	}
+
+	return nil
+}
+
+func etcdDoneScaling(etcd *operatorv1.Etcd) (bool, error) {
+	if etcd.Spec.ManagementState == operatorv1.Unmanaged {
+		logrus.Info("Cluster etcd operator is in Unmanaged mode")
+		return true, nil
+	}
+	if operatorv1helpers.IsOperatorConditionTrue(etcd.Status.Conditions, operatorv1.OperatorStatusTypeAvailable) &&
+		operatorv1helpers.IsOperatorConditionFalse(etcd.Status.Conditions, operatorv1.OperatorStatusTypeProgressing) &&
+		operatorv1helpers.IsOperatorConditionFalse(etcd.Status.Conditions, operatorv1.OperatorStatusTypeDegraded) {
+		logrus.Info("Cluster etcd operator bootstrapped successfully")
+		return true, nil
+	}
+	logrus.Info("Still waiting for the cluster to bootstrap...")
+	return false, nil
 }
 
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation
