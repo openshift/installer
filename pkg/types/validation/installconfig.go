@@ -65,6 +65,8 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	nameErr := validate.ClusterName(c.ObjectMeta.Name)
 	if gcpNameErr := gcpvalidation.ValidateClusterName(c.ObjectMeta.Name); c.Platform.GCP != nil && gcpNameErr != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), c.ObjectMeta.Name, gcpNameErr.Error()))
+	} else if azureNameErr := azurevalidation.ValidateClusterName(c.ObjectMeta.Name); c.Platform.Azure != nil && azureNameErr != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), c.ObjectMeta.Name, azureNameErr.Error()))
 	} else if nameErr != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), c.ObjectMeta.Name, nameErr.Error()))
 	}
