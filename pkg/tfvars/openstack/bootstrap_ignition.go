@@ -89,6 +89,20 @@ func generateIgnitionShim(userCA string, clusterID string, swiftObject string) (
 		},
 	}
 
+	// Openstack Ca Cert file
+	openstackCAFile := ignition.File{
+		Node: ignition.Node{
+			Filesystem: "root",
+			Path:       "/opt/openshift/tls/cloud-ca-cert.pem",
+		},
+		FileEmbedded1: ignition.FileEmbedded1{
+			Mode: &fileMode,
+			Contents: ignition.FileContents{
+				Source: fmt.Sprintf("data:text/plain;base64,%s", b64.StdEncoding.EncodeToString([]byte(userCA))),
+			},
+		},
+	}
+
 	security := ignition.Security{}
 	if userCA != "" {
 		security = ignition.Security{
@@ -115,6 +129,7 @@ func generateIgnitionShim(userCA string, clusterID string, swiftObject string) (
 		Storage: ignition.Storage{
 			Files: []ignition.File{
 				hostnameConfigFile,
+				openstackCAFile,
 			},
 		},
 	}
