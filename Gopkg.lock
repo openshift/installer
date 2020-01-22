@@ -215,7 +215,7 @@
   version = "v18"
 
 [[projects]]
-  digest = "1:fb5b2aed0d774e210c1f2c0893e620cb3fa98957d3b925d0378f93b9613eb605"
+  digest = "1:9d287b91aa84165861fe64390d2b824e71e11bc681c9946481ef2409af5735eb"
   name = "github.com/coreos/ignition"
   packages = [
     "config/shared/errors",
@@ -229,15 +229,15 @@
     "config/v2_1/types",
     "config/v2_2",
     "config/v2_2/types",
-    "config/v2_3_experimental/types",
+    "config/v2_5_experimental/types",
     "config/validate",
     "config/validate/astjson",
     "config/validate/astnode",
     "config/validate/report",
   ]
   pruneopts = "NUT"
-  revision = "76107251acd117c6d3e5b4dae2b47f82f944984b"
-  version = "v0.26.0"
+  revision = "7afbeba044a8bf5762609fbb5f352291eeb7ad9a"
+  version = "v0.35.0"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"

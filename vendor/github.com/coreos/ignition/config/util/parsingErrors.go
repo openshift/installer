@@ -19,7 +19,7 @@ import (
 	"errors"
 
 	configErrors "github.com/coreos/ignition/config/shared/errors"
-	"github.com/coreos/ignition/config/v2_3_experimental/types"
+	"github.com/coreos/ignition/config/v2_5_experimental/types"
 	"github.com/coreos/ignition/config/validate/report"
 
 	json "github.com/ajeddeloh/go-json"

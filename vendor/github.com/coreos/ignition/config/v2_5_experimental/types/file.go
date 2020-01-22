@@ -16,6 +16,7 @@ package types
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
@@ -67,5 +68,33 @@ func (fc FileContents) ValidateSource() report.Report {
 			Kind:    report.EntryError,
 		})
 	}
+	return r
+}
+
+func (fc FileContents) ValidateHTTPHeaders() report.Report {
+	r := report.Report{}
+
+	if len(fc.HTTPHeaders) < 1 {
+		return r
+	}
+
+	u, err := url.Parse(fc.Source)
+	if err != nil {
+		r.Add(report.Entry{
+			Message: errors.ErrInvalidUrl.Error(),
+			Kind:    report.EntryError,
+		})
+		return r
+	}
+
+	switch u.Scheme {
+	case "http", "https":
+	default:
+		r.Add(report.Entry{
+			Message: errors.ErrUnsupportedSchemeForHTTPHeaders.Error(),
+			Kind:    report.EntryError,
+		})
+	}
+
 	return r
 }

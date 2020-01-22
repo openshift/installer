@@ -15,6 +15,8 @@
 package types
 
 import (
+	"net/url"
+
 	"github.com/coreos/go-semver/semver"
 
 	"github.com/coreos/ignition/config/shared/errors"
@@ -30,6 +32,34 @@ func (c ConfigReference) ValidateSource() report.Report {
 			Kind:    report.EntryError,
 		})
 	}
+	return r
+}
+
+func (c ConfigReference) ValidateHTTPHeaders() report.Report {
+	r := report.Report{}
+
+	if len(c.HTTPHeaders) < 1 {
+		return r
+	}
+
+	u, err := url.Parse(c.Source)
+	if err != nil {
+		r.Add(report.Entry{
+			Message: errors.ErrInvalidUrl.Error(),
+			Kind:    report.EntryError,
+		})
+		return r
+	}
+
+	switch u.Scheme {
+	case "http", "https":
+	default:
+		r.Add(report.Entry{
+			Message: errors.ErrUnsupportedSchemeForHTTPHeaders.Error(),
+			Kind:    report.EntryError,
+		})
+	}
+
 	return r
 }
 

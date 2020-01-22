@@ -36,11 +36,10 @@ func Append(oldConfig, newConfig types.Config) types.Config {
 // appendStruct is an internal helper function to AppendConfig. Given two values
 // of structures (assumed to be the same type), recursively iterate over every
 // field in the struct, appending slices, recursively appending structs, and
-// overwriting old values with the new for all other types. Individual fields
-// are able to override their merge strategy using the "merge" tag. Accepted
-// values are "new" or "old": "new" uses the new value, "old" uses the old
-// value. These are currently only used for "ignition.config" and
-// "ignition.version".
+// overwriting old values with the new for all other types. Some individual
+// struct fields have alternate merge strategies, determined by the field name.
+// Currently these fields are "ignition.version", which uses the old value, and
+// "ignition.config" which uses the new value.
 func appendStruct(vOld, vNew reflect.Value) reflect.Value {
 	tOld := vOld.Type()
 	vRes := reflect.New(tOld)
@@ -50,11 +49,11 @@ func appendStruct(vOld, vNew reflect.Value) reflect.Value {
 		vfNew := vNew.Field(i)
 		vfRes := vRes.Elem().Field(i)
 
-		switch tOld.Field(i).Tag.Get("merge") {
-		case "old":
+		switch tOld.Field(i).Name {
+		case "Version":
 			vfRes.Set(vfOld)
 			continue
-		case "new":
+		case "Config":
 			vfRes.Set(vfNew)
 			continue
 		}
@@ -65,7 +64,11 @@ func appendStruct(vOld, vNew reflect.Value) reflect.Value {
 		case reflect.Slice:
 			vfRes.Set(reflect.AppendSlice(vfOld, vfNew))
 		default:
-			vfRes.Set(vfNew)
+			if vfNew.Kind() == reflect.Ptr && vfNew.IsNil() {
+				vfRes.Set(vfOld)
+			} else {
+				vfRes.Set(vfNew)
+			}
 		}
 	}
 
