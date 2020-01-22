@@ -16,8 +16,10 @@ resource "vsphere_virtual_machine" "vm" {
   }
 
   disk {
-    label = "disk0"
-    size  = 120
+    label            = "disk0"
+    size             = 120
+    eagerly_scrub    = var.scrub_disk
+    thin_provisioned = var.thin_disk
   }
 
   clone {

@@ -309,6 +309,8 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 	case vspheretypes.Name:
 		mpool := defaultVSphereMachinePoolPlatform()
+		mpool.NumCPUs = 4
+		mpool.MemoryMiB = 16384
 		mpool.Set(ic.Platform.VSphere.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.VSphere)
 		pool.Platform.VSphere = &mpool

@@ -51,6 +51,10 @@ variable "num_cpus" {
   type = number
 }
 
+variable "cores_per_socket" {
+  type = number
+}
+
 variable "disk_size" {
   type = number
 }
@@ -63,3 +67,10 @@ variable "cluster_id" {
   type = string
 }
 
+variable "thin_disk" {
+  type = bool
+}
+
+variable "scrub_disk" {
+  type = bool
+}
