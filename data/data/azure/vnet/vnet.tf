@@ -7,12 +7,6 @@ resource "azurerm_virtual_network" "cluster_vnet" {
   address_space       = concat(var.vnet_v4_cidrs, var.vnet_v6_cidrs)
 }
 
-resource "azurerm_route_table" "route_table" {
-  name                = "${var.cluster_id}-node-routetable"
-  location            = var.region
-  resource_group_name = var.resource_group_name
-}
-
 resource "azurerm_subnet" "master_subnet" {
   count = var.preexisting_network ? 0 : 1
 
