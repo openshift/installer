@@ -1,0 +1,10 @@
+apiVersion: metal3.io/v1alpha1
+kind: Provisioning
+metadata:
+  name: provisioning-configuration
+spec:
+  provisioningInterface: {{.ProvisioningNetworkInterface}}
+  provisioningIP: {{.ClusterProvisioningIP}}
+  provisioningNetworkCIDR: {{.ProvisioningNetworkCIDR}}
+  provisioningDHCPExternal: {{.ProvisioningDHCPExternal}}
+  provisioningDHCPRange: {{.ProvisioningDHCPRange}}
