@@ -149,3 +149,8 @@ required = [
   branch = "master"
   name = "github.com/openshift/machine-api-operator"
   source = "github.com/openshift/machine-api-operator"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/vmware/govmomi"
+  source = "https://github.com/vmware/govmomi"

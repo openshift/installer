@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/libvirt"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/cluster/ovirt"
+	"github.com/openshift/installer/pkg/asset/cluster/vsphere"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -80,7 +81,9 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 		metadata.ClusterPlatformMetadata.BareMetal = baremetal.Metadata(installConfig.Config)
 	case ovirttypes.Name:
 		metadata.ClusterPlatformMetadata.Ovirt = ovirt.Metadata(installConfig.Config)
-	case nonetypes.Name, vspheretypes.Name:
+	case vspheretypes.Name:
+		metadata.ClusterPlatformMetadata.VSphere = vsphere.Metadata(installConfig.Config)
+	case nonetypes.Name:
 	default:
 		return errors.Errorf("no known platform")
 	}

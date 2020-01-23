@@ -857,6 +857,33 @@
   revision = "9a301d65acbb728fcc3ace14f45f511a4cfeea9c"
 
 [[projects]]
+  branch = "master"
+  digest = "1:6985ae3d34c74a894dbafce8895c02d7913b26f2e502653a769215cfd1fdc9e3"
+  name = "github.com/vmware/govmomi"
+  packages = [
+    ".",
+    "nfc",
+    "object",
+    "property",
+    "session",
+    "task",
+    "vapi/internal",
+    "vapi/rest",
+    "vapi/tags",
+    "vim25",
+    "vim25/debug",
+    "vim25/methods",
+    "vim25/mo",
+    "vim25/progress",
+    "vim25/soap",
+    "vim25/types",
+    "vim25/xml",
+  ]
+  pruneopts = "NUT"
+  revision = "deff37c279fe783a0ea565cd572565d37bbedafd"
+  source = "https://github.com/vmware/govmomi"
+
+[[projects]]
   digest = "1:58f2854b50ff8862eb6a347f20dedaac83e1166f4040472e17bc37736841a12f"
   name = "go.opencensus.io"
   packages = [
@@ -1488,6 +1515,15 @@
     "github.com/spf13/cobra",
     "github.com/stretchr/testify/assert",
     "github.com/vincent-petithory/dataurl",
+    "github.com/vmware/govmomi",
+    "github.com/vmware/govmomi/object",
+    "github.com/vmware/govmomi/property",
+    "github.com/vmware/govmomi/vapi/rest",
+    "github.com/vmware/govmomi/vapi/tags",
+    "github.com/vmware/govmomi/vim25",
+    "github.com/vmware/govmomi/vim25/mo",
+    "github.com/vmware/govmomi/vim25/soap",
+    "github.com/vmware/govmomi/vim25/types",
     "golang.org/x/crypto/bcrypt",
     "golang.org/x/crypto/ssh",
     "golang.org/x/crypto/ssh/agent",
