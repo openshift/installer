@@ -3,8 +3,9 @@ kind: Provisioning
 metadata:
   name: provisioning-configuration
 spec:
-  provisioningInterface: {{.ProvisioningNetworkInterface}}
-  provisioningIP: {{.ClusterProvisioningIP}}
-  provisioningNetworkCIDR: {{.ProvisioningNetworkCIDR}}
-  provisioningDHCPExternal: {{.ProvisioningDHCPExternal}}
-  provisioningDHCPRange: {{.ProvisioningDHCPRange}}
+  provisioningInterface: {{.Baremetal.ProvisioningNetworkInterface}}
+  provisioningIP: {{.Baremetal.ClusterProvisioningIP}}
+  provisioningNetworkCIDR: {{.Baremetal.ProvisioningNetworkCIDR}}
+  provisioningDHCPExternal: {{.Baremetal.ProvisioningDHCPExternal}}
+  provisioningDHCPRange: {{.Baremetal.ProvisioningDHCPRange}}
+  provisioningOSDownloadURL: {{.ProvisioningOSDownloadURL}}
