@@ -12,14 +12,13 @@ import (
 
 // Defaults for the baremetal platform.
 const (
-	LibvirtURI                   = "qemu:///system"
-	ProvisioningNetworkCIDR      = "172.22.0.0/24"
-	ExternalBridge               = "baremetal"
-	ProvisioningBridge           = "provisioning"
-	ProvisioningNetworkInterface = "ens3"
-	HardwareProfile              = "default"
-	APIVIP                       = ""
-	IngressVIP                   = ""
+	LibvirtURI              = "qemu:///system"
+	ProvisioningNetworkCIDR = "172.22.0.0/24"
+	ExternalBridge          = "baremetal"
+	ProvisioningBridge      = "provisioning"
+	HardwareProfile         = "default"
+	APIVIP                  = ""
+	IngressVIP              = ""
 )
 
 // Wrapper for net.LookupHost so we can override in the test
@@ -68,10 +67,6 @@ func SetPlatformDefaults(p *baremetal.Platform, c *types.InstallConfig) {
 
 	if p.ProvisioningBridge == "" {
 		p.ProvisioningBridge = ProvisioningBridge
-	}
-
-	if p.ProvisioningNetworkInterface == "" {
-		p.ProvisioningNetworkInterface = ProvisioningNetworkInterface
 	}
 
 	for _, host := range p.Hosts {

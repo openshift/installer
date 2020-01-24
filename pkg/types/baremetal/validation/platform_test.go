@@ -290,7 +290,23 @@ func TestValidatePlatform(t *testing.T) {
 			network:  network,
 			expected: "Invalid value: \"noexist\": invalid provisioning bridge",
 		},
-
+		{
+			name: "invalid_provisioning_interface",
+			platform: &baremetal.Platform{
+				APIVIP:                  "192.168.111.2",
+				DNSVIP:                  "192.168.111.3",
+				IngressVIP:              "192.168.111.4",
+				Hosts:                   []*baremetal.Host{},
+				LibvirtURI:              "qemu://system",
+				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("172.22.0.0/24"),
+				ClusterProvisioningIP:   "172.22.0.3",
+				BootstrapProvisioningIP: "172.22.0.2",
+				ExternalBridge:          "br0",
+				ProvisioningBridge:      "noexist",
+			},
+			network:  network,
+			expected: "Invalid value: \"\": no provisioning network interface is configured, please set this value to be the interface on the provisioning network on your cluster's baremetal hosts",
+		},
 		{
 			name: "invalid_clusterprovip_machineCIDR",
 			platform: &baremetal.Platform{

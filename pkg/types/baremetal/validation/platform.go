@@ -105,7 +105,7 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 
 	// Make sure the provisioning interface is set.  Very little we can do to validate this  as it's not on this machine.
 	if p.ProvisioningNetworkInterface == "" {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkInterface"), p.ProvisioningNetworkInterface, "No baremetal provisioning network interface is configured."))
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkInterface"), p.ProvisioningNetworkInterface, "no provisioning network interface is configured, please set this value to be the interface on the provisioning network on your cluster's baremetal hosts"))
 	}
 
 	if p.Hosts == nil {
