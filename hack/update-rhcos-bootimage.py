@@ -34,7 +34,7 @@ newmeta['amis'] = {
 }
 newmeta['baseURI'] = urllib.parse.urljoin(args.meta, '.')
 
-with open(os.path.join(metadata_dir, f"rhcos-{args.arch}.json"), 'w') as f:
+with open(os.path.join(metadata_dir, 'rhcos-{}.json'.format(args.arch)), 'w') as f:
     json.dump(newmeta, f, sort_keys=True, indent=4)
 
 # Continue to populate the legacy metadata file because there are still
