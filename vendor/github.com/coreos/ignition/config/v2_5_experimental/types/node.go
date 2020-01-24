@@ -15,55 +15,57 @@
 package types
 
 import (
-	"fmt"
+	"path/filepath"
 
 	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
 )
 
-func (f File) Validate() report.Report {
-	if f.Overwrite != nil && *f.Overwrite && f.Append {
-		return report.ReportFromError(errors.ErrAppendAndOverwrite, report.EntryError)
+func (n Node) ValidateFilesystem() report.Report {
+	r := report.Report{}
+	if n.Filesystem == "" {
+		r.Add(report.Entry{
+			Message: errors.ErrNoFilesystem.Error(),
+			Kind:    report.EntryError,
+		})
 	}
-	return report.Report{}
+	return r
 }
 
-func (f File) ValidateMode() report.Report {
+func (n Node) ValidatePath() report.Report {
 	r := report.Report{}
-	if err := validateMode(f.Mode); err != nil {
+	if err := validatePath(n.Path); err != nil {
 		r.Add(report.Entry{
 			Message: err.Error(),
 			Kind:    report.EntryError,
 		})
 	}
-	if f.Mode == nil {
-		r.Add(report.Entry{
-			Message: errors.ErrPermissionsUnset.Error(),
-			Kind:    report.EntryWarning,
-		})
-	}
 	return r
 }
 
-func (fc FileContents) ValidateCompression() report.Report {
+func (n Node) Depth() int {
+	count := 0
+	for p := filepath.Clean(string(n.Path)); p != "/"; count++ {
+		p = filepath.Dir(p)
+	}
+	return count
+}
+
+func (nu NodeUser) Validate() report.Report {
 	r := report.Report{}
-	switch fc.Compression {
-	case "", "gzip":
-	default:
+	if nu.ID != nil && nu.Name != "" {
 		r.Add(report.Entry{
-			Message: errors.ErrCompressionInvalid.Error(),
+			Message: errors.ErrBothIDAndNameSet.Error(),
 			Kind:    report.EntryError,
 		})
 	}
 	return r
 }
-
-func (fc FileContents) ValidateSource() report.Report {
+func (ng NodeGroup) Validate() report.Report {
 	r := report.Report{}
-	err := validateURL(fc.Source)
-	if err != nil {
+	if ng.ID != nil && ng.Name != "" {
 		r.Add(report.Entry{
-			Message: fmt.Sprintf("invalid url %q: %v", fc.Source, err),
+			Message: errors.ErrBothIDAndNameSet.Error(),
 			Kind:    report.EntryError,
 		})
 	}

@@ -72,18 +72,23 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		}
 	}
 
-	swiftPublicURL, err := getSwiftPublicURL(cloud)
+	glancePublicURL, err := getGlancePublicURL(cloud)
 	if err != nil {
 		return nil, err
 	}
 
-	objectID, err := createBootstrapSwiftObject(cloud, bootstrapIgn, infraID)
+	configLocation, err := uploadBootstrapConfig(cloud, bootstrapIgn, infraID)
 	if err != nil {
 		return nil, err
 	}
 
-	objectAddress := fmt.Sprintf("%s/%s/%s", swiftPublicURL, infraID, objectID)
-	userCAIgnition, err := generateIgnitionShim(userCA, infraID, objectAddress)
+	tokenID, err := getAuthToken(cloud)
+	if err != nil {
+		return nil, err
+	}
+
+	bootstrapConfigURL := fmt.Sprintf("%s%s", glancePublicURL, configLocation)
+	userCAIgnition, err := generateIgnitionShim(userCA, infraID, bootstrapConfigURL, tokenID)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +138,7 @@ func validateOverriddenImageName(imageName, cloud string) error {
 	return nil
 }
 
-// We need to obtain Swift public endpoint that will be used by Ignition to download bootstrap ignition files.
+// We need to obtain Glance public endpoint that will be used by Ignition to download bootstrap ignition files.
 // By design this should be done by using https://www.terraform.io/docs/providers/openstack/d/identity_endpoint_v3.html
 // but OpenStack default policies forbid to use this API for regular users.
 // On the other hand when a user authenticates in OpenStack (i.e. gets a token), it includes the whole service
@@ -143,21 +148,21 @@ func validateOverriddenImageName(imageName, cloud string) error {
 // We do next:
 // 1. In "getServiceCatalog" we authenticate in OpenStack (tokens.Create(..)),
 //    parse the token and extract the service catalog: (ExtractServiceCatalog())
-// 2. In getSwiftPublicURL we iterate through the catalog and find "public" endpoint for "object-store".
+// 2. In getGlancePublicURL we iterate through the catalog and find "public" endpoint for "image".
 
-// getSwiftPublicURL obtains Swift public endpoint URL
-func getSwiftPublicURL(cloud string) (string, error) {
-	var swiftPublicURL string
+// getGlancePublicURL obtains Glance public endpoint URL
+func getGlancePublicURL(cloud string) (string, error) {
+	var glancePublicURL string
 	serviceCatalog, err := getServiceCatalog(cloud)
 	if err != nil {
 		return "", err
 	}
 
 	for _, svc := range serviceCatalog.Entries {
-		if svc.Type == "object-store" {
+		if svc.Type == "image" {
 			for _, e := range svc.Endpoints {
 				if e.Interface == "public" {
-					swiftPublicURL = e.URL
+					glancePublicURL = e.URL
 					break
 				}
 			}
@@ -165,11 +170,11 @@ func getSwiftPublicURL(cloud string) (string, error) {
 		}
 	}
 
-	if swiftPublicURL == "" {
-		return "", errors.Errorf("cannot retrieve Swift URL from the service catalog")
+	if glancePublicURL == "" {
+		return "", errors.Errorf("cannot retrieve Glance URL from the service catalog")
 	}
 
-	return swiftPublicURL, nil
+	return glancePublicURL, nil
 }
 
 // getServiceCatalog fetches OpenStack service catalog with service endpoints

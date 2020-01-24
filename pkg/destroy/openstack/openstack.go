@@ -544,6 +544,10 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 
 	conn, err := clientconfig.NewServiceClient("object-store", opts)
 	if err != nil {
+		if _, ok := err.(*gophercloud.ErrEndpointNotFound); ok {
+			logger.Debug("Swift endpoint is not found")
+			return true, nil
+		}
 		logger.Errorf("%v", err)
 		return false, nil
 	}
