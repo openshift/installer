@@ -437,6 +437,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
+
+		// TODO: is this wise to overwrite the install-config?
 		installConfig.Config.VSphere.ClusterOSImage = cachedImage
 
 		t.FileList = append(t.FileList, &asset.File{

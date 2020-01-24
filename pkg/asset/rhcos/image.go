@@ -3,9 +3,10 @@ package rhcos
 
 import (
 	"context"
-	"github.com/openshift/installer/pkg/types/ovirt"
 	"os"
 	"time"
+
+	"github.com/openshift/installer/pkg/types/ovirt"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

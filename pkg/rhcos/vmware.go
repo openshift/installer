@@ -42,3 +42,22 @@ func VMware(ctx context.Context, arch types.Architecture) (string, error) {
 
 	return baseURL, nil
 }
+
+// GenerateVSphereImageName returns Glance image name for instances.
+func GenerateVSphereImageName(rhcosImage, infraID string) (string, error) {
+
+	//TODO: Determine how to use Base Path as imageName
+	/*
+		rhcosImageURL, err := url.ParseRequestURI(rhcosImage)
+		if err != nil {
+			return "", errors.Errorf("expected RHCOS image to be a URL")
+		}
+		fileName := path.Base(rhcosImageURL.Path)
+		fileNameNoExt := strings.TrimSuffix(fileName, path.Ext(fileName))
+		imageName := fmt.Sprintf("%s-%s", infraID, fileNameNoExt)
+
+		return imageName, nil
+	*/
+
+	return infraID + "-rhcos", nil
+}

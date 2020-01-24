@@ -20,6 +20,5 @@ func Metadata(config *types.InstallConfig) *vsphere.Metadata {
 // PreTerraform performs any infrastructure initialization which must
 // happen before Terraform creates the remaining infrastructure.
 func PreTerraform(ctx context.Context, infraID string, installConfig *installconfig.InstallConfig) error {
-	// TODO: create VM Template using cachedImage
-	return nil
+	return importOva(installConfig.Config, infraID)
 }

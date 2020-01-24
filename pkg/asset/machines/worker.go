@@ -312,7 +312,12 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(pool.Platform.VSphere)
 			pool.Platform.VSphere = &mpool
 
-			sets, err := vsphere.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+			imageName, err := rhcosutils.GenerateVSphereImageName(string(*rhcosImage), clusterID.InfraID)
+			if err != nil {
+				return err
+			}
+
+			sets, err := vsphere.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}

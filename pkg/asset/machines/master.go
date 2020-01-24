@@ -315,7 +315,12 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.Set(pool.Platform.VSphere)
 		pool.Platform.VSphere = &mpool
 
-		machines, err = vsphere.Machines(clusterID.InfraID, ic, pool, string(*rhcosImage), "master", "master-user-data")
+		imageName, err := rhcosutils.GenerateVSphereImageName(string(*rhcosImage), clusterID.InfraID)
+		if err != nil {
+			return err
+		}
+
+		machines, err = vsphere.Machines(clusterID.InfraID, ic, pool, imageName, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
