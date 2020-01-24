@@ -243,6 +243,16 @@ resource "aws_security_group_rule" "master_ingress_services_tcp" {
   self      = true
 }
 
+resource "aws_security_group_rule" "master_ingress_services_tcp_from_worker" {
+  type                     = "ingress"
+  security_group_id        = aws_security_group.master.id
+  source_security_group_id = aws_security_group.worker.id
+
+  protocol  = "tcp"
+  from_port = 30000
+  to_port   = 32767
+}
+
 resource "aws_security_group_rule" "master_ingress_services_udp" {
   type              = "ingress"
   security_group_id = aws_security_group.master.id
@@ -253,3 +263,12 @@ resource "aws_security_group_rule" "master_ingress_services_udp" {
   self      = true
 }
 
+resource "aws_security_group_rule" "master_ingress_services_udp_from_worker" {
+  type                     = "ingress"
+  security_group_id        = aws_security_group.master.id
+  source_security_group_id = aws_security_group.worker.id
+
+  protocol  = "udp"
+  from_port = 30000
+  to_port   = 32767
+}
