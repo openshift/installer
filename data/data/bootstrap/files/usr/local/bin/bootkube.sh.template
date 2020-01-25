@@ -381,12 +381,16 @@ rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
 
 echo "Starting cluster-bootstrap..."
 
-bootkube_podman_run \
-	--rm \
-	--volume "$PWD:/assets:z" \
-	--volume /etc/kubernetes:/etc/kubernetes:z \
-	"${CLUSTER_BOOTSTRAP_IMAGE}" \
-	start --tear-down-early=false --asset-dir=/assets --required-pods="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
+if [ ! -f cb-bootstrap.done ]
+then
+    bootkube_podman_run \
+        --rm \
+        --volume "$PWD:/assets:z" \
+        --volume /etc/kubernetes:/etc/kubernetes:z \
+        "${CLUSTER_BOOTSTRAP_IMAGE}" \
+        start --tear-down-early=false --asset-dir=/assets --required-pods="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
+    touch cb-bootstrap.done
+fi
 
 if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
 then
