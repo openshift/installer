@@ -20,6 +20,9 @@ import (
 // served by the machine config server.
 func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string) *ignition.Config {
 	var ignitionHost string
+	// Default platform independent ignitionHost
+	ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
+	// Update ignitionHost as necessary for platform
 	switch installConfig.Platform.Name() {
 	case baremetaltypes.Name:
 		// Baremetal needs to point directly at the VIP because we don't have a
@@ -29,17 +32,14 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 		apiVIP, err := openstackdefaults.APIVIP(installConfig.Networking)
 		if err == nil {
 			ignitionHost = net.JoinHostPort(apiVIP.String(), "22623")
-		} else {
-			ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
 		}
 	case ovirttypes.Name:
 		ignitionHost = net.JoinHostPort(installConfig.Ovirt.APIVIP, "22623")
 	case vspheretypes.Name:
-		ignitionHost = net.JoinHostPort(installConfig.VSphere.APIVIP, "22623")
-	default:
-		ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
+		if installConfig.VSphere.APIVIP != "" {
+			ignitionHost = net.JoinHostPort(installConfig.VSphere.APIVIP, "22623")
+		}
 	}
-
 	return &ignition.Config{
 		Ignition: ignition.Ignition{
 			Version: ignition.MaxVersion.String(),
