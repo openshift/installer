@@ -62,4 +62,3 @@ variable "nodes_subnet_id" {
 variable "cluster_domain" {
   type = string
 }
-
