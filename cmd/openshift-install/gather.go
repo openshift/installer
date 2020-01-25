@@ -28,6 +28,7 @@ import (
 	gatherlibvirt "github.com/openshift/installer/pkg/terraform/gather/libvirt"
 	gatheropenstack "github.com/openshift/installer/pkg/terraform/gather/openstack"
 	gatherovirt "github.com/openshift/installer/pkg/terraform/gather/ovirt"
+	gathervsphere "github.com/openshift/installer/pkg/terraform/gather/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -35,6 +36,7 @@ import (
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 func newGatherCmd() *cobra.Command {
@@ -192,6 +194,12 @@ func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State)
 			return bootstrap, port, masters, err
 		}
 		masters, err = gatherovirt.ControlPlaneIPs(tfstate)
+	case vspheretypes.Name:
+		bootstrap, err = gathervsphere.BootstrapIP(config, tfstate)
+		if err != nil {
+			return bootstrap, port, masters, err
+		}
+		masters, err = gathervsphere.ControlPlaneIPs(config, tfstate)
 		if err != nil {
 			logrus.Error(err)
 		}
