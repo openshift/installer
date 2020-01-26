@@ -30,7 +30,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
-	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
+	//destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 )
 
@@ -105,16 +105,21 @@ var (
 					logrus.Fatal("Bootstrap failed to complete: ", err)
 				}
 
-				logrus.Info("Destroying the bootstrap resources...")
+				logrus.Info("Here's where we would be destroying the bootstrap resources, but we aren't because this is a debugging hack...")
+/*
 				err = destroybootstrap.Destroy(rootOpts.dir)
 				if err != nil {
 					logrus.Fatal(err)
 				}
+*/
 
 				err = waitForInstallComplete(ctx, config, rootOpts.dir)
 				if err != nil {
 					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
+					}
+					if err2 := runGatherBootstrapCmd(rootOpts.dir); err2 != nil {
+						logrus.Error("Attempted to gather debug logs after installation failure: ", err2)
 					}
 					logrus.Fatal(err)
 				}
