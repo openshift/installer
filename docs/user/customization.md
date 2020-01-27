@@ -449,6 +449,62 @@ Example application of `loglevel=7` (change Linux kernel log level to KERN_DEBUG
 
     If you wish to confirm the kernel argument is indeed being applied on the system, you can `oc debug` into a node and check with `rpm-ostree kargs`.
 
+#### Switching RHCOS host kernel using KernelType
+
+With OCP 4.4 and onward release, it is possible to switch from traditional to Real Time (RT) kernel on RHCOS node. During install time, switching to RT kernel can be done through manifests as an installer operation. See [customizing MachineConfig](#install-time-customization-for-machine-configuration) to configure kernelType during install time. To set kernelType as day 2 operation, see [MachineConfiguration](https://github.com/openshift/machine-config-operator/blob/master/docs/MachineConfiguration.md#kernelType) doc.
+
+Example for switching to RT kernel on worker nodes during initial cluster install:
+
+1. Run `manifests` target to create all the manifests.
+
+    ```console
+    $ mkdir realtime_kernel
+    $ openshift-install --dir realtime_kernel create manifests
+    ```
+
+2. Create a `MachineConfig` that sets `kernelType` to `realtime`:
+
+    ```sh
+    cat > realtime_kernel/openshift/99-worker-kerneltype.yaml <<EOF
+    apiVersion: machineconfiguration.openshift.io/v1
+    kind: MachineConfig
+    metadata:
+      labels:
+        machineconfiguration.openshift.io/role: "worker"
+      name: 99-worker-kerneltype
+    spec:
+      kernelType: realtime
+    EOF
+    ```
+
+3. Run `cluster` target to create the cluster using the custom manifests.
+
+    ```console
+    $ openshift-install --dir realtime_kernel create cluster
+    ```
+
+    Check that the MachineConfig has the kernelType applied
+
+    ```console
+    $ oc --config realtime_kernel/auth/kubeconfig get machineconfigs
+    NAME                                                        GENERATEDBYCONTROLLER                      IGNITIONVERSION   AGE
+    ...
+    99-worker-kerneltype                                                                                                     80m
+    99-worker-ssh                                                                                          2.2.0             80m
+    rendered-worker-853ba9bf0337db528a857a9c7380b95a            6306be9274cd3052f5075c81fa447c7895b7b9f4   2.2.0             78m
+    ...
+
+4. To confirm that worker node has switched to RT kernel, access one of the worker node and run `uname -a`
+
+    ```console
+    $ oc --config realtime_kernel/auth/kubeconfig debug node/<worker_node>
+    ...
+    sh-4.2# uname -a
+    Linux <worker_node> 4.18.0-147.3.1.rt24.96.el8_1.x86_64 #1 SMP PREEMPT RT Wed Nov 27 18:29:55 UTC 2019 x86_64 x86_64 x86_64 GNU/Linux
+    ```
+
+**Note:**  The RT kernel lowers throughput (performance) in return for improved worst-case latency bounds. This feature is intended only for use cases that require consistent low latency. For more information, see the [Linux Foundation wiki](https://wiki.linuxfoundation.org/realtime/start) and the [RHEL RT portal](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux_for_real_time/8/).
+
 ## OS Customization (unvalidated)
 
 In rare circumstances, certain modifications to the bootstrap and other machines may be necessary. The installer provides the "ignition-configs" target, which allows arbitrary modification to the [Ignition Configs][ignition] used to boot these machines. Note that there is currently no validation on the modifications that are made, so it is possible that the changes will result in a non-functioning cluster.
