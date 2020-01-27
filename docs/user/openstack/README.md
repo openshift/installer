@@ -16,6 +16,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
     - [Disk Requirements](#disk-requirements)
     - [Neutron Public Network](#neutron-public-network)
     - [Nova Metadata Service](#nova-metadata-service)
+    - [Glance Service](#glance-service)
   - [OpenStack Credentials](#openstack-credentials)
   - [Standalone Single-Node Development Environment](#standalone-single-node-development-environment)
   - [Running The Installer](#running-the-installer)
@@ -158,6 +159,14 @@ openstack network list --long -c ID -c Name -c "Router Type"
 ### Nova Metadata Service
 
 Nova [metadata service](https://docs.openstack.org/nova/latest/user/metadata.html#metadata-service) must be enabled and available at `http://169.254.169.254`. Currently the service is used to deliver Ignition config files to Nova instances and provide information about the machine to `kubelet`.
+
+### Glance Service
+
+The creation of images in Glance should be available to the user. Now Glance is used for two things:
+
+- Right after the installation starts, the installer automatically uploads the actual `RHCOS` binary image to Glance with the name `<clusterID>-rhcos`. The image exists throughout the life of the cluster and is removed along with it.
+
+- The installer stores bootstrap ignition configs in a temporary image called `<clusterID>-ignition`. This is not a canonical use of the service, but this solution allows us to unify the installation process, since Glance is available on all OpenStack clouds, unlike Swift. The image exists for a limited period of time while the bootstrap process is running (normally 10-30 minutes), and then is automatically deleted.
 
 ## OpenStack Credentials
 
