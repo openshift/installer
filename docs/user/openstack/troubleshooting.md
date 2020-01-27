@@ -55,3 +55,32 @@ And connect to it using the master currently holding the API VIP (and hence the 
 ```sh
 ssh -J core@${FIP} core@<host>
 ```
+
+## Cluster destruction if its metadata has been lost
+
+When deploying a cluster, the installer generates metadata in the asset directory that is then used to destroy the cluster. If the metadata were accidentally deleted, the destruction of the cluster terminates with an error
+
+```txt
+FATAL Failed while preparing to destroy cluster: open clustername/metadata.json: no such file or directory
+```
+
+To avoid this error and successfully destroy the cluster, you need to restore the `metadata.json` file in a temporary asset directory. To do this, you only need to know ID of the cluster you want to destroy.
+
+First, you need to create a temporary directory where the `metadata.json` file will be located. The name and location can be anything, but to avoid possible conflicts, we recommend using `mktemp` command.
+
+```sh
+export TMP_DIR=$(mktemp -d -t shiftstack-XXXXXXXXXX)
+```
+
+The next step is to restore the `metadata.json` file.
+
+```sh
+export CLUSTER_ID=clustername-eiu38 # id of the cluster you want to destroy
+echo "{\"infraID\":\"$INFRA_ID\",\"openstack\":{\"identifier\":{\"openshiftClusterID\":\"$INFRA_ID\"}}}" > $TMP_DIR/metadata.json
+```
+
+Now you have a working directory and you can destroy the cluster by executing the following command:
+
+```sh
+openshift-install destroy cluster --dir $TMP_DIR
+```
