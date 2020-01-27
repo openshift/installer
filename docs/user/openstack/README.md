@@ -12,7 +12,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
     - [Master Nodes](#master-nodes)
     - [Worker Nodes](#worker-nodes)
     - [Bootstrap Node](#bootstrap-node)
-    - [Swift](#swift)
+    - [Image Registry Requirements](#image-registry-requirements)
     - [Disk Requirements](#disk-requirements)
     - [Neutron Public Network](#neutron-public-network)
     - [Nova Metadata Service](#nova-metadata-service)
@@ -54,11 +54,7 @@ For a successful installation it is required:
 - vCPUs: 28
 - Volume Storage: 175 GB
 - Instances: 7
-- Swift containers: 2
-- Swift objects: 1
-- Available space in Swift: at least 10 MB
-
-**NOTE:** Size depends on the size of the bootstrap ignition file.
+- Depending on the type of [image registry backend](#image-registry-requirements) either 1 Swift container or an additional 100 GB volume.
 
 You may need to increase the security group related quotas from their default values. For example (as an OpenStack administrator):
 
@@ -78,17 +74,19 @@ The default deployment stands up 3 worker nodes. In our testing we determined th
 
 The bootstrap node is a temporary node that is responsible for standing up the control plane on the masters. Only one bootstrap node will be stood up and it will be deprovisioned once the production control plane is ready. To do so, you need 1 instance, and 1 port. We recommend a flavor with a minimum of 16 GB RAM, 4 vCPUs, and 25 GB Disk.
 
-### Swift
+### Image Registry Requirements
 
-Swift is required for installation as the user-data provided by OpenStack Metadata service is not big enough to store the ignition config files, so they are served by Swift instead.
+If Swift is available in the cloud where the installation is being performed, it is used as the default backend for the OpenShift image registry. At the time of installation only an empty container is created without loading any data. Later on, for the system to work properly, you need to have enough free space to store the container images.
 
-Swift is also used as a backend for the OpenShift image registry, but at the time of installation only an empty container is created without loading any data. Later on, for the system to work properly, you need to have enough free space to store the container images.
-
-The user must have `swiftoperator` permissions. As an OpenStack administrator:
+In this case the user must have `swiftoperator` permissions. As an OpenStack administrator:
 
 ```sh
 openstack role add --user <user> --project <project> swiftoperator
 ```
+
+If Swift is not available, the [PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims) storage is used as the backend. For this purpose, a persistent volume of 100 GB will be created in Cinder and mounted to the image registry pod during the installation.
+
+**Note:** Since Cinder supports only [ReadWriteOnce](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes) access mode, it's not possible to have more than one replica of the image registry pod.
 
 ### Disk Requirements
 
