@@ -154,6 +154,26 @@ Resources:
       ToPort: 9999
       IpProtocol: tcp
 
+  MasterIngressInternalUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Internal cluster communication
+      FromPort: 9000
+      ToPort: 9999
+      IpProtocol: udp
+
+  MasterIngressWorkerInternalUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Internal cluster communication
+      FromPort: 9000
+      ToPort: 9999
+      IpProtocol: udp
+
   MasterIngressKube:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -193,6 +213,26 @@ Resources:
       FromPort: 30000
       ToPort: 32767
       IpProtocol: tcp
+
+  MasterIngressIngressServicesUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Kubernetes ingress services
+      FromPort: 30000
+      ToPort: 32767
+      IpProtocol: udp
+
+  MasterIngressWorkerIngressServicesUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Kubernetes ingress services
+      FromPort: 30000
+      ToPort: 32767
+      IpProtocol: udp
 
   WorkerIngressVxlan:
     Type: AWS::EC2::SecurityGroupIngress
@@ -244,7 +284,7 @@ Resources:
       ToPort: 9999
       IpProtocol: tcp
 
-  WorkerIngressWorkerInternal:
+  WorkerIngressMasterInternal:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId: !GetAtt WorkerSecurityGroup.GroupId
@@ -253,6 +293,26 @@ Resources:
       FromPort: 9000
       ToPort: 9999
       IpProtocol: tcp
+
+  WorkerIngressInternalUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Internal cluster communication
+      FromPort: 9000
+      ToPort: 9999
+      IpProtocol: udp
+
+  WorkerIngressMasterInternalUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Internal cluster communication
+      FromPort: 9000
+      ToPort: 9999
+      IpProtocol: udp
 
   WorkerIngressKube:
     Type: AWS::EC2::SecurityGroupIngress
@@ -284,7 +344,7 @@ Resources:
       ToPort: 32767
       IpProtocol: tcp
 
-  WorkerIngressWorkerIngressServices:
+  WorkerIngressMasterIngressServices:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId: !GetAtt WorkerSecurityGroup.GroupId
@@ -293,6 +353,26 @@ Resources:
       FromPort: 30000
       ToPort: 32767
       IpProtocol: tcp
+
+  WorkerIngressIngressServicesUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
+      Description: Kubernetes ingress services
+      FromPort: 30000
+      ToPort: 32767
+      IpProtocol: udp
+
+  WorkerIngressMasterIngressServicesUDP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt WorkerSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+      Description: Kubernetes ingress services
+      FromPort: 30000
+      ToPort: 32767
+      IpProtocol: udp
 
   MasterIamRole:
     Type: AWS::IAM::Role
