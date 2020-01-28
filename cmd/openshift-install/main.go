@@ -65,7 +65,7 @@ func installerMain() {
 
 func newRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:              "openshift-install",
+		Use:              filepath.Base(os.Args[0]),
 		Short:            "Creates OpenShift clusters",
 		Long:             "",
 		PersistentPreRun: runRootCmd,
