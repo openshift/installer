@@ -1,7 +1,6 @@
 package openstack
 
 import (
-	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -118,7 +117,7 @@ prepend domain-name-servers 127.0.0.1;`
 		FileEmbedded1: ignition.FileEmbedded1{
 			Mode: &fileMode,
 			Contents: ignition.FileContents{
-				Source: fmt.Sprintf("data:text/plain;base64,%s", b64.StdEncoding.EncodeToString([]byte(contents))),
+				Source: dataurl.EncodeBytes([]byte(contents)),
 			},
 		},
 	}
@@ -132,7 +131,7 @@ prepend domain-name-servers 127.0.0.1;`
 		FileEmbedded1: ignition.FileEmbedded1{
 			Mode: &fileMode,
 			Contents: ignition.FileContents{
-				Source: fmt.Sprintf("data:text/plain;base64,%s", b64.StdEncoding.EncodeToString([]byte(userCA))),
+				Source: dataurl.EncodeBytes([]byte(userCA)),
 			},
 		},
 	}
