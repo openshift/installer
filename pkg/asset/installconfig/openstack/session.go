@@ -40,41 +40,55 @@ func defaultClientOpts(cloudName string) *clientconfig.ClientOpts {
 type yamlLoadOpts struct{}
 
 func (opts yamlLoadOpts) LoadCloudsYAML() (map[string]clientconfig.Cloud, error) {
-	return loadAndLog(clientconfig.FindAndReadCloudsYAML)
-}
-
-func (opts yamlLoadOpts) LoadSecureCloudsYAML() (map[string]clientconfig.Cloud, error) {
-	clouds, err := loadAndLog(clientconfig.FindAndReadSecureCloudsYAML)
-	if err != nil {
-		if err.Error() == "no secure.yaml file found" {
-			// secure.yaml is optional so just ignore read error
-			return clouds, nil
-		}
-	}
-	return clouds, err
-}
-
-func (opts yamlLoadOpts) LoadPublicCloudsYAML() (map[string]clientconfig.Cloud, error) {
-	clouds, err := loadAndLog(clientconfig.FindAndReadPublicCloudsYAML)
-	if err != nil {
-		if err.Error() == "no clouds-public.yaml file found" {
-			// clouds-public.yaml is optional so just ignore read error
-			return clouds, nil
-		}
-	}
-	return clouds, err
-}
-
-func loadAndLog(fn func() (string, []byte, error)) (map[string]clientconfig.Cloud, error) {
-	filename, content, err := fn()
+	var clouds clientconfig.Clouds
+	content, err := loadAndLog(clientconfig.FindAndReadCloudsYAML)
 	if err != nil {
 		return nil, err
 	}
-
-	var clouds clientconfig.Clouds
 	err = yaml.Unmarshal(content, &clouds)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal yaml")
+	}
+
+	return clouds.Clouds, nil
+}
+
+func (opts yamlLoadOpts) LoadSecureCloudsYAML() (map[string]clientconfig.Cloud, error) {
+	var clouds clientconfig.Clouds
+	content, err := loadAndLog(clientconfig.FindAndReadSecureCloudsYAML)
+	if err != nil {
+		if err.Error() == "no secure.yaml file found" {
+			// secure.yaml is optional so just ignore read error
+			return clouds.Clouds, nil
+		}
+	}
+	err = yaml.Unmarshal(content, &clouds)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal yaml")
+	}
+	return clouds.Clouds, err
+}
+
+func (opts yamlLoadOpts) LoadPublicCloudsYAML() (map[string]clientconfig.Cloud, error) {
+	var publicClouds clientconfig.PublicClouds
+	content, err := loadAndLog(clientconfig.FindAndReadPublicCloudsYAML)
+	if err != nil {
+		if err.Error() == "no clouds-public.yaml file found" {
+			// clouds-public.yaml is optional so just ignore read error
+			return publicClouds.Clouds, nil
+		}
+	}
+	err = yaml.Unmarshal(content, &publicClouds)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal yaml")
+	}
+	return publicClouds.Clouds, err
+}
+
+func loadAndLog(fn func() (string, []byte, error)) ([]byte, error) {
+	filename, content, err := fn()
+	if err != nil {
+		return nil, err
 	}
 
 	if _, has := onceLoggers[filename]; !has {
@@ -84,5 +98,5 @@ func loadAndLog(fn func() (string, []byte, error)) (map[string]clientconfig.Clou
 		logrus.Infof("Credentials loaded from file %q", filename)
 	})
 
-	return clouds.Clouds, nil
+	return content, nil
 }
