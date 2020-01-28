@@ -377,7 +377,6 @@ done
 echo "etcd cluster up. Killing etcd certificate signer..."
 
 podman rm --force etcd-signer
-rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
 
 echo "Starting cluster-bootstrap..."
 
@@ -391,6 +390,8 @@ then
         start --tear-down-early=false --asset-dir=/assets --required-pods="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
     touch cb-bootstrap.done
 fi
+
+rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
 
 if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
 then
