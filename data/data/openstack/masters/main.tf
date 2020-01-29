@@ -3,10 +3,9 @@ data "openstack_compute_flavor_v2" "masters_flavor" {
 }
 
 data "ignition_file" "hostname" {
-  count      = var.instance_count
-  filesystem = "root"
-  mode       = "420" // 0644
-  path       = "/etc/hostname"
+  count = var.instance_count
+  mode  = "420" // 0644
+  path  = "/etc/hostname"
 
   content {
     content = <<EOF
