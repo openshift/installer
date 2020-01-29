@@ -20,6 +20,9 @@ resource "google_compute_region_backend_service" "api_internal" {
   protocol              = "TCP"
   timeout_sec           = 120
 
+  // time for kube-apiserver to drain open connections: little more than 70s shutdown-delay-duration + 60s request timeout
+  connection_draining_timeout_sec = 135
+
   dynamic "backend" {
     for_each = var.bootstrap_lb ? concat(var.bootstrap_instance_groups, var.master_instance_groups) : var.master_instance_groups
 
