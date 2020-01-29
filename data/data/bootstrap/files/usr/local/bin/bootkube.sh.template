@@ -66,10 +66,6 @@ fi
 # Run crio-configure after the pivot
 /usr/local/bin/crio-configure.sh
 
-# Use runc for podman runs
-cp /usr/share/containers/libpod.conf /etc/containers/libpod.conf
-sed --in-place --expression "s,^runtime *=.*,runtime = \"runc\"," /etc/containers/libpod.conf
-
 mkdir --parents ./{bootstrap-manifests,manifests}
 
 if [ ! -f openshift-manifests.done ]
