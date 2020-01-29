@@ -16,6 +16,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
     - [Disk Requirements](#disk-requirements)
     - [Neutron Public Network](#neutron-public-network)
   - [OpenStack Credentials](#openstack-credentials)
+    - [Self Signed OpenStack CA certificates](#self-signed-openstack-ca-certificates)
   - [Standalone Single-Node Development Environment](#standalone-single-node-development-environment)
   - [Running The Installer](#running-the-installer)
     - [Known Issues](#known-issues)
@@ -189,6 +190,24 @@ clouds:
 
 The file can contain information about several clouds. For instance, the example above describes two clouds: `shiftstack` and `dev-evn`.
 In order to determine which cloud to use, the user can either specify it in the `install-config.yaml` file under `platform.openstack.cloud` or with `OS_CLOUD` environment variable. If both are omitted, then the cloud name defaults to `openstack`.
+
+### Self Signed OpenStack CA certificates
+
+If your OpenStack cluster uses self signed CA certificates for endpoint authentication, you will need a few additional steps to run the installer. First, make sure that the host running the installer trusts your CA certificates. If you want more information on how to do this, refer to the [Red Hat OpenStack Plaform documentation](https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/director_installation_and_usage/appe-ssltls_certificate_configuration#Adding_the_Certificate_Authority_to_Clients). In the future, we plan to modify the installer to be able to trust certificates independently of the host OS.
+
+```sh
+sudo cp ca.crt.pem /etc/pki/ca-trust/source/anchors/
+sudo update-ca-trust extract
+```
+
+Next, you should add the `cacert` key to your `clouds.yaml`. Its value should be a valid path to your CA cert that does not require root privilege to read.
+
+```yaml
+clouds:
+  shiftstack:
+    auth: ...
+    cacert: "ca.crt.pem"
+```
 
 ## Standalone Single-Node Development Environment
 
