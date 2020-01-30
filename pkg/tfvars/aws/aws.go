@@ -34,6 +34,8 @@ type config struct {
 	PublicSubnets           *[]string         `json:"aws_public_subnets,omitempty"`
 	PublishStrategy         string            `json:"aws_publish_strategy,omitempty"`
 	SkipRegionCheck         bool              `json:"aws_skip_region_validation"`
+	IgnitionBucket          string            `json:"aws_ignition_bucket"`
+	IgnitionPresignedURL    string            `json:"aws_ignition_presigned_url"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -47,6 +49,8 @@ type TFVarsSources struct {
 	AMIID, AMIRegion string
 
 	MasterConfigs, WorkerConfigs []*v1beta1.AWSMachineProviderConfig
+
+	IgnitionBucket, IgnitionPresignedURL string
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
@@ -116,6 +120,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PrivateSubnets:          sources.PrivateSubnets,
 		PublishStrategy:         string(sources.Publish),
 		SkipRegionCheck:         !configaws.IsKnownRegion(masterConfig.Placement.Region),
+		IgnitionBucket:          sources.IgnitionBucket,
+		IgnitionPresignedURL:    sources.IgnitionPresignedURL,
 	}
 
 	if len(sources.PublicSubnets) == 0 {

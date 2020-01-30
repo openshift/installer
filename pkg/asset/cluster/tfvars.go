@@ -26,6 +26,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
@@ -199,6 +200,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 		}
 
+		sess, err := installConfig.AWS.Session(ctx)
+		if err != nil {
+			return err
+		}
+		object := "bootstrap.ign"
+		bucket := fmt.Sprintf("%s-bootstrap", clusterID.InfraID)
+		url, err := awsconfig.PresignedS3URL(sess, installConfig.Config.Platform.AWS.Region, bucket, object)
+		if err != nil {
+			return err
+		}
 		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
@@ -222,15 +233,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			osImageRegion = osImage[1]
 		}
 		data, err := awstfvars.TFVars(awstfvars.TFVarsSources{
-			VPC:            vpc,
-			PrivateSubnets: privateSubnets,
-			PublicSubnets:  publicSubnets,
-			Services:       installConfig.Config.AWS.ServiceEndpoints,
-			Publish:        installConfig.Config.Publish,
-			MasterConfigs:  masterConfigs,
-			WorkerConfigs:  workerConfigs,
-			AMIID:          osImageID,
-			AMIRegion:      osImageRegion,
+			VPC:                  vpc,
+			PrivateSubnets:       privateSubnets,
+			PublicSubnets:        publicSubnets,
+			Services:             installConfig.Config.AWS.ServiceEndpoints,
+			Publish:              installConfig.Config.Publish,
+			MasterConfigs:        masterConfigs,
+			WorkerConfigs:        workerConfigs,
+			AMIID:                osImageID,
+			AMIRegion:            osImageRegion,
+			IgnitionBucket:       bucket,
+			IgnitionPresignedURL: url,
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
