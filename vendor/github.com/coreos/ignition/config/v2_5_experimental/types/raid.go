@@ -1,4 +1,4 @@
-// Copyright 2015 CoreOS, Inc.
+// Copyright 2016 CoreOS, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,38 +15,43 @@
 package types
 
 import (
-	"github.com/coreos/go-semver/semver"
-
 	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
 )
 
-func (c ConfigReference) ValidateSource() report.Report {
+func (n Raid) ValidateLevel() report.Report {
 	r := report.Report{}
-	err := validateURL(c.Source)
-	if err != nil {
+	switch n.Level {
+	case "linear", "raid0", "0", "stripe":
+		if n.Spares != 0 {
+			r.Add(report.Entry{
+				Message: errors.ErrSparesUnsupportedForLevel.Error(),
+				Kind:    report.EntryError,
+			})
+		}
+	case "raid1", "1", "mirror":
+	case "raid4", "4":
+	case "raid5", "5":
+	case "raid6", "6":
+	case "raid10", "10":
+	default:
 		r.Add(report.Entry{
-			Message: err.Error(),
+			Message: errors.ErrUnrecognizedRaidLevel.Error(),
 			Kind:    report.EntryError,
 		})
 	}
 	return r
 }
 
-func (v Ignition) Semver() (*semver.Version, error) {
-	return semver.NewVersion(v.Version)
-}
-
-func (v Ignition) Validate() report.Report {
-	tv, err := v.Semver()
-	if err != nil {
-		return report.ReportFromError(errors.ErrInvalidVersion, report.EntryError)
+func (n Raid) ValidateDevices() report.Report {
+	r := report.Report{}
+	for _, d := range n.Devices {
+		if err := validatePath(string(d)); err != nil {
+			r.Add(report.Entry{
+				Message: errors.ErrPathRelative.Error(),
+				Kind:    report.EntryError,
+			})
+		}
 	}
-	if MaxVersion.Major > tv.Major {
-		return report.ReportFromError(errors.ErrOldVersion, report.EntryError)
-	}
-	if MaxVersion.LessThan(*tv) {
-		return report.ReportFromError(errors.ErrNewVersion, report.EntryError)
-	}
-	return report.Report{}
+	return r
 }

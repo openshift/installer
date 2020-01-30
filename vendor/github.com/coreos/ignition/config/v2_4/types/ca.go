@@ -15,6 +15,9 @@
 package types
 
 import (
+	"net/url"
+
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
 )
 
@@ -24,4 +27,32 @@ func (c CaReference) ValidateSource() report.Report {
 		return report.ReportFromError(err, report.EntryError)
 	}
 	return report.Report{}
+}
+
+func (c CaReference) ValidateHTTPHeaders() report.Report {
+	r := report.Report{}
+
+	if len(c.HTTPHeaders) < 1 {
+		return r
+	}
+
+	u, err := url.Parse(c.Source)
+	if err != nil {
+		r.Add(report.Entry{
+			Message: errors.ErrInvalidUrl.Error(),
+			Kind:    report.EntryError,
+		})
+		return r
+	}
+
+	switch u.Scheme {
+	case "http", "https":
+	default:
+		r.Add(report.Entry{
+			Message: errors.ErrUnsupportedSchemeForHTTPHeaders.Error(),
+			Kind:    report.EntryError,
+		})
+	}
+
+	return r
 }

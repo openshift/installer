@@ -1,4 +1,4 @@
-// Copyright 2017 CoreOS, Inc.
+// Copyright 2020 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,19 +15,33 @@
 package types
 
 import (
+	"fmt"
+
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
 )
 
-func (s LinkEmbedded1) ValidateTarget() report.Report {
+func (h HTTPHeaders) Validate() report.Report {
 	r := report.Report{}
-	if !s.Hard {
-		err := validatePath(s.Target)
-		if err != nil {
+	found := make(map[string]struct{})
+	for _, header := range h {
+		// Header name can't be empty
+		if header.Name == "" {
 			r.Add(report.Entry{
-				Message: err.Error(),
+				Message: errors.ErrEmptyHTTPHeaderName.Error(),
 				Kind:    report.EntryError,
 			})
+			continue
 		}
+		// Header names must be unique
+		if _, ok := found[header.Name]; ok {
+			r.Add(report.Entry{
+				Message: fmt.Sprintf("Found duplicate HTTP header: %q", header.Name),
+				Kind:    report.EntryError,
+			})
+			continue
+		}
+		found[header.Name] = struct{}{}
 	}
 	return r
 }

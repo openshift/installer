@@ -59,6 +59,12 @@ func (n Disk) ValidatePartitions() report.Report {
 			Kind:    report.EntryError,
 		})
 	}
+	if n.partitionsUnitsMismatch() {
+		r.Add(report.Entry{
+			Message: errors.ErrPartitionsUnitsMismatch.Error(),
+			Kind:    report.EntryError,
+		})
+	}
 	// Disks which have no errors at this point will likely succeed in sgdisk
 	return r
 }
@@ -141,4 +147,18 @@ func (n Disk) partitionsMixZeroesAndNonexistence() bool {
 		hasZero = hasZero || (p.Number == 0)
 	}
 	return hasZero && hasShouldNotExist
+}
+
+func (n Disk) partitionsUnitsMismatch() bool {
+	partsInMb := false
+	partsNotInMb := false
+	for _, p := range n.Partitions {
+		if p.Size != nil || p.Start != nil {
+			partsNotInMb = true
+		}
+		if p.SizeMiB != nil || p.StartMiB != nil {
+			partsInMb = true
+		}
+	}
+	return partsInMb && partsNotInMb
 }
