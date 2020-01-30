@@ -316,6 +316,18 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_tcp" {
   depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_etcd"]
 }
 
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_tcp_from_worker" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 30000
+  port_range_max    = 32767
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  security_group_id = openstack_networking_secgroup_v2.master.id
+
+  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_services_tcp"]
+}
+
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_udp" {
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -325,7 +337,19 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_udp" {
   remote_group_id   = openstack_networking_secgroup_v2.master.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_services_tcp"]
+  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_services_tcp_from_worker"]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_udp_from_worker" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 30000
+  port_range_max    = 32767
+  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  security_group_id = openstack_networking_secgroup_v2.master.id
+
+  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_services_udp"]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_vrrp" {
@@ -335,6 +359,6 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_vrrp" {
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_services_udp"]
+  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_services_udp_from_worker"]
 }
 
