@@ -20,6 +20,7 @@ The following `install-config.yaml` properties are available:
     The current version (as described in this documentation) is `v1`.
     The installer may also support older API versions.
 * `additionalTrustBundle` (optional string): a PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted certificate store.
+    This trust bundle may also be used when [a proxy has been configured](#proxy).
 * `baseDomain` (required string): The base domain to which the cluster should belong.
 * `publish` (optional string): This controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
     Valid values are `External` (the default) and `Internal`.
@@ -216,6 +217,7 @@ sshKey: ssh-ed25519 AAAA...
 ```
 
 If your proxy certificate is signed by a certificate authority which RHCOS does not trust by default, you may also wish to configure [an additional trust bundle](#additional-trust-bundle).
+If `additionalTrustBundle` and at least one `proxy` setting are configured, the `cluster` [Proxy object][proxy] will be configured with [`trustedCA`][proxy-trusted-ca] referencing the additional trust bundle.
 
 ## Kubernetes Customization (unvalidated)
 
@@ -494,3 +496,5 @@ An example `worker.ign` is shown below. It has been modified to increase the HTT
 [machine-config]: https://github.com/openshift/machine-config-operator/blob/master/docs/MachineConfiguration.md
 [master-machine-config-pool]: https://github.com/openshift/machine-config-operator/blob/master/manifests/master.machineconfigpool.yaml
 [openshift-sdn]: https://github.com/openshift/sdn
+[proxy]: https://github.com/openshift/api/blob/f2a771e1a90ceb4e65f1ca2c8b11fc1ac6a66da8/config/v1/types_proxy.go#L11
+[proxy-trusted-ca]: https://github.com/openshift/api/blob/f2a771e1a90ceb4e65f1ca2c8b11fc1ac6a66da8/config/v1/types_proxy.go#L44-L69
