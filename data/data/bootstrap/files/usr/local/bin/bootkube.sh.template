@@ -59,6 +59,9 @@ if [ ! -f .pivot-done ]; then
   chmod +x /usr/local/bin/machine-config-daemon
   restorecon /usr/local/bin/machine-config-daemon
 
+  # Disable zincati
+  systemctl disable zincati.service
+
   touch .pivot-done
   /usr/local/bin/machine-config-daemon pivot
 fi
