@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/ghodss/yaml"
@@ -152,9 +153,12 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			},
 		}
 	case vspheretypes.Name:
+		// Strip illegal colons which may apppear if VCenter has a port.
+		vCenter := strings.Split(installConfig.Config.VSphere.VCenter, ":")[0]
+
 		cloudCreds = cloudCredsSecretData{
 			VSphere: &VSphereCredsSecretData{
-				VCenter:              installConfig.Config.VSphere.VCenter,
+				VCenter:              vCenter,
 				Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.VSphere.Username)),
 				Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.VSphere.Password)),
 			},
