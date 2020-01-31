@@ -274,13 +274,15 @@ func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fie
 			logger.Errorf("%v", err)
 			return false, nil
 		}
+		// If a user provisioned floating ip was used, it needs to be dissociated.
+		// Any floating Ip's associated with ports that are going to be deleted will be dissociated.
 		for _, fip := range allFIPs {
-			logger.Debugf("Deleting Floating IP %q", fip.ID)
-			err = floatingips.Delete(conn, fip.ID).ExtractErr()
+			logger.Debugf("Dissociating Floating IP %q", fip.ID)
+			_, err := floatingips.Update(conn, fip.ID, floatingips.UpdateOpts{}).Extract()
 			if err != nil {
 				// Ignore the error if the floating ip cannot be found and return with an appropriate message if it's another type of error
 				if _, ok := err.(gophercloud.ErrDefault404); !ok {
-					logger.Errorf("While deleting port %q, the deletion of the floating IP %q failed with error: %v", port.ID, fip.ID, err)
+					logger.Errorf("While deleting port %q, the update of the floating IP %q failed with error: %v", port.ID, fip.ID, err)
 					return false, nil
 				}
 				logger.Debugf("Cannot find floating ip %q. It's probably already been deleted.", fip.ID)
