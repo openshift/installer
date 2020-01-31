@@ -23,6 +23,7 @@ const (
 	applicationName = "openshift-installer"
 	imageDataType   = "image"
 	gzipFileType    = "application/x-gzip"
+	xzFileType      = "application/octet-stream"
 )
 
 var compressorMap = map[string](func(string, string) error){
@@ -127,16 +128,25 @@ func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err er
 	reader = io.MultiReader(bytes.NewReader(buf), reader)
 	fileType := http.DetectContentType(buf)
 	logrus.Debugf("content type of %s is %s", filePath, fileType)
+
 	switch fileType {
-	case gzipFileType:
-		uncompressor, err := gzip.NewReader(reader)
-		if err != nil {
-			return err
-		}
-		defer uncompressor.Close()
-		reader = uncompressor
-	default:
-		// No need for an interposer otherwise
+	    case gzipFileType:
+			uncompressor, err := gzip.NewReader(reader)
+			if err != nil {
+				return err
+			}
+			defer uncompressor.Close()
+			reader = uncompressor
+
+	    case xzFileType:
+			uncompressor, err := xz.NewReader(reader)
+			if err != nil {
+				return err
+			}
+			reader = uncompressor
+
+		default:
+			// No need for an interposer otherwise
 	}
 
 	// Wrap the reader in TeeReader to calculate sha256 checksum on the fly

@@ -8,6 +8,8 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure/defaults"
 	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
+	"github.com/openshift/installer/pkg/tfvars/internal/cache"
+	"github.com/pkg/errors"
 )
 
 // Auth is the collection of credentials that will be used by terrform.
@@ -60,6 +62,11 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		masterAvailabilityZones[i] = to.String(c.Zone)
 	}
 
+	localOsImage, err := cache.DownloadImageFile(sources.ImageURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to use cached Azure image")
+	}
+
 	cfg := &config{
 		Auth:                        sources.Auth,
 		Region:                      region,
@@ -68,7 +75,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		MasterAvailabilityZones:     masterAvailabilityZones,
 		VolumeType:                  masterConfig.OSDisk.ManagedDisk.StorageAccountType,
 		VolumeSize:                  masterConfig.OSDisk.DiskSizeGB,
-		ImageURL:                    sources.ImageURL,
+		ImageURL:                    localOsImage,
 		Private:                     sources.Publish == types.InternalPublishingStrategy,
 		BaseDomainResourceGroupName: sources.BaseDomainResourceGroupName,
 		NetworkResourceGroupName:    masterConfig.NetworkResourceGroup,
