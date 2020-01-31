@@ -8,6 +8,7 @@ import (
 	"os"
 
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	ospclientconfig "github.com/gophercloud/utils/openstack/clientconfig"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	"github.com/pkg/errors"
@@ -15,7 +16,6 @@ import (
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
-	ospclientconfig "github.com/gophercloud/utils/openstack/clientconfig"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
