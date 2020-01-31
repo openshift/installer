@@ -55,6 +55,7 @@ spec:
     systemd: {}
   fips: false
   kernelArguments: null
+  kernelType: ""
   osImageURL: ""
 `},
 		},
@@ -91,6 +92,7 @@ spec:
     systemd: {}
   fips: false
   kernelArguments: null
+  kernelType: ""
   osImageURL: ""
 `},
 		},
@@ -128,6 +130,7 @@ spec:
     systemd: {}
   fips: false
   kernelArguments: null
+  kernelType: ""
   osImageURL: ""
 `, `apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
@@ -154,6 +157,7 @@ spec:
     systemd: {}
   fips: false
   kernelArguments: null
+  kernelType: ""
   osImageURL: ""
 `},
 		},
