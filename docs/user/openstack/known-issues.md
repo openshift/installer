@@ -10,10 +10,6 @@ If the mDNS service name of a server is too long, it will exceed the character l
 
 Since the installer requires the *Name* of your external network and Red Hat Core OS image, if you have other networks or images with the same name, it will choose one randomly from the set. This is not a reliable way to run the installer. We highly recommend that you resolve this with your cluster administrator by creating unique names for your resources in openstack.
 
-## Self Signed Certificates
-
-A partial fix for Self Signed Certificates has been merged, enabling the bootstrap node to get its ignition configs. However, this revealed another bug with CA bundle distrubution within OpenShift that is being tracked here: https://bugzilla.redhat.com/show_bug.cgi?id=1769879. Unfortunately, we are not able to resolve this bug in the current release, so clusters with self signed certificates will remain unsupported. This bug is a top priority for the team, and the necessary trackers will be updated frequently with the latest information.
-
 ## External Network Overlap
 
 If your external network's CIDR range is the same as one of the default network ranges, then you will need to change the matching network range by running the installer with a custom `install-config.yaml`. If users are experiencing unusual networking problems, please contact your cluster administrator and validate that none of your network CIDRs are overlapping with the external network. We were unfortunately unable to support validation for this due to a lack of support in gophercloud, and even if we were, it is likely that the CIDR range of the floating ip would only be accessible cluster administrators. The default network CIDR are as follows:
