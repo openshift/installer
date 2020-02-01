@@ -1,0 +1,102 @@
+{
+  "$schema" : "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion" : "1.0.0.0",
+  "variables" : {
+    "location" : "[resourceGroup().location]",
+    "virtualNetworkName" : "[concat(resourceGroup().name, '-vnet')]",
+    "addressPrefix" : "10.0.0.0/16",
+    "masterSubnetName" : "[concat(resourceGroup().name, '-master-subnet')]",
+    "masterSubnetPrefix" : "10.0.0.0/24",
+    "nodeSubnetName" : "[concat(resourceGroup().name, '-node-subnet')]",
+    "nodeSubnetPrefix" : "10.0.1.0/24",
+    "controlPlaneNsgName" : "[concat(resourceGroup().name, '-controlplane-nsg')]",
+    "nodeNsgName" : "[concat(resourceGroup().name, '-node-nsg')]"
+  },
+  "resources" : [
+    {
+      "apiVersion" : "2018-12-01",
+      "type" : "Microsoft.Network/virtualNetworks",
+      "name" : "[variables('virtualNetworkName')]",
+      "location" : "[variables('location')]",
+      "dependsOn" : [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('controlPlaneNsgName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nodeNsgName'))]"
+      ],
+      "properties" : {
+        "addressSpace" : {
+          "addressPrefixes" : [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets" : [
+          {
+            "name" : "[variables('masterSubnetName')]",
+            "properties" : {
+              "addressPrefix" : "[variables('masterSubnetPrefix')]",
+              "serviceEndpoints": [],
+              "networkSecurityGroup" : {
+                "id" : "[resourceId('Microsoft.Network/networkSecurityGroups', variables('controlPlaneNsgName'))]"
+              }
+            }
+          },
+          {
+            "name" : "[variables('nodeSubnetName')]",
+            "properties" : {
+              "addressPrefix" : "[variables('nodeSubnetPrefix')]",
+              "serviceEndpoints": [],
+              "networkSecurityGroup" : {
+                "id" : "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nodeNsgName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type" : "Microsoft.Network/networkSecurityGroups",
+      "name" : "[variables('controlPlaneNsgName')]",
+      "apiVersion" : "2018-10-01",
+      "location" : "[variables('location')]",
+      "properties" : {
+        "securityRules" : [
+          {
+            "name" : "apiserver_in",
+            "properties" : {
+              "protocol" : "Tcp",
+              "sourcePortRange" : "*",
+              "destinationPortRange" : "6443",
+              "sourceAddressPrefix" : "*",
+              "destinationAddressPrefix" : "*",
+              "access" : "Allow",
+              "priority" : 101,
+              "direction" : "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type" : "Microsoft.Network/networkSecurityGroups",
+      "name" : "[variables('nodeNsgName')]",
+      "apiVersion" : "2018-10-01",
+      "location" : "[variables('location')]",
+      "properties" : {
+        "securityRules" : [
+          {
+            "name" : "apiserver_in",
+            "properties" : {
+              "protocol" : "Tcp",
+              "sourcePortRange" : "*",
+              "destinationPortRange" : "6443",
+              "sourceAddressPrefix" : "*",
+              "destinationAddressPrefix" : "*",
+              "access" : "Allow",
+              "priority" : 101,
+              "direction" : "Inbound"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
