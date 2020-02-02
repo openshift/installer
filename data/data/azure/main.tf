@@ -21,6 +21,22 @@ provider "azureprivatedns" {
   tenant_id       = var.azure_tenant_id
 }
 
+module "vhd-converter" {
+  source              = "./vhd-converter"
+  resource_group_name = azurerm_resource_group.main.name
+  azure_region        = var.azure_region
+  vm_size             = var.azure_bootstrap_vm_type
+  azure_image_url     = var.azure_image_url
+  identity            = azurerm_user_assigned_identity.main.id
+  cluster_id          = var.cluster_id
+  subnet_id           = module.vnet.master_subnet_id
+  tags                = local.tags
+  storage_account     = azurerm_storage_account.cluster
+  container_name      = azurerm_storage_container.vhd.name
+  nsg_name            = module.vnet.master_nsg_name
+  private             = module.vnet.private
+}
+
 module "bootstrap" {
   source              = "./bootstrap"
   resource_group_name = azurerm_resource_group.main.name
@@ -145,15 +161,15 @@ resource "azurerm_storage_container" "vhd" {
   storage_account_name = azurerm_storage_account.cluster.name
 }
 
-resource "azurerm_storage_blob" "rhcos_image" {
-  name                   = "rhcos${random_string.storage_suffix.result}.vhd"
-  resource_group_name    = azurerm_resource_group.main.name
-  storage_account_name   = azurerm_storage_account.cluster.name
-  storage_container_name = azurerm_storage_container.vhd.name
-  type                   = "block"
-  source_uri             = var.azure_image_url
-  metadata               = map("source_uri", var.azure_image_url)
-}
+#resource "azurerm_storage_blob" "rhcos_image" {
+#  name                   = "rhcos${random_string.storage_suffix.result}.vhd"
+#  resource_group_name    = azurerm_resource_group.main.name
+#  storage_account_name   = azurerm_storage_account.cluster.name
+#  storage_container_name = azurerm_storage_container.vhd.name
+#  type                   = "block"
+#  source_uri             = var.azure_image_url
+#  metadata               = map("source_uri", var.azure_image_url)
+#}
 
 resource "azurerm_image" "cluster" {
   name                = var.cluster_id
@@ -163,6 +179,8 @@ resource "azurerm_image" "cluster" {
   os_disk {
     os_type  = "Linux"
     os_state = "Generalized"
-    blob_uri = azurerm_storage_blob.rhcos_image.url
+    blob_uri = "${azurerm_storage_account.cluster.primary_blob_endpoint}${azurerm_storage_container.vhd.name}/fcos.vhd"
   }
+
+  depends_on = [module.vhd-converter.vhd-converter-vm]
 }

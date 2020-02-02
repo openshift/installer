@@ -123,7 +123,7 @@ func unpackAndInit(dir string, platform string) (err error) {
 	defer lpError.Close()
 
 	args := []string{
-		"-get-plugins=false",
+		"-get-plugins=true",  // TODO: template plugin is required. Handle this the same as the other plugins.
 	}
 	args = append(args, dir)
 	if exitCode := texec.Init(dir, args, lpDebug, lpError); exitCode != 0 {
