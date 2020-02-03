@@ -116,7 +116,7 @@ resource "azurerm_network_interface" "bootstrap" {
         primary : ! var.use_ipv4,
         name : local.bootstrap_nic_ip_v6_configuration_name,
         ip_address_version : "IPv6",
-        public_ip_id : var.private ? null : azurerm_public_ip.bootstrap_public_ip_v6[0].id,
+        public_ip_id : var.private || ! var.use_ipv6 ? null : azurerm_public_ip.bootstrap_public_ip_v6[0].id,
         include : var.use_ipv6,
       },
       ] : {

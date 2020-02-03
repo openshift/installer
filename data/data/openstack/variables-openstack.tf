@@ -328,7 +328,7 @@ EOF
 }
 
 variable "openstack_octavia_support" {
-  type = "string"
+  type = string
 
   description = <<EOF
 Contains 0 if the OpenStack Octavia endpoint is missing and 1 if it exists.

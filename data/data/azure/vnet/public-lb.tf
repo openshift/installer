@@ -52,7 +52,7 @@ resource "azurerm_lb" "public" {
     for_each = [for ip in [
       // DEBUG: Azure apparently requires dual stack LB for external load balancers v6
       { name : local.public_lb_frontend_ip_v4_configuration_name, value : azurerm_public_ip.cluster_public_ip_v4[0].id, include : true, ipv6 : false },
-      { name : local.public_lb_frontend_ip_v6_configuration_name, value : azurerm_public_ip.cluster_public_ip_v6[0].id, include : var.use_ipv6, ipv6 : true },
+      { name : local.public_lb_frontend_ip_v6_configuration_name, value : var.use_ipv6 ? azurerm_public_ip.cluster_public_ip_v6[0].id : null, include : var.use_ipv6, ipv6 : true },
       ] : {
       name : ip.name
       value : ip.value

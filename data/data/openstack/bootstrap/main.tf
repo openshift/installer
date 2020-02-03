@@ -52,5 +52,5 @@ resource "openstack_networking_floatingip_v2" "bootstrap_fip" {
   port_id     = openstack_networking_port_v2.bootstrap_port.id
   tags        = ["openshiftClusterID=${var.cluster_id}"]
 
-  depends_on = ["openstack_compute_instance_v2.bootstrap"]
+  depends_on = [openstack_compute_instance_v2.bootstrap]
 }

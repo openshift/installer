@@ -177,7 +177,6 @@ resource "azurerm_storage_blob" "rhcos_image" {
   type                   = "block"
   source_uri             = var.azure_image_url
   metadata               = map("source_uri", var.azure_image_url)
-  attempts               = 2
 }
 
 resource "azurerm_image" "cluster" {

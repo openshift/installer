@@ -54,5 +54,5 @@ variable "trunk_support" {
 }
 
 variable "octavia_support" {
-  type = "string"
+  type = string
 }
