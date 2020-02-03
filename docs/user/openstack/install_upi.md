@@ -497,7 +497,9 @@ openstack security group rule create --description "master ingress kubelet secur
 openstack security group rule create --description "master ingress kubelet secure from worker" --protocol tcp --dst-port 10250 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
 openstack security group rule create --description "etcd" --protocol tcp --dst-port 2379:2380 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
 openstack security group rule create --description "master ingress services (TCP)" --protocol tcp --dst-port 30000:32767 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
+openstack security group rule create --description "master ingress services (TCP) from worker" --protocol tcp --dst-port 30000:32767 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
 openstack security group rule create --description "master ingress services (UDP)" --protocol udp --dst-port 30000:32767 --remote-group "$INFRA_ID-master" "$INFRA_ID-master"
+openstack security group rule create --description "master ingress services (UDP) from worker" --protocol udp --dst-port 30000:32767 --remote-group "$INFRA_ID-worker" "$INFRA_ID-master"
 openstack security group rule create --description "VRRP" --protocol vrrp --remote-ip 192.0.2.0/24 "$INFRA_ID-master"
 ```
 
@@ -522,7 +524,9 @@ openstack security group rule create --description "worker ingress internal from
 openstack security group rule create --description "worker ingress kubelet secure" --protocol tcp --dst-port 10250 --remote-group "$INFRA_ID-worker" "$INFRA_ID-worker"
 openstack security group rule create --description "worker ingress kubelet secure from master" --protocol tcp --dst-port 10250 --remote-group "$INFRA_ID-master" "$INFRA_ID-worker"
 openstack security group rule create --description "worker ingress services (TCP)" --protocol tcp --dst-port 30000:32767 --remote-group "$INFRA_ID-worker" "$INFRA_ID-worker"
+openstack security group rule create --description "worker ingress services (TCP) from master" --protocol tcp --dst-port 30000:32767 --remote-group "$INFRA_ID-master" "$INFRA_ID-worker"
 openstack security group rule create --description "worker ingress services (UDP)" --protocol udp --dst-port 30000:32767 --remote-group "$INFRA_ID-worker" "$INFRA_ID-worker"
+openstack security group rule create --description "worker ingress services (UDP) from master" --protocol udp --dst-port 30000:32767 --remote-group "$INFRA_ID-master" "$INFRA_ID-worker"
 openstack security group rule create --description "VRRP" --protocol vrrp --remote-ip 192.0.2.0/24 "$INFRA_ID-worker"
 ```
 
