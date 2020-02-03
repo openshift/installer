@@ -100,6 +100,7 @@ require (
 	github.com/terraform-providers/terraform-provider-openstack v1.24.0
 	github.com/terraform-providers/terraform-provider-random v1.3.2-0.20191204175905-53436297444a
 	github.com/terraform-providers/terraform-provider-vsphere v1.14.0
+	github.com/ulikunitz/xz v0.5.6
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 	go.uber.org/atomic v1.5.1 // indirect
 	go.uber.org/multierr v1.4.0 // indirect

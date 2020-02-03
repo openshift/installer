@@ -14,6 +14,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/ulikunitz/xz"
 
 	"golang.org/x/sys/unix"
 )
@@ -22,6 +23,7 @@ const (
 	applicationName = "openshift-installer"
 	imageDataType   = "image"
 	gzipFileType    = "application/x-gzip"
+	xzFileType      = "application/octet-stream"
 )
 
 // getCacheDir returns a local path of the cache, where the installer should put the data:
@@ -128,6 +130,12 @@ func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err er
 			return err
 		}
 		defer uncompressor.Close()
+		reader = uncompressor
+	case xzFileType:
+		uncompressor, err := xz.NewReader(reader)
+		if err != nil {
+			return err
+		}
 		reader = uncompressor
 	default:
 		// No need for an interposer otherwise
