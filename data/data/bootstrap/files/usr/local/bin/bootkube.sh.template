@@ -7,6 +7,10 @@ mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests
 
 ETCD_ENDPOINTS=
 
+bootkube_podman_pull() {
+    until podman pull "${@}"; do echo "Retrying pull ${@}"; sleep 5; done
+}
+
 bootkube_podman_run() {
     # we run all commands in the host-network to prevent IP conflicts with
     # end-user infrastructure.
@@ -21,6 +25,9 @@ MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 
 KUBE_ETCD_SIGNER_SERVER_IMAGE=$(image_for kube-etcd-signer-server)
 CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator || echo "no-ceo-image")
+
+bootkube_podman_pull "${CLUSTER_ETCD_OPERATOR_IMAGE}"
+
 CLUSTER_ETCD_OPERATOR_MANAGED=${CLUSTER_ETCD_OPERATOR_IMAGE:+$(bootkube_podman_run \
 	"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
 	/usr/bin/grep -oP Managed \
@@ -54,10 +61,14 @@ if [ ! -f .pivot-done ]; then
   echo "DELETE mitigations=auto,nosmt" >> /etc/pivot/kernel-args
 
   mkdir --parents bin/
+  bootkube_podman_pull "${MACHINE_CONFIG_OPERATOR_IMAGE}"
   bootkube_podman_run --entrypoint=cat "${MACHINE_CONFIG_OPERATOR_IMAGE}" \
     /usr/bin/machine-config-daemon > /usr/local/bin/machine-config-daemon
   chmod +x /usr/local/bin/machine-config-daemon
   restorecon /usr/local/bin/machine-config-daemon
+
+  # Disable zincati
+  systemctl disable zincati.service
 
   touch .pivot-done
   /usr/local/bin/machine-config-daemon pivot
@@ -65,10 +76,6 @@ fi
 
 # Run crio-configure after the pivot
 /usr/local/bin/crio-configure.sh
-
-# Use runc for podman runs
-cp /usr/share/containers/libpod.conf /etc/containers/libpod.conf
-sed --in-place --expression "s,^runtime *=.*,runtime = \"runc\"," /etc/containers/libpod.conf
 
 mkdir --parents ./{bootstrap-manifests,manifests}
 
@@ -85,6 +92,7 @@ then
 
 	rm --recursive --force cvo-bootstrap
 
+	bootkube_podman_pull "${RELEASE_IMAGE_DIGEST}"
 	bootkube_podman_run \
 		--volume "$PWD:/assets:z" \
 		"${RELEASE_IMAGE_DIGEST}" \
@@ -110,6 +118,7 @@ echo "Starting etcd certificate signer..."
 
 trap "podman rm --force etcd-signer" ERR
 
+bootkube_podman_pull "${KUBE_ETCD_SIGNER_SERVER_IMAGE}"
 bootkube_podman_run \
 	--name etcd-signer \
 	--detach \
@@ -144,6 +153,7 @@ then
 	if [ ! -f etcd-bootstrap.done ]
 	then
 		echo "Rendering CEO Manifests..."
+		bootkube_podman_pull "${CLUSTER_ETCD_OPERATOR_IMAGE}"
 		bootkube_podman_run \
 			--volume "$PWD:/assets:z" \
 			"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
@@ -184,6 +194,7 @@ then
 
 	rm --recursive --force config-bootstrap
 
+	bootkube_podman_pull "${CONFIG_OPERATOR_IMAGE}"
 	bootkube_podman_run \
 		--volume "$PWD:/assets:z" \
 		"${CONFIG_OPERATOR_IMAGE}" \
@@ -203,6 +214,7 @@ then
 
 	rm --recursive --force kube-apiserver-bootstrap
 
+	bootkube_podman_pull "${KUBE_APISERVER_OPERATOR_IMAGE}"
 	bootkube_podman_run  \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_APISERVER_OPERATOR_IMAGE}" \
@@ -229,6 +241,7 @@ then
 
 	rm --recursive --force kube-controller-manager-bootstrap
 
+	bootkube_podman_pull "${KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE}"
 	bootkube_podman_run \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE}" \
@@ -252,6 +265,7 @@ then
 
 	rm --recursive --force kube-scheduler-bootstrap
 
+	bootkube_podman_pull "${KUBE_SCHEDULER_OPERATOR_IMAGE}"
 	bootkube_podman_run \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_SCHEDULER_OPERATOR_IMAGE}" \
@@ -274,6 +288,7 @@ then
 
 	rm --recursive --force ingress-operator-bootstrap
 
+	bootkube_podman_pull "${INGRESS_OPERATOR_IMAGE}"
 	bootkube_podman_run \
 		--volume "$PWD:/assets:z" \
 		"${INGRESS_OPERATOR_IMAGE}" \
@@ -292,6 +307,7 @@ then
 
 	rm --recursive --force mco-bootstrap
 
+	bootkube_podman_pull "${MACHINE_CONFIG_OPERATOR_IMAGE}"
 	bootkube_podman_run \
 		--user 0 \
 		--volume "$PWD:/assets:z" \
@@ -360,6 +376,7 @@ then
 	rm --recursive --force cco-bootstrap
 
 	# shellcheck disable=SC2154
+	bootkube_podman_pull "${CLOUD_CREDENTIAL_OPERATOR_IMAGE}"
 	bootkube_podman_run \
 		--quiet \
 		--user 0 \
@@ -376,6 +393,7 @@ then
 fi
 
 # Wait for the etcd cluster to come up.
+bootkube_podman_pull "${MACHINE_CONFIG_ETCD_IMAGE}"
 until bootkube_podman_run \
 		--rm \
 		--name etcdctl \
@@ -397,10 +415,10 @@ done
 echo "etcd cluster up. Killing etcd certificate signer..."
 
 podman rm --force etcd-signer
-rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
 
 echo "Starting cluster-bootstrap..."
 
+bootkube_podman_pull "${CLUSTER_BOOTSTRAP_IMAGE}"
 bootkube_podman_run \
 	--rm \
 	--volume "$PWD:/assets:z" \
@@ -408,9 +426,12 @@ bootkube_podman_run \
 	"${CLUSTER_BOOTSTRAP_IMAGE}" \
 	start --tear-down-early=false --asset-dir=/assets --required-pods="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
 
+rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
+
 if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
 then
 	echo "Waiting for CEO to finish..."
+	bootkube_podman_pull "${CLUSTER_ETCD_OPERATOR_IMAGE}"
 	bootkube_podman_run \
 		--volume "$PWD:/assets:z" \
 		"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
