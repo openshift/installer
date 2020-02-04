@@ -196,6 +196,10 @@ func (o *ClusterUninstaller) clusterIDFilter() string {
 	return fmt.Sprintf("name eq \"%s-.*\"", o.ClusterID)
 }
 
+func (o *ClusterUninstaller) clusterLabelFilter() string {
+	return fmt.Sprintf("labels.kubernetes-io-cluster-%s eq \"owned\"", o.ClusterID)
+}
+
 func isNoOp(err error) bool {
 	if err == nil {
 		return false
