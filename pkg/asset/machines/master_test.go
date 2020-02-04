@@ -60,73 +60,6 @@ spec:
   osImageURL: ""
 `},
 		},
-		{
-			name:           "key present hyperthreading disabled",
-			key:            "ssh-rsa: dummy-key",
-			hyperthreading: types.HyperthreadingDisabled,
-			expectedMachineConfig: []string{`apiVersion: machineconfiguration.openshift.io/v1
-kind: MachineConfig
-metadata:
-  creationTimestamp: null
-  labels:
-    machineconfiguration.openshift.io/role: master
-  name: 99-master-disable-hyperthreading
-spec:
-  config:
-    ignition:
-      config:
-        replace:
-          source: null
-          verification: {}
-      security:
-        tls: {}
-      timeouts: {}
-      version: 3.0.0
-    passwd: {}
-    storage:
-      files:
-      - contents:
-          source: data:text/plain;charset=utf-8;base64,QUREIG5vc210
-          verification: {}
-        group: {}
-        mode: 384
-        path: /etc/pivot/kernel-args
-        user:
-          name: root
-    systemd: {}
-  fips: false
-  kernelArguments: null
-  osImageURL: ""
-`, `apiVersion: machineconfiguration.openshift.io/v1
-kind: MachineConfig
-metadata:
-  creationTimestamp: null
-  labels:
-    machineconfiguration.openshift.io/role: master
-  name: 99-master-ssh
-spec:
-  config:
-    ignition:
-      config:
-        replace:
-          source: null
-          verification: {}
-      security:
-        tls: {}
-      timeouts: {}
-      version: 3.0.0
-    passwd:
-      users:
-      - name: core
-        sshAuthorizedKeys:
-        - 'ssh-rsa: dummy-key'
-    storage: {}
-    systemd: {}
-  fips: false
-  kernelArguments: null
-  osImageURL: ""
-`},
-		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -141,7 +74,6 @@ spec:
 						ObjectMeta: metav1.ObjectMeta{
 							Name: "test-cluster",
 						},
-						SSHKey:     tc.key,
 						BaseDomain: "test-domain",
 						Platform: types.Platform{
 							AWS: &awstypes.Platform{
