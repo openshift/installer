@@ -47,6 +47,8 @@ purposes:
 
 * **NIC #2 - Provisioning Network**
   * A private network used for PXE based provisioning.
+  * You must specify `provisioningNetworkInterface` to indicate which
+    interface is connected to this network.
   * DHCP is automated for this network by default, to rely on external
     DHCP, set the platform's `provisioningDHCPExternal` option to `true`
   * Addressing for this network defaults to `172.22.0.0/24`, but is
@@ -136,6 +138,7 @@ platform:
     apiVIP: 192.168.111.5
     ingressVIP: 192.168.111.4
     dnsVIP: 192.168.111.3
+    provisioningNetworkInterface: enp1s0
     hosts:
       - name: openshift-master-0
         role: master
