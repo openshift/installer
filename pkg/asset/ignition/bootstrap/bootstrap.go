@@ -74,6 +74,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
 		&kubeconfig.AdminInternalClient{},
+		&kubeconfig.Etcd{},
 		&kubeconfig.Kubelet{},
 		&kubeconfig.LoopbackClient{},
 		&machines.Master{},
@@ -88,6 +89,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&tls.AggregatorSignerCertKey{},
 		&tls.APIServerProxyCertKey{},
 		&tls.EtcdCABundle{},
+		&tls.EtcdKubeAPIServerClientCertCABundle{},
 		&tls.EtcdMetricCABundle{},
 		&tls.EtcdMetricSignerCertKey{},
 		&tls.EtcdMetricSignerClientCertKey{},
@@ -448,6 +450,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 	// These files are all added with mode 0600; use for secret keys and the like.
 	for _, asset := range []asset.WritableAsset{
 		&kubeconfig.AdminInternalClient{},
+		&kubeconfig.Etcd{},
 		&kubeconfig.Kubelet{},
 		&kubeconfig.LoopbackClient{},
 		&tls.AdminKubeConfigCABundle{},
@@ -457,6 +460,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 		&tls.AggregatorSignerCertKey{},
 		&tls.APIServerProxyCertKey{},
 		&tls.EtcdCABundle{},
+		&tls.EtcdKubeAPIServerClientCertCABundle{},
 		&tls.EtcdMetricCABundle{},
 		&tls.EtcdMetricSignerCertKey{},
 		&tls.EtcdMetricSignerClientCertKey{},
