@@ -167,9 +167,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		if pool.Hyperthreading == types.HyperthreadingDisabled {
 			machineConfigs = append(machineConfigs, machineconfig.ForHyperthreadingDisabled("worker"))
 		}
-		if ic.SSHKey != "" {
-			machineConfigs = append(machineConfigs, machineconfig.ForAuthorizedKeys(ic.SSHKey, "worker"))
-		}
 		if ic.FIPS {
 			machineConfigs = append(machineConfigs, machineconfig.ForFIPSEnabled("worker"))
 		}
