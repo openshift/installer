@@ -349,9 +349,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	if pool.Hyperthreading == types.HyperthreadingDisabled {
 		machineConfigs = append(machineConfigs, machineconfig.ForHyperthreadingDisabled("master"))
 	}
-	if ic.SSHKey != "" {
-		machineConfigs = append(machineConfigs, machineconfig.ForAuthorizedKeys(ic.SSHKey, "master"))
-	}
 	if ic.FIPS {
 		machineConfigs = append(machineConfigs, machineconfig.ForFIPSEnabled("master"))
 	}
