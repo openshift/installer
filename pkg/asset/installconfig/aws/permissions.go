@@ -39,6 +39,7 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:AuthorizeSecurityGroupIngress",
 		"ec2:CopyImage",
 		"ec2:CreateNetworkInterface",
+		"ec2:AttachNetworkInterface",
 		"ec2:CreateSecurityGroup",
 		"ec2:CreateTags",
 		"ec2:CreateVolume",
