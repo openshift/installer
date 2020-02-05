@@ -6,7 +6,6 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -15,9 +14,7 @@ import (
 )
 
 var (
-	// ConfigPath is the relative path of openshift-install within the asset
-	// directory.
-	ConfigPath = filepath.Join("openshift", "openshift-install.yaml")
+	configPath = filepath.Join("openshift", "openshift-install-manifests.yaml")
 )
 
 // Config generates the openshift-install ConfigMap.
@@ -29,7 +26,7 @@ var _ asset.WritableAsset = (*Config)(nil)
 
 // Name returns a human friendly name for the asset.
 func (*Config) Name() string {
-	return "OpenShift Install"
+	return "OpenShift Install (Manifests)"
 }
 
 // Dependencies returns all of the dependencies directly needed to generate
@@ -40,16 +37,14 @@ func (*Config) Dependencies() []asset.Asset {
 
 // Generate generates the openshift-install ConfigMap.
 func (i *Config) Generate(dependencies asset.Parents) error {
-	cm, err := CreateInstallConfig("")
+	cm, err := CreateInstallConfigMap("openshift-install-manifests")
 	if err != nil {
 		return err
 	}
 
-	if cm != "" {
-		i.File = &asset.File{
-			Filename: ConfigPath,
-			Data:     []byte(cm),
-		}
+	i.File = &asset.File{
+		Filename: configPath,
+		Data:     []byte(cm),
 	}
 
 	return nil
@@ -65,7 +60,7 @@ func (i *Config) Files() []*asset.File {
 
 // Load loads the already-rendered files back from disk.
 func (i *Config) Load(f asset.FileFetcher) (bool, error) {
-	file, err := f.FetchByName(ConfigPath)
+	file, err := f.FetchByName(configPath)
 	if os.IsNotExist(err) {
 		return false, nil
 	} else if err != nil {
@@ -75,20 +70,15 @@ func (i *Config) Load(f asset.FileFetcher) (bool, error) {
 	return true, nil
 }
 
-// CreateInstallConfig creates the openshift-install ConfigMap from the
-// OPENSHIFT_INSTALL_INVOKER environment variable, and if not present, from the
-// provided default invoker. If both the environment variable and the default
-// are the empty string, this returns an empty string (indicting that no
-// ConfigMap should be created. This returns an error if the marshalling to
-// YAML fails.
-func CreateInstallConfig(defaultInvoker string) (string, error) {
+// CreateInstallConfigMap creates an openshift-install ConfigMap from the
+// OPENSHIFT_INSTALL_INVOKER environment variable and the given name for the
+// ConfigMap. This returns an error if marshalling to YAML fails.
+func CreateInstallConfigMap(name string) (string, error) {
 	var invoker string
 	if env := os.Getenv("OPENSHIFT_INSTALL_INVOKER"); env != "" {
 		invoker = env
-	} else if defaultInvoker != "" {
-		invoker = defaultInvoker
 	} else {
-		return "", nil
+		invoker = "user"
 	}
 
 	cm := &corev1.ConfigMap{
@@ -98,7 +88,7 @@ func CreateInstallConfig(defaultInvoker string) (string, error) {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "openshift-config",
-			Name:      "openshift-install",
+			Name:      name,
 		},
 		Data: map[string]string{
 			"version": version.Raw,
@@ -108,7 +98,7 @@ func CreateInstallConfig(defaultInvoker string) (string, error) {
 
 	cmData, err := yaml.Marshal(cm)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to create install-config ConfigMap")
+		return "", errors.Wrapf(err, "failed to create %q ConfigMap", name)
 	}
 
 	return string(cmData), nil
