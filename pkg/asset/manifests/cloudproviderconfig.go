@@ -2,6 +2,7 @@ package manifests
 
 import (
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
@@ -93,6 +94,15 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		}
 
 		cm.Data[cloudProviderConfigDataKey] = openstackmanifests.CloudProviderConfig(cloud)
+
+		// Get the ca-cert-bundle key if there is a value for cacert in clouds.yaml
+		if caPath := cloud.CACertFile; caPath != "" {
+			caFile, err := ioutil.ReadFile(caPath)
+			if err != nil {
+				return errors.Wrap(err, "failed to read clouds.yaml ca-cert from disk")
+			}
+			cm.Data["ca-bundle.pem"] = string(caFile)
+		}
 	case azuretypes.Name:
 		session, err := icazure.GetSession()
 		if err != nil {

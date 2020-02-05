@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	ospclientconfig "github.com/gophercloud/utils/openstack/clientconfig"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	"github.com/pkg/errors"
@@ -304,6 +306,22 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case openstack.Name:
+		opts := &ospclientconfig.ClientOpts{}
+		opts.Cloud = installConfig.Config.Platform.OpenStack.Cloud
+		cloud, err := ospclientconfig.GetCloudFromYAML(opts)
+		if err != nil {
+			return errors.Wrap(err, "failed to get cloud config for openstack")
+		}
+		var caCert string
+		// Get the ca-cert-bundle key if there is a value for cacert in clouds.yaml
+		if caPath := cloud.CACertFile; caPath != "" {
+			caFile, err := ioutil.ReadFile(caPath)
+			if err != nil {
+				return errors.Wrap(err, "failed to read clouds.yaml ca-cert from disk")
+			}
+			caCert = string(caFile)
+		}
+
 		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err
@@ -333,7 +351,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.OpenStack.OctaviaSupport,
 			string(*rhcosImage),
 			clusterID.InfraID,
-			installConfig.Config.AdditionalTrustBundle,
+			caCert,
 			bootstrapIgn,
 		)
 		if err != nil {
