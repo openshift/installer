@@ -20,11 +20,7 @@ MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(image_for kube-client-agent)
 MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 
 KUBE_ETCD_SIGNER_SERVER_IMAGE=$(image_for kube-etcd-signer-server)
-CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator || echo "no-ceo-image")
-CLUSTER_ETCD_OPERATOR_MANAGED=${CLUSTER_ETCD_OPERATOR_IMAGE:+$(bootkube_podman_run \
-	"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
-	/usr/bin/grep -oP Managed \
-	/manifests/0000_12_etcd-operator_01_operator.cr.yaml)} || echo "CEO is Unmanaged"
+CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator)
 
 CONFIG_OPERATOR_IMAGE=$(image_for cluster-config-operator)
 KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)
@@ -107,49 +103,39 @@ bootkube_podman_run \
 	--servercertdur=26280h \
 	--metriccertdur=26280h
 
-# during initial operator rollout phase this logic allows us to deploy the operator via CVO
-# in an `Unmanaged` no-op state. after all of the pieces have merged and the operator is
-# deemed stable we can remove this logic and the operator will be `Managed` by default.
-if [ ! -z "$CLUSTER_ETCD_OPERATOR_MANAGED" ]
+# TODO: host-etcd endpoint rendered by cluster-etcd-operator
+ETCD_ENDPOINTS=https://localhost:2379
+if [ ! -f etcd-bootstrap.done ]
 then
-	# TODO: host-etcd endpoint rendered by cluster-etcd-operator
-	ETCD_ENDPOINTS=https://localhost:2379
-	if [ ! -f etcd-bootstrap.done ]
-	then
-		echo "Rendering CEO Manifests..."
-		bootkube_podman_run \
-			--volume "$PWD:/assets:z" \
-			"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
-			/usr/bin/cluster-etcd-operator render \
-			--etcd-ca=/assets/tls/etcd-ca-bundle.crt \
-			--etcd-metric-ca=/assets/tls/etcd-metric-ca-bundle.crt \
-			--manifest-etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
-			--etcd-discovery-domain={{.ClusterDomain}} \
-			--manifest-cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}" \
-			--manifest-setup-etcd-env-image="${MACHINE_CONFIG_OPERATOR_IMAGE}" \
-			--manifest-kube-client-agent-image="${MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE}" \
-			--asset-input-dir=/assets/tls \
-			--asset-output-dir=/assets/etcd-bootstrap \
-			--config-output-file=/assets/etcd-bootstrap/config \
-			--cluster-config-file=/assets/manifests/cluster-network-02-config.yml
+	echo "Rendering CEO Manifests..."
+	bootkube_podman_run \
+		--volume "$PWD:/assets:z" \
+		"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-etcd-operator render \
+		--etcd-ca=/assets/tls/etcd-ca-bundle.crt \
+		--etcd-metric-ca=/assets/tls/etcd-metric-ca-bundle.crt \
+		--manifest-etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
+		--etcd-discovery-domain={{.ClusterDomain}} \
+		--manifest-cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+		--manifest-setup-etcd-env-image="${MACHINE_CONFIG_OPERATOR_IMAGE}" \
+		--manifest-kube-client-agent-image="${MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE}" \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/etcd-bootstrap \
+		--config-output-file=/assets/etcd-bootstrap/config \
+		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml
 
-		# pass an IP in the sample range to pass validation, but be ignored.
-		sed -i "s/__BOOTSTRAP_IP__/192.0.2.200/" /opt/openshift/manifests/etcd-host-service-endpoints.yaml
+	# pass an IP in the sample range to pass validation, but be ignored.
+	sed -i "s/__BOOTSTRAP_IP__/192.0.2.200/" /opt/openshift/manifests/etcd-host-service-endpoints.yaml
 
-		cp etcd-bootstrap/manifests/* manifests/
-		cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
+	cp etcd-bootstrap/manifests/* manifests/
+	cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
 
-		# /etc/kubernetes/static-pod-resources/etcd-member is the location etcd-bootstrap tls assets.
-		mkdir --parents /etc/kubernetes/static-pod-resources/etcd-member
-		cp tls/etcd-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-member/ca.crt
-		cp tls/etcd-metric-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-member/metric-ca.crt
+	# /etc/kubernetes/static-pod-resources/etcd-member is the location etcd-bootstrap tls assets.
+	mkdir --parents /etc/kubernetes/static-pod-resources/etcd-member
+	cp tls/etcd-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-member/ca.crt
+	cp tls/etcd-metric-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-member/metric-ca.crt
 
-		touch etcd-bootstrap.done
-	fi
-else
-	ETCD_ENDPOINTS={{.EtcdCluster}}
-	CLUSTER_ETCD_OPERATOR_IMAGE=
-	sed -i '/etcd-bootstrap/I,+1 d' /opt/openshift/manifests/etcd-host-service-endpoints.yaml
+	touch etcd-bootstrap.done
 fi
 
 if [ ! -f config-bootstrap.done ]
