@@ -221,9 +221,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		})
 	}
 
-	if openshiftInstall.File != nil {
-		o.FileList = append(o.FileList, openshiftInstall.Files()...)
-	}
+	o.FileList = append(o.FileList, openshiftInstall.Files()...)
 
 	asset.SortFiles(o.FileList)
 

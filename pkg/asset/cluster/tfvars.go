@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	"path/filepath"
 
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
@@ -492,28 +491,17 @@ func (t *TerraformVariables) Load(f asset.FileFetcher) (found bool, err error) {
 // injectInstallInfo adds information about the installer and its invoker as a
 // ConfigMap to the provided bootstrap Ignition config.
 func injectInstallInfo(bootstrap []byte) (string, error) {
-	openshiftInstallPath := filepath.Join("/", "opt", "openshift", openshiftinstall.ConfigPath)
 	config := &igntypes.Config{}
 	if err := json.Unmarshal(bootstrap, &config); err != nil {
 		return "", errors.Wrap(err, "failed to unmarshal bootstrap Ignition config")
 	}
 
-	// If the openshift-install ConfigMap is already present, don't bother
-	// injecting another. In fact, while it's okay in Ignition v0s2 for a file
-	// to be defined multiple times (the last occurrence takes precedence), it
-	// is an error in Ignition v2s3, which is used by OKD.
-	for _, file := range config.Storage.Files {
-		if file.Path == openshiftInstallPath {
-			return string(bootstrap), nil
-		}
-	}
-
-	cm, err := openshiftinstall.CreateInstallConfig("user")
+	cm, err := openshiftinstall.CreateInstallConfigMap("openshift-install")
 	if err != nil {
 		return "", errors.Wrap(err, "failed to generate openshift-install config")
 	}
 
-	config.Storage.Files = append(config.Storage.Files, ignition.FileFromString(openshiftInstallPath, "root", 0644, cm))
+	config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/opt/openshift/manifests/openshift-install.yaml", "root", 0644, cm))
 
 	ign, err := json.Marshal(config)
 	if err != nil {
