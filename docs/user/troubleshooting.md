@@ -13,7 +13,7 @@ The installer doesn't provision worker nodes directly, like it does with master 
 The status of the Machine API Operator can be checked by running the following command from the machine used to install the cluster:
 
 ```sh
-oc --config=${INSTALL_DIR}/auth/kubeconfig --namespace=openshift-machine-api get deployments
+oc --kubeconfig=${INSTALL_DIR}/auth/kubeconfig --namespace=openshift-machine-api get deployments
 ```
 
 If the API is unavailable, that will need to be [investigated first](#kubernetes-api-is-unavailable).
@@ -30,7 +30,7 @@ machine-api-operator          1/1     1            1           86m
 Check the machine controller logs with the following command.
 
 ```sh
-oc --config=${INSTALL_DIR}/auth/kubeconfig --namespace=openshift-machine-api logs deployments/machine-api-controllers --container=machine-controller
+oc --kubeconfig=${INSTALL_DIR}/auth/kubeconfig --namespace=openshift-machine-api logs deployments/machine-api-controllers --container=machine-controller
 ```
 
 ### Kubernetes API is Unavailable
@@ -98,7 +98,7 @@ The installer uses the [cluster-version-operator] to create all the components o
 1. Inspecting the `ClusterVersion` object.
 
     ```console
-    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusterversion -oyaml
+    $ oc --kubeconfig=${INSTALL_DIR}/auth/kubeconfig get clusterversion -oyaml
     apiVersion: config.openshift.io/v1
     kind: ClusterVersion
     metadata:
@@ -147,7 +147,7 @@ The installer uses the [cluster-version-operator] to create all the components o
     Some of most important [conditions][cluster-operator-conditions] to take note are `Failing`, `Available` and `Progressing`. You can look at the conditions using:
 
     ```console
-    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusterversion version -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'
+    $ oc --kubeconfig=${INSTALL_DIR}/auth/kubeconfig get clusterversion version -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'
     Available True Done applying 4.1.1
     Failing False
     Progressing False Cluster version is 4.0.0-0.alpha-2019-02-26-194020
@@ -159,7 +159,7 @@ The installer uses the [cluster-version-operator] to create all the components o
     You can get the status of all the cluster operators:
 
     ```console
-    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusteroperator
+    $ oc --kubeconfig=${INSTALL_DIR}/auth/kubeconfig get clusteroperator
     NAME                                  VERSION   AVAILABLE   PROGRESSING   FAILING   SINCE
     cluster-autoscaler                              True        False         False     17m
     cluster-storage-operator                        True        False         False     10m
@@ -188,7 +188,7 @@ The installer uses the [cluster-version-operator] to create all the components o
     To get detailed information on why an individual cluster operator is `Failing` or not yet `Available`, you can check the status of that individual operator, for example `monitoring`:
 
     ```console
-    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusteroperator monitoring -oyaml
+    $ oc --kubeconfig=${INSTALL_DIR}/auth/kubeconfig get clusteroperator monitoring -oyaml
     apiVersion: config.openshift.io/v1
     kind: ClusterOperator
     metadata:
@@ -219,7 +219,7 @@ The installer uses the [cluster-version-operator] to create all the components o
     Again, the cluster operators also publish [conditions][cluster-operator-conditions] like `Failing`, `Available` and `Progressing` that can help user provide information on the current state of the operator:
 
     ```console
-    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusteroperator monitoring -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'
+    $ oc --kubeconfig=${INSTALL_DIR}/auth/kubeconfig get clusteroperator monitoring -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'
     Available True Successfully rolled out the stack
     Progressing False
     Failing False
@@ -228,7 +228,7 @@ The installer uses the [cluster-version-operator] to create all the components o
     Each clusteroperator also publishes the list of objects owned by the cluster operator. To get that information:
 
     ```console
-    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusteroperator kube-apiserver -o=jsonpath='{.status.relatedObjects}'
+    $ oc --kubeconfig=${INSTALL_DIR}/auth/kubeconfig get clusteroperator kube-apiserver -o=jsonpath='{.status.relatedObjects}'
     [map[resource:kubeapiservers group:operator.openshift.io name:cluster] map[group: name:openshift-config resource:namespaces] map[group: name:openshift-config-managed resource:namespaces] map[group: name:openshift-kube-apiserver-operator resource:namespaces] map[group: name:openshift-kube-apiserver resource:namespaces]]
     ```
 
@@ -241,7 +241,7 @@ The installer fetches the URL for OpenShift console using the [route][route-obje
 1. Check if the console router is `Available` or `Failing`
 
     ```console
-    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusteroperator console -oyaml
+    $ oc --kubeconfig=${INSTALL_DIR}/auth/kubeconfig get clusteroperator console -oyaml
     apiVersion: config.openshift.io/v1
     kind: ClusterOperator
     metadata:
@@ -289,7 +289,7 @@ The installer fetches the URL for OpenShift console using the [route][route-obje
 2. Manually get the URL for `console`
 
   ```console
-  $ oc --config=${INSTALL_DIR}/auth/kubeconfig get route console -n openshift-console -o=jsonpath='{.spec.host}'
+  $ oc --kubeconfig=${INSTALL_DIR}/auth/kubeconfig get route console -n openshift-console -o=jsonpath='{.spec.host}'
   console-openshift-console.apps.adahiya-1.devcluster.openshift.com
   ```
 
@@ -298,7 +298,7 @@ The installer fetches the URL for OpenShift console using the [route][route-obje
 The installer adds the CA certificate for the router to the list of trusted client certificate authorities in `${INSTALL_DIR}/auth/kubeconfig`. If the installer fails to add the router CA to `kubeconfig`, you can fetch the router CA from the cluster using:
 
 ```console
-$ oc --config=${INSTALL_DIR}/auth/kubeconfig get configmaps router-ca -n openshift-config-managed -o=jsonpath='{.data.ca-bundle\.crt}'
+$ oc --kubeconfig=${INSTALL_DIR}/auth/kubeconfig get configmaps router-ca -n openshift-config-managed -o=jsonpath='{.data.ca-bundle\.crt}'
 -----BEGIN CERTIFICATE-----
 MIIC/TCCAeWgAwIBAgIBATANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDDCNjbHVz
 dGVyLWluZ3Jlc3Mtb3BlcmF0b3JAMTU1MTMwNzU4OTAeFw0xOTAyMjcyMjQ2Mjha
@@ -332,7 +332,7 @@ For other generic troubleshooting, see [the Kubernetes documentation][kubernetes
 This is the generic version of the [*No Worker Nodes Created*](#no-worker-nodes-created) troubleshooting procedure.
 
 ```console
-$ oc --config=${INSTALL_DIR}/auth/kubeconfig get pods --all-namespaces
+$ oc --kubeconfig=${INSTALL_DIR}/auth/kubeconfig get pods --all-namespaces
 NAMESPACE                              NAME                                                              READY     STATUS              RESTARTS   AGE
 kube-system                            etcd-member-wking-master-0                                        1/1       Running             0          46s
 openshift-machine-api                  machine-api-operator-586bd5b6b9-bxq9s                             0/1       Pending             0          1m
@@ -343,7 +343,7 @@ openshift-cluster-dns-operator         cluster-dns-operator-7f4f6866b9-kzth5    
 You can investigate any pods listed as `Pending` with:
 
 ```sh
-oc --config=${INSTALL_DIR}/auth/kubeconfig describe -n openshift-machine-api pod/machine-api-operator-586bd5b6b9-bxq9s
+oc --kubeconfig=${INSTALL_DIR}/auth/kubeconfig describe -n openshift-machine-api pod/machine-api-operator-586bd5b6b9-bxq9s
 ```
 
 which may show events with warnings like:
@@ -355,7 +355,7 @@ Warning  FailedScheduling  1m (x10 over 1m)  default-scheduler  0/1 nodes are av
 You can get the image used for a crashing pod with:
 
 ```console
-$ oc --config=${INSTALL_DIR}/auth/kubeconfig get pod -o "jsonpath={range .status.containerStatuses[*]}{.name}{'\t'}{.state}{'\t'}{.image}{'\n'}{end}" -n openshift-machine-api machine-api-operator-586bd5b6b9-bxq9s
+$ oc --kubeconfig=${INSTALL_DIR}/auth/kubeconfig get pod -o "jsonpath={range .status.containerStatuses[*]}{.name}{'\t'}{.state}{'\t'}{.image}{'\n'}{end}" -n openshift-machine-api machine-api-operator-586bd5b6b9-bxq9s
 machine-api-operator	map[running:map[startedAt:2018-11-13T19:04:50Z]]	registry.svc.ci.openshift.org/openshift/origin-v4.0-20181113175638@sha256:c97d0b53b98d07053090f3c9563cfd8277587ce94f8c2400b33e246aa08332c7
 ```
 
