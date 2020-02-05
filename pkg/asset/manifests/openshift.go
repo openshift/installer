@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/password"
@@ -64,6 +65,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&openshift.RoleCloudCredsSecretReader{},
 		&openshift.PrivateClusterOutbound{},
 		&openshift.BaremetalConfig{},
+		new(rhcos.Image),
 	}
 }
 
@@ -185,12 +187,14 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	kubeadminPasswordSecret := &openshift.KubeadminPasswordSecret{}
 	roleCloudCredsSecretReader := &openshift.RoleCloudCredsSecretReader{}
 	baremetalConfig := &openshift.BaremetalConfig{}
+	rhcosImage := new(rhcos.Image)
 
 	dependencies.Get(
 		cloudCredsSecret,
 		kubeadminPasswordSecret,
 		roleCloudCredsSecretReader,
-		baremetalConfig)
+		baremetalConfig,
+		rhcosImage)
 
 	assetData := map[string][]byte{
 		"99_kubeadmin-password-secret.yaml": applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
@@ -201,7 +205,11 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
 		assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleCloudCredsSecretReader.Files()[0].Data, templateData)
 	case baremetaltypes.Name:
-		assetData["99_baremetal-provisioning-config.yaml"] = applyTemplateData(baremetalConfig.Files()[0].Data, *installConfig.Config.Platform.BareMetal)
+		bmTemplateData := baremetalTemplateData{
+			Baremetal:                 installConfig.Config.Platform.BareMetal,
+			ProvisioningOSDownloadURL: string(*rhcosImage),
+		}
+		assetData["99_baremetal-provisioning-config.yaml"] = applyTemplateData(baremetalConfig.Files()[0].Data, bmTemplateData)
 	}
 
 	if platform == azuretypes.Name && installConfig.Config.Publish == types.InternalPublishingStrategy {
