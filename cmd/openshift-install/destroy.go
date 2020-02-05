@@ -1,6 +1,9 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -16,6 +19,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
+	"github.com/openshift/installer/pkg/terraform"
 )
 
 func newDestroyCmd() *cobra.Command {
@@ -71,6 +75,12 @@ func runDestroyCmd(directory string) error {
 	err = store.DestroyState()
 	if err != nil {
 		return errors.Wrap(err, "failed to remove state file")
+	}
+
+	tfStateFilePath := filepath.Join(directory, terraform.StateFileName)
+	err = os.Remove(tfStateFilePath)
+	if err != nil && !os.IsNotExist(err) {
+		return errors.Wrap(err, "failed to remove Terraform state")
 	}
 
 	return nil
