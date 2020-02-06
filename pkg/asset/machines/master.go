@@ -19,6 +19,7 @@ import (
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	awsapi "sigs.k8s.io/cluster-api-provider-aws/pkg/apis"
@@ -120,10 +121,13 @@ func (m *Master) Dependencies() []asset.Asset {
 	}
 }
 
-func awsDefaultMasterMachineType(installconfig *installconfig.InstallConfig) string {
-	region := installconfig.Config.Platform.AWS.Region
-	instanceClass := awsdefaults.InstanceClass(region)
-	return fmt.Sprintf("%s.xlarge", instanceClass)
+func awsDefaultMasterMachineTypes(region string) []string {
+	classes := awsdefaults.InstanceClasses(region)
+	types := make([]string, len(classes))
+	for i, c := range classes {
+		types[i] = fmt.Sprintf("%s.xlarge", c)
+	}
+	return types
 }
 
 // Generate generates the Master asset.
@@ -154,7 +158,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 
 		mpool := defaultAWSMachinePoolPlatform()
-		mpool.InstanceType = awsDefaultMasterMachineType(installConfig)
 		mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.AWS)
 		if len(mpool.Zones) == 0 {
@@ -167,6 +170,13 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 				if err != nil {
 					return err
 				}
+			}
+		}
+		if mpool.InstanceType == "" {
+			mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultMasterMachineTypes(installConfig.Config.Platform.AWS.Region), mpool.Zones)
+			if err != nil {
+				logrus.Warn(errors.Wrap(err, "failed to find default instance type"))
+				mpool.InstanceType = awsDefaultMasterMachineTypes(installConfig.Config.Platform.AWS.Region)[0]
 			}
 		}
 

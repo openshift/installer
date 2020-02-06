@@ -184,7 +184,8 @@ spec:
 								Hyperthreading: tc.hyperthreading,
 								Platform: types.MachinePoolPlatform{
 									AWS: &awstypes.MachinePool{
-										Zones: []string{"us-east-1a"},
+										Zones:        []string{"us-east-1a"},
+										InstanceType: "m4.large",
 									},
 								},
 							},

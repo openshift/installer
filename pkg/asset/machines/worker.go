@@ -17,6 +17,7 @@ import (
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	awsapi "sigs.k8s.io/cluster-api-provider-aws/pkg/apis"
@@ -120,6 +121,15 @@ func defaultVSphereMachinePoolPlatform() vspheretypes.MachinePool {
 	}
 }
 
+func awsDefaultWorkerMachineTypes(region string) []string {
+	classes := awsdefaults.InstanceClasses(region)
+	types := make([]string, len(classes))
+	for i, c := range classes {
+		types[i] = fmt.Sprintf("%s.large", c)
+	}
+	return types
+}
+
 // Worker generates the machinesets for `worker` machine pool.
 type Worker struct {
 	UserDataFile       *asset.File
@@ -145,12 +155,6 @@ func (w *Worker) Dependencies() []asset.Asset {
 		new(rhcos.Image),
 		&machine.Worker{},
 	}
-}
-
-func awsDefaultWorkerMachineType(installconfig *installconfig.InstallConfig) string {
-	region := installconfig.Config.Platform.AWS.Region
-	instanceClass := awsdefaults.InstanceClass(region)
-	return fmt.Sprintf("%s.large", instanceClass)
 }
 
 // Generate generates the Worker asset.
@@ -190,7 +194,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 
 			mpool := defaultAWSMachinePoolPlatform()
-			mpool.InstanceType = awsDefaultWorkerMachineType(installConfig)
 			mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.AWS)
 			if len(mpool.Zones) == 0 {
@@ -203,6 +206,13 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 					if err != nil {
 						return err
 					}
+				}
+			}
+			if mpool.InstanceType == "" {
+				mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultWorkerMachineTypes(installConfig.Config.Platform.AWS.Region), mpool.Zones)
+				if err != nil {
+					logrus.Warn(errors.Wrap(err, "failed to find default instance type"))
+					mpool.InstanceType = awsDefaultWorkerMachineTypes(installConfig.Config.Platform.AWS.Region)[0]
 				}
 			}
 			pool.Platform.AWS = &mpool
