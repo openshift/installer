@@ -24,7 +24,16 @@ func (o *ClusterUninstaller) getInstanceNameAndZone(instanceURL string) (string,
 }
 
 func (o *ClusterUninstaller) listInstances() ([]cloudResource, error) {
-	return o.listInstancesWithFilter("items/*/instances(name,zone,status),nextPageToken", o.clusterIDFilter(), nil)
+	byName, err := o.listInstancesWithFilter("items/*/instances(name,zone,status),nextPageToken", o.clusterIDFilter(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	byLabel, err := o.listInstancesWithFilter("items/*/instances(name,zone,status),nextPageToken", o.clusterLabelFilter(), nil)
+	if err != nil {
+		return nil, err
+	}
+	return append(byName, byLabel...), nil
 }
 
 // listInstancesWithFilter lists instances in the project that satisfy the filter criteria.
