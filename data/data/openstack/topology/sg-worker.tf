@@ -221,6 +221,16 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_tcp" {
   depends_on = ["openstack_networking_secgroup_rule_v2.worker_ingress_kubelet_insecure_from_master"]
 }
 
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_tcp_from_master" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 30000
+  port_range_max    = 32767
+  remote_group_id   = openstack_networking_secgroup_v2.master.id
+  security_group_id = openstack_networking_secgroup_v2.worker.id
+}
+
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_udp" {
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -231,6 +241,16 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_udp" {
   security_group_id = openstack_networking_secgroup_v2.worker.id
 
   depends_on = ["openstack_networking_secgroup_rule_v2.worker_ingress_services_tcp"]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_udp_from_master" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 30000
+  port_range_max    = 32767
+  remote_group_id   = openstack_networking_secgroup_v2.master.id
+  security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vrrp" {
