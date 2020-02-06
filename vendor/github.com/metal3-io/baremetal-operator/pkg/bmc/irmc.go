@@ -8,18 +8,20 @@ func init() {
 	registerFactory("irmc", newIRMCAccessDetails)
 }
 
-func newIRMCAccessDetails(parsedURL *url.URL) (AccessDetails, error) {
+func newIRMCAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
 	return &iRMCAccessDetails{
-		bmcType:  parsedURL.Scheme,
-		portNum:  parsedURL.Port(),
-		hostname: parsedURL.Hostname(),
+		bmcType:                        parsedURL.Scheme,
+		portNum:                        parsedURL.Port(),
+		hostname:                       parsedURL.Hostname(),
+		disableCertificateVerification: disableCertificateVerification,
 	}, nil
 }
 
 type iRMCAccessDetails struct {
-	bmcType  string
-	portNum  string
-	hostname string
+	bmcType                        string
+	portNum                        string
+	hostname                       string
+	disableCertificateVerification bool
 }
 
 func (a *iRMCAccessDetails) Type() string {
@@ -36,6 +38,10 @@ func (a *iRMCAccessDetails) Driver() string {
 	return "irmc"
 }
 
+func (a *iRMCAccessDetails) DisableCertificateVerification() bool {
+	return a.disableCertificateVerification
+}
+
 // DriverInfo returns a data structure to pass as the DriverInfo
 // parameter when creating a node in Ironic. The structure is
 // pre-populated with the access information, and the caller is
@@ -46,6 +52,10 @@ func (a *iRMCAccessDetails) DriverInfo(bmcCreds Credentials) map[string]interfac
 		"irmc_username": bmcCreds.Username,
 		"irmc_password": bmcCreds.Password,
 		"irmc_address":  a.hostname,
+	}
+
+	if a.disableCertificateVerification {
+		result["irmc_verify_ca"] = false
 	}
 
 	if a.portNum != "" {
@@ -68,7 +78,7 @@ func (a *iRMCAccessDetails) PowerInterface() string {
 }
 
 func (a *iRMCAccessDetails) RAIDInterface() string {
-	return ""
+	return "irmc"
 }
 
 func (a *iRMCAccessDetails) VendorInterface() string {

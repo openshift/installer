@@ -70,8 +70,9 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSet
 			Spec: baremetalhost.BareMetalHostSpec{
 				Online: true,
 				BMC: baremetalhost.BMCDetails{
-					Address:         host.BMC.Address,
-					CredentialsName: secret.Name,
+					Address:                        host.BMC.Address,
+					CredentialsName:                secret.Name,
+					DisableCertificateVerification: host.BMC.DisableCertificateVerification,
 				},
 				BootMACAddress:  host.BootMACAddress,
 				HardwareProfile: host.HardwareProfile,
