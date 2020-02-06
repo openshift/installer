@@ -60,6 +60,11 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		platform,
 	)
 
+	// Override empty pull secrets with valid json fake pull secret
+	if pullSecret.PullSecret == "" {
+		pullSecret.PullSecret = "{\"auths\":{\"fake\":{\"auth\": \"bar\"}}}"
+	}
+
 	a.Config = &types.InstallConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: types.InstallConfigVersion,
