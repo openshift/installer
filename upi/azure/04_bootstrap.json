@@ -140,61 +140,6 @@
       }
     },
     {
-      "apiVersion": "2018-09-01",
-      "type": "Microsoft.Network/privateDnsZones/A",
-      "name": "[concat(parameters('privateDNSZoneName'), '/bootstrap-0')]",
-      "location" : "[variables('location')]",
-      "dependsOn" : [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
-      ],
-      "properties": {
-        "ttl": 60,
-        "aRecords": [
-          {
-            "ipv4Address": "[reference(variables('nicName')).ipConfigurations[0].properties.privateIPAddress]"
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2018-09-01",
-      "type": "Microsoft.Network/privateDnsZones/SRV",
-      "name": "[concat(parameters('privateDNSZoneName'), '/_etcd-server-ssl._tcp')]",
-      "location" : "[variables('location')]",
-      "dependsOn" : [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
-      ],
-      "properties": {
-        "ttl": 60,
-        "srvRecords": [
-          {
-            "priority": 0,
-            "weight" : 10,
-            "port" : 2380,
-            "target" : "[concat('bootstrap-0.', parameters('privateDNSZoneName'))]"
-          },
-          {
-            "priority": 0,
-            "weight" : 10,
-            "port" : 2380,
-            "target" : "[concat('etcd-0.', parameters('privateDNSZoneName'))]"
-          },
-          {
-            "priority": 0,
-            "weight" : 10,
-            "port" : 2380,
-            "target" : "[concat('etcd-1.', parameters('privateDNSZoneName'))]"
-          },
-          {
-            "priority": 0,
-            "weight" : 10,
-            "port" : 2380,
-            "target" : "[concat('etcd-2.', parameters('privateDNSZoneName'))]"
-          }
-        ]
-      }
-    },
-    {
       "apiVersion" : "2018-06-01",
       "type" : "Microsoft.Compute/virtualMachines",
       "name" : "[variables('vmName')]",
@@ -206,9 +151,7 @@
         }
       },
       "dependsOn" : [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
-        "[concat('Microsoft.Network/privateDnsZones/', parameters('privateDNSZoneName'), '/A/bootstrap-0')]",
-        "[concat('Microsoft.Network/privateDnsZones/', parameters('privateDNSZoneName'), '/SRV/_etcd-server-ssl._tcp')]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties" : {
         "hardwareProfile" : {
