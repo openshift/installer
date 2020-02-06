@@ -7,45 +7,47 @@ curler() {
 
 get_ifname() {
   sysfs_path="/sys/class/net"
-  for dev in $(find ${sysfs_path} -maxdepth 1  -mindepth 1);
+  while IFS= read -r -d '' dev
   do
-      local mac=$(<${dev}/address);
-      local name="$(basename ${dev})"
+      local mac
+      mac=$(<"${dev}"/address);
+      local name
+      name="$(basename "${dev}")"
       if [ "${mac}" == "${1}" ];
       then
           echo "${name}"
           return;
       fi
-  done
+  done <   <(find ${sysfs_path} -maxdepth 1  -mindepth 1 -print0)
 }
 
 set_routes() {
   local dev="${1}"
-  read -a dev_routes <<< "${routes[$dev]}"
-  for cur_route in $(ip route show dev ${dev} table local proto 66 | awk '{print$2}');
+  read -a -r dev_routes <<< "${routes[$dev]}"
+  for cur_route in $(ip route show dev "${dev}" table local proto 66 | awk '{print$2}');
   do
-      if [[ ! "${dev_routes[@]}" =~ "${cur_route}" ]];
+      if [[ ! "${dev_routes[*]}" =~ ${cur_route} ]];
       then
           echo "Removing stale forwarded IP ${cur_route}/32"
-          ip route del ${cur_route}/32 dev ${dev} table local proto 66
+          ip route del "${cur_route}"/32 dev "${dev}" table local proto 66
       fi
   done
-  for route in ${dev_routes[@]}
+  for route in "${dev_routes[@]}"
   do
-      ip route replace to local ${route} dev $dev proto 66
+      ip route replace to local "${route}" dev "$dev" proto 66
   done
   unset dev_routes
 }
 
 del_routes() {
   local dev="${1}"
-  read -a dev_routes <<< "${routes[$dev]}"
-  for cur_route in $(ip route show dev ${dev} table local proto 66 | awk '{print$2}');
+  read -a -r dev_routes <<< "${routes[$dev]}"
+  for cur_route in $(ip route show dev "${dev}" table local proto 66 | awk '{print$2}');
   do
-      if [[ "${dev_routes[@]}" =~ "${cur_route}" ]];
+      if [[ "${dev_routes[*]}" =~ ${cur_route} ]];
       then
           echo "Removing forwarded IP ${cur_route}/32"
-          ip route del ${cur_route}/32 dev ${dev} table local proto 66
+          ip route del "${cur_route}"/32 dev "${dev}" table local proto 66
       fi
   done
   unset dev_routes
@@ -56,16 +58,16 @@ run() {
   for vif in $(curler ${net_path}); do
       hw_addr=$(curler "${net_path}${vif}mac")
       fwip_path="${net_path}${vif}forwarded-ips/"
-      dev_name="$(get_ifname ${hw_addr})"
-      for level in $(curler ${fwip_path})
+      dev_name="$(get_ifname "${hw_addr}")"
+      for level in $(curler "${fwip_path}")
       do
-          for fwip in $(curler ${fwip_path}${level})
+          for fwip in $(curler "${fwip_path}${level}")
           do
               echo "Processing route for NIC ${vif}${hw_addr} as ${dev_name} for ${fwip}"
               routes[$dev_name]+="${fwip} "
           done
       done
-      $"${1}" ${dev_name}
+      $"${1}" "${dev_name}"
 
       routes[$dev_name]=""
       unset hw_addr
