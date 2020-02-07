@@ -70,6 +70,9 @@ if [ ! -f .pivot-done ]; then
   # Disable zincati
   systemctl disable zincati.service
 
+	# GCP: enable gcp-routes
+	systemctl enable gcp-routes.service || true
+
   touch .pivot-done
   /usr/local/bin/machine-config-daemon pivot
 fi
