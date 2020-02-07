@@ -14,34 +14,36 @@ func init() {
 	registerFactory("idrac-virtualmedia", newRedfishiDracVirtualMediaAccessDetails)
 }
 
-func redfishDetails(parsedURL *url.URL) *redfishAccessDetails {
+func redfishDetails(parsedURL *url.URL, disableCertificateVerification bool) *redfishAccessDetails {
 	return &redfishAccessDetails{
-		bmcType: parsedURL.Scheme,
-		host:    parsedURL.Host,
-		path:    parsedURL.Path,
+		bmcType:                        parsedURL.Scheme,
+		host:                           parsedURL.Host,
+		path:                           parsedURL.Path,
+		disableCertificateVerification: disableCertificateVerification,
 	}
 }
 
-func newRedfishAccessDetails(parsedURL *url.URL) (AccessDetails, error) {
-	return redfishDetails(parsedURL), nil
+func newRedfishAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
+	return redfishDetails(parsedURL, disableCertificateVerification), nil
 }
 
-func newRedfishVirtualMediaAccessDetails(parsedURL *url.URL) (AccessDetails, error) {
+func newRedfishVirtualMediaAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
 	return &redfishVirtualMediaAccessDetails{
-		*redfishDetails(parsedURL),
+		*redfishDetails(parsedURL, disableCertificateVerification),
 	}, nil
 }
 
-func newRedfishiDracVirtualMediaAccessDetails(parsedURL *url.URL) (AccessDetails, error) {
+func newRedfishiDracVirtualMediaAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
 	return &redfishiDracVirtualMediaAccessDetails{
-		*redfishDetails(parsedURL),
+		*redfishDetails(parsedURL, disableCertificateVerification),
 	}, nil
 }
 
 type redfishAccessDetails struct {
-	bmcType string
-	host    string
-	path    string
+	bmcType                        string
+	host                           string
+	path                           string
+	disableCertificateVerification bool
 }
 
 type redfishVirtualMediaAccessDetails struct {
@@ -70,6 +72,10 @@ func (a *redfishAccessDetails) Driver() string {
 	return "redfish"
 }
 
+func (a *redfishAccessDetails) DisableCertificateVerification() bool {
+	return a.disableCertificateVerification
+}
+
 // DriverInfo returns a data structure to pass as the DriverInfo
 // parameter when creating a node in Ironic. The structure is
 // pre-populated with the access information, and the caller is
@@ -91,6 +97,10 @@ func (a *redfishAccessDetails) DriverInfo(bmcCreds Credentials) map[string]inter
 		"redfish_username":  bmcCreds.Username,
 		"redfish_password":  bmcCreds.Password,
 		"redfish_address":   strings.Join(redfishAddress, ""),
+	}
+
+	if a.disableCertificateVerification {
+		result["redfish_verify_ca"] = false
 	}
 
 	return result

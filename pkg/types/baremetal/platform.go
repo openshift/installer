@@ -6,9 +6,10 @@ import (
 
 // BMC stores the information about a baremetal host's management controller.
 type BMC struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Address  string `json:"address"`
+	Username                       string `json:"username"`
+	Password                       string `json:"password"`
+	Address                        string `json:"address"`
+	DisableCertificateVerification bool   `json:"disableCertificateVerification"`
 }
 
 // Host stores all the configuration data for a baremetal host.

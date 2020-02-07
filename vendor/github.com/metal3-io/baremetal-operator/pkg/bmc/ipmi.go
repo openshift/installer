@@ -9,18 +9,20 @@ func init() {
 	registerFactory("libvirt", newIPMIAccessDetails)
 }
 
-func newIPMIAccessDetails(parsedURL *url.URL) (AccessDetails, error) {
+func newIPMIAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
 	return &ipmiAccessDetails{
-		bmcType:  parsedURL.Scheme,
-		portNum:  parsedURL.Port(),
-		hostname: parsedURL.Hostname(),
+		bmcType:                        parsedURL.Scheme,
+		portNum:                        parsedURL.Port(),
+		hostname:                       parsedURL.Hostname(),
+		disableCertificateVerification: disableCertificateVerification,
 	}, nil
 }
 
 type ipmiAccessDetails struct {
-	bmcType  string
-	portNum  string
-	hostname string
+	bmcType                        string
+	portNum                        string
+	hostname                       string
+	disableCertificateVerification bool
 }
 
 const ipmiDefaultPort = "623"
@@ -45,6 +47,10 @@ func (a *ipmiAccessDetails) Driver() string {
 	return "ipmi"
 }
 
+func (a *ipmiAccessDetails) DisableCertificateVerification() bool {
+	return a.disableCertificateVerification
+}
+
 // DriverInfo returns a data structure to pass as the DriverInfo
 // parameter when creating a node in Ironic. The structure is
 // pre-populated with the access information, and the caller is
@@ -56,6 +62,10 @@ func (a *ipmiAccessDetails) DriverInfo(bmcCreds Credentials) map[string]interfac
 		"ipmi_username": bmcCreds.Username,
 		"ipmi_password": bmcCreds.Password,
 		"ipmi_address":  a.hostname,
+	}
+
+	if a.disableCertificateVerification {
+		result["ipmi_verify_ca"] = false
 	}
 	if a.portNum == "" {
 		result["ipmi_port"] = ipmiDefaultPort
