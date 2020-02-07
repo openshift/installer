@@ -123,6 +123,12 @@ sudo podman run -d --net host --privileged --name ironic-api \
      --entrypoint /bin/runironic-api \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
 
+# See if Ironic API is up
+while true; do
+    curl http://localhost:6385/v1 && break
+    sleep 10
+done
+
 # Now loop so the service remains active and restart everything should one of the containers exit unexpectedly.
 # The alternative would be RemainAfterExit=yes but then we lose the ability to restart if something crashes.
 while true; do
@@ -137,5 +143,15 @@ while true; do
             exit 1
         fi
     done
+
+    # See if all 3 masters are up yet - if so we can bring down Ironic. If the masters are brought up, and
+    # machine-api is started in the cluster, there can end up being 2 DHCP servers running on the network.
+    # We must ensure we stop the bootstrap's Ironic before that can happen.
+    ACTIVE_NODES=$(curl -H "X-OpenStack-Ironic-API-Version: 1.9" 'http://localhost:6385/v1/nodes?provision_state=active' | jq '.nodes | length')
+    if [[ "$ACTIVE_NODES" == "3" ]]; then
+        sleep 60
+        stopironic.sh
+        sleep infinity
+    fi
     sleep 10
 done
