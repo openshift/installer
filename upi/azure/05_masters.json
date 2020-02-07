@@ -157,6 +157,25 @@
     },
     {
       "apiVersion": "2018-09-01",
+      "type": "Microsoft.Network/privateDnsZones/SRV",
+      "name": "[concat(parameters('privateDNSZoneName'), '/_etcd-server-ssl._tcp')]",
+      "location" : "[variables('location')]",
+      "properties": {
+        "ttl": 60,
+        "copy": [{
+          "name": "srvRecords",
+          "count": "[length(variables('vmNames'))]",
+          "input": {
+            "priority": 0,
+            "weight" : 10,
+            "port" : 2380,
+            "target" : "[concat('etcd-', copyIndex('srvRecords'), '.', parameters('privateDNSZoneName'))]"
+          }
+        }]
+      }
+    },
+    {
+      "apiVersion": "2018-09-01",
       "type": "Microsoft.Network/privateDnsZones/A",
       "copy" : {
         "name" : "dnsCopy",
@@ -193,7 +212,8 @@
       },
       "dependsOn" : [
         "[concat('Microsoft.Network/networkInterfaces/', concat(variables('vmNames')[copyIndex()], '-nic'))]",
-        "[concat('Microsoft.Network/privateDnsZones/', parameters('privateDNSZoneName'), '/A/etcd-', copyIndex())]"
+        "[concat('Microsoft.Network/privateDnsZones/', parameters('privateDNSZoneName'), '/A/etcd-', copyIndex())]",
+        "[concat('Microsoft.Network/privateDnsZones/', parameters('privateDNSZoneName'), '/SRV/_etcd-server-ssl._tcp')]"
       ],
       "properties" : {
         "hardwareProfile" : {
