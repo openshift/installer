@@ -73,6 +73,9 @@ if [ ! -f .pivot-done ]; then
 	# GCP: enable gcp-routes
 	systemctl enable gcp-routes.service || true
 
+	# vSphere: enable open-vm-tools
+	systemctl enable vmtoolsd.service || true
+
   touch .pivot-done
   /usr/local/bin/machine-config-daemon pivot
 fi
