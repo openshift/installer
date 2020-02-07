@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -105,10 +106,15 @@ var (
 					logrus.Fatal("Bootstrap failed to complete: ", err)
 				}
 
-				logrus.Info("Destroying the bootstrap resources...")
-				err = destroybootstrap.Destroy(rootOpts.dir)
-				if err != nil {
-					logrus.Fatal(err)
+				if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP"); ok && oi != "" {
+					logrus.Warn("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP is set, not destroying bootstrap resources. " +
+						"Warning: this should only be used for debugging purposes, and poses a risk to cluster stability.")
+				} else {
+					logrus.Info("Destroying the bootstrap resources...")
+					err = destroybootstrap.Destroy(rootOpts.dir)
+					if err != nil {
+						logrus.Fatal(err)
+					}
 				}
 
 				err = waitForInstallComplete(ctx, config, rootOpts.dir)
@@ -244,7 +250,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 
 	discovery := client.Discovery()
 
-	apiTimeout := 30 * time.Minute
+	apiTimeout := 20 * time.Minute
 	logrus.Infof("Waiting up to %v for the Kubernetes API at %s...", apiTimeout, config.Host)
 	apiContext, cancel := context.WithTimeout(ctx, apiTimeout)
 	defer cancel()
@@ -285,7 +291,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 // and waits for the bootstrap configmap to report that bootstrapping has
 // completed.
 func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset) error {
-	timeout := 30 * time.Minute
+	timeout := 40 * time.Minute
 	logrus.Infof("Waiting up to %v for bootstrapping to complete...", timeout)
 
 	waitCtx, cancel := context.WithTimeout(ctx, timeout)
