@@ -106,9 +106,17 @@ func init() {
 	}
 }
 
+// SimulateParams captures any additional details that should be used
+// when simulating permissions.
+type SimulateParams struct {
+	Region string
+}
+
 // CheckCloudCredCreation will see whether we have enough permissions to create new sub-creds
 func CheckCloudCredCreation(awsClient Client, logger log.FieldLogger) (bool, error) {
-	return CheckPermissionsAgainstActions(awsClient, credMintingActions, logger)
+	// Empty SimulateParams{} b/c creating IAM users and assigning policies
+	// are all IAM API alls which are not region-specific
+	return CheckPermissionsAgainstActions(awsClient, credMintingActions, &SimulateParams{}, logger)
 }
 
 // getClientDetails will return the *iam.User associated with the provided client's credentials,
@@ -136,7 +144,8 @@ func getClientDetails(awsClient Client) (*iam.User, bool, error) {
 
 // CheckPermissionsUsingQueryClient will use queryClient to query whether the credentials in targetClient can perform the actions
 // listed in the statementEntries. queryClient will need iam:GetUser and iam:SimulatePrincipalPolicy
-func CheckPermissionsUsingQueryClient(queryClient, targetClient Client, statementEntries []minterv1.StatementEntry, logger log.FieldLogger) (bool, error) {
+func CheckPermissionsUsingQueryClient(queryClient, targetClient Client, statementEntries []minterv1.StatementEntry,
+	params *SimulateParams, logger log.FieldLogger) (bool, error) {
 	targetUser, isRoot, err := getClientDetails(targetClient)
 	if err != nil {
 		return false, fmt.Errorf("error gathering AWS credentials details: %v", err)
@@ -157,6 +166,17 @@ func CheckPermissionsUsingQueryClient(queryClient, targetClient Client, statemen
 	input := &iam.SimulatePrincipalPolicyInput{
 		PolicySourceArn: targetUser.Arn,
 		ActionNames:     allowList,
+		ContextEntries:  []*iam.ContextEntry{},
+	}
+
+	if params != nil {
+		if params.Region != "" {
+			input.ContextEntries = append(input.ContextEntries, &iam.ContextEntry{
+				ContextKeyName:   aws.String("aws:RequestedRegion"),
+				ContextKeyType:   aws.String("string"),
+				ContextKeyValues: []*string{aws.String(params.Region)},
+			})
+		}
 	}
 
 	// Either all actions are allowed and we'll return 'true', or it's a failure
@@ -189,14 +209,15 @@ func CheckPermissionsUsingQueryClient(queryClient, targetClient Client, statemen
 
 // CheckPermissionsAgainstStatementList will test to see whether the list of actions in the provided
 // list of StatementEntries can work with the credentials used by the passed-in awsClient
-func CheckPermissionsAgainstStatementList(awsClient Client, statementEntries []minterv1.StatementEntry, logger log.FieldLogger) (bool, error) {
-	return CheckPermissionsUsingQueryClient(awsClient, awsClient, statementEntries, logger)
+func CheckPermissionsAgainstStatementList(awsClient Client, statementEntries []minterv1.StatementEntry,
+	params *SimulateParams, logger log.FieldLogger) (bool, error) {
+	return CheckPermissionsUsingQueryClient(awsClient, awsClient, statementEntries, params, logger)
 }
 
 // CheckPermissionsAgainstActions will take the static list of Actions to check whether the provided
 // awsClient creds have sufficient permissions to perform the actions.
 // Will return true/false indicating whether the permissions are sufficient.
-func CheckPermissionsAgainstActions(awsClient Client, actionList []string, logger log.FieldLogger) (bool, error) {
+func CheckPermissionsAgainstActions(awsClient Client, actionList []string, params *SimulateParams, logger log.FieldLogger) (bool, error) {
 	statementList := []minterv1.StatementEntry{
 		{
 			Action:   actionList,
@@ -205,15 +226,15 @@ func CheckPermissionsAgainstActions(awsClient Client, actionList []string, logge
 		},
 	}
 
-	return CheckPermissionsAgainstStatementList(awsClient, statementList, logger)
+	return CheckPermissionsAgainstStatementList(awsClient, statementList, params, logger)
 }
 
 // CheckCloudCredPassthrough will see if the provided creds are good enough to pass through
 // to other components as-is based on the static list of permissions needed by the various
 // users of CredentialsRequests
 // TODO: move away from static list (to dynamic passthrough validation?)
-func CheckCloudCredPassthrough(awsClient Client, logger log.FieldLogger) (bool, error) {
-	return CheckPermissionsAgainstActions(awsClient, credPassthroughActions, logger)
+func CheckCloudCredPassthrough(awsClient Client, params *SimulateParams, logger log.FieldLogger) (bool, error) {
+	return CheckPermissionsAgainstActions(awsClient, credPassthroughActions, params, logger)
 }
 
 func readCredentialRequest(cr []byte) (*minterv1.CredentialsRequest, error) {
