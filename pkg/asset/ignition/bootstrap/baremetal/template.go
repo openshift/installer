@@ -2,6 +2,7 @@ package baremetal
 
 import (
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"strings"
 )
 
 // TemplateData holds data specific to templates used for the baremetal platform.
@@ -18,6 +19,10 @@ type TemplateData struct {
 	// ProvisioningDHCPRange has the DHCP range, if DHCP is not external. Otherwise it
 	// should be blank.
 	ProvisioningDHCPRange string
+
+	// ProvisioningDHCPAllowList contains a space-separated list of all of the control plane's boot
+	// MAC addresses. Requests to bootstrap DHCP from other hosts will be ignored.
+	ProvisioningDHCPAllowList string
 }
 
 // GetTemplateData returns platform-specific data for bootstrap templates.
@@ -33,6 +38,14 @@ func GetTemplateData(config *baremetal.Platform) *TemplateData {
 
 	if !config.ProvisioningDHCPExternal {
 		templateData.ProvisioningDHCPRange = config.ProvisioningDHCPRange
+
+		var dhcpAllowList []string
+		for _, host := range config.Hosts {
+			if host.Role == "master" {
+				dhcpAllowList = append(dhcpAllowList, host.BootMACAddress)
+			}
+		}
+		templateData.ProvisioningDHCPAllowList = strings.Join(dhcpAllowList, " ")
 	}
 
 	return &templateData
