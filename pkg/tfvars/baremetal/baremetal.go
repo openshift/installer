@@ -78,8 +78,9 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 
 		// Properties
 		propertiesMap := map[string]interface{}{
-			"local_gb": profile.LocalGB,
-			"cpu_arch": profile.CPUArch,
+			"local_gb":     profile.LocalGB,
+			"cpu_arch":     profile.CPUArch,
+			"capabilities": "boot_mode:uefi",
 		}
 
 		// Root device hints
