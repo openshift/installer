@@ -1,16 +1,25 @@
 {
   "$schema" : "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion" : "1.0.0.0",
+  "parameters" : {
+    "baseName" : {
+      "type" : "string",
+      "minLength" : 1,
+      "metadata" : {
+        "description" : "Base name to be used in resource names (usually the cluster's Infra ID)"
+      }
+    }
+  },
   "variables" : {
     "location" : "[resourceGroup().location]",
-    "virtualNetworkName" : "[concat(resourceGroup().name, '-vnet')]",
+    "virtualNetworkName" : "[concat(parameters('baseName'), '-vnet')]",
     "addressPrefix" : "10.0.0.0/16",
-    "masterSubnetName" : "[concat(resourceGroup().name, '-master-subnet')]",
+    "masterSubnetName" : "[concat(parameters('baseName'), '-master-subnet')]",
     "masterSubnetPrefix" : "10.0.0.0/24",
-    "nodeSubnetName" : "[concat(resourceGroup().name, '-node-subnet')]",
+    "nodeSubnetName" : "[concat(parameters('baseName'), '-worker-subnet')]",
     "nodeSubnetPrefix" : "10.0.1.0/24",
-    "controlPlaneNsgName" : "[concat(resourceGroup().name, '-controlplane-nsg')]",
-    "nodeNsgName" : "[concat(resourceGroup().name, '-node-nsg')]"
+    "controlPlaneNsgName" : "[concat(parameters('baseName'), '-controlplane-nsg')]",
+    "nodeNsgName" : "[concat(parameters('baseName'), '-node-nsg')]"
   },
   "resources" : [
     {

@@ -2,6 +2,13 @@
   "$schema" : "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion" : "1.0.0.0",
   "parameters" : {
+    "baseName" : {
+      "type" : "string",
+      "minLength" : 1,
+      "metadata" : {
+        "description" : "Base name to be used in resource names (usually the cluster's Infra ID)"
+      }
+    },
     "workerIgnition" : {
       "type" : "string",
       "metadata" : {
@@ -101,18 +108,19 @@
   },
   "variables" : {
     "location" : "[resourceGroup().location]",
-    "virtualNetworkName" : "[concat(resourceGroup().name, '-vnet')]",
+    "virtualNetworkName" : "[concat(parameters('baseName'), '-vnet')]",
     "virtualNetworkID" : "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "nodeSubnetName" : "[concat(resourceGroup().name, '-node-subnet')]",
+    "nodeSubnetName" : "[concat(parameters('baseName'), '-worker-subnet')]",
     "nodeSubnetRef" : "[concat(variables('virtualNetworkID'), '/subnets/', variables('nodeSubnetName'))]",
-    "infraLoadBalancerName" : "[resourceGroup().name]",
+    "infraLoadBalancerName" : "[parameters('baseName')]",
     "sshKeyPath" : "/home/capi/.ssh/authorized_keys",
-    "identityName" : "[concat(resourceGroup().name, '-identity')]",
+    "identityName" : "[concat(parameters('baseName'), '-identity')]",
+    "imageName" : "[concat(parameters('baseName'), '-image')]",
     "copy" : [
       {
         "name" : "vmNames",
         "count" :  "[parameters('numberOfNodes')]",
-        "input" : "[concat(resourceGroup().name, '-worker-', variables('location'), '-', copyIndex('vmNames', 1))]"
+        "input" : "[concat(parameters('baseName'), '-worker-', variables('location'), '-', copyIndex('vmNames', 1))]"
       }
     ]
   },
@@ -147,7 +155,7 @@
                       },
                       "loadBalancerBackendAddressPools" : [
                         {
-                          "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('infraLoadBalancerName'), '/backendAddressPools/', resourceGroup().name)]"
+                          "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('infraLoadBalancerName'), '/backendAddressPools/', parameters('baseName'))]"
                         }
                       ]
                     }
@@ -194,7 +202,7 @@
                 },
                 "storageProfile" : {
                   "imageReference": {
-                    "id": "[resourceId('Microsoft.Compute/images', concat(resourceGroup().name, '-image'))]"
+                    "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]"
                   },
                   "osDisk" : {
                     "name": "[concat(variables('vmNames')[copyIndex()],'_OSDisk')]",
