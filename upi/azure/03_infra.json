@@ -2,6 +2,13 @@
   "$schema" : "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion" : "1.0.0.0",
   "parameters" : {
+    "baseName" : {
+      "type" : "string",
+      "minLength" : 1,
+      "metadata" : {
+        "description" : "Base name to be used in resource names (usually the cluster's Infra ID)"
+      }
+    },
     "privateDNSZoneName" : {
       "type" : "string",
       "metadata" : {
@@ -11,15 +18,15 @@
   },
   "variables" : {
     "location" : "[resourceGroup().location]",
-    "virtualNetworkName" : "[concat(resourceGroup().name, '-vnet')]",
+    "virtualNetworkName" : "[concat(parameters('baseName'), '-vnet')]",
     "virtualNetworkID" : "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "masterSubnetName" : "[concat(resourceGroup().name, '-master-subnet')]",
+    "masterSubnetName" : "[concat(parameters('baseName'), '-master-subnet')]",
     "masterSubnetRef" : "[concat(variables('virtualNetworkID'), '/subnets/', variables('masterSubnetName'))]",
-    "masterPublicIpAddressName" : "[concat(resourceGroup().name, '-master-pip')]",
+    "masterPublicIpAddressName" : "[concat(parameters('baseName'), '-master-pip')]",
     "masterPublicIpAddressID" : "[resourceId('Microsoft.Network/publicIPAddresses', variables('masterPublicIpAddressName'))]",
-    "masterLoadBalancerName" : "[concat(resourceGroup().name, '-public-lb')]",
+    "masterLoadBalancerName" : "[concat(parameters('baseName'), '-public-lb')]",
     "masterLoadBalancerID" : "[resourceId('Microsoft.Network/loadBalancers', variables('masterLoadBalancerName'))]",
-    "internalLoadBalancerName" : "[concat(resourceGroup().name, '-internal-lb')]",
+    "internalLoadBalancerName" : "[concat(parameters('baseName'), '-internal-lb')]",
     "internalLoadBalancerID" : "[resourceId('Microsoft.Network/loadBalancers', variables('internalLoadBalancerName'))]",
     "skuName": "Standard"
   },

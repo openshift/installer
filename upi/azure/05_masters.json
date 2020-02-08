@@ -2,6 +2,13 @@
   "$schema" : "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion" : "1.0.0.0",
   "parameters" : {
+    "baseName" : {
+      "type" : "string",
+      "minLength" : 1,
+      "metadata" : {
+        "description" : "Base name to be used in resource names (usually the cluster's Infra ID)"
+      }
+    },
     "masterIgnition" : {
       "type" : "string",
       "metadata" : {
@@ -107,19 +114,20 @@
   },
   "variables" : {
     "location" : "[resourceGroup().location]",
-    "virtualNetworkName" : "[concat(resourceGroup().name, '-vnet')]",
+    "virtualNetworkName" : "[concat(parameters('baseName'), '-vnet')]",
     "virtualNetworkID" : "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "masterSubnetName" : "[concat(resourceGroup().name, '-master-subnet')]",
+    "masterSubnetName" : "[concat(parameters('baseName'), '-master-subnet')]",
     "masterSubnetRef" : "[concat(variables('virtualNetworkID'), '/subnets/', variables('masterSubnetName'))]",
-    "masterLoadBalancerName" : "[concat(resourceGroup().name, '-public-lb')]",
-    "internalLoadBalancerName" : "[concat(resourceGroup().name, '-internal-lb')]",
+    "masterLoadBalancerName" : "[concat(parameters('baseName'), '-public-lb')]",
+    "internalLoadBalancerName" : "[concat(parameters('baseName'), '-internal-lb')]",
     "sshKeyPath" : "/home/core/.ssh/authorized_keys",
-    "identityName" : "[concat(resourceGroup().name, '-identity')]",
+    "identityName" : "[concat(parameters('baseName'), '-identity')]",
+    "imageName" : "[concat(parameters('baseName'), '-image')]",
     "copy" : [
       {
         "name" : "vmNames",
         "count" :  "[parameters('numberOfMasters')]",
-        "input" : "[concat(resourceGroup().name, '-master-', copyIndex('vmNames'))]"
+        "input" : "[concat(parameters('baseName'), '-master-', copyIndex('vmNames'))]"
       }
     ]
   },
@@ -217,7 +225,7 @@
         },
         "storageProfile" : {
           "imageReference": {
-            "id": "[resourceId('Microsoft.Compute/images', concat(resourceGroup().name, '-image'))]"
+            "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]"
           },
           "osDisk" : {
             "name": "[concat(variables('vmNames')[copyIndex()], '_OSDisk')]",
