@@ -41,6 +41,11 @@ type metadata struct {
 			SHA256             string `json:"sha256"`
 			UncompressedSHA256 string `json:"uncompressed-sha256"`
 		} `json:"openstack"`
+		Baremetal struct {
+			Path               string `json:"path"`
+			SHA256             string `json:"sha256"`
+			UncompressedSHA256 string `json:"uncompressed-sha256"`
+		} `json:"metal"`
 	} `json:"images"`
 	OSTreeVersion string `json:"ostree-version"`
 }
