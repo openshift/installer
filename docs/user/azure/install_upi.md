@@ -170,7 +170,6 @@ $ tree
 ├── bootstrap.ign
 ├── master.ign
 ├── metadata.json
-├── setup-bootstrap-ignition.py
 ├── setup-manifests.py
 └── worker.ign
 ```
@@ -339,7 +338,7 @@ az network dns record-set a add-record -g $BASE_DOMAIN_RESOURCE_GROUP -z ${BASE_
 
 ```sh
 export BOOTSTRAP_URL=`az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c "files" -n "bootstrap.ign" -o tsv`
-export BOOTSTRAP_IGNITION=`python3 setup-bootstrap-ignition.py $BOOTSTRAP_URL`
+export BOOTSTRAP_IGNITION=`jq -rcnM --arg v "2.2.0" --arg url $BOOTSTRAP_URL '{ignition:{version:$v,config:{replace:{source:$url}}}}' | base64 -w0`
 
 az group deployment create -g $RESOURCE_GROUP \
   --template-file "04_bootstrap.json" \
