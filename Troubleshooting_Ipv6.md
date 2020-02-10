@@ -4,11 +4,11 @@ In this document we will analyze common scenarios of errors/failures which can c
 
 ## Common failures Basic checks before Installing
 
-Below are some precautions we should follow before even attempting the OCP4.3 Ipv6 deployments. 
+Below are some precautions we should follow before even attempting the OCP4 Ipv6 deployments. 
 
 * [Ipv4-BM-IPI](https://github.com/openshift-kni/baremetal-deploy/blob/master/install-steps.md#preparing-the-provision-node-for-openshift-install) has some pre-requisites which will be applied fpr ipv6 deployments as well. 
 
-### The architecture for IPv6 Disconnected Install is 
+### The architecture for IPv6 Disconnected Install(Nodes can vary as per requirements) 
 * Jump Host which acts as a DNSMasq, Registry. 
 * Worker/Provisioning node 
 * 3 Master nodes. 
@@ -78,7 +78,7 @@ After the registry is mirrored, confirm that you can access this in your disconn
 
 ```
 # curl -k -6 -u kni:kni https://registry.<Cluster-Name>.<Domain-Name>:5000/v2/_catalog
-{"repositories":["ocp4"]}
+{"repositories":["<Repo-Name>"]}
 ```
 
 Now, we need to verify the images are served from local http service(either create an nginx local server or httpd container service) 
@@ -87,8 +87,12 @@ Now, we need to verify the images are served from local http service(either crea
 # curl -I -s http://<Jump-Host>.<Domain-Name>
 HTTP/1.1 200 OK
 
+#export $RHCOS_OPENSTACK_URI=rhcos-43.81.202001142154.0-openstack.x86_64.qcow2.gz
+
 # curl -I -s http://<Jump-Host>.<Domain-Name>/$RHCOS_OPENSTACK_URI | grep HTTP
 HTTP/1.1 200 OK
+
+#export $RHCOS_QEMU_URI=rhcos-43.81.202001142154.0-qemu.x86_64.qcow2.gz
 
 # curl -I -s http://<Jump-Host>.<Domain-Name>/$RHCOS_QEMU_URI | grep HTTP
 HTTP/1.1 200 OK
@@ -120,7 +124,7 @@ Here `eno1` should be a slave to `baremetal` bridge and `eno3` to `provisioning`
 
 * Create an install-config file as [Install-config](https://gist.github.com/hardys/30809af4d2d6f89354cec60241b4883d)
 
-**Imp**:  Make sure to power off the master nodes before you begin the installation via iDRAC/iLOM.
+**Important**:  Make sure to power off the master nodes before you begin the installation via iDRAC/iLOM.
 
 Feel free to use this below script:
 
@@ -135,25 +139,25 @@ ipmitool -I lanplus -U root -P <Password> -H <iDRAC-ipv6-ip> power off
 
 ## During the deployment
 
-As per the [issue](https://github.com/openshift/installer/pull/2449) we need to create a custom metal3-config.yaml file as shown below. 
+Create your metal3-config.yaml file as shown below 
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: metal3-config
-  namespace: openshift-machine-api
-data:
-  cache_url: ''
-  deploy_kernel_url: http://172.22.0.3:6180/images/ironic-python-agent.kernel
-  deploy_ramdisk_url: http://172.22.0.3:6180/images/ironic-python-agent.initramfs
-  dhcp_range: 172.22.0.10,172.22.0.100
-  http_port: "6180"
-  ironic_endpoint: http://172.22.0.3:6385/v1/
-  ironic_inspector_endpoint: http://172.22.0.3:5050/v1/
-  provisioning_interface: eno1
-  provisioning_ip: 172.22.0.3/24
-  rhcos_image_url: ${RHCOS_PATH}${RHCOS_URI}
+ apiVersion: v1
+ kind: ConfigMap
+ metadata:
+   name: metal3-config
+   namespace: openshift-machine-api
+ data:
+   cache_url: rhcos-43.81.202001142154.0-qemu.x86_64.qcow2.gz
+   deploy_kernel_url: http://172.22.0.1:6180/images/ironic-python-agent.kernel
+   deploy_ramdisk_url: http://172.22.0.1:6180/images/ironic-python-agent.initramfs
+   dhcp_range: 172.22.0.10,172.22.0.100
+   http_port: "6180"
+   ironic_endpoint: http://172.22.0.1:6385/v1/
+   ironic_inspector_endpoint: http://172.22.0.3:5050/v1/
+   provisioning_interface: eno1
+   provisioning_ip: 172.22.0.1/24
+   rhcos_image_url: http://[Ipv6-IP-Registry]/rhcos-43.81.202001142154.0-openstack.x86_64.qcow2.gz
 ```
 
 After the installation is triggered, Check/verify bootstrap VM is up and running from worker node: 
