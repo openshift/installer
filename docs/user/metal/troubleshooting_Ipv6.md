@@ -15,7 +15,7 @@ Below are some precautions we should follow before even attempting the OCP4 Ipv6
 
 Before starting the installation, we need to set up a DNSmasq conf file which will assign IPv6 IP's to all the nodes on `eno3` interface.A sample file is provided below.  
 
-* A Jump Host should have one interface say `eno1` on Ipv4(Public Network), `eno3` on **Private VLAN** this will be used to provide IPv6 IP's on the isolated VLAN
+* A Jump Host should have one interface say `eno1` on Ipv4(Public Network), `eno3` on **Private VLAN** this will be used to provide **IPv6 IP's on the isolated VLAN**. 
 
 ```
 domain-needed
