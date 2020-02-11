@@ -292,10 +292,11 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 	}
 
 	filename := path.Base(uri)
+	parentDir := path.Base(path.Dir(uri))
 
 	var mode int
 	appendToFile := false
-	if path.Base(path.Dir(uri)) == "bin" {
+	if parentDir == "bin" || parentDir == "dispatcher.d" {
 		mode = 0555
 	} else if filename == "motd" {
 		mode = 0644
