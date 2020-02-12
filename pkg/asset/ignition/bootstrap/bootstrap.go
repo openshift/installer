@@ -12,8 +12,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
-
 	"github.com/containers/image/pkg/sysregistriesv2"
 	"github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_0/types"
