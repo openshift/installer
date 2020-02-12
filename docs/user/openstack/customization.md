@@ -2,6 +2,15 @@
 
 Beyond the [platform-agnostic `install-config.yaml` properties](../customization.md#platform-customization), the installer supports additional, OpenStack-specific properties.
 
+## Table of Contents
+
+* [Cluster-scoped properties](#cluster-scoped-properties)
+* [Machine pools](#machine-pools)
+* [Examples](#examples)
+  * [Minimal](#minimal)
+  * [Custom-machine-pools](#custom-machine-pools)
+* [Further customization](#further-customization)
+
 ## Cluster-scoped properties
 
 * `cloud` (required string): The name of the OpenStack cloud to use from `clouds.yaml`.
@@ -80,3 +89,7 @@ platform:
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
+
+## Further customization
+
+For customizing the installation beyond what is possible with `openshift-install`, refer to the [UPI (User Provided Infrastructure) documentation](./install_upi.md).
