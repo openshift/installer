@@ -112,7 +112,7 @@
   version = "v2.0"
 
 [[projects]]
-  digest = "1:ef55f87a8efa6ed704f2477bd6ca696780ff56340d84cd4fc473b04134a03f1e"
+  digest = "1:607e6e0487464ad5194fde915e288ae705e2d5750e3e4058e5e4de6033397366"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -137,9 +137,11 @@
     "internal/ini",
     "internal/s3err",
     "internal/sdkio",
+    "internal/sdkmath",
     "internal/sdkrand",
     "internal/sdkuri",
     "internal/shareddefaults",
+    "internal/strings",
     "private/protocol",
     "private/protocol/ec2query",
     "private/protocol/eventstream",
@@ -160,13 +162,15 @@
     "service/resourcegroupstaggingapi",
     "service/route53",
     "service/s3",
+    "service/s3/internal/arn",
     "service/s3/s3iface",
     "service/s3/s3manager",
     "service/sts",
+    "service/sts/stsiface",
   ]
   pruneopts = "NUT"
-  revision = "fb5f514796fc4fdc6afdcf5a675a5b2baa714b9f"
-  version = "v1.16.14"
+  revision = "10653500713c229d4ef93175510476c3cc385299"
+  version = "v1.28.3"
 
 [[projects]]
   digest = "1:fdb4ed936abeecb46a8c27dcac83f75c05c87a46d9ec7711411eb785c213fa02"

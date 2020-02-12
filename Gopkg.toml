@@ -19,7 +19,7 @@ required = [
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
-  version = "1.16.14"
+  version = "1.25.35"
 
 [[constraint]]
   name = "github.com/Azure/azure-sdk-for-go"
