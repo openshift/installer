@@ -1134,7 +1134,7 @@
   version = "v1.19.1"
 
 [[projects]]
-  digest = "1:de19d3688bad66ab5567a2e0a12951a6323a48afca7a7e6582a2b9d3a7456c1c"
+  digest = "1:c4e32536f0f5b5f6644337fcb58d53679e3d4720b0bd13699b60e4a9a9f93faa"
   name = "gopkg.in/AlecAivazis/survey.v1"
   packages = [
     ".",
@@ -1142,8 +1142,8 @@
     "terminal",
   ]
   pruneopts = "NUT"
-  revision = "e4af3b345125b0903edb492a33a99a23e9eb3487"
-  version = "v1.8.7"
+  revision = "da50ccef2fd74048e26b7846a731da4254035115"
+  version = "v1.8.8"
 
 [[projects]]
   digest = "1:2d1fbdc6777e5408cabeb02bf336305e724b925ff4546ded0fa8715a7267922a"
