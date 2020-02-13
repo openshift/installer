@@ -108,13 +108,13 @@ func TestValidatePlatform(t *testing.T) {
 			name:      "network extensions fetch failure",
 			platform:  validPlatform(),
 			noNetExts: true,
-			valid:     false,
+			valid:     true,
 		},
 		{
 			name:             "service catalog fetch failure",
 			platform:         validPlatform(),
 			noServiceCatalog: true,
-			valid:            false,
+			valid:            true,
 		},
 	}
 	for _, tc := range cases {
