@@ -24,7 +24,6 @@ var (
 // addKnownTypes adds types to API group
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(GroupVersion,
-		&MCOConfig{},
 		&ContainerRuntimeConfig{},
 		&ContainerRuntimeConfigList{},
 		&ControllerConfig{},

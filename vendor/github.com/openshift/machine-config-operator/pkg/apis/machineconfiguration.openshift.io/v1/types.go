@@ -11,32 +11,6 @@ import (
 )
 
 // +genclient
-// +genclient:noStatus
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// MCOConfig describes configuration for MachineConfigOperator.
-type MCOConfig struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec MCOConfigSpec `json:"spec"`
-}
-
-// MCOConfigSpec is the spec for MCOConfig resource.
-type MCOConfigSpec struct {
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// MCOConfigList is a list of MCOConfig resources
-type MCOConfigList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata"`
-
-	Items []MCOConfig `json:"items"`
-}
-
-// +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -82,6 +56,9 @@ type ControllerConfigSpec struct {
 	// rootCAData specifies the root CA data
 	RootCAData []byte `json:"rootCAData"`
 
+	// cloudProvider specifies the cloud provider CA data
+	CloudProviderCAData []byte `json:"cloudProviderCAData"`
+
 	// additionalTrustBundle is a certificate bundle that will be added to the nodes
 	// trusted certificate store.
 	AdditionalTrustBundle []byte `json:"additionalTrustBundle"`
@@ -105,6 +82,9 @@ type ControllerConfigSpec struct {
 	// infra holds the infrastructure details
 	// TODO this makes platform redundant as everything is contained inside Infra.Status
 	Infra *configv1.Infrastructure `json:"infra"`
+
+	// kubeletIPv6 is true to force a single-stack IPv6 kubelet config
+	KubeletIPv6 bool `json:"kubeletIPv6,omitempty"`
 }
 
 // ControllerConfigStatus is the status for ControllerConfig
@@ -185,7 +165,8 @@ type MachineConfigSpec struct {
 
 	KernelArguments []string `json:"kernelArguments"`
 
-	FIPS bool `json:"fips"`
+	FIPS       bool   `json:"fips"`
+	KernelType string `json:"kernelType"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

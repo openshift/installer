@@ -1914,6 +1914,26 @@ virDomainSetGuestVcpusWrapper(virDomainPtr domain,
 
 
 int
+virDomainSetIOThreadParamsWrapper(virDomainPtr domain,
+                                  unsigned int iothread_id,
+                                  virTypedParameterPtr params,
+                                  int nparams,
+                                  unsigned int flags,
+                                  virErrorPtr err)
+{
+#if LIBVIR_VERSION_NUMBER < 4010000
+    assert(0); // Caller should have checked version
+#else
+    int ret = virDomainSetIOThreadParams(domain, iothread_id, params, nparams, flags);
+    if (ret < 0) {
+        virCopyLastError(err);
+    }
+    return ret;
+#endif
+}
+
+
+int
 virDomainSetInterfaceParametersWrapper(virDomainPtr domain,
                                        const char *device,
                                        virTypedParameterPtr params,
@@ -2325,6 +2345,96 @@ virDomainUpdateDeviceFlagsWrapper(virDomainPtr domain,
     return ret;
 }
 
+
+int
+virDomainListAllCheckpointsWrapper(virDomainPtr domain,
+                                   virDomainCheckpointPtr **cps,
+                                   unsigned int flags,
+                                   virErrorPtr err)
+{
+#if LIBVIR_VERSION_NUMBER < 5006000
+    assert(0); // Caller should have checked version
+#else
+    int ret = virDomainListAllCheckpoints(domain, cps, flags);
+    if (ret < 0) {
+        virCopyLastError(err);
+    }
+    return ret;
+#endif
+}
+
+
+virDomainCheckpointPtr
+virDomainCheckpointCreateXMLWrapper(virDomainPtr domain,
+                                  const char *xmlDesc,
+                                  unsigned int flags,
+                                  virErrorPtr err)
+{
+#if LIBVIR_VERSION_NUMBER < 5006000
+    assert(0); // Caller should have checked version
+#else
+    virDomainCheckpointPtr ret = virDomainCheckpointCreateXML(domain, xmlDesc, flags);
+    if (!ret) {
+        virCopyLastError(err);
+    }
+    return ret;
+#endif
+}
+
+
+virDomainCheckpointPtr
+virDomainCheckpointLookupByNameWrapper(virDomainPtr domain,
+                                       const char *name,
+                                       unsigned int flags,
+                                       virErrorPtr err)
+{
+#if LIBVIR_VERSION_NUMBER < 5006000
+    assert(0); // Caller should have checked version
+#else
+    virDomainCheckpointPtr ret = virDomainCheckpointLookupByName(domain, name, flags);
+    if (!ret) {
+        virCopyLastError(err);
+    }
+    return ret;
+#endif
+}
+
+
+int
+virDomainGetGuestInfoWrapper(virDomainPtr domain,
+			     unsigned int types,
+			     virTypedParameterPtr *params,
+			     int *nparams,
+			     unsigned int flags,
+                             virErrorPtr err)
+{
+#if LIBVIR_VERSION_NUMBER < 5007000
+    assert(0); // Caller should have checked version
+#else
+    int ret = virDomainGetGuestInfo(domain, types, params, nparams, flags);
+    if (ret < 0) {
+        virCopyLastError(err);
+    }
+    return ret;
+#endif
+}
+
+int
+virDomainAgentSetResponseTimeoutWrapper(virDomainPtr domain,
+                                        int timeout,
+                                        unsigned int flags,
+                                        virErrorPtr err)
+{
+#if LIBVIR_VERSION_NUMBER < 5010000
+    assert(0); // Caller should have checked version
+#else
+    int ret = virDomainAgentSetResponseTimeout(domain, timeout, flags);
+    if (ret < 0) {
+        virCopyLastError(err);
+    }
+    return ret;
+#endif
+}
 
 */
 import "C"

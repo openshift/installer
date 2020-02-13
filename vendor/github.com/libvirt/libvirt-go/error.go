@@ -362,6 +362,24 @@ const (
 
 	// Requested nwfilter binding does not exist
 	ERR_NO_NWFILTER_BINDING = ErrorNumber(C.VIR_ERR_NO_NWFILTER_BINDING)
+
+	// invalid domain checkpoint
+	ERR_INVALID_DOMAIN_CHECKPOINT = ErrorNumber(C.VIR_ERR_INVALID_DOMAIN_CHECKPOINT)
+
+	// domain checkpoint not found
+	ERR_NO_DOMAIN_CHECKPOINT = ErrorNumber(C.VIR_ERR_NO_DOMAIN_CHECKPOINT)
+
+	// domain backup job id not found *
+	ERR_NO_DOMAIN_BACKUP = ErrorNumber(C.VIR_ERR_NO_DOMAIN_BACKUP)
+
+	// invalid network port object
+	ERR_INVALID_NETWORK_PORT = ErrorNumber(C.VIR_ERR_INVALID_NETWORK_PORT)
+
+	// network port already exists
+	ERR_NETWORK_PORT_EXIST = ErrorNumber(C.VIR_ERR_NETWORK_PORT_EXIST)
+
+	// network port not found
+	ERR_NO_NETWORK_PORT = ErrorNumber(C.VIR_ERR_NO_NETWORK_PORT)
 )
 
 type ErrorDomain int
@@ -569,6 +587,18 @@ const (
 
 	// Error from resoruce control
 	FROM_RESCTRL = ErrorDomain(C.VIR_FROM_RESCTRL)
+
+	// Error from firewalld
+	FROM_FIREWALLD = ErrorDomain(C.VIR_FROM_FIREWALLD)
+
+	// Error from domain checkpoint
+	FROM_DOMAIN_CHECKPOINT = ErrorDomain(C.VIR_FROM_DOMAIN_CHECKPOINT)
+
+	// Error from TPM
+	FROM_TPM = ErrorDomain(C.VIR_FROM_TPM)
+
+	// Error from BPF
+	FROM_BPF = ErrorDomain(C.VIR_FROM_BPF)
 )
 
 type Error struct {
