@@ -99,7 +99,8 @@ containing all of the details of the bare metal hosts to be provisioned.
 
 The `install-config.yaml` file requires some additional details.  Most of the
 information is teaching the installer and the resulting cluster enough about
-the available hardware so that it is able to fully manage it.
+the available hardware so that it is able to fully manage it. There are
+[additional customizations](customization_ipi.md) possible.
 
 Here is an example `install-config.yaml` with the required `baremetal` platform
 details.

@@ -50,6 +50,7 @@ The following `install-config.yaml` properties are available:
         The default is 172.30.0.0/16.
 * `platform` (required object): The configuration for the specific platform upon which to perform the installation.
     * `aws` (optional object): [AWS-specific properties](aws/customization.md#cluster-scoped-properties).
+    * `baremetal` (optional object): [Baremetal IPI-specific properties](metal/customization_ipi.md).
     * `azure` (optional object): [Azure-specific properties](azure/customization.md#cluster-scoped-properties).
     * `openstack` (optional object): [OpenStack-specific properties](openstack/customization.md#cluster-scoped-properties).
     * `vsphere` (optional object): [vSphere-specific properties](vsphere/customization.md#cluster-scoped-properties).
