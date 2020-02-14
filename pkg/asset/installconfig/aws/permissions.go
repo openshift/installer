@@ -217,7 +217,7 @@ var permissions = map[PermissionGroup][]string{
 // are sufficient to perform an installation, and that they can be used for cluster runtime
 // as either capable of creating new credentials for components that interact with the cloud or
 // being able to be passed through as-is to the components that need cloud credentials
-func ValidateCreds(ssn *session.Session, groups []PermissionGroup) error {
+func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string) error {
 	// Compile a list of permissions based on the permission groups provided
 	requiredPermissions := []string{}
 	for _, group := range groups {
@@ -238,9 +238,13 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup) error {
 		return errors.Wrap(err, "initialize cloud-credentials client")
 	}
 
+	sParams := &ccaws.SimulateParams{
+		Region: region,
+	}
+
 	// Check whether we can do an installation
 	logger := logrus.StandardLogger()
-	canInstall, err := ccaws.CheckPermissionsAgainstActions(client, requiredPermissions, logger)
+	canInstall, err := ccaws.CheckPermissionsAgainstActions(client, requiredPermissions, sParams, logger)
 	if err != nil {
 		return errors.Wrap(err, "checking install permissions")
 	}
@@ -259,7 +263,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup) error {
 
 	// Check whether we can use the current credentials in passthrough mode to satisfy
 	// cluster services needing to interact with the cloud
-	canPassthrough, err := ccaws.CheckCloudCredPassthrough(client, logger)
+	canPassthrough, err := ccaws.CheckCloudCredPassthrough(client, sParams, logger)
 	if err != nil {
 		return errors.Wrap(err, "passthrough credentials check")
 	}

@@ -95,6 +95,10 @@ required = [
   name = "github.com/gophercloud/gophercloud"
 
 [[constraint]]
+  branch = "release-4.3"
+  name = "github.com/openshift/cloud-credential-operator"
+
+[[constraint]]
   branch = "master"
   name = "sigs.k8s.io/cluster-api-provider-openstack"
   source = "https://github.com/openshift/cluster-api-provider-openstack.git"
