@@ -25,6 +25,7 @@ import (
 	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/machines"
+	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
@@ -43,7 +44,6 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	"github.com/openshift/installer/pkg/types/vsphere"
-	"github.com/openshift/installer/pkg/version"
 )
 
 const (
@@ -418,21 +418,12 @@ func injectInstallInfo(bootstrap []byte) (string, error) {
 		return "", errors.Wrap(err, "failed to unmarshal bootstrap Ignition config")
 	}
 
-	invoker := "user"
-	if env := os.Getenv("OPENSHIFT_INSTALL_INVOKER"); env != "" {
-		invoker = env
+	cm, err := openshiftinstall.CreateInstallConfigMap("openshift-install")
+	if err != nil {
+		return "", errors.Wrap(err, "failed to generate openshift-install config")
 	}
 
-	config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/opt/openshift/manifests/openshift-install.yml", "root", 0644, fmt.Sprintf(`---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: openshift-install
-  namespace: openshift-config
-data:
-  version: "%s"
-  invoker: "%s"
-`, version.Raw, invoker)))
+	config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/opt/openshift/manifests/openshift-install.yaml", "root", 0644, cm))
 
 	ign, err := json.Marshal(config)
 	if err != nil {

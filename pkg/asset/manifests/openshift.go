@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/machines"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
+	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/password"
@@ -52,6 +53,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&installconfig.ClusterID{},
 		&password.KubeadminPassword{},
+		&openshiftinstall.Config{},
 
 		&openshift.CloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
@@ -65,7 +67,8 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	kubeadminPassword := &password.KubeadminPassword{}
-	dependencies.Get(installConfig, kubeadminPassword, clusterID)
+	openshiftInstall := &openshiftinstall.Config{}
+	dependencies.Get(installConfig, kubeadminPassword, clusterID, openshiftInstall)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -192,6 +195,8 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			Data:     data,
 		})
 	}
+
+	o.FileList = append(o.FileList, openshiftInstall.Files()...)
 
 	asset.SortFiles(o.FileList)
 
