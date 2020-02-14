@@ -22,7 +22,7 @@ RUN yum install --setopt=tsflags=nodocs -y git gzip util-linux && yum clean all 
     chmod g+w /etc/passwd
 
 RUN yum update -y && \
-    yum install --setopt=tsflags=nodocs -y \
+    yum install --enablerepo=* --setopt=tsflags=nodocs -y \
     python-openstackclient ansible python-openstacksdk python-netaddr awscli && \
     yum clean all && rm -rf /var/cache/yum/*
 
