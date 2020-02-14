@@ -67,7 +67,11 @@ func setupFileHook(baseDir string) func() {
 		DisableLevelTruncation: false,
 	}))
 
-	logrus.Debugf(version.String)
+	versionString, err := version.String()
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	logrus.Debugf(versionString)
 	if version.Commit != "" {
 		logrus.Debugf("Built from commit %s", version.Commit)
 	}

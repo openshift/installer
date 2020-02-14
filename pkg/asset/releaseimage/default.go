@@ -10,10 +10,10 @@ import (
 //
 // 1. Extract a release binary from the installer image referenced within the release image
 // 2. Identify the release image pull spec, add a NUL terminator byte (0x00) to the end, calculate length
-// 3. Length must be less than 300 bytes
+// 3. Length must be less than the marker length
 // 4. Search through the installer binary looking for `\x00_RELEASE_IMAGE_LOCATION_\x00<PADDING_TO_LENGTH>`
-//    where padding is the ASCII character X and length is the total length of the image
-// 5. Overwrite that chunk of the bytes if found, otherwise return error.
+//    where padding is the ASCII character X and length is the total length of the marker
+// 5. Overwrite the beginning of the marker with the release pullspec and a NUL terminator byte (0x00)
 //
 // On start the installer examines the constant and if it has been modified from the default the installer
 // will use that image.
