@@ -93,7 +93,7 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 		// Overriding it here allows the same check to be done, but against the
 		// hook's output instead of the logger's output.
 		ForceColors:            terminal.IsTerminal(int(os.Stderr.Fd())),
-		DisableTimestamp:       true,
+		FullTimestamp:          true,
 		DisableLevelTruncation: true,
 	}))
 
