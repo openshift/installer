@@ -58,6 +58,8 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 			return err
 		}
 		a.BaseDomain = zone.Name
+		// XXX: It would be nice to check for forbidden/throttle error
+		// like aws and gcp here.
 		return platform.Azure.SetBaseDomain(zone.ID)
 	case gcp.Name:
 		a.BaseDomain, err = gcpconfig.GetBaseDomain(platform.GCP.ProjectID)

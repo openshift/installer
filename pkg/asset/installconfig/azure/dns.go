@@ -3,6 +3,8 @@ package azure
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns"
@@ -18,7 +20,7 @@ type DNSConfig struct {
 
 //ZonesGetter fetches the DNS zones available for the installer
 type ZonesGetter interface {
-	GetAllPublicZones() (map[string]string, error)
+	GetAllPublicZones() (map[string][]string, error)
 }
 
 //ZonesClient wraps the azure ZonesClient internal
@@ -80,33 +82,60 @@ func (config DNSConfig) GetPrivateDNSZoneID(rgName string, zoneName string) stri
 //GetDNSZone returns a DNS zone selected by survey
 func (config DNSConfig) GetDNSZone() (*Zone, error) {
 	//call azure api using the session to retrieve available base domain
-	zonesClient := newZonesClient(config.session)
-	allZones, _ := zonesClient.GetAllPublicZones()
-	if len(allZones) == 0 {
-		return nil, errors.New("no public dns zone found in your subscription")
-	}
-	zoneNames := []string{}
-	for zoneName := range allZones {
-		zoneNames = append(zoneNames, zoneName)
+	zonesClient := newZonesClient(config.Session)
+	publicZonesMap, err := zonesClient.GetAllPublicZones()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not retrieve base domains")
 	}
 
-	var zoneName string
-	err := survey.Ask([]*survey.Question{
+	if len(publicZonesMap) == 0 {
+		return nil, errors.New("no public dns zone found in your subscription")
+	}
+
+	publicZones := make([]string, 0, len(publicZonesMap))
+	for name, ids := range publicZonesMap {
+		for _, id := range ids {
+			// A subscription ID has the format
+			// "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/xxxx-xxxxx-rg/providers/...".
+			// Splitting the string on '/' gives us the following slice:
+			// parts[0] = ''
+			// parts[1] = 'subscriptions'
+			// parts[2] = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+			// parts[3] = 'resourceGroups'
+			// parts[4] = 'xxxx-xxxxx-rg' <- This is the resource group name
+			// parts[..] = ... the rest
+			parts := strings.Split(id, "/")
+			rgName := parts[4]
+			publicZones = append(publicZones, fmt.Sprintf("%s (%s)", name, rgName))
+		}
+	}
+	sort.Strings(publicZones)
+
+	var publicZoneNameChoice string
+	var publicZoneName string
+	var publicZoneID string
+
+	err = survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Select{
 				Message: "Base Domain",
 				Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base and will also include the cluster name.\n\nIf you don't see you intended base-domain listed, create a new Azure DNS Zone and rerun the installer.",
-				Options: zoneNames,
+				Options: publicZones,
 			},
 		},
-	}, &zoneName)
+	}, &publicZoneNameChoice)
 	if err != nil {
 		return nil, err
 	}
 
+	parts := strings.Split(publicZoneNameChoice, " ")
+	publicZoneName = parts[0]
+	rgName := parts[1][1 : len(parts[1])-1]
+	publicZoneID = config.GetDNSZoneID(rgName, publicZoneName)
+
 	return &Zone{
-		ID:   allZones[zoneName],
-		Name: zoneName,
+		ID:   publicZoneID,
+		Name: publicZoneName,
 	}, nil
 
 }
@@ -136,11 +165,12 @@ func newRecordSetsClient(session *Session) *RecordSetsClient {
 	return &RecordSetsClient{azureClient: azureClient}
 }
 
-//GetAllPublicZones get all public zones from the current subscription
-func (client *ZonesClient) GetAllPublicZones() (map[string]string, error) {
+// GetAllPublicZones returns a map of DNS names to zone ID's of all public domains
+// in the current subscription.
+func (client *ZonesClient) GetAllPublicZones() (map[string][]string, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
-	allZones := map[string]string{}
+	allZones := map[string][]string{}
 	for zonesPage, err := client.azureClient.List(ctx, to.Int32Ptr(100)); zonesPage.NotDone(); err = zonesPage.NextWithContext(ctx) {
 		if err != nil {
 			return nil, err
@@ -149,7 +179,8 @@ func (client *ZonesClient) GetAllPublicZones() (map[string]string, error) {
 		//the property is present in the REST api response, but not mapped yet in the stable SDK (present in preview)
 		//https://github.com/Azure/azure-sdk-for-go/blob/07f918ba2d513bbc5b75bc4caac845e10f27449e/services/preview/dns/mgmt/2018-03-01-preview/dns/models.go#L857
 		for _, zone := range zonesPage.Values() {
-			allZones[to.String(zone.Name)] = to.String(zone.ID)
+			zoneName := to.String(zone.Name)
+			allZones[zoneName] = append(allZones[zoneName], to.String(zone.ID))
 		}
 	}
 	return allZones, nil
