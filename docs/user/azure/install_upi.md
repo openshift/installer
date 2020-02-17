@@ -344,7 +344,6 @@ az group deployment create -g $RESOURCE_GROUP \
   --template-file "04_bootstrap.json" \
   --parameters bootstrapIgnition="$BOOTSTRAP_IGNITION" \
   --parameters sshKeyData="$SSH_KEY" \
-  --parameters privateDNSZoneName="${CLUSTER_NAME}.${BASE_DOMAIN}" \
   --parameters baseName="$INFRA_ID"
 ```
 
@@ -382,12 +381,14 @@ INFO It is now safe to remove the bootstrap resources
 Once the bootstrapping process is complete you can deallocate and delete bootstrap resources:
 
 ```sh
+az network nsg rule delete -g $RESOURCE_GROUP --nsg-name ${INFRA_ID}-controlplane-nsg --name bootstrap_ssh_in
 az vm stop -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap
 az vm deallocate -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap
 az vm delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap --yes
 az disk delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap_OSDisk --no-wait --yes
 az network nic delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap-nic --no-wait
 az storage blob delete --account-key $ACCOUNT_KEY --account-name ${CLUSTER_NAME}sa --container-name files --name bootstrap.ign
+az network public-ip delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap-ssh-pip
 ```
 
 ## Access the OpenShift API
