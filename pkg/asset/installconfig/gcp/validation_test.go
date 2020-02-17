@@ -26,6 +26,13 @@ var (
 	validComputeSubnet = "valid-compute-subnet"
 	validCPSubnet      = "valid-controlplane-subnet"
 	validCIDR          = "10.0.0.0/16"
+	validPublicZoneID  = "valid-public-zone-id"
+	validBaseDomain    = "valid-base-domain"
+
+	addPublicZoneID = func(ic *types.InstallConfig) {
+		ic.BaseDomain = validBaseDomain
+		ic.GCP.PublicZoneID = validPublicZoneID
+	}
 
 	invalidateMachineCIDR = func(ic *types.InstallConfig) {
 		_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
@@ -39,6 +46,8 @@ var (
 	invalidateCPSubnet      = func(ic *types.InstallConfig) { ic.GCP.ControlPlaneSubnet = "invalid-cp-subnet" }
 	invalidateRegion        = func(ic *types.InstallConfig) { ic.GCP.Region = "us-east4" }
 	invalidateProject       = func(ic *types.InstallConfig) { ic.GCP.ProjectID = "invalid-project" }
+	invalidatePublicZoneID  = func(ic *types.InstallConfig) { ic.GCP.PublicZoneID = "invalid-public-zone-id" }
+	invalidateBaseDomain    = func(ic *types.InstallConfig) { ic.BaseDomain = "invalid-base-domain" }
 	removeVPC               = func(ic *types.InstallConfig) { ic.GCP.Network = "" }
 	removeSubnets           = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet, ic.GCP.ControlPlaneSubnet = "", "" }
 
@@ -56,6 +65,7 @@ var (
 
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
+		BaseDomain: validBaseDomain,
 		Networking: &types.Networking{
 			MachineNetwork: []types.MachineNetworkEntry{
 				{CIDR: *ipnet.MustParseCIDR(validCIDR)},
@@ -64,6 +74,7 @@ func validInstallConfig() *types.InstallConfig {
 		Platform: types.Platform{
 			GCP: &gcp.Platform{
 				ProjectID:          validProjectName,
+				PublicZoneID:       validPublicZoneID,
 				Region:             validRegion,
 				Network:            validNetworkName,
 				ComputeSubnet:      validComputeSubnet,
@@ -146,6 +157,24 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			expectedError:  true,
 			expectedErrMsg: "platform.gcp.project: Invalid value: \"invalid-project\": invalid project ID",
 		},
+		{
+			name:           "Valid public zone id",
+			edits:          editFunctions{addPublicZoneID},
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid public zone id",
+			edits:          editFunctions{addPublicZoneID, invalidatePublicZoneID},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.publicZoneID: Invalid value: \"invalid-public-zone-id\": public zone not found$",
+		},
+		{
+			name:           "Invalid base domain",
+			edits:          editFunctions{addPublicZoneID, invalidateBaseDomain},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.publicZoneID: Internal error: the DNS name for the provided zone id does not match the base domain$",
+		},
 	}
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -168,6 +197,12 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	gcpClient.EXPECT().GetSubnetworks(gomock.Any(), gomock.Not(validNetworkName), gomock.Any(), gomock.Any()).Return([]*compute.Subnetwork{}, nil).AnyTimes()
 	gcpClient.EXPECT().GetSubnetworks(gomock.Any(), gomock.Any(), gomock.Not(validProjectName), gomock.Any()).Return([]*compute.Subnetwork{}, nil).AnyTimes()
 	gcpClient.EXPECT().GetSubnetworks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Not(validRegion)).Return([]*compute.Subnetwork{}, nil).AnyTimes()
+
+	// When passed the correct public zone ID, return a DNS managed zone with a valid name and DNS name
+	gcpClient.EXPECT().GetPublicDNSZoneByID(gomock.Any(), gomock.Any(), validPublicZoneID).Return(&dns.ManagedZone{Name: validPublicZoneID, DnsName: validBaseDomain}, nil).AnyTimes()
+
+	// When passed an incorrect public zone id, return an error
+	gcpClient.EXPECT().GetPublicDNSZoneByID(gomock.Any(), gomock.Any(), gomock.Not(validPublicZoneID)).Return(nil, fmt.Errorf("invalid zone id")).AnyTimes()
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

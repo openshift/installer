@@ -62,8 +62,12 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 		// like aws and gcp here.
 		return platform.Azure.SetBaseDomain(zone.ID)
 	case gcp.Name:
-		a.BaseDomain, err = gcpconfig.GetBaseDomain(platform.GCP.ProjectID)
-
+		var err error
+		zone, err := gcpconfig.GetBaseDomain(platform.GCP.ProjectID)
+		if zone != nil {
+			a.BaseDomain = zone.DNSName
+			platform.GCP.PublicZoneID = zone.ID
+		}
 		// We are done if success (err == nil) or an err besides forbidden/throttling
 		if !(gcpconfig.IsForbidden(err) || gcpconfig.IsThrottled(err)) {
 			return err

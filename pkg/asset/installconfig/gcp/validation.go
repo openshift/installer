@@ -21,6 +21,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 
 	allErrs = append(allErrs, validateProject(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateNetworks(client, ic, field.NewPath("platform").Child("gcp"))...)
+	allErrs = append(allErrs, validatePublicZoneID(client, ic, field.NewPath("platform").Child("gcp"))...)
 
 	return allErrs.ToAggregate()
 }
@@ -70,6 +71,21 @@ func validateProject(client API, ic *types.InstallConfig, fieldPath *field.Path)
 		}
 		if _, found := projects[ic.GCP.ProjectID]; !found {
 			return append(allErrs, field.Invalid(fieldPath.Child("project"), ic.GCP.ProjectID, "invalid project ID"))
+		}
+	}
+	return allErrs
+}
+
+func validatePublicZoneID(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if ic.GCP.PublicZoneID != "" {
+		zone, err := client.GetPublicDNSZoneByID(context.TODO(), ic.GCP.ProjectID, ic.GCP.PublicZoneID)
+		if err != nil {
+			return append(allErrs, field.Invalid(fieldPath.Child("publicZoneID"), ic.GCP.PublicZoneID, "public zone not found"))
+		}
+		if zone.Name != ic.GCP.PublicZoneID || zone.DnsName != ic.BaseDomain {
+			return append(allErrs, field.InternalError(fieldPath.Child("publicZoneID"), errors.New("the DNS name for the provided zone id does not match the base domain")))
 		}
 	}
 

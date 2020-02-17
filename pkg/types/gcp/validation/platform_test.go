@@ -75,7 +75,6 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			valid: false,
 		},
-
 		{
 			name: "supported GCP disk type",
 			platform: &gcp.Platform{
@@ -87,6 +86,22 @@ func TestValidatePlatform(t *testing.T) {
 				},
 			},
 			valid: true,
+		},
+		{
+			name: "valid public zone id",
+			platform: &gcp.Platform{
+				Region:       "us-east1",
+				PublicZoneID: "valid-public-zone-id",
+			},
+			valid: true,
+		},
+		{
+			name: "invalid public zone id",
+			platform: &gcp.Platform{
+				Region:       "us-east1",
+				PublicZoneID: "1invalid-public-zone-id",
+			},
+			valid: false,
 		},
 	}
 	for _, tc := range cases {

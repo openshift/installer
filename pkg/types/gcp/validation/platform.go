@@ -3,6 +3,8 @@ package validation
 import (
 	"os"
 
+	"fmt"
+	"regexp"
 	"sort"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -49,6 +51,8 @@ var (
 		sort.Strings(validValues)
 		return validValues
 	}()
+	publicZoneRegexPattern = "^[a-z][a-z0-9-]{0,61}[a-z0-9]?$"
+	publicZoneRegex        = regexp.MustCompile(publicZoneRegexPattern)
 )
 
 // ValidatePlatform checks that the specified platform is valid.
@@ -56,6 +60,15 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if _, ok := Regions[p.Region]; !ok {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, validRegionValues))
+	}
+	if p.PublicZoneID != "" {
+		// PublicZoneID must be 1-63 characters long, must begin with a
+		// letter, end with a letter or digit, and only contain lowercase
+		// letters, digits or dashes.
+		match := publicZoneRegex.MatchString(p.PublicZoneID)
+		if match == false {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("publicZoneID"), p.PublicZoneID, fmt.Sprintf("public zone id is not properly formatted, it should match the regex '%s'", publicZoneRegexPattern)))
+		}
 	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)

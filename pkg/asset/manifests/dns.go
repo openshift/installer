@@ -112,11 +112,15 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		}
 	case gcptypes.Name:
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
-			zone, err := icgcp.GetPublicZone(context.TODO(), installConfig.Config.Platform.GCP.ProjectID, installConfig.Config.BaseDomain)
-			if err != nil {
-				return errors.Wrapf(err, "failed to get public zone for %q", installConfig.Config.BaseDomain)
+			publicZoneID := installConfig.Config.GCP.PublicZoneID
+			if publicZoneID == "" {
+				zone, err := icgcp.GetPublicZone(context.TODO(), installConfig.Config.Platform.GCP.ProjectID, installConfig.Config.BaseDomain)
+				if err != nil {
+					return errors.Wrapf(err, "failed to get public zone for %q", installConfig.Config.BaseDomain)
+				}
+				publicZoneID = zone.Name
 			}
-			config.Spec.PublicZone = &configv1.DNSZone{ID: zone.Name}
+			config.Spec.PublicZone = &configv1.DNSZone{ID: publicZoneID}
 		}
 		config.Spec.PrivateZone = &configv1.DNSZone{ID: fmt.Sprintf("%s-private-zone", clusterID.InfraID)}
 	case libvirttypes.Name, openstacktypes.Name, baremetaltypes.Name, nonetypes.Name, vspheretypes.Name, ovirttypes.Name:

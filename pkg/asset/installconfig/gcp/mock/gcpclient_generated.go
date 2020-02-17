@@ -51,10 +51,10 @@ func (mr *MockAPIMockRecorder) GetNetwork(ctx, network, project interface{}) *go
 }
 
 // GetPublicDomains mocks base method.
-func (m *MockAPI) GetPublicDomains(ctx context.Context, project string) ([]string, error) {
+func (m *MockAPI) GetPublicDomains(ctx context.Context, project string) (map[string][]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPublicDomains", ctx, project)
-	ret0, _ := ret[0].([]string)
+	ret0, _ := ret[0].(map[string][]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -66,18 +66,33 @@ func (mr *MockAPIMockRecorder) GetPublicDomains(ctx, project interface{}) *gomoc
 }
 
 // GetPublicDNSZone mocks base method.
-func (m *MockAPI) GetPublicDNSZone(ctx context.Context, baseDomain, project string) (*dns.ManagedZone, error) {
+func (m *MockAPI) GetPublicDNSZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPublicDNSZone", ctx, baseDomain, project)
+	ret := m.ctrl.Call(m, "GetPublicDNSZone", ctx, project, baseDomain)
 	ret0, _ := ret[0].(*dns.ManagedZone)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPublicDNSZone indicates an expected call of GetPublicDNSZone.
-func (mr *MockAPIMockRecorder) GetPublicDNSZone(ctx, baseDomain, project interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetPublicDNSZone(ctx, project, baseDomain interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicDNSZone", reflect.TypeOf((*MockAPI)(nil).GetPublicDNSZone), ctx, baseDomain, project)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicDNSZone", reflect.TypeOf((*MockAPI)(nil).GetPublicDNSZone), ctx, project, baseDomain)
+}
+
+// GetPublicDNSZoneByID mocks base method
+func (m *MockAPI) GetPublicDNSZoneByID(ctx context.Context, project, publicZoneID string) (*dns.ManagedZone, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPublicDNSZoneByID", ctx, project, publicZoneID)
+	ret0, _ := ret[0].(*dns.ManagedZone)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPublicDNSZoneByID indicates an expected call of GetPublicDNSZoneByID
+func (mr *MockAPIMockRecorder) GetPublicDNSZoneByID(ctx, project, publicZoneID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicDNSZoneByID", reflect.TypeOf((*MockAPI)(nil).GetPublicDNSZoneByID), ctx, project, publicZoneID)
 }
 
 // GetSubnetworks mocks base method.

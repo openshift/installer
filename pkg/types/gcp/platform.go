@@ -9,6 +9,11 @@ type Platform struct {
 	// Region specifies the GCP region where the cluster will be created.
 	Region string `json:"region"`
 
+	// PublicZoneID specifies the ID for the public DNS Zone
+	// This is the managed zone name and it is used as a tuple with the
+	// project ID to uniquely identify a DNS zone.
+	PublicZoneID string `json:"publicZoneID,omitempty"`
+
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on GCP for machine pools which do not define their own
 	// platform configuration.

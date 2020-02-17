@@ -313,7 +313,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case gcp.Name:
-		var publicZoneName string
 		sess, err := gcpconfig.GetSession(ctx)
 		if err != nil {
 			return err
@@ -336,12 +335,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
 		}
+
+		var publicZoneID string
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
-			publicZone, err := gcpconfig.GetPublicZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
-			if err != nil {
-				return errors.Wrapf(err, "failed to get GCP public zone")
+			publicZoneID = installConfig.Config.GCP.PublicZoneID
+			if publicZoneID == "" {
+				zone, err := gcpconfig.GetPublicZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
+				if err != nil {
+					return errors.Wrapf(err, "failed to get GCP public zone")
+				}
+				publicZoneID = zone.Name
 			}
-			publicZoneName = publicZone.Name
 		}
 		preexistingnetwork := installConfig.Config.GCP.Network != ""
 		data, err := gcptfvars.TFVars(
@@ -351,7 +355,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				WorkerConfigs:      workerConfigs,
 				ImageURI:           string(*rhcosImage),
 				ImageLicenses:      installConfig.Config.GCP.Licenses,
-				PublicZoneName:     publicZoneName,
+				PublicZoneName:     publicZoneID,
 				PublishStrategy:    installConfig.Config.Publish,
 				PreexistingNetwork: preexistingnetwork,
 			},

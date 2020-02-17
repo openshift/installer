@@ -4,6 +4,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 
 * `projectID` (required string): The project where the cluster should be created.
 * `region` (required string): The GCP region where the cluster should be created.
+* `publicZoneID` (optional string): The ID of the public DNS zone name (this is the GCP managed name).
 * `network` (optional string): The name of an existing GCP VPC where the cluster infrastructure should be provisioned.
 * `controlPlaneSubnet` (optional string): The name of an existing GCP subnet which should be used by the cluster control plane.
 * `computeSubnet` (optional string): The name of an existing GCP subnet which should be used by the cluster nodes.
@@ -135,3 +136,21 @@ platform:
 [compute-images]: https://cloud.google.com/compute/docs/reference/rest/v1/images
 [gcp-nested]: https://cloud.google.com/compute/docs/instances/enable-nested-virtualization-vm-instances
 [license-api]: https://cloud.google.com/compute/docs/reference/rest/v1/licenses/list
+
+### Pre-existing cloud DNS zone
+
+An example minimal GCP install config with a cloud DNS zone ID:
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+metadata:
+  name: example-cluster
+platform:
+  gcp:
+    project: example-project
+    region: us-east1
+    publicZoneID: installer-public-zone
+pullSecret: '{"auths": ...}'
+sshKey: ssh-ed25519 AAAA...
+```
