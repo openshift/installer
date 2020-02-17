@@ -124,6 +124,9 @@ Here `eno1` should be a slave to `baremetal` bridge and `eno3` to `provisioning`
 
 * Create an install-config file as [Install-config](https://gist.github.com/hardys/30809af4d2d6f89354cec60241b4883d)
 
+* Verify the syntax of install-config.yaml file, confirm that you can reach the `bootstrapOSImage` and `clusterOSImage` URL from the Jump Host. 
+
+
 **Important**:  Make sure to power off the master nodes before you begin the installation via iDRAC/iLOM.
 
 Feel free to use this below script:
@@ -167,6 +170,16 @@ After the installation is triggered, Check/verify bootstrap VM is up and running
  Id    Name                           State
 ----------------------------------------------------
  12    kni7-xf6fq-bootstrap           running
+```
+
+If there is no sign of Bootstarp VM running on the provioner node, check if the libvirtd is running(if not, start the service) on the provisioner node. 
+
+```
+systemctl status libvirtd
+● libvirtd.service - Virtualization daemon
+   Loaded: loaded (/usr/lib/systemd/system/libvirtd.service; enabled; vendor preset: enabled)
+   Active: active (running) since Mon 2020-02-03 13:08:51 EST; 2 weeks 0 days ago
+     Docs: man:libvirtd(8)
 ```
 
 If re-running the deployment, please make sure to delete all the older VM including its volume as shown below:
@@ -216,12 +229,16 @@ Feb 05 10:29:51 localhost bootkube.sh[3119]: https://etcd-1.kni7.cloud.lab.eng.b
 Feb 05 10:29:51 localhost bootkube.sh[3119]: Error: unhealthy cluster
 Feb 05 10:29:51 localhost podman[7743]: 2020-02-05 10:29:51.487999651 +0000 UTC m=+5.434743491 container died a62fd32f5b22e117e1fa5885ae956c5085f3ac5cc47fe88256b8282a9b45695d (image=quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:b3f6e79c60f60a3a8b8422adf82182de632ba2594b34a5b2e56e3564186efe77, name=etcdctl)
 ```
+Once logged in to this VM, please check if all the pods(dnsmasq,mariadb,httpd, ironic pods etc) are in running state. 
 
-To check the logs, please the below commands:
+To check the logs of all the containers , please the below commands:
 
 ```
 sudo podman logs ironic-api
 ```
+You will get the error messages if the master nodes are not `powered on` by inspecting the ironic pods. 
+
+Once the ironic poewers on the master nodes, verify if RHCOS images are pushed to the cluster, once again inspect the logs of httpd and ironic pods logs from Bootstrap VM. 
 
 ## BootstrapVM cannot download RHCOS image
 
@@ -246,6 +263,40 @@ clusterOSImage: http://[<IPv6-IP-Registry>]/rhcos-43.81.202001142154.0-openstack
 
 #podman logs -f coreos-downloader
 
+```
+After the installation is complete copy the config file to the `~/.kube/config` dir to interact with the cluster
+
+```
+cp /install-dir/ocp/auth/kubeconfig  ~/.kube/config
+```
+Or 
+
+```
+export KUBECONFIG=/install-dir/ocp/auth/kubeconfig
+```
+
+Verify if all the control plane nodes are up and running 
+
+```
+oc get nodes
+NAME                                         STATUS   ROLES           AGE    VERSION
+master-0.kni7.cloud.lab.eng.bos.redhat.com   Ready    master,worker   4h   v1.16.2
+master-1.kni7.cloud.lab.eng.bos.redhat.com   Ready    master,worker   4h   v1.16.2
+master-2.kni7.cloud.lab.eng.bos.redhat.com   Ready    master,worker   4h   v1.16.2
+```
+
+There might be a scenario where the nodes can be stuck in `NotReady` state. To check the exact errors, login to the nodes and check for logs.
+
+```
+#ssh core@master-0 
+#crictl ps (look for the error in pod status if any)
+#crictl logs <pod-in-error-state>
+```
+Check for pod errors if any in the cluster in any namespaces
+
+```
+oc get namespaces 
+For Example: oc get pods -n openshift-kube-apiserver
 ```
 
 ## Bootstrap VM cannot boot up my nodes
