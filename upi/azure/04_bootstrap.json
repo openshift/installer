@@ -22,12 +22,6 @@
         "description" : "SSH RSA public key file as a string."
       }
     },
-    "privateDNSZoneName" : {
-      "type" : "string",
-      "metadata" : {
-        "description" : "Name of the private DNS zone the bootstrap node is going to be attached to"
-      }
-    },
     "bootstrapVMSize" : {
       "type" : "string",
       "defaultValue" : "Standard_D4s_v3",
@@ -116,20 +110,43 @@
     "identityName" : "[concat(parameters('baseName'), '-identity')]",
     "vmName" : "[concat(parameters('baseName'), '-bootstrap')]",
     "nicName" : "[concat(variables('vmName'), '-nic')]",
-    "imageName" : "[concat(parameters('baseName'), '-image')]"
+    "imageName" : "[concat(parameters('baseName'), '-image')]",
+    "controlPlaneNsgName" : "[concat(parameters('baseName'), '-controlplane-nsg')]",
+    "sshPublicIpAddressName" : "[concat(variables('vmName'), '-ssh-pip')]"
   },
   "resources" : [
+    {
+      "apiVersion" : "2018-12-01",
+      "type" : "Microsoft.Network/publicIPAddresses",
+      "name" : "[variables('sshPublicIpAddressName')]",
+      "location" : "[variables('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties" : {
+        "publicIPAllocationMethod" : "Static",
+        "dnsSettings" : {
+          "domainNameLabel" : "[variables('sshPublicIpAddressName')]"
+        }
+      }
+    },
     {
       "apiVersion" : "2018-06-01",
       "type" : "Microsoft.Network/networkInterfaces",
       "name" : "[variables('nicName')]",
       "location" : "[variables('location')]",
+      "dependsOn" : [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('sshPublicIpAddressName'))]"
+      ],
       "properties" : {
         "ipConfigurations" : [
           {
             "name" : "pipConfig",
             "properties" : {
               "privateIPAllocationMethod" : "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('sshPublicIpAddressName'))]"
+              },
               "subnet" : {
                 "id" : "[variables('masterSubnetRef')]"
               },
@@ -201,6 +218,25 @@
             }
           ]
         }
+      }
+    },
+    {
+      "apiVersion" : "2018-06-01",
+      "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+      "name" : "[concat(variables('controlPlaneNsgName'), '/bootstrap_ssh_in')]",
+      "location" : "[variables('location')]",
+      "dependsOn" : [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ],
+      "properties": {
+        "protocol" : "Tcp",
+        "sourcePortRange" : "*",
+        "destinationPortRange" : "22",
+        "sourceAddressPrefix" : "*",
+        "destinationAddressPrefix" : "*",
+        "access" : "Allow",
+        "priority" : 100,
+        "direction" : "Inbound"
       }
     }
   ]
