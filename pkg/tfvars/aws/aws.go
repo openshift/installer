@@ -32,6 +32,7 @@ type config struct {
 	VPC                     string            `json:"aws_vpc,omitempty"`
 	PrivateSubnets          []string          `json:"aws_private_subnets,omitempty"`
 	PublicSubnets           *[]string         `json:"aws_public_subnets,omitempty"`
+	PublicZoneID            string            `json:"aws_public_zone_id"`
 	PublishStrategy         string            `json:"aws_publish_strategy,omitempty"`
 	SkipRegionCheck         bool              `json:"aws_skip_region_validation"`
 	IgnitionBucket          string            `json:"aws_ignition_bucket"`
@@ -51,6 +52,8 @@ type TFVarsSources struct {
 	MasterConfigs, WorkerConfigs []*v1beta1.AWSMachineProviderConfig
 
 	IgnitionBucket, IgnitionPresignedURL string
+
+	PublicZoneID string
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
@@ -118,6 +121,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Type:                    *rootVolume.EBS.VolumeType,
 		VPC:                     sources.VPC,
 		PrivateSubnets:          sources.PrivateSubnets,
+		PublicZoneID:            sources.PublicZoneID,
 		PublishStrategy:         string(sources.Publish),
 		SkipRegionCheck:         !configaws.IsKnownRegion(masterConfig.Placement.Region),
 		IgnitionBucket:          sources.IgnitionBucket,

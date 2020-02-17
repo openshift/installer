@@ -390,6 +390,27 @@ func TestValidate(t *testing.T) {
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
 		exptectErr:     `^platform\.aws\.amiID: Required value: AMI must be provided$`,
+	}, {
+		name: "valid public zone id",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.PublicZoneID = "valid-public-zone-id"
+			c.BaseDomain = "valid-public-zone"
+			return c
+		}(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+	}, {
+		name: "invalid public zone",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.PublicZoneID = "valid-public-zone-id"
+			c.BaseDomain = "invalid-public-zone"
+			return c
+		}(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		exptectErr:     `^platform\.aws\.publicZoneID: Invalid value: \"valid-public-zone-id\": invalid zone id: valid-public-zone-id$`,
 	}}
 
 	for _, test := range tests {

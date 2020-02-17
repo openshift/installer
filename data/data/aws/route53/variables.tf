@@ -43,6 +43,11 @@ variable "api_internal_lb_zone_id" {
   type        = string
 }
 
+variable "public_zone_id" {
+  description = "The ID of the public DNS zone"
+  type        = string
+}
+
 variable "publish_strategy" {
   type        = string
   description = <<EOF

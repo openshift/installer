@@ -23,7 +23,8 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	if config.Platform.AWS == nil {
 		return errors.New(field.Required(field.NewPath("platform", "aws"), "AWS validation requires an AWS platform configuration").Error())
 	}
-	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config.Platform.AWS, config.Networking, config.Publish)...)
+
+	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config.Platform.AWS, config.BaseDomain, config.Networking, config.Publish)...)
 
 	if config.ControlPlane != nil && config.ControlPlane.Platform.AWS != nil {
 		allErrs = append(allErrs, validateMachinePool(ctx, meta, field.NewPath("controlPlane", "platform", "aws"), config.Platform.AWS, config.ControlPlane.Platform.AWS)...)
@@ -34,16 +35,19 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 			allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("platform", "aws"), config.Platform.AWS, compute.Platform.AWS)...)
 		}
 	}
+
 	return allErrs.ToAggregate()
 }
 
-func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
+func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, baseDomain string, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if !isAWSSDKRegion(platform.Region) && platform.AMIID == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("amiID"), "AMI must be provided"))
 	}
-
+	if len(platform.PublicZoneID) > 1 {
+		allErrs = append(allErrs, validatePublicZoneID(ctx, meta, fldPath.Child("publicZoneID"), platform.PublicZoneID, baseDomain, publish)...)
+	}
 	if len(platform.Subnets) > 0 {
 		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("subnets"), platform.Subnets, networking, publish)...)
 	}
@@ -52,6 +56,18 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 	}
 	if platform.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("defaultMachinePlatform"), platform, platform.DefaultMachinePlatform)...)
+	}
+	return allErrs
+}
+
+func validatePublicZoneID(ctx context.Context, meta *Metadata, fldPath *field.Path, publicZoneID string, baseDomain string, publish types.PublishingStrategy) field.ErrorList {
+	allErrs := field.ErrorList{}
+	zone, err := GetPublicZoneByID(nil, publicZoneID)
+	if err != nil {
+		return append(allErrs, field.Invalid(fldPath, publicZoneID, fmt.Sprintf("failed to get zone: %s", err)))
+	}
+	if *zone.Id != publicZoneID || *zone.Name != baseDomain {
+		return append(allErrs, field.Invalid(fldPath, publicZoneID, fmt.Sprintf("invalid zone id: %s", publicZoneID)))
 	}
 	return allErrs
 }

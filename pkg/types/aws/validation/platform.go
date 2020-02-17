@@ -17,9 +17,10 @@ func ValidatePlatform(p *aws.Platform, fldPath *field.Path) field.ErrorList {
 	if p.Region == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("region"), "region must be specified"))
 	}
-
 	allErrs = append(allErrs, validateServiceEndpoints(p.ServiceEndpoints, fldPath.Child("serviceEndpoints"))...)
-
+	if len(p.PublicZoneID) == 1 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("publicZoneID"), p.PublicZoneID, "publicZoneID must have 2 or more characters"))
+	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}

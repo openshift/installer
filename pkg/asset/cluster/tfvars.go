@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	awssdk "github.com/aws/aws-sdk-go/aws"
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
@@ -167,7 +168,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		var vpc string
 		var privateSubnets []string
 		var publicSubnets []string
+		var publicZoneID string
 
+		sess, err := installConfig.AWS.Session(ctx)
+		if err != nil {
+			return err
+		}
 		if len(installConfig.Config.Platform.AWS.Subnets) > 0 {
 			subnets, err := installConfig.AWS.PrivateSubnets(ctx)
 			if err != nil {
@@ -219,6 +225,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, m := range workers {
 			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
 		}
+		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+			publicZoneID = installConfig.Config.AWS.PublicZoneID
+			if publicZoneID == "" {
+				zone, err := awsconfig.GetPublicZone(sess, installConfig.Config.BaseDomain)
+				if err != nil {
+					return errors.Wrapf(err, "failed to get AWS public zone")
+				}
+				publicZoneID = strings.TrimPrefix(awssdk.StringValue(zone.Id), "/hostedzone/")
+			}
+		}
 		osImage := strings.SplitN(string(*rhcosImage), ",", 2)
 		osImageID := osImage[0]
 		osImageRegion := installConfig.Config.AWS.Region
@@ -230,6 +246,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			PrivateSubnets:       privateSubnets,
 			PublicSubnets:        publicSubnets,
 			Services:             installConfig.Config.AWS.ServiceEndpoints,
+			PublicZoneID:         publicZoneID,
 			Publish:              installConfig.Config.Publish,
 			MasterConfigs:        masterConfigs,
 			WorkerConfigs:        workerConfigs,

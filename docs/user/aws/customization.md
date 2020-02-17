@@ -7,6 +7,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `amiID` (optional string): The AMI that should be used to boot machines for the cluster.
     If set, the AMI should belong to the same region as the cluster.
 * `region` (required string): The AWS region where the cluster will be created.
+* `publicZoneID` (optional string): The public zone ID of the base domain DNS zone.
 * `subnets` (optional array of strings): Existing subnets (by ID) where cluster resources will be created.
     Leave unset to have the installer create subnets in a new VPC on your behalf.
 * `userTags` (optional object): Additional keys and values that the installer will add as tags to all resources that it creates.
@@ -110,6 +111,23 @@ platform:
     subnets:
     - subnet-0e953079d31ec4c74
     - subnet-05e6864f66a954c27
+pullSecret: '{"auths": ...}'
+sshKey: ssh-ed25519 AAAA...
+```
+
+### Pre-existing route53 public hosted zone
+
+An example minimal AWS install config with a route53 hosted zone ID:
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+metadata:
+  name: test-cluster
+platform:
+  aws:
+    region: us-west-2
+    publicZoneID: Z3URY6TWQ91KVV
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```

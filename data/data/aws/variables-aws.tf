@@ -126,6 +126,11 @@ variable "aws_private_subnets" {
   description = "(optional) Existing private subnets into which the cluster should be installed."
 }
 
+variable "aws_public_zone_id" {
+  type        = string
+  description = "The ID of the public DNS zone"
+}
+
 variable "aws_publish_strategy" {
   type        = string
   description = "The cluster publishing strategy, either Internal or External"

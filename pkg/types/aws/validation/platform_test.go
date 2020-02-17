@@ -117,6 +117,21 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			expected: `^test-path\.defaultMachinePlatform\.iops: Invalid value: -10: Storage IOPS must be positive$`,
 		},
+		{
+			name: "valid public zone id",
+			platform: &aws.Platform{
+				Region:       "us-east-1",
+				PublicZoneID: "valid-public-zone-id",
+			},
+		},
+		{
+			name: "invalid public zone id",
+			platform: &aws.Platform{
+				Region:       "us-east-1",
+				PublicZoneID: "v",
+			},
+			expected: `test-path.publicZoneID: Invalid value: \"v\": publicZoneID must have 2 or more characters`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

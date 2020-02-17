@@ -12,6 +12,9 @@ type Platform struct {
 	// Region specifies the AWS region where the cluster will be created.
 	Region string `json:"region"`
 
+	// PublicZoneID specifies the ID for the public DNS Zone
+	PublicZoneID string `json:"publicZoneID,omitempty"`
+
 	// Subnets specifies existing subnets (by ID) where cluster
 	// resources will be created.  Leave unset to have the installer
 	// create subnets in a new VPC on your behalf.

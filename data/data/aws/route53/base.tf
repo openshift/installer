@@ -9,7 +9,7 @@ locals {
 data "aws_route53_zone" "public" {
   count = local.public_endpoints ? 1 : 0
 
-  name = var.base_domain
+  zone_id = var.public_zone_id
 }
 
 resource "aws_route53_zone" "int" {

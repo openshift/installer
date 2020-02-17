@@ -87,6 +87,7 @@ module "dns" {
   cluster_id               = var.cluster_id
   tags                     = local.tags
   vpc_id                   = module.vpc.vpc_id
+  public_zone_id           = var.aws_public_zone_id
   publish_strategy         = var.aws_publish_strategy
 }
 

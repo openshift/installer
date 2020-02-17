@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -84,11 +83,15 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			if err != nil {
 				return errors.Wrap(err, "failed to initialize session")
 			}
-			zone, err := icaws.GetPublicZone(sess, installConfig.Config.BaseDomain)
-			if err != nil {
-				return errors.Wrapf(err, "getting public zone for %q", installConfig.Config.BaseDomain)
+			publicZoneID := installConfig.Config.AWS.PublicZoneID
+			if publicZoneID == "" {
+				zone, err := icaws.GetPublicZone(sess, installConfig.Config.BaseDomain)
+				if err != nil {
+					return errors.Wrapf(err, "getting public zone for %q", installConfig.Config.BaseDomain)
+				}
+				publicZoneID = *zone.Id
 			}
-			config.Spec.PublicZone = &configv1.DNSZone{ID: strings.TrimPrefix(*zone.Id, "/hostedzone/")}
+			config.Spec.PublicZone = &configv1.DNSZone{ID: publicZoneID}
 		}
 		config.Spec.PrivateZone = &configv1.DNSZone{Tags: map[string]string{
 			fmt.Sprintf("kubernetes.io/cluster/%s", clusterID.InfraID): "owned",
