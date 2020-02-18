@@ -123,8 +123,8 @@ func runGatherBootstrapCmd(directory string) error {
 func logGatherBootstrap(bootstrap string, port int, masters []string, directory string) error {
 	logrus.Info("Pulling debug logs from the bootstrap machine")
 	client, err := ssh.NewClient("core", net.JoinHostPort(bootstrap, strconv.Itoa(port)), gatherBootstrapOpts.sshKeys)
-	if err != nil && len(gatherBootstrapOpts.sshKeys) == 0 {
-		return errors.Wrap(err, "failed to create SSH client, ensure the proper ssh key is in your keyring or specify with --key")
+	if err != nil && strings.Contains(err.Error(), "ssh: handshake failed: ssh: unable to authenticate") {
+		return errors.Wrap(err, "failed to create SSH client, ensure the private key is added to your authentication agent (ssh-agent) or specified with the --key parameter")
 	} else if err != nil {
 		return errors.Wrap(err, "failed to create SSH client")
 	}
