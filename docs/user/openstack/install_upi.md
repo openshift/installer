@@ -595,6 +595,8 @@ $ ansible-playbook -i inventory.yaml 04_control-plane.yaml
 
 Our control plane will consist of three nodes. The servers will be passed the `master-?-ignition.json` files prepared earlier.
 
+The playbook places the Control Plane in a Server Group with "soft anti-affinity" policy.
+
 The master nodes should load the initial Ignition and then keep waiting until the bootstrap node stands up the Machine Config Server which will provide the rest of the configuration.
 
 ### Control Plane Trunks (Kuryr SDN)
