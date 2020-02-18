@@ -176,6 +176,8 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:DeleteVolume",
 		"elasticloadbalancing:DeleteTargetGroup",
 		"elasticloadbalancing:DescribeTargetGroups",
+		"iam:DeleteAccessKey",
+		"iam:DeleteUser",
 		"iam:ListInstanceProfiles",
 		"iam:ListRolePolicies",
 		"iam:ListUserPolicies",
