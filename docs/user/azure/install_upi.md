@@ -134,8 +134,8 @@ export RESOURCE_GROUP=`yq -r '.status.platformStatus.azure.resourceGroupName' ma
 ```
 
 **Optional:** it's possible to choose any other name for the Infra ID and/or the resource group, but in that case some adjustments in manifests are needed.
-A Python script is provided to help with these adjustments. Export the `INFRA_ID` and the `RESOURCE_GROUP` environment variables with the desired names and invoke
-the script with:
+A Python script is provided to help with these adjustments. Export the `INFRA_ID` and the `RESOURCE_GROUP` environment variables with the desired names, copy the
+[`setup-manifests.py`](../../../upi/azure/setup-manifests.py) script locally and invoke it with:
 
 ```sh
 python3 setup-manifests.py $RESOURCE_GROUP $INFRA_ID
@@ -158,19 +158,11 @@ After running the command, several files will be available in the directory.
 ```console
 $ tree
 .
-├── 01_vnet.json
-├── 02_storage.json
-├── 03_infra.json
-├── 04_bootstrap.json
-├── 05_masters.json
-├── 06_workers.json
 ├── auth
-│   ├── kubeadmin-password
 │   └── kubeconfig
 ├── bootstrap.ign
 ├── master.ign
 ├── metadata.json
-├── setup-manifests.py
 └── worker.ign
 ```
 
@@ -286,6 +278,10 @@ In this example we're going to create a Virtual Network and subnets specifically
 if the cluster is going to live in a VNet already existing in your organization, or you can edit the `01_vnet.json` file to your
 own needs (e.g. change the subnets address prefixes in CIDR format).
 
+Copy the [`01_vnet.json`](../../../upi/azure/01_vnet.json) ARM template locally.
+
+Create the deployment using the `az` client:
+
 ```sh
 az group deployment create -g $RESOURCE_GROUP \
   --template-file "01_vnet.json" \
@@ -300,6 +296,10 @@ az network private-dns link vnet create -g $RESOURCE_GROUP -z ${CLUSTER_NAME}.${
 
 ## Deploy the image
 
+Copy the [`02_storage.json`](../../../upi/azure/02_storage.json) ARM template locally.
+
+Create the deployment using the `az` client:
+
 ```sh
 export VHD_BLOB_URL=`az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c vhd -n "rhcos.vhd" -o tsv`
 
@@ -311,7 +311,9 @@ az group deployment create -g $RESOURCE_GROUP \
 
 ## Deploy the load balancers
 
-Deploy the load balancers and public IP addresses:
+Copy the [`03_infra.json`](../../../upi/azure/03_infra.json) ARM template locally.
+
+Deploy the load balancers and public IP addresses using the `az` client:
 
 ```sh
 az group deployment create -g $RESOURCE_GROUP \
@@ -336,6 +338,10 @@ az network dns record-set a add-record -g $BASE_DOMAIN_RESOURCE_GROUP -z ${BASE_
 
 ## Launch the temporary cluster bootstrap
 
+Copy the [`04_bootstrap.json`](../../../upi/azure/04_bootstrap.json) ARM template locally.
+
+Create the deployment using the `az` client:
+
 ```sh
 export BOOTSTRAP_URL=`az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c "files" -n "bootstrap.ign" -o tsv`
 export BOOTSTRAP_IGNITION=`jq -rcnM --arg v "2.2.0" --arg url $BOOTSTRAP_URL '{ignition:{version:$v,config:{replace:{source:$url}}}}' | base64 -w0`
@@ -348,6 +354,10 @@ az group deployment create -g $RESOURCE_GROUP \
 ```
 
 ## Launch the permanent control plane
+
+Copy the [`05_masters.json`](../../../upi/azure/05_masters.json) ARM template locally.
+
+Create the deployment using the `az` client:
 
 ```sh
 export MASTER_IGNITION=`cat master.ign | base64`
@@ -409,6 +419,10 @@ You may create compute nodes by launching individual instances discretely or by 
 You can also take advantage of the built in cluster scaling mechanisms and the machine API in OpenShift.
 
 In this example, we'll manually launch three instances via the provided ARM template. Additional instances can be launched by editing the `06_workers.json` file.
+
+Copy the [`06_workers.json`](../../../upi/azure/06_workers.json) ARM template locally.
+
+Create the deployment using the `az` client:
 
 ```sh
 export WORKER_IGNITION=`cat worker.ign | base64`
