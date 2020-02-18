@@ -122,14 +122,15 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			subnet = installConfig.Config.Azure.ComputeSubnet
 		}
 		azureConfig, err := azure.CloudProviderConfig{
-			GroupLocation:            installConfig.Config.Azure.Region,
-			ResourcePrefix:           clusterID.InfraID,
-			SubscriptionID:           session.Credentials.SubscriptionID,
-			TenantID:                 session.Credentials.TenantID,
-			NetworkResourceGroupName: nrg,
-			NetworkSecurityGroupName: nsg,
-			VirtualNetworkName:       vnet,
-			SubnetName:               subnet,
+			GroupLocation:               installConfig.Config.Azure.Region,
+			ResourcePrefix:              clusterID.InfraID,
+			SubscriptionID:              session.Credentials.SubscriptionID,
+			TenantID:                    session.Credentials.TenantID,
+			NetworkResourceGroupName:    nrg,
+			NetworkSecurityGroupName:    nsg,
+			VirtualNetworkName:          vnet,
+			SubnetName:                  subnet,
+			ExcludeMasterFromStandardLB: false,
 		}.JSON()
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")

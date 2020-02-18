@@ -7,14 +7,15 @@ import (
 
 //CloudProviderConfig is the azure cloud provider config
 type CloudProviderConfig struct {
-	TenantID                 string
-	SubscriptionID           string
-	GroupLocation            string
-	ResourcePrefix           string
-	NetworkResourceGroupName string
-	NetworkSecurityGroupName string
-	VirtualNetworkName       string
-	SubnetName               string
+	TenantID                    string
+	SubscriptionID              string
+	GroupLocation               string
+	ResourcePrefix              string
+	NetworkResourceGroupName    string
+	NetworkSecurityGroupName    string
+	VirtualNetworkName          string
+	SubnetName                  string
+	ExcludeMasterFromStandardLB bool `json:"excludeMasterFromStandardLB"`
 }
 
 // JSON generates the cloud provider json config for the azure platform.
