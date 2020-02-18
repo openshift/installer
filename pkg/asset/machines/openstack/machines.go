@@ -4,6 +4,8 @@ package openstack
 import (
 	"fmt"
 
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/servergroups"
+	"github.com/gophercloud/utils/openstack/clientconfig"
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,8 +39,18 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	platform := config.Platform.OpenStack
 
 	az := ""
-	trunk := config.Platform.OpenStack.TrunkSupport
+	trunk := platform.TrunkSupport
+
 	provider := generateProvider(clusterID, platform, pool.Platform.OpenStack, osImage, az, role, userDataSecret, trunk)
+
+	if role == "master" {
+		sg, err := createServerGroup(platform.Cloud, clusterID+"-"+role, "soft-anti-affinity")
+		if err != nil {
+			return nil, err
+		}
+
+		provider.ServerGroupID = sg.ID
+	}
 
 	total := int64(1)
 	if pool.Replicas != nil {
@@ -131,6 +143,31 @@ func trunkSupportBoolean(trunkSupport string) (result bool) {
 		result = false
 	}
 	return
+}
+
+// createServerGroup creates a Nova server group with the given name and
+// policy.
+//
+// https://docs.openstack.org/api-ref/compute/?expanded=create-server-group-detail#server-groups-os-server-groups
+func createServerGroup(cloud, serverGroupName, policy string) (*servergroups.ServerGroup, error) {
+	conn, err := clientconfig.NewServiceClient(
+		"compute",
+		&clientconfig.ClientOpts{
+			Cloud: cloud,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Microversion "2.15" is the first that supports "soft"-anti-affinity.
+	// Note that microversions starting from "2.64" use a new field
+	// accepting policies as a string instead of an array.
+	conn.Microversion = "2.15"
+	return servergroups.Create(conn, &servergroups.CreateOpts{
+		Name:     serverGroupName,
+		Policies: []string{policy},
+	}).Extract()
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines

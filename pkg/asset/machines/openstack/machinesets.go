@@ -32,6 +32,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	machinesets := make([]*clusterapi.MachineSet, 0, 1)
 	az := ""
 	trunk := config.Platform.OpenStack.TrunkSupport
+
 	provider := generateProvider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunk)
 	// TODO(flaper87): Implement AZ support sometime soon
 	//name := fmt.Sprintf("%s-%s-%s", clustername, pool.Name, az)

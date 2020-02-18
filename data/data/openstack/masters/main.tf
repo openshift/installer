@@ -63,6 +63,10 @@ resource "openstack_compute_instance_v2" "master_conf" {
     port = var.master_port_ids[count.index]
   }
 
+  scheduler_hints {
+    group = var.server_group_id
+  }
+
   metadata = {
     # FIXME(mandre) shouldn't it be "${var.cluster_id}-master-${count.index}" ?
     Name = "${var.cluster_id}-master"
