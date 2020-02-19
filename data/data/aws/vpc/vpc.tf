@@ -27,6 +27,8 @@ resource "aws_vpc_endpoint" "s3" {
     aws_route_table.private_routes.*.id,
     aws_route_table.default.*.id,
   )
+
+  tags = var.tags
 }
 
 resource "aws_vpc_dhcp_options" "main" {

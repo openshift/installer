@@ -35,7 +35,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_icmp" {
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_mcs"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_mcs]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_ssh" {
@@ -48,7 +48,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_ssh" {
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_icmp"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_icmp]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_tcp" {
@@ -60,7 +60,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_tcp" {
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_ssh"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_ssh]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_udp" {
@@ -72,7 +72,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_udp" {
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_dns_tcp"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_dns_tcp]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_mdns_udp" {
@@ -84,7 +84,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_mdns_udp" {
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_dns_udp"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_dns_udp]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
@@ -97,7 +97,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_mdns_udp"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_mdns_udp]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_vxlan" {
@@ -109,7 +109,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_vxlan" {
   remote_group_id   = openstack_networking_secgroup_v2.master.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_https"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_https]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_vxlan_from_worker" {
@@ -121,7 +121,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_vxlan_from_work
   remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_vxlan"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_vxlan]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_geneve" {
@@ -133,7 +133,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_geneve" {
   remote_group_id   = openstack_networking_secgroup_v2.master.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_vxlan_from_worker"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_vxlan_from_worker]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_geneve_from_worker" {
@@ -145,7 +145,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_geneve_from_wor
   remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_geneve"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_geneve]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_ovndb" {
@@ -157,7 +157,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_ovndb" {
   remote_group_id   = openstack_networking_secgroup_v2.master.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_geneve_from_worker"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_geneve_from_worker]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_ovndb_from_worker" {
@@ -169,7 +169,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_ovndb_from_work
   remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_ovndb"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_ovndb]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal" {
@@ -181,7 +181,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal" {
   remote_group_id   = openstack_networking_secgroup_v2.master.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_ovndb_from_worker"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_ovndb_from_worker]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_from_worker" {
@@ -193,7 +193,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_from_w
   remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_internal"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_internal]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_udp" {
@@ -205,7 +205,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_udp" {
   remote_group_id   = openstack_networking_secgroup_v2.master.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_internal_from_worker"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_internal_from_worker]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_from_worker_udp" {
@@ -217,7 +217,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_from_w
   remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_internal_udp"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_internal_udp]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_scheduler" {
@@ -229,7 +229,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_scheduler"
   remote_group_id   = openstack_networking_secgroup_v2.master.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_internal_from_worker_udp"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_internal_from_worker_udp]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_scheduler_from_worker" {
@@ -241,7 +241,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_scheduler_
   remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_kube_scheduler"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_kube_scheduler]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller_manager" {
@@ -253,7 +253,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller
   remote_group_id   = openstack_networking_secgroup_v2.master.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_kube_scheduler_from_worker"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_kube_scheduler_from_worker]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller_manager_from_worker" {
@@ -265,7 +265,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller
   remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_kube_controller_manager"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_kube_controller_manager]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_secure" {
@@ -277,7 +277,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_secure"
   remote_group_id   = openstack_networking_secgroup_v2.master.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_kube_controller_manager_from_worker"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_kube_controller_manager_from_worker]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_secure_from_worker" {
@@ -289,7 +289,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_secure_
   remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_kubelet_secure"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_kubelet_secure]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_etcd" {
@@ -301,7 +301,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_etcd" {
   remote_group_id   = openstack_networking_secgroup_v2.master.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_kubelet_secure_from_worker"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_kubelet_secure_from_worker]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_tcp" {
@@ -313,7 +313,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_tcp" {
   remote_group_id   = openstack_networking_secgroup_v2.master.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_etcd"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_etcd]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_tcp_from_worker" {
@@ -325,7 +325,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_tcp_fr
   remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_services_tcp"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_services_tcp]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_udp" {
@@ -337,7 +337,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_udp" {
   remote_group_id   = openstack_networking_secgroup_v2.master.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_services_tcp_from_worker"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_services_tcp_from_worker]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_udp_from_worker" {
@@ -349,7 +349,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_udp_fr
   remote_group_id   = openstack_networking_secgroup_v2.worker.id
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_services_udp"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_services_udp]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_vrrp" {
@@ -359,6 +359,6 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_vrrp" {
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
 
-  depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_services_udp_from_worker"]
+  depends_on = [openstack_networking_secgroup_rule_v2.master_ingress_services_udp_from_worker]
 }
 

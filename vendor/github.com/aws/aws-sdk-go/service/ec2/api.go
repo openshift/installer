@@ -440,8 +440,8 @@ func (c *EC2) AdvertiseByoipCidrRequest(input *AdvertiseByoipCidrInput) (req *re
 
 // AdvertiseByoipCidr API operation for Amazon Elastic Compute Cloud.
 //
-// Advertises an IPv4 address range that is provisioned for use with your AWS
-// resources through bring your own IP addresses (BYOIP).
+// Advertises an IPv4 or IPv6 address range that is provisioned for use with
+// your AWS resources through bring your own IP addresses (BYOIP).
 //
 // You can perform this operation at most once every 10 seconds, even if you
 // specify different address ranges each time.
@@ -1603,8 +1603,10 @@ func (c *EC2) AssociateVpcCidrBlockRequest(input *AssociateVpcCidrBlockInput) (r
 // AssociateVpcCidrBlock API operation for Amazon Elastic Compute Cloud.
 //
 // Associates a CIDR block with your VPC. You can associate a secondary IPv4
-// CIDR block, or you can associate an Amazon-provided IPv6 CIDR block. The
-// IPv6 CIDR block size is fixed at /56.
+// CIDR block, an Amazon-provided IPv6 CIDR block, or an IPv6 CIDR block from
+// an IPv6 address pool that you provisioned through bring your own IP addresses
+// (BYOIP (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-byoip.html)).
+// The IPv6 CIDR block size is fixed at /56.
 //
 // For more information about associating CIDR blocks with your VPC and applicable
 // restrictions, see VPC and Subnet Sizing (https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html#VPC_Sizing)
@@ -7169,9 +7171,10 @@ func (c *EC2) CreateVpcRequest(input *CreateVpcInput) (req *request.Request, out
 // make your VPC, see Your VPC and Subnets (https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html)
 // in the Amazon Virtual Private Cloud User Guide.
 //
-// You can optionally request an Amazon-provided IPv6 CIDR block for the VPC.
-// The IPv6 CIDR block uses a /56 prefix length, and is allocated from Amazon's
-// pool of IPv6 addresses. You cannot choose the IPv6 range for your VPC.
+// You can optionally request an IPv6 CIDR block for the VPC. You can request
+// an Amazon-provided IPv6 CIDR block from Amazon's pool of IPv6 addresses,
+// or an IPv6 CIDR block from an IPv6 address pool that you provisioned through
+// bring your own IP addresses (BYOIP (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-byoip.html)).
 //
 // By default, each instance you launch in the VPC has the default DHCP options,
 // which include only a default DNS server that we provide (AmazonProvidedDNS).
@@ -7257,14 +7260,14 @@ func (c *EC2) CreateVpcEndpointRequest(input *CreateVpcEndpointInput) (req *requ
 //
 // Creates a VPC endpoint for a specified service. An endpoint enables you to
 // create a private connection between your VPC and the service. The service
-// may be provided by AWS, an AWS Marketplace partner, or another AWS account.
+// may be provided by AWS, an AWS Marketplace Partner, or another AWS account.
 // For more information, see VPC Endpoints (https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html)
 // in the Amazon Virtual Private Cloud User Guide.
 //
 // A gateway endpoint serves as a target for a route in your route table for
 // traffic destined for the AWS service. You can specify an endpoint policy
-// to attach to the endpoint that will control access to the service from your
-// VPC. You can also specify the VPC route tables that use the endpoint.
+// to attach to the endpoint, which will control access to the service from
+// your VPC. You can also specify the VPC route tables that use the endpoint.
 //
 // An interface endpoint is a network interface in your subnet that serves as
 // an endpoint for communicating with the specified service. You can specify
@@ -7432,6 +7435,11 @@ func (c *EC2) CreateVpcEndpointServiceConfigurationRequest(input *CreateVpcEndpo
 // To create an endpoint service configuration, you must first create a Network
 // Load Balancer for your service. For more information, see VPC Endpoint Services
 // (https://docs.aws.amazon.com/vpc/latest/userguide/endpoint-service.html)
+// in the Amazon Virtual Private Cloud User Guide.
+//
+// If you set the private DNS name, you must prove that you own the private
+// DNS domain name. For more information, see VPC Endpoint Service Private DNS
+// Name Verification (https://docs.aws.amazon.com/vpc/latest/userguide/endpoint-services-dns-validation.html)
 // in the Amazon Virtual Private Cloud User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -12187,7 +12195,7 @@ func (c *EC2) DescribeByoipCidrsRequest(input *DescribeByoipCidrsInput) (req *re
 // Describes the IP address ranges that were specified in calls to ProvisionByoipCidr.
 //
 // To describe the address pools that were created when you provisioned the
-// address ranges, use DescribePublicIpv4Pools.
+// address ranges, use DescribePublicIpv4Pools or DescribeIpv6Pools.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -16691,6 +16699,138 @@ func (c *EC2) DescribeInternetGatewaysPagesWithContext(ctx aws.Context, input *D
 
 	for p.Next() {
 		if !fn(p.Page().(*DescribeInternetGatewaysOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
+const opDescribeIpv6Pools = "DescribeIpv6Pools"
+
+// DescribeIpv6PoolsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeIpv6Pools operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeIpv6Pools for more information on using the DescribeIpv6Pools
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeIpv6PoolsRequest method.
+//    req, resp := client.DescribeIpv6PoolsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeIpv6Pools
+func (c *EC2) DescribeIpv6PoolsRequest(input *DescribeIpv6PoolsInput) (req *request.Request, output *DescribeIpv6PoolsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeIpv6Pools,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &DescribeIpv6PoolsInput{}
+	}
+
+	output = &DescribeIpv6PoolsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeIpv6Pools API operation for Amazon Elastic Compute Cloud.
+//
+// Describes your IPv6 address pools.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic Compute Cloud's
+// API operation DescribeIpv6Pools for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeIpv6Pools
+func (c *EC2) DescribeIpv6Pools(input *DescribeIpv6PoolsInput) (*DescribeIpv6PoolsOutput, error) {
+	req, out := c.DescribeIpv6PoolsRequest(input)
+	return out, req.Send()
+}
+
+// DescribeIpv6PoolsWithContext is the same as DescribeIpv6Pools with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeIpv6Pools for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) DescribeIpv6PoolsWithContext(ctx aws.Context, input *DescribeIpv6PoolsInput, opts ...request.Option) (*DescribeIpv6PoolsOutput, error) {
+	req, out := c.DescribeIpv6PoolsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// DescribeIpv6PoolsPages iterates over the pages of a DescribeIpv6Pools operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeIpv6Pools method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeIpv6Pools operation.
+//    pageNum := 0
+//    err := client.DescribeIpv6PoolsPages(params,
+//        func(page *ec2.DescribeIpv6PoolsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *EC2) DescribeIpv6PoolsPages(input *DescribeIpv6PoolsInput, fn func(*DescribeIpv6PoolsOutput, bool) bool) error {
+	return c.DescribeIpv6PoolsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeIpv6PoolsPagesWithContext same as DescribeIpv6PoolsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) DescribeIpv6PoolsPagesWithContext(ctx aws.Context, input *DescribeIpv6PoolsInput, fn func(*DescribeIpv6PoolsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeIpv6PoolsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeIpv6PoolsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*DescribeIpv6PoolsOutput), !p.HasNextPage()) {
 			break
 		}
 	}
@@ -26591,6 +26731,139 @@ func (c *EC2) ExportTransitGatewayRoutesWithContext(ctx aws.Context, input *Expo
 	return out, req.Send()
 }
 
+const opGetAssociatedIpv6PoolCidrs = "GetAssociatedIpv6PoolCidrs"
+
+// GetAssociatedIpv6PoolCidrsRequest generates a "aws/request.Request" representing the
+// client's request for the GetAssociatedIpv6PoolCidrs operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetAssociatedIpv6PoolCidrs for more information on using the GetAssociatedIpv6PoolCidrs
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetAssociatedIpv6PoolCidrsRequest method.
+//    req, resp := client.GetAssociatedIpv6PoolCidrsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/GetAssociatedIpv6PoolCidrs
+func (c *EC2) GetAssociatedIpv6PoolCidrsRequest(input *GetAssociatedIpv6PoolCidrsInput) (req *request.Request, output *GetAssociatedIpv6PoolCidrsOutput) {
+	op := &request.Operation{
+		Name:       opGetAssociatedIpv6PoolCidrs,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &GetAssociatedIpv6PoolCidrsInput{}
+	}
+
+	output = &GetAssociatedIpv6PoolCidrsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetAssociatedIpv6PoolCidrs API operation for Amazon Elastic Compute Cloud.
+//
+// Gets information about the IPv6 CIDR block associations for a specified IPv6
+// address pool.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic Compute Cloud's
+// API operation GetAssociatedIpv6PoolCidrs for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/GetAssociatedIpv6PoolCidrs
+func (c *EC2) GetAssociatedIpv6PoolCidrs(input *GetAssociatedIpv6PoolCidrsInput) (*GetAssociatedIpv6PoolCidrsOutput, error) {
+	req, out := c.GetAssociatedIpv6PoolCidrsRequest(input)
+	return out, req.Send()
+}
+
+// GetAssociatedIpv6PoolCidrsWithContext is the same as GetAssociatedIpv6PoolCidrs with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetAssociatedIpv6PoolCidrs for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) GetAssociatedIpv6PoolCidrsWithContext(ctx aws.Context, input *GetAssociatedIpv6PoolCidrsInput, opts ...request.Option) (*GetAssociatedIpv6PoolCidrsOutput, error) {
+	req, out := c.GetAssociatedIpv6PoolCidrsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// GetAssociatedIpv6PoolCidrsPages iterates over the pages of a GetAssociatedIpv6PoolCidrs operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See GetAssociatedIpv6PoolCidrs method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a GetAssociatedIpv6PoolCidrs operation.
+//    pageNum := 0
+//    err := client.GetAssociatedIpv6PoolCidrsPages(params,
+//        func(page *ec2.GetAssociatedIpv6PoolCidrsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *EC2) GetAssociatedIpv6PoolCidrsPages(input *GetAssociatedIpv6PoolCidrsInput, fn func(*GetAssociatedIpv6PoolCidrsOutput, bool) bool) error {
+	return c.GetAssociatedIpv6PoolCidrsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// GetAssociatedIpv6PoolCidrsPagesWithContext same as GetAssociatedIpv6PoolCidrsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) GetAssociatedIpv6PoolCidrsPagesWithContext(ctx aws.Context, input *GetAssociatedIpv6PoolCidrsInput, fn func(*GetAssociatedIpv6PoolCidrsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *GetAssociatedIpv6PoolCidrsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.GetAssociatedIpv6PoolCidrsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*GetAssociatedIpv6PoolCidrsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opGetCapacityReservationUsage = "GetCapacityReservationUsage"
 
 // GetCapacityReservationUsageRequest generates a "aws/request.Request" representing the
@@ -31041,6 +31314,11 @@ func (c *EC2) ModifyVpcEndpointServiceConfigurationRequest(input *ModifyVpcEndpo
 // acceptance is required for requests to connect to your endpoint service through
 // an interface VPC endpoint.
 //
+// If you set or modify the private DNS name, you must prove that you own the
+// private DNS domain name. For more information, see VPC Endpoint Service Private
+// DNS Name Verification (https://docs.aws.amazon.com/vpc/latest/userguide/endpoint-services-dns-validation.html)
+// in the Amazon Virtual Private Cloud User Guide.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -31798,9 +32076,10 @@ func (c *EC2) ProvisionByoipCidrRequest(input *ProvisionByoipCidrInput) (req *re
 
 // ProvisionByoipCidr API operation for Amazon Elastic Compute Cloud.
 //
-// Provisions an address range for use with your AWS resources through bring
-// your own IP addresses (BYOIP) and creates a corresponding address pool. After
-// the address range is provisioned, it is ready to be advertised using AdvertiseByoipCidr.
+// Provisions an IPv4 or IPv6 address range for use with your AWS resources
+// through bring your own IP addresses (BYOIP) and creates a corresponding address
+// pool. After the address range is provisioned, it is ready to be advertised
+// using AdvertiseByoipCidr.
 //
 // AWS verifies that you own the address range and are authorized to advertise
 // it. You must ensure that the address range is registered to you and that
@@ -31813,8 +32092,8 @@ func (c *EC2) ProvisionByoipCidrRequest(input *ProvisionByoipCidrInput) (req *re
 // immediately, but the address range is not ready to use until its status changes
 // from pending-provision to provisioned. To monitor the status of an address
 // range, use DescribeByoipCidrs. To allocate an Elastic IP address from your
-// address pool, use AllocateAddress with either the specific address from the
-// address pool or the ID of the address pool.
+// IPv4 address pool, use AllocateAddress with either the specific address from
+// the address pool or the ID of the address pool.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -35081,6 +35360,89 @@ func (c *EC2) StartInstancesWithContext(ctx aws.Context, input *StartInstancesIn
 	return out, req.Send()
 }
 
+const opStartVpcEndpointServicePrivateDnsVerification = "StartVpcEndpointServicePrivateDnsVerification"
+
+// StartVpcEndpointServicePrivateDnsVerificationRequest generates a "aws/request.Request" representing the
+// client's request for the StartVpcEndpointServicePrivateDnsVerification operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See StartVpcEndpointServicePrivateDnsVerification for more information on using the StartVpcEndpointServicePrivateDnsVerification
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the StartVpcEndpointServicePrivateDnsVerificationRequest method.
+//    req, resp := client.StartVpcEndpointServicePrivateDnsVerificationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/StartVpcEndpointServicePrivateDnsVerification
+func (c *EC2) StartVpcEndpointServicePrivateDnsVerificationRequest(input *StartVpcEndpointServicePrivateDnsVerificationInput) (req *request.Request, output *StartVpcEndpointServicePrivateDnsVerificationOutput) {
+	op := &request.Operation{
+		Name:       opStartVpcEndpointServicePrivateDnsVerification,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &StartVpcEndpointServicePrivateDnsVerificationInput{}
+	}
+
+	output = &StartVpcEndpointServicePrivateDnsVerificationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// StartVpcEndpointServicePrivateDnsVerification API operation for Amazon Elastic Compute Cloud.
+//
+// Initiates the verification process to prove that the service provider owns
+// the private DNS name domain for the endpoint service.
+//
+// The service provider must successfully perform the verification before the
+// consumer can use the name to access the service.
+//
+// Before the service provider runs this command, they must add a record to
+// the DNS server. For more information, see Adding a TXT Record to Your Domain's
+// DNS Server (https://docs.aws.amazon.com/vpc/latest/userguide/ndpoint-services-dns-validation.html#add-dns-txt-record)
+// in the Amazon VPC User Guide.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic Compute Cloud's
+// API operation StartVpcEndpointServicePrivateDnsVerification for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/StartVpcEndpointServicePrivateDnsVerification
+func (c *EC2) StartVpcEndpointServicePrivateDnsVerification(input *StartVpcEndpointServicePrivateDnsVerificationInput) (*StartVpcEndpointServicePrivateDnsVerificationOutput, error) {
+	req, out := c.StartVpcEndpointServicePrivateDnsVerificationRequest(input)
+	return out, req.Send()
+}
+
+// StartVpcEndpointServicePrivateDnsVerificationWithContext is the same as StartVpcEndpointServicePrivateDnsVerification with the addition of
+// the ability to pass a context and additional request options.
+//
+// See StartVpcEndpointServicePrivateDnsVerification for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) StartVpcEndpointServicePrivateDnsVerificationWithContext(ctx aws.Context, input *StartVpcEndpointServicePrivateDnsVerificationInput, opts ...request.Option) (*StartVpcEndpointServicePrivateDnsVerificationOutput, error) {
+	req, out := c.StartVpcEndpointServicePrivateDnsVerificationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opStopInstances = "StopInstances"
 
 // StopInstancesRequest generates a "aws/request.Request" representing the
@@ -35801,8 +36163,7 @@ func (c *EC2) WithdrawByoipCidrRequest(input *WithdrawByoipCidrInput) (req *requ
 
 // WithdrawByoipCidr API operation for Amazon Elastic Compute Cloud.
 //
-// Stops advertising an IPv4 address range that is provisioned as an address
-// pool.
+// Stops advertising an address range that is provisioned as an address pool.
 //
 // You can perform this operation at most once every 10 seconds, even if you
 // specify different address ranges each time.
@@ -36089,7 +36450,7 @@ type AcceptVpcEndpointConnectionsInput struct {
 	// it is UnauthorizedOperation.
 	DryRun *bool `type:"boolean"`
 
-	// The ID of the endpoint service.
+	// The ID of the VPC endpoint service.
 	//
 	// ServiceId is a required field
 	ServiceId *string `type:"string" required:"true"`
@@ -36473,8 +36834,8 @@ func (s *Address) SetTags(v []*Tag) *Address {
 type AdvertiseByoipCidrInput struct {
 	_ struct{} `type:"structure"`
 
-	// The IPv4 address range, in CIDR notation. This must be the exact range that
-	// you provisioned. You can't advertise only a portion of the provisioned range.
+	// The address range, in CIDR notation. This must be the exact range that you
+	// provisioned. You can't advertise only a portion of the provisioned range.
 	//
 	// Cidr is a required field
 	Cidr *string `type:"string" required:"true"`
@@ -37958,6 +38319,12 @@ type AssociateVpcCidrBlockInput struct {
 	// An IPv4 CIDR block to associate with the VPC.
 	CidrBlock *string `type:"string"`
 
+	// An IPv6 CIDR block from the IPv6 address pool. You must also specify Ipv6Pool
+	// in the request.
+	//
+	// To let Amazon choose the IPv6 CIDR block for you, omit this parameter.
+	Ipv6CidrBlock *string `type:"string"`
+
 	// The name of the location from which we advertise the IPV6 CIDR block. Use
 	// this parameter to limit the CiDR block to this location.
 	//
@@ -37965,6 +38332,9 @@ type AssociateVpcCidrBlockInput struct {
 	//
 	// You can have one IPv6 CIDR block association per network border group.
 	Ipv6CidrBlockNetworkBorderGroup *string `type:"string"`
+
+	// The ID of an IPv6 address pool from which to allocate the IPv6 CIDR block.
+	Ipv6Pool *string `type:"string"`
 
 	// The ID of the VPC.
 	//
@@ -38007,9 +38377,21 @@ func (s *AssociateVpcCidrBlockInput) SetCidrBlock(v string) *AssociateVpcCidrBlo
 	return s
 }
 
+// SetIpv6CidrBlock sets the Ipv6CidrBlock field's value.
+func (s *AssociateVpcCidrBlockInput) SetIpv6CidrBlock(v string) *AssociateVpcCidrBlockInput {
+	s.Ipv6CidrBlock = &v
+	return s
+}
+
 // SetIpv6CidrBlockNetworkBorderGroup sets the Ipv6CidrBlockNetworkBorderGroup field's value.
 func (s *AssociateVpcCidrBlockInput) SetIpv6CidrBlockNetworkBorderGroup(v string) *AssociateVpcCidrBlockInput {
 	s.Ipv6CidrBlockNetworkBorderGroup = &v
+	return s
+}
+
+// SetIpv6Pool sets the Ipv6Pool field's value.
+func (s *AssociateVpcCidrBlockInput) SetIpv6Pool(v string) *AssociateVpcCidrBlockInput {
+	s.Ipv6Pool = &v
 	return s
 }
 
@@ -39576,7 +39958,7 @@ func (s *BundleTaskError) SetMessage(v string) *BundleTaskError {
 type ByoipCidr struct {
 	_ struct{} `type:"structure"`
 
-	// The public IPv4 address range, in CIDR notation.
+	// The address range, in CIDR notation.
 	Cidr *string `locationName:"cidr" type:"string"`
 
 	// The description of the address range.
@@ -41535,6 +41917,9 @@ type ClientVpnEndpoint struct {
 	// The transport protocol used by the Client VPN endpoint.
 	TransportProtocol *string `locationName:"transportProtocol" type:"string" enum:"TransportProtocol"`
 
+	// The port number for the Client VPN endpoint.
+	VpnPort *int64 `locationName:"vpnPort" type:"integer"`
+
 	// The protocol used by the VPN session.
 	VpnProtocol *string `locationName:"vpnProtocol" type:"string" enum:"VpnProtocol"`
 }
@@ -41636,6 +42021,12 @@ func (s *ClientVpnEndpoint) SetTags(v []*Tag) *ClientVpnEndpoint {
 // SetTransportProtocol sets the TransportProtocol field's value.
 func (s *ClientVpnEndpoint) SetTransportProtocol(v string) *ClientVpnEndpoint {
 	s.TransportProtocol = &v
+	return s
+}
+
+// SetVpnPort sets the VpnPort field's value.
+func (s *ClientVpnEndpoint) SetVpnPort(v int64) *ClientVpnEndpoint {
+	s.VpnPort = &v
 	return s
 }
 
@@ -43112,6 +43503,13 @@ type CreateClientVpnEndpointInput struct {
 	//
 	// Default value: udp
 	TransportProtocol *string `type:"string" enum:"TransportProtocol"`
+
+	// The port number to assign to the Client VPN endpoint for TCP and UDP traffic.
+	//
+	// Valid Values: 443 | 1194
+	//
+	// Default Value: 443
+	VpnPort *int64 `type:"integer"`
 }
 
 // String returns the string representation
@@ -43209,6 +43607,12 @@ func (s *CreateClientVpnEndpointInput) SetTagSpecifications(v []*TagSpecificatio
 // SetTransportProtocol sets the TransportProtocol field's value.
 func (s *CreateClientVpnEndpointInput) SetTransportProtocol(v string) *CreateClientVpnEndpointInput {
 	s.TransportProtocol = &v
+	return s
+}
+
+// SetVpnPort sets the VpnPort field's value.
+func (s *CreateClientVpnEndpointInput) SetVpnPort(v int64) *CreateClientVpnEndpointInput {
+	s.VpnPort = &v
 	return s
 }
 
@@ -48358,8 +48762,8 @@ func (s *CreateVolumePermissionModifications) SetRemove(v []*CreateVolumePermiss
 type CreateVpcEndpointConnectionNotificationInput struct {
 	_ struct{} `type:"structure"`
 
-	// Unique, case-sensitive identifier you provide to ensure the idempotency of
-	// the request. For more information, see How to Ensure Idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html).
+	// Unique, case-sensitive identifier that you provide to ensure the idempotency
+	// of the request. For more information, see How to Ensure Idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html).
 	ClientToken *string `type:"string"`
 
 	// One or more endpoint events for which to receive notifications. Valid values
@@ -48451,8 +48855,8 @@ func (s *CreateVpcEndpointConnectionNotificationInput) SetVpcEndpointId(v string
 type CreateVpcEndpointConnectionNotificationOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Unique, case-sensitive identifier you provide to ensure the idempotency of
-	// the request.
+	// Unique, case-sensitive identifier that you provide to ensure the idempotency
+	// of the request.
 	ClientToken *string `locationName:"clientToken" type:"string"`
 
 	// Information about the notification.
@@ -48485,8 +48889,8 @@ func (s *CreateVpcEndpointConnectionNotificationOutput) SetConnectionNotificatio
 type CreateVpcEndpointInput struct {
 	_ struct{} `type:"structure"`
 
-	// Unique, case-sensitive identifier you provide to ensure the idempotency of
-	// the request. For more information, see How to Ensure Idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html).
+	// Unique, case-sensitive identifier that you provide to ensure the idempotency
+	// of the request. For more information, see How to Ensure Idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html).
 	ClientToken *string `type:"string"`
 
 	// Checks whether you have the required permissions for the action, without
@@ -48500,10 +48904,10 @@ type CreateVpcEndpointInput struct {
 	// we attach a default policy that allows full access to the service.
 	PolicyDocument *string `type:"string"`
 
-	// (Interface endpoint) Indicate whether to associate a private hosted zone
+	// (Interface endpoint) Indicates whether to associate a private hosted zone
 	// with the specified VPC. The private hosted zone contains a record set for
 	// the default public DNS name for the service for the Region (for example,
-	// kinesis.us-east-1.amazonaws.com) which resolves to the private IP addresses
+	// kinesis.us-east-1.amazonaws.com), which resolves to the private IP addresses
 	// of the endpoint network interfaces in the VPC. This enables you to make requests
 	// to the default public DNS name for the service instead of the public DNS
 	// names that are automatically generated by the VPC endpoint service.
@@ -48633,8 +49037,8 @@ func (s *CreateVpcEndpointInput) SetVpcId(v string) *CreateVpcEndpointInput {
 type CreateVpcEndpointOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Unique, case-sensitive identifier you provide to ensure the idempotency of
-	// the request.
+	// Unique, case-sensitive identifier that you provide to ensure the idempotency
+	// of the request.
 	ClientToken *string `locationName:"clientToken" type:"string"`
 
 	// Information about the endpoint.
@@ -48666,12 +49070,12 @@ func (s *CreateVpcEndpointOutput) SetVpcEndpoint(v *VpcEndpoint) *CreateVpcEndpo
 type CreateVpcEndpointServiceConfigurationInput struct {
 	_ struct{} `type:"structure"`
 
-	// Indicate whether requests from service consumers to create an endpoint to
+	// Indicates whether requests from service consumers to create an endpoint to
 	// your service must be accepted. To accept a request, use AcceptVpcEndpointConnections.
 	AcceptanceRequired *bool `type:"boolean"`
 
-	// Unique, case-sensitive identifier you provide to ensure the idempotency of
-	// the request. For more information, see How to Ensure Idempotency (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html).
+	// Unique, case-sensitive identifier that you provide to ensure the idempotency
+	// of the request. For more information, see How to Ensure Idempotency (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html).
 	ClientToken *string `type:"string"`
 
 	// Checks whether you have the required permissions for the action, without
@@ -48685,6 +49089,9 @@ type CreateVpcEndpointServiceConfigurationInput struct {
 	//
 	// NetworkLoadBalancerArns is a required field
 	NetworkLoadBalancerArns []*string `locationName:"NetworkLoadBalancerArn" locationNameList:"item" type:"list" required:"true"`
+
+	// The private DNS name to assign to the VPC endpoint service.
+	PrivateDnsName *string `type:"string"`
 }
 
 // String returns the string representation
@@ -48734,11 +49141,17 @@ func (s *CreateVpcEndpointServiceConfigurationInput) SetNetworkLoadBalancerArns(
 	return s
 }
 
+// SetPrivateDnsName sets the PrivateDnsName field's value.
+func (s *CreateVpcEndpointServiceConfigurationInput) SetPrivateDnsName(v string) *CreateVpcEndpointServiceConfigurationInput {
+	s.PrivateDnsName = &v
+	return s
+}
+
 type CreateVpcEndpointServiceConfigurationOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Unique, case-sensitive identifier you provide to ensure the idempotency of
-	// the request.
+	// Unique, case-sensitive identifier that you provide to ensure the idempotency
+	// of the request.
 	ClientToken *string `locationName:"clientToken" type:"string"`
 
 	// Information about the service configuration.
@@ -48798,11 +49211,20 @@ type CreateVpcInput struct {
 	// Default: default
 	InstanceTenancy *string `locationName:"instanceTenancy" type:"string" enum:"Tenancy"`
 
+	// The IPv6 CIDR block from the IPv6 address pool. You must also specify Ipv6Pool
+	// in the request.
+	//
+	// To let Amazon choose the IPv6 CIDR block for you, omit this parameter.
+	Ipv6CidrBlock *string `type:"string"`
+
 	// The name of the location from which we advertise the IPV6 CIDR block. Use
 	// this parameter to limit the address to this location.
 	//
 	// You must set AmazonProvidedIpv6CidrBlock to true to use this parameter.
 	Ipv6CidrBlockNetworkBorderGroup *string `type:"string"`
+
+	// The ID of an IPv6 address pool from which to allocate the IPv6 CIDR block.
+	Ipv6Pool *string `type:"string"`
 }
 
 // String returns the string representation
@@ -48852,9 +49274,21 @@ func (s *CreateVpcInput) SetInstanceTenancy(v string) *CreateVpcInput {
 	return s
 }
 
+// SetIpv6CidrBlock sets the Ipv6CidrBlock field's value.
+func (s *CreateVpcInput) SetIpv6CidrBlock(v string) *CreateVpcInput {
+	s.Ipv6CidrBlock = &v
+	return s
+}
+
 // SetIpv6CidrBlockNetworkBorderGroup sets the Ipv6CidrBlockNetworkBorderGroup field's value.
 func (s *CreateVpcInput) SetIpv6CidrBlockNetworkBorderGroup(v string) *CreateVpcInput {
 	s.Ipv6CidrBlockNetworkBorderGroup = &v
+	return s
+}
+
+// SetIpv6Pool sets the Ipv6Pool field's value.
+func (s *CreateVpcInput) SetIpv6Pool(v string) *CreateVpcInput {
+	s.Ipv6Pool = &v
 	return s
 }
 
@@ -53075,8 +53509,8 @@ func (s DeleteVpnGatewayOutput) GoString() string {
 type DeprovisionByoipCidrInput struct {
 	_ struct{} `type:"structure"`
 
-	// The public IPv4 address range, in CIDR notation. The prefix must be the same
-	// prefix that you specified when you provisioned the address range.
+	// The address range, in CIDR notation. The prefix must be the same prefix that
+	// you specified when you provisioned the address range.
 	//
 	// Cidr is a required field
 	Cidr *string `type:"string" required:"true"`
@@ -54141,6 +54575,14 @@ type DescribeClientVpnAuthorizationRulesInput struct {
 	DryRun *bool `type:"boolean"`
 
 	// One or more filters. Filter names and values are case-sensitive.
+	//
+	//    * description - The description of the authorization rule.
+	//
+	//    * destination-cidr - The CIDR of the network to which the authorization
+	//    rule applies.
+	//
+	//    * group-id - The ID of the Active Directory group to which the authorization
+	//    rule grants access.
 	Filters []*Filter `locationName:"Filter" locationNameList:"Filter" type:"list"`
 
 	// The maximum number of results to return for the request in a single page.
@@ -54256,6 +54698,11 @@ type DescribeClientVpnConnectionsInput struct {
 	DryRun *bool `type:"boolean"`
 
 	// One or more filters. Filter names and values are case-sensitive.
+	//
+	//    * connection-id - The ID of the connection.
+	//
+	//    * username - For Active Directory client authentication, the user name
+	//    of the client who established the client connection.
 	Filters []*Filter `locationName:"Filter" locationNameList:"Filter" type:"list"`
 
 	// The maximum number of results to return for the request in a single page.
@@ -54369,6 +54816,10 @@ type DescribeClientVpnEndpointsInput struct {
 	DryRun *bool `type:"boolean"`
 
 	// One or more filters. Filter names and values are case-sensitive.
+	//
+	//    * endpoint-id - The ID of the Client VPN endpoint.
+	//
+	//    * transport-protocol - The transport protocol (tcp | udp).
 	Filters []*Filter `locationName:"Filter" locationNameList:"Filter" type:"list"`
 
 	// The maximum number of results to return for the request in a single page.
@@ -54481,6 +54932,13 @@ type DescribeClientVpnRoutesInput struct {
 	DryRun *bool `type:"boolean"`
 
 	// One or more filters. Filter names and values are case-sensitive.
+	//
+	//    * destination-cidr - The CIDR of the route destination.
+	//
+	//    * origin - How the route was associated with the Client VPN endpoint (associate
+	//    | add-route).
+	//
+	//    * target-subnet - The ID of the subnet through which traffic is routed.
 	Filters []*Filter `locationName:"Filter" locationNameList:"Filter" type:"list"`
 
 	// The maximum number of results to return for the request in a single page.
@@ -54599,6 +55057,12 @@ type DescribeClientVpnTargetNetworksInput struct {
 	DryRun *bool `type:"boolean"`
 
 	// One or more filters. Filter names and values are case-sensitive.
+	//
+	//    * association-id - The ID of the association.
+	//
+	//    * target-network-id - The ID of the subnet specified as the target network.
+	//
+	//    * vpc-id - The ID of the VPC in which the target network is located.
 	Filters []*Filter `locationName:"Filter" locationNameList:"Filter" type:"list"`
 
 	// The maximum number of results to return for the request in a single page.
@@ -55112,6 +55576,19 @@ type DescribeEgressOnlyInternetGatewaysInput struct {
 	// One or more egress-only internet gateway IDs.
 	EgressOnlyInternetGatewayIds []*string `locationName:"EgressOnlyInternetGatewayId" locationNameList:"item" type:"list"`
 
+	// One or more filters.
+	//
+	//    * tag:<key> - The key/value combination of a tag assigned to the resource.
+	//    Use the tag key in the filter name and the tag value as the filter value.
+	//    For example, to find all resources that have a tag with the key Owner
+	//    and the value TeamA, specify tag:Owner for the filter name and TeamA for
+	//    the filter value.
+	//
+	//    * tag-key - The key of a tag assigned to the resource. Use this filter
+	//    to find all resources assigned a tag with a specific key, regardless of
+	//    the tag value.
+	Filters []*Filter `locationName:"Filter" locationNameList:"Filter" type:"list"`
+
 	// The maximum number of results to return with a single call. To retrieve the
 	// remaining results, make another call with the returned nextToken value.
 	MaxResults *int64 `min:"5" type:"integer"`
@@ -55152,6 +55629,12 @@ func (s *DescribeEgressOnlyInternetGatewaysInput) SetDryRun(v bool) *DescribeEgr
 // SetEgressOnlyInternetGatewayIds sets the EgressOnlyInternetGatewayIds field's value.
 func (s *DescribeEgressOnlyInternetGatewaysInput) SetEgressOnlyInternetGatewayIds(v []*string) *DescribeEgressOnlyInternetGatewaysInput {
 	s.EgressOnlyInternetGatewayIds = v
+	return s
+}
+
+// SetFilters sets the Filters field's value.
+func (s *DescribeEgressOnlyInternetGatewaysInput) SetFilters(v []*Filter) *DescribeEgressOnlyInternetGatewaysInput {
+	s.Filters = v
 	return s
 }
 
@@ -55450,6 +55933,7 @@ type DescribeExportTasksInput struct {
 	// The export task IDs.
 	ExportTaskIds []*string `locationName:"exportTaskId" locationNameList:"ExportTaskId" type:"list"`
 
+	// the filters for the export tasks.
 	Filters []*Filter `locationName:"Filter" locationNameList:"Filter" type:"list"`
 }
 
@@ -58347,7 +58831,7 @@ type DescribeInstanceTypesInput struct {
 	//    type.
 	//
 	//    * vcpu-info.default-threads-per-core - The default number of threads per
-	//    cores for the instance type.
+	//    core for the instance type.
 	//
 	//    * vcpu-info.default-vcpus - The default number of vCPUs for the instance
 	//    type.
@@ -58924,6 +59408,125 @@ func (s *DescribeInternetGatewaysOutput) SetInternetGateways(v []*InternetGatewa
 
 // SetNextToken sets the NextToken field's value.
 func (s *DescribeInternetGatewaysOutput) SetNextToken(v string) *DescribeInternetGatewaysOutput {
+	s.NextToken = &v
+	return s
+}
+
+type DescribeIpv6PoolsInput struct {
+	_ struct{} `type:"structure"`
+
+	// Checks whether you have the required permissions for the action, without
+	// actually making the request, and provides an error response. If you have
+	// the required permissions, the error response is DryRunOperation. Otherwise,
+	// it is UnauthorizedOperation.
+	DryRun *bool `type:"boolean"`
+
+	// One or more filters.
+	//
+	//    * tag:<key> - The key/value combination of a tag assigned to the resource.
+	//    Use the tag key in the filter name and the tag value as the filter value.
+	//    For example, to find all resources that have a tag with the key Owner
+	//    and the value TeamA, specify tag:Owner for the filter name and TeamA for
+	//    the filter value.
+	//
+	//    * tag-key - The key of a tag assigned to the resource. Use this filter
+	//    to find all resources assigned a tag with a specific key, regardless of
+	//    the tag value.
+	Filters []*Filter `locationName:"Filter" locationNameList:"Filter" type:"list"`
+
+	// The maximum number of results to return with a single call. To retrieve the
+	// remaining results, make another call with the returned nextToken value.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// The token for the next page of results.
+	NextToken *string `type:"string"`
+
+	// The IDs of the IPv6 address pools.
+	PoolIds []*string `locationName:"PoolId" locationNameList:"item" type:"list"`
+}
+
+// String returns the string representation
+func (s DescribeIpv6PoolsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeIpv6PoolsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeIpv6PoolsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeIpv6PoolsInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDryRun sets the DryRun field's value.
+func (s *DescribeIpv6PoolsInput) SetDryRun(v bool) *DescribeIpv6PoolsInput {
+	s.DryRun = &v
+	return s
+}
+
+// SetFilters sets the Filters field's value.
+func (s *DescribeIpv6PoolsInput) SetFilters(v []*Filter) *DescribeIpv6PoolsInput {
+	s.Filters = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *DescribeIpv6PoolsInput) SetMaxResults(v int64) *DescribeIpv6PoolsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeIpv6PoolsInput) SetNextToken(v string) *DescribeIpv6PoolsInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetPoolIds sets the PoolIds field's value.
+func (s *DescribeIpv6PoolsInput) SetPoolIds(v []*string) *DescribeIpv6PoolsInput {
+	s.PoolIds = v
+	return s
+}
+
+type DescribeIpv6PoolsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the IPv6 address pools.
+	Ipv6Pools []*Ipv6Pool `locationName:"ipv6PoolSet" locationNameList:"item" type:"list"`
+
+	// The token to use to retrieve the next page of results. This value is null
+	// when there are no more results to return.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeIpv6PoolsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeIpv6PoolsOutput) GoString() string {
+	return s.String()
+}
+
+// SetIpv6Pools sets the Ipv6Pools field's value.
+func (s *DescribeIpv6PoolsOutput) SetIpv6Pools(v []*Ipv6Pool) *DescribeIpv6PoolsOutput {
+	s.Ipv6Pools = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeIpv6PoolsOutput) SetNextToken(v string) *DescribeIpv6PoolsOutput {
 	s.NextToken = &v
 	return s
 }
@@ -65874,7 +66477,7 @@ type DescribeVpcEndpointConnectionNotificationsInput struct {
 
 	// One or more filters.
 	//
-	//    * connection-notification-arn - The ARN of SNS topic for the notification.
+	//    * connection-notification-arn - The ARN of the SNS topic for the notification.
 	//
 	//    * connection-notification-id - The ID of the notification.
 	//
@@ -65993,7 +66596,7 @@ type DescribeVpcEndpointConnectionsInput struct {
 	// The maximum number of results to return for the request in a single page.
 	// The remaining results of the initial request can be seen by sending another
 	// request with the returned NextToken value. This value can be between 5 and
-	// 1000; if MaxResults is given a value larger than 1000, only 1000 results
+	// 1,000; if MaxResults is given a value larger than 1,000, only 1,000 results
 	// are returned.
 	MaxResults *int64 `type:"integer"`
 
@@ -66100,7 +66703,7 @@ type DescribeVpcEndpointServiceConfigurationsInput struct {
 	// The maximum number of results to return for the request in a single page.
 	// The remaining results of the initial request can be seen by sending another
 	// request with the returned NextToken value. This value can be between 5 and
-	// 1000; if MaxResults is given a value larger than 1000, only 1000 results
+	// 1,000; if MaxResults is given a value larger than 1,000, only 1,000 results
 	// are returned.
 	MaxResults *int64 `type:"integer"`
 
@@ -66204,7 +66807,7 @@ type DescribeVpcEndpointServicePermissionsInput struct {
 	// The maximum number of results to return for the request in a single page.
 	// The remaining results of the initial request can be seen by sending another
 	// request with the returned NextToken value. This value can be between 5 and
-	// 1000; if MaxResults is given a value larger than 1000, only 1000 results
+	// 1,000; if MaxResults is given a value larger than 1,000, only 1,000 results
 	// are returned.
 	MaxResults *int64 `type:"integer"`
 
@@ -66315,7 +66918,7 @@ type DescribeVpcEndpointServicesInput struct {
 
 	// One or more filters.
 	//
-	//    * service-name: The name of the service.
+	//    * service-name - The name of the service.
 	//
 	//    * tag:<key> - The key/value combination of a tag assigned to the resource.
 	//    Use the tag key in the filter name and the tag value as the filter value.
@@ -66332,7 +66935,7 @@ type DescribeVpcEndpointServicesInput struct {
 	// a token that you can specify in a subsequent call to get the next set of
 	// results.
 	//
-	// Constraint: If the value is greater than 1000, we return only 1000 items.
+	// Constraint: If the value is greater than 1,000, we return only 1,000 items.
 	MaxResults *int64 `type:"integer"`
 
 	// The token for the next set of items to return. (You received this token from
@@ -66438,11 +67041,11 @@ type DescribeVpcEndpointsInput struct {
 
 	// One or more filters.
 	//
-	//    * service-name: The name of the service.
+	//    * service-name - The name of the service.
 	//
-	//    * vpc-id: The ID of the VPC in which the endpoint resides.
+	//    * vpc-id - The ID of the VPC in which the endpoint resides.
 	//
-	//    * vpc-endpoint-id: The ID of the endpoint.
+	//    * vpc-endpoint-id - The ID of the endpoint.
 	//
 	//    * vpc-endpoint-state - The state of the endpoint (pendingAcceptance |
 	//    pending | available | deleting | deleted | rejected | failed).
@@ -66462,7 +67065,7 @@ type DescribeVpcEndpointsInput struct {
 	// a token that you can specify in a subsequent call to get the next set of
 	// results.
 	//
-	// Constraint: If the value is greater than 1000, we return only 1000 items.
+	// Constraint: If the value is greater than 1,000, we return only 1,000 items.
 	MaxResults *int64 `type:"integer"`
 
 	// The token for the next set of items to return. (You received this token from
@@ -66722,6 +67325,9 @@ type DescribeVpcsInput struct {
 	//
 	//    * ipv6-cidr-block-association.ipv6-cidr-block - An IPv6 CIDR block associated
 	//    with the VPC.
+	//
+	//    * ipv6-cidr-block-association.ipv6-pool - The ID of the IPv6 address pool
+	//    from which the IPv6 CIDR block is allocated.
 	//
 	//    * ipv6-cidr-block-association.association-id - The association ID for
 	//    an IPv6 CIDR block associated with the VPC.
@@ -69429,6 +70035,9 @@ type EgressOnlyInternetGateway struct {
 
 	// The ID of the egress-only internet gateway.
 	EgressOnlyInternetGatewayId *string `locationName:"egressOnlyInternetGatewayId" type:"string"`
+
+	// The tags assigned to the egress-only internet gateway.
+	Tags []*Tag `locationName:"tagSet" locationNameList:"item" type:"list"`
 }
 
 // String returns the string representation
@@ -69450,6 +70059,12 @@ func (s *EgressOnlyInternetGateway) SetAttachments(v []*InternetGatewayAttachmen
 // SetEgressOnlyInternetGatewayId sets the EgressOnlyInternetGatewayId field's value.
 func (s *EgressOnlyInternetGateway) SetEgressOnlyInternetGatewayId(v string) *EgressOnlyInternetGateway {
 	s.EgressOnlyInternetGatewayId = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *EgressOnlyInternetGateway) SetTags(v []*Tag) *EgressOnlyInternetGateway {
+	s.Tags = v
 	return s
 }
 
@@ -71059,6 +71674,7 @@ type ExportTask struct {
 	// The status message related to the export task.
 	StatusMessage *string `locationName:"statusMessage" type:"string"`
 
+	// The tags for the export task.
 	Tags []*Tag `locationName:"tagSet" locationNameList:"item" type:"list"`
 }
 
@@ -72591,6 +73207,111 @@ func (s *FpgaInfo) SetFpgas(v []*FpgaDeviceInfo) *FpgaInfo {
 // SetTotalFpgaMemoryInMiB sets the TotalFpgaMemoryInMiB field's value.
 func (s *FpgaInfo) SetTotalFpgaMemoryInMiB(v int64) *FpgaInfo {
 	s.TotalFpgaMemoryInMiB = &v
+	return s
+}
+
+type GetAssociatedIpv6PoolCidrsInput struct {
+	_ struct{} `type:"structure"`
+
+	// Checks whether you have the required permissions for the action, without
+	// actually making the request, and provides an error response. If you have
+	// the required permissions, the error response is DryRunOperation. Otherwise,
+	// it is UnauthorizedOperation.
+	DryRun *bool `type:"boolean"`
+
+	// The maximum number of results to return with a single call. To retrieve the
+	// remaining results, make another call with the returned nextToken value.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// The token for the next page of results.
+	NextToken *string `type:"string"`
+
+	// The ID of the IPv6 address pool.
+	//
+	// PoolId is a required field
+	PoolId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetAssociatedIpv6PoolCidrsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetAssociatedIpv6PoolCidrsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetAssociatedIpv6PoolCidrsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetAssociatedIpv6PoolCidrsInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.PoolId == nil {
+		invalidParams.Add(request.NewErrParamRequired("PoolId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDryRun sets the DryRun field's value.
+func (s *GetAssociatedIpv6PoolCidrsInput) SetDryRun(v bool) *GetAssociatedIpv6PoolCidrsInput {
+	s.DryRun = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *GetAssociatedIpv6PoolCidrsInput) SetMaxResults(v int64) *GetAssociatedIpv6PoolCidrsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *GetAssociatedIpv6PoolCidrsInput) SetNextToken(v string) *GetAssociatedIpv6PoolCidrsInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetPoolId sets the PoolId field's value.
+func (s *GetAssociatedIpv6PoolCidrsInput) SetPoolId(v string) *GetAssociatedIpv6PoolCidrsInput {
+	s.PoolId = &v
+	return s
+}
+
+type GetAssociatedIpv6PoolCidrsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the IPv6 CIDR block associations.
+	Ipv6CidrAssociations []*Ipv6CidrAssociation `locationName:"ipv6CidrAssociationSet" locationNameList:"item" type:"list"`
+
+	// The token to use to retrieve the next page of results. This value is null
+	// when there are no more results to return.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation
+func (s GetAssociatedIpv6PoolCidrsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetAssociatedIpv6PoolCidrsOutput) GoString() string {
+	return s.String()
+}
+
+// SetIpv6CidrAssociations sets the Ipv6CidrAssociations field's value.
+func (s *GetAssociatedIpv6PoolCidrsOutput) SetIpv6CidrAssociations(v []*Ipv6CidrAssociation) *GetAssociatedIpv6PoolCidrsOutput {
+	s.Ipv6CidrAssociations = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *GetAssociatedIpv6PoolCidrsOutput) SetNextToken(v string) *GetAssociatedIpv6PoolCidrsOutput {
+	s.NextToken = &v
 	return s
 }
 
@@ -76044,7 +76765,7 @@ type ImportImageTask struct {
 	// A descriptive status message for the import image task.
 	StatusMessage *string `locationName:"statusMessage" type:"string"`
 
-	// Any tags applied to the import image task.
+	// The tags for the import image task.
 	Tags []*Tag `locationName:"tagSet" locationNameList:"item" type:"list"`
 }
 
@@ -76779,7 +77500,7 @@ type ImportSnapshotTask struct {
 	// Describes an import snapshot task.
 	SnapshotTaskDetail *SnapshotTaskDetail `locationName:"snapshotTaskDetail" type:"structure"`
 
-	// Any tags applied to the import snapshot task.
+	// The tags for the import snapshot task.
 	Tags []*Tag `locationName:"tagSet" locationNameList:"item" type:"list"`
 }
 
@@ -79467,6 +80188,39 @@ func (s *IpRange) SetDescription(v string) *IpRange {
 	return s
 }
 
+// Describes an IPv6 CIDR block association.
+type Ipv6CidrAssociation struct {
+	_ struct{} `type:"structure"`
+
+	// The resource that's associated with the IPv6 CIDR block.
+	AssociatedResource *string `locationName:"associatedResource" type:"string"`
+
+	// The IPv6 CIDR block.
+	Ipv6Cidr *string `locationName:"ipv6Cidr" type:"string"`
+}
+
+// String returns the string representation
+func (s Ipv6CidrAssociation) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Ipv6CidrAssociation) GoString() string {
+	return s.String()
+}
+
+// SetAssociatedResource sets the AssociatedResource field's value.
+func (s *Ipv6CidrAssociation) SetAssociatedResource(v string) *Ipv6CidrAssociation {
+	s.AssociatedResource = &v
+	return s
+}
+
+// SetIpv6Cidr sets the Ipv6Cidr field's value.
+func (s *Ipv6CidrAssociation) SetIpv6Cidr(v string) *Ipv6CidrAssociation {
+	s.Ipv6Cidr = &v
+	return s
+}
+
 // Describes an IPv6 CIDR block.
 type Ipv6CidrBlock struct {
 	_ struct{} `type:"structure"`
@@ -79488,6 +80242,57 @@ func (s Ipv6CidrBlock) GoString() string {
 // SetIpv6CidrBlock sets the Ipv6CidrBlock field's value.
 func (s *Ipv6CidrBlock) SetIpv6CidrBlock(v string) *Ipv6CidrBlock {
 	s.Ipv6CidrBlock = &v
+	return s
+}
+
+// Describes an IPv6 address pool.
+type Ipv6Pool struct {
+	_ struct{} `type:"structure"`
+
+	// The description for the address pool.
+	Description *string `locationName:"description" type:"string"`
+
+	// The CIDR blocks for the address pool.
+	PoolCidrBlocks []*PoolCidrBlock `locationName:"poolCidrBlockSet" locationNameList:"item" type:"list"`
+
+	// The ID of the address pool.
+	PoolId *string `locationName:"poolId" type:"string"`
+
+	// Any tags for the address pool.
+	Tags []*Tag `locationName:"tagSet" locationNameList:"item" type:"list"`
+}
+
+// String returns the string representation
+func (s Ipv6Pool) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Ipv6Pool) GoString() string {
+	return s.String()
+}
+
+// SetDescription sets the Description field's value.
+func (s *Ipv6Pool) SetDescription(v string) *Ipv6Pool {
+	s.Description = &v
+	return s
+}
+
+// SetPoolCidrBlocks sets the PoolCidrBlocks field's value.
+func (s *Ipv6Pool) SetPoolCidrBlocks(v []*PoolCidrBlock) *Ipv6Pool {
+	s.PoolCidrBlocks = v
+	return s
+}
+
+// SetPoolId sets the PoolId field's value.
+func (s *Ipv6Pool) SetPoolId(v string) *Ipv6Pool {
+	s.PoolId = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *Ipv6Pool) SetTags(v []*Tag) *Ipv6Pool {
+	s.Tags = v
 	return s
 }
 
@@ -79580,6 +80385,39 @@ func (s *KeyPairInfo) SetKeyPairId(v string) *KeyPairInfo {
 // SetTags sets the Tags field's value.
 func (s *KeyPairInfo) SetTags(v []*Tag) *KeyPairInfo {
 	s.Tags = v
+	return s
+}
+
+// The last error that occurred for a VPC endpoint.
+type LastError struct {
+	_ struct{} `type:"structure"`
+
+	// The error code for the VPC endpoint error.
+	Code *string `locationName:"code" type:"string"`
+
+	// The error message for the VPC endpoint error.
+	Message *string `locationName:"message" type:"string"`
+}
+
+// String returns the string representation
+func (s LastError) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s LastError) GoString() string {
+	return s.String()
+}
+
+// SetCode sets the Code field's value.
+func (s *LastError) SetCode(v string) *LastError {
+	s.Code = &v
+	return s
+}
+
+// SetMessage sets the Message field's value.
+func (s *LastError) SetMessage(v string) *LastError {
+	s.Message = &v
 	return s
 }
 
@@ -80677,6 +81515,150 @@ func (s *LaunchTemplateInstanceMarketOptionsRequest) SetSpotOptions(v *LaunchTem
 	return s
 }
 
+// The metadata options for the instance. For more information, see Instance
+// Metadata and User Data (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html)
+// in the Amazon Elastic Compute Cloud User Guide.
+type LaunchTemplateInstanceMetadataOptions struct {
+	_ struct{} `type:"structure"`
+
+	// This parameter enables or disables the HTTP metadata endpoint on your instances.
+	// If the parameter is not specified, the default state is enabled.
+	//
+	// If you specify a value of disabled, you will not be able to access your instance
+	// metadata.
+	HttpEndpoint *string `locationName:"httpEndpoint" type:"string" enum:"LaunchTemplateInstanceMetadataEndpointState"`
+
+	// The desired HTTP PUT response hop limit for instance metadata requests. The
+	// larger the number, the further instance metadata requests can travel.
+	//
+	// Default: 1
+	//
+	// Possible values: Integers from 1 to 64
+	HttpPutResponseHopLimit *int64 `locationName:"httpPutResponseHopLimit" type:"integer"`
+
+	// The state of token usage for your instance metadata requests. If the parameter
+	// is not specified in the request, the default state is optional.
+	//
+	// If the state is optional, you can choose to retrieve instance metadata with
+	// or without a signed token header on your request. If you retrieve the IAM
+	// role credentials without a token, the version 1.0 role credentials are returned.
+	// If you retrieve the IAM role credentials using a valid signed token, the
+	// version 2.0 role credentials are returned.
+	//
+	// If the state is required, you must send a signed token header with any instance
+	// metadata retrieval requests. In this state, retrieving the IAM role credentials
+	// always returns the version 2.0 credentials; the version 1.0 credentials are
+	// not available.
+	HttpTokens *string `locationName:"httpTokens" type:"string" enum:"LaunchTemplateHttpTokensState"`
+
+	// The state of the metadata option changes.
+	//
+	// pending - The metadata options are being updated and the instance is not
+	// ready to process metadata traffic with the new selection.
+	//
+	// applied - The metadata options have been successfully applied on the instance.
+	State *string `locationName:"state" type:"string" enum:"LaunchTemplateInstanceMetadataOptionsState"`
+}
+
+// String returns the string representation
+func (s LaunchTemplateInstanceMetadataOptions) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s LaunchTemplateInstanceMetadataOptions) GoString() string {
+	return s.String()
+}
+
+// SetHttpEndpoint sets the HttpEndpoint field's value.
+func (s *LaunchTemplateInstanceMetadataOptions) SetHttpEndpoint(v string) *LaunchTemplateInstanceMetadataOptions {
+	s.HttpEndpoint = &v
+	return s
+}
+
+// SetHttpPutResponseHopLimit sets the HttpPutResponseHopLimit field's value.
+func (s *LaunchTemplateInstanceMetadataOptions) SetHttpPutResponseHopLimit(v int64) *LaunchTemplateInstanceMetadataOptions {
+	s.HttpPutResponseHopLimit = &v
+	return s
+}
+
+// SetHttpTokens sets the HttpTokens field's value.
+func (s *LaunchTemplateInstanceMetadataOptions) SetHttpTokens(v string) *LaunchTemplateInstanceMetadataOptions {
+	s.HttpTokens = &v
+	return s
+}
+
+// SetState sets the State field's value.
+func (s *LaunchTemplateInstanceMetadataOptions) SetState(v string) *LaunchTemplateInstanceMetadataOptions {
+	s.State = &v
+	return s
+}
+
+// The metadata options for the instance. For more information, see Instance
+// Metadata and User Data (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html)
+// in the Amazon Elastic Compute Cloud User Guide.
+type LaunchTemplateInstanceMetadataOptionsRequest struct {
+	_ struct{} `type:"structure"`
+
+	// This parameter enables or disables the HTTP metadata endpoint on your instances.
+	// If the parameter is not specified, the default state is enabled.
+	//
+	// If you specify a value of disabled, you will not be able to access your instance
+	// metadata.
+	HttpEndpoint *string `type:"string" enum:"LaunchTemplateInstanceMetadataEndpointState"`
+
+	// The desired HTTP PUT response hop limit for instance metadata requests. The
+	// larger the number, the further instance metadata requests can travel.
+	//
+	// Default: 1
+	//
+	// Possible values: Integers from 1 to 64
+	HttpPutResponseHopLimit *int64 `type:"integer"`
+
+	// The state of token usage for your instance metadata requests. If the parameter
+	// is not specified in the request, the default state is optional.
+	//
+	// If the state is optional, you can choose to retrieve instance metadata with
+	// or without a signed token header on your request. If you retrieve the IAM
+	// role credentials without a token, the version 1.0 role credentials are returned.
+	// If you retrieve the IAM role credentials using a valid signed token, the
+	// version 2.0 role credentials are returned.
+	//
+	// If the state is required, you must send a signed token header with any instance
+	// metadata retrieval requests. In this state, retrieving the IAM role credentials
+	// always returns the version 2.0 credentials; the version 1.0 credentials are
+	// not available.
+	HttpTokens *string `type:"string" enum:"LaunchTemplateHttpTokensState"`
+}
+
+// String returns the string representation
+func (s LaunchTemplateInstanceMetadataOptionsRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s LaunchTemplateInstanceMetadataOptionsRequest) GoString() string {
+	return s.String()
+}
+
+// SetHttpEndpoint sets the HttpEndpoint field's value.
+func (s *LaunchTemplateInstanceMetadataOptionsRequest) SetHttpEndpoint(v string) *LaunchTemplateInstanceMetadataOptionsRequest {
+	s.HttpEndpoint = &v
+	return s
+}
+
+// SetHttpPutResponseHopLimit sets the HttpPutResponseHopLimit field's value.
+func (s *LaunchTemplateInstanceMetadataOptionsRequest) SetHttpPutResponseHopLimit(v int64) *LaunchTemplateInstanceMetadataOptionsRequest {
+	s.HttpPutResponseHopLimit = &v
+	return s
+}
+
+// SetHttpTokens sets the HttpTokens field's value.
+func (s *LaunchTemplateInstanceMetadataOptionsRequest) SetHttpTokens(v string) *LaunchTemplateInstanceMetadataOptionsRequest {
+	s.HttpTokens = &v
+	return s
+}
+
 // Describes a network interface.
 type LaunchTemplateInstanceNetworkInterfaceSpecification struct {
 	_ struct{} `type:"structure"`
@@ -81092,6 +82074,10 @@ type LaunchTemplatePlacement struct {
 	// The ARN of the host resource group in which to launch the instances.
 	HostResourceGroupArn *string `locationName:"hostResourceGroupArn" type:"string"`
 
+	// The number of the partition the instance should launch in. Valid only if
+	// the placement group strategy is set to partition.
+	PartitionNumber *int64 `locationName:"partitionNumber" type:"integer"`
+
 	// Reserved for future use.
 	SpreadDomain *string `locationName:"spreadDomain" type:"string"`
 
@@ -81140,6 +82126,12 @@ func (s *LaunchTemplatePlacement) SetHostResourceGroupArn(v string) *LaunchTempl
 	return s
 }
 
+// SetPartitionNumber sets the PartitionNumber field's value.
+func (s *LaunchTemplatePlacement) SetPartitionNumber(v int64) *LaunchTemplatePlacement {
+	s.PartitionNumber = &v
+	return s
+}
+
 // SetSpreadDomain sets the SpreadDomain field's value.
 func (s *LaunchTemplatePlacement) SetSpreadDomain(v string) *LaunchTemplatePlacement {
 	s.SpreadDomain = &v
@@ -81172,6 +82164,10 @@ type LaunchTemplatePlacementRequest struct {
 	// specify a host resource group ARN, omit the Tenancy parameter or set it to
 	// host.
 	HostResourceGroupArn *string `type:"string"`
+
+	// The number of the partition the instance should launch in. Valid only if
+	// the placement group strategy is set to partition.
+	PartitionNumber *int64 `type:"integer"`
 
 	// Reserved for future use.
 	SpreadDomain *string `type:"string"`
@@ -81218,6 +82214,12 @@ func (s *LaunchTemplatePlacementRequest) SetHostId(v string) *LaunchTemplatePlac
 // SetHostResourceGroupArn sets the HostResourceGroupArn field's value.
 func (s *LaunchTemplatePlacementRequest) SetHostResourceGroupArn(v string) *LaunchTemplatePlacementRequest {
 	s.HostResourceGroupArn = &v
+	return s
+}
+
+// SetPartitionNumber sets the PartitionNumber field's value.
+func (s *LaunchTemplatePlacementRequest) SetPartitionNumber(v int64) *LaunchTemplatePlacementRequest {
+	s.PartitionNumber = &v
 	return s
 }
 
@@ -81830,6 +82832,9 @@ type LocalGateway struct {
 
 	// The state of the local gateway.
 	State *string `locationName:"state" type:"string"`
+
+	// The tags assigned to the local gateway.
+	Tags []*Tag `locationName:"tagSet" locationNameList:"item" type:"list"`
 }
 
 // String returns the string representation
@@ -81863,6 +82868,12 @@ func (s *LocalGateway) SetOwnerId(v string) *LocalGateway {
 // SetState sets the State field's value.
 func (s *LocalGateway) SetState(v string) *LocalGateway {
 	s.State = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *LocalGateway) SetTags(v []*Tag) *LocalGateway {
+	s.Tags = v
 	return s
 }
 
@@ -81941,6 +82952,9 @@ type LocalGatewayRouteTable struct {
 
 	// The state of the local gateway route table.
 	State *string `locationName:"state" type:"string"`
+
+	// The tags assigned to the local gateway route table.
+	Tags []*Tag `locationName:"tagSet" locationNameList:"item" type:"list"`
 }
 
 // String returns the string representation
@@ -81977,6 +82991,12 @@ func (s *LocalGatewayRouteTable) SetState(v string) *LocalGatewayRouteTable {
 	return s
 }
 
+// SetTags sets the Tags field's value.
+func (s *LocalGatewayRouteTable) SetTags(v []*Tag) *LocalGatewayRouteTable {
+	s.Tags = v
+	return s
+}
+
 // Describes an association between a local gateway route table and a virtual
 // interface group.
 type LocalGatewayRouteTableVirtualInterfaceGroupAssociation struct {
@@ -81996,6 +83016,9 @@ type LocalGatewayRouteTableVirtualInterfaceGroupAssociation struct {
 
 	// The state of the association.
 	State *string `locationName:"state" type:"string"`
+
+	// The tags assigned to the association.
+	Tags []*Tag `locationName:"tagSet" locationNameList:"item" type:"list"`
 }
 
 // String returns the string representation
@@ -82038,6 +83061,12 @@ func (s *LocalGatewayRouteTableVirtualInterfaceGroupAssociation) SetState(v stri
 	return s
 }
 
+// SetTags sets the Tags field's value.
+func (s *LocalGatewayRouteTableVirtualInterfaceGroupAssociation) SetTags(v []*Tag) *LocalGatewayRouteTableVirtualInterfaceGroupAssociation {
+	s.Tags = v
+	return s
+}
+
 // Describes an association between a local gateway route table and a VPC.
 type LocalGatewayRouteTableVpcAssociation struct {
 	_ struct{} `type:"structure"`
@@ -82053,6 +83082,9 @@ type LocalGatewayRouteTableVpcAssociation struct {
 
 	// The state of the association.
 	State *string `locationName:"state" type:"string"`
+
+	// The tags assigned to the association.
+	Tags []*Tag `locationName:"tagSet" locationNameList:"item" type:"list"`
 
 	// The ID of the VPC.
 	VpcId *string `locationName:"vpcId" type:"string"`
@@ -82092,6 +83124,12 @@ func (s *LocalGatewayRouteTableVpcAssociation) SetState(v string) *LocalGatewayR
 	return s
 }
 
+// SetTags sets the Tags field's value.
+func (s *LocalGatewayRouteTableVpcAssociation) SetTags(v []*Tag) *LocalGatewayRouteTableVpcAssociation {
+	s.Tags = v
+	return s
+}
+
 // SetVpcId sets the VpcId field's value.
 func (s *LocalGatewayRouteTableVpcAssociation) SetVpcId(v string) *LocalGatewayRouteTableVpcAssociation {
 	s.VpcId = &v
@@ -82120,6 +83158,9 @@ type LocalGatewayVirtualInterface struct {
 
 	// The peer BGP ASN.
 	PeerBgpAsn *int64 `locationName:"peerBgpAsn" type:"integer"`
+
+	// The tags assigned to the virtual interface.
+	Tags []*Tag `locationName:"tagSet" locationNameList:"item" type:"list"`
 
 	// The ID of the VLAN.
 	Vlan *int64 `locationName:"vlan" type:"integer"`
@@ -82171,6 +83212,12 @@ func (s *LocalGatewayVirtualInterface) SetPeerBgpAsn(v int64) *LocalGatewayVirtu
 	return s
 }
 
+// SetTags sets the Tags field's value.
+func (s *LocalGatewayVirtualInterface) SetTags(v []*Tag) *LocalGatewayVirtualInterface {
+	s.Tags = v
+	return s
+}
+
 // SetVlan sets the Vlan field's value.
 func (s *LocalGatewayVirtualInterface) SetVlan(v int64) *LocalGatewayVirtualInterface {
 	s.Vlan = &v
@@ -82189,6 +83236,9 @@ type LocalGatewayVirtualInterfaceGroup struct {
 
 	// The IDs of the virtual interfaces.
 	LocalGatewayVirtualInterfaceIds []*string `locationName:"localGatewayVirtualInterfaceIdSet" locationNameList:"item" type:"list"`
+
+	// The tags assigned to the virtual interface group.
+	Tags []*Tag `locationName:"tagSet" locationNameList:"item" type:"list"`
 }
 
 // String returns the string representation
@@ -82216,6 +83266,12 @@ func (s *LocalGatewayVirtualInterfaceGroup) SetLocalGatewayVirtualInterfaceGroup
 // SetLocalGatewayVirtualInterfaceIds sets the LocalGatewayVirtualInterfaceIds field's value.
 func (s *LocalGatewayVirtualInterfaceGroup) SetLocalGatewayVirtualInterfaceIds(v []*string) *LocalGatewayVirtualInterfaceGroup {
 	s.LocalGatewayVirtualInterfaceIds = v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *LocalGatewayVirtualInterfaceGroup) SetTags(v []*Tag) *LocalGatewayVirtualInterfaceGroup {
+	s.Tags = v
 	return s
 }
 
@@ -82405,6 +83461,13 @@ type ModifyClientVpnEndpointInput struct {
 	// VPN Endpoint (https://docs.aws.amazon.com/vpn/latest/clientvpn-admin/split-tunnel-vpn.html)
 	// in the AWS Client VPN Administrator Guide.
 	SplitTunnel *bool `type:"boolean"`
+
+	// The port number to assign to the Client VPN endpoint for TCP and UDP traffic.
+	//
+	// Valid Values: 443 | 1194
+	//
+	// Default Value: 443
+	VpnPort *int64 `type:"integer"`
 }
 
 // String returns the string representation
@@ -82469,6 +83532,12 @@ func (s *ModifyClientVpnEndpointInput) SetServerCertificateArn(v string) *Modify
 // SetSplitTunnel sets the SplitTunnel field's value.
 func (s *ModifyClientVpnEndpointInput) SetSplitTunnel(v bool) *ModifyClientVpnEndpointInput {
 	s.SplitTunnel = &v
+	return s
+}
+
+// SetVpnPort sets the VpnPort field's value.
+func (s *ModifyClientVpnEndpointInput) SetVpnPort(v int64) *ModifyClientVpnEndpointInput {
+	s.VpnPort = &v
 	return s
 }
 
@@ -85622,7 +86691,7 @@ type ModifyVpcEndpointInput struct {
 	// policy must be in valid JSON format.
 	PolicyDocument *string `type:"string"`
 
-	// (Interface endpoint) Indicate whether a private hosted zone is associated
+	// (Interface endpoint) Indicates whether a private hosted zone is associated
 	// with the VPC.
 	PrivateDnsEnabled *bool `type:"boolean"`
 
@@ -85761,7 +86830,8 @@ func (s *ModifyVpcEndpointOutput) SetReturn(v bool) *ModifyVpcEndpointOutput {
 type ModifyVpcEndpointServiceConfigurationInput struct {
 	_ struct{} `type:"structure"`
 
-	// Indicate whether requests to create an endpoint to your service must be accepted.
+	// Indicates whether requests to create an endpoint to your service must be
+	// accepted.
 	AcceptanceRequired *bool `type:"boolean"`
 
 	// The Amazon Resource Names (ARNs) of Network Load Balancers to add to your
@@ -85774,9 +86844,15 @@ type ModifyVpcEndpointServiceConfigurationInput struct {
 	// it is UnauthorizedOperation.
 	DryRun *bool `type:"boolean"`
 
+	// The private DNS name to assign to the endpoint service.
+	PrivateDnsName *string `type:"string"`
+
 	// The Amazon Resource Names (ARNs) of Network Load Balancers to remove from
 	// your service configuration.
 	RemoveNetworkLoadBalancerArns []*string `locationName:"RemoveNetworkLoadBalancerArn" locationNameList:"item" type:"list"`
+
+	// Removes the private DNS name of the endpoint service.
+	RemovePrivateDnsName *bool `type:"boolean"`
 
 	// The ID of the service.
 	//
@@ -85825,9 +86901,21 @@ func (s *ModifyVpcEndpointServiceConfigurationInput) SetDryRun(v bool) *ModifyVp
 	return s
 }
 
+// SetPrivateDnsName sets the PrivateDnsName field's value.
+func (s *ModifyVpcEndpointServiceConfigurationInput) SetPrivateDnsName(v string) *ModifyVpcEndpointServiceConfigurationInput {
+	s.PrivateDnsName = &v
+	return s
+}
+
 // SetRemoveNetworkLoadBalancerArns sets the RemoveNetworkLoadBalancerArns field's value.
 func (s *ModifyVpcEndpointServiceConfigurationInput) SetRemoveNetworkLoadBalancerArns(v []*string) *ModifyVpcEndpointServiceConfigurationInput {
 	s.RemoveNetworkLoadBalancerArns = v
+	return s
+}
+
+// SetRemovePrivateDnsName sets the RemovePrivateDnsName field's value.
+func (s *ModifyVpcEndpointServiceConfigurationInput) SetRemovePrivateDnsName(v bool) *ModifyVpcEndpointServiceConfigurationInput {
+	s.RemovePrivateDnsName = &v
 	return s
 }
 
@@ -88814,6 +89902,30 @@ func (s *PlacementResponse) SetGroupName(v string) *PlacementResponse {
 	return s
 }
 
+// Describes a CIDR block for an address pool.
+type PoolCidrBlock struct {
+	_ struct{} `type:"structure"`
+
+	// The CIDR block.
+	Cidr *string `locationName:"poolCidrBlock" type:"string"`
+}
+
+// String returns the string representation
+func (s PoolCidrBlock) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PoolCidrBlock) GoString() string {
+	return s.String()
+}
+
+// SetCidr sets the Cidr field's value.
+func (s *PoolCidrBlock) SetCidr(v string) *PoolCidrBlock {
+	s.Cidr = &v
+	return s
+}
+
 // Describes a range of ports.
 type PortRange struct {
 	_ struct{} `type:"structure"`
@@ -89098,6 +90210,65 @@ func (s *PrincipalIdFormat) SetStatuses(v []*IdFormat) *PrincipalIdFormat {
 	return s
 }
 
+// Information about the private DNS name for the service endpoint. For more
+// information about these parameters, see VPC Endpoint Service Private DNS
+// Name Verification (https://docs.aws.amazon.com/vpc/latest/userguide/ndpoint-services-dns-validation.html)
+// in the Amazon Virtual Private Cloud User Guide.
+type PrivateDnsNameConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the record subdomain the service provider needs to create. The
+	// service provider adds the value text to the name.
+	Name *string `locationName:"name" type:"string"`
+
+	// The verification state of the VPC endpoint service.
+	//
+	// >Consumers of the endpoint service can use the private name only when the
+	// state is verified.
+	State *string `locationName:"state" type:"string" enum:"DnsNameState"`
+
+	// The endpoint service verification type, for example TXT.
+	Type *string `locationName:"type" type:"string"`
+
+	// The value the service provider adds to the private DNS name domain record
+	// before verification.
+	Value *string `locationName:"value" type:"string"`
+}
+
+// String returns the string representation
+func (s PrivateDnsNameConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PrivateDnsNameConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetName sets the Name field's value.
+func (s *PrivateDnsNameConfiguration) SetName(v string) *PrivateDnsNameConfiguration {
+	s.Name = &v
+	return s
+}
+
+// SetState sets the State field's value.
+func (s *PrivateDnsNameConfiguration) SetState(v string) *PrivateDnsNameConfiguration {
+	s.State = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *PrivateDnsNameConfiguration) SetType(v string) *PrivateDnsNameConfiguration {
+	s.Type = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *PrivateDnsNameConfiguration) SetValue(v string) *PrivateDnsNameConfiguration {
+	s.Value = &v
+	return s
+}
+
 // Describes a secondary private IPv4 address for a network interface.
 type PrivateIpAddressSpecification struct {
 	_ struct{} `type:"structure"`
@@ -89225,9 +90396,10 @@ func (s *PropagatingVgw) SetGatewayId(v string) *PropagatingVgw {
 type ProvisionByoipCidrInput struct {
 	_ struct{} `type:"structure"`
 
-	// The public IPv4 address range, in CIDR notation. The most specific prefix
-	// that you can specify is /24. The address range cannot overlap with another
-	// address range that you've brought to this or another Region.
+	// The public IPv4 or IPv6 address range, in CIDR notation. The most specific
+	// IPv4 prefix that you can specify is /24. The most specific IPv6 prefix you
+	// can specify is /56. The address range cannot overlap with another address
+	// range that you've brought to this or another Region.
 	//
 	// Cidr is a required field
 	Cidr *string `type:"string" required:"true"`
@@ -89244,6 +90416,12 @@ type ProvisionByoipCidrInput struct {
 	// the required permissions, the error response is DryRunOperation. Otherwise,
 	// it is UnauthorizedOperation.
 	DryRun *bool `type:"boolean"`
+
+	// (IPv6 only) Indicate whether the address range will be publicly advertised
+	// to the internet.
+	//
+	// Default: true
+	PubliclyAdvertisable *bool `type:"boolean"`
 }
 
 // String returns the string representation
@@ -89298,10 +90476,16 @@ func (s *ProvisionByoipCidrInput) SetDryRun(v bool) *ProvisionByoipCidrInput {
 	return s
 }
 
+// SetPubliclyAdvertisable sets the PubliclyAdvertisable field's value.
+func (s *ProvisionByoipCidrInput) SetPubliclyAdvertisable(v bool) *ProvisionByoipCidrInput {
+	s.PubliclyAdvertisable = &v
+	return s
+}
+
 type ProvisionByoipCidrOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Information about the address pool.
+	// Information about the address range.
 	ByoipCidr *ByoipCidr `locationName:"byoipCidr" type:"structure"`
 }
 
@@ -89393,7 +90577,7 @@ func (s *ProvisionedBandwidth) SetStatus(v string) *ProvisionedBandwidth {
 	return s
 }
 
-// Describes an address pool.
+// Describes an IPv4 address pool.
 type PublicIpv4Pool struct {
 	_ struct{} `type:"structure"`
 
@@ -89403,7 +90587,7 @@ type PublicIpv4Pool struct {
 	// The address ranges.
 	PoolAddressRanges []*PublicIpv4PoolRange `locationName:"poolAddressRangeSet" locationNameList:"item" type:"list"`
 
-	// The ID of the IPv4 address pool.
+	// The ID of the address pool.
 	PoolId *string `locationName:"poolId" type:"string"`
 
 	// The total number of addresses.
@@ -91786,12 +92970,6 @@ type RequestLaunchTemplateData struct {
 	_ struct{} `type:"structure"`
 
 	// The block device mapping.
-	//
-	// Supplying both a snapshot ID and an encryption value as arguments for block-device
-	// mapping results in an error. This is because only blank volumes can be encrypted
-	// on start, and these are not created from a snapshot. If a snapshot is the
-	// basis for the volume, it contains data by definition and its encryption status
-	// cannot be changed using this action.
 	BlockDeviceMappings []*LaunchTemplateBlockDeviceMappingRequest `locationName:"BlockDeviceMapping" locationNameList:"BlockDeviceMapping" type:"list"`
 
 	// The Capacity Reservation targeting option. If you do not specify this parameter,
@@ -91870,6 +93048,11 @@ type RequestLaunchTemplateData struct {
 
 	// The license configurations.
 	LicenseSpecifications []*LaunchTemplateLicenseConfigurationRequest `locationName:"LicenseSpecification" locationNameList:"item" type:"list"`
+
+	// The metadata options for the instance. For more information, see Instance
+	// Metadata and User Data (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html)
+	// in the Amazon Elastic Compute Cloud User Guide.
+	MetadataOptions *LaunchTemplateInstanceMetadataOptionsRequest `type:"structure"`
 
 	// The monitoring for the instance.
 	Monitoring *LaunchTemplatesMonitoringRequest `type:"structure"`
@@ -92056,6 +93239,12 @@ func (s *RequestLaunchTemplateData) SetKeyName(v string) *RequestLaunchTemplateD
 // SetLicenseSpecifications sets the LicenseSpecifications field's value.
 func (s *RequestLaunchTemplateData) SetLicenseSpecifications(v []*LaunchTemplateLicenseConfigurationRequest) *RequestLaunchTemplateData {
 	s.LicenseSpecifications = v
+	return s
+}
+
+// SetMetadataOptions sets the MetadataOptions field's value.
+func (s *RequestLaunchTemplateData) SetMetadataOptions(v *LaunchTemplateInstanceMetadataOptionsRequest) *RequestLaunchTemplateData {
+	s.MetadataOptions = v
 	return s
 }
 
@@ -92810,7 +93999,7 @@ type ReservedInstances struct {
 	ReservedInstancesId *string `locationName:"reservedInstancesId" type:"string"`
 
 	// The scope of the Reserved Instance.
-	Scope *string `locationName:"scope" type:"string" enum:"scope"`
+	Scope *string `locationName:"scope" type:"string" enum:"Scope"`
 
 	// The date and time the Reserved Instance started.
 	Start *time.Time `locationName:"start" type:"timestamp"`
@@ -92964,7 +94153,7 @@ type ReservedInstancesConfiguration struct {
 
 	// Whether the Reserved Instance is applied to instances in a Region or instances
 	// in a specific Availability Zone.
-	Scope *string `locationName:"scope" type:"string" enum:"scope"`
+	Scope *string `locationName:"scope" type:"string" enum:"Scope"`
 }
 
 // String returns the string representation
@@ -93323,7 +94512,7 @@ type ReservedInstancesOffering struct {
 
 	// Whether the Reserved Instance is applied to instances in a Region or an Availability
 	// Zone.
-	Scope *string `locationName:"scope" type:"string" enum:"scope"`
+	Scope *string `locationName:"scope" type:"string" enum:"Scope"`
 
 	// The usage price of the Reserved Instance, per hour.
 	UsagePrice *float64 `locationName:"usagePrice" type:"float"`
@@ -93969,6 +95158,11 @@ type ResponseLaunchTemplateData struct {
 	// The license configurations.
 	LicenseSpecifications []*LaunchTemplateLicenseConfiguration `locationName:"licenseSet" locationNameList:"item" type:"list"`
 
+	// The metadata options for the instance. For more information, see Instance
+	// Metadata and User Data (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html)
+	// in the Amazon Elastic Compute Cloud User Guide.
+	MetadataOptions *LaunchTemplateInstanceMetadataOptions `locationName:"metadataOptions" type:"structure"`
+
 	// The monitoring for the instance.
 	Monitoring *LaunchTemplatesMonitoring `locationName:"monitoring" type:"structure"`
 
@@ -94103,6 +95297,12 @@ func (s *ResponseLaunchTemplateData) SetKeyName(v string) *ResponseLaunchTemplat
 // SetLicenseSpecifications sets the LicenseSpecifications field's value.
 func (s *ResponseLaunchTemplateData) SetLicenseSpecifications(v []*LaunchTemplateLicenseConfiguration) *ResponseLaunchTemplateData {
 	s.LicenseSpecifications = v
+	return s
+}
+
+// SetMetadataOptions sets the MetadataOptions field's value.
+func (s *ResponseLaunchTemplateData) SetMetadataOptions(v *LaunchTemplateInstanceMetadataOptions) *ResponseLaunchTemplateData {
+	s.MetadataOptions = v
 	return s
 }
 
@@ -97299,13 +98499,13 @@ type ServiceConfiguration struct {
 	// to the service must first be accepted.
 	AcceptanceRequired *bool `locationName:"acceptanceRequired" type:"boolean"`
 
-	// In the Availability Zones in which the service is available.
+	// The Availability Zones in which the service is available.
 	AvailabilityZones []*string `locationName:"availabilityZoneSet" locationNameList:"item" type:"list"`
 
 	// The DNS names for the service.
 	BaseEndpointDnsNames []*string `locationName:"baseEndpointDnsNameSet" locationNameList:"item" type:"list"`
 
-	// Indicates whether the service manages it's VPC endpoints. Management of the
+	// Indicates whether the service manages its VPC endpoints. Management of the
 	// service VPC endpoints using the VPC endpoint API is restricted.
 	ManagesVpcEndpoints *bool `locationName:"managesVpcEndpoints" type:"boolean"`
 
@@ -97314,6 +98514,9 @@ type ServiceConfiguration struct {
 
 	// The private DNS name for the service.
 	PrivateDnsName *string `locationName:"privateDnsName" type:"string"`
+
+	// Information about the endpoint service private DNS name configuration.
+	PrivateDnsNameConfiguration *PrivateDnsNameConfiguration `locationName:"privateDnsNameConfiguration" type:"structure"`
 
 	// The ID of the service.
 	ServiceId *string `locationName:"serviceId" type:"string"`
@@ -97377,6 +98580,12 @@ func (s *ServiceConfiguration) SetPrivateDnsName(v string) *ServiceConfiguration
 	return s
 }
 
+// SetPrivateDnsNameConfiguration sets the PrivateDnsNameConfiguration field's value.
+func (s *ServiceConfiguration) SetPrivateDnsNameConfiguration(v *PrivateDnsNameConfiguration) *ServiceConfiguration {
+	s.PrivateDnsNameConfiguration = v
+	return s
+}
+
 // SetServiceId sets the ServiceId field's value.
 func (s *ServiceConfiguration) SetServiceId(v string) *ServiceConfiguration {
 	s.ServiceId = &v
@@ -97421,7 +98630,7 @@ type ServiceDetail struct {
 	// The DNS names for the service.
 	BaseEndpointDnsNames []*string `locationName:"baseEndpointDnsNameSet" locationNameList:"item" type:"list"`
 
-	// Indicates whether the service manages it's VPC endpoints. Management of the
+	// Indicates whether the service manages its VPC endpoints. Management of the
 	// service VPC endpoints using the VPC endpoint API is restricted.
 	ManagesVpcEndpoints *bool `locationName:"managesVpcEndpoints" type:"boolean"`
 
@@ -97430,6 +98639,12 @@ type ServiceDetail struct {
 
 	// The private DNS name for the service.
 	PrivateDnsName *string `locationName:"privateDnsName" type:"string"`
+
+	// The verification state of the VPC endpoint service.
+	//
+	// Consumers of the endpoint service cannot use the private name when the state
+	// is not verified.
+	PrivateDnsNameVerificationState *string `locationName:"privateDnsNameVerificationState" type:"string" enum:"DnsNameState"`
 
 	// The ID of the endpoint service.
 	ServiceId *string `locationName:"serviceId" type:"string"`
@@ -97490,6 +98705,12 @@ func (s *ServiceDetail) SetOwner(v string) *ServiceDetail {
 // SetPrivateDnsName sets the PrivateDnsName field's value.
 func (s *ServiceDetail) SetPrivateDnsName(v string) *ServiceDetail {
 	s.PrivateDnsName = &v
+	return s
+}
+
+// SetPrivateDnsNameVerificationState sets the PrivateDnsNameVerificationState field's value.
+func (s *ServiceDetail) SetPrivateDnsNameVerificationState(v string) *ServiceDetail {
+	s.PrivateDnsNameVerificationState = &v
 	return s
 }
 
@@ -99757,6 +100978,79 @@ func (s StartInstancesOutput) GoString() string {
 // SetStartingInstances sets the StartingInstances field's value.
 func (s *StartInstancesOutput) SetStartingInstances(v []*InstanceStateChange) *StartInstancesOutput {
 	s.StartingInstances = v
+	return s
+}
+
+type StartVpcEndpointServicePrivateDnsVerificationInput struct {
+	_ struct{} `type:"structure"`
+
+	// Checks whether you have the required permissions for the action, without
+	// actually making the request, and provides an error response. If you have
+	// the required permissions, the error response is DryRunOperation. Otherwise,
+	// it is UnauthorizedOperation.
+	DryRun *bool `type:"boolean"`
+
+	// The ID of the endpoint service.
+	//
+	// ServiceId is a required field
+	ServiceId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s StartVpcEndpointServicePrivateDnsVerificationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StartVpcEndpointServicePrivateDnsVerificationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StartVpcEndpointServicePrivateDnsVerificationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StartVpcEndpointServicePrivateDnsVerificationInput"}
+	if s.ServiceId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ServiceId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDryRun sets the DryRun field's value.
+func (s *StartVpcEndpointServicePrivateDnsVerificationInput) SetDryRun(v bool) *StartVpcEndpointServicePrivateDnsVerificationInput {
+	s.DryRun = &v
+	return s
+}
+
+// SetServiceId sets the ServiceId field's value.
+func (s *StartVpcEndpointServicePrivateDnsVerificationInput) SetServiceId(v string) *StartVpcEndpointServicePrivateDnsVerificationInput {
+	s.ServiceId = &v
+	return s
+}
+
+type StartVpcEndpointServicePrivateDnsVerificationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Returns true if the request succeeds; otherwise, it returns an error.
+	ReturnValue *bool `locationName:"return" type:"boolean"`
+}
+
+// String returns the string representation
+func (s StartVpcEndpointServicePrivateDnsVerificationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StartVpcEndpointServicePrivateDnsVerificationOutput) GoString() string {
+	return s.String()
+}
+
+// SetReturnValue sets the ReturnValue field's value.
+func (s *StartVpcEndpointServicePrivateDnsVerificationOutput) SetReturnValue(v bool) *StartVpcEndpointServicePrivateDnsVerificationOutput {
+	s.ReturnValue = &v
 	return s
 }
 
@@ -104918,15 +106212,18 @@ func (s *VpcClassicLink) SetVpcId(v string) *VpcClassicLink {
 type VpcEndpoint struct {
 	_ struct{} `type:"structure"`
 
-	// The date and time the VPC endpoint was created.
+	// The date and time that the VPC endpoint was created.
 	CreationTimestamp *time.Time `locationName:"creationTimestamp" type:"timestamp"`
 
 	// (Interface endpoint) The DNS entries for the endpoint.
 	DnsEntries []*DnsEntry `locationName:"dnsEntrySet" locationNameList:"item" type:"list"`
 
-	// (Interface endpoint) Information about the security groups associated with
-	// the network interface.
+	// (Interface endpoint) Information about the security groups that are associated
+	// with the network interface.
 	Groups []*SecurityGroupIdentifier `locationName:"groupSet" locationNameList:"item" type:"list"`
+
+	// The last error that occurred for VPC endpoint.
+	LastError *LastError `locationName:"lastError" type:"structure"`
 
 	// (Interface endpoint) One or more network interfaces for the endpoint.
 	NetworkInterfaceIds []*string `locationName:"networkInterfaceIdSet" locationNameList:"item" type:"list"`
@@ -104994,6 +106291,12 @@ func (s *VpcEndpoint) SetDnsEntries(v []*DnsEntry) *VpcEndpoint {
 // SetGroups sets the Groups field's value.
 func (s *VpcEndpoint) SetGroups(v []*SecurityGroupIdentifier) *VpcEndpoint {
 	s.Groups = v
+	return s
+}
+
+// SetLastError sets the LastError field's value.
+func (s *VpcEndpoint) SetLastError(v *LastError) *VpcEndpoint {
+	s.LastError = v
 	return s
 }
 
@@ -105079,7 +106382,7 @@ func (s *VpcEndpoint) SetVpcId(v string) *VpcEndpoint {
 type VpcEndpointConnection struct {
 	_ struct{} `type:"structure"`
 
-	// The date and time the VPC endpoint was created.
+	// The date and time that the VPC endpoint was created.
 	CreationTimestamp *time.Time `locationName:"creationTimestamp" type:"timestamp"`
 
 	// The DNS entries for the VPC endpoint.
@@ -105166,6 +106469,9 @@ type VpcIpv6CidrBlockAssociation struct {
 	// Information about the state of the CIDR block.
 	Ipv6CidrBlockState *VpcCidrBlockState `locationName:"ipv6CidrBlockState" type:"structure"`
 
+	// The ID of the IPv6 address pool from which the IPv6 CIDR block is allocated.
+	Ipv6Pool *string `locationName:"ipv6Pool" type:"string"`
+
 	// The name of the location from which we advertise the IPV6 CIDR block.
 	NetworkBorderGroup *string `locationName:"networkBorderGroup" type:"string"`
 }
@@ -105195,6 +106501,12 @@ func (s *VpcIpv6CidrBlockAssociation) SetIpv6CidrBlock(v string) *VpcIpv6CidrBlo
 // SetIpv6CidrBlockState sets the Ipv6CidrBlockState field's value.
 func (s *VpcIpv6CidrBlockAssociation) SetIpv6CidrBlockState(v *VpcCidrBlockState) *VpcIpv6CidrBlockAssociation {
 	s.Ipv6CidrBlockState = v
+	return s
+}
+
+// SetIpv6Pool sets the Ipv6Pool field's value.
+func (s *VpcIpv6CidrBlockAssociation) SetIpv6Pool(v string) *VpcIpv6CidrBlockAssociation {
+	s.Ipv6Pool = &v
 	return s
 }
 
@@ -105996,7 +107308,7 @@ func (s *VpnTunnelOptionsSpecification) SetTunnelInsideCidr(v string) *VpnTunnel
 type WithdrawByoipCidrInput struct {
 	_ struct{} `type:"structure"`
 
-	// The public IPv4 address range, in CIDR notation.
+	// The address range, in CIDR notation.
 	//
 	// Cidr is a required field
 	Cidr *string `type:"string" required:"true"`
@@ -106301,6 +107613,9 @@ const (
 
 	// ByoipCidrStateProvisioned is a ByoipCidrState enum value
 	ByoipCidrStateProvisioned = "provisioned"
+
+	// ByoipCidrStateProvisionedNotPubliclyAdvertisable is a ByoipCidrState enum value
+	ByoipCidrStateProvisionedNotPubliclyAdvertisable = "provisioned-not-publicly-advertisable"
 )
 
 const (
@@ -106598,6 +107913,17 @@ const (
 
 	// DiskTypeSsd is a DiskType enum value
 	DiskTypeSsd = "ssd"
+)
+
+const (
+	// DnsNameStatePendingVerification is a DnsNameState enum value
+	DnsNameStatePendingVerification = "pendingVerification"
+
+	// DnsNameStateVerified is a DnsNameState enum value
+	DnsNameStateVerified = "verified"
+
+	// DnsNameStateFailed is a DnsNameState enum value
+	DnsNameStateFailed = "failed"
 )
 
 const (
@@ -107958,6 +109284,30 @@ const (
 )
 
 const (
+	// LaunchTemplateHttpTokensStateOptional is a LaunchTemplateHttpTokensState enum value
+	LaunchTemplateHttpTokensStateOptional = "optional"
+
+	// LaunchTemplateHttpTokensStateRequired is a LaunchTemplateHttpTokensState enum value
+	LaunchTemplateHttpTokensStateRequired = "required"
+)
+
+const (
+	// LaunchTemplateInstanceMetadataEndpointStateDisabled is a LaunchTemplateInstanceMetadataEndpointState enum value
+	LaunchTemplateInstanceMetadataEndpointStateDisabled = "disabled"
+
+	// LaunchTemplateInstanceMetadataEndpointStateEnabled is a LaunchTemplateInstanceMetadataEndpointState enum value
+	LaunchTemplateInstanceMetadataEndpointStateEnabled = "enabled"
+)
+
+const (
+	// LaunchTemplateInstanceMetadataOptionsStatePending is a LaunchTemplateInstanceMetadataOptionsState enum value
+	LaunchTemplateInstanceMetadataOptionsStatePending = "pending"
+
+	// LaunchTemplateInstanceMetadataOptionsStateApplied is a LaunchTemplateInstanceMetadataOptionsState enum value
+	LaunchTemplateInstanceMetadataOptionsStateApplied = "applied"
+)
+
+const (
 	// ListingStateAvailable is a ListingState enum value
 	ListingStateAvailable = "available"
 
@@ -108539,6 +109889,14 @@ const (
 
 	// RuleActionDeny is a RuleAction enum value
 	RuleActionDeny = "deny"
+)
+
+const (
+	// ScopeAvailabilityZone is a Scope enum value
+	ScopeAvailabilityZone = "Availability Zone"
+
+	// ScopeRegion is a Scope enum value
+	ScopeRegion = "Region"
 )
 
 const (
@@ -109241,12 +110599,4 @@ const (
 const (
 	// VpnStaticRouteSourceStatic is a VpnStaticRouteSource enum value
 	VpnStaticRouteSourceStatic = "Static"
-)
-
-const (
-	// ScopeAvailabilityZone is a scope enum value
-	ScopeAvailabilityZone = "Availability Zone"
-
-	// ScopeRegion is a scope enum value
-	ScopeRegion = "Region"
 )
