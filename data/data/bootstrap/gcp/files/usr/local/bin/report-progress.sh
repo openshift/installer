@@ -19,7 +19,7 @@ echo "Waiting for bootstrap to complete..."
 wait_for_existance /opt/openshift/.bootkube.done
 
 echo "Reporting install progress..."
-while ! oc --config="$KUBECONFIG" create -f - <<-EOF
+while ! oc --kubeconfig="$KUBECONFIG" create -f - <<-EOF
 	apiVersion: v1
 	kind: ConfigMap
 	metadata:
