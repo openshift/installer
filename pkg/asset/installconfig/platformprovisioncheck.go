@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/openshift/installer/pkg/asset"
+	azconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	vsconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -43,7 +44,12 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-	case azure.Name, aws.Name, baremetal.Name, gcp.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name:
+	case azure.Name:
+		err = azconfig.ValidatePublicDNS(ic.Config)
+		if err != nil {
+			return err
+		}
+	case aws.Name, baremetal.Name, gcp.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name:
 		// no special provisioning requirements to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
