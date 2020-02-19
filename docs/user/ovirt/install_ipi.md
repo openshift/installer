@@ -46,6 +46,15 @@ DNS and LB services but is a platform provider. See also [OpenShift-Metal³ kni-
     provider - see this ansible role https://github.com/oVirt/ovirt-ansible-image-template
     Use it to make a template from the glance image.
 
+3. Create the ~/.ovirt/ovirt-config.yaml file with contents similar to this.
+   ```
+   $ cat ~/.ovirt/ovirt-config.yaml 
+   ovirt_url: https://[engine.name.fqdn]/ovirt-engine/api
+   ovirt_insecure: true
+   ovirt_username: admin@internal
+   ovirt_password: somePassword
+   ```   
+
 ## Install
 Start the installation by creating an `install-config` interactively, using a work-dir:
 ```console
