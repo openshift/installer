@@ -18,7 +18,7 @@ require (
 	github.com/antchfx/xpath v1.1.2 // indirect
 	github.com/apparentlymart/go-cidr v1.0.1
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
-	github.com/aws/aws-sdk-go v1.28.8
+	github.com/aws/aws-sdk-go v1.28.9
 	github.com/btubbs/datetime v0.1.1 // indirect
 	github.com/c4milo/gotoolkit v0.0.0-20190525173301-67483a18c17a // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
@@ -47,12 +47,11 @@ require (
 	github.com/hashicorp/memberlist v0.1.5 // indirect
 	github.com/hashicorp/serf v0.8.5 // indirect
 	github.com/hashicorp/terraform v0.0.0
-	github.com/hashicorp/terraform-plugin-sdk v1.5.0
+	github.com/hashicorp/terraform-plugin-sdk v1.6.0
 	github.com/hashicorp/vault v1.3.0 // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/joyent/triton-go v1.7.0 // indirect
 	github.com/keybase/go-crypto v0.0.0-20190828182435-a05457805304 // indirect
-	github.com/kubernetes-sigs/aws-iam-authenticator v0.4.0 // indirect
 	github.com/libvirt/libvirt-go v5.10.0+incompatible
 	github.com/libvirt/libvirt-go-xml v5.10.0+incompatible // indirect
 	github.com/lusis/go-artifactory v0.0.0-20180304164534-a47f63f234b2 // indirect
@@ -90,7 +89,7 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/stoewer/go-strcase v1.1.0 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/terraform-providers/terraform-provider-aws v1.60.1-0.20200130210954-e03ec66d8774
+	github.com/terraform-providers/terraform-provider-aws v1.60.1-0.20200214022145-f0f304894df6
 	github.com/terraform-providers/terraform-provider-azuread v0.7.0 // indirect
 	github.com/terraform-providers/terraform-provider-azurerm v0.0.0
 	github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200204003432-77547e3e7d52
@@ -113,7 +112,7 @@ require (
 	google.golang.org/api v0.14.0
 	gopkg.in/AlecAivazis/survey.v1 v1.8.8
 	gopkg.in/ini.v1 v1.51.0
-	gopkg.in/yaml.v2 v2.2.7
+	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.17.2
 	k8s.io/apimachinery v0.17.2
 	k8s.io/client-go v12.0.0+incompatible
@@ -130,7 +129,6 @@ replace (
 	github.com/hashicorp/consul => github.com/hashicorp/consul v1.6.2 // Pin to version required by terraform fork
 	github.com/hashicorp/terraform => github.com/openshift/hashicorp-terraform v0.12.20-openshift // Pin to fork with deduplicated rpc types
 	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.6.0-openshift // Pin to fork with public rpc types
-	github.com/kubernetes-sigs/aws-iam-authenticator => github.com/kubernetes-sigs/aws-iam-authenticator v0.3.1-0.20181019024009-82544ec86140 // Pin to version required by tf-provider-aws
 	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20200206190020-71b826cc0f0a // Use OpenShift fork
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200210091934-a0e53e94816b // Pin API
