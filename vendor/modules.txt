@@ -1075,7 +1075,7 @@ github.com/terraform-providers/terraform-provider-aws/aws/internal/flatmap
 github.com/terraform-providers/terraform-provider-aws/aws/internal/keyvaluetags
 # github.com/terraform-providers/terraform-provider-azuread v0.7.0
 github.com/terraform-providers/terraform-provider-azuread/azuread/helpers/tf
-# github.com/terraform-providers/terraform-provider-azurerm v0.0.0 => github.com/openshift/terraform-provider-azurerm v1.41.1-openshift
+# github.com/terraform-providers/terraform-provider-azurerm v0.0.0 => github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-2
 github.com/terraform-providers/terraform-provider-azurerm/azurerm
 github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure
 github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/kubernetes

@@ -1758,8 +1758,8 @@ github.com/openshift/machine-api-operator v0.2.1-0.20200211164549-65f366001347/g
 github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530 h1:r9eSp963LcaLw3YUyJHMHwZYXoaGXOc2MOKVQQrdRmw=
 github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530/go.mod h1:z3udws7UDLBp233iGbayvpZEwhWn74K9xzjDtCGJlok=
 github.com/openshift/runtime-utils v0.0.0-20191011150825-9169de69ebf6/go.mod h1:5gDRVvQwesU7cfwlpuMivdv3Dz/oslvv2qTBHCy4wqQ=
-github.com/openshift/terraform-provider-azurerm v1.41.1-openshift h1:5G0U2XoNchxl6VKJJYB6X0RTmDk0mWCoZ9jEt1F0S3I=
-github.com/openshift/terraform-provider-azurerm v1.41.1-openshift/go.mod h1:O9UYVGp8E7aMa2dANw9oTQmaZZbbr8DMRpC56dyy00E=
+github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-2 h1:El3ZKTVtyGIxkXPzLNXhuiGb1iP9XEkYkyCmTRShi84=
+github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-2/go.mod h1:O9UYVGp8E7aMa2dANw9oTQmaZZbbr8DMRpC56dyy00E=
 github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492/go.mod h1:Ngi6UdF0k5OKD5t5wlmGhe/EDKPoUM3BXZSSfIuJbis=
 github.com/opentracing/basictracer-go v1.0.0/go.mod h1:QfBfYuafItcjQuMwinw9GhYKwFXS9KnPs5lxoYwgW74=
 github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
