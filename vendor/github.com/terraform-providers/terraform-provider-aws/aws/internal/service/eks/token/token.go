@@ -1,5 +1,18 @@
 /*
-Copyright 2017 by the contributors.
+This file is a hard copy of:
+https://github.com/kubernetes-sigs/aws-iam-authenticator/blob/7547c74e660f8d34d9980f2c69aa008eed1f48d0/pkg/token/token.go
+
+With the following modifications:
+
+ - Removal of all Generator interface methods and implementations except GetWithSTS
+ - Removal of other unused code
+ - Use *sts.STS instead of stsiface.STSAPI in Generator interface and GetWithSTS implementation
+ - Hard copy and use local Canonicalize implementation instead of "sigs.k8s.io/aws-iam-authenticator/pkg/arn"
+ - Fix staticcheck reports
+*/
+
+/*
+Copyright 2017-2020 by the contributors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,18 +36,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/kubernetes-sigs/aws-iam-authenticator/pkg/arn"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clientauthv1alpha1 "k8s.io/client-go/pkg/apis/clientauthentication/v1alpha1"
 )
 
 // Identity is returned on successful Verify() results. It contains a parsed
@@ -62,6 +69,11 @@ type Identity struct {
 	// users or other roles are allowed to assume the role, they can provide
 	// (nearly) arbitrary strings here.
 	SessionName string
+
+	// The AWS Access Key ID used to authenticate the request.  This can be used
+	// in conjunction with CloudTrail to determine the identity of the individual
+	// if the individual assumed an IAM role before making the request.
+	AccessKeyID string
 }
 
 const (
@@ -78,6 +90,7 @@ const (
 	// Format of the X-Amz-Date header used for expiration
 	// https://golang.org/pkg/time/#pkg-constants
 	dateHeaderFormat = "20060102T150405Z"
+	hostRegexp       = `^sts(\.[a-z1-9\-]+)?\.amazonaws\.com(\.cn)?$`
 )
 
 // Token is generated and used by Kubernetes client-go to authenticate with a Kubernetes cluster.
@@ -138,95 +151,23 @@ type getCallerIdentityWrapper struct {
 	} `json:"GetCallerIdentityResponse"`
 }
 
-// Generator provides new tokens for the heptio authenticator.
+// Generator provides new tokens for the AWS IAM Authenticator.
 type Generator interface {
-	// Get a token using credentials in the default credentials chain.
-	Get(string) (Token, error)
-	// GetWithRole creates a token by assuming the provided role, using the credentials in the default chain.
-	GetWithRole(clusterID, roleARN string) (Token, error)
-	// GetWithRoleForSession creates a token by assuming the provided role, using the provided session.
-	GetWithRoleForSession(clusterID string, roleARN string, sess *session.Session) (Token, error)
 	// GetWithSTS returns a token valid for clusterID using the given STS client.
 	GetWithSTS(clusterID string, stsAPI *sts.STS) (Token, error)
-	// FormatJSON returns the client auth formatted json for the ExecCredential auth
-	FormatJSON(Token) string
 }
 
 type generator struct {
 	forwardSessionName bool
+	cache              bool
 }
 
 // NewGenerator creates a Generator and returns it.
-func NewGenerator(forwardSessionName bool) (Generator, error) {
+func NewGenerator(forwardSessionName bool, cache bool) (Generator, error) {
 	return generator{
 		forwardSessionName: forwardSessionName,
+		cache:              cache,
 	}, nil
-}
-
-// Get uses the directly available AWS credentials to return a token valid for
-// clusterID. It follows the default AWS credential handling behavior.
-func (g generator) Get(clusterID string) (Token, error) {
-	return g.GetWithRole(clusterID, "")
-}
-
-func StdinStderrTokenProvider() (string, error) {
-	var v string
-	fmt.Fprint(os.Stderr, "Assume Role MFA token code: ")
-	_, err := fmt.Scanln(&v)
-	return v, err
-}
-
-// GetWithRole assumes the given AWS IAM role and returns a token valid for
-// clusterID. If roleARN is empty, behaves like Get (does not assume a role).
-func (g generator) GetWithRole(clusterID string, roleARN string) (Token, error) {
-	// create a session with the "base" credentials available
-	// (from environment variable, profile files, EC2 metadata, etc)
-	sess, err := session.NewSessionWithOptions(session.Options{
-		AssumeRoleTokenProvider: StdinStderrTokenProvider,
-		SharedConfigState:       session.SharedConfigEnable,
-	})
-	if err != nil {
-		return Token{}, fmt.Errorf("could not create session: %v", err)
-	}
-
-	return g.GetWithRoleForSession(clusterID, roleARN, sess)
-}
-
-// GetWithRole assumes the given AWS IAM role for the given session and behaves
-// like GetWithRole.
-func (g generator) GetWithRoleForSession(clusterID string, roleARN string, sess *session.Session) (Token, error) {
-	// use an STS client based on the direct credentials
-	stsAPI := sts.New(sess)
-
-	// if a roleARN was specified, replace the STS client with one that uses
-	// temporary credentials from that role.
-	if roleARN != "" {
-		sessionSetter := func(provider *stscreds.AssumeRoleProvider) {}
-		if g.forwardSessionName {
-			// If the current session is already a federated identity, carry through
-			// this session name onto the new session to provide better debugging
-			// capabilities
-			resp, err := stsAPI.GetCallerIdentity(&sts.GetCallerIdentityInput{})
-			if err != nil {
-				return Token{}, err
-			}
-
-			userIDParts := strings.Split(*resp.UserId, ":")
-			sessionSetter = func(provider *stscreds.AssumeRoleProvider) {
-				if len(userIDParts) == 2 {
-					provider.RoleSessionName = userIDParts[1]
-				}
-			}
-		}
-
-		// create STS-based credentials that will assume the given role
-		creds := stscreds.NewCredentials(sess, roleARN, sessionSetter)
-
-		// create an STS API interface that uses the assumed role's temporary credentials
-		stsAPI = sts.New(sess, &aws.Config{Credentials: creds})
-	}
-
-	return g.GetWithSTS(clusterID, stsAPI)
 }
 
 // GetWithSTS returns a token valid for clusterID using the given STS client.
@@ -252,23 +193,6 @@ func (g generator) GetWithSTS(clusterID string, stsAPI *sts.STS) (Token, error) 
 	return Token{v1Prefix + base64.RawURLEncoding.EncodeToString([]byte(presignedURLString)), tokenExpiration}, nil
 }
 
-// FormatJSON formats the json to support ExecCredential authentication
-func (g generator) FormatJSON(token Token) string {
-	expirationTimestamp := metav1.NewTime(token.Expiration)
-	execInput := &clientauthv1alpha1.ExecCredential{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "client.authentication.k8s.io/v1alpha1",
-			Kind:       "ExecCredential",
-		},
-		Status: &clientauthv1alpha1.ExecCredentialStatus{
-			ExpirationTimestamp: &expirationTimestamp,
-			Token:               token.Token,
-		},
-	}
-	enc, _ := json.Marshal(execInput)
-	return string(enc)
-}
-
 // Verifier validates tokens by calling STS and returning the associated identity.
 type Verifier interface {
 	Verify(token string) (*Identity, error)
@@ -285,6 +209,15 @@ func NewVerifier(clusterID string) Verifier {
 		client:    http.DefaultClient,
 		clusterID: clusterID,
 	}
+}
+
+// verify a sts host, doc: http://docs.amazonaws.cn/en_us/general/latest/gr/rande.html#sts_region
+func (v tokenVerifier) verifyHost(host string) error {
+	if match, _ := regexp.MatchString(hostRegexp, host); !match {
+		return FormatError{fmt.Sprintf("unexpected hostname %q in pre-signed URL", host)}
+	}
+
+	return nil
 }
 
 // Verify a token is valid for the specified clusterID. On success, returns an
@@ -314,8 +247,8 @@ func (v tokenVerifier) Verify(token string) (*Identity, error) {
 		return nil, FormatError{fmt.Sprintf("unexpected scheme %q in pre-signed URL", parsedURL.Scheme)}
 	}
 
-	if parsedURL.Host != "sts.amazonaws.com" {
-		return nil, FormatError{"unexpected hostname in pre-signed URL"}
+	if err = v.verifyHost(parsedURL.Host); err != nil {
+		return nil, err
 	}
 
 	if parsedURL.Path != "/" {
@@ -354,6 +287,9 @@ func (v tokenVerifier) Verify(token string) (*Identity, error) {
 		return nil, FormatError{"X-Amz-Date parameter must be present in pre-signed URL"}
 	}
 
+	// Obtain AWS Access Key ID from supplied credentials
+	accessKeyID := strings.Split(queryParamsLower.Get("x-amz-credential"), "/")[0]
+
 	dateParam, err := time.Parse(dateHeaderFormat, date)
 	if err != nil {
 		return nil, FormatError{fmt.Sprintf("error parsing X-Amz-Date parameter %s into format %s: %s", date, dateHeaderFormat, err.Error())}
@@ -365,7 +301,7 @@ func (v tokenVerifier) Verify(token string) (*Identity, error) {
 		return nil, FormatError{fmt.Sprintf("X-Amz-Date parameter is expired (%.f minute expiration) %s", presignedURLExpiration.Minutes(), dateParam)}
 	}
 
-	req, err := http.NewRequest("GET", parsedURL.String(), nil)
+	req, _ := http.NewRequest("GET", parsedURL.String(), nil)
 	req.Header.Set(clusterIDHeader, v.clusterID)
 	req.Header.Set("accept", "application/json")
 
@@ -379,13 +315,13 @@ func (v tokenVerifier) Verify(token string) (*Identity, error) {
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode != 200 {
-		return nil, NewSTSError(fmt.Sprintf("error from AWS (expected 200, got %d)", response.StatusCode))
-	}
-
 	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, NewSTSError(fmt.Sprintf("error reading HTTP result: %v", err))
+	}
+
+	if response.StatusCode != 200 {
+		return nil, NewSTSError(fmt.Sprintf("error from AWS (expected 200, got %d). Body: %s", response.StatusCode, string(responseBody[:])))
 	}
 
 	var callerIdentity getCallerIdentityWrapper
@@ -396,10 +332,11 @@ func (v tokenVerifier) Verify(token string) (*Identity, error) {
 
 	// parse the response into an Identity
 	id := &Identity{
-		ARN:       callerIdentity.GetCallerIdentityResponse.GetCallerIdentityResult.Arn,
-		AccountID: callerIdentity.GetCallerIdentityResponse.GetCallerIdentityResult.Account,
+		ARN:         callerIdentity.GetCallerIdentityResponse.GetCallerIdentityResult.Arn,
+		AccountID:   callerIdentity.GetCallerIdentityResponse.GetCallerIdentityResult.Account,
+		AccessKeyID: accessKeyID,
 	}
-	id.CanonicalARN, err = arn.Canonicalize(id.ARN)
+	id.CanonicalARN, err = Canonicalize(id.ARN)
 	if err != nil {
 		return nil, NewSTSError(err.Error())
 	}
@@ -424,7 +361,7 @@ func (v tokenVerifier) Verify(token string) (*Identity, error) {
 func hasSignedClusterIDHeader(paramsLower *url.Values) bool {
 	signedHeaders := strings.Split(paramsLower.Get("x-amz-signedheaders"), ";")
 	for _, hdr := range signedHeaders {
-		if strings.ToLower(hdr) == strings.ToLower(clusterIDHeader) {
+		if strings.EqualFold(hdr, clusterIDHeader) {
 			return true
 		}
 	}
