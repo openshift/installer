@@ -239,6 +239,18 @@ func TestValidateProvisioning(t *testing.T) {
 			expected: "baremetal.BootstrapOSImage: Invalid value:.*: the URI provided:.*is invalid",
 		},
 		{
+			name: "invalid_clusterosimage_not_qcow2",
+			platform: platform().
+				ClusterOSImage(imagesServer.URL + "/images/metal.x86_64.gz?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da").build(),
+			expected: "the URI provided:.* is an OS image and must end in .qcow2.gz or .qcow2.xz",
+		},
+		{
+			name: "invalid_bootstraposimage_not_qcow2",
+			platform: platform().
+				BootstrapOSImage(imagesServer.URL + "/images/something.x86_64.gz?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da").build(),
+			expected: "the URI provided:.* is an OS image and must end in .qcow2.gz or .qcow2.xz",
+		},
+		{
 			name: "invalid_clusterosimage",
 			platform: platform().
 				ClusterOSImage("http//192.168.111.1/images/metal.x86_64.qcow2.gz?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da").build(),
