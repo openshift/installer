@@ -26,7 +26,8 @@ purposes:
   * ***DHCP***
     * External DHCP is assumed on this network.  It is **strongly** recommended
       to set up DHCP reservations for each of the hosts in the cluster to
-      ensure that they retain stable IP addresses.
+      ensure that they retain stable IP addresses. The addresses assigned by
+      DHCP need to be in the same subnet as the Virtual IPs discussed below.
     * A pool of dynamic addresses should also be available on this network, as
       the provisioning host and temporary bootstrap VM will also need addresses
       on this network.
