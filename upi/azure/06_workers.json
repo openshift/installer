@@ -152,12 +152,7 @@
                       "privateIPAllocationMethod" : "Dynamic",
                       "subnet" : {
                         "id" : "[variables('nodeSubnetRef')]"
-                      },
-                      "loadBalancerBackendAddressPools" : [
-                        {
-                          "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('infraLoadBalancerName'), '/backendAddressPools/', parameters('baseName'))]"
-                        }
-                      ]
+                      }
                     }
                   }
                 ]
