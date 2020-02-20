@@ -14,7 +14,8 @@ baseDomain: devcluster.openshift.com
 metadata:
   name: mstaeble
 networking:
-  machineCIDR: "139.178.89.192/26"
+  machineNetwork:
+  - cidr: "139.178.89.192/26"
 platform:
   vsphere:
     vCenter: vcsa.vmware.devcluster.openshift.com

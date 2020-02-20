@@ -27,7 +27,9 @@ var (
 
 	invalidateMachineCIDR = func(ic *types.InstallConfig) {
 		_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
-		ic.MachineCIDR = &ipnet.IPNet{IPNet: *newCidr}
+		ic.MachineNetwork = []types.MachineNetworkEntry{
+			{CIDR: ipnet.IPNet{IPNet: *newCidr}},
+		}
 	}
 
 	invalidateNetwork       = func(ic *types.InstallConfig) { ic.GCP.Network = "invalid-vpc" }
@@ -53,7 +55,9 @@ var (
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		Networking: &types.Networking{
-			MachineCIDR: ipnet.MustParseCIDR(validCIDR),
+			MachineNetwork: []types.MachineNetworkEntry{
+				{CIDR: *ipnet.MustParseCIDR(validCIDR)},
+			},
 		},
 		Platform: types.Platform{
 			GCP: &gcp.Platform{
@@ -90,7 +94,7 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			name:           "Invalid subnet range",
 			edits:          editFunctions{invalidateMachineCIDR},
 			expectedError:  true,
-			expectedErrMsg: "computeSubnet: Invalid value.*MachineCIDR",
+			expectedErrMsg: "computeSubnet: Invalid value.*subnet CIDR range start 10.0.0.0 is outside of the specified machine networks",
 		},
 		{
 			name:           "Invalid network",

@@ -22,7 +22,9 @@ func TestRedactedInstallConfig(t *testing.T) {
 			SSHKey:     "test-ssh-key",
 			BaseDomain: "test-domain",
 			Networking: &types.Networking{
-				MachineCIDR: ipnet.MustParseCIDR("1.2.3.4/5"),
+				MachineNetwork: []types.MachineNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("1.2.3.4/5")},
+				},
 				NetworkType: "test-network-type",
 				ClusterNetwork: []types.ClusterNetworkEntry{
 					{
@@ -71,7 +73,8 @@ networking:
   clusterNetwork:
   - cidr: 1.2.3.4/5
     hostPrefix: 6
-  machineCIDR: 1.2.3.4/5
+  machineNetwork:
+  - cidr: 1.2.3.4/5
   networkType: test-network-type
   serviceNetwork:
   - 1.2.3.4/5

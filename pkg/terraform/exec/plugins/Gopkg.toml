@@ -46,7 +46,13 @@ ignored = [
 
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-azurerm"
-  version = "=1.27.1"
+  source = "https://github.com/openshift/terraform-provider-azurerm"
+  version = "=v1.27.2-openshift"
+
+[[constraint]]
+  name = "github.com/Azure/azure-sdk-for-go"
+  source = "https://github.com/openshift/azure-sdk-for-go"
+  version = "=v26.7.1-openshift"
 
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-google"
@@ -71,3 +77,7 @@ ignored = [
 [[constraint]]
   name = "github.com/openshift-metal3/terraform-provider-ironic"
   version = "v0.1.8"
+
+[[override]]
+  name = "github.com/apparentlymart/go-cidr"
+  version = "v1.0.1"

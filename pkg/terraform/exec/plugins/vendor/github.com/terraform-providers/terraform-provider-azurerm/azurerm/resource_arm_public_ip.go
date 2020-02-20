@@ -164,12 +164,6 @@ func resourceArmPublicIpCreateUpdate(d *schema.ResourceData, meta interface{}) e
 		return fmt.Errorf("Either `allocation_method` or `public_ip_address_allocation` must be specified.")
 	}
 
-	if strings.EqualFold(string(ipVersion), string(network.IPv6)) {
-		if strings.EqualFold(ipAllocationMethod, "static") {
-			return fmt.Errorf("Cannot specify publicIpAllocationMethod as Static for IPv6 PublicIp")
-		}
-	}
-
 	if strings.EqualFold(sku, "standard") {
 		if !strings.EqualFold(ipAllocationMethod, "static") {
 			return fmt.Errorf("Static IP allocation must be used when creating Standard SKU public IP addresses.")

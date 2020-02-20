@@ -28,7 +28,7 @@
   version = "v0.4.12"
 
 [[projects]]
-  digest = "1:8021e3abefedd67a86d9653d9d0c8a3233f3f8877557b893f0a7a78dbdc6f02a"
+  digest = "1:01b10cea3bf227c7617f26d9a080e47b27410a73ca01dffdcac0d36cfdf74af2"
   name = "github.com/Azure/azure-sdk-for-go"
   packages = [
     "profiles/2017-03-09/resources/mgmt/resources",
@@ -97,8 +97,9 @@
     "version",
   ]
   pruneopts = "NUT"
-  revision = "f0ff339f1297d3374fc36bcbfc7d1bbba045d992"
-  version = "v26.7.0"
+  revision = "07077554785f058c92843966f12d8b0cd3f8679d"
+  source = "https://github.com/openshift/azure-sdk-for-go"
+  version = "v26.7.1-openshift"
 
 [[projects]]
   digest = "1:90c9fd5fc13d2dc42520c321202481506f660e58ec9e2c546d2cc5304d7bba78"
@@ -846,7 +847,7 @@
   version = "v2.10.0"
 
 [[projects]]
-  digest = "1:95e2fb03b69a29c7f843830c392f684f110da8ca83649c821c20bad61d9116b5"
+  digest = "1:78f3ea27f70c476e8c05f82dd96dcd662527d68e9967a6d5ac89aad44604b7a0"
   name = "github.com/terraform-providers/terraform-provider-azurerm"
   packages = [
     "azurerm",
@@ -861,8 +862,9 @@
     "version",
   ]
   pruneopts = "NUT"
-  revision = "05662fd82a299fff148a6a31cc9c2ba9b5841064"
-  version = "v1.27.1"
+  revision = "7bc287e956632e40076a4deb227ec42108be9fb0"
+  source = "https://github.com/openshift/terraform-provider-azurerm"
+  version = "v1.27.2-openshift"
 
 [[projects]]
   digest = "1:2daa3bddc630ead813a47149cdc429816c43f9423a7d6e2aeff7ca794b072548"

@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -30,18 +31,8 @@ func validInstallConfig() *types.InstallConfig {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-cluster",
 		},
-		BaseDomain: "test-domain",
-		Networking: &types.Networking{
-			NetworkType:    "OpenShiftSDN",
-			MachineCIDR:    ipnet.MustParseCIDR("10.0.0.0/16"),
-			ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-			ClusterNetwork: []types.ClusterNetworkEntry{
-				{
-					CIDR:       *ipnet.MustParseCIDR("192.168.1.0/24"),
-					HostPrefix: 28,
-				},
-			},
-		},
+		BaseDomain:   "test-domain",
+		Networking:   validIPv4NetworkingConfig(),
 		ControlPlane: validMachinePool("master"),
 		Compute:      []types.MachinePool{*validMachinePool("worker")},
 		Platform: types.Platform{
@@ -60,6 +51,13 @@ func validInstallConfig() *types.InstallConfig {
 func validAWSPlatform() *aws.Platform {
 	return &aws.Platform{
 		Region: "us-east-1",
+	}
+}
+
+func validAzurePlatform() *azure.Platform {
+	return &azure.Platform{
+		Region:                      "us-east-1",
+		BaseDomainResourceGroupName: "my-resource-group",
 	}
 }
 
@@ -110,6 +108,74 @@ func validOpenStackPlatform() *openstack.Platform {
 		Cloud:           "test-cloud",
 		ExternalNetwork: "test-network",
 		FlavorName:      "test-flavor",
+	}
+}
+
+func validIPv4NetworkingConfig() *types.Networking {
+	return &types.Networking{
+		NetworkType: "OpenShiftSDN",
+		MachineNetwork: []types.MachineNetworkEntry{
+			{
+				CIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
+			},
+		},
+		ServiceNetwork: []ipnet.IPNet{
+			*ipnet.MustParseCIDR("172.30.0.0/16"),
+		},
+		ClusterNetwork: []types.ClusterNetworkEntry{
+			{
+				CIDR:       *ipnet.MustParseCIDR("192.168.1.0/24"),
+				HostPrefix: 28,
+			},
+		},
+	}
+}
+
+func validIPv6NetworkingConfig() *types.Networking {
+	return &types.Networking{
+		NetworkType: "OVNKubernetes",
+		MachineNetwork: []types.MachineNetworkEntry{
+			{
+				CIDR: *ipnet.MustParseCIDR("ffd0::/48"),
+			},
+		},
+		ServiceNetwork: []ipnet.IPNet{
+			*ipnet.MustParseCIDR("ffd1::/48"),
+		},
+		ClusterNetwork: []types.ClusterNetworkEntry{
+			{
+				CIDR:       *ipnet.MustParseCIDR("ffd2::/48"),
+				HostPrefix: 64,
+			},
+		},
+	}
+}
+
+func validDualStackNetworkingConfig() *types.Networking {
+	return &types.Networking{
+		NetworkType: "OVNKubernetes",
+		MachineNetwork: []types.MachineNetworkEntry{
+			{
+				CIDR: *ipnet.MustParseCIDR("ffd0::/48"),
+			},
+			{
+				CIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
+			},
+		},
+		ServiceNetwork: []ipnet.IPNet{
+			*ipnet.MustParseCIDR("ffd1::/48"),
+			*ipnet.MustParseCIDR("172.30.0.0/16"),
+		},
+		ClusterNetwork: []types.ClusterNetworkEntry{
+			{
+				CIDR:       *ipnet.MustParseCIDR("ffd2::/48"),
+				HostPrefix: 64,
+			},
+			{
+				CIDR:       *ipnet.MustParseCIDR("192.168.1.0/24"),
+				HostPrefix: 28,
+			},
+		},
 	}
 }
 
@@ -212,7 +278,21 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking.ServiceNetwork[0] = *ipnet.MustParseCIDR("10.0.2.0/24")
 				return c
 			}(),
-			expectedError: `^networking\.serviceNetwork\[0\]: Invalid value: "10\.0\.2\.0/24": service network must not overlap with machineCIDR$`,
+			expectedError: `^networking\.serviceNetwork\[0\]: Invalid value: "10\.0\.2\.0/24": service network must not overlap with any of the machine networks$`,
+		},
+		{
+			name: "overlapping machine network and machine network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("13.0.0.0/16")},
+					{CIDR: *ipnet.MustParseCIDR("13.0.2.0/24")},
+				}
+
+				return c
+			}(),
+			// also triggers the only-one-machine-network validation
+			expectedError: `^networking\.machineNetwork\[1\]: Invalid value: "13\.0\.2\.0/24": machine network must not overlap with machine network 0$`,
 		},
 		{
 			name: "overlapping service network and service network",
@@ -229,22 +309,22 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^\[networking\.serviceNetwork\[1\]: Invalid value: "13\.0\.2\.0/24": service network must not overlap with service network 0, networking\.serviceNetwork: Invalid value: "13\.0\.0\.0/16, 13\.0\.2\.0/24": only one service network can be specified]$`,
 		},
 		{
-			name: "missing machine cidr",
+			name: "missing machine networks",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.MachineCIDR = nil
+				c.Networking.MachineNetwork = nil
 				return c
 			}(),
-			expectedError: `^networking\.machineCIDR: Required value: a machine CIDR is required$`,
+			expectedError: `^networking\.machineNetwork: Required value: at least one machine network is required$`,
 		},
 		{
 			name: "invalid machine cidr",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.MachineCIDR = ipnet.MustParseCIDR("11.0.128.0/16")
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{{CIDR: *ipnet.MustParseCIDR("11.0.128.0/16")}}
 				return c
 			}(),
-			expectedError: `^networking\.machineCIDR: Invalid value: "11\.0\.128\.0/16": invalid network address. got 11\.0\.128\.0/16, expecting 11\.0\.0\.0/16$`,
+			expectedError: `^networking\.machineNetwork\[0\]: Invalid value: "11\.0\.128\.0/16": invalid network address. got 11\.0\.128\.0/16, expecting 11\.0\.0\.0/16$`,
 		},
 		{
 			name: "invalid cluster network",
@@ -262,7 +342,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking.ClusterNetwork[0].CIDR = *ipnet.MustParseCIDR("10.0.3.0/24")
 				return c
 			}(),
-			expectedError: `^networking\.clusterNetwork\[0]\.cidr: Invalid value: "10\.0\.3\.0/24": cluster network must not overlap with machine CIDR$`,
+			expectedError: `^networking\.clusterNetwork\[0]\.cidr: Invalid value: "10\.0\.3\.0/24": cluster network must not overlap with any of the machine networks$`,
 		},
 		{
 			name: "overlapping cluster network and service network",
@@ -485,7 +565,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.APIVIP = ""
 				return c
 			}(),
-			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "": "" is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
+			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "": "" is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "": the virtual IP is expected to be in one of the machine networks]$`,
 		},
 		{
 			name: "baremetal API VIP not an IP",
@@ -497,7 +577,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.APIVIP = "test"
 				return c
 			}(),
-			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "test": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
+			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "test": the virtual IP is expected to be in one of the machine networks]$`,
 		},
 		{
 			name: "baremetal API VIP set to an incorrect value",
@@ -509,7 +589,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.APIVIP = "10.1.0.5"
 				return c
 			}(),
-			expectedError: `^platform\.baremetal\.apiVIP: Invalid value: "10\.1\.0\.5": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet$`,
+			expectedError: `^platform\.baremetal\.apiVIP: Invalid value: "10\.1\.0\.5": the virtual IP is expected to be in one of the machine networks$`,
 		},
 		{
 			name: "baremetal DNS VIP not an IP",
@@ -521,7 +601,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.DNSVIP = "test"
 				return c
 			}(),
-			expectedError: `^\[platform\.baremetal\.dnsVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.dnsVIP: Invalid value: "test": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
+			expectedError: `^\[platform\.baremetal\.dnsVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.dnsVIP: Invalid value: "test": the virtual IP is expected to be in one of the machine networks]$`,
 		},
 		{
 			name: "baremetal DNS VIP set to an incorrect value",
@@ -533,7 +613,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.DNSVIP = "10.1.0.6"
 				return c
 			}(),
-			expectedError: `^platform\.baremetal\.dnsVIP: Invalid value: "10\.1\.0\.6": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet$`,
+			expectedError: `^platform\.baremetal\.dnsVIP: Invalid value: "10\.1\.0\.6": the virtual IP is expected to be in one of the machine networks$`,
 		},
 		{
 			name: "baremetal Ingress VIP not an IP",
@@ -545,7 +625,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.IngressVIP = "test"
 				return c
 			}(),
-			expectedError: `^\[platform\.baremetal\.ingressVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.ingressVIP: Invalid value: "test": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet]$`,
+			expectedError: `^\[platform\.baremetal\.ingressVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.ingressVIP: Invalid value: "test": the virtual IP is expected to be in one of the machine networks]$`,
 		},
 		{
 			name: "baremetal Ingress VIP set to an incorrect value",
@@ -557,7 +637,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.IngressVIP = "10.1.0.7"
 				return c
 			}(),
-			expectedError: `^platform\.baremetal\.ingressVIP: Invalid value: "10\.1\.0\.7": the virtual IP is expected to be in 10\.0\.0\.0/16 subnet$`,
+			expectedError: `^platform\.baremetal\.ingressVIP: Invalid value: "10\.1\.0\.7": the virtual IP is expected to be in one of the machine networks$`,
 		}, {
 			name: "valid vsphere platform",
 			installConfig: func() *types.InstallConfig {
@@ -721,6 +801,88 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^publish: Unsupported value: \"ExternalInternalDoNotCare\": supported values: \"External\", \"Internal\"`,
+		},
+
+		{
+			name: "valid dual-stack configuration",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				return c
+			}(),
+		},
+		{
+			name: "valid single-stack IPv6 configuration",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validIPv6NetworkingConfig()
+				return c
+			}(),
+		},
+		{
+			name: "invalid dual-stack configuration, bad platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.Networking = validDualStackNetworkingConfig()
+				return c
+			}(),
+			expectedError: `Invalid value: "DualStack": dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address`,
+		},
+		{
+			name: "invalid single-stack IPv6 configuration, bad platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.Networking = validIPv6NetworkingConfig()
+				return c
+			}(),
+			expectedError: `Invalid value: "IPv6": single-stack IPv6 is not supported for this platform`,
+		},
+		{
+			name: "invalid dual-stack configuration, bad plugin",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.NetworkType = "OpenShiftSDN"
+				return c
+			}(),
+			expectedError: `IPv6 is not supported for this networking plugin`,
+		},
+		{
+			name: "invalid single-stack IPv6 configuration, bad plugin",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validIPv6NetworkingConfig()
+				c.Networking.NetworkType = "OpenShiftSDN"
+				return c
+			}(),
+			expectedError: `IPv6 is not supported for this networking plugin`,
+		},
+		{
+			name: "invalid dual-stack configuration, machine has no IPv6",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.MachineNetwork = c.Networking.MachineNetwork[1:]
+				return c
+			}(),
+			expectedError: `Invalid value: "10.0.0.0": dual-stack IPv4/IPv6 requires an IPv6 address in this list`,
+		},
+		{
+			name: "valid dual-stack configuration, machine has no IPv6 but is on AWS",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.MachineNetwork = c.Networking.MachineNetwork[1:]
+				return c
+			}(),
+			expectedError: `Invalid value: "DualStack": dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address`,
 		},
 	}
 	for _, tc := range cases {

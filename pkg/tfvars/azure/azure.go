@@ -2,6 +2,8 @@ package azure
 
 import (
 	"encoding/json"
+	"net"
+	"os"
 
 	"github.com/Azure/go-autorest/autorest/to"
 
@@ -35,6 +37,9 @@ type config struct {
 	ComputeSubnet               string            `json:"azure_compute_subnet"`
 	PreexistingNetwork          bool              `json:"azure_preexisting_network"`
 	Private                     bool              `json:"azure_private"`
+	MachineV4CIDRs              []string          `json:"azure_machine_v4_cidrs"`
+	MachineV6CIDRs              []string          `json:"azure_machine_v6_cidrs"`
+	EmulateSingleStackIPv6      bool              `json:"azure_emulate_single_stack_ipv6"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -46,6 +51,9 @@ type TFVarsSources struct {
 	ImageURL                    string
 	PreexistingNetwork          bool
 	Publish                     types.PublishingStrategy
+
+	MachineV4CIDRs []net.IPNet
+	MachineV6CIDRs []net.IPNet
 }
 
 // TFVars generates Azure-specific Terraform variables launching the cluster.
@@ -58,6 +66,19 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	masterAvailabilityZones := make([]string, len(sources.MasterConfigs))
 	for i, c := range sources.MasterConfigs {
 		masterAvailabilityZones[i] = to.String(c.Zone)
+	}
+
+	machineV4CIDRStrings, machineV6CIDRStrings := []string{}, []string{}
+	for _, ipnet := range sources.MachineV4CIDRs {
+		machineV4CIDRStrings = append(machineV4CIDRStrings, ipnet.String())
+	}
+	for _, ipnet := range sources.MachineV6CIDRs {
+		machineV6CIDRStrings = append(machineV6CIDRStrings, ipnet.String())
+	}
+
+	var emulateSingleStackIPv6 bool
+	if os.Getenv("OPENSHIFT_INSTALL_AZURE_EMULATE_SINGLESTACK_IPV6") == "true" {
+		emulateSingleStackIPv6 = true
 	}
 
 	cfg := &config{
@@ -76,6 +97,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ControlPlaneSubnet:          masterConfig.Subnet,
 		ComputeSubnet:               workerConfig.Subnet,
 		PreexistingNetwork:          sources.PreexistingNetwork,
+		MachineV4CIDRs:              machineV4CIDRStrings,
+		MachineV6CIDRs:              machineV6CIDRStrings,
+		EmulateSingleStackIPv6:      emulateSingleStackIPv6,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

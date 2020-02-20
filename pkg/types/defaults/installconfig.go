@@ -26,10 +26,14 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	if c.Networking == nil {
 		c.Networking = &types.Networking{}
 	}
-	if c.Networking.MachineCIDR == nil {
-		c.Networking.MachineCIDR = defaultMachineCIDR
+	if len(c.Networking.MachineNetwork) == 0 {
+		c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+			{CIDR: *defaultMachineCIDR},
+		}
 		if c.Platform.Libvirt != nil {
-			c.Networking.MachineCIDR = libvirtdefaults.DefaultMachineCIDR
+			c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+				{CIDR: *libvirtdefaults.DefaultMachineCIDR},
+			}
 		}
 	}
 	if c.Networking.NetworkType == "" {
