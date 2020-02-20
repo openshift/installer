@@ -154,6 +154,13 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 		if err := validateOSImageURI(p.ClusterOSImage); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), p.ClusterOSImage, err.Error()))
 		}
+		if !strings.Contains(p.ClusterOSImage, "-openstack") {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), p.ClusterOSImage, "cluster baremetal image must contain '-openstack'"))
+		}
+		// The URL will contain a checksum after the '?' so we can just check for the suffix followed by a '?'.
+		if !strings.Contains(p.ClusterOSImage, "qcow2.gz?") && !strings.Contains(p.ClusterOSImage, "qcow2.xz?") {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), p.ClusterOSImage, "cluster baremetal image must end in .qcow2.gz or .qcow2.xz"))
+		}
 	}
 
 	for _, validator := range dynamicValidators {
