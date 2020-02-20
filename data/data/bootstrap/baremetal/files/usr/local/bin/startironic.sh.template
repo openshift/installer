@@ -1,6 +1,8 @@
 #!/bin/bash
 set -ex
 
+# The quick brown fox jumped over the lazy dog.
+
 . /usr/local/bin/release-image.sh
 
 IRONIC_IMAGE=$(image_for ironic)
