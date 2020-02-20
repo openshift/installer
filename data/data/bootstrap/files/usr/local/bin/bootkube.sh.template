@@ -112,9 +112,7 @@ bootkube_podman_run \
 # deemed stable we can remove this logic and the operator will be `Managed` by default.
 if [ ! -z "$CLUSTER_ETCD_OPERATOR_MANAGED" ]
 then
-	# TODO: host-etcd endpoint rendered by cluster-etcd-operator
-	BOOTSTRAP_IP=$(hostname -I | awk '{ print $1 }')
-	ETCD_ENDPOINTS=https://"${BOOTSTRAP_IP}":2379
+	ETCD_ENDPOINTS=https://localhost:2379
 	if [ ! -f etcd-bootstrap.done ]
 	then
 		echo "Rendering CEO Manifests..."
@@ -134,12 +132,10 @@ then
 			--config-output-file=/assets/etcd-bootstrap/config \
 			--cluster-config-file=/assets/manifests/cluster-network-02-config.yml
 
-		sed -i "s/__BOOTSTRAP_IP__/${BOOTSTRAP_IP}/" /opt/openshift/manifests/etcd-host-service-endpoints.yaml
-
 		cp etcd-bootstrap/manifests/* manifests/
 		cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
 
-		# /etc/kubernetes/static-pod-resources/etcd-member is the location etcd-bootstrap tls assets.
+		# /etc/kubernetes/static-pod-resources/etcd-member is the location of etcd-bootstrap tls assets.
 		mkdir --parents /etc/kubernetes/static-pod-resources/etcd-member
 		cp tls/etcd-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-member/ca.crt
 		cp tls/etcd-metric-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-member/metric-ca.crt
