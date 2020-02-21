@@ -1788,8 +1788,6 @@ github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200120152131-1b09fd9e71
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200120152131-1b09fd9e7156/go.mod h1:KCyjaBfEkifs9bqV1HEXDJUyQylgeLSqiqt2QnMn7is=
 github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603 h1:MC6BSZYxFPoqqKj9PdlGjHGVKcMsvn6Kv1NiVzQErZ8=
 github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603/go.mod h1:7pQ9Bzha+ug/5zd+0ufbDEcnn2OnNlPwRwYrzhXk4NM=
-github.com/openshift/cluster-api-provider-openstack v0.0.0-20200130125124-ef82ce374112 h1:ny9quEJfUBkUyalPn4sRBX86Ci5Jx72pIO2Qjsxy0yA=
-github.com/openshift/cluster-api-provider-openstack v0.0.0-20200130125124-ef82ce374112/go.mod h1:ntMRKZlv++TExGO4g2jgsVIaHKJt8kKe72BAvMPV5vA=
 github.com/openshift/cluster-api-provider-openstack v0.0.0-20200221124403-d699c3611b0c h1:Rn/Ip2nbWUhvOF9/EZaorxKVcQnm427cSOJQJIFXuHQ=
 github.com/openshift/cluster-api-provider-openstack v0.0.0-20200221124403-d699c3611b0c/go.mod h1:ntMRKZlv++TExGO4g2jgsVIaHKJt8kKe72BAvMPV5vA=
 github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20200128081049-840376ca5c09 h1:QJxGgIB7f5BqNPEZOCgV29NsDf1P439Bs3q0B5O3fP8=
