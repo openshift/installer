@@ -54,8 +54,9 @@ resource "ovirt_vm" "tmp_import_vm" {
   cores      = var.ovirt_template_cpu
   memory     = var.ovirt_template_mem
   block_device {
-    disk_id   = ovirt_image_transfer.releaseimage.0.disk_id
-    interface = "virtio_scsi"
+    disk_id      = ovirt_image_transfer.releaseimage.0.disk_id
+    interface    = "virtio_scsi"
+    pass_discard = true
   }
   nics {
     name            = "nic1"
