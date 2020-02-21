@@ -1,4 +1,12 @@
-package arn
+/*
+This file is a hard copy of:
+https://github.com/kubernetes-sigs/aws-iam-authenticator/blob/7547c74e660f8d34d9980f2c69aa008eed1f48d0/pkg/arn/arn.go
+
+With the following modifications:
+ - Rename package from arn to token for simplication
+*/
+
+package token
 
 import (
 	"fmt"

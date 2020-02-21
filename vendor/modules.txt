@@ -181,7 +181,7 @@ github.com/awalterschulze/gographviz/internal/errors
 github.com/awalterschulze/gographviz/internal/lexer
 github.com/awalterschulze/gographviz/internal/parser
 github.com/awalterschulze/gographviz/internal/token
-# github.com/aws/aws-sdk-go v1.28.8
+# github.com/aws/aws-sdk-go v1.28.9
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
 github.com/aws/aws-sdk-go/aws/awserr
@@ -253,6 +253,7 @@ github.com/aws/aws-sdk-go/service/codebuild
 github.com/aws/aws-sdk-go/service/codecommit
 github.com/aws/aws-sdk-go/service/codedeploy
 github.com/aws/aws-sdk-go/service/codepipeline
+github.com/aws/aws-sdk-go/service/codestarnotifications
 github.com/aws/aws-sdk-go/service/cognitoidentity
 github.com/aws/aws-sdk-go/service/cognitoidentityprovider
 github.com/aws/aws-sdk-go/service/configservice
@@ -361,6 +362,7 @@ github.com/aws/aws-sdk-go/service/waf
 github.com/aws/aws-sdk-go/service/wafregional
 github.com/aws/aws-sdk-go/service/wafv2
 github.com/aws/aws-sdk-go/service/worklink
+github.com/aws/aws-sdk-go/service/workmail
 github.com/aws/aws-sdk-go/service/workspaces
 github.com/aws/aws-sdk-go/service/xray
 # github.com/beevik/etree v1.1.0
@@ -808,7 +810,7 @@ github.com/hashicorp/terraform/terraform
 github.com/hashicorp/terraform/version
 # github.com/hashicorp/terraform-config-inspect v0.0.0-20191212124732-c6ae6269b9d7
 github.com/hashicorp/terraform-config-inspect/tfconfig
-# github.com/hashicorp/terraform-plugin-sdk v1.5.0 => github.com/openshift/hashicorp-terraform-plugin-sdk v1.6.0-openshift
+# github.com/hashicorp/terraform-plugin-sdk v1.6.0 => github.com/openshift/hashicorp-terraform-plugin-sdk v1.6.0-openshift
 github.com/hashicorp/terraform-plugin-sdk/helper/acctest
 github.com/hashicorp/terraform-plugin-sdk/helper/customdiff
 github.com/hashicorp/terraform-plugin-sdk/helper/encryption
@@ -910,9 +912,6 @@ github.com/keybase/go-crypto/rsa
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/kr/fs v0.1.0
 github.com/kr/fs
-# github.com/kubernetes-sigs/aws-iam-authenticator v0.4.0 => github.com/kubernetes-sigs/aws-iam-authenticator v0.3.1-0.20181019024009-82544ec86140
-github.com/kubernetes-sigs/aws-iam-authenticator/pkg/arn
-github.com/kubernetes-sigs/aws-iam-authenticator/pkg/token
 # github.com/lib/pq v1.2.0
 github.com/lib/pq
 github.com/lib/pq/oid
@@ -1069,13 +1068,15 @@ github.com/stoewer/go-strcase
 github.com/stretchr/testify/assert
 # github.com/svanharmelen/jsonapi v0.0.0-20180618144545-0c0828c3f16d
 github.com/svanharmelen/jsonapi
-# github.com/terraform-providers/terraform-provider-aws v1.60.1-0.20200130210954-e03ec66d8774
+# github.com/terraform-providers/terraform-provider-aws v1.60.1-0.20200214022145-f0f304894df6
 github.com/terraform-providers/terraform-provider-aws/aws
 github.com/terraform-providers/terraform-provider-aws/aws/internal/flatmap
 github.com/terraform-providers/terraform-provider-aws/aws/internal/keyvaluetags
+github.com/terraform-providers/terraform-provider-aws/aws/internal/service/batch/equivalency
+github.com/terraform-providers/terraform-provider-aws/aws/internal/service/eks/token
 # github.com/terraform-providers/terraform-provider-azuread v0.7.0
 github.com/terraform-providers/terraform-provider-azuread/azuread/helpers/tf
-# github.com/terraform-providers/terraform-provider-azurerm v0.0.0 => github.com/openshift/terraform-provider-azurerm v1.41.1-openshift
+# github.com/terraform-providers/terraform-provider-azurerm v0.0.0 => github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-2
 github.com/terraform-providers/terraform-provider-azurerm/azurerm
 github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure
 github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/kubernetes
@@ -1425,7 +1426,7 @@ golang.org/x/text/unicode/norm
 golang.org/x/text/width
 # golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 golang.org/x/time/rate
-# golang.org/x/tools v0.0.0-20200115044656-831fdb1e1868
+# golang.org/x/tools v0.0.0-20200204192400-7124308813f3
 golang.org/x/tools/cmd/goimports
 golang.org/x/tools/go/analysis
 golang.org/x/tools/go/analysis/passes/inspect
@@ -1442,6 +1443,7 @@ golang.org/x/tools/internal/fastwalk
 golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/imports
 golang.org/x/tools/internal/module
+golang.org/x/tools/internal/packagesinternal
 golang.org/x/tools/internal/semver
 # google.golang.org/api v0.14.0 => google.golang.org/api v0.13.0
 google.golang.org/api/appengine/v1
@@ -1575,7 +1577,7 @@ gopkg.in/AlecAivazis/survey.v1/terminal
 gopkg.in/inf.v0
 # gopkg.in/ini.v1 v1.51.0
 gopkg.in/ini.v1
-# gopkg.in/yaml.v2 v2.2.7
+# gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2
 # honnef.co/go/tools v0.0.1-2019.2.3
 honnef.co/go/tools/arg
