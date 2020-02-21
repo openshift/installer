@@ -3,6 +3,14 @@ set -ex
 
 . /usr/local/bin/release-image.sh
 
+grep -q "ironic.service" /etc/motd || cat <<EOF>> /etc/motd
+
+For monitoring baremetal provisioning services, you can look at ironic.service logs:
+
+  journalctl -b -f -u ironic.service
+
+EOF
+
 IRONIC_IMAGE=$(image_for ironic)
 IRONIC_INSPECTOR_IMAGE=$(image_for ironic-inspector)
 IPA_DOWNLOADER_IMAGE=$(image_for ironic-ipa-downloader)
