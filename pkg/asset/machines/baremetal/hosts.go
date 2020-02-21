@@ -2,6 +2,7 @@ package baremetal
 
 import (
 	"fmt"
+
 	"github.com/metal3-io/baremetal-operator/pkg/hardware"
 
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
@@ -11,6 +12,7 @@ import (
 	baremetalhost "github.com/metal3-io/baremetal-operator/pkg/apis/metal3/v1alpha1"
 
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/baremetal"
 )
 
 // HostSettings hold the information needed to build the manifests to
@@ -78,6 +80,14 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSet
 				HardwareProfile: host.HardwareProfile,
 			},
 		}
+
+		// we will always default to UEFI
+		if host.BootMode == baremetal.Legacy {
+			newHost.Spec.BootMode = baremetalhost.Legacy
+		} else {
+			newHost.Spec.BootMode = baremetalhost.UEFI
+		}
+
 		if i < len(machines) {
 			// Setting ExternallyProvisioned to true and adding a
 			// ConsumerRef without setting Image associates the host

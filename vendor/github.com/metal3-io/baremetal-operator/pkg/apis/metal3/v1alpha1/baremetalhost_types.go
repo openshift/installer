@@ -133,6 +133,14 @@ type BMCDetails struct {
 	DisableCertificateVerification bool `json:"disableCertificateVerification,omitempty"`
 }
 
+type BootMode string
+
+// Allowed boot mode from metal3
+const (
+	UEFI   BootMode = "UEFI"
+	Legacy BootMode = "legacy"
+)
+
 // BareMetalHostSpec defines the desired state of BareMetalHost
 type BareMetalHostSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code
@@ -156,6 +164,10 @@ type BareMetalHostSpec struct {
 	// types, but required for libvirt VMs driven by vbmc.
 	// +kubebuilder:validation:Pattern=`[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}`
 	BootMACAddress string `json:"bootMACAddress,omitempty"`
+
+	// Boot mode for baremetal server
+	// +kubebuilder:validation:Enum=UEFI;legacy
+	BootMode BootMode `json:"bootMode,omitempty"`
 
 	// Should the server be online?
 	Online bool `json:"online"`

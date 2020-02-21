@@ -77,10 +77,16 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		}
 
 		// Properties
+
+		// capabilities, default to uefi boot mode if no other value is present
+		capabilities := "boot_mode:uefi"
+		if host.BootMode == baremetal.Legacy {
+			capabilities = "boot_mode:bios"
+		}
 		propertiesMap := map[string]interface{}{
 			"local_gb":     profile.LocalGB,
 			"cpu_arch":     profile.CPUArch,
-			"capabilities": "boot_mode:uefi",
+			"capabilities": capabilities,
 		}
 
 		// Root device hints

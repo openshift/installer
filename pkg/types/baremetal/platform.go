@@ -12,13 +12,23 @@ type BMC struct {
 	DisableCertificateVerification bool   `json:"disableCertificateVerification"`
 }
 
+// BootMode is the boot mode of the system
+type BootMode string
+
+// Allowed boot mode from metal3
+const (
+	UEFI   BootMode = "UEFI"
+	Legacy BootMode = "legacy"
+)
+
 // Host stores all the configuration data for a baremetal host.
 type Host struct {
-	Name            string `json:"name,omitempty"`
-	BMC             BMC    `json:"bmc"`
-	Role            string `json:"role"`
-	BootMACAddress  string `json:"bootMACAddress"`
-	HardwareProfile string `json:"hardwareProfile"`
+	Name            string   `json:"name,omitempty"`
+	BMC             BMC      `json:"bmc"`
+	Role            string   `json:"role"`
+	BootMACAddress  string   `json:"bootMACAddress"`
+	BootMode        BootMode `json:"bootMode,omitempty"`
+	HardwareProfile string   `json:"hardwareProfile"`
 }
 
 // Platform stores all the global configuration that all machinesets use.
