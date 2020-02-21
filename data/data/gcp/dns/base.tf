@@ -8,6 +8,8 @@ resource "google_dns_managed_zone" "int" {
       network_url = var.network
     }
   }
+
+  depends_on = [google_dns_record_set.api_external]
 }
 
 resource "google_dns_record_set" "api_external" {
