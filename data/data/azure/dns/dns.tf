@@ -6,6 +6,8 @@ locals {
 resource "azureprivatedns_zone" "private" {
   name                = var.cluster_domain
   resource_group_name = var.resource_group_name
+
+  depends_on = [azurerm_dns_cname_record.api_external_v4, azurerm_dns_cname_record.api_external_v6]
 }
 
 resource "azureprivatedns_zone_virtual_network_link" "network" {
