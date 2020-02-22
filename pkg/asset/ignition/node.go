@@ -27,9 +27,11 @@ func FileFromString(path string, username string, mode int, contents string) ign
 // FileFromBytes creates an ignition-config file with the given contents.
 func FileFromBytes(path string, username string, mode int, contents []byte) ignition.File {
 	contentsString := dataurl.EncodeBytes(contents)
+	overwrite := true
 	return ignition.File{
 		Node: ignition.Node{
-			Path: path,
+			Path:      path,
+			Overwrite: &overwrite,
 			User: ignition.NodeUser{
 				Name: &username,
 			},

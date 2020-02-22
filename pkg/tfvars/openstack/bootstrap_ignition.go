@@ -72,6 +72,7 @@ func createBootstrapSwiftObject(cloud string, bootstrapIgn string, clusterID str
 // in its Security section.
 func generateIgnitionShim(userCA string, clusterID string, swiftObject string) (string, error) {
 	fileMode := 420
+	overwrite := true
 
 	// Hostname Config
 	contents := fmt.Sprintf("data:text/plain;base64,%s", b64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s-bootstrap", clusterID))))
@@ -79,7 +80,8 @@ func generateIgnitionShim(userCA string, clusterID string, swiftObject string) (
 	// TODO
 	hostnameConfigFile := ignition.File{
 		Node: ignition.Node{
-			Path: "/etc/hostname",
+			Path:      "/etc/hostname",
+			Overwrite: &overwrite,
 		},
 		FileEmbedded1: ignition.FileEmbedded1{
 			Mode: &fileMode,
