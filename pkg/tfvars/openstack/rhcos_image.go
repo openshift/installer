@@ -3,12 +3,14 @@ package openstack
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imageimport"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -45,12 +47,60 @@ func uploadBaseImage(cloud string, localFilePath string, imageName string, clust
 	}
 	logrus.Debugf("Image %s was created.", img.Name)
 
-	logrus.Debugf("Uploading RHCOS to the image %v with ID %v", img.Name, img.ID)
-	res := imagedata.Upload(conn, img.ID, f)
-	if res.Err != nil {
+	useImageImport, err := isImageImportSupported(cloud)
+	if err != nil {
 		return err
 	}
-	logrus.Debugf("The data was uploaded.")
+
+	if useImageImport {
+		logrus.Debugf("Using Image Import API to upload RHCOS to the image %q with ID %q", img.Name, img.ID)
+		stageRes := imagedata.Stage(conn, img.ID, f)
+		if stageRes.Err != nil {
+			return err
+		}
+		logrus.Debugf("The data was uploaded.")
+
+		logrus.Debugf("Begin image import for the image %q with ID %q", img.Name, img.ID)
+		co := imageimport.CreateOpts{
+			Name: imageimport.GlanceDirectMethod,
+		}
+		importRes := imageimport.Create(conn, img.ID, co)
+		if importRes.Err != nil {
+			return err
+		}
+		logrus.Debugf("Image import started.")
+
+		// Image import is an asynchronous operation, so we have to wait until the image becomes "active"
+		const numRetries = 5000
+		const timeSleepSeconds = 15
+		for i := 0; i < numRetries; i++ {
+			getRes, err := images.Get(conn, img.ID).Extract()
+			if err != nil {
+				return err
+			}
+
+			// More information about Glance Image Status transitioning
+			// https://docs.openstack.org/glance/latest/user/statuses.html
+			if getRes.Status == images.ImageStatusActive {
+				// Import succeed
+				break
+			} else if getRes.Status == images.ImageStatusQueued || getRes.Status == images.ImageStatusDeleted {
+				// Import failed
+				return errors.New("RHCOS image import failed")
+			}
+			time.Sleep(timeSleepSeconds * time.Second)
+		}
+
+		logrus.Debugf("Image import finished.")
+	} else {
+		// Use classic legacy upload that doesn't support image conversion
+		logrus.Debugf("Using legacy API to upload RHCOS to the image %q with ID %q", img.Name, img.ID)
+		res := imagedata.Upload(conn, img.ID, f)
+		if res.Err != nil {
+			return err
+		}
+		logrus.Debugf("The data was uploaded.")
+	}
 
 	return nil
 }
