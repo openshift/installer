@@ -2,7 +2,6 @@ package bootstrap
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,9 +11,10 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/clarketm/json"
 	"github.com/containers/image/pkg/sysregistriesv2"
-	"github.com/coreos/ignition/config/util"
-	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	"github.com/coreos/ignition/v2/config/util"
+	igntypes "github.com/coreos/ignition/v2/config/v3_0/types"
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -300,18 +300,14 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 	parentDir := path.Base(path.Dir(uri))
 
 	var mode int
-	appendToFile := false
 	if parentDir == "bin" || parentDir == "dispatcher.d" {
 		mode = 0555
 	} else if filename == "motd" {
 		mode = 0644
-		appendToFile = true
 	} else {
 		mode = 0600
 	}
 	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)
-	ign.Append = appendToFile
-
 	// Replace files that already exist in the slice with ones added later, otherwise append them
 	a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, ign)
 
@@ -369,7 +365,7 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 				return err
 			}
 
-			dropins := []igntypes.SystemdDropin{}
+			dropins := []igntypes.Dropin{}
 			for _, childInfo := range children {
 				file, err := data.Assets.Open(path.Join(dir, childInfo.Name()))
 				if err != nil {
@@ -382,9 +378,11 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 					return err
 				}
 
-				dropins = append(dropins, igntypes.SystemdDropin{
+				contentsString := string(contents)
+
+				dropins = append(dropins, igntypes.Dropin{
 					Name:     childName,
-					Contents: string(contents),
+					Contents: &contentsString,
 				})
 			}
 
@@ -403,9 +401,11 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 				return err
 			}
 
+			contentsString := string(contents)
+
 			unit := igntypes.Unit{
 				Name:     name,
-				Contents: string(contents),
+				Contents: &contentsString,
 			}
 			if _, ok := enabled[name]; ok {
 				unit.Enabled = util.BoolToPtr(true)

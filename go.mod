@@ -22,10 +22,11 @@ require (
 	github.com/btubbs/datetime v0.1.1 // indirect
 	github.com/c4milo/gotoolkit v0.0.0-20190525173301-67483a18c17a // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
+	github.com/clarketm/json v1.13.4
 	github.com/containers/image v3.0.2+incompatible
 	github.com/coreos/etcd v3.3.18+incompatible // indirect
 	github.com/coreos/go-systemd v0.0.0 // indirect
-	github.com/coreos/ignition v0.35.0
+	github.com/coreos/ignition/v2 v2.2.2-0.20200325194711-7d770711ebc1
 	github.com/dmacvicar/terraform-provider-libvirt v0.6.1-0.20191216113711-1a01934a7d20
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
@@ -62,7 +63,6 @@ require (
 	github.com/metal3-io/baremetal-operator v0.0.0
 	github.com/metal3-io/cluster-api-provider-baremetal v0.0.0
 	github.com/mitchellh/cli v1.0.0
-	github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6 // indirect
 	github.com/openshift-metal3/terraform-provider-ironic v0.1.9
 	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible
 	github.com/openshift/client-go v0.0.0-20200116152001-92a2713fa240
@@ -95,7 +95,7 @@ require (
 	github.com/terraform-providers/terraform-provider-azuread v0.7.0 // indirect
 	github.com/terraform-providers/terraform-provider-azurerm v0.0.0
 	github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200204003432-77547e3e7d52
-	github.com/terraform-providers/terraform-provider-ignition v1.2.1
+	github.com/terraform-providers/terraform-provider-ignition/v2 v2.0.0
 	github.com/terraform-providers/terraform-provider-local v1.4.0
 	github.com/terraform-providers/terraform-provider-openstack v1.25.0
 	github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
@@ -116,8 +116,8 @@ require (
 	gopkg.in/AlecAivazis/survey.v1 v1.8.9-0.20200217094205-6773bdf39b7f
 	gopkg.in/ini.v1 v1.51.0
 	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.17.2
-	k8s.io/apimachinery v0.17.3
+	k8s.io/api v0.17.4
+	k8s.io/apimachinery v0.17.4
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog v1.0.0
 	k8s.io/utils v0.0.0-20191217005138-9e5e9d854fcc
@@ -135,8 +135,9 @@ replace (
 	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20200206190020-71b826cc0f0a // Use OpenShift fork
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200210091934-a0e53e94816b // Pin API
-	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530 // Pin MCO so it doesn't get downgraded
+	github.com/openshift/machine-config-operator => github.com/LorbusChris/machine-config-operator v0.0.1-0.20200323222512-db1a46cb4bbb // Pin FCOS MCO
 	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-3 // Pin to openshift fork with IPv6 fixes
+	github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/LorbusChris/terraform-provider-ignition/v2 v2.0.0-20200118034038-6e413297dc57
 	google.golang.org/api => google.golang.org/api v0.13.0 // Pin to version required by tf-provider-google
 	k8s.io/api => k8s.io/api v0.17.1 // Replaced by MCO/CRI-O
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.17.1 // Replaced by MCO/CRI-O

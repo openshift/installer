@@ -1,5 +1,5 @@
 provider "ignition" {
-  version = "1.1.0"
+  version = "2.0.0"
 }
 
 locals {
@@ -12,7 +12,6 @@ locals {
 data "ignition_file" "hostname" {
   count = "${var.instance_count}"
 
-  filesystem = "root"
   path       = "/etc/hostname"
   mode       = "420"
 
@@ -24,7 +23,6 @@ data "ignition_file" "hostname" {
 data "ignition_file" "static_ip" {
   count = "${var.instance_count}"
 
-  filesystem = "root"
   path       = "/etc/sysconfig/network-scripts/ifcfg-ens192"
   mode       = "420"
 
@@ -64,16 +62,16 @@ EOF
 data "ignition_config" "ign" {
   count = "${var.instance_count}"
 
-  append {
+  merge {
     source = "${var.ignition_url != "" ? var.ignition_url : local.ignition_encoded}"
   }
 
   systemd = [
-    "${data.ignition_systemd_unit.restart.*.id[count.index]}",
+    "${data.ignition_systemd_unit.restart.*.rendered[count.index]}",
   ]
 
   files = [
-    "${data.ignition_file.hostname.*.id[count.index]}",
-    "${data.ignition_file.static_ip.*.id[count.index]}",
+    "${data.ignition_file.hostname.*.rendered[count.index]}",
+    "${data.ignition_file.static_ip.*.rendered[count.index]}",
   ]
 }

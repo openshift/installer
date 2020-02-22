@@ -2,12 +2,16 @@ package openstack
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"strings"
 
-	ignition "github.com/coreos/ignition/config/v2_4/types"
+	"github.com/clarketm/json"
+	// TODO lorbus:
+	// This is currently broken because no ignition binary with support for spec v3_1_experimental with HTTP headers has landed in FCOS yet.
+	// Update FCOS image as soon as that is available.
+	// Later replace with stable spec v3.1.
+	igntypes "github.com/coreos/ignition/v2/config/v3_1_experimental/types"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/utils/openstack/clientconfig"
@@ -65,40 +69,43 @@ func uploadBootstrapConfig(cloud string, bootstrapIgn string, clusterID string) 
 // in its Security section.
 func generateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL string, tokenID string) (string, error) {
 	fileMode := 420
+	overwrite := true
 
 	// Hostname Config
-	contents := fmt.Sprintf("%s-bootstrap", clusterID)
+	hostnameConfigContents := fmt.Sprintf("data:text/plain;base64,%s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s-bootstrap", clusterID))))
 
-	hostnameConfigFile := ignition.File{
-		Node: ignition.Node{
-			Filesystem: "root",
-			Path:       "/etc/hostname",
+	hostnameConfigFile := igntypes.File{
+		Node: igntypes.Node{
+			Path:      "/etc/hostname",
+			Overwrite: &overwrite,
 		},
-		FileEmbedded1: ignition.FileEmbedded1{
+		FileEmbedded1: igntypes.FileEmbedded1{
 			Mode: &fileMode,
-			Contents: ignition.FileContents{
-				Source: dataurl.EncodeBytes([]byte(contents)),
+			Contents: igntypes.FileContents{
+				Source: &hostnameConfigContents,
 			},
 		},
 	}
 
 	// Openstack Ca Cert file
-	openstackCAFile := ignition.File{
-		Node: ignition.Node{
-			Filesystem: "root",
-			Path:       "/opt/openshift/tls/cloud-ca-cert.pem",
+	openstackCAContents := dataurl.EncodeBytes([]byte(userCA))
+
+	openstackCAFile := igntypes.File{
+		Node: igntypes.Node{
+			Path:      "/opt/openshift/tls/cloud-ca-cert.pem",
+			Overwrite: &overwrite,
 		},
-		FileEmbedded1: ignition.FileEmbedded1{
+		FileEmbedded1: igntypes.FileEmbedded1{
 			Mode: &fileMode,
-			Contents: ignition.FileContents{
-				Source: dataurl.EncodeBytes([]byte(userCA)),
+			Contents: igntypes.FileContents{
+				Source: &openstackCAContents,
 			},
 		},
 	}
 
-	security := ignition.Security{}
+	security := igntypes.Security{}
 	if userCA != "" {
-		carefs := []ignition.CaReference{}
+		carefs := []igntypes.CaReference{}
 		rest := []byte(userCA)
 
 		for {
@@ -108,42 +115,42 @@ func generateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL st
 				return "", fmt.Errorf("unable to parse certificate, please check the cacert section of clouds.yaml")
 			}
 
-			carefs = append(carefs, ignition.CaReference{Source: dataurl.EncodeBytes(pem.EncodeToMemory(block))})
+			carefs = append(carefs, igntypes.CaReference{Source: dataurl.EncodeBytes(pem.EncodeToMemory(block))})
 
 			if len(rest) == 0 {
 				break
 			}
 		}
 
-		security = ignition.Security{
-			TLS: ignition.TLS{
+		security = igntypes.Security{
+			TLS: igntypes.TLS{
 				CertificateAuthorities: carefs,
 			},
 		}
 	}
 
-	headers := []ignition.HTTPHeader{
+	headers := []igntypes.HTTPHeader{
 		{
 			Name:  "X-Auth-Token",
-			Value: tokenID,
+			Value: &tokenID,
 		},
 	}
 
-	ign := ignition.Config{
-		Ignition: ignition.Ignition{
-			Version:  ignition.MaxVersion.String(),
+	ign := igntypes.Config{
+		Ignition: igntypes.Ignition{
+			Version:  igntypes.MaxVersion.String(),
 			Security: security,
-			Config: ignition.IgnitionConfig{
-				Append: []ignition.ConfigReference{
+			Config: igntypes.IgnitionConfig{
+				Merge: []igntypes.ConfigReference{
 					{
-						Source:      bootstrapConfigURL,
+						Source:      &bootstrapConfigURL,
 						HTTPHeaders: headers,
 					},
 				},
 			},
 		},
-		Storage: ignition.Storage{
-			Files: []ignition.File{
+		Storage: igntypes.Storage{
+			Files: []igntypes.File{
 				hostnameConfigFile,
 				openstackCAFile,
 			},

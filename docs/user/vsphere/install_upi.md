@@ -222,7 +222,7 @@ The Ignition config created by the OpenShift Installer cannot be used directly b
 {
   "ignition": {
     "config": {
-      "append": [
+      "merge": [
         {
           "source": "bootstrap_ignition_config_url",
           "verification": {}
@@ -230,9 +230,8 @@ The Ignition config created by the OpenShift Installer cannot be used directly b
       ]
     },
     "timeouts": {},
-    "version": "2.1.0"
+    "version": "3.0.0"
   },
-  "networkd": {},
   "passwd": {},
   "storage": {},
   "systemd": {}
@@ -251,14 +250,12 @@ For example, the following Ignition config will create a hostname file that sets
   "ignition": {
     "config": {},
     "timeouts": {},
-    "version": "2.1.0"
+    "version": "3.0.0"
   },
-  "networkd": {},
   "passwd": {},
   "storage": {
     "files": [
       {
-        "filesystem": "root",
         "group": {},
         "path": "/etc/hostname",
         "user": {},
@@ -285,14 +282,12 @@ For example, the following Ignition config will create an ifcfg file that sets t
   "ignition": {
     "config": {},
     "timeouts": {},
-    "version": "2.1.0"
+    "version": "3.0.0"
   },
-  "networkd": {},
   "passwd": {},
   "storage": {
     "files": [
       {
-        "filesystem": "root",
         "group": {},
         "path": "/etc/sysconfig/network-scripts/ifcfg-ens192",
         "user": {},

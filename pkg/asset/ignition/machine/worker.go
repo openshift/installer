@@ -1,10 +1,10 @@
 package machine
 
 import (
-	"encoding/json"
 	"os"
 
-	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	"github.com/clarketm/json"
+	igntypes "github.com/coreos/ignition/v2/config/v3_0/types"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -38,7 +38,7 @@ func (a *Worker) Generate(dependencies asset.Parents) error {
 	rootCA := &tls.RootCA{}
 	dependencies.Get(installConfig, rootCA)
 
-	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "worker")
+	a.Config = pointerIgnitionConfigSpecV3(installConfig.Config, rootCA.Cert(), "worker")
 
 	data, err := json.Marshal(a.Config)
 	if err != nil {
