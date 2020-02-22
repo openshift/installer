@@ -34,7 +34,7 @@ require (
 	github.com/google/go-cmp v0.3.2-0.20191028172631-481baca67f93 // indirect
 	github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible // indirect
 	github.com/google/uuid v1.1.1
-	github.com/gophercloud/gophercloud v0.7.1-0.20191211202411-f940f50ff1f7
+	github.com/gophercloud/gophercloud v0.8.0
 	github.com/gophercloud/utils v0.0.0-20191212191830-4533a07bd492
 	github.com/gopherjs/gopherjs v0.0.0-20191106031601-ce3c9ade29de // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
