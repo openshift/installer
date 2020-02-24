@@ -6,6 +6,7 @@ set -euoE pipefail ## -E option will cause functions to inherit trap
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
 ETCD_ENDPOINTS=
+MACHINE_CIDR="{{ .MachineCIDR }}"
 
 bootkube_podman_run() {
     # we run all commands in the host-network to prevent IP conflicts with

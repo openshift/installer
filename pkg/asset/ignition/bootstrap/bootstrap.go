@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
 	"io"
 	"io/ioutil"
 	"os"
@@ -12,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
 
 	"github.com/containers/image/pkg/sysregistriesv2"
 	"github.com/coreos/ignition/config/util"
@@ -53,6 +54,7 @@ type bootstrapTemplateData struct {
 	BootImage             string
 	ClusterDomain         string
 	PlatformData          platformTemplateData
+	MachineCIDR           string
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -217,6 +219,11 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		etcdEndpoints[i] = fmt.Sprintf("https://etcd-%d.%s:2379", i, installConfig.ClusterDomain())
 	}
 
+	machineCIDR, err := getMachineCIDR(installConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	registries := []sysregistriesv2.Registry{}
 	for _, group := range mergedMirrorSets(imageSources) {
 		if len(group.Mirrors) == 0 {
@@ -251,6 +258,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		BootImage:             string(*rhcosImage),
 		ClusterDomain:         installConfig.ClusterDomain(),
 		PlatformData:          platformData,
+		MachineCIDR:           machineCIDR,
 	}, nil
 }
 
@@ -506,6 +514,41 @@ func applyTemplateData(template *template.Template, templateData interface{}) st
 		panic(err)
 	}
 	return buf.String()
+}
+
+// getMachineCIDR returns the MachineCIDR used by the cluster
+func getMachineCIDR(installConfig *types.InstallConfig) (string, error) {
+	serviceCIDRs := installConfig.ServiceNetwork
+	if len(serviceCIDRs) == 0 {
+		return "", fmt.Errorf("serviceCIDRs not found")
+	}
+
+	isSingleStack := true
+	for _, service := range serviceCIDRs {
+		if service.IP.To4() != nil {
+			isSingleStack = false
+		}
+	}
+
+	machineCIDRs := installConfig.MachineNetwork
+	if len(machineCIDRs) > 0 {
+		for _, machine := range machineCIDRs {
+			// IPv6
+			if machine.CIDR.IP.To4() == nil && isSingleStack {
+				return machine.CIDR.String(), nil
+			}
+			// IPV4
+			if machine.CIDR.IP.To4() != nil && !isSingleStack {
+				return machine.CIDR.String(), nil
+			}
+		}
+	}
+
+	// depricatedMachineCIDRs would currently still need to be checked as a fallback to the above.
+	if depricatedMachineCIDRs := installConfig.DeprecatedMachineCIDR; depricatedMachineCIDRs != nil {
+		return depricatedMachineCIDRs.String(), nil
+	}
+	return "", fmt.Errorf("no valid MachineCIDR found")
 }
 
 // Load returns the bootstrap ignition from disk.
