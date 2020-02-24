@@ -80,7 +80,13 @@ func osImage(config *types.InstallConfig) (string, error) {
 		osimage, err = rhcos.GCP(ctx, arch)
 	case libvirt.Name:
 		osimage, err = rhcos.QEMU(ctx, arch)
-	case openstack.Name, ovirt.Name:
+	case openstack.Name:
+		if oi := config.Platform.OpenStack.ClusterOSImage; oi != "" {
+			osimage = oi
+			break
+		}
+		osimage, err = rhcos.OpenStack(ctx, arch)
+	case ovirt.Name:
 		osimage, err = rhcos.OpenStack(ctx, arch)
 	case azure.Name:
 		osimage, err = rhcos.VHD(ctx, arch)
