@@ -10,6 +10,8 @@ The following dependencies must be installed on your system before you can build
 sudo yum install golang-bin gcc-c++
 ```
 
+NOTE: Currently RHEL8.1 provides Go version 1.12, so it cannot be used to build the installer.
+
 If you need support for [libvirt destroy](libvirt/README.md#cleanup), you should also install `libvirt-devel`.
 
 ### Go
