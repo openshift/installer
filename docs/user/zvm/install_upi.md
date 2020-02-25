@@ -225,7 +225,7 @@ $ vmur pun -r -u <z/vm guest id> -N kernel.img rhcos-<version>-installer-kernel
 # punch the parameter file created in an earlier step
 $ vmur pun -r -u <z/vm guest id> -N generic.parm <bootstrap,master,worker>.prm
 # punch the initramfs into the virtual reader
-$ vmur pun -r -u <z/vm guest id> N initrd.img rhcos-<version>-installer-initramfs.img
+$ vmur pun -r -u <z/vm guest id> -N initrd.img rhcos-<version>-installer-initramfs.img
 ```
 
 * Using a 3270 console, connect to each guest and boot from the virtual reader
