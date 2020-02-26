@@ -113,7 +113,10 @@ bootkube_podman_run \
 if [ ! -z "$CLUSTER_ETCD_OPERATOR_MANAGED" ]
 then
 	# TODO: host-etcd endpoint rendered by cluster-etcd-operator
-	BOOTSTRAP_IP=$(hostname -I | awk '{ print $1 }')
+	# "ip route get" can return a slightly different format on different linux releases
+	# but on every one of them it will have "src IP". That's why sed is used here.
+	# It will return IP of default gateway
+	BOOTSTRAP_IP=$(ip route get 1 | sed 's/^.*src \([^ ]*\).*$/\1/;q')
 	ETCD_ENDPOINTS=https://"${BOOTSTRAP_IP}":2379
 	if [ ! -f etcd-bootstrap.done ]
 	then
