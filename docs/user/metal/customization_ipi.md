@@ -124,6 +124,14 @@ permission to communicate with the libvirt services.
 The hypervisor must meet the network requirements described in
 the [Prerequisites](install_ipi.md#prerequisites) section.
 
+Example:
+
+```yaml
+platform:
+  baremetal:
+    libvirtURI: qemu+ssh://hyperuser@hypervisor.example.com/system
+```
+
 ## Disabling Certificate Verification for BMCs
 
 By default TLS clients communicating with BMCs will require valid
