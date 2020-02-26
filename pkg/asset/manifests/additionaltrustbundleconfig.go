@@ -9,6 +9,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -114,9 +115,13 @@ func parseCertificates(certificates string) (map[string]string, error) {
 			return nil, err
 		}
 
-		if cert.IsCA {
-			sb.WriteString(string(pem.EncodeToMemory(block)))
+		if cert.Version < 3 {
+			logrus.Warnf("Certificate %X from additionalTrustBundle is x509 v%d", cert.SerialNumber, cert.Version)
+		} else if !cert.IsCA {
+			logrus.Warnf("Certificate %X from additionalTrustBundle is x509 v%d but not a certificate authority", cert.SerialNumber, cert.Version)
 		}
+
+		sb.WriteString(string(pem.EncodeToMemory(block)))
 
 		if len(rest) == 0 {
 			break
