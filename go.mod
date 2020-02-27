@@ -110,7 +110,7 @@ require (
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	google.golang.org/api v0.14.0
-	gopkg.in/AlecAivazis/survey.v1 v1.8.8
+	gopkg.in/AlecAivazis/survey.v1 v1.8.9-0.20200217094205-6773bdf39b7f
 	gopkg.in/ini.v1 v1.51.0
 	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.17.2
