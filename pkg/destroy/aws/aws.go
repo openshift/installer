@@ -150,6 +150,7 @@ func (o *ClusterUninstaller) Run() error {
 		return err
 	}
 
+	tracker := new(errorTracker)
 	tagClientStack := append([]*resourcegroupstaggingapi.ResourceGroupsTaggingAPI(nil), tagClients...)
 	err = wait.PollImmediateInfinite(
 		time.Second*10,
@@ -183,7 +184,7 @@ func (o *ClusterUninstaller) Run() error {
 
 									err = deleteARN(awsSession, parsed, filter, arnLogger)
 									if err != nil {
-										arnLogger.Debug(err)
+										tracker.suppressWarning(arnString, err, arnLogger)
 										err = errors.Wrapf(err, "deleting %s", arnString)
 										continue
 									}
@@ -240,7 +241,7 @@ func (o *ClusterUninstaller) Run() error {
 
 					err = deleteARN(awsSession, parsed, nil, arnLogger)
 					if err != nil {
-						arnLogger.Debug(err)
+						tracker.suppressWarning(arnString, err, arnLogger)
 						err = errors.Wrapf(err, "deleting %s", arnString)
 						loopError = err
 						continue
