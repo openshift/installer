@@ -12,8 +12,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/h2non/filetype/matchers"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/ulikunitz/xz"
 
 	"golang.org/x/sys/unix"
 )
@@ -21,7 +23,6 @@ import (
 const (
 	applicationName = "openshift-installer"
 	imageDataType   = "image"
-	gzipFileType    = "application/x-gzip"
 )
 
 // getCacheDir returns a local path of the cache, where the installer should put the data:
@@ -119,18 +120,25 @@ func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err er
 	}
 
 	reader = io.MultiReader(bytes.NewReader(buf), reader)
-	fileType := http.DetectContentType(buf)
-	logrus.Debugf("content type of %s is %s", filePath, fileType)
-	switch fileType {
-	case gzipFileType:
+	switch {
+	case matchers.Gz(buf):
+		logrus.Debug("decompressing the image archive as gz")
 		uncompressor, err := gzip.NewReader(reader)
 		if err != nil {
 			return err
 		}
 		defer uncompressor.Close()
 		reader = uncompressor
+	case matchers.Xz(buf):
+		logrus.Debug("decompressing the image archive as xz")
+		uncompressor, err := xz.NewReader(reader)
+		if err != nil {
+			return err
+		}
+		reader = uncompressor
 	default:
 		// No need for an interposer otherwise
+		logrus.Debug("no known archive format detected for image, assuming no decompression necessary")
 	}
 
 	// Wrap the reader in TeeReader to calculate sha256 checksum on the fly
