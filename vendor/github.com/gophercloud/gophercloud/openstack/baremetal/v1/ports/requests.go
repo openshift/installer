@@ -182,8 +182,8 @@ const (
 )
 
 type UpdateOperation struct {
-	Op    UpdateOp    `json:"op,required"`
-	Path  string      `json:"path,required"`
+	Op    UpdateOp    `json:"op" required:"true"`
+	Path  string      `json:"path" required:"true"`
 	Value interface{} `json:"value,omitempty"`
 }
 

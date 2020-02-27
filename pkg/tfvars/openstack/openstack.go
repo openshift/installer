@@ -16,21 +16,20 @@ import (
 )
 
 type config struct {
-	BaseImageName          string   `json:"openstack_base_image_name,omitempty"`
-	BaseImageLocalFilePath string   `json:"openstack_base_image_local_file_path,omitempty"`
-	ExternalNetwork        string   `json:"openstack_external_network,omitempty"`
-	Cloud                  string   `json:"openstack_credentials_cloud,omitempty"`
-	FlavorName             string   `json:"openstack_master_flavor_name,omitempty"`
-	LbFloatingIP           string   `json:"openstack_lb_floating_ip,omitempty"`
-	APIVIP                 string   `json:"openstack_api_int_ip,omitempty"`
-	DNSVIP                 string   `json:"openstack_node_dns_ip,omitempty"`
-	IngressVIP             string   `json:"openstack_ingress_ip,omitempty"`
-	TrunkSupport           string   `json:"openstack_trunk_support,omitempty"`
-	OctaviaSupport         string   `json:"openstack_octavia_support,omitempty"`
-	RootVolumeSize         int      `json:"openstack_master_root_volume_size,omitempty"`
-	RootVolumeType         string   `json:"openstack_master_root_volume_type,omitempty"`
-	BootstrapShim          string   `json:"openstack_bootstrap_shim_ignition,omitempty"`
-	ExternalDNS            []string `json:"openstack_external_dns,omitempty"`
+	BaseImageName   string   `json:"openstack_base_image_name,omitempty"`
+	ExternalNetwork string   `json:"openstack_external_network,omitempty"`
+	Cloud           string   `json:"openstack_credentials_cloud,omitempty"`
+	FlavorName      string   `json:"openstack_master_flavor_name,omitempty"`
+	LbFloatingIP    string   `json:"openstack_lb_floating_ip,omitempty"`
+	APIVIP          string   `json:"openstack_api_int_ip,omitempty"`
+	DNSVIP          string   `json:"openstack_node_dns_ip,omitempty"`
+	IngressVIP      string   `json:"openstack_ingress_ip,omitempty"`
+	TrunkSupport    string   `json:"openstack_trunk_support,omitempty"`
+	OctaviaSupport  string   `json:"openstack_octavia_support,omitempty"`
+	RootVolumeSize  int      `json:"openstack_master_root_volume_size,omitempty"`
+	RootVolumeType  string   `json:"openstack_master_root_volume_type,omitempty"`
+	BootstrapShim   string   `json:"openstack_bootstrap_shim_ignition,omitempty"`
+	ExternalDNS     []string `json:"openstack_external_dns,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
@@ -62,7 +61,11 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		if err != nil {
 			return nil, err
 		}
-		cfg.BaseImageLocalFilePath = localFilePath
+
+		err = uploadBaseImage(cloud, localFilePath, imageName, infraID)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// Not a URL -> use baseImage value as an overridden Glance image name.
 		// Need to check if this image exists and there are no other images with this name.

@@ -275,6 +275,15 @@ type CreateMemberOpts struct {
 	// The administrative state of the Pool. A valid value is true (UP)
 	// or false (DOWN).
 	AdminStateUp *bool `json:"admin_state_up,omitempty"`
+
+	// Is the member a backup? Backup members only receive traffic when all non-backup members are down.
+	Backup *bool `json:"backup,omitempty"`
+
+	// An alternate IP address used for health monitoring a backend member.
+	MonitorAddress string `json:"monitor_address,omitempty"`
+
+	// An alternate protocol port used for health monitoring a backend member.
+	MonitorPort *int `json:"monitor_port,omitempty"`
 }
 
 // ToMemberCreateMap builds a request body from CreateMemberOpts.
@@ -283,7 +292,7 @@ func (opts CreateMemberOpts) ToMemberCreateMap() (map[string]interface{}, error)
 }
 
 // CreateMember will create and associate a Member with a particular Pool.
-func CreateMember(c *gophercloud.ServiceClient, poolID string, opts CreateMemberOpts) (r CreateMemberResult) {
+func CreateMember(c *gophercloud.ServiceClient, poolID string, opts CreateMemberOptsBuilder) (r CreateMemberResult) {
 	b, err := opts.ToMemberCreateMap()
 	if err != nil {
 		r.Err = err
