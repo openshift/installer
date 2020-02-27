@@ -717,7 +717,7 @@ github.com/hashicorp/hil/scanner
 github.com/hashicorp/logutils
 # github.com/hashicorp/serf v0.8.5
 github.com/hashicorp/serf/coordinate
-# github.com/hashicorp/terraform v0.0.0 => github.com/openshift/hashicorp-terraform v0.12.20-openshift
+# github.com/hashicorp/terraform v0.0.0 => github.com/openshift/hashicorp-terraform v0.12.20-openshift-2
 github.com/hashicorp/terraform/addrs
 github.com/hashicorp/terraform/backend
 github.com/hashicorp/terraform/backend/atlas

@@ -1783,8 +1783,8 @@ github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20200128081049-840376ca
 github.com/openshift/cluster-autoscaler-operator v0.0.0-20190521201101-62768a6ba480/go.mod h1:/XmV44Fh28Vo3Ye93qFrxAbcFJ/Uy+7LPD+jGjmfJYc=
 github.com/openshift/cluster-etcd-operator v0.0.0-alpha.0.0.20191025163650-5854b5c48ce4/go.mod h1:vcBAUefK8pQmTPQ3jlCemORXhnRnq3aTsfOSVeaWliY=
 github.com/openshift/cluster-version-operator v3.11.1-0.20190629164025-08cac1c02538+incompatible/go.mod h1:0BbpR1mrN0F2ZRae5N1XHcytmkvVPaeKgSQwRRBWugc=
-github.com/openshift/hashicorp-terraform v0.12.20-openshift h1:7Ljl6sDrRtmp2jHpPz7pow4lRtzd/nxHuZqaNfq81Ts=
-github.com/openshift/hashicorp-terraform v0.12.20-openshift/go.mod h1:R/dUWEZVB5itR8fNzx3g8QZMIwwWuI8rcwF8SbL1sq4=
+github.com/openshift/hashicorp-terraform v0.12.20-openshift-2 h1:lFBL2fP3PUiO99f2PfaauBUQMwxQBjCDTk7Z7+fsARk=
+github.com/openshift/hashicorp-terraform v0.12.20-openshift-2/go.mod h1:R/dUWEZVB5itR8fNzx3g8QZMIwwWuI8rcwF8SbL1sq4=
 github.com/openshift/hashicorp-terraform-plugin-sdk v1.6.0-openshift h1:lfMsjeRYTWs2FmLo9ak0fqV7ekzpKUtV2JkLKdlx3Zk=
 github.com/openshift/hashicorp-terraform-plugin-sdk v1.6.0-openshift/go.mod h1:H5QLx/uhwfxBZ59Bc5SqT19M4i+fYt7LZjHTpbLZiAg=
 github.com/openshift/imagebuilder v1.1.0/go.mod h1:9aJRczxCH0mvT6XQ+5STAQaPWz7OsWcU5/mRkt8IWeo=
