@@ -51,6 +51,7 @@ spec:
           verification: {}
         group: {}
         mode: 384
+        overwrite: true
         path: /etc/pivot/kernel-args
         user:
           name: root
