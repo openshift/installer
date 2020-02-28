@@ -15,7 +15,7 @@ required = [
 
 [[constraint]]
   name = "gopkg.in/AlecAivazis/survey.v1"
-  version = "1.8.8"
+  revision = "6773bdf39b7fa13e6a40ece7ac2d01e0d469c205"
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
