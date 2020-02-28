@@ -297,7 +297,7 @@ For example, the following Ignition config will create an ifcfg file that sets t
         "path": "/etc/sysconfig/network-scripts/ifcfg-ens192",
         "user": {},
         "contents": {
-          "source": "data:text/plain;charset=utf-8;base64,VFlQRT1FdGhlcm5ldApCT09UUFJPVE89bm9uZQpOQU1FPWVuczE5MgpERVZJQ0U9ZW5zMTkyCk9OQk9PVD15ZXMKSVBfQUREUj0xMC4wLjAuMgpQUkVGSVg9MjQKR0FURVdBWT0xMC4wLjAuMQpET01BSU49bXlkb21haW4uY29tCkROUzE9OC44LjguOAo=",
+          "source": "data:text/plain;charset=utf-8;base64,VFlQRT1FdGhlcm5ldApCT09UUFJPVE89bm9uZQpOQU1FPWVuczE5MgpERVZJQ0U9ZW5zMTkyCk9OQk9PVD15ZXMKSVBBRERSPTEwLjAuMC4yClBSRUZJWD0yNApHQVRFV0FZPTEwLjAuMC4xCkRPTUFJTj1teWRvbWFpbi5jb20KRE5TMT04LjguOC44",
           "verification": {}
         },
         "mode": 420
@@ -316,7 +316,7 @@ BOOTPROTO=none
 NAME=ens192
 DEVICE=ens192
 ONBOOT=yes
-IP_ADDR=10.0.0.2
+IPADDR=10.0.0.2
 PREFIX=24
 GATEWAY=10.0.0.1
 DOMAIN=mydomain.com
