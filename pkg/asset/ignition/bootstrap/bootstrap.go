@@ -302,7 +302,6 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 		mode = 0600
 	}
 	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)
-	a.Config.Storage.Files = append(a.Config.Storage.Files, ign)
 
 	// Replace files that already exist in the slice with ones added later, otherwise append them
 	if exists, i := sliceContainsFileAtIndex(a.Config.Storage.Files, ign); exists == true {
