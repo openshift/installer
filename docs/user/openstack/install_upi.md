@@ -29,6 +29,7 @@ Below is a step-by-step guide to a UPI installation that mimics an automated IPI
 * [Ignition Config](#ignition-config)
   * [Infra ID](#infra-id)
   * [Bootstrap Ignition](#bootstrap-ignition)
+    * [Glance Authentication](#glance-authentication)
   * [Master Ignition](#master-ignition)
 * [Network Topology](#network-topology)
   * [Security Groups](#security-groups)
@@ -392,26 +393,55 @@ You are free to choose any storage you want. For example:
 
 * Swift Object Storage
   Create the `<container_name>` container and upload the `bootstrap.ign` file:
+
   ```sh
   $ swift upload <container_name> bootstrap.ign
   ```
+
   Make the container accessible:
+
   ```sh
   $ swift post <container_name> --read-acl ".r:*,.rlistings"
   ```
-  Get the `StorageURL` from the output:
+
+  Get the `storage_url` from the output:
+
   ```sh
   $ swift stat -v
   ```
+
+* Glance image service
+
+  Create the `<image_name>` image and upload the `bootstrap.ign` file:
+
+  ```sh
+  $ openstack image create --disk-format=raw --container-format=bare --file bootstrap.ign <image_name>
+  ```
+
+  **NOTE**: Make sure the created image has `active` status.
+
+  Copy and save `file` value of the output, it should look like `/v2/images/<image_id>/file`.
+
+  Get Glance public URL:
+
+  ```sh
+  $ openstack catalog show image
+  ```
+
+  Combine the public URL with the `file` value from the previous step to get the link to your bootstrap ignition.
+  Example of the link: `https://public.glance.example.com:9292/v2/images/b7e2b84e-15cf-440a-a113-3197518da024/file`.
+
 * Amazon S3
+
 * Internal HTTP server inside your organisation
+
 * A short-lived Nova server in `$INFRA_ID-nodes` hosting the file for bootstrapping
 
 In this guide, we will assume the file is at the following URL:
 
 https://static.example.com/bootstrap.ign
 
-**NOTE**: In case the Swift object storage option was chosen the URL will have the following format: `<StorageURL>/<container_name>/bootstrap.ign`
+**NOTE**: In case the Swift object storage option was chosen the URL will have the following format: `<storage_url>/<container_name>/bootstrap.ign`. For Glance it is `<glance_public_url>/v2/images/<image_id>/file`.
 
 **IMPORTANT**: The `bootstrap.ign` contains sensitive information such as your `clouds.yaml` credentials and TLS certificates. It should **not** be accessible by the public! It will only be used once during the Nova boot of the Bootstrap server. We strongly recommend you restrict the access to that server only and delete the file afterwards.
 
@@ -428,13 +458,14 @@ Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`
       "append": [
         {
           "source": "https://static.example.com/bootstrap.ign",
-          "verification": {}
+          "verification": {},
+          "httpHeaders": []
         }
       ]
     },
     "security": {},
     "timeouts": {},
-    "version": "2.2.0"
+    "version": "2.4.0"
   },
   "networkd": {},
   "passwd": {},
@@ -444,6 +475,59 @@ Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`
 ```
 
 Change the `ignition.config.append.source` field to the URL hosting the `bootstrap.ign` file you've uploaded previously.
+
+#### Glance Authentication
+
+By default Glance service doesn't allow anonymous access to the data. So, if you use Glance to store the ignition config, then you also need to provide a valid auth token in the `ignition.config.append.httpHeaders` field.
+
+To obtain the token execute:
+
+```sh
+openstack token issue -c id -f value
+```
+
+Add a new entity to the list of http headers:
+
+```json
+{
+  "httpHeaders": [
+    {
+      "name": "X-Auth-Token",
+      "value": "<token_id>"
+    }
+  ]
+}
+```
+
+The result shim config should look like:
+
+```json
+{
+  "ignition": {
+    "config": {
+      "append": [
+        {
+          "source": "https://public.glance.example.com:9292/v2/images/b7e2b84e-15cf-440a-a113-3197518da024/file",
+          "verification": {},
+          "httpHeaders": [
+            {
+              "name": "X-Auth-Token",
+              "value": "46b30a6a00d654f4af0fc5bb8b8413f1"
+            }
+          ]
+        }
+      ]
+    },
+    "security": {},
+    "timeouts": {},
+    "version": "2.4.0"
+  },
+  "networkd": {},
+  "passwd": {},
+  "storage": {},
+  "systemd": {}
+}
+```
 
 ### Update Bootstrap Ignition
 
