@@ -18,10 +18,11 @@
   version = "v0.4.11"
 
 [[projects]]
-  digest = "1:30bf7932616fd30848ac8f869c9bdf158ce4d099944f13d8dd8a15243c2cb1ea"
+  digest = "1:cb5a084abcd601226fd3fbc8e226aa4b6c5a8b90b8aa46266d6a27c9c4df984d"
   name = "github.com/Azure/azure-sdk-for-go"
   packages = [
     "profiles/latest/dns/mgmt/dns",
+    "profiles/latest/resources/mgmt/resources",
     "profiles/latest/resources/mgmt/subscriptions",
     "services/compute/mgmt/2018-10-01/compute",
     "services/dns/mgmt/2017-10-01/dns",
@@ -31,6 +32,7 @@
     "services/privatedns/mgmt/2018-09-01/privatedns",
     "services/resources/mgmt/2018-05-01/resources",
     "services/resources/mgmt/2018-06-01/subscriptions",
+    "services/resources/mgmt/2019-03-01/resources",
     "version",
   ]
   pruneopts = "NUT"
@@ -1426,6 +1428,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns",
+    "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/resources",
     "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions",
     "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute",
     "github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac",
