@@ -61,6 +61,66 @@ func validateOSImageURI(uri string) error {
 	return nil
 }
 
+// validateHosts checks that hosts have all required fields set with appropriate values
+func validateHosts(hosts []*baremetal.Host, fldPath *field.Path) field.ErrorList {
+	hostErrs := field.ErrorList{}
+
+	uniqueBMC := make(map[string]int)
+	uniqueMAC := make(map[string]int)
+	uniqueName := make(map[string]int)
+
+	fldPath = fldPath.Child("hosts")
+
+	for idx, host := range hosts {
+		// Ensure name is set
+		if host.Name == "" {
+			hostErrs = append(hostErrs, field.Required(fldPath.Index(idx).Child("name"), "host must have name"))
+		}
+
+		// Ensure name is unique
+		if other, ok := uniqueName[host.Name]; ok {
+			hostErrs = append(hostErrs, field.Duplicate(fldPath.Index(idx).Child("name"), hosts[other].Name))
+		} else {
+			uniqueName[host.Name] = idx
+		}
+
+		// Ensure MAC is required
+		if host.BootMACAddress == "" {
+			hostErrs = append(hostErrs, field.Required(fldPath.Index(idx).Child("bootMACAddress"), "host must have bootMacAddress"))
+		}
+
+		// Ensure MAC is unique
+		if other, ok := uniqueMAC[host.BootMACAddress]; ok {
+			hostErrs = append(hostErrs, field.Duplicate(fldPath.Index(idx).Child("bootMACAddress"),
+				fmt.Sprintf("%s is in use by hosts[%d]", host.BootMACAddress, other)))
+		} else {
+			uniqueMAC[host.BootMACAddress] = idx
+		}
+
+		// Validate that all BMC fields are all set
+		if host.BMC.Address == "" {
+			hostErrs = append(hostErrs, field.Required(fldPath.Index(idx).Child("BMC").Child("address"), "missing BMC address"))
+		}
+
+		if host.BMC.Username == "" {
+			hostErrs = append(hostErrs, field.Required(fldPath.Index(idx).Child("BMC").Child("username"), "missing BMC username"))
+		}
+		if host.BMC.Password == "" {
+			hostErrs = append(hostErrs, field.Required(fldPath.Index(idx).Child("BMC").Child("password"), "missing BMC password"))
+		}
+
+		// Validate BMC address is Unique
+		if other, ok := uniqueBMC[host.BMC.Address]; ok {
+			hostErrs = append(hostErrs, field.Duplicate(fldPath.Index(idx).Child("BMC").Child("Address"),
+				fmt.Sprintf("%s already used by hosts[%d]", host.BMC.Address, other)))
+		} else {
+			uniqueBMC[host.BMC.Address] = idx
+		}
+	}
+
+	return hostErrs
+}
+
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -155,6 +215,8 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), p.ClusterOSImage, err.Error()))
 		}
 	}
+
+	allErrs = append(allErrs, validateHosts(p.Hosts, fldPath)...)
 
 	for _, validator := range dynamicValidators {
 		allErrs = append(allErrs, validator(p, fldPath)...)
