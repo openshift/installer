@@ -17,3 +17,32 @@ do
     echo "Pull failed. Retrying $RELEASE_IMAGE..."
 done
 
+{{if .IsOKD -}}
+# Copy machine-config-daemon binary from payload and run pivot
+if [ ! -f /opt/openshift/.pivot-done ]; then
+  . /usr/local/bin/release-image.sh
+
+  MACHINE_CONFIG_OPERATOR_IMAGE=$(image_for machine-config-operator)
+  MACHINE_CONFIG_OSCONTENT=$(image_for machine-os-content)
+  mkdir --parents /run/pivot /etc/pivot
+  touch /run/pivot/reboot-needed
+  echo "${MACHINE_CONFIG_OSCONTENT}" > /etc/pivot/image-pullspec
+
+  echo "ADD systemd.unified_cgroup_hierarchy=0" > /etc/pivot/kernel-args
+  echo "DELETE mitigations=auto,nosmt" >> /etc/pivot/kernel-args
+
+  mkdir --parents bin/
+  podman run --quiet --net=host --entrypoint=cat "${MACHINE_CONFIG_OPERATOR_IMAGE}" \
+    /usr/bin/machine-config-daemon > /usr/local/bin/machine-config-daemon
+  chmod +x /usr/local/bin/machine-config-daemon
+  restorecon /usr/local/bin/machine-config-daemon
+
+  # GCP: enable gcp-routes services
+  systemctl enable gcp-routes.service || true
+
+  touch /opt/openshift/.pivot-done
+  /usr/local/bin/machine-config-daemon pivot
+
+  systemctl reboot
+fi
+{{end -}}
