@@ -15,7 +15,7 @@ required = [
 
 [[constraint]]
   name = "gopkg.in/AlecAivazis/survey.v1"
-  version = "1.8.7"
+  revision = "6773bdf39b7fa13e6a40ece7ac2d01e0d469c205"
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
@@ -120,7 +120,7 @@ required = [
   branch = "master"
   name = "golang.org/x/oauth2"
 
-[[constraint]]  
+[[constraint]]
   branch = "master"
   name = "github.com/openshift/cluster-api-provider-gcp"
 
@@ -128,7 +128,7 @@ required = [
   branch = "master"
   name = "github.com/openshift/machine-config-operator"
 
-[[constraint]]  
+[[constraint]]
   name = "github.com/containers/image"
   version = "2.0.0"
 
