@@ -10,8 +10,8 @@ import (
 )
 
 // VMware fetches the URL of the Red Hat Enterprise Linux CoreOS release.
-func VMware(ctx context.Context, arch types.Architecture) (string, error) {
-	meta, err := fetchRHCOSBuild(ctx, arch)
+func VMware(ctx context.Context, arch types.Architecture, isOKD bool) (string, error) {
+	meta, err := fetchRHCOSBuild(ctx, arch, isOKD)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to fetch RHCOS metadata")
 	}
