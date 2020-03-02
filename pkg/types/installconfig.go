@@ -42,6 +42,9 @@ var (
 		baremetal.Name,
 		none.Name,
 	}
+
+	// OKD is a setting to enable community-only modifications
+	OKD = false
 )
 
 // PublishingStrategy is a strategy for how various endpoints for the cluster are exposed.
@@ -124,6 +127,11 @@ type InstallConfig struct {
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
 func (c *InstallConfig) ClusterDomain() string {
 	return fmt.Sprintf("%s.%s", c.ObjectMeta.Name, c.BaseDomain)
+}
+
+// IsOKD returns true if community-only modifications are enabled
+func (c *InstallConfig) IsOKD() bool {
+	return OKD
 }
 
 // Platform is the configuration for the specific platform upon which to perform
