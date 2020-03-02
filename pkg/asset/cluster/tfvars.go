@@ -331,7 +331,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		preexistingnetwork := installConfig.Config.GCP.Network != ""
 
-		imageRaw, err := rhcospkg.GCPRaw(ctx, installConfig.Config.ControlPlane.Architecture)
+		imageRaw, err := rhcospkg.GCPRaw(ctx, installConfig.Config.ControlPlane.Architecture, installConfig.Config.IsOKD())
 		if err != nil {
 			return errors.Wrap(err, "failed to find Raw GCP image URL")
 		}

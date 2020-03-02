@@ -15,6 +15,8 @@ import (
 
 var (
 	errInvalidArch = fmt.Errorf("no build metadata for given architecture")
+	rhcosTemplate  = "rhcos-%s.json"
+	fcosTemplate   = "fcos-%s.json"
 )
 
 type metadata struct {
@@ -50,8 +52,12 @@ type metadata struct {
 	OSTreeVersion string `json:"ostree-version"`
 }
 
-func fetchRHCOSBuild(ctx context.Context, arch types.Architecture) (*metadata, error) {
-	file, err := data.Assets.Open(fmt.Sprintf("rhcos-%s.json", arch))
+func fetchRHCOSBuild(ctx context.Context, arch types.Architecture, isOKD bool) (*metadata, error) {
+	fileNameTemplate := rhcosTemplate
+	if isOKD {
+		fileNameTemplate = fcosTemplate
+	}
+	file, err := data.Assets.Open(fmt.Sprintf(fileNameTemplate, arch))
 	if err != nil {
 		return nil, err
 	}

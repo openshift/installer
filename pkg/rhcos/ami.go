@@ -11,8 +11,8 @@ import (
 )
 
 // AMI fetches the HVM AMI ID of the Red Hat Enterprise Linux CoreOS release.
-func AMI(ctx context.Context, arch types.Architecture, region string) (string, error) {
-	meta, err := fetchRHCOSBuild(ctx, arch)
+func AMI(ctx context.Context, arch types.Architecture, region string, isOKD bool) (string, error) {
+	meta, err := fetchRHCOSBuild(ctx, arch, isOKD)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to fetch RHCOS metadata")
 	}
