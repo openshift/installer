@@ -671,18 +671,25 @@ func deleteLoadBalancers(opts *clientconfig.ClientOpts, filter Filter, logger lo
 
 	conn, err := clientconfig.NewServiceClient("load-balancer", opts)
 	if err != nil {
-		logger.Debugf("%v", err)
-		return true, nil
+		// Ignore the error if Octavia is not available for the cloud
+		if _, ok := err.(*gophercloud.ErrEndpointNotFound); ok {
+			logger.Debug("Skip load balancer deletion because Octavia endpoint is not found")
+			return true, nil
+		}
+		logger.Errorf("%v", err)
+		return false, nil
 	}
 
 	newallPages, err := apiversions.List(conn).AllPages()
 	if err != nil {
-		logger.Debug("Unable to list api versions: %v", err)
+		logger.Errorf("Unable to list api versions: %v", err)
+		return false, nil
 	}
 
 	allAPIVersions, err := apiversions.ExtractAPIVersions(newallPages)
 	if err != nil {
-		logger.Debug("Unable to extract api versions: %v", err)
+		logger.Errorf("Unable to extract api versions: %v", err)
+		return false, nil
 	}
 
 	var octaviaTagSupport bool
