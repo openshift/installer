@@ -44,7 +44,7 @@ func uploadBootstrapConfig(cloud string, bootstrapIgn string, clusterID string) 
 	logrus.Debugf("Uploading bootstrap config to the image %v with ID %v", img.Name, img.ID)
 	res := imagedata.Upload(conn, img.ID, strings.NewReader(bootstrapIgn))
 	if res.Err != nil {
-		return "", err
+		return "", res.Err
 	}
 	logrus.Debugf("The config was uploaded.")
 
