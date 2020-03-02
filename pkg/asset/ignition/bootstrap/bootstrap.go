@@ -53,6 +53,7 @@ type bootstrapTemplateData struct {
 	BootImage             string
 	ClusterDomain         string
 	PlatformData          platformTemplateData
+	IsOKD                 bool
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -249,6 +250,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		BootImage:             string(*rhcosImage),
 		ClusterDomain:         installConfig.ClusterDomain(),
 		PlatformData:          platformData,
+		IsOKD:                 installConfig.IsOKD(),
 	}, nil
 }
 
