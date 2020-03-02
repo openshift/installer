@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
+	azres "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/resources"
 	azsub "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 )
 
@@ -27,12 +28,24 @@ func Platform() (*azure.Platform, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get list of regions")
 	}
+
+	resourceCapableRegions, err := getResourceCapableRegions()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get list of resources to check available regions")
+	}
+
 	longRegions := make([]string, 0, len(regions))
 	shortRegions := make([]string, 0, len(regions))
 	for id, location := range regions {
-		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", id, location))
-		shortRegions = append(shortRegions, id)
+		for _, resourceCapableRegion := range resourceCapableRegions {
+			// filter our regions not capable of having resources created (we check for resource groups)
+			if resourceCapableRegion == location {
+				longRegions = append(longRegions, fmt.Sprintf("%s (%s)", id, location))
+				shortRegions = append(shortRegions, id)
+			}
+		}
 	}
+
 	regionTransform := survey.TransformString(func(s string) string {
 		return strings.SplitN(s, " ", 2)[0]
 	})
@@ -94,4 +107,29 @@ func getRegions() (map[string]string, error) {
 		allLocations[to.String(location.Name)] = to.String(location.DisplayName)
 	}
 	return allLocations, nil
+}
+
+func getResourceCapableRegions() ([]string, error) {
+	session, err := GetSession()
+	if err != nil {
+		return nil, err
+	}
+
+	client := azres.NewProvidersClient(session.Credentials.SubscriptionID)
+	client.Authorizer = session.Authorizer
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+
+	provider, err := client.Get(ctx, "Microsoft.Resources", "")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, resType := range *provider.ResourceTypes {
+		if *resType.ResourceType == "resourceGroups" {
+			return *resType.Locations, nil
+		}
+	}
+
+	return []string{}, nil
 }
