@@ -1,10 +1,10 @@
 locals {
-  arn = "aws"
-
   // Because of the issue https://github.com/hashicorp/terraform/issues/12570, the consumers cannot use a dynamic list for count
   // and therefore are force to implicitly assume that the list is of aws_lb_target_group_arns_length - 1, in case there is no api_external
   target_group_arns_length = var.publish_strategy == "External" ? var.target_group_arns_length : var.target_group_arns_length - 1
 }
+
+data "aws_partition" "current" {}
 
 resource "aws_iam_instance_profile" "master" {
   name = "${var.cluster_id}-master-profile"
@@ -23,7 +23,7 @@ resource "aws_iam_role" "master_role" {
         {
             "Action": "sts:AssumeRole",
             "Principal": {
-                "Service": "ec2.amazonaws.com"
+                "Service": "ec2.${data.aws_partition.current.dns_suffix}"
             },
             "Effect": "Allow",
             "Sid": ""
@@ -62,7 +62,7 @@ resource "aws_iam_role_policy" "master_policy" {
       "Action" : [
         "s3:GetObject"
       ],
-      "Resource": "arn:${local.arn}:s3:::*",
+      "Resource": "arn:${data.aws_partition.current.partition}:s3:::*",
       "Effect": "Allow"
     },
     {

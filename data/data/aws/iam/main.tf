@@ -2,6 +2,8 @@ locals {
   arn = "aws"
 }
 
+data "aws_partition" "current" {}
+
 resource "aws_iam_instance_profile" "worker" {
   name = "${var.cluster_id}-worker-profile"
 
@@ -19,7 +21,7 @@ resource "aws_iam_role" "worker_role" {
         {
             "Action": "sts:AssumeRole",
             "Principal": {
-                "Service": "ec2.amazonaws.com"
+                "Service": "ec2.${data.aws_partition.current.dns_suffix}"
             },
             "Effect": "Allow",
             "Sid": ""
