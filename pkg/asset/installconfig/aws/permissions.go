@@ -236,7 +236,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 		return errors.Wrap(err, "getting creds from session")
 	}
 
-	client, err := ccaws.NewClient([]byte(creds.AccessKeyID), []byte(creds.SecretAccessKey), fmt.Sprintf("OpenShift/4.x Installer/%s", version.Raw))
+	client, err := ccaws.NewClient([]byte(creds.AccessKeyID), []byte(creds.SecretAccessKey), region, fmt.Sprintf("OpenShift/4.x Installer/%s", version.Raw))
 	if err != nil {
 		return errors.Wrap(err, "initialize cloud-credentials client")
 	}
