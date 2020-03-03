@@ -38,11 +38,8 @@ dev)
 	exit 1
 esac
 
-if (echo "${TAGS}" | grep -q 'libvirt')
-then
-	export CGO_ENABLED=1
-fi
+export CGO_ENABLED=1
 
 go build "${GOFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install
 
-CGO_ENABLED=1 go build -buildmode=plugin "${GOFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "bin/libvirt-plugin.so" ./plugins/libvirt
+go build -buildmode=plugin "${GOFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "bin/libvirt-plugin.so" ./plugins/libvirt

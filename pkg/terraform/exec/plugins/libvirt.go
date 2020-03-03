@@ -7,12 +7,12 @@ import (
 )
 
 func init() {
-	exec := func() {
+	KnownPlugins["terraform-provider-libvirt"] = func() {
 		lvp, err := loader.LoadPlugin()
 		if err != nil {
-			logrus.Fatalf(err.Error())
+			logrus.Errorf(err.Error())
+			return
 		}
 		lvp.Init()
 	}
-	KnownPlugins["terraform-provider-libvirt"] = exec
 }
