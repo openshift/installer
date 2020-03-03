@@ -2,6 +2,7 @@ package openstack
 
 import (
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"strings"
 
@@ -138,11 +139,26 @@ prepend domain-name-servers 127.0.0.1;`
 
 	security := ignition.Security{}
 	if userCA != "" {
+		carefs := []ignition.CaReference{}
+		rest := []byte(userCA)
+
+		for {
+			var block *pem.Block
+			block, rest = pem.Decode(rest)
+			if block == nil {
+				return "", fmt.Errorf("unable to parse certificate, please check the cacert section of clouds.yaml")
+			}
+
+			carefs = append(carefs, ignition.CaReference{Source: dataurl.EncodeBytes(pem.EncodeToMemory(block))})
+
+			if len(rest) == 0 {
+				break
+			}
+		}
+
 		security = ignition.Security{
 			TLS: ignition.TLS{
-				CertificateAuthorities: []ignition.CaReference{{
-					Source: dataurl.EncodeBytes([]byte(userCA)),
-				}},
+				CertificateAuthorities: carefs,
 			},
 		}
 	}
