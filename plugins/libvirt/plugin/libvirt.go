@@ -1,6 +1,4 @@
-// +build libvirt
-
-package libvirt
+package plugin
 
 import (
 	"strings"
@@ -48,7 +46,7 @@ type ClusterUninstaller struct {
 }
 
 // New returns libvirt Uninstaller from ClusterMetadata.
-func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
+func (p *LibvirtPlugin) NewUninstaller(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	return &ClusterUninstaller{
 		LibvirtURI: metadata.ClusterPlatformMetadata.Libvirt.URI,
 		Filter:     ClusterIDPrefixFilter(metadata.InfraID),

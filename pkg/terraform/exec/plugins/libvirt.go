@@ -1,19 +1,18 @@
-// +build libvirt
-
 package plugins
 
 import (
-	"github.com/dmacvicar/terraform-provider-libvirt/libvirt"
-	"github.com/hashicorp/terraform-plugin-sdk/plugin"
+	"github.com/sirupsen/logrus"
+
+	"github.com/openshift/installer/plugins/libvirt/loader"
 )
 
 func init() {
 	exec := func() {
-		defer libvirt.CleanupLibvirtConnections()
-
-		plugin.Serve(&plugin.ServeOpts{
-			ProviderFunc: libvirt.Provider,
-		})
+		lvp, err := loader.LoadPlugin()
+		if err != nil {
+			logrus.Fatalf(err.Error())
+		}
+		lvp.Init()
 	}
 	KnownPlugins["terraform-provider-libvirt"] = exec
 }

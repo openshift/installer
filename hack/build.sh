@@ -44,3 +44,5 @@ then
 fi
 
 go build "${GOFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install
+
+CGO_ENABLED=1 go build -buildmode=plugin "${GOFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "bin/libvirt-plugin.so" ./plugins/libvirt
