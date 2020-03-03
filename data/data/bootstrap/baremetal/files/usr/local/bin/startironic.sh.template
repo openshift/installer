@@ -103,7 +103,7 @@ done
 {{if .PlatformData.BareMetal.ProvisioningDHCPAllowList}}
 $IPTABLES -t raw -N DHCP
 $IPTABLES -t raw -A PREROUTING -p udp --dport 67 -j DHCP
-$IPTABLES -t raw -A PREROUTING -p udp --dport 546 -j DHCP
+$IPTABLES -t raw -A PREROUTING -p udp --dport 547 -j DHCP
 
 for mac in {{.PlatformData.BareMetal.ProvisioningDHCPAllowList}}
 do
