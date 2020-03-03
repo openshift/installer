@@ -370,6 +370,7 @@ until bootkube_podman_run \
 		--endpoints="${ETCD_ENDPOINTS}" \
 		endpoint health
 do
+	podman rm --storage etcdctl || true
 	echo "etcdctl failed. Retrying in 5 seconds..."
 	sleep 5
 done
