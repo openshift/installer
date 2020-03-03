@@ -546,8 +546,9 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 
 	conn, err := clientconfig.NewServiceClient("object-store", opts)
 	if err != nil {
+		// Ignore the error if Swift is not available for the cloud
 		if _, ok := err.(*gophercloud.ErrEndpointNotFound); ok {
-			logger.Debug("Swift endpoint is not found")
+			logger.Debug("Skip container deletion because Swift endpoint is not found")
 			return true, nil
 		}
 		logger.Errorf("%v", err)
@@ -557,6 +558,11 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 
 	allPages, err := containers.List(conn, listOpts).AllPages()
 	if err != nil {
+		// Ignore the error if the user doesn't have the swiftoperator role
+		if _, ok := err.(gophercloud.ErrDefault403); ok {
+			logger.Debug("Skip container deletion because the user doesn't have the `swiftoperator` role")
+			return true, nil
+		}
 		logger.Errorf("%v", err)
 		return false, nil
 	}
