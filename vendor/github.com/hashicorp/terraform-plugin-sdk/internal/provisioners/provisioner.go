@@ -2,7 +2,7 @@ package provisioners
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/internal/configs/configschema"
-	"github.com/hashicorp/terraform/tfdiags"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/zclconf/go-cty/cty"
 )
 

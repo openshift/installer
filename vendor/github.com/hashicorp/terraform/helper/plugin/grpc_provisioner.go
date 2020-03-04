@@ -5,10 +5,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	proto "github.com/hashicorp/terraform-plugin-sdk/tfplugin5"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/plugin/convert"
 	"github.com/hashicorp/terraform/terraform"
-	proto "github.com/hashicorp/terraform/tfplugin5"
 	"github.com/zclconf/go-cty/cty"
 	ctyconvert "github.com/zclconf/go-cty/cty/convert"
 	"github.com/zclconf/go-cty/cty/msgpack"

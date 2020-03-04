@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/internal/plans"
 	"github.com/hashicorp/terraform-plugin-sdk/internal/providers"
 	"github.com/hashicorp/terraform-plugin-sdk/internal/states"
-	"github.com/hashicorp/terraform/tfdiags"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 )
 
 // NodeApplyableResourceInstance represents a resource instance that is

@@ -5,7 +5,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/internal/addrs"
 	"github.com/hashicorp/terraform-plugin-sdk/internal/configs/configschema"
 	"github.com/hashicorp/terraform-plugin-sdk/internal/lang/blocktoattr"
-	"github.com/hashicorp/terraform/tfdiags"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 )
 
 // References finds all of the references in the given set of traversals,

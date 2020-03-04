@@ -5,7 +5,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/internal/configs"
 	"github.com/hashicorp/terraform-plugin-sdk/internal/dag"
 	"github.com/hashicorp/terraform-plugin-sdk/internal/states"
-	"github.com/hashicorp/terraform/tfdiags"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 )
 
 // EvalGraphBuilder implements GraphBuilder and constructs a graph suitable

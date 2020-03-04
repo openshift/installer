@@ -51,6 +51,12 @@ func resourceVSphereVirtualDisk() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+				ValidateFunc: func(v interface{}, k string) (warns []string, errors []error) {
+					if !strings.HasSuffix(v.(string), ".vmdk") {
+						errors = append(errors, fmt.Errorf("vmdk_path must end with '.vmdk'"))
+					}
+					return
+				},
 			},
 
 			"datastore": {

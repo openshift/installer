@@ -11,13 +11,13 @@ import (
 	"github.com/zclconf/go-cty/cty/msgpack"
 	context "golang.org/x/net/context"
 
+	proto "github.com/hashicorp/terraform-plugin-sdk/tfplugin5"
 	"github.com/hashicorp/terraform/configs/configschema"
 	"github.com/hashicorp/terraform/configs/hcl2shim"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/plans/objchange"
 	"github.com/hashicorp/terraform/plugin/convert"
 	"github.com/hashicorp/terraform/terraform"
-	proto "github.com/hashicorp/terraform/tfplugin5"
 )
 
 const newExtraKey = "_new_extra_shim"

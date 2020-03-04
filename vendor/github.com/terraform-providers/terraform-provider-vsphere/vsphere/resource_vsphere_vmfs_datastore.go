@@ -97,7 +97,7 @@ func resourceVSphereVmfsDatastoreCreate(d *schema.ResourceData, meta interface{}
 
 	// Load up the tags client, which will validate a proper vCenter before
 	// attempting to proceed if we have tags defined.
-	tagsClient, err := tagsClientIfDefined(d, meta)
+	tagsClient, err := tagsManagerIfDefined(d, meta)
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func resourceVSphereVmfsDatastoreRead(d *schema.ResourceData, meta interface{}) 
 	}
 
 	// Read tags if we have the ability to do so
-	if tagsClient, _ := meta.(*VSphereClient).TagsClient(); tagsClient != nil {
+	if tagsClient, _ := meta.(*VSphereClient).TagsManager(); tagsClient != nil {
 		if err := readTagsForResource(tagsClient, ds, d); err != nil {
 			return err
 		}
@@ -239,7 +239,7 @@ func resourceVSphereVmfsDatastoreUpdate(d *schema.ResourceData, meta interface{}
 
 	// Load up the tags client, which will validate a proper vCenter before
 	// attempting to proceed if we have tags defined.
-	tagsClient, err := tagsClientIfDefined(d, meta)
+	tagsClient, err := tagsManagerIfDefined(d, meta)
 	if err != nil {
 		return err
 	}

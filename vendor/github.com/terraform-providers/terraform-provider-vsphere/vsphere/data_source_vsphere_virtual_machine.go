@@ -83,6 +83,12 @@ func dataSourceVSphereVirtualMachine() *schema.Resource {
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
+			"guest_ip_addresses": {
+				Type:        schema.TypeList,
+				Description: "The current list of IP addresses on this virtual machine.",
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 		},
 	}
 }
@@ -132,11 +138,16 @@ func dataSourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{
 	if err != nil {
 		return fmt.Errorf("error reading network interface types: %s", err)
 	}
-	if d.Set("disks", disks); err != nil {
+	if err := d.Set("disks", disks); err != nil {
 		return fmt.Errorf("error setting disk sizes: %s", err)
 	}
-	if d.Set("network_interface_types", nics); err != nil {
+	if err := d.Set("network_interface_types", nics); err != nil {
 		return fmt.Errorf("error setting network interface types: %s", err)
+	}
+	if props.Guest != nil {
+		if err := buildAndSelectGuestIPs(d, *props.Guest); err != nil {
+			return fmt.Errorf("error setting guest IP addresses: %s", err)
+		}
 	}
 	log.Printf("[DEBUG] VM search for %q completed successfully (UUID %q)", name, props.Config.Uuid)
 	return nil

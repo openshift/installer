@@ -19,7 +19,7 @@ require (
 	github.com/antchfx/xpath v1.1.2 // indirect
 	github.com/apparentlymart/go-cidr v1.0.1
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
-	github.com/aws/aws-sdk-go v1.26.5
+	github.com/aws/aws-sdk-go v1.28.8
 	github.com/btubbs/datetime v0.1.1 // indirect
 	github.com/c4milo/gotoolkit v0.0.0-20190525173301-67483a18c17a // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
@@ -46,7 +46,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.6.4 // indirect
 	github.com/hashicorp/logutils v1.0.0
 	github.com/hashicorp/terraform v0.12.18
-	github.com/hashicorp/terraform-plugin-sdk v1.4.1
+	github.com/hashicorp/terraform-plugin-sdk v1.5.0
 	github.com/hashicorp/vault v1.3.0 // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/joyent/triton-go v1.7.0 // indirect
@@ -74,7 +74,7 @@ require (
 	github.com/openshift/machine-api-operator v0.2.1-0.20200116114648-a3345f5a437a
 	github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033375cbe820+incompatible
 	github.com/ovirt/go-ovirt v4.3.4+incompatible
-	github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200101083113-aaa6ce5ab359
+	github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200122105935-65b89ad00553
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
 	github.com/pborman/uuid v1.2.0
 	github.com/pierrec/lz4 v2.3.0+incompatible // indirect
@@ -131,17 +131,15 @@ replace (
 	github.com/coreos/go-systemd => github.com/coreos/go-systemd v0.0.0-20181031085051-9002847aa142 // Pin non-versioned import v22.0.0
 	github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb // Pinned by MCO
 	github.com/hashicorp/consul => github.com/hashicorp/consul v1.6.2 // Pin to version required by terraform
-	github.com/hashicorp/terraform => github.com/LorbusChris/terraform v0.12.18-0.20200119232315-d11f8e438757 // Pin to fork with deduplicated rpc types
-	github.com/hashicorp/terraform-plugin-sdk => github.com/LorbusChris/terraform-plugin-sdk v1.4.1-0.20191218013551-33541515cfe4 // Pin to fork with deduplicated rpc types
+	github.com/hashicorp/terraform => github.com/openshift/hashicorp-terraform v0.12.20-openshift-2 // Pin to fork with deduplicated rpc types
+	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.6.0-openshift // Pin to fork with deduplicated rpc types
 	github.com/kubernetes-sigs/aws-iam-authenticator => github.com/kubernetes-sigs/aws-iam-authenticator v0.3.1-0.20181019024009-82544ec86140 // Pin to version required by tf-provider-aws
 	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20191209182400-81ee99999340 // Use OpenShift fork
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200117162508-e7ccdda6ba67 // Pin API
 	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20200118054812-d0ff651e69ab
-	github.com/ovirt/terraform-provider-ovirt => github.com/LorbusChris/terraform-provider-ovirt v0.4.3-0.20200120052059-a925cff29011
 	github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/LorbusChris/terraform-provider-ignition/v2 v2.0.0-20200118034038-6e413297dc57
-	github.com/terraform-providers/terraform-provider-vsphere => github.com/LorbusChris/terraform-provider-vsphere v1.14.1-0.20200120024642-670c2d04a2a2 // Pin to fork that uses tf-plugin-sdk
-	github.com/vmware/vic => github.com/LorbusChris/vic v1.5.5-0.20200120002717-4f75eaa93104 // Pin to fork with fixed sirupsen/logrus import, pulled in by tf-vsphere-provider
+	github.com/terraform-providers/terraform-provider-vsphere => github.com/LorbusChris/terraform-provider-vsphere v1.14.1-0.20200128145507-331c3c135db7 // Pin to fork that uses tf-plugin-sdk
 	google.golang.org/api => google.golang.org/api v0.11.1-0.20191012001332-5e0e3f4a3bb8 // Pin to version required by tf-provider-google
 	k8s.io/api => k8s.io/api v0.0.0-20190918155943-95b840bb6a1f // Pinned by MCO
 	k8s.io/apiextensions-apiserver => github.com/openshift/kubernetes-apiextensions-apiserver v0.0.0-20190918161926-8f644eb6e783 // Replaced by MCO

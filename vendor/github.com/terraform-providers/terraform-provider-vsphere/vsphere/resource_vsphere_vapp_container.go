@@ -352,7 +352,7 @@ func resourceVSphereVAppContainerValidateEmpty(va *object.VirtualApp) error {
 // resourceVSphereVAppContainerApplyTags processes the tags step for both create
 // and update for vsphere_vapp_container.
 func resourceVSphereVAppContainerApplyTags(d *schema.ResourceData, meta interface{}, va *object.VirtualApp) error {
-	tagsClient, err := tagsClientIfDefined(d, meta)
+	tagsClient, err := tagsManagerIfDefined(d, meta)
 	if err != nil {
 		return err
 	}
@@ -370,7 +370,7 @@ func resourceVSphereVAppContainerApplyTags(d *schema.ResourceData, meta interfac
 // resourceVSphereVAppContainerReadTags reads the tags for
 // vsphere_vapp_container.
 func resourceVSphereVAppContainerReadTags(d *schema.ResourceData, meta interface{}, va *object.VirtualApp) error {
-	if tagsClient, _ := meta.(*VSphereClient).TagsClient(); tagsClient != nil {
+	if tagsClient, _ := meta.(*VSphereClient).TagsManager(); tagsClient != nil {
 		log.Printf("[DEBUG] %s: Reading tags", resourceVSphereVAppContainerIDString(d))
 		if err := readTagsForResource(tagsClient, va, d); err != nil {
 			return err
