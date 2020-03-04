@@ -6,18 +6,18 @@ import (
 
 // BMC stores the information about a baremetal host's management controller.
 type BMC struct {
-	Username                       string `json:"username"`
-	Password                       string `json:"password"`
-	Address                        string `json:"address"`
+	Username                       string `json:"username" validate:"required"`
+	Password                       string `json:"password" validate:"required"`
+	Address                        string `json:"address" validate:"required,uniqueField"`
 	DisableCertificateVerification bool   `json:"disableCertificateVerification"`
 }
 
 // Host stores all the configuration data for a baremetal host.
 type Host struct {
-	Name            string `json:"name,omitempty"`
+	Name            string `json:"name,omitempty" validate:"required,uniqueField"`
 	BMC             BMC    `json:"bmc"`
 	Role            string `json:"role"`
-	BootMACAddress  string `json:"bootMACAddress"`
+	BootMACAddress  string `json:"bootMACAddress" validate:"required,uniqueField"`
 	HardwareProfile string `json:"hardwareProfile"`
 }
 
