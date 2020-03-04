@@ -105,8 +105,9 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		// We strip any .gz suffix because ironic-machine-os-downloader unzips the image
 		// ref https://github.com/openshift/ironic-rhcos-downloader/pull/12
 		imageFilename := path.Base(strings.TrimSuffix(imageURL.String(), ".gz"))
-		compressedImageFilename := strings.Replace(imageFilename, "openstack", "compressed", 1)
-		cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(bootstrapProvisioningIP, "80"), imageFilename, compressedImageFilename)
+		cachedImageFilename := "cached-" + imageFilename
+		cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(bootstrapProvisioningIP, "80"), imageFilename, cachedImageFilename)
+
 		cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
 		instanceInfo := map[string]interface{}{
 			"root_gb":        25, // FIXME(stbenjam): Needed until https://storyboard.openstack.org/#!/story/2005165

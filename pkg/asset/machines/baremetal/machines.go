@@ -72,8 +72,8 @@ func provider(clusterName string, platform *baremetal.Platform, osImage string, 
 	// compresses it to speed up deployments and makes it available on platform.ClusterProvisioningIP, via http
 	// osImage looks like:
 	//   https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.2/42.80.20190725.1/rhcos-42.80.20190725.1-openstack.qcow2?sha256sum=123
-	// But the cached URL looks like:
-	//   http://172.22.0.3:6180/images/rhcos-42.80.20190725.1-openstack.qcow2/rhcos-42.80.20190725.1-compressed.qcow2
+	// And the cached URL looks like:
+	//   http://172.22.0.3:6180/images/rhcos-42.80.20190725.1-openstack.qcow2/cached-rhcos-42.80.20190725.1-openstack.qcow2
 	// See https://github.com/openshift/ironic-rhcos-downloader for more details
 	// The image is now formatted with a query string containing the sha256sum, we strip that here
 	// and it will be consumed for validation in ironic-machine-os-downloader
@@ -86,8 +86,8 @@ func provider(clusterName string, platform *baremetal.Platform, osImage string, 
 	// We strip any .gz suffix because ironic-machine-os-downloader unzips the image
 	// ref https://github.com/openshift/ironic-rhcos-downloader/pull/12
 	imageFilename := path.Base(strings.TrimSuffix(imageURL.String(), ".gz"))
-	compressedImageFilename := strings.Replace(imageFilename, "openstack", "compressed", 1)
-	cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(platform.ClusterProvisioningIP, "6180"), imageFilename, compressedImageFilename)
+	cachedImageFilename := "cached-" + imageFilename
+	cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(platform.ClusterProvisioningIP, "6180"), imageFilename, cachedImageFilename)
 	cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
 	config := &baremetalprovider.BareMetalMachineProviderSpec{
 		Image: baremetalprovider.Image{
