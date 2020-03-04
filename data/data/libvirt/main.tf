@@ -5,7 +5,7 @@ provider "libvirt" {
 resource "libvirt_pool" "storage_pool" {
   name = var.cluster_id
   type = "dir"
-  path = "/var/lib/libvirt/openshift-images/${var.cluster_id}"
+  path = "${var.libvirt_base_pooldir}/openshift-images/${var.cluster_id}"
 }
 
 module "volume" {

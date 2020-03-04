@@ -44,3 +44,9 @@ variable "libvirt_master_vcpu" {
   default     = "4"
 }
 
+# Base directory location for libvirt image storage
+variable "libvirt_base_pooldir" {
+  type        = string
+  description = "Base libvirt pool storage directory"
+  default     = "/var/lib/libvirt"
+}

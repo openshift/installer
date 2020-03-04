@@ -208,6 +208,12 @@ TAGS=libvirt hack/build.sh
 
 With [libvirt configured](#install-and-enable-libvirt), you can proceed with [the usual quick-start](../../../README.md#quick-start).
 
+Note that by default, the base image storage location is set to `/var/lib/libvirt`. If a different base image storage location is desired, for example, a directory on a separate filesystem mount utilizing the same or separate storage drive with additional capacity or providing increased performance, export the following variable defining the base storage directory location to utilize, _prior_ to executing any `openshift-install` commands:
+
+```sh
+export TF_VAR_libvirt_base_pooldir="/some/other/directory"
+```
+
 ## Cleanup
 
 To remove resources associated with your cluster, run:
