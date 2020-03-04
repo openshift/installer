@@ -467,6 +467,13 @@ github.com/go-openapi/jsonreference
 github.com/go-openapi/spec
 # github.com/go-openapi/swag v0.19.5
 github.com/go-openapi/swag
+# github.com/go-playground/locales v0.13.0
+github.com/go-playground/locales
+github.com/go-playground/locales/currency
+# github.com/go-playground/universal-translator v0.17.0
+github.com/go-playground/universal-translator
+# github.com/go-playground/validator/v10 v10.2.0
+github.com/go-playground/validator/v10
 # github.com/gofrs/uuid v3.2.0+incompatible
 github.com/gofrs/uuid
 # github.com/gogo/protobuf v1.3.1
@@ -923,6 +930,8 @@ github.com/kr/fs
 github.com/kr/pretty
 # github.com/kr/text v0.1.0
 github.com/kr/text
+# github.com/leodido/go-urn v1.2.0
+github.com/leodido/go-urn
 # github.com/lib/pq v1.2.0
 github.com/lib/pq
 github.com/lib/pq/oid
