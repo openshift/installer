@@ -54,7 +54,10 @@ var (
 func ValidatePlatform(p *aws.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if _, ok := Regions[p.Region]; !ok {
-		allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, validRegionValues))
+		// TODO remove this when AWS China regions are officially supported
+		if p.Region != "cn-north-1" && p.Region != "cn-northwest-1" {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, validRegionValues))
+		}
 	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)

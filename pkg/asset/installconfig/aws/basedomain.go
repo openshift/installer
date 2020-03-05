@@ -7,7 +7,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/service/route53"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
@@ -75,7 +77,7 @@ func GetBaseDomain() (string, error) {
 }
 
 // GetPublicZone returns a public route53 zone that matches the name.
-func GetPublicZone(name string) (*route53.HostedZone, error) {
+func GetPublicZone(name, region string) (*route53.HostedZone, error) {
 	var res *route53.HostedZone
 	f := func(resp *route53.ListHostedZonesOutput, lastPage bool) (shouldContinue bool) {
 		for idx, zone := range resp.HostedZones {
@@ -91,7 +93,17 @@ func GetPublicZone(name string) (*route53.HostedZone, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "getting AWS session")
 	}
-	client := route53.New(session)
+	// TODO Remove the hard code api endpoint after it's GA in AWS China
+	// If it's AWS China region, we have to set region to "cn-northwest-1"
+	// as route53 is hosted in that region.
+	awsConfig := aws.NewConfig()
+	switch region {
+	case endpoints.CnNorth1RegionID, endpoints.CnNorthwest1RegionID:
+		awsConfig.WithRegion(endpoints.CnNorthwest1RegionID)
+		awsConfig.WithEndpoint("https://route53.amazonaws.com.cn")
+	}
+	client := route53.New(session, awsConfig)
+	logrus.Debugf("listing AWS hosted zones")
 	if err := client.ListHostedZonesPages(&route53.ListHostedZonesInput{}, f); err != nil {
 		return nil, errors.Wrap(err, "listing hosted zones")
 	}

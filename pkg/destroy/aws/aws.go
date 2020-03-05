@@ -125,12 +125,21 @@ func (o *ClusterUninstaller) Run() error {
 	tagClientNames := map[*resourcegroupstaggingapi.ResourceGroupsTaggingAPI]string{
 		tagClients[0]: o.Region,
 	}
-	if o.Region != "us-east-1" {
-		tagClient := resourcegroupstaggingapi.New(
-			awsSession, aws.NewConfig().WithRegion("us-east-1"),
-		)
-		tagClients = append(tagClients, tagClient)
-		tagClientNames[tagClient] = "us-east-1"
+
+	switch o.Region {
+	case endpoints.CnNorth1RegionID, endpoints.CnNorthwest1RegionID:
+		if o.Region != endpoints.CnNorthwest1RegionID {
+			tagClient := resourcegroupstaggingapi.New(awsSession, aws.NewConfig().WithRegion(endpoints.CnNorthwest1RegionID))
+			tagClients = append(tagClients, tagClient)
+			tagClientNames[tagClient] = endpoints.CnNorthwest1RegionID
+		}
+
+	default:
+		if o.Region != endpoints.UsEast1RegionID {
+			tagClient := resourcegroupstaggingapi.New(awsSession, aws.NewConfig().WithRegion(endpoints.UsEast1RegionID))
+			tagClients = append(tagClients, tagClient)
+			tagClientNames[tagClient] = endpoints.UsEast1RegionID
+		}
 	}
 
 	iamClient := iam.New(awsSession)
@@ -1712,7 +1721,18 @@ func deleteRoute53(session *session.Session, arn arn.ARN, logger logrus.FieldLog
 		return errors.Errorf("unrecognized Route 53 resource type %s", resourceType)
 	}
 
-	client := route53.New(session)
+	awsConfig := aws.NewConfig()
+
+	// If the region is in aws china, cn-north-1 or cn-northwest-1, we should:
+	// hard code route53 api endpoint to https://route53.amazonaws.com.cn and
+	// region to "cn-northwest-1" as route53 is not GA in AWS China,
+	// and aws sdk didn't have the endpoint.
+	switch *session.Config.Region {
+	case endpoints.CnNorth1RegionID, endpoints.CnNorthwest1RegionID:
+		awsConfig.WithRegion(endpoints.CnNorthwest1RegionID)
+		awsConfig.WithEndpoint("https://route53.amazonaws.com.cn")
+	}
+	client := route53.New(session, awsConfig)
 
 	sharedZoneID, err := getSharedHostedZone(client, id, logger)
 	if err != nil {
