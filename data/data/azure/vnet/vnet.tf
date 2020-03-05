@@ -17,6 +17,8 @@ resource "azurerm_subnet" "master_subnet" {
   ] : cidr.value if cidr.include]
   virtual_network_name = local.virtual_network
   name                 = var.master_subnet
+
+  depends_on = [azurerm_virtual_network.cluster_vnet]
 }
 
 resource "azurerm_subnet" "worker_subnet" {
@@ -29,4 +31,6 @@ resource "azurerm_subnet" "worker_subnet" {
   ] : cidr.value if cidr.include]
   virtual_network_name = local.virtual_network
   name                 = var.worker_subnet
+
+  depends_on = [azurerm_virtual_network.cluster_vnet, azurerm_subnet.master_subnet]
 }
