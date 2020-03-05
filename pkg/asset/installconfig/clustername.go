@@ -4,8 +4,6 @@ import (
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
-	azurevalidation "github.com/openshift/installer/pkg/types/azure/validation"
-	gcpvalidation "github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/openshift/installer/pkg/types/validation"
 	"github.com/openshift/installer/pkg/validate"
 )
@@ -32,10 +30,10 @@ func (a *clusterName) Generate(parents asset.Parents) error {
 
 	validator := survey.Required
 
-	if platform.GCP != nil {
-		validator = survey.ComposeValidators(validator, func(ans interface{}) error { return gcpvalidation.ValidateClusterName(ans.(string)) })
-	} else if platform.Azure != nil {
-		validator = survey.ComposeValidators(validator, func(ans interface{}) error { return azurevalidation.ValidateClusterName(ans.(string)) })
+	if platform.GCP != nil || platform.Azure != nil {
+		validator = survey.ComposeValidators(validator, func(ans interface{}) error {
+			return validate.ClusterName1035(ans.(string))
+		})
 	}
 	validator = survey.ComposeValidators(validator, func(ans interface{}) error {
 		return validate.DomainName(validation.ClusterDomain(bd.BaseDomain, ans.(string)), false)
