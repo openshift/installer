@@ -2,13 +2,11 @@ package cluster
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 
-	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
@@ -29,7 +27,6 @@ import (
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
-	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
@@ -112,7 +109,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	}
 
 	masterIgn := string(masterIgnAsset.Files()[0].Data)
-	bootstrapIgn, err := injectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
+	bootstrapIgn, err := ignition.InjectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
 	if err != nil {
 		return errors.Wrap(err, "unable to inject installation info")
 	}
@@ -538,27 +535,4 @@ func (t *TerraformVariables) Load(f asset.FileFetcher) (found bool, err error) {
 	t.FileList = append(t.FileList, fileList...)
 
 	return true, nil
-}
-
-// injectInstallInfo adds information about the installer and its invoker as a
-// ConfigMap to the provided bootstrap Ignition config.
-func injectInstallInfo(bootstrap []byte) (string, error) {
-	config := &igntypes.Config{}
-	if err := json.Unmarshal(bootstrap, &config); err != nil {
-		return "", errors.Wrap(err, "failed to unmarshal bootstrap Ignition config")
-	}
-
-	cm, err := openshiftinstall.CreateInstallConfigMap("openshift-install")
-	if err != nil {
-		return "", errors.Wrap(err, "failed to generate openshift-install config")
-	}
-
-	config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/opt/openshift/manifests/openshift-install.yaml", "root", 0644, cm))
-
-	ign, err := json.Marshal(config)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to marshal bootstrap Ignition config")
-	}
-
-	return string(ign), nil
 }
