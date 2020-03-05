@@ -13,8 +13,6 @@ import (
 	"text/template"
 
 	"github.com/containers/image/pkg/sysregistriesv2"
-	"github.com/coreos/ignition/config/util"
-	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -66,7 +64,7 @@ type platformTemplateData struct {
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
 type Bootstrap struct {
-	Config *igntypes.Config
+	Config *ignition.Config
 	File   *asset.File
 }
 
@@ -145,11 +143,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 		return errors.Wrap(err, "failed to get bootstrap templates")
 	}
 
-	a.Config = &igntypes.Config{
-		Ignition: igntypes.Ignition{
-			Version: igntypes.MaxVersion.String(),
-		},
-	}
+	a.Config = ignition.GenerateMinimalConfig()
 
 	err = a.addStorageFiles("/", "bootstrap/files", templateData)
 	if err != nil {
@@ -184,13 +178,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 
 	a.addParentFiles(dependencies)
 
-	a.Config.Passwd.Users = append(
-		a.Config.Passwd.Users,
-		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{
-			igntypes.SSHAuthorizedKey(installConfig.Config.SSHKey),
-			igntypes.SSHAuthorizedKey(string(bootstrapSSHKeyPair.Public())),
-		}},
-	)
+	a.Config.AddSSHKey(installConfig.Config.SSHKey, string(bootstrapSSHKeyPair.Public()))
 
 	data, err := json.Marshal(a.Config)
 	if err != nil {
@@ -318,7 +306,7 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 	ign.Append = appendToFile
 
 	// Replace files that already exist in the slice with ones added later, otherwise append them
-	a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, ign)
+	a.Config.ReplaceOrAppend(ign)
 
 	return nil
 }
@@ -375,7 +363,7 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 				return err
 			}
 
-			dropins := []igntypes.SystemdDropin{}
+			dropins := []ignition.Dropin{}
 			for _, childInfo := range children {
 				file, err := data.Assets.Open(path.Join(dir, childInfo.Name()))
 				if err != nil {
@@ -388,35 +376,23 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 					return err
 				}
 
-				dropins = append(dropins, igntypes.SystemdDropin{
+				dropins = append(dropins, ignition.Dropin{
 					Name:     childName,
 					Contents: string(contents),
 				})
 			}
 
 			name := strings.TrimSuffix(childInfo.Name(), ".d")
-			unit := igntypes.Unit{
-				Name:    name,
-				Dropins: dropins,
-			}
-			if _, ok := enabled[name]; ok {
-				unit.Enabled = util.BoolToPtr(true)
-			}
-			a.Config.Systemd.Units = append(a.Config.Systemd.Units, unit)
+			_, unitEnabled := enabled[name]
+			a.Config.AddSystemdDropins(name, dropins, unitEnabled)
 		} else {
 			name, contents, err := readFile(childInfo.Name(), file, templateData)
 			if err != nil {
 				return err
 			}
 
-			unit := igntypes.Unit{
-				Name:     name,
-				Contents: string(contents),
-			}
-			if _, ok := enabled[name]; ok {
-				unit.Enabled = util.BoolToPtr(true)
-			}
-			a.Config.Systemd.Units = append(a.Config.Systemd.Units, unit)
+			_, unitEnabled := enabled[name]
+			a.Config.AddSystemdUnit(name, string(contents), unitEnabled)
 		}
 	}
 
@@ -459,7 +435,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 
 		// Replace files that already exist in the slice with ones added later, otherwise append them
 		for _, file := range ignition.FilesFromAsset(rootDir, "root", 0644, asset) {
-			a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, file)
+			a.Config.ReplaceOrAppend(file)
 		}
 	}
 
@@ -512,24 +488,13 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 
 		// Replace files that already exist in the slice with ones added later, otherwise append them
 		for _, file := range ignition.FilesFromAsset(rootDir, "root", 0600, asset) {
-			a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, file)
+			a.Config.ReplaceOrAppend(file)
 		}
 	}
 
 	rootCA := &tls.RootCA{}
 	dependencies.Get(rootCA)
-	a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
-}
-
-func replaceOrAppend(files []igntypes.File, file igntypes.File) []igntypes.File {
-	for i, f := range files {
-		if f.Node.Path == file.Node.Path {
-			files[i] = file
-			return files
-		}
-	}
-	files = append(files, file)
-	return files
+	a.Config.ReplaceOrAppend(ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
 }
 
 func applyTemplateData(template *template.Template, templateData interface{}) string {
@@ -550,7 +515,7 @@ func (a *Bootstrap) Load(f asset.FileFetcher) (found bool, err error) {
 		return false, err
 	}
 
-	config := &igntypes.Config{}
+	config := &ignition.Config{}
 	if err := json.Unmarshal(file.Data, config); err != nil {
 		return false, errors.Wrapf(err, "failed to unmarshal %s", bootstrapIgnFilename)
 	}
