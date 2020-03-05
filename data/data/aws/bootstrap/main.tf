@@ -2,6 +2,8 @@ locals {
   public_endpoints = var.publish_strategy == "External" ? true : false
 }
 
+data "aws_partition" "current" {}
+
 resource "aws_s3_bucket" "ignition" {
   acl = "private"
 
@@ -60,7 +62,7 @@ resource "aws_iam_role" "bootstrap" {
         {
             "Action": "sts:AssumeRole",
             "Principal": {
-                "Service": "ec2.amazonaws.com"
+                "Service": "ec2.${data.aws_partition.current.dns_suffix}"
             },
             "Effect": "Allow",
             "Sid": ""
@@ -104,7 +106,7 @@ resource "aws_iam_role_policy" "bootstrap" {
       "Action" : [
         "s3:GetObject"
       ],
-      "Resource": "arn:aws:s3:::*",
+      "Resource": "arn:${data.aws_partition.current.partition}:s3:::*",
       "Effect": "Allow"
     }
   ]
