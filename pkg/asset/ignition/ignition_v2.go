@@ -202,10 +202,10 @@ func GenerateMinimalConfig() *Config {
 }
 
 // AddSSHKey returns a minimal ignition v2 config
-func (c *Config) AddSSHKey(sshKey string) {
+func (c *Config) AddSSHKey(sshKey, bootstrapSSHKeyPair string) {
 	c.Passwd.Users = append(
 		c.Passwd.Users,
-		igntypes2.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes2.SSHAuthorizedKey{igntypes2.SSHAuthorizedKey(sshKey)}},
+		igntypes2.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes2.SSHAuthorizedKey{igntypes2.SSHAuthorizedKey(sshKey), igntypes2.SSHAuthorizedKey(bootstrapSSHKeyPair)}},
 	)
 }
 
