@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"golang.org/x/crypto/ssh"
@@ -94,6 +95,22 @@ func ImagePullSecret(secret string) error {
 		}
 	}
 	return k8serrors.NewAggregate(errs)
+}
+
+// ClusterName1035 checks the provided cluster name matches RFC1035 naming requirements.
+// Some platform resource names must comply with RFC1035 "[a-z]([-a-z0-9]*[a-z0-9])?". They
+// are based on the InfraID, which is a truncated version of the cluster name where all non-
+// alphanumeric characters "[^A-Za-z0-9-]" have been replaced with dashes "-". As a result,
+// if we first verify the name starts with a lower-case letter "^[a-z]" then we can rely on
+// the ClusterName function to confirm compliance with the rest. The resulting name will
+// therefore match RFC1035 with the exception of possible periods ".", which will be
+// translated into dashes "-" in the InfraID before being used to create cloud resources.
+func ClusterName1035(v string) error {
+	re := regexp.MustCompile("^[a-z]")
+	if !re.MatchString(v) {
+		return errors.New("cluster name must begin with a lower-case letter")
+	}
+	return ClusterName(v)
 }
 
 // ClusterName checks if the given string is a valid name for a cluster and returns an error if not.

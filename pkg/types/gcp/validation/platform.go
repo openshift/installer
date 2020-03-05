@@ -1,10 +1,8 @@
 package validation
 
 import (
-	"regexp"
 	"sort"
 
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/gcp"
@@ -71,15 +69,4 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path) field.ErrorList {
 	}
 
 	return allErrs
-}
-
-// ValidateClusterName confirms that the provided cluster name matches GCP naming requirements.
-func ValidateClusterName(clusterName string) error {
-	gcpResourceFmt := `(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)`
-
-	re := regexp.MustCompile("^" + gcpResourceFmt + "$")
-	if !re.MatchString(clusterName) {
-		return errors.Errorf("GCP requires cluster name to match regular expression %s", gcpResourceFmt)
-	}
-	return nil
 }
