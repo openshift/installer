@@ -15,6 +15,7 @@ import (
 
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 
@@ -87,6 +88,15 @@ func PointerIgnitionConfig(url string, rootCA []byte) *Config {
 	}
 }
 
+// MarshalOrDie returns a marshalled interface or panics
+func MarshalOrDie(input interface{}) []byte {
+	bytes, err := json.Marshal(input)
+	if err != nil {
+		panic(err)
+	}
+	return bytes
+}
+
 // ForAuthorizedKeys creates the MachineConfig to set the authorized key for `core` user.
 func ForAuthorizedKeys(key string, role string) *mcfgv1.MachineConfig {
 	return &mcfgv1.MachineConfig{
@@ -101,15 +111,17 @@ func ForAuthorizedKeys(key string, role string) *mcfgv1.MachineConfig {
 			},
 		},
 		Spec: mcfgv1.MachineConfigSpec{
-			Config: igntypes2.Config{
-				Ignition: igntypes2.Ignition{
-					Version: igntypes2.MaxVersion.String(),
-				},
-				Passwd: igntypes2.Passwd{
-					Users: []igntypes2.PasswdUser{{
-						Name: "core", SSHAuthorizedKeys: []igntypes2.SSHAuthorizedKey{igntypes2.SSHAuthorizedKey(key)},
-					}},
-				},
+			Config: runtime.RawExtension{
+				Raw: MarshalOrDie(&igntypes2.Config{
+					Ignition: igntypes2.Ignition{
+						Version: igntypes2.MaxVersion.String(),
+					},
+					Passwd: igntypes2.Passwd{
+						Users: []igntypes2.PasswdUser{{
+							Name: "core", SSHAuthorizedKeys: []igntypes2.SSHAuthorizedKey{igntypes2.SSHAuthorizedKey(key)},
+						}},
+					},
+				}),
 			},
 		},
 	}
@@ -130,10 +142,12 @@ func ForFIPSEnabled(role string) *mcfgv1.MachineConfig {
 			},
 		},
 		Spec: mcfgv1.MachineConfigSpec{
-			Config: igntypes2.Config{
-				Ignition: igntypes2.Ignition{
-					Version: igntypes2.MaxVersion.String(),
-				},
+			Config: runtime.RawExtension{
+				Raw: MarshalOrDie(&igntypes2.Config{
+					Ignition: igntypes2.Ignition{
+						Version: igntypes2.MaxVersion.String(),
+					},
+				}),
 			},
 			FIPS: true,
 		},
@@ -155,15 +169,17 @@ func ForHyperthreadingDisabled(role string) *mcfgv1.MachineConfig {
 			},
 		},
 		Spec: mcfgv1.MachineConfigSpec{
-			Config: igntypes2.Config{
-				Ignition: igntypes2.Ignition{
-					Version: igntypes2.MaxVersion.String(),
-				},
-				Storage: igntypes2.Storage{
-					Files: []igntypes2.File{
-						FileFromString("/etc/pivot/kernel-args", "root", 0600, "ADD nosmt"),
+			Config: runtime.RawExtension{
+				Raw: MarshalOrDie(&igntypes2.Config{
+					Ignition: igntypes2.Ignition{
+						Version: igntypes2.MaxVersion.String(),
 					},
-				},
+					Storage: igntypes2.Storage{
+						Files: []igntypes2.File{
+							FileFromString("/etc/pivot/kernel-args", "root", 0600, "ADD nosmt"),
+						},
+					},
+				}),
 			},
 		},
 	}
