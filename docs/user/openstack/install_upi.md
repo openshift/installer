@@ -95,13 +95,38 @@ This repository contains [Ansible playbooks][ansible-upi] to deploy OpenShift on
   * netaddr
   * openstackclient
 
-The file `requirements.txt` included in the playbook directory helps using `pip` for gathering the required dependencies in a Python virtual environment:
+### RHEL
+
+From a RHEL 8 box, make sure that the repository origins are all set:
 
 ```sh
-python -m venv venv
-source venv/bin/activate
-pip install -U pip
-pip install -r requirements.txt
+sudo subscription-manager register # if not done already
+sudo subscription-manager attach --pool=$YOUR_POOLID # if not done already
+sudo subscription-manager repos --disable=* # if not done already
+
+sudo subscription-manager repos \
+  --enable=rhel-8-for-x86_64-baseos-rpms \
+  --enable=openstack-16-tools-for-rhel-8-x86_64-rpms \
+  --enable=ansible-2.8-for-rhel-8-x86_64-rpms \
+  --enable=rhel-8-for-x86_64-appstream-rpms
+```
+
+Then install the packages:
+```sh
+sudo yum install python3-openstackclient ansible python3-openstacksdk python3-netaddr
+```
+
+Make sure that `python` points to Python3:
+```sh
+sudo alternatives --set python /usr/bin/python3
+```
+
+### Fedora
+
+This command installs all required dependencies on Fedora:
+
+```sh
+sudo dnf install python-openstackclient ansible python-openstacksdk python-netaddr
 ```
 
 [ansible-upi]: ../../../upi/openstack "Ansible Playbooks for Openstack UPI"
