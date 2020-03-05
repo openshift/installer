@@ -79,7 +79,15 @@ func osImage(config *types.InstallConfig) (string, error) {
 	case gcp.Name:
 		osimage, err = rhcos.GCP(ctx, arch)
 	case libvirt.Name:
-		osimage, err = rhcos.QEMU(ctx, arch)
+		// The qemu image for s390x and ppc64le are useless for now because both arches do not support fw_cfg
+		// Refer: https://github.com/coreos/ignition/issues/825 and https://github.com/coreos/ignition/issues/666
+		// Use the OpenStack image as there is support for config drive on libvirt for both s390x and ppc64le
+		switch arch {
+		case "s390x", "ppc64le":
+			osimage, err = rhcos.OpenStack(ctx, arch)
+		default:
+			osimage, err = rhcos.QEMU(ctx, arch)
+		}
 	case openstack.Name:
 		if oi := config.Platform.OpenStack.ClusterOSImage; oi != "" {
 			osimage = oi
