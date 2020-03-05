@@ -1,31 +1,31 @@
 variable "pxe_kernel" {
-  type = "string"
+  type = string
 }
 
 variable "pxe_initrd" {
-  type = "string"
+  type = string
 }
 
 variable "pxe_kernel_args" {
-  type = "list"
+  type = list(string)
 }
 
 variable "matchbox_http_endpoint" {
-  type = "string"
+  type = string
 }
 
 variable "cluster_id" {
-  type = "string"
+  type = string
 }
 
 variable "igntion_config_content" {
-  type = "string"
+  type = string
 }
 
 variable "packet_facility" {
-  type = "string"
+  type = string
 }
 
 variable "packet_project_id" {
-  type = "string"
+  type = string
 }
