@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"os"
 
-	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
 )
@@ -18,7 +18,7 @@ const (
 
 // Master is an asset that generates the ignition config for master nodes.
 type Master struct {
-	Config *igntypes.Config
+	Config *ignition.Config
 	File   *asset.File
 }
 
@@ -38,7 +38,8 @@ func (a *Master) Generate(dependencies asset.Parents) error {
 	rootCA := &tls.RootCA{}
 	dependencies.Get(installConfig, rootCA)
 
-	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master")
+	url := buildPointerURL(installConfig.Config, "master")
+	a.Config = ignition.PointerIgnitionConfig(url.String(), rootCA.Cert())
 
 	data, err := json.Marshal(a.Config)
 	if err != nil {
@@ -75,7 +76,7 @@ func (a *Master) Load(f asset.FileFetcher) (found bool, err error) {
 		return false, err
 	}
 
-	config := &igntypes.Config{}
+	config := &ignition.Config{}
 	if err := json.Unmarshal(file.Data, config); err != nil {
 		return false, errors.Wrapf(err, "failed to unmarshal %s", masterIgnFilename)
 	}
