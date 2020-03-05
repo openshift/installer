@@ -747,7 +747,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.ObjectMeta.Name = "1-invalid-cluster"
 				return c
 			}(),
-			expectedError: `^metadata\.name: Invalid value: "1-invalid-cluster": GCP requires cluster name to match regular expression \(\?:\[a-z\]\(\?:\[-a-z0-9\]\{0,61\}\[a-z0-9\]\)\?\)$`,
+			expectedError: `^metadata\.name: Invalid value: "1-invalid-cluster": cluster name must begin with a lower-case letter$`,
 		},
 		{
 			name: "release image source is not canonical",

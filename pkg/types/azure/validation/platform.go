@@ -1,9 +1,6 @@
 package validation
 
 import (
-	"regexp"
-
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -44,15 +41,4 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		}
 	}
 	return allErrs
-}
-
-// ValidateClusterName confirms that the provided cluster name matches Azure naming requirements.
-func ValidateClusterName(clusterName string) error {
-	azureResourceFmt := `[a-z][a-z0-9-]{1,61}[a-z0-9]`
-
-	re := regexp.MustCompile("^" + azureResourceFmt + "$")
-	if !re.MatchString(clusterName) {
-		return errors.Errorf("Azure requires cluster name to match regular expression %s", azureResourceFmt)
-	}
-	return nil
 }
