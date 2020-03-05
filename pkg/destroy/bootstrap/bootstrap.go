@@ -35,7 +35,13 @@ func Destroy(dir string) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "failed to create temporary directory for Terraform execution")
 	}
-	defer os.RemoveAll(tempDir)
+
+	tf_log := strings.ToLower(os.Getenv("TF_LOG"))
+	if tf_log == "debug" || tf_log == "trace" {
+		defer os.Rename(tempDir, fmt.Sprintf("%s-bootstrap", tempDir))
+	} else {
+		defer os.RemoveAll(tempDir)
+	}
 
 	extraArgs := []string{}
 	for _, filename := range []string{terraform.StateFileName, cluster.TfVarsFileName, tfPlatformVarsFileName} {

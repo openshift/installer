@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -63,7 +64,13 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "failed to create temp dir for terraform execution")
 	}
-	defer os.RemoveAll(tmpDir)
+
+	tf_log := strings.ToLower(os.Getenv("TF_LOG"))
+	if tf_log == "debug" || tf_log == "trace" {
+		defer os.Rename(tmpDir, fmt.Sprintf("%s-cluster", tmpDir))
+	} else {
+		defer os.RemoveAll(tmpDir)
+	}
 
 	extraArgs := []string{}
 	for _, file := range terraformVariables.Files() {
