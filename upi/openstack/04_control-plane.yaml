@@ -41,7 +41,7 @@
     os_server_group:
       name: "{{ os_cp_server_group_name }}"
       policies:
-      - "soft-anti-affinity"
+      - "anti-affinity"
     register: "cp_group"
 
   - name: 'Create the Control Plane servers'
