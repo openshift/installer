@@ -80,3 +80,31 @@ platform:
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
+
+## Image Overrides
+
+Normally the installer downloads the RHCOS image from a predetermined location described in [data/data/rhcos.json](/data/data/rhcos.json)). But the download URL can be overridden, notably for disconnected installations.
+
+To do so and upload binary data from a custom location the user may set `clusterOSImage` parameter in the install config that points to that location, and then start the installation. In all other respects the process will be consistent with the default.
+
+**NOTE:** For this to work, the parameter value must be a valid http(s) URL.
+
+**NOTE:** The optional `sha256` query parameter can be attached to the URL, which will force the installer to check the image file checksum before uploading it into Glance.
+
+Example:
+
+```yaml
+platform:
+  openstack:
+      clusterOSImage: http://mirror.example.com/images/rhcos-43.81.201912131630.0-openstack.x86_64.qcow2.gz?sha256=ffebbd68e8a1f2a245ca19522c16c86f67f9ac8e4e0c1f0a812b068b16f7265d
+```
+
+If the user wants to reuse an existing Glance image without any uploading of binary data, then it is possible to set `clusterOSImage` install config parameter that specifies the Glance image name. In this case no new Glance images will be created, and the image will stay when the cluster is destroyed. In other words, if `clusterOSImage` is not an http(s) URL, then the installer will look into Glance for an image with that name.
+
+Example:
+
+```yaml
+platform:
+  openstack:
+      clusterOSImage: my-rhcos
+```
