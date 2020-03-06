@@ -103,7 +103,7 @@ var (
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
 					}
 					if err2 := runGatherBootstrapCmd(rootOpts.dir); err2 != nil {
-						logrus.Error("Attempted to gather debug logs after installation failure: ", err2)
+						logrus.Error("Attempted to gather debug logs after installation failure by running openshift-install gather bootstrap:", err2)
 					}
 					logrus.Fatal("Bootstrap failed to complete: ", err)
 				}
