@@ -4,7 +4,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 	grpcplugin "github.com/hashicorp/terraform-plugin-sdk/internal/helper/plugin"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	proto "github.com/hashicorp/terraform/tfplugin5"
+	proto "github.com/hashicorp/terraform-plugin-sdk/tfplugin5"
 )
 
 const (

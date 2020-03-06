@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-config-inspect/tfconfig"
 	"github.com/hashicorp/terraform-plugin-sdk/internal/modsdir"
 	"github.com/hashicorp/terraform-plugin-sdk/internal/registry"
-	"github.com/hashicorp/terraform/tfdiags"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 )
 
 const initFromModuleRootCallName = "root"

@@ -32,12 +32,12 @@ func dataSourceVSphereTagCategory() *schema.Resource {
 }
 
 func dataSourceVSphereTagCategoryRead(d *schema.ResourceData, meta interface{}) error {
-	client, err := meta.(*VSphereClient).TagsClient()
+	tm, err := meta.(*VSphereClient).TagsManager()
 	if err != nil {
 		return err
 	}
 
-	id, err := tagCategoryByName(client, d.Get("name").(string))
+	id, err := tagCategoryByName(tm, d.Get("name").(string))
 	if err != nil {
 		return err
 	}

@@ -177,7 +177,7 @@ github.com/awalterschulze/gographviz/internal/errors
 github.com/awalterschulze/gographviz/internal/lexer
 github.com/awalterschulze/gographviz/internal/parser
 github.com/awalterschulze/gographviz/internal/token
-# github.com/aws/aws-sdk-go v1.26.5
+# github.com/aws/aws-sdk-go v1.28.8
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
 github.com/aws/aws-sdk-go/aws/awserr
@@ -205,6 +205,7 @@ github.com/aws/aws-sdk-go/internal/sdkmath
 github.com/aws/aws-sdk-go/internal/sdkrand
 github.com/aws/aws-sdk-go/internal/sdkuri
 github.com/aws/aws-sdk-go/internal/shareddefaults
+github.com/aws/aws-sdk-go/internal/strings
 github.com/aws/aws-sdk-go/private/protocol
 github.com/aws/aws-sdk-go/private/protocol/ec2query
 github.com/aws/aws-sdk-go/private/protocol/eventstream
@@ -690,7 +691,7 @@ github.com/hashicorp/hil/scanner
 github.com/hashicorp/logutils
 # github.com/hashicorp/serf v0.8.3
 github.com/hashicorp/serf/coordinate
-# github.com/hashicorp/terraform v0.12.18 => github.com/LorbusChris/terraform v0.12.18-0.20200119232315-d11f8e438757
+# github.com/hashicorp/terraform v0.12.18 => github.com/openshift/hashicorp-terraform v0.12.20-openshift-2
 github.com/hashicorp/terraform/addrs
 github.com/hashicorp/terraform/backend
 github.com/hashicorp/terraform/backend/atlas
@@ -781,12 +782,10 @@ github.com/hashicorp/terraform/states
 github.com/hashicorp/terraform/states/statefile
 github.com/hashicorp/terraform/states/statemgr
 github.com/hashicorp/terraform/terraform
-github.com/hashicorp/terraform/tfdiags
-github.com/hashicorp/terraform/tfplugin5
 github.com/hashicorp/terraform/version
 # github.com/hashicorp/terraform-config-inspect v0.0.0-20191212124732-c6ae6269b9d7
 github.com/hashicorp/terraform-config-inspect/tfconfig
-# github.com/hashicorp/terraform-plugin-sdk v1.4.1 => github.com/LorbusChris/terraform-plugin-sdk v1.4.1-0.20191218013551-33541515cfe4
+# github.com/hashicorp/terraform-plugin-sdk v1.5.0 => github.com/openshift/hashicorp-terraform-plugin-sdk v1.6.0-openshift
 github.com/hashicorp/terraform-plugin-sdk/helper/acctest
 github.com/hashicorp/terraform-plugin-sdk/helper/customdiff
 github.com/hashicorp/terraform-plugin-sdk/helper/encryption
@@ -836,6 +835,8 @@ github.com/hashicorp/terraform-plugin-sdk/internal/version
 github.com/hashicorp/terraform-plugin-sdk/meta
 github.com/hashicorp/terraform-plugin-sdk/plugin
 github.com/hashicorp/terraform-plugin-sdk/terraform
+github.com/hashicorp/terraform-plugin-sdk/tfdiags
+github.com/hashicorp/terraform-plugin-sdk/tfplugin5
 # github.com/hashicorp/terraform-svchost v0.0.0-20191119180714-d2e4933b9136
 github.com/hashicorp/terraform-svchost
 github.com/hashicorp/terraform-svchost/auth
@@ -997,7 +998,7 @@ github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1
 github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1
 # github.com/ovirt/go-ovirt v4.3.4+incompatible
 github.com/ovirt/go-ovirt
-# github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200101083113-aaa6ce5ab359 => github.com/LorbusChris/terraform-provider-ovirt v0.4.3-0.20200120052059-a925cff29011
+# github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200122105935-65b89ad00553
 github.com/ovirt/terraform-provider-ovirt/ovirt
 # github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db
 github.com/packer-community/winrmcp/winrmcp
@@ -1203,7 +1204,7 @@ github.com/terraform-providers/terraform-provider-local/local
 github.com/terraform-providers/terraform-provider-openstack/openstack
 # github.com/terraform-providers/terraform-provider-random v1.3.2-0.20191204175905-53436297444a
 github.com/terraform-providers/terraform-provider-random/random
-# github.com/terraform-providers/terraform-provider-vsphere v1.14.0 => github.com/LorbusChris/terraform-provider-vsphere v1.14.1-0.20200120024642-670c2d04a2a2
+# github.com/terraform-providers/terraform-provider-vsphere v1.14.0 => github.com/LorbusChris/terraform-provider-vsphere v1.14.1-0.20200128145507-331c3c135db7
 github.com/terraform-providers/terraform-provider-vsphere/vsphere
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/clustercomputeresource
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/computeresource
@@ -1218,6 +1219,7 @@ github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helpe
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/nsx
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/provider
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/resourcepool
+github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/spbm
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/storagepod
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/structure
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/vappcontainer
@@ -1247,7 +1249,7 @@ github.com/vincent-petithory/dataurl
 # github.com/vmihailenco/msgpack v4.0.4+incompatible
 github.com/vmihailenco/msgpack
 github.com/vmihailenco/msgpack/codes
-# github.com/vmware/govmomi v0.21.0
+# github.com/vmware/govmomi v0.22.1
 github.com/vmware/govmomi
 github.com/vmware/govmomi/event
 github.com/vmware/govmomi/find
@@ -1255,9 +1257,15 @@ github.com/vmware/govmomi/license
 github.com/vmware/govmomi/list
 github.com/vmware/govmomi/nfc
 github.com/vmware/govmomi/object
+github.com/vmware/govmomi/pbm
+github.com/vmware/govmomi/pbm/methods
+github.com/vmware/govmomi/pbm/types
 github.com/vmware/govmomi/property
 github.com/vmware/govmomi/session
 github.com/vmware/govmomi/task
+github.com/vmware/govmomi/vapi/internal
+github.com/vmware/govmomi/vapi/rest
+github.com/vmware/govmomi/vapi/tags
 github.com/vmware/govmomi/view
 github.com/vmware/govmomi/vim25
 github.com/vmware/govmomi/vim25/debug
@@ -1267,8 +1275,6 @@ github.com/vmware/govmomi/vim25/progress
 github.com/vmware/govmomi/vim25/soap
 github.com/vmware/govmomi/vim25/types
 github.com/vmware/govmomi/vim25/xml
-# github.com/vmware/vic v1.5.4 => github.com/LorbusChris/vic v1.5.5-0.20200120002717-4f75eaa93104
-github.com/vmware/vic/pkg/vsphere/tags
 # github.com/xanzy/ssh-agent v0.2.1
 github.com/xanzy/ssh-agent
 # github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca
@@ -1469,7 +1475,7 @@ google.golang.org/appengine/internal/socket
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/socket
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20191203220235-3fa9dbf08042
+# google.golang.org/genproto v0.0.0-20200122232147-0452cf42e150
 google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/bigtable/admin/v2
 google.golang.org/genproto/googleapis/bigtable/v2

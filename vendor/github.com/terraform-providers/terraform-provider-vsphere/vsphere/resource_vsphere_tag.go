@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/vmware/vic/pkg/vsphere/tags"
+	"github.com/vmware/govmomi/vapi/tags"
 )
 
 func resourceVSphereTag() *schema.Resource {
@@ -44,33 +44,30 @@ func resourceVSphereTag() *schema.Resource {
 }
 
 func resourceVSphereTagCreate(d *schema.ResourceData, meta interface{}) error {
-	client, err := meta.(*VSphereClient).TagsClient()
+	tm, err := meta.(*VSphereClient).TagsManager()
 	if err != nil {
 		return err
 	}
-
-	spec := &tags.TagCreateSpec{
-		CreateSpec: tags.TagCreate{
-			CategoryID:  d.Get("category_id").(string),
-			Description: d.Get("description").(string),
-			Name:        d.Get("name").(string),
-		},
+	spec := &tags.Tag{
+		CategoryID:  d.Get("category_id").(string),
+		Description: d.Get("description").(string),
+		Name:        d.Get("name").(string),
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultAPITimeout)
 	defer cancel()
-	id, err := client.CreateTag(ctx, spec)
+	id, err := tm.CreateTag(ctx, spec)
 	if err != nil {
 		return fmt.Errorf("could not create tag: %s", err)
 	}
-	if id == nil {
+	if id == "" {
 		return errors.New("no ID was returned")
 	}
-	d.SetId(*id)
+	d.SetId(id)
 	return resourceVSphereTagRead(d, meta)
 }
 
 func resourceVSphereTagRead(d *schema.ResourceData, meta interface{}) error {
-	client, err := meta.(*VSphereClient).TagsClient()
+	tm, err := meta.(*VSphereClient).TagsManager()
 	if err != nil {
 		return err
 	}
@@ -79,7 +76,7 @@ func resourceVSphereTagRead(d *schema.ResourceData, meta interface{}) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultAPITimeout)
 	defer cancel()
-	tag, err := client.GetTag(ctx, id)
+	tag, err := tm.GetTag(ctx, id)
 	if err != nil {
 		if strings.Contains(err.Error(), "com.vmware.vapi.std.errors.not_found") {
 			log.Printf("[DEBUG] Tag %s: Resource has been deleted", id)
@@ -96,21 +93,20 @@ func resourceVSphereTagRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVSphereTagUpdate(d *schema.ResourceData, meta interface{}) error {
-	client, err := meta.(*VSphereClient).TagsClient()
+	tm, err := meta.(*VSphereClient).TagsManager()
 	if err != nil {
 		return err
 	}
 
 	id := d.Id()
-	spec := &tags.TagUpdateSpec{
-		UpdateSpec: tags.TagUpdate{
-			Description: d.Get("description").(string),
-			Name:        d.Get("name").(string),
-		},
+	spec := &tags.Tag{
+		ID:          id,
+		Description: d.Get("description").(string),
+		Name:        d.Get("name").(string),
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultAPITimeout)
 	defer cancel()
-	err = client.UpdateTag(ctx, id, spec)
+	err = tm.UpdateTag(ctx, spec)
 	if err != nil {
 		return fmt.Errorf("could not update tag with id %q: %s", id, err)
 	}
@@ -118,7 +114,7 @@ func resourceVSphereTagUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVSphereTagDelete(d *schema.ResourceData, meta interface{}) error {
-	client, err := meta.(*VSphereClient).TagsClient()
+	tm, err := meta.(*VSphereClient).TagsManager()
 	if err != nil {
 		return err
 	}
@@ -127,7 +123,11 @@ func resourceVSphereTagDelete(d *schema.ResourceData, meta interface{}) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultAPITimeout)
 	defer cancel()
-	err = client.DeleteTag(ctx, id)
+	tag, err := tm.GetTag(ctx, id)
+	if err != nil {
+		return err
+	}
+	err = tm.DeleteTag(ctx, tag)
 	if err != nil {
 		return fmt.Errorf("could not delete tag with id %q: %s", id, err)
 	}
@@ -155,16 +155,16 @@ func resourceVSphereTagImport(d *schema.ResourceData, meta interface{}) ([]*sche
 		return nil, errors.New("missing tag_name in input data")
 	}
 
-	client, err := meta.(*VSphereClient).TagsClient()
+	tm, err := meta.(*VSphereClient).TagsManager()
 	if err != nil {
 		return nil, err
 	}
 
-	categoryID, err := tagCategoryByName(client, categoryName)
+	categoryID, err := tagCategoryByName(tm, categoryName)
 	if err != nil {
 		return nil, err
 	}
-	tagID, err := tagByName(client, tagName, categoryID)
+	tagID, err := tagByName(tm, tagName, categoryID)
 	if err != nil {
 		return nil, err
 	}

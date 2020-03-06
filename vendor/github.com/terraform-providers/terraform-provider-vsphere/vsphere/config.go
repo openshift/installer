@@ -7,20 +7,24 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/vmware/govmomi/vapi/rest"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/viapi"
 	"github.com/vmware/govmomi"
+	"github.com/vmware/govmomi/pbm"
 	"github.com/vmware/govmomi/session"
+	"github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/debug"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
-	"github.com/vmware/vic/pkg/vsphere/tags"
 )
 
 // VSphereClient is the client connection manager for the vSphere provider. It
@@ -31,16 +35,19 @@ type VSphereClient struct {
 	// The VIM/govmomi client.
 	vimClient *govmomi.Client
 
-	// The specialized tags client SDK imported from vmware/vic.
-	tagsClient *tags.RestClient
+	// The policy based management client
+	pbmClient *pbm.Client
+
+	// The REST client used for tags and content library.
+	restClient *rest.Client
 }
 
-// TagsClient returns the embedded REST client used for tags, after determining
-// if the connection is eligible:
+// TagsManager returns the embedded tags manager used for tags, after determining
+// if the REST connection is eligible:
 //
 // * The connection information in vimClient is valid vCenter connection
 // * The provider has a connection to the CIS REST client. This is true if
-// tagsClient != nil.
+// restClient != nil.
 //
 // This function should be used whenever possible to return the client from the
 // provider meta variable for use, to determine if it can be used at all.
@@ -51,19 +58,19 @@ type VSphereClient struct {
 // Read call to determine if tags are supported on this connection, and if they
 // are, read them from the object and save them in the resource:
 //
-//   if tagsClient, _ := meta.(*VSphereClient).TagsClient(); tagsClient != nil {
-//     if err := readTagsForResource(tagsClient, obj, d); err != nil {
+//   if tm, _ := meta.(*VSphereClient).TagsManager(); tm != nil {
+//     if err := readTagsForResource(restClient, obj, d); err != nil {
 //       return err
 //     }
 //   }
-func (c *VSphereClient) TagsClient() (*tags.RestClient, error) {
+func (c *VSphereClient) TagsManager() (*tags.Manager, error) {
 	if err := viapi.ValidateVirtualCenter(c.vimClient); err != nil {
 		return nil, err
 	}
-	if c.tagsClient == nil {
+	if c.restClient == nil {
 		return nil, fmt.Errorf("tags require %s or higher", tagsMinVersion)
 	}
-	return c.tagsClient, nil
+	return tags.NewManager(c.restClient), nil
 }
 
 // Config holds the provider configuration, and delivers a populated
@@ -142,35 +149,78 @@ func (c *Config) Client() (*VSphereClient, error) {
 
 	// Set up the VIM/govmomi client connection, or load a previous session
 	client.vimClient, err = c.SavedVimSessionOrNew(u)
-
 	if err != nil {
 		return nil, err
 	}
 
 	log.Printf("[DEBUG] VMWare vSphere Client configured for URL: %s", c.VSphereServer)
 
-	if isEligibleTagEndpoint(client.vimClient) {
-		// Connect to the CIS REST endpoint for tagging, or load a previous session
-		client.tagsClient, err = c.SavedRestSessionOrNew(u)
-		if err != nil {
-			return nil, err
-		}
-		log.Println("[DEBUG] CIS REST client configuration successful")
+	ctx, cancel := context.WithTimeout(context.Background(), defaultAPITimeout)
+	defer cancel()
+
+	if isEligibleRestEndpoint(client.vimClient) {
+		client.restClient, err = c.SavedRestSessionOrNew(ctx, client.vimClient)
 	} else {
 		// Just print a log message so that we know that tags are not available on
 		// this connection.
 		log.Printf("[DEBUG] Connected endpoint does not support tags (%s)", viapi.ParseVersionFromClient(client.vimClient))
 	}
 
+	if isEligiblePBMEndpoint(client.vimClient) {
+		if err := viapi.ValidateVirtualCenter(client.vimClient); err != nil {
+			return nil, err
+		}
+
+		pc, err := pbm.NewClient(ctx, client.vimClient.Client)
+		if err != nil {
+			return nil, err
+		}
+		client.pbmClient = pc
+	} else {
+		log.Printf("[DEBUG] Connected endpoint does not support policy based management")
+	}
+
 	// Done, save sessions if we need to and return
 	if err := c.SaveVimClient(client.vimClient); err != nil {
 		return nil, fmt.Errorf("error persisting SOAP session to disk: %s", err)
 	}
-	if err := c.SaveRestClient(client.tagsClient); err != nil {
-		return nil, fmt.Errorf("error persisting REST session to disk: %s", err)
-	}
 
 	return client, nil
+}
+
+func (c *Config) SavedRestSessionOrNew(ctx context.Context, vimClient *govmomi.Client) (*rest.Client, error) {
+	log.Printf("[DEBUG] Setting up REST client")
+	var restClient *rest.Client
+	valid := false
+	restSessionFile, err := c.restSessionFile()
+	if err != nil {
+		return nil, err
+	}
+	restClient, valid, err = c.LoadAndVerifyRestSession(vimClient)
+	if err != nil {
+		return nil, err
+	}
+	if !valid {
+		log.Printf("[DEBUG] Creating new REST session")
+		err := restClient.Login(ctx, url.UserPassword(c.User, c.Password))
+		if err != nil {
+			return nil, err
+		}
+		// Write REST session ID to file if session persistence is enabled.
+		if c.Persist {
+			cookiePath, _ := url.Parse("/rest/com/vmware")
+			cookiePath.Scheme = restClient.URL().Scheme
+			cookiePath.Host = restClient.URL().Host
+			for _, cookie := range restClient.Jar.Cookies(cookiePath) {
+				if cookie.Name == "vmware-api-session-id" {
+					ioutil.WriteFile(restSessionFile, []byte(cookie.Value), 0600)
+					break
+				}
+			}
+		}
+	}
+	log.Println("[DEBUG] CIS REST client configuration successful")
+	return restClient, nil
 }
 
 // EnableDebug turns on govmomi API operation logging, if appropriate settings
@@ -240,16 +290,6 @@ func (c *Config) sessionFile() (string, error) {
 	return name, nil
 }
 
-// vimSessionFile is takes the session file name generated by sessionFile and
-// then prefixes the SOAP client session path to it.
-func (c *Config) vimSessionFile() (string, error) {
-	p, err := c.sessionFile()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(c.VimSessionPath, p), nil
-}
-
 // restSessionFile is takes the session file name generated by sessionFile and
 // then prefixes the REST client session path to it.
 func (c *Config) restSessionFile() (string, error) {
@@ -258,6 +298,16 @@ func (c *Config) restSessionFile() (string, error) {
 		return "", err
 	}
 	return filepath.Join(c.RestSessionPath, p), nil
+}
+
+// vimSessionFile is takes the session file name generated by sessionFile and
+// then prefixes the SOAP client session path to it.
+func (c *Config) vimSessionFile() (string, error) {
+	p, err := c.sessionFile()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(c.VimSessionPath, p), nil
 }
 
 // SaveVimClient saves a client to the supplied path. This facilitates re-use of
@@ -300,32 +350,6 @@ func (c *Config) SaveVimClient(client *govmomi.Client) error {
 	return nil
 }
 
-// SaveRestClient saves the REST client session ID to the supplied path. This
-// facilitates re-use of the session at a later date.
-func (c *Config) SaveRestClient(client *tags.RestClient) error {
-	if !c.Persist {
-		return nil
-	}
-
-	p, err := c.restSessionFile()
-	if err != nil {
-		return err
-	}
-
-	log.Printf("[DEBUG] Will persist REST client session data to %q", p)
-	err = os.MkdirAll(filepath.Dir(p), 0700)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(p, []byte(client.SessionID()), 0600)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // restoreVimClient loads the saved session from disk. Note that this is a helper
 // function to LoadVimClient and should not be called directly.
 func (c *Config) restoreVimClient(client *vim25.Client) (bool, error) {
@@ -361,31 +385,6 @@ func (c *Config) restoreVimClient(client *vim25.Client) (bool, error) {
 	}
 
 	return true, nil
-}
-
-// readRestSessionID reads a saved REST session ID and returns it. An empty
-// string is returned if session does not exist.
-func (c *Config) readRestSessionID() (string, error) {
-	if !c.Persist {
-		return "", nil
-	}
-
-	p, err := c.restSessionFile()
-	if err != nil {
-		return "", err
-	}
-	log.Printf("[DEBUG] Attempting to locate REST client session data in %q", p)
-	id, err := ioutil.ReadFile(p)
-	if err != nil {
-		if os.IsNotExist(err) {
-			log.Printf("[DEBUG] REST client session data not found in %q", p)
-			return "", nil
-		}
-
-		return "", err
-	}
-
-	return string(id), nil
 }
 
 // LoadVimClient loads a saved vSphere SOAP API session from disk, previously
@@ -436,32 +435,6 @@ func (c *Config) LoadVimClient() (*govmomi.Client, error) {
 	}, nil
 }
 
-// LoadRestClient loads a saved vSphere REST API session from disk, previously
-// saved by SaveRestClient, checking it for validity before returning it. If
-// it's not valid, false is returned as the third return value, but the client
-// can still be technically used for logging in by calling Login on the client.
-func (c *Config) LoadRestClient(ctx context.Context, u *url.URL) (*tags.RestClient, bool, error) {
-	id, err := c.readRestSessionID()
-	if err != nil {
-		return nil, false, err
-	}
-
-	client := tags.NewClientWithSessionID(u, c.InsecureFlag, "", id)
-
-	if id == "" {
-		log.Println("[DEBUG] No cached REST session data found or persistence not enabled, new session necessary")
-		return client, false, nil
-	}
-
-	if !client.Valid(ctx) {
-		log.Println("[DEBUG] Cached REST client session data not valid, new session necessary")
-		return client, false, nil
-	}
-
-	log.Println("[DEBUG] Cached REST client session loaded successfully")
-	return client, true, nil
-}
-
 // SavedVimSessionOrNew either loads a saved SOAP session from disk, or creates
 // a new one.
 func (c *Config) SavedVimSessionOrNew(u *url.URL) (*govmomi.Client, error) {
@@ -509,22 +482,75 @@ func newClientWithKeepAlive(ctx context.Context, u *url.URL, insecure bool, keep
 	return c, nil
 }
 
-// SavedRestSessionOrNew either loads a saved REST session from disk, or creates
-// a new one.
-func (c *Config) SavedRestSessionOrNew(u *url.URL) (*tags.RestClient, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultAPITimeout)
-	defer cancel()
-
-	client, valid, err := c.LoadRestClient(ctx, u)
+func restSessionValid(client *rest.Client) bool {
+	url := client.URL().String() + "/cis/session?~action=get"
+	resp, err := client.Post(url, "", nil)
+	if err != nil || resp.StatusCode != 200 {
+		return false
+	}
+	return true
+}
+func readRestSession(path string) (string, error) {
+	f, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("error trying to load vSphere REST session from disk: %s", err)
-	}
-	if !valid {
-		log.Printf("[DEBUG] Creating new CIS REST API session on endpoint %s", c.VSphereServer)
-		if err := client.Login(ctx); err != nil {
-			return nil, fmt.Errorf("Error connecting to CIS REST endpoint: %s", err)
+		if os.IsNotExist(err) {
+			// No session file exists
+			log.Printf("[DEBUG] No REST session file exists.")
+			return "", nil
 		}
-		log.Println("[DEBUG] CIS REST API session creation successful")
+		return "", err
 	}
-	return client, nil
+
+	a, err := f.Stat()
+	if err != nil {
+		return "", err
+	}
+	c := make([]byte, a.Size())
+	_, err = f.Read(c)
+	if err != nil {
+		return "", err
+	}
+	return string(c), nil
+}
+func (c *Config) LoadAndVerifyRestSession(client *govmomi.Client) (*rest.Client, bool, error) {
+	// Connect to the CIS REST endpoint for tagging, or load a previous session
+	restClient := rest.NewClient(client.Client)
+	cookiePath, _ := url.Parse("/rest/com/vmware")
+	cookiePath.Scheme = client.URL().Scheme
+	cookiePath.Host = client.URL().Host
+	cookies := client.Jar.Cookies(cookiePath)
+	if c.Persist {
+		log.Printf("[DEBUG] Session persistence is enabled. Attempting to use existion session")
+		restSessionFile, err := c.restSessionFile()
+		if err != nil {
+			return nil, false, err
+		}
+		sessionId, err := readRestSession(restSessionFile)
+		if err != nil {
+			return nil, false, err
+		}
+		if sessionId != "" {
+			newcookie := http.Cookie{
+				Name:  "vmware-api-session-id",
+				Value: sessionId,
+			}
+			client.Jar.SetCookies(cookiePath, append(cookies, &newcookie))
+			restClient = rest.NewClient(client.Client)
+		}
+	}
+	if restSessionValid(restClient) {
+		log.Printf("[DEBUG] Existing REST session still active")
+		return restClient, true, nil
+	} else {
+		// Existing REST session is no longer valid. Reset the rest cookie.
+		log.Printf("[DEBUG] Existing REST session has expired")
+		newcookie := http.Cookie{
+			Name:   "vmware-api-session-id",
+			Value:  "",
+			MaxAge: -1,
+		}
+		restClient.Jar.SetCookies(cookiePath, []*http.Cookie{&newcookie})
+		return restClient, false, nil
+	}
+
 }

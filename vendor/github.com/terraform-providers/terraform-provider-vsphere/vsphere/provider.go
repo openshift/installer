@@ -141,6 +141,7 @@ func Provider() terraform.ResourceProvider {
 			"vsphere_host":                       dataSourceVSphereHost(),
 			"vsphere_network":                    dataSourceVSphereNetwork(),
 			"vsphere_resource_pool":              dataSourceVSphereResourcePool(),
+			"vsphere_storage_policy":             dataSourceVSphereStoragePolicy(),
 			"vsphere_tag":                        dataSourceVSphereTag(),
 			"vsphere_tag_category":               dataSourceVSphereTagCategory(),
 			"vsphere_vapp_container":             dataSourceVSphereVAppContainer(),

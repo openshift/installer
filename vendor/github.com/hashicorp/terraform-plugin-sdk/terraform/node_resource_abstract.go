@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/internal/dag"
 	"github.com/hashicorp/terraform-plugin-sdk/internal/lang"
 	"github.com/hashicorp/terraform-plugin-sdk/internal/states"
-	"github.com/hashicorp/terraform/tfdiags"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 )
 
 // ConcreteResourceNodeFunc is a callback type used to convert an

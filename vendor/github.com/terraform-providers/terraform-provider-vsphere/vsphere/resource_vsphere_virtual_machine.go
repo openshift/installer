@@ -16,6 +16,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/folder"
 	"github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/hostsystem"
 	"github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/resourcepool"
+	"github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/spbm"
 	"github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/storagepod"
 	"github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/structure"
 	"github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/vappcontainer"
@@ -257,7 +258,7 @@ func resourceVSphereVirtualMachine() *schema.Resource {
 func resourceVSphereVirtualMachineCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] %s: Beginning create", resourceVSphereVirtualMachineIDString(d))
 	client := meta.(*VSphereClient).vimClient
-	tagsClient, err := tagsClientIfDefined(d, meta)
+	tagsClient, err := tagsManagerIfDefined(d, meta)
 	if err != nil {
 		return err
 	}
@@ -440,6 +441,13 @@ func resourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("error reading virtual machine configuration: %s", err)
 	}
 
+	// Read the VM Home storage policy if associated
+	polID, err := spbm.PolicyIDByVirtualMachine(client, moid)
+	if err != nil {
+		return err
+	}
+	d.Set("storage_policy_id", polID)
+
 	// Perform pending device read operations.
 	devices := object.VirtualDeviceList(vprops.Config.Hardware.Device)
 	// Read the state of the SCSI bus.
@@ -459,7 +467,7 @@ func resourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{})
 	}
 
 	// Read tags if we have the ability to do so
-	if tagsClient, _ := meta.(*VSphereClient).TagsClient(); tagsClient != nil {
+	if tagsClient, _ := meta.(*VSphereClient).TagsManager(); tagsClient != nil {
 		if err := readTagsForResource(tagsClient, vm, d); err != nil {
 			return err
 		}
@@ -486,7 +494,7 @@ func resourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{})
 func resourceVSphereVirtualMachineUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] %s: Performing update", resourceVSphereVirtualMachineIDString(d))
 	client := meta.(*VSphereClient).vimClient
-	tagsClient, err := tagsClientIfDefined(d, meta)
+	tagsClient, err := tagsManagerIfDefined(d, meta)
 	if err != nil {
 		return err
 	}
@@ -1451,13 +1459,15 @@ func resourceVSphereVirtualMachineUpdateLocation(d *schema.ResourceData, meta in
 		Pool: types.NewReference(pool.Reference()),
 	}
 
-	// Fetch the datastore
-	if dsID, ok := d.GetOk("datastore_id"); ok {
-		ds, err := datastore.FromID(client, dsID.(string))
-		if err != nil {
-			return fmt.Errorf("error locating datastore for VM: %s", err)
+	// Fetch the datastore only if a datastore_cluster is not set
+	if _, ok := d.GetOk("datastore_cluster_id"); !ok {
+		if dsID, ok := d.GetOk("datastore_id"); ok {
+			ds, err := datastore.FromID(client, dsID.(string))
+			if err != nil {
+				return fmt.Errorf("error locating datastore for VM: %s", err)
+			}
+			spec.Datastore = types.NewReference(ds.Reference())
 		}
-		spec.Datastore = types.NewReference(ds.Reference())
 	}
 
 	if hs != nil {

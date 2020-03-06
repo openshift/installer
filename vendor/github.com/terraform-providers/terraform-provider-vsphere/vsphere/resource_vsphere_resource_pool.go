@@ -338,7 +338,7 @@ func resourceVSphereResourcePoolValidateEmpty(rp *object.ResourcePool) error {
 // resourceVSphereResourcePoolApplyTags processes the tags step for both create
 // and update for vsphere_resource_pool.
 func resourceVSphereResourcePoolApplyTags(d *schema.ResourceData, meta interface{}, rp *object.ResourcePool) error {
-	tagsClient, err := tagsClientIfDefined(d, meta)
+	tagsClient, err := tagsManagerIfDefined(d, meta)
 	if err != nil {
 		return err
 	}
@@ -356,7 +356,7 @@ func resourceVSphereResourcePoolApplyTags(d *schema.ResourceData, meta interface
 // resourceVSphereResourcePoolReadTags reads the tags for
 // vsphere_resource_pool.
 func resourceVSphereResourcePoolReadTags(d *schema.ResourceData, meta interface{}, rp *object.ResourcePool) error {
-	if tagsClient, _ := meta.(*VSphereClient).TagsClient(); tagsClient != nil {
+	if tagsClient, _ := meta.(*VSphereClient).TagsManager(); tagsClient != nil {
 		log.Printf("[DEBUG] %s: Reading tags", resourceVSphereResourcePoolIDString(d))
 		if err := readTagsForResource(tagsClient, rp, d); err != nil {
 			return err
