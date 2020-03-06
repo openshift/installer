@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
+        "github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
 )
@@ -40,6 +41,72 @@ func (a *Worker) Generate(dependencies asset.Parents) error {
 
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "worker")
 
+        a.Config.Storage.Files = append(a.Config.Storage.Files,ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-api-conn", "root", 0420, `VLAN=yes
+               TYPE=Vlan
+               PHYSDEV=ens3
+               VLAN_ID=1021
+               REORDER_HDR=yes
+               GVRP=no
+               MVRP=no
+               PROXY_METHOD=none
+               BROWSER_ONLY=no
+               BOOTPROTO=none
+               IPADDR=10.11.0.12
+               PREFIX=24
+               DEFROUTE=yes
+                GATEWAY=10.11.0.1
+               PEERDNS=no
+               IPV4_FAILURE_FATAL=no
+               IPV6INIT=no
+               NAME=api-conn
+               DEVICE=ens3.1021
+               ONBOOT=yes
+                METRIC=90"`),ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-ens3.4094", "root", 0420, `DEVICE=ens3.4094
+               ONBOOT=yes
+               BOOTPROTO=dhcp
+               MTU=1500
+               TYPE=Vlan
+               VLAN=yes
+               PHYSDEV=ens3
+               VLAN_ID=4094
+               REORDER_HDR=yes
+               GVRP=no
+               MVRP=no
+               PROXY_METHOD=none
+               BROWSER_ONLY=no
+               DEFROUTE=yes
+               IPV4_FAILURE_FATAL=no
+        IPV6INIT=no`),ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-opflex-conn", "root", 0420, `VLAN=VLAN=yes
+               TYPE=Vlan
+               PHYSDEV=ens3
+               VLAN_ID=4093
+               REORDER_HDR=yes
+               GVRP=no
+               MVRP=no
+               PROXY_METHOD=none
+               BROWSER_ONLY=no
+               BOOTPROTO=dhcp
+               DEFROUTE=no
+               IPV4_FAILURE_FATAL=no
+               IPV6INIT=no
+               NAME=opflex-conn
+               DEVICE=ens3.4093
+               ONBOOT=yes
+               MTU=1500"`),ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-uplink-conn", "root", 0420, `TYPE=Ethernet
+               PROXY_METHOD=none
+               BROWSER_ONLY=no
+               DEFROUTE=yes
+               IPV4_FAILURE_FATAL=no
+               IPV6INIT=no
+               NAME=uplink-conn
+               DEVICE=ens3
+               ONBOOT=yes
+               BOOTPROTO=none
+               MTU=1500`),ignition.FileFromString("/etc/sysconfig/network-scripts/route-opflex-conn", "root", 0420, `ADDRESS0=224.0.0.0
+               NETMASK0=240.0.0.0
+               METRIC0=1000"`),ignition.FileFromString("/etc/sysconfig/network-scripts/route-ens3.4094", "root", 0420, `ADDRESS0=1.106.2.0
+                NETMASK0=255.255.255.0
+                METRIC0=1001"`))
 	data, err := json.Marshal(a.Config)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal Ignition config")

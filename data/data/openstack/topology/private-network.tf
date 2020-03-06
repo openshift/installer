@@ -1,11 +1,20 @@
 locals {
-  nodes_cidr_block = var.cidr_block
+  nodes_cidr_block = "192.168.0.0/16"
+}
+
+variable "aci-net-ext" {
+ type = "map"
+ default = {"apic:nested_domain_infra_vlan"="4093"
+            "apic:nested_domain_node_network_vlan"="1021"
+            "apic:nested_domain_service_vlan"="1022"
+           }
 }
 
 data "openstack_networking_network_v2" "external_network" {
   name       = var.external_network
   network_id = var.external_network_id
   external   = true
+  value_specs    = var.aci-net-ext
 }
 
 resource "openstack_networking_network_v2" "openshift-private" {

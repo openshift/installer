@@ -30,22 +30,24 @@ func SetPlatformDefaults(p *openstack.Platform) {
 // cluster. The DNS static pods running on the nodes resolve the
 // api-int record to APIVIP.
 func APIVIP(networking *types.Networking) (net.IP, error) {
-	return cidr.Host(&networking.MachineNetwork[0].CIDR.IPNet, 5)
-}
+       return cidr.Host(&net.IPNet{IP: net.IP{192,168,0,0},
+       Mask: net.IPMask{255,255,0,0}},5)
+ }
 
 // DNSVIP returns the internal virtual IP address (VIP) put in front
 // of the DNS static pods running on the nodes. Unlike the DNS
 // operator these services provide name resolution for the nodes
 // themselves.
 func DNSVIP(networking *types.Networking) (net.IP, error) {
-	return cidr.Host(&networking.MachineNetwork[0].CIDR.IPNet, 6)
-}
-
+       return cidr.Host(&net.IPNet{IP: net.IP{192,168,0,0},
+               Mask: net.IPMask{255,255,0,0}},6)
+ }
 // IngressVIP returns the internal virtual IP address (VIP) put in
 // front of the OpenShift router pods. This provides the internal
 // accessibility to the internal pods running on the worker nodes,
 // e.g. `console`. The DNS static pods running on the nodes resolve
 // the wildcard apps record to IngressVIP.
 func IngressVIP(networking *types.Networking) (net.IP, error) {
-	return cidr.Host(&networking.MachineNetwork[0].CIDR.IPNet, 7)
-}
+       return cidr.Host(&net.IPNet{IP: net.IP{192,168,0,0},
+              Mask: net.IPMask{255,255,0,0}},7)
+ }
