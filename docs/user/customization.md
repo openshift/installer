@@ -367,14 +367,14 @@ For example:
     Check that no control plane nodes registered with taints:
 
     ```console
-    $ oc --config no-taint-cluster/auth/kubeconfig get nodes -ojson | jq '.items[] | select(.metadata.labels."node-role.kubernetes.io/master" == "") | .spec.taints'
+    $ oc --kubeconfig no-taint-cluster/auth/kubeconfig get nodes -ojson | jq '.items[] | select(.metadata.labels."node-role.kubernetes.io/master" == "") | .spec.taints'
     null
     ```
 
     Check that the `02-master-kubelet` `MachineConfig` exists in the cluster:
 
     ```console
-    oc --config no-taint-cluster/auth/kubeconfig get machineconfigs
+    oc --kubeconfig no-taint-cluster/auth/kubeconfig get machineconfigs
     NAME                                                        GENERATEDBYCONTROLLER        IGNITIONVERSION   CREATED
     00-master                                                   3.11.0-744-g5b05d9d3-dirty   2.2.0             137m
     00-master-ssh                                               3.11.0-744-g5b05d9d3-dirty                     137m
@@ -438,7 +438,7 @@ Example application of `loglevel=7` (change Linux kernel log level to KERN_DEBUG
     Check that the machineconfig has the kernel arguments applied
 
     ```console
-    $ oc --config log_debug_cluster/auth/kubeconfig get machineconfigs
+    $ oc --kubeconfig log_debug_cluster/auth/kubeconfig get machineconfigs
     NAME                                                        GENERATEDBYCONTROLLER                      IGNITIONVERSION   CREATED
     99-master-kargs-loglevel                                    bd846958bc95d049547164046a962054fca093df   2.2.0             26h
     99-master-ssh                                               bd846958bc95d049547164046a962054fca093df   2.2.0             26h
@@ -489,7 +489,7 @@ Example for switching to RT kernel on worker nodes during initial cluster instal
     Check that the MachineConfig has the kernelType applied
 
     ```console
-    $ oc --config realtime_kernel/auth/kubeconfig get machineconfigs
+    $ oc --kubeconfig realtime_kernel/auth/kubeconfig get machineconfigs
     NAME                                                        GENERATEDBYCONTROLLER                      IGNITIONVERSION   AGE
     ...
     99-worker-kerneltype                                                                                                     80m
@@ -500,7 +500,7 @@ Example for switching to RT kernel on worker nodes during initial cluster instal
 4. To confirm that worker node has switched to RT kernel, access one of the worker node and run `uname -a`
 
     ```console
-    $ oc --config realtime_kernel/auth/kubeconfig debug node/<worker_node>
+    $ oc --kubeconfig realtime_kernel/auth/kubeconfig debug node/<worker_node>
     ...
     sh-4.2# uname -a
     Linux <worker_node> 4.18.0-147.3.1.rt24.96.el8_1.x86_64 #1 SMP PREEMPT RT Wed Nov 27 18:29:55 UTC 2019 x86_64 x86_64 x86_64 GNU/Linux
