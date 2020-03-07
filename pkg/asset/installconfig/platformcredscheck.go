@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
-	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -45,20 +44,9 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 	platform := ic.Config.Platform.Name()
 	switch platform {
 	case aws.Name:
-		permissionGroups := []awsconfig.PermissionGroup{awsconfig.PermissionCreateBase, awsconfig.PermissionDeleteBase}
-		// If subnets are not provided in install-config.yaml, include network permissions
-		if len(ic.Config.AWS.Subnets) == 0 {
-			permissionGroups = append(permissionGroups, awsconfig.PermissionCreateNetworking, awsconfig.PermissionDeleteNetworking)
-		}
-
-		ssn, err := ic.AWS.Session(ctx)
+		_, err := ic.AWS.Session(ctx)
 		if err != nil {
 			return err
-		}
-
-		err = awsconfig.ValidateCreds(ssn, permissionGroups, ic.Config.Platform.AWS.Region)
-		if err != nil {
-			return errors.Wrap(err, "validate AWS credentials")
 		}
 	case gcp.Name:
 		_, err = gcpconfig.GetSession(ctx)
