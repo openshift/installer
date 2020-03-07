@@ -18,6 +18,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+        "github.com/apparentlymart/go-cidr/cidr"
 
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
@@ -30,6 +31,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+        ign "github.com/openshift/installer/pkg/asset/ignition"
 )
 
 const (
@@ -141,28 +143,19 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-       logrus.Info("Editing Bootstrap.........")
-       a.Config.Storage.Files = append(a.Config.Storage.Files,ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-api-conn", "root", 0420, `VLAN=yes
-               TYPE=Vlan
-               PHYSDEV=ens3
-               VLAN_ID=1021
-               REORDER_HDR=yes
-               GVRP=no
-               MVRP=no
-               PROXY_METHOD=none
-               BROWSER_ONLY=no
-               BOOTPROTO=none
-               IPADDR=10.11.0.11
-               PREFIX=24
-               DEFROUTE=yes
-                GATEWAY=10.11.0.1
-               PEERDNS=no
-               IPV4_FAILURE_FATAL=no
-               IPV6INIT=no
-               NAME=api-conn
-               DEVICE=ens3.1021
-               ONBOOT=yes
-               METRIC=90`),ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-ens3.4094", "root", 0420, `DEVICE=ens3.4094
+        // Create network Script
+        machineCIDR := &installConfig.Config.Networking.MachineCIDR.IPNet
+        defaultGateway, _ := cidr.Host(machineCIDR, 1)
+        kube_api_vlan := installConfig.Config.Platform.OpenStack.AciNetExt.KubeApiVLAN
+        mtu_value := installConfig.Config.Platform.OpenStack.AciNetExt.Mtu
+        if mtu_value == "" {
+                mtu_value = "1500"
+        }
+        networkScriptString, _ := ign.NetworkScript(kube_api_vlan, defaultGateway.String(), mtu_value)
+        logrus.Debug(string(networkScriptString))
+
+        logrus.Info("Editing Bootstrap.........")
+        a.Config.Storage.Files = append(a.Config.Storage.Files,ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-ens3.4094", "root", 0420, `DEVICE=ens3.4094
                ONBOOT=yes
                BOOTPROTO=dhcp
                MTU=1500

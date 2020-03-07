@@ -6,11 +6,14 @@ import (
 
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	"github.com/pkg/errors"
+        "github.com/apparentlymart/go-cidr/cidr"
+        "github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
         "github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
+        ign "github.com/openshift/installer/pkg/asset/ignition"
 )
 
 const (
@@ -40,6 +43,19 @@ func (a *Worker) Generate(dependencies asset.Parents) error {
 	dependencies.Get(installConfig, rootCA)
 
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "worker")
+
+        // Create network Script
+        machineCIDR := &installConfig.Config.Networking.MachineCIDR.IPNet
+        defaultGateway, _ := cidr.Host(machineCIDR, 1)
+        kube_api_vlan := installConfig.Config.Platform.OpenStack.AciNetExt.KubeApiVLAN
+        mtu_value := installConfig.Config.Platform.OpenStack.AciNetExt.Mtu
+
+        if mtu_value == "" {
+                mtu_value = "1500"
+        }
+
+        networkScriptString, _ := ign.NetworkScript(kube_api_vlan, defaultGateway.String(), mtu_value)
+        logrus.Debug(string(networkScriptString))
 
         a.Config.Storage.Files = append(a.Config.Storage.Files,ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-api-conn", "root", 0420, `VLAN=yes
                TYPE=Vlan
