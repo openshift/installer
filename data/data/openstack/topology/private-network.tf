@@ -14,13 +14,13 @@ data "openstack_networking_network_v2" "external_network" {
   name       = var.external_network
   network_id = var.external_network_id
   external   = true
-  value_specs    = var.aci-net-ext
 }
 
 resource "openstack_networking_network_v2" "openshift-private" {
   name           = "${var.cluster_id}-openshift"
   admin_state_up = "true"
   tags           = ["openshiftClusterID=${var.cluster_id}"]
+  value_specs    = var.aci-net-ext
 }
 
 resource "openstack_networking_subnet_v2" "nodes" {
