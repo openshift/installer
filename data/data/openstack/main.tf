@@ -64,6 +64,7 @@ module "topology" {
   cluster_id          = var.cluster_id
   cluster_domain      = var.cluster_domain
   external_network    = var.openstack_external_network
+  aci_net_ext         = var.openstack_aci_net_ext
   external_network_id = var.openstack_external_network_id
   masters_count       = var.master_count
   lb_floating_ip      = var.openstack_lb_floating_ip

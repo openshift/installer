@@ -17,6 +17,12 @@ variable "external_network" {
   default     = ""
 }
 
+variable "aci_net_ext" {
+ description = "Network extensions fields for APIC"
+ type = "map"
+ default = {}
+}
+
 variable "external_network_id" {
   description = "UUID of the external network providing Floating IP addresses."
   type        = string

@@ -369,13 +369,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
                          
                 logrus.Infof("Editing Bootstrap ign here...")
                 bootstrapIgn = strings.Replace(bootstrapIgn, `--container-runtime=remote`,`--container-runtime=remote \\\n   --address=10.11.0.11`, -1)
-                logrus.Infof("After Editing",bootstrapIgn)
+                logrus.Debug("After Editing",bootstrapIgn)
 
 
 		data, err = openstacktfvars.TFVars(
 			masters[0].Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec),
 			installConfig.Config.Platform.OpenStack.Cloud,
 			installConfig.Config.Platform.OpenStack.ExternalNetwork,
+                        installConfig.Config.Platform.OpenStack.AciNetExt,
 			installConfig.Config.Platform.OpenStack.ExternalDNS,
 			installConfig.Config.Platform.OpenStack.LbFloatingIP,
 			apiVIP.String(),

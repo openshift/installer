@@ -1,5 +1,7 @@
 package openstack
 
+import "github.com/openshift/installer/pkg/tfvars/openstack"
+
 // Platform stores all the global configuration that all
 // machinesets use.
 type Platform struct {
@@ -18,6 +20,9 @@ type Platform struct {
 
 	// ExternalNetwork is name of the external network in your OpenStack cluster.
 	ExternalNetwork string `json:"externalNetwork"`
+
+        // AciNetExt is the name of the map for APIC nested domain fields
+        AciNetExt openstack.AciNetExtStruct `json:"aciNetExt"`
 
 	// FlavorName is the name of the compute flavor to use for instances in this cluster.
 	FlavorName string `json:"computeFlavor"`
