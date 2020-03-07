@@ -76,7 +76,7 @@ func (a *Worker) Generate(dependencies asset.Parents) error {
                BROWSER_ONLY=no
                DEFROUTE=yes
                IPV4_FAILURE_FATAL=no
-        IPV6INIT=no`),ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-opflex-conn", "root", 0420, `VLAN=VLAN=yes
+        IPV6INIT=no`),ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-opflex-conn", "root", 0420, `VLAN=yes
                TYPE=Vlan
                PHYSDEV=ens3
                VLAN_ID=4093
@@ -104,9 +104,7 @@ func (a *Worker) Generate(dependencies asset.Parents) error {
                BOOTPROTO=none
                MTU=1500`),ignition.FileFromString("/etc/sysconfig/network-scripts/route-opflex-conn", "root", 0420, `ADDRESS0=224.0.0.0
                NETMASK0=240.0.0.0
-               METRIC0=1000"`),ignition.FileFromString("/etc/sysconfig/network-scripts/route-ens3.4094", "root", 0420, `ADDRESS0=1.106.2.0
-                NETMASK0=255.255.255.0
-                METRIC0=1001"`))
+               METRIC0=1000`))
 	data, err := json.Marshal(a.Config)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal Ignition config")
