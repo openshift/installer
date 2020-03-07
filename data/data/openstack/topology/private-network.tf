@@ -2,14 +2,6 @@ locals {
   nodes_cidr_block = "192.168.0.0/16"
 }
 
-variable "aci-net-ext" {
- type = "map"
- default = {"apic:nested_domain_infra_vlan"="4093"
-            "apic:nested_domain_node_network_vlan"="1021"
-            "apic:nested_domain_service_vlan"="1022"
-           }
-}
-
 data "openstack_networking_network_v2" "external_network" {
   name       = var.external_network
   network_id = var.external_network_id
@@ -20,7 +12,11 @@ resource "openstack_networking_network_v2" "openshift-private" {
   name           = "${var.cluster_id}-openshift"
   admin_state_up = "true"
   tags           = ["openshiftClusterID=${var.cluster_id}"]
-  value_specs    = var.aci-net-ext
+  value_specs    = {
+    "apic:nested_domain_infra_vlan"        : var.aci_net_ext["infra_vlan"],
+    "apic:nested_domain_node_network_vlan" : var.aci_net_ext["kube_api_vlan"],
+    "apic:nested_domain_service_vlan"      : var.aci_net_ext["service_vlan"],
+  }
 }
 
 resource "openstack_networking_subnet_v2" "nodes" {
