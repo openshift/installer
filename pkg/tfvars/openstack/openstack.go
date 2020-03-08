@@ -19,6 +19,7 @@ type AciNetExtStruct struct {
         InfraVLAN              string   `json:"infra_vlan,omitempty"`
         KubeApiVLAN            string   `json:"kube_api_vlan,omitempty"`
         ServiceVLAN            string   `json:"service_vlan,omitempty"`
+        Mtu                    string   `json:"mtu,omitempty"`
 }
 
 type config struct {
