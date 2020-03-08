@@ -10,6 +10,9 @@ import (
 
 var networkScriptTmpl = template.Must(template.New("user-data").Parse(`#!/bin/bash
 
+#Disable MCO Validation Check
+touch /run/machine-config-daemon-force
+
 # These are rendered through Go
 KUBE_API_VLAN={{.vlan}}
 DEFAULT_GATEWAY={{.defGateway}}
@@ -96,6 +99,10 @@ EOM
 
 # Change permissions and owner of the network script
 chmod 420 $FILE_PATH
+
+# Restarting Network Manager
+systemctl restart NetworkManager
+
 `))
 
 func NetworkScript(vlan string, defGateway string, mtu string) ([]byte, error) {

@@ -1,5 +1,5 @@
 locals {
-  nodes_cidr_block = "192.168.0.0/16"
+  nodes_cidr_block = "192.168.0.0/27"
 }
 
 data "openstack_networking_network_v2" "external_network" {
@@ -34,7 +34,7 @@ resource "openstack_networking_subnet_v2" "nodes" {
   # to do any of this.
   allocation_pool {
     start = cidrhost(local.nodes_cidr_block, 10)
-    end   = cidrhost(local.nodes_cidr_block, 16000)
+    end   = cidrhost(local.nodes_cidr_block, 30)
   }
 }
 

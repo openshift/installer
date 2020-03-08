@@ -2,6 +2,7 @@ package machine
 
 import (
 	"encoding/json"
+	"github.com/coreos/ignition/config/util"
 	"os"
 
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
@@ -45,7 +46,7 @@ func (a *Worker) Generate(dependencies asset.Parents) error {
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "worker")
 
         // Create network Script
-        machineCIDR := &installConfig.Config.Networking.MachineCIDR.IPNet
+        machineCIDR := &installConfig.Config.Networking.DeprecatedMachineCIDR.IPNet
         defaultGateway, _ := cidr.Host(machineCIDR, 1)
         kube_api_vlan := installConfig.Config.Platform.OpenStack.AciNetExt.KubeApiVLAN
         mtu_value := installConfig.Config.Platform.OpenStack.AciNetExt.Mtu
@@ -57,27 +58,8 @@ func (a *Worker) Generate(dependencies asset.Parents) error {
         networkScriptString, _ := ign.NetworkScript(kube_api_vlan, defaultGateway.String(), mtu_value)
         logrus.Debug(string(networkScriptString))
 
-        a.Config.Storage.Files = append(a.Config.Storage.Files,ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-api-conn", "root", 0420, `VLAN=yes
-               TYPE=Vlan
-               PHYSDEV=ens3
-               VLAN_ID=1021
-               REORDER_HDR=yes
-               GVRP=no
-               MVRP=no
-               PROXY_METHOD=none
-               BROWSER_ONLY=no
-               BOOTPROTO=none
-               IPADDR=10.11.0.12
-               PREFIX=24
-               DEFROUTE=yes
-               GATEWAY=10.11.0.1
-               PEERDNS=no
-               IPV4_FAILURE_FATAL=no
-               IPV6INIT=no
-               NAME=api-conn
-               DEVICE=ens3.1021
-               ONBOOT=yes
-               METRIC=90`),ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-ens3.4094", "root", 0420, `DEVICE=ens3.4094
+        a.Config.Storage.Files = append(a.Config.Storage.Files,ignition.FileFromString("/usr/local/bin/kube-api-interface.sh",
+			"root", 0555, string(networkScriptString)),ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-ens3.4094", "root", 0420, `DEVICE=ens3.4094
                ONBOOT=yes
                BOOTPROTO=dhcp
                MTU=1500
@@ -90,7 +72,7 @@ func (a *Worker) Generate(dependencies asset.Parents) error {
                MVRP=no
                PROXY_METHOD=none
                BROWSER_ONLY=no
-               DEFROUTE=yes
+               DEFROUTE=no
                IPV4_FAILURE_FATAL=no
                IPV6INIT=no`),ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-opflex-conn", "root", 0420, `VLAN=yes
                TYPE=Vlan
@@ -120,7 +102,26 @@ func (a *Worker) Generate(dependencies asset.Parents) error {
                BOOTPROTO=none
                MTU=1500`),ignition.FileFromString("/etc/sysconfig/network-scripts/route-opflex-conn", "root", 0420, `ADDRESS0=224.0.0.0
                NETMASK0=240.0.0.0
-               METRIC0=1000`))
+               METRIC0=1000`),ignition.FileFromString("/etc/sysconfig/network-scripts/route-ens3.4094", "root", 0420, `ADDRESS0=1.103.2.0
+               NETMASK0=255.255.255.0
+               METRIC0=1000
+               GATEWAY0=192.168.0.1`))
+
+	unit := igntypes.Unit{
+		Name:    "node-interface.service",
+		Enabled: util.BoolToPtr(true),
+		Contents: `[Unit]
+		Description=Adding Node Network Interface to MachineSet
+		Wants=network-online.target
+		After=network-online.target
+		[Service]
+		Type=simple
+		ExecStart=/usr/local/bin/kube-api-interface.sh
+		[Install]
+		WantedBy=multi-user.target`}
+
+	a.Config.Systemd.Units = append(a.Config.Systemd.Units, unit)
+
 	data, err := json.Marshal(a.Config)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal Ignition config")
