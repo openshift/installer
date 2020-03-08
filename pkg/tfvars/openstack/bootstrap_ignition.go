@@ -1,6 +1,7 @@
 package openstack
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -152,6 +153,12 @@ func generateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL st
 	data, err := json.Marshal(ign)
 	if err != nil {
 		return "", err
+	}
+
+	// Check the size of the base64-rendered ignition shim isn't to big for nova
+	// https://docs.openstack.org/nova/latest/user/metadata.html#user-data
+	if len(base64.StdEncoding.EncodeToString(data)) > 65535 {
+		return "", fmt.Errorf("rendered bootstrap ignition shim exceeds the 64KB limit for nova user data -- try reducing the size of your CA cert bundle")
 	}
 
 	return string(data), nil
