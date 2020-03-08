@@ -134,5 +134,5 @@ do
   scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null -r -q "core@[${master}]:/tmp/artifacts-${GATHER_ID}/*" "${ARTIFACTS}/control-plane/${master}/"
 done
 TAR_FILE="${TAR_FILE:-${HOME}/log-bundle-${GATHER_ID}.tar.gz}"
-tar cz -C "${ARTIFACTS}" . >"${TAR_FILE}"
+tar cz -C "${ARTIFACTS}" --transform "s?^\\.?log-bundle-${GATHER_ID}?" . > "${TAR_FILE}"
 echo "Log bundle written to ${TAR_FILE}"
