@@ -171,6 +171,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 				Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(conf.Password)),
 				Base64encodeCAFile:   base64.StdEncoding.EncodeToString([]byte(conf.CAFile)),
 				Base64encodeInsecure: base64.StdEncoding.EncodeToString([]byte(strconv.FormatBool(conf.Insecure))),
+				Base64encodeCABundle: base64.StdEncoding.EncodeToString([]byte(conf.CABundle)),
 			},
 		}
 	}
