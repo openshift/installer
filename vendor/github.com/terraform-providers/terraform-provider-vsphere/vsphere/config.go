@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -192,11 +191,7 @@ func (c *Config) SavedRestSessionOrNew(ctx context.Context, vimClient *govmomi.C
 	log.Printf("[DEBUG] Setting up REST client")
 	var restClient *rest.Client
 	valid := false
-	restSessionFile, err := c.restSessionFile()
-	if err != nil {
-		return nil, err
-	}
-	restClient, valid, err = c.LoadAndVerifyRestSession(vimClient)
+	restClient, valid, err := c.LoadAndVerifyRestSession(vimClient)
 	if err != nil {
 		return nil, err
 	}
@@ -207,17 +202,7 @@ func (c *Config) SavedRestSessionOrNew(ctx context.Context, vimClient *govmomi.C
 			return nil, err
 		}
 		// Write REST session ID to file if session persistence is enabled.
-		if c.Persist {
-			cookiePath, _ := url.Parse("/rest/com/vmware")
-			cookiePath.Scheme = restClient.URL().Scheme
-			cookiePath.Host = restClient.URL().Host
-			for _, cookie := range restClient.Jar.Cookies(cookiePath) {
-				if cookie.Name == "vmware-api-session-id" {
-					ioutil.WriteFile(restSessionFile, []byte(cookie.Value), 0600)
-					break
-				}
-			}
-		}
+		c.SaveRestClient(restClient)
 	}
 	log.Println("[DEBUG] CIS REST client configuration successful")
 	return restClient, nil
@@ -345,6 +330,46 @@ func (c *Config) SaveVimClient(client *govmomi.Client) error {
 	err = json.NewEncoder(f).Encode(client.Client)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (c *Config) SaveRestClient(client *rest.Client) error {
+	if !c.Persist {
+		return nil
+	}
+
+	p, err := c.restSessionFile()
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[DEBUG] Will persist REST client session data to %q", p)
+	err = os.MkdirAll(filepath.Dir(p), 0700)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(p, os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err = f.Close(); err != nil {
+			log.Printf("[DEBUG] Error closing REST client session file %q: %s", p, err)
+		}
+	}()
+
+	cookiePath, _ := url.Parse("/rest/com/vmware")
+	cookiePath.Scheme = client.URL().Scheme
+	cookiePath.Host = client.URL().Host
+	for _, cookie := range client.Jar.Cookies(cookiePath) {
+		if cookie.Name == "vmware-api-session-id" {
+			_, err = f.Write([]byte(cookie.Value))
+			break
+		}
 	}
 
 	return nil
@@ -483,7 +508,7 @@ func newClientWithKeepAlive(ctx context.Context, u *url.URL, insecure bool, keep
 }
 
 func restSessionValid(client *rest.Client) bool {
-	url := client.URL().String() + "/cis/session?~action=get"
+	url := client.URL().String() + "/com/vmware/cis/session?~action=get"
 	resp, err := client.Post(url, "", nil)
 	if err != nil || resp.StatusCode != 200 {
 		return false
@@ -534,8 +559,8 @@ func (c *Config) LoadAndVerifyRestSession(client *govmomi.Client) (*rest.Client,
 				Name:  "vmware-api-session-id",
 				Value: sessionId,
 			}
-			client.Jar.SetCookies(cookiePath, append(cookies, &newcookie))
 			restClient = rest.NewClient(client.Client)
+			restClient.Jar.SetCookies(cookiePath, append(cookies, &newcookie))
 		}
 	}
 	if restSessionValid(restClient) {
