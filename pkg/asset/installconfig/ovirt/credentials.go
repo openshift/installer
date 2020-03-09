@@ -1,6 +1,9 @@
 package ovirt
 
 import (
+	"fmt"
+	"net/url"
+
 	"gopkg.in/AlecAivazis/survey.v1"
 )
 
@@ -23,7 +26,7 @@ func askCredentials() (Config, error) {
 	err = survey.AskOne(
 		&survey.Confirm{
 			Message: "Is the installed oVirt certificate trusted?",
-			Default: false,
+			Default: true,
 			Help:    "",
 		},
 		&ovirtCertTrusted,
@@ -32,6 +35,28 @@ func askCredentials() (Config, error) {
 		return c, err
 	}
 	c.Insecure = !ovirtCertTrusted
+
+	if ovirtCertTrusted {
+		ovirtURL, err := url.Parse(c.URL)
+		if err != nil {
+			// should have passed validation, this is unexpected
+			return c, err
+		}
+		pemURL := fmt.Sprintf(
+			"%s://%s/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA",
+			ovirtURL.Scheme,
+			ovirtURL.Host)
+
+		err = survey.AskOne(&survey.Multiline{
+			Message: "Enter oVirt's CA bundle",
+			Help:    "Obtain oVirt CA bundle from " + pemURL,
+		},
+			&c.CABundle,
+			survey.ComposeValidators(survey.Required))
+		if err != nil {
+			return c, err
+		}
+	}
 
 	err = survey.Ask([]*survey.Question{
 		{
