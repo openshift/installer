@@ -47,8 +47,8 @@ require (
 	github.com/hashicorp/logutils v1.0.0
 	github.com/hashicorp/memberlist v0.1.5 // indirect
 	github.com/hashicorp/serf v0.8.5 // indirect
-	github.com/hashicorp/terraform v0.0.0
-	github.com/hashicorp/terraform-plugin-sdk v1.6.0
+	github.com/hashicorp/terraform v0.12.21
+	github.com/hashicorp/terraform-plugin-sdk v1.7.0
 	github.com/hashicorp/vault v1.3.0 // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/joyent/triton-go v1.7.0 // indirect
@@ -98,7 +98,7 @@ require (
 	github.com/terraform-providers/terraform-provider-local v1.4.0
 	github.com/terraform-providers/terraform-provider-openstack v1.25.0
 	github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
-	github.com/terraform-providers/terraform-provider-vsphere v0.0.0
+	github.com/terraform-providers/terraform-provider-vsphere v1.16.2
 	github.com/ulikunitz/xz v0.5.6
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 	github.com/vmware/govmomi v0.22.1
@@ -136,7 +136,6 @@ replace (
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200210091934-a0e53e94816b // Pin API
 	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530 // Pin MCO so it doesn't get downgraded
 	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-2 // Pin to openshift fork with IPv6 fixes
-	github.com/terraform-providers/terraform-provider-vsphere => github.com/LorbusChris/terraform-provider-vsphere v1.14.1-0.20200128145507-331c3c135db7 // Pin to fork that has migrated to tf-plugin-sdk
 	google.golang.org/api => google.golang.org/api v0.13.0 // Pin to version required by tf-provider-google
 	k8s.io/api => k8s.io/api v0.17.1 // Replaced by MCO/CRI-O
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.17.1 // Replaced by MCO/CRI-O
