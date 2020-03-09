@@ -33,6 +33,7 @@ import (
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
+	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 )
@@ -97,6 +98,7 @@ var (
 					logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 				}
 
+				timer.StartTimer("Bootstrap Complete")
 				err = waitForBootstrapComplete(ctx, config, rootOpts.dir)
 				if err != nil {
 					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
@@ -107,6 +109,8 @@ var (
 					}
 					logrus.Fatal("Bootstrap failed to complete: ", err)
 				}
+				timer.StopTimer("Bootstrap Complete")
+				timer.StartTimer("Bootstrap Destroy")
 
 				if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP"); ok && oi != "" {
 					logrus.Warn("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP is set, not destroying bootstrap resources. " +
@@ -118,6 +122,7 @@ var (
 						logrus.Fatal(err)
 					}
 				}
+				timer.StopTimer("Bootstrap Destroy")
 
 				err = waitForInstallComplete(ctx, config, rootOpts.dir)
 				if err != nil {
@@ -126,6 +131,8 @@ var (
 					}
 					logrus.Fatal(err)
 				}
+				timer.StopTimer(timer.TotalTimeElapsed)
+				timer.LogSummary()
 			},
 		},
 		assets: targetassets.Cluster,
@@ -182,6 +189,8 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 	}
 
 	return func(cmd *cobra.Command, args []string) {
+		timer.StartTimer(timer.TotalTimeElapsed)
+
 		cleanup := setupFileHook(rootOpts.dir)
 		defer cleanup()
 
@@ -254,6 +263,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 
 	apiTimeout := 20 * time.Minute
 	logrus.Infof("Waiting up to %v for the Kubernetes API at %s...", apiTimeout, config.Host)
+
 	apiContext, cancel := context.WithTimeout(ctx, apiTimeout)
 	defer cancel()
 	// Poll quickly so we notice changes, but only log when the response
@@ -262,10 +272,12 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 	logDownsample := 15
 	silenceRemaining := logDownsample
 	previousErrorSuffix := ""
+	timer.StartTimer("API")
 	wait.Until(func() {
 		version, err := discovery.ServerVersion()
 		if err == nil {
 			logrus.Infof("API %s up", version)
+			timer.StopTimer("API")
 			cancel()
 		} else {
 			silenceRemaining--
@@ -352,6 +364,7 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 	defer cancel()
 
 	failing := configv1.ClusterStatusConditionType("Failing")
+	timer.StartTimer("Cluster Operators")
 	var lastError string
 	_, err = clientwatch.UntilWithSync(
 		clusterVersionContext,
@@ -367,6 +380,7 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 					return false, nil
 				}
 				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorAvailable) {
+					timer.StopTimer("Cluster Operators")
 					return true, nil
 				}
 				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, failing) {
@@ -418,6 +432,7 @@ func waitForConsole(ctx context.Context, config *rest.Config, directory string) 
 	// no route in a row (to show we're still alive).
 	logDownsample := 15
 	silenceRemaining := logDownsample
+	timer.StartTimer("Console")
 	wait.Until(func() {
 		consoleRoutes, err := rc.RouteV1().Routes(consoleNamespace).List(metav1.ListOptions{})
 		if err == nil && len(consoleRoutes.Items) > 0 {
@@ -450,6 +465,7 @@ func waitForConsole(ctx context.Context, config *rest.Config, directory string) 
 	if url == "" {
 		return url, errors.New("could not get openshift-console URL")
 	}
+	timer.StopTimer("Console")
 	return url, nil
 }
 
