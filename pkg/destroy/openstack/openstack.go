@@ -558,8 +558,16 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 
 	allPages, err := containers.List(conn, listOpts).AllPages()
 	if err != nil {
-		// Ignore the error if the user doesn't have the swiftoperator role
+		// Ignore the error if the user doesn't have the swiftoperator role.
+		// Depending on the configuration Swift returns different error codes:
+		// 403 with Keystone and 401 with internal Swauth.
+		// It means we have to catch them both.
+		// More information about Swith auth: https://docs.openstack.org/swift/latest/overview_auth.html
 		if _, ok := err.(gophercloud.ErrDefault403); ok {
+			logger.Debug("Skip container deletion because the user doesn't have the `swiftoperator` role")
+			return true, nil
+		}
+		if _, ok := err.(gophercloud.ErrDefault401); ok {
 			logger.Debug("Skip container deletion because the user doesn't have the `swiftoperator` role")
 			return true, nil
 		}
