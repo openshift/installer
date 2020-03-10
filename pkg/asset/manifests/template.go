@@ -44,6 +44,7 @@ type OvirtCredsSecretData struct {
 	Base64encodePassword string
 	Base64encodeCAFile   string
 	Base64encodeInsecure string
+	Base64encodeCABundle string
 }
 
 type cloudCredsSecretData struct {

@@ -18,6 +18,7 @@ type Config struct {
 	Password string `yaml:"ovirt_password"`
 	CAFile   string `yaml:"ovirt_cafile,omitempty"`
 	Insecure bool   `yaml:"ovirt_insecure,omitempty"`
+	CABundle string `yaml:"ovirt_ca_bundle,omitempty"`
 }
 
 // LoadOvirtConfig from the following location (first wins):
