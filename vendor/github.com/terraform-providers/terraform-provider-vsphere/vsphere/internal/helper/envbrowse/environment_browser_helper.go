@@ -77,10 +77,13 @@ func (b *EnvironmentBrowser) OSFamily(ctx context.Context, guest string) (string
 		return "", err
 	}
 
-	req := types.QueryConfigOption{
+	req := types.QueryConfigOptionEx{
 		This: b.Reference(),
+		Spec: &types.EnvironmentBrowserConfigOptionQuerySpec{
+			GuestId: []string{guest},
+		},
 	}
-	res, err := methods.QueryConfigOption(ctx, b.Client(), &req)
+	res, err := methods.QueryConfigOptionEx(ctx, b.Client(), &req)
 	if err != nil {
 		return "", err
 	}
