@@ -81,39 +81,4 @@ resource "azurerm_dns_cname_record" "api_external_v6" {
   record              = var.external_lb_fqdn_v6
 }
 
-resource "azureprivatedns_a_record" "etcd_a_nodes" {
-  count               = var.use_ipv4 && ! var.emulate_single_stack_ipv6 ? var.etcd_count : 0
-  name                = "etcd-${count.index}"
-  zone_name           = azureprivatedns_zone.private.name
-  resource_group_name = var.resource_group_name
-  ttl                 = 60
-  records             = [var.etcd_ip_v4_addresses[count.index]]
-}
-
-resource "azureprivatedns_aaaa_record" "etcd_aaaa_nodes" {
-  count               = var.use_ipv6 ? var.etcd_count : 0
-  name                = "etcd-${count.index}"
-  zone_name           = azureprivatedns_zone.private.name
-  resource_group_name = var.resource_group_name
-  ttl                 = 60
-  records             = [var.etcd_ip_v6_addresses[count.index]]
-}
-
-resource "azureprivatedns_srv_record" "etcd_cluster" {
-  name                = "_etcd-server-ssl._tcp"
-  zone_name           = azureprivatedns_zone.private.name
-  resource_group_name = var.resource_group_name
-  ttl                 = 60
-
-  dynamic "record" {
-    for_each = concat(azureprivatedns_a_record.etcd_a_nodes.*.name, azureprivatedns_aaaa_record.etcd_aaaa_nodes.*.name)
-    iterator = name
-    content {
-      target   = "${name.value}.${azureprivatedns_zone.private.name}"
-      priority = 10
-      weight   = 10
-      port     = 2380
-    }
-  }
-}
 

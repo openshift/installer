@@ -49,23 +49,6 @@ variable "virtual_network_id" {
   type        = string
 }
 
-variable "etcd_count" {
-  description = "The number of etcd members."
-  type        = string
-}
-
-variable "etcd_ip_v4_addresses" {
-  description = "List of string IPs in IPv4 for machines running etcd members."
-  type        = list(string)
-  default     = []
-}
-
-variable "etcd_ip_v6_addresses" {
-  description = "List of string IPs in IPv6 for machines running etcd members."
-  type        = list(string)
-  default     = []
-}
-
 variable "resource_group_name" {
   type        = string
   description = "Resource group for the deployment"

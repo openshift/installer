@@ -22,9 +22,7 @@ internal to the cluster as possible.
 There is a DNS VIP managed by `keepalived` in a manner similar to the API VIP
 discussed above.
 
-`coredns` runs with a custom `mdns` plugin (`coredns-mdns`) that can
-dynamically generate the DNS SRV record for `etcd`, as well as resolve the
-`etcd` hostnames.
+`coredns` runs with a custom `mdns` plugin (`coredns-mdns`).
 
 Relevant files:
 * **[files/etc/dhcp/dhclient.conf](files/etc/dhcp/dhclient.conf)** - Sepcify

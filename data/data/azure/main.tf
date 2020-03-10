@@ -105,9 +105,6 @@ module "dns" {
   internal_lb_ipaddress_v6        = module.vnet.internal_lb_ip_v6_address
   resource_group_name             = azurerm_resource_group.main.name
   base_domain_resource_group_name = var.azure_base_domain_resource_group_name
-  etcd_count                      = var.master_count
-  etcd_ip_v4_addresses            = module.master.ip_v4_addresses
-  etcd_ip_v6_addresses            = module.master.ip_v6_addresses
   private                         = module.vnet.private
 
   use_ipv4                  = var.use_ipv4 || var.azure_emulate_single_stack_ipv6
