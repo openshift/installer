@@ -28,7 +28,9 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
     - [Current Expected Behavior](#current-expected-behavior)
     - [Checking Cluster Status](#checking-cluster-status)
     - [Destroying The Cluster](#destroying-the-cluster)
-  - [Using an External Load Balancer](#using-an-external-load-balancer)
+  - [Post Install Operations](#post-install-operations)
+    - [Using an External Load Balancer](#using-an-external-load-balancer)
+    - [Refreshing a CA Certificate](#refreshing-a-ca-certificate)
   - [Reporting Issues](#reporting-issues)
 
 ## Reference Documents
@@ -391,7 +393,6 @@ Finally, to see all the running pods in your cluster, you can do:
 ```sh
 oc get pods -A
 ```
-
 ### Destroying The Cluster
 
 To destroy the cluster, point it to your cluster with this command:
@@ -405,8 +406,9 @@ Then, you can delete the folder containing the cluster metadata:
 ```sh
 rm -rf ostest/
 ```
+## Post Install Operations
 
-## Using an External Load Balancer
+### Using an External Load Balancer
 
 This documents how to shift from the internal load balancer, which is intended for internal networking needs, to an external load balancer.
 
@@ -484,6 +486,14 @@ Another useful thing to check is that the ignition configurations are only avail
 
 ```sh
 curl https://<loadbalancer ip>:22623/config/master --insecure
+```
+
+### Refreshing a CA Certificate
+
+If you ran the installer with a [custom CA certificate](#self-signed-openstack-ca-certificates), then this certificate can be changed while the cluster is running. To change your certificate, edit the value of the `ca-cert.pem` key in the `cloud-provider-config` configmap with a valid PEM certificate.
+
+```sh
+oc edit -n openshift-config cloud-provider-config
 ```
 
 ## Reporting Issues
