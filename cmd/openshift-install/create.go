@@ -34,6 +34,7 @@ import (
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/libvirt"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 )
 
@@ -333,11 +334,12 @@ func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset
 func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 	timeout := 30 * time.Minute
 
-	// Wait longer for baremetal, due to length of time it takes to boot
+	// Wait longer for baremetal and libvirt, due to length of time it takes to boot
 	if assetStore, err := assetstore.NewStore(rootOpts.dir); err == nil {
 		installConfig := &installconfig.InstallConfig{}
 		if err := assetStore.Fetch(installConfig); err == nil {
-			if installConfig.Config.Platform.Name() == baremetal.Name {
+			platform := installConfig.Config.Platform.Name()
+			if platform == baremetal.Name || platform == libvirt.Name {
 				timeout = 60 * time.Minute
 			}
 		}
