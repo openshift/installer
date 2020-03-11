@@ -81,7 +81,11 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
-			zone, err := icaws.GetPublicZone(installConfig.Config.BaseDomain)
+			sess, err := installConfig.AWS.Session(context.TODO())
+			if err != nil {
+				return errors.Wrap(err, "failed to initialize session")
+			}
+			zone, err := icaws.GetPublicZone(sess, installConfig.Config.BaseDomain)
 			if err != nil {
 				return errors.Wrapf(err, "getting public zone for %q", installConfig.Config.BaseDomain)
 			}

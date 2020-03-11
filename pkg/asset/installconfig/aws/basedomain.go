@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -75,7 +76,7 @@ func GetBaseDomain() (string, error) {
 }
 
 // GetPublicZone returns a public route53 zone that matches the name.
-func GetPublicZone(name string) (*route53.HostedZone, error) {
+func GetPublicZone(sess *session.Session, name string) (*route53.HostedZone, error) {
 	var res *route53.HostedZone
 	f := func(resp *route53.ListHostedZonesOutput, lastPage bool) (shouldContinue bool) {
 		for idx, zone := range resp.HostedZones {
@@ -87,11 +88,7 @@ func GetPublicZone(name string) (*route53.HostedZone, error) {
 		return !lastPage
 	}
 
-	session, err := GetSession()
-	if err != nil {
-		return nil, errors.Wrap(err, "getting AWS session")
-	}
-	client := route53.New(session)
+	client := route53.New(sess)
 	if err := client.ListHostedZonesPages(&route53.ListHostedZonesInput{}, f); err != nil {
 		return nil, errors.Wrap(err, "listing hosted zones")
 	}
