@@ -24,18 +24,6 @@ def GenerateConfig(context):
             'ipCidrRange': context.properties['worker_subnet_cidr']
         }
     }, {
-        'name': context.properties['infra_id'] + '-master-nat-ip',
-        'type': 'compute.v1.address',
-        'properties': {
-            'region': context.properties['region']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-worker-nat-ip',
-        'type': 'compute.v1.address',
-        'properties': {
-            'region': context.properties['region']
-        }
-    }, {
         'name': context.properties['infra_id'] + '-router',
         'type': 'compute.v1.router',
         'properties': {
@@ -43,8 +31,7 @@ def GenerateConfig(context):
             'network': '$(ref.' + context.properties['infra_id'] + '-network.selfLink)',
             'nats': [{
                 'name': context.properties['infra_id'] + '-nat-master',
-                'natIpAllocateOption': 'MANUAL_ONLY',
-                'natIps': ['$(ref.' + context.properties['infra_id'] + '-master-nat-ip.selfLink)'],
+                'natIpAllocateOption': 'AUTO_ONLY',
                 'minPortsPerVm': 7168,
                 'sourceSubnetworkIpRangesToNat': 'LIST_OF_SUBNETWORKS',
                 'subnetworks': [{
@@ -53,9 +40,8 @@ def GenerateConfig(context):
                 }]
             }, {
                 'name': context.properties['infra_id'] + '-nat-worker',
-                'natIpAllocateOption': 'MANUAL_ONLY',
-                'natIps': ['$(ref.' + context.properties['infra_id'] + '-worker-nat-ip.selfLink)'],
-                'minPortsPerVm': 128,
+                'natIpAllocateOption': 'AUTO_ONLY',
+                'minPortsPerVm': 512,
                 'sourceSubnetworkIpRangesToNat': 'LIST_OF_SUBNETWORKS',
                 'subnetworks': [{
                     'name': '$(ref.' + context.properties['infra_id'] + '-worker-subnet.selfLink)',

@@ -9,7 +9,7 @@ def GenerateConfig(context):
                 'IPProtocol': 'tcp',
                 'ports': ['22']
             }],
-            'sourceRanges':  ['0.0.0.0/0'],
+            'sourceRanges': [context.properties['allowed_external_cidr']],
             'targetTags': [context.properties['infra_id'] + '-bootstrap']
         }
     }, {
@@ -21,23 +21,7 @@ def GenerateConfig(context):
                 'IPProtocol': 'tcp',
                 'ports': ['6443']
             }],
-            'sourceRanges':  ['0.0.0.0/0'],
-            'targetTags': [context.properties['infra_id'] + '-master']
-        }
-    }, {
-        'name': context.properties['infra_id'] + '-mcs',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['22623']
-            }],
-            'sourceRanges':  [
-                context.properties['network_cidr'],
-                context.properties['master_nat_ip'],
-                context.properties['worker_nat_ip']
-            ],
+            'sourceRanges': [context.properties['allowed_external_cidr']],
             'targetTags': [context.properties['infra_id'] + '-master']
         }
     }, {
@@ -47,7 +31,7 @@ def GenerateConfig(context):
             'network': context.properties['cluster_network'],
             'allowed': [{
                 'IPProtocol': 'tcp',
-                'ports': ['6080', '22624']
+                'ports': ['6080', '6443', '22624']
             }],
             'sourceRanges': ['35.191.0.0/16', '130.211.0.0/22', '209.85.152.0/22', '209.85.204.0/22'],
             'targetTags': [context.properties['infra_id'] + '-master']
@@ -75,6 +59,9 @@ def GenerateConfig(context):
             },{
                 'IPProtocol': 'tcp',
                 'ports': ['10259']
+            },{
+                'IPProtocol': 'tcp',
+                'ports': ['22623']
             }],
             'sourceTags': [
                 context.properties['infra_id'] + '-master',
@@ -93,7 +80,7 @@ def GenerateConfig(context):
                 'IPProtocol': 'tcp',
                 'ports': ['22']
             }],
-            'sourceRanges':  [context.properties['network_cidr']],
+            'sourceRanges': [context.properties['network_cidr']],
             'targetTags': [
                 context.properties['infra_id'] + '-master',
                 context.properties['infra_id'] + '-worker'
