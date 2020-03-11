@@ -39,8 +39,8 @@ type Platform struct {
 	// cluster supports Octavia Loadbalancing.
 	OctaviaSupport string `json:"octaviaSupport"`
 
-	// ClusterOSImage is either a URL to override the default OS image
-	// for cluster nodes or an existing Glance image name.
+	// ClusterOSImage is either a URL with `http(s)` or `file` scheme to override
+	// the default OS image for cluster nodes, or an existing Glance image name.
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
 }
