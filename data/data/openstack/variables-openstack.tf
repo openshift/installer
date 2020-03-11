@@ -257,6 +257,26 @@ EOF
 
 }
 
+variable "openstack_neutron_cidr" {
+  type = string
+  default = ""
+
+  description = <<EOF
+(optional) Neutron CIDR string
+EOF
+
+}
+
+variable "openstack_neutron_cidr_end" {
+  type = number
+  default = 11
+
+  description = <<EOF
+(optional) Neutron CIDR allocation end.
+EOF
+
+}
+
 variable "openstack_external_network_id" {
   type    = string
   default = ""

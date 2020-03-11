@@ -181,6 +181,10 @@ func (p *Platform) Name() string {
 
 // Networking defines the pod network provider in the cluster.
 type Networking struct {
+
+        // Neutron CIDR consumed in Config.Platform
+        NeutronCIDR *ipnet.IPNet
+
 	// NetworkType is the type of network to install.
 	// +optional
 	// Default is OpenShiftSDN.

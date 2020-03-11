@@ -4,6 +4,9 @@ package openstack
 import (
 	"encoding/json"
 	"fmt"
+        "math"
+        "strconv"
+        "strings"
 
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
@@ -27,6 +30,8 @@ type config struct {
 	BaseImageLocalFilePath string            `json:"openstack_base_image_local_file_path,omitempty"`
 	ExternalNetwork        string            `json:"openstack_external_network,omitempty"`
         AciNetExt              AciNetExtStruct   `json:"openstack_aci_net_ext",omitempty`
+        NeutronCIDR            string            `json:"openstack_neutron_cidr",omitempty`
+        NeutronCIDREnd         int               `json:"openstack_neutron_cidr_end",omitempty`
 	Cloud                  string            `json:"openstack_credentials_cloud,omitempty"`
 	FlavorName             string            `json:"openstack_master_flavor_name,omitempty"`
 	LbFloatingIP           string            `json:"openstack_lb_floating_ip,omitempty"`
@@ -42,11 +47,16 @@ type config struct {
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, aciNetExtInput AciNetExtStruct, externalDNS []string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string, baseImage string, infraID string, userCA string, bootstrapIgn string) ([]byte, error) {
+func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, aciNetExtInput AciNetExtStruct, neutronCIDR string, externalDNS []string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string, baseImage string, infraID string, userCA string, bootstrapIgn string) ([]byte, error) {
+
+        neutron_mask, _ := strconv.Atoi(strings.Split(neutronCIDR, "/")[1])
+        neutron_end := int(math.Pow(2, float64(32 - neutron_mask)) - 2)
 
 	cfg := &config{
 		ExternalNetwork: externalNetwork,
                 AciNetExt:       aciNetExtInput,
+                NeutronCIDR:     neutronCIDR,
+                NeutronCIDREnd:  neutron_end,
 		Cloud:           cloud,
 		FlavorName:      masterConfig.Flavor,
 		LbFloatingIP:    lbFloatingIP,
