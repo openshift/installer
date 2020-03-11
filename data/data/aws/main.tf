@@ -13,6 +13,14 @@ provider "aws" {
   # Validation of AWS Bahrain region was added in AWS TF provider v2.22
   # so we skip when installing in me-south-1.
   skip_region_validation = var.aws_region == "me-south-1"
+
+  endpoints {
+    s3      = lookup(var.custom_endpoints, "s3", null)
+    ec2     = lookup(var.custom_endpoints, "ec2", null)
+    elb     = lookup(var.custom_endpoints, "elasticloadbalancing", null)
+    iam     = lookup(var.custom_endpoints, "iam", null)
+    route53 = lookup(var.custom_endpoints, "route53", null)
+  }
 }
 
 module "bootstrap" {

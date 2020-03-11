@@ -9,11 +9,13 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
+	typesaws "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/aws/defaults"
 )
 
 type config struct {
 	AMI                     string            `json:"aws_ami"`
+	CustomEndpoints         map[string]string `json:"custom_endpoints,omitempty"`
 	ExtraTags               map[string]string `json:"aws_extra_tags,omitempty"`
 	BootstrapInstanceType   string            `json:"aws_bootstrap_instance_type,omitempty"`
 	MasterInstanceType      string            `json:"aws_master_instance_type,omitempty"`
@@ -35,6 +37,7 @@ type config struct {
 type TFVarsSources struct {
 	VPC                           string
 	PrivateSubnets, PublicSubnets []string
+	Services                      []typesaws.ServiceEndpoint
 
 	Publish types.PublishingStrategy
 
@@ -44,6 +47,12 @@ type TFVarsSources struct {
 // TFVars generates AWS-specific Terraform variables launching the cluster.
 func TFVars(sources TFVarsSources) ([]byte, error) {
 	masterConfig := sources.MasterConfigs[0]
+
+	endpoints := make(map[string]string)
+	for _, service := range sources.Services {
+		service := service
+		endpoints[service.Name] = service.URL
+	}
 
 	tags := make(map[string]string, len(masterConfig.Tags))
 	for _, tag := range masterConfig.Tags {
@@ -89,6 +98,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	instanceClass := defaults.InstanceClass(masterConfig.Placement.Region)
 
 	cfg := &config{
+		CustomEndpoints:         endpoints,
 		Region:                  masterConfig.Placement.Region,
 		ExtraTags:               tags,
 		AMI:                     *masterConfig.AMI.ID,

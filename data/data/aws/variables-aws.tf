@@ -7,6 +7,19 @@ EOF
   default = "1.0"
 }
 
+variable "custom_endpoints" {
+  type = map(string)
+
+  description = <<EOF
+(optional) Custom AWS endpoints to override existing services.
+Check - https://www.terraform.io/docs/providers/aws/guides/custom-service-endpoints.html
+
+Example: `{ "key" = "value", "foo" = "bar" }`
+EOF
+
+  default = {}
+}
+
 variable "aws_bootstrap_instance_type" {
   type = string
   description = "Instance type for the bootstrap node. Example: `m4.large`."
