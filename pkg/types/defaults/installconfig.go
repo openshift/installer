@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	defaultMachineCIDR    = ipnet.MustParseCIDR("10.0.0.0/16")
+	defaultMachineCIDR    = ipnet.MustParseCIDR("10.0.0.0/24")
 	defaultServiceNetwork = ipnet.MustParseCIDR("172.30.0.0/16")
 	defaultClusterNetwork = ipnet.MustParseCIDR("10.128.0.0/14")
 	defaultHostPrefix     = 23
@@ -76,7 +76,7 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	case c.Platform.Libvirt != nil:
 		libvirtdefaults.SetPlatformDefaults(c.Platform.Libvirt)
 	case c.Platform.OpenStack != nil:
-		openstackdefaults.SetPlatformDefaults(c.Platform.OpenStack)
+		openstackdefaults.SetPlatformDefaults(c.Platform.OpenStack, c)
 	case c.Platform.VSphere != nil:
 		vspheredefaults.SetPlatformDefaults(c.Platform.VSphere, c)
 	case c.Platform.BareMetal != nil:

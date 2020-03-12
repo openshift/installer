@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+        "net"
 	"os"
 	"path"
 	"path/filepath"
@@ -148,19 +149,21 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
         defaultGateway, _ := cidr.Host(machineCIDR, 1)
         kube_api_vlan := installConfig.Config.Platform.OpenStack.AciNetExt.KubeApiVLAN
         mtu_value := installConfig.Config.Platform.OpenStack.AciNetExt.Mtu
-        if mtu_value == "" {
-                mtu_value = "1500"
-        }
         networkScriptString, _ := ign.NetworkScript(kube_api_vlan, defaultGateway.String(), mtu_value)
         logrus.Debug(string(networkScriptString))
 
-        logrus.Info("Editing Bootstrap.........")
+        neutronCIDR := &installConfig.Config.Platform.OpenStack.NeutronCIDR.IPNet
+        defaultNeutronGateway, _ := cidr.Host(neutronCIDR, 1)
+        defaultNeutronGatewayStr := defaultNeutronGateway.String()
 
-        a.Config.Storage.Files = append(a.Config.Storage.Files,ignition.FileFromString("/usr/local/bin/kube-api-interface.sh", "root", 0555, string(networkScriptString)),
-			ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-ens3.4094", "root", 0365, `DEVICE=ens3.4094
+        installerHostSubnet := installConfig.Config.Platform.OpenStack.InstallerHostSubnet
+        installerHostIP, installerHostNet, _ := net.ParseCIDR(installerHostSubnet)
+        installerNetmask := net.IP(installerHostNet.Mask)
+
+        ifcfg_ens3_string := `DEVICE=ens3.4094
                ONBOOT=yes
                BOOTPROTO=dhcp
-               MTU=1500
+               MTU=` + mtu_value + `
                TYPE=Vlan
                VLAN=yes
                PHYSDEV=ens3
@@ -172,7 +175,9 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
                BROWSER_ONLY=no
                DEFROUTE=no
                IPV4_FAILURE_FATAL=no
-               IPV6INIT=no`),ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-opflex-conn", "root", 0420, `VLAN=yes
+               IPV6INIT=no`
+
+        ifcfg_opflex_conn_string := `VLAN=yes
                TYPE=Vlan
                PHYSDEV=ens3
                VLAN_ID=4093
@@ -188,7 +193,9 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
                NAME=opflex-conn
                DEVICE=ens3.4093
                ONBOOT=yes
-               MTU=1500`),ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-uplink-conn", "root", 0420, `TYPE=Ethernet
+               MTU=` + mtu_value
+
+        ifcfg_uplink_conn_string := `TYPE=Ethernet
                PROXY_METHOD=none
                BROWSER_ONLY=no
                DEFROUTE=yes
@@ -198,12 +205,26 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
                DEVICE=ens3
                ONBOOT=yes
                BOOTPROTO=none
-               MTU=1500`),ignition.FileFromString("/etc/sysconfig/network-scripts/route-opflex-conn", "root", 0420, `ADDRESS0=224.0.0.0
+               MTU=` + mtu_value
+
+        route_opflex_conn_string := `ADDRESS0=224.0.0.0
                NETMASK0=240.0.0.0
-               METRIC0=1000`),ignition.FileFromString("/etc/sysconfig/network-scripts/route-ens3.4094", "root", 0420, `ADDRESS0=1.103.2.0
-               NETMASK0=255.255.255.0
+               METRIC0=1000`
+
+        route_ens3_string := `ADDRESS0=` + installerHostIP.String() + `
+               NETMASK0=` + installerNetmask.String() + `
                METRIC0=1000
-               GATEWAY0=192.168.0.1`))
+               GATEWAY0=` + defaultNeutronGatewayStr
+
+        logrus.Info("Editing Bootstrap.........")
+
+        a.Config.Storage.Files = append(a.Config.Storage.Files,
+                        ignition.FileFromString("/usr/local/bin/kube-api-interface.sh", "root", 0555, string(networkScriptString)),
+			ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-ens3.4094", "root", 0420, ifcfg_ens3_string),
+                        ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-opflex-conn", "root", 0420, ifcfg_opflex_conn_string),
+                        ignition.FileFromString("/etc/sysconfig/network-scripts/ifcfg-uplink-conn", "root", 0420, ifcfg_uplink_conn_string),
+                        ignition.FileFromString("/etc/sysconfig/network-scripts/route-opflex-conn", "root", 0420, route_opflex_conn_string),
+                        ignition.FileFromString("/etc/sysconfig/network-scripts/route-ens3.4094", "root", 0420, route_ens3_string))
 	err = a.addSystemdUnits("bootstrap/systemd/units", templateData)
 	if err != nil {
 		return err

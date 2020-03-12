@@ -1,6 +1,9 @@
 package openstack
 
-import "github.com/openshift/installer/pkg/tfvars/openstack"
+import (
+        "github.com/openshift/installer/pkg/ipnet"
+        "github.com/openshift/installer/pkg/tfvars/openstack"
+)
 
 // Platform stores all the global configuration that all
 // machinesets use.
@@ -23,6 +26,12 @@ type Platform struct {
 
         // AciNetExt is the name of the map for APIC nested domain fields
         AciNetExt openstack.AciNetExtStruct `json:"aciNetExt"`
+
+        // Neutron CIDR 
+        NeutronCIDR *ipnet.IPNet `json:"neutronCIDR,omitempty"`
+
+        // Installer host subnet
+        InstallerHostSubnet string `json:"installer_host_subnet",omitempty`
 
 	// FlavorName is the name of the compute flavor to use for instances in this cluster.
 	FlavorName string `json:"computeFlavor"`
