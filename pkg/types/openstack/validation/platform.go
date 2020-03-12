@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -49,24 +48,6 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 			allErrs = append(allErrs, field.InternalError(fldPath.Child("computeFlavor"), errors.New("could not retrieve valid flavors")))
 		} else if !isValidValue(p.FlavorName, validFlavors) {
 			allErrs = append(allErrs, field.NotSupported(fldPath.Child("computeFlavor"), p.FlavorName, validFlavors))
-		}
-		p.TrunkSupport = "0"
-		netExts, err := fetcher.GetNetworkExtensionsAliases(p.Cloud)
-		if err != nil {
-			logrus.Warning("Could not retrieve networking extension aliases. Assuming trunk ports are not supported.")
-		} else {
-			if isValidValue("trunk", netExts) {
-				p.TrunkSupport = "1"
-			}
-		}
-		p.OctaviaSupport = "0"
-		serviceCatalog, err := fetcher.GetServiceCatalog(p.Cloud)
-		if err != nil {
-			logrus.Warning("Could not retrieve service catalog. Assuming there is no Octavia load balancer service available.")
-		} else {
-			if isValidValue("octavia", serviceCatalog) {
-				p.OctaviaSupport = "1"
-			}
 		}
 	}
 	if p.DefaultMachinePlatform != nil {
