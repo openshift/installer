@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/utils/openstack/clientconfig"
@@ -155,26 +157,17 @@ func validateOverriddenImageName(imageName, cloud string) error {
 
 // getGlancePublicURL obtains Glance public endpoint URL
 func getGlancePublicURL(cloud string) (string, error) {
-	var glancePublicURL string
 	serviceCatalog, err := getServiceCatalog(cloud)
 	if err != nil {
 		return "", err
 	}
 
-	for _, svc := range serviceCatalog.Entries {
-		if svc.Type == "image" {
-			for _, e := range svc.Endpoints {
-				if e.Interface == "public" {
-					glancePublicURL = e.URL
-					break
-				}
-			}
-			break
-		}
-	}
-
-	if glancePublicURL == "" {
-		return "", errors.Errorf("cannot retrieve Glance URL from the service catalog")
+	glancePublicURL, err := openstack.V3EndpointURL(serviceCatalog, gophercloud.EndpointOpts{
+		Type:         "image",
+		Availability: gophercloud.AvailabilityPublic,
+	})
+	if err != nil {
+		return "", errors.Errorf("cannot retrieve Glance URL from the service catalog: %v", err)
 	}
 
 	return glancePublicURL, nil
