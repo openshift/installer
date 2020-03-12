@@ -23,9 +23,9 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `externalDNS` (optional list of strings): The IP addresses of DNS servers to be used for the DNS resolution of all instances in the cluster
 * `externalNetwork` (required string): The OpenStack external network name to be used for installation.
 * `lbFloatingIP` (required string): Existing Floating IP to associate with the API load balancer.
-* `octaviaSupport` (optional string): Whether OpenStack supports Octavia (`1` for true or `0` for false)
+* `octaviaSupport` (deprecated string): Whether OpenStack supports Octavia (`1` for true or `0` for false)
 * `region` (deprecated string): The OpenStack region where the cluster will be created. Currently this value is not used by the installer.
-* `trunkSupport` (optional string): Whether OpenStack ports can be trunked (`1` for true or `0` for false)
+* `trunkSupport` (deprecated string): Whether OpenStack ports can be trunked (`1` for true or `0` for false)
 * `clusterOSImage` (optional string): Either a URL with `http(s)` or `file` scheme to override the default OS image for cluster nodes or an existing Glance image name.
 * `apiVIP` (optional string): An IP addresss on the machineNetwork that will be assigned to the API VIP. Be aware that the `10` and `11` of the machineNetwork will be taken by neutron dhcp by default, and wont be available.
 * `ingressVIP` (optional string): An IP address on the machineNetwork that will be assigned to the ingress VIP. Be aware that the `10` and `11` of the machineNetwork will be taken by neutron dhcp by default, and wont be available.
