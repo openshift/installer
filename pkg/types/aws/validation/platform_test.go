@@ -24,9 +24,9 @@ func TestValidatePlatform(t *testing.T) {
 		{
 			name: "invalid region",
 			platform: &aws.Platform{
-				Region: "bad-region",
+				Region: "",
 			},
-			expected: `^test-path\.region: Unsupported value: "bad-region": supported values: .*$`,
+			expected: `^test-path\.region: Required value: region must be specified$`,
 		},
 		{
 			name: "invalid url for service endpoint",
