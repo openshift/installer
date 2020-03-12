@@ -942,8 +942,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			fetcher.EXPECT().GetCloudNames().Return([]string{"test-cloud"}, nil).AnyTimes()
 			fetcher.EXPECT().GetNetworkNames(gomock.Any()).Return([]string{"test-network"}, nil).AnyTimes()
 			fetcher.EXPECT().GetFlavorNames(gomock.Any()).Return([]string{"test-flavor"}, nil).AnyTimes()
-			fetcher.EXPECT().GetNetworkExtensionsAliases(gomock.Any()).Return([]string{"trunk"}, nil).AnyTimes()
-			fetcher.EXPECT().GetServiceCatalog(gomock.Any()).Return([]string{"octavia"}, nil).AnyTimes()
 
 			err := ValidateInstallConfig(tc.installConfig, fetcher).ToAggregate()
 			if tc.expectedError == "" {

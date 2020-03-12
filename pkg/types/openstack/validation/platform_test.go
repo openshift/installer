@@ -39,8 +39,6 @@ func TestValidatePlatform(t *testing.T) {
 		noClouds              bool
 		noNetworks            bool
 		noFlavors             bool
-		noNetExts             bool
-		noServiceCatalog      bool
 		validMachinesSubnet   bool
 		invalidMachinesSubnet bool
 		valid                 bool
@@ -125,20 +123,6 @@ func TestValidatePlatform(t *testing.T) {
 			networking: validNetworking(),
 			noFlavors:  true,
 			valid:      false,
-		},
-		{
-			name:       "network extensions fetch failure",
-			platform:   validPlatform(),
-			networking: validNetworking(),
-			noNetExts:  true,
-			valid:      true,
-		},
-		{
-			name:             "service catalog fetch failure",
-			platform:         validPlatform(),
-			networking:       validNetworking(),
-			noServiceCatalog: true,
-			valid:            true,
 		},
 		{
 			name: "valid custom API vip",
@@ -282,24 +266,6 @@ func TestValidatePlatform(t *testing.T) {
 			} else {
 				fetcher.EXPECT().GetFlavorNames(tc.platform.Cloud).
 					Return([]string{"test-flavor"}, nil).
-					MaxTimes(1)
-			}
-			if tc.noNetExts {
-				fetcher.EXPECT().GetNetworkExtensionsAliases(tc.platform.Cloud).
-					Return(nil, errors.New("no network extensions")).
-					MaxTimes(1)
-			} else {
-				fetcher.EXPECT().GetNetworkExtensionsAliases(tc.platform.Cloud).
-					Return([]string{"trunk"}, nil).
-					MaxTimes(1)
-			}
-			if tc.noServiceCatalog {
-				fetcher.EXPECT().GetServiceCatalog(tc.platform.Cloud).
-					Return(nil, errors.New("no service catalog")).
-					MaxTimes(1)
-			} else {
-				fetcher.EXPECT().GetServiceCatalog(tc.platform.Cloud).
-					Return([]string{"octavia"}, nil).
 					MaxTimes(1)
 			}
 			if tc.validMachinesSubnet {
