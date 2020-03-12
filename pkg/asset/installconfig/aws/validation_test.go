@@ -25,6 +25,7 @@ func validInstallConfig() *types.InstallConfig {
 		Publish: types.ExternalPublishingStrategy,
 		Platform: types.Platform{
 			AWS: &aws.Platform{
+				Region: "us-east-1",
 				Subnets: []string{
 					"valid-private-subnet-a",
 					"valid-private-subnet-b",
@@ -90,6 +91,31 @@ func validPublicSubnets() map[string]Subnet {
 	}
 }
 
+func validServiceEndpoints() []aws.ServiceEndpoint {
+	return []aws.ServiceEndpoint{{
+		Name: "ec2",
+		URL:  "e2e.local",
+	}, {
+		Name: "s3",
+		URL:  "e2e.local",
+	}, {
+		Name: "iam",
+		URL:  "e2e.local",
+	}, {
+		Name: "elasticloadbalancing",
+		URL:  "e2e.local",
+	}, {
+		Name: "tagging",
+		URL:  "e2e.local",
+	}, {
+		Name: "route53",
+		URL:  "e2e.local",
+	}, {
+		Name: "sts",
+		URL:  "e2e.local",
+	}}
+}
+
 func TestValidate(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -102,7 +128,7 @@ func TestValidate(t *testing.T) {
 		name: "valid no byo",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS = &aws.Platform{}
+			c.Platform.AWS = &aws.Platform{Region: "us-east-1"}
 			return c
 		}(),
 		availZones: validAvailZones(),
@@ -315,6 +341,55 @@ func TestValidate(t *testing.T) {
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
 		exptectErr:     `^\[compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\", \"d\"}: No subnets provided for zones \[d\], compute\[1\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"e\"}: No subnets provided for zones \[e\]\]$`,
+	}, {
+		name: "custom region invalid service endpoints none provided",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "test-region"
+			c.Platform.AWS.AMIID = "dummy-id"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		exptectErr:     `^platform\.aws\.serviceEndpoints: Invalid value: (.|\n)*: \[failed to find endpoint for service "ec2": (.|\n)*, failed to find endpoint for service "elasticloadbalancing": (.|\n)*, failed to find endpoint for service "iam": (.|\n)*, failed to find endpoint for service "route53": (.|\n)*, failed to find endpoint for service "s3": (.|\n)*, failed to find endpoint for service "sts": (.|\n)*, failed to find endpoint for service "tagging": (.|\n)*\]$`,
+	}, {
+		name: "custom region invalid service endpoints some provided",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "test-region"
+			c.Platform.AWS.AMIID = "dummy-id"
+			c.Platform.AWS.ServiceEndpoints = validServiceEndpoints()[:3]
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		exptectErr:     `^platform\.aws\.serviceEndpoints: Invalid value: (.|\n)*: \[failed to find endpoint for service "elasticloadbalancing": (.|\n)*, failed to find endpoint for service "route53": (.|\n)*, failed to find endpoint for service "sts": (.|\n)*, failed to find endpoint for service "tagging": (.|\n)*$`,
+	}, {
+		name: "custom region valid service endpoints",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "test-region"
+			c.Platform.AWS.AMIID = "dummy-id"
+			c.Platform.AWS.ServiceEndpoints = validServiceEndpoints()
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+	}, {
+		name: "AMI not provided for unknown region",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "test-region"
+			c.Platform.AWS.ServiceEndpoints = validServiceEndpoints()
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		exptectErr:     `^platform\.aws\.amiID: Required value: AMI must be provided$`,
 	}}
 
 	for _, test := range tests {
