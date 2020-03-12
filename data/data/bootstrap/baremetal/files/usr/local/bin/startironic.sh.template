@@ -101,16 +101,20 @@ done
 # plane.  We are using iptables instead of dnsmasq's dhcp-host because
 # DHCPv6 wants to use DUID's instead of mac addresses.
 {{if .PlatformData.BareMetal.ProvisioningDHCPAllowList}}
-$IPTABLES -t raw -N DHCP
-$IPTABLES -t raw -A PREROUTING -p udp --dport 67 -j DHCP
-$IPTABLES -t raw -A PREROUTING -p udp --dport 547 -j DHCP
+iptables -n --list DHCP > /dev/null 2>&1
+IPTABLES_DHCP_NOT_FOUND=$?
+if [[ $IPTABLES_DHCP_NOT_FOUND ]]; then
+  $IPTABLES -t raw -N DHCP
+  $IPTABLES -t raw -A PREROUTING -p udp --dport 67 -j DHCP
+  $IPTABLES -t raw -A PREROUTING -p udp --dport 547 -j DHCP
 
-for mac in {{.PlatformData.BareMetal.ProvisioningDHCPAllowList}}
-do
-  $IPTABLES -t raw -A DHCP -m mac --mac-source "$mac" -j ACCEPT
-done
+  for mac in {{.PlatformData.BareMetal.ProvisioningDHCPAllowList}}
+  do
+    $IPTABLES -t raw -A DHCP -m mac --mac-source "$mac" -j ACCEPT
+  done
 
-$IPTABLES -t raw -A DHCP -j DROP
+  $IPTABLES -t raw -A DHCP -j DROP
+fi
 {{end}}
 
 # Wait for images to be downloaded/ready
