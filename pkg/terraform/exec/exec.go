@@ -30,6 +30,12 @@ var commands = map[string]cmdFunc{
 	"init": func(meta command.Meta) cli.Command {
 		return &command.InitCommand{Meta: meta}
 	},
+	"plan": func(meta command.Meta) cli.Command {
+		return &command.PlanCommand{Meta: meta}
+	},
+	"show": func(meta command.Meta) cli.Command {
+		return &command.ShowCommand{Meta: meta}
+	},
 }
 
 func runner(cmd string, dir string, args []string, stdout, stderr io.Writer) int {
@@ -103,6 +109,16 @@ func Destroy(datadir string, args []string, stdout, stderr io.Writer) int {
 // Init is wrapper around `terraform init` subcommand.
 func Init(datadir string, args []string, stdout, stderr io.Writer) int {
 	return runner("init", datadir, args, stdout, stderr)
+}
+
+// Plan is wrapper around `terraform plan` subcommand.
+func Plan(datadir string, args []string, stdout, stderr io.Writer) int {
+	return runner("plan", datadir, args, stdout, stderr)
+}
+
+// Show is wrapper around `terraform show` subcommand.
+func Show(datadir string, args []string, stdout, stderr io.Writer) int {
+	return runner("show", datadir, args, stdout, stderr)
 }
 
 // makeShutdownCh creates an interrupt listener and returns a channel.

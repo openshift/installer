@@ -1,6 +1,7 @@
 package terraform
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -22,6 +23,50 @@ const (
 	// VarFileName is the default name for Terraform var file.
 	VarFileName string = "terraform.tfvars"
 )
+
+// Plan unpacks the platform-specific Terraform modules into the given directory
+// and then runs 'terraform init' and 'terraform plan'.  It returns the absolute
+// path of a JSON-serialized Terraform plan file, rooted in the specified
+// directory, along with any errors from Terraform.
+func Plan(dir string, platform string, extraArgs ...string) (path string, err error) {
+	err = unpackAndInit(dir, platform)
+	if err != nil {
+		return "", err
+	}
+
+	tDebug := &lineprinter.Trimmer{WrappedPrint: logrus.Debug}
+	tError := &lineprinter.Trimmer{WrappedPrint: logrus.Error}
+	lpDebug := &lineprinter.LinePrinter{Print: tDebug.Print}
+	lpError := &lineprinter.LinePrinter{Print: tError.Print}
+	defer lpDebug.Close()
+	defer lpError.Close()
+
+	planFile := filepath.Join(dir, "terraform.plan")
+	planArgs := []string{
+		"-input=false",
+		fmt.Sprintf("-state=%s", filepath.Join(dir, StateFileName)),
+		fmt.Sprintf("-out=%s", planFile),
+	}
+	planArgs = append(planArgs, extraArgs...)
+	planArgs = append(planArgs, dir)
+	if exitCode := texec.Plan(dir, planArgs, lpDebug, lpError); exitCode != 0 {
+		return "", errors.New("failed to plan using Terraform")
+	}
+	planJSONFilePath := filepath.Join(dir, "terraform-plan.json")
+	planJSONFile, err := os.Create(planJSONFilePath)
+	if err != nil {
+		return "", err
+	}
+	showArgs := []string{
+		"-json",
+		planFile,
+	}
+	if exitCode := texec.Show(dir, showArgs, bufio.NewWriter(planJSONFile), lpError); exitCode != 0 {
+		return "", errors.New("failed to show plan using Terraform")
+	}
+	planJSONFile.Close()
+	return planJSONFilePath, nil
+}
 
 // Apply unpacks the platform-specific Terraform modules into the
 // given directory and then runs 'terraform init' and 'terraform

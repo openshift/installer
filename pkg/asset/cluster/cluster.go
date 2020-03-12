@@ -80,6 +80,23 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		}
 	}
 
+	if len(os.Getenv("PLAN_ONLY")) > 0 {
+		logrus.Warn("Creating Terraform plan and exiting; plan will NOT BE APPLIED")
+		if planFile, err := terraform.Plan(tmpDir, installConfig.Config.Platform.Name(), extraArgs...); err == nil {
+			if data, readErr := ioutil.ReadFile(planFile); readErr == nil {
+				c.FileList = append(c.FileList, &asset.File{
+					Filename: "terraform-plan.json",
+					Data:     data,
+				})
+				return errors.New("created plan and intentionally failing")
+			} else {
+				return errors.Wrap(readErr, "failed to read plan")
+			}
+		} else {
+			return errors.Wrap(err, "failed to create plan")
+		}
+	}
+
 	stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name(), extraArgs...)
 	if err != nil {
 		err = errors.Wrap(err, "failed to create cluster")
