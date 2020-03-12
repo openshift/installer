@@ -84,8 +84,6 @@ module "dns" {
   cluster_id           = var.cluster_id
   public_dns_zone_name = var.gcp_public_dns_zone_name
   network              = module.network.network
-  etcd_ip_addresses    = flatten(module.master.ip_addresses)
-  etcd_count           = var.master_count
   cluster_domain       = var.cluster_domain
   api_external_lb_ip   = module.network.cluster_public_ip
   api_internal_lb_ip   = module.network.cluster_ip
