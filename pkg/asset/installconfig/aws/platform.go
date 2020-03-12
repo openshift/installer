@@ -5,18 +5,19 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/openshift/installer/pkg/types/aws"
-	"github.com/openshift/installer/pkg/types/aws/validation"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
+
+	"github.com/openshift/installer/pkg/types/aws"
 )
 
 // Platform collects AWS-specific configuration.
 func Platform() (*aws.Platform, error) {
-	longRegions := make([]string, 0, len(validation.Regions))
-	shortRegions := make([]string, 0, len(validation.Regions))
-	for id, location := range validation.Regions {
+	regions := knownRegions()
+	longRegions := make([]string, 0, len(regions))
+	shortRegions := make([]string, 0, len(regions))
+	for id, location := range regions {
 		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", id, location))
 		shortRegions = append(shortRegions, id)
 	}
@@ -25,8 +26,7 @@ func Platform() (*aws.Platform, error) {
 	})
 
 	defaultRegion := "us-east-1"
-	_, ok := validation.Regions[defaultRegion]
-	if !ok {
+	if !IsKnownRegion(defaultRegion) {
 		panic(fmt.Sprintf("installer bug: invalid default AWS region %q", defaultRegion))
 	}
 
@@ -37,8 +37,7 @@ func Platform() (*aws.Platform, error) {
 
 	defaultRegionPointer := ssn.Config.Region
 	if defaultRegionPointer != nil && *defaultRegionPointer != "" {
-		_, ok := validation.Regions[*defaultRegionPointer]
-		if ok {
+		if IsKnownRegion(*defaultRegionPointer) {
 			defaultRegion = *defaultRegionPointer
 		} else {
 			logrus.Warnf("Unrecognized AWS region %q, defaulting to %s", *defaultRegionPointer, defaultRegion)
@@ -54,7 +53,7 @@ func Platform() (*aws.Platform, error) {
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The AWS region to be used for installation.",
-				Default: fmt.Sprintf("%s (%s)", defaultRegion, validation.Regions[defaultRegion]),
+				Default: fmt.Sprintf("%s (%s)", defaultRegion, regions[defaultRegion]),
 				Options: longRegions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
