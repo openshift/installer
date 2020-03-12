@@ -5,5 +5,5 @@ metadata:
   name: version
 spec:
   upstream: https://api.openshift.com/api/upgrades_info/v1/graph
-  channel: stable-4.4
+  channel: stable-4.5
   clusterID: {{.CVOClusterID}}
