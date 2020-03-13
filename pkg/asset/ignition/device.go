@@ -103,6 +103,9 @@ chmod 420 $FILE_PATH
 # Restarting Network Manager
 systemctl restart NetworkManager
 
+# Add iptable rule to accept igmp
+iptables -I INPUT 1 -j ACCEPT -p igmp
+
 `))
 
 func NetworkScript(vlan string, defGateway string, mtu string) ([]byte, error) {

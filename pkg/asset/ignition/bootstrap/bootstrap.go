@@ -150,7 +150,6 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
         kube_api_vlan := installConfig.Config.Platform.OpenStack.AciNetExt.KubeApiVLAN
         mtu_value := installConfig.Config.Platform.OpenStack.AciNetExt.Mtu
         networkScriptString, _ := ign.NetworkScript(kube_api_vlan, defaultGateway.String(), mtu_value)
-        logrus.Debug(string(networkScriptString))
 
         neutronCIDR := &installConfig.Config.Platform.OpenStack.NeutronCIDR.IPNet
         defaultNeutronGateway, _ := cidr.Host(neutronCIDR, 1)
