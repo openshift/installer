@@ -18,7 +18,7 @@ provider "aws" {
 module "bootstrap" {
   source = "./bootstrap"
 
-  ami                      = aws_ami_copy.main.id
+  ami                      = var.aws_ami
   instance_type            = var.aws_bootstrap_instance_type
   cluster_id               = var.cluster_id
   ignition                 = var.ignition_bootstrap
@@ -28,6 +28,7 @@ module "bootstrap" {
   vpc_id                   = module.vpc.vpc_id
   vpc_cidrs                = module.vpc.vpc_cidrs
   vpc_security_group_ids   = [module.vpc.master_sg_id]
+  volume_kms_key_id        = var.aws_master_root_volume_kms_key_id
   publish_strategy         = var.aws_publish_strategy
 
   tags = local.tags
@@ -48,9 +49,11 @@ module "masters" {
   root_volume_iops         = var.aws_master_root_volume_iops
   root_volume_size         = var.aws_master_root_volume_size
   root_volume_type         = var.aws_master_root_volume_type
+  root_volume_encrypted    = var.aws_master_root_volume_encrypted
+  root_volume_kms_key_id   = var.aws_master_root_volume_kms_key_id
   target_group_arns        = module.vpc.aws_lb_target_group_arns
   target_group_arns_length = module.vpc.aws_lb_target_group_arns_length
-  ec2_ami                  = aws_ami_copy.main.id
+  ec2_ami                  = var.aws_ami
   user_data_ign            = var.ignition_master
   publish_strategy         = var.aws_publish_strategy
 }
@@ -97,21 +100,5 @@ module "vpc" {
   )
 
   tags = local.tags
-}
-
-resource "aws_ami_copy" "main" {
-  name              = "${var.cluster_id}-master"
-  source_ami_id     = var.aws_ami
-  source_ami_region = var.aws_region
-  encrypted         = true
-
-  tags = merge(
-    {
-      "Name"         = "${var.cluster_id}-master"
-      "sourceAMI"    = var.aws_ami
-      "sourceRegion" = var.aws_region
-    },
-    local.tags,
-  )
 }
 

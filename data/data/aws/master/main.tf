@@ -6,6 +6,8 @@ locals {
 
 data "aws_partition" "current" {}
 
+data "aws_ebs_default_kms_key" "current" {}
+
 resource "aws_iam_instance_profile" "master" {
   name = "${var.cluster_id}-master-profile"
 
@@ -121,6 +123,8 @@ resource "aws_instance" "master" {
     volume_type = var.root_volume_type
     volume_size = var.root_volume_size
     iops        = var.root_volume_type == "io1" ? var.root_volume_iops : 0
+    encrypted   = var.root_volume_encrypted
+    kms_key_id  = var.root_volume_kms_key_id == "" ? data.aws_ebs_default_kms_key.current.key_arn : var.root_volume_kms_key_id
   }
 
   volume_tags = merge(
