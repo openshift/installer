@@ -21,18 +21,23 @@ EOF
 }
 
 variable "aws_bootstrap_instance_type" {
-  type = string
+  type        = string
   description = "Instance type for the bootstrap node. Example: `m4.large`."
 }
 
 variable "aws_master_instance_type" {
-  type = string
+  type        = string
   description = "Instance type for the master node(s). Example: `m4.large`."
 }
 
 variable "aws_ami" {
-  type = string
+  type        = string
   description = "AMI for all nodes.  An encrypted copy of this AMI will be used.  Example: `ami-foobar123`."
+}
+
+variable "aws_ami_region" {
+  type        = string
+  description = "Region for the AMI for all nodes.  An encrypted copy of this AMI will be used.  Example: `ami-foobar123`."
 }
 
 variable "aws_extra_tags" {
@@ -89,39 +94,39 @@ EOF
 }
 
 variable "aws_region" {
-  type = string
+  type        = string
   description = "The target AWS region for the cluster."
 }
 
 variable "aws_master_availability_zones" {
-  type = list(string)
+  type        = list(string)
   description = "The availability zones in which to create the masters. The length of this list must match master_count."
 }
 
 variable "aws_worker_availability_zones" {
-  type = list(string)
+  type        = list(string)
   description = "The availability zones to provision for workers.  Worker instances are created by the machine-API operator, but this variable controls their supporting infrastructure (subnets, routing, etc.)."
 }
 
 variable "aws_vpc" {
-  type = string
-  default = null
+  type        = string
+  default     = null
   description = "(optional) An existing network (VPC ID) into which the cluster should be installed."
 }
 
 variable "aws_public_subnets" {
-  type = list(string)
-  default = null
+  type        = list(string)
+  default     = null
   description = "(optional) Existing public subnets into which the cluster should be installed."
 }
 
 variable "aws_private_subnets" {
-  type = list(string)
-  default = null
+  type        = list(string)
+  default     = null
   description = "(optional) Existing private subnets into which the cluster should be installed."
 }
 
 variable "aws_publish_strategy" {
-  type = string
+  type        = string
   description = "The cluster publishing strategy, either Internal or External"
 }

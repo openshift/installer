@@ -126,7 +126,7 @@ resource "aws_network_interface" "master" {
 
   tags = merge(
     {
-    "Name" = "${var.cluster_id}-master-${count.index}"
+      "Name" = "${var.cluster_id}-master-${count.index}"
     },
     var.tags,
   )
@@ -154,7 +154,7 @@ resource "aws_instance" "master" {
 
   tags = merge(
     {
-    "Name" = "${var.cluster_id}-master-${count.index}"
+      "Name" = "${var.cluster_id}-master-${count.index}"
     },
     var.tags,
   )
@@ -169,7 +169,7 @@ resource "aws_instance" "master" {
 
   volume_tags = merge(
     {
-    "Name" = "${var.cluster_id}-master-${count.index}-vol"
+      "Name" = "${var.cluster_id}-master-${count.index}-vol"
     },
     var.tags,
   )

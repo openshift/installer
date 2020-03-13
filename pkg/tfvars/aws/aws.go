@@ -15,6 +15,7 @@ import (
 
 type config struct {
 	AMI                     string            `json:"aws_ami"`
+	AMIRegion               string            `json:"aws_ami_region"`
 	CustomEndpoints         map[string]string `json:"custom_endpoints,omitempty"`
 	ExtraTags               map[string]string `json:"aws_extra_tags,omitempty"`
 	BootstrapInstanceType   string            `json:"aws_bootstrap_instance_type,omitempty"`
@@ -40,6 +41,8 @@ type TFVarsSources struct {
 	Services                      []typesaws.ServiceEndpoint
 
 	Publish types.PublishingStrategy
+
+	AMIID, AMIRegion string
 
 	MasterConfigs, WorkerConfigs []*v1beta1.AWSMachineProviderConfig
 }
@@ -101,7 +104,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		CustomEndpoints:         endpoints,
 		Region:                  masterConfig.Placement.Region,
 		ExtraTags:               tags,
-		AMI:                     *masterConfig.AMI.ID,
 		MasterAvailabilityZones: masterAvailabilityZones,
 		WorkerAvailabilityZones: workerAvailabilityZones,
 		BootstrapInstanceType:   fmt.Sprintf("%s.large", instanceClass),
@@ -133,6 +135,14 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		cfg.KMSKeyID = *rootVolume.EBS.KMSKey.ID
 	} else if rootVolume.EBS.KMSKey.ARN != nil && *rootVolume.EBS.KMSKey.ARN != "" {
 		cfg.KMSKeyID = *rootVolume.EBS.KMSKey.ARN
+	}
+
+	if masterConfig.AMI.ID != nil && *masterConfig.AMI.ID != "" {
+		cfg.AMI = *masterConfig.AMI.ID
+		cfg.AMIRegion = masterConfig.Placement.Region
+	} else {
+		cfg.AMI = sources.AMIID
+		cfg.AMIRegion = sources.AMIRegion
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
