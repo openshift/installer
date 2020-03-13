@@ -272,6 +272,7 @@ func (in *EBSBlockDeviceSpec) DeepCopyInto(out *EBSBlockDeviceSpec) {
 		*out = new(bool)
 		**out = **in
 	}
+	in.KMSKey.DeepCopyInto(&out.KMSKey)
 	if in.Iops != nil {
 		in, out := &in.Iops, &out.Iops
 		*out = new(int64)

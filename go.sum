@@ -1766,8 +1766,8 @@ github.com/openshift/cluster-api v0.0.0-20191030113141-9a3a7bbe9258/go.mod h1:T1
 github.com/openshift/cluster-api v0.0.0-20191129101638-b09907ac6668 h1:IDZyg/Kye98ptqpc9j9rzPjZJlijjEDe8g7TZ67CmLU=
 github.com/openshift/cluster-api v0.0.0-20191129101638-b09907ac6668/go.mod h1:T18COkr6nLh9RyZKPMP7YjnwBME7RX8P2ar1SQbBltM=
 github.com/openshift/cluster-api-actuator-pkg v0.0.0-20190614215203-42228d06a2ca/go.mod h1:KNPaA64x3Ok7z538kvS2acwC5fEwvPfF0RdTx2geQEE=
-github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200204144622-0df2d100309c h1:Xy9oQu/23dWIfb16kuSwev++aCwszRPBdqwdMGYw0Zk=
-github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200204144622-0df2d100309c/go.mod h1:ZoUVLK6Sz9wmeVsD0Vc2AmHY3rJeAWQyQW2uRW7vwh4=
+github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200316201703-923caeb1d0d8 h1:PN6SLAJ3rhTxOORCOYCjUCeko6uisulOTGOcJ34oPDU=
+github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200316201703-923caeb1d0d8/go.mod h1:Tap/FtbogcRCV6aSVYY/FRhT+IBBQCRgE38fue32nqU=
 github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20200120114645-8a9592f1f87b h1:xVFJ2MCv6QBBk49FEzMmdQF/21qr8x5UhW1NFqZ13oM=
 github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20200120114645-8a9592f1f87b/go.mod h1:LPNjFna6F+ePHaXM/7QIyCF0sLsEtfuN16yY9sFZJ40=
 github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d h1:6+XwaVvSMPHm3nFdZW3g+iXiOHpf0Y2ajY5/Zr66Dt0=
@@ -1794,8 +1794,8 @@ github.com/openshift/library-go v0.0.0-20200210105614-4bf528465627 h1:Rs1RtB123V
 github.com/openshift/library-go v0.0.0-20200210105614-4bf528465627/go.mod h1:T+sDdW3J/cgxUSqPdAwmhFrJhfFRv1ZtCSTVY59phN4=
 github.com/openshift/machine-api-operator v0.0.0-20190312153711-9650e16c9880/go.mod h1:7HeAh0v04zQn1L+4ItUjvpBQYsm2Nf81WaZLiXTcnkc=
 github.com/openshift/machine-api-operator v0.2.1-0.20191128180243-986b771e661d/go.mod h1:9qQPF00anuIsc6RiHYfHE0+cZZImbvFNLln0NRBVVMg=
-github.com/openshift/machine-api-operator v0.2.1-0.20200211164549-65f366001347 h1:ATq+gLgVMVsYI62bckQymIMVTmS45fLm8ZqxJl4Da/Y=
-github.com/openshift/machine-api-operator v0.2.1-0.20200211164549-65f366001347/go.mod h1:b3huCV+DbroXP1sHtsU5xBwx97zqc6GKB5owyl2zsNM=
+github.com/openshift/machine-api-operator v0.2.1-0.20200310180732-c63fa2b143f0 h1:Na0422T5qq9e4AtBqH4hyqujESg29Akrf2asy/kc02U=
+github.com/openshift/machine-api-operator v0.2.1-0.20200310180732-c63fa2b143f0/go.mod h1:b3huCV+DbroXP1sHtsU5xBwx97zqc6GKB5owyl2zsNM=
 github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530 h1:r9eSp963LcaLw3YUyJHMHwZYXoaGXOc2MOKVQQrdRmw=
 github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530/go.mod h1:z3udws7UDLBp233iGbayvpZEwhWn74K9xzjDtCGJlok=
 github.com/openshift/runtime-utils v0.0.0-20191011150825-9169de69ebf6/go.mod h1:5gDRVvQwesU7cfwlpuMivdv3Dz/oslvv2qTBHCy4wqQ=

@@ -180,6 +180,9 @@ type EBSBlockDeviceSpec struct {
 	// may only be attached to machines that support Amazon EBS encryption.
 	Encrypted *bool `json:"encrypted,omitempty"`
 
+	// Indicates the KMS key that should be used to encrypt the Amazon EBS volume.
+	KMSKey AWSResourceReference `json:"kmsKey,omitempty"`
+
 	// The number of I/O operations per second (IOPS) that the volume supports.
 	// For io1, this represents the number of IOPS that are provisioned for the
 	// volume. For gp2, this represents the baseline performance of the volume and
