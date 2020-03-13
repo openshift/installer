@@ -9,9 +9,9 @@ resource "openstack_networking_network_v2" "openshift-private" {
   admin_state_up = "true"
   tags           = ["openshiftClusterID=${var.cluster_id}"]
   value_specs    = {
-    "apic:nested_domain_infra_vlan"        : var.aci_net_ext["infra_vlan"],
-    "apic:nested_domain_node_network_vlan" : var.aci_net_ext["kube_api_vlan"],
-    "apic:nested_domain_service_vlan"      : var.aci_net_ext["service_vlan"],
+    "apic:nested_domain_infra_vlan"        : var.aci_net_ext["infraVlan"],
+    "apic:nested_domain_node_network_vlan" : var.aci_net_ext["kubeApiVlan"],
+    "apic:nested_domain_service_vlan"      : var.aci_net_ext["serviceVlan"],
   }
 }
 

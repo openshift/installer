@@ -252,7 +252,7 @@ variable "openstack_aci_net_ext" {
 
   description = <<EOF
 (optional) Network extension fields required by APIC. Please provide
-map with keys "infra_vlan", "kube_api_vlan" and "service_vlan"
+map with keys "infraVlan", "kubeApiVlan" and "serviceVlan"
 EOF
 
 }

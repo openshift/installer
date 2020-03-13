@@ -3,6 +3,7 @@ package defaults
 import (
 	"net"
 	"os"
+	"strings"
 
 	"github.com/apparentlymart/go-cidr/cidr"
         "github.com/openshift/installer/pkg/ipnet"
@@ -28,21 +29,20 @@ func SetPlatformDefaults(p *openstack.Platform, installConfig *types.InstallConf
         }
         // Panic if input neutron CIDR and machine CIDR don't have equal masks.
         // If no neutron CIDR provided, set it to 192.168.0.0 with the machine CIDR mask
-        machineMask := installConfig.Networking.DeprecatedMachineCIDR.Mask
+        machineNet :=  &installConfig.Networking.DeprecatedMachineCIDR.IPNet
+        machineMask := machineNet.Mask
         if p.NeutronCIDR.String() != "" {
-                neutronMask := p.NeutronCIDR.Mask
+                neutronNet := &p.NeutronCIDR.IPNet
+                neutronMask := neutronNet.Mask
                 if machineMask.String() != neutronMask.String() {
                         panic("Machine CIDR and Neutron CIDR have different subnet masks")
-                        
+ 
                 }
         } else {
-                neutronIP := net.ParseIP("192.168.0.0")
-                p.NeutronCIDR = &ipnet.IPNet{
-                                        IPNet: net.IPNet{
-                                                IP:   neutronIP,
-                                                Mask: machineMask,
-                                        },
-                                }
+                machineNetString := machineNet.String()
+                machineMaskString := strings.Split(machineNetString, "/")[1]
+                neutronCIDRString := "192.168.0.0/" + machineMaskString
+                p.NeutronCIDR = ipnet.MustParseCIDR(neutronCIDRString)
         }
         installConfig.Networking.NeutronCIDR = p.NeutronCIDR
 
