@@ -31,7 +31,7 @@ type Platform struct {
         NeutronCIDR *ipnet.IPNet `json:"neutronCIDR,omitempty"`
 
         // Installer host subnet
-        InstallerHostSubnet string `json:"installerHostSubnet",omitempty`
+        InstallerHostSubnet string `json:"installerHostSubnet"`
 
 	// FlavorName is the name of the compute flavor to use for instances in this cluster.
 	FlavorName string `json:"computeFlavor"`

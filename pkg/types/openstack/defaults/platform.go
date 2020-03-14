@@ -4,7 +4,6 @@ import (
 	"net"
 	"os"
 	"strings"
-
 	"github.com/apparentlymart/go-cidr/cidr"
         "github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
