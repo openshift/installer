@@ -97,6 +97,8 @@ func provider(clusterID string, region string, subnet string, instanceType strin
 					VolumeType: pointer.StringPtr(root.Type),
 					VolumeSize: pointer.Int64Ptr(int64(root.Size)),
 					Iops:       pointer.Int64Ptr(int64(root.IOPS)),
+					Encrypted:  pointer.BoolPtr(true),
+					KMSKey:     awsprovider.AWSResourceReference{ARN: pointer.StringPtr(root.KMSKeyARN)},
 				},
 			},
 		},

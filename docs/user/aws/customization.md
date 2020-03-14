@@ -20,6 +20,9 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
         This is only valid for `type` `io1`.
     * `size` (optional integer): Size of the root volume in gibibytes (GiB).
     * `type` (optional string):  The [type of volume][volume-type].
+    * `kmsKeyARN` (optional string): The [ARN of KMS key][ebs-kms-key] that should be used to encrypt the EBS volume.
+        When no key is specified by user, the account's [default KMS Key][kms-key-default] for the region will be used.
+        Example ARN values are: `arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab` or `arn:aws:kms:us-east-1:111122223333:alias/my-key`
 * `type` (optional string): The [EC2 instance type][instance-type].
 * `zones` (optional array of strings): The availability zones used for machines in the pool.
 
@@ -68,6 +71,7 @@ compute:
         iops: 4000
         size: 500
         type: io1
+        kmsKeyARN: arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab
       type: c5.9xlarge
       zones:
       - us-west-2c
@@ -83,5 +87,7 @@ sshKey: ssh-ed25519 AAAA...
 
 [availablity-zones]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html
 [instance-type]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html
+[kms-key-default]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetEbsDefaultKmsKeyId.html
+[kms-key]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html
 [volume-iops]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-io-characteristics.html
 [volume-type]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html
