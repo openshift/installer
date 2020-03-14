@@ -87,8 +87,8 @@ Update the scheduler configuration to keep router pods and other workloads off t
 ```sh
 python -c '
 import yaml;
-path = "manifests/cluster-scheduler-02-config.yml"
-data = yaml.load(open(path));
+path = "manifests/cluster-scheduler-02-config.yml";
+data = yaml.full_load(open(path));
 data["spec"]["mastersSchedulable"] = False;
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
@@ -170,14 +170,12 @@ Create a resource definition file: `01_vpc.yaml`
 $ cat <<EOF >01_vpc.yaml
 imports:
 - path: 01_vpc.py
-
 resources:
 - name: cluster-vpc
   type: 01_vpc.py
   properties:
     infra_id: '${INFRA_ID}'
     region: '${REGION}'
-
     master_subnet_cidr: '${MASTER_SUBNET_CIDR}'
     worker_subnet_cidr: '${WORKER_SUBNET_CIDR}'
 EOF
@@ -195,7 +193,8 @@ gcloud deployment-manager deployments create ${INFRA_ID}-vpc --config 01_vpc.yam
 
 ## Create DNS entries and load balancers
 
-Copy [`02_infra.py`](../../../upi/gcp/02_infra.py) locally.
+Copy [`02_dns.py`](../../../upi/gcp/02_dns.py) locally.
+Copy [`02_lb_ext.py`](../../../upi/gcp/02_lb_ext.py) locally.
 
 Export variables needed by the resource definition.
 
@@ -208,17 +207,20 @@ Create a resource definition file: `02_infra.yaml`
 ```console
 $ cat <<EOF >02_infra.yaml
 imports:
-- path: 02_infra.py
-
+- path: 02_dns.py
+- path: 02_lb_ext.py
 resources:
-- name: cluster-infra
-  type: 02_infra.py
+- name: cluster-dns
+  type: 02_dns.py
+  properties:
+    infra_id: '${INFRA_ID}'
+    cluster_domain: '${CLUSTER_NAME}.${BASE_DOMAIN}'
+    cluster_network: '${CLUSTER_NETWORK}'
+- name: cluster-lb-ext
+  type: 02_lb_ext.py
   properties:
     infra_id: '${INFRA_ID}'
     region: '${REGION}'
-
-    cluster_domain: '${CLUSTER_NAME}.${BASE_DOMAIN}'
-    cluster_network: '${CLUSTER_NETWORK}'
 EOF
 ```
 - `infra_id`: the infrastructure name (INFRA_ID above)
@@ -254,7 +256,8 @@ gcloud dns record-sets transaction execute --zone ${INFRA_ID}-private-zone
 
 ## Create firewall rules and IAM roles
 
-Copy [`03_security.py`](../../../upi/gcp/03_security.py) locally.
+Copy [`03_firewall.py`](../../../upi/gcp/03_firewall.py) locally.
+Copy [`03_iam.py`](../../../upi/gcp/03_iam.py) locally.
 
 Export variables needed by the resource definition.
 
@@ -268,19 +271,21 @@ Create a resource definition file: `03_security.yaml`
 ```console
 $ cat <<EOF >03_security.yaml
 imports:
-- path: 03_security.py
-
+- path: 03_firewall.py
+- path: 03_iam.py
 resources:
-- name: cluster-security
-  type: 03_security.py
+- name: cluster-firewall
+  type: 03_firewall.py
   properties:
     infra_id: '${INFRA_ID}'
-    region: '${REGION}'
-
     cluster_network: '${CLUSTER_NETWORK}'
     network_cidr: '${NETWORK_CIDR}'
     master_nat_ip: '${MASTER_NAT_IP}'
     worker_nat_ip: '${WORKER_NAT_IP}'
+- name: cluster-iam
+  type: 03_iam.py
+  properties:
+    infra_id: '${INFRA_ID}'
 EOF
 ```
 - `infra_id`: the infrastructure name (INFRA_ID above)
@@ -361,7 +366,6 @@ Create a resource definition file: `04_bootstrap.yaml`
 $ cat <<EOF >04_bootstrap.yaml
 imports:
 - path: 04_bootstrap.py
-
 resources:
 - name: cluster-bootstrap
   type: 04_bootstrap.py
@@ -369,13 +373,10 @@ resources:
     infra_id: '${INFRA_ID}'
     region: '${REGION}'
     zone: '${ZONE_0}'
-
-    cluster_network: '${CLUSTER_NETWORK}'
     control_subnet: '${CONTROL_SUBNET}'
     image: '${CLUSTER_IMAGE}'
     machine_type: 'n1-standard-4'
     root_volume_size: '128'
-
     bootstrap_ign: '${BOOTSTRAP_IGN}'
 EOF
 ```
@@ -419,24 +420,20 @@ Create a resource definition file: `05_control_plane.yaml`
 $ cat <<EOF >05_control_plane.yaml
 imports:
 - path: 05_control_plane.py
-
 resources:
 - name: cluster-control-plane
   type: 05_control_plane.py
   properties:
     infra_id: '${INFRA_ID}'
-    region: '${REGION}'
     zones:
     - '${ZONE_0}'
     - '${ZONE_1}'
     - '${ZONE_2}'
-
     control_subnet: '${CONTROL_SUBNET}'
     image: '${CLUSTER_IMAGE}'
     machine_type: 'n1-standard-4'
     root_volume_size: '128'
     service_account_email: '${MASTER_SERVICE_ACCOUNT_EMAIL}'
-
     ignition: '${MASTER_IGNITION}'
 EOF
 ```
@@ -533,21 +530,28 @@ Create a resource definition file: `06_worker.yaml`
 $ cat <<EOF >06_worker.yaml
 imports:
 - path: 06_worker.py
-
 resources:
-- name: 'w-a-0'
+- name: 'w-0'
   type: 06_worker.py
   properties:
     infra_id: '${INFRA_ID}'
-    region: '${REGION}'
     zone: '${ZONE_0}'
-
     compute_subnet: '${COMPUTE_SUBNET}'
     image: '${CLUSTER_IMAGE}'
     machine_type: 'n1-standard-4'
     root_volume_size: '128'
     service_account_email: '${WORKER_SERVICE_ACCOUNT_EMAIL}'
-
+    ignition: '${WORKER_IGNITION}'
+- name: 'w-1'
+  type: 06_worker.py
+  properties:
+    infra_id: '${INFRA_ID}'
+    zone: '${ZONE_1}'
+    compute_subnet: '${COMPUTE_SUBNET}'
+    image: '${CLUSTER_IMAGE}'
+    machine_type: 'n1-standard-4'
+    root_volume_size: '128'
+    service_account_email: '${WORKER_SERVICE_ACCOUNT_EMAIL}'
     ignition: '${WORKER_IGNITION}'
 EOF
 ```
