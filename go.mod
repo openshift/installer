@@ -65,7 +65,7 @@ require (
 	github.com/openshift-metal3/terraform-provider-ironic v0.1.9
 	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible
 	github.com/openshift/client-go v0.0.0-20200116152001-92a2713fa240
-	github.com/openshift/cloud-credential-operator v0.0.0-20200206164830-e1ee12c64bec
+	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
 	github.com/openshift/cluster-api v0.0.0-20191129101638-b09907ac6668
 	github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200120152131-1b09fd9e7156
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
