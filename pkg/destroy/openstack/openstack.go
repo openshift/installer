@@ -1,4 +1,3 @@
-// Package openstack provides a cluster-destroyer for openstack clusters.
 package openstack
 
 import (
@@ -73,8 +72,23 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 
 // Run is the entrypoint to start the uninstall process.
 func (o *ClusterUninstaller) Run() error {
-	deleteFuncs := map[string]deleteFunc{}
-	populateDeleteFuncs(deleteFuncs)
+	// deleteFuncs contains the functions that will be launched as
+	// goroutines.
+	deleteFuncs := map[string]deleteFunc{
+		"deleteServers":        deleteServers,
+		"deleteTrunks":         deleteTrunks,
+		"deleteLoadBalancers":  deleteLoadBalancers,
+		"deletePorts":          deletePorts,
+		"deleteSecurityGroups": deleteSecurityGroups,
+		"deleteRouters":        deleteRouters,
+		"deleteSubnets":        deleteSubnets,
+		"deleteSubnetPools":    deleteSubnetPools,
+		"deleteNetworks":       deleteNetworks,
+		"deleteContainers":     deleteContainers,
+		"deleteVolumes":        deleteVolumes,
+		"deleteFloatingIPs":    deleteFloatingIPs,
+		"deleteImages":         deleteImages,
+	}
 	returnChannel := make(chan string)
 
 	opts := &clientconfig.ClientOpts{
@@ -115,24 +129,6 @@ func deleteRunner(deleteFuncName string, dFunction deleteFunc, opts *clientconfi
 	// record that the goroutine has run to completion
 	channel <- deleteFuncName
 	return
-}
-
-// populateDeleteFuncs is the list of functions that will be launched as
-// goroutines.
-func populateDeleteFuncs(funcs map[string]deleteFunc) {
-	funcs["deleteServers"] = deleteServers
-	funcs["deleteTrunks"] = deleteTrunks
-	funcs["deleteLoadBalancers"] = deleteLoadBalancers
-	funcs["deletePorts"] = deletePorts
-	funcs["deleteSecurityGroups"] = deleteSecurityGroups
-	funcs["deleteRouters"] = deleteRouters
-	funcs["deleteSubnets"] = deleteSubnets
-	funcs["deleteSubnetPools"] = deleteSubnetPools
-	funcs["deleteNetworks"] = deleteNetworks
-	funcs["deleteContainers"] = deleteContainers
-	funcs["deleteVolumes"] = deleteVolumes
-	funcs["deleteFloatingIPs"] = deleteFloatingIPs
-	funcs["deleteImages"] = deleteImages
 }
 
 // filterObjects will do client-side filtering given an appropriately filled out
