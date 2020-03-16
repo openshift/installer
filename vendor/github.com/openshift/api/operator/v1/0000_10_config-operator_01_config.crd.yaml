@@ -1,24 +1,23 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: servicecatalogcontrollermanagers.operator.openshift.io
+  name: configs.operator.openshift.io
 spec:
   scope: Cluster
   preserveUnknownFields: false
   group: operator.openshift.io
   version: v1
   names:
-    kind: ServiceCatalogControllerManager
-    plural: servicecatalogcontrollermanagers
-    singular: servicecatalogcontrollermanager
+    kind: Config
+    plural: configs
+    singular: config
     categories:
     - coreoperators
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: ServiceCatalogControllerManager provides information to configure
-        an operator to manage Service Catalog Controller Manager
+      description: Config provides information to configure the config operator.
       type: object
       required:
       - spec
@@ -36,6 +35,8 @@ spec:
         metadata:
           type: object
         spec:
+          description: spec is the specification of the desired behavior of the Config
+            Operator.
           type: object
           properties:
             logLevel:
@@ -71,6 +72,7 @@ spec:
               nullable: true
               x-kubernetes-preserve-unknown-fields: true
         status:
+          description: status defines the observed status of the Config Operator.
           type: object
           properties:
             conditions:
