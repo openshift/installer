@@ -398,8 +398,7 @@
   version = "v0.2.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:0989b632c84399624334e9ed9b8157319cf01d211140c0a4f78f780564caeeb0"
+  digest = "1:28944402500e0013e987179c15016f1b151889f7c1337df136aeafa05a675003"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
@@ -414,6 +413,7 @@
     "openstack/identity/v2/tokens",
     "openstack/identity/v3/tokens",
     "openstack/imageservice/v2/imagedata",
+    "openstack/imageservice/v2/imageimport",
     "openstack/imageservice/v2/images",
     "openstack/loadbalancer/v2/apiversions",
     "openstack/loadbalancer/v2/l7policies",
@@ -438,7 +438,8 @@
     "pagination",
   ]
   pruneopts = "NUT"
-  revision = "6ad562af8c1fd8a69397a13caf58fa184d115b56"
+  revision = "21353468abed58d85242df15e1be5339ba985662"
+  version = "v0.8.0"
 
 [[projects]]
   branch = "master"
@@ -1471,6 +1472,7 @@
     "github.com/gophercloud/gophercloud/openstack/compute/v2/servers",
     "github.com/gophercloud/gophercloud/openstack/identity/v3/tokens",
     "github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata",
+    "github.com/gophercloud/gophercloud/openstack/imageservice/v2/imageimport",
     "github.com/gophercloud/gophercloud/openstack/imageservice/v2/images",
     "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/apiversions",
     "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/loadbalancers",
