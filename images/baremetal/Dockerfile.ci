@@ -15,7 +15,8 @@ COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
     libvirt-libs openssl unzip jq openssh-clients && \
-    yum clean all && rm -rf /var/cache/yum/*
+    yum clean all && rm -rf /var/cache/yum/* && \
+    chmod g+w /etc/passwd
 
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
