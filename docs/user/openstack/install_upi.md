@@ -470,11 +470,39 @@ Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`
 
 Change the `ignition.config.append.source` field to the URL hosting the `bootstrap.ign` file you've uploaded previously.
 
+#### Ignition file served by server using self-signed certificate
+
+In order for the bootstrap node to retrieve the ignition file when it is served by a server using self-signed certificate, it is necessary to add the CA certificate to the `ignition.security.tls.certificateAuthorities` in the ignition file. For instance:
+
+```json
+{
+  "ignition": {
+    "config": {},
+    "security": {
+      "tls": {
+        "certificateAuthorities": [
+          {
+            "source": "data:text/plain;charset=utf-8;base64,<base64_encoded_certificate>",
+            "verification": {}
+          }
+        ]
+      }
+    },
+    "timeouts": {},
+    "version": "2.2.0"
+  },
+  "networkd": {},
+  "passwd": {},
+  "storage": {},
+  "systemd": {}
+}
+```
+
 ### Update Bootstrap Ignition
 
-We need to set the bootstrap hostname explicitly. The IPI installer does this automatically, but for now UPI does not.
+We need to set the bootstrap hostname explicitly, and in the case of OpenStack using self-signed certificate, the CA cert file. The IPI installer does this automatically, but for now UPI does not.
 
-We will update the ignition to create the following file:
+We will update the ignition to create the following files:
 
 **`/etc/hostname`**:
 
@@ -483,6 +511,8 @@ openshift-qlvwv-bootstrap
 ```
 
 (using the `infraID`)
+
+**`/opt/openshift/tls/cloud-ca-cert.pem`** (if applicable).
 
 **NOTE**: We recommend you back up the Ignition files before making any changes!
 
@@ -510,6 +540,23 @@ files.append(
     },
     'filesystem': 'root',
 })
+
+ca_cert_path = os.environ.get('OS_CACERT', '')
+if ca_cert_path:
+    with open(ca_cert_path, 'r') as f:
+        ca_cert = f.read().encode()
+        ca_cert_b64 = base64.standard_b64encode(ca_cert).decode().strip()
+
+    files.append(
+    {
+        'path': '/opt/openshift/tls/cloud-ca-cert.pem',
+        'mode': 420,
+        'contents': {
+            'source': 'data:text/plain;charset=utf-8;base64,' + ca_cert_b64,
+            'verification': {}
+        },
+        'filesystem': 'root',
+    })
 
 ignition['storage']['files'] = files;
 
