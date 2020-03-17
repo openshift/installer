@@ -14,7 +14,7 @@ import (
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, region string, subnets map[string]string, pool *types.MachinePool, osImage, role, userDataSecret string, userTags map[string]string) ([]*machineapi.MachineSet, error) {
+func MachineSets(clusterID string, region string, subnets map[string]string, pool *types.MachinePool, role, userDataSecret string, userTags map[string]string) ([]*machineapi.MachineSet, error) {
 	if poolPlatform := pool.Platform.Name(); poolPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
 	}
@@ -43,7 +43,7 @@ func MachineSets(clusterID string, region string, subnets map[string]string, poo
 			subnet,
 			mpool.InstanceType,
 			&mpool.EC2RootVolume,
-			osImage,
+			mpool.AMIID,
 			az,
 			role,
 			userDataSecret,

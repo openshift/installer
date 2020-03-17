@@ -195,6 +195,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 
 			mpool := defaultAWSMachinePoolPlatform()
+			mpool.AMIID = string(*rhcosImage)
 			mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.AWS)
 			if len(mpool.Zones) == 0 {
@@ -222,7 +223,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				installConfig.Config.Platform.AWS.Region,
 				subnets,
 				&pool,
-				string(*rhcosImage),
 				"worker",
 				"worker-user-data",
 				installConfig.Config.Platform.AWS.UserTags,

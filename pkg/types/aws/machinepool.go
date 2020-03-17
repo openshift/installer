@@ -10,6 +10,10 @@ type MachinePool struct {
 	// eg. m4-large
 	InstanceType string `json:"type"`
 
+	// AMIID is the AMI that should be used to boot the ec2 instance.
+	// If set, the AMI should belong to the same region as the cluster.
+	AMIID string `json:"amiID,omitempty"`
+
 	// EC2RootVolume defines the root volume for EC2 instances in the machine pool.
 	EC2RootVolume `json:"rootVolume"`
 }
@@ -26,6 +30,10 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.InstanceType != "" {
 		a.InstanceType = required.InstanceType
+	}
+
+	if required.AMIID != "" {
+		a.AMIID = required.AMIID
 	}
 
 	if required.EC2RootVolume.IOPS != 0 {
