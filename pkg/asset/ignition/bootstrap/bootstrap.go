@@ -148,6 +148,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
         machineCIDR := &installConfig.Config.Networking.DeprecatedMachineCIDR.IPNet
         defaultGateway, _ := cidr.Host(machineCIDR, 1)
         kube_api_vlan := installConfig.Config.Platform.OpenStack.AciNetExt.KubeApiVLAN
+        infra_vlan := installConfig.Config.Platform.OpenStack.AciNetExt.InfraVLAN
         mtu_value := installConfig.Config.Platform.OpenStack.AciNetExt.Mtu
         networkScriptString, _ := ign.NetworkScript(kube_api_vlan, defaultGateway.String(), mtu_value)
 
@@ -179,7 +180,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
         ifcfg_opflex_conn_string := `VLAN=yes
                TYPE=Vlan
                PHYSDEV=ens3
-               VLAN_ID=4093
+               VLAN_ID=` + infra_vlan + `
                REORDER_HDR=yes
                GVRP=no
                MVRP=no
@@ -190,7 +191,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
                IPV4_FAILURE_FATAL=no
                IPV6INIT=no
                NAME=opflex-conn
-               DEVICE=ens3.4093
+               DEVICE=ens3.`+ infra_vlan +`
                ONBOOT=yes
                MTU=` + mtu_value
 
