@@ -128,17 +128,12 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		dnsVIP, err := openstackdefaults.DNSVIP(installConfig.Config.Networking)
-		if err != nil {
-			return err
-		}
 		ingressVIP, err := openstackdefaults.IngressVIP(installConfig.Config.Networking)
 		if err != nil {
 			return err
 		}
 		config.Status.PlatformStatus.OpenStack = &configv1.OpenStackPlatformStatus{
 			APIServerInternalIP: apiVIP.String(),
-			NodeDNSIP:           dnsVIP.String(),
 			IngressIP:           ingressVIP.String(),
 		}
 	case vsphere.Name:

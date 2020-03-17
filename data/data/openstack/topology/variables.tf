@@ -37,10 +37,6 @@ variable "api_int_ip" {
   type = string
 }
 
-variable "node_dns_ip" {
-  type = string
-}
-
 variable "ingress_ip" {
   type = string
 }

@@ -18,10 +18,6 @@ resource "openstack_networking_port_v2" "bootstrap_port" {
   allowed_address_pairs {
     ip_address = var.api_int_ip
   }
-
-  allowed_address_pairs {
-    ip_address = var.node_dns_ip
-  }
 }
 
 data "openstack_compute_flavor_v2" "bootstrap_flavor" {

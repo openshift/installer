@@ -33,14 +33,6 @@ func APIVIP(networking *types.Networking) (net.IP, error) {
 	return cidr.Host(&networking.MachineNetwork[0].CIDR.IPNet, 5)
 }
 
-// DNSVIP returns the internal virtual IP address (VIP) put in front
-// of the DNS static pods running on the nodes. Unlike the DNS
-// operator these services provide name resolution for the nodes
-// themselves.
-func DNSVIP(networking *types.Networking) (net.IP, error) {
-	return cidr.Host(&networking.MachineNetwork[0].CIDR.IPNet, 6)
-}
-
 // IngressVIP returns the internal virtual IP address (VIP) put in
 // front of the OpenShift router pods. This provides the internal
 // accessibility to the internal pods running on the worker nodes,
