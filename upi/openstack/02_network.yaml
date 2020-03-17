@@ -15,12 +15,6 @@
     os_network:
       name: "{{ os_network }}"
 
-  - name: 'Set the cluster network tag'
-    os_tag:
-      resource: "network"
-      name: "{{ os_network }}"
-      tags: "{{ [cluster_id_tag] }}"
-
   - name: 'Create a subnet'
     os_subnet:
       name: "{{ os_subnet }}"
@@ -28,12 +22,6 @@
       cidr: "{{ os_subnet_range }}"
       allocation_pool_start: "{{ os_subnet_range | next_nth_usable(10) }}"
       allocation_pool_end: "{{ os_subnet_range | ipaddr('last_usable') }}"
-
-  - name: 'Set the cluster subnet tag'
-    os_tag:
-      resource: "subnet"
-      name: "{{ os_subnet }}"
-      tags: "{{ [cluster_id_tag] }}"
 
   - name: 'Create the service network'
     os_network:
@@ -53,13 +41,6 @@
       network_name: "{{ os_svc_network }}"
       cidr: "{{ svc_subnet_range }}"
       openstack_svc_network: "{{ os_svc_network_range }}"
-    when: os_networking_type == "Kuryr"
-
-  - name: 'Set the service subnet tag'
-    os_tag:
-      resource: "subnet"
-      name: "{{ os_svc_subnet }}"
-      tags: "{{ [cluster_id_tag] }}"
     when: os_networking_type == "Kuryr"
 
   - name: 'Create pods subnet pool'
@@ -83,52 +64,3 @@
       interfaces:
       - "{{ os_subnet }}"
 
-  - name: 'Set external router tag'
-    os_tag:
-      resource: "router"
-      name: "{{ os_router }}"
-      tags: "{{ [cluster_id_tag] }}"
-
-  - name: 'Create the API port'
-    os_port:
-      name: "{{ os_port_api }}"
-      network: "{{ os_network }}"
-      security_groups:
-      - "{{ os_sg_master }}"
-      fixed_ips:
-      - subnet: "{{ os_subnet }}"
-        ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
-
-  - name: 'Set API port tag'
-    os_tag:
-      resource: "port"
-      name: "{{ os_port_api }}"
-      tags: "{{ [cluster_id_tag] }}"
-
-  - name: 'Create the Ingress port'
-    os_port:
-      name: "{{ os_port_ingress }}"
-      network: "{{ os_network }}"
-      security_groups:
-      - "{{ os_sg_worker }}"
-      fixed_ips:
-      - subnet: "{{ os_subnet }}"
-        ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
-
-  - name: 'Set the Ingress port tag'
-    os_tag:
-      resource: "port"
-      name: "{{ os_port_ingress }}"
-      tags: "{{ [cluster_id_tag] }}"
-
-  # NOTE: openstack ansible module doesn't allow attaching Floating IPs to
-  # ports, let's use the CLI instead
-  - name: 'Attach the API floating IP to API port'
-    command:
-      cmd: "openstack floating ip set --port {{ os_port_api }} {{ os_api_fip }}"
-
-  # NOTE: openstack ansible module doesn't allow attaching Floating IPs to
-  # ports, let's use the CLI instead
-  - name: 'Attach the Ingress floating IP to Ingress port'
-    command:
-      cmd: "openstack floating ip set --port {{ os_port_ingress }} {{ os_ingress_fip }}"

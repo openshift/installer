@@ -20,12 +20,6 @@
       - ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
       - ip_address: "{{ os_subnet_range | next_nth_usable(6) }}"
 
-  - name: 'Set bootstrap port tag'
-    os_tag:
-      resource: "port"
-      name: "{{ os_port_bootstrap }}"
-      tags: "{{ [cluster_id_tag] }}"
-
   - name: 'Create the bootstrap server'
     os_server:
       name: "{{ os_bootstrap_server_name }}"

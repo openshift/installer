@@ -21,13 +21,6 @@
     with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"
     register: ports
 
-  - name: 'Set Compute ports tag'
-    os_tag:
-      resource: "port"
-      name: "{{ item.1 }}-{{ item.0 }}"
-      tags: "{{ [cluster_id_tag] }}"
-    with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"
-
   - name: 'Create the Compute trunks'
     os_trunk:
       name: "{{ os_compute_trunk_name }}-{{ item.0 }}"

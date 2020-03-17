@@ -5,15 +5,15 @@ all:
       ansible_python_interpreter: "{{ansible_playbook_python}}"
 
       # User-provided values
-      os_subnet_range: '10.0.0.0/16'
-      os_flavor_master: 'm1.xlarge'
-      os_flavor_worker: 'm1.large'
+      os_subnet_range: '192.168.2.0/24'
+      os_flavor_master: 's3.4xlarge.2'
+      os_flavor_worker: 's3.4xlarge.2'
       os_image_rhcos: 'rhcos'
-      os_external_network: 'external'
+      os_external_network: 'admin_external_net'
       # OpenShift API floating IP address
-      os_api_fip: '203.0.113.23'
+      os_api_fip: '90.84.186.82'
       # OpenShift Ingress floating IP address
-      os_ingress_fip: '203.0.113.19'
+      os_ingress_fip: '90.84.243.186'
       # Service subnet cidr
       svc_subnet_range: '172.30.0.0/16'
       os_svc_network_range: '172.30.0.0/15'
