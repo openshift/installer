@@ -102,12 +102,6 @@ func TestValidatePlatform(t *testing.T) {
 			expected: "Invalid value: \"192.168.222.2\": the virtual IP is expected to be in one of the machine networks",
 		},
 		{
-			name: "invalid_dnsvip",
-			platform: platform().
-				DNSVIP("192.168.222.3").build(),
-			expected: "Invalid value: \"192.168.222.3\": the virtual IP is expected to be in one of the machine networks",
-		},
-		{
 			name: "invalid_ingressvip",
 			platform: platform().
 				IngressVIP("192.168.222.4").build(),
@@ -389,7 +383,6 @@ func platform() *platformBuilder {
 	return &platformBuilder{
 		baremetal.Platform{
 			APIVIP:                       "192.168.111.2",
-			DNSVIP:                       "192.168.111.3",
 			IngressVIP:                   "192.168.111.4",
 			Hosts:                        []*baremetal.Host{},
 			LibvirtURI:                   "qemu://system",
@@ -438,11 +431,6 @@ func (pb *platformBuilder) ProvisioningDHCPRange(value string) *platformBuilder 
 
 func (pb *platformBuilder) APIVIP(value string) *platformBuilder {
 	pb.Platform.APIVIP = value
-	return pb
-}
-
-func (pb *platformBuilder) DNSVIP(value string) *platformBuilder {
-	pb.Platform.DNSVIP = value
 	return pb
 }
 

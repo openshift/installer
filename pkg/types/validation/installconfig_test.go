@@ -122,7 +122,6 @@ func validBareMetalPlatform() *baremetal.Platform {
 		DefaultMachinePlatform: &baremetal.MachinePool{},
 		APIVIP:                 "10.0.0.5",
 		IngressVIP:             "10.0.0.4",
-		DNSVIP:                 "10.0.0.2",
 	}
 }
 
@@ -620,30 +619,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^platform\.baremetal\.apiVIP: Invalid value: "10\.1\.0\.5": the virtual IP is expected to be in one of the machine networks$`,
-		},
-		{
-			name: "baremetal DNS VIP not an IP",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					BareMetal: validBareMetalPlatform(),
-				}
-				c.Platform.BareMetal.DNSVIP = "test"
-				return c
-			}(),
-			expectedError: `^\[platform\.baremetal\.dnsVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.dnsVIP: Invalid value: "test": the virtual IP is expected to be in one of the machine networks]$`,
-		},
-		{
-			name: "baremetal DNS VIP set to an incorrect value",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					BareMetal: validBareMetalPlatform(),
-				}
-				c.Platform.BareMetal.DNSVIP = "10.1.0.6"
-				return c
-			}(),
-			expectedError: `^platform\.baremetal\.dnsVIP: Invalid value: "10\.1\.0\.6": the virtual IP is expected to be in one of the machine networks$`,
 		},
 		{
 			name: "baremetal Ingress VIP not an IP",
