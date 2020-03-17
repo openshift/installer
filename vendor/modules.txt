@@ -1022,7 +1022,7 @@ github.com/openshift/cluster-api-provider-ovirt/pkg/apis
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1
 # github.com/openshift/library-go v0.0.0-20200210105614-4bf528465627
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
-# github.com/openshift/machine-api-operator v0.2.1-0.20200211164549-65f366001347
+# github.com/openshift/machine-api-operator v0.2.1-0.20200310180732-c63fa2b143f0
 github.com/openshift/machine-api-operator/pkg/apis/machine
 github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1
 github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider
@@ -1773,7 +1773,7 @@ k8s.io/utils/buffer
 k8s.io/utils/integer
 k8s.io/utils/pointer
 k8s.io/utils/trace
-# sigs.k8s.io/cluster-api-provider-aws v0.0.0 => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200204144622-0df2d100309c
+# sigs.k8s.io/cluster-api-provider-aws v0.0.0 => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200316201703-923caeb1d0d8
 sigs.k8s.io/cluster-api-provider-aws/pkg/apis
 sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1
 # sigs.k8s.io/cluster-api-provider-azure v0.0.0 => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20200120114645-8a9592f1f87b

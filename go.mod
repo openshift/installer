@@ -71,7 +71,7 @@ require (
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20200128081049-840376ca5c09
 	github.com/openshift/library-go v0.0.0-20200210105614-4bf528465627
-	github.com/openshift/machine-api-operator v0.2.1-0.20200211164549-65f366001347
+	github.com/openshift/machine-api-operator v0.2.1-0.20200310180732-c63fa2b143f0
 	github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033375cbe820+incompatible
 	github.com/ovirt/go-ovirt v4.3.4+incompatible
 	github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200122105935-65b89ad00553
@@ -159,7 +159,7 @@ replace (
 	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.17.1 // Replaced by MCO/CRI-O
 	k8s.io/metrics => k8s.io/metrics v0.17.1 // Replaced by MCO/CRI-O
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.17.1 // Replaced by MCO/CRI-O
-	sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200204144622-0df2d100309c // Pin OpenShift fork
+	sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200316201703-923caeb1d0d8 // Pin OpenShift fork
 	sigs.k8s.io/cluster-api-provider-azure => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20200120114645-8a9592f1f87b // Pin OpenShift fork
 	sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.0.0-20200130125124-ef82ce374112 // Pin OpenShift fork
 )

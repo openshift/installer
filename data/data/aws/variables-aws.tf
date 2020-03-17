@@ -54,6 +54,27 @@ EOF
 
 }
 
+variable "aws_master_root_volume_encrypted" {
+  type = bool
+
+  description = <<EOF
+Indicates whether the root EBS volume for master is encrypted. Encrypted Amazon EBS volumes
+may only be attached to machines that support Amazon EBS encryption.
+EOF
+
+}
+
+variable "aws_master_root_volume_kms_key_id" {
+  type = string
+
+  description = <<EOF
+(optional) Indicates the KMS key that should be used to encrypt the Amazon EBS volume.
+If not set and root volume has to be encrypted, the default KMS key for the account will be used.
+EOF
+
+  default = ""
+}
+
 variable "aws_region" {
   type = string
   description = "The target AWS region for the cluster."

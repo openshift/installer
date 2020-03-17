@@ -37,6 +37,9 @@ func (a *MachinePool) Set(required *MachinePool) {
 	if required.EC2RootVolume.Type != "" {
 		a.EC2RootVolume.Type = required.EC2RootVolume.Type
 	}
+	if required.EC2RootVolume.KMSKeyARN != "" {
+		a.EC2RootVolume.KMSKeyARN = required.EC2RootVolume.KMSKeyARN
+	}
 }
 
 // EC2RootVolume defines the storage for an ec2 instance.
@@ -48,4 +51,10 @@ type EC2RootVolume struct {
 	Size int `json:"size"`
 	// Type defines the type of the volume.
 	Type string `json:"type"`
+
+	// The KMS key that will be used to encrypt the EBS volume.
+	// If no key is provided the default KMS key for the account will be used.
+	// https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetEbsDefaultKmsKeyId.html
+	// +optional
+	KMSKeyARN string `json:"kmsKeyARN,omitempty"`
 }
