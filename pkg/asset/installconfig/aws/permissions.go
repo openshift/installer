@@ -2,14 +2,12 @@
 package aws
 
 import (
-	"fmt"
-
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	ccaws "github.com/openshift/cloud-credential-operator/pkg/aws"
-	"github.com/openshift/installer/pkg/version"
 )
 
 // PermissionGroup is the group of permissions needed by cluster creation, operation, or teardown.
@@ -231,14 +229,9 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 		requiredPermissions = append(requiredPermissions, groupPerms...)
 	}
 
-	creds, err := ssn.Config.Credentials.Get()
+	client, err := ccaws.NewClientFromIAMClient(iam.New(ssn))
 	if err != nil {
-		return errors.Wrap(err, "getting creds from session")
-	}
-
-	client, err := ccaws.NewClient([]byte(creds.AccessKeyID), []byte(creds.SecretAccessKey), fmt.Sprintf("OpenShift/4.x Installer/%s", version.Raw))
-	if err != nil {
-		return errors.Wrap(err, "initialize cloud-credentials client")
+		return errors.Wrap(err, "failed to create client for permission check")
 	}
 
 	sParams := &ccaws.SimulateParams{
