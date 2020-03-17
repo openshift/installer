@@ -54,6 +54,7 @@
   #       server_group:
   #         name: "{{ os_cp_server_group_name }}"
   #         policy: "soft-anti-affinity"
+  #   register: cp_group
   - name: 'Create the Control Plane server group'
     uri:
       method: POST
@@ -67,6 +68,7 @@
           name: "{{ os_cp_server_group_name }}"
           policies:
           - soft-anti-affinity
+    register: cp_group
 
   - name: 'Create the Control Plane servers'
     os_server:
@@ -82,5 +84,5 @@
       nics:
       - port-name: "{{ os_port_master }}-{{ item.0 }}"
       scheduler_hints:
-        group: "{{ cp_group.id }}"
+        group: "{{ cp_group.json.server_group.id }}"
     with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
