@@ -8,17 +8,6 @@ variable "network" {
   type        = string
 }
 
-variable "etcd_count" {
-  description = "The number of etcd members."
-  type        = string
-}
-
-variable "etcd_ip_addresses" {
-  description = "List of string IPs for machines running etcd members."
-  type        = list(string)
-  default     = []
-}
-
 variable "cluster_id" {
   type        = string
   description = "The identifier for the cluster."
