@@ -47,7 +47,7 @@ ignored = [
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-azurerm"
   source = "https://github.com/openshift/terraform-provider-azurerm"
-  version = "=v1.27.2-openshift"
+  version = "=v1.27.2-openshift-2"
 
 [[constraint]]
   name = "github.com/Azure/azure-sdk-for-go"
