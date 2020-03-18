@@ -139,7 +139,7 @@ baseDomain: example.com
 metadata:
   name: test-cluster
 networking:
-  clusterNetworks:
+  clusterNetwork:
   - cidr: 10.128.0.0/14
     hostPrefix: 23
   machineNetwork:
