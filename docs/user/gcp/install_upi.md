@@ -524,6 +524,18 @@ EOF
 - `machine_type`: the machine type of the instance (for example n1-standard-4)
 - `bootstrap_ign`: the URL output when creating a signed URL above.
 
+You can add custom tags to `04_bootstrap.py` as needed
+
+```console
+            'tags': {
+                'items': [
+                    context.properties['infra_id'] + '-master',
+                    context.properties['infra_id'] + '-bootstrap',
+                    'my-custom-tag-example'
+                ]
+            },
+```
+
 Create the deployment using gcloud.
 
 ```sh
@@ -581,6 +593,17 @@ EOF
 - `machine_type`: the machine type of the instance (for example n1-standard-4)
 - `service_account_email`: the email address for the master service account created above
 - `ignition`: the contents of the master.ign file
+
+You can add custom tags to `05_control_plane.py` as needed
+
+```console
+            'tags': {
+                'items': [
+                    context.properties['infra_id'] + '-master',
+                    'my-custom-tag-example'
+                ]
+            },
+```
 
 Create the deployment using gcloud.
 
@@ -687,6 +710,17 @@ EOF
 - `machine_type`: The machine type of the instance (for example n1-standard-4)
 - `service_account_email`: the email address for the worker service account created above
 - `ignition`: the contents of the worker.ign file
+
+You can add custom tags to `06_worker.py` as needed
+
+```console
+            'tags': {
+                'items': [
+                    context.properties['infra_id'] + '-worker',
+                    'my-custom-tag-example'
+                ]
+            },
+```
 
 Create the deployment using gcloud.
 
