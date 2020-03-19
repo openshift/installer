@@ -25,6 +25,8 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
         Example ARN values are: `arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab` or `arn:aws:kms:us-east-1:111122223333:alias/my-key`
 * `type` (optional string): The [EC2 instance type][instance-type].
 * `zones` (optional array of strings): The availability zones used for machines in the pool.
+* `amiID` (optional string): The AMI that should be used to boot machines.
+    If set, the AMI should belong to the same region as the cluster.
 
 ## Examples
 
@@ -67,6 +69,7 @@ compute:
 - name: worker
   platform:
     aws:
+      amiID: ami-123456
       rootVolume:
         iops: 4000
         size: 500
