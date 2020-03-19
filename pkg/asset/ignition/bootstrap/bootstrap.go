@@ -152,11 +152,11 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
         mtu_value := installConfig.Config.Platform.OpenStack.AciNetExt.Mtu
         networkScriptString, _ := ign.NetworkScript(kube_api_vlan, defaultGateway.String(), mtu_value)
 
-        neutronCIDR := &installConfig.Config.Platform.OpenStack.NeutronCIDR.IPNet
+        neutronCIDR := &installConfig.Config.Platform.OpenStack.AciNetExt.NeutronCIDR.IPNet
         defaultNeutronGateway, _ := cidr.Host(neutronCIDR, 1)
         defaultNeutronGatewayStr := defaultNeutronGateway.String()
 
-        installerHostSubnet := installConfig.Config.Platform.OpenStack.InstallerHostSubnet
+        installerHostSubnet := installConfig.Config.Platform.OpenStack.AciNetExt.InstallerHostSubnet
         installerHostIP, installerHostNet, _ := net.ParseCIDR(installerHostSubnet)
         installerNetmask := net.IP(installerHostNet.Mask)
 

@@ -366,7 +366,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
                          
-                neutronCIDR := &installConfig.Config.Platform.OpenStack.NeutronCIDR.IPNet
+                neutronCIDR := &installConfig.Config.Platform.OpenStack.AciNetExt.NeutronCIDR.IPNet
                 neutronCIDRString := neutronCIDR.String()
 
 		data, err = openstacktfvars.TFVars(

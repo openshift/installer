@@ -1,10 +1,18 @@
 package validation
 
 import (
+        "archive/tar"
+        "bytes"
+	"compress/gzip"
 	"fmt"
+        "gopkg.in/yaml.v2"
+        "io"
+        "io/ioutil"
+        "log"
 	"net"
 	"os"
 	"sort"
+        "strconv"
 	"strings"
 
 	dockerref "github.com/containers/image/docker/reference"
@@ -33,6 +41,51 @@ import (
 const (
 	masterPoolName = "master"
 )
+
+type AciContainersConfig struct {
+        Data ConfigData `yaml:data,omitempty`
+}
+
+type ConfigData struct {
+        HostConfig string `yaml:"host-agent-config"`
+}
+
+type HostConfigMap struct {
+        ServiceVLAN int    `yaml:"service-vlan"`
+        InfraVLAN   int    `yaml:"aci-infra-vlan"`
+        KubeApiVLAN int    `yaml:"kubeapi-vlan"`
+        PodSubnet   string `yaml:"pod-subnet"`
+        NodeSubnet  string `yaml:"node-subnet"`
+}
+
+type ClusterConfig03 struct {
+	ApiVersion string     `yaml:"apiVersion"`
+        Kind       string     `yaml:"kind"`
+        Metadata   MetaEntry  `yaml:"metadata,omitempty"`
+	Spec       SpecEntry  `yaml:"spec,omitempty"`
+}
+
+type MetaEntry struct {
+	Name	string `yaml:"name"`
+}
+
+type SpecEntry struct {
+	Multus		string				`yaml:"disableMultiNetwork"`
+        ClusterNetwork	[]ClusterEntry 			`yaml:"clusterNetwork,omitempty"`  
+        DefaultNetwork  DefaultNetEntry			`yaml:"defaultNetwork,omitempty"`
+        NetworkType	string				`yaml:"networkType,omitempty"`
+        ServiceNetwork	[]string			`yaml:"serviceNetwork,omitempty"`
+}
+
+type ClusterEntry struct {
+        CIDR		string	`yaml:"cidr"`
+	HostPrefix	int32	`yaml:"hostPrefix"`
+}
+
+type DefaultNetEntry struct {
+	Type	string	`yaml:"type"`
+}
+
 
 // ClusterDomain returns the cluster domain for a cluster with the specified
 // base domain and cluster name.
@@ -103,7 +156,121 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("publish"), c.Publish, validPublishingStrategyValues))
 	}
 
+	r, err := os.Open(c.Platform.OpenStack.AciNetExt.ProvisionTar)
+        if err != nil {
+        	fmt.Println("error")
+    	}
+        serviceNetwork := c.Networking.ServiceNetwork[0].String()
+        hostPrefix := c.Networking.ClusterNetwork[0].HostPrefix
+        networkType := c.Networking.NetworkType
+	clusterNetworkCIDR := &c.Networking.ClusterNetwork[0].CIDR
+        config := ExtractTarGz(r, serviceNetwork, clusterNetworkCIDR.String(), hostPrefix, networkType)
+        machineCIDR := c.Networking.DeprecatedMachineCIDR
+        // Validate against values from install config
+        if (strconv.Itoa(config.InfraVLAN) != c.Platform.OpenStack.AciNetExt.InfraVLAN) ||
+               (strconv.Itoa(config.ServiceVLAN) != c.Platform.OpenStack.AciNetExt.ServiceVLAN) ||
+                       (strconv.Itoa(config.KubeApiVLAN) != c.Platform.OpenStack.AciNetExt.KubeApiVLAN) ||
+                           DiffSubnets(config.NodeSubnet, machineCIDR) ||
+                               DiffSubnets(config.PodSubnet, clusterNetworkCIDR) {
+                                       panic("Install config and acc-provision not in sync")
+        }
+
 	return allErrs
+}
+
+func DiffSubnets(sub1 string, sub2 *ipnet.IPNet) bool {
+        // Returns True if the subnets are different
+        _, net1, _ := net.ParseCIDR(sub1)
+        if net1.String() != sub2.String() {
+                return true
+	}
+        return false
+}
+
+func ExtractTarGz(gzipStream io.Reader, serviceNet string, clusterCIDR string, hostPrefix int32, netType string) HostConfigMap {
+        uncompressedStream, err := gzip.NewReader(gzipStream)
+        if err != nil {
+                panic("ExtractTarGz: NewReader failed")
+        }
+
+        tarReader := tar.NewReader(uncompressedStream)
+
+        manifests_dir := "manifests"
+        os.Mkdir(manifests_dir, 0777)
+        config := HostConfigMap{}
+
+        for true {
+                header, err := tarReader.Next()
+
+                if err == io.EOF {
+                        break
+                }
+
+                if err != nil {
+                        log.Fatalf("ExtractTarGz: Next() failed: %s", err.Error())
+                }
+
+                switch header.Typeflag {
+                case tar.TypeReg:
+
+                        fileName := manifests_dir + "/" + header.Name
+                        outFile, err := os.Create(fileName)
+                        if err != nil {
+                                log.Fatalf("ExtractTarGz: Create() failed: %s", err.Error())
+                        }
+
+                        var buf bytes.Buffer
+                        teeReader := io.TeeReader(tarReader, &buf)
+                        temp, _ := ioutil.ReadAll(teeReader)
+
+			// Unmarshal acc configmap to get acc-provision values
+                        if strings.Contains(header.Name, "aci-containers-config") {
+                                t := AciContainersConfig{}
+                                err1 := yaml.Unmarshal(temp, &t)
+                                if err1 != nil {
+                                        log.Fatalf("error: %v", err1)
+                                }
+                                err2 := yaml.Unmarshal([]byte(t.Data.HostConfig), &config)
+                                if err2 != nil {
+                                        log.Fatalf("error: %v", err2)
+                                }
+                        }
+
+			// Set cluster-network-03 fields as provided in install-config.yaml
+                        if strings.Contains(header.Name, "cluster-network-03") {
+                                t := ClusterConfig03{}
+                                err1 := yaml.Unmarshal(temp, &t)
+                                if err1 != nil {
+                                        log.Fatalf("error: %v", err1)
+                                }
+				t.Spec.ClusterNetwork[0].CIDR = clusterCIDR
+                                t.Spec.ClusterNetwork[0].HostPrefix = hostPrefix
+                                t.Spec.ServiceNetwork[0] = serviceNet
+                                t.Spec.DefaultNetwork.Type = netType
+                                d, err := yaml.Marshal(&t)
+				if err != nil {
+					log.Fatalf("error: %v", err)
+				}
+                                
+				err = ioutil.WriteFile(fileName, d, 0640)
+                                if err != nil {
+					log.Fatal(err)
+				}
+                        } else {
+                        	if _, err := io.Copy(outFile, &buf); err != nil {
+                                	log.Fatalf("ExtractTarGz: Copy() failed: %s", err.Error())
+                        	}
+                        	outFile.Close()
+			}
+                default:
+                        log.Fatalf(
+                                "ExtractTarGz: unknown type: %s in %s",
+                                header.Typeflag,
+                                header.Name)
+                }
+
+        }
+        return config
 }
 
 // ipAddressTypeByField is a map of field path to whether they request IPv4 or IPv6.

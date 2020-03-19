@@ -55,11 +55,11 @@ func (a *Worker) Generate(dependencies asset.Parents) error {
         networkScriptString, _ := ign.NetworkScript(kube_api_vlan, defaultGateway.String(), mtu_value)
         logrus.Debug(string(networkScriptString))
 
-        neutronCIDR := &installConfig.Config.Platform.OpenStack.NeutronCIDR.IPNet
+        neutronCIDR := &installConfig.Config.Platform.OpenStack.AciNetExt.NeutronCIDR.IPNet
         defaultNeutronGateway, _ := cidr.Host(neutronCIDR, 1)
         defaultNeutronGatewayStr := defaultNeutronGateway.String()
 
-        installerHostSubnet := installConfig.Config.Platform.OpenStack.InstallerHostSubnet
+        installerHostSubnet := installConfig.Config.Platform.OpenStack.AciNetExt.InstallerHostSubnet
         installerHostIP, installerHostNet, _ := net.ParseCIDR(installerHostSubnet)
         installerNetmask := net.IP(installerHostNet.Mask)
 
