@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 
 	vsphereapis "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1"
+	"github.com/pkg/errors"
+
+	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 )
 
 type config struct {
@@ -20,6 +23,7 @@ type config struct {
 	Folder            string `json:"vsphere_folder"`
 	Network           string `json:"vsphere_network"`
 	Template          string `json:"vsphere_template"`
+	OvaFilePath       string `json:"vsphere_ova_filepath"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -28,11 +32,17 @@ type TFVarsSources struct {
 	Username            string
 	Password            string
 	Cluster             string
+	ImageURL            string
 }
 
 //TFVars generate vSphere-specific Terraform variables
 func TFVars(sources TFVarsSources) ([]byte, error) {
 	controlPlaneConfig := sources.ControlPlaneConfigs[0]
+
+	cachedImage, err := cache.DownloadImageFile(sources.ImageURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to use cached vsphere image")
+	}
 
 	cfg := &config{
 		VSphereURL:        controlPlaneConfig.Workspace.Server,
@@ -48,6 +58,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Folder:            controlPlaneConfig.Workspace.Folder,
 		Network:           controlPlaneConfig.Network.Devices[0].NetworkName,
 		Template:          controlPlaneConfig.Template,
+		OvaFilePath:       cachedImage,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

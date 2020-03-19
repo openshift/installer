@@ -919,6 +919,10 @@ github.com/keybase/go-crypto/rsa
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/kr/fs v0.1.0
 github.com/kr/fs
+# github.com/kr/pretty v0.1.0
+github.com/kr/pretty
+# github.com/kr/text v0.1.0
+github.com/kr/text
 # github.com/lib/pq v1.2.0
 github.com/lib/pq
 github.com/lib/pq/oid
@@ -1284,19 +1288,28 @@ github.com/vincent-petithory/dataurl
 # github.com/vmihailenco/msgpack v4.0.4+incompatible
 github.com/vmihailenco/msgpack
 github.com/vmihailenco/msgpack/codes
-# github.com/vmware/govmomi v0.22.1
+# github.com/vmware/govmomi v0.22.2
 github.com/vmware/govmomi
 github.com/vmware/govmomi/event
 github.com/vmware/govmomi/find
+github.com/vmware/govmomi/govc/cli
+github.com/vmware/govmomi/govc/flags
+github.com/vmware/govmomi/govc/importx
 github.com/vmware/govmomi/license
 github.com/vmware/govmomi/list
+github.com/vmware/govmomi/lookup
+github.com/vmware/govmomi/lookup/methods
+github.com/vmware/govmomi/lookup/types
 github.com/vmware/govmomi/nfc
 github.com/vmware/govmomi/object
+github.com/vmware/govmomi/ovf
 github.com/vmware/govmomi/pbm
 github.com/vmware/govmomi/pbm/methods
 github.com/vmware/govmomi/pbm/types
 github.com/vmware/govmomi/property
 github.com/vmware/govmomi/session
+github.com/vmware/govmomi/sts
+github.com/vmware/govmomi/sts/internal
 github.com/vmware/govmomi/task
 github.com/vmware/govmomi/vapi/internal
 github.com/vmware/govmomi/vapi/rest
@@ -1310,6 +1323,7 @@ github.com/vmware/govmomi/vim25/progress
 github.com/vmware/govmomi/vim25/soap
 github.com/vmware/govmomi/vim25/types
 github.com/vmware/govmomi/vim25/xml
+github.com/vmware/govmomi/vmdk
 # github.com/xanzy/ssh-agent v0.2.1
 github.com/xanzy/ssh-agent
 # github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca
@@ -1653,7 +1667,7 @@ k8s.io/api/settings/v1alpha1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apimachinery v0.17.2 => k8s.io/apimachinery v0.17.1
+# k8s.io/apimachinery v0.17.3 => k8s.io/apimachinery v0.17.1
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta

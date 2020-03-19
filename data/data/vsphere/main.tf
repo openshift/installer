@@ -5,6 +5,13 @@ provider "vsphere" {
   allow_unverified_ssl = false
 }
 
+provider "vsphereprivate" {
+  user                 = var.vsphere_username
+  password             = var.vsphere_password
+  vsphere_server       = var.vsphere_url
+  allow_unverified_ssl = false
+}
+
 data "vsphere_datacenter" "datacenter" {
   name = var.vsphere_datacenter
 }
@@ -25,8 +32,18 @@ data "vsphere_network" "network" {
 }
 
 data "vsphere_virtual_machine" "template" {
-  name          = var.vsphere_template
+  name          = vsphereprivate_import_ova.import.name
   datacenter_id = data.vsphere_datacenter.datacenter.id
+}
+
+resource "vsphereprivate_import_ova" "import" {
+  name       = var.vsphere_template
+  filename   = var.vsphere_ova_filepath
+  cluster    = var.vsphere_cluster
+  datacenter = var.vsphere_datacenter
+  datastore  = var.vsphere_datastore
+  network    = var.vsphere_network
+  folder     = vsphere_folder.folder.path
 }
 
 resource "vsphere_tag_category" "category" {

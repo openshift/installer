@@ -101,8 +101,15 @@ func osImage(config *types.InstallConfig) (string, error) {
 		// because this contains the necessary ironic config drive
 		// ignition support, which isn't enabled in the UPI BM images
 		osimage, err = rhcos.OpenStack(ctx, arch)
-	case none.Name, vsphere.Name:
+	case vsphere.Name:
+		// Check for RHCOS image URL override
+		if config.Platform.VSphere.ClusterOSImage != "" {
+			osimage = config.Platform.VSphere.ClusterOSImage
+			break
+		}
 
+		osimage, err = rhcos.VMware(ctx, arch)
+	case none.Name:
 	default:
 		return "", errors.New("invalid Platform")
 	}
