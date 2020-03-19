@@ -46,8 +46,9 @@ resource "azurerm_network_interface" "master" {
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "master_v4" {
-  // should be 'count = var.use_ipv4 && ! var.emulate_single_stack_ipv6 ? var.instance_count : 0', but we need a V4 LB for egress for quay
-  count = var.use_ipv4 ? var.instance_count : 0
+  // This is required because terraform cannot calculate counts during plan phase completely and therefore the `vnet/public-lb.tf`
+  // conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
+  count = (! var.private || ! var.outbound_udr) ? var.instance_count : 0
 
   network_interface_id    = element(azurerm_network_interface.master.*.id, count.index)
   backend_address_pool_id = var.elb_backend_pool_v4_id
@@ -55,7 +56,9 @@ resource "azurerm_network_interface_backend_address_pool_association" "master_v4
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "master_v6" {
-  count = var.use_ipv6 ? var.instance_count : 0
+  // This is required because terraform cannot calculate counts during plan phase completely and therefore the `vnet/public-lb.tf`
+  // conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
+  count = var.use_ipv6 && (! var.private || ! var.outbound_udr) ? var.instance_count : 0
 
   network_interface_id    = element(azurerm_network_interface.master.*.id, count.index)
   backend_address_pool_id = var.elb_backend_pool_v6_id

@@ -110,3 +110,16 @@ variable "emulate_single_stack_ipv6" {
   type        = bool
   description = "This determines whether a dual-stack cluster is configured to emulate single-stack IPv6."
 }
+
+variable "outbound_udr" {
+  type    = bool
+  default = false
+
+  description = <<EOF
+This determined whether User defined routing will be used for egress to Internet.
+When false, Standard LB will be used for egress to the Internet.
+
+This is required because terraform cannot calculate counts during plan phase completely and therefore the `vnet/public-lb.tf`
+conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
+EOF
+}

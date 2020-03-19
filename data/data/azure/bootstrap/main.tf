@@ -137,8 +137,9 @@ resource "azurerm_network_interface" "bootstrap" {
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap_v4" {
-  // should be 'count = var.use_ipv4 && ! var.emulate_single_stack_ipv6 ? 1 : 0', but we need a V4 LB for egress for quay
-  count = var.use_ipv4 ? 1 : 0
+  // This is required because terraform cannot calculate counts during plan phase completely and therefore the `vnet/public-lb.tf`
+  // conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
+  count = (! var.private || ! var.outbound_udr) ? 1 : 0
 
   network_interface_id    = azurerm_network_interface.bootstrap.id
   backend_address_pool_id = var.elb_backend_pool_v4_id
@@ -146,7 +147,9 @@ resource "azurerm_network_interface_backend_address_pool_association" "public_lb
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap_v6" {
-  count = var.use_ipv6 ? 1 : 0
+  // This is required because terraform cannot calculate counts during plan phase completely and therefore the `vnet/public-lb.tf`
+  // conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
+  count = var.use_ipv6 && (! var.private || ! var.outbound_udr) ? 1 : 0
 
   network_interface_id    = azurerm_network_interface.bootstrap.id
   backend_address_pool_id = var.elb_backend_pool_v6_id
