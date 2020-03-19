@@ -3,19 +3,21 @@
 
 FROM registry.svc.ci.openshift.org/openshift/release:golang-1.13 AS builder
 RUN yum install -y libvirt-devel && \
-    yum clean all && rm -rf /var/cache/yum/*
+    yum clean all && \
+    rm -rf /var/cache/yum/*
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN TAGS="libvirt baremetal" hack/build.sh
 
 
-FROM registry.svc.ci.openshift.org/origin/4.1:base
+FROM registry.svc.ci.openshift.org/origin/4.4:base
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
     libvirt-libs openssl unzip jq openssh-clients && \
-    yum clean all && rm -rf /var/cache/yum/* && \
+    yum clean all && \
+    rm -rf /var/cache/yum/* && \
     chmod g+w /etc/passwd
 
 RUN mkdir /output && chown 1000:1000 /output
