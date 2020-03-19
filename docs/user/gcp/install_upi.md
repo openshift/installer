@@ -387,6 +387,7 @@ resources:
     infra_id: '${INFRA_ID}'
     region: '${REGION}'
     zone: '${ZONE_0}'
+    cluster_network: '${CLUSTER_NETWORK}'
     control_subnet: '${CONTROL_SUBNET}'
     image: '${CLUSTER_IMAGE}'
     machine_type: 'n1-standard-4'
@@ -416,14 +417,13 @@ Manager, so we must add the bootstrap node manually.
 ### Add bootstrap instance to internal load balancer instance group
 
 ```sh
-gcloud compute instance-groups unmanaged add-instances ${INFRA_ID}-master-${ZONE_0}-instance-group --zone=${ZONE_0} --instances=${INFRA_ID}-bootstrap
+gcloud compute instance-groups unmanaged add-instances ${INFRA_ID}-bootstrap-instance-group --zone=${ZONE_0} --instances=${INFRA_ID}-bootstrap
 ```
 
-### Add bootstrap instance to external load balancer target pool (optional)
-If you deployed external load balancers with `02_infra.yaml`, add the bootstrap node to the target pool.
+### Add bootstrap instance group to the internal load balancer backend service
 
 ```sh
-gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone=${ZONE_0} --instances=${INFRA_ID}-bootstrap
+gcloud compute backend-services add-backend ${INFRA_ID}-api-internal-backend-service --region=${REGION} --instance-group=${INFRA_ID}-bootstrap-instance-group --instance-group-zone=${ZONE_0}
 ```
 
 ## Launch permanent control plane
@@ -585,8 +585,7 @@ INFO Waiting up to 30m0s for the bootstrap-complete event...
 At this point, you should delete the bootstrap resources.
 
 ```sh
-gcloud compute instance-groups unmanaged remove-instances ${INFRA_ID}-master-${ZONE_0}-instance-group --zone=${ZONE_0} --instances=${INFRA_ID}-bootstrap
-gcloud compute target-pools remove-instances ${INFRA_ID}-api-target-pool --instances-zone="${ZONE_0}" --instances=${INFRA_ID}-bootstrap
+gcloud compute backend-services remove-backend ${INFRA_ID}-api-internal-backend-service --region=${REGION} --instance-group=${INFRA_ID}-bootstrap-instance-group --instance-group-zone=${ZONE_0}
 gsutil rm gs://${INFRA_ID}-bootstrap-ignition/bootstrap.ign
 gsutil rb gs://${INFRA_ID}-bootstrap-ignition
 gcloud deployment-manager deployments delete ${INFRA_ID}-bootstrap

@@ -39,6 +39,22 @@ def GenerateConfig(context):
             },
             'zone': context.properties['zone']
         }
+    }, {
+        'name': context.properties['infra_id'] + '-bootstrap-instance-group',
+        'type': 'compute.v1.instanceGroup',
+        'properties': {
+            'namedPorts': [
+                {
+                    'name': 'ignition',
+                    'port': 22623
+                }, {
+                    'name': 'https',
+                    'port': 6443
+                }
+            ],
+            'network': context.properties['cluster_network'],
+            'zone': context.properties['zone']
+        }
     }]
 
     return {'resources': resources}
