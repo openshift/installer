@@ -136,12 +136,12 @@
   version = "v2"
 
 [[projects]]
-  digest = "1:1929b21a34400d463a99336f8e2908d2a154dc525c52411a8d99bb519942dc4c"
+  digest = "1:aef9339f69dda1ca77fdb2fd83cf64c3f5087c1f00f69719eaa14679f5321512"
   name = "github.com/apparentlymart/go-cidr"
   packages = ["cidr"]
   pruneopts = "NUT"
-  revision = "b1115bf8e14a60131a196f908223e4506b0ddc35"
-  version = "v1.0.0"
+  revision = "c0fb5fbe0acb592411e2db59add389a43260ad44"
+  version = "v1.0.1"
 
 [[projects]]
   digest = "1:b64410231651b7912fc7cbfed95cba05c5c61af1cc8c676e2accc79ea6c1d6ef"
@@ -886,7 +886,7 @@
   version = "v2.10.0"
 
 [[projects]]
-  digest = "1:78f3ea27f70c476e8c05f82dd96dcd662527d68e9967a6d5ac89aad44604b7a0"
+  digest = "1:d6be6c5b9c2fb05bd2dd5ada569c2fb9f8688d34abd711ce8c1973a5de023e1c"
   name = "github.com/terraform-providers/terraform-provider-azurerm"
   packages = [
     "azurerm",
@@ -901,9 +901,9 @@
     "version",
   ]
   pruneopts = "NUT"
-  revision = "7bc287e956632e40076a4deb227ec42108be9fb0"
+  revision = "7622916991c09e4d2f87f5be01b1bc882b396f1f"
   source = "https://github.com/openshift/terraform-provider-azurerm"
-  version = "v1.27.2-openshift"
+  version = "v1.27.2-openshift-2"
 
 [[projects]]
   digest = "1:2daa3bddc630ead813a47149cdc429816c43f9423a7d6e2aeff7ca794b072548"
