@@ -238,6 +238,9 @@ both required.  For example
 `redfish://myhost.example/redfish/v1/Systems/System.Embedded.1` or
 `redfish://myhost.example/redfish/v1/Systems/1`
 
+To use virtual media instead of PXE for attaching the provisioning
+image to the host, use `redfish-virtualmedia://` or `idrac-virtualmedia://`
+
 ## Work in Progress
 
 Integration of the `baremetal` platform is still a work-in-progress across
