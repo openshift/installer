@@ -2,6 +2,20 @@ package azure
 
 import "strings"
 
+// OutboundType is a strategy for how egress from cluster is achieved.
+// +kubebuilder:validation:Enum="";Loadbalancer;UserDefinedRouting
+type OutboundType string
+
+const (
+	// LoadbalancerOutboundType uses Standard loadbalancer for egress from the cluster.
+	// see https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-outbound-connections#lb
+	LoadbalancerOutboundType OutboundType = "Loadbalancer"
+
+	// UserDefinedRoutingOutboundType uses user defined routing for egress from the cluster.
+	// see https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-udr-overview
+	UserDefinedRoutingOutboundType OutboundType = "UserDefinedRouting"
+)
+
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
@@ -42,6 +56,12 @@ type Platform struct {
 	// If empty, the value is equal to "AzurePublicCloud".
 	// +optional
 	CloudName CloudEnvironment `json:"cloudName,omitempty"`
+
+	// OutboundType is a strategy for how egress from cluster is achieved. When not specified default is "Loadbalancer".
+	//
+	// +kubebuilder:default=Loadbalancer
+	// +optional
+	OutboundType OutboundType `json:"outboundType"`
 }
 
 // CloudEnvironment is the name of the Azure cloud environment

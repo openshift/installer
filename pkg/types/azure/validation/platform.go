@@ -1,6 +1,9 @@
 package validation
 
 import (
+	"fmt"
+	"sort"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -61,5 +64,29 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 	if !validCloudNames[p.CloudName] {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("cloudName"), p.CloudName, validCloudNameValues))
 	}
+
+	if _, ok := validOutboundTypes[p.OutboundType]; !ok {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("outboundType"), p.OutboundType, validOutboundTypeValues))
+	}
+	if p.OutboundType == azure.UserDefinedRoutingOutboundType && p.VirtualNetwork == "" {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, fmt.Sprintf("%s is only allowed when installing to pre-existing network", azure.UserDefinedRoutingOutboundType)))
+	}
+
 	return allErrs
 }
+
+var (
+	validOutboundTypes = map[azure.OutboundType]struct{}{
+		azure.LoadbalancerOutboundType:       {},
+		azure.UserDefinedRoutingOutboundType: {},
+	}
+
+	validOutboundTypeValues = func() []string {
+		v := make([]string, 0, len(validOutboundTypes))
+		for m := range validOutboundTypes {
+			v = append(v, string(m))
+		}
+		sort.Strings(v)
+		return v
+	}()
+)
