@@ -54,7 +54,6 @@ platform:
       - "8.8.8.8"
       - "192.168.1.12"
     lbFloatingIP: 128.0.0.1
-    region: region1
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
@@ -86,7 +85,6 @@ platform:
     computeFlavor: m1.s2.xlarge
     externalNetwork: external
     lbFloatingIP: 128.0.0.1
-    region: region1
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
