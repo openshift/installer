@@ -15,9 +15,9 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/gcp"
-	"github.com/openshift/installer/pkg/types/none"
-	"github.com/openshift/installer/pkg/types/vsphere"
+	"github.com/openshift/installer/pkg/types/openstack"
 )
 
 var proxyCfgFilename = filepath.Join(manifestDir, "cluster-proxy-01-config.yaml")
@@ -105,7 +105,7 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 // createNoProxy combines user-provided & platform-specific values to create a comma-separated
 // list of unique NO_PROXY values. Platform values are: serviceCIDR, podCIDR, machineCIDR,
 // localhost, 127.0.0.1, api.clusterdomain, api-int.clusterdomain, etcd-idx.clusterdomain
-// If platform is not vSphere or None add 169.254.169.254 to the list of NO_PROXY addresses.
+// If platform is AWS, GCP, Azure, or OpenStack add 169.254.169.254 to the list of NO_PROXY addresses.
 // If platform is AWS, add ".ec2.internal" for region us-east-1 or for all other regions add
 // ".<aws_region>.compute.internal" to the list of NO_PROXY addresses. We should not proxy
 // the instance metadata services:
@@ -129,7 +129,10 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 
 	platform := installConfig.Config.Platform.Name()
 
-	if platform != vsphere.Name && platform != none.Name {
+	// FIXME: The cluster-network-operator duplicates this code in pkg/util/proxyconfig/no_proxy.go,
+	//  if altering this list of platforms, you must ALSO alter the code in cluster-network-operator.
+	switch platform {
+	case aws.Name, gcp.Name, azure.Name, openstack.Name:
 		set.Insert("169.254.169.254")
 	}
 
