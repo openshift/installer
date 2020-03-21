@@ -2,6 +2,7 @@ package validation
 
 import (
 	"errors"
+        "net"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -66,6 +67,17 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 		}
 	}
 
+	// Check if snatCRSubnet is a valid subnet or IP
+	if p.AciNetExt.ClusterSNATSubnet != "" {
+		_, _, err := net.ParseCIDR(p.AciNetExt.ClusterSNATSubnet)
+		if err != nil {
+			ip := net.ParseIP(p.AciNetExt.ClusterSNATSubnet)
+			if ip == nil {
+				// error
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("ClusterSNATSubnet"), p.AciNetExt.ClusterSNATSubnet, err.Error()))
+			}	
+		}
+	}
 	return allErrs
 }
 
