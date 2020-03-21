@@ -13,41 +13,35 @@ import (
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
+        "github.com/openshift/installer/pkg/types/openstack"
 	"github.com/pkg/errors"
 
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 )
 
-type AciNetExtStruct struct {
-        InfraVLAN              string   `json:"infraVlan,omitempty"`
-        KubeApiVLAN            string   `json:"kubeApiVlan,omitempty"`
-        ServiceVLAN            string   `json:"serviceVlan,omitempty"`
-        Mtu                    string   `json:"mtu,omitempty"`
-}
-
 type config struct {
-	BaseImageName          string            `json:"openstack_base_image_name,omitempty"`
-	BaseImageLocalFilePath string            `json:"openstack_base_image_local_file_path,omitempty"`
-	ExternalNetwork        string            `json:"openstack_external_network,omitempty"`
-        AciNetExt              AciNetExtStruct   `json:"openstack_aci_net_ext",omitempty`
-        NeutronCIDR            string            `json:"openstack_neutron_cidr",omitempty`
-        NeutronCIDREnd         int               `json:"openstack_neutron_cidr_end",omitempty`
-	Cloud                  string            `json:"openstack_credentials_cloud,omitempty"`
-	FlavorName             string            `json:"openstack_master_flavor_name,omitempty"`
-	LbFloatingIP           string            `json:"openstack_lb_floating_ip,omitempty"`
-	APIVIP                 string            `json:"openstack_api_int_ip,omitempty"`
-	DNSVIP                 string            `json:"openstack_node_dns_ip,omitempty"`
-	IngressVIP             string            `json:"openstack_ingress_ip,omitempty"`
-	TrunkSupport           string            `json:"openstack_trunk_support,omitempty"`
-	OctaviaSupport         string            `json:"openstack_octavia_support,omitempty"`
-	RootVolumeSize         int               `json:"openstack_master_root_volume_size,omitempty"`
-	RootVolumeType         string            `json:"openstack_master_root_volume_type,omitempty"`
-	BootstrapShim          string            `json:"openstack_bootstrap_shim_ignition,omitempty"`
-	ExternalDNS            []string          `json:"openstack_external_dns,omitempty"`
+	BaseImageName          string                      `json:"openstack_base_image_name,omitempty"`
+	BaseImageLocalFilePath string                      `json:"openstack_base_image_local_file_path,omitempty"`
+	ExternalNetwork        string                      `json:"openstack_external_network,omitempty"`
+        AciNetExt              openstack.AciNetExtStruct   `json:"openstack_aci_net_ext",omitempty`
+        NeutronCIDR            string                      `json:"openstack_neutron_cidr",omitempty`
+        NeutronCIDREnd         int                         `json:"openstack_neutron_cidr_end",omitempty`
+	Cloud                  string                      `json:"openstack_credentials_cloud,omitempty"`
+	FlavorName             string                      `json:"openstack_master_flavor_name,omitempty"`
+	LbFloatingIP           string                      `json:"openstack_lb_floating_ip,omitempty"`
+	APIVIP                 string                      `json:"openstack_api_int_ip,omitempty"`
+	DNSVIP                 string                      `json:"openstack_node_dns_ip,omitempty"`
+	IngressVIP             string                      `json:"openstack_ingress_ip,omitempty"`
+	TrunkSupport           string                      `json:"openstack_trunk_support,omitempty"`
+	OctaviaSupport         string                      `json:"openstack_octavia_support,omitempty"`
+	RootVolumeSize         int                         `json:"openstack_master_root_volume_size,omitempty"`
+	RootVolumeType         string                      `json:"openstack_master_root_volume_type,omitempty"`
+	BootstrapShim          string                      `json:"openstack_bootstrap_shim_ignition,omitempty"`
+	ExternalDNS            []string                    `json:"openstack_external_dns,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, aciNetExtInput AciNetExtStruct, neutronCIDR string, externalDNS []string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string, baseImage string, infraID string, userCA string, bootstrapIgn string) ([]byte, error) {
+func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, aciNetExtInput openstack.AciNetExtStruct, neutronCIDR string, externalDNS []string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string, baseImage string, infraID string, userCA string, bootstrapIgn string) ([]byte, error) {
 
         neutron_mask, _ := strconv.Atoi(strings.Split(neutronCIDR, "/")[1])
         neutron_end := int(math.Pow(2, float64(32 - neutron_mask)) - 2)

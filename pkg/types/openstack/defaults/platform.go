@@ -30,8 +30,8 @@ func SetPlatformDefaults(p *openstack.Platform, installConfig *types.InstallConf
         // If no neutron CIDR provided, set it to 192.168.0.0 with the machine CIDR mask
         machineNet :=  &installConfig.Networking.DeprecatedMachineCIDR.IPNet
         machineMask := machineNet.Mask
-        if p.NeutronCIDR.String() != "" {
-                neutronNet := &p.NeutronCIDR.IPNet
+        if p.AciNetExt.NeutronCIDR.String() != "" {
+                neutronNet := &p.AciNetExt.NeutronCIDR.IPNet
                 neutronMask := neutronNet.Mask
                 if machineMask.String() != neutronMask.String() {
                         panic("Machine CIDR and Neutron CIDR have different subnet masks")
@@ -41,11 +41,11 @@ func SetPlatformDefaults(p *openstack.Platform, installConfig *types.InstallConf
                 machineNetString := machineNet.String()
                 machineMaskString := strings.Split(machineNetString, "/")[1]
                 neutronCIDRString := "192.168.0.0/" + machineMaskString
-                p.NeutronCIDR = ipnet.MustParseCIDR(neutronCIDRString)
+                p.AciNetExt.NeutronCIDR = ipnet.MustParseCIDR(neutronCIDRString)
         }
-        installConfig.Networking.NeutronCIDR = p.NeutronCIDR
+        installConfig.Networking.NeutronCIDR = p.AciNetExt.NeutronCIDR
 
-        ipnet.MustParseCIDR(p.InstallerHostSubnet)
+        ipnet.MustParseCIDR(p.AciNetExt.InstallerHostSubnet)
 }
 
 // APIVIP returns the internal virtual IP address (VIP) put in front
