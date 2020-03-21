@@ -131,6 +131,19 @@ var (
 					}
 					logrus.Fatal(err)
 				}
+
+				logrus.Infof("Post installer processing: Approving pending CSRs, and restarting aci-containers-controller pod...")
+				logrus.Infof("Approving pending CSRs")
+				_, err = exec.Command("sh", "-c", "KUBECONFIG=auth/kubeconfig oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | KUBECONFIG=auth/kubeconfig xargs oc adm certificate approve").Output()
+                          	if err != nil {
+                                	logrus.Warnf("Unable to approve CSRs")
+                          	}
+
+				logrus.Infof("Restarting aci-containers-controller")
+                          	_, err = exec.Command("sh", "-c", "KUBECONFIG=auth/kubeconfig oc get pods -n aci-containers-system | grep 'aci-containers-controller' | awk '{print $1}' | KUBECONFIG=auth/kubeconfig xargs oc delete pod -n aci-containers-system").Output()
+                          	if err != nil {
+                                	logrus.Warnf("Unable to restart ACI CNI controller")
+                          	}
 			},
 		},
 		assets: targetassets.Cluster,
