@@ -8,7 +8,6 @@ import (
         "gopkg.in/yaml.v2"
         "io"
         "io/ioutil"
-        "log"
 	"net"
 	"os"
 	"sort"
@@ -156,24 +155,45 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("publish"), c.Publish, validPublishingStrategyValues))
 	}
 
-	r, err := os.Open(c.Platform.OpenStack.AciNetExt.ProvisionTar)
+	tarField := field.NewPath("ProvisionTar")
+        r, err := os.Open(c.Platform.OpenStack.AciNetExt.ProvisionTar)
         if err != nil {
-        	fmt.Println("error")
-    	}
-        serviceNetwork := c.Networking.ServiceNetwork[0].String()
-        hostPrefix := c.Networking.ClusterNetwork[0].HostPrefix
-        networkType := c.Networking.NetworkType
-	clusterNetworkCIDR := &c.Networking.ClusterNetwork[0].CIDR
-        config := ExtractTarGz(r, serviceNetwork, clusterNetworkCIDR.String(), hostPrefix, networkType)
-        machineCIDR := c.Networking.DeprecatedMachineCIDR
-        // Validate against values from install config
-        if (strconv.Itoa(config.InfraVLAN) != c.Platform.OpenStack.AciNetExt.InfraVLAN) ||
-               (strconv.Itoa(config.ServiceVLAN) != c.Platform.OpenStack.AciNetExt.ServiceVLAN) ||
-                       (strconv.Itoa(config.KubeApiVLAN) != c.Platform.OpenStack.AciNetExt.KubeApiVLAN) ||
-                           DiffSubnets(config.NodeSubnet, machineCIDR) ||
-                               DiffSubnets(config.PodSubnet, clusterNetworkCIDR) {
-                                       panic("Install config and acc-provision not in sync")
-        }
+		allErrs = append(allErrs, field.Invalid(tarField, c.Platform.OpenStack.AciNetExt.ProvisionTar, err.Error()))
+    	} else {
+        	serviceNetwork := c.Networking.ServiceNetwork[0].String()
+                hostPrefix := c.Networking.ClusterNetwork[0].HostPrefix
+                networkType := c.Networking.NetworkType
+                clusterNetworkCIDR := &c.Networking.ClusterNetwork[0].CIDR
+                config, err := ExtractTarGz(r, serviceNetwork, clusterNetworkCIDR.String(), hostPrefix, networkType)
+                if err != nil {
+                        allErrs = append(allErrs, field.Invalid(tarField.Child("Unmarshal"),
+                                c.Platform.OpenStack.AciNetExt.ProvisionTar, err.Error()))
+                } else {
+			machineCIDR := c.Networking.MachineCIDR
+                        // Validate against values from install config
+
+                        if (strconv.Itoa(config.InfraVLAN) != c.Platform.OpenStack.AciNetExt.InfraVLAN) {
+                                allErrs = append(allErrs, field.Invalid(field.NewPath("InfraVLAN"),
+                                        c.Platform.OpenStack.AciNetExt.InfraVLAN, "InfraVLAN values in acc-provision input and install config have to be the same"))
+                        }
+                        if (strconv.Itoa(config.ServiceVLAN) != c.Platform.OpenStack.AciNetExt.ServiceVLAN) {
+                                allErrs = append(allErrs, field.Invalid(field.NewPath("ServiceVLAN"),
+                                        c.Platform.OpenStack.AciNetExt.ServiceVLAN, "ServiceVLAN values in acc-provision input and install config have to be the same"))
+                        }
+                        if (strconv.Itoa(config.KubeApiVLAN) != c.Platform.OpenStack.AciNetExt.KubeApiVLAN) {
+                                allErrs = append(allErrs, field.Invalid(field.NewPath("KubeApiVLAN"),
+                                        c.Platform.OpenStack.AciNetExt.KubeApiVLAN, "KubeApiVLAN values in acc-provision input and install config have to be the same"))
+                        }
+                        if DiffSubnets(config.NodeSubnet, machineCIDR) {
+                                allErrs = append(allErrs, field.Invalid(field.NewPath("MachineCIDR"),
+                                        c.Networking.MachineCIDR, "node_subnet in acc-provision input has to be the same as machineCIDR"))
+                        }
+                        if DiffSubnets(config.PodSubnet, clusterNetworkCIDR) {
+                                allErrs = append(allErrs, field.Invalid(field.NewPath("ClusterNetworkCIDR"),
+                                        clusterNetworkCIDR, "pod_subnet in acc-provision input has to be the same as clusterNetwork CIDR"))
+                        }
+		}
+	}
 
 	return allErrs
 }
@@ -187,17 +207,17 @@ func DiffSubnets(sub1 string, sub2 *ipnet.IPNet) bool {
         return false
 }
 
-func ExtractTarGz(gzipStream io.Reader, serviceNet string, clusterCIDR string, hostPrefix int32, netType string) HostConfigMap {
+func ExtractTarGz(gzipStream io.Reader, serviceNet string, clusterCIDR string, hostPrefix int32, netType string) (HostConfigMap, error) {
+	config := HostConfigMap{}
         uncompressedStream, err := gzip.NewReader(gzipStream)
         if err != nil {
-                panic("ExtractTarGz: NewReader failed")
+		return config, err
         }
 
         tarReader := tar.NewReader(uncompressedStream)
 
         manifests_dir := "manifests"
         os.Mkdir(manifests_dir, 0777)
-        config := HostConfigMap{}
 
         for true {
                 header, err := tarReader.Next()
@@ -207,7 +227,7 @@ func ExtractTarGz(gzipStream io.Reader, serviceNet string, clusterCIDR string, h
                 }
 
                 if err != nil {
-                        log.Fatalf("ExtractTarGz: Next() failed: %s", err.Error())
+			return config, err
                 }
 
                 switch header.Typeflag {
@@ -216,7 +236,7 @@ func ExtractTarGz(gzipStream io.Reader, serviceNet string, clusterCIDR string, h
                         fileName := manifests_dir + "/" + header.Name
                         outFile, err := os.Create(fileName)
                         if err != nil {
-                                log.Fatalf("ExtractTarGz: Create() failed: %s", err.Error())
+				return config, err
                         }
 
                         var buf bytes.Buffer
@@ -226,22 +246,22 @@ func ExtractTarGz(gzipStream io.Reader, serviceNet string, clusterCIDR string, h
 			// Unmarshal acc configmap to get acc-provision values
                         if strings.Contains(header.Name, "aci-containers-config") {
                                 t := AciContainersConfig{}
-                                err1 := yaml.Unmarshal(temp, &t)
-                                if err1 != nil {
-                                        log.Fatalf("error: %v", err1)
+                                err = yaml.Unmarshal(temp, &t)
+                                if err != nil {
+					return config, err
                                 }
-                                err2 := yaml.Unmarshal([]byte(t.Data.HostConfig), &config)
-                                if err2 != nil {
-                                        log.Fatalf("error: %v", err2)
+                                err = yaml.Unmarshal([]byte(t.Data.HostConfig), &config)
+                                if err != nil {
+					return config, err
                                 }
                         }
 
 			// Set cluster-network-03 fields as provided in install-config.yaml
                         if strings.Contains(header.Name, "cluster-network-03") {
                                 t := ClusterConfig03{}
-                                err1 := yaml.Unmarshal(temp, &t)
-                                if err1 != nil {
-                                        log.Fatalf("error: %v", err1)
+                                err = yaml.Unmarshal(temp, &t)
+                                if err != nil {
+					return config, err
                                 }
 				t.Spec.ClusterNetwork[0].CIDR = clusterCIDR
                                 t.Spec.ClusterNetwork[0].HostPrefix = hostPrefix
@@ -249,28 +269,24 @@ func ExtractTarGz(gzipStream io.Reader, serviceNet string, clusterCIDR string, h
                                 t.Spec.DefaultNetwork.Type = netType
                                 d, err := yaml.Marshal(&t)
 				if err != nil {
-					log.Fatalf("error: %v", err)
+					return config, err
 				}
                                 
 				err = ioutil.WriteFile(fileName, d, 0640)
                                 if err != nil {
-					log.Fatal(err)
+					return config, err
 				}
                         } else {
                         	if _, err := io.Copy(outFile, &buf); err != nil {
-                                	log.Fatalf("ExtractTarGz: Copy() failed: %s", err.Error())
+					return config, err
                         	}
                         	outFile.Close()
 			}
                 default:
-                        log.Fatalf(
-                                "ExtractTarGz: unknown type: %s in %s",
-                                header.Typeflag,
-                                header.Name)
-                }
+			return config, errors.New("Unsupported file type in tar")
 
         }
-        return config
+        return config, nil
 }
 
 // ipAddressTypeByField is a map of field path to whether they request IPv4 or IPv6.

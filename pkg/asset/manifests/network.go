@@ -1,8 +1,10 @@
 package manifests
 
 import (
+        "bytes"
 	"fmt"
 	"path/filepath"
+	"text/template"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -18,7 +20,17 @@ import (
 var (
 	noCrdFilename = filepath.Join(manifestDir, "cluster-network-01-crd.yml")
 	noCfgFilename = filepath.Join(manifestDir, "cluster-network-02-config.yml")
+	noSNATCRFilename = filepath.Join(manifestDir, "cluster-network-27-snat-policy-cr.yaml")
 )
+
+var snatCRTmpl = template.Must(template.New("snat-cr").Parse(`apiVersion: aci.snat/v1
+kind: SnatPolicy
+metadata:
+  name: installerclusterdefault
+spec:
+  snatIp:
+    -  {{.snatIP}}
+`))
 
 // We need to manually create our CRDs first, so we can create the
 // configuration instance of it in the installer. Other operators have
@@ -51,7 +63,7 @@ func (no *Networking) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the network operator config and its CRD.
+// Generate generates the network operator config and its CRD and the SNAT Cluster CR if needed.
 func (no *Networking) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	crds := &openshift.NetworkCRDs{}
@@ -107,14 +119,25 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 	}
 
 	no.FileList = []*asset.File{
-		{
-			Filename: noCrdFilename,
-			Data:     []byte(crdContents),
-		},
-		{
-			Filename: noCfgFilename,
-			Data:     configData,
-		},
+                {
+                        Filename: noCrdFilename,
+                        Data:     []byte(crdContents),
+                },
+                {
+                        Filename: noCfgFilename,
+                        Data:     configData,
+                },
+        }
+
+	// Create SNAT Cluster CR file 
+	if installConfig.Config.Platform.OpenStack.AciNetExt.ClusterSNATSubnet != "" {
+		snatData := &bytes.Buffer{}
+		data := map[string]string{"snatIP": installConfig.Config.Platform.OpenStack.AciNetExt.ClusterSNATSubnet}
+		if err := snatCRTmpl.Execute(snatData, data); err != nil {
+			return errors.Wrapf(err, "failed to create SNAT CR manifests from InstallConfig")
+		}
+		snatFile := &asset.File{Filename: noSNATCRFilename, Data: snatData.Bytes()}
+		no.FileList = append(no.FileList, snatFile)
 	}
 
 	return nil
