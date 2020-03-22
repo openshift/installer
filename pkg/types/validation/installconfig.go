@@ -69,7 +69,7 @@ type MetaEntry struct {
 }
 
 type SpecEntry struct {
-	Multus		string				`yaml:"disableMultiNetwork"`
+	Multus		bool				`yaml:"disableMultiNetwork"`
         ClusterNetwork	[]ClusterEntry 			`yaml:"clusterNetwork,omitempty"`  
         DefaultNetwork  DefaultNetEntry			`yaml:"defaultNetwork,omitempty"`
         NetworkType	string				`yaml:"networkType,omitempty"`
