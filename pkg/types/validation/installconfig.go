@@ -284,6 +284,7 @@ func ExtractTarGz(gzipStream io.Reader, serviceNet string, clusterCIDR string, h
 			}
                 default:
 			return config, errors.New("Unsupported file type in tar")
+		}
 
         }
         return config, nil
