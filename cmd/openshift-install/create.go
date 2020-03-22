@@ -48,6 +48,20 @@ type target struct {
 	assets  []asset.WritableAsset
 }
 
+var exposeString = `KUBECONFIG=auth/kubeconfig oc replace --force --wait --filename - <<EOF
+apiVersion: operator.openshift.io/v1
+kind: IngressController
+metadata:
+  namespace: openshift-ingress-operator
+  name: default
+spec:
+  endpointPublishingStrategy:
+    type: LoadBalancerService
+    loadBalancer:
+      scope: Internal
+EOF
+`
+
 // each target is a variable to preserve the order when creating subcommands and still
 // allow other functions to directly access each target individually.
 var (
@@ -132,7 +146,7 @@ var (
 					logrus.Fatal(err)
 				}
 
-				logrus.Infof("Post installer processing: Approving pending CSRs, and restarting aci-containers-controller pod...")
+				logrus.Infof("Post installer processing: Approving pending CSRs, restarting aci-containers-controller pod and updating default IngressController...")
 				logrus.Infof("Approving pending CSRs")
 				_, err = exec.Command("sh", "-c", "KUBECONFIG=auth/kubeconfig oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | KUBECONFIG=auth/kubeconfig xargs oc adm certificate approve").Output()
                           	if err != nil {
@@ -144,6 +158,12 @@ var (
                           	if err != nil {
                                 	logrus.Warnf("Unable to restart ACI CNI controller")
                           	}
+
+				logrus.Infof("Updating default IngressController publish strategy to use LoadBalancerService type")
+				_, err = exec.Command("sh", "-c", exposeString).Output()
+                                if err != nil {
+                                        logrus.Warnf("Unable to Expose the openshift-ingress service")
+                                }
 			},
 		},
 		assets: targetassets.Cluster,
