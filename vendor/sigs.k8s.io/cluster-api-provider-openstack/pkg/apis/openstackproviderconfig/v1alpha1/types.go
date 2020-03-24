@@ -118,6 +118,8 @@ type NetworkParam struct {
 	Filter Filter `json:"filter,omitempty"`
 	// Subnet within a network to use
 	Subnets []SubnetParam `json:"subnets,omitempty"`
+	// NoAllowedAddressPairs disables creation of allowed address pairs for the network ports
+	NoAllowedAddressPairs bool `json:"noAllowedAddressPairs,omitempty"`
 }
 
 type Filter struct {
