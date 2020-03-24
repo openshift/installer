@@ -648,6 +648,10 @@ func deleteTrunks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 	}
 	allPages, err := trunks.List(conn, listOpts).AllPages()
 	if err != nil {
+		if _, ok := err.(gophercloud.ErrDefault404); ok {
+			logger.Debug("Skip trunk deletion because the cloud doesn't support trunk ports")
+			return true, nil
+		}
 		logger.Error(err)
 		return false, nil
 	}
