@@ -19,6 +19,7 @@ type Host struct {
 	Role            string `json:"role"`
 	BootMACAddress  string `json:"bootMACAddress" validate:"required,uniqueField"`
 	HardwareProfile string `json:"hardwareProfile"`
+	RootHint        map[string]interface{} `json:"rootHint"`
 }
 
 // Platform stores all the global configuration that all machinesets use.

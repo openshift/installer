@@ -85,7 +85,11 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 
 		// Root device hints
 		rootDevice := make(map[string]interface{})
-		if profile.RootDeviceHints.HCTL != "" {
+
+		// host.RootHint overrides the root device hint in the profile
+		if len(host.RootHint) != 0 {
+			rootDevice = host.RootHint
+		} else if profile.RootDeviceHints.HCTL != "" {
 			rootDevice["hctl"] = profile.RootDeviceHints.HCTL
 		} else {
 			rootDevice["name"] = profile.RootDeviceHints.DeviceName
