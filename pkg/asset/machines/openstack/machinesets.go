@@ -10,7 +10,6 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
-	"github.com/pkg/errors"
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
@@ -30,13 +29,11 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	}
 
 	// TODO(flaper87): Add support for availability zones
-	var machinesets []*clusterapi.MachineSet
+	machinesets := make([]*clusterapi.MachineSet, 0, 1)
 	az := ""
 	trunk := config.Platform.OpenStack.TrunkSupport
-	provider, err := provider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunk)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create provider")
-	}
+
+	provider := generateProvider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunk)
 	// TODO(flaper87): Implement AZ support sometime soon
 	//name := fmt.Sprintf("%s-%s-%s", clustername, pool.Name, az)
 	name := fmt.Sprintf("%s-%s", clusterID, pool.Name)
