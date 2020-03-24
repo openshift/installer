@@ -307,6 +307,12 @@ variable "openstack_external_dns" {
   default     = []
 }
 
+variable "openstack_additional_network_ids" {
+  type        = list(string)
+  description = "IDs of additional networks for master nodes."
+  default     = []
+}
+
 variable "openstack_master_flavor_name" {
   type        = string
   description = "Instance size for the master node(s). Example: `m1.medium`."
