@@ -61,7 +61,7 @@ func Destroy(dir string) (err error) {
 			return errors.Wrap(err, "failed disabling bootstrap load balancing")
 		}
 
-		// Then destory the bootstrap instance and instance group so destroy runs cleanly.
+		// Then destroy the bootstrap instance and instance group so destroy runs cleanly.
 		// First remove the bootstrap from LB target and its instance so that bootstrap module is cleanly destroyed.
 		_, err = terraform.Apply(tempDir, platform, append(extraArgs, "-var=gcp_bootstrap_enabled=false")...)
 		if err != nil {
