@@ -350,7 +350,9 @@ Remove the control-plane Machines and compute MachineSets, because we'll be prov
 ```sh
 $ rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml openshift/99_openshift-cluster-api_worker-machineset-*.yaml
 ```
-You are free to leave the compute MachineSets in if you want to create compute machines via the machine API, but if you do you may need to update the various references (`subnet`, etc.) to match your environment.
+Leave the compute MachineSets in if you want to create compute machines via the machine API. However, some references must be updated in the machineset spec (`openshift/99_openshift-cluster-api_worker-machineset-0.yaml`) to match your environment:
+
+* The OS image: `spec.template.spec.providerSpec.value.image`
 
 [mao]: https://github.com/openshift/machine-api-operator
 
