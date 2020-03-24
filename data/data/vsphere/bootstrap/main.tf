@@ -29,6 +29,7 @@ resource "vsphere_virtual_machine" "vm" {
   extra_config = {
     "guestinfo.ignition.config.data"          = base64encode(var.ignition)
     "guestinfo.ignition.config.data.encoding" = "base64"
+    "guestinfo.hostname"                      = "${var.cluster_id}-bootstrap"
   }
   tags = var.tags
 }
