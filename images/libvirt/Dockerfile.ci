@@ -14,9 +14,6 @@ COPY --from=builder /go/src/github.com/openshift/installer/images/libvirt/mock-n
 COPY --from=builder /go/src/github.com/openshift/installer/images/libvirt/google-cloud-sdk.repo /etc/yum.repos.d/google-cloud-sdk.repo
 
 RUN yum update -y && \
-    yum install --setopt=tsflags=nodocs -y epel-release && \
-    yum clean all && rm -rf /var/cache/yum/*
-RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
     genisoimage \
     gettext \
