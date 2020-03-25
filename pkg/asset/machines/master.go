@@ -310,7 +310,11 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 	case ovirttypes.Name:
 		mpool := defaultOvirtMachinePoolPlatform()
+		mpool.VMType = ovirttypes.VMTypeHighPerformance
+		mpool.Set(ic.Platform.Ovirt.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.Ovirt)
 		pool.Platform.Ovirt = &mpool
+
 		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
 		machines, err = ovirt.Machines(clusterID.InfraID, ic, pool, imageName, "master", "master-user-data")
