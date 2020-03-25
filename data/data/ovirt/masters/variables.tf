@@ -27,10 +27,32 @@ variable "ignition_master" {
   description = "master ignition config"
 }
 
-variable "ovirt_master_mem" {
-  type = string
+variable "ovirt_master_memory" {
+  type        = string
+  description = "master VM memory in MiB"
 }
 
-variable "ovirt_master_cpu" {
-  type = string
+variable "ovirt_master_cores" {
+  type        = string
+  description = "master VM number of cores"
+}
+
+variable "ovirt_master_sockets" {
+  type        = string
+  description = "master VM number of sockets"
+}
+
+variable "ovirt_master_os_disk_size_gb" {
+  type        = string
+  description = "master VM disk size in GiB"
+}
+
+variable "ovirt_master_vm_type" {
+  type        = string
+  description = "master VM type"
+}
+
+variable "ovirt_master_instance_type_id" {
+  type        = string
+  description = "master VM instance type ID"
 }

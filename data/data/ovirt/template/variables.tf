@@ -37,16 +37,3 @@ variable "ovirt_vnic_profile_id" {
   type        = string
   description = "The ID of the vnic profile of ovirt's logical network."
 }
-
-variable "ovirt_template_mem" {
-  type = string
-}
-
-variable "ovirt_template_cpu" {
-  type = string
-}
-
-variable "disk_size_gib" {
-  type        = number
-  description = "The size of the template disk for worker/nodes in GiB."
-}

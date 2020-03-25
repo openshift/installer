@@ -16,6 +16,8 @@ import (
 	libvirtvalidation "github.com/openshift/installer/pkg/types/libvirt/validation"
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
+	"github.com/openshift/installer/pkg/types/ovirt"
+	ovirtvalidation "github.com/openshift/installer/pkg/types/ovirt/validation"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	vspherevalidation "github.com/openshift/installer/pkg/types/vsphere/validation"
 )
@@ -97,6 +99,9 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 	}
 	if p.VSphere != nil {
 		validate(vsphere.Name, p.VSphere, func(f *field.Path) field.ErrorList { return vspherevalidation.ValidateMachinePool(p.VSphere, f) })
+	}
+	if p.Ovirt != nil {
+		validate(ovirt.Name, p.Ovirt, func(f *field.Path) field.ErrorList { return ovirtvalidation.ValidateMachinePool(p.Ovirt, f) })
 	}
 	return allErrs
 }
