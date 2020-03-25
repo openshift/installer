@@ -44,7 +44,7 @@ func resourceComputeFlavorAccessV2() *schema.Resource {
 
 func resourceComputeFlavorAccessV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	computeClient, err := config.computeV2Client(GetRegion(d, config))
+	computeClient, err := config.ComputeV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
@@ -69,7 +69,7 @@ func resourceComputeFlavorAccessV2Create(d *schema.ResourceData, meta interface{
 
 func resourceComputeFlavorAccessV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	computeClient, err := config.computeV2Client(GetRegion(d, config))
+	computeClient, err := config.ComputeV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
@@ -88,7 +88,7 @@ func resourceComputeFlavorAccessV2Read(d *schema.ResourceData, meta interface{})
 
 func resourceComputeFlavorAccessV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	computeClient, err := config.computeV2Client(GetRegion(d, config))
+	computeClient, err := config.ComputeV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}

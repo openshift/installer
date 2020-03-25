@@ -55,6 +55,18 @@ type MachineHealthCheckSpec struct {
 	// "selector" are not healthy.
 	// +optional
 	MaxUnhealthy *intstr.IntOrString `json:"maxUnhealthy,omitempty"`
+
+	// It would be preferable for nodeStartupTimeout to be a metav1.Duration, but
+	// there's no good way to validate the format here.  Invalid input would cause
+	// problems with marshaling, so it's better to just make it a string and
+	// handle the conversion in the controller.
+	//
+	// Intentional blank line to keep this out of the OpenAPI description...
+
+	// Machines older than this duration without a node will be considered to have
+	// failed and will be remediated.
+	// +optional
+	NodeStartupTimeout string `json:"nodeStartupTimeout,omitempty"`
 }
 
 // UnhealthyCondition represents a Node condition type and value with a timeout

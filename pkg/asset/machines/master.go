@@ -13,12 +13,14 @@ import (
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	libvirtapi "github.com/openshift/cluster-api-provider-libvirt/pkg/apis"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
-	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
+	ovirtproviderapi "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
+	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	vsphereapi "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider"
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	awsapi "sigs.k8s.io/cluster-api-provider-aws/pkg/apis"
@@ -120,10 +122,13 @@ func (m *Master) Dependencies() []asset.Asset {
 	}
 }
 
-func awsDefaultMasterMachineType(installconfig *installconfig.InstallConfig) string {
-	region := installconfig.Config.Platform.AWS.Region
-	instanceClass := awsdefaults.InstanceClass(region)
-	return fmt.Sprintf("%s.xlarge", instanceClass)
+func awsDefaultMasterMachineTypes(region string) []string {
+	classes := awsdefaults.InstanceClasses(region)
+	types := make([]string, len(classes))
+	for i, c := range classes {
+		types[i] = fmt.Sprintf("%s.xlarge", c)
+	}
+	return types
 }
 
 // Generate generates the Master asset.
@@ -154,7 +159,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 
 		mpool := defaultAWSMachinePoolPlatform()
-		mpool.InstanceType = awsDefaultMasterMachineType(installConfig)
+		mpool.AMIID = string(*rhcosImage)
 		mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.AWS)
 		if len(mpool.Zones) == 0 {
@@ -169,6 +174,13 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 				}
 			}
 		}
+		if mpool.InstanceType == "" {
+			mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultMasterMachineTypes(installConfig.Config.Platform.AWS.Region), mpool.Zones)
+			if err != nil {
+				logrus.Warn(errors.Wrap(err, "failed to find default instance type"))
+				mpool.InstanceType = awsDefaultMasterMachineTypes(installConfig.Config.Platform.AWS.Region)[0]
+			}
+		}
 
 		pool.Platform.AWS = &mpool
 		machines, err = aws.Machines(
@@ -176,7 +188,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			installConfig.Config.Platform.AWS.Region,
 			subnets,
 			pool,
-			string(*rhcosImage),
 			"master",
 			"master-user-data",
 			installConfig.Config.Platform.AWS.UserTags,
@@ -309,11 +320,14 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 	case vspheretypes.Name:
 		mpool := defaultVSphereMachinePoolPlatform()
+		mpool.NumCPUs = 4
+		mpool.MemoryMiB = 16384
 		mpool.Set(ic.Platform.VSphere.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.VSphere)
 		pool.Platform.VSphere = &mpool
+		templateName := clusterID.InfraID + "-rhcos"
 
-		machines, err = vsphere.Machines(clusterID.InfraID, ic, pool, string(*rhcosImage), "master", "master-user-data")
+		machines, err = vsphere.Machines(clusterID.InfraID, ic, pool, templateName, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
@@ -444,7 +458,7 @@ func (m *Master) Machines() ([]machineapi.Machine, error) {
 	gcpapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
-	ovirtprovider.AddToScheme(scheme)
+	ovirtproviderapi.AddToScheme(scheme)
 	vsphereapi.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		awsprovider.SchemeGroupVersion,
@@ -454,6 +468,7 @@ func (m *Master) Machines() ([]machineapi.Machine, error) {
 		libvirtprovider.SchemeGroupVersion,
 		openstackprovider.SchemeGroupVersion,
 		vsphereprovider.SchemeGroupVersion,
+		ovirtprovider.SchemeGroupVersion,
 	)
 
 	machines := []machineapi.Machine{}

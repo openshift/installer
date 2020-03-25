@@ -73,6 +73,7 @@ resource "ovirt_template" "releaseimage_template" {
   // create from vm
   vm_id      = ovirt_vm.tmp_import_vm.0.id
   depends_on = [ovirt_vm.tmp_import_vm]
+  cores      = var.ovirt_template_cpu
 }
 
 // finally get the template by name(should be unique), fail if it doesn't exist

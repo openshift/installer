@@ -35,6 +35,47 @@
       name: "{{ os_subnet }}"
       tags: "{{ [cluster_id_tag] }}"
 
+  - name: 'Create the service network'
+    os_network:
+      name: "{{ os_svc_network }}"
+    when: os_networking_type == "Kuryr"
+
+  - name: 'Set the service network tag'
+    os_tag:
+      resource: "network"
+      name: "{{ os_svc_network }}"
+      tags: "{{ [cluster_id_tag] }}"
+    when: os_networking_type == "Kuryr"
+
+  - name: 'Create the service subnet'
+    os_create_svc_subnet:
+      subnet_name: "{{ os_svc_subnet }}"
+      network_name: "{{ os_svc_network }}"
+      cidr: "{{ svc_subnet_range }}"
+      openstack_svc_network: "{{ os_svc_network_range }}"
+    when: os_networking_type == "Kuryr"
+
+  - name: 'Set the service subnet tag'
+    os_tag:
+      resource: "subnet"
+      name: "{{ os_svc_subnet }}"
+      tags: "{{ [cluster_id_tag] }}"
+    when: os_networking_type == "Kuryr"
+
+  - name: 'Create pods subnet pool'
+    os_create_subnet_pool:
+      name: "{{ subnet_pool }}"
+      prefix_lenght: "{{ host_prefix }}"
+      prefixes: "{{ cluster_network_cidrs }}"
+    when: os_networking_type == "Kuryr"
+
+  - name: 'Set subnet pool tag'
+    os_tag:
+      resource: "subnet_pool"
+      name: "{{ subnet_pool }}"
+      tags: "{{ [cluster_id_tag] }}"
+    when: os_networking_type == "Kuryr"
+
   - name: 'Create external router'
     os_router:
       name: "{{ os_router }}"

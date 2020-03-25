@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/vsphere"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
@@ -32,6 +33,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 const (
@@ -59,6 +61,7 @@ type bootstrapTemplateData struct {
 // template files that are specific to one platform.
 type platformTemplateData struct {
 	BareMetal *baremetal.TemplateData
+	VSphere   *vsphere.TemplateData
 }
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
@@ -232,12 +235,14 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		registries = append(registries, registry)
 	}
 
-	// Generate platform-specific baremetal data
+	// Generate platform-specific bootstrap data
 	var platformData platformTemplateData
 
 	switch installConfig.Platform.Name() {
 	case baremetaltypes.Name:
 		platformData.BareMetal = baremetal.GetTemplateData(installConfig.Platform.BareMetal)
+	case vspheretypes.Name:
+		platformData.VSphere = vsphere.GetTemplateData(installConfig.Platform.VSphere)
 	}
 
 	return &bootstrapTemplateData{
@@ -292,9 +297,10 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 	}
 
 	filename := path.Base(uri)
+	parentDir := path.Base(path.Dir(uri))
 
 	var mode int
-	if path.Base(path.Dir(uri)) == "bin" {
+	if parentDir == "bin" || parentDir == "dispatcher.d" {
 		mode = 0555
 	} else if filename == "motd" {
 		mode = 0644
@@ -302,13 +308,8 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 		mode = 0600
 	}
 	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)
-
 	// Replace files that already exist in the slice with ones added later, otherwise append them
-	if exists, i := sliceContainsFileAtIndex(a.Config.Storage.Files, ign); exists == true {
-		a.Config.Storage.Files[i] = ign
-	} else {
-		a.Config.Storage.Files = append(a.Config.Storage.Files, ign)
-	}
+	a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, ign)
 
 	return nil
 }
@@ -376,6 +377,7 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 				if err != nil {
 					return err
 				}
+
 				contentsString := string(contents)
 
 				dropins = append(dropins, igntypes.Dropin{
@@ -398,6 +400,7 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 			if err != nil {
 				return err
 			}
+
 			contentsString := string(contents)
 
 			unit := igntypes.Unit{
@@ -450,11 +453,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 
 		// Replace files that already exist in the slice with ones added later, otherwise append them
 		for _, file := range ignition.FilesFromAsset(rootDir, "root", 0644, asset) {
-			if exists, i := sliceContainsFileAtIndex(a.Config.Storage.Files, file); exists == true {
-				a.Config.Storage.Files[i] = file
-			} else {
-				a.Config.Storage.Files = append(a.Config.Storage.Files, file)
-			}
+			a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, file)
 		}
 	}
 
@@ -504,21 +503,27 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 		&tls.JournalCertKey{},
 	} {
 		dependencies.Get(asset)
-		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "root", 0600, asset)...)
+
+		// Replace files that already exist in the slice with ones added later, otherwise append them
+		for _, file := range ignition.FilesFromAsset(rootDir, "root", 0600, asset) {
+			a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, file)
+		}
 	}
 
 	rootCA := &tls.RootCA{}
 	dependencies.Get(rootCA)
-	a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
+	a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
 }
 
-func sliceContainsFileAtIndex(files []igntypes.File, file igntypes.File) (bool, int) {
+func replaceOrAppend(files []igntypes.File, file igntypes.File) []igntypes.File {
 	for i, f := range files {
 		if f.Node.Path == file.Node.Path {
-			return true, i
+			files[i] = file
+			return files
 		}
 	}
-	return false, -1
+	files = append(files, file)
+	return files
 }
 
 func applyTemplateData(template *template.Template, templateData interface{}) string {

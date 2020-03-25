@@ -50,7 +50,7 @@ var SelectQuestionTemplate = `
 {{- color "default+hb"}}{{ .Message }}{{ .FilterMessage }}{{color "reset"}}
 {{- if .ShowAnswer}}{{color "cyan"}} {{.Answer}}{{color "reset"}}{{"\n"}}
 {{- else}}
-  {{- "  "}}{{- color "cyan"}}[Use arrows to move, space to select, type to filter{{- if and .Help (not .ShowHelp)}}, {{ HelpInputRune }} for more help{{end}}]{{color "reset"}}
+  {{- "  "}}{{- color "cyan"}}[Use arrows to move, enter to select, type to filter{{- if and .Help (not .ShowHelp)}}, {{ HelpInputRune }} for more help{{end}}]{{color "reset"}}
   {{- "\n"}}
   {{- range $ix, $choice := .PageEntries}}
     {{- if eq $ix $.SelectedIndex}}{{color "cyan+b"}}{{ SelectFocusIcon }} {{else}}{{color "default+hb"}}  {{end}}
@@ -151,6 +151,12 @@ func (s *Select) OnChange(line []rune, pos int, key rune) (newLine []rune, newPo
 	if len(options) <= s.selectedIndex {
 		return []rune{}, 0, false
 	}
+
+	// s.selectedIndex should not be a negative number
+	if s.selectedIndex < 0 {
+		return []rune{}, 0, false
+	}
+
 	return []rune(options[s.selectedIndex]), 0, true
 }
 
@@ -249,7 +255,7 @@ func (s *Select) Prompt() (interface{}, error) {
 			val = options[0]
 		}
 		// otherwise the selected index points to the value
-	} else if s.selectedIndex < len(options) {
+	} else if s.selectedIndex >= 0 && s.selectedIndex < len(options) {
 		// the
 		val = options[s.selectedIndex]
 	}

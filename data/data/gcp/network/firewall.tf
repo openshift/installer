@@ -119,6 +119,18 @@ resource "google_compute_firewall" "internal_cluster" {
     ports    = ["10250"]
   }
 
+  # services tcp
+  allow {
+    protocol = "tcp"
+    ports    = ["30000-32767"]
+  }
+
+  # services udp
+  allow {
+    protocol = "udp"
+    ports    = ["30000-32767"]
+  }
+
   source_tags = [
     "${var.cluster_id}-master",
     "${var.cluster_id}-worker"
@@ -127,44 +139,4 @@ resource "google_compute_firewall" "internal_cluster" {
     "${var.cluster_id}-master",
     "${var.cluster_id}-worker"
   ]
-}
-
-resource "google_compute_firewall" "internal_services_master" {
-  name    = "${var.cluster_id}-internal-services-master"
-  network = local.cluster_network
-
-  # services tcp
-  allow {
-    protocol = "tcp"
-    ports    = ["30000-32767"]
-  }
-
-  # services udp
-  allow {
-    protocol = "udp"
-    ports    = ["30000-32767"]
-  }
-
-  source_tags = ["${var.cluster_id}-master"]
-  target_tags = ["${var.cluster_id}-master"]
-}
-
-resource "google_compute_firewall" "internal_services_worker" {
-  name    = "${var.cluster_id}-internal-services-worker"
-  network = local.cluster_network
-
-  # services tcp
-  allow {
-    protocol = "tcp"
-    ports    = ["30000-32767"]
-  }
-
-  # services udp
-  allow {
-    protocol = "udp"
-    ports    = ["30000-32767"]
-  }
-
-  source_tags = ["${var.cluster_id}-worker"]
-  target_tags = ["${var.cluster_id}-worker"]
 }

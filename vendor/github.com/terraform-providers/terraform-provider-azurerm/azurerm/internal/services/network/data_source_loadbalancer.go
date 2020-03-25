@@ -59,6 +59,11 @@ func dataSourceArmLoadBalancer() *schema.Resource {
 							Computed: true,
 						},
 
+						"private_ip_address_version": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
 						"public_ip_address_id": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -132,6 +137,7 @@ func dataSourceArmLoadBalancerRead(d *schema.ResourceData, meta interface{}) err
 
 			privateIpAddress := ""
 			privateIpAddresses := make([]string, 0)
+			privateIpAddressVersion := ""
 			for _, config := range *feipConfigs {
 				if feipProps := config.FrontendIPConfigurationPropertiesFormat; feipProps != nil {
 					if ip := feipProps.PrivateIPAddress; ip != nil {
@@ -141,10 +147,14 @@ func dataSourceArmLoadBalancerRead(d *schema.ResourceData, meta interface{}) err
 
 						privateIpAddresses = append(privateIpAddresses, *feipProps.PrivateIPAddress)
 					}
+					if privateIpAddressVersion == "" {
+						privateIpAddressVersion = string(feipProps.PrivateIPAddressVersion)
+					}
 				}
 			}
 
 			d.Set("private_ip_address", privateIpAddress)
+			d.Set("private_ip_address_version", privateIpAddressVersion)
 			d.Set("private_ip_addresses", privateIpAddresses)
 		}
 	}
@@ -183,6 +193,10 @@ func flattenLoadBalancerDataSourceFrontendIpConfiguration(ipConfigs *[]network.F
 
 			if pip := props.PrivateIPAddress; pip != nil {
 				ipConfig["private_ip_address"] = *pip
+			}
+
+			if props.PrivateIPAddressVersion != "" {
+				ipConfig["private_ip_address_version"] = string(props.PrivateIPAddressVersion)
 			}
 
 			if pip := props.PublicIPAddress; pip != nil && pip.ID != nil {

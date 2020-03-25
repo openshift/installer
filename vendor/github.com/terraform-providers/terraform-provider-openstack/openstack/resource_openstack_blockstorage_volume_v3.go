@@ -142,7 +142,7 @@ func resourceBlockStorageVolumeV3() *schema.Resource {
 
 func resourceBlockStorageVolumeV3Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	blockStorageClient, err := config.blockStorageV3Client(GetRegion(d, config))
+	blockStorageClient, err := config.BlockStorageV3Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack block storage client: %s", err)
 	}
@@ -193,7 +193,7 @@ func resourceBlockStorageVolumeV3Create(d *schema.ResourceData, meta interface{}
 
 func resourceBlockStorageVolumeV3Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	blockStorageClient, err := config.blockStorageV3Client(GetRegion(d, config))
+	blockStorageClient, err := config.BlockStorageV3Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack block storage client: %s", err)
 	}
@@ -227,7 +227,7 @@ func resourceBlockStorageVolumeV3Read(d *schema.ResourceData, meta interface{}) 
 
 func resourceBlockStorageVolumeV3Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	blockStorageClient, err := config.blockStorageV3Client(GetRegion(d, config))
+	blockStorageClient, err := config.BlockStorageV3Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack block storage client: %s", err)
 	}
@@ -298,7 +298,7 @@ func resourceBlockStorageVolumeV3Update(d *schema.ResourceData, meta interface{}
 
 func resourceBlockStorageVolumeV3Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	blockStorageClient, err := config.blockStorageV3Client(GetRegion(d, config))
+	blockStorageClient, err := config.BlockStorageV3Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack block storage client: %s", err)
 	}
@@ -310,7 +310,7 @@ func resourceBlockStorageVolumeV3Delete(d *schema.ResourceData, meta interface{}
 
 	// make sure this volume is detached from all instances before deleting
 	if len(v.Attachments) > 0 {
-		computeClient, err := config.computeV2Client(GetRegion(d, config))
+		computeClient, err := config.ComputeV2Client(GetRegion(d, config))
 		if err != nil {
 			return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 		}

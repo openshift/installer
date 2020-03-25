@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	computeBeta "google.golang.org/api/compute/v0.beta"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 )
@@ -47,6 +46,20 @@ func resourceComputeNetworkPeering() *schema.Resource {
 				DiffSuppressFunc: compareSelfLinkRelativePaths,
 			},
 
+			"export_custom_routes": {
+				Type:     schema.TypeBool,
+				ForceNew: true,
+				Optional: true,
+				Default:  false,
+			},
+
+			"import_custom_routes": {
+				Type:     schema.TypeBool,
+				ForceNew: true,
+				Optional: true,
+				Default:  false,
+			},
+
 			"state": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -61,7 +74,7 @@ func resourceComputeNetworkPeering() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Removed:  "auto_create_routes has been removed because it's redundant and not user-configurable. It can safely be removed from your config",
-				ForceNew: true,
+				Computed: true,
 			},
 		},
 	}
@@ -73,11 +86,23 @@ func resourceComputeNetworkPeeringCreate(d *schema.ResourceData, meta interface{
 	if err != nil {
 		return err
 	}
+	peerNetworkFieldValue, err := ParseNetworkFieldValue(d.Get("peer_network").(string), d, config)
+	if err != nil {
+		return err
+	}
 
-	request := &computeBeta.NetworksAddPeeringRequest{}
+	request := &compute.NetworksAddPeeringRequest{}
 	request.NetworkPeering = expandNetworkPeering(d)
 
-	addOp, err := config.clientComputeBeta.Networks.AddPeering(networkFieldValue.Project, networkFieldValue.Name, request).Do()
+	// Only one peering operation at a time can be performed for a given network.
+	// Lock on both networks, sorted so we don't deadlock for A <--> B peering pairs.
+	peeringLockNames := sortedNetworkPeeringMutexKeys(networkFieldValue, peerNetworkFieldValue)
+	for _, kn := range peeringLockNames {
+		mutexKV.Lock(kn)
+		defer mutexKV.Unlock(kn)
+	}
+
+	addOp, err := config.clientCompute.Networks.AddPeering(networkFieldValue.Project, networkFieldValue.Name, request).Do()
 	if err != nil {
 		return fmt.Errorf("Error adding network peering: %s", err)
 	}
@@ -101,7 +126,7 @@ func resourceComputeNetworkPeeringRead(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	network, err := config.clientComputeBeta.Networks.Get(networkFieldValue.Project, networkFieldValue.Name).Do()
+	network, err := config.clientCompute.Networks.Get(networkFieldValue.Project, networkFieldValue.Name).Do()
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("Network %q", networkFieldValue.Name))
 	}
@@ -115,6 +140,8 @@ func resourceComputeNetworkPeeringRead(d *schema.ResourceData, meta interface{})
 
 	d.Set("peer_network", peering.Network)
 	d.Set("name", peering.Name)
+	d.Set("import_custom_routes", peering.ImportCustomRoutes)
+	d.Set("export_custom_routes", peering.ExportCustomRoutes)
 	d.Set("state", peering.State)
 	d.Set("state_details", peering.StateDetails)
 
@@ -139,10 +166,13 @@ func resourceComputeNetworkPeeringDelete(d *schema.ResourceData, meta interface{
 		Name: name,
 	}
 
-	// Only one delete peering operation at a time can be performed inside any peered VPCs.
-	peeringLockName := getNetworkPeeringLockName(networkFieldValue.Name, peerNetworkFieldValue.Name)
-	mutexKV.Lock(peeringLockName)
-	defer mutexKV.Unlock(peeringLockName)
+	// Only one peering operation at a time can be performed for a given network.
+	// Lock on both networks, sorted so we don't deadlock for A <--> B peering pairs.
+	peeringLockNames := sortedNetworkPeeringMutexKeys(networkFieldValue, peerNetworkFieldValue)
+	for _, kn := range peeringLockNames {
+		mutexKV.Lock(kn)
+		defer mutexKV.Unlock(kn)
+	}
 
 	removeOp, err := config.clientCompute.Networks.RemovePeering(networkFieldValue.Project, networkFieldValue.Name, request).Do()
 	if err != nil {
@@ -161,7 +191,7 @@ func resourceComputeNetworkPeeringDelete(d *schema.ResourceData, meta interface{
 	return nil
 }
 
-func findPeeringFromNetwork(network *computeBeta.Network, peeringName string) *computeBeta.NetworkPeering {
+func findPeeringFromNetwork(network *compute.Network, peeringName string) *compute.NetworkPeering {
 	for _, p := range network.Peerings {
 		if p.Name == peeringName {
 			return p
@@ -169,21 +199,25 @@ func findPeeringFromNetwork(network *computeBeta.Network, peeringName string) *c
 	}
 	return nil
 }
-func expandNetworkPeering(d *schema.ResourceData) *computeBeta.NetworkPeering {
-	return &computeBeta.NetworkPeering{
+func expandNetworkPeering(d *schema.ResourceData) *compute.NetworkPeering {
+	return &compute.NetworkPeering{
 		ExchangeSubnetRoutes: true,
 		Name:                 d.Get("name").(string),
 		Network:              d.Get("peer_network").(string),
+		ExportCustomRoutes:   d.Get("export_custom_routes").(bool),
+		ImportCustomRoutes:   d.Get("import_custom_routes").(bool),
 	}
 }
 
-func getNetworkPeeringLockName(networkName, peerNetworkName string) string {
+func sortedNetworkPeeringMutexKeys(networkName, peerNetworkName *GlobalFieldValue) []string {
 	// Whether you delete the peering from network A to B or the one from B to A, they
 	// cannot happen at the same time.
-	networks := []string{networkName, peerNetworkName}
+	networks := []string{
+		fmt.Sprintf("%s/peerings", networkName.RelativeLink()),
+		fmt.Sprintf("%s/peerings", peerNetworkName.RelativeLink()),
+	}
 	sort.Strings(networks)
-
-	return fmt.Sprintf("network_peering/%s/%s", networks[0], networks[1])
+	return networks
 }
 
 func resourceComputeNetworkPeeringImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

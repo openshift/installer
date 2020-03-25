@@ -23,11 +23,16 @@
       # Server names
       os_bootstrap_server_name: "{{ infraID }}-bootstrap"
       os_cp_server_name: "{{ infraID }}-master"
+      os_cp_server_group_name: "{{ infraID }}-master-group"
       os_compute_server_name: "{{ infraID }}-worker"
       # Trunk names
       os_cp_trunk_name: "{{ infraID }}-master-trunk"
       os_compute_trunk_name: "{{ infraID }}-worker-trunk"
-      # Subnet pool names
+      # Subnet pool name
       subnet_pool: "{{ infraID }}-kuryr-pod-subnetpool"
+      # Service network name
+      os_svc_network: "{{ infraID }}-kuryr-service-network"
+      # Service subnet name
+      os_svc_subnet: "{{ infraID }}-kuryr-service-subnet"
       # Ignition files
       os_bootstrap_ignition: "{{ infraID }}-bootstrap-ignition.json"

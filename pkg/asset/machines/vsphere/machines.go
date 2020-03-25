@@ -85,7 +85,10 @@ func provider(clusterID string, platform *vsphere.Platform, mpool *vsphere.Machi
 			Datastore:  platform.DefaultDatastore,
 			Folder:     clusterID,
 		},
-		DiskGiB: mpool.OSDisk.DiskSizeGB,
+		NumCPUs:           mpool.NumCPUs,
+		NumCoresPerSocket: mpool.NumCoresPerSocket,
+		MemoryMiB:         mpool.MemoryMiB,
+		DiskGiB:           mpool.OSDisk.DiskSizeGB,
 	}, nil
 }
 

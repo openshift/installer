@@ -45,7 +45,7 @@ func policyNameByID(client *govmomi.Client, id string) (string, error) {
 	defer cancel()
 	pc, err := pbmClientFromGovmomiClient(ctx, client)
 	if err != nil {
-		return "", err
+		return "", provider.ProviderError(id, "policyNameByID", err)
 	}
 
 	log.Printf("[DEBUG] Retrieving contents of storage profiles by id: %s.", id)
@@ -56,7 +56,7 @@ func policyNameByID(client *govmomi.Client, id string) (string, error) {
 	}
 	policies, err := pc.RetrieveContent(ctx, profileId)
 	if err != nil {
-		return "", err
+		return "", provider.ProviderError(id, "RetrieveContent", err)
 	}
 
 	return policies[0].GetPbmProfile().Name, err
@@ -77,7 +77,7 @@ func PolicyIDByVirtualDisk(client *govmomi.Client, vmMOID string, diskKey int) (
 	defer cancel()
 	pc, err := pbmClientFromGovmomiClient(ctx, client)
 	if err != nil {
-		return "", err
+		return "", provider.ProviderError(vmMOID, "PolicyIDByVirtualDisk", err)
 	}
 
 	pbmSOR := pbmtypes.PbmServerObjectRef{
@@ -87,7 +87,7 @@ func PolicyIDByVirtualDisk(client *govmomi.Client, vmMOID string, diskKey int) (
 
 	policies, err := queryAssociatedProfile(ctx, pc, pbmSOR)
 	if err != nil {
-		return "", err
+		return "", provider.ProviderError(vmMOID, "PolicyIDByVirtualDisk", err)
 	}
 
 	// If no policy returned then virtual disk is not associated with a policy
@@ -104,7 +104,7 @@ func PolicyIDByVirtualMachine(client *govmomi.Client, vmMOID string) (string, er
 	defer cancel()
 	pc, err := pbmClientFromGovmomiClient(ctx, client)
 	if err != nil {
-		return "", err
+		return "", provider.ProviderError(vmMOID, "PolicyIDByVirtualMachine", err)
 	}
 
 	pbmSOR := pbmtypes.PbmServerObjectRef{
@@ -114,7 +114,7 @@ func PolicyIDByVirtualMachine(client *govmomi.Client, vmMOID string) (string, er
 
 	policies, err := queryAssociatedProfile(ctx, pc, pbmSOR)
 	if err != nil {
-		return "", err
+		return "", provider.ProviderError(vmMOID, "PolicyIDByVirtualMachine", err)
 	}
 
 	// If no policy returned then VM is not associated with a policy
@@ -135,7 +135,7 @@ func queryAssociatedProfile(ctx context.Context, pc *pbm.Client, ref pbmtypes.Pb
 
 	res, err := methods.PbmQueryAssociatedProfile(ctx, pc, &req)
 	if err != nil {
-		return nil, err
+		return nil, provider.ProviderError(ref.Key, "queryAssociatedProfile", err)
 	}
 
 	return res.Returnval, nil

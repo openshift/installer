@@ -37,6 +37,39 @@
     with_indexed_items: "{{ ports.results }}"
     when: os_networking_type == "Kuryr"
 
+  - name: 'Get a token for creating the server group'
+    os_auth:
+    register: cloud
+
+  # If microversion 2.15 is not available, replace with:
+  # - name: 'Create the Control Plane server group'
+  #   uri:
+  #     method: POST
+  #     headers:
+  #       X-Auth-Token: "{{ cloud.ansible_facts.auth_token }}"
+  #       X-OpenStack-Nova-API-Version: '2.64'
+  #     url: "{{ cloud.ansible_facts.service_catalog | selectattr('name', 'match', 'nova') | first | json_query('endpoints') | selectattr('interface', 'match', 'public') | first | json_query('url') }}/os-server-groups"
+  #     body_format: json
+  #     body:
+  #       server_group:
+  #         name: "{{ os_cp_server_group_name }}"
+  #         policy: "soft-anti-affinity"
+  #   register: cp_group
+  - name: 'Create the Control Plane server group'
+    uri:
+      method: POST
+      headers:
+        X-Auth-Token: "{{ cloud.ansible_facts.auth_token }}"
+        X-OpenStack-Nova-API-Version: '2.15'
+      url: "{{ cloud.ansible_facts.service_catalog | selectattr('name', 'match', 'nova') | first | json_query('endpoints') | selectattr('interface', 'match', 'public') | first | json_query('url') }}/os-server-groups"
+      body_format: json
+      body:
+        server_group:
+          name: "{{ os_cp_server_group_name }}"
+          policies:
+          - soft-anti-affinity
+    register: cp_group
+
   - name: 'Create the Control Plane servers'
     os_server:
       name: "{{ item.1 }}-{{ item.0 }}"
@@ -50,4 +83,6 @@
       userdata: "{{ lookup('file', [item.1, item.0, 'ignition.json'] | join('-')) | string }}"
       nics:
       - port-name: "{{ os_port_master }}-{{ item.0 }}"
+      scheduler_hints:
+        group: "{{ cp_group.json.server_group.id }}"
     with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"

@@ -86,7 +86,7 @@ func resourceBlockStorageQuotasetV3() *schema.Resource {
 
 func resourceBlockStorageQuotasetV3Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	blockStorageClient, err := config.blockStorageV3Client(GetRegion(d, config))
+	blockStorageClient, err := config.BlockStorageV3Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack block storage client: %s", err)
 	}
@@ -124,7 +124,7 @@ func resourceBlockStorageQuotasetV3Create(d *schema.ResourceData, meta interface
 
 func resourceBlockStorageQuotasetV3Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	blockStorageClient, err := config.blockStorageV3Client(GetRegion(d, config))
+	blockStorageClient, err := config.BlockStorageV3Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack block storage client: %s", err)
 	}
@@ -150,7 +150,7 @@ func resourceBlockStorageQuotasetV3Read(d *schema.ResourceData, meta interface{}
 
 func resourceBlockStorageQuotasetV3Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	blockStorageClient, err := config.blockStorageV3Client(GetRegion(d, config))
+	blockStorageClient, err := config.BlockStorageV3Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack block storage client: %s", err)
 	}

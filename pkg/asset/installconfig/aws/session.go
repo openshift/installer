@@ -5,15 +5,17 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/openshift/installer/pkg/version"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 	ini "gopkg.in/ini.v1"
+
+	"github.com/openshift/installer/pkg/version"
 )
 
 const (
@@ -60,7 +62,7 @@ func GetSession() (*session.Session, error) {
 			return nil, err
 		}
 	}
-
+	ssn = ssn.Copy(&aws.Config{MaxRetries: aws.Int(25)})
 	ssn.Handlers.Build.PushBackNamed(request.NamedHandler{
 		Name: "openshiftInstaller.OpenshiftInstallerUserAgentHandler",
 		Fn:   request.MakeAddToUserAgentHandler("OpenShift/4.x Installer", version.Raw),

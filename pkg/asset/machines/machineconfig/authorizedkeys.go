@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/clarketm/json"
-	igntypes "github.com/coreos/ignition/v2/config/v3_0/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_1_experimental/types"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -12,9 +12,10 @@ import (
 
 // ForAuthorizedKeys creates the MachineConfig to set the authorized key for `core` user.
 func ForAuthorizedKeys(key string, role string) (*mcfgv1.MachineConfig, error) {
+	// TODO lorbus: Go back to using igntypes.MaxVersion.String() once spec 3.1 stable is available
 	rawIgnitionConfig, err := json.Marshal(igntypes.Config{
 		Ignition: igntypes.Ignition{
-			Version: igntypes.MaxVersion.String(),
+			Version: "3.0.0",
 		},
 		Passwd: igntypes.Passwd{
 			Users: []igntypes.PasswdUser{{

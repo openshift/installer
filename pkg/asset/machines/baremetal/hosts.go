@@ -2,6 +2,7 @@ package baremetal
 
 import (
 	"fmt"
+	"github.com/metal3-io/baremetal-operator/pkg/hardware"
 
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -52,6 +53,11 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSet
 		}
 		settings.Secrets = append(settings.Secrets, secret)
 
+		// Map string 'default' to hardware.DefaultProfileName
+		if host.HardwareProfile == "default" {
+			host.HardwareProfile = hardware.DefaultProfileName
+		}
+
 		newHost := baremetalhost.BareMetalHost{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: baremetalhost.SchemeGroupVersion.String(),
@@ -64,8 +70,9 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSet
 			Spec: baremetalhost.BareMetalHostSpec{
 				Online: true,
 				BMC: baremetalhost.BMCDetails{
-					Address:         host.BMC.Address,
-					CredentialsName: secret.Name,
+					Address:                        host.BMC.Address,
+					CredentialsName:                secret.Name,
+					DisableCertificateVerification: host.BMC.DisableCertificateVerification,
 				},
 				BootMACAddress:  host.BootMACAddress,
 				HardwareProfile: host.HardwareProfile,

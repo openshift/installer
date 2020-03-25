@@ -57,6 +57,11 @@ variable "volume_type" {
   description = "The volume type for the bootstrap node's root volume."
 }
 
+variable "volume_kms_key_id" {
+  type        = string
+  description = "The KMS key id that should be used to encrypt the bootstrap node's root block device."
+}
+
 variable "vpc_id" {
   type        = string
   description = "VPC ID is used to create resources like security group rules for bootstrap machine."

@@ -51,7 +51,7 @@ func resourceNetworkingQoSDSCPMarkingRuleV2() *schema.Resource {
 
 func resourceNetworkingQoSDSCPMarkingRuleV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -92,7 +92,7 @@ func resourceNetworkingQoSDSCPMarkingRuleV2Create(d *schema.ResourceData, meta i
 
 func resourceNetworkingQoSDSCPMarkingRuleV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -118,7 +118,7 @@ func resourceNetworkingQoSDSCPMarkingRuleV2Read(d *schema.ResourceData, meta int
 
 func resourceNetworkingQoSDSCPMarkingRuleV2Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -145,7 +145,7 @@ func resourceNetworkingQoSDSCPMarkingRuleV2Update(d *schema.ResourceData, meta i
 
 func resourceNetworkingQoSDSCPMarkingRuleV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}

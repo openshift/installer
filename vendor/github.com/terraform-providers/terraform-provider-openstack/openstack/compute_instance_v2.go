@@ -160,7 +160,7 @@ func getInstanceNetworkInfo(
 	config := meta.(*Config)
 
 	if _, ok := os.LookupEnv("OS_NOVA_NETWORK"); !ok {
-		networkClient, err := config.networkingV2Client(GetRegion(d, config))
+		networkClient, err := config.NetworkingV2Client(GetRegion(d, config))
 		if err == nil {
 			networkInfo, err := getInstanceNetworkInfoNeutron(networkClient, queryType, queryTerm)
 			if err != nil {
@@ -173,7 +173,7 @@ func getInstanceNetworkInfo(
 
 	log.Printf("[DEBUG] Unable to obtain a network client")
 
-	computeClient, err := config.computeV2Client(GetRegion(d, config))
+	computeClient, err := config.ComputeV2Client(GetRegion(d, config))
 	if err != nil {
 		return nil, fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
@@ -412,7 +412,7 @@ func flattenInstanceNetworks(
 	d *schema.ResourceData, meta interface{}) ([]map[string]interface{}, error) {
 
 	config := meta.(*Config)
-	computeClient, err := config.computeV2Client(GetRegion(d, config))
+	computeClient, err := config.ComputeV2Client(GetRegion(d, config))
 	if err != nil {
 		return nil, fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}

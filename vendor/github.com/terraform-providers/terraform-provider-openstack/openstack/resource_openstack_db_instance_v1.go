@@ -171,7 +171,7 @@ func resourceDatabaseInstanceV1() *schema.Resource {
 
 func resourceDatabaseInstanceV1Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	databaseV1Client, err := config.databaseV1Client(GetRegion(d, config))
+	DatabaseV1Client, err := config.DatabaseV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack database client: %s", err)
 	}
@@ -212,7 +212,7 @@ func resourceDatabaseInstanceV1Create(d *schema.ResourceData, meta interface{}) 
 
 	log.Printf("[DEBUG] openstack_db_instance_v1 create options: %#v", createOpts)
 
-	instance, err := instances.Create(databaseV1Client, createOpts).Extract()
+	instance, err := instances.Create(DatabaseV1Client, createOpts).Extract()
 	if err != nil {
 		return fmt.Errorf("Error creating openstack_db_instance_v1: %s", err)
 	}
@@ -223,7 +223,7 @@ func resourceDatabaseInstanceV1Create(d *schema.ResourceData, meta interface{}) 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"BUILD"},
 		Target:     []string{"ACTIVE"},
-		Refresh:    databaseInstanceV1StateRefreshFunc(databaseV1Client, instance.ID),
+		Refresh:    databaseInstanceV1StateRefreshFunc(DatabaseV1Client, instance.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      10 * time.Second,
 		MinTimeout: 3 * time.Second,
@@ -236,7 +236,7 @@ func resourceDatabaseInstanceV1Create(d *schema.ResourceData, meta interface{}) 
 
 	if configuration, ok := d.GetOk("configuration_id"); ok {
 		log.Printf("[DEBUG] Attaching configuration %s to openstack_db_instance_v1 %s", configuration, instance.ID)
-		err := instances.AttachConfigurationGroup(databaseV1Client, instance.ID, configuration.(string)).ExtractErr()
+		err := instances.AttachConfigurationGroup(DatabaseV1Client, instance.ID, configuration.(string)).ExtractErr()
 		if err != nil {
 			return fmt.Errorf("error attaching configuration group %s to openstack_db_instance_v1 %s: %s",
 				configuration, instance.ID, err)
@@ -251,12 +251,12 @@ func resourceDatabaseInstanceV1Create(d *schema.ResourceData, meta interface{}) 
 
 func resourceDatabaseInstanceV1Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	databaseV1Client, err := config.databaseV1Client(GetRegion(d, config))
+	DatabaseV1Client, err := config.DatabaseV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack database client: %s", err)
 	}
 
-	instance, err := instances.Get(databaseV1Client, d.Id()).Extract()
+	instance, err := instances.Get(DatabaseV1Client, d.Id()).Extract()
 	if err != nil {
 		return CheckDeleted(d, err, "Error retrieving openstack_db_instance_v1")
 	}
@@ -273,7 +273,7 @@ func resourceDatabaseInstanceV1Read(d *schema.ResourceData, meta interface{}) er
 
 func resourceDatabaseInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	databaseV1Client, err := config.databaseV1Client(GetRegion(d, config))
+	DatabaseV1Client, err := config.DatabaseV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack database client: %s", err)
 	}
@@ -281,14 +281,14 @@ func resourceDatabaseInstanceUpdate(d *schema.ResourceData, meta interface{}) er
 	if d.HasChange("configuration_id") {
 		old, new := d.GetChange("configuration_id")
 
-		err := instances.DetachConfigurationGroup(databaseV1Client, d.Id()).ExtractErr()
+		err := instances.DetachConfigurationGroup(DatabaseV1Client, d.Id()).ExtractErr()
 		if err != nil {
 			return err
 		}
 		log.Printf("Detaching configuration %s from openstack_db_instance_v1 %s", old, d.Id())
 
 		if new != "" {
-			err := instances.AttachConfigurationGroup(databaseV1Client, d.Id(), new.(string)).ExtractErr()
+			err := instances.AttachConfigurationGroup(DatabaseV1Client, d.Id(), new.(string)).ExtractErr()
 			if err != nil {
 				return err
 			}
@@ -301,12 +301,12 @@ func resourceDatabaseInstanceUpdate(d *schema.ResourceData, meta interface{}) er
 
 func resourceDatabaseInstanceV1Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	databaseV1Client, err := config.databaseV1Client(GetRegion(d, config))
+	DatabaseV1Client, err := config.DatabaseV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack database client: %s", err)
 	}
 
-	err = instances.Delete(databaseV1Client, d.Id()).ExtractErr()
+	err = instances.Delete(DatabaseV1Client, d.Id()).ExtractErr()
 	if err != nil {
 		return CheckDeleted(d, err, "Error deleting openstack_db_instance_v1")
 	}
@@ -314,7 +314,7 @@ func resourceDatabaseInstanceV1Delete(d *schema.ResourceData, meta interface{}) 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"ACTIVE", "SHUTDOWN"},
 		Target:     []string{"DELETED"},
-		Refresh:    databaseInstanceV1StateRefreshFunc(databaseV1Client, d.Id()),
+		Refresh:    databaseInstanceV1StateRefreshFunc(DatabaseV1Client, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
 		MinTimeout: 3 * time.Second,

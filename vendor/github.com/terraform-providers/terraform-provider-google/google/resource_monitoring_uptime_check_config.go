@@ -237,37 +237,44 @@ func resourceMonitoringUptimeCheckConfig() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Removed:  "This field never worked, and will be removed in 3.0.0.",
+				Computed: true,
 			},
 			"internal_checkers": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Removed:  "This field never worked, and will be removed in 3.0.0.",
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"display_name": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Removed:  "This field never worked, and will be removed in 3.0.0.",
+							Computed: true,
 						},
 						"gcp_zone": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Removed:  "This field never worked, and will be removed in 3.0.0.",
+							Computed: true,
 						},
 						"name": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Removed:  "This field never worked, and will be removed in 3.0.0.",
+							Computed: true,
 						},
 						"network": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Removed:  "This field never worked, and will be removed in 3.0.0.",
+							Computed: true,
 						},
 						"peer_project_id": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Removed:  "This field never worked, and will be removed in 3.0.0.",
+							Computed: true,
 						},
 					},
 				},
@@ -351,7 +358,7 @@ func resourceMonitoringUptimeCheckConfigCreate(d *schema.ResourceData, meta inte
 	if err != nil {
 		return err
 	}
-	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate), isMonitoringRetryableError)
 	if err != nil {
 		return fmt.Errorf("Error creating UptimeCheckConfig: %s", err)
 	}
@@ -388,7 +395,7 @@ func resourceMonitoringUptimeCheckConfigRead(d *schema.ResourceData, meta interf
 	if err != nil {
 		return err
 	}
-	res, err := sendRequest(config, "GET", project, url, nil)
+	res, err := sendRequest(config, "GET", project, url, nil, isMonitoringRetryableError)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("MonitoringUptimeCheckConfig %q", d.Id()))
 	}
@@ -517,7 +524,7 @@ func resourceMonitoringUptimeCheckConfigUpdate(d *schema.ResourceData, meta inte
 	if err != nil {
 		return err
 	}
-	_, err = sendRequestWithTimeout(config, "PATCH", project, url, obj, d.Timeout(schema.TimeoutUpdate))
+	_, err = sendRequestWithTimeout(config, "PATCH", project, url, obj, d.Timeout(schema.TimeoutUpdate), isMonitoringRetryableError)
 
 	if err != nil {
 		return fmt.Errorf("Error updating UptimeCheckConfig %q: %s", d.Id(), err)
@@ -542,7 +549,7 @@ func resourceMonitoringUptimeCheckConfigDelete(d *schema.ResourceData, meta inte
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting UptimeCheckConfig %q", d.Id())
 
-	res, err := sendRequestWithTimeout(config, "DELETE", project, url, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := sendRequestWithTimeout(config, "DELETE", project, url, obj, d.Timeout(schema.TimeoutDelete), isMonitoringRetryableError)
 	if err != nil {
 		return handleNotFoundError(err, d, "UptimeCheckConfig")
 	}

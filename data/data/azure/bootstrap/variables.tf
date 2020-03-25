@@ -38,14 +38,24 @@ variable "subnet_id" {
   description = "The subnet ID for the bootstrap node."
 }
 
-variable "elb_backend_pool_id" {
+variable "elb_backend_pool_v4_id" {
   type        = string
   description = "The external load balancer bakend pool id. used to attach the bootstrap NIC"
 }
 
-variable "ilb_backend_pool_id" {
+variable "elb_backend_pool_v6_id" {
+  type        = string
+  description = "The external load balancer bakend pool id for ipv6. used to attach the bootstrap NIC"
+}
+
+variable "ilb_backend_pool_v4_id" {
   type        = string
   description = "The internal load balancer bakend pool id. used to attach the bootstrap NIC"
+}
+
+variable "ilb_backend_pool_v6_id" {
+  type        = string
+  description = "The internal load balancer bakend pool id for ipv6. used to attach the bootstrap NIC"
 }
 
 variable "storage_account" {
@@ -67,4 +77,19 @@ variable "nsg_name" {
 variable "private" {
   type        = bool
   description = "This value determines if this is a private cluster or not."
+}
+
+variable "use_ipv4" {
+  type        = bool
+  description = "This value determines if this is cluster should use IPv4 networking."
+}
+
+variable "use_ipv6" {
+  type        = bool
+  description = "This value determines if this is cluster should use IPv6 networking."
+}
+
+variable "emulate_single_stack_ipv6" {
+  type        = bool
+  description = "This determines whether a dual-stack cluster is configured to emulate single-stack IPv6."
 }

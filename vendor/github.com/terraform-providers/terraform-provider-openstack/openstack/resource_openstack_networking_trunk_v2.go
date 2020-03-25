@@ -102,7 +102,7 @@ func resourceNetworkingTrunkV2() *schema.Resource {
 
 func resourceNetworkingTrunkV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	client, err := config.networkingV2Client(GetRegion(d, config))
+	client, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -159,7 +159,7 @@ func resourceNetworkingTrunkV2Create(d *schema.ResourceData, meta interface{}) e
 
 func resourceNetworkingTrunkV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	client, err := config.networkingV2Client(GetRegion(d, config))
+	client, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -190,7 +190,7 @@ func resourceNetworkingTrunkV2Read(d *schema.ResourceData, meta interface{}) err
 
 func resourceNetworkingTrunkV2Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	client, err := config.networkingV2Client(GetRegion(d, config))
+	client, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -278,7 +278,7 @@ func resourceNetworkingTrunkV2Update(d *schema.ResourceData, meta interface{}) e
 
 func resourceNetworkingTrunkV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	client, err := config.networkingV2Client(GetRegion(d, config))
+	client, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}

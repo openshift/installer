@@ -67,7 +67,7 @@ func resourceDatabaseUserV1() *schema.Resource {
 
 func resourceDatabaseUserV1Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	databaseV1Client, err := config.databaseV1Client(GetRegion(d, config))
+	DatabaseV1Client, err := config.DatabaseV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack database client: %s", err)
 	}
@@ -84,7 +84,7 @@ func resourceDatabaseUserV1Create(d *schema.ResourceData, meta interface{}) erro
 		Databases: expandDatabaseUserV1Databases(rawDatabases),
 	})
 
-	err = users.Create(databaseV1Client, instanceID, usersList).ExtractErr()
+	err = users.Create(DatabaseV1Client, instanceID, usersList).ExtractErr()
 	if err != nil {
 		return fmt.Errorf("Error creating openstack_db_user_v1: %s", err)
 	}
@@ -92,7 +92,7 @@ func resourceDatabaseUserV1Create(d *schema.ResourceData, meta interface{}) erro
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"BUILD"},
 		Target:     []string{"ACTIVE"},
-		Refresh:    databaseUserV1StateRefreshFunc(databaseV1Client, instanceID, userName),
+		Refresh:    databaseUserV1StateRefreshFunc(DatabaseV1Client, instanceID, userName),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      10 * time.Second,
 		MinTimeout: 3 * time.Second,
@@ -111,7 +111,7 @@ func resourceDatabaseUserV1Create(d *schema.ResourceData, meta interface{}) erro
 
 func resourceDatabaseUserV1Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	databaseV1Client, err := config.databaseV1Client(GetRegion(d, config))
+	DatabaseV1Client, err := config.DatabaseV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack database client: %s", err)
 	}
@@ -124,7 +124,7 @@ func resourceDatabaseUserV1Read(d *schema.ResourceData, meta interface{}) error 
 	instanceID := userID[0]
 	userName := userID[1]
 
-	exists, userObj, err := databaseUserV1Exists(databaseV1Client, instanceID, userName)
+	exists, userObj, err := databaseUserV1Exists(DatabaseV1Client, instanceID, userName)
 	if err != nil {
 		return fmt.Errorf("Error checking if openstack_db_user_v1 %s exists: %s", d.Id(), err)
 	}
@@ -146,7 +146,7 @@ func resourceDatabaseUserV1Read(d *schema.ResourceData, meta interface{}) error 
 
 func resourceDatabaseUserV1Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	databaseV1Client, err := config.databaseV1Client(GetRegion(d, config))
+	DatabaseV1Client, err := config.DatabaseV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack database client: %s", err)
 	}
@@ -159,7 +159,7 @@ func resourceDatabaseUserV1Delete(d *schema.ResourceData, meta interface{}) erro
 	instanceID := userID[0]
 	userName := userID[1]
 
-	exists, _, err := databaseUserV1Exists(databaseV1Client, instanceID, userName)
+	exists, _, err := databaseUserV1Exists(DatabaseV1Client, instanceID, userName)
 	if err != nil {
 		return fmt.Errorf("Error checking if openstack_db_user_v1 %s exists: %s", d.Id(), err)
 	}
@@ -168,7 +168,7 @@ func resourceDatabaseUserV1Delete(d *schema.ResourceData, meta interface{}) erro
 		return nil
 	}
 
-	err = users.Delete(databaseV1Client, instanceID, userName).ExtractErr()
+	err = users.Delete(DatabaseV1Client, instanceID, userName).ExtractErr()
 	if err != nil {
 		return fmt.Errorf("Error deleting openstack_db_user_v1 %s: %s", d.Id(), err)
 	}

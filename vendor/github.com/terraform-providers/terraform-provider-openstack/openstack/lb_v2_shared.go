@@ -10,11 +10,12 @@ import (
 
 	"github.com/gophercloud/gophercloud"
 	octavialisteners "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/listeners"
+	octaviamonitors "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/monitors"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/l7policies"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/listeners"
 	neutronlisteners "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/listeners"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/loadbalancers"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/monitors"
+	neutronmonitors "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/monitors"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/pools"
 )
 
@@ -30,10 +31,10 @@ var lbSkipLBStatuses = []string{"ERROR", "ACTIVE"}
 // chooseLBV2Client will determine which load balacing client to use:
 // Either the Octavia/LBaaS client or the Neutron/Networking v2 client.
 func chooseLBV2Client(d *schema.ResourceData, config *Config) (*gophercloud.ServiceClient, error) {
-	if config.useOctavia {
-		return config.loadBalancerV2Client(GetRegion(d, config))
+	if config.UseOctavia {
+		return config.LoadBalancerV2Client(GetRegion(d, config))
 	}
-	return config.networkingV2Client(GetRegion(d, config))
+	return config.NetworkingV2Client(GetRegion(d, config))
 }
 
 // chooseLBV2AccTestClient will determine which load balacing client to use:
@@ -41,10 +42,10 @@ func chooseLBV2Client(d *schema.ResourceData, config *Config) (*gophercloud.Serv
 // This is similar to the chooseLBV2Client function but specific for acceptance
 // tests.
 func chooseLBV2AccTestClient(config *Config, region string) (*gophercloud.ServiceClient, error) {
-	if config.useOctavia {
-		return config.loadBalancerV2Client(region)
+	if config.UseOctavia {
+		return config.LoadBalancerV2Client(region)
 	}
-	return config.networkingV2Client(region)
+	return config.NetworkingV2Client(region)
 }
 
 // chooseLBV2ListenerCreateOpts will determine which load balancer listener Create options to use:
@@ -61,7 +62,7 @@ func chooseLBV2ListenerCreateOpts(d *schema.ResourceData, config *Config) neutro
 
 	var createOpts neutronlisteners.CreateOptsBuilder
 
-	if config.useOctavia {
+	if config.UseOctavia {
 		// Use Octavia.
 		opts := octavialisteners.CreateOpts{
 			Protocol:               octavialisteners.Protocol(d.Get("protocol").(string)),
@@ -133,7 +134,7 @@ func chooseLBV2ListenerCreateOpts(d *schema.ResourceData, config *Config) neutro
 func chooseLBV2ListenerUpdateOpts(d *schema.ResourceData, config *Config) neutronlisteners.UpdateOptsBuilder {
 	var hasChange bool
 
-	if config.useOctavia {
+	if config.UseOctavia {
 		// Use Octavia.
 		var opts octavialisteners.UpdateOpts
 		if d.HasChange("name") {
@@ -307,6 +308,151 @@ func resourceLBV2ListenerRefreshFunc(lbClient *gophercloud.ServiceClient, lbID s
 	return resourceLBV2LoadBalancerStatusRefreshFuncNeutron(lbClient, lbID, "listener", listener.ID, "")
 }
 
+// chooseLBV2MonitorCreateOpts will determine which load balancer monitor Create options to use:
+// Either the Octavia/LBaaS or the Neutron/Networking v2.
+func chooseLBV2MonitorCreateOpts(d *schema.ResourceData, config *Config) neutronmonitors.CreateOptsBuilder {
+	adminStateUp := d.Get("admin_state_up").(bool)
+
+	var createOpts neutronmonitors.CreateOptsBuilder
+
+	if config.UseOctavia {
+		// Use Octavia.
+		opts := octaviamonitors.CreateOpts{
+			PoolID:         d.Get("pool_id").(string),
+			TenantID:       d.Get("tenant_id").(string),
+			Type:           d.Get("type").(string),
+			Delay:          d.Get("delay").(int),
+			Timeout:        d.Get("timeout").(int),
+			MaxRetries:     d.Get("max_retries").(int),
+			MaxRetriesDown: d.Get("max_retries_down").(int),
+			URLPath:        d.Get("url_path").(string),
+			HTTPMethod:     d.Get("http_method").(string),
+			ExpectedCodes:  d.Get("expected_codes").(string),
+			Name:           d.Get("name").(string),
+			AdminStateUp:   &adminStateUp,
+		}
+
+		createOpts = opts
+	} else {
+		// Use Neutron.
+		opts := neutronmonitors.CreateOpts{
+			PoolID:        d.Get("pool_id").(string),
+			TenantID:      d.Get("tenant_id").(string),
+			Type:          d.Get("type").(string),
+			Delay:         d.Get("delay").(int),
+			Timeout:       d.Get("timeout").(int),
+			MaxRetries:    d.Get("max_retries").(int),
+			URLPath:       d.Get("url_path").(string),
+			HTTPMethod:    d.Get("http_method").(string),
+			ExpectedCodes: d.Get("expected_codes").(string),
+			Name:          d.Get("name").(string),
+			AdminStateUp:  &adminStateUp,
+		}
+
+		createOpts = opts
+	}
+
+	return createOpts
+}
+
+// chooseLBV2MonitorUpdateOpts will determine which load balancer monitor Update options to use:
+// Either the Octavia/LBaaS or the Neutron/Networking v2.
+func chooseLBV2MonitorUpdateOpts(d *schema.ResourceData, config *Config) neutronmonitors.UpdateOptsBuilder {
+	var hasChange bool
+
+	if config.UseOctavia {
+		// Use Octavia.
+		var opts octaviamonitors.UpdateOpts
+
+		if d.HasChange("url_path") {
+			hasChange = true
+			opts.URLPath = d.Get("url_path").(string)
+		}
+		if d.HasChange("expected_codes") {
+			hasChange = true
+			opts.ExpectedCodes = d.Get("expected_codes").(string)
+		}
+		if d.HasChange("delay") {
+			hasChange = true
+			opts.Delay = d.Get("delay").(int)
+		}
+		if d.HasChange("timeout") {
+			hasChange = true
+			opts.Timeout = d.Get("timeout").(int)
+		}
+		if d.HasChange("max_retries") {
+			hasChange = true
+			opts.MaxRetries = d.Get("max_retries").(int)
+		}
+		if d.HasChange("max_retries_down") {
+			hasChange = true
+			opts.MaxRetriesDown = d.Get("max_retries_down").(int)
+		}
+		if d.HasChange("admin_state_up") {
+			hasChange = true
+			asu := d.Get("admin_state_up").(bool)
+			opts.AdminStateUp = &asu
+		}
+		if d.HasChange("name") {
+			hasChange = true
+			name := d.Get("name").(string)
+			opts.Name = &name
+		}
+		if d.HasChange("http_method") {
+			hasChange = true
+			opts.HTTPMethod = d.Get("http_method").(string)
+		}
+
+		if hasChange {
+			return opts
+		}
+	} else {
+		// Use Neutron.
+		var opts neutronmonitors.UpdateOpts
+
+		if d.HasChange("url_path") {
+			hasChange = true
+			opts.URLPath = d.Get("url_path").(string)
+		}
+		if d.HasChange("expected_codes") {
+			hasChange = true
+			opts.ExpectedCodes = d.Get("expected_codes").(string)
+		}
+		if d.HasChange("delay") {
+			hasChange = true
+			opts.Delay = d.Get("delay").(int)
+		}
+		if d.HasChange("timeout") {
+			hasChange = true
+			opts.Timeout = d.Get("timeout").(int)
+		}
+		if d.HasChange("max_retries") {
+			hasChange = true
+			opts.MaxRetries = d.Get("max_retries").(int)
+		}
+		if d.HasChange("admin_state_up") {
+			hasChange = true
+			asu := d.Get("admin_state_up").(bool)
+			opts.AdminStateUp = &asu
+		}
+		if d.HasChange("name") {
+			hasChange = true
+			name := d.Get("name").(string)
+			opts.Name = &name
+		}
+		if d.HasChange("http_method") {
+			hasChange = true
+			opts.HTTPMethod = d.Get("http_method").(string)
+		}
+
+		if hasChange {
+			return opts
+		}
+	}
+
+	return nil
+}
+
 func waitForLBV2LoadBalancer(lbClient *gophercloud.ServiceClient, lbID string, target string, pending []string, timeout time.Duration) error {
 	log.Printf("[DEBUG] Waiting for loadbalancer %s to become %s.", lbID, target)
 
@@ -400,8 +546,8 @@ func resourceLBV2MemberRefreshFunc(lbClient *gophercloud.ServiceClient, lbID str
 	return resourceLBV2LoadBalancerStatusRefreshFuncNeutron(lbClient, lbID, "member", member.ID, poolID)
 }
 
-func waitForLBV2Monitor(lbClient *gophercloud.ServiceClient, parentPool *pools.Pool, monitor *monitors.Monitor, target string, pending []string, timeout time.Duration) error {
-	log.Printf("[DEBUG] Waiting for monitor %s to become %s.", monitor.ID, target)
+func waitForLBV2Monitor(lbClient *gophercloud.ServiceClient, parentPool *pools.Pool, monitor *neutronmonitors.Monitor, target string, pending []string, timeout time.Duration) error {
+	log.Printf("[DEBUG] Waiting for openstack_lb_monitor_v2 %s to become %s.", monitor.ID, target)
 
 	lbID, err := lbV2FindLBIDviaPool(lbClient, parentPool)
 	if err != nil {
@@ -424,13 +570,13 @@ func waitForLBV2Monitor(lbClient *gophercloud.ServiceClient, parentPool *pools.P
 				return nil
 			}
 		}
-		return fmt.Errorf("Error waiting for monitor %s to become %s: %s", monitor.ID, target, err)
+		return fmt.Errorf("Error waiting for openstack_lb_monitor_v2 %s to become %s: %s", monitor.ID, target, err)
 	}
 
 	return nil
 }
 
-func resourceLBV2MonitorRefreshFunc(lbClient *gophercloud.ServiceClient, lbID string, monitor *monitors.Monitor) resource.StateRefreshFunc {
+func resourceLBV2MonitorRefreshFunc(lbClient *gophercloud.ServiceClient, lbID string, monitor *neutronmonitors.Monitor) resource.StateRefreshFunc {
 	if monitor.ProvisioningStatus != "" {
 		return func() (interface{}, string, error) {
 			lb, status, err := resourceLBV2LoadBalancerRefreshFunc(lbClient, lbID)()
@@ -441,7 +587,7 @@ func resourceLBV2MonitorRefreshFunc(lbClient *gophercloud.ServiceClient, lbID st
 				return lb, status, nil
 			}
 
-			monitor, err := monitors.Get(lbClient, monitor.ID).Extract()
+			monitor, err := neutronmonitors.Get(lbClient, monitor.ID).Extract()
 			if err != nil {
 				return nil, "", err
 			}
@@ -580,7 +726,7 @@ func resourceLBV2LoadBalancerStatusRefreshFuncNeutron(lbClient *gophercloud.Serv
 					}
 				}
 			}
-			monitor, err := monitors.Get(lbClient, resourceID).Extract()
+			monitor, err := neutronmonitors.Get(lbClient, resourceID).Extract()
 			return monitor, "ACTIVE", err
 
 		case "member":

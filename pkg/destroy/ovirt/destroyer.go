@@ -21,7 +21,7 @@ type ClusterUninstaller struct {
 
 // Run is the entrypoint to start the uninstall process.
 func (uninstaller *ClusterUninstaller) Run() error {
-	config, err := ovirt.GetOvirtConfig()
+	config, err := ovirt.NewConfig()
 	if err != nil {
 		return err
 	}

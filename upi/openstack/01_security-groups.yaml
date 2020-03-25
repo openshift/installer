@@ -224,11 +224,27 @@
       port_range_min: 30000
       port_range_max: 32767
 
+  - name: 'Create master-sg rule "master ingress services (TCP) from worker"'
+    os_security_group_rule:
+      security_group: "{{ os_sg_master }}"
+      protocol: tcp
+      remote_group: "{{ os_sg_worker }}"
+      port_range_min: 30000
+      port_range_max: 32767
+
   - name: 'Create master-sg rule "master ingress services (UDP)"'
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: udp
       remote_group: "{{ os_sg_master }}"
+      port_range_min: 30000
+      port_range_max: 32767
+
+  - name: 'Create master-sg rule "master ingress services (UDP) from worker"'
+    os_security_group_rule:
+      security_group: "{{ os_sg_master }}"
+      protocol: udp
+      remote_group: "{{ os_sg_worker }}"
       port_range_min: 30000
       port_range_max: 32767
 
@@ -369,11 +385,27 @@
       port_range_min: 30000
       port_range_max: 32767
 
+  - name: 'Create worker-sg rule "worker ingress services (TCP) from master"'
+    os_security_group_rule:
+      security_group: "{{ os_sg_worker }}"
+      protocol: tcp
+      remote_group: "{{ os_sg_master }}"
+      port_range_min: 30000
+      port_range_max: 32767
+
   - name: 'Create worker-sg rule "worker ingress services (UDP)"'
     os_security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: udp
       remote_group: "{{ os_sg_worker }}"
+      port_range_min: 30000
+      port_range_max: 32767
+
+  - name: 'Create worker-sg rule "worker ingress services (UDP) from master"'
+    os_security_group_rule:
+      security_group: "{{ os_sg_worker }}"
+      protocol: udp
+      remote_group: "{{ os_sg_master }}"
       port_range_min: 30000
       port_range_max: 32767
 

@@ -509,6 +509,26 @@ func (c *Config) ObjectStorageV1Client(region string) (*gophercloud.ServiceClien
 	return client, nil
 }
 
+func (c *Config) OrchestrationV1Client(region string) (*gophercloud.ServiceClient, error) {
+	if err := c.authenticate(); err != nil {
+		return nil, err
+	}
+
+	client, err := openstack.NewOrchestrationV1(c.OsClient, gophercloud.EndpointOpts{
+		Region:       c.determineRegion(region),
+		Availability: clientconfig.GetEndpointType(c.EndpointType),
+	})
+
+	if err != nil {
+		return client, err
+	}
+
+	// Check if an endpoint override was specified for the orchestration service.
+	client = c.determineEndpoint(client, "orchestration")
+
+	return client, nil
+}
+
 func (c *Config) LoadBalancerV2Client(region string) (*gophercloud.ServiceClient, error) {
 	if err := c.authenticate(); err != nil {
 		return nil, err

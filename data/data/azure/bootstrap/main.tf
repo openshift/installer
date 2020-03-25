@@ -1,5 +1,6 @@
 locals {
-  bootstrap_nic_ip_configuration_name = "bootstrap-nic-ip"
+  bootstrap_nic_ip_v4_configuration_name = "bootstrap-nic-ip-v4"
+  bootstrap_nic_ip_v6_configuration_name = "bootstrap-nic-ip-v6"
 }
 
 data "azurerm_storage_account_sas" "ignition" {
@@ -61,20 +62,38 @@ data "ignition_config" "redirect" {
   }
 }
 
-resource "azurerm_public_ip" "bootstrap_public_ip" {
-  count = var.private ? 0 : 1
+resource "azurerm_public_ip" "bootstrap_public_ip_v4" {
+  count = var.private || ! var.use_ipv4 ? 0 : 1
 
   sku                 = "Standard"
   location            = var.region
-  name                = "${var.cluster_id}-bootstrap-pip"
+  name                = "${var.cluster_id}-bootstrap-pip-v4"
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
 }
 
-data "azurerm_public_ip" "bootstrap_public_ip" {
+data "azurerm_public_ip" "bootstrap_public_ip_v4" {
   count = var.private ? 0 : 1
 
-  name                = azurerm_public_ip.bootstrap_public_ip[0].name
+  name                = azurerm_public_ip.bootstrap_public_ip_v4[0].name
+  resource_group_name = var.resource_group_name
+}
+
+resource "azurerm_public_ip" "bootstrap_public_ip_v6" {
+  count = var.private || ! var.use_ipv6 ? 0 : 1
+
+  sku                 = "Standard"
+  location            = var.region
+  name                = "${var.cluster_id}-bootstrap-pip-v6"
+  resource_group_name = var.resource_group_name
+  allocation_method   = "Static"
+  ip_version          = "IPv6"
+}
+
+data "azurerm_public_ip" "bootstrap_public_ip_v6" {
+  count = var.private || ! var.use_ipv6 ? 0 : 1
+
+  name                = azurerm_public_ip.bootstrap_public_ip_v6[0].name
   resource_group_name = var.resource_group_name
 }
 
@@ -83,24 +102,73 @@ resource "azurerm_network_interface" "bootstrap" {
   location            = var.region
   resource_group_name = var.resource_group_name
 
-  ip_configuration {
-    subnet_id                     = var.subnet_id
-    name                          = local.bootstrap_nic_ip_configuration_name
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = var.private ? null : azurerm_public_ip.bootstrap_public_ip[0].id
+  dynamic "ip_configuration" {
+    for_each = [for ip in [
+      {
+        // LIMITATION: azure does not allow an ipv6 address to be primary today
+        primary : var.use_ipv4,
+        name : local.bootstrap_nic_ip_v4_configuration_name,
+        ip_address_version : "IPv4",
+        public_ip_id : var.private ? null : azurerm_public_ip.bootstrap_public_ip_v4[0].id,
+        include : var.use_ipv4 || var.use_ipv6,
+      },
+      {
+        primary : ! var.use_ipv4,
+        name : local.bootstrap_nic_ip_v6_configuration_name,
+        ip_address_version : "IPv6",
+        public_ip_id : var.private || ! var.use_ipv6 ? null : azurerm_public_ip.bootstrap_public_ip_v6[0].id,
+        include : var.use_ipv6,
+      },
+      ] : {
+      primary : ip.primary
+      name : ip.name
+      ip_address_version : ip.ip_address_version
+      public_ip_id : ip.public_ip_id
+      include : ip.include
+      } if ip.include
+    ]
+    content {
+      primary                       = ip_configuration.value.primary
+      name                          = ip_configuration.value.name
+      subnet_id                     = var.subnet_id
+      private_ip_address_version    = ip_configuration.value.ip_address_version
+      private_ip_address_allocation = "Dynamic"
+      public_ip_address_id          = ip_configuration.value.public_ip_id
+    }
   }
 }
 
-resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap" {
+resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap_v4" {
+  // should be 'count = var.use_ipv4 && ! var.emulate_single_stack_ipv6 ? 1 : 0', but we need a V4 LB for egress for quay
+  count = var.use_ipv4 ? 1 : 0
+
   network_interface_id    = azurerm_network_interface.bootstrap.id
-  backend_address_pool_id = var.elb_backend_pool_id
-  ip_configuration_name   = local.bootstrap_nic_ip_configuration_name
+  backend_address_pool_id = var.elb_backend_pool_v4_id
+  ip_configuration_name   = local.bootstrap_nic_ip_v4_configuration_name
 }
 
-resource "azurerm_network_interface_backend_address_pool_association" "internal_lb_bootstrap" {
+resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap_v6" {
+  count = var.use_ipv6 ? 1 : 0
+
   network_interface_id    = azurerm_network_interface.bootstrap.id
-  backend_address_pool_id = var.ilb_backend_pool_id
-  ip_configuration_name   = local.bootstrap_nic_ip_configuration_name
+  backend_address_pool_id = var.elb_backend_pool_v6_id
+  ip_configuration_name   = local.bootstrap_nic_ip_v6_configuration_name
+}
+
+resource "azurerm_network_interface_backend_address_pool_association" "internal_lb_bootstrap_v4" {
+  count = var.use_ipv4 ? 1 : 0
+
+  network_interface_id    = azurerm_network_interface.bootstrap.id
+  backend_address_pool_id = var.ilb_backend_pool_v4_id
+  ip_configuration_name   = local.bootstrap_nic_ip_v4_configuration_name
+}
+
+resource "azurerm_network_interface_backend_address_pool_association" "internal_lb_bootstrap_v6" {
+  count = var.use_ipv6 ? 1 : 0
+
+  network_interface_id    = azurerm_network_interface.bootstrap.id
+  backend_address_pool_id = var.ilb_backend_pool_v6_id
+  ip_configuration_name   = local.bootstrap_nic_ip_v6_configuration_name
 }
 
 resource "azurerm_virtual_machine" "bootstrap" {
@@ -150,8 +218,10 @@ resource "azurerm_virtual_machine" "bootstrap" {
   }
 
   depends_on = [
-    azurerm_network_interface_backend_address_pool_association.public_lb_bootstrap,
-    azurerm_network_interface_backend_address_pool_association.internal_lb_bootstrap
+    azurerm_network_interface_backend_address_pool_association.public_lb_bootstrap_v4,
+    azurerm_network_interface_backend_address_pool_association.public_lb_bootstrap_v6,
+    azurerm_network_interface_backend_address_pool_association.internal_lb_bootstrap_v4,
+    azurerm_network_interface_backend_address_pool_association.internal_lb_bootstrap_v6
   ]
 }
 

@@ -88,7 +88,7 @@ func resourceDNSRecordSetV2() *schema.Resource {
 
 func resourceDNSRecordSetV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	dnsClient, err := config.dnsV2Client(GetRegion(d, config))
+	dnsClient, err := config.DNSV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack DNS client: %s", err)
 	}
@@ -140,7 +140,7 @@ func resourceDNSRecordSetV2Create(d *schema.ResourceData, meta interface{}) erro
 
 func resourceDNSRecordSetV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	dnsClient, err := config.dnsV2Client(GetRegion(d, config))
+	dnsClient, err := config.DNSV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack DNS client: %s", err)
 	}
@@ -170,7 +170,7 @@ func resourceDNSRecordSetV2Read(d *schema.ResourceData, meta interface{}) error 
 
 func resourceDNSRecordSetV2Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	dnsClient, err := config.dnsV2Client(GetRegion(d, config))
+	dnsClient, err := config.DNSV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack DNS client: %s", err)
 	}
@@ -220,7 +220,7 @@ func resourceDNSRecordSetV2Update(d *schema.ResourceData, meta interface{}) erro
 
 func resourceDNSRecordSetV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	dnsClient, err := config.dnsV2Client(GetRegion(d, config))
+	dnsClient, err := config.DNSV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack DNS client: %s", err)
 	}
@@ -252,7 +252,7 @@ func resourceDNSRecordSetV2Delete(d *schema.ResourceData, meta interface{}) erro
 
 func resourceDNSRecordSetV2Import(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
-	dnsClient, err := config.dnsV2Client(GetRegion(d, config))
+	dnsClient, err := config.DNSV2Client(GetRegion(d, config))
 	if err != nil {
 		return nil, fmt.Errorf("Error creating OpenStack DNS client: %s", err)
 	}

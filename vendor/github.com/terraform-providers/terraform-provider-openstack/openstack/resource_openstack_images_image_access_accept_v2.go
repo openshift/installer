@@ -72,7 +72,7 @@ func resourceImagesImageAccessAcceptV2() *schema.Resource {
 
 func resourceImagesImageAccessAcceptV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	imageClient, err := config.imageV2Client(GetRegion(d, config))
+	imageClient, err := config.ImageV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack image client: %s", err)
 	}
@@ -105,7 +105,7 @@ func resourceImagesImageAccessAcceptV2Create(d *schema.ResourceData, meta interf
 
 func resourceImagesImageAccessAcceptV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	imageClient, err := config.imageV2Client(GetRegion(d, config))
+	imageClient, err := config.ImageV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack image client: %s", err)
 	}
@@ -136,7 +136,7 @@ func resourceImagesImageAccessAcceptV2Read(d *schema.ResourceData, meta interfac
 
 func resourceImagesImageAccessAcceptV2Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	imageClient, err := config.imageV2Client(GetRegion(d, config))
+	imageClient, err := config.ImageV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack image client: %s", err)
 	}
@@ -161,7 +161,7 @@ func resourceImagesImageAccessAcceptV2Update(d *schema.ResourceData, meta interf
 
 func resourceImagesImageAccessAcceptV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	imageClient, err := config.imageV2Client(GetRegion(d, config))
+	imageClient, err := config.ImageV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack image client: %s", err)
 	}
@@ -187,7 +187,7 @@ func resourceImagesImageAccessAcceptV2Import(d *schema.ResourceData, meta interf
 	parts := strings.SplitN(d.Id(), "/", 2)
 
 	config := meta.(*Config)
-	imageClient, err := config.imageV2Client(GetRegion(d, config))
+	imageClient, err := config.ImageV2Client(GetRegion(d, config))
 	if err != nil {
 		return nil, fmt.Errorf("Error creating OpenStack image client: %s", err)
 	}

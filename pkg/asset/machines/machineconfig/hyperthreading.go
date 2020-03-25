@@ -15,9 +15,10 @@ import (
 // ForHyperthreadingDisabled creates the MachineConfig to disable hyperthreading.
 // RHCOS ships with pivot.service that uses the `/etc/pivot/kernel-args` to override the kernel arguments for hosts.
 func ForHyperthreadingDisabled(role string) (*mcfgv1.MachineConfig, error) {
+	// TODO lorbus: Go back to using igntypes.MaxVersion.String() once spec 3.1 stable is available
 	rawIgnitionConfig, err := json.Marshal(igntypes.Config{
 		Ignition: igntypes.Ignition{
-			Version: igntypes.MaxVersion.String(),
+			Version: "3.0.0",
 		},
 		Storage: igntypes.Storage{
 			Files: []igntypes.File{

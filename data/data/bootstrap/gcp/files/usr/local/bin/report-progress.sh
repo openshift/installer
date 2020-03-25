@@ -9,14 +9,17 @@ wait_for_existance() {
 	done
 }
 
-echo "Waiting for bootstrap to complete..."
-wait_for_existance /opt/openshift/.bootkube.done
+echo "Waiting for cb-bootstrap to complete..."
+wait_for_existance /opt/openshift/cb-bootstrap.done
 
 ## remove the routes setup so that we can open up the blackhole
 systemctl stop gcp-routes.service
 
+echo "Waiting for bootstrap to complete..."
+wait_for_existance /opt/openshift/.bootkube.done
+
 echo "Reporting install progress..."
-while ! oc --config="$KUBECONFIG" create -f - <<-EOF
+while ! oc --kubeconfig="$KUBECONFIG" create -f - <<-EOF
 	apiVersion: v1
 	kind: ConfigMap
 	metadata:

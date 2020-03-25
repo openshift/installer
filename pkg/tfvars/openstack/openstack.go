@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/utils/openstack/clientconfig"
@@ -16,21 +18,20 @@ import (
 )
 
 type config struct {
-	BaseImageName          string   `json:"openstack_base_image_name,omitempty"`
-	BaseImageLocalFilePath string   `json:"openstack_base_image_local_file_path,omitempty"`
-	ExternalNetwork        string   `json:"openstack_external_network,omitempty"`
-	Cloud                  string   `json:"openstack_credentials_cloud,omitempty"`
-	FlavorName             string   `json:"openstack_master_flavor_name,omitempty"`
-	LbFloatingIP           string   `json:"openstack_lb_floating_ip,omitempty"`
-	APIVIP                 string   `json:"openstack_api_int_ip,omitempty"`
-	DNSVIP                 string   `json:"openstack_node_dns_ip,omitempty"`
-	IngressVIP             string   `json:"openstack_ingress_ip,omitempty"`
-	TrunkSupport           string   `json:"openstack_trunk_support,omitempty"`
-	OctaviaSupport         string   `json:"openstack_octavia_support,omitempty"`
-	RootVolumeSize         int      `json:"openstack_master_root_volume_size,omitempty"`
-	RootVolumeType         string   `json:"openstack_master_root_volume_type,omitempty"`
-	BootstrapShim          string   `json:"openstack_bootstrap_shim_ignition,omitempty"`
-	ExternalDNS            []string `json:"openstack_external_dns,omitempty"`
+	BaseImageName   string   `json:"openstack_base_image_name,omitempty"`
+	ExternalNetwork string   `json:"openstack_external_network,omitempty"`
+	Cloud           string   `json:"openstack_credentials_cloud,omitempty"`
+	FlavorName      string   `json:"openstack_master_flavor_name,omitempty"`
+	LbFloatingIP    string   `json:"openstack_lb_floating_ip,omitempty"`
+	APIVIP          string   `json:"openstack_api_int_ip,omitempty"`
+	DNSVIP          string   `json:"openstack_node_dns_ip,omitempty"`
+	IngressVIP      string   `json:"openstack_ingress_ip,omitempty"`
+	TrunkSupport    string   `json:"openstack_trunk_support,omitempty"`
+	OctaviaSupport  string   `json:"openstack_octavia_support,omitempty"`
+	RootVolumeSize  int      `json:"openstack_master_root_volume_size,omitempty"`
+	RootVolumeType  string   `json:"openstack_master_root_volume_type,omitempty"`
+	BootstrapShim   string   `json:"openstack_bootstrap_shim_ignition,omitempty"`
+	ExternalDNS     []string `json:"openstack_external_dns,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
@@ -62,7 +63,11 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		if err != nil {
 			return nil, err
 		}
-		cfg.BaseImageLocalFilePath = localFilePath
+
+		err = uploadBaseImage(cloud, localFilePath, imageName, infraID)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// Not a URL -> use baseImage value as an overridden Glance image name.
 		// Need to check if this image exists and there are no other images with this name.
@@ -72,18 +77,23 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		}
 	}
 
-	swiftPublicURL, err := getSwiftPublicURL(cloud)
+	glancePublicURL, err := getGlancePublicURL(cloud)
 	if err != nil {
 		return nil, err
 	}
 
-	objectID, err := createBootstrapSwiftObject(cloud, bootstrapIgn, infraID)
+	configLocation, err := uploadBootstrapConfig(cloud, bootstrapIgn, infraID)
 	if err != nil {
 		return nil, err
 	}
 
-	objectAddress := fmt.Sprintf("%s/%s/%s", swiftPublicURL, infraID, objectID)
-	userCAIgnition, err := generateIgnitionShim(userCA, infraID, objectAddress)
+	tokenID, err := getAuthToken(cloud)
+	if err != nil {
+		return nil, err
+	}
+
+	bootstrapConfigURL := fmt.Sprintf("%s%s", glancePublicURL, configLocation)
+	userCAIgnition, err := generateIgnitionShim(userCA, infraID, bootstrapConfigURL, tokenID)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +143,7 @@ func validateOverriddenImageName(imageName, cloud string) error {
 	return nil
 }
 
-// We need to obtain Swift public endpoint that will be used by Ignition to download bootstrap ignition files.
+// We need to obtain Glance public endpoint that will be used by Ignition to download bootstrap ignition files.
 // By design this should be done by using https://www.terraform.io/docs/providers/openstack/d/identity_endpoint_v3.html
 // but OpenStack default policies forbid to use this API for regular users.
 // On the other hand when a user authenticates in OpenStack (i.e. gets a token), it includes the whole service
@@ -143,33 +153,24 @@ func validateOverriddenImageName(imageName, cloud string) error {
 // We do next:
 // 1. In "getServiceCatalog" we authenticate in OpenStack (tokens.Create(..)),
 //    parse the token and extract the service catalog: (ExtractServiceCatalog())
-// 2. In getSwiftPublicURL we iterate through the catalog and find "public" endpoint for "object-store".
+// 2. In getGlancePublicURL we iterate through the catalog and find "public" endpoint for "image".
 
-// getSwiftPublicURL obtains Swift public endpoint URL
-func getSwiftPublicURL(cloud string) (string, error) {
-	var swiftPublicURL string
+// getGlancePublicURL obtains Glance public endpoint URL
+func getGlancePublicURL(cloud string) (string, error) {
 	serviceCatalog, err := getServiceCatalog(cloud)
 	if err != nil {
 		return "", err
 	}
 
-	for _, svc := range serviceCatalog.Entries {
-		if svc.Type == "object-store" {
-			for _, e := range svc.Endpoints {
-				if e.Interface == "public" {
-					swiftPublicURL = e.URL
-					break
-				}
-			}
-			break
-		}
+	glancePublicURL, err := openstack.V3EndpointURL(serviceCatalog, gophercloud.EndpointOpts{
+		Type:         "image",
+		Availability: gophercloud.AvailabilityPublic,
+	})
+	if err != nil {
+		return "", errors.Errorf("cannot retrieve Glance URL from the service catalog: %v", err)
 	}
 
-	if swiftPublicURL == "" {
-		return "", errors.Errorf("cannot retrieve Swift URL from the service catalog")
-	}
-
-	return swiftPublicURL, nil
+	return glancePublicURL, nil
 }
 
 // getServiceCatalog fetches OpenStack service catalog with service endpoints

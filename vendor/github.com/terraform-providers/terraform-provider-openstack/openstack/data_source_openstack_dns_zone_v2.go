@@ -110,7 +110,7 @@ func dataSourceDNSZoneV2() *schema.Resource {
 
 func dataSourceDNSZoneV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	dnsClient, err := config.dnsV2Client(GetRegion(d, config))
+	dnsClient, err := config.DNSV2Client(GetRegion(d, config))
 	if err != nil {
 		return err
 	}

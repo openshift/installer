@@ -141,7 +141,7 @@ func dataSourceKeyManagerSecretV1() *schema.Resource {
 
 func dataSourceKeyManagerSecretV1Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	kmClient, err := config.keyManagerV1Client(GetRegion(d, config))
+	kmClient, err := config.KeyManagerV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack barbican client: %s", err)
 	}

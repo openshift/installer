@@ -70,6 +70,41 @@ func resourceIdentityApplicationCredentialV3() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
+			"access_rules": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				ForceNew: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
+						"path": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+						},
+
+						"method": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"POST", "GET", "HEAD", "PATCH", "PUT", "DELETE",
+							}, false),
+						},
+
+						"service": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+						},
+					},
+				},
+			},
+
 			"expires_at": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -82,7 +117,7 @@ func resourceIdentityApplicationCredentialV3() *schema.Resource {
 
 func resourceIdentityApplicationCredentialV3Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	identityClient, err := config.identityV3Client(GetRegion(d, config))
+	identityClient, err := config.IdentityV3Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack identity client: %s", err)
 	}
@@ -102,6 +137,7 @@ func resourceIdentityApplicationCredentialV3Create(d *schema.ResourceData, meta 
 		Description:  d.Get("description").(string),
 		Unrestricted: d.Get("unrestricted").(bool),
 		Roles:        expandIdentityApplicationCredentialRolesV3(d.Get("roles").(*schema.Set).List()),
+		AccessRules:  expandIdentityApplicationCredentialAccessRulesV3(d.Get("access_rules").(*schema.Set).List()),
 		ExpiresAt:    d.Get("expires_at").(string),
 	}
 
@@ -127,7 +163,7 @@ func resourceIdentityApplicationCredentialV3Create(d *schema.ResourceData, meta 
 
 func resourceIdentityApplicationCredentialV3Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	identityClient, err := config.identityV3Client(GetRegion(d, config))
+	identityClient, err := config.IdentityV3Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack identity client: %s", err)
 	}
@@ -153,6 +189,7 @@ func resourceIdentityApplicationCredentialV3Read(d *schema.ResourceData, meta in
 	d.Set("description", applicationCredential.Description)
 	d.Set("unrestricted", applicationCredential.Unrestricted)
 	d.Set("roles", flattenIdentityApplicationCredentialRolesV3(applicationCredential.Roles))
+	d.Set("access_rules", flattenIdentityApplicationCredentialAccessRulesV3(applicationCredential.AccessRules))
 	d.Set("project_id", applicationCredential.ProjectID)
 	d.Set("region", GetRegion(d, config))
 
@@ -167,7 +204,7 @@ func resourceIdentityApplicationCredentialV3Read(d *schema.ResourceData, meta in
 
 func resourceIdentityApplicationCredentialV3Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	identityClient, err := config.identityV3Client(GetRegion(d, config))
+	identityClient, err := config.IdentityV3Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack identity client: %s", err)
 	}
@@ -184,8 +221,13 @@ func resourceIdentityApplicationCredentialV3Delete(d *schema.ResourceData, meta 
 
 	err = applicationcredentials.Delete(identityClient, user.ID, d.Id()).ExtractErr()
 	if err != nil {
-		return CheckDeleted(d, err, "Error deleting openstack_identity_application_credential_v3")
+		err = CheckDeleted(d, err, "Error deleting openstack_identity_application_credential_v3")
+		if err != nil {
+			return err
+		}
 	}
 
-	return nil
+	// cleanup access rules
+	accessRules := expandIdentityApplicationCredentialAccessRulesV3(d.Get("access_rules").(*schema.Set).List())
+	return applicationCredentialCleanupAccessRulesV3(identityClient, user.ID, d.Id(), accessRules)
 }

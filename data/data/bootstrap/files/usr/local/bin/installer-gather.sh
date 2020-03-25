@@ -77,37 +77,37 @@ function queue() {
 mkdir -p "${ARTIFACTS}/control-plane" "${ARTIFACTS}/resources"
 
 echo "Gathering cluster resources ..."
-queue resources/nodes.list oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get nodes -o jsonpath --template '{range .items[*]}{.metadata.name}{"\n"}{end}'
-queue resources/masters.list oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get nodes -o jsonpath -l 'node-role.kubernetes.io/master' --template '{range .items[*]}{.metadata.name}{"\n"}{end}'
+queue resources/nodes.list oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get nodes -o jsonpath --template '{range .items[*]}{.metadata.name}{"\n"}{end}'
+queue resources/masters.list oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get nodes -o jsonpath -l 'node-role.kubernetes.io/master' --template '{range .items[*]}{.metadata.name}{"\n"}{end}'
 # ShellCheck doesn't realize that $ns is for the Go template, not something we're trying to expand in the shell
 # shellcheck disable=2016
-queue resources/containers oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get pods --all-namespaces --template '{{ range .items }}{{ $name := .metadata.name }}{{ $ns := .metadata.namespace }}{{ range .spec.containers }}-n {{ $ns }} {{ $name }} -c {{ .name }}{{ "\n" }}{{ end }}{{ range .spec.initContainers }}-n {{ $ns }} {{ $name }} -c {{ .name }}{{ "\n" }}{{ end }}{{ end }}'
-queue resources/api-pods oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get pods -l apiserver=true --all-namespaces --template '{{ range .items }}-n {{ .metadata.namespace }} {{ .metadata.name }}{{ "\n" }}{{ end }}'
+queue resources/containers oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get pods --all-namespaces --template '{{ range .items }}{{ $name := .metadata.name }}{{ $ns := .metadata.namespace }}{{ range .spec.containers }}-n {{ $ns }} {{ $name }} -c {{ .name }}{{ "\n" }}{{ end }}{{ range .spec.initContainers }}-n {{ $ns }} {{ $name }} -c {{ .name }}{{ "\n" }}{{ end }}{{ end }}'
+queue resources/api-pods oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get pods -l apiserver=true --all-namespaces --template '{{ range .items }}-n {{ .metadata.namespace }} {{ .metadata.name }}{{ "\n" }}{{ end }}'
 
-queue resources/apiservices.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get apiservices -o json
-queue resources/clusteroperators.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get clusteroperators -o json
-queue resources/clusterversion.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get clusterversion -o json
-queue resources/configmaps.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get configmaps --all-namespaces -o json
-queue resources/csr.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get csr -o json
-queue resources/endpoints.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get endpoints --all-namespaces -o json
-queue resources/events.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get events --all-namespaces -o json
-queue resources/kubeapiserver.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get kubeapiserver -o json
-queue resources/kubecontrollermanager.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get kubecontrollermanager -o json
-queue resources/machineconfigpools.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get machineconfigpools -o json
-queue resources/machineconfigs.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get machineconfigs -o json
-queue resources/namespaces.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get namespaces -o json
-queue resources/nodes.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get nodes -o json
-queue resources/openshiftapiserver.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get openshiftapiserver -o json
-queue resources/pods.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get pods --all-namespaces -o json
-queue resources/rolebindings.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get rolebindings --all-namespaces -o json
-queue resources/roles.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get roles --all-namespaces -o json
+queue resources/apiservices.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get apiservices -o json
+queue resources/clusteroperators.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get clusteroperators -o json
+queue resources/clusterversion.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get clusterversion -o json
+queue resources/configmaps.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get configmaps --all-namespaces -o json
+queue resources/csr.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get csr -o json
+queue resources/endpoints.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get endpoints --all-namespaces -o json
+queue resources/events.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get events --all-namespaces -o json
+queue resources/kubeapiserver.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get kubeapiserver -o json
+queue resources/kubecontrollermanager.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get kubecontrollermanager -o json
+queue resources/machineconfigpools.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get machineconfigpools -o json
+queue resources/machineconfigs.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get machineconfigs -o json
+queue resources/namespaces.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get namespaces -o json
+queue resources/nodes.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get nodes -o json
+queue resources/openshiftapiserver.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get openshiftapiserver -o json
+queue resources/pods.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get pods --all-namespaces -o json
+queue resources/rolebindings.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get rolebindings --all-namespaces -o json
+queue resources/roles.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get roles --all-namespaces -o json
 # this just lists names and number of keys
-queue resources/secrets-names.txt oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get secrets --all-namespaces
+queue resources/secrets-names.txt oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get secrets --all-namespaces
 # this adds annotations, but strips out the SA tokens and dockercfg secrets which are noisy and may contain secrets in the annotations
-queue resources/secrets-names-with-annotations.txt oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get secrets --all-namespaces -o=custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,TYPE:.type,ANNOTATIONS:.metadata.annotations | grep -v -- '-token-' | grep -v -- '-dockercfg-'
-queue resources/services.json oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get services --all-namespaces -o json
+queue resources/secrets-names-with-annotations.txt oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get secrets --all-namespaces -o=custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,TYPE:.type,ANNOTATIONS:.metadata.annotations | grep -v -- '-token-' | grep -v -- '-dockercfg-'
+queue resources/services.json oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get services --all-namespaces -o json
 
-FILTER=gzip queue resources/openapi.json.gz oc --config=/opt/openshift/auth/kubeconfig --request-timeout=5s get --raw /openapi/v2
+FILTER=gzip queue resources/openapi.json.gz oc --kubeconfig=/opt/openshift/auth/kubeconfig --request-timeout=5s get --raw /openapi/v2
 
 echo "Waiting for logs ..."
 wait
@@ -119,20 +119,17 @@ if [ "$#" -ne 0 ]; then
 elif test -s "${ARTIFACTS}/resources/masters.list"; then
     mapfile -t MASTERS < "${ARTIFACTS}/resources/masters.list"
 else
-    # Find out master IPs from etcd discovery record
-    DOMAIN=$(sudo oc --config=/opt/openshift/auth/kubeconfig whoami --show-server | grep -oP "api.\\K([a-z\\.]*)")
-    dig -t SRV "_etcd-server-ssl._tcp.${DOMAIN}" +short | cut -f 4 -d ' ' | sed 's/.$//' >"${ARTIFACTS}/resources/masters.list"
-    mapfile -t MASTERS < "${ARTIFACTS}/resources/masters.list"
+    echo "No masters found!"
 fi
 
 for master in "${MASTERS[@]}"
 do
   echo "Collecting info from ${master}"
-  scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null -q /usr/local/bin/installer-masters-gather.sh "core@${master}:"
+  scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null -q /usr/local/bin/installer-masters-gather.sh "core@[${master}]:"
   mkdir -p "${ARTIFACTS}/control-plane/${master}"
   ssh -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null "core@${master}" -C "sudo ./installer-masters-gather.sh --id '${GATHER_ID}'" </dev/null
-  scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null -r -q "core@${master}:/tmp/artifacts-${GATHER_ID}/*" "${ARTIFACTS}/control-plane/${master}/"
+  scp -o PreferredAuthentications=publickey -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null -r -q "core@[${master}]:/tmp/artifacts-${GATHER_ID}/*" "${ARTIFACTS}/control-plane/${master}/"
 done
 TAR_FILE="${TAR_FILE:-${HOME}/log-bundle-${GATHER_ID}.tar.gz}"
-tar cz -C "${ARTIFACTS}" . >"${TAR_FILE}"
+tar cz -C "${ARTIFACTS}" --transform "s?^\\.?log-bundle-${GATHER_ID}?" . > "${TAR_FILE}"
 echo "Log bundle written to ${TAR_FILE}"

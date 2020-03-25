@@ -66,7 +66,7 @@ func resourceComputeInterfaceAttachV2() *schema.Resource {
 
 func resourceComputeInterfaceAttachV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	computeClient, err := config.computeV2Client(GetRegion(d, config))
+	computeClient, err := config.ComputeV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
@@ -131,7 +131,7 @@ func resourceComputeInterfaceAttachV2Create(d *schema.ResourceData, meta interfa
 
 func resourceComputeInterfaceAttachV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	computeClient, err := config.computeV2Client(GetRegion(d, config))
+	computeClient, err := config.ComputeV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
@@ -158,7 +158,7 @@ func resourceComputeInterfaceAttachV2Read(d *schema.ResourceData, meta interface
 
 func resourceComputeInterfaceAttachV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	computeClient, err := config.computeV2Client(GetRegion(d, config))
+	computeClient, err := config.ComputeV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}

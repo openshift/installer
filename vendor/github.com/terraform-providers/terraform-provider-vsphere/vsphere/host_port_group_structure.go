@@ -85,7 +85,7 @@ func calculateComputedPolicy(policy types.HostNetworkPolicy) (map[string]string,
 }
 
 // calculatePorts is a utility function that returns a set of port data.
-func calculatePorts(ports []types.HostPortGroupPort) *schema.Set {
+func calculatePorts(ports []types.HostPortGroupPort) *[]interface{} {
 	s := make([]interface{}, 0)
 	for _, port := range ports {
 		m := make(map[string]interface{})
@@ -94,7 +94,7 @@ func calculatePorts(ports []types.HostPortGroupPort) *schema.Set {
 		m["type"] = port.Type
 		s = append(s, m)
 	}
-	return schema.NewSet(schema.HashResource(portGroupPortSchema()), s)
+	return &s
 }
 
 // portGroupPortSchema returns a sub-schema for a port group's connected ports.

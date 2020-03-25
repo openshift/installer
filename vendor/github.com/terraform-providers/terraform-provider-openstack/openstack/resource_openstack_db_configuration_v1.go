@@ -87,7 +87,7 @@ func resourceDatabaseConfigurationV1() *schema.Resource {
 
 func resourceDatabaseConfigurationV1Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	databaseV1Client, err := config.databaseV1Client(GetRegion(d, config))
+	DatabaseV1Client, err := config.DatabaseV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack database client: %s", err)
 	}
@@ -110,7 +110,7 @@ func resourceDatabaseConfigurationV1Create(d *schema.ResourceData, meta interfac
 	createOpts.Values = values
 
 	log.Printf("[DEBUG] openstack_db_configuration_v1 create options: %#v", createOpts)
-	cgroup, err := configurations.Create(databaseV1Client, createOpts).Extract()
+	cgroup, err := configurations.Create(DatabaseV1Client, createOpts).Extract()
 
 	if err != nil {
 		return fmt.Errorf("Error creating openstack_db_configuration_v1: %s", err)
@@ -119,7 +119,7 @@ func resourceDatabaseConfigurationV1Create(d *schema.ResourceData, meta interfac
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"BUILD"},
 		Target:     []string{"ACTIVE"},
-		Refresh:    databaseConfigurationV1StateRefreshFunc(databaseV1Client, cgroup.ID),
+		Refresh:    databaseConfigurationV1StateRefreshFunc(DatabaseV1Client, cgroup.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      10 * time.Second,
 		MinTimeout: 3 * time.Second,
@@ -138,12 +138,12 @@ func resourceDatabaseConfigurationV1Create(d *schema.ResourceData, meta interfac
 
 func resourceDatabaseConfigurationV1Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	databaseV1Client, err := config.databaseV1Client(GetRegion(d, config))
+	DatabaseV1Client, err := config.DatabaseV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack database client: %s", err)
 	}
 
-	cgroup, err := configurations.Get(databaseV1Client, d.Id()).Extract()
+	cgroup, err := configurations.Get(DatabaseV1Client, d.Id()).Extract()
 	if err != nil {
 		return CheckDeleted(d, err, "Error retrieving openstack_db_configuration_v1")
 	}
@@ -159,12 +159,12 @@ func resourceDatabaseConfigurationV1Read(d *schema.ResourceData, meta interface{
 
 func resourceDatabaseConfigurationV1Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	databaseV1Client, err := config.databaseV1Client(GetRegion(d, config))
+	DatabaseV1Client, err := config.DatabaseV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack database client: %s", err)
 	}
 
-	err = configurations.Delete(databaseV1Client, d.Id()).ExtractErr()
+	err = configurations.Delete(DatabaseV1Client, d.Id()).ExtractErr()
 	if err != nil {
 		return fmt.Errorf("Error deleting openstack_db_configuration_v1 %s: %s", d.Id(), err)
 	}
@@ -172,7 +172,7 @@ func resourceDatabaseConfigurationV1Delete(d *schema.ResourceData, meta interfac
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"ACTIVE", "SHUTOFF"},
 		Target:     []string{"DELETED"},
-		Refresh:    databaseConfigurationV1StateRefreshFunc(databaseV1Client, d.Id()),
+		Refresh:    databaseConfigurationV1StateRefreshFunc(DatabaseV1Client, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      10 * time.Second,
 		MinTimeout: 3 * time.Second,

@@ -95,7 +95,7 @@ func resourceDNSZoneV2() *schema.Resource {
 
 func resourceDNSZoneV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	dnsClient, err := config.dnsV2Client(GetRegion(d, config))
+	dnsClient, err := config.DNSV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack DNS client: %s", err)
 	}
@@ -139,7 +139,7 @@ func resourceDNSZoneV2Create(d *schema.ResourceData, meta interface{}) error {
 
 func resourceDNSZoneV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	dnsClient, err := config.dnsV2Client(GetRegion(d, config))
+	dnsClient, err := config.DNSV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack DNS client: %s", err)
 	}
@@ -165,7 +165,7 @@ func resourceDNSZoneV2Read(d *schema.ResourceData, meta interface{}) error {
 
 func resourceDNSZoneV2Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	dnsClient, err := config.dnsV2Client(GetRegion(d, config))
+	dnsClient, err := config.DNSV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack DNS client: %s", err)
 	}
@@ -211,7 +211,7 @@ func resourceDNSZoneV2Update(d *schema.ResourceData, meta interface{}) error {
 
 func resourceDNSZoneV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	dnsClient, err := config.dnsV2Client(GetRegion(d, config))
+	dnsClient, err := config.DNSV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack DNS client: %s", err)
 	}

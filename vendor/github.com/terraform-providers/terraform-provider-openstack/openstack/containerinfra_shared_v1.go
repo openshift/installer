@@ -111,7 +111,7 @@ func containerInfraClusterV1MasterFlavor(d *schema.ResourceData) (string, error)
 		return flavor, nil
 	}
 
-	// Try the OS_MAGNUM_FLAVOR environment variable
+	// Try the OS_MAGNUM_MASTER_FLAVOR environment variable
 	if v := os.Getenv("OS_MAGNUM_MASTER_FLAVOR"); v != "" {
 		return v, nil
 	}

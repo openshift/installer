@@ -95,7 +95,7 @@ func resourceSharedFilesystemSecurityServiceV2() *schema.Resource {
 
 func resourceSharedFilesystemSecurityServiceV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	sfsClient, err := config.sharedfilesystemV2Client(GetRegion(d, config))
+	sfsClient, err := config.SharedfilesystemV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack sharedfilesystem client: %s", err)
 	}
@@ -132,7 +132,7 @@ func resourceSharedFilesystemSecurityServiceV2Create(d *schema.ResourceData, met
 
 func resourceSharedFilesystemSecurityServiceV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	sfsClient, err := config.sharedfilesystemV2Client(GetRegion(d, config))
+	sfsClient, err := config.SharedfilesystemV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack sharedfilesystem client: %s", err)
 	}
@@ -178,7 +178,7 @@ func resourceSharedFilesystemSecurityServiceV2Read(d *schema.ResourceData, meta 
 
 func resourceSharedFilesystemSecurityServiceV2Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	sfsClient, err := config.sharedfilesystemV2Client(GetRegion(d, config))
+	sfsClient, err := config.SharedfilesystemV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack sharedfilesystem client: %s", err)
 	}
@@ -244,7 +244,7 @@ func resourceSharedFilesystemSecurityServiceV2Update(d *schema.ResourceData, met
 
 func resourceSharedFilesystemSecurityServiceV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	sfsClient, err := config.sharedfilesystemV2Client(GetRegion(d, config))
+	sfsClient, err := config.SharedfilesystemV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack sharedfilesystem client: %s", err)
 	}

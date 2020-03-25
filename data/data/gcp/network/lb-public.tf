@@ -9,6 +9,11 @@ resource "google_compute_http_health_check" "api" {
 
   name = "${var.cluster_id}-api"
 
+  healthy_threshold   = 3
+  unhealthy_threshold = 3
+  check_interval_sec  = 2
+  timeout_sec         = 2
+
   port         = 6080
   request_path = "/readyz"
 }

@@ -123,13 +123,23 @@ func dataSourceContainerInfraCluster() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+
+			"fixed_network": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"fixed_subnet": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
 
 func dataSourceContainerInfraClusterRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	containerInfraClient, err := config.containerInfraV1Client(GetRegion(d, config))
+	containerInfraClient, err := config.ContainerInfraV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack container infra client: %s", err)
 	}
@@ -159,6 +169,8 @@ func dataSourceContainerInfraClusterRead(d *schema.ResourceData, meta interface{
 	d.Set("master_addresses", c.MasterAddresses)
 	d.Set("node_addresses", c.NodeAddresses)
 	d.Set("stack_id", c.StackID)
+	d.Set("fixed_network", c.FixedNetwork)
+	d.Set("fixed_subnet", c.FixedSubnet)
 
 	if err := d.Set("labels", c.Labels); err != nil {
 		log.Printf("[DEBUG] Unable to set labels for openstack_containerinfra_cluster_v1 %s: %s", c.UUID, err)

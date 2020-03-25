@@ -56,7 +56,7 @@ func resourceNetworkingPortSecGroupAssociateV2() *schema.Resource {
 
 func resourceNetworkingPortSecGroupAssociateV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -99,7 +99,7 @@ func resourceNetworkingPortSecGroupAssociateV2Create(d *schema.ResourceData, met
 
 func resourceNetworkingPortSecGroupAssociateV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -134,7 +134,7 @@ func resourceNetworkingPortSecGroupAssociateV2Read(d *schema.ResourceData, meta 
 
 func resourceNetworkingPortSecGroupAssociateV2Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -173,7 +173,7 @@ func resourceNetworkingPortSecGroupAssociateV2Update(d *schema.ResourceData, met
 
 func resourceNetworkingPortSecGroupAssociateV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}

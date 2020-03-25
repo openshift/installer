@@ -3,11 +3,20 @@ package openstack
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/mutexkv"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+
+	"github.com/gophercloud/utils/terraform/auth"
 )
 
 // This is a global MutexKV for use within this plugin.
 var osMutexKV = mutexkv.NewMutexKV()
+
+// Use openstackbase.Config as the base/foundation of this provider's
+// Config struct.
+type Config struct {
+	auth.Config
+}
 
 // Provider returns a schema.Provider for OpenStack.
 func Provider() terraform.ResourceProvider {
@@ -204,6 +213,13 @@ func Provider() terraform.ResourceProvider {
 				Description: descriptions["delayed_auth"],
 			},
 
+			"allow_reauth": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OS_ALLOW_REAUTH", false),
+				Description: descriptions["allow_reauth"],
+			},
+
 			"cloud": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -236,6 +252,8 @@ func Provider() terraform.ResourceProvider {
 			"openstack_blockstorage_availability_zones_v3":       dataSourceBlockStorageAvailabilityZonesV3(),
 			"openstack_blockstorage_snapshot_v2":                 dataSourceBlockStorageSnapshotV2(),
 			"openstack_blockstorage_snapshot_v3":                 dataSourceBlockStorageSnapshotV3(),
+			"openstack_blockstorage_volume_v2":                   dataSourceBlockStorageVolumeV2(),
+			"openstack_blockstorage_volume_v3":                   dataSourceBlockStorageVolumeV3(),
 			"openstack_compute_availability_zones_v2":            dataSourceComputeAvailabilityZonesV2(),
 			"openstack_compute_flavor_v2":                        dataSourceComputeFlavorV2(),
 			"openstack_compute_keypair_v2":                       dataSourceComputeKeypairV2(),
@@ -348,6 +366,7 @@ func Provider() terraform.ResourceProvider {
 			"openstack_objectstorage_container_v1":               resourceObjectStorageContainerV1(),
 			"openstack_objectstorage_object_v1":                  resourceObjectStorageObjectV1(),
 			"openstack_objectstorage_tempurl_v1":                 resourceObjectstorageTempurlV1(),
+			"openstack_orchestration_stack_v1":                   resourceOrchestrationStackV1(),
 			"openstack_vpnaas_ipsec_policy_v2":                   resourceIPSecPolicyV2(),
 			"openstack_vpnaas_service_v2":                        resourceServiceV2(),
 			"openstack_vpnaas_ike_policy_v2":                     resourceIKEPolicyV2(),
@@ -436,6 +455,11 @@ func init() {
 		"delayed_auth": "If set to `true`, OpenStack authorization will be perfomed,\n" +
 			"when the service provider client is called.",
 
+		"allow_reauth": "If set to `true`, OpenStack authorization will be perfomed\n" +
+			"automatically, if the initial auth token get expired. This is useful,\n" +
+			"when the token TTL is low or the overall Terraform provider execution\n" +
+			"time expected to be greater than the initial token TTL.",
+
 		"cloud": "An entry in a `clouds.yaml` file to use.",
 
 		"max_retries": "How many times HTTP connection should be retried until giving up.",
@@ -449,36 +473,40 @@ func init() {
 
 func configureProvider(d *schema.ResourceData, terraformVersion string) (interface{}, error) {
 	config := Config{
-		CACertFile:                  d.Get("cacert_file").(string),
-		ClientCertFile:              d.Get("cert").(string),
-		ClientKeyFile:               d.Get("key").(string),
-		Cloud:                       d.Get("cloud").(string),
-		DefaultDomain:               d.Get("default_domain").(string),
-		DomainID:                    d.Get("domain_id").(string),
-		DomainName:                  d.Get("domain_name").(string),
-		EndpointOverrides:           d.Get("endpoint_overrides").(map[string]interface{}),
-		EndpointType:                d.Get("endpoint_type").(string),
-		IdentityEndpoint:            d.Get("auth_url").(string),
-		Password:                    d.Get("password").(string),
-		ProjectDomainID:             d.Get("project_domain_id").(string),
-		ProjectDomainName:           d.Get("project_domain_name").(string),
-		Region:                      d.Get("region").(string),
-		Swauth:                      d.Get("swauth").(bool),
-		Token:                       d.Get("token").(string),
-		TenantID:                    d.Get("tenant_id").(string),
-		TenantName:                  d.Get("tenant_name").(string),
-		UserDomainID:                d.Get("user_domain_id").(string),
-		UserDomainName:              d.Get("user_domain_name").(string),
-		Username:                    d.Get("user_name").(string),
-		UserID:                      d.Get("user_id").(string),
-		ApplicationCredentialID:     d.Get("application_credential_id").(string),
-		ApplicationCredentialName:   d.Get("application_credential_name").(string),
-		ApplicationCredentialSecret: d.Get("application_credential_secret").(string),
-		useOctavia:                  d.Get("use_octavia").(bool),
-		delayedAuth:                 d.Get("delayed_auth").(bool),
-		MaxRetries:                  d.Get("max_retries").(int),
-		DisableNoCacheHeader:        d.Get("disable_no_cache_header").(bool),
-		terraformVersion:            terraformVersion,
+		auth.Config{
+			CACertFile:                  d.Get("cacert_file").(string),
+			ClientCertFile:              d.Get("cert").(string),
+			ClientKeyFile:               d.Get("key").(string),
+			Cloud:                       d.Get("cloud").(string),
+			DefaultDomain:               d.Get("default_domain").(string),
+			DomainID:                    d.Get("domain_id").(string),
+			DomainName:                  d.Get("domain_name").(string),
+			EndpointOverrides:           d.Get("endpoint_overrides").(map[string]interface{}),
+			EndpointType:                d.Get("endpoint_type").(string),
+			IdentityEndpoint:            d.Get("auth_url").(string),
+			Password:                    d.Get("password").(string),
+			ProjectDomainID:             d.Get("project_domain_id").(string),
+			ProjectDomainName:           d.Get("project_domain_name").(string),
+			Region:                      d.Get("region").(string),
+			Swauth:                      d.Get("swauth").(bool),
+			Token:                       d.Get("token").(string),
+			TenantID:                    d.Get("tenant_id").(string),
+			TenantName:                  d.Get("tenant_name").(string),
+			UserDomainID:                d.Get("user_domain_id").(string),
+			UserDomainName:              d.Get("user_domain_name").(string),
+			Username:                    d.Get("user_name").(string),
+			UserID:                      d.Get("user_id").(string),
+			ApplicationCredentialID:     d.Get("application_credential_id").(string),
+			ApplicationCredentialName:   d.Get("application_credential_name").(string),
+			ApplicationCredentialSecret: d.Get("application_credential_secret").(string),
+			UseOctavia:                  d.Get("use_octavia").(bool),
+			DelayedAuth:                 d.Get("delayed_auth").(bool),
+			AllowReauth:                 d.Get("allow_reauth").(bool),
+			MaxRetries:                  d.Get("max_retries").(int),
+			DisableNoCacheHeader:        d.Get("disable_no_cache_header").(bool),
+			TerraformVersion:            terraformVersion,
+			SDKVersion:                  meta.SDKVersionString(),
+		},
 	}
 
 	v, ok := d.GetOkExists("insecure")

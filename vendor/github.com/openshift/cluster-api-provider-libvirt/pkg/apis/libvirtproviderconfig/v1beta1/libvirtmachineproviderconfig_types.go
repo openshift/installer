@@ -2,6 +2,7 @@ package v1beta1
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -50,9 +51,10 @@ type CloudInit struct {
 
 // Volume contains the info for the actuator to create a volume
 type Volume struct {
-	PoolName     string `json:"poolName"`
-	BaseVolumeID string `json:"baseVolumeID"`
-	VolumeName   string `json:"volumeName"`
+	PoolName     string             `json:"poolName"`
+	BaseVolumeID string             `json:"baseVolumeID"`
+	VolumeName   string             `json:"volumeName"`
+	VolumeSize   *resource.Quantity `json:"volumeSize,omitempty"`
 }
 
 // LibvirtClusterProviderConfig is the type that will be embedded in a Cluster.Spec.ProviderSpec field.

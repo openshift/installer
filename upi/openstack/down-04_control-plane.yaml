@@ -15,6 +15,11 @@
       state: absent
     with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
 
+  - name: 'Remove the Control Plane server group'
+    os_server_group:
+      name: "{{ os_cp_server_group_name }}"
+      state: absent
+
   - name: 'Remove the Control Plane trunks'
     os_trunk:
       name: "{{ item.1 }}-{{ item.0 }}"

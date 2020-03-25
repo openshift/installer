@@ -7,18 +7,6 @@ def GenerateConfig(context):
             'region': context.properties['region']
         }
     }, {
-        'name': context.properties['infra_id'] + '-bootstrap-in-ssh',
-        'type': 'compute.v1.firewall',
-        'properties': {
-            'network': context.properties['cluster_network'],
-            'allowed': [{
-                'IPProtocol': 'tcp',
-                'ports': ['22']
-            }],
-            'sourceRanges':  ['0.0.0.0/0'],
-            'targetTags': [context.properties['infra_id'] + '-bootstrap']
-        }
-    }, {
         'name': context.properties['infra_id'] + '-bootstrap',
         'type': 'compute.v1.instance',
         'properties': {
@@ -49,6 +37,22 @@ def GenerateConfig(context):
                     context.properties['infra_id'] + '-bootstrap'
                 ]
             },
+            'zone': context.properties['zone']
+        }
+    }, {
+        'name': context.properties['infra_id'] + '-bootstrap-instance-group',
+        'type': 'compute.v1.instanceGroup',
+        'properties': {
+            'namedPorts': [
+                {
+                    'name': 'ignition',
+                    'port': 22623
+                }, {
+                    'name': 'https',
+                    'port': 6443
+                }
+            ],
+            'network': context.properties['cluster_network'],
             'zone': context.properties['zone']
         }
     }]
