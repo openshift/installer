@@ -48,6 +48,13 @@ func (c ContextPath) Append(e ...interface{}) ContextPath {
 	}
 }
 
+func (c ContextPath) Copy() ContextPath {
+	return ContextPath{
+		Path: append([]interface{}{}, c.Path...),
+		Tag:  c.Tag,
+	}
+}
+
 // Head returns the first element in the path, panics if empty.
 func (c ContextPath) Head() interface{} {
 	return c.Path[0]

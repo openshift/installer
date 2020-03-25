@@ -374,6 +374,8 @@ github.com/btubbs/datetime
 github.com/c4milo/gotoolkit
 # github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 github.com/chzyer/readline
+# github.com/clarketm/json v1.13.4
+github.com/clarketm/json
 # github.com/containers/image v3.0.2+incompatible
 github.com/containers/image/docker/reference
 github.com/containers/image/pkg/sysregistriesv2
@@ -407,16 +409,14 @@ github.com/coreos/go-semver/semver
 github.com/coreos/go-systemd/journal
 github.com/coreos/go-systemd/unit
 # github.com/coreos/ignition/v2 v2.1.1
-github.com/coreos/ignition/v2/config/merge
 github.com/coreos/ignition/v2/config/shared/errors
 github.com/coreos/ignition/v2/config/shared/validations
 github.com/coreos/ignition/v2/config/util
-github.com/coreos/ignition/v2/config/v3_0
 github.com/coreos/ignition/v2/config/v3_0/types
 github.com/coreos/ignition/v2/config/validate
 # github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f
 github.com/coreos/pkg/capnslog
-# github.com/coreos/vcontext v0.0.0-20190605182717-e9c4ffaa1f6a
+# github.com/coreos/vcontext v0.0.0-20191017033345-260217907eb5
 github.com/coreos/vcontext/json
 github.com/coreos/vcontext/path
 github.com/coreos/vcontext/report
@@ -962,7 +962,7 @@ github.com/openshift/api/config/v1
 github.com/openshift/api/operator/v1
 github.com/openshift/api/operator/v1alpha1
 github.com/openshift/api/route/v1
-# github.com/openshift/client-go v0.0.0-20191001081553-3b0e988f8cb0
+# github.com/openshift/client-go v0.0.0-20191001081553-3b0e988f8cb0 => github.com/openshift/client-go v0.0.0-20191001081553-3b0e988f8cb0
 github.com/openshift/client-go/config/clientset/versioned
 github.com/openshift/client-go/config/clientset/versioned/scheme
 github.com/openshift/client-go/config/clientset/versioned/typed/config/v1
@@ -987,14 +987,14 @@ github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig
 # github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20200120072345-c29232e3f4ed
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1
-# github.com/openshift/library-go v0.0.0-20191205152556-73e1fb871a9b
+# github.com/openshift/library-go v0.0.0-20191205152556-73e1fb871a9b => github.com/openshift/library-go v0.0.0-20191205152556-73e1fb871a9b
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 # github.com/openshift/machine-api-operator v0.2.1-0.20200116114648-a3345f5a437a
 github.com/openshift/machine-api-operator/pkg/apis/machine
 github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1
 github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider
 github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1
-# github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033375cbe820+incompatible => github.com/openshift/machine-config-operator v0.0.1-0.20200118054812-d0ff651e69ab
+# github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033375cbe820+incompatible => github.com/LorbusChris/machine-config-operator v0.0.1-0.20200324143955-c508c0a1de55
 github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1
 # github.com/ovirt/go-ovirt v4.3.4+incompatible
 github.com/ovirt/go-ovirt
@@ -1573,7 +1573,7 @@ honnef.co/go/tools/staticcheck/vrp
 honnef.co/go/tools/stylecheck
 honnef.co/go/tools/unused
 honnef.co/go/tools/version
-# k8s.io/api v0.17.1 => k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
+# k8s.io/api v0.17.4 => k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1beta1
 k8s.io/api/apps/v1
@@ -1612,7 +1612,7 @@ k8s.io/api/settings/v1alpha1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apimachinery v0.17.1 => k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655
+# k8s.io/apimachinery v0.17.4 => k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
