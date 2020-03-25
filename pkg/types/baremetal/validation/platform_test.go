@@ -10,6 +10,168 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
+///////////////////////////////////////////////////////////////////////////////
+
+type hostBuilder struct {
+	baremetal.Host
+}
+
+func host1() *hostBuilder {
+	return &hostBuilder{
+		baremetal.Host{
+			Name:           "host1",
+			BootMACAddress: "CA:FE:CA:FE:00:00",
+			BMC: baremetal.BMC{
+				Username: "root",
+				Password: "password",
+				Address:  "ipmi://192.168.111.1",
+			},
+		},
+	}
+}
+
+func host2() *hostBuilder {
+	return &hostBuilder{
+		baremetal.Host{
+			Name:           "host2",
+			BootMACAddress: "CA:FE:CA:FE:00:01",
+			BMC: baremetal.BMC{
+				Username: "root",
+				Password: "password",
+				Address:  "ipmi://192.168.111.2",
+			},
+		},
+	}
+}
+
+func (hb *hostBuilder) build() *baremetal.Host {
+	return &hb.Host
+}
+
+func (hb *hostBuilder) Name(value string) *hostBuilder {
+	hb.Host.Name = value
+	return hb
+}
+
+func (hb *hostBuilder) BootMACAddress(value string) *hostBuilder {
+	hb.Host.BootMACAddress = value
+	return hb
+}
+
+func (hb *hostBuilder) BMCAddress(value string) *hostBuilder {
+	hb.Host.BMC.Address = value
+	return hb
+}
+
+func (hb *hostBuilder) BMCUsername(value string) *hostBuilder {
+	hb.Host.BMC.Username = value
+	return hb
+}
+
+func (hb *hostBuilder) BMCPassword(value string) *hostBuilder {
+	hb.Host.BMC.Password = value
+	return hb
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+type platformBuilder struct {
+	baremetal.Platform
+}
+
+func platform() *platformBuilder {
+	return &platformBuilder{
+		baremetal.Platform{
+			APIVIP:                       "192.168.111.2",
+			DNSVIP:                       "192.168.111.3",
+			IngressVIP:                   "192.168.111.4",
+			Hosts:                        []*baremetal.Host{},
+			LibvirtURI:                   "qemu://system",
+			ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
+			ClusterProvisioningIP:        "172.22.0.3",
+			BootstrapProvisioningIP:      "172.22.0.2",
+			ExternalBridge:               "br0",
+			ProvisioningBridge:           "br1",
+			ProvisioningNetworkInterface: "ens3",
+		}}
+}
+
+func (pb *platformBuilder) build() *baremetal.Platform {
+	return &pb.Platform
+}
+
+func (pb *platformBuilder) ProvisioningNetworkCIDR(value string) *platformBuilder {
+	pb.Platform.ProvisioningNetworkCIDR = ipnet.MustParseCIDR(value)
+	return pb
+}
+
+func (pb *platformBuilder) ClusterProvisioningIP(value string) *platformBuilder {
+	pb.Platform.ClusterProvisioningIP = value
+	return pb
+}
+
+func (pb *platformBuilder) BootstrapProvisioningIP(value string) *platformBuilder {
+	pb.Platform.BootstrapProvisioningIP = value
+	return pb
+}
+
+func (pb *platformBuilder) BootstrapOSImage(value string) *platformBuilder {
+	pb.Platform.BootstrapOSImage = value
+	return pb
+}
+
+func (pb *platformBuilder) ClusterOSImage(value string) *platformBuilder {
+	pb.Platform.ClusterOSImage = value
+	return pb
+}
+
+func (pb *platformBuilder) ProvisioningDHCPRange(value string) *platformBuilder {
+	pb.Platform.ProvisioningDHCPRange = value
+	return pb
+}
+
+func (pb *platformBuilder) APIVIP(value string) *platformBuilder {
+	pb.Platform.APIVIP = value
+	return pb
+}
+
+func (pb *platformBuilder) DNSVIP(value string) *platformBuilder {
+	pb.Platform.DNSVIP = value
+	return pb
+}
+
+func (pb *platformBuilder) IngressVIP(value string) *platformBuilder {
+	pb.Platform.IngressVIP = value
+	return pb
+}
+
+func (pb *platformBuilder) Hosts(value ...*baremetal.Host) *platformBuilder {
+	pb.Platform.Hosts = value
+	return pb
+}
+
+func (pb *platformBuilder) LibvirtURI(value string) *platformBuilder {
+	pb.Platform.LibvirtURI = value
+	return pb
+}
+
+func (pb *platformBuilder) ExternalBridge(value string) *platformBuilder {
+	pb.Platform.ExternalBridge = value
+	return pb
+}
+
+func (pb *platformBuilder) ProvisioningBridge(value string) *platformBuilder {
+	pb.Platform.ProvisioningBridge = value
+	return pb
+}
+
+func (pb *platformBuilder) ProvisioningNetworkInterface(value string) *platformBuilder {
+	pb.Platform.ProvisioningNetworkInterface = value
+	return pb
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 func TestValidatePlatform(t *testing.T) {
 	interfaceValidator := func(p *baremetal.Platform, fldPath *field.Path) field.ErrorList {
 		errorList := field.ErrorList{}
@@ -32,706 +194,210 @@ func TestValidatePlatform(t *testing.T) {
 	cases := []struct {
 		name     string
 		platform *baremetal.Platform
-		network  *types.Networking
 		expected string
 	}{
 		{
-			name: "valid",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				ProvisioningNetworkInterface: "ens3",
-			},
-			network: network,
+			name:     "valid",
+			platform: platform().build(),
 		},
 		{
 			name: "valid_ipv6_provisioning",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("fd2e:6f44:5dd8:b856::/64"),
-				ClusterProvisioningIP:        "fd2e:6f44:5dd8:b856::3",
-				BootstrapProvisioningIP:      "fd2e:6f44:5dd8:b856::2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				ProvisioningNetworkInterface: "ens3",
-			},
-			network: network,
+			platform: platform().
+				ProvisioningNetworkCIDR("fd2e:6f44:5dd8:b856::/64").
+				ClusterProvisioningIP("fd2e:6f44:5dd8:b856::3").
+				BootstrapProvisioningIP("fd2e:6f44:5dd8:b856::2").build(),
 		},
 
 		{
 			name: "valid_with_os_image_overrides",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				BootstrapOSImage:             "http://192.168.111.1/images/qemu.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f",
-				ClusterOSImage:               "http://192.168.111.1/images/metal.x86_64.qcow2.gz?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da",
-				ProvisioningNetworkInterface: "ens3",
-			},
-			network: network,
+			platform: platform().
+				BootstrapOSImage("http://192.168.111.1/images/qemu.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f").
+				ClusterOSImage("http://192.168.111.1/images/metal.x86_64.qcow2.gz?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da").build(),
 		},
 		{
 			name: "valid_provisioningDHCPRange",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ProvisioningDHCPRange:        "172.22.0.10,172.22.0.50",
-				ProvisioningNetworkInterface: "ens3",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-			},
-			network: network,
+			platform: platform().
+				ProvisioningDHCPRange("172.22.0.10,172.22.0.50").build(),
 		},
 		{
 			name: "invalid_provisioningDHCPRange_missing_pair",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ProvisioningDHCPRange:        "172.22.0.10,",
-				ProvisioningNetworkInterface: "ens3",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-			},
-			network:  network,
+			platform: platform().
+				ProvisioningDHCPRange("172.22.0.10,").build(),
 			expected: "provisioningDHCPRange: Invalid value: \"172.22.0.10,\": : \"\" is not a valid IP",
 		},
 		{
 			name: "invalid_provisioningDHCPRange_not_a_range",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ProvisioningDHCPRange:        "172.22.0.19",
-				ProvisioningNetworkInterface: "ens3",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-			},
-			network:  network,
+			platform: platform().
+				ProvisioningDHCPRange("172.22.0.19").build(),
 			expected: "Invalid value: \"172.22.0.19\": provisioning dhcp range should be in format: start_ip,end_ip",
 		},
 		{
 			name: "invalid_provisioningDHCPRange_wrong_CIDR",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ProvisioningNetworkInterface: "ens3",
-				ProvisioningDHCPRange:        "192.168.128.1,172.22.0.100",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-			},
-			network:  network,
+			platform: platform().
+				ProvisioningDHCPRange("192.168.128.1,172.22.0.100").build(),
 			expected: "Invalid value: \"192.168.128.1,172.22.0.100\": \"192.168.128.1\" is not in the provisioning network",
 		},
 		{
 			name: "invalid_apivip",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.222.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ProvisioningNetworkInterface: "ens3",
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-			},
-			network:  network,
+			platform: platform().
+				APIVIP("192.168.222.2").build(),
 			expected: "Invalid value: \"192.168.222.2\": the virtual IP is expected to be in one of the machine networks",
 		},
 		{
 			name: "invalid_dnsvip",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.222.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ProvisioningNetworkInterface: "ens3",
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-			},
-			network:  network,
+			platform: platform().
+				DNSVIP("192.168.222.3").build(),
 			expected: "Invalid value: \"192.168.222.3\": the virtual IP is expected to be in one of the machine networks",
 		},
 		{
 			name: "invalid_ingressvip",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.222.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkInterface: "ens3",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-			},
-			network:  network,
+			platform: platform().
+				IngressVIP("192.168.222.4").build(),
 			expected: "Invalid value: \"192.168.222.4\": the virtual IP is expected to be in one of the machine networks",
 		},
 		{
 			name: "invalid_hosts",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        nil,
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkInterface: "ens3",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-			},
-			network:  network,
+			platform: platform().
+				Hosts().build(),
 			expected: "bare metal hosts are missing",
 		},
 		{
 			name: "invalid_libvirturi",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "",
-				ProvisioningNetworkInterface: "ens3",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-			},
-			network:  network,
+			platform: platform().
+				LibvirtURI("").build(),
 			expected: "invalid URI \"\"",
 		},
 		{
 			name: "invalid_extbridge",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkInterface: "ens3",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "noexist",
-				ProvisioningBridge:           "br1",
-			},
-			network:  network,
+			platform: platform().
+				ExternalBridge("noexist").build(),
 			expected: "Invalid value: \"noexist\": invalid external bridge",
 		},
 		{
 			name: "invalid_provbridge",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkInterface: "ens3",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "noexist",
-			},
-			network:  network,
+			platform: platform().
+				ProvisioningBridge("noexist").build(),
 			expected: "Invalid value: \"noexist\": invalid provisioning bridge",
 		},
 		{
 			name: "invalid_provisioning_interface",
-			platform: &baremetal.Platform{
-				APIVIP:                  "192.168.111.2",
-				DNSVIP:                  "192.168.111.3",
-				IngressVIP:              "192.168.111.4",
-				Hosts:                   []*baremetal.Host{},
-				LibvirtURI:              "qemu://system",
-				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:   "172.22.0.3",
-				BootstrapProvisioningIP: "172.22.0.2",
-				ExternalBridge:          "br0",
-				ProvisioningBridge:      "noexist",
-			},
-			network:  network,
+			platform: platform().
+				ProvisioningNetworkInterface("").build(),
 			expected: "Invalid value: \"\": no provisioning network interface is configured, please set this value to be the interface on the provisioning network on your cluster's baremetal hosts",
 		},
 		{
 			name: "invalid_clusterprovip_machineCIDR",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkInterface: "ens3",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "192.168.111.5",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-			},
-			network:  network,
+			platform: platform().
+				ClusterProvisioningIP("192.168.111.5").build(),
 			expected: "Invalid value: \"192.168.111.5\": the IP must not be in one of the machine networks",
 		},
 		{
 			name: "invalid_clusterprovip_wrongCIDR",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkInterface: "ens3",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "192.168.128.1",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ProvisioningDHCPRange:        "172.22.0.10,172.22.0.100",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-			},
-			network:  network,
+			platform: platform().
+				ClusterProvisioningIP("192.168.128.1").build(),
 			expected: "Invalid value: \"192.168.128.1\": \"192.168.128.1\" is not in the provisioning network",
 		},
 		{
 			name: "invalid_bootstrapprovip_machineCIDR",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkInterface: "ens3",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "192.168.111.5",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-			},
-			network:  network,
+			platform: platform().
+				BootstrapProvisioningIP("192.168.111.5").build(),
 			expected: "Invalid value: \"192.168.111.5\": the IP must not be in one of the machine networks",
 		},
 		{
 			name: "invalid_bootstraposimage",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkInterface: "ens3",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				BootstrapOSImage:             "192.168.111.1/images/qemu.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f",
-				ClusterOSImage:               "http://192.168.111.1/images/metal.x86_64.qcow2.gz?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da",
-			},
-			network:  network,
+			platform: platform().
+				BootstrapOSImage("192.168.111.1/images/qemu.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f").build(),
 			expected: "the URI provided.*is invalid",
 		},
 		{
 			name: "invalid_clusterosimage",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ClusterProvisioningIP:        "172.22.0.3",
-				ProvisioningNetworkInterface: "ens3",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				BootstrapOSImage:             "http://192.168.111.1/images/qemu.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f",
-				ClusterOSImage:               "http//192.168.111.1/images/metal.x86_64.qcow2.gz?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da",
-			},
-			network:  network,
+			platform: platform().
+				ClusterOSImage("http//192.168.111.1/images/metal.x86_64.qcow2.gz?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da").build(),
 			expected: "the URI provided.*is invalid",
 		},
 		{
 			name: "invalid_bootstraposimage_checksum",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkInterface: "ens3",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				BootstrapOSImage:             "http://192.168.111.1/images/qemu.x86_64.qcow2.gz?md5sum=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f",
-				ClusterOSImage:               "http://192.168.111.1/images/metal.x86_64.qcow2.gz?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da",
-			},
-			network:  network,
+			platform: platform().
+				BootstrapOSImage("http://192.168.111.1/images/qemu.x86_64.qcow2.gz?md5sum=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f").build(),
 			expected: "the sha256 parameter in the.*URI is missing",
 		},
 		{
 			name: "invalid_clusterosimage_checksum",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkInterface: "ens3",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				BootstrapOSImage:             "http://192.168.111.1/images/qemu.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f",
-				ClusterOSImage:               "http://192.168.111.1/images/metal.x86_64.qcow2.gz?sha256=3ee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da",
-			},
-			network:  network,
+			platform: platform().
+				ClusterOSImage("http://192.168.111.1/images/metal.x86_64.qcow2.gz?sha256=3ee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da").build(),
 			expected: "the sha256 parameter in the.*URI is invalid",
 		},
 		{
 			name: "invalid_bootstraposimage_uri_scheme",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ProvisioningNetworkInterface: "ens3",
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				BootstrapOSImage:             "xttp://192.168.111.1/images/qemu.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f",
-				ClusterOSImage:               "http://192.168.111.1/images/metal.x86_64.qcow2.gz?sha256=340dfa4d92450f2eee852ed1e2d02e3138cc68d824827ef9cf0a40a7ea2f93da",
-			},
-			network:  network,
+			platform: platform().
+				BootstrapOSImage("xttp://192.168.111.1/images/qemu.x86_64.qcow2.gz?sha256=3b5a882c2af3e19d515b961855d144f293cab30190c2bdedd661af31a1fc4e2f").build(),
 			expected: "the URI provided.*must begin with http/https",
 		},
 		{
 			name: "invalid_bootstrapprovip_wrongCIDR",
-			platform: &baremetal.Platform{
-				APIVIP:                       "192.168.111.2",
-				DNSVIP:                       "192.168.111.3",
-				IngressVIP:                   "192.168.111.4",
-				Hosts:                        []*baremetal.Host{},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkInterface: "ens3",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "192.168.128.1",
-				ProvisioningDHCPRange:        "172.22.0.10,172.22.0.100",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-			},
-			network:  network,
+			platform: platform().
+				BootstrapProvisioningIP("192.168.128.1").build(),
 			expected: "Invalid value: \"192.168.128.1\": \"192.168.128.1\" is not in the provisioning network",
 		},
 		{
 			name: "duplicate_bmc_address",
-			platform: &baremetal.Platform{
-				APIVIP:     "192.168.111.2",
-				DNSVIP:     "192.168.111.3",
-				IngressVIP: "192.168.111.4",
-				Hosts: []*baremetal.Host{
-					{
-						Name:           "host1",
-						BootMACAddress: "CA:FE:CA:FE:00:00",
-						BMC: baremetal.BMC{
-							Username: "root",
-							Password: "password",
-							Address:  "ipmi://192.168.111.1",
-						},
-					},
-					{
-						Name:           "host2",
-						BootMACAddress: "CA:FE:CA:FE:00:01",
-						BMC: baremetal.BMC{
-							Username: "root",
-							Password: "password",
-							Address:  "ipmi://192.168.111.1",
-						},
-					},
-				},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				ProvisioningNetworkInterface: "ens3",
-			},
-			network:  network,
+			platform: platform().
+				Hosts(
+					host1().BMCAddress("ipmi://192.168.111.1").build(),
+					host2().BMCAddress("ipmi://192.168.111.1").build()).build(),
 			expected: "baremetal.hosts\\[1\\].BMC.Address: Duplicate value: \"ipmi://192.168.111.1\"",
 		},
 		{
 			name: "bmc_address_required",
-			platform: &baremetal.Platform{
-				APIVIP:     "192.168.111.2",
-				DNSVIP:     "192.168.111.3",
-				IngressVIP: "192.168.111.4",
-				Hosts: []*baremetal.Host{
-					{
-						Name:           "host1",
-						BootMACAddress: "CA:FE:CA:FE:00:00",
-						BMC: baremetal.BMC{
-							Username: "root",
-							Password: "password",
-						},
-					},
-				},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				ProvisioningNetworkInterface: "ens3",
-			},
-			network:  network,
+			platform: platform().
+				Hosts(host1().BMCAddress("").build()).build(),
 			expected: "baremetal.hosts\\[0\\].BMC.Address: Required value: missing Address",
 		},
 		{
 			name: "bmc_username_required",
-			platform: &baremetal.Platform{
-				APIVIP:     "192.168.111.2",
-				DNSVIP:     "192.168.111.3",
-				IngressVIP: "192.168.111.4",
-				Hosts: []*baremetal.Host{
-					{
-						Name:           "host1",
-						BootMACAddress: "CA:FE:CA:FE:00:00",
-						BMC: baremetal.BMC{
-							Password: "password",
-							Address:  "ipmi://192.168.111.1",
-						},
-					},
-				},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				ProvisioningNetworkInterface: "ens3",
-			},
-			network:  network,
+			platform: platform().
+				Hosts(host1().BMCUsername("").build()).build(),
 			expected: "baremetal.hosts\\[0\\].BMC.Username: Required value: missing Username",
 		},
 		{
 			name: "bmc_password_required",
-			platform: &baremetal.Platform{
-				APIVIP:     "192.168.111.2",
-				DNSVIP:     "192.168.111.3",
-				IngressVIP: "192.168.111.4",
-				Hosts: []*baremetal.Host{
-					{
-						Name:           "host1",
-						BootMACAddress: "CA:FE:CA:FE:00:00",
-						BMC: baremetal.BMC{
-							Username: "root",
-							Address:  "ipmi://192.168.111.1",
-						},
-					},
-				},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				ProvisioningNetworkInterface: "ens3",
-			},
-			network:  network,
+			platform: platform().
+				Hosts(host1().BMCPassword("").build()).build(),
 			expected: "baremetal.hosts\\[0\\].BMC.Password: Required value: missing Password",
 		},
 		{
 			name: "duplicate_host_name",
-			platform: &baremetal.Platform{
-				APIVIP:     "192.168.111.2",
-				DNSVIP:     "192.168.111.3",
-				IngressVIP: "192.168.111.4",
-				Hosts: []*baremetal.Host{
-					{
-						Name:           "host1",
-						BootMACAddress: "CA:FE:CA:FE:00:00",
-						BMC: baremetal.BMC{
-							Username: "root",
-							Password: "password",
-							Address:  "ipmi://192.168.111.1",
-						},
-					},
-					{
-						Name:           "host1",
-						BootMACAddress: "CA:FE:CA:FE:00:01",
-						BMC: baremetal.BMC{
-							Username: "root",
-							Password: "password",
-							Address:  "ipmi://192.168.111.2",
-						},
-					},
-				},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				ProvisioningNetworkInterface: "ens3",
-			},
-			network:  network,
+			platform: platform().
+				Hosts(
+					host1().Name("host1").build(),
+					host2().Name("host1").build()).build(),
 			expected: "baremetal.hosts\\[1\\].Name: Duplicate value: \"host1\"",
 		},
 		{
 			name: "duplicate_host_mac",
-			platform: &baremetal.Platform{
-				APIVIP:     "192.168.111.2",
-				DNSVIP:     "192.168.111.3",
-				IngressVIP: "192.168.111.4",
-				Hosts: []*baremetal.Host{
-					{
-						Name:           "host1",
-						BootMACAddress: "CA:FE:CA:FE:CA:FE",
-						BMC: baremetal.BMC{
-							Username: "root",
-							Password: "password",
-							Address:  "ipmi://192.168.111.1",
-						},
-					},
-					{
-						Name:           "host2",
-						BootMACAddress: "CA:FE:CA:FE:CA:FE",
-						BMC: baremetal.BMC{
-							Username: "root",
-							Password: "password",
-							Address:  "ipmi://192.168.111.2",
-						},
-					},
-				},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				ProvisioningNetworkInterface: "ens3",
-			},
-			network:  network,
+			platform: platform().
+				Hosts(
+					host1().BootMACAddress("CA:FE:CA:FE:CA:FE").build(),
+					host2().BootMACAddress("CA:FE:CA:FE:CA:FE").build()).build(),
 			expected: "baremetal.hosts\\[1\\].BootMACAddress: Duplicate value: \"CA:FE:CA:FE:CA:FE\"",
 		},
 		{
 			name: "missing_name",
-			platform: &baremetal.Platform{
-				APIVIP:     "192.168.111.2",
-				DNSVIP:     "192.168.111.3",
-				IngressVIP: "192.168.111.4",
-				Hosts: []*baremetal.Host{
-					{
-						BootMACAddress: "CA:FE:CA:FE:CA:FE",
-						BMC: baremetal.BMC{
-							Username: "root",
-							Password: "password",
-							Address:  "ipmi://192.168.111.1",
-						},
-					},
-				},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				ProvisioningNetworkInterface: "ens3",
-			},
-			network:  network,
+			platform: platform().
+				Hosts(host1().Name("").build()).build(),
 			expected: "baremetal.hosts\\[0\\].Name: Required value: missing Name",
 		},
 		{
 			name: "missing_mac",
-			platform: &baremetal.Platform{
-				APIVIP:     "192.168.111.2",
-				DNSVIP:     "192.168.111.3",
-				IngressVIP: "192.168.111.4",
-				Hosts: []*baremetal.Host{
-					{
-						Name: "host1",
-						BMC: baremetal.BMC{
-							Username: "root",
-							Password: "password",
-							Address:  "ipmi://192.168.111.1",
-						},
-					},
-				},
-				LibvirtURI:                   "qemu://system",
-				ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
-				ClusterProvisioningIP:        "172.22.0.3",
-				BootstrapProvisioningIP:      "172.22.0.2",
-				ExternalBridge:               "br0",
-				ProvisioningBridge:           "br1",
-				ProvisioningNetworkInterface: "ens3",
-			},
-			network:  network,
+			platform: platform().
+				Hosts(host1().BootMACAddress("").build()).build(),
 			expected: "baremetal.hosts\\[0\\].BootMACAddress: Required value: missing BootMACAddress",
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidatePlatform(tc.platform, tc.network, field.NewPath("baremetal")).ToAggregate()
+			err := ValidatePlatform(tc.platform, network, field.NewPath("baremetal")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
