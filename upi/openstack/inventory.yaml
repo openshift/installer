@@ -5,21 +5,33 @@ all:
       ansible_python_interpreter: "{{ansible_playbook_python}}"
 
       # User-provided values
+      # same value as install-config.ymal networking.clusterNetwork.cidr
       os_subnet_range: '10.0.0.0/16'
       os_flavor_master: 'm1.xlarge'
       os_flavor_worker: 'm1.large'
       os_image_rhcos: 'rhcos'
       os_external_network: 'external'
-      # OpenShift API floating IP address
+
+      # OpenShift API floating IP address.
+      # Same value as install-config.yaml platform.openstack.lbFloatingIP
       os_api_fip: '203.0.113.23'
+
       # OpenShift Ingress floating IP address
+      # Maps to ingress port  created by installer in the os_subnet_range subnet
       os_ingress_fip: '203.0.113.19'
+
       # Service subnet cidr
+      # Same as install-config.yaml networking.serviceNetwork
       svc_subnet_range: '172.30.0.0/16'
+
+      # service subnet for Kuryr
       os_svc_network_range: '172.30.0.0/15'
-      # Subnet pool prefixes
+
+      # Subnet pool prefixes for Kuryr
       cluster_network_cidrs: ['10.128.0.0/14']
+
       # Subnet pool prefix length
+      # Same value as install-config.yaml networking.clusterNetwork.hostPrefix
       host_prefix: '23'
 
       os_region_name: ''
