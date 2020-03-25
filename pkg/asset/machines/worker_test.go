@@ -35,29 +35,19 @@ metadata:
 spec:
   config:
     ignition:
-      config:
-        replace:
-          source: null
-          verification: {}
-      security:
-        tls: {}
-      timeouts: {}
       version: 3.0.0
-    passwd: {}
     storage:
       files:
       - contents:
           source: data:text/plain;charset=utf-8;base64,QUREIG5vc210
-          verification: {}
-        group: {}
         mode: 384
         overwrite: true
         path: /etc/pivot/kernel-args
         user:
           name: root
-    systemd: {}
   fips: false
   kernelArguments: null
+  kernelType: ""
   osImageURL: ""
 `},
 		},

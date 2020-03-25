@@ -3,14 +3,25 @@ package machineconfig
 import (
 	"fmt"
 
+	"github.com/clarketm/json"
 	igntypes "github.com/coreos/ignition/v2/config/v3_0/types"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ForFIPSEnabled creates the MachineConfig to enable FIPS.
 // See also https://github.com/openshift/machine-config-operator/pull/889
-func ForFIPSEnabled(role string) *mcfgv1.MachineConfig {
+func ForFIPSEnabled(role string) (*mcfgv1.MachineConfig, error) {
+	rawIgnitionConfig, err := json.Marshal(igntypes.Config{
+		Ignition: igntypes.Ignition{
+			Version: igntypes.MaxVersion.String(),
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("marshalling 99-%s-fips ignition config failed: %v", role, err)
+	}
+
 	return &mcfgv1.MachineConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machineconfiguration.openshift.io/v1",
@@ -23,12 +34,10 @@ func ForFIPSEnabled(role string) *mcfgv1.MachineConfig {
 			},
 		},
 		Spec: mcfgv1.MachineConfigSpec{
-			Config: igntypes.Config{
-				Ignition: igntypes.Ignition{
-					Version: igntypes.MaxVersion.String(),
-				},
+			Config: runtime.RawExtension{
+				Raw: rawIgnitionConfig,
 			},
 			FIPS: true,
 		},
-	}
+	}, nil
 }

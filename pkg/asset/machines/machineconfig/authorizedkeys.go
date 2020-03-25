@@ -3,13 +3,29 @@ package machineconfig
 import (
 	"fmt"
 
-	ignv3_0types "github.com/coreos/ignition/v2/config/v3_0/types"
+	"github.com/clarketm/json"
+	igntypes "github.com/coreos/ignition/v2/config/v3_0/types"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ForAuthorizedKeys creates the MachineConfig to set the authorized key for `core` user.
-func ForAuthorizedKeys(key string, role string) *mcfgv1.MachineConfig {
+func ForAuthorizedKeys(key string, role string) (*mcfgv1.MachineConfig, error) {
+	rawIgnitionConfig, err := json.Marshal(igntypes.Config{
+		Ignition: igntypes.Ignition{
+			Version: igntypes.MaxVersion.String(),
+		},
+		Passwd: igntypes.Passwd{
+			Users: []igntypes.PasswdUser{{
+				Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{igntypes.SSHAuthorizedKey(key)},
+			}},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("marshalling 99-%s-ssh ignition config failed: %v", role, err)
+	}
+
 	return &mcfgv1.MachineConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: mcfgv1.SchemeGroupVersion.String(),
@@ -22,16 +38,9 @@ func ForAuthorizedKeys(key string, role string) *mcfgv1.MachineConfig {
 			},
 		},
 		Spec: mcfgv1.MachineConfigSpec{
-			Config: ignv3_0types.Config{
-				Ignition: ignv3_0types.Ignition{
-					Version: ignv3_0types.MaxVersion.String(),
-				},
-				Passwd: ignv3_0types.Passwd{
-					Users: []ignv3_0types.PasswdUser{{
-						Name: "core", SSHAuthorizedKeys: []ignv3_0types.SSHAuthorizedKey{ignv3_0types.SSHAuthorizedKey(key)},
-					}},
-				},
+			Config: runtime.RawExtension{
+				Raw: rawIgnitionConfig,
 			},
 		},
-	}
+	}, nil
 }

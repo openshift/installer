@@ -335,13 +335,25 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 
 	machineConfigs := []*mcfgv1.MachineConfig{}
 	if pool.Hyperthreading == types.HyperthreadingDisabled {
-		machineConfigs = append(machineConfigs, machineconfig.ForHyperthreadingDisabled("master"))
+		HyperthreadingDisabledMC, err := machineconfig.ForHyperthreadingDisabled("master")
+		if err != nil {
+			return errors.Wrap(err, "failed to create Hyperthreading Disabled MachineConfig for master machines")
+		}
+		machineConfigs = append(machineConfigs, HyperthreadingDisabledMC)
 	}
 	if ic.SSHKey != "" {
-		machineConfigs = append(machineConfigs, machineconfig.ForAuthorizedKeys(ic.SSHKey, "master"))
+		sshKeyMC, err := machineconfig.ForAuthorizedKeys(ic.SSHKey, "master")
+		if err != nil {
+			return errors.Wrap(err, "failed to create SSH Key MachineConfig for master machines")
+		}
+		machineConfigs = append(machineConfigs, sshKeyMC)
 	}
 	if ic.FIPS {
-		machineConfigs = append(machineConfigs, machineconfig.ForFIPSEnabled("master"))
+		fipsEnabledMC, err := machineconfig.ForFIPSEnabled("master")
+		if err != nil {
+			return errors.Wrap(err, "failed to create FIPS Enabled MachineConfig for master machines")
+		}
+		machineConfigs = append(machineConfigs, fipsEnabledMC)
 	}
 
 	m.MachineConfigFiles, err = machineconfig.Manifests(machineConfigs, "master", directory)

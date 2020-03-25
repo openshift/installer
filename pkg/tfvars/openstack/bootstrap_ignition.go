@@ -2,11 +2,11 @@ package openstack
 
 import (
 	b64 "encoding/base64"
-	"encoding/json"
 	"fmt"
 	"strings"
 
-	ignition "github.com/coreos/ignition/v2/config/v3_0/types"
+	"github.com/clarketm/json"
+	igntypes "github.com/coreos/ignition/v2/config/v3_0/types"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects"
 	"github.com/gophercloud/utils/openstack/clientconfig"
@@ -78,44 +78,44 @@ func generateIgnitionShim(userCA string, clusterID string, swiftObject string) (
 	contents := fmt.Sprintf("data:text/plain;base64,%s", b64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s-bootstrap", clusterID))))
 
 	// TODO
-	hostnameConfigFile := ignition.File{
-		Node: ignition.Node{
+	hostnameConfigFile := igntypes.File{
+		Node: igntypes.Node{
 			Path:      "/etc/hostname",
 			Overwrite: &overwrite,
 		},
-		FileEmbedded1: ignition.FileEmbedded1{
+		FileEmbedded1: igntypes.FileEmbedded1{
 			Mode: &fileMode,
-			Contents: ignition.FileContents{
+			Contents: igntypes.FileContents{
 				Source: &contents,
 			},
 		},
 	}
 
-	security := ignition.Security{}
+	security := igntypes.Security{}
 	if userCA != "" {
-		security = ignition.Security{
-			TLS: ignition.TLS{
-				CertificateAuthorities: []ignition.CaReference{{
+		security = igntypes.Security{
+			TLS: igntypes.TLS{
+				CertificateAuthorities: []igntypes.CaReference{{
 					Source: dataurl.EncodeBytes([]byte(userCA)),
 				}},
 			},
 		}
 	}
 
-	ign := ignition.Config{
-		Ignition: ignition.Ignition{
-			Version:  ignition.MaxVersion.String(),
+	ign := igntypes.Config{
+		Ignition: igntypes.Ignition{
+			Version:  igntypes.MaxVersion.String(),
 			Security: security,
-			Config: ignition.IgnitionConfig{
-				Merge: []ignition.ConfigReference{
+			Config: igntypes.IgnitionConfig{
+				Merge: []igntypes.ConfigReference{
 					{
 						Source: &swiftObject,
 					},
 				},
 			},
 		},
-		Storage: ignition.Storage{
-			Files: []ignition.File{
+		Storage: igntypes.Storage{
+			Files: []igntypes.File{
 				hostnameConfigFile,
 			},
 		},

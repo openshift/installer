@@ -23,6 +23,7 @@ require (
 	github.com/btubbs/datetime v0.1.1 // indirect
 	github.com/c4milo/gotoolkit v0.0.0-20190525173301-67483a18c17a // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
+	github.com/clarketm/json v1.13.4
 	github.com/containers/image v3.0.2+incompatible
 	github.com/coreos/etcd v3.3.18+incompatible // indirect
 	github.com/coreos/go-systemd v0.0.0-20191111152658-2d78030078ef // indirect
@@ -59,9 +60,7 @@ require (
 	github.com/metal3-io/baremetal-operator v0.0.0
 	github.com/metal3-io/cluster-api-provider-baremetal v0.0.0
 	github.com/mitchellh/cli v1.0.0
-	github.com/onsi/ginkgo v1.10.3 // indirect
 	github.com/onsi/gomega v1.7.1 // indirect
-	github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6 // indirect
 	github.com/openshift-metal3/terraform-provider-ironic v0.1.9
 	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible
 	github.com/openshift/client-go v0.0.0-20191001081553-3b0e988f8cb0
@@ -110,13 +109,12 @@ require (
 	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
 	golang.org/x/sys v0.0.0-20191206220618-eeba5f6aabab
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
-	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	google.golang.org/api v0.14.0
 	gopkg.in/AlecAivazis/survey.v1 v1.8.7
 	gopkg.in/ini.v1 v1.51.0
 	gopkg.in/yaml.v2 v2.2.7
-	k8s.io/api v0.17.1
-	k8s.io/apimachinery v0.17.1
+	k8s.io/api v0.17.4
+	k8s.io/apimachinery v0.17.4
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog v1.0.0
 	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a // indirect
@@ -137,7 +135,9 @@ replace (
 	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20191209182400-81ee99999340 // Use OpenShift fork
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200117162508-e7ccdda6ba67 // Pin API
-	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20200118054812-d0ff651e69ab
+	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20191001081553-3b0e988f8cb0
+	github.com/openshift/library-go => github.com/openshift/library-go v0.0.0-20191205152556-73e1fb871a9b
+	github.com/openshift/machine-config-operator => github.com/LorbusChris/machine-config-operator v0.0.1-0.20200324143955-c508c0a1de55
 	github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/LorbusChris/terraform-provider-ignition/v2 v2.0.0-20200118034038-6e413297dc57
 	github.com/terraform-providers/terraform-provider-vsphere => github.com/LorbusChris/terraform-provider-vsphere v1.14.1-0.20200128145507-331c3c135db7 // Pin to fork that uses tf-plugin-sdk
 	google.golang.org/api => google.golang.org/api v0.11.1-0.20191012001332-5e0e3f4a3bb8 // Pin to version required by tf-provider-google
