@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	ignition "github.com/coreos/ignition/v2/config/v3_0/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_0/types"
 	"github.com/vincent-petithory/dataurl"
 
 	"github.com/openshift/installer/pkg/types"
@@ -15,9 +15,9 @@ import (
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
-// pointerIgnitionConfig generates a config which references the remote config
+// pointerIgnitionConfigSpecV3 generates a spec v3 ignition config which references the remote config
 // served by the machine config server.
-func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string) *ignition.Config {
+func pointerIgnitionConfigSpecV3(installConfig *types.InstallConfig, rootCA []byte, role string) *igntypes.Config {
 	var ignitionHost string
 	// Default platform independent ignitionHost
 	ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
@@ -47,17 +47,17 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 	}
 	mergeSource := mergeSourceURL.String()
 
-	return &ignition.Config{
-		Ignition: ignition.Ignition{
-			Version: ignition.MaxVersion.String(),
-			Config: ignition.IgnitionConfig{
-				Merge: []ignition.ConfigReference{{
+	return &igntypes.Config{
+		Ignition: igntypes.Ignition{
+			Version: igntypes.MaxVersion.String(),
+			Config: igntypes.IgnitionConfig{
+				Merge: []igntypes.ConfigReference{{
 					Source: &mergeSource,
 				}},
 			},
-			Security: ignition.Security{
-				TLS: ignition.TLS{
-					CertificateAuthorities: []ignition.CaReference{{
+			Security: igntypes.Security{
+				TLS: igntypes.TLS{
+					CertificateAuthorities: []igntypes.CaReference{{
 						Source: dataurl.EncodeBytes(rootCA),
 					}},
 				},

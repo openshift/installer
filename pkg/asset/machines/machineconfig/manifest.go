@@ -28,7 +28,7 @@ func Manifests(configs []*mcfgv1.MachineConfig, role, directory string) ([]*asse
 		}
 		configData, err := yaml.Marshal(c)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to marshal MC to yaml: %v", err)
 		}
 		ret = append(ret, &asset.File{
 			// Note that we should always be generating the role name in our MCs,
