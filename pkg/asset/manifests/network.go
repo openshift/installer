@@ -1,9 +1,15 @@
 package manifests
 
 import (
+	"archive/tar"
         "bytes"
+	"compress/gzip"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/ghodss/yaml"
@@ -13,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
+	types "github.com/openshift/installer/pkg/types/validation"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -128,6 +135,41 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
                         Data:     configData,
                 },
         }
+
+	// Untar and add acc-provision files
+	r, _ := os.Open(installConfig.Config.Platform.OpenStack.AciNetExt.ProvisionTar)
+	uncompressedStream, _ := gzip.NewReader(r)
+	tarReader := tar.NewReader(uncompressedStream)
+	for true {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		b, _ := ioutil.ReadAll(tarReader);
+
+		// Edit cluster-network-03 file with correct fields
+		if strings.Contains(header.Name, "cluster-network-03"){
+			serviceNetwork := netConfig.ServiceNetwork[0].String()
+			hostPrefix := netConfig.ClusterNetwork[0].HostPrefix
+			networkType := netConfig.NetworkType
+			clusterNetworkCIDR := &netConfig.ClusterNetwork[0].CIDR
+			t := types.ClusterConfig03{}
+			err1 := yaml.Unmarshal(b, &t)
+			if err1 != nil {
+				return errors.Wrapf(err, "failed to unmarshal cluster-network-03 from provisionTar")
+			}
+			t.Spec.ClusterNetwork[0].CIDR = clusterNetworkCIDR.String()
+			t.Spec.ClusterNetwork[0].HostPrefix = hostPrefix
+			t.Spec.ServiceNetwork[0] = serviceNetwork
+			t.Spec.DefaultNetwork.Type = networkType
+			b, err1 = yaml.Marshal(&t)
+			if err1 != nil {
+				return errors.Wrapf(err, "failed to marshal edited cluster-network-03")
+			}
+		}
+		tempFile := &asset.File{Filename: filepath.Join(manifestDir, header.Name), Data: b}
+		no.FileList = append(no.FileList, tempFile)
+	}
 
 	// Create SNAT Cluster CR file 
 	if installConfig.Config.Platform.OpenStack.AciNetExt.ClusterSNATSubnet != "" {

@@ -2,7 +2,6 @@ package validation
 
 import (
         "archive/tar"
-        "bytes"
 	"compress/gzip"
 	"fmt"
         "gopkg.in/yaml.v2"
@@ -161,11 +160,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
         if err != nil {
 		allErrs = append(allErrs, field.Invalid(tarField, c.Platform.OpenStack.AciNetExt.ProvisionTar, err.Error()))
     	} else {
-        	serviceNetwork := c.Networking.ServiceNetwork[0].String()
-                hostPrefix := c.Networking.ClusterNetwork[0].HostPrefix
-                networkType := c.Networking.NetworkType
-                clusterNetworkCIDR := &c.Networking.ClusterNetwork[0].CIDR
-                config, err := ExtractTarGz(r, serviceNetwork, clusterNetworkCIDR.String(), hostPrefix, networkType)
+                config, err := ExtractTarGz(r)
                 if err != nil {
                         allErrs = append(allErrs, field.Invalid(tarField.Child("Unmarshal"),
                                 c.Platform.OpenStack.AciNetExt.ProvisionTar, err.Error()))
@@ -176,6 +171,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 
                         // Validate against values from install config
 			machineCIDR := c.Networking.DeprecatedMachineCIDR
+			clusterNetworkCIDR := &c.Networking.ClusterNetwork[0].CIDR
                         if DiffSubnets(config.NodeSubnet, machineCIDR) {
 				option := UserPrompt(config.NodeSubnet, machineCIDR, "node_subnet", "machineCIDR")
 				if (option == true) {
@@ -224,7 +220,7 @@ func UserPrompt(sub1 string, sub2 *ipnet.IPNet, item1 string, item2 string) bool
 	return op
 }
 
-func ExtractTarGz(gzipStream io.Reader, serviceNet string, clusterCIDR string, hostPrefix int32, netType string) (HostConfigMap, error) {
+func ExtractTarGz(gzipStream io.Reader) (HostConfigMap, error) {
 	config := HostConfigMap{}
         uncompressedStream, err := gzip.NewReader(gzipStream)
         if err != nil {
@@ -232,9 +228,6 @@ func ExtractTarGz(gzipStream io.Reader, serviceNet string, clusterCIDR string, h
         }
 
         tarReader := tar.NewReader(uncompressedStream)
-
-        manifests_dir := "manifests"
-        os.Mkdir(manifests_dir, 0777)
 
         for true {
                 header, err := tarReader.Next()
@@ -249,16 +242,7 @@ func ExtractTarGz(gzipStream io.Reader, serviceNet string, clusterCIDR string, h
 
                 switch header.Typeflag {
                 case tar.TypeReg:
-
-                        fileName := manifests_dir + "/" + header.Name
-                        outFile, err := os.Create(fileName)
-                        if err != nil {
-				return config, err
-                        }
-
-                        var buf bytes.Buffer
-                        teeReader := io.TeeReader(tarReader, &buf)
-                        temp, _ := ioutil.ReadAll(teeReader)
+                        temp, _ := ioutil.ReadAll(tarReader)
 
 			// Unmarshal acc configmap to get acc-provision values
                         if strings.Contains(header.Name, "aci-containers-config") {
@@ -272,33 +256,6 @@ func ExtractTarGz(gzipStream io.Reader, serviceNet string, clusterCIDR string, h
 					return config, err
                                 }
                         }
-
-			// Set cluster-network-03 fields as provided in install-config.yaml
-                        if strings.Contains(header.Name, "cluster-network-03") {
-                                t := ClusterConfig03{}
-                                err = yaml.Unmarshal(temp, &t)
-                                if err != nil {
-					return config, err
-                                }
-				t.Spec.ClusterNetwork[0].CIDR = clusterCIDR
-                                t.Spec.ClusterNetwork[0].HostPrefix = hostPrefix
-                                t.Spec.ServiceNetwork[0] = serviceNet
-                                t.Spec.DefaultNetwork.Type = netType
-                                d, err := yaml.Marshal(&t)
-				if err != nil {
-					return config, err
-				}
-                                
-				err = ioutil.WriteFile(fileName, d, 0640)
-                                if err != nil {
-					return config, err
-				}
-                        } else {
-                        	if _, err := io.Copy(outFile, &buf); err != nil {
-					return config, err
-                        	}
-                        	outFile.Close()
-			}
                 default:
 			return config, errors.New("Unsupported file type in tar")
 		}
