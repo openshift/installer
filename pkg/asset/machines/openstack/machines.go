@@ -3,6 +3,7 @@ package openstack
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/servergroups"
 	"github.com/gophercloud/utils/openstack/clientconfig"
@@ -43,7 +44,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 	provider := generateProvider(clusterID, platform, pool.Platform.OpenStack, osImage, az, role, userDataSecret, trunk)
 
-	if role == "master" {
+	if role == "master" && provider.ServerGroupID == "" {
 		sg, err := createServerGroup(platform.Cloud, clusterID+"-"+role, "soft-anti-affinity")
 		if err != nil {
 			return nil, err
@@ -150,6 +151,9 @@ func trunkSupportBoolean(trunkSupport string) (result bool) {
 //
 // https://docs.openstack.org/api-ref/compute/?expanded=create-server-group-detail#server-groups-os-server-groups
 func createServerGroup(cloud, serverGroupName, policy string) (*servergroups.ServerGroup, error) {
+	fmt.Println("createServerGroup was called")
+	debug.PrintStack()
+
 	conn, err := clientconfig.NewServiceClient(
 		"compute",
 		&clientconfig.ClientOpts{
