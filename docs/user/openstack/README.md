@@ -215,13 +215,13 @@ sudo cp ca.crt.pem /etc/pki/ca-trust/source/anchors/
 sudo update-ca-trust extract
 ```
 
-Next, you should add the `cacert` key to your `clouds.yaml`. Its value should be a valid path to your CA cert that does not require root privilege to read.
+Next, you should add the `cacert` key to your `clouds.yaml`. Its value should be a valid path to your CA cert that does not require root privilege to read. The path can be either absolute, or relative to the current working directory while running the installer.
 
 ```yaml
 clouds:
   shiftstack:
     auth: ...
-    cacert: "ca.crt.pem"
+    cacert: "/etc/pki/ca-trust/source/anchors/ca.crt.pem"
 ```
 
 ## Standalone Single-Node Development Environment
