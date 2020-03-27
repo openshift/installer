@@ -38,6 +38,7 @@ module "bootstrap" {
   private_network_id      = module.topology.private_network_id
   master_sg_id            = module.topology.master_sg_id
   bootstrap_shim_ignition = var.openstack_bootstrap_shim_ignition
+  master_port_ids         = module.topology.master_port_ids
 }
 
 module "masters" {
