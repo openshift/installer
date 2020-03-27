@@ -23,6 +23,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `octaviaSupport` (optional string): Whether OpenStack supports Octavia (`1` for true or `0` for false)
 * `region` (deprecated string): The OpenStack region where the cluster will be created. Currently this value is not used by the installer.
 * `trunkSupport` (optional string): Whether OpenStack ports can be trunked (`1` for true or `0` for false)
+* `clusterOSimage` (optional string): Either a URL with `http(s)` or `file` scheme to override the default OS image for cluster nodes or an existing Glance image name.
 
 ## Machine pools
 
@@ -107,7 +108,17 @@ platform:
       clusterOSImage: http://mirror.example.com/images/rhcos-43.81.201912131630.0-openstack.x86_64.qcow2.gz?sha256=ffebbd68e8a1f2a245ca19522c16c86f67f9ac8e4e0c1f0a812b068b16f7265d
 ```
 
-If the user wants to reuse an existing Glance image without any uploading of binary data, then it is possible to set `clusterOSImage` install config parameter that specifies the Glance image name. In this case no new Glance images will be created, and the image will stay when the cluster is destroyed. In other words, if `clusterOSImage` is not an http(s) URL, then the installer will look into Glance for an image with that name.
+If the user wants to upload the image from the local file system, he can set `clusterOSImage` as `file:///path/to/file`. In this case the installer will take this file and automatically create an image in Glance.
+
+Example:
+
+```yaml
+platform:
+  openstack:
+      clusterOSImage: file:///home/user/rhcos.qcow2
+```
+
+If the user wants to reuse an existing Glance image without any uploading of binary data, then it is possible to set `clusterOSImage` install config parameter that specifies the Glance image name. In this case no new Glance images will be created, and the image will stay when the cluster is destroyed. In other words, if `clusterOSImage` is not an "http(s)" or "file" URL, then the installer will look into Glance for an image with that name.
 
 Example:
 
