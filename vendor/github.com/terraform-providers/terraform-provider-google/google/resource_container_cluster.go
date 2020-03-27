@@ -109,6 +109,11 @@ func resourceContainerCluster() *schema.Resource {
 				},
 			},
 
+			"operation": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			"location": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -120,12 +125,14 @@ func resourceContainerCluster() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Removed:  "Use location instead",
+				Computed: true,
 			},
 
 			"zone": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Removed:  "Use location instead",
+				Computed: true,
 			},
 
 			"node_locations": {
@@ -139,6 +146,7 @@ func resourceContainerCluster() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Removed:  "Use node_locations instead",
+				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
@@ -183,6 +191,7 @@ func resourceContainerCluster() *schema.Resource {
 							Type:     schema.TypeList,
 							Optional: true,
 							Removed:  "The Kubernetes Dashboard addon is removed for clusters on GKE.",
+							Computed: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -255,6 +264,7 @@ func resourceContainerCluster() *schema.Resource {
 									"oauth_scopes": {
 										Type:             schema.TypeList,
 										Optional:         true,
+										Computed:         true,
 										Elem:             &schema.Schema{Type: schema.TypeString},
 										DiffSuppressFunc: containerClusterAddedScopesSuppress,
 										ExactlyOneOf: []string{
@@ -294,8 +304,7 @@ func resourceContainerCluster() *schema.Resource {
 			},
 
 			"enable_binary_authorization": {
-				Removed:  "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/guides/provider_versions.html for more details.",
-				Computed: true,
+				Default:  false,
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
@@ -512,6 +521,7 @@ func resourceContainerCluster() *schema.Resource {
 			"pod_security_policy_config": {
 				// Remove return nil from expand when this is removed for good.
 				Removed:  "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/guides/provider_versions.html for more details.",
+				Computed: true,
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
@@ -668,7 +678,10 @@ func resourceContainerCluster() *schema.Resource {
 							ForceNew:     true,
 							ValidateFunc: orEmpty(validation.CIDRNetwork(28, 28)),
 						},
-
+						"peering_name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"private_endpoint": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -712,6 +725,7 @@ func resourceContainerCluster() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Removed:  "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/guides/provider_versions.html for more details.",
+				Computed: true,
 			},
 		},
 	}
@@ -809,8 +823,12 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 		IpAllocationPolicy:      expandIPAllocationPolicy(d.Get("ip_allocation_policy")),
 		PodSecurityPolicyConfig: expandPodSecurityPolicyConfig(d.Get("pod_security_policy_config")),
 		Autoscaling:             expandClusterAutoscaling(d.Get("cluster_autoscaling"), d),
-		MasterAuth:              expandMasterAuth(d.Get("master_auth")),
-		ResourceLabels:          expandStringMap(d, "resource_labels"),
+		BinaryAuthorization: &containerBeta.BinaryAuthorization{
+			Enabled:         d.Get("enable_binary_authorization").(bool),
+			ForceSendFields: []string{"Enabled"},
+		},
+		MasterAuth:     expandMasterAuth(d.Get("master_auth")),
+		ResourceLabels: expandStringMap(d, "resource_labels"),
 	}
 
 	if v, ok := d.GetOk("default_max_pods_per_node"); ok {
@@ -916,6 +934,18 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 	timeoutInMinutes := int(d.Timeout(schema.TimeoutCreate).Minutes())
 	waitErr := containerOperationWait(config, op, project, location, "creating GKE cluster", timeoutInMinutes)
 	if waitErr != nil {
+		// Check if the create operation failed because Terraform was prematurely terminated. If it was we can persist the
+		// operation id to state so that a subsequent refresh of this resource will wait until the operation has terminated
+		// before attempting to Read the state of the cluster. This allows a graceful resumption of a Create that was killed
+		// by the upstream Terraform process exiting early such as a sigterm.
+		select {
+		case <-config.context.Done():
+			log.Printf("[DEBUG] Persisting %s so this operation can be resumed \n", op.Name)
+			d.Set("operation", op.Name)
+			return nil
+		default:
+			// leaving default case to ensure this is non blocking
+		}
 		// Try a GET on the cluster so we can see the state in debug logs. This will help classify error states.
 		_, getErr := config.clientContainerBeta.Projects.Locations.Clusters.Get(containerClusterFullName(project, location, clusterName)).Do()
 		if getErr != nil {
@@ -974,6 +1004,19 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
+	operation := d.Get("operation").(string)
+	if operation != "" {
+		log.Printf("[DEBUG] in progress operation detected at %v, attempting to resume", operation)
+		op := &containerBeta.Operation{
+			Name: operation,
+		}
+		d.Set("operation", "")
+		waitErr := containerOperationWait(config, op, project, location, "resuming GKE cluster", int(d.Timeout(schema.TimeoutCreate).Minutes()))
+		if waitErr != nil {
+			return waitErr
+		}
+	}
+
 	clusterName := d.Get("name").(string)
 	name := containerClusterFullName(project, location, clusterName)
 	cluster, err := config.clientContainerBeta.Projects.Locations.Clusters.Get(name).Do()
@@ -1020,6 +1063,7 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 	if err := d.Set("cluster_autoscaling", flattenClusterAutoscaling(cluster.Autoscaling)); err != nil {
 		return err
 	}
+	d.Set("enable_binary_authorization", cluster.BinaryAuthorization != nil && cluster.BinaryAuthorization.Enabled)
 	if err := d.Set("authenticator_groups_config", flattenAuthenticatorGroupsConfig(cluster.AuthenticatorGroupsConfig)); err != nil {
 		return err
 	}
@@ -1157,6 +1201,28 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		log.Printf("[INFO] GKE cluster %s's cluster-wide autoscaling has been updated", d.Id())
 
 		d.SetPartial("cluster_autoscaling")
+	}
+
+	if d.HasChange("enable_binary_authorization") {
+		enabled := d.Get("enable_binary_authorization").(bool)
+		req := &containerBeta.UpdateClusterRequest{
+			Update: &containerBeta.ClusterUpdate{
+				DesiredBinaryAuthorization: &containerBeta.BinaryAuthorization{
+					Enabled:         enabled,
+					ForceSendFields: []string{"Enabled"},
+				},
+			},
+		}
+
+		updateF := updateFunc(req, "updating GKE binary authorization")
+		// Call update serially.
+		if err := lockedCall(lockKey, updateF); err != nil {
+			return err
+		}
+
+		log.Printf("[INFO] GKE cluster %s's binary authorization has been updated to %v", d.Id(), enabled)
+
+		d.SetPartial("enable_binary_authorization")
 	}
 
 	if d.HasChange("maintenance_policy") {
@@ -2039,6 +2105,7 @@ func flattenPrivateClusterConfig(c *containerBeta.PrivateClusterConfig) []map[st
 			"enable_private_endpoint": c.EnablePrivateEndpoint,
 			"enable_private_nodes":    c.EnablePrivateNodes,
 			"master_ipv4_cidr_block":  c.MasterIpv4CidrBlock,
+			"peering_name":            c.PeeringName,
 			"private_endpoint":        c.PrivateEndpoint,
 			"public_endpoint":         c.PublicEndpoint,
 		},

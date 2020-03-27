@@ -74,9 +74,10 @@ func Destroy(dir string) (err error) {
 			return errors.Wrap(err, "Terraform apply")
 		}
 	case openstack.Name:
-		err = osp.DeleteSwiftContainer(metadata.InfraID, metadata.OpenStack.Cloud)
+		imageName := metadata.InfraID + "-ignition"
+		err = osp.DeleteGlanceImage(imageName, metadata.OpenStack.Cloud)
 		if err != nil {
-			return errors.Wrapf(err, "Failed to delete swift container %s", metadata.InfraID)
+			return errors.Wrapf(err, "Failed to delete glance image %s", imageName)
 		}
 	}
 

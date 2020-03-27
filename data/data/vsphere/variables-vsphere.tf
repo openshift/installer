@@ -32,6 +32,11 @@ variable "vsphere_datastore" {
   description = "This is the name of the vSphere data store."
 }
 
+variable "vsphere_ova_filepath" {
+  type        = string
+  description = "This is the filepath to the ova file that will be imported into vSphere."
+}
+
 variable "vsphere_template" {
   type        = string
   description = "This is the name of the VM template to clone."
@@ -50,14 +55,19 @@ variable "vsphere_folder" {
 // Control Plane machine variables
 ///////////
 
-variable "control_plane_memory_mib" {
+variable "vsphere_control_plane_memory_mib" {
   type = number
 }
 
-variable "control_plane_disk_gib" {
+variable "vsphere_control_plane_disk_gib" {
   type = number
 }
 
-variable "control_plane_num_cpus" {
+variable "vsphere_control_plane_num_cpus" {
   type = number
 }
+
+variable "vsphere_control_plane_cores_per_socket" {
+  type = number
+}
+

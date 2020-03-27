@@ -131,7 +131,7 @@ func resourceBlockStorageVolumeAttachV2() *schema.Resource {
 
 func resourceBlockStorageVolumeAttachV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	client, err := config.blockStorageV2Client(GetRegion(d, config))
+	client, err := config.BlockStorageV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack block storage client: %s", err)
 	}
@@ -277,7 +277,7 @@ func resourceBlockStorageVolumeAttachV2Create(d *schema.ResourceData, meta inter
 
 func resourceBlockStorageVolumeAttachV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	client, err := config.blockStorageV2Client(GetRegion(d, config))
+	client, err := config.BlockStorageV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack block storage client: %s", err)
 	}
@@ -310,7 +310,7 @@ func resourceBlockStorageVolumeAttachV2Read(d *schema.ResourceData, meta interfa
 
 func resourceBlockStorageVolumeAttachV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	client, err := config.blockStorageV2Client(GetRegion(d, config))
+	client, err := config.BlockStorageV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack block storage client: %s", err)
 	}

@@ -24,9 +24,10 @@ purposes:
   * This network is the main network used by the cluster, including API traffic
     and application traffic.
   * ***DHCP***
-    * External DHCP is assumed on this network.  It is **strongly** recommended
-      to set up DHCP reservations for each of the hosts in the cluster to
-      ensure that they retain stable IP addresses.
+    * External DHCP is assumed on this network. Hosts *must* have stable
+      IP addresses, therefore you should set up DHCP reservations for
+      each of the hosts in the cluster. The addresses assigned by DHCP
+      need to be in the same subnet as the Virtual IPs discussed below.
     * A pool of dynamic addresses should also be available on this network, as
       the provisioning host and temporary bootstrap VM will also need addresses
       on this network.
@@ -47,6 +48,8 @@ purposes:
 
 * **NIC #2 - Provisioning Network**
   * A private network used for PXE based provisioning.
+  * You must specify `provisioningNetworkInterface` to indicate which
+    interface is connected to this network.
   * DHCP is automated for this network by default, to rely on external
     DHCP, set the platform's `provisioningDHCPExternal` option to `true`
   * Addressing for this network defaults to `172.22.0.0/24`, but is
@@ -97,7 +100,8 @@ containing all of the details of the bare metal hosts to be provisioned.
 
 The `install-config.yaml` file requires some additional details.  Most of the
 information is teaching the installer and the resulting cluster enough about
-the available hardware so that it is able to fully manage it.
+the available hardware so that it is able to fully manage it. There are
+[additional customizations](customization_ipi.md) possible.
 
 Here is an example `install-config.yaml` with the required `baremetal` platform
 details.
@@ -136,6 +140,7 @@ platform:
     apiVIP: 192.168.111.5
     ingressVIP: 192.168.111.4
     dnsVIP: 192.168.111.3
+    provisioningNetworkInterface: enp1s0
     hosts:
       - name: openshift-master-0
         role: master
@@ -172,6 +177,69 @@ platform:
 pullSecret: ...
 sshKey: ...
 ```
+
+#### Required Inputs
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+`provisioningNetworkInterface` | | The name of the network interface on control plane nodes connected to the provisioning network. |
+`hosts` | | Details about bare metal hosts to use to build the cluster. See below for more details. |
+`defaultMachinePlatform` | | The default configuration used for machine pools without a platform configuration. |
+`apiVIP` | `api.<clusterdomain>` | The VIP to use for internal API communication. |
+`ingressVIP` | `test.apps.<clusterdomain>` | The VIP to use for ingress traffic. |
+`dnsVIP` | | The VIP to use for internal DNS communication. |
+
+##### VIP Settings
+
+The `apiVIP` and `ingressVIP` settings must either be provided or
+pre-configured in DNS so that the default names resolve correctly (see
+the defaults in the table above).
+
+The `dnsVIP` setting has no default and must always be provided.
+
+##### Describing Hosts
+
+The `hosts` parameter is a list of separate bare metal assets that
+should be used to build the cluster.
+
+| Name | Default | Description |
+| --- | --- | --- |
+| `name` | | The name of the `BareMetalHost` resource to associate with the details. |
+| `role` | | Either `master` or `worker`. |
+| `bmc` | | Connection details for the baseboard management controller. See below for details. |
+| `bootMACAddress` | | The MAC address of the NIC the host will use to boot on the provisioning network. |
+
+The `bmc` parameter for each host is a set of values for accessing the
+baseboard management controller in the host.
+
+| Name | Default | Description |
+| --- | --- | --- |
+| `username` | | The username for authenticating to the BMC |
+| `password` | | The password associated with `username`. |
+| `address` | | The URL for communicating with the BMC controller, based on the provider being used. See [BMC Addressing](#bmc-addressing) for details. |
+
+##### BMC Addressing
+
+The `address` field for each `bmc` entry is a URL with details for
+connecting to the controller, including the type of controller in the
+URL scheme and its location on the network.
+
+IPMI hosts use `ipmi://<host>:<port>`. An unadorned `<host>:<port>` is
+also accepted. If the port is omitted, the default of 623 is used.
+
+Dell iDRAC hosts use `idrac://` (or `idrac+http://` to disable TLS).
+
+Fujitsu iRMC hosts use `irmc://<host>:<port>`, where `<port>` is
+optional if using the default.
+
+For Redfish, use `redfish://` (or `redfish+http://` to disable
+TLS). The hostname (or IP address) and the path to the system ID are
+both required.  For example
+`redfish://myhost.example/redfish/v1/Systems/System.Embedded.1` or
+`redfish://myhost.example/redfish/v1/Systems/1`
+
+To use virtual media instead of PXE for attaching the provisioning
+image to the host, use `redfish-virtualmedia://` or `idrac-virtualmedia://`
 
 ## Work in Progress
 

@@ -1,9 +1,10 @@
 package validation
 
 import (
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // ValidatePlatform checks that the specified platform is valid.

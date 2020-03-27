@@ -142,7 +142,7 @@ func resourceObjectStorageObjectV1() *schema.Resource {
 
 func resourceObjectStorageObjectV1Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	objectStorageClient, err := config.objectStorageV1Client(GetRegion(d, config))
+	objectStorageClient, err := config.ObjectStorageV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack object storage client: %s", err)
 	}
@@ -238,7 +238,7 @@ func resourceObjectStorageObjectV1Create(d *schema.ResourceData, meta interface{
 
 func resourceObjectStorageObjectV1Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	objectStorageClient, err := config.objectStorageV1Client(GetRegion(d, config))
+	objectStorageClient, err := config.ObjectStorageV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack object storage client: %s", err)
 	}
@@ -285,7 +285,7 @@ func resourceObjectStorageObjectV1Read(d *schema.ResourceData, meta interface{})
 
 func resourceObjectStorageObjectV1Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	objectStorageClient, err := config.objectStorageV1Client(GetRegion(d, config))
+	objectStorageClient, err := config.ObjectStorageV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack object storage client: %s", err)
 	}
@@ -378,7 +378,7 @@ func resourceObjectStorageObjectV1Update(d *schema.ResourceData, meta interface{
 
 func resourceObjectStorageObjectV1Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	objectStorageClient, err := config.objectStorageV1Client(GetRegion(d, config))
+	objectStorageClient, err := config.ObjectStorageV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack object storage client: %s", err)
 	}

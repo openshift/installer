@@ -15,6 +15,12 @@ func BootstrapIP(tfs *terraform.State) (string, error) {
 	var bootstrap string
 
 	publicIP, err := terraform.LookupResource(tfs, "module.bootstrap", "azurerm_public_ip", "bootstrap_public_ip")
+	if err != nil {
+		publicIP, err = terraform.LookupResource(tfs, "module.bootstrap", "azurerm_public_ip", "bootstrap_public_ip_v4")
+	}
+	if err != nil {
+		publicIP, err = terraform.LookupResource(tfs, "module.bootstrap", "azurerm_public_ip", "bootstrap_public_ip_v6")
+	}
 	if err == nil && len(publicIP.Instances) > 0 {
 		bootstrap, _, err = unstructured.NestedString(publicIP.Instances[0].Attributes, "ip_address")
 		if err != nil {

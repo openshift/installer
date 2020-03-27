@@ -183,7 +183,7 @@ func resourceListenerV2Read(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Use Octavia listener body if Octavia/LBaaS is enabled.
-	if config.useOctavia {
+	if config.UseOctavia {
 		listener, err := octavialisteners.Get(lbClient, d.Id()).Extract()
 		if err != nil {
 			return CheckDeleted(d, err, "openstack_lb_listener_v2")

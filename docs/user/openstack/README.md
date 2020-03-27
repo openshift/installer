@@ -12,11 +12,13 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
     - [Master Nodes](#master-nodes)
     - [Worker Nodes](#worker-nodes)
     - [Bootstrap Node](#bootstrap-node)
-    - [Swift](#swift)
+    - [Image Registry Requirements](#image-registry-requirements)
     - [Disk Requirements](#disk-requirements)
     - [Neutron Public Network](#neutron-public-network)
     - [Nova Metadata Service](#nova-metadata-service)
+    - [Glance Service](#glance-service)
   - [OpenStack Credentials](#openstack-credentials)
+    - [Self Signed OpenStack CA certificates](#self-signed-openstack-ca-certificates)
   - [Standalone Single-Node Development Environment](#standalone-single-node-development-environment)
   - [Running The Installer](#running-the-installer)
     - [Known Issues](#known-issues)
@@ -28,7 +30,9 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
     - [Current Expected Behavior](#current-expected-behavior)
     - [Checking Cluster Status](#checking-cluster-status)
     - [Destroying The Cluster](#destroying-the-cluster)
-  - [Using an External Load Balancer](#using-an-external-load-balancer)
+  - [Post Install Operations](#post-install-operations)
+    - [Using an External Load Balancer](#using-an-external-load-balancer)
+    - [Refreshing a CA Certificate](#refreshing-a-ca-certificate)
   - [Reporting Issues](#reporting-issues)
 
 ## Reference Documents
@@ -37,6 +41,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
 - [Using the OSP 4 installer with Kuryr](kuryr.md)
 - [Troubleshooting your cluster](troubleshooting.md)
 - [Customizing your install](customization.md)
+- [Installing OpenShift on OpenStack User-Provisioned Infrastructure](install_upi.md)
 - [Learn about the OpenShift on OpenStack networking infrastructure design](../../design/openstack/networking-infrastructure.md)
 
 ## OpenStack Requirements
@@ -54,11 +59,7 @@ For a successful installation it is required:
 - vCPUs: 28
 - Volume Storage: 175 GB
 - Instances: 7
-- Swift containers: 2
-- Swift objects: 1
-- Available space in Swift: at least 10 MB
-
-**NOTE:** Size depends on the size of the bootstrap ignition file.
+- Depending on the type of [image registry backend](#image-registry-requirements) either 1 Swift container or an additional 100 GB volume.
 
 You may need to increase the security group related quotas from their default values. For example (as an OpenStack administrator):
 
@@ -78,17 +79,19 @@ The default deployment stands up 3 worker nodes. In our testing we determined th
 
 The bootstrap node is a temporary node that is responsible for standing up the control plane on the masters. Only one bootstrap node will be stood up and it will be deprovisioned once the production control plane is ready. To do so, you need 1 instance, and 1 port. We recommend a flavor with a minimum of 16 GB RAM, 4 vCPUs, and 25 GB Disk.
 
-### Swift
+### Image Registry Requirements
 
-Swift is required for installation as the user-data provided by OpenStack Metadata service is not big enough to store the ignition config files, so they are served by Swift instead.
+If Swift is available in the cloud where the installation is being performed, it is used as the default backend for the OpenShift image registry. At the time of installation only an empty container is created without loading any data. Later on, for the system to work properly, you need to have enough free space to store the container images.
 
-Swift is also used as a backend for the OpenShift image registry, but at the time of installation only an empty container is created without loading any data. Later on, for the system to work properly, you need to have enough free space to store the container images.
-
-The user must have `swiftoperator` permissions. As an OpenStack administrator:
+In this case the user must have `swiftoperator` permissions. As an OpenStack administrator:
 
 ```sh
 openstack role add --user <user> --project <project> swiftoperator
 ```
+
+If Swift is not available, the [PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims) storage is used as the backend. For this purpose, a persistent volume of 100 GB will be created in Cinder and mounted to the image registry pod during the installation.
+
+**Note:** Since Cinder supports only [ReadWriteOnce](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes) access mode, it's not possible to have more than one replica of the image registry pod.
 
 ### Disk Requirements
 
@@ -161,6 +164,14 @@ openstack network list --long -c ID -c Name -c "Router Type"
 
 Nova [metadata service](https://docs.openstack.org/nova/latest/user/metadata.html#metadata-service) must be enabled and available at `http://169.254.169.254`. Currently the service is used to deliver Ignition config files to Nova instances and provide information about the machine to `kubelet`.
 
+### Glance Service
+
+The creation of images in Glance should be available to the user. Now Glance is used for two things:
+
+- Right after the installation starts, the installer automatically uploads the actual `RHCOS` binary image to Glance with the name `<clusterID>-rhcos`. The image exists throughout the life of the cluster and is removed along with it.
+
+- The installer stores bootstrap ignition configs in a temporary image called `<clusterID>-ignition`. This is not a canonical use of the service, but this solution allows us to unify the installation process, since Glance is available on all OpenStack clouds, unlike Swift. The image exists for a limited period of time while the bootstrap process is running (normally 10-30 minutes), and then is automatically deleted.
+
 ## OpenStack Credentials
 
 You must have a `clouds.yaml` file in order to run the installer. The installer will look for a `clouds.yaml` file in the following locations in order:
@@ -194,6 +205,24 @@ clouds:
 
 The file can contain information about several clouds. For instance, the example above describes two clouds: `shiftstack` and `dev-evn`.
 In order to determine which cloud to use, the user can either specify it in the `install-config.yaml` file under `platform.openstack.cloud` or with `OS_CLOUD` environment variable. If both are omitted, then the cloud name defaults to `openstack`.
+
+### Self Signed OpenStack CA certificates
+
+If your OpenStack cluster uses self signed CA certificates for endpoint authentication, you will need a few additional steps to run the installer. First, make sure that the host running the installer trusts your CA certificates. If you want more information on how to do this, refer to the [Red Hat OpenStack Plaform documentation](https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/director_installation_and_usage/appe-ssltls_certificate_configuration#Adding_the_Certificate_Authority_to_Clients). In the future, we plan to modify the installer to be able to trust certificates independently of the host OS.
+
+```sh
+sudo cp ca.crt.pem /etc/pki/ca-trust/source/anchors/
+sudo update-ca-trust extract
+```
+
+Next, you should add the `cacert` key to your `clouds.yaml`. Its value should be a valid path to your CA cert that does not require root privilege to read.
+
+```yaml
+clouds:
+  shiftstack:
+    auth: ...
+    cacert: "ca.crt.pem"
+```
 
 ## Standalone Single-Node Development Environment
 
@@ -377,7 +406,6 @@ Finally, to see all the running pods in your cluster, you can do:
 ```sh
 oc get pods -A
 ```
-
 ### Destroying The Cluster
 
 To destroy the cluster, point it to your cluster with this command:
@@ -391,8 +419,9 @@ Then, you can delete the folder containing the cluster metadata:
 ```sh
 rm -rf ostest/
 ```
+## Post Install Operations
 
-## Using an External Load Balancer
+### Using an External Load Balancer
 
 This documents how to shift from the internal load balancer, which is intended for internal networking needs, to an external load balancer.
 
@@ -470,6 +499,14 @@ Another useful thing to check is that the ignition configurations are only avail
 
 ```sh
 curl https://<loadbalancer ip>:22623/config/master --insecure
+```
+
+### Refreshing a CA Certificate
+
+If you ran the installer with a [custom CA certificate](#self-signed-openstack-ca-certificates), then this certificate can be changed while the cluster is running. To change your certificate, edit the value of the `ca-cert.pem` key in the `cloud-provider-config` configmap with a valid PEM certificate.
+
+```sh
+oc edit -n openshift-config cloud-provider-config
 ```
 
 ## Reporting Issues

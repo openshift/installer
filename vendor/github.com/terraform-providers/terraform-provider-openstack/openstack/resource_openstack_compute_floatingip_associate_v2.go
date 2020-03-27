@@ -63,7 +63,7 @@ func resourceComputeFloatingIPAssociateV2() *schema.Resource {
 
 func resourceComputeFloatingIPAssociateV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	computeClient, err := config.computeV2Client(GetRegion(d, config))
+	computeClient, err := config.ComputeV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
@@ -119,7 +119,7 @@ func resourceComputeFloatingIPAssociateV2Create(d *schema.ResourceData, meta int
 
 func resourceComputeFloatingIPAssociateV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	computeClient, err := config.computeV2Client(GetRegion(d, config))
+	computeClient, err := config.ComputeV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
@@ -133,7 +133,7 @@ func resourceComputeFloatingIPAssociateV2Read(d *schema.ResourceData, meta inter
 	// Now check and see whether the floating IP still exists.
 	// First try to do this by querying the Network API.
 	networkEnabled := true
-	networkClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		networkEnabled = false
 	}
@@ -189,7 +189,7 @@ func resourceComputeFloatingIPAssociateV2Read(d *schema.ResourceData, meta inter
 
 func resourceComputeFloatingIPAssociateV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	computeClient, err := config.computeV2Client(GetRegion(d, config))
+	computeClient, err := config.ComputeV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}

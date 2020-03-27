@@ -102,8 +102,12 @@ func (c *awsClient) TagUser(input *iam.TagUserInput) (*iam.TagUserOutput, error)
 }
 
 // NewClient creates our client wrapper object for the actual AWS clients we use.
-func NewClient(accessKeyID, secretAccessKey []byte, infraName string) (Client, error) {
+func NewClient(accessKeyID, secretAccessKey []byte, region, infraName string) (Client, error) {
 	awsConfig := &awssdk.Config{}
+
+	if region != "" {
+		awsConfig.Region = &region
+	}
 
 	awsConfig.Credentials = credentials.NewStaticCredentials(
 		string(accessKeyID), string(secretAccessKey), "")
@@ -117,7 +121,12 @@ func NewClient(accessKeyID, secretAccessKey []byte, infraName string) (Client, e
 		Fn:   request.MakeAddToUserAgentHandler("openshift.io cloud-credential-operator", version.Version, infraName),
 	})
 
+	return NewClientFromIAMClient(iam.New(s))
+}
+
+// NewClientFromIAMClient create a client from AWS IAM client.
+func NewClientFromIAMClient(client iamiface.IAMAPI) (Client, error) {
 	return &awsClient{
-		iamClient: iam.New(s),
+		iamClient: client,
 	}, nil
 }

@@ -161,7 +161,7 @@ func resourceNetworkingSubnetPoolV2() *schema.Resource {
 
 func resourceNetworkingSubnetPoolV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -222,7 +222,7 @@ func resourceNetworkingSubnetPoolV2Create(d *schema.ResourceData, meta interface
 
 func resourceNetworkingSubnetPoolV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -265,7 +265,7 @@ func resourceNetworkingSubnetPoolV2Read(d *schema.ResourceData, meta interface{}
 
 func resourceNetworkingSubnetPoolV2Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -350,7 +350,7 @@ func resourceNetworkingSubnetPoolV2Update(d *schema.ResourceData, meta interface
 
 func resourceNetworkingSubnetPoolV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}

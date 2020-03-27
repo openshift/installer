@@ -16,9 +16,13 @@ COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/upi /var/lib/openshift-install/upi
 COPY --from=builder /go/src/github.com/openshift/installer/data/data/rhcos.json /var/lib/openshift-install/rhcos.json
 
+RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
+RUN sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" >/etc/yum.repos.d/azure-cli.repo'
+
 RUN yum install --setopt=tsflags=nodocs -y \
     gettext \
     openssh-clients \
+    azure-cli \
     openssl && \
     yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
@@ -39,6 +43,10 @@ RUN curl -L -O https://github.com/LorbusChris/terraform-provider-ignition/raw/v2
 RUN curl -L -O https://github.com/vmware/govmomi/releases/download/v0.21.0/govc_linux_amd64.gz && \
     gzip -d govc_linux_amd64.gz && \
     chmod +x govc_linux_amd64 && mv govc_linux_amd64 /bin/govc
+RUN curl -L -O -k https://vcsa-ci.vmware.devcluster.openshift.com/certs/download.zip && \
+    unzip download.zip && \
+    cp certs/lin/* /etc/pki/ca-trust/source/anchors && \
+    update-ca-trust extract
 
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000

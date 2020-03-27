@@ -151,6 +151,7 @@ func resourceStorageBucket() *schema.Resource {
 										Type:     schema.TypeBool,
 										Optional: true,
 										Removed:  "Please use `with_state` instead",
+										Computed: true,
 									},
 									"with_state": {
 										Type:         schema.TypeString,
@@ -262,6 +263,12 @@ func resourceStorageBucket() *schema.Resource {
 					},
 				},
 			},
+
+			"default_event_based_hold": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+
 			"logging": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -351,6 +358,10 @@ func resourceStorageBucketCreate(d *schema.ResourceData, meta interface{}) error
 		if v, ok := retentionPolicy["retention_period"]; ok {
 			sb.RetentionPolicy.RetentionPeriod = int64(v.(int))
 		}
+	}
+
+	if v, ok := d.GetOk("default_event_based_hold"); ok {
+		sb.DefaultEventBasedHold = v.(bool)
 	}
 
 	if v, ok := d.GetOk("cors"); ok {
@@ -449,6 +460,12 @@ func resourceStorageBucketUpdate(d *schema.ResourceData, meta interface{}) error
 
 	if v, ok := d.GetOk("cors"); ok {
 		sb.Cors = expandCors(v.([]interface{}))
+	}
+
+	if d.HasChange("default_event_based_hold") {
+		v := d.Get("default_event_based_hold")
+		sb.DefaultEventBasedHold = v.(bool)
+		sb.ForceSendFields = append(sb.ForceSendFields, "DefaultEventBasedHold")
 	}
 
 	if d.HasChange("logging") {
@@ -566,6 +583,7 @@ func resourceStorageBucketRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("encryption", flattenBucketEncryption(res.Encryption))
 	d.Set("location", res.Location)
 	d.Set("cors", flattenCors(res.Cors))
+	d.Set("default_event_based_hold", res.DefaultEventBasedHold)
 	d.Set("logging", flattenBucketLogging(res.Logging))
 	d.Set("versioning", flattenBucketVersioning(res.Versioning))
 	d.Set("lifecycle_rule", flattenBucketLifecycle(res.Lifecycle))

@@ -171,6 +171,7 @@ type Data struct {
 	MemoryMB      int                          `json:"memory_mb"`
 	RootDisk      RootDiskType                 `json:"root_disk"`
 	Extra         ExtraHardwareDataType        `json:"extra"`
+	NUMATopology  NUMATopology                 `json:"numa_topology"`
 }
 
 // Sub Types defined under Data and deeper in the structure
@@ -262,6 +263,28 @@ type ExtraHardwareDataType struct {
 	Memory   ExtraHardwareDataSection `json:"memory"`
 	Network  ExtraHardwareDataSection `json:"network"`
 	System   ExtraHardwareDataSection `json:"system"`
+}
+
+type NUMATopology struct {
+	CPUs []NUMACPU `json:"cpus"`
+	NICs []NUMANIC `json:"nics"`
+	RAM  []NUMARAM `json:"ram"`
+}
+
+type NUMACPU struct {
+	CPU            int   `json:"cpu"`
+	NUMANode       int   `json:"numa_node"`
+	ThreadSiblings []int `json:"thread_siblings"`
+}
+
+type NUMANIC struct {
+	Name     string `json:"name"`
+	NUMANode int    `json:"numa_node"`
+}
+
+type NUMARAM struct {
+	NUMANode int `json:"numa_node"`
+	SizeKB   int `json:"size_kb"`
 }
 
 // UnmarshalJSON interprets an LLDP TLV [key, value] pair as an LLDPTLVType structure

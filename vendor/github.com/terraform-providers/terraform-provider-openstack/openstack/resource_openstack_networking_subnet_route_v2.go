@@ -56,7 +56,7 @@ func resourceNetworkingSubnetRouteV2Create(d *schema.ResourceData, meta interfac
 	var nextHop string = d.Get("next_hop").(string)
 
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -112,7 +112,7 @@ func resourceNetworkingSubnetRouteV2Read(d *schema.ResourceData, meta interface{
 	subnetId := d.Get("subnet_id").(string)
 
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -176,7 +176,7 @@ func resourceNetworkingSubnetRouteV2Delete(d *schema.ResourceData, meta interfac
 
 	config := meta.(*Config)
 
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}

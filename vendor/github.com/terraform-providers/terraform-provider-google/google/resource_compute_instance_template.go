@@ -41,6 +41,7 @@ func resourceComputeInstanceTemplate() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			resourceComputeInstanceTemplateSourceImageCustomizeDiff,
 			resourceComputeInstanceTemplateScratchDiskCustomizeDiff,
+			resourceComputeInstanceTemplateBootDiskCustomizeDiff,
 		),
 		MigrateState: resourceComputeInstanceTemplateMigrateState,
 
@@ -58,11 +59,10 @@ func resourceComputeInstanceTemplate() *schema.Resource {
 			},
 
 			"name_prefix": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"name"},
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
 				ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
 					// https://cloud.google.com/compute/docs/reference/latest/instanceTemplates#resource
 					// uuid is 26 characters, limit the prefix to 37.
@@ -575,6 +575,20 @@ func resourceComputeInstanceTemplateScratchDiskCustomizeDiffFunc(diff TerraformR
 		}
 	}
 
+	return nil
+}
+
+func resourceComputeInstanceTemplateBootDiskCustomizeDiff(diff *schema.ResourceDiff, meta interface{}) error {
+	numDisks := diff.Get("disk.#").(int)
+	// No disk except the first can be the boot disk
+	for i := 1; i < numDisks; i++ {
+		key := fmt.Sprintf("disk.%d.boot", i)
+		if v, ok := diff.GetOk(key); ok {
+			if v.(bool) {
+				return fmt.Errorf("Only the first disk specified in instance_template can be the boot disk. %s was true", key)
+			}
+		}
+	}
 	return nil
 }
 

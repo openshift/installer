@@ -148,5 +148,6 @@ func init() {
 		&AWSProviderStatus{}, &AWSProviderSpec{},
 		&AzureProviderStatus{}, &AzureProviderSpec{},
 		&GCPProviderStatus{}, &GCPProviderSpec{},
+		&VSphereProviderStatus{}, &VSphereProviderSpec{},
 	)
 }

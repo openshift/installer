@@ -116,7 +116,7 @@ func resourceKeyManagerContainerV1() *schema.Resource {
 
 func resourceKeyManagerContainerV1Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	kmClient, err := config.keyManagerV1Client(GetRegion(d, config))
+	kmClient, err := config.KeyManagerV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack KeyManager client: %s", err)
 	}
@@ -159,7 +159,7 @@ func resourceKeyManagerContainerV1Create(d *schema.ResourceData, meta interface{
 
 func resourceKeyManagerContainerV1Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	kmClient, err := config.keyManagerV1Client(GetRegion(d, config))
+	kmClient, err := config.KeyManagerV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack barbican client: %s", err)
 	}
@@ -191,7 +191,7 @@ func resourceKeyManagerContainerV1Read(d *schema.ResourceData, meta interface{})
 
 func resourceKeyManagerContainerV1Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	kmClient, err := config.keyManagerV1Client(GetRegion(d, config))
+	kmClient, err := config.KeyManagerV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack barbican client: %s", err)
 	}
@@ -227,7 +227,7 @@ func resourceKeyManagerContainerV1Update(d *schema.ResourceData, meta interface{
 
 func resourceKeyManagerContainerV1Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	kmClient, err := config.keyManagerV1Client(GetRegion(d, config))
+	kmClient, err := config.KeyManagerV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack barbican client: %s", err)
 	}

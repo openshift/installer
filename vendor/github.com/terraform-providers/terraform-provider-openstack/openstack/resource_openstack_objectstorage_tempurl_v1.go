@@ -84,7 +84,7 @@ func resourceObjectstorageTempurlV1() *schema.Resource {
 // resourceObjectstorageTempurlV1Create performs the image lookup.
 func resourceObjectstorageTempurlV1Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	objectStorageClient, err := config.objectStorageV1Client(GetRegion(d, config))
+	objectStorageClient, err := config.ObjectStorageV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}

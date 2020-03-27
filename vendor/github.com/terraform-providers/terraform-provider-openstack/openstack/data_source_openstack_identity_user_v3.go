@@ -75,7 +75,7 @@ func dataSourceIdentityUserV3() *schema.Resource {
 // dataSourceIdentityUserV3Read performs the user lookup.
 func dataSourceIdentityUserV3Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	identityClient, err := config.identityV3Client(GetRegion(d, config))
+	identityClient, err := config.IdentityV3Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack identity client: %s", err)
 	}

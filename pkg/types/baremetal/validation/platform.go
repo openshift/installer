@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"reflect"
+	"strings"
+
+	"github.com/go-playground/validator/v10"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/validate"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"strings"
 )
 
 // dynamicValidator is a function that validates certain fields in the platform.
@@ -61,6 +64,57 @@ func validateOSImageURI(uri string) error {
 	return nil
 }
 
+// validateHosts checks that hosts have all required fields set with appropriate values
+func validateHosts(hosts []*baremetal.Host, fldPath *field.Path) field.ErrorList {
+	hostErrs := field.ErrorList{}
+
+	values := make(map[string]map[interface{}]struct{})
+
+	//Initialize a new validator and register a custom validation rule for the tag `uniqueField`
+	validate := validator.New()
+	validate.RegisterValidation("uniqueField", func(fl validator.FieldLevel) bool {
+		valueFound := false
+		fieldName := fl.Parent().Type().Name() + "." + fl.FieldName()
+		fieldValue := fl.Field().Interface()
+
+		if fl.Field().Type().Comparable() {
+			if _, present := values[fieldName]; !present {
+				values[fieldName] = make(map[interface{}]struct{})
+			}
+
+			fieldValues := values[fieldName]
+			if _, valueFound = fieldValues[fieldValue]; !valueFound {
+				fieldValues[fieldValue] = struct{}{}
+			}
+		} else {
+			panic(fmt.Sprintf("Cannot apply validation rule 'uniqueField' on field %s", fl.FieldName()))
+		}
+
+		return !valueFound
+	})
+
+	//Apply validations and translate errors
+	fldPath = fldPath.Child("hosts")
+
+	for idx, host := range hosts {
+		err := validate.Struct(host)
+		if err != nil {
+			hostType := reflect.TypeOf(hosts).Elem().Elem().Name()
+			for _, err := range err.(validator.ValidationErrors) {
+				childName := fldPath.Index(idx).Child(err.Namespace()[len(hostType)+1:])
+				switch err.Tag() {
+				case "required":
+					hostErrs = append(hostErrs, field.Required(childName, "missing "+err.Field()))
+				case "uniqueField":
+					hostErrs = append(hostErrs, field.Duplicate(childName, err.Value()))
+				}
+			}
+		}
+	}
+
+	return hostErrs
+}
+
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -105,7 +159,7 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 
 	// Make sure the provisioning interface is set.  Very little we can do to validate this  as it's not on this machine.
 	if p.ProvisioningNetworkInterface == "" {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkInterface"), p.ProvisioningNetworkInterface, "No baremetal provisioning network interface is configured."))
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkInterface"), p.ProvisioningNetworkInterface, "no provisioning network interface is configured, please set this value to be the interface on the provisioning network on your cluster's baremetal hosts"))
 	}
 
 	if p.Hosts == nil {
@@ -155,6 +209,8 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), p.ClusterOSImage, err.Error()))
 		}
 	}
+
+	allErrs = append(allErrs, validateHosts(p.Hosts, fldPath)...)
 
 	for _, validator := range dynamicValidators {
 		allErrs = append(allErrs, validator(p, fldPath)...)

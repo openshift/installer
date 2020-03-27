@@ -5,17 +5,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
 var defaultOvirtConfigEnvVar = "OVIRT_CONFIG"
 var defaultOvirtConfigPath = filepath.Join(os.Getenv("HOME"), ".ovirt", "ovirt-config.yaml")
 
-// ErrCanNotLoadOvirtConfig is returned when the config file fails to load.
-var ErrCanNotLoadOvirtConfig error = errors.New("can not load ovirt config")
-
-// Config holds oVirt api access details.
+// Config holds oVirt api access details
 type Config struct {
 	URL      string `yaml:"ovirt_url"`
 	Username string `yaml:"ovirt_username"`
@@ -28,6 +24,7 @@ type Config struct {
 // LoadOvirtConfig from the following location (first wins):
 // 1. OVIRT_CONFIG env variable
 // 2  $defaultOvirtConfigPath
+// See #@Config for the expected format
 func LoadOvirtConfig() ([]byte, error) {
 	data, err := ioutil.ReadFile(discoverPath())
 	if err != nil {
@@ -36,19 +33,18 @@ func LoadOvirtConfig() ([]byte, error) {
 	return data, nil
 }
 
-// GetOvirtConfig will return an Config by loading
+// NewConfig will return an Config by loading
 // the configuration from locations specified in @LoadOvirtConfig
-// error is return if the configuration could not be retained.
-func GetOvirtConfig() (Config, error) {
+func NewConfig() (Config, error) {
 	c := Config{}
 	in, err := LoadOvirtConfig()
 	if err != nil {
-		return c, errors.Wrap(ErrCanNotLoadOvirtConfig, err.Error())
+		return c, err
 	}
 
 	err = yaml.Unmarshal(in, &c)
 	if err != nil {
-		return c, errors.Wrap(ErrCanNotLoadOvirtConfig, err.Error())
+		return c, err
 	}
 
 	return c, nil
@@ -72,5 +68,9 @@ func (c *Config) Save() error {
 	}
 
 	path := discoverPath()
+	err = os.MkdirAll(filepath.Dir(path), os.FileMode(700))
+	if err != nil {
+		return err
+	}
 	return ioutil.WriteFile(path, out, os.FileMode(0600))
 }

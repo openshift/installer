@@ -58,7 +58,7 @@ func resourceNetworkingQoSMinimumBandwidthRuleV2() *schema.Resource {
 
 func resourceNetworkingQoSMinimumBandwidthRuleV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -100,7 +100,7 @@ func resourceNetworkingQoSMinimumBandwidthRuleV2Create(d *schema.ResourceData, m
 
 func resourceNetworkingQoSMinimumBandwidthRuleV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -127,7 +127,7 @@ func resourceNetworkingQoSMinimumBandwidthRuleV2Read(d *schema.ResourceData, met
 
 func resourceNetworkingQoSMinimumBandwidthRuleV2Update(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
@@ -164,7 +164,7 @@ func resourceNetworkingQoSMinimumBandwidthRuleV2Update(d *schema.ResourceData, m
 
 func resourceNetworkingQoSMinimumBandwidthRuleV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	networkingClient, err := config.networkingV2Client(GetRegion(d, config))
+	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}

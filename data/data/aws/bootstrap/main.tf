@@ -2,6 +2,10 @@ locals {
   public_endpoints = var.publish_strategy == "External" ? true : false
 }
 
+data "aws_partition" "current" {}
+
+data "aws_ebs_default_kms_key" "current" {}
+
 resource "aws_s3_bucket" "ignition" {
   acl = "private"
 
@@ -60,7 +64,7 @@ resource "aws_iam_role" "bootstrap" {
         {
             "Action": "sts:AssumeRole",
             "Principal": {
-                "Service": "ec2.amazonaws.com"
+                "Service": "ec2.${data.aws_partition.current.dns_suffix}"
             },
             "Effect": "Allow",
             "Sid": ""
@@ -104,7 +108,7 @@ resource "aws_iam_role_policy" "bootstrap" {
       "Action" : [
         "s3:GetObject"
       ],
-      "Resource": "arn:aws:s3:::*",
+      "Resource": "arn:${data.aws_partition.current.partition}:s3:::*",
       "Effect": "Allow"
     }
   ]
@@ -140,6 +144,8 @@ resource "aws_instance" "bootstrap" {
     volume_type = var.volume_type
     volume_size = var.volume_size
     iops        = var.volume_type == "io1" ? var.volume_iops : 0
+    encrypted   = true
+    kms_key_id  = var.volume_kms_key_id == "" ? data.aws_ebs_default_kms_key.current.key_arn : var.volume_kms_key_id
   }
 
   volume_tags = merge(

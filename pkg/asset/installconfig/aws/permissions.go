@@ -2,14 +2,12 @@
 package aws
 
 import (
-	"fmt"
-
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	ccaws "github.com/openshift/cloud-credential-operator/pkg/aws"
-	"github.com/openshift/installer/pkg/version"
 )
 
 // PermissionGroup is the group of permissions needed by cluster creation, operation, or teardown.
@@ -39,6 +37,7 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:AuthorizeSecurityGroupIngress",
 		"ec2:CopyImage",
 		"ec2:CreateNetworkInterface",
+		"ec2:AttachNetworkInterface",
 		"ec2:CreateSecurityGroup",
 		"ec2:CreateTags",
 		"ec2:CreateVolume",
@@ -175,6 +174,8 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:DeleteVolume",
 		"elasticloadbalancing:DeleteTargetGroup",
 		"elasticloadbalancing:DescribeTargetGroups",
+		"iam:DeleteAccessKey",
+		"iam:DeleteUser",
 		"iam:ListInstanceProfiles",
 		"iam:ListRolePolicies",
 		"iam:ListUserPolicies",
@@ -217,7 +218,7 @@ var permissions = map[PermissionGroup][]string{
 // are sufficient to perform an installation, and that they can be used for cluster runtime
 // as either capable of creating new credentials for components that interact with the cloud or
 // being able to be passed through as-is to the components that need cloud credentials
-func ValidateCreds(ssn *session.Session, groups []PermissionGroup) error {
+func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string) error {
 	// Compile a list of permissions based on the permission groups provided
 	requiredPermissions := []string{}
 	for _, group := range groups {
@@ -228,19 +229,18 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup) error {
 		requiredPermissions = append(requiredPermissions, groupPerms...)
 	}
 
-	creds, err := ssn.Config.Credentials.Get()
+	client, err := ccaws.NewClientFromIAMClient(iam.New(ssn))
 	if err != nil {
-		return errors.Wrap(err, "getting creds from session")
+		return errors.Wrap(err, "failed to create client for permission check")
 	}
 
-	client, err := ccaws.NewClient([]byte(creds.AccessKeyID), []byte(creds.SecretAccessKey), fmt.Sprintf("OpenShift/4.x Installer/%s", version.Raw))
-	if err != nil {
-		return errors.Wrap(err, "initialize cloud-credentials client")
+	sParams := &ccaws.SimulateParams{
+		Region: region,
 	}
 
 	// Check whether we can do an installation
 	logger := logrus.StandardLogger()
-	canInstall, err := ccaws.CheckPermissionsAgainstActions(client, requiredPermissions, logger)
+	canInstall, err := ccaws.CheckPermissionsAgainstActions(client, requiredPermissions, sParams, logger)
 	if err != nil {
 		return errors.Wrap(err, "checking install permissions")
 	}
@@ -259,7 +259,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup) error {
 
 	// Check whether we can use the current credentials in passthrough mode to satisfy
 	// cluster services needing to interact with the cloud
-	canPassthrough, err := ccaws.CheckCloudCredPassthrough(client, logger)
+	canPassthrough, err := ccaws.CheckCloudCredPassthrough(client, sParams, logger)
 	if err != nil {
 		return errors.Wrap(err, "passthrough credentials check")
 	}

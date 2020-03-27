@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -56,6 +57,9 @@ func (o *ClusterUninstaller) deleteRoute(item cloudResource) error {
 	op, err := o.computeSvc.Routes.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
 		o.resetRequestID(item.typeName, item.name)
+		if strings.HasPrefix(item.name, "default-route") {
+			return errors.New("this looks like a default route, which cannot be deleted manually but will be deleted with the corresponding network")
+		}
 		return errors.Wrapf(err, "failed to delete route %s", item.name)
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {

@@ -1,0 +1,11 @@
+apiVersion: metal3.io/v1alpha1
+kind: Provisioning
+metadata:
+  name: provisioning-configuration
+spec:
+  provisioningInterface: {{.Baremetal.ProvisioningNetworkInterface}}
+  provisioningIP: {{.Baremetal.ClusterProvisioningIP}}
+  provisioningNetworkCIDR: {{.Baremetal.ProvisioningNetworkCIDR}}
+  provisioningDHCPExternal: {{.Baremetal.ProvisioningDHCPExternal}}
+  provisioningDHCPRange: {{.Baremetal.ProvisioningDHCPRange}}
+  provisioningOSDownloadURL: {{.ProvisioningOSDownloadURL}}

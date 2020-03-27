@@ -1,64 +1,61 @@
 package openstack
 
 import (
-	b64 "encoding/base64"
+	"encoding/base64"
+	"encoding/pem"
 	"fmt"
 	"strings"
 
 	"github.com/clarketm/json"
-	igntypes "github.com/coreos/ignition/v2/config/v3_0/types"
-	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
-	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects"
+	// TODO lorbus:
+	// This is currently broken because no ignition binary with support for spec v3_1_experimental with HTTP headers has landed in FCOS yet.
+	// Update FCOS image as soon as that is available.
+	// Later replace with stable spec v3.1.
+	igntypes "github.com/coreos/ignition/v2/config/v3_1_experimental/types"
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata"
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
-	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-// createBootstrapSwiftObject creates a container and object in swift with the bootstrap ignition config.
-func createBootstrapSwiftObject(cloud string, bootstrapIgn string, clusterID string) (string, error) {
-	logrus.Debugln("Creating a Swift container for your bootstrap ignition...")
+// Starting from OpenShift 4.4 we store bootstrap Ignition configs in Glance.
+
+// uploadBootstrapConfig uploads the bootstrap Ignition config in Glance and returns its location
+func uploadBootstrapConfig(cloud string, bootstrapIgn string, clusterID string) (string, error) {
+	logrus.Debugln("Creating a Glance image for your bootstrap ignition config...")
 	opts := clientconfig.ClientOpts{
 		Cloud: cloud,
 	}
 
-	conn, err := clientconfig.NewServiceClient("object-store", &opts)
+	conn, err := clientconfig.NewServiceClient("image", &opts)
 	if err != nil {
 		return "", err
 	}
 
-	containerCreateOpts := containers.CreateOpts{
-		ContainerRead: ".r:*",
-
-		// "kubernetes.io/cluster/${var.cluster_id}" = "owned"
-		Metadata: map[string]string{
-			"Name":               fmt.Sprintf("%s-ignition", clusterID),
-			"openshiftClusterID": clusterID,
-		},
+	imageCreateOpts := images.CreateOpts{
+		Name:            fmt.Sprintf("%s-ignition", clusterID),
+		ContainerFormat: "bare",
+		DiskFormat:      "raw",
+		Tags:            []string{fmt.Sprintf("openshiftClusterID=%s", clusterID)},
+		// TODO(mfedosin): add Description when gophercloud supports it.
 	}
 
-	_, err = containers.Create(conn, clusterID, containerCreateOpts).Extract()
+	img, err := images.Create(conn, imageCreateOpts).Extract()
 	if err != nil {
 		return "", err
 	}
-	logrus.Debugf("Container %s was created.", clusterID)
+	logrus.Debugf("Image %s was created.", img.Name)
 
-	logrus.Debugf("Creating a Swift object in container %s containing your bootstrap ignition...", clusterID)
-	objectCreateOpts := objects.CreateOpts{
-		ContentType: "text/plain",
-		Content:     strings.NewReader(bootstrapIgn),
-		DeleteAfter: 3600,
+	logrus.Debugf("Uploading bootstrap config to the image %v with ID %v", img.Name, img.ID)
+	res := imagedata.Upload(conn, img.ID, strings.NewReader(bootstrapIgn))
+	if res.Err != nil {
+		return "", res.Err
 	}
+	logrus.Debugf("The config was uploaded.")
 
-	objID := rand.String(16)
-
-	_, err = objects.Create(conn, clusterID, objID, objectCreateOpts).Extract()
-	if err != nil {
-		return "", err
-	}
-	logrus.Debugf("The object was created.")
-
-	return objID, nil
+	// img.File contains location of the uploaded data
+	return img.File, nil
 }
 
 // To allow Ignition to download its config on the bootstrap machine from a location secured by a
@@ -70,14 +67,13 @@ func createBootstrapSwiftObject(cloud string, bootstrapIgn string, clusterID str
 
 // generateIgnitionShim is used to generate an ignition file that contains a user ca bundle
 // in its Security section.
-func generateIgnitionShim(userCA string, clusterID string, swiftObject string) (string, error) {
+func generateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL string, tokenID string) (string, error) {
 	fileMode := 420
 	overwrite := true
 
 	// Hostname Config
-	contents := fmt.Sprintf("data:text/plain;base64,%s", b64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s-bootstrap", clusterID))))
+	hostnameConfigContents := fmt.Sprintf("data:text/plain;base64,%s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s-bootstrap", clusterID))))
 
-	// TODO
 	hostnameConfigFile := igntypes.File{
 		Node: igntypes.Node{
 			Path:      "/etc/hostname",
@@ -86,20 +82,58 @@ func generateIgnitionShim(userCA string, clusterID string, swiftObject string) (
 		FileEmbedded1: igntypes.FileEmbedded1{
 			Mode: &fileMode,
 			Contents: igntypes.FileContents{
-				Source: &contents,
+				Source: &hostnameConfigContents,
+			},
+		},
+	}
+
+	// Openstack Ca Cert file
+	openstackCAContents := dataurl.EncodeBytes([]byte(userCA))
+
+	openstackCAFile := igntypes.File{
+		Node: igntypes.Node{
+			Path:      "/opt/openshift/tls/cloud-ca-cert.pem",
+			Overwrite: &overwrite,
+		},
+		FileEmbedded1: igntypes.FileEmbedded1{
+			Mode: &fileMode,
+			Contents: igntypes.FileContents{
+				Source: &openstackCAContents,
 			},
 		},
 	}
 
 	security := igntypes.Security{}
 	if userCA != "" {
+		carefs := []igntypes.CaReference{}
+		rest := []byte(userCA)
+
+		for {
+			var block *pem.Block
+			block, rest = pem.Decode(rest)
+			if block == nil {
+				return "", fmt.Errorf("unable to parse certificate, please check the cacert section of clouds.yaml")
+			}
+
+			carefs = append(carefs, igntypes.CaReference{Source: dataurl.EncodeBytes(pem.EncodeToMemory(block))})
+
+			if len(rest) == 0 {
+				break
+			}
+		}
+
 		security = igntypes.Security{
 			TLS: igntypes.TLS{
-				CertificateAuthorities: []igntypes.CaReference{{
-					Source: dataurl.EncodeBytes([]byte(userCA)),
-				}},
+				CertificateAuthorities: carefs,
 			},
 		}
+	}
+
+	headers := []igntypes.HTTPHeader{
+		{
+			Name:  "X-Auth-Token",
+			Value: &tokenID,
+		},
 	}
 
 	ign := igntypes.Config{
@@ -109,7 +143,8 @@ func generateIgnitionShim(userCA string, clusterID string, swiftObject string) (
 			Config: igntypes.IgnitionConfig{
 				Merge: []igntypes.ConfigReference{
 					{
-						Source: &swiftObject,
+						Source:      &bootstrapConfigURL,
+						HTTPHeaders: headers,
 					},
 				},
 			},
@@ -117,6 +152,7 @@ func generateIgnitionShim(userCA string, clusterID string, swiftObject string) (
 		Storage: igntypes.Storage{
 			Files: []igntypes.File{
 				hostnameConfigFile,
+				openstackCAFile,
 			},
 		},
 	}
@@ -126,5 +162,30 @@ func generateIgnitionShim(userCA string, clusterID string, swiftObject string) (
 		return "", err
 	}
 
+	// Check the size of the base64-rendered ignition shim isn't to big for nova
+	// https://docs.openstack.org/nova/latest/user/metadata.html#user-data
+	if len(base64.StdEncoding.EncodeToString(data)) > 65535 {
+		return "", fmt.Errorf("rendered bootstrap ignition shim exceeds the 64KB limit for nova user data -- try reducing the size of your CA cert bundle")
+	}
+
 	return string(data), nil
+}
+
+// getAuthToken fetches valid OpenStack authentication token ID
+func getAuthToken(cloud string) (string, error) {
+	opts := &clientconfig.ClientOpts{
+		Cloud: cloud,
+	}
+
+	conn, err := clientconfig.NewServiceClient("identity", opts)
+	if err != nil {
+		return "", err
+	}
+
+	token, err := conn.GetAuthResult().ExtractTokenID()
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }

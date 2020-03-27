@@ -42,7 +42,3 @@ func main() {
 	wp.StopWait()
 }
 ```
-
-## Real world examples
-
-The list of open source projects using worker pool can be found [here](https://github.com/gammazero/workerpool/wiki#open-projects-using-workerpool)

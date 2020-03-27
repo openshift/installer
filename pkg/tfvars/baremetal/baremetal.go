@@ -4,14 +4,16 @@ package baremetal
 import (
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/url"
+	"path"
+	"strings"
+
 	"github.com/metal3-io/baremetal-operator/pkg/bmc"
 	"github.com/metal3-io/baremetal-operator/pkg/hardware"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/pkg/errors"
-	"net/url"
-	"path"
-	"strings"
 )
 
 type config struct {
@@ -50,7 +52,7 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		}
 
 		// BMC Driver Info
-		accessDetails, err := bmc.NewAccessDetails(host.BMC.Address)
+		accessDetails, err := bmc.NewAccessDetails(host.BMC.Address, host.BMC.DisableCertificateVerification)
 		if err != nil {
 			return nil, err
 		}
@@ -59,8 +61,8 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 			Password: host.BMC.Password,
 		}
 		driverInfo := accessDetails.DriverInfo(credentials)
-		driverInfo["deploy_kernel"] = fmt.Sprintf("http://%s/images/ironic-python-agent.kernel", bootstrapProvisioningIP)
-		driverInfo["deploy_ramdisk"] = fmt.Sprintf("http://%s/images/ironic-python-agent.initramfs", bootstrapProvisioningIP)
+		driverInfo["deploy_kernel"] = fmt.Sprintf("http://%s/images/ironic-python-agent.kernel", net.JoinHostPort(bootstrapProvisioningIP, "80"))
+		driverInfo["deploy_ramdisk"] = fmt.Sprintf("http://%s/images/ironic-python-agent.initramfs", net.JoinHostPort(bootstrapProvisioningIP, "80"))
 
 		// Host Details
 		hostMap := map[string]interface{}{
@@ -76,8 +78,9 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 
 		// Properties
 		propertiesMap := map[string]interface{}{
-			"local_gb": profile.LocalGB,
-			"cpu_arch": profile.CPUArch,
+			"local_gb":     profile.LocalGB,
+			"cpu_arch":     profile.CPUArch,
+			"capabilities": "boot_mode:uefi",
 		}
 
 		// Root device hints
@@ -103,7 +106,7 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		// ref https://github.com/openshift/ironic-rhcos-downloader/pull/12
 		imageFilename := path.Base(strings.TrimSuffix(imageURL.String(), ".gz"))
 		compressedImageFilename := strings.Replace(imageFilename, "openstack", "compressed", 1)
-		cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", bootstrapProvisioningIP, imageFilename, compressedImageFilename)
+		cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(bootstrapProvisioningIP, "80"), imageFilename, compressedImageFilename)
 		cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
 		instanceInfo := map[string]interface{}{
 			"root_gb":        25, // FIXME(stbenjam): Needed until https://storyboard.openstack.org/#!/story/2005165

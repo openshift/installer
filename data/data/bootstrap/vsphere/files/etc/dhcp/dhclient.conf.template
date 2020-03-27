@@ -1,0 +1,11 @@
+{{if .PlatformData.VSphere.UserProvidedVIPs}}
+
+
+# Specifies that the bootstrap node should use its own local DNS server for
+# name resolution.
+#
+# For more information, see installer/data/data/bootstrap/baremetal/README.md
+#
+
+prepend domain-name-servers 127.0.0.1;
+{{end}}

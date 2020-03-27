@@ -32,7 +32,7 @@ func dataSourceSharedFilesystemAvailabilityZonesV2() *schema.Resource {
 
 func dataSourceSharedFilesystemAvailabilityZonesV2Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	client, err := config.sharedfilesystemV2Client(GetRegion(d, config))
+	client, err := config.SharedfilesystemV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack sharedfilesystem client: %s", err)
 	}

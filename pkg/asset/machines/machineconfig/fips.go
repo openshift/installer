@@ -13,9 +13,10 @@ import (
 // ForFIPSEnabled creates the MachineConfig to enable FIPS.
 // See also https://github.com/openshift/machine-config-operator/pull/889
 func ForFIPSEnabled(role string) (*mcfgv1.MachineConfig, error) {
+	// TODO lorbus: Go back to using igntypes.MaxVersion.String() once spec 3.1 stable is available
 	rawIgnitionConfig, err := json.Marshal(igntypes.Config{
 		Ignition: igntypes.Ignition{
-			Version: igntypes.MaxVersion.String(),
+			Version: "3.0.0",
 		},
 	})
 	if err != nil {

@@ -1,4 +1,0 @@
-ansible~=2.9.2
-netaddr~=0.7.19
-openstacksdk~=0.39.0
-openstackclient~=4.0.0

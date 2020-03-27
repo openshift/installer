@@ -63,7 +63,7 @@ func dataSourceBlockStorageSnapshotV3() *schema.Resource {
 
 func dataSourceBlockStorageSnapshotV3Read(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	client, err := config.blockStorageV3Client(GetRegion(d, config))
+	client, err := config.BlockStorageV3Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack block storage client: %s", err)
 	}

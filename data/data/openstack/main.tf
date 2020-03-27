@@ -75,20 +75,6 @@ module "topology" {
   octavia_support     = var.openstack_octavia_support
 }
 
-resource "openstack_images_image_v2" "base_image" {
-  // we need to create a new image only if the base image local file path has been provided, plus base image name is <cluster_id>-rhcos
-  count = var.openstack_base_image_local_file_path != "" && var.openstack_base_image_name == "${var.cluster_id}-rhcos" ? 1 : 0
-
-  name             = var.openstack_base_image_name
-  local_file_path  = var.openstack_base_image_local_file_path
-  container_format = "bare"
-  disk_format      = "qcow2"
-
-  tags = ["openshiftClusterID=${var.cluster_id}"]
-}
-
 data "openstack_images_image_v2" "base_image" {
   name = var.openstack_base_image_name
-
-  depends_on = [openstack_images_image_v2.base_image]
 }
