@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 
 	"github.com/apparentlymart/go-cidr/cidr"
@@ -40,14 +41,23 @@ func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, 
 		return nil, errors.Wrap(err, "failed to use cached libvirt image")
 	}
 
+	domainMemory := strconv.Itoa(masterConfig.DomainMemory)
+	if value := os.Getenv("TF_VAR_libvirt_master_memory"); value != "" {
+		domainMemory = value
+	}
+	domainVcpu := strconv.Itoa(masterConfig.DomainVcpu)
+	if value := os.Getenv("TF_VAR_libvirt_master_vcpu"); value != "" {
+		domainVcpu = value
+	}
+
 	cfg := &config{
 		URI:          masterConfig.URI,
 		Image:        osImage,
 		IfName:       bridge,
 		BootstrapIP:  bootstrapIP.String(),
 		MasterIPs:    masterIPs,
-		MasterMemory: strconv.Itoa(masterConfig.DomainMemory),
-		MasterVcpu:   strconv.Itoa(masterConfig.DomainVcpu),
+		MasterMemory: domainMemory,
+		MasterVcpu:   domainVcpu,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
