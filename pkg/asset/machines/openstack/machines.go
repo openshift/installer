@@ -44,7 +44,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	provider := generateProvider(clusterID, platform, pool.Platform.OpenStack, osImage, az, role, userDataSecret, trunk)
 
 	if role == "master" {
-		sg, err := createServerGroup(platform.Cloud, clusterID+"-"+role, "soft-anti-affinity")
+		sg, err := getOrCreateServerGroup(platform.Cloud, clusterID+"-"+role, "soft-anti-affinity")
 		if err != nil {
 			return nil, err
 		}
@@ -145,11 +145,11 @@ func trunkSupportBoolean(trunkSupport string) (result bool) {
 	return
 }
 
-// createServerGroup creates a Nova server group with the given name and
-// policy.
+// getOrCreateServerGroup gets a Nova server group with the given name and
+// policy or creates a new one if it doesn't exist.
 //
 // https://docs.openstack.org/api-ref/compute/?expanded=create-server-group-detail#server-groups-os-server-groups
-func createServerGroup(cloud, serverGroupName, policy string) (*servergroups.ServerGroup, error) {
+func getOrCreateServerGroup(cloud, serverGroupName, policy string) (*servergroups.ServerGroup, error) {
 	conn, err := clientconfig.NewServiceClient(
 		"compute",
 		&clientconfig.ClientOpts{
@@ -164,6 +164,25 @@ func createServerGroup(cloud, serverGroupName, policy string) (*servergroups.Ser
 	// Note that microversions starting from "2.64" use a new field
 	// accepting policies as a string instead of an array.
 	conn.Microversion = "2.15"
+
+	allPages, err := servergroups.List(conn).AllPages()
+	if err != nil {
+		return nil, err
+	}
+
+	allServerGroups, err := servergroups.ExtractServerGroups(allPages)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, serverGroup := range allServerGroups {
+		// Reuse the server group if it already exists and is empty
+		if serverGroup.Name == serverGroupName && len(serverGroup.Members) == 0 {
+			return &serverGroup, nil
+		}
+	}
+
+	// Create a new group otherwise
 	return servergroups.Create(conn, &servergroups.CreateOpts{
 		Name:     serverGroupName,
 		Policies: []string{policy},
