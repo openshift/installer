@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"reflect"
 	"strings"
@@ -115,6 +116,43 @@ func validateHosts(hosts []*baremetal.Host, fldPath *field.Path) field.ErrorList
 	return hostErrs
 }
 
+func validateOSImages(p *baremetal.Platform, fldPath *field.Path) field.ErrorList {
+	platformErrs := field.ErrorList{}
+
+	validate := validator.New()
+
+	customErrs := make(map[string]error)
+	validate.RegisterValidation("osimageuri", func(fl validator.FieldLevel) bool {
+		err := validateOSImageURI(fl.Field().String())
+		if err != nil {
+			customErrs[fl.FieldName()] = err
+		}
+		return err == nil
+	})
+	validate.RegisterValidation("urlexist", func(fl validator.FieldLevel) bool {
+		if res, err := http.Head(fl.Field().String()); err == nil {
+			return res.StatusCode == http.StatusOK
+		}
+		return false
+	})
+	err := validate.Struct(p)
+
+	if err != nil {
+		baseType := reflect.TypeOf(p).Elem().Name()
+		for _, err := range err.(validator.ValidationErrors) {
+			childName := fldPath.Child(err.Namespace()[len(baseType)+1:])
+			switch err.Tag() {
+			case "osimageuri":
+				platformErrs = append(platformErrs, field.Invalid(childName, err.Value(), customErrs[err.Field()].Error()))
+			case "urlexist":
+				platformErrs = append(platformErrs, field.NotFound(childName, err.Value()))
+			}
+		}
+	}
+
+	return platformErrs
+}
+
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -199,16 +237,8 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 	if err := validateIPNotinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapHostIP"), p.BootstrapProvisioningIP, err.Error()))
 	}
-	if p.BootstrapOSImage != "" {
-		if err := validateOSImageURI(p.BootstrapOSImage); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapOSImage"), p.BootstrapOSImage, err.Error()))
-		}
-	}
-	if p.ClusterOSImage != "" {
-		if err := validateOSImageURI(p.ClusterOSImage); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), p.ClusterOSImage, err.Error()))
-		}
-	}
+
+	allErrs = append(allErrs, validateOSImages(p, fldPath)...)
 
 	allErrs = append(allErrs, validateHosts(p.Hosts, fldPath)...)
 
