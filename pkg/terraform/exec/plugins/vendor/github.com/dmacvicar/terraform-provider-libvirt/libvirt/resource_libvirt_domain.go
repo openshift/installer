@@ -491,7 +491,7 @@ func resourceLibvirtDomainCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	if err := setCloudinit(d, &domainDef, virConn, arch); err != nil {
+	if err := setCloudinit(d, &domainDef, virConn); err != nil {
 		return err
 	}
 
@@ -632,12 +632,7 @@ func resourceLibvirtDomainUpdate(d *schema.ResourceData, meta interface{}) error
 			return err
 		}
 
-		arch, err := getHostArchitecture(virConn)
-		if err != nil {
-			return fmt.Errorf("Error retrieving host architecture: %s", err)
-		}
-
-		disk, err := newDiskForCloudInit(virConn, cloudinitID, arch)
+		disk, err := newDiskForCloudInit(virConn, cloudinitID)
 		if err != nil {
 			return err
 		}
