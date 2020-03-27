@@ -14,6 +14,7 @@ func defaultMachinePool(name string) *types.MachinePool {
 		Name:           name,
 		Replicas:       pointer.Int64Ptr(3),
 		Hyperthreading: types.HyperthreadingEnabled,
+		Architecture:   types.ArchitectureAMD64,
 	}
 }
 

@@ -31,6 +31,20 @@ var (
 		}
 		return v
 	}()
+
+	validArchitectures = map[types.Architecture]bool{
+		types.ArchitectureAMD64:   true,
+		types.ArchitectureS390X:   true,
+		types.ArchitecturePPC64LE: true,
+	}
+
+	validArchitectureValues = func() []string {
+		v := make([]string, 0, len(validArchitectures))
+		for m := range validArchitectures {
+			v = append(v, string(m))
+		}
+		return v
+	}()
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
@@ -45,6 +59,9 @@ func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath
 	}
 	if !validHyperthreadingModes[p.Hyperthreading] {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("hyperthreading"), p.Hyperthreading, validHyperthreadingModeValues))
+	}
+	if !validArchitectures[p.Architecture] {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("architecture"), p.Architecture, validArchitectureValues))
 	}
 	allErrs = append(allErrs, validateMachinePoolPlatform(platform, &p.Platform, fldPath.Child("platform"))...)
 	return allErrs

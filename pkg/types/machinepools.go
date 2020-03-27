@@ -20,6 +20,18 @@ const (
 	HyperthreadingDisabled HyperthreadingMode = "Disabled"
 )
 
+// Architecture is the instruction set architecture for the machines in a pool.
+type Architecture string
+
+const (
+	// ArchitectureAMD64 indicates AMD64 (x86_64).
+	ArchitectureAMD64 = "amd64"
+	// ArchitectureS390X indicates s390x (IBM System Z).
+	ArchitectureS390X = "s390x"
+	// ArchitecturePPC64LE indicates ppc64 little endian (Power PC)
+	ArchitecturePPC64LE = "ppc64le"
+)
+
 // MachinePool is a pool of machines to be installed.
 type MachinePool struct {
 	// Name is the name of the machine pool.
@@ -38,6 +50,10 @@ type MachinePool struct {
 	// +optional
 	// Default is for hyperthreading to be enabled.
 	Hyperthreading HyperthreadingMode `json:"hyperthreading,omitempty"`
+
+	// Architecture is the instruction set architecture of the machine pool.
+	// Defaults to amd64.
+	Architecture Architecture `json:"architecture,omitempty"`
 }
 
 // MachinePoolPlatform is the platform-specific configuration for a machine

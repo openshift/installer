@@ -884,6 +884,24 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `Invalid value: "DualStack": dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address`,
 		},
+		{
+			name: "cluster is not heteregenous",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute[0].Architecture = types.ArchitectureS390X
+				return c
+			}(),
+			expectedError: `^compute\[0\].architecture: Invalid value: "s390x": heteregeneous multi-arch is not supported; compute pool architecture must match control plane$`,
+		},
+		{
+			name: "cluster is not heteregenous",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute[0].Architecture = types.ArchitecturePPC64LE
+				return c
+			}(),
+			expectedError: `^compute\[0\].architecture: Invalid value: "ppc64le": heteregeneous multi-arch is not supported; compute pool architecture must match control plane$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
