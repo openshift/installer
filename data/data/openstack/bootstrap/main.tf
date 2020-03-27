@@ -22,6 +22,8 @@ resource "openstack_networking_port_v2" "bootstrap_port" {
   allowed_address_pairs {
     ip_address = var.node_dns_ip
   }
+
+  depends_on = [var.master_port_ids]
 }
 
 data "openstack_compute_flavor_v2" "bootstrap_flavor" {

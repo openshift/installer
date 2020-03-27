@@ -43,4 +43,14 @@ type Platform struct {
 	// the default OS image for cluster nodes, or an existing Glance image name.
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
+
+	// APIVIP is the static IP on the nodes subnet that the api port for openshift will be assigned
+	// Default: will be set to the 5 on the first entry in the machineNetwork CIDR
+	// +optional
+	APIVIP string `json:"apiVIP,omitempty"`
+
+	// IngressVIP is the static IP on the nodes subnet that the apps port for openshift will be assigned
+	// Default: will be set to the 7 on the first entry in the machineNewtwork CIDR
+	// +optional
+	IngressVIP string `json:"ingressVIP,omitempty"`
 }

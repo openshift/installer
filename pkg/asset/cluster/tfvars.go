@@ -364,15 +364,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		apiVIP, err := openstackdefaults.APIVIP(installConfig.Config.Networking)
-		if err != nil {
-			return err
-		}
 		dnsVIP, err := openstackdefaults.DNSVIP(installConfig.Config.Networking)
-		if err != nil {
-			return err
-		}
-		ingressVIP, err := openstackdefaults.IngressVIP(installConfig.Config.Networking)
 		if err != nil {
 			return err
 		}
@@ -382,9 +374,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.OpenStack.ExternalNetwork,
 			installConfig.Config.Platform.OpenStack.ExternalDNS,
 			installConfig.Config.Platform.OpenStack.LbFloatingIP,
-			apiVIP.String(),
+			installConfig.Config.Platform.OpenStack.APIVIP,
 			dnsVIP.String(),
-			ingressVIP.String(),
+			installConfig.Config.Platform.OpenStack.IngressVIP,
 			installConfig.Config.Platform.OpenStack.TrunkSupport,
 			installConfig.Config.Platform.OpenStack.OctaviaSupport,
 			string(*rhcosImage),
