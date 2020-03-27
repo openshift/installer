@@ -143,6 +143,13 @@ func TestValidatePlatform(t *testing.T) {
 				ProvisioningNetworkInterface("").build(),
 			expected: "Invalid value: \"\": no provisioning network interface is configured, please set this value to be the interface on the provisioning network on your cluster's baremetal hosts",
 		},
+
+		{
+			name:     "invalid_provisioning_network_overlapping_CIDR",
+			platform: platform().ProvisioningNetworkCIDR("192.168.111.192/23").build(),
+			expected: "Invalid value: \"192.168.111.192/23\": cannot overlap with machine network: 192.168.111.0/24 overlaps with 192.168.111.192/23",
+		},
+
 		{
 			name: "invalid_clusterprovip_machineCIDR",
 			platform: platform().
