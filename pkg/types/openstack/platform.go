@@ -12,7 +12,8 @@ type AciNetExtStruct struct {
         ProvisionTar            string		`json:"provisionTar,omitempty"`
         NeutronCIDR             *ipnet.IPNet    `json:"neutronCIDR,omitempty"`
         InstallerHostSubnet	string          `json:"installerHostSubnet"`
-	ClusterSNATSubnet       string          `json:"clusterSNATSubnet"`
+	ClusterSNATSubnet       string          `json:"clusterSNATPolicyIP"`
+	ClusterSNATDest         string          `json:"clusterSNATPolicyDestIP"`
 }
 
 // Platform stores all the global configuration that all

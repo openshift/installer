@@ -78,6 +78,18 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 			}	
 		}
 	}
+
+	// Check if snatCR Destination Subnet is a valid subnet or IP
+        if p.AciNetExt.ClusterSNATDest != "" {
+                _, _, err := net.ParseCIDR(p.AciNetExt.ClusterSNATDest)
+                if err != nil {
+                        ip := net.ParseIP(p.AciNetExt.ClusterSNATDest)
+                        if ip == nil {
+                                // error
+                                allErrs = append(allErrs, field.Invalid(fldPath.Child("ClusterSNATDest"), p.AciNetExt.ClusterSNATDest, err.Error()))
+                        }
+                }
+        }
 	return allErrs
 }
 

@@ -136,6 +136,11 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 		if err := snatCRTmpl.Execute(snatData, data); err != nil {
 			return errors.Wrapf(err, "failed to create SNAT CR manifests from InstallConfig")
 		}
+		// add destIP if field present
+		if installConfig.Config.Platform.OpenStack.AciNetExt.ClusterSNATDest != "" {
+			dest := "  destIp:\n    -  " + installConfig.Config.Platform.OpenStack.AciNetExt.ClusterSNATDest + "\n"
+			snatData.WriteString(dest)
+		}
 		snatFile := &asset.File{Filename: noSNATCRFilename, Data: snatData.Bytes()}
 		no.FileList = append(no.FileList, snatFile)
 	}
