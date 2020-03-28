@@ -154,16 +154,16 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 			networkType := netConfig.NetworkType
 			clusterNetworkCIDR := &netConfig.ClusterNetwork[0].CIDR
 			t := types.ClusterConfig03{}
-			err1 := yaml.Unmarshal(b, &t)
-			if err1 != nil {
+			err = yaml.Unmarshal(b, &t)
+			if err != nil {
 				return errors.Wrapf(err, "failed to unmarshal cluster-network-03 from provisionTar")
 			}
 			t.Spec.ClusterNetwork[0].CIDR = clusterNetworkCIDR.String()
 			t.Spec.ClusterNetwork[0].HostPrefix = hostPrefix
 			t.Spec.ServiceNetwork[0] = serviceNetwork
 			t.Spec.DefaultNetwork.Type = networkType
-			b, err1 = yaml.Marshal(&t)
-			if err1 != nil {
+			b, err = yaml.Marshal(&t)
+			if err != nil {
 				return errors.Wrapf(err, "failed to marshal edited cluster-network-03")
 			}
 		}

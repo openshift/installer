@@ -242,7 +242,10 @@ func ExtractTarGz(gzipStream io.Reader) (HostConfigMap, error) {
 
                 switch header.Typeflag {
                 case tar.TypeReg:
-                        temp, _ := ioutil.ReadAll(tarReader)
+                        temp, err := ioutil.ReadAll(tarReader)
+			if err != nil {
+				return config, err
+			}
 
 			// Unmarshal acc configmap to get acc-provision values
                         if strings.Contains(header.Name, "aci-containers-config") {
