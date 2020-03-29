@@ -19,3 +19,17 @@ func Validate(ic *types.InstallConfig) error {
 
 	return allErrs.ToAggregate()
 }
+
+// ValidateForProvisioning performs platform validation specifically for installer-
+// provisioned infrastructure. In this case, self-hosted networking is a requirement
+// when the installer creates infrastructure for vSphere clusters.
+func ValidateForProvisioning(ic *types.InstallConfig) error {
+	allErrs := field.ErrorList{}
+	if ic.Platform.VSphere == nil {
+		return errors.New(field.Required(field.NewPath("platform", "vsphere"), "vSphere validation requires a vSphere platform configuration").Error())
+	}
+
+	allErrs = append(allErrs, validation.ValidateForProvisioning(ic.Platform.VSphere, field.NewPath("platform").Child("vsphere"))...)
+
+	return allErrs.ToAggregate()
+}

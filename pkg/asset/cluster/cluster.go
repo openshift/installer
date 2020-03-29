@@ -36,12 +36,13 @@ func (c *Cluster) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
-		// PlatformCredsCheck checks the creds (and asks, if needed).
-		// PlatformPermsCheck checks for required account permissions.
+		// PlatformCredsCheck, PlatformPermsCheck and PlatformProvisionCheck
+		// perform validations & permis checks required to provision infrastructure.
 		// We do not actually use them in this asset directly, hence
-		// they are put in the dependencies but not fetched in Generate
+		// they are put in the dependencies but not fetched in Generate.
 		&installconfig.PlatformCredsCheck{},
 		&installconfig.PlatformPermsCheck{},
+		&installconfig.PlatformProvisionCheck{},
 		&TerraformVariables{},
 		&password.KubeadminPassword{},
 	}

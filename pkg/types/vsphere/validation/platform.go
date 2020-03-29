@@ -36,6 +36,24 @@ func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 	return allErrs
 }
 
+// ValidateForProvisioning checks that the specified platform is valid.
+func ValidateForProvisioning(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if len(p.Cluster) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("cluster"), "must specify the cluster"))
+	}
+
+	if len(p.Network) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("network"), "must specify the network"))
+	}
+
+	allErrs = append(allErrs, validateVIPs(p, fldPath)...)
+
+	return allErrs
+}
+
+// ValidateVIPs checks that all required VIPs are provided and are valid IP addresses.
 func validateVIPs(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
