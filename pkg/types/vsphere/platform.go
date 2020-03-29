@@ -43,5 +43,5 @@ type Platform struct {
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
 	// Network specifies the name of the network to be used by the cluster.
-	Network string `json:"network,omitempty"` //TODO: determine if this should be omitempty or required
+	Network string `json:"network,omitempty"`
 }
