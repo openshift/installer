@@ -4,13 +4,10 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
-        "gopkg.in/yaml.v2"
 	"io/ioutil"
-        "log"
-        "os"
+	"os"
         "os/exec"
 	"path/filepath"
-        "strconv"
 	"strings"
 	"time"
 
@@ -38,7 +35,6 @@ import (
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	"github.com/openshift/installer/pkg/types/baremetal"
-        types "github.com/openshift/installer/pkg/types/validation"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 )
 
@@ -215,53 +211,6 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 
 			if err != nil {
 				return err
-			}
-                        if a.Name() == "Openshift Manifests" {
-
-				// Append to cluster-network-02 files with status field
-				manifestsDir := "manifests/"
-                                files, err := ioutil.ReadDir(manifestsDir)
-    				if err != nil {
-        				log.Fatal(err)
-   	 			}
-				var cluster02file string
-
-				t := types.ClusterConfig03{}
-    				for _, f := range files {
-					if strings.Contains(f.Name(), "cluster-network-02") {
-						cluster02file = f.Name()
-					}
-    				}
-				cluster02file = manifestsDir + cluster02file
-
-				// Read the cluster-network-02 to get values:
-				yamlFile, err := ioutil.ReadFile(cluster02file)
-    				if err != nil {
-        				log.Printf("yamlFile.Get err   #%v ", err)
-    				}
-   				err = yaml.Unmarshal(yamlFile, &t)
-    				if err != nil {
-        				log.Fatalf("Unmarshal: %v", err)
-    				}
-
-				appendString := "status:\n  clusterNetwork:\n  - cidr: " + t.Spec.ClusterNetwork[0].CIDR +"\n    hostPrefix: " + strconv.Itoa(int(t.Spec.ClusterNetwork[0].HostPrefix)) + "\n  networkType: " + t.Spec.NetworkType + "\n  serviceNetwork:\n  - " + t.Spec.ServiceNetwork[0] + "\n"
-
-				// Delete the last line of 02 file, to delete the empty status
-				cmdOutput, _ := exec.Command("sed", "$d", cluster02file).Output()
-				err = ioutil.WriteFile(cluster02file, cmdOutput, 0644)
-				if err != nil {
-                                        log.Fatalf("failed writing file: %s", err)
-                                }
-
-                                file, err := os.OpenFile(cluster02file, os.O_WRONLY|os.O_APPEND, 0644)
-                                if err != nil {
-                                	log.Fatalf("failed opening file: %s", err)
-                                }
-                                _, err = file.WriteString(appendString)
-                                if err != nil {
-                                        log.Fatalf("failed writing to file: %s", err)
-                                }
-                                file.Close()
 			}
 		}
 		return nil

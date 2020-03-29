@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
-	types "github.com/openshift/installer/pkg/types/validation"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -37,6 +37,21 @@ metadata:
 spec:
   snatIp:
     -  {{.snatIP}}
+`))
+
+var clusterNetwork03Tmpl = template.Must(template.New("cluster03").Parse(`apiVersion: operator.openshift.io/v1
+metadata:
+  creationTimestamp: null
+  name: cluster
+spec:
+  disableMultiNetwork: true
+  clusterNetwork:
+  - cidr: {{.clusterNet}}
+    hostPrefix: {{.hostPrefix}}
+  defaultNetwork:
+    type: {{.netType}}
+  serviceNetwork:
+  - {{.svcNet}}
 `))
 
 // We need to manually create our CRDs first, so we can create the
@@ -113,6 +128,11 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 				Policy: &configv1.ExternalIPPolicy{},
 			},
 		},
+		Status: configv1.NetworkStatus{
+			ClusterNetwork: clusterNet,
+			ServiceNetwork: serviceNet,
+			NetworkType:    netConfig.NetworkType,
+		},
 	}
 
 	configData, err := yaml.Marshal(no.Config)
@@ -149,23 +169,16 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 
 		// Edit cluster-network-03 file with correct fields
 		if strings.Contains(header.Name, "cluster-network-03"){
-			serviceNetwork := netConfig.ServiceNetwork[0].String()
-			hostPrefix := netConfig.ClusterNetwork[0].HostPrefix
-			networkType := netConfig.NetworkType
+			cluster03Data := &bytes.Buffer{}
 			clusterNetworkCIDR := &netConfig.ClusterNetwork[0].CIDR
-			t := types.ClusterConfig03{}
-			err = yaml.Unmarshal(b, &t)
-			if err != nil {
-				return errors.Wrapf(err, "failed to unmarshal cluster-network-03 from provisionTar")
+			data := map[string]string{"clusterNet": clusterNetworkCIDR.String(),
+                		"hostPrefix":  strconv.Itoa(int(netConfig.ClusterNetwork[0].HostPrefix)),
+                		"netType": netConfig.NetworkType, "svcNet": netConfig.ServiceNetwork[0].String()}
+			if err := clusterNetwork03Tmpl.Execute(cluster03Data, data); err != nil {
+				return errors.Wrapf(err, "failed to create cluster-network-03 manifests from InstallConfig")
 			}
-			t.Spec.ClusterNetwork[0].CIDR = clusterNetworkCIDR.String()
-			t.Spec.ClusterNetwork[0].HostPrefix = hostPrefix
-			t.Spec.ServiceNetwork[0] = serviceNetwork
-			t.Spec.DefaultNetwork.Type = networkType
-			b, err = yaml.Marshal(&t)
-			if err != nil {
-				return errors.Wrapf(err, "failed to marshal edited cluster-network-03")
-			}
+			b = cluster03Data.Bytes()
+
 		}
 		tempFile := &asset.File{Filename: filepath.Join(manifestDir, header.Name), Data: b}
 		no.FileList = append(no.FileList, tempFile)
