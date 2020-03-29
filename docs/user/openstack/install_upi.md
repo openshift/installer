@@ -156,11 +156,33 @@ Next step is to create a Glance image.
 
 **NOTE:** *This document* will use `rhcos` as the Glance image name, but it's not mandatory.
 
+**NOTE:** In some examples below we will use the native OpenStack Glance client `glance` to send request to the server, because the common `openstack` client doesn't support all required features at this moment.
+
+To create the image we recommend to use [interoperable image import](https://docs.openstack.org/api-ref/image/v2/index.html#interoperable-image-import) mechanism if it is available and supported. Sometimes `qcow2` disk format might not be the most appropriate depending on the Glance backend. This mechanism allows to automatically convert the image to the desired backend format on the server side, for instance, to `raw` if Glance backend is Ceph.
+
+To check the availability you can execute the command:
+
+```sh
+$ glance import-info
++----------------+----------------------------------------------------------------------------------+
+| Property       | Value                                                                            |
++----------------+----------------------------------------------------------------------------------+
+| import-methods | {"type": "array", "description": "Import methods available.", "value": ["glance- |
+|                | direct", "web-download"]}                                                        |
++----------------+----------------------------------------------------------------------------------+
+```
+
+If `glance-direct` is in the list of availble import methods, then you can begin the import process:
+
+```sh
+$ glance image-create-via-import --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.qcow2 --name rhcos
+```
+
+Otherwise you can use the legacy image creation mechanism:
+
 ```sh
 $ openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.qcow2 rhcos
 ```
-
-**NOTE:** Depending on your OpenStack environment you can upload the RHCOS image as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/introduction.html#disk-and-container-formats-for-images) for more information.
 
 Finally validate that the image was successfully created:
 
