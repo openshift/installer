@@ -8,7 +8,7 @@ if [ "$IS_CONTAINER" != "" ]; then
     -o -path "${TOP_DIR}/tests/bdd-smoke/vendor" -prune \
     -o -path "${TOP_DIR}/tests/smoke/.build" -prune \
     -o -path "${TOP_DIR}/pkg/terraform/exec/plugins/vendor" -prune \
-    -o -type f -name '*.sh' -exec shellcheck --format=gcc {} \+
+    -o -type f \(-name '*.sh' ! -name 'gcp-routes.sh'\) -exec shellcheck --format=gcc {} \+
 else
   podman run --rm \
     --env IS_CONTAINER=TRUE \
