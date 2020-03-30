@@ -30,3 +30,13 @@ Some OpenStack clouds do not set default DNS servers for the newly created subne
 If you are having this problem in the IPI installer, you will need to set the [`externalDNS` property in `install-config.yaml`](./customization.md#cluster-scoped-properties).
 
 Alternatively, for UPI, you will need to [set the subnet DNS resolvers](./install_upi.md#subnet-dns-optional).
+
+# Known Issues specific to User-Provisioned Installations
+
+## Stale resources
+
+The teardown playbooks provided for UPI installation will not delete:
+ - Cinder volumes from PVs
+ - Swift container for image registry (bootstrap container is correctly deleted)
+
+These objects have to be manually removed after running the teardown playbooks.
