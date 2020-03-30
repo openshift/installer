@@ -53,4 +53,10 @@ type Platform struct {
 	// Default: will be set to the 7 on the first entry in the machineNewtwork CIDR
 	// +optional
 	IngressVIP string `json:"ingressVIP,omitempty"`
+
+	// MachinesSubnet is the UUIDv4 of an openstack subnet. This subnet will be used by all nodes created by the installer.
+	// By setting this, the installer will no longer create a network and subnet.
+	// The subnet and network specified in MachinesSubnet will not be deleted or modified by the installer.
+	// +optional
+	MachinesSubnet string `json:"machinesSubnet,omitempty"`
 }

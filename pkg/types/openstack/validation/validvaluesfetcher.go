@@ -16,4 +16,6 @@ type ValidValuesFetcher interface {
 	GetServiceCatalog(cloud string) ([]string, error)
 	// GetFloatingIPNames gets the floating IPs
 	GetFloatingIPNames(cloud string, floatingNetwork string) ([]string, error)
+	// GetSubnetCIDR gets the CIDR of a subnet
+	GetSubnetCIDR(cloud string, subnetID string) (string, error)
 }

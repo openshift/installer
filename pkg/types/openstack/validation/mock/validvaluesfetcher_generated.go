@@ -9,30 +9,30 @@ import (
 	reflect "reflect"
 )
 
-// MockValidValuesFetcher is a mock of ValidValuesFetcher interface
+// MockValidValuesFetcher is a mock of ValidValuesFetcher interface.
 type MockValidValuesFetcher struct {
 	ctrl     *gomock.Controller
 	recorder *MockValidValuesFetcherMockRecorder
 }
 
-// MockValidValuesFetcherMockRecorder is the mock recorder for MockValidValuesFetcher
+// MockValidValuesFetcherMockRecorder is the mock recorder for MockValidValuesFetcher.
 type MockValidValuesFetcherMockRecorder struct {
 	mock *MockValidValuesFetcher
 }
 
-// NewMockValidValuesFetcher creates a new mock instance
+// NewMockValidValuesFetcher creates a new mock instance.
 func NewMockValidValuesFetcher(ctrl *gomock.Controller) *MockValidValuesFetcher {
 	mock := &MockValidValuesFetcher{ctrl: ctrl}
 	mock.recorder = &MockValidValuesFetcherMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockValidValuesFetcher) EXPECT() *MockValidValuesFetcherMockRecorder {
 	return m.recorder
 }
 
-// GetCloudNames mocks base method
+// GetCloudNames mocks base method.
 func (m *MockValidValuesFetcher) GetCloudNames() ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCloudNames")
@@ -41,13 +41,13 @@ func (m *MockValidValuesFetcher) GetCloudNames() ([]string, error) {
 	return ret0, ret1
 }
 
-// GetCloudNames indicates an expected call of GetCloudNames
+// GetCloudNames indicates an expected call of GetCloudNames.
 func (mr *MockValidValuesFetcherMockRecorder) GetCloudNames() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCloudNames", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetCloudNames))
 }
 
-// GetNetworkNames mocks base method
+// GetNetworkNames mocks base method.
 func (m *MockValidValuesFetcher) GetNetworkNames(cloud string) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNetworkNames", cloud)
@@ -56,13 +56,13 @@ func (m *MockValidValuesFetcher) GetNetworkNames(cloud string) ([]string, error)
 	return ret0, ret1
 }
 
-// GetNetworkNames indicates an expected call of GetNetworkNames
+// GetNetworkNames indicates an expected call of GetNetworkNames.
 func (mr *MockValidValuesFetcherMockRecorder) GetNetworkNames(cloud interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetworkNames", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetNetworkNames), cloud)
 }
 
-// GetFlavorNames mocks base method
+// GetFlavorNames mocks base method.
 func (m *MockValidValuesFetcher) GetFlavorNames(cloud string) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetFlavorNames", cloud)
@@ -71,13 +71,13 @@ func (m *MockValidValuesFetcher) GetFlavorNames(cloud string) ([]string, error) 
 	return ret0, ret1
 }
 
-// GetFlavorNames indicates an expected call of GetFlavorNames
+// GetFlavorNames indicates an expected call of GetFlavorNames.
 func (mr *MockValidValuesFetcherMockRecorder) GetFlavorNames(cloud interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFlavorNames", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetFlavorNames), cloud)
 }
 
-// GetNetworkExtensionsAliases mocks base method
+// GetNetworkExtensionsAliases mocks base method.
 func (m *MockValidValuesFetcher) GetNetworkExtensionsAliases(cloud string) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNetworkExtensionsAliases", cloud)
@@ -86,13 +86,13 @@ func (m *MockValidValuesFetcher) GetNetworkExtensionsAliases(cloud string) ([]st
 	return ret0, ret1
 }
 
-// GetNetworkExtensionsAliases indicates an expected call of GetNetworkExtensionsAliases
+// GetNetworkExtensionsAliases indicates an expected call of GetNetworkExtensionsAliases.
 func (mr *MockValidValuesFetcherMockRecorder) GetNetworkExtensionsAliases(cloud interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetworkExtensionsAliases", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetNetworkExtensionsAliases), cloud)
 }
 
-// GetServiceCatalog mocks base method
+// GetServiceCatalog mocks base method.
 func (m *MockValidValuesFetcher) GetServiceCatalog(cloud string) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetServiceCatalog", cloud)
@@ -101,13 +101,13 @@ func (m *MockValidValuesFetcher) GetServiceCatalog(cloud string) ([]string, erro
 	return ret0, ret1
 }
 
-// GetServiceCatalog indicates an expected call of GetServiceCatalog
+// GetServiceCatalog indicates an expected call of GetServiceCatalog.
 func (mr *MockValidValuesFetcherMockRecorder) GetServiceCatalog(cloud interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceCatalog", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetServiceCatalog), cloud)
 }
 
-// GetFloatingIPNames mocks base method
+// GetFloatingIPNames mocks base method.
 func (m *MockValidValuesFetcher) GetFloatingIPNames(cloud, floatingNetwork string) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetFloatingIPNames", cloud, floatingNetwork)
@@ -116,8 +116,23 @@ func (m *MockValidValuesFetcher) GetFloatingIPNames(cloud, floatingNetwork strin
 	return ret0, ret1
 }
 
-// GetFloatingIPNames indicates an expected call of GetFloatingIPNames
+// GetFloatingIPNames indicates an expected call of GetFloatingIPNames.
 func (mr *MockValidValuesFetcherMockRecorder) GetFloatingIPNames(cloud, floatingNetwork interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFloatingIPNames", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetFloatingIPNames), cloud, floatingNetwork)
+}
+
+// GetSubnetCIDR mocks base method.
+func (m *MockValidValuesFetcher) GetSubnetCIDR(cloud, subnetID string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSubnetCIDR", cloud, subnetID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSubnetCIDR indicates an expected call of GetSubnetCIDR.
+func (mr *MockValidValuesFetcherMockRecorder) GetSubnetCIDR(cloud, subnetID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnetCIDR", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetSubnetCIDR), cloud, subnetID)
 }

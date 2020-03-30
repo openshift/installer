@@ -76,6 +76,8 @@ module "topology" {
   external_dns        = var.openstack_external_dns
   trunk_support       = var.openstack_trunk_support
   octavia_support     = var.openstack_octavia_support
+  machines_subnet_id  = var.openstack_machines_subnet_id
+  machines_network_id = var.openstack_machines_network_id
 }
 
 data "openstack_images_image_v2" "base_image" {

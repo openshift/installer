@@ -1,5 +1,7 @@
 locals {
   nodes_cidr_block = var.cidr_block
+  nodes_subnet_id  = var.machines_subnet_id != "" ? var.machines_subnet_id : openstack_networking_subnet_v2.nodes[0].id
+  nodes_network_id = var.machines_network_id != "" ? var.machines_network_id : openstack_networking_network_v2.openshift-private[0].id
 }
 
 data "openstack_networking_network_v2" "external_network" {
@@ -9,16 +11,18 @@ data "openstack_networking_network_v2" "external_network" {
 }
 
 resource "openstack_networking_network_v2" "openshift-private" {
+  count          = var.machines_subnet_id == "" ? 1 : 0
   name           = "${var.cluster_id}-openshift"
   admin_state_up = "true"
   tags           = ["openshiftClusterID=${var.cluster_id}"]
 }
 
 resource "openstack_networking_subnet_v2" "nodes" {
+  count           = var.machines_subnet_id == "" ? 1 : 0
   name            = "${var.cluster_id}-nodes"
   cidr            = local.nodes_cidr_block
   ip_version      = 4
-  network_id      = openstack_networking_network_v2.openshift-private.id
+  network_id      = local.nodes_network_id
   tags            = ["openshiftClusterID=${var.cluster_id}"]
   dns_nameservers = var.external_dns
 
@@ -38,7 +42,7 @@ resource "openstack_networking_port_v2" "masters" {
   count = var.masters_count
 
   admin_state_up     = "true"
-  network_id         = openstack_networking_network_v2.openshift-private.id
+  network_id         = local.nodes_network_id
   security_group_ids = [openstack_networking_secgroup_v2.master.id]
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
@@ -48,7 +52,7 @@ resource "openstack_networking_port_v2" "masters" {
   }
 
   fixed_ip {
-    subnet_id = openstack_networking_subnet_v2.nodes.id
+    subnet_id = local.nodes_subnet_id
   }
 
   allowed_address_pairs {
@@ -70,12 +74,12 @@ resource "openstack_networking_port_v2" "api_port" {
   name = "${var.cluster_id}-api-port"
 
   admin_state_up     = "true"
-  network_id         = openstack_networking_network_v2.openshift-private.id
+  network_id         = local.nodes_network_id
   security_group_ids = [openstack_networking_secgroup_v2.master.id]
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
   fixed_ip {
-    subnet_id  = openstack_networking_subnet_v2.nodes.id
+    subnet_id  = local.nodes_subnet_id
     ip_address = var.api_int_ip
   }
 }
@@ -84,12 +88,12 @@ resource "openstack_networking_port_v2" "ingress_port" {
   name = "${var.cluster_id}-ingress-port"
 
   admin_state_up     = "true"
-  network_id         = openstack_networking_network_v2.openshift-private.id
+  network_id         = local.nodes_network_id
   security_group_ids = [openstack_networking_secgroup_v2.worker.id]
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
   fixed_ip {
-    subnet_id  = openstack_networking_subnet_v2.nodes.id
+    subnet_id  = local.nodes_subnet_id
     ip_address = var.ingress_ip
   }
 }
@@ -123,6 +127,7 @@ resource "openstack_networking_floatingip_associate_v2" "api_fip" {
   count       = length(var.lb_floating_ip) == 0 ? 0 : 1
   port_id     = openstack_networking_port_v2.api_port.id
   floating_ip = var.lb_floating_ip
+  depends_on  = [openstack_networking_router_interface_v2.nodes_router_interface]
 }
 
 resource "openstack_networking_router_v2" "openshift-external-router" {
@@ -134,6 +139,5 @@ resource "openstack_networking_router_v2" "openshift-external-router" {
 
 resource "openstack_networking_router_interface_v2" "nodes_router_interface" {
   router_id = openstack_networking_router_v2.openshift-external-router.id
-  subnet_id = openstack_networking_subnet_v2.nodes.id
+  subnet_id = local.nodes_subnet_id
 }
-

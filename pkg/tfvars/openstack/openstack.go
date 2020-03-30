@@ -11,6 +11,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
@@ -38,10 +39,12 @@ type config struct {
 	MasterServerGroupID        string   `json:"openstack_master_server_group_id,omitempty"`
 	AdditionalNetworkIDs       []string `json:"openstack_additional_network_ids,omitempty"`
 	AdditionalSecurityGroupIDs []string `json:"openstack_master_extra_sg_ids,omitempty"`
+	MachinesSubnet             string   `json:"openstack_machines_subnet_id,omitempty"`
+	MachinesNetwork            string   `json:"openstack_machines_network_id,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string, baseImage string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool) ([]byte, error) {
+func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, lbFloatingIP string, apiVIP string, dnsVIP string, ingressVIP string, trunkSupport string, octaviaSupport string, baseImage string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool, machinesSubnet string) ([]byte, error) {
 
 	cfg := &config{
 		ExternalNetwork: externalNetwork,
@@ -54,6 +57,7 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		ExternalDNS:     externalDNS,
 		TrunkSupport:    trunkSupport,
 		OctaviaSupport:  octaviaSupport,
+		MachinesSubnet:  machinesSubnet,
 	}
 
 	// Normally baseImage contains a URL that we will use to create a new Glance image, but for testing
@@ -140,6 +144,13 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 	if mpool.AdditionalSecurityGroupIDs != nil {
 		for _, sgID := range mpool.AdditionalSecurityGroupIDs {
 			cfg.AdditionalSecurityGroupIDs = append(cfg.AdditionalSecurityGroupIDs, sgID)
+		}
+	}
+
+	if machinesSubnet != "" {
+		cfg.MachinesNetwork, err = getNetworkFromSubnet(cloud, machinesSubnet)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -234,4 +245,23 @@ func getServiceCatalog(cloud string) (*tokens.ServiceCatalog, error) {
 	}
 
 	return serviceCatalog, nil
+}
+
+// getNetworkFromSubnet looks up a subnet in openstack and returns the ID of the network it's a part of
+func getNetworkFromSubnet(cloud string, subnetID string) (string, error) {
+	opts := &clientconfig.ClientOpts{
+		Cloud: cloud,
+	}
+
+	networkClient, err := clientconfig.NewServiceClient("network", opts)
+	if err != nil {
+		return "", err
+	}
+
+	subnet, err := subnets.Get(networkClient, subnetID).Extract()
+	if err != nil {
+		return "", err
+	}
+
+	return subnet.NetworkID, nil
 }

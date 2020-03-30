@@ -86,17 +86,22 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 }
 
 func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunk string) *openstackprovider.OpenstackProviderSpec {
-	networks := []openstackprovider.NetworkParam{
-		{
-			Subnets: []openstackprovider.SubnetParam{
-				{
-					Filter: openstackprovider.SubnetFilter{
-						Name: fmt.Sprintf("%s-nodes", clusterID),
-						Tags: fmt.Sprintf("%s=%s", "openshiftClusterID", clusterID),
-					},
-				},
-			},
-		},
+	var networks []openstackprovider.NetworkParam
+	if platform.MachinesSubnet != "" {
+		networks = []openstackprovider.NetworkParam{{
+			Subnets: []openstackprovider.SubnetParam{{
+				UUID: platform.MachinesSubnet,
+			}}},
+		}
+	} else {
+		networks = []openstackprovider.NetworkParam{{
+			Subnets: []openstackprovider.SubnetParam{{
+				Filter: openstackprovider.SubnetFilter{
+					Name: fmt.Sprintf("%s-nodes", clusterID),
+					Tags: fmt.Sprintf("%s=%s", "openshiftClusterID", clusterID),
+				}},
+			}},
+		}
 	}
 	for _, networkID := range mpool.AdditionalNetworkIDs {
 		networks = append(networks, openstackprovider.NetworkParam{
