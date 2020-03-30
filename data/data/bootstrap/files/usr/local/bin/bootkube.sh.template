@@ -374,6 +374,7 @@ then
 		${CLOUD_CREDENTIAL_OPERATOR_IMAGE} \
 		render \
 			--dest-dir=/assets/cco-bootstrap \
+			--manifests-dir=/assets/manifests \
 			--cloud-credential-operator-image=${CLOUD_CREDENTIAL_OPERATOR_IMAGE}
 
 	cp cco-bootstrap/manifests/* manifests/
