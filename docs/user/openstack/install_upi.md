@@ -410,185 +410,11 @@ Make sure your shell session has the `$INFRA_ID` environment variable set when y
 
 ### Bootstrap Ignition
 
-The generated boostrap ignition file (`bootstrap.ign`) tends to be quite large (around 300KB -- it contains all the manifests, master and worker ignitions etc.). This is generally too big to be passed to the server directly (the OpenStack Nova user data limit is 64KB).
-
-To boot it up, we will create a smaller Ignition file that will be passed to Nova as user data and that will download the main ignition file upon execution.
-
-The main file needs to be uploaded to an HTTP(S) location the Bootstrap node will be able to access.
-
-You are free to choose any storage you want. For example:
-
-* Swift Object Storage
-  Create the `<container_name>` container and upload the `bootstrap.ign` file:
-
-  ```sh
-  $ swift upload <container_name> bootstrap.ign
-  ```
-
-  Make the container accessible:
-
-  ```sh
-  $ swift post <container_name> --read-acl ".r:*,.rlistings"
-  ```
-
-  Get the `storage_url` from the output:
-
-  ```sh
-  $ swift stat -v
-  ```
-
-* Glance image service
-
-  Create the `<image_name>` image and upload the `bootstrap.ign` file:
-
-  ```sh
-  $ openstack image create --disk-format=raw --container-format=bare --file bootstrap.ign <image_name>
-  ```
-
-  **NOTE**: Make sure the created image has `active` status.
-
-  Copy and save `file` value of the output, it should look like `/v2/images/<image_id>/file`.
-
-  Get Glance public URL:
-
-  ```sh
-  $ openstack catalog show image
-  ```
-
-  Combine the public URL with the `file` value from the previous step to get the link to your bootstrap ignition.
-  Example of the link: `https://public.glance.example.com:9292/v2/images/b7e2b84e-15cf-440a-a113-3197518da024/file`.
-
-* Amazon S3
-
-* Internal HTTP server inside your organisation
-
-* A short-lived Nova server in `$INFRA_ID-nodes` hosting the file for bootstrapping
-
-In this guide, we will assume the file is at the following URL:
-
-https://static.example.com/bootstrap.ign
-
-**NOTE**: In case the Swift object storage option was chosen the URL will have the following format: `<storage_url>/<container_name>/bootstrap.ign`. For Glance it is `<glance_public_url>/v2/images/<image_id>/file`.
-
-**IMPORTANT**: The `bootstrap.ign` contains sensitive information such as your `clouds.yaml` credentials and TLS certificates. It should **not** be accessible by the public! It will only be used once during the Nova boot of the Bootstrap server. We strongly recommend you restrict the access to that server only and delete the file afterwards.
-
-### Bootstrap Ignition Shim
-
-As mentioned before due to Nova user data size limit, we will need to create a new Ignition file that will load the bulk of the Bootstrap node configuration. This will be similar to the existing `master.ign` and `worker.ign` files.
-
-Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`) with the following contents:
-
-```json
-{
-  "ignition": {
-    "config": {
-      "append": [
-        {
-          "source": "https://static.example.com/bootstrap.ign",
-          "verification": {},
-          "httpHeaders": []
-        }
-      ]
-    },
-    "security": {},
-    "timeouts": {},
-    "version": "2.4.0"
-  },
-  "networkd": {},
-  "passwd": {},
-  "storage": {},
-  "systemd": {}
-}
-```
-
-Change the `ignition.config.append.source` field to the URL hosting the `bootstrap.ign` file you've uploaded previously.
-
-#### Ignition file served by server using self-signed certificate
-
-In order for the bootstrap node to retrieve the ignition file when it is served by a server using self-signed certificate, it is necessary to add the CA certificate to the `ignition.security.tls.certificateAuthorities` in the ignition file. For instance:
-
-```json
-{
-  "ignition": {
-    "config": {},
-    "security": {
-      "tls": {
-        "certificateAuthorities": [
-          {
-            "source": "data:text/plain;charset=utf-8;base64,<base64_encoded_certificate>",
-            "verification": {}
-          }
-        ]
-      }
-    },
-    "timeouts": {},
-    "version": "2.4.0"
-  },
-  "networkd": {},
-  "passwd": {},
-  "storage": {},
-  "systemd": {}
-}
-```
-
-#### Glance Authentication
-
-By default Glance service doesn't allow anonymous access to the data. So, if you use Glance to store the ignition config, then you also need to provide a valid auth token in the `ignition.config.append.httpHeaders` field.
-
-To obtain the token execute:
-
-```sh
-openstack token issue -c id -f value
-```
-
-Add a new entity to the list of http headers:
-
-```json
-{
-  "httpHeaders": [
-    {
-      "name": "X-Auth-Token",
-      "value": "<token_id>"
-    }
-  ]
-}
-```
-
-The result shim config should look like:
-
-```json
-{
-  "ignition": {
-    "config": {
-      "append": [
-        {
-          "source": "https://public.glance.example.com:9292/v2/images/b7e2b84e-15cf-440a-a113-3197518da024/file",
-          "verification": {},
-          "httpHeaders": [
-            {
-              "name": "X-Auth-Token",
-              "value": "46b30a6a00d654f4af0fc5bb8b8413f1"
-            }
-          ]
-        }
-      ]
-    },
-    "security": {},
-    "timeouts": {},
-    "version": "2.4.0"
-  },
-  "networkd": {},
-  "passwd": {},
-  "storage": {},
-  "systemd": {}
-}
-```
-
-### Update Bootstrap Ignition
+### Edit the Bootstrap Ignition
 
 We need to set the bootstrap hostname explicitly, and in the case of OpenStack using self-signed certificate, the CA cert file. The IPI installer does this automatically, but for now UPI does not.
 
-We will update the ignition to create the following files:
+We will update the ignition file (`bootstrap.ign`) to create the following files:
 
 **`/etc/hostname`**:
 
@@ -651,6 +477,182 @@ with open('bootstrap.ign', 'w') as f:
 ```
 
 Feel free to make any other changes.
+
+### Upload the Boostrap Ignition
+
+The generated boostrap ignition file tends to be quite large (around 300KB -- it contains all the manifests, master and worker ignitions etc.). This is generally too big to be passed to the server directly (the OpenStack Nova user data limit is 64KB).
+
+To boot it up, we will create a smaller Ignition file that will be passed to Nova as user data and that will download the main ignition file upon execution.
+
+The main file needs to be uploaded to an HTTP(S) location the Bootstrap node will be able to access.
+
+You are free to choose any storage you want. For example:
+
+* Swift Object Storage
+  Create the `<container_name>` container and upload the `bootstrap.ign` file:
+
+  ```sh
+  $ swift upload <container_name> bootstrap.ign
+  ```
+
+  Make the container accessible:
+
+  ```sh
+  $ swift post <container_name> --read-acl ".r:*,.rlistings"
+  ```
+
+  Get the `storage_url` from the output:
+
+  ```sh
+  $ swift stat -v
+  ```
+
+* Glance image service
+
+  Create the `<image_name>` image and upload the `bootstrap.ign` file:
+
+  ```sh
+  $ openstack image create --disk-format=raw --container-format=bare --file bootstrap.ign <image_name>
+  ```
+
+  **NOTE**: Make sure the created image has `active` status.
+
+  Copy and save `file` value of the output, it should look like `/v2/images/<image_id>/file`.
+
+  Get Glance public URL:
+
+  ```sh
+  $ openstack catalog show image
+  ```
+
+  Combine the public URL with the `file` value from the previous step to get the link to your bootstrap ignition.
+  Example of the link: `https://public.glance.example.com:9292/v2/images/b7e2b84e-15cf-440a-a113-3197518da024/file`.
+
+* Amazon S3
+
+* Internal HTTP server inside your organisation
+
+* A short-lived Nova server in `$INFRA_ID-nodes` hosting the file for bootstrapping
+
+In this guide, we will assume the file is at the following URL:
+
+https://static.example.com/bootstrap.ign
+
+**NOTE**: In case the Swift object storage option was chosen the URL will have the following format: `<storage_url>/<container_name>/bootstrap.ign`. For Glance it is `<glance_public_url>/v2/images/<image_id>/file`.
+
+**IMPORTANT**: The `bootstrap.ign` contains sensitive information such as your `clouds.yaml` credentials and TLS certificates. It should **not** be accessible by the public! It will only be used once during the Nova boot of the Bootstrap server. We strongly recommend you restrict the access to that server only and delete the file afterwards.
+
+#### Glance Authentication (if Bootstrap Ignition was uploaded to Glance)
+
+By default Glance service doesn't allow anonymous access to the data. So, if you use Glance to store the ignition config, then you also need to provide a valid auth token in the `ignition.config.append.httpHeaders` field.
+
+To obtain the token execute:
+
+```sh
+openstack token issue -c id -f value
+```
+
+Add a new entity to the list of http headers:
+
+```json
+{
+  "httpHeaders": [
+    {
+      "name": "X-Auth-Token",
+      "value": "<token_id>"
+    }
+  ]
+}
+```
+
+The result shim config should look like:
+
+```json
+{
+  "ignition": {
+    "config": {
+      "append": [
+        {
+          "source": "https://public.glance.example.com:9292/v2/images/b7e2b84e-15cf-440a-a113-3197518da024/file",
+          "verification": {},
+          "httpHeaders": [
+            {
+              "name": "X-Auth-Token",
+              "value": "46b30a6a00d654f4af0fc5bb8b8413f1"
+            }
+          ]
+        }
+      ]
+    },
+    "security": {},
+    "timeouts": {},
+    "version": "2.4.0"
+  },
+  "networkd": {},
+  "passwd": {},
+  "storage": {},
+  "systemd": {}
+}
+```
+
+### Create the Bootstrap Ignition Shim
+
+As mentioned before due to Nova user data size limit, we will need to create a new Ignition file that will load the bulk of the Bootstrap node configuration. This will be similar to the existing `master.ign` and `worker.ign` files.
+
+Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`) with the following contents:
+
+```json
+{
+  "ignition": {
+    "config": {
+      "append": [
+        {
+          "source": "https://static.example.com/bootstrap.ign",
+          "verification": {},
+          "httpHeaders": []
+        }
+      ]
+    },
+    "security": {},
+    "timeouts": {},
+    "version": "2.4.0"
+  },
+  "networkd": {},
+  "passwd": {},
+  "storage": {},
+  "systemd": {}
+}
+```
+
+Change the `ignition.config.append.source` field to the URL hosting the `bootstrap.ign` file you've uploaded previously.
+
+#### Ignition file served by server using self-signed certificate
+
+In order for the bootstrap node to retrieve the ignition file when it is served by a server using self-signed certificate, it is necessary to add the CA certificate to the `ignition.security.tls.certificateAuthorities` in the ignition file. For instance:
+
+```json
+{
+  "ignition": {
+    "config": {},
+    "security": {
+      "tls": {
+        "certificateAuthorities": [
+          {
+            "source": "data:text/plain;charset=utf-8;base64,<base64_encoded_certificate>",
+            "verification": {}
+          }
+        ]
+      }
+    },
+    "timeouts": {},
+    "version": "2.4.0"
+  },
+  "networkd": {},
+  "passwd": {},
+  "storage": {},
+  "systemd": {}
+}
+```
 
 ### Master Ignition
 
