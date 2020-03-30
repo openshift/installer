@@ -32,7 +32,6 @@ of this method of installation.
 * [Ignition Config](#ignition-config)
   * [Infra ID](#infra-id)
   * [Bootstrap Ignition](#bootstrap-ignition)
-    * [Glance Authentication](#glance-authentication)
   * [Master Ignition](#master-ignition)
 * [Network Topology](#network-topology)
   * [Security Groups](#security-groups)
@@ -94,9 +93,9 @@ This repository contains [Ansible playbooks][ansible-upi] to deploy OpenShift on
 * Python
 * Ansible
 * Python modules required in the playbooks. Namely:
+  * openstackclient
   * openstacksdk
   * netaddr
-  * openstackclient
 
 ### RHEL
 
@@ -235,7 +234,6 @@ $ tree
 The installer added a default IP range for the OpenShift nodes. It must match the range for the Neutron subnet you'll create later on.
 
 We're going to use a custom subnet to illustrate how that can be done.
-
 
 Our range will be `192.0.2.0/24` so we need to add that value to
 `install-config.yaml`. Look under `networking` -> `machineNetwork` -> network -> `cidr`.
@@ -413,7 +411,7 @@ Make sure your shell session has the `$INFRA_ID` environment variable set when y
 
 ### Bootstrap Ignition
 
-### Edit the Bootstrap Ignition
+#### Edit the Bootstrap Ignition
 
 We need to set the bootstrap hostname explicitly, and in the case of OpenStack using self-signed certificate, the CA cert file. The IPI installer does this automatically, but for now UPI does not.
 
@@ -481,7 +479,7 @@ with open('bootstrap.ign', 'w') as f:
 
 Feel free to make any other changes.
 
-### Upload the Boostrap Ignition
+#### Upload the Boostrap Ignition
 
 The generated boostrap ignition file tends to be quite large (around 300KB -- it contains all the manifests, master and worker ignitions etc.). This is generally too big to be passed to the server directly (the OpenStack Nova user data limit is 64KB).
 
@@ -489,63 +487,63 @@ To boot it up, we will create a smaller Ignition file that will be passed to Nov
 
 The main file needs to be uploaded to an HTTP(S) location the Bootstrap node will be able to access.
 
-You are free to choose any storage you want. For example:
+Choose the storage that best fits your needs and availability.
 
-* Swift Object Storage
-  Create the `<container_name>` container and upload the `bootstrap.ign` file:
+**IMPORTANT**: The `bootstrap.ign` contains sensitive information such as your `clouds.yaml` credentials. It should not be accessible by the public! It will only be used once during the Nova boot of the Bootstrap server. We strongly recommend you restrict the access to that server only and delete the file afterwards.
 
-  ```sh
-  $ swift upload <container_name> bootstrap.ign
-  ```
+Possible choices include:
 
-  Make the container accessible:
-
-  ```sh
-  $ swift post <container_name> --read-acl ".r:*,.rlistings"
-  ```
-
-  Get the `storage_url` from the output:
-
-  ```sh
-  $ swift stat -v
-  ```
-
-* Glance image service
-
-  Create the `<image_name>` image and upload the `bootstrap.ign` file:
-
-  ```sh
-  $ openstack image create --disk-format=raw --container-format=bare --file bootstrap.ign <image_name>
-  ```
-
-  **NOTE**: Make sure the created image has `active` status.
-
-  Copy and save `file` value of the output, it should look like `/v2/images/<image_id>/file`.
-
-  Get Glance public URL:
-
-  ```sh
-  $ openstack catalog show image
-  ```
-
-  Combine the public URL with the `file` value from the previous step to get the link to your bootstrap ignition.
-  Example of the link: `https://public.glance.example.com:9292/v2/images/b7e2b84e-15cf-440a-a113-3197518da024/file`.
-
-* Amazon S3
-
-* Internal HTTP server inside your organisation
-
-* A short-lived Nova server in `$INFRA_ID-nodes` hosting the file for bootstrapping
+* Swift (see Example 1 below);
+* Glance (see Example 2 below);
+* Amazon S3;
+* Internal web server inside your organisation;
+* A throwaway Nova server in `$INFRA_ID-nodes` hosting a static web server exposing the file.
 
 In this guide, we will assume the file is at the following URL:
 
 https://static.example.com/bootstrap.ign
 
-**NOTE**: In case the Swift object storage option was chosen the URL will have the following format: `<storage_url>/<container_name>/bootstrap.ign`. For Glance it is `<glance_public_url>/v2/images/<image_id>/file`.
+##### Example 1: Swift
 
-**IMPORTANT**: The `bootstrap.ign` contains sensitive information such as your `clouds.yaml` credentials and TLS certificates. It should **not** be accessible by the public! It will only be used once during the Nova boot of the Bootstrap server. We strongly recommend you restrict the access to that server only and delete the file afterwards.
+The `swift` client is needed for enabling listing on the container.
 
-#### Glance Authentication (if Bootstrap Ignition was uploaded to Glance)
+Create the `<container_name>` container and upload the `bootstrap.ign` file:
+
+```sh
+$ swift upload <container_name> bootstrap.ign
+```
+
+Make the container accessible:
+
+```sh
+$ swift post <container_name> --read-acl ".r:*,.rlistings"
+```
+
+Get the `storage_url` from the output:
+
+```sh
+$ swift stat -v
+```
+
+The URL to be put in the `source` property of the Ignition Shim (see below) will have the following format: `<storage_url>/<container_name>/bootstrap.ign`.
+
+##### Example 2: Glance image service
+
+Create the `<image_name>` image and upload the `bootstrap.ign` file:
+
+```sh
+$ openstack image create --disk-format=raw --container-format=bare --file bootstrap.ign <image_name>
+```
+
+**NOTE**: Make sure the created image has `active` status.
+
+Copy and save `file` value of the output, it should look like `/v2/images/<image_id>/file`.
+
+Get Glance public URL:
+
+```sh
+$ openstack catalog show image
+```
 
 By default Glance service doesn't allow anonymous access to the data. So, if you use Glance to store the ignition config, then you also need to provide a valid auth token in the `ignition.config.append.httpHeaders` field.
 
@@ -555,48 +553,20 @@ To obtain the token execute:
 openstack token issue -c id -f value
 ```
 
-Add a new entity to the list of http headers:
+The command will return the token to be added to the `ignition.config.append[0].httpHeaders` property in the Bootstrap Ignition Shim (see [below](#create-the-bootstrap-ignition-shim)):
 
 ```json
-{
-  "httpHeaders": [
-    {
-      "name": "X-Auth-Token",
-      "value": "<token_id>"
-    }
-  ]
-}
+"httpHeaders": [
+	{
+		"name": "X-Auth-Token",
+		"value": "<token>"
+	}
+]
 ```
 
-The result shim config should look like:
+Combine the public URL with the `file` value to get the link to your bootstrap ignition, in the format `<glance_public_url>/v2/images/<image_id>/file`.
 
-```json
-{
-  "ignition": {
-    "config": {
-      "append": [
-        {
-          "source": "https://public.glance.example.com:9292/v2/images/b7e2b84e-15cf-440a-a113-3197518da024/file",
-          "verification": {},
-          "httpHeaders": [
-            {
-              "name": "X-Auth-Token",
-              "value": "46b30a6a00d654f4af0fc5bb8b8413f1"
-            }
-          ]
-        }
-      ]
-    },
-    "security": {},
-    "timeouts": {},
-    "version": "2.4.0"
-  },
-  "networkd": {},
-  "passwd": {},
-  "storage": {},
-  "systemd": {}
-}
-```
+Example of the link to be put in the `source` property of the Ignition Shim (see below): `https://public.glance.example.com:9292/v2/images/b7e2b84e-15cf-440a-a113-3197518da024/file`.
 
 ### Create the Bootstrap Ignition Shim
 
@@ -820,7 +790,6 @@ $ ansible-playbook -i inventory.yaml 05_compute-nodes.yaml
 ```
 
 This process is similar to the masters, but the workers need to be approved before they're allowed to join the cluster.
-
 
 The workers need no ignition override.
 
