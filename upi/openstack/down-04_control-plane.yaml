@@ -1,6 +1,7 @@
 # Required Python packages:
 #
 # ansible
+# openstackclient
 # openstacksdk
 
 - import_playbook: common.yaml
@@ -15,12 +16,19 @@
       state: absent
     with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
 
-  - name: 'Remove the Control Plane trunks'
-    os_trunk:
-      name: "{{ item.1 }}-{{ item.0 }}"
-      state: absent
-    with_indexed_items: "{{ [os_cp_trunk_name] * os_cp_nodes_number }}"
+  - name: 'List the Compute trunks'
+    command:
+      cmd: "openstack network trunk list -c Name -f value"
     when: os_networking_type == "Kuryr"
+    register: trunks
+
+  - name: 'Remove the Control Plane trunks'
+    command:
+      cmd: "openstack network trunk delete {{ item.1 }}-{{ item.0 }}"
+    when:
+    - os_networking_type == "Kuryr"
+    - (item.1|string + '-' + item.0|string) in trunks.stdout_lines|list
+    with_indexed_items: "{{ [os_cp_trunk_name] * os_cp_nodes_number }}"
 
   - name: 'Remove the Control Plane ports'
     os_port:

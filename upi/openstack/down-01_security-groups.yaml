@@ -1,6 +1,7 @@
 # Required Python packages:
 #
 # ansible
+# openstackclient
 # openstacksdk
 
 - import_playbook: common.yaml
@@ -9,7 +10,12 @@
   gather_facts: no
 
   tasks:
+  - name: 'List security groups'
+    command:
+      cmd: "openstack security group list --tags {{ cluster_id_tag }} -f value -c Name"
+    register: security_groups
+
   - name: 'Remove the cluster security groups'
-    os_delete_network_resources:
-      resource: "security_group"
-      tags: "{{ [cluster_id_tag] }}"
+    command:
+      cmd: "openstack security group delete {{ item.1 }}"
+    with_indexed_items: "{{ security_groups.stdout_lines }}"

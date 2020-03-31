@@ -18,11 +18,9 @@ all:
       svc_subnet_range: '172.30.0.0/16'
       os_svc_network_range: '172.30.0.0/15'
       # Subnet pool prefixes
-      cluster_network_cidrs: ['10.128.0.0/14']
+      cluster_network_cidrs: '10.128.0.0/14'
       # Subnet pool prefix length
       host_prefix: '23'
-
-      os_region_name: ''
       # Name of the SDN.
       # Possible values are OpenshiftSDN or Kuryr.
       os_networking_type: 'OpenshiftSDN'
