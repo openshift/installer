@@ -1,6 +1,7 @@
 # Required Python packages:
 #
 # ansible
+# openstackclient
 # openstacksdk
 # netaddr
 
@@ -21,10 +22,8 @@
       - ip_address: "{{ os_subnet_range | next_nth_usable(6) }}"
 
   - name: 'Set bootstrap port tag'
-    os_tag:
-      resource: "port"
-      name: "{{ os_port_bootstrap }}"
-      tags: "{{ [cluster_id_tag] }}"
+    command:
+      cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_bootstrap }}"
 
   - name: 'Create the bootstrap server'
     os_server:
