@@ -54,7 +54,7 @@ func uploadBaseImage(cloud string, localFilePath string, imageName string, clust
 
 	if useImageImport {
 		logrus.Debugf("Using Image Import API to upload RHCOS to the image %q with ID %q", img.Name, img.ID)
-		stageRes := imagedata.Stage(conn, img.ID, f)
+		stageRes := imagedata.Stage(conn, img.ID, f).ExtractErr()
 		if stageRes.Err != nil {
 			return err
 		}
@@ -64,7 +64,7 @@ func uploadBaseImage(cloud string, localFilePath string, imageName string, clust
 		co := imageimport.CreateOpts{
 			Name: imageimport.GlanceDirectMethod,
 		}
-		importRes := imageimport.Create(conn, img.ID, co)
+		importRes := imageimport.Create(conn, img.ID, co).ExtractErr()
 		if importRes.Err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ func uploadBaseImage(cloud string, localFilePath string, imageName string, clust
 	} else {
 		// Use classic legacy upload that doesn't support image conversion
 		logrus.Debugf("Using legacy API to upload RHCOS to the image %q with ID %q", img.Name, img.ID)
-		res := imagedata.Upload(conn, img.ID, f)
+		res := imagedata.Upload(conn, img.ID, f).ExtractErr()
 		if res.Err != nil {
 			return err
 		}
