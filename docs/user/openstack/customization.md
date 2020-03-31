@@ -23,7 +23,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `octaviaSupport` (optional string): Whether OpenStack supports Octavia (`1` for true or `0` for false)
 * `region` (deprecated string): The OpenStack region where the cluster will be created. Currently this value is not used by the installer.
 * `trunkSupport` (optional string): Whether OpenStack ports can be trunked (`1` for true or `0` for false)
-* `clusterOSimage` (optional string): Either a URL with `http(s)` or `file` scheme to override the default OS image for cluster nodes or an existing Glance image name.
+* `clusterOSImage` (optional string): Either a URL with `http(s)` or `file` scheme to override the default OS image for cluster nodes or an existing Glance image name.
 
 ## Machine pools
 
