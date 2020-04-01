@@ -43,38 +43,31 @@
     - os_networking_type == "Kuryr"
     - "os_cp_trunk_name|string not in control_plane_trunks.stdout"
 
-  - name: 'Get a token for creating the server group'
-    os_auth:
-    register: cloud
+  - name: 'List the Server groups'
+    command:
+      cmd: "openstack server group list -f json -c ID -c Name"
+    register: server_group_list
 
-  # If microversion 2.15 is not available, replace with:
-  # - name: 'Create the Control Plane server group'
-  #   uri:
-  #     method: POST
-  #     headers:
-  #       X-Auth-Token: "{{ cloud.ansible_facts.auth_token }}"
-  #       X-OpenStack-Nova-API-Version: '2.64'
-  #     url: "{{ cloud.ansible_facts.service_catalog | selectattr('name', 'match', 'nova') | first | json_query('endpoints') | selectattr('interface', 'match', 'public') | first | json_query('url') }}/os-server-groups"
-  #     body_format: json
-  #     body:
-  #       server_group:
-  #         name: "{{ os_cp_server_group_name }}"
-  #         policy: "soft-anti-affinity"
-  #   register: cp_group
+  - name: 'Parse the Server group ID from existing'
+    set_fact:
+      server_group_id: "{{ (server_group_list.stdout | from_json | json_query(list_query) | first).ID }}"
+    vars:
+      list_query: "[?Name=='{{ os_cp_server_group_name }}']"
+    when:
+    - "os_cp_server_group_name|string in server_group_list.stdout"
+
   - name: 'Create the Control Plane server group'
-    uri:
-      method: POST
-      headers:
-        X-Auth-Token: "{{ cloud.ansible_facts.auth_token }}"
-        X-OpenStack-Nova-API-Version: '2.15'
-      url: "{{ cloud.ansible_facts.service_catalog | selectattr('name', 'match', 'nova') | first | json_query('endpoints') | selectattr('interface', 'match', 'public') | first | json_query('url') }}/os-server-groups"
-      body_format: json
-      body:
-        server_group:
-          name: "{{ os_cp_server_group_name }}"
-          policies:
-          - soft-anti-affinity
-    register: cp_group
+    command:
+      cmd: "openstack --os-compute-api-version=2.15 server group create -f json -c id --policy=soft-anti-affinity {{ os_cp_server_group_name }}"
+    register: server_group_created
+    when:
+    - server_group_id is not defined
+
+  - name: 'Parse the Server group ID from creation'
+    set_fact:
+      server_group_id: "{{ (server_group_created.stdout | from_json).id }}"
+    when:
+    - server_group_id is not defined
 
   - name: 'Create the Control Plane servers'
     os_server:
@@ -90,5 +83,5 @@
       nics:
       - port-name: "{{ os_port_master }}-{{ item.0 }}"
       scheduler_hints:
-        group: "{{ cp_group.json.server_group.id }}"
+        group: "{{ server_group_id }}"
     with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
