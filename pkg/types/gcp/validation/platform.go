@@ -1,11 +1,15 @@
 package validation
 
 import (
+	"os"
+
 	"sort"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/gcp"
+
+	"github.com/openshift/installer/pkg/validate"
 )
 
 var (
@@ -66,6 +70,16 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path) field.ErrorList {
 	}
 	if (p.ComputeSubnet != "" || p.ControlPlaneSubnet != "") && p.Network == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("network"), "must provide a VPC network when supplying subnets"))
+	}
+
+	if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE"); ok && oi != "" && len(p.Licenses) > 0 {
+		allErrs = append(allErrs, field.Forbidden(fldPath.Child("licenses"), "the use of custom image licenses is forbidden if an OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE is specified"))
+	}
+
+	for i, license := range p.Licenses {
+		if validate.URIWithProtocol(license, "https") != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("licenses").Index(i), license, "licenses must be URLs (https) only"))
+		}
 	}
 
 	return allErrs

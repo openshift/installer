@@ -313,6 +313,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				MasterConfigs:      masterConfigs,
 				WorkerConfigs:      workerConfigs,
 				ImageURI:           string(*rhcosImage),
+				ImageLicenses:      installConfig.Config.GCP.Licenses,
 				PublicZoneName:     publicZoneName,
 				PublishStrategy:    installConfig.Config.Publish,
 				PreexistingNetwork: preexistingnetwork,

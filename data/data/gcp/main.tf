@@ -96,4 +96,6 @@ resource "google_compute_image" "cluster" {
   raw_disk {
     source = var.gcp_image_uri
   }
+
+  licenses = var.gcp_image_licenses
 }
