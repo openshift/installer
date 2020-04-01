@@ -53,7 +53,6 @@ func (a *Master) Generate(dependencies asset.Parents) error {
         infra_vlan := installConfig.Config.Platform.OpenStack.AciNetExt.InfraVLAN
         mtu_value := installConfig.Config.Platform.OpenStack.AciNetExt.Mtu
         networkScriptString, _ := ign.NetworkScript(kube_api_vlan, defaultGateway.String(), mtu_value)
-        logrus.Debug(string(networkScriptString))
 
         neutronCIDR := &installConfig.Config.Platform.OpenStack.AciNetExt.NeutronCIDR.IPNet
         defaultNeutronGateway, _ := cidr.Host(neutronCIDR, 1)
