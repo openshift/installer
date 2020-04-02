@@ -14,7 +14,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -200,13 +199,9 @@ func addRouterCAToClusterCA(config *rest.Config, directory string) (err error) {
 	}
 
 	// Configmap may not exist. log and accept not-found errors with configmap.
-	caConfigMap, err := client.CoreV1().ConfigMaps("openshift-config-managed").Get("router-ca", metav1.GetOptions{})
+	caConfigMap, err := client.CoreV1().ConfigMaps("openshift-config-managed").Get("default-ingress-cert", metav1.GetOptions{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			logrus.Infof("router-ca resource not found in cluster, perhaps you are not using default router CA")
-			return nil
-		}
-		return errors.Wrap(err, "fetching router-ca configmap from openshift-config-managed namespace")
+		return errors.Wrap(err, "fetching default-ingress-cert configmap from openshift-config-managed namespace")
 	}
 
 	routerCrtBytes := []byte(caConfigMap.Data["ca-bundle.crt"])
@@ -230,7 +225,7 @@ func addRouterCAToClusterCA(config *rest.Config, directory string) (err error) {
 			return errors.New("cluster CA found in kubeconfig not valid PEM format")
 		}
 		if !certPool.AppendCertsFromPEM(routerCrtBytes) {
-			return errors.New("ca-bundle.crt from router-ca configmap not valid PEM format")
+			return errors.New("ca-bundle.crt from default-ingress-cert configmap not valid PEM format")
 		}
 
 		newCA := append(routerCrtBytes, clusterCABytes...)
