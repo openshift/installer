@@ -3,9 +3,7 @@ package defaults
 import (
 	"net"
 	"os"
-	"strings"
 	"github.com/apparentlymart/go-cidr/cidr"
-        "github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -26,26 +24,6 @@ func SetPlatformDefaults(p *openstack.Platform, installConfig *types.InstallConf
         if p.AciNetExt.Mtu == "" {
                 p.AciNetExt.Mtu = "1500"
         }
-        // Panic if input neutron CIDR and machine CIDR don't have equal masks.
-        // If no neutron CIDR provided, set it to 192.168.0.0 with the machine CIDR mask
-        machineNet :=  &installConfig.Networking.DeprecatedMachineCIDR.IPNet
-        machineMask := machineNet.Mask
-        if p.AciNetExt.NeutronCIDR.String() != "" {
-                neutronNet := &p.AciNetExt.NeutronCIDR.IPNet
-                neutronMask := neutronNet.Mask
-                if machineMask.String() != neutronMask.String() {
-                        panic("Machine CIDR and Neutron CIDR have different subnet masks")
- 
-                }
-        } else {
-                machineNetString := machineNet.String()
-                machineMaskString := strings.Split(machineNetString, "/")[1]
-                neutronCIDRString := "192.168.0.0/" + machineMaskString
-                p.AciNetExt.NeutronCIDR = ipnet.MustParseCIDR(neutronCIDRString)
-        }
-        installConfig.Networking.NeutronCIDR = p.AciNetExt.NeutronCIDR
-
-        ipnet.MustParseCIDR(p.AciNetExt.InstallerHostSubnet)
 }
 
 // APIVIP returns the internal virtual IP address (VIP) put in front

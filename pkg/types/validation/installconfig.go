@@ -169,28 +169,28 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
                         allErrs = append(allErrs, field.Invalid(tarField.Child("Unmarshal"),
                                 c.Platform.OpenStack.AciNetExt.ProvisionTar, err.Error()))
                 } else {
-			machineCIDR := c.Networking.MachineCIDR
+			machineCIDR := c.Networking.DeprecatedMachineCIDR
                         // Validate against values from install config
 
                         if (strconv.Itoa(config.InfraVLAN) != c.Platform.OpenStack.AciNetExt.InfraVLAN) {
-                                allErrs = append(allErrs, field.Invalid(field.NewPath("InfraVLAN"),
-                                        c.Platform.OpenStack.AciNetExt.InfraVLAN, "InfraVLAN values in acc-provision input and install config have to be the same"))
+                                allErrs = append(allErrs, field.Invalid(field.NewPath("infraVLAN"),
+                                        c.Platform.OpenStack.AciNetExt.InfraVLAN, "infraVLAN values in acc-provision input(" + strconv.Itoa(config.InfraVLAN) + ") and install-config.yaml(" + c.Platform.OpenStack.AciNetExt.InfraVLAN + ") have to be the same"))
                         }
                         if (strconv.Itoa(config.ServiceVLAN) != c.Platform.OpenStack.AciNetExt.ServiceVLAN) {
-                                allErrs = append(allErrs, field.Invalid(field.NewPath("ServiceVLAN"),
-                                        c.Platform.OpenStack.AciNetExt.ServiceVLAN, "ServiceVLAN values in acc-provision input and install config have to be the same"))
+                                allErrs = append(allErrs, field.Invalid(field.NewPath("serviceVLAN"),
+                                        c.Platform.OpenStack.AciNetExt.ServiceVLAN, "serviceVLAN values in acc-provision input(" + strconv.Itoa(config.ServiceVLAN) + ") and install-config.yaml(" + c.Platform.OpenStack.AciNetExt.ServiceVLAN + ") have to be the same"))
                         }
                         if (strconv.Itoa(config.KubeApiVLAN) != c.Platform.OpenStack.AciNetExt.KubeApiVLAN) {
-                                allErrs = append(allErrs, field.Invalid(field.NewPath("KubeApiVLAN"),
-                                        c.Platform.OpenStack.AciNetExt.KubeApiVLAN, "KubeApiVLAN values in acc-provision input and install config have to be the same"))
+                                allErrs = append(allErrs, field.Invalid(field.NewPath("kubeApiVLAN"),
+                                        c.Platform.OpenStack.AciNetExt.KubeApiVLAN, "kubeApiVLAN values in acc-provision input(" + strconv.Itoa(config.KubeApiVLAN) + ") and install-config.yaml(" + c.Platform.OpenStack.AciNetExt.KubeApiVLAN + ") have to be the same"))
                         }
                         if DiffSubnets(config.NodeSubnet, machineCIDR) {
-                                allErrs = append(allErrs, field.Invalid(field.NewPath("MachineCIDR"),
-                                        c.Networking.MachineCIDR, "node_subnet in acc-provision input has to be the same as machineCIDR"))
+                                allErrs = append(allErrs, field.Invalid(field.NewPath("machineCIDR"),
+                                        c.Networking.DeprecatedMachineCIDR.String(), "node_subnet in acc-provision input(" + config.NodeSubnet + ") has to be the same as machineCIDR in install-config.yaml(" + machineCIDR.String() + ")"))
                         }
                         if DiffSubnets(config.PodSubnet, clusterNetworkCIDR) {
-                                allErrs = append(allErrs, field.Invalid(field.NewPath("ClusterNetworkCIDR"),
-                                        clusterNetworkCIDR, "pod_subnet in acc-provision input has to be the same as clusterNetwork CIDR"))
+                                allErrs = append(allErrs, field.Invalid(field.NewPath("clusterNetworkCIDR"),
+                                        clusterNetworkCIDR.String(), "pod_subnet in acc-provision input(" + config.PodSubnet + ") has to be the same as clusterNetwork:cidr in install-config.yaml(" + clusterNetworkCIDR.String() + ")"))
                         }
 		}
 	}

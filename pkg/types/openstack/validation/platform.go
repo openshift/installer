@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/validate"
@@ -73,8 +74,7 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 		if err != nil {
 			ip := net.ParseIP(p.AciNetExt.ClusterSNATSubnet)
 			if ip == nil {
-				// error
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("ClusterSNATSubnet"), p.AciNetExt.ClusterSNATSubnet, err.Error()))
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterSNATPolicyIP"), p.AciNetExt.ClusterSNATSubnet, err.Error()))
 			}	
 		}
 	}
@@ -85,11 +85,35 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
                 if err != nil {
                         ip := net.ParseIP(p.AciNetExt.ClusterSNATDest)
                         if ip == nil {
-                                // error
-                                allErrs = append(allErrs, field.Invalid(fldPath.Child("ClusterSNATDest"), p.AciNetExt.ClusterSNATDest, err.Error()))
+                                allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterSNATPolicyDestIP"), p.AciNetExt.ClusterSNATDest, err.Error()))
                         }
                 }
         }
+
+	machineMask := n.DeprecatedMachineCIDR.Mask
+	if p.AciNetExt.NeutronCIDR.String() != "" {
+                neutronMask := p.AciNetExt.NeutronCIDR.Mask
+                if machineMask.String() != neutronMask.String() {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("neutronCIDR"), p.AciNetExt.NeutronCIDR.String(), "The CIDRs specified in the machineCIDR (" + n.DeprecatedMachineCIDR.String() + ") and neutronCIDR (" + p.AciNetExt.NeutronCIDR.String() + ") configurations in the install-config.yaml have different subnet masks (machineCIDR mask: " + machineMask.String() + ", neutronCIDR mask: " + neutronMask.String()))
+                }
+        } else {
+		// If no neutron CIDR provided, set it to 192.168.0.0 with the machine CIDR mask
+                neutronIP := net.ParseIP("192.168.0.0")
+                p.AciNetExt.NeutronCIDR = &ipnet.IPNet{
+                                        IPNet: net.IPNet{
+                                                IP:   neutronIP,
+                                                Mask: machineMask,
+                                        },
+                                }
+        }
+        n.NeutronCIDR = p.AciNetExt.NeutronCIDR
+
+	_, err = ipnet.ParseCIDR(p.AciNetExt.InstallerHostSubnet)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("installerHostSubnet"),
+                		p.AciNetExt.InstallerHostSubnet, "installerHostSubnet has an invalid subnet value (" + p.AciNetExt.InstallerHostSubnet + ")"))
+	}
+
 	return allErrs
 }
 
