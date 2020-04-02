@@ -47,10 +47,14 @@ func uploadBaseImage(cloud string, localFilePath string, imageName string, clust
 	}
 	logrus.Debugf("Image %s was created.", img.Name)
 
-	useImageImport, err := isImageImportSupported(cloud)
-	if err != nil {
-		return err
-	}
+	// FIXME(mfedosin): We have to temporary disable image import, because it looks
+	// like there are problems on the server side.
+	// Revert this patch when the problems are fixed.
+	useImageImport := false
+	// useImageImport, err := isImageImportSupported(cloud)
+	// if err != nil {
+	// 	return err
+	// }
 
 	if useImageImport {
 		logrus.Debugf("Using Image Import API to upload RHCOS to the image %q with ID %q", img.Name, img.ID)
