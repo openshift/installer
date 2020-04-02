@@ -30,15 +30,49 @@ func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 
 	// If all VIPs are empty, skip IP validation.  All VIPs are required to be defined together.
 	if strings.Join([]string{p.APIVIP, p.IngressVIP, p.DNSVIP}, "") != "" {
-		if err := validate.IP(p.APIVIP); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
-		}
-		if err := validate.IP(p.IngressVIP); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
-		}
-		if err := validate.IP(p.DNSVIP); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsVIP"), p.DNSVIP, err.Error()))
-		}
+		allErrs = append(allErrs, validateVIPs(p, fldPath)...)
+	}
+
+	return allErrs
+}
+
+// ValidateForProvisioning checks that the specified platform is valid.
+func ValidateForProvisioning(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if len(p.Cluster) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("cluster"), "must specify the cluster"))
+	}
+
+	if len(p.Network) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("network"), "must specify the network"))
+	}
+
+	allErrs = append(allErrs, validateVIPs(p, fldPath)...)
+
+	return allErrs
+}
+
+// ValidateVIPs checks that all required VIPs are provided and are valid IP addresses.
+func validateVIPs(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if len(p.APIVIP) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("apiVIP"), "must specify a VIP for the API"))
+	} else if err := validate.IP(p.APIVIP); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
+	}
+
+	if len(p.IngressVIP) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("ingressVIP"), "must specify a VIP for Ingress"))
+	} else if err := validate.IP(p.IngressVIP); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
+	}
+
+	if len(p.DNSVIP) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("dnsVIP"), "must specify a VIP for DNS"))
+	} else if err := validate.IP(p.DNSVIP); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsVIP"), p.DNSVIP, err.Error()))
 	}
 
 	return allErrs
