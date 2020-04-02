@@ -12,6 +12,9 @@ This provides a greater flexibility at the cost of a more explicit and interacti
 
 Below is a step-by-step guide to a UPI installation that mimics an automated IPI installation; prerequisites and steps described below should be adapted to the constraints of the target infrastructure.
 
+Please be aware of the [Known Issues](known-issues.md#known-issues-specific-to-user-provisioned-installations)
+of this method of installation.
+
 ## Table of Contents
 
 * [Prerequisites](#prerequisites)
