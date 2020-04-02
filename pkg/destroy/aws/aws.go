@@ -1832,6 +1832,45 @@ func deleteS3(session *session.Session, arn arn.ARN, logger logrus.FieldLogger) 
 	}
 	logger.Debug("Emptied")
 
+	var lastError error
+	err = client.ListObjectVersionsPagesWithContext(aws.BackgroundContext(), &s3.ListObjectVersionsInput{
+		Bucket:  aws.String(arn.Resource),
+		MaxKeys: aws.Int64(1000),
+	}, func(page *s3.ListObjectVersionsOutput, lastPage bool) bool {
+		var deleteObjects []*s3.ObjectIdentifier
+		for _, deleteMarker := range page.DeleteMarkers {
+			deleteObjects = append(deleteObjects, &s3.ObjectIdentifier{
+				Key:       aws.String(*deleteMarker.Key),
+				VersionId: aws.String(*deleteMarker.VersionId),
+			})
+		}
+		for _, version := range page.Versions {
+			deleteObjects = append(deleteObjects, &s3.ObjectIdentifier{
+				Key:       aws.String(*version.Key),
+				VersionId: aws.String(*version.VersionId),
+			})
+		}
+		if len(deleteObjects) > 0 {
+			_, err := client.DeleteObjects(&s3.DeleteObjectsInput{
+				Bucket: aws.String(arn.Resource),
+				Delete: &s3.Delete{
+					Objects: deleteObjects,
+				},
+			})
+			if err != nil {
+				lastError = errors.Wrapf(err, "delete object failed %v", err)
+			}
+		}
+		return !lastPage
+	})
+	if lastError != nil {
+		return lastError
+	}
+	if err != nil && !isBucketNotFound(err) {
+		return err
+	}
+	logger.Debug("Versions Deleted")
+
 	_, err = client.DeleteBucket(&s3.DeleteBucketInput{
 		Bucket: aws.String(arn.Resource),
 	})
