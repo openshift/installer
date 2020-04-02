@@ -55,6 +55,7 @@ module "masters" {
   )
   root_volume_size = var.openstack_master_root_volume_size
   root_volume_type = var.openstack_master_root_volume_type
+  server_group_id  = var.openstack_master_server_group_id
 }
 
 module "topology" {

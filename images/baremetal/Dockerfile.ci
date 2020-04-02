@@ -11,6 +11,7 @@ RUN TAGS="libvirt baremetal" hack/build.sh
 
 FROM registry.svc.ci.openshift.org/origin/4.1:base
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
+COPY --from=builder /go/src/github.com/openshift/installer/data/data/rhcos.json /var/cache/
 
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \

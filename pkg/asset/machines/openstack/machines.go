@@ -4,8 +4,9 @@ package openstack
 import (
 	"fmt"
 
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/servergroups"
+	"github.com/gophercloud/utils/openstack/clientconfig"
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
-	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,20 +37,27 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		return nil, fmt.Errorf("non-OpenStack machine-pool: %q", poolPlatform)
 	}
 	platform := config.Platform.OpenStack
-	mpool := pool.Platform.OpenStack
+
+	az := ""
+	trunk := platform.TrunkSupport
+
+	provider := generateProvider(clusterID, platform, pool.Platform.OpenStack, osImage, az, role, userDataSecret, trunk)
+
+	if role == "master" {
+		sg, err := getOrCreateServerGroup(platform.Cloud, clusterID+"-"+role, "soft-anti-affinity")
+		if err != nil {
+			return nil, err
+		}
+
+		provider.ServerGroupID = sg.ID
+	}
 
 	total := int64(1)
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	var machines []machineapi.Machine
+	machines := make([]machineapi.Machine, 0, total)
 	for idx := int64(0); idx < total; idx++ {
-		az := ""
-		trunk := config.Platform.OpenStack.TrunkSupport
-		provider, err := provider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunk)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to create provider")
-		}
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
@@ -71,14 +79,13 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				// we don't need to set Versions, because we control those via operators.
 			},
 		}
-
 		machines = append(machines, machine)
 	}
 
 	return machines, nil
 }
 
-func provider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunk string) (*openstackprovider.OpenstackProviderSpec, error) {
+func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunk string) *openstackprovider.OpenstackProviderSpec {
 
 	spec := openstackprovider.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
@@ -126,7 +133,7 @@ func provider(clusterID string, platform *openstack.Platform, mpool *openstack.M
 	} else {
 		spec.Image = osImage
 	}
-	return &spec, nil
+	return &spec
 }
 
 func trunkSupportBoolean(trunkSupport string) (result bool) {
@@ -136,6 +143,50 @@ func trunkSupportBoolean(trunkSupport string) (result bool) {
 		result = false
 	}
 	return
+}
+
+// getOrCreateServerGroup gets a Nova server group with the given name and
+// policy or creates a new one if it doesn't exist.
+//
+// https://docs.openstack.org/api-ref/compute/?expanded=create-server-group-detail#server-groups-os-server-groups
+func getOrCreateServerGroup(cloud, serverGroupName, policy string) (*servergroups.ServerGroup, error) {
+	conn, err := clientconfig.NewServiceClient(
+		"compute",
+		&clientconfig.ClientOpts{
+			Cloud: cloud,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Microversion "2.15" is the first that supports "soft"-anti-affinity.
+	// Note that microversions starting from "2.64" use a new field
+	// accepting policies as a string instead of an array.
+	conn.Microversion = "2.15"
+
+	allPages, err := servergroups.List(conn).AllPages()
+	if err != nil {
+		return nil, err
+	}
+
+	allServerGroups, err := servergroups.ExtractServerGroups(allPages)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, serverGroup := range allServerGroups {
+		// Reuse the server group if it already exists and is empty
+		if serverGroup.Name == serverGroupName && len(serverGroup.Members) == 0 {
+			return &serverGroup, nil
+		}
+	}
+
+	// Create a new group otherwise
+	return servergroups.Create(conn, &servergroups.CreateOpts{
+		Name:     serverGroupName,
+		Policies: []string{policy},
+	}).Extract()
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines

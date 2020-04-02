@@ -40,3 +40,8 @@ variable "root_volume_type" {
   type        = string
   description = "The type of volume for the root block device."
 }
+
+variable "server_group_id" {
+  type        = string
+  description = "ID of the server group to assign the servers to."
+}

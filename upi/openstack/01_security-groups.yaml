@@ -1,6 +1,7 @@
 # Required Python packages:
 #
 # ansible
+# openstackclient
 # openstacksdk
 
 - import_playbook: common.yaml
@@ -14,20 +15,16 @@
       name: "{{ os_sg_master }}"
 
   - name: 'Set master security group tag'
-    os_tag:
-      resource: "security_group"
-      name: "{{ os_sg_master }}"
-      tags: "{{ [cluster_id_tag] }}"
+    command:
+      cmd: "openstack security group set --tag {{ cluster_id_tag }} {{ os_sg_master }} "
 
   - name: 'Create the worker security group'
     os_security_group:
       name: "{{ os_sg_worker }}"
 
   - name: 'Set worker security group tag'
-    os_tag:
-      resource: "security_group"
-      name: "{{ os_sg_worker }}"
-      tags: "{{ [cluster_id_tag] }}"
+    command:
+      cmd: "openstack security group set --tag {{ cluster_id_tag }} {{ os_sg_worker }} "
 
   - name: 'Create master-sg rule "ICMP"'
     os_security_group_rule:

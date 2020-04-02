@@ -1716,6 +1716,11 @@ func deleteRoute53(session *session.Session, arn arn.ARN, logger logrus.FieldLog
 
 	sharedZoneID, err := getSharedHostedZone(client, id, logger)
 	if err != nil {
+		// In some cases AWS may return the zone in the list of tagged resources despite the fact
+		// it no longer exists.
+		if err.(awserr.Error).Code() == route53.ErrCodeNoSuchHostedZone {
+			return nil
+		}
 		return err
 	}
 

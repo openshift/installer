@@ -329,3 +329,8 @@ Contains 0 if the OpenStack Octavia endpoint is missing and 1 if it exists.
 EOF
 
 }
+
+variable "openstack_master_server_group_id" {
+  type        = string
+  description = "ID of the server group to assign the master servers to."
+}

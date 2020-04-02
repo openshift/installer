@@ -28,6 +28,9 @@ When using Kuryr SDN, as the pods, services, namespaces, network policies, etc.,
 * vCPUs: 28
 * Volume Storage: 175 GB
 * Instances: 7
+* Load Balancers: 100 (1 needed per OpenShift service)
+* Load Balancer Listeners: 500 (1 per port exposed on the services)
+* Load Balancer Pools: 500 (1 per port exposed on the services)
 
 ## Increase Quota
 
@@ -36,6 +39,8 @@ As highlighted in the minimum quota recommendations, when using Kuryr SDN, there
 ```sh
 openstack quota set --secgroups 100 --secgroup-rules 500 --ports 500 --subnets 100 --networks 100 <project>
 ```
+
+**NOTE:** Each Amphora Load Balancer creates a VM. Even if that VM is not part of the user quota, the OpenStack cluster must have enough capacity to allocate those VMs too. A standard OpenShift installation ends up with more that 50 Amphora Load Balancers.
 
 ## Neutron Configuration
 
@@ -73,7 +78,7 @@ platform:
 
 There are known limitations when using Kuryr SDN:
 
-* There is an amphora load balancer VM being deployed per OpenShift service with the default Octavia load balancer driver (amphora driver). If the environment is resource constrained it could be a problem to create a large amount of services.
-* Depending on the Octavia version, UDP listeners are not supported. This means that OpenShift UDP services are not supported.
-* There is a known limitation of Octavia not supporting listeners on different protocols (e.g., UDP and TCP) on the same port. Thus services exposing the same port for different protocols are not supported.
-* Due to the above UDP limitations of Octavia, Kuryr is forcing pods to use TCP for DNS resolution (`use-vc` option at `resolv.conf`). This may be a problem for pods running Go applications compiled with `CGO_DEBUG` flag disabled as that forces to use the `go` resolver that is only using UDP and is not considering the `use-vc` option added by Kuryr to the `resolv.conf`. This is a problem also for musl-based containers as it's resolver does not support `use-vc` option. This would include e.g., images build from `alpine`.
+* There is an amphora load balancer VM being deployed per OpenShift service with the default Octavia load balancer driver (amphora driver). If the environment is resource constrained it could be a problem to create a large amount of services as each one will create a new VM.
+* Depending on the Octavia version, UDP listeners are not supported. This means that OpenShift UDP services are not supported unless OpenStack version is Train or newer.
+* Depending on the Octavia version, there is a known limitation of Octavia not supporting listeners on different protocols (e.g., UDP and TCP) on the same port. Thus services exposing the same port for different protocols are not supported unless OpenStack version is Train or newer.
+* Due to the above UDP limitations of Octavia, Kuryr is forcing pods to use TCP for DNS resolution (`use-vc` option at `resolv.conf`) if the OpenStack version is not Train or newer. This may be a problem for Go applications compiled without CGO support (i.e. `CGO_ENABLED=0`) as the native Go resolver is using UDP only and is not considering the `use-vc` option added by Kuryr to the `resolv.conf` for `GO` version 1.12 or earlier. This is a problem also for musl-based containers as its resolver does not support `use-vc` option. This would include e.g., images build from `alpine`.
