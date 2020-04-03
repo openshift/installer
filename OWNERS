@@ -7,3 +7,4 @@ approvers:
   - LorbusChris
 reviewers:
   - installer-reviewers
+component: Installer
