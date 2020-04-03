@@ -1,0 +1,243 @@
+{
+  "$schema" : "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion" : "1.0.0.0",
+  "parameters" : {
+    "baseName" : {
+      "type" : "string",
+      "minLength" : 1,
+      "metadata" : {
+        "description" : "Base name to be used in resource names (usually the cluster's Infra ID)"
+      }
+    },
+    "bootstrapIgnition" : {
+      "type" : "string",
+      "minLength" : 1,
+      "metadata" : {
+        "description" : "Bootstrap ignition content for the bootstrap cluster"
+      }
+    },
+    "sshKeyData" : {
+      "type" : "securestring",
+      "metadata" : {
+        "description" : "SSH RSA public key file as a string."
+      }
+    },
+    "bootstrapVMSize" : {
+      "type" : "string",
+      "defaultValue" : "Standard_D4s_v3",
+      "allowedValues" : [
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A9",
+        "Standard_A10",
+        "Standard_A11",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D11",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D8_v3",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2",
+        "Standard_E2_v3",
+        "Standard_E4_v3",
+        "Standard_E8_v3",
+        "Standard_E16_v3",
+        "Standard_E32_v3",
+        "Standard_E64_v3",
+        "Standard_E2s_v3",
+        "Standard_E4s_v3",
+        "Standard_E8s_v3",
+        "Standard_E16s_v3",
+        "Standard_E32s_v3",
+        "Standard_E64s_v3",
+        "Standard_G1",
+        "Standard_G2",
+        "Standard_G3",
+        "Standard_G4",
+        "Standard_G5",
+        "Standard_DS2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_DS11",
+        "Standard_DS12",
+        "Standard_DS13",
+        "Standard_DS14",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_DS11_v2",
+        "Standard_DS12_v2",
+        "Standard_DS13_v2",
+        "Standard_DS14_v2",
+        "Standard_GS1",
+        "Standard_GS2",
+        "Standard_GS3",
+        "Standard_GS4",
+        "Standard_GS5",
+        "Standard_D2s_v3",
+        "Standard_D4s_v3",
+        "Standard_D8s_v3"
+      ],
+      "metadata" : {
+        "description" : "The size of the Bootstrap Virtual Machine"
+      }
+    }
+  },
+  "variables" : {
+    "location" : "[resourceGroup().location]",
+    "virtualNetworkName" : "[concat(parameters('baseName'), '-vnet')]",
+    "virtualNetworkID" : "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "masterSubnetName" : "[concat(parameters('baseName'), '-master-subnet')]",
+    "masterSubnetRef" : "[concat(variables('virtualNetworkID'), '/subnets/', variables('masterSubnetName'))]",
+    "masterLoadBalancerName" : "[concat(parameters('baseName'), '-public-lb')]",
+    "internalLoadBalancerName" : "[concat(parameters('baseName'), '-internal-lb')]",
+    "sshKeyPath" : "/home/core/.ssh/authorized_keys",
+    "identityName" : "[concat(parameters('baseName'), '-identity')]",
+    "vmName" : "[concat(parameters('baseName'), '-bootstrap')]",
+    "nicName" : "[concat(variables('vmName'), '-nic')]",
+    "imageName" : "[concat(parameters('baseName'), '-image')]",
+    "controlPlaneNsgName" : "[concat(parameters('baseName'), '-controlplane-nsg')]",
+    "sshPublicIpAddressName" : "[concat(variables('vmName'), '-ssh-pip')]"
+  },
+  "resources" : [
+    {
+      "apiVersion" : "2018-12-01",
+      "type" : "Microsoft.Network/publicIPAddresses",
+      "name" : "[variables('sshPublicIpAddressName')]",
+      "location" : "[variables('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties" : {
+        "publicIPAllocationMethod" : "Static",
+        "dnsSettings" : {
+          "domainNameLabel" : "[variables('sshPublicIpAddressName')]"
+        }
+      }
+    },
+    {
+      "apiVersion" : "2018-06-01",
+      "type" : "Microsoft.Network/networkInterfaces",
+      "name" : "[variables('nicName')]",
+      "location" : "[variables('location')]",
+      "dependsOn" : [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('sshPublicIpAddressName'))]"
+      ],
+      "properties" : {
+        "ipConfigurations" : [
+          {
+            "name" : "pipConfig",
+            "properties" : {
+              "privateIPAllocationMethod" : "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('sshPublicIpAddressName'))]"
+              },
+              "subnet" : {
+                "id" : "[variables('masterSubnetRef')]"
+              },
+              "loadBalancerBackendAddressPools" : [
+                {
+                  "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('masterLoadBalancerName'), '/backendAddressPools/public-lb-backend')]"
+                },
+                {
+                  "id" : "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('internalLoadBalancerName'), '/backendAddressPools/internal-lb-backend')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion" : "2018-06-01",
+      "type" : "Microsoft.Compute/virtualMachines",
+      "name" : "[variables('vmName')]",
+      "location" : "[variables('location')]",
+      "identity" : {
+        "type" : "userAssigned",
+        "userAssignedIdentities" : {
+          "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities/', variables('identityName'))]" : {}
+        }
+      },
+      "dependsOn" : [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties" : {
+        "hardwareProfile" : {
+          "vmSize" : "[parameters('bootstrapVMSize')]"
+        },
+        "osProfile" : {
+          "computerName" : "[variables('vmName')]",
+          "adminUsername" : "core",
+          "customData" : "[parameters('bootstrapIgnition')]",
+          "linuxConfiguration" : {
+            "disablePasswordAuthentication" : true,
+            "ssh" : {
+              "publicKeys" : [
+                {
+                  "path" : "[variables('sshKeyPath')]",
+                  "keyData" : "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile" : {
+          "imageReference": {
+            "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]"
+          },
+          "osDisk" : {
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
+            "osType" : "Linux",
+            "createOption" : "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "diskSizeGB" : 100
+          }
+        },
+        "networkProfile" : {
+          "networkInterfaces" : [
+            {
+              "id" : "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion" : "2018-06-01",
+      "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+      "name" : "[concat(variables('controlPlaneNsgName'), '/bootstrap_ssh_in')]",
+      "location" : "[variables('location')]",
+      "dependsOn" : [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ],
+      "properties": {
+        "protocol" : "Tcp",
+        "sourcePortRange" : "*",
+        "destinationPortRange" : "22",
+        "sourceAddressPrefix" : "*",
+        "destinationAddressPrefix" : "*",
+        "access" : "Allow",
+        "priority" : 100,
+        "direction" : "Inbound"
+      }
+    }
+  ]
+}
