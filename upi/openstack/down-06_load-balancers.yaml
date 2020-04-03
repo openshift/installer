@@ -26,7 +26,7 @@
 
   - set_fact:
       versions: "{{ octavia_versions.json.versions | selectattr('id', 'match', 'v2.5') | map(attribute='id') | list }}"
-      when: os_networking_type == "Kuryr"
+    when: os_networking_type == "Kuryr"
 
   - name: 'List tagged loadbalancers'
     uri:
