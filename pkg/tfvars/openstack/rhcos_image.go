@@ -50,11 +50,12 @@ func uploadBaseImage(cloud string, localFilePath string, imageName string, clust
 	// FIXME(mfedosin): We have to temporary disable image import, because it looks
 	// like there are problems on the server side.
 	// Revert this patch when the problems are fixed.
-	useImageImport := false
+	// https://github.com/openshift/installer/issues/3403
 	// useImageImport, err := isImageImportSupported(cloud)
 	// if err != nil {
 	// 	return err
 	// }
+	useImageImport := false
 
 	if useImageImport {
 		logrus.Debugf("Using Image Import API to upload RHCOS to the image %q with ID %q", img.Name, img.ID)
