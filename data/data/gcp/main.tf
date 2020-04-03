@@ -93,6 +93,14 @@ module "dns" {
 resource "google_compute_image" "cluster" {
   name = "${var.cluster_id}-rhcos-image"
 
+  # See https://github.com/openshift/installer/issues/2546
+  guest_os_features {
+    type = "SECURE_BOOT"
+  }
+  guest_os_features {
+    type = "UEFI_COMPATIBLE"
+  }
+
   raw_disk {
     source = var.gcp_image_uri
   }
