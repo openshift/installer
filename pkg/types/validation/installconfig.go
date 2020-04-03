@@ -8,6 +8,7 @@ import (
         "gopkg.in/yaml.v2"
         "io"
         "io/ioutil"
+	"log"
 	"net"
 	"os"
 	"sort"
@@ -176,12 +177,25 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
                         // Validate against values from install config
 			machineCIDR := c.Networking.DeprecatedMachineCIDR
                         if DiffSubnets(config.NodeSubnet, machineCIDR) {
-                                allErrs = append(allErrs, field.Invalid(field.NewPath("machineCIDR"),
-                                        c.Networking.DeprecatedMachineCIDR.String(), "node_subnet in acc-provision input(" + config.NodeSubnet + ") has to be the same as machineCIDR in install-config.yaml(" + machineCIDR.String() + ")"))
+				option := UserPrompt(config.NodeSubnet, machineCIDR, "node_subnet", "machineCIDR")
+				if (option == true) {
+					c.Networking.DeprecatedMachineCIDR, _ = ipnet.ParseCIDR(config.NodeSubnet)
+					log.Print("Setting machineCIDR to " + config.NodeSubnet)
+				} else {
+                                	allErrs = append(allErrs, field.Invalid(field.NewPath("machineCIDR"),
+                                        	c.Networking.DeprecatedMachineCIDR.String(), "node_subnet in acc-provision input(" + config.NodeSubnet + ") has to be the same as machineCIDR in install-config.yaml(" + machineCIDR.String() + ")"))
+				}
                         }
                         if DiffSubnets(config.PodSubnet, clusterNetworkCIDR) {
-                                allErrs = append(allErrs, field.Invalid(field.NewPath("clusterNetworkCIDR"),
-                                        clusterNetworkCIDR.String(), "pod_subnet in acc-provision input(" + config.PodSubnet + ") has to be the same as clusterNetwork:cidr in install-config.yaml(" + clusterNetworkCIDR.String() + ")"))
+				option := UserPrompt(config.PodSubnet, clusterNetworkCIDR, "pod_subnet", "clusterNetworkCIDR")
+				if (option == true) {
+					parsedCIDR, _ := ipnet.ParseCIDR(config.PodSubnet)
+					c.Networking.ClusterNetwork[0].CIDR = *parsedCIDR
+					log.Print("Setting clusterNetwork CIDR to " + config.PodSubnet)
+				} else {
+                                	allErrs = append(allErrs, field.Invalid(field.NewPath("clusterNetworkCIDR"),
+                                        	clusterNetworkCIDR.String(), "pod_subnet in acc-provision input(" + config.PodSubnet + ") has to be the same as clusterNetwork:cidr in install-config.yaml(" + clusterNetworkCIDR.String() + ")"))
+				}
                         }
 		}
 	}
@@ -196,6 +210,18 @@ func DiffSubnets(sub1 string, sub2 *ipnet.IPNet) bool {
                 return true
 	}
         return false
+}
+
+func UserPrompt(sub1 string, sub2 *ipnet.IPNet, item1 string, item2 string) bool {
+	var option string
+	log.Print("There's a discrepancy between " + item1 + "(" + sub1 + ") in acc-provision input and " + item2 + "(" + sub2.String() + ") in install-config.yaml")
+	log.Print("Enter Y to use acc-provision value, or N to exit installer and fix acc-provision tar")
+	fmt.Scanln(&option)
+	var op bool
+	if (option == "y" || option == "Y") {
+		op = true
+	}
+	return op
 }
 
 func ExtractTarGz(gzipStream io.Reader, serviceNet string, clusterCIDR string, hostPrefix int32, netType string) (HostConfigMap, error) {
