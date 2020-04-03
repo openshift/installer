@@ -32,6 +32,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/asset/tls"
 	rhcospkg "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
@@ -92,6 +93,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		&machines.Master{},
 		&machines.Worker{},
 		&baremetalbootstrap.IronicCreds{},
+		&tls.RootCA{},
 	}
 }
 
@@ -442,6 +444,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			string(*rhcosImage),
 			ironicCreds.Username,
 			ironicCreds.Password,
+			masterIgn,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
