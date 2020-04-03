@@ -5,3 +5,4 @@ approvers:
   - installer-approvers
 reviewers:
   - installer-reviewers
+component: Installer
