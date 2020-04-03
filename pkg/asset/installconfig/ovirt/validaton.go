@@ -13,10 +13,10 @@ import (
 	"github.com/openshift/installer/pkg/types/ovirt/validation"
 )
 
-// Validate executes platform-specific validation.
+// Validate executes ovirt specific validation
 func Validate(ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
-	ovirtPlatformPath := field.NewPath("platform", ovirt.Name)
+	ovirtPlatformPath := field.NewPath("platform", "ovirt")
 
 	if ic.Platform.Ovirt == nil {
 		return errors.New(field.Required(
@@ -27,6 +27,18 @@ func Validate(ic *types.InstallConfig) error {
 	allErrs = append(
 		allErrs,
 		validation.ValidatePlatform(ic.Platform.Ovirt, ovirtPlatformPath)...)
+
+	con, err := NewConnection()
+	if err != nil {
+		return err
+	}
+	defer con.Close()
+
+	if err := validateVNICProfile(*ic.Ovirt, con); err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(ovirtPlatformPath.Child("vnicProfileID"), ic.Ovirt.VNICProfileID, err.Error()))
+	}
 
 	return allErrs.ToAggregate()
 }
@@ -59,4 +71,26 @@ func authenticated(c *Config) survey.Validator {
 		return nil
 	}
 
+}
+
+// validate the provided vnic profile exists and belongs the the cluster network
+func validateVNICProfile(platform ovirt.Platform, con *ovirtsdk.Connection) error {
+	if platform.VNICProfileID != "" {
+		profiles, err := FetchVNICProfileByClusterNetwork(con, platform.ClusterID, platform.NetworkName)
+		if err != nil {
+			return err
+		}
+
+		for _, p := range profiles {
+			if platform.VNICProfileID == p.MustId() {
+				return nil
+			}
+		}
+
+		return fmt.Errorf(
+			"vNic profile ID %s does not belong to cluster network %s",
+			platform.VNICProfileID,
+			platform.NetworkName)
+	}
+	return nil
 }

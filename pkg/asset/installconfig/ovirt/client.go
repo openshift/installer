@@ -1,6 +1,8 @@
 package ovirt
 
 import (
+	"fmt"
+
 	ovirtsdk "github.com/ovirt/go-ovirt"
 	"github.com/pkg/errors"
 )
@@ -33,4 +35,36 @@ func NewConnection() (*ovirtsdk.Connection, error) {
 		return nil, errors.Wrap(err, "establishing ovirt connection")
 	}
 	return con, nil
+}
+
+// FetchVNICProfileByClusterNetwork returns a list of profiles for the given cluster and network name.
+func FetchVNICProfileByClusterNetwork(con *ovirtsdk.Connection, clusterID string, networkName string) ([]*ovirtsdk.VnicProfile, error) {
+	clusterResponse, err := con.SystemService().ClustersService().ClusterService(clusterID).Get().Follow("networks").Send()
+	if err != nil {
+		return nil, err
+	}
+
+	cluster, ok := clusterResponse.Cluster()
+	if !ok {
+		return nil, fmt.Errorf("failed to find cluster with id %s", clusterID)
+	}
+
+	networks, ok := cluster.Networks()
+	if !ok {
+		return nil, fmt.Errorf("no cluster networks for cluster %s [%s]", cluster.MustName(), clusterID)
+	}
+
+	for _, n := range networks.Slice() {
+		if n.MustName() != networkName {
+			continue
+		}
+
+		profilesGet, err := con.SystemService().NetworksService().NetworkService(n.MustId()).VnicProfilesService().List().Send()
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch vNic profiles")
+		}
+
+		return profilesGet.MustProfiles().Slice(), nil
+	}
+	return nil, fmt.Errorf("there are no vNic profiles for the given cluster ID %s and network name %s", clusterID, networkName)
 }

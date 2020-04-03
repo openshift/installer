@@ -30,8 +30,12 @@ variable "openstack_base_image_local_file_path" {
 
 variable "ovirt_network_name" {
   type        = string
-  default     = "ovirtmgmt"
   description = "The name of ovirt's logical network for the selected ovirt cluster."
+}
+
+variable "ovirt_vnic_profile_id" {
+  type        = string
+  description = "The ID of the vnic profile of ovirt's logical network."
 }
 
 variable "ovirt_template_mem" {
