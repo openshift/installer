@@ -25,6 +25,11 @@ func ValidatePlatform(p *ovirt.Platform, fldPath *field.Path) field.ErrorList {
 	if err := validate.IP(p.IngressVIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingress_vip"), p.IngressVIP, err.Error()))
 	}
+	if p.VNICProfileID != "" {
+		if err := validate.UUID(p.VNICProfileID); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("vnicProfileID"), p.IngressVIP, err.Error()))
+		}
+	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}

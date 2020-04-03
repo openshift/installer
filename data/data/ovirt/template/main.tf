@@ -22,12 +22,6 @@ data "ovirt_clusters" "clusters" {
   }
 }
 
-// default vnic profile of ovirt's cluster network
-data "ovirt_vnic_profiles" "vnic_profiles" {
-  name_regex = var.ovirt_network_name
-  network_id = local.network_id
-}
-
 // work around the missing regexall in terraform < 0.12.9
 // if length(regexall("^Blank.*$", t.name)
 locals {
@@ -62,7 +56,7 @@ resource "ovirt_vm" "tmp_import_vm" {
   }
   nics {
     name            = "nic1"
-    vnic_profile_id = data.ovirt_vnic_profiles.vnic_profiles.vnic_profiles.0.id
+    vnic_profile_id = var.ovirt_vnic_profile_id
   }
   depends_on = [ovirt_image_transfer.releaseimage]
 }
