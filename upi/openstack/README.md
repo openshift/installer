@@ -13,13 +13,13 @@ The playbooks in this directory are designed to reproduce an IPI installation, b
 Every step can be run like this:
 
 ```shell
-(venv)$ ansible-playbook -i inventory.yaml 01_network.yaml
+(venv)$ ansible-playbook -i inventory.yaml network.yaml
 ```
 
 For every script, a symmetrical teardown playbook is provided:
 
 ```shell
-(venv)$ ansible-playbook -i inventory.yaml down-01_network.yaml
+(venv)$ ansible-playbook -i inventory.yaml down-network.yaml
 ```
 
 A full teardown can be achieved by running all the `down` scripts in reverse order.
