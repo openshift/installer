@@ -412,7 +412,77 @@ Make sure your shell session has the `$INFRA_ID` environment variable set when y
 
 ### Bootstrap Ignition
 
-The generated boostrap ignition file (`bootstrap.ign`) tends to be quite large (around 300KB -- it contains all the manifests, master and worker ignitions etc.). This is generally too big to be passed to the server directly (the OpenStack Nova user data limit is 64KB).
+#### Edit the Bootstrap Ignition
+
+We need to set the bootstrap hostname explicitly, and in the case of OpenStack using self-signed certificate, the CA cert file. The IPI installer does this automatically, but for now UPI does not.
+
+We will update the ignition file (`bootstrap.ign`) to create the following files:
+
+**`/etc/hostname`**:
+
+```plaintext
+openshift-qlvwv-bootstrap
+```
+
+(using the `infraID`)
+
+**`/opt/openshift/tls/cloud-ca-cert.pem`** (if applicable).
+
+**NOTE**: We recommend you back up the Ignition files before making any changes!
+
+You can edit the Ignition file manually or run this Python script:
+
+```python
+import base64
+import json
+import os
+
+with open('bootstrap.ign', 'r') as f:
+    ignition = json.load(f)
+
+files = ignition['storage'].get('files', [])
+
+infra_id = os.environ.get('INFRA_ID', 'openshift').encode()
+hostname_b64 = base64.standard_b64encode(infra_id + b'-bootstrap\n').decode().strip()
+files.append(
+{
+    'path': '/etc/hostname',
+    'mode': 420,
+    'contents': {
+        'source': 'data:text/plain;charset=utf-8;base64,' + hostname_b64,
+        'verification': {}
+    },
+    'filesystem': 'root',
+})
+
+ca_cert_path = os.environ.get('OS_CACERT', '')
+if ca_cert_path:
+    with open(ca_cert_path, 'r') as f:
+        ca_cert = f.read().encode()
+        ca_cert_b64 = base64.standard_b64encode(ca_cert).decode().strip()
+
+    files.append(
+    {
+        'path': '/opt/openshift/tls/cloud-ca-cert.pem',
+        'mode': 420,
+        'contents': {
+            'source': 'data:text/plain;charset=utf-8;base64,' + ca_cert_b64,
+            'verification': {}
+        },
+        'filesystem': 'root',
+    })
+
+ignition['storage']['files'] = files;
+
+with open('bootstrap.ign', 'w') as f:
+    json.dump(ignition, f)
+```
+
+Feel free to make any other changes.
+
+#### Upload the Boostrap Ignition
+
+The generated boostrap ignition file tends to be quite large (around 300KB -- it contains all the manifests, master and worker ignitions etc.). This is generally too big to be passed to the server directly (the OpenStack Nova user data limit is 64KB).
 
 To boot it up, we will create a smaller Ignition file that will be passed to Nova as user data and that will download the main ignition file upon execution.
 
@@ -502,74 +572,6 @@ In order for the bootstrap node to retrieve the ignition file when it is served 
   "systemd": {}
 }
 ```
-
-### Update Bootstrap Ignition
-
-We need to set the bootstrap hostname explicitly, and in the case of OpenStack using self-signed certificate, the CA cert file. The IPI installer does this automatically, but for now UPI does not.
-
-We will update the ignition to create the following files:
-
-**`/etc/hostname`**:
-
-```plaintext
-openshift-qlvwv-bootstrap
-```
-
-(using the `infraID`)
-
-**`/opt/openshift/tls/cloud-ca-cert.pem`** (if applicable).
-
-**NOTE**: We recommend you back up the Ignition files before making any changes!
-
-You can edit the Ignition file manually or run this Python script:
-
-```python
-import base64
-import json
-import os
-
-with open('bootstrap.ign', 'r') as f:
-    ignition = json.load(f)
-
-files = ignition['storage'].get('files', [])
-
-infra_id = os.environ.get('INFRA_ID', 'openshift').encode()
-hostname_b64 = base64.standard_b64encode(infra_id + b'-bootstrap\n').decode().strip()
-files.append(
-{
-    'path': '/etc/hostname',
-    'mode': 420,
-    'contents': {
-        'source': 'data:text/plain;charset=utf-8;base64,' + hostname_b64,
-        'verification': {}
-    },
-    'filesystem': 'root',
-})
-
-ca_cert_path = os.environ.get('OS_CACERT', '')
-if ca_cert_path:
-    with open(ca_cert_path, 'r') as f:
-        ca_cert = f.read().encode()
-        ca_cert_b64 = base64.standard_b64encode(ca_cert).decode().strip()
-
-    files.append(
-    {
-        'path': '/opt/openshift/tls/cloud-ca-cert.pem',
-        'mode': 420,
-        'contents': {
-            'source': 'data:text/plain;charset=utf-8;base64,' + ca_cert_b64,
-            'verification': {}
-        },
-        'filesystem': 'root',
-    })
-
-ignition['storage']['files'] = files;
-
-with open('bootstrap.ign', 'w') as f:
-    json.dump(ignition, f)
-```
-
-Feel free to make any other changes.
 
 ### Master Ignition
 
