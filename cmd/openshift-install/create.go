@@ -239,7 +239,7 @@ func addRouterCAToClusterCA(config *rest.Config, directory string) (err error) {
 
 // FIXME: pulling the kubeconfig and metadata out of the root
 // directory is a bit cludgy when we already have them in memory.
-func waitForBootstrapComplete(ctx context.Context, config *rest.Config, directory string) (err error) {
+func waitForBootstrapAPI(ctx context.Context, config *rest.Config, directory string) (err error) {
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return errors.Wrap(err, "creating a Kubernetes client")
@@ -280,7 +280,17 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 	if err != nil && err != context.Canceled {
 		return errors.Wrap(err, "waiting for Kubernetes API")
 	}
+	return nil
+}
 
+func waitForBootstrapComplete(ctx context.Context, config *rest.Config, directory string) (err error) {
+	if err := waitForBootstrapAPI(ctx, config, directory); err != nil {
+		return err
+	}
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return errors.Wrap(err, "creating a Kubernetes client")
+	}
 	return waitForBootstrapConfigMap(ctx, client)
 }
 

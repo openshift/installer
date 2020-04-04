@@ -23,9 +23,40 @@ them directly.`,
 			return cmd.Help()
 		},
 	}
+	cmd.AddCommand(newWaitForBootstrapAPICmd())
 	cmd.AddCommand(newWaitForBootstrapCompleteCmd())
 	cmd.AddCommand(newWaitForInstallCompleteCmd())
 	return cmd
+}
+
+func newWaitForBootstrapAPICmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "bootstrap-api",
+		Short: "Wait until Bootstrap Api is up",
+		Args:  cobra.ExactArgs(0),
+		Run: func(_ *cobra.Command, _ []string) {
+			ctx := context.Background()
+
+			cleanup := setupFileHook(rootOpts.dir)
+			defer cleanup()
+
+			config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(rootOpts.dir, "auth", "kubeconfig"))
+			if err != nil {
+				logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
+			}
+
+			err = waitForBootstrapAPI(ctx, config, rootOpts.dir)
+			if err != nil {
+				if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
+					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
+				}
+
+				logrus.Info("Use the following commands to gather logs from the cluster")
+				logrus.Info("openshift-install gather bootstrap --help")
+				logrus.Fatal(err)
+			}
+		},
+	}
 }
 
 func newWaitForBootstrapCompleteCmd() *cobra.Command {
