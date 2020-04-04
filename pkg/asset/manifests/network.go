@@ -40,8 +40,8 @@ spec:
 `))
 
 var clusterNetwork03Tmpl = template.Must(template.New("cluster03").Parse(`apiVersion: operator.openshift.io/v1
+kind: Network
 metadata:
-  creationTimestamp: null
   name: cluster
 spec:
   disableMultiNetwork: true
