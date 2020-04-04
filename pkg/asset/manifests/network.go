@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -37,6 +38,17 @@ metadata:
 spec:
   snatIp:
     -  {{.snatIP}}
+`))
+
+var rdConfigTmpl = template.Must(template.New("rdconfig").Parse(`apiVersion: aci.snat/v1
+kind: RdConfig
+metadata:
+  name: routingdomain-config
+  namespace: aci-containers-system
+spec:
+  usersubnets:
+  - {{ .neutronCIDR }}
+  - 224.0.0.0/4
 `))
 
 var clusterNetwork03Tmpl = template.Must(template.New("cluster03").Parse(`apiVersion: operator.openshift.io/v1
@@ -160,12 +172,25 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 	r, _ := os.Open(installConfig.Config.Platform.OpenStack.AciNetExt.ProvisionTar)
 	uncompressedStream, _ := gzip.NewReader(r)
 	tarReader := tar.NewReader(uncompressedStream)
+	var noRDconfigFilename string
 	for true {
 		header, err := tarReader.Next()
 		if err == io.EOF {
 			break
 		}
 		b, _ := ioutil.ReadAll(tarReader);
+
+		// Save filenumber of hostagent daemonset for rdconfig CR
+		if strings.Contains(header.Name, "DaemonSet-aci-containers-host"){
+			hostAgentFileName := header.Name
+			hyphenParsed := strings.Split(hostAgentFileName, "-")
+			hostAgentFileNo, err := strconv.Atoi(hyphenParsed[2])
+			if err != nil {
+				return errors.Wrapf(err, "failed to decipher host agent  manifest file from acc-provision tar")
+			}
+			rdConfigFileNo := strconv.Itoa(hostAgentFileNo - 4)
+			noRDconfigFilename = filepath.Join(manifestDir, "cluster-network-" + rdConfigFileNo + "-2-CustomResource-rdconfig.yaml")
+		}
 
 		// Edit cluster-network-03 file with correct fields
 		if strings.Contains(header.Name, "cluster-network-03"){
@@ -198,6 +223,18 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 		}
 		snatFile := &asset.File{Filename: noSNATCRFilename, Data: snatData.Bytes()}
 		no.FileList = append(no.FileList, snatFile)
+
+		// Create yaml for rdConfig
+		if noRDconfigFilename == "" {
+			return errors.New("no manifest with DaemonSet-aci-containers-host found in acc-provision tar")
+		}
+                rdConfigData := &bytes.Buffer{}
+                data = map[string]string{"neutronCIDR": installConfig.Config.Platform.OpenStack.AciNetExt.NeutronCIDR.String()}
+                if err = rdConfigTmpl.Execute(rdConfigData, data); err != nil {
+                        return errors.Wrapf(err, "failed to create rdconfig manifest from InstallConfig")
+                }
+                rdconfigFile := &asset.File{Filename: noRDconfigFilename, Data: rdConfigData.Bytes()}
+                no.FileList = append(no.FileList, rdconfigFile)
 	}
 
 	return nil
