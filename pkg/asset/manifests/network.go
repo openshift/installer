@@ -1,9 +1,16 @@
 package manifests
 
 import (
+	"archive/tar"
         "bytes"
+	"compress/gzip"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/ghodss/yaml"
@@ -30,6 +37,21 @@ metadata:
 spec:
   snatIp:
     -  {{.snatIP}}
+`))
+
+var clusterNetwork03Tmpl = template.Must(template.New("cluster03").Parse(`apiVersion: operator.openshift.io/v1
+kind: Network
+metadata:
+  name: cluster
+spec:
+  disableMultiNetwork: true
+  clusterNetwork:
+  - cidr: {{.clusterNet}}
+    hostPrefix: {{.hostPrefix}}
+  defaultNetwork:
+    type: {{.netType}}
+  serviceNetwork:
+  - {{.svcNet}}
 `))
 
 // We need to manually create our CRDs first, so we can create the
@@ -106,6 +128,11 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 				Policy: &configv1.ExternalIPPolicy{},
 			},
 		},
+		Status: configv1.NetworkStatus{
+			ClusterNetwork: clusterNet,
+			ServiceNetwork: serviceNet,
+			NetworkType:    netConfig.NetworkType,
+		},
 	}
 
 	configData, err := yaml.Marshal(no.Config)
@@ -128,6 +155,34 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
                         Data:     configData,
                 },
         }
+
+	// Untar and add acc-provision files
+	r, _ := os.Open(installConfig.Config.Platform.OpenStack.AciNetExt.ProvisionTar)
+	uncompressedStream, _ := gzip.NewReader(r)
+	tarReader := tar.NewReader(uncompressedStream)
+	for true {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		b, _ := ioutil.ReadAll(tarReader);
+
+		// Edit cluster-network-03 file with correct fields
+		if strings.Contains(header.Name, "cluster-network-03"){
+			cluster03Data := &bytes.Buffer{}
+			clusterNetworkCIDR := &netConfig.ClusterNetwork[0].CIDR
+			data := map[string]string{"clusterNet": clusterNetworkCIDR.String(),
+                		"hostPrefix":  strconv.Itoa(int(netConfig.ClusterNetwork[0].HostPrefix)),
+                		"netType": netConfig.NetworkType, "svcNet": netConfig.ServiceNetwork[0].String()}
+			if err := clusterNetwork03Tmpl.Execute(cluster03Data, data); err != nil {
+				return errors.Wrapf(err, "failed to create cluster-network-03 manifests from InstallConfig")
+			}
+			b = cluster03Data.Bytes()
+
+		}
+		tempFile := &asset.File{Filename: filepath.Join(manifestDir, header.Name), Data: b}
+		no.FileList = append(no.FileList, tempFile)
+	}
 
 	// Create SNAT Cluster CR file 
 	if installConfig.Config.Platform.OpenStack.AciNetExt.ClusterSNATSubnet != "" {

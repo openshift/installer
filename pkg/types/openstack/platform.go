@@ -5,9 +5,9 @@ import (
 )
 
 type AciNetExtStruct struct {
-        InfraVLAN               string
-        KubeApiVLAN             string
-        ServiceVLAN             string
+        InfraVLAN               string          `json:"infraVlan"`
+        KubeApiVLAN             string          `json:"kubeApiVlan"`
+        ServiceVLAN             string          `json:"serviceVlan"`
         Mtu                     string          `json:"mtu,omitempty"`
         ProvisionTar            string		`json:"provisionTar,omitempty"`
         NeutronCIDR             *ipnet.IPNet    `json:"neutronCIDR,omitempty"`
