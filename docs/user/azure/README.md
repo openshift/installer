@@ -16,4 +16,8 @@ Please see the [Issue Tracker][issues] for current known issues.
 Please report a new issue if you do not find an issue related to any trouble
 you're having.
 
+## Azure MAG
+
+Please see [Azure MAG Quickstart](install_upi_azuremag_quickstart.md), this is currently in pre-alpha.
+
 [issues]: https://github.com/openshift/installer/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+azure
