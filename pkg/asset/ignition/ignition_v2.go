@@ -10,7 +10,8 @@ import (
 	"path/filepath"
 
 	"github.com/coreos/ignition/config/util"
-	igntypes2 "github.com/coreos/ignition/config/v2_4/types"
+	igntypes22 "github.com/coreos/ignition/config/v2_2/types"
+	igntypes24 "github.com/coreos/ignition/config/v2_4/types"
 	"github.com/pkg/errors"
 
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
@@ -24,9 +25,9 @@ import (
 )
 
 // Config is ignition v2 Config
-type Config igntypes2.Config
+type Config igntypes22.Config
 
-// Dropin in an abstraction over igntypes2.SystemdDropin
+// Dropin in an abstraction over igntypes22.SystemdDropin
 type Dropin struct {
 	Name     string
 	Contents string
@@ -34,8 +35,8 @@ type Dropin struct {
 
 // FilesFromAsset creates ignition files for each of the files in the specified
 // asset.
-func FilesFromAsset(pathPrefix string, username string, mode int, asset asset.WritableAsset) []igntypes2.File {
-	var files []igntypes2.File
+func FilesFromAsset(pathPrefix string, username string, mode int, asset asset.WritableAsset) []igntypes22.File {
+	var files []igntypes22.File
 	for _, f := range asset.Files() {
 		files = append(files, FileFromBytes(filepath.Join(pathPrefix, f.Filename), username, mode, f.Data))
 	}
@@ -43,23 +44,23 @@ func FilesFromAsset(pathPrefix string, username string, mode int, asset asset.Wr
 }
 
 // FileFromString creates an ignition-config file with the given contents.
-func FileFromString(path string, username string, mode int, contents string) igntypes2.File {
+func FileFromString(path string, username string, mode int, contents string) igntypes22.File {
 	return FileFromBytes(path, username, mode, []byte(contents))
 }
 
 // FileFromBytes creates an ignition-config file with the given contents.
-func FileFromBytes(path string, username string, mode int, contents []byte) igntypes2.File {
-	return igntypes2.File{
-		Node: igntypes2.Node{
+func FileFromBytes(path string, username string, mode int, contents []byte) igntypes22.File {
+	return igntypes22.File{
+		Node: igntypes22.Node{
 			Filesystem: "root",
 			Path:       path,
-			User: &igntypes2.NodeUser{
+			User: &igntypes22.NodeUser{
 				Name: username,
 			},
 		},
-		FileEmbedded1: igntypes2.FileEmbedded1{
+		FileEmbedded1: igntypes22.FileEmbedded1{
 			Mode: &mode,
-			Contents: igntypes2.FileContents{
+			Contents: igntypes22.FileContents{
 				Source: dataurl.EncodeBytes(contents),
 			},
 		},
@@ -70,16 +71,16 @@ func FileFromBytes(path string, username string, mode int, contents []byte) ignt
 // served by the machine config server.
 func PointerIgnitionConfig(url string, rootCA []byte) *Config {
 	return &Config{
-		Ignition: igntypes2.Ignition{
-			Version: igntypes2.MaxVersion.String(),
-			Config: igntypes2.IgnitionConfig{
-				Append: []igntypes2.ConfigReference{{
+		Ignition: igntypes22.Ignition{
+			Version: igntypes22.MaxVersion.String(),
+			Config: igntypes22.IgnitionConfig{
+				Append: []igntypes22.ConfigReference{{
 					Source: url,
 				}},
 			},
-			Security: igntypes2.Security{
-				TLS: igntypes2.TLS{
-					CertificateAuthorities: []igntypes2.CaReference{{
+			Security: igntypes22.Security{
+				TLS: igntypes22.TLS{
+					CertificateAuthorities: []igntypes22.CaReference{{
 						Source: dataurl.EncodeBytes(rootCA),
 					}},
 				},
@@ -112,13 +113,13 @@ func ForAuthorizedKeys(key string, role string) *mcfgv1.MachineConfig {
 		},
 		Spec: mcfgv1.MachineConfigSpec{
 			Config: runtime.RawExtension{
-				Raw: MarshalOrDie(&igntypes2.Config{
-					Ignition: igntypes2.Ignition{
-						Version: igntypes2.MaxVersion.String(),
+				Raw: MarshalOrDie(&igntypes22.Config{
+					Ignition: igntypes22.Ignition{
+						Version: igntypes22.MaxVersion.String(),
 					},
-					Passwd: igntypes2.Passwd{
-						Users: []igntypes2.PasswdUser{{
-							Name: "core", SSHAuthorizedKeys: []igntypes2.SSHAuthorizedKey{igntypes2.SSHAuthorizedKey(key)},
+					Passwd: igntypes22.Passwd{
+						Users: []igntypes22.PasswdUser{{
+							Name: "core", SSHAuthorizedKeys: []igntypes22.SSHAuthorizedKey{igntypes22.SSHAuthorizedKey(key)},
 						}},
 					},
 				}),
@@ -143,9 +144,9 @@ func ForFIPSEnabled(role string) *mcfgv1.MachineConfig {
 		},
 		Spec: mcfgv1.MachineConfigSpec{
 			Config: runtime.RawExtension{
-				Raw: MarshalOrDie(&igntypes2.Config{
-					Ignition: igntypes2.Ignition{
-						Version: igntypes2.MaxVersion.String(),
+				Raw: MarshalOrDie(&igntypes22.Config{
+					Ignition: igntypes22.Ignition{
+						Version: igntypes22.MaxVersion.String(),
 					},
 				}),
 			},
@@ -170,12 +171,12 @@ func ForHyperthreadingDisabled(role string) *mcfgv1.MachineConfig {
 		},
 		Spec: mcfgv1.MachineConfigSpec{
 			Config: runtime.RawExtension{
-				Raw: MarshalOrDie(&igntypes2.Config{
-					Ignition: igntypes2.Ignition{
-						Version: igntypes2.MaxVersion.String(),
+				Raw: MarshalOrDie(&igntypes22.Config{
+					Ignition: igntypes22.Ignition{
+						Version: igntypes22.MaxVersion.String(),
 					},
-					Storage: igntypes2.Storage{
-						Files: []igntypes2.File{
+					Storage: igntypes22.Storage{
+						Files: []igntypes22.File{
 							FileFromString("/etc/pivot/kernel-args", "root", 0600, "ADD nosmt"),
 						},
 					},
@@ -188,7 +189,7 @@ func ForHyperthreadingDisabled(role string) *mcfgv1.MachineConfig {
 // InjectInstallInfo adds information about the installer and its invoker as a
 // ConfigMap to the provided bootstrap Ignition config.
 func InjectInstallInfo(bootstrap []byte) (string, error) {
-	config := &igntypes2.Config{}
+	config := &igntypes22.Config{}
 	if err := json.Unmarshal(bootstrap, &config); err != nil {
 		return "", errors.Wrap(err, "failed to unmarshal bootstrap Ignition config")
 	}
@@ -211,8 +212,8 @@ func InjectInstallInfo(bootstrap []byte) (string, error) {
 // GenerateMinimalConfig returns a minimal ignition v2 config
 func GenerateMinimalConfig() *Config {
 	return &Config{
-		Ignition: igntypes2.Ignition{
-			Version: igntypes2.MaxVersion.String(),
+		Ignition: igntypes22.Ignition{
+			Version: igntypes22.MaxVersion.String(),
 		},
 	}
 }
@@ -221,13 +222,13 @@ func GenerateMinimalConfig() *Config {
 func (c *Config) AddSSHKey(sshKey, bootstrapSSHKeyPair string) {
 	c.Passwd.Users = append(
 		c.Passwd.Users,
-		igntypes2.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes2.SSHAuthorizedKey{igntypes2.SSHAuthorizedKey(sshKey), igntypes2.SSHAuthorizedKey(bootstrapSSHKeyPair)}},
+		igntypes22.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes22.SSHAuthorizedKey{igntypes22.SSHAuthorizedKey(sshKey), igntypes22.SSHAuthorizedKey(bootstrapSSHKeyPair)}},
 	)
 }
 
 // AddSystemdUnit appends contents in Ignition config
 func (c *Config) AddSystemdUnit(name string, contents string, enabled bool) {
-	unit := igntypes2.Unit{
+	unit := igntypes22.Unit{
 		Name:     name,
 		Contents: contents,
 	}
@@ -239,15 +240,15 @@ func (c *Config) AddSystemdUnit(name string, contents string, enabled bool) {
 
 // AddSystemdDropins appends systemd dropins in the config
 func (c *Config) AddSystemdDropins(name string, children []Dropin, enabled bool) {
-	dropins := []igntypes2.SystemdDropin{}
+	dropins := []igntypes22.SystemdDropin{}
 	for _, childInfo := range children {
 
-		dropins = append(dropins, igntypes2.SystemdDropin{
+		dropins = append(dropins, igntypes22.SystemdDropin{
 			Name:     childInfo.Name,
 			Contents: childInfo.Contents,
 		})
 	}
-	unit := igntypes2.Unit{
+	unit := igntypes22.Unit{
 		Name:    name,
 		Dropins: dropins,
 	}
@@ -258,7 +259,7 @@ func (c *Config) AddSystemdDropins(name string, children []Dropin, enabled bool)
 }
 
 // ReplaceOrAppend is a function which ensures duplicate files are not added in the file list
-func (c *Config) ReplaceOrAppend(file igntypes2.File) {
+func (c *Config) ReplaceOrAppend(file igntypes22.File) {
 	for i, f := range c.Storage.Files {
 		if f.Node.Path == file.Node.Path {
 			c.Storage.Files[i] = file
@@ -283,36 +284,36 @@ func GenerateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL st
 	// Hostname Config
 	contents := fmt.Sprintf("%s-bootstrap", clusterID)
 
-	hostnameConfigFile := igntypes2.File{
-		Node: igntypes2.Node{
+	hostnameConfigFile := igntypes24.File{
+		Node: igntypes24.Node{
 			Filesystem: "root",
 			Path:       "/etc/hostname",
 		},
-		FileEmbedded1: igntypes2.FileEmbedded1{
+		FileEmbedded1: igntypes24.FileEmbedded1{
 			Mode: &fileMode,
-			Contents: igntypes2.FileContents{
+			Contents: igntypes24.FileContents{
 				Source: dataurl.EncodeBytes([]byte(contents)),
 			},
 		},
 	}
 
 	// Openstack Ca Cert file
-	openstackCAFile := igntypes2.File{
-		Node: igntypes2.Node{
+	openstackCAFile := igntypes24.File{
+		Node: igntypes24.Node{
 			Filesystem: "root",
 			Path:       "/opt/openshift/tls/cloud-ca-cert.pem",
 		},
-		FileEmbedded1: igntypes2.FileEmbedded1{
+		FileEmbedded1: igntypes24.FileEmbedded1{
 			Mode: &fileMode,
-			Contents: igntypes2.FileContents{
+			Contents: igntypes24.FileContents{
 				Source: dataurl.EncodeBytes([]byte(userCA)),
 			},
 		},
 	}
 
-	security := igntypes2.Security{}
+	security := igntypes24.Security{}
 	if userCA != "" {
-		carefs := []igntypes2.CaReference{}
+		carefs := []igntypes24.CaReference{}
 		rest := []byte(userCA)
 
 		for {
@@ -322,33 +323,33 @@ func GenerateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL st
 				return "", fmt.Errorf("unable to parse certificate, please check the cacert section of clouds.yaml")
 			}
 
-			carefs = append(carefs, igntypes2.CaReference{Source: dataurl.EncodeBytes(pem.EncodeToMemory(block))})
+			carefs = append(carefs, igntypes24.CaReference{Source: dataurl.EncodeBytes(pem.EncodeToMemory(block))})
 
 			if len(rest) == 0 {
 				break
 			}
 		}
 
-		security = igntypes2.Security{
-			TLS: igntypes2.TLS{
+		security = igntypes24.Security{
+			TLS: igntypes24.TLS{
 				CertificateAuthorities: carefs,
 			},
 		}
 	}
 
-	headers := []igntypes2.HTTPHeader{
+	headers := []igntypes24.HTTPHeader{
 		{
 			Name:  "X-Auth-Token",
 			Value: tokenID,
 		},
 	}
 
-	ign := igntypes2.Config{
-		Ignition: igntypes2.Ignition{
-			Version:  igntypes2.MaxVersion.String(),
+	ign := igntypes24.Config{
+		Ignition: igntypes24.Ignition{
+			Version:  igntypes24.MaxVersion.String(),
 			Security: security,
-			Config: igntypes2.IgnitionConfig{
-				Append: []igntypes2.ConfigReference{
+			Config: igntypes24.IgnitionConfig{
+				Append: []igntypes24.ConfigReference{
 					{
 						Source:      bootstrapConfigURL,
 						HTTPHeaders: headers,
@@ -356,8 +357,8 @@ func GenerateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL st
 				},
 			},
 		},
-		Storage: igntypes2.Storage{
-			Files: []igntypes2.File{
+		Storage: igntypes24.Storage{
+			Files: []igntypes24.File{
 				hostnameConfigFile,
 				openstackCAFile,
 			},
