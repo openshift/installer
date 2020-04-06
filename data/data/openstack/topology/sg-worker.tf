@@ -53,6 +53,16 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_mdns_udp" {
   depends_on = ["openstack_networking_secgroup_rule_v2.worker_ingress_ssh"]
 }
 
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_mdns_udp_neutron" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 5353
+  port_range_max    = 5353
+  remote_ip_prefix  = var.neutron_cidr
+  security_group_id = openstack_networking_secgroup_v2.worker.id
+}
+
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_http" {
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -87,6 +97,16 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_router" {
   security_group_id = openstack_networking_secgroup_v2.worker.id
 
   depends_on = ["openstack_networking_secgroup_rule_v2.worker_ingress_https"]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_router_neutron" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 1936
+  port_range_max    = 1936
+  remote_ip_prefix  = var.neutron_cidr
+  security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vxlan" {
@@ -261,4 +281,12 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vrrp" {
   security_group_id = openstack_networking_secgroup_v2.worker.id
 
   depends_on = ["openstack_networking_secgroup_rule_v2.worker_ingress_services_udp"]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vrrp_neutron" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "vrrp"
+  remote_ip_prefix  = var.neutron_cidr
+  security_group_id = openstack_networking_secgroup_v2.worker.id
 }
