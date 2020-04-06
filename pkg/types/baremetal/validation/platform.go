@@ -153,8 +153,28 @@ func validateOSImages(p *baremetal.Platform, fldPath *field.Path) field.ErrorLis
 	return platformErrs
 }
 
+func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallConfig) error {
+
+	hostsNum := int64(len(hosts))
+	counter := int64(0)
+
+	for _, worker := range installConfig.Compute {
+		if worker.Replicas != nil {
+			counter += *worker.Replicas
+		}
+	}
+	if installConfig.ControlPlane != nil && installConfig.ControlPlane.Replicas != nil {
+		counter += *installConfig.ControlPlane.Replicas
+	}
+	if hostsNum < counter {
+		return fmt.Errorf("not enough hosts found (%v) to support all the configured ControlPlane and Compute replicas (%v)", hostsNum, counter)
+	}
+
+	return nil
+}
+
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field.Path) field.ErrorList {
+func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if err := validate.URI(p.LibvirtURI); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("libvirtURI"), p.LibvirtURI, err.Error()))
@@ -236,6 +256,10 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 	}
 	if err := validateIPNotinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapHostIP"), p.BootstrapProvisioningIP, err.Error()))
+	}
+
+	if err := validateHostsCount(p.Hosts, c); err != nil {
+		allErrs = append(allErrs, field.Required(fldPath.Child("Hosts"), err.Error()))
 	}
 
 	allErrs = append(allErrs, validateOSImages(p, fldPath)...)
