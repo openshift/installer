@@ -41,11 +41,10 @@ spec:
   config:
     ignition:
       config: {}
-      proxy: {}
       security:
         tls: {}
       timeouts: {}
-      version: 2.4.0
+      version: 2.2.0
     networkd: {}
     passwd:
       users:
@@ -74,11 +73,10 @@ spec:
   config:
     ignition:
       config: {}
-      proxy: {}
       security:
         tls: {}
       timeouts: {}
-      version: 2.4.0
+      version: 2.2.0
     networkd: {}
     passwd: {}
     storage:
@@ -113,11 +111,10 @@ spec:
   config:
     ignition:
       config: {}
-      proxy: {}
       security:
         tls: {}
       timeouts: {}
-      version: 2.4.0
+      version: 2.2.0
     networkd: {}
     passwd: {}
     storage:
@@ -146,11 +143,10 @@ spec:
   config:
     ignition:
       config: {}
-      proxy: {}
       security:
         tls: {}
       timeouts: {}
-      version: 2.4.0
+      version: 2.2.0
     networkd: {}
     passwd:
       users:
