@@ -372,7 +372,7 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackVa
 	}
 	if platform.BareMetal != nil {
 		validate(baremetal.Name, platform.BareMetal, func(f *field.Path) field.ErrorList {
-			return baremetalvalidation.ValidatePlatform(platform.BareMetal, network, f)
+			return baremetalvalidation.ValidatePlatform(platform.BareMetal, network, f, c)
 		})
 	}
 	return allErrs
