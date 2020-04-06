@@ -1,5 +1,34 @@
 #!/bin/bash
 
+while test $# -gt 0; do
+  case "$1" in
+    -h|--help)
+      echo "Create UPI OCP 4.X on Azure MAG, see Readme"
+      echo " "
+      echo "options:"
+      echo "-h, --help                show brief help"
+      echo "-w, --worker-nodes=number specify number of worker nodes, 3 default"
+      exit 0
+      ;;
+    -w)
+      shift
+      if test $# -gt 0; then
+        export WORKERNODES=$1
+      else
+        export WORKERNODES=3
+      fi
+      shift
+      ;;
+    --worker-nodes*)
+      export PROCESS=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
 export CLUSTER_NAME=`yq -r .metadata.name install-config.yaml`
 export AZURE_REGION=`yq -r .platform.azure.region install-config.yaml`
 export SSH_KEY=`yq -r .sshKey install-config.yaml | xargs`
@@ -18,9 +47,11 @@ open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 
 openshift-install create manifests
 
+read -p "press follow step 6 in azuremag quickstart guide, press [enter] to continue..." dummy
+
 rm -fv openshift/99_openshift-cluster-api_master-machines-*.yaml
 rm -fv openshift/99_openshift-cluster-api_worker-machineset-*.yaml
-rm -fv manifests/cluster-ingress-02-config.yml
+
 
 python3 -c '
 import yaml;
@@ -61,6 +92,14 @@ export RESOURCE_GROUP_ID=`az group show -g $RESOURCE_GROUP --query id --out tsv`
 az role assignment create --assignee "$PRINCIPAL_ID" --role 'Contributor' --scope "$RESOURCE_GROUP_ID"
 
 az network dns zone create -g $RESOURCE_GROUP -n ${CLUSTER_NAME}.${BASE_DOMAIN}
+
+nsServer0=`az network dns zone show --resource-group $RESOURCE_GROUP --name ${CLUSTER_NAME}.${BASE_DOMAIN} --query "nameServers[0]" -o tsv`
+nsServer1=`az network dns zone show --resource-group $RESOURCE_GROUP --name ${CLUSTER_NAME}.${BASE_DOMAIN} --query "nameServers[1]" -o tsv`
+
+az network dns record-set ns create --name ${CLUSTER_NAME} --resource-group $BASE_DOMAIN_RESOURCE_GROUP --zone-name ${BASE_DOMAIN}
+az network dns record-set ns add-record --nsdname $nsServer0 -n ${CLUSTER_NAME} -g $BASE_DOMAIN_RESOURCE_GROUP -z ${BASE_DOMAIN}
+az network dns record-set ns add-record --nsdname $nsServer1 -n ${CLUSTER_NAME} -g $BASE_DOMAIN_RESOURCE_GROUP -z ${BASE_DOMAIN}
+
 az network private-dns zone create -g $RESOURCE_GROUP -n ${CLUSTER_NAME}.${BASE_DOMAIN}
 
 status="unknown"
@@ -130,4 +169,5 @@ az deployment group create -g $RESOURCE_GROUP \
   --template-file "06_workers.json" \
   --parameters workerIgnition="$WORKER_IGNITION" \
   --parameters sshKeyData="$SSH_KEY" \
-  --parameters baseName="$INFRA_ID"
+  --parameters baseName="$INFRA_ID" \
+  --parameters numberOfNodes="$WORKERNODES"
