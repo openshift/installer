@@ -184,7 +184,20 @@ resource "aws_route53_record" "ctrlp_int" {
   records = ["${local.ctrp_records}"]
 }
 
-resource "aws_route53_record" "apps" {
+resource "aws_route53_record" "apps_noworker" {
+  count = "${var.worker_count == 0 ? 1 : 0}"
+
+  zone_id = "${data.aws_route53_zone.public.zone_id}"
+  type    = "A"
+  ttl     = "60"
+  name    = "*.apps.${var.cluster_domain}"
+
+  records = ["${local.master_public_ipv4}"]
+}
+
+resource "aws_route53_record" "apps_worker" {
+  count = "${var.worker_count > 0 ? 1 : 0}"
+
   zone_id = "${data.aws_route53_zone.public.zone_id}"
   type    = "A"
   ttl     = "60"
