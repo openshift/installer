@@ -59,8 +59,8 @@
     "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.4/44.81.202003062006-0/x86_64/",
     "buildid": "44.81.202003062006-0",
     "gcp": {
-        "image": "rhcos-44-81-202003062006-0-gcp-x86-64",
-        "url": "https://storage.googleapis.com/rhcos/rhcos/rhcos-44-81-202003062006-0-gcp-x86-64.tar.gz"
+        "image": "rhcos-45-81-202004071310-0-gcp-x86-64",
+        "url": "https://storage.googleapis.com/rhcos-devel/devel/rhcos/rhcos-45-81-202004071310-0-gcp-x86-64.tar.gz"
     },
     "images": {
         "aws": {
@@ -78,9 +78,9 @@
             "uncompressed-size": 17179869696
         },
         "gcp": {
-            "path": "rhcos-44.81.202003062006-0-gcp.x86_64.tar.gz",
-            "sha256": "679de9281b3671100f520dd82d00bdcb877924dbeb4df7c3eb912374377b5898",
-            "size": 847864998
+           "path": "rhcos-45.81.202004071310-0-gcp.x86_64.tar.gz",
+           "sha256": "40026215112e3d6a008ccce6c15c64b50d82fbfca774267b4e416b3ac31463af",
+           "size": 886449358
         },
         "initramfs": {
             "path": "rhcos-44.81.202003062006-0-installer-initramfs.x86_64.img",
@@ -127,8 +127,8 @@
         }
     },
     "oscontainer": {
-        "digest": "sha256:679c8b29ee2cc209568ae5504f97ce03aba415c8f89a78d52fa0da9a1c43b4d4",
-        "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+        "digest": "sha256:047b8ea5a1408482acf9a008676199504e3b06d34744916a3a7234cb39c1ae6b",
+        "image": "registry.svc.ci.openshift.org/rhcos-devel/machine-os-content"
     },
     "ostree-commit": "4e3f5cd998893cc6648888e77515c91e3de87732b220a84b5a6fa12c5d87f8ce",
     "ostree-version": "44.81.202003062006-0"
