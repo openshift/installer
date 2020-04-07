@@ -18,12 +18,10 @@
   version = "v0.4.11"
 
 [[projects]]
-  digest = "1:cb5a084abcd601226fd3fbc8e226aa4b6c5a8b90b8aa46266d6a27c9c4df984d"
+  digest = "1:69b23217cf6386b0fbc6a89743969b0300e1d403307e2cb5c4d016385b07cdd8"
   name = "github.com/Azure/azure-sdk-for-go"
   packages = [
     "profiles/latest/dns/mgmt/dns",
-    "profiles/latest/resources/mgmt/resources",
-    "profiles/latest/resources/mgmt/subscriptions",
     "services/compute/mgmt/2018-10-01/compute",
     "services/dns/mgmt/2017-10-01/dns",
     "services/graphrbac/1.6/graphrbac",
@@ -31,8 +29,8 @@
     "services/preview/dns/mgmt/2018-03-01-preview/dns",
     "services/privatedns/mgmt/2018-09-01/privatedns",
     "services/resources/mgmt/2018-05-01/resources",
-    "services/resources/mgmt/2018-06-01/subscriptions",
     "services/resources/mgmt/2019-03-01/resources",
+    "services/resources/mgmt/2018-06-01/subscriptions",
     "version",
   ]
   pruneopts = "NUT"
@@ -1367,14 +1365,14 @@
   analyzer-version = 1
   input-imports = [
     "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns",
-    "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/resources",
-    "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions",
     "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute",
     "github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac",
     "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network",
     "github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns",
     "github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns",
     "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources",
+    "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-06-01/subscriptions",
+    "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-03-01/resources",
     "github.com/Azure/go-autorest/autorest",
     "github.com/Azure/go-autorest/autorest/azure",
     "github.com/Azure/go-autorest/autorest/azure/auth",
