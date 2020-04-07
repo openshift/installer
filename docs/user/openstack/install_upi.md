@@ -846,4 +846,7 @@ $ ansible-playbook -i inventory.yaml  \
 
 The playbook `down-06_load-balancers.yaml` idempotently deletes the load balancers created by the Kuryr installation, if any.
 
+**NOTE:** The deletion of load balancers with `provisioning_status` `PENDING-*` is skipped. Make sure to retry the
+`down-load-balancers.yaml` playbook once the load balancers have transitioned to `ACTIVE`.
+
 Then, remove the `api` and `*.apps` DNS records.
