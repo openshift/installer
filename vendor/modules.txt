@@ -1042,9 +1042,9 @@ github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider
 github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1
 # github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033375cbe820+incompatible => github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530
 github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1
-# github.com/ovirt/go-ovirt v4.3.4+incompatible
+# github.com/ovirt/go-ovirt v4.3.4+incompatible => github.com/ovirt/go-ovirt v0.0.0-20200320082526-4e97a11ff083
 github.com/ovirt/go-ovirt
-# github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200122105935-65b89ad00553
+# github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200406133650-74a154c1d861
 github.com/ovirt/terraform-provider-ovirt/ovirt
 # github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db
 github.com/packer-community/winrmcp/winrmcp

@@ -1826,10 +1826,10 @@ github.com/operator-framework/operator-sdk v0.5.1-0.20190301204940-c2efe6f74e7b/
 github.com/oracle/oci-go-sdk v7.0.0+incompatible/go.mod h1:VQb79nF8Z2cwLkLS35ukwStZIg5F66tcBccjip/j888=
 github.com/ory/dockertest v3.3.4+incompatible/go.mod h1:1vX4m9wsvi00u5bseYwXaSnhNrne+V0E6LAcBILJdPs=
 github.com/ostreedev/ostree-go v0.0.0-20190702140239-759a8c1ac913/go.mod h1:J6OG6YJVEWopen4avK3VNQSnALmmjvniMmni/YFYAwc=
-github.com/ovirt/go-ovirt v4.3.4+incompatible h1:jXcJpcXyNZ3mXJ1IVU3l3tMpE4JEUSNjqRiEJnVpG40=
-github.com/ovirt/go-ovirt v4.3.4+incompatible/go.mod h1:r33ZGjVKCPMiI6hw791/Zx8tNKk0Gn+4VFWbOfyIvZQ=
-github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200122105935-65b89ad00553 h1:vmWD1P79PygdRMQluGsJ1Xl7PIIcJiiL8ZnawfUTv24=
-github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200122105935-65b89ad00553/go.mod h1:IJf1C8MY1f4djN506HESURNfvcjrMVjBWEHN13dw8R0=
+github.com/ovirt/go-ovirt v0.0.0-20200320082526-4e97a11ff083 h1:nW3qTnZ+ytoEZ1JL0EW3+mwjVcfjZ9WB3tSfOHQREgM=
+github.com/ovirt/go-ovirt v0.0.0-20200320082526-4e97a11ff083/go.mod h1:fLDxPk1Sf64DBYtwIYxrnx3gPZ1q0xPdWdI1y9vxUaw=
+github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200406133650-74a154c1d861 h1:vhOqmT4WRzfUys+NBhTzkRD08waA3dNDB7G5Pty2Rns=
+github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200406133650-74a154c1d861/go.mod h1:XFDLN/srNA1s2Dq+gp4zBvql6nRnfNJzDGzI5vtK85g=
 github.com/oxtoacart/bpool v0.0.0-20150712133111-4e1c5567d7c2/go.mod h1:L3UMQOThbttwfYRNFOWLLVXMhk5Lkio4GGOtw5UrxS0=
 github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c/go.mod h1:X07ZCGwUbLaax7L0S3Tw4hpejzu63ZrrQiUe6W0hcy0=
 github.com/packer-community/winrmcp v0.0.0-20180102160824-81144009af58/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=

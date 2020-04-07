@@ -42,15 +42,14 @@ func resourceOvirtVM() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"cluster_id": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"status": {
 				Type:     schema.TypeString,
+				Optional: true,
 				Computed: true,
 			},
 			"template_id": {
@@ -69,12 +68,10 @@ func resourceOvirtVM() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
-				ForceNew: true,
 			},
 			"memory": {
 				Type:         schema.TypeInt,
 				Optional:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.IntAtLeast(1),
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 					// Suppress diff if new memory is not set
@@ -86,19 +83,31 @@ func resourceOvirtVM() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Default:  1,
-				ForceNew: true,
 			},
 			"sockets": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Default:  1,
-				ForceNew: true,
 			},
 			"threads": {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Default:  1,
+			},
+			"os": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
 				ForceNew: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+						},
+					},
+				},
 			},
 			"nics": {
 				Type:     schema.TypeList,
@@ -118,6 +127,19 @@ func resourceOvirtVM() *schema.Resource {
 					},
 				},
 			},
+			"boot_devices": {
+				Type:     schema.TypeList,
+				Optional: true,
+				ForceNew: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+					ValidateFunc: validation.StringInSlice([]string{
+						string(ovirtsdk4.BOOTDEVICE_CDROM),
+						string(ovirtsdk4.BOOTDEVICE_HD),
+						string(ovirtsdk4.BOOTDEVICE_NETWORK),
+					}, false),
+				},
+			},
 			"block_device": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -126,8 +148,14 @@ func resourceOvirtVM() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"disk_id": {
 							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: true,
+							Optional: true,
+							ForceNew: false,
+						},
+						"size": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							ForceNew:    false,
+							Description: "in GiB",
 						},
 						"active": {
 							Type:     schema.TypeBool,
@@ -248,6 +276,28 @@ func resourceOvirtVM() *schema.Resource {
 					},
 				},
 			},
+			"type": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: fmt.Sprintf(
+					"One of %s, %s, %s",
+					ovirtsdk4.VMTYPE_DESKTOP,
+					ovirtsdk4.VMTYPE_SERVER,
+					ovirtsdk4.VMTYPE_HIGH_PERFORMANCE),
+				ValidateFunc: validation.StringInSlice([]string{
+					string(ovirtsdk4.VMTYPE_DESKTOP),
+					string(ovirtsdk4.VMTYPE_SERVER),
+					string(ovirtsdk4.VMTYPE_HIGH_PERFORMANCE),
+				}, false),
+			},
+			"instance_type_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: fmt.Sprintf(
+					"The ID of the Instance Type." +
+						" Checkout the IDs by requesting ovirt-engine/api/instancetypes" +
+						" from APIs or the WebAdmin portal"),
+			},
 		},
 	}
 }
@@ -269,7 +319,11 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 		if len(tds) > 0 && blockDeviceOk {
-			return fmt.Errorf("template_id with disks attached is conflict with block_device")
+			device := blockDevice.([]interface{})
+			// check if a disk id was passed to block_device, fail if so.
+			if diskID, _ := device[0].(map[string]interface{})["disk_id"].(string); diskID != "" {
+				return fmt.Errorf("template_id with disks attached is conflict with block_device")
+			}
 		}
 		if len(tds) == 0 && !blockDeviceOk {
 			return fmt.Errorf("template has no disks attached, so block_device must be assigned")
@@ -322,6 +376,14 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	vmBuilder.Cpu(cpu)
 
+	os, err := expandOS(d)
+	if err != nil {
+		return err
+	}
+	if os != nil {
+		vmBuilder.Os(os)
+	}
+
 	if v, ok := d.GetOk("initialization"); ok {
 		initialization, err := expandOvirtVMInitialization(v.([]interface{}))
 		if err != nil {
@@ -330,6 +392,15 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 		if initialization != nil {
 			vmBuilder.Initialization(initialization)
 		}
+	}
+
+	if v, ok := d.GetOk("type"); ok {
+		vmBuilder.Type(ovirtsdk4.VmType(fmt.Sprint(v)))
+	}
+
+	if v, ok := d.GetOk("instance_type_id"); ok {
+		vmBuilder.InstanceTypeBuilder(
+			ovirtsdk4.NewInstanceTypeBuilder().Id(v.(string)))
 	}
 
 	vm, err := vmBuilder.Build()
@@ -394,9 +465,8 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 	// Try to start VM
 	log.Printf("[DEBUG] Try to start VM (%s)", d.Id())
 
-	// Currently only support cloud-init for Linux VMs
-	_, useCloudInit := d.GetOk("initialization")
-	_, err = vmService.Start().UseCloudInit(useCloudInit).Send()
+	_, initialize := d.GetOk("initialization")
+	_, err = vmService.Start().UseInitialization(initialize).Send()
 	if err != nil {
 		return err
 	}
@@ -423,9 +493,109 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceOvirtVMUpdate(d *schema.ResourceData, meta interface{}) error {
 	conn := meta.(*ovirtsdk4.Connection)
 	vmService := conn.SystemService().VmsService().VmService(d.Id())
-	paramVM := ovirtsdk4.NewVmBuilder()
+	vmBuilder := ovirtsdk4.NewVmBuilder()
 	attributeUpdated := false
 
+	// Block that update VM Basic parameters:
+	// Name, Memory, Cluster, CPU params
+	if name, ok := d.GetOk("name"); ok {
+		vmBuilder.Name(name.(string))
+	}
+
+	if memory, ok := d.GetOk("memory"); ok {
+		// memory is specified in MB
+		vmBuilder.Memory(int64(memory.(int)) * int64(math.Pow(2, 20)))
+	}
+
+	cluster, err := ovirtsdk4.NewClusterBuilder().
+		Id(d.Get("cluster_id").(string)).Build()
+	if err != nil {
+		return err
+	}
+	vmBuilder.Cluster(cluster)
+
+	if ha, ok := d.GetOkExists("high_availability"); ok {
+		highAvailability, err := ovirtsdk4.NewHighAvailabilityBuilder().
+			Enabled(ha.(bool)).Build()
+
+		if err != nil {
+			return err
+		}
+		vmBuilder.HighAvailability(highAvailability)
+	}
+
+	cpuTopo := ovirtsdk4.NewCpuTopologyBuilder().
+		Cores(int64(d.Get("cores").(int))).
+		Threads(int64(d.Get("threads").(int))).
+		Sockets(int64(d.Get("sockets").(int))).
+		MustBuild()
+
+	cpu, err := ovirtsdk4.NewCpuBuilder().
+		Topology(cpuTopo).
+		Build()
+	if err != nil {
+		return err
+	}
+	vmBuilder.Cpu(cpu)
+
+	//paramVM.Initialization(initialization)
+	if v, ok := d.GetOk("initialization"); ok {
+		initialization, err := expandOvirtVMInitialization(v.([]interface{}))
+		if err != nil {
+			return err
+		}
+		if initialization != nil {
+			vmBuilder.Initialization(initialization)
+		}
+	}
+
+	_, err = vmService.Update().Vm(vmBuilder.MustBuild()).Send()
+	if err != nil {
+		log.Printf("[DEBUG] Error updating the VM (%s)", d.Get("name").(string))
+		return err
+	}
+
+	// Check status and Start/Stop VM
+	status, statusOK := d.GetOk("status")
+
+	if d.HasChange("status") && statusOK {
+		// Try to start VM
+		log.Printf("[DEBUG] Try to update runing status for VM (%s)", d.Id())
+		var vm_status ovirtsdk4.VmStatus
+
+		switch status {
+		case "up":
+			vm_status = ovirtsdk4.VMSTATUS_UP
+			_, err = vmService.Start().Send()
+		case "down":
+			vm_status = ovirtsdk4.VMSTATUS_DOWN
+			_, err = vmService.Stop().Send()
+		}
+		if err != nil {
+			log.Printf("[DEBUG] Failed to change status for VM (%s)", d.Id())
+			return err
+		}
+
+		// Wait until vm is update status
+		log.Printf("[DEBUG] Wait for VM (%s) status to become %s", d.Id(), vm_status)
+
+		desiredStateConf := &resource.StateChangeConf{
+			Target:     []string{string(vm_status)},
+			Refresh:    VMStateRefreshFunc(conn, d.Id()),
+			Timeout:    d.Timeout(schema.TimeoutCreate),
+			Delay:      10 * time.Second,
+			MinTimeout: 3 * time.Second,
+		}
+		_, err = desiredStateConf.WaitForState()
+		if err != nil {
+			log.Printf("[DEBUG] Error waiting for VM (%s) to become %s: %s", d.Id(), vm_status, err)
+			return err
+		}
+
+		log.Printf("[DEBUG] VM (%s) status has became to %s", d.Id(), vm_status)
+	}
+
+	// Update VM initialization parameters
 	d.Partial(true)
 	// initialization is a built-in attribute of VM that could be changed
 	// at any conditions.
@@ -435,13 +605,20 @@ func resourceOvirtVMUpdate(d *schema.ResourceData, meta interface{}) error {
 			if err != nil {
 				return err
 			}
-			paramVM.Initialization(initialization)
+			vmBuilder.Initialization(initialization)
+		}
+		attributeUpdated = true
+	}
+	if d.HasChange("instance_type_id") {
+		if v, ok := d.GetOk("instance_type_id"); ok {
+			vmBuilder.InstanceTypeBuilder(
+				ovirtsdk4.NewInstanceTypeBuilder().Name(fmt.Sprint(v)))
 		}
 		attributeUpdated = true
 	}
 
 	if attributeUpdated {
-		_, err := vmService.Update().Vm(paramVM.MustBuild()).Send()
+		_, err := vmService.Update().Vm(vmBuilder.MustBuild()).Send()
 		if err != nil {
 			return err
 		}
@@ -479,6 +656,26 @@ func resourceOvirtVMRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("threads", vm.MustCpu().MustTopology().MustThreads())
 	d.Set("cluster_id", vm.MustCluster().MustId())
 
+	if it, ok := vm.InstanceType(); ok {
+		d.Set("instance_type_id", it.MustId())
+	}
+
+	err = d.Set("os", []map[string]interface{}{
+		{"type": vm.MustOs().MustType()},
+	})
+	if err != nil {
+		return fmt.Errorf("error setting os type: %s", err)
+	}
+
+	if len(d.Get("boot_devices").([]interface{})) != 0 {
+		os, err := convertOS(vm.MustOs())
+		if err != nil {
+			return fmt.Errorf("error setting operating system: %s", err)
+		}
+
+		d.Set("boot_devices", os[0]["boot"].(map[string]interface{})["devices"])
+	}
+
 	// If the virtual machine is cloned from a template or another virtual machine,
 	// the template links to the Blank template, and the original_template is used to track history.
 	// Otherwise the template and original_template are the same.
@@ -500,6 +697,20 @@ func resourceOvirtVMRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	return nil
+}
+
+func convertOS(os *ovirtsdk4.OperatingSystem) ([]map[string]interface{}, error) {
+	boot := os.MustBoot()
+	devices := boot.MustDevices()
+	operatingSystems := make([]map[string]interface{}, 1)
+	operatingSystem := make(map[string]interface{})
+	operatingSystem["boot"] = make(map[string]interface{})
+	outBoot := operatingSystem["boot"].(map[string]interface{})
+	outBoot["devices"] = devices
+
+	operatingSystems[0] = operatingSystem
+
+	return operatingSystems, nil
 }
 
 func resourceOvirtVMDelete(d *schema.ResourceData, meta interface{}) error {
@@ -606,6 +817,36 @@ func VMStateRefreshFunc(conn *ovirtsdk4.Connection, vmID string) resource.StateR
 	}
 }
 
+func expandOS(d *schema.ResourceData) (*ovirtsdk4.OperatingSystem, error) {
+	osBuilder := ovirtsdk4.NewOperatingSystemBuilder()
+
+	devicesExists := d.Get("boot_devices").([]interface{})
+	if devicesExists != nil {
+		devices, err := expandOvirtBootDevices(devicesExists)
+		if err != nil {
+			return nil, err
+		}
+		boot, err := ovirtsdk4.NewBootBuilder().
+			Devices(devices).
+			Build()
+		if err != nil {
+			return nil, err
+		}
+
+		osBuilder.Boot(boot)
+	}
+
+	v, ok := d.GetOk("os")
+	if ok {
+		source := v.([]interface{})[0].(map[string]interface{})
+		if v, ok := source["type"]; ok {
+			osBuilder.Type(v.(string))
+		}
+	}
+
+	return osBuilder.Build()
+}
+
 func expandOvirtVMInitialization(l []interface{}) (*ovirtsdk4.Initialization, error) {
 	if len(l) == 0 {
 		return nil, nil
@@ -643,6 +884,15 @@ func expandOvirtVMInitialization(l []interface{}) (*ovirtsdk4.Initialization, er
 		}
 	}
 	return initializationBuilder.Build()
+}
+
+func expandOvirtBootDevices(l []interface{}) ([]ovirtsdk4.BootDevice, error) {
+	devices := make([]ovirtsdk4.BootDevice, len(l))
+	for i, v := range l {
+		devices[i] = ovirtsdk4.BootDevice(v.(string))
+	}
+
+	return devices, nil
 }
 
 func expandOvirtVMNicConfigurations(l []interface{}) ([]*ovirtsdk4.NicConfiguration, error) {
@@ -687,6 +937,10 @@ func expandOvirtVMDiskAttachment(d interface{}, disk *ovirtsdk4.Disk) (*ovirtsdk
 	builder.Bootable(true)
 	if disk != nil {
 		builder.Disk(disk)
+		if v, ok := dmap["size"]; ok {
+			newSize := int64(v.(int)) * int64(math.Pow(2, 30))
+			disk.SetProvisionedSize(newSize)
+		}
 	}
 	if v, ok := dmap["interface"]; ok {
 		builder.Interface(ovirtsdk4.DiskInterface(v.(string)))
@@ -738,9 +992,23 @@ func ovirtAttachDisks(s []interface{}, vmID string, meta interface{}) error {
 	conn := meta.(*ovirtsdk4.Connection)
 	vmService := conn.SystemService().VmsService().VmService(vmID)
 	for _, v := range s {
-		attachment := v.(map[string]interface{})
+		blockDeviceElement, ok := v.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("failed getting block_device content %v", blockDeviceElement)
+		}
+		// try the passed disk_id, if not, detect boot disk
+		diskID, ok := blockDeviceElement["disk_id"].(string)
+		attachmentExists := false
+		if !ok || diskID == "" {
+			findID, err := findVMBootDiskAttachmentID(vmService)
+			if err != nil {
+				return err
+			}
+			diskID = findID
+			attachmentExists = true
+		}
 		diskService := conn.SystemService().DisksService().
-			DiskService(attachment["disk_id"].(string))
+			DiskService(diskID)
 		var disk *ovirtsdk4.Disk
 		err := resource.Retry(30*time.Second, func() *resource.RetryError {
 			getDiskResp, err := diskService.Get().Send()
@@ -762,25 +1030,59 @@ func ovirtAttachDisks(s []interface{}, vmID string, meta interface{}) error {
 			return err
 		}
 
-		err = resource.Retry(2*time.Minute, func() *resource.RetryError {
-			addAttachmentResp, err := vmService.DiskAttachmentsService().
-				Add().
-				Attachment(da).
-				Send()
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("failed to attach disk: %s, wait for next check", err))
-			}
-			_, ok := addAttachmentResp.Attachment()
-			if !ok {
-				return resource.RetryableError(fmt.Errorf("failed to attach disk: not exists in response, wait for next check"))
-			}
-			return nil
-		})
+		attachment, err := attachDisk(vmService.DiskAttachmentsService(), da, attachmentExists)
+		if err != nil {
+			return fmt.Errorf("failed to attach disk: %s", err)
+		}
+		err = conn.WaitForDisk(attachment.MustId(), ovirtsdk4.DISKSTATUS_OK, 20*time.Minute)
 		if err != nil {
 			return err
 		}
+		return nil
 	}
 	return nil
+}
+
+// attachDisk will attach a disk to vm or update an existing one. Returns the
+// new attachment or error.
+func attachDisk(service *ovirtsdk4.DiskAttachmentsService, attachment *ovirtsdk4.DiskAttachment, update bool) (*ovirtsdk4.DiskAttachment, error) {
+	if update {
+		r, err := service.
+			AttachmentService(attachment.MustDisk().MustId()).
+			Update().
+			DiskAttachment(attachment).
+			Send()
+		if err != nil {
+			return nil, err
+		}
+		return r.MustDiskAttachment(), nil
+	}
+	r, err := service.
+		Add().
+		Attachment(attachment).
+		Send()
+	if err != nil {
+		return nil, err
+	}
+	return r.MustAttachment(), nil
+}
+
+// findVMBootDiskAttachmentID returns the disk attachment id of
+// the bootable disk of a VM
+func findVMBootDiskAttachmentID(vmService *ovirtsdk4.VmService) (string, error) {
+	r, err := vmService.DiskAttachmentsService().List().Send()
+	if err != nil {
+		return "", err
+	}
+
+	for _, attachment := range r.MustAttachments().Slice() {
+		bootable, ok := attachment.Bootable()
+		if ok && bootable {
+			return attachment.MustId(), nil
+		}
+	}
+
+	return "", fmt.Errorf("no bootable disk for the VM")
 }
 
 func flattenOvirtVMDiskAttachments(configured []*ovirtsdk4.DiskAttachment) []map[string]interface{} {
