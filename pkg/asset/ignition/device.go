@@ -2,8 +2,15 @@ package ignition
 
 import (
         "text/template"
+	"net"
         "bytes"
+
+	"github.com/apparentlymart/go-cidr/cidr"
+	"github.com/coreos/ignition/config/util"
         "github.com/pkg/errors"
+
+	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 )
 
 // This creates a script which would create a node network interface with IP address with the same last 4 bits as the ens3.4094 interface IP
@@ -116,4 +123,133 @@ func NetworkScript(vlan string, defGateway string, mtu string) ([]byte, error) {
 		return nil, errors.Wrap(err, "failed to execute user-data template")
 	}
         return buf.Bytes(), nil
+}
+
+func IgnitionFiles(installConfig *installconfig.InstallConfig) []igntypes.File {
+	//installConfig := &installconfig.InstallConfig{}
+        machineCIDR := &installConfig.Config.Networking.DeprecatedMachineCIDR.IPNet
+        defaultGateway, _ := cidr.Host(machineCIDR, 1)
+        kube_api_vlan := installConfig.Config.Platform.OpenStack.AciNetExt.KubeApiVLAN
+        infra_vlan := installConfig.Config.Platform.OpenStack.AciNetExt.InfraVLAN
+        mtu_value := installConfig.Config.Platform.OpenStack.AciNetExt.Mtu
+        networkScriptString, _ := NetworkScript(kube_api_vlan, defaultGateway.String(), mtu_value)
+
+        neutronCIDR := &installConfig.Config.Platform.OpenStack.AciNetExt.NeutronCIDR.IPNet
+        defaultNeutronGateway, _ := cidr.Host(neutronCIDR, 1)
+        defaultNeutronGatewayStr := defaultNeutronGateway.String()
+
+        installerHostSubnet := installConfig.Config.Platform.OpenStack.AciNetExt.InstallerHostSubnet
+        installerHostIP, installerHostNet, _ := net.ParseCIDR(installerHostSubnet)
+        installerNetmask := net.IP(installerHostNet.Mask)
+	
+	ifcfg_ens3_string := `DEVICE=ens3.4094
+               ONBOOT=yes
+               BOOTPROTO=dhcp
+               MTU=` + mtu_value + `
+               TYPE=Vlan
+               VLAN=yes
+               PHYSDEV=ens3
+               VLAN_ID=4094
+               REORDER_HDR=yes
+               GVRP=no
+               MVRP=no
+               PROXY_METHOD=none
+               BROWSER_ONLY=no
+               DEFROUTE=no
+               IPV4_FAILURE_FATAL=no
+               IPV6INIT=no`
+
+        ifcfg_opflex_conn_string := `VLAN=yes
+               TYPE=Vlan
+               PHYSDEV=ens3
+               VLAN_ID=` + infra_vlan + `
+               REORDER_HDR=yes
+               GVRP=no
+               MVRP=no
+               PROXY_METHOD=none
+               BROWSER_ONLY=no
+               BOOTPROTO=dhcp
+               DEFROUTE=no
+               IPV4_FAILURE_FATAL=no
+               IPV6INIT=no
+               NAME=opflex-conn
+               DEVICE=ens3.`+ infra_vlan +`
+               ONBOOT=yes
+               MTU=` + mtu_value
+
+        ifcfg_uplink_conn_string := `TYPE=Ethernet
+               PROXY_METHOD=none
+               BROWSER_ONLY=no
+               DEFROUTE=yes
+               IPV4_FAILURE_FATAL=no
+               IPV6INIT=no
+               NAME=uplink-conn
+               DEVICE=ens3
+               ONBOOT=yes
+               BOOTPROTO=none
+               MTU=` + mtu_value
+
+        route_opflex_conn_string := `ADDRESS0=224.0.0.0
+               NETMASK0=240.0.0.0
+               METRIC0=1000`
+
+        route_ens3_string := `ADDRESS0=` + installerHostIP.String() + `
+               NETMASK0=` + installerNetmask.String() + `
+               METRIC0=1000
+               GATEWAY0=` + defaultNeutronGatewayStr
+
+	var ignitionFiles []igntypes.File
+	ignitionFiles = append(ignitionFiles,
+				FileFromString("/usr/local/bin/kube-api-interface.sh", "root", 0555, string(networkScriptString)),
+				FileFromString("/etc/sysconfig/network-scripts/ifcfg-ens3.4094", "root", 0420, ifcfg_ens3_string),
+				FileFromString("/etc/sysconfig/network-scripts/ifcfg-opflex-conn", "root", 0420, ifcfg_opflex_conn_string),
+				FileFromString("/etc/sysconfig/network-scripts/ifcfg-uplink-conn", "root", 0420, ifcfg_uplink_conn_string),
+                        	FileFromString("/etc/sysconfig/network-scripts/route-opflex-conn", "root", 0420, route_opflex_conn_string),
+                        	FileFromString("/etc/sysconfig/network-scripts/route-ens3.4094", "root", 0420, route_ens3_string))
+
+	return ignitionFiles
+}
+
+func SystemdUnitFiles(installConfig *installconfig.InstallConfig) []igntypes.Unit {
+	var systemdUnits []igntypes.Unit
+
+	nodeService := igntypes.Unit{
+		Name:    "node-interface.service",
+		Enabled: util.BoolToPtr(true),
+		Contents: `[Unit]
+		Description=Adding Node Network Interface to MachineSet
+		Wants=network-online.target
+		After=network-online.target
+		[Service]
+		Type=simple
+		ExecStart=/usr/local/bin/kube-api-interface.sh
+		[Install]
+		WantedBy=multi-user.target`}
+	systemdUnits = append(systemdUnits, nodeService)
+
+	machineConfigDaemonPath := igntypes.Unit{
+		Name:    "machine-config-daemon-force.path",
+		Enabled: util.BoolToPtr(true),
+		Contents: `[Unit]
+Description=Path File for Disabling Machine-Config Validation Check
+[Path]
+PathChanged=/run/machine-config-daemon-force
+Unit=machine-config-daemon-force.service
+[Install]
+WantedBy=multi-user.target`}
+	systemdUnits = append(systemdUnits, machineConfigDaemonPath)
+
+	machineConfigDaemonService := igntypes.Unit{
+		Name:    "machine-config-daemon-force.service",
+		Enabled: util.BoolToPtr(true),
+		Contents: `[Unit]
+Description=Disabling Machine-Config Validation Check
+[Service]
+Type=simple
+ExecStart=touch /run/machine-config-daemon-force
+[Install]
+WantedBy=multi-user.target`}
+	systemdUnits = append(systemdUnits, machineConfigDaemonService)
+
+	return systemdUnits
 }
