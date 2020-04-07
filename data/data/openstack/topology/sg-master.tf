@@ -22,6 +22,16 @@ resource "openstack_networking_secgroup_rule_v2" "master_mcs" {
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
 }
+
+resource "openstack_networking_secgroup_rule_v2" "master_mcs_neutron" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 22623
+  port_range_max    = 22623
+  remote_ip_prefix  = var.neutron_cidr
+  security_group_id = openstack_networking_secgroup_v2.master.id
+}
 #
 # TODO(mandre) Explicitely enable egress
 
@@ -63,6 +73,16 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_tcp" {
   depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_ssh"]
 }
 
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_tcp_neutron" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 53
+  port_range_max    = 53
+  remote_ip_prefix  = var.neutron_cidr
+  security_group_id = openstack_networking_secgroup_v2.master.id
+}
+
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_udp" {
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -75,6 +95,16 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_udp" {
   depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_dns_tcp"]
 }
 
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_udp_neutron" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 53
+  port_range_max    = 53
+  remote_ip_prefix  = var.neutron_cidr
+  security_group_id = openstack_networking_secgroup_v2.master.id
+}
+
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_mdns_udp" {
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -85,6 +115,16 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_mdns_udp" {
   security_group_id = openstack_networking_secgroup_v2.master.id
 
   depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_dns_udp"]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_mdns_udp_neutron" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 5353
+  port_range_max    = 5353
+  remote_ip_prefix  = var.neutron_cidr
+  security_group_id = openstack_networking_secgroup_v2.master.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
@@ -358,3 +398,10 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_vrrp" {
   depends_on = ["openstack_networking_secgroup_rule_v2.master_ingress_services_udp"]
 }
 
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_vrrp_neutron" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "vrrp"
+  remote_ip_prefix  = var.neutron_cidr
+  security_group_id = openstack_networking_secgroup_v2.master.id
+}
