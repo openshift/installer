@@ -23,6 +23,10 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `type` (optional string): The [EC2 instance type][instance-type].
 * `zones` (optional array of strings): The availability zones used for machines in the pool.
 
+## Installing to Existing VPC & Subnetworks
+
+The installer can use an existing VPC and subnets when provisioning an OpenShift cluster. A VPC will be inferred from the provided subnets. For a standard installation, a private and public subnet should be specified. ([see example below](#pre-existing-vpc--subnets)). Both of the subnets must be within the IP range specified in `networking.machineNetwork`. 
+
 ## Examples
 
 Some example `install-config.yaml` are shown below.
@@ -77,6 +81,28 @@ metadata:
 platform:
   aws:
     region: us-west-2
+pullSecret: '{"auths": ...}'
+sshKey: ssh-ed25519 AAAA...
+```
+
+### Pre-existing VPC & Subnets
+
+An example install config for installing to an existing VPC and subnets is:
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+metadata:
+  name: test-cluster
+networking:
+  machineNetwork:
+  - cidr: 10.190.0.0/16
+platform:
+  aws:
+    region: us-west-2
+    subnets:
+    - subnet-0e953079d31ec4c74
+    - subnet-05e6864f66a954c27
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```

@@ -16,7 +16,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 
 ## Installing to Existing Networks & Subnetworks
 
-The installer can use an existing VPC and subnets when provisioning an OpenShift cluster. If one of `network`, `controlPlaneSubnet`, or `computeSubnet` is specified, all must be specified ([see example below](#pre-existing-networks-&-subnets)). Furthermore, each of the networks must belong to the project specified by `projectID`, and the subnets must belong to the specified cluster `region`. The installer will use these existing networks when creating infrastructure such as VM instances, load balancers, firewall rules, and DNS zones.
+The installer can use an existing VPC and subnets when provisioning an OpenShift cluster. If one of `network`, `controlPlaneSubnet`, or `computeSubnet` is specified, all must be specified ([see example below](#pre-existing-networks--subnets)). Furthermore, each of the networks must belong to the project specified by `projectID`, and the subnets must belong to the specified cluster `region`. The installer will use these existing networks when creating infrastructure such as VM instances, load balancers, firewall rules, and DNS zones.
 
 ### Cluster Isolation
 
