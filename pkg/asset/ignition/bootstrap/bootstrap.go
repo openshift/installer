@@ -319,9 +319,10 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 		"systemd-journal-gatewayd.socket": {},
 		"approve-csr.service":             {},
 		// baremetal & openstack platform services
-		"keepalived.service": {},
-		"coredns.service":    {},
-		"ironic.service":     {},
+		"keepalived.service":        {},
+		"coredns.service":           {},
+		"ironic.service":            {},
+		"master-bmh-update.service": {},
 	}
 
 	directory, err := data.Assets.Open(uri)
