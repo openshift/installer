@@ -30,7 +30,7 @@ RUN yum install --setopt=tsflags=nodocs -y \
     yum clean all && rm -rf /var/cache/yum/* && \
     chmod g+w /etc/passwd
 
-ENV TERRAFORM_VERSION=0.11.11
+ENV TERRAFORM_VERSION=0.12.24
 RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
     unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /bin/
 ENV MATCHBOX_PROVIDER_VERSION=v0.3.0
