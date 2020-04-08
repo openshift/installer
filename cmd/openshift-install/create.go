@@ -130,19 +130,19 @@ var (
 
 				logrus.Infof("Post installer processing: Approving pending CSRs, restarting aci-containers-controller pod and updating default IngressController...")
 				kubeconfigpath := filepath.Join(rootOpts.dir, "auth", "kubeconfig")
-				logrus.Infof("Approving pending CSRs")
 				_, err = exec.Command("sh", "-c", "KUBECONFIG=" + kubeconfigpath + " oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | KUBECONFIG=" + kubeconfigpath + " xargs oc adm certificate approve").Output()
                           	if err != nil {
-                                	logrus.Warnf("Unable to approve CSRs")
+                                	logrus.Warnf("Unable to approve CSRs: " + err.Error())
                           	}
+				logrus.Infof("Approved pending CSRs")
 
-				logrus.Infof("Restarting aci-containers-controller")
                           	_, err = exec.Command("sh", "-c", "KUBECONFIG=" + kubeconfigpath + " oc get pods -n aci-containers-system | grep 'aci-containers-controller' | awk '{print $1}' | KUBECONFIG=" + kubeconfigpath + " xargs oc delete pod -n aci-containers-system").Output()
                           	if err != nil {
-                                	logrus.Warnf("Unable to restart ACI CNI controller")
+                                	logrus.Warnf("Unable to restart ACI CNI controller: " + err.Error())
                           	}
+				logrus.Infof("Restarted aci-containers-controller")
 
-var exposeString = `KUBECONFIG=" + kubeconfigpath + "  oc replace --force --wait --filename - <<EOF
+var exposeString = `KUBECONFIG=` + kubeconfigpath + ` oc replace --force --wait --filename - <<EOF
 apiVersion: operator.openshift.io/v1
 kind: IngressController
 metadata:
@@ -156,11 +156,11 @@ spec:
 EOF
 `
 
-				logrus.Infof("Updating default IngressController publish strategy to use LoadBalancerService type")
 				_, err = exec.Command("sh", "-c", exposeString).Output()
                                 if err != nil {
-                                        logrus.Warnf("Unable to Expose the openshift-ingress service")
+                                        logrus.Warnf("Unable to expose the openshift-ingress service: " + err.Error())
                                 }
+				logrus.Infof("Updated default IngressController publish strategy to use LoadBalancerService type")
 			},
 		},
 		assets: targetassets.Cluster,
