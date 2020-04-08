@@ -351,7 +351,10 @@ then
 			--cloud-credential-operator-image=${CLOUD_CREDENTIAL_OPERATOR_IMAGE}
 
 	cp cco-bootstrap/manifests/* manifests/
-	cp cco-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+	# skip copy if static pod manifest does not exist (ie CCO has been disabled)
+	if [ -f cco-bootstrap/bootstrap-manifests/cloud-credential-operator-pod.yaml ]; then
+		cp cco-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+	fi
 
 	touch cco-bootstrap.done
 fi
