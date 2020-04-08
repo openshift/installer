@@ -1,9 +1,9 @@
 # Required Python packages:
 #
 # ansible
+# openstackclient
 # openstacksdk
 # netaddr
-# openstackclient
 
 - import_playbook: common.yaml
 
@@ -16,10 +16,8 @@
       name: "{{ os_network }}"
 
   - name: 'Set the cluster network tag'
-    os_tag:
-      resource: "network"
-      name: "{{ os_network }}"
-      tags: "{{ [cluster_id_tag] }}"
+    command:
+      cmd: "openstack network set --tag {{ cluster_id_tag }} {{ os_network }}"
 
   - name: 'Create a subnet'
     os_subnet:
@@ -30,10 +28,8 @@
       allocation_pool_end: "{{ os_subnet_range | ipaddr('last_usable') }}"
 
   - name: 'Set the cluster subnet tag'
-    os_tag:
-      resource: "subnet"
-      name: "{{ os_subnet }}"
-      tags: "{{ [cluster_id_tag] }}"
+    command:
+      cmd: "openstack subnet set --tag {{ cluster_id_tag }} {{ os_subnet }}"
 
   - name: 'Create the service network'
     os_network:
@@ -41,40 +37,68 @@
     when: os_networking_type == "Kuryr"
 
   - name: 'Set the service network tag'
-    os_tag:
-      resource: "network"
-      name: "{{ os_svc_network }}"
-      tags: "{{ [cluster_id_tag] }}"
+    command:
+      cmd: "openstack network set --tag {{ cluster_id_tag }} {{ os_svc_network }}"
     when: os_networking_type == "Kuryr"
+
+  - name: 'Computing facts for service subnet'
+    set_fact:
+      first_ip_svc_subnet_range: "{{ svc_subnet_range | ipv4('network') }}"
+      last_ip_svc_subnet_range: "{{ svc_subnet_range | ipaddr('last_usable') |ipmath(1) }}"
+      first_ip_os_svc_network_range: "{{ os_svc_network_range | ipv4('network') }}"
+      last_ip_os_svc_network_range: "{{ os_svc_network_range | ipaddr('last_usable') |ipmath(1) }}"
+      allocation_pool: ""
+    when: os_networking_type == "Kuryr"
+
+  - name: 'Get first part of OpenStack network'
+    set_fact:
+      allocation_pool: "{{ allocation_pool + '--allocation-pool start={{ first_ip_os_svc_network_range | ipmath(1) }},end={{ first_ip_svc_subnet_range |ipmath(-1) }}' }}"
+    when:
+    - os_networking_type == "Kuryr"
+    - first_ip_svc_subnet_range != first_ip_os_svc_network_range
+
+  - name: 'Get last part of OpenStack network'
+    set_fact:
+      allocation_pool: "{{ allocation_pool + ' --allocation-pool start={{ last_ip_svc_subnet_range | ipmath(1) }},end={{ last_ip_os_svc_network_range |ipmath(-1) }}' }}"
+    when:
+    - os_networking_type == "Kuryr"
+    - last_ip_svc_subnet_range != last_ip_os_svc_network_range
+
+  - name: 'Get end of allocation'
+    set_fact:
+      gateway_ip: "{{ allocation_pool.split('=')[-1] }}"
+    when: os_networking_type == "Kuryr"
+
+  - name: 'replace last IP'
+    set_fact:
+      allocation_pool: "{{ allocation_pool | replace(gateway_ip, gateway_ip | ipmath(-1))}}"
+    when: os_networking_type == "Kuryr"
+
+  - name: 'list service subnet'
+    command:
+      cmd: "openstack subnet list --name {{ os_svc_subnet }} --tag {{ cluster_id_tag }}"
+    when: os_networking_type == "Kuryr"
+    register: svc_subnet
 
   - name: 'Create the service subnet'
-    os_create_svc_subnet:
-      subnet_name: "{{ os_svc_subnet }}"
-      network_name: "{{ os_svc_network }}"
-      cidr: "{{ svc_subnet_range }}"
-      openstack_svc_network: "{{ os_svc_network_range }}"
-    when: os_networking_type == "Kuryr"
+    command:
+      cmd: "openstack subnet create --ip-version 4 --gateway {{ gateway_ip }} --subnet-range {{ os_svc_network_range }} {{ allocation_pool }} --no-dhcp --network {{ os_svc_network }} --tag {{ cluster_id_tag }} {{ os_svc_subnet }}"
+    when:
+    - os_networking_type == "Kuryr"
+    - svc_subnet.stdout == ""
 
-  - name: 'Set the service subnet tag'
-    os_tag:
-      resource: "subnet"
-      name: "{{ os_svc_subnet }}"
-      tags: "{{ [cluster_id_tag] }}"
+  - name: 'list subnet pool'
+    command:
+      cmd: "openstack subnet pool list --name {{ subnet_pool }} --tags {{ cluster_id_tag }}"
     when: os_networking_type == "Kuryr"
+    register: pods_subnet_pool
 
   - name: 'Create pods subnet pool'
-    os_create_subnet_pool:
-      name: "{{ subnet_pool }}"
-      prefix_lenght: "{{ host_prefix }}"
-      prefixes: "{{ cluster_network_cidrs }}"
-    when: os_networking_type == "Kuryr"
-
-  - name: 'Set subnet pool tag'
-    os_tag:
-      resource: "subnet_pool"
-      name: "{{ subnet_pool }}"
-      tags: "{{ [cluster_id_tag] }}"
-    when: os_networking_type == "Kuryr"
+    command:
+      cmd: "openstack subnet pool create --default-prefix-length {{ host_prefix }} --pool-prefix {{ cluster_network_cidrs }} --tag {{ cluster_id_tag }} {{ subnet_pool }}"
+    when:
+    - os_networking_type == "Kuryr"
+    - pods_subnet_pool.stdout == ""
 
   - name: 'Create external router'
     os_router:
@@ -84,10 +108,9 @@
       - "{{ os_subnet }}"
 
   - name: 'Set external router tag'
-    os_tag:
-      resource: "router"
-      name: "{{ os_router }}"
-      tags: "{{ [cluster_id_tag] }}"
+    command:
+      cmd: "openstack router set --tag {{ cluster_id_tag }} {{ os_router }}"
+    when: os_networking_type == "Kuryr"
 
   - name: 'Create the API port'
     os_port:
@@ -100,10 +123,8 @@
         ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
 
   - name: 'Set API port tag'
-    os_tag:
-      resource: "port"
-      name: "{{ os_port_api }}"
-      tags: "{{ [cluster_id_tag] }}"
+    command:
+      cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_api }}"
 
   - name: 'Create the Ingress port'
     os_port:
@@ -116,10 +137,8 @@
         ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
 
   - name: 'Set the Ingress port tag'
-    os_tag:
-      resource: "port"
-      name: "{{ os_port_ingress }}"
-      tags: "{{ [cluster_id_tag] }}"
+    command:
+      cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_ingress }}"
 
   # NOTE: openstack ansible module doesn't allow attaching Floating IPs to
   # ports, let's use the CLI instead

@@ -836,10 +836,10 @@ Upon success, it will print the URL to the OpenShift Console (the web UI) as wel
 
 ```sh
 $ ansible-playbook -i inventory.yaml  \
-	down-06_load-balancers.yaml \
-	down-05_compute-nodes.yaml  \
-	down-04_control-plane.yaml  \
 	down-03_bootstrap.yaml      \
+	down-04_control-plane.yaml  \
+	down-05_compute-nodes.yaml  \
+	down-06_load-balancers.yaml \
 	down-02_network.yaml        \
 	down-01_security-groups.yaml
 ```
