@@ -67,6 +67,14 @@ resource "openstack_compute_instance_v2" "master_conf" {
     group = var.server_group_id
   }
 
+  dynamic network {
+    for_each = var.additional_network_ids
+
+    content {
+      uuid = network.value
+    }
+  }
+
   metadata = {
     # FIXME(mandre) shouldn't it be "${var.cluster_id}-master-${count.index}" ?
     Name = "${var.cluster_id}-master"

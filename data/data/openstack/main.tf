@@ -54,9 +54,10 @@ module "masters" {
     var.openstack_master_extra_sg_ids,
     [module.topology.master_sg_id],
   )
-  root_volume_size = var.openstack_master_root_volume_size
-  root_volume_type = var.openstack_master_root_volume_type
-  server_group_id  = var.openstack_master_server_group_id
+  root_volume_size       = var.openstack_master_root_volume_size
+  root_volume_type       = var.openstack_master_root_volume_type
+  server_group_id        = var.openstack_master_server_group_id
+  additional_network_ids = var.openstack_additional_network_ids
 }
 
 module "topology" {

@@ -10,6 +10,8 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
   * [Minimal](#minimal)
   * [Custom-machine-pools](#custom-machine-pools)
 * [Image Overrides](#image-overrides)
+* [Additional Networks](#additional-networks)
+* [Additional Security Groups](#additional-security-groups)
 * [Further customization](#further-customization)
 
 ## Cluster-scoped properties
@@ -29,6 +31,8 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 
 ## Machine pools
 
+* `additionalNetworkIDs` (optional list of strings): IDs of additional networks for machines.
+* `additionalSecurityGroupIDs` (optional list of strings): IDs of additional security groups for machines.
 * `type` (optional string): The OpenStack flavor name for machines in the pool.
 * `rootVolume` (optional object): Defines the root volume for instances in the machine pool. The instances use ephemeral disks if not set.
   * `size` (required integer): Size of the root volume in GB.
@@ -128,6 +132,66 @@ Example:
 platform:
   openstack:
       clusterOSImage: my-rhcos
+```
+
+## Additional Networks
+
+You can set additional networks for your machines by defining `additionalNetworkIDs` parameter in the machine configuration. The parameter is a list of strings with additional network IDs:
+
+```yaml
+additionalNetworkIDs:
+- <network1_uuid>
+- <network2_uuid>
+```
+
+You can attach this parameter for both `controlPlane` and `compute` machines:
+
+Example:
+
+```yaml
+compute:
+- name: worker
+  platform:
+    openstack:
+      additionalNetworkIDs:
+      - fa806b2f-ac49-4bce-b9db-124bc64209bf
+controlPlane:
+  name: master
+  platform:
+    openstack:
+      additionalNetworkIDs:
+      - fa806b2f-ac49-4bce-b9db-124bc64209bf
+```
+
+**NOTE:** Allowed address pairs won't be created for the additional networks.
+
+## Additional Security Groups
+
+You can set additional security groups for your machines by defining `additionalSecurityGroupIDs` parameter in the machine configuration. The parameter is a list of strings with additional security group IDs:
+
+```yaml
+additionalSecurityGroupIDs:
+- <security_group1_id>
+- <security_group2_id>
+```
+
+You can attach this parameter for both `controlPlane` and `compute` machines:
+
+Example:
+
+```yaml
+compute:
+- name: worker
+  platform:
+    openstack:
+      additionalSecurityGroupIDs:
+      - 7ee219f3-d2e9-48a1-96c2-e7429f1b0da7
+controlPlane:
+  name: master
+  platform:
+    openstack:
+      additionalSecurityGroupIDs:
+      - 7ee219f3-d2e9-48a1-96c2-e7429f1b0da7
 ```
 
 ## Further customization

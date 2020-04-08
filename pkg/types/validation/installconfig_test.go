@@ -489,7 +489,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^compute\[0\]\.platform\.openstack: Invalid value: openstack\.MachinePool{FlavorName:"", RootVolume:\(\*openstack\.RootVolume\)\(nil\)}: cannot specify "openstack" for machine pool when cluster is using "aws"$`,
+			expectedError: `^compute\[0\]\.platform\.openstack: Invalid value: openstack\.MachinePool{.*}: cannot specify "openstack" for machine pool when cluster is using "aws"$`,
 		},
 		{
 			name: "missing platform",

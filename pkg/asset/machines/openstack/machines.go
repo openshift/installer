@@ -86,35 +86,49 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 }
 
 func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunk string) *openstackprovider.OpenstackProviderSpec {
+	networks := []openstackprovider.NetworkParam{
+		{
+			Subnets: []openstackprovider.SubnetParam{
+				{
+					Filter: openstackprovider.SubnetFilter{
+						Name: fmt.Sprintf("%s-nodes", clusterID),
+						Tags: fmt.Sprintf("%s=%s", "openshiftClusterID", clusterID),
+					},
+				},
+			},
+		},
+	}
+	for _, networkID := range mpool.AdditionalNetworkIDs {
+		networks = append(networks, openstackprovider.NetworkParam{
+			UUID:                  networkID,
+			NoAllowedAddressPairs: true,
+		})
+	}
+
+	securityGroups := []openstackprovider.SecurityGroupParam{
+		{
+			Name: fmt.Sprintf("%s-%s", clusterID, role),
+		},
+	}
+	for _, sg := range mpool.AdditionalSecurityGroupIDs {
+		securityGroups = append(securityGroups, openstackprovider.SecurityGroupParam{
+			UUID: sg,
+		})
+	}
 
 	spec := openstackprovider.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: openstackprovider.SchemeGroupVersion.String(),
 			Kind:       "OpenstackProviderSpec",
 		},
-		Flavor:         mpool.FlavorName,
-		CloudName:      CloudName,
-		CloudsSecret:   &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
-		UserDataSecret: &corev1.SecretReference{Name: userDataSecret},
-		Networks: []openstackprovider.NetworkParam{
-			{
-				Subnets: []openstackprovider.SubnetParam{
-					{
-						Filter: openstackprovider.SubnetFilter{
-							Name: fmt.Sprintf("%s-nodes", clusterID),
-							Tags: fmt.Sprintf("%s=%s", "openshiftClusterID", clusterID),
-						},
-					},
-				},
-			},
-		},
+		Flavor:           mpool.FlavorName,
+		CloudName:        CloudName,
+		CloudsSecret:     &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
+		UserDataSecret:   &corev1.SecretReference{Name: userDataSecret},
+		Networks:         networks,
 		AvailabilityZone: az,
-		SecurityGroups: []openstackprovider.SecurityGroupParam{
-			{
-				Name: fmt.Sprintf("%s-%s", clusterID, role),
-			},
-		},
-		Trunk: trunkSupportBoolean(trunk),
+		SecurityGroups:   securityGroups,
+		Trunk:            trunkSupportBoolean(trunk),
 		Tags: []string{
 			fmt.Sprintf("openshiftClusterID=%s", clusterID),
 		},
