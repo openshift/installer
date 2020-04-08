@@ -62,6 +62,8 @@ resource "openstack_networking_port_v2" "masters" {
   allowed_address_pairs {
     ip_address = var.ingress_ip
   }
+
+  depends_on = [openstack_networking_port_v2.api_port, openstack_networking_port_v2.ingress_port]
 }
 
 resource "openstack_networking_port_v2" "api_port" {
@@ -73,8 +75,7 @@ resource "openstack_networking_port_v2" "api_port" {
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
   fixed_ip {
-    subnet_id = openstack_networking_subnet_v2.nodes.id
-    # FIXME(mandre) we could let the installer automatically pick up the address
+    subnet_id  = openstack_networking_subnet_v2.nodes.id
     ip_address = var.api_int_ip
   }
 }
@@ -88,8 +89,7 @@ resource "openstack_networking_port_v2" "ingress_port" {
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
   fixed_ip {
-    subnet_id = openstack_networking_subnet_v2.nodes.id
-    # FIXME(mandre) we could let the installer automatically pick up the address
+    subnet_id  = openstack_networking_subnet_v2.nodes.id
     ip_address = var.ingress_ip
   }
 }
