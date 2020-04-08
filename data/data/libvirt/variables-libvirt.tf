@@ -44,3 +44,9 @@ variable "libvirt_master_vcpu" {
   default     = "4"
 }
 
+variable "libvirt_bootstrap_memory" {
+  type        = number
+  description = "RAM in MiB allocated to the bootstrap node"
+  default     = 2048
+}
+
