@@ -1,0 +1,55 @@
+defaults
+  maxconn 20000
+  mode    tcp
+  log     /var/run/haproxy/haproxy-log.sock local0
+  option  dontlognull
+  retries 3
+  timeout http-request 10s
+  timeout queue        1m
+  timeout connect      10s
+  timeout client       86400s
+  timeout server       86400s
+  timeout tunnel       86400s
+
+frontend api-server
+    bind ${lb_ip_address}:6443
+    default_backend api-server
+
+frontend machine-config-server
+    bind ${lb_ip_address}:22623
+    default_backend machine-config-server
+
+frontend router-http
+    bind ${lb_ip_address}:80
+    default_backend router-http
+
+frontend router-https
+    bind ${lb_ip_address}:443
+    default_backend router-https
+
+backend api-server
+    balance roundrobin
+    %{ for addr in api ~}
+    server ${addr} ${addr}:6443 check
+    %{ endfor ~}
+
+backend machine-config-server
+    balance roundrobin
+    %{ for addr in api ~}
+    server ${addr} ${addr}:22623 check
+    %{ endfor ~}
+
+backend router-http
+    balance source
+    mode tcp
+    %{ for addr in ingress ~}
+    server ${addr} ${addr}:80 check
+    %{ endfor ~}
+
+backend router-https
+    balance source
+    mode tcp
+    %{ for addr in ingress ~}
+    server ${addr} ${addr}:443 check
+    %{ endfor ~}
+
