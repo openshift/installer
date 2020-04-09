@@ -24,7 +24,7 @@ Azure Rquirements
 
 ### Create Install Config
 
-Run
+Run openshift install to create initial cluster config
 ```shell
 openshift-install create install-config
 ```
