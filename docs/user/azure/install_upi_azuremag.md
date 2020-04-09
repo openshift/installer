@@ -150,9 +150,9 @@ data:
   azure_client_id: {US_GOV_CLIENT_ID | base64 -w0}
   azure_client_secret: {US_GOV_CLIENT_SECRET | base64 -w0}
   azure_tenant_id: {US_GOV_TENANT_ID | base64 -w0}
-  azure_resource_prefix: dXBpYXp1cmVtYWctNG10MnI=
-  azure_resourcegroup: dXBpYXp1cmVtYWctNG10MnItcmc=
-  azure_region: ZWFzdHVz
+  azure_resource_prefix: <No Change>
+  azure_resourcegroup: <No Change>
+  azure_region: <No Change>
 ```
 #### Finish Cluster Configuration
 
