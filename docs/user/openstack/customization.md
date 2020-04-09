@@ -31,6 +31,8 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
   * `size` (required integer): Size of the root volume in GB.
   * `type` (required string): The volume pool to create the volume from.
 
+**NOTE:** The bootstrap node follows the `type` and `rootVolume` parameters from the `controlPlane` machine pool.
+
 ## Examples
 
 Some example `install-config.yaml` are shown below.
