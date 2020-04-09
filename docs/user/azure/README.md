@@ -18,6 +18,6 @@ you're having.
 
 ## Azure MAG
 
-Please see [Azure MAG Quickstart](install_upi_azuremag_quickstart.md), this is currently in pre-alpha.
+Please see [Azure MAG Instructions](install_upi_azuremag.md), this is currently in pre-alpha.
 
 [issues]: https://github.com/openshift/installer/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+azure
