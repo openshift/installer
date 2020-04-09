@@ -1,93 +1,113 @@
 #!/bin/bash
 
-declare -A routes
+# Update iptables rules based on google cloud load balancer VIPS
+#
+# This is needed because the GCP L3 load balancer doesn't actually do DNAT; 
+# the destination IP address is still the VIP. Normally, there is an agent that
+# adds the vip to the local routing table, tricking the kernel in to thinking
+# it's a local IP and allowing processes doing an accept(0.0.0.0) to receive
+# the packets. Clever.
+#
+# We don't do that. Instead, we DNAT with conntrack. This is so we don't break
+# existing connections when the vip is removed. This is useful for draining
+# connections - take ourselves out of the vip, but service existing conns.
+#
+# ~cdc~
+
+set -e
+
+# the list of load balancer IPs that are assigned to this node
+# keys = values, for easy searching
+declare -A vips
+
 curler() {
-  curl --silent -L -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/${1}"
+   curl --silent -L -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/${1}"
 }
 
-get_ifname() {
-  sysfs_path="/sys/class/net"
-  while IFS= read -r -d '' dev
-  do
-      local mac
-      mac=$(<"${dev}"/address);
-      local name
-      name="$(basename "${dev}")"
-      if [ "${mac}" == "${1}" ];
-      then
-          echo "${name}"
-          return;
-      fi
-  done <   <(find ${sysfs_path} -maxdepth 1  -mindepth 1 -print0)
+CHAIN_NAME="gcp-vips"
+
+
+# Create a chan if it doesn't exist
+ensure_chain() {
+    local table="${1}"
+    local chain="${2}"
+
+    if ! iptables -w -t "${table}" -S "${chain}" &> /dev/null ; then
+        iptables -w -t "${table}" -N "${chain}";
+    fi;
 }
 
-set_routes() {
-  local dev="${1}"
-  read -a -r dev_routes <<< "${routes[$dev]}"
-  for cur_route in $(ip route show dev "${dev}" table local proto 66 | awk '{print$2}');
-  do
-      if [[ ! "${dev_routes[*]}" =~ ${cur_route} ]];
-      then
-          echo "Removing stale forwarded IP ${cur_route}/32"
-          ip route del "${cur_route}"/32 dev "${dev}" table local proto 66
-      fi
-  done
-  for route in "${dev_routes[@]}"
-  do
-      ip route replace to local "${route}" dev "$dev" proto 66
-  done
-  unset dev_routes
+ensure_rule() {
+    local table="${1}"
+    local chain="${2}"
+    shift 2
+
+    if ! iptables -w -t "${table}" -C "${chain}" "$@" &> /dev/null; then
+        iptables -w -t "${table}" -A "${chain}" "$@"
+    fi
 }
 
-del_routes() {
-  local dev="${1}"
-  read -a -r dev_routes <<< "${routes[$dev]}"
-  for cur_route in $(ip route show dev "${dev}" table local proto 66 | awk '{print$2}');
-  do
-      if [[ "${dev_routes[*]}" =~ ${cur_route} ]];
-      then
-          echo "Removing forwarded IP ${cur_route}/32"
-          ip route del "${cur_route}"/32 dev "${dev}" table local proto 66
-      fi
-  done
-  unset dev_routes
+# set the chain, ensure entry rules, ensure ESTABLISHED rule
+initialize() {
+    ensure_chain nat "${CHAIN_NAME}"
+    ensure_rule nat PREROUTING -m comment --comment 'gcp LB vip DNAT' -j ${CHAIN_NAME}
+
+    # Need this so that existing flows (with an entry in conntrack) continue to be
+    # balanced, even if the DNAT entry is removed
+    ensure_rule filter INPUT -m comment --comment 'gcp LB vip existing' -m addrtype ! --dst-type LOCAL -m state --state ESTABLISHED,RELATED -j ACCEPT
 }
 
-run() {
-  net_path="network-interfaces/"
-  for vif in $(curler ${net_path}); do
-      hw_addr=$(curler "${net_path}${vif}mac")
-      fwip_path="${net_path}${vif}forwarded-ips/"
-      dev_name="$(get_ifname "${hw_addr}")"
-      for level in $(curler "${fwip_path}")
-      do
-          for fwip in $(curler "${fwip_path}${level}")
-          do
-              echo "Processing route for NIC ${vif}${hw_addr} as ${dev_name} for ${fwip}"
-              routes[$dev_name]+="${fwip} "
+remove_stale() {
+    ## find extra iptables rules
+    for ipt_vip in $(iptables -w -t nat -S "${CHAIN_NAME}" | awk '$4{print $4}' | awk -F/ '{print $1}'); do
+        echo checking if "${ipt_vip}" is stale
+        if [[ -z "${vips[${ipt_vip}]}" ]]; then
+            iptables -w -t nat -D "${CHAIN_NAME}" --dst "${ipt_vip}" -j REDIRECT
+        fi
+    done
+}
+
+add_rules() {
+    for vip in "${vips[@]}"; do
+        echo "ensuring rule for ${vip}"
+        ensure_rule nat "${CHAIN_NAME}" --dst "${vip}" -j REDIRECT
+    done
+}
+
+clear_rules() {
+    iptables -t nat -F "${CHAIN_NAME}" || true
+}
+
+# out paramater: vips
+list_lb_ips() {
+   local net_path="network-interfaces/"
+   for vif in $(curler ${net_path}); do
+      local hw_addr; hw_addr=$(curler "${net_path}${vif}mac")
+      local fwip_path; fwip_path="${net_path}${vif}forwarded-ips/"
+      for level in $(curler "${fwip_path}"); do
+          for fwip in $(curler "${fwip_path}${level}"); do
+              echo "Processing route for NIC ${vif}${hw_addr} for ${fwip}"
+              vips[${fwip}]="${fwip}"
           done
       done
-      $"${1}" "${dev_name}"
-
-      routes[$dev_name]=""
-      unset hw_addr
-      unset fwip_path
-      unset dev_name
-  done
+   done
 }
 
 case "$1" in
   start)
+    initialize
     while :; do
-      run set_routes
+      list_lb_ips
+      remove_stale
+      add_rules
+      echo "done applying vip rules"
       sleep 30
     done
     ;;
   cleanup)
-    run del_routes
+    clear_rules
     ;;
   *)
     echo $"Usage: $0 {start|cleanup}"
     exit 1
-
 esac
