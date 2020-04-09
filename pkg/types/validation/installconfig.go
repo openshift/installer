@@ -137,23 +137,6 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
 	}
-	allErrs = append(allErrs, validatePlatform(&c.Platform, field.NewPath("platform"), openStackValidValuesFetcher, c.Networking, c)...)
-	if c.ControlPlane != nil {
-		allErrs = append(allErrs, validateControlPlane(&c.Platform, c.ControlPlane, field.NewPath("controlPlane"))...)
-	} else {
-		allErrs = append(allErrs, field.Required(field.NewPath("controlPlane"), "controlPlane is required"))
-	}
-	allErrs = append(allErrs, validateCompute(&c.Platform, c.Compute, field.NewPath("compute"))...)
-	if err := validate.ImagePullSecret(c.PullSecret); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("pullSecret"), c.PullSecret, err.Error()))
-	}
-	if c.Proxy != nil {
-		allErrs = append(allErrs, validateProxy(c.Proxy, field.NewPath("proxy"))...)
-	}
-	allErrs = append(allErrs, validateImageContentSources(c.ImageContentSources, field.NewPath("imageContentSources"))...)
-	if _, ok := validPublishingStrategies[c.Publish]; !ok {
-		allErrs = append(allErrs, field.NotSupported(field.NewPath("publish"), c.Publish, validPublishingStrategyValues))
-	}
 
 	tarField := field.NewPath("ProvisionTar")
         r, err := os.Open(c.Platform.OpenStack.AciNetExt.ProvisionTar)
@@ -172,40 +155,60 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
                         // Validate against values from install config
 			machineCIDR := c.Networking.DeprecatedMachineCIDR
 			clusterNetworkCIDR := &c.Networking.ClusterNetwork[0].CIDR
-                        if DiffSubnets(config.NodeSubnet, machineCIDR) {
-				option := UserPrompt(config.NodeSubnet, machineCIDR, "node_subnet", "machineCIDR")
+			nodeDiff := DiffSubnets(config.NodeSubnet, machineCIDR)
+                        if nodeDiff != nil {
+				option := UserPrompt(nodeDiff.String(), machineCIDR, "node_subnet", "machineCIDR")
 				if (option == true) {
-					c.Networking.DeprecatedMachineCIDR, _ = ipnet.ParseCIDR(config.NodeSubnet)
-					log.Print("Setting machineCIDR to " + config.NodeSubnet)
+					c.Networking.DeprecatedMachineCIDR, _ = ipnet.ParseCIDR(nodeDiff.String())
+					log.Print("Setting machineCIDR to " + nodeDiff.String())
 				} else {
                                 	allErrs = append(allErrs, field.Invalid(field.NewPath("machineCIDR"),
-                                        	c.Networking.DeprecatedMachineCIDR.String(), "node_subnet in acc-provision input(" + config.NodeSubnet + ") has to be the same as machineCIDR in install-config.yaml(" + machineCIDR.String() + ")"))
+                                        	c.Networking.DeprecatedMachineCIDR.String(), "node_subnet in acc-provision input(" + nodeDiff.String() + ") has to be the same as machineCIDR in install-config.yaml(" + machineCIDR.String() + ")"))
 				}
                         }
-                        if DiffSubnets(config.PodSubnet, clusterNetworkCIDR) {
-				option := UserPrompt(config.PodSubnet, clusterNetworkCIDR, "pod_subnet", "clusterNetworkCIDR")
+			clusterDiff := DiffSubnets(config.PodSubnet, clusterNetworkCIDR)
+                        if clusterDiff != nil {
+				option := UserPrompt(clusterDiff.String(), clusterNetworkCIDR, "pod_subnet", "clusterNetworkCIDR")
 				if (option == true) {
-					parsedCIDR, _ := ipnet.ParseCIDR(config.PodSubnet)
+					parsedCIDR, _ := ipnet.ParseCIDR(clusterDiff.String())
 					c.Networking.ClusterNetwork[0].CIDR = *parsedCIDR
-					log.Print("Setting clusterNetwork CIDR to " + config.PodSubnet)
+					log.Print("Setting clusterNetwork CIDR to " + clusterDiff.String())
 				} else {
                                 	allErrs = append(allErrs, field.Invalid(field.NewPath("clusterNetworkCIDR"),
-                                        	clusterNetworkCIDR.String(), "pod_subnet in acc-provision input(" + config.PodSubnet + ") has to be the same as clusterNetwork:cidr in install-config.yaml(" + clusterNetworkCIDR.String() + ")"))
+                                        	clusterNetworkCIDR.String(), "pod_subnet in acc-provision input(" + clusterDiff.String() + ") has to be the same as clusterNetwork:cidr in install-config.yaml(" + clusterNetworkCIDR.String() + ")"))
 				}
                         }
 		}
 	}
 
+	allErrs = append(allErrs, validatePlatform(&c.Platform, field.NewPath("platform"), openStackValidValuesFetcher, c.Networking, c)...)
+	if c.ControlPlane != nil {
+		allErrs = append(allErrs, validateControlPlane(&c.Platform, c.ControlPlane, field.NewPath("controlPlane"))...)
+	} else {
+		allErrs = append(allErrs, field.Required(field.NewPath("controlPlane"), "controlPlane is required"))
+	}
+	allErrs = append(allErrs, validateCompute(&c.Platform, c.Compute, field.NewPath("compute"))...)
+	if err := validate.ImagePullSecret(c.PullSecret); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("pullSecret"), c.PullSecret, err.Error()))
+	}
+	if c.Proxy != nil {
+		allErrs = append(allErrs, validateProxy(c.Proxy, field.NewPath("proxy"))...)
+	}
+	allErrs = append(allErrs, validateImageContentSources(c.ImageContentSources, field.NewPath("imageContentSources"))...)
+	if _, ok := validPublishingStrategies[c.Publish]; !ok {
+		allErrs = append(allErrs, field.NotSupported(field.NewPath("publish"), c.Publish, validPublishingStrategyValues))
+	}
+
 	return allErrs
 }
 
-func DiffSubnets(sub1 string, sub2 *ipnet.IPNet) bool {
-        // Returns True if the subnets are different
+func DiffSubnets(sub1 string, sub2 *ipnet.IPNet) *net.IPNet {
+        // Returns first subnet if the subnets are different
         _, net1, _ := net.ParseCIDR(sub1)
         if net1.String() != sub2.String() {
-                return true
+                return net1
 	}
-        return false
+        return nil
 }
 
 func UserPrompt(sub1 string, sub2 *ipnet.IPNet, item1 string, item2 string) bool {
