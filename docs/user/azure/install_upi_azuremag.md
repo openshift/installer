@@ -90,8 +90,8 @@ cp $CODE_LOCATION/upi/azure/azureGovQuickstart.sh ./
 Be in the directory with the copied files and run
 ```shell
 chmod +x azureGovQuickstart.sh
-export WORKER_NODE_CODUNT=<Number of workers you want, default of 3>
-./azureGovQuickstart.sh -w $WORKER_NODE_CODUNT
+export WORKER_NODE_COUNT=<Number of workers you want, default of 3>
+./azureGovQuickstart.sh -w $WORKER_NODE_COUNT
 ```
 
 #### Log into azure portal
