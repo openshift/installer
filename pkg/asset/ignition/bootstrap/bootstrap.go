@@ -90,6 +90,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&tls.AggregatorClientCertKey{},
 		&tls.AggregatorSignerCertKey{},
 		&tls.APIServerProxyCertKey{},
+		&tls.BootstrapSSHKeyPair{},
 		&tls.EtcdCABundle{},
 		&tls.EtcdMetricCABundle{},
 		&tls.EtcdMetricSignerCertKey{},
@@ -135,7 +136,8 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	proxy := &manifests.Proxy{}
 	releaseImage := &releaseimage.Image{}
 	rhcosImage := new(rhcos.Image)
-	dependencies.Get(installConfig, proxy, releaseImage, rhcosImage)
+	bootstrapSSHKeyPair := &tls.BootstrapSSHKeyPair{}
+	dependencies.Get(installConfig, proxy, releaseImage, rhcosImage, bootstrapSSHKeyPair)
 
 	templateData, err := a.getTemplateData(installConfig.Config, releaseImage.PullSpec, installConfig.Config.ImageContentSources, proxy.Config, rhcosImage)
 
@@ -184,7 +186,10 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 
 	a.Config.Passwd.Users = append(
 		a.Config.Passwd.Users,
-		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{igntypes.SSHAuthorizedKey(installConfig.Config.SSHKey)}},
+		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{
+			igntypes.SSHAuthorizedKey(installConfig.Config.SSHKey),
+			igntypes.SSHAuthorizedKey(string(bootstrapSSHKeyPair.Public())),
+		}},
 	)
 
 	data, err := json.Marshal(a.Config)
