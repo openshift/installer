@@ -39,6 +39,8 @@ module "bootstrap" {
   master_sg_id            = module.topology.master_sg_id
   bootstrap_shim_ignition = var.openstack_bootstrap_shim_ignition
   master_port_ids         = module.topology.master_port_ids
+  root_volume_size        = var.openstack_master_root_volume_size
+  root_volume_type        = var.openstack_master_root_volume_type
 }
 
 module "masters" {
