@@ -6,7 +6,7 @@ This brief guide will demonstrate how to use the UPI installer to install OCP 4.
 
 ### Prerequisites
 
-Applications
+Applications in your $PATH
 - Azcli
 - jq
 - yq
