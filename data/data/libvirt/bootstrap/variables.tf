@@ -33,3 +33,8 @@ variable "pool" {
   type        = string
   description = "The name of the storage pool."
 }
+
+variable "bootstrap_memory" {
+  type        = number
+  description = "RAM in MiB allocated to the bootstrap node"
+}

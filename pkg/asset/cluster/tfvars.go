@@ -329,6 +329,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			&installConfig.Config.Networking.MachineNetwork[0].CIDR.IPNet,
 			installConfig.Config.Platform.Libvirt.Network.IfName,
 			masterCount,
+			installConfig.Config.ControlPlane.Architecture,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
