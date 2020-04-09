@@ -156,6 +156,8 @@ data:
 ```
 #### Finish Cluster Configuration
 
+Wait 10 minutes for the nodes to requst cluster membership and then run the following.
+
 After the script completes configure kubeconfig, join the work nodes, edit the registry operator, and launch the web console.
 
 ```bash
@@ -166,7 +168,7 @@ export KUBECONFIG="$PWD/auth/kubeconfig"
 oc get csr -A
 
 # Approve CSR ids
-oc adm certificate approve [csr IDs]
+oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs oc adm certificate approve
 
 # Nodes should populate and become ready in a couple of minutes
 watch oc get nodes
@@ -184,4 +186,26 @@ Add DNS Records in public and private dns zone of the ip address assigned to the
 ```bash
 # Complete the cluster install and get temporary admin password for web console
 openshift-install wait-for install-complete
+```
+
+#### Add Azure Disk Storage Class 
+
+Add the following storage class to your deployment, for more information see official [docs](https://kubernetes.io/docs/concepts/storage/storage-classes/#azure-disk-storage-class)
+
+```yaml
+# azure-disk.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  annotations:
+    description: azure disk
+    storageclass.kubernetes.io/is-default-class: "true"
+  name: azuredisk
+parameters:
+  kind: managed
+  location: <your_region>
+  skuName: <your_sku>
+provisioner: kubernetes.io/azure-disk
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
 ```
