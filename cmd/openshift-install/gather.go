@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -20,6 +21,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
+	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/gather/ssh"
 	"github.com/openshift/installer/pkg/terraform"
 	gatheraws "github.com/openshift/installer/pkg/terraform/gather/aws"
@@ -85,18 +87,35 @@ func newGatherBootstrapCmd() *cobra.Command {
 }
 
 func runGatherBootstrapCmd(directory string) error {
+	assetStore, err := assetstore.NewStore(directory)
+	if err != nil {
+		return errors.Wrap(err, "failed to create asset store")
+	}
+	// add the default bootstrap key pair to the sshKeys list
+	bootstrapSSHKeyPair := &tls.BootstrapSSHKeyPair{}
+	if err := assetStore.Fetch(bootstrapSSHKeyPair); err != nil {
+		return errors.Wrapf(err, "failed to fetch %s", bootstrapSSHKeyPair.Name())
+	}
+	tmpfile, err := ioutil.TempFile("", "bootstrap-ssh")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmpfile.Name())
+	if _, err := tmpfile.Write(bootstrapSSHKeyPair.Private()); err != nil {
+		return err
+	}
+	if err := tmpfile.Close(); err != nil {
+		return err
+	}
+	gatherBootstrapOpts.sshKeys = append(gatherBootstrapOpts.sshKeys, tmpfile.Name())
+
 	tfStateFilePath := filepath.Join(directory, terraform.StateFileName)
-	_, err := os.Stat(tfStateFilePath)
+	_, err = os.Stat(tfStateFilePath)
 	if os.IsNotExist(err) {
 		return unSupportedPlatformGather(directory)
 	}
 	if err != nil {
 		return err
-	}
-
-	assetStore, err := assetstore.NewStore(directory)
-	if err != nil {
-		return errors.Wrap(err, "failed to create asset store")
 	}
 
 	config := &installconfig.InstallConfig{}
