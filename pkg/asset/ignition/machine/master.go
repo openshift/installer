@@ -46,8 +46,8 @@ func (a *Master) Generate(dependencies asset.Parents) error {
 
 	ignitionFiles := ign.IgnitionFiles(installConfig)
         for _, ignFile := range ignitionFiles {
-                a.Config.Storage.Files = append(a.Config.Storage.Files, ignFile)
-        }
+               	a.Config.Storage.Files = append(a.Config.Storage.Files, ignFile)
+       	}
 	systemdUnits := ign.SystemdUnitFiles(installConfig)
 	for _, unit := range systemdUnits {
 		a.Config.Systemd.Units = append(a.Config.Systemd.Units, unit)

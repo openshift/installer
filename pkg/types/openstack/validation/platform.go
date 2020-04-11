@@ -90,11 +90,11 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
                 }
         }
 
-	machineMask := n.DeprecatedMachineCIDR.Mask
+	machineMask := n.MachineNetwork[0].CIDR.Mask
 	if p.AciNetExt.NeutronCIDR.String() != "" {
                 neutronMask := p.AciNetExt.NeutronCIDR.Mask
                 if machineMask.String() != neutronMask.String() {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("neutronCIDR"), p.AciNetExt.NeutronCIDR.String(), "The CIDRs specified in the machineCIDR (" + n.DeprecatedMachineCIDR.String() + ") and neutronCIDR (" + p.AciNetExt.NeutronCIDR.String() + ") configurations in the install-config.yaml have different subnet masks (machineCIDR mask: " + machineMask.String() + ", neutronCIDR mask: " + neutronMask.String()))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("neutronCIDR"), p.AciNetExt.NeutronCIDR.String(), "The CIDRs specified in the machineCIDR (" + n.MachineNetwork[0].CIDR.String() + ") and neutronCIDR (" + p.AciNetExt.NeutronCIDR.String() + ") configurations in the install-config.yaml have different subnet masks (machineCIDR mask: " + machineMask.String() + ", neutronCIDR mask: " + neutronMask.String()))
                 }
         } else {
 		// If no neutron CIDR provided, set it to 192.168.0.0 with the machine CIDR mask
