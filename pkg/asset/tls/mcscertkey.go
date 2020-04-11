@@ -48,7 +48,7 @@ func (a *MCSCertKey) Generate(dependencies asset.Parents) error {
 		cfg.IPAddresses = []net.IP{net.ParseIP(installConfig.Config.BareMetal.APIVIP)}
 		cfg.DNSNames = []string{hostname, installConfig.Config.BareMetal.APIVIP}
 	case openstacktypes.Name:
-		apiVIP, err := openstackdefaults.APIVIP(installConfig.Config.Networking)
+		apiVIP, err := openstackdefaults.APIVIP(installConfig.Config.Platform.OpenStack)
 		if err != nil {
 			return err
 		}

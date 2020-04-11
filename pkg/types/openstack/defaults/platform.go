@@ -30,8 +30,8 @@ func SetPlatformDefaults(p *openstack.Platform, installConfig *types.InstallConf
 // of the Kubernetes API server for use by components inside the
 // cluster. The DNS static pods running on the nodes resolve the
 // api-int record to APIVIP.
-func APIVIP(networking *types.Networking) (net.IP, error) {
-       neutronCIDR := &networking.NeutronCIDR.IPNet
+func APIVIP(p *openstack.Platform) (net.IP, error) {
+       neutronCIDR := &p.AciNetExt.NeutronCIDR.IPNet
        return cidr.Host(neutronCIDR, 5)
  }
 
@@ -39,8 +39,8 @@ func APIVIP(networking *types.Networking) (net.IP, error) {
 // of the DNS static pods running on the nodes. Unlike the DNS
 // operator these services provide name resolution for the nodes
 // themselves.
-func DNSVIP(networking *types.Networking) (net.IP, error) {
-       neutronCIDR := &networking.NeutronCIDR.IPNet
+func DNSVIP(p *openstack.Platform) (net.IP, error) {
+       neutronCIDR := &p.AciNetExt.NeutronCIDR.IPNet
        return cidr.Host(neutronCIDR, 6)
  }
 // IngressVIP returns the internal virtual IP address (VIP) put in
@@ -48,7 +48,7 @@ func DNSVIP(networking *types.Networking) (net.IP, error) {
 // accessibility to the internal pods running on the worker nodes,
 // e.g. `console`. The DNS static pods running on the nodes resolve
 // the wildcard apps record to IngressVIP.
-func IngressVIP(networking *types.Networking) (net.IP, error) {
-       neutronCIDR := &networking.NeutronCIDR.IPNet
+func IngressVIP(p *openstack.Platform) (net.IP, error) {
+       neutronCIDR := &p.AciNetExt.NeutronCIDR.IPNet
        return cidr.Host(neutronCIDR, 7)
  }

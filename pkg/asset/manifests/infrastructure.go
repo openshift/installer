@@ -124,15 +124,15 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		config.Status.PlatformStatus.Type = configv1.NonePlatformType
 	case openstack.Name:
 		config.Status.PlatformStatus.Type = configv1.OpenStackPlatformType
-		apiVIP, err := openstackdefaults.APIVIP(installConfig.Config.Networking)
+		apiVIP, err := openstackdefaults.APIVIP(installConfig.Config.Platform.OpenStack)
 		if err != nil {
 			return err
 		}
-		dnsVIP, err := openstackdefaults.DNSVIP(installConfig.Config.Networking)
+		dnsVIP, err := openstackdefaults.DNSVIP(installConfig.Config.Platform.OpenStack)
 		if err != nil {
 			return err
 		}
-		ingressVIP, err := openstackdefaults.IngressVIP(installConfig.Config.Networking)
+		ingressVIP, err := openstackdefaults.IngressVIP(installConfig.Config.Platform.OpenStack)
 		if err != nil {
 			return err
 		}
