@@ -118,7 +118,7 @@ func NewDNSConfig() (*DNSConfig, error) {
 }
 
 func newZonesClient(session *Session) ZonesGetter {
-	azureClient := azdns.NewZonesClient(session.Credentials.SubscriptionID)
+	azureClient := azdns.NewZonesClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
 	azureClient.Authorizer = session.Authorizer
 	return &ZonesClient{azureClient: azureClient}
 }
