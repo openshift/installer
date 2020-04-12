@@ -16,12 +16,11 @@ import (
 )
 
 const azureAuthEnv = "AZURE_AUTH_LOCATION"
-const azureEnvironment = "AZURE_ENVIONRMENT"
 
 var (
 	defaultAuthFilePath = filepath.Join(os.Getenv("HOME"), ".azure", "osServicePrincipal.json")
-	defaultAzureEnvironment = azureenv.PublicCloud
 	onceLoggers         = map[string]*sync.Once{}
+	defaultAzureEnvironment = azureenv.PublicCloud
 )
 
 //Session is an object representing session for subscription
@@ -29,6 +28,7 @@ type Session struct {
 	GraphAuthorizer autorest.Authorizer
 	Authorizer      autorest.Authorizer
 	Credentials     Credentials
+	Environment     azureenv.Environment
 }
 
 //Credentials is the data type for credentials as understood by the azure sdk
@@ -39,6 +39,19 @@ type Credentials struct {
 	TenantID       string `json:"tenantId,omitempty"`
 }
 
+func getEnvironmentFromOS() azureenv.Environment {
+	env := defaultAzureEnvironment
+	if envSet := os.Getenv(azureEnvironment); len(envSet) > 0 {
+		logrus.Debugf("Found Azure environment override, trying to set environment to %v", envSet)
+		foundEnvironment, err := azureenv.EnvironmentFromName(envSet)
+		if err == nil {
+			env = foundEnvironment
+		}
+		logrus.Debugf("Successfully set azure environment to %v", foundEnvironment.Name)
+	}
+	return env
+}
+
 // GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
 // and, if no creds are found, asks for them and stores them on disk in a config file
 func GetSession() (*Session, error) {
@@ -46,13 +59,7 @@ func GetSession() (*Session, error) {
 	if f := os.Getenv(azureAuthEnv); len(f) > 0 {
 		authFile = f
 	}
-	env := defaultAzureEnvironment
-	if envSet := os.Getenv(azureEnvironment); len(envSet) > 0 {
-		foundEnvironment, err := azureenv.EnvironmentFromName(envSet)
-		if err == nil {
-			env = foundEnvironment
-		}
-	}
+	env := getEnvironmentFromOS()
 	return newSessionFromFile(authFile, env)
 }
 
@@ -105,6 +112,7 @@ func newSessionFromFile(authFilePath string, env azureenv.Environment) (*Session
 		GraphAuthorizer: graphAuthorizer,
 		Authorizer:      authorizer,
 		Credentials:     *credentials,
+		Environment:     env,
 	}, nil
 }
 

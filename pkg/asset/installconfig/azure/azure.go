@@ -19,7 +19,8 @@ import (
 )
 
 const (
-	defaultRegion string = "eastus"
+	defaultRegion    string = "eastus"
+	azureEnvironment string = "AZURE_ENVIONRMENT"
 )
 
 // Platform collects azure-specific configuration.
@@ -92,7 +93,7 @@ func getRegions() (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	client := azsub.NewClient()
+	client := azsub.NewClientWithBaseURI(session.Environment.ResourceManagerEndpoint)
 	client.Authorizer = session.Authorizer
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
@@ -114,8 +115,7 @@ func getResourceCapableRegions() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	client := azres.NewProvidersClient(session.Credentials.SubscriptionID)
+	client := azres.NewProvidersClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
 	client.Authorizer = session.Authorizer
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
