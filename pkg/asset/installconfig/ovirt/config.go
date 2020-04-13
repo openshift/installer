@@ -68,9 +68,9 @@ func (c *Config) Save() error {
 	}
 
 	path := discoverPath()
-	err = os.MkdirAll(filepath.Dir(path), os.FileMode(700))
+	err = os.MkdirAll(filepath.Dir(path), 0700)
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(path, out, os.FileMode(0600))
+	return ioutil.WriteFile(path, out, 0600)
 }
