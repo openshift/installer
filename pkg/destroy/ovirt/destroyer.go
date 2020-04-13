@@ -93,23 +93,27 @@ func (uninstaller *ClusterUninstaller) stopVM(vmsService *ovirtsdk.VmsService, v
 	vmService := vmsService.VmService(vm.MustId())
 	// this is a teardown, stopping instead of shutting down.
 	_, err := vmService.Stop().Send()
-	uninstaller.Logger.Infof("Stopping VM %s : %s", vm.MustName(), "errors: %s", err)
-	if err != nil {
-		uninstaller.Logger.Debugf("Failed stopping VM %s : %s", vm.MustName(), err)
+	if err == nil {
+		uninstaller.Logger.Infof("Stopping VM %s", vm.MustName())
+	} else {
+		uninstaller.Logger.Debugf("Failed to stop VM %s : %s", vm.MustName(), err)
 	}
 	waitForDownDuration := time.Minute * 10
 	err = vmService.Connection().WaitForVM(vm.MustId(), ovirtsdk.VMSTATUS_DOWN, waitForDownDuration)
-	if err != nil {
-		uninstaller.Logger.Warnf("Waiting %d for VM %s to power-off", waitForDownDuration, vm.MustName())
+	if err == nil {
+		uninstaller.Logger.Infof("VM %s powered off", vm.MustName())
+	} else {
+		uninstaller.Logger.Warnf("Waited %d for VM %s to power-off: %s", waitForDownDuration, vm.MustName(), err)
 	}
 }
 
 func (uninstaller *ClusterUninstaller) removeVM(vmsService *ovirtsdk.VmsService, vm *ovirtsdk.Vm) {
 	vmService := vmsService.VmService(vm.MustId())
 	_, err := vmService.Remove().Send()
-	uninstaller.Logger.Infof("Removing VM %s : %s", vm.MustName(), "errors: %s", err)
-	if err != nil {
-		uninstaller.Logger.Debugf("Failed removing VM %s : %s", vm.MustName(), err)
+	if err == nil {
+		uninstaller.Logger.Infof("Removing VM %s", vm.MustName())
+	} else {
+		uninstaller.Logger.Debugf("Failed to remove VM %s : %s", vm.MustName(), err)
 	}
 }
 
