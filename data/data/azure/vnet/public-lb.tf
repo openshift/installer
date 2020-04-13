@@ -161,5 +161,6 @@ resource "azurerm_lb_probe" "public_lb_probe_api_internal" {
   number_of_probes    = 2
   loadbalancer_id     = azurerm_lb.public.id
   port                = 6443
-  protocol            = "TCP"
+  protocol            = "HTTPS"
+  request_path        = "/readyz"
 }
