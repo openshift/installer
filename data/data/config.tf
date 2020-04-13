@@ -2,15 +2,6 @@ terraform {
   required_version = ">= 0.12"
 }
 
-variable "machine_cidr" {
-  type = string
-
-  description = <<EOF
-The IP address space from which to assign machine IPs.
-EOF
-
-}
-
 variable "machine_v4_cidrs" {
   type = list(string)
 
