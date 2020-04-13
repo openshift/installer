@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
@@ -121,12 +120,23 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 	}
 
+	machineV4CIDRs, machineV6CIDRs := []string{}, []string{}
+	for _, network := range installConfig.Config.Networking.MachineNetwork {
+		if network.CIDR.IPNet.IP.To4() != nil {
+			machineV4CIDRs = append(machineV4CIDRs, network.CIDR.IPNet.String())
+		} else {
+			machineV6CIDRs = append(machineV6CIDRs, network.CIDR.IPNet.String())
+		}
+	}
+
 	masterCount := len(mastersAsset.MachineFiles)
 	data, err := tfvars.TFVars(
 		clusterID.InfraID,
 		installConfig.Config.ClusterDomain(),
 		installConfig.Config.BaseDomain,
 		&installConfig.Config.Networking.MachineNetwork[0].CIDR.IPNet,
+		machineV4CIDRs,
+		machineV6CIDRs,
 		useIPv4,
 		useIPv6,
 		bootstrapIgn,
@@ -230,18 +240,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*azureprovider.AzureMachineProviderSpec)
 		}
 
-		var (
-			machineV4CIDRs []net.IPNet
-			machineV6CIDRs []net.IPNet
-		)
-		for _, network := range installConfig.Config.Networking.MachineNetwork {
-			if network.CIDR.IPNet.IP.To4() != nil {
-				machineV4CIDRs = append(machineV4CIDRs, network.CIDR.IPNet)
-			} else {
-				machineV6CIDRs = append(machineV6CIDRs, network.CIDR.IPNet)
-			}
-		}
-
 		preexistingnetwork := installConfig.Config.Azure.VirtualNetwork != ""
 		data, err := azuretfvars.TFVars(
 			azuretfvars.TFVarsSources{
@@ -252,8 +250,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				ImageURL:                    string(*rhcosImage),
 				PreexistingNetwork:          preexistingnetwork,
 				Publish:                     installConfig.Config.Publish,
-				MachineV4CIDRs:              machineV4CIDRs,
-				MachineV6CIDRs:              machineV6CIDRs,
 			},
 		)
 		if err != nil {

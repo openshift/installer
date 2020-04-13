@@ -48,8 +48,8 @@ module "bootstrap" {
 module "vnet" {
   source              = "./vnet"
   resource_group_name = azurerm_resource_group.main.name
-  vnet_v4_cidrs       = var.azure_machine_v4_cidrs
-  vnet_v6_cidrs       = var.azure_machine_v6_cidrs
+  vnet_v4_cidrs       = var.machine_v4_cidrs
+  vnet_v6_cidrs       = var.machine_v6_cidrs
   cluster_id          = var.cluster_id
   region              = var.azure_region
   dns_label           = var.cluster_id
