@@ -31,6 +31,7 @@ EOF
 
 variable "master_count" {
   type = string
+
   default = "1"
 
   description = <<EOF
@@ -70,7 +71,8 @@ EOF
 }
 
 variable "ignition_master" {
-  type    = string
+  type = string
+
   default = ""
 
   description = <<EOF
@@ -81,6 +83,7 @@ EOF
 
 variable "ignition_bootstrap" {
   type = string
+
   default = ""
 
   description = <<EOF
