@@ -3,8 +3,9 @@ variable "availability_zones" {
   description = "The availability zones in which to provision subnets."
 }
 
-variable "cidr_block" {
-  type = string
+variable "cidr_blocks" {
+  type        = list(string)
+  description = "A list of IPv4 CIDRs with 0 index being the main CIDR."
 }
 
 variable "cluster_id" {

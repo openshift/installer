@@ -26,7 +26,7 @@ module "bootstrap" {
   target_group_arns        = module.vpc.aws_lb_target_group_arns
   target_group_arns_length = module.vpc.aws_lb_target_group_arns_length
   vpc_id                   = module.vpc.vpc_id
-  vpc_cidrs                = module.vpc.vpc_cidrs
+  vpc_cidrs                = var.machine_v4_cidrs
   vpc_security_group_ids   = [module.vpc.master_sg_id]
   volume_kms_key_id        = var.aws_master_root_volume_kms_key_id
   publish_strategy         = var.aws_publish_strategy
@@ -84,7 +84,7 @@ module "dns" {
 module "vpc" {
   source = "./vpc"
 
-  cidr_block       = var.machine_cidr
+  cidr_blocks      = var.machine_v4_cidrs
   cluster_id       = var.cluster_id
   region           = var.aws_region
   vpc              = var.aws_vpc
