@@ -82,6 +82,9 @@ type OpenstackProviderSpec struct {
 
 	// The volume metadata to boot from
 	RootVolume *RootVolume `json:"rootVolume,omitempty"`
+
+	// The server group to assign the machine to
+	ServerGroupID string `json:"serverGroupID,omitempty"`
 }
 
 type SecurityGroupParam struct {
