@@ -1,8 +1,8 @@
 locals {
   labels = var.gcp_extra_labels
 
-  master_subnet_cidr = cidrsubnet(var.machine_cidr, 3, 0) #master subnet is a smaller subnet within the vnet. i.e from /21 to /24
-  worker_subnet_cidr = cidrsubnet(var.machine_cidr, 3, 1) #worker subnet is a smaller subnet within the vnet. i.e from /21 to /24
+  master_subnet_cidr = cidrsubnet(var.machine_v4_cidrs[0], 3, 0) #master subnet is a smaller subnet within the vnet. i.e from /21 to /24
+  worker_subnet_cidr = cidrsubnet(var.machine_v4_cidrs[0], 3, 1) #worker subnet is a smaller subnet within the vnet. i.e from /21 to /24
   public_endpoints   = var.gcp_publish_strategy == "External" ? true : false
 }
 
@@ -22,7 +22,7 @@ module "bootstrap" {
   cluster_id       = var.cluster_id
   ignition         = var.ignition_bootstrap
   network          = module.network.network
-  network_cidr     = var.machine_cidr
+  network_cidr     = var.machine_v4_cidrs[0]
   public_endpoints = local.public_endpoints
   subnet           = module.network.master_subnet
   zone             = var.gcp_master_availability_zones[0]
@@ -62,7 +62,7 @@ module "network" {
   cluster_id         = var.cluster_id
   master_subnet_cidr = local.master_subnet_cidr
   worker_subnet_cidr = local.worker_subnet_cidr
-  network_cidr       = var.machine_cidr
+  network_cidr       = var.machine_v4_cidrs[0]
   public_endpoints   = local.public_endpoints
 
   bootstrap_lb              = var.gcp_bootstrap_enabled && var.gcp_bootstrap_lb
