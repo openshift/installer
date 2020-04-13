@@ -353,15 +353,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		apiVIP, err := openstackdefaults.APIVIP(installConfig.Config.Networking)
+		apiVIP, err := openstackdefaults.APIVIP(installConfig.Config.Platform.OpenStack)
 		if err != nil {
 			return err
 		}
-		dnsVIP, err := openstackdefaults.DNSVIP(installConfig.Config.Networking)
+
+		dnsVIP, err := openstackdefaults.DNSVIP(installConfig.Config.Platform.OpenStack)
 		if err != nil {
 			return err
 		}
-		ingressVIP, err := openstackdefaults.IngressVIP(installConfig.Config.Networking)
+		ingressVIP, err := openstackdefaults.IngressVIP(installConfig.Config.Platform.OpenStack)
 		if err != nil {
 			return err
 		}

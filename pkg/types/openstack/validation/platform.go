@@ -106,7 +106,6 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
                                         },
                                 }
         }
-        n.NeutronCIDR = p.AciNetExt.NeutronCIDR
 
 	_, err = ipnet.ParseCIDR(p.AciNetExt.InstallerHostSubnet)
 	if err != nil {

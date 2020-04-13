@@ -24,7 +24,7 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 		// way to configure DNS before Ignition runs.
 		ignitionHost = net.JoinHostPort(installConfig.BareMetal.APIVIP, "22623")
 	case openstacktypes.Name:
-		apiVIP, err := openstackdefaults.APIVIP(installConfig.Networking)
+		apiVIP, err := openstackdefaults.APIVIP(installConfig.Platform.OpenStack)
 		if err == nil {
 			ignitionHost = net.JoinHostPort(apiVIP.String(), "22623")
 		} else {
