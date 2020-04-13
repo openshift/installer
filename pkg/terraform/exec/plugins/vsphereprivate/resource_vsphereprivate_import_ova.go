@@ -12,6 +12,7 @@ import (
 	"github.com/vmware/govmomi/nfc"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/ovf"
+	"github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
@@ -76,6 +77,13 @@ func resourceVSpherePrivateImportOva() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.NoZeroValues,
 			},
+			"tag": {
+				Type:         schema.TypeString,
+				Description:  "The name of the tag to attach the virtual machine in.",
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.NoZeroValues,
+			},
 		},
 	}
 }
@@ -90,7 +98,7 @@ type importOvaParams struct {
 	Folder       *object.Folder
 }
 
-func findImportOvaParams(client *vim25.Client, datacenter, cluster, datastore, network string) (*importOvaParams, error) {
+func findImportOvaParams(client *vim25.Client, datacenter, cluster, datastore, network, folder string) (*importOvaParams, error) {
 	var ccrMo mo.ClusterComputeResource
 
 	ctx, cancel := context.WithTimeout(context.TODO(), defaultAPITimeout)
@@ -106,15 +114,13 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, datastore, n
 	}
 	importOvaParams.Datacenter = dcObj
 
-	// Find the top-level (and hidden to view) folders in the
-	// datacenter
-	folders, err := importOvaParams.Datacenter.Folders(ctx)
+	// Find the newly created folder based on the path
+	// provided
+	folderObj, err := finder.Folder(ctx, folder)
 	if err != nil {
 		return nil, err
 	}
-	// The only folder we are interested in is VmFolder
-	// Which can contain our template
-	importOvaParams.Folder = folders.VmFolder
+	importOvaParams.Folder = folderObj
 
 	clusterPath := fmt.Sprintf("/%s/host/%s", datacenter, cluster)
 
@@ -215,6 +221,23 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, datastore, n
 	return importOvaParams, nil
 }
 
+func attachTag(d *schema.ResourceData, meta interface{}) error {
+	ctx, cancel := context.WithTimeout(context.TODO(), defaultAPITimeout)
+	defer cancel()
+	tagManager := tags.NewManager(meta.(*VSphereClient).restClient)
+	moRef := types.ManagedObjectReference{
+		Value: d.Id(),
+		Type:  "VirtualMachine",
+	}
+
+	err := tagManager.AttachTag(ctx, d.Get("tag").(string), moRef)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Used govc/importx/ovf.go as an example to implement
 // resourceVspherePrivateImportOvaCreate and upload functions
 // See: https://github.com/vmware/govmomi/blob/cc10a0758d5b4d4873388bcea417251d1ad03e42/govc/importx/ovf.go#L196-L324
@@ -246,7 +269,8 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 		d.Get("datacenter").(string),
 		d.Get("cluster").(string),
 		d.Get("datastore").(string),
-		d.Get("network").(string))
+		d.Get("network").(string),
+		d.Get("folder").(string))
 	if err != nil {
 		return errors.Errorf("failed to find provided vSphere objects: %s", err)
 	}
@@ -333,6 +357,11 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 	}
 
 	d.SetId(info.Entity.Value)
+
+	err = attachTag(d, meta)
+	if err != nil {
+		return errors.Errorf("failed to attach tag to virtual machine: %s", err)
+	}
 	log.Printf("[DEBUG] %s: ova import complete", d.Get("name").(string))
 
 	return resourceVSpherePrivateImportOvaRead(d, meta)
