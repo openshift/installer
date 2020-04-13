@@ -49,7 +49,7 @@ resource "libvirt_network" "net" {
 
   domain = var.cluster_domain
 
-  addresses = [var.machine_cidr]
+  addresses = var.machine_v4_cidrs
 
   dns {
     local_only = true
