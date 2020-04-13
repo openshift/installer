@@ -139,7 +139,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		clusterID.InfraID,
 		installConfig.Config.ClusterDomain(),
 		installConfig.Config.BaseDomain,
-		&installConfig.Config.Networking.MachineNetwork[0].CIDR.IPNet,
 		machineV4CIDRs,
 		machineV6CIDRs,
 		useIPv4,
