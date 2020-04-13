@@ -67,6 +67,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&openshift.PrivateClusterOutbound{},
 		&openshift.BaremetalConfig{},
 		&openshift.CommunityOperators{},
+		&openshift.SamplesOperator{},
 		new(rhcos.Image),
 	}
 }
@@ -191,12 +192,14 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	roleCloudCredsSecretReader := &openshift.RoleCloudCredsSecretReader{}
 	baremetalConfig := &openshift.BaremetalConfig{}
 	communityOperatorsSetting := &openshift.CommunityOperators{}
+	samplesOperatorSetting := &openshift.SamplesOperator{}
 	rhcosImage := new(rhcos.Image)
 
 	dependencies.Get(
 		cloudCredsSecret,
 		kubeadminPasswordSecret,
 		communityOperatorsSetting,
+		samplesOperatorSetting,
 		roleCloudCredsSecretReader,
 		baremetalConfig,
 		rhcosImage)
@@ -204,6 +207,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	assetData := map[string][]byte{
 		"99_kubeadmin-password-secret.yaml": applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
 		"99_community_operators.yaml":       applyTemplateData(communityOperatorsSetting.Files()[0].Data, templateData),
+		"99_samples_operator.yaml":          applyTemplateData(samplesOperatorSetting.Files()[0].Data, templateData),
 	}
 
 	switch platform {

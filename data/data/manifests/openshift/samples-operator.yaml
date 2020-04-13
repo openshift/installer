@@ -1,0 +1,317 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: samples.operator.openshift.io/v1
+  kind: Config
+  metadata:
+    name: cluster
+  spec:
+    architectures:
+    - x86_64
+    samplesRegistry: registry.access.redhat.com
+    managementState: Managed
+    skippedImagestreams:
+    - fuse7-java-openshift
+    - apicast-gateway
+    - apicurito-ui
+    - dotnet
+    - jenkins
+    - dotnet-runtime
+    - eap-cd-openshift
+    - fis-java-openshift
+    - fis-karaf-openshift
+    - fuse-apicurito-generator
+    - fuse7-console
+    - fuse7-eap-openshift
+    - fuse7-karaf-openshift
+    - golang
+    - httpd
+    - java
+    - nodejs
+    - jboss-amq-62
+    - jboss-amq-63
+    - jboss-amq-63
+    - jboss-datagrid65-client-openshift
+    - jboss-datagrid65-openshift
+    - jboss-datagrid71-client-openshift
+    - jboss-datagrid71-openshift
+    - jboss-datagrid72-openshift
+    - jboss-datagrid73-openshift
+    - jboss-datavirt64-driver-openshift
+    - jboss-datavirt64-openshift
+    - jboss-decisionserver64-openshift
+    - jboss-eap64-openshift
+    - jboss-eap70-openshift
+    - jboss-eap71-openshift
+    - jboss-eap72-openshift
+    - jboss-fuse70-console
+    - jboss-fuse70-eap-openshift
+    - jboss-fuse70-java-openshift
+    - jboss-fuse70-karaf-openshift
+    - jboss-processserver64-openshift
+    - jboss-webserver30-tomcat7-openshift
+    - jboss-webserver30-tomcat8-openshift
+    - jboss-webserver31-tomcat7-openshift
+    - jboss-webserver31-tomcat8-openshift
+    - jboss-webserver50-tomcat9-openshift
+    - jenkins-agent-maven
+    - jenkins-agent-nodejs
+    - mariadb
+    - modern-webapp
+    - nginx
+    - openjdk-11-rhel7
+    - openjdk-11-rhel8
+    - openjdk-8-rhel8
+    - redhat-openjdk18-openshift
+    - redhat-sso70-openshift
+    - redhat-sso71-openshift
+    - redhat-sso72-openshift
+    - redhat-sso73-openshift
+    - redis
+    - rhdm-decisioncentral-rhel8
+    - rhdm-kieserver-rhel8
+    - rhdm-optaweb-employee-rostering-rhel8
+    - rhpam-businesscentral-monitoring-rhel8
+    - rhpam-businesscentral-rhel8
+    - rhpam-kieserver-rhel8
+    - rhpam-smartrouter-rhel8
+    - php
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      openshift.io/display-name: Node.js
+    name: nodejs
+    namespace: openshift
+  spec:
+    lookupPolicy:
+      local: false
+    tags:
+    - name: '10'
+      annotations:
+        description: >-
+          Build and run Node.js 10 applications on RHEL 7. For more information
+          about using this builder image, including OpenShift considerations,
+          see
+          https://github.com/sclorg/s2i-nodejs-container/blob/master/10/README.md.
+        iconClass: icon-nodejs
+        openshift.io/display-name: Node.js 10
+        openshift.io/provider-display-name: 'Red Hat, Inc.'
+        sampleRepo: 'https://github.com/sclorg/nodejs-ex.git'
+        tags: 'builder,nodejs'
+        version: '10'
+      from:
+        kind: DockerImage
+        name: 'registry.access.redhat.com/rhscl/nodejs-10-rhel7:latest'
+      generation: 1
+      importPolicy: {}
+      referencePolicy:
+        type: Local
+    - name: latest
+      annotations:
+        description: >-
+          Build and run Node.js applications on CentOS 7. For more information
+          about using this builder image, including OpenShift considerations,
+          see
+          https://github.com/sclorg/s2i-nodejs-container/blob/master/12/README.md.
+
+          WARNING: By selecting this tag, your application will automatically
+          update to use the latest version of Node.js available on OpenShift,
+          including major version updates.
+        iconClass: icon-nodejs
+        openshift.io/display-name: Node.js (Latest)
+        openshift.io/provider-display-name: 'Red Hat, Inc.'
+        sampleRepo: 'https://github.com/sclorg/nodejs-ex.git'
+        supports: nodejs
+        tags: 'builder,nodejs'
+      from:
+        kind: ImageStreamTag
+        name: '10'
+      generation: 1
+      importPolicy: {}
+      referencePolicy:
+        type: Local
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      openshift.io/display-name: PHP
+    name: php
+    namespace: openshift
+  spec:
+    lookupPolicy:
+      local: false
+    tags:
+    - name: '7.2'
+      annotations:
+        description: >-
+          Build and run PHP 7.2 applications on CentOS 7. For more information
+          about using this builder image, including OpenShift considerations,
+          see
+          https://github.com/sclorg/s2i-php-container/blob/master/7.2/README.md.
+        iconClass: icon-php
+        openshift.io/display-name: PHP 7.2
+        openshift.io/provider-display-name: 'Red Hat, Inc.'
+        sampleRepo: 'https://github.com/sclorg/cakephp-ex.git'
+        supports: 'php:7.2,php'
+        tags: 'builder,php'
+        version: '7.2'
+      from:
+        kind: DockerImage
+        name: 'registry.access.redhat.com/rhscl/php-72-rhel7:latest'
+      generation: 1
+      importPolicy: {}
+      referencePolicy:
+        type: Local
+    - name: latest
+      annotations:
+        description: >-
+          Build and run PHP applications on CentOS 7. For more information about
+          using this builder image, including OpenShift considerations, see
+          https://github.com/sclorg/s2i-php-container/blob/master/7.2/README.md.
+
+          WARNING: By selecting this tag, your application will automatically
+          update to use the latest version of PHP available on OpenShift,
+          including major version updates.
+        iconClass: icon-php
+        openshift.io/display-name: PHP (Latest)
+        openshift.io/provider-display-name: 'Red Hat, Inc.'
+        sampleRepo: 'https://github.com/sclorg/cakephp-ex.git'
+        supports: php
+        tags: 'builder,php'
+      from:
+        kind: ImageStreamTag
+        name: '7.2'
+      generation: 1
+      importPolicy: {}
+      referencePolicy:
+        type: Local
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      openshift.io/display-name: Jenkins NodeJS Agent
+    name: jenkins-agent-nodejs
+    namespace: openshift
+  spec:
+    lookupPolicy:
+      local: false
+    tags:
+    - name: latest
+      annotations:
+        description: Provides a Jenkins Agent with NodeJS tooling
+        iconClass: icon-jenkins
+        openshift.io/display-name: Jenkins NodeJS Agent
+        openshift.io/provider-display-name: 'Red Hat, Inc.'
+        tags: jenkins
+      from:
+        kind: DockerImage
+        name: quay.io/openshift/origin-jenkins-agent-nodejs:latest
+      generation: 1
+      importPolicy: {}
+      referencePolicy:
+        type: Local
+    - name: v4.4
+      annotations:
+        description: Provides a Jenkins Agent with NodeJS tooling
+        iconClass: icon-jenkins
+        openshift.io/display-name: Jenkins NodeJS Agent
+        openshift.io/provider-display-name: 'Red Hat, Inc.'
+        tags: jenkins
+      from:
+        kind: DockerImage
+        name: quay.io/openshift/origin-jenkins-agent-nodejs:4.4
+      generation: 1
+      importPolicy: {}
+      referencePolicy:
+        type: Local
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      openshift.io/display-name: Jenkins Maven Agent
+    name: jenkins-agent-maven
+    namespace: openshift
+  spec:
+    lookupPolicy:
+      local: false
+    tags:
+    - name: latest
+      annotations:
+        description: Provides a Jenkins Agent with Maven tooling
+        iconClass: icon-jenkins
+        openshift.io/display-name: Jenkins Maven Agent
+        openshift.io/provider-display-name: 'Red Hat, Inc.'
+        tags: jenkins
+      from:
+        kind: DockerImage
+        name: quay.io/openshift/origin-jenkins-agent-maven:latest
+      generation: 1
+      importPolicy: {}
+      referencePolicy:
+        type: Local
+    - name: v4.4
+      annotations:
+        description: Provides a Jenkins Agent with Maven tooling
+        iconClass: icon-jenkins
+        openshift.io/display-name: Jenkins Maven Agent
+        openshift.io/provider-display-name: 'Red Hat, Inc.'
+        tags: jenkins
+      from:
+        kind: DockerImage
+        name: quay.io/openshift/origin-jenkins-agent-maven:4.4
+      generation: 11
+      importPolicy: {}
+      referencePolicy:
+        type: Local
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      openshift.io/display-name: Jenkins
+    name: jenkins
+    namespace: openshift
+  spec:
+    lookupPolicy:
+      local: false
+    tags:
+    - name: '2'
+      annotations:
+        description: >-
+          Provides a Jenkins 2.X server on RHEL 7. For more information about
+          using this container image, including OpenShift considerations, see
+          https://github.com/openshift/jenkins/blob/master/README.md.
+        iconClass: icon-jenkins
+        openshift.io/display-name: Jenkins 2.X
+        openshift.io/provider-display-name: 'Red Hat, Inc.'
+        tags: jenkins
+        version: 2.x
+      from:
+        kind: DockerImage
+        name: 'quay.io/openshift/origin-jenkins:4.4'
+      generation: 1
+      importPolicy: {}
+      referencePolicy:
+        type: Local
+    - name: latest
+      annotations:
+        description: >-
+          Provides a Jenkins server on RHEL 7. For more information about using
+          this container image, including OpenShift considerations, see
+          https://github.com/openshift/jenkins/blob/master/README.md.
+
+
+          WARNING: By selecting this tag, your application will automatically
+          update to use the latest version of Jenkins available on OpenShift,
+          including major versions updates.
+        iconClass: icon-jenkins
+        openshift.io/display-name: Jenkins (Latest)
+        openshift.io/provider-display-name: 'Red Hat, Inc.'
+        tags: jenkins
+      from:
+        kind: DockerImage
+        name: 'quay.io/openshift/origin-jenkins:latest'
+      generation: 1
+      importPolicy: {}
+      referencePolicy:
+        type: Local
