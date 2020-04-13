@@ -112,24 +112,6 @@ variable "azure_private" {
   description = "This determines if this is a private cluster or not."
 }
 
-variable "azure_machine_v4_cidrs" {
-  type = list(string)
-
-  description = <<EOF
-The list of IPv4 address spaces from which to assign machine IPs.
-EOF
-
-}
-
-variable "azure_machine_v6_cidrs" {
-  type = list(string)
-
-  description = <<EOF
-The list of IPv6 address spaces from which to assign machine IPs.
-EOF
-
-}
-
 variable "azure_emulate_single_stack_ipv6" {
   type        = bool
   description = "This determines whether a dual-stack cluster is configured to emulate single-stack IPv6."

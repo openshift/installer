@@ -11,6 +11,24 @@ EOF
 
 }
 
+variable "machine_v4_cidrs" {
+  type = list(string)
+
+  description = <<EOF
+The list of IPv4 address spaces from which to assign machine IPs.
+EOF
+
+}
+
+variable "machine_v6_cidrs" {
+  type = list(string)
+
+  description = <<EOF
+The list of IPv6 address spaces from which to assign machine IPs.
+EOF
+
+}
+
 variable "master_count" {
   type = string
   default = "1"
