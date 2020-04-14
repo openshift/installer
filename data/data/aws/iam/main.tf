@@ -39,6 +39,13 @@ EOF
 }
 
 resource "aws_iam_role_policy" "worker_policy" {
+
+  // List curated from https://github.com/kubernetes/cloud-provider-aws#readme, minus entries specific to EKS
+  // integrations.
+  // This list should not be updated any further without an operator owning migrating changes here for existing
+  // clusters.
+  // Please see: docs/dev/aws/iam_permissions.md
+
   name = "${var.cluster_id}-worker-policy"
   role = aws_iam_role.worker_role.id
 
@@ -48,7 +55,10 @@ resource "aws_iam_role_policy" "worker_policy" {
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": "ec2:Describe*",
+      "Action": [
+        "ec2:DescribeInstances",
+        "ec2:DescribeRegions"
+      ],
       "Resource": "*"
     }
   ]
