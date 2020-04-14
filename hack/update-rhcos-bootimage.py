@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# Usage: ./hack/update-rhcos-bootimage.py https://releases-art-rhcos.svc.ci.openshift.org/storage/releases/ootpa/410.8.20190401.0/meta.json amd64
+# Usage: ./hack/update-rhcos-bootimage.py https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/31.20200323.3.2/x86_64/meta.json amd64
 import codecs,os,sys,json,argparse
 import urllib.parse
 import urllib.request
 
 # An app running in the CI cluster exposes this public endpoint about ART RHCOS
 # builds.  Do not try to e.g. point to RHT-internal endpoints.
-RHCOS_RELEASES_APP = 'https://releases-art-rhcos.svc.ci.openshift.org'
+RHCOS_RELEASES_APP = 'https://builds.coreos.fedoraproject.org'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("meta", action='store')
@@ -22,9 +22,9 @@ with urllib.request.urlopen(args.meta) as f:
     string_f = codecs.getreader('utf-8')(f)  # support for Python < 3.6
     meta = json.load(string_f)
 newmeta = {}
-for k in ['images', 'buildid', 'oscontainer',
+for k in ['images', 'buildid',
           'ostree-commit', 'ostree-version',
-          'azure', 'gcp']:
+          'gcp']:
     newmeta[k] = meta[k]
 newmeta['amis'] = {
     entry['name']: {
