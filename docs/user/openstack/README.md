@@ -55,6 +55,7 @@ For a successful installation it is required:
 - Security Group Rules: 60
 - Routers: 1
 - Subnets: 1
+- Server Groups: 1
 - RAM: 112 GB
 - vCPUs: 28
 - Volume Storage: 175 GB
