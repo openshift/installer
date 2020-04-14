@@ -46,8 +46,10 @@ func getEnvironmentFromOS() azureenv.Environment {
 		foundEnvironment, err := azureenv.EnvironmentFromName(envSet)
 		if err == nil {
 			env = foundEnvironment
+			logrus.Debugf("Successfully set azure environment to %v", foundEnvironment.Name)
+		}else {
+			logrus.Debugf("Error setting environment, %v", err.Error())
 		}
-		logrus.Debugf("Successfully set azure environment to %v", foundEnvironment.Name)
 	}
 	return env
 }

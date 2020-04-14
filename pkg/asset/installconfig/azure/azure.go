@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	azureEnvironment string = "AZURE_ENVIONRMENT"
+	azureEnvironment string = "AZURE_ENVIRONMENT"
 )
 
 // Platform collects azure-specific configuration.

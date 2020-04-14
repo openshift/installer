@@ -47,11 +47,8 @@ open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 
 openshift-install create manifests
 
-read -p "press follow step 6 in azuremag quickstart guide, press [enter] to continue..." dummy
-
 rm -fv openshift/99_openshift-cluster-api_master-machines-*.yaml
 rm -fv openshift/99_openshift-cluster-api_worker-machineset-*.yaml
-
 
 python3 -c '
 import yaml;
@@ -72,8 +69,6 @@ export INFRA_ID=`yq -r '.status.infrastructureName' manifests/cluster-infrastruc
 export RESOURCE_GROUP=`yq -r '.status.platformStatus.azure.resourceGroupName' manifests/cluster-infrastructure-02-config.yml`
 
 openshift-install create ignition-configs
-
-tree
 
 az group create --name $RESOURCE_GROUP --location $AZURE_REGION
 az identity create -g $RESOURCE_GROUP -n ${INFRA_ID}-identity
