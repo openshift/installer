@@ -1037,7 +1037,7 @@ github.com/openshift/machine-api-operator/pkg/apis/machine
 github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1
 github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider
 github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1
-# github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033375cbe820+incompatible => github.com/LorbusChris/machine-config-operator v0.0.1-0.20200323222512-db1a46cb4bbb
+# github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033375cbe820+incompatible => github.com/openshift/machine-config-operator v0.0.1-0.20200414120921-1de18b18146b
 github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1
 # github.com/ovirt/go-ovirt v4.3.4+incompatible
 github.com/ovirt/go-ovirt
