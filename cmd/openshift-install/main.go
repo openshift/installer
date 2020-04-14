@@ -54,6 +54,7 @@ func installerMain() {
 		newVersionCmd(),
 		newGraphCmd(),
 		newCompletionCmd(),
+		newMigrateCmd(),
 	} {
 		rootCmd.AddCommand(subCmd)
 	}
