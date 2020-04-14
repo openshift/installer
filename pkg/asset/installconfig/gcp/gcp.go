@@ -7,10 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/AlecAivazis/survey.v1"
+
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/pkg/errors"
-	"gopkg.in/AlecAivazis/survey.v1"
 )
 
 // Platform collects GCP-specific configuration.
