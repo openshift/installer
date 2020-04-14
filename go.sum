@@ -105,8 +105,6 @@ github.com/InVisionApp/go-health v2.1.0+incompatible/go.mod h1:/+Gv1o8JUsrjC6pi6
 github.com/JeffAshton/win_pdh v0.0.0-20161109143554-76bb4ee9f0ab/go.mod h1:3VYc5hodBMJ5+l/7J4xAyMeuM2PNuepvHlGs8yilUCA=
 github.com/Jeffail/gabs v1.1.1/go.mod h1:6xMvQMK4k33lb7GUUpaAPh6nKMmemQeg5d4gn7/bOXc=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
-github.com/LorbusChris/machine-config-operator v0.0.1-0.20200323222512-db1a46cb4bbb h1:zZhZOgHnNq3Zj65UA63NIGcUPGAIGrzSae/QFAm0ia8=
-github.com/LorbusChris/machine-config-operator v0.0.1-0.20200323222512-db1a46cb4bbb/go.mod h1:EnsJFPg9wiFS06ORFuhuQfgWQCzFbctj15jW9i2o5PU=
 github.com/LorbusChris/terraform-provider-ignition/v2 v2.0.0-20200118034038-6e413297dc57 h1:BupptCmXjF41p4eUw+yBwwyHgovRAkAt/hH7PDk1u8U=
 github.com/LorbusChris/terraform-provider-ignition/v2 v2.0.0-20200118034038-6e413297dc57/go.mod h1:kjYnSlonNzYk08tQnHAh0e/9e/GV7tM8ClGwPCQJqqI=
 github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd/go.mod h1:64YHyfSL2R96J44Nlwm39UHepQbyR5q10x7iYa1ks2E=
@@ -371,7 +369,7 @@ github.com/coreos/etcd v3.3.13+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc
 github.com/coreos/etcd v3.3.15+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
 github.com/coreos/etcd v3.3.18+incompatible h1:Zz1aXgDrFFi1nadh58tA9ktt06cmPTwNNP3dXwIq1lE=
 github.com/coreos/etcd v3.3.18+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
-github.com/coreos/fcct v0.4.0/go.mod h1:rNqhmWqBE0ArcrunuaCz/+P2FHcDHlaOcgQUDOPr5oQ=
+github.com/coreos/fcct v0.5.0/go.mod h1:cbE+j77YSQwFB2fozWVB3qsI2Pi3YiVEbDz/b6Yywdo=
 github.com/coreos/go-etcd v2.0.0+incompatible/go.mod h1:Jez6KQU2B/sWsbdaef3ED8NzMklzPG4d5KIOhIy30Tk=
 github.com/coreos/go-iptables v0.4.2/go.mod h1:/mVI274lEDI2ns62jHCDnCyBF9Iwsmekav8Dbxlm1MU=
 github.com/coreos/go-oidc v2.0.0+incompatible/go.mod h1:CgnwVTmzoESiwO9qyAFEMiHoZ1nMCKZlZ9V6mm3/LKc=
@@ -385,6 +383,7 @@ github.com/coreos/ignition v0.33.0/go.mod h1:WJQapxzEn9DE0ryxsGvm8QnBajm/XsS/Pkr
 github.com/coreos/ignition v0.34.0 h1:r3HQKhQmRDhofcRSFp2fDVB6vhqb9gubEnyjgM+l3GQ=
 github.com/coreos/ignition v0.34.0/go.mod h1:WJQapxzEn9DE0ryxsGvm8QnBajm/XsS/PkrDqSpz+bA=
 github.com/coreos/ignition/v2 v2.1.1/go.mod h1:RqmqU64zxarUJa3l4cHtbhcSwfQLpUhv0WVziZwoXvE=
+github.com/coreos/ignition/v2 v2.2.1/go.mod h1:RqmqU64zxarUJa3l4cHtbhcSwfQLpUhv0WVziZwoXvE=
 github.com/coreos/ignition/v2 v2.2.2-0.20200325194711-7d770711ebc1 h1:kEZ+EZv6PVXHZ1JnzvFePPTP7zNpUhB/h/hos1GUw20=
 github.com/coreos/ignition/v2 v2.2.2-0.20200325194711-7d770711ebc1/go.mod h1:RqmqU64zxarUJa3l4cHtbhcSwfQLpUhv0WVziZwoXvE=
 github.com/coreos/pkg v0.0.0-20160727233714-3ac0863d7acf/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
@@ -1811,6 +1810,8 @@ github.com/openshift/machine-api-operator v0.0.0-20190312153711-9650e16c9880/go.
 github.com/openshift/machine-api-operator v0.2.1-0.20191128180243-986b771e661d/go.mod h1:9qQPF00anuIsc6RiHYfHE0+cZZImbvFNLln0NRBVVMg=
 github.com/openshift/machine-api-operator v0.2.1-0.20200310180732-c63fa2b143f0 h1:Na0422T5qq9e4AtBqH4hyqujESg29Akrf2asy/kc02U=
 github.com/openshift/machine-api-operator v0.2.1-0.20200310180732-c63fa2b143f0/go.mod h1:b3huCV+DbroXP1sHtsU5xBwx97zqc6GKB5owyl2zsNM=
+github.com/openshift/machine-config-operator v0.0.1-0.20200414120921-1de18b18146b h1:0P/nbeROvQg02urwzqeQ2yKI6L0dluyYnT0n2XnYJmw=
+github.com/openshift/machine-config-operator v0.0.1-0.20200414120921-1de18b18146b/go.mod h1:yZV361656gvAH+Tg6izYvSiH9reMGIP3lcB04ip8IRc=
 github.com/openshift/runtime-utils v0.0.0-20191011150825-9169de69ebf6/go.mod h1:5gDRVvQwesU7cfwlpuMivdv3Dz/oslvv2qTBHCy4wqQ=
 github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-3 h1:aRnSZYFNqYXv8mc3/q6nP1WJP4VR8eugkdmJF6xnCs0=
 github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-3/go.mod h1:O9UYVGp8E7aMa2dANw9oTQmaZZbbr8DMRpC56dyy00E=

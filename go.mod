@@ -135,7 +135,7 @@ replace (
 	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20200206190020-71b826cc0f0a // Use OpenShift fork
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200210091934-a0e53e94816b // Pin API
-	github.com/openshift/machine-config-operator => github.com/LorbusChris/machine-config-operator v0.0.1-0.20200323222512-db1a46cb4bbb // Pin FCOS MCO
+	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20200414120921-1de18b18146b // Pin FCOS MCO
 	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-3 // Pin to openshift fork with IPv6 fixes
 	github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/LorbusChris/terraform-provider-ignition/v2 v2.0.0-20200118034038-6e413297dc57
 	google.golang.org/api => google.golang.org/api v0.13.0 // Pin to version required by tf-provider-google
