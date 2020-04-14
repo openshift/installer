@@ -20,6 +20,7 @@ const azureAuthEnv = "AZURE_AUTH_LOCATION"
 var (
 	defaultAuthFilePath = filepath.Join(os.Getenv("HOME"), ".azure", "osServicePrincipal.json")
 	onceLoggers         = map[string]*sync.Once{}
+	defaultAzureEnvironment = azureenv.PublicCloud
 )
 
 //Session is an object representing session for subscription
@@ -27,6 +28,7 @@ type Session struct {
 	GraphAuthorizer autorest.Authorizer
 	Authorizer      autorest.Authorizer
 	Credentials     Credentials
+	Environment     azureenv.Environment
 }
 
 //Credentials is the data type for credentials as understood by the azure sdk
@@ -37,6 +39,19 @@ type Credentials struct {
 	TenantID       string `json:"tenantId,omitempty"`
 }
 
+func getEnvironmentFromOS() azureenv.Environment {
+	env := defaultAzureEnvironment
+	if envSet := os.Getenv(azureEnvironment); len(envSet) > 0 {
+		logrus.Debugf("Found Azure environment override, trying to set environment to %v", envSet)
+		foundEnvironment, err := azureenv.EnvironmentFromName(envSet)
+		if err == nil {
+			env = foundEnvironment
+		}
+		logrus.Debugf("Successfully set azure environment to %v", foundEnvironment.Name)
+	}
+	return env
+}
+
 // GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
 // and, if no creds are found, asks for them and stores them on disk in a config file
 func GetSession() (*Session, error) {
@@ -44,14 +59,15 @@ func GetSession() (*Session, error) {
 	if f := os.Getenv(azureAuthEnv); len(f) > 0 {
 		authFile = f
 	}
-	return newSessionFromFile(authFile)
+	env := getEnvironmentFromOS()
+	return newSessionFromFile(authFile, env)
 }
 
-func newSessionFromFile(authFilePath string) (*Session, error) {
+func newSessionFromFile(authFilePath string, env azureenv.Environment) (*Session, error) {
 	// NewAuthorizerFromFileWithResource uses `auth.GetSettingsFromFile`, which uses the `azureAuthEnv` to fetch the auth credentials.
 	// therefore setting the local env here to authFilePath allows NewAuthorizerFromFileWithResource to load credentials.
 	os.Setenv(azureAuthEnv, authFilePath)
-	_, err := auth.NewAuthorizerFromFileWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
+	_, err := auth.NewAuthorizerFromFileWithResource(env.ResourceManagerEndpoint)
 	if err != nil {
 		logrus.Debug("Could not get an azure authorizer from file. Asking user to provide authentication info")
 		credentials, err := askForCredentials()
@@ -82,12 +98,12 @@ func newSessionFromFile(authFilePath string) (*Session, error) {
 		logrus.Infof("Credentials loaded from file %q", authFilePath)
 	})
 
-	authorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
+	authorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(env.ResourceManagerEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get client credentials authorizer from saved azure auth settings")
 	}
 
-	graphAuthorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(azureenv.PublicCloud.GraphEndpoint)
+	graphAuthorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(env.GraphEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get GraphEndpoint authorizer from saved azure auth settings")
 	}
@@ -96,6 +112,7 @@ func newSessionFromFile(authFilePath string) (*Session, error) {
 		GraphAuthorizer: graphAuthorizer,
 		Authorizer:      authorizer,
 		Credentials:     *credentials,
+		Environment:     env,
 	}, nil
 }
 

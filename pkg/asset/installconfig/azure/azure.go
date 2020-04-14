@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	defaultRegion string = "eastus"
+	azureEnvironment string = "AZURE_ENVIONRMENT"
 )
 
 // Platform collects azure-specific configuration.
@@ -50,11 +50,6 @@ func Platform() (*azure.Platform, error) {
 		return strings.SplitN(s, " ", 2)[0]
 	})
 
-	_, ok := regions[defaultRegion]
-	if !ok {
-		return nil, errors.Errorf("installer bug: invalid default azure region %q", defaultRegion)
-	}
-
 	sort.Strings(longRegions)
 	sort.Strings(shortRegions)
 
@@ -64,7 +59,6 @@ func Platform() (*azure.Platform, error) {
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The azure region to be used for installation.",
-				Default: fmt.Sprintf("%s (%s)", defaultRegion, regions[defaultRegion]),
 				Options: longRegions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
@@ -92,7 +86,7 @@ func getRegions() (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	client := azsub.NewClient()
+	client := azsub.NewClientWithBaseURI(session.Environment.ResourceManagerEndpoint)
 	client.Authorizer = session.Authorizer
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
@@ -114,8 +108,7 @@ func getResourceCapableRegions() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	client := azres.NewProvidersClient(session.Credentials.SubscriptionID)
+	client := azres.NewProvidersClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
 	client.Authorizer = session.Authorizer
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
