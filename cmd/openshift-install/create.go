@@ -127,40 +127,6 @@ var (
 					}
 					logrus.Fatal(err)
 				}
-
-				logrus.Infof("Post installer processing: Approving pending CSRs, restarting aci-containers-controller pod and updating default IngressController...")
-				kubeconfigpath := filepath.Join(rootOpts.dir, "auth", "kubeconfig")
-				_, err = exec.Command("sh", "-c", "KUBECONFIG=" + kubeconfigpath + " oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | KUBECONFIG=" + kubeconfigpath + " xargs oc adm certificate approve").Output()
-                          	if err != nil {
-                                	logrus.Warnf("Unable to approve CSRs: " + err.Error())
-                          	}
-				logrus.Infof("Approved pending CSRs")
-
-                          	_, err = exec.Command("sh", "-c", "KUBECONFIG=" + kubeconfigpath + " oc get pods -n aci-containers-system | grep 'aci-containers-controller' | awk '{print $1}' | KUBECONFIG=" + kubeconfigpath + " xargs oc delete pod -n aci-containers-system").Output()
-                          	if err != nil {
-                                	logrus.Warnf("Unable to restart ACI CNI controller: " + err.Error())
-                          	}
-				logrus.Infof("Restarted aci-containers-controller")
-
-var exposeString = `KUBECONFIG=` + kubeconfigpath + ` oc replace --force --wait --filename - <<EOF
-apiVersion: operator.openshift.io/v1
-kind: IngressController
-metadata:
-  namespace: openshift-ingress-operator
-  name: default
-spec:
-  endpointPublishingStrategy:
-    type: LoadBalancerService
-    loadBalancer:
-      scope: Internal
-EOF
-`
-
-				_, err = exec.Command("sh", "-c", exposeString).Output()
-                                if err != nil {
-                                        logrus.Warnf("Unable to expose the openshift-ingress service: " + err.Error())
-                                }
-				logrus.Infof("Updated default IngressController publish strategy to use LoadBalancerService type")
 			},
 		},
 		assets: targetassets.Cluster,
@@ -496,6 +462,8 @@ func logComplete(directory, consoleURL string) error {
 		return err
 	}
 	kubeconfig := filepath.Join(absDir, "auth", "kubeconfig")
+	aciPostInstallSteps(kubeconfig)
+
 	pwFile := filepath.Join(absDir, "auth", "kubeadmin-password")
 	pw, err := ioutil.ReadFile(pwFile)
 	if err != nil {
@@ -523,4 +491,51 @@ func waitForInstallComplete(ctx context.Context, config *rest.Config, directory 
 	}
 
 	return logComplete(rootOpts.dir, consoleURL)
+}
+
+func aciPostInstallSteps(kubeconfigpath string) {
+
+        logrus.Info("Post installer processing: Approving pending CSRs, restarting aci-containers-controller pod and updating default IngressController...")
+        _, err := exec.Command("sh", "-c", "KUBECONFIG=" + kubeconfigpath + " oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | KUBECONFIG=" + kubeconfigpath + " xargs oc adm certificate approve").Output()
+        if err != nil {
+                logrus.Warnf("Unable to approve CSRs: " + err.Error())
+        }
+        logrus.Info("Approved pending CSRs")
+
+        _, err = exec.Command("sh", "-c", "KUBECONFIG=" + kubeconfigpath + " oc get pods -n aci-containers-system | grep 'aci-containers-controller' | awk '{print $1}' | KUBECONFIG=" + kubeconfigpath + " xargs oc delete pod -n aci-containers-system").Output()
+        if err != nil {
+                logrus.Warnf("Unable to restart ACI CNI controller: " + err.Error())
+        }
+        logrus.Info("Restarted aci-containers-controller")
+
+var exposeString = `KUBECONFIG=` + kubeconfigpath + ` oc replace --force --wait --filename - <<EOF
+apiVersion: operator.openshift.io/v1
+kind: IngressController
+metadata:
+  namespace: openshift-ingress-operator
+  name: default
+spec:
+  endpointPublishingStrategy:
+    type: LoadBalancerService
+    loadBalancer:
+      scope: Internal
+EOF
+`
+
+        _, err = exec.Command("sh", "-c", exposeString).Output()
+        if err != nil {
+                logrus.Warnf("Unable to expose the openshift-ingress service: " + err.Error())
+        }
+        logrus.Info("Updated default IngressController publish strategy to use LoadBalancerService type")
+
+	logForSnatPolicy(kubeconfigpath)
+}
+
+func logForSnatPolicy(kubeconfigpath string) {
+	ocCmdOutput, _ := exec.Command("sh", "-c", "KUBECONFIG=" + kubeconfigpath + " oc get snatpolicy installerclusterdefault").Output()
+	ocCmdOutputString := string(ocCmdOutput)
+	if !strings.Contains(ocCmdOutputString, "not found") {
+		logrus.Info("A cluster level snatpolicy called installerclusterdefault has been applied.")
+		logrus.Infof("If required, delete it by running 'KUBECONFIG=%s oc delete snatpolicy installerclusterdefault'", kubeconfigpath)
+	}
 }
