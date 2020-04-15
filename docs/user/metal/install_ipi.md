@@ -33,7 +33,8 @@ purposes:
   * ***NTP***
     * A time source must be accessible from this network.
   * ***Reserved VIPs (Virtual IPs)*** - 3 IP addresses must be reserved on this
-    network for use by the cluster.  Specifically, these IPs will serve the
+	network for use by the cluster. These Virtual IPs are managed using VRRP
+	(v2 for IPv4 and v3 for IPv6). Specifically, these IPs will serve the
     following purposes:
     * API - This IP will be used to reach the cluster API.
     * Ingress - This IP will be used by cluster ingress traffic
@@ -65,6 +66,29 @@ purposes:
   * Servers will typically have an additional NIC used by the onboard
     management controllers (BMCs).  These BMCs must be accessible and routed to
     the host.
+
+When the Virtual IPs are managed using multicast (VRRPv2 or VRRPv3), there is a
+limitation for 255 unique virtual routers per multicast domain. In case you
+have pre-existing virtual routers using the standard IPv4 or IPv6 multicast
+groups, you can learn the VIPs the installation will choose by running the
+following command:
+
+    $ podman run quay.io/openshift/origin-baremetal-runtimecfg:TAG vr-ids cnf10
+    APIVirtualRouterID: 147
+    DNSVirtualRouterID: 158
+    IngressVirtualRouterID: 2
+
+Where `TAG` is the release you are going to install, e.g., 4.5. Let's see another example:
+
+    $ podman run quay.io/openshift/origin-baremetal-runtimecfg:TAG vr-ids cnf11
+    APIVirtualRouterID: 228
+    DNSVirtualRouterID: 239
+    IngressVirtualRouterID: 147
+
+In the example output above you can see that installing two clusters in the
+same multicast domain with names `cnf10` and `cnf11` would lead to a conflict.
+You should also take care that none of those are taken by other independent
+VRRP virtual routers running in the same broadcast domain.
 
 ### Provisioning Host
 
