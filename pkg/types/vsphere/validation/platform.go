@@ -29,7 +29,7 @@ func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 	}
 
 	// If all VIPs are empty, skip IP validation.  All VIPs are required to be defined together.
-	if strings.Join([]string{p.APIVIP, p.IngressVIP, p.DNSVIP}, "") != "" {
+	if strings.Join([]string{p.APIVIP, p.IngressVIP}, "") != "" {
 		allErrs = append(allErrs, validateVIPs(p, fldPath)...)
 	}
 
@@ -67,12 +67,6 @@ func validateVIPs(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 		allErrs = append(allErrs, field.Required(fldPath.Child("ingressVIP"), "must specify a VIP for Ingress"))
 	} else if err := validate.IP(p.IngressVIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
-	}
-
-	if len(p.DNSVIP) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("dnsVIP"), "must specify a VIP for DNS"))
-	} else if err := validate.IP(p.DNSVIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsVIP"), p.DNSVIP, err.Error()))
 	}
 
 	return allErrs

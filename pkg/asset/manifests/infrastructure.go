@@ -138,7 +138,6 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		if installConfig.Config.VSphere.APIVIP != "" {
 			config.Status.PlatformStatus.VSphere = &configv1.VSpherePlatformStatus{
 				APIServerInternalIP: installConfig.Config.VSphere.APIVIP,
-				NodeDNSIP:           installConfig.Config.VSphere.DNSVIP,
 				IngressIP:           installConfig.Config.VSphere.IngressVIP,
 			}
 		}
