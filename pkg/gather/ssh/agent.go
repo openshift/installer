@@ -52,8 +52,22 @@ func newAgent(keyPaths []string) (agent.Agent, error) {
 }
 
 func loadKeys(paths []string) (map[string]interface{}, error) {
+	keys := map[string]interface{}{}
 	if len(paths) > 0 {
-		return LoadPrivateSSHKeys(paths)
+		pkeys, err := LoadPrivateSSHKeys(paths)
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range pkeys {
+			keys[k] = v
+		}
 	}
-	return defaultPrivateSSHKeys()
+	dkeys, err := defaultPrivateSSHKeys()
+	if err != nil && len(paths) == 0 {
+		return nil, err
+	}
+	for k, v := range dkeys {
+		keys[k] = v
+	}
+	return keys, nil
 }
