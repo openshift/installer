@@ -13,9 +13,6 @@ import (
 
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
-
-	azres "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/resources"
-	azsub "github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 )
 
 const (
@@ -88,39 +85,36 @@ func Platform() (*azure.Platform, error) {
 }
 
 func getRegions() (map[string]string, error) {
-	session, err := GetSession()
-	if err != nil {
-		return nil, err
-	}
-	client := azsub.NewClient()
-	client.Authorizer = session.Authorizer
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
-	defer cancel()
-	locations, err := client.ListLocations(ctx, session.Credentials.SubscriptionID)
+	client, err := NewClient(context.TODO())
 	if err != nil {
 		return nil, err
 	}
 
-	locationsValue := *locations.Value
+	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
+	defer cancel()
+
+	locations, err := client.ListLocations(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	allLocations := map[string]string{}
-	for _, location := range locationsValue {
+	for _, location := range *locations {
 		allLocations[to.String(location.Name)] = to.String(location.DisplayName)
 	}
 	return allLocations, nil
 }
 
 func getResourceCapableRegions() ([]string, error) {
-	session, err := GetSession()
+	client, err := NewClient(context.TODO())
 	if err != nil {
 		return nil, err
 	}
 
-	client := azres.NewProvidersClient(session.Credentials.SubscriptionID)
-	client.Authorizer = session.Authorizer
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
 	defer cancel()
 
-	provider, err := client.Get(ctx, "Microsoft.Resources", "")
+	provider, err := client.GetResourcesProvider(ctx, "Microsoft.Resources")
 	if err != nil {
 		return nil, err
 	}

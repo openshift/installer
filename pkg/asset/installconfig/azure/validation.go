@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 
 	aznetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
+	"github.com/Azure/go-autorest/autorest/to"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 
 	"github.com/openshift/installer/pkg/types"
@@ -17,6 +19,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateNetworks(client, ic.Azure, ic.Networking.MachineNetwork, field.NewPath("platform").Child("azure"))...)
+	allErrs = append(allErrs, validateRegion(client, field.NewPath("platform").Child("azure").Child("region"), ic.Azure)...)
 	return allErrs.ToAggregate()
 }
 
@@ -68,4 +71,48 @@ func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.Mach
 		}
 	}
 	return field.ErrorList{field.Invalid(fldPath, subnetName, fmt.Sprintf("subnet %s address prefix is outside of the specified machine networks", ip))}
+}
+
+// validateRegion checks that the desired region is valid and available to the user
+func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) field.ErrorList {
+	locations, err := client.ListLocations(context.TODO())
+	if err != nil {
+		return field.ErrorList{field.Invalid(fieldPath, p.Region, "failed to retrieve available regions")}
+	}
+
+	availableRegions := map[string]string{}
+	for _, location := range *locations {
+		availableRegions[to.String(location.Name)] = to.String(location.DisplayName)
+	}
+
+	displayName, ok := availableRegions[p.Region]
+
+	if !ok {
+		errMsg := fmt.Sprintf("region %q is not valid or not available for this account", p.Region)
+
+		normalizedRegion := strings.Replace(strings.ToLower(p.Region), " ", "", -1)
+		if _, ok := availableRegions[normalizedRegion]; ok {
+			errMsg += fmt.Sprintf(", did you mean %q?", normalizedRegion)
+		}
+
+		return field.ErrorList{field.Invalid(fieldPath, p.Region, errMsg)}
+
+	}
+
+	provider, err := client.GetResourcesProvider(context.TODO(), "Microsoft.Resources")
+	if err != nil {
+		return field.ErrorList{field.Invalid(fieldPath, p.Region, "failed to retrieve resource capable regions")}
+	}
+
+	for _, resType := range *provider.ResourceTypes {
+		if *resType.ResourceType == "resourceGroups" {
+			for _, resourceCapableRegion := range *resType.Locations {
+				if resourceCapableRegion == displayName {
+					return field.ErrorList{}
+				}
+			}
+		}
+	}
+
+	return field.ErrorList{field.Invalid(fieldPath, p.Region, fmt.Sprintf("region %q does not support resource creation", p.Region))}
 }
