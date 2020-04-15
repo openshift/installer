@@ -43,6 +43,13 @@ EOF
 }
 
 resource "aws_iam_role_policy" "master_policy" {
+
+  // List curated from https://github.com/kubernetes/cloud-provider-aws#readme, minus entries specific to EKS
+  // integrations.
+  // This list should not be updated any further without an operator owning migrating changes here for existing
+  // clusters.
+  // Please see: docs/dev/aws/iam_permissions.md
+
   name = "${var.cluster_id}-master-policy"
   role = aws_iam_role.master_role.id
 
@@ -51,24 +58,57 @@ resource "aws_iam_role_policy" "master_policy" {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Action": "ec2:*",
-      "Resource": "*",
-      "Effect": "Allow"
-    },
-    {
-      "Action": "iam:PassRole",
-      "Resource": "*",
-      "Effect": "Allow"
-    },
-    {
-      "Action" : [
-        "s3:GetObject"
+      "Action": [
+        "ec2:DescribeInstances",
+        "ec2:DescribeRegions",
+        "ec2:DescribeRouteTables",
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeVolumes",
+        "ec2:CreateSecurityGroup",
+        "ec2:CreateTags",
+        "ec2:CreateVolume",
+        "ec2:ModifyInstanceAttribute",
+        "ec2:ModifyVolume",
+        "ec2:AttachVolume",
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:DeleteSecurityGroup",
+        "ec2:DeleteVolume",
+        "ec2:DetachVolume",
+        "ec2:RevokeSecurityGroupIngress",
+        "ec2:DescribeVpcs",
+        "elasticloadbalancing:AddTags",
+        "elasticloadbalancing:AttachLoadBalancerToSubnets",
+        "elasticloadbalancing:ApplySecurityGroupsToLoadBalancer",
+        "elasticloadbalancing:CreateLoadBalancer",
+        "elasticloadbalancing:CreateLoadBalancerPolicy",
+        "elasticloadbalancing:CreateLoadBalancerListeners",
+        "elasticloadbalancing:ConfigureHealthCheck",
+        "elasticloadbalancing:DeleteLoadBalancer",
+        "elasticloadbalancing:DeleteLoadBalancerListeners",
+        "elasticloadbalancing:DescribeLoadBalancers",
+        "elasticloadbalancing:DescribeLoadBalancerAttributes",
+        "elasticloadbalancing:DetachLoadBalancerFromSubnets",
+        "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+        "elasticloadbalancing:ModifyLoadBalancerAttributes",
+        "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+        "elasticloadbalancing:SetLoadBalancerPoliciesForBackendServer",
+        "elasticloadbalancing:AddTags",
+        "elasticloadbalancing:CreateListener",
+        "elasticloadbalancing:CreateTargetGroup",
+        "elasticloadbalancing:DeleteListener",
+        "elasticloadbalancing:DeleteTargetGroup",
+        "elasticloadbalancing:DescribeListeners",
+        "elasticloadbalancing:DescribeLoadBalancerPolicies",
+        "elasticloadbalancing:DescribeTargetGroups",
+        "elasticloadbalancing:DescribeTargetHealth",
+        "elasticloadbalancing:ModifyListener",
+        "elasticloadbalancing:ModifyTargetGroup",
+        "elasticloadbalancing:RegisterTargets",
+        "elasticloadbalancing:DeregisterTargets",
+        "elasticloadbalancing:SetLoadBalancerPoliciesOfListener",
+        "kms:DescribeKey"
       ],
-      "Resource": "arn:${data.aws_partition.current.partition}:s3:::*",
-      "Effect": "Allow"
-    },
-    {
-      "Action": "elasticloadbalancing:*",
       "Resource": "*",
       "Effect": "Allow"
     }
@@ -81,9 +121,9 @@ EOF
 resource "aws_network_interface" "master" {
   count     = var.instance_count
   subnet_id = var.az_to_subnet_id[var.availability_zones[count.index]]
-  
+
   security_groups = var.master_sg_ids
-  
+
   tags = merge(
     {
     "Name" = "${var.cluster_id}-master-${count.index}"
@@ -91,7 +131,7 @@ resource "aws_network_interface" "master" {
     var.tags,
   )
 }
-  
+
 resource "aws_instance" "master" {
   count = var.instance_count
   ami   = var.ec2_ami
