@@ -52,9 +52,7 @@ func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, 
 		MasterVcpu:   strconv.Itoa(masterConfig.DomainVcpu),
 	}
 
-	// Power PC systems typically require more memory because the page size is 64K and not the default 4K
-	// TODO: need to make ppc64le a supported architecture - https://bugzilla.redhat.com/show_bug.cgi?id=1821392
-	if architecture == "ppc64le" {
+	if architecture == types.ArchitecturePPC64LE {
 		cfg.BootstrapMemory = 5120
 	}
 
