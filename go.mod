@@ -44,7 +44,6 @@ require (
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-azure-helpers v0.10.0
 	github.com/hashicorp/go-plugin v1.0.1
-	github.com/hashicorp/go-retryablehttp v0.6.4 // indirect
 	github.com/hashicorp/logutils v1.0.0
 	github.com/hashicorp/memberlist v0.1.5 // indirect
 	github.com/hashicorp/serf v0.8.5 // indirect
@@ -63,7 +62,7 @@ require (
 	github.com/metal3-io/cluster-api-provider-baremetal v0.0.0
 	github.com/mitchellh/cli v1.0.0
 	github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6 // indirect
-	github.com/openshift-metal3/terraform-provider-ironic v0.1.9
+	github.com/openshift-metal3/terraform-provider-ironic v0.2.0
 	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible
 	github.com/openshift/client-go v0.0.0-20200116152001-92a2713fa240
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
@@ -107,7 +106,7 @@ require (
 	go.uber.org/multierr v1.4.0 // indirect
 	go.uber.org/zap v1.13.0 // indirect
 	golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
-	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
 	golang.org/x/sys v0.0.0-20191206220618-eeba5f6aabab
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect

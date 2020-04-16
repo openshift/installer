@@ -1001,7 +1001,7 @@ github.com/opencontainers/go-digest
 # github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openshift-metal3/terraform-provider-ironic v0.1.9
+# github.com/openshift-metal3/terraform-provider-ironic v0.2.0
 github.com/openshift-metal3/terraform-provider-ironic/ironic
 # github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible => github.com/openshift/api v0.0.0-20200210091934-a0e53e94816b
 github.com/openshift/api/config/v1
@@ -1408,7 +1408,7 @@ golang.org/x/crypto/ssh/terminal
 # golang.org/x/exp v0.0.0-20191129062945-2f5052295587
 golang.org/x/exp/apidiff
 golang.org/x/exp/cmd/apidiff
-# golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f
+# golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 golang.org/x/lint
 golang.org/x/lint/golint
 # golang.org/x/mod v0.1.1-0.20191105210325-c90efee705ee

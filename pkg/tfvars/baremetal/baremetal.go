@@ -22,6 +22,8 @@ type config struct {
 	BootstrapOSImage        string `json:"bootstrap_os_image,omitempty"`
 	ExternalBridge          string `json:"external_bridge,omitempty"`
 	ProvisioningBridge      string `json:"provisioning_bridge,omitempty"`
+	IgnitionURL             string `json:"ignition_url,omitempty"`
+	IgnitionURLCACert       string `json:"ignition_url_ca_cert,omitempty"`
 
 	// Data required for control plane deployment - several maps per host, because of terraform's limitations
 	Hosts         []map[string]interface{} `json:"hosts"`
@@ -32,7 +34,7 @@ type config struct {
 }
 
 // TFVars generates bare metal specific Terraform variables.
-func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridge, provisioningBridge string, platformHosts []*baremetal.Host, image string) ([]byte, error) {
+func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridge, provisioningBridge string, platformHosts []*baremetal.Host, image string, ignitionURL string, ignitionURLCACert string) ([]byte, error) {
 	bootstrapOSImage, err := cache.DownloadImageFile(bootstrapOSImage)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to use cached bootstrap libvirt image")
@@ -132,6 +134,8 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		DriverInfos:             driverInfos,
 		RootDevices:             rootDevices,
 		InstanceInfos:           instanceInfos,
+		IgnitionURL:             ignitionURL,
+		IgnitionURLCACert:       ignitionURLCACert,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
