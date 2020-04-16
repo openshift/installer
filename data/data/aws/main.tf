@@ -10,9 +10,7 @@ locals {
 provider "aws" {
   region = var.aws_region
 
-  # Validation of AWS Bahrain region was added in AWS TF provider v2.22
-  # so we skip when installing in me-south-1.
-  skip_region_validation = var.aws_region == "me-south-1"
+  skip_region_validation = var.aws_skip_region_validation
 
   endpoints {
     ec2     = lookup(var.custom_endpoints, "ec2", null)

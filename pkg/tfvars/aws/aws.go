@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 
+	configaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/aws/defaults"
@@ -32,6 +33,7 @@ type config struct {
 	PrivateSubnets          []string          `json:"aws_private_subnets,omitempty"`
 	PublicSubnets           *[]string         `json:"aws_public_subnets,omitempty"`
 	PublishStrategy         string            `json:"aws_publish_strategy,omitempty"`
+	SkipRegionCheck         bool              `json:"aws_skip_region_validation"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -113,6 +115,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VPC:                     sources.VPC,
 		PrivateSubnets:          sources.PrivateSubnets,
 		PublishStrategy:         string(sources.Publish),
+		SkipRegionCheck:         !configaws.IsKnownRegion(masterConfig.Placement.Region),
 	}
 
 	if len(sources.PublicSubnets) == 0 {

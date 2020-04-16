@@ -130,3 +130,7 @@ variable "aws_publish_strategy" {
   type        = string
   description = "The cluster publishing strategy, either Internal or External"
 }
+variable "aws_skip_region_validation" {
+  type        = bool
+  description = "This decides if the AWS provider should validate if the region is known."
+}
