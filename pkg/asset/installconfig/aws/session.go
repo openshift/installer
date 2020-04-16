@@ -175,12 +175,19 @@ func getCredentials() error {
 type awsResolver struct {
 	region   string
 	services map[string]typesaws.ServiceEndpoint
+
+	// this is a list of known default endpoints for specific regions that would
+	// otherwise require user to set the service overrides.
+	// it's a map of region => service => resolved endpoint
+	// this is only used when the user hasn't specified a override for the service in that region.
+	defaultEndpoints map[string]map[string]endpoints.ResolvedEndpoint
 }
 
 func newAWSResolver(region string, services []typesaws.ServiceEndpoint) *awsResolver {
 	resolver := &awsResolver{
-		region:   region,
-		services: make(map[string]typesaws.ServiceEndpoint),
+		region:           region,
+		services:         make(map[string]typesaws.ServiceEndpoint),
+		defaultEndpoints: defaultEndpoints(),
 	}
 	for _, service := range services {
 		service := service
@@ -197,9 +204,35 @@ func (ar *awsResolver) EndpointFor(service, region string, optFns ...func(*endpo
 			SigningRegion: ar.region,
 		}, nil
 	}
+	if rv, ok := ar.defaultEndpoints[region]; ok {
+		if v, ok := rv[service]; ok {
+			return v, nil
+		}
+	}
 	return endpoints.DefaultResolver().EndpointFor(service, region, optFns...)
 }
 
 func resolverKey(service string) string {
 	return service
+}
+
+// this is a list of known default endpoints for specific regions that would
+// otherwise require user to set the service overrides.
+// it's a map of region => service => resolved endpoint
+// this is only used when the user hasn't specified a override for the service in that region.
+func defaultEndpoints() map[string]map[string]endpoints.ResolvedEndpoint {
+	return map[string]map[string]endpoints.ResolvedEndpoint{
+		endpoints.CnNorth1RegionID: {
+			"route53": {
+				URL:           "https://route53.amazonaws.com.cn",
+				SigningRegion: endpoints.CnNorthwest1RegionID,
+			},
+		},
+		endpoints.CnNorthwest1RegionID: {
+			"route53": {
+				URL:           "https://route53.amazonaws.com.cn",
+				SigningRegion: endpoints.CnNorthwest1RegionID,
+			},
+		},
+	}
 }

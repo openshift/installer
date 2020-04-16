@@ -125,12 +125,21 @@ func (o *ClusterUninstaller) Run() error {
 	tagClientNames := map[*resourcegroupstaggingapi.ResourceGroupsTaggingAPI]string{
 		tagClients[0]: o.Region,
 	}
-	if o.Region != "us-east-1" {
-		tagClient := resourcegroupstaggingapi.New(
-			awsSession, aws.NewConfig().WithRegion("us-east-1"),
-		)
-		tagClients = append(tagClients, tagClient)
-		tagClientNames[tagClient] = "us-east-1"
+
+	switch o.Region {
+	case endpoints.CnNorth1RegionID, endpoints.CnNorthwest1RegionID:
+		if o.Region != endpoints.CnNorthwest1RegionID {
+			tagClient := resourcegroupstaggingapi.New(awsSession, aws.NewConfig().WithRegion(endpoints.CnNorthwest1RegionID))
+			tagClients = append(tagClients, tagClient)
+			tagClientNames[tagClient] = endpoints.CnNorthwest1RegionID
+		}
+
+	default:
+		if o.Region != endpoints.UsEast1RegionID {
+			tagClient := resourcegroupstaggingapi.New(awsSession, aws.NewConfig().WithRegion(endpoints.UsEast1RegionID))
+			tagClients = append(tagClients, tagClient)
+			tagClientNames[tagClient] = endpoints.UsEast1RegionID
+		}
 	}
 
 	iamClient := iam.New(awsSession)
