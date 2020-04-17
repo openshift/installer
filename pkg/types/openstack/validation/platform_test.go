@@ -33,15 +33,17 @@ func validNetworking() *types.Networking {
 
 func TestValidatePlatform(t *testing.T) {
 	cases := []struct {
-		name             string
-		platform         *openstack.Platform
-		networking       *types.Networking
-		noClouds         bool
-		noNetworks       bool
-		noFlavors        bool
-		noNetExts        bool
-		noServiceCatalog bool
-		valid            bool
+		name                  string
+		platform              *openstack.Platform
+		networking            *types.Networking
+		noClouds              bool
+		noNetworks            bool
+		noFlavors             bool
+		noNetExts             bool
+		noServiceCatalog      bool
+		validMachinesSubnet   bool
+		invalidMachinesSubnet bool
+		valid                 bool
 	}{
 		{
 			name:       "minimal",
@@ -198,6 +200,58 @@ func TestValidatePlatform(t *testing.T) {
 			networking: validNetworking(),
 			valid:      false,
 		},
+		{
+			name: "valid MachinesSubnet",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.MachinesSubnet = "c664df47-4f7e-4852-819e-e66f9882b7b3"
+				return p
+			}(),
+			networking:          validNetworking(),
+			validMachinesSubnet: true,
+			valid:               true,
+		},
+		{
+			name: "valid MachinesSubnet invalid machineNetwork",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.MachinesSubnet = "c664df47-4f7e-4852-819e-e66f9882b7b3"
+				return p
+			}(),
+			networking: func() *types.Networking {
+				n := validNetworking()
+				n.MachineNetwork[0].CIDR = *ipnet.MustParseCIDR("105.90.0.0/16")
+				return n
+			}(),
+			validMachinesSubnet: true,
+			valid:               false,
+		},
+		{
+			name: "invalid MachinesSubnet",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.MachinesSubnet = "subnet-c17b"
+				return p
+			}(),
+			networking:            validNetworking(),
+			invalidMachinesSubnet: true,
+			valid:                 false,
+		},
+		{
+			name: "valid MachinesSubnet externalDNS set",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.MachinesSubnet = "c664df47-4f7e-4852-819e-e66f9882b7b3"
+				p.ExternalDNS = []string{
+					"192.168.1.12",
+					"10.0.5.16",
+				}
+				return p
+			}(),
+			networking:          validNetworking(),
+			validMachinesSubnet: true,
+			valid:               false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -246,6 +300,16 @@ func TestValidatePlatform(t *testing.T) {
 			} else {
 				fetcher.EXPECT().GetServiceCatalog(tc.platform.Cloud).
 					Return([]string{"octavia"}, nil).
+					MaxTimes(1)
+			}
+			if tc.validMachinesSubnet {
+				fetcher.EXPECT().GetSubnetCIDR(tc.platform.Cloud, tc.platform.MachinesSubnet).
+					Return("10.0.0.0/16", nil).
+					MaxTimes(1)
+			}
+			if tc.invalidMachinesSubnet {
+				fetcher.EXPECT().GetSubnetCIDR(tc.platform.Cloud, tc.platform.MachinesSubnet).
+					Return("", errors.New("invalid machinesSubnet")).
 					MaxTimes(1)
 			}
 

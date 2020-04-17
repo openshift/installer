@@ -9,6 +9,7 @@ import (
 	netext "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 
 	"github.com/openshift/installer/pkg/types/openstack/validation"
@@ -190,4 +191,22 @@ func (f realValidValuesFetcher) GetFloatingIPNames(cloud string, floatingNetwork
 	}
 
 	return floatingIPNames, nil
+}
+
+func (f realValidValuesFetcher) GetSubnetCIDR(cloud string, subnetID string) (string, error) {
+	opts := &clientconfig.ClientOpts{
+		Cloud: cloud,
+	}
+
+	networkClient, err := clientconfig.NewServiceClient("network", opts)
+	if err != nil {
+		return "", err
+	}
+
+	subnet, err := subnets.Get(networkClient, subnetID).Extract()
+	if err != nil {
+		return "", err
+	}
+
+	return subnet.CIDR, nil
 }

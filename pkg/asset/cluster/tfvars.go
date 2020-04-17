@@ -385,6 +385,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			caCert,
 			bootstrapIgn,
 			installConfig.Config.ControlPlane.Platform.OpenStack,
+			installConfig.Config.Platform.OpenStack.MachinesSubnet,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
