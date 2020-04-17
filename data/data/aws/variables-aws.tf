@@ -53,12 +53,12 @@ EOF
 }
 
 variable "aws_master_root_volume_type" {
-  type        = string
+  type = string
   description = "The type of volume for the root block device of master nodes."
 }
 
 variable "aws_master_root_volume_size" {
-  type        = string
+  type = string
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
