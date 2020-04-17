@@ -195,7 +195,6 @@ func validateServiceEndpoints(fldPath *field.Path, region string, services []aws
 func isAWSSDKRegion(region string) bool {
 	for _, partition := range endpoints.DefaultPartitions() {
 		for _, partitionRegion := range partition.Regions() {
-			partitionRegion := partitionRegion
 			if region == partitionRegion.ID() {
 				return true
 			}
