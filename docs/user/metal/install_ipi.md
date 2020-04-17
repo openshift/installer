@@ -206,7 +206,7 @@ sshKey: ...
 
 | Parameter | Default | Description |
 | --- | --- | --- |
-`provisioningNetworkInterface` | | The name of the network interface on control plane nodes connected to the provisioning network. |
+`provisioningNetworkInterface` | | The name of the network interface on control plane nodes connected to the provisioning network. It cannot overlap with the main network (see `machineNetwork`) |
 `hosts` | | Details about bare metal hosts to use to build the cluster. See below for more details. |
 `defaultMachinePlatform` | | The default configuration used for machine pools without a platform configuration. |
 `apiVIP` | `api.<clusterdomain>` | The VIP to use for internal API communication. |
@@ -224,14 +224,14 @@ The `dnsVIP` setting has no default and must always be provided.
 ##### Describing Hosts
 
 The `hosts` parameter is a list of separate bare metal assets that
-should be used to build the cluster.
+should be used to build the cluster. The number of assets must be at least greater or equal to the sum of the configured `ControlPlane` and `compute` `Replicas`.
 
 | Name | Default | Description |
 | --- | --- | --- |
-| `name` | | The name of the `BareMetalHost` resource to associate with the details. |
+| `name` | | The name of the `BareMetalHost` resource to associate with the details. It must be unique. |
 | `role` | | Either `master` or `worker`. |
 | `bmc` | | Connection details for the baseboard management controller. See below for details. |
-| `bootMACAddress` | | The MAC address of the NIC the host will use to boot on the provisioning network. |
+| `bootMACAddress` | | The MAC address of the NIC the host will use to boot on the provisioning network. It must be unique. |
 
 The `bmc` parameter for each host is a set of values for accessing the
 baseboard management controller in the host.
@@ -240,7 +240,7 @@ baseboard management controller in the host.
 | --- | --- | --- |
 | `username` | | The username for authenticating to the BMC |
 | `password` | | The password associated with `username`. |
-| `address` | | The URL for communicating with the BMC controller, based on the provider being used. See [BMC Addressing](#bmc-addressing) for details. |
+| `address` | | The URL for communicating with the BMC controller, based on the provider being used. See [BMC Addressing](#bmc-addressing) for details. It must be unique. |
 
 ##### BMC Addressing
 
