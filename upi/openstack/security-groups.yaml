@@ -81,15 +81,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: udp
-      remote_group: "{{ os_sg_master }}"
-      port_range_min: 4789
-      port_range_max: 4789
-
-  - name: 'Create master-sg rule "VXLAN from worker"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_master }}"
-      protocol: udp
-      remote_group: "{{ os_sg_worker }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 4789
       port_range_max: 4789
 
@@ -97,15 +89,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: udp
-      remote_group: "{{ os_sg_master }}"
-      port_range_min: 6081
-      port_range_max: 6081
-
-  - name: 'Create master-sg rule "Geneve from worker"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_master }}"
-      protocol: udp
-      remote_group: "{{ os_sg_worker }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 6081
       port_range_max: 6081
 
@@ -113,15 +97,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
-      remote_group: "{{ os_sg_master }}"
-      port_range_min: 6641
-      port_range_max: 6642
-
-  - name: 'Create master-sg rule "ovndb from worker"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_master }}"
-      protocol: tcp
-      remote_group: "{{ os_sg_worker }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 6641
       port_range_max: 6642
 
@@ -129,15 +105,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
-      remote_group: "{{ os_sg_master }}"
-      port_range_min: 9000
-      port_range_max: 9999
-
-  - name: 'Create master-sg rule "master ingress internal from worker (TCP)"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_master }}"
-      protocol: tcp
-      remote_group: "{{ os_sg_worker }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 9000
       port_range_max: 9999
 
@@ -145,15 +113,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: udp
-      remote_group: "{{ os_sg_master }}"
-      port_range_min: 9000
-      port_range_max: 9999
-
-  - name: 'Create master-sg rule "master ingress internal from worker (UDP)"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_master }}"
-      protocol: udp
-      remote_group: "{{ os_sg_worker }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 9000
       port_range_max: 9999
 
@@ -161,15 +121,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
-      remote_group: "{{ os_sg_master }}"
-      port_range_min: 10259
-      port_range_max: 10259
-
-  - name: 'Create master-sg rule "kube scheduler from worker"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_master }}"
-      protocol: tcp
-      remote_group: "{{ os_sg_worker }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 10259
       port_range_max: 10259
 
@@ -177,15 +129,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
-      remote_group: "{{ os_sg_master }}"
-      port_range_min: 10257
-      port_range_max: 10257
-
-  - name: 'Create master-sg rule "kube controller manager from worker"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_master }}"
-      protocol: tcp
-      remote_group: "{{ os_sg_worker }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 10257
       port_range_max: 10257
 
@@ -193,15 +137,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
-      remote_group: "{{ os_sg_master }}"
-      port_range_min: 10250
-      port_range_max: 10250
-
-  - name: 'Create master-sg rule "master ingress kubelet secure from worker"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_master }}"
-      protocol: tcp
-      remote_group: "{{ os_sg_worker }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 10250
       port_range_max: 10250
 
@@ -209,7 +145,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
-      remote_group: "{{ os_sg_master }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 2379
       port_range_max: 2380
 
@@ -217,15 +153,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
-      remote_group: "{{ os_sg_master }}"
-      port_range_min: 30000
-      port_range_max: 32767
-
-  - name: 'Create master-sg rule "master ingress services (TCP) from worker"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_master }}"
-      protocol: tcp
-      remote_group: "{{ os_sg_worker }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 30000
       port_range_max: 32767
 
@@ -233,15 +161,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: udp
-      remote_group: "{{ os_sg_master }}"
-      port_range_min: 30000
-      port_range_max: 32767
-
-  - name: 'Create master-sg rule "master ingress services (UDP) from worker"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_master }}"
-      protocol: udp
-      remote_group: "{{ os_sg_worker }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 30000
       port_range_max: 32767
 
@@ -298,15 +218,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: udp
-      remote_group: "{{ os_sg_worker }}"
-      port_range_min: 4789
-      port_range_max: 4789
-
-  - name: 'Create worker-sg rule "VXLAN from master"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_worker }}"
-      protocol: udp
-      remote_group: "{{ os_sg_master }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 4789
       port_range_max: 4789
 
@@ -314,15 +226,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: udp
-      remote_group: "{{ os_sg_worker }}"
-      port_range_min: 6081
-      port_range_max: 6081
-
-  - name: 'Create worker-sg rule "Geneve from master"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_worker }}"
-      protocol: udp
-      remote_group: "{{ os_sg_master }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 6081
       port_range_max: 6081
 
@@ -330,15 +234,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: tcp
-      remote_group: "{{ os_sg_worker }}"
-      port_range_min: 9000
-      port_range_max: 9999
-
-  - name: 'Create worker-sg rule "worker ingress internal from master (TCP)"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_worker }}"
-      protocol: tcp
-      remote_group: "{{ os_sg_master }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 9000
       port_range_max: 9999
 
@@ -346,31 +242,15 @@
     os_security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: udp
-      remote_group: "{{ os_sg_worker }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 9000
       port_range_max: 9999
 
-  - name: 'Create worker-sg rule "worker ingress internal from master (UDP)"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_worker }}"
-      protocol: udp
-      remote_group: "{{ os_sg_master }}"
-      port_range_min: 9000
-      port_range_max: 9999
-
-  - name: 'Create worker-sg rule "worker ingress kubelet secure"'
+  - name: 'Create worker-sg rule "worker ingress kubelet insecure"'
     os_security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: tcp
-      remote_group: "{{ os_sg_worker }}"
-      port_range_min: 10250
-      port_range_max: 10250
-
-  - name: 'Create worker-sg rule "worker ingress kubelet secure from master"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_worker }}"
-      protocol: tcp
-      remote_group: "{{ os_sg_master }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 10250
       port_range_max: 10250
 
@@ -378,15 +258,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: tcp
-      remote_group: "{{ os_sg_worker }}"
-      port_range_min: 30000
-      port_range_max: 32767
-
-  - name: 'Create worker-sg rule "worker ingress services (TCP) from master"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_worker }}"
-      protocol: tcp
-      remote_group: "{{ os_sg_master }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 30000
       port_range_max: 32767
 
@@ -394,15 +266,7 @@
     os_security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: udp
-      remote_group: "{{ os_sg_worker }}"
-      port_range_min: 30000
-      port_range_max: 32767
-
-  - name: 'Create worker-sg rule "worker ingress services (UDP) from master"'
-    os_security_group_rule:
-      security_group: "{{ os_sg_worker }}"
-      protocol: udp
-      remote_group: "{{ os_sg_master }}"
+      remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 30000
       port_range_max: 32767
 
