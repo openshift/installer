@@ -233,9 +233,11 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_udp" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_vrrp" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "vrrp"
+  direction = "ingress"
+  ethertype = "IPv4"
+  # Explicitly set the vrrp protocol number to prevent cases when the Neutron Plugin
+  # is disabled and it cannot identify a number by name.
+  protocol          = "112"
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
 
