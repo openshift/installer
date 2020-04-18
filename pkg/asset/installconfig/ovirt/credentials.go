@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/sirupsen/logrus"
 	"gopkg.in/AlecAivazis/survey.v1"
 )
 
@@ -25,9 +26,9 @@ func askCredentials() (Config, error) {
 	var ovirtCertTrusted bool
 	err = survey.AskOne(
 		&survey.Confirm{
-			Message: "Is the oVirt CA bundle trusted locally?",
+			Message: "Is the oVirt CA trusted locally?",
 			Default: true,
-			Help:    "In order to securly communicate with the oVirt engine, the certificate authority bundle must either be trusted by the local system or explicitly provided.",
+			Help:    "In order to securly communicate with the oVirt engine, the certificate authority must be trusted by the local system.",
 		},
 		&ovirtCertTrusted,
 		nil)
@@ -48,14 +49,16 @@ func askCredentials() (Config, error) {
 			ovirtURL.Host)
 
 		err = survey.AskOne(&survey.Multiline{
-			Message: "oVirt CA bundle",
-			Help:    fmt.Sprintf("The oVirt CA bundle can be downloaded from %s.", pemURL),
+			Message: "oVirt certificate bundle",
+			Help:    fmt.Sprintf("The oVirt certificate bundle can be downloaded from %s.", pemURL),
 		},
 			&c.CABundle,
 			survey.ComposeValidators(survey.Required))
 		if err != nil {
 			return c, err
 		}
+	} else {
+		logrus.Warning("Communication with the oVirt engine will be insecure.")
 	}
 
 	err = survey.Ask([]*survey.Question{
