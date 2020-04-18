@@ -27,7 +27,10 @@ func CloudProviderConfig(clusterName string, p *vspheretypes.Platform) (string, 
 	printIfNotEmpty(buf, "server", p.VCenter)
 	printIfNotEmpty(buf, "datacenter", p.Datacenter)
 	printIfNotEmpty(buf, "default-datastore", p.DefaultDatastore)
-	printIfNotEmpty(buf, "folder", clusterName)
+	printIfNotEmpty(buf, "folder", p.Folder)
+	if p.Folder == "" {
+		printIfNotEmpty(buf, "folder", clusterName)
+	}
 	fmt.Fprintln(buf, "")
 
 	fmt.Fprintf(buf, "[VirtualCenter %q]\n", p.VCenter)
