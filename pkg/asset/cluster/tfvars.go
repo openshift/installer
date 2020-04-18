@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"strings"
 
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
@@ -214,13 +215,22 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, m := range workers {
 			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
 		}
+		osImage := strings.SplitN(string(*rhcosImage), ",", 2)
+		osImageID := osImage[0]
+		osImageRegion := installConfig.Config.AWS.Region
+		if len(osImage) == 2 {
+			osImageRegion = osImage[1]
+		}
 		data, err := awstfvars.TFVars(awstfvars.TFVarsSources{
 			VPC:            vpc,
 			PrivateSubnets: privateSubnets,
 			PublicSubnets:  publicSubnets,
+			Services:       installConfig.Config.AWS.ServiceEndpoints,
 			Publish:        installConfig.Config.Publish,
 			MasterConfigs:  masterConfigs,
 			WorkerConfigs:  workerConfigs,
+			AMIID:          osImageID,
+			AMIRegion:      osImageRegion,
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

@@ -1,3 +1,5 @@
+//go:generate go run ami_regions_generate.go rhcos ../../data/data/rhcos-amd64.json ami_regions.go
+
 package rhcos
 
 import (

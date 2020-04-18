@@ -6,7 +6,9 @@ import (
 	"net"
 	"sort"
 
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/pkg/errors"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -37,8 +39,16 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 
 func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	if !isAWSSDKRegion(platform.Region) && platform.AMIID == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("amiID"), "AMI must be provided"))
+	}
+
 	if len(platform.Subnets) > 0 {
 		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("subnets"), platform.Subnets, networking, publish)...)
+	}
+	if err := validateServiceEndpoints(fldPath.Child("serviceEndpoints"), platform.Region, platform.ServiceEndpoints); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceEndpoints"), platform.ServiceEndpoints, err.Error()))
 	}
 	if platform.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("defaultMachinePlatform"), platform, platform.DefaultMachinePlatform)...)
@@ -164,4 +174,41 @@ func validateDuplicateSubnetZones(fldPath *field.Path, subnets map[string]Subnet
 		}
 	}
 	return allErrs
+}
+
+func validateServiceEndpoints(fldPath *field.Path, region string, services []awstypes.ServiceEndpoint) error {
+	if isAWSSDKRegion(region) {
+		return nil
+	}
+
+	resolver := newAWSResolver(region, services)
+	var errs []error
+	for _, service := range requiredServices {
+		_, err := resolver.EndpointFor(service, region, endpoints.StrictMatchingOption)
+		if err != nil {
+			errs = append(errs, errors.Wrapf(err, "failed to find endpoint for service %q", service))
+		}
+	}
+	return utilerrors.NewAggregate(errs)
+}
+
+func isAWSSDKRegion(region string) bool {
+	for _, partition := range endpoints.DefaultPartitions() {
+		for _, partitionRegion := range partition.Regions() {
+			if region == partitionRegion.ID() {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+var requiredServices = []string{
+	"ec2",
+	"elasticloadbalancing",
+	"iam",
+	"route53",
+	"s3",
+	"sts",
+	"tagging",
 }

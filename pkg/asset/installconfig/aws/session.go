@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/defaults"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
@@ -15,6 +16,7 @@ import (
 	survey "gopkg.in/AlecAivazis/survey.v1"
 	ini "gopkg.in/ini.v1"
 
+	typesaws "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/version"
 )
 
@@ -30,12 +32,41 @@ var (
 	}
 )
 
+// SessionOptions is a function that modifies the provided session.Option.
+type SessionOptions func(sess *session.Options)
+
+// WithRegion configures the session.Option to set the AWS region.
+func WithRegion(region string) SessionOptions {
+	return func(sess *session.Options) {
+		cfg := aws.NewConfig().WithRegion(region)
+		sess.Config.MergeIn(cfg)
+	}
+}
+
+// WithServiceEndpoints configures the session.Option to use provides services for AWS endpoints.
+func WithServiceEndpoints(region string, services []typesaws.ServiceEndpoint) SessionOptions {
+	return func(sess *session.Options) {
+		resolver := newAWSResolver(region, services)
+		cfg := aws.NewConfig().WithEndpointResolver(resolver)
+		sess.Config.MergeIn(cfg)
+	}
+}
+
 // GetSession returns an AWS session by checking credentials
 // and, if no creds are found, asks for them and stores them on disk in a config file
-func GetSession() (*session.Session, error) {
-	ssn := session.Must(session.NewSessionWithOptions(session.Options{
+func GetSession() (*session.Session, error) { return GetSessionWithOptions() }
+
+// GetSessionWithOptions returns an AWS session by checking credentials
+// and, if no creds are found, asks for them and stores them on disk in a config file
+func GetSessionWithOptions(optFuncs ...SessionOptions) (*session.Session, error) {
+	options := session.Options{
 		SharedConfigState: session.SharedConfigEnable,
-	}))
+	}
+	for _, optFunc := range optFuncs {
+		optFunc(&options)
+	}
+
+	ssn := session.Must(session.NewSessionWithOptions(options))
 
 	sharedCredentialsProvider := &credentials.SharedCredentialsProvider{}
 	ssn.Config.Credentials = credentials.NewChainCredentials([]credentials.Provider{
@@ -139,4 +170,69 @@ func getCredentials() error {
 	}
 
 	return os.Rename(tempPath, path)
+}
+
+type awsResolver struct {
+	region   string
+	services map[string]typesaws.ServiceEndpoint
+
+	// this is a list of known default endpoints for specific regions that would
+	// otherwise require user to set the service overrides.
+	// it's a map of region => service => resolved endpoint
+	// this is only used when the user hasn't specified a override for the service in that region.
+	defaultEndpoints map[string]map[string]endpoints.ResolvedEndpoint
+}
+
+func newAWSResolver(region string, services []typesaws.ServiceEndpoint) *awsResolver {
+	resolver := &awsResolver{
+		region:           region,
+		services:         make(map[string]typesaws.ServiceEndpoint),
+		defaultEndpoints: defaultEndpoints(),
+	}
+	for _, service := range services {
+		service := service
+		resolver.services[resolverKey(service.Name)] = service
+	}
+	return resolver
+}
+
+func (ar *awsResolver) EndpointFor(service, region string, optFns ...func(*endpoints.Options)) (endpoints.ResolvedEndpoint, error) {
+	if s, ok := ar.services[resolverKey(service)]; ok {
+		logrus.Debugf("resolved AWS service %s (%s) to %q", service, region, s.URL)
+		return endpoints.ResolvedEndpoint{
+			URL:           s.URL,
+			SigningRegion: ar.region,
+		}, nil
+	}
+	if rv, ok := ar.defaultEndpoints[region]; ok {
+		if v, ok := rv[service]; ok {
+			return v, nil
+		}
+	}
+	return endpoints.DefaultResolver().EndpointFor(service, region, optFns...)
+}
+
+func resolverKey(service string) string {
+	return service
+}
+
+// this is a list of known default endpoints for specific regions that would
+// otherwise require user to set the service overrides.
+// it's a map of region => service => resolved endpoint
+// this is only used when the user hasn't specified a override for the service in that region.
+func defaultEndpoints() map[string]map[string]endpoints.ResolvedEndpoint {
+	return map[string]map[string]endpoints.ResolvedEndpoint{
+		endpoints.CnNorth1RegionID: {
+			"route53": {
+				URL:           "https://route53.amazonaws.com.cn",
+				SigningRegion: endpoints.CnNorthwest1RegionID,
+			},
+		},
+		endpoints.CnNorthwest1RegionID: {
+			"route53": {
+				URL:           "https://route53.amazonaws.com.cn",
+				SigningRegion: endpoints.CnNorthwest1RegionID,
+			},
+		},
+	}
 }

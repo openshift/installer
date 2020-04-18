@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	baremetalapi "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis"
@@ -195,7 +196,14 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 
 			mpool := defaultAWSMachinePoolPlatform()
-			mpool.AMIID = string(*rhcosImage)
+
+			osImage := strings.SplitN(string(*rhcosImage), ",", 2)
+			osImageID := osImage[0]
+			if len(osImage) == 2 {
+				osImageID = "" // the AMI will be generated later on
+			}
+			mpool.AMIID = osImageID
+
 			mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.AWS)
 			if len(mpool.Zones) == 0 {

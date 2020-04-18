@@ -10,15 +10,22 @@ locals {
 provider "aws" {
   region = var.aws_region
 
-  # Validation of AWS Bahrain region was added in AWS TF provider v2.22
-  # so we skip when installing in me-south-1.
-  skip_region_validation = var.aws_region == "me-south-1"
+  skip_region_validation = var.aws_skip_region_validation
+
+  endpoints {
+    ec2     = lookup(var.custom_endpoints, "ec2", null)
+    elb     = lookup(var.custom_endpoints, "elasticloadbalancing", null)
+    iam     = lookup(var.custom_endpoints, "iam", null)
+    route53 = lookup(var.custom_endpoints, "route53", null)
+    s3      = lookup(var.custom_endpoints, "s3", null)
+    sts     = lookup(var.custom_endpoints, "sts", null)
+  }
 }
 
 module "bootstrap" {
   source = "./bootstrap"
 
-  ami                      = var.aws_ami
+  ami                      = var.aws_region == var.aws_ami_region ? var.aws_ami : aws_ami_copy.imported[0].id
   instance_type            = var.aws_bootstrap_instance_type
   cluster_id               = var.cluster_id
   ignition                 = var.ignition_bootstrap
@@ -53,7 +60,7 @@ module "masters" {
   root_volume_kms_key_id   = var.aws_master_root_volume_kms_key_id
   target_group_arns        = module.vpc.aws_lb_target_group_arns
   target_group_arns_length = module.vpc.aws_lb_target_group_arns_length
-  ec2_ami                  = var.aws_ami
+  ec2_ami                  = var.aws_region == var.aws_ami_region ? var.aws_ami : aws_ami_copy.imported[0].id
   user_data_ign            = var.ignition_master
   publish_strategy         = var.aws_publish_strategy
 }
@@ -100,5 +107,22 @@ module "vpc" {
   )
 
   tags = local.tags
+}
+
+resource "aws_ami_copy" "imported" {
+  count             = var.aws_region != var.aws_ami_region ? 1 : 0
+  name              = "${var.cluster_id}-master"
+  source_ami_id     = var.aws_ami
+  source_ami_region = var.aws_ami_region
+  encrypted         = true
+
+  tags = merge(
+    {
+      "Name"         = "${var.cluster_id}-ami-${var.aws_region}"
+      "sourceAMI"    = var.aws_ami
+      "sourceRegion" = var.aws_ami_region
+    },
+    local.tags,
+  )
 }
 

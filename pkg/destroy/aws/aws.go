@@ -74,15 +74,18 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	for _, filter := range metadata.ClusterPlatformMetadata.AWS.Identifier {
 		filters = append(filters, filter)
 	}
-
-	session, err := awssession.GetSession()
+	region := metadata.ClusterPlatformMetadata.AWS.Region
+	session, err := awssession.GetSessionWithOptions(
+		awssession.WithRegion(region),
+		awssession.WithServiceEndpoints(region, metadata.ClusterPlatformMetadata.AWS.ServiceEndpoints),
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ClusterUninstaller{
 		Filters:   filters,
-		Region:    metadata.ClusterPlatformMetadata.AWS.Region,
+		Region:    region,
 		Logger:    logger,
 		ClusterID: metadata.InfraID,
 		Session:   session,
@@ -103,16 +106,13 @@ func (o *ClusterUninstaller) Run() error {
 		return err
 	}
 
-	awsConfig := &aws.Config{Region: aws.String(o.Region)}
 	awsSession := o.Session
 	if awsSession == nil {
 		// Relying on appropriate AWS ENV vars (eg AWS_PROFILE, AWS_ACCESS_KEY_ID, etc)
-		awsSession, err = session.NewSession(awsConfig)
+		awsSession, err = session.NewSession(aws.NewConfig().WithRegion(o.Region))
 		if err != nil {
 			return err
 		}
-	} else {
-		awsSession = awsSession.Copy(awsConfig)
 	}
 	awsSession.Handlers.Build.PushBackNamed(request.NamedHandler{
 		Name: "openshiftInstaller.OpenshiftInstallerUserAgentHandler",
@@ -125,12 +125,21 @@ func (o *ClusterUninstaller) Run() error {
 	tagClientNames := map[*resourcegroupstaggingapi.ResourceGroupsTaggingAPI]string{
 		tagClients[0]: o.Region,
 	}
-	if o.Region != "us-east-1" {
-		tagClient := resourcegroupstaggingapi.New(
-			awsSession, aws.NewConfig().WithRegion("us-east-1"),
-		)
-		tagClients = append(tagClients, tagClient)
-		tagClientNames[tagClient] = "us-east-1"
+
+	switch o.Region {
+	case endpoints.CnNorth1RegionID, endpoints.CnNorthwest1RegionID:
+		if o.Region != endpoints.CnNorthwest1RegionID {
+			tagClient := resourcegroupstaggingapi.New(awsSession, aws.NewConfig().WithRegion(endpoints.CnNorthwest1RegionID))
+			tagClients = append(tagClients, tagClient)
+			tagClientNames[tagClient] = endpoints.CnNorthwest1RegionID
+		}
+
+	default:
+		if o.Region != endpoints.UsEast1RegionID {
+			tagClient := resourcegroupstaggingapi.New(awsSession, aws.NewConfig().WithRegion(endpoints.UsEast1RegionID))
+			tagClients = append(tagClients, tagClient)
+			tagClientNames[tagClient] = endpoints.UsEast1RegionID
+		}
 	}
 
 	iamClient := iam.New(awsSession)
