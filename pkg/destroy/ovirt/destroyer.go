@@ -33,27 +33,31 @@ func (uninstaller *ClusterUninstaller) Run() error {
 	}
 	defer con.Close()
 
-	err = uninstaller.removeVms(con)
-	uninstaller.Logger.Errorf("Removing VMs - error: %s", err)
-	err = uninstaller.removeTag(con)
-	uninstaller.Logger.Errorf("Removing Tag - error: %s", err)
-	err = uninstaller.removeTemplate(con)
-	uninstaller.Logger.Errorf("Removing Template - error: %s", err)
+	if err := uninstaller.removeVMs(con); err != nil {
+		uninstaller.Logger.Errorf("Failed to remove VMs: %s", err)
+	}
+	if err := uninstaller.removeTag(con); err != nil {
+		uninstaller.Logger.Errorf("Failed to remove tag: %s", err)
+	}
+	if err := uninstaller.removeTemplate(con); err != nil {
+		uninstaller.Logger.Errorf("Failed to remove template: %s", err)
+	}
+
 	return nil
 }
 
-func (uninstaller *ClusterUninstaller) removeVms(con *ovirtsdk.Connection) error {
+func (uninstaller *ClusterUninstaller) removeVMs(con *ovirtsdk.Connection) error {
 	// - find all vms by tag name=infraID
 	vmsService := con.SystemService().VmsService()
 	searchTerm := fmt.Sprintf("tag=%s", uninstaller.Metadata.InfraID)
-	uninstaller.Logger.Infof("searching VMs by %s", searchTerm)
+	uninstaller.Logger.Debugf("Searching VMs by %s", searchTerm)
 	vmsResponse, err := vmsService.List().Search(searchTerm).Send()
 	if err != nil {
 		return err
 	}
 	// - stop + delete VMS
 	vms := vmsResponse.MustVms().Slice()
-	uninstaller.Logger.Infof("Found %s VMs", len(vms))
+	uninstaller.Logger.Debugf("Found %d VMs", len(vms))
 	wg := sync.WaitGroup{}
 	wg.Add(len(vms))
 	for _, vm := range vms {
@@ -77,10 +81,9 @@ func (uninstaller *ClusterUninstaller) removeTag(con *ovirtsdk.Connection) error
 	if tagsServiceListResponse != nil {
 		for _, t := range tagsServiceListResponse.MustTags().Slice() {
 			if t.MustName() == uninstaller.Metadata.InfraID {
+				uninstaller.Logger.Infof("Removing tag %s", t.MustName())
 				_, err := tagsService.TagService(t.MustId()).Remove().Send()
-				uninstaller.Logger.Infof("Removing tag %s : %s", t.MustName(), "errors: %s", err)
 				if err != nil {
-					uninstaller.Logger.Debugf("Failed removing tag %s : %s", t.MustName(), err)
 					return err
 				}
 			}
@@ -93,23 +96,27 @@ func (uninstaller *ClusterUninstaller) stopVM(vmsService *ovirtsdk.VmsService, v
 	vmService := vmsService.VmService(vm.MustId())
 	// this is a teardown, stopping instead of shutting down.
 	_, err := vmService.Stop().Send()
-	uninstaller.Logger.Infof("Stopping VM %s : %s", vm.MustName(), "errors: %s", err)
-	if err != nil {
-		uninstaller.Logger.Debugf("Failed stopping VM %s : %s", vm.MustName(), err)
+	if err == nil {
+		uninstaller.Logger.Infof("Stopping VM %s", vm.MustName())
+	} else {
+		uninstaller.Logger.Errorf("Failed to stop VM %s: %s", vm.MustName(), err)
 	}
 	waitForDownDuration := time.Minute * 10
 	err = vmService.Connection().WaitForVM(vm.MustId(), ovirtsdk.VMSTATUS_DOWN, waitForDownDuration)
-	if err != nil {
-		uninstaller.Logger.Warnf("Waiting %d for VM %s to power-off", waitForDownDuration, vm.MustName())
+	if err == nil {
+		uninstaller.Logger.Infof("VM %s powered off", vm.MustName())
+	} else {
+		uninstaller.Logger.Warnf("Waited %d for VM %s to power off: %s", waitForDownDuration, vm.MustName(), err)
 	}
 }
 
 func (uninstaller *ClusterUninstaller) removeVM(vmsService *ovirtsdk.VmsService, vm *ovirtsdk.Vm) {
 	vmService := vmsService.VmService(vm.MustId())
 	_, err := vmService.Remove().Send()
-	uninstaller.Logger.Infof("Removing VM %s : %s", vm.MustName(), "errors: %s", err)
-	if err != nil {
-		uninstaller.Logger.Debugf("Failed removing VM %s : %s", vm.MustName(), err)
+	if err == nil {
+		uninstaller.Logger.Infof("Removing VM %s", vm.MustName())
+	} else {
+		uninstaller.Logger.Errorf("Failed to remove VM %s: %s", vm.MustName(), err)
 	}
 }
 
@@ -118,8 +125,7 @@ func (uninstaller *ClusterUninstaller) removeTemplate(con *ovirtsdk.Connection) 
 		search, err := con.SystemService().TemplatesService().
 			List().Search(fmt.Sprintf("name=%s", uninstaller.Metadata.InfraID)).Send()
 		if err != nil {
-			uninstaller.Logger.Errorf("Couldn't find a template with name %s", uninstaller.Metadata.InfraID)
-			return nil
+			return fmt.Errorf("couldn't find a template with name %s", uninstaller.Metadata.InfraID)
 		}
 		if result, ok := search.Templates(); ok {
 			// the results can potentially return a list of template
@@ -129,7 +135,6 @@ func (uninstaller *ClusterUninstaller) removeTemplate(con *ovirtsdk.Connection) 
 				service := con.SystemService().TemplatesService().TemplateService(tmp.MustId())
 				_, err := service.Remove().Send()
 				if err != nil {
-					uninstaller.Logger.Errorf("Failed to remove Template %s %s", tmp.MustName(), tmp.MustId())
 					return err
 				}
 			}

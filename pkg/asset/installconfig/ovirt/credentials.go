@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/sirupsen/logrus"
 	"gopkg.in/AlecAivazis/survey.v1"
 )
 
@@ -12,8 +13,8 @@ func askCredentials() (Config, error) {
 	err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
-				Message: "Enter oVirt's api endpoint URL",
-				Help:    "oVirt engine api url, for example https://ovirt-engine-fqdn/ovirt-engine/api",
+				Message: "oVirt API endpoint URL",
+				Help:    "The URL of the oVirt engine API. For example, https://ovirt-engine-fqdn/ovirt-engine/api.",
 			},
 			Validate: survey.ComposeValidators(survey.Required),
 		},
@@ -25,9 +26,9 @@ func askCredentials() (Config, error) {
 	var ovirtCertTrusted bool
 	err = survey.AskOne(
 		&survey.Confirm{
-			Message: "Is the installed oVirt certificate trusted?",
+			Message: "Is the oVirt CA trusted locally?",
 			Default: true,
-			Help:    "",
+			Help:    "In order to securly communicate with the oVirt engine, the certificate authority must be trusted by the local system.",
 		},
 		&ovirtCertTrusted,
 		nil)
@@ -48,21 +49,23 @@ func askCredentials() (Config, error) {
 			ovirtURL.Host)
 
 		err = survey.AskOne(&survey.Multiline{
-			Message: "Enter oVirt's CA bundle",
-			Help:    "Obtain oVirt CA bundle from " + pemURL,
+			Message: "oVirt certificate bundle",
+			Help:    fmt.Sprintf("The oVirt certificate bundle can be downloaded from %s.", pemURL),
 		},
 			&c.CABundle,
 			survey.ComposeValidators(survey.Required))
 		if err != nil {
 			return c, err
 		}
+	} else {
+		logrus.Warning("Communication with the oVirt engine will be insecure.")
 	}
 
 	err = survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
-				Message: "Enter ovirt-engine username",
-				Help:    "The user must have permissions to create VMs and disks on the Storage Domain with the same name as the OpenShift cluster",
+				Message: "oVirt engine username",
+				Help:    "The user must have permissions to create VMs and disks on the Storage Domain with the same name as the OpenShift cluster.",
 				Default: "admin@internal",
 			},
 			Validate: survey.ComposeValidators(survey.Required),
@@ -75,7 +78,7 @@ func askCredentials() (Config, error) {
 	err = survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Password{
-				Message: "Enter password",
+				Message: "oVirt engine password",
 				Help:    "",
 			},
 			Validate: survey.ComposeValidators(survey.Required, authenticated(&c)),
