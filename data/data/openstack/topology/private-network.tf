@@ -14,7 +14,7 @@ resource "openstack_networking_network_v2" "openshift-private" {
   count          = var.machines_subnet_id == "" ? 1 : 0
   name           = "${var.cluster_id}-openshift"
   admin_state_up = "true"
-  tags           = ["openshiftClusterID=${var.cluster_id}"]
+  tags           = ["openshiftClusterID=${var.cluster_id}", "${var.cluster_id}-primaryClusterNetwork"]
 }
 
 resource "openstack_networking_subnet_v2" "nodes" {

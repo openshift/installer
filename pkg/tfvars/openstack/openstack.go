@@ -11,6 +11,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/rhcos"
@@ -152,6 +153,15 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		if err != nil {
 			return nil, err
 		}
+
+		// Make sure that the network has the primary cluster network tag.
+		// In the case of multiple networks this tag is required for
+		// cluster-api-provider-openstack to define which ip address to set as
+		// the primary one.
+		err = setNetworkTag(cloud, cfg.MachinesNetwork, infraID+"-primaryClusterNetwork")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
@@ -264,4 +274,23 @@ func getNetworkFromSubnet(cloud string, subnetID string) (string, error) {
 	}
 
 	return subnet.NetworkID, nil
+}
+
+// setNetworkTag sets a tag for the network
+func setNetworkTag(cloud string, networkID string, networkTag string) error {
+	opts := &clientconfig.ClientOpts{
+		Cloud: cloud,
+	}
+
+	networkClient, err := clientconfig.NewServiceClient("network", opts)
+	if err != nil {
+		return err
+	}
+
+	err = attributestags.Add(networkClient, "networks", networkID, networkTag).ExtractErr()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
