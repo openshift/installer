@@ -2,6 +2,12 @@
 
 This brief guide will demonstrate how to use the UPI installer to install OCP 4.X in Azure Government
 
+## Notice of supportability
+
+CloudFit Software, partnering with Microsoft and Red Hat are actively working towards support exceptions that will cover OCP 4.3 implementations running on Azure Government implementations.  This information will be published and updated periodically.
+Until there is a support excpetion Red Hat recommends that this only be used in proof of concept (POC) environments, and does not recommend this for production use cases as it will not be supported.
+
+
 ## Install Procedures
 
 ### Prerequisites
@@ -16,23 +22,27 @@ Applications in your $PATH
 
 Azure Access
 - Contributor access to an existing azure government subscription
+- Ability to create the following resource types
+  - Disk
+  - DNS Zone
+  - Image
+  - Load Balancer
+  - Managed Identity
+  - Network Interface
+    - With a public ip binding (this will be resolved in a later release)
+  - Network Security Group
+  - Private DNS Zone
+  - Public IP address
+  - Storage Account
+  - Virtual Machine
+  - Virtual Network
 
 Azure Rquirements
 - Public DNS zone available in azure government
 
 ### Create Install Config
 
-Run openshift install with the azure government override to create initial cluster config
-```shell
-export AZURE_ENVIRONMENT="AZUREUSGOVERNMENTCLOUD"
-openshift-install create install-config
-```
-
-Input valid azure government information.
-
-#### Create install config without installer
-
-If you don't have the ability to run the create-install config command here is a sample of the install config
+Here is a sample install config, create a install-config.yaml file in an empty folder with this template to get started.
 
 ```yaml
 #install-config.yaml
