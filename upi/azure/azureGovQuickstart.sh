@@ -1,5 +1,34 @@
 #!/bin/bash
 
+function try()
+{
+    [[ $- = *e* ]]; SAVED_OPT_E=$?
+    set +e
+}
+
+function throw()
+{   
+    echo $1 
+    exit 1
+}
+
+function catch()
+{
+    export ex_code=$?
+    (( $SAVED_OPT_E )) && set +e
+    return $ex_code
+}
+
+function throwErrors()
+{
+    set -e
+}
+
+function ignoreErrors()
+{
+    set +e
+}
+
 while test $# -gt 0; do
   case "$1" in
     -h|--help)
@@ -29,37 +58,9 @@ while test $# -gt 0; do
   esac
 done
 
-function try()
-{
-    [[ $- = *e* ]]; SAVED_OPT_E=$?
-    set +e
-}
-
-function throw()
-{    
-    exit $1
-}
-
-function catch()
-{
-    export ex_code=$?
-    (( $SAVED_OPT_E )) && set +e
-    return $ex_code
-}
-
-function throwErrors()
-{
-    set -e
-}
-
-function ignoreErrors()
-{
-    set +e
-}
-
 
 echo "Making sure all the correct applications are in your path"
-echo "checking azcli"
+echo "checking az cli"
 az version -o table &>/dev/null || throw "Az cli is not installed, please install. https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest"
 echo "checking jq"
 jq --version &>/dev/null || throw "jq is not installed, please install. https://stedolan.github.io/jq/download/"
