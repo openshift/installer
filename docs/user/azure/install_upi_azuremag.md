@@ -7,7 +7,6 @@ This brief guide will demonstrate how to use the UPI installer to install OCP 4.
 CloudFit Software, partnering with Microsoft and Red Hat are actively working towards support exceptions that will cover OCP 4.3 implementations running on Azure Government implementations.  This information will be published and updated periodically.
 Until there is a support excpetion Red Hat recommends that this only be used in proof of concept (POC) environments, and does not recommend this for production use cases as it will not be supported.
 
-
 ## Install Procedures
 
 ### Prerequisites
