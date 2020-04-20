@@ -15,9 +15,26 @@ import (
 func Validate(client API, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 
+	allErrs = append(allErrs, validateProject(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateNetworks(client, ic, field.NewPath("platform").Child("gcp"))...)
 
 	return allErrs.ToAggregate()
+}
+
+func validateProject(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if ic.GCP.ProjectID != "" {
+		projects, err := client.GetProjects(context.TODO())
+		if err != nil {
+			return append(allErrs, field.InternalError(fieldPath.Child("project"), err))
+		}
+		if _, found := projects[ic.GCP.ProjectID]; !found {
+			return append(allErrs, field.Invalid(fieldPath.Child("project"), ic.GCP.ProjectID, "invalid project ID"))
+		}
+	}
+
+	return allErrs
 }
 
 // validateNetworks checks that the user-provided VPC is in the project and the provided subnets are valid.
