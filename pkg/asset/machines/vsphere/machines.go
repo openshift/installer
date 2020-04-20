@@ -83,7 +83,7 @@ func provider(clusterID string, platform *vsphere.Platform, mpool *vsphere.Machi
 			Server:     platform.VCenter,
 			Datacenter: platform.Datacenter,
 			Datastore:  platform.DefaultDatastore,
-			Folder:     clusterID,
+			Folder:     platform.Folder,
 		},
 		NumCPUs:           mpool.NumCPUs,
 		NumCoresPerSocket: mpool.NumCoresPerSocket,
