@@ -43,4 +43,10 @@ type Platform struct {
 	// for cluster nodes or an existing Glance image name.
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
+
+	// MachinesSubnet is the UUIDv4 of an openstack subnet. This subnet will be used by all nodes created by the installer.
+	// By setting this, the installer will no longer create a network and subnet.
+	// The subnet and network specified in MachinesSubnet will not be deleted or modified by the installer.
+	// +optional
+	MachinesSubnet string `json:"machinesSubnet,omitempty"`
 }

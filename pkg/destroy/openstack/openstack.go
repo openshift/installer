@@ -14,6 +14,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/apiversions"
 	"github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/loadbalancers"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/routers"
 	sg "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/groups"
@@ -25,6 +26,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects"
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -59,15 +61,18 @@ type ClusterUninstaller struct {
 	Cloud string
 	// Filter contains the openshiftClusterID to filter tags
 	Filter Filter
-	Logger logrus.FieldLogger
+	// InfraID contains unique cluster identifier
+	InfraID string
+	Logger  logrus.FieldLogger
 }
 
 // New returns an OpenStack destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	return &ClusterUninstaller{
-		Cloud:  metadata.ClusterPlatformMetadata.OpenStack.Cloud,
-		Filter: metadata.ClusterPlatformMetadata.OpenStack.Identifier,
-		Logger: logger,
+		Cloud:   metadata.ClusterPlatformMetadata.OpenStack.Cloud,
+		Filter:  metadata.ClusterPlatformMetadata.OpenStack.Identifier,
+		InfraID: metadata.InfraID,
+		Logger:  logger,
 	}, nil
 }
 
@@ -92,6 +97,12 @@ func (o *ClusterUninstaller) Run() error {
 		case res := <-returnChannel:
 			o.Logger.Debugf("goroutine %v complete", res)
 		}
+	}
+
+	// we need to untag the custom network if it was provided by the user
+	err := untagRunner(opts, o.InfraID, o.Logger)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -935,5 +946,70 @@ func deleteImages(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 			return false, nil
 		}
 	}
+	return true, nil
+}
+
+func untagRunner(opts *clientconfig.ClientOpts, infraID string, logger logrus.FieldLogger) error {
+	backoffSettings := wait.Backoff{
+		Duration: time.Second * 10,
+		Steps:    25,
+	}
+
+	err := wait.ExponentialBackoff(backoffSettings, func() (bool, error) {
+		return untagPrimaryNetwork(opts, infraID, logger)
+	})
+	if err != nil {
+		if err == wait.ErrWaitTimeout {
+			return err
+		}
+		return errors.Errorf("Unrecoverable error: %v", err)
+	}
+
+	return nil
+}
+
+// untagNetwork removes the tag from the primary cluster network based on unfra id
+func untagPrimaryNetwork(opts *clientconfig.ClientOpts, infraID string, logger logrus.FieldLogger) (bool, error) {
+	networkTag := infraID + "-primaryClusterNetwork"
+
+	logger.Debugf("Removing tag %v from openstack networks", networkTag)
+	defer logger.Debug("Exiting untagging openstack networks")
+
+	conn, err := clientconfig.NewServiceClient("network", opts)
+	if err != nil {
+		logger.Debug(err)
+		return false, nil
+	}
+
+	listOpts := networks.ListOpts{
+		Tags: networkTag,
+	}
+
+	allPages, err := networks.List(conn, listOpts).AllPages()
+	if err != nil {
+		logger.Debug(err)
+		return false, nil
+	}
+
+	allNetworks, err := networks.ExtractNetworks(allPages)
+	if err != nil {
+		logger.Debug(err)
+		return false, nil
+	}
+
+	if len(allNetworks) > 1 {
+		return false, errors.Errorf("More than one network with tag %v", networkTag)
+	}
+
+	if len(allNetworks) == 0 {
+		// The network has already been deleted.
+		return true, nil
+	}
+
+	err = attributestags.Delete(conn, "networks", allNetworks[0].ID, networkTag).ExtractErr()
+	if err != nil {
+		return false, nil
+	}
+
 	return true, nil
 }
