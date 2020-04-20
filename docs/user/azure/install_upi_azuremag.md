@@ -179,11 +179,3 @@ provisioner: kubernetes.io/azure-disk
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
 ```
-
-## Supported Azure Environment Overrides
-
-|Azure Environment 	| AZURE_ENVIRONMENT Override Text |
-|------------------	|-------------------------------	|
-| USGovernmentCloud	| AZUREUSGOVERNMENTCLOUD 	        |
-| GermanCloud      	| AZUREGERMANCLOUD       	        |
-| ChinaCloud       	| AZURECHINACLOUD        	        |
