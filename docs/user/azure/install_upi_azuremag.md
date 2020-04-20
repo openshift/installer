@@ -50,7 +50,7 @@ controlPlane:
   replicas: 3
 metadata:
   creationTimestamp: null
-  name: upitest0416
+  name: <YOUR_CLUSTER_NAME>
 networking:
   clusterNetwork:
   - cidr: 10.128.0.0/14
