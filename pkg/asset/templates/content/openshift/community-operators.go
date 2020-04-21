@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	communityOperatorsFilename = "community-operators.yaml"
+	communityOperatorsFilename               = "community-operators.yaml"
+	upstreamCommunityOperatorsSourceFilename = "upstream-community-operators.yaml"
 )
 
 var _ asset.WritableAsset = (*CommunityOperators)(nil)
@@ -39,6 +40,14 @@ func (t *CommunityOperators) Generate(parents asset.Parents) error {
 		Filename: filepath.Join(content.TemplateDir, communityOperatorsFilename),
 		Data:     []byte(data),
 	})
+	data, err = content.GetOpenshiftTemplate(upstreamCommunityOperatorsSourceFilename)
+	if err != nil {
+		return err
+	}
+	t.FileList = append(t.FileList, &asset.File{
+		Filename: filepath.Join(content.TemplateDir, upstreamCommunityOperatorsSourceFilename),
+		Data:     []byte(data),
+	})
 	return nil
 }
 
@@ -50,6 +59,15 @@ func (t *CommunityOperators) Files() []*asset.File {
 // Load returns the asset from disk.
 func (t *CommunityOperators) Load(f asset.FileFetcher) (bool, error) {
 	file, err := f.FetchByName(filepath.Join(content.TemplateDir, communityOperatorsFilename))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	t.FileList = append(t.FileList, file)
+
+	file, err = f.FetchByName(filepath.Join(content.TemplateDir, upstreamCommunityOperatorsSourceFilename))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false, nil

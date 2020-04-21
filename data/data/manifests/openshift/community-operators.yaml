@@ -8,5 +8,9 @@ spec:
     {
       name: "community-operators",
       disabled: false,
+    },
+    {
+      name: "upstream-community-operators",
+      disabled: false,
     }
   ]
