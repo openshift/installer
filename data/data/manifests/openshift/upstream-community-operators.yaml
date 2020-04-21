@@ -1,0 +1,16 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorSource
+metadata:
+  name: upstream-community-operators
+  namespace: openshift-marketplace
+  finalizers:
+  - finalizer.operatorsources.operators.coreos.com
+  labels:
+    opsrc-provider: upstream-community
+spec:
+  authorizationToken: {}
+  displayName: Upstream Community Operators
+  endpoint: 'https://quay.io/cnr'
+  publisher: Red Hat
+  registryNamespace: upstream-community-operators
+  type: appregistry
