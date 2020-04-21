@@ -153,7 +153,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 			c.Platform.OpenStack.AciNetExt.ServiceVLAN = strconv.Itoa(config.ServiceVLAN)
 
                         // Validate against values from install config
-			machineCIDR := c.Networking.DeprecatedMachineCIDR
+			machineCIDR := &c.Networking.MachineNetwork[0].CIDR
 			clusterNetworkCIDR := &c.Networking.ClusterNetwork[0].CIDR
 			nodeDiff := DiffSubnets(config.NodeSubnet, machineCIDR)
                         if nodeDiff != nil {

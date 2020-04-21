@@ -1,26 +1,59 @@
 package ignition
 
 import (
-        "text/template"
-	"net"
-        "bytes"
+	"encoding/base64"
+	"strings"
+	"testing"
 
-	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/coreos/ignition/config/util"
-        "github.com/pkg/errors"
-
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
-	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/stretchr/testify/assert"
 )
 
-// This creates a script which would create a node network interface with IP address with the same last 4 bits as the ens3.4094 interface IP
+func CheckIgnitionFiles(t *testing.T, ignConfig *igntypes.Config) {
 
-var networkScriptTmpl = template.Must(template.New("user-data").Parse(`#!/bin/bash
+	actualStringList := [6]string{ GetActualKubeApiInterfaceStr(),
+				GetActualIfcfgEns34094Str(),
+				GetActualIfcfgOpflexConnStr(),
+				GetActualIfcfgUplinkConnStr(),
+				GetActualRouteOpflexConnStr(),
+				GetActualRouteEns34094Str() }
+
+	for i := 0; i < 6; i++ {
+		expected := ignConfig.Storage.Files[i].FileEmbedded1.Contents.Source
+		actualStr := actualStringList[i]
+		compareScripts(t, expected, actualStr)
+	}
+
+}
+
+func compareScripts(t *testing.T, expected string, actualStr string) {
+        expectedSplit := strings.Split(expected, ",")[1]
+        expectedDecoded, _ := base64.StdEncoding.DecodeString(expectedSplit)
+        expectedStr := string(expectedDecoded)
+        assert.Equal(t, expectedStr, actualStr, "unexpected ignition file")
+}
+
+func CheckSystemdUnitFiles(t *testing.T, actualUnits []igntypes.Unit) {
+
+	expectedUnitData := [3]igntypes.Unit{GetNodeInterfaceService(),
+					GetMachineConfigDaemonForcePath(),
+					GetMachineConfigDaemonService()}
+					
+        for i, u := range actualUnits {
+		assert.Equal(t, u, expectedUnitData[i], "unexpected " + expectedUnitData[i].Name)
+        }
+
+}
+
+func GetActualKubeApiInterfaceStr() string {
+
+	actualKubeApiInterfaceStr := `#!/bin/bash
 
 # These are rendered through Go
-KUBE_API_VLAN={{.vlan}}
-DEFAULT_GATEWAY={{.defGateway}}
-MTU_VALUE={{.mtu}}
+KUBE_API_VLAN=1021
+DEFAULT_GATEWAY=1.2.3.1
+MTU_VALUE=1600
 
 IFC_4094=ens3.4094
 KUBE_API_VLAN_DEVICE="ens3.${KUBE_API_VLAN}"
@@ -110,44 +143,16 @@ systemctl restart NetworkManager
 # Add iptable rule to accept igmp
 iptables -I INPUT 1 -j ACCEPT -p igmp
 
-`))
-
-func NetworkScript(vlan string, defGateway string, mtu string) ([]byte, error) {
-        buf := &bytes.Buffer{}
-        data := map[string]string{
-		"vlan":          vlan,
-                "defGateway":    defGateway,
-                "mtu":           mtu,
-	}
-	if err := networkScriptTmpl.Execute(buf, data); err != nil {
-		return nil, errors.Wrap(err, "failed to execute user-data template")
-	}
-        return buf.Bytes(), nil
+`
+	return actualKubeApiInterfaceStr
 }
 
-func IgnitionFiles(installConfig *installconfig.InstallConfig) []igntypes.File {
-	if installConfig.Config.Networking.NetworkType != "CiscoAci" {
-		return nil
-	}
-        machineCIDR := &installConfig.Config.Networking.MachineNetwork[0].CIDR.IPNet
-        defaultGateway, _ := cidr.Host(machineCIDR, 1)
-        kube_api_vlan := installConfig.Config.Platform.OpenStack.AciNetExt.KubeApiVLAN
-        infra_vlan := installConfig.Config.Platform.OpenStack.AciNetExt.InfraVLAN
-        mtu_value := installConfig.Config.Platform.OpenStack.AciNetExt.Mtu
-        networkScriptString, _ := NetworkScript(kube_api_vlan, defaultGateway.String(), mtu_value)
+func GetActualIfcfgEns34094Str() string {
 
-        neutronCIDR := &installConfig.Config.Platform.OpenStack.AciNetExt.NeutronCIDR.IPNet
-        defaultNeutronGateway, _ := cidr.Host(neutronCIDR, 1)
-        defaultNeutronGatewayStr := defaultNeutronGateway.String()
-
-        installerHostSubnet := installConfig.Config.Platform.OpenStack.AciNetExt.InstallerHostSubnet
-        installerHostIP, installerHostNet, _ := net.ParseCIDR(installerHostSubnet)
-        installerNetmask := net.IP(installerHostNet.Mask)
-	
-	ifcfg_ens3_string := `DEVICE=ens3.4094
+	actualIfcfgEns34094Str := `DEVICE=ens3.4094
                ONBOOT=yes
                BOOTPROTO=dhcp
-               MTU=` + mtu_value + `
+               MTU=1600
                TYPE=Vlan
                VLAN=yes
                PHYSDEV=ens3
@@ -161,10 +166,15 @@ func IgnitionFiles(installConfig *installconfig.InstallConfig) []igntypes.File {
                IPV4_FAILURE_FATAL=no
                IPV6INIT=no`
 
-        ifcfg_opflex_conn_string := `VLAN=yes
+	return actualIfcfgEns34094Str
+}
+
+func GetActualIfcfgOpflexConnStr() string {
+
+	actualIfcfgOpflexConnStr := `VLAN=yes
                TYPE=Vlan
                PHYSDEV=ens3
-               VLAN_ID=` + infra_vlan + `
+               VLAN_ID=4094
                REORDER_HDR=yes
                GVRP=no
                MVRP=no
@@ -175,11 +185,16 @@ func IgnitionFiles(installConfig *installconfig.InstallConfig) []igntypes.File {
                IPV4_FAILURE_FATAL=no
                IPV6INIT=no
                NAME=opflex-conn
-               DEVICE=ens3.`+ infra_vlan +`
+               DEVICE=ens3.4094
                ONBOOT=yes
-               MTU=` + mtu_value
+               MTU=1600`
 
-        ifcfg_uplink_conn_string := `TYPE=Ethernet
+	return actualIfcfgOpflexConnStr
+}
+
+func GetActualIfcfgUplinkConnStr() string { 
+
+        actualIfcfgUplinkConnStr := `TYPE=Ethernet
                PROXY_METHOD=none
                BROWSER_ONLY=no
                DEFROUTE=yes
@@ -189,35 +204,30 @@ func IgnitionFiles(installConfig *installconfig.InstallConfig) []igntypes.File {
                DEVICE=ens3
                ONBOOT=yes
                BOOTPROTO=none
-               MTU=` + mtu_value
+               MTU=1600`
 
-        route_opflex_conn_string := `ADDRESS0=224.0.0.0
-               NETMASK0=240.0.0.0
-               METRIC0=1000`
-
-        route_ens3_string := `ADDRESS0=` + installerHostIP.String() + `
-               NETMASK0=` + installerNetmask.String() + `
-               METRIC0=1000
-               GATEWAY0=` + defaultNeutronGatewayStr
-
-	var ignitionFiles []igntypes.File
-	ignitionFiles = append(ignitionFiles,
-				FileFromString("/usr/local/bin/kube-api-interface.sh", "root", 0555, string(networkScriptString)),
-				FileFromString("/etc/sysconfig/network-scripts/ifcfg-ens3.4094", "root", 0420, ifcfg_ens3_string),
-				FileFromString("/etc/sysconfig/network-scripts/ifcfg-opflex-conn", "root", 0420, ifcfg_opflex_conn_string),
-				FileFromString("/etc/sysconfig/network-scripts/ifcfg-uplink-conn", "root", 0420, ifcfg_uplink_conn_string),
-                        	FileFromString("/etc/sysconfig/network-scripts/route-opflex-conn", "root", 0420, route_opflex_conn_string),
-                        	FileFromString("/etc/sysconfig/network-scripts/route-ens3.4094", "root", 0420, route_ens3_string))
-
-	return ignitionFiles
+	return actualIfcfgUplinkConnStr
 }
 
-func SystemdUnitFiles(installConfig *installconfig.InstallConfig) []igntypes.Unit {
-	if installConfig.Config.Networking.NetworkType != "CiscoAci" {
-                return nil
-        }
-	var systemdUnits []igntypes.Unit
+func GetActualRouteOpflexConnStr() string {
 
+	actualRouteOpflexConnStr := `ADDRESS0=224.0.0.0
+               NETMASK0=240.0.0.0
+               METRIC0=1000`
+	return actualRouteOpflexConnStr
+}
+
+func GetActualRouteEns34094Str() string {
+
+	actualRouteEns34094Str := `ADDRESS0=9.10.11.12
+               NETMASK0=255.192.0.0
+               METRIC0=1000
+               GATEWAY0=5.6.7.9`
+
+	return actualRouteEns34094Str
+}
+
+func GetNodeInterfaceService() igntypes.Unit {
 	nodeService := igntypes.Unit{
 		Name:    "node-interface.service",
 		Enabled: util.BoolToPtr(true),
@@ -230,8 +240,10 @@ func SystemdUnitFiles(installConfig *installconfig.InstallConfig) []igntypes.Uni
 		ExecStart=/usr/local/bin/kube-api-interface.sh
 		[Install]
 		WantedBy=multi-user.target`}
-	systemdUnits = append(systemdUnits, nodeService)
+	return nodeService
+}
 
+func GetMachineConfigDaemonForcePath() igntypes.Unit {
 	machineConfigDaemonPath := igntypes.Unit{
 		Name:    "machine-config-daemon-force.path",
 		Enabled: util.BoolToPtr(true),
@@ -242,8 +254,10 @@ PathChanged=/run/machine-config-daemon-force
 Unit=machine-config-daemon-force.service
 [Install]
 WantedBy=multi-user.target`}
-	systemdUnits = append(systemdUnits, machineConfigDaemonPath)
+	return machineConfigDaemonPath
+}
 
+func GetMachineConfigDaemonService() igntypes.Unit {
 	machineConfigDaemonService := igntypes.Unit{
 		Name:    "machine-config-daemon-force.service",
 		Enabled: util.BoolToPtr(true),
@@ -254,7 +268,5 @@ Type=simple
 ExecStart=touch /run/machine-config-daemon-force
 [Install]
 WantedBy=multi-user.target`}
-	systemdUnits = append(systemdUnits, machineConfigDaemonService)
-
-	return systemdUnits
+	return machineConfigDaemonService
 }
