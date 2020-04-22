@@ -10,7 +10,7 @@
   gather_facts: no
 
   tasks:
-  - name: 'Get a token for creating the server group'
+  - name: 'Get an auth token'
     os_auth:
     register: cloud
     when: os_networking_type == "Kuryr"
