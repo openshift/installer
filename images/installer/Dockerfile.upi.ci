@@ -33,14 +33,14 @@ RUN yum install --setopt=tsflags=nodocs -y \
 ENV TERRAFORM_VERSION=0.12.24
 RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
     unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /bin/
-ENV MATCHBOX_VERSION=v0.3.0
-RUN curl -L -O https://github.com/poseidon/terraform-provider-matchbox/releases/download/${MATCHBOX_VERSION}/terraform-provider-matchbox-${MATCHBOX_VERSION}-linux-amd64.tar.gz && \
-    tar xzf terraform-provider-matchbox-${MATCHBOX_VERSION}-linux-amd64.tar.gz && \
-    mv terraform-provider-matchbox-${MATCHBOX_VERSION}-linux-amd64/terraform-provider-matchbox /bin/terraform-provider-matchbox
+ENV MATCHBOX_PROVIDER_VERSION=v0.3.0
+RUN curl -L -O https://github.com/poseidon/terraform-provider-matchbox/releases/download/${MATCHBOX_PROVIDER_VERSION}/terraform-provider-matchbox-${MATCHBOX_PROVIDER_VERSION}-linux-amd64.tar.gz && \
+    tar xzf terraform-provider-matchbox-${MATCHBOX_PROVIDER_VERSION}-linux-amd64.tar.gz && \
+    mv terraform-provider-matchbox-${MATCHBOX_PROVIDER_VERSION}-linux-amd64/terraform-provider-matchbox /bin/terraform-provider-matchbox
 RUN curl -L -O https://github.com/LorbusChris/terraform-provider-ignition/raw/v2-bin-1/terraform-provider-ignition && \
     chmod +x terraform-provider-ignition && \
     mv terraform-provider-ignition /bin/terraform-provider-ignition_v2.0.0
-RUN curl -L -O https://github.com/vmware/govmomi/releases/download/v0.21.0/govc_linux_amd64.gz && \
+RUN curl -L -O https://github.com/vmware/govmomi/releases/download/v0.20.0/govc_linux_amd64.gz && \
     gzip -d govc_linux_amd64.gz && \
     chmod +x govc_linux_amd64 && mv govc_linux_amd64 /bin/govc
 RUN curl -L -O -k https://vcsa-ci.vmware.devcluster.openshift.com/certs/download.zip && \
