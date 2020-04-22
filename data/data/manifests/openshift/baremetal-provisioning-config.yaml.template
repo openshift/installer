@@ -3,9 +3,9 @@ kind: Provisioning
 metadata:
   name: provisioning-configuration
 spec:
-  provisioningInterface: {{.Baremetal.ProvisioningNetworkInterface}}
-  provisioningIP: {{.Baremetal.ClusterProvisioningIP}}
-  provisioningNetworkCIDR: {{.Baremetal.ProvisioningNetworkCIDR}}
+  provisioningInterface: "{{.Baremetal.ProvisioningNetworkInterface}}"
+  provisioningIP: "{{.Baremetal.ClusterProvisioningIP}}"
+  provisioningNetworkCIDR: "{{.Baremetal.ProvisioningNetworkCIDR}}"
   provisioningDHCPExternal: {{.Baremetal.ProvisioningDHCPExternal}}
-  provisioningDHCPRange: {{.Baremetal.ProvisioningDHCPRange}}
-  provisioningOSDownloadURL: {{.ProvisioningOSDownloadURL}}
+  provisioningDHCPRange: "{{.Baremetal.ProvisioningDHCPRange}}"
+  provisioningOSDownloadURL: "{{.ProvisioningOSDownloadURL}}"
