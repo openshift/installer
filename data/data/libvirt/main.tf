@@ -53,7 +53,7 @@ resource "libvirt_network" "net" {
   addresses = var.machine_v4_cidrs
 
   dns {
-    local_only = true
+    local_only = false
 
     dynamic "hosts" {
       for_each = concat(
