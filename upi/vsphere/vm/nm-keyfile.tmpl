@@ -1,0 +1,12 @@
+[connection]
+id=Static ethernet connnection 1
+uuid=${uuid()}
+type=802-3-ethernet
+interface-name=ens192
+autoconnect=true
+
+[ipv4]
+method=manual
+dns=${join(";", dns_addresses)}
+addresses=${ip_address}/24
+gateway=${cidrhost(machine_cidr, 1)}
