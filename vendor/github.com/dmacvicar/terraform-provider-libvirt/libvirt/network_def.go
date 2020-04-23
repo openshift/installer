@@ -45,7 +45,7 @@ func getXMLNetworkDefFromLibvirt(network Network) (libvirtxml.Network, error) {
 // Creates a network definition with the defaults the provider uses
 func newNetworkDef() libvirtxml.Network {
 	const defNetworkXML = `
-		<network >
+		<network>
 		  <name>default</name>
 		  <forward mode='nat'>
 		    <nat>
