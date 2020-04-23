@@ -23,7 +23,7 @@
       # Server names
       os_bootstrap_server_name: "{{ infraID }}-bootstrap"
       os_cp_server_name: "{{ infraID }}-master"
-      os_cp_server_group_name: "{{ infraID }}-master-group"
+      os_cp_server_group_name: "{{ infraID }}-master"
       os_compute_server_name: "{{ infraID }}-worker"
       # Trunk names
       os_cp_trunk_name: "{{ infraID }}-master-trunk"
