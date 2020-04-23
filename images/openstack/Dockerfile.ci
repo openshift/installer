@@ -27,6 +27,7 @@ RUN yum update -y && \
     python-openstackclient ansible python-openstacksdk python-netaddr unzip && \
     yum clean all && rm -rf /var/cache/yum/*
 
+# The Continuous Integration machinery relies on Route53 for DNS while testing the cluster.
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip && \
     ./aws/install -b /bin && \
