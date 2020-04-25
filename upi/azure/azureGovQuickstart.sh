@@ -169,10 +169,10 @@ echoDo "Create VNET"  az deployment group create -g $RESOURCE_GROUP \
   --template-file "01_vnet.json" \
   --parameters baseName="$INFRA_ID" -o none
 echoDo "Associate private-dns with virtual network" az network private-dns link vnet create -g $RESOURCE_GROUP -z ${CLUSTER_NAME}.${BASE_DOMAIN} -n ${INFRA_ID}-network-link -v "${INFRA_ID}-vnet" -e false -o none
-vhd_blob_url=`az storage blob url --account-name ${cluster_name}sa --account-key $account_key -c vhd -n "rhcos.vhd" -o tsv`
+vhd_blob_url=`az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c vhd -n "rhcos.vhd" -o tsv`
 # looks like we need a short delay here
 sleep 10
-echodo "setup azure VHD storage" az deployment group create -g $resource_group \
+echoDo "setup azure VHD storage" az deployment group create -g $RESOURCE_GROUP \
   --template-file "02_storage.json" \
   --parameters vhdBlobURL="$VHD_BLOB_URL" \
   --parameters baseName="$INFRA_ID" -o none
