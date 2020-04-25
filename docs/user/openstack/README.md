@@ -493,7 +493,7 @@ curl https://<loadbalancer ip>:22623/config/master --insecure
 If you ran the installer with a [custom CA certificate](#self-signed-openstack-ca-certificates), then this certificate can be changed while the cluster is running. To change your certificate, edit the value of the `ca-cert.pem` key in the `cloud-provider-config` configmap with a valid PEM certificate.
 
 ```sh
-oc edit -n openshift-config cloud-provider-config
+oc edit configmap -n openshift-config cloud-provider-config
 ```
 
 ## Reporting Issues
