@@ -51,7 +51,7 @@ function echoDo()
     echo "--->> Result Code $res"
 }
 
-WORKERODES=3
+WORKERNODES=3
 
 while test $# -gt 0; do
   case "$1" in
@@ -209,7 +209,7 @@ export KUBECONFIG="$PWD/auth/kubeconfig"
 oc get nodes
 oc get clusteroperator
 WORKER_IGNITION=$(base64 -w0 worker.ign)
-az deployment group create -g $RESOURCE_GROUP \
+echoDo "Create Worker Nodes" az deployment group create -g $RESOURCE_GROUP \
   --template-file "06_workers.json" \
   --parameters workerIgnition="$WORKER_IGNITION" \
   --parameters sshKeyData="$SSH_KEY" \
