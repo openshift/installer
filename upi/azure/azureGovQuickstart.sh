@@ -172,7 +172,7 @@ echoDo "Associate private-dns with virtual network" az network private-dns link 
 VHD_BLOB_URL=`az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c vhd -n "rhcos.vhd" -o tsv`
 # looks like we need a short delay here
 sleep 10
-echoDo "setup azure VHD storage" az deployment group create -g $RESOURCE_GROUP \
+echoDo "Setup azure VHD storage" az deployment group create -g $RESOURCE_GROUP \
   --template-file "02_storage.json" \
   --parameters vhdBlobURL="$VHD_BLOB_URL" \
   --parameters baseName="$INFRA_ID" -o none
@@ -180,10 +180,10 @@ echoDo "Setup PrivateDNS records for infrastructure" az deployment group create 
   --template-file "03_infra.json" \
   --parameters privateDNSZoneName="${CLUSTER_NAME}.${BASE_DOMAIN}" \
   --parameters baseName="$INFRA_ID" -o none
-PUBLIC_IP=`az network public-ip list -g $RESOURCE_GROUP --query "[?name=='${INFRA_ID}-master-pip'] | [0].ipAddress" -o tsv`
-echoDo az network dns record-set a add-record -g $RESOURCE_GROUP -z ${CLUSTER_NAME}.${BASE_DOMAIN} -n api -a $PUBLIC_IP --ttl 60
-BOOTSTRAP_URL=`az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c "files" -n "bootstrap.ign" -o tsv`
-BOOTSTRAP_IGNITION=`jq -rcnM --arg v "2.2.0" --arg url $BOOTSTRAP_URL '{ignition:{version:$v,config:{replace:{source:$url}}}}' | base64 -w0`
+PUBLIC_IP=$(az network public-ip list -g $RESOURCE_GROUP --query "[?name=='${INFRA_ID}-master-pip'] | [0].ipAddress" -o tsv)
+echoDo "Add public A record for api end point" az network dns record-set a add-record -g $RESOURCE_GROUP -z ${CLUSTER_NAME}.${BASE_DOMAIN} -n api -a $PUBLIC_IP --ttl 60
+BOOTSTRAP_URL=$(az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c "files" -n "bootstrap.ign" -o tsv)
+BOOTSTRAP_IGNITION=$(jq -rcnM --arg v "2.2.0" --arg url $BOOTSTRAP_URL '{ignition:{version:$v,config:{replace:{source:$url}}}}' | base64 -w0)
 echoDo "Create Bootstrap" az deployment group create -g $RESOURCE_GROUP \
   --template-file "04_bootstrap.json" \
   --parameters bootstrapIgnition="$BOOTSTRAP_IGNITION" \
