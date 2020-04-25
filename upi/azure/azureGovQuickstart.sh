@@ -162,14 +162,14 @@ echoDo "Create Private DNS zone" az network private-dns zone create -g $RESOURCE
 status="unknown"
 while [ "$status" != "success" ]
 do
-  status=`az storage blob show --container-name vhd --name "rhcos.vhd" --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -o tsv --query properties.copy.status`
+  status=$(az storage blob show --container-name vhd --name "rhcos.vhd" --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -o tsv --query properties.copy.status)
   echo $status
 done
 echoDo "Create VNET"  az deployment group create -g $RESOURCE_GROUP \
   --template-file "01_vnet.json" \
   --parameters baseName="$INFRA_ID" -o none
 echoDo "Associate private-dns with virtual network" az network private-dns link vnet create -g $RESOURCE_GROUP -z ${CLUSTER_NAME}.${BASE_DOMAIN} -n ${INFRA_ID}-network-link -v "${INFRA_ID}-vnet" -e false -o none
-vhd_blob_url=`az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c vhd -n "rhcos.vhd" -o tsv`
+VHD_BLOB_URL=`az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c vhd -n "rhcos.vhd" -o tsv`
 # looks like we need a short delay here
 sleep 10
 echoDo "setup azure VHD storage" az deployment group create -g $RESOURCE_GROUP \
