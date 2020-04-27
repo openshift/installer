@@ -254,14 +254,6 @@ echoDo "Create masters" az deployment group create -g $RESOURCE_GROUP \
   --parameters privateDNSZoneName="${CLUSTER_NAME}.${BASE_DOMAIN}" \
   --parameters baseName="$INFRA_ID" ${azout}
 echoDo "Wait for OCP Bootstrap to complete" openshift-install wait-for bootstrap-complete --log-level debug
-az network nsg rule delete -g $RESOURCE_GROUP --nsg-name ${INFRA_ID}-controlplane-nsg --name bootstrap_ssh_in
-az vm stop -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap
-az vm deallocate -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap
-az vm delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap --yes
-az disk delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap_OSDisk --no-wait --yes
-az network nic delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap-nic --no-wait
-az storage blob delete --account-key $ACCOUNT_KEY --account-name ${CLUSTER_NAME}sa --container-name files --name bootstrap.ign
-az network public-ip delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap-ssh-pip
 export KUBECONFIG="$PWD/auth/kubeconfig"
 oc get nodes
 oc get clusteroperator
@@ -272,3 +264,16 @@ echoDo "Create Worker Nodes" az deployment group create -g $RESOURCE_GROUP \
   --parameters sshKeyData="$SSH_KEY" \
   --parameters baseName="$INFRA_ID" \
   --parameters numberOfNodes="$WORKERNODES" ${azout}
+
+# Remove bootstrap
+echo Remove Bootstrap resources
+echoDo "Remove SSH access to Bootstrap" az network nsg rule delete -g $RESOURCE_GROUP --nsg-name ${INFRA_ID}-controlplane-nsg --name bootstrap_ssh_in ${azout}
+echoDo "Stop Bootstrap VM" az vm stop -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap ${azout}
+echoDo "Deallocated Bootstrap VM" az vm deallocate -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap ${azout}
+echoDo "Delete Bootstrap VM" az vm delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap --yes ${azout}
+echoDo "Delete Bootstrap OS Disk" az disk delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap_OSDisk --no-wait --yes ${azout}
+echoDo "Delete Bootstrap NIC" az network nic delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap-nic --no-wait ${azout}
+echoDo "Delete ignition file for RHCOS bootstrapping" az storage blob delete --account-key $ACCOUNT_KEY --account-name ${CLUSTER_NAME}sa --container-name files --name bootstrap.ign ${azout}
+echoDo "Delete public IP for ssh access" az network public-ip delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap-ssh-pip ${azout}
+
+echo All done .... goodbye!
