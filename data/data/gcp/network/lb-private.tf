@@ -7,7 +7,18 @@ resource "google_compute_address" "cluster_ip" {
 resource "google_compute_health_check" "api_internal" {
   name = "${var.cluster_id}-api-internal"
 
+  // CAUTION: the gcp-routes mechanism must be _faster_ than this value:
+  //
+  //          Otherwise, local client traffic will go to the GCP LB until the
+  //          gcp-routes mechanism is done rerouting, and therefore back to the
+  //          local node in 1/3 of cases, which is blackholed (due to missing
+  //          hairpinning support).
   healthy_threshold   = 3
+  // CAUTION: the gcp-routes mechanism must be _slower_ than this value:
+  //
+  //          Otherwise, local client traffic  will go to the GCP LB until the LB
+  //          endpoint is deactived, and therefore back to the local node in 1/3
+  //          of cases, which is blackholed (due to missing hairpinning support).
   unhealthy_threshold = 3
   check_interval_sec  = 2
   timeout_sec         = 2
