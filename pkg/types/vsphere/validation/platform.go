@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"fmt"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -33,6 +34,11 @@ func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 		allErrs = append(allErrs, validateVIPs(p, fldPath)...)
 	}
 
+	// folder is optional, but if provided should pass validation
+	if len(p.Folder) != 0 {
+		allErrs = append(allErrs, validateFolder(p, fldPath)...)
+	}
+
 	return allErrs
 }
 
@@ -49,11 +55,10 @@ func ValidateForProvisioning(p *vsphere.Platform, fldPath *field.Path) field.Err
 	}
 
 	allErrs = append(allErrs, validateVIPs(p, fldPath)...)
-
 	return allErrs
 }
 
-// ValidateVIPs checks that all required VIPs are provided and are valid IP addresses.
+// validateVIPs checks that all required VIPs are provided and are valid IP addresses.
 func validateVIPs(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -67,6 +72,24 @@ func validateVIPs(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 		allErrs = append(allErrs, field.Required(fldPath.Child("ingressVIP"), "must specify a VIP for Ingress"))
 	} else if err := validate.IP(p.IngressVIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
+	}
+
+	return allErrs
+}
+
+// validateFolder checks that a provided folder is in absolute path in the correct datacenter.
+func validateFolder(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	dc := p.Datacenter
+	if len(dc) == 0 {
+		dc = "<datacenter>"
+	}
+	expectedPrefix := fmt.Sprintf("/%s/vm/", dc)
+
+	if !strings.HasPrefix(p.Folder, expectedPrefix) {
+		errMsg := fmt.Sprintf("folder must be absolute path: expected prefix %s", expectedPrefix)
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("folder"), p.Folder, errMsg))
 	}
 
 	return allErrs

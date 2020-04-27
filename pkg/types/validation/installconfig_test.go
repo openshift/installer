@@ -691,6 +691,18 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^platform\.vsphere.vCenter: Required value: must specify the name of the vCenter$`,
 		},
 		{
+			name: "invalid vsphere folder",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					VSphere: validVSpherePlatform(),
+				}
+				c.Platform.VSphere.Folder = "my-folder"
+				return c
+			}(),
+			expectedError: `^platform\.vsphere.folder: Invalid value: \"my-folder\": folder must be absolute path: expected prefix /test-datacenter/vm/$`,
+		},
+		{
 			name: "empty proxy settings",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
