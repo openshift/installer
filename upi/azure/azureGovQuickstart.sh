@@ -162,7 +162,9 @@ SSH_KEY=$(yq -r .sshKey install-config.yaml | xargs)
 BASE_DOMAIN=$(yq -r .baseDomain install-config.yaml)
 BASE_DOMAIN_RESOURCE_GROUP=$(yq -r .platform.azure.baseDomainResourceGroupName install-config.yaml)
 
-if [[ "$CLUSTERNAME" == "" -o "$BASE_DOMAIN" == "example.com" ]]; then
+if [ "$CLUSTER_NAME" == "" -o "$BASE_DOMAIN" == "example.com" ]; then
+  echo CLUSTER_NAME: $CLUSTER_NAME
+  echo BASE_DOMAIN: $BASE_DOMAIN
   throw "install-config.yaml is not properly configured. Please fill it out before running openshift-install"
   exit 1
 fi   
