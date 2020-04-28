@@ -4,22 +4,32 @@ package vsphere
 // on vSphere.
 type MachinePool struct {
 	// NumCPUs is the total number of virtual processor cores to assign a vm.
+	//
+	// +optional
 	NumCPUs int32 `json:"cpus"`
 
 	// NumCoresPerSocket is the number of cores per socket in a vm. The number
 	// of vCPUs on the vm will be NumCPUs/NumCoresPerSocket.
+	//
+	// +optional
 	NumCoresPerSocket int32 `json:"coresPerSocket"`
 
 	// Memory is the size of a VM's memory in MB.
+	//
+	// +optional
 	MemoryMiB int64 `json:"memoryMB"`
 
 	// OSDisk defines the storage for instance.
+	//
+	// +optional
 	OSDisk `json:"osDisk"`
 }
 
 // OSDisk defines the disk for a virtual machine.
 type OSDisk struct {
 	// DiskSizeGB defines the size of disk in GB.
+	//
+	// +optional
 	DiskSizeGB int32 `json:"diskSizeGB"`
 }
 

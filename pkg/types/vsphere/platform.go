@@ -28,9 +28,15 @@ type Platform struct {
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
 
 	// APIVIP is the virtual IP address for the api endpoint
+	//
+	// +kubebuilder:validation:format=ip
+	// +optional
 	APIVIP string `json:"apiVIP,omitempty"`
 
 	// IngressVIP is the virtual IP address for ingress
+	//
+	// +kubebuilder:validation:format=ip
+	// +optional
 	IngressVIP string `json:"ingressVIP,omitempty"`
 
 	// DefaultMachinePlatform is the default configuration used when
