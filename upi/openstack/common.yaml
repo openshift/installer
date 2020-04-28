@@ -1,4 +1,4 @@
-- hosts: localhost
+- hosts: blablabla
   gather_facts: no
 
   vars_files:
