@@ -1,0 +1,50 @@
+{
+    "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.4-ppc64le/44.81.202004252240-0/ppc64le/",
+    "buildid": "44.81.202004252240-0",
+    "images": {
+        "initramfs": {
+            "path": "rhcos-44.81.202004252240-0-installer-initramfs.ppc64le.img",
+            "sha256": "73cc22be85df4ec764f2b6284695fa594dff06af4718d6eb7668b77b560cefd8"
+        },
+        "iso": {
+            "path": "rhcos-44.81.202004252240-0-installer.ppc64le.iso",
+            "sha256": "9175dea605c2ef49ae250b976478b8685ccbc6035f2b3bd26e925947004bcf2b"
+        },
+        "kernel": {
+            "path": "rhcos-44.81.202004252240-0-installer-kernel-ppc64le",
+            "sha256": "447777af2b5136b555548ac674f0823148f1faf986df3e54b1119774a80621a5"
+        },
+        "metal": {
+            "path": "rhcos-44.81.202004252240-0-metal.ppc64le.raw.gz",
+            "sha256": "ad866e9e31209ed2f248e2815e9eaea792d2ddfe1537231ab58f1ca00f57f9e6",
+            "size": 814734845,
+            "uncompressed-sha256": "6d6346cd108a35e4de84baa41901c45064bc45dde93a48d4fa79e76d18bcb016",
+            "uncompressed-size": 3700424704
+        },
+        "openstack": {
+            "path": "rhcos-44.81.202004252240-0-openstack.ppc64le.qcow2.gz",
+            "sha256": "27a2947aea1039621747a2e4f4ff75a5a614f3977ca94a6f28b06591e01aa047",
+            "size": 813348296,
+            "uncompressed-sha256": "b7228af46822f0deeef5bd06e1e78d6188e57bb74ec98f17b3f5bd82e596349f",
+            "uncompressed-size": 2354970624
+        },
+        "ostree": {
+            "path": "rhcos-44.81.202004252240-0-ostree.ppc64le.tar",
+            "sha256": "49cefb03446ebd3249f22036f179a67bb6670d80f915826330f667aa7025a36f",
+            "size": 731453440
+        },
+        "qemu": {
+            "path": "rhcos-44.81.202004252240-0-qemu.ppc64le.qcow2.gz",
+            "sha256": "06c0d56581358f6d149466ba2c113b5132e5390eb68cfc4c3c9834ad6c69d796",
+            "size": 813896314,
+            "uncompressed-sha256": "1f435d7ba80b8339d01552e7138dfcb0001626ced589e96c4e19ce5d2c66a5cf",
+            "uncompressed-size": 2400976896
+        }
+    },
+    "oscontainer": {
+        "digest": "sha256:fd1567de4bdca01d95ab8e5eb9b4ab9c9e8259d256f753ba4061c531d6b8f6bc",
+        "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+    },
+    "ostree-commit": "21173fcbd7cc29aa270b8037c6c77869c7b2945a45d896e80c0b8db63f3c2b50",
+    "ostree-version": "44.81.202004252240-0"
+}
