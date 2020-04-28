@@ -6,6 +6,7 @@ package mock
 
 import (
 	context "context"
+	compute "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute"
 	network "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
 	resources "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
 	subscriptions "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-06-01/subscriptions"
@@ -109,4 +110,19 @@ func (m *MockAPI) GetResourcesProvider(ctx context.Context, resourceProviderName
 func (mr *MockAPIMockRecorder) GetResourcesProvider(ctx, resourceProviderNamespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourcesProvider", reflect.TypeOf((*MockAPI)(nil).GetResourcesProvider), ctx, resourceProviderNamespace)
+}
+
+// ValidateResourceSkuAvailability mocks base method.
+func (m *MockAPI) ValidateResourceSkuAvailability(ctx context.Context, region, diskType string) (*compute.ResourceSku, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateResourceSkuAvailability", ctx, region, diskType)
+	ret0, _ := ret[0].(*compute.ResourceSku)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValidateResourceSkuAvailability indicates an expected call of ValidateResourceSkuAvailability.
+func (mr *MockAPIMockRecorder) ValidateResourceSkuAvailability(ctx, region, diskType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateResourceSkuAvailability", reflect.TypeOf((*MockAPI)(nil).ValidateResourceSkuAvailability), ctx, region, diskType)
 }

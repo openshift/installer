@@ -261,6 +261,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 				mpool.Zones = []string{""}
 			}
 		}
+
 		pool.Platform.Azure = &mpool
 
 		machines, err = azure.Machines(clusterID.InfraID, ic, pool, string(*rhcosImage), "master", "master-user-data")

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 
 	aznetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
 	"github.com/Azure/go-autorest/autorest/to"
@@ -115,4 +116,26 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 	}
 
 	return field.ErrorList{field.Invalid(fieldPath, p.Region, fmt.Sprintf("region %q does not support resource creation", p.Region))}
+}
+
+// validateRegionForUltraDisks checks that the Ultra SSD disks are available for the user.
+func validateRegionForUltraDisks(fldPath *field.Path, region string) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+	client, err := NewClient(ctx)
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(fldPath.Child("disktype"), err))
+	}
+
+	contxt, canc := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer canc()
+
+	_, err = client.ValidateResourceSkuAvailability(contxt, region, "UltraSSD_LRS")
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(fldPath.Child("disktype"), err))
+	}
+
+	return allErrs
 }

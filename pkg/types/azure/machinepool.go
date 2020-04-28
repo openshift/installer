@@ -19,6 +19,11 @@ type MachinePool struct {
 type OSDisk struct {
 	// DiskSizeGB defines the size of disk in GB.
 	DiskSizeGB int32 `json:"diskSizeGB"`
+	// DiskType defines the type of disk.
+	// The valid values are <list>
+	// By default, <> will be used.
+	// +optional
+	DiskType string `json:"diskType"`
 }
 
 // Set sets the values from `required` to `a`.
@@ -37,5 +42,9 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.OSDisk.DiskSizeGB != 0 {
 		a.OSDisk.DiskSizeGB = required.OSDisk.DiskSizeGB
+	}
+
+	if required.OSDisk.DiskType != "" {
+		a.OSDisk.DiskType = required.OSDisk.DiskType
 	}
 }
