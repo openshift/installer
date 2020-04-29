@@ -3,7 +3,7 @@ package vsphere
 import (
 	"encoding/json"
 
-	vsphereapis "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1"
+	vsphereapis "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
