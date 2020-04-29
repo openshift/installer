@@ -76,7 +76,6 @@ module "master" {
   vm_image               = azurerm_image.cluster.id
   identity               = azurerm_user_assigned_identity.main.id
   ignition               = var.ignition_master
-  external_lb_id         = module.vnet.public_lb_id
   elb_backend_pool_v4_id = module.vnet.public_lb_backend_pool_v4_id
   elb_backend_pool_v6_id = module.vnet.public_lb_backend_pool_v6_id
   ilb_backend_pool_v4_id = module.vnet.internal_lb_backend_pool_v4_id

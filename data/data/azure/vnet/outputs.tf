@@ -1,9 +1,9 @@
 output "public_lb_backend_pool_v4_id" {
-  value = var.use_ipv4 ? azurerm_lb_backend_address_pool.master_public_lb_pool_v4[0].id : null
+  value = var.use_ipv4 ? azurerm_lb_backend_address_pool.public_lb_pool_v4[0].id : null
 }
 
 output "public_lb_backend_pool_v6_id" {
-  value = var.use_ipv6 ? azurerm_lb_backend_address_pool.master_public_lb_pool_v6[0].id : null
+  value = var.use_ipv6 ? azurerm_lb_backend_address_pool.public_lb_pool_v6[0].id : null
 }
 
 output "internal_lb_backend_pool_v4_id" {
