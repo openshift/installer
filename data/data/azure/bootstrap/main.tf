@@ -36,7 +36,6 @@ data "azurerm_storage_account_sas" "ignition" {
 }
 
 resource "azurerm_storage_container" "ignition" {
-  resource_group_name   = var.resource_group_name
   name                  = "ignition"
   storage_account_name  = var.storage_account.name
   container_access_type = "private"
@@ -50,10 +49,9 @@ resource "local_file" "ignition_bootstrap" {
 resource "azurerm_storage_blob" "ignition" {
   name                   = "bootstrap.ign"
   source                 = local_file.ignition_bootstrap.filename
-  resource_group_name    = var.resource_group_name
   storage_account_name   = var.storage_account.name
   storage_container_name = azurerm_storage_container.ignition.name
-  type                   = "block"
+  type                   = "Block"
 }
 
 data "ignition_config" "redirect" {

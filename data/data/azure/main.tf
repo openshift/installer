@@ -8,6 +8,7 @@ locals {
 }
 
 provider "azurerm" {
+  features {}
   subscription_id = var.azure_subscription_id
   client_id       = var.azure_client_id
   client_secret   = var.azure_client_secret
@@ -161,16 +162,14 @@ resource "azurerm_role_assignment" "network" {
 # copy over the vhd to cluster resource group and create an image using that
 resource "azurerm_storage_container" "vhd" {
   name                 = "vhd"
-  resource_group_name  = azurerm_resource_group.main.name
   storage_account_name = azurerm_storage_account.cluster.name
 }
 
 resource "azurerm_storage_blob" "rhcos_image" {
   name                   = "rhcos${random_string.storage_suffix.result}.vhd"
-  resource_group_name    = azurerm_resource_group.main.name
   storage_account_name   = azurerm_storage_account.cluster.name
   storage_container_name = azurerm_storage_container.vhd.name
-  type                   = "block"
+  type                   = "Block"
   source_uri             = var.azure_image_url
   metadata               = map("source_uri", var.azure_image_url)
 }
