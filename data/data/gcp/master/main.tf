@@ -31,7 +31,7 @@ resource "google_project_iam_member" "master-service-account-user" {
 resource "google_compute_instance" "master" {
   count = var.instance_count
 
-  name         = "${var.cluster_id}-m-${count.index}"
+  name         = "${var.cluster_id}-master-${count.index}"
   machine_type = var.machine_type
   zone         = element(var.zones, count.index)
 
