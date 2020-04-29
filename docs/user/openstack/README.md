@@ -61,6 +61,7 @@ For a successful installation it is required:
 - Volume Storage: 175 GB
 - Instances: 7
 - Depending on the type of [image registry backend](#image-registry-requirements) either 1 Swift container or an additional 100 GB volume.
+- OpenStack resource tagging
 
 You may need to increase the security group related quotas from their default values. For example (as an OpenStack administrator):
 
