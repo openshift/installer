@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
@@ -45,7 +44,7 @@ func resourceArmMonitorDiagnosticSetting() *schema.Resource {
 				ForceNew: true,
 				// NOTE: there's no validation requirements listed for this
 				// so we're intentionally doing the minimum we can here
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"target_resource_id": {
@@ -108,7 +107,7 @@ func resourceArmMonitorDiagnosticSetting() *schema.Resource {
 
 						"retention_policy": {
 							Type:     schema.TypeList,
-							Required: true,
+							Optional: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -147,7 +146,7 @@ func resourceArmMonitorDiagnosticSetting() *schema.Resource {
 
 						"retention_policy": {
 							Type:     schema.TypeList,
-							Required: true,
+							Optional: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -353,12 +352,7 @@ func resourceArmMonitorDiagnosticSettingDelete(d *schema.ResourceData, meta inte
 		Refresh:                   monitorDiagnosticSettingDeletedRefreshFunc(ctx, client, targetResourceId, id.name),
 		MinTimeout:                15 * time.Second,
 		ContinuousTargetOccurence: 5,
-	}
-
-	if features.SupportsCustomTimeouts() {
-		stateConf.Timeout = d.Timeout(schema.TimeoutDelete)
-	} else {
-		stateConf.Timeout = 60 * time.Minute
+		Timeout:                   d.Timeout(schema.TimeoutDelete),
 	}
 
 	if _, err = stateConf.WaitForState(); err != nil {
@@ -390,19 +384,22 @@ func expandMonitorDiagnosticsSettingsLogs(input []interface{}) []insights.LogSet
 
 		category := v["category"].(string)
 		enabled := v["enabled"].(bool)
-
 		policiesRaw := v["retention_policy"].([]interface{})
-		policyRaw := policiesRaw[0].(map[string]interface{})
-		retentionDays := policyRaw["days"].(int)
-		retentionEnabled := policyRaw["enabled"].(bool)
-
-		output := insights.LogSettings{
-			Category: utils.String(category),
-			Enabled:  utils.Bool(enabled),
-			RetentionPolicy: &insights.RetentionPolicy{
+		var retentionPolicy *insights.RetentionPolicy
+		if len(policiesRaw) != 0 {
+			policyRaw := policiesRaw[0].(map[string]interface{})
+			retentionDays := policyRaw["days"].(int)
+			retentionEnabled := policyRaw["enabled"].(bool)
+			retentionPolicy = &insights.RetentionPolicy{
 				Days:    utils.Int32(int32(retentionDays)),
 				Enabled: utils.Bool(retentionEnabled),
-			},
+			}
+		}
+
+		output := insights.LogSettings{
+			Category:        utils.String(category),
+			Enabled:         utils.Bool(enabled),
+			RetentionPolicy: retentionPolicy,
 		}
 
 		results = append(results, output)
@@ -462,18 +459,20 @@ func expandMonitorDiagnosticsSettingsMetrics(input []interface{}) []insights.Met
 		enabled := v["enabled"].(bool)
 
 		policiesRaw := v["retention_policy"].([]interface{})
-		policyRaw := policiesRaw[0].(map[string]interface{})
-
-		retentionDays := policyRaw["days"].(int)
-		retentionEnabled := policyRaw["enabled"].(bool)
-
-		output := insights.MetricSettings{
-			Category: utils.String(category),
-			Enabled:  utils.Bool(enabled),
-			RetentionPolicy: &insights.RetentionPolicy{
+		var retentionPolicy *insights.RetentionPolicy
+		if policiesRaw != nil {
+			policyRaw := policiesRaw[0].(map[string]interface{})
+			retentionDays := policyRaw["days"].(int)
+			retentionEnabled := policyRaw["enabled"].(bool)
+			retentionPolicy = &insights.RetentionPolicy{
 				Days:    utils.Int32(int32(retentionDays)),
 				Enabled: utils.Bool(retentionEnabled),
-			},
+			}
+		}
+		output := insights.MetricSettings{
+			Category:        utils.String(category),
+			Enabled:         utils.Bool(enabled),
+			RetentionPolicy: retentionPolicy,
 		}
 
 		results = append(results, output)

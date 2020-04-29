@@ -6,14 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2018-01-01/apimanagement"
+	"github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2019-12-01/apimanagement"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
@@ -62,12 +61,12 @@ func resourceArmApiManagementBackend() *schema.Resource {
 									"parameter": {
 										Type:         schema.TypeString,
 										Optional:     true,
-										ValidateFunc: validate.NoEmptyStrings,
+										ValidateFunc: validation.StringIsNotEmpty,
 									},
 									"scheme": {
 										Type:         schema.TypeString,
 										Optional:     true,
-										ValidateFunc: validate.NoEmptyStrings,
+										ValidateFunc: validation.StringIsNotEmpty,
 									},
 								},
 							},
@@ -77,7 +76,7 @@ func resourceArmApiManagementBackend() *schema.Resource {
 							Optional: true,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
-								ValidateFunc: validate.NoEmptyStrings,
+								ValidateFunc: validation.StringIsNotEmpty,
 							},
 						},
 						"header": {
@@ -85,7 +84,7 @@ func resourceArmApiManagementBackend() *schema.Resource {
 							Optional: true,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
-								ValidateFunc: validate.NoEmptyStrings,
+								ValidateFunc: validation.StringIsNotEmpty,
 							},
 						},
 						"query": {
@@ -93,7 +92,7 @@ func resourceArmApiManagementBackend() *schema.Resource {
 							Optional: true,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
-								ValidateFunc: validate.NoEmptyStrings,
+								ValidateFunc: validation.StringIsNotEmpty,
 							},
 						},
 					},
@@ -125,17 +124,17 @@ func resourceArmApiManagementBackend() *schema.Resource {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Sensitive:    true,
-							ValidateFunc: validate.NoEmptyStrings,
+							ValidateFunc: validation.StringIsNotEmpty,
 						},
 						"url": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validate.NoEmptyStrings,
+							ValidateFunc: validation.StringIsNotEmpty,
 						},
 						"username": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validate.NoEmptyStrings,
+							ValidateFunc: validation.StringIsNotEmpty,
 						},
 					},
 				},
@@ -156,14 +155,14 @@ func resourceArmApiManagementBackend() *schema.Resource {
 						"client_certificate_thumbprint": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validate.NoEmptyStrings,
+							ValidateFunc: validation.StringIsNotEmpty,
 						},
 						"management_endpoints": {
 							Type:     schema.TypeSet,
 							Required: true,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
-								ValidateFunc: validate.NoEmptyStrings,
+								ValidateFunc: validation.StringIsNotEmpty,
 							},
 						},
 						"max_partition_resolution_retries": {
@@ -176,7 +175,7 @@ func resourceArmApiManagementBackend() *schema.Resource {
 							ConflictsWith: []string{"service_fabric_cluster.0.server_x509_name"},
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
-								ValidateFunc: validate.NoEmptyStrings,
+								ValidateFunc: validation.StringIsNotEmpty,
 							},
 						},
 						"server_x509_name": {
@@ -188,12 +187,12 @@ func resourceArmApiManagementBackend() *schema.Resource {
 									"issuer_certificate_thumbprint": {
 										Type:         schema.TypeString,
 										Required:     true,
-										ValidateFunc: validate.NoEmptyStrings,
+										ValidateFunc: validation.StringIsNotEmpty,
 									},
 									"name": {
 										Type:         schema.TypeString,
 										Required:     true,
-										ValidateFunc: validate.NoEmptyStrings,
+										ValidateFunc: validation.StringIsNotEmpty,
 									},
 								},
 							},
@@ -229,7 +228,7 @@ func resourceArmApiManagementBackend() *schema.Resource {
 			"url": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 		},
 	}
@@ -244,11 +243,11 @@ func resourceArmApiManagementBackendCreateUpdate(d *schema.ResourceData, meta in
 	serviceName := d.Get("api_management_name").(string)
 	name := d.Get("name").(string)
 
-	if features.ShouldResourcesBeImported() && d.IsNewResource() {
+	if d.IsNewResource() {
 		existing, err := client.Get(ctx, resourceGroup, serviceName, name)
 		if err != nil {
 			if !utils.ResponseWasNotFound(existing.Response) {
-				return fmt.Errorf("Error checking for presence of existing backend %q (API Management Service %q / Resource Group %q): %s", name, serviceName, resourceGroup, err)
+				return fmt.Errorf("checking for presence of existing backend %q (API Management Service %q / Resource Group %q): %s", name, serviceName, resourceGroup, err)
 			}
 		}
 
@@ -296,12 +295,12 @@ func resourceArmApiManagementBackendCreateUpdate(d *schema.ResourceData, meta in
 	}
 
 	if _, err := client.CreateOrUpdate(ctx, resourceGroup, serviceName, name, backendContract, ""); err != nil {
-		return fmt.Errorf("Error creating/updating backend %q (API Management Service %q / Resource Group %q): %+v", name, serviceName, resourceGroup, err)
+		return fmt.Errorf("creating/updating backend %q (API Management Service %q / Resource Group %q): %+v", name, serviceName, resourceGroup, err)
 	}
 
 	read, err := client.Get(ctx, resourceGroup, serviceName, name)
 	if err != nil {
-		return fmt.Errorf("Error retrieving backend %q (API Management Service %q / Resource Group %q): %+v", name, serviceName, resourceGroup, err)
+		return fmt.Errorf("retrieving backend %q (API Management Service %q / Resource Group %q): %+v", name, serviceName, resourceGroup, err)
 	}
 
 	if read.ID == nil {
@@ -333,7 +332,7 @@ func resourceArmApiManagementBackendRead(d *schema.ResourceData, meta interface{
 			return nil
 		}
 
-		return fmt.Errorf("Error retrieving backend %q (API Management Service %q / Resource Group %q): %+v", name, serviceName, resourceGroup, err)
+		return fmt.Errorf("retrieving backend %q (API Management Service %q / Resource Group %q): %+v", name, serviceName, resourceGroup, err)
 	}
 
 	d.Set("name", name)
@@ -347,18 +346,18 @@ func resourceArmApiManagementBackendRead(d *schema.ResourceData, meta interface{
 		d.Set("title", props.Title)
 		d.Set("url", props.URL)
 		if err := d.Set("credentials", flattenApiManagementBackendCredentials(props.Credentials)); err != nil {
-			return fmt.Errorf("Error setting `credentials`: %s", err)
+			return fmt.Errorf("setting `credentials`: %s", err)
 		}
 		if err := d.Set("proxy", flattenApiManagementBackendProxy(props.Proxy)); err != nil {
-			return fmt.Errorf("Error setting `proxy`: %s", err)
+			return fmt.Errorf("setting `proxy`: %s", err)
 		}
 		if properties := props.Properties; properties != nil {
 			if err := d.Set("service_fabric_cluster", flattenApiManagementBackendServiceFabricCluster(properties.ServiceFabricCluster)); err != nil {
-				return fmt.Errorf("Error setting `service_fabric_cluster`: %s", err)
+				return fmt.Errorf("setting `service_fabric_cluster`: %s", err)
 			}
 		}
 		if err := d.Set("tls", flattenApiManagementBackendTls(props.TLS)); err != nil {
-			return fmt.Errorf("Error setting `tls`: %s", err)
+			return fmt.Errorf("setting `tls`: %s", err)
 		}
 	}
 
@@ -381,7 +380,7 @@ func resourceArmApiManagementBackendDelete(d *schema.ResourceData, meta interfac
 
 	if resp, err := client.Delete(ctx, resourceGroup, serviceName, name, ""); err != nil {
 		if !utils.ResponseWasNotFound(resp) {
-			return fmt.Errorf("Error deleting backend %q (API Management Service %q / Resource Group %q): %s", name, serviceName, resourceGroup, err)
+			return fmt.Errorf("deleting backend %q (API Management Service %q / Resource Group %q): %s", name, serviceName, resourceGroup, err)
 		}
 	}
 

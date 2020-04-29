@@ -11,7 +11,6 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
@@ -42,7 +41,7 @@ func resourceArmVirtualNetworkGatewayConnection() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"resource_group_name": azure.SchemaResourceGroupName(),
@@ -72,7 +71,7 @@ func resourceArmVirtualNetworkGatewayConnection() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Sensitive:    true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"express_route_circuit_id": {
@@ -111,7 +110,7 @@ func resourceArmVirtualNetworkGatewayConnection() *schema.Resource {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Computed:     true,
-				ValidateFunc: validation.IntBetween(0, 1000),
+				ValidateFunc: validation.IntBetween(0, 32000),
 			},
 
 			"shared_key": {
@@ -511,23 +510,19 @@ func getArmVirtualNetworkGatewayConnectionProperties(d *schema.ResourceData) (*n
 
 	if props.ConnectionType == network.ExpressRoute {
 		if props.Peer == nil || props.Peer.ID == nil {
-			return nil, fmt.Errorf("`express_route_circuit_id` must be specified when `type` is set to `ExpressRoute")
+			return nil, fmt.Errorf("`express_route_circuit_id` must be specified when `type` is set to `ExpressRoute`")
 		}
 	}
 
 	if props.ConnectionType == network.IPsec {
 		if props.LocalNetworkGateway2 == nil || props.LocalNetworkGateway2.ID == nil {
-			return nil, fmt.Errorf("`local_network_gateway_id` and `shared_key` must be specified when `type` is set to `IPsec")
-		}
-
-		if props.SharedKey == nil {
-			return nil, fmt.Errorf("`local_network_gateway_id` and `shared_key` must be specified when `type` is set to `IPsec")
+			return nil, fmt.Errorf("`local_network_gateway_id` must be specified when `type` is set to `IPsec`")
 		}
 	}
 
 	if props.ConnectionType == network.Vnet2Vnet {
 		if props.VirtualNetworkGateway2 == nil || props.VirtualNetworkGateway2.ID == nil {
-			return nil, fmt.Errorf("`peer_virtual_network_gateway_id` and `shared_key` must be specified when `type` is set to `Vnet2Vnet")
+			return nil, fmt.Errorf("`peer_virtual_network_gateway_id` must be specified when `type` is set to `Vnet2Vnet`")
 		}
 	}
 
