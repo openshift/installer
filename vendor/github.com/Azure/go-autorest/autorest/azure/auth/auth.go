@@ -466,7 +466,7 @@ func decode(b []byte) ([]byte, error) {
 }
 
 func (settings FileSettings) getResourceForToken(baseURI string) (string, error) {
-	// Compare dafault base URI from the SDK to the endpoints from the public cloud
+	// Compare default base URI from the SDK to the endpoints from the public cloud
 	// Base URI and token resource are the same string. This func finds the authentication
 	// file field that matches the SDK base URI. The SDK defines the public cloud
 	// endpoint as its default base URI

@@ -3,9 +3,9 @@ module github.com/openshift/installer
 go 1.13
 
 require (
-	github.com/Azure/azure-sdk-for-go v38.1.0+incompatible
-	github.com/Azure/go-autorest/autorest v0.9.3
-	github.com/Azure/go-autorest/autorest/adal v0.8.1-0.20191028180845-3492b2aff503
+	github.com/Azure/azure-sdk-for-go v41.2.0+incompatible
+	github.com/Azure/go-autorest/autorest v0.10.0
+	github.com/Azure/go-autorest/autorest/adal v0.8.2
 	github.com/Azure/go-autorest/autorest/azure/auth v0.4.1
 	github.com/Azure/go-autorest/autorest/to v0.3.1-0.20191028180845-3492b2aff503
 	github.com/Azure/go-autorest/autorest/validation v0.2.1-0.20191028180845-3492b2aff503 // indirect
@@ -89,7 +89,6 @@ require (
 	github.com/stoewer/go-strcase v1.1.0 // indirect
 	github.com/stretchr/testify v1.5.1
 	github.com/terraform-providers/terraform-provider-aws v0.0.0
-	github.com/terraform-providers/terraform-provider-azuread v0.7.0 // indirect
 	github.com/terraform-providers/terraform-provider-azurerm v0.0.0
 	github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200204003432-77547e3e7d52
 	github.com/terraform-providers/terraform-provider-ignition v1.2.1
@@ -126,6 +125,9 @@ require (
 )
 
 replace (
+	github.com/Azure/go-autorest => github.com/tombuildsstuff/go-autorest v14.0.1-0.20200416184303-d4e299a3c04a+incompatible
+	github.com/Azure/go-autorest/autorest => github.com/tombuildsstuff/go-autorest/autorest v0.10.1-0.20200416184303-d4e299a3c04a
+	github.com/Azure/go-autorest/autorest/azure/auth => github.com/tombuildsstuff/go-autorest/autorest/azure/auth v0.4.3-0.20200416184303-d4e299a3c04a
 	github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb // Pinned by MCO
 	github.com/hashicorp/consul => github.com/hashicorp/consul v1.6.2 // Pin to version required by terraform fork
 	github.com/hashicorp/terraform => github.com/openshift/hashicorp-terraform v0.12.20-openshift-2 // Pin to fork with deduplicated rpc types
