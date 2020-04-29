@@ -8,11 +8,11 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/preview/botservice/mgmt/2018-07-12/botservice"
 	"github.com/hashicorp/go-azure-helpers/response"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
@@ -43,13 +43,13 @@ func resourceArmBotChannelMsTeams() *schema.Resource {
 			"bot_name": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"calling_web_hook": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validate.ValidateBotMSTeamsCallingWebHook(),
+				ValidateFunc: validate.BotMSTeamsCallingWebHook(),
 			},
 
 			"enable_calling": {
@@ -69,7 +69,7 @@ func resourceArmBotChannelMsTeamsCreate(d *schema.ResourceData, meta interface{}
 	resourceGroup := d.Get("resource_group_name").(string)
 	botName := d.Get("bot_name").(string)
 
-	if features.ShouldResourcesBeImported() && d.IsNewResource() {
+	if d.IsNewResource() {
 		existing, err := client.Get(ctx, resourceGroup, string(botservice.ChannelNameMsTeamsChannel), botName)
 		if err != nil {
 			if !utils.ResponseWasNotFound(existing.Response) {

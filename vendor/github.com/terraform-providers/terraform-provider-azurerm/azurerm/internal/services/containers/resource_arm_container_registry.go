@@ -16,7 +16,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/location"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
@@ -78,35 +78,14 @@ func resourceArmContainerRegistry() *schema.Resource {
 				Optional: true,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
-					ValidateFunc: validate.NoEmptyStrings,
+					ValidateFunc: validation.StringIsNotEmpty,
 				},
-				Set: azure.HashAzureLocation,
+				Set: location.HashCode,
 			},
 
 			"storage_account_id": {
 				Type:     schema.TypeString,
 				Optional: true,
-			},
-
-			"storage_account": {
-				Type:       schema.TypeList,
-				Optional:   true,
-				Deprecated: "`storage_account` has been replaced by `storage_account_id`.",
-				MaxItems:   1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-
-						"access_key": {
-							Type:      schema.TypeString,
-							Required:  true,
-							Sensitive: true,
-						},
-					},
-				},
 			},
 
 			"login_server": {
@@ -215,7 +194,7 @@ func resourceArmContainerRegistryCreate(d *schema.ResourceData, meta interface{}
 	resourceGroup := d.Get("resource_group_name").(string)
 	name := d.Get("name").(string)
 
-	if features.ShouldResourcesBeImported() && d.IsNewResource() {
+	if d.IsNewResource() {
 		existing, err := client.Get(ctx, resourceGroup, name)
 		if err != nil {
 			if !utils.ResponseWasNotFound(existing.Response) {
@@ -274,10 +253,8 @@ func resourceArmContainerRegistryCreate(d *schema.ResourceData, meta interface{}
 		parameters.StorageAccount = &containerregistry.StorageAccountProperties{
 			ID: utils.String(v.(string)),
 		}
-	} else {
-		if strings.EqualFold(sku, string(containerregistry.Classic)) {
-			return fmt.Errorf("`storage_account_id` must be specified for a Classic (unmanaged) Sku.")
-		}
+	} else if strings.EqualFold(sku, string(containerregistry.Classic)) {
+		return fmt.Errorf("`storage_account_id` must be specified for a Classic (unmanaged) Sku.")
 	}
 
 	future, err := client.Create(ctx, resourceGroup, name, parameters)
@@ -356,10 +333,8 @@ func resourceArmContainerRegistryUpdate(d *schema.ResourceData, meta interface{}
 		parameters.StorageAccount = &containerregistry.StorageAccountProperties{
 			ID: utils.String(v.(string)),
 		}
-	} else {
-		if strings.EqualFold(sku, string(containerregistry.Classic)) {
-			return fmt.Errorf("`storage_account_id` must be specified for a Classic (unmanaged) Sku.")
-		}
+	} else if strings.EqualFold(sku, string(containerregistry.Classic)) {
+		return fmt.Errorf("`storage_account_id` must be specified for a Classic (unmanaged) Sku.")
 	}
 
 	// geo replication is only supported by Premium Sku
@@ -663,7 +638,7 @@ func flattenNetworkRuleSet(networkRuleSet *containerregistry.NetworkRuleSet) []i
 		value := make(map[string]interface{})
 		value["action"] = string(ipRule.Action)
 
-		//When a /32 CIDR is passed as an ip rule, Azure will drop the /32 leading to the resource wanting to be re-created next run
+		// When a /32 CIDR is passed as an ip rule, Azure will drop the /32 leading to the resource wanting to be re-created next run
 		if !strings.Contains(*ipRule.IPAddressOrRange, "/") {
 			*ipRule.IPAddressOrRange += "/32"
 		}

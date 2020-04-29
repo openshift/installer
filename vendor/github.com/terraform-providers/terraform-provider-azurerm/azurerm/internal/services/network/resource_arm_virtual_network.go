@@ -19,7 +19,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-09-01/network"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -47,7 +47,7 @@ func resourceArmVirtualNetwork() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"resource_group_name": azure.SchemaResourceGroupName(),
@@ -60,7 +60,7 @@ func resourceArmVirtualNetwork() *schema.Resource {
 				MinItems: 1,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
-					ValidateFunc: validate.NoEmptyStrings,
+					ValidateFunc: validation.StringIsNotEmpty,
 				},
 			},
 
@@ -89,32 +89,44 @@ func resourceArmVirtualNetwork() *schema.Resource {
 				Optional: true,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
-					ValidateFunc: validate.NoEmptyStrings,
+					ValidateFunc: validation.StringIsNotEmpty,
 				},
 			},
 
-			"subnet": {
-				Type:     schema.TypeSet,
-				Optional: true,
+			"guid": {
+				Type:     schema.TypeString,
 				Computed: true,
+			},
+
+			"subnet": {
+				Type:       schema.TypeSet,
+				Optional:   true,
+				Computed:   true,
+				ConfigMode: schema.SchemaConfigModeAttr,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validate.NoEmptyStrings,
+							ValidateFunc: validation.StringIsNotEmpty,
 						},
 
 						"address_prefix": {
-							Type:       schema.TypeString,
-							Optional:   true,
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+							// TODO Remove this in the next major version release
 							Deprecated: "Use the `address_prefixes` property instead.",
 						},
 
 						"address_prefixes": {
 							Type:     schema.TypeList,
 							Optional: true,
-							Elem:     &schema.Schema{Type: schema.TypeString},
+							Computed: true,
+							Elem: &schema.Schema{
+								Type:         schema.TypeString,
+								ValidateFunc: validation.StringIsNotEmpty,
+							},
 						},
 
 						"security_group": {
@@ -184,7 +196,7 @@ func resourceArmVirtualNetworkCreateUpdate(d *schema.ResourceData, meta interfac
 
 			networkSecurityGroupName := parsedNsgID.Path["networkSecurityGroups"]
 
-			if !SliceContainsValue(networkSecurityGroupNames, networkSecurityGroupName) {
+			if !azure.SliceContainsValue(networkSecurityGroupNames, networkSecurityGroupName) {
 				networkSecurityGroupNames = append(networkSecurityGroupNames, networkSecurityGroupName)
 			}
 		}
@@ -238,11 +250,14 @@ func resourceArmVirtualNetworkRead(d *schema.ResourceData, meta interface{}) err
 
 	d.Set("name", resp.Name)
 	d.Set("resource_group_name", resGroup)
+
 	if location := resp.Location; location != nil {
 		d.Set("location", azure.NormalizeLocation(*location))
 	}
 
 	if props := resp.VirtualNetworkPropertiesFormat; props != nil {
+		d.Set("guid", props.ResourceGUID)
+
 		if space := props.AddressSpace; space != nil {
 			d.Set("address_space", utils.FlattenStringSlice(space.AddressPrefixes))
 		}
@@ -303,7 +318,7 @@ func expandVirtualNetworkProperties(ctx context.Context, d *schema.ResourceData,
 
 			name := subnet["name"].(string)
 			log.Printf("[INFO] setting subnets inside vNet, processing %q", name)
-			//since subnets can also be created outside of vNet definition (as root objects)
+			// since subnets can also be created outside of vNet definition (as root objects)
 			// do a GET on subnet properties from the server before setting them
 			resGroup := d.Get("resource_group_name").(string)
 			vnetName := d.Get("name").(string)
@@ -322,14 +337,14 @@ func expandVirtualNetworkProperties(ctx context.Context, d *schema.ResourceData,
 				}
 				properties.AddressPrefixes = &addressPrefixes
 				if len(addressPrefixes) > 0 {
-					prefixSet += 1
+					prefixSet++
 				}
 			}
 			if value, ok := subnet["address_prefix"]; ok {
 				addressPrefix := value.(string)
 				properties.AddressPrefix = &addressPrefix
 				if len(addressPrefix) > 0 {
-					prefixSet += 1
+					prefixSet++
 				}
 			}
 			if properties.AddressPrefixes != nil && len(*properties.AddressPrefixes) == 1 {
@@ -337,15 +352,15 @@ func expandVirtualNetworkProperties(ctx context.Context, d *schema.ResourceData,
 				properties.AddressPrefixes = nil
 			}
 			if prefixSet == 0 {
-				return nil, fmt.Errorf("[ERROR] either address_prefix or address_prefixes is required")
+				return nil, fmt.Errorf("one of `address_prefix` or `address_prefixes` must be set")
 			}
 			if prefixSet == 2 {
-				return nil, fmt.Errorf("[ERROR] either address_prefix or address_prefixes must be set, not both")
+				return nil, fmt.Errorf("only one of `address_prefix` or `address_prefixes` can be set")
 			}
 
 			secGroup := subnet["security_group"].(string)
 
-			//set the props from config and leave the rest intact
+			// set the props from config and leave the rest intact
 			subnetObj.Name = &name
 			if subnetObj.SubnetPropertiesFormat == nil {
 				subnetObj.SubnetPropertiesFormat = &network.SubnetPropertiesFormat{}
@@ -502,7 +517,7 @@ func getExistingSubnet(ctx context.Context, resGroup string, vnetName string, su
 		if resp.StatusCode == http.StatusNotFound {
 			return &network.Subnet{}, nil
 		}
-		//raise an error if there was an issue other than 404 in getting subnet properties
+		// raise an error if there was an issue other than 404 in getting subnet properties
 		return nil, err
 	}
 
@@ -530,7 +545,7 @@ func expandAzureRmVirtualNetworkVirtualNetworkSecurityGroupNames(d *schema.Resou
 
 				networkSecurityGroupName := parsedNsgID.Path["networkSecurityGroups"]
 
-				if !SliceContainsValue(nsgNames, networkSecurityGroupName) {
+				if !azure.SliceContainsValue(nsgNames, networkSecurityGroupName) {
 					nsgNames = append(nsgNames, networkSecurityGroupName)
 				}
 			}

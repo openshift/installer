@@ -13,6 +13,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
@@ -90,12 +91,15 @@ func resourceArmPrivateEndpoint() *schema.Resource {
 							Optional:     true,
 							ValidateFunc: validation.StringLenBetween(1, 140),
 						},
+						"private_ip_address": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
 
-			// tags has been removed
-			// API Issue "Unable to remove Tags from Private Endpoint": https://github.com/Azure/azure-sdk-for-go/issues/6467
+			"tags": tags.Schema(),
 		},
 	}
 }
@@ -138,11 +142,16 @@ func resourceArmPrivateEndpointCreateUpdate(d *schema.ResourceData, meta interfa
 				ID: utils.String(subnetId),
 			},
 		},
+		Tags: tags.Expand(d.Get("tags").(map[string]interface{})),
 	}
 
 	future, err := client.CreateOrUpdate(ctx, resourceGroup, name, parameters)
 	if err != nil {
-		return fmt.Errorf("Error creating Private Endpoint %q (Resource Group %q): %+v", name, resourceGroup, err)
+		if azure.StringContains(err.Error(), "is missing required parameter 'group Id'") {
+			return fmt.Errorf("Error creating Private Endpoint %q (Resource Group %q) due to missing 'group Id', ensure that the 'subresource_names' type is populated: %+v", name, resourceGroup, err)
+		} else {
+			return fmt.Errorf("Error creating Private Endpoint %q (Resource Group %q): %+v", name, resourceGroup, err)
+		}
 	}
 	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
 		return fmt.Errorf("Error waiting for creation of Private Endpoint %q (Resource Group %q): %+v", name, resourceGroup, err)
@@ -162,6 +171,7 @@ func resourceArmPrivateEndpointCreateUpdate(d *schema.ResourceData, meta interfa
 
 func resourceArmPrivateEndpointRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Network.PrivateEndpointClient
+	nicsClient := meta.(*clients.Client).Network.InterfacesClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -189,7 +199,20 @@ func resourceArmPrivateEndpointRead(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if props := resp.PrivateEndpointProperties; props != nil {
+		privateIpAddress := ""
+
+		if nics := props.NetworkInterfaces; nics != nil && len(*nics) > 0 {
+			nic := (*nics)[0]
+			if nic.ID != nil && *nic.ID != "" {
+				privateIpAddress = getPrivateIpAddress(ctx, nicsClient, *nic.ID)
+			}
+		}
+
 		flattenedConnection := flattenArmPrivateLinkEndpointServiceConnection(props.PrivateLinkServiceConnections, props.ManualPrivateLinkServiceConnections)
+		for _, item := range flattenedConnection {
+			v := item.(map[string]interface{})
+			v["private_ip_address"] = privateIpAddress
+		}
 		if err := d.Set("private_service_connection", flattenedConnection); err != nil {
 			return fmt.Errorf("Error setting `private_service_connection`: %+v", err)
 		}
@@ -201,8 +224,7 @@ func resourceArmPrivateEndpointRead(d *schema.ResourceData, meta interface{}) er
 		d.Set("subnet_id", subnetId)
 	}
 
-	// API Issue "Unable to remove Tags from Private Link Endpoint": https://github.com/Azure/azure-sdk-for-go/issues/6467
-	return nil
+	return tags.FlattenAndSet(d, resp.Tags)
 }
 
 func resourceArmPrivateEndpointDelete(d *schema.ResourceData, meta interface{}) error {
