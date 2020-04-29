@@ -1,4 +1,4 @@
-package v1alpha1
+package v1beta1
 
 import (
 	corev1 "k8s.io/api/core/v1"
@@ -52,7 +52,37 @@ type VSphereMachineProviderSpec struct {
 	// machine is cloned.
 	// +optional
 	DiskGiB int32 `json:"diskGiB,omitempty"`
+	// Snapshot is the name of the snapshot from which the VM was cloned
+	// +optional
+	Snapshot string `json:"snapshot"`
+
+	// CloneMode specifies the type of clone operation.
+	// The LinkedClone mode is only support for templates that have at least
+	// one snapshot. If the template has no snapshots, then CloneMode defaults
+	// to FullClone.
+	// When LinkedClone mode is enabled the DiskGiB field is ignored as it is
+	// not possible to expand disks of linked clones.
+	// Defaults to LinkedClone, but fails gracefully to FullClone if the source
+	// of the clone operation has no snapshots.
+	// +optional
+	CloneMode CloneMode `json:"cloneMode,omitempty"`
 }
+
+// CloneMode is the type of clone operation used to clone a VM from a template.
+type CloneMode string
+
+const (
+	// FullClone indicates a VM will have no relationship to the source of the
+	// clone operation once the operation is complete. This is the safest clone
+	// mode, but it is not the fastest.
+	FullClone CloneMode = "fullClone"
+
+	// LinkedClone means resulting VMs will be dependent upon the snapshot of
+	// the source VM/template from which the VM was cloned. This is the fastest
+	// clone mode, but it also prevents expanding a VMs disk beyond the size of
+	// the source VM/template.
+	LinkedClone CloneMode = "linkedClone"
+)
 
 // NetworkSpec defines the virtual machine's network configuration.
 type NetworkSpec struct {
