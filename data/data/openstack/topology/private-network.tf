@@ -7,6 +7,7 @@ data "openstack_networking_network_v2" "external_network" {
 resource "openstack_networking_network_v2" "openshift-private" {
   name           = "${var.cluster_id}-openshift"
   admin_state_up = "true"
+  mtu            = tonumber(var.aci_net_ext["mtu"])
   tags           = ["openshiftClusterID=${var.cluster_id}"]
   value_specs    = {
     "apic:nested_domain_infra_vlan"        : var.aci_net_ext["infraVlan"],

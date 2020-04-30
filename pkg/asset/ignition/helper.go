@@ -53,7 +53,7 @@ func GetActualKubeApiInterfaceStr() string {
 # These are rendered through Go
 KUBE_API_VLAN=1021
 DEFAULT_GATEWAY=1.2.3.1
-MTU_VALUE=1600
+MTU_VALUE=1400
 
 IFC_4094=ens3.4094
 KUBE_API_VLAN_DEVICE="ens3.${KUBE_API_VLAN}"
@@ -152,7 +152,7 @@ func GetActualIfcfgEns34094Str() string {
 	actualIfcfgEns34094Str := `DEVICE=ens3.4094
                ONBOOT=yes
                BOOTPROTO=dhcp
-               MTU=1600
+               MTU=1400
                TYPE=Vlan
                VLAN=yes
                PHYSDEV=ens3
@@ -187,7 +187,7 @@ func GetActualIfcfgOpflexConnStr() string {
                NAME=opflex-conn
                DEVICE=ens3.4094
                ONBOOT=yes
-               MTU=1600`
+               MTU=1400`
 
 	return actualIfcfgOpflexConnStr
 }
@@ -204,7 +204,7 @@ func GetActualIfcfgUplinkConnStr() string {
                DEVICE=ens3
                ONBOOT=yes
                BOOTPROTO=none
-               MTU=1600`
+               MTU=1400`
 
 	return actualIfcfgUplinkConnStr
 }

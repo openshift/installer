@@ -77,7 +77,7 @@ func TestWorkerGenerateCiscoAci(t *testing.T) {
 						KubeApiVLAN: "1021",
                                                 NeutronCIDR: ipnet.MustParseCIDR("5.6.7.8/5"),
                                                 InstallerHostSubnet: "9.10.11.12/10",
-						Mtu: "1600",
+						Mtu: "1500",
                                         },
                                 },
                         },
