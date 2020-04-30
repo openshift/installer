@@ -19,6 +19,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
+	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
 )
 
@@ -54,6 +55,7 @@ func newDestroyClusterCmd() *cobra.Command {
 }
 
 func runDestroyCmd(directory string) error {
+	timer.StartTimer(timer.TotalTimeElapsed)
 	destroyer, err := destroy.New(logrus.StandardLogger(), directory)
 	if err != nil {
 		return errors.Wrap(err, "Failed while preparing to destroy cluster")
@@ -82,6 +84,8 @@ func runDestroyCmd(directory string) error {
 	if err != nil && !os.IsNotExist(err) {
 		return errors.Wrap(err, "failed to remove Terraform state")
 	}
+	timer.StopTimer(timer.TotalTimeElapsed)
+	timer.LogSummary()
 
 	return nil
 }
@@ -95,10 +99,13 @@ func newDestroyBootstrapCmd() *cobra.Command {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
 
+			timer.StartTimer(timer.TotalTimeElapsed)
 			err := bootstrap.Destroy(rootOpts.dir)
 			if err != nil {
 				logrus.Fatal(err)
 			}
+			timer.StopTimer(timer.TotalTimeElapsed)
+			timer.LogSummary()
 		},
 	}
 }

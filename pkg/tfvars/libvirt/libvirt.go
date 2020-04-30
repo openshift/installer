@@ -10,21 +10,23 @@ import (
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
 )
 
 type config struct {
-	URI          string   `json:"libvirt_uri,omitempty"`
-	Image        string   `json:"os_image,omitempty"`
-	IfName       string   `json:"libvirt_network_if"`
-	MasterIPs    []string `json:"libvirt_master_ips,omitempty"`
-	BootstrapIP  string   `json:"libvirt_bootstrap_ip,omitempty"`
-	MasterMemory string   `json:"libvirt_master_memory,omitempty"`
-	MasterVcpu   string   `json:"libvirt_master_vcpu,omitempty"`
+	URI             string   `json:"libvirt_uri,omitempty"`
+	Image           string   `json:"os_image,omitempty"`
+	IfName          string   `json:"libvirt_network_if"`
+	MasterIPs       []string `json:"libvirt_master_ips,omitempty"`
+	BootstrapIP     string   `json:"libvirt_bootstrap_ip,omitempty"`
+	MasterMemory    string   `json:"libvirt_master_memory,omitempty"`
+	MasterVcpu      string   `json:"libvirt_master_vcpu,omitempty"`
+	BootstrapMemory int      `json:"libvirt_bootstrap_memory,omitempty"`
 }
 
 // TFVars generates libvirt-specific Terraform variables.
-func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, machineCIDR *net.IPNet, bridge string, masterCount int) ([]byte, error) {
+func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, machineCIDR *net.IPNet, bridge string, masterCount int, architecture types.Architecture) ([]byte, error) {
 	bootstrapIP, err := cidr.Host(machineCIDR, 10)
 	if err != nil {
 		return nil, errors.Errorf("failed to generate bootstrap IP: %v", err)
@@ -48,6 +50,12 @@ func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, 
 		MasterIPs:    masterIPs,
 		MasterMemory: strconv.Itoa(masterConfig.DomainMemory),
 		MasterVcpu:   strconv.Itoa(masterConfig.DomainVcpu),
+	}
+
+	// Power PC systems typically require more memory because the page size is 64K and not the default 4K
+	// TODO: need to make ppc64le a supported architecture - https://bugzilla.redhat.com/show_bug.cgi?id=1821392
+	if architecture == "ppc64le" {
+		cfg.BootstrapMemory = 5120
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

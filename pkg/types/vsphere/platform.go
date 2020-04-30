@@ -33,9 +33,6 @@ type Platform struct {
 	// IngressVIP is the virtual IP address for ingress
 	IngressVIP string `json:"ingressVIP,omitempty"`
 
-	// DNSVIP is the virtual IP address for DNS
-	DNSVIP string `json:"dnsVIP,omitempty"`
-
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on VSphere for machine pools which do not define their own
 	// platform configuration.

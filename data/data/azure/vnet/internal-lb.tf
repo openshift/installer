@@ -5,7 +5,7 @@ locals {
 
 resource "azurerm_lb" "internal" {
   sku                 = "Standard"
-  name                = "${var.cluster_id}-internal-lb"
+  name                = "${var.cluster_id}-internal"
   resource_group_name = var.resource_group_name
   location            = var.region
 
@@ -39,7 +39,7 @@ resource "azurerm_lb_backend_address_pool" "internal_lb_controlplane_pool_v4" {
 
   resource_group_name = var.resource_group_name
   loadbalancer_id     = azurerm_lb.internal.id
-  name                = "${var.cluster_id}-internal-controlplane-v4"
+  name                = var.cluster_id
 }
 
 resource "azurerm_lb_backend_address_pool" "internal_lb_controlplane_pool_v6" {
@@ -47,7 +47,7 @@ resource "azurerm_lb_backend_address_pool" "internal_lb_controlplane_pool_v6" {
 
   resource_group_name = var.resource_group_name
   loadbalancer_id     = azurerm_lb.internal.id
-  name                = "${var.cluster_id}-internal-controlplane-v6"
+  name                = "${var.cluster_id}-IPv6"
 }
 
 resource "azurerm_lb_rule" "internal_lb_rule_api_internal_v4" {

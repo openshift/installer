@@ -18,7 +18,7 @@
 
 First, install all [build dependencies](docs/dev/dependencies.md).
 
-Clone this repository to `src/github.com/openshift/installer` in your [GOPATH](https://golang.org/cmd/go/#hdr-GOPATH_environment_variable). Then build the `openshift-install` binary with:
+Clone this repository. Then build the `openshift-install` binary with:
 
 ```sh
 hack/build.sh

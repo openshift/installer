@@ -3,6 +3,7 @@ package manifests
 import (
 	"fmt"
 	"path/filepath"
+	"sort"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -70,6 +71,9 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			Name: "cluster",
 			// not namespaced
 		},
+		Spec: configv1.InfrastructureSpec{
+			PlatformSpec: configv1.PlatformSpec{},
+		},
 		Status: configv1.InfrastructureStatus{
 			InfrastructureName:   clusterID.InfraID,
 			APIServerURL:         getAPIServerURL(installConfig.Config),
@@ -81,12 +85,28 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 
 	switch installConfig.Config.Platform.Name() {
 	case aws.Name:
-		config.Status.PlatformStatus.Type = configv1.AWSPlatformType
+		config.Spec.PlatformSpec.Type = configv1.AWSPlatformType
+		config.Spec.PlatformSpec.AWS = &configv1.AWSPlatformSpec{}
 		config.Status.PlatformStatus.AWS = &configv1.AWSPlatformStatus{
 			Region: installConfig.Config.Platform.AWS.Region,
 		}
+
+		for _, service := range installConfig.Config.Platform.AWS.ServiceEndpoints {
+			config.Spec.PlatformSpec.AWS.ServiceEndpoints = append(config.Spec.PlatformSpec.AWS.ServiceEndpoints, configv1.AWSServiceEndpoint{
+				Name: service.Name,
+				URL:  service.URL,
+			})
+			config.Status.PlatformStatus.AWS.ServiceEndpoints = append(config.Status.PlatformStatus.AWS.ServiceEndpoints, configv1.AWSServiceEndpoint{
+				Name: service.Name,
+				URL:  service.URL,
+			})
+			sort.Slice(config.Status.PlatformStatus.AWS.ServiceEndpoints, func(i, j int) bool {
+				return config.Status.PlatformStatus.AWS.ServiceEndpoints[i].Name <
+					config.Status.PlatformStatus.AWS.ServiceEndpoints[j].Name
+			})
+		}
 	case azure.Name:
-		config.Status.PlatformStatus.Type = configv1.AzurePlatformType
+		config.Spec.PlatformSpec.Type = configv1.AzurePlatformType
 
 		rg := fmt.Sprintf("%s-rg", clusterID.InfraID)
 		config.Status.PlatformStatus.Azure = &configv1.AzurePlatformStatus{
@@ -97,14 +117,14 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			config.Status.PlatformStatus.Azure.NetworkResourceGroupName = nrg
 		}
 	case baremetal.Name:
-		config.Status.PlatformStatus.Type = configv1.BareMetalPlatformType
+		config.Spec.PlatformSpec.Type = configv1.BareMetalPlatformType
 		config.Status.PlatformStatus.BareMetal = &configv1.BareMetalPlatformStatus{
 			APIServerInternalIP: installConfig.Config.Platform.BareMetal.APIVIP,
 			NodeDNSIP:           installConfig.Config.Platform.BareMetal.DNSVIP,
 			IngressIP:           installConfig.Config.Platform.BareMetal.IngressVIP,
 		}
 	case gcp.Name:
-		config.Status.PlatformStatus.Type = configv1.GCPPlatformType
+		config.Spec.PlatformSpec.Type = configv1.GCPPlatformType
 		config.Status.PlatformStatus.GCP = &configv1.GCPPlatformStatus{
 			ProjectID: installConfig.Config.Platform.GCP.ProjectID,
 			Region:    installConfig.Config.Platform.GCP.Region,
@@ -119,48 +139,40 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			Data:     content,
 		})
 	case libvirt.Name:
-		config.Status.PlatformStatus.Type = configv1.LibvirtPlatformType
+		config.Spec.PlatformSpec.Type = configv1.LibvirtPlatformType
 	case none.Name:
-		config.Status.PlatformStatus.Type = configv1.NonePlatformType
+		config.Spec.PlatformSpec.Type = configv1.NonePlatformType
 	case openstack.Name:
-		config.Status.PlatformStatus.Type = configv1.OpenStackPlatformType
-		apiVIP, err := openstackdefaults.APIVIP(installConfig.Config.Networking)
-		if err != nil {
-			return err
-		}
+		config.Spec.PlatformSpec.Type = configv1.OpenStackPlatformType
 		dnsVIP, err := openstackdefaults.DNSVIP(installConfig.Config.Networking)
 		if err != nil {
 			return err
 		}
-		ingressVIP, err := openstackdefaults.IngressVIP(installConfig.Config.Networking)
-		if err != nil {
-			return err
-		}
 		config.Status.PlatformStatus.OpenStack = &configv1.OpenStackPlatformStatus{
-			APIServerInternalIP: apiVIP.String(),
+			APIServerInternalIP: installConfig.Config.OpenStack.APIVIP,
 			NodeDNSIP:           dnsVIP.String(),
-			IngressIP:           ingressVIP.String(),
+			IngressIP:           installConfig.Config.OpenStack.IngressVIP,
 		}
 	case vsphere.Name:
-		config.Status.PlatformStatus.Type = configv1.VSpherePlatformType
+		config.Spec.PlatformSpec.Type = configv1.VSpherePlatformType
 		if installConfig.Config.VSphere.APIVIP != "" {
 			config.Status.PlatformStatus.VSphere = &configv1.VSpherePlatformStatus{
 				APIServerInternalIP: installConfig.Config.VSphere.APIVIP,
-				NodeDNSIP:           installConfig.Config.VSphere.DNSVIP,
 				IngressIP:           installConfig.Config.VSphere.IngressVIP,
 			}
 		}
 	case ovirt.Name:
-		config.Status.PlatformStatus.Type = configv1.OvirtPlatformType
+		config.Spec.PlatformSpec.Type = configv1.OvirtPlatformType
 		config.Status.PlatformStatus.Ovirt = &configv1.OvirtPlatformStatus{
 			APIServerInternalIP: installConfig.Config.Ovirt.APIVIP,
 			NodeDNSIP:           installConfig.Config.Ovirt.DNSVIP,
 			IngressIP:           installConfig.Config.Ovirt.IngressVIP,
 		}
 	default:
-		config.Status.PlatformStatus.Type = configv1.NonePlatformType
+		config.Spec.PlatformSpec.Type = configv1.NonePlatformType
 	}
-	config.Status.Platform = config.Status.PlatformStatus.Type
+	config.Status.Platform = config.Spec.PlatformSpec.Type
+	config.Status.PlatformStatus.Type = config.Spec.PlatformSpec.Type
 
 	if cloudproviderconfig.ConfigMap != nil {
 		// set the configmap reference.

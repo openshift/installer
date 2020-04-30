@@ -62,3 +62,17 @@ variable "nodes_subnet_id" {
 variable "cluster_domain" {
   type = string
 }
+
+variable "master_port_ids" {
+  type = list(string)
+}
+
+variable "root_volume_size" {
+  type = number
+  description = "The size of the volume in gigabytes for the root block device."
+}
+
+variable "root_volume_type" {
+  type = string
+  description = "The type of volume for the root block device."
+}

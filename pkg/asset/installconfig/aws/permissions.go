@@ -69,6 +69,7 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:DescribeVpcClassicLinkDnsSupport",
 		"ec2:DescribeVpcEndpoints",
 		"ec2:DescribeVpcs",
+		"ec2:GetEbsDefaultKmsKeyId",
 		"ec2:ModifyInstanceAttribute",
 		"ec2:ModifyNetworkInterfaceAttribute",
 		"ec2:ReleaseAddress",
@@ -140,6 +141,7 @@ var permissions = map[PermissionGroup][]string{
 		"s3:CreateBucket",
 		"s3:DeleteBucket",
 		"s3:GetAccelerateConfiguration",
+		"s3:GetBucketAcl",
 		"s3:GetBucketCors",
 		"s3:GetBucketLocation",
 		"s3:GetBucketLogging",
@@ -180,6 +182,7 @@ var permissions = map[PermissionGroup][]string{
 		"iam:ListRolePolicies",
 		"iam:ListUserPolicies",
 		"s3:DeleteObject",
+		"s3:ListBucketVersions",
 		"tag:GetResources",
 	},
 	// Permissions required for creating network resources

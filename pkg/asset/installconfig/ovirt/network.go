@@ -29,9 +29,8 @@ func askNetwork(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
 		networkNames = append(networkNames, network.MustName())
 	}
 	err = survey.AskOne(&survey.Select{
-		Message: "Select the oVirt network",
-		Help: "The oVirt network of the deployed VMs. 'ovirtmgmt' is the default network - it is recommended " +
-			"to work with a dedicated network per OpenShift cluster",
+		Message: "oVirt network",
+		Help:    "The oVirt network of the deployed VMs. 'ovirtmgmt' is the default network. It is recommended to use a dedicated network for each OpenShift cluster.",
 		Options: networkNames,
 	},
 		&networkName,

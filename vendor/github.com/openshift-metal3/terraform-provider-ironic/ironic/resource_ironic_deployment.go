@@ -1,11 +1,18 @@
 package ironic
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/base64"
 	"fmt"
 	"github.com/gophercloud/gophercloud/openstack/baremetal/v1/nodes"
 	utils "github.com/gophercloud/utils/openstack/baremetal/v1/nodes"
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"io/ioutil"
+	"log"
+	"net/http"
 )
 
 // Schema resource definition for an Ironic deployment.
@@ -32,6 +39,16 @@ func resourceDeployment() *schema.Resource {
 				ForceNew: true,
 			},
 			"user_data": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+			"user_data_url": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+			"user_data_url_ca_cert": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
@@ -85,8 +102,18 @@ func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 
 	d.SetId(d.Get("node_uuid").(string))
 
+	userData := d.Get("user_data").(string)
+	userDataURL := d.Get("user_data_url").(string)
+	userDataCaCert := d.Get("user_data_url_ca_cert").(string)
+
+	// if user_data_url is specified in addition to user_data, use the former
+	ignitionData := fetchFullIgnition(userDataURL, userDataCaCert)
+	if ignitionData != "" {
+		userData = ignitionData
+	}
+
 	configDrive, err := buildConfigDrive(client.Microversion,
-		d.Get("user_data").(string),
+		userData,
 		d.Get("network_data").(map[string]interface{}),
 		d.Get("metadata").(map[string]interface{}))
 	if err != nil {
@@ -95,6 +122,48 @@ func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 
 	// Deploy the node - drive Ironic state machine until node is 'active'
 	return ChangeProvisionStateToTarget(client, d.Id(), "active", &configDrive)
+}
+
+// fetchFullIgnition gets full igntion from the URL and cert passed to it and returns userdata as a string
+func fetchFullIgnition(userDataURL string, userDataCaCert string) string {
+	// Send full ignition, if the URL is specified
+	if userDataURL != "" {
+		caCertPool := x509.NewCertPool()
+		transport := &http.Transport{}
+
+		if userDataCaCert != "" {
+			caCert, err := base64.StdEncoding.DecodeString(userDataCaCert)
+			if err != nil {
+				log.Printf("could not decode user_data_url_ca_cert: %s", err)
+				return ""
+			}
+			caCertPool.AppendCertsFromPEM(caCert)
+
+			transport.TLSClientConfig = &tls.Config{RootCAs: caCertPool}
+		} else {
+			// Disable certificate verification
+			transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		}
+
+		client := retryablehttp.NewClient()
+		client.HTTPClient.Transport = transport
+
+		// Get the data
+		resp, err := client.Get(userDataURL)
+		if err != nil {
+			log.Printf("could not get user_data_url: %s", err)
+			return ""
+		}
+		defer resp.Body.Close()
+		var userData []byte
+		userData, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("could not read user_data_url: %s", err)
+			return ""
+		}
+		return string(userData)
+	}
+	return ""
 }
 
 // buildConfigDrive handles building a config drive appropriate for the Ironic version we are using.  Newer versions

@@ -1,0 +1,12 @@
+TYPE=Ethernet
+BOOTPROTO=none
+NAME=ens192
+DEVICE=ens192
+ONBOOT=yes
+IPADDR=${ip_address}
+PREFIX=${element(split("/", machine_cidr), 1)}
+GATEWAY=${cidrhost(machine_cidr, 1)}
+DOMAIN=${cluster_domain}
+%{ for index, ip in dns_addresses ~}
+DNS${index+1}=${ip}
+%{ endfor ~}

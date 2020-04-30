@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/openstack/validation/mock"
@@ -21,21 +22,34 @@ func validPlatform() *openstack.Platform {
 	}
 }
 
+func validNetworking() *types.Networking {
+	return &types.Networking{
+		NetworkType: "OpenShiftSDN",
+		MachineNetwork: []types.MachineNetworkEntry{{
+			CIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
+		}},
+	}
+}
+
 func TestValidatePlatform(t *testing.T) {
 	cases := []struct {
-		name             string
-		platform         *openstack.Platform
-		noClouds         bool
-		noNetworks       bool
-		noFlavors        bool
-		noNetExts        bool
-		noServiceCatalog bool
-		valid            bool
+		name                  string
+		platform              *openstack.Platform
+		networking            *types.Networking
+		noClouds              bool
+		noNetworks            bool
+		noFlavors             bool
+		noNetExts             bool
+		noServiceCatalog      bool
+		validMachinesSubnet   bool
+		invalidMachinesSubnet bool
+		valid                 bool
 	}{
 		{
-			name:     "minimal",
-			platform: validPlatform(),
-			valid:    true,
+			name:       "minimal",
+			platform:   validPlatform(),
+			networking: validNetworking(),
+			valid:      true,
 		},
 		{
 			name: "missing cloud",
@@ -44,7 +58,8 @@ func TestValidatePlatform(t *testing.T) {
 				p.Cloud = ""
 				return p
 			}(),
-			valid: false,
+			networking: validNetworking(),
+			valid:      false,
 		},
 		{
 			name: "missing external network",
@@ -53,7 +68,8 @@ func TestValidatePlatform(t *testing.T) {
 				p.ExternalNetwork = ""
 				return p
 			}(),
-			valid: false,
+			networking: validNetworking(),
+			valid:      false,
 		},
 		{
 			name: "valid default machine pool",
@@ -62,7 +78,8 @@ func TestValidatePlatform(t *testing.T) {
 				p.DefaultMachinePlatform = &openstack.MachinePool{}
 				return p
 			}(),
-			valid: true,
+			networking: validNetworking(),
+			valid:      true,
 		},
 		{
 			name: "non IP external dns",
@@ -73,7 +90,8 @@ func TestValidatePlatform(t *testing.T) {
 				}
 				return p
 			}(),
-			valid: false,
+			networking: validNetworking(),
+			valid:      false,
 		},
 		{
 			name: "valid external dns",
@@ -84,37 +102,155 @@ func TestValidatePlatform(t *testing.T) {
 				}
 				return p
 			}(),
-			valid: true,
+			networking: validNetworking(),
+			valid:      true,
 		},
 		{
-			name:     "clouds fetch failure",
-			platform: validPlatform(),
-			noClouds: true,
-			valid:    false,
+			name:       "clouds fetch failure",
+			platform:   validPlatform(),
+			networking: validNetworking(),
+			noClouds:   true,
+			valid:      false,
 		},
 		{
 			name:       "networks fetch failure",
 			platform:   validPlatform(),
+			networking: validNetworking(),
 			noNetworks: true,
 			valid:      false,
 		},
 		{
-			name:      "flavors fetch failure",
-			platform:  validPlatform(),
-			noFlavors: true,
-			valid:     false,
+			name:       "flavors fetch failure",
+			platform:   validPlatform(),
+			networking: validNetworking(),
+			noFlavors:  true,
+			valid:      false,
 		},
 		{
-			name:      "network extensions fetch failure",
-			platform:  validPlatform(),
-			noNetExts: true,
-			valid:     true,
+			name:       "network extensions fetch failure",
+			platform:   validPlatform(),
+			networking: validNetworking(),
+			noNetExts:  true,
+			valid:      true,
 		},
 		{
 			name:             "service catalog fetch failure",
 			platform:         validPlatform(),
+			networking:       validNetworking(),
 			noServiceCatalog: true,
 			valid:            true,
+		},
+		{
+			name: "valid custom API vip",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.APIVIP = "10.0.0.9"
+				return p
+			}(),
+			networking: validNetworking(),
+			valid:      true,
+		},
+		{
+			name: "incorrect network custom API vip",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.APIVIP = "11.1.0.5"
+				return p
+			}(),
+			networking: validNetworking(),
+			valid:      false,
+		},
+		{
+			name: "valid custom ingress vip",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.IngressVIP = "10.0.0.9"
+				return p
+			}(),
+			networking: validNetworking(),
+			valid:      true,
+		},
+		{
+			name: "incorrect network custom ingress vip",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.IngressVIP = "11.1.0.5"
+				return p
+			}(),
+			networking: validNetworking(),
+			valid:      false,
+		},
+		{
+			name: "invalid network custom ingress vip",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.IngressVIP = "banana"
+				return p
+			}(),
+			networking: validNetworking(),
+			valid:      false,
+		},
+		{
+			name: "invalid network custom API vip",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.APIVIP = "banana"
+				return p
+			}(),
+			networking: validNetworking(),
+			valid:      false,
+		},
+		{
+			name: "valid MachinesSubnet",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.MachinesSubnet = "c664df47-4f7e-4852-819e-e66f9882b7b3"
+				return p
+			}(),
+			networking:          validNetworking(),
+			validMachinesSubnet: true,
+			valid:               true,
+		},
+		{
+			name: "valid MachinesSubnet invalid machineNetwork",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.MachinesSubnet = "c664df47-4f7e-4852-819e-e66f9882b7b3"
+				return p
+			}(),
+			networking: func() *types.Networking {
+				n := validNetworking()
+				n.MachineNetwork[0].CIDR = *ipnet.MustParseCIDR("105.90.0.0/16")
+				return n
+			}(),
+			validMachinesSubnet: true,
+			valid:               false,
+		},
+		{
+			name: "invalid MachinesSubnet",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.MachinesSubnet = "subnet-c17b"
+				return p
+			}(),
+			networking:            validNetworking(),
+			invalidMachinesSubnet: true,
+			valid:                 false,
+		},
+		{
+			name: "valid MachinesSubnet externalDNS set",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.MachinesSubnet = "c664df47-4f7e-4852-819e-e66f9882b7b3"
+				p.ExternalDNS = []string{
+					"192.168.1.12",
+					"10.0.5.16",
+				}
+				return p
+			}(),
+			networking:          validNetworking(),
+			validMachinesSubnet: true,
+			valid:               false,
 		},
 	}
 	for _, tc := range cases {
@@ -166,11 +302,21 @@ func TestValidatePlatform(t *testing.T) {
 					Return([]string{"octavia"}, nil).
 					MaxTimes(1)
 			}
+			if tc.validMachinesSubnet {
+				fetcher.EXPECT().GetSubnetCIDR(tc.platform.Cloud, tc.platform.MachinesSubnet).
+					Return("10.0.0.0/16", nil).
+					MaxTimes(1)
+			}
+			if tc.invalidMachinesSubnet {
+				fetcher.EXPECT().GetSubnetCIDR(tc.platform.Cloud, tc.platform.MachinesSubnet).
+					Return("", errors.New("invalid machinesSubnet")).
+					MaxTimes(1)
+			}
 
 			testConfig := types.InstallConfig{}
 			testConfig.ObjectMeta.Name = "test"
 
-			err := ValidatePlatform(tc.platform, nil, field.NewPath("test-path"), fetcher, &testConfig).ToAggregate()
+			err := ValidatePlatform(tc.platform, tc.networking, field.NewPath("test-path"), fetcher, &testConfig).ToAggregate()
 			if tc.valid {
 				assert.NoError(t, err)
 			} else {

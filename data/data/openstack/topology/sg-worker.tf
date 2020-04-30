@@ -95,22 +95,10 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vxlan" {
   protocol          = "udp"
   port_range_min    = 4789
   port_range_max    = 4789
-  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
 
   depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_router]
-}
-
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vxlan_from_master" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "udp"
-  port_range_min    = 4789
-  port_range_max    = 4789
-  remote_group_id   = openstack_networking_secgroup_v2.master.id
-  security_group_id = openstack_networking_secgroup_v2.worker.id
-
-  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_vxlan]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_geneve" {
@@ -119,22 +107,10 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_geneve" {
   protocol          = "udp"
   port_range_min    = 6081
   port_range_max    = 6081
-  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
 
-  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_vxlan_from_master]
-}
-
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_geneve_from_master" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "udp"
-  port_range_min    = 6081
-  port_range_max    = 6081
-  remote_group_id   = openstack_networking_secgroup_v2.master.id
-  security_group_id = openstack_networking_secgroup_v2.worker.id
-
-  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_geneve]
+  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_vxlan]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal" {
@@ -143,22 +119,10 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal" {
   protocol          = "tcp"
   port_range_min    = 9000
   port_range_max    = 9999
-  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
 
-  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_geneve_from_master]
-}
-
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal_from_master" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 9000
-  port_range_max    = 9999
-  remote_group_id   = openstack_networking_secgroup_v2.master.id
-  security_group_id = openstack_networking_secgroup_v2.worker.id
-
-  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_internal]
+  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_geneve]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal_udp" {
@@ -167,22 +131,10 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal_udp" {
   protocol          = "udp"
   port_range_min    = 9000
   port_range_max    = 9999
-  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
 
-  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_internal_from_master]
-}
-
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal_from_master_udp" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "udp"
-  port_range_min    = 9000
-  port_range_max    = 9999
-  remote_group_id   = openstack_networking_secgroup_v2.master.id
-  security_group_id = openstack_networking_secgroup_v2.worker.id
-
-  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_internal_udp]
+  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_internal]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_kubelet_insecure" {
@@ -191,22 +143,10 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_kubelet_insecur
   protocol          = "tcp"
   port_range_min    = 10250
   port_range_max    = 10250
-  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
 
-  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_internal_from_master_udp]
-}
-
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_kubelet_insecure_from_master" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 10250
-  port_range_max    = 10250
-  remote_group_id   = openstack_networking_secgroup_v2.master.id
-  security_group_id = openstack_networking_secgroup_v2.worker.id
-
-  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_kubelet_insecure]
+  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_internal_udp]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_tcp" {
@@ -215,22 +155,10 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_tcp" {
   protocol          = "tcp"
   port_range_min    = 30000
   port_range_max    = 32767
-  remote_group_id   = openstack_networking_secgroup_v2.worker.id
+  remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
 
-  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_kubelet_insecure_from_master]
-}
-
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_tcp_from_master" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "tcp"
-  port_range_min    = 30000
-  port_range_max    = 32767
-  remote_group_id   = openstack_networking_secgroup_v2.master.id
-  security_group_id = openstack_networking_secgroup_v2.worker.id
-
-  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_services_tcp]
+  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_kubelet_insecure]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_udp" {
@@ -239,30 +167,20 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_udp" {
   protocol          = "udp"
   port_range_min    = 30000
   port_range_max    = 32767
-  remote_group_id   = openstack_networking_secgroup_v2.worker.id
-  security_group_id = openstack_networking_secgroup_v2.worker.id
-
-  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_services_tcp_from_master]
-}
-
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_udp_from_master" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "udp"
-  port_range_min    = 30000
-  port_range_max    = 32767
-  remote_group_id   = openstack_networking_secgroup_v2.master.id
-  security_group_id = openstack_networking_secgroup_v2.worker.id
-
-  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_services_udp]
-}
-
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vrrp" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "vrrp"
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
 
-  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_services_udp_from_master]
+  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_services_tcp]
+}
+
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vrrp" {
+  direction = "ingress"
+  ethertype = "IPv4"
+  # Explicitly set the vrrp protocol number to prevent cases when the Neutron Plugin
+  # is disabled and it cannot identify a number by name.
+  protocol          = "112"
+  remote_ip_prefix  = var.cidr_block
+  security_group_id = openstack_networking_secgroup_v2.worker.id
+
+  depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_services_udp]
 }

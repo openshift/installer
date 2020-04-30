@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/password"
+	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
 )
 
@@ -81,6 +82,8 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		}
 	}
 
+	timer.StartTimer("Infrastructure")
+
 	stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name(), extraArgs...)
 	if err != nil {
 		err = errors.Wrap(err, "failed to create cluster")
@@ -104,6 +107,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		logrus.Errorf("Failed to read tfstate: %v", err2)
 	}
 
+	timer.StopTimer("Infrastructure")
 	return err
 }
 

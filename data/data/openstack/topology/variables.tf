@@ -56,3 +56,13 @@ variable "trunk_support" {
 variable "octavia_support" {
   type = string
 }
+
+variable "machines_subnet_id" {
+  type    = string
+  default = ""
+}
+
+variable "machines_network_id" {
+  type    = string
+  default = ""
+}

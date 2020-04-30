@@ -50,16 +50,18 @@ In order to run the latest version of the installer in OpenStack, at a bare mini
 
 For a successful installation it is required:
 
-- Floating IPs: 2
+- Floating IPs: 2 (plus one that will be created and destroyed by the Installer during the installation process)
 - Security Groups: 3
 - Security Group Rules: 60
 - Routers: 1
 - Subnets: 1
+- Server Groups: 1
 - RAM: 112 GB
 - vCPUs: 28
 - Volume Storage: 175 GB
 - Instances: 7
 - Depending on the type of [image registry backend](#image-registry-requirements) either 1 Swift container or an additional 100 GB volume.
+- OpenStack resource tagging
 
 You may need to increase the security group related quotas from their default values. For example (as an OpenStack administrator):
 
@@ -508,7 +510,7 @@ curl https://<loadbalancer ip>:22623/config/master --insecure
 If you ran the installer with a [custom CA certificate](#self-signed-openstack-ca-certificates), then this certificate can be changed while the cluster is running. To change your certificate, edit the value of the `ca-cert.pem` key in the `cloud-provider-config` configmap with a valid PEM certificate.
 
 ```sh
-oc edit -n openshift-config cloud-provider-config
+oc edit configmap -n openshift-config cloud-provider-config
 ```
 
 ## Reporting Issues

@@ -8,8 +8,11 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/go-playground/validator/v10"
+	"github.com/pkg/errors"
 
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/validate"
@@ -39,6 +42,44 @@ func validateIPNotinMachineCIDR(ip string, n *types.Networking) error {
 			return fmt.Errorf("the IP must not be in one of the machine networks")
 		}
 	}
+	return nil
+}
+
+func validateNoOverlapMachineCIDR(target *net.IPNet, n *types.Networking) error {
+	allIPv4 := ipnet.MustParseCIDR("0.0.0.0/0")
+	allIPv6 := ipnet.MustParseCIDR("::/0")
+	netIsIPv6 := target.IP.To4() == nil
+
+	for _, machineCIDR := range n.MachineNetwork {
+		machineCIDRisIPv6 := machineCIDR.CIDR.IP.To4() == nil
+
+		// Only compare if both are the same IP version
+		if netIsIPv6 == machineCIDRisIPv6 {
+			var err error
+			if netIsIPv6 {
+				err = cidr.VerifyNoOverlap(
+					[]*net.IPNet{
+						target,
+						&machineCIDR.CIDR.IPNet,
+					},
+					&allIPv6.IPNet,
+				)
+			} else {
+				err = cidr.VerifyNoOverlap(
+					[]*net.IPNet{
+						target,
+						&machineCIDR.CIDR.IPNet,
+					},
+					&allIPv4.IPNet,
+				)
+			}
+
+			if err != nil {
+				return errors.Wrap(err, "cannot overlap with machine network")
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -153,8 +194,28 @@ func validateOSImages(p *baremetal.Platform, fldPath *field.Path) field.ErrorLis
 	return platformErrs
 }
 
+func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallConfig) error {
+
+	hostsNum := int64(len(hosts))
+	counter := int64(0)
+
+	for _, worker := range installConfig.Compute {
+		if worker.Replicas != nil {
+			counter += *worker.Replicas
+		}
+	}
+	if installConfig.ControlPlane != nil && installConfig.ControlPlane.Replicas != nil {
+		counter += *installConfig.ControlPlane.Replicas
+	}
+	if hostsNum < counter {
+		return fmt.Errorf("not enough hosts found (%v) to support all the configured ControlPlane and Compute replicas (%v)", hostsNum, counter)
+	}
+
+	return nil
+}
+
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field.Path) field.ErrorList {
+func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if err := validate.URI(p.LibvirtURI); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("libvirtURI"), p.LibvirtURI, err.Error()))
@@ -164,16 +225,25 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningHostIP"), p.ClusterProvisioningIP, err.Error()))
 	}
 
-	if p.ProvisioningNetworkCIDR != nil && !p.ProvisioningNetworkCIDR.Contains(net.ParseIP(p.ClusterProvisioningIP)) {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, fmt.Sprintf("%q is not in the provisioning network", p.ClusterProvisioningIP)))
-	}
-
 	if err := validate.IP(p.BootstrapProvisioningIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, err.Error()))
 	}
 
-	if p.ProvisioningNetworkCIDR != nil && !p.ProvisioningNetworkCIDR.Contains(net.ParseIP(p.BootstrapProvisioningIP)) {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, fmt.Sprintf("%q is not in the provisioning network", p.BootstrapProvisioningIP)))
+	if p.ProvisioningNetworkCIDR != nil {
+		// Ensure provisioningNetworkCIDR doesn't overlap with any machine network
+		if err := validateNoOverlapMachineCIDR(&p.ProvisioningNetworkCIDR.IPNet, n); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkCIDR"), p.ProvisioningNetworkCIDR.String(), err.Error()))
+		}
+
+		// Ensure bootstrapProvisioningIP is in the provisioningNetworkCIDR
+		if !p.ProvisioningNetworkCIDR.Contains(net.ParseIP(p.BootstrapProvisioningIP)) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, fmt.Sprintf("%q is not in the provisioning network", p.BootstrapProvisioningIP)))
+		}
+
+		// Ensure clusterProvisioningIP is in the provisioningNetworkCIDR
+		if !p.ProvisioningNetworkCIDR.Contains(net.ParseIP(p.ClusterProvisioningIP)) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, fmt.Sprintf("%q is not in the provisioning network", p.ClusterProvisioningIP)))
+		}
 	}
 
 	if p.ProvisioningDHCPRange != "" {
@@ -236,6 +306,10 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 	}
 	if err := validateIPNotinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapHostIP"), p.BootstrapProvisioningIP, err.Error()))
+	}
+
+	if err := validateHostsCount(p.Hosts, c); err != nil {
+		allErrs = append(allErrs, field.Required(fldPath.Child("Hosts"), err.Error()))
 	}
 
 	allErrs = append(allErrs, validateOSImages(p, fldPath)...)

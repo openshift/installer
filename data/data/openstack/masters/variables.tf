@@ -45,3 +45,8 @@ variable "server_group_id" {
   type        = string
   description = "ID of the server group to assign the servers to."
 }
+
+variable "additional_network_ids" {
+  type        = list(string)
+  description = "IDs of additional networks for master nodes."
+}

@@ -138,11 +138,19 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			expectedError:  true,
 			expectedErrMsg: "network: Invalid value",
 		},
+		{
+			name:           "Invalid project ID",
+			edits:          editFunctions{invalidateProject, removeSubnets, removeVPC},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.project: Invalid value: \"invalid-project\": invalid project ID",
+		},
 	}
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	gcpClient := mock.NewMockAPI(mockCtrl)
+	// Should get the list of projects.
+	gcpClient.EXPECT().GetProjects(gomock.Any()).Return(map[string]string{"valid-project": "valid-project"}, nil).AnyTimes()
 	// When passed the correct network & project, return an empty network, which should be enough to validate ok.
 	gcpClient.EXPECT().GetNetwork(gomock.Any(), validNetworkName, validProjectName).Return(&compute.Network{}, nil).AnyTimes()
 

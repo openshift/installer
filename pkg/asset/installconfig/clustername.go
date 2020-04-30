@@ -4,7 +4,7 @@ import (
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/types/validation"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -36,7 +36,9 @@ func (a *clusterName) Generate(parents asset.Parents) error {
 		})
 	}
 	validator = survey.ComposeValidators(validator, func(ans interface{}) error {
-		return validate.DomainName(validation.ClusterDomain(bd.BaseDomain, ans.(string)), false)
+		installConfig := &types.InstallConfig{BaseDomain: bd.BaseDomain}
+		installConfig.ObjectMeta.Name = ans.(string)
+		return validate.DomainName(installConfig.ClusterDomain(), false)
 	})
 
 	return survey.Ask([]*survey.Question{
