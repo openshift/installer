@@ -185,7 +185,7 @@ resource "aws_route53_record" "ctrlp_int" {
 }
 
 resource "aws_route53_record" "apps_noworker" {
-  count = var.worker_count == 0 ? 1 : 0
+  count = var.worker_count < 1 ? 1 : 0
 
   zone_id = data.aws_route53_zone.public.zone_id
   type    = "A"
