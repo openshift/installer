@@ -46,7 +46,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 				logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 			}
 			timer.StartTimer("Bootstrap Complete")
-			err = waitForBootstrapComplete(ctx, config, rootOpts.dir)
+			err = waitForBootstrapComplete(ctx, config)
 			if err != nil {
 				if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
