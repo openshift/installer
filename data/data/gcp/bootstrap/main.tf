@@ -43,7 +43,7 @@ resource "google_compute_firewall" "bootstrap_ingress_ssh" {
 resource "google_compute_instance" "bootstrap" {
   count = var.bootstrap_enabled ? 1 : 0
 
-  name         = "${var.cluster_id}-bootstrap"
+  name         = "${var.cluster_id}-b"
   machine_type = var.machine_type
   zone         = var.zone
 
