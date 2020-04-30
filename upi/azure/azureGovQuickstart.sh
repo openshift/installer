@@ -178,6 +178,9 @@ open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 openshift-install create manifests || throw "Unable to create manifests"
 rm -fv openshift/99_openshift-cluster-api_master-machines-*.yaml
 rm -fv openshift/99_openshift-cluster-api_worker-machineset-*.yaml
+# Change cloud provider
+sed -i 's/AzurePublicCloud/AzureUSGovernmentCloud/' manifests/cloud-provider-config.yaml
+
 python3 -c '
 import yaml;
 path = "manifests/cluster-scheduler-02-config.yml";
@@ -238,7 +241,7 @@ echoDo "Setup PrivateDNS records for infrastructure" az deployment group create 
   --parameters privateDNSZoneName="${CLUSTER_NAME}.${BASE_DOMAIN}" \
   --parameters baseName="$INFRA_ID" ${azout}
 PUBLIC_IP=$(az network public-ip list -g $RESOURCE_GROUP --query "[?name=='${INFRA_ID}-master-pip'] | [0].ipAddress" -o tsv)
-echoDo "Add public A record for api end point" az network dns record-set a add-record -g $RESOURCE_GROUP -z ${CLUSTER_NAME}.${BASE_DOMAIN} -n api -a $PUBLIC_IP --ttl 60
+echoDo "Add public A record for api end point" az network dns record-set a add-record -g $RESOURCE_GROUP -z ${CLUSTER_NAME}.${BASE_DOMAIN} -n api -a $PUBLIC_IP --ttl 60 ${azout}
 BOOTSTRAP_URL=$(az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c "files" -n "bootstrap.ign" -o tsv)
 BOOTSTRAP_IGNITION=$(jq -rcnM --arg v "2.2.0" --arg url $BOOTSTRAP_URL '{ignition:{version:$v,config:{replace:{source:$url}}}}' | base64 -w0)
 echoDo "Create Bootstrap" az deployment group create -g $RESOURCE_GROUP \
@@ -246,13 +249,13 @@ echoDo "Create Bootstrap" az deployment group create -g $RESOURCE_GROUP \
   --parameters bootstrapIgnition="$BOOTSTRAP_IGNITION" \
   --parameters sshKeyData="$SSH_KEY" \
   --parameters baseName="$INFRA_ID" ${azout}
-MASTER_IGNITION=$(base64 -w0 master.ign)
 echoDo "Create masters" az deployment group create -g $RESOURCE_GROUP \
   --template-file "05_masters.json" \
-  --parameters masterIgnition="$MASTER_IGNITION" \
+  --parameters masterIgnition="$(base64 -w0 master.ign)" \
   --parameters sshKeyData="$SSH_KEY" \
   --parameters privateDNSZoneName="${CLUSTER_NAME}.${BASE_DOMAIN}" \
-  --parameters baseName="$INFRA_ID" ${azout}
+  --parameters baseName="$INFRA_ID" \
+  --no-wait ${azout}
 echoDo "Wait for OCP Bootstrap to complete" openshift-install wait-for bootstrap-complete --log-level debug
 export KUBECONFIG="$PWD/auth/kubeconfig"
 oc get nodes
@@ -263,7 +266,8 @@ echoDo "Create Worker Nodes" az deployment group create -g $RESOURCE_GROUP \
   --parameters workerIgnition="$(base64 -w0 worker.ign)" \
   --parameters sshKeyData="$SSH_KEY" \
   --parameters baseName="$INFRA_ID" \
-  --parameters numberOfNodes="$WORKERNODES" ${azout}
+  --parameters numberOfNodes="$WORKERNODES" \
+  --no-wait ${azout}
 
 # Remove bootstrap
 echo Remove Bootstrap resources
