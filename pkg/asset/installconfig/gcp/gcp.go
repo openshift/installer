@@ -7,10 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/AlecAivazis/survey.v1"
+
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/pkg/errors"
-	"gopkg.in/AlecAivazis/survey.v1"
 )
 
 // Platform collects GCP-specific configuration.
@@ -37,16 +38,43 @@ func selectProject(ctx context.Context) (string, error) {
 	}
 	defaultProject := ssn.Credentials.ProjectID
 
+	client := &Client{
+		ssn: ssn,
+	}
+
+	projects, err := client.GetProjects(ctx)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get projects")
+	}
+
+	var options []string
+	ids := make(map[string]string)
+
+	var defaultValue string
+
+	for id, name := range projects {
+		option := fmt.Sprintf("%s (%s)", name, id)
+		ids[option] = id
+		if id == defaultProject {
+			defaultValue = option
+		}
+		options = append(options, option)
+	}
+	sort.Strings(options)
+
 	var selectedProject string
 	err = survey.Ask([]*survey.Question{
 		{
-			Prompt: &survey.Input{
+			Prompt: &survey.Select{
 				Message: "Project ID",
 				Help:    "The project id where the cluster will be provisioned. The default is taken from the provided service account.",
-				Default: defaultProject,
+				Default: defaultValue,
+				Options: options,
 			},
 		},
 	}, &selectedProject)
+
+	selectedProject = ids[selectedProject]
 	return selectedProject, nil
 }
 

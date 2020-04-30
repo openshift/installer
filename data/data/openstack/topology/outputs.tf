@@ -7,10 +7,10 @@ output "master_port_ids" {
 }
 
 output "private_network_id" {
-  value = openstack_networking_network_v2.openshift-private.id
+  value = local.nodes_network_id
 }
 
 output "nodes_subnet_id" {
-  value = openstack_networking_subnet_v2.nodes.id
+  value = local.nodes_subnet_id
 }
 

@@ -51,6 +51,7 @@ func TestValidatePlatform(t *testing.T) {
 
 	cases := []struct {
 		name     string
+		config   *types.InstallConfig
 		platform *baremetal.Platform
 		expected string
 	}{
@@ -142,6 +143,13 @@ func TestValidatePlatform(t *testing.T) {
 				ProvisioningNetworkInterface("").build(),
 			expected: "Invalid value: \"\": no provisioning network interface is configured, please set this value to be the interface on the provisioning network on your cluster's baremetal hosts",
 		},
+
+		{
+			name:     "invalid_provisioning_network_overlapping_CIDR",
+			platform: platform().ProvisioningNetworkCIDR("192.168.111.192/23").build(),
+			expected: "Invalid value: \"192.168.111.192/23\": cannot overlap with machine network: 192.168.111.0/24 overlaps with 192.168.111.192/23",
+		},
+
 		{
 			name: "invalid_clusterprovip_machineCIDR",
 			platform: platform().
@@ -218,61 +226,91 @@ func TestValidatePlatform(t *testing.T) {
 			name: "duplicate_bmc_address",
 			platform: platform().
 				Hosts(
-					host1().BMCAddress("ipmi://192.168.111.1").build(),
-					host2().BMCAddress("ipmi://192.168.111.1").build()).build(),
+					host1().BMCAddress("ipmi://192.168.111.1"),
+					host2().BMCAddress("ipmi://192.168.111.1")).build(),
 			expected: "baremetal.hosts\\[1\\].BMC.Address: Duplicate value: \"ipmi://192.168.111.1\"",
 		},
 		{
 			name: "bmc_address_required",
 			platform: platform().
-				Hosts(host1().BMCAddress("").build()).build(),
+				Hosts(host1().BMCAddress("")).build(),
 			expected: "baremetal.hosts\\[0\\].BMC.Address: Required value: missing Address",
 		},
 		{
 			name: "bmc_username_required",
 			platform: platform().
-				Hosts(host1().BMCUsername("").build()).build(),
+				Hosts(host1().BMCUsername("")).build(),
 			expected: "baremetal.hosts\\[0\\].BMC.Username: Required value: missing Username",
 		},
 		{
 			name: "bmc_password_required",
 			platform: platform().
-				Hosts(host1().BMCPassword("").build()).build(),
+				Hosts(host1().BMCPassword("")).build(),
 			expected: "baremetal.hosts\\[0\\].BMC.Password: Required value: missing Password",
 		},
 		{
 			name: "duplicate_host_name",
 			platform: platform().
 				Hosts(
-					host1().Name("host1").build(),
-					host2().Name("host1").build()).build(),
+					host1().Name("host1"),
+					host2().Name("host1")).build(),
 			expected: "baremetal.hosts\\[1\\].Name: Duplicate value: \"host1\"",
 		},
 		{
 			name: "duplicate_host_mac",
 			platform: platform().
 				Hosts(
-					host1().BootMACAddress("CA:FE:CA:FE:CA:FE").build(),
-					host2().BootMACAddress("CA:FE:CA:FE:CA:FE").build()).build(),
+					host1().BootMACAddress("CA:FE:CA:FE:CA:FE"),
+					host2().BootMACAddress("CA:FE:CA:FE:CA:FE")).build(),
 			expected: "baremetal.hosts\\[1\\].BootMACAddress: Duplicate value: \"CA:FE:CA:FE:CA:FE\"",
 		},
 		{
 			name: "missing_name",
 			platform: platform().
-				Hosts(host1().Name("").build()).build(),
+				Hosts(host1().Name("")).build(),
 			expected: "baremetal.hosts\\[0\\].Name: Required value: missing Name",
 		},
 		{
 			name: "missing_mac",
 			platform: platform().
-				Hosts(host1().BootMACAddress("").build()).build(),
+				Hosts(host1().BootMACAddress("")).build(),
 			expected: "baremetal.hosts\\[0\\].BootMACAddress: Required value: missing BootMACAddress",
+		},
+		{
+			name: "toofew_hosts",
+			config: installConfig().
+				BareMetalPlatform(
+					platform().Hosts(
+						host1())).
+				ControlPlane(
+					machinePool().Replicas(3)).
+				Compute(
+					machinePool().Replicas(2),
+					machinePool().Replicas(3)).build(),
+			expected: "baremetal.Hosts: Required value: not enough hosts found \\(1\\) to support all the configured ControlPlane and Compute replicas \\(8\\)",
+		},
+		{
+			name: "enough_hosts",
+			config: installConfig().
+				BareMetalPlatform(
+					platform().Hosts(
+						host1(),
+						host2())).
+				ControlPlane(
+					machinePool().Replicas(2)).build(),
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidatePlatform(tc.platform, network(), field.NewPath("baremetal")).ToAggregate()
+			//Build default wrapping installConfig
+			if tc.config == nil {
+				tc.config = installConfig().build()
+				tc.config.BareMetal = tc.platform
+			}
+
+			err := ValidatePlatform(tc.config.BareMetal, network(), field.NewPath("baremetal"), tc.config).ToAggregate()
+
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
@@ -413,8 +451,11 @@ func (pb *platformBuilder) IngressVIP(value string) *platformBuilder {
 	return pb
 }
 
-func (pb *platformBuilder) Hosts(value ...*baremetal.Host) *platformBuilder {
-	pb.Platform.Hosts = value
+func (pb *platformBuilder) Hosts(builders ...*hostBuilder) *platformBuilder {
+	pb.Platform.Hosts = nil
+	for _, builder := range builders {
+		pb.Platform.Hosts = append(pb.Platform.Hosts, builder.build())
+	}
 	return pb
 }
 
@@ -440,4 +481,58 @@ func (pb *platformBuilder) ProvisioningNetworkInterface(value string) *platformB
 
 func network() *types.Networking {
 	return &types.Networking{MachineNetwork: []types.MachineNetworkEntry{{CIDR: *ipnet.MustParseCIDR("192.168.111.0/24")}}}
+}
+
+type installConfigBuilder struct {
+	types.InstallConfig
+}
+
+func installConfig() *installConfigBuilder {
+	return &installConfigBuilder{
+		InstallConfig: types.InstallConfig{},
+	}
+}
+
+func (icb *installConfigBuilder) build() *types.InstallConfig {
+	return &icb.InstallConfig
+}
+
+func (icb *installConfigBuilder) BareMetalPlatform(builder *platformBuilder) *installConfigBuilder {
+	icb.InstallConfig.Platform = types.Platform{
+		BareMetal: builder.build(),
+	}
+	return icb
+}
+
+func (icb *installConfigBuilder) ControlPlane(builder *machinePoolBuilder) *installConfigBuilder {
+	icb.InstallConfig.ControlPlane = builder.build()
+
+	return icb
+}
+
+func (icb *installConfigBuilder) Compute(builders ...*machinePoolBuilder) *installConfigBuilder {
+	icb.InstallConfig.Compute = nil
+	for _, builder := range builders {
+		icb.InstallConfig.Compute = append(icb.InstallConfig.Compute, *builder.build())
+	}
+	return icb
+}
+
+type machinePoolBuilder struct {
+	types.MachinePool
+}
+
+func machinePool() *machinePoolBuilder {
+	return &machinePoolBuilder{
+		MachinePool: types.MachinePool{},
+	}
+}
+
+func (mpb *machinePoolBuilder) build() *types.MachinePool {
+	return &mpb.MachinePool
+}
+
+func (mpb *machinePoolBuilder) Replicas(count int64) *machinePoolBuilder {
+	mpb.MachinePool.Replicas = &count
+	return mpb
 }

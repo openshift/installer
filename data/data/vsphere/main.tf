@@ -44,6 +44,7 @@ resource "vsphereprivate_import_ova" "import" {
   datastore  = var.vsphere_datastore
   network    = var.vsphere_network
   folder     = vsphere_folder.folder.path
+  tag        = vsphere_tag.tag.id
 }
 
 resource "vsphere_tag_category" "category" {

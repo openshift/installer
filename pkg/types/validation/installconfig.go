@@ -34,12 +34,6 @@ const (
 	masterPoolName = "master"
 )
 
-// ClusterDomain returns the cluster domain for a cluster with the specified
-// base domain and cluster name.
-func ClusterDomain(baseDomain, clusterName string) string {
-	return fmt.Sprintf("%s.%s", clusterName, baseDomain)
-}
-
 // ValidateInstallConfig checks that the specified install config is valid.
 func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher openstackvalidation.ValidValuesFetcher) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -74,7 +68,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 		allErrs = append(allErrs, field.Invalid(field.NewPath("baseDomain"), c.BaseDomain, baseDomainErr.Error()))
 	}
 	if nameErr == nil && baseDomainErr == nil {
-		clusterDomain := ClusterDomain(c.BaseDomain, c.ObjectMeta.Name)
+		clusterDomain := c.ClusterDomain()
 		if err := validate.DomainName(clusterDomain, true); err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("baseDomain"), clusterDomain, err.Error()))
 		}
@@ -378,7 +372,7 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackVa
 	}
 	if platform.BareMetal != nil {
 		validate(baremetal.Name, platform.BareMetal, func(f *field.Path) field.ErrorList {
-			return baremetalvalidation.ValidatePlatform(platform.BareMetal, network, f)
+			return baremetalvalidation.ValidatePlatform(platform.BareMetal, network, f, c)
 		})
 	}
 	return allErrs

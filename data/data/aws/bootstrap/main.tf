@@ -135,7 +135,7 @@ resource "aws_instance" "bootstrap" {
 
   tags = merge(
     {
-    "Name" = "${var.cluster_id}-bootstrap"
+      "Name" = "${var.cluster_id}-bootstrap"
     },
     var.tags,
   )
@@ -150,7 +150,7 @@ resource "aws_instance" "bootstrap" {
 
   volume_tags = merge(
     {
-    "Name" = "${var.cluster_id}-bootstrap-vol"
+      "Name" = "${var.cluster_id}-bootstrap-vol"
     },
     var.tags,
   )
@@ -174,7 +174,7 @@ resource "aws_security_group" "bootstrap" {
 
   tags = merge(
     {
-    "Name" = "${var.cluster_id}-bootstrap-sg"
+      "Name" = "${var.cluster_id}-bootstrap-sg"
     },
     var.tags,
   )

@@ -55,8 +55,8 @@ func Platform() (*ovirt.Platform, error) {
 	err = survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
-				Message: "Enter the internal API Virtual IP",
-				Help:    "Make sure the IP address is not in use",
+				Message: "Internal API virtual IP",
+				Help:    "This is the virtual IP address that will be used to address the OpenShift control plane. Make sure the IP address is not in use.",
 				Default: "",
 			},
 			Validate: survey.ComposeValidators(survey.Required),
@@ -69,8 +69,8 @@ func Platform() (*ovirt.Platform, error) {
 	err = survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
-				Message: "Enter the internal DNS Virtual IP",
-				Help:    "Make sure the IP address is not in use",
+				Message: "Internal DNS virtual IP",
+				Help:    "This is the virtual IP address that will be used to address the DNS server internal to the cluster. Make sure the IP address is not in use.",
 				Default: "",
 			},
 			Validate: survey.ComposeValidators(survey.Required),
@@ -83,8 +83,8 @@ func Platform() (*ovirt.Platform, error) {
 	err = survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
-				Message: "Enter the ingress IP ",
-				Help:    "Make sure the IP address is not in use",
+				Message: "Ingress virtual IP",
+				Help:    "This is the virtual IP address that will be used to address the OpenShift ingress routers. Make sure the IP address is not in use.",
 				Default: "",
 			},
 			Validate: survey.ComposeValidators(survey.Required),

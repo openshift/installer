@@ -662,7 +662,7 @@ In this section we'll create all the networking pieces necessary to host the Ope
 ### Security Groups
 
 ```sh
-$ ansible-playbook -i inventory.yaml 01_security-groups.yaml
+$ ansible-playbook -i inventory.yaml security-groups.yaml
 ```
 
 The playbook creates one Security group for the Control Plane and one for the Compute nodes, then attaches rules for enabling communication between the nodes.
@@ -670,7 +670,7 @@ The playbook creates one Security group for the Control Plane and one for the Co
 ### Network, Subnet and external router
 
 ```sh
-$ ansible-playbook -i inventory.yaml 02_network.yaml
+$ ansible-playbook -i inventory.yaml network.yaml
 ```
 
 The playbook creates a network and a subnet. The subnet obeys `os_subnet_range`; however the first ten IP addresses are removed from the allocation pool. These addresses will be used for the VRRP addresses managed by keepalived for high availability. For more information, read the [networking infrastructure design document][net-infra].
@@ -698,7 +698,7 @@ $ openstack subnet set --dns-nameserver <198.51.100.86> --dns-nameserver <198.51
 ## Bootstrap
 
 ```sh
-$ ansible-playbook -i inventory.yaml 03_bootstrap.yaml
+$ ansible-playbook -i inventory.yaml bootstrap.yaml
 ```
 
 The playbook sets the *allowed address pairs* on each port attached to our OpenShift nodes.
@@ -723,7 +723,7 @@ $ ssh core@203.0.113.24
 ## Control Plane
 
 ```sh
-$ ansible-playbook -i inventory.yaml 04_control-plane.yaml
+$ ansible-playbook -i inventory.yaml control-plane.yaml
 ```
 
 Our control plane will consist of three nodes. The servers will be passed the `master-?-ignition.json` files prepared earlier.
@@ -776,7 +776,7 @@ $ oc get pods -A
 ### Delete the Bootstrap Resources
 
 ```sh
-$ ansible-playbook -i inventory.yaml down-03_bootstrap.yaml
+$ ansible-playbook -i inventory.yaml down-bootstrap.yaml
 ```
 
 The teardown playbook deletes the bootstrap port, server and floating IP address.
@@ -786,7 +786,7 @@ If you haven't done so already, you should also disable the bootstrap Ignition U
 ## Compute Nodes
 
 ```sh
-$ ansible-playbook -i inventory.yaml 05_compute-nodes.yaml
+$ ansible-playbook -i inventory.yaml compute-nodes.yaml
 ```
 
 This process is similar to the masters, but the workers need to be approved before they're allowed to join the cluster.
@@ -891,14 +891,17 @@ Upon success, it will print the URL to the OpenShift Console (the web UI) as wel
 
 ```sh
 $ ansible-playbook -i inventory.yaml  \
-	down-03_bootstrap.yaml      \
-	down-04_control-plane.yaml  \
-	down-05_compute-nodes.yaml  \
-	down-06_load-balancers.yaml \
-	down-02_network.yaml        \
-	down-01_security-groups.yaml
+	down-bootstrap.yaml      \
+	down-control-plane.yaml  \
+	down-compute-nodes.yaml  \
+	down-load-balancers.yaml \
+	down-network.yaml        \
+	down-security-groups.yaml
 ```
 
-The playbook `down-06_load-balancers.yaml` idempotently deletes the load balancers created by the Kuryr installation, if any.
+The playbook `down-load-balancers.yaml` idempotently deletes the load balancers created by the Kuryr installation, if any.
+
+**NOTE:** The deletion of load balancers with `provisioning_status` `PENDING-*` is skipped. Make sure to retry the
+`down-load-balancers.yaml` playbook once the load balancers have transitioned to `ACTIVE`.
 
 Then, remove the `api` and `*.apps` DNS records.

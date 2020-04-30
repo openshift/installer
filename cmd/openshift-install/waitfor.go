@@ -4,6 +4,7 @@ import (
 	"context"
 	"path/filepath"
 
+	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -34,6 +35,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 		Short: "Wait until cluster bootstrapping has completed",
 		Args:  cobra.ExactArgs(0),
 		Run: func(_ *cobra.Command, _ []string) {
+			timer.StartTimer(timer.TotalTimeElapsed)
 			ctx := context.Background()
 
 			cleanup := setupFileHook(rootOpts.dir)
@@ -43,7 +45,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 			if err != nil {
 				logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 			}
-
+			timer.StartTimer("Bootstrap Complete")
 			err = waitForBootstrapComplete(ctx, config, rootOpts.dir)
 			if err != nil {
 				if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
@@ -56,6 +58,9 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 			}
 
 			logrus.Info("It is now safe to remove the bootstrap resources")
+			timer.StopTimer("Bootstrap Complete")
+			timer.StopTimer(timer.TotalTimeElapsed)
+			timer.LogSummary()
 		},
 	}
 }
@@ -66,6 +71,7 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 		Short: "Wait until the cluster is ready",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
+			timer.StartTimer(timer.TotalTimeElapsed)
 			ctx := context.Background()
 
 			cleanup := setupFileHook(rootOpts.dir)
@@ -84,6 +90,8 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 
 				logrus.Fatal(err)
 			}
+			timer.StopTimer(timer.TotalTimeElapsed)
+			timer.LogSummary()
 		},
 	}
 }

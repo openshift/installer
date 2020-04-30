@@ -33,7 +33,6 @@ func validIPIInstallConfig() *types.InstallConfig {
 				VCenter:          "valid_vcenter",
 				APIVIP:           "192.168.111.0",
 				IngressVIP:       "192.168.111.1",
-				DNSVIP:           "192.168.111.2",
 			},
 		},
 	}

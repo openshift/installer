@@ -38,6 +38,9 @@ module "bootstrap" {
   private_network_id      = module.topology.private_network_id
   master_sg_id            = module.topology.master_sg_id
   bootstrap_shim_ignition = var.openstack_bootstrap_shim_ignition
+  master_port_ids         = module.topology.master_port_ids
+  root_volume_size        = var.openstack_master_root_volume_size
+  root_volume_type        = var.openstack_master_root_volume_type
 }
 
 module "masters" {
@@ -53,15 +56,16 @@ module "masters" {
     var.openstack_master_extra_sg_ids,
     [module.topology.master_sg_id],
   )
-  root_volume_size = var.openstack_master_root_volume_size
-  root_volume_type = var.openstack_master_root_volume_type
-  server_group_id  = var.openstack_master_server_group_id
+  root_volume_size       = var.openstack_master_root_volume_size
+  root_volume_type       = var.openstack_master_root_volume_type
+  server_group_id        = var.openstack_master_server_group_id
+  additional_network_ids = var.openstack_additional_network_ids
 }
 
 module "topology" {
   source = "./topology"
 
-  cidr_block          = var.machine_cidr
+  cidr_block          = var.machine_v4_cidrs[0]
   cluster_id          = var.cluster_id
   cluster_domain      = var.cluster_domain
   external_network    = var.openstack_external_network
@@ -74,6 +78,8 @@ module "topology" {
   external_dns        = var.openstack_external_dns
   trunk_support       = var.openstack_trunk_support
   octavia_support     = var.openstack_octavia_support
+  machines_subnet_id  = var.openstack_machines_subnet_id
+  machines_network_id = var.openstack_machines_network_id
 }
 
 data "openstack_images_image_v2" "base_image" {

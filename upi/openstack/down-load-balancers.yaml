@@ -1,0 +1,76 @@
+# Required Python packages:
+#
+# ansible
+# openstackcli
+# openstacksdk
+
+- import_playbook: common.yaml
+
+- hosts: all
+  gather_facts: no
+
+  tasks:
+  - name: 'Get an auth token'
+    os_auth:
+    register: cloud
+    when: os_networking_type == "Kuryr"
+
+  - name: 'List octavia versions'
+    uri:
+      method: GET
+      headers:
+        X-Auth-Token: "{{ cloud.ansible_facts.auth_token }}"
+        Content-Type: 'application/json'
+      url: "{{ cloud.ansible_facts.service_catalog | selectattr('name', 'match', 'octavia') | first | json_query('endpoints') | selectattr('interface', 'match', 'public') | first | json_query('url') }}/"
+    register: octavia_versions
+    when: os_networking_type == "Kuryr"
+
+  - set_fact:
+      versions: "{{ octavia_versions.json.versions | selectattr('id', 'match', 'v2.5') | map(attribute='id') | list }}"
+    when: os_networking_type == "Kuryr"
+
+  - name: 'List tagged loadbalancers'
+    uri:
+      method: GET
+      headers:
+        X-Auth-Token: "{{ cloud.ansible_facts.auth_token }}"
+      url: "{{ cloud.ansible_facts.service_catalog | selectattr('name', 'match', 'octavia') | first | json_query('endpoints') | selectattr('interface', 'match', 'public') | first | json_query('url') }}/v2.0/lbaas/loadbalancers?tags={{cluster_id_tag}}"
+    when:
+    - os_networking_type == "Kuryr"
+    - versions | length > 0
+    register: lbs_tagged
+
+  # NOTE: Kuryr creates an Octavia load balancer
+  # for each service present on the cluster. Let's make
+  # sure to remove the resources generated.
+  - name: 'Remove the cluster load balancers'
+    command:
+      cmd: "openstack loadbalancer delete --cascade {{ item.id }}"
+    with_items: "{{ lbs_tagged.json.loadbalancers }}"
+    when:
+    - os_networking_type == "Kuryr"
+    - versions | length > 0
+    - '"PENDING" not in item.provisioning_status'
+
+  - name: 'List loadbalancers tagged on description'
+    uri:
+      method: GET
+      headers:
+        X-Auth-Token: "{{ cloud.ansible_facts.auth_token }}"
+      url: "{{ cloud.ansible_facts.service_catalog | selectattr('name', 'match', 'octavia') | first | json_query('endpoints') | selectattr('interface', 'match', 'public') | first | json_query('url') }}/v2.0/lbaas/loadbalancers?description={{cluster_id_tag}}"
+    when:
+    - os_networking_type == "Kuryr"
+    - versions | length == 0
+    register: lbs_description
+
+  # NOTE: Kuryr creates an Octavia load balancer
+  # for each service present on the cluster. Let's make
+  # sure to remove the resources generated.
+  - name: 'Remove the cluster load balancers'
+    command:
+      cmd: "openstack loadbalancer delete --cascade {{ item.id }}"
+    with_items: "{{ lbs_description.json.loadbalancers }}"
+    when:
+    - os_networking_type == "Kuryr"
+    - versions | length == 0
+    - '"PENDING" not in item.provisioning_status'

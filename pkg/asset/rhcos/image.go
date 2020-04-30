@@ -3,7 +3,7 @@ package rhcos
 
 import (
 	"context"
-	"github.com/openshift/installer/pkg/types/ovirt"
+	"fmt"
 	"os"
 	"time"
 
@@ -12,6 +12,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	configaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -21,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -75,7 +77,14 @@ func osImage(config *types.InstallConfig) (string, error) {
 			osimage = config.Platform.AWS.AMIID
 			break
 		}
-		osimage, err = rhcos.AMI(ctx, arch, config.Platform.AWS.Region)
+		region := config.Platform.AWS.Region
+		if !configaws.IsKnownRegion(config.Platform.AWS.Region) {
+			region = "us-east-1"
+		}
+		osimage, err = rhcos.AMI(ctx, arch, region)
+		if region != config.Platform.AWS.Region {
+			osimage = fmt.Sprintf("%s,%s", osimage, region)
+		}
 	case gcp.Name:
 		osimage, err = rhcos.GCP(ctx, arch)
 	case libvirt.Name:

@@ -6,6 +6,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
+
+	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
 
 // Metadata holds additional metadata for InstallConfig resources that
@@ -16,15 +18,18 @@ type Metadata struct {
 	availabilityZones []string
 	privateSubnets    map[string]Subnet
 	publicSubnets     map[string]Subnet
-	Region            string   `json:"region,omitempty"`
-	Subnets           []string `json:"subnets,omitempty"`
 	vpc               string
-	mutex             sync.Mutex
+
+	Region   string                     `json:"region,omitempty"`
+	Subnets  []string                   `json:"subnets,omitempty"`
+	Services []typesaws.ServiceEndpoint `json:"services,omitempty"`
+
+	mutex sync.Mutex
 }
 
 // NewMetadata initializes a new Metadata object.
-func NewMetadata(region string, subnets []string) *Metadata {
-	return &Metadata{Region: region, Subnets: subnets}
+func NewMetadata(region string, subnets []string, services []typesaws.ServiceEndpoint) *Metadata {
+	return &Metadata{Region: region, Subnets: subnets, Services: services}
 }
 
 // Session holds an AWS session which can be used for AWS API calls
@@ -39,7 +44,7 @@ func (m *Metadata) Session(ctx context.Context) (*session.Session, error) {
 func (m *Metadata) unlockedSession(ctx context.Context) (*session.Session, error) {
 	if m.session == nil {
 		var err error
-		m.session, err = GetSession()
+		m.session, err = GetSessionWithOptions(WithRegion(m.Region), WithServiceEndpoints(m.Region, m.Services))
 		if err != nil {
 			return nil, errors.Wrap(err, "creating AWS session")
 		}

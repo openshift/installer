@@ -48,8 +48,8 @@ module "bootstrap" {
 module "vnet" {
   source              = "./vnet"
   resource_group_name = azurerm_resource_group.main.name
-  vnet_v4_cidrs       = var.azure_machine_v4_cidrs
-  vnet_v6_cidrs       = var.azure_machine_v6_cidrs
+  vnet_v4_cidrs       = var.machine_v4_cidrs
+  vnet_v6_cidrs       = var.machine_v6_cidrs
   cluster_id          = var.cluster_id
   region              = var.azure_region
   dns_label           = var.cluster_id
@@ -76,7 +76,6 @@ module "master" {
   vm_image               = azurerm_image.cluster.id
   identity               = azurerm_user_assigned_identity.main.id
   ignition               = var.ignition_master
-  external_lb_id         = module.vnet.public_lb_id
   elb_backend_pool_v4_id = module.vnet.public_lb_backend_pool_v4_id
   elb_backend_pool_v6_id = module.vnet.public_lb_backend_pool_v6_id
   ilb_backend_pool_v4_id = module.vnet.internal_lb_backend_pool_v4_id

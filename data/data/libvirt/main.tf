@@ -19,13 +19,14 @@ module "volume" {
 module "bootstrap" {
   source = "./bootstrap"
 
-  cluster_domain = var.cluster_domain
-  addresses      = [var.libvirt_bootstrap_ip]
-  base_volume_id = module.volume.coreos_base_volume_id
-  cluster_id     = var.cluster_id
-  ignition       = var.ignition_bootstrap
-  network_id     = libvirt_network.net.id
-  pool           = libvirt_pool.storage_pool.name
+  cluster_domain   = var.cluster_domain
+  addresses        = [var.libvirt_bootstrap_ip]
+  base_volume_id   = module.volume.coreos_base_volume_id
+  cluster_id       = var.cluster_id
+  ignition         = var.ignition_bootstrap
+  network_id       = libvirt_network.net.id
+  pool             = libvirt_pool.storage_pool.name
+  bootstrap_memory = var.libvirt_bootstrap_memory
 }
 
 resource "libvirt_volume" "master" {
@@ -49,7 +50,7 @@ resource "libvirt_network" "net" {
 
   domain = var.cluster_domain
 
-  addresses = [var.machine_cidr]
+  addresses = var.machine_v4_cidrs
 
   dns {
     local_only = true

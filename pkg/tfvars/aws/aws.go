@@ -8,12 +8,16 @@ import (
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 
+	configaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types"
+	typesaws "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/aws/defaults"
 )
 
 type config struct {
 	AMI                     string            `json:"aws_ami"`
+	AMIRegion               string            `json:"aws_ami_region"`
+	CustomEndpoints         map[string]string `json:"custom_endpoints,omitempty"`
 	ExtraTags               map[string]string `json:"aws_extra_tags,omitempty"`
 	BootstrapInstanceType   string            `json:"aws_bootstrap_instance_type,omitempty"`
 	MasterInstanceType      string            `json:"aws_master_instance_type,omitempty"`
@@ -29,14 +33,18 @@ type config struct {
 	PrivateSubnets          []string          `json:"aws_private_subnets,omitempty"`
 	PublicSubnets           *[]string         `json:"aws_public_subnets,omitempty"`
 	PublishStrategy         string            `json:"aws_publish_strategy,omitempty"`
+	SkipRegionCheck         bool              `json:"aws_skip_region_validation"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
 	VPC                           string
 	PrivateSubnets, PublicSubnets []string
+	Services                      []typesaws.ServiceEndpoint
 
 	Publish types.PublishingStrategy
+
+	AMIID, AMIRegion string
 
 	MasterConfigs, WorkerConfigs []*v1beta1.AWSMachineProviderConfig
 }
@@ -44,6 +52,12 @@ type TFVarsSources struct {
 // TFVars generates AWS-specific Terraform variables launching the cluster.
 func TFVars(sources TFVarsSources) ([]byte, error) {
 	masterConfig := sources.MasterConfigs[0]
+
+	endpoints := make(map[string]string)
+	for _, service := range sources.Services {
+		service := service
+		endpoints[service.Name] = service.URL
+	}
 
 	tags := make(map[string]string, len(masterConfig.Tags))
 	for _, tag := range masterConfig.Tags {
@@ -89,9 +103,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	instanceClass := defaults.InstanceClass(masterConfig.Placement.Region)
 
 	cfg := &config{
+		CustomEndpoints:         endpoints,
 		Region:                  masterConfig.Placement.Region,
 		ExtraTags:               tags,
-		AMI:                     *masterConfig.AMI.ID,
 		MasterAvailabilityZones: masterAvailabilityZones,
 		WorkerAvailabilityZones: workerAvailabilityZones,
 		BootstrapInstanceType:   fmt.Sprintf("%s.large", instanceClass),
@@ -101,6 +115,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VPC:                     sources.VPC,
 		PrivateSubnets:          sources.PrivateSubnets,
 		PublishStrategy:         string(sources.Publish),
+		SkipRegionCheck:         !configaws.IsKnownRegion(masterConfig.Placement.Region),
 	}
 
 	if len(sources.PublicSubnets) == 0 {
@@ -123,6 +138,14 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		cfg.KMSKeyID = *rootVolume.EBS.KMSKey.ID
 	} else if rootVolume.EBS.KMSKey.ARN != nil && *rootVolume.EBS.KMSKey.ARN != "" {
 		cfg.KMSKeyID = *rootVolume.EBS.KMSKey.ARN
+	}
+
+	if masterConfig.AMI.ID != nil && *masterConfig.AMI.ID != "" {
+		cfg.AMI = *masterConfig.AMI.ID
+		cfg.AMIRegion = masterConfig.Placement.Region
+	} else {
+		cfg.AMI = sources.AMIID
+		cfg.AMIRegion = sources.AMIRegion
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

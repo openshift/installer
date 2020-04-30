@@ -97,13 +97,32 @@ func validBareMetalPlatform() *baremetal.Platform {
 		ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("192.168.111.0/24"),
 		BootstrapProvisioningIP:      "192.168.111.1",
 		ClusterProvisioningIP:        "192.168.111.2",
-		Hosts:                        []*baremetal.Host{},
-		ExternalBridge:               iface[0].Name,
-		ProvisioningBridge:           iface[0].Name,
-		DefaultMachinePlatform:       &baremetal.MachinePool{},
-		APIVIP:                       "10.0.0.5",
-		IngressVIP:                   "10.0.0.4",
-		DNSVIP:                       "10.0.0.2",
+		Hosts: []*baremetal.Host{
+			{
+				Name:           "host1",
+				BootMACAddress: "CA:FE:CA:FE:00:00",
+				BMC: baremetal.BMC{
+					Username: "root",
+					Password: "password",
+					Address:  "ipmi://192.168.111.1",
+				},
+			},
+			{
+				Name:           "host2",
+				BootMACAddress: "CA:FE:CA:FE:00:01",
+				BMC: baremetal.BMC{
+					Username: "root",
+					Password: "password",
+					Address:  "ipmi://192.168.111.2",
+				},
+			},
+		},
+		ExternalBridge:         iface[0].Name,
+		ProvisioningBridge:     iface[0].Name,
+		DefaultMachinePlatform: &baremetal.MachinePool{},
+		APIVIP:                 "10.0.0.5",
+		IngressVIP:             "10.0.0.4",
+		DNSVIP:                 "10.0.0.2",
 	}
 }
 
@@ -470,7 +489,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^compute\[0\]\.platform\.openstack: Invalid value: openstack\.MachinePool{FlavorName:"", RootVolume:\(\*openstack\.RootVolume\)\(nil\)}: cannot specify "openstack" for machine pool when cluster is using "aws"$`,
+			expectedError: `^compute\[0\]\.platform\.openstack: Invalid value: openstack\.MachinePool{.*}: cannot specify "openstack" for machine pool when cluster is using "aws"$`,
 		},
 		{
 			name: "missing platform",
@@ -499,7 +518,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^platform\.aws\.region: Unsupported value: "": supported values: "ap-northeast-1", "ap-northeast-2", "ap-south-1", "ap-southeast-1", "ap-southeast-2", "ca-central-1", "eu-central-1", "eu-north-1", "eu-west-1", "eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-west-1", "us-west-2"$`,
+			expectedError: `^platform\.aws\.region: Required value: region must be specified$`,
 		},
 		{
 			name: "valid libvirt platform",

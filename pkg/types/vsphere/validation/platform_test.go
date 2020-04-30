@@ -80,7 +80,6 @@ func TestValidatePlatform(t *testing.T) {
 				p := validPlatform()
 				p.APIVIP = "192.168.111.2"
 				p.IngressVIP = "192.168.111.3"
-				p.DNSVIP = "192.168.111.4"
 				return p
 			}(),
 			// expectedError: `^test-path\.apiVIP: Invalid value: "": "" is not a valid IP`,
@@ -91,7 +90,6 @@ func TestValidatePlatform(t *testing.T) {
 				p := validPlatform()
 				p.APIVIP = ""
 				p.IngressVIP = "192.168.111.3"
-				p.DNSVIP = "192.168.111.4"
 				return p
 			}(),
 			expectedError: `^test-path\.apiVIP: Required value: must specify a VIP for the API`,
@@ -102,21 +100,9 @@ func TestValidatePlatform(t *testing.T) {
 				p := validPlatform()
 				p.APIVIP = "192.168.111.2"
 				p.IngressVIP = ""
-				p.DNSVIP = "192.168.111.4"
 				return p
 			}(),
 			expectedError: `^test-path\.ingressVIP: Required value: must specify a VIP for Ingress`,
-		},
-		{
-			name: "missing DNS VIP",
-			platform: func() *vsphere.Platform {
-				p := validPlatform()
-				p.APIVIP = "192.168.111.2"
-				p.IngressVIP = "192.168.111.3"
-				p.DNSVIP = ""
-				return p
-			}(),
-			expectedError: `^test-path\.dnsVIP: Required value: must specify a VIP for DNS`,
 		},
 		{
 			name: "Invalid API VIP",
@@ -124,7 +110,6 @@ func TestValidatePlatform(t *testing.T) {
 				p := validPlatform()
 				p.APIVIP = "192.168.111"
 				p.IngressVIP = "192.168.111.2"
-				p.DNSVIP = "192.168.111.3"
 				return p
 			}(),
 			expectedError: `^test-path.apiVIP: Invalid value: "192.168.111": "192.168.111" is not a valid IP`,
@@ -135,21 +120,9 @@ func TestValidatePlatform(t *testing.T) {
 				p := validPlatform()
 				p.APIVIP = "192.168.111.1"
 				p.IngressVIP = "192.168.111"
-				p.DNSVIP = "192.168.111.3"
 				return p
 			}(),
 			expectedError: `^test-path.ingressVIP: Invalid value: "192.168.111": "192.168.111" is not a valid IP`,
-		},
-		{
-			name: "Invalid DNS VIP",
-			platform: func() *vsphere.Platform {
-				p := validPlatform()
-				p.APIVIP = "192.168.111.2"
-				p.IngressVIP = "192.168.111.3"
-				p.DNSVIP = "192.168.111"
-				return p
-			}(),
-			expectedError: `^test-path.dnsVIP: Invalid value: "192.168.111": "192.168.111" is not a valid IP`,
 		},
 	}
 	for _, tc := range cases {

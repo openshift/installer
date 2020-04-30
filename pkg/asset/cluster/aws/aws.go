@@ -23,6 +23,7 @@ func Metadata(clusterID, infraID string, config *types.InstallConfig) *awstypes.
 		}, {
 			"openshiftClusterID": clusterID,
 		}},
+		ServiceEndpoints: config.AWS.ServiceEndpoints,
 	}
 }
 

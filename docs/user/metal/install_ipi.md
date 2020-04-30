@@ -34,7 +34,8 @@ purposes:
   * ***NTP***
     * A time source must be accessible from this network.
   * ***Reserved VIPs (Virtual IPs)*** - 3 IP addresses must be reserved on this
-    network for use by the cluster.  Specifically, these IPs will serve the
+	network for use by the cluster. These Virtual IPs are managed using VRRP
+	(v2 for IPv4 and v3 for IPv6). Specifically, these IPs will serve the
     following purposes:
     * API - This IP will be used to reach the cluster API.
     * Ingress - This IP will be used by cluster ingress traffic
@@ -66,6 +67,29 @@ purposes:
   * Servers will typically have an additional NIC used by the onboard
     management controllers (BMCs).  These BMCs must be accessible and routed to
     the host.
+
+When the Virtual IPs are managed using multicast (VRRPv2 or VRRPv3), there is a
+limitation for 255 unique virtual routers per multicast domain. In case you
+have pre-existing virtual routers using the standard IPv4 or IPv6 multicast
+groups, you can learn the VIPs the installation will choose by running the
+following command:
+
+    $ podman run quay.io/openshift/origin-baremetal-runtimecfg:TAG vr-ids cnf10
+    APIVirtualRouterID: 147
+    DNSVirtualRouterID: 158
+    IngressVirtualRouterID: 2
+
+Where `TAG` is the release you are going to install, e.g., 4.5. Let's see another example:
+
+    $ podman run quay.io/openshift/origin-baremetal-runtimecfg:TAG vr-ids cnf11
+    APIVirtualRouterID: 228
+    DNSVirtualRouterID: 239
+    IngressVirtualRouterID: 147
+
+In the example output above you can see that installing two clusters in the
+same multicast domain with names `cnf10` and `cnf11` would lead to a conflict.
+You should also take care that none of those are taken by other independent
+VRRP virtual routers running in the same broadcast domain.
 
 ### Provisioning Host
 
@@ -182,7 +206,7 @@ sshKey: ...
 
 | Parameter | Default | Description |
 | --- | --- | --- |
-`provisioningNetworkInterface` | | The name of the network interface on control plane nodes connected to the provisioning network. |
+`provisioningNetworkInterface` | | The name of the network interface on control plane nodes connected to the provisioning network. It cannot overlap with the main network (see `machineNetwork`) |
 `hosts` | | Details about bare metal hosts to use to build the cluster. See below for more details. |
 `defaultMachinePlatform` | | The default configuration used for machine pools without a platform configuration. |
 `apiVIP` | `api.<clusterdomain>` | The VIP to use for internal API communication. |
@@ -200,14 +224,14 @@ The `dnsVIP` setting has no default and must always be provided.
 ##### Describing Hosts
 
 The `hosts` parameter is a list of separate bare metal assets that
-should be used to build the cluster.
+should be used to build the cluster. The number of assets must be at least greater or equal to the sum of the configured `ControlPlane` and `compute` `Replicas`.
 
 | Name | Default | Description |
 | --- | --- | --- |
-| `name` | | The name of the `BareMetalHost` resource to associate with the details. |
+| `name` | | The name of the `BareMetalHost` resource to associate with the details. It must be unique. |
 | `role` | | Either `master` or `worker`. |
 | `bmc` | | Connection details for the baseboard management controller. See below for details. |
-| `bootMACAddress` | | The MAC address of the NIC the host will use to boot on the provisioning network. |
+| `bootMACAddress` | | The MAC address of the NIC the host will use to boot on the provisioning network. It must be unique. |
 
 The `bmc` parameter for each host is a set of values for accessing the
 baseboard management controller in the host.
@@ -216,7 +240,7 @@ baseboard management controller in the host.
 | --- | --- | --- |
 | `username` | | The username for authenticating to the BMC |
 | `password` | | The password associated with `username`. |
-| `address` | | The URL for communicating with the BMC controller, based on the provider being used. See [BMC Addressing](#bmc-addressing) for details. |
+| `address` | | The URL for communicating with the BMC controller, based on the provider being used. See [BMC Addressing](#bmc-addressing) for details. It must be unique. |
 
 ##### BMC Addressing
 
