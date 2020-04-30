@@ -169,50 +169,38 @@ resource "azurerm_network_interface_backend_address_pool_association" "internal_
   ip_configuration_name   = local.bootstrap_nic_ip_v6_configuration_name
 }
 
-resource "azurerm_virtual_machine" "bootstrap" {
+resource "azurerm_linux_virtual_machine" "bootstrap" {
   name                  = "${var.cluster_id}-bootstrap"
   location              = var.region
   resource_group_name   = var.resource_group_name
   network_interface_ids = [azurerm_network_interface.bootstrap.id]
-  vm_size               = var.vm_size
-
-  delete_os_disk_on_termination    = true
-  delete_data_disks_on_termination = true
+  size                  = var.vm_size
+  admin_username        = "core"
+  # The password is normally applied by WALA (the Azure agent), but this
+  # isn't installed in RHCOS. As a result, this password is never set. It is
+  # included here because it is required by the Azure ARM API.
+  admin_password                  = "NotActuallyApplied!"
+  disable_password_authentication = false
 
   identity {
     type         = "UserAssigned"
     identity_ids = [var.identity]
   }
 
-  storage_os_disk {
-    name              = "${var.cluster_id}-bootstrap_OSDisk" # os disk name needs to match cluster-api convention
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Premium_LRS"
-    disk_size_gb      = 100
+  os_disk {
+    name                 = "${var.cluster_id}-bootstrap_OSDisk" # os disk name needs to match cluster-api convention
+    caching              = "ReadWrite"
+    storage_account_type = "Premium_LRS"
+    disk_size_gb         = 100
   }
 
-  storage_image_reference {
-    id = var.vm_image
-  }
+  source_image_id = var.vm_image
 
-  os_profile {
-    computer_name  = "${var.cluster_id}-bootstrap-vm"
-    admin_username = "core"
-    # The password is normally applied by WALA (the Azure agent), but this
-    # isn't installed in RHCOS. As a result, this password is never set. It is
-    # included here because it is required by the Azure ARM API.
-    admin_password = "NotActuallyApplied!"
-    custom_data    = data.ignition_config.redirect.rendered
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
+  computer_name = "${var.cluster_id}-bootstrap-vm"
+  custom_data   = base64encode(data.ignition_config.redirect.rendered)
 
   boot_diagnostics {
-    enabled     = true
-    storage_uri = var.storage_account.primary_blob_endpoint
+    storage_account_uri = var.storage_account.primary_blob_endpoint
   }
 
   depends_on = [
