@@ -461,6 +461,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, c := range controlPlanes {
 			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*vsphereprovider.VSphereMachineProviderSpec)
 		}
+
+		// Set this flag to use an existing folder specified in the install-config. Otherwise, create one.
+		preexistingFolder := installConfig.Config.Platform.VSphere.Folder != ""
+
 		data, err = vspheretfvars.TFVars(
 			vspheretfvars.TFVarsSources{
 				ControlPlaneConfigs: controlPlaneConfigs,
@@ -468,6 +472,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				Password:            installConfig.Config.VSphere.Password,
 				Cluster:             installConfig.Config.VSphere.Cluster,
 				ImageURL:            string(*rhcosImage),
+				PreexistingFolder:   preexistingFolder,
 			},
 		)
 		if err != nil {

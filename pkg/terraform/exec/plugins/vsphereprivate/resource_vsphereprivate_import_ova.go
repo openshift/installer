@@ -114,9 +114,9 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, datastore, n
 	}
 	importOvaParams.Datacenter = dcObj
 
-	// Find the newly created folder based on the path
-	// provided
-	folderObj, err := finder.Folder(ctx, folder)
+	// Create an absolute path to the folder in case the provided folder is nested.
+	folderPath := fmt.Sprintf("/%s/vm/%s", datacenter, folder)
+	folderObj, err := finder.Folder(ctx, folderPath)
 	if err != nil {
 		return nil, err
 	}

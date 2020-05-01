@@ -48,7 +48,13 @@ variable "vsphere_network" {
 }
 
 variable "vsphere_folder" {
-  type = string
+  type        = string
+  description = "The relative path to the folder which should be used or created for VMs."
+}
+
+variable "vsphere_preexisting_folder" {
+  type        = bool
+  description = "If false, creates a top-level folder with the name from vsphere_folder_rel_path."
 }
 
 ///////////
