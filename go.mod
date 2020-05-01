@@ -74,7 +74,7 @@ require (
 	github.com/openshift/machine-api-operator v0.2.1-0.20200429102619-d36974451290
 	github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033375cbe820+incompatible
 	github.com/ovirt/go-ovirt v4.3.4+incompatible
-	github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200122105935-65b89ad00553
+	github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200406133650-74a154c1d861
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
 	github.com/pborman/uuid v1.2.0
 	github.com/pierrec/lz4 v2.3.0+incompatible // indirect
@@ -136,6 +136,7 @@ replace (
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200413201024-c6e8c9b6eb9a // Pin API
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200116152001-92a2713fa240 // Pin client-go
 	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530 // Pin MCO so it doesn't get downgraded
+	github.com/ovirt/go-ovirt => github.com/ovirt/go-ovirt v0.0.0-20200320082526-4e97a11ff083
 	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-3 // Pin to openshift fork with IPv6 fixes
 	google.golang.org/api => google.golang.org/api v0.13.0 // Pin to version required by tf-provider-google
 	k8s.io/api => k8s.io/api v0.17.1 // Replaced by MCO/CRI-O

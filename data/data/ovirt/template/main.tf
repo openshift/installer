@@ -57,6 +57,9 @@ resource "ovirt_vm" "tmp_import_vm" {
     disk_id   = ovirt_image_transfer.releaseimage.0.disk_id
     interface = "virtio_scsi"
   }
+  os {
+    type = "rhcos_x86"
+  }
   nics {
     name            = "nic1"
     vnic_profile_id = data.ovirt_vnic_profiles.vnic_profiles.vnic_profiles.0.id

@@ -1,0 +1,218 @@
+= Changes
+
+This document describes the relevant changes between releases of the SDK.
+
+== 4.4.1 / Jan 31 2020
+
+Bug fixes:
+
+* Fix to replace incorrect XML tag names for lists of enums
+ Bug-Url: https://github.com/oVirt/ovirt-engine-sdk-go/issues/192[#192]
+
+
+== 4.4.0 / Jan 4 2020
+
+Update to model 4.4.11
+
+New features:
+
+* Added 'discardSnapshots', 'storageDomain' params to VM clone
+
+* Added MDevType type and mDevTypes() to HostDevice
+
+* Add disk download example
+  https://github.com/oVirt/ovirt-engine-sdk-go/pull/188[GitHub-188]
+
+
+== 4.3.9 / Oct 29 2019
+
+Update to model 4.4.10.
+
+New features:
+
+* Added properties for user type.
+  
+* Add HOST_CERTIFICATE_HAS_INVALID_SAN event
+  https://bugzilla.redhat.com/1763084[1763084].
+
+* Add the support for stop and shutdown
+  https://bugzilla.redhat.com/1450351[1450351].
+
+* Add copyhostnetworks method
+  https://bugzilla.redhat.com/1627465[1627465].
+
+* Add encrypted to migration options
+  https://bugzilla.redhat.com/1739557[1739557].
+
+* Add maintenance_after_restart to host fence action.
+  https://bugzilla.redhat.com/1574443[1574443].
+
+Deprecations:
+
+* Deprecate linux boot params
+  https://bugzilla.redhat.com/1732437[1732437].
+
+
+== 4.3.8 / Sep 12 2019
+
+Update to model 4.4.7.
+
+New features:
+
+* Echo external event to oVirt log on host.
+
+* Cluster-wide BIOS Type default
+
+* Add timeout to host upgrade
+  https://bugzilla.redhat.com/1728617[1728617].
+
+Deprecations:
+
+* Drop ovirt node legacy support
+  https://bugzilla.redhat.com/1718790[1718790].
+
+
+== 4.3.7 / Aug 19 2019
+
+Update to model 4.4.6.
+
+New features:
+
+* Introduce API for Event-Notifications
+  http://bugzilla.redhat.com/1700338[1700338].
+
+* Added AffinityGroupHostsService
+  https://bugzilla.redhat.com/1652064[1652064].
+
+* Add new option to remove SerialNumberPolicy
+  https://bugzilla.redhat.com/1607414[1607414].
+
+* Add services for labels in affinity groups
+  https://bugzilla.redhat.com/1680499[1680499].
+
+* It should be possible to specify exact v4.0 as NFS version
+  https://bugzilla.redhat.com/1690026[1690026].
+
+* Add priority to AffinityGroup type
+  https://bugzilla.redhat.com/1680498[1680498].
+
+* Add allContent to HostNic Services
+  https://bugzilla.redhat.com/1718141[1718141].
+
+Deprecations:
+
+* Announce the depreciation of Neutron agent configuration
+  https://bugzilla.redhat.com/1638675[1638675].
+
+
+== 4.3.6 / Jul 10 2019
+
+Bug fixes:
+
+* The commit ID tagged for version 4.3.5 is incorrect, release 4.3.6 for a quick fix
+  Bug-Url: https://github.com/oVirt/ovirt-engine-sdk-go/issues/169[#169]
+
+== 4.3.5 / Jun 25 2019
+
+Update to model 4.4.2.
+
+  New features:
+
+* Allow setting a disk ScsiGenericIO to disabled
+  https://bugzilla.redhat.com/1714834[1714834].
+
+* Treat image transfers cancelled by user/system differently
+  https://bugzilla.redhat.com/1533362[1533362].
+
+Leverage `go module` for dependency management.
+
+
+== 4.3.4 / May 23 2019
+Add v before tag names.
+
+
+== 4.3.3 / May 16 2019
+Update to model 4.4.0.
+
+  New features:
+
+ * Add new parameters to HostsService.List and VmService.Migrate
+  https://bugzilla.redhat.com/1651406[1651406].
+
+
+== 4.3.2 / Apr 10 2019
+Update to model 4.3.22.
+
+  New features:
+
+ * Add Upgrade action to cluster to set upgrade_action flag of cluster via API
+  Bug-Url: https://bugzilla.redhat.com/1663626[1663626].
+
+ * Add Hosted Engine disk types to content type
+  Bug-Url: https://bugzilla.redhat.com/1600788[1600788].
+
+Bug fixes:
+
+* Fix sdk compiling errors when updating to model 4.3.22
+ Bug-Url: https://github.com/oVirt/ovirt-engine-sdk-go/issues/151[#151]
+
+
+== 4.3.1 / Apr 8 2019
+Update to model 4.3.21.
+
+ New features:
+
+ * Add `activate` input param to add/install/approve host
+  http://bugzilla.redhat.com/1561539[1561539].
+
+ * Added support for incremental backup.
+
+ * Added block size Storage domain property
+  https://bugzilla.redhat.com/1592916[1592916].
+
+ * Added V5 storage format
+  https://bugzilla.redhat.com/1592916[1592916].
+
+ * Add driverSensitiveOptions to managed block storage type.
+
+ * Add managed block storage type.
+
+ * Setup networks commit on success.
+
+ * Add vGPU placement to Host
+  https://bugzilla.redhat.com/1641125[1641125].
+
+ * Specify cloud-init protocol in vm intialization
+  https://bugzilla.redhat.com/1611889[1611889].
+
+ * Added SATA to DiskInterface enum.
+
+ * Add disks link to Snapshot type.
+
+ Bug fixes:
+
+ * Change HostNic statistics and labels to Link
+  https://bugzilla.redhat.com/1661207[1661207].
+
+
+== 4.3.0 / Mar 14 2019
+
+This is the first stable release after being migrated to oVirt organization.
+
+The notable changes includes:
+
+* Update metamodel to 4.3.20
+
+* Change import path to `github.com/ovirt/go-ovirt`
+
+* Use https://developer.github.com/v3/guides/managing-deploy-keys/[Github deploy keys] as the credentials to deploy the auto-generated codes
+
+== 4.2.2 / Jan 24 2019
+
+Add support for semantic versioning, which is also considered to be the 
+recommended way for dependencies management.
+
+== 4.2.1 / Jan 16 2019
+
+This is considered to be the first stable release version in 4.2.x.
+In this release the model version is 4.2.37 and metamodel is 1.2.16.
