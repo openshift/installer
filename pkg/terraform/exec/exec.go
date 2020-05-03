@@ -58,9 +58,11 @@ func runner(cmd string, dir string, args []string, stdout, stderr io.Writer) int
 	meta := command.Meta{
 		Color:            false,
 		GlobalPluginDirs: pluginDirs,
-		Ui: &cli.BasicUi{
-			Writer:      stdout,
-			ErrorWriter: stderr,
+		Ui: &supressedUI{
+			Ui: &cli.BasicUi{
+				Writer:      stdout,
+				ErrorWriter: stderr,
+			},
 		},
 
 		OverrideDataDir: filepath.Join(dir, ".tf"),
@@ -124,4 +126,14 @@ func makeShutdownCh() (<-chan struct{}, func()) {
 	}()
 
 	return resultCh, func() { signal.Reset(handle...) }
+}
+
+// suppressedUI suppresses the Ui's warnings from error to
+// info.
+type supressedUI struct {
+	cli.Ui
+}
+
+func (sui *supressedUI) Warn(msg string) {
+	sui.Ui.Info(msg)
 }
