@@ -46,7 +46,8 @@ type AciContainersConfig struct {
 }
 
 type ConfigData struct {
-        HostConfig string `yaml:"host-agent-config"`
+        HostConfig       string `yaml:"host-agent-config"`
+	ControllerConfig string `yaml:"controller-config"`
 }
 
 type HostConfigMap struct {
@@ -57,32 +58,8 @@ type HostConfigMap struct {
         NodeSubnet  string `yaml:"node-subnet"`
 }
 
-type ClusterConfig03 struct {
-	ApiVersion string     `yaml:"apiVersion"`
-        Kind       string     `yaml:"kind"`
-        Metadata   MetaEntry  `yaml:"metadata,omitempty"`
-	Spec       SpecEntry  `yaml:"spec,omitempty"`
-}
-
-type MetaEntry struct {
-	Name	string `yaml:"name"`
-}
-
-type SpecEntry struct {
-	Multus		bool				`yaml:"disableMultiNetwork"`
-        ClusterNetwork	[]ClusterEntry 			`yaml:"clusterNetwork,omitempty"`  
-        DefaultNetwork  DefaultNetEntry			`yaml:"defaultNetwork,omitempty"`
-        NetworkType	string				`yaml:"networkType,omitempty"`
-        ServiceNetwork	[]string			`yaml:"serviceNetwork,omitempty"`
-}
-
-type ClusterEntry struct {
-        CIDR		string	`yaml:"cidr"`
-	HostPrefix	int32	`yaml:"hostPrefix"`
-}
-
-type DefaultNetEntry struct {
-	Type	string	`yaml:"type"`
+type ControllerConfigMap struct {
+	PodSubnetChunkSize int `yaml:"pod-subnet-chunk-size"`
 }
 
 
@@ -143,7 +120,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
         if err != nil {
 		allErrs = append(allErrs, field.Invalid(tarField, c.Platform.OpenStack.AciNetExt.ProvisionTar, err.Error()))
     	} else {
-                config, err := ExtractTarGz(r)
+                config, controllerConfig, err := ExtractTarGz(r)
                 if err != nil {
                         allErrs = append(allErrs, field.Invalid(tarField.Child("Unmarshal"),
                                 c.Platform.OpenStack.AciNetExt.ProvisionTar, err.Error()))
@@ -157,7 +134,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 			clusterNetworkCIDR := &c.Networking.ClusterNetwork[0].CIDR
 			nodeDiff := DiffSubnets(config.NodeSubnet, machineCIDR)
                         if nodeDiff != nil {
-				option := UserPrompt(nodeDiff.String(), machineCIDR, "node_subnet", "machineNetworkCIDR")
+				option := UserPrompt(nodeDiff.String(), machineCIDR.String(), "node_subnet", "machineNetworkCIDR")
 				if (option == true) {
 					cidrValue, _ := ipnet.ParseCIDR(nodeDiff.String())
 					c.Networking.MachineNetwork[0].CIDR = *cidrValue
@@ -169,7 +146,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
                         }
 			clusterDiff := DiffSubnets(config.PodSubnet, clusterNetworkCIDR)
                         if clusterDiff != nil {
-				option := UserPrompt(clusterDiff.String(), clusterNetworkCIDR, "pod_subnet", "clusterNetworkCIDR")
+				option := UserPrompt(clusterDiff.String(), clusterNetworkCIDR.String(), "pod_subnet", "clusterNetworkCIDR")
 				if (option == true) {
 					parsedCIDR, _ := ipnet.ParseCIDR(clusterDiff.String())
 					c.Networking.ClusterNetwork[0].CIDR = *parsedCIDR
@@ -179,6 +156,22 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
                                         	clusterNetworkCIDR.String(), "pod_subnet in acc-provision input(" + clusterDiff.String() + ") has to be the same as clusterNetwork:cidr in install-config.yaml(" + clusterNetworkCIDR.String() + ")"))
 				}
                         }
+
+			// Validate hostPrefix against pod-subnet-chunk-size
+			hostPrefix := c.Networking.ClusterNetwork[0].HostPrefix
+			inputSubnetSize := GetSubnetSize(hostPrefix)
+			provisionSubnetSize := controllerConfig.PodSubnetChunkSize
+			if inputSubnetSize != provisionSubnetSize {
+				option := UserPrompt(strconv.Itoa(provisionSubnetSize),
+						strconv.Itoa(inputSubnetSize), "pod_subnet_chunk_size", "hostPrefix")
+                                if (option == true) {
+                                        c.Networking.ClusterNetwork[0].HostPrefix = int32(provisionSubnetSize)
+                                        log.Print("Setting clusterNetwork hostPrefix to " + strconv.Itoa(provisionSubnetSize))
+                                } else {
+                                        allErrs = append(allErrs, field.Invalid(field.NewPath("clusterNetworkHostPrefix"),
+                                                strconv.Itoa(int(hostPrefix)), "pod_subnet_chunk_size in acc-provision input(" + strconv.Itoa(provisionSubnetSize) + ") has to be the same as clusterNetwork:hostPrefix in install-config.yaml(" + strconv.Itoa(inputSubnetSize) + ")"))
+                                }
+			}
 		}
 	}
 
@@ -212,9 +205,13 @@ func DiffSubnets(sub1 string, sub2 *ipnet.IPNet) *net.IPNet {
         return nil
 }
 
-func UserPrompt(sub1 string, sub2 *ipnet.IPNet, item1 string, item2 string) bool {
+func GetSubnetSize(hostPrefix int32) int {
+	return 1 << (32 - hostPrefix)
+}
+
+func UserPrompt(sub1 string, sub2 string, item1 string, item2 string) bool {
 	var option string
-	log.Print("There's a discrepancy between " + item1 + "(" + sub1 + ") in acc-provision input and " + item2 + "(" + sub2.String() + ") in install-config.yaml")
+	log.Print("There's a discrepancy between " + item1 + "(" + sub1 + ") in acc-provision input and " + item2 + "(" + sub2 + ") in install-config.yaml")
 	log.Print("Enter Y to use acc-provision value, or N to exit installer and fix acc-provision tar")
 	fmt.Scanln(&option)
 	var op bool
@@ -224,11 +221,12 @@ func UserPrompt(sub1 string, sub2 *ipnet.IPNet, item1 string, item2 string) bool
 	return op
 }
 
-func ExtractTarGz(gzipStream io.Reader) (HostConfigMap, error) {
+func ExtractTarGz(gzipStream io.Reader) (HostConfigMap, ControllerConfigMap, error) {
 	config := HostConfigMap{}
+	controllerConfig := ControllerConfigMap{}
         uncompressedStream, err := gzip.NewReader(gzipStream)
         if err != nil {
-		return config, err
+		return config, controllerConfig, err
         }
 
         tarReader := tar.NewReader(uncompressedStream)
@@ -241,14 +239,14 @@ func ExtractTarGz(gzipStream io.Reader) (HostConfigMap, error) {
                 }
 
                 if err != nil {
-			return config, err
+			return config, controllerConfig, err
                 }
 
                 switch header.Typeflag {
                 case tar.TypeReg:
                         temp, err := ioutil.ReadAll(tarReader)
 			if err != nil {
-				return config, err
+				return config, controllerConfig, err
 			}
 
 			// Unmarshal acc configmap to get acc-provision values
@@ -256,23 +254,27 @@ func ExtractTarGz(gzipStream io.Reader) (HostConfigMap, error) {
                                 t := AciContainersConfig{}
                                 err = yaml.Unmarshal(temp, &t)
                                 if err != nil {
-					return config, err
+					return config, controllerConfig, err
                                 }
                                 err = yaml.Unmarshal([]byte(t.Data.HostConfig), &config)
                                 if err != nil {
-					return config, err
+					return config, controllerConfig, err
+                                }
+				err = yaml.Unmarshal([]byte(t.Data.ControllerConfig), &controllerConfig)
+                                if err != nil {
+                                        return config, controllerConfig, err
                                 }
 				err = checkForParsedConfigValues(config)
 				if err != nil {
-                                        return config, err
+                                        return config, controllerConfig,  err
                                 }
                         }
                 default:
-			return config, errors.New("Unsupported file type in tar")
+			return config, controllerConfig, errors.New("Unsupported file type in tar")
 		}
 
         }
-        return config, nil
+        return config, controllerConfig, nil
 }
 
 func checkForParsedConfigValues(config HostConfigMap) error {
