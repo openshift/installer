@@ -1,7 +1,9 @@
 package terraform
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -43,15 +45,14 @@ func Apply(dir string, platform string, extraArgs ...string) (path string, err e
 	args = append(args, dir)
 	sf := filepath.Join(dir, StateFileName)
 
-	tDebug := &lineprinter.Trimmer{WrappedPrint: logrus.Debug}
-	tError := &lineprinter.Trimmer{WrappedPrint: logrus.Error}
-	lpDebug := &lineprinter.LinePrinter{Print: tDebug.Print}
-	lpError := &lineprinter.LinePrinter{Print: tError.Print}
+	lpDebug := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Debug}).Print}
+	lpError := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Error}).Print}
 	defer lpDebug.Close()
 	defer lpError.Close()
 
-	if exitCode := texec.Apply(dir, args, lpDebug, lpError); exitCode != 0 {
-		return sf, errors.New("failed to apply using Terraform")
+	errBuf := &bytes.Buffer{}
+	if exitCode := texec.Apply(dir, args, lpDebug, io.MultiWriter(errBuf, lpError)); exitCode != 0 {
+		return sf, errors.Wrap(Diagnose(errBuf.String()), "failed to apply Terraform")
 	}
 	return sf, nil
 }
@@ -74,10 +75,8 @@ func Destroy(dir string, platform string, extraArgs ...string) (err error) {
 	args := append(defaultArgs, extraArgs...)
 	args = append(args, dir)
 
-	tDebug := &lineprinter.Trimmer{WrappedPrint: logrus.Debug}
-	tError := &lineprinter.Trimmer{WrappedPrint: logrus.Error}
-	lpDebug := &lineprinter.LinePrinter{Print: tDebug.Print}
-	lpError := &lineprinter.LinePrinter{Print: tError.Print}
+	lpDebug := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Debug}).Print}
+	lpError := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Error}).Print}
 	defer lpDebug.Close()
 	defer lpError.Close()
 
@@ -115,10 +114,8 @@ func unpackAndInit(dir string, platform string) (err error) {
 		return errors.Wrap(err, "failed to setup embedded Terraform plugins")
 	}
 
-	tDebug := &lineprinter.Trimmer{WrappedPrint: logrus.Debug}
-	tError := &lineprinter.Trimmer{WrappedPrint: logrus.Error}
-	lpDebug := &lineprinter.LinePrinter{Print: tDebug.Print}
-	lpError := &lineprinter.LinePrinter{Print: tError.Print}
+	lpDebug := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Debug}).Print}
+	lpError := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Error}).Print}
 	defer lpDebug.Close()
 	defer lpError.Close()
 
