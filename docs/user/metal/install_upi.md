@@ -227,7 +227,7 @@ Terraform [templates][upi-metal-example] provides an example of using OpenShift 
 ### Overview
 
 * Compute: Uses Packet.net to deploy bare-metal machines.
-    Uses [matchbox](coreos-matchbox) to serve PXE scripts and Ignition configs for bootstrap, control plane and worker machines.
+    Uses [matchbox] to serve PXE scripts and Ignition configs for bootstrap, control plane and worker machines.
     Uses `public` IPv4 addresses for each machine, so that all the machines are accessible on the internet.
 
 * DNS and Load Balancing
@@ -309,10 +309,10 @@ terraform destroy -auto-approve
 [cluster-image-registry-operator]: https://github.com/openshift/cluster-image-registry-operator#image-registry-operator
 [coreos-installer-args]: https://github.com/coreos/coreos-installer#kernel-command-line-options-for-coreos-installer-running-in-the-initramfs
 [coreos-installer]: https://github.com/coreos/coreos-installer#coreos-installer
-[coreos-matchbox]: https://github.com/coreos/matchbox#matchbox----
 [csr-requests]: https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/#requesting-a-certificate
 [etcd-ports]: https://github.com/openshift/origin/pull/21520
 [machine-config-server]: https://github.com/openshift/machine-config-operator/blob/master/docs/MachineConfigServer.md
+[matchbox]: https://github.com/coreos/matchbox
 [openshift-router]: https://github.com/openshift/cluster-ingress-operator#openshift-ingress-operator
 [rrdns]: https://tools.ietf.org/html/rfc1794
 [sdn-ports]: https://github.com/openshift/origin/pull/21520
