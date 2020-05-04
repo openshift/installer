@@ -120,7 +120,7 @@ The OpenShift Installer provides administrators various assets that are required
 
 ### Setting up install-config for installer
 
-The OpenShift installer uses an [Install Config](../customization.md#platform-customization) to drive all install time configuration.
+The OpenShift installer uses an [Install Config](../customization.md#platform-customization) to drive all install time configuration. Note that, the Openshift Installer currently can not create the Install Config for baremetal and you will have to manually create this file.
 
 An example install config for bare-metal UPI is as follows:
 
