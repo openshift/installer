@@ -115,7 +115,7 @@ func SignedCertificate(
 		Version:               3,
 		BasicConstraintsValid: true,
 	}
-	pub := caCert.PublicKey.(*rsa.PublicKey)
+	pub := key.Public()
 	certTmpl.SubjectKeyId, err = generateSubjectKeyID(pub)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to set subject key identifier")
