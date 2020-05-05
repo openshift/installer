@@ -6,7 +6,30 @@ import (
 	ovirtsdk "github.com/ovirt/go-ovirt"
 	"github.com/pkg/errors"
 	"gopkg.in/AlecAivazis/survey.v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/ovirt/validation"
 )
+
+// Validate executes platform-specific validation.
+func Validate(ic *types.InstallConfig) error {
+	allErrs := field.ErrorList{}
+	ovirtPlatformPath := field.NewPath("platform", ovirt.Name)
+
+	if ic.Platform.Ovirt == nil {
+		return errors.New(field.Required(
+			ovirtPlatformPath,
+			"oVirt validation requires a oVirt platform configuration").Error())
+	}
+
+	allErrs = append(
+		allErrs,
+		validation.ValidatePlatform(ic.Platform.Ovirt, ovirtPlatformPath)...)
+
+	return allErrs.ToAggregate()
+}
 
 // authenticated takes an ovirt platform and validates
 // its connection to the API by establishing
