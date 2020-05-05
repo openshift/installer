@@ -21,64 +21,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Annotation constants
-const (
-	// ClusterIDLabel is the label that a machineset must have to identify the
-	// cluster to which it belongs.
-	ClusterIDLabel = "machine.openshift.io/cluster-api-cluster"
-)
-
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// AWSMachineProviderStatus is the type that will be embedded in a Machine.Status.ProviderStatus field.
-// It contains AWS-specific status information.
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type AWSMachineProviderStatus struct {
-	metav1.TypeMeta `json:",inline"`
-
-	// InstanceID is the instance ID of the machine created in AWS
-	// +optional
-	InstanceID *string `json:"instanceId,omitempty"`
-
-	// InstanceState is the state of the AWS instance for this machine
-	// +optional
-	InstanceState *string `json:"instanceState,omitempty"`
-
-	// Conditions is a set of conditions associated with the Machine to indicate
-	// errors or other status
-	Conditions []AWSMachineProviderCondition `json:"conditions,omitempty"`
-}
-
-// AWSMachineProviderConditionType is a valid value for AWSMachineProviderCondition.Type
-type AWSMachineProviderConditionType string
-
-// Valid conditions for an AWS machine instance
-const (
-	// MachineCreation indicates whether the machine has been created or not. If not,
-	// it should include a reason and message for the failure.
-	MachineCreation AWSMachineProviderConditionType = "MachineCreation"
-)
-
-// AWSMachineProviderCondition is a condition in a AWSMachineProviderStatus
-type AWSMachineProviderCondition struct {
-	// Type is the type of the condition.
-	Type AWSMachineProviderConditionType `json:"type"`
-	// Status is the status of the condition.
-	Status corev1.ConditionStatus `json:"status"`
-	// LastProbeTime is the last time we probed the condition.
-	// +optional
-	LastProbeTime metav1.Time `json:"lastProbeTime,omitempty"`
-	// LastTransitionTime is the last time the condition transitioned from one status to another.
-	// +optional
-	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
-	// Reason is a unique, one-word, CamelCase reason for the condition's last transition.
-	// +optional
-	Reason string `json:"reason,omitempty"`
-	// Message is a human-readable message indicating details about last transition.
-	// +optional
-	Message string `json:"message,omitempty"`
-}
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -121,7 +65,7 @@ type AWSMachineProviderConfig struct {
 
 	// PublicIP specifies whether the instance should get a public IP. If not present,
 	// it should use the default of its subnet.
-	PublicIP *bool `json:"publicIp"`
+	PublicIP *bool `json:"publicIp,omitempty"`
 
 	// SecurityGroups is an array of references to security groups that should be applied to the
 	// instance.
@@ -140,6 +84,9 @@ type AWSMachineProviderConfig struct {
 	// BlockDevices is the set of block device mapping associated to this instance
 	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
 	BlockDevices []BlockDeviceMappingSpec `json:"blockDevices,omitempty"`
+
+	// SpotMarketOptions allows users to configure instances to be run using AWS Spot instances.
+	SpotMarketOptions *SpotMarketOptions `json:"spotMarketOptions,omitempty"`
 }
 
 // BlockDeviceMappingSpec describes a block device mapping
@@ -214,6 +161,15 @@ type EBSBlockDeviceSpec struct {
 	// The volume type: gp2, io1, st1, sc1, or standard.
 	// Default: standard
 	VolumeType *string `json:"volumeType,omitempty"`
+}
+
+// SpotMarketOptions defines the options available to a user when configuring
+// Machines to run on Spot instances.
+// Most users should provide an empty struct.
+type SpotMarketOptions struct {
+	// The maximum price the user is willing to pay for their instances
+	// Default: On-Demand price
+	MaxPrice *string `json:"maxPrice,omitempty"`
 }
 
 // AWSResourceReference is a reference to a specific AWS resource by ID, ARN, or filters.

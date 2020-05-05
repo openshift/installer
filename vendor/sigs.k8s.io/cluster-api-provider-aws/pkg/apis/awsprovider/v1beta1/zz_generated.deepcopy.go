@@ -123,7 +123,7 @@ func (in *AWSMachineProviderConfig) DeepCopyObject() runtime.Object {
 func (in *AWSMachineProviderConfigList) DeepCopyInto(out *AWSMachineProviderConfigList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]AWSMachineProviderConfig, len(*in))
