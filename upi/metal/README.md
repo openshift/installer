@@ -4,7 +4,7 @@
 
 ### Matchbox
 
-Setup an instance of matchbox using this [guide][coreos-matchbox-getting-started] which is accessible to everybody on the internet.
+Setup an instance of matchbox using this [guide][coreos-matchbox-getting-started]. The matchbox instance must be reachable from public internet.
 
 Store the tls assets that will be used for client authentication and the CA certificate that allows client to trust the matchbox server on the host that will run the example terraform scripts.
 
