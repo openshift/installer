@@ -11,6 +11,8 @@ import (
 const (
 	// DefaultCloudName is the default name of the cloud in clouds.yaml file.
 	DefaultCloudName = "openstack"
+	DefaultNeutronMTU = "1600"
+	DefaultInstallerHostSubnet = "1.109.2.0/24"
 )
 
 // SetPlatformDefaults sets the defaults for the platform.
@@ -22,8 +24,11 @@ func SetPlatformDefaults(p *openstack.Platform, installConfig *types.InstallConf
 		}
 	}
         if p.AciNetExt.Mtu == "" {
-                p.AciNetExt.Mtu = "1500"
+                p.AciNetExt.Mtu = DefaultNeutronMTU
         }
+	if p.AciNetExt.InstallerHostSubnet == "" {
+		p.AciNetExt.InstallerHostSubnet = DefaultInstallerHostSubnet
+	}
 }
 
 // APIVIP returns the internal virtual IP address (VIP) put in front

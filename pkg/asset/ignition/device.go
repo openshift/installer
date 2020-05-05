@@ -4,6 +4,7 @@ import (
         "text/template"
 	"net"
         "bytes"
+	"strconv"
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/coreos/ignition/config/util"
@@ -131,10 +132,11 @@ func IgnitionFiles(installConfig *installconfig.InstallConfig) []igntypes.File {
 	}
         machineCIDR := &installConfig.Config.Networking.MachineNetwork[0].CIDR.IPNet
         defaultGateway, _ := cidr.Host(machineCIDR, 1)
-        kube_api_vlan := installConfig.Config.Platform.OpenStack.AciNetExt.KubeApiVLAN
-        infra_vlan := installConfig.Config.Platform.OpenStack.AciNetExt.InfraVLAN
-        mtu_value := installConfig.Config.Platform.OpenStack.AciNetExt.Mtu
-        networkScriptString, _ := NetworkScript(kube_api_vlan, defaultGateway.String(), mtu_value)
+        kubeApiVLAN := installConfig.Config.Platform.OpenStack.AciNetExt.KubeApiVLAN
+        infraVLAN := installConfig.Config.Platform.OpenStack.AciNetExt.InfraVLAN
+	mtuString, _ := strconv.Atoi(installConfig.Config.Platform.OpenStack.AciNetExt.Mtu)
+	mtuValue := strconv.Itoa(mtuString - 100)
+        networkScriptString, _ := NetworkScript(kubeApiVLAN, defaultGateway.String(), mtuValue)
 
         neutronCIDR := &installConfig.Config.Platform.OpenStack.AciNetExt.NeutronCIDR.IPNet
         defaultNeutronGateway, _ := cidr.Host(neutronCIDR, 1)
@@ -147,7 +149,7 @@ func IgnitionFiles(installConfig *installconfig.InstallConfig) []igntypes.File {
 	ifcfg_ens3_string := `DEVICE=ens3.4094
                ONBOOT=yes
                BOOTPROTO=dhcp
-               MTU=` + mtu_value + `
+               MTU=` + mtuValue + `
                TYPE=Vlan
                VLAN=yes
                PHYSDEV=ens3
@@ -164,7 +166,7 @@ func IgnitionFiles(installConfig *installconfig.InstallConfig) []igntypes.File {
         ifcfg_opflex_conn_string := `VLAN=yes
                TYPE=Vlan
                PHYSDEV=ens3
-               VLAN_ID=` + infra_vlan + `
+               VLAN_ID=` + infraVLAN + `
                REORDER_HDR=yes
                GVRP=no
                MVRP=no
@@ -175,9 +177,9 @@ func IgnitionFiles(installConfig *installconfig.InstallConfig) []igntypes.File {
                IPV4_FAILURE_FATAL=no
                IPV6INIT=no
                NAME=opflex-conn
-               DEVICE=ens3.`+ infra_vlan +`
+               DEVICE=ens3.`+ infraVLAN +`
                ONBOOT=yes
-               MTU=` + mtu_value
+               MTU=` + mtuValue
 
         ifcfg_uplink_conn_string := `TYPE=Ethernet
                PROXY_METHOD=none
@@ -189,7 +191,7 @@ func IgnitionFiles(installConfig *installconfig.InstallConfig) []igntypes.File {
                DEVICE=ens3
                ONBOOT=yes
                BOOTPROTO=none
-               MTU=` + mtu_value
+               MTU=` + mtuValue
 
         route_opflex_conn_string := `ADDRESS0=224.0.0.0
                NETMASK0=240.0.0.0

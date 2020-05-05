@@ -139,11 +139,6 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 				Policy: &configv1.ExternalIPPolicy{},
 			},
 		},
-		Status: configv1.NetworkStatus{
-			ClusterNetwork: clusterNet,
-			ServiceNetwork: serviceNet,
-			NetworkType:    netConfig.NetworkType,
-		},
 	}
 
 	configData, err := yaml.Marshal(no.Config)

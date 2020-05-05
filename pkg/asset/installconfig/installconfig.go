@@ -3,9 +3,11 @@ package installconfig
 import (
 	"context"
 	"os"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	survey "gopkg.in/AlecAivazis/survey.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -81,7 +83,28 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	a.Config.GCP = platform.GCP
 	a.Config.BareMetal = platform.BareMetal
 
+	provisionTarPath, err := a.queryUserForTarPath()
+	if err != nil {
+		return err
+	}
+	a.Config.Platform.OpenStack.AciNetExt.ProvisionTar = provisionTarPath
+
 	return a.finish("")
+}
+
+func (a *InstallConfig) queryUserForTarPath() (tarPath string, err error) {
+        err = survey.Ask([]*survey.Question{
+                {
+                        Prompt:    &survey.Input{Message: "Full path for acc-provision tar file: "},
+                        Transform: TrimString,
+                },
+        }, &tarPath)
+        return
+}
+
+func TrimString(ans interface{}) interface{} {
+        transformer := survey.TransformString(strings.TrimSpace)
+        return transformer(ans)
 }
 
 // Name returns the human-friendly name of the asset.

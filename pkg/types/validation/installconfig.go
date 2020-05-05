@@ -157,13 +157,14 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 			clusterNetworkCIDR := &c.Networking.ClusterNetwork[0].CIDR
 			nodeDiff := DiffSubnets(config.NodeSubnet, machineCIDR)
                         if nodeDiff != nil {
-				option := UserPrompt(nodeDiff.String(), machineCIDR, "node_subnet", "machineCIDR")
+				option := UserPrompt(nodeDiff.String(), machineCIDR, "node_subnet", "machineNetworkCIDR")
 				if (option == true) {
-					c.Networking.DeprecatedMachineCIDR, _ = ipnet.ParseCIDR(nodeDiff.String())
+					cidrValue, _ := ipnet.ParseCIDR(nodeDiff.String())
+					c.Networking.MachineNetwork[0].CIDR = *cidrValue
 					log.Print("Setting machineCIDR to " + nodeDiff.String())
 				} else {
-                                	allErrs = append(allErrs, field.Invalid(field.NewPath("machineCIDR"),
-                                        	c.Networking.DeprecatedMachineCIDR.String(), "node_subnet in acc-provision input(" + nodeDiff.String() + ") has to be the same as machineCIDR in install-config.yaml(" + machineCIDR.String() + ")"))
+                                	allErrs = append(allErrs, field.Invalid(field.NewPath("machineNetworkCIDR"),
+                                        	c.Networking.DeprecatedMachineCIDR.String(), "node_subnet in acc-provision input(" + nodeDiff.String() + ") has to be the same as machineNetwork CIDR in install-config.yaml(" + machineCIDR.String() + ")"))
 				}
                         }
 			clusterDiff := DiffSubnets(config.PodSubnet, clusterNetworkCIDR)
@@ -261,6 +262,10 @@ func ExtractTarGz(gzipStream io.Reader) (HostConfigMap, error) {
                                 if err != nil {
 					return config, err
                                 }
+				err = checkForParsedConfigValues(config)
+				if err != nil {
+                                        return config, err
+                                }
                         }
                 default:
 			return config, errors.New("Unsupported file type in tar")
@@ -268,6 +273,15 @@ func ExtractTarGz(gzipStream io.Reader) (HostConfigMap, error) {
 
         }
         return config, nil
+}
+
+func checkForParsedConfigValues(config HostConfigMap) error {
+	if config.PodSubnet == "" || config.NodeSubnet == "" ||
+		config.KubeApiVLAN == 0 || config.ServiceVLAN == 0 ||
+			config.InfraVLAN == 0 {
+				return errors.New("One or more values missing from acc-provision tar configmap")
+	}
+	return nil
 }
 
 // ipAddressTypeByField is a map of field path to whether they request IPv4 or IPv6.
