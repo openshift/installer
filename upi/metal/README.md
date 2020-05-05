@@ -42,7 +42,7 @@ terraform-examples config.tf > terraform.tfvars.example
 
 [aws-cli-configure-creds]: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html
 [aws-create-public-route53-zone]: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html
-[coreos-matchbox-getting-started]: https://github.com/coreos/matchbox#matchbox----
+[coreos-matchbox-getting-started]: https://matchbox.psdn.io/getting-started/
 [packet-api-keys]: https://www.packet.com/developers/changelog/project-only-api-keys/
 [packet-deploy-server]: https://support.packet.com/kb/articles/deploy-a-server
 [terraform-examples]: https://github.com/s-urbaniak/terraform-examples#terraform-examples
