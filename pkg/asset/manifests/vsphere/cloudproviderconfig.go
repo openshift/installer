@@ -14,7 +14,7 @@ func printIfNotEmpty(buf *bytes.Buffer, k, v string) {
 }
 
 // CloudProviderConfig generates the cloud provider config for the vSphere platform.
-func CloudProviderConfig(clusterName string, p *vspheretypes.Platform) (string, error) {
+func CloudProviderConfig(clusterID, folderRelPath string, p *vspheretypes.Platform) (string, error) {
 	buf := new(bytes.Buffer)
 
 	fmt.Fprintln(buf, "[Global]")
@@ -27,9 +27,9 @@ func CloudProviderConfig(clusterName string, p *vspheretypes.Platform) (string, 
 	printIfNotEmpty(buf, "server", p.VCenter)
 	printIfNotEmpty(buf, "datacenter", p.Datacenter)
 	printIfNotEmpty(buf, "default-datastore", p.DefaultDatastore)
-	printIfNotEmpty(buf, "folder", p.Folder)
+	printIfNotEmpty(buf, "folder", folderRelPath)
 	if p.Folder == "" {
-		printIfNotEmpty(buf, "folder", clusterName)
+		printIfNotEmpty(buf, "folder", clusterID)
 	}
 	fmt.Fprintln(buf, "")
 

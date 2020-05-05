@@ -52,32 +52,29 @@ func New(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata) (p
 	}, nil
 }
 
-func deleteVirtualMachines(ctx context.Context, client *vim25.Client, virtualMachineMoList []mo.VirtualMachine, parentFolder mo.Folder, logger logrus.FieldLogger) error {
+func deleteVirtualMachines(ctx context.Context, client *vim25.Client, virtualMachineMoList []mo.VirtualMachine, logger logrus.FieldLogger) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
 
 	if len(virtualMachineMoList) != 0 {
 		for _, vmMO := range virtualMachineMoList {
 			virtualMachineLogger := logger.WithField("VirtualMachine", vmMO.Name)
-			// Checking if the Folder mobRef is the same as the VirtualMachine parent mobRef
-			if parentFolder.Reference() == vmMO.Parent.Reference() {
-				vm := object.NewVirtualMachine(client, vmMO.Reference())
-				if vmMO.Summary.Runtime.PowerState == "poweredOn" {
-					task, err := vm.PowerOff(ctx)
-					if err != nil {
-						return err
-					}
-					task.Wait(ctx)
-					virtualMachineLogger.Debug("Powered off")
-				}
-
-				task, err := vm.Destroy(ctx)
+			vm := object.NewVirtualMachine(client, vmMO.Reference())
+			if vmMO.Summary.Runtime.PowerState == "poweredOn" {
+				task, err := vm.PowerOff(ctx)
 				if err != nil {
 					return err
 				}
 				task.Wait(ctx)
-				virtualMachineLogger.Info("Destroyed")
+				virtualMachineLogger.Debug("Powered off")
 			}
+
+			task, err := vm.Destroy(ctx)
+			if err != nil {
+				return err
+			}
+			task.Wait(ctx)
+			virtualMachineLogger.Info("Destroyed")
 		}
 	}
 	return nil
@@ -157,15 +154,12 @@ func (o *ClusterUninstaller) Run() error {
 		}
 	}
 
-	// There should be exactly one Folder which is created by
-	// terraform.  That is the parent to the VirtualMachines.
+	// The installer should create at most one parent,
+	// the parent to the VirtualMachines.
 	// If there are more or less fail with error message.
-	if len(folderList) != 1 {
+	if len(folderList) > 1 {
 		return errors.Errorf("Expected 1 Folder per tag but got %d", len(folderList))
 	}
-
-	o.Logger.Debug("find Folder objects")
-	folderMoList, err := getFolderManagedObjects(context.TODO(), o.Client, folderList)
 
 	o.Logger.Debug("find VirtualMachine objects")
 	virtualMachineMoList, err := getVirtualMachineManagedObjects(context.TODO(), o.Client, virtualMachineList)
@@ -173,15 +167,19 @@ func (o *ClusterUninstaller) Run() error {
 		return err
 	}
 	o.Logger.Debug("delete VirtualMachines")
-	err = deleteVirtualMachines(context.TODO(), o.Client, virtualMachineMoList, folderMoList[0], o.Logger)
+	err = deleteVirtualMachines(context.TODO(), o.Client, virtualMachineMoList, o.Logger)
 	if err != nil {
 		return err
 	}
-	// When removing virtual machines the mo.Folder object does not change
-	// We need to re-retrieve the list again
+
+	// In this case, folder was user-provided
+	// and should not be deleted so we are done.
+	if len(folderList) == 0 {
+		return nil
+	}
+
 	o.Logger.Debug("find Folder objects")
-	folderMoList = nil
-	folderMoList, err = getFolderManagedObjects(context.TODO(), o.Client, folderList)
+	folderMoList, err := getFolderManagedObjects(context.TODO(), o.Client, folderList)
 	if err != nil {
 		o.Logger.Errorln(err)
 		return err
