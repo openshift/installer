@@ -77,6 +77,8 @@ The most important thing to look at on the bootstrap node is `bootkube.service`.
 1. If SSH is available, the following command can be run on the bootstrap node: `journalctl --unit=bootkube.service`
 2. Regardless of whether or not SSH is available, the following command can be run: `curl --insecure --cert ${INSTALL_DIR}/tls/journal-gatewayd.crt --key ${INSTALL_DIR}/tls/journal-gatewayd.key 'https://${BOOTSTRAP_IP}:19531/entries?follow&_SYSTEMD_UNIT=bootkube.service'`
 
+The installer can also gather a log bundle from the bootstrap host using SSH as describe in [troubleshooting bootstrap](./troubleshootingbootstrap.md) document.
+
 ### etcd Is Not Running
 
 During the bootstrap process, the Kubelet may emit errors like the following:
