@@ -46,6 +46,11 @@ variable "ovirt_network_name" {
   description = "The name of ovirt's logical network for the selected ovirt cluster."
 }
 
+variable "ovirt_vnic_profile_id" {
+  type        = string
+  description = "The ID of the vnic profile of ovirt's logical network."
+}
+
 variable "ovirt_master_mem" {
   type    = string
   default = "8192"
