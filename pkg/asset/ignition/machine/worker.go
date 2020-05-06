@@ -42,13 +42,13 @@ func (a *Worker) Generate(dependencies asset.Parents) error {
 
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "worker")
 
-	logrus.Info("Editing Worker.........")
+	logrus.Debug("Editing Worker.........")
 
-        ignitionFiles := ign.IgnitionFiles(installConfig)
+        ignitionFiles := ign.IgnitionFiles(installConfig, false)
         for _, ignFile := range ignitionFiles {
                 a.Config.Storage.Files = append(a.Config.Storage.Files, ignFile)
         }
-        systemdUnits := ign.SystemdUnitFiles(installConfig)
+        systemdUnits := ign.SystemdUnitFiles(installConfig, false)
         for _, unit := range systemdUnits {
                 a.Config.Systemd.Units = append(a.Config.Systemd.Units, unit)
         }

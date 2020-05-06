@@ -11,7 +11,8 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
-        ign "github.com/openshift/installer/pkg/asset/ignition"
+	ign "github.com/openshift/installer/pkg/asset/ignition"
+
 )
 
 const (
@@ -42,13 +43,13 @@ func (a *Master) Generate(dependencies asset.Parents) error {
 
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master")
 
-	logrus.Info("Editing Master.........")
+	logrus.Debug("Editing Master.........")
 
-	ignitionFiles := ign.IgnitionFiles(installConfig)
-        for _, ignFile := range ignitionFiles {
-               	a.Config.Storage.Files = append(a.Config.Storage.Files, ignFile)
-       	}
-	systemdUnits := ign.SystemdUnitFiles(installConfig)
+	ignitionFiles := ign.IgnitionFiles(installConfig, false)
+	for _, ignFile := range ignitionFiles {
+			a.Config.Storage.Files = append(a.Config.Storage.Files, ignFile)
+	}
+	systemdUnits := ign.SystemdUnitFiles(installConfig, false)
 	for _, unit := range systemdUnits {
 		a.Config.Systemd.Units = append(a.Config.Systemd.Units, unit)
 	}

@@ -14,6 +14,22 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 )
 
+// This creates a script which would add node labels to kubelet service
+var cloudProviderScriptTmpl = template.Must(template.New("user-data").Parse(`#!/bin/bash
+# These are rendered through Go
+KUBE_API_VLAN={{.vlan}}
+KUBE_API_VLAN_DEVICE="ens3.${KUBE_API_VLAN}"
+ip=$(/sbin/ip -o -4 addr list $KUBE_API_VLAN_DEVICE | awk '{print $4}' | cut -d/ -f1)
+retVal=1
+while [ $retVal -ne 0 ]; do
+echo "Node IP is ${ip}"
+oc get nodes --kubeconfig=/var/lib/kubelet/kubeconfig  -o wide | grep $ip
+retVal=$?
+done
+grep -zo 'cloud-provider=openstack \\' /etc/systemd/system/kubelet.service  || sed -i '/kubelet \\/a\      \--cloud-provider=openstack \\\n      --cloud-config=/etc/kubernetes/cloud.conf \\' /etc/systemd/system/kubelet.service
+systemctl daemon-reload
+systemctl restart kubelet`))
+
 // This creates a script which would create a node network interface with IP address with the same last 4 bits as the ens3.4094 interface IP
 
 var networkScriptTmpl = template.Must(template.New("user-data").Parse(`#!/bin/bash
@@ -113,12 +129,23 @@ iptables -I INPUT 1 -j ACCEPT -p igmp
 
 `))
 
+func CloudProviderScript(vlan string) ([]byte, error) {
+	buf := &bytes.Buffer{}
+	data := map[string]string{
+		"vlan":          vlan,
+	}
+	if err := cloudProviderScriptTmpl.Execute(buf, data); err != nil {
+		return nil, errors.Wrap(err, "failed to execute user-data template")
+	}
+	return buf.Bytes(), nil
+}
+
 func NetworkScript(vlan string, defGateway string, mtu string) ([]byte, error) {
         buf := &bytes.Buffer{}
         data := map[string]string{
 		"vlan":          vlan,
-                "defGateway":    defGateway,
-                "mtu":           mtu,
+		"defGateway":    defGateway,
+		"mtu":           mtu,
 	}
 	if err := networkScriptTmpl.Execute(buf, data); err != nil {
 		return nil, errors.Wrap(err, "failed to execute user-data template")
@@ -126,7 +153,7 @@ func NetworkScript(vlan string, defGateway string, mtu string) ([]byte, error) {
         return buf.Bytes(), nil
 }
 
-func IgnitionFiles(installConfig *installconfig.InstallConfig) []igntypes.File {
+func IgnitionFiles(installConfig *installconfig.InstallConfig, is_bootstrap bool) []igntypes.File {
 	if installConfig.Config.Networking.NetworkType != "CiscoAci" {
 		return nil
 	}
@@ -134,10 +161,10 @@ func IgnitionFiles(installConfig *installconfig.InstallConfig) []igntypes.File {
         defaultGateway, _ := cidr.Host(machineCIDR, 1)
         kubeApiVLAN := installConfig.Config.Platform.OpenStack.AciNetExt.KubeApiVLAN
         infraVLAN := installConfig.Config.Platform.OpenStack.AciNetExt.InfraVLAN
-	mtuString, _ := strconv.Atoi(installConfig.Config.Platform.OpenStack.AciNetExt.Mtu)
-	mtuValue := strconv.Itoa(mtuString - 100)
+        mtuString, _ := strconv.Atoi(installConfig.Config.Platform.OpenStack.AciNetExt.Mtu)
+        mtuValue := strconv.Itoa(mtuString - 100)
+	    cloudProviderScriptString, _ := CloudProviderScript(kubeApiVLAN)
         networkScriptString, _ := NetworkScript(kubeApiVLAN, defaultGateway.String(), mtuValue)
-
         neutronCIDR := &installConfig.Config.Platform.OpenStack.AciNetExt.NeutronCIDR.IPNet
         defaultNeutronGateway, _ := cidr.Host(neutronCIDR, 1)
         defaultNeutronGatewayStr := defaultNeutronGateway.String()
@@ -211,10 +238,16 @@ func IgnitionFiles(installConfig *installconfig.InstallConfig) []igntypes.File {
                         	FileFromString("/etc/sysconfig/network-scripts/route-opflex-conn", "root", 0420, route_opflex_conn_string),
                         	FileFromString("/etc/sysconfig/network-scripts/route-ens3.4094", "root", 0420, route_ens3_string))
 
+	if !is_bootstrap{
+		ignitionFiles = append(ignitionFiles,FileFromString(
+			"/usr/local/bin/node-cloud-provider.sh", "root", 0555,
+			string(cloudProviderScriptString)))
+	}
+
 	return ignitionFiles
 }
 
-func SystemdUnitFiles(installConfig *installconfig.InstallConfig) []igntypes.Unit {
+func SystemdUnitFiles(installConfig *installconfig.InstallConfig, is_bootstrap bool) []igntypes.Unit {
 	if installConfig.Config.Networking.NetworkType != "CiscoAci" {
                 return nil
         }
@@ -232,7 +265,25 @@ func SystemdUnitFiles(installConfig *installconfig.InstallConfig) []igntypes.Uni
 		ExecStart=/usr/local/bin/kube-api-interface.sh
 		[Install]
 		WantedBy=multi-user.target`}
+
 	systemdUnits = append(systemdUnits, nodeService)
+
+	if !is_bootstrap {
+		nodeCloudProvider := igntypes.Unit{
+			Name:    "node-cloud-provider.service",
+			Enabled: util.BoolToPtr(true),
+			Contents: `[Unit]
+		Description=Assigning Cloud Provider Extension to kubelet
+		Wants=kubelet.service
+		After=kubelet.service
+		[Service]
+		Type=simple
+		ExecStart=/usr/local/bin/node-cloud-provider.sh
+		[Install]
+		WantedBy=multi-user.target`}
+
+		systemdUnits = append(systemdUnits, nodeCloudProvider)
+	}
 
 	machineConfigDaemonPath := igntypes.Unit{
 		Name:    "machine-config-daemon-force.path",

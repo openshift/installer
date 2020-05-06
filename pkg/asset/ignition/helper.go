@@ -12,14 +12,15 @@ import (
 
 func CheckIgnitionFiles(t *testing.T, ignConfig *igntypes.Config) {
 
-	actualStringList := [6]string{ GetActualKubeApiInterfaceStr(),
+	actualStringList := [7]string{ GetActualKubeApiInterfaceStr(),
 				GetActualIfcfgEns34094Str(),
 				GetActualIfcfgOpflexConnStr(),
 				GetActualIfcfgUplinkConnStr(),
 				GetActualRouteOpflexConnStr(),
-				GetActualRouteEns34094Str() }
+				GetActualRouteEns34094Str(),
+				GetActualCloudProviderStr(),}
 
-	for i := 0; i < 6; i++ {
+	for i := 0; i < 7; i++ {
 		expected := ignConfig.Storage.Files[i].FileEmbedded1.Contents.Source
 		actualStr := actualStringList[i]
 		compareScripts(t, expected, actualStr)
@@ -36,9 +37,10 @@ func compareScripts(t *testing.T, expected string, actualStr string) {
 
 func CheckSystemdUnitFiles(t *testing.T, actualUnits []igntypes.Unit) {
 
-	expectedUnitData := [3]igntypes.Unit{GetNodeInterfaceService(),
+	expectedUnitData := [4]igntypes.Unit{GetNodeInterfaceService(),
+					GetCloudProviderService(),
 					GetMachineConfigDaemonForcePath(),
-					GetMachineConfigDaemonService()}
+					GetMachineConfigDaemonService(),}
 					
         for i, u := range actualUnits {
 		assert.Equal(t, u, expectedUnitData[i], "unexpected " + expectedUnitData[i].Name)
@@ -227,6 +229,26 @@ func GetActualRouteEns34094Str() string {
 	return actualRouteEns34094Str
 }
 
+func GetActualCloudProviderStr() string {
+
+	actualCloudProviderStr := `#!/bin/bash
+# These are rendered through Go
+KUBE_API_VLAN=1021
+KUBE_API_VLAN_DEVICE="ens3.${KUBE_API_VLAN}"
+ip=$(/sbin/ip -o -4 addr list $KUBE_API_VLAN_DEVICE | awk '{print $4}' | cut -d/ -f1)
+retVal=1
+while [ $retVal -ne 0 ]; do
+echo "Node IP is ${ip}"
+oc get nodes --kubeconfig=/var/lib/kubelet/kubeconfig  -o wide | grep $ip
+retVal=$?
+done
+grep -zo 'cloud-provider=openstack \\' /etc/systemd/system/kubelet.service  || sed -i '/kubelet \\/a\      \--cloud-provider=openstack \\\n      --cloud-config=/etc/kubernetes/cloud.conf \\' /etc/systemd/system/kubelet.service
+systemctl daemon-reload
+systemctl restart kubelet`
+
+	return actualCloudProviderStr
+}
+
 func GetNodeInterfaceService() igntypes.Unit {
 	nodeService := igntypes.Unit{
 		Name:    "node-interface.service",
@@ -269,4 +291,20 @@ ExecStart=touch /run/machine-config-daemon-force
 [Install]
 WantedBy=multi-user.target`}
 	return machineConfigDaemonService
+}
+
+func GetCloudProviderService() igntypes.Unit {
+	nodeCloudProvider := igntypes.Unit{
+		Name:    "node-cloud-provider.service",
+		Enabled: util.BoolToPtr(true),
+		Contents: `[Unit]
+		Description=Assigning Cloud Provider Extension to kubelet
+		Wants=kubelet.service
+		After=kubelet.service
+		[Service]
+		Type=simple
+		ExecStart=/usr/local/bin/node-cloud-provider.sh
+		[Install]
+		WantedBy=multi-user.target`}
+	return nodeCloudProvider
 }

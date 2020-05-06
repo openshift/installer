@@ -142,7 +142,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	ignitionFiles := ign.IgnitionFiles(installConfig)
+	ignitionFiles := ign.IgnitionFiles(installConfig,true)
 	for _, ignFile := range ignitionFiles {
 		a.Config.Storage.Files = append(a.Config.Storage.Files, ignFile)
 	}
@@ -173,9 +173,9 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 		}
 	}
 
-	logrus.Info("Adding Bootstrap Systemd")
+	logrus.Debug("Adding Bootstrap Systemd")
 
-        systemdUnits := ign.SystemdUnitFiles(installConfig)
+        systemdUnits := ign.SystemdUnitFiles(installConfig, true)
         for _, unit := range systemdUnits {
                 a.Config.Systemd.Units = append(a.Config.Systemd.Units, unit)
         }

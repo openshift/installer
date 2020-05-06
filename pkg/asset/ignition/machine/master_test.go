@@ -115,6 +115,7 @@ func TestMasterGenerateCiscoAci(t *testing.T) {
 	expectedIgnitionConfigNames := []string{
 		"master.ign",
 	}
+
 	actualFiles := master.Files()
 	actualIgnitionConfigNames := make([]string, len(actualFiles))
 	var masterFileData []byte
