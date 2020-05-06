@@ -321,5 +321,5 @@ terraform destroy -auto-approve
 [terraform-init]: https://www.terraform.io/docs/commands/init.html
 [terraform-providers]: https://www.terraform.io/docs/providers/
 [upi-metal-example-pre-req]: ../../../upi/metal/README.md#pre-requisites
-[upi-metal-example-tfvar]: ../../../upi/aws/terraform.tfvar.example
+[upi-metal-example-tfvar]: ../../../upi/metal/terraform.tfvars.example
 [upi-metal-example]: ../../../upi/metal/README.md
