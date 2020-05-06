@@ -247,7 +247,7 @@ Use the OpenShift Installer to create [Ignition configs](#getting-ignition-confi
 Use the [example][upi-metal-example-tfvar] Terraform variable file to create terraform variable file, and edit the `tfvars` file on your favorite editor.
 
 ```sh
-cp terraform.tfvars.{example,}
+cp terraform.tfvars{.example,}
 ```
 
 #### Creating resources
