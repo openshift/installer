@@ -516,7 +516,7 @@ EOF
 `
 
         logrus.Info("Post installer processing: Approving pending CSRs, restarting aci-containers-controller pod and updating default IngressController...")
-	_, err := exec.Command("oc version").Output()
+	_, err := exec.Command("sh", "-c", "KUBECONFIG=" + kubeconfigpath + " oc version").Output()
 	if err != nil {
 		logrus.Warn("oc binary not found in PATH. Please install oc binary and run the following post-processing commands:")
 		logrus.Warn(certString)
