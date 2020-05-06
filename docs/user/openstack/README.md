@@ -6,19 +6,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
 ## Table of Contents
 
 - [OpenStack Platform Support](#openstack-platform-support)
-  - [Table of Contents](#table-of-contents)
-  - [Reference Documents](#reference-documents)
-  - [OpenStack Requirements](#openstack-requirements)
-    - [Master Nodes](#master-nodes)
-    - [Worker Nodes](#worker-nodes)
-    - [Bootstrap Node](#bootstrap-node)
-    - [Image Registry Requirements](#image-registry-requirements)
-    - [Disk Requirements](#disk-requirements)
-    - [Neutron Public Network](#neutron-public-network)
-    - [Nova Metadata Service](#nova-metadata-service)
-    - [Glance Service](#glance-service)
-  - [OpenStack Credentials](#openstack-credentials)
-    - [Self Signed OpenStack CA certificates](#self-signed-openstack-ca-certificates)
+  - [Tabl
   - [Standalone Single-Node Development Environment](#standalone-single-node-development-environment)
   - [Running The Installer](#running-the-installer)
     - [Known Issues](#known-issues)
