@@ -36,8 +36,8 @@ output "internal_lb_ip_v6_address" {
   value = var.use_ipv6 ? azurerm_lb.internal.private_ip_addresses[1] : null
 }
 
-output "master_nsg_name" {
-  value = azurerm_network_security_group.master.name
+output "cluster_nsg_name" {
+  value = azurerm_network_security_group.cluster.name
 }
 
 output "virtual_network_id" {

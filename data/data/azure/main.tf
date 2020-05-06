@@ -37,7 +37,7 @@ module "bootstrap" {
   ilb_backend_pool_v6_id = module.vnet.internal_lb_backend_pool_v6_id
   tags                   = local.tags
   storage_account        = azurerm_storage_account.cluster
-  nsg_name               = module.vnet.master_nsg_name
+  nsg_name               = module.vnet.cluster_nsg_name
   private                = module.vnet.private
 
   use_ipv4                  = var.use_ipv4 || var.azure_emulate_single_stack_ipv6
