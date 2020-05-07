@@ -18,15 +18,23 @@ type Platform struct {
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
 	// NetworkResourceGroupName specifies the network resource group that contains an existing VNet
+	//
+	// +optional
 	NetworkResourceGroupName string `json:"networkResourceGroupName,omitempty"`
 
 	// VirtualNetwork specifies the name of an existing VNet for the installer to use
+	//
+	// +optional
 	VirtualNetwork string `json:"virtualNetwork,omitempty"`
 
 	// ControlPlaneSubnet specifies an existing subnet for use by the control plane nodes
+	//
+	// +optional
 	ControlPlaneSubnet string `json:"controlPlaneSubnet,omitempty"`
 
 	// ComputeSubnet specifies an existing subnet for use by compute nodes
+	//
+	// +optional
 	ComputeSubnet string `json:"computeSubnet,omitempty"`
 }
 

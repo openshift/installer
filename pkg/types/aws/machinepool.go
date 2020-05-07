@@ -4,17 +4,25 @@ package aws
 // on AWS.
 type MachinePool struct {
 	// Zones is list of availability zones that can be used.
+	//
+	// +optional
 	Zones []string `json:"zones,omitempty"`
 
 	// InstanceType defines the ec2 instance type.
 	// eg. m4-large
+	//
+	// +optional
 	InstanceType string `json:"type"`
 
 	// AMIID is the AMI that should be used to boot the ec2 instance.
 	// If set, the AMI should belong to the same region as the cluster.
+	//
+	// +optional
 	AMIID string `json:"amiID,omitempty"`
 
 	// EC2RootVolume defines the root volume for EC2 instances in the machine pool.
+	//
+	// +optional
 	EC2RootVolume `json:"rootVolume"`
 }
 
@@ -54,9 +62,16 @@ func (a *MachinePool) Set(required *MachinePool) {
 type EC2RootVolume struct {
 	// IOPS defines the amount of provisioned IOPS. This is only valid
 	// for type io1.
+	//
+	// +kubebuilder:validation:Minimum=0
+	// +optional
 	IOPS int `json:"iops"`
+
 	// Size defines the size of the volume in gibibytes (GiB).
+	//
+	// +kubebuilder:validation:Minimum=0
 	Size int `json:"size"`
+
 	// Type defines the type of the volume.
 	Type string `json:"type"`
 

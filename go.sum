@@ -143,6 +143,8 @@ github.com/VividCortex/ewma v1.1.1/go.mod h1:2Tkkvm3sRDVXaiyucHiACn4cqf7DpdyLvmx
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/abdullin/seq v0.0.0-20160510034733-d5467c17e7af h1:DBNMBMuMiWYu0b+8KMJuWmfCkcxl09JwdlqwDZZ6U14=
 github.com/abdullin/seq v0.0.0-20160510034733-d5467c17e7af/go.mod h1:5Jv4cbFiHJMsVxt52+i0Ha45fjshj6wxYr1r19tB9bw=
+github.com/abhinavdahiya/controller-tools v0.3.1-0.20200430222905-6fdf2d5fc069 h1:VGdRFAFdKKu/1kRTJJYPBGDkDK6ce5SNxbknnZTxAxI=
+github.com/abhinavdahiya/controller-tools v0.3.1-0.20200430222905-6fdf2d5fc069/go.mod h1:enhtKGfxZD1GFEoMgP8Fdbu+uKQ/cq1/WGJhdVChfvI=
 github.com/aclements/go-gg v0.0.0-20170323211221-abd1f791f5ee/go.mod h1:55qNq4vcpkIuHowELi5C8e+1yUHtoLoOUR9QU5j7Tes=
 github.com/aclements/go-moremath v0.0.0-20190506201756-286cc0be6f75/go.mod h1:idZL3yvz4kzx1dsBOAC+oYv6L92P1oFEhUXUB1A/lwQ=
 github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5/go.mod h1:SkGFH1ia65gfNATL8TAiHDNxPzPdmEL5uirI2Uyuz6c=
@@ -1771,14 +1773,9 @@ github.com/openshift/api v0.0.0-20200413201024-c6e8c9b6eb9a h1:fIIKps4VKnxrXSp3l
 github.com/openshift/api v0.0.0-20200413201024-c6e8c9b6eb9a/go.mod h1:RKMJ5CBnljLfnej+BJ/xnOWc3kZDvJUaIAEq2oKSPtE=
 github.com/openshift/baremetal-operator v0.0.0-20200206190020-71b826cc0f0a h1:65ZuRkPnQGh9uo0z93KosrPlwEWJNxUjxnuM9lyGBHc=
 github.com/openshift/baremetal-operator v0.0.0-20200206190020-71b826cc0f0a/go.mod h1:cXwn0hhgHpORjBasg0RnZwhKaJGy9+r6qgj0HCXrs/Y=
-github.com/openshift/build-machinery-go v0.0.0-20200205161356-ef115f5adc73/go.mod h1:1CkcsT3aVebzRBzVTSbiKSkJMsC/CASqxesfqEMfJEc=
 github.com/openshift/build-machinery-go v0.0.0-20200211121458-5e3d6e570160/go.mod h1:1CkcsT3aVebzRBzVTSbiKSkJMsC/CASqxesfqEMfJEc=
-github.com/openshift/client-go v0.0.0-20190617165122-8892c0adc000/go.mod h1:6rzn+JTr7+WYS2E1TExP4gByoABxMznR6y2SnUIkmxk=
-github.com/openshift/client-go v0.0.0-20191001081553-3b0e988f8cb0/go.mod h1:6rzn+JTr7+WYS2E1TExP4gByoABxMznR6y2SnUIkmxk=
 github.com/openshift/client-go v0.0.0-20200116152001-92a2713fa240 h1:XYfJWv2Ch+qInGLDEedHRtDsJwnxyU1L8U7SY56NcA8=
 github.com/openshift/client-go v0.0.0-20200116152001-92a2713fa240/go.mod h1:4riOwdj99Hd/q+iAcJZfNCsQQQMwURnZV6RL4WHYS5w=
-github.com/openshift/client-go v0.0.0-20200320150128-a906f3d8e723 h1:FfrELmZ9N9NtVE15qmTRkJIETX75QHdr65xiuTKvNYo=
-github.com/openshift/client-go v0.0.0-20200320150128-a906f3d8e723/go.mod h1:wNBSSt4RZTHhUWyhBE3gxTR32QpF9DB2SfS14u2IxuE=
 github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e h1:2gyl9UVyjHSWzdS56KUXxQwIhENbq2x2olqoMQSA/C8=
 github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e/go.mod h1:iPn+uhIe7nkP5BMHe2QnbLtg5m/AIQ1xvz9s3cig5ss=
 github.com/openshift/cluster-api v0.0.0-20190805113604-f8de78af80fc/go.mod h1:mNsD1dsD4T57kV4/C6zTHke/Ro166xgnyyRZqkamiEU=
@@ -1811,12 +1808,9 @@ github.com/openshift/hashicorp-terraform-plugin-sdk v1.6.0-openshift/go.mod h1:H
 github.com/openshift/imagebuilder v1.1.0/go.mod h1:9aJRczxCH0mvT6XQ+5STAQaPWz7OsWcU5/mRkt8IWeo=
 github.com/openshift/library-go v0.0.0-20190619114638-6b58b672ee58/go.mod h1:NBttNjZpWwup/nthuLbPAPSYC8Qyo+BBK5bCtFoyYjo=
 github.com/openshift/library-go v0.0.0-20191003152030-97c62d8a2901/go.mod h1:NBttNjZpWwup/nthuLbPAPSYC8Qyo+BBK5bCtFoyYjo=
-github.com/openshift/library-go v0.0.0-20200210105614-4bf528465627 h1:Rs1RtB123VJr+kqXBYOTERNp23tZUUZ6w1gWrkroH3M=
-github.com/openshift/library-go v0.0.0-20200210105614-4bf528465627/go.mod h1:T+sDdW3J/cgxUSqPdAwmhFrJhfFRv1ZtCSTVY59phN4=
 github.com/openshift/library-go v0.0.0-20200324092245-db2a8546af81 h1:bNUcSdyoACkjI2USyvDbAMb6lCtghdz563b0bfhPC8A=
 github.com/openshift/library-go v0.0.0-20200324092245-db2a8546af81/go.mod h1:Qc5duoXHzAKyUfA0REIlG/rdfWzknOpp9SiDiyg5Y7A=
 github.com/openshift/machine-api-operator v0.0.0-20190312153711-9650e16c9880/go.mod h1:7HeAh0v04zQn1L+4ItUjvpBQYsm2Nf81WaZLiXTcnkc=
-github.com/openshift/machine-api-operator v0.2.0 h1:g+EIEZrbbE0C2zC2x4nddgA2oxqP/3sjkEGdiX2qNe8=
 github.com/openshift/machine-api-operator v0.2.1-0.20191128180243-986b771e661d/go.mod h1:9qQPF00anuIsc6RiHYfHE0+cZZImbvFNLln0NRBVVMg=
 github.com/openshift/machine-api-operator v0.2.1-0.20200310180732-c63fa2b143f0 h1:Na0422T5qq9e4AtBqH4hyqujESg29Akrf2asy/kc02U=
 github.com/openshift/machine-api-operator v0.2.1-0.20200310180732-c63fa2b143f0/go.mod h1:b3huCV+DbroXP1sHtsU5xBwx97zqc6GKB5owyl2zsNM=
@@ -2854,11 +2848,6 @@ sigs.k8s.io/controller-runtime v0.2.0/go.mod h1:ZHqrRDZi3f6BzONcvlUxkqCKgwasGk5F
 sigs.k8s.io/controller-runtime v0.3.1-0.20191016212439-2df793d02076/go.mod h1:p2vzQ3RuSVv9YR4AcM0y8TKHQA+0oLXazKFt6Z0OdS8=
 sigs.k8s.io/controller-runtime v0.4.0 h1:wATM6/m+3w8lj8FXNaO6Fs/rq/vqoOjO1Q116Z9NPsg=
 sigs.k8s.io/controller-runtime v0.4.0/go.mod h1:ApC79lpY3PHW9xj/w9pj+lYkLgwAAUZwfXkME1Lajns=
-sigs.k8s.io/controller-tools v0.2.2-0.20190919191502-76a25b63325a/go.mod h1:8SNGuj163x/sMwydREj7ld5mIMJu1cDanIfnx6xsU70=
-sigs.k8s.io/controller-tools v0.2.2-0.20190930215132-4752ed2de7d2/go.mod h1:8SNGuj163x/sMwydREj7ld5mIMJu1cDanIfnx6xsU70=
-sigs.k8s.io/controller-tools v0.2.4/go.mod h1:m/ztfQNocGYBgTTCmFdnK94uVvgxeZeE3LtJvd/jIzA=
-sigs.k8s.io/controller-tools v0.2.9-0.20200331153640-3c5446d407dd h1:q2VrviTVgpbV4H+J8XjXnFtuGCkgED3M9tcykEgN7c4=
-sigs.k8s.io/controller-tools v0.2.9-0.20200331153640-3c5446d407dd/go.mod h1:D2LzYpGDYjxaAALDVYAwaqaKp2fNuyO5yfOBoU/cbBE=
 sigs.k8s.io/kustomize v2.0.3+incompatible/go.mod h1:MkjgH3RdOWrievjo6c9T245dYlB5QeXV4WCbnt/PEpU=
 sigs.k8s.io/structured-merge-diff v0.0.0-20190302045857-e85c7b244fd2/go.mod h1:wWxsB5ozmmv/SG7nM11ayaAW51xMvak/t1r0CSlcokI=
 sigs.k8s.io/structured-merge-diff v0.0.0-20190525122527-15d366b2352e/go.mod h1:wWxsB5ozmmv/SG7nM11ayaAW51xMvak/t1r0CSlcokI=
@@ -2868,7 +2857,6 @@ sigs.k8s.io/testing_frameworks v0.1.1/go.mod h1:VVBKrHmJ6Ekkfz284YKhQePcdycOzNH9
 sigs.k8s.io/testing_frameworks v0.1.2-0.20190130140139-57f07443c2d4/go.mod h1:VVBKrHmJ6Ekkfz284YKhQePcdycOzNH9qL6ht1zEr/U=
 sigs.k8s.io/testing_frameworks v0.1.2 h1:vK0+tvjF0BZ/RYFeZ1E6BYBwHJJXhjuZ3TdsEKH+UQM=
 sigs.k8s.io/testing_frameworks v0.1.2/go.mod h1:ToQrwSC3s8Xf/lADdZp3Mktcql9CG0UAmdJG9th5i0w=
-sigs.k8s.io/yaml v1.1.0 h1:4A07+ZFc2wgJwo8YNlQpr1rVlgUDlxXHhPJciaPY5gs=
 sigs.k8s.io/yaml v1.1.0/go.mod h1:UJmg0vDUVViEyp3mgSv9WPwZCDxu4rQW1olrI1uml+o=
 sigs.k8s.io/yaml v1.2.0 h1:kr/MCeFWJWTwyaHoR9c8EjH9OumOmoF9YGiZd7lFm/Q=
 sigs.k8s.io/yaml v1.2.0/go.mod h1:yfXDCHCao9+ENCvLSE62v9VSji2MKu5jeNfTrofGhJc=

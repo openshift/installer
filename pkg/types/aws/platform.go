@@ -5,6 +5,8 @@ package aws
 type Platform struct {
 	// AMIID is the AMI that should be used to boot machines for the cluster.
 	// If set, the AMI should belong to the same region as the cluster.
+	//
+	// +optional
 	AMIID string `json:"amiID,omitempty"`
 
 	// Region specifies the AWS region where the cluster will be created.
@@ -13,6 +15,8 @@ type Platform struct {
 	// Subnets specifies existing subnets (by ID) where cluster
 	// resources will be created.  Leave unset to have the installer
 	// create subnets in a new VPC on your behalf.
+	//
+	// +optional
 	Subnets []string `json:"subnets,omitempty"`
 
 	// UserTags additional keys and values that the installer will add
@@ -44,5 +48,7 @@ type ServiceEndpoint struct {
 	// URL is fully qualified URI with scheme https, that overrides the default generated
 	// endpoint for a client.
 	// This must be provided and cannot be empty.
+	//
+	// +kubebuilder:validation:Pattern=`^https://`
 	URL string `json:"url"`
 }

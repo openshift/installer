@@ -115,14 +115,16 @@ require (
 	gopkg.in/AlecAivazis/survey.v1 v1.8.9-0.20200217094205-6773bdf39b7f
 	gopkg.in/ini.v1 v1.51.0
 	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.18.0
-	k8s.io/apimachinery v0.18.0
+	k8s.io/api v0.18.2
+	k8s.io/apiextensions-apiserver v0.18.2
+	k8s.io/apimachinery v0.18.2
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog v1.0.0
 	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
 	sigs.k8s.io/cluster-api-provider-aws v0.0.0
 	sigs.k8s.io/cluster-api-provider-azure v0.0.0
 	sigs.k8s.io/cluster-api-provider-openstack v0.0.0
+	sigs.k8s.io/controller-tools v0.3.0
 )
 
 replace (
@@ -164,4 +166,5 @@ replace (
 	sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200316201703-923caeb1d0d8 // Pin OpenShift fork
 	sigs.k8s.io/cluster-api-provider-azure => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20200120114645-8a9592f1f87b // Pin OpenShift fork
 	sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.0.0-20200323110431-3311de91e078 // Pin OpenShift fork
+	sigs.k8s.io/controller-tools => github.com/abhinavdahiya/controller-tools v0.3.1-0.20200430222905-6fdf2d5fc069 // Using fork for sigs.k8s.io/controller-tools#427
 )
