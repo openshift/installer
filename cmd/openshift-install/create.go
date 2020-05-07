@@ -268,6 +268,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 	silenceRemaining := logDownsample
 	previousErrorSuffix := ""
 	timer.StartTimer("API")
+	var lastErr error
 	wait.Until(func() {
 		version, err := discovery.ServerVersion()
 		if err == nil {
@@ -275,6 +276,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 			timer.StopTimer("API")
 			cancel()
 		} else {
+			lastErr = err
 			silenceRemaining--
 			chunks := strings.Split(err.Error(), ":")
 			errorSuffix := chunks[len(chunks)-1]
@@ -290,6 +292,9 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config, director
 	}, 2*time.Second, apiContext.Done())
 	err = apiContext.Err()
 	if err != nil && err != context.Canceled {
+		if lastErr != nil {
+			return errors.Wrap(lastErr, "failed waiting for Kubernetes API")
+		}
 		return errors.Wrap(err, "waiting for Kubernetes API")
 	}
 
