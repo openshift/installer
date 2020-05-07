@@ -62,6 +62,7 @@ The following `install-config.yaml` properties are available:
     * `noProxy` (optional string): A comma-separated list of domains and [CIDRs][cidr-notation] for which the proxy should not be used.
 * `pullSecret` (required string): The secret to use when pulling images.
 * `sshKey` (optional string): The public Secure Shell (SSH) key to provide access to instances.
+* `clusterProfile` (optional string): The [profile](....) defining the cluster variant which will be created
 
 ### IP networks
 
