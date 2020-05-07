@@ -57,7 +57,7 @@
     },
     "azure": {
         "image": "fedora-coreos-31.20200407.3.0-azure.x86_64.vhd",
-        "url": "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/31.20200323.3.2/x86_64/fedora-coreos-31.20200407.3.0-azure.x86_64.vhd.xz"
+        "url": "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/31.20200407.3.0/x86_64/fedora-coreos-31.20200407.3.0-azure.x86_64.vhd.xz"
     },
     "baseURI": "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/31.20200407.3.0/x86_64/",
     "buildid": "31.20200407.3.0",
