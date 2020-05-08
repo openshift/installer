@@ -77,7 +77,7 @@ package {{ .Pkg }}
 // AMIRegoins is a list of regions where the RHEL CoreOS is published.
 var AMIRegions = []string{
 {{- range $region := .Regions}}
-    "{{ $region }}",
+	"{{ $region }}",
 {{- end}}
 }
 `
