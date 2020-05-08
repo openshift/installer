@@ -74,6 +74,9 @@ type Master struct {
 	// HostFiles is the list of baremetal hosts provided in the
 	// installer configuration.
 	HostFiles []*asset.File
+
+	//SingleMaster is a list of manifests to setup a single master cluster
+	SingleMasterFiles []*asset.File
 }
 
 const (
@@ -94,12 +97,15 @@ const (
 	// masterUserDataFileName is the filename used for the master
 	// user-data secret.
 	masterUserDataFileName = "99_openshift-cluster-api_master-user-data-secret.yaml"
+
+	singleMasterFileName = "99_openshift-single-master-%s.yaml"
 )
 
 var (
 	secretFileNamePattern        = fmt.Sprintf(secretFileName, "*")
 	hostFileNamePattern          = fmt.Sprintf(hostFileName, "*")
 	masterMachineFileNamePattern = fmt.Sprintf(masterMachineFileName, "*")
+	singleMasterFileNamePattern  = fmt.Sprintf(singleMasterFileName, "*")
 
 	_ asset.WritableAsset = (*Master)(nil)
 )
@@ -361,6 +367,18 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		Data:     data,
 	}
 
+	if pool.Replicas != nil && *pool.Replicas == 1 && ic.IsOKD() {
+		m.SingleMasterFiles = make([]*asset.File, 2)
+		m.SingleMasterFiles[0] = &asset.File{
+			Filename: filepath.Join(directory, fmt.Sprintf(singleMasterFileName, "etcd")),
+			Data:     etcdSingleMasterData,
+		}
+		m.SingleMasterFiles[1] = &asset.File{
+			Filename: filepath.Join(directory, fmt.Sprintf(singleMasterFileName, "ingress")),
+			Data:     ingressSingleMasterData,
+		}
+	}
+
 	machineConfigs := []*mcfgv1.MachineConfig{}
 	if pool.Hyperthreading == types.HyperthreadingDisabled {
 		machineConfigs = append(machineConfigs, ignition.ForHyperthreadingDisabled("master"))
@@ -413,6 +431,7 @@ func (m *Master) Files() []*asset.File {
 	// reconcile a machine it can pick up the related host.
 	files = append(files, m.HostFiles...)
 	files = append(files, m.MachineFiles...)
+	files = append(files, m.SingleMasterFiles...)
 	return files
 }
 
@@ -451,6 +470,12 @@ func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
 		return true, err
 	}
 	m.MachineFiles = fileList
+
+	fileList, err = f.FetchByPattern(filepath.Join(directory, singleMasterFileNamePattern))
+	if err != nil {
+		return true, err
+	}
+	m.SingleMasterFiles = fileList
 
 	return true, nil
 }
