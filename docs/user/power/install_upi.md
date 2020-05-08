@@ -20,15 +20,15 @@ The steps for performing a UPI-based install are outlined here. Example automati
 
 ## Compute
 
-The smallest OpenShift 4.x clusters require the following host:
+The smallest OpenShift 4.x cluster requires the following hosts:
 
 * 1 bootstrap machine.
 
 * 3 control plane machines.
 
-* atleast 1 worker machine.
+* 2 worker machines.
 
-NOTE: The cluster requires the bootstrap machine to deploy the OpenShift cluster on to the 3 control plane machines, and you can remove the bootstrap machine.
+NOTE: The cluster requires the bootstrap machine to deploy the OpenShift cluster on to the 3 control plane machines. Once the installation completes you can remove the bootstrap machine.
 
 All the machines must use Red Hat Enterprise Linux CoreOS (RHCOS) as the operating system.
 
@@ -45,7 +45,7 @@ All the machines must use Red Hat Enterprise Linux CoreOS (RHCOS) as the operati
 ## Network Topology Requirements
 
 The easiest way to get started is to ensure all Power nodes have internet access to pull images for platform containers and provide telemetry data to Red Hat.
-OpenShift 4.x also supports air-gapped installs
+OpenShift 4.x also supports a restricted network installation.
 
 ### Load balancers
 
@@ -215,7 +215,7 @@ INFO Waiting up to 30m0s for bootstrapping to complete...
 ### Configure Image Registry Storage Provisioner
 
 
-The Cluster Image Registry [Operator][cluster-image-registry-operator] does not pick an storage backend for `None` platform. Therefore, the cluster operator will be stuck in progressing because it is waiting for the administrator to [configure][cluster-image-registry-operator-configuration] a storage backend for the image-registry.
+The Cluster Image Registry [Operator][cluster-image-registry-operator] does not pick a storage backend for `None` platform. Therefore, the cluster operator will be stuck in progressing because it is waiting for the administrator to [configure][cluster-image-registry-operator-configuration] a storage backend for the image-registry.
 [NFS][openshift-nfs] should be picked as a [storage-backend][nfs-storage-backend].
 
 
