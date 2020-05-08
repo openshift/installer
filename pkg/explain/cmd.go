@@ -22,10 +22,10 @@ installconfig.<fieldName>[.<fieldName>]
 `,
 		Example: `
 # Get the documentation of the resource and its fields
-kubectl explain installconfig
+openshift-install explain installconfig
 
 # Get the documentation of a AWS platform
-kubectl explain installconfig.platform.aws`,
+openshift-install explain installconfig.platform.aws`,
 		RunE: runCmd,
 	}
 
