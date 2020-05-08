@@ -17,9 +17,9 @@ import (
 )
 
 type pendingMapping struct {
-	mac      string
-	hostname string
-	network  *libvirt.Network
+	mac         string
+	hostname    string
+	networkName string
 }
 
 func init() {
@@ -43,6 +43,11 @@ func resourceLibvirtDomain() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
+			},
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
 				ForceNew: true,
 			},
 			"metadata": {
@@ -139,9 +144,10 @@ func resourceLibvirtDomain() *schema.Resource {
 				},
 			},
 			"disk": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
+				Type:       schema.TypeList,
+				Optional:   true,
+				ForceNew:   true,
+				ConfigMode: schema.SchemaConfigModeAttr,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"volume_id": {
@@ -159,7 +165,6 @@ func resourceLibvirtDomain() *schema.Resource {
 						"scsi": {
 							Type:     schema.TypeBool,
 							Optional: true,
-							Default:  false,
 						},
 						"wwn": {
 							Type:     schema.TypeString,
@@ -457,6 +462,7 @@ func resourceLibvirtDomainCreate(d *schema.ResourceData, meta interface{}) error
 	domainDef.VCPU = &libvirtxml.DomainVCPU{
 		Value: d.Get("vcpu").(int),
 	}
+	domainDef.Description = d.Get("description").(string)
 
 	domainDef.OS.Kernel = d.Get("kernel").(string)
 	domainDef.OS.Initrd = d.Get("initrd").(string)
@@ -491,7 +497,7 @@ func resourceLibvirtDomainCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	if err := setCloudinit(d, &domainDef, virConn, arch); err != nil {
+	if err := setCloudinit(d, &domainDef, virConn); err != nil {
 		return err
 	}
 
@@ -567,15 +573,19 @@ func resourceLibvirtDomainCreate(d *schema.ResourceData, meta interface{}) error
 		}
 	}
 
+	// We save runnig state to not mix what we have and what we want
+	requiredStatus := d.Get("running")
+
 	err = resourceLibvirtDomainRead(d, meta)
 	if err != nil {
 		return err
 	}
 
+	d.Set("running", requiredStatus)
+
 	// we must read devices again in order to set some missing ip/MAC/host mappings
 	for i := 0; i < d.Get("network_interface.#").(int); i++ {
 		prefix := fmt.Sprintf("network_interface.%d", i)
-
 		mac := strings.ToUpper(d.Get(prefix + ".mac").(string))
 
 		// if we were waiting for an IP address for this MAC, go ahead.
@@ -583,16 +593,26 @@ func resourceLibvirtDomainCreate(d *schema.ResourceData, meta interface{}) error
 			// we should have the address now
 			addressesI, ok := d.GetOk(prefix + ".addresses")
 			if !ok {
-				return fmt.Errorf("Did not obtain the IP address for MAC=%s", mac)
+				log.Printf("Did not obtain the IP address for MAC=%s", mac)
+				continue
 			}
+
+			network, err := virConn.LookupNetworkByName(pending.networkName)
+			if err != nil {
+				log.Printf("Can't retrieve network '%s'", pending.networkName)
+				continue
+			}
+
 			for _, addressI := range addressesI.([]interface{}) {
 				address := addressI.(string)
 				log.Printf("[INFO] Finally adding IP/MAC/host=%s/%s/%s", address, mac, pending.hostname)
-				updateOrAddHost(pending.network, address, mac, pending.hostname)
+
+				err = updateOrAddHost(network, address, mac, pending.hostname)
 				if err != nil {
-					return fmt.Errorf("Could not add IP/MAC/host=%s/%s/%s: %s", address, mac, pending.hostname, err)
+					log.Printf("Could not add IP/MAC/host=%s/%s/%s: %s", address, mac, pending.hostname, err)
 				}
 			}
+			network.Free()
 		}
 	}
 
@@ -632,12 +652,7 @@ func resourceLibvirtDomainUpdate(d *schema.ResourceData, meta interface{}) error
 			return err
 		}
 
-		arch, err := getHostArchitecture(virConn)
-		if err != nil {
-			return fmt.Errorf("Error retrieving host architecture: %s", err)
-		}
-
-		disk, err := newDiskForCloudInit(virConn, cloudinitID, arch)
+		disk, err := newDiskForCloudInit(virConn, cloudinitID)
 		if err != nil {
 			return err
 		}
@@ -741,7 +756,13 @@ func resourceLibvirtDomainRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error reading domain autostart setting: %s", err)
 	}
 
+	domainRunningNow, err := domainIsRunning(*domain)
+	if err != nil {
+		return fmt.Errorf("Error reading domain running state : %s", err)
+	}
+
 	d.Set("name", domainDef.Name)
+	d.Set("description", domainDef.Description)
 	d.Set("vcpu", domainDef.VCPU)
 	d.Set("memory", domainDef.Memory)
 	d.Set("firmware", domainDef.OS.Loader)
@@ -749,6 +770,7 @@ func resourceLibvirtDomainRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("cpu", domainDef.CPU)
 	d.Set("arch", domainDef.OS.Type.Arch)
 	d.Set("autostart", autostart)
+	d.Set("running", domainRunningNow)
 
 	cmdLines, err := splitKernelCmdLine(domainDef.OS.Cmdline)
 	if err != nil {
@@ -896,6 +918,7 @@ func resourceLibvirtDomainRead(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		netIface["wait_for_lease"] = d.Get(prefix + ".wait_for_lease").(bool)
+		netIface["hostname"] = d.Get(prefix + ".hostname").(string)
 		netIface["addresses"] = addressesForMac(mac)
 		log.Printf("[DEBUG] read: addresses for '%s': %+v", mac, netIface["addresses"])
 

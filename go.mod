@@ -26,7 +26,7 @@ require (
 	github.com/coreos/etcd v3.3.18+incompatible // indirect
 	github.com/coreos/go-systemd v0.0.0 // indirect
 	github.com/coreos/ignition v0.35.0
-	github.com/dmacvicar/terraform-provider-libvirt v0.6.1-0.20191216113711-1a01934a7d20
+	github.com/dmacvicar/terraform-provider-libvirt v0.6.2
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/zapr v0.1.1 // indirect

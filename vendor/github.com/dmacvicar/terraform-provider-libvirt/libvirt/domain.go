@@ -198,26 +198,14 @@ func domainGetIfacesInfo(domain libvirt.Domain, rd *schema.ResourceData) ([]libv
 	return interfaces, nil
 }
 
-func newDiskForCloudInit(virConn *libvirt.Connect, volumeKey string, arch string) (libvirtxml.DomainDisk, error) {
-	var target *libvirtxml.DomainDiskTarget
-	switch arch {
-	case "s390", "s390x":
-		target = &libvirtxml.DomainDiskTarget{
-			// s390 platform doesn't support IDE controllers
-			Dev: "vdb",
-			Bus: "scsi",
-		}
-	default:
-		target = &libvirtxml.DomainDiskTarget{
+func newDiskForCloudInit(virConn *libvirt.Connect, volumeKey string) (libvirtxml.DomainDisk, error) {
+	disk := libvirtxml.DomainDisk{
+		Device: "cdrom",
+		Target: &libvirtxml.DomainDiskTarget{
 			// Last device letter possible with a single IDE controller on i440FX
 			Dev: "hdd",
 			Bus: "ide",
-		}
-	}
-
-	disk := libvirtxml.DomainDisk{
-		Device: "cdrom",
-		Target: target,
+		},
 		Driver: &libvirtxml.DomainDiskDriver{
 			Name: "qemu",
 			Type: "raw",
@@ -269,18 +257,32 @@ func setCoreOSIgnition(d *schema.ResourceData, domainDef *libvirtxml.Domain, vir
 					},
 				}
 			}
-		case "s390", "s390x":
-			// System Z does not support any of the same pass-through
-			// mechanisms as Ignition. As a temporary workaround, the OpenStack
-			// Config Drive can be used instead. The Ignition volume already
-			// contains a Config Drive at this point.
-
-			disk, err := newDiskForCloudInit(virConn, ignitionKey, arch)
-			if err != nil {
-				return err
+		case "s390", "s390x", "ppc64", "ppc64le":
+			// System Z and PowerPC do not support the Firmware Configuration
+			// device. After a discussion about the best way to support a similar
+			// method for qemu in https://github.com/coreos/ignition/issues/928,
+			// decided on creating a virtio-blk device with a serial of ignition
+			// which contains the ignition config and have ignition support for
+			// reading from the device which landed in https://github.com/coreos/ignition/pull/936
+			igndisk := libvirtxml.DomainDisk{
+				Device: "disk",
+				Source: &libvirtxml.DomainDiskSource{
+					File: &libvirtxml.DomainDiskSourceFile{
+						File: ignitionKey,
+					},
+				},
+				Target: &libvirtxml.DomainDiskTarget{
+					Dev: "vdb",
+					Bus: "virtio",
+				},
+				Driver: &libvirtxml.DomainDiskDriver{
+					Name: "qemu",
+					Type: "raw",
+				},
+				ReadOnly: &libvirtxml.DomainDiskReadOnly{},
+				Serial:   "ignition",
 			}
-
-			domainDef.Devices.Disks = append(domainDef.Devices.Disks, disk)
+			domainDef.Devices.Disks = append(domainDef.Devices.Disks, igndisk)
 		default:
 			return fmt.Errorf("Ignition not supported on %q", arch)
 		}
@@ -303,7 +305,8 @@ func setVideo(d *schema.ResourceData, domainDef *libvirtxml.Domain) error {
 }
 
 func setGraphics(d *schema.ResourceData, domainDef *libvirtxml.Domain, arch string) error {
-	if arch == "s390x" || arch == "ppc64" {
+	// For s390x, ppc64 and ppc64le spice is not supported
+	if arch == "s390x" || strings.HasPrefix(arch, "ppc64") {
 		domainDef.Devices.Graphics = nil
 		return nil
 	}
@@ -654,13 +657,13 @@ func setFilesystems(d *schema.ResourceData, domainDef *libvirtxml.Domain) error 
 	return nil
 }
 
-func setCloudinit(d *schema.ResourceData, domainDef *libvirtxml.Domain, virConn *libvirt.Connect, arch string) error {
+func setCloudinit(d *schema.ResourceData, domainDef *libvirtxml.Domain, virConn *libvirt.Connect) error {
 	if cloudinit, ok := d.GetOk("cloudinit"); ok {
 		cloudinitID, err := getCloudInitVolumeKeyFromTerraformID(cloudinit.(string))
 		if err != nil {
 			return err
 		}
-		disk, err := newDiskForCloudInit(virConn, cloudinitID, arch)
+		disk, err := newDiskForCloudInit(virConn, cloudinitID)
 		if err != nil {
 			return err
 		}
@@ -705,23 +708,58 @@ func setNetworkInterfaces(d *schema.ResourceData, domainDef *libvirtxml.Domain,
 		}
 
 		// connect to the interface to the network... first, look for the network
-		if n, ok := d.GetOk(prefix + ".network_name"); ok {
-			// when using a "network_name" we do not try to do anything: we just
-			// connect to that network
-			netIface.Source = &libvirtxml.DomainInterfaceSource{
-				Network: &libvirtxml.DomainInterfaceSourceNetwork{
-					Network: n.(string),
-				},
+		var network *libvirt.Network
+		var err error
+
+		if networkName, ok := d.GetOk(prefix + ".network_name"); ok {
+			network, err = virConn.LookupNetworkByName(networkName.(string))
+			if err != nil {
+				return fmt.Errorf("Can't retrieve network '%s'", networkName.(string))
 			}
+			defer network.Free()
+
 		} else if networkUUID, ok := d.GetOk(prefix + ".network_id"); ok {
 			// when using a "network_id" we are referring to a "network resource"
 			// we have defined somewhere else...
-			network, err := virConn.LookupNetworkByUUIDString(networkUUID.(string))
+			network, err = virConn.LookupNetworkByUUIDString(networkUUID.(string))
 			if err != nil {
 				return fmt.Errorf("Can't retrieve network ID %s", networkUUID)
 			}
 			defer network.Free()
 
+		} else if bridgeNameI, ok := d.GetOk(prefix + ".bridge"); ok {
+			netIface.Source = &libvirtxml.DomainInterfaceSource{
+				Bridge: &libvirtxml.DomainInterfaceSourceBridge{
+					Bridge: bridgeNameI.(string),
+				},
+			}
+		} else if devI, ok := d.GetOk(prefix + ".vepa"); ok {
+			netIface.Source = &libvirtxml.DomainInterfaceSource{
+				Direct: &libvirtxml.DomainInterfaceSourceDirect{
+					Dev:  devI.(string),
+					Mode: "vepa",
+				},
+			}
+		} else if devI, ok := d.GetOk(prefix + ".macvtap"); ok {
+			netIface.Source = &libvirtxml.DomainInterfaceSource{
+				Direct: &libvirtxml.DomainInterfaceSourceDirect{
+					Dev:  devI.(string),
+					Mode: "bridge",
+				},
+			}
+		} else if devI, ok := d.GetOk(prefix + ".passthrough"); ok {
+			netIface.Source = &libvirtxml.DomainInterfaceSource{
+				Direct: &libvirtxml.DomainInterfaceSourceDirect{
+					Dev:  devI.(string),
+					Mode: "passthrough",
+				},
+			}
+		} else {
+			// no network has been specified: we are on our own
+		}
+
+		// if we got a network
+		if network != nil {
 			networkName, err := network.GetName()
 			if err != nil {
 				return fmt.Errorf("Error retrieving network name: %s", err)
@@ -762,10 +800,13 @@ func setNetworkInterfaces(d *schema.ResourceData, domainDef *libvirtxml.Domain,
 						// have a valid lease and then read the IP we have been assigned, so we can
 						// do the mapping
 						log.Printf("[DEBUG] Do not have an IP for '%s' yet: will wait until DHCP provides one...", hostname)
+						if err != nil {
+							return err
+						}
 						partialNetIfaces[strings.ToUpper(mac)] = &pendingMapping{
-							mac:      strings.ToUpper(mac),
-							hostname: hostname,
-							network:  network,
+							mac:         strings.ToUpper(mac),
+							hostname:    hostname,
+							networkName: networkName,
 						}
 					}
 				}
@@ -776,35 +817,6 @@ func setNetworkInterfaces(d *schema.ResourceData, domainDef *libvirtxml.Domain,
 					Network: networkName,
 				},
 			}
-		} else if bridgeNameI, ok := d.GetOk(prefix + ".bridge"); ok {
-			netIface.Source = &libvirtxml.DomainInterfaceSource{
-				Bridge: &libvirtxml.DomainInterfaceSourceBridge{
-					Bridge: bridgeNameI.(string),
-				},
-			}
-		} else if devI, ok := d.GetOk(prefix + ".vepa"); ok {
-			netIface.Source = &libvirtxml.DomainInterfaceSource{
-				Direct: &libvirtxml.DomainInterfaceSourceDirect{
-					Dev:  devI.(string),
-					Mode: "vepa",
-				},
-			}
-		} else if devI, ok := d.GetOk(prefix + ".macvtap"); ok {
-			netIface.Source = &libvirtxml.DomainInterfaceSource{
-				Direct: &libvirtxml.DomainInterfaceSourceDirect{
-					Dev:  devI.(string),
-					Mode: "bridge",
-				},
-			}
-		} else if devI, ok := d.GetOk(prefix + ".passthrough"); ok {
-			netIface.Source = &libvirtxml.DomainInterfaceSource{
-				Direct: &libvirtxml.DomainInterfaceSourceDirect{
-					Dev:  devI.(string),
-					Mode: "passthrough",
-				},
-			}
-		} else {
-			// no network has been specified: we are on our own
 		}
 
 		domainDef.Devices.Interfaces = append(domainDef.Devices.Interfaces, netIface)

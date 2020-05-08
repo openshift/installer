@@ -433,6 +433,8 @@ github.com/djherbis/buffer v1.0.0/go.mod h1:VwN8VdFkMY0DCALdY8o00d3IZ6Amz/UNVMWc
 github.com/djherbis/nio v2.0.3+incompatible/go.mod h1:v74owXPROGWsr1y28T13rlXf5Hn/bWJ1bbX8M+BqyPo=
 github.com/dmacvicar/terraform-provider-libvirt v0.6.1-0.20191216113711-1a01934a7d20 h1:Img6/bWq48uGHkmG4Eq2pf9HTBx6dQ9BcfRE1SVaU88=
 github.com/dmacvicar/terraform-provider-libvirt v0.6.1-0.20191216113711-1a01934a7d20/go.mod h1:rUzijwUJHukJWZKi6PJXo9aJqGLXeUX6NDEy6O0UATg=
+github.com/dmacvicar/terraform-provider-libvirt v0.6.2 h1:jXhlKg24SNsG3EYWq45BbCocO5kNlTEOpZgpYLVhPYw=
+github.com/dmacvicar/terraform-provider-libvirt v0.6.2/go.mod h1:rUzijwUJHukJWZKi6PJXo9aJqGLXeUX6NDEy6O0UATg=
 github.com/dnaeon/go-vcr v0.0.0-20180920040454-5637cf3d8a31/go.mod h1:aBB1+wY4s93YsC3HHjMBMrwTj2R9FHDzUr9KyGc8n1E=
 github.com/dnaeon/go-vcr v1.0.1 h1:r8L/HqC0Hje5AXMu1ooW8oyQyOFv4GxqpL0nRP7SLLY=
 github.com/dnaeon/go-vcr v1.0.1/go.mod h1:aBB1+wY4s93YsC3HHjMBMrwTj2R9FHDzUr9KyGc8n1E=
@@ -1623,6 +1625,7 @@ github.com/mattn/go-sqlite3 v1.10.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsO
 github.com/mattn/go-tty v0.0.0-20180907095812-13ff1204f104/go.mod h1:XPvLUNfbS4fJH25nqRHfWLMa1ONC8Amw+mIA639KxkE=
 github.com/mattn/go-zglob v0.0.0-20171230104132-4959821b4817/go.mod h1:9fxibJccNxU2cnpIKLRRFA7zX7qhkJIQWBb449FYHOo=
 github.com/mattn/go-zglob v0.0.0-20180803001819-2ea3427bfa53/go.mod h1:9fxibJccNxU2cnpIKLRRFA7zX7qhkJIQWBb449FYHOo=
+github.com/mattn/goveralls v0.0.2 h1:7eJB6EqsPhRVxvwEXGnqdO2sJI0PTsrWoTMXEk9/OQc=
 github.com/mattn/goveralls v0.0.2/go.mod h1:8d1ZMHsd7fW6IRPKQh46F2WRpyib5/X4FOpevwGNQEw=
 github.com/matttproud/golang_protobuf_extensions v1.0.0/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/matttproud/golang_protobuf_extensions v1.0.1 h1:4hp9jkHxhMHkqkrB3Ix0jegS5sx/RkqARlsWZ6pIwiU=
