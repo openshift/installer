@@ -1,5 +1,3 @@
-// +build libvirt
-
 package plugins
 
 import (
