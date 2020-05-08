@@ -10,6 +10,7 @@ import (
 
 func TestCloudProviderConfig(t *testing.T) {
 	clusterName := "test-cluster"
+	folderRelPath := ""
 	platform := &vspheretypes.Platform{
 		VCenter:          "test-name",
 		Username:         "test-username",
@@ -31,7 +32,7 @@ folder = "test-cluster"
 [VirtualCenter "test-name"]
 datacenters = "test-datacenter"
 `
-	actualConfig, err := CloudProviderConfig(clusterName, platform)
+	actualConfig, err := CloudProviderConfig(clusterName, folderRelPath, platform)
 	assert.NoError(t, err, "failed to create cloud provider config")
 	assert.Equal(t, expectedConfig, actualConfig, "unexpected cloud provider config")
 }

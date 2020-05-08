@@ -691,6 +691,18 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^platform\.vsphere.vCenter: Required value: must specify the name of the vCenter$`,
 		},
 		{
+			name: "invalid vsphere folder",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					VSphere: validVSpherePlatform(),
+				}
+				c.Platform.VSphere.Folder = "my-folder"
+				return c
+			}(),
+			expectedError: `^platform\.vsphere.folder: Invalid value: \"my-folder\": folder must be absolute path: expected prefix /test-datacenter/vm/$`,
+		},
+		{
 			name: "empty proxy settings",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -925,7 +937,24 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 		},
-		// TODO(crawford): add a test to validate that homogeneous clusters are enforced once an additional architecture is added
+		{
+			name: "cluster is not heteregenous",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute[0].Architecture = types.ArchitectureS390X
+				return c
+			}(),
+			expectedError: `^compute\[0\].architecture: Invalid value: "s390x": heteregeneous multi-arch is not supported; compute pool architecture must match control plane$`,
+		},
+		{
+			name: "cluster is not heteregenous",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute[0].Architecture = types.ArchitecturePPC64LE
+				return c
+			}(),
+			expectedError: `^compute\[0\].architecture: Invalid value: "ppc64le": heteregeneous multi-arch is not supported; compute pool architecture must match control plane$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

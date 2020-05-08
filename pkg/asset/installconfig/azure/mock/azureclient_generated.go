@@ -112,17 +112,17 @@ func (mr *MockAPIMockRecorder) GetResourcesProvider(ctx, resourceProviderNamespa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourcesProvider", reflect.TypeOf((*MockAPI)(nil).GetResourcesProvider), ctx, resourceProviderNamespace)
 }
 
-// ValidateResourceSkuAvailability mocks base method.
-func (m *MockAPI) ValidateResourceSkuAvailability(ctx context.Context, region, diskType string) (*compute.ResourceSku, error) {
+// GetDiskSkus mocks base method.
+func (m *MockAPI) GetDiskSkus(ctx context.Context, region string) ([]compute.ResourceSku, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateResourceSkuAvailability", ctx, region, diskType)
-	ret0, _ := ret[0].(*compute.ResourceSku)
+	ret := m.ctrl.Call(m, "GetDiskSkus", ctx, region)
+	ret0, _ := ret[0].([]compute.ResourceSku)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ValidateResourceSkuAvailability indicates an expected call of ValidateResourceSkuAvailability.
-func (mr *MockAPIMockRecorder) ValidateResourceSkuAvailability(ctx, region, diskType interface{}) *gomock.Call {
+// GetDiskSkus indicates an expected call of GetDiskSkus.
+func (mr *MockAPIMockRecorder) GetDiskSkus(ctx, region interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateResourceSkuAvailability", reflect.TypeOf((*MockAPI)(nil).ValidateResourceSkuAvailability), ctx, region, diskType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDiskSkus", reflect.TypeOf((*MockAPI)(nil).GetDiskSkus), ctx, region)
 }

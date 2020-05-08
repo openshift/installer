@@ -34,7 +34,7 @@ var (
 	validResourceGroupNamespace    = "Microsoft.Resources"
 	validResourceGroupResourceType = "resourceGroups"
 	validResourceSkuRegions        = "southeastasia"
-	validResourceSkuDiskType       = "UltraSSD_LRS"
+	validDiskSkuType               = "UltraSSD_LRS"
 
 	invalidateMachineCIDR = func(ic *types.InstallConfig) {
 		_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
@@ -42,8 +42,8 @@ var (
 			{CIDR: ipnet.IPNet{IPNet: *newCidr}},
 		}
 	}
-	invalidResourceSkuRegion   = "centralus"
-	invalidResourceSkuDiskType = "LRS"
+	invalidResourceSkuRegion = "centralus"
+	invalidDiskType          = "LRS"
 
 	invalidateNetworkResourceGroup = func(ic *types.InstallConfig) {
 		ic.Azure.NetworkResourceGroupName = "invalid-network-resource-group"
@@ -56,12 +56,9 @@ var (
 	invalidateRegionLetterCase   = func(ic *types.InstallConfig) { ic.Azure.Region = "Central US" }
 	removeVirtualNetwork         = func(ic *types.InstallConfig) { ic.Azure.VirtualNetwork = "" }
 	removeSubnets                = func(ic *types.InstallConfig) { ic.Azure.ComputeSubnet, ic.Azure.ControlPlaneSubnet = "", "" }
-	invalidateDiskType           = func(ic *types.InstallConfig) {
-		ic.Azure.DefaultMachinePlatform.OSDisk.DiskType, ic.Azure.Region = invalidResourceSkuDiskType, validRegion
-	}
-	invalidateRegionForDiskType = func(ic *types.InstallConfig) {
-		ic.Azure.DefaultMachinePlatform.OSDisk.DiskType, ic.Azure.Region = validResourceSkuDiskType, invalidResourceSkuRegion
-	}
+	invalidateDiskType           = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.OSDisk.DiskType = invalidDiskType }
+	invalidateRegionForDiskType  = func(ic *types.InstallConfig) { ic.Azure.Region = invalidResourceSkuRegion }
+	validResourceSkuDisk         = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.OSDisk.DiskType = validDiskSkuType }
 
 	virtualNetworkAPIResult = &aznetwork.VirtualNetwork{
 		Name: &validVirtualNetwork,
@@ -178,16 +175,6 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			edits:    editFunctions{invalidateRegionLetterCase},
 			errorMsg: "region \"Central US\" is not valid or not available for this account, did you mean \"centralus\"\\?$",
 		},
-		{
-			name:     "Invalid disk types",
-			edits:    editFunctions{removeSubnets, removeVirtualNetwork, invalidateDiskType},
-			errorMsg: "",
-		},
-		{
-			name:     "Invalid region for disk type",
-			edits:    editFunctions{removeSubnets, removeVirtualNetwork, invalidateRegionForDiskType},
-			errorMsg: "",
-		},
 	}
 
 	mockCtrl := gomock.NewController(t)
@@ -219,8 +206,8 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 	azureClient.EXPECT().GetResourcesProvider(gomock.Any(), validResourceGroupNamespace).Return(resourcesProviderAPIResult, nil).AnyTimes()
 
 	//Resource SKUs
-	azureClient.EXPECT().ValidateResourceSkuAvailability(gomock.Any(), validResourceSkuRegions, invalidResourceSkuDiskType).Return(nil, fmt.Errorf("invalid disk type")).AnyTimes()
-	azureClient.EXPECT().ValidateResourceSkuAvailability(gomock.Any(), invalidResourceSkuRegion, validResourceSkuDiskType).Return(nil, fmt.Errorf("invalid region")).AnyTimes()
+	azureClient.EXPECT().GetDiskSkus(gomock.Any(), validResourceSkuRegions).Return(nil, fmt.Errorf("invalid disk type")).AnyTimes()
+	azureClient.EXPECT().GetDiskSkus(gomock.Any(), invalidResourceSkuRegion).Return(nil, fmt.Errorf("invalid region")).AnyTimes()
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			editedInstallConfig := validInstallConfig()

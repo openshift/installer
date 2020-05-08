@@ -9,6 +9,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `password` (required string): The password to use to connect to the vCenter.
 * `datacenter` (required string): The name of the datacenter to use in the vCenter.
 * `defaultDatastore` (required string): The default datastore to use for provisioning volumes.
+* `folder` (optional string): The absolute path of an existing folder where the installer should create VMs. The absolute path is of the form `/example_datacenter/vm/example_folder/example_subfolder`. If a value is specified, the folder must exist. If no value is specified, a folder named with the cluster ID will be created in the `datacenter` VM folder.
 
 ## Machine pools
 

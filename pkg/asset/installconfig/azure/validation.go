@@ -7,9 +7,11 @@ import (
 	"strings"
 	"time"
 
+	azdns "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns"
 	aznetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
 	"github.com/Azure/go-autorest/autorest/to"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
+	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -119,23 +121,69 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 }
 
 // validateRegionForUltraDisks checks that the Ultra SSD disks are available for the user.
-func validateRegionForUltraDisks(fldPath *field.Path, region string) field.ErrorList {
-	allErrs := field.ErrorList{}
+func validateRegionForUltraDisks(fldPath *field.Path, region string) *field.Error {
+	diskType := "UltraSSD_LRS"
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
 	client, err := NewClient(ctx)
 	if err != nil {
-		allErrs = append(allErrs, field.InternalError(fldPath.Child("disktype"), err))
+		return field.InternalError(fldPath.Child("diskType"), err)
 	}
 
-	contxt, canc := context.WithTimeout(context.TODO(), 30*time.Second)
-	defer canc()
-
-	_, err = client.ValidateResourceSkuAvailability(contxt, region, "UltraSSD_LRS")
+	regionDisks, err := client.GetDiskSkus(ctx, region)
 	if err != nil {
-		allErrs = append(allErrs, field.InternalError(fldPath.Child("disktype"), err))
+		return field.InternalError(fldPath.Child("diskType"), err)
 	}
 
-	return allErrs
+	for _, page := range regionDisks {
+		for _, location := range to.StringSlice(page.Locations) {
+			if location == diskType {
+				return nil
+			}
+		}
+	}
+
+	return field.NotFound(fldPath.Child("diskType"), fmt.Sprintf("%s is not available in specified subscription for region %s", diskType, region))
+}
+
+// ValidatePublicDNS checks DNS for CNAME, A, and AAA records for
+// api.zoneName. If a record exists, it's likely a cluster already exists.
+func ValidatePublicDNS(ic *types.InstallConfig) error {
+	// If this is an internal cluster, this check is not necessary
+	if ic.Publish == types.InternalPublishingStrategy {
+		return nil
+	}
+
+	clusterName := ic.ObjectMeta.Name
+	record := fmt.Sprintf("api.%s", clusterName)
+
+	azureDNS, err := NewDNSConfig()
+	if err != nil {
+		return err
+	}
+
+	rgName := ic.Azure.BaseDomainResourceGroupName
+	zoneName := ic.BaseDomain
+	fmtStr := "api.%s %s record already exists in %s and might be in use by another cluster, please remove it to continue"
+
+	// Look for an existing CNAME first
+	rs, err := azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.CNAME)
+	if err == nil && rs.CnameRecord != nil {
+		return errors.New(fmt.Sprintf(fmtStr, zoneName, azdns.CNAME, clusterName))
+	}
+
+	// Look for an A record
+	rs, err = azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.A)
+	if err == nil && rs.ARecords != nil && len(*rs.ARecords) > 0 {
+		return errors.New(fmt.Sprintf(fmtStr, zoneName, azdns.A, clusterName))
+	}
+
+	// Look for an AAAA record
+	rs, err = azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.AAAA)
+	if err == nil && rs.AaaaRecords != nil && len(*rs.AaaaRecords) > 0 {
+		return errors.New(fmt.Sprintf(fmtStr, zoneName, azdns.AAAA, clusterName))
+	}
+
+	return nil
 }

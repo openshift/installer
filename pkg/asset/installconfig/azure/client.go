@@ -2,7 +2,7 @@ package azure
 
 import (
 	"context"
-	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -23,7 +23,7 @@ type API interface {
 	GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*aznetwork.Subnet, error)
 	ListLocations(ctx context.Context) (*[]azsubs.Location, error)
 	GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*azres.Provider, error)
-	ValidateResourceSkuAvailability(ctx context.Context, region, diskType string) (*azsku.ResourceSku, error)
+	GetDiskSkus(ctx context.Context, region string) ([]azsku.ResourceSku, error)
 }
 
 // Client makes calls to the Azure API.
@@ -157,30 +157,31 @@ func (c *Client) getProvidersClient(ctx context.Context) (azres.ProvidersClient,
 	return client, nil
 }
 
-// ValidateResourceSkuAvailability checks if the diskType exists for the given region.
-func (c *Client) ValidateResourceSkuAvailability(ctx context.Context, region string, diskType string) (*azsku.ResourceSku, error) {
+// GetDiskSkus returns all the disk SKU pages for a given region.
+func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azsku.ResourceSku, error) {
 	client := azsku.NewResourceSkusClient(c.ssn.Credentials.SubscriptionID)
 	client.Authorizer = c.ssn.Authorizer
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	resourceSkus, err := client.List(ctx)
-	if err != nil {
-		return nil, err
-	}
+	var sku []azsku.ResourceSku
 
-	for !resourceSkus.NotDone() {
-		for _, page := range resourceSkus.Values() {
-			if to.String(page.Name) == diskType {
-				for _, diskRegion := range to.StringSlice(page.Locations) {
-					if diskRegion == region {
-						return &page, nil
-					}
+	for skuPage, err := client.List(ctx); skuPage.NotDone(); err = skuPage.NextWithContext(ctx) {
+		if err != nil {
+			return nil, errors.Wrap(err, "error fetching SKU pages")
+		}
+		for _, page := range skuPage.Values() {
+			for _, diskRegion := range to.StringSlice(page.Locations) {
+				if strings.EqualFold(diskRegion, region) {
+					sku = append(sku, page)
 				}
 			}
 		}
-		resourceSkus.Next()
 	}
 
-	return nil, errors.New(fmt.Sprintf("diskType ultraSSD_LRS not available for specified subscription in region %s", region))
+	if len(sku) != 0 {
+		return sku, nil
+	}
+
+	return nil, errors.Errorf("no disks for specified subscription in region %s", region)
 }

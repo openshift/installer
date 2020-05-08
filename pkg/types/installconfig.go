@@ -45,6 +45,7 @@ var (
 )
 
 // PublishingStrategy is a strategy for how various endpoints for the cluster are exposed.
+// +kubebuilder:validation:Enum="";External;Internal
 type PublishingStrategy string
 
 const (
@@ -53,6 +54,8 @@ const (
 	// InternalPublishingStrategy exposes the endpoints for the cluster to the private network only.
 	InternalPublishingStrategy PublishingStrategy = "Internal"
 )
+
+//go:generate go run ../../vendor/sigs.k8s.io/controller-tools/cmd/controller-gen crd:crdVersions=v1 paths=. output:dir=../../data/data/
 
 // InstallConfig is the configuration for an OpenShift install.
 type InstallConfig struct {
@@ -63,6 +66,7 @@ type InstallConfig struct {
 
 	// AdditionalTrustBundle is a PEM-encoded X.509 certificate bundle
 	// that will be added to the nodes' trusted certificate store.
+	//
 	// +optional
 	AdditionalTrustBundle string `json:"additionalTrustBundle,omitempty"`
 
@@ -104,11 +108,16 @@ type InstallConfig struct {
 	ImageContentSources []ImageContentSource `json:"imageContentSources,omitempty"`
 
 	// Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed.
-	// When no strategy is specified, the strategy is `External`.
+	// When no strategy is specified, the strategy is "External".
+	//
+	// +kubebuilder:default=External
 	// +optional
 	Publish PublishingStrategy `json:"publish,omitempty"`
 
 	// FIPS configures https://www.nist.gov/itl/fips-general-information
+	//
+	// +kubebuilder:default=false
+	// +optional
 	FIPS bool `json:"fips,omitempty"`
 }
 
@@ -189,28 +198,33 @@ func (p *Platform) Name() string {
 
 // Networking defines the pod network provider in the cluster.
 type Networking struct {
-	// NetworkType is the type of network to install.
+	// NetworkType is the type of network to install. The default is OpenShiftSDN
+	//
+	// +kubebuilder:default=OpenShiftSDN
 	// +optional
-	// Default is OpenShiftSDN.
 	NetworkType string `json:"networkType,omitempty"`
 
 	// MachineNetwork is the list of IP address pools for machines.
 	// This field replaces MachineCIDR, and if set MachineCIDR must
 	// be empty or match the first entry in the list.
-	// +optional
 	// Default is 10.0.0.0/16 for all platforms other than libvirt.
 	// For libvirt, the default is 192.168.126.0/24.
+	//
+	// +optional
 	MachineNetwork []MachineNetworkEntry `json:"machineNetwork,omitempty"`
 
 	// ClusterNetwork is the list of IP address pools for pods.
-	// +optional
 	// Default is 10.128.0.0/14 and a host prefix of /23.
+	//
+	// +optional
 	ClusterNetwork []ClusterNetworkEntry `json:"clusterNetwork,omitempty"`
 
 	// ServiceNetwork is the list of IP address pools for services.
-	// +optional
 	// Default is 172.30.0.0/16.
 	// NOTE: currently only one entry is supported.
+	//
+	// +kubebuilder:validation:MaxItems=1
+	// +optional
 	ServiceNetwork []ipnet.IPNet `json:"serviceNetwork,omitempty"`
 
 	// Deprected types, scheduled to be removed
@@ -251,6 +265,7 @@ type ClusterNetworkEntry struct {
 
 	// The size of blocks to allocate from the larger pool.
 	// This is the length in bits - so a 9 here will allocate a /23.
+	// +optional
 	DeprecatedHostSubnetLength int32 `json:"hostSubnetLength,omitempty"`
 }
 

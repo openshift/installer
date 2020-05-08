@@ -94,3 +94,18 @@ func (mr *MockAPIMockRecorder) GetSubnetworks(ctx, network, project, region inte
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnetworks", reflect.TypeOf((*MockAPI)(nil).GetSubnetworks), ctx, network, project, region)
 }
+
+// GetProjects mocks base method
+func (m *MockAPI) GetProjects(ctx context.Context) (map[string]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProjects", ctx)
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProjects indicates an expected call of GetProjects
+func (mr *MockAPIMockRecorder) GetProjects(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjects", reflect.TypeOf((*MockAPI)(nil).GetProjects), ctx)
+}

@@ -14,7 +14,7 @@ import (
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
-	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1"
+	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
@@ -433,6 +433,25 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		con, err := ovirtconfig.NewConnection()
+		if err != nil {
+			return err
+		}
+		defer con.Close()
+
+		if installConfig.Config.Platform.Ovirt.VNICProfileID == "" {
+			profiles, err := ovirtconfig.FetchVNICProfileByClusterNetwork(
+				con,
+				installConfig.Config.Platform.Ovirt.ClusterID,
+				installConfig.Config.Platform.Ovirt.NetworkName)
+			if err != nil {
+				return errors.Wrapf(err, "failed to compute values for oVirt platform")
+			}
+			if len(profiles) != 1 {
+				return errors.Wrapf(err, "failed to compute values for oVirt platform, there are multiple vNic profiles.")
+			}
+			installConfig.Config.Platform.Ovirt.VNICProfileID = profiles[0].MustId()
+		}
 
 		data, err := ovirttfvars.TFVars(
 			config.URL,
@@ -442,6 +461,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.Ovirt.ClusterID,
 			installConfig.Config.Platform.Ovirt.StorageDomainID,
 			installConfig.Config.Platform.Ovirt.NetworkName,
+			installConfig.Config.Platform.Ovirt.VNICProfileID,
 			string(*rhcosImage),
 			clusterID.InfraID,
 		)
@@ -461,6 +481,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, c := range controlPlanes {
 			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*vsphereprovider.VSphereMachineProviderSpec)
 		}
+
+		// Set this flag to use an existing folder specified in the install-config. Otherwise, create one.
+		preexistingFolder := installConfig.Config.Platform.VSphere.Folder != ""
+
 		data, err = vspheretfvars.TFVars(
 			vspheretfvars.TFVarsSources{
 				ControlPlaneConfigs: controlPlaneConfigs,
@@ -468,6 +492,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				Password:            installConfig.Config.VSphere.Password,
 				Cluster:             installConfig.Config.VSphere.Cluster,
 				ImageURL:            string(*rhcosImage),
+				PreexistingFolder:   preexistingFolder,
 			},
 		)
 		if err != nil {

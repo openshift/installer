@@ -18,7 +18,7 @@ import (
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	vsphereapi "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider"
-	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1"
+	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

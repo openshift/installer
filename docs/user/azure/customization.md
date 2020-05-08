@@ -75,6 +75,7 @@ compute:
       type: Standard_DS4_v2
       osDisk:
         diskSizeGB: 512
+        diskType: Standard_LRS
       zones:
       - "1"
       - "2"
@@ -86,6 +87,9 @@ platform:
   azure:
     region: centralus
     baseDomainResourceGroupName: os4-common
+    osDisk:
+        diskSizeGB: 512
+        diskType: Premium_LRS
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
@@ -106,6 +110,9 @@ platform:
     virtualNetwork: example_vnet
     controlPlaneSubnet: example_master_subnet
     computeSubnet: example_worker_subnet
+    osDisk:
+        diskSizeGB: 512
+        diskType: Premium_LRS
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```

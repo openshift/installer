@@ -1,9 +1,9 @@
 output "public_lb_backend_pool_v4_id" {
-  value = var.use_ipv4 ? azurerm_lb_backend_address_pool.master_public_lb_pool_v4[0].id : null
+  value = var.use_ipv4 ? azurerm_lb_backend_address_pool.public_lb_pool_v4[0].id : null
 }
 
 output "public_lb_backend_pool_v6_id" {
-  value = var.use_ipv6 ? azurerm_lb_backend_address_pool.master_public_lb_pool_v6[0].id : null
+  value = var.use_ipv6 ? azurerm_lb_backend_address_pool.public_lb_pool_v6[0].id : null
 }
 
 output "internal_lb_backend_pool_v4_id" {
@@ -36,8 +36,8 @@ output "internal_lb_ip_v6_address" {
   value = var.use_ipv6 ? azurerm_lb.internal.private_ip_addresses[1] : null
 }
 
-output "master_nsg_name" {
-  value = azurerm_network_security_group.master.name
+output "cluster_nsg_name" {
+  value = azurerm_network_security_group.cluster.name
 }
 
 output "virtual_network_id" {

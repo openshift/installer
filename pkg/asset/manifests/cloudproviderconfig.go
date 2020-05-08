@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -108,7 +109,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "could not get azure session")
 		}
 
-		nsg := fmt.Sprintf("%s-node-nsg", clusterID.InfraID)
+		nsg := fmt.Sprintf("%s-nsg", clusterID.InfraID)
 		nrg := fmt.Sprintf("%s-rg", clusterID.InfraID)
 		if installConfig.Config.Azure.NetworkResourceGroupName != "" {
 			nrg = installConfig.Config.Azure.NetworkResourceGroupName
@@ -146,8 +147,14 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		}
 		cm.Data[cloudProviderConfigDataKey] = gcpConfig
 	case vspheretypes.Name:
+		var folderRelPath string
+		if len(installConfig.Config.Platform.VSphere.Folder) != 0 {
+			folderRelPath = strings.SplitAfterN(installConfig.Config.Platform.VSphere.Folder, "vm/", 2)[1]
+		}
+
 		vsphereConfig, err := vspheremanifests.CloudProviderConfig(
-			installConfig.Config.ObjectMeta.Name,
+			clusterID.InfraID,
+			folderRelPath,
 			installConfig.Config.Platform.VSphere,
 		)
 		if err != nil {

@@ -155,7 +155,11 @@ func logGatherBootstrap(bootstrap string, port int, masters []string, directory 
 	if err := ssh.PullFileTo(client, fmt.Sprintf("/home/core/log-bundle-%s.tar.gz", gatherID), file); err != nil {
 		return errors.Wrap(err, "failed to pull log file from remote")
 	}
-	logrus.Infof("Bootstrap gather logs captured here %q", file)
+	path, err := filepath.Abs(file)
+	if err != nil {
+		return errors.Wrap(err, "failed to stat log file")
+	}
+	logrus.Infof("Bootstrap gather logs captured here %q", path)
 	return nil
 }
 

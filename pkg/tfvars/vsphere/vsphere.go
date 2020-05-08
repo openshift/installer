@@ -2,8 +2,9 @@ package vsphere
 
 import (
 	"encoding/json"
+	"strings"
 
-	vsphereapis "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1"
+	vsphereapis "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
@@ -24,6 +25,7 @@ type config struct {
 	Network           string `json:"vsphere_network"`
 	Template          string `json:"vsphere_template"`
 	OvaFilePath       string `json:"vsphere_ova_filepath"`
+	PreexistingFolder bool   `json:"vsphere_preexisting_folder"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -33,6 +35,7 @@ type TFVarsSources struct {
 	Password            string
 	Cluster             string
 	ImageURL            string
+	PreexistingFolder   bool
 }
 
 //TFVars generate vSphere-specific Terraform variables
@@ -43,6 +46,11 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to use cached vsphere image")
 	}
+
+	// The vSphere provider needs the relativepath of the folder,
+	// so get the relPath from the absolute path. Absolute path is always of the form
+	// /<datacenter>/vm/<folder_path> so we can split on "vm/".
+	folderRelPath := strings.SplitAfterN(controlPlaneConfig.Workspace.Folder, "vm/", 2)[1]
 
 	cfg := &config{
 		VSphereURL:        controlPlaneConfig.Workspace.Server,
@@ -55,10 +63,11 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Cluster:           sources.Cluster,
 		Datacenter:        controlPlaneConfig.Workspace.Datacenter,
 		Datastore:         controlPlaneConfig.Workspace.Datastore,
-		Folder:            controlPlaneConfig.Workspace.Folder,
+		Folder:            folderRelPath,
 		Network:           controlPlaneConfig.Network.Devices[0].NetworkName,
 		Template:          controlPlaneConfig.Template,
 		OvaFilePath:       cachedImage,
+		PreexistingFolder: sources.PreexistingFolder,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

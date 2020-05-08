@@ -87,6 +87,9 @@ func resourceOvirtImageTransferCreate(d *schema.ResourceData, meta interface{}) 
 	sparse := d.Get("sparse").(bool)
 
 	uploadSize, qcowSize, sourceFile, format, err := PrepareForTransfer(sourceUrl)
+	if err != nil {
+		return fmt.Errorf("Failed preparing disk for transfer: %s", err)
+	}
 
 	diskBuilder := ovirtsdk4.NewDiskBuilder().
 		Alias(alias).
@@ -211,10 +214,10 @@ func detectUploadUrl(transfer *ovirtsdk4.ImageTransfer) (string, error) {
 	if err == nil {
 		optionsReq, err := http.NewRequest(http.MethodOptions, hostUrl.String(), strings.NewReader(""))
 		res, err := insecureClient.Do(optionsReq)
-		log.Printf("OPTIONS call on %s: %v", hostUrl.String(), res.StatusCode)
 		if err == nil && res.StatusCode == 200 {
 			return hostUrl.String(), nil
 		}
+		log.Printf("OPTIONS call to %s failed with %v. Trying the proxy URL", hostUrl.String(), err)
 		// can't reach the host url, try the proxy.
 	}
 
@@ -225,10 +228,10 @@ func detectUploadUrl(transfer *ovirtsdk4.ImageTransfer) (string, error) {
 	}
 	optionsReq, err := http.NewRequest(http.MethodOptions, proxyUrl.String(), strings.NewReader(""))
 	res, err := insecureClient.Do(optionsReq)
-	log.Printf("OPTIONS call on %s: %v", proxyUrl.String(), res.StatusCode)
 	if err == nil && res.StatusCode == 200 {
 		return proxyUrl.String(), nil
 	}
+	log.Printf("OPTIONS call to %s failed with  %v", proxyUrl.String(), err)
 	return "", err
 }
 
@@ -339,6 +342,13 @@ func PrepareForTransfer(sourceUrl string) (uploadSize int64, qcowSize uint64, so
 
 		sFile, err = ioutil.TempFile("/tmp", "*-ovirt-image.downloaded")
 		io.Copy(sFile, resp.Body)
+
+		// reset cursor to prep for reads
+		_, err = sFile.Seek(0, 0)
+		if err != nil {
+			return 0, 0, nil, "", err
+		}
+
 		// remove it when done or cache? maybe --cache
 		// defer os.Remove(sFile.Name())
 	}

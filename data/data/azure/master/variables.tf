@@ -30,10 +30,6 @@ variable "instance_count" {
   type = string
 }
 
-variable "external_lb_id" {
-  type = string
-}
-
 variable "elb_backend_pool_v4_id" {
   type = string
 }

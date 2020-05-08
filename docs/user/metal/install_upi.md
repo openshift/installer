@@ -120,7 +120,7 @@ The OpenShift Installer provides administrators various assets that are required
 
 ### Setting up install-config for installer
 
-The OpenShift installer uses an [Install Config](../customization.md#platform-customization) to drive all install time configuration.
+The OpenShift installer uses an [Install Config](../customization.md#platform-customization) to drive all install time configuration. Note that, the Openshift Installer currently can not create the Install Config for baremetal and you will have to manually create this file.
 
 An example install config for bare-metal UPI is as follows:
 
@@ -227,7 +227,7 @@ Terraform [templates][upi-metal-example] provides an example of using OpenShift 
 ### Overview
 
 * Compute: Uses Packet.net to deploy bare-metal machines.
-    Uses [matchbox](coreos-matchbox) to serve PXE scripts and Ignition configs for bootstrap, control plane and worker machines.
+    Uses [matchbox] to serve PXE scripts and Ignition configs for bootstrap, control plane and worker machines.
     Uses `public` IPv4 addresses for each machine, so that all the machines are accessible on the internet.
 
 * DNS and Load Balancing
@@ -247,7 +247,7 @@ Use the OpenShift Installer to create [Ignition configs](#getting-ignition-confi
 Use the [example][upi-metal-example-tfvar] Terraform variable file to create terraform variable file, and edit the `tfvars` file on your favorite editor.
 
 ```sh
-cp terraform.tfvars.{example,}
+cp terraform.tfvars{.example,}
 ```
 
 #### Creating resources
@@ -309,10 +309,10 @@ terraform destroy -auto-approve
 [cluster-image-registry-operator]: https://github.com/openshift/cluster-image-registry-operator#image-registry-operator
 [coreos-installer-args]: https://github.com/coreos/coreos-installer#kernel-command-line-options-for-coreos-installer-running-in-the-initramfs
 [coreos-installer]: https://github.com/coreos/coreos-installer#coreos-installer
-[coreos-matchbox]: https://github.com/coreos/matchbox#matchbox----
 [csr-requests]: https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/#requesting-a-certificate
 [etcd-ports]: https://github.com/openshift/origin/pull/21520
 [machine-config-server]: https://github.com/openshift/machine-config-operator/blob/master/docs/MachineConfigServer.md
+[matchbox]: https://github.com/coreos/matchbox
 [openshift-router]: https://github.com/openshift/cluster-ingress-operator#openshift-ingress-operator
 [rrdns]: https://tools.ietf.org/html/rfc1794
 [sdn-ports]: https://github.com/openshift/origin/pull/21520
@@ -321,5 +321,5 @@ terraform destroy -auto-approve
 [terraform-init]: https://www.terraform.io/docs/commands/init.html
 [terraform-providers]: https://www.terraform.io/docs/providers/
 [upi-metal-example-pre-req]: ../../../upi/metal/README.md#pre-requisites
-[upi-metal-example-tfvar]: ../../../upi/aws/terraform.tfvar.example
+[upi-metal-example-tfvar]: ../../../upi/metal/terraform.tfvars.example
 [upi-metal-example]: ../../../upi/metal/README.md

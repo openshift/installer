@@ -12,6 +12,7 @@ import (
 )
 
 // HyperthreadingMode is the mode of hyperthreading for a machine.
+// +kubebuilder:validation:Enum="";Enabled;Disabled
 type HyperthreadingMode string
 
 const (
@@ -22,11 +23,16 @@ const (
 )
 
 // Architecture is the instruction set architecture for the machines in a pool.
+// +kubebuilder:validation:Enum="";amd64
 type Architecture string
 
 const (
 	// ArchitectureAMD64 indicates AMD64 (x86_64).
 	ArchitectureAMD64 = "amd64"
+	// ArchitectureS390X indicates s390x (IBM System Z).
+	ArchitectureS390X = "s390x"
+	// ArchitecturePPC64LE indicates ppc64 little endian (Power PC)
+	ArchitecturePPC64LE = "ppc64le"
 )
 
 // MachinePool is a pool of machines to be installed.
@@ -44,12 +50,17 @@ type MachinePool struct {
 
 	// Hyperthreading determines the mode of hyperthreading that machines in the
 	// pool will utilize.
-	// +optional
 	// Default is for hyperthreading to be enabled.
+	//
+	// +kubebuilder:default=Enabled
+	// +optional
 	Hyperthreading HyperthreadingMode `json:"hyperthreading,omitempty"`
 
 	// Architecture is the instruction set architecture of the machine pool.
 	// Defaults to amd64.
+	//
+	// +kubebuilder:default=amd64
+	// +optional
 	Architecture Architecture `json:"architecture,omitempty"`
 }
 
