@@ -71,31 +71,33 @@ func Platform() (*openstack.Platform, error) {
 		return nil, err
 	}
 
+	var lbFloatingIP string
 	floatingIPNames, err := validValuesFetcher.GetFloatingIPNames(cloud, extNet)
 	if err != nil {
-		return nil, err
-	}
-	sort.Strings(floatingIPNames)
-	var lbFloatingIP string
-	err = survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Select{
-				Message: "APIFloatingIPAddress",
-				Help:    "The Floating IP address used for external access to the OpenShift API.",
-				Options: floatingIPNames,
+		logrus.Warning("Failed to get Floating IP")
+		lbFloatingIP = "dummy"
+	} else {
+		sort.Strings(floatingIPNames)
+		err = survey.Ask([]*survey.Question{
+			{
+				Prompt: &survey.Select{
+					Message: "APIFloatingIPAddress",
+					Help:    "The Floating IP address used for external access to the OpenShift API.",
+					Options: floatingIPNames,
+				},
+				Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+					value := ans.(string)
+					i := sort.SearchStrings(floatingIPNames, value)
+					if i == len(floatingIPNames) || floatingIPNames[i] != value {
+						return errors.Errorf("invalid floating IP %q, should be one of %+v", value, strings.Join(floatingIPNames, ", "))
+					}
+					return nil
+				}),
 			},
-			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				value := ans.(string)
-				i := sort.SearchStrings(floatingIPNames, value)
-				if i == len(floatingIPNames) || floatingIPNames[i] != value {
-					return errors.Errorf("invalid floating IP %q, should be one of %+v", value, strings.Join(floatingIPNames, ", "))
-				}
-				return nil
-			}),
-		},
-	}, &lbFloatingIP)
-	if err != nil {
-		return nil, err
+		}, &lbFloatingIP)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	flavorNames, err := validValuesFetcher.GetFlavorNames(cloud)
