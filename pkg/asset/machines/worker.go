@@ -39,7 +39,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/machines/ovirt"
-	"github.com/openshift/installer/pkg/asset/machines/vsphere"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
@@ -109,17 +108,6 @@ func defaultBareMetalMachinePoolPlatform() baremetaltypes.MachinePool {
 
 func defaultOvirtMachinePoolPlatform() ovirttypes.MachinePool {
 	return ovirttypes.MachinePool{}
-}
-
-func defaultVSphereMachinePoolPlatform() vspheretypes.MachinePool {
-	return vspheretypes.MachinePool{
-		NumCPUs:           2,
-		NumCoresPerSocket: 1,
-		MemoryMiB:         8192,
-		OSDisk: vspheretypes.OSDisk{
-			DiskSizeGB: 120,
-		},
-	}
 }
 
 func awsDefaultWorkerMachineTypes(region string) []string {
@@ -329,20 +317,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
-		case vspheretypes.Name:
-			mpool := defaultVSphereMachinePoolPlatform()
-			mpool.Set(ic.Platform.VSphere.DefaultMachinePlatform)
-			mpool.Set(pool.Platform.VSphere)
-			pool.Platform.VSphere = &mpool
-			templateName := clusterID.InfraID + "-rhcos"
-
-			sets, err := vsphere.MachineSets(clusterID.InfraID, ic, &pool, templateName, "worker", "worker-user-data")
-			if err != nil {
-				return errors.Wrap(err, "failed to create worker machine objects")
-			}
-			for _, set := range sets {
-				machineSets = append(machineSets, set)
-			}
 		case ovirttypes.Name:
 			pool.Platform.Ovirt = &ovirttypes.MachinePool{}
 			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
@@ -353,7 +327,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
-		case nonetypes.Name:
+		case nonetypes.Name, vspheretypes.Name:
 		default:
 			return fmt.Errorf("invalid Platform")
 		}

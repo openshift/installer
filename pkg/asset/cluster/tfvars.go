@@ -11,7 +11,6 @@ import (
 	igntypes "github.com/coreos/ignition/v2/config/v3_0/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
-	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
@@ -38,7 +37,6 @@ import (
 	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
 	ovirttfvars "github.com/openshift/installer/pkg/tfvars/ovirt"
-	vspheretfvars "github.com/openshift/installer/pkg/tfvars/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -107,7 +105,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
-	case none.Name:
+	case none.Name, vsphere.Name:
 		return errors.Errorf("cannot create the cluster because %q is a UPI platform", platform)
 	}
 
@@ -431,31 +429,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.Ovirt.NetworkName,
 			string(*rhcosImage),
 			clusterID.InfraID,
-		)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
-		}
-		t.FileList = append(t.FileList, &asset.File{
-			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
-			Data:     data,
-		})
-	case vsphere.Name:
-		controlPlanes, err := mastersAsset.Machines()
-		if err != nil {
-			return err
-		}
-		controlPlaneConfigs := make([]*vsphereprovider.VSphereMachineProviderSpec, len(controlPlanes))
-		for i, c := range controlPlanes {
-			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*vsphereprovider.VSphereMachineProviderSpec)
-		}
-		data, err = vspheretfvars.TFVars(
-			vspheretfvars.TFVarsSources{
-				ControlPlaneConfigs: controlPlaneConfigs,
-				Username:            installConfig.Config.VSphere.Username,
-				Password:            installConfig.Config.VSphere.Password,
-				Cluster:             installConfig.Config.VSphere.Cluster,
-				ImageURL:            string(*rhcosImage),
-			},
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
