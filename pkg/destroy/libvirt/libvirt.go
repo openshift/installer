@@ -113,7 +113,7 @@ func deleteDomainsSinglePass(conn *libvirt.Connect, filter filterFunc, logger lo
 		nothingToDelete = false
 		dState, _, err := domain.GetState()
 		if err != nil {
-			return false, errors.Wrapf(err, "get domain state %d", dName)
+			return false, errors.Wrapf(err, "get domain state %q", dName)
 		}
 
 		if dState != libvirt.DOMAIN_SHUTOFF && dState != libvirt.DOMAIN_SHUTDOWN {
