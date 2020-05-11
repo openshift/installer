@@ -23,6 +23,7 @@ data "ignition_file" "static_ip" {
     content = templatefile("${path.module}/ifcfg.tmpl", {
       dns_addresses = var.dns_addresses,
       machine_cidr  = var.machine_cidr
+      gateway       = var.gateway
       //ip_address     = var.hostnames_ip_addresses[count.index].value
       ip_address     = each.value
       cluster_domain = var.cluster_domain

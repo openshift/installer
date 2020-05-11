@@ -164,6 +164,7 @@ module "lb_vm" {
   num_cpus      = 2
   memory        = 2096
   dns_addresses = var.vm_dns_addresses
+  gateway       = var.vm_gateway
 }
 
 module "bootstrap" {
@@ -191,6 +192,7 @@ module "bootstrap" {
   num_cpus      = 2
   memory        = 8192
   dns_addresses = var.vm_dns_addresses
+  gateway       = var.vm_gateway
 }
 
 module "control_plane_vm" {
@@ -222,6 +224,7 @@ module "control_plane_vm" {
   num_cpus      = var.control_plane_num_cpus
   memory        = var.control_plane_memory
   dns_addresses = var.vm_dns_addresses
+  gateway       = var.vm_gateway
 }
 
 module "compute_vm" {
@@ -249,6 +252,7 @@ module "compute_vm" {
   num_cpus      = var.compute_num_cpus
   memory        = var.compute_memory
   dns_addresses = var.vm_dns_addresses
+  gateway       = var.vm_gateway
 
   nested_hv_enabled = var.nested_virt
 }

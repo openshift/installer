@@ -62,6 +62,11 @@ variable "vm_dns_addresses" {
   default = ["1.1.1.1", "9.9.9.9"]
 }
 
+variable "vm_gateway" {
+  type    = string
+  default = null
+}
+
 /////////
 // OpenShift cluster variables
 /////////
