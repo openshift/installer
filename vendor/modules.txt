@@ -1038,8 +1038,6 @@ github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1
 # github.com/openshift/library-go v0.0.0-20200324092245-db2a8546af81
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 # github.com/openshift/machine-api-operator v0.2.1-0.20200429102619-d36974451290
-github.com/openshift/machine-api-operator/pkg/apis/machine
-github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1
 github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider
 github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1
 # github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033375cbe820+incompatible => github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530
@@ -1805,14 +1803,14 @@ k8s.io/client-go/util/retry
 k8s.io/klog
 # k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a
 k8s.io/kube-openapi/pkg/common
-# k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
+# k8s.io/utils v0.0.0-20200327001022-6496210b90e8
 k8s.io/utils/buffer
 k8s.io/utils/integer
 k8s.io/utils/pointer
 k8s.io/utils/trace
-# sigs.k8s.io/cluster-api-provider-aws v0.0.0 => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200316201703-923caeb1d0d8
+# sigs.k8s.io/cluster-api-provider-aws v0.0.0 => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200506073438-9d49428ff837
 sigs.k8s.io/cluster-api-provider-aws/pkg/apis
-sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1
+sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1
 # sigs.k8s.io/cluster-api-provider-azure v0.0.0 => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20200120114645-8a9592f1f87b
 sigs.k8s.io/cluster-api-provider-azure/pkg/apis
 sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1alpha1
@@ -1820,7 +1818,7 @@ sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1
 # sigs.k8s.io/cluster-api-provider-openstack v0.0.0 => github.com/openshift/cluster-api-provider-openstack v0.0.0-20200323110431-3311de91e078
 sigs.k8s.io/cluster-api-provider-openstack/pkg/apis
 sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1
-# sigs.k8s.io/controller-runtime v0.4.0
+# sigs.k8s.io/controller-runtime v0.5.1-0.20200330174416-a11a908d91e0
 sigs.k8s.io/controller-runtime/pkg/scheme
 # sigs.k8s.io/controller-tools v0.3.0 => github.com/abhinavdahiya/controller-tools v0.3.1-0.20200430222905-6fdf2d5fc069
 sigs.k8s.io/controller-tools/cmd/controller-gen
