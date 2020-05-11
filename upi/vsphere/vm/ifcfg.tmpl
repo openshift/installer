@@ -5,7 +5,7 @@ DEVICE=ens192
 ONBOOT=yes
 IPADDR=${ip_address}
 PREFIX=${element(split("/", machine_cidr), 1)}
-GATEWAY=${gateway != "" ? gateway : cidrhost(machine_cidr, 1)}
+GATEWAY=${gateway != null ? gateway : cidrhost(machine_cidr, 1)}
 DOMAIN=${cluster_domain}
 %{ for index, ip in dns_addresses ~}
 DNS${index+1}=${ip}

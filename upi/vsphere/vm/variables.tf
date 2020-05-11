@@ -59,3 +59,8 @@ variable "dns_addresses" {
   type = list(string)
 }
 
+variable "gateway" {
+  type = string
+  default = null
+}
+
