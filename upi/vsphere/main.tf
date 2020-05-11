@@ -249,4 +249,6 @@ module "compute_vm" {
   num_cpus      = var.compute_num_cpus
   memory        = var.compute_memory
   dns_addresses = var.vm_dns_addresses
+
+  nested_hv_enabled = var.nested_virt
 }
