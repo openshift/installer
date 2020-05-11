@@ -45,7 +45,6 @@ require (
 	github.com/metal3-io/baremetal-operator v0.0.0
 	github.com/metal3-io/cluster-api-provider-baremetal v0.0.0
 	github.com/mitchellh/cli v1.0.0
-	github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6 // indirect
 	github.com/openshift-metal3/terraform-provider-ironic v0.2.1
 	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible
 	github.com/openshift/client-go v0.0.0-20200320150128-a906f3d8e723
@@ -114,7 +113,7 @@ replace (
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200601094953-95abe2d2f422 // Pin API
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200116152001-92a2713fa240 // Pin client-go
-	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530 // Pin MCO so it doesn't get downgraded
+	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20200609021741-16da55b2a211 // Pin MCO so it doesn't get downgraded
 	github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20200526184553-1a716dcc0fa8 // Pin to openshift fork with tag v2.60.0-openshift-1
 	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200508151851-2bfa0b7d4a9d // release-2.8.0 branch
 	github.com/terraform-providers/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-1
