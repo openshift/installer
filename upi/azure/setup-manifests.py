@@ -31,7 +31,7 @@ with open('manifests/cloud-provider-config.yaml') as file:
     config.vnetName = infra_id + "-vnet"
     config.vnetResourceGroup = resource_group
     config.subnetName = infra_id + "-worker-subnet"
-    config.securityGroupName = infra_id + "-node-nsg"
+    config.securityGroupName = infra_id + "-nsg"
     config.routeTableName = ""
     config.cloudProviderRateLimit = False
     config.azure_resourcegroup = resource_group

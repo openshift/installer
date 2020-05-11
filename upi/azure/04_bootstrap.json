@@ -111,7 +111,7 @@
     "vmName" : "[concat(parameters('baseName'), '-bootstrap')]",
     "nicName" : "[concat(variables('vmName'), '-nic')]",
     "imageName" : "[concat(parameters('baseName'), '-image')]",
-    "controlPlaneNsgName" : "[concat(parameters('baseName'), '-controlplane-nsg')]",
+    "clusterNsgName" : "[concat(parameters('baseName'), '-nsg')]",
     "sshPublicIpAddressName" : "[concat(variables('vmName'), '-ssh-pip')]"
   },
   "resources" : [
@@ -223,7 +223,7 @@
     {
       "apiVersion" : "2018-06-01",
       "type": "Microsoft.Network/networkSecurityGroups/securityRules",
-      "name" : "[concat(variables('controlPlaneNsgName'), '/bootstrap_ssh_in')]",
+      "name" : "[concat(variables('clusterNsgName'), '/bootstrap_ssh_in')]",
       "location" : "[variables('location')]",
       "dependsOn" : [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"

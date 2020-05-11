@@ -391,7 +391,7 @@ INFO It is now safe to remove the bootstrap resources
 Once the bootstrapping process is complete you can deallocate and delete bootstrap resources:
 
 ```sh
-az network nsg rule delete -g $RESOURCE_GROUP --nsg-name ${INFRA_ID}-controlplane-nsg --name bootstrap_ssh_in
+az network nsg rule delete -g $RESOURCE_GROUP --nsg-name ${INFRA_ID}-nsg --name bootstrap_ssh_in
 az vm stop -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap
 az vm deallocate -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap
 az vm delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap --yes
