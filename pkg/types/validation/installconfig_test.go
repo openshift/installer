@@ -479,7 +479,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: "": must specify one of the platforms \(aws, azure, baremetal, gcp, none, openstack, ovirt, vsphere\)$`,
+			expectedError: `^platform: Invalid value: "": must specify one of the platforms \(aws, azure, baremetal, gcp, libvirt, none, openstack, ovirt, vsphere\)$`,
 		},
 		{
 			name: "multiple platforms",
@@ -502,17 +502,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^platform\.aws\.region: Unsupported value: "": supported values: "ap-northeast-1", "ap-northeast-2", "ap-south-1", "ap-southeast-1", "ap-southeast-2", "ca-central-1", "eu-central-1", "eu-north-1", "eu-west-1", "eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-west-1", "us-west-2"$`,
 		},
 		{
-			name: "valid libvirt platform",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					Libvirt: validLibvirtPlatform(),
-				}
-				return c
-			}(),
-			expectedError: `^platform: Invalid value: "libvirt": must specify one of the platforms \(aws, azure, baremetal, gcp, none, openstack, ovirt, vsphere\)$`,
-		},
-		{
 			name: "invalid libvirt platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -522,7 +511,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.Libvirt.URI = ""
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: "libvirt": must specify one of the platforms \(aws, azure, baremetal, gcp, none, openstack, ovirt, vsphere\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
+			expectedError: `^platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)$`,
 		},
 		{
 			name: "valid none platform",
