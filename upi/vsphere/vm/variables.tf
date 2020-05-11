@@ -64,3 +64,8 @@ variable "gateway" {
   default = null
 }
 
+variable "nested_virt" {
+  type = bool
+  default = false
+}
+

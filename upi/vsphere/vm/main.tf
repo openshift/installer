@@ -14,6 +14,8 @@ resource "vsphere_virtual_machine" "vm" {
   wait_for_guest_net_timeout  = "0"
   wait_for_guest_net_routable = "false"
 
+  nested_hv_enabled = var.nested_virt
+
   network_interface {
     network_id = var.network_id
   }

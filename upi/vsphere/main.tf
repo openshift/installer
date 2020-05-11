@@ -254,5 +254,5 @@ module "compute_vm" {
   dns_addresses = var.vm_dns_addresses
   gateway       = var.vm_gateway
 
-  nested_hv_enabled = var.nested_virt
+  nested_virt = var.nested_virt
 }
