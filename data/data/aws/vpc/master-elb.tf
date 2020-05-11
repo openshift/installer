@@ -57,6 +57,7 @@ resource "aws_lb_target_group" "api_internal" {
     var.tags,
   )
 
+  // Refer to docs/dev/kube-apiserver-health-check.md on how to correctly setup health check probe for kube-apiserver
   health_check {
     healthy_threshold   = 2
     unhealthy_threshold = 2
@@ -84,6 +85,7 @@ resource "aws_lb_target_group" "api_external" {
     var.tags,
   )
 
+  // Refer to docs/dev/kube-apiserver-health-check.md on how to correctly setup health check probe for kube-apiserver
   health_check {
     healthy_threshold   = 2
     unhealthy_threshold = 2

@@ -4,6 +4,7 @@ resource "google_compute_address" "cluster_ip" {
   subnetwork   = local.master_subnet
 }
 
+// Refer to docs/dev/kube-apiserver-health-check.md on how to correctly setup health check probe for kube-apiserver
 resource "google_compute_health_check" "api_internal" {
   name = "${var.cluster_id}-api-internal"
 

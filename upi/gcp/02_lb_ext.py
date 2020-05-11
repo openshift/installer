@@ -7,6 +7,7 @@ def GenerateConfig(context):
             'region': context.properties['region']
         }
     }, {
+        # Refer to docs/dev/kube-apiserver-health-check.md on how to correctly setup health check probe for kube-apiserver
         'name': context.properties['infra_id'] + '-api-http-health-check',
         'type': 'compute.v1.httpHealthCheck',
         'properties': {

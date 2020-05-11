@@ -15,6 +15,7 @@ def GenerateConfig(context):
             'subnetwork': context.properties['control_subnet']
         }
     }, {
+        # Refer to docs/dev/kube-apiserver-health-check.md on how to correctly setup health check probe for kube-apiserver
         'name': context.properties['infra_id'] + '-api-internal-health-check',
         'type': 'compute.v1.healthCheck',
         'properties': {
