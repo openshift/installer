@@ -38,5 +38,9 @@ dev)
 	exit 1
 esac
 
-export CGO_ENABLED=1
+if [ "${GOOS}" != "darwin" ]
+then
+	export CGO_ENABLED=1
+fi
+
 go build "${GOFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install
