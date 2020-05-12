@@ -23,6 +23,11 @@ crw-rw-rw-+ 1 root kvm 10, 232 Oct 31 09:22 /dev/kvm
 If it is missing, try some of the ideas [here][kvm-install].
 
 ### Install and Enable Libvirt
+
+On RHEL 7.x, if you are subscribed to `rhel-7-server-rhv-4-mgmt-agent-rpms` repo(does not come by default),
+then you can use it update to minimum required `qemu-kvm` i.e. higher than `qemu-2.4` version.
+In case, subscription is not available, then same steps as CentOS 7 below, can be used.
+
 On CentOS 7, first enable the
 [kvm-common](http://mirror.centos.org/centos/7/virt/x86_64/kvm-common/)
 repository to ensure you get a new enough version of qemu-kvm.
