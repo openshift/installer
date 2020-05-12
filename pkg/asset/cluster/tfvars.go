@@ -2,12 +2,9 @@ package cluster
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net"
-	"net/url"
 	"os"
 	"strings"
 
@@ -33,7 +30,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
-	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/tfvars"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
 	azuretfvars "github.com/openshift/installer/pkg/tfvars/azure"
@@ -93,7 +89,6 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		&machine.Master{},
 		&machines.Master{},
 		&machines.Worker{},
-		&tls.RootCA{},
 	}
 }
 
@@ -108,8 +103,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	workersAsset := &machines.Worker{}
 	rhcosImage := new(rhcos.Image)
 	rhcosBootstrapImage := new(rhcos.BootstrapImage)
-	rootCA := &tls.RootCA{}
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, rhcosImage, rhcosBootstrapImage, rootCA)
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, rhcosImage, rhcosBootstrapImage)
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -405,11 +399,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case baremetal.Name:
-		ignitionURL := &url.URL{
-			Scheme: "https",
-			Host:   net.JoinHostPort(installConfig.Config.Platform.BareMetal.APIVIP, "22623"),
-			Path:   "config/master",
-		}
 		data, err = baremetaltfvars.TFVars(
 			installConfig.Config.Platform.BareMetal.LibvirtURI,
 			installConfig.Config.Platform.BareMetal.BootstrapProvisioningIP,
@@ -418,8 +407,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.BareMetal.ProvisioningBridge,
 			installConfig.Config.Platform.BareMetal.Hosts,
 			string(*rhcosImage),
-			ignitionURL.String(),
-			base64.StdEncoding.EncodeToString(rootCA.Cert()),
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
