@@ -33,6 +33,40 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expected: `^test-path\.zones\[1]: Invalid value: "us-central1-f": Zone not in configured region \(us-east1\)$`,
 		},
+		{
+			name: "valid disk type",
+			pool: &gcp.MachinePool{
+				OSDisk: gcp.OSDisk{
+					DiskType: "pd-standard",
+				},
+			},
+		},
+		{
+			name: "invalid disk type",
+			pool: &gcp.MachinePool{
+				OSDisk: gcp.OSDisk{
+					DiskType: "pd-",
+				},
+			},
+			expected: `^test-path\.diskType: Unsupported value: "pd-": supported values: "pd-ssd", "pd-standard"$`,
+		},
+		{
+			name: "valid disk size",
+			pool: &gcp.MachinePool{
+				OSDisk: gcp.OSDisk{
+					DiskSizeGB: 100,
+				},
+			},
+		},
+		{
+			name: "invalid disk type",
+			pool: &gcp.MachinePool{
+				OSDisk: gcp.OSDisk{
+					DiskSizeGB: -120,
+				},
+			},
+			expected: `^test-path\.diskSizeGB: Invalid value: -120: must be a positive value$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

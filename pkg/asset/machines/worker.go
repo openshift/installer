@@ -95,6 +95,10 @@ func defaultAzureMachinePoolPlatform() azuretypes.MachinePool {
 func defaultGCPMachinePoolPlatform() gcptypes.MachinePool {
 	return gcptypes.MachinePool{
 		InstanceType: "n1-standard-4",
+		OSDisk: gcptypes.OSDisk{
+			DiskSizeGB: 128,
+			DiskType:   "pd-ssd",
+		},
 	}
 }
 

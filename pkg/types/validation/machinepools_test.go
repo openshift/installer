@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -141,6 +142,48 @@ func TestValidateMachinePool(t *testing.T) {
 					AWS:     &aws.MachinePool{},
 					Libvirt: &libvirt.MachinePool{},
 				}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name:     "valid GCP",
+			platform: &types.Platform{GCP: &gcp.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("test-name")
+				p.Platform = types.MachinePoolPlatform{
+					GCP: &gcp.MachinePool{},
+				}
+				p.Platform.GCP.OSDisk.DiskSizeGB = 100
+				p.Platform.GCP.OSDisk.DiskType = "pd-standard"
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name:     "invalid GCP disk size",
+			platform: &types.Platform{GCP: &gcp.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("test-name")
+				p.Platform = types.MachinePoolPlatform{
+					GCP: &gcp.MachinePool{},
+				}
+				p.Platform.GCP.OSDisk.DiskSizeGB = -100
+				p.Platform.GCP.OSDisk.DiskType = "pd-standard"
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name:     "invalid GCP disk type",
+			platform: &types.Platform{GCP: &gcp.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("test-name")
+				p.Platform = types.MachinePoolPlatform{
+					GCP: &gcp.MachinePool{},
+				}
+				p.Platform.GCP.OSDisk.DiskSizeGB = 100
+				p.Platform.GCP.OSDisk.DiskType = "pd-"
 				return p
 			}(),
 			valid: false,

@@ -55,6 +55,7 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path) field.ErrorList {
 	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
+		allErrs = append(allErrs, ValidateDefaultDiskType(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
 	if p.Network != "" {
 		if p.ComputeSubnet == "" {

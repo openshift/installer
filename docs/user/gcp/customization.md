@@ -13,6 +13,9 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 
 * `type` (optional string): The [GCP machine type][machine-type].
 * `zones` (optional array of strings): The availability zones used for machines in the pool.
+* `osDisk` (optional object):
+    * `diskSizeGB` (optional integer): The size of the disk in gigabytes (GB).
+    * `diskType` (optional string): The type of disk (allowed values are: `pd-ssd`, and `pd-standard`. Default: `pd-ssd`).
 
 ## Installing to Existing Networks & Subnetworks
 
@@ -44,6 +47,9 @@ platform:
   gcp:
     project: example-project
     region: us-east1
+    osDisk:
+      diskType: pd-ssd
+      diskSizeGB: 120
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
@@ -63,6 +69,9 @@ compute:
       zones:
       - us-central1-a
       - us-central1-c
+      osDisk:
+        diskType: pd-standard
+        diskSizeGB: 128
   replicas: 3
 controlPlane:
   name: master
@@ -72,6 +81,9 @@ controlPlane:
       zones:
       - us-central1-a
       - us-central1-c
+      osDisk:
+        diskType: pd-ssd
+        diskSizeGB: 1024
   replicas: 3
 metadata:
   name: example-cluster

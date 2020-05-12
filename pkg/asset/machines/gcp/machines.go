@@ -31,6 +31,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
+
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		azIndex := int(idx) % len(azs)
@@ -84,8 +85,8 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 		Disks: []*gcpprovider.GCPDisk{{
 			AutoDelete: true,
 			Boot:       true,
-			SizeGb:     128,
-			Type:       "pd-ssd",
+			SizeGb:     mpool.OSDisk.DiskSizeGB,
+			Type:       mpool.OSDisk.DiskType,
 			Image:      fmt.Sprintf("%s-rhcos-image", clusterID),
 		}},
 		NetworkInterfaces: []*gcpprovider.GCPNetworkInterface{{

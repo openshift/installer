@@ -12,6 +12,26 @@ type MachinePool struct {
 	//
 	// +optional
 	InstanceType string `json:"type"`
+
+	// OSDisk defines the storage for instance.
+	//
+	// +optional
+	OSDisk `json:"osDisk"`
+}
+
+// OSDisk defines the disk for machines on GCP.
+type OSDisk struct {
+	// DiskType defines the type of disk.
+	// The valid values are pd-standard and pd-ssd
+	// For control plane nodes, the valid value is pd-ssd.
+	// +optional
+	// +kubebuilder:validation:Enum=pd-ssd;pd-standard
+	DiskType string `json:"DiskType"`
+
+	// DiskSizeGB defines the size of disk in GB.
+	//
+	// +kubebuilder:validation:Minimum=0
+	DiskSizeGB int64 `json:"DiskSizeGB"`
 }
 
 // Set sets the values from `required` to `a`.
@@ -26,5 +46,13 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.InstanceType != "" {
 		a.InstanceType = required.InstanceType
+	}
+
+	if required.OSDisk.DiskSizeGB > 0 {
+		a.OSDisk.DiskSizeGB = required.OSDisk.DiskSizeGB
+	}
+
+	if required.OSDisk.DiskType != "" {
+		a.OSDisk.DiskType = required.OSDisk.DiskType
 	}
 }
