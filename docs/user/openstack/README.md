@@ -344,7 +344,7 @@ This assumes the floating IP and corresponding `*.apps` DNS record exists.
 
 If you cannot or don't want to pre-create a floating IP address, the installation should still succeed, however the installer will fail waiting for the API.
 
-**WARNING:** The installer will fail if it can't reach the bootstrap OpenShift API in 30 minutes.
+**WARNING:** The installer will fail if it can't reach the bootstrap OpenShift API in 20 minutes.
 
 Even if the installer times out, the OpenShift cluster should still come up. Once the bootstrapping process is in place, it should all run to completion. So you should be able to deploy OpenShift without any floating IP addresses and DNS records and create everything yourself after the cluster is up.
 
