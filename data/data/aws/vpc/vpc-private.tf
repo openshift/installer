@@ -29,7 +29,7 @@ resource "aws_subnet" "private_subnet" {
 
   vpc_id = data.aws_vpc.cluster_vpc.id
 
-  cidr_block = cidrsubnet(local.new_private_cidr_range, 3, count.index)
+  cidr_block = cidrsubnet(local.new_private_cidr_range, ceil(log(length(var.availability_zones), 2)), count.index)
 
   availability_zone = var.availability_zones[count.index]
 
