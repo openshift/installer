@@ -2,10 +2,6 @@ output "vpc_id" {
   value = data.aws_vpc.cluster_vpc.id
 }
 
-output "vpc_cidrs" {
-  value = [data.aws_vpc.cluster_vpc.cidr_block]
-}
-
 output "az_to_private_subnet_id" {
   value = zipmap(data.aws_subnet.private.*.availability_zone, data.aws_subnet.private.*.id)
 }

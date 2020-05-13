@@ -62,7 +62,7 @@ module "masters" {
 module "topology" {
   source = "./topology"
 
-  cidr_block          = var.machine_cidr
+  cidr_block          = var.machine_v4_cidrs[0]
   cluster_id          = var.cluster_id
   cluster_domain      = var.cluster_domain
   external_network    = var.openstack_external_network
