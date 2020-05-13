@@ -1,5 +1,5 @@
 #!/bin/bash
-# cidr_to_ip - 
+# cidr_to_ip -
 #  https://www.terraform.io/docs/providers/external/data_source.html
 #  Based on info from here: https://gist.github.com/irvingpop/968464132ded25a206ced835d50afa6b
 #  This script takes requests an IP address from an IPAM server
@@ -58,11 +58,11 @@ function produce_output() {
   # The verification and looping is a crude way of overcoming the lack of
   # currency safety in the IPAM server.
   while [[ $SECONDS -lt $timeout ]]
-  do 
+  do
     ip_address=$(curl -s "http://$ipam/api/getFreeIP.php?apiapp=address&apitoken=$ipam_token&subnet=${network}&host=${hostname}")
 
     if [[ "$(is_ip_address "${ip_address}")" != "true" ]]; then error_exit "could not reserve an IP address: ${ip_address}"; fi
-	
+
     if [[ "$ip_address" == "$(get_reservation)" ]]
 	then
       jq -n \
