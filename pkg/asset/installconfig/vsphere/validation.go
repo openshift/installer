@@ -21,7 +21,6 @@ func Validate(ic *types.InstallConfig) error {
 	}
 
 	allErrs = append(allErrs, validation.ValidatePlatform(ic.Platform.VSphere, field.NewPath("platform").Child("vsphere"))...)
-	allErrs = append(allErrs, folderExists(ic, field.NewPath("platform").Child("vsphere").Child("folder"))...)
 
 	return allErrs.ToAggregate()
 }
@@ -36,6 +35,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	}
 
 	allErrs = append(allErrs, validation.ValidateForProvisioning(ic.Platform.VSphere, field.NewPath("platform").Child("vsphere"))...)
+	allErrs = append(allErrs, folderExists(ic, field.NewPath("platform").Child("vsphere").Child("folder"))...)
 
 	return allErrs.ToAggregate()
 }
