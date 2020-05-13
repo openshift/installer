@@ -29,3 +29,4 @@ USER 1000:1000
 ENV PATH /bin
 ENV HOME /output
 WORKDIR /output
+ENTRYPOINT ["/bin/openshift-install"]
