@@ -109,7 +109,17 @@ func defaultBareMetalMachinePoolPlatform() baremetaltypes.MachinePool {
 }
 
 func defaultOvirtMachinePoolPlatform() ovirttypes.MachinePool {
-	return ovirttypes.MachinePool{}
+	return ovirttypes.MachinePool{
+		CPU: &ovirttypes.CPU{
+			Cores:   4,
+			Sockets: 1,
+		},
+		MemoryMB: 16348,
+		OSDisk: &ovirttypes.Disk{
+			SizeGB: 120,
+		},
+		VMType: ovirttypes.VMTypeServer,
+	}
 }
 
 func defaultVSphereMachinePoolPlatform() vspheretypes.MachinePool {
@@ -340,8 +350,13 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				machineSets = append(machineSets, set)
 			}
 		case ovirttypes.Name:
-			pool.Platform.Ovirt = &ovirttypes.MachinePool{}
+			mpool := defaultOvirtMachinePoolPlatform()
+			mpool.Set(ic.Platform.Ovirt.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.Ovirt)
+			pool.Platform.Ovirt = &mpool
+
 			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
+
 			sets, err := ovirt.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects for ovirt provider")

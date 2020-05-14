@@ -206,6 +206,9 @@ func validOvirtPlatform() *ovirt.Platform {
 	return &ovirt.Platform{
 		ClusterID:       uuid.NewRandom().String(),
 		StorageDomainID: uuid.NewRandom().String(),
+		APIVIP:          "1.1.1.1",
+		DNSVIP:          "1.1.1.2",
+		IngressVIP:      "1.1.1.3",
 	}
 }
 

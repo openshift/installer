@@ -40,7 +40,37 @@ func Validate(ic *types.InstallConfig) error {
 			field.Invalid(ovirtPlatformPath.Child("vnicProfileID"), ic.Ovirt.VNICProfileID, err.Error()))
 	}
 
+	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Ovirt != nil {
+		allErrs = append(
+			allErrs,
+			validateMachinePool(con, field.NewPath("controlPlane", "platform", "ovirt"), ic.ControlPlane.Platform.Ovirt)...)
+	}
+	for idx, compute := range ic.Compute {
+		fldPath := field.NewPath("compute").Index(idx)
+		if compute.Platform.Ovirt != nil {
+			allErrs = append(
+				allErrs,
+				validateMachinePool(con, fldPath.Child("platform", "ovirt"), compute.Platform.Ovirt)...)
+		}
+	}
+
 	return allErrs.ToAggregate()
+}
+
+func validateMachinePool(con *ovirtsdk.Connection, child *field.Path, pool *ovirt.MachinePool) field.ErrorList {
+	allErrs := field.ErrorList{}
+	allErrs = append(allErrs, validateInstanceTypeID(con, child, pool))
+	return allErrs
+}
+
+func validateInstanceTypeID(con *ovirtsdk.Connection, child *field.Path, machinePool *ovirt.MachinePool) *field.Error {
+	if machinePool.InstanceTypeID != "" {
+		_, err := con.SystemService().InstanceTypesService().InstanceTypeService(machinePool.InstanceTypeID).Get().Send()
+		if err != nil {
+			return field.NotFound(child.Child("instanceTypeID"), machinePool.InstanceTypeID)
+		}
+	}
+	return nil
 }
 
 // authenticated takes an ovirt platform and validates

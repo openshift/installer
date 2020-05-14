@@ -1032,7 +1032,7 @@ github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1
 # github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
 github.com/openshift/cluster-api-provider-libvirt/pkg/apis
 github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1
-# github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20200128081049-840376ca5c09
+# github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20200504092944-27473ea1ae43
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis
 github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1
 # github.com/openshift/library-go v0.0.0-20200324092245-db2a8546af81
@@ -1042,7 +1042,7 @@ github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider
 github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1
 # github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033375cbe820+incompatible => github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530
 github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1
-# github.com/ovirt/go-ovirt v4.3.4+incompatible => github.com/ovirt/go-ovirt v0.0.0-20200320082526-4e97a11ff083
+# github.com/ovirt/go-ovirt v0.0.0-20200428093010-9bcc4fd4e6c0 => github.com/ovirt/go-ovirt v0.0.0-20200320082526-4e97a11ff083
 github.com/ovirt/go-ovirt
 # github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200406133650-74a154c1d861
 github.com/ovirt/terraform-provider-ovirt/ovirt
