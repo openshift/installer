@@ -13,15 +13,16 @@ import (
 	"google.golang.org/api/option"
 )
 
-//go:generate mockgen -source=./client.go -destination=.mock/gcpclient_generated.go -package=mock
+//go:generate mockgen -source=./client.go -destination=./mock/gcpclient_generated.go -package=mock
 
 // API represents the calls made to the API.
 type API interface {
 	GetNetwork(ctx context.Context, network, project string) (*compute.Network, error)
 	GetPublicDomains(ctx context.Context, project string) ([]string, error)
-	GetPublicDNSZone(ctx context.Context, baseDomain, project string) (*dns.ManagedZone, error)
+	GetPublicDNSZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error)
 	GetSubnetworks(ctx context.Context, network, project, region string) ([]*compute.Subnetwork, error)
 	GetProjects(ctx context.Context) (map[string]string, error)
+	GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error)
 }
 
 // Client makes calls to the GCP API.
@@ -95,7 +96,9 @@ func (c *Client) GetPublicDNSZone(ctx context.Context, project, baseDomain strin
 	if err != nil {
 		return nil, err
 	}
-
+	if !strings.HasSuffix(baseDomain, ".") {
+		baseDomain = fmt.Sprintf("%s.", baseDomain)
+	}
 	req := svc.ManagedZones.List(project).DnsName(baseDomain).Context(ctx)
 	var res *dns.ManagedZone
 	if err := req.Pages(ctx, func(page *dns.ManagedZonesListResponse) error {
@@ -112,6 +115,27 @@ func (c *Client) GetPublicDNSZone(ctx context.Context, project, baseDomain strin
 		return nil, errors.New("no matching public DNS Zone found")
 	}
 	return res, nil
+}
+
+// GetRecordSets returns all the records for a DNS zone.
+func (c *Client) GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
+	defer cancel()
+
+	svc, err := c.getDNSService(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := svc.ResourceRecordSets.List(project, zone).Context(ctx)
+	var rrSets []*dns.ResourceRecordSet
+	if err := req.Pages(ctx, func(page *dns.ResourceRecordSetsListResponse) error {
+		rrSets = append(rrSets, page.Rrsets...)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return rrSets, nil
 }
 
 // GetSubnetworks uses the GCP Compute Service API to retrieve all subnetworks in a given network.

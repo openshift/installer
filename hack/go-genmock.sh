@@ -2,7 +2,7 @@
 # Example:  ./hack/go-genmock.sh
 
 if [ "$IS_CONTAINER" != "" ]; then
-  go generate ./pkg/... "${@}"
+  go generate ./pkg/asset/installconfig/... "${@}"
 else
   podman build -t openshift-install-mock ./images/mock
   podman run --rm \
