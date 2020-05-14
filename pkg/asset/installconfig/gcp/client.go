@@ -13,7 +13,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-//go:generate mockgen -source=./client.go -destination=.mock/gcpclient_generated.go -package=mock
+//go:generate mockgen -source=./client.go -destination=./mock/gcpclient_generated.go -package=mock
 
 // API represents the calls made to the API.
 type API interface {
