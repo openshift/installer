@@ -19,7 +19,7 @@ import (
 type API interface {
 	GetNetwork(ctx context.Context, network, project string) (*compute.Network, error)
 	GetPublicDomains(ctx context.Context, project string) ([]string, error)
-	GetPublicDNSZone(ctx context.Context, baseDomain, project string) (*dns.ManagedZone, error)
+	GetPublicDNSZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error)
 	GetSubnetworks(ctx context.Context, network, project, region string) ([]*compute.Subnetwork, error)
 	GetProjects(ctx context.Context) (map[string]string, error)
 	GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error)
@@ -96,7 +96,9 @@ func (c *Client) GetPublicDNSZone(ctx context.Context, project, baseDomain strin
 	if err != nil {
 		return nil, err
 	}
-
+	if !strings.HasSuffix(baseDomain, ".") {
+		baseDomain = fmt.Sprintf("%s.", baseDomain)
+	}
 	req := svc.ManagedZones.List(project).DnsName(baseDomain).Context(ctx)
 	var res *dns.ManagedZone
 	if err := req.Pages(ctx, func(page *dns.ManagedZonesListResponse) error {

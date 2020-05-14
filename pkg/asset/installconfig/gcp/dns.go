@@ -2,9 +2,7 @@ package gcp
 
 import (
 	"context"
-	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -22,10 +20,6 @@ func GetPublicZone(ctx context.Context, project, baseDomain string) (*dns.Manage
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
-
-	if !strings.HasSuffix(baseDomain, ".") {
-		baseDomain = fmt.Sprintf("%s.", baseDomain)
-	}
 
 	dnsZone, err := client.GetPublicDNSZone(ctx, project, baseDomain)
 	if err != nil {

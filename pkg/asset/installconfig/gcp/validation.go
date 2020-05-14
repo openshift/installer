@@ -35,7 +35,7 @@ func ValidatePreExitingPublicDNS(client API, ic *types.InstallConfig) error {
 
 	record := fmt.Sprintf("api.%s.", strings.TrimSuffix(ic.ClusterDomain(), "."))
 
-	zone, err := client.GetPublicDNSZone(context.TODO(), ic.BaseDomain, ic.Platform.GCP.ProjectID)
+	zone, err := client.GetPublicDNSZone(context.TODO(), ic.Platform.GCP.ProjectID, ic.BaseDomain)
 	if err != nil {
 		var gErr *googleapi.Error
 		if errors.As(err, &gErr) {

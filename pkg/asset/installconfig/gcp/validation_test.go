@@ -213,7 +213,7 @@ func TestValidatePreExitingPublicDNS(t *testing.T) {
 			defer mockCtrl.Finish()
 			gcpClient := mock.NewMockAPI(mockCtrl)
 
-			gcpClient.EXPECT().GetPublicDNSZone(gomock.Any(), "base-domain", "project-id").Return(&dns.ManagedZone{Name: "zone-name"}, nil).AnyTimes()
+			gcpClient.EXPECT().GetPublicDNSZone(gomock.Any(), "project-id", "base-domain").Return(&dns.ManagedZone{Name: "zone-name"}, nil).AnyTimes()
 			gcpClient.EXPECT().GetRecordSets(gomock.Any(), gomock.Eq("project-id"), gomock.Eq("zone-name")).Return(test.records, nil).AnyTimes()
 
 			err := ValidatePreExitingPublicDNS(gcpClient, &types.InstallConfig{
