@@ -22,6 +22,7 @@ type API interface {
 	GetPublicDNSZone(ctx context.Context, baseDomain, project string) (*dns.ManagedZone, error)
 	GetSubnetworks(ctx context.Context, network, project, region string) ([]*compute.Subnetwork, error)
 	GetProjects(ctx context.Context) (map[string]string, error)
+	GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error)
 }
 
 // Client makes calls to the GCP API.
@@ -112,6 +113,27 @@ func (c *Client) GetPublicDNSZone(ctx context.Context, project, baseDomain strin
 		return nil, errors.New("no matching public DNS Zone found")
 	}
 	return res, nil
+}
+
+// GetRecordSets returns all the records for a DNS zone.
+func (c *Client) GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
+	defer cancel()
+
+	svc, err := c.getDNSService(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := svc.ResourceRecordSets.List(project, zone).Context(ctx)
+	var rrSets []*dns.ResourceRecordSet
+	if err := req.Pages(ctx, func(page *dns.ResourceRecordSetsListResponse) error {
+		rrSets = append(rrSets, page.Rrsets...)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return rrSets, nil
 }
 
 // GetSubnetworks uses the GCP Compute Service API to retrieve all subnetworks in a given network.
