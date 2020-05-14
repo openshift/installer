@@ -1,10 +1,12 @@
 package installconfig
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/openshift/installer/pkg/asset"
 	azconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	vsconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -49,7 +51,16 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-	case aws.Name, baremetal.Name, gcp.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name:
+	case gcp.Name:
+		client, err := gcpconfig.NewClient(context.TODO())
+		if err != nil {
+			return err
+		}
+		err = gcpconfig.ValidatePreExitingPublicDNS(client, ic.Config)
+		if err != nil {
+			return err
+		}
+	case aws.Name, baremetal.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name:
 		// no special provisioning requirements to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
