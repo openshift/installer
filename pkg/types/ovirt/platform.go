@@ -7,9 +7,15 @@ type Platform struct {
 	ClusterID string `json:"ovirt_cluster_id"`
 	// The target storage domain under which all VM disk would be created.
 	StorageDomainID string `json:"ovirt_storage_domain_id"`
-	// The target network of all the network interfaces of the nodes. Omitting defaults to ovirtmgmt
-	// network which is a default network for evert ovirt cluster.
+	// The target network of all the network interfaces of the nodes.
+	// +optional
+	//Omitting defaults to ovirtmgmt network which is a default network for every ovirt cluster.
 	NetworkName string `json:"ovirt_network_name,omitempty"`
+	//VNICProfileID defines the VNIC profile ID to use the the VM network interfaces.
+	// +optional
+	// Default will set the vnic profile id to the profile of the network. If there are multiple
+	// profiles for that network the installation exits.
+	VNICProfileID string `json:"vnicProfileID,omitempty"`
 	// APIVIP is an IP which will be served by bootstrap and then pivoted masters, using keepalived
 	APIVIP string `json:"api_vip"`
 	// DNSVIP is the IP of the internal DNS which will be operated by the cluster

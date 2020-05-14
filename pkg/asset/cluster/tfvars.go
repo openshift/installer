@@ -409,6 +409,25 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		con, err := ovirtconfig.NewConnection()
+		if err != nil {
+			return err
+		}
+		defer con.Close()
+
+		if installConfig.Config.Platform.Ovirt.VNICProfileID == "" {
+			profiles, err := ovirtconfig.FetchVNICProfileByClusterNetwork(
+				con,
+				installConfig.Config.Platform.Ovirt.ClusterID,
+				installConfig.Config.Platform.Ovirt.NetworkName)
+			if err != nil {
+				return errors.Wrapf(err, "failed to compute values for oVirt platform")
+			}
+			if len(profiles) != 1 {
+				return errors.Wrapf(err, "failed to compute values for oVirt platform, there are multiple vNic profiles.")
+			}
+			installConfig.Config.Platform.Ovirt.VNICProfileID = profiles[0].MustId()
+		}
 
 		data, err := ovirttfvars.TFVars(
 			config.URL,
@@ -418,6 +437,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.Ovirt.ClusterID,
 			installConfig.Config.Platform.Ovirt.StorageDomainID,
 			installConfig.Config.Platform.Ovirt.NetworkName,
+			installConfig.Config.Platform.Ovirt.VNICProfileID,
 			string(*rhcosImage),
 			clusterID.InfraID,
 		)

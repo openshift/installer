@@ -14,6 +14,7 @@ import (
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	icopenstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
+	icovirt "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/conversion"
 	"github.com/openshift/installer/pkg/types/defaults"
@@ -172,6 +173,9 @@ func (a *InstallConfig) platformValidation() error {
 	}
 	if a.Config.Platform.AWS != nil {
 		return aws.Validate(context.TODO(), a.AWS, a.Config)
+	}
+	if a.Config.Platform.Ovirt != nil {
+		return icovirt.Validate(a.Config)
 	}
 	return field.ErrorList{}.ToAggregate()
 }

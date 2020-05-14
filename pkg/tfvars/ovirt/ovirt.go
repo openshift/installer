@@ -16,6 +16,7 @@ type config struct {
 	ClusterID              string `json:"ovirt_cluster_id"`
 	StorageDomainID        string `json:"ovirt_storage_domain_id"`
 	NetworkName            string `json:"ovirt_network_name,omitempty"`
+	VNICProfileID          string `json:"ovirt_vnic_profile_id,omitempty"`
 	BaseImageName          string `json:"openstack_base_image_name,omitempty"`
 	BaseImageLocalFilePath string `json:"openstack_base_image_local_file_path,omitempty"`
 }
@@ -29,6 +30,7 @@ func TFVars(
 	clusterID string,
 	stoarageDomainID string,
 	networkName string,
+	vnicProfileID string,
 	baseImage string,
 	infraID string) ([]byte, error) {
 
@@ -40,6 +42,7 @@ func TFVars(
 		ClusterID:       clusterID,
 		StorageDomainID: stoarageDomainID,
 		NetworkName:     networkName,
+		VNICProfileID:   vnicProfileID,
 		BaseImageName:   baseImage,
 	}
 

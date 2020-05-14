@@ -9,7 +9,9 @@ import (
 )
 
 func defaultPlatform() *ovirt.Platform {
-	return &ovirt.Platform{}
+	return &ovirt.Platform{
+		NetworkName: DefaultNetworkName,
+	}
 }
 
 func TestSetPlatformDefaults(t *testing.T) {

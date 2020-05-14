@@ -52,6 +52,11 @@ func Platform() (*ovirt.Platform, error) {
 		return &p, err
 	}
 
+	err = askVNICProfileID(c, &p)
+	if err != nil {
+		return &p, err
+	}
+
 	err = survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{

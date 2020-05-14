@@ -16,6 +16,7 @@ module "template" {
   ovirt_template_mem                   = var.ovirt_template_mem
   disk_size_gib                        = var.ovirt_template_disk_size_gib
   ovirt_network_name                   = var.ovirt_network_name
+  ovirt_vnic_profile_id                = var.ovirt_vnic_profile_id
 }
 
 module "bootstrap" {

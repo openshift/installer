@@ -50,3 +50,46 @@ func askNetwork(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
 		})
 	return err
 }
+
+func askVNICProfileID(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
+	var profileID string
+	var profilesByNames = make(map[string]*ovirtsdk4.VnicProfile)
+	var profileNames []string
+	profiles, err := FetchVNICProfileByClusterNetwork(c, p.ClusterID, p.NetworkName)
+	if err != nil {
+		return err
+	}
+
+	for _, profile := range profiles {
+		profilesByNames[profile.MustName()] = profile
+		profileNames = append(profileNames, profile.MustName())
+	}
+
+	if len(profilesByNames) == 1 {
+		p.VNICProfileID = profilesByNames[profileNames[0]].MustId()
+		return nil
+	}
+
+	// we have multiple vnic profile for the selected network
+	err = survey.AskOne(&survey.Select{
+		Message: "VNIC Profile",
+		Help:    "The oVirt VNIC profile of the VMs.",
+		Options: profileNames,
+	},
+		&profileID,
+		func(ans interface{}) error {
+			choice := ans.(string)
+			sort.Strings(profileNames)
+			i := sort.SearchStrings(profileNames, choice)
+			if i == len(profileNames) || profileNames[i] != choice {
+				return fmt.Errorf("invalid VNIC profile %s", choice)
+			}
+			profile, ok := profilesByNames[choice]
+			if !ok {
+				return fmt.Errorf("cannot find a VNIC profile id by the name %s", choice)
+			}
+			p.VNICProfileID = profile.MustId()
+			return nil
+		})
+	return err
+}
