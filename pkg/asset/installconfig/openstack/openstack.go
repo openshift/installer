@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -125,30 +126,29 @@ func Platform() (*openstack.Platform, error) {
 		return nil, err
 	}
 
+	trunkSupport := "0"
+	var i int
 	netExts, err := validValuesFetcher.GetNetworkExtensionsAliases(cloud)
 	if err != nil {
-		return nil, err
-	}
-	sort.Strings(netExts)
-	i := sort.SearchStrings(netExts, "trunk")
-	var trunkSupport string
-	if i == len(netExts) || netExts[i] != "trunk" {
-		trunkSupport = "0"
+		logrus.Warning("Could not retrieve networking extension aliases. Assuming trunk ports are not supported.")
 	} else {
-		trunkSupport = "1"
+		sort.Strings(netExts)
+		i = sort.SearchStrings(netExts, "trunk")
+		if i != len(netExts) && netExts[i] == "trunk" {
+			trunkSupport = "1"
+		}
 	}
 
+	octaviaSupport := "0"
 	serviceCatalog, err := validValuesFetcher.GetServiceCatalog(cloud)
 	if err != nil {
-		return nil, err
-	}
-	sort.Strings(serviceCatalog)
-	i = sort.SearchStrings(serviceCatalog, "octavia")
-	var octaviaSupport string
-	if i == len(serviceCatalog) || serviceCatalog[i] != "octavia" {
-		octaviaSupport = "0"
+		logrus.Warning("Could not retrieve service catalog. Assuming there is no Octavia load balancer service available.")
 	} else {
-		octaviaSupport = "1"
+		sort.Strings(serviceCatalog)
+		i = sort.SearchStrings(serviceCatalog, "octavia")
+		if i != len(serviceCatalog) && serviceCatalog[i] == "octavia" {
+			octaviaSupport = "1"
+		}
 	}
 
 	return &openstack.Platform{
