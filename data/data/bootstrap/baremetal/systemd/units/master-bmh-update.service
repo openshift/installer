@@ -1,0 +1,11 @@
+[Unit]
+Description=Update master BareMetalHosts with introspection data
+Wants=bootkube.service
+After=release-image.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/master-bmh-update.sh
+
+[Install]
+WantedBy=multi-user.target
