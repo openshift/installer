@@ -497,11 +497,13 @@ func aciPostInstallSteps(kubeconfigpath string) {
 
 	logForSnatPolicy(kubeconfigpath)
 
-	var certString = "KUBECONFIG=" + kubeconfigpath + " oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs oc adm certificate approve"
+	var versionString = "oc --kubeconfig=" + kubeconfigpath + " version"
 
-	var restartString = "KUBECONFIG=" + kubeconfigpath + " oc get pods -n aci-containers-system | grep 'aci-containers-controller' | awk '{print $1}' | KUBECONFIG=" + kubeconfigpath + " xargs oc delete pod -n aci-containers-system"
+	var certString = "oc --kubeconfig=" + kubeconfigpath + " get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs oc --kubeconfig=" + kubeconfigpath + " adm certificate approve"
 
-	var exposeString = `KUBECONFIG=` + kubeconfigpath + ` oc replace --force --wait --filename - <<EOF
+	var restartString = "oc --kubeconfig=" + kubeconfigpath + " get pods -n aci-containers-system | grep 'aci-containers-controller' | awk '{print $1}' | xargs oc --kubeconfig=" + kubeconfigpath + " delete pod -n aci-containers-system"
+
+	var exposeString = `oc --kubeconfig=` + kubeconfigpath + ` replace --force --wait --filename - <<EOF
 apiVersion: operator.openshift.io/v1
 kind: IngressController
 metadata:
@@ -516,7 +518,7 @@ EOF
 `
 
         logrus.Info("Post installer processing: Approving pending CSRs, restarting aci-containers-controller pod and updating default IngressController...")
-	_, err := exec.Command("sh", "-c", "KUBECONFIG=" + kubeconfigpath + " oc version").Output()
+	_, err := exec.Command("sh", "-c", versionString).Output()
 	if err != nil {
 		logrus.Warn("oc binary not found in PATH. Please install oc binary and run the following post-processing commands:")
 		logrus.Warn(certString)
@@ -527,28 +529,30 @@ EOF
         _, err = exec.Command("sh", "-c", certString).Output()
         if err != nil {
                 logrus.Warnf("Unable to approve CSRs: " + err.Error())
-        }
-        logrus.Info("Approved pending CSRs")
+        } else {
+        	logrus.Info("Approved pending CSRs")
+	}
 
         _, err = exec.Command("sh", "-c", restartString).Output()
         if err != nil {
                 logrus.Warnf("Unable to restart ACI CNI controller: " + err.Error())
-        }
-        logrus.Info("Restarted aci-containers-controller")
+        } else {
+        	logrus.Info("Restarted aci-containers-controller")
+	}
 
         _, err = exec.Command("sh", "-c", exposeString).Output()
         if err != nil {
                 logrus.Warnf("Unable to expose the openshift-ingress service: " + err.Error())
+	} else {
+        	logrus.Info("Updated default IngressController publish strategy to use LoadBalancerService type")
 	}
- 
-        logrus.Info("Updated default IngressController publish strategy to use LoadBalancerService type")
 }
 
 func logForSnatPolicy(kubeconfigpath string) {
-	ocCmdOutput, _ := exec.Command("sh", "-c", "KUBECONFIG=" + kubeconfigpath + " oc get snatpolicy installerclusterdefault").Output()
+	ocCmdOutput, _ := exec.Command("sh", "-c", "oc --kubeconfig=" + kubeconfigpath + " get snatpolicy installerclusterdefault").Output()
 	ocCmdOutputString := string(ocCmdOutput)
 	if !strings.Contains(ocCmdOutputString, "not found") {
 		logrus.Info("A cluster level snatpolicy called installerclusterdefault has been applied.")
-		logrus.Infof("If required, delete it by running 'KUBECONFIG=%s oc delete snatpolicy installerclusterdefault'", kubeconfigpath)
+		logrus.Infof("If required, delete it by running 'oc --kubeconfig=%s delete snatpolicy installerclusterdefault'", kubeconfigpath)
 	}
 }
