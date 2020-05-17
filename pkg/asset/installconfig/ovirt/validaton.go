@@ -59,18 +59,19 @@ func Validate(ic *types.InstallConfig) error {
 
 func validateMachinePool(con *ovirtsdk.Connection, child *field.Path, pool *ovirt.MachinePool) field.ErrorList {
 	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, validateInstanceTypeID(con, child, pool))
+	allErrs = append(allErrs, validateInstanceTypeID(con, child, pool)...)
 	return allErrs
 }
 
-func validateInstanceTypeID(con *ovirtsdk.Connection, child *field.Path, machinePool *ovirt.MachinePool) *field.Error {
+func validateInstanceTypeID(con *ovirtsdk.Connection, child *field.Path, machinePool *ovirt.MachinePool) field.ErrorList {
+	allErrs := field.ErrorList{}
 	if machinePool.InstanceTypeID != "" {
 		_, err := con.SystemService().InstanceTypesService().InstanceTypeService(machinePool.InstanceTypeID).Get().Send()
 		if err != nil {
-			return field.NotFound(child.Child("instanceTypeID"), machinePool.InstanceTypeID)
+			allErrs = append(allErrs, field.NotFound(child.Child("instanceTypeID"), machinePool.InstanceTypeID))
 		}
 	}
-	return nil
+	return allErrs
 }
 
 // authenticated takes an ovirt platform and validates
