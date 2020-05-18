@@ -63,6 +63,31 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			valid: false,
 		},
+		{
+			name: "unsupported GCP disk type",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				DefaultMachinePlatform: &gcp.MachinePool{
+					OSDisk: gcp.OSDisk{
+						DiskType: "pd-standard",
+					},
+				},
+			},
+			valid: false,
+		},
+
+		{
+			name: "supported GCP disk type",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				DefaultMachinePlatform: &gcp.MachinePool{
+					OSDisk: gcp.OSDisk{
+						DiskType: "pd-ssd",
+					},
+				},
+			},
+			valid: true,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

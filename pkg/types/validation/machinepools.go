@@ -12,6 +12,8 @@ import (
 	azurevalidation "github.com/openshift/installer/pkg/types/azure/validation"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	baremetalvalidation "github.com/openshift/installer/pkg/types/baremetal/validation"
+	"github.com/openshift/installer/pkg/types/gcp"
+	gcpvalidation "github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	libvirtvalidation "github.com/openshift/installer/pkg/types/libvirt/validation"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -67,11 +69,11 @@ func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath
 	if !validArchitectures[p.Architecture] {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("architecture"), p.Architecture, validArchitectureValues))
 	}
-	allErrs = append(allErrs, validateMachinePoolPlatform(platform, &p.Platform, fldPath.Child("platform"))...)
+	allErrs = append(allErrs, validateMachinePoolPlatform(platform, &p.Platform, p, fldPath.Child("platform"))...)
 	return allErrs
 }
 
-func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolPlatform, fldPath *field.Path) field.ErrorList {
+func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolPlatform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	platformName := platform.Name()
 	validate := func(n string, value interface{}, validation func(*field.Path) field.ErrorList) {
@@ -88,6 +90,9 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 	if p.Azure != nil {
 		validate(azure.Name, p.Azure, func(f *field.Path) field.ErrorList { return azurevalidation.ValidateMachinePool(p.Azure, f) })
 	}
+	if p.GCP != nil {
+		validate(gcp.Name, p.GCP, func(f *field.Path) field.ErrorList { return validateGCPMachinePool(platform, p, pool, f) })
+	}
 	if p.Libvirt != nil {
 		validate(libvirt.Name, p.Libvirt, func(f *field.Path) field.ErrorList { return libvirtvalidation.ValidateMachinePool(p.Libvirt, f) })
 	}
@@ -103,5 +108,14 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 	if p.Ovirt != nil {
 		validate(ovirt.Name, p.Ovirt, func(f *field.Path) field.ErrorList { return ovirtvalidation.ValidateMachinePool(p.Ovirt, f) })
 	}
+	return allErrs
+}
+
+func validateGCPMachinePool(platform *types.Platform, p *types.MachinePoolPlatform, pool *types.MachinePool, f *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	allErrs = append(allErrs, gcpvalidation.ValidateMachinePool(platform.GCP, p.GCP, f)...)
+	allErrs = append(allErrs, gcpvalidation.ValidateMasterDiskType(pool, f)...)
+
 	return allErrs
 }
