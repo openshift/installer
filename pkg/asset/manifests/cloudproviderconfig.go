@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -147,14 +146,13 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		}
 		cm.Data[cloudProviderConfigDataKey] = gcpConfig
 	case vspheretypes.Name:
-		var folderRelPath string
-		if len(installConfig.Config.Platform.VSphere.Folder) != 0 {
-			folderRelPath = strings.SplitAfterN(installConfig.Config.Platform.VSphere.Folder, "vm/", 2)[1]
+		folderPath := installConfig.Config.Platform.VSphere.Folder
+		if len(folderPath) == 0 {
+			dataCenter := installConfig.Config.Platform.VSphere.Datacenter
+			folderPath = fmt.Sprintf("/%s/vm/%s", dataCenter, clusterID.InfraID)
 		}
-
 		vsphereConfig, err := vspheremanifests.CloudProviderConfig(
-			clusterID.InfraID,
-			folderRelPath,
+			folderPath,
 			installConfig.Config.Platform.VSphere,
 		)
 		if err != nil {
