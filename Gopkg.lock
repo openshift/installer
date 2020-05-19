@@ -29,8 +29,8 @@
     "services/preview/dns/mgmt/2018-03-01-preview/dns",
     "services/privatedns/mgmt/2018-09-01/privatedns",
     "services/resources/mgmt/2018-05-01/resources",
-    "services/resources/mgmt/2019-03-01/resources",
     "services/resources/mgmt/2018-06-01/subscriptions",
+    "services/resources/mgmt/2019-03-01/resources",
     "version",
   ]
   pruneopts = "NUT"
@@ -717,14 +717,14 @@
   revision = "ecea5317a4ab6e24ef65ad4573d0a358e3585931"
 
 [[projects]]
-  digest = "1:34cebaa53b25a1ca69b5f1a2e062019ed450e4b876c9df8d2a915a4525d39766"
+  digest = "1:dd679bbc885d6f58bfc92eabbdb62c9755295b116ed7ced1a622ecc3255a8643"
   name = "github.com/openshift/cluster-api-provider-ovirt"
   packages = [
     "pkg/apis",
     "pkg/apis/ovirtprovider/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "0966db28bce37ca97ada41c69f48ffa7c4d02493"
+  revision = "281b4db96607c474f73161c49aab80528f517c26"
 
 [[projects]]
   branch = "master"
@@ -755,20 +755,11 @@
   revision = "e8050812d5068866f61f052cc7c96e45d626776e"
 
 [[projects]]
-  branch = "master"
-  digest = "1:1581ac6de200d826b923454e6514648f2d97276577fc0096997d4bda2a8f15b4"
-  name = "github.com/ovirt/cluster-api-provider-ovirt"
-  packages = ["pkg/apis/ovirtprovider/v1beta1"]
-  pruneopts = "NUT"
-  revision = "0966db28bce37ca97ada41c69f48ffa7c4d02493"
-
-[[projects]]
-  digest = "1:796faaf419fdbc002e2c4db8ca582c4203bd638e65124f10458fd4d7b231f019"
+  digest = "1:704335a74afe56a1e6b8664c54e0704b0f23df290c91f4e65aaa0136e290ff7e"
   name = "github.com/ovirt/go-ovirt"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "4b8d743feec5a6bca4503f4f96bb9db55e4999bd"
-  version = "v4.3.9"
+  revision = "9bcc4fd4e6c0921d07d328036c73abbea369e023"
 
 [[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"

@@ -815,19 +815,18 @@
   version = "v0.1.8"
 
 [[projects]]
-  digest = "1:556507a0c824a5adb52cca65625c44fbd3eb909011c47f7125703785740c0281"
+  digest = "1:704335a74afe56a1e6b8664c54e0704b0f23df290c91f4e65aaa0136e290ff7e"
   name = "github.com/ovirt/go-ovirt"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "826bd4309444d965a4bdf5348881bfc2267ed200"
-  version = "v4.3.8"
+  revision = "9bcc4fd4e6c0921d07d328036c73abbea369e023"
 
 [[projects]]
-  digest = "1:8d9a8cb8a9a95fa144a58384faf43b9e4b40f85678629b4dc8079cc4c3b43d0c"
+  digest = "1:07ef342fe2bae3befe37453d1fedc1f38c2786089a9946889ef71149ecb95bbe"
   name = "github.com/ovirt/terraform-provider-ovirt"
   packages = ["ovirt"]
   pruneopts = "NUT"
-  revision = "aaa6ce5ab3595c654bacc6525bc7b27329297c4e"
+  revision = "f290f06b7bdf4ae2e25f70c99dd14f55975d2c73"
 
 [[projects]]
   branch = "master"
