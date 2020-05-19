@@ -180,9 +180,45 @@ test-vsphere
 
 NOTE: The filename for `install-config` in the `INSTALL_DIR` must be `install-config.yaml`
 
+### Invoking the installer to get manifests
+Given that you have setup the `INSTALL_DIR` with the appropriate `install-config.yaml`, you can create manifests by using the `create manifests` target. For example,
+
+```console
+$ openshift-install --dir vsphere-test create manifests
+INFO Consuming Install Config from target directory
+```
+This produces two directories which contain many manifests that will be used for installation.
+```
+$  tree vsphere-test -d
+vsphere-test
+├── manifests
+└── openshift
+
+2 directories
+```
+
+#### Remove Machines and MachineSets
+
+Some of the manifests produced are for creating machinesets and machine objects:
+
+```
+$ find vsphere-test -name '*machineset*' -o -name '*master-machine*'
+vsphere-test/openshift/99_openshift-cluster-api_master-machines-1.yaml
+vsphere-test/openshift/99_openshift-cluster-api_master-machines-2.yaml
+vsphere-test/openshift/99_openshift-cluster-api_master-machines-0.yaml
+vsphere-test/openshift/99_openshift-cluster-api_worker-machineset-0.yaml
+```
+
+We should remove these, because we don't want to involve [the machine-API operator][machine-api-operator] during install. 
+
+From within the `INSTALL_DIR`:
+```console
+$ rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml openshift/99_openshift-cluster-api_worker-machineset-*.yaml
+```
+
 ### Invoking the installer to get Ignition configs
 
-Given that you have setup the `INSTALL_DIR` with the appropriate `install-config`, you can create the Ignition configs by using the `create ignition-configs` target. For example,
+Given that you have setup the `INSTALL_DIR` with the appropriate manifests, you can create the Ignition configs by using the `create ignition-configs` target. For example,
 
 ```console
 $ openshift-install --dir test-vsphere create ignition-configs
