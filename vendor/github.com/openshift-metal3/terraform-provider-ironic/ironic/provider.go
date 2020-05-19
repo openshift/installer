@@ -1,6 +1,7 @@
 package ironic
 
 import (
+	"context"
 	"fmt"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/baremetal/noauth"
@@ -11,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -45,6 +47,9 @@ type Clients struct {
 
 // GetIronicClient returns the API client for Ironic, optionally retrying to reach the API if timeout is set.
 func (c *Clients) GetIronicClient() (*gophercloud.ServiceClient, error) {
+	// Terraform concurrently creates some resources which means multiple callers can request an Ironic client. We
+	// only need to check if the API is available once, so we use a mux to restrict one caller to polling the API.
+	// When the mux is released, the other callers will fall through to the check for ironicUp.
 	c.ironicMux.Lock()
 	defer c.ironicMux.Unlock()
 
@@ -53,24 +58,44 @@ func (c *Clients) GetIronicClient() (*gophercloud.ServiceClient, error) {
 		return c.ironic, nil
 	}
 
+	// We previously tried and it failed.
 	if c.ironicFailed {
 		return nil, fmt.Errorf("could not contact API: timeout reached")
 	}
 
-	// Wait the specified interval for Ironic to come up
-	err := waitForAPI(c.timeout, c.ironic)
-	if err != nil {
-		c.ironicFailed = true
-		return nil, err
+	// Let's poll the API until it's up, or times out.
+	duration := time.Duration(c.timeout) * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), duration)
+	defer cancel()
 
+	done := make(chan struct{})
+	go func() {
+		log.Printf("[INFO] Waiting for Ironic API...")
+		waitForAPI(ctx, c.ironic)
+		log.Printf("[INFO] API successfully connected, waiting for conductor...")
+		waitForConductor(ctx, c.ironic)
+		close(done)
+	}()
+
+	// Wait for done or time out
+	select {
+	case <-ctx.Done():
+		if err := ctx.Err(); err != nil {
+			c.ironicFailed = true
+			return nil, fmt.Errorf("could not contact API: %w", err)
+		}
+	case <-done:
 	}
 
 	c.ironicUp = true
-	return c.ironic, nil
+	return c.ironic, ctx.Err()
 }
 
 // GetInspectorClient returns the API client for Ironic, optionally retrying to reach the API if timeout is set.
 func (c *Clients) GetInspectorClient() (*gophercloud.ServiceClient, error) {
+	// Terraform concurrently creates some resources which means multiple callers can request an Inspector client. We
+	// only need to check if the API is available once, so we use a mux to restrict one caller to polling the API.
+	// When the mux is released, the other callers will fall through to the check for inspectorUp.
 	c.inspectorMux.Lock()
 	defer c.inspectorMux.Unlock()
 
@@ -82,14 +107,35 @@ func (c *Clients) GetInspectorClient() (*gophercloud.ServiceClient, error) {
 		return nil, fmt.Errorf("could not contact API: timeout reached")
 	}
 
-	err := waitForAPI(c.timeout, c.inspector)
-	if err != nil {
+	// Let's poll the API until it's up, or times out.
+	duration := time.Duration(c.timeout) * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), duration)
+	defer cancel()
+
+	done := make(chan struct{})
+	go func() {
+		log.Printf("[INFO] Waiting for Inspector API...")
+		waitForAPI(ctx, c.inspector)
+		close(done)
+	}()
+
+	// Wait for done or time out
+	select {
+	case <-ctx.Done():
+		if err := ctx.Err(); err != nil {
+			c.ironicFailed = true
+			return nil, err
+		}
+	case <-done:
+	}
+
+	if err := ctx.Err(); err != nil {
 		c.inspectorFailed = true
 		return nil, err
 	}
 
 	c.inspectorUp = true
-	return c.inspector, nil
+	return c.inspector, ctx.Err()
 }
 
 // Provider Ironic
@@ -181,54 +227,64 @@ func configureProvider(schema *schema.ResourceData) (interface{}, error) {
 	return &clients, err
 }
 
-// Retries an API until a timeout is reached. The timeout is approximate, we calculate approximately
-// the number of attempts that would equal that timeout. It's not exact, but it will be *at least* the
-// value specified.
-func waitForAPI(timeout int, client *gophercloud.ServiceClient) error {
-	var maxTries int
-	if timeout < 5 {
-		maxTries = 1
-	} else {
-		maxTries = timeout / 5
-	}
-	log.Printf("[DEBUG] Waiting for Ironic API to become available - max attempts is %d", maxTries)
-
+// Retries an API forever until it responds.
+func waitForAPI(ctx context.Context, client *gophercloud.ServiceClient) {
 	httpClient := &http.Client{
 		Timeout: 5 * time.Second,
 	}
 
-	for tries := 1; tries <= maxTries; tries++ {
-		// FIXME(stbenjam): After we sleep at the end of the loop, *something* is changing log output to be discarded, and
-		// when we get woken up again, our logs aren't printed anymore until the end of the loop. Very odd error, possibly
-		// something in terraform is doing this.
-		log.Printf("[DEBUG] Trying to connect to API, attempt %d of %d\n", tries, maxTries)
+	// NOTE: Some versions of Ironic inspector returns 404 for /v1/ but 200 for /v1,
+	// which seems to be the default behavior for Flask. Remove the trailing slash
+	// from the client endpoint.
+	endpoint := strings.TrimSuffix(client.Endpoint, "/")
 
-		r, err := httpClient.Get(client.Endpoint)
-		if err == nil {
-			statusCode := r.StatusCode
-			r.Body.Close()
-			if statusCode == http.StatusOK {
-				log.Printf("[DEBUG] API successfully connected, waiting for conductor...")
-				driverCount := 0
-				drivers.ListDrivers(client, drivers.ListDriversOpts{
-					Detail: false,
-				}).EachPage(func(page pagination.Page) (bool, error) {
-					actual, err := drivers.ExtractDrivers(page)
-					if err != nil {
-						return false, err
-					}
-					driverCount += len(actual)
-					return true, nil
-				})
-				// If we have any drivers, conductor is up.
-				if driverCount > 0 {
-					return nil
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			log.Printf("[DEBUG] Waiting for API to become available...")
+
+			r, err := httpClient.Get(endpoint)
+			if err == nil {
+				statusCode := r.StatusCode
+				r.Body.Close()
+				if statusCode == http.StatusOK {
+					return
 				}
 			}
+
+			time.Sleep(5 * time.Second)
 		}
-
-		time.Sleep(5 * time.Second)
 	}
+}
 
-	return fmt.Errorf("could not contact API: timeout reached")
+// Ironic conductor can be considered up when the driver count returns non-zero.
+func waitForConductor(ctx context.Context, client *gophercloud.ServiceClient) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			log.Printf("[DEBUG] Waiting for conductor API to become available...")
+			driverCount := 0
+
+			drivers.ListDrivers(client, drivers.ListDriversOpts{
+				Detail: false,
+			}).EachPage(func(page pagination.Page) (bool, error) {
+				actual, err := drivers.ExtractDrivers(page)
+				if err != nil {
+					return false, err
+				}
+				driverCount += len(actual)
+				return true, nil
+			})
+			// If we have any drivers, conductor is up.
+			if driverCount > 0 {
+				return
+			}
+
+			time.Sleep(5 * time.Second)
+		}
+	}
 }
