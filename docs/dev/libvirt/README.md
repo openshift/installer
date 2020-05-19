@@ -30,7 +30,7 @@ repository to ensure you get a new enough version of qemu-kvm.
 On Fedora, CentOS/RHEL:
 
 ```sh
-sudo yum install libvirt libvirt-devel libvirt-daemon-kvm qemu-kvm
+sudo yum install libvirt-devel libvirt-daemon-kvm libvirt-client
 ```
 
 Then start libvirtd:
