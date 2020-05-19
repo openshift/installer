@@ -100,8 +100,6 @@ auth_tcp="none"
 tcp_port = "16509"
 ```
 
-Note that authentication is not currently supported, but should be soon.
-
 On Fedora 31, you also need to enable and start the libvirtd TCP
 socket, which is managed by systemd:
 
@@ -111,6 +109,16 @@ sudo systemctl start libvirtd-tcp.socket
 ```
 
 after which you need to restart libvirtd.
+
+**NOTE:** that the above configuration disables all encryption and
+authentication options in libvirtd and causes it to listen on all
+network interfaces and IP addresses. **A connection to this privileged
+libvirtd gives the client privileges equivalent to those of a root
+shell.** This configuration has a security impact on a par with
+running a telnet server with no root password set. It is critical
+to follow the steps below to **configure the firewall to prevent
+access to libvirt from other hosts on the LAN/WAN**.
+
 
 #### Configure qemu.conf
 
