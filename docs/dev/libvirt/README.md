@@ -129,8 +129,14 @@ errors. Double check that `security_driver = "none"` line is present in
 `/etc/libvirt/qemu.conf` and not commented out.
 
 #### Configure the service runner to pass `--listen` to libvirtd
-In addition to the config, you'll have to pass an additional command-line
-argument to libvirtd. On Fedora, modify `/etc/sysconfig/libvirtd` and set:
+
+**NOTE:** if the installation of libvirt included support for socket
+activation via the `libvirt-tcp.socket` systemd unit, the `--listen`
+argument should not be added and thus this step can be skipped.
+
+If socket activation is not available, you'll have to pass an additional
+command-line argument to libvirtd. On Red Hat based distros, modify
+`/etc/sysconfig/libvirtd` and set:
 
 ```
 LIBVIRTD_ARGS="--listen"
