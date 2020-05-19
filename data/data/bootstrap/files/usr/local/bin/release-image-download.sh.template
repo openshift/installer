@@ -12,7 +12,7 @@ set -euo pipefail
 RELEASE_IMAGE={{.ReleaseImage}}
 
 echo "Pulling $RELEASE_IMAGE..."
-while ! podman pull --quiet "$RELEASE_IMAGE"
+while ! podman pull "$RELEASE_IMAGE"
 do
     echo "Pull failed. Retrying $RELEASE_IMAGE..."
 done
