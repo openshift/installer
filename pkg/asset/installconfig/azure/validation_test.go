@@ -5,9 +5,11 @@ import (
 	"net"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-07-01/compute"
 	aznetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
 	azres "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
 	azsubs "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-06-01/subscriptions"
+	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/golang/mock/gomock"
 	"github.com/openshift/installer/pkg/asset/installconfig/azure/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -31,6 +33,8 @@ var (
 	validControlPlaneSubnetCIDR    = "10.0.32.0/24"
 	validResourceGroupNamespace    = "Microsoft.Resources"
 	validResourceGroupResourceType = "resourceGroups"
+	validResourceSkuRegions        = "southeastasia"
+	validDiskSkuType               = "UltraSSD_LRS"
 
 	invalidateMachineCIDR = func(ic *types.InstallConfig) {
 		_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
@@ -38,6 +42,8 @@ var (
 			{CIDR: ipnet.IPNet{IPNet: *newCidr}},
 		}
 	}
+	invalidResourceSkuRegion = "centralus"
+	invalidDiskType          = "LRS"
 
 	invalidateNetworkResourceGroup = func(ic *types.InstallConfig) {
 		ic.Azure.NetworkResourceGroupName = "invalid-network-resource-group"
@@ -50,6 +56,9 @@ var (
 	invalidateRegionLetterCase   = func(ic *types.InstallConfig) { ic.Azure.Region = "Central US" }
 	removeVirtualNetwork         = func(ic *types.InstallConfig) { ic.Azure.VirtualNetwork = "" }
 	removeSubnets                = func(ic *types.InstallConfig) { ic.Azure.ComputeSubnet, ic.Azure.ControlPlaneSubnet = "", "" }
+	invalidateDiskType           = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.OSDisk.DiskType = invalidDiskType }
+	invalidateRegionForDiskType  = func(ic *types.InstallConfig) { ic.Azure.Region = invalidResourceSkuRegion }
+	validResourceSkuDisk         = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.OSDisk.DiskType = validDiskSkuType }
 
 	virtualNetworkAPIResult = &aznetwork.VirtualNetwork{
 		Name: &validVirtualNetwork,
@@ -85,6 +94,9 @@ var (
 			},
 		},
 	}
+	validateResourceSkuResult = &compute.ResourceSku{
+		Name: to.StringPtr("UltraSSD_LRS"),
+	}
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -101,6 +113,7 @@ func validInstallConfig() *types.InstallConfig {
 				VirtualNetwork:           validVirtualNetwork,
 				ComputeSubnet:            validComputeSubnet,
 				ControlPlaneSubnet:       validControlPlaneSubnet,
+				DefaultMachinePlatform:   &azure.MachinePool{},
 			},
 		},
 	}
@@ -192,6 +205,9 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 	// ResourceProvider
 	azureClient.EXPECT().GetResourcesProvider(gomock.Any(), validResourceGroupNamespace).Return(resourcesProviderAPIResult, nil).AnyTimes()
 
+	//Resource SKUs
+	azureClient.EXPECT().GetDiskSkus(gomock.Any(), validResourceSkuRegions).Return(nil, fmt.Errorf("invalid disk type")).AnyTimes()
+	azureClient.EXPECT().GetDiskSkus(gomock.Any(), invalidResourceSkuRegion).Return(nil, fmt.Errorf("invalid region")).AnyTimes()
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			editedInstallConfig := validInstallConfig()

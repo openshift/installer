@@ -126,6 +126,16 @@ spec:
                               format: int32
                               minimum: 0
                               type: integer
+                            diskType:
+                              description: DiskType defines the type of disk. The
+                                valid values are Standard_LRS, Premium_LRS, StandardSSD_LRS
+                                For control plane nodes, the valid values are Premium_LRS
+                                and StandardSSD_LRS. Default is Premium_LRS
+                              enum:
+                              - Standard_LRS
+                              - Premium_LRS
+                              - StandardSSD_LRS
+                              type: string
                           required:
                           - diskSizeGB
                           type: object
@@ -403,6 +413,16 @@ spec:
                             format: int32
                             minimum: 0
                             type: integer
+                          diskType:
+                            description: DiskType defines the type of disk. The valid
+                              values are Standard_LRS, Premium_LRS, StandardSSD_LRS
+                              For control plane nodes, the valid values are Premium_LRS
+                              and StandardSSD_LRS. Default is Premium_LRS
+                            enum:
+                            - Standard_LRS
+                            - Premium_LRS
+                            - StandardSSD_LRS
+                            type: string
                         required:
                         - diskSizeGB
                         type: object
@@ -848,6 +868,16 @@ spec:
                             format: int32
                             minimum: 0
                             type: integer
+                          diskType:
+                            description: DiskType defines the type of disk. The valid
+                              values are Standard_LRS, Premium_LRS, StandardSSD_LRS
+                              For control plane nodes, the valid values are Premium_LRS
+                              and StandardSSD_LRS. Default is Premium_LRS
+                            enum:
+                            - Standard_LRS
+                            - Premium_LRS
+                            - StandardSSD_LRS
+                            type: string
                         required:
                         - diskSizeGB
                         type: object

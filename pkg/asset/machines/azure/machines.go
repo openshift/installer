@@ -90,6 +90,10 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		return nil, err
 	}
 
+	if mpool.OSDisk.DiskType == "" {
+		mpool.OSDisk.DiskType = "Premium_LRS"
+	}
+
 	return &azureprovider.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "azureproviderconfig.openshift.io/v1beta1",
@@ -106,7 +110,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 			OSType:     "Linux",
 			DiskSizeGB: mpool.OSDisk.DiskSizeGB,
 			ManagedDisk: azureprovider.ManagedDisk{
-				StorageAccountType: "Premium_LRS",
+				StorageAccountType: mpool.OSDisk.DiskType,
 			},
 		},
 		Zone:                 az,

@@ -2,13 +2,16 @@ package azure
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 
+	azsku "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute"
 	aznetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
 	azres "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
 	azsubs "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-06-01/subscriptions"
+	"github.com/Azure/go-autorest/autorest/to"
 )
 
 //go:generate mockgen -source=./client.go -destination=mock/azureclient_generated.go -package=mock
@@ -20,6 +23,7 @@ type API interface {
 	GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*aznetwork.Subnet, error)
 	ListLocations(ctx context.Context) (*[]azsubs.Location, error)
 	GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*azres.Provider, error)
+	GetDiskSkus(ctx context.Context, region string) ([]azsku.ResourceSku, error)
 }
 
 // Client makes calls to the Azure API.
@@ -151,4 +155,33 @@ func (c *Client) getProvidersClient(ctx context.Context) (azres.ProvidersClient,
 	client := azres.NewProvidersClient(c.ssn.Credentials.SubscriptionID)
 	client.Authorizer = c.ssn.Authorizer
 	return client, nil
+}
+
+// GetDiskSkus returns all the disk SKU pages for a given region.
+func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azsku.ResourceSku, error) {
+	client := azsku.NewResourceSkusClient(c.ssn.Credentials.SubscriptionID)
+	client.Authorizer = c.ssn.Authorizer
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	var sku []azsku.ResourceSku
+
+	for skuPage, err := client.List(ctx); skuPage.NotDone(); err = skuPage.NextWithContext(ctx) {
+		if err != nil {
+			return nil, errors.Wrap(err, "error fetching SKU pages")
+		}
+		for _, page := range skuPage.Values() {
+			for _, diskRegion := range to.StringSlice(page.Locations) {
+				if strings.EqualFold(diskRegion, region) {
+					sku = append(sku, page)
+				}
+			}
+		}
+	}
+
+	if len(sku) != 0 {
+		return sku, nil
+	}
+
+	return nil, errors.Errorf("no disks for specified subscription in region %s", region)
 }

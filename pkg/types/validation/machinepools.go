@@ -88,7 +88,7 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 		validate(aws.Name, p.AWS, func(f *field.Path) field.ErrorList { return awsvalidation.ValidateMachinePool(platform.AWS, p.AWS, f) })
 	}
 	if p.Azure != nil {
-		validate(azure.Name, p.Azure, func(f *field.Path) field.ErrorList { return azurevalidation.ValidateMachinePool(p.Azure, f) })
+		validate(azure.Name, p.Azure, func(f *field.Path) field.ErrorList { return validateAzureMachinePool(p, pool, f) })
 	}
 	if p.GCP != nil {
 		validate(gcp.Name, p.GCP, func(f *field.Path) field.ErrorList { return validateGCPMachinePool(platform, p, pool, f) })
@@ -116,6 +116,15 @@ func validateGCPMachinePool(platform *types.Platform, p *types.MachinePoolPlatfo
 
 	allErrs = append(allErrs, gcpvalidation.ValidateMachinePool(platform.GCP, p.GCP, f)...)
 	allErrs = append(allErrs, gcpvalidation.ValidateMasterDiskType(pool, f)...)
+
+	return allErrs
+}
+
+func validateAzureMachinePool(p *types.MachinePoolPlatform, pool *types.MachinePool, f *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	allErrs = append(allErrs, azurevalidation.ValidateMachinePool(p.Azure, f)...)
+	allErrs = append(allErrs, azurevalidation.ValidateMasterDiskType(pool, f)...)
 
 	return allErrs
 }

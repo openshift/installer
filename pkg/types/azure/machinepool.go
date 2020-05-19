@@ -27,6 +27,13 @@ type OSDisk struct {
 	//
 	// +kubebuilder:validation:Minimum=0
 	DiskSizeGB int32 `json:"diskSizeGB"`
+	// DiskType defines the type of disk.
+	// The valid values are Standard_LRS, Premium_LRS, StandardSSD_LRS
+	// For control plane nodes, the valid values are Premium_LRS and StandardSSD_LRS.
+	// Default is Premium_LRS
+	// +optional
+	// +kubebuilder:validation:Enum=Standard_LRS;Premium_LRS;StandardSSD_LRS
+	DiskType string `json:"diskType"`
 }
 
 // Set sets the values from `required` to `a`.
@@ -45,5 +52,9 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.OSDisk.DiskSizeGB != 0 {
 		a.OSDisk.DiskSizeGB = required.OSDisk.DiskSizeGB
+	}
+
+	if required.OSDisk.DiskType != "" {
+		a.OSDisk.DiskType = required.OSDisk.DiskType
 	}
 }

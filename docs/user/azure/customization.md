@@ -18,6 +18,7 @@ The following options are available when using Azure:
 
 * `osDisk` (optional object):
     * `diskSizeGB` (optional integer): The size of the disk in gigabytes (GB).
+    * `diskType` (optional string): The type of disk (allowed values are: `Premium_LRS`, `Standard_LRS`, and `StandardSSD_LRS`).
 * `type` (optional string): The Azure instance type.
 * `zones` (optional string slice): List of Azure availability zones that can be used (for example, `["1", "2", "3"]`).
 
@@ -65,6 +66,7 @@ controlPlane:
       type: Standard_DS4_v2
       osDisk:
         diskSizeGB: 512
+        diskType: Premium_LRS
   replicas: 3
 compute:
 - name: worker
@@ -73,6 +75,7 @@ compute:
       type: Standard_DS4_v2
       osDisk:
         diskSizeGB: 512
+        diskType: Standard_LRS
       zones:
       - "1"
       - "2"
@@ -84,6 +87,9 @@ platform:
   azure:
     region: centralus
     baseDomainResourceGroupName: os4-common
+    osDisk:
+        diskSizeGB: 512
+        diskType: Premium_LRS
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
@@ -104,6 +110,9 @@ platform:
     virtualNetwork: example_vnet
     controlPlaneSubnet: example_master_subnet
     computeSubnet: example_worker_subnet
+    osDisk:
+        diskSizeGB: 512
+        diskType: Premium_LRS
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
