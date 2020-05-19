@@ -20,11 +20,7 @@ MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(image_for kube-client-agent)
 MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 
 KUBE_ETCD_SIGNER_SERVER_IMAGE=$(image_for kube-etcd-signer-server)
-CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator || echo "no-ceo-image")
-CLUSTER_ETCD_OPERATOR_MANAGED=${CLUSTER_ETCD_OPERATOR_IMAGE:+$(bootkube_podman_run \
-	"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
-	/usr/bin/grep -oP Managed \
-	/manifests/0000_12_etcd-operator_01_operator.cr.yaml)} || echo "CEO is Unmanaged"
+CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator)
 
 CONFIG_OPERATOR_IMAGE=$(image_for cluster-config-operator)
 KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)

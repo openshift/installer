@@ -4,7 +4,6 @@ package manifests
 import (
 	"bytes"
 	"encoding/base64"
-	"fmt"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -164,17 +163,9 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		rootCA,
 	)
 
-	etcdEndpointHostnames := make([]string, *installConfig.Config.ControlPlane.Replicas+1)
-	for i := range etcdEndpointHostnames {
-		etcdEndpointHostnames[i] = fmt.Sprintf("etcd-%d", i-1)
-	}
-	etcdEndpointHostnames[0] = "etcd-bootstrap"
-
 	templateData := &bootkubeTemplateData{
 		CVOClusterID:               clusterID.UUID,
 		EtcdCaBundle:               string(etcdCABundle.Cert()),
-		EtcdEndpointDNSSuffix:      installConfig.Config.ClusterDomain(),
-		EtcdEndpointHostnames:      etcdEndpointHostnames,
 		EtcdMetricCaCert:           string(etcdMetricCABundle.Cert()),
 		EtcdMetricSignerCert:       base64.StdEncoding.EncodeToString(etcdMetricSignerCertKey.Cert()),
 		EtcdMetricSignerClientCert: base64.StdEncoding.EncodeToString(etcdMetricSignerClientCertKey.Cert()),
