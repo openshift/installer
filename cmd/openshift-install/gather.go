@@ -26,6 +26,7 @@ import (
 	"github.com/openshift/installer/pkg/terraform"
 	gatheraws "github.com/openshift/installer/pkg/terraform/gather/aws"
 	gatherazure "github.com/openshift/installer/pkg/terraform/gather/azure"
+	gatherbaremetal "github.com/openshift/installer/pkg/terraform/gather/baremetal"
 	gathergcp "github.com/openshift/installer/pkg/terraform/gather/gcp"
 	gatherlibvirt "github.com/openshift/installer/pkg/terraform/gather/libvirt"
 	gatheropenstack "github.com/openshift/installer/pkg/terraform/gather/openstack"
@@ -34,6 +35,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -183,6 +185,12 @@ func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State)
 		masters, err = gatherazure.ControlPlaneIPs(tfstate)
 		if err != nil {
 			logrus.Error(err)
+		}
+	case baremetaltypes.Name:
+		bootstrap = config.Platform.BareMetal.BootstrapProvisioningIP
+		masters, err = gatherbaremetal.ControlPlaneIPs(config, tfstate)
+		if err != nil {
+			return bootstrap, port, masters, err
 		}
 	case gcptypes.Name:
 		bootstrap, err = gathergcp.BootstrapIP(tfstate)

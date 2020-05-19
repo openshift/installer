@@ -4,6 +4,7 @@ provider "libvirt" {
 
 provider "ironic" {
   url          = "http://${var.bootstrap_provisioning_ip}:6385/v1"
+  inspector    = "http://${var.bootstrap_provisioning_ip}:5050/v1"
   microversion = "1.56"
   timeout      = 1500
 }
