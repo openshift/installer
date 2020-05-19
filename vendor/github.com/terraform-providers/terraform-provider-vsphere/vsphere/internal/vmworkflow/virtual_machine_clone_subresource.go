@@ -48,6 +48,18 @@ func VirtualMachineCloneSchema() map[string]*schema.Schema {
 			Description: "The customization spec for this clone. This allows the user to configure the virtual machine post-clone.",
 			Elem:        &schema.Resource{Schema: VirtualMachineCustomizeSchema()},
 		},
+		"ovf_network_map": {
+			Type:        schema.TypeMap,
+			Optional:    true,
+			Description: "Mapping of ovf networks to the networks to use in vSphere.",
+			Elem:        &schema.Schema{Type: schema.TypeString},
+		},
+		"ovf_storage_map": {
+			Type:        schema.TypeMap,
+			Optional:    true,
+			Description: "Mapping of ovf storage to the datastores to use in vSphere.",
+			Elem:        &schema.Schema{Type: schema.TypeString},
+		},
 	}
 }
 

@@ -19,6 +19,7 @@ import (
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/pbm"
 	"github.com/vmware/govmomi/session"
+	"github.com/vmware/govmomi/session/cache"
 	"github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/debug"
@@ -156,13 +157,20 @@ func (c *Config) Client() (*VSphereClient, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultAPITimeout)
 	defer cancel()
-
+	s := new(cache.Session)
 	if isEligibleRestEndpoint(client.vimClient) {
-		client.restClient, err = c.SavedRestSessionOrNew(ctx, client.vimClient)
+		s, err = c.restURL()
+		if err != nil {
+			return nil, err
+		}
+		client.restClient, err = c.SavedRestSessionOrNew(s)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// Just print a log message so that we know that tags are not available on
 		// this connection.
-		log.Printf("[DEBUG] Connected endpoint does not support tags (%s)", viapi.ParseVersionFromClient(client.vimClient))
+		log.Printf("[DEBUG] Connected endpoint does not support REST API (%s)", viapi.ParseVersionFromClient(client.vimClient))
 	}
 
 	if isEligiblePBMEndpoint(client.vimClient) {
@@ -183,26 +191,40 @@ func (c *Config) Client() (*VSphereClient, error) {
 	if err := c.SaveVimClient(client.vimClient); err != nil {
 		return nil, fmt.Errorf("error persisting SOAP session to disk: %s", err)
 	}
+	if err := c.SaveRestClient(client.restClient, s); err != nil {
+		return nil, fmt.Errorf("error persisting REST session to disk: %s", err)
+	}
 
 	return client, nil
 }
 
-func (c *Config) SavedRestSessionOrNew(ctx context.Context, vimClient *govmomi.Client) (*rest.Client, error) {
-	log.Printf("[DEBUG] Setting up REST client")
-	var restClient *rest.Client
-	valid := false
-	restClient, valid, err := c.LoadAndVerifyRestSession(vimClient)
+func (c *Config) restURL() (*cache.Session, error) {
+	u, err := url.Parse("https://" + c.VSphereServer)
 	if err != nil {
 		return nil, err
 	}
-	if !valid {
-		log.Printf("[DEBUG] Creating new REST session")
-		err := restClient.Login(ctx, url.UserPassword(c.User, c.Password))
-		if err != nil {
-			return nil, err
-		}
-		// Write REST session ID to file if session persistence is enabled.
-		c.SaveRestClient(restClient)
+	if err != nil {
+		return nil, err
+	}
+	u.User = url.UserPassword(c.User, c.Password)
+	s := &cache.Session{
+		URL:      u,
+		Insecure: c.InsecureFlag,
+	}
+	return s, err
+}
+
+func (c *Config) SavedRestSessionOrNew(s *cache.Session) (*rest.Client, error) {
+	log.Printf("[DEBUG] Setting up REST client")
+	ctx, cancel := context.WithTimeout(context.Background(), defaultAPITimeout)
+	defer cancel()
+
+	s.DirREST = c.RestSessionPath
+	s.Passthrough = !c.Persist
+	restClient := new(rest.Client)
+	err := s.Login(ctx, restClient, nil)
+	if err != nil {
+		return nil, err
 	}
 	log.Println("[DEBUG] CIS REST client configuration successful")
 	return restClient, nil
@@ -335,44 +357,11 @@ func (c *Config) SaveVimClient(client *govmomi.Client) error {
 	return nil
 }
 
-func (c *Config) SaveRestClient(client *rest.Client) error {
+func (c *Config) SaveRestClient(client *rest.Client, s *cache.Session) error {
 	if !c.Persist {
 		return nil
 	}
-
-	p, err := c.restSessionFile()
-	if err != nil {
-		return err
-	}
-
-	log.Printf("[DEBUG] Will persist REST client session data to %q", p)
-	err = os.MkdirAll(filepath.Dir(p), 0700)
-	if err != nil {
-		return err
-	}
-
-	f, err := os.OpenFile(p, os.O_CREATE|os.O_WRONLY, 0600)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if err = f.Close(); err != nil {
-			log.Printf("[DEBUG] Error closing REST client session file %q: %s", p, err)
-		}
-	}()
-
-	cookiePath, _ := url.Parse("/rest/com/vmware")
-	cookiePath.Scheme = client.URL().Scheme
-	cookiePath.Host = client.URL().Host
-	for _, cookie := range client.Jar.Cookies(cookiePath) {
-		if cookie.Name == "vmware-api-session-id" {
-			_, err = f.Write([]byte(cookie.Value))
-			break
-		}
-	}
-
-	return nil
+	return s.Save(client)
 }
 
 // restoreVimClient loads the saved session from disk. Note that this is a helper

@@ -463,6 +463,7 @@ func DiskRefreshOperation(d *schema.ResourceData, c *govmomi.Client, l object.Vi
 				// Skip any of these keys as we won't be matching any of those anyway here
 				continue
 			}
+
 			if !diskUUIDMatch(device, m["uuid"].(string)) {
 				// Skip any device that doesn't match UUID
 				continue
@@ -472,6 +473,12 @@ func DiskRefreshOperation(d *schema.ResourceData, c *govmomi.Client, l object.Vi
 			if err := r.Read(l); err != nil {
 				return fmt.Errorf("%s: %s", r.Addr(), err)
 			}
+
+			if strings.HasPrefix(r.Get("label").(string), diskOrphanedPrefix) {
+				// Skip if it's previously discovered orphaned device
+				continue
+			}
+
 			// Done reading, push this onto our new set and remove the device from
 			// the list
 			newSet = append(newSet, r.Data())
@@ -1898,8 +1905,10 @@ func (l virtualDeviceListSorter) Less(i, j int) bool {
 	if liCtlr == nil || ljCtlr == nil {
 		panic(errors.New("virtualDeviceListSorter cannot be used with devices that are not assigned to a controller"))
 	}
-	if liCtlr.(types.BaseVirtualController).GetVirtualController().BusNumber < liCtlr.(types.BaseVirtualController).GetVirtualController().BusNumber {
-		return true
+	liCtlrBus := liCtlr.(types.BaseVirtualController).GetVirtualController().BusNumber
+	ljCtlrBus := ljCtlr.(types.BaseVirtualController).GetVirtualController().BusNumber
+	if liCtlrBus != ljCtlrBus {
+		return liCtlrBus < ljCtlrBus
 	}
 	liUnit := li.GetVirtualDevice().UnitNumber
 	ljUnit := lj.GetVirtualDevice().UnitNumber

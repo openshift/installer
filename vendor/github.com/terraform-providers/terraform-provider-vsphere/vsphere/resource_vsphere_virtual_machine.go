@@ -4,8 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/contentlibrary"
+	"github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/ovfdeploy"
+	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -26,6 +31,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/vmworkflow"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/ovf"
 	"github.com/vmware/govmomi/vim25/types"
 )
 
@@ -84,6 +90,11 @@ func resourceVSphereVirtualMachine() *schema.Resource {
 			Optional:      true,
 			ConflictsWith: []string{"datastore_id"},
 			Description:   "The ID of a datastore cluster to put the virtual machine in.",
+		},
+		"datacenter_id": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "The ID of the datacenter where the VM is to be created.",
 		},
 		"folder": {
 			Type:        schema.TypeString,
@@ -149,6 +160,13 @@ func resourceVSphereVirtualMachine() *schema.Resource {
 			Description:  "The amount of time, in minutes, to wait for a vMotion operation to complete before failing.",
 			ValidateFunc: validation.IntAtLeast(10),
 		},
+		"poweron_timeout": {
+			Type:         schema.TypeInt,
+			Description:  "The amount of time, in seconds, that we will be trying to power on a VM",
+			Default:      300,
+			ValidateFunc: validation.IntAtLeast(300),
+			Optional:     true,
+		},
 		"force_power_off": {
 			Type:        schema.TypeBool,
 			Optional:    true,
@@ -168,6 +186,12 @@ func resourceVSphereVirtualMachine() *schema.Resource {
 			Default:      virtualdevice.SubresourceControllerTypeParaVirtual,
 			Description:  "The type of SCSI bus this virtual machine will have. Can be one of lsilogic, lsilogic-sas or pvscsi.",
 			ValidateFunc: validation.StringInSlice(virtualdevice.SCSIBusTypeAllowedValues, false),
+			DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+				if len(d.Get("ovf_deploy").([]interface{})) > 0 {
+					return true
+				}
+				return false
+			},
 		},
 		"scsi_bus_sharing": {
 			Type:         schema.TypeString,
@@ -187,13 +211,26 @@ func resourceVSphereVirtualMachine() *schema.Resource {
 			Description: "A specification for a virtual disk device on this virtual machine.",
 			MaxItems:    60,
 			Elem:        &schema.Resource{Schema: virtualdevice.DiskSubresourceSchema()},
+			DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+				if len(d.Get("ovf_deploy").([]interface{})) > 0 {
+					return true
+				}
+				return false
+			},
 		},
 		"network_interface": {
 			Type:        schema.TypeList,
-			Required:    true,
+			Optional:    true,
 			Description: "A specification for a virtual NIC on this virtual machine.",
 			MaxItems:    10,
 			Elem:        &schema.Resource{Schema: virtualdevice.NetworkInterfaceSubresourceSchema()},
+			DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+				//no network_interface diff for ovf template deployment
+				if len(d.Get("ovf_deploy").([]interface{})) > 0 {
+					return true
+				}
+				return false
+			},
 		},
 		"cdrom": {
 			Type:        schema.TypeList,
@@ -201,6 +238,12 @@ func resourceVSphereVirtualMachine() *schema.Resource {
 			Description: "A specification for a CDROM device on this virtual machine.",
 			MaxItems:    1,
 			Elem:        &schema.Resource{Schema: virtualdevice.CdromSubresourceSchema()},
+			DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+				if len(d.Get("ovf_deploy").([]interface{})) > 0 {
+					return true
+				}
+				return false
+			},
 		},
 		"clone": {
 			Type:        schema.TypeList,
@@ -208,6 +251,13 @@ func resourceVSphereVirtualMachine() *schema.Resource {
 			Description: "A specification for cloning a virtual machine from template.",
 			MaxItems:    1,
 			Elem:        &schema.Resource{Schema: vmworkflow.VirtualMachineCloneSchema()},
+		},
+		"ovf_deploy": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			Description: "A specification for deploying a virtual machine from OVF template.",
+			MaxItems:    1,
+			Elem:        &schema.Resource{Schema: vmworkflow.VirtualMachineOVFDeploySchema()},
 		},
 		"reboot_required": {
 			Type:        schema.TypeBool,
@@ -276,6 +326,8 @@ func resourceVSphereVirtualMachineCreate(d *schema.ResourceData, meta interface{
 	switch {
 	case len(d.Get("clone").([]interface{})) > 0:
 		vm, err = resourceVSphereVirtualMachineCreateClone(d, meta)
+	case len(d.Get("ovf_deploy").([]interface{})) > 0:
+		vm, err = resourceVsphereMachineDeployOVF(d, meta)
 	default:
 		vm, err = resourceVSphereVirtualMachineCreateBare(d, meta)
 	}
@@ -601,6 +653,11 @@ func resourceVSphereVirtualMachineUpdate(d *schema.ResourceData, meta interface{
 		return err
 	}
 	// Only carry out the reconfigure if we actually have a change to process.
+	cv := virtualmachine.GetHardwareVersionNumber(vprops.Config.Version)
+	tv := d.Get("hardware_version").(int)
+	if tv > cv {
+		d.Set("reboot_required", true)
+	}
 	if changed || len(spec.DeviceChange) > 0 {
 		//Check to see if we need to shutdown the VM for this process.
 		if d.Get("reboot_required").(bool) && vprops.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOff {
@@ -660,6 +717,12 @@ func resourceVSphereVirtualMachineUpdate(d *schema.ResourceData, meta interface{
 			err = virtualmachine.Reconfigure(vm, spec)
 		}
 
+		// Upgrade the VM's hardware version if needed.
+		err = virtualmachine.SetHardwareVersion(vm, d.Get("hardware_version").(int))
+		if err != nil {
+			return err
+		}
+
 		// Regardless of the result we no longer need to watch for pending questions.
 		gChan <- true
 
@@ -673,7 +736,13 @@ func resourceVSphereVirtualMachineUpdate(d *schema.ResourceData, meta interface{
 		}
 		// Power back on the VM, and wait for network if necessary.
 		if vprops.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn {
-			if err := virtualmachine.PowerOn(vm); err != nil {
+			pTimeoutStr := fmt.Sprintf("%ds", d.Get("poweron_timeout").(int))
+			pTimeout, err := time.ParseDuration(pTimeoutStr)
+			if err != nil {
+				return fmt.Errorf("failed to parse poweron_timeout as a valid duration: %s", err)
+			}
+			// Start the virtual machine
+			if err := virtualmachine.PowerOn(vm, pTimeout); err != nil {
 				return fmt.Errorf("error powering on virtual machine: %s", err)
 			}
 			err = virtualmachine.WaitForGuestIP(
@@ -697,6 +766,7 @@ func resourceVSphereVirtualMachineUpdate(d *schema.ResourceData, meta interface{
 			}
 		}
 	}
+
 	// Now safe to turn off partial mode.
 	d.Partial(false)
 	d.Set("reboot_required", false)
@@ -804,11 +874,17 @@ func resourceVSphereVirtualMachineCustomizeDiff(d *schema.ResourceDiff, meta int
 		}
 	}
 
-	// Validate cdrom sub-resources
-	if err := virtualdevice.CdromDiffOperation(d, client); err != nil {
-		return err
+	// Validate cdrom sub-resources when not deploying from ovf
+	if len(d.Get("ovf_deploy").([]interface{})) == 0 {
+		if err := virtualdevice.CdromDiffOperation(d, client); err != nil {
+			return err
+		}
 	}
 
+	if len(d.Get("ovf_deploy").([]interface{})) == 0 && len(d.Get("network_interface").([]interface{})) == 0 {
+		return fmt.Errorf("network_interface parameter is required when not deploying from ovf template")
+
+	}
 	// Validate network device sub-resources
 	if err := virtualdevice.NetworkInterfaceDiffOperation(d, client); err != nil {
 		return err
@@ -824,15 +900,51 @@ func resourceVSphereVirtualMachineCustomizeDiff(d *schema.ResourceDiff, meta int
 		return err
 	}
 
-	// Validate and normalize disk sub-resources
-	if err := virtualdevice.DiskDiffOperation(d, client); err != nil {
-		return err
+	// Validate and normalize disk sub-resources when not deploying from ovf
+	if len(d.Get("ovf_deploy").([]interface{})) == 0 {
+		if len(d.Get("clone").([]interface{})) == 0 {
+			if err := virtualdevice.DiskDiffOperation(d, client); err != nil {
+				return err
+			}
+		}
 	}
 	// When a VM is a member of a vApp container, it is no longer part of the VM
 	// tree, and therefore cannot have its VM folder set.
 	if _, ok := d.GetOk("folder"); ok && vappcontainer.IsVApp(client, d.Get("resource_pool_id").(string)) {
 		return fmt.Errorf("cannot set folder while VM is in a vApp container")
 	}
+
+	if len(d.Get("ovf_deploy").([]interface{})) == 0 && d.Get("datacenter_id").(string) != "" {
+		return fmt.Errorf("data center id is to be set only when deploying from ovf")
+	}
+
+	if len(d.Get("ovf_deploy").([]interface{})) > 0 {
+
+		localOvfPath := d.Get("ovf_deploy.0.local_ovf_path").(string)
+		remoteOvfUrl := d.Get("ovf_deploy.0.remote_ovf_url").(string)
+		datacenterId := d.Get("datacenter_id").(string)
+		dataStoreId := d.Get("datastore_id").(string)
+		hostSystemId := d.Get("host_system_id").(string)
+
+		if localOvfPath == "" && remoteOvfUrl == "" {
+			return fmt.Errorf("either local ovf path or remote ovf url is required, both can't be empty")
+		}
+		if datacenterId == "" {
+			return fmt.Errorf("data center ID is required for OVF deployment")
+		}
+		if dataStoreId == "" {
+			return fmt.Errorf("data store ID is required for OVF deployment")
+		}
+		if hostSystemId == "" {
+			return fmt.Errorf("host system ID is required for OVF deployment")
+		}
+		if localOvfPath != "" {
+			if _, err := os.Stat(localOvfPath); os.IsNotExist(err) {
+				return fmt.Errorf("file doesn't exist %s", localOvfPath)
+			}
+		}
+	}
+
 	// If this is a new resource and we are cloning, perform all clone validation
 	// operations.
 	if len(d.Get("clone").([]interface{})) > 0 {
@@ -848,7 +960,11 @@ func resourceVSphereVirtualMachineCustomizeDiff(d *schema.ResourceDiff, meta int
 			// flagging the imported flag to off.
 			d.SetNew("imported", false)
 		case d.Id() == "":
-			if err := vmworkflow.ValidateVirtualMachineClone(d, client); err != nil {
+			if contentlibrary.IsContentLibraryItem(meta.(*VSphereClient).restClient, d.Get("clone.0.template_uuid").(string)) {
+				if _, ok := d.GetOk("datastore_cluster_id"); ok {
+					return fmt.Errorf("Cannot use datastore_cluster_id with Content Library source")
+				}
+			} else if err := vmworkflow.ValidateVirtualMachineClone(d, client); err != nil {
 				return err
 			}
 			fallthrough
@@ -868,6 +984,11 @@ func resourceVSphereVirtualMachineCustomizeDiff(d *schema.ResourceDiff, meta int
 			}
 		}
 	}
+
+	// Validate hardware version changes.
+	cv, tv := d.GetChange("hardware_version")
+	virtualmachine.ValidateHardwareVersion(cv.(int), tv.(int))
+
 	// Validate that the config has the necessary components for vApp support.
 	// Note that for clones the data is prepopulated in
 	// ValidateVirtualMachineClone.
@@ -1025,6 +1146,7 @@ func resourceVSphereVirtualMachineImport(d *schema.ResourceData, meta interface{
 	d.Set("wait_for_guest_ip_timeout", rs["wait_for_guest_ip_timeout"].Default)
 	d.Set("wait_for_guest_net_timeout", rs["wait_for_guest_net_timeout"].Default)
 	d.Set("wait_for_guest_net_routable", rs["wait_for_guest_net_routable"].Default)
+	d.Set("poweron_timeout", rs["poweron_timeout"].Default)
 
 	log.Printf("[DEBUG] %s: Import complete, resource is ready for read", resourceVSphereVirtualMachineIDString(d))
 	return []*schema.ResourceData{d}, nil
@@ -1104,8 +1226,13 @@ func resourceVSphereVirtualMachineCreateBare(d *schema.ResourceData, meta interf
 	log.Printf("[DEBUG] VM %q - UUID is %q", vm.InventoryPath, vprops.Config.Uuid)
 	d.SetId(vprops.Config.Uuid)
 
+	pTimeoutStr := fmt.Sprintf("%ds", d.Get("poweron_timeout").(int))
+	pTimeout, err := time.ParseDuration(pTimeoutStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse poweron_timeout as a valid duration: %s", err)
+	}
 	// Start the virtual machine
-	if err := virtualmachine.PowerOn(vm); err != nil {
+	if err := virtualmachine.PowerOn(vm, pTimeout); err != nil {
 		return nil, fmt.Errorf("error powering on virtual machine: %s", err)
 	}
 	return vm, nil
@@ -1171,6 +1298,134 @@ func resourceVSphereVirtualMachineCreateBareStandard(
 	return vm, nil
 }
 
+// Deploy vm from OVF template
+func resourceVsphereMachineDeployOVF(d *schema.ResourceData, meta interface{}) (*object.VirtualMachine, error) {
+
+	localOvfPath := d.Get("ovf_deploy.0.local_ovf_path").(string)
+	remoteOvfUrl := d.Get("ovf_deploy.0.remote_ovf_url").(string)
+	ovFromLocal := true
+	if localOvfPath == "" {
+		ovFromLocal = false
+	}
+	log.Printf("[DEBUG] %s:%s VM is being deployed from OVF template ", localOvfPath, remoteOvfUrl)
+
+	client := meta.(*VSphereClient).vimClient
+	name := d.Get("name").(string)
+	var vm *object.VirtualMachine
+
+	poolID := d.Get("resource_pool_id").(string)
+	poolObj, err := resourcepool.FromID(client, poolID)
+	if err != nil {
+		return nil, fmt.Errorf("could not find resource pool ID %q: %s", poolID, err)
+	}
+	resourcePoolMor := poolObj.Reference()
+
+	folderObj, err := folder.VirtualMachineFolderFromObject(client, poolObj, d.Get("folder").(string))
+	if err != nil {
+		return nil, err
+	}
+
+	hostId := d.Get("host_system_id").(string)
+	hostObj, err := hostsystem.FromID(client, hostId)
+	if err != nil {
+		return nil, fmt.Errorf("could not find host with ID %q: %s", hostId, err)
+	}
+	hostMor := hostObj.Reference()
+
+	dsId := d.Get("datastore_id").(string)
+	dsObj, err := datastore.FromID(client, dsId)
+	if err != nil {
+		return nil, fmt.Errorf("could not find datastore with ID %q: %s", dsId, err)
+	}
+	dsMor := dsObj.Reference()
+
+	networkMapping, err := ovfdeploy.GetNetworkMapping(client, d)
+	if err != nil {
+		return nil, err
+	}
+	importSpecParam := types.OvfCreateImportSpecParams{
+		EntityName:         name,
+		HostSystem:         &hostMor,
+		NetworkMapping:     networkMapping,
+		IpAllocationPolicy: d.Get("ovf_deploy.0.ip_allocation_policy").(string),
+		IpProtocol:         d.Get("ovf_deploy.0.ip_protocol").(string),
+		DiskProvisioning:   d.Get("ovf_deploy.0.disk_provisioning").(string),
+	}
+
+	ovfDescriptor := ""
+	if ovFromLocal {
+		fileBuffer, err := ioutil.ReadFile(localOvfPath)
+		if err != nil {
+			return nil, err
+		}
+		ovfDescriptor = string(fileBuffer)
+	} else {
+		resp, err := http.Get(remoteOvfUrl)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusOK {
+			bodyBytes, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			ovfDescriptor = string(bodyBytes)
+		}
+	}
+	if ovfDescriptor == "" {
+		return nil, fmt.Errorf("error while reading the OVF File %s %s", localOvfPath, remoteOvfUrl)
+	}
+
+	ovfManager := ovf.NewManager(client.Client)
+	ovfCreateImportSpecResult, err := ovfManager.CreateImportSpec(context.Background(), ovfDescriptor,
+		resourcePoolMor, dsMor, importSpecParam)
+	if err != nil {
+		return nil, err
+	}
+
+	ovfPath := localOvfPath
+	if !ovFromLocal {
+		ovfPath = remoteOvfUrl
+	}
+
+	log.Print(" [DEBUG] start deploying from OVF Template")
+	err = ovfdeploy.DeployOVFAndGetResult(ovfCreateImportSpecResult, poolObj, folderObj, hostObj, ovfPath, ovFromLocal)
+	if err != nil {
+		return nil, fmt.Errorf("error while importing OVF template %s", err)
+	}
+
+	dataCenterId := d.Get("datacenter_id").(string)
+	datacenterObj, err := datacenterFromID(client, dataCenterId)
+	if err != nil {
+		return nil, fmt.Errorf("error while getting datacenter with id %s %s", dataCenterId, err)
+	}
+	vm, err = virtualmachine.FromPath(client, name, datacenterObj)
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching the created vm %s", err)
+	}
+
+	// set ID for the vm
+	vprops, err := virtualmachine.Properties(vm)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fetch properties of created virtual machine: %s", err)
+	}
+
+	log.Printf("[DEBUG] VM %q - UUID is %q", vm.InventoryPath, vprops.Config.Uuid)
+	d.SetId(vprops.Config.Uuid)
+	pTimeoutStr := fmt.Sprintf("%ds", d.Get("poweron_timeout").(int))
+	pTimeout, err := time.ParseDuration(pTimeoutStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse poweron_timeout as a valid duration: %s", err)
+	}
+	// Start the virtual machine
+	if err := virtualmachine.PowerOn(vm, pTimeout); err != nil {
+		return nil, fmt.Errorf("error powering on virtual machine: %s", err)
+	}
+	return vm, nil
+}
+
 // resourceVSphereVirtualMachineCreateClone contains the clone VM deploy
 // path. The VM is returned.
 func resourceVSphereVirtualMachineCreateClone(d *schema.ResourceData, meta interface{}) (*object.VirtualMachine, error) {
@@ -1191,25 +1446,70 @@ func resourceVSphereVirtualMachineCreateClone(d *schema.ResourceData, meta inter
 		return nil, err
 	}
 
-	// Expand the clone spec. We get the source VM here too.
-	cloneSpec, srcVM, err := vmworkflow.ExpandVirtualMachineCloneSpec(d, client)
-	if err != nil {
-		return nil, err
-	}
-
 	// Start the clone
 	name := d.Get("name").(string)
 	timeout := d.Get("clone.0.timeout").(int)
 	var vm *object.VirtualMachine
-	if _, ok := d.GetOk("datastore_cluster_id"); ok {
-		vm, err = resourceVSphereVirtualMachineCreateCloneWithSDRS(d, meta, srcVM, fo, name, cloneSpec, timeout)
-	} else {
-		vm, err = virtualmachine.Clone(client, srcVM, fo, name, cloneSpec, timeout)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("error cloning virtual machine: %s", err)
-	}
+	if contentlibrary.IsContentLibraryItem(meta.(*VSphereClient).restClient, d.Get("clone.0.template_uuid").(string)) {
+		// Clone source is an item from a Content Library. Prepare required resources.
 
+		// First, if a host is set, check that it is valid.
+		host := &object.HostSystem{}
+		if hid := d.Get("host_system_id").(string); hid != "" {
+			host, err = hostsystem.FromID(client, hid)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// Get OVF mappings for NICs
+		nm := contentlibrary.MapNetworkDevices(d)
+
+		// Validate the specified datastore
+		dsID := d.Get("datastore_id")
+		ds, err := datastore.FromID(client, dsID.(string))
+		if err != nil {
+			return nil, err
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		spId := d.Get("storage_policy_id").(string)
+
+		dd := virtualmachine.DeployDest(name, d.Get("annotation").(string), pool, host, fo, ds, spId, nm)
+
+		rclient := meta.(*VSphereClient).restClient
+		item, err := contentlibrary.ItemFromID(rclient, d.Get("clone.0.template_uuid").(string))
+		if err != nil {
+			return nil, err
+		}
+		vmoid, err := virtualmachine.Deploy(rclient, item, dd, 30)
+		if err != nil {
+			return nil, err
+		}
+		vm, err = virtualmachine.FromMOID(client, vmoid.Value)
+		if err != nil {
+			return nil, err
+		}
+		// There is not currently a way to pull config values from Content Library items. If we do not send the values,
+		// the defaults from the template will be used.
+		d.Set("guest_id", "")
+	} else {
+		// Expand the clone spec. We get the source VM here too.
+		cloneSpec, srcVM, err := vmworkflow.ExpandVirtualMachineCloneSpec(d, client)
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := d.GetOk("datastore_cluster_id"); ok {
+			vm, err = resourceVSphereVirtualMachineCreateCloneWithSDRS(d, meta, srcVM, fo, name, cloneSpec, timeout)
+		} else {
+			vm, err = virtualmachine.Clone(client, srcVM, fo, name, cloneSpec, timeout)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error cloning virtual machine: %s", err)
+		}
+	}
 	// The VM has been created. We still need to do post-clone configuration, and
 	// while the resource should have an ID until this is done, we need it to go
 	// through post-clone rollback workflows. All rollback functions will remove
@@ -1310,6 +1610,12 @@ func resourceVSphereVirtualMachineCreateClone(d *schema.ResourceData, meta inter
 		)
 	}
 
+	// Upgrade the VM's hardware version if needed.
+	err = virtualmachine.SetHardwareVersion(vm, d.Get("hardware_version").(int))
+	if err != nil {
+		return nil, err
+	}
+
 	var cw *virtualMachineCustomizationWaiter
 	// Send customization spec if any has been defined.
 	if len(d.Get("clone.0.customize").([]interface{})) > 0 {
@@ -1329,7 +1635,8 @@ func resourceVSphereVirtualMachineCreateClone(d *schema.ResourceData, meta inter
 		}
 	}
 	// Finally time to power on the virtual machine!
-	if err := virtualmachine.PowerOn(vm); err != nil {
+	pTimeout := time.Duration(d.Get("poweron_timeout").(int)) * time.Second
+	if err := virtualmachine.PowerOn(vm, pTimeout); err != nil {
 		return nil, fmt.Errorf("error powering on virtual machine: %s", err)
 	}
 	// If we customized, wait on customization.

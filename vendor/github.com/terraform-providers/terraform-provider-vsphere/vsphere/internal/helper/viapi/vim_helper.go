@@ -17,6 +17,11 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
+// ManagedObject allows for working generically with managed objects.
+type ManagedObject interface {
+	Reference() types.ManagedObjectReference
+}
+
 // ErrVirtualCenterOnly is the error message that validateVirtualCenter returns.
 const ErrVirtualCenterOnly = "this operation is only supported on vCenter"
 
@@ -54,6 +59,28 @@ func taskFault(err error) (types.BaseMethodFault, bool) {
 func IsManagedObjectNotFoundError(err error) bool {
 	if f, ok := vimSoapFault(err); ok {
 		if _, ok := f.(types.ManagedObjectNotFound); ok {
+			return true
+		}
+	}
+	return false
+}
+
+// IsInvalidStateError checks an error to see if it's of the
+// InvalidState type.
+func IsInvalidStateError(err error) bool {
+	if f, ok := vimSoapFault(err); ok {
+		if _, ok := f.(types.InvalidState); ok {
+			return true
+		}
+	}
+	return false
+}
+
+// IsInvalidPowerStateError checks an error to see if it's of the
+// InvalidState type.
+func IsInvalidPowerStateError(err error) bool {
+	if f, ok := vimSoapFault(err); ok {
+		if _, ok := f.(types.InvalidPowerState); ok {
 			return true
 		}
 	}

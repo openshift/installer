@@ -1,7 +1,6 @@
 package vsphereprivate
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/url"
@@ -9,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-vsphere/vsphere"
 	"github.com/vmware/govmomi"
+	"github.com/vmware/govmomi/session/cache"
 	"github.com/vmware/govmomi/vapi/rest"
 )
 
@@ -47,6 +47,23 @@ func (cw *ConfigWrapper) vimURL() (*url.URL, error) {
 	return u, nil
 }
 
+// restURL returns a URL to pass to the REST client.
+func (cw *ConfigWrapper) restURL() (*cache.Session, error) {
+	u, err := url.Parse("https://" + cw.config.VSphereServer)
+	if err != nil {
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+	u.User = url.UserPassword(cw.config.User, cw.config.Password)
+	s := &cache.Session{
+		URL:      u,
+		Insecure: cw.config.InsecureFlag,
+	}
+	return s, err
+}
+
 // Client returns a new client for accessing VMWare vSphere.
 func (cw *ConfigWrapper) Client() (*VSphereClient, error) {
 	client := new(VSphereClient)
@@ -66,10 +83,13 @@ func (cw *ConfigWrapper) Client() (*VSphereClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(context.TODO(), defaultAPITimeout)
-	defer cancel()
 
-	client.restClient, err = cw.config.SavedRestSessionOrNew(ctx, client.vimClient)
+	s := new(cache.Session)
+	s, err = cw.restURL()
+	if err != nil {
+		return nil, err
+	}
+	client.restClient, err = cw.config.SavedRestSessionOrNew(s)
 	if err != nil {
 		return nil, err
 	}

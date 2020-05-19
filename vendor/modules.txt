@@ -1253,10 +1253,11 @@ github.com/terraform-providers/terraform-provider-local/local
 github.com/terraform-providers/terraform-provider-openstack/openstack
 # github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
 github.com/terraform-providers/terraform-provider-random/random
-# github.com/terraform-providers/terraform-provider-vsphere v1.16.2
+# github.com/terraform-providers/terraform-provider-vsphere v1.16.2 => github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-1
 github.com/terraform-providers/terraform-provider-vsphere/vsphere
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/clustercomputeresource
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/computeresource
+github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/contentlibrary
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/customattribute
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/datacenter
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/datastore
@@ -1266,6 +1267,7 @@ github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helpe
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/hostsystem
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/network
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/nsx
+github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/ovfdeploy
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/provider
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/resourcepool
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/spbm
@@ -1298,7 +1300,7 @@ github.com/vincent-petithory/dataurl
 # github.com/vmihailenco/msgpack v4.0.4+incompatible
 github.com/vmihailenco/msgpack
 github.com/vmihailenco/msgpack/codes
-# github.com/vmware/govmomi v0.22.2
+# github.com/vmware/govmomi v0.22.2 => github.com/vmware/govmomi v0.22.2-0.20200420222347-5fceac570f29
 github.com/vmware/govmomi
 github.com/vmware/govmomi/event
 github.com/vmware/govmomi/find
@@ -1307,9 +1309,6 @@ github.com/vmware/govmomi/govc/flags
 github.com/vmware/govmomi/govc/importx
 github.com/vmware/govmomi/license
 github.com/vmware/govmomi/list
-github.com/vmware/govmomi/lookup
-github.com/vmware/govmomi/lookup/methods
-github.com/vmware/govmomi/lookup/types
 github.com/vmware/govmomi/nfc
 github.com/vmware/govmomi/object
 github.com/vmware/govmomi/ovf
@@ -1318,12 +1317,14 @@ github.com/vmware/govmomi/pbm/methods
 github.com/vmware/govmomi/pbm/types
 github.com/vmware/govmomi/property
 github.com/vmware/govmomi/session
-github.com/vmware/govmomi/sts
-github.com/vmware/govmomi/sts/internal
+github.com/vmware/govmomi/session/cache
 github.com/vmware/govmomi/task
 github.com/vmware/govmomi/vapi/internal
+github.com/vmware/govmomi/vapi/library
+github.com/vmware/govmomi/vapi/library/finder
 github.com/vmware/govmomi/vapi/rest
 github.com/vmware/govmomi/vapi/tags
+github.com/vmware/govmomi/vapi/vcenter
 github.com/vmware/govmomi/view
 github.com/vmware/govmomi/vim25
 github.com/vmware/govmomi/vim25/debug
