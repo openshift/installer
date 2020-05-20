@@ -3,13 +3,14 @@ package network
 import (
 	"context"
 	"fmt"
-
 	"github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/provider"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/view"
+	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/mo"
+	"github.com/vmware/govmomi/vim25/types"
 )
 
 // FromPath loads a network via its path.
@@ -30,6 +31,59 @@ func FromPath(client *govmomi.Client, name string, dc *object.Datacenter) (objec
 	ctx, cancel := context.WithTimeout(context.Background(), provider.DefaultAPITimeout)
 	defer cancel()
 	return finder.Network(ctx, name)
+}
+
+func FromNameAndDVSUuid(client *govmomi.Client, name string, dc *object.Datacenter, dvsUuid string) (object.NetworkReference, error) {
+
+	finder := find.NewFinder(client.Client, false)
+	if dc != nil {
+		finder.SetDatacenter(dc)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), provider.DefaultAPITimeout)
+	defer cancel()
+	networks, err := finder.NetworkList(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	if len(networks) == 0 {
+		return nil, fmt.Errorf("%s %s not found", "Network", name)
+	}
+
+	if len(networks) == 1 && dvsUuid == "" {
+		return networks[0], nil
+	} else if len(networks) > 1 && dvsUuid == "" {
+		return nil, fmt.Errorf("path '%s' resolves to multiple %ss, Please specify", name, "network")
+
+		//handle cases with same port group names by checking the dv switch.
+	} else if dvsUuid != "" {
+
+		dvsObj, err := dvsFromUUID(client, dvsUuid)
+		if err != nil {
+			return nil, err
+		}
+		dvsMoid := dvsObj.Reference().Value
+
+		for _, network := range networks {
+			if network.Reference().Type == "DistributedVirtualPortgroup" {
+				dvPortGroup := object.NewDistributedVirtualPortgroup(client.Client, network.Reference())
+
+				var dvPortGroupObj mo.DistributedVirtualPortgroup
+
+				err = dvPortGroup.Properties(ctx, dvPortGroup.Reference(), []string{"config"}, &dvPortGroupObj)
+				if err != nil {
+					return nil, err
+				}
+
+				if dvPortGroupObj.Config.DistributedVirtualSwitch != nil &&
+					dvsMoid == dvPortGroupObj.Config.DistributedVirtualSwitch.Value {
+					return dvPortGroup, nil
+				}
+			}
+		}
+		return nil, fmt.Errorf("error while getting Network with name %s and Distributed virtual switch %s", name, dvsUuid)
+	}
+	return nil, fmt.Errorf("%s %s not found", "Network", name)
 }
 
 // FromID loads a network via its managed object reference ID.
@@ -117,4 +171,37 @@ func Properties(net *object.Network) (*mo.Network, error) {
 		return nil, err
 	}
 	return &props, nil
+}
+
+func dvsFromMOID(client *govmomi.Client, id string) (*object.VmwareDistributedVirtualSwitch, error) {
+	finder := find.NewFinder(client.Client, false)
+
+	ref := types.ManagedObjectReference{
+		Type:  "VmwareDistributedVirtualSwitch",
+		Value: id,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), provider.DefaultAPITimeout)
+	defer cancel()
+	ds, err := finder.ObjectReference(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+	// Should be safe to return here. If our reference returned here and is not a
+	// VmwareDistributedVirtualSwitch, then we have bigger problems and to be
+	// honest we should be panicking anyway.
+	return ds.(*object.VmwareDistributedVirtualSwitch), nil
+}
+func dvsFromUUID(client *govmomi.Client, uuid string) (*object.VmwareDistributedVirtualSwitch, error) {
+	dvsm := types.ManagedObjectReference{Type: "DistributedVirtualSwitchManager", Value: "DVSManager"}
+	req := &types.QueryDvsByUuid{
+		This: dvsm,
+		Uuid: uuid,
+	}
+	resp, err := methods.QueryDvsByUuid(context.TODO(), client, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return dvsFromMOID(client, resp.Returnval.Reference().Value)
 }

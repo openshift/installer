@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vmware/govmomi"
@@ -127,63 +129,101 @@ func resourceVSphereFileCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourceVSphereFileRead(d, meta)
 }
 
-func createFile(client *govmomi.Client, f *file) error {
+func createDirectory(datastoreFileManager *object.DatastoreFileManager, f *file) error {
+	directoryPathIndex := strings.LastIndex(f.destinationFile, "/")
+	path := f.destinationFile[0:directoryPathIndex]
+	err := datastoreFileManager.FileManager.MakeDirectory(context.TODO(),
+		datastoreFileManager.Datastore.Path(path), datastoreFileManager.Datacenter, true)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
+// fileUpload - upload file to a vSphere datastore
+func fileUpload(client *govmomi.Client, dc *object.Datacenter, ds *object.Datastore, source, destination string) error {
+	dsurl, err := ds.URL(context.TODO(), dc, destination)
+	if err != nil {
+		return err
+	}
+
+	p := soap.DefaultUpload
+	err = client.Client.UploadFile(context.TODO(), source, dsurl, &p)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createFile(client *govmomi.Client, f *file) error {
 	finder := find.NewFinder(client.Client, true)
 
-	dc, err := finder.Datacenter(context.TODO(), f.datacenter)
+	dstDatacenter, err := finder.Datacenter(context.TODO(), f.datacenter)
 	if err != nil {
 		return fmt.Errorf("error %s", err)
 	}
-	finder = finder.SetDatacenter(dc)
+	finder = finder.SetDatacenter(dstDatacenter)
 
-	ds, err := getDatastore(finder, f.datastore)
+	dstDatastore, err := getDatastore(finder, f.datastore)
 	if err != nil {
 		return fmt.Errorf("error %s", err)
+	}
+	dstDfm := dstDatastore.NewFileManager(dstDatacenter, false)
+
+	if f.createDirectories {
+		err = createDirectory(dstDfm, f)
+		if err != nil {
+			return fmt.Errorf("error %s", err)
+		}
 	}
 
 	if f.copyFile {
-		// Copying file from withing vSphere
-		source_dc, err := finder.Datacenter(context.TODO(), f.sourceDatacenter)
-		if err != nil {
-			return fmt.Errorf("error %s", err)
-		}
-		finder = finder.SetDatacenter(dc)
-
-		source_ds, err := getDatastore(finder, f.sourceDatastore)
+		// Copying file from within vSphere
+		srcDatacenter, err := finder.Datacenter(context.TODO(), f.sourceDatacenter)
 		if err != nil {
 			return fmt.Errorf("error %s", err)
 		}
 
-		fm := object.NewFileManager(client.Client)
-		if f.createDirectories {
-			directoryPathIndex := strings.LastIndex(f.destinationFile, "/")
-			path := f.destinationFile[0:directoryPathIndex]
-			err = fm.MakeDirectory(context.TODO(), ds.Path(path), dc, true)
-			if err != nil {
-				return fmt.Errorf("error %s", err)
-			}
-		}
-		task, err := fm.CopyDatastoreFile(context.TODO(), source_ds.Path(f.sourceFile), source_dc, ds.Path(f.destinationFile), dc, true)
-
+		srcDatastore, err := getDatastore(finder, f.sourceDatastore)
 		if err != nil {
 			return fmt.Errorf("error %s", err)
 		}
 
-		_, err = task.WaitForResult(context.TODO(), nil)
+		srcDfm := srcDatastore.NewFileManager(srcDatacenter, false)
+		srcDfm.DatacenterTarget = dstDatacenter
+
+		dstFilePath := dstDfm.Path(f.destinationFile)
+
+		// govmomi datastore_file_manager Copy function properly handles
+		// copying VMDK(s) and regular files e.g. ISO(s)
+		// If the source is a VMDK the Copy method uses the correct CopyVirtualDisk_Task instead of
+		// CopyDatastoreFile_Task
+		err = srcDfm.Copy(context.TODO(), f.sourceFile, dstFilePath.String())
+		if err != nil {
+			return fmt.Errorf("error %s", err)
+		}
+	} else if path.Ext(f.sourceFile) == ".vmdk" {
+		tempDstFile := fmt.Sprintf("tfm-temp-%d.vmdk", time.Now().Nanosecond())
+
+		err = fileUpload(client, dstDatacenter, dstDatastore, f.sourceFile, tempDstFile)
+		if err != nil {
+			return fmt.Errorf("error %s", err)
+		}
+
+		// govmomi datastore_file_manager Move function properly handles
+		// moving VMDK(s) and regular files e.g. ISO(s)
+		// If the source is a VMDK the Move method uses the correct MoveVirtualDisk_Task instead of
+		// MoveDatastoreFile_Task
+		err = dstDfm.Move(context.TODO(), tempDstFile, f.destinationFile)
 		if err != nil {
 			return fmt.Errorf("error %s", err)
 		}
 
 	} else {
-		// Uploading file to vSphere
-		dsurl, err := ds.URL(context.TODO(), dc, f.destinationFile)
-		if err != nil {
-			return fmt.Errorf("error %s", err)
-		}
-
-		p := soap.DefaultUpload
-		err = client.Client.UploadFile(context.TODO(), f.sourceFile, dsurl, &p)
+		// If we are not copying a file or uploading a VMDK
+		// just use UploadFile alone
+		err = fileUpload(client, dstDatacenter, dstDatastore, f.sourceFile, f.destinationFile)
 		if err != nil {
 			return fmt.Errorf("error %s", err)
 		}
@@ -398,8 +438,7 @@ func getDatastore(f *find.Finder, ds string) (*object.Datastore, error) {
 	if ds != "" {
 		dso, err := f.Datastore(context.TODO(), ds)
 		return dso, err
-	} else {
-		dso, err := f.DefaultDatastore(context.TODO())
-		return dso, err
 	}
+	dso, err := f.DefaultDatastore(context.TODO())
+	return dso, err
 }

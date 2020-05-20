@@ -192,6 +192,7 @@ func VirtualMachineCustomizeSchema() map[string]*schema.Schema {
 				"product_key": {
 					Type:        schema.TypeString,
 					Optional:    true,
+					Sensitive:   true,
 					Description: "The product key for this virtual machine.",
 				},
 			}},

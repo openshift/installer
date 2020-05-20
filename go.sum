@@ -1821,6 +1821,8 @@ github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf53
 github.com/openshift/runtime-utils v0.0.0-20191011150825-9169de69ebf6/go.mod h1:5gDRVvQwesU7cfwlpuMivdv3Dz/oslvv2qTBHCy4wqQ=
 github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-3 h1:aRnSZYFNqYXv8mc3/q6nP1WJP4VR8eugkdmJF6xnCs0=
 github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-3/go.mod h1:O9UYVGp8E7aMa2dANw9oTQmaZZbbr8DMRpC56dyy00E=
+github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-1 h1:Jvi/tGlF8xOLZ5lWjJWi8hyXOSe7NqbAqOrwjdDRE7E=
+github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-1/go.mod h1:a1mEaZ0sy5RL+ukbqPvY1N6dw9K0yG7EYWZZkfJUeyA=
 github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492/go.mod h1:Ngi6UdF0k5OKD5t5wlmGhe/EDKPoUM3BXZSSfIuJbis=
 github.com/opentracing/basictracer-go v1.0.0/go.mod h1:QfBfYuafItcjQuMwinw9GhYKwFXS9KnPs5lxoYwgW74=
 github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
@@ -2116,8 +2118,6 @@ github.com/terraform-providers/terraform-provider-random v0.0.0-20190925200408-3
 github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f h1:oqZwtMD9/XcOcCzm/9cz8+pQWRTGF60N1RNcYLg+BCw=
 github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f/go.mod h1:F4KE9YftuJyMiBth4W1kCrsyOHndtTjAmZ+ZzjqWY+4=
 github.com/terraform-providers/terraform-provider-template v1.0.0/go.mod h1:/J+B8me5DCMa0rEBH5ic2aKPjhtpWNeScmxFJWxB1EU=
-github.com/terraform-providers/terraform-provider-vsphere v1.16.2 h1:OvKh7usOd3m/JkIY80ZhP8tpOkkfUYr79zlFXZiaBCo=
-github.com/terraform-providers/terraform-provider-vsphere v1.16.2/go.mod h1:yTPDOvhy5A/PX5z/sKq0FthWz1m38QKRW+P+SJDYbeo=
 github.com/thecodeteam/goscaleio v0.1.0/go.mod h1:68sdkZAsK8bvEwBlbQnlLS+xU+hvLYM/iQ8KXej1AwM=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/timakin/bodyclose v0.0.0-20190721030226-87058b9bfcec/go.mod h1:Qimiffbc6q9tBWlVV6x0P9sat/ao1xEkREYPPj9hphk=
@@ -2182,10 +2182,8 @@ github.com/vmihailenco/msgpack v3.3.3+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6Ac
 github.com/vmihailenco/msgpack v4.0.1+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
 github.com/vmihailenco/msgpack v4.0.4+incompatible h1:dSLoQfGFAo3F6OoNhwUmLwVgaUXK79GlxNBwueZn0xI=
 github.com/vmihailenco/msgpack v4.0.4+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
-github.com/vmware/govmomi v0.20.3/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59bHWk6aFU=
-github.com/vmware/govmomi v0.22.1/go.mod h1:Y+Wq4lst78L85Ge/F8+ORXIWiKYqaro1vhAulACy9Lc=
-github.com/vmware/govmomi v0.22.2 h1:hmLv4f+RMTTseqtJRijjOWzwELiaLMIoHv2D6H3bF4I=
-github.com/vmware/govmomi v0.22.2/go.mod h1:Y+Wq4lst78L85Ge/F8+ORXIWiKYqaro1vhAulACy9Lc=
+github.com/vmware/govmomi v0.22.2-0.20200420222347-5fceac570f29 h1:8S2J/LGp5U19G4tia+aq+KvlNPuynIeui7W8xc8PGqU=
+github.com/vmware/govmomi v0.22.2-0.20200420222347-5fceac570f29/go.mod h1:Y+Wq4lst78L85Ge/F8+ORXIWiKYqaro1vhAulACy9Lc=
 github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728/go.mod h1:x9oS4Wk2s2u4tS29nEaDLdzvuHdB19CvSGJjPgkZJNk=
 github.com/weppos/publicsuffix-go v0.4.0/go.mod h1:z3LCPQ38eedDQSwmsSRW4Y7t2L8Ln16JPQ02lHAdn5k=
 github.com/xanzy/ssh-agent v0.2.0/go.mod h1:0NyE30eGUDliuLEHJgYte/zncp2zdTStcOnWhgSqHD8=

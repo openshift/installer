@@ -104,6 +104,12 @@ func NetworkInterfaceSubresourceSchema() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "The MAC address of this network interface. Can only be manually set if use_static_mac is true.",
 		},
+		"ovf_mapping": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			ForceNew:    true,
+			Description: "Mapping of network interface to OVF network.",
+		},
 	}
 	structure.MergeSchema(s, subresourceSchema())
 	return s
@@ -474,7 +480,11 @@ func NetworkInterfacePostCloneOperation(d *schema.ResourceData, c *govmomi.Clien
 	// Any other device past the end of the network devices listed in config needs to be removed.
 	if len(curSet) < len(srcSet) {
 		for i, si := range srcSet[len(curSet):] {
-			sm := si.(map[string]interface{})
+			sm, ok := si.(map[string]interface{})
+			if !ok {
+				log.Printf("[DEBUG] Extra entry in NIC source list, but not of expected type")
+				continue
+			}
 			r := NewNetworkInterfaceSubresource(c, d, sm, nil, i+len(curSet))
 			dspec, err := r.Delete(l)
 			if err != nil {

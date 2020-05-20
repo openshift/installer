@@ -28,6 +28,11 @@ func dataSourceVSphereNetwork() *schema.Resource {
 				Description: "The managed object type of the network.",
 				Computed:    true,
 			},
+			"distributed_virtual_switch_uuid": {
+				Type:        schema.TypeString,
+				Description: "Id of the distributed virtual switch of which the port group is a part of",
+				Optional:    true,
+			},
 		},
 	}
 }
@@ -36,6 +41,7 @@ func dataSourceVSphereNetworkRead(d *schema.ResourceData, meta interface{}) erro
 	client := meta.(*VSphereClient).vimClient
 
 	name := d.Get("name").(string)
+	dvSwitchUuid := d.Get("distributed_virtual_switch_uuid").(string)
 	var dc *object.Datacenter
 	if dcID, ok := d.GetOk("datacenter_id"); ok {
 		var err error
@@ -44,7 +50,7 @@ func dataSourceVSphereNetworkRead(d *schema.ResourceData, meta interface{}) erro
 			return fmt.Errorf("cannot locate datacenter: %s", err)
 		}
 	}
-	net, err := network.FromPath(client, name, dc)
+	net, err := network.FromNameAndDVSUuid(client, name, dc, dvSwitchUuid)
 	if err != nil {
 		return fmt.Errorf("error fetching network: %s", err)
 	}
