@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.3.0
+    controller-gen.kubebuilder.io/version: (devel)
   creationTimestamp: null
   name: installconfigs.install.openshift.io
 spec:
@@ -849,6 +849,17 @@ spec:
                     description: BaseDomainResourceGroupName specifies the resource
                       group where the Azure DNS zone for the base domain is found.
                     type: string
+                  cloudName:
+                    description: cloudName is the name of the Azure cloud environment
+                      which can be used to configure the Azure SDK with the appropriate
+                      Azure API endpoints. If empty, the value is equal to "AzurePublicCloud".
+                    enum:
+                    - ""
+                    - AzurePublicCloud
+                    - AzureUSGovernmentCloud
+                    - AzureChinaCloud
+                    - AzureGermanCloud
+                    type: string
                   computeSubnet:
                     description: ComputeSubnet specifies an existing subnet for use
                       by compute nodes
@@ -938,10 +949,6 @@ spec:
                       used when installing on bare metal for machine pools which do
                       not define their own platform configuration.
                     type: object
-                  dnsVIP:
-                    description: DNSVIP is the VIP to use for internal DNS communication
-                    format: ip
-                    type: string
                   externalBridge:
                     description: External bridge is used for external communication.
                     type: string
@@ -1027,7 +1034,6 @@ spec:
                     type: string
                 required:
                 - apiVIP
-                - dnsVIP
                 - hosts
                 - ingressVIP
                 - provisioningNetworkInterface

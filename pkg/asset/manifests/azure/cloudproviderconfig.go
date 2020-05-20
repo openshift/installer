@@ -3,10 +3,13 @@ package azure
 import (
 	"bytes"
 	"encoding/json"
+
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
-//CloudProviderConfig is the azure cloud provider config
+// CloudProviderConfig is the azure cloud provider config
 type CloudProviderConfig struct {
+	CloudName                azure.CloudEnvironment
 	TenantID                 string
 	SubscriptionID           string
 	GroupLocation            string
@@ -23,7 +26,7 @@ func (params CloudProviderConfig) JSON() (string, error) {
 	resourceGroupName := params.ResourcePrefix + "-rg"
 	config := config{
 		authConfig: authConfig{
-			Cloud:                       "AzurePublicCloud",
+			Cloud:                       params.CloudName.Name(),
 			TenantID:                    params.TenantID,
 			SubscriptionID:              params.SubscriptionID,
 			UseManagedIdentityExtension: true,
@@ -49,8 +52,8 @@ func (params CloudProviderConfig) JSON() (string, error) {
 		CloudProviderBackoffDuration: 6,
 
 		UseInstanceMetadata: true,
-		//default to standard load balancer, supports tcp resets on idle
-		//https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-tcp-reset
+		// default to standard load balancer, supports tcp resets on idle
+		// https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-tcp-reset
 		LoadBalancerSku: "standard",
 	}
 	buff := &bytes.Buffer{}

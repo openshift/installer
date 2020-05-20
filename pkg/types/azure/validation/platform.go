@@ -7,6 +7,23 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 )
 
+var (
+	validCloudNames = map[azure.CloudEnvironment]bool{
+		azure.PublicCloud:       true,
+		azure.USGovernmentCloud: true,
+		azure.ChinaCloud:        true,
+		azure.GermanCloud:       true,
+	}
+
+	validCloudNameValues = func() []string {
+		v := make([]string, 0, len(validCloudNames))
+		for n := range validCloudNames {
+			v = append(v, string(n))
+		}
+		return v
+	}()
+)
+
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -40,6 +57,9 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		if p.NetworkResourceGroupName == "" {
 			allErrs = append(allErrs, field.Required(fldPath.Child("networkResourceGroupName"), "must provide a network resource group when supplying subnets"))
 		}
+	}
+	if !validCloudNames[p.CloudName] {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("cloudName"), p.CloudName, validCloudNameValues))
 	}
 	return allErrs
 }

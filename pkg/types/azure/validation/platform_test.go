@@ -3,10 +3,11 @@ package validation
 import (
 	"testing"
 
-	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
 func TestValidatePlatform(t *testing.T) {
@@ -20,6 +21,7 @@ func TestValidatePlatform(t *testing.T) {
 			platform: &azure.Platform{
 				Region:                      "",
 				BaseDomainResourceGroupName: "group",
+				CloudName:                   azure.PublicCloud,
 			},
 			valid: false,
 		},
@@ -28,6 +30,7 @@ func TestValidatePlatform(t *testing.T) {
 			platform: &azure.Platform{
 				Region:                      "eastus",
 				BaseDomainResourceGroupName: "",
+				CloudName:                   azure.PublicCloud,
 			},
 			valid: false,
 		},
@@ -36,6 +39,7 @@ func TestValidatePlatform(t *testing.T) {
 			platform: &azure.Platform{
 				Region:                      "eastus",
 				BaseDomainResourceGroupName: "group",
+				CloudName:                   azure.PublicCloud,
 			},
 			valid: true,
 		},
@@ -45,6 +49,7 @@ func TestValidatePlatform(t *testing.T) {
 				Region:                      "eastus",
 				BaseDomainResourceGroupName: "group",
 				DefaultMachinePlatform:      &azure.MachinePool{},
+				CloudName:                   azure.PublicCloud,
 			},
 			valid: true,
 		},
@@ -57,6 +62,7 @@ func TestValidatePlatform(t *testing.T) {
 				VirtualNetwork:              "virtualnetwork",
 				ComputeSubnet:               "computesubnet",
 				ControlPlaneSubnet:          "controlplanesubnet",
+				CloudName:                   azure.PublicCloud,
 			},
 			valid: true,
 		},
@@ -66,6 +72,7 @@ func TestValidatePlatform(t *testing.T) {
 				Region:                   "eastus",
 				NetworkResourceGroupName: "networkresourcegroup",
 				VirtualNetwork:           "virtualnetwork",
+				CloudName:                azure.PublicCloud,
 			},
 			valid: false,
 		},
@@ -75,6 +82,7 @@ func TestValidatePlatform(t *testing.T) {
 				Region:                   "eastus",
 				NetworkResourceGroupName: "networkresourcegroup",
 				ComputeSubnet:            "computesubnet",
+				CloudName:                azure.PublicCloud,
 			},
 			valid: false,
 		},
@@ -85,6 +93,24 @@ func TestValidatePlatform(t *testing.T) {
 				VirtualNetwork:     "virtualnetwork",
 				ComputeSubnet:      "computesubnet",
 				ControlPlaneSubnet: "controlplanesubnet",
+				CloudName:          azure.PublicCloud,
+			},
+			valid: false,
+		},
+		{
+			name: "missing cloud name",
+			platform: &azure.Platform{
+				Region:                      "eastus",
+				BaseDomainResourceGroupName: "group",
+			},
+			valid: false,
+		},
+		{
+			name: "invalid cloud name",
+			platform: &azure.Platform{
+				Region:                      "eastus",
+				BaseDomainResourceGroupName: "group",
+				CloudName:                   azure.CloudEnvironment("AzureOtherCloud"),
 			},
 			valid: false,
 		},

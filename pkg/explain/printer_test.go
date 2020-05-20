@@ -127,6 +127,10 @@ func Test_PrintFields(t *testing.T) {
     baseDomainResourceGroupName <string>
       BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found.
 
+    cloudName <string>
+      Valid Values: "","AzurePublicCloud","AzureUSGovernmentCloud","AzureChinaCloud","AzureGermanCloud"
+      cloudName is the name of the Azure cloud environment which can be used to configure the Azure SDK with the appropriate Azure API endpoints. If empty, the value is equal to "AzurePublicCloud".
+
     computeSubnet <string>
       ComputeSubnet specifies an existing subnet for use by compute nodes
 
