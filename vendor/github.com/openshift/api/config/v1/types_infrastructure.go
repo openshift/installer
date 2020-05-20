@@ -5,6 +5,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:subresource:status
 
 // Infrastructure holds cluster-wide information about Infrastructure.  The canonical name is `cluster`
 type Infrastructure struct {
@@ -26,6 +27,15 @@ type InfrastructureSpec struct {
 	// This configuration file is used to configure the Kubernetes cloud provider integration
 	// when using the built-in cloud provider integration or the external cloud controller manager.
 	// The namespace for this config map is openshift-config.
+	//
+	// cloudConfig should only be consumed by the kube_cloud_config controller.
+	// The controller is responsible for using the user configuration in the spec
+	// for various platforms and combining that with the user provided ConfigMap in this field
+	// to create a stitched kube cloud config.
+	// The controller generates a ConfigMap `kube-cloud-config` in `openshift-config-managed` namespace
+	// with the kube cloud config is stored in `cloud.conf` key.
+	// All the clients are expected to use the generated ConfigMap only.
+	//
 	// +optional
 	CloudConfig ConfigMapFileReference `json:"cloudConfig"`
 
@@ -267,7 +277,31 @@ type AzurePlatformStatus struct {
 	// If empty, the value is same as ResourceGroupName.
 	// +optional
 	NetworkResourceGroupName string `json:"networkResourceGroupName,omitempty"`
+
+	// cloudName is the name of the Azure cloud environment which can be used to configure the Azure SDK
+	// with the appropriate Azure API endpoints.
+	// If empty, the value is equal to `AzurePublicCloud`.
+	// +optional
+	CloudName AzureCloudEnvironment `json:"cloudName,omitempty"`
 }
+
+// AzureCloudEnvironment is the name of the Azure cloud environment
+// +kubebuilder:validation:Enum="";AzurePublicCloud;AzureUSGovernmentCloud;AzureChinaCloud;AzureGermanCloud
+type AzureCloudEnvironment string
+
+const (
+	// AzurePublicCloud is the general-purpose, public Azure cloud environment.
+	AzurePublicCloud AzureCloudEnvironment = "AzurePublicCloud"
+
+	// AzureUSGovernmentCloud is the Azure cloud environment for the US government.
+	AzureUSGovernmentCloud AzureCloudEnvironment = "AzureUSGovernmentCloud"
+
+	// AzureChinaCloud is the Azure cloud environment used in China.
+	AzureChinaCloud AzureCloudEnvironment = "AzureChinaCloud"
+
+	// AzureGermanCloud is the Azure cloud environment used in Germany.
+	AzureGermanCloud AzureCloudEnvironment = "AzureGermanCloud"
+)
 
 // GCPPlatformSpec holds the desired state of the Google Cloud Platform infrastructure provider.
 // This only includes fields that can be modified in the cluster.
