@@ -97,7 +97,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 
 	case azuretypes.Name:
 		resourceGroupName := clusterID.InfraID + "-rg"
-		session, err := azure.GetSession()
+		session, err := azure.GetSession(installConfig.Config.Platform.Azure.CloudName)
 		if err != nil {
 			return err
 		}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/Azure/go-autorest/autorest/to"
 
@@ -21,12 +20,19 @@ const (
 
 // Platform collects azure-specific configuration.
 func Platform() (*azure.Platform, error) {
-	regions, err := getRegions()
+	const cloudName = azure.PublicCloud
+
+	client, err := NewClient(context.TODO(), cloudName)
+	if err != nil {
+		return nil, err
+	}
+
+	regions, err := getRegions(context.TODO(), client)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get list of regions")
 	}
 
-	resourceCapableRegions, err := getResourceCapableRegions()
+	resourceCapableRegions, err := getResourceCapableRegions(context.TODO(), client)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get list of resources to check available regions")
 	}
@@ -80,19 +86,12 @@ func Platform() (*azure.Platform, error) {
 	}
 
 	return &azure.Platform{
-		Region: region,
+		Region:    region,
+		CloudName: cloudName,
 	}, nil
 }
 
-func getRegions() (map[string]string, error) {
-	client, err := NewClient(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-
-	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
-	defer cancel()
-
+func getRegions(ctx context.Context, client API) (map[string]string, error) {
 	locations, err := client.ListLocations(ctx)
 	if err != nil {
 		return nil, err
@@ -105,15 +104,7 @@ func getRegions() (map[string]string, error) {
 	return allLocations, nil
 }
 
-func getResourceCapableRegions() ([]string, error) {
-	client, err := NewClient(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-
-	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
-	defer cancel()
-
+func getResourceCapableRegions(ctx context.Context, client API) ([]string, error) {
 	provider, err := client.GetResourcesProvider(ctx, "Microsoft.Resources")
 	if err != nil {
 		return nil, err

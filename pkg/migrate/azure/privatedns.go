@@ -15,6 +15,7 @@ import (
 	azdns "github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns"
 	azprivatedns "github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns"
 	azconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
 type legacyDNSZone struct {
@@ -484,8 +485,8 @@ func (client *privateDNSClient) migrateLegacyZone(legacyDNSZone *legacyDNSZone, 
 }
 
 // Migrate does a migration from a legacy zone to a private zone
-func Migrate(resourceGroup string, migrateZone string, virtualNetwork string, vnetResourceGroup string, link bool) error {
-	session, err := azconfig.GetSession()
+func Migrate(cloudName azure.CloudEnvironment, resourceGroup string, migrateZone string, virtualNetwork string, vnetResourceGroup string, link bool) error {
+	session, err := azconfig.GetSession(cloudName)
 	if err != nil {
 		return err
 	}
@@ -508,8 +509,8 @@ func Migrate(resourceGroup string, migrateZone string, virtualNetwork string, vn
 }
 
 // Eligible shows legacy zones that are eligible for migrating to private zones
-func Eligible() error {
-	session, err := azconfig.GetSession()
+func Eligible(cloudName azure.CloudEnvironment) error {
+	session, err := azconfig.GetSession(cloudName)
 	if err != nil {
 		return err
 	}

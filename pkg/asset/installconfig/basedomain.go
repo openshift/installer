@@ -43,7 +43,7 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 		}
 	case azure.Name:
 		var err error
-		azureDNS, _ := azureconfig.NewDNSConfig()
+		azureDNS, _ := azureconfig.NewDNSConfig(azure.PublicCloud)
 		zone, err := azureDNS.GetDNSZone()
 		if err != nil {
 			return err

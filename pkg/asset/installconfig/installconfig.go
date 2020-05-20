@@ -159,7 +159,7 @@ func (a *InstallConfig) finish(filename string) error {
 
 func (a *InstallConfig) platformValidation() error {
 	if a.Config.Platform.Azure != nil {
-		client, err := icazure.NewClient(context.TODO())
+		client, err := icazure.NewClient(context.TODO(), a.Config.Platform.Azure.CloudName)
 		if err != nil {
 			return err
 		}

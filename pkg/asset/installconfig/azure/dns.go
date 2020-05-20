@@ -9,6 +9,8 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
+
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
 //DNSConfig exposes functions to choose the DNS settings
@@ -120,8 +122,8 @@ func (config DNSConfig) GetDNSRecordSet(rgName string, zoneName string, relative
 //NewDNSConfig returns a new DNSConfig struct that helps configuring the DNS
 //by querying your subscription and letting you choose
 //which domain you wish to use for the cluster
-func NewDNSConfig() (*DNSConfig, error) {
-	session, err := GetSession()
+func NewDNSConfig(cloudName azure.CloudEnvironment) (*DNSConfig, error) {
+	session, err := GetSession(cloudName)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not retrieve session information")
 	}

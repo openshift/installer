@@ -248,7 +248,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case azure.Name:
-		sess, err := azureconfig.GetSession()
+		sess, err := azureconfig.GetSession(installConfig.Config.Platform.Azure.CloudName)
 		if err != nil {
 			return err
 		}
@@ -279,6 +279,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		data, err := azuretfvars.TFVars(
 			azuretfvars.TFVarsSources{
 				Auth:                        auth,
+				CloudName:                   installConfig.Config.Azure.CloudName,
 				BaseDomainResourceGroupName: installConfig.Config.Azure.BaseDomainResourceGroupName,
 				MasterConfigs:               masterConfigs,
 				WorkerConfigs:               workerConfigs,

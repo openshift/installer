@@ -13,6 +13,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/AlecAivazis/survey.v1"
+
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
 const azureAuthEnv = "AZURE_AUTH_LOCATION"
@@ -39,19 +41,23 @@ type Credentials struct {
 
 // GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
 // and, if no creds are found, asks for them and stores them on disk in a config file
-func GetSession() (*Session, error) {
+func GetSession(cloudName azure.CloudEnvironment) (*Session, error) {
 	authFile := defaultAuthFilePath
 	if f := os.Getenv(azureAuthEnv); len(f) > 0 {
 		authFile = f
 	}
-	return newSessionFromFile(authFile)
+	return newSessionFromFile(authFile, cloudName)
 }
 
-func newSessionFromFile(authFilePath string) (*Session, error) {
+func newSessionFromFile(authFilePath string, cloudName azure.CloudEnvironment) (*Session, error) {
 	// NewAuthorizerFromFileWithResource uses `auth.GetSettingsFromFile`, which uses the `azureAuthEnv` to fetch the auth credentials.
 	// therefore setting the local env here to authFilePath allows NewAuthorizerFromFileWithResource to load credentials.
 	os.Setenv(azureAuthEnv, authFilePath)
-	_, err := auth.NewAuthorizerFromFileWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
+	env, err := azureenv.EnvironmentFromName(string(cloudName))
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get Azure environment for the %q cloud", cloudName)
+	}
+	_, err = auth.NewAuthorizerFromFileWithResource(env.ResourceManagerEndpoint)
 	if err != nil {
 		logrus.Debug("Could not get an azure authorizer from file. Asking user to provide authentication info")
 		credentials, err := askForCredentials()
@@ -82,12 +88,12 @@ func newSessionFromFile(authFilePath string) (*Session, error) {
 		logrus.Infof("Credentials loaded from file %q", authFilePath)
 	})
 
-	authorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(azureenv.PublicCloud.ResourceManagerEndpoint)
+	authorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(env.ResourceManagerEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get client credentials authorizer from saved azure auth settings")
 	}
 
-	graphAuthorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(azureenv.PublicCloud.GraphEndpoint)
+	graphAuthorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(env.GraphEndpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get GraphEndpoint authorizer from saved azure auth settings")
 	}
