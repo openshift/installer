@@ -61,14 +61,15 @@ func askCredentials() (Config, error) {
 			// should have passed validation, this is unexpected
 			return c, err
 		}
-		pemURL := fmt.Sprintf(
+		c.PemURL = fmt.Sprintf(
 			"%s://%s/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA",
 			ovirtURL.Scheme,
 			ovirtURL.Host)
+		logrus.Debug("PEM URL: ", c.PemURL)
 
 		err = survey.AskOne(&survey.Multiline{
 			Message: "oVirt certificate bundle",
-			Help:    fmt.Sprintf("The oVirt certificate bundle can be downloaded from %s.", pemURL),
+			Help:    fmt.Sprintf("The oVirt certificate bundle can be downloaded from %s", c.PemURL),
 		},
 			&c.CABundle,
 			survey.ComposeValidators(survey.Required))
