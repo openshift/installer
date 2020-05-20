@@ -5,6 +5,7 @@ import (
 	"net"
         "bytes"
 	"strconv"
+	"strings"
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/coreos/ignition/config/util"
@@ -106,7 +107,7 @@ PROXY_METHOD=none
 BROWSER_ONLY=no
 BOOTPROTO=none
 IPADDR=$new_ip
-PREFIX=24
+PREFIX={{.machine_cidr_mask}}
 DEFROUTE=yes
 GATEWAY=$DEFAULT_GATEWAY
 PEERDNS=no
@@ -140,12 +141,13 @@ func CloudProviderScript(vlan string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func NetworkScript(vlan string, defGateway string, mtu string) ([]byte, error) {
+func NetworkScript(vlan string, defGateway string, mtu string, machineCIDRMask string) ([]byte, error) {
         buf := &bytes.Buffer{}
         data := map[string]string{
-		"vlan":          vlan,
-		"defGateway":    defGateway,
-		"mtu":           mtu,
+		"vlan":          	vlan,
+		"defGateway":    	defGateway,
+		"mtu":           	mtu,
+                "machine_cidr_mask":	machineCIDRMask,
 	}
 	if err := networkScriptTmpl.Execute(buf, data); err != nil {
 		return nil, errors.Wrap(err, "failed to execute user-data template")
@@ -158,13 +160,15 @@ func IgnitionFiles(installConfig *installconfig.InstallConfig, is_bootstrap bool
 		return nil
 	}
         machineCIDR := &installConfig.Config.Networking.MachineNetwork[0].CIDR.IPNet
+	machineStr := machineCIDR.String()
+        machineCIDRMask := strings.Split(machineStr, "/")[1]
         defaultGateway, _ := cidr.Host(machineCIDR, 1)
         kubeApiVLAN := installConfig.Config.Platform.OpenStack.AciNetExt.KubeApiVLAN
         infraVLAN := installConfig.Config.Platform.OpenStack.AciNetExt.InfraVLAN
         mtuString, _ := strconv.Atoi(installConfig.Config.Platform.OpenStack.AciNetExt.Mtu)
         mtuValue := strconv.Itoa(mtuString - 100)
-	    cloudProviderScriptString, _ := CloudProviderScript(kubeApiVLAN)
-        networkScriptString, _ := NetworkScript(kubeApiVLAN, defaultGateway.String(), mtuValue)
+	cloudProviderScriptString, _ := CloudProviderScript(kubeApiVLAN)
+        networkScriptString, _ := NetworkScript(kubeApiVLAN, defaultGateway.String(), mtuValue, machineCIDRMask)
         neutronCIDR := &installConfig.Config.Platform.OpenStack.AciNetExt.NeutronCIDR.IPNet
         defaultNeutronGateway, _ := cidr.Host(neutronCIDR, 1)
         defaultNeutronGatewayStr := defaultNeutronGateway.String()
