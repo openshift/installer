@@ -12,7 +12,7 @@ import (
 // Check if URL can be reached before we proceed with the installation
 // Parms:
 //	urlAddr - Full URL
-func checkUrlResponse(urlAddr string) {
+func checkURLResponse(urlAddr string) {
 
 	logrus.Debug("Checking URL Response: ", urlAddr)
 	_, err := http.Get(urlAddr)
@@ -35,7 +35,7 @@ func askCredentials() (Config, error) {
 	if err != nil {
 		return c, err
 	}
-	checkUrlResponse(c.URL)
+	checkURLResponse(c.URL)
 
 	var ovirtCertTrusted bool
 	err = survey.AskOne(
