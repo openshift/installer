@@ -14,7 +14,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `type` (optional string): The [GCP machine type][machine-type].
 * `zones` (optional array of strings): The availability zones used for machines in the pool.
 * `osDisk` (optional object):
-    * `diskSizeGB` (optional integer): The size of the disk in gigabytes (GB).
+    * `diskSizeGB` (optional integer): The size of the disk in gigabytes (GB) (Minimum: 16GB, Maximum: 65536GB).
     * `diskType` (optional string): The type of disk (allowed values are: `pd-ssd`, and `pd-standard`. Default: `pd-ssd`).
 
 ## Installing to Existing Networks & Subnetworks

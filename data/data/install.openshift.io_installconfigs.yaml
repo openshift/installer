@@ -165,7 +165,8 @@ spec:
                               description: DiskSizeGB defines the size of disk in
                                 GB.
                               format: int64
-                              minimum: 0
+                              maximum: 65536
+                              minimum: 16
                               type: integer
                             DiskType:
                               description: DiskType defines the type of disk. The
@@ -451,7 +452,8 @@ spec:
                           DiskSizeGB:
                             description: DiskSizeGB defines the size of disk in GB.
                             format: int64
-                            minimum: 0
+                            maximum: 65536
+                            minimum: 16
                             type: integer
                           DiskType:
                             description: DiskType defines the type of disk. The valid
@@ -1055,7 +1057,8 @@ spec:
                           DiskSizeGB:
                             description: DiskSizeGB defines the size of disk in GB.
                             format: int64
-                            minimum: 0
+                            maximum: 65536
+                            minimum: 16
                             type: integer
                           DiskType:
                             description: DiskType defines the type of disk. The valid
