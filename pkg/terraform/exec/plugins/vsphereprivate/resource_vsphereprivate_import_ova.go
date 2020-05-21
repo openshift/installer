@@ -93,6 +93,12 @@ func resourceVSpherePrivateImportOva() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.NoZeroValues,
 			},
+			"thin": {
+				Type:        schema.TypeBool,
+				Description: "If set to True then the OVA will be imported as a Thin provisioned VMDK.",
+				Required:    true,
+				ForceNew:    true,
+			},
 		},
 	}
 }
@@ -347,11 +353,20 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 		Name:    ovfEnvelope.Network.Networks[0].Name,
 		Network: importOvaParams.Network.Reference(),
 	}}
+
+	var diskType types.OvfCreateImportSpecParamsDiskProvisioningType
+
+	if d.Get("thin").(bool) {
+		diskType = types.OvfCreateImportSpecParamsDiskProvisioningTypeThin
+	} else {
+		diskType = types.OvfCreateImportSpecParamsDiskProvisioningTypeEagerZeroedThick
+	}
 	// This is a very minimal spec for importing
 	// an OVF.
 	cisp := types.OvfCreateImportSpecParams{
-		EntityName:     d.Get("name").(string),
-		NetworkMapping: networkMappings,
+		DiskProvisioning: string(diskType),
+		EntityName:       d.Get("name").(string),
+		NetworkMapping:   networkMappings,
 	}
 
 	m := ovf.NewManager(client)

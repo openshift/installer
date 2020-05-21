@@ -628,6 +628,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				Cluster:             installConfig.Config.VSphere.Cluster,
 				ImageURL:            string(*rhcosImage),
 				PreexistingFolder:   preexistingFolder,
+				Thin:                installConfig.Config.Platform.VSphere.Thin,
 			},
 		)
 		if err != nil {
