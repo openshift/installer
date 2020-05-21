@@ -1,6 +1,7 @@
 package vsphere
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,8 +10,6 @@ import (
 )
 
 func TestCloudProviderConfig(t *testing.T) {
-	clusterName := "test-cluster"
-	folderRelPath := ""
 	platform := &vspheretypes.Platform{
 		VCenter:          "test-name",
 		Username:         "test-username",
@@ -27,12 +26,13 @@ insecure-flag = "1"
 server = "test-name"
 datacenter = "test-datacenter"
 default-datastore = "test-datastore"
-folder = "test-cluster"
+folder = "/test-datacenter/vm/clusterID"
 
 [VirtualCenter "test-name"]
 datacenters = "test-datacenter"
 `
-	actualConfig, err := CloudProviderConfig(clusterName, folderRelPath, platform)
+	folderPath := fmt.Sprintf("/%s/vm/%s", "test-datacenter", "clusterID")
+	actualConfig, err := CloudProviderConfig(folderPath, platform)
 	assert.NoError(t, err, "failed to create cloud provider config")
 	assert.Equal(t, expectedConfig, actualConfig, "unexpected cloud provider config")
 }
