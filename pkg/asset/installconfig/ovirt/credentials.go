@@ -12,17 +12,13 @@ import (
 // Check if URL can be reacheable before we proceed with the installation
 // Parms:
 //	urlAddr - Full URL
-// Returns:
-//	err  - Error
-func checkUrlResponse(urlAddr string) (error) {
+func checkUrlResponse(urlAddr string) {
 
 	logrus.Debug("Checking URL Response: ", urlAddr)
 	_, err := http.Get(urlAddr)
 	if err != nil {
 		logrus.Fatal(err)
 	}
-
-	return err
 }
 
 func askCredentials() (Config, error) {
