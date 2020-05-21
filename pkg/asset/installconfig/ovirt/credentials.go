@@ -9,7 +9,7 @@ import (
 	"gopkg.in/AlecAivazis/survey.v1"
 )
 
-// Check if URL can be reacheable before we proceed with the installation
+// Check if URL can be reached before we proceed with the installation
 // Parms:
 //	urlAddr - Full URL
 func checkUrlResponse(urlAddr string) {
