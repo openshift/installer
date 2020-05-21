@@ -9,7 +9,7 @@ import (
 )
 
 var defaultOvirtConfigEnvVar = "OVIRT_CONFIG"
-var defaultOvirtConfigPath = filepath.Join(os.Getenv("HOME"), ".ovirt", "ovirt-config.yaml")
+var defaultOvirtConfigPath = filepath.Join(os.Getenv("HOME"), ".config", "ovirt", "ovirt-config.yaml")
 
 // Config holds oVirt api access details
 type Config struct {
