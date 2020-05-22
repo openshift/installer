@@ -16,7 +16,8 @@ COPY --from=builder /go/src/github.com/openshift/installer/images/openstack/rdo-
 
 # Install Dependendencies for tests
 # https://github.com/openshift/origin/blob/6114cbc507bf18890f009f16ee424a62007bc390/images/tests/Dockerfile.rhel
-RUN yum install --setopt=tsflags=nodocs -y git gzip util-linux && yum clean all && rm -rf /var/cache/yum/* && \
+RUN yum install --setopt=tsflags=nodocs -y git gzip util-linux && \
+    yum clean all && rm -rf /var/cache/yum/* && \
     localedef -c -f UTF-8 -i en_US en_US.UTF-8 && \
     git config --system user.name test && \
     git config --system user.email test@example.com && \
@@ -31,6 +32,11 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
     unzip awscliv2.zip && \
     ./aws/install -b /bin && \
     rm -rf ./aws awscliv2.zip
+
+# The Continuous Integration machinery relies on jq to parse JSON configuration files.
+RUN curl -sSo /etc/yum.repos.d/rdo-trunk-runtime-deps.repo https://trunk.rdoproject.org/centos7/rdo-trunk-runtime-deps.repo && \
+    yum install --setopt=tsflags=nodocs --disablerepo='*' --enablerepo=delorean-master-testing -y jq && \
+    yum clean all && rm -rf /var/cache/yum/*
 
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
