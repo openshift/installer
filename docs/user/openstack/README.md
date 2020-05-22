@@ -50,7 +50,7 @@ In order to run the latest version of the installer in OpenStack, at a bare mini
 
 For a successful installation it is required:
 
-- Floating IPs: 2
+- Floating IPs: 2 (plus one that will be created and destroyed by the Installer during the installation process)
 - Security Groups: 3
 - Security Group Rules: 60
 - Routers: 1
