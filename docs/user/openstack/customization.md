@@ -10,6 +10,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
   * [Minimal](#minimal)
   * [Custom-machine-pools](#custom-machine-pools)
 * [Image Overrides](#image-overrides)
+* [Custom Subnets](#custom-subnets)
 * [Additional Networks](#additional-networks)
 * [Additional Security Groups](#additional-security-groups)
 * [Further customization](#further-customization)
@@ -28,7 +29,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `clusterOSImage` (optional string): Either a URL with `http(s)` or `file` scheme to override the default OS image for cluster nodes or an existing Glance image name.
 * `apiVIP` (optional string): An IP addresss on the machineNetwork that will be assigned to the API VIP. Be aware that the `10` and `11` of the machineNetwork will be taken by neutron dhcp by default, and wont be available.
 * `ingressVIP` (optional string): An IP address on the machineNetwork that will be assigned to the ingress VIP. Be aware that the `10` and `11` of the machineNetwork will be taken by neutron dhcp by default, and wont be available.
-* `machinesSubnet` (optional string): the UUID of an openstack subnet to install the nodes of the cluster onto. The first CIDR in `networks.machineNetwork` must match the cidr of the `machinesSubnet`. In order to support more complex networking configurations, we expect the subnet passed to already be connected to an external network in some way. When this option is set, we will no longer attempt to create a router. Also note that setting `externalDNS` while setting `machinesSubnet` is invalid usage. If you want to add a DNS to your cluster while using a custom subnet, add it to the subnet in openstack [like this](https://docs.openstack.org/neutron/rocky/admin/config-dns-res.html). 
+* `machinesSubnet` (optional string): the UUID of an openstack subnet to install the nodes of the cluster onto. For more information on how to install with a custom subnet, see the [custom subnets](#custom-subnets) section of the docs.
 
 ## Machine pools
 
@@ -136,6 +137,12 @@ platform:
   openstack:
       clusterOSImage: my-rhcos
 ```
+
+## Custom Subnets
+
+Before running the installer with a custom `machinesSubnet`, there are a few things you should check. First, make sure that you have a network and subnet available. Note that the installer will create ports on this network, and some ports will be given a fixed IP addresses in the subnet's CIDR. Make sure that the credentials that you give the installer are authorized to do this! The installer will also apply a tag to the subnet. Lastly, the installer will not create a router, so make sure to do this if you need a router to attach floating ip addresses to the network you want to install the nodes onto. Note that for now, this feature does not fully support provider networks. 
+
+Once that is ironed out, you can pass the ID of the subnet to the install config with the `machinesSubnet` option. This subnet will be tagged as the primary subnet for the cluster. The nodes, and VIP port will be created on this subnet. This does add some complexity to the install process that needs to be accounted for. First of all, the subnet must have DHCP enabled. Also, the CIDR of the custom subnet must match the cidr of `networks.machineNetwork`. Be aware that the API and Ingress VIPs by default will try to take the .5 and .7 of your network CIDR. To avoid other services taking the ports assigned to the api and ingress VIPs, it is recommended that users set the `apiVIP` and `ingressVIP` options in the install config to addresses that are outside of the DHCP allocation pool. Lastly, note that setting `externalDNS` while setting `machinesSubnet` is invalid usage, since the installer will not modify your subnet. If you want to add a DNS to your cluster while using a custom subnet, add it to the subnet in openstack [like this](https://docs.openstack.org/neutron/rocky/admin/config-dns-res.html).
 
 ## Additional Networks
 
