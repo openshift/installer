@@ -1,6 +1,7 @@
 # Required Python packages:
 #
 # ansible
+# openstackcli
 # openstacksdk
 
 - import_playbook: common.yaml
@@ -43,14 +44,13 @@
   # for each service present on the cluster. Let's make
   # sure to remove the resources generated.
   - name: 'Remove the cluster load balancers'
-    os_loadbalancer:
-      name: "{{ item.name }}"
-      state: absent
-      wait: no
+    command:
+      cmd: "openstack loadbalancer delete --cascade {{ item.id }}"
     with_items: "{{ lbs_tagged.json.loadbalancers }}"
     when:
     - os_networking_type == "Kuryr"
     - versions | length > 0
+    - '"PENDING" not in item.provisioning_status'
 
   - name: 'List loadbalancers tagged on description'
     uri:
@@ -67,10 +67,10 @@
   # for each service present on the cluster. Let's make
   # sure to remove the resources generated.
   - name: 'Remove the cluster load balancers'
-    os_loadbalancer:
-      name: "{{ item.name }}"
-      state: absent
+    command:
+      cmd: "openstack loadbalancer delete --cascade {{ item.id }}"
     with_items: "{{ lbs_description.json.loadbalancers }}"
     when:
     - os_networking_type == "Kuryr"
     - versions | length == 0
+    - '"PENDING" not in item.provisioning_status'
