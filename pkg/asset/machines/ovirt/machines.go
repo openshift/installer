@@ -29,7 +29,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider := provider(platform, userDataSecret, osImage)
+	provider := provider(platform, pool, userDataSecret, osImage)
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		machine := machineapi.Machine{
@@ -59,15 +59,31 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(platform *ovirt.Platform, userDataSecret string, osImage string) *ovirtprovider.OvirtMachineProviderSpec {
-	return &ovirtprovider.OvirtMachineProviderSpec{
+func provider(platform *ovirt.Platform, pool *types.MachinePool, userDataSecret string, osImage string) *ovirtprovider.OvirtMachineProviderSpec {
+	spec := ovirtprovider.OvirtMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "ovirtproviderconfig.openshift.io/v1beta1",
+			APIVersion: "ovirtproviderconfig.machine.openshift.io/v1beta1",
 			Kind:       "OvirtMachineProviderSpec",
 		},
 		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret: &corev1.LocalObjectReference{Name: "ovirt-credentials"},
-		ClusterId:         platform.ClusterID,
 		TemplateName:      osImage,
+		ClusterId:         platform.ClusterID,
+		InstanceTypeId:    pool.Platform.Ovirt.InstanceTypeID,
+		MemoryMB:          pool.Platform.Ovirt.MemoryMB,
+		VMType:            string(pool.Platform.Ovirt.VMType),
 	}
+	if pool.Platform.Ovirt.CPU != nil {
+		spec.CPU = &ovirtprovider.CPU{
+			Cores:   pool.Platform.Ovirt.CPU.Cores,
+			Sockets: pool.Platform.Ovirt.CPU.Sockets,
+			Threads: 1,
+		}
+	}
+	if pool.Platform.Ovirt.OSDisk != nil {
+		spec.OSDisk = &ovirtprovider.Disk{
+			SizeGB: pool.Platform.Ovirt.OSDisk.SizeGB,
+		}
+	}
+	return &spec
 }

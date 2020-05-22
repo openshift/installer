@@ -10,6 +10,7 @@ import (
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
+	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1alpha1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -429,17 +430,25 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.Ovirt.VNICProfileID = profiles[0].MustId()
 		}
 
+		masters, err := mastersAsset.Machines()
+		if err != nil {
+			return err
+		}
+
 		data, err := ovirttfvars.TFVars(
-			config.URL,
-			config.Username,
-			config.Password,
-			config.CAFile,
+			ovirttfvars.Auth{
+				URL:      config.URL,
+				Username: config.Username,
+				Password: config.Password,
+				Cafile:   config.CAFile,
+			},
 			installConfig.Config.Platform.Ovirt.ClusterID,
 			installConfig.Config.Platform.Ovirt.StorageDomainID,
 			installConfig.Config.Platform.Ovirt.NetworkName,
 			installConfig.Config.Platform.Ovirt.VNICProfileID,
 			string(*rhcosImage),
 			clusterID.InfraID,
+			masters[0].Spec.ProviderSpec.Value.Object.(*ovirtprovider.OvirtMachineProviderSpec),
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

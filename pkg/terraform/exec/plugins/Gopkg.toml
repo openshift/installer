@@ -81,7 +81,12 @@ ignored = [
 
 [[constraint]]
   name = "github.com/ovirt/terraform-provider-ovirt"
-  revision = "aaa6ce5ab3595c654bacc6525bc7b27329297c4e"
+  revision = "f290f06b7bdf4ae2e25f70c99dd14f55975d2c73"
+
+[[override]]
+  name = "github.com/ovirt/go-ovirt"
+  revision = "9bcc4fd4e6c0921d07d328036c73abbea369e023"
+
 
 [[constraint]]
   name = "github.com/terraform-providers/terraform-provider-vsphere"

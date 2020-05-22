@@ -47,6 +47,7 @@ type Connection struct {
 	token    string
 	insecure bool
 	caFile   string
+	caCert   []byte
 	headers  map[string]string
 	// Debug options
 	logFunc LogFunc
@@ -69,9 +70,36 @@ func (c *Connection) URL() string {
 // Test tests the connectivity with the server using the credentials provided in connection.
 // If connectivity works correctly and the credentials are valid, it returns a nil error,
 // or it will return an error containing the reason as the message.
+// If the authentication fails because the oauth token is no longer valid it will
+// try to re-authenticate, to renew the token.
 func (c *Connection) Test() error {
-	_, err := c.authenticate()
+	statusCode, err := c.testToken()
+	if err != nil || statusCode == http.StatusUnauthorized {
+		// failed, then clear state.
+		c.ssoToken = ""
+	}
+	_, err = c.authenticate()
 	return err
+}
+
+// testToken tries a minimal request, using the existing token. Returns the status
+// code and an error.
+func (c *Connection) testToken() (int, error) {
+	// a simple http OPTIONS request is the lightest method to test auth.
+	options, err := http.NewRequest(http.MethodOptions, c.url.String(), nil)
+	// add auth token to the request
+	options.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.ssoToken))
+	if err != nil {
+		// shouldn't fail to construct a request, but report anyway.
+		return 0, err
+	}
+	res, err := c.client.Do(options)
+	if err != nil {
+		return 0, err
+	}
+	defer res.Body.Close()
+
+	return res.StatusCode, err
 }
 
 func (c *Connection) getHref(object Href) (string, bool) {
@@ -236,13 +264,19 @@ func (c *Connection) getSsoResponse(inputURL *url.URL, parameters map[string]str
 			if _, err := os.Stat(c.caFile); os.IsNotExist(err) {
 				return nil, fmt.Errorf("The CA File '%s' doesn't exist", c.caFile)
 			}
-			pool := x509.NewCertPool()
 			caCerts, err := ioutil.ReadFile(c.caFile)
 			if err != nil {
 				return nil, err
 			}
-			if !pool.AppendCertsFromPEM(caCerts) {
+			pool, err := createCertPool(caCerts)
+			if err != nil {
 				return nil, fmt.Errorf("Failed to parse CA Certificate in file '%s'", c.caFile)
+			}
+			tlsConfig.RootCAs = pool
+		} else if len(c.caCert) > 0 {
+			pool, err := createCertPool(c.caCert)
+			if err != nil {
+				return nil, err
 			}
 			tlsConfig.RootCAs = pool
 		}
@@ -452,6 +486,16 @@ func (connBuilder *ConnectionBuilder) CAFile(caFilePath string) *ConnectionBuild
 	return connBuilder
 }
 
+// CACert sets the caCert field for `Connection` instance
+func (connBuilder *ConnectionBuilder) CACert(caCert []byte) *ConnectionBuilder {
+	// If already has errors, just return
+	if connBuilder.err != nil {
+		return connBuilder
+	}
+	connBuilder.conn.caCert = caCert
+	return connBuilder
+}
+
 // Headers sets a map of custom HTTP headers to be added to each HTTP request
 func (connBuilder *ConnectionBuilder) Headers(headers map[string]string) *ConnectionBuilder {
 	// If already has errors, just return
@@ -523,13 +567,19 @@ func (connBuilder *ConnectionBuilder) Build() (*Connection, error) {
 			if _, err := os.Stat(connBuilder.conn.caFile); os.IsNotExist(err) {
 				return nil, fmt.Errorf("The ca file '%s' doesn't exist", connBuilder.conn.caFile)
 			}
-			pool := x509.NewCertPool()
 			caCerts, err := ioutil.ReadFile(connBuilder.conn.caFile)
 			if err != nil {
 				return nil, err
 			}
-			if !pool.AppendCertsFromPEM(caCerts) {
+			pool, err := createCertPool(caCerts)
+			if err != nil {
 				return nil, fmt.Errorf("Failed to parse CA Certificate in file '%s'", connBuilder.conn.caFile)
+			}
+			tlsConfig.RootCAs = pool
+		} else if len(connBuilder.conn.caCert) > 0 {
+			pool, err := createCertPool(connBuilder.conn.caCert)
+			if err != nil {
+				return nil, err
 			}
 			tlsConfig.RootCAs = pool
 		}
@@ -544,4 +594,12 @@ func (connBuilder *ConnectionBuilder) Build() (*Connection, error) {
 		},
 	}
 	return connBuilder.conn, nil
+}
+
+func createCertPool(caCerts []byte) (*x509.CertPool, error) {
+	pool := x509.NewCertPool()
+	if !pool.AppendCertsFromPEM(caCerts) {
+		return nil, fmt.Errorf("Failed to parse CA Certificate")
+	}
+	return pool, nil
 }

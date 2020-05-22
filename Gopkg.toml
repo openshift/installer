@@ -139,11 +139,11 @@ required = [
 
 [[constraint]]
   name = "github.com/openshift/cluster-api-provider-ovirt"
-  revision ="0966db28bce37ca97ada41c69f48ffa7c4d02493"
+  revision = "281b4db96607c474f73161c49aab80528f517c26"
 
 [[constraint]]
   name = "github.com/ovirt/go-ovirt"
-  version = "v4.3.9"
+  revision = "9bcc4fd4e6c0921d07d328036c73abbea369e023"
 
 [[constraint]]
   branch = "master"
