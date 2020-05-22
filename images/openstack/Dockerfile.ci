@@ -10,6 +10,7 @@ FROM registry.svc.ci.openshift.org/origin/4.2:cli AS cli
 FROM registry.svc.ci.openshift.org/origin/4.2:base
 COPY --from=cli /usr/bin/oc /bin/oc
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
+COPY --from=builder /go/src/github.com/openshift/installer/upi /var/lib/openshift-install/upi
 COPY --from=builder /go/src/github.com/openshift/installer/images/openstack/rdo-stein.repo /etc/yum.repos.d/rdo-stein.repo
 COPY --from=builder /go/src/github.com/openshift/installer/images/openstack/rdo-stein.gpg /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-Cloud
 
