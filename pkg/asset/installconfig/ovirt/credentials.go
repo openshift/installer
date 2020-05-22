@@ -3,7 +3,6 @@ package ovirt
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/AlecAivazis/survey.v1"
@@ -22,20 +21,27 @@ func checkURLResponse(urlAddr string) {
 }
 
 func askCredentials() (Config, error) {
-	c := Config{}
+	oVirtConfig := Config{}
 	err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
-				Message: "oVirt API endpoint URL",
-				Help:    "The URL of the oVirt engine API. For example, https://ovirt-engine-fqdn/ovirt-engine/api.",
+				Message: "oVirt FQDN[:PORT]",
+				Help:    "The oVirt FQDN[:PORT] (ovirt.example.com:443)",
 			},
 			Validate: survey.ComposeValidators(survey.Required),
 		},
-	}, &c.URL)
+	}, &oVirtConfig.FQDN)
 	if err != nil {
-		return c, err
+		return oVirtConfig, err
 	}
-	checkURLResponse(c.URL)
+
+
+	// Set c.URL with the API endpoint
+	oVirtConfig.URL = fmt.Sprintf(
+		"https://%s/ovirt-engine/api",
+		oVirtConfig.FQDN)
+
+	checkURLResponse(oVirtConfig.URL)
 
 	var ovirtCertTrusted bool
 	err = survey.AskOne(
@@ -47,30 +53,29 @@ func askCredentials() (Config, error) {
 		&ovirtCertTrusted,
 		nil)
 	if err != nil {
-		return c, err
+		return oVirtConfig, err
 	}
-	c.Insecure = !ovirtCertTrusted
+	oVirtConfig.Insecure = !ovirtCertTrusted
 
 	if ovirtCertTrusted {
-		ovirtURL, err := url.Parse(c.URL)
 		if err != nil {
 			// should have passed validation, this is unexpected
-			return c, err
+			return oVirtConfig, err
 		}
-		c.PemURL = fmt.Sprintf(
-			"%s://%s/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA",
-			ovirtURL.Scheme,
-			ovirtURL.Host)
-		logrus.Debug("PEM URL: ", c.PemURL)
+
+		oVirtConfig.PemURL = fmt.Sprintf(
+			"https://%s/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA",
+			oVirtConfig.FQDN)
+		logrus.Debug("PEM URL: ", oVirtConfig.PemURL)
 
 		err = survey.AskOne(&survey.Multiline{
 			Message: "oVirt certificate bundle",
-			Help:    fmt.Sprintf("The oVirt certificate bundle can be downloaded from %s", c.PemURL),
+			Help:    fmt.Sprintf("The oVirt certificate bundle can be downloaded from %s", oVirtConfig.PemURL),
 		},
-			&c.CABundle,
+			&oVirtConfig.CABundle,
 			survey.ComposeValidators(survey.Required))
 		if err != nil {
-			return c, err
+			return oVirtConfig, err
 		}
 	} else {
 		logrus.Warning("Communication with the oVirt engine will be insecure.")
@@ -85,9 +90,9 @@ func askCredentials() (Config, error) {
 			},
 			Validate: survey.ComposeValidators(survey.Required),
 		},
-	}, &c.Username)
+	}, &oVirtConfig.Username)
 	if err != nil {
-		return c, err
+		return oVirtConfig, err
 	}
 
 	err = survey.Ask([]*survey.Question{
@@ -96,12 +101,12 @@ func askCredentials() (Config, error) {
 				Message: "oVirt engine password",
 				Help:    "",
 			},
-			Validate: survey.ComposeValidators(survey.Required, authenticated(&c)),
+			Validate: survey.ComposeValidators(survey.Required, authenticated(&oVirtConfig)),
 		},
-	}, &c.Password)
+	}, &oVirtConfig.Password)
 	if err != nil {
-		return c, err
+		return oVirtConfig, err
 	}
 
-	return c, nil
+	return oVirtConfig, nil
 }
