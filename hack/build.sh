@@ -25,7 +25,7 @@ export CGO_ENABLED=0
 case "${MODE}" in
 release)
 	LDFLAGS="${LDFLAGS} -s -w"
-	TAGS="${TAGS} release"
+	TAGS="${TAGS} release okd"
 	if test "${SKIP_GENERATION}" != y
 	then
 		go generate ./data
