@@ -108,6 +108,19 @@ resource "openstack_networking_trunk_v2" "masters" {
   port_id        = openstack_networking_port_v2.masters[count.index].id
 }
 
+// Artificial delay to prevent race conditions in Neutron. Despite the fact
+// the service says the port was created and returns its ID, when we try to
+// assotiate a floating IP with this port, it may return 404.
+// For more information: https://bugzilla.redhat.com/show_bug.cgi?id=1836098
+resource "null_resource" "delay" {
+  provisioner "local-exec" {
+    command = "sleep 10"
+  }
+  triggers = {
+    "api_port" = "${openstack_networking_port_v2.api_port.id}"
+  }
+}
+
 // Assign the floating IP to one of the masters.
 //
 // Strictly speaking, this is not required to finish the installation. We
@@ -128,6 +141,7 @@ resource "openstack_networking_floatingip_associate_v2" "api_fip" {
   count       = length(var.lb_floating_ip) == 0 ? 0 : 1
   port_id     = openstack_networking_port_v2.api_port.id
   floating_ip = var.lb_floating_ip
+  depends_on  = [null_resource.delay]
 }
 
 resource "openstack_networking_router_v2" "openshift-external-router" {
