@@ -35,7 +35,6 @@ func askCredentials() (Config, error) {
 		return oVirtConfig, err
 	}
 
-
 	// Set c.URL with the API endpoint
 	oVirtConfig.URL = fmt.Sprintf(
 		"https://%s/ovirt-engine/api",
