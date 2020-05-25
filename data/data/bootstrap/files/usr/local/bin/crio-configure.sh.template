@@ -10,8 +10,11 @@ set -euo pipefail
 
 . /usr/local/bin/release-image.sh
 
-MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
+if [[ -d "/etc/crio" ]]; then
+  MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 
-sed --in-place --expression "s,pause_image *=.*,pause_image = \"${MACHINE_CONFIG_INFRA_IMAGE}\"," /etc/crio/crio.conf
-sed --in-place --expression 's,pause_command *=.*,pause_command = "/usr/bin/pod",' /etc/crio/crio.conf
-sed --in-place --expression 's,"/usr/share/containers/oci/hooks.d","/etc/containers/oci/hooks.d",' /etc/crio/crio.conf
+  sed --in-place --expression "s,pause_image *=.*,pause_image = \"${MACHINE_CONFIG_INFRA_IMAGE}\"," /etc/crio/crio.conf
+  sed --in-place --expression 's,pause_command *=.*,pause_command = "/usr/bin/pod",' /etc/crio/crio.conf
+  sed --in-place --expression 's,"/usr/share/containers/oci/hooks.d","/etc/containers/oci/hooks.d",' /etc/crio/crio.conf
+fi
+
