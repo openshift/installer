@@ -2,11 +2,24 @@ package ovirt
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/AlecAivazis/survey.v1"
 )
+
+// Check if URL can be reached before we proceed with the installation
+// Parms:
+//	urlAddr - Full URL
+func checkURLResponse(urlAddr string) {
+
+	logrus.Debug("Checking URL Response: ", urlAddr)
+	_, err := http.Get(urlAddr)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+}
 
 func askCredentials() (Config, error) {
 	c := Config{}
@@ -22,6 +35,7 @@ func askCredentials() (Config, error) {
 	if err != nil {
 		return c, err
 	}
+	checkURLResponse(c.URL)
 
 	var ovirtCertTrusted bool
 	err = survey.AskOne(
