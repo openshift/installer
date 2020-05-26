@@ -14,6 +14,7 @@ var defaultOvirtConfigPath = filepath.Join(os.Getenv("HOME"), ".ovirt", "ovirt-c
 // Config holds oVirt api access details
 type Config struct {
 	URL      string `yaml:"ovirt_url"`
+	FQDN     string `yaml:"ovirt_fqdn"`
 	PemURL   string `yaml:"ovirt_pem_url"`
 	Username string `yaml:"ovirt_username"`
 	Password string `yaml:"ovirt_password"`
