@@ -29,8 +29,8 @@ func askNetwork(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
 		networkNames = append(networkNames, network.MustName())
 	}
 	err = survey.AskOne(&survey.Select{
-		Message: "oVirt network",
-		Help:    "The oVirt network of the deployed VMs. 'ovirtmgmt' is the default network. It is recommended to use a dedicated network for each OpenShift cluster.",
+		Message: "Engine network",
+		Help:    "The Engine network of the deployed VMs. 'ovirtmgmt' is the default network. It is recommended to use a dedicated network for each OpenShift cluster.",
 		Options: networkNames,
 	},
 		&networkName,
@@ -73,7 +73,7 @@ func askVNICProfileID(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
 	// we have multiple vnic profile for the selected network
 	err = survey.AskOne(&survey.Select{
 		Message: "VNIC Profile",
-		Help:    "The oVirt VNIC profile of the VMs.",
+		Help:    "The Engine VNIC profile of the VMs.",
 		Options: profileNames,
 	},
 		&profileID,

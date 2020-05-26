@@ -29,7 +29,7 @@ func askStorage(c *ovirtsdk4.Connection, p *ovirt.Platform, clusterName string) 
 		domainNames = append(domainNames, domain.MustName())
 	}
 	err = survey.AskOne(&survey.Select{
-		Message: "oVirt storage domain",
+		Message: "Engine storage domain",
 		Help:    "The storage domain will be used to create the disks of all the cluster nodes.",
 		Options: domainNames,
 	},

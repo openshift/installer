@@ -102,8 +102,8 @@ func askCredentials() (Config, error) {
 	err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
-				Message: "oVirt FQDN[:PORT]",
-				Help:    "The oVirt FQDN[:PORT] (ovirt.example.com:443)",
+				Message: "Engine FQDN[:PORT]",
+				Help:    "The Engine FQDN[:PORT] (ovirt.example.com:443)",
 			},
 			Validate: survey.ComposeValidators(survey.Required),
 		},
@@ -137,7 +137,7 @@ func askCredentials() (Config, error) {
 		&survey.Confirm{
 			Message: message,
 			Default: false,
-			Help:    "In order to securly communicate with the oVirt engine, the certificate authority must be trusted by the local system.",
+			Help:    "In order to securly communicate with the Engine, the certificate authority must be trusted by the local system.",
 		},
 		&importCACert,
 		nil)
@@ -192,7 +192,7 @@ func askCredentials() (Config, error) {
 	err = survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
-				Message: "oVirt engine username",
+				Message: "Engine username",
 				Help:    "The user must have permissions to create VMs and disks on the Storage Domain with the same name as the OpenShift cluster.",
 				Default: "admin@internal",
 			},
@@ -206,7 +206,7 @@ func askCredentials() (Config, error) {
 	err = survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Password{
-				Message: "oVirt engine password",
+				Message: "Engine password",
 				Help:    "",
 			},
 			Validate: survey.ComposeValidators(survey.Required, authenticated(&oVirtConfig)),

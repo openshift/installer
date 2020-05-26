@@ -29,8 +29,8 @@ func askCluster(c *ovirtsdk4.Connection, p *ovirt.Platform) (string, error) {
 		clusterNames = append(clusterNames, cluster.MustName())
 	}
 	err = survey.AskOne(&survey.Select{
-		Message: "oVirt cluster",
-		Help:    "The oVirt cluster where the VMs will be created.",
+		Message: "Engine cluster",
+		Help:    "The Engine cluster where the VMs will be created.",
 		Options: clusterNames,
 	},
 		&clusterName,

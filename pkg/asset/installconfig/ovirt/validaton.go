@@ -21,7 +21,7 @@ func Validate(ic *types.InstallConfig) error {
 	if ic.Platform.Ovirt == nil {
 		return errors.New(field.Required(
 			ovirtPlatformPath,
-			"oVirt validation requires a oVirt platform configuration").Error())
+			"Engine validation requires a Engine platform configuration").Error())
 	}
 
 	allErrs = append(
@@ -90,14 +90,14 @@ func authenticated(c *Config) survey.Validator {
 			Build()
 
 		if err != nil {
-			return errors.Errorf("failed to construct connection to oVirt platform %s", err)
+			return errors.Errorf("failed to construct connection to Engine platform %s", err)
 		}
 
 		defer connection.Close()
 
 		err = connection.Test()
 		if err != nil {
-			return errors.Errorf("failed to connect to oVirt platform %s", err)
+			return errors.Errorf("failed to connect to Engine platform %s", err)
 		}
 		return nil
 	}
