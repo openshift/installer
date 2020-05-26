@@ -50,7 +50,7 @@ resource "ovirt_vm" "tmp_import_vm" {
     interface = "virtio_scsi"
   }
   os {
-    type = "rhcos_x86"
+    type = "rhcos_x64"
   }
   nics {
     name            = "nic1"
