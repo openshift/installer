@@ -58,7 +58,7 @@ module "masters" {
   )
   root_volume_size       = var.openstack_master_root_volume_size
   root_volume_type       = var.openstack_master_root_volume_type
-  server_group_id        = var.openstack_master_server_group_id
+  server_group_name      = var.openstack_master_server_group_name
   additional_network_ids = var.openstack_additional_network_ids
 }
 

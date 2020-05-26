@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 // +k8s:deepcopy-gen=package,register
-// +k8s:conversion-gen=github.com/openshift/cluster-api/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig
+// +k8s:conversion-gen=github.com/openshift/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig
 // +k8s:openapi-gen=true
 // +k8s:defaulter-gen=TypeMeta
 // +groupName=openstackproviderconfig.openshift.io

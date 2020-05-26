@@ -1177,11 +1177,13 @@ github.com/gophercloud/gophercloud v0.0.0-20190212181753-892256c46858/go.mod h1:
 github.com/gophercloud/gophercloud v0.0.0-20190509032623-7892efa714f1/go.mod h1:vxM41WHh5uqHVBMZHzuwNOHh8XEoIEcSTewFxm1c5g8=
 github.com/gophercloud/gophercloud v0.1.0/go.mod h1:vxM41WHh5uqHVBMZHzuwNOHh8XEoIEcSTewFxm1c5g8=
 github.com/gophercloud/gophercloud v0.2.0/go.mod h1:vxM41WHh5uqHVBMZHzuwNOHh8XEoIEcSTewFxm1c5g8=
+github.com/gophercloud/gophercloud v0.6.1-0.20191025185032-6ad562af8c1f/go.mod h1:GICNByuaEBibcjmjvI7QvYJSZEbGkcYwAR7EZK2WMqM=
 github.com/gophercloud/gophercloud v0.7.1-0.20191210042042-7aa2e52d21f9/go.mod h1:gmC5oQqMDOMO1t1gq5DquX/yAU808e/4mzjjDA76+Ss=
 github.com/gophercloud/gophercloud v0.7.1-0.20191211202411-f940f50ff1f7 h1:iYD//82P8YSpKrCUaYhLMoxnIXmT5qvNNKTy5iGgc30=
 github.com/gophercloud/gophercloud v0.7.1-0.20191211202411-f940f50ff1f7/go.mod h1:gmC5oQqMDOMO1t1gq5DquX/yAU808e/4mzjjDA76+Ss=
 github.com/gophercloud/gophercloud v0.8.0 h1:1ylFFLRx7otpfRPSuOm77q8HLSlSOwYCGDeXmXJhX7A=
 github.com/gophercloud/gophercloud v0.8.0/go.mod h1:Kc/QKr9thLKruO/dG0szY8kRIYS+iENz0ziI0hJf76A=
+github.com/gophercloud/utils v0.0.0-20190124231947-9c3b9f2457ef/go.mod h1:wjDF8z83zTeg5eMLml5EBSlAhbF7G8DobyI1YsMuyzw=
 github.com/gophercloud/utils v0.0.0-20190313033024-0bcc8e728cb5/go.mod h1:SZ9FTKibIotDtCrxAU/evccoyu1yhKST6hgBvwTB5Eg=
 github.com/gophercloud/utils v0.0.0-20191129022341-463e26ffa30d/go.mod h1:SZ9FTKibIotDtCrxAU/evccoyu1yhKST6hgBvwTB5Eg=
 github.com/gophercloud/utils v0.0.0-20191212191830-4533a07bd492 h1:NAwq2GgRiqbNLw1cA7KUdt7lDR/NzJtk4EXGxO3gqas=
@@ -1795,8 +1797,8 @@ github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200120152131-1b09fd9e71
 github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200120152131-1b09fd9e7156/go.mod h1:KCyjaBfEkifs9bqV1HEXDJUyQylgeLSqiqt2QnMn7is=
 github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603 h1:MC6BSZYxFPoqqKj9PdlGjHGVKcMsvn6Kv1NiVzQErZ8=
 github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603/go.mod h1:7pQ9Bzha+ug/5zd+0ufbDEcnn2OnNlPwRwYrzhXk4NM=
-github.com/openshift/cluster-api-provider-openstack v0.0.0-20200323110431-3311de91e078 h1:Irj9ROcWhbeH6t2DEUDIpdIJgSLBaXww6AP/FMCmGmw=
-github.com/openshift/cluster-api-provider-openstack v0.0.0-20200323110431-3311de91e078/go.mod h1:ntMRKZlv++TExGO4g2jgsVIaHKJt8kKe72BAvMPV5vA=
+github.com/openshift/cluster-api-provider-openstack v0.0.0-20200526112135-319a35b2e38e h1:qDiAnW8lxrOqt3iiC1Ph1W+2E1s05OGO4NlIs4YIcOc=
+github.com/openshift/cluster-api-provider-openstack v0.0.0-20200526112135-319a35b2e38e/go.mod h1:1DDDZ7uXsauiUvCDUxq6XmsToaTh9WipPoW1qASkL9c=
 github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20200504092944-27473ea1ae43 h1:JO7t5tJcLiE0gk7VrdzKrJAcOv73GirpUxH/OvrOVms=
 github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20200504092944-27473ea1ae43/go.mod h1:Vl/bvZulLw6PdUADIFWGfoTWH1O4L1B80eN7BtLYEuo=
 github.com/openshift/cluster-autoscaler-operator v0.0.0-20190521201101-62768a6ba480/go.mod h1:/XmV44Fh28Vo3Ye93qFrxAbcFJ/Uy+7LPD+jGjmfJYc=
@@ -2498,6 +2500,7 @@ golang.org/x/sys v0.0.0-20190922100055-0a153f010e69/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20191002091554-b397fe3ad8ed/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191008105621-543471e840be/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191010194322-b09406accb47/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20191029155521-f43be2a4598c/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191120155948-bd437916bb0e/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191128015809-6d18c012aee9/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191204072324-ce4227a45e2e/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=

@@ -24,8 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 	"sigs.k8s.io/yaml"
 
-	clusterv1 "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1"
-	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
+	machinev1 "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
@@ -39,35 +38,7 @@ var (
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
 )
 
-// ClusterConfigFromProviderSpec unmarshals a provider config into an OpenStack Cluster type
-func ClusterSpecFromProviderSpec(providerSpec clusterv1.ProviderSpec) (*OpenstackClusterProviderSpec, error) {
-	if providerSpec.Value == nil {
-		return nil, errors.New("no such providerSpec found in manifest")
-	}
-
-	var config OpenstackClusterProviderSpec
-	if err := yaml.Unmarshal(providerSpec.Value.Raw, &config); err != nil {
-		return nil, err
-	}
-	return &config, nil
-}
-
-// ClusterStatusFromProviderStatus unmarshals a provider status into an OpenStack Cluster Status type
-func ClusterStatusFromProviderStatus(extension *runtime.RawExtension) (*OpenstackClusterProviderStatus, error) {
-	if extension == nil {
-		return &OpenstackClusterProviderStatus{}, nil
-	}
-
-	status := new(OpenstackClusterProviderStatus)
-	if err := yaml.Unmarshal(extension.Raw, status); err != nil {
-		return nil, err
-	}
-
-	return status, nil
-}
-
-// This is the same as ClusterSpecFromProviderSpec but we
-// expect there to be a specific Spec type for Machines soon
+// MachineSpecFromProviderSpec unmarshals a provider status into an OpenStack Machine Status type
 func MachineSpecFromProviderSpec(providerSpec machinev1.ProviderSpec) (*OpenstackProviderSpec, error) {
 	if providerSpec.Value == nil {
 		return nil, errors.New("no such providerSpec found in manifest")

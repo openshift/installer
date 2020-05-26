@@ -4,8 +4,6 @@ package openstack
 import (
 	"fmt"
 
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/servergroups"
-	"github.com/gophercloud/utils/openstack/clientconfig"
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,12 +42,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	provider := generateProvider(clusterID, platform, pool.Platform.OpenStack, osImage, az, role, userDataSecret, trunk)
 
 	if role == "master" {
-		sg, err := getOrCreateServerGroup(platform.Cloud, clusterID+"-"+role, "soft-anti-affinity")
-		if err != nil {
-			return nil, err
-		}
-
-		provider.ServerGroupID = sg.ID
+		provider.ServerGroupName = clusterID + "-master"
 	}
 
 	total := int64(1)
@@ -162,50 +155,6 @@ func trunkSupportBoolean(trunkSupport string) (result bool) {
 		result = false
 	}
 	return
-}
-
-// getOrCreateServerGroup gets a Nova server group with the given name and
-// policy or creates a new one if it doesn't exist.
-//
-// https://docs.openstack.org/api-ref/compute/?expanded=create-server-group-detail#server-groups-os-server-groups
-func getOrCreateServerGroup(cloud, serverGroupName, policy string) (*servergroups.ServerGroup, error) {
-	conn, err := clientconfig.NewServiceClient(
-		"compute",
-		&clientconfig.ClientOpts{
-			Cloud: cloud,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Microversion "2.15" is the first that supports "soft"-anti-affinity.
-	// Note that microversions starting from "2.64" use a new field
-	// accepting policies as a string instead of an array.
-	conn.Microversion = "2.15"
-
-	allPages, err := servergroups.List(conn).AllPages()
-	if err != nil {
-		return nil, err
-	}
-
-	allServerGroups, err := servergroups.ExtractServerGroups(allPages)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, serverGroup := range allServerGroups {
-		// Reuse the server group if it already exists and is empty
-		if serverGroup.Name == serverGroupName && len(serverGroup.Members) == 0 {
-			return &serverGroup, nil
-		}
-	}
-
-	// Create a new group otherwise
-	return servergroups.Create(conn, &servergroups.CreateOpts{
-		Name:     serverGroupName,
-		Policies: []string{policy},
-	}).Extract()
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines

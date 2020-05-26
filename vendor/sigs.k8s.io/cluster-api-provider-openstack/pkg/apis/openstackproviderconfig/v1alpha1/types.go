@@ -83,8 +83,14 @@ type OpenstackProviderSpec struct {
 	// The volume metadata to boot from
 	RootVolume *RootVolume `json:"rootVolume,omitempty"`
 
-	// The server group to assign the machine to
+	// The server group to assign the machine to.
 	ServerGroupID string `json:"serverGroupID,omitempty"`
+
+	// The server group to assign the machine to. A server group with that
+	// name will be created if it does not exist. If both ServerGroupID and
+	// ServerGroupName are non-empty, they must refer to the same OpenStack
+	// resource.
+	ServerGroupName string `json:"serverGroupName,omitempty"`
 }
 
 type SecurityGroupParam struct {

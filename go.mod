@@ -108,7 +108,6 @@ require (
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
 	golang.org/x/sys v0.0.0-20191206220618-eeba5f6aabab
-	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	google.golang.org/api v0.14.0
 	gopkg.in/AlecAivazis/survey.v1 v1.8.9-0.20200217094205-6773bdf39b7f
@@ -166,6 +165,6 @@ replace (
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.17.1 // Replaced by MCO/CRI-O
 	sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200506073438-9d49428ff837 // Pin OpenShift fork
 	sigs.k8s.io/cluster-api-provider-azure => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20200120114645-8a9592f1f87b // Pin OpenShift fork
-	sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.0.0-20200323110431-3311de91e078 // Pin OpenShift fork
+	sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.0.0-20200526112135-319a35b2e38e // Pin OpenShift fork
 	sigs.k8s.io/controller-tools => github.com/abhinavdahiya/controller-tools v0.3.1-0.20200430222905-6fdf2d5fc069 // Using fork for sigs.k8s.io/controller-tools#427
 )

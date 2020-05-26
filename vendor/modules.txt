@@ -1022,8 +1022,6 @@ github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1
 github.com/openshift/cloud-credential-operator/pkg/aws
 github.com/openshift/cloud-credential-operator/version
 # github.com/openshift/cluster-api v0.0.0-20191129101638-b09907ac6668
-github.com/openshift/cluster-api/pkg/apis/cluster/common
-github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1
 github.com/openshift/cluster-api/pkg/apis/machine/common
 github.com/openshift/cluster-api/pkg/apis/machine/v1beta1
 # github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200120152131-1b09fd9e7156
@@ -1038,6 +1036,8 @@ github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1
 # github.com/openshift/library-go v0.0.0-20200324092245-db2a8546af81
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 # github.com/openshift/machine-api-operator v0.2.1-0.20200429102619-d36974451290
+github.com/openshift/machine-api-operator/pkg/apis/machine
+github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1
 github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider
 github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1
 # github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033375cbe820+incompatible => github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530
@@ -1816,7 +1816,7 @@ sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1
 sigs.k8s.io/cluster-api-provider-azure/pkg/apis
 sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1alpha1
 sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1
-# sigs.k8s.io/cluster-api-provider-openstack v0.0.0 => github.com/openshift/cluster-api-provider-openstack v0.0.0-20200323110431-3311de91e078
+# sigs.k8s.io/cluster-api-provider-openstack v0.0.0 => github.com/openshift/cluster-api-provider-openstack v0.0.0-20200526112135-319a35b2e38e
 sigs.k8s.io/cluster-api-provider-openstack/pkg/apis
 sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1
 # sigs.k8s.io/controller-runtime v0.5.1-0.20200330174416-a11a908d91e0
