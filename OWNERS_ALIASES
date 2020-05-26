@@ -56,3 +56,10 @@ aliases:
     - fabianofranz
     - jhixson74
   azure-reviewers:
+  ovirt-approvers:
+    - rgolangh
+  ovirt-reviewers:
+    - rgolangh
+    - Gal-Zaidman
+    - dougsland
+    - gekorob
