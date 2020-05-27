@@ -416,17 +416,13 @@ github.com/coreos/go-semver/semver
 # github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
 github.com/coreos/go-systemd/journal
 github.com/coreos/go-systemd/unit
+# github.com/coreos/go-systemd/v22 v22.0.0
+github.com/coreos/go-systemd/v22/unit
 # github.com/coreos/ignition v0.35.0
 github.com/coreos/ignition/config/shared/errors
 github.com/coreos/ignition/config/shared/validations
 github.com/coreos/ignition/config/util
-github.com/coreos/ignition/config/v1
-github.com/coreos/ignition/config/v1/types
-github.com/coreos/ignition/config/v2_0
-github.com/coreos/ignition/config/v2_0/types
-github.com/coreos/ignition/config/v2_1
 github.com/coreos/ignition/config/v2_1/types
-github.com/coreos/ignition/config/v2_2
 github.com/coreos/ignition/config/v2_2/types
 github.com/coreos/ignition/config/v2_4/types
 github.com/coreos/ignition/config/v2_5_experimental/types
@@ -434,8 +430,21 @@ github.com/coreos/ignition/config/validate
 github.com/coreos/ignition/config/validate/astjson
 github.com/coreos/ignition/config/validate/astnode
 github.com/coreos/ignition/config/validate/report
+# github.com/coreos/ignition/v2 v2.3.0
+github.com/coreos/ignition/v2/config/shared/errors
+github.com/coreos/ignition/v2/config/shared/validations
+github.com/coreos/ignition/v2/config/util
+github.com/coreos/ignition/v2/config/v3_0/types
+github.com/coreos/ignition/v2/config/v3_1/types
+github.com/coreos/ignition/v2/config/validate
 # github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f
 github.com/coreos/pkg/capnslog
+# github.com/coreos/vcontext v0.0.0-20191017033345-260217907eb5
+github.com/coreos/vcontext/json
+github.com/coreos/vcontext/path
+github.com/coreos/vcontext/report
+github.com/coreos/vcontext/tree
+github.com/coreos/vcontext/validate
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -1006,7 +1015,7 @@ github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
 # github.com/openshift-metal3/terraform-provider-ironic v0.2.1 => github.com/vrutkovs/terraform-provider-ironic v0.2.2-0.20200523090752-3a6a3c5a70d7
 github.com/openshift-metal3/terraform-provider-ironic/ironic
-# github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible => github.com/openshift/api v0.0.0-20200413201024-c6e8c9b6eb9a
+# github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible => github.com/openshift/api v0.0.0-20200429152225-b98a784d8e6d
 github.com/openshift/api/config/v1
 github.com/openshift/api/operator/v1
 github.com/openshift/api/operator/v1alpha1
@@ -1253,6 +1262,8 @@ github.com/terraform-providers/terraform-provider-google/google
 github.com/terraform-providers/terraform-provider-google/version
 # github.com/terraform-providers/terraform-provider-ignition v1.2.1
 github.com/terraform-providers/terraform-provider-ignition/ignition
+# github.com/terraform-providers/terraform-provider-ignition/v2 v2.0.0 => github.com/LorbusChris/terraform-provider-ignition/v2 v2.0.0-20200118034038-6e413297dc57
+github.com/terraform-providers/terraform-provider-ignition/v2/ignition
 # github.com/terraform-providers/terraform-provider-local v1.4.0
 github.com/terraform-providers/terraform-provider-local/local
 # github.com/terraform-providers/terraform-provider-openstack v1.25.0
@@ -1387,7 +1398,7 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# go4.org v0.0.0-20191010144846-132d2879e1e9
+# go4.org v0.0.0-20200104003542-c7e774b10ea0
 go4.org/errorutil
 # golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
 golang.org/x/crypto/bcrypt
@@ -1622,7 +1633,7 @@ gopkg.in/inf.v0
 gopkg.in/ini.v1
 # gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2
-# gopkg.in/yaml.v3 v3.0.0-20190905181640-827449938966
+# gopkg.in/yaml.v3 v3.0.0-20191010095647-fc94e3f71652
 gopkg.in/yaml.v3
 # honnef.co/go/tools v0.0.1-2019.2.3
 honnef.co/go/tools/arg
