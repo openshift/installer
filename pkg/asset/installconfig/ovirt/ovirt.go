@@ -13,7 +13,7 @@ func Platform() (*ovirt.Platform, error) {
 
 	ovirtConfig, err := NewConfig()
 	if err != nil {
-		ovirtConfig, err = askCredentials()
+		ovirtConfig, err = engineSetup()
 		if err != nil {
 			return nil, err
 		}

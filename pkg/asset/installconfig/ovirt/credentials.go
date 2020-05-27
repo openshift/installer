@@ -24,6 +24,9 @@ const (
 	ChmodCommand = "/usr/bin/chmod"
 )
 
+// EngineConfig struct - Hold all info about user environment
+var EngineConfig = Config{}
+
 // checkURLResponse performs a GET on the provided urlAddr to ensure that
 // the url actually exists. Users can set skipVerify as true or false to
 // avoid cert validation. In case of failure, returns error.
@@ -89,8 +92,67 @@ func fileContent(filename string) ([]byte, error) {
 	return content, nil
 }
 
-func askCredentials() (Config, error) {
-	EngineConfig := Config{}
+// askPassword will ask the password to connect to Engine API.
+// The password provided will be added in the Config struct.
+// If an error happens, it will ask again username for users.
+func askPassword() error {
+	err := survey.Ask([]*survey.Question{
+		{
+			Prompt: &survey.Password{
+				Message: "oVirt engine password",
+				Help:    "",
+			},
+			Validate: survey.ComposeValidators(survey.Required, authenticated(&EngineConfig)),
+		},
+	}, &EngineConfig.Password)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// askUsername will ask username to connect to Engine API.
+// The username provided will be added in the Config struct.
+// Returns Config and error if failure.
+func askUsername() error {
+	err := survey.Ask([]*survey.Question{
+		{
+			Prompt: &survey.Input{
+				Message: "oVirt engine username",
+				Help:    "The user must have permissions to create VMs and disks on the Storage Domain with the same name as the OpenShift cluster.",
+				Default: "admin@internal",
+			},
+			Validate: survey.ComposeValidators(survey.Required),
+		},
+	}, &EngineConfig.Username)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// askCredentials will handle username and password for connecting with Engine
+// In case of error during password, users will be prompted username again.
+func askCredentials() error {
+
+	err := askUsername()
+	if err != nil {
+		return err
+	}
+
+	err = askPassword()
+	if err != nil {
+		return askUsername()
+	}
+
+	return nil
+}
+
+// engineSetup will ask users: FQDN, execute validations and about
+// the credentials. In case of failure, returns Config and error
+func engineSetup() (Config, error) {
 	err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
@@ -206,30 +268,7 @@ func askCredentials() (Config, error) {
 		logrus.Warning("Communication with the Engine will be insecure.")
 	}
 
-	// Ask Engine credentials
-	err = survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Input{
-				Message: "oVirt engine username",
-				Help:    "The user must have permissions to create VMs and disks on the Storage Domain with the same name as the OpenShift cluster.",
-				Default: "admin@internal",
-			},
-			Validate: survey.ComposeValidators(survey.Required),
-		},
-	}, &EngineConfig.Username)
-	if err != nil {
-		return EngineConfig, err
-	}
-
-	err = survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Password{
-				Message: "oVirt engine password",
-				Help:    "",
-			},
-			Validate: survey.ComposeValidators(survey.Required, authenticated(&EngineConfig)),
-		},
-	}, &EngineConfig.Password)
+	err = askCredentials()
 	if err != nil {
 		return EngineConfig, err
 	}
