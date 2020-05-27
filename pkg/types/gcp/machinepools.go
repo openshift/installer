@@ -30,7 +30,8 @@ type OSDisk struct {
 
 	// DiskSizeGB defines the size of disk in GB.
 	//
-	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Minimum=16
+	// +kubebuilder:validation:Maximum=65536
 	DiskSizeGB int64 `json:"DiskSizeGB"`
 }
 

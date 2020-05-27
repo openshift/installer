@@ -59,13 +59,31 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid disk type",
+			name: "invalid disk size",
 			pool: &gcp.MachinePool{
 				OSDisk: gcp.OSDisk{
 					DiskSizeGB: -120,
 				},
 			},
-			expected: `^test-path\.diskSizeGB: Invalid value: -120: must be a positive value$`,
+			expected: `^test-path\.diskSizeGB: Invalid value: -120: must be at least 16GB in size$`,
+		},
+		{
+			name: "insufficient disk size",
+			pool: &gcp.MachinePool{
+				OSDisk: gcp.OSDisk{
+					DiskSizeGB: 11,
+				},
+			},
+			expected: `^test-path\.diskSizeGB: Invalid value: 11: must be at least 16GB in size$`,
+		},
+		{
+			name: "exceeded disk size",
+			pool: &gcp.MachinePool{
+				OSDisk: gcp.OSDisk{
+					DiskSizeGB: 66000,
+				},
+			},
+			expected: `^test-path\.diskSizeGB: Invalid value: 66000: exceeding maximum GCP disk size limit, must be below 65536$`,
 		},
 	}
 	for _, tc := range cases {

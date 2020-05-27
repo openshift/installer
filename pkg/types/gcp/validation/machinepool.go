@@ -18,9 +18,12 @@ func ValidateMachinePool(platform *gcp.Platform, p *gcp.MachinePool, fldPath *fi
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("zones").Index(i), zone, fmt.Sprintf("Zone not in configured region (%s)", platform.Region)))
 		}
 	}
-
-	if p.OSDisk.DiskSizeGB < 0 {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("diskSizeGB"), p.OSDisk.DiskSizeGB, "must be a positive value"))
+	if p.OSDisk.DiskSizeGB != 0 {
+		if p.OSDisk.DiskSizeGB < 16 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("diskSizeGB"), p.OSDisk.DiskSizeGB, "must be at least 16GB in size"))
+		} else if p.OSDisk.DiskSizeGB > 65536 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("diskSizeGB"), p.OSDisk.DiskSizeGB, "exceeding maximum GCP disk size limit, must be below 65536"))
+		}
 	}
 
 	if p.OSDisk.DiskType != "" {
