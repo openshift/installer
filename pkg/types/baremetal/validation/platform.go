@@ -294,13 +294,6 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
 	}
 
-	if err := validate.IP(p.DNSVIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsVIP"), p.DNSVIP, err.Error()))
-	}
-
-	if err := validateIPinMachineCIDR(p.DNSVIP, n); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsVIP"), p.DNSVIP, err.Error()))
-	}
 	if err := validateIPNotinMachineCIDR(p.ClusterProvisioningIP, n); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningHostIP"), p.ClusterProvisioningIP, err.Error()))
 	}

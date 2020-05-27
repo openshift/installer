@@ -93,11 +93,6 @@ type Platform struct {
 	// +kubebuilder:validation:Format=ip
 	IngressVIP string `json:"ingressVIP"`
 
-	// DNSVIP is the VIP to use for internal DNS communication
-	//
-	// +kubebuilder:validation:Format=ip
-	DNSVIP string `json:"dnsVIP"`
-
 	// BootstrapOSImage is a URL to override the default OS image
 	// for the bootstrap node. The URL must contain a sha256 hash of the image
 	// e.g https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd...

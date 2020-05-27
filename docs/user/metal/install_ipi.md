@@ -39,7 +39,6 @@ purposes:
     following purposes:
     * API - This IP will be used to reach the cluster API.
     * Ingress - This IP will be used by cluster ingress traffic
-    * DNS - This IP will be used internally by the cluster for automating
       internal DNS requirements.
   * ***External DNS*** - While the cluster automates the internal DNS
     requirements, two external DNS records must be created in whatever DNS
@@ -163,7 +162,6 @@ platform:
   baremetal:
     apiVIP: 192.168.111.5
     ingressVIP: 192.168.111.4
-    dnsVIP: 192.168.111.3
     provisioningNetworkInterface: enp1s0
     hosts:
       - name: openshift-master-0
@@ -211,15 +209,12 @@ sshKey: ...
 `defaultMachinePlatform` | | The default configuration used for machine pools without a platform configuration. |
 `apiVIP` | `api.<clusterdomain>` | The VIP to use for internal API communication. |
 `ingressVIP` | `test.apps.<clusterdomain>` | The VIP to use for ingress traffic. |
-`dnsVIP` | | The VIP to use for internal DNS communication. |
 
 ##### VIP Settings
 
 The `apiVIP` and `ingressVIP` settings must either be provided or
 pre-configured in DNS so that the default names resolve correctly (see
 the defaults in the table above).
-
-The `dnsVIP` setting has no default and must always be provided.
 
 ##### Describing Hosts
 
