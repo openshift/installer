@@ -387,6 +387,14 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		machineConfigs = append(machineConfigs, ignFIPS)
 	}
 
+	if ic.IsOKD() {
+		ignMitigationsDisable, err := machineconfig.ForMitigationsDisabled("master")
+		if err != nil {
+			return errors.Wrap(err, "failed to create ignition for mitigations disable for master machines")
+		}
+		machineConfigs = append(machineConfigs, ignMitigationsDisable)
+	}
+
 	m.MachineConfigFiles, err = machineconfig.Manifests(machineConfigs, "master", directory)
 	if err != nil {
 		return errors.Wrap(err, "failed to create MachineConfig manifests for master machines")

@@ -212,6 +212,13 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 			machineConfigs = append(machineConfigs, ignFIPS)
 		}
+		if ic.IsOKD() {
+			ignMitigationsDisable, err := machineconfig.ForMitigationsDisabled("worker")
+			if err != nil {
+				return errors.Wrap(err, "failed to create ignition for mitigations disable for master machines")
+			}
+			machineConfigs = append(machineConfigs, ignMitigationsDisable)
+		}
 		switch ic.Platform.Name() {
 		case awstypes.Name:
 			subnets := map[string]string{}
