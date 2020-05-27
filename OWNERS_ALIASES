@@ -61,12 +61,16 @@ aliases:
     - fabianofranz
     - jhixson74
   azure-reviewers:
+    - asalkeld
+    - ehashman
     - fabianofranz
     - jhixson74
+    - jim-minter
+    - mjudeikis
   ovirt-approvers:
     - rgolangh
   ovirt-reviewers:
-    - rgolangh
-    - Gal-Zaidman
     - dougsland
+    - Gal-Zaidman
     - gekorob
+    - rgolangh
