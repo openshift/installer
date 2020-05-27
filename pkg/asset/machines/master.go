@@ -372,6 +372,10 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		machineConfigs = append(machineConfigs, ignition.ForFIPSEnabled("master"))
 	}
 
+	if ic.IsOKD() {
+		machineConfigs = append(machineConfigs, ignition.ForMitigationsDisabled("master"))
+	}
+
 	m.MachineConfigFiles, err = machineconfig.Manifests(machineConfigs, "master", directory)
 	if err != nil {
 		return errors.Wrap(err, "failed to create MachineConfig manifests for master machines")

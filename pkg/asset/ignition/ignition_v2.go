@@ -191,6 +191,12 @@ func ForHyperthreadingDisabled(role string) *mcfgv1.MachineConfig {
 	}
 }
 
+// ForMitigationsDisabled creates the MachineConfig to disable mitigatations.
+// RHCOS doesn't need mitigations disabled, so this function is noop
+func ForMitigationsDisabled(role string) *mcfgv1.MachineConfig {
+	return &mcfgv1.MachineConfig{}
+}
+
 // InjectInstallInfo adds information about the installer and its invoker as a
 // ConfigMap to the provided bootstrap Ignition config.
 func InjectInstallInfo(bootstrap []byte) (string, error) {

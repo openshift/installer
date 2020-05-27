@@ -198,6 +198,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		if ic.FIPS {
 			machineConfigs = append(machineConfigs, ignition.ForFIPSEnabled("worker"))
 		}
+		if ic.IsOKD() {
+			machineConfigs = append(machineConfigs, ignition.ForMitigationsDisabled("worker"))
+		}
 		switch ic.Platform.Name() {
 		case awstypes.Name:
 			subnets := map[string]string{}

@@ -192,6 +192,37 @@ func ForHyperthreadingDisabled(role string) *mcfgv1.MachineConfig {
 	}
 }
 
+// ForMitigationsDisabled creates the MachineConfig to disable mitigatations.
+// FCOS uses `/etc/pivot/kernel-args` to override the kernel arguments for hosts during pivot.
+func ForMitigationsDisabled(role string) *mcfgv1.MachineConfig {
+	return &mcfgv1.MachineConfig{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "machineconfiguration.openshift.io/v1",
+			Kind:       "MachineConfig",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: fmt.Sprintf("99-%s-disable-mitigations", role),
+			Labels: map[string]string{
+				"machineconfiguration.openshift.io/role": role,
+			},
+		},
+		Spec: mcfgv1.MachineConfigSpec{
+			Config: runtime.RawExtension{
+				Raw: MarshalOrDie(&igntypes3.Config{
+					Ignition: igntypes3.Ignition{
+						Version: igntypes3.MaxVersion.String(),
+					},
+					Storage: igntypes3.Storage{
+						Files: []igntypes3.File{
+							FileFromString("/etc/pivot/kernel-args", "root", 0600, "DELETE mitigations=auto,nosmt"),
+						},
+					},
+				}),
+			},
+		},
+	}
+}
+
 // InjectInstallInfo adds information about the installer and its invoker as a
 // ConfigMap to the provided bootstrap Ignition config.
 func InjectInstallInfo(bootstrap []byte) (string, error) {
