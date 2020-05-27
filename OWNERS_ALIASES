@@ -14,9 +14,10 @@ aliases:
     - patrickdillon
   libvirt-approvers:
     - praveenkumar
+    - cfergeau
   libvirt-reviewers:
     - praveenkumar
-    - zeenix
+    - cfergeau
   openstack-approvers:
     - Fedosin
     - adduarte
