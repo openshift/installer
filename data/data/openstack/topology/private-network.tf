@@ -38,6 +38,51 @@ resource "openstack_networking_subnet_v2" "nodes" {
   }
 }
 
+// To create a floating IP we use the identifier of the port created before.
+// Unfortunately, due to a race condition in OpenStack Neutron, we may get a
+// situation when the identifier is already received, but the port is not yet
+// available. In this case we get the NotFound error when creating the floating ip.
+// For us this happens when we try to create API floating IP in this module.
+// For more information: https://bugzilla.redhat.com/show_bug.cgi?id=1836098
+
+// To prevent this race condition we explicitly create a chain by setting
+// the `depends_on`instructions:
+// `api_port` -> `ingress_port` -> `masters` -> `api_fip`
+// This solution gives us enough time to make sure that `api_port` is available
+// when we need to create `api_fip`.
+
+// This is a temporary workaround, because this problem has to be solved in Neutron.
+
+resource "openstack_networking_port_v2" "api_port" {
+  name = "${var.cluster_id}-api-port"
+
+  admin_state_up     = "true"
+  network_id         = local.nodes_network_id
+  security_group_ids = [openstack_networking_secgroup_v2.master.id]
+  tags               = ["openshiftClusterID=${var.cluster_id}"]
+
+  fixed_ip {
+    subnet_id  = local.nodes_subnet_id
+    ip_address = var.api_int_ip
+  }
+}
+
+resource "openstack_networking_port_v2" "ingress_port" {
+  name = "${var.cluster_id}-ingress-port"
+
+  admin_state_up     = "true"
+  network_id         = local.nodes_network_id
+  security_group_ids = [openstack_networking_secgroup_v2.worker.id]
+  tags               = ["openshiftClusterID=${var.cluster_id}"]
+
+  fixed_ip {
+    subnet_id  = local.nodes_subnet_id
+    ip_address = var.ingress_ip
+  }
+
+  depends_on = [openstack_networking_port_v2.api_port]
+}
+
 resource "openstack_networking_port_v2" "masters" {
   name  = "${var.cluster_id}-master-port-${count.index}"
   count = var.masters_count
@@ -68,35 +113,7 @@ resource "openstack_networking_port_v2" "masters" {
     ip_address = var.ingress_ip
   }
 
-  depends_on = [openstack_networking_port_v2.api_port, openstack_networking_port_v2.ingress_port]
-}
-
-resource "openstack_networking_port_v2" "api_port" {
-  name = "${var.cluster_id}-api-port"
-
-  admin_state_up     = "true"
-  network_id         = local.nodes_network_id
-  security_group_ids = [openstack_networking_secgroup_v2.master.id]
-  tags               = ["openshiftClusterID=${var.cluster_id}"]
-
-  fixed_ip {
-    subnet_id  = local.nodes_subnet_id
-    ip_address = var.api_int_ip
-  }
-}
-
-resource "openstack_networking_port_v2" "ingress_port" {
-  name = "${var.cluster_id}-ingress-port"
-
-  admin_state_up     = "true"
-  network_id         = local.nodes_network_id
-  security_group_ids = [openstack_networking_secgroup_v2.worker.id]
-  tags               = ["openshiftClusterID=${var.cluster_id}"]
-
-  fixed_ip {
-    subnet_id  = local.nodes_subnet_id
-    ip_address = var.ingress_ip
-  }
+  depends_on = [openstack_networking_port_v2.ingress_port]
 }
 
 resource "openstack_networking_trunk_v2" "masters" {
@@ -128,6 +145,8 @@ resource "openstack_networking_floatingip_associate_v2" "api_fip" {
   count       = length(var.lb_floating_ip) == 0 ? 0 : 1
   port_id     = openstack_networking_port_v2.api_port.id
   floating_ip = var.lb_floating_ip
+
+  depends_on = ["openstack_networking_port_v2.masters"]
 }
 
 resource "openstack_networking_router_v2" "openshift-external-router" {
