@@ -80,7 +80,7 @@ func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.Mach
 func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) field.ErrorList {
 	locations, err := client.ListLocations(context.TODO())
 	if err != nil {
-		return field.ErrorList{field.Invalid(fieldPath, p.Region, "failed to retrieve available regions")}
+		return field.ErrorList{field.Invalid(fieldPath, p.Region, fmt.Sprintf("failed to retrieve available regions: %+v", err))}
 	}
 
 	availableRegions := map[string]string{}
