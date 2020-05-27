@@ -122,9 +122,9 @@ sudo podman run \
 		--rw=write
 ```
 
-Look for the 99th percentile under `fsync/fdatasync/sync_file_range` -> `sync percentiles`.
+The command must be run as superuser.
 
-Caution about the measurement units: fio fluidly adjusts the scale between ms/µs/ns depending on the numbers.
+In the command output, look for the the 99th percentile of [fdatasync](https://linux.die.net/man/2/fdatasync) durations (`fsync/fdatasync/sync_file_range` -> `sync percentiles`). The number must be less than 10ms (or 10000µs: fio fluidly adjusts the scale between ms/µs/ns depending on the numbers).
 
 **Look for spikes.** Even if the baseline latency looks good, there may be spikes where it comes up, triggering issues that result in API being unavailable.
 
