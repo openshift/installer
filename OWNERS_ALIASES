@@ -26,8 +26,10 @@ aliases:
     - pierreprinetti
   openstack-reviewers:
     - Fedosin
+    - adduarte
     - iamemilio
     - mandre
+    - pierreprinetti
   vsphere-approvers:
     - dav1x
     - mtnbikenc
