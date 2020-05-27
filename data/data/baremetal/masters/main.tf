@@ -46,3 +46,11 @@ resource "ironic_deployment" "openshift-master-deployment" {
   user_data     = var.ignition
 }
 
+data "ironic_introspection" "openshift-master-introspection" {
+  count = var.master_count
+
+  uuid = element(
+    ironic_node_v1.openshift-master-host.*.id,
+    count.index,
+  )
+}

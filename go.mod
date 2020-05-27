@@ -62,7 +62,7 @@ require (
 	github.com/metal3-io/cluster-api-provider-baremetal v0.0.0
 	github.com/mitchellh/cli v1.0.0
 	github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6 // indirect
-	github.com/openshift-metal3/terraform-provider-ironic v0.2.0
+	github.com/openshift-metal3/terraform-provider-ironic v0.2.1
 	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible
 	github.com/openshift/client-go v0.0.0-20200320150128-a906f3d8e723
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
