@@ -296,26 +296,18 @@ export CONTROL_SUBNET=$(gcloud compute networks subnets describe ${INFRA_ID}-mas
 export COMPUTE_SUBNET=$(gcloud compute networks subnets describe ${INFRA_ID}-worker-subnet --region=${REGION} --format json | jq -r .selfLink)
 ```
 
-## Create DNS entries and load balancers
-Create the DNS zone and load balancers for the cluster.
-You can exclude the DNS zone or external load balancer by removing their associated section(s) from the `02_infra.yaml`.
+## Create DNS entries 
+Create the private DNS zone for the cluster.
 If you choose to exclude the DNS zone, you will need to create it some other way and ensure it is populated with the necessary records as documented below.
 
-If you are installing into a [Shared VPC (XPN)][sharedvpc],
-exclude the DNS section as it must be created in the host project.
-
 Copy [`02_dns.py`](../../../upi/gcp/02_dns.py) locally.
-Copy [`02_lb_ext.py`](../../../upi/gcp/02_lb_ext.py) locally.
-Copy [`02_lb_int.py`](../../../upi/gcp/02_lb_int.py) locally.
 
-Create a resource definition file: `02_infra.yaml`
+Create a resource definition file: `02_infra_dns.yaml`
 
 ```console
-$ cat <<EOF >02_infra.yaml
+$ cat <<EOF >02_infra_dns.yaml
 imports:
 - path: 02_dns.py
-- path: 02_lb_ext.py
-- path: 02_lb_int.py
 resources:
 - name: cluster-dns
   type: 02_dns.py
@@ -323,6 +315,35 @@ resources:
     infra_id: '${INFRA_ID}'
     cluster_domain: '${CLUSTER_NAME}.${BASE_DOMAIN}'
     cluster_network: '${CLUSTER_NETWORK}'
+EOF
+```
+- `infra_id`: the infrastructure name (INFRA_ID above)
+- `cluster_domain`: the domain for the cluster (for example openshift.example.com)
+- `cluster_network`: the URI to the cluster network
+
+Create the deployment using gcloud. 
+
+If you are installing into a [Shared VPC (XPN)][sharedvpc],
+use the --account and --project parameters to perform these actions in the host project.
+
+```sh
+gcloud deployment-manager deployments create ${INFRA_ID}-infra-dns --config 02_infra_dns.yaml
+```
+
+## Create load balancers
+Create load balancers for the cluster. If you are installing a private cluster, you can exclude external load balancer by removing their associated section(s) from the `02_infra_lb.yaml`.
+
+Copy [`02_lb_ext.py`](../../../upi/gcp/02_lb_ext.py) locally.
+Copy [`02_lb_int.py`](../../../upi/gcp/02_lb_int.py) locally.
+
+Create a resource definition file: `02_infra_lb.yaml`
+
+```console
+$ cat <<EOF >02_infra_lb.yaml
+imports:
+- path: 02_lb_ext.py
+- path: 02_lb_int.py
+resources:
 - name: cluster-lb-ext
   type: 02_lb_ext.py
   properties:
@@ -343,7 +364,6 @@ EOF
 ```
 - `infra_id`: the infrastructure name (INFRA_ID above)
 - `region`: the region to deploy the cluster into (for example us-east1)
-- `cluster_domain`: the domain for the cluster (for example openshift.example.com)
 - `cluster_network`: the URI to the cluster network
 - `control_subnet`: the URI to the control subnet
 - `zones`: the zones to deploy the control plane instances into (for example us-east1-b, us-east1-c, us-east1-d)
@@ -351,7 +371,7 @@ EOF
 Create the deployment using gcloud.
 
 ```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-infra --config 02_infra.yaml
+gcloud deployment-manager deployments create ${INFRA_ID}-infra-lb --config 02_infra_lb.yaml
 ```
 
 ## Configure infra variables
@@ -379,7 +399,7 @@ gcloud dns record-sets transaction execute --zone ${INFRA_ID}-private-zone
 ```
 
 ### Add external DNS entries (optional)
-If you deployed external load balancers with `02_infra.yaml`, you can deploy external DNS entries.
+If you deployed external load balancers with `02_infra_lb.yaml`, you can deploy external DNS entries.
 
 ```sh
 if [ -f transaction.yaml ]; then rm transaction.yaml; fi
@@ -388,25 +408,19 @@ gcloud dns record-sets transaction add ${CLUSTER_PUBLIC_IP} --name api.${CLUSTER
 gcloud dns record-sets transaction execute --zone ${BASE_DOMAIN_ZONE_NAME}
 ```
 
-## Create firewall rules and IAM roles
-Create the firewall rules and IAM roles for the cluster.
-You can exclude either of these by removing their associated section(s) from the `02_infra.yaml`.
-If you choose to do so, you will need to create the required resources some other way.
+## Create firewall rules 
+Create the firewall rules for the cluster.
+You can exclude it, if you choose to do so, you will need to create the required resources some other way.
 Details about these resources can be found in the imported python templates.
 
-If you are installing into a [Shared VPC (XPN)][sharedvpc],
-exclude the firewall section as they must be created in the host project.
-
 Copy [`03_firewall.py`](../../../upi/gcp/03_firewall.py) locally.
-Copy [`03_iam.py`](../../../upi/gcp/03_iam.py) locally.
 
-Create a resource definition file: `03_security.yaml`
+Create a resource definition file: `03_security_firewall.yaml`
 
 ```console
-$ cat <<EOF >03_security.yaml
+$ cat <<EOF >03_security_firewall.yaml
 imports:
 - path: 03_firewall.py
-- path: 03_iam.py
 resources:
 - name: cluster-firewall
   type: 03_firewall.py
@@ -415,26 +429,51 @@ resources:
     infra_id: '${INFRA_ID}'
     cluster_network: '${CLUSTER_NETWORK}'
     network_cidr: '${NETWORK_CIDR}'
+EOF
+```
+- `allowed_external_cidr`: limits access to the cluster API and ssh to the bootstrap host. (for example External: 0.0.0.0/0, Internal: ${NETWORK_CIDR})
+- `infra_id`: the infrastructure name (INFRA_ID above)
+- `cluster_network`: the URI to the cluster network
+- `network_cidr`: the CIDR of the vpc network (for example 10.0.0.0/16)
+
+Create the deployment using gcloud.
+If you are installing into a [Shared VPC (XPN)][sharedvpc],
+use the `--account` and `--project` parameters to perform these actions in the host project.
+
+```sh
+gcloud deployment-manager deployments create ${INFRA_ID}-security-firewall --config 03_security_firewall.yaml
+```
+
+## Create IAM roles
+Create the IAM roles for the cluster.
+You can exclude it, if you choose to do so, you will need to create the required resources some other way.
+Details about these resources can be found in the imported python templates.
+
+Copy [`03_iam.py`](../../../upi/gcp/03_iam.py) locally.
+
+Create a resource definition file: `03_security_iam.yaml`
+
+```console
+$ cat <<EOF >03_security_iam.yaml
+imports:
+- path: 03_iam_iam.py
+resources:
 - name: cluster-iam
   type: 03_iam.py
   properties:
     infra_id: '${INFRA_ID}'
 EOF
 ```
-- `allowed_external_cidr`: limits access to the cluster API and ssh to the bootstrap host. (for example External: 0.0.0.0/0, Internal: ${NETWORK_CIDR})
 - `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `cluster_network`: the URI to the cluster network
-- `network_cidr`: the CIDR of the vpc network (for example 10.0.0.0/16)
 
 Create the deployment using gcloud.
 
 ```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-security --config 03_security.yaml
+gcloud deployment-manager deployments create ${INFRA_ID}-security-iam --config 03_security_iam.yaml
 ```
 
 ## Configure security variables
-Configure the variables based on the `03_security.yaml` deployment.
+Configure the variables based on the `03_security_iam.yaml` deployment.
 If you excluded the IAM section, ensure these are set to the `.email` of their associated resources.
 
 ```sh
@@ -445,10 +484,6 @@ export WORKER_SERVICE_ACCOUNT=$(gcloud iam service-accounts list --filter "email
 ## Add required roles to IAM service accounts
 The templates do not create the policy bindings due to limitations of Deployment Manager, so we must create them manually.
 
-If you are installing into a [Shared VPC (XPN)][sharedvpc],
-ensure these service accounts have `roles/compute.networkUser` access to each of the host project subnets used by the cluster so the instances can use the networks.
-Also ensure the master service account has `roles/compute.networkViewer` access to the host project itself so the gcp-cloud-provider can look for firewall settings as part of ingress controller operations.
-
 ```sh
 gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member "serviceAccount:${MASTER_SERVICE_ACCOUNT}" --role "roles/compute.instanceAdmin"
 gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member "serviceAccount:${MASTER_SERVICE_ACCOUNT}" --role "roles/compute.networkAdmin"
@@ -458,6 +493,20 @@ gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member "serviceAccount:
 
 gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member "serviceAccount:${WORKER_SERVICE_ACCOUNT}" --role "roles/compute.viewer"
 gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member "serviceAccount:${WORKER_SERVICE_ACCOUNT}" --role "roles/storage.admin"
+```
+
+If you are installing into a [Shared VPC (XPN)][sharedvpc],
+ensure these service accounts have `roles/compute.networkUser` access to each of the host project subnets used by the cluster so the instances can use the networks.
+Also ensure the master service account has `roles/compute.networkViewer` access to the host project itself so the gcp-cloud-provider can look for firewall settings as part of ingress controller operations.
+
+```sh
+gcloud --account=${HOST_PROJECT_ACCOUNT} --project=${HOST_PROJECT} projects add-iam-policy-binding ${HOST_PROJECT} --member "serviceAccount:${MASTER_SERVICE_ACCOUNT}" --role "roles/compute.networkViewer"
+
+gcloud --account=${HOST_PROJECT_ACCOUNT} --project=${HOST_PROJECT} compute networks subnets add-iam-policy-binding "${HOST_PROJECT_CONTROL_SUBNET}" --member "serviceAccount:${MASTER_SERVICE_ACCOUNT}" --role "roles/compute.networkUser" --region ${REGION}
+gcloud --account=${HOST_PROJECT_ACCOUNT} --project=${HOST_PROJECT} compute networks subnets add-iam-policy-binding "${HOST_PROJECT_CONTROL_SUBNET}" --member "serviceAccount:${WORKER_SERVICE_ACCOUNT}" --role "roles/compute.networkUser" --region ${REGION}
+
+gcloud --account=${HOST_PROJECT_ACCOUNT} --project=${HOST_PROJECT} compute networks subnets add-iam-policy-binding "${HOST_PROJECT_COMPUTE_SUBNET}" --member "serviceAccount:${MASTER_SERVICE_ACCOUNT}" --role "roles/compute.networkUser" --region ${REGION}
+gcloud --account=${HOST_PROJECT_ACCOUNT} --project=${HOST_PROJECT} compute networks subnets add-iam-policy-binding "${HOST_PROJECT_COMPUTE_SUBNET}" --member "serviceAccount:${WORKER_SERVICE_ACCOUNT}" --role "roles/compute.networkUser" --region ${REGION}
 ```
 
 ## Generate a service-account-key for signing the bootstrap.ign url
@@ -652,7 +701,7 @@ gcloud compute instance-groups unmanaged add-instances ${INFRA_ID}-master-${ZONE
 ```
 
 ### Add control plane instances to external load balancer target pools (optional)
-If you deployed external load balancers with `02_infra.yaml`, add the control plane instances to the target pool.
+If you deployed external load balancers with `02_infra_lb.yaml`, add the control plane instances to the target pool.
 
 ```sh
 gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone="${ZONE_0}" --instances=${INFRA_ID}-m-0
