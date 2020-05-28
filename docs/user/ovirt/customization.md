@@ -4,8 +4,8 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 
 ## Cluster-scoped properties
 
-* `ovirt_cluster_id` (required string): The oVirt cluster where the VMs will be created.
-* `ovirt_storage_domain_id` (required string): The storage domain ID where the VM disks will be created.
+* `ovirt_cluster_id` (required string): The Cluster where the VMs will be created.
+* `ovirt_storage_domain_id` (required string): The Storage Domain ID where the VM disks will be created.
 * `ovirt_network_name` (required string): The network name where the VM nics will be created.
 * `vnicProfileID` (required string): The ID of the [vNic profile][vnic-profile] used for the VM network interfaces.
     This can be inferred if the cluster network has a single profile.
@@ -36,7 +36,7 @@ For examples of platform-agnostic configuration fragments, see [here](../customi
 
 ### Minimal
 
-An example minimal oVirt install config is:
+An example minimal install config is:
 
 ```yaml
 apiVersion: v1
@@ -58,7 +58,7 @@ sshKey: ssh-ed25519 AAAA...
 
 ### Custom machine pools
 
-An example oVirt install config with custom machine pools:
+An example install config with custom machine pools:
 
 ```yaml
 apiVersion: v1

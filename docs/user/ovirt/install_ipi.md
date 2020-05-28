@@ -48,7 +48,7 @@ The default master/worker:
 - 16 RAM
 - 120 GB disk
 
-For 3 masters/3 workers, the target oVirt cluster must have at least:
+For 3 masters/3 workers, the target Cluster **must have at least**:
 - 96RAM
 - 24vCPUs
 - 720GiB storage
@@ -117,10 +117,10 @@ Continue the installation using the install-config in the new folder `install_di
 $ openshift-install create cluster --dir=install_dir
 ``` 
 
-When the all prompts are done the installer will create 3 VMs under the oVirt
-cluster supplied, and another VM as the bootstrap node. 
+When the all prompts are done the installer will create 3 VMs under the
+Cluster supplied, and another VM as the bootstrap node.
 The bootstrap will perform ignition fully and will advertise the IP in the
-pre-login msg. Go to oVirt webadmin UI, and open the console of the bootstrap
+pre-login msg. Go to Engine webadmin UI, and open the console of the bootstrap
 VM to get it. 
 In the end the installer finishes and the cluster should be up.
 

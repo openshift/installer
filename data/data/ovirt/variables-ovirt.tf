@@ -6,27 +6,27 @@ variable "bootstrap_dns" {
 
 variable "ovirt_url" {
   type        = string
-  description = "The oVirt engine URL"
+  description = "The Engine URL"
 }
 
 variable "ovirt_username" {
   type        = string
-  description = "The name of user to access oVirt engine API"
+  description = "The name of user to access Engine API"
 }
 
 variable "ovirt_password" {
   type        = string
-  description = "The plain password of user to access oVirt engine API"
+  description = "The plain password of user to access Engine API"
 }
 
 variable "ovirt_cluster_id" {
   type        = string
-  description = "The ID of oVirt's cluster"
+  description = "The ID of Cluster"
 }
 
 variable "ovirt_storage_domain_id" {
   type        = string
-  description = "The ID of oVirt's stoage domain for the template"
+  description = "The ID of Storage Domain for the template"
 }
 
 variable "openstack_base_image_name" {
@@ -43,12 +43,12 @@ variable "openstack_base_image_local_file_path" {
 variable "ovirt_network_name" {
   type        = string
   default     = "ovirtmgmt"
-  description = "The name of ovirt's logical network for the selected ovirt cluster."
+  description = "The name of Logical Network for the selected Engine cluster."
 }
 
 variable "ovirt_vnic_profile_id" {
   type        = string
-  description = "The ID of the vnic profile of ovirt's logical network."
+  description = "The ID of the vNIC profile of Logical Network."
 }
 
 variable "ovirt_master_memory" {
