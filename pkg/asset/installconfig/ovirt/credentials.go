@@ -2,44 +2,107 @@ package ovirt
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/AlecAivazis/survey.v1"
 )
 
-// commands definitions
-const (
-	SudoCommand  = "/usr/bin/sudo"
-	CpCommand    = "/usr/bin/cp"
-	TrustCommand = "/usr/bin/trust"
-	CurlCommand  = "/usr/bin/curl"
-	ChmodCommand = "/usr/bin/chmod"
-)
+// clientHTTP struct - Hold info about http calls
+type clientHTTP struct {
+	saveFilePath string // Path for saving file (GET method)
+	urlAddr      string // URL or Address
+	skipVerify   bool   // skipt cert validatin in the http call
+	certPool     *x509.CertPool
+}
 
 // EngineConfig struct - Hold all info about user environment
 var EngineConfig = Config{}
 
-// checkURLResponse performs a GET on the provided urlAddr to ensure that
-// the url actually exists. Users can set skipVerify as true or false to
-// avoid cert validation. In case of failure, returns error.
-func checkURLResponse(urlAddr string, skipVerify bool) error {
+// HTTPResource struct - Hold info for managing http calls
+var HTTPResource = clientHTTP{}
 
-	logrus.Debugf("Checking URL Response... urlAddr: %s skipVerify: %s", urlAddr, strconv.FormatBool(skipVerify))
+// Import PEM into the System Pool
+func (c clientHTTP) importCertIntoSystemPool(pemFilePath string) error {
+	c.certPool, _ = x509.SystemCertPool()
+	if c.certPool == nil {
+		logrus.Debug("Failed to load cert pool.... Creating new cert pool")
+		c.certPool = x509.NewCertPool()
+	}
+	c.certPool = x509.NewCertPool()
+	logrus.Debugf("Reading file: %s", pemFilePath)
+	pem, err := ioutil.ReadFile(pemFilePath)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to read the cert")
+	}
+
+	logrus.Debug(string(pem))
+	if len(pem) != 0 {
+		logrus.Debug("trying to import...")
+		if !c.certPool.AppendCertsFromPEM(pem) {
+			return errors.Wrapf(err, "unable to load local certificates")
+		}
+		logrus.Debugf("Loaded %s into the system pool!", pemFilePath)
+	}
+	return nil
+}
+
+// downloadFile from specificed URL and store via filepath
+// Return error in case of failure
+func (c clientHTTP) downloadFile() error {
 
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: skipVerify},
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: c.skipVerify,
+			RootCAs:            c.certPool,
+		},
 	}
 
 	client := &http.Client{Transport: tr}
-	resp, err := client.Get(urlAddr)
+	resp, err := client.Get(c.urlAddr)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if c.saveFilePath == "" {
+		return errors.Wrapf(err, "saveFilePath must be specificed")
+	}
+
+	out, err := os.Create(c.saveFilePath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	return err
+}
+
+// checkURLResponse performs a GET on the provided urlAddr to ensure that
+// the url actually exists. Users can set skipVerify as true or false to
+// avoid cert validation. In case of failure, returns error.
+func (c clientHTTP) checkURLResponse() error {
+
+	logrus.Debugf("Checking URL Response... urlAddr: %s skipVerify: %s", c.urlAddr, strconv.FormatBool(c.skipVerify))
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: c.skipVerify,
+			RootCAs:            c.certPool,
+		},
+	}
+
+	client := &http.Client{Transport: tr}
+	resp, err := client.Get(c.urlAddr)
 	if err != nil {
 		return errors.Wrapf(err, "Error checking URL response")
 	}
@@ -61,37 +124,6 @@ func execCommand(cmdName string, cmdArgs ...string) ([]byte, error) {
 	return stdout, nil
 }
 
-// checkCATrust executes trust list command to validate if fqdn
-// provided is trusted locally. Returns true/false and error in case of
-// failure
-func checkCATrust(fqdn string) (bool, error) {
-	logrus.Infof("Checking if %s CA is trusted locally...", fqdn)
-
-	stdout, err := execCommand(TrustCommand, "list")
-	if err != nil {
-		return false, errors.Wrapf(err, "Cannot execute command: %s", TrustCommand)
-	}
-
-	if strings.Contains(string(stdout), fqdn) {
-		logrus.Info("Detected: Engine CA as trusted locally...")
-		return true, nil
-	}
-
-	logrus.Warningf("Engine: %s CA is NOT trusted locally...", fqdn)
-
-	return false, nil
-}
-
-// fileContent receives filename as argument and return the content as []byte
-func fileContent(filename string) ([]byte, error) {
-	content, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error reading file: %s", filename)
-	}
-
-	return content, nil
-}
-
 // askPassword will ask the password to connect to Engine API.
 // The password provided will be added in the Config struct.
 // If an error happens, it will ask again username for users.
@@ -99,7 +131,7 @@ func askPassword() error {
 	err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Password{
-				Message: "oVirt engine password",
+				Message: "Engine password",
 				Help:    "",
 			},
 			Validate: survey.ComposeValidators(survey.Required, authenticated(&EngineConfig)),
@@ -119,7 +151,7 @@ func askUsername() error {
 	err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
-				Message: "oVirt engine username",
+				Message: "Engine username",
 				Help:    "The user must have permissions to create VMs and disks on the Storage Domain with the same name as the OpenShift cluster.",
 				Default: "admin@internal",
 			},
@@ -136,7 +168,6 @@ func askUsername() error {
 // askCredentials will handle username and password for connecting with Engine
 // In case of error during password, users will be prompted username again.
 func askCredentials() error {
-
 	err := askUsername()
 	if err != nil {
 		return err
@@ -165,104 +196,48 @@ func engineSetup() (Config, error) {
 	if err != nil {
 		return EngineConfig, err
 	}
+	logrus.Debug("Engine FQDN: ", EngineConfig.FQDN)
+
+	// By default, we set Insecure true
+	EngineConfig.Insecure = true
 
 	// Set c.URL with the API endpoint
-	EngineConfig.URL = fmt.Sprintf(
-		"https://%s/ovirt-engine/api",
-		EngineConfig.FQDN)
+	EngineConfig.URL = fmt.Sprintf("https://%s/ovirt-engine/api", EngineConfig.FQDN)
+	logrus.Debug("Engine URL: ", EngineConfig.URL)
 
-	// Set PEM URL for Download
+	// Start creating HTTPResource struct for checking if Engine FQDN is responding
+	HTTPResource.skipVerify = true
+	HTTPResource.urlAddr = EngineConfig.URL
+	err = HTTPResource.checkURLResponse()
+	if err != nil {
+		return EngineConfig, err
+	}
+
+	// Set Engine PEM URL for Download
 	EngineConfig.PemURL = fmt.Sprintf(
 		"https://%s/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA",
 		EngineConfig.FQDN)
 	logrus.Debug("PEM URL: ", EngineConfig.PemURL)
 
-	// Simple http get to check if FQDN/URL are valid
-	err = checkURLResponse(EngineConfig.URL, true)
+	// Create tmpFile to store the Engine PEM file
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "engine-")
 	if err != nil {
-		return EngineConfig, err
+		fmt.Println("Cannot create temporary file", err)
 	}
+	defer os.Remove(tmpFile.Name())
 
-	// Check if CA is trusted locally
-	var importCACert bool = false
-
-	// Store if connection with Engine is secure
-	var ConnectionSecure bool = false
-
-	ConnectionSecure, err = checkCATrust(EngineConfig.FQDN)
-	if err != nil {
-		return EngineConfig, err
-	}
-
-	if ConnectionSecure {
-		EngineConfig.Insecure = false
-	} else {
-		EngineConfig.Insecure = true
-		message := fmt.Sprintf("Would you like to import Engine CA cert locally from: %s ?", EngineConfig.PemURL)
-		err = survey.AskOne(
-			&survey.Confirm{
-				Message: message,
-				Default: false,
-				Help:    "In order to securly communicate with the oVirt engine, the certificate authority must be trusted by the local system.",
-			},
-			&importCACert,
-			nil)
-		if err != nil {
-			return EngineConfig, err
+	// Download PEM
+	HTTPResource.saveFilePath = tmpFile.Name()
+	HTTPResource.skipVerify = true
+	HTTPResource.urlAddr = EngineConfig.PemURL
+	err = HTTPResource.downloadFile()
+	if err == nil {
+		err = HTTPResource.importCertIntoSystemPool(HTTPResource.saveFilePath)
+		if err == nil {
+			EngineConfig.Insecure = false
 		}
 	}
-
-	// If users request, let's work to import Engine CA locally
-	if importCACert == true {
-		logrus.Info("Downloading Engine CA cert from Engine...")
-		tmpFile, err := ioutil.TempFile(os.TempDir(), "engine-")
-		if err != nil {
-			fmt.Println("Cannot create temporary file", err)
-		}
-		defer os.Remove(tmpFile.Name())
-
-		logrus.Debugf("CA cert temporary stored: %s", tmpFile.Name())
-
-		/* curl command */
-		_, err = execCommand(CurlCommand, "-k", EngineConfig.PemURL, "-o", tmpFile.Name())
-		if err != nil {
-			return EngineConfig, err
-		}
-		logrus.Debugf("PEM file: %s", tmpFile.Name())
-
-		var content []byte
-		content, err = fileContent(tmpFile.Name())
-		if err != nil {
-			return EngineConfig, err
-		}
-		logrus.Debug(string(content))
-
-		/* Check if CA file already exists */
-		CaPath := fmt.Sprintf("/etc/pki/ca-trust/source/anchors/%s.pem", strings.ReplaceAll(EngineConfig.FQDN, ".", "-"))
-		if _, err := os.Stat(CaPath); err == nil {
-			return EngineConfig, err
-		}
-
-		/* Copy the CA to anchors */
-		_, err = execCommand(SudoCommand, CpCommand, tmpFile.Name(), CaPath)
-		if err != nil {
-			return EngineConfig, err
-		}
-
-		/* chmod to allow non root users to read the cert */
-		_, err = execCommand(SudoCommand, ChmodCommand, "0644", CaPath)
-		if err != nil {
-			return EngineConfig, err
-		}
-
-		/* Update CA database */
-		_, err = execCommand(SudoCommand, "/usr/bin/update-ca-trust")
-		if err != nil {
-			return EngineConfig, err
-		}
-		EngineConfig.Insecure = false
-		logrus.Infof("%s imported with success!", CaPath)
-	}
+	logrus.Debugf("Engine PEM temporary stored: %s", HTTPResource.saveFilePath)
 
 	if EngineConfig.Insecure == true {
 		logrus.Warning("Communication with the Engine will be insecure.")
