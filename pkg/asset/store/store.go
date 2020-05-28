@@ -357,3 +357,18 @@ func (s *storeImpl) purge(excluded []asset.WritableAsset) error {
 func increaseIndent(indent string) string {
 	return indent + "  "
 }
+
+// Load retrieves the given asset if it is present in the store and does not generate the asset
+// if it does not exist and will return nil.
+func (s *storeImpl) Load(a asset.Asset) (asset.Asset, error) {
+	foundOnDisk, err := s.load(a, "")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to load asset")
+	}
+
+	if foundOnDisk.source == unfetched {
+		return nil, nil
+	}
+
+	return s.assets[reflect.TypeOf(a)].asset, nil
+}

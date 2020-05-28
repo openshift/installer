@@ -429,3 +429,58 @@ func TestStoreFetchIdempotency(t *testing.T) {
 	filepath.Walk(tempDir, walkFunc)
 	assert.Equal(t, expectedFiles, actualFiles, "unexpected files on disk")
 }
+
+func TestStoreLoadOnDiskAssets(t *testing.T) {
+	cases := []struct {
+		name               string
+		assets             map[string][]string
+		onDiskAssets       []string
+		target             string
+		expectedFoundValue bool
+	}{
+		{
+			name: "on-disk assets",
+			assets: map[string][]string{
+				"a": {},
+			},
+			onDiskAssets:       []string{"a"},
+			target:             "a",
+			expectedFoundValue: true,
+		},
+		{
+			name: "no on-disk assets",
+			assets: map[string][]string{
+				"a": {"b"},
+				"b": {},
+			},
+			onDiskAssets:       nil,
+			target:             "a",
+			expectedFoundValue: false,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			clearAssetBehaviors()
+			store := &storeImpl{
+				assets: map[reflect.Type]*assetState{},
+			}
+			assets := make(map[string]asset.Asset, len(tc.assets))
+			for name := range tc.assets {
+				assets[name] = newTestStoreAsset(name)
+			}
+			for name, deps := range tc.assets {
+				dependenciesOfAsset := make([]asset.Asset, len(deps))
+				for i, d := range deps {
+					dependenciesOfAsset[i] = assets[d]
+				}
+				dependencies[reflect.TypeOf(assets[name])] = dependenciesOfAsset
+			}
+			for _, name := range tc.onDiskAssets {
+				onDiskAssets[reflect.TypeOf(assets[name])] = true
+			}
+			found, err := store.Load(assets[tc.target])
+			assert.NoError(t, err, "unexpected error")
+			assert.EqualValues(t, tc.expectedFoundValue, found != nil)
+		})
+	}
+}

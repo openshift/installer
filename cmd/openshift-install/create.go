@@ -347,9 +347,8 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 
 	// Wait longer for baremetal, due to length of time it takes to boot
 	if assetStore, err := assetstore.NewStore(rootOpts.dir); err == nil {
-		installConfig := &installconfig.InstallConfig{}
-		if err := assetStore.Fetch(installConfig); err == nil {
-			if installConfig.Config.Platform.Name() == baremetal.Name {
+		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
+			if installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == baremetal.Name {
 				timeout = 60 * time.Minute
 			}
 		}
