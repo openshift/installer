@@ -7,6 +7,7 @@ Launching clusters via libvirt is especially useful for operator development.
 [how to create an install-config.yaml file](../../user/overview.md#multiple-invocations) and [the libvirt platform customization](customization.md) documents.
 
 ## One-time setup
+
 It's expected that you will create and destroy clusters often in the course of development. These steps only need to be run once.
 
 Before you begin, install the [build dependencies](../dependencies.md).
@@ -16,13 +17,14 @@ Before you begin, install the [build dependencies](../dependencies.md).
 Make sure you have KVM enabled by checking for the device:
 
 ```console
-$ ls -l /dev/kvm 
+$ ls -l /dev/kvm
 crw-rw-rw-+ 1 root kvm 10, 232 Oct 31 09:22 /dev/kvm
 ```
 
 If it is missing, try some of the ideas [here][kvm-install].
 
 ### Install and Enable Libvirt
+
 On CentOS 7, first enable the
 [kvm-common](http://mirror.centos.org/centos/7/virt/x86_64/kvm-common/)
 repository to ensure you get a new enough version of qemu-kvm.
@@ -44,6 +46,7 @@ sudo systemctl enable --now libvirtd
 In this example, we'll set the base domain to `tt.testing` and the cluster name to `test1`.
 
 ### Clone the project
+
 ```sh
 git clone https://github.com/openshift/installer.git
 cd installer
@@ -151,6 +154,7 @@ libvirtd_opts="--listen"
 Next, restart libvirt: `systemctl restart libvirtd`
 
 #### Firewall
+
 Finally, if you have a firewall, you may have to allow connections to the
 libvirt daemon from the IP range used by your cluster nodes.
 
@@ -194,6 +198,7 @@ add `--permanent` to the `firewall-cmd` commands and run them a second time.
 ### Set up NetworkManager DNS overlay
 
 This step allows installer and users to resolve cluster-internal hostnames from your host.
+
 1. Tell NetworkManager to use `dnsmasq`:
 
     ```sh
@@ -207,8 +212,8 @@ This step allows installer and users to resolve cluster-internal hostnames from 
     ```sh
     echo server=/tt.testing/192.168.126.1 | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
     ```
-3. Reload NetworkManager to pick up the `dns` configuration change: `sudo systemctl reload NetworkManager`
 
+3. Reload NetworkManager to pick up the `dns` configuration change: `sudo systemctl reload NetworkManager`
 
 ## Build the installer
 
@@ -286,41 +291,49 @@ kubectl get --all-namespaces pods
 ## FAQ
 
 ### Libvirt vs. AWS
+
 1. There isn't a load balancer on libvirt.
 
 ## Troubleshooting
+
 If following the above steps hasn't quite worked, please review this section for well known issues.
 
 ### Console doesn't come up
+
 In case of libvirt there is no wildcard DNS resolution and console depends on the route which is created by auth operator ([Issue #1007](https://github.com/openshift/installer/issues/1007)).
 To make it work we need to first create the manifests and edit the `domain` for ingress config, before directly creating the cluster.
 
 - Add another domain entry in the openshift.conf which used by dnsmasq.
 Here `tt.testing` is the domain which I choose when running the installer.
 Here the IP in the address belong to one of the worker node.
+
 ```console
 $ cat /etc/NetworkManager/dnsmasq.d/openshift.conf
 server=/tt.testing/192.168.126.1
 address=/.apps.tt.testing/192.168.126.51
 ```
 
-- Make sure you restart the NetworkManager after change in the openshift.conf
+- Make sure you restart the NetworkManager after change in `openshift.conf`:
+
 ```console
 $ sudo systemctl restart NetworkManager
 ```
 
-- Create the manifests
+- Create the manifests:
+
 ```console
 $ openshift-install --dir $INSTALL_DIR create manifests
 ```
 
-- Domain entry in cluster-ingress-02-config.yml file should not contain cluster name
+- Domain entry in cluster-ingress-02-config.yml file should not contain cluster name:
+
 ```console
 # Assuming `test1` as cluster name
 $ sed -i 's/test1.//' $INSTALL_DIR/manifests/cluster-ingress-02-config.yml
 ```
 
-- Start the installer to create the cluster
+- Start the installer to create the cluster:
+
 ```console
 $ openshift-install --dir $INSTALL_DIR create cluster
 ```
@@ -341,6 +354,7 @@ FATA[0019] failed to run Terraform: exit status 1
 it is likely that your install configuration contains three backslashes after the protocol (e.g. `qemu+tcp:///...`), when it should only be two.
 
 ### Random domain creation errors due to libvirt race conditon
+
 Depending on your libvirt version you might encounter [a race condition][bugzilla_libvirt_race] leading to an error similar to:
 
 ```
@@ -349,9 +363,11 @@ Depending on your libvirt version you might encounter [a race condition][bugzill
 This is also being [tracked on the libvirt-terraform-provider][tfprovider_libvirt_race] but is likely not fixable on the client side, which is why you should upgrade libvirt to >=4.5 or a patched version, depending on your environment.
 
 ### MacOS support currently broken
+
 * Support for libvirt on Mac OS [is currently broken and being worked on][brokenmacosissue201].
 
 ### Error with firewall initialization on Arch Linux
+
 If you're on Arch Linux and get an error similar to
 
 ```
@@ -368,6 +384,7 @@ error: internal error: Failed to initialize a valid firewall backend
 please check out [this thread on superuser][arch_firewall_superuser].
 
 ### Github Issue Tracker
+
 You might find other reports of your problem in the [Issues tab for this repository][issues_libvirt] where we ask you to provide any additional information.
 If your issue is not reported, please do.
 
