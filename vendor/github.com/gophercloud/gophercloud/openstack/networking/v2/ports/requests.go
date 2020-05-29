@@ -1,6 +1,10 @@
 package ports
 
 import (
+	"fmt"
+	"net/url"
+	"strings"
+
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/pagination"
 )
@@ -36,11 +40,37 @@ type ListOpts struct {
 	TagsAny      string `q:"tags-any"`
 	NotTags      string `q:"not-tags"`
 	NotTagsAny   string `q:"not-tags-any"`
+	FixedIPs     []FixedIPOpts
+}
+
+type FixedIPOpts struct {
+	IPAddress       string
+	IPAddressSubstr string
+	SubnetID        string
+}
+
+func (f FixedIPOpts) String() string {
+	var res []string
+	if f.IPAddress != "" {
+		res = append(res, fmt.Sprintf("ip_address=%s", f.IPAddress))
+	}
+	if f.IPAddressSubstr != "" {
+		res = append(res, fmt.Sprintf("ip_address_substr=%s", f.IPAddressSubstr))
+	}
+	if f.SubnetID != "" {
+		res = append(res, fmt.Sprintf("subnet_id=%s", f.SubnetID))
+	}
+	return strings.Join(res, ",")
 }
 
 // ToPortListQuery formats a ListOpts into a query string.
 func (opts ListOpts) ToPortListQuery() (string, error) {
 	q, err := gophercloud.BuildQueryString(opts)
+	params := q.Query()
+	for _, fixedIP := range opts.FixedIPs {
+		params.Add("fixed_ips", fixedIP.String())
+	}
+	q = &url.URL{RawQuery: params.Encode()}
 	return q.String(), err
 }
 
@@ -67,7 +97,8 @@ func List(c *gophercloud.ServiceClient, opts ListOptsBuilder) pagination.Pager {
 
 // Get retrieves a specific port based on its unique ID.
 func Get(c *gophercloud.ServiceClient, id string) (r GetResult) {
-	_, r.Err = c.Get(getURL(c, id), &r.Body, nil)
+	resp, err := c.Get(getURL(c, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -106,7 +137,8 @@ func Create(c *gophercloud.ServiceClient, opts CreateOptsBuilder) (r CreateResul
 		r.Err = err
 		return
 	}
-	_, r.Err = c.Post(createURL(c), b, &r.Body, nil)
+	resp, err := c.Post(createURL(c), b, &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -141,51 +173,16 @@ func Update(c *gophercloud.ServiceClient, id string, opts UpdateOptsBuilder) (r 
 		r.Err = err
 		return
 	}
-	_, r.Err = c.Put(updateURL(c, id), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := c.Put(updateURL(c, id), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200, 201},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Delete accepts a unique ID and deletes the port associated with it.
 func Delete(c *gophercloud.ServiceClient, id string) (r DeleteResult) {
-	_, r.Err = c.Delete(deleteURL(c, id), nil)
+	resp, err := c.Delete(deleteURL(c, id), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
-}
-
-// IDFromName is a convenience function that returns a port's ID,
-// given its name.
-func IDFromName(client *gophercloud.ServiceClient, name string) (string, error) {
-	count := 0
-	id := ""
-
-	listOpts := ListOpts{
-		Name: name,
-	}
-
-	pages, err := List(client, listOpts).AllPages()
-	if err != nil {
-		return "", err
-	}
-
-	all, err := ExtractPorts(pages)
-	if err != nil {
-		return "", err
-	}
-
-	for _, s := range all {
-		if s.Name == name {
-			count++
-			id = s.ID
-		}
-	}
-
-	switch count {
-	case 0:
-		return "", gophercloud.ErrResourceNotFound{Name: name, ResourceType: "port"}
-	case 1:
-		return id, nil
-	default:
-		return "", gophercloud.ErrMultipleResourcesFound{Name: name, Count: count, ResourceType: "port"}
-	}
 }

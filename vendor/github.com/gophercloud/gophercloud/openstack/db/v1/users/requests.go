@@ -71,7 +71,8 @@ func Create(client *gophercloud.ServiceClient, instanceID string, opts CreateOpt
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(baseURL(client, instanceID), &b, nil, nil)
+	resp, err := client.Post(baseURL(client, instanceID), &b, nil, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -86,6 +87,7 @@ func List(client *gophercloud.ServiceClient, instanceID string) pagination.Pager
 
 // Delete will permanently delete a user from a specified database instance.
 func Delete(client *gophercloud.ServiceClient, instanceID, userName string) (r DeleteResult) {
-	_, r.Err = client.Delete(userURL(client, instanceID, userName), nil)
+	resp, err := client.Delete(userURL(client, instanceID, userName), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

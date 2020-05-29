@@ -164,9 +164,10 @@ func ListDetail(client *gophercloud.ServiceClient, opts ListOptsBuilder) paginat
 
 // Get requests details on a single node, by ID.
 func Get(client *gophercloud.ServiceClient, id string) (r GetResult) {
-	_, r.Err = client.Get(getURL(client, id), &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Get(getURL(client, id), &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -260,7 +261,8 @@ func Create(client *gophercloud.ServiceClient, opts CreateOptsBuilder) (r Create
 		return
 	}
 
-	_, r.Err = client.Post(createURL(client), reqBody, &r.Body, nil)
+	resp, err := client.Post(createURL(client), reqBody, &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -301,34 +303,37 @@ func Update(client *gophercloud.ServiceClient, id string, opts UpdateOpts) (r Up
 
 		body[i] = result
 	}
-	_, r.Err = client.Patch(updateURL(client, id), body, &r.Body, &gophercloud.RequestOpts{
-		JSONBody: &body,
-		OkCodes:  []int{200},
+	resp, err := client.Patch(updateURL(client, id), body, &r.Body, &gophercloud.RequestOpts{
+		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Delete requests that a node be removed
 func Delete(client *gophercloud.ServiceClient, id string) (r DeleteResult) {
-	_, r.Err = client.Delete(deleteURL(client, id), nil)
+	resp, err := client.Delete(deleteURL(client, id), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Request that Ironic validate whether the Node’s driver has enough information to manage the Node. This polls each
 // interface on the driver, and returns the status of that interface.
 func Validate(client *gophercloud.ServiceClient, id string) (r ValidateResult) {
-	_, r.Err = client.Get(validateURL(client, id), &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Get(validateURL(client, id), &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Inject NMI (Non-Masking Interrupts) for the given Node. This feature can be used for hardware diagnostics, and
 // actual support depends on a driver.
 func InjectNMI(client *gophercloud.ServiceClient, id string) (r InjectNMIResult) {
-	_, r.Err = client.Put(injectNMIURL(client, id), map[string]string{}, nil, &gophercloud.RequestOpts{
+	resp, err := client.Put(injectNMIURL(client, id), map[string]string{}, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{204},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -362,25 +367,28 @@ func SetBootDevice(client *gophercloud.ServiceClient, id string, bootDevice Boot
 		return
 	}
 
-	_, r.Err = client.Put(bootDeviceURL(client, id), reqBody, nil, &gophercloud.RequestOpts{
+	resp, err := client.Put(bootDeviceURL(client, id), reqBody, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{204},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Get the current boot device for the given Node.
 func GetBootDevice(client *gophercloud.ServiceClient, id string) (r BootDeviceResult) {
-	_, r.Err = client.Get(bootDeviceURL(client, id), &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Get(bootDeviceURL(client, id), &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Retrieve the acceptable set of supported boot devices for a specific Node.
 func GetSupportedBootDevices(client *gophercloud.ServiceClient, id string) (r SupportedBootDeviceResult) {
-	_, r.Err = client.Get(supportedBootDeviceURL(client, id), &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Get(supportedBootDeviceURL(client, id), &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -435,9 +443,10 @@ func ChangeProvisionState(client *gophercloud.ServiceClient, id string, opts Pro
 		return
 	}
 
-	_, r.Err = client.Put(provisionStateURL(client, id), reqBody, nil, &gophercloud.RequestOpts{
+	resp, err := client.Put(provisionStateURL(client, id), reqBody, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{202},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -481,9 +490,10 @@ func ChangePowerState(client *gophercloud.ServiceClient, id string, opts PowerSt
 		return
 	}
 
-	_, r.Err = client.Put(powerStateURL(client, id), reqBody, nil, &gophercloud.RequestOpts{
+	resp, err := client.Put(powerStateURL(client, id), reqBody, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{202},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -586,8 +596,9 @@ func SetRAIDConfig(client *gophercloud.ServiceClient, id string, raidConfigOptsB
 		return
 	}
 
-	_, r.Err = client.Put(raidConfigURL(client, id), reqBody, nil, &gophercloud.RequestOpts{
+	resp, err := client.Put(raidConfigURL(client, id), reqBody, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{204},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

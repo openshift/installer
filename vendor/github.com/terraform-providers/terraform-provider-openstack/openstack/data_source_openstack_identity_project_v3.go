@@ -54,6 +54,13 @@ func dataSourceIdentityProjectV3() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+
+			"tags": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Set:      schema.HashString,
+			},
 		},
 	}
 }
@@ -151,6 +158,7 @@ func dataSourceIdentityProjectV3Attributes(d *schema.ResourceData, project *proj
 	d.Set("enabled", project.Enabled)
 	d.Set("name", project.Name)
 	d.Set("parent_id", project.ParentID)
+	d.Set("tags", project.Tags)
 
 	return nil
 }

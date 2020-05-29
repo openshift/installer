@@ -104,13 +104,15 @@ func Create(c *gophercloud.ServiceClient, opts CreateOptsBuilder) (r CreateResul
 		r.Err = err
 		return
 	}
-	_, r.Err = c.Post(rootURL(c), b, &r.Body, nil)
+	resp, err := c.Post(rootURL(c), b, &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Get retrieves a particular pool based on its unique ID.
 func Get(c *gophercloud.ServiceClient, id string) (r GetResult) {
-	_, r.Err = c.Get(resourceURL(c, id), &r.Body, nil)
+	resp, err := c.Get(resourceURL(c, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -143,15 +145,17 @@ func Update(c *gophercloud.ServiceClient, id string, opts UpdateOptsBuilder) (r 
 		r.Err = err
 		return
 	}
-	_, r.Err = c.Put(resourceURL(c, id), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := c.Put(resourceURL(c, id), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Delete will permanently delete a particular pool based on its unique ID.
 func Delete(c *gophercloud.ServiceClient, id string) (r DeleteResult) {
-	_, r.Err = c.Delete(resourceURL(c, id), nil)
+	resp, err := c.Delete(resourceURL(c, id), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -162,7 +166,8 @@ func Delete(c *gophercloud.ServiceClient, id string) (r DeleteResult) {
 // finds it unhealthy.
 func AssociateMonitor(c *gophercloud.ServiceClient, poolID, monitorID string) (r AssociateResult) {
 	b := map[string]interface{}{"health_monitor": map[string]string{"id": monitorID}}
-	_, r.Err = c.Post(associateURL(c, poolID), b, &r.Body, nil)
+	resp, err := c.Post(associateURL(c, poolID), b, &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -170,6 +175,7 @@ func AssociateMonitor(c *gophercloud.ServiceClient, poolID, monitorID string) (r
 // pool. When dissociation is successful, the health monitor will no longer
 // check for the health of the members of the pool.
 func DisassociateMonitor(c *gophercloud.ServiceClient, poolID, monitorID string) (r AssociateResult) {
-	_, r.Err = c.Delete(disassociateURL(c, poolID, monitorID), nil)
+	resp, err := c.Delete(disassociateURL(c, poolID, monitorID), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

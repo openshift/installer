@@ -29,8 +29,11 @@ func initClientOpts(client *gophercloud.ProviderClient, eo EndpointOpts) (*gophe
 // "noauth" bare metal introspection service.
 func NewBareMetalIntrospectionNoAuth(eo EndpointOpts) (*gophercloud.ServiceClient, error) {
 	sc, err := initClientOpts(&gophercloud.ProviderClient{}, eo)
+	if err != nil {
+		return nil, err
+	}
 
 	sc.Type = "baremetal-inspector"
 
-	return sc, err
+	return sc, nil
 }

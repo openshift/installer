@@ -5,12 +5,13 @@ import (
 	"log"
 	"time"
 
+	"github.com/gophercloud/gophercloud/openstack/keymanager/v1/acls"
 	"github.com/gophercloud/gophercloud/openstack/keymanager/v1/containers"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func dataSourceKeyManagerContainerV1() *schema.Resource {
-	return &schema.Resource{
+	ret := &schema.Resource{
 		Read: dataSourceKeyManagerContainerV1Read,
 
 		Schema: map[string]*schema.Schema{
@@ -73,6 +74,11 @@ func dataSourceKeyManagerContainerV1() *schema.Resource {
 				},
 			},
 
+			"acl": {
+				Type:     schema.TypeList,
+				Computed: true,
+			},
+
 			"created_at": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -89,6 +95,16 @@ func dataSourceKeyManagerContainerV1() *schema.Resource {
 			},
 		},
 	}
+
+	elem := &schema.Resource{
+		Schema: make(map[string]*schema.Schema),
+	}
+	for _, aclOp := range aclOperations {
+		elem.Schema[aclOp] = aclSchema
+	}
+	ret.Schema["acl"].Elem = elem
+
+	return ret
 }
 
 func dataSourceKeyManagerContainerV1Read(d *schema.ResourceData, meta interface{}) error {
@@ -143,6 +159,12 @@ func dataSourceKeyManagerContainerV1Read(d *schema.ResourceData, meta interface{
 	d.Set("consumers", flattenKeyManagerContainerV1Consumers(container.Consumers))
 
 	d.Set("secret_refs", flattenKeyManagerContainerV1SecretRefs(container.SecretRefs))
+
+	acl, err := acls.GetContainerACL(kmClient, d.Id()).Extract()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to get %s container acls: %s", uuid, err)
+	}
+	d.Set("acl", flattenKeyManagerV1ACLs(acl))
 
 	// Set the region
 	d.Set("region", GetRegion(d, config))

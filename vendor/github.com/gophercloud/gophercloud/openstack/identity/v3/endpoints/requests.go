@@ -42,7 +42,8 @@ func Create(client *gophercloud.ServiceClient, opts CreateOptsBuilder) (r Create
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(listURL(client), &b, &r.Body, nil)
+	resp, err := client.Post(listURL(client), &b, &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -125,12 +126,14 @@ func Update(client *gophercloud.ServiceClient, endpointID string, opts UpdateOpt
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Patch(endpointURL(client, endpointID), &b, &r.Body, nil)
+	resp, err := client.Patch(endpointURL(client, endpointID), &b, &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Delete removes an endpoint from the service catalog.
 func Delete(client *gophercloud.ServiceClient, endpointID string) (r DeleteResult) {
-	_, r.Err = client.Delete(endpointURL(client, endpointID), nil)
+	resp, err := client.Delete(endpointURL(client, endpointID), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

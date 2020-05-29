@@ -55,7 +55,8 @@ func List(client *gophercloud.ServiceClient, opts ListOptsBuilder) pagination.Pa
 
 // Get retrieves details of a container.
 func Get(client *gophercloud.ServiceClient, id string) (r GetResult) {
-	_, r.Err = client.Get(getURL(client, id), &r.Body, nil)
+	resp, err := client.Get(getURL(client, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -89,15 +90,17 @@ func Create(client *gophercloud.ServiceClient, opts CreateOptsBuilder) (r Create
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(createURL(client), &b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(createURL(client), &b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{201},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Delete deletes a container.
 func Delete(client *gophercloud.ServiceClient, id string) (r DeleteResult) {
-	_, r.Err = client.Delete(deleteURL(client, id), nil)
+	resp, err := client.Delete(deleteURL(client, id), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -166,9 +169,10 @@ func CreateConsumer(client *gophercloud.ServiceClient, containerID string, opts 
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(createConsumerURL(client, containerID), &b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(createConsumerURL(client, containerID), &b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -203,11 +207,12 @@ func DeleteConsumer(client *gophercloud.ServiceClient, containerID string, opts 
 		return
 	}
 
-	_, r.Err = client.Request("DELETE", url, &gophercloud.RequestOpts{
+	resp, err := client.Request("DELETE", url, &gophercloud.RequestOpts{
 		JSONBody:     b,
 		JSONResponse: &r.Body,
 		OkCodes:      []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -230,9 +235,10 @@ func CreateSecretRef(client *gophercloud.ServiceClient, containerID string, opts
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(createSecretRefURL(client, containerID), &b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(createSecretRefURL(client, containerID), &b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{201},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -246,9 +252,10 @@ func DeleteSecretRef(client *gophercloud.ServiceClient, containerID string, opts
 		return
 	}
 
-	_, r.Err = client.Request("DELETE", url, &gophercloud.RequestOpts{
+	resp, err := client.Request("DELETE", url, &gophercloud.RequestOpts{
 		JSONBody: b,
 		OkCodes:  []int{204},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

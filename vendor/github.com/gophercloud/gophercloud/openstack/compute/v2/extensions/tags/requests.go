@@ -5,18 +5,20 @@ import "github.com/gophercloud/gophercloud"
 // List all tags on a server.
 func List(client *gophercloud.ServiceClient, serverID string) (r ListResult) {
 	url := listURL(client, serverID)
-	_, r.Err = client.Get(url, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Get(url, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Check if a tag exists on a server.
 func Check(client *gophercloud.ServiceClient, serverID, tag string) (r CheckResult) {
 	url := checkURL(client, serverID, tag)
-	_, r.Err = client.Get(url, nil, &gophercloud.RequestOpts{
+	resp, err := client.Get(url, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{204},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -43,35 +45,39 @@ func ReplaceAll(client *gophercloud.ServiceClient, serverID string, opts Replace
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Put(url, &b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Put(url, &b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Add adds a new Tag on a server.
 func Add(client *gophercloud.ServiceClient, serverID, tag string) (r AddResult) {
 	url := addURL(client, serverID, tag)
-	_, r.Err = client.Put(url, nil, nil, &gophercloud.RequestOpts{
+	resp, err := client.Put(url, nil, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{201, 204},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Delete removes a tag from a server.
 func Delete(client *gophercloud.ServiceClient, serverID, tag string) (r DeleteResult) {
 	url := deleteURL(client, serverID, tag)
-	_, r.Err = client.Delete(url, &gophercloud.RequestOpts{
+	resp, err := client.Delete(url, &gophercloud.RequestOpts{
 		OkCodes: []int{204},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // DeleteAll removes all tag from a server.
 func DeleteAll(client *gophercloud.ServiceClient, serverID string) (r DeleteResult) {
 	url := deleteAllURL(client, serverID)
-	_, r.Err = client.Delete(url, &gophercloud.RequestOpts{
+	resp, err := client.Delete(url, &gophercloud.RequestOpts{
 		OkCodes: []int{204},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

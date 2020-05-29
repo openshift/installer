@@ -35,8 +35,8 @@ require (
 	github.com/google/go-cmp v0.3.2-0.20191028172631-481baca67f93 // indirect
 	github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible // indirect
 	github.com/google/uuid v1.1.1
-	github.com/gophercloud/gophercloud v0.8.0
-	github.com/gophercloud/utils v0.0.0-20191212191830-4533a07bd492
+	github.com/gophercloud/gophercloud v0.10.1-0.20200424014253-c3bfe50899e5
+	github.com/gophercloud/utils v0.0.0-20200423144003-7c72efc7435d
 	github.com/gopherjs/gopherjs v0.0.0-20191106031601-ce3c9ade29de // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
@@ -48,7 +48,7 @@ require (
 	github.com/hashicorp/memberlist v0.1.5 // indirect
 	github.com/hashicorp/serf v0.8.5 // indirect
 	github.com/hashicorp/terraform v0.12.21
-	github.com/hashicorp/terraform-plugin-sdk v1.9.0
+	github.com/hashicorp/terraform-plugin-sdk v1.11.0
 	github.com/hashicorp/vault v1.3.0 // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/joyent/triton-go v1.7.0 // indirect
@@ -95,7 +95,7 @@ require (
 	github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200204003432-77547e3e7d52
 	github.com/terraform-providers/terraform-provider-ignition v1.2.1
 	github.com/terraform-providers/terraform-provider-local v1.4.0
-	github.com/terraform-providers/terraform-provider-openstack v1.25.0
+	github.com/terraform-providers/terraform-provider-openstack v1.28.0
 	github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
 	github.com/terraform-providers/terraform-provider-vsphere v1.16.2
 	github.com/ulikunitz/xz v0.5.6

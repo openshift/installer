@@ -1,16 +1,30 @@
 package openstack
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/base64"
+	"encoding/pem"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack/containerinfra/v1/certificates"
 	"github.com/gophercloud/gophercloud/openstack/containerinfra/v1/clusters"
 	"github.com/gophercloud/gophercloud/openstack/containerinfra/v1/clustertemplates"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+
+	yaml "gopkg.in/yaml.v2"
+)
+
+const (
+	rsaPrivateKeyBlockType      = "RSA PRIVATE KEY"
+	certificateRequestBlockType = "CERTIFICATE REQUEST"
 )
 
 func expandContainerInfraV1LabelsMap(v map[string]interface{}) (map[string]string, error) {
@@ -117,4 +131,154 @@ func containerInfraClusterV1MasterFlavor(d *schema.ResourceData) (string, error)
 	}
 
 	return "", nil
+}
+
+type kubernetesConfig struct {
+	APIVersion     string                    `yaml:"apiVersion"`
+	Kind           string                    `yaml:"kind"`
+	Clusters       []kubernetesConfigCluster `yaml:"clusters"`
+	Contexts       []kubernetesConfigContext `yaml:"contexts"`
+	CurrentContext string                    `yaml:"current-context"`
+	Users          []kubernetesConfigUser    `yaml:"users"`
+}
+
+type kubernetesConfigCluster struct {
+	Cluster kubernetesConfigClusterData `yaml:"cluster"`
+	Name    string                      `yaml:"name"`
+}
+type kubernetesConfigClusterData struct {
+	CertificateAuthorityData string `yaml:"certificate-authority-data"`
+	Server                   string `yaml:"server"`
+}
+
+type kubernetesConfigContext struct {
+	Context kubernetesConfigContextData `yaml:"context"`
+	Name    string                      `yaml:"name"`
+}
+type kubernetesConfigContextData struct {
+	Cluster string `yaml:"cluster"`
+	User    string `yaml:"user"`
+}
+
+type kubernetesConfigUser struct {
+	Name string                   `yaml:"name"`
+	User kubernetesConfigUserData `yaml:"user"`
+}
+
+type kubernetesConfigUserData struct {
+	ClientKeyData         string `yaml:"client-key-data"`
+	ClientCertificateData string `yaml:"client-certificate-data"`
+}
+
+func flattenContainerInfraV1Kubeconfig(d *schema.ResourceData, containerInfraClient *gophercloud.ServiceClient) (map[string]interface{}, error) {
+	var kubeconfig map[string]interface{}
+	name := d.Get("name").(string)
+	host := d.Get("api_address").(string)
+
+	if d.Get("kubeconfig.client_certificate").(string) != "" {
+		return d.Get("kubeconfig").(map[string]interface{}), nil
+	}
+
+	certificateAuthority, err := certificates.Get(containerInfraClient, d.Id()).Extract()
+	if err != nil {
+		return nil, fmt.Errorf("Error getting certificate authority: %s", err)
+	}
+
+	clientKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return nil, fmt.Errorf("Error generating client key: %s", err)
+	}
+
+	csrTemplate := x509.CertificateRequest{
+		PublicKey:          clientKey.Public,
+		SignatureAlgorithm: x509.SHA512WithRSA,
+		Subject: pkix.Name{
+			CommonName:         "admin",
+			Organization:       []string{"system:masters"},
+			OrganizationalUnit: []string{"terraform"},
+		},
+	}
+
+	clientCsr, err := x509.CreateCertificateRequest(rand.Reader, &csrTemplate, clientKey)
+	if err != nil {
+		return nil, fmt.Errorf("Error generating client CSR: %s", err)
+	}
+
+	pemClientKey := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  rsaPrivateKeyBlockType,
+			Bytes: x509.MarshalPKCS1PrivateKey(clientKey),
+		},
+	)
+
+	pemClientCsr := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  certificateRequestBlockType,
+			Bytes: clientCsr,
+		},
+	)
+
+	certificateCreateOpts := certificates.CreateOpts{
+		ClusterUUID: d.Id(),
+		CSR:         string(pemClientCsr),
+	}
+
+	clientCertificate, err := certificates.Create(containerInfraClient, certificateCreateOpts).Extract()
+	if err != nil {
+		return nil, fmt.Errorf("Error requesting client certificate: %s", err)
+	}
+
+	rawKubeconfig, err := renderKubeconfig(name, host, []byte(certificateAuthority.PEM), []byte(clientCertificate.PEM), pemClientKey)
+	if err != nil {
+		return nil, fmt.Errorf("Error rendering kubeconfig: %s", err)
+	}
+
+	kubeconfig = map[string]interface{}{
+		"raw_config":             string(rawKubeconfig),
+		"host":                   host,
+		"cluster_ca_certificate": certificateAuthority.PEM,
+		"client_certificate":     clientCertificate.PEM,
+		"client_key":             string(pemClientKey),
+	}
+
+	return kubeconfig, nil
+}
+
+func renderKubeconfig(name string, host string, clusterCaCertificate []byte, clientCertificate []byte, clientKey []byte) ([]byte, error) {
+	userName := fmt.Sprintf("%s-admin", name)
+
+	config := kubernetesConfig{
+		APIVersion: "v1",
+		Kind:       "Config",
+		Clusters: []kubernetesConfigCluster{
+			{
+				Name: name,
+				Cluster: kubernetesConfigClusterData{
+					CertificateAuthorityData: base64.StdEncoding.EncodeToString(clusterCaCertificate),
+					Server:                   host,
+				},
+			},
+		},
+		Contexts: []kubernetesConfigContext{
+			{
+				Context: kubernetesConfigContextData{
+					Cluster: name,
+					User:    userName,
+				},
+				Name: name,
+			},
+		},
+		CurrentContext: name,
+		Users: []kubernetesConfigUser{
+			{
+				Name: userName,
+				User: kubernetesConfigUserData{
+					ClientCertificateData: base64.StdEncoding.EncodeToString(clientCertificate),
+					ClientKeyData:         base64.StdEncoding.EncodeToString(clientKey),
+				},
+			},
+		},
+	}
+
+	return yaml.Marshal(config)
 }
