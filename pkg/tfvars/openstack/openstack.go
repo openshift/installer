@@ -37,7 +37,7 @@ type config struct {
 	RootVolumeType             string   `json:"openstack_master_root_volume_type,omitempty"`
 	BootstrapShim              string   `json:"openstack_bootstrap_shim_ignition,omitempty"`
 	ExternalDNS                []string `json:"openstack_external_dns,omitempty"`
-	MasterServerGroupID        string   `json:"openstack_master_server_group_id,omitempty"`
+	MasterServerGroupName      string   `json:"openstack_master_server_group_name,omitempty"`
 	AdditionalNetworkIDs       []string `json:"openstack_additional_network_ids,omitempty"`
 	AdditionalSecurityGroupIDs []string `json:"openstack_master_extra_sg_ids,omitempty"`
 	MachinesSubnet             string   `json:"openstack_machines_subnet_id,omitempty"`
@@ -132,7 +132,11 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 		cfg.RootVolumeType = masterConfig.RootVolume.VolumeType
 	}
 
-	cfg.MasterServerGroupID = masterConfig.ServerGroupID
+	cfg.MasterServerGroupName = masterConfig.ServerGroupName
+
+	if masterConfig.ServerGroupID != "" {
+		return nil, errors.Errorf("ServerGroupID is not implemented in the Installer. Please use ServerGroupName for automatic creation of the Control Plane server group.")
+	}
 
 	cfg.AdditionalNetworkIDs = []string{}
 	if mpool.AdditionalNetworkIDs != nil {

@@ -41,9 +41,9 @@ variable "root_volume_type" {
   description = "The type of volume for the root block device."
 }
 
-variable "server_group_id" {
+variable "server_group_name" {
   type        = string
-  description = "ID of the server group to assign the servers to."
+  description = "Name of the server group for the master nodes."
 }
 
 variable "additional_network_ids" {

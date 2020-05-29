@@ -336,9 +336,9 @@ EOF
 
 }
 
-variable "openstack_master_server_group_id" {
+variable "openstack_master_server_group_name" {
   type        = string
-  description = "ID of the server group to assign the master servers to."
+  description = "Name of the server group for the master nodes."
 }
 
 variable "openstack_machines_subnet_id" {

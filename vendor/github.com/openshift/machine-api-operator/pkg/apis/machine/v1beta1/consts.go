@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package common
+package v1beta1
 
 // Constants aren't automatically generated for unversioned packages.
 // Instead share the same constant for all versioned packages
