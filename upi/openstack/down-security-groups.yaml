@@ -12,7 +12,7 @@
   tasks:
   - name: 'List security groups'
     command:
-      cmd: "openstack security group list --tags {{ cluster_id_tag }} -f value -c Name"
+      cmd: "openstack security group list --tags {{ cluster_id_tag }} -f value -c ID"
     register: security_groups
 
   - name: 'Remove the cluster security groups'
