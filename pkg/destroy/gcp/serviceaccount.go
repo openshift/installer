@@ -12,19 +12,33 @@ import (
 // infra ID. Filtering is done client side because the API doesn't offer filtering for service accounts.
 func (o *ClusterUninstaller) listServiceAccounts() ([]cloudResource, error) {
 	o.Logger.Debugf("Listing service accounts")
+
+	result := []cloudResource{}
+	sas, err := o.listClusterServiceAccount()
+	if err != nil {
+		errors.Wrapf(err, "failed to fetch service accounts for the cluster")
+	}
+	for _, item := range sas {
+		o.Logger.Debugf("Found service account: %s", item.Name)
+		result = append(result, cloudResource{
+			key:      item.Name,
+			name:     item.Name,
+			url:      item.Email,
+			typeName: "serviceaccount",
+		})
+	}
+	return result, nil
+}
+
+func (o *ClusterUninstaller) listClusterServiceAccount() ([]*iam.ServiceAccount, error) {
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-	result := []cloudResource{}
-	req := o.iamSvc.Projects.ServiceAccounts.List(fmt.Sprintf("projects/%s", o.ProjectID)).Fields("accounts(name,email),nextPageToken")
+	result := []*iam.ServiceAccount{}
+	req := o.iamSvc.Projects.ServiceAccounts.List(fmt.Sprintf("projects/%s", o.ProjectID)).Fields("accounts(name,displayName,email),nextPageToken")
 	err := req.Pages(ctx, func(list *iam.ListServiceAccountsResponse) error {
-		for _, item := range list.Accounts {
-			if o.isClusterResource(item.Email) {
-				o.Logger.Debugf("Found service account: %s", item.Name)
-				result = append(result, cloudResource{
-					key:      item.Name,
-					name:     item.Name,
-					typeName: "serviceaccount",
-				})
+		for idx, item := range list.Accounts {
+			if o.isClusterResource(item.Email) || o.isClusterResource(item.DisplayName) {
+				result = append(result, list.Accounts[idx])
 			}
 		}
 		return nil
@@ -55,6 +69,8 @@ func (o *ClusterUninstaller) destroyServiceAccounts() error {
 	if err != nil {
 		return err
 	}
+	o.insertPendingItems("serviceaccount_binding", found) // store service accounts to remove project IAM binding
+
 	items := o.insertPendingItems("serviceaccount", found)
 	errs := []error{}
 	for _, item := range items {

@@ -1,11 +1,11 @@
 package gcp
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	resourcemanager "google.golang.org/api/cloudresourcemanager/v1"
 )
@@ -34,12 +34,13 @@ func (o *ClusterUninstaller) setProjectIAMPolicy(policy *resourcemanager.Policy)
 	return nil
 }
 
-func clearIAMPolicyBindings(policy *resourcemanager.Policy, clusterID string, logger logrus.FieldLogger) bool {
+func clearIAMPolicyBindings(policy *resourcemanager.Policy, emails sets.String, logger logrus.FieldLogger) bool {
 	removedBindings := false
 	for _, binding := range policy.Bindings {
 		members := []string{}
 		for _, member := range binding.Members {
-			if strings.HasPrefix(strings.TrimPrefix(member, "deleted:"), fmt.Sprintf("serviceAccount:%s", clusterID)) {
+			email := strings.TrimPrefix(strings.TrimPrefix(member, "deleted:"), "serviceAccount:")
+			if emails.Has(email) {
 				logger.Debugf("IAM: removing %s from role %s", member, binding.Role)
 				removedBindings = true
 				continue
@@ -58,7 +59,14 @@ func (o *ClusterUninstaller) destroyIAMPolicyBindings() error {
 	if err != nil {
 		return err
 	}
-	if !clearIAMPolicyBindings(policy, o.ClusterID, o.Logger) {
+
+	sas := o.getPendingItems("serviceaccount_binding")
+	emails := sets.NewString()
+	for _, item := range sas {
+		emails.Insert(item.url)
+	}
+
+	if !clearIAMPolicyBindings(policy, emails, o.Logger) {
 		pendingPolicy := o.getPendingItems("iampolicy")
 		if len(pendingPolicy) > 0 {
 			o.Logger.Infof("Deleted IAM project role bindings")
