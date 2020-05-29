@@ -234,8 +234,8 @@ github.com/aws/aws-sdk-go v1.25.3/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN
 github.com/aws/aws-sdk-go v1.25.47/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/aws/aws-sdk-go v1.28.8 h1:kPGnElMdW0GDc54Giy1lcE/3gAr2Gzl6cMjYKoBNFhw=
 github.com/aws/aws-sdk-go v1.28.8/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
-github.com/aws/aws-sdk-go v1.29.24 h1:KOnds/LwADMDBaALL4UB98ZR+TUR1A1mYmAYbdLixLA=
-github.com/aws/aws-sdk-go v1.29.24/go.mod h1:1KvfttTE3SPKMpo8g2c6jL3ZKfXtFvKscTgahTma5Xg=
+github.com/aws/aws-sdk-go v1.30.16 h1:1eabOZiVGl+XB02/VG9NpR+3fngaNc74pgb5RmyzgLY=
+github.com/aws/aws-sdk-go v1.30.16/go.mod h1:5zCpMtNQVjRREroY7sYe8lOMRSxkhG6MZveU8YkpAk0=
 github.com/aws/aws-sdk-go-v2 v0.9.0/go.mod h1:sa1GePZ/LfBGI4dSq30f6uR4Tthll8axxtEPvlpXZ8U=
 github.com/aybabtme/rgbterm v0.0.0-20170906152045-cc83f3b3ce59/go.mod h1:q/89r3U2H7sSsE2t6Kca0lfwTK8JdoNGS/yzM/4iH5I=
 github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f h1:ZNv7On9kyUzm7fvRZumSyy/IUiSC7AzL0I1jKKtwooA=
@@ -254,7 +254,7 @@ github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6r
 github.com/bflad/gopaniccheck v0.1.0/go.mod h1:ZCj2vSr7EqVeDaqVsWN4n2MwdROx1YL+LFo47TSWtsA=
 github.com/bflad/tfproviderdocs v0.5.0 h1:FzT4hEtKX1WcrLmZSRB83kFdzRmkqu7kS9RHn5oKAuA=
 github.com/bflad/tfproviderdocs v0.5.0/go.mod h1:d0k1fQLEu1pdeORxozwuwmvauFaEmMBREQ1fw3J+pPc=
-github.com/bflad/tfproviderlint v0.12.0/go.mod h1:MsNI3eEj7uC7P/h7XmGvzMLtsotLkrvB+NF2/w3RZGc=
+github.com/bflad/tfproviderlint v0.14.0/go.mod h1:1Jtjs6DPKoyqPrbPyMiy33h0ViO2h831uzoOuikCA60=
 github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d h1:xDfNPAt8lFiC1UJrqV3uuy861HCTo708pDMbjHHdCas=
 github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d/go.mod h1:6QX/PXZ00z/TKoufEY6K/a0k6AhaJrQKdFe6OfVXsa4=
 github.com/bgentry/speakeasy v0.1.0 h1:ByYyxL9InA1OWqxJqqp2A5pYHUrCiAL6K3J+LKSsQkY=
@@ -1435,6 +1435,8 @@ github.com/jirfag/go-printf-func-name v0.0.0-20191110105641-45db9963cdd3/go.mod 
 github.com/jmespath/go-jmespath v0.0.0-20160202185014-0b12d6b521d8/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5imkbgOkpRUYLnmbU7UEFbjtDA2hxJ1ichM=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
+github.com/jmespath/go-jmespath v0.3.0 h1:OS12ieG61fsCg5+qLJ+SsW9NicxNkg3b25OyT2yCeUc=
+github.com/jmespath/go-jmespath v0.3.0/go.mod h1:9QtRXoHjLGCJ5IBSaohpXITPlowMeeYCZ7fLUTSywik=
 github.com/jmoiron/sqlx v0.0.0-20180614180643-0dae4fefe7c0/go.mod h1:IiEW3SEiiErVyFdH8NTuWjSifiEQKUoyK3LNqr2kCHU=
 github.com/jmoiron/sqlx v1.2.0/go.mod h1:1FEQNm3xlJgrMD+FBdI9+xvCksHtbpVBBw5dYhBSsks=
 github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5/go.mod h1:1FEQNm3xlJgrMD+FBdI9+xvCksHtbpVBBw5dYhBSsks=
@@ -1819,6 +1821,8 @@ github.com/openshift/machine-api-operator v0.2.1-0.20200429102619-d36974451290/g
 github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530 h1:r9eSp963LcaLw3YUyJHMHwZYXoaGXOc2MOKVQQrdRmw=
 github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530/go.mod h1:z3udws7UDLBp233iGbayvpZEwhWn74K9xzjDtCGJlok=
 github.com/openshift/runtime-utils v0.0.0-20191011150825-9169de69ebf6/go.mod h1:5gDRVvQwesU7cfwlpuMivdv3Dz/oslvv2qTBHCy4wqQ=
+github.com/openshift/terraform-provider-aws v1.60.1-0.20200526184553-1a716dcc0fa8 h1:4FyzQRruWKVZwGGxO+87DMWb4QuTFrssOGbn8AzRmDk=
+github.com/openshift/terraform-provider-aws v1.60.1-0.20200526184553-1a716dcc0fa8/go.mod h1:H7ABt26s2lS5p/AOJvhB5V68d+2XzuNcpv9+3gsENJY=
 github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-3 h1:aRnSZYFNqYXv8mc3/q6nP1WJP4VR8eugkdmJF6xnCs0=
 github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-3/go.mod h1:O9UYVGp8E7aMa2dANw9oTQmaZZbbr8DMRpC56dyy00E=
 github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-1 h1:Jvi/tGlF8xOLZ5lWjJWi8hyXOSe7NqbAqOrwjdDRE7E=
@@ -2092,6 +2096,8 @@ github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
+github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H4=
+github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/svanharmelen/jsonapi v0.0.0-20180618144545-0c0828c3f16d h1:Z4EH+5EffvBEhh37F0C0DnpklTMh00JOkjW5zK3ofBI=
 github.com/svanharmelen/jsonapi v0.0.0-20180618144545-0c0828c3f16d/go.mod h1:BSTlc8jOjh0niykqEGVXOLXdi9o0r0kR8tCYiMvjFgw=
@@ -2099,8 +2105,6 @@ github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG
 github.com/syndtr/goleveldb v1.0.0/go.mod h1:ZVVdQEZoIme9iO1Ch2Jdy24qqXrMMOU6lpPAyBWyWuQ=
 github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07/go.mod h1:kDXzergiv9cbyO7IOYJZWg1U88JhDg3PB6klq9Hg2pA=
 github.com/tchap/go-patricia v2.3.0+incompatible/go.mod h1:bmLyhP68RS6kStMGxByiQ23RP/odRBOTVjwp2cDyi6I=
-github.com/terraform-providers/terraform-provider-aws v1.60.1-0.20200319153356-a183662640d9 h1:xqOfDQLPKE6UkJi4sq2/R0e/zpQQDypUzuCNPbbcXSE=
-github.com/terraform-providers/terraform-provider-aws v1.60.1-0.20200319153356-a183662640d9/go.mod h1:S5ebfk4piId2DRon9QQgeXU4+A5ICUSJWlzl+OcXPNs=
 github.com/terraform-providers/terraform-provider-azuread v0.6.1-0.20191007035844-361c0a206ad4/go.mod h1:nIkEKBYPFXH/yU7mY7lK5Om6Krga/aMdD/B/OEJpWzc=
 github.com/terraform-providers/terraform-provider-azuread v0.7.0 h1:s0kZMhL8feJu5ay+E+0eD5xIZ4/t4+k0Iy9o5gq2T8g=
 github.com/terraform-providers/terraform-provider-azuread v0.7.0/go.mod h1:JDNotK1YxzW2NX2HhWjd0AB6AHOMrO7CQ6kiLl4Z3x8=
