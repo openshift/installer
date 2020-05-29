@@ -8,3 +8,6 @@ Before=crio.service
 Type=oneshot
 ExecStart=/usr/local/bin/crio-configure.sh
 RemainAfterExit=true
+
+[Install]
+RequiredBy=crio.service
