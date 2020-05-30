@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/ovirt"
@@ -15,18 +16,26 @@ func askCluster(c *ovirtsdk4.Connection, p *ovirt.Platform) (string, error) {
 	var clusterByNames = make(map[string]*ovirtsdk4.Cluster)
 	var clusterNames []string
 	systemService := c.SystemService()
-	response, err := systemService.ClustersService().List().Send()
+
+	dcResp, err := datacentersAvailable(c, "status=up")
 	if err != nil {
-		return "", err
-	}
-	clusters, ok := response.Clusters()
-	if !ok {
-		return "", fmt.Errorf("there are no available clusters")
+		return "Failed to search Cluster available in the DataCenters!", err
 	}
 
-	for _, cluster := range clusters.Slice() {
-		clusterByNames[cluster.MustName()] = cluster
-		clusterNames = append(clusterNames, cluster.MustName())
+	datacenters := dcResp.MustDataCenters()
+	for _, dc := range datacenters.Slice() {
+		dcService := systemService.DataCentersService().DataCenterService(dc.MustId())
+		logrus.Debug("Datacenter:", dc.MustName())
+		clusters, err := dcService.ClustersService().List().Send()
+		if err != nil {
+			return "Failed to search dataCenter list, reason: %v\n", err
+		}
+		clusterSlice := clusters.MustClusters()
+		for _, cluster := range clusterSlice.Slice() {
+			fmt.Println("\tCluster:", cluster.MustName())
+			clusterByNames[cluster.MustName()] = cluster
+			clusterNames = append(clusterNames, cluster.MustName())
+		}
 	}
 	err = survey.AskOne(&survey.Select{
 		Message: "Cluster",
