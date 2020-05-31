@@ -173,18 +173,21 @@ func askUsername() error {
 }
 
 // askCredentials will handle username and password for connecting with Engine
-// In case of error during password, users will be prompted username again.
 func askCredentials() error {
-	err := askUsername()
-	if err != nil {
-		return err
-	}
 
-	err = askPassword()
-	if err != nil {
-		return askUsername()
-	}
+	loginAttempts := 3
+	for loginAttempts > 0 {
+		logrus.Debugf("Login attempts %d...", loginAttempts)
+		err := askUsername()
+		if err != nil {
+			return err
+		}
 
+		err = askPassword()
+		if err != nil {
+			loginAttempts = loginAttempts - 1
+		}
+	}
 	return nil
 }
 
