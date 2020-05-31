@@ -17,7 +17,12 @@ func askCluster(c *ovirtsdk4.Connection, p *ovirt.Platform) (string, error) {
 	var clusterNames []string
 	systemService := c.SystemService()
 
-	dcResp, err := datacentersAvailable(c, "status=up")
+	dcOptions := dataCenterConfig{
+		conn:         c,
+		searchFilter: "",
+	}
+
+	dcResp, err := datacentersAvailable(dcOptions)
 	if err != nil {
 		return "Failed to search Cluster available in the DataCenters!", err
 	}
