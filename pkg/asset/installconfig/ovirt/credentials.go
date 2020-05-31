@@ -3,13 +3,15 @@ package ovirt
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/asn1"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -31,28 +33,46 @@ var EngineConfig = Config{}
 var HTTPResource = clientHTTP{}
 
 // Import PEM into the System Pool
-func (c clientHTTP) importCertIntoSystemPool(pemFilePath string) error {
+func (c clientHTTP) importCertIntoSystemPool(pemFilePath string) bool {
 	c.certPool, _ = x509.SystemCertPool()
 	if c.certPool == nil {
 		logrus.Debug("Failed to load cert pool.... Creating new cert pool")
 		c.certPool = x509.NewCertPool()
+		return false
 	}
-	c.certPool = x509.NewCertPool()
+	for _, rawSubject := range c.certPool.Subjects() {
+		var rdnSequence pkix.RDNSequence
+		_, err := asn1.Unmarshal(rawSubject, &rdnSequence)
+		if err != nil {
+			logrus.Debug("Could not unmarshal der formatted subject")
+			return false
+		}
+		var name pkix.Name
+		name.FillFromRDNSequence(&rdnSequence)
+		if strings.Contains(name.CommonName, EngineConfig.FQDN) {
+			logrus.Debug("Found FQDN in the cert list of subjects! CommonName: ", name.CommonName)
+			return true
+		}
+
+	}
+
 	logrus.Debugf("Reading file: %s", pemFilePath)
 	pem, err := ioutil.ReadFile(pemFilePath)
 	if err != nil {
-		return errors.Wrapf(err, "Failed to read the cert")
+		logrus.Debug("Failed to read the cert!")
+		return false
 	}
 
 	logrus.Debug(string(pem))
 	if len(pem) != 0 {
 		logrus.Debug("trying to import...")
 		if !c.certPool.AppendCertsFromPEM(pem) {
-			return errors.Wrapf(err, "unable to load local certificates")
+			logrus.Debug("Unable to load local certificates!")
+			return false
 		}
 		logrus.Debugf("Loaded %s into the system pool!", pemFilePath)
 	}
-	return nil
+	return false
 }
 
 // downloadFile from specificed URL and store via filepath
@@ -109,19 +129,6 @@ func (c clientHTTP) checkURLResponse() error {
 	defer resp.Body.Close()
 
 	return nil
-}
-
-// execCommand executes a command from cmdName with args
-// provided from cmdArgs. Returns the stdout in []byte and error or nil
-func execCommand(cmdName string, cmdArgs ...string) ([]byte, error) {
-	logrus.Debugf("Executing: %s %s ", cmdName, cmdArgs)
-	cmd := exec.Command(cmdName, cmdArgs...)
-	stdout, err := cmd.Output()
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error executing the command")
-	}
-
-	return stdout, nil
 }
 
 // askPassword will ask the password to connect to Engine API.
@@ -232,15 +239,16 @@ func engineSetup() (Config, error) {
 	HTTPResource.urlAddr = EngineConfig.PemURL
 	err = HTTPResource.downloadFile()
 	if err == nil {
-		err = HTTPResource.importCertIntoSystemPool(HTTPResource.saveFilePath)
-		if err == nil {
+		if HTTPResource.importCertIntoSystemPool(HTTPResource.saveFilePath) {
 			EngineConfig.Insecure = false
+		} else {
+			EngineConfig.Insecure = true
 		}
 	}
 	logrus.Debugf("Engine PEM temporary stored: %s", HTTPResource.saveFilePath)
 
 	if EngineConfig.Insecure == true {
-		logrus.Warning("Communication with the Engine will be insecure.")
+		logrus.Warning("Cannot detect Engine CA cert imported in the system. Communication with the Engine will be insecure.")
 	}
 
 	err = askCredentials()

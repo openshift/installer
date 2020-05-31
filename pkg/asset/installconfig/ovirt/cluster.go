@@ -32,7 +32,7 @@ func askCluster(c *ovirtsdk4.Connection, p *ovirt.Platform) (string, error) {
 		}
 		clusterSlice := clusters.MustClusters()
 		for _, cluster := range clusterSlice.Slice() {
-			fmt.Println("\tCluster:", cluster.MustName())
+			logrus.Debug("\tCluster:", cluster.MustName())
 			clusterByNames[cluster.MustName()] = cluster
 			clusterNames = append(clusterNames, cluster.MustName())
 		}
