@@ -229,7 +229,8 @@ func engineSetup() (Config, error) {
 	// Create tmpFile to store the Engine PEM file
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "engine-")
 	if err != nil {
-		fmt.Println("Cannot create temporary file", err)
+		logrus.Debug("Cannot create temporary file: ", err)
+		return EngineConfig, err
 	}
 	defer os.Remove(tmpFile.Name())
 
@@ -238,12 +239,14 @@ func engineSetup() (Config, error) {
 	HTTPResource.skipVerify = true
 	HTTPResource.urlAddr = EngineConfig.PemURL
 	err = HTTPResource.downloadFile()
-	if err == nil {
-		if HTTPResource.importCertIntoSystemPool(HTTPResource.saveFilePath) {
-			EngineConfig.Insecure = false
-		} else {
-			EngineConfig.Insecure = true
-		}
+	if err != nil {
+		logrus.Warning("Cannot download PEM file from Engine!", err)
+	}
+
+	if HTTPResource.importCertIntoSystemPool(HTTPResource.saveFilePath) {
+		EngineConfig.Insecure = false
+	} else {
+		EngineConfig.Insecure = true
 	}
 	logrus.Debugf("Engine PEM temporary stored: %s", HTTPResource.saveFilePath)
 
