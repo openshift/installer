@@ -170,3 +170,19 @@ variable "ssh_public_key_path" {
   type    = string
   default = "~/.ssh/id_rsa.pub"
 }
+
+//////////
+// Citrix ADC Variables
+//////////
+
+variable "citrix_adc_ip" {
+  type = string
+}
+
+variable "citrix_adc_username" {
+  type = string
+}
+
+variable "citrix_adc_password" {
+  type = string
+}

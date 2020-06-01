@@ -111,6 +111,26 @@ module "lb" {
   ssh_public_key_path       = var.ssh_public_key_path
 }
 
+// Configure Citrix ADC as an External LB
+module "citrix_adc" {
+
+  source        = "./citrix_adc"
+
+  citrix_adc_ip = var.citrix_adc_ip
+  citrix_adc_username = var.citrix_adc_username
+  citrix_adc_password = var.citrix_adc_password
+
+  lb_ip_address = module.ipam_lb.ip_addresses[0]
+
+  api_backend_addresses = flatten([
+    module.ipam_bootstrap.ip_addresses[0],
+    module.ipam_control_plane.ip_addresses]
+  )
+
+  ingress_backend_addresses = module.ipam_compute.ip_addresses
+
+}
+
 module "dns_cluster_domain" {
   source         = "./cluster_domain"
   cluster_domain = var.cluster_domain
