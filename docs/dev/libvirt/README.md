@@ -30,7 +30,7 @@ repository to ensure you get a new enough version of qemu-kvm.
 On Fedora, CentOS/RHEL:
 
 ```sh
-sudo yum install libvirt libvirt-devel libvirt-daemon-kvm qemu-kvm
+sudo yum install libvirt-devel libvirt-daemon-kvm libvirt-client
 ```
 
 Then start libvirtd:
@@ -100,8 +100,6 @@ auth_tcp="none"
 tcp_port = "16509"
 ```
 
-Note that authentication is not currently supported, but should be soon.
-
 On Fedora 31, you also need to enable and start the libvirtd TCP
 socket, which is managed by systemd:
 
@@ -112,6 +110,16 @@ sudo systemctl start libvirtd-tcp.socket
 
 after which you need to restart libvirtd.
 
+**NOTE:** that the above configuration disables all encryption and
+authentication options in libvirtd and causes it to listen on all
+network interfaces and IP addresses. **A connection to this privileged
+libvirtd gives the client privileges equivalent to those of a root
+shell.** This configuration has a security impact on a par with
+running a telnet server with no root password set. It is critical
+to follow the steps below to **configure the firewall to prevent
+access to libvirt from other hosts on the LAN/WAN**.
+
+
 #### Configure qemu.conf
 
 On Debian/Ubuntu it might be needed to configure security driver for qemu.
@@ -121,8 +129,14 @@ errors. Double check that `security_driver = "none"` line is present in
 `/etc/libvirt/qemu.conf` and not commented out.
 
 #### Configure the service runner to pass `--listen` to libvirtd
-In addition to the config, you'll have to pass an additional command-line
-argument to libvirtd. On Fedora, modify `/etc/sysconfig/libvirtd` and set:
+
+**NOTE:** if the installation of libvirt included support for socket
+activation via the `libvirt-tcp.socket` systemd unit, the `--listen`
+argument should not be added and thus this step can be skipped.
+
+If socket activation is not available, you'll have to pass an additional
+command-line argument to libvirtd. On Red Hat based distros, modify
+`/etc/sysconfig/libvirtd` and set:
 
 ```
 LIBVIRTD_ARGS="--listen"
