@@ -4,13 +4,12 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 
 ## Cluster-scoped properties
 
-* `ovirt_cluster_id` (required string): The oVirt cluster where the VMs will be created.
-* `ovirt_storage_domain_id` (required string): The storage domain ID where the VM disks will be created.
+* `ovirt_cluster_id` (required string): The Cluster where the VMs will be created.
+* `ovirt_storage_domain_id` (required string): The Storage Domain ID where the VM disks will be created.
 * `ovirt_network_name` (required string): The network name where the VM nics will be created.
 * `vnicProfileID` (required string): The ID of the [vNic profile][vnic-profile] used for the VM network interfaces.
     This can be inferred if the cluster network has a single profile.
 * `api_vip` (required string): An IP address on the machineNetwork that will be assigned to the API VIP.
-* `dns_vip` (required string): An IP address on the machineNetwork that will be assigned to the DNS VIP.
 * `ingress_vip` (required string): An IP address on the machineNetwork that will be assigned to the Ingress VIP.
 
 ## Machine pools
@@ -36,7 +35,7 @@ For examples of platform-agnostic configuration fragments, see [here](../customi
 
 ### Minimal
 
-An example minimal oVirt install config is:
+An example minimal install config is:
 
 ```yaml
 apiVersion: v1
@@ -46,7 +45,6 @@ metadata:
 platform:
   ovirt:
     api_vip: 10.46.8.230
-    dns_vip: 10.46.8.231
     ingress_vip: 10.46.8.232
     ovirt_cluster_id: 68833f9f-e89c-4891-b768-e2ba0815b76b
     ovirt_storage_domain_id: ed7b0f4e-0e96-492a-8fff-279213ee1468
@@ -58,7 +56,7 @@ sshKey: ssh-ed25519 AAAA...
 
 ### Custom machine pools
 
-An example oVirt install config with custom machine pools:
+An example install config with custom machine pools:
 
 ```yaml
 apiVersion: v1
@@ -92,7 +90,6 @@ metadata:
 platform:
   ovirt:
     api_vip: 10.46.8.230
-    dns_vip: 10.46.8.231
     ingress_vip: 10.46.8.232
     ovirt_cluster_id: 68833f9f-e89c-4891-b768-e2ba0815b76b
     ovirt_storage_domain_id: ed7b0f4e-0e96-492a-8fff-279213ee1468

@@ -28,11 +28,11 @@ func getConnection(ovirtConfig Config) (*ovirtsdk.Connection, error) {
 func NewConnection() (*ovirtsdk.Connection, error) {
 	ovirtConfig, err := NewConfig()
 	if err != nil {
-		return nil, errors.Wrap(err, "getting ovirt configuration")
+		return nil, errors.Wrap(err, "getting Engine configuration")
 	}
 	con, err := getConnection(ovirtConfig)
 	if err != nil {
-		return nil, errors.Wrap(err, "establishing ovirt connection")
+		return nil, errors.Wrap(err, "establishing Engine connection")
 	}
 	return con, nil
 }

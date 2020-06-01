@@ -23,9 +23,6 @@ type Platform struct {
 	// APIVIP is an IP which will be served by bootstrap and then pivoted masters, using keepalived
 	APIVIP string `json:"api_vip"`
 
-	// DNSVIP is the IP of the internal DNS which will be operated by the cluster
-	DNSVIP string `json:"dns_vip"`
-
 	// IngressIP is an external IP which routes to the default ingress controller.
 	// The IP is a suitable target of a wildcard DNS record used to resolve default route host names.
 	IngressVIP string `json:"ingress_vip"`
