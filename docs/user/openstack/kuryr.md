@@ -5,11 +5,22 @@ OpenShift pods into OpenStack SDN. In addition, it provides interconnectivity be
 
 Kuryr is recommended for OpenShift deployments on encapsulated OpenStack tenant networks in order to avoid double encapsulation, such as running an encapsulated OpenShift SDN over an OpenStack network.
 
-Conversely, using Kuryr does not make sense in the following cases:
+If you use provider networks or tenant VLANs, you do not need to use Kuryr to
+avoid double encapsulation. The performance benefit is negligible. Depending on
+your configuration, though, using Kuryr to avoid having two overlays might still
+be beneficial.
 
-* You use provider networks or tenant VLANs.
-* The deployment will use many services on a few hypervisors. Each OpenShift service creates an Octavia Amphora virtual machine in OpenStack that hosts a required load balancer.
-* UDP services are needed.
+Kuryr is not recommended in deployments where all of the following criteria are
+true:
+
+* The OpenStack version is less than Train.
+* The deployment uses UDP services, or a large number of TCP services on few
+  hypervisors.
+
+or
+
+* The `ovn-octavia` Octavia driver is disabled.
+* The deployment uses a large number of TCP services on few hypervisors.
 
 [Learn more about Kuryr](https://docs.openstack.org/kuryr-kubernetes/latest/).
 
@@ -53,6 +64,39 @@ In addition, if the default ML2/OVS Neutron driver is used, the firewall must be
 Kuryr SDN uses OpenStack Octavia LBaaS to implement OpenShift services. Thus the OpenStack environment must have Octavia components installed and configured if Kuryr SDN is used.
 
 **NOTE:** Depending on your OpenStack environment Octavia may not support UDP listeners, which means there is no support for UDP services if Kuryr SDN is used.
+
+### The Octavia OVN Driver
+
+Octavia supports multiple provider drivers through the Octavia API.
+￼
+To see all available Octavia provider drivers, on a command line, enter:
+
+```yaml
+$ openstack loadbalancer provider list
++---------+-------------------------------------------------+
+| name    | description                                     |
++---------+-------------------------------------------------+
+| amphora | The Octavia Amphora driver.                     |
+| octavia | Deprecated alias of the Octavia Amphora driver. |
+| ovn     | Octavia OVN driver.                             |
++---------+-------------------------------------------------+
+```
+￼
+Beginning with OpenStack Train, the Octavia OVN provider driver (`ovn`) is supported.
+`ovn` is an integration driver for the load balancing that Octavia and OVN provide.
+It supports basic load balancing capabilities, and is based on OpenFlow rules.
+￼
+The Amphora provider driver is the default driver. If `ovn` is enabled,
+however, Kuryr uses it.￼
+If Kuryr uses `ovn` instead of Amphora, it offers the following benefits:
+￼
+* Decreased resource requirements. Kuryr does not require a load balancer VM
+for each Service.
+* Reduced network latency.
+* Increased service creation speed by using OpenFlow rules instead of a VM for
+each Service.
+* Distributed load balancing actions across all nodes instead of centralized on
+Amphora VMs.
 
 ## Installing with Kuryr SDN
 
