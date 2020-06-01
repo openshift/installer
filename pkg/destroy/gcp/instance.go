@@ -12,11 +12,11 @@ import (
 
 // getInstanceNameAndZone extracts an instance and zone name from an instance URL in the form:
 // https://www.googleapis.com/compute/v1/projects/project-id/zones/us-central1-a/instances/instance-name
-// After trimming the service's base path, you get:
+// After splitting the service's base path with the work `/projects/`, you get:
 // project-id/zones/us-central1-a/instances/instance-name
 // TODO: Find a better way to get the instance name and zone to account for changes in base path
 func (o *ClusterUninstaller) getInstanceNameAndZone(instanceURL string) (string, string) {
-	path := strings.TrimLeft(instanceURL, "https://www.googleapis.com/compute/v1/projects/")
+	path := strings.Split(instanceURL, "/projects/")[1]
 	parts := strings.Split(path, "/")
 	if len(parts) >= 5 {
 		return parts[4], parts[2]

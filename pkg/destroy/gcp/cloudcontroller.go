@@ -22,7 +22,7 @@ func (o *ClusterUninstaller) listCloudControllerInstanceGroups() ([]cloudResourc
 func (o *ClusterUninstaller) listCloudControllerBackendServices(instanceGroups []cloudResource) ([]cloudResource, error) {
 	urls := sets.NewString()
 	for _, instanceGroup := range instanceGroups {
-		urls.Insert(o.getInstanceGroupURL(instanceGroup))
+		urls.Insert(instanceGroup.url)
 	}
 	filter := "name eq \"a[0-9a-f]{30,50}\""
 	return o.listBackendServicesWithFilter("items(name,backends),nextPageToken", filter, func(item *compute.BackendService) bool {
