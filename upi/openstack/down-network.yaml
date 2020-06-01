@@ -32,13 +32,13 @@
 
   - name: 'List ports'
     command:
-      cmd: "openstack port list --tags {{ cluster_id_tag }} -f value -c id "
+      cmd: "openstack port list --tags {{ cluster_id_tag }} -f value -c id"
     register: ports
 
   - name: 'Remove the cluster ports'
     command:
-      cmd: "openstack port delete {{ item.1}}"
-    with_indexed_items: "{{ ports.stdout_lines }}"
+      cmd: "openstack port delete {{ ports.stdout_lines | join(' ') }}"
+    when: ports.stdout != ""
 
   - name: 'Remove the cluster router'
     os_router:
@@ -47,14 +47,13 @@
 
   - name: 'List cluster networks'
     command:
-      cmd: "openstack network list --tags {{ cluster_id_tag }} -f value -c Name"
+      cmd: "openstack network list --tags {{ cluster_id_tag }} -f value -c ID"
     register: networks
 
   - name: 'Remove the cluster networks'
-    os_network:
-      name: "{{ item.1}}"
-      state: absent
-    with_indexed_items: "{{ networks.stdout_lines }}"
+    command:
+      cmd: "openstack network delete {{ networks.stdout_lines | join(' ') }}"
+    when: networks.stdout != ""
 
   - name: 'List the cluster subnet pool'
     command:
