@@ -13,6 +13,16 @@ variable "ignition" {
   description = "The content of the bootstrap ignition file."
 }
 
+variable "ignition_bucket" {
+  type        = string
+  description = "The S3 bucket where the ignition configuration is stored"
+}
+
+variable "ignition_presigned_url" {
+  type        = string
+  description = "The presigned URL for the S3 bucket where the ignition configuration is stored"
+}
+
 variable "instance_type" {
   type        = string
   description = "The instance type of the bootstrap node."

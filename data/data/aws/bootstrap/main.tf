@@ -7,7 +7,8 @@ data "aws_partition" "current" {}
 data "aws_ebs_default_kms_key" "current" {}
 
 resource "aws_s3_bucket" "ignition" {
-  acl = "private"
+  bucket = var.ignition_bucket
+  acl    = "private"
 
   tags = merge(
     {
@@ -43,7 +44,7 @@ resource "aws_s3_bucket_object" "ignition" {
 
 data "ignition_config" "redirect" {
   replace {
-    source = "s3://${aws_s3_bucket.ignition.id}/bootstrap.ign"
+    source = var.ignition_presigned_url
   }
 }
 
@@ -103,13 +104,6 @@ resource "aws_iam_role_policy" "bootstrap" {
       "Effect": "Allow",
       "Action": "ec2:DetachVolume",
       "Resource": "*"
-    },
-    {
-      "Action" : [
-        "s3:GetObject"
-      ],
-      "Resource": "arn:${data.aws_partition.current.partition}:s3:::*",
-      "Effect": "Allow"
     }
   ]
 }
