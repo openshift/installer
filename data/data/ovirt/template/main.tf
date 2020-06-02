@@ -76,5 +76,6 @@ data "ovirt_templates" "finalTemplate" {
     criteria       = "name=${var.openstack_base_image_name}"
     case_sensitive = true
   }
+  // This is a test
   depends_on = [ovirt_template.releaseimage_template]
 }
