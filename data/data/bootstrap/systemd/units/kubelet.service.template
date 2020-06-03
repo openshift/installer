@@ -1,14 +1,16 @@
 [Unit]
 Description=Kubernetes Kubelet
-Wants=rpc-statd.service crio.service
-After=crio.service
+Wants=rpc-statd.service crio.service release-image.service
+After=crio.service release-image.service
 
 [Service]
 Type=notify
 ExecStartPre=/bin/mkdir --parents /etc/kubernetes/manifests
 ExecStartPre=/bin/mkdir --parents /etc/kubernetes/kubelet-plugins/volume/exec
+ExecStartPre=/usr/local/bin/kubelet-pause-image.sh
 Environment=KUBELET_RUNTIME_REQUEST_TIMEOUT=10m
 EnvironmentFile=-/etc/kubernetes/kubelet-env
+EnvironmentFile=-/etc/kubernetes/kubelet-pause-image-override
 
 ExecStart=/usr/bin/hyperkube \
   kubelet \
@@ -21,7 +23,8 @@ ExecStart=/usr/bin/hyperkube \
     --cgroup-driver=systemd \
     --serialize-image-pulls=false \
     --v=2 \
-    --volume-plugin-dir=/etc/kubernetes/kubelet-plugins/volume/exec
+    --volume-plugin-dir=/etc/kubernetes/kubelet-plugins/volume/exec \
+    --pod-infra-container-image=${MACHINE_CONFIG_INFRA_IMAGE}
 
 Restart=always
 RestartSec=10

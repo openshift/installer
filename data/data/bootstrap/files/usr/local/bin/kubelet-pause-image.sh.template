@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Before kubelet.service and crio.service start, ensure
+# that we're using the pause image from our payload just like the primary cluster.
+# Need to set the --pod-infra-container-image flag for the kubelet to point to the pause image from the payload
+# So we add MACHINE_CONFIG_INFRA_IMAGE to an environment file and source that in the kubelet service
+
+. /usr/local/bin/release-image.sh
+
+echo "MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)" > /etc/kubernetes/kubelet-pause-image-override
