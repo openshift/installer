@@ -94,6 +94,11 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		mpool.OSDisk.DiskType = "Premium_LRS"
 	}
 
+	publicLB := clusterID
+	if platform.OutboundType == azure.UserDefinedRoutingOutboundType {
+		publicLB = ""
+	}
+
 	return &azureprovider.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "azureproviderconfig.openshift.io/v1beta1",
@@ -119,6 +124,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		Vnet:                 virtualNetwork,
 		ResourceGroup:        fmt.Sprintf("%s-rg", clusterID),
 		NetworkResourceGroup: networkResourceGroup,
+		PublicLoadBalancer:   publicLB,
 	}, nil
 }
 
