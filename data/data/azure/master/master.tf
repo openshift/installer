@@ -78,54 +78,43 @@ resource "azurerm_network_interface_backend_address_pool_association" "master_in
   ip_configuration_name   = local.ip_v6_configuration_name
 }
 
-resource "azurerm_virtual_machine" "master" {
+resource "azurerm_linux_virtual_machine" "master" {
   count = var.instance_count
 
   name                  = "${var.cluster_id}-master-${count.index}"
   location              = var.region
-  zones                 = compact([var.availability_zones[count.index]])
+  zone                  = var.availability_zones[count.index]
   resource_group_name   = var.resource_group_name
   network_interface_ids = [element(azurerm_network_interface.master.*.id, count.index)]
-  vm_size               = var.vm_size
-
-  delete_os_disk_on_termination = true
+  size                  = var.vm_size
+  admin_username        = "core"
+  # The password is normally applied by WALA (the Azure agent), but this
+  # isn't installed in RHCOS. As a result, this password is never set. It is
+  # included here because it is required by the Azure ARM API.
+  admin_password                  = "NotActuallyApplied!"
+  disable_password_authentication = false
 
   identity {
     type         = "UserAssigned"
     identity_ids = [var.identity]
   }
 
-  storage_os_disk {
-    name              = "${var.cluster_id}-master-${count.index}_OSDisk" # os disk name needs to match cluster-api convention
-    caching           = "ReadOnly"
-    create_option     = "FromImage"
-    managed_disk_type = var.os_volume_type
-    disk_size_gb      = var.os_volume_size
+  os_disk {
+    name                 = "${var.cluster_id}-master-${count.index}_OSDisk" # os disk name needs to match cluster-api convention
+    caching              = "ReadOnly"
+    storage_account_type = var.os_volume_type
+    disk_size_gb         = var.os_volume_size
   }
 
-  storage_image_reference {
-    id = var.vm_image
-  }
+  source_image_id = var.vm_image
 
   //we don't provide a ssh key, because it is set with ignition. 
   //it is required to provide at least 1 auth method to deploy a linux vm
-  os_profile {
-    computer_name  = "${var.cluster_id}-master-${count.index}"
-    admin_username = "core"
-    # The password is normally applied by WALA (the Azure agent), but this
-    # isn't installed in RHCOS. As a result, this password is never set. It is
-    # included here because it is required by the Azure ARM API.
-    admin_password = "NotActuallyApplied!"
-    custom_data    = var.ignition
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
+  computer_name = "${var.cluster_id}-master-${count.index}"
+  custom_data   = base64encode(var.ignition)
 
   boot_diagnostics {
-    enabled     = true
-    storage_uri = var.storage_account.primary_blob_endpoint
+    storage_account_uri = var.storage_account.primary_blob_endpoint
   }
 }
 

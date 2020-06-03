@@ -10,10 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
@@ -48,10 +46,9 @@ func resourceArmApplicationInsights() *schema.Resource {
 			"location": azure.SchemaLocation(),
 
 			"application_type": {
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				DiffSuppressFunc: suppress.CaseDifference,
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					"web",
 					"other",
@@ -61,7 +58,23 @@ func resourceArmApplicationInsights() *schema.Resource {
 					"store",
 					"ios",
 					"Node.JS",
-				}, true),
+				}, false),
+			},
+
+			"retention_in_days": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				ValidateFunc: validation.IntInSlice([]int{
+					30,
+					60,
+					90,
+					120,
+					180,
+					270,
+					365,
+					550,
+					730,
+				}),
 			},
 
 			"sampling_percentage": {
@@ -71,7 +84,26 @@ func resourceArmApplicationInsights() *schema.Resource {
 				ValidateFunc: validation.FloatBetween(0, 100),
 			},
 
+			"disable_ip_masking": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
+
 			"tags": tags.Schema(),
+
+			"daily_data_cap_in_gb": {
+				Type:         schema.TypeFloat,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.FloatBetween(0, 1000),
+			},
+
+			"daily_data_cap_notifications_disabled": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
 
 			"app_id": {
 				Type:     schema.TypeString,
@@ -89,7 +121,9 @@ func resourceArmApplicationInsights() *schema.Resource {
 
 func resourceArmApplicationInsightsCreateUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).AppInsights.ComponentsClient
+	billingClient := meta.(*clients.Client).AppInsights.BillingClient
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
+
 	defer cancel()
 
 	log.Printf("[INFO] preparing arguments for AzureRM Application Insights creation.")
@@ -97,7 +131,7 @@ func resourceArmApplicationInsightsCreateUpdate(d *schema.ResourceData, meta int
 	name := d.Get("name").(string)
 	resGroup := d.Get("resource_group_name").(string)
 
-	if features.ShouldResourcesBeImported() && d.IsNewResource() {
+	if d.IsNewResource() {
 		existing, err := client.Get(ctx, resGroup, name)
 		if err != nil {
 			if !utils.ResponseWasNotFound(existing.Response) {
@@ -112,6 +146,7 @@ func resourceArmApplicationInsightsCreateUpdate(d *schema.ResourceData, meta int
 
 	applicationType := d.Get("application_type").(string)
 	samplingPercentage := utils.Float(d.Get("sampling_percentage").(float64))
+	disableIpMasking := d.Get("disable_ip_masking").(bool)
 	location := azure.NormalizeLocation(d.Get("location").(string))
 	t := d.Get("tags").(map[string]interface{})
 
@@ -119,6 +154,11 @@ func resourceArmApplicationInsightsCreateUpdate(d *schema.ResourceData, meta int
 		ApplicationID:      &name,
 		ApplicationType:    insights.ApplicationType(applicationType),
 		SamplingPercentage: samplingPercentage,
+		DisableIPMasking:   utils.Bool(disableIpMasking),
+	}
+
+	if v, ok := d.GetOk("retention_in_days"); ok {
+		applicationInsightsComponentProperties.RetentionInDays = utils.Int32(int32(v.(int)))
 	}
 
 	insightProperties := insights.ApplicationInsightsComponent{
@@ -129,14 +169,9 @@ func resourceArmApplicationInsightsCreateUpdate(d *schema.ResourceData, meta int
 		Tags:                                   tags.Expand(t),
 	}
 
-	resp, err := client.CreateOrUpdate(ctx, resGroup, name, insightProperties)
+	_, err := client.CreateOrUpdate(ctx, resGroup, name, insightProperties)
 	if err != nil {
-		// @tombuildsstuff - from 2018-08-14 the Create call started returning a 201 instead of 200
-		// which doesn't match the Swagger - this works around it until that's fixed
-		// BUG: https://github.com/Azure/azure-sdk-for-go/issues/2465
-		if resp.StatusCode != http.StatusCreated {
-			return fmt.Errorf("Error creating Application Insights %q (Resource Group %q): %+v", name, resGroup, err)
-		}
+		return fmt.Errorf("Error creating Application Insights %q (Resource Group %q): %+v", name, resGroup, err)
 	}
 
 	read, err := client.Get(ctx, resGroup, name)
@@ -147,6 +182,28 @@ func resourceArmApplicationInsightsCreateUpdate(d *schema.ResourceData, meta int
 		return fmt.Errorf("Cannot read AzureRM Application Insights '%s' (Resource Group %s) ID", name, resGroup)
 	}
 
+	billingRead, err := billingClient.Get(ctx, resGroup, name)
+	if err != nil {
+		return fmt.Errorf("Error read Application Insights Billing Features %q (Resource Group %q): %+v", name, resGroup, err)
+	}
+
+	applicationInsightsComponentBillingFeatures := insights.ApplicationInsightsComponentBillingFeatures{
+		CurrentBillingFeatures: billingRead.CurrentBillingFeatures,
+		DataVolumeCap:          billingRead.DataVolumeCap,
+	}
+
+	if v, ok := d.GetOk("daily_data_cap_in_gb"); ok {
+		applicationInsightsComponentBillingFeatures.DataVolumeCap.Cap = utils.Float(v.(float64))
+	}
+
+	if v, ok := d.GetOk("daily_data_cap_notifications_disabled"); ok {
+		applicationInsightsComponentBillingFeatures.DataVolumeCap.StopSendNotificationWhenHitCap = utils.Bool(v.(bool))
+	}
+
+	if _, err = billingClient.Update(ctx, resGroup, name, applicationInsightsComponentBillingFeatures); err != nil {
+		return fmt.Errorf("Error update Application Insights Billing Feature %q (Resource Group %q): %+v", name, resGroup, err)
+	}
+
 	d.SetId(*read.ID)
 
 	return resourceArmApplicationInsightsRead(d, meta)
@@ -154,6 +211,7 @@ func resourceArmApplicationInsightsCreateUpdate(d *schema.ResourceData, meta int
 
 func resourceArmApplicationInsightsRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).AppInsights.ComponentsClient
+	billingClient := meta.(*clients.Client).AppInsights.BillingClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -176,6 +234,11 @@ func resourceArmApplicationInsightsRead(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("Error making Read request on AzureRM Application Insights '%s': %+v", name, err)
 	}
 
+	billingResp, err := billingClient.Get(ctx, resGroup, name)
+	if err != nil {
+		return fmt.Errorf("Error making Read request on AzureRM Application Insights Billing Feature '%s': %+v", name, err)
+	}
+
 	d.Set("name", name)
 	d.Set("resource_group_name", resGroup)
 	if location := resp.Location; location != nil {
@@ -187,6 +250,15 @@ func resourceArmApplicationInsightsRead(d *schema.ResourceData, meta interface{}
 		d.Set("app_id", props.AppID)
 		d.Set("instrumentation_key", props.InstrumentationKey)
 		d.Set("sampling_percentage", props.SamplingPercentage)
+		d.Set("disable_ip_masking", props.DisableIPMasking)
+		if v := props.RetentionInDays; v != nil {
+			d.Set("retention_in_days", v)
+		}
+	}
+
+	if billingProps := billingResp.DataVolumeCap; billingProps != nil {
+		d.Set("daily_data_cap_in_gb", billingProps.Cap)
+		d.Set("daily_data_cap_notifications_disabled", billingProps.StopSendNotificationWhenHitCap)
 	}
 
 	return tags.FlattenAndSet(d, resp.Tags)

@@ -5,15 +5,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2018-01-01/apimanagement"
+	"github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2019-12-01/apimanagement"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/satori/uuid"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
@@ -41,12 +39,11 @@ func resourceArmApiManagementSubscription() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.UUIDOrEmpty,
+				ValidateFunc: validation.Any(validation.IsUUID, validation.StringIsEmpty),
 			},
 
+			// 3.0 this seems to have been renamed to owner id?
 			"user_id": azure.SchemaApiManagementChildID(),
-
-			"product_id": azure.SchemaApiManagementChildID(),
 
 			"resource_group_name": azure.SchemaResourceGroupName(),
 
@@ -55,7 +52,15 @@ func resourceArmApiManagementSubscription() *schema.Resource {
 			"display_name": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
+			},
+
+			// TODO this now sets the scope property - either a scope block needs adding or additional properties `api_id` and maybe `all_apis`
+			"product_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"state": {
@@ -101,11 +106,11 @@ func resourceArmApiManagementSubscriptionCreateUpdate(d *schema.ResourceData, me
 		subscriptionId = uuid.NewV4().String()
 	}
 
-	if features.ShouldResourcesBeImported() && d.IsNewResource() {
+	if d.IsNewResource() {
 		resp, err := client.Get(ctx, resourceGroup, serviceName, subscriptionId)
 		if err != nil {
 			if !utils.ResponseWasNotFound(resp.Response) {
-				return fmt.Errorf("Error checking for present of existing Subscription %q (API Management Service %q / Resource Group %q): %+v", subscriptionId, serviceName, resourceGroup, err)
+				return fmt.Errorf("checking for present of existing Subscription %q (API Management Service %q / Resource Group %q): %+v", subscriptionId, serviceName, resourceGroup, err)
 			}
 		}
 
@@ -122,9 +127,9 @@ func resourceArmApiManagementSubscriptionCreateUpdate(d *schema.ResourceData, me
 	params := apimanagement.SubscriptionCreateParameters{
 		SubscriptionCreateParameterProperties: &apimanagement.SubscriptionCreateParameterProperties{
 			DisplayName: utils.String(displayName),
-			ProductID:   utils.String(productId),
+			Scope:       utils.String(productId),
 			State:       apimanagement.SubscriptionState(state),
-			UserID:      utils.String(userId),
+			OwnerID:     utils.String(userId),
 		},
 	}
 
@@ -139,12 +144,12 @@ func resourceArmApiManagementSubscriptionCreateUpdate(d *schema.ResourceData, me
 	sendEmail := utils.Bool(false)
 	_, err := client.CreateOrUpdate(ctx, resourceGroup, serviceName, subscriptionId, params, sendEmail, "")
 	if err != nil {
-		return fmt.Errorf("Error creating/updating Subscription %q (API Management Service %q / Resource Group %q): %+v", subscriptionId, serviceName, resourceGroup, err)
+		return fmt.Errorf("creating/updating Subscription %q (API Management Service %q / Resource Group %q): %+v", subscriptionId, serviceName, resourceGroup, err)
 	}
 
 	resp, err := client.Get(ctx, resourceGroup, serviceName, subscriptionId)
 	if err != nil {
-		return fmt.Errorf("Error retrieving Subscription %q (API Management Service %q / Resource Group %q): %+v", subscriptionId, serviceName, resourceGroup, err)
+		return fmt.Errorf("retrieving Subscription %q (API Management Service %q / Resource Group %q): %+v", subscriptionId, serviceName, resourceGroup, err)
 	}
 
 	d.SetId(*resp.ID)
@@ -173,7 +178,7 @@ func resourceArmApiManagementSubscriptionRead(d *schema.ResourceData, meta inter
 			return nil
 		}
 
-		return fmt.Errorf("Error retrieving Subscription %q (API Management Service %q / Resource Group %q): %+v", subscriptionId, serviceName, resourceGroup, err)
+		return fmt.Errorf("retrieving Subscription %q (API Management Service %q / Resource Group %q): %+v", subscriptionId, serviceName, resourceGroup, err)
 	}
 
 	d.Set("subscription_id", subscriptionId)
@@ -185,8 +190,8 @@ func resourceArmApiManagementSubscriptionRead(d *schema.ResourceData, meta inter
 		d.Set("primary_key", props.PrimaryKey)
 		d.Set("secondary_key", props.SecondaryKey)
 		d.Set("state", string(props.State))
-		d.Set("product_id", props.ProductID)
-		d.Set("user_id", props.UserID)
+		d.Set("product_id", props.Scope)
+		d.Set("user_id", props.OwnerID)
 	}
 
 	return nil
@@ -207,7 +212,7 @@ func resourceArmApiManagementSubscriptionDelete(d *schema.ResourceData, meta int
 
 	if resp, err := client.Delete(ctx, resourceGroup, serviceName, subscriptionId, ""); err != nil {
 		if !utils.ResponseWasNotFound(resp) {
-			return fmt.Errorf("Error removing Subscription %q (API Management Service %q / Resource Group %q): %+v", subscriptionId, serviceName, resourceGroup, err)
+			return fmt.Errorf("removing Subscription %q (API Management Service %q / Resource Group %q): %+v", subscriptionId, serviceName, resourceGroup, err)
 		}
 	}
 

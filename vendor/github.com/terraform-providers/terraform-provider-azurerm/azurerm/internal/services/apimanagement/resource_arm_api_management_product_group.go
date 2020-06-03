@@ -56,20 +56,20 @@ func resourceArmApiManagementProductGroupCreate(d *schema.ResourceData, meta int
 		resp, err := client.CheckEntityExists(ctx, resourceGroup, serviceName, productId, groupName)
 		if err != nil {
 			if !utils.ResponseWasNotFound(resp) {
-				return fmt.Errorf("Error checking for present of existing Product %q / Group %q (API Management Service %q / Resource Group %q): %+v", productId, groupName, serviceName, resourceGroup, err)
+				return fmt.Errorf("checking for present of existing Product %q / Group %q (API Management Service %q / Resource Group %q): %+v", productId, groupName, serviceName, resourceGroup, err)
 			}
 		}
 
 		if !utils.ResponseWasNotFound(resp) {
 			subscriptionId := meta.(*clients.Client).Account.SubscriptionId
-			resourceId := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.ApiManagement/service/%s/products/%s/groups/%s", subscriptionId, resourceGroup, serviceName, groupName, productId)
+			resourceId := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.ApiManagement/service/%s/products/%s/groups/%s", subscriptionId, resourceGroup, serviceName, productId, groupName)
 			return tf.ImportAsExistsError("azurerm_api_management_product_group", resourceId)
 		}
 	}
 
 	resp, err := client.CreateOrUpdate(ctx, resourceGroup, serviceName, productId, groupName)
 	if err != nil {
-		return fmt.Errorf("Error adding Product %q to Group %q (API Management Service %q / Resource Group %q): %+v", productId, groupName, serviceName, resourceGroup, err)
+		return fmt.Errorf("adding Product %q to Group %q (API Management Service %q / Resource Group %q): %+v", productId, groupName, serviceName, resourceGroup, err)
 	}
 
 	// there's no Read so this is best-effort
@@ -100,7 +100,7 @@ func resourceArmApiManagementProductGroupRead(d *schema.ResourceData, meta inter
 			return nil
 		}
 
-		return fmt.Errorf("Error retrieving Product %q / Group %q (API Management Service %q / Resource Group %q): %+v", productId, groupName, serviceName, resourceGroup, err)
+		return fmt.Errorf("retrieving Product %q / Group %q (API Management Service %q / Resource Group %q): %+v", productId, groupName, serviceName, resourceGroup, err)
 	}
 
 	d.Set("group_name", groupName)
@@ -127,7 +127,7 @@ func resourceArmApiManagementProductGroupDelete(d *schema.ResourceData, meta int
 
 	if resp, err := client.Delete(ctx, resourceGroup, serviceName, productId, groupName); err != nil {
 		if !utils.ResponseWasNotFound(resp) {
-			return fmt.Errorf("Error removing Product %q from Group %q (API Management Service %q / Resource Group %q): %+v", productId, groupName, serviceName, resourceGroup, err)
+			return fmt.Errorf("removing Product %q from Group %q (API Management Service %q / Resource Group %q): %+v", productId, groupName, serviceName, resourceGroup, err)
 		}
 	}
 

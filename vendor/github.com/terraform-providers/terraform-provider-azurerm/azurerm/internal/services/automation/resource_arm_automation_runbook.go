@@ -14,7 +14,6 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
@@ -46,7 +45,7 @@ func resourceArmAutomationRunbook() *schema.Resource {
 				ValidateFunc: azure.ValidateAutomationRunbookName(),
 			},
 
-			"account_name": {
+			"automation_account_name": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
@@ -143,10 +142,10 @@ func resourceArmAutomationRunbookCreateUpdate(d *schema.ResourceData, meta inter
 	log.Printf("[INFO] preparing arguments for AzureRM Automation Runbook creation.")
 
 	name := d.Get("name").(string)
-	accName := d.Get("account_name").(string)
+	accName := d.Get("automation_account_name").(string)
 	resGroup := d.Get("resource_group_name").(string)
 
-	if features.ShouldResourcesBeImported() && d.IsNewResource() {
+	if d.IsNewResource() {
 		existing, err := client.Get(ctx, resGroup, accName, name)
 		if err != nil {
 			if !utils.ResponseWasNotFound(existing.Response) {
@@ -243,7 +242,7 @@ func resourceArmAutomationRunbookRead(d *schema.ResourceData, meta interface{}) 
 		d.Set("location", azure.NormalizeLocation(*location))
 	}
 
-	d.Set("account_name", accName)
+	d.Set("automation_account_name", accName)
 	if props := resp.RunbookProperties; props != nil {
 		d.Set("log_verbose", props.LogVerbose)
 		d.Set("log_progress", props.LogProgress)
