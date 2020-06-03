@@ -92,13 +92,15 @@ var (
 				cleanup := setupFileHook(rootOpts.dir)
 				defer cleanup()
 
+				// FIXME: pulling the kubeconfig and metadata out of the root
+				// directory is a bit cludgy when we already have them in memory.
 				config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(rootOpts.dir, "auth", "kubeconfig"))
 				if err != nil {
 					logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 				}
 
 				timer.StartTimer("Bootstrap Complete")
-				err = waitForBootstrapComplete(ctx, config, rootOpts.dir)
+				err = waitForBootstrapComplete(ctx, config)
 				if err != nil {
 					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
@@ -246,9 +248,7 @@ func addRouterCAToClusterCA(config *rest.Config, directory string) (err error) {
 	return nil
 }
 
-// FIXME: pulling the kubeconfig and metadata out of the root
-// directory is a bit cludgy when we already have them in memory.
-func waitForBootstrapComplete(ctx context.Context, config *rest.Config, directory string) (err error) {
+func waitForBootstrapComplete(ctx context.Context, config *rest.Config) (err error) {
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return errors.Wrap(err, "creating a Kubernetes client")
@@ -413,7 +413,7 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 }
 
 // waitForConsole returns the console URL from the route 'console' in namespace openshift-console
-func waitForConsole(ctx context.Context, config *rest.Config, directory string) (string, error) {
+func waitForConsole(ctx context.Context, config *rest.Config) (string, error) {
 	url := ""
 	// Need to keep these updated if they change
 	consoleNamespace := "openshift-console"
@@ -493,7 +493,7 @@ func waitForInstallComplete(ctx context.Context, config *rest.Config, directory 
 		return err
 	}
 
-	consoleURL, err := waitForConsole(ctx, config, rootOpts.dir)
+	consoleURL, err := waitForConsole(ctx, config)
 	if err != nil {
 		return err
 	}
