@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/apparentlymart/go-cidr/cidr"
@@ -37,9 +40,21 @@ func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, 
 		return nil, err
 	}
 
-	osImage, err = cache.DownloadImageFile(osImage)
+	url, err := url.Parse(osImage)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to use cached libvirt image")
+		return nil, errors.Wrap(err, "failed to parse image url")
+	}
+
+	if url.Scheme == "file" {
+		osImage = filepath.FromSlash(url.Path)
+		if _, err = os.Stat(osImage); err != nil {
+			return nil, errors.Wrap(err, "failed to access file or directory")
+		}
+	} else {
+		osImage, err = cache.DownloadImageFile(osImage)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to use cached libvirt image")
+		}
 	}
 
 	cfg := &config{
