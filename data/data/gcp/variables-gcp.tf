@@ -97,3 +97,10 @@ variable "gcp_publish_strategy" {
   type = string
   description = "The cluster publishing strategy, either Internal or External"
 }
+
+variable "gcp_image_licenses" {
+  type = list(string)
+  description = "The licenses to use when creating compute instances"
+  default = []
+}
+

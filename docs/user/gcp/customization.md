@@ -8,6 +8,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `controlPlaneSubnet` (optional string): The name of an existing GCP subnet which should be used by the cluster control plane.
 * `computeSubnet` (optional string): The name of an existing GCP subnet which should be used by the cluster nodes.
 * `defaultMachinePlatform` (optional object): Default [GCP-specific machine pool properties](#machine-pools) which apply to [machine pools](../customization.md#machine-pools) that do not define their own GCP-specific properties.
+* `licenses` (optional list of strings): A list of license URLs (https) that should be applied to the compute images (as defined in [the API][compute-images]). The use of this property in combination with any mechanism that results in using pre-built images (such as the current OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE) is forbidden. Also, note that use of these URLs will force the installer to copy the source image before being used. An example of this license is the one that enables [nested virtualization][gcp-nested]. A full list of available licenses can be retrieved using [the license API][license-api].
 
 ## Machine pools
 
@@ -115,4 +116,22 @@ pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
 
+### Nested virtualization
+
+An example GCP install config enabling [GCP's nested virtualization license][gcp-nested]:
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+platform:
+  gcp:
+    projectID: example-project
+    region: us-east1
+    licenses:
+    - https://compute.googleapis.com/compute/v1/projects/vm-options/global/licenses/enable-vmx
+```
+
 [machine-type]: https://cloud.google.com/compute/docs/machine-types
+[compute-images]: https://cloud.google.com/compute/docs/reference/rest/v1/images
+[gcp-nested]: https://cloud.google.com/compute/docs/instances/enable-nested-virtualization-vm-instances
+[license-api]: https://cloud.google.com/compute/docs/reference/rest/v1/licenses/list

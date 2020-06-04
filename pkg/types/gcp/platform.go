@@ -29,4 +29,12 @@ type Platform struct {
 	// The value should be the name of the subnet.
 	// +optional
 	ComputeSubnet string `json:"computeSubnet,omitempty"`
+
+	// Licenses is a list of licenses to apply to the compute images
+	// The value should a list of strings (https URLs only) representing the license keys.
+	// When set, this will cause the installer to copy the image into user's project.
+	// This option is incompatible with any mechanism that makes use of pre-built images
+	// such as the current env OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE
+	// +optional
+	Licenses []string `json:"licenses,omitempty"`
 }
