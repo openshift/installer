@@ -13,6 +13,7 @@ import (
 	"github.com/vmware/govmomi/vapi/rest"
 	"github.com/vmware/govmomi/vim25"
 	"gopkg.in/AlecAivazis/survey.v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/pkg/types/vsphere"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -20,8 +21,6 @@ import (
 )
 
 const root = "/..."
-const distributedVirtualPortGroupType = "DistributedVirtualPortgroup"
-const networkType = "Network"
 
 // vCenterClient contains the login info/creds and client for the vCenter.
 // They are contained in a single struct to facilitate client creation
@@ -305,9 +304,15 @@ func getNetwork(ctx context.Context, path string, finder *find.Finder, client *v
 		return n.Name(), nil
 	}
 
+	validNetworkTypes := sets.NewString(
+		"DistributedVirtualPortgroup",
+		"Network",
+		"OpaqueNetwork",
+	)
+
 	var networkChoices []string
 	for _, network := range networks {
-		if network.Reference().Type == distributedVirtualPortGroupType || network.Reference().Type == networkType {
+		if validNetworkTypes.Has(network.Reference().Type) {
 			n := network.(networkNamer)
 			networkChoices = append(networkChoices, n.Name())
 		}
