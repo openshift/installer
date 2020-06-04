@@ -411,11 +411,12 @@ cd test-vsphere
 create_tfvars.sh
 ```
 
-At a minimum, you will need to provide values for the following variables.
-* bootstrap_ignition_url
-* bootstrap_ip
-* control_plane_ips
-* compute_ips
+At a minimum, you need to set values for the following variables.
+* cluster_id
+* cluster_domain
+* vsphere_user
+* vsphere_password
+* ipam_token OR bootstrap_ip, control_plane_ips, and compute_ips
 
 Move the `tfvars` file to the directory with the example Terraform.
 
