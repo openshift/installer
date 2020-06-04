@@ -98,8 +98,9 @@
           {
             "name" : "api-internal-probe",
             "properties" : {
-              "protocol" : "Tcp",
+              "protocol" : "Https",
               "port" : 6443,
+              "requestPath": "/readyz",
               "intervalInSeconds" : 10,
               "numberOfProbes" : 3
             }
@@ -181,8 +182,9 @@
           {
             "name" : "api-internal-probe",
             "properties" : {
-              "protocol" : "Tcp",
+              "protocol" : "Https",
               "port" : 6443,
+              "requestPath": "/readyz",
               "intervalInSeconds" : 10,
               "numberOfProbes" : 3
             }
@@ -190,8 +192,9 @@
           {
             "name" : "sint-probe",
             "properties" : {
-              "protocol" : "Tcp",
+              "protocol" : "Https",
               "port" : 22623,
+              "requestPath": "/healthz",
               "intervalInSeconds" : 10,
               "numberOfProbes" : 3
             }
