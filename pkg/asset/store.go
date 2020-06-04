@@ -14,4 +14,8 @@ type Store interface {
 	// DestroyState removes everything from the internal state and the internal
 	// state file
 	DestroyState() error
+
+	// Load retrieves the state of the given asset but does not generate it if it
+	// does not exist and instead will return nil if not found.
+	Load(Asset) (Asset, error)
 }
