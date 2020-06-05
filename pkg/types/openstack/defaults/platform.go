@@ -1,7 +1,6 @@
 package defaults
 
 import (
-	"net"
 	"os"
 
 	"github.com/apparentlymart/go-cidr/cidr"
@@ -41,12 +40,4 @@ func SetPlatformDefaults(p *openstack.Platform, n *types.Networking) {
 		vip, _ := cidr.Host(&n.MachineNetwork[0].CIDR.IPNet, 7)
 		p.IngressVIP = vip.String()
 	}
-}
-
-// DNSVIP returns the internal virtual IP address (VIP) put in front
-// of the DNS static pods running on the nodes. Unlike the DNS
-// operator these services provide name resolution for the nodes
-// themselves.
-func DNSVIP(networking *types.Networking) (net.IP, error) {
-	return cidr.Host(&networking.MachineNetwork[0].CIDR.IPNet, 6)
 }

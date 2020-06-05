@@ -31,7 +31,6 @@ module "bootstrap" {
   flavor_name             = var.openstack_master_flavor_name
   ignition                = var.ignition_bootstrap
   api_int_ip              = var.openstack_api_int_ip
-  node_dns_ip             = var.openstack_node_dns_ip
   external_network        = var.openstack_external_network
   cluster_domain          = var.cluster_domain
   nodes_subnet_id         = module.topology.nodes_subnet_id
@@ -73,7 +72,6 @@ module "topology" {
   masters_count       = var.master_count
   lb_floating_ip      = var.openstack_lb_floating_ip
   api_int_ip          = var.openstack_api_int_ip
-  node_dns_ip         = var.openstack_node_dns_ip
   ingress_ip          = var.openstack_ingress_ip
   external_dns        = var.openstack_external_dns
   trunk_support       = var.openstack_trunk_support
