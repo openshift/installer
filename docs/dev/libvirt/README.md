@@ -170,25 +170,33 @@ iptables -I INPUT -p tcp -s 192.168.126.0/24 -d 192.168.122.1 --dport 16509 -j A
 
 #### Firewalld
 
-If using `firewalld`, the specifics will depend on how your distribution setup the
-various zones.
+If using `firewalld`, the specifics will depend on how your distribution has set
+up the various zones. The following instructions should work as is for Fedora,
+CentOS, RHEL and Arch Linux.
 
-On Fedora Workstation, as we don't want to expose the libvirt port externally,
-we'll need to actively block it. We then use the preexisting `dmz` zone for the
-traffic between VMs.
+First, as we don't want to expose the libvirt port externally, we will need to
+actively block it:
 
 ```sh
 sudo firewall-cmd --add-rich-rule "rule service name="libvirt" reject"
-sudo firewall-cmd --zone=dmz --change-interface=virbr0
-sudo firewall-cmd --zone=dmz --change-interface=tt0
-sudo firewall-cmd --zone=dmz --add-service=libvirt
 ```
 
-On RHEL8, the bridges used by the VMs are already isolated in their own zones,
-so we only need to allow traffic on the libvirt port:
+For systems with libvirt version 5.1.0 and later, libvirt will set new bridged
+network interfaces in the `libvirt` zone. We thus need to allow `libvirt`
+traffic from the VMs to reach the host:
 
 ```sh
 sudo firewall-cmd --zone=libvirt --add-service=libvirt
+```
+
+For system with an older libvirt, we will move the new bridge interface to a
+dedicated network zone and enable incoming libvirt, DNS & DHCP traffic:
+
+```sh
+sudo firewall-cmd --zone=dmz --change-interface=tt0
+sudo firewall-cmd --zone=dmz --add-service=libvirt
+sudo firewall-cmd --zone=dmz --add-service=dns
+sudo firewall-cmd --zone=dmz --add-service=dhcp
 ```
 
 NOTE: When the firewall rules are no longer needed, `sudo firewall-cmd --reload`
