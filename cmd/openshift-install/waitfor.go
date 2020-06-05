@@ -52,7 +52,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
 				}
 
-				logrus.Info("Use the following commands to gather logs from the cluster")
+				logrus.Info("Use the following command to gather logs from the cluster:")
 				logrus.Info("openshift-install gather bootstrap --help")
 				logrus.Fatal(err)
 			}

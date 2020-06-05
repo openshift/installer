@@ -130,6 +130,8 @@ var (
 					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
 					}
+					logrus.Info("Use the following command if you want to wait longer for install completion:")
+					logrus.Info("openshift-install wait-for install-complete --help")
 					logrus.Fatal(err)
 				}
 				timer.StopTimer(timer.TotalTimeElapsed)
