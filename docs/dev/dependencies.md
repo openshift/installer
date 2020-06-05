@@ -18,7 +18,7 @@ We follow a hard flattening approach; i.e. direct and inherited dependencies are
 
 Dependencies are managed with [Go Modules](https://github.com/golang/go/wiki/Modules) but committed directly to the repository.
 
-We require at least Go 1.13.
+We require at least Go 1.14.
 
 - Add or update a dependency with `go get <dependency>@<version>`.
 - If you want to use a fork of a project or ensure that a dependency is not updated even when another dependency requires a newer version of it, manually add a [replace directive in the go.mod file](https://github.com/golang/go/wiki/Modules#when-should-i-use-the-replace-directive). 
