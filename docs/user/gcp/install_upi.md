@@ -1,4 +1,4 @@
-# Install: User-Provided Infrastructure
+# Install: User-Provided Infrastructure 
 The steps for performing a user-provided infrastructure install are outlined here. Several
 [Deployment Manager][deploymentmanager] templates are provided to assist in
 completing these steps or to help model your own. You are also free to create
