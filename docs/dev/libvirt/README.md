@@ -91,67 +91,91 @@ components drive deployment of worker machines.  The libvirt cluster-api
 provider will run inside the local cluster, and will need to connect back to
 the libvirt instance on the host machine to deploy workers.
 
-In order for this to work, you'll need to enable TCP connections for libvirt.
+In order for this to work, you'll need to enable unauthenticated TCP
+connections for libvirt.
 
-#### Configure libvirtd.conf
-To do this, first modify your `/etc/libvirt/libvirtd.conf` and set the
-following:
-```
-listen_tls = 0
-listen_tcp = 1
-auth_tcp="none"
-tcp_port = "16509"
-```
+**NOTE:** The following configuration disables all encryption and authentication
+options in libvirtd and causes it to listen on all network interfaces and IP
+addresses. **A connection to this privileged libvirtd gives the client
+privileges equivalent to those of a root shell.** This configuration has a
+security impact on a par with running a telnet server with no root password set.
+It is critical to follow the steps below to **configure the firewall to prevent
+access to libvirt from other hosts on the LAN/WAN**.
 
-On Fedora 31, you also need to enable and start the libvirtd TCP
-socket, which is managed by systemd:
+#### For systemd activated libvirt
+
+This applies only if the libvirt daemon is configured to use socket activation.
+This is currently the case on Fedora 31 (and later) and Arch Linux.
+
+First, you need to start the libvirtd TCP socket, which is managed by systemd:
 
 ```sh
-sudo systemctl enable libvirtd-tcp.socket
 sudo systemctl start libvirtd-tcp.socket
 ```
 
-after which you need to restart libvirtd.
+To make this change persistent accross reboots you can optionally enable it:
 
-**NOTE:** that the above configuration disables all encryption and
-authentication options in libvirtd and causes it to listen on all
-network interfaces and IP addresses. **A connection to this privileged
-libvirtd gives the client privileges equivalent to those of a root
-shell.** This configuration has a security impact on a par with
-running a telnet server with no root password set. It is critical
-to follow the steps below to **configure the firewall to prevent
-access to libvirt from other hosts on the LAN/WAN**.
+```sh
+sudo systemctl enable libvirtd-tcp.socket
+```
 
+Then to enable TCP access to libvirtd, modify `/etc/libvirt/libvirtd.conf` and
+set the following:
+
+```
+auth_tcp = "none"
+```
+
+Then restart libvirt:
+
+```sh
+sudo systemctl restart libvirtd
+```
+
+#### For permanently running libvirt daemon
+
+This applies only if the libvirt daemon is started only through
+`libvirtd.service` and without making use of systemd socket activation (through
+`libvirtd.socket` and similar systemd units).
+
+
+For RHEL/CentOS, make sure that the following is set in
+`/etc/sysconfig/libvirtd`:
+
+```
+LIBVIRTD_ARGS="--listen"
+```
+
+For Debian based distros, make sure that the following is set in
+`/etc/default/libvirtd`:
+
+```
+libvirtd_opts="--listen"
+```
+
+Then to enable TCP access to libvirtd, modify `/etc/libvirt/libvirtd.conf` and
+set the following:
+
+```
+listen_tls = 0
+listen_tcp = 1
+auth_tcp = "none"
+tcp_port = "16509"
+```
+
+Then restart libvirt:
+
+```sh
+sudo systemctl restart libvirtd
+```
 
 #### Configure qemu.conf
 
 On Debian/Ubuntu it might be needed to configure security driver for qemu.
 Installer uses terraform libvirt, and it has a known issue, that might cause
 unexpected `Could not open '/var/lib/libvirt/images/<FILE_NAME>': Permission denied`
-errors. Double check that `security_driver = "none"` line is present in 
+errors. Double check that `security_driver = "none"` line is present in
 `/etc/libvirt/qemu.conf` and not commented out.
-
-#### Configure the service runner to pass `--listen` to libvirtd
-
-**NOTE:** if the installation of libvirt included support for socket
-activation via the `libvirt-tcp.socket` systemd unit, the `--listen`
-argument should not be added and thus this step can be skipped.
-
-If socket activation is not available, you'll have to pass an additional
-command-line argument to libvirtd. On Red Hat based distros, modify
-`/etc/sysconfig/libvirtd` and set:
-
-```
-LIBVIRTD_ARGS="--listen"
-```
-
-On Debian based distros, modify `/etc/default/libvirtd` and set:
-
-```
-libvirtd_opts="--listen"
-```
-
-Next, restart libvirt: `systemctl restart libvirtd`
 
 #### Firewall
 
