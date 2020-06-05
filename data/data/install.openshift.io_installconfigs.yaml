@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: (devel)
+    controller-gen.kubebuilder.io/version: v0.3.1-0.20200617211605-651903477185
   creationTimestamp: null
   name: installconfigs.install.openshift.io
 spec:
@@ -994,6 +994,53 @@ spec:
                           type: string
                         role:
                           type: string
+                        rootDeviceHints:
+                          description: RootDeviceHints holds the hints for specifying
+                            the storage location for the root filesystem for the image.
+                          properties:
+                            deviceName:
+                              description: A Linux device name like "/dev/vda". The
+                                hint must match the actual value exactly.
+                              type: string
+                            hctl:
+                              description: A SCSI bus address like 0:0:0:0. The hint
+                                must match the actual value exactly.
+                              type: string
+                            minSizeGigabytes:
+                              description: The minimum size of the device in Gigabytes.
+                              minimum: 0
+                              type: integer
+                            model:
+                              description: A vendor-specific device identifier. The
+                                hint can be a substring of the actual value.
+                              type: string
+                            rotational:
+                              description: True if the device should use spinning
+                                media, false otherwise.
+                              type: boolean
+                            serialNumber:
+                              description: Device serial number. The hint must match
+                                the actual value exactly.
+                              type: string
+                            vendor:
+                              description: The name of the vendor or manufacturer
+                                of the device. The hint can be a substring of the
+                                actual value.
+                              type: string
+                            wwn:
+                              description: Unique storage identifier. The hint must
+                                match the actual value exactly.
+                              type: string
+                            wwnVendorExtension:
+                              description: Unique vendor storage identifier. The hint
+                                must match the actual value exactly.
+                              type: string
+                            wwnWithExtension:
+                              description: Unique storage identifier with the vendor
+                                extension appended. The hint must match the actual
+                                value exactly.
+                              type: string
+                          type: object
                       required:
                       - bmc
                       - bootMACAddress
@@ -1097,6 +1144,16 @@ spec:
                           type: string
                         type: array
                     type: object
+                  licenses:
+                    description: Licenses is a list of licenses to apply to the compute
+                      images The value should a list of strings (https URLs only)
+                      representing the license keys. When set, this will cause the
+                      installer to copy the image into user's project. This option
+                      is incompatible with any mechanism that makes use of pre-built
+                      images such as the current env OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE
+                    items:
+                      type: string
+                    type: array
                   network:
                     description: Network specifies an existing VPC where the cluster
                       should be created rather than provisioning a new one.
@@ -1475,5 +1532,5 @@ status:
   acceptedNames:
     kind: ""
     plural: ""
-  conditions: []
-  storedVersions: []
+  conditions: null
+  storedVersions: null
