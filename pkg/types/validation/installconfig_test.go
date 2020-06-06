@@ -698,7 +698,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.HTTPProxy = "http://bad%20uri"
 				return c
 			}(),
-			expectedError: `^\QHTTPProxy: Invalid value: "http://bad%20uri": parse http://bad%20uri: invalid URL escape "%20"\E$`,
+			expectedError: `^HTTPProxy: Invalid value: "http://bad%20uri": parse .*: invalid URL escape "%20"$`,
 		},
 		{
 			name: "invalid HTTPSProxy",
@@ -707,7 +707,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.HTTPSProxy = "https://bad%20uri"
 				return c
 			}(),
-			expectedError: `^\QHTTPSProxy: Invalid value: "https://bad%20uri": parse https://bad%20uri: invalid URL escape "%20"\E$`,
+			expectedError: `^HTTPSProxy: Invalid value: "https://bad%20uri": parse .*: invalid URL escape "%20"$`,
 		},
 		{
 			name: "invalid NoProxy domain",
