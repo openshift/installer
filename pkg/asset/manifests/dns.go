@@ -96,7 +96,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			"Name": fmt.Sprintf("%s-int", clusterID.InfraID),
 		}}
 	case azuretypes.Name:
-		dnsConfig, err := icazure.NewDNSConfig()
+		dnsConfig, err := icazure.NewDNSConfig(installConfig.Config.Azure.CloudName)
 		if err != nil {
 			return err
 		}

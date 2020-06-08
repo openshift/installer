@@ -111,6 +111,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		config.Status.PlatformStatus.Azure = &configv1.AzurePlatformStatus{
 			ResourceGroupName:        rg,
 			NetworkResourceGroupName: rg,
+			CloudName:                configv1.AzureCloudEnvironment(installConfig.Config.Platform.Azure.CloudName),
 		}
 		if nrg := installConfig.Config.Platform.Azure.NetworkResourceGroupName; nrg != "" {
 			config.Status.PlatformStatus.Azure.NetworkResourceGroupName = nrg

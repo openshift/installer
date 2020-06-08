@@ -22,6 +22,7 @@ import (
 	azuresession "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
@@ -69,7 +70,11 @@ func (o *ClusterUninstaller) configureClients() {
 
 // New returns an Azure destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
-	session, err := azuresession.GetSession()
+	cloudName := metadata.Azure.CloudName
+	if cloudName == "" {
+		cloudName = azure.PublicCloud
+	}
+	session, err := azuresession.GetSession(cloudName)
 	if err != nil {
 		return nil, err
 	}

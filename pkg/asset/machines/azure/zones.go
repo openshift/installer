@@ -10,11 +10,12 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute"
 	azureutil "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
-// AvailabilityZones retrieves a list of availability zones for the given region and instance type.
-func AvailabilityZones(region string, instanceType string) ([]string, error) {
-	skusClient, err := skusClient()
+// AvailabilityZones retrieves a list of availability zones for the given cloud, region, and instance type.
+func AvailabilityZones(cloud azure.CloudEnvironment, region string, instanceType string) ([]string, error) {
+	skusClient, err := skusClient(cloud)
 	if err != nil {
 		return nil, err
 	}
@@ -25,8 +26,8 @@ func AvailabilityZones(region string, instanceType string) ([]string, error) {
 	return zones, nil
 }
 
-func skusClient() (client *compute.ResourceSkusClient, err error) {
-	ssn, err := azureutil.GetSession()
+func skusClient(cloudName azure.CloudEnvironment) (client *compute.ResourceSkusClient, err error) {
+	ssn, err := azureutil.GetSession(cloudName)
 	if err != nil {
 		return nil, err
 	}

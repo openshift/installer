@@ -12,6 +12,8 @@ import (
 	azres "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
 	azsubs "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-06-01/subscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
+
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
 //go:generate mockgen -source=./client.go -destination=mock/azureclient_generated.go -package=mock
@@ -32,11 +34,11 @@ type Client struct {
 }
 
 // NewClient initializes a client with a session.
-func NewClient(ctx context.Context) (*Client, error) {
+func NewClient(ctx context.Context, cloudName azure.CloudEnvironment) (*Client, error) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	ssn, err := GetSession()
+	ssn, err := GetSession(cloudName)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get session")
 	}

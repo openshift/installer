@@ -11,6 +11,9 @@ var (
 
 // SetPlatformDefaults sets the defaults for the platform.
 func SetPlatformDefaults(p *azure.Platform) {
+	if p.CloudName == "" {
+		p.CloudName = azure.PublicCloud
+	}
 }
 
 // getInstanceClass returns the instance "class" we should use for a given region.

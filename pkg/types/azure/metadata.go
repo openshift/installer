@@ -2,5 +2,6 @@ package azure
 
 // Metadata contains Azure metadata (e.g. for uninstalling the cluster).
 type Metadata struct {
-	Region string `json:"region"`
+	CloudName CloudEnvironment `json:"cloudName"`
+	Region    string           `json:"region"`
 }

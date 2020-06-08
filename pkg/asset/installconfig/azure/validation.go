@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/types"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -121,12 +122,12 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 }
 
 // validateRegionForUltraDisks checks that the Ultra SSD disks are available for the user.
-func validateRegionForUltraDisks(fldPath *field.Path, region string) *field.Error {
+func validateRegionForUltraDisks(fldPath *field.Path, cloudName azuretypes.CloudEnvironment, region string) *field.Error {
 	diskType := "UltraSSD_LRS"
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
-	client, err := NewClient(ctx)
+	client, err := NewClient(ctx, cloudName)
 	if err != nil {
 		return field.InternalError(fldPath.Child("diskType"), err)
 	}
@@ -158,7 +159,7 @@ func ValidatePublicDNS(ic *types.InstallConfig) error {
 	clusterName := ic.ObjectMeta.Name
 	record := fmt.Sprintf("api.%s", clusterName)
 
-	azureDNS, err := NewDNSConfig()
+	azureDNS, err := NewDNSConfig(ic.Azure.CloudName)
 	if err != nil {
 		return err
 	}

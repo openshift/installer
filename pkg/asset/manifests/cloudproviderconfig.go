@@ -103,7 +103,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			cm.Data["ca-bundle.pem"] = string(caFile)
 		}
 	case azuretypes.Name:
-		session, err := icazure.GetSession()
+		session, err := icazure.GetSession(installConfig.Config.Platform.Azure.CloudName)
 		if err != nil {
 			return errors.Wrap(err, "could not get azure session")
 		}
@@ -122,6 +122,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			subnet = installConfig.Config.Azure.ComputeSubnet
 		}
 		azureConfig, err := azure.CloudProviderConfig{
+			CloudName:                installConfig.Config.Azure.CloudName,
 			GroupLocation:            installConfig.Config.Azure.Region,
 			ResourcePrefix:           clusterID.InfraID,
 			SubscriptionID:           session.Credentials.SubscriptionID,

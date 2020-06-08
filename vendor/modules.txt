@@ -1019,7 +1019,7 @@ github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
 # github.com/openshift-metal3/terraform-provider-ironic v0.2.1
 github.com/openshift-metal3/terraform-provider-ironic/ironic
-# github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible => github.com/openshift/api v0.0.0-20200413201024-c6e8c9b6eb9a
+# github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible => github.com/openshift/api v0.0.0-20200601094953-95abe2d2f422
 github.com/openshift/api/config/v1
 github.com/openshift/api/operator/v1
 github.com/openshift/api/operator/v1alpha1
@@ -1747,7 +1747,7 @@ honnef.co/go/tools/staticcheck/vrp
 honnef.co/go/tools/stylecheck
 honnef.co/go/tools/unused
 honnef.co/go/tools/version
-# k8s.io/api v0.18.2 => k8s.io/api v0.17.1
+# k8s.io/api v0.18.3 => k8s.io/api v0.17.1
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1beta1
 k8s.io/api/apps/v1
@@ -1792,7 +1792,7 @@ k8s.io/api/storage/v1beta1
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1
-# k8s.io/apimachinery v0.18.2 => k8s.io/apimachinery v0.17.1
+# k8s.io/apimachinery v0.18.3 => k8s.io/apimachinery v0.17.1
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta

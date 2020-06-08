@@ -5,10 +5,13 @@ import (
 	"os"
 
 	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/pkg/errors"
+
+	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/azure/defaults"
-	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 )
 
 // Auth is the collection of credentials that will be used by terrform.
@@ -21,6 +24,7 @@ type Auth struct {
 
 type config struct {
 	Auth                        `json:",inline"`
+	Environment                 string            `json:"azure_environment"`
 	ExtraTags                   map[string]string `json:"azure_extra_tags,omitempty"`
 	BootstrapInstanceType       string            `json:"azure_bootstrap_vm_type,omitempty"`
 	MasterInstanceType          string            `json:"azure_master_vm_type,omitempty"`
@@ -42,6 +46,7 @@ type config struct {
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
 	Auth                        Auth
+	CloudName                   azure.CloudEnvironment
 	BaseDomainResourceGroupName string
 	MasterConfigs               []*azureprovider.AzureMachineProviderSpec
 	WorkerConfigs               []*azureprovider.AzureMachineProviderSpec
@@ -67,8 +72,14 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		emulateSingleStackIPv6 = true
 	}
 
+	environment, err := environment(sources.CloudName)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not determine Azure environment to use for Terraform")
+	}
+
 	cfg := &config{
 		Auth:                        sources.Auth,
+		Environment:                 environment,
 		Region:                      region,
 		BootstrapInstanceType:       defaults.BootstrapInstanceType(region),
 		MasterInstanceType:          masterConfig.VMSize,
@@ -87,4 +98,20 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
+}
+
+// environment returns the Azure environment to pass to Terraform
+func environment(cloudName azure.CloudEnvironment) (string, error) {
+	switch cloudName {
+	case azure.PublicCloud:
+		return "public", nil
+	case azure.USGovernmentCloud:
+		return "usgovernment", nil
+	case azure.ChinaCloud:
+		return "china", nil
+	case azure.GermanCloud:
+		return "german", nil
+	default:
+		return "", errors.Errorf("unsupported cloud name %q", cloudName)
+	}
 }

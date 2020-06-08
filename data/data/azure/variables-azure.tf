@@ -8,6 +8,11 @@ EOF
   default = "0.1"
 }
 
+variable "azure_environment" {
+  type = string
+  description = "The target Azure cloud environment for the cluster."
+}
+
 variable "azure_region" {
   type = string
   description = "The target Azure region for the cluster."
