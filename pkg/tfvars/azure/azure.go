@@ -40,6 +40,7 @@ type config struct {
 	ComputeSubnet               string            `json:"azure_compute_subnet"`
 	PreexistingNetwork          bool              `json:"azure_preexisting_network"`
 	Private                     bool              `json:"azure_private"`
+	OutboundUDR                 bool              `json:"azure_outbound_user_defined_routing"`
 	EmulateSingleStackIPv6      bool              `json:"azure_emulate_single_stack_ipv6"`
 }
 
@@ -53,6 +54,7 @@ type TFVarsSources struct {
 	ImageURL                    string
 	PreexistingNetwork          bool
 	Publish                     types.PublishingStrategy
+	OutboundType                azure.OutboundType
 }
 
 // TFVars generates Azure-specific Terraform variables launching the cluster.
@@ -88,6 +90,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VolumeSize:                  masterConfig.OSDisk.DiskSizeGB,
 		ImageURL:                    sources.ImageURL,
 		Private:                     sources.Publish == types.InternalPublishingStrategy,
+		OutboundUDR:                 sources.OutboundType == azure.UserDefinedRoutingOutboundType,
 		BaseDomainResourceGroupName: sources.BaseDomainResourceGroupName,
 		NetworkResourceGroupName:    masterConfig.NetworkResourceGroup,
 		VirtualNetwork:              masterConfig.Vnet,

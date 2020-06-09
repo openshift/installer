@@ -18,16 +18,18 @@ func TestSetPlatformDefaults(t *testing.T) {
 			name:     "empty",
 			platform: &azure.Platform{},
 			expected: &azure.Platform{
-				CloudName: azure.PublicCloud,
+				CloudName:    azure.PublicCloud,
+				OutboundType: azure.LoadbalancerOutboundType,
 			},
 		},
 		{
-			name: "default",
+			name: "default cloud",
 			platform: &azure.Platform{
 				CloudName: azure.PublicCloud,
 			},
 			expected: &azure.Platform{
-				CloudName: azure.PublicCloud,
+				CloudName:    azure.PublicCloud,
+				OutboundType: azure.LoadbalancerOutboundType,
 			},
 		},
 		{
@@ -36,7 +38,30 @@ func TestSetPlatformDefaults(t *testing.T) {
 				CloudName: azure.USGovernmentCloud,
 			},
 			expected: &azure.Platform{
-				CloudName: azure.USGovernmentCloud,
+				CloudName:    azure.USGovernmentCloud,
+				OutboundType: azure.LoadbalancerOutboundType,
+			},
+		},
+		{
+			name: "default outbound",
+			platform: &azure.Platform{
+				CloudName:    azure.PublicCloud,
+				OutboundType: azure.LoadbalancerOutboundType,
+			},
+			expected: &azure.Platform{
+				CloudName:    azure.PublicCloud,
+				OutboundType: azure.LoadbalancerOutboundType,
+			},
+		},
+		{
+			name: "non-default cloud name",
+			platform: &azure.Platform{
+				CloudName:    azure.USGovernmentCloud,
+				OutboundType: azure.UserDefinedRoutingOutboundType,
+			},
+			expected: &azure.Platform{
+				CloudName:    azure.USGovernmentCloud,
+				OutboundType: azure.UserDefinedRoutingOutboundType,
 			},
 		},
 	}

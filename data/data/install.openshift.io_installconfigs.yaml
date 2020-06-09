@@ -909,6 +909,15 @@ spec:
                     description: NetworkResourceGroupName specifies the network resource
                       group that contains an existing VNet
                     type: string
+                  outboundType:
+                    default: Loadbalancer
+                    description: OutboundType is a strategy for how egress from cluster
+                      is achieved. When not specified default is "Loadbalancer".
+                    enum:
+                    - ""
+                    - Loadbalancer
+                    - UserDefinedRouting
+                    type: string
                   region:
                     description: Region specifies the Azure region where the cluster
                       will be created.

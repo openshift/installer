@@ -143,6 +143,11 @@ func Test_PrintFields(t *testing.T) {
     networkResourceGroupName <string>
       NetworkResourceGroupName specifies the network resource group that contains an existing VNet
 
+    outboundType <string>
+      Default: "Loadbalancer"
+      Valid Values: "","Loadbalancer","UserDefinedRouting"
+      OutboundType is a strategy for how egress from cluster is achieved. When not specified default is "Loadbalancer".
+
     region <string> -required-
       Region specifies the Azure region where the cluster will be created.
 

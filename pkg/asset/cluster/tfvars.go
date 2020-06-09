@@ -285,6 +285,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				ImageURL:                    string(*rhcosImage),
 				PreexistingNetwork:          preexistingnetwork,
 				Publish:                     installConfig.Config.Publish,
+				OutboundType:                installConfig.Config.Azure.OutboundType,
 			},
 		)
 		if err != nil {

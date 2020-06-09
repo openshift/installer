@@ -3,9 +3,16 @@ locals {
   public_lb_frontend_ip_v6_configuration_name = "public-lb-ip-v6"
 }
 
-resource "azurerm_public_ip" "cluster_public_ip_v4" {
+locals {
   // DEBUG: Azure apparently requires dual stack LB for v6
-  count = var.use_ipv4 || true ? 1 : 0
+  need_public_ipv4 = ! var.private || ! var.outbound_udr
+
+  need_public_ipv6 = var.use_ipv6 && (! var.private || ! var.outbound_udr)
+}
+
+
+resource "azurerm_public_ip" "cluster_public_ip_v4" {
+  count = local.need_public_ipv4 ? 1 : 0
 
   sku                 = "Standard"
   location            = var.region
@@ -17,14 +24,15 @@ resource "azurerm_public_ip" "cluster_public_ip_v4" {
 
 data "azurerm_public_ip" "cluster_public_ip_v4" {
   // DEBUG: Azure apparently requires dual stack LB for v6
-  count = var.use_ipv4 || true ? 1 : 0
+  count = local.need_public_ipv4 ? 1 : 0
 
   name                = azurerm_public_ip.cluster_public_ip_v4[0].name
   resource_group_name = var.resource_group_name
 }
 
+
 resource "azurerm_public_ip" "cluster_public_ip_v6" {
-  count = var.use_ipv6 ? 1 : 0
+  count = local.need_public_ipv6 ? 1 : 0
 
   ip_version          = "IPv6"
   sku                 = "Standard"
@@ -36,7 +44,7 @@ resource "azurerm_public_ip" "cluster_public_ip_v6" {
 }
 
 data "azurerm_public_ip" "cluster_public_ip_v6" {
-  count = var.use_ipv6 ? 1 : 0
+  count = local.need_public_ipv6 ? 1 : 0
 
   name                = azurerm_public_ip.cluster_public_ip_v6[0].name
   resource_group_name = var.resource_group_name
@@ -51,8 +59,18 @@ resource "azurerm_lb" "public" {
   dynamic "frontend_ip_configuration" {
     for_each = [for ip in [
       // DEBUG: Azure apparently requires dual stack LB for external load balancers v6
-      { name : local.public_lb_frontend_ip_v4_configuration_name, value : azurerm_public_ip.cluster_public_ip_v4[0].id, include : true, ipv6 : false },
-      { name : local.public_lb_frontend_ip_v6_configuration_name, value : var.use_ipv6 ? azurerm_public_ip.cluster_public_ip_v6[0].id : null, include : var.use_ipv6, ipv6 : true },
+      {
+        name : local.public_lb_frontend_ip_v4_configuration_name,
+        value : local.need_public_ipv4 ? azurerm_public_ip.cluster_public_ip_v4[0].id : null,
+        include : local.need_public_ipv4,
+        ipv6 : false,
+      },
+      {
+        name : local.public_lb_frontend_ip_v6_configuration_name,
+        value : local.need_public_ipv6 ? azurerm_public_ip.cluster_public_ip_v6[0].id : null,
+        include : local.need_public_ipv6,
+        ipv6 : true,
+      },
       ] : {
       name : ip.name
       value : ip.value
@@ -70,8 +88,13 @@ resource "azurerm_lb" "public" {
   }
 }
 
+// The backends are only created when frontend configuration exists, because of the following error from Azure API;
+// ```
+// Load Balancer /subscriptions/xx/resourceGroups/xx/providers/Microsoft.Network/loadBalancers/xx-public-lb does not have Frontend IP Configuration, 
+// but it has other child resources. This setup is not supported.
+// ```
 resource "azurerm_lb_backend_address_pool" "public_lb_pool_v4" {
-  count = var.use_ipv4 ? 1 : 0
+  count = local.need_public_ipv4 ? 1 : 0
 
   resource_group_name = var.resource_group_name
   loadbalancer_id     = azurerm_lb.public.id
@@ -79,7 +102,7 @@ resource "azurerm_lb_backend_address_pool" "public_lb_pool_v4" {
 }
 
 resource "azurerm_lb_backend_address_pool" "public_lb_pool_v6" {
-  count = var.use_ipv6 ? 1 : 0
+  count = local.need_public_ipv6 ? 1 : 0
 
   resource_group_name = var.resource_group_name
   loadbalancer_id     = azurerm_lb.public.id
@@ -87,7 +110,7 @@ resource "azurerm_lb_backend_address_pool" "public_lb_pool_v6" {
 }
 
 resource "azurerm_lb_rule" "public_lb_rule_api_internal_v4" {
-  count = var.private || ! var.use_ipv4 ? 0 : 1
+  count = var.use_ipv4 && ! var.private ? 1 : 0
 
   name                           = "api-internal-v4"
   resource_group_name            = var.resource_group_name
@@ -104,7 +127,7 @@ resource "azurerm_lb_rule" "public_lb_rule_api_internal_v4" {
 }
 
 resource "azurerm_lb_rule" "public_lb_rule_api_internal_v6" {
-  count = var.private || ! var.use_ipv6 ? 0 : 1
+  count = var.use_ipv6 && ! var.private ? 1 : 0
 
   name                           = "api-internal-v6"
   resource_group_name            = var.resource_group_name
@@ -120,36 +143,32 @@ resource "azurerm_lb_rule" "public_lb_rule_api_internal_v6" {
   probe_id                       = azurerm_lb_probe.public_lb_probe_api_internal[0].id
 }
 
-resource "azurerm_lb_rule" "internal_outbound_rule_v4" {
-  count = var.private && var.use_ipv4 ? 1 : 0
+resource "azurerm_lb_outbound_rule" "public_lb_outbound_rule_v4" {
+  count = var.use_ipv4 && var.private && ! var.outbound_udr ? 1 : 0
 
-  name                           = "internal_outbound_rule_v4"
-  resource_group_name            = var.resource_group_name
-  protocol                       = "Tcp"
-  backend_address_pool_id        = azurerm_lb_backend_address_pool.public_lb_pool_v4[0].id
-  loadbalancer_id                = azurerm_lb.public.id
-  frontend_port                  = 27627
-  backend_port                   = 27627
-  frontend_ip_configuration_name = local.public_lb_frontend_ip_v4_configuration_name
-  enable_floating_ip             = false
-  idle_timeout_in_minutes        = 30
-  load_distribution              = "Default"
+  name                    = "outbound-rule-v4"
+  resource_group_name     = var.resource_group_name
+  loadbalancer_id         = azurerm_lb.public.id
+  backend_address_pool_id = azurerm_lb_backend_address_pool.public_lb_pool_v4[0].id
+  protocol                = "All"
+
+  frontend_ip_configuration {
+    name = local.public_lb_frontend_ip_v4_configuration_name
+  }
 }
 
-resource "azurerm_lb_rule" "internal_outbound_rule_v6" {
-  count = var.private && var.use_ipv6 ? 1 : 0
+resource "azurerm_lb_outbound_rule" "public_lb_outbound_rule_v6" {
+  count = var.use_ipv6 && var.private && ! var.outbound_udr ? 1 : 0
 
-  name                           = "internal_outbound_rule_v6"
-  resource_group_name            = var.resource_group_name
-  protocol                       = "Tcp"
-  backend_address_pool_id        = azurerm_lb_backend_address_pool.public_lb_pool_v6[0].id
-  loadbalancer_id                = azurerm_lb.public.id
-  frontend_port                  = 27627
-  backend_port                   = 27627
-  frontend_ip_configuration_name = local.public_lb_frontend_ip_v6_configuration_name
-  enable_floating_ip             = false
-  idle_timeout_in_minutes        = 30
-  load_distribution              = "Default"
+  name                    = "outbound-rule-v6"
+  resource_group_name     = var.resource_group_name
+  loadbalancer_id         = azurerm_lb.public.id
+  backend_address_pool_id = azurerm_lb_backend_address_pool.public_lb_pool_v6[0].id
+  protocol                = "All"
+
+  frontend_ip_configuration {
+    name = local.public_lb_frontend_ip_v6_configuration_name
+  }
 }
 
 resource "azurerm_lb_probe" "public_lb_probe_api_internal" {
