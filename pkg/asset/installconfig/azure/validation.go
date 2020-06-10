@@ -10,12 +10,11 @@ import (
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns"
 	aznetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
 	"github.com/Azure/go-autorest/autorest/to"
-	aztypes "github.com/openshift/installer/pkg/types/azure"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
-	azuretypes "github.com/openshift/installer/pkg/types/azure"
-	"k8s.io/apimachinery/pkg/util/validation/field"
+	aztypes "github.com/openshift/installer/pkg/types/azure"
 )
 
 // Validate executes platform-specific validation.
@@ -122,15 +121,11 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 }
 
 // validateRegionForUltraDisks checks that the Ultra SSD disks are available for the user.
-func validateRegionForUltraDisks(fldPath *field.Path, cloudName azuretypes.CloudEnvironment, region string) *field.Error {
+func validateRegionForUltraDisks(fldPath *field.Path, client *Client, region string) *field.Error {
 	diskType := "UltraSSD_LRS"
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
-	client, err := NewClient(ctx, cloudName)
-	if err != nil {
-		return field.InternalError(fldPath.Child("diskType"), err)
-	}
 
 	regionDisks, err := client.GetDiskSkus(ctx, region)
 	if err != nil {
@@ -150,7 +145,7 @@ func validateRegionForUltraDisks(fldPath *field.Path, cloudName azuretypes.Cloud
 
 // ValidatePublicDNS checks DNS for CNAME, A, and AAA records for
 // api.zoneName. If a record exists, it's likely a cluster already exists.
-func ValidatePublicDNS(ic *types.InstallConfig) error {
+func ValidatePublicDNS(ic *types.InstallConfig, azureDNS *DNSConfig) error {
 	// If this is an internal cluster, this check is not necessary
 	if ic.Publish == types.InternalPublishingStrategy {
 		return nil
@@ -158,12 +153,6 @@ func ValidatePublicDNS(ic *types.InstallConfig) error {
 
 	clusterName := ic.ObjectMeta.Name
 	record := fmt.Sprintf("api.%s", clusterName)
-
-	azureDNS, err := NewDNSConfig(ic.Azure.CloudName)
-	if err != nil {
-		return err
-	}
-
 	rgName := ic.Azure.BaseDomainResourceGroupName
 	zoneName := ic.BaseDomain
 	fmtStr := "api.%s %s record already exists in %s and might be in use by another cluster, please remove it to continue"

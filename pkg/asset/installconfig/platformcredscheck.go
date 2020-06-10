@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
-	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
@@ -60,7 +59,7 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 	case baremetal.Name, libvirt.Name, none.Name, vsphere.Name:
 		// no creds to check
 	case azure.Name:
-		_, err = azureconfig.GetSession(ic.Config.Azure.CloudName)
+		_, err = ic.Azure.Session()
 		if err != nil {
 			return errors.Wrap(err, "creating Azure session")
 		}

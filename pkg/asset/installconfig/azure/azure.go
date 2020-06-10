@@ -20,12 +20,14 @@ const (
 
 // Platform collects azure-specific configuration.
 func Platform() (*azure.Platform, error) {
+	// Create client using public cloud because install config has not been generated yet.
 	const cloudName = azure.PublicCloud
-
-	client, err := NewClient(context.TODO(), cloudName)
+	ssn, err := GetSession(cloudName)
 	if err != nil {
 		return nil, err
 	}
+
+	client := NewClient(ssn)
 
 	regions, err := getRegions(context.TODO(), client)
 	if err != nil {

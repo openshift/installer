@@ -13,7 +13,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	icopenstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
@@ -103,7 +102,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			cm.Data["ca-bundle.pem"] = string(caFile)
 		}
 	case azuretypes.Name:
-		session, err := icazure.GetSession(installConfig.Config.Platform.Azure.CloudName)
+		session, err := installConfig.Azure.Session()
 		if err != nil {
 			return errors.Wrap(err, "could not get azure session")
 		}

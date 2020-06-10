@@ -25,7 +25,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
-	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
@@ -247,15 +246,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case azure.Name:
-		sess, err := azureconfig.GetSession(installConfig.Config.Platform.Azure.CloudName)
+		session, err := installConfig.Azure.Session()
 		if err != nil {
 			return err
 		}
+
 		auth := azuretfvars.Auth{
-			SubscriptionID: sess.Credentials.SubscriptionID,
-			ClientID:       sess.Credentials.ClientID,
-			ClientSecret:   sess.Credentials.ClientSecret,
-			TenantID:       sess.Credentials.TenantID,
+			SubscriptionID: session.Credentials.SubscriptionID,
+			ClientID:       session.Credentials.ClientID,
+			ClientSecret:   session.Credentials.ClientSecret,
+			TenantID:       session.Credentials.TenantID,
 		}
 		masters, err := mastersAsset.Machines()
 		if err != nil {
