@@ -135,7 +135,7 @@ replace (
 	github.com/openshift-metal3/terraform-provider-ironic => github.com/vrutkovs/terraform-provider-ironic v0.2.2-0.20200523090752-3a6a3c5a70d7
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200429152225-b98a784d8e6d // Pin API
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200116152001-92a2713fa240 // Pin client-go
-	github.com/openshift/machine-config-operator => github.com/vrutkovs/machine-config-operator v0.0.1-0.20200525162958-4840e9f1e815 // Pin MCO so it doesn't get downgraded
+	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20200605145110-6f5b3c52f671 // Pin MCO so it doesn't get downgraded
 	github.com/ovirt/go-ovirt => github.com/ovirt/go-ovirt v0.0.0-20200320082526-4e97a11ff083
 	github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20200526184553-1a716dcc0fa8 // Pin to openshift fork with tag v2.60.0-openshift-1
 	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.41.1-openshift-3 // Pin to openshift fork with IPv6 fixes
