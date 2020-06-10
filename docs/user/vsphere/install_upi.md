@@ -34,7 +34,7 @@ NOTE: The cluster requires the bootstrap machine to deploy the OpenShift cluster
 
 The bootstrap and control plane machines must use Red Hat Enterprise Linux CoreOS (RHCOS) as the operating system.
 
-All of the VMs created must reside within the same folder in all of the vCenters used. For example, if the VM folder used is named MyFolder, then all of the VMs running OpenShift must be in the MyFolder folder.
+All of the VMs created must reside within the same folder. See [the note below](#check-folder-name-in-cloud-provider-manifest) for details about folder naming.
 
 The disk UUID on the VMs must be enabled: the `disk.EnableUUID` value must be set to `True`. This step is necessary so that the VMDK always presents a consistent UUID to the VM, thus allowing the disk to be mounted properly.
 
@@ -215,6 +215,22 @@ From within the `INSTALL_DIR`:
 ```console
 $ rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml openshift/99_openshift-cluster-api_worker-machineset-*.yaml
 ```
+
+#### Check Folder Name in Cloud Provider Manifest
+
+An absolute path to the cluster VM folder is specified in the `cloud-provider-config.yaml` manifest. The vSphere Cloud Provider uses the specified folder for cluster operations, such as provisioning volumes. By default, the
+folder name is specified as the cluster id:
+
+```console
+$ cat vsphere-test/manifests/cloud-provider-config.yaml | grep folder
+    folder = "/<datacenter>/vm/test-kndtw"
+```
+
+You must either:
+* change this value to match the absolute path of your VM folder; OR
+* create a VM folder at this path named with the cluster ID
+
+Note: `folder` may be specified in the install config, and this value will automatically be updated to match the provided value. See [customization.md](customization.md) for more details.
 
 ### Invoking the installer to get Ignition configs
 
