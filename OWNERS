@@ -2,7 +2,9 @@
 # This file just uses aliases defined in OWNERS_ALIASES.
 
 approvers:
-  - installer-approvers
+  - LorbusChris
+  - vrutkovs
 reviewers:
-  - installer-reviewers
+  - LorbusChris
+  - vrutkovs
 component: Installer
