@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 
-	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/groups"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/rules"
@@ -35,31 +34,37 @@ func resourceNetworkingSecGroupV2() *schema.Resource {
 				Computed: true,
 				ForceNew: true,
 			},
+
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
+
 			"tenant_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
+
 			"delete_default_rules": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
 			},
+
 			"tags": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
+
 			"all_tags": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -70,7 +75,6 @@ func resourceNetworkingSecGroupV2() *schema.Resource {
 }
 
 func resourceNetworkingSecGroupV2Create(d *schema.ResourceData, meta interface{}) error {
-
 	config := meta.(*Config)
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
@@ -83,66 +87,63 @@ func resourceNetworkingSecGroupV2Create(d *schema.ResourceData, meta interface{}
 		TenantID:    d.Get("tenant_id").(string),
 	}
 
-	log.Printf("[DEBUG] Create OpenStack Neutron Security Group: %#v", opts)
-
-	security_group, err := groups.Create(networkingClient, opts).Extract()
+	log.Printf("[DEBUG] openstack_networking_secgroup_v2 create options: %#v", opts)
+	sg, err := groups.Create(networkingClient, opts).Extract()
 	if err != nil {
-		return err
+		return fmt.Errorf("Error creating openstack_networking_secgroup_v2: %s", err)
 	}
 
 	// Delete the default security group rules if it has been requested.
 	deleteDefaultRules := d.Get("delete_default_rules").(bool)
 	if deleteDefaultRules {
-		security_group, err := groups.Get(networkingClient, security_group.ID).Extract()
+		sgID := sg.ID
+		sg, err := groups.Get(networkingClient, sgID).Extract()
 		if err != nil {
-			return err
+			return fmt.Errorf("Error retrieving the created openstack_networking_secgroup_v2 %s: %s", sgID, err)
 		}
-		for _, rule := range security_group.Rules {
+
+		for _, rule := range sg.Rules {
 			if err := rules.Delete(networkingClient, rule.ID).ExtractErr(); err != nil {
-				return fmt.Errorf(
-					"There was a problem deleting a default security group rule: %s", err)
+				return fmt.Errorf("Error deleting a default rule for openstack_networking_secgroup_v2 %s: %s", sgID, err)
 			}
 		}
 	}
 
-	log.Printf("[DEBUG] OpenStack Neutron Security Group created: %#v", security_group)
-
-	d.SetId(security_group.ID)
+	d.SetId(sg.ID)
 
 	tags := networkingV2AttributesTags(d)
 	if len(tags) > 0 {
 		tagOpts := attributestags.ReplaceAllOpts{Tags: tags}
-		tags, err := attributestags.ReplaceAll(networkingClient, "security-groups", security_group.ID, tagOpts).Extract()
+		tags, err := attributestags.ReplaceAll(networkingClient, "security-groups", sg.ID, tagOpts).Extract()
 		if err != nil {
-			return fmt.Errorf("Error creating Tags on SecurityGroup: %s", err)
+			return fmt.Errorf("Error setting tags on openstack_networking_secgroup_v2 %s: %s", sg.ID, err)
 		}
-		log.Printf("[DEBUG] Set Tags = %+v on SecurityGroup %+v", tags, security_group.ID)
+		log.Printf("[DEBUG] Set tags %s on openstack_networking_secgroup_v2 %s", tags, sg.ID)
 	}
+
+	log.Printf("[DEBUG] Created openstack_networking_secgroup_v2: %#v", sg)
 
 	return resourceNetworkingSecGroupV2Read(d, meta)
 }
 
 func resourceNetworkingSecGroupV2Read(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] Retrieve information about security group: %s", d.Id())
-
 	config := meta.(*Config)
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
 
-	security_group, err := groups.Get(networkingClient, d.Id()).Extract()
-
+	sg, err := groups.Get(networkingClient, d.Id()).Extract()
 	if err != nil {
-		return CheckDeleted(d, err, "OpenStack Neutron Security group")
+		return CheckDeleted(d, err, "Error retrieving openstack_networking_secgroup_v2")
 	}
 
-	d.Set("description", security_group.Description)
-	d.Set("tenant_id", security_group.TenantID)
-	d.Set("name", security_group.Name)
+	d.Set("description", sg.Description)
+	d.Set("tenant_id", sg.TenantID)
+	d.Set("name", sg.Name)
 	d.Set("region", GetRegion(d, config))
 
-	networkingV2ReadAttributesTags(d, security_group.Tags)
+	networkingV2ReadAttributesTags(d, sg.Tags)
 
 	return nil
 }
@@ -154,25 +155,27 @@ func resourceNetworkingSecGroupV2Update(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
 
-	var update bool
-	var updateOpts groups.UpdateOpts
+	var (
+		updated    bool
+		updateOpts groups.UpdateOpts
+	)
 
 	if d.HasChange("name") {
-		update = true
+		updated = true
 		updateOpts.Name = d.Get("name").(string)
 	}
 
 	if d.HasChange("description") {
-		update = true
+		updated = true
 		description := d.Get("description").(string)
 		updateOpts.Description = &description
 	}
 
-	if update {
-		log.Printf("[DEBUG] Updating SecGroup %s with options: %#v", d.Id(), updateOpts)
+	if updated {
+		log.Printf("[DEBUG] Updating openstack_networking_secgroup_v2 %s with options: %#v", d.Id(), updateOpts)
 		_, err = groups.Update(networkingClient, d.Id(), updateOpts).Extract()
 		if err != nil {
-			return fmt.Errorf("Error updating OpenStack SecGroup: %s", err)
+			return fmt.Errorf("Error updating openstack_networking_secgroup_v2: %s", err)
 		}
 	}
 
@@ -181,17 +184,15 @@ func resourceNetworkingSecGroupV2Update(d *schema.ResourceData, meta interface{}
 		tagOpts := attributestags.ReplaceAllOpts{Tags: tags}
 		tags, err := attributestags.ReplaceAll(networkingClient, "security-groups", d.Id(), tagOpts).Extract()
 		if err != nil {
-			return fmt.Errorf("Error updating Tags on SecurityGroup: %s", err)
+			return fmt.Errorf("Error setting tags on openstack_networking_secgroup_v2 %s: %s", d.Id(), err)
 		}
-		log.Printf("[DEBUG] Updated Tags = %+v on SecurityGroup %+v", tags, d.Id())
+		log.Printf("[DEBUG] Set tags %s on openstack_networking_secgroup_v2 %s", tags, d.Id())
 	}
 
 	return resourceNetworkingSecGroupV2Read(d, meta)
 }
 
 func resourceNetworkingSecGroupV2Delete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] Destroy security group: %s", d.Id())
-
 	config := meta.(*Config)
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
@@ -201,7 +202,7 @@ func resourceNetworkingSecGroupV2Delete(d *schema.ResourceData, meta interface{}
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"ACTIVE"},
 		Target:     []string{"DELETED"},
-		Refresh:    waitForSecGroupDelete(networkingClient, d.Id()),
+		Refresh:    networkingSecgroupV2StateRefreshFuncDelete(networkingClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
@@ -209,39 +210,8 @@ func resourceNetworkingSecGroupV2Delete(d *schema.ResourceData, meta interface{}
 
 	_, err = stateConf.WaitForState()
 	if err != nil {
-		return fmt.Errorf("Error deleting OpenStack Neutron Security Group: %s", err)
+		return fmt.Errorf("Error deleting openstack_networking_secgroup_v2: %s", err)
 	}
 
-	d.SetId("")
 	return err
-}
-
-func waitForSecGroupDelete(networkingClient *gophercloud.ServiceClient, secGroupId string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		log.Printf("[DEBUG] Attempting to delete OpenStack Security Group %s.\n", secGroupId)
-
-		r, err := groups.Get(networkingClient, secGroupId).Extract()
-		if err != nil {
-			if _, ok := err.(gophercloud.ErrDefault404); ok {
-				log.Printf("[DEBUG] Successfully deleted OpenStack Neutron Security Group %s", secGroupId)
-				return r, "DELETED", nil
-			}
-			return r, "ACTIVE", err
-		}
-
-		err = groups.Delete(networkingClient, secGroupId).ExtractErr()
-		if err != nil {
-			if _, ok := err.(gophercloud.ErrDefault404); ok {
-				log.Printf("[DEBUG] Successfully deleted OpenStack Neutron Security Group %s", secGroupId)
-				return r, "DELETED", nil
-			}
-			if _, ok := err.(gophercloud.ErrDefault409); ok {
-				return r, "ACTIVE", nil
-			}
-			return r, "ACTIVE", err
-		}
-
-		log.Printf("[DEBUG] OpenStack Neutron Security Group %s still active.\n", secGroupId)
-		return r, "ACTIVE", nil
-	}
 }

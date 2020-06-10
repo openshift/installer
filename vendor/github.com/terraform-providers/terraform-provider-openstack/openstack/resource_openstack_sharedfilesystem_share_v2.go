@@ -244,7 +244,7 @@ func resourceSharedFilesystemShareV2Read(d *schema.ResourceData, meta interface{
 
 	log.Printf("[DEBUG] Retrieved share %s: %#v", d.Id(), share)
 
-	exportLocationsRaw, err := shares.GetExportLocations(sfsClient, d.Id()).Extract()
+	exportLocationsRaw, err := shares.ListExportLocations(sfsClient, d.Id()).Extract()
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve share's export_locations %s: %s", d.Id(), err)
 	}

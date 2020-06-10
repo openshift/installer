@@ -55,6 +55,9 @@ type Project struct {
 
 	// ParentID is the parent_id of the project.
 	ParentID string `json:"parent_id"`
+
+	// Tags is the list of tags associated with the project.
+	Tags []string `json:"tags,omitempty"`
 }
 
 // ProjectPage is a single page of Project results.

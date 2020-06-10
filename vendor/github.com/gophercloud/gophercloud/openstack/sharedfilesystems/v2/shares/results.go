@@ -207,31 +207,15 @@ type UpdateResult struct {
 	commonResult
 }
 
-// IDFromName is a convenience function that returns a share's ID given its name.
-func IDFromName(client *gophercloud.ServiceClient, name string) (string, error) {
-	r, err := ListDetail(client, &ListOpts{Name: name}).AllPages()
-	if err != nil {
-		return "", err
-	}
-
-	ss, err := ExtractShares(r)
-	if err != nil {
-		return "", err
-	}
-
-	switch len(ss) {
-	case 0:
-		return "", gophercloud.ErrResourceNotFound{Name: name, ResourceType: "share"}
-	case 1:
-		return ss[0].ID, nil
-	default:
-		return "", gophercloud.ErrMultipleResourcesFound{Name: name, Count: len(ss), ResourceType: "share"}
-	}
+// ListExportLocationsResult contains the result body and error from a
+// ListExportLocations request.
+type ListExportLocationsResult struct {
+	gophercloud.Result
 }
 
-// GetExportLocationsResult contains the result body and error from an
-// GetExportLocations request.
-type GetExportLocationsResult struct {
+// GetExportLocationResult contains the result body and error from a
+// GetExportLocation request.
+type GetExportLocationResult struct {
 	gophercloud.Result
 }
 
@@ -254,13 +238,22 @@ type ExportLocation struct {
 	Preferred bool `json:"preferred"`
 }
 
-// Extract will get the Export Locations from the commonResult
-func (r GetExportLocationsResult) Extract() ([]ExportLocation, error) {
+// Extract will get the Export Locations from the ListExportLocationsResult
+func (r ListExportLocationsResult) Extract() ([]ExportLocation, error) {
 	var s struct {
 		ExportLocations []ExportLocation `json:"export_locations"`
 	}
 	err := r.ExtractInto(&s)
 	return s.ExportLocations, err
+}
+
+// Extract will get the Export Location from the GetExportLocationResult
+func (r GetExportLocationResult) Extract() (*ExportLocation, error) {
+	var s struct {
+		ExportLocation *ExportLocation `json:"export_location"`
+	}
+	err := r.ExtractInto(&s)
+	return s.ExportLocation, err
 }
 
 // AccessRight contains all information associated with an OpenStack share
@@ -355,5 +348,25 @@ func (r MetadataResult) Extract() (map[string]string, error) {
 
 // DeleteMetadatumResult contains the response body and error from a DeleteMetadatum request.
 type DeleteMetadatumResult struct {
+	gophercloud.ErrResult
+}
+
+// RevertResult contains the response error from an Revert request.
+type RevertResult struct {
+	gophercloud.ErrResult
+}
+
+// ResetStatusResult contains the response error from an ResetStatus request.
+type ResetStatusResult struct {
+	gophercloud.ErrResult
+}
+
+// ForceDeleteResult contains the response error from an ForceDelete request.
+type ForceDeleteResult struct {
+	gophercloud.ErrResult
+}
+
+// UnmanageResult contains the response error from an Unmanage request.
+type UnmanageResult struct {
 	gophercloud.ErrResult
 }

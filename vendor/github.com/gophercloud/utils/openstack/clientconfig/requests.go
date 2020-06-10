@@ -2,6 +2,7 @@ package clientconfig
 
 import (
 	"fmt"
+	"net/http"
 	"reflect"
 	"strings"
 
@@ -60,6 +61,10 @@ type ClientOpts struct {
 	// EndpointType specifies whether to use the public, internal, or
 	// admin endpoint of a service.
 	EndpointType string
+
+	// HTTPClient provides the ability customize the ProviderClient's
+	// internal HTTP client.
+	HTTPClient *http.Client
 
 	// YAMLOpts provides the ability to pass a customized set
 	// of options and methods for loading the YAML file.
@@ -220,31 +225,32 @@ func GetCloudFromYAML(opts *ClientOpts) (*Cloud, error) {
 		}
 	}
 
-	var cloudIsInCloudsYaml bool
-	if cloud == nil {
-		// not an immediate error as it might still be defined in secure.yaml
-		cloudIsInCloudsYaml = false
-	} else {
-		cloudIsInCloudsYaml = true
-	}
+	if cloud != nil {
+		// A profile points to a public cloud entry.
+		// If one was specified, load a list of public clouds
+		// and then merge the information with the current cloud data.
+		profileName := defaultIfEmpty(cloud.Profile, cloud.Cloud)
 
-	publicClouds, err := yamlOpts.LoadPublicCloudsYAML()
-	if err != nil {
-		return nil, fmt.Errorf("unable to load clouds-public.yaml: %s", err)
-	}
+		if profileName != "" {
+			publicClouds, err := yamlOpts.LoadPublicCloudsYAML()
+			if err != nil {
+				return nil, fmt.Errorf("unable to load clouds-public.yaml: %s", err)
+			}
 
-	var profileName = defaultIfEmpty(cloud.Profile, cloud.Cloud)
-	if profileName != "" {
-		publicCloud, ok := publicClouds[profileName]
-		if !ok {
-			return nil, fmt.Errorf("cloud %s does not exist in clouds-public.yaml", profileName)
+			publicCloud, ok := publicClouds[profileName]
+			if !ok {
+				return nil, fmt.Errorf("cloud %s does not exist in clouds-public.yaml", profileName)
+			}
+
+			cloud, err = mergeClouds(cloud, publicCloud)
+			if err != nil {
+				return nil, fmt.Errorf("Could not merge information from clouds.yaml and clouds-public.yaml for cloud %s", profileName)
+			}
 		}
-		cloud, err = mergeClouds(cloud, publicCloud)
-		if err != nil {
-			return nil, fmt.Errorf("Could not merge information from clouds.yaml and clouds-public.yaml for cloud %s", profileName)
-		}
 	}
 
+	// Next, load a secure clouds file and see if a cloud entry
+	// can be found or merged.
 	secureClouds, err := yamlOpts.LoadSecureCloudsYAML()
 	if err != nil {
 		return nil, fmt.Errorf("unable to load secure.yaml: %s", err)
@@ -253,12 +259,13 @@ func GetCloudFromYAML(opts *ClientOpts) (*Cloud, error) {
 	if secureClouds != nil {
 		// If no entry was found in clouds.yaml, no cloud name was specified,
 		// and only one secureCloud entry exists, use that as the cloud entry.
-		if !cloudIsInCloudsYaml && cloudName == "" && len(secureClouds) == 1 {
+		if cloud == nil && cloudName == "" && len(secureClouds) == 1 {
 			for _, v := range secureClouds {
 				cloud = &v
 			}
 		}
 
+		// Otherwise, see if the provided cloud name exists in the secure yaml file.
 		secureCloud, ok := secureClouds[cloudName]
 		if !ok && cloud == nil {
 			// cloud == nil serves two purposes here:
@@ -276,6 +283,12 @@ func GetCloudFromYAML(opts *ClientOpts) (*Cloud, error) {
 				return nil, fmt.Errorf("unable to merge information from clouds.yaml and secure.yaml")
 			}
 		}
+	}
+
+	// As an extra precaution, do one final check to see if cloud is nil.
+	// We shouldn't reach this point, though.
+	if cloud == nil {
+		return nil, fmt.Errorf("Could not find cloud %s", cloudName)
 	}
 
 	// Default is to verify SSL API requests
@@ -735,6 +748,11 @@ func NewServiceClient(service string, opts *ClientOpts) (*gophercloud.ServiceCli
 		return nil, err
 	}
 
+	// If an HTTPClient was specified, use it.
+	if opts.HTTPClient != nil {
+		pClient.HTTPClient = *opts.HTTPClient
+	}
+
 	// Determine the region to use.
 	// First, check if the REGION_NAME environment variable is set.
 	var region string
@@ -783,6 +801,8 @@ func NewServiceClient(service string, opts *ClientOpts) (*gophercloud.ServiceCli
 		return openstack.NewComputeV2(pClient, eo)
 	case "container":
 		return openstack.NewContainerV1(pClient, eo)
+	case "container-infra":
+		return openstack.NewContainerInfraV1(pClient, eo)
 	case "database":
 		return openstack.NewDBV1(pClient, eo)
 	case "dns":

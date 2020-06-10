@@ -128,6 +128,12 @@ func resourceListenerV2() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+
+			"insert_headers": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				ForceNew: false,
+			},
 		},
 	}
 }
@@ -148,7 +154,10 @@ func resourceListenerV2Create(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Choose either the Octavia or Neutron create options.
-	createOpts := chooseLBV2ListenerCreateOpts(d, config)
+	createOpts, err := chooseLBV2ListenerCreateOpts(d, config)
+	if err != nil {
+		return fmt.Errorf("Error building openstack_lb_listener_v2 create options: %s", err)
+	}
 
 	log.Printf("[DEBUG] openstack_lb_listener_v2 create options: %#v", createOpts)
 	var listener *neutronlisteners.Listener
@@ -212,6 +221,10 @@ func resourceListenerV2Read(d *schema.ResourceData, meta interface{}) error {
 			d.Set("loadbalancer_id", listener.Loadbalancers[0].ID)
 		}
 
+		if err := d.Set("insert_headers", listener.InsertHeaders); err != nil {
+			return fmt.Errorf("Unable to set openstack_lb_listener_v2 insert_headers: %s", err)
+		}
+
 		return nil
 	}
 
@@ -263,7 +276,10 @@ func resourceListenerV2Update(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	updateOpts := chooseLBV2ListenerUpdateOpts(d, config)
+	updateOpts, err := chooseLBV2ListenerUpdateOpts(d, config)
+	if err != nil {
+		return fmt.Errorf("Error building openstack_lb_listener_v2 update options: %s", err)
+	}
 	if updateOpts == nil {
 		log.Printf("[DEBUG] openstack_lb_listener_v2 %s: nothing to update", d.Id())
 		return resourceListenerV2Read(d, meta)

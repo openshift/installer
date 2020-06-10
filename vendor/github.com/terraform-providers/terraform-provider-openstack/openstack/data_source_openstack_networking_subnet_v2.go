@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 )
@@ -60,17 +61,10 @@ func dataSourceNetworkingSubnetV2() *schema.Resource {
 			},
 
 			"ip_version": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Computed: true,
-				ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
-					value := v.(int)
-					if value != 4 && value != 6 {
-						errors = append(errors, fmt.Errorf(
-							"Only 4 and 6 are supported values for 'ip_version'"))
-					}
-					return
-				},
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IntInSlice([]int{4, 6}),
 			},
 
 			"gateway_ip": {
@@ -118,7 +112,6 @@ func dataSourceNetworkingSubnetV2() *schema.Resource {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-				Set:      schema.HashString,
 			},
 
 			"host_routes": {
@@ -137,30 +130,39 @@ func dataSourceNetworkingSubnetV2() *schema.Resource {
 					},
 				},
 			},
+
 			"ipv6_address_mode": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				Computed:     true,
-				ValidateFunc: validateSubnetV2IPv6Mode,
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"slaac", "dhcpv6-stateful", "dhcpv6-stateless",
+				}, false),
 			},
+
 			"ipv6_ra_mode": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				Computed:     true,
-				ValidateFunc: validateSubnetV2IPv6Mode,
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"slaac", "dhcpv6-stateful", "dhcpv6-stateless",
+				}, false),
 			},
+
 			"subnetpool_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Optional: true,
 			},
+
 			"tags": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
+
 			"all_tags": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -240,27 +242,27 @@ func dataSourceNetworkingSubnetV2Read(d *schema.ResourceData, meta interface{}) 
 
 	pages, err := subnets.List(networkingClient, listOpts).AllPages()
 	if err != nil {
-		return fmt.Errorf("Unable to retrieve subnets: %s", err)
+		return fmt.Errorf("Unable to retrieve openstack_networking_subnet_v2: %s", err)
 	}
 
 	allSubnets, err := subnets.ExtractSubnets(pages)
 	if err != nil {
-		return fmt.Errorf("Unable to extract subnets: %s", err)
+		return fmt.Errorf("Unable to extract openstack_networking_subnet_v2: %s", err)
 	}
 
 	if len(allSubnets) < 1 {
-		return fmt.Errorf("Your query returned no results. " +
+		return fmt.Errorf("Your query returned no openstack_networking_subnet_v2. " +
 			"Please change your search criteria and try again.")
 	}
 
 	if len(allSubnets) > 1 {
-		return fmt.Errorf("Your query returned more than one result." +
+		return fmt.Errorf("Your query returned more than one openstack_networking_subnet_v2." +
 			" Please try a more specific search criteria")
 	}
 
 	subnet := allSubnets[0]
 
-	log.Printf("[DEBUG] Retrieved Subnet %s: %+v", subnet.ID, subnet)
+	log.Printf("[DEBUG] Retrieved openstack_networking_subnet_v2 %s: %+v", subnet.ID, subnet)
 	d.SetId(subnet.ID)
 
 	d.Set("name", subnet.Name)
@@ -277,28 +279,17 @@ func dataSourceNetworkingSubnetV2Read(d *schema.ResourceData, meta interface{}) 
 	d.Set("all_tags", subnet.Tags)
 	d.Set("region", GetRegion(d, config))
 
-	err = d.Set("dns_nameservers", subnet.DNSNameservers)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to set dns_nameservers: %s", err)
+	if err := d.Set("dns_nameservers", subnet.DNSNameservers); err != nil {
+		log.Printf("[DEBUG] Unable to set openstack_networking_subnet_v2 dns_nameservers: %s", err)
 	}
 
-	err = d.Set("host_routes", subnet.HostRoutes)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to set host_routes: %s", err)
+	if err := d.Set("host_routes", subnet.HostRoutes); err != nil {
+		log.Printf("[DEBUG] Unable to set openstack_networking_subnet_v2 host_routes: %s", err)
 	}
 
-	// Set the allocation_pools
-	var allocationPools []map[string]interface{}
-	for _, v := range subnet.AllocationPools {
-		pool := make(map[string]interface{})
-		pool["start"] = v.Start
-		pool["end"] = v.End
-
-		allocationPools = append(allocationPools, pool)
-	}
-	err = d.Set("allocation_pools", allocationPools)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to set allocation_pools: %s", err)
+	allocationPools := flattenNetworkingSubnetV2AllocationPools(subnet.AllocationPools)
+	if err := d.Set("allocation_pools", allocationPools); err != nil {
+		log.Printf("[DEBUG] Unable to set openstack_networking_subnet_v2 allocation_pools: %s", err)
 	}
 
 	return nil

@@ -58,6 +58,13 @@ func resourceIdentityProjectV3() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+
+			"tags": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Set:      schema.HashString,
+			},
 		},
 	}
 }
@@ -78,6 +85,11 @@ func resourceIdentityProjectV3Create(d *schema.ResourceData, meta interface{}) e
 		IsDomain:    &isDomain,
 		Name:        d.Get("name").(string),
 		ParentID:    d.Get("parent_id").(string),
+	}
+
+	if v, ok := d.GetOk("tags"); ok {
+		tags := v.(*schema.Set).List()
+		createOpts.Tags = expandToStringSlice(tags)
 	}
 
 	log.Printf("[DEBUG] openstack_identity_project_v3 create options: %#v", createOpts)
@@ -112,6 +124,7 @@ func resourceIdentityProjectV3Read(d *schema.ResourceData, meta interface{}) err
 	d.Set("name", project.Name)
 	d.Set("parent_id", project.ParentID)
 	d.Set("region", GetRegion(d, config))
+	d.Set("tags", project.Tags)
 
 	return nil
 }
@@ -157,6 +170,17 @@ func resourceIdentityProjectV3Update(d *schema.ResourceData, meta interface{}) e
 		hasChange = true
 		description := d.Get("description").(string)
 		updateOpts.Description = &description
+	}
+
+	if d.HasChange("tags") {
+		hasChange = true
+		if v, ok := d.GetOk("tags"); ok {
+			tags := v.(*schema.Set).List()
+			tagsToUpdate := expandToStringSlice(tags)
+			updateOpts.Tags = &tagsToUpdate
+		} else {
+			updateOpts.Tags = &[]string{}
+		}
 	}
 
 	if hasChange {

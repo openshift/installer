@@ -132,13 +132,18 @@ func resourceIdentityApplicationCredentialV3Create(d *schema.ResourceData, meta 
 		return err
 	}
 
+	var expiresAt *time.Time
+	if v, err := time.Parse(time.RFC3339, d.Get("expires_at").(string)); err == nil {
+		expiresAt = &v
+	}
+
 	createOpts := applicationcredentials.CreateOpts{
 		Name:         d.Get("name").(string),
 		Description:  d.Get("description").(string),
 		Unrestricted: d.Get("unrestricted").(bool),
 		Roles:        expandIdentityApplicationCredentialRolesV3(d.Get("roles").(*schema.Set).List()),
 		AccessRules:  expandIdentityApplicationCredentialAccessRulesV3(d.Get("access_rules").(*schema.Set).List()),
-		ExpiresAt:    d.Get("expires_at").(string),
+		ExpiresAt:    expiresAt,
 	}
 
 	log.Printf("[DEBUG] openstack_identity_application_credential_v3 create options: %#v", createOpts)

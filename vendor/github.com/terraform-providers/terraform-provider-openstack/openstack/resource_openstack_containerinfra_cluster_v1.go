@@ -156,15 +156,17 @@ func resourceContainerInfraClusterV1() *schema.Resource {
 			},
 
 			"master_addresses": {
-				Type:     schema.TypeString,
+				Type:     schema.TypeList,
 				ForceNew: false,
 				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
 			"node_addresses": {
-				Type:     schema.TypeString,
+				Type:     schema.TypeList,
 				ForceNew: false,
 				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
 			"stack_id": {
@@ -185,6 +187,40 @@ func resourceContainerInfraClusterV1() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
+			},
+
+			"kubeconfig": {
+				Type:      schema.TypeMap,
+				Computed:  true,
+				Sensitive: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"raw_config": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
+						"host": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
+						"cluster_ca_certificate": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
+						"client_key": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
+						"client_certificate": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -273,6 +309,7 @@ func resourceContainerInfraClusterV1Create(d *schema.ResourceData, meta interfac
 	}
 
 	log.Printf("[DEBUG] Created openstack_containerinfra_cluster_v1 %s", s)
+
 	return resourceContainerInfraClusterV1Read(d, meta)
 }
 
@@ -313,6 +350,12 @@ func resourceContainerInfraClusterV1Read(d *schema.ResourceData, meta interface{
 	d.Set("fixed_network", s.FixedNetwork)
 	d.Set("fixed_subnet", s.FixedSubnet)
 
+	kubeconfig, err := flattenContainerInfraV1Kubeconfig(d, containerInfraClient)
+	if err != nil {
+		return fmt.Errorf("Error building kubeconfig for openstack_containerinfra_cluster_v1 %s: %s", d.Id(), err)
+	}
+	d.Set("kubeconfig", kubeconfig)
+
 	if err := d.Set("created_at", s.CreatedAt.Format(time.RFC3339)); err != nil {
 		log.Printf("[DEBUG] Unable to set openstack_containerinfra_cluster_v1 created_at: %s", err)
 	}
@@ -342,28 +385,29 @@ func resourceContainerInfraClusterV1Update(d *schema.ResourceData, meta interfac
 		})
 	}
 
-	log.Printf(
-		"[DEBUG] Updating openstack_containerinfra_cluster_v1 %s with options: %#v", d.Id(), updateOpts)
+	if len(updateOpts) > 0 {
+		log.Printf(
+			"[DEBUG] Updating openstack_containerinfra_cluster_v1 %s with options: %#v", d.Id(), updateOpts)
 
-	_, err = clusters.Update(containerInfraClient, d.Id(), updateOpts).Extract()
-	if err != nil {
-		return fmt.Errorf("Error updating openstack_containerinfra_cluster_v1 %s: %s", d.Id(), err)
-	}
+		_, err = clusters.Update(containerInfraClient, d.Id(), updateOpts).Extract()
+		if err != nil {
+			return fmt.Errorf("Error updating openstack_containerinfra_cluster_v1 %s: %s", d.Id(), err)
+		}
 
-	stateConf := &resource.StateChangeConf{
-		Pending:      []string{"UPDATE_IN_PROGRESS"},
-		Target:       []string{"UPDATE_COMPLETE"},
-		Refresh:      containerInfraClusterV1StateRefreshFunc(containerInfraClient, d.Id()),
-		Timeout:      d.Timeout(schema.TimeoutUpdate),
-		Delay:        1 * time.Minute,
-		PollInterval: 20 * time.Second,
+		stateConf := &resource.StateChangeConf{
+			Pending:      []string{"UPDATE_IN_PROGRESS"},
+			Target:       []string{"UPDATE_COMPLETE"},
+			Refresh:      containerInfraClusterV1StateRefreshFunc(containerInfraClient, d.Id()),
+			Timeout:      d.Timeout(schema.TimeoutUpdate),
+			Delay:        1 * time.Minute,
+			PollInterval: 20 * time.Second,
+		}
+		_, err = stateConf.WaitForState()
+		if err != nil {
+			return fmt.Errorf(
+				"Error waiting for openstack_containerinfra_cluster_v1 %s to become updated: %s", d.Id(), err)
+		}
 	}
-	_, err = stateConf.WaitForState()
-	if err != nil {
-		return fmt.Errorf(
-			"Error waiting for openstack_containerinfra_cluster_v1 %s to become updated: %s", d.Id(), err)
-	}
-
 	return resourceContainerInfraClusterV1Read(d, meta)
 }
 

@@ -68,7 +68,8 @@ func Create(client *gophercloud.ServiceClient, instanceID string, opts CreateOpt
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(baseURL(client, instanceID), &b, nil, nil)
+	resp, err := client.Post(baseURL(client, instanceID), &b, nil, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -84,6 +85,7 @@ func List(client *gophercloud.ServiceClient, instanceID string) pagination.Pager
 // Delete will permanently delete the database within a specified instance.
 // All contained data inside the database will also be permanently deleted.
 func Delete(client *gophercloud.ServiceClient, instanceID, dbName string) (r DeleteResult) {
-	_, r.Err = client.Delete(dbURL(client, instanceID, dbName), nil)
+	resp, err := client.Delete(dbURL(client, instanceID, dbName), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

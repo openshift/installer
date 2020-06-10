@@ -134,13 +134,15 @@ func Create(c *gophercloud.ServiceClient, opts CreateOptsBuilder) (r CreateResul
 		r.Err = err
 		return
 	}
-	_, r.Err = c.Post(rootURL(c), b, &r.Body, nil)
+	resp, err := c.Post(rootURL(c), b, &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Get retrieves a particular pool based on its unique ID.
 func Get(c *gophercloud.ServiceClient, id string) (r GetResult) {
-	_, r.Err = c.Get(resourceURL(c, id), &r.Body, nil)
+	resp, err := c.Get(resourceURL(c, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -181,15 +183,17 @@ func Update(c *gophercloud.ServiceClient, id string, opts UpdateOptsBuilder) (r 
 		r.Err = err
 		return
 	}
-	_, r.Err = c.Put(resourceURL(c, id), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := c.Put(resourceURL(c, id), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Delete will permanently delete a particular pool based on its unique ID.
 func Delete(c *gophercloud.ServiceClient, id string) (r DeleteResult) {
-	_, r.Err = c.Delete(resourceURL(c, id), nil)
+	resp, err := c.Delete(resourceURL(c, id), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -297,13 +301,15 @@ func CreateMember(c *gophercloud.ServiceClient, poolID string, opts CreateMember
 		r.Err = err
 		return
 	}
-	_, r.Err = c.Post(memberRootURL(c, poolID), b, &r.Body, nil)
+	resp, err := c.Post(memberRootURL(c, poolID), b, &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // GetMember retrieves a particular Pool Member based on its unique ID.
 func GetMember(c *gophercloud.ServiceClient, poolID string, memberID string) (r GetMemberResult) {
-	_, r.Err = c.Get(memberResourceURL(c, poolID, memberID), &r.Body, nil)
+	resp, err := c.Get(memberResourceURL(c, poolID, memberID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -342,15 +348,17 @@ func UpdateMember(c *gophercloud.ServiceClient, poolID string, memberID string, 
 		r.Err = err
 		return
 	}
-	_, r.Err = c.Put(memberResourceURL(c, poolID, memberID), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := c.Put(memberResourceURL(c, poolID, memberID), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200, 201, 202},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // DisassociateMember will remove and disassociate a Member from a particular
 // Pool.
 func DeleteMember(c *gophercloud.ServiceClient, poolID string, memberID string) (r DeleteMemberResult) {
-	_, r.Err = c.Delete(memberResourceURL(c, poolID, memberID), nil)
+	resp, err := c.Delete(memberResourceURL(c, poolID, memberID), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

@@ -23,6 +23,8 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	flavors_utils "github.com/gophercloud/utils/openstack/compute/v2/flavors"
+	images_utils "github.com/gophercloud/utils/openstack/compute/v2/images"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -111,11 +113,18 @@ func resourceComputeInstanceV2() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 				Set:      schema.HashString,
 			},
+			"availability_zone_hints": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"availability_zone"},
+			},
 			"availability_zone": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ForceNew:         true,
 				Computed:         true,
+				ConflictsWith:    []string{"availability_zone_hints"},
 				DiffSuppressFunc: suppressAvailabilityZoneDetailDiffs,
 			},
 			"network": {
@@ -243,6 +252,11 @@ func resourceComputeInstanceV2() *schema.Resource {
 							ForceNew: true,
 						},
 						"guest_format": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+						"volume_type": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
@@ -394,6 +408,11 @@ func resourceComputeInstanceV2() *schema.Resource {
 							Default:  false,
 							Optional: true,
 						},
+						"detach_ports_before_destroy": {
+							Type:     schema.TypeBool,
+							Default:  false,
+							Optional: true,
+						},
 					},
 				},
 			},
@@ -409,6 +428,7 @@ func resourceComputeInstanceV2Create(d *schema.ResourceData, meta interface{}) e
 	}
 
 	var createOpts servers.CreateOptsBuilder
+	var availabilityZone string
 
 	// Determines the Image ID using the following rules:
 	// If a bootable block_device was specified, ignore the image altogether.
@@ -451,12 +471,18 @@ func resourceComputeInstanceV2Create(d *schema.ResourceData, meta interface{}) e
 		computeClient.Microversion = computeV2InstanceCreateServerWithTagsMicroversion
 	}
 
+	if v, ok := d.GetOkExists("availability_zone"); ok {
+		availabilityZone = v.(string)
+	} else {
+		availabilityZone = d.Get("availability_zone_hints").(string)
+	}
+
 	createOpts = &servers.CreateOpts{
 		Name:             d.Get("name").(string),
 		ImageRef:         imageId,
 		FlavorRef:        flavorId,
 		SecurityGroups:   resourceInstanceSecGroupsV2(d),
-		AvailabilityZone: d.Get("availability_zone").(string),
+		AvailabilityZone: availabilityZone,
 		Networks:         networks,
 		Metadata:         resourceInstanceMetadataV2(d),
 		ConfigDrive:      &configDrive,
@@ -477,6 +503,14 @@ func resourceComputeInstanceV2Create(d *schema.ResourceData, meta interface{}) e
 		blockDevices, err := resourceInstanceBlockDevicesV2(d, vL.([]interface{}))
 		if err != nil {
 			return err
+		}
+
+		// Check if VolumeType was set in any of the Block Devices.
+		// If so, set the client's microversion appropriately.
+		for _, bd := range blockDevices {
+			if bd.VolumeType != "" {
+				computeClient.Microversion = computeV2InstanceBlockDeviceVolumeTypeMicroversion
+			}
 		}
 
 		createOpts = &bootfromvolume.CreateOptsExt{
@@ -851,7 +885,7 @@ func resourceComputeInstanceV2Update(d *schema.ResourceData, meta interface{}) e
 			newFlavorId = d.Get("flavor_id").(string)
 		} else {
 			newFlavorName := d.Get("flavor_name").(string)
-			newFlavorId, err = flavors.IDFromName(computeClient, newFlavorName)
+			newFlavorId, err = flavors_utils.IDFromName(computeClient, newFlavorName)
 			if err != nil {
 				return err
 			}
@@ -964,7 +998,35 @@ func resourceComputeInstanceV2Delete(d *schema.ResourceData, meta interface{}) e
 			}
 		}
 	}
+	vendorOptionsRaw := d.Get("vendor_options").(*schema.Set)
+	var detachPortBeforeDestroy bool
+	if vendorOptionsRaw.Len() > 0 {
+		vendorOptions := expandVendorOptions(vendorOptionsRaw.List())
+		detachPortBeforeDestroy = vendorOptions["detach_ports_before_destroy"].(bool)
+	}
+	if detachPortBeforeDestroy {
+		allInstanceNetworks, err := getAllInstanceNetworks(d, meta)
+		if err != nil {
+			log.Printf("[WARN] Unable to get openstack_compute_instance_v2 ports: %s", err)
+		} else {
 
+			for _, network := range allInstanceNetworks {
+				if network.Port != "" {
+					stateConf := &resource.StateChangeConf{
+						Pending:    []string{""},
+						Target:     []string{"DETACHED"},
+						Refresh:    computeInterfaceAttachV2DetachFunc(computeClient, d.Id(), network.Port),
+						Timeout:    d.Timeout(schema.TimeoutDelete),
+						Delay:      5 * time.Second,
+						MinTimeout: 5 * time.Second,
+					}
+					if _, err = stateConf.WaitForState(); err != nil {
+						return fmt.Errorf("Error detaching openstack_compute_instance_v2 %s: %s", d.Id(), err)
+					}
+				}
+			}
+		}
+	}
 	if d.Get("force_delete").(bool) {
 		log.Printf("[DEBUG] Force deleting OpenStack Instance %s", d.Id())
 		err = servers.ForceDelete(computeClient, d.Id()).ExtractErr()
@@ -1055,6 +1117,7 @@ func resourceOpenStackComputeInstanceV2ImportState(d *schema.ResourceData, meta 
 				"source_type":           "image",
 				"volume_size":           volMetaData.Size,
 				"disk_bus":              "",
+				"volume_type":           "",
 				"device_type":           "",
 			}
 
@@ -1115,6 +1178,7 @@ func resourceInstanceBlockDevicesV2(d *schema.ResourceData, bds []interface{}) (
 			BootIndex:           bdM["boot_index"].(int),
 			DeleteOnTermination: bdM["delete_on_termination"].(bool),
 			GuestFormat:         bdM["guest_format"].(string),
+			VolumeType:          bdM["volume_type"].(string),
 			DeviceType:          bdM["device_type"].(string),
 			DiskBus:             bdM["disk_bus"].(string),
 		}
@@ -1217,7 +1281,7 @@ func getImageIDFromConfig(computeClient *gophercloud.ServiceClient, d *schema.Re
 	}
 
 	if imageName != "" {
-		imageId, err := images.IDFromName(computeClient, imageName)
+		imageId, err := images_utils.IDFromName(computeClient, imageName)
 		if err != nil {
 			return "", err
 		}
@@ -1285,7 +1349,7 @@ func getFlavorID(computeClient *gophercloud.ServiceClient, d *schema.ResourceDat
 	}
 
 	if flavorName != "" {
-		flavorId, err := flavors.IDFromName(computeClient, flavorName)
+		flavorId, err := flavors_utils.IDFromName(computeClient, flavorName)
 		if err != nil {
 			return "", err
 		}
