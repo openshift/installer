@@ -128,6 +128,7 @@ resource "openstack_networking_floatingip_associate_v2" "api_fip" {
   count       = length(var.lb_floating_ip) == 0 ? 0 : 1
   port_id     = openstack_networking_port_v2.api_port.id
   floating_ip = var.lb_floating_ip
+  depends_on  = [openstack_networking_router_interface_v2.nodes_router_interface]
 }
 
 resource "openstack_networking_router_v2" "openshift-external-router" {
