@@ -157,13 +157,9 @@ control-plane
 
 The containers directory contains the descriptions and logs from all the containers created by the kubelet using CRI-O on the control-plane host. The files are same as [containers directory](#directory-bootstrap-containers) on bootstrap host.
 
-#### directory: control-plane/name/journals
+#### directory: control-plane/name/journal.txt
 
-The journals directory contains the logs of **important** units on the control plane hosts. The list of such units is,
-
-* `crio.log`
-* `kubelet.log`
-* `machine-config-daemon-host.log` and `pivot.log`, these files have logs for RHCOS pivot related actions on the control plane host.
+The `journal.txt` file contains the full journal from the control plane host.
 
 ## Common Failures
 

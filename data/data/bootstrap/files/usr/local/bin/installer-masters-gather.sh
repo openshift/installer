@@ -19,12 +19,8 @@ do
     systemctl status "${UNIT}" >& "${ARTIFACTS}/unit-status/${UNIT}.txt"
 done
 
-echo "Gathering master journals ..."
-mkdir -p "${ARTIFACTS}/journals"
-for service in kubelet crio machine-config-daemon-host pivot
-do
-    journalctl --boot --no-pager --output=short --unit="${service}" > "${ARTIFACTS}/journals/${service}.log"
-done
+echo "Gathering master journal ..."
+journalctl --no-hostname --no-pager --output=short > "${ARTIFACTS}/journal.txt"
 
 echo "Gathering master containers ..."
 mkdir -p "${ARTIFACTS}/containers"
