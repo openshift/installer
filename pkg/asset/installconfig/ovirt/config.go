@@ -1,6 +1,7 @@
 package ovirt
 
 import (
+	"crypto/x509"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -14,11 +15,21 @@ var defaultOvirtConfigPath = filepath.Join(os.Getenv("HOME"), ".ovirt", "ovirt-c
 // Config holds oVirt api access details
 type Config struct {
 	URL      string `yaml:"ovirt_url"`
+	FQDN     string `yaml:"ovirt_fqdn"`
+	PemURL   string `yaml:"ovirt_pem_url"`
 	Username string `yaml:"ovirt_username"`
 	Password string `yaml:"ovirt_password"`
 	CAFile   string `yaml:"ovirt_cafile,omitempty"`
 	Insecure bool   `yaml:"ovirt_insecure,omitempty"`
 	CABundle string `yaml:"ovirt_ca_bundle,omitempty"`
+}
+
+// clientHTTP struct - Hold info about http calls
+type clientHTTP struct {
+	saveFilePath string // Path for saving file (GET method)
+	urlAddr      string // URL or Address
+	skipVerify   bool   // skipt cert validatin in the http call
+	certPool     *x509.CertPool
 }
 
 // LoadOvirtConfig from the following location (first wins):

@@ -19,9 +19,6 @@ func ValidatePlatform(p *ovirt.Platform, fldPath *field.Path) field.ErrorList {
 	if err := validate.IP(p.APIVIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("api_vip"), p.APIVIP, err.Error()))
 	}
-	if err := validate.IP(p.DNSVIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("dns_vip"), p.DNSVIP, err.Error()))
-	}
 	if err := validate.IP(p.IngressVIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingress_vip"), p.IngressVIP, err.Error()))
 	}

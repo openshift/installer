@@ -1318,10 +1318,6 @@ spec:
                         - high_performance
                         type: string
                     type: object
-                  dns_vip:
-                    description: DNSVIP is the IP of the internal DNS which will be
-                      operated by the cluster
-                    type: string
                   ingress_vip:
                     description: IngressIP is an external IP which routes to the default
                       ingress controller. The IP is a suitable target of a wildcard
@@ -1349,7 +1345,6 @@ spec:
                     type: string
                 required:
                 - api_vip
-                - dns_vip
                 - ingress_vip
                 - ovirt_cluster_id
                 - ovirt_storage_domain_id

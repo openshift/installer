@@ -13,7 +13,7 @@ func Platform() (*ovirt.Platform, error) {
 
 	ovirtConfig, err := NewConfig()
 	if err != nil {
-		ovirtConfig, err = askCredentials()
+		ovirtConfig, err = engineSetup()
 		if err != nil {
 			return nil, err
 		}
@@ -67,20 +67,6 @@ func Platform() (*ovirt.Platform, error) {
 			Validate: survey.ComposeValidators(survey.Required),
 		},
 	}, &p.APIVIP)
-	if err != nil {
-		return nil, err
-	}
-
-	err = survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Input{
-				Message: "Internal DNS virtual IP",
-				Help:    "This is the virtual IP address that will be used to address the DNS server internal to the cluster. Make sure the IP address is not in use.",
-				Default: "",
-			},
-			Validate: survey.ComposeValidators(survey.Required),
-		},
-	}, &p.DNSVIP)
 	if err != nil {
 		return nil, err
 	}

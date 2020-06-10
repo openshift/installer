@@ -159,7 +159,6 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		config.Spec.PlatformSpec.Type = configv1.OvirtPlatformType
 		config.Status.PlatformStatus.Ovirt = &configv1.OvirtPlatformStatus{
 			APIServerInternalIP: installConfig.Config.Ovirt.APIVIP,
-			NodeDNSIP:           installConfig.Config.Ovirt.DNSVIP,
 			IngressIP:           installConfig.Config.Ovirt.IngressVIP,
 		}
 	default:
