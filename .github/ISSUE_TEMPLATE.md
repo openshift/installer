@@ -16,7 +16,13 @@ $ openshift-install version
 
 # Platform:
 <!--
-Please specify the platform type: aws, libvirt, openstack, baremetal, or none (UPI)
+Please specify the platform type: aws, libvirt, openstack or baremetal
+-->
+
+<!--
+Please specify:
+* IPI (automated install with `openshift-install`. If you don't know, then it's IPI)
+* UPI (semi-manual installation on customised infrastructure)
 -->
 
 # What happened?
