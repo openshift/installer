@@ -95,27 +95,27 @@ func (c *clientHTTP) checkURLResponse() error {
 // askPassword will ask the password to connect to Engine API.
 // The password provided will be added in the Config struct.
 // If an error happens, it will ask again username for users.
-func askPassword(c Config) (Config, error) {
+func askPassword(c *Config) error {
 	err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Password{
 				Message: "Engine password",
 				Help:    "",
 			},
-			Validate: survey.ComposeValidators(survey.Required, authenticated(&c)),
+			Validate: survey.ComposeValidators(survey.Required, authenticated(c)),
 		},
-	}, c.Password)
+	}, &c.Password)
 	if err != nil {
-		return c, err
+		return err
 	}
 
-	return c, nil
+	return nil
 }
 
 // askUsername will ask username to connect to Engine API.
 // The username provided will be added in the Config struct.
 // Returns Config and error if failure.
-func askUsername(c Config) (Config, error) {
+func askUsername(c *Config) error {
 	err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
@@ -125,12 +125,12 @@ func askUsername(c Config) (Config, error) {
 			},
 			Validate: survey.ComposeValidators(survey.Required),
 		},
-	}, c.Username)
+	}, &c.Username)
 	if err != nil {
-		return c, err
+		return err
 	}
 
-	return c, nil
+	return nil
 }
 
 // askCredentials will handle username and password for connecting with Engine
@@ -138,12 +138,12 @@ func askCredentials(c Config) (Config, error) {
 	loginAttempts := 3
 	logrus.Debugf("login attempts available: %d", loginAttempts)
 	for loginAttempts > 0 {
-		c, err := askUsername(c)
+		err := askUsername(&c)
 		if err != nil {
 			return c, err
 		}
 
-		c, err = askPassword(c)
+		err = askPassword(&c)
 		if err != nil {
 			loginAttempts = loginAttempts - 1
 			logrus.Debugf("login attempts now: %d", loginAttempts)
