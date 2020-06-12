@@ -72,13 +72,14 @@ func (o *ClusterUninstaller) destroyHealthChecks() error {
 		return err
 	}
 	items := o.insertPendingItems("healthcheck", found)
-	errs := []error{}
 	for _, item := range items {
 		err := o.deleteHealthCheck(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("healthcheck")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("healthcheck"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }

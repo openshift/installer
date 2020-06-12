@@ -72,13 +72,14 @@ func (o *ClusterUninstaller) destroyTargetPools() error {
 		return err
 	}
 	items := o.insertPendingItems("targetpool", found)
-	errs := []error{}
 	for _, item := range items {
 		err := o.deleteTargetPool(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("targetpool")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("targetpool"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }

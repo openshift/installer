@@ -72,13 +72,14 @@ func (o *ClusterUninstaller) destroyRouters() error {
 		return err
 	}
 	items := o.insertPendingItems("router", found)
-	errs := []error{}
 	for _, item := range items {
 		err := o.deleteRouter(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("router")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("router"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }

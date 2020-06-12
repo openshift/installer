@@ -34,6 +34,9 @@ func (o *ClusterUninstaller) listRoutesWithFilter(fields string, filter string, 
 	err := req.Pages(ctx, func(list *compute.RouteList) error {
 		for _, item := range list.Items {
 			if filterFunc == nil || filterFunc != nil && filterFunc(item) {
+				if strings.HasPrefix(item.Name, "default-route-") {
+					continue
+				}
 				o.Logger.Debugf("Found route: %s", item.Name)
 				result = append(result, cloudResource{
 					key:      item.Name,
@@ -57,9 +60,6 @@ func (o *ClusterUninstaller) deleteRoute(item cloudResource) error {
 	op, err := o.computeSvc.Routes.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
 		o.resetRequestID(item.typeName, item.name)
-		if strings.HasPrefix(item.name, "default-route") {
-			return errors.New("this looks like a default route, which cannot be deleted manually but will be deleted with the corresponding network")
-		}
 		return errors.Wrapf(err, "failed to delete route %s", item.name)
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
@@ -82,13 +82,14 @@ func (o *ClusterUninstaller) destroyRoutes() error {
 		return err
 	}
 	items := o.insertPendingItems("route", found)
-	errs := []error{}
 	for _, item := range items {
 		err := o.deleteRoute(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("route")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("route"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }

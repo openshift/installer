@@ -72,25 +72,25 @@ func (o *ClusterUninstaller) destroyBuckets() error {
 		return err
 	}
 	items := o.insertPendingItems("bucket", found)
-	errs := []error{}
 	for _, item := range items {
 		foundObjects, err := o.listBucketObjects(item)
 		if err != nil {
-			errs = append(errs, err)
-			continue
+			return err
 		}
 		objects := o.insertPendingItems("bucketobject", foundObjects)
 		for _, object := range objects {
 			err = o.deleteBucketObject(item, object)
 			if err != nil {
-				errs = append(errs, err)
+				o.errorTracker.suppressWarning(object.key, err, o.Logger)
 			}
 		}
 		err = o.deleteBucket(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("bucket")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("bucket"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }

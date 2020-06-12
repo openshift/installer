@@ -72,13 +72,14 @@ func (o *ClusterUninstaller) destroyForwardingRules() error {
 		return err
 	}
 	items := o.insertPendingItems("forwardingrule", found)
-	errs := []error{}
 	for _, item := range items {
 		err := o.deleteForwardingRule(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("forwardingrule")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("forwardingrule"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }

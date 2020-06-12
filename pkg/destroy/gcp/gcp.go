@@ -51,6 +51,7 @@ type ClusterUninstaller struct {
 	// from metadata or by inferring it from existing cluster resources.
 	cloudControllerUID string
 
+	errorTracker
 	requestIDTracker
 	pendingItemTracker
 }

@@ -73,25 +73,26 @@ func (o *ClusterUninstaller) destroyNetworks() error {
 		return err
 	}
 	items := o.insertPendingItems("network", found)
-	errs := []error{}
 	for _, item := range items {
 		foundRoutes, err := o.listNetworkRoutes(item.url)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 			continue
 		}
 		routes := o.insertPendingItems("route", foundRoutes)
 		for _, route := range routes {
 			err := o.deleteRoute(route)
 			if err != nil {
-				o.Logger.Debugf("Failed to delete route %s: %v", route.name, err)
+				o.errorTracker.suppressWarning(route.key, err, o.Logger)
 			}
 		}
 		err = o.deleteNetwork(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("network")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("network"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }

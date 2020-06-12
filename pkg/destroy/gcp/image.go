@@ -72,13 +72,14 @@ func (o *ClusterUninstaller) destroyImages() error {
 		return err
 	}
 	items := o.insertPendingItems("image", found)
-	errs := []error{}
 	for _, item := range items {
 		err := o.deleteImage(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("image")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("image"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }

@@ -78,13 +78,14 @@ func (o *ClusterUninstaller) destroyDisks() error {
 		return err
 	}
 	items := o.insertPendingItems("disk", found)
-	errs := []error{}
 	for _, item := range items {
 		err := o.deleteDisk(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("disk")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("disk"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }
