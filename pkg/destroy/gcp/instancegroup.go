@@ -37,6 +37,7 @@ func (o *ClusterUninstaller) listInstanceGroupsWithFilter(fields string, filter 
 						name:     item.Name,
 						typeName: "instancegroup",
 						zone:     zoneName,
+						url:      item.SelfLink,
 					})
 				}
 			}
