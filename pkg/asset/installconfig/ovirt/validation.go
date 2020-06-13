@@ -34,7 +34,13 @@ func Validate(ic *types.InstallConfig) error {
 	}
 	defer con.Close()
 
-	if err := validateVNICProfile(*ic.Ovirt, con); err != nil {
+	if err := validateMinimumVersion(con); err != nil {
+		allErrs = append(
+			allErrs,
+			field.InternalError(field.NewPath("validateMinimumVersion"), err))
+	}
+
+	if err = validateVNICProfile(*ic.Ovirt, con); err != nil {
 		allErrs = append(
 			allErrs,
 			field.Invalid(ovirtPlatformPath.Child("vnicProfileID"), ic.Ovirt.VNICProfileID, err.Error()))
@@ -102,6 +108,15 @@ func authenticated(c *Config) survey.Validator {
 		return nil
 	}
 
+}
+
+// validate user's oVirt version deployed is the minimum required to deploy OCP
+func validateMinimumVersion(con *ovirtsdk.Connection) error {
+	err := engineMinimumVersionRequirement(con)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // validate the provided vnic profile exists and belongs the the cluster network
