@@ -218,7 +218,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       HealthCheckIntervalSeconds: 10
-      HealthCheckPath: "/readyz"
+      HealthCheckPath: "/healthz"
       HealthCheckPort: 22623
       HealthCheckProtocol: HTTPS
       HealthyThresholdCount: 2
