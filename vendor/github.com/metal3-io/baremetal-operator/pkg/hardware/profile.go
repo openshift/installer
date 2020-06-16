@@ -2,6 +2,8 @@ package hardware
 
 import (
 	"fmt"
+
+	metal3v1alpha1 "github.com/metal3-io/baremetal-operator/pkg/apis/metal3/v1alpha1"
 )
 
 const (
@@ -17,7 +19,7 @@ type Profile struct {
 
 	// RootDeviceHints holds the suggestions for placing the storage
 	// for the root filesystem.
-	RootDeviceHints RootDeviceHints
+	RootDeviceHints metal3v1alpha1.RootDeviceHints
 
 	// RootGB is the size of the root volume in GB
 	RootGB int
@@ -29,26 +31,12 @@ type Profile struct {
 	CPUArch string
 }
 
-// RootDeviceHints holds the hints for specifying the storage location
-// for the root filesystem for the image.
-//
-// NOTE(dhellmann): Valid ironic hints are: "vendor,
-// wwn_vendor_extension, wwn_with_extension, by_path, serial, wwn,
-// size, rotational, name, hctl, model"
-type RootDeviceHints struct {
-	// A device name like "/dev/vda"
-	DeviceName string
-
-	// A SCSI bus address like 0:0:0:0
-	HCTL string
-}
-
 var profiles = make(map[string]Profile)
 
 func init() {
 	profiles[DefaultProfileName] = Profile{
 		Name: DefaultProfileName,
-		RootDeviceHints: RootDeviceHints{
+		RootDeviceHints: metal3v1alpha1.RootDeviceHints{
 			DeviceName: "/dev/sda",
 		},
 		RootGB:  10,
@@ -58,7 +46,7 @@ func init() {
 
 	profiles["libvirt"] = Profile{
 		Name: "libvirt",
-		RootDeviceHints: RootDeviceHints{
+		RootDeviceHints: metal3v1alpha1.RootDeviceHints{
 			DeviceName: "/dev/vda",
 		},
 		RootGB:  10,
@@ -68,7 +56,7 @@ func init() {
 
 	profiles["dell"] = Profile{
 		Name: "dell",
-		RootDeviceHints: RootDeviceHints{
+		RootDeviceHints: metal3v1alpha1.RootDeviceHints{
 			HCTL: "0:0:0:0",
 		},
 		RootGB:  10,
@@ -78,7 +66,7 @@ func init() {
 
 	profiles["dell-raid"] = Profile{
 		Name: "dell-raid",
-		RootDeviceHints: RootDeviceHints{
+		RootDeviceHints: metal3v1alpha1.RootDeviceHints{
 			HCTL: "0:2:0:0",
 		},
 		RootGB:  10,
@@ -86,6 +74,25 @@ func init() {
 		CPUArch: "x86_64",
 	}
 
+	profiles["openstack"] = Profile{
+		Name: "openstack",
+		RootDeviceHints: metal3v1alpha1.RootDeviceHints{
+			DeviceName: "/dev/vdb",
+		},
+		RootGB:  10,
+		LocalGB: 50,
+		CPUArch: "x86_64",
+	}
+
+	profiles["openstack"] = Profile{
+		Name: "openstack",
+		RootDeviceHints: metal3v1alpha1.RootDeviceHints{
+			DeviceName: "/dev/vdb",
+		},
+		RootGB:  10,
+		LocalGB: 50,
+		CPUArch: "x86_64",
+	}
 }
 
 // GetProfile returns the named profile
