@@ -86,3 +86,9 @@ aliases:
     - Gal-Zaidman
     - rgolangh
     - eslutsky
+  equinix-approvers:
+    - displague
+    - detiber
+  equinix-reviewers:
+    - displague
+    - detiber

@@ -275,6 +275,7 @@ then
 	copy_static_resources_for baremetal
 	copy_static_resources_for openstack
 	copy_static_resources_for ovirt
+	copy_static_resources_for equinixmetal
 	copy_static_resources_for vsphere
 
 	cp mco-bootstrap/manifests/* manifests/

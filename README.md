@@ -15,6 +15,7 @@
 * [Power](docs/user/power/install_upi.md)
 * [oVirt](docs/user/ovirt/install_ipi.md)
 * [oVirt (UPI)](docs/user/ovirt/install_upi.md)
+* [Equinix Metal](docs/user/equinixmetal/install_ipi.md)
 * [vSphere](docs/user/vsphere/README.md)
 * [vSphere (UPI)](docs/user/vsphere/install_upi.md)
 * [z/VM](docs/user/zvm/install_upi.md)

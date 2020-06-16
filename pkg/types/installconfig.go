@@ -8,6 +8,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/equinixmetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -34,6 +35,7 @@ var (
 		gcp.Name,
 		openstack.Name,
 		ovirt.Name,
+		equinixmetal.Name,
 		vsphere.Name,
 	}
 	// HiddenPlatformNames is a slice with all the
@@ -177,6 +179,10 @@ type Platform struct {
 	// +optional
 	OpenStack *openstack.Platform `json:"openstack,omitempty"`
 
+	// EquinixMetal is the configuration used when installing on EquinixMetal.
+	// +optional
+	EquinixMetal *equinixmetal.Platform `json:"equinixmetal,omitempty"`
+
 	// VSphere is the configuration used when installing on vSphere.
 	// +optional
 	VSphere *vsphere.Platform `json:"vsphere,omitempty"`
@@ -207,6 +213,8 @@ func (p *Platform) Name() string {
 		return none.Name
 	case p.OpenStack != nil:
 		return openstack.Name
+	case p.EquinixMetal != nil:
+		return equinixmetal.Name
 	case p.VSphere != nil:
 		return vsphere.Name
 	case p.Ovirt != nil:

@@ -4,6 +4,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/equinixmetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -90,6 +91,9 @@ type MachinePoolPlatform struct {
 
 	// Ovirt is the configuration used when installing on oVirt.
 	Ovirt *ovirt.MachinePool `json:"ovirt,omitempty"`
+
+	// EquinixMetal is the configuration used when installing on Equinix Metal.
+	EquinixMetal *equinixmetal.MachinePool `json:"equinixmetal,omitempty"`
 }
 
 // Name returns a string representation of the platform (e.g. "aws" if
@@ -111,10 +115,12 @@ func (p *MachinePoolPlatform) Name() string {
 		return libvirt.Name
 	case p.OpenStack != nil:
 		return openstack.Name
-	case p.VSphere != nil:
-		return vsphere.Name
 	case p.Ovirt != nil:
 		return ovirt.Name
+	case p.VSphere != nil:
+		return vsphere.Name
+	case p.EquinixMetal != nil:
+		return equinixmetal.Name
 	default:
 		return ""
 	}

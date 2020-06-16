@@ -1,1 +1,4 @@
 /bin/
+.openshift_install_state.json
+.openshift_install.log
+.vscode

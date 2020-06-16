@@ -141,6 +141,13 @@
             "sha256": "ffac43f96bcef2a129734bd50145cdba0ec191aab09641f9a5f0d3e1d48ef8b2",
             "size": 801607680
         },
+        "equinixmetal": {
+            "path": "rhcos-45.81.202005200134-0-metal.x86_64.raw.gz",
+            "sha256": "fbbe3f1a6cd60ec0344ca88925efc812c1556654680d8663bffd0663ae55843a",
+            "size": 878855135,
+            "uncompressed-sha256": "4a211425bf1af046ffbd91c9c63b0d179db67f9dc4165a4a106a2f0a1c74df7e",
+            "uncompressed-size": 3807379456
+        },
         "qemu": {
             "path": "rhcos-47.82.202010211043-0-qemu.x86_64.qcow2.gz",
             "sha256": "ced6480a9f4960484ba83e5734334bb1afab19cb38e8a8f4901919eb222567c0",

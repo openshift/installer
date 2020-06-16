@@ -7,12 +7,14 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
+	equinixconfig "github.com/openshift/installer/pkg/asset/installconfig/equinixmetal"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/equinixmetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -74,6 +76,11 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		err = con.Test()
 		if err != nil {
 			return errors.Wrap(err, "testing Engine connection")
+		}
+	case equinixmetal.Name:
+		_, err := equinixconfig.NewConnection()
+		if err != nil {
+			return errors.Wrap(err, "creating Engine connection")
 		}
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)

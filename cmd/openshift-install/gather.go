@@ -28,6 +28,7 @@ import (
 	gatheraws "github.com/openshift/installer/pkg/terraform/gather/aws"
 	gatherazure "github.com/openshift/installer/pkg/terraform/gather/azure"
 	gatherbaremetal "github.com/openshift/installer/pkg/terraform/gather/baremetal"
+	gatherequinix "github.com/openshift/installer/pkg/terraform/gather/equinixmetal"
 	gathergcp "github.com/openshift/installer/pkg/terraform/gather/gcp"
 	gatherlibvirt "github.com/openshift/installer/pkg/terraform/gather/libvirt"
 	gatheropenstack "github.com/openshift/installer/pkg/terraform/gather/openstack"
@@ -37,6 +38,7 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	equinixtypes "github.com/openshift/installer/pkg/types/equinixmetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -228,6 +230,15 @@ func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State)
 			return bootstrap, port, masters, err
 		}
 		masters, err = gatherovirt.ControlPlaneIPs(tfstate)
+	case equinixtypes.Name:
+		bootstrap, err = gatherequinix.BootstrapIP(tfstate)
+		if err != nil {
+			return bootstrap, port, masters, err
+		}
+		masters, err = gatherequinix.ControlPlaneIPs(tfstate)
+		if err != nil {
+			logrus.Error(err)
+		}
 	case vspheretypes.Name:
 		bootstrap, err = gathervsphere.BootstrapIP(config, tfstate)
 		if err != nil {

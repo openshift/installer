@@ -13,6 +13,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/installconfig/equinixmetal"
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
@@ -26,6 +27,7 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	equinixtypes "github.com/openshift/installer/pkg/types/equinixmetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
@@ -182,6 +184,19 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 				Base64encodeCABundle: base64.StdEncoding.EncodeToString([]byte(conf.CABundle)),
 			},
 		}
+	case equinixtypes.Name:
+		conf, err := equinixmetal.NewConfig()
+		if err != nil {
+			return err
+		}
+
+		cloudCreds = cloudCredsSecretData{
+			EquinixMetal: &EquinixMetalCredsSecretData{
+				Base64encodeURL:      base64.StdEncoding.EncodeToString([]byte(conf.APIURL)),
+				Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(conf.APIKey)),
+			},
+		}
+
 	}
 
 	templateData := &openshiftTemplateData{

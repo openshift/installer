@@ -14,6 +14,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/azure"
 	_ "github.com/openshift/installer/pkg/destroy/baremetal"
 	"github.com/openshift/installer/pkg/destroy/bootstrap"
+	_ "github.com/openshift/installer/pkg/destroy/equinixmetal"
 	_ "github.com/openshift/installer/pkg/destroy/gcp"
 	_ "github.com/openshift/installer/pkg/destroy/libvirt"
 	_ "github.com/openshift/installer/pkg/destroy/openstack"

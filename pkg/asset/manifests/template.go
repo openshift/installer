@@ -47,13 +47,24 @@ type OvirtCredsSecretData struct {
 	Base64encodeCABundle string
 }
 
+// EquinixMetalCredsSecretData holds encoded credentials and is used to generated cloud-creds secret
+type EquinixMetalCredsSecretData struct {
+	Base64encodeURL      string
+	Base64encodeUsername string
+	Base64encodePassword string
+	Base64encodeCAFile   string
+	Base64encodeInsecure string
+	Base64encodeCABundle string
+}
+
 type cloudCredsSecretData struct {
-	AWS       *AwsCredsSecretData
-	Azure     *AzureCredsSecretData
-	GCP       *GCPCredsSecretData
-	OpenStack *OpenStackCredsSecretData
-	VSphere   *VSphereCredsSecretData
-	Ovirt     *OvirtCredsSecretData
+	AWS          *AwsCredsSecretData
+	Azure        *AzureCredsSecretData
+	GCP          *GCPCredsSecretData
+	OpenStack    *OpenStackCredsSecretData
+	VSphere      *VSphereCredsSecretData
+	Ovirt        *OvirtCredsSecretData
+	EquinixMetal *EquinixMetalCredsSecretData
 }
 
 type bootkubeTemplateData struct {

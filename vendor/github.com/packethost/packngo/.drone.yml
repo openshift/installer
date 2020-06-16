@@ -1,0 +1,19 @@
+workspace:
+  base: /go
+  path: src/github.com/packethost/packngo
+
+pipeline:
+  lint:
+    image: golang:1.13
+    commands:
+      - make lint BUILD=local
+
+  build:
+    image: golang:1.13
+    commands:
+      - make build BUILD=local
+
+  test:
+    image: golang:1.13
+    commands:
+      - make test BUILD=local

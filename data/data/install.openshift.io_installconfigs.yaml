@@ -266,6 +266,10 @@ spec:
                           - high_performance
                           type: string
                       type: object
+                    equinixmetal:
+                      description: Equinix Metal is the configuration used when installing
+                        on Equinix Metal.
+                      type: object
                     vsphere:
                       description: VSphere is the configuration used when installing on vSphere.
                       properties:
@@ -533,6 +537,10 @@ spec:
                         - server
                         - high_performance
                         type: string
+                    type: object
+                  equinixmetal:
+                    description: Equinix Metal is the configuration used when installing
+                      on Equinix Metal.
                     type: object
                   vsphere:
                     description: VSphere is the configuration used when installing on vSphere.
@@ -1240,6 +1248,53 @@ spec:
                 - ingress_vip
                 - ovirt_cluster_id
                 - ovirt_storage_domain_id
+                type: object
+              equinixmetal:
+                description: Equinix Metal is the configuration used when installing on Equinix Metal.
+                properties:
+                  apivip:
+                    description: 'APIVIP is the static IP on the nodes subnet that
+                      the api port for openshift will be assigned Default: will be
+                      set to the 5 on the first entry in the machineNetwork CIDR'
+                    format: ip
+                    type: string
+                  bootstrapOSImage:
+                    description: BootstrapOSImage is a URL to override the default
+                      OS image for the bootstrap node. The URL must contain a sha256
+                      hash of the image e.g https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd...
+                    type: string
+                  clusterOSImage:
+                    description: ClusterOSImage is a URL to override the default OS
+                      image for cluster nodes. The URL must contain a sha256 hash
+                      of the image e.g https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8...
+                    type: string
+                  computeSubnet:
+                    description: ComputeSubnet is an existing subnet where the compute
+                      nodes will be deployed. The value should be the name of the
+                      subnet.
+                    type: string
+                  controlPlaneSubnet:
+                    description: ControlPlaneSubnet is an existing subnet where the
+                      control plane will be deployed. The value should be the name
+                      of the subnet.
+                    type: string
+                  defaultMachinePlatform:
+                    description: DefaultMachinePlatform is the default configuration
+                      used when installing on bare metal for machine pools which do
+                      not define their own platform configuration.
+                    type: object
+                  facility_code:
+                    description: FacilityCode represents the Equinix Metal region and datacenter
+                      where your devices will be provisioned (https://www.equinixmetal.com/developers/docs/getting-started/facilities/)
+                    type: string
+                  network:
+                    description: Network specifies an existing VPC where the cluster
+                      should be created rather than provisioning a new one.
+                    type: string
+                  project_id:
+                    description: ProjectID represents the Equinix Metal project used for
+                      logical grouping and invoicing (https://metal.equinix.com/developers/api/)
+                    type: string
                 type: object
               vsphere:
                 description: VSphere is the configuration used when installing on vSphere.

@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	equinixtypes "github.com/openshift/installer/pkg/types/equinixmetal"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -40,6 +41,12 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 	case vspheretypes.Name:
 		if installConfig.VSphere.APIVIP != "" {
 			ignitionHost = net.JoinHostPort(installConfig.VSphere.APIVIP, "22623")
+		}
+	case equinixtypes.Name:
+		// TODO(displague) Do I have to set platform = "equinixmetal" around here?
+		if installConfig.EquinixMetal.APIVIP != "" {
+			ignitionHost = net.JoinHostPort(installConfig.EquinixMetal.APIVIP, "22623")
+
 		}
 	}
 	return &igntypes.Config{

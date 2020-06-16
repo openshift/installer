@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_1/types"
+	equinixprovider "github.com/openshift/cluster-api-provider-equinix-metal/pkg/apis/equinixmetal/v1beta1"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
@@ -19,6 +20,8 @@ import (
 	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
+	// TODO(displague) This is moving to sigs.k8s.io
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
@@ -26,6 +29,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	equinixconfig "github.com/openshift/installer/pkg/asset/installconfig/equinixmetal"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
@@ -37,6 +41,7 @@ import (
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
 	azuretfvars "github.com/openshift/installer/pkg/tfvars/azure"
 	baremetaltfvars "github.com/openshift/installer/pkg/tfvars/baremetal"
+	equinixtfvars "github.com/openshift/installer/pkg/tfvars/equinixmetal"
 	gcptfvars "github.com/openshift/installer/pkg/tfvars/gcp"
 	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
@@ -46,6 +51,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/equinixmetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -495,6 +501,38 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			clusterID.InfraID,
 			masters[0].Spec.ProviderSpec.Value.Object.(*ovirtprovider.OvirtMachineProviderSpec),
 		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
+		}
+		t.FileList = append(t.FileList, &asset.File{
+			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Data:     data,
+		})
+	case equinixmetal.Name:
+		config, err := equinixconfig.NewConfig()
+		if err != nil {
+			return err
+		}
+		/*
+			con, err := equinixconfig.NewConnection()
+			if err != nil {
+				return err
+			}
+		*/
+		// TODO(displague) Equinix Metal networking
+
+		masters, err := mastersAsset.Machines()
+		if err != nil {
+			return err
+		}
+
+		data, err := equinixtfvars.TFVars(equinixtfvars.TFVarsSources{
+			ControlPlaneConfigs: []*equinixprovider.EquinixMetalMachineProviderConfig{
+				masters[0].Spec.ProviderSpec.Value.Object.(*equinixprovider.EquinixMetalMachineProviderConfig),
+			},
+			APIURL: config.APIURL,
+			APIKey: config.APIKey,
+		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}

@@ -11,6 +11,8 @@ import (
 	openstackclientconfig "github.com/gophercloud/utils/openstack/clientconfig"
 	baremetalapi "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis"
 	baremetalprovider "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
+	equinixapi "github.com/openshift/cluster-api-provider-equinix-metal/pkg/apis"
+	equinixprovider "github.com/openshift/cluster-api-provider-equinix-metal/pkg/apis/equinixmetal/v1beta1"
 	gcpapi "github.com/openshift/cluster-api-provider-gcp/pkg/apis"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	libvirtapi "github.com/openshift/cluster-api-provider-libvirt/pkg/apis"
@@ -38,6 +40,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
+	"github.com/openshift/installer/pkg/asset/machines/equinixmetal"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
@@ -52,6 +55,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	equinixtypes "github.com/openshift/installer/pkg/types/equinixmetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
@@ -128,6 +132,13 @@ func defaultOvirtMachinePoolPlatform() ovirttypes.MachinePool {
 			SizeGB: 120,
 		},
 		VMType: ovirttypes.VMTypeServer,
+	}
+}
+
+func defaultEquinixMetalMachinePoolPlatform() equinixtypes.MachinePool {
+	return equinixtypes.MachinePool{
+		// TODO(displague) what defaults should we supply?
+		Plan: "c3-medium.x86",
 	}
 }
 
@@ -389,6 +400,21 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
+		case equinixtypes.Name:
+			mpool := defaultEquinixMetalMachinePoolPlatform()
+			mpool.Set(ic.Platform.EquinixMetal.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.EquinixMetal)
+			pool.Platform.EquinixMetal = &mpool
+
+			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
+
+			sets, err := equinixmetal.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data")
+			if err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects for ovirt provider")
+			}
+			for _, set := range sets {
+				machineSets = append(machineSets, set)
+			}
 		case nonetypes.Name:
 		default:
 			return fmt.Errorf("invalid Platform")
@@ -472,6 +498,7 @@ func (w *Worker) MachineSets() ([]machineapi.MachineSet, error) {
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
 	ovirtproviderapi.AddToScheme(scheme)
+	equinixapi.AddToScheme(scheme)
 	vsphereproviderapi.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		awsprovider.SchemeGroupVersion,
@@ -481,6 +508,7 @@ func (w *Worker) MachineSets() ([]machineapi.MachineSet, error) {
 		libvirtprovider.SchemeGroupVersion,
 		openstackprovider.SchemeGroupVersion,
 		ovirtprovider.SchemeGroupVersion,
+		equinixprovider.SchemeGroupVersion,
 		vsphereprovider.SchemeGroupVersion,
 	)
 

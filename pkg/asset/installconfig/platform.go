@@ -11,6 +11,7 @@ import (
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	baremetalconfig "github.com/openshift/installer/pkg/asset/installconfig/baremetal"
+	equinixconfig "github.com/openshift/installer/pkg/asset/installconfig/equinixmetal"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	libvirtconfig "github.com/openshift/installer/pkg/asset/installconfig/libvirt"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
@@ -20,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	equinixmetal "github.com/openshift/installer/pkg/types/equinixmetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -83,6 +85,11 @@ func (a *platform) Generate(asset.Parents) error {
 		}
 	case ovirt.Name:
 		a.Ovirt, err = ovirtconfig.Platform()
+		if err != nil {
+			return err
+		}
+	case equinixmetal.Name:
+		a.EquinixMetal, err = equinixconfig.Platform()
 		if err != nil {
 			return err
 		}
