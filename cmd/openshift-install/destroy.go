@@ -18,6 +18,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/libvirt"
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
+	_ "github.com/openshift/installer/pkg/destroy/packet"
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
