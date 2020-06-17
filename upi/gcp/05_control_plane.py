@@ -1,7 +1,7 @@
 def GenerateConfig(context):
 
     resources = [{
-        'name': context.properties['infra_id'] + '-master-0',
+        'name': context.properties['infra_id'] + '-m-0',
         'type': 'compute.v1.instance',
         'properties': {
             'disks': [{
@@ -35,7 +35,7 @@ def GenerateConfig(context):
             'zone': context.properties['zones'][0]
         }
     }, {
-        'name': context.properties['infra_id'] + '-master-1',
+        'name': context.properties['infra_id'] + '-m-1',
         'type': 'compute.v1.instance',
         'properties': {
             'disks': [{
@@ -69,7 +69,7 @@ def GenerateConfig(context):
             'zone': context.properties['zones'][1]
         }
     }, {
-        'name': context.properties['infra_id'] + '-master-2',
+        'name': context.properties['infra_id'] + '-m-2',
         'type': 'compute.v1.instance',
         'properties': {
             'disks': [{
