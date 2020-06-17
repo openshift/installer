@@ -13,7 +13,7 @@
 `provisioningBridge` | `provisioning` | The name of the bridge on the hypervisor attached to the provisioning network. |
 `provisioningNetworkCIDR` | `172.22.0.0/24` | The CIDR for the network to use for provisioning. |
 `provisioningDHCPExternal` | `false` | Flag indicating that DHCP for the provisioning network is managed outside of the cluster by existing infrastructure services. |
-`provisioningDHCPRange` | The tenth through the hundredth IP on the provisioning network. `172.22.0.10,172.22.0.100` | The IP range to use for hosts on the provisioning network. |
+`provisioningDHCPRange` | The tenth through the second last IP on the provisioning network. `172.22.0.10,172.22.0.254` | The IP range to use for hosts on the provisioning network. |
 `defaultMachinePlatform` | | The default configuration used for machine pools without a platform configuration. |
 `bootstrapOSImage` | *based on the release image* | A URL to override the default operating system image for the bootstrap node. The URL must contain a sha256 hash of the image. Example `https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd...` |
 `clusterOSImage` | *based on the release image* | A URL to override the default operating system for cluster nodes. The URL must include a sha256 hash of the image. Example `https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8...` |
@@ -72,8 +72,8 @@ platform:
 ```
 
 * `provisioningDHCPRange` (optional string): By default, the installer picks a range from
-  the 10th to 100th addresses. To use a different range, specify this
-  using the provisioingDHCPRange option in the baremetal platform. This
+  the 10th to the second from last address. To use a different range, specify this
+  using the provisioningDHCPRange option in the baremetal platform. This
   should be a comma-separated list indicating the start and end range.
 
 Example:
@@ -81,7 +81,7 @@ Example:
 ```yaml
 platform:
   baremetal:
-    provisioningDHCPRange: "172.23.0.10,172.23.0.100"
+    provisioningDHCPRange: "172.23.0.10,172.23.0.254"
 ```
 
 * `provisioningDHCPExternal` (optional boolean): If you would prefer to

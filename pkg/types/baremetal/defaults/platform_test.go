@@ -45,7 +45,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				APIVIP:                  "192.168.111.2",
 				IngressVIP:              "192.168.111.3",
 				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("172.22.0.0/24"),
-				ProvisioningDHCPRange:   "172.22.0.10,172.22.0.100",
+				ProvisioningDHCPRange:   "172.22.0.10,172.22.0.254",
 			},
 		},
 		{
@@ -62,7 +62,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				APIVIP:                  "192.168.111.2",
 				IngressVIP:              "192.168.111.3",
 				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("172.23.0.0/24"),
-				ProvisioningDHCPRange:   "172.23.0.10,172.23.0.100",
+				ProvisioningDHCPRange:   "172.23.0.10,172.23.0.254",
 			},
 		},
 		{
@@ -79,7 +79,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				APIVIP:                  "192.168.111.2",
 				IngressVIP:              "192.168.111.3",
 				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("fd2e:6f44:5dd8:b856::/64"),
-				ProvisioningDHCPRange:   "fd2e:6f44:5dd8:b856::a,fd2e:6f44:5dd8:b856::64",
+				ProvisioningDHCPRange:   "fd2e:6f44:5dd8:b856::a,fd2e:6f44:5dd8:b856:ffff:ffff:ffff:fffe",
 			},
 		},
 		{
