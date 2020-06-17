@@ -1,0 +1,20 @@
+# Required Python packages:
+#
+# ansible
+# openstackclient
+# openstacksdk
+
+- import_playbook: common.yaml
+
+- hosts: all
+  gather_facts: no
+
+  tasks:
+  - name: 'List the containers associated with the cluster'
+    command:
+      cmd: "openstack container list --prefix {{ os_infra_id }} -f value -c Name"
+    register: container_list
+
+  - name: 'Delete the containers associated with the cluster'
+    command:
+      cmd: "openstack container delete -r {{ container_list.stdout }}"

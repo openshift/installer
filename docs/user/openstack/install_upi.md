@@ -895,6 +895,7 @@ $ ansible-playbook -i inventory.yaml  \
 	down-control-plane.yaml  \
 	down-compute-nodes.yaml  \
 	down-load-balancers.yaml \
+	down-containers.yaml     \
 	down-network.yaml        \
 	down-security-groups.yaml
 ```
