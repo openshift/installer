@@ -10,7 +10,6 @@ RHCOS_RELEASES_APP = 'https://builds.coreos.fedoraproject.org'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("meta", action='store')
-parser.add_argument("arch", action='store', choices=['amd64', 's390x', 'ppc64le'])
 args = parser.parse_args()
 
 metadata_dir = os.path.join(os.path.dirname(sys.argv[0]), "../data/data")
@@ -36,13 +35,12 @@ if meta.get(k):
     }
 newmeta['baseURI'] = urllib.parse.urljoin(args.meta, '.')
 
-with open(os.path.join(metadata_dir, 'fcos-{}.json'.format(args.arch)), 'w') as f:
+with open(os.path.join(metadata_dir, 'fcos-amd64.json'), 'w') as f:
     json.dump(newmeta, f, sort_keys=True, indent=4)
 
 # Continue to populate the legacy metadata file because there are still
 # processes consuming this file directly. This normally could just be a symlink
 # but some of these processes reference raw.githubusercontent.com which doesn't
 # follow symlinks.
-if args.arch == 'amd64':
-    with open(os.path.join(metadata_dir, "fcos.json"), 'w') as f:
-        json.dump(newmeta, f, sort_keys=True, indent=4)
+with open(os.path.join(metadata_dir, "fcos.json"), 'w') as f:
+    json.dump(newmeta, f, sort_keys=True, indent=4)
