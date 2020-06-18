@@ -80,7 +80,7 @@ func (a *KubeadminPassword) generateRandomPasswordHash(length int) error {
 
 	a.File = &asset.File{
 		Filename: kubeadminPasswordPath,
-		Data:     []byte(a.Password),
+		Data:     []byte(a.Password + "\n"),
 	}
 
 	return nil
