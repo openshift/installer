@@ -21,6 +21,15 @@ with urllib.request.urlopen(args.meta) as f:
     string_f = codecs.getreader('utf-8')(f)  # support for Python < 3.6
     meta = json.load(string_f)
 newmeta = {}
+
+# OKD doesn't yet support several platforms, so some image metadata should be skipped
+include_images = ['aws', 'azure', 'gcp', 'metal', 'openstack', 'ostree', 'qemu', 'vmware']
+rename_images = {
+    "live-initramfs": "initramfs",
+    "live-iso": "iso",
+    "live-kernel": "kernel",
+}
+
 for k in ['images', 'buildid', 'oscontainer',
           'ostree-commit', 'ostree-version',
           'azure', 'gcp']:
@@ -34,6 +43,25 @@ if meta.get(k):
         for entry in meta['amis']
     }
 newmeta['baseURI'] = urllib.parse.urljoin(args.meta, '.')
+
+# Filter images
+imgs = meta['images']
+for k in list(imgs):
+    if k in rename_images.keys():
+        imgs[rename_images[k]] = imgs[k]
+        del imgs[k]
+        continue
+    if k not in include_images:
+        del imgs[k]
+
+newmeta['images'] = imgs
+
+# There are no official Azure images yet (https://github.com/coreos/fedora-coreos-tracker/issues/148)
+# Installer has a workaround for that, so this section can be synthetized
+newmeta['azure'] = {
+    'image': newmeta['images']['azure']['path'].strip(".xz"),
+    'url': '{}{}'.format(newmeta['baseURI'], newmeta['images']['azure']['path']),
+}
 
 with open(os.path.join(metadata_dir, 'fcos-amd64.json'), 'w') as f:
     json.dump(newmeta, f, sort_keys=True, indent=4)
