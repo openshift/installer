@@ -10,7 +10,7 @@ import (
 )
 
 func (o *ClusterUninstaller) listInstanceGroups() ([]cloudResource, error) {
-	return o.listInstanceGroupsWithFilter("items/*/instanceGroups(name,zone),nextPageToken", o.clusterIDFilter(), nil)
+	return o.listInstanceGroupsWithFilter("items/*/instanceGroups(name,selfLink,zone),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listInstanceGroupsWithFilter lists addresses in the project that satisfy the filter criteria.

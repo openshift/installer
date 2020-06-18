@@ -13,7 +13,7 @@ import (
 // https://github.com/openshift/kubernetes/blob/1e5983903742f64bca36a464582178c940353e9a/pkg/cloudprovider/providers/gce/gce_clusterid.go#L210-L238
 func (o *ClusterUninstaller) listCloudControllerInstanceGroups() ([]cloudResource, error) {
 	filter := fmt.Sprintf("name eq \"k8s-ig--%s\"", o.cloudControllerUID)
-	return o.listInstanceGroupsWithFilter("items/*/instanceGroups(name,zone),nextPageToken", filter, nil)
+	return o.listInstanceGroupsWithFilter("items/*/instanceGroups(name,selfLink,zone),nextPageToken", filter, nil)
 }
 
 // listCloudControllerBackendServices returns backend services created by the cloud controller.
