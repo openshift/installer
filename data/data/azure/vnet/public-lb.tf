@@ -120,36 +120,32 @@ resource "azurerm_lb_rule" "public_lb_rule_api_internal_v6" {
   probe_id                       = azurerm_lb_probe.public_lb_probe_api_internal[0].id
 }
 
-resource "azurerm_lb_rule" "internal_outbound_rule_v4" {
+resource "azurerm_lb_outbound_rule" "public_lb_outbound_rule_v4" {
   count = var.private && var.use_ipv4 ? 1 : 0
 
-  name                           = "internal_outbound_rule_v4"
-  resource_group_name            = var.resource_group_name
-  protocol                       = "Tcp"
-  backend_address_pool_id        = azurerm_lb_backend_address_pool.public_lb_pool_v4[0].id
-  loadbalancer_id                = azurerm_lb.public.id
-  frontend_port                  = 27627
-  backend_port                   = 27627
-  frontend_ip_configuration_name = local.public_lb_frontend_ip_v4_configuration_name
-  enable_floating_ip             = false
-  idle_timeout_in_minutes        = 30
-  load_distribution              = "Default"
+  name                    = "outbound-rule-v4"
+  resource_group_name     = var.resource_group_name
+  loadbalancer_id         = azurerm_lb.public.id
+  backend_address_pool_id = azurerm_lb_backend_address_pool.public_lb_pool_v4[0].id
+  protocol                = "All"
+
+  frontend_ip_configuration {
+    name = local.public_lb_frontend_ip_v4_configuration_name
+  }
 }
 
-resource "azurerm_lb_rule" "internal_outbound_rule_v6" {
+resource "azurerm_lb_outbound_rule" "public_lb_outbound_rule_v6" {
   count = var.private && var.use_ipv6 ? 1 : 0
 
-  name                           = "internal_outbound_rule_v6"
-  resource_group_name            = var.resource_group_name
-  protocol                       = "Tcp"
-  backend_address_pool_id        = azurerm_lb_backend_address_pool.public_lb_pool_v6[0].id
-  loadbalancer_id                = azurerm_lb.public.id
-  frontend_port                  = 27627
-  backend_port                   = 27627
-  frontend_ip_configuration_name = local.public_lb_frontend_ip_v6_configuration_name
-  enable_floating_ip             = false
-  idle_timeout_in_minutes        = 30
-  load_distribution              = "Default"
+  name                    = "outbound-rule-v6"
+  resource_group_name     = var.resource_group_name
+  loadbalancer_id         = azurerm_lb.public.id
+  backend_address_pool_id = azurerm_lb_backend_address_pool.public_lb_pool_v6[0].id
+  protocol                = "All"
+
+  frontend_ip_configuration {
+    name = local.public_lb_frontend_ip_v6_configuration_name
+  }
 }
 
 resource "azurerm_lb_probe" "public_lb_probe_api_internal" {
