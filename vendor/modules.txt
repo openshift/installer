@@ -779,12 +779,15 @@ github.com/hashicorp/terraform/configs/configupgrade
 github.com/hashicorp/terraform/configs/hcl2shim
 github.com/hashicorp/terraform/dag
 github.com/hashicorp/terraform/experiments
+github.com/hashicorp/terraform/flatmap
+github.com/hashicorp/terraform/helper/config
 github.com/hashicorp/terraform/helper/didyoumean
 github.com/hashicorp/terraform/helper/experiment
 github.com/hashicorp/terraform/helper/hashcode
 github.com/hashicorp/terraform/helper/hilmapstructure
 github.com/hashicorp/terraform/helper/logging
 github.com/hashicorp/terraform/helper/plugin
+github.com/hashicorp/terraform/helper/resource
 github.com/hashicorp/terraform/helper/schema
 github.com/hashicorp/terraform/helper/slowmessage
 github.com/hashicorp/terraform/helper/structure
@@ -1066,6 +1069,9 @@ github.com/ovirt/terraform-provider-ovirt/ovirt
 # github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db
 ## explicit
 github.com/packer-community/winrmcp/winrmcp
+# github.com/packethost/packngo v0.2.0
+## explicit
+github.com/packethost/packngo
 # github.com/pborman/uuid v1.2.0
 ## explicit
 github.com/pborman/uuid
@@ -1428,6 +1434,9 @@ github.com/terraform-providers/terraform-provider-local/local
 # github.com/terraform-providers/terraform-provider-openstack v1.28.0
 ## explicit
 github.com/terraform-providers/terraform-provider-openstack/openstack
+# github.com/terraform-providers/terraform-provider-packet v1.7.2
+## explicit
+github.com/terraform-providers/terraform-provider-packet/packet
 # github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
 ## explicit
 github.com/terraform-providers/terraform-provider-random/random

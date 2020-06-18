@@ -62,6 +62,7 @@ require (
 	github.com/ovirt/go-ovirt v0.0.0-20200613023950-320a86f9df27
 	github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200406133650-74a154c1d861
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
+	github.com/packethost/packngo v0.2.0
 	github.com/pborman/uuid v1.2.0
 	github.com/pierrec/lz4 v2.3.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1
@@ -79,6 +80,7 @@ require (
 	github.com/terraform-providers/terraform-provider-ignition v1.2.1
 	github.com/terraform-providers/terraform-provider-local v1.4.0
 	github.com/terraform-providers/terraform-provider-openstack v1.28.0
+	github.com/terraform-providers/terraform-provider-packet v1.7.2
 	github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
 	github.com/terraform-providers/terraform-provider-vsphere v1.16.2
 	github.com/ulikunitz/xz v0.5.6

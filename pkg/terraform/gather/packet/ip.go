@@ -1,0 +1,18 @@
+// Package packet supply utilities to extract information from terraform state
+package packet
+
+import (
+	"github.com/openshift/installer/pkg/terraform"
+)
+
+// BootstrapIP returns the ip address for bootstrap host.
+// TODO(displague) implement
+func BootstrapIP(tfs *terraform.State) (string, error) {
+	return "", nil
+}
+
+// ControlPlaneIPs returns the ip addresses for control plane hosts.
+// TODO(displague) implement
+func ControlPlaneIPs(tfs *terraform.State) ([]string, error) {
+	return []string{""}, nil
+}
