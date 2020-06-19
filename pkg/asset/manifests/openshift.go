@@ -13,7 +13,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
@@ -97,7 +96,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 
 	case azuretypes.Name:
 		resourceGroupName := clusterID.InfraID + "-rg"
-		session, err := azure.GetSession(installConfig.Config.Platform.Azure.CloudName)
+		session, err := installConfig.Azure.Session()
 		if err != nil {
 			return err
 		}

@@ -47,7 +47,11 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 	case azure.Name:
-		err = azconfig.ValidatePublicDNS(ic.Config)
+		dnsConfig, err := ic.Azure.DNSConfig()
+		if err != nil {
+			return err
+		}
+		err = azconfig.ValidatePublicDNS(ic.Config, dnsConfig)
 		if err != nil {
 			return err
 		}

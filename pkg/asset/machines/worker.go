@@ -262,7 +262,11 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.Azure)
 			if len(mpool.Zones) == 0 {
-				azs, err := azure.AvailabilityZones(ic.Platform.Azure.CloudName, ic.Platform.Azure.Region, mpool.InstanceType)
+				session, err := installConfig.Azure.Session()
+				if err != nil {
+					return errors.Wrap(err, "failed to fetch session for availability zones")
+				}
+				azs, err := azure.AvailabilityZones(session, ic.Platform.Azure.Region, mpool.InstanceType)
 				if err != nil {
 					return errors.Wrap(err, "failed to fetch availability zones")
 				}

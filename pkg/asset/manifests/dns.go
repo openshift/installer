@@ -15,7 +15,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
-	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -96,7 +95,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			"Name": fmt.Sprintf("%s-int", clusterID.InfraID),
 		}}
 	case azuretypes.Name:
-		dnsConfig, err := icazure.NewDNSConfig(installConfig.Config.Azure.CloudName)
+		dnsConfig, err := installConfig.Azure.DNSConfig()
 		if err != nil {
 			return err
 		}

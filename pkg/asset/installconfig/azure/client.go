@@ -5,15 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	azsku "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute"
 	aznetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
 	azres "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
 	azsubs "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-06-01/subscriptions"
 	"github.com/Azure/go-autorest/autorest/to"
-
-	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/pkg/errors"
 )
 
 //go:generate mockgen -source=./client.go -destination=mock/azureclient_generated.go -package=mock
@@ -34,19 +31,11 @@ type Client struct {
 }
 
 // NewClient initializes a client with a session.
-func NewClient(ctx context.Context, cloudName azure.CloudEnvironment) (*Client, error) {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
-	ssn, err := GetSession(cloudName)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get session")
-	}
-
+func NewClient(ssn *Session) *Client {
 	client := &Client{
 		ssn: ssn,
 	}
-	return client, nil
+	return client
 }
 
 // GetVirtualNetwork gets an Azure virtual network by name
