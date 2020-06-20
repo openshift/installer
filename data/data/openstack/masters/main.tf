@@ -4,7 +4,6 @@ data "openstack_compute_flavor_v2" "masters_flavor" {
 
 data "ignition_file" "hostname" {
   count      = var.instance_count
-  filesystem = "root"
   mode       = "420" // 0644
   path       = "/etc/hostname"
 
@@ -18,7 +17,7 @@ EOF
 data "ignition_config" "master_ignition_config" {
   count = var.instance_count
 
-  append {
+  merge {
     source = "data:text/plain;charset=utf-8;base64,${base64encode(var.user_data_ign)}"
   }
 

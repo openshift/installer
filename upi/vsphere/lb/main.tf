@@ -4,7 +4,6 @@ data "ignition_systemd_unit" "haproxy" {
 }
 
 data "ignition_file" "haproxy" {
-  filesystem = "root"
   path       = "/etc/haproxy/haproxy.conf"
   mode       = 0755
   content {
@@ -26,4 +25,3 @@ data "ignition_config" "lb" {
   files   = [data.ignition_file.haproxy.rendered]
   systemd = [data.ignition_systemd_unit.haproxy.rendered]
 }
-
