@@ -1,0 +1,11 @@
+[connection]
+id=Wired connnection 1
+uuid=${uuid()}
+type=802-3-ethernet
+interface-name=ens192
+autoconnect=true
+[ipv4]
+method=manual
+dns=%{ for index, ip in dns_addresses ~}${ip};%{ endfor ~}
+addresses=${ip_address}/${element(split("/", machine_cidr), 1)}
+gateway=${cidrhost(machine_cidr, 1)}

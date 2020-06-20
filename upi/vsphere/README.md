@@ -35,11 +35,11 @@ There is an example terraform.tfvars file in this directory named terraform.tfva
 * cluster_domain
 * vsphere_user
 * vsphere_password
-* ipam_token
-* bootstrap_ignition_url
-* control_plane_ignition
-* compute_ignition
+* ipam_token OR bootstrap_ip, control_plane_ips, and compute_ips
+
 The bootstrap ignition config must be placed in a location that will be accessible by the bootstrap machine. For example, you could store the bootstrap ignition config in a gist.
+
+Even if declaring static IPs a DHCP server is still required early in the boot process to download the ignition files. 
 
 4. Run `terraform init`.
 

@@ -20,7 +20,7 @@ data "ignition_file" "static_ip" {
   mode       = "420"
 
   content {
-    content = templatefile("${path.module}/ifcfg.tmpl", {
+    content = templatefile("${path.module}/nm.tmpl", {
       dns_addresses = var.dns_addresses,
       machine_cidr  = var.machine_cidr
       //ip_address     = var.hostnames_ip_addresses[count.index].value
