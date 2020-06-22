@@ -3,6 +3,7 @@ package openstack
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
@@ -18,6 +19,9 @@ func resourceObjectStorageContainerV1() *schema.Resource {
 		Read:   resourceObjectStorageContainerV1Read,
 		Update: resourceObjectStorageContainerV1Update,
 		Delete: resourceObjectStorageContainerV1Delete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"region": {
@@ -94,7 +98,7 @@ func resourceObjectStorageContainerV1Create(d *schema.ResourceData, meta interfa
 	config := meta.(*Config)
 	objectStorageClient, err := config.ObjectStorageV1Client(GetRegion(d, config))
 	if err != nil {
-		return fmt.Errorf("Error creating OpenStack object storage client: %s", err)
+		return fmt.Errorf("error creating OpenStack object storage client: %s", err)
 	}
 
 	cn := d.Get("name").(string)
@@ -121,12 +125,12 @@ func resourceObjectStorageContainerV1Create(d *schema.ResourceData, meta interfa
 		}
 	}
 
-	log.Printf("[DEBUG] Create Options: %#v", createOpts)
+	log.Printf("[DEBUG] Create Options for objectstorage_container_v1: %#v", createOpts)
 	_, err = containers.Create(objectStorageClient, cn, createOpts).Extract()
 	if err != nil {
-		return fmt.Errorf("Error creating OpenStack container: %s", err)
+		return fmt.Errorf("error creating objectstorage_container_v1: %s", err)
 	}
-	log.Printf("[INFO] Container ID: %s", cn)
+	log.Printf("[INFO] objectstorage_container_v1 created with ID: %s", cn)
 
 	// Store the ID now
 	d.SetId(cn)
@@ -139,13 +143,61 @@ func resourceObjectStorageContainerV1Read(d *schema.ResourceData, meta interface
 
 	objectStorageClient, err := config.ObjectStorageV1Client(GetRegion(d, config))
 	if err != nil {
-		return fmt.Errorf("Error creating OpenStack object storage client: %s", err)
+		return fmt.Errorf("error creating OpenStack object storage client: %s", err)
 	}
 
 	result := containers.Get(objectStorageClient, d.Id(), nil)
 
 	if result.Err != nil {
 		return CheckDeleted(d, result.Err, "container")
+	}
+
+	headers, err := result.Extract()
+	if err != nil {
+		return fmt.Errorf("error extracting headers for objectstorage_container_v1 '%s': %s", d.Id(), err)
+	}
+	log.Printf("[DEBUG] Retrieved headers for objectstorage_container_v1 '%s': %#v", d.Id(), headers)
+
+	metadata, err := result.ExtractMetadata()
+	if err != nil {
+		return fmt.Errorf("error extracting metadata for objectstorage_container_v1 '%s': %s", d.Id(), err)
+	}
+	log.Printf("[DEBUG] Retrieved metadata for objectstorage_container_v1 '%s': %#v", d.Id(), metadata)
+
+	d.Set("name", d.Id())
+
+	if len(headers.Read) > 0 && headers.Read[0] != "" {
+		d.Set("container_read", strings.Join(headers.Read, ","))
+	}
+
+	if len(headers.Write) > 0 && headers.Write[0] != "" {
+		d.Set("container_write", strings.Join(headers.Write, ","))
+	}
+
+	versioningResource := resourceObjectStorageContainerV1().Schema["versioning"].Elem.(*schema.Resource)
+
+	if headers.VersionsLocation != "" && headers.HistoryLocation != "" {
+		return fmt.Errorf("error reading versioning headers for objectstorage_container_v1 '%s': found location for both exclusive types, versions ('%s') and history ('%s')", d.Id(), headers.VersionsLocation, headers.HistoryLocation)
+	}
+
+	if headers.VersionsLocation != "" {
+		versioning := map[string]interface{}{
+			"type":     "versions",
+			"location": headers.VersionsLocation,
+		}
+		if err := d.Set("versioning", schema.NewSet(schema.HashResource(versioningResource), []interface{}{versioning})); err != nil {
+			return fmt.Errorf("error setting 'versions' versioning for objectstorage_container_v1 '%s': %s", d.Id(), err)
+		}
+	}
+
+	if headers.HistoryLocation != "" {
+		versioning := map[string]interface{}{
+			"type":     "history",
+			"location": headers.HistoryLocation,
+		}
+		if err := d.Set("versioning", schema.NewSet(schema.HashResource(versioningResource), []interface{}{versioning})); err != nil {
+			return fmt.Errorf("error setting 'history' versioning for objectstorage_container_v1 '%s': %s", d.Id(), err)
+		}
 	}
 
 	d.Set("region", GetRegion(d, config))
@@ -157,7 +209,7 @@ func resourceObjectStorageContainerV1Update(d *schema.ResourceData, meta interfa
 	config := meta.(*Config)
 	objectStorageClient, err := config.ObjectStorageV1Client(GetRegion(d, config))
 	if err != nil {
-		return fmt.Errorf("Error creating OpenStack object storage client: %s", err)
+		return fmt.Errorf("error creating OpenStack object storage client: %s", err)
 	}
 
 	updateOpts := containers.UpdateOpts{
@@ -196,7 +248,7 @@ func resourceObjectStorageContainerV1Update(d *schema.ResourceData, meta interfa
 
 	_, err = containers.Update(objectStorageClient, d.Id(), updateOpts).Extract()
 	if err != nil {
-		return fmt.Errorf("Error updating OpenStack container: %s", err)
+		return fmt.Errorf("error updating objectstorage_container_v1 '%s': %s", d.Id(), err)
 	}
 
 	return resourceObjectStorageContainerV1Read(d, meta)
@@ -206,7 +258,7 @@ func resourceObjectStorageContainerV1Delete(d *schema.ResourceData, meta interfa
 	config := meta.(*Config)
 	objectStorageClient, err := config.ObjectStorageV1Client(GetRegion(d, config))
 	if err != nil {
-		return fmt.Errorf("Error creating OpenStack object storage client: %s", err)
+		return fmt.Errorf("error creating OpenStack object storage client: %s", err)
 	}
 
 	_, err = containers.Delete(objectStorageClient, d.Id()).Extract()
@@ -214,7 +266,7 @@ func resourceObjectStorageContainerV1Delete(d *schema.ResourceData, meta interfa
 		_, ok := err.(gophercloud.ErrDefault409)
 		if ok && d.Get("force_destroy").(bool) {
 			// Container may have things. Delete them.
-			log.Printf("[DEBUG] Attempting to forceDestroy Openstack container %+v", err)
+			log.Printf("[DEBUG] Attempting to forceDestroy objectstorage_container_v1 '%s': %+v", d.Id(), err)
 
 			container := d.Id()
 			opts := &objects.ListOpts{
@@ -227,12 +279,12 @@ func resourceObjectStorageContainerV1Delete(d *schema.ResourceData, meta interfa
 
 				objectList, err := objects.ExtractNames(page)
 				if err != nil {
-					return false, fmt.Errorf("Error extracting names from objects from page %+v", err)
+					return false, fmt.Errorf("error extracting names from objects from page for objectstorage_container_v1 '%s': %+v", container, err)
 				}
 				for _, object := range objectList {
 					_, err = objects.Delete(objectStorageClient, container, object, objects.DeleteOpts{}).Extract()
 					if err != nil {
-						return false, fmt.Errorf("Error deleting object from container %+v", err)
+						return false, fmt.Errorf("error deleting object '%s' from objectstorage_container_v1 '%s': %+v", object, container, err)
 					}
 				}
 				return true, nil
@@ -242,7 +294,7 @@ func resourceObjectStorageContainerV1Delete(d *schema.ResourceData, meta interfa
 			}
 			return resourceObjectStorageContainerV1Delete(d, meta)
 		}
-		return fmt.Errorf("Error deleting OpenStack container: %s", err)
+		return fmt.Errorf("error deleting objectstorage_container_v1 '%s': %s", d.Id(), err)
 	}
 
 	d.SetId("")

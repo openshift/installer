@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gophercloud/gophercloud/openstack/keymanager/v1/acls"
 	"github.com/gophercloud/gophercloud/openstack/keymanager/v1/secrets"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -20,7 +21,7 @@ var validDateFilters = []string{
 }
 
 func dataSourceKeyManagerSecretV1() *schema.Resource {
-	return &schema.Resource{
+	ret := &schema.Resource{
 		Read: dataSourceKeyManagerSecretV1Read,
 
 		Schema: map[string]*schema.Schema{
@@ -81,6 +82,11 @@ func dataSourceKeyManagerSecretV1() *schema.Resource {
 			},
 
 			// computed
+			"acl": {
+				Type:     schema.TypeList,
+				Computed: true,
+			},
+
 			"secret_ref": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -117,8 +123,9 @@ func dataSourceKeyManagerSecretV1() *schema.Resource {
 			},
 
 			"payload": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:      schema.TypeString,
+				Computed:  true,
+				Sensitive: true,
 			},
 
 			"payload_content_type": {
@@ -137,6 +144,16 @@ func dataSourceKeyManagerSecretV1() *schema.Resource {
 			},
 		},
 	}
+
+	elem := &schema.Resource{
+		Schema: make(map[string]*schema.Schema),
+	}
+	for _, aclOp := range aclOperations {
+		elem.Schema[aclOp] = aclSchema
+	}
+	ret.Schema["acl"].Elem = elem
+
+	return ret
 }
 
 func dataSourceKeyManagerSecretV1Read(d *schema.ResourceData, meta interface{}) error {
@@ -209,7 +226,7 @@ func dataSourceKeyManagerSecretV1Read(d *schema.ResourceData, meta interface{}) 
 	d.Set("payload", keyManagerSecretV1GetPayload(kmClient, d.Id()))
 	metadataMap, err := secrets.GetMetadata(kmClient, d.Id()).Extract()
 	if err != nil {
-		log.Printf("[DEBUG] Unable to get metadata: %s", err)
+		log.Printf("[DEBUG] Unable to get %s secret metadata: %s", uuid, err)
 	}
 	d.Set("metadata", metadataMap)
 
@@ -218,6 +235,12 @@ func dataSourceKeyManagerSecretV1Read(d *schema.ResourceData, meta interface{}) 
 	} else {
 		d.Set("expiration", secret.Expiration.Format(time.RFC3339))
 	}
+
+	acl, err := acls.GetSecretACL(kmClient, d.Id()).Extract()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to get %s secret acls: %s", uuid, err)
+	}
+	d.Set("acl", flattenKeyManagerV1ACLs(acl))
 
 	// Set the region
 	d.Set("region", GetRegion(d, config))

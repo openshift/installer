@@ -81,7 +81,7 @@ func resourcePoolV2() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					"ROUND_ROBIN", "LEAST_CONNECTIONS", "SOURCE_IP",
+					"ROUND_ROBIN", "LEAST_CONNECTIONS", "SOURCE_IP", "SOURCE_IP_PORT",
 				}, false),
 			},
 

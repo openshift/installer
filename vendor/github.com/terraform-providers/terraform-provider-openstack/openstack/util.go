@@ -96,15 +96,6 @@ func suppressEquivilentTimeDiffs(k, old, new string, d *schema.ResourceData) boo
 	return oldTime.Equal(newTime)
 }
 
-func validateSubnetV2IPv6Mode(v interface{}, k string) (ws []string, errors []error) {
-	value := v.(string)
-	if value != "slaac" && value != "dhcpv6-stateful" && value != "dhcpv6-stateless" {
-		err := fmt.Errorf("%s must be one of slaac, dhcpv6-stateful or dhcpv6-stateless", k)
-		errors = append(errors, err)
-	}
-	return
-}
-
 func resourceNetworkingAvailabilityZoneHintsV2(d *schema.ResourceData) []string {
 	rawAZH := d.Get("availability_zone_hints").([]interface{})
 	azh := make([]string, len(rawAZH))

@@ -75,7 +75,7 @@ require (
 	github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160
 	github.com/terraform-providers/terraform-provider-ignition v1.2.1
 	github.com/terraform-providers/terraform-provider-local v1.4.0
-	github.com/terraform-providers/terraform-provider-openstack v1.25.0
+	github.com/terraform-providers/terraform-provider-openstack v1.28.0
 	github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
 	github.com/terraform-providers/terraform-provider-vsphere v1.16.2
 	github.com/ulikunitz/xz v0.5.6
