@@ -39,7 +39,7 @@ func (c *clientHTTP) addTrustBundle(pemFilePath string) error {
 
 // downloadFile from specificed URL and store via filepath
 // Return error in case of failure
-func (c *clientHTTP) downloadFile() error {
+func (c *clientHTTP) downloadFile() (int, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: c.skipVerify,
@@ -48,24 +48,30 @@ func (c *clientHTTP) downloadFile() error {
 	}
 
 	if c.saveFilePath == "" {
-		return errors.New("saveFilePath must be specificed")
+		return http.StatusNotFound, errors.New("saveFilePath must be specificed")
 	}
 
 	client := &http.Client{Transport: tr}
 	resp, err := client.Get(c.urlAddr)
+
+	switch resp.StatusCode {
+	case http.StatusNotFound:
+		return resp.StatusCode, errors.Errorf("http response 404 for: %s", c.urlAddr)
+	}
+
 	if err != nil {
-		return err
+		return resp.StatusCode, err
 	}
 	defer resp.Body.Close()
 
 	out, err := os.Create(c.saveFilePath)
 	if err != nil {
-		return err
+		return resp.StatusCode, err
 	}
 	defer out.Close()
 
 	_, err = io.Copy(out, resp.Body)
-	return err
+	return resp.StatusCode, err
 }
 
 // checkURLResponse performs a GET on the provided urlAddr to ensure that
@@ -209,7 +215,11 @@ func engineSetup() (Config, error) {
 	httpResource.saveFilePath = tmpFile.Name()
 	httpResource.skipVerify = true
 	httpResource.urlAddr = engineConfig.PemURL
-	err = httpResource.downloadFile()
+	resp, err := httpResource.downloadFile()
+	if resp == http.StatusNotFound {
+		return engineConfig, err
+	}
+
 	if err != nil {
 		logrus.Warning("cannot download PEM file from Engine!", err)
 		engineConfig.Insecure = true
