@@ -213,13 +213,13 @@ Example to Get a specific QoS policy
 
 Example to Create a QoS policy
 
-    opts := policies.CreateOpts{
+    createOpts := policies.CreateOpts{
         Name:      "shared-default-policy",
         Shared:    true,
         IsDefault: true,
     }
 
-    policy, err := policies.Create(networkClient, opts).Extract()
+    policy, err := policies.Create(networkClient, createOpts).Extract()
     if err != nil {
         panic(err)
     }

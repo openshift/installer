@@ -8,6 +8,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	networkutils "github.com/gophercloud/utils/openstack/networking/v2/networks"
 
 	"github.com/openshift/installer/pkg/types/openstack/validation"
 )
@@ -104,7 +105,7 @@ func (f realValidValuesFetcher) GetFloatingIPNames(cloud string, floatingNetwork
 	}
 
 	// floatingips.ListOpts requires an ID so we must get it from the name
-	floatingNetworkID, err := networks.IDFromName(conn, floatingNetworkName)
+	floatingNetworkID, err := networkutils.IDFromName(conn, floatingNetworkName)
 	if err != nil {
 		return nil, err
 	}

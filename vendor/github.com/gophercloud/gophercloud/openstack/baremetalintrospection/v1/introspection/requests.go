@@ -48,9 +48,10 @@ func ListIntrospections(client *gophercloud.ServiceClient, opts ListIntrospectio
 // GetIntrospectionStatus makes a request against the Inspector API to get the
 // status of a single introspection.
 func GetIntrospectionStatus(client *gophercloud.ServiceClient, nodeID string) (r GetIntrospectionStatusResult) {
-	_, r.Err = client.Get(introspectionURL(client, nodeID), &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Get(introspectionURL(client, nodeID), &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -81,36 +82,37 @@ func StartIntrospection(client *gophercloud.ServiceClient, nodeID string, opts S
 		return
 	}
 
-	_, r.Err = client.Post(introspectionURL(client, nodeID), nil, nil, &gophercloud.RequestOpts{
+	resp, err := client.Post(introspectionURL(client, nodeID), nil, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{202},
 	})
-
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // AbortIntrospection abort running introspection.
 func AbortIntrospection(client *gophercloud.ServiceClient, nodeID string) (r AbortResult) {
-	_, r.Err = client.Post(abortIntrospectionURL(client, nodeID), nil, nil, &gophercloud.RequestOpts{
+	resp, err := client.Post(abortIntrospectionURL(client, nodeID), nil, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{202},
 	})
-
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // GetIntrospectionData return stored data from successful introspection.
 func GetIntrospectionData(client *gophercloud.ServiceClient, nodeID string) (r DataResult) {
-	_, r.Err = client.Get(introspectionDataURL(client, nodeID), &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Get(introspectionDataURL(client, nodeID), &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // ReApplyIntrospection triggers introspection on stored unprocessed data.
 // No data is allowed to be sent along with the request.
 func ReApplyIntrospection(client *gophercloud.ServiceClient, nodeID string) (r ApplyDataResult) {
-	_, r.Err = client.Post(introspectionUnprocessedDataURL(client, nodeID), nil, nil, &gophercloud.RequestOpts{
+	resp, err := client.Post(introspectionUnprocessedDataURL(client, nodeID), nil, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{202},
 	})
-
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

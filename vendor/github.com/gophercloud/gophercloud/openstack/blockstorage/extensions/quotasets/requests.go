@@ -8,20 +8,23 @@ import (
 
 // Get returns public data about a previously created QuotaSet.
 func Get(client *gophercloud.ServiceClient, projectID string) (r GetResult) {
-	_, r.Err = client.Get(getURL(client, projectID), &r.Body, nil)
+	resp, err := client.Get(getURL(client, projectID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // GetDefaults returns public data about the project's default block storage quotas.
 func GetDefaults(client *gophercloud.ServiceClient, projectID string) (r GetResult) {
-	_, r.Err = client.Get(getDefaultsURL(client, projectID), &r.Body, nil)
+	resp, err := client.Get(getDefaultsURL(client, projectID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // GetUsage returns detailed public data about a previously created QuotaSet.
 func GetUsage(client *gophercloud.ServiceClient, projectID string) (r GetUsageResult) {
 	u := fmt.Sprintf("%s?usage=true", getURL(client, projectID))
-	_, r.Err = client.Get(u, &r.Body, nil)
+	resp, err := client.Get(u, &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -33,10 +36,11 @@ func Update(client *gophercloud.ServiceClient, projectID string, opts UpdateOpts
 		return
 	}
 
-	_, r.Err = client.Put(updateURL(client, projectID), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Put(updateURL(client, projectID), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
-	return r
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
 }
 
 // UpdateOptsBuilder enables extensins to add parameters to the update request.
@@ -87,8 +91,9 @@ type UpdateOpts struct {
 
 // Resets the quotas for the given tenant to their default values.
 func Delete(client *gophercloud.ServiceClient, projectID string) (r DeleteResult) {
-	_, r.Err = client.Delete(updateURL(client, projectID), &gophercloud.RequestOpts{
+	resp, err := client.Delete(updateURL(client, projectID), &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

@@ -140,7 +140,8 @@ func Create(client *gophercloud.ServiceClient, opts CreateOptsBuilder) (r Create
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(baseURL(client), &b, &r.Body, &gophercloud.RequestOpts{OkCodes: []int{200}})
+	resp, err := client.Post(baseURL(client), &b, &r.Body, &gophercloud.RequestOpts{OkCodes: []int{200}})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -153,20 +154,23 @@ func List(client *gophercloud.ServiceClient) pagination.Pager {
 
 // Get retrieves the status and information for a specified database instance.
 func Get(client *gophercloud.ServiceClient, id string) (r GetResult) {
-	_, r.Err = client.Get(resourceURL(client, id), &r.Body, nil)
+	resp, err := client.Get(resourceURL(client, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Delete permanently destroys the database instance.
 func Delete(client *gophercloud.ServiceClient, id string) (r DeleteResult) {
-	_, r.Err = client.Delete(resourceURL(client, id), nil)
+	resp, err := client.Delete(resourceURL(client, id), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // EnableRootUser enables the login from any host for the root user and
 // provides the user with a generated root password.
 func EnableRootUser(client *gophercloud.ServiceClient, id string) (r EnableRootUserResult) {
-	_, r.Err = client.Post(userRootURL(client, id), nil, &r.Body, &gophercloud.RequestOpts{OkCodes: []int{200}})
+	resp, err := client.Post(userRootURL(client, id), nil, &r.Body, &gophercloud.RequestOpts{OkCodes: []int{200}})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -174,7 +178,8 @@ func EnableRootUser(client *gophercloud.ServiceClient, id string) (r EnableRootU
 // True if root user is enabled for the specified database instance or False
 // otherwise.
 func IsRootEnabled(client *gophercloud.ServiceClient, id string) (r IsRootEnabledResult) {
-	_, r.Err = client.Get(userRootURL(client, id), &r.Body, nil)
+	resp, err := client.Get(userRootURL(client, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -183,7 +188,8 @@ func IsRootEnabled(client *gophercloud.ServiceClient, id string) (r IsRootEnable
 // The MySQL service will be unavailable until the instance restarts.
 func Restart(client *gophercloud.ServiceClient, id string) (r ActionResult) {
 	b := map[string]interface{}{"restart": struct{}{}}
-	_, r.Err = client.Post(actionURL(client, id), &b, nil, nil)
+	resp, err := client.Post(actionURL(client, id), &b, nil, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -191,7 +197,8 @@ func Restart(client *gophercloud.ServiceClient, id string) (r ActionResult) {
 // flavorRef is provided. It will also restart the MySQL service.
 func Resize(client *gophercloud.ServiceClient, id, flavorRef string) (r ActionResult) {
 	b := map[string]interface{}{"resize": map[string]string{"flavorRef": flavorRef}}
-	_, r.Err = client.Post(actionURL(client, id), &b, nil, nil)
+	resp, err := client.Post(actionURL(client, id), &b, nil, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -200,20 +207,23 @@ func Resize(client *gophercloud.ServiceClient, id, flavorRef string) (r ActionRe
 // The volume size is in gigabytes (GB) and must be an integer.
 func ResizeVolume(client *gophercloud.ServiceClient, id string, size int) (r ActionResult) {
 	b := map[string]interface{}{"resize": map[string]interface{}{"volume": map[string]int{"size": size}}}
-	_, r.Err = client.Post(actionURL(client, id), &b, nil, nil)
+	resp, err := client.Post(actionURL(client, id), &b, nil, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // AttachConfigurationGroup will attach configuration group to the instance
 func AttachConfigurationGroup(client *gophercloud.ServiceClient, instanceID string, configID string) (r ConfigurationResult) {
 	b := map[string]interface{}{"instance": map[string]interface{}{"configuration": configID}}
-	_, r.Err = client.Put(resourceURL(client, instanceID), &b, nil, &gophercloud.RequestOpts{OkCodes: []int{202}})
+	resp, err := client.Put(resourceURL(client, instanceID), &b, nil, &gophercloud.RequestOpts{OkCodes: []int{202}})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // DetachConfigurationGroup will dettach configuration group from the instance
 func DetachConfigurationGroup(client *gophercloud.ServiceClient, instanceID string) (r ConfigurationResult) {
 	b := map[string]interface{}{"instance": map[string]interface{}{}}
-	_, r.Err = client.Put(resourceURL(client, instanceID), &b, nil, &gophercloud.RequestOpts{OkCodes: []int{202}})
+	resp, err := client.Put(resourceURL(client, instanceID), &b, nil, &gophercloud.RequestOpts{OkCodes: []int{202}})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

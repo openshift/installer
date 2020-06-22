@@ -38,6 +38,7 @@ Example to Get a Secret
 
 Example to Get a Payload
 
+	// if "Extract" method is not called, the HTTP connection will remain consumed
 	payload, err := secrets.GetPayload(client, secretID).Extract()
 	if err != nil {
 		panic(err)

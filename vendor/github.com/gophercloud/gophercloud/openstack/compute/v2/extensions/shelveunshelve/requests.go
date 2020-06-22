@@ -7,13 +7,15 @@ import (
 
 // Shelve is the operation responsible for shelving a Compute server.
 func Shelve(client *gophercloud.ServiceClient, id string) (r ShelveResult) {
-	_, r.Err = client.Post(extensions.ActionURL(client, id), map[string]interface{}{"shelve": nil}, nil, nil)
+	resp, err := client.Post(extensions.ActionURL(client, id), map[string]interface{}{"shelve": nil}, nil, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // ShelveOffload is the operation responsible for Shelve-Offload a Compute server.
 func ShelveOffload(client *gophercloud.ServiceClient, id string) (r ShelveOffloadResult) {
-	_, r.Err = client.Post(extensions.ActionURL(client, id), map[string]interface{}{"shelveOffload": nil}, nil, nil)
+	resp, err := client.Post(extensions.ActionURL(client, id), map[string]interface{}{"shelveOffload": nil}, nil, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -52,6 +54,7 @@ func Unshelve(client *gophercloud.ServiceClient, id string, opts UnshelveOptsBui
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(extensions.ActionURL(client, id), b, nil, nil)
+	resp, err := client.Post(extensions.ActionURL(client, id), b, nil, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

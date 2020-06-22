@@ -53,13 +53,15 @@ func Create(client *gophercloud.ServiceClient, opts CreateOptsBuilder) (r Create
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(baseURL(client), &b, &r.Body, &gophercloud.RequestOpts{OkCodes: []int{200}})
+	resp, err := client.Post(baseURL(client), &b, &r.Body, &gophercloud.RequestOpts{OkCodes: []int{200}})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Get will retrieve the details for a specified configuration group.
 func Get(client *gophercloud.ServiceClient, configID string) (r GetResult) {
-	_, r.Err = client.Get(resourceURL(client, configID), &r.Body, nil)
+	resp, err := client.Get(resourceURL(client, configID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -97,7 +99,8 @@ func Update(client *gophercloud.ServiceClient, configID string, opts UpdateOptsB
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Patch(resourceURL(client, configID), &b, nil, nil)
+	resp, err := client.Patch(resourceURL(client, configID), &b, nil, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -110,7 +113,8 @@ func Replace(client *gophercloud.ServiceClient, configID string, opts UpdateOpts
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Put(resourceURL(client, configID), &b, nil, nil)
+	resp, err := client.Put(resourceURL(client, configID), &b, nil, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -118,7 +122,8 @@ func Replace(client *gophercloud.ServiceClient, configID string, opts UpdateOpts
 // config groups cannot be deleted whilst still attached to running instances -
 // you must detach and then delete them.
 func Delete(client *gophercloud.ServiceClient, configID string) (r DeleteResult) {
-	_, r.Err = client.Delete(resourceURL(client, configID), nil)
+	resp, err := client.Delete(resourceURL(client, configID), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -147,7 +152,8 @@ func ListDatastoreParams(client *gophercloud.ServiceClient, datastoreID, version
 // need the param's ID first, which can be attained by using the ListDatastoreParams
 // operation.
 func GetDatastoreParam(client *gophercloud.ServiceClient, datastoreID, versionID, paramID string) (r ParamResult) {
-	_, r.Err = client.Get(getDSParamURL(client, datastoreID, versionID, paramID), &r.Body, nil)
+	resp, err := client.Get(getDSParamURL(client, datastoreID, versionID, paramID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -162,6 +168,7 @@ func ListGlobalParams(client *gophercloud.ServiceClient, versionID string) pagin
 // GetGlobalParam is similar to GetDatastoreParam but does not require a
 // DatastoreID.
 func GetGlobalParam(client *gophercloud.ServiceClient, versionID, paramID string) (r ParamResult) {
-	_, r.Err = client.Get(getGlobalParamURL(client, versionID, paramID), &r.Body, nil)
+	resp, err := client.Get(getGlobalParamURL(client, versionID, paramID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

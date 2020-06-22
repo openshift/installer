@@ -59,7 +59,8 @@ func ListBandwidthLimitRules(c *gophercloud.ServiceClient, policyID string, opts
 
 // GetBandwidthLimitRule retrieves a specific BandwidthLimitRule based on its ID.
 func GetBandwidthLimitRule(c *gophercloud.ServiceClient, policyID, ruleID string) (r GetBandwidthLimitRuleResult) {
-	_, r.Err = c.Get(getBandwidthLimitRuleURL(c, policyID, ruleID), &r.Body, nil)
+	resp, err := c.Get(getBandwidthLimitRuleURL(c, policyID, ruleID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -93,9 +94,10 @@ func CreateBandwidthLimitRule(client *gophercloud.ServiceClient, policyID string
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(createBandwidthLimitRuleURL(client, policyID), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(createBandwidthLimitRuleURL(client, policyID), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{201},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -129,15 +131,17 @@ func UpdateBandwidthLimitRule(client *gophercloud.ServiceClient, policyID, ruleI
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Put(updateBandwidthLimitRuleURL(client, policyID, ruleID), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Put(updateBandwidthLimitRuleURL(client, policyID, ruleID), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Delete accepts policy and rule ID and deletes the BandwidthLimitRule associated with them.
 func DeleteBandwidthLimitRule(c *gophercloud.ServiceClient, policyID, ruleID string) (r DeleteBandwidthLimitRuleResult) {
-	_, r.Err = c.Delete(deleteBandwidthLimitRuleURL(c, policyID, ruleID), nil)
+	resp, err := c.Delete(deleteBandwidthLimitRuleURL(c, policyID, ruleID), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -193,7 +197,8 @@ func ListDSCPMarkingRules(c *gophercloud.ServiceClient, policyID string, opts DS
 
 // GetDSCPMarkingRule retrieves a specific DSCPMarkingRule based on its ID.
 func GetDSCPMarkingRule(c *gophercloud.ServiceClient, policyID, ruleID string) (r GetDSCPMarkingRuleResult) {
-	_, r.Err = c.Get(getDSCPMarkingRuleURL(c, policyID, ruleID), &r.Body, nil)
+	resp, err := c.Get(getDSCPMarkingRuleURL(c, policyID, ruleID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -221,9 +226,10 @@ func CreateDSCPMarkingRule(client *gophercloud.ServiceClient, policyID string, o
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(createDSCPMarkingRuleURL(client, policyID), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(createDSCPMarkingRuleURL(client, policyID), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{201},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -251,15 +257,17 @@ func UpdateDSCPMarkingRule(client *gophercloud.ServiceClient, policyID, ruleID s
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Put(updateDSCPMarkingRuleURL(client, policyID, ruleID), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Put(updateDSCPMarkingRuleURL(client, policyID, ruleID), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // DeleteDSCPMarkingRule accepts policy and rule ID and deletes the DSCPMarkingRule associated with them.
 func DeleteDSCPMarkingRule(c *gophercloud.ServiceClient, policyID, ruleID string) (r DeleteDSCPMarkingRuleResult) {
-	_, r.Err = c.Delete(deleteDSCPMarkingRuleURL(c, policyID, ruleID), nil)
+	resp, err := c.Delete(deleteDSCPMarkingRuleURL(c, policyID, ruleID), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -316,7 +324,8 @@ func ListMinimumBandwidthRules(c *gophercloud.ServiceClient, policyID string, op
 
 // GetMinimumBandwidthRule retrieves a specific MinimumBandwidthRule based on its ID.
 func GetMinimumBandwidthRule(c *gophercloud.ServiceClient, policyID, ruleID string) (r GetMinimumBandwidthRuleResult) {
-	_, r.Err = c.Get(getMinimumBandwidthRuleURL(c, policyID, ruleID), &r.Body, nil)
+	resp, err := c.Get(getMinimumBandwidthRuleURL(c, policyID, ruleID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -347,9 +356,10 @@ func CreateMinimumBandwidthRule(client *gophercloud.ServiceClient, policyID stri
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(createMinimumBandwidthRuleURL(client, policyID), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(createMinimumBandwidthRuleURL(client, policyID), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{201},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -380,14 +390,16 @@ func UpdateMinimumBandwidthRule(client *gophercloud.ServiceClient, policyID, rul
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Put(updateMinimumBandwidthRuleURL(client, policyID, ruleID), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Put(updateMinimumBandwidthRuleURL(client, policyID, ruleID), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // DeleteMinimumBandwidthRule accepts policy and rule ID and deletes the MinimumBandwidthRule associated with them.
 func DeleteMinimumBandwidthRule(c *gophercloud.ServiceClient, policyID, ruleID string) (r DeleteMinimumBandwidthRuleResult) {
-	_, r.Err = c.Delete(deleteMinimumBandwidthRuleURL(c, policyID, ruleID), nil)
+	resp, err := c.Delete(deleteMinimumBandwidthRuleURL(c, policyID, ruleID), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
