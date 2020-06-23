@@ -38,7 +38,7 @@ if [ ! -f /opt/openshift/.pivot-done ]; then
   restorecon /usr/local/bin/machine-config-daemon
 
   # GCP: enable gcp-routes services
-  systemctl enable gcp-routes.service || true
+  systemctl enable openshift-gcp-routes.service || true
 
   touch /opt/openshift/.pivot-done
   /usr/local/bin/machine-config-daemon pivot
