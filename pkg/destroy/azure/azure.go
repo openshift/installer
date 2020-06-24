@@ -90,21 +90,21 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (o *ClusterUninstaller) Run(context.Context) error {
+func (o *ClusterUninstaller) Run(ctx context.Context) error {
 	o.configureClients()
 	group := o.InfraID + "-rg"
 	o.Logger.Debug("deleting public records")
-	if err := deletePublicRecords(context.TODO(), o.zonesClient, o.recordsClient, o.privateZonesClient, o.privateRecordSetsClient, o.Logger, group); err != nil {
+	if err := deletePublicRecords(ctx, o.zonesClient, o.recordsClient, o.privateZonesClient, o.privateRecordSetsClient, o.Logger, group); err != nil {
 		o.Logger.Debug(err)
 		return errors.Wrap(err, "failed to delete public DNS records")
 	}
 	o.Logger.Debug("deleting resource group")
-	if err := deleteResourceGroup(context.TODO(), o.resourceGroupsClient, o.Logger, group); err != nil {
+	if err := deleteResourceGroup(ctx, o.resourceGroupsClient, o.Logger, group); err != nil {
 		o.Logger.Debug(err)
 		return errors.Wrap(err, "failed to delete resource group")
 	}
 	o.Logger.Debug("deleting application registrations")
-	if err := deleteApplicationRegistrations(context.TODO(), o.applicationsClient, o.serviceprincipalsClient, o.Logger, o.InfraID); err != nil {
+	if err := deleteApplicationRegistrations(ctx, o.applicationsClient, o.serviceprincipalsClient, o.Logger, o.InfraID); err != nil {
 		o.Logger.Debug(err)
 		return errors.Wrap(err, "failed to delete application registrations and their service principals")
 	}
