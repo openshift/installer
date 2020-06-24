@@ -3,6 +3,7 @@ package openstack
 import (
 	"context"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/openshift/installer/pkg/destroy/providers"
@@ -80,7 +81,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (o *ClusterUninstaller) Run(context.Context) error {
+func (o *ClusterUninstaller) Run(ctx context.Context) error {
 	// deleteFuncs contains the functions that will be launched as
 	// goroutines.
 	deleteFuncs := map[string]deleteFunc{
@@ -99,27 +100,39 @@ func (o *ClusterUninstaller) Run(context.Context) error {
 		"deleteFloatingIPs":    deleteFloatingIPs,
 		"deleteImages":         deleteImages,
 	}
-	returnChannel := make(chan string)
 
 	opts := &clientconfig.ClientOpts{
 		Cloud: o.Cloud,
 	}
 
+	errChan := make(chan (error), len(deleteFuncs))
+
+	var wg sync.WaitGroup
+
 	// launch goroutines
-	for name, function := range deleteFuncs {
-		go deleteRunner(name, function, opts, o.Filter, o.Logger, returnChannel)
+	for n, f := range deleteFuncs {
+		wg.Add(1)
+		go func(name string, function deleteFunc) {
+			defer wg.Done()
+			err := deleteRunner(ctx, function, opts, o.Filter, o.Logger)
+			if err != nil {
+				errChan <- errors.Wrapf(err, "error running %s", name)
+			}
+		}(n, f)
 	}
 
 	// wait for them to finish
-	for i := 0; i < len(deleteFuncs); i++ {
-		select {
-		case res := <-returnChannel:
-			o.Logger.Debugf("goroutine %v complete", res)
-		}
+	wg.Wait()
+
+	select {
+	case err := <-errChan:
+		return err
+	default:
+		// no errors
 	}
 
 	// we need to untag the custom network if it was provided by the user
-	err := untagRunner(opts, o.InfraID, o.Logger)
+	err := untagRunner(ctx, opts, o.InfraID, o.Logger)
 	if err != nil {
 		return err
 	}
@@ -127,24 +140,22 @@ func (o *ClusterUninstaller) Run(context.Context) error {
 	return nil
 }
 
-func deleteRunner(deleteFuncName string, dFunction deleteFunc, opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger, channel chan string) {
+func deleteRunner(ctx context.Context, dFunction deleteFunc, opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) error {
 	backoffSettings := wait.Backoff{
 		Duration: time.Second * 15,
 		Factor:   1.3,
 		Steps:    25,
 	}
 
-	err := wait.ExponentialBackoff(backoffSettings, func() (bool, error) {
+	err := exponentialBackoffWithContext(ctx, backoffSettings, func() (bool, error) {
 		return dFunction(opts, filter, logger)
 	})
 
 	if err != nil {
-		logger.Fatalf("Unrecoverable error/timed out: %v", err)
+		return errors.Wrap(err, "Unrecoverable error/timed out")
 	}
 
-	// record that the goroutine has run to completion
-	channel <- deleteFuncName
-	return
+	return nil
 }
 
 // filterObjects will do client-side filtering given an appropriately filled out
@@ -1017,13 +1028,13 @@ func deleteImages(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 	return true, nil
 }
 
-func untagRunner(opts *clientconfig.ClientOpts, infraID string, logger logrus.FieldLogger) error {
+func untagRunner(ctx context.Context, opts *clientconfig.ClientOpts, infraID string, logger logrus.FieldLogger) error {
 	backoffSettings := wait.Backoff{
 		Duration: time.Second * 10,
 		Steps:    25,
 	}
 
-	err := wait.ExponentialBackoff(backoffSettings, func() (bool, error) {
+	err := exponentialBackoffWithContext(ctx, backoffSettings, func() (bool, error) {
 		return untagPrimaryNetwork(opts, infraID, logger)
 	})
 	if err != nil {
@@ -1080,4 +1091,25 @@ func untagPrimaryNetwork(opts *clientconfig.ClientOpts, infraID string, logger l
 	}
 
 	return true, nil
+}
+
+func exponentialBackoffWithContext(ctx context.Context, backoff wait.Backoff, condition wait.ConditionFunc) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	for backoff.Steps > 0 {
+		if ok, err := condition(); err != nil || ok {
+			return err
+		}
+		if backoff.Steps == 1 {
+			break
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(backoff.Step()):
+			// slept until time to run next condition check
+		}
+	}
+	return wait.ErrWaitTimeout
 }
