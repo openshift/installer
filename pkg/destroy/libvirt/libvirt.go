@@ -39,7 +39,7 @@ var AlwaysTrueFilter = func() filterFunc {
 }
 
 // deleteFunc is the interface a function needs to implement to be delete resources.
-type deleteFunc func(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) error
+type deleteFunc func(ctx context.Context, conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) error
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
 type ClusterUninstaller struct {
@@ -59,6 +59,9 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 
 // Run is the entrypoint to start the uninstall process.
 func (o *ClusterUninstaller) Run(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	conn, err := libvirt.NewConnect(o.LibvirtURI)
 	if err != nil {
 		return errors.Wrap(err, "failed to connect to Libvirt daemon")
@@ -69,7 +72,7 @@ func (o *ClusterUninstaller) Run(ctx context.Context) error {
 		deleteNetwork,
 		deleteStoragePool,
 	} {
-		err = del(conn, o.Filter, o.Logger)
+		err = del(ctx, conn, o.Filter, o.Logger)
 		if err != nil {
 			return err
 		}
@@ -83,12 +86,12 @@ func (o *ClusterUninstaller) Run(ctx context.Context) error {
 // additional nodes after the initial list call.  We continue deleting
 // domains until we either hit an error or we have a list call with no
 // matching domains.
-func deleteDomains(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) error {
+func deleteDomains(ctx context.Context, conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) error {
 	logger.Debug("Deleting libvirt domains")
 	var err error
 	nothingToDelete := false
 	for !nothingToDelete {
-		nothingToDelete, err = deleteDomainsSinglePass(conn, filter, logger)
+		nothingToDelete, err = deleteDomainsSinglePass(ctx, conn, filter, logger)
 		if err != nil {
 			return err
 		}
@@ -96,15 +99,21 @@ func deleteDomains(conn *libvirt.Connect, filter filterFunc, logger logrus.Field
 	return nil
 }
 
-func deleteDomainsSinglePass(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) (nothingToDelete bool, err error) {
+func deleteDomainsSinglePass(ctx context.Context, conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) (nothingToDelete bool, err error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
 	domains, err := conn.ListAllDomains(0)
 	if err != nil {
 		return false, errors.Wrap(err, "list domains")
 	}
 
-	nothingToDelete = true
 	for _, domain := range domains {
 		defer domain.Free()
+	}
+
+	nothingToDelete = true
+	for _, domain := range domains {
 		dName, err := domain.GetName()
 		if err != nil {
 			return false, errors.Wrap(err, "get domain name")
@@ -114,15 +123,22 @@ func deleteDomainsSinglePass(conn *libvirt.Connect, filter filterFunc, logger lo
 		}
 
 		nothingToDelete = false
+
 		dState, _, err := domain.GetState()
 		if err != nil {
 			return false, errors.Wrapf(err, "get domain state %d", dName)
 		}
 
 		if dState != libvirt.DOMAIN_SHUTOFF && dState != libvirt.DOMAIN_SHUTDOWN {
+			if err := ctx.Err(); err != nil {
+				return false, err
+			}
 			if err := domain.Destroy(); err != nil {
 				return false, errors.Wrapf(err, "destroy domain %q", dName)
 			}
+		}
+		if err := ctx.Err(); err != nil {
+			return false, err
 		}
 		if err := domain.Undefine(); err != nil {
 			return false, errors.Wrapf(err, "undefine domain %q", dName)
@@ -133,26 +149,39 @@ func deleteDomainsSinglePass(conn *libvirt.Connect, filter filterFunc, logger lo
 	return nothingToDelete, nil
 }
 
-func deleteStoragePool(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) error {
+func deleteStoragePool(ctx context.Context, conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) error {
 	logger.Debug("Deleting libvirt volumes")
 
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	pools, err := conn.ListStoragePools()
 	if err != nil {
 		return errors.Wrap(err, "list storage pools")
 	}
 
 	for _, pname := range pools {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		// pool name that returns true from filter
 		if !filter(pname) {
 			continue
 		}
 
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		pool, err := conn.LookupStoragePoolByName(pname)
 		if err != nil {
 			return errors.Wrapf(err, "get storage pool %q", pname)
 		}
 		defer pool.Free()
 
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		// delete all vols that return true from filter.
 		vols, err := pool.ListAllStorageVolumes(0)
 		if err != nil {
@@ -161,9 +190,15 @@ func deleteStoragePool(conn *libvirt.Connect, filter filterFunc, logger logrus.F
 
 		for _, vol := range vols {
 			defer vol.Free()
+		}
+
+		for _, vol := range vols {
 			vName, err := vol.GetName()
 			if err != nil {
 				return errors.Wrapf(err, "get volume names in %q", pname)
+			}
+			if err := ctx.Err(); err != nil {
+				return err
 			}
 			if err := vol.Delete(0); err != nil {
 				return errors.Wrapf(err, "delete volume %q from %q", vName, pname)
@@ -171,15 +206,24 @@ func deleteStoragePool(conn *libvirt.Connect, filter filterFunc, logger logrus.F
 			logger.WithField("volume", vName).Info("Deleted volume")
 		}
 
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		// blow away entire pool.
 		if err := pool.Destroy(); err != nil {
 			return errors.Wrapf(err, "destroy pool %q", pname)
 		}
 
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if err := pool.Delete(0); err != nil {
 			return errors.Wrapf(err, "delete pool %q", pname)
 		}
 
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if err := pool.Undefine(); err != nil {
 			return errors.Wrapf(err, "undefine pool %q", pname)
 		}
@@ -189,17 +233,28 @@ func deleteStoragePool(conn *libvirt.Connect, filter filterFunc, logger logrus.F
 	return nil
 }
 
-func deleteNetwork(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) error {
+func deleteNetwork(ctx context.Context, conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) error {
 	logger.Debug("Deleting libvirt network")
 
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	networks, err := conn.ListNetworks()
 	if err != nil {
 		return errors.Wrap(err, "list networks")
 	}
 
 	for _, nName := range networks {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		if !filter(nName) {
 			continue
+		}
+
+		if err := ctx.Err(); err != nil {
+			return err
 		}
 		network, err := conn.LookupNetworkByName(nName)
 		if err != nil {
@@ -207,10 +262,16 @@ func deleteNetwork(conn *libvirt.Connect, filter filterFunc, logger logrus.Field
 		}
 		defer network.Free()
 
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if err := network.Destroy(); err != nil {
 			return errors.Wrapf(err, "destroy network %q", nName)
 		}
 
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if err := network.Undefine(); err != nil {
 			return errors.Wrapf(err, "undefine network %q", nName)
 		}
