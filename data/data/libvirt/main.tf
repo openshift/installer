@@ -34,6 +34,7 @@ resource "libvirt_volume" "master" {
   name           = "${var.cluster_id}-master-${count.index}"
   base_volume_id = module.volume.coreos_base_volume_id
   pool           = libvirt_pool.storage_pool.name
+  size           = var.libvirt_master_size
 }
 
 resource "libvirt_ignition" "master" {

@@ -23,6 +23,7 @@ type config struct {
 	MasterMemory    string   `json:"libvirt_master_memory,omitempty"`
 	MasterVcpu      string   `json:"libvirt_master_vcpu,omitempty"`
 	BootstrapMemory int      `json:"libvirt_bootstrap_memory,omitempty"`
+	MasterDiskSize  string   `json:"libvirt_master_size,omitempty"`
 }
 
 // TFVars generates libvirt-specific Terraform variables.
@@ -50,6 +51,10 @@ func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, 
 		MasterIPs:    masterIPs,
 		MasterMemory: strconv.Itoa(masterConfig.DomainMemory),
 		MasterVcpu:   strconv.Itoa(masterConfig.DomainVcpu),
+	}
+
+	if masterConfig.Volume.VolumeSize != nil {
+		cfg.MasterDiskSize = masterConfig.Volume.VolumeSize.String()
 	}
 
 	if architecture == types.ArchitecturePPC64LE {
