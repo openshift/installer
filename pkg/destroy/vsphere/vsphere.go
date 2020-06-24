@@ -131,12 +131,12 @@ func getAttachedObjectsOnTag(ctx context.Context, client *rest.Client, tagName s
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (o *ClusterUninstaller) Run() error {
+func (o *ClusterUninstaller) Run(ctx context.Context) error {
 	var folderList []types.ManagedObjectReference
 	var virtualMachineList []types.ManagedObjectReference
 
 	o.Logger.Debug("find attached objects on tag")
-	tagAttachedObjects, err := getAttachedObjectsOnTag(context.TODO(), o.RestClient, o.InfraID)
+	tagAttachedObjects, err := getAttachedObjectsOnTag(ctx, o.RestClient, o.InfraID)
 	if err != nil {
 		return err
 	}
@@ -162,12 +162,12 @@ func (o *ClusterUninstaller) Run() error {
 	}
 
 	o.Logger.Debug("find VirtualMachine objects")
-	virtualMachineMoList, err := getVirtualMachineManagedObjects(context.TODO(), o.Client, virtualMachineList)
+	virtualMachineMoList, err := getVirtualMachineManagedObjects(ctx, o.Client, virtualMachineList)
 	if err != nil {
 		return err
 	}
 	o.Logger.Debug("delete VirtualMachines")
-	err = deleteVirtualMachines(context.TODO(), o.Client, virtualMachineMoList, o.Logger)
+	err = deleteVirtualMachines(ctx, o.Client, virtualMachineMoList, o.Logger)
 	if err != nil {
 		return err
 	}
@@ -179,14 +179,14 @@ func (o *ClusterUninstaller) Run() error {
 	}
 
 	o.Logger.Debug("find Folder objects")
-	folderMoList, err := getFolderManagedObjects(context.TODO(), o.Client, folderList)
+	folderMoList, err := getFolderManagedObjects(ctx, o.Client, folderList)
 	if err != nil {
 		o.Logger.Errorln(err)
 		return err
 	}
 
 	o.Logger.Debug("delete Folder")
-	err = deleteFolder(context.TODO(), o.Client, folderMoList, o.Logger)
+	err = deleteFolder(ctx, o.Client, folderMoList, o.Logger)
 	if err != nil {
 		o.Logger.Errorln(err)
 		return err
