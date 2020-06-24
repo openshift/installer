@@ -63,7 +63,6 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		Region:             metadata.ClusterPlatformMetadata.GCP.Region,
 		ProjectID:          metadata.ClusterPlatformMetadata.GCP.ProjectID,
 		ClusterID:          metadata.InfraID,
-		Context:            context.Background(),
 		cloudControllerUID: gcptypes.CloudControllerUID(metadata.InfraID),
 		requestIDTracker:   newRequestIDTracker(),
 		pendingItemTracker: newPendingItemTracker(),
@@ -71,7 +70,9 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 }
 
 // Run is the entrypoint to start the uninstall process
-func (o *ClusterUninstaller) Run(context.Context) error {
+func (o *ClusterUninstaller) Run(ctx context.Context) error {
+	o.Context = ctx
+
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 
@@ -110,9 +111,10 @@ func (o *ClusterUninstaller) Run(context.Context) error {
 		return errors.Wrap(err, "failed to create resourcemanager service")
 	}
 
-	err = wait.PollImmediateInfinite(
+	err = wait.PollImmediateUntil(
 		time.Second*10,
 		o.destroyCluster,
+		o.Context.Done(),
 	)
 	return nil
 
