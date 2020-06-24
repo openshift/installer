@@ -3,6 +3,8 @@
 package baremetal
 
 import (
+	"context"
+
 	"github.com/libvirt/libvirt-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -19,7 +21,7 @@ type ClusterUninstaller struct {
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (o *ClusterUninstaller) Run() error {
+func (o *ClusterUninstaller) Run(context.Context) error {
 	o.Logger.Debug("Deleting bare metal resources")
 
 	// FIXME: close the connection

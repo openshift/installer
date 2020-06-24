@@ -3,6 +3,7 @@
 package libvirt
 
 import (
+	"context"
 	"strings"
 
 	libvirt "github.com/libvirt/libvirt-go"
@@ -57,7 +58,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (o *ClusterUninstaller) Run() error {
+func (o *ClusterUninstaller) Run(ctx context.Context) error {
 	conn, err := libvirt.NewConnect(o.LibvirtURI)
 	if err != nil {
 		return errors.Wrap(err, "failed to connect to Libvirt daemon")

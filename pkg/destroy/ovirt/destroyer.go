@@ -1,6 +1,7 @@
 package ovirt
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -20,7 +21,7 @@ type ClusterUninstaller struct {
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (uninstaller *ClusterUninstaller) Run() error {
+func (uninstaller *ClusterUninstaller) Run(context.Context) error {
 	con, err := ovirt.NewConnection()
 	if err != nil {
 		return fmt.Errorf("failed to initialize connection to ovirt-engine's %s", err)

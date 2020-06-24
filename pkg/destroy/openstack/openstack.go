@@ -1,6 +1,7 @@
 package openstack
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -79,7 +80,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (o *ClusterUninstaller) Run() error {
+func (o *ClusterUninstaller) Run(context.Context) error {
 	// deleteFuncs contains the functions that will be launched as
 	// goroutines.
 	deleteFuncs := map[string]deleteFunc{

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -60,7 +61,7 @@ func runDestroyCmd(directory string) error {
 	if err != nil {
 		return errors.Wrap(err, "Failed while preparing to destroy cluster")
 	}
-	if err := destroyer.Run(); err != nil {
+	if err := destroyer.Run(context.Background()); err != nil {
 		return errors.Wrap(err, "Failed to destroy cluster")
 	}
 

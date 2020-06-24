@@ -90,7 +90,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (o *ClusterUninstaller) Run() error {
+func (o *ClusterUninstaller) Run(context.Context) error {
 	o.configureClients()
 	group := o.InfraID + "-rg"
 	o.Logger.Debug("deleting public records")
