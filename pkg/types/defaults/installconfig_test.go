@@ -35,9 +35,10 @@ func defaultInstallConfig() *types.InstallConfig {
 				},
 			},
 		},
-		ControlPlane: defaultMachinePool("master"),
-		Compute:      []types.MachinePool{*defaultMachinePool("worker")},
-		Publish:      types.ExternalPublishingStrategy,
+		ControlPlane:   defaultMachinePool("master"),
+		Compute:        []types.MachinePool{*defaultMachinePool("worker")},
+		Publish:        types.ExternalPublishingStrategy,
+		ClusterProfile: "default",
 	}
 }
 

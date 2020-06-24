@@ -34,6 +34,7 @@ var (
 		&bootkube.KubeCloudConfig{},
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.CVOOverrides{},
+		&bootkube.ClusterProfile{},
 		&bootkube.EtcdHostServiceEndpoints{},
 		&bootkube.EtcdServingCAConfigMap{},
 		&bootkube.KubeSystemConfigmapRootCA{},

@@ -94,8 +94,9 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 		Platform: types.Platform{
 			None: &none.Platform{},
 		},
-		PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
-		Publish:    types.ExternalPublishingStrategy,
+		PullSecret:     `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+		Publish:        types.ExternalPublishingStrategy,
+		ClusterProfile: "default",
 	}
 	assert.Equal(t, expected, installConfig.Config, "unexpected config generated")
 }
@@ -162,8 +163,9 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 						Region: "us-east-1",
 					},
 				},
-				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
-				Publish:    types.ExternalPublishingStrategy,
+				PullSecret:     `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				Publish:        types.ExternalPublishingStrategy,
+				ClusterProfile: "default",
 			},
 		},
 		{
@@ -248,8 +250,9 @@ network:
 						Region: "us-east-1",
 					},
 				},
-				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
-				Publish:    types.ExternalPublishingStrategy,
+				PullSecret:     `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				Publish:        types.ExternalPublishingStrategy,
+				ClusterProfile: "default",
 			},
 		},
 	}

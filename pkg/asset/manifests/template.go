@@ -65,16 +65,17 @@ type bootkubeTemplateData struct {
 	EtcdMetricSignerCert       string
 	EtcdMetricSignerClientCert string
 	EtcdMetricSignerClientKey  string
-	EtcdMetricSignerKey        string
-	EtcdSignerCert             string
-	EtcdSignerClientCert       string
-	EtcdSignerClientKey        string
-	EtcdSignerKey              string
-	McsTLSCert                 string
-	McsTLSKey                  string
-	PullSecretBase64           string
-	RootCaCert                 string
-	WorkerIgnConfig            string
+	EtcdMetricSignerKey  string
+	EtcdSignerCert       string
+	EtcdSignerClientCert string
+	EtcdSignerClientKey  string
+	EtcdSignerKey        string
+	McsTLSCert           string
+	McsTLSKey            string
+	PullSecretBase64     string
+	RootCaCert           string
+	WorkerIgnConfig      string
+	ClusterProfile       string
 }
 
 type baremetalTemplateData struct {
