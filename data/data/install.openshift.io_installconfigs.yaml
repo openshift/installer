@@ -286,6 +286,12 @@ spec:
                           - high_performance
                           type: string
                       type: object
+                    packet:
+                      description: Packet is the configuration used when installing
+                        on Packet.
+                      properties: {}
+                      # TODO(displague) [properties]
+                      type: object
                     vsphere:
                       description: VSphere is the configuration used when installing
                         on vSphere.
@@ -572,6 +578,12 @@ spec:
                         - server
                         - high_performance
                         type: string
+                    type: object
+                 packet:
+                    description: Packet is the configuration used when installing on
+                      Packet.
+                    properties: {}
+                    # TODO(displague) properties
                     type: object
                   vsphere:
                     description: VSphere is the configuration used when installing
@@ -1432,6 +1444,11 @@ spec:
                 - ingress_vip
                 - ovirt_cluster_id
                 - ovirt_storage_domain_id
+                type: object
+              packet:
+                description: Packet is the configuration used when installing on Packet
+                properties: {}
+                # TODO(displague) properties
                 type: object
               vsphere:
                 description: VSphere is the configuration used when installing on

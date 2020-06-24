@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/packet"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -33,6 +34,7 @@ var (
 		gcp.Name,
 		openstack.Name,
 		ovirt.Name,
+		packet.Name,
 		vsphere.Name,
 	}
 	// HiddenPlatformNames is a slice with all the
@@ -176,6 +178,10 @@ type Platform struct {
 	// +optional
 	OpenStack *openstack.Platform `json:"openstack,omitempty"`
 
+	// Packet is the configuration used when installing on Packet.
+	// +optional
+	Packet *packet.Platform `json:"packet,omitempty"`
+
 	// VSphere is the configuration used when installing on vSphere.
 	// +optional
 	VSphere *vsphere.Platform `json:"vsphere,omitempty"`
@@ -206,6 +212,8 @@ func (p *Platform) Name() string {
 		return none.Name
 	case p.OpenStack != nil:
 		return openstack.Name
+	case p.Packet != nil:
+		return packet.Name
 	case p.VSphere != nil:
 		return vsphere.Name
 	case p.Ovirt != nil:

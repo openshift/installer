@@ -15,6 +15,7 @@ import (
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	icopenstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	icovirt "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	icpacket "github.com/openshift/installer/pkg/asset/installconfig/packet"
 	icvsphere "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/conversion"
@@ -84,6 +85,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	a.Config.GCP = platform.GCP
 	a.Config.BareMetal = platform.BareMetal
 	a.Config.Ovirt = platform.Ovirt
+	a.Config.Packet = platform.Packet
 
 	return a.finish("")
 }
@@ -186,6 +188,8 @@ func (a *InstallConfig) platformValidation() error {
 	}
 	if a.Config.Platform.OpenStack != nil {
 		return icopenstack.Validate(a.Config)
+	if a.Config.Platform.Packet != nil {
+		return icpacket.Validate(a.Config)
 	}
 	return field.ErrorList{}.ToAggregate()
 }

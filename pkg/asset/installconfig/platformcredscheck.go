@@ -10,6 +10,7 @@ import (
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	packetconfig "github.com/openshift/installer/pkg/asset/installconfig/packet"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -18,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/packet"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -71,6 +73,11 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		err = con.Test()
 		if err != nil {
 			return errors.Wrap(err, "testing Engine connection")
+		}
+	case packet.Name:
+		_, err := packetconfig.NewConnection()
+		if err != nil {
+			return errors.Wrap(err, "creating Engine connection")
 		}
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)

@@ -133,6 +133,13 @@
             "sha256": "e6b570a3559b76ca7350ed5865ebb799bb769a11883e38129326c995603e3aca",
             "size": 838369280
         },
+        "packet": {
+            "path": "rhcos-45.81.202005200134-0-metal.x86_64.raw.gz",
+            "sha256": "fbbe3f1a6cd60ec0344ca88925efc812c1556654680d8663bffd0663ae55843a",
+            "size": 878855135,
+            "uncompressed-sha256": "4a211425bf1af046ffbd91c9c63b0d179db67f9dc4165a4a106a2f0a1c74df7e",
+            "uncompressed-size": 3807379456
+        },
         "qemu": {
             "path": "rhcos-46.82.202007051540-0-qemu.x86_64.qcow2.gz",
             "sha256": "d74174df0c5813d0eaf5d31742504b775222385810dc8bf90b7a6b4af6c4b5fb",

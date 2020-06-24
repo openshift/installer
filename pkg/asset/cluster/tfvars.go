@@ -19,6 +19,8 @@ import (
 	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
+	// TODO(displague) This is moving to sigs.k8s.io
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
@@ -40,6 +42,7 @@ import (
 	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
 	ovirttfvars "github.com/openshift/installer/pkg/tfvars/ovirt"
+	packettfvars "github.com/openshift/installer/pkg/tfvars/packet"
 	vspheretfvars "github.com/openshift/installer/pkg/tfvars/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -50,6 +53,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/packet"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -476,6 +480,34 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			clusterID.InfraID,
 			masters[0].Spec.ProviderSpec.Value.Object.(*ovirtprovider.OvirtMachineProviderSpec),
 		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
+		}
+		t.FileList = append(t.FileList, &asset.File{
+			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Data:     data,
+		})
+	case packet.Name:
+		/*
+			config, err := packetconfig.NewConfig()
+			if err != nil {
+				return err
+			}
+			con, err := packetconfig.NewConnection()
+			if err != nil {
+				return err
+			}
+		*/
+		// TODO(displague) Packet networking
+
+		/*
+			masters, err := mastersAsset.Machines()
+			if err != nil {
+				return err
+			}
+		*/
+
+		data, err := packettfvars.TFVars(packettfvars.TFVarsSources{})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
