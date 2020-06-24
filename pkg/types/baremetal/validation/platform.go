@@ -194,8 +194,11 @@ func validateOSImages(p *baremetal.Platform, fldPath *field.Path) field.ErrorLis
 	return platformErrs
 }
 
-func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallConfig) error {
-
+func validateHostsCount(p *baremetal.Platform, installConfig *types.InstallConfig) error {
+	if strings.Contains(p.SkipValidations, "hosts") {
+		return nil
+	}
+	hosts := p.Hosts
 	hostsNum := int64(len(hosts))
 	counter := int64(0)
 
@@ -270,7 +273,7 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkInterface"), p.ProvisioningNetworkInterface, "no provisioning network interface is configured, please set this value to be the interface on the provisioning network on your cluster's baremetal hosts"))
 	}
 
-	if p.Hosts == nil {
+	if p.Hosts == nil && !strings.Contains(p.SkipValidations, "hosts") {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("hosts"), p.Hosts, "bare metal hosts are missing"))
 	}
 
@@ -301,7 +304,7 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapHostIP"), p.BootstrapProvisioningIP, err.Error()))
 	}
 
-	if err := validateHostsCount(p.Hosts, c); err != nil {
+	if err := validateHostsCount(p, c); err != nil {
 		allErrs = append(allErrs, field.Required(fldPath.Child("Hosts"), err.Error()))
 	}
 

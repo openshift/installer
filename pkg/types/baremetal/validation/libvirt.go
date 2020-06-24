@@ -19,6 +19,10 @@ func init() {
 func validateInterfaces(p *baremetal.Platform, fldPath *field.Path) field.ErrorList {
 	errorList := field.ErrorList{}
 
+	if strings.Contains(p.SkipValidations, "interfaces") {
+		return errorList
+	}
+
 	findInterface, err := interfaceValidator(p.LibvirtURI)
 	if err != nil {
 		errorList = append(errorList, field.InternalError(fldPath.Child("libvirtURI"), err))

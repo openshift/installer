@@ -106,4 +106,10 @@ type Platform struct {
 	//
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty" validate:"omitempty,osimageuri,urlexist"`
+
+	// SkipValidations is list of validations to skip during loading/fetching of install-config.yaml for baremetal platform
+	// currently to validations skipping is supported
+	// "interfaces" - skip validation of hosts networking interfaces via libvirt
+	// "hosts" - skips validation of hosts existannce it they values
+	SkipValidations string `json:"skipValidations,omitemtpy"`
 }
