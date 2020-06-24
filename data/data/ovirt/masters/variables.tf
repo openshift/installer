@@ -14,12 +14,12 @@ variable "master_count" {
 
 variable "ovirt_cluster_id" {
   type        = string
-  description = "The ID of oVirt's cluster"
+  description = "The ID of Cluster"
 }
 
 variable "ovirt_template_id" {
   type        = string
-  description = "The ID of oVirt's VM template"
+  description = "The ID of VM template"
 }
 
 variable "ignition_master" {

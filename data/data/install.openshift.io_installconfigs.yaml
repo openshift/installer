@@ -938,10 +938,6 @@ spec:
                       used when installing on bare metal for machine pools which do
                       not define their own platform configuration.
                     type: object
-                  dnsVIP:
-                    description: DNSVIP is the VIP to use for internal DNS communication
-                    format: ip
-                    type: string
                   externalBridge:
                     description: External bridge is used for external communication.
                     type: string
@@ -1027,7 +1023,6 @@ spec:
                     type: string
                 required:
                 - apiVIP
-                - dnsVIP
                 - hosts
                 - ingressVIP
                 - provisioningNetworkInterface
@@ -1303,10 +1298,6 @@ spec:
                         - high_performance
                         type: string
                     type: object
-                  dns_vip:
-                    description: DNSVIP is the IP of the internal DNS which will be
-                      operated by the cluster
-                    type: string
                   ingress_vip:
                     description: IngressIP is an external IP which routes to the default
                       ingress controller. The IP is a suitable target of a wildcard
@@ -1334,7 +1325,6 @@ spec:
                     type: string
                 required:
                 - api_vip
-                - dns_vip
                 - ingress_vip
                 - ovirt_cluster_id
                 - ovirt_storage_domain_id

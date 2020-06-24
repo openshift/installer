@@ -433,10 +433,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				installConfig.Config.Platform.Ovirt.ClusterID,
 				installConfig.Config.Platform.Ovirt.NetworkName)
 			if err != nil {
-				return errors.Wrapf(err, "failed to compute values for oVirt platform")
+				return errors.Wrapf(err, "failed to compute values for Engine platform")
 			}
 			if len(profiles) != 1 {
-				return errors.Wrapf(err, "failed to compute values for oVirt platform, there are multiple vNic profiles.")
+				return errors.Wrapf(err, "failed to compute values for Engine platform, there are multiple vNIC profiles.")
 			}
 			installConfig.Config.Platform.Ovirt.VNICProfileID = profiles[0].MustId()
 		}

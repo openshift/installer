@@ -16,7 +16,6 @@ func validPlatform() *ovirt.Platform {
 		VNICProfileID:          "57e42205-02ac-46e1-a6d1-07459d94bc52",
 		NetworkName:            "ocp-blue",
 		APIVIP:                 "10.0.0.1",
-		DNSVIP:                 "10.0.0.2",
 		IngressVIP:             "10.0.0.3",
 		DefaultMachinePlatform: nil,
 	}
@@ -53,15 +52,6 @@ func TestValidatePlatform(t *testing.T) {
 		},
 		{
 			name: "invalid when API VIP is invalid",
-			platform: func() *ovirt.Platform {
-				p := validPlatform()
-				p.APIVIP = "1."
-				return p
-			}(),
-			valid: false,
-		},
-		{
-			name: "invalid when DNS VIP is invalid",
 			platform: func() *ovirt.Platform {
 				p := validPlatform()
 				p.APIVIP = "1."
