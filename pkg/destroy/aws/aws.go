@@ -100,13 +100,7 @@ func (o *ClusterUninstaller) validate() error {
 }
 
 // Run is the entrypoint to start the uninstall process
-func (o *ClusterUninstaller) Run(context.Context) error {
-	return o.RunWithContext(context.Background())
-}
-
-// RunWithContext runs the uninstall process with a context.
-// The first return is the list of ARNs for resources that could not be destroyed.
-func (o *ClusterUninstaller) RunWithContext(ctx context.Context) error {
+func (o *ClusterUninstaller) Run(ctx context.Context) error {
 	err := o.validate()
 	if err != nil {
 		return err
