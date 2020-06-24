@@ -9,6 +9,8 @@ import (
 	"github.com/ovirt/go-ovirt"
 	"github.com/sirupsen/logrus"
 
+	"k8s.io/apimachinery/pkg/util/errors"
+
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
@@ -21,7 +23,7 @@ type ClusterUninstaller struct {
 }
 
 // Run is the entrypoint to start the uninstall process.
-func (uninstaller *ClusterUninstaller) Run(context.Context) error {
+func (uninstaller *ClusterUninstaller) Run(ctx context.Context) error {
 	con, err := ovirt.NewConnection()
 	if err != nil {
 		return fmt.Errorf("failed to initialize connection to ovirt-engine's %s", err)
@@ -34,21 +36,24 @@ func (uninstaller *ClusterUninstaller) Run(context.Context) error {
 	tags := [2]string{tagVMs, tagVMbootstrap}
 
 	for _, tag := range tags {
-		if err := uninstaller.removeVMs(con, tag); err != nil {
+		if err := uninstaller.removeVMs(ctx, con, tag); err != nil {
 			uninstaller.Logger.Errorf("failed to remove VMs: %s", err)
 		}
-		if err := uninstaller.removeTag(con, tag); err != nil {
+		if err := uninstaller.removeTag(ctx, con, tag); err != nil {
 			uninstaller.Logger.Errorf("failed to remove tag: %s", err)
 		}
 	}
-	if err := uninstaller.removeTemplate(con); err != nil {
+	if err := uninstaller.removeTemplate(ctx, con); err != nil {
 		uninstaller.Logger.Errorf("Failed to remove template: %s", err)
 	}
 
 	return nil
 }
 
-func (uninstaller *ClusterUninstaller) removeVMs(con *ovirtsdk.Connection, tag string) error {
+func (uninstaller *ClusterUninstaller) removeVMs(ctx context.Context, con *ovirtsdk.Connection, tag string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	// - find all vms by tag name=infraID
 	vmsService := con.SystemService().VmsService()
 	searchTerm := fmt.Sprintf("tag=%s", tag)
@@ -60,20 +65,34 @@ func (uninstaller *ClusterUninstaller) removeVMs(con *ovirtsdk.Connection, tag s
 	// - stop + delete VMS
 	vms := vmsResponse.MustVms().Slice()
 	uninstaller.Logger.Debugf("Found %d VMs", len(vms))
+	errChan := make(chan (error), len(vms))
 	wg := sync.WaitGroup{}
 	wg.Add(len(vms))
 	for _, vm := range vms {
 		go func(vm *ovirtsdk.Vm) {
-			uninstaller.stopVM(vmsService, vm)
-			uninstaller.removeVM(vmsService, vm)
-			wg.Done()
+			defer wg.Done()
+			if err := uninstaller.stopVM(ctx, vmsService, vm); err != nil {
+				errChan <- err
+				return
+			}
+			if err := uninstaller.removeVM(vmsService, vm); err != nil {
+				errChan <- err
+			}
 		}(vm)
 	}
 	wg.Wait()
-	return nil
+	close(errChan)
+	var errorList []error
+	for err := range errChan {
+		errorList = append(errorList, err)
+	}
+	return errors.NewAggregate(errorList)
 }
 
-func (uninstaller *ClusterUninstaller) removeTag(con *ovirtsdk.Connection, tag string) error {
+func (uninstaller *ClusterUninstaller) removeTag(ctx context.Context, con *ovirtsdk.Connection, tag string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	// finally remove the tag
 	tagsService := con.SystemService().TagsService()
 	tagsServiceListResponse, err := tagsService.List().Send()
@@ -94,36 +113,38 @@ func (uninstaller *ClusterUninstaller) removeTag(con *ovirtsdk.Connection, tag s
 	return nil
 }
 
-func (uninstaller *ClusterUninstaller) stopVM(vmsService *ovirtsdk.VmsService, vm *ovirtsdk.Vm) {
+func (uninstaller *ClusterUninstaller) stopVM(ctx context.Context, vmsService *ovirtsdk.VmsService, vm *ovirtsdk.Vm) error {
 	vmService := vmsService.VmService(vm.MustId())
 	// this is a teardown, stopping instead of shutting down.
-	_, err := vmService.Stop().Send()
-	if err == nil {
-		uninstaller.Logger.Infof("Stopping VM %s", vm.MustName())
-	} else {
+	if _, err := vmService.Stop().Send(); err != nil {
 		uninstaller.Logger.Errorf("Failed to stop VM %s: %s", vm.MustName(), err)
+		return err
 	}
-	waitForDownDuration := time.Minute * 10
-	err = vmService.Connection().WaitForVM(vm.MustId(), ovirtsdk.VMSTATUS_DOWN, waitForDownDuration)
-	if err == nil {
-		uninstaller.Logger.Infof("VM %s powered off", vm.MustName())
-	} else {
+	uninstaller.Logger.Infof("Stopping VM %s", vm.MustName())
+	waitForDownDuration := timeoutWithContext(ctx, time.Minute*10)
+	if err := vmService.Connection().WaitForVM(vm.MustId(), ovirtsdk.VMSTATUS_DOWN, waitForDownDuration); err != nil {
 		uninstaller.Logger.Warnf("Waited %d for VM %s to power off: %s", waitForDownDuration, vm.MustName(), err)
+		return err
 	}
+	uninstaller.Logger.Infof("VM %s powered off", vm.MustName())
+	return nil
 }
 
-func (uninstaller *ClusterUninstaller) removeVM(vmsService *ovirtsdk.VmsService, vm *ovirtsdk.Vm) {
+func (uninstaller *ClusterUninstaller) removeVM(vmsService *ovirtsdk.VmsService, vm *ovirtsdk.Vm) error {
 	vmService := vmsService.VmService(vm.MustId())
-	_, err := vmService.Remove().Send()
-	if err == nil {
-		uninstaller.Logger.Infof("Removing VM %s", vm.MustName())
-	} else {
+	if _, err := vmService.Remove().Send(); err != nil {
 		uninstaller.Logger.Errorf("Failed to remove VM %s: %s", vm.MustName(), err)
+		return err
 	}
+	uninstaller.Logger.Infof("Removing VM %s", vm.MustName())
+	return nil
 }
 
-func (uninstaller *ClusterUninstaller) removeTemplate(con *ovirtsdk.Connection) error {
+func (uninstaller *ClusterUninstaller) removeTemplate(ctx context.Context, con *ovirtsdk.Connection) error {
 	if uninstaller.Metadata.Ovirt.RemoveTemplate {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		search, err := con.SystemService().TemplatesService().
 			List().Search(fmt.Sprintf("name=%s-rhcos", uninstaller.Metadata.InfraID)).Send()
 		if err != nil {
@@ -151,4 +172,17 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		Metadata: *metadata,
 		Logger:   logger,
 	}, nil
+}
+
+// timeoutWithContext returns the smaller timeout between the context timeout and the specified timeout.
+func timeoutWithContext(ctx context.Context, timeout time.Duration) time.Duration {
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return timeout
+	}
+	timeUntilDeadline := time.Until(deadline)
+	if timeUntilDeadline < timeout {
+		return timeUntilDeadline
+	}
+	return timeout
 }
