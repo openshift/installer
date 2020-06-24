@@ -50,3 +50,11 @@ variable "libvirt_bootstrap_memory" {
   default     = 2048
 }
 
+# Currently RHCOS maintain its default 16G size if that
+# changes we need to change it here also
+# https://github.com/coreos/coreos-assembler/pull/924
+variable "libvirt_master_size" {
+  type        = string
+  description = "Size of the volume in bytes"
+  default     = "17179869184"
+}
