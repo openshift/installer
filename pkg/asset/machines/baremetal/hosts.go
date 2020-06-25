@@ -87,6 +87,9 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSet
 			// hosts are in the same order as the control plane
 			// machines.
 			newHost.Spec.ExternallyProvisioned = true
+			// Pause reconciliation until we can annotate with the initial
+			// status containing the HardwareDetails
+			newHost.ObjectMeta.Annotations = map[string]string{"baremetalhost.metal3.io/paused": ""}
 			machine := machines[i]
 			newHost.Spec.ConsumerRef = &corev1.ObjectReference{
 				APIVersion: machine.TypeMeta.APIVersion,
