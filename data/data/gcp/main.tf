@@ -4,6 +4,8 @@ locals {
   master_subnet_cidr = cidrsubnet(var.machine_v4_cidrs[0], 3, 0) #master subnet is a smaller subnet within the vnet. i.e from /21 to /24
   worker_subnet_cidr = cidrsubnet(var.machine_v4_cidrs[0], 3, 1) #worker subnet is a smaller subnet within the vnet. i.e from /21 to /24
   public_endpoints   = var.gcp_publish_strategy == "External" ? true : false
+
+  gcp_image = var.gcp_preexisting_image ? var.gcp_image : google_compute_image.cluster[0].self_link
 }
 
 provider "google" {
@@ -17,7 +19,7 @@ module "bootstrap" {
 
   bootstrap_enabled = var.gcp_bootstrap_enabled
 
-  image            = google_compute_image.cluster.self_link
+  image            = local.gcp_image
   machine_type     = var.gcp_bootstrap_instance_type
   cluster_id       = var.cluster_id
   ignition         = var.ignition_bootstrap
@@ -36,7 +38,7 @@ module "bootstrap" {
 module "master" {
   source = "./master"
 
-  image          = google_compute_image.cluster.self_link
+  image          = local.gcp_image
   instance_count = var.master_count
   machine_type   = var.gcp_master_instance_type
   cluster_id     = var.cluster_id
@@ -91,6 +93,8 @@ module "dns" {
 }
 
 resource "google_compute_image" "cluster" {
+  count = var.gcp_preexisting_image ? 0 : 1
+
   name = "${var.cluster_id}-rhcos-image"
 
   # See https://github.com/openshift/installer/issues/2546
