@@ -78,14 +78,13 @@ IPTABLES=iptables
 # from the internet location ( IP=n.n.n.n:nn or [x:x::x]:nn )
 IP=$(echo $RHCOS_BOOT_IMAGE_URL | sed -e 's/.*:\/\/\([^/]*\)\/.*/\1/g' )
 CACHEURL="http://$IP/images"
-podman run -d --net host --name ipa-downloader \
-     --env CACHEURL=${CACHEURL} \
-     -v $IRONIC_SHARED_VOLUME:/shared:z ${IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
-
 podman run -d --net host --name coreos-downloader \
      --env CACHEURL=${CACHEURL} \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${COREOS_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh $RHCOS_BOOT_IMAGE_URL
 
+podman run -d --net host --name ipa-downloader \
+     --env CACHEURL=${CACHEURL} \
+     -v $IRONIC_SHARED_VOLUME:/shared:z ${IPA_DOWNLOADER_IMAGE} /usr/local/bin/get-resource.sh
 
 # Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
 for port in 80 5050 6385 ; do
