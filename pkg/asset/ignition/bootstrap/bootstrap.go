@@ -245,7 +245,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 
 	switch installConfig.Platform.Name() {
 	case baremetaltypes.Name:
-		platformData.BareMetal = baremetal.GetTemplateData(installConfig.Platform.BareMetal)
+		platformData.BareMetal = baremetal.GetTemplateData(installConfig.Platform.BareMetal, installConfig.MachineNetwork)
 	case vspheretypes.Name:
 		platformData.VSphere = vsphere.GetTemplateData(installConfig.Platform.VSphere)
 	}

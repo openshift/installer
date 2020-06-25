@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/baremetal"
 )
 
 // ConvertInstallConfig is modeled after the k8s conversion schemes, which is
@@ -24,6 +25,11 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 		return field.Invalid(field.NewPath("apiVersion"), config.APIVersion, fmt.Sprintf("cannot upconvert from version %s", config.APIVersion))
 	}
 	ConvertNetworking(config)
+
+	switch config.Platform.Name() {
+	case baremetal.Name:
+		ConvertBaremetal(config)
+	}
 
 	config.APIVersion = types.InstallConfigVersion
 	return nil
@@ -62,5 +68,14 @@ func ConvertNetworking(config *types.InstallConfig) {
 			_, size := entry.CIDR.Mask.Size()
 			netconf.ClusterNetwork[i].HostPrefix = int32(size) - entry.DeprecatedHostSubnetLength
 		}
+	}
+}
+
+// ConvertBaremetal upconverts deprecated fields in the baremetal
+// platform. ProvisioningDHCPExternal has been replaced by setting
+// the ProvisioningNetwork field to "Unmanaged"
+func ConvertBaremetal(config *types.InstallConfig) {
+	if config.Platform.BareMetal.DeprecatedProvisioningDHCPExternal == true && config.Platform.BareMetal.ProvisioningNetwork == "" {
+		config.Platform.BareMetal.ProvisioningNetwork = baremetal.UnmanagedProvisioningNetwork
 	}
 }

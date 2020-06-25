@@ -6,6 +6,6 @@ spec:
   provisioningInterface: "{{.Baremetal.ProvisioningNetworkInterface}}"
   provisioningIP: "{{.Baremetal.ClusterProvisioningIP}}"
   provisioningNetworkCIDR: "{{.Baremetal.ProvisioningNetworkCIDR}}"
-  provisioningDHCPExternal: {{.Baremetal.ProvisioningDHCPExternal}}
+  provisioningNetwork: "{{.Baremetal.ProvisioningNetwork}}"
   provisioningDHCPRange: "{{.Baremetal.ProvisioningDHCPRange}}"
   provisioningOSDownloadURL: "{{.ProvisioningOSDownloadURL}}"

@@ -32,42 +32,56 @@ func SetPlatformDefaults(p *baremetal.Platform, c *types.InstallConfig) {
 		p.LibvirtURI = LibvirtURI
 	}
 
-	if p.ProvisioningNetworkCIDR == nil {
-		p.ProvisioningNetworkCIDR = ipnet.MustParseCIDR(ProvisioningNetworkCIDR)
+	if p.ProvisioningNetwork == "" {
+		p.ProvisioningNetwork = baremetal.ManagedProvisioningNetwork
 	}
 
-	// If the user doesn't provide an explicit DHCP range, and DHCP is not
-	// disabled, then we set a default value from the 10th to 100th
-	// address in the network.
-	if !p.ProvisioningDHCPExternal && p.ProvisioningDHCPRange == "" {
+	switch p.ProvisioningNetwork {
+	case baremetal.DisabledProvisioningNetwork:
+		if p.ClusterProvisioningIP != "" {
+			for _, network := range c.MachineNetwork {
+				if network.CIDR.Contains(net.ParseIP(p.ClusterProvisioningIP)) {
+					p.ProvisioningNetworkCIDR = &network.CIDR
+				}
+			}
+		}
+	default:
+		if p.ProvisioningNetworkCIDR == nil {
+			p.ProvisioningNetworkCIDR = ipnet.MustParseCIDR(ProvisioningNetworkCIDR)
+		}
+
+		if p.BootstrapProvisioningIP == "" {
+			// Default to the second address in provisioning network, e.g 172.22.0.2
+			ip, err := cidr.Host(&p.ProvisioningNetworkCIDR.IPNet, 2)
+			if err == nil {
+				p.BootstrapProvisioningIP = ip.String()
+			}
+		}
+
+		if p.ClusterProvisioningIP == "" {
+			// Default to the third address in provisioning network, e.g 172.22.0.3
+			ip, err := cidr.Host(&p.ProvisioningNetworkCIDR.IPNet, 3)
+			if err == nil {
+				p.ClusterProvisioningIP = ip.String()
+			}
+		}
+
+		if p.ProvisioningBridge == "" {
+			p.ProvisioningBridge = ProvisioningBridge
+		}
+	}
+
+	// If network is managed, and user didn't specify a range, let's use the rest of the subnet range from
+	// the 10th address until the end.
+	if p.ProvisioningNetwork == baremetal.ManagedProvisioningNetwork && p.ProvisioningDHCPRange == "" {
 		startIP, _ := cidr.Host(&p.ProvisioningNetworkCIDR.IPNet, 10)
 		_, broadcastIP := cidr.AddressRange(&p.ProvisioningNetworkCIDR.IPNet)
 		endIP := cidr.Dec(broadcastIP)
 		p.ProvisioningDHCPRange = fmt.Sprintf("%s,%s", startIP, endIP)
 	}
 
-	if p.BootstrapProvisioningIP == "" {
-		// Default to the second address in provisioning network, e.g 172.22.0.2
-		ip, err := cidr.Host(&p.ProvisioningNetworkCIDR.IPNet, 2)
-		if err == nil {
-			p.BootstrapProvisioningIP = ip.String()
-		}
-	}
-
-	if p.ClusterProvisioningIP == "" {
-		// Default to the third address in provisioning network, e.g 172.22.0.3
-		ip, err := cidr.Host(&p.ProvisioningNetworkCIDR.IPNet, 3)
-		if err == nil {
-			p.ClusterProvisioningIP = ip.String()
-		}
-	}
-
 	if p.ExternalBridge == "" {
 		p.ExternalBridge = ExternalBridge
-	}
-
-	if p.ProvisioningBridge == "" {
-		p.ProvisioningBridge = ProvisioningBridge
 	}
 
 	for _, host := range p.Hosts {

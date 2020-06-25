@@ -35,6 +35,27 @@ type Host struct {
 	BootMode        BootMode                  `json:"bootMode,omitempty"`
 }
 
+// ProvisioningNetwork determines how we will use the provisioning network.
+// +kubebuilder:validation:Enum="";Managed;Unmanaged;Disabled
+type ProvisioningNetwork string
+
+const (
+	// ManagedProvisioningNetwork indicates we should fully manage the provisioning network, including DHCP
+	// services required for PXE-based provisioning.
+	ManagedProvisioningNetwork ProvisioningNetwork = "Managed"
+
+	// UnmanagedProvisioningNetwork indicates responsibility for managing the provisioning network is left to the
+	// user. No DHCP server will be configured, however TFTP remains enabled if a user wants to use PXE-based provisioning.
+	// However, they will need to configure external DHCP correctly with next-server definitions set to the relevant
+	// provisioning IP's.
+	UnmanagedProvisioningNetwork ProvisioningNetwork = "Unmanaged"
+
+	// DisabledProvisioningNetwork indicates that no provisioning network will be used. Provisioning capabilities
+	// will be limited to virtual media-based deployments only, and neither DHCP nor TFTP will be operated by the
+	// cluster.
+	DisabledProvisioningNetwork ProvisioningNetwork = "Disabled"
+)
+
 // Platform stores all the global configuration that all machinesets use.
 type Platform struct {
 	// LibvirtURI is the identifier for the libvirtd connection.  It must be
@@ -63,6 +84,11 @@ type Platform struct {
 	// +optional
 	ExternalBridge string `json:"externalBridge,omitempty"`
 
+	// ProvisioningNetwork is used to indicate if we will have a provisioning network, and how it will be managed.
+	// +kubebuilder:default=Managed
+	// +optional
+	ProvisioningNetwork ProvisioningNetwork `json:"provisioningNetwork,omitempty"`
+
 	// Provisioning bridge is used for provisioning nodes, on the host that
 	// will run the bootstrap VM.
 	// +optional
@@ -76,12 +102,10 @@ type Platform struct {
 	// +optional
 	ProvisioningNetworkCIDR *ipnet.IPNet `json:"provisioningNetworkCIDR,omitempty"`
 
-	// ProvisioningDHCPExternal indicates that DHCP is provided by an external service, appropriately
-	// configured with next-server set to BootstrapProvisioningIP for the control plane, and
-	// ClusterProvisioningIP for workers. The default for this field is false, which means we will
-	// start and manage a DHCP server on the provisioning network.
+	// DeprecatedProvisioningDHCPExternal indicates that DHCP is provided by an external service. This parameter is
+	// replaced by ProvisioningNetwork being set to "Unmanaged".
 	// +optional
-	ProvisioningDHCPExternal bool `json:"provisioningDHCPExternal,omitempty"`
+	DeprecatedProvisioningDHCPExternal bool `json:"provisioningDHCPExternal,omitempty"`
 
 	// ProvisioningDHCPRange is used to provide DHCP services to hosts
 	// for provisioning.

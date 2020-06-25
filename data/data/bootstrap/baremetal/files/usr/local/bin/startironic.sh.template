@@ -23,10 +23,16 @@ for name in ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb i
 done
 
 # Start the provisioning nic if not already started
-PROVISIONING_NIC=ens4
-if ! nmcli -t device | grep "$PROVISIONING_NIC:ethernet:connected:provisioning"; then
+PROVISIONING_NIC={{.PlatformData.BareMetal.ProvisioningInterface}}
+
+if ! nmcli -t device | grep "$PROVISIONING_NIC:ethernet:connected"; then
     nmcli c add type ethernet ifname $PROVISIONING_NIC con-name provisioning {{ if .PlatformData.BareMetal.ProvisioningIPv6 }} ip6 {{ else }} ip4 {{ end }} {{.PlatformData.BareMetal.ProvisioningIP}}/{{.PlatformData.BareMetal.ProvisioningCIDR}}
     nmcli c up provisioning
+else
+  connection=$(nmcli -t device show $PROVISIONING_NIC | grep GENERAL.CONNECTION | cut -d: -f2)
+  nmcli con modify "$connection" ifname $PROVISIONING_NIC {{ if .PlatformData.BareMetal.ProvisioningIPv6 }} ip6 {{ else }} ip4 {{ end }} {{.PlatformData.BareMetal.ProvisioningIP}}/{{.PlatformData.BareMetal.ProvisioningCIDR}}
+  nmcli con reload "$connection"
+  nmcli con up "$connection"
 fi
 
 # Wait for the interface to come up
@@ -53,14 +59,19 @@ done
 # Start dnsmasq, http, mariadb, and ironic containers using same image
 # Currently we do this outside of a pod because we need to ensure the images
 # are downloaded before starting the API pods
-podman run -d --net host --privileged --name mariadb \
-     -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/runmariadb \
-     --env MARIADB_PASSWORD=$mariadb_password ${IRONIC_IMAGE}
-
-podman run -d --net host --privileged --name dnsmasq \
+{{ if .PlatformData.BareMetal.ProvisioningDNSMasq }}
+dnsmasq_container_name="dnsmasq"
+podman run -d --net host --privileged --name $dnsmasq_container_name \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --env DHCP_RANGE=$DHCP_RANGE \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/rundnsmasq ${IRONIC_IMAGE}
+{{ else }}
+dnsmasq_container_name=""
+{{ end }}
+
+podman run -d --net host --privileged --name mariadb \
+     -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/runmariadb \
+     --env MARIADB_PASSWORD=$mariadb_password ${IRONIC_IMAGE}
 
 podman run -d --net host --privileged --name httpd \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
@@ -146,7 +157,7 @@ sudo podman run -d --net host --privileged --name ironic-api \
 # Now loop so the service remains active and restart everything should one of the containers exit unexpectedly.
 # The alternative would be RemainAfterExit=yes but then we lose the ability to restart if something crashes.
 while true; do
-    for name in ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb; do
+    for name in ironic-api ironic-conductor ironic-inspector $dnsmasq_container_name httpd mariadb; do
         # Note there are two levels of go templating here, the outer braces
         # are for the templating done in openshift-install, to escape the
         # templating input to the --format option of podman inspect

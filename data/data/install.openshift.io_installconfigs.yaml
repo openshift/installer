@@ -1119,11 +1119,9 @@ spec:
                       on the host that will run the bootstrap VM.
                     type: string
                   provisioningDHCPExternal:
-                    description: ProvisioningDHCPExternal indicates that DHCP is provided
-                      by an external service, appropriately configured with next-server
-                      set to BootstrapProvisioningIP for the control plane, and ClusterProvisioningIP
-                      for workers. The default for this field is false, which means
-                      we will start and manage a DHCP server on the provisioning network.
+                    description: DeprecatedProvisioningDHCPExternal indicates that
+                      DHCP is provided by an external service. This parameter is replaced
+                      by ProvisioningNetwork being set to "Unmanaged".
                     type: boolean
                   provisioningDHCPRange:
                     description: ProvisioningDHCPRange is used to provide DHCP services
@@ -1134,6 +1132,16 @@ spec:
                       provisioning network where the baremetal-operator pod runs provisioning
                       services, and an http server to cache some downloaded content
                       e.g RHCOS/IPA images
+                    type: string
+                  provisioningNetwork:
+                    default: Managed
+                    description: ProvisioningNetwork is used to indicate if we will
+                      have a provisioning network, and how it will be managed.
+                    enum:
+                    - ""
+                    - Managed
+                    - Unmanaged
+                    - Disabled
                     type: string
                   provisioningNetworkCIDR:
                     description: ProvisioningNetworkCIDR defines the network to use

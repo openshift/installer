@@ -13,12 +13,7 @@ variable "ignition" {
   description = "The content of the bootstrap ignition file."
 }
 
-variable "external_bridge" {
-  type        = string
-  description = "The name of the bridge providing external access"
-}
-
-variable "provisioning_bridge" {
-  type        = string
-  description = "The name of the bridge used for provisioning"
+variable "bridges" {
+  type        = list(string)
+  description = "A list of network interfaces to attach to the bootstrap virtual machine"
 }

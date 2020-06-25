@@ -45,13 +45,13 @@ func TestValidatePlatform(t *testing.T) {
 			name: "invalid_apivip",
 			platform: platform().
 				APIVIP("192.168.222.2").build(),
-			expected: "Invalid value: \"192.168.222.2\": the virtual IP is expected to be in one of the machine networks",
+			expected: "Invalid value: \"192.168.222.2\": IP expected to be in one of the machine networks: 192.168.111.0/24",
 		},
 		{
 			name: "invalid_ingressvip",
 			platform: platform().
 				IngressVIP("192.168.222.4").build(),
-			expected: "Invalid value: \"192.168.222.4\": the virtual IP is expected to be in one of the machine networks",
+			expected: "Invalid value: \"192.168.222.4\": IP expected to be in one of the machine networks: 192.168.111.0/24",
 		},
 		{
 			name: "invalid_hosts",
@@ -127,6 +127,19 @@ func TestValidatePlatform(t *testing.T) {
 			platform: platform().
 				Hosts(host1().BootMode("legacy")).build(),
 			expected: "",
+		},
+		{
+			name:     "provisioningNetwork_disabled_valid",
+			platform: platform().ProvisioningNetwork(baremetal.DisabledProvisioningNetwork).build(),
+		},
+		{
+			name:     "provisioningNetwork_unmanaged_valid",
+			platform: platform().ProvisioningNetwork(baremetal.UnmanagedProvisioningNetwork).build(),
+		},
+		{
+			name:     "provisioningNetwork_invalid",
+			platform: platform().ProvisioningNetwork("Invalid").build(),
+			expected: `Unsupported value: "Invalid": supported values: "Disabled", "Managed", "Unmanaged"`,
 		},
 	}
 
@@ -283,13 +296,14 @@ func TestValidateProvisioning(t *testing.T) {
 			name: "invalid_bootstrapprovip_machineCIDR",
 			platform: platform().
 				BootstrapProvisioningIP("192.168.111.5").build(),
-			expected: "Invalid value: \"192.168.111.5\": the IP must not be in one of the machine networks",
+			expected: "Invalid value: \"192.168.111.5\": \"192.168.111.5\" is not in the provisioning network",
 		},
+
 		{
 			name: "invalid_clusterprovip_machineCIDR",
 			platform: platform().
 				ClusterProvisioningIP("192.168.111.5").build(),
-			expected: "Invalid value: \"192.168.111.5\": the IP must not be in one of the machine networks",
+			expected: "Invalid value: \"192.168.111.5\": \"192.168.111.5\" is not in the provisioning network",
 		},
 		{
 			name: "invalid_clusterprovip_wrongCIDR",
@@ -349,6 +363,34 @@ func TestValidateProvisioning(t *testing.T) {
 				LibvirtURI("bad").build(),
 			expected: "invalid URI \"bad\"",
 		},
+
+		// Disabled provisioning network
+		{
+			name:   "valid_provisioningDisabled_noProvisioningInterface",
+			config: installConfig().Network(networking().Network("192.168.111.0/24")).build(),
+			platform: platform().
+				ProvisioningNetwork(baremetal.DisabledProvisioningNetwork).
+				ClusterProvisioningIP("192.168.111.2").
+				BootstrapProvisioningIP("192.168.111.3").
+				ProvisioningNetworkInterface("").build(),
+		},
+		{
+			name:   "valid_provisioningDisabled_IPs_in_machineCIDR",
+			config: installConfig().Network(networking().Network("192.168.111.0/24")).build(),
+			platform: platform().
+				ProvisioningNetwork(baremetal.DisabledProvisioningNetwork).
+				ClusterProvisioningIP("192.168.111.2").
+				BootstrapProvisioningIP("192.168.111.3").build(),
+		},
+		{
+			name:   "invalid_provisioningDisabled_IPs_not_in_machineCIDR",
+			config: installConfig().Network(networking().Network("192.168.111.0/24")).build(),
+			platform: platform().
+				ProvisioningNetwork(baremetal.DisabledProvisioningNetwork).
+				BootstrapProvisioningIP("192.168.111.3").
+				ClusterProvisioningIP("192.168.0.2").build(),
+			expected: "Invalid value: \"192.168.0.2\": provisioning network is disabled, IP expected to be in one of the machine networks: 192.168.111.0/24",
+		},
 	}
 
 	for _, tc := range cases {
@@ -356,8 +398,8 @@ func TestValidateProvisioning(t *testing.T) {
 			//Build default wrapping installConfig
 			if tc.config == nil {
 				tc.config = installConfig().build()
-				tc.config.BareMetal = tc.platform
 			}
+			tc.config.BareMetal = tc.platform
 
 			defaults.SetPlatformDefaults(tc.config.BareMetal, tc.config)
 
@@ -450,6 +492,7 @@ func platform() *platformBuilder {
 			Hosts:                        []*baremetal.Host{},
 			LibvirtURI:                   "qemu://system",
 			ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("172.22.0.0/24"),
+			ProvisioningNetwork:          baremetal.ManagedProvisioningNetwork,
 			ClusterProvisioningIP:        "172.22.0.3",
 			BootstrapProvisioningIP:      "172.22.0.2",
 			ExternalBridge:               "br0",
@@ -464,6 +507,11 @@ func (pb *platformBuilder) build() *baremetal.Platform {
 
 func (pb *platformBuilder) ProvisioningNetworkCIDR(value string) *platformBuilder {
 	pb.Platform.ProvisioningNetworkCIDR = ipnet.MustParseCIDR(value)
+	return pb
+}
+
+func (pb *platformBuilder) ProvisioningNetwork(value baremetal.ProvisioningNetwork) *platformBuilder {
+	pb.Platform.ProvisioningNetwork = value
 	return pb
 }
 
@@ -561,6 +609,12 @@ func (icb *installConfigBuilder) ControlPlane(builder *machinePoolBuilder) *inst
 	return icb
 }
 
+func (icb *installConfigBuilder) Network(builder *networkingBuilder) *installConfigBuilder {
+	icb.InstallConfig.Networking = builder.build()
+
+	return icb
+}
+
 func (icb *installConfigBuilder) Compute(builders ...*machinePoolBuilder) *installConfigBuilder {
 	icb.InstallConfig.Compute = nil
 	for _, builder := range builders {
@@ -586,4 +640,28 @@ func (mpb *machinePoolBuilder) build() *types.MachinePool {
 func (mpb *machinePoolBuilder) Replicas(count int64) *machinePoolBuilder {
 	mpb.MachinePool.Replicas = &count
 	return mpb
+}
+
+type networkingBuilder struct {
+	types.Networking
+}
+
+func networking() *networkingBuilder {
+	return &networkingBuilder{
+		Networking: types.Networking{},
+	}
+}
+
+func (nb *networkingBuilder) Network(cidr string) *networkingBuilder {
+	network := ipnet.MustParseCIDR(cidr)
+
+	nb.MachineNetwork = append(nb.MachineNetwork, types.MachineNetworkEntry{
+		CIDR: *network,
+	})
+
+	return nb
+}
+
+func (nb *networkingBuilder) build() *types.Networking {
+	return &nb.Networking
 }

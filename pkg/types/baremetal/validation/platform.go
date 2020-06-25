@@ -12,12 +12,13 @@ import (
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/validate"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // dynamicProvisioningValidator is a function that validates certain fields in the platform.
@@ -29,12 +30,16 @@ type dynamicProvisioningValidator func(*baremetal.Platform, *field.Path) field.E
 var dynamicProvisioningValidators []dynamicProvisioningValidator
 
 func validateIPinMachineCIDR(vip string, n *types.Networking) error {
+	var networks []string
+
 	for _, network := range n.MachineNetwork {
 		if network.CIDR.Contains(net.ParseIP(vip)) {
 			return nil
 		}
+		networks = append(networks, network.CIDR.String())
 	}
-	return fmt.Errorf("the virtual IP is expected to be in one of the machine networks")
+
+	return fmt.Errorf("IP expected to be in one of the machine networks: %s", strings.Join(networks, ","))
 }
 
 func validateIPNotinMachineCIDR(ip string, n *types.Networking) error {
@@ -289,6 +294,15 @@ func validateBootMode(hosts []*baremetal.Host, fldPath *field.Path) (errors fiel
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	provisioningNetwork := sets.NewString(string(baremetal.ManagedProvisioningNetwork),
+		string(baremetal.UnmanagedProvisioningNetwork),
+		string(baremetal.DisabledProvisioningNetwork))
+
+	if !provisioningNetwork.Has(string(p.ProvisioningNetwork)) {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("provisioningNetwork"), p.ProvisioningNetwork, provisioningNetwork.List()))
+	}
+
 	if err := validate.IP(p.ClusterProvisioningIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningHostIP"), p.ClusterProvisioningIP, err.Error()))
 	}
@@ -332,14 +346,21 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if err := validate.IP(p.BootstrapProvisioningIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, err.Error()))
-	}
-	if err := validateIPNotinMachineCIDR(p.ClusterProvisioningIP, n); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningHostIP"), p.ClusterProvisioningIP, err.Error()))
-	}
+	switch p.ProvisioningNetwork {
+	// If we do not have a provisioning network, provisioning services
+	// will be run on the external network. Users must provide IP's on the
+	// machine networks to host those services.
+	case baremetal.DisabledProvisioningNetwork:
+		// Ensure bootstrapProvisioningIP is in one of the machine networks
+		if err := validateIPinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, fmt.Sprintf("provisioning network is disabled, %s", err.Error())))
+		}
 
-	if p.ProvisioningNetworkCIDR != nil {
+		// Ensure clusterProvisioningIP is in one of the machine networks
+		if err := validateIPinMachineCIDR(p.ClusterProvisioningIP, n); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, fmt.Sprintf("provisioning network is disabled, %s", err.Error())))
+		}
+	default:
 		// Ensure provisioningNetworkCIDR doesn't overlap with any machine network
 		if err := validateNoOverlapMachineCIDR(&p.ProvisioningNetworkCIDR.IPNet, n); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkCIDR"), p.ProvisioningNetworkCIDR.String(), err.Error()))
@@ -354,19 +375,18 @@ func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *f
 		if !p.ProvisioningNetworkCIDR.Contains(net.ParseIP(p.ClusterProvisioningIP)) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, fmt.Sprintf("%q is not in the provisioning network", p.ClusterProvisioningIP)))
 		}
-	}
 
-	if p.ProvisioningDHCPRange != "" {
-		allErrs = append(allErrs, validateDHCPRange(p, fldPath)...)
-	}
+		if err := validateIPNotinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, err.Error()))
+		}
 
-	if err := validateIPNotinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapHostIP"), p.BootstrapProvisioningIP, err.Error()))
-	}
-
-	// Make sure the provisioning interface is set.  Very little we can do to validate this  as it's not on this machine.
-	if p.ProvisioningNetworkInterface == "" {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkInterface"), p.ProvisioningNetworkInterface, "no provisioning network interface is configured, please set this value to be the interface on the provisioning network on your cluster's baremetal hosts"))
+		if p.ProvisioningDHCPRange != "" {
+			allErrs = append(allErrs, validateDHCPRange(p, fldPath)...)
+		}
+		// Make sure the provisioning interface is set.  Very little we can do to validate this  as it's not on this machine.
+		if p.ProvisioningNetworkInterface == "" {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkInterface"), p.ProvisioningNetworkInterface, "no provisioning network interface is configured, please set this value to be the interface on the provisioning network on your cluster's baremetal hosts"))
+		}
 	}
 
 	if err := validate.URI(p.LibvirtURI); err != nil {
