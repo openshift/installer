@@ -1317,9 +1317,6 @@ spec:
                 required:
                 - cloud
                 - computeFlavor
-                - externalNetwork
-                - ingressFloatingIP
-                - lbFloatingIP
                 - octaviaSupport
                 - region
                 - trunkSupport

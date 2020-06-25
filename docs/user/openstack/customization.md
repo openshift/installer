@@ -21,15 +21,15 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `computeFlavor` (required string): The OpenStack flavor to use for compute and control-plane machines.
     This is currently required, but has lower precedence than [the `type` property](#machine-pools) on [the `compute` and `controlPlane` machine-pools](../customization.md#platform-customization).
 * `externalDNS` (optional list of strings): The IP addresses of DNS servers to be used for the DNS resolution of all instances in the cluster
-* `externalNetwork` (required string): The OpenStack external network name to be used for installation.
-* `lbFloatingIP` (required string): Existing Floating IP to associate with the API load balancer.
+* `externalNetwork` (optional string): Name of external network the installer will use to provide access to the cluster. If defined, a floating ip from this network will be created and associated with the bootstrap node to facilitate debugging and connection to the bootstrap node during installation. The lbFloatingIP property is a floating ip address selected from this network.
+* `lbFloatingIP` (optional string): Address of existing Floating IP from externalNetwork the installer will associate with the API load balancer. This property is only valid if externalNetwork is defined. If externalNetwork is not defined, this property is ignored.
 * `octaviaSupport` (deprecated string): Whether OpenStack supports Octavia (`1` for true or `0` for false)
 * `region` (deprecated string): The OpenStack region where the cluster will be created. Currently this value is not used by the installer.
 * `trunkSupport` (deprecated string): Whether OpenStack ports can be trunked (`1` for true or `0` for false)
 * `clusterOSImage` (optional string): Either a URL with `http(s)` or `file` scheme to override the default OS image for cluster nodes or an existing Glance image name.
-* `apiVIP` (optional string): An IP addresss on the machineNetwork that will be assigned to the API VIP. Be aware that the `10` and `11` of the machineNetwork will be taken by neutron dhcp by default, and wont be available.
+* `apiVIP` (optional string): An IP address on the machineNetwork that will be assigned to the API VIP. Be aware that the `10` and `11` of the machineNetwork will be taken by neutron dhcp by default, and wont be available.
 * `ingressVIP` (optional string): An IP address on the machineNetwork that will be assigned to the ingress VIP. Be aware that the `10` and `11` of the machineNetwork will be taken by neutron dhcp by default, and wont be available.
-* `machinesSubnet` (optional string): the UUID of an openstack subnet to install the nodes of the cluster onto. For more information on how to install with a custom subnet, see the [custom subnets](#custom-subnets) section of the docs.
+* `machinesSubnet` (optional string): the UUID of an OpenStack subnet to install the nodes of the cluster onto. For more information on how to install with a custom subnet, see the [custom subnets](#custom-subnets) section of the docs.
 
 ## Machine pools
 

@@ -2,10 +2,11 @@ locals {
   nodes_cidr_block = var.cidr_block
   nodes_subnet_id  = var.machines_subnet_id != "" ? var.machines_subnet_id : openstack_networking_subnet_v2.nodes[0].id
   nodes_network_id = var.machines_network_id != "" ? var.machines_network_id : openstack_networking_network_v2.openshift-private[0].id
-  create_router    = var.machines_subnet_id != "" ? 0 : 1
+  create_router    = (var.external_network != "" && var.machines_subnet_id == "") ? 1 : 0
 }
 
 data "openstack_networking_network_v2" "external_network" {
+  count      = var.external_network != "" ? 1 : 0
   name       = var.external_network
   network_id = var.external_network_id
   external   = true
@@ -104,7 +105,7 @@ resource "openstack_networking_trunk_v2" "masters" {
   port_id        = openstack_networking_port_v2.masters[count.index].id
 }
 
-// Assign the floating IP to one of the masters.
+// If external network is defined, assign the floating IP to one of the masters.
 //
 // Strictly speaking, this is not required to finish the installation. We
 // support environments without floating IPs. However, since the installer
@@ -117,9 +118,13 @@ resource "openstack_networking_trunk_v2" "masters" {
 // step that can't always be automated (we need to support OpenStack clusters)
 // that do not have or do not want to use Octavia.
 //
+// If an external network has not bee defined then a floating IP
+// will not be provided or assigned to the masters.
+//
 // If the floating IP is not provided, the installer will time out waiting for
 // bootstrapping to complete, but the OpenShift cluster itself should come up
 // as expected.
+
 resource "openstack_networking_floatingip_associate_v2" "api_fip" {
   count       = length(var.lb_floating_ip) == 0 ? 0 : 1
   port_id     = openstack_networking_port_v2.api_port.id
@@ -138,12 +143,12 @@ resource "openstack_networking_router_v2" "openshift-external-router" {
   count               = local.create_router
   name                = "${var.cluster_id}-external-router"
   admin_state_up      = true
-  external_network_id = data.openstack_networking_network_v2.external_network.id
+  external_network_id = join("", data.openstack_networking_network_v2.external_network.*.id)
   tags                = ["openshiftClusterID=${var.cluster_id}"]
 }
 
 resource "openstack_networking_router_interface_v2" "nodes_router_interface" {
   count     = local.create_router
-  router_id = openstack_networking_router_v2.openshift-external-router[0].id
+  router_id = join("", openstack_networking_router_v2.openshift-external-router.*.id)
   subnet_id = local.nodes_subnet_id
 }
