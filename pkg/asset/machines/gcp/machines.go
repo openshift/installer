@@ -69,7 +69,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, osImage string, azIdx int, role, userDataSecret string) (*gcpprovider.GCPMachineProviderSpec, error) {
 	az := mpool.Zones[azIdx]
-
+	if len(platform.Licenses) > 0 {
+		osImage = fmt.Sprintf("%s-rhcos-image", clusterID)
+	}
 	network, subnetwork, err := getNetworks(platform, clusterID, role)
 	if err != nil {
 		return nil, err
@@ -87,7 +89,7 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			Boot:       true,
 			SizeGb:     mpool.OSDisk.DiskSizeGB,
 			Type:       mpool.OSDisk.DiskType,
-			Image:      fmt.Sprintf("%s-rhcos-image", clusterID),
+			Image:      osImage,
 		}},
 		NetworkInterfaces: []*gcpprovider.GCPNetworkInterface{{
 			Network:    network,
