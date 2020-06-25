@@ -46,11 +46,11 @@ variable "external_dns" {
 }
 
 variable "trunk_support" {
-  type = string
+  type = bool
 }
 
 variable "octavia_support" {
-  type = string
+  type = bool
 }
 
 variable "machines_subnet_id" {

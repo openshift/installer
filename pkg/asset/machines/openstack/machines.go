@@ -4,6 +4,9 @@ package openstack
 import (
 	"fmt"
 
+	"github.com/gophercloud/gophercloud"
+	netext "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions"
+	"github.com/gophercloud/utils/openstack/clientconfig"
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,9 +40,10 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	platform := config.Platform.OpenStack
 
 	az := ""
-	trunk := platform.TrunkSupport
-
-	provider := generateProvider(clusterID, platform, pool.Platform.OpenStack, osImage, az, role, userDataSecret, trunk)
+	provider, err := generateProvider(clusterID, platform, pool.Platform.OpenStack, osImage, az, role, userDataSecret)
+	if err != nil {
+		return nil, err
+	}
 
 	if role == "master" {
 		provider.ServerGroupName = clusterID + "-master"
@@ -78,7 +82,12 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunk string) *openstackprovider.OpenstackProviderSpec {
+func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string) (*openstackprovider.OpenstackProviderSpec, error) {
+	trunkSupport, err := checkNetworkExtensionAvailability(platform.Cloud, "trunk")
+	if err != nil {
+		return nil, err
+	}
+
 	var networks []openstackprovider.NetworkParam
 	if platform.MachinesSubnet != "" {
 		networks = []openstackprovider.NetworkParam{{
@@ -126,7 +135,7 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		Networks:         networks,
 		AvailabilityZone: az,
 		SecurityGroups:   securityGroups,
-		Trunk:            trunkSupportBoolean(trunk),
+		Trunk:            trunkSupport,
 		Tags: []string{
 			fmt.Sprintf("openshiftClusterID=%s", clusterID),
 		},
@@ -145,16 +154,28 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 	} else {
 		spec.Image = osImage
 	}
-	return &spec
+	return &spec, nil
 }
 
-func trunkSupportBoolean(trunkSupport string) (result bool) {
-	if trunkSupport == "1" {
-		result = true
-	} else {
-		result = false
+func checkNetworkExtensionAvailability(cloud, alias string) (bool, error) {
+	opts := &clientconfig.ClientOpts{
+		Cloud: cloud,
 	}
-	return
+
+	conn, err := clientconfig.NewServiceClient("network", opts)
+	if err != nil {
+		return false, err
+	}
+
+	res := netext.Get(conn, alias)
+	if res.Err != nil {
+		if _, ok := res.Err.(gophercloud.ErrDefault404); ok {
+			return false, nil
+		}
+		return false, res.Err
+	}
+
+	return true, nil
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
