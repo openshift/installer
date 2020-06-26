@@ -155,7 +155,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_tcp" {
   protocol          = "tcp"
   port_range_min    = 30000
   port_range_max    = 32767
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.worker.id
 
   depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_kubelet_insecure]
@@ -167,7 +167,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_udp" {
   protocol          = "udp"
   port_range_min    = 30000
   port_range_max    = 32767
-  remote_ip_prefix  = var.cidr_block
+  remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.worker.id
 
   depends_on = [openstack_networking_secgroup_rule_v2.worker_ingress_services_tcp]
