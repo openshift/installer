@@ -1,57 +1,76 @@
 {
-    "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.5-s390x/45.81.202005020555-0/s390x/",
-    "buildid": "45.81.202005020555-0",
+    "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.6-s390x/46.82.202006241639-0/s390x/",
+    "buildid": "46.82.202006241639-0",
     "images": {
         "dasd": {
-            "path": "rhcos-45.81.202005020555-0-dasd.s390x.raw.gz",
-            "sha256": "69b972efb6c26fadb4e65d3186361b012894afe33412b338de796a27b7db20ee",
-            "size": 797188604,
-            "uncompressed-sha256": "ca83c51de424fa1803117b2759b65c6e92316dd5acaa6102fac79ec834b48208",
-            "uncompressed-size": 3568304128
+            "path": "rhcos-46.82.202006241639-0-dasd.s390x.raw.gz",
+            "sha256": "2bfeac3861b5786ededdea3dfe13d1698831b0b2f54cb9e6e0e04388d105f9b0",
+            "size": 832351316,
+            "uncompressed-sha256": "cf389be55dc2e7c51dc9beb5305637f90df94b635bc0195e7cc7abddb2e2ab51",
+            "uncompressed-size": 3682598912
         },
         "initramfs": {
-            "path": "rhcos-45.81.202005020555-0-installer-initramfs.s390x.img",
-            "sha256": "d9cce833b56ad3444892d99a9d5386dae3c1fec91fdd35c3d2c1b55a520b4a60"
+            "path": "rhcos-46.82.202006241639-0-installer-initramfs.s390x.img",
+            "sha256": "097f1844930727d053efeda1ba848c93d130b760f250d25a006fda3e2b43346e"
         },
         "iso": {
-            "path": "rhcos-45.81.202005020555-0-installer.s390x.iso",
-            "sha256": "1f2103b9ec3ac42de396ceb02c0f31e4cfd8d1e502df09f2c6a5b92d99b2a4f3"
+            "path": "rhcos-46.82.202006241639-0-installer.s390x.iso",
+            "sha256": "6f9cc505ee2b68e7336b562ed58411c30f54c18dab5df4538e193d06eb2fcc85"
         },
         "kernel": {
-            "path": "rhcos-45.81.202005020555-0-installer-kernel-s390x",
-            "sha256": "08906e6d627688378be7c26c614ef39430f3b837a8fa9fda698d361116d65abb"
+            "path": "rhcos-46.82.202006241639-0-installer-kernel-s390x",
+            "sha256": "7a468bd7f6f67bb156ea64f29cb23ad59eddd1a322b7cc850c5a0c26aef01e7f"
+        },
+        "live-initramfs": {
+            "path": "rhcos-46.82.202006241639-0-live-initramfs.s390x.img",
+            "sha256": "72ef01220faae98db0f9e27d8cdf46a7597294be2e0a1b787612a4c0c8a64d00"
+        },
+        "live-iso": {
+            "path": "rhcos-46.82.202006241639-0-live.s390x.iso",
+            "sha256": "c17320745bb8b7d11f0cb2bc08f4f27edf9c5bb18c8f0c2c4fee6fccb44c3a36"
+        },
+        "live-kernel": {
+            "path": "rhcos-46.82.202006241639-0-live-kernel-s390x",
+            "sha256": "7a468bd7f6f67bb156ea64f29cb23ad59eddd1a322b7cc850c5a0c26aef01e7f"
         },
         "metal": {
-            "path": "rhcos-45.81.202005020555-0-metal.s390x.raw.gz",
-            "sha256": "0ebbd895d2b56cb3fbf17e6779e29d19ec13b0c2fb2c4757b90370110db5c99e",
-            "size": 797100175,
-            "uncompressed-sha256": "83e3e251307f3cb45350a64fbea09465174cffdfb6856b70779a29b3a80d5646",
-            "uncompressed-size": 3568304128
+            "path": "rhcos-46.82.202006241639-0-metal.s390x.raw.gz",
+            "sha256": "9cedf7df554abea5c98eea65dd58a8aa587268729aebbff65de075bbcb6a627c",
+            "size": 832389552,
+            "uncompressed-sha256": "ae430bcc6df24a6daa5e735e27ab5107a76bba28a8f1d6e684f435ac32479ed6",
+            "uncompressed-size": 3682598912
+        },
+        "metal4k": {
+            "path": "rhcos-46.82.202006241639-0-metal4k.s390x.raw.gz",
+            "sha256": "db0e572ece27d83919e22b00355a6aab7927356012ca8c4f9267ad8fb3318b31",
+            "size": 832436489,
+            "uncompressed-sha256": "1d705d296b0abcbaef5ee1122921784e9fc0a6e9287609fff8471111a4e368d8",
+            "uncompressed-size": 3682598912
         },
         "openstack": {
-            "path": "rhcos-45.81.202005020555-0-openstack.s390x.qcow2.gz",
-            "sha256": "f0b7237cbcae8cc4fee3503f158e03cd7e2e55ce557c6ab6313365f8da6f3242",
-            "size": 795947849,
-            "uncompressed-sha256": "a1aa568e92a1f28b49ad8fc394f7154687e8c54ecbfa45deca739146fadd0f6b",
-            "uncompressed-size": 2224816128
+            "path": "rhcos-46.82.202006241639-0-openstack.s390x.qcow2.gz",
+            "sha256": "393481755869aab7cee4218da05b8749340335eec39cbd7eaa76076b86b40549",
+            "size": 831110776,
+            "uncompressed-sha256": "b28efc53e9d3dbde628cbcc6538821d0901d333361a0df7176b9c50579f72337",
+            "uncompressed-size": 2306998272
         },
         "ostree": {
-            "path": "rhcos-45.81.202005020555-0-ostree.s390x.tar",
-            "sha256": "3102b3d526430cc73da11494765029bf9b54fc8151b5d14cdb00df2eddb6b5f9",
-            "size": 745584640
+            "path": "rhcos-46.82.202006241639-0-ostree.s390x.tar",
+            "sha256": "755ffc75c2551eebd7c5d8284a501efb87b96fc41a7ba8cf375525d84dd0e885",
+            "size": 778444800
         },
         "qemu": {
-            "path": "rhcos-45.81.202005020555-0-qemu.s390x.qcow2.gz",
-            "sha256": "d6e523879c7e10e0547dffdd06c12c7748c6b598d3bef43ab2a46c04217aae41",
-            "size": 797517829,
-            "uncompressed-sha256": "9e4f4a9b46ca90cb4da2b2611592ec62ade470c812e5545642ffea2bd4308315",
-            "uncompressed-size": 2272002048
+            "path": "rhcos-46.82.202006241639-0-qemu.s390x.qcow2.gz",
+            "sha256": "508eeecf9011b59139a9c1f910fc444c0dac6e43ae424a15106c98fa1b609f85",
+            "size": 832217393,
+            "uncompressed-sha256": "655a3ec009a88a7f47cba5f80ddb728f26991ab231a20b4cd19a23386ad725d5",
+            "uncompressed-size": 2356215808
         }
     },
     "oscontainer": {
-        "digest": "sha256:0a05c9f97e6f08383078329634ff29dbf32700547d42e601d6156e7af0f10039",
+        "digest": "sha256:6728457912a2ba37f42b206cb356d1d5b79e90f8224b69d498473a114d1b5fb0",
         "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
     },
-    "ostree-commit": "ae47674eca7dffb4d179b9f61589ed5c05566d9a20d4345715c3195938b693b7",
-    "ostree-version": "45.81.202005020555-0"
+    "ostree-commit": "6dc0583bd710713416e4b2ed3f98b5cdf6ec746d3ea1b6413a1deaf87b210317",
+    "ostree-version": "46.82.202006241639-0"
 }
