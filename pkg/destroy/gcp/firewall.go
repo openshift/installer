@@ -72,13 +72,14 @@ func (o *ClusterUninstaller) destroyFirewalls() error {
 		return err
 	}
 	items := o.insertPendingItems("firewall", found)
-	errs := []error{}
 	for _, item := range items {
 		err := o.deleteFirewall(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("firewall")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("firewall"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }

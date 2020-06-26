@@ -72,13 +72,14 @@ func (o *ClusterUninstaller) destroyServiceAccounts() error {
 	o.insertPendingItems("serviceaccount_binding", found) // store service accounts to remove project IAM binding
 
 	items := o.insertPendingItems("serviceaccount", found)
-	errs := []error{}
 	for _, item := range items {
 		err := o.deleteServiceAccount(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("serviceaccount")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("serviceaccount"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }

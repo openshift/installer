@@ -72,13 +72,14 @@ func (o *ClusterUninstaller) destroyBackendServices() error {
 		return err
 	}
 	items := o.insertPendingItems("backendservice", found)
-	errs := []error{}
 	for _, item := range items {
 		err := o.deleteBackendService(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("backendservice")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("backendservice"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }

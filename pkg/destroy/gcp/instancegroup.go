@@ -106,13 +106,14 @@ func (o *ClusterUninstaller) destroyInstanceGroups() error {
 		return err
 	}
 	items := o.insertPendingItems("instancegroup", found)
-	errs := []error{}
 	for _, item := range items {
 		err := o.deleteInstanceGroup(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("instancegroup")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("instancegroup"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }

@@ -72,13 +72,14 @@ func (o *ClusterUninstaller) destroyAddresses() error {
 		return err
 	}
 	items := o.insertPendingItems("address", found)
-	errs := []error{}
 	for _, item := range items {
 		err := o.deleteAddress(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("address")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("address"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }

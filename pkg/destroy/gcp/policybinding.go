@@ -76,5 +76,8 @@ func (o *ClusterUninstaller) destroyIAMPolicyBindings() error {
 	}
 	o.insertPendingItems("iampolicy", []cloudResource{{key: "policy", name: "policy", typeName: "iampolicy"}})
 	err = o.setProjectIAMPolicy(policy)
-	return aggregateError([]error{err}, 1)
+	if err != nil {
+		return err
+	}
+	return errors.Errorf("%d items pending", 1)
 }

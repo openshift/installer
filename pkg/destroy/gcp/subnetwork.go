@@ -72,13 +72,14 @@ func (o *ClusterUninstaller) destroySubnetworks() error {
 		return err
 	}
 	items := o.insertPendingItems("subnetwork", found)
-	errs := []error{}
 	for _, item := range items {
 		err := o.deleteSubnetwork(item)
 		if err != nil {
-			errs = append(errs, err)
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	items = o.getPendingItems("subnetwork")
-	return aggregateError(errs, len(items))
+	if items = o.getPendingItems("subnetwork"); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
 }
