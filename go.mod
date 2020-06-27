@@ -3,6 +3,7 @@ module github.com/openshift/installer
 go 1.14
 
 require (
+	cloud.google.com/go v0.56.0
 	github.com/Azure/azure-sdk-for-go v43.2.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.10.0
 	github.com/Azure/go-autorest/autorest/adal v0.8.2
@@ -25,6 +26,7 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/golang/mock v1.4.3
+	github.com/golang/protobuf v1.3.5
 	github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible // indirect
 	github.com/google/uuid v1.1.1
 	github.com/gophercloud/gophercloud v0.8.0
@@ -87,6 +89,8 @@ require (
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d
 	google.golang.org/api v0.25.0
+	google.golang.org/genproto v0.0.0-20200331122359-1ee6d9798940
+	google.golang.org/grpc v1.28.0
 	gopkg.in/AlecAivazis/survey.v1 v1.8.9-0.20200217094205-6773bdf39b7f
 	gopkg.in/ini.v1 v1.51.0
 	gopkg.in/yaml.v2 v2.2.8
