@@ -40,6 +40,10 @@ func (Generator) Help() *markers.DefinitionHelp {
 				Summary: "indicates whether or not we should turn off pruning. ",
 				Details: "Left unspecified, it'll default to true when only a v1beta1 CRD is generated (to preserve compatibility with older versions of this tool), or false otherwise. \n It's required to be false for v1 CRDs.",
 			},
+			"AllowDangerousTypes": markers.DetailedHelp{
+				Summary: "allows types which are usually omitted from CRD generation because they are not recommended. ",
+				Details: "Currently the following additional types are allowed when this is true: float32 float64 \n Left unspecified, the default is false",
+			},
 			"MaxDescLen": markers.DetailedHelp{
 				Summary: "specifies the maximum description length for fields in CRD's OpenAPI schema. ",
 				Details: "0 indicates drop the description for all fields completely. n indicates limit the description to at most n characters and truncate the description to closest sentence boundary if it exceeds n characters.",

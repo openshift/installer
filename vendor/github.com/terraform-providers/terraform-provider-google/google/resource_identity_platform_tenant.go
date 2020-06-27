@@ -122,6 +122,9 @@ func resourceIdentityPlatformTenantCreate(d *schema.ResourceData, meta interface
 	if err != nil {
 		return fmt.Errorf("Error creating Tenant: %s", err)
 	}
+	if err := d.Set("name", flattenIdentityPlatformTenantName(res["name"], d, config)); err != nil {
+		return fmt.Errorf(`Error setting computed identity field "name": %s`, err)
+	}
 
 	// Store the ID now
 	id, err := replaceVars(d, config, "projects/{{project}}/tenants/{{name}}")
@@ -169,19 +172,19 @@ func resourceIdentityPlatformTenantRead(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("Error reading Tenant: %s", err)
 	}
 
-	if err := d.Set("name", flattenIdentityPlatformTenantName(res["name"], d)); err != nil {
+	if err := d.Set("name", flattenIdentityPlatformTenantName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Tenant: %s", err)
 	}
-	if err := d.Set("display_name", flattenIdentityPlatformTenantDisplayName(res["displayName"], d)); err != nil {
+	if err := d.Set("display_name", flattenIdentityPlatformTenantDisplayName(res["displayName"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Tenant: %s", err)
 	}
-	if err := d.Set("allow_password_signup", flattenIdentityPlatformTenantAllowPasswordSignup(res["allowPasswordSignup"], d)); err != nil {
+	if err := d.Set("allow_password_signup", flattenIdentityPlatformTenantAllowPasswordSignup(res["allowPasswordSignup"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Tenant: %s", err)
 	}
-	if err := d.Set("enable_email_link_signin", flattenIdentityPlatformTenantEnableEmailLinkSignin(res["enableEmailLinkSignin"], d)); err != nil {
+	if err := d.Set("enable_email_link_signin", flattenIdentityPlatformTenantEnableEmailLinkSignin(res["enableEmailLinkSignin"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Tenant: %s", err)
 	}
-	if err := d.Set("disable_auth", flattenIdentityPlatformTenantDisableAuth(res["disableAuth"], d)); err != nil {
+	if err := d.Set("disable_auth", flattenIdentityPlatformTenantDisableAuth(res["disableAuth"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Tenant: %s", err)
 	}
 
@@ -305,26 +308,26 @@ func resourceIdentityPlatformTenantImport(d *schema.ResourceData, meta interface
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenIdentityPlatformTenantName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenIdentityPlatformTenantName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
 	return NameFromSelfLinkStateFunc(v)
 }
 
-func flattenIdentityPlatformTenantDisplayName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenIdentityPlatformTenantDisplayName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenIdentityPlatformTenantAllowPasswordSignup(v interface{}, d *schema.ResourceData) interface{} {
+func flattenIdentityPlatformTenantAllowPasswordSignup(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenIdentityPlatformTenantEnableEmailLinkSignin(v interface{}, d *schema.ResourceData) interface{} {
+func flattenIdentityPlatformTenantEnableEmailLinkSignin(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenIdentityPlatformTenantDisableAuth(v interface{}, d *schema.ResourceData) interface{} {
+func flattenIdentityPlatformTenantDisableAuth(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 

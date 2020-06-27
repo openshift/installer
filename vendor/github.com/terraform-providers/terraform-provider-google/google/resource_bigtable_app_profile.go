@@ -61,10 +61,11 @@ func resourceBigtableAppProfile() *schema.Resource {
 				Default:     false,
 			},
 			"instance": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: `The name of the instance to create the app profile within.`,
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: compareResourceNames,
+				Description:      `The name of the instance to create the app profile within.`,
 			},
 			"multi_cluster_routing_use_any": {
 				Type:     schema.TypeBool,
@@ -136,6 +137,11 @@ func resourceBigtableAppProfileCreate(d *schema.ResourceData, meta interface{}) 
 		obj["singleClusterRouting"] = singleClusterRoutingProp
 	}
 
+	obj, err = resourceBigtableAppProfileEncoder(d, meta, obj)
+	if err != nil {
+		return err
+	}
+
 	url, err := replaceVars(d, config, "{{BigtableBasePath}}projects/{{project}}/instances/{{instance}}/appProfiles?appProfileId={{app_profile_id}}")
 	if err != nil {
 		return err
@@ -149,6 +155,9 @@ func resourceBigtableAppProfileCreate(d *schema.ResourceData, meta interface{}) 
 	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating AppProfile: %s", err)
+	}
+	if err := d.Set("name", flattenBigtableAppProfileName(res["name"], d, config)); err != nil {
+		return fmt.Errorf(`Error setting computed identity field "name": %s`, err)
 	}
 
 	// Store the ID now
@@ -184,16 +193,16 @@ func resourceBigtableAppProfileRead(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("Error reading AppProfile: %s", err)
 	}
 
-	if err := d.Set("name", flattenBigtableAppProfileName(res["name"], d)); err != nil {
+	if err := d.Set("name", flattenBigtableAppProfileName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading AppProfile: %s", err)
 	}
-	if err := d.Set("description", flattenBigtableAppProfileDescription(res["description"], d)); err != nil {
+	if err := d.Set("description", flattenBigtableAppProfileDescription(res["description"], d, config)); err != nil {
 		return fmt.Errorf("Error reading AppProfile: %s", err)
 	}
-	if err := d.Set("multi_cluster_routing_use_any", flattenBigtableAppProfileMultiClusterRoutingUseAny(res["multiClusterRoutingUseAny"], d)); err != nil {
+	if err := d.Set("multi_cluster_routing_use_any", flattenBigtableAppProfileMultiClusterRoutingUseAny(res["multiClusterRoutingUseAny"], d, config)); err != nil {
 		return fmt.Errorf("Error reading AppProfile: %s", err)
 	}
-	if err := d.Set("single_cluster_routing", flattenBigtableAppProfileSingleClusterRouting(res["singleClusterRouting"], d)); err != nil {
+	if err := d.Set("single_cluster_routing", flattenBigtableAppProfileSingleClusterRouting(res["singleClusterRouting"], d, config)); err != nil {
 		return fmt.Errorf("Error reading AppProfile: %s", err)
 	}
 
@@ -214,6 +223,11 @@ func resourceBigtableAppProfileUpdate(d *schema.ResourceData, meta interface{}) 
 		return err
 	} else if v, ok := d.GetOkExists("description"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
+	}
+
+	obj, err = resourceBigtableAppProfileEncoder(d, meta, obj)
+	if err != nil {
+		return err
 	}
 
 	url, err := replaceVars(d, config, "{{BigtableBasePath}}projects/{{project}}/instances/{{instance}}/appProfiles/{{app_profile_id}}?ignoreWarnings={{ignore_warnings}}")
@@ -287,19 +301,19 @@ func resourceBigtableAppProfileImport(d *schema.ResourceData, meta interface{}) 
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenBigtableAppProfileName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenBigtableAppProfileName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenBigtableAppProfileDescription(v interface{}, d *schema.ResourceData) interface{} {
+func flattenBigtableAppProfileDescription(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenBigtableAppProfileMultiClusterRoutingUseAny(v interface{}, d *schema.ResourceData) interface{} {
+func flattenBigtableAppProfileMultiClusterRoutingUseAny(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v != nil
 }
 
-func flattenBigtableAppProfileSingleClusterRouting(v interface{}, d *schema.ResourceData) interface{} {
+func flattenBigtableAppProfileSingleClusterRouting(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return nil
 	}
@@ -309,16 +323,16 @@ func flattenBigtableAppProfileSingleClusterRouting(v interface{}, d *schema.Reso
 	}
 	transformed := make(map[string]interface{})
 	transformed["cluster_id"] =
-		flattenBigtableAppProfileSingleClusterRoutingClusterId(original["clusterId"], d)
+		flattenBigtableAppProfileSingleClusterRoutingClusterId(original["clusterId"], d, config)
 	transformed["allow_transactional_writes"] =
-		flattenBigtableAppProfileSingleClusterRoutingAllowTransactionalWrites(original["allowTransactionalWrites"], d)
+		flattenBigtableAppProfileSingleClusterRoutingAllowTransactionalWrites(original["allowTransactionalWrites"], d, config)
 	return []interface{}{transformed}
 }
-func flattenBigtableAppProfileSingleClusterRoutingClusterId(v interface{}, d *schema.ResourceData) interface{} {
+func flattenBigtableAppProfileSingleClusterRoutingClusterId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenBigtableAppProfileSingleClusterRoutingAllowTransactionalWrites(v interface{}, d *schema.ResourceData) interface{} {
+func flattenBigtableAppProfileSingleClusterRoutingAllowTransactionalWrites(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -366,4 +380,10 @@ func expandBigtableAppProfileSingleClusterRoutingClusterId(v interface{}, d Terr
 
 func expandBigtableAppProfileSingleClusterRoutingAllowTransactionalWrites(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
+}
+
+func resourceBigtableAppProfileEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
+	// Instance is a URL parameter only, so replace self-link/path with resource name only.
+	d.Set("instance", GetResourceNameFromSelfLink(d.Get("instance").(string)))
+	return obj, nil
 }

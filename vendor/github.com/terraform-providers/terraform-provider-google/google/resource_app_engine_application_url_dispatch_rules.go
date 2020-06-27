@@ -121,7 +121,7 @@ func resourceAppEngineApplicationUrlDispatchRulesCreate(d *schema.ResourceData, 
 
 	err = appEngineOperationWaitTime(
 		config, res, project, "Creating ApplicationUrlDispatchRules",
-		int(d.Timeout(schema.TimeoutCreate).Minutes()))
+		d.Timeout(schema.TimeoutCreate))
 
 	if err != nil {
 		// The resource didn't actually create
@@ -155,7 +155,7 @@ func resourceAppEngineApplicationUrlDispatchRulesRead(d *schema.ResourceData, me
 		return fmt.Errorf("Error reading ApplicationUrlDispatchRules: %s", err)
 	}
 
-	if err := d.Set("dispatch_rules", flattenAppEngineApplicationUrlDispatchRulesDispatchRules(res["dispatchRules"], d)); err != nil {
+	if err := d.Set("dispatch_rules", flattenAppEngineApplicationUrlDispatchRulesDispatchRules(res["dispatchRules"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ApplicationUrlDispatchRules: %s", err)
 	}
 
@@ -199,7 +199,7 @@ func resourceAppEngineApplicationUrlDispatchRulesUpdate(d *schema.ResourceData, 
 
 	err = appEngineOperationWaitTime(
 		config, res, project, "Updating ApplicationUrlDispatchRules",
-		int(d.Timeout(schema.TimeoutUpdate).Minutes()))
+		d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return err
@@ -238,7 +238,7 @@ func resourceAppEngineApplicationUrlDispatchRulesDelete(d *schema.ResourceData, 
 
 	err = appEngineOperationWaitTime(
 		config, res, project, "Deleting ApplicationUrlDispatchRules",
-		int(d.Timeout(schema.TimeoutDelete).Minutes()))
+		d.Timeout(schema.TimeoutDelete))
 
 	if err != nil {
 		return err
@@ -266,7 +266,7 @@ func resourceAppEngineApplicationUrlDispatchRulesImport(d *schema.ResourceData, 
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenAppEngineApplicationUrlDispatchRulesDispatchRules(v interface{}, d *schema.ResourceData) interface{} {
+func flattenAppEngineApplicationUrlDispatchRulesDispatchRules(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
@@ -279,22 +279,22 @@ func flattenAppEngineApplicationUrlDispatchRulesDispatchRules(v interface{}, d *
 			continue
 		}
 		transformed = append(transformed, map[string]interface{}{
-			"domain":  flattenAppEngineApplicationUrlDispatchRulesDispatchRulesDomain(original["domain"], d),
-			"path":    flattenAppEngineApplicationUrlDispatchRulesDispatchRulesPath(original["path"], d),
-			"service": flattenAppEngineApplicationUrlDispatchRulesDispatchRulesService(original["service"], d),
+			"domain":  flattenAppEngineApplicationUrlDispatchRulesDispatchRulesDomain(original["domain"], d, config),
+			"path":    flattenAppEngineApplicationUrlDispatchRulesDispatchRulesPath(original["path"], d, config),
+			"service": flattenAppEngineApplicationUrlDispatchRulesDispatchRulesService(original["service"], d, config),
 		})
 	}
 	return transformed
 }
-func flattenAppEngineApplicationUrlDispatchRulesDispatchRulesDomain(v interface{}, d *schema.ResourceData) interface{} {
+func flattenAppEngineApplicationUrlDispatchRulesDispatchRulesDomain(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenAppEngineApplicationUrlDispatchRulesDispatchRulesPath(v interface{}, d *schema.ResourceData) interface{} {
+func flattenAppEngineApplicationUrlDispatchRulesDispatchRulesPath(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenAppEngineApplicationUrlDispatchRulesDispatchRulesService(v interface{}, d *schema.ResourceData) interface{} {
+func flattenAppEngineApplicationUrlDispatchRulesDispatchRulesService(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 

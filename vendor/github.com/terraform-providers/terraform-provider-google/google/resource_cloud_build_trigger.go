@@ -261,7 +261,7 @@ If any of the images fail to be pushed, the build status is marked FAILURE.`,
 						"timeout": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Description: `Amount of time that this build should be allowed to run, to second granularity. 
+							Description: `Amount of time that this build should be allowed to run, to second granularity.
 If this amount of time elapses, work on the build will cease and the build status will be TIMEOUT.
 This timeout must be equal to or greater than the sum of the timeouts for build steps within the build.
 The expected format is the number of seconds followed by s.
@@ -307,7 +307,7 @@ of the ignoredFiles globs, then we do not trigger a build.`,
 			"included_files": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Description: `ignoredFiles and includedFiles are file glob matches using http://godoc/pkg/path/filepath#Match
+				Description: `ignoredFiles and includedFiles are file glob matches using https://golang.org/pkg/path/filepath/#Match
 extended with support for '**'.
 
 If any of the files altered in the commit pass the ignoredFiles filter
@@ -368,6 +368,11 @@ This field is a regular expression.`,
 This must be a relative path. If a step's dir is specified and
 is an absolute path, this value is ignored for that step's
 execution.`,
+						},
+						"invert_regex": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: `Only trigger a build if the revision regex does NOT match the revision regex.`,
 						},
 						"project_id": {
 							Type:     schema.TypeString,
@@ -534,37 +539,37 @@ func resourceCloudBuildTriggerRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error reading Trigger: %s", err)
 	}
 
-	if err := d.Set("trigger_id", flattenCloudBuildTriggerTriggerId(res["id"], d)); err != nil {
+	if err := d.Set("trigger_id", flattenCloudBuildTriggerTriggerId(res["id"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Trigger: %s", err)
 	}
-	if err := d.Set("name", flattenCloudBuildTriggerName(res["name"], d)); err != nil {
+	if err := d.Set("name", flattenCloudBuildTriggerName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Trigger: %s", err)
 	}
-	if err := d.Set("description", flattenCloudBuildTriggerDescription(res["description"], d)); err != nil {
+	if err := d.Set("description", flattenCloudBuildTriggerDescription(res["description"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Trigger: %s", err)
 	}
-	if err := d.Set("disabled", flattenCloudBuildTriggerDisabled(res["disabled"], d)); err != nil {
+	if err := d.Set("disabled", flattenCloudBuildTriggerDisabled(res["disabled"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Trigger: %s", err)
 	}
-	if err := d.Set("create_time", flattenCloudBuildTriggerCreateTime(res["createTime"], d)); err != nil {
+	if err := d.Set("create_time", flattenCloudBuildTriggerCreateTime(res["createTime"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Trigger: %s", err)
 	}
-	if err := d.Set("substitutions", flattenCloudBuildTriggerSubstitutions(res["substitutions"], d)); err != nil {
+	if err := d.Set("substitutions", flattenCloudBuildTriggerSubstitutions(res["substitutions"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Trigger: %s", err)
 	}
-	if err := d.Set("filename", flattenCloudBuildTriggerFilename(res["filename"], d)); err != nil {
+	if err := d.Set("filename", flattenCloudBuildTriggerFilename(res["filename"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Trigger: %s", err)
 	}
-	if err := d.Set("ignored_files", flattenCloudBuildTriggerIgnoredFiles(res["ignoredFiles"], d)); err != nil {
+	if err := d.Set("ignored_files", flattenCloudBuildTriggerIgnoredFiles(res["ignoredFiles"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Trigger: %s", err)
 	}
-	if err := d.Set("included_files", flattenCloudBuildTriggerIncludedFiles(res["includedFiles"], d)); err != nil {
+	if err := d.Set("included_files", flattenCloudBuildTriggerIncludedFiles(res["includedFiles"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Trigger: %s", err)
 	}
-	if err := d.Set("trigger_template", flattenCloudBuildTriggerTriggerTemplate(res["triggerTemplate"], d)); err != nil {
+	if err := d.Set("trigger_template", flattenCloudBuildTriggerTriggerTemplate(res["triggerTemplate"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Trigger: %s", err)
 	}
-	if err := d.Set("build", flattenCloudBuildTriggerBuild(res["build"], d)); err != nil {
+	if err := d.Set("build", flattenCloudBuildTriggerBuild(res["build"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Trigger: %s", err)
 	}
 
@@ -696,43 +701,43 @@ func resourceCloudBuildTriggerImport(d *schema.ResourceData, meta interface{}) (
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenCloudBuildTriggerTriggerId(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerTriggerId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerDescription(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerDescription(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerDisabled(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerDisabled(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerCreateTime(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerCreateTime(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerSubstitutions(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerSubstitutions(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerFilename(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerFilename(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerIgnoredFiles(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerIgnoredFiles(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerIncludedFiles(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerIncludedFiles(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerTriggerTemplate(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerTriggerTemplate(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return nil
 	}
@@ -742,44 +747,50 @@ func flattenCloudBuildTriggerTriggerTemplate(v interface{}, d *schema.ResourceDa
 	}
 	transformed := make(map[string]interface{})
 	transformed["project_id"] =
-		flattenCloudBuildTriggerTriggerTemplateProjectId(original["projectId"], d)
+		flattenCloudBuildTriggerTriggerTemplateProjectId(original["projectId"], d, config)
 	transformed["repo_name"] =
-		flattenCloudBuildTriggerTriggerTemplateRepoName(original["repoName"], d)
+		flattenCloudBuildTriggerTriggerTemplateRepoName(original["repoName"], d, config)
 	transformed["dir"] =
-		flattenCloudBuildTriggerTriggerTemplateDir(original["dir"], d)
+		flattenCloudBuildTriggerTriggerTemplateDir(original["dir"], d, config)
+	transformed["invert_regex"] =
+		flattenCloudBuildTriggerTriggerTemplateInvertRegex(original["invertRegex"], d, config)
 	transformed["branch_name"] =
-		flattenCloudBuildTriggerTriggerTemplateBranchName(original["branchName"], d)
+		flattenCloudBuildTriggerTriggerTemplateBranchName(original["branchName"], d, config)
 	transformed["tag_name"] =
-		flattenCloudBuildTriggerTriggerTemplateTagName(original["tagName"], d)
+		flattenCloudBuildTriggerTriggerTemplateTagName(original["tagName"], d, config)
 	transformed["commit_sha"] =
-		flattenCloudBuildTriggerTriggerTemplateCommitSha(original["commitSha"], d)
+		flattenCloudBuildTriggerTriggerTemplateCommitSha(original["commitSha"], d, config)
 	return []interface{}{transformed}
 }
-func flattenCloudBuildTriggerTriggerTemplateProjectId(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerTriggerTemplateProjectId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerTriggerTemplateRepoName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerTriggerTemplateRepoName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerTriggerTemplateDir(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerTriggerTemplateDir(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerTriggerTemplateBranchName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerTriggerTemplateInvertRegex(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerTriggerTemplateTagName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerTriggerTemplateBranchName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerTriggerTemplateCommitSha(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerTriggerTemplateTagName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuild(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerTriggerTemplateCommitSha(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenCloudBuildTriggerBuild(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return nil
 	}
@@ -789,28 +800,28 @@ func flattenCloudBuildTriggerBuild(v interface{}, d *schema.ResourceData) interf
 	}
 	transformed := make(map[string]interface{})
 	transformed["tags"] =
-		flattenCloudBuildTriggerBuildTags(original["tags"], d)
+		flattenCloudBuildTriggerBuildTags(original["tags"], d, config)
 	transformed["images"] =
-		flattenCloudBuildTriggerBuildImages(original["images"], d)
+		flattenCloudBuildTriggerBuildImages(original["images"], d, config)
 	transformed["timeout"] =
-		flattenCloudBuildTriggerBuildTimeout(original["timeout"], d)
+		flattenCloudBuildTriggerBuildTimeout(original["timeout"], d, config)
 	transformed["step"] =
-		flattenCloudBuildTriggerBuildStep(original["steps"], d)
+		flattenCloudBuildTriggerBuildStep(original["steps"], d, config)
 	return []interface{}{transformed}
 }
-func flattenCloudBuildTriggerBuildTags(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildTags(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuildImages(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildImages(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuildTimeout(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildTimeout(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuildStep(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildStep(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
@@ -823,58 +834,58 @@ func flattenCloudBuildTriggerBuildStep(v interface{}, d *schema.ResourceData) in
 			continue
 		}
 		transformed = append(transformed, map[string]interface{}{
-			"name":       flattenCloudBuildTriggerBuildStepName(original["name"], d),
-			"args":       flattenCloudBuildTriggerBuildStepArgs(original["args"], d),
-			"env":        flattenCloudBuildTriggerBuildStepEnv(original["env"], d),
-			"id":         flattenCloudBuildTriggerBuildStepId(original["id"], d),
-			"entrypoint": flattenCloudBuildTriggerBuildStepEntrypoint(original["entrypoint"], d),
-			"dir":        flattenCloudBuildTriggerBuildStepDir(original["dir"], d),
-			"secret_env": flattenCloudBuildTriggerBuildStepSecretEnv(original["secretEnv"], d),
-			"timeout":    flattenCloudBuildTriggerBuildStepTimeout(original["timeout"], d),
-			"timing":     flattenCloudBuildTriggerBuildStepTiming(original["timing"], d),
-			"volumes":    flattenCloudBuildTriggerBuildStepVolumes(original["volumes"], d),
-			"wait_for":   flattenCloudBuildTriggerBuildStepWaitFor(original["waitFor"], d),
+			"name":       flattenCloudBuildTriggerBuildStepName(original["name"], d, config),
+			"args":       flattenCloudBuildTriggerBuildStepArgs(original["args"], d, config),
+			"env":        flattenCloudBuildTriggerBuildStepEnv(original["env"], d, config),
+			"id":         flattenCloudBuildTriggerBuildStepId(original["id"], d, config),
+			"entrypoint": flattenCloudBuildTriggerBuildStepEntrypoint(original["entrypoint"], d, config),
+			"dir":        flattenCloudBuildTriggerBuildStepDir(original["dir"], d, config),
+			"secret_env": flattenCloudBuildTriggerBuildStepSecretEnv(original["secretEnv"], d, config),
+			"timeout":    flattenCloudBuildTriggerBuildStepTimeout(original["timeout"], d, config),
+			"timing":     flattenCloudBuildTriggerBuildStepTiming(original["timing"], d, config),
+			"volumes":    flattenCloudBuildTriggerBuildStepVolumes(original["volumes"], d, config),
+			"wait_for":   flattenCloudBuildTriggerBuildStepWaitFor(original["waitFor"], d, config),
 		})
 	}
 	return transformed
 }
-func flattenCloudBuildTriggerBuildStepName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildStepName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuildStepArgs(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildStepArgs(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuildStepEnv(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildStepEnv(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuildStepId(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildStepId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuildStepEntrypoint(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildStepEntrypoint(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuildStepDir(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildStepDir(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuildStepSecretEnv(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildStepSecretEnv(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuildStepTimeout(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildStepTimeout(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuildStepTiming(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildStepTiming(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuildStepVolumes(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildStepVolumes(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
@@ -887,21 +898,21 @@ func flattenCloudBuildTriggerBuildStepVolumes(v interface{}, d *schema.ResourceD
 			continue
 		}
 		transformed = append(transformed, map[string]interface{}{
-			"name": flattenCloudBuildTriggerBuildStepVolumesName(original["name"], d),
-			"path": flattenCloudBuildTriggerBuildStepVolumesPath(original["path"], d),
+			"name": flattenCloudBuildTriggerBuildStepVolumesName(original["name"], d, config),
+			"path": flattenCloudBuildTriggerBuildStepVolumesPath(original["path"], d, config),
 		})
 	}
 	return transformed
 }
-func flattenCloudBuildTriggerBuildStepVolumesName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildStepVolumesName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuildStepVolumesPath(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildStepVolumesPath(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenCloudBuildTriggerBuildStepWaitFor(v interface{}, d *schema.ResourceData) interface{} {
+func flattenCloudBuildTriggerBuildStepWaitFor(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -970,6 +981,13 @@ func expandCloudBuildTriggerTriggerTemplate(v interface{}, d TerraformResourceDa
 		transformed["dir"] = transformedDir
 	}
 
+	transformedInvertRegex, err := expandCloudBuildTriggerTriggerTemplateInvertRegex(original["invert_regex"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedInvertRegex); val.IsValid() && !isEmptyValue(val) {
+		transformed["invertRegex"] = transformedInvertRegex
+	}
+
 	transformedBranchName, err := expandCloudBuildTriggerTriggerTemplateBranchName(original["branch_name"], d, config)
 	if err != nil {
 		return nil, err
@@ -1003,6 +1021,10 @@ func expandCloudBuildTriggerTriggerTemplateRepoName(v interface{}, d TerraformRe
 }
 
 func expandCloudBuildTriggerTriggerTemplateDir(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudBuildTriggerTriggerTemplateInvertRegex(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

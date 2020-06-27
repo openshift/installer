@@ -135,6 +135,9 @@ func resourceIdentityPlatformDefaultSupportedIdpConfigCreate(d *schema.ResourceD
 	if err != nil {
 		return fmt.Errorf("Error creating DefaultSupportedIdpConfig: %s", err)
 	}
+	if err := d.Set("name", flattenIdentityPlatformDefaultSupportedIdpConfigName(res["name"], d, config)); err != nil {
+		return fmt.Errorf(`Error setting computed identity field "name": %s`, err)
+	}
 
 	// Store the ID now
 	id, err := replaceVars(d, config, "projects/{{project}}/defaultSupportedIdpConfigs/{{idp_id}}")
@@ -169,16 +172,16 @@ func resourceIdentityPlatformDefaultSupportedIdpConfigRead(d *schema.ResourceDat
 		return fmt.Errorf("Error reading DefaultSupportedIdpConfig: %s", err)
 	}
 
-	if err := d.Set("name", flattenIdentityPlatformDefaultSupportedIdpConfigName(res["name"], d)); err != nil {
+	if err := d.Set("name", flattenIdentityPlatformDefaultSupportedIdpConfigName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading DefaultSupportedIdpConfig: %s", err)
 	}
-	if err := d.Set("client_id", flattenIdentityPlatformDefaultSupportedIdpConfigClientId(res["clientId"], d)); err != nil {
+	if err := d.Set("client_id", flattenIdentityPlatformDefaultSupportedIdpConfigClientId(res["clientId"], d, config)); err != nil {
 		return fmt.Errorf("Error reading DefaultSupportedIdpConfig: %s", err)
 	}
-	if err := d.Set("client_secret", flattenIdentityPlatformDefaultSupportedIdpConfigClientSecret(res["clientSecret"], d)); err != nil {
+	if err := d.Set("client_secret", flattenIdentityPlatformDefaultSupportedIdpConfigClientSecret(res["clientSecret"], d, config)); err != nil {
 		return fmt.Errorf("Error reading DefaultSupportedIdpConfig: %s", err)
 	}
-	if err := d.Set("enabled", flattenIdentityPlatformDefaultSupportedIdpConfigEnabled(res["enabled"], d)); err != nil {
+	if err := d.Set("enabled", flattenIdentityPlatformDefaultSupportedIdpConfigEnabled(res["enabled"], d, config)); err != nil {
 		return fmt.Errorf("Error reading DefaultSupportedIdpConfig: %s", err)
 	}
 
@@ -292,19 +295,19 @@ func resourceIdentityPlatformDefaultSupportedIdpConfigImport(d *schema.ResourceD
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenIdentityPlatformDefaultSupportedIdpConfigName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenIdentityPlatformDefaultSupportedIdpConfigName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenIdentityPlatformDefaultSupportedIdpConfigClientId(v interface{}, d *schema.ResourceData) interface{} {
+func flattenIdentityPlatformDefaultSupportedIdpConfigClientId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenIdentityPlatformDefaultSupportedIdpConfigClientSecret(v interface{}, d *schema.ResourceData) interface{} {
+func flattenIdentityPlatformDefaultSupportedIdpConfigClientSecret(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenIdentityPlatformDefaultSupportedIdpConfigEnabled(v interface{}, d *schema.ResourceData) interface{} {
+func flattenIdentityPlatformDefaultSupportedIdpConfigEnabled(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 

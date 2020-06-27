@@ -25,6 +25,7 @@
   },
   "id": "servicenetworking:v1",
   "kind": "discovery#restDescription",
+  "mtlsRootUrl": "https://servicenetworking.mtls.googleapis.com/",
   "name": "servicenetworking",
   "ownerDomain": "google.com",
   "ownerName": "Google",
@@ -121,7 +122,7 @@
             "name": {
               "description": "The name of the operation resource to be cancelled.",
               "location": "path",
-              "pattern": "^operations/.+$",
+              "pattern": "^operations/.*$",
               "required": true,
               "type": "string"
             }
@@ -150,7 +151,7 @@
             "name": {
               "description": "The name of the operation resource to be deleted.",
               "location": "path",
-              "pattern": "^operations/.+$",
+              "pattern": "^operations/.*$",
               "required": true,
               "type": "string"
             }
@@ -237,7 +238,7 @@
     "services": {
       "methods": {
         "addSubnetwork": {
-          "description": "For service producers, provisions a new subnet in a\npeered service's shared VPC network in the requested region and with the\nrequested size that's expressed as a CIDR range (number of leading bits of\nipV4 network mask). The method checks against the assigned allocated ranges\nto find a non-conflicting IP address range. The method will reuse a subnet\nif subsequent calls contain the same subnet name, region, and prefix\nlength. This method will make producer's tenant project to be a shared VPC\nservice project as needed. The response from the `get` operation will be of\ntype `Subnetwork` if the operation successfully completes.",
+          "description": "For service producers, provisions a new subnet in a peered service's shared\nVPC network in the requested region and with the requested size that's\nexpressed as a CIDR range (number of leading bits of ipV4 network mask).\nThe method checks against the assigned allocated ranges to find a\nnon-conflicting IP address range. The method will reuse a subnet if\nsubsequent calls contain the same subnet name, region, and prefix length.\nThis method will make producer's tenant project to be a shared VPC service\nproject as needed.",
           "flatPath": "v1/services/{servicesId}/{servicesId1}/{servicesId2}:addSubnetwork",
           "httpMethod": "POST",
           "id": "servicenetworking.services.addSubnetwork",
@@ -265,8 +266,66 @@
             "https://www.googleapis.com/auth/service.management"
           ]
         },
+        "disableVpcServiceControls": {
+          "description": "Disables VPC service controls for a connection.",
+          "flatPath": "v1/services/{servicesId}:disableVpcServiceControls",
+          "httpMethod": "PATCH",
+          "id": "servicenetworking.services.disableVpcServiceControls",
+          "parameterOrder": [
+            "parent"
+          ],
+          "parameters": {
+            "parent": {
+              "description": "The service that is managing peering connectivity for a service producer's\norganization. For Google services that support this functionality, this\nvalue is `services/servicenetworking.googleapis.com`.",
+              "location": "path",
+              "pattern": "^services/[^/]+$",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "v1/{+parent}:disableVpcServiceControls",
+          "request": {
+            "$ref": "DisableVpcServiceControlsRequest"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/service.management"
+          ]
+        },
+        "enableVpcServiceControls": {
+          "description": "Enables VPC service controls for a connection.",
+          "flatPath": "v1/services/{servicesId}:enableVpcServiceControls",
+          "httpMethod": "PATCH",
+          "id": "servicenetworking.services.enableVpcServiceControls",
+          "parameterOrder": [
+            "parent"
+          ],
+          "parameters": {
+            "parent": {
+              "description": "The service that is managing peering connectivity for a service producer's\norganization. For Google services that support this functionality, this\nvalue is `services/servicenetworking.googleapis.com`.",
+              "location": "path",
+              "pattern": "^services/[^/]+$",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "v1/{+parent}:enableVpcServiceControls",
+          "request": {
+            "$ref": "EnableVpcServiceControlsRequest"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/service.management"
+          ]
+        },
         "searchRange": {
-          "description": "Service producers can use this method to find a currently unused range\nwithin consumer allocated ranges.   This returned range is not reserved,\nand not guaranteed to remain unused.\nIt will validate previously provided allocated ranges, find\nnon-conflicting sub-range of requested size (expressed in\nnumber of leading bits of ipv4 network mask, as in CIDR range\nnotation).\nOperation\u003cresponse: Range\u003e",
+          "description": "Service producers can use this method to find a currently unused range\nwithin consumer allocated ranges. This returned range is not reserved,\nand not guaranteed to remain unused. It will validate previously provided\nallocated ranges, find non-conflicting sub-range of requested size\n(expressed in number of leading bits of ipv4 network mask, as in CIDR range\nnotation).",
           "flatPath": "v1/services/{servicesId}:searchRange",
           "httpMethod": "POST",
           "id": "servicenetworking.services.searchRange",
@@ -275,7 +334,7 @@
           ],
           "parameters": {
             "parent": {
-              "description": "Required. This is in a form services/{service}.\n{service} the name of the private access management service, for example\n'service-peering.example.com'.",
+              "description": "Required. This is in a form services/{service}. {service} the name of the private\naccess management service, for example 'service-peering.example.com'.",
               "location": "path",
               "pattern": "^services/[^/]+$",
               "required": true,
@@ -293,13 +352,42 @@
             "https://www.googleapis.com/auth/cloud-platform",
             "https://www.googleapis.com/auth/service.management"
           ]
+        },
+        "validate": {
+          "description": "Service producers use this method to validate if the consumer provided\nnetwork, project and requested range are valid. This allows them to use\na fail-fast mechanism for consumer requests, and not have to wait for\nAddSubnetwork operation completion to determine if user request is invalid.",
+          "flatPath": "v1/services/{servicesId}:validate",
+          "httpMethod": "POST",
+          "id": "servicenetworking.services.validate",
+          "parameterOrder": [
+            "parent"
+          ],
+          "parameters": {
+            "parent": {
+              "description": "Required. This is in a form services/{service} where {service} is the name of the\nprivate access management service. For example\n'service-peering.example.com'.",
+              "location": "path",
+              "pattern": "^services/[^/]+$",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "v1/{+parent}:validate",
+          "request": {
+            "$ref": "ValidateConsumerConfigRequest"
+          },
+          "response": {
+            "$ref": "ValidateConsumerConfigResponse"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/service.management"
+          ]
         }
       },
       "resources": {
         "connections": {
           "methods": {
             "create": {
-              "description": "Creates a private connection that establishes a VPC Network Peering\nconnection to a VPC network in the service producer's organization.\nThe administrator of the service consumer's VPC network invokes this\nmethod. The administrator must assign one or more allocated IP ranges for\nprovisioning subnetworks in the service producer's VPC network. This\nconnection is used for all supported services in the service producer's\norganization, so it only needs to be invoked once. The response from the\n`get` operation will be of type `Connection` if the operation successfully\ncompletes.",
+              "description": "Creates a private connection that establishes a VPC Network Peering\nconnection to a VPC network in the service producer's organization.\nThe administrator of the service consumer's VPC network invokes this\nmethod. The administrator must assign one or more allocated IP ranges for\nprovisioning subnetworks in the service producer's VPC network. This\nconnection is used for all supported services in the service producer's\norganization, so it only needs to be invoked once.",
               "flatPath": "v1/services/{servicesId}/connections",
               "httpMethod": "POST",
               "id": "servicenetworking.services.connections.create",
@@ -359,7 +447,7 @@
               ]
             },
             "patch": {
-              "description": "Updates the allocated ranges that are assigned to a connection.\nThe response from the `get` operation will be of type `Connection` if the\noperation successfully completes.",
+              "description": "Updates the allocated ranges that are assigned to a connection.",
               "flatPath": "v1/services/{servicesId}/connections/{connectionsId}",
               "httpMethod": "PATCH",
               "id": "servicenetworking.services.connections.patch",
@@ -399,13 +487,84 @@
               ]
             }
           }
+        },
+        "roles": {
+          "methods": {
+            "add": {
+              "description": "Service producers can use this method to add roles in the shared VPC host\nproject. Each role is bound to the provided member. Each role must be\nselected from within a whitelisted set of roles. Each role is applied at\nonly the granularity specified in the whitelist.",
+              "flatPath": "v1/services/{servicesId}/roles:add",
+              "httpMethod": "POST",
+              "id": "servicenetworking.services.roles.add",
+              "parameterOrder": [
+                "parent"
+              ],
+              "parameters": {
+                "parent": {
+                  "description": "Required. This is in a form services/{service} where {service} is the name of the\nprivate access management service. For example\n'service-peering.example.com'.",
+                  "location": "path",
+                  "pattern": "^services/[^/]+$",
+                  "required": true,
+                  "type": "string"
+                }
+              },
+              "path": "v1/{+parent}/roles:add",
+              "request": {
+                "$ref": "AddRolesRequest"
+              },
+              "response": {
+                "$ref": "Operation"
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/service.management"
+              ]
+            }
+          }
         }
       }
     }
   },
-  "revision": "20190922",
+  "revision": "20200508",
   "rootUrl": "https://servicenetworking.googleapis.com/",
   "schemas": {
+    "AddRolesMetadata": {
+      "description": "Metadata provided through GetOperation request for the LRO generated by\nAddRoles API",
+      "id": "AddRolesMetadata",
+      "properties": {},
+      "type": "object"
+    },
+    "AddRolesRequest": {
+      "description": "Request for AddRoles to allow Service Producers to add roles in the shared\nVPC host project for them to use.",
+      "id": "AddRolesRequest",
+      "properties": {
+        "consumerNetwork": {
+          "description": "Required. The network that the consumer is using to connect with services. Must be in\nthe form of projects/{project}/global/networks/{network}\n{project} is a project number, as in '12345'\n{network} is a network name.",
+          "type": "string"
+        },
+        "policyBinding": {
+          "description": "Required. List of policy bindings to add to shared VPC host project.",
+          "items": {
+            "$ref": "PolicyBinding"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "AddRolesResponse": {
+      "description": "Represents IAM roles added to the shared VPC host project.",
+      "id": "AddRolesResponse",
+      "properties": {
+        "policyBinding": {
+          "description": "Required. List of policy bindings that were added to the shared VPC host project.",
+          "items": {
+            "$ref": "PolicyBinding"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "AddSubnetworkRequest": {
       "description": "Request to create a subnetwork in a previously peered service network.",
       "id": "AddSubnetworkRequest",
@@ -419,13 +578,17 @@
           "type": "string"
         },
         "description": {
-          "description": "An optional description of the subnet.",
+          "description": "Optional. Description of the subnet.",
           "type": "string"
         },
         "ipPrefixLength": {
           "description": "Required. The prefix length of the subnet's IP address range.  Use CIDR\nrange notation, such as `30` to provision a subnet with an\n`x.x.x.x/30` CIDR range. The IP address range is drawn from a\npool of available ranges in the service consumer's allocated range.",
           "format": "int32",
           "type": "integer"
+        },
+        "privateIpv6GoogleAccess": {
+          "description": "Optional. The private IPv6 google access type for the VMs in this subnet.\nFor information about the access types that can be set using this field,\nsee [subnetwork](/compute/docs/reference/rest/v1/subnetworks)\nin the Compute API documentation.",
+          "type": "string"
         },
         "region": {
           "description": "Required. The name of a [region](/compute/docs/regions-zones)\nfor the subnet, such `europe-west1`.",
@@ -506,7 +669,7 @@
       "id": "AuthProvider",
       "properties": {
         "audiences": {
-          "description": "The list of JWT\n[audiences](https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-32#section-4.1.3).\nthat are allowed to access. A JWT containing any of these audiences will\nbe accepted. When this setting is absent, only JWTs with audience\n\"https://Service_name/API_name\"\nwill be accepted. For example, if no audiences are in the setting,\nLibraryService API will only accept JWTs with the following audience\n\"https://library-example.googleapis.com/google.example.library.v1.LibraryService\".\n\nExample:\n\n    audiences: bookstore_android.apps.googleusercontent.com,\n               bookstore_web.apps.googleusercontent.com",
+          "description": "The list of JWT\n[audiences](https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-32#section-4.1.3).\nthat are allowed to access. A JWT containing any of these audiences will\nbe accepted. When this setting is absent, JWTs with audiences:\n  - \"https://[service.name]/[google.protobuf.Api.name]\"\n  - \"https://[service.name]/\"\nwill be accepted.\nFor example, if no audiences are in the setting, LibraryService API will\naccept JWTs with the following audiences:\n  -\n  https://library-example.googleapis.com/google.example.library.v1.LibraryService\n  - https://library-example.googleapis.com/\n\nExample:\n\n    audiences: bookstore_android.apps.googleusercontent.com,\n               bookstore_web.apps.googleusercontent.com",
           "type": "string"
         },
         "authorizationUrl": {
@@ -524,6 +687,13 @@
         "jwksUri": {
           "description": "URL of the provider's public key set to validate signature of the JWT. See\n[OpenID\nDiscovery](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata).\nOptional if the key set document:\n - can be retrieved from\n   [OpenID\n   Discovery](https://openid.net/specs/openid-connect-discovery-1_0.html of\n   the issuer.\n - can be inferred from the email domain of the issuer (e.g. a Google\n service account).\n\nExample: https://www.googleapis.com/oauth2/v1/certs",
           "type": "string"
+        },
+        "jwtLocations": {
+          "description": "Defines the locations to extract the JWT.\n\nJWT locations can be either from HTTP headers or URL query parameters.\nThe rule is that the first match wins. The checking order is: checking\nall headers first, then URL query parameters.\n\nIf not specified,  default to use following 3 locations:\n   1) Authorization: Bearer\n   2) x-goog-iap-jwt-assertion\n   3) access_token query parameter\n\nDefault locations can be specified as followings:\n   jwt_locations:\n   - header: Authorization\n     value_prefix: \"Bearer \"\n   - header: x-goog-iap-jwt-assertion\n   - query: access_token",
+          "items": {
+            "$ref": "JwtLocation"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -609,16 +779,20 @@
       "id": "BackendRule",
       "properties": {
         "address": {
-          "description": "The address of the API backend.",
+          "description": "The address of the API backend.\n\nThe scheme is used to determine the backend protocol and security.\nThe following schemes are accepted:\n\n   SCHEME        PROTOCOL    SECURITY\n   http://       HTTP        None\n   https://      HTTP        TLS\n   grpc://       gRPC        None\n   grpcs://      gRPC        TLS\n\nIt is recommended to explicitly include a scheme. Leaving out the scheme\nmay cause constrasting behaviors across platforms.\n\nIf the port is unspecified, the default is:\n- 80 for schemes without TLS\n- 443 for schemes with TLS\n\nFor HTTP backends, use protocol\nto specify the protocol version.",
           "type": "string"
         },
         "deadline": {
-          "description": "The number of seconds to wait for a response from a request.  The default\ndeadline for gRPC is infinite (no deadline) and HTTP requests is 5 seconds.",
+          "description": "The number of seconds to wait for a response from a request. The default\nvaries based on the request protocol and deployment environment.",
           "format": "double",
           "type": "number"
         },
+        "disableAuth": {
+          "description": "When disable_auth is true, a JWT ID token won't be generated and the\noriginal \"Authorization\" HTTP header will be preserved. If the header is\nused to carry the original token and is expected by the backend, this\nfield must be set to true to preserve the header.",
+          "type": "boolean"
+        },
         "jwtAudience": {
-          "description": "The JWT audience is used when generating a JWT id token for the backend.",
+          "description": "The JWT audience is used when generating a JWT ID token for the backend.\nThis ID token will be added in the HTTP \"authorization\" header, and sent\nto the backend.",
           "type": "string"
         },
         "minDeadline": {
@@ -644,6 +818,14 @@
           ],
           "type": "string"
         },
+        "protocol": {
+          "description": "The protocol used for sending a request to the backend.\nThe supported values are \"http/1.1\" and \"h2\".\n\nThe default value is inferred from the scheme in the\naddress field:\n\n   SCHEME        PROTOCOL\n   http://       http/1.1\n   https://      http/1.1\n   grpc://       h2\n   grpcs://      h2\n\nFor secure HTTP backends (https://) that support HTTP/2, set this field\nto \"h2\" for improved performance.\n\nConfiguring this field to non-default values is only supported for secure\nHTTP backends. This field will be ignored for all other backends.\n\nSee\nhttps://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids\nfor more details on the supported values.",
+          "type": "string"
+        },
+        "renameTo": {
+          "description": "Unimplemented. Do not use.\n\nThe new name the selected proto elements should be renamed to.\n\nThe package, the service and the method can all be renamed.\nThe backend server should implement the renamed proto. However, clients\nshould call the original method, and ESF routes the traffic to the renamed\nmethod.\n\nHTTP clients should call the URL mapped to the original method.\ngRPC and Stubby clients should call the original method with package name.\n\nFor legacy reasons, ESF allows Stubby clients to call with the\nshort name (without the package name). However, for API Versioning(or\nmultiple methods mapped to the same short name), all Stubby clients must\ncall the method's full name with the package name, otherwise the first one\n(selector) wins.\n\nIf this `rename_to` is specified with a trailing `*`, the `selector` must\nbe specified with a trailing `*` as well. The all element short names\nmatched by the `*` in the selector will be kept in the `rename_to`.\n\nFor example,\n    rename_rules:\n    - selector: |-\n        google.example.library.v1.*\n      rename_to: google.example.library.*\n\nThe selector matches `google.example.library.v1.Library.CreateShelf` and\n`google.example.library.v1.Library.CreateBook`, they will be renamed to\n`google.example.library.Library.CreateShelf` and\n`google.example.library.Library.CreateBook`. It essentially renames the\nproto package name section of the matched proto service and methods.",
+          "type": "string"
+        },
         "selector": {
           "description": "Selects the methods to which this rule applies.\n\nRefer to selector for syntax details.",
           "type": "string"
@@ -652,7 +834,7 @@
       "type": "object"
     },
     "Billing": {
-      "description": "Billing related configuration of the service.\n\nThe following example shows how to configure monitored resources and metrics\nfor billing:\n\n    monitored_resources:\n    - type: library.googleapis.com/branch\n      labels:\n      - key: /city\n        description: The city where the library branch is located in.\n      - key: /name\n        description: The name of the branch.\n    metrics:\n    - name: library.googleapis.com/book/borrowed_count\n      metric_kind: DELTA\n      value_type: INT64\n    billing:\n      consumer_destinations:\n      - monitored_resource: library.googleapis.com/branch\n        metrics:\n        - library.googleapis.com/book/borrowed_count",
+      "description": "Billing related configuration of the service.\n\nThe following example shows how to configure monitored resources and metrics\nfor billing, `consumer_destinations` is the only supported destination and\nthe monitored resources need at least one label key\n`cloud.googleapis.com/location` to indicate the location of the billing\nusage, using different monitored resources between monitoring and billing is\nrecommended so they can be evolved independently:\n\n\n    monitored_resources:\n    - type: library.googleapis.com/billing_branch\n      labels:\n      - key: cloud.googleapis.com/location\n        description: |\n          Predefined label to support billing location restriction.\n      - key: city\n        description: |\n          Custom label to define the city where the library branch is located\n          in.\n      - key: name\n        description: Custom label to define the name of the library branch.\n    metrics:\n    - name: library.googleapis.com/book/borrowed_count\n      metric_kind: DELTA\n      value_type: INT64\n      unit: \"1\"\n    billing:\n      consumer_destinations:\n      - monitored_resource: library.googleapis.com/billing_branch\n        metrics:\n        - library.googleapis.com/book/borrowed_count",
       "id": "Billing",
       "properties": {
         "consumerDestinations": {
@@ -710,6 +892,18 @@
         },
         "service": {
           "description": "Output only. The name of the peering service that's associated with this connection, in\nthe following format: `services/{service name}`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ConsumerProject": {
+      "description": "Represents a consumer project.",
+      "id": "ConsumerProject",
+      "properties": {
+        "projectNum": {
+          "description": "Required. Project number of the consumer that is launching the service instance. It\ncan own the network that is peered with Google or, be a service project in\nan XPN where the host project has the network.",
+          "format": "int64",
           "type": "string"
         }
       },
@@ -830,6 +1024,17 @@
       },
       "type": "object"
     },
+    "DisableVpcServiceControlsRequest": {
+      "description": "Request to disable VPC service controls.",
+      "id": "DisableVpcServiceControlsRequest",
+      "properties": {
+        "consumerNetwork": {
+          "description": "Required. The network that the consumer is using to connect with services.\nMust be in the form of projects/{project}/global/networks/{network}\n{project} is a project number, as in '12345'\n{network} is network name.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "Documentation": {
       "description": "`Documentation` provides the information for describing a service.\n\nExample:\n\u003cpre\u003e\u003ccode\u003edocumentation:\n  summary: \u003e\n    The Google Calendar API gives access\n    to most calendar features.\n  pages:\n  - name: Overview\n    content: \u0026#40;== include google/foo/overview.md ==\u0026#41;\n  - name: Tutorial\n    content: \u0026#40;== include google/foo/tutorial.md ==\u0026#41;\n    subpages;\n    - name: Java\n      content: \u0026#40;== include google/foo/tutorial_java.md ==\u0026#41;\n  rules:\n  - selector: google.calendar.Calendar.Get\n    description: \u003e\n      ...\n  - selector: google.calendar.Calendar.Put\n    description: \u003e\n      ...\n\u003c/code\u003e\u003c/pre\u003e\nDocumentation is provided in markdown syntax. In addition to\nstandard markdown features, definition lists, tables and fenced\ncode blocks are supported. Section headers can be provided and are\ninterpreted relative to the section nesting of the context where\na documentation fragment is embedded.\n\nDocumentation from the IDL is merged with documentation defined\nvia the config at normalization time, where documentation provided\nby config rules overrides IDL provided.\n\nA number of constructs specific to the API platform are supported\nin documentation text.\n\nIn order to reference a proto element, the following\nnotation can be used:\n\u003cpre\u003e\u003ccode\u003e\u0026#91;fully.qualified.proto.name]\u0026#91;]\u003c/code\u003e\u003c/pre\u003e\nTo override the display text used for the link, this can be used:\n\u003cpre\u003e\u003ccode\u003e\u0026#91;display text]\u0026#91;fully.qualified.proto.name]\u003c/code\u003e\u003c/pre\u003e\nText can be excluded from doc using the following notation:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;-- internal comment --\u0026#41;\u003c/code\u003e\u003c/pre\u003e\n\nA few directives are available in documentation. Note that\ndirectives must appear on a single line to be properly\nidentified. The `include` directive includes a markdown file from\nan external source:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;== include path/to/file ==\u0026#41;\u003c/code\u003e\u003c/pre\u003e\nThe `resource_for` directive marks a message to be the resource of\na collection in REST view. If it is not specified, tools attempt\nto infer the resource from the operations in a collection:\n\u003cpre\u003e\u003ccode\u003e\u0026#40;== resource_for v1.shelves.books ==\u0026#41;\u003c/code\u003e\u003c/pre\u003e\nThe directive `suppress_warning` does not directly affect documentation\nand is documented together with service config validation.",
       "id": "Documentation",
@@ -890,6 +1095,17 @@
       "description": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:\n\n    service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
       "id": "Empty",
       "properties": {},
+      "type": "object"
+    },
+    "EnableVpcServiceControlsRequest": {
+      "description": "Request to enable VPC service controls.",
+      "id": "EnableVpcServiceControlsRequest",
+      "properties": {
+        "consumerNetwork": {
+          "description": "Required. The network that the consumer is using to connect with services.\nMust be in the form of projects/{project}/global/networks/{network}\n{project} is a project number, as in '12345'\n{network} is network name.",
+          "type": "string"
+        }
+      },
       "type": "object"
     },
     "Endpoint": {
@@ -1147,6 +1363,10 @@
           },
           "type": "array"
         },
+        "allowHalfDuplex": {
+          "description": "When this flag is set to true, HTTP requests will be allowed to invoke a\nhalf-duplex streaming method.",
+          "type": "boolean"
+        },
         "body": {
           "description": "The name of the request field whose value is mapped to the HTTP request\nbody, or `*` for mapping all request fields not captured by the path\npattern to the HTTP body, or omitted for not having any HTTP request body.\n\nNOTE: the referred field must be present at the top-level of the request\nmessage type.",
           "type": "string"
@@ -1181,6 +1401,25 @@
         },
         "selector": {
           "description": "Selects a method to which this rule applies.\n\nRefer to selector for syntax details.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "JwtLocation": {
+      "description": "Specifies a location to extract JWT from an API request.",
+      "id": "JwtLocation",
+      "properties": {
+        "header": {
+          "description": "Specifies HTTP header name to extract JWT token.",
+          "type": "string"
+        },
+        "query": {
+          "description": "Specifies URL query parameter name to extract JWT token.",
+          "type": "string"
+        },
+        "valuePrefix": {
+          "description": "The value prefix. The value format is \"value_prefix{token}\"\nOnly applies to \"in\" header type. Must be empty for \"in\" query type.\nIf not empty, the header value has to match (case sensitive) this prefix.\nIf not matched, JWT will not be extracted. If matched, JWT will be\nextracted after the prefix is removed.\n\nFor example, for \"Authorization: Bearer {JWT}\",\nvalue_prefix=\"Bearer \" with a space at the end.",
           "type": "string"
         }
       },
@@ -1381,6 +1620,8 @@
           "description": "Optional. The launch stage of the metric definition.",
           "enum": [
             "LAUNCH_STAGE_UNSPECIFIED",
+            "UNIMPLEMENTED",
+            "PRELAUNCH",
             "EARLY_ACCESS",
             "ALPHA",
             "BETA",
@@ -1389,6 +1630,8 @@
           ],
           "enumDescriptions": [
             "Do not use this default value.",
+            "The feature is not yet implemented. Users can not use it.",
+            "Prelaunch features are hidden from users and are only visible internally.",
             "Early Access features are limited to a closed group of testers. To use\nthese features, you must sign up in advance and sign a Trusted Tester\nagreement (which includes confidentiality provisions). These features may\nbe unstable, changed in backward-incompatible ways, and are not\nguaranteed to be released.",
             "Alpha is a limited availability test for releases before they are cleared\nfor widespread use. By Alpha, all significant design issues are resolved\nand we are in the process of verifying functionality. Alpha customers\nneed to apply for access, agree to applicable terms, and have their\nprojects whitelisted. Alpha releases don’t have to be feature complete,\nno SLAs are provided, and there are no technical support obligations, but\nthey will be far enough along that customers can actually use them in\ntest environments or for limited-use tests -- just like they would in\nnormal production cases.",
             "Beta is the point at which we are ready to open a release for any\ncustomer to use. There are no SLA or technical support obligations in a\nBeta release. Products will be complete from a feature perspective, but\nmay have some open outstanding issues. Beta releases are suitable for\nlimited production use cases.",
@@ -1433,7 +1676,7 @@
           "type": "string"
         },
         "unit": {
-          "description": "The unit in which the metric value is reported. It is only applicable\nif the `value_type` is `INT64`, `DOUBLE`, or `DISTRIBUTION`. The\nsupported units are a subset of [The Unified Code for Units of\nMeasure](http://unitsofmeasure.org/ucum.html) standard:\n\n**Basic units (UNIT)**\n\n* `bit`   bit\n* `By`    byte\n* `s`     second\n* `min`   minute\n* `h`     hour\n* `d`     day\n\n**Prefixes (PREFIX)**\n\n* `k`     kilo    (10**3)\n* `M`     mega    (10**6)\n* `G`     giga    (10**9)\n* `T`     tera    (10**12)\n* `P`     peta    (10**15)\n* `E`     exa     (10**18)\n* `Z`     zetta   (10**21)\n* `Y`     yotta   (10**24)\n* `m`     milli   (10**-3)\n* `u`     micro   (10**-6)\n* `n`     nano    (10**-9)\n* `p`     pico    (10**-12)\n* `f`     femto   (10**-15)\n* `a`     atto    (10**-18)\n* `z`     zepto   (10**-21)\n* `y`     yocto   (10**-24)\n* `Ki`    kibi    (2**10)\n* `Mi`    mebi    (2**20)\n* `Gi`    gibi    (2**30)\n* `Ti`    tebi    (2**40)\n\n**Grammar**\n\nThe grammar also includes these connectors:\n\n* `/`    division (as an infix operator, e.g. `1/s`).\n* `.`    multiplication (as an infix operator, e.g. `GBy.d`)\n\nThe grammar for a unit is as follows:\n\n    Expression = Component { \".\" Component } { \"/\" Component } ;\n\n    Component = ( [ PREFIX ] UNIT | \"%\" ) [ Annotation ]\n              | Annotation\n              | \"1\"\n              ;\n\n    Annotation = \"{\" NAME \"}\" ;\n\nNotes:\n\n* `Annotation` is just a comment if it follows a `UNIT` and is\n   equivalent to `1` if it is used alone. For examples,\n   `{requests}/s == 1/s`, `By{transmitted}/s == By/s`.\n* `NAME` is a sequence of non-blank printable ASCII characters not\n   containing '{' or '}'.\n* `1` represents dimensionless value 1, such as in `1/s`.\n* `%` represents dimensionless value 1/100, and annotates values giving\n   a percentage.",
+          "description": "The units in which the metric value is reported. It is only applicable\nif the `value_type` is `INT64`, `DOUBLE`, or `DISTRIBUTION`. The `unit`\ndefines the representation of the stored metric values.\n\nDifferent systems may scale the values to be more easily displayed (so a\nvalue of `0.02KBy` _might_ be displayed as `20By`, and a value of\n`3523KBy` _might_ be displayed as `3.5MBy`). However, if the `unit` is\n`KBy`, then the value of the metric is always in thousands of bytes, no\nmatter how it may be displayed..\n\nIf you want a custom metric to record the exact number of CPU-seconds used\nby a job, you can create an `INT64 CUMULATIVE` metric whose `unit` is\n`s{CPU}` (or equivalently `1s{CPU}` or just `s`). If the job uses 12,005\nCPU-seconds, then the value is written as `12005`.\n\nAlternatively, if you want a custom metric to record data in a more\ngranular way, you can create a `DOUBLE CUMULATIVE` metric whose `unit` is\n`ks{CPU}`, and then write the value `12.005` (which is `12005/1000`),\nor use `Kis{CPU}` and write `11.723` (which is `12005/1024`).\n\nThe supported units are a subset of [The Unified Code for Units of\nMeasure](http://unitsofmeasure.org/ucum.html) standard:\n\n**Basic units (UNIT)**\n\n* `bit`   bit\n* `By`    byte\n* `s`     second\n* `min`   minute\n* `h`     hour\n* `d`     day\n\n**Prefixes (PREFIX)**\n\n* `k`     kilo    (10^3)\n* `M`     mega    (10^6)\n* `G`     giga    (10^9)\n* `T`     tera    (10^12)\n* `P`     peta    (10^15)\n* `E`     exa     (10^18)\n* `Z`     zetta   (10^21)\n* `Y`     yotta   (10^24)\n\n* `m`     milli   (10^-3)\n* `u`     micro   (10^-6)\n* `n`     nano    (10^-9)\n* `p`     pico    (10^-12)\n* `f`     femto   (10^-15)\n* `a`     atto    (10^-18)\n* `z`     zepto   (10^-21)\n* `y`     yocto   (10^-24)\n\n* `Ki`    kibi    (2^10)\n* `Mi`    mebi    (2^20)\n* `Gi`    gibi    (2^30)\n* `Ti`    tebi    (2^40)\n* `Pi`    pebi    (2^50)\n\n**Grammar**\n\nThe grammar also includes these connectors:\n\n* `/`    division or ratio (as an infix operator). For examples,\n         `kBy/{email}` or `MiBy/10ms` (although you should almost never\n         have `/s` in a metric `unit`; rates should always be computed at\n         query time from the underlying cumulative or delta value).\n* `.`    multiplication or composition (as an infix operator). For\n         examples, `GBy.d` or `k{watt}.h`.\n\nThe grammar for a unit is as follows:\n\n    Expression = Component { \".\" Component } { \"/\" Component } ;\n\n    Component = ( [ PREFIX ] UNIT | \"%\" ) [ Annotation ]\n              | Annotation\n              | \"1\"\n              ;\n\n    Annotation = \"{\" NAME \"}\" ;\n\nNotes:\n\n* `Annotation` is just a comment if it follows a `UNIT`. If the annotation\n   is used alone, then the unit is equivalent to `1`. For examples,\n   `{request}/s == 1/s`, `By{transmitted}/s == By/s`.\n* `NAME` is a sequence of non-blank printable ASCII characters not\n   containing `{` or `}`.\n* `1` represents a unitary [dimensionless\n   unit](https://en.wikipedia.org/wiki/Dimensionless_quantity) of 1, such\n   as in `1/s`. It is typically used when none of the basic units are\n   appropriate. For example, \"new users per day\" can be represented as\n   `1/d` or `{new-users}/d` (and a metric value `5` would mean \"5 new\n   users). Alternatively, \"thousands of page views per day\" would be\n   represented as `1000/d` or `k1/d` or `k{page_views}/d` (and a metric\n   value of `5.3` would mean \"5300 page views per day\").\n* `%` represents dimensionless value of 1/100, and annotates values giving\n   a percentage (so the metric values are typically in the range of 0..100,\n   and a metric value `3` means \"3 percent\").\n* `10^2.%` indicates a metric contains a ratio, typically in the range\n   0..1, that will be multiplied by 100 and displayed as a percentage\n   (so a metric value `0.03` means \"3 percent\").",
           "type": "string"
         },
         "valueType": {
@@ -1474,6 +1717,8 @@
           "description": "Deprecated. Must use the MetricDescriptor.launch_stage instead.",
           "enum": [
             "LAUNCH_STAGE_UNSPECIFIED",
+            "UNIMPLEMENTED",
+            "PRELAUNCH",
             "EARLY_ACCESS",
             "ALPHA",
             "BETA",
@@ -1482,6 +1727,8 @@
           ],
           "enumDescriptions": [
             "Do not use this default value.",
+            "The feature is not yet implemented. Users can not use it.",
+            "Prelaunch features are hidden from users and are only visible internally.",
             "Early Access features are limited to a closed group of testers. To use\nthese features, you must sign up in advance and sign a Trusted Tester\nagreement (which includes confidentiality provisions). These features may\nbe unstable, changed in backward-incompatible ways, and are not\nguaranteed to be released.",
             "Alpha is a limited availability test for releases before they are cleared\nfor widespread use. By Alpha, all significant design issues are resolved\nand we are in the process of verifying functionality. Alpha customers\nneed to apply for access, agree to applicable terms, and have their\nprojects whitelisted. Alpha releases don’t have to be feature complete,\nno SLAs are provided, and there are no technical support obligations, but\nthey will be far enough along that customers can actually use them in\ntest environments or for limited-use tests -- just like they would in\nnormal production cases.",
             "Beta is the point at which we are ready to open a release for any\ncustomer to use. There are no SLA or technical support obligations in a\nBeta release. Products will be complete from a feature perspective, but\nmay have some open outstanding issues. Beta releases are suitable for\nlimited production use cases.",
@@ -1555,6 +1802,8 @@
           "description": "Optional. The launch stage of the monitored resource definition.",
           "enum": [
             "LAUNCH_STAGE_UNSPECIFIED",
+            "UNIMPLEMENTED",
+            "PRELAUNCH",
             "EARLY_ACCESS",
             "ALPHA",
             "BETA",
@@ -1563,6 +1812,8 @@
           ],
           "enumDescriptions": [
             "Do not use this default value.",
+            "The feature is not yet implemented. Users can not use it.",
+            "Prelaunch features are hidden from users and are only visible internally.",
             "Early Access features are limited to a closed group of testers. To use\nthese features, you must sign up in advance and sign a Trusted Tester\nagreement (which includes confidentiality provisions). These features may\nbe unstable, changed in backward-incompatible ways, and are not\nguaranteed to be released.",
             "Alpha is a limited availability test for releases before they are cleared\nfor widespread use. By Alpha, all significant design issues are resolved\nand we are in the process of verifying functionality. Alpha customers\nneed to apply for access, agree to applicable terms, and have their\nprojects whitelisted. Alpha releases don’t have to be feature complete,\nno SLAs are provided, and there are no technical support obligations, but\nthey will be far enough along that customers can actually use them in\ntest environments or for limited-use tests -- just like they would in\nnormal production cases.",
             "Beta is the point at which we are ready to open a release for any\ncustomer to use. There are no SLA or technical support obligations in a\nBeta release. Products will be complete from a feature perspective, but\nmay have some open outstanding issues. Beta releases are suitable for\nlimited production use cases.",
@@ -1708,6 +1959,21 @@
       },
       "type": "object"
     },
+    "PolicyBinding": {
+      "description": "Grouping of IAM role and IAM member.",
+      "id": "PolicyBinding",
+      "properties": {
+        "member": {
+          "description": "Required. Member to bind the role with. See\n/iam/docs/reference/rest/v1/Policy#Binding for how to format each member.\nEg.\n  - user:myuser@mydomain.com\n  - serviceAccount:my-service-account@app.gserviceaccount.com",
+          "type": "string"
+        },
+        "role": {
+          "description": "Required. Role to apply. Only whitelisted roles can be used at the specified\ngranularity. The role must be one of the following:\n  - 'roles/container.hostServiceAgentUser' applied on the shared VPC host\n    project",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "Quota": {
       "description": "Quota configuration helps to achieve fairness and budgeting in service\nusage.\n\nThe metric based quota configuration works this way:\n- The service configuration defines a set of metrics.\n- For API calls, the quota.metric_rules maps methods to metrics with\n  corresponding costs.\n- The quota.limits defines limits on the metrics, which will be used for\n  quota checks at runtime.\n\nAn example quota configuration in yaml format:\n\n   quota:\n     limits:\n\n     - name: apiWriteQpsPerProject\n       metric: library.googleapis.com/write_calls\n       unit: \"1/min/{project}\"  # rate limit for consumer projects\n       values:\n         STANDARD: 10000\n\n\n     # The metric rules bind all methods to the read_calls metric,\n     # except for the UpdateBook and DeleteBook methods. These two methods\n     # are mapped to the write_calls metric, with the UpdateBook method\n     # consuming at twice rate as the DeleteBook method.\n     metric_rules:\n     - selector: \"*\"\n       metric_costs:\n         library.googleapis.com/read_calls: 1\n     - selector: google.example.library.v1.LibraryService.UpdateBook\n       metric_costs:\n         library.googleapis.com/write_calls: 2\n     - selector: google.example.library.v1.LibraryService.DeleteBook\n       metric_costs:\n         library.googleapis.com/write_calls: 1\n\n Corresponding Metric definition:\n\n     metrics:\n     - name: library.googleapis.com/read_calls\n       display_name: Read requests\n       metric_kind: DELTA\n       value_type: INT64\n\n     - name: library.googleapis.com/write_calls\n       display_name: Write requests\n       metric_kind: DELTA\n       value_type: INT64\n\n",
       "id": "Quota",
@@ -1798,17 +2064,60 @@
       },
       "type": "object"
     },
+    "RangeReservation": {
+      "description": "Represents a range reservation.",
+      "id": "RangeReservation",
+      "properties": {
+        "ipPrefixLength": {
+          "description": "Required. The size of the desired subnet. Use usual CIDR range notation. For example,\n'30' to find unused x.x.x.x/30 CIDR range. The goal is to determine if one\nof the allocated ranges has enough free space for a subnet of the requested\nsize.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "secondaryRangeIpPrefixLengths": {
+          "description": "Optional. DO NOT USE - Under development.\nThe size of the desired secondary ranges for the subnet. Use usual CIDR\nrange notation. For example, '30' to find unused x.x.x.x/30 CIDR range. The\ngoal is to determine that the allocated ranges have enough free space for\nall the requested secondary ranges.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "Route": {
+      "description": "Represents a route that was created or discovered by a private access\nmanagement service.",
+      "id": "Route",
+      "properties": {
+        "destRange": {
+          "description": "Destination CIDR range that this route applies to.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Route name. See https://cloud.google.com/vpc/docs/routes",
+          "type": "string"
+        },
+        "network": {
+          "description": "Fully-qualified URL of the VPC network in the producer host tenant project\nthat this route applies to. For example:\n`projects/123456/global/networks/host-network`",
+          "type": "string"
+        },
+        "nextHopGateway": {
+          "description": "Fully-qualified URL of the gateway that should handle matching packets that\nthis route applies to. For example:\n`projects/123456/global/gateways/default-internet-gateway`",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "SearchRangeRequest": {
       "description": "Request to search for an unused range within allocated ranges.",
       "id": "SearchRangeRequest",
       "properties": {
         "ipPrefixLength": {
-          "description": "Required. The prefix length of the IP range.\nUse usual CIDR range notation.\nFor example, '30' to find unused x.x.x.x/30 CIDR range.\nActual range will be determined using allocated range for the consumer\npeered network and returned in the result.",
+          "description": "Required. The prefix length of the IP range. Use usual CIDR range notation. For\nexample, '30' to find unused x.x.x.x/30 CIDR range. Actual range will be\ndetermined using allocated range for the consumer peered network and\nreturned in the result.",
           "format": "int32",
           "type": "integer"
         },
         "network": {
-          "description": "Network name in the consumer project.   This network must have been\nalready peered with a shared VPC network using CreateConnection\nmethod.\nMust be in a form 'projects/{project}/global/networks/{network}'.\n{project} is a project number, as in '12345'\n{network} is network name.",
+          "description": "Network name in the consumer project. This network must have been\nalready peered with a shared VPC network using CreateConnection\nmethod. Must be in a form 'projects/{project}/global/networks/{network}'.\n{project} is a project number, as in '12345' {network} is network name.",
           "type": "string"
         }
       },
@@ -1838,7 +2147,7 @@
           "description": "Billing configuration."
         },
         "configVersion": {
-          "description": "The semantic version of the service configuration. The config version\naffects the interpretation of the service configuration. For example,\ncertain features are enabled by default for certain config versions.\nThe latest config version is `3`.",
+          "description": "The semantic version of the service configuration. The config version\naffects the interpretation of the service configuration. For example,\ncertain features are enabled by default for certain config versions.\n\nThe latest config version is `3`.",
           "format": "uint32",
           "type": "integer"
         },
@@ -1877,7 +2186,7 @@
           "description": "HTTP configuration."
         },
         "id": {
-          "description": "A unique ID for a specific instance of this message, typically assigned\nby the client for tracking purpose. If empty, the server may choose to\ngenerate one instead. Must be no longer than 60 characters.",
+          "description": "A unique ID for a specific instance of this message, typically assigned\nby the client for tracking purpose. Must be no longer than 63 characters\nand only lower case letters, digits, '.', '_' and '-' are allowed. If\nempty, the server may choose to generate one instead.",
           "type": "string"
         },
         "logging": {
@@ -1950,6 +2259,25 @@
         "usage": {
           "$ref": "Usage",
           "description": "Configuration controlling usage of this service."
+        }
+      },
+      "type": "object"
+    },
+    "ServiceIdentity": {
+      "description": "The per-product per-project service identity for a service.\n\n\nUse this field to configure per-product per-project service identity.\nExample of a service identity configuration.\n\n    usage:\n      service_identity:\n      - service_account_parent: \"projects/123456789\"\n        display_name: \"Cloud XXX Service Agent\"\n        description: \"Used as the identity of Cloud XXX to access resources\"",
+      "id": "ServiceIdentity",
+      "properties": {
+        "description": {
+          "description": "Optional. A user-specified opaque description of the service account.\nMust be less than or equal to 256 UTF-8 bytes.",
+          "type": "string"
+        },
+        "displayName": {
+          "description": "Optional. A user-specified name for the service account.\nMust be less than or equal to 100 UTF-8 bytes.",
+          "type": "string"
+        },
+        "serviceAccountParent": {
+          "description": "A service account project that hosts the service accounts.\n\nAn example name would be:\n`projects/123456789`",
+          "type": "string"
         }
       },
       "type": "object"
@@ -2153,6 +2481,10 @@
             "$ref": "UsageRule"
           },
           "type": "array"
+        },
+        "serviceIdentity": {
+          "$ref": "ServiceIdentity",
+          "description": "The configuration of a per-product per-project service identity."
         }
       },
       "type": "object"
@@ -2172,6 +2504,72 @@
         "skipServiceControl": {
           "description": "If true, the selected method should skip service control and the control\nplane features, such as quota and billing, will not be available.\nThis flag is used by Google Cloud Endpoints to bypass checks for internal\nmethods, such as service health check methods.",
           "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "ValidateConsumerConfigRequest": {
+      "id": "ValidateConsumerConfigRequest",
+      "properties": {
+        "consumerNetwork": {
+          "description": "Required. The network that the consumer is using to connect with services. Must be in\nthe form of projects/{project}/global/networks/{network} {project} is a\nproject number, as in '12345' {network} is network name.",
+          "type": "string"
+        },
+        "consumerProject": {
+          "$ref": "ConsumerProject",
+          "description": "NETWORK_NOT_IN_CONSUMERS_PROJECT, NETWORK_NOT_IN_CONSUMERS_HOST_PROJECT,\nand HOST_PROJECT_NOT_FOUND are done when consumer_project is provided."
+        },
+        "rangeReservation": {
+          "$ref": "RangeReservation",
+          "description": "RANGES_EXHAUSTED, RANGES_EXHAUSTED, and RANGES_DELETED_LATER are done\nwhen range_reservation is provided."
+        },
+        "validateNetwork": {
+          "description": "The validations will be performed in the order listed in the\nValidationError enum. The first failure will return. If a validation is not\nrequested, then the next one will be performed.\nSERVICE_NETWORKING_NOT_ENABLED and NETWORK_NOT_PEERED checks are performed\nfor all requests where validation is requested. NETWORK_NOT_FOUND and\nNETWORK_DISCONNECTED checks are done for requests that have\nvalidate_network set to true.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "ValidateConsumerConfigResponse": {
+      "id": "ValidateConsumerConfigResponse",
+      "properties": {
+        "isValid": {
+          "type": "boolean"
+        },
+        "validationError": {
+          "enum": [
+            "VALIDATION_ERROR_UNSPECIFIED",
+            "VALIDATION_NOT_REQUESTED",
+            "SERVICE_NETWORKING_NOT_ENABLED",
+            "NETWORK_NOT_FOUND",
+            "NETWORK_NOT_PEERED",
+            "NETWORK_PEERING_DELETED",
+            "NETWORK_NOT_IN_CONSUMERS_PROJECT",
+            "NETWORK_NOT_IN_CONSUMERS_HOST_PROJECT",
+            "HOST_PROJECT_NOT_FOUND",
+            "CONSUMER_PROJECT_NOT_SERVICE_PROJECT",
+            "RANGES_EXHAUSTED",
+            "RANGES_NOT_RESERVED",
+            "RANGES_DELETED_LATER",
+            "COMPUTE_API_NOT_ENABLED"
+          ],
+          "enumDescriptions": [
+            "",
+            "In case none of the validations are requested.",
+            "",
+            "The network provided by the consumer does not exist.",
+            "The network has not been peered with the producer org.",
+            "The peering was created and later deleted.",
+            "The network is a regular VPC but the network is not in the consumer's\nproject.",
+            "The consumer project is a service project, and network is a shared VPC,\nbut the network is not in the host project of this consumer project.",
+            "The host project associated with the consumer project\nwas not found.",
+            "The consumer project is not a service project for\nthe specified host project.",
+            "The reserved IP ranges do not have enough space to create\na subnet of desired size.",
+            "The IP ranges were not reserved.",
+            "The IP ranges were reserved but deleted later.",
+            "The consumer project does not have the compute api enabled."
+          ],
+          "type": "string"
         }
       },
       "type": "object"

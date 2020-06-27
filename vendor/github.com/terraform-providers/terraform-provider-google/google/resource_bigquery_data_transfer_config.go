@@ -100,6 +100,15 @@ about the format here:
 https://cloud.google.com/appengine/docs/flexible/python/scheduling-jobs-with-cron-yaml#the_schedule_format
 NOTE: the granularity should be at least 8 hours, or less frequent.`,
 			},
+			"service_account_name": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: `Optional service account name. If this field is set, transfer config will
+be created with this service account credentials. It requires that
+requesting user calling this API has permissions to act as this service account.`,
+				Default: "",
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -165,7 +174,7 @@ func resourceBigqueryDataTransferConfigCreate(d *schema.ResourceData, meta inter
 		obj["params"] = paramsProp
 	}
 
-	url, err := replaceVars(d, config, "{{BigqueryDataTransferBasePath}}projects/{{project}}/locations/{{location}}/transferConfigs")
+	url, err := replaceVars(d, config, "{{BigqueryDataTransferBasePath}}projects/{{project}}/locations/{{location}}/transferConfigs?serviceAccountName={{service_account_name}}")
 	if err != nil {
 		return err
 	}
@@ -178,6 +187,9 @@ func resourceBigqueryDataTransferConfigCreate(d *schema.ResourceData, meta inter
 	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate), iamMemberMissing)
 	if err != nil {
 		return fmt.Errorf("Error creating Config: %s", err)
+	}
+	if err := d.Set("name", flattenBigqueryDataTransferConfigName(res["name"], d, config)); err != nil {
+		return fmt.Errorf(`Error setting computed identity field "name": %s`, err)
 	}
 
 	// Store the ID now
@@ -221,28 +233,28 @@ func resourceBigqueryDataTransferConfigRead(d *schema.ResourceData, meta interfa
 		return fmt.Errorf("Error reading Config: %s", err)
 	}
 
-	if err := d.Set("display_name", flattenBigqueryDataTransferConfigDisplayName(res["displayName"], d)); err != nil {
+	if err := d.Set("display_name", flattenBigqueryDataTransferConfigDisplayName(res["displayName"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Config: %s", err)
 	}
-	if err := d.Set("name", flattenBigqueryDataTransferConfigName(res["name"], d)); err != nil {
+	if err := d.Set("name", flattenBigqueryDataTransferConfigName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Config: %s", err)
 	}
-	if err := d.Set("destination_dataset_id", flattenBigqueryDataTransferConfigDestinationDatasetId(res["destinationDatasetId"], d)); err != nil {
+	if err := d.Set("destination_dataset_id", flattenBigqueryDataTransferConfigDestinationDatasetId(res["destinationDatasetId"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Config: %s", err)
 	}
-	if err := d.Set("data_source_id", flattenBigqueryDataTransferConfigDataSourceId(res["dataSourceId"], d)); err != nil {
+	if err := d.Set("data_source_id", flattenBigqueryDataTransferConfigDataSourceId(res["dataSourceId"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Config: %s", err)
 	}
-	if err := d.Set("schedule", flattenBigqueryDataTransferConfigSchedule(res["schedule"], d)); err != nil {
+	if err := d.Set("schedule", flattenBigqueryDataTransferConfigSchedule(res["schedule"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Config: %s", err)
 	}
-	if err := d.Set("data_refresh_window_days", flattenBigqueryDataTransferConfigDataRefreshWindowDays(res["dataRefreshWindowDays"], d)); err != nil {
+	if err := d.Set("data_refresh_window_days", flattenBigqueryDataTransferConfigDataRefreshWindowDays(res["dataRefreshWindowDays"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Config: %s", err)
 	}
-	if err := d.Set("disabled", flattenBigqueryDataTransferConfigDisabled(res["disabled"], d)); err != nil {
+	if err := d.Set("disabled", flattenBigqueryDataTransferConfigDisabled(res["disabled"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Config: %s", err)
 	}
-	if err := d.Set("params", flattenBigqueryDataTransferConfigParams(res["params"], d)); err != nil {
+	if err := d.Set("params", flattenBigqueryDataTransferConfigParams(res["params"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Config: %s", err)
 	}
 
@@ -361,48 +373,55 @@ func resourceBigqueryDataTransferConfigImport(d *schema.ResourceData, meta inter
 	config := meta.(*Config)
 
 	// current import_formats can't import fields with forward slashes in their value
-	if err := parseImportId([]string{"(?P<name>.+)"}, d, config); err != nil {
+	if err := parseImportId([]string{"(?P<project>[^ ]+) (?P<name>[^ ]+)", "(?P<name>[^ ]+)"}, d, config); err != nil {
 		return nil, err
 	}
 
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenBigqueryDataTransferConfigDisplayName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenBigqueryDataTransferConfigDisplayName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenBigqueryDataTransferConfigName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenBigqueryDataTransferConfigName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenBigqueryDataTransferConfigDestinationDatasetId(v interface{}, d *schema.ResourceData) interface{} {
+func flattenBigqueryDataTransferConfigDestinationDatasetId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenBigqueryDataTransferConfigDataSourceId(v interface{}, d *schema.ResourceData) interface{} {
+func flattenBigqueryDataTransferConfigDataSourceId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenBigqueryDataTransferConfigSchedule(v interface{}, d *schema.ResourceData) interface{} {
+func flattenBigqueryDataTransferConfigSchedule(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenBigqueryDataTransferConfigDataRefreshWindowDays(v interface{}, d *schema.ResourceData) interface{} {
+func flattenBigqueryDataTransferConfigDataRefreshWindowDays(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
 		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
 			return intVal
-		} // let terraform core handle it if we can't convert the string to an int.
+		}
 	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenBigqueryDataTransferConfigDisabled(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenBigqueryDataTransferConfigDisabled(v interface{}, d *schema.ResourceData) interface{} {
-	return v
-}
-
-func flattenBigqueryDataTransferConfigParams(v interface{}, d *schema.ResourceData) interface{} {
+func flattenBigqueryDataTransferConfigParams(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}

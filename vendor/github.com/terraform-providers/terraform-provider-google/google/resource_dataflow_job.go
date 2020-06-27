@@ -6,11 +6,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"google.golang.org/api/dataflow/v1b3"
+	dataflow "google.golang.org/api/dataflow/v1b3"
 	"google.golang.org/api/googleapi"
 )
 
@@ -44,54 +45,61 @@ func resourceDataflowJob() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceDataflowJobCreate,
 		Read:   resourceDataflowJobRead,
+		Update: resourceDataflowJobUpdateByReplacement,
 		Delete: resourceDataflowJobDelete,
+		Timeouts: &schema.ResourceTimeout{
+			Update: schema.DefaultTimeout(10 * time.Minute),
+		},
+		CustomizeDiff: customdiff.All(
+			resourceDataflowJobTypeCustomizeDiff,
+		),
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				// ForceNew applies to both stream and batch jobs
 				ForceNew: true,
 			},
 
 			"template_gcs_path": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 
 			"temp_gcs_location": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 
 			"zone": {
 				Type:     schema.TypeString,
 				Optional: true,
+				// ForceNew applies to both stream and batch jobs
 				ForceNew: true,
 			},
 
 			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
+				// ForceNew applies to both stream and batch jobs
 				ForceNew: true,
 			},
 
 			"max_workers": {
 				Type:     schema.TypeInt,
 				Optional: true,
+				// ForceNew applies to both stream and batch jobs
 				ForceNew: true,
 			},
 
 			"parameters": {
 				Type:     schema.TypeMap,
 				Optional: true,
-				ForceNew: true,
 			},
 
 			"labels": {
 				Type:             schema.TypeMap,
 				Optional:         true,
-				ForceNew:         true,
 				DiffSuppressFunc: resourceDataflowJobLabelDiffSuppress,
 			},
 
@@ -100,13 +108,13 @@ func resourceDataflowJob() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{"cancel", "drain"}, false),
 				Optional:     true,
 				Default:      "drain",
-				ForceNew:     true,
 			},
 
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+				// ForceNew applies to both stream and batch jobs
 				ForceNew: true,
 			},
 
@@ -114,41 +122,72 @@ func resourceDataflowJob() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-
+			"type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"service_account_email": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 			},
 
 			"network": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				ForceNew:         true,
 				DiffSuppressFunc: compareSelfLinkOrResourceName,
 			},
 
 			"subnetwork": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				ForceNew:         true,
 				DiffSuppressFunc: compareSelfLinkOrResourceName,
 			},
 
 			"machine_type": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 			},
 
 			"ip_configuration": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice([]string{"WORKER_IP_PUBLIC", "WORKER_IP_PRIVATE", ""}, false),
+			},
+
+			"additional_experiments": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+
+			"job_id": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		},
 	}
+}
+
+func resourceDataflowJobTypeCustomizeDiff(d *schema.ResourceDiff, meta interface{}) error {
+	// All non-virtual fields are ForceNew for batch jobs
+	if d.Get("type") == "JOB_TYPE_BATCH" {
+		resourceSchema := resourceDataflowJob().Schema
+		for field := range resourceSchema {
+			if field == "on_delete" {
+				continue
+			}
+			// Labels map will likely have suppressed changes, so we check each key instead of the parent field
+			if field == "labels" {
+				resourceDataflowJobIterateMapForceNew(field, d)
+			} else if d.HasChange(field) {
+				d.ForceNew(field)
+			}
+		}
+	}
+
+	return nil
 }
 
 func resourceDataflowJobCreate(d *schema.ResourceData, meta interface{}) error {
@@ -159,29 +198,16 @@ func resourceDataflowJobCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	zone, err := getZone(d, config)
-	if err != nil {
-		return err
-	}
-
 	region, err := getRegion(d, config)
 	if err != nil {
 		return err
 	}
 
 	params := expandStringMap(d, "parameters")
-	labels := expandStringMap(d, "labels")
 
-	env := dataflow.RuntimeEnvironment{
-		MaxWorkers:           int64(d.Get("max_workers").(int)),
-		Network:              d.Get("network").(string),
-		ServiceAccountEmail:  d.Get("service_account_email").(string),
-		Subnetwork:           d.Get("subnetwork").(string),
-		TempLocation:         d.Get("temp_gcs_location").(string),
-		MachineType:          d.Get("machine_type").(string),
-		IpConfiguration:      d.Get("ip_configuration").(string),
-		AdditionalUserLabels: labels,
-		Zone:                 zone,
+	env, err := resourceDataflowJobSetupEnv(d, config)
+	if err != nil {
+		return err
 	}
 
 	request := dataflow.CreateJobFromTemplateRequest{
@@ -220,10 +246,20 @@ func resourceDataflowJobRead(d *schema.ResourceData, meta interface{}) error {
 		return handleNotFoundError(err, d, fmt.Sprintf("Dataflow job %s", id))
 	}
 
+	d.Set("job_id", job.Id)
 	d.Set("state", job.CurrentState)
 	d.Set("name", job.Name)
+	d.Set("type", job.Type)
 	d.Set("project", project)
 	d.Set("labels", job.Labels)
+
+	sdkPipelineOptions, err := ConvertToMap(job.Environment.SdkPipelineOptions)
+	if err != nil {
+		return err
+	}
+	optionsMap := sdkPipelineOptions["options"].(map[string]interface{})
+	d.Set("template_gcs_path", optionsMap["templateLocation"])
+	d.Set("temp_gcs_location", optionsMap["tempLocation"])
 
 	if _, ok := dataflowTerminalStatesMap[job.CurrentState]; ok {
 		log.Printf("[DEBUG] Removing resource '%s' because it is in state %s.\n", job.Name, job.CurrentState)
@@ -233,6 +269,57 @@ func resourceDataflowJobRead(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(job.Id)
 
 	return nil
+}
+
+// Stream update method. Batch job changes should have been set to ForceNew via custom diff
+func resourceDataflowJobUpdateByReplacement(d *schema.ResourceData, meta interface{}) error {
+	// Don't send an update request if only virtual fields have changes
+	if resourceDataflowJobIsVirtualUpdate(d) {
+		return nil
+	}
+
+	config := meta.(*Config)
+
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
+	region, err := getRegion(d, config)
+	if err != nil {
+		return err
+	}
+
+	params := expandStringMap(d, "parameters")
+
+	env, err := resourceDataflowJobSetupEnv(d, config)
+	if err != nil {
+		return err
+	}
+
+	request := dataflow.LaunchTemplateParameters{
+		JobName:     d.Get("name").(string),
+		Parameters:  params,
+		Environment: &env,
+		Update:      true,
+	}
+
+	var response *dataflow.LaunchTemplateResponse
+	err = retryTimeDuration(func() (updateErr error) {
+		response, updateErr = resourceDataflowJobLaunchTemplate(config, project, region, d.Get("template_gcs_path").(string), &request)
+		return updateErr
+	}, time.Minute*time.Duration(5), isDataflowJobUpdateRetryableError)
+	if err != nil {
+		return err
+	}
+
+	if err := waitForDataflowJobToBeUpdated(d, config, response.Job.Id, d.Timeout(schema.TimeoutUpdate)); err != nil {
+		return fmt.Errorf("Error updating job with job ID %q: %v", d.Id(), err)
+	}
+
+	d.SetId(response.Job.Id)
+
+	return resourceDataflowJobRead(d, meta)
 }
 
 func resourceDataflowJobDelete(d *schema.ResourceData, meta interface{}) error {
@@ -265,17 +352,17 @@ func resourceDataflowJobDelete(d *schema.ResourceData, meta interface{}) error {
 
 		_, updateErr := resourceDataflowJobUpdateJob(config, project, region, id, job)
 		if updateErr != nil {
-			gerr, isGoogleErr := err.(*googleapi.Error)
+			gerr, isGoogleErr := updateErr.(*googleapi.Error)
 			if !isGoogleErr {
 				// If we have an error and it's not a google-specific error, we should go ahead and return.
-				return resource.NonRetryableError(err)
+				return resource.NonRetryableError(updateErr)
 			}
 
 			if strings.Contains(gerr.Message, "not yet ready for canceling") {
 				// Retry cancelling job if it's not ready.
 				// Sleep to avoid hitting update quota with repeated attempts.
 				time.Sleep(5 * time.Second)
-				return resource.RetryableError(err)
+				return resource.RetryableError(updateErr)
 			}
 
 			if strings.Contains(gerr.Message, "Job has terminated") {
@@ -332,9 +419,9 @@ func resourceDataflowJobCreateJob(config *Config, project string, region string,
 
 func resourceDataflowJobGetJob(config *Config, project string, region string, id string) (*dataflow.Job, error) {
 	if region == "" {
-		return config.clientDataflow.Projects.Jobs.Get(project, id).Do()
+		return config.clientDataflow.Projects.Jobs.Get(project, id).View("JOB_VIEW_ALL").Do()
 	}
-	return config.clientDataflow.Projects.Locations.Jobs.Get(project, region, id).Do()
+	return config.clientDataflow.Projects.Locations.Jobs.Get(project, region, id).View("JOB_VIEW_ALL").Do()
 }
 
 func resourceDataflowJobUpdateJob(config *Config, project string, region string, id string, job *dataflow.Job) (*dataflow.Job, error) {
@@ -342,4 +429,114 @@ func resourceDataflowJobUpdateJob(config *Config, project string, region string,
 		return config.clientDataflow.Projects.Jobs.Update(project, id, job).Do()
 	}
 	return config.clientDataflow.Projects.Locations.Jobs.Update(project, region, id, job).Do()
+}
+
+func resourceDataflowJobLaunchTemplate(config *Config, project string, region string, gcsPath string, request *dataflow.LaunchTemplateParameters) (*dataflow.LaunchTemplateResponse, error) {
+	if region == "" {
+		return config.clientDataflow.Projects.Templates.Launch(project, request).GcsPath(gcsPath).Do()
+	}
+	return config.clientDataflow.Projects.Locations.Templates.Launch(project, region, request).GcsPath(gcsPath).Do()
+}
+
+func resourceDataflowJobSetupEnv(d *schema.ResourceData, config *Config) (dataflow.RuntimeEnvironment, error) {
+	zone, err := getZone(d, config)
+	if err != nil {
+		return dataflow.RuntimeEnvironment{}, err
+	}
+
+	labels := expandStringMap(d, "labels")
+
+	additionalExperiments := convertStringSet(d.Get("additional_experiments").(*schema.Set))
+
+	env := dataflow.RuntimeEnvironment{
+		MaxWorkers:            int64(d.Get("max_workers").(int)),
+		Network:               d.Get("network").(string),
+		ServiceAccountEmail:   d.Get("service_account_email").(string),
+		Subnetwork:            d.Get("subnetwork").(string),
+		TempLocation:          d.Get("temp_gcs_location").(string),
+		MachineType:           d.Get("machine_type").(string),
+		IpConfiguration:       d.Get("ip_configuration").(string),
+		AdditionalUserLabels:  labels,
+		Zone:                  zone,
+		AdditionalExperiments: additionalExperiments,
+	}
+	return env, nil
+}
+
+func resourceDataflowJobIterateMapForceNew(mapKey string, d *schema.ResourceDiff) {
+	obj := d.Get(mapKey).(map[string]interface{})
+	for k := range obj {
+		entrySchemaKey := mapKey + "." + k
+		if d.HasChange(entrySchemaKey) {
+			// ForceNew must be called on the parent map to trigger
+			d.ForceNew(mapKey)
+			break
+		}
+	}
+}
+
+func resourceDataflowJobIterateMapHasChange(mapKey string, d *schema.ResourceData) bool {
+	obj := d.Get(mapKey).(map[string]interface{})
+	for k := range obj {
+		entrySchemaKey := mapKey + "." + k
+		if d.HasChange(entrySchemaKey) {
+			return true
+		}
+	}
+	return false
+}
+
+func resourceDataflowJobIsVirtualUpdate(d *schema.ResourceData) bool {
+	// on_delete is the only virtual field
+	if d.HasChange("on_delete") {
+		// Check if other fields have changes, which would require an actual update request
+		resourceSchema := resourceDataflowJob().Schema
+		for field := range resourceSchema {
+			if field == "on_delete" {
+				continue
+			}
+			// Labels map will likely have suppressed changes, so we check each key instead of the parent field
+			if (field == "labels" && resourceDataflowJobIterateMapHasChange(field, d)) ||
+				(field != "labels" && d.HasChange(field)) {
+				return false
+			}
+		}
+		// on_delete is changing, but nothing else
+		return true
+	}
+
+	return false
+}
+
+func waitForDataflowJobToBeUpdated(d *schema.ResourceData, config *Config, replacementJobID string, timeout time.Duration) error {
+	return resource.Retry(timeout, func() *resource.RetryError {
+		project, err := getProject(d, config)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+
+		region, err := getRegion(d, config)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+
+		replacementJob, err := resourceDataflowJobGetJob(config, project, region, replacementJobID)
+		if err != nil {
+			if isRetryableError(err) {
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+
+		state := replacementJob.CurrentState
+		switch state {
+		case "", "JOB_STATE_PENDING":
+			return resource.RetryableError(fmt.Errorf("the replacement job with ID %q has pending state %q.", replacementJobID, state))
+		case "JOB_STATE_FAILED":
+			return resource.NonRetryableError(fmt.Errorf("the replacement job with ID %q failed with state %q.", replacementJobID, state))
+		default:
+			log.Printf("[DEBUG] the replacement job with ID %q has state %q.", replacementJobID, state)
+			return nil
+		}
+	})
 }
