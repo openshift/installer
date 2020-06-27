@@ -11,8 +11,6 @@ require (
 	github.com/Azure/go-ntlmssp v0.0.0-20191115210519-2b2be6cc8ed4 // indirect
 	github.com/ChrisTrenkamp/goxpath v0.0.0-20190607011252-c5096ec8773d // indirect
 	github.com/Netflix/go-expect v0.0.0-20190729225929-0e00d9168667 // indirect
-	github.com/aliyun/alibaba-cloud-sdk-go v1.60.285 // indirect
-	github.com/aliyun/aliyun-tablestore-go-sdk v4.1.3+incompatible // indirect
 	github.com/antchfx/xpath v1.1.2 // indirect
 	github.com/apparentlymart/go-cidr v1.0.1
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
@@ -20,7 +18,6 @@ require (
 	github.com/btubbs/datetime v0.1.1 // indirect
 	github.com/c4milo/gotoolkit v0.0.0-20190525173301-67483a18c17a // indirect
 	github.com/containers/image v3.0.2+incompatible
-	github.com/coreos/etcd v3.3.18+incompatible // indirect
 	github.com/coreos/go-systemd v0.0.0 // indirect
 	github.com/coreos/ignition v0.35.0
 	github.com/dmacvicar/terraform-provider-libvirt v0.6.2
@@ -32,7 +29,6 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/gophercloud/gophercloud v0.8.0
 	github.com/gophercloud/utils v0.0.0-20191212191830-4533a07bd492
-	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-azure-helpers v0.10.0
 	github.com/hashicorp/go-plugin v1.0.1
@@ -41,11 +37,9 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk v1.9.0
 	github.com/hashicorp/vault v1.3.0 // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
-	github.com/joyent/triton-go v1.7.0 // indirect
 	github.com/keybase/go-crypto v0.0.0-20190828182435-a05457805304 // indirect
 	github.com/libvirt/libvirt-go v5.10.0+incompatible
 	github.com/libvirt/libvirt-go-xml v5.10.0+incompatible // indirect
-	github.com/lusis/go-artifactory v0.0.0-20180304164534-a47f63f234b2 // indirect
 	github.com/masterzen/simplexml v0.0.0-20190410153822-31eea3082786 // indirect
 	github.com/masterzen/winrm v0.0.0-20190308153735-1d17eaf15943 // indirect
 	github.com/metal3-io/baremetal-operator v0.0.0
@@ -87,6 +81,7 @@ require (
 	github.com/ulikunitz/xz v0.5.6
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 	github.com/vmware/govmomi v0.22.2
+	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca // indirect
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
@@ -113,8 +108,7 @@ replace (
 	github.com/Azure/go-autorest/autorest/azure/auth => github.com/tombuildsstuff/go-autorest/autorest/azure/auth v0.4.3-0.20200416184303-d4e299a3c04a
 	github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.0.0 // Pin non-versioned import to v22.0.0
 	github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb // Pinned by MCO
-	github.com/hashicorp/consul => github.com/hashicorp/consul v1.6.2 // Pin to version required by terraform fork
-	github.com/hashicorp/terraform => github.com/openshift/hashicorp-terraform v0.12.20-openshift-2 // Pin to fork with deduplicated rpc types
+	github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-3 // Pin to fork with deduplicated rpc types
 	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.6.0-openshift // Pin to fork with public rpc types
 	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20200611190251-d997d9c06ba8 // Use OpenShift fork
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork

@@ -15,7 +15,6 @@ cloud.google.com/go/bigtable/internal/option
 cloud.google.com/go/storage
 # github.com/Azure/azure-sdk-for-go v41.2.0+incompatible
 github.com/Azure/azure-sdk-for-go/profiles/2017-03-09/resources/mgmt/resources
-github.com/Azure/azure-sdk-for-go/profiles/2017-03-09/storage/mgmt/storage
 github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns
 github.com/Azure/azure-sdk-for-go/services/analysisservices/mgmt/2017-08-01/analysisservices
 github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2019-12-01/apimanagement
@@ -104,13 +103,11 @@ github.com/Azure/azure-sdk-for-go/services/search/mgmt/2015-08-19/search
 github.com/Azure/azure-sdk-for-go/services/servicebus/mgmt/2017-04-01/servicebus
 github.com/Azure/azure-sdk-for-go/services/servicefabric/mgmt/2018-02-01/servicefabric
 github.com/Azure/azure-sdk-for-go/services/signalr/mgmt/2018-10-01/signalr
-github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2016-01-01/storage
 github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2019-04-01/storage
 github.com/Azure/azure-sdk-for-go/services/storagecache/mgmt/2019-11-01/storagecache
 github.com/Azure/azure-sdk-for-go/services/streamanalytics/mgmt/2016-03-01/streamanalytics
 github.com/Azure/azure-sdk-for-go/services/trafficmanager/mgmt/2018-04-01/trafficmanager
 github.com/Azure/azure-sdk-for-go/services/web/mgmt/2019-08-01/web
-github.com/Azure/azure-sdk-for-go/storage
 github.com/Azure/azure-sdk-for-go/version
 # github.com/Azure/go-autorest/autorest v0.10.0 => github.com/tombuildsstuff/go-autorest/autorest v0.10.1-0.20200416184303-d4e299a3c04a
 github.com/Azure/go-autorest/autorest
@@ -158,33 +155,12 @@ github.com/PuerkitoBio/urlesc
 github.com/agext/levenshtein
 # github.com/ajeddeloh/go-json v0.0.0-20170920214419-6a2fe990e083
 github.com/ajeddeloh/go-json
-# github.com/aliyun/alibaba-cloud-sdk-go v1.60.285
-github.com/aliyun/alibaba-cloud-sdk-go/sdk
-github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth
-github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials
-github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials/provider
-github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/signers
-github.com/aliyun/alibaba-cloud-sdk-go/sdk/endpoints
-github.com/aliyun/alibaba-cloud-sdk-go/sdk/errors
-github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests
-github.com/aliyun/alibaba-cloud-sdk-go/sdk/responses
-github.com/aliyun/alibaba-cloud-sdk-go/sdk/utils
-github.com/aliyun/alibaba-cloud-sdk-go/services/location
-github.com/aliyun/alibaba-cloud-sdk-go/services/sts
-# github.com/aliyun/aliyun-oss-go-sdk v2.0.4+incompatible
-github.com/aliyun/aliyun-oss-go-sdk/oss
-# github.com/aliyun/aliyun-tablestore-go-sdk v4.1.3+incompatible
-github.com/aliyun/aliyun-tablestore-go-sdk/tablestore
-github.com/aliyun/aliyun-tablestore-go-sdk/tablestore/otsprotocol
-github.com/aliyun/aliyun-tablestore-go-sdk/tablestore/search
 # github.com/apparentlymart/go-cidr v1.0.1
 github.com/apparentlymart/go-cidr/cidr
 # github.com/apparentlymart/go-textseg v1.0.0
 github.com/apparentlymart/go-textseg/textseg
 # github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2
 github.com/armon/circbuf
-# github.com/armon/go-metrics v0.3.0
-github.com/armon/go-metrics
 # github.com/armon/go-radix v1.0.0
 github.com/armon/go-radix
 # github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
@@ -401,33 +377,9 @@ github.com/chzyer/readline
 github.com/containers/image/docker/reference
 github.com/containers/image/pkg/sysregistriesv2
 github.com/containers/image/types
-# github.com/coreos/etcd v3.3.18+incompatible
-github.com/coreos/etcd/auth/authpb
-github.com/coreos/etcd/client
-github.com/coreos/etcd/clientv3
-github.com/coreos/etcd/clientv3/balancer
-github.com/coreos/etcd/clientv3/balancer/connectivity
-github.com/coreos/etcd/clientv3/balancer/picker
-github.com/coreos/etcd/clientv3/balancer/resolver/endpoint
-github.com/coreos/etcd/clientv3/concurrency
-github.com/coreos/etcd/clientv3/credentials
-github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes
-github.com/coreos/etcd/etcdserver/etcdserverpb
-github.com/coreos/etcd/mvcc/mvccpb
-github.com/coreos/etcd/pkg/logutil
-github.com/coreos/etcd/pkg/pathutil
-github.com/coreos/etcd/pkg/srv
-github.com/coreos/etcd/pkg/systemd
-github.com/coreos/etcd/pkg/tlsutil
-github.com/coreos/etcd/pkg/transport
-github.com/coreos/etcd/pkg/types
-github.com/coreos/etcd/raft
-github.com/coreos/etcd/raft/raftpb
-github.com/coreos/etcd/version
 # github.com/coreos/go-semver v0.3.0
 github.com/coreos/go-semver/semver
 # github.com/coreos/go-systemd v0.0.0 => github.com/coreos/go-systemd/v22 v22.0.0
-github.com/coreos/go-systemd/journal
 github.com/coreos/go-systemd/unit
 # github.com/coreos/ignition v0.35.0
 github.com/coreos/ignition/config/shared/errors
@@ -447,8 +399,6 @@ github.com/coreos/ignition/config/validate
 github.com/coreos/ignition/config/validate/astjson
 github.com/coreos/ignition/config/validate/astnode
 github.com/coreos/ignition/config/validate/report
-# github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f
-github.com/coreos/pkg/capnslog
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -493,9 +443,7 @@ github.com/gobuffalo/flect
 # github.com/gofrs/uuid v3.2.0+incompatible
 github.com/gofrs/uuid
 # github.com/gogo/protobuf v1.3.1
-github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/proto
-github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 github.com/gogo/protobuf/sortkeys
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 github.com/golang/groupcache/lru
@@ -523,8 +471,6 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/go-querystring v1.0.0
-github.com/google/go-querystring/query
 # github.com/google/gofuzz v1.1.0
 github.com/google/gofuzz
 # github.com/google/uuid v1.1.1
@@ -672,8 +618,6 @@ github.com/h2non/filetype/matchers/isobmff
 github.com/h2non/filetype/types
 # github.com/hashicorp/aws-sdk-go-base v0.4.0
 github.com/hashicorp/aws-sdk-go-base
-# github.com/hashicorp/consul/api v1.3.0
-github.com/hashicorp/consul/api
 # github.com/hashicorp/errwrap v1.0.0
 github.com/hashicorp/errwrap
 # github.com/hashicorp/go-azure-helpers v0.10.0
@@ -689,8 +633,6 @@ github.com/hashicorp/go-getter
 github.com/hashicorp/go-getter/helper/url
 # github.com/hashicorp/go-hclog v0.10.0
 github.com/hashicorp/go-hclog
-# github.com/hashicorp/go-immutable-radix v1.1.0
-github.com/hashicorp/go-immutable-radix
 # github.com/hashicorp/go-multierror v1.0.0
 github.com/hashicorp/go-multierror
 # github.com/hashicorp/go-plugin v1.0.1
@@ -698,14 +640,8 @@ github.com/hashicorp/go-plugin
 github.com/hashicorp/go-plugin/internal/plugin
 # github.com/hashicorp/go-retryablehttp v0.6.4
 github.com/hashicorp/go-retryablehttp
-# github.com/hashicorp/go-rootcerts v1.0.1
-github.com/hashicorp/go-rootcerts
 # github.com/hashicorp/go-safetemp v1.0.0
 github.com/hashicorp/go-safetemp
-# github.com/hashicorp/go-slug v0.4.1
-github.com/hashicorp/go-slug
-# github.com/hashicorp/go-tfe v0.3.27
-github.com/hashicorp/go-tfe
 # github.com/hashicorp/go-uuid v1.0.2-0.20191001231223-f32f5fe8d6a8
 github.com/hashicorp/go-uuid
 # github.com/hashicorp/go-version v1.2.0
@@ -744,28 +680,11 @@ github.com/hashicorp/hil/parser
 github.com/hashicorp/hil/scanner
 # github.com/hashicorp/logutils v1.0.0
 github.com/hashicorp/logutils
-# github.com/hashicorp/serf v0.8.5
-github.com/hashicorp/serf/coordinate
-# github.com/hashicorp/terraform v0.12.21 => github.com/openshift/hashicorp-terraform v0.12.20-openshift-2
+# github.com/hashicorp/terraform v0.12.21 => github.com/openshift/terraform v0.12.20-openshift-3
 github.com/hashicorp/terraform/addrs
 github.com/hashicorp/terraform/backend
-github.com/hashicorp/terraform/backend/atlas
 github.com/hashicorp/terraform/backend/init
 github.com/hashicorp/terraform/backend/local
-github.com/hashicorp/terraform/backend/remote
-github.com/hashicorp/terraform/backend/remote-state/artifactory
-github.com/hashicorp/terraform/backend/remote-state/azure
-github.com/hashicorp/terraform/backend/remote-state/consul
-github.com/hashicorp/terraform/backend/remote-state/etcdv2
-github.com/hashicorp/terraform/backend/remote-state/etcdv3
-github.com/hashicorp/terraform/backend/remote-state/gcs
-github.com/hashicorp/terraform/backend/remote-state/http
-github.com/hashicorp/terraform/backend/remote-state/inmem
-github.com/hashicorp/terraform/backend/remote-state/manta
-github.com/hashicorp/terraform/backend/remote-state/oss
-github.com/hashicorp/terraform/backend/remote-state/pg
-github.com/hashicorp/terraform/backend/remote-state/s3
-github.com/hashicorp/terraform/backend/remote-state/swift
 github.com/hashicorp/terraform/builtin/providers/terraform
 github.com/hashicorp/terraform/builtin/provisioners/chef
 github.com/hashicorp/terraform/builtin/provisioners/file
@@ -802,7 +721,6 @@ github.com/hashicorp/terraform/helper/experiment
 github.com/hashicorp/terraform/helper/hashcode
 github.com/hashicorp/terraform/helper/hilmapstructure
 github.com/hashicorp/terraform/helper/logging
-github.com/hashicorp/terraform/helper/pathorcontents
 github.com/hashicorp/terraform/helper/plugin
 github.com/hashicorp/terraform/helper/schema
 github.com/hashicorp/terraform/helper/slowmessage
@@ -832,7 +750,6 @@ github.com/hashicorp/terraform/registry/regsrc
 github.com/hashicorp/terraform/registry/response
 github.com/hashicorp/terraform/repl
 github.com/hashicorp/terraform/state
-github.com/hashicorp/terraform/state/remote
 github.com/hashicorp/terraform/states
 github.com/hashicorp/terraform/states/statefile
 github.com/hashicorp/terraform/states/statemgr
@@ -908,12 +825,6 @@ github.com/inconshreveable/mousetrap
 github.com/jen20/awspolicyequivalence
 # github.com/jmespath/go-jmespath v0.3.0
 github.com/jmespath/go-jmespath
-# github.com/joyent/triton-go v1.7.0
-github.com/joyent/triton-go
-github.com/joyent/triton-go/authentication
-github.com/joyent/triton-go/client
-github.com/joyent/triton-go/errors
-github.com/joyent/triton-go/storage
 # github.com/json-iterator/go v1.1.9
 github.com/json-iterator/go
 # github.com/jstemmer/go-junit-report v0.9.1
@@ -948,16 +859,10 @@ github.com/kr/pretty
 github.com/kr/text
 # github.com/leodido/go-urn v1.2.0
 github.com/leodido/go-urn
-# github.com/lib/pq v1.2.0
-github.com/lib/pq
-github.com/lib/pq/oid
-github.com/lib/pq/scram
 # github.com/libvirt/libvirt-go v5.10.0+incompatible
 github.com/libvirt/libvirt-go
 # github.com/libvirt/libvirt-go-xml v5.10.0+incompatible
 github.com/libvirt/libvirt-go-xml
-# github.com/lusis/go-artifactory v0.0.0-20180304164534-a47f63f234b2
-github.com/lusis/go-artifactory/src/artifactory.v401
 # github.com/mailru/easyjson v0.7.0
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
@@ -1100,8 +1005,6 @@ github.com/spf13/pflag
 github.com/stoewer/go-strcase
 # github.com/stretchr/testify v1.5.1
 github.com/stretchr/testify/assert
-# github.com/svanharmelen/jsonapi v0.0.0-20180618144545-0c0828c3f16d
-github.com/svanharmelen/jsonapi
 # github.com/terraform-providers/terraform-provider-aws v0.0.0 => github.com/openshift/terraform-provider-aws v1.60.1-0.20200526184553-1a716dcc0fa8
 github.com/terraform-providers/terraform-provider-aws/aws
 github.com/terraform-providers/terraform-provider-aws/aws/internal/flatmap
@@ -1471,17 +1374,6 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
-# go.uber.org/atomic v1.6.0
-go.uber.org/atomic
-# go.uber.org/multierr v1.5.0
-go.uber.org/multierr
-# go.uber.org/zap v1.14.1
-go.uber.org/zap
-go.uber.org/zap/buffer
-go.uber.org/zap/internal/bufferpool
-go.uber.org/zap/internal/color
-go.uber.org/zap/internal/exit
-go.uber.org/zap/zapcore
 # go4.org v0.0.0-20191010144846-132d2879e1e9
 go4.org/errorutil
 # golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
@@ -1706,8 +1598,6 @@ google.golang.org/grpc/metadata
 google.golang.org/grpc/naming
 google.golang.org/grpc/peer
 google.golang.org/grpc/resolver
-google.golang.org/grpc/resolver/dns
-google.golang.org/grpc/resolver/passthrough
 google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
