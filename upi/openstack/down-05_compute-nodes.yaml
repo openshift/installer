@@ -35,3 +35,9 @@
       name: "{{ item.1 }}-{{ item.0 }}"
       state: absent
     with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"
+
+  - name: 'Remove the Compute ports2'
+    os_port:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      state: absent
+    with_indexed_items: "{{ [os_port_worker2] * os_compute_nodes_number }}"

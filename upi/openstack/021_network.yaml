@@ -1,0 +1,30 @@
+- import_playbook: common.yaml
+
+- hosts: all
+  gather_facts: no
+
+  tasks:
+  - name: 'Create second node network'
+    command:
+      cmd: "neutron net-create {{ os_network2 }} --apic:nested-domain-name openshift-domain --apic:nested-domain-type openshift --apic:nested_domain_infra_vlan 4093 --apic:nested_domain_service_vlan 2003"
+
+  - name: 'Set the second cluster network tag'
+    command:
+      cmd: "openstack network set --tag {{ cluster_id_tag }} {{ os_network2 }}"
+
+  - name: 'Create a subnet2'
+    os_subnet:
+      name: "{{ os_subnet2 }}"
+      network_name: "{{ os_network2 }}"
+      no_gateway_ip: yes
+      cidr: "{{ os_subnet_range2 }}"
+      allocation_pool_start: "{{ os_subnet_range2 | next_nth_usable(10) }}"
+      allocation_pool_end: "{{ os_subnet_range2 | ipaddr('last_usable') }}"
+
+  - name: 'Set the cluster subnet tag'
+    command:
+      cmd: "openstack subnet set --tag {{ cluster_id_tag }} {{ os_subnet2 }}"
+
+  - name: 'Set dns nameserver'
+    command:
+      cmd: "openstack subnet set --dns-nameserver {{ dns_ip }} {{ os_subnet }}"

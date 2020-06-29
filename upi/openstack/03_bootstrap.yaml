@@ -25,6 +25,18 @@
     command:
       cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_bootstrap }}"
 
+  - name: 'Create the bootstrap server port'
+    os_port:
+      name: "{{ os_port_bootstrap2 }}"
+      network: "{{ os_network2 }}"
+      allowed_address_pairs:
+      - ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
+      - ip_address: "{{ os_subnet_range | next_nth_usable(6) }}"
+
+  - name: 'Set bootstrap port tag 2'
+    command:
+      cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_bootstrap2 }}"
+
   - name: 'Create the bootstrap server'
     os_server:
       name: "{{ os_bootstrap_server_name }}"
@@ -34,9 +46,11 @@
       auto_ip: no
       nics:
       - port-name: "{{ os_port_bootstrap }}"
+      - port-name: "{{ os_port_bootstrap2 }}"
 
   - name: 'Create the bootstrap floating IP'
     os_floating_ip:
       state: present
+      nat_destination: "{{ os_network }}"
       network: "{{ os_external_network }}"
       server: "{{ os_bootstrap_server_name }}"

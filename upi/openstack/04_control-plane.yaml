@@ -29,6 +29,22 @@
       cmd: "openstack port set --tag {{ cluster_id_tag }} {{ item.1 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_port_master] * os_cp_nodes_number }}"
 
+  - name: 'Create the Control Plane ports 2'
+    os_port:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      network: "{{ os_network2 }}"
+      allowed_address_pairs:
+      - ip_address: "{{ os_subnet_range2 | next_nth_usable(5) }}"
+      - ip_address: "{{ os_subnet_range2 | next_nth_usable(6) }}"
+      - ip_address: "{{ os_subnet_range2 | next_nth_usable(7) }}"
+    with_indexed_items: "{{ [os_port_master2] * os_cp_nodes_number }}"
+    register: ports
+
+  - name: 'Set Control Plane ports tag2'
+    command:
+      cmd: "openstack port set --tag {{ cluster_id_tag }} {{ item.1 }}-{{ item.0 }}"
+    with_indexed_items: "{{ [os_port_master2] * os_cp_nodes_number }}"
+
   - name: 'List the Control Plane Trunks'
     command:
       cmd: "openstack network trunk list"
@@ -56,4 +72,13 @@
       userdata: "{{ lookup('file', [item.1, item.0, 'ignition.json'] | join('-')) | string }}"
       nics:
       - port-name: "{{ os_port_master }}-{{ item.0 }}"
+      - port-name: "{{ os_port_master2 }}-{{ item.0 }}"
+    with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
+
+  - name: 'Create the master floating IP'
+    os_floating_ip:
+      state: present
+      nat_destination: "{{ os_network }}"
+      network: "{{ os_external_network }}"
+      server: "{{ item.1 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
