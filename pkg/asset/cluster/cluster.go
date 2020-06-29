@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/password"
+	"github.com/openshift/installer/pkg/asset/quota"
 	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
 )
@@ -44,6 +45,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&installconfig.PlatformCredsCheck{},
 		&installconfig.PlatformPermsCheck{},
 		&installconfig.PlatformProvisionCheck{},
+		&quota.PlatformQuotaCheck{},
 		&TerraformVariables{},
 		&password.KubeadminPassword{},
 	}
