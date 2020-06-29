@@ -2,7 +2,7 @@
 
 This image enables launching a libvirt cluster for CI testing through two primary mechanisms:
   1. Targeting a libvirt service running on a remote host
-  2. Launching a libvirt VM nested in a GCE instance
+  2. Launching libvirt VMs nested in a GCE instance
 
 This image contains [`nss_wrapper`](https://cwrap.org/nss_wrapper.html) to execute `ssh` commands as
 a mock user to interact with the remote libvirt API or GCE instance from an OpenShift container.
@@ -51,3 +51,14 @@ containers:
     #!/bin/sh
     mock-nss.sh openshift-install <args>
 ```
+
+### Provision script
+
+The `provision-host.sh` script is copied to the libvirt-installer CI image.  This script contains all steps necessary
+to run a nested libvirt install.  You can look at the [libvirt developer docs](https://github.com/openshift/installer/tree/master/docs/dev/libvirt)
+for more context.  For CI testing, the `provision-host.sh` script is run inside a rhel8 GCP instance.  This is necessary to run before the install.
+
+### Create-Cluster script
+
+The `create-cluster` script is copied to the libvirt-installer CI image.  This script is what will run the installer within the rhel8 GCP instance.
+A 3 control-plane node and 2 compute node cluster is created.  The installer image is extracted from a provided release image.

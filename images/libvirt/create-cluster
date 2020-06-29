@@ -1,0 +1,88 @@
+#!/bin/bash
+
+NAME="$1"
+if [ -z "$NAME" ]; then
+  echo "usage: create-cluster <name>"
+  exit 1
+fi
+
+# TODO: only need RELEASE_IMAGE, but temporarily need both while we transition in CI
+if [[ -z "$RELEASE_IMAGE" ]] && [[ -z "$OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE" ]]; then
+    echo "either \$RELEASE_IMAGE or \$OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE must be provided"
+    exit 1
+fi
+
+if [[ ! -z "$OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE" ]]; then
+    export RELEASE_IMAGE="${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}"
+    unset OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
+fi
+
+# extract libvirt installer from release image
+oc adm release extract -a ~/pull-secret --command openshift-baremetal-install "${RELEASE_IMAGE}"
+sudo mv openshift-baremetal-install /usr/local/bin/openshift-install
+
+CLUSTER_DIR="${HOME}/clusters/${NAME}"
+if [ -d "${CLUSTER_DIR}" ]; then
+  echo "WARNING: cluster ${NAME} already exists at ${CLUSTER_DIR}"
+else
+  mkdir -p ${CLUSTER_DIR}
+fi
+# Generate a default SSH key if one doesn't exist
+SSH_KEY="${HOME}/.ssh/id_rsa"
+if [ ! -f $SSH_KEY ]; then
+  ssh-keygen -t rsa -N "" -f $SSH_KEY
+fi
+export BASE_DOMAIN=openshift.testing
+export CLUSTER_NAME="${NAME}"
+export PUB_SSH_KEY="${SSH_KEY}.pub"
+PULL_SECRET=$(cat "${HOME}/pull-secret")
+
+cat > "${CLUSTER_DIR}/install-config.yaml" << EOF
+apiVersion: v1
+baseDomain: "${BASE_DOMAIN}"
+compute:
+- hyperthreading: Enabled
+  architecture: amd64
+  name: worker
+  platform: {}
+  replicas: 2
+controlPlane:
+  hyperthreading: Enabled
+  architecture: amd64
+  name: master
+  platform: {}
+  replicas: 3
+metadata:
+  creationTimestamp: null
+  name: "${CLUSTER_NAME}"
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 192.168.126.0/24
+  networkType: OpenShiftSDN
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  libvirt:
+    network:
+      if: tt0
+publish: External
+pullSecret: $(echo \'"${PULL_SECRET}"\')
+sshKey: |
+  $(cat "${PUB_SSH_KEY}")
+EOF
+
+# Create manifests and modify route domain
+openshift-install --dir="$CLUSTER_DIR" create manifests
+# Workaround for https://github.com/openshift/installer/issues/1007
+# Add custom domain to cluster-ingress
+yq write --inplace $CLUSTER_DIR/manifests/cluster-ingress-02-config.yml spec[domain] apps.$BASE_DOMAIN
+
+# Add master memory to 12 GB
+# This is only valid for openshift 4.3 onwards
+yq write --inplace ${CLUSTER_DIR}/openshift/99_openshift-cluster-api_master-machines-0.yaml spec.providerSpec.value[domainMemory] 14336
+
+openshift-install create cluster --log-level=debug --dir="$CLUSTER_DIR" || true
+openshift-install wait-for install-complete --log-level=debug --dir="$CLUSTER_DIR"
