@@ -5,6 +5,7 @@ import (
 	"log"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"google.golang.org/api/compute/v1"
@@ -20,6 +21,11 @@ func resourceComputeNetworkPeering() *schema.Resource {
 		Delete: resourceComputeNetworkPeeringDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceComputeNetworkPeeringImport,
+		},
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(4 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -58,6 +64,19 @@ func resourceComputeNetworkPeering() *schema.Resource {
 				ForceNew: true,
 				Optional: true,
 				Default:  false,
+			},
+
+			"export_subnet_routes_with_public_ip": {
+				Type:     schema.TypeBool,
+				ForceNew: true,
+				Optional: true,
+				Default:  true,
+			},
+
+			"import_subnet_routes_with_public_ip": {
+				Type:     schema.TypeBool,
+				ForceNew: true,
+				Optional: true,
 			},
 
 			"state": {
@@ -107,7 +126,7 @@ func resourceComputeNetworkPeeringCreate(d *schema.ResourceData, meta interface{
 		return fmt.Errorf("Error adding network peering: %s", err)
 	}
 
-	err = computeOperationWait(config, addOp, networkFieldValue.Project, "Adding Network Peering")
+	err = computeOperationWaitTime(config, addOp, networkFieldValue.Project, "Adding Network Peering", d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return err
 	}
@@ -142,6 +161,8 @@ func resourceComputeNetworkPeeringRead(d *schema.ResourceData, meta interface{})
 	d.Set("name", peering.Name)
 	d.Set("import_custom_routes", peering.ImportCustomRoutes)
 	d.Set("export_custom_routes", peering.ExportCustomRoutes)
+	d.Set("import_subnet_routes_with_public_ip", peering.ImportSubnetRoutesWithPublicIp)
+	d.Set("export_subnet_routes_with_public_ip", peering.ExportSubnetRoutesWithPublicIp)
 	d.Set("state", peering.State)
 	d.Set("state_details", peering.StateDetails)
 
@@ -182,7 +203,7 @@ func resourceComputeNetworkPeeringDelete(d *schema.ResourceData, meta interface{
 			return fmt.Errorf("Error removing peering `%s` from network `%s`: %s", name, networkFieldValue.Name, err)
 		}
 	} else {
-		err = computeOperationWait(config, removeOp, networkFieldValue.Project, "Removing Network Peering")
+		err = computeOperationWaitTime(config, removeOp, networkFieldValue.Project, "Removing Network Peering", d.Timeout(schema.TimeoutDelete))
 		if err != nil {
 			return err
 		}
@@ -201,11 +222,14 @@ func findPeeringFromNetwork(network *compute.Network, peeringName string) *compu
 }
 func expandNetworkPeering(d *schema.ResourceData) *compute.NetworkPeering {
 	return &compute.NetworkPeering{
-		ExchangeSubnetRoutes: true,
-		Name:                 d.Get("name").(string),
-		Network:              d.Get("peer_network").(string),
-		ExportCustomRoutes:   d.Get("export_custom_routes").(bool),
-		ImportCustomRoutes:   d.Get("import_custom_routes").(bool),
+		ExchangeSubnetRoutes:           true,
+		Name:                           d.Get("name").(string),
+		Network:                        d.Get("peer_network").(string),
+		ExportCustomRoutes:             d.Get("export_custom_routes").(bool),
+		ImportCustomRoutes:             d.Get("import_custom_routes").(bool),
+		ExportSubnetRoutesWithPublicIp: d.Get("export_subnet_routes_with_public_ip").(bool),
+		ImportSubnetRoutesWithPublicIp: d.Get("import_subnet_routes_with_public_ip").(bool),
+		ForceSendFields:                []string{"ExportSubnetRoutesWithPublicIp"},
 	}
 }
 

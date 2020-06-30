@@ -68,7 +68,7 @@ Keyed by the topic names.`,
 							ValidateFunc: validation.StringInSlice([]string{"PROTOBUF", "JSON"}, false),
 							Description: `The format of the Cloud Pub/Sub messages. 
 - PROTOBUF: The message payload is a serialized protocol buffer of SourceRepoEvent.
-- JSON: The message payload is a JSON string of SourceRepoEvent.`,
+- JSON: The message payload is a JSON string of SourceRepoEvent. Possible values: ["PROTOBUF", "JSON"]`,
 						},
 						"service_account_email": {
 							Type:     schema.TypeString,
@@ -173,16 +173,16 @@ func resourceSourceRepoRepositoryRead(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("Error reading Repository: %s", err)
 	}
 
-	if err := d.Set("name", flattenSourceRepoRepositoryName(res["name"], d)); err != nil {
+	if err := d.Set("name", flattenSourceRepoRepositoryName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Repository: %s", err)
 	}
-	if err := d.Set("url", flattenSourceRepoRepositoryUrl(res["url"], d)); err != nil {
+	if err := d.Set("url", flattenSourceRepoRepositoryUrl(res["url"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Repository: %s", err)
 	}
-	if err := d.Set("size", flattenSourceRepoRepositorySize(res["size"], d)); err != nil {
+	if err := d.Set("size", flattenSourceRepoRepositorySize(res["size"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Repository: %s", err)
 	}
-	if err := d.Set("pubsub_configs", flattenSourceRepoRepositoryPubsubConfigs(res["pubsubConfigs"], d)); err != nil {
+	if err := d.Set("pubsub_configs", flattenSourceRepoRepositoryPubsubConfigs(res["pubsubConfigs"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Repository: %s", err)
 	}
 
@@ -280,7 +280,7 @@ func resourceSourceRepoRepositoryImport(d *schema.ResourceData, meta interface{}
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenSourceRepoRepositoryName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenSourceRepoRepositoryName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
@@ -290,21 +290,28 @@ func flattenSourceRepoRepositoryName(v interface{}, d *schema.ResourceData) inte
 	return parts[3]
 }
 
-func flattenSourceRepoRepositoryUrl(v interface{}, d *schema.ResourceData) interface{} {
+func flattenSourceRepoRepositoryUrl(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenSourceRepoRepositorySize(v interface{}, d *schema.ResourceData) interface{} {
+func flattenSourceRepoRepositorySize(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
 		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
 			return intVal
-		} // let terraform core handle it if we can't convert the string to an int.
+		}
 	}
-	return v
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
 }
 
-func flattenSourceRepoRepositoryPubsubConfigs(v interface{}, d *schema.ResourceData) interface{} {
+func flattenSourceRepoRepositoryPubsubConfigs(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
@@ -314,17 +321,17 @@ func flattenSourceRepoRepositoryPubsubConfigs(v interface{}, d *schema.ResourceD
 		original := raw.(map[string]interface{})
 		transformed = append(transformed, map[string]interface{}{
 			"topic":                 k,
-			"message_format":        flattenSourceRepoRepositoryPubsubConfigsMessageFormat(original["messageFormat"], d),
-			"service_account_email": flattenSourceRepoRepositoryPubsubConfigsServiceAccountEmail(original["serviceAccountEmail"], d),
+			"message_format":        flattenSourceRepoRepositoryPubsubConfigsMessageFormat(original["messageFormat"], d, config),
+			"service_account_email": flattenSourceRepoRepositoryPubsubConfigsServiceAccountEmail(original["serviceAccountEmail"], d, config),
 		})
 	}
 	return transformed
 }
-func flattenSourceRepoRepositoryPubsubConfigsMessageFormat(v interface{}, d *schema.ResourceData) interface{} {
+func flattenSourceRepoRepositoryPubsubConfigsMessageFormat(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenSourceRepoRepositoryPubsubConfigsServiceAccountEmail(v interface{}, d *schema.ResourceData) interface{} {
+func flattenSourceRepoRepositoryPubsubConfigsServiceAccountEmail(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -344,15 +351,22 @@ func expandSourceRepoRepositoryPubsubConfigs(v interface{}, d TerraformResourceD
 		transformedMessageFormat, err := expandSourceRepoRepositoryPubsubConfigsMessageFormat(original["message_format"], d, config)
 		if err != nil {
 			return nil, err
+		} else if val := reflect.ValueOf(transformedMessageFormat); val.IsValid() && !isEmptyValue(val) {
+			transformed["messageFormat"] = transformedMessageFormat
 		}
-		transformed["messageFormat"] = transformedMessageFormat
+
 		transformedServiceAccountEmail, err := expandSourceRepoRepositoryPubsubConfigsServiceAccountEmail(original["service_account_email"], d, config)
 		if err != nil {
 			return nil, err
+		} else if val := reflect.ValueOf(transformedServiceAccountEmail); val.IsValid() && !isEmptyValue(val) {
+			transformed["serviceAccountEmail"] = transformedServiceAccountEmail
 		}
-		transformed["serviceAccountEmail"] = transformedServiceAccountEmail
 
-		m[original["topic"].(string)] = transformed
+		transformedTopic, err := expandSourceRepoRepositoryPubsubConfigsTopic(original["topic"], d, config)
+		if err != nil {
+			return nil, err
+		}
+		m[transformedTopic] = transformed
 	}
 	return m, nil
 }

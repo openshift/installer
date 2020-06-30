@@ -21,6 +21,7 @@ func resourceComputeSecurityPolicy() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceSecurityPolicyStateImporter,
 		},
+		CustomizeDiff: rulesCustomizeDiff,
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(4 * time.Minute),
@@ -81,7 +82,7 @@ func resourceComputeSecurityPolicy() *schema.Resource {
 													Type:     schema.TypeSet,
 													Required: true,
 													MinItems: 1,
-													MaxItems: 5,
+													MaxItems: 10,
 													Elem:     &schema.Schema{Type: schema.TypeString},
 												},
 											},
@@ -92,6 +93,33 @@ func resourceComputeSecurityPolicy() *schema.Resource {
 										Type:         schema.TypeString,
 										Optional:     true,
 										ValidateFunc: validation.StringInSlice([]string{"SRC_IPS_V1"}, false),
+									},
+
+									"expr": {
+										Type:     schema.TypeList,
+										Optional: true,
+										MaxItems: 1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"expression": {
+													Type:     schema.TypeString,
+													Required: true,
+												},
+												// These fields are not yet supported (Issue terraform-providers/terraform-provider-google#4497: mbang)
+												// "title": {
+												// 	Type:     schema.TypeString,
+												// 	Optional: true,
+												// },
+												// "description": {
+												// 	Type:     schema.TypeString,
+												// 	Optional: true,
+												// },
+												// "location": {
+												// 	Type:     schema.TypeString,
+												// 	Optional: true,
+												// },
+											},
+										},
 									},
 								},
 							},
@@ -121,6 +149,22 @@ func resourceComputeSecurityPolicy() *schema.Resource {
 			},
 		},
 	}
+}
+
+func rulesCustomizeDiff(diff *schema.ResourceDiff, _ interface{}) error {
+	_, n := diff.GetChange("rule")
+	nSet := n.(*schema.Set)
+
+	nPriorities := map[int64]bool{}
+	for _, rule := range nSet.List() {
+		priority := int64(rule.(map[string]interface{})["priority"].(int))
+		if nPriorities[priority] {
+			return fmt.Errorf("Two rules have the same priority, please update one of the priorities to be different.")
+		}
+		nPriorities[priority] = true
+	}
+
+	return nil
 }
 
 func resourceComputeSecurityPolicyCreate(d *schema.ResourceData, meta interface{}) error {
@@ -154,7 +198,7 @@ func resourceComputeSecurityPolicyCreate(d *schema.ResourceData, meta interface{
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(config, op, project, fmt.Sprintf("Creating SecurityPolicy %q", sp), int(d.Timeout(schema.TimeoutCreate).Minutes()))
+	err = computeOperationWaitTime(config, op, project, fmt.Sprintf("Creating SecurityPolicy %q", sp), d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return err
 	}
@@ -210,7 +254,7 @@ func resourceComputeSecurityPolicyUpdate(d *schema.ResourceData, meta interface{
 			return errwrap.Wrapf(fmt.Sprintf("Error updating SecurityPolicy %q: {{err}}", sp), err)
 		}
 
-		err = computeOperationWaitTime(config, op, project, fmt.Sprintf("Updating SecurityPolicy %q", sp), int(d.Timeout(schema.TimeoutCreate).Minutes()))
+		err = computeOperationWaitTime(config, op, project, fmt.Sprintf("Updating SecurityPolicy %q", sp), d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return err
 		}
@@ -238,7 +282,7 @@ func resourceComputeSecurityPolicyUpdate(d *schema.ResourceData, meta interface{
 					return errwrap.Wrapf(fmt.Sprintf("Error updating SecurityPolicy %q: {{err}}", sp), err)
 				}
 
-				err = computeOperationWaitTime(config, op, project, fmt.Sprintf("Updating SecurityPolicy %q", sp), int(d.Timeout(schema.TimeoutCreate).Minutes()))
+				err = computeOperationWaitTime(config, op, project, fmt.Sprintf("Updating SecurityPolicy %q", sp), d.Timeout(schema.TimeoutUpdate))
 				if err != nil {
 					return err
 				}
@@ -250,7 +294,7 @@ func resourceComputeSecurityPolicyUpdate(d *schema.ResourceData, meta interface{
 					return errwrap.Wrapf(fmt.Sprintf("Error updating SecurityPolicy %q: {{err}}", sp), err)
 				}
 
-				err = computeOperationWaitTime(config, op, project, fmt.Sprintf("Updating SecurityPolicy %q", sp), int(d.Timeout(schema.TimeoutCreate).Minutes()))
+				err = computeOperationWaitTime(config, op, project, fmt.Sprintf("Updating SecurityPolicy %q", sp), d.Timeout(schema.TimeoutUpdate))
 				if err != nil {
 					return err
 				}
@@ -267,7 +311,7 @@ func resourceComputeSecurityPolicyUpdate(d *schema.ResourceData, meta interface{
 					return errwrap.Wrapf(fmt.Sprintf("Error updating SecurityPolicy %q: {{err}}", sp), err)
 				}
 
-				err = computeOperationWaitTime(config, op, project, fmt.Sprintf("Updating SecurityPolicy %q", sp), int(d.Timeout(schema.TimeoutCreate).Minutes()))
+				err = computeOperationWaitTime(config, op, project, fmt.Sprintf("Updating SecurityPolicy %q", sp), d.Timeout(schema.TimeoutUpdate))
 				if err != nil {
 					return err
 				}
@@ -292,7 +336,7 @@ func resourceComputeSecurityPolicyDelete(d *schema.ResourceData, meta interface{
 		return errwrap.Wrapf("Error deleting SecurityPolicy: {{err}}", err)
 	}
 
-	err = computeOperationWaitTime(config, op, project, "Deleting SecurityPolicy", int(d.Timeout(schema.TimeoutDelete).Minutes()))
+	err = computeOperationWaitTime(config, op, project, "Deleting SecurityPolicy", d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return err
 	}
@@ -330,6 +374,7 @@ func expandSecurityPolicyMatch(configured []interface{}) *compute.SecurityPolicy
 	return &compute.SecurityPolicyRuleMatcher{
 		VersionedExpr: data["versioned_expr"].(string),
 		Config:        expandSecurityPolicyMatchConfig(data["config"].([]interface{})),
+		Expr:          expandSecurityPolicyMatchExpr(data["expr"].([]interface{})),
 	}
 }
 
@@ -341,6 +386,21 @@ func expandSecurityPolicyMatchConfig(configured []interface{}) *compute.Security
 	data := configured[0].(map[string]interface{})
 	return &compute.SecurityPolicyRuleMatcherConfig{
 		SrcIpRanges: convertStringArr(data["src_ip_ranges"].(*schema.Set).List()),
+	}
+}
+
+func expandSecurityPolicyMatchExpr(expr []interface{}) *compute.Expr {
+	if len(expr) == 0 || expr[0] == nil {
+		return nil
+	}
+
+	data := expr[0].(map[string]interface{})
+	return &compute.Expr{
+		Expression: data["expression"].(string),
+		// These fields are not yet supported  (Issue terraform-providers/terraform-provider-google#4497: mbang)
+		// Title:       data["title"].(string),
+		// Description: data["description"].(string),
+		// Location:    data["location"].(string),
 	}
 }
 
@@ -368,6 +428,7 @@ func flattenMatch(match *compute.SecurityPolicyRuleMatcher) []map[string]interfa
 	data := map[string]interface{}{
 		"versioned_expr": match.VersionedExpr,
 		"config":         flattenMatchConfig(match.Config),
+		"expr":           flattenMatchExpr(match),
 	}
 
 	return []map[string]interface{}{data}
@@ -380,6 +441,22 @@ func flattenMatchConfig(conf *compute.SecurityPolicyRuleMatcherConfig) []map[str
 
 	data := map[string]interface{}{
 		"src_ip_ranges": schema.NewSet(schema.HashString, convertStringArrToInterface(conf.SrcIpRanges)),
+	}
+
+	return []map[string]interface{}{data}
+}
+
+func flattenMatchExpr(match *compute.SecurityPolicyRuleMatcher) []map[string]interface{} {
+	if match.Expr == nil {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"expression": match.Expr.Expression,
+		// These fields are not yet supported (Issue terraform-providers/terraform-provider-google#4497: mbang)
+		// "title":       match.Expr.Title,
+		// "description": match.Expr.Description,
+		// "location":    match.Expr.Location,
 	}
 
 	return []map[string]interface{}{data}

@@ -139,6 +139,13 @@ func resourceStorageBucketObject() *schema.Resource {
 				Computed: true,
 			},
 
+			"metadata": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				ForceNew: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+
 			"self_link": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -199,6 +206,10 @@ func resourceStorageBucketObjectCreate(d *schema.ResourceData, meta interface{})
 		object.ContentType = v.(string)
 	}
 
+	if v, ok := d.GetOk("metadata"); ok {
+		object.Metadata = convertStringMap(v.(map[string]interface{}))
+	}
+
 	if v, ok := d.GetOk("storage_class"); ok {
 		object.StorageClass = v.(string)
 	}
@@ -242,6 +253,7 @@ func resourceStorageBucketObjectRead(d *schema.ResourceData, meta interface{}) e
 	d.Set("storage_class", res.StorageClass)
 	d.Set("self_link", res.SelfLink)
 	d.Set("output_name", res.Name)
+	d.Set("metadata", res.Metadata)
 
 	d.SetId(objectGetId(res))
 

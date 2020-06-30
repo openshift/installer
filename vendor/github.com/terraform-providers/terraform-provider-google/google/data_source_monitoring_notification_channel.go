@@ -26,7 +26,7 @@ func dataSourceMonitoringNotificationChannel() *schema.Resource {
 func dataSourceMonitoringNotificationChannelRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	url, err := replaceVars(d, config, "{{MonitoringBasePath}}projects/{{project}}/notificationChannels")
+	url, err := replaceVars(d, config, "{{MonitoringBasePath}}v3/projects/{{project}}/notificationChannels")
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func dataSourceMonitoringNotificationChannelRead(d *schema.ResourceData, meta in
 	}
 	res := channels[0].(map[string]interface{})
 
-	name := flattenMonitoringNotificationChannelName(res["name"], d).(string)
+	name := flattenMonitoringNotificationChannelName(res["name"], d, config).(string)
 	d.Set("name", name)
 	d.SetId(name)
 

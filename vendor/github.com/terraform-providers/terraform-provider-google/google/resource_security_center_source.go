@@ -103,6 +103,9 @@ func resourceSecurityCenterSourceCreate(d *schema.ResourceData, meta interface{}
 	if err != nil {
 		return fmt.Errorf("Error creating Source: %s", err)
 	}
+	if err := d.Set("name", flattenSecurityCenterSourceName(res["name"], d, config)); err != nil {
+		return fmt.Errorf(`Error setting computed identity field "name": %s`, err)
+	}
 
 	// Store the ID now
 	id, err := replaceVars(d, config, "{{name}}")
@@ -137,13 +140,13 @@ func resourceSecurityCenterSourceRead(d *schema.ResourceData, meta interface{}) 
 		return handleNotFoundError(err, d, fmt.Sprintf("SecurityCenterSource %q", d.Id()))
 	}
 
-	if err := d.Set("name", flattenSecurityCenterSourceName(res["name"], d)); err != nil {
+	if err := d.Set("name", flattenSecurityCenterSourceName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Source: %s", err)
 	}
-	if err := d.Set("description", flattenSecurityCenterSourceDescription(res["description"], d)); err != nil {
+	if err := d.Set("description", flattenSecurityCenterSourceDescription(res["description"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Source: %s", err)
 	}
-	if err := d.Set("display_name", flattenSecurityCenterSourceDisplayName(res["displayName"], d)); err != nil {
+	if err := d.Set("display_name", flattenSecurityCenterSourceDisplayName(res["displayName"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Source: %s", err)
 	}
 
@@ -227,15 +230,15 @@ func resourceSecurityCenterSourceImport(d *schema.ResourceData, meta interface{}
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenSecurityCenterSourceName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenSecurityCenterSourceName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenSecurityCenterSourceDescription(v interface{}, d *schema.ResourceData) interface{} {
+func flattenSecurityCenterSourceDescription(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenSecurityCenterSourceDisplayName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenSecurityCenterSourceDisplayName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 

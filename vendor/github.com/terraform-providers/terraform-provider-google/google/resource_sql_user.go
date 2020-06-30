@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	sqladmin "google.golang.org/api/sqladmin/v1beta4"
@@ -17,6 +18,12 @@ func resourceSqlUser() *schema.Resource {
 		Delete: resourceSqlUserDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceSqlUserImporter,
+		},
+
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(10 * time.Minute),
+			Update: schema.DefaultTimeout(10 * time.Minute),
+			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
 
 		SchemaVersion: 1,
@@ -96,7 +103,7 @@ func resourceSqlUserCreate(d *schema.ResourceData, meta interface{}) error {
 	// for which user.Host is an empty string.  That's okay.
 	d.SetId(fmt.Sprintf("%s/%s/%s", user.Name, user.Host, user.Instance))
 
-	err = sqlAdminOperationWait(config, op, project, "Insert User")
+	err = sqlAdminOperationWaitTime(config, op, project, "Insert User", d.Timeout(schema.TimeoutCreate))
 
 	if err != nil {
 		return fmt.Errorf("Error, failure waiting for insertion of %s "+
@@ -179,8 +186,7 @@ func resourceSqlUserUpdate(d *schema.ResourceData, meta interface{}) error {
 		defer mutexKV.Unlock(instanceMutexKey(project, instance))
 		var op *sqladmin.Operation
 		updateFunc := func() error {
-			op, err = config.clientSqlAdmin.Users.Update(project, instance, name,
-				user).Host(host).Do()
+			op, err = config.clientSqlAdmin.Users.Update(project, instance, user).Host(host).Name(name).Do()
 			return err
 		}
 		err = retryTimeDuration(updateFunc, d.Timeout(schema.TimeoutUpdate))
@@ -190,7 +196,7 @@ func resourceSqlUserUpdate(d *schema.ResourceData, meta interface{}) error {
 				"user %s into user %s: %s", name, instance, err)
 		}
 
-		err = sqlAdminOperationWait(config, op, project, "Insert User")
+		err = sqlAdminOperationWaitTime(config, op, project, "Insert User", d.Timeout(schema.TimeoutUpdate))
 
 		if err != nil {
 			return fmt.Errorf("Error, failure waiting for update of %s "+
@@ -212,29 +218,29 @@ func resourceSqlUserDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	name := d.Get("name").(string)
-	instance := d.Get("instance").(string)
 	host := d.Get("host").(string)
+	instance := d.Get("instance").(string)
 
 	mutexKV.Lock(instanceMutexKey(project, instance))
 	defer mutexKV.Unlock(instanceMutexKey(project, instance))
 
 	var op *sqladmin.Operation
 	err = retryTimeDuration(func() error {
-		op, err = config.clientSqlAdmin.Users.Delete(project, instance, host, name).Do()
-		return err
-	}, d.Timeout(schema.TimeoutDelete))
+		op, err = config.clientSqlAdmin.Users.Delete(project, instance).Host(host).Name(name).Do()
+		if err != nil {
+			return err
+		}
+
+		if err := sqlAdminOperationWaitTime(config, op, project, "Delete User", d.Timeout(schema.TimeoutDelete)); err != nil {
+			return err
+		}
+		return nil
+	}, d.Timeout(schema.TimeoutDelete), isSqlOperationInProgressError, isSqlInternalError)
 
 	if err != nil {
 		return fmt.Errorf("Error, failed to delete"+
 			"user %s in instance %s: %s", name,
 			instance, err)
-	}
-
-	err = sqlAdminOperationWait(config, op, project, "Delete User")
-
-	if err != nil {
-		return fmt.Errorf("Error, failure waiting for deletion of %s "+
-			"in %s: %s", name, instance, err)
 	}
 
 	return nil

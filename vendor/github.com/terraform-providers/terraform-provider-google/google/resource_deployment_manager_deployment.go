@@ -126,7 +126,7 @@ configuration.`,
 create and update. Valid values are 'CREATE_OR_ACQUIRE' (default) or
 'ACQUIRE'. If set to 'ACQUIRE' and resources do not already exist,
 the deployment will fail. Note that updating this field does not
-actually affect the deployment, just how it is updated.`,
+actually affect the deployment, just how it is updated. Default value: "CREATE_OR_ACQUIRE" Possible values: ["ACQUIRE", "CREATE_OR_ACQUIRE"]`,
 				Default: "CREATE_OR_ACQUIRE",
 			},
 			"delete_policy": {
@@ -139,7 +139,7 @@ Valid values are 'DELETE' (default) or 'ABANDON'. If 'DELETE',
 resource is deleted after removal from Deployment Manager. If
 'ABANDON', the resource is only removed from Deployment Manager
 and is not actually deleted. Note that updating this field does not
-actually change the deployment, just how it is updated.`,
+actually change the deployment, just how it is updated. Default value: "DELETE" Possible values: ["ABANDON", "DELETE"]`,
 				Default: "DELETE",
 			},
 			"description": {
@@ -263,7 +263,7 @@ func resourceDeploymentManagerDeploymentCreate(d *schema.ResourceData, meta inte
 
 	err = deploymentManagerOperationWaitTime(
 		config, res, project, "Creating Deployment",
-		int(d.Timeout(schema.TimeoutCreate).Minutes()))
+		d.Timeout(schema.TimeoutCreate))
 
 	if err != nil {
 		resourceDeploymentManagerDeploymentPostCreateFailure(d, meta)
@@ -298,22 +298,22 @@ func resourceDeploymentManagerDeploymentRead(d *schema.ResourceData, meta interf
 		return fmt.Errorf("Error reading Deployment: %s", err)
 	}
 
-	if err := d.Set("name", flattenDeploymentManagerDeploymentName(res["name"], d)); err != nil {
+	if err := d.Set("name", flattenDeploymentManagerDeploymentName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Deployment: %s", err)
 	}
-	if err := d.Set("description", flattenDeploymentManagerDeploymentDescription(res["description"], d)); err != nil {
+	if err := d.Set("description", flattenDeploymentManagerDeploymentDescription(res["description"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Deployment: %s", err)
 	}
-	if err := d.Set("labels", flattenDeploymentManagerDeploymentLabels(res["labels"], d)); err != nil {
+	if err := d.Set("labels", flattenDeploymentManagerDeploymentLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Deployment: %s", err)
 	}
-	if err := d.Set("deployment_id", flattenDeploymentManagerDeploymentDeploymentId(res["id"], d)); err != nil {
+	if err := d.Set("deployment_id", flattenDeploymentManagerDeploymentDeploymentId(res["id"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Deployment: %s", err)
 	}
-	if err := d.Set("manifest", flattenDeploymentManagerDeploymentManifest(res["manifest"], d)); err != nil {
+	if err := d.Set("manifest", flattenDeploymentManagerDeploymentManifest(res["manifest"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Deployment: %s", err)
 	}
-	if err := d.Set("self_link", flattenDeploymentManagerDeploymentSelfLink(res["selfLink"], d)); err != nil {
+	if err := d.Set("self_link", flattenDeploymentManagerDeploymentSelfLink(res["selfLink"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Deployment: %s", err)
 	}
 
@@ -355,7 +355,7 @@ func resourceDeploymentManagerDeploymentUpdate(d *schema.ResourceData, meta inte
 
 		err = deploymentManagerOperationWaitTime(
 			config, res, project, "Updating Deployment",
-			int(d.Timeout(schema.TimeoutUpdate).Minutes()))
+			d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return err
 		}
@@ -406,7 +406,7 @@ func resourceDeploymentManagerDeploymentUpdate(d *schema.ResourceData, meta inte
 
 		err = deploymentManagerOperationWaitTime(
 			config, res, project, "Updating Deployment",
-			int(d.Timeout(schema.TimeoutUpdate).Minutes()))
+			d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return err
 		}
@@ -444,7 +444,7 @@ func resourceDeploymentManagerDeploymentDelete(d *schema.ResourceData, meta inte
 
 	err = deploymentManagerOperationWaitTime(
 		config, res, project, "Deleting Deployment",
-		int(d.Timeout(schema.TimeoutDelete).Minutes()))
+		d.Timeout(schema.TimeoutDelete))
 
 	if err != nil {
 		return err
@@ -474,15 +474,15 @@ func resourceDeploymentManagerDeploymentImport(d *schema.ResourceData, meta inte
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenDeploymentManagerDeploymentName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenDeploymentManagerDeploymentName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenDeploymentManagerDeploymentDescription(v interface{}, d *schema.ResourceData) interface{} {
+func flattenDeploymentManagerDeploymentDescription(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenDeploymentManagerDeploymentLabels(v interface{}, d *schema.ResourceData) interface{} {
+func flattenDeploymentManagerDeploymentLabels(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
@@ -495,29 +495,29 @@ func flattenDeploymentManagerDeploymentLabels(v interface{}, d *schema.ResourceD
 			continue
 		}
 		transformed.Add(map[string]interface{}{
-			"key":   flattenDeploymentManagerDeploymentLabelsKey(original["key"], d),
-			"value": flattenDeploymentManagerDeploymentLabelsValue(original["value"], d),
+			"key":   flattenDeploymentManagerDeploymentLabelsKey(original["key"], d, config),
+			"value": flattenDeploymentManagerDeploymentLabelsValue(original["value"], d, config),
 		})
 	}
 	return transformed
 }
-func flattenDeploymentManagerDeploymentLabelsKey(v interface{}, d *schema.ResourceData) interface{} {
+func flattenDeploymentManagerDeploymentLabelsKey(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenDeploymentManagerDeploymentLabelsValue(v interface{}, d *schema.ResourceData) interface{} {
+func flattenDeploymentManagerDeploymentLabelsValue(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenDeploymentManagerDeploymentDeploymentId(v interface{}, d *schema.ResourceData) interface{} {
+func flattenDeploymentManagerDeploymentDeploymentId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenDeploymentManagerDeploymentManifest(v interface{}, d *schema.ResourceData) interface{} {
+func flattenDeploymentManagerDeploymentManifest(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenDeploymentManagerDeploymentSelfLink(v interface{}, d *schema.ResourceData) interface{} {
+func flattenDeploymentManagerDeploymentSelfLink(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 

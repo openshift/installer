@@ -1,3 +1,4 @@
+//
 package google
 
 import (
@@ -22,7 +23,7 @@ func instanceSchedulingNodeAffinitiesElemSchema() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"IN", "NOT"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"IN", "NOT_IN"}, false),
 			},
 			"values": {
 				Type:     schema.TypeSet,
@@ -91,7 +92,6 @@ func expandScheduling(v interface{}) (*computeBeta.Scheduling, error) {
 	if v, ok := original["preemptible"]; ok {
 		scheduling.Preemptible = v.(bool)
 		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "Preemptible")
-
 	}
 
 	if v, ok := original["on_host_maintenance"]; ok {

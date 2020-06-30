@@ -247,6 +247,13 @@ func resourceComputeRouteCreate(d *schema.ResourceData, meta interface{}) error 
 		obj["nextHopIlb"] = nextHopIlbProp
 	}
 
+	lockName, err := replaceVars(d, config, "projects/{{project}}/global/networks/{{network}}/peerings")
+	if err != nil {
+		return err
+	}
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
+
 	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/routes")
 	if err != nil {
 		return err
@@ -257,7 +264,7 @@ func resourceComputeRouteCreate(d *schema.ResourceData, meta interface{}) error 
 	if err != nil {
 		return err
 	}
-	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := sendRequestWithTimeout(config, "POST", project, url, obj, d.Timeout(schema.TimeoutCreate), isPeeringOperationInProgress)
 	if err != nil {
 		return fmt.Errorf("Error creating Route: %s", err)
 	}
@@ -271,7 +278,7 @@ func resourceComputeRouteCreate(d *schema.ResourceData, meta interface{}) error 
 
 	err = computeOperationWaitTime(
 		config, res, project, "Creating Route",
-		int(d.Timeout(schema.TimeoutCreate).Minutes()))
+		d.Timeout(schema.TimeoutCreate))
 
 	if err != nil {
 		// The resource didn't actually create
@@ -296,7 +303,7 @@ func resourceComputeRouteRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	res, err := sendRequest(config, "GET", project, url, nil)
+	res, err := sendRequest(config, "GET", project, url, nil, isPeeringOperationInProgress)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeRoute %q", d.Id()))
 	}
@@ -317,40 +324,40 @@ func resourceComputeRouteRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
 
-	if err := d.Set("dest_range", flattenComputeRouteDestRange(res["destRange"], d)); err != nil {
+	if err := d.Set("dest_range", flattenComputeRouteDestRange(res["destRange"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
-	if err := d.Set("description", flattenComputeRouteDescription(res["description"], d)); err != nil {
+	if err := d.Set("description", flattenComputeRouteDescription(res["description"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
-	if err := d.Set("name", flattenComputeRouteName(res["name"], d)); err != nil {
+	if err := d.Set("name", flattenComputeRouteName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
-	if err := d.Set("network", flattenComputeRouteNetwork(res["network"], d)); err != nil {
+	if err := d.Set("network", flattenComputeRouteNetwork(res["network"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
-	if err := d.Set("priority", flattenComputeRoutePriority(res["priority"], d)); err != nil {
+	if err := d.Set("priority", flattenComputeRoutePriority(res["priority"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
-	if err := d.Set("tags", flattenComputeRouteTags(res["tags"], d)); err != nil {
+	if err := d.Set("tags", flattenComputeRouteTags(res["tags"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
-	if err := d.Set("next_hop_gateway", flattenComputeRouteNextHopGateway(res["nextHopGateway"], d)); err != nil {
+	if err := d.Set("next_hop_gateway", flattenComputeRouteNextHopGateway(res["nextHopGateway"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
-	if err := d.Set("next_hop_instance", flattenComputeRouteNextHopInstance(res["nextHopInstance"], d)); err != nil {
+	if err := d.Set("next_hop_instance", flattenComputeRouteNextHopInstance(res["nextHopInstance"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
-	if err := d.Set("next_hop_ip", flattenComputeRouteNextHopIp(res["nextHopIp"], d)); err != nil {
+	if err := d.Set("next_hop_ip", flattenComputeRouteNextHopIp(res["nextHopIp"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
-	if err := d.Set("next_hop_vpn_tunnel", flattenComputeRouteNextHopVpnTunnel(res["nextHopVpnTunnel"], d)); err != nil {
+	if err := d.Set("next_hop_vpn_tunnel", flattenComputeRouteNextHopVpnTunnel(res["nextHopVpnTunnel"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
-	if err := d.Set("next_hop_network", flattenComputeRouteNextHopNetwork(res["nextHopNetwork"], d)); err != nil {
+	if err := d.Set("next_hop_network", flattenComputeRouteNextHopNetwork(res["nextHopNetwork"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
-	if err := d.Set("next_hop_ilb", flattenComputeRouteNextHopIlb(res["nextHopIlb"], d)); err != nil {
+	if err := d.Set("next_hop_ilb", flattenComputeRouteNextHopIlb(res["nextHopIlb"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Route: %s", err)
 	}
 	if err := d.Set("self_link", ConvertSelfLinkToV1(res["selfLink"].(string))); err != nil {
@@ -368,6 +375,13 @@ func resourceComputeRouteDelete(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 
+	lockName, err := replaceVars(d, config, "projects/{{project}}/global/networks/{{network}}/peerings")
+	if err != nil {
+		return err
+	}
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
+
 	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/routes/{{name}}")
 	if err != nil {
 		return err
@@ -376,14 +390,14 @@ func resourceComputeRouteDelete(d *schema.ResourceData, meta interface{}) error 
 	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting Route %q", d.Id())
 
-	res, err := sendRequestWithTimeout(config, "DELETE", project, url, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := sendRequestWithTimeout(config, "DELETE", project, url, obj, d.Timeout(schema.TimeoutDelete), isPeeringOperationInProgress)
 	if err != nil {
 		return handleNotFoundError(err, d, "Route")
 	}
 
 	err = computeOperationWaitTime(
 		config, res, project, "Deleting Route",
-		int(d.Timeout(schema.TimeoutDelete).Minutes()))
+		d.Timeout(schema.TimeoutDelete))
 
 	if err != nil {
 		return err
@@ -413,69 +427,76 @@ func resourceComputeRouteImport(d *schema.ResourceData, meta interface{}) ([]*sc
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenComputeRouteDestRange(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeRouteDestRange(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeRouteDescription(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeRouteDescription(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeRouteName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeRouteName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeRouteNetwork(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeRouteNetwork(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
 	return ConvertSelfLinkToV1(v.(string))
 }
 
-func flattenComputeRoutePriority(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeRoutePriority(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
 		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
 			return intVal
-		} // let terraform core handle it if we can't convert the string to an int.
+		}
 	}
-	return v
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
 }
 
-func flattenComputeRouteTags(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeRouteTags(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
 	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
-func flattenComputeRouteNextHopGateway(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeRouteNextHopGateway(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeRouteNextHopInstance(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeRouteNextHopInstance(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
 	return ConvertSelfLinkToV1(v.(string))
 }
 
-func flattenComputeRouteNextHopIp(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeRouteNextHopIp(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeRouteNextHopVpnTunnel(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeRouteNextHopVpnTunnel(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
 	return ConvertSelfLinkToV1(v.(string))
 }
 
-func flattenComputeRouteNextHopNetwork(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeRouteNextHopNetwork(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeRouteNextHopIlb(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeRouteNextHopIlb(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}

@@ -53,6 +53,16 @@ type Generator struct {
 	// It's required to be false for v1 CRDs.
 	PreserveUnknownFields *bool `marker:",optional"`
 
+	// AllowDangerousTypes allows types which are usually omitted from CRD generation
+	// because they are not recommended.
+	//
+	// Currently the following additional types are allowed when this is true:
+	// float32
+	// float64
+	//
+	// Left unspecified, the default is false
+	AllowDangerousTypes *bool `marker:",optional"`
+
 	// MaxDescLen specifies the maximum description length for fields in CRD's OpenAPI schema.
 	//
 	// 0 indicates drop the description for all fields completely.
@@ -78,6 +88,8 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 	parser := &Parser{
 		Collector: ctx.Collector,
 		Checker:   ctx.Checker,
+		// Perform defaulting here to avoid ambiguity later
+		AllowDangerousTypes: g.AllowDangerousTypes != nil && *g.AllowDangerousTypes == true,
 	}
 
 	AddKnownTypes(parser)

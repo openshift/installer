@@ -8,10 +8,12 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/pathorcontents"
 	"github.com/hashicorp/terraform-plugin-sdk/httpclient"
 	"github.com/terraform-providers/terraform-provider-google/version"
+	"google.golang.org/api/option"
 
 	"golang.org/x/oauth2"
 	googleoauth "golang.org/x/oauth2/google"
@@ -36,10 +38,10 @@ import (
 	"google.golang.org/api/dns/v1"
 	dnsBeta "google.golang.org/api/dns/v1beta2"
 	file "google.golang.org/api/file/v1beta1"
+	healthcare "google.golang.org/api/healthcare/v1"
 	"google.golang.org/api/iam/v1"
 	iamcredentials "google.golang.org/api/iamcredentials/v1"
 	cloudlogging "google.golang.org/api/logging/v2"
-	"google.golang.org/api/option"
 	"google.golang.org/api/pubsub/v1"
 	runtimeconfig "google.golang.org/api/runtimeconfig/v1beta1"
 	"google.golang.org/api/servicemanagement/v1"
@@ -64,11 +66,16 @@ type Config struct {
 	BatchingConfig      *batchingConfig
 	UserProjectOverride bool
 	RequestTimeout      time.Duration
+	// PollInterval is passed to resource.StateChangeConf in common_operation.go
+	// It controls the interval at which we poll for successful operations
+	PollInterval time.Duration
 
-	client           *http.Client
-	context          context.Context
-	terraformVersion string
-	userAgent        string
+	client                *http.Client
+	wrappedBigQueryClient *http.Client
+	wrappedPubsubClient   *http.Client
+	context               context.Context
+	terraformVersion      string
+	userAgent             string
 
 	tokenSource oauth2.TokenSource
 
@@ -80,32 +87,43 @@ type Config struct {
 	BinaryAuthorizationBasePath  string
 	CloudBuildBasePath           string
 	CloudFunctionsBasePath       string
+	CloudIotBasePath             string
 	CloudRunBasePath             string
 	CloudSchedulerBasePath       string
 	CloudTasksBasePath           string
 	ComputeBasePath              string
 	ContainerAnalysisBasePath    string
+	DataCatalogBasePath          string
 	DataprocBasePath             string
+	DatastoreBasePath            string
 	DeploymentManagerBasePath    string
+	DialogflowBasePath           string
 	DNSBasePath                  string
 	FilestoreBasePath            string
 	FirestoreBasePath            string
+	HealthcareBasePath           string
 	IapBasePath                  string
 	IdentityPlatformBasePath     string
 	KMSBasePath                  string
 	LoggingBasePath              string
 	MLEngineBasePath             string
 	MonitoringBasePath           string
+	NetworkManagementBasePath    string
+	OSLoginBasePath              string
 	PubsubBasePath               string
 	RedisBasePath                string
 	ResourceManagerBasePath      string
 	RuntimeConfigBasePath        string
+	SecretManagerBasePath        string
 	SecurityCenterBasePath       string
+	ServiceManagementBasePath    string
+	ServiceUsageBasePath         string
 	SourceRepoBasePath           string
 	SpannerBasePath              string
 	SQLBasePath                  string
 	StorageBasePath              string
 	TPUBasePath                  string
+	VPCAccessBasePath            string
 
 	CloudBillingBasePath string
 	clientBilling        *cloudbilling.APIService
@@ -168,11 +186,11 @@ type Config struct {
 	IAMBasePath string
 	clientIAM   *iam.Service
 
-	ServiceManagementBasePath string
-	clientServiceMan          *servicemanagement.APIService
+	clientHealthcare *healthcare.Service
 
-	ServiceUsageBasePath string
-	clientServiceUsage   *serviceusage.Service
+	clientServiceMan *servicemanagement.APIService
+
+	clientServiceUsage *serviceusage.Service
 
 	clientBigQuery *bigquery.Service
 
@@ -211,32 +229,43 @@ var BigtableDefaultBasePath = "https://bigtableadmin.googleapis.com/v2/"
 var BinaryAuthorizationDefaultBasePath = "https://binaryauthorization.googleapis.com/v1/"
 var CloudBuildDefaultBasePath = "https://cloudbuild.googleapis.com/v1/"
 var CloudFunctionsDefaultBasePath = "https://cloudfunctions.googleapis.com/v1/"
+var CloudIotDefaultBasePath = "https://cloudiot.googleapis.com/v1/"
 var CloudRunDefaultBasePath = "https://{{location}}-run.googleapis.com/"
 var CloudSchedulerDefaultBasePath = "https://cloudscheduler.googleapis.com/v1/"
 var CloudTasksDefaultBasePath = "https://cloudtasks.googleapis.com/v2/"
 var ComputeDefaultBasePath = "https://www.googleapis.com/compute/v1/"
 var ContainerAnalysisDefaultBasePath = "https://containeranalysis.googleapis.com/v1/"
+var DataCatalogDefaultBasePath = "https://datacatalog.googleapis.com/v1/"
 var DataprocDefaultBasePath = "https://dataproc.googleapis.com/v1/"
+var DatastoreDefaultBasePath = "https://datastore.googleapis.com/v1/"
 var DeploymentManagerDefaultBasePath = "https://www.googleapis.com/deploymentmanager/v2/"
+var DialogflowDefaultBasePath = "https://dialogflow.googleapis.com/v2/"
 var DNSDefaultBasePath = "https://www.googleapis.com/dns/v1/"
 var FilestoreDefaultBasePath = "https://file.googleapis.com/v1/"
 var FirestoreDefaultBasePath = "https://firestore.googleapis.com/v1/"
+var HealthcareDefaultBasePath = "https://healthcare.googleapis.com/v1/"
 var IapDefaultBasePath = "https://iap.googleapis.com/v1/"
 var IdentityPlatformDefaultBasePath = "https://identitytoolkit.googleapis.com/v2/"
 var KMSDefaultBasePath = "https://cloudkms.googleapis.com/v1/"
 var LoggingDefaultBasePath = "https://logging.googleapis.com/v2/"
 var MLEngineDefaultBasePath = "https://ml.googleapis.com/v1/"
-var MonitoringDefaultBasePath = "https://monitoring.googleapis.com/v3/"
+var MonitoringDefaultBasePath = "https://monitoring.googleapis.com/"
+var NetworkManagementDefaultBasePath = "https://networkmanagement.googleapis.com/v1/"
+var OSLoginDefaultBasePath = "https://oslogin.googleapis.com/v1/"
 var PubsubDefaultBasePath = "https://pubsub.googleapis.com/v1/"
 var RedisDefaultBasePath = "https://redis.googleapis.com/v1/"
 var ResourceManagerDefaultBasePath = "https://cloudresourcemanager.googleapis.com/v1/"
 var RuntimeConfigDefaultBasePath = "https://runtimeconfig.googleapis.com/v1beta1/"
+var SecretManagerDefaultBasePath = "https://secretmanager.googleapis.com/v1/"
 var SecurityCenterDefaultBasePath = "https://securitycenter.googleapis.com/v1/"
+var ServiceManagementDefaultBasePath = "https://servicemanagement.googleapis.com/v1/"
+var ServiceUsageDefaultBasePath = "https://serviceusage.googleapis.com/v1/"
 var SourceRepoDefaultBasePath = "https://sourcerepo.googleapis.com/v1/"
 var SpannerDefaultBasePath = "https://spanner.googleapis.com/v1/"
-var SQLDefaultBasePath = "https://www.googleapis.com/sql/v1beta4/"
+var SQLDefaultBasePath = "https://sqladmin.googleapis.com/sql/v1beta4/"
 var StorageDefaultBasePath = "https://www.googleapis.com/storage/v1/"
 var TPUDefaultBasePath = "https://tpu.googleapis.com/v1/"
+var VPCAccessDefaultBasePath = "https://vpcaccess.googleapis.com/v1/"
 
 var defaultClientScopes = []string{
 	"https://www.googleapis.com/auth/compute",
@@ -257,8 +286,23 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	}
 	c.tokenSource = tokenSource
 
-	client := oauth2.NewClient(context.Background(), tokenSource)
-	client.Transport = logging.NewTransport("Google", client.Transport)
+	cleanCtx := context.WithValue(ctx, oauth2.HTTPClient, cleanhttp.DefaultClient())
+
+	// 1. OAUTH2 TRANSPORT/CLIENT - sets up proper auth headers
+	client := oauth2.NewClient(cleanCtx, tokenSource)
+
+	// 2. Logging Transport - ensure we log HTTP requests to GCP APIs.
+	loggingTransport := logging.NewTransport("Google", client.Transport)
+
+	// 3. Retry Transport - retries common temporary errors
+	// Keep order for wrapping logging so we log each retried request as well.
+	// This value should be used if needed to create shallow copies with additional retry predicates.
+	// See ClientWithAdditionalRetries
+	retryTransport := NewTransportWithDefaultRetries(loggingTransport)
+
+	// Set final transport value.
+	client.Transport = retryTransport
+
 	// This timeout is a timeout per HTTP request, not per logical operation.
 	client.Timeout = c.synchronousTimeout()
 
@@ -356,7 +400,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	c.clientStorage.UserAgent = userAgent
 	c.clientStorage.BasePath = storageClientBasePath
 
-	sqlClientBasePath := c.SQLBasePath
+	sqlClientBasePath := removeBasePathVersion(removeBasePathVersion(c.SQLBasePath))
 	log.Printf("[INFO] Instantiating Google SqlAdmin client for path %s", sqlClientBasePath)
 	c.clientSqlAdmin, err = sqladmin.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
@@ -367,7 +411,9 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 
 	pubsubClientBasePath := removeBasePathVersion(c.PubsubBasePath)
 	log.Printf("[INFO] Instantiating Google Pubsub client for path %s", pubsubClientBasePath)
-	c.clientPubsub, err = pubsub.NewService(ctx, option.WithHTTPClient(client))
+	wrappedPubsubClient := ClientWithAdditionalRetries(client, retryTransport, pubsubTopicProjectNotReady)
+	c.wrappedPubsubClient = wrappedPubsubClient
+	c.clientPubsub, err = pubsub.NewService(ctx, option.WithHTTPClient(wrappedPubsubClient))
 	if err != nil {
 		return err
 	}
@@ -466,7 +512,9 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 
 	bigQueryClientBasePath := c.BigQueryBasePath
 	log.Printf("[INFO] Instantiating Google Cloud BigQuery client for path %s", bigQueryClientBasePath)
-	c.clientBigQuery, err = bigquery.NewService(ctx, option.WithHTTPClient(client))
+	wrappedBigQueryClient := ClientWithAdditionalRetries(client, retryTransport, iamMemberMissing)
+	c.wrappedBigQueryClient = wrappedBigQueryClient
+	c.clientBigQuery, err = bigquery.NewService(ctx, option.WithHTTPClient(wrappedBigQueryClient))
 	if err != nil {
 		return err
 	}
@@ -588,10 +636,22 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	c.clientStorageTransfer.UserAgent = userAgent
 	c.clientStorageTransfer.BasePath = storageTransferClientBasePath
 
+	healthcareClientBasePath := removeBasePathVersion(c.HealthcareBasePath)
+	log.Printf("[INFO] Instantiating Google Cloud Healthcare client for path %s", healthcareClientBasePath)
+
+	c.clientHealthcare, err = healthcare.NewService(ctx, option.WithHTTPClient(client))
+	if err != nil {
+		return err
+	}
+	c.clientHealthcare.UserAgent = userAgent
+	c.clientHealthcare.BasePath = healthcareClientBasePath
+
 	c.Region = GetRegionFromRegionSelfLink(c.Region)
 
 	c.requestBatcherServiceUsage = NewRequestBatcher("Service Usage", ctx, c.BatchingConfig)
 	c.requestBatcherIam = NewRequestBatcher("IAM", ctx, c.BatchingConfig)
+
+	c.PollInterval = 10 * time.Second
 
 	return nil
 }
@@ -654,7 +714,7 @@ func (c *Config) getTokenSource(clientScopes []string) (oauth2.TokenSource, erro
 
 		creds, err := googleoauth.CredentialsFromJSON(context.Background(), []byte(contents), clientScopes...)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to parse credentials from '%s': %s", contents, err)
+			return nil, fmt.Errorf("Unable to parse credentials: %s", err)
 		}
 
 		log.Printf("[INFO] Authenticating using configured Google JSON 'credentials'...")
@@ -686,32 +746,43 @@ func ConfigureBasePaths(c *Config) {
 	c.BinaryAuthorizationBasePath = BinaryAuthorizationDefaultBasePath
 	c.CloudBuildBasePath = CloudBuildDefaultBasePath
 	c.CloudFunctionsBasePath = CloudFunctionsDefaultBasePath
+	c.CloudIotBasePath = CloudIotDefaultBasePath
 	c.CloudRunBasePath = CloudRunDefaultBasePath
 	c.CloudSchedulerBasePath = CloudSchedulerDefaultBasePath
 	c.CloudTasksBasePath = CloudTasksDefaultBasePath
 	c.ComputeBasePath = ComputeDefaultBasePath
 	c.ContainerAnalysisBasePath = ContainerAnalysisDefaultBasePath
+	c.DataCatalogBasePath = DataCatalogDefaultBasePath
 	c.DataprocBasePath = DataprocDefaultBasePath
+	c.DatastoreBasePath = DatastoreDefaultBasePath
 	c.DeploymentManagerBasePath = DeploymentManagerDefaultBasePath
+	c.DialogflowBasePath = DialogflowDefaultBasePath
 	c.DNSBasePath = DNSDefaultBasePath
 	c.FilestoreBasePath = FilestoreDefaultBasePath
 	c.FirestoreBasePath = FirestoreDefaultBasePath
+	c.HealthcareBasePath = HealthcareDefaultBasePath
 	c.IapBasePath = IapDefaultBasePath
 	c.IdentityPlatformBasePath = IdentityPlatformDefaultBasePath
 	c.KMSBasePath = KMSDefaultBasePath
 	c.LoggingBasePath = LoggingDefaultBasePath
 	c.MLEngineBasePath = MLEngineDefaultBasePath
 	c.MonitoringBasePath = MonitoringDefaultBasePath
+	c.NetworkManagementBasePath = NetworkManagementDefaultBasePath
+	c.OSLoginBasePath = OSLoginDefaultBasePath
 	c.PubsubBasePath = PubsubDefaultBasePath
 	c.RedisBasePath = RedisDefaultBasePath
 	c.ResourceManagerBasePath = ResourceManagerDefaultBasePath
 	c.RuntimeConfigBasePath = RuntimeConfigDefaultBasePath
+	c.SecretManagerBasePath = SecretManagerDefaultBasePath
 	c.SecurityCenterBasePath = SecurityCenterDefaultBasePath
+	c.ServiceManagementBasePath = ServiceManagementDefaultBasePath
+	c.ServiceUsageBasePath = ServiceUsageDefaultBasePath
 	c.SourceRepoBasePath = SourceRepoDefaultBasePath
 	c.SpannerBasePath = SpannerDefaultBasePath
 	c.SQLBasePath = SQLDefaultBasePath
 	c.StorageBasePath = StorageDefaultBasePath
 	c.TPUBasePath = TPUDefaultBasePath
+	c.VPCAccessBasePath = VPCAccessDefaultBasePath
 
 	// Handwritten Products / Versioned / Atypical Entries
 	c.CloudBillingBasePath = CloudBillingDefaultBasePath
@@ -725,11 +796,8 @@ func ConfigureBasePaths(c *Config) {
 	c.IamCredentialsBasePath = IamCredentialsDefaultBasePath
 	c.ResourceManagerV2Beta1BasePath = ResourceManagerV2Beta1DefaultBasePath
 	c.IAMBasePath = IAMDefaultBasePath
-	c.ServiceManagementBasePath = ServiceManagementDefaultBasePath
 	c.ServiceNetworkingBasePath = ServiceNetworkingDefaultBasePath
-	c.ServiceUsageBasePath = ServiceUsageDefaultBasePath
 	c.BigQueryBasePath = BigQueryDefaultBasePath
-	c.CloudIoTBasePath = CloudIoTDefaultBasePath
 	c.StorageTransferBasePath = StorageTransferDefaultBasePath
 	c.BigtableAdminBasePath = BigtableAdminDefaultBasePath
 }

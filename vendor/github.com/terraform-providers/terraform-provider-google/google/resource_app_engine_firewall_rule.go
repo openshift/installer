@@ -48,7 +48,7 @@ func resourceAppEngineFirewallRule() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{"UNSPECIFIED_ACTION", "ALLOW", "DENY"}, false),
-				Description:  `The action to take if this rule matches.`,
+				Description:  `The action to take if this rule matches. Possible values: ["UNSPECIFIED_ACTION", "ALLOW", "DENY"]`,
 			},
 			"source_range": {
 				Type:        schema.TypeString,
@@ -109,6 +109,13 @@ func resourceAppEngineFirewallRuleCreate(d *schema.ResourceData, meta interface{
 		obj["priority"] = priorityProp
 	}
 
+	lockName, err := replaceVars(d, config, "apps/{{project}}")
+	if err != nil {
+		return err
+	}
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
+
 	url, err := replaceVars(d, config, "{{AppEngineBasePath}}apps/{{project}}/firewall/ingressRules")
 	if err != nil {
 		return err
@@ -157,16 +164,16 @@ func resourceAppEngineFirewallRuleRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error reading FirewallRule: %s", err)
 	}
 
-	if err := d.Set("description", flattenAppEngineFirewallRuleDescription(res["description"], d)); err != nil {
+	if err := d.Set("description", flattenAppEngineFirewallRuleDescription(res["description"], d, config)); err != nil {
 		return fmt.Errorf("Error reading FirewallRule: %s", err)
 	}
-	if err := d.Set("source_range", flattenAppEngineFirewallRuleSourceRange(res["sourceRange"], d)); err != nil {
+	if err := d.Set("source_range", flattenAppEngineFirewallRuleSourceRange(res["sourceRange"], d, config)); err != nil {
 		return fmt.Errorf("Error reading FirewallRule: %s", err)
 	}
-	if err := d.Set("action", flattenAppEngineFirewallRuleAction(res["action"], d)); err != nil {
+	if err := d.Set("action", flattenAppEngineFirewallRuleAction(res["action"], d, config)); err != nil {
 		return fmt.Errorf("Error reading FirewallRule: %s", err)
 	}
-	if err := d.Set("priority", flattenAppEngineFirewallRulePriority(res["priority"], d)); err != nil {
+	if err := d.Set("priority", flattenAppEngineFirewallRulePriority(res["priority"], d, config)); err != nil {
 		return fmt.Errorf("Error reading FirewallRule: %s", err)
 	}
 
@@ -206,6 +213,13 @@ func resourceAppEngineFirewallRuleUpdate(d *schema.ResourceData, meta interface{
 	} else if v, ok := d.GetOkExists("priority"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, priorityProp)) {
 		obj["priority"] = priorityProp
 	}
+
+	lockName, err := replaceVars(d, config, "apps/{{project}}")
+	if err != nil {
+		return err
+	}
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
 
 	url, err := replaceVars(d, config, "{{AppEngineBasePath}}apps/{{project}}/firewall/ingressRules/{{priority}}")
 	if err != nil {
@@ -253,6 +267,13 @@ func resourceAppEngineFirewallRuleDelete(d *schema.ResourceData, meta interface{
 		return err
 	}
 
+	lockName, err := replaceVars(d, config, "apps/{{project}}")
+	if err != nil {
+		return err
+	}
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
+
 	url, err := replaceVars(d, config, "{{AppEngineBasePath}}apps/{{project}}/firewall/ingressRules/{{priority}}")
 	if err != nil {
 		return err
@@ -290,26 +311,33 @@ func resourceAppEngineFirewallRuleImport(d *schema.ResourceData, meta interface{
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenAppEngineFirewallRuleDescription(v interface{}, d *schema.ResourceData) interface{} {
+func flattenAppEngineFirewallRuleDescription(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenAppEngineFirewallRuleSourceRange(v interface{}, d *schema.ResourceData) interface{} {
+func flattenAppEngineFirewallRuleSourceRange(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenAppEngineFirewallRuleAction(v interface{}, d *schema.ResourceData) interface{} {
+func flattenAppEngineFirewallRuleAction(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenAppEngineFirewallRulePriority(v interface{}, d *schema.ResourceData) interface{} {
+func flattenAppEngineFirewallRulePriority(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
 		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
 			return intVal
-		} // let terraform core handle it if we can't convert the string to an int.
+		}
 	}
-	return v
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
 }
 
 func expandAppEngineFirewallRuleDescription(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {

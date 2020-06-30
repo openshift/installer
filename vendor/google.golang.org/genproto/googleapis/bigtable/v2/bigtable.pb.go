@@ -1046,7 +1046,9 @@ func init() {
 	proto.RegisterType((*ReadModifyWriteRowResponse)(nil), "google.bigtable.v2.ReadModifyWriteRowResponse")
 }
 
-func init() { proto.RegisterFile("google/bigtable/v2/bigtable.proto", fileDescriptor_7e9247725ec9a6cf) }
+func init() {
+	proto.RegisterFile("google/bigtable/v2/bigtable.proto", fileDescriptor_7e9247725ec9a6cf)
+}
 
 var fileDescriptor_7e9247725ec9a6cf = []byte{
 	// 1469 bytes of a gzipped FileDescriptorProto
@@ -1146,11 +1148,11 @@ var fileDescriptor_7e9247725ec9a6cf = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // BigtableClient is the client API for Bigtable service.
 //
@@ -1185,10 +1187,10 @@ type BigtableClient interface {
 }
 
 type bigtableClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewBigtableClient(cc *grpc.ClientConn) BigtableClient {
+func NewBigtableClient(cc grpc.ClientConnInterface) BigtableClient {
 	return &bigtableClient{cc}
 }
 

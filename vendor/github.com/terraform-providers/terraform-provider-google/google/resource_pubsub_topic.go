@@ -36,8 +36,8 @@ func resourcePubsubTopic() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(6 * time.Minute),
+			Update: schema.DefaultTimeout(6 * time.Minute),
 			Delete: schema.DefaultTimeout(4 * time.Minute),
 		},
 
@@ -57,7 +57,6 @@ func resourcePubsubTopic() *schema.Resource {
 to messages published on this topic. Your project's PubSub service account
 ('service-{{PROJECT_NUMBER}}@gcp-sa-pubsub.iam.gserviceaccount.com') must have
 'roles/cloudkms.cryptoKeyEncrypterDecrypter' to use this feature.
-
 The expected format is 'projects/*/locations/*/keyRings/*/cryptoKeys/*'`,
 			},
 			"labels": {
@@ -158,9 +157,35 @@ func resourcePubsubTopicCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetId(id)
 
+	err = PollingWaitTime(resourcePubsubTopicPollRead(d, meta), PollCheckForExistence, "Creating Topic", d.Timeout(schema.TimeoutCreate))
+	if err != nil {
+		log.Printf("[ERROR] Unable to confirm eventually consistent Topic %q finished updating: %q", d.Id(), err)
+	}
+
 	log.Printf("[DEBUG] Finished creating Topic %q: %#v", d.Id(), res)
 
 	return resourcePubsubTopicRead(d, meta)
+}
+
+func resourcePubsubTopicPollRead(d *schema.ResourceData, meta interface{}) PollReadFunc {
+	return func() (map[string]interface{}, error) {
+		config := meta.(*Config)
+
+		url, err := replaceVars(d, config, "{{PubsubBasePath}}projects/{{project}}/topics/{{name}}")
+		if err != nil {
+			return nil, err
+		}
+
+		project, err := getProject(d, config)
+		if err != nil {
+			return nil, err
+		}
+		res, err := sendRequest(config, "GET", project, url, nil, pubsubTopicProjectNotReady)
+		if err != nil {
+			return res, err
+		}
+		return res, nil
+	}
 }
 
 func resourcePubsubTopicRead(d *schema.ResourceData, meta interface{}) error {
@@ -184,16 +209,16 @@ func resourcePubsubTopicRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error reading Topic: %s", err)
 	}
 
-	if err := d.Set("name", flattenPubsubTopicName(res["name"], d)); err != nil {
+	if err := d.Set("name", flattenPubsubTopicName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Topic: %s", err)
 	}
-	if err := d.Set("kms_key_name", flattenPubsubTopicKmsKeyName(res["kmsKeyName"], d)); err != nil {
+	if err := d.Set("kms_key_name", flattenPubsubTopicKmsKeyName(res["kmsKeyName"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Topic: %s", err)
 	}
-	if err := d.Set("labels", flattenPubsubTopicLabels(res["labels"], d)); err != nil {
+	if err := d.Set("labels", flattenPubsubTopicLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Topic: %s", err)
 	}
-	if err := d.Set("message_storage_policy", flattenPubsubTopicMessageStoragePolicy(res["messageStoragePolicy"], d)); err != nil {
+	if err := d.Set("message_storage_policy", flattenPubsubTopicMessageStoragePolicy(res["messageStoragePolicy"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Topic: %s", err)
 	}
 
@@ -302,22 +327,22 @@ func resourcePubsubTopicImport(d *schema.ResourceData, meta interface{}) ([]*sch
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenPubsubTopicName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenPubsubTopicName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
 	return NameFromSelfLinkStateFunc(v)
 }
 
-func flattenPubsubTopicKmsKeyName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenPubsubTopicKmsKeyName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenPubsubTopicLabels(v interface{}, d *schema.ResourceData) interface{} {
+func flattenPubsubTopicLabels(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenPubsubTopicMessageStoragePolicy(v interface{}, d *schema.ResourceData) interface{} {
+func flattenPubsubTopicMessageStoragePolicy(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return nil
 	}
@@ -327,10 +352,10 @@ func flattenPubsubTopicMessageStoragePolicy(v interface{}, d *schema.ResourceDat
 	}
 	transformed := make(map[string]interface{})
 	transformed["allowed_persistence_regions"] =
-		flattenPubsubTopicMessageStoragePolicyAllowedPersistenceRegions(original["allowedPersistenceRegions"], d)
+		flattenPubsubTopicMessageStoragePolicyAllowedPersistenceRegions(original["allowedPersistenceRegions"], d, config)
 	return []interface{}{transformed}
 }
-func flattenPubsubTopicMessageStoragePolicyAllowedPersistenceRegions(v interface{}, d *schema.ResourceData) interface{} {
+func flattenPubsubTopicMessageStoragePolicyAllowedPersistenceRegions(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 

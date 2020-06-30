@@ -27,6 +27,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"google.golang.org/api/googleapi"
 )
 
 func resourceComputeFirewallRuleHash(v interface{}) int {
@@ -98,20 +99,18 @@ character, which cannot be a dash.`,
 				Description: `The list of ALLOW rules specified by this firewall. Each rule
 specifies a protocol and port-range tuple that describes a permitted
 connection.`,
-				Elem:          computeFirewallAllowSchema(),
-				Set:           resourceComputeFirewallRuleHash,
-				ConflictsWith: []string{"deny"},
-				AtLeastOneOf:  []string{"allow", "deny"},
+				Elem:         computeFirewallAllowSchema(),
+				Set:          resourceComputeFirewallRuleHash,
+				ExactlyOneOf: []string{"allow", "deny"},
 			},
 			"deny": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Description: `The list of DENY rules specified by this firewall. Each rule specifies
 a protocol and port-range tuple that describes a denied connection.`,
-				Elem:          computeFirewallDenySchema(),
-				Set:           resourceComputeFirewallRuleHash,
-				ConflictsWith: []string{"allow"},
-				AtLeastOneOf:  []string{"allow", "deny"},
+				Elem:         computeFirewallDenySchema(),
+				Set:          resourceComputeFirewallRuleHash,
+				ExactlyOneOf: []string{"allow", "deny"},
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -141,7 +140,7 @@ must be expressed in CIDR format. Only IPv4 is supported.`,
 				Description: `Direction of traffic to which this firewall applies; default is
 INGRESS. Note: For INGRESS traffic, it is NOT supported to specify
 destinationRanges; For EGRESS traffic, it is NOT supported to specify
-sourceRanges OR sourceTags.`,
+sourceRanges OR sourceTags. Possible values: ["INGRESS", "EGRESS"]`,
 			},
 			"disabled": {
 				Type:     schema.TypeBool,
@@ -286,7 +285,7 @@ func computeFirewallAllowSchema() *schema.Resource {
 				Description: `The IP protocol to which this rule applies. The protocol type is
 required when creating a firewall rule. This value can either be
 one of the following well known protocol strings (tcp, udp,
-icmp, esp, ah, sctp), or the IP protocol number.`,
+icmp, esp, ah, sctp, ipip), or the IP protocol number.`,
 			},
 			"ports": {
 				Type:     schema.TypeList,
@@ -316,7 +315,7 @@ func computeFirewallDenySchema() *schema.Resource {
 				Description: `The IP protocol to which this rule applies. The protocol type is
 required when creating a firewall rule. This value can either be
 one of the following well known protocol strings (tcp, udp,
-icmp, esp, ah, sctp), or the IP protocol number.`,
+icmp, esp, ah, sctp, ipip), or the IP protocol number.`,
 			},
 			"ports": {
 				Type:     schema.TypeList,
@@ -455,7 +454,7 @@ func resourceComputeFirewallCreate(d *schema.ResourceData, meta interface{}) err
 
 	err = computeOperationWaitTime(
 		config, res, project, "Creating Firewall",
-		int(d.Timeout(schema.TimeoutCreate).Minutes()))
+		d.Timeout(schema.TimeoutCreate))
 
 	if err != nil {
 		// The resource didn't actually create
@@ -489,30 +488,33 @@ func resourceComputeFirewallRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
 
-	if err := d.Set("allow", flattenComputeFirewallAllow(res["allowed"], d)); err != nil {
+	if err := d.Set("allow", flattenComputeFirewallAllow(res["allowed"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
-	if err := d.Set("creation_timestamp", flattenComputeFirewallCreationTimestamp(res["creationTimestamp"], d)); err != nil {
+	if err := d.Set("creation_timestamp", flattenComputeFirewallCreationTimestamp(res["creationTimestamp"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
-	if err := d.Set("deny", flattenComputeFirewallDeny(res["denied"], d)); err != nil {
+	if err := d.Set("deny", flattenComputeFirewallDeny(res["denied"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
-	if err := d.Set("description", flattenComputeFirewallDescription(res["description"], d)); err != nil {
+	if err := d.Set("description", flattenComputeFirewallDescription(res["description"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
-	if err := d.Set("destination_ranges", flattenComputeFirewallDestinationRanges(res["destinationRanges"], d)); err != nil {
+	if err := d.Set("destination_ranges", flattenComputeFirewallDestinationRanges(res["destinationRanges"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
-	if err := d.Set("direction", flattenComputeFirewallDirection(res["direction"], d)); err != nil {
+	if err := d.Set("direction", flattenComputeFirewallDirection(res["direction"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
-	if err := d.Set("disabled", flattenComputeFirewallDisabled(res["disabled"], d)); err != nil {
+	if err := d.Set("disabled", flattenComputeFirewallDisabled(res["disabled"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
 	// Terraform must set the top level schema field, but since this object contains collapsed properties
 	// it's difficult to know what the top level should be. Instead we just loop over the map returned from flatten.
-	if flattenedProp := flattenComputeFirewallLogConfig(res["logConfig"], d); flattenedProp != nil {
+	if flattenedProp := flattenComputeFirewallLogConfig(res["logConfig"], d, config); flattenedProp != nil {
+		if gerr, ok := flattenedProp.(*googleapi.Error); ok {
+			return fmt.Errorf("Error reading Firewall: %s", gerr)
+		}
 		casted := flattenedProp.([]interface{})[0]
 		if casted != nil {
 			for k, v := range casted.(map[string]interface{}) {
@@ -520,28 +522,28 @@ func resourceComputeFirewallRead(d *schema.ResourceData, meta interface{}) error
 			}
 		}
 	}
-	if err := d.Set("name", flattenComputeFirewallName(res["name"], d)); err != nil {
+	if err := d.Set("name", flattenComputeFirewallName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
-	if err := d.Set("network", flattenComputeFirewallNetwork(res["network"], d)); err != nil {
+	if err := d.Set("network", flattenComputeFirewallNetwork(res["network"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
-	if err := d.Set("priority", flattenComputeFirewallPriority(res["priority"], d)); err != nil {
+	if err := d.Set("priority", flattenComputeFirewallPriority(res["priority"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
-	if err := d.Set("source_ranges", flattenComputeFirewallSourceRanges(res["sourceRanges"], d)); err != nil {
+	if err := d.Set("source_ranges", flattenComputeFirewallSourceRanges(res["sourceRanges"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
-	if err := d.Set("source_service_accounts", flattenComputeFirewallSourceServiceAccounts(res["sourceServiceAccounts"], d)); err != nil {
+	if err := d.Set("source_service_accounts", flattenComputeFirewallSourceServiceAccounts(res["sourceServiceAccounts"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
-	if err := d.Set("source_tags", flattenComputeFirewallSourceTags(res["sourceTags"], d)); err != nil {
+	if err := d.Set("source_tags", flattenComputeFirewallSourceTags(res["sourceTags"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
-	if err := d.Set("target_service_accounts", flattenComputeFirewallTargetServiceAccounts(res["targetServiceAccounts"], d)); err != nil {
+	if err := d.Set("target_service_accounts", flattenComputeFirewallTargetServiceAccounts(res["targetServiceAccounts"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
-	if err := d.Set("target_tags", flattenComputeFirewallTargetTags(res["targetTags"], d)); err != nil {
+	if err := d.Set("target_tags", flattenComputeFirewallTargetTags(res["targetTags"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Firewall: %s", err)
 	}
 	if err := d.Set("self_link", ConvertSelfLinkToV1(res["selfLink"].(string))); err != nil {
@@ -593,7 +595,7 @@ func resourceComputeFirewallUpdate(d *schema.ResourceData, meta interface{}) err
 	logConfigProp, err := expandComputeFirewallLogConfig(nil, d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("log_config"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, logConfigProp)) {
+	} else if !isEmptyValue(reflect.ValueOf(logConfigProp)) {
 		obj["logConfig"] = logConfigProp
 	}
 	networkProp, err := expandComputeFirewallNetwork(d.Get("network"), d, config)
@@ -653,7 +655,7 @@ func resourceComputeFirewallUpdate(d *schema.ResourceData, meta interface{}) err
 
 	err = computeOperationWaitTime(
 		config, res, project, "Updating Firewall",
-		int(d.Timeout(schema.TimeoutUpdate).Minutes()))
+		d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return err
@@ -685,7 +687,7 @@ func resourceComputeFirewallDelete(d *schema.ResourceData, meta interface{}) err
 
 	err = computeOperationWaitTime(
 		config, res, project, "Deleting Firewall",
-		int(d.Timeout(schema.TimeoutDelete).Minutes()))
+		d.Timeout(schema.TimeoutDelete))
 
 	if err != nil {
 		return err
@@ -715,7 +717,7 @@ func resourceComputeFirewallImport(d *schema.ResourceData, meta interface{}) ([]
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenComputeFirewallAllow(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallAllow(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
@@ -728,25 +730,25 @@ func flattenComputeFirewallAllow(v interface{}, d *schema.ResourceData) interfac
 			continue
 		}
 		transformed.Add(map[string]interface{}{
-			"protocol": flattenComputeFirewallAllowProtocol(original["IPProtocol"], d),
-			"ports":    flattenComputeFirewallAllowPorts(original["ports"], d),
+			"protocol": flattenComputeFirewallAllowProtocol(original["IPProtocol"], d, config),
+			"ports":    flattenComputeFirewallAllowPorts(original["ports"], d, config),
 		})
 	}
 	return transformed
 }
-func flattenComputeFirewallAllowProtocol(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallAllowProtocol(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeFirewallAllowPorts(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallAllowPorts(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeFirewallCreationTimestamp(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallCreationTimestamp(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeFirewallDeny(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallDeny(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
@@ -759,40 +761,40 @@ func flattenComputeFirewallDeny(v interface{}, d *schema.ResourceData) interface
 			continue
 		}
 		transformed.Add(map[string]interface{}{
-			"protocol": flattenComputeFirewallDenyProtocol(original["IPProtocol"], d),
-			"ports":    flattenComputeFirewallDenyPorts(original["ports"], d),
+			"protocol": flattenComputeFirewallDenyProtocol(original["IPProtocol"], d, config),
+			"ports":    flattenComputeFirewallDenyPorts(original["ports"], d, config),
 		})
 	}
 	return transformed
 }
-func flattenComputeFirewallDenyProtocol(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallDenyProtocol(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeFirewallDenyPorts(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallDenyPorts(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeFirewallDescription(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallDescription(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeFirewallDestinationRanges(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallDestinationRanges(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
 	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
-func flattenComputeFirewallDirection(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallDirection(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeFirewallDisabled(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallDisabled(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeFirewallLogConfig(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallLogConfig(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return nil
 	}
@@ -802,63 +804,70 @@ func flattenComputeFirewallLogConfig(v interface{}, d *schema.ResourceData) inte
 	}
 	transformed := make(map[string]interface{})
 	transformed["enable_logging"] =
-		flattenComputeFirewallLogConfigEnableLogging(original["enable"], d)
+		flattenComputeFirewallLogConfigEnableLogging(original["enable"], d, config)
 	return []interface{}{transformed}
 }
-func flattenComputeFirewallLogConfigEnableLogging(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallLogConfigEnableLogging(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeFirewallName(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
-func flattenComputeFirewallNetwork(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallNetwork(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
 	return ConvertSelfLinkToV1(v.(string))
 }
 
-func flattenComputeFirewallPriority(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallPriority(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
 		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
 			return intVal
-		} // let terraform core handle it if we can't convert the string to an int.
+		}
 	}
-	return v
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
 }
 
-func flattenComputeFirewallSourceRanges(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallSourceRanges(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
 	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
-func flattenComputeFirewallSourceServiceAccounts(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallSourceServiceAccounts(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
 	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
-func flattenComputeFirewallSourceTags(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallSourceTags(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
 	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
-func flattenComputeFirewallTargetServiceAccounts(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallTargetServiceAccounts(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}
 	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
-func flattenComputeFirewallTargetTags(v interface{}, d *schema.ResourceData) interface{} {
+func flattenComputeFirewallTargetTags(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return v
 	}

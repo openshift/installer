@@ -449,8 +449,8 @@ by Dataproc`,
 										AtLeastOneOf: clusterSoftwareConfigKeys,
 										Elem: &schema.Schema{
 											Type: schema.TypeString,
-											ValidateFunc: validation.StringInSlice([]string{"COMPONENT_UNSPECIFIED", "ANACONDA", "DRUID", "HIVE_WEBHCAT",
-												"JUPYTER", "KERBEROS", "PRESTO", "ZEPPELIN", "ZOOKEEPER"}, false),
+											ValidateFunc: validation.StringInSlice([]string{"COMPONENT_UNSPECIFIED", "ANACONDA", "DRUID", "HBASE", "HIVE_WEBHCAT",
+												"JUPYTER", "KERBEROS", "PRESTO", "RANGER", "SOLR", "ZEPPELIN", "ZOOKEEPER"}, false),
 										},
 									},
 								},
@@ -689,8 +689,7 @@ func resourceDataprocClusterCreate(d *schema.ResourceData, meta interface{}) err
 	d.SetId(fmt.Sprintf("projects/%s/regions/%s/clusters/%s", project, region, cluster.ClusterName))
 
 	// Wait until it's created
-	timeoutInMinutes := int(d.Timeout(schema.TimeoutCreate).Minutes())
-	waitErr := dataprocClusterOperationWait(config, op, "creating Dataproc cluster", timeoutInMinutes)
+	waitErr := dataprocClusterOperationWait(config, op, "creating Dataproc cluster", d.Timeout(schema.TimeoutCreate))
 	if waitErr != nil {
 		// The resource didn't actually create
 		// Note that we do not remove the ID here - this resource tends to leave
@@ -1023,7 +1022,6 @@ func resourceDataprocClusterUpdate(d *schema.ResourceData, meta interface{}) err
 
 	region := d.Get("region").(string)
 	clusterName := d.Get("name").(string)
-	timeoutInMinutes := int(d.Timeout(schema.TimeoutUpdate).Minutes())
 
 	cluster := &dataproc.Cluster{
 		ClusterName: clusterName,
@@ -1071,7 +1069,7 @@ func resourceDataprocClusterUpdate(d *schema.ResourceData, meta interface{}) err
 		}
 
 		// Wait until it's updated
-		waitErr := dataprocClusterOperationWait(config, op, "updating Dataproc cluster ", timeoutInMinutes)
+		waitErr := dataprocClusterOperationWait(config, op, "updating Dataproc cluster ", d.Timeout(schema.TimeoutUpdate))
 		if waitErr != nil {
 			return waitErr
 		}
@@ -1269,6 +1267,22 @@ func flattenGceClusterConfig(d *schema.ResourceData, gcc *dataproc.GceClusterCon
 }
 
 func flattenPreemptibleInstanceGroupConfig(d *schema.ResourceData, icg *dataproc.InstanceGroupConfig) []map[string]interface{} {
+	// if num_instances is 0, icg will always be returned nil. This means the
+	// server has discarded diskconfig etc. However, the only way to remove the
+	// preemptible group is to set the size to 0, because it's O+C. Many users
+	// won't remove the rest of the config (eg disk config). Therefore, we need to
+	// preserve the other set fields by using the old state to stop users from
+	// getting a diff.
+	if icg == nil {
+		icgSchema := d.Get("cluster_config.0.preemptible_worker_config")
+		log.Printf("[DEBUG] state of preemptible is %#v", icgSchema)
+		if v, ok := icgSchema.([]interface{}); ok && len(v) > 0 {
+			if m, ok := v[0].(map[string]interface{}); ok {
+				return []map[string]interface{}{m}
+			}
+		}
+	}
+
 	disk := map[string]interface{}{}
 	data := map[string]interface{}{}
 
@@ -1327,7 +1341,6 @@ func resourceDataprocClusterDelete(d *schema.ResourceData, meta interface{}) err
 
 	region := d.Get("region").(string)
 	clusterName := d.Get("name").(string)
-	timeoutInMinutes := int(d.Timeout(schema.TimeoutDelete).Minutes())
 
 	log.Printf("[DEBUG] Deleting Dataproc cluster %s", clusterName)
 	op, err := config.clientDataprocBeta.Projects.Regions.Clusters.Delete(
@@ -1337,7 +1350,7 @@ func resourceDataprocClusterDelete(d *schema.ResourceData, meta interface{}) err
 	}
 
 	// Wait until it's deleted
-	waitErr := dataprocClusterOperationWait(config, op, "deleting Dataproc cluster", timeoutInMinutes)
+	waitErr := dataprocClusterOperationWait(config, op, "deleting Dataproc cluster", d.Timeout(schema.TimeoutDelete))
 	if waitErr != nil {
 		return waitErr
 	}
