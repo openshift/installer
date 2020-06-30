@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	dynamicValidators = append(dynamicValidators, validateInterfaces)
+	dynamicProvisioningValidators = append(dynamicProvisioningValidators, validateInterfaces)
 }
 
 // validateInterfaces ensures that any interfaces required by the platform exist on the libvirt host.
