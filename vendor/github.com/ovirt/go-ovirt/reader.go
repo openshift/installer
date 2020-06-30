@@ -144,7 +144,6 @@ func (reader *XMLReader) ReadStrings(start *xml.StartElement) ([]string, error) 
 				return nil, err
 			}
 			strings = append(strings, str)
-			depth++
 		case xml.EndElement:
 			depth--
 		}
@@ -234,7 +233,7 @@ func (reader *XMLReader) ReadTime(start *xml.StartElement) (time.Time, error) {
 		var t time.Time
 		return t, err
 	}
-	
+
 	return time.Parse(time.RFC3339Nano, str)
 }
 
