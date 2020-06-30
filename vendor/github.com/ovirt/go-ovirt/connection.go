@@ -94,6 +94,9 @@ func (c *Connection) testToken() (int, error) {
 		return 0, err
 	}
 	res, err := c.client.Do(options)
+	if err != nil {
+		return 0, err
+	}
 	defer res.Body.Close()
 
 	return res.StatusCode, err
