@@ -57,7 +57,7 @@ require (
 	github.com/openshift/library-go v0.0.0-20200324092245-db2a8546af81
 	github.com/openshift/machine-api-operator v0.2.1-0.20200429102619-d36974451290
 	github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033375cbe820+incompatible
-	github.com/ovirt/go-ovirt v0.0.0-20200428093010-9bcc4fd4e6c0
+	github.com/ovirt/go-ovirt v0.0.0-20200613023950-320a86f9df27
 	github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200406133650-74a154c1d861
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
 	github.com/pborman/uuid v1.2.0
@@ -115,7 +115,6 @@ replace (
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200601094953-95abe2d2f422 // Pin API
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200116152001-92a2713fa240 // Pin client-go
 	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530 // Pin MCO so it doesn't get downgraded
-	github.com/ovirt/go-ovirt => github.com/ovirt/go-ovirt v0.0.0-20200320082526-4e97a11ff083
 	github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20200526184553-1a716dcc0fa8 // Pin to openshift fork with tag v2.60.0-openshift-1
 	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200508151851-2bfa0b7d4a9d // release-2.8.0 branch
 	github.com/terraform-providers/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-1
