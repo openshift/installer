@@ -5,14 +5,19 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
+	"github.com/openshift/installer/pkg/asset/quota/aws"
 	"github.com/openshift/installer/pkg/asset/quota/gcp"
 	"github.com/openshift/installer/pkg/diagnostics"
 	"github.com/openshift/installer/pkg/quota"
+	quotaaws "github.com/openshift/installer/pkg/quota/aws"
 	quotagcp "github.com/openshift/installer/pkg/quota/gcp"
-	"github.com/openshift/installer/pkg/types/aws"
+	typesaws "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	typesgcp "github.com/openshift/installer/pkg/types/gcp"
@@ -21,8 +26,6 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/vsphere"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // PlatformQuotaCheck is an asset that validates the install-config platform for
@@ -60,6 +63,33 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 
 	platform := ic.Config.Platform.Name()
 	switch platform {
+	case typesaws.Name:
+		services := []string{"ec2", "vpc"}
+		session, err := ic.AWS.Session(context.TODO())
+		if err != nil {
+			return errors.Wrap(err, "failed to load AWS session")
+		}
+		q, err := quotaaws.Load(context.TODO(), session, ic.AWS.Region, services...)
+		if quotaaws.IsUnauthorized(err) {
+			logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v, make sure you have `servicequotas:ListAWSDefaultServiceQuotas` persmission available to the user.", err)
+			return nil
+		}
+		if err != nil {
+			return errors.Wrapf(err, "failed to load Quota for services: %s", strings.Join(services, ", "))
+		}
+		instanceTypes, err := aws.InstanceTypes(context.TODO(), session, ic.AWS.Region)
+		if quotaaws.IsUnauthorized(err) {
+			logrus.Warnf("Missing permissions to fetch instance types and therefore will skip checking Quotas: %v, make sure you have `ec2:DescribeInstanceTypes` persmission available to the user.", err)
+			return nil
+		}
+		if err != nil {
+			return errors.Wrapf(err, "failed to load instance types for %s", ic.AWS.Region)
+		}
+		reports, err := quota.Check(q, aws.Constraints(ic.Config, masters, workers, instanceTypes))
+		if err != nil {
+			return summarizeFailingReport(reports)
+		}
+		summarizeReport(reports)
 	case typesgcp.Name:
 		services := []string{"compute.googleapis.com", "iam.googleapis.com"}
 		q, err := quotagcp.Load(context.TODO(), ic.Config.Platform.GCP.ProjectID, services...)
@@ -75,7 +105,7 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 			return summarizeFailingReport(reports)
 		}
 		summarizeReport(reports)
-	case aws.Name, azure.Name, baremetal.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name:
+	case azure.Name, baremetal.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name:
 		// no special provisioning requirements to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
