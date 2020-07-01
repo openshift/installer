@@ -8,6 +8,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -58,7 +59,16 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "validate AWS credentials")
 		}
-	case azure.Name, baremetal.Name, gcp.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name:
+	case gcp.Name:
+		client, err := gcpconfig.NewClient(context.TODO())
+		if err != nil {
+			return err
+		}
+
+		if err = gcpconfig.ValidateEnabledServices(ctx, client, ic.Config.GCP.ProjectID); err != nil {
+			return errors.Wrap(err, "failed to validate services in this project")
+		}
+	case azure.Name, baremetal.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name:
 		// no permissions to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)

@@ -229,3 +229,45 @@ func TestValidatePreExitingPublicDNS(t *testing.T) {
 		})
 	}
 }
+
+func TestGCPEnabledServicesList(t *testing.T) {
+	cases := []struct {
+		name     string
+		services []string
+		err      string
+	}{{
+		name:     "No services present",
+		services: nil,
+		err: "following required services are not enabled in this project storage-component.googleapis.com," +
+			" servicemanagement.googleapis.com, storage-api.googleapis.com, compute.googleapis.com," +
+			" cloudapis.googleapis.com, dns.googleapis.com, iam.googleapis.com, iamcredentials.googleapis.com," +
+			" serviceusage.googleapis.com, cloudresourcemanager.googleapis.com",
+	}, {
+		name: "All pre-existing",
+		services: []string{"compute.googleapis.com", "cloudapis.googleapis.com",
+			"cloudresourcemanager.googleapis.com", "dns.googleapis.com",
+			"iam.googleapis.com", "iamcredentials.googleapis.com",
+			"servicemanagement.googleapis.com", "serviceusage.googleapis.com",
+			"storage-api.googleapis.com", "storage-component.googleapis.com"},
+	}, {
+		name:     "Some services present",
+		services: []string{"compute.googleapis.com"},
+		err:      "enable all services before creating the cluster",
+	}}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+			gcpClient := mock.NewMockAPI(mockCtrl)
+
+			gcpClient.EXPECT().GetEnabledServices(gomock.Any()).Return(test.services, nil).AnyTimes()
+			err := ValidateEnabledServices(nil, gcpClient, "")
+			if test.err == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}

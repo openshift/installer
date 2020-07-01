@@ -110,6 +110,21 @@ func (mr *MockAPIMockRecorder) GetProjects(ctx interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjects", reflect.TypeOf((*MockAPI)(nil).GetProjects), ctx)
 }
 
+//GetEnabledServices mocks base method
+func (m *MockAPI) GetEnabledServices(ctx context.Context, project string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEnabledServices", ctx)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEnabledServices indicates an expected call of GetEnabledServices.
+func (mr *MockAPIMockRecorder) GetEnabledServices(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnabledServices", reflect.TypeOf((*MockAPI)(nil).GetEnabledServices), ctx)
+}
+
 // GetRecordSets mocks base method.
 func (m *MockAPI) GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error) {
 	m.ctrl.T.Helper()
