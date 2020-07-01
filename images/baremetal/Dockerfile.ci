@@ -9,7 +9,7 @@ COPY . .
 RUN TAGS="libvirt baremetal" hack/build.sh
 
 
-FROM registry.svc.ci.openshift.org/origin/4.1:base
+FROM registry.svc.ci.openshift.org/origin/4.5:base
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/data/data/rhcos.json /var/cache/
 
