@@ -3,6 +3,7 @@ package manifests
 import (
 	"context"
 	"encoding/base64"
+	"net"
 	"path/filepath"
 	"strconv"
 
@@ -154,9 +155,13 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			},
 		}
 	case vspheretypes.Name:
+		host, _, err := net.SplitHostPort(installConfig.Config.VSphere.VCenter)
+		if err != nil {
+			host = installConfig.Config.VSphere.VCenter
+		}
 		cloudCreds = cloudCredsSecretData{
 			VSphere: &VSphereCredsSecretData{
-				VCenter:              installConfig.Config.VSphere.VCenter,
+				VCenter:              host,
 				Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.VSphere.Username)),
 				Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.VSphere.Password)),
 			},
