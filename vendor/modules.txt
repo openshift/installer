@@ -170,7 +170,7 @@ github.com/awalterschulze/gographviz/internal/errors
 github.com/awalterschulze/gographviz/internal/lexer
 github.com/awalterschulze/gographviz/internal/parser
 github.com/awalterschulze/gographviz/internal/token
-# github.com/aws/aws-sdk-go v1.30.16
+# github.com/aws/aws-sdk-go v1.32.3
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
 github.com/aws/aws-sdk-go/aws/awserr
@@ -201,6 +201,7 @@ github.com/aws/aws-sdk-go/internal/sdkuri
 github.com/aws/aws-sdk-go/internal/shareddefaults
 github.com/aws/aws-sdk-go/internal/strings
 github.com/aws/aws-sdk-go/internal/sync/singleflight
+github.com/aws/aws-sdk-go/private/checksum
 github.com/aws/aws-sdk-go/private/protocol
 github.com/aws/aws-sdk-go/private/protocol/ec2query
 github.com/aws/aws-sdk-go/private/protocol/eventstream
@@ -240,6 +241,7 @@ github.com/aws/aws-sdk-go/service/cloudtrail
 github.com/aws/aws-sdk-go/service/cloudwatch
 github.com/aws/aws-sdk-go/service/cloudwatchevents
 github.com/aws/aws-sdk-go/service/cloudwatchlogs
+github.com/aws/aws-sdk-go/service/codeartifact
 github.com/aws/aws-sdk-go/service/codebuild
 github.com/aws/aws-sdk-go/service/codecommit
 github.com/aws/aws-sdk-go/service/codedeploy
@@ -311,8 +313,10 @@ github.com/aws/aws-sdk-go/service/mediastore
 github.com/aws/aws-sdk-go/service/mediastoredata
 github.com/aws/aws-sdk-go/service/mq
 github.com/aws/aws-sdk-go/service/neptune
+github.com/aws/aws-sdk-go/service/networkmanager
 github.com/aws/aws-sdk-go/service/opsworks
 github.com/aws/aws-sdk-go/service/organizations
+github.com/aws/aws-sdk-go/service/outposts
 github.com/aws/aws-sdk-go/service/personalize
 github.com/aws/aws-sdk-go/service/pinpoint
 github.com/aws/aws-sdk-go/service/pricing
@@ -349,6 +353,7 @@ github.com/aws/aws-sdk-go/service/storagegateway
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
 github.com/aws/aws-sdk-go/service/swf
+github.com/aws/aws-sdk-go/service/synthetics
 github.com/aws/aws-sdk-go/service/transfer
 github.com/aws/aws-sdk-go/service/waf
 github.com/aws/aws-sdk-go/service/wafregional
@@ -633,7 +638,7 @@ github.com/hashicorp/go-getter
 github.com/hashicorp/go-getter/helper/url
 # github.com/hashicorp/go-hclog v0.10.0
 github.com/hashicorp/go-hclog
-# github.com/hashicorp/go-multierror v1.0.0
+# github.com/hashicorp/go-multierror v1.1.0
 github.com/hashicorp/go-multierror
 # github.com/hashicorp/go-plugin v1.2.0
 github.com/hashicorp/go-plugin
@@ -644,7 +649,7 @@ github.com/hashicorp/go-retryablehttp
 github.com/hashicorp/go-safetemp
 # github.com/hashicorp/go-uuid v1.0.2-0.20191001231223-f32f5fe8d6a8
 github.com/hashicorp/go-uuid
-# github.com/hashicorp/go-version v1.2.0
+# github.com/hashicorp/go-version v1.2.1
 github.com/hashicorp/go-version
 # github.com/hashicorp/golang-lru v0.5.4
 github.com/hashicorp/golang-lru
@@ -757,7 +762,7 @@ github.com/hashicorp/terraform/terraform
 github.com/hashicorp/terraform/version
 # github.com/hashicorp/terraform-config-inspect v0.0.0-20191212124732-c6ae6269b9d7
 github.com/hashicorp/terraform-config-inspect/tfconfig
-# github.com/hashicorp/terraform-json v0.4.0
+# github.com/hashicorp/terraform-json v0.5.0
 github.com/hashicorp/terraform-json
 # github.com/hashicorp/terraform-plugin-sdk v1.14.0 => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
 github.com/hashicorp/terraform-plugin-sdk/acctest
@@ -860,7 +865,7 @@ github.com/konsorten/go-windows-terminal-sequences
 github.com/kr/fs
 # github.com/kr/pretty v0.1.0
 github.com/kr/pretty
-# github.com/kr/text v0.1.0
+# github.com/kr/text v0.2.0
 github.com/kr/text
 # github.com/leodido/go-urn v1.2.0
 github.com/leodido/go-urn
@@ -1010,18 +1015,22 @@ github.com/spf13/pflag
 github.com/stoewer/go-strcase
 # github.com/stretchr/testify v1.5.1
 github.com/stretchr/testify/assert
-# github.com/terraform-providers/terraform-provider-aws v0.0.0 => github.com/openshift/terraform-provider-aws v1.60.1-0.20200526184553-1a716dcc0fa8
+# github.com/terraform-providers/terraform-provider-aws v0.0.0 => github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699
 github.com/terraform-providers/terraform-provider-aws/aws
 github.com/terraform-providers/terraform-provider-aws/aws/internal/flatmap
 github.com/terraform-providers/terraform-provider-aws/aws/internal/keyvaluetags
 github.com/terraform-providers/terraform-provider-aws/aws/internal/naming
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/apigatewayv2/waiter
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/batch/equivalency
+github.com/terraform-providers/terraform-provider-aws/aws/internal/service/ec2/waiter
+github.com/terraform-providers/terraform-provider-aws/aws/internal/service/ecs/waiter
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/eks/token
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/guardduty/waiter
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/iam/waiter
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/kms/waiter
+github.com/terraform-providers/terraform-provider-aws/aws/internal/service/secretsmanager/waiter
 github.com/terraform-providers/terraform-provider-aws/aws/internal/service/servicediscovery/waiter
+github.com/terraform-providers/terraform-provider-aws/aws/internal/service/workspaces/waiter
 # github.com/terraform-providers/terraform-provider-azuread v0.8.0
 github.com/terraform-providers/terraform-provider-azuread/azuread/helpers/tf
 github.com/terraform-providers/terraform-provider-azuread/azuread/helpers/validate

@@ -91,6 +91,16 @@ func resourceAwsEip() *schema.Resource {
 				Optional: true,
 			},
 
+			"customer_owned_ipv4_pool": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+
+			"customer_owned_ip": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			"public_ipv4_pool": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -118,6 +128,10 @@ func resourceAwsEipCreate(d *schema.ResourceData, meta interface{}) error {
 
 	if v, ok := d.GetOk("public_ipv4_pool"); ok {
 		allocOpts.PublicIpv4Pool = aws.String(v.(string))
+	}
+
+	if v, ok := d.GetOk("customer_owned_ipv4_pool"); ok {
+		allocOpts.CustomerOwnedIpv4Pool = aws.String(v.(string))
 	}
 
 	log.Printf("[DEBUG] EIP create configuration: %#v", allocOpts)
@@ -258,6 +272,8 @@ func resourceAwsEipRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 	d.Set("public_ipv4_pool", address.PublicIpv4Pool)
+	d.Set("customer_owned_ipv4_pool", address.CustomerOwnedIpv4Pool)
+	d.Set("customer_owned_ip", address.CustomerOwnedIp)
 
 	// On import (domain never set, which it must've been if we created),
 	// set the 'vpc' attribute depending on if we're in a VPC.
@@ -292,7 +308,7 @@ func resourceAwsEipUpdate(d *schema.ResourceData, meta interface{}) error {
 	if !d.IsNewResource() {
 		if d.HasChange("instance") && d.Get("instance").(string) != "" {
 			disassociate = true
-		} else if (d.HasChange("network_interface") || d.HasChange("associate_with_private_ip")) && d.Get("association_id").(string) != "" {
+		} else if (d.HasChanges("network_interface", "associate_with_private_ip")) && d.Get("association_id").(string) != "" {
 			disassociate = true
 		}
 	}
@@ -309,7 +325,7 @@ func resourceAwsEipUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	if d.HasChange("instance") && ok_instance {
 		associate = true
-	} else if (d.HasChange("network_interface") || d.HasChange("associate_with_private_ip")) && ok_interface {
+	} else if (d.HasChanges("network_interface", "associate_with_private_ip")) && ok_interface {
 		associate = true
 	}
 	if associate {
