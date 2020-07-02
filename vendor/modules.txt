@@ -635,7 +635,7 @@ github.com/hashicorp/go-getter/helper/url
 github.com/hashicorp/go-hclog
 # github.com/hashicorp/go-multierror v1.0.0
 github.com/hashicorp/go-multierror
-# github.com/hashicorp/go-plugin v1.0.1
+# github.com/hashicorp/go-plugin v1.2.0
 github.com/hashicorp/go-plugin
 github.com/hashicorp/go-plugin/internal/plugin
 # github.com/hashicorp/go-retryablehttp v0.6.4
@@ -757,7 +757,10 @@ github.com/hashicorp/terraform/terraform
 github.com/hashicorp/terraform/version
 # github.com/hashicorp/terraform-config-inspect v0.0.0-20191212124732-c6ae6269b9d7
 github.com/hashicorp/terraform-config-inspect/tfconfig
-# github.com/hashicorp/terraform-plugin-sdk v1.11.0 => github.com/openshift/hashicorp-terraform-plugin-sdk v1.6.0-openshift
+# github.com/hashicorp/terraform-json v0.4.0
+github.com/hashicorp/terraform-json
+# github.com/hashicorp/terraform-plugin-sdk v1.14.0 => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
+github.com/hashicorp/terraform-plugin-sdk/acctest
 github.com/hashicorp/terraform-plugin-sdk/helper/acctest
 github.com/hashicorp/terraform-plugin-sdk/helper/customdiff
 github.com/hashicorp/terraform-plugin-sdk/helper/encryption
@@ -809,6 +812,8 @@ github.com/hashicorp/terraform-plugin-sdk/plugin
 github.com/hashicorp/terraform-plugin-sdk/terraform
 github.com/hashicorp/terraform-plugin-sdk/tfdiags
 github.com/hashicorp/terraform-plugin-sdk/tfplugin5
+# github.com/hashicorp/terraform-plugin-test v1.3.0
+github.com/hashicorp/terraform-plugin-test
 # github.com/hashicorp/terraform-svchost v0.0.0-20191119180714-d2e4933b9136
 github.com/hashicorp/terraform-svchost
 github.com/hashicorp/terraform-svchost/auth
@@ -1602,6 +1607,8 @@ google.golang.org/grpc/keepalive
 google.golang.org/grpc/metadata
 google.golang.org/grpc/naming
 google.golang.org/grpc/peer
+google.golang.org/grpc/reflection
+google.golang.org/grpc/reflection/grpc_reflection_v1alpha
 google.golang.org/grpc/resolver
 google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats

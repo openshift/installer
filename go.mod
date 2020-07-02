@@ -31,10 +31,10 @@ require (
 	github.com/gophercloud/utils v0.0.0-20191212191830-4533a07bd492
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-azure-helpers v0.10.0
-	github.com/hashicorp/go-plugin v1.0.1
+	github.com/hashicorp/go-plugin v1.2.0
 	github.com/hashicorp/logutils v1.0.0
 	github.com/hashicorp/terraform v0.12.21
-	github.com/hashicorp/terraform-plugin-sdk v1.11.0
+	github.com/hashicorp/terraform-plugin-sdk v1.14.0
 	github.com/hashicorp/vault v1.3.0 // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/keybase/go-crypto v0.0.0-20190828182435-a05457805304 // indirect
@@ -109,7 +109,7 @@ replace (
 	github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.0.0 // Pin non-versioned import to v22.0.0
 	github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb // Pinned by MCO
 	github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-3 // Pin to fork with deduplicated rpc types
-	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.6.0-openshift // Pin to fork with public rpc types
+	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift // Pin to fork with public rpc types
 	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20200611190251-d997d9c06ba8 // Use OpenShift fork
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200601094953-95abe2d2f422 // Pin API
