@@ -25,7 +25,7 @@
     command:
       cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_bootstrap }}"
 
-  - name: 'Create the bootstrap server'
+  - name: 'Create the bootstrap server (debug)'
     os_server:
       name: "{{ os_bootstrap_server_name }}"
       image: "{{ os_image_rhcos }}"
