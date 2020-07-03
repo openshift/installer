@@ -4,6 +4,6 @@ metadata:
   namespace: openshift-cluster-version
   name: version
 spec:
-  upstream: https://api.openshift.com/api/upgrades_info/v1/graph
+  upstream: https://origin-release.svc.ci.openshift.org/graph
   channel: stable-4
   clusterID: {{.CVOClusterID}}
