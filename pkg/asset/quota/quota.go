@@ -64,7 +64,7 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		services := []string{"compute.googleapis.com", "iam.googleapis.com"}
 		q, err := quotagcp.Load(context.TODO(), ic.Config.Platform.GCP.ProjectID, services...)
 		if quotagcp.IsUnauthorized(err) {
-			logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v", err)
+			logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v, make sure you have `roles/servicemanagement.quotaViewer` assigned to the user.", err)
 			return nil
 		}
 		if err != nil {
