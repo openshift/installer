@@ -14,7 +14,7 @@ require (
 	github.com/antchfx/xpath v1.1.2 // indirect
 	github.com/apparentlymart/go-cidr v1.0.1
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
-	github.com/aws/aws-sdk-go v1.30.16
+	github.com/aws/aws-sdk-go v1.32.3
 	github.com/btubbs/datetime v0.1.1 // indirect
 	github.com/c4milo/gotoolkit v0.0.0-20190525173301-67483a18c17a // indirect
 	github.com/containers/image v3.0.2+incompatible
@@ -31,10 +31,10 @@ require (
 	github.com/gophercloud/utils v0.0.0-20191212191830-4533a07bd492
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-azure-helpers v0.10.0
-	github.com/hashicorp/go-plugin v1.0.1
+	github.com/hashicorp/go-plugin v1.2.0
 	github.com/hashicorp/logutils v1.0.0
 	github.com/hashicorp/terraform v0.12.21
-	github.com/hashicorp/terraform-plugin-sdk v1.11.0
+	github.com/hashicorp/terraform-plugin-sdk v1.14.0
 	github.com/hashicorp/vault v1.3.0 // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/keybase/go-crypto v0.0.0-20190828182435-a05457805304 // indirect
@@ -109,13 +109,13 @@ replace (
 	github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.0.0 // Pin non-versioned import to v22.0.0
 	github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb // Pinned by MCO
 	github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-3 // Pin to fork with deduplicated rpc types
-	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.6.0-openshift // Pin to fork with public rpc types
+	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift // Pin to fork with public rpc types
 	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20200611190251-d997d9c06ba8 // Use OpenShift fork
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200601094953-95abe2d2f422 // Pin API
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200116152001-92a2713fa240 // Pin client-go
 	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530 // Pin MCO so it doesn't get downgraded
-	github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20200526184553-1a716dcc0fa8 // Pin to openshift fork with tag v2.60.0-openshift-1
+	github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699 // Pin to openshift fork with tag v2.67.0-openshift
 	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200508151851-2bfa0b7d4a9d // release-2.8.0 branch
 	github.com/terraform-providers/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-1
 	github.com/vmware/govmomi => github.com/vmware/govmomi v0.22.2-0.20200420222347-5fceac570f29
