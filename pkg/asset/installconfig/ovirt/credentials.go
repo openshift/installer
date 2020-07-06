@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -16,7 +17,7 @@ import (
 )
 
 // Add PEM into the System Pool
-func (c *clientHTTP) addTrustBundle(pemFilePath string) error {
+func (c *clientHTTP) addTrustBundle(pemFilePath string, engineConfig *Config) error {
 	c.certPool, _ = x509.SystemCertPool()
 	if c.certPool == nil {
 		logrus.Debug("failed to load cert pool.... Creating new cert pool")
@@ -33,6 +34,7 @@ func (c *clientHTTP) addTrustBundle(pemFilePath string) error {
 			return errors.Wrapf(err, "unable to load local certificate: %s", pemFilePath)
 		}
 		logrus.Debugf("loaded %s into the system pool: ", pemFilePath)
+		engineConfig.CABundle = strings.TrimSpace(string(pem))
 	}
 	return nil
 }
@@ -214,7 +216,7 @@ func engineSetup() (Config, error) {
 		logrus.Warning("cannot download PEM file from Engine!", err)
 		engineConfig.Insecure = true
 	} else {
-		err = httpResource.addTrustBundle(httpResource.saveFilePath)
+		err = httpResource.addTrustBundle(httpResource.saveFilePath, &engineConfig)
 		if err != nil {
 			engineConfig.Insecure = true
 		} else {
