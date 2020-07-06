@@ -177,7 +177,8 @@ platform:
           username: admin
           password: password
         bootMACAddress: 00:11:07:4e:f6:68
-        hardwareProfile: default
+        rootDeviceHints:
+          minSizeGigabytes: 20
       - name: openshift-master-1
         role: master
         bmc:
@@ -185,7 +186,8 @@ platform:
           username: admin
           password: password
         bootMACAddress: 00:11:07:4e:f6:6c
-        hardwareProfile: default
+        rootDeviceHints:
+          minSizeGigabytes: 20
       - name: openshift-master-2
         role: master
         bmc:
@@ -193,7 +195,8 @@ platform:
           username: admin
           password: password
         bootMACAddress: 00:11:07:4e:f6:70
-        hardwareProfile: default
+        rootDeviceHints:
+          minSizeGigabytes: 20
       - name: openshift-worker-0
         role: worker
         bmc:
@@ -201,7 +204,8 @@ platform:
           username: admin
           password: password
         bootMACAddress: 00:11:07:4e:f6:71
-        hardwareProfile: default
+        rootDeviceHints:
+          minSizeGigabytes: 20
 pullSecret: ...
 sshKey: ...
 ```
