@@ -880,6 +880,7 @@ github.com/mattn/go-isatty
 github.com/metal3-io/baremetal-operator/pkg/apis/metal3/v1alpha1
 github.com/metal3-io/baremetal-operator/pkg/bmc
 github.com/metal3-io/baremetal-operator/pkg/hardware
+github.com/metal3-io/baremetal-operator/pkg/provisioner/ironic/devicehints
 # github.com/metal3-io/cluster-api-provider-baremetal v0.0.0 => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
 github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis
 github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1

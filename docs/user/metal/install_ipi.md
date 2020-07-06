@@ -134,13 +134,19 @@ platform should be considered experimental and still subject to change without
 backwards compatibility.  In particular, some items likely to change soon
 include:
 
-* The `hardwareProfile` is currently exposed as a way to allow specifying
+* **This field is deprecated. See rootDeviceHints instead.**
+  The `hardwareProfile` is currently exposed as a way to allow specifying
   different hardware parameters for deployment.  By default, we will deploy
   RHCOS to the first disk, but that may not be appropriate for all hardware.
   The `hardwareProfile` is the field we have available to change that.  This
   interface is subject to change.  In the meantime, hardware profiles can be
   found here:
   https://github.com/metal3-io/baremetal-operator/blob/master/pkg/hardware/profile.go#L48
+
+* *rootDeviceHints* -- Guidance for how to choose the device to
+  receive the image being provisioned. Documentation on using this field can
+  be found here
+  https://github.com/metal3-io/baremetal-operator/blob/master/docs/api.md
 
 ```yaml
 apiVersion: v1
