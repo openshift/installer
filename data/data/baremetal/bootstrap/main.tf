@@ -1,5 +1,12 @@
+resource "libvirt_pool" "bootstrap" {
+  name = "${var.cluster_id}-bootstrap"
+  type = "dir"
+  path = "/var/lib/libvirt/openshift-images/${var.cluster_id}-bootstrap"
+}
+
 resource "libvirt_volume" "bootstrap" {
   name   = "${var.cluster_id}-bootstrap"
+  pool   = libvirt_pool.bootstrap.name
   source = var.image
 }
 
