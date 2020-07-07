@@ -6,12 +6,11 @@ import (
 )
 
 func init() {
-	registerFactory("redfish", newRedfishAccessDetails)
-	registerFactory("redfish+http", newRedfishAccessDetails)
-	registerFactory("redfish+https", newRedfishAccessDetails)
-	registerFactory("redfish-virtualmedia", newRedfishVirtualMediaAccessDetails)
-	registerFactory("ilo5-virtualmedia", newRedfishVirtualMediaAccessDetails)
-	registerFactory("idrac-virtualmedia", newRedfishiDracVirtualMediaAccessDetails)
+	schemes := []string{"http", "https"}
+	registerFactory("redfish", newRedfishAccessDetails, schemes)
+	registerFactory("redfish-virtualmedia", newRedfishVirtualMediaAccessDetails, schemes)
+	registerFactory("ilo5-virtualmedia", newRedfishVirtualMediaAccessDetails, schemes)
+	registerFactory("idrac-virtualmedia", newRedfishiDracVirtualMediaAccessDetails, schemes)
 }
 
 func redfishDetails(parsedURL *url.URL, disableCertificateVerification bool) *redfishAccessDetails {

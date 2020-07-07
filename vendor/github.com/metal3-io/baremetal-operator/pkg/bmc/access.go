@@ -1,6 +1,7 @@
 package bmc
 
 import (
+	"fmt"
 	"net"
 	"net/url"
 	"strings"
@@ -16,8 +17,12 @@ var factories = map[string]AccessDetailsFactory{}
 
 // We could make this function public if we want to support
 // out-of-tree factories.
-func registerFactory(name string, factory AccessDetailsFactory) {
+func registerFactory(name string, factory AccessDetailsFactory, schemes []string) {
 	factories[name] = factory
+
+	for _, scheme := range schemes {
+		factories[fmt.Sprintf("%s+%s", name, scheme)] = factory
+	}
 }
 
 // AccessDetails contains the information about how to get to a BMC.
