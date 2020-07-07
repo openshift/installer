@@ -332,6 +332,19 @@ func PossibleMessageFilterTypeValues() []MessageFilterType {
 	return []MessageFilterType{MessageFilterTypeExclude, MessageFilterTypeInclude, MessageFilterTypeNotSpecified}
 }
 
+// OpenAuthenticationProviderType enumerates the values for open authentication provider type.
+type OpenAuthenticationProviderType string
+
+const (
+	// AAD ...
+	AAD OpenAuthenticationProviderType = "AAD"
+)
+
+// PossibleOpenAuthenticationProviderTypeValues returns an array of possible values for the OpenAuthenticationProviderType const type.
+func PossibleOpenAuthenticationProviderTypeValues() []OpenAuthenticationProviderType {
+	return []OpenAuthenticationProviderType{AAD}
+}
+
 // ParameterType enumerates the values for parameter type.
 type ParameterType string
 
@@ -698,16 +711,22 @@ const (
 	WorkflowProvisioningStateDeleting WorkflowProvisioningState = "Deleting"
 	// WorkflowProvisioningStateFailed ...
 	WorkflowProvisioningStateFailed WorkflowProvisioningState = "Failed"
+	// WorkflowProvisioningStateInProgress ...
+	WorkflowProvisioningStateInProgress WorkflowProvisioningState = "InProgress"
 	// WorkflowProvisioningStateMoving ...
 	WorkflowProvisioningStateMoving WorkflowProvisioningState = "Moving"
 	// WorkflowProvisioningStateNotSpecified ...
 	WorkflowProvisioningStateNotSpecified WorkflowProvisioningState = "NotSpecified"
+	// WorkflowProvisioningStatePending ...
+	WorkflowProvisioningStatePending WorkflowProvisioningState = "Pending"
 	// WorkflowProvisioningStateReady ...
 	WorkflowProvisioningStateReady WorkflowProvisioningState = "Ready"
 	// WorkflowProvisioningStateRegistered ...
 	WorkflowProvisioningStateRegistered WorkflowProvisioningState = "Registered"
 	// WorkflowProvisioningStateRegistering ...
 	WorkflowProvisioningStateRegistering WorkflowProvisioningState = "Registering"
+	// WorkflowProvisioningStateRenewing ...
+	WorkflowProvisioningStateRenewing WorkflowProvisioningState = "Renewing"
 	// WorkflowProvisioningStateRunning ...
 	WorkflowProvisioningStateRunning WorkflowProvisioningState = "Running"
 	// WorkflowProvisioningStateSucceeded ...
@@ -718,11 +737,13 @@ const (
 	WorkflowProvisioningStateUnregistering WorkflowProvisioningState = "Unregistering"
 	// WorkflowProvisioningStateUpdating ...
 	WorkflowProvisioningStateUpdating WorkflowProvisioningState = "Updating"
+	// WorkflowProvisioningStateWaiting ...
+	WorkflowProvisioningStateWaiting WorkflowProvisioningState = "Waiting"
 )
 
 // PossibleWorkflowProvisioningStateValues returns an array of possible values for the WorkflowProvisioningState const type.
 func PossibleWorkflowProvisioningStateValues() []WorkflowProvisioningState {
-	return []WorkflowProvisioningState{WorkflowProvisioningStateAccepted, WorkflowProvisioningStateCanceled, WorkflowProvisioningStateCompleted, WorkflowProvisioningStateCreated, WorkflowProvisioningStateCreating, WorkflowProvisioningStateDeleted, WorkflowProvisioningStateDeleting, WorkflowProvisioningStateFailed, WorkflowProvisioningStateMoving, WorkflowProvisioningStateNotSpecified, WorkflowProvisioningStateReady, WorkflowProvisioningStateRegistered, WorkflowProvisioningStateRegistering, WorkflowProvisioningStateRunning, WorkflowProvisioningStateSucceeded, WorkflowProvisioningStateUnregistered, WorkflowProvisioningStateUnregistering, WorkflowProvisioningStateUpdating}
+	return []WorkflowProvisioningState{WorkflowProvisioningStateAccepted, WorkflowProvisioningStateCanceled, WorkflowProvisioningStateCompleted, WorkflowProvisioningStateCreated, WorkflowProvisioningStateCreating, WorkflowProvisioningStateDeleted, WorkflowProvisioningStateDeleting, WorkflowProvisioningStateFailed, WorkflowProvisioningStateInProgress, WorkflowProvisioningStateMoving, WorkflowProvisioningStateNotSpecified, WorkflowProvisioningStatePending, WorkflowProvisioningStateReady, WorkflowProvisioningStateRegistered, WorkflowProvisioningStateRegistering, WorkflowProvisioningStateRenewing, WorkflowProvisioningStateRunning, WorkflowProvisioningStateSucceeded, WorkflowProvisioningStateUnregistered, WorkflowProvisioningStateUnregistering, WorkflowProvisioningStateUpdating, WorkflowProvisioningStateWaiting}
 }
 
 // WorkflowState enumerates the values for workflow state.
@@ -1004,6 +1025,480 @@ type AS2MessageConnectionSettings struct {
 	UnfoldHTTPHeaders *bool `json:"unfoldHttpHeaders,omitempty"`
 }
 
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic/models.go
+=======
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+// Deprecated: Use NextWithContext() instead.
+func (iter *APIOperationListResultIterator) Next() error {
+	return iter.NextWithContext(context.Background())
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter APIOperationListResultIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter APIOperationListResultIterator) Response() APIOperationListResult {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter APIOperationListResultIterator) Value() APIOperation {
+	if !iter.page.NotDone() {
+		return APIOperation{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// Creates a new instance of the APIOperationListResultIterator type.
+func NewAPIOperationListResultIterator(page APIOperationListResultPage) APIOperationListResultIterator {
+	return APIOperationListResultIterator{page: page}
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (aolr APIOperationListResult) IsEmpty() bool {
+	return aolr.Value == nil || len(*aolr.Value) == 0
+}
+
+// aPIOperationListResultPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (aolr APIOperationListResult) aPIOperationListResultPreparer(ctx context.Context) (*http.Request, error) {
+	if aolr.NextLink == nil || len(to.String(aolr.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare((&http.Request{}).WithContext(ctx),
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(aolr.NextLink)))
+}
+
+// APIOperationListResultPage contains a page of APIOperation values.
+type APIOperationListResultPage struct {
+	fn   func(context.Context, APIOperationListResult) (APIOperationListResult, error)
+	aolr APIOperationListResult
+}
+
+// NextWithContext advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *APIOperationListResultPage) NextWithContext(ctx context.Context) (err error) {
+	if tracing.IsEnabled() {
+		ctx = tracing.StartSpan(ctx, fqdn+"/APIOperationListResultPage.NextWithContext")
+		defer func() {
+			sc := -1
+			if page.Response().Response.Response != nil {
+				sc = page.Response().Response.Response.StatusCode
+			}
+			tracing.EndSpan(ctx, sc, err)
+		}()
+	}
+	next, err := page.fn(ctx, page.aolr)
+	if err != nil {
+		return err
+	}
+	page.aolr = next
+	return nil
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+// Deprecated: Use NextWithContext() instead.
+func (page *APIOperationListResultPage) Next() error {
+	return page.NextWithContext(context.Background())
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page APIOperationListResultPage) NotDone() bool {
+	return !page.aolr.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page APIOperationListResultPage) Response() APIOperationListResult {
+	return page.aolr
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page APIOperationListResultPage) Values() []APIOperation {
+	if page.aolr.IsEmpty() {
+		return nil
+	}
+	return *page.aolr.Value
+}
+
+// Creates a new instance of the APIOperationListResultPage type.
+func NewAPIOperationListResultPage(getNextPage func(context.Context, APIOperationListResult) (APIOperationListResult, error)) APIOperationListResultPage {
+	return APIOperationListResultPage{fn: getNextPage}
+}
+
+// APIOperationPropertiesDefinition the api operations properties
+type APIOperationPropertiesDefinition struct {
+	// Summary - The summary of the api operation.
+	Summary *string `json:"summary,omitempty"`
+	// Description - The description of the api operation.
+	Description *string `json:"description,omitempty"`
+	// Visibility - The visibility of the api operation.
+	Visibility *string `json:"visibility,omitempty"`
+	// Trigger - The trigger type of api operation.
+	Trigger *string `json:"trigger,omitempty"`
+	// TriggerHint - The trigger hint for the api operation.
+	TriggerHint *string `json:"triggerHint,omitempty"`
+	// Pageable - Indicates whether the api operation is pageable.
+	Pageable *bool `json:"pageable,omitempty"`
+	// Annotation - The annotation of api operation.
+	Annotation *APIOperationAnnotation `json:"annotation,omitempty"`
+	// API - The api reference.
+	API *APIReference `json:"api,omitempty"`
+	// InputsDefinition - The operation inputs definition schema.
+	InputsDefinition *SwaggerSchema `json:"inputsDefinition,omitempty"`
+	// ResponsesDefinition - The operation responses definition schemas.
+	ResponsesDefinition map[string]*SwaggerSchema `json:"responsesDefinition"`
+	// IsWebhook - Indicates whether the API operation is webhook or not.
+	IsWebhook *bool `json:"isWebhook,omitempty"`
+	// IsNotification - Indicates whether the API operation is notification or not.
+	IsNotification *bool `json:"isNotification,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for APIOperationPropertiesDefinition.
+func (aopd APIOperationPropertiesDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if aopd.Summary != nil {
+		objectMap["summary"] = aopd.Summary
+	}
+	if aopd.Description != nil {
+		objectMap["description"] = aopd.Description
+	}
+	if aopd.Visibility != nil {
+		objectMap["visibility"] = aopd.Visibility
+	}
+	if aopd.Trigger != nil {
+		objectMap["trigger"] = aopd.Trigger
+	}
+	if aopd.TriggerHint != nil {
+		objectMap["triggerHint"] = aopd.TriggerHint
+	}
+	if aopd.Pageable != nil {
+		objectMap["pageable"] = aopd.Pageable
+	}
+	if aopd.Annotation != nil {
+		objectMap["annotation"] = aopd.Annotation
+	}
+	if aopd.API != nil {
+		objectMap["api"] = aopd.API
+	}
+	if aopd.InputsDefinition != nil {
+		objectMap["inputsDefinition"] = aopd.InputsDefinition
+	}
+	if aopd.ResponsesDefinition != nil {
+		objectMap["responsesDefinition"] = aopd.ResponsesDefinition
+	}
+	if aopd.IsWebhook != nil {
+		objectMap["isWebhook"] = aopd.IsWebhook
+	}
+	if aopd.IsNotification != nil {
+		objectMap["isNotification"] = aopd.IsNotification
+	}
+	return json.Marshal(objectMap)
+}
+
+// APIReference the Api reference.
+type APIReference struct {
+	// DisplayName - The display name of the api.
+	DisplayName *string `json:"displayName,omitempty"`
+	// Description - The description of the api.
+	Description *string `json:"description,omitempty"`
+	// IconURI - The icon uri of the api.
+	IconURI *string `json:"iconUri,omitempty"`
+	// Swagger - The swagger of the api.
+	Swagger interface{} `json:"swagger,omitempty"`
+	// BrandColor - The brand color of the api.
+	BrandColor *string `json:"brandColor,omitempty"`
+	// Category - The tier. Possible values include: 'APITierNotSpecified', 'APITierEnterprise', 'APITierStandard', 'APITierPremium'
+	Category APITier `json:"category,omitempty"`
+	// IntegrationServiceEnvironment - The integration service environment reference.
+	IntegrationServiceEnvironment *ResourceReference `json:"integrationServiceEnvironment,omitempty"`
+	// ID - The resource id.
+	ID *string `json:"id,omitempty"`
+	// Name - READ-ONLY; Gets the resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - READ-ONLY; Gets the resource type.
+	Type *string `json:"type,omitempty"`
+}
+
+// APIResourceBackendService the API backend service.
+type APIResourceBackendService struct {
+	// ServiceURL - The service URL.
+	ServiceURL *string `json:"serviceUrl,omitempty"`
+}
+
+// APIResourceDefinitions the Api resource definition.
+type APIResourceDefinitions struct {
+	// OriginalSwaggerURL - The original swagger url.
+	OriginalSwaggerURL *string `json:"originalSwaggerUrl,omitempty"`
+	// ModifiedSwaggerURL - The modified swagger url.
+	ModifiedSwaggerURL *string `json:"modifiedSwaggerUrl,omitempty"`
+}
+
+// APIResourceGeneralInformation the API general information.
+type APIResourceGeneralInformation struct {
+	// IconURL - The icon url.
+	IconURL *string `json:"iconUrl,omitempty"`
+	// DisplayName - The display name.
+	DisplayName *string `json:"displayName,omitempty"`
+	// Description - The description.
+	Description *string `json:"description,omitempty"`
+	// TermsOfUseURL - The terms of use url.
+	TermsOfUseURL *string `json:"termsOfUseUrl,omitempty"`
+	// ReleaseTag - The release tag.
+	ReleaseTag *string `json:"releaseTag,omitempty"`
+	// Tier - The tier. Possible values include: 'APITierNotSpecified', 'APITierEnterprise', 'APITierStandard', 'APITierPremium'
+	Tier APITier `json:"tier,omitempty"`
+}
+
+// APIResourceMetadata the api resource metadata.
+type APIResourceMetadata struct {
+	// Source - The source.
+	Source *string `json:"source,omitempty"`
+	// BrandColor - The brand color.
+	BrandColor *string `json:"brandColor,omitempty"`
+	// HideKey - The hide key.
+	HideKey *string `json:"hideKey,omitempty"`
+	// Tags - The tags.
+	Tags map[string]*string `json:"tags"`
+	// APIType - The api type. Possible values include: 'APITypeNotSpecified', 'APITypeRest', 'APITypeSoap'
+	APIType APIType `json:"ApiType,omitempty"`
+	// WsdlService - The WSDL service.
+	WsdlService *WsdlService `json:"wsdlService,omitempty"`
+	// WsdlImportMethod - The WSDL import method. Possible values include: 'WsdlImportMethodNotSpecified', 'WsdlImportMethodSoapToRest', 'WsdlImportMethodSoapPassThrough'
+	WsdlImportMethod WsdlImportMethod `json:"wsdlImportMethod,omitempty"`
+	// ConnectionType - The connection type.
+	ConnectionType *string `json:"connectionType,omitempty"`
+	// ProvisioningState - The provisioning state. Possible values include: 'WorkflowProvisioningStateNotSpecified', 'WorkflowProvisioningStateAccepted', 'WorkflowProvisioningStateRunning', 'WorkflowProvisioningStateReady', 'WorkflowProvisioningStateCreating', 'WorkflowProvisioningStateCreated', 'WorkflowProvisioningStateDeleting', 'WorkflowProvisioningStateDeleted', 'WorkflowProvisioningStateCanceled', 'WorkflowProvisioningStateFailed', 'WorkflowProvisioningStateSucceeded', 'WorkflowProvisioningStateMoving', 'WorkflowProvisioningStateUpdating', 'WorkflowProvisioningStateRegistering', 'WorkflowProvisioningStateRegistered', 'WorkflowProvisioningStateUnregistering', 'WorkflowProvisioningStateUnregistered', 'WorkflowProvisioningStateCompleted', 'WorkflowProvisioningStateRenewing', 'WorkflowProvisioningStatePending', 'WorkflowProvisioningStateWaiting', 'WorkflowProvisioningStateInProgress'
+	ProvisioningState WorkflowProvisioningState `json:"provisioningState,omitempty"`
+	// DeploymentParameters - The connector deployment parameters metadata.
+	DeploymentParameters *APIDeploymentParameterMetadataSet `json:"deploymentParameters,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for APIResourceMetadata.
+func (arm APIResourceMetadata) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if arm.Source != nil {
+		objectMap["source"] = arm.Source
+	}
+	if arm.BrandColor != nil {
+		objectMap["brandColor"] = arm.BrandColor
+	}
+	if arm.HideKey != nil {
+		objectMap["hideKey"] = arm.HideKey
+	}
+	if arm.Tags != nil {
+		objectMap["tags"] = arm.Tags
+	}
+	if arm.APIType != "" {
+		objectMap["ApiType"] = arm.APIType
+	}
+	if arm.WsdlService != nil {
+		objectMap["wsdlService"] = arm.WsdlService
+	}
+	if arm.WsdlImportMethod != "" {
+		objectMap["wsdlImportMethod"] = arm.WsdlImportMethod
+	}
+	if arm.ConnectionType != nil {
+		objectMap["connectionType"] = arm.ConnectionType
+	}
+	if arm.ProvisioningState != "" {
+		objectMap["provisioningState"] = arm.ProvisioningState
+	}
+	if arm.DeploymentParameters != nil {
+		objectMap["deploymentParameters"] = arm.DeploymentParameters
+	}
+	return json.Marshal(objectMap)
+}
+
+// APIResourcePolicies the API resource policies.
+type APIResourcePolicies struct {
+	// Content - The API level only policies XML as embedded content.
+	Content *string `json:"content,omitempty"`
+	// ContentLink - The content link to the policies.
+	ContentLink *string `json:"contentLink,omitempty"`
+}
+
+// APIResourceProperties the API resource properties.
+type APIResourceProperties struct {
+	// Name - The name
+	Name *string `json:"name,omitempty"`
+	// ConnectionParameters - The connection parameters.
+	ConnectionParameters map[string]interface{} `json:"connectionParameters"`
+	// Metadata - The metadata.
+	Metadata *APIResourceMetadata `json:"metadata,omitempty"`
+	// RuntimeUrls - The runtime urls.
+	RuntimeUrls *[]string `json:"runtimeUrls,omitempty"`
+	// GeneralInformation - The api general information.
+	GeneralInformation *APIResourceGeneralInformation `json:"generalInformation,omitempty"`
+	// Capabilities - The capabilities.
+	Capabilities *[]string `json:"capabilities,omitempty"`
+	// BackendService - The backend service.
+	BackendService *APIResourceBackendService `json:"backendService,omitempty"`
+	// Policies - The policies for the API.
+	Policies *APIResourcePolicies `json:"policies,omitempty"`
+	// APIDefinitionURL - The API definition.
+	APIDefinitionURL *string `json:"apiDefinitionUrl,omitempty"`
+	// APIDefinitions - The api definitions.
+	APIDefinitions *APIResourceDefinitions `json:"apiDefinitions,omitempty"`
+	// IntegrationServiceEnvironment - The integration service environment reference.
+	IntegrationServiceEnvironment *ResourceReference `json:"integrationServiceEnvironment,omitempty"`
+	// ProvisioningState - The provisioning state. Possible values include: 'WorkflowProvisioningStateNotSpecified', 'WorkflowProvisioningStateAccepted', 'WorkflowProvisioningStateRunning', 'WorkflowProvisioningStateReady', 'WorkflowProvisioningStateCreating', 'WorkflowProvisioningStateCreated', 'WorkflowProvisioningStateDeleting', 'WorkflowProvisioningStateDeleted', 'WorkflowProvisioningStateCanceled', 'WorkflowProvisioningStateFailed', 'WorkflowProvisioningStateSucceeded', 'WorkflowProvisioningStateMoving', 'WorkflowProvisioningStateUpdating', 'WorkflowProvisioningStateRegistering', 'WorkflowProvisioningStateRegistered', 'WorkflowProvisioningStateUnregistering', 'WorkflowProvisioningStateUnregistered', 'WorkflowProvisioningStateCompleted', 'WorkflowProvisioningStateRenewing', 'WorkflowProvisioningStatePending', 'WorkflowProvisioningStateWaiting', 'WorkflowProvisioningStateInProgress'
+	ProvisioningState WorkflowProvisioningState `json:"provisioningState,omitempty"`
+	// Category - The category. Possible values include: 'APITierNotSpecified', 'APITierEnterprise', 'APITierStandard', 'APITierPremium'
+	Category APITier `json:"category,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for APIResourceProperties.
+func (arp APIResourceProperties) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if arp.Name != nil {
+		objectMap["name"] = arp.Name
+	}
+	if arp.ConnectionParameters != nil {
+		objectMap["connectionParameters"] = arp.ConnectionParameters
+	}
+	if arp.Metadata != nil {
+		objectMap["metadata"] = arp.Metadata
+	}
+	if arp.RuntimeUrls != nil {
+		objectMap["runtimeUrls"] = arp.RuntimeUrls
+	}
+	if arp.GeneralInformation != nil {
+		objectMap["generalInformation"] = arp.GeneralInformation
+	}
+	if arp.Capabilities != nil {
+		objectMap["capabilities"] = arp.Capabilities
+	}
+	if arp.BackendService != nil {
+		objectMap["backendService"] = arp.BackendService
+	}
+	if arp.Policies != nil {
+		objectMap["policies"] = arp.Policies
+	}
+	if arp.APIDefinitionURL != nil {
+		objectMap["apiDefinitionUrl"] = arp.APIDefinitionURL
+	}
+	if arp.APIDefinitions != nil {
+		objectMap["apiDefinitions"] = arp.APIDefinitions
+	}
+	if arp.IntegrationServiceEnvironment != nil {
+		objectMap["integrationServiceEnvironment"] = arp.IntegrationServiceEnvironment
+	}
+	if arp.ProvisioningState != "" {
+		objectMap["provisioningState"] = arp.ProvisioningState
+	}
+	if arp.Category != "" {
+		objectMap["category"] = arp.Category
+	}
+	return json.Marshal(objectMap)
+}
+
+// ArtifactContentPropertiesDefinition the artifact content properties definition.
+type ArtifactContentPropertiesDefinition struct {
+	Content interface{} `json:"content,omitempty"`
+	// ContentType - The content type.
+	ContentType *string `json:"contentType,omitempty"`
+	// ContentLink - The content link.
+	ContentLink *ContentLink `json:"contentLink,omitempty"`
+	// CreatedTime - The artifact creation time.
+	CreatedTime *date.Time `json:"createdTime,omitempty"`
+	// ChangedTime - The artifact changed time.
+	ChangedTime *date.Time  `json:"changedTime,omitempty"`
+	Metadata    interface{} `json:"metadata,omitempty"`
+}
+
+// ArtifactProperties the artifact properties definition.
+type ArtifactProperties struct {
+	// CreatedTime - The artifact creation time.
+	CreatedTime *date.Time `json:"createdTime,omitempty"`
+	// ChangedTime - The artifact changed time.
+	ChangedTime *date.Time  `json:"changedTime,omitempty"`
+	Metadata    interface{} `json:"metadata,omitempty"`
+}
+
+// AS2AcknowledgementConnectionSettings the AS2 agreement acknowledgement connection settings.
+type AS2AcknowledgementConnectionSettings struct {
+	// IgnoreCertificateNameMismatch - Indicates whether to ignore mismatch in certificate name.
+	IgnoreCertificateNameMismatch *bool `json:"ignoreCertificateNameMismatch,omitempty"`
+	// SupportHTTPStatusCodeContinue - Indicates whether to support HTTP status code 'CONTINUE'.
+	SupportHTTPStatusCodeContinue *bool `json:"supportHttpStatusCodeContinue,omitempty"`
+	// KeepHTTPConnectionAlive - Indicates whether to keep the connection alive.
+	KeepHTTPConnectionAlive *bool `json:"keepHttpConnectionAlive,omitempty"`
+	// UnfoldHTTPHeaders - Indicates whether to unfold the HTTP headers.
+	UnfoldHTTPHeaders *bool `json:"unfoldHttpHeaders,omitempty"`
+}
+
+// AS2AgreementContent the integration account AS2 agreement content.
+type AS2AgreementContent struct {
+	// ReceiveAgreement - The AS2 one-way receive agreement.
+	ReceiveAgreement *AS2OneWayAgreement `json:"receiveAgreement,omitempty"`
+	// SendAgreement - The AS2 one-way send agreement.
+	SendAgreement *AS2OneWayAgreement `json:"sendAgreement,omitempty"`
+}
+
+// AS2EnvelopeSettings the AS2 agreement envelope settings.
+type AS2EnvelopeSettings struct {
+	// MessageContentType - The message content type.
+	MessageContentType *string `json:"messageContentType,omitempty"`
+	// TransmitFileNameInMimeHeader - The value indicating whether to transmit file name in mime header.
+	TransmitFileNameInMimeHeader *bool `json:"transmitFileNameInMimeHeader,omitempty"`
+	// FileNameTemplate - The template for file name.
+	FileNameTemplate *string `json:"fileNameTemplate,omitempty"`
+	// SuspendMessageOnFileNameGenerationError - The value indicating whether to suspend message on file name generation error.
+	SuspendMessageOnFileNameGenerationError *bool `json:"suspendMessageOnFileNameGenerationError,omitempty"`
+	// AutogenerateFileName - The value indicating whether to auto generate file name.
+	AutogenerateFileName *bool `json:"autogenerateFileName,omitempty"`
+}
+
+// AS2ErrorSettings the AS2 agreement error settings.
+type AS2ErrorSettings struct {
+	// SuspendDuplicateMessage - The value indicating whether to suspend duplicate message.
+	SuspendDuplicateMessage *bool `json:"suspendDuplicateMessage,omitempty"`
+	// ResendIfMDNNotReceived - The value indicating whether to resend message If MDN is not received.
+	ResendIfMDNNotReceived *bool `json:"resendIfMDNNotReceived,omitempty"`
+}
+
+// AS2MdnSettings the AS2 agreement mdn settings.
+type AS2MdnSettings struct {
+	// NeedMDN - The value indicating whether to send or request a MDN.
+	NeedMDN *bool `json:"needMDN,omitempty"`
+	// SignMDN - The value indicating whether the MDN needs to be signed or not.
+	SignMDN *bool `json:"signMDN,omitempty"`
+	// SendMDNAsynchronously - The value indicating whether to send the asynchronous MDN.
+	SendMDNAsynchronously *bool `json:"sendMDNAsynchronously,omitempty"`
+	// ReceiptDeliveryURL - The receipt delivery URL.
+	ReceiptDeliveryURL *string `json:"receiptDeliveryUrl,omitempty"`
+	// DispositionNotificationTo - The disposition notification to header value.
+	DispositionNotificationTo *string `json:"dispositionNotificationTo,omitempty"`
+	// SignOutboundMDNIfOptional - The value indicating whether to sign the outbound MDN if optional.
+	SignOutboundMDNIfOptional *bool `json:"signOutboundMDNIfOptional,omitempty"`
+	// MdnText - The MDN text.
+	MdnText *string `json:"mdnText,omitempty"`
+	// SendInboundMDNToMessageBox - The value indicating whether to send inbound MDN to message box.
+	SendInboundMDNToMessageBox *bool `json:"sendInboundMDNToMessageBox,omitempty"`
+	// MicHashingAlgorithm - The signing or hashing algorithm. Possible values include: 'HashingAlgorithmNotSpecified', 'HashingAlgorithmNone', 'HashingAlgorithmMD5', 'HashingAlgorithmSHA1', 'HashingAlgorithmSHA2256', 'HashingAlgorithmSHA2384', 'HashingAlgorithmSHA2512'
+	MicHashingAlgorithm HashingAlgorithm `json:"micHashingAlgorithm,omitempty"`
+}
+
+// AS2MessageConnectionSettings the AS2 agreement message connection settings.
+type AS2MessageConnectionSettings struct {
+	// IgnoreCertificateNameMismatch - The value indicating whether to ignore mismatch in certificate name.
+	IgnoreCertificateNameMismatch *bool `json:"ignoreCertificateNameMismatch,omitempty"`
+	// SupportHTTPStatusCodeContinue - The value indicating whether to support HTTP status code 'CONTINUE'.
+	SupportHTTPStatusCodeContinue *bool `json:"supportHttpStatusCodeContinue,omitempty"`
+	// KeepHTTPConnectionAlive - The value indicating whether to keep the connection alive.
+	KeepHTTPConnectionAlive *bool `json:"keepHttpConnectionAlive,omitempty"`
+	// UnfoldHTTPHeaders - The value indicating whether to unfold the HTTP headers.
+	UnfoldHTTPHeaders *bool `json:"unfoldHttpHeaders,omitempty"`
+}
+
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic/models.go
 // AS2OneWayAgreement the integration account AS2 one-way agreement.
 type AS2OneWayAgreement struct {
 	// SenderBusinessIdentity - The sender business identity
@@ -1636,6 +2131,57 @@ type ExpressionTraces struct {
 	Inputs            *[]ExpressionRoot `json:"inputs,omitempty"`
 }
 
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic/models.go
+=======
+// ExtendedErrorInfo the extended error info.
+type ExtendedErrorInfo struct {
+	// Code - The error code. Possible values include: 'ErrorResponseCodeNotSpecified', 'ErrorResponseCodeIntegrationServiceEnvironmentNotFound', 'ErrorResponseCodeInternalServerError', 'ErrorResponseCodeInvalidOperationID'
+	Code ErrorResponseCode `json:"code,omitempty"`
+	// Message - The error message.
+	Message *string `json:"message,omitempty"`
+	// Details - The error message details.
+	Details *[]ExtendedErrorInfo `json:"details,omitempty"`
+	// InnerError - The inner error.
+	InnerError interface{} `json:"innerError,omitempty"`
+}
+
+// FlowAccessControlConfiguration the access control configuration.
+type FlowAccessControlConfiguration struct {
+	// Triggers - The access control configuration for invoking workflow triggers.
+	Triggers *FlowAccessControlConfigurationPolicy `json:"triggers,omitempty"`
+	// Contents - The access control configuration for accessing workflow run contents.
+	Contents *FlowAccessControlConfigurationPolicy `json:"contents,omitempty"`
+	// Actions - The access control configuration for workflow actions.
+	Actions *FlowAccessControlConfigurationPolicy `json:"actions,omitempty"`
+	// WorkflowManagement - The access control configuration for workflow management.
+	WorkflowManagement *FlowAccessControlConfigurationPolicy `json:"workflowManagement,omitempty"`
+}
+
+// FlowAccessControlConfigurationPolicy the access control configuration policy.
+type FlowAccessControlConfigurationPolicy struct {
+	// AllowedCallerIPAddresses - The allowed caller IP address ranges.
+	AllowedCallerIPAddresses *[]IPAddressRange `json:"allowedCallerIpAddresses,omitempty"`
+	// OpenAuthenticationPolicies - The authentication policies for workflow.
+	OpenAuthenticationPolicies *OpenAuthenticationAccessPolicies `json:"openAuthenticationPolicies,omitempty"`
+}
+
+// FlowEndpoints the flow endpoints configuration.
+type FlowEndpoints struct {
+	// OutgoingIPAddresses - The outgoing ip address.
+	OutgoingIPAddresses *[]IPAddress `json:"outgoingIpAddresses,omitempty"`
+	// AccessEndpointIPAddresses - The access endpoint ip address.
+	AccessEndpointIPAddresses *[]IPAddress `json:"accessEndpointIpAddresses,omitempty"`
+}
+
+// FlowEndpointsConfiguration the endpoints configuration.
+type FlowEndpointsConfiguration struct {
+	// Workflow - The workflow endpoints.
+	Workflow *FlowEndpoints `json:"workflow,omitempty"`
+	// Connector - The connector endpoints.
+	Connector *FlowEndpoints `json:"connector,omitempty"`
+}
+
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic/models.go
 // GenerateUpgradedDefinitionParameters the parameters to generate upgraded definition.
 type GenerateUpgradedDefinitionParameters struct {
 	// TargetSchemaVersion - The target schema version.
@@ -3553,6 +4099,7 @@ func (ias *IntegrationAccountSession) UnmarshalJSON(body []byte) error {
 				}
 				ias.IntegrationAccountSessionProperties = &integrationAccountSessionProperties
 			}
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic/models.go
 		case "id":
 			if v != nil {
 				var ID string
@@ -3561,6 +4108,236 @@ func (ias *IntegrationAccountSession) UnmarshalJSON(body []byte) error {
 					return err
 				}
 				ias.ID = &ID
+=======
+			tracing.EndSpan(ctx, sc, err)
+		}()
+	}
+	next, err := page.fn(ctx, page.iselr)
+	if err != nil {
+		return err
+	}
+	page.iselr = next
+	return nil
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+// Deprecated: Use NextWithContext() instead.
+func (page *IntegrationServiceEnvironmentListResultPage) Next() error {
+	return page.NextWithContext(context.Background())
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page IntegrationServiceEnvironmentListResultPage) NotDone() bool {
+	return !page.iselr.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page IntegrationServiceEnvironmentListResultPage) Response() IntegrationServiceEnvironmentListResult {
+	return page.iselr
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page IntegrationServiceEnvironmentListResultPage) Values() []IntegrationServiceEnvironment {
+	if page.iselr.IsEmpty() {
+		return nil
+	}
+	return *page.iselr.Value
+}
+
+// Creates a new instance of the IntegrationServiceEnvironmentListResultPage type.
+func NewIntegrationServiceEnvironmentListResultPage(getNextPage func(context.Context, IntegrationServiceEnvironmentListResult) (IntegrationServiceEnvironmentListResult, error)) IntegrationServiceEnvironmentListResultPage {
+	return IntegrationServiceEnvironmentListResultPage{fn: getNextPage}
+}
+
+// IntegrationServiceEnvironmentManagedApisDeleteFuture an abstraction for monitoring and retrieving the
+// results of a long-running operation.
+type IntegrationServiceEnvironmentManagedApisDeleteFuture struct {
+	azure.Future
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future *IntegrationServiceEnvironmentManagedApisDeleteFuture) Result(client IntegrationServiceEnvironmentManagedApisClient) (ar autorest.Response, err error) {
+	var done bool
+	done, err = future.DoneWithContext(context.Background(), client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.IntegrationServiceEnvironmentManagedApisDeleteFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		err = azure.NewAsyncOpIncompleteError("logic.IntegrationServiceEnvironmentManagedApisDeleteFuture")
+		return
+	}
+	ar.Response = future.Response()
+	return
+}
+
+// IntegrationServiceEnvironmentManagedApisPutFuture an abstraction for monitoring and retrieving the
+// results of a long-running operation.
+type IntegrationServiceEnvironmentManagedApisPutFuture struct {
+	azure.Future
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future *IntegrationServiceEnvironmentManagedApisPutFuture) Result(client IntegrationServiceEnvironmentManagedApisClient) (ma ManagedAPI, err error) {
+	var done bool
+	done, err = future.DoneWithContext(context.Background(), client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.IntegrationServiceEnvironmentManagedApisPutFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		err = azure.NewAsyncOpIncompleteError("logic.IntegrationServiceEnvironmentManagedApisPutFuture")
+		return
+	}
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ma.Response.Response, err = future.GetResult(sender); err == nil && ma.Response.Response.StatusCode != http.StatusNoContent {
+		ma, err = client.PutResponder(ma.Response.Response)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "logic.IntegrationServiceEnvironmentManagedApisPutFuture", "Result", ma.Response.Response, "Failure responding to request")
+		}
+	}
+	return
+}
+
+// IntegrationServiceEnvironmentNetworkDependency the azure async operation resource.
+type IntegrationServiceEnvironmentNetworkDependency struct {
+	// Category - The network dependency category type. Possible values include: 'IntegrationServiceEnvironmentNetworkDependencyCategoryTypeNotSpecified', 'IntegrationServiceEnvironmentNetworkDependencyCategoryTypeAzureStorage', 'IntegrationServiceEnvironmentNetworkDependencyCategoryTypeAzureManagement', 'IntegrationServiceEnvironmentNetworkDependencyCategoryTypeAzureActiveDirectory', 'IntegrationServiceEnvironmentNetworkDependencyCategoryTypeSSLCertificateVerification', 'IntegrationServiceEnvironmentNetworkDependencyCategoryTypeDiagnosticLogsAndMetrics', 'IntegrationServiceEnvironmentNetworkDependencyCategoryTypeIntegrationServiceEnvironmentConnectors', 'IntegrationServiceEnvironmentNetworkDependencyCategoryTypeRedisCache', 'IntegrationServiceEnvironmentNetworkDependencyCategoryTypeAccessEndpoints', 'IntegrationServiceEnvironmentNetworkDependencyCategoryTypeRecoveryService', 'IntegrationServiceEnvironmentNetworkDependencyCategoryTypeSQL', 'IntegrationServiceEnvironmentNetworkDependencyCategoryTypeRegionalService'
+	Category IntegrationServiceEnvironmentNetworkDependencyCategoryType `json:"category,omitempty"`
+	// DisplayName - The display name.
+	DisplayName *string `json:"displayName,omitempty"`
+	// Endpoints - The endpoints.
+	Endpoints *[]IntegrationServiceEnvironmentNetworkEndpoint `json:"endpoints,omitempty"`
+}
+
+// IntegrationServiceEnvironmentNetworkDependencyHealth the integration service environment subnet network
+// health.
+type IntegrationServiceEnvironmentNetworkDependencyHealth struct {
+	// Error - The error if any occurred during the operation.
+	Error *ExtendedErrorInfo `json:"error,omitempty"`
+	// State - The network dependency health state. Possible values include: 'IntegrationServiceEnvironmentNetworkDependencyHealthStateNotSpecified', 'IntegrationServiceEnvironmentNetworkDependencyHealthStateHealthy', 'IntegrationServiceEnvironmentNetworkDependencyHealthStateUnhealthy', 'IntegrationServiceEnvironmentNetworkDependencyHealthStateUnknown'
+	State IntegrationServiceEnvironmentNetworkDependencyHealthState `json:"state,omitempty"`
+}
+
+// IntegrationServiceEnvironmentNetworkEndpoint the network endpoint.
+type IntegrationServiceEnvironmentNetworkEndpoint struct {
+	// Accessibility - The accessibility state. Possible values include: 'IntegrationServiceEnvironmentNetworkEndPointAccessibilityStateNotSpecified', 'IntegrationServiceEnvironmentNetworkEndPointAccessibilityStateUnknown', 'IntegrationServiceEnvironmentNetworkEndPointAccessibilityStateAvailable', 'IntegrationServiceEnvironmentNetworkEndPointAccessibilityStateNotAvailable'
+	Accessibility IntegrationServiceEnvironmentNetworkEndPointAccessibilityState `json:"accessibility,omitempty"`
+	// DomainName - The domain name.
+	DomainName *string `json:"domainName,omitempty"`
+	// Ports - The ports.
+	Ports *[]string `json:"ports,omitempty"`
+}
+
+// IntegrationServiceEnvironmentProperties the integration service environment properties.
+type IntegrationServiceEnvironmentProperties struct {
+	// ProvisioningState - The provisioning state. Possible values include: 'WorkflowProvisioningStateNotSpecified', 'WorkflowProvisioningStateAccepted', 'WorkflowProvisioningStateRunning', 'WorkflowProvisioningStateReady', 'WorkflowProvisioningStateCreating', 'WorkflowProvisioningStateCreated', 'WorkflowProvisioningStateDeleting', 'WorkflowProvisioningStateDeleted', 'WorkflowProvisioningStateCanceled', 'WorkflowProvisioningStateFailed', 'WorkflowProvisioningStateSucceeded', 'WorkflowProvisioningStateMoving', 'WorkflowProvisioningStateUpdating', 'WorkflowProvisioningStateRegistering', 'WorkflowProvisioningStateRegistered', 'WorkflowProvisioningStateUnregistering', 'WorkflowProvisioningStateUnregistered', 'WorkflowProvisioningStateCompleted', 'WorkflowProvisioningStateRenewing', 'WorkflowProvisioningStatePending', 'WorkflowProvisioningStateWaiting', 'WorkflowProvisioningStateInProgress'
+	ProvisioningState WorkflowProvisioningState `json:"provisioningState,omitempty"`
+	// State - The integration service environment state. Possible values include: 'WorkflowStateNotSpecified', 'WorkflowStateCompleted', 'WorkflowStateEnabled', 'WorkflowStateDisabled', 'WorkflowStateDeleted', 'WorkflowStateSuspended'
+	State WorkflowState `json:"state,omitempty"`
+	// IntegrationServiceEnvironmentID - Gets the tracking id.
+	IntegrationServiceEnvironmentID *string `json:"integrationServiceEnvironmentId,omitempty"`
+	// EndpointsConfiguration - The endpoints configuration.
+	EndpointsConfiguration *FlowEndpointsConfiguration `json:"endpointsConfiguration,omitempty"`
+	// NetworkConfiguration - The network configuration.
+	NetworkConfiguration *NetworkConfiguration `json:"networkConfiguration,omitempty"`
+}
+
+// IntegrationServiceEnvironmentsCreateOrUpdateFuture an abstraction for monitoring and retrieving the
+// results of a long-running operation.
+type IntegrationServiceEnvironmentsCreateOrUpdateFuture struct {
+	azure.Future
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future *IntegrationServiceEnvironmentsCreateOrUpdateFuture) Result(client IntegrationServiceEnvironmentsClient) (ise IntegrationServiceEnvironment, err error) {
+	var done bool
+	done, err = future.DoneWithContext(context.Background(), client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.IntegrationServiceEnvironmentsCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		err = azure.NewAsyncOpIncompleteError("logic.IntegrationServiceEnvironmentsCreateOrUpdateFuture")
+		return
+	}
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ise.Response.Response, err = future.GetResult(sender); err == nil && ise.Response.Response.StatusCode != http.StatusNoContent {
+		ise, err = client.CreateOrUpdateResponder(ise.Response.Response)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "logic.IntegrationServiceEnvironmentsCreateOrUpdateFuture", "Result", ise.Response.Response, "Failure responding to request")
+		}
+	}
+	return
+}
+
+// IntegrationServiceEnvironmentSku the integration service environment sku.
+type IntegrationServiceEnvironmentSku struct {
+	// Name - The sku name. Possible values include: 'IntegrationServiceEnvironmentSkuNameNotSpecified', 'IntegrationServiceEnvironmentSkuNamePremium', 'IntegrationServiceEnvironmentSkuNameDeveloper'
+	Name IntegrationServiceEnvironmentSkuName `json:"name,omitempty"`
+	// Capacity - The sku capacity.
+	Capacity *int32 `json:"capacity,omitempty"`
+}
+
+// IntegrationServiceEnvironmentSkuCapacity the integration service environment sku capacity.
+type IntegrationServiceEnvironmentSkuCapacity struct {
+	// Minimum - The minimum capacity.
+	Minimum *int32 `json:"minimum,omitempty"`
+	// Maximum - The maximum capacity.
+	Maximum *int32 `json:"maximum,omitempty"`
+	// Default - The default capacity.
+	Default *int32 `json:"default,omitempty"`
+	// ScaleType - The sku scale type. Possible values include: 'Manual', 'Automatic', 'None'
+	ScaleType IntegrationServiceEnvironmentSkuScaleType `json:"scaleType,omitempty"`
+}
+
+// IntegrationServiceEnvironmentSkuDefinition the integration service environment sku definition.
+type IntegrationServiceEnvironmentSkuDefinition struct {
+	// ResourceType - The resource type.
+	ResourceType *string `json:"resourceType,omitempty"`
+	// Sku - The sku.
+	Sku *IntegrationServiceEnvironmentSkuDefinitionSku `json:"sku,omitempty"`
+	// Capacity - The sku capacity.
+	Capacity *IntegrationServiceEnvironmentSkuCapacity `json:"capacity,omitempty"`
+}
+
+// IntegrationServiceEnvironmentSkuDefinitionSku the sku.
+type IntegrationServiceEnvironmentSkuDefinitionSku struct {
+	// Name - The sku name. Possible values include: 'IntegrationServiceEnvironmentSkuNameNotSpecified', 'IntegrationServiceEnvironmentSkuNamePremium', 'IntegrationServiceEnvironmentSkuNameDeveloper'
+	Name IntegrationServiceEnvironmentSkuName `json:"name,omitempty"`
+	// Tier - The sku tier.
+	Tier *string `json:"tier,omitempty"`
+}
+
+// IntegrationServiceEnvironmentSkuList the list of integration service environment skus.
+type IntegrationServiceEnvironmentSkuList struct {
+	autorest.Response `json:"-"`
+	// Value - The list of integration service environment skus.
+	Value *[]IntegrationServiceEnvironmentSkuDefinition `json:"value,omitempty"`
+	// NextLink - The URL to get the next set of results.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// IntegrationServiceEnvironmentSkuListIterator provides access to a complete listing of
+// IntegrationServiceEnvironmentSkuDefinition values.
+type IntegrationServiceEnvironmentSkuListIterator struct {
+	i    int
+	page IntegrationServiceEnvironmentSkuListPage
+}
+
+// NextWithContext advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *IntegrationServiceEnvironmentSkuListIterator) NextWithContext(ctx context.Context) (err error) {
+	if tracing.IsEnabled() {
+		ctx = tracing.StartSpan(ctx, fqdn+"/IntegrationServiceEnvironmentSkuListIterator.NextWithContext")
+		defer func() {
+			sc := -1
+			if iter.Response().Response.Response != nil {
+				sc = iter.Response().Response.Response.StatusCode
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic/models.go
 			}
 		case "name":
 			if v != nil {
@@ -3600,6 +4377,59 @@ func (ias *IntegrationAccountSession) UnmarshalJSON(body []byte) error {
 			}
 		}
 	}
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic/models.go
+=======
+	return
+}
+
+// IPAddress the ip address.
+type IPAddress struct {
+	// Address - The address.
+	Address *string `json:"address,omitempty"`
+}
+
+// IPAddressRange the ip address range.
+type IPAddressRange struct {
+	// AddressRange - The IP address range.
+	AddressRange *string `json:"addressRange,omitempty"`
+}
+
+// JSONSchema the JSON schema.
+type JSONSchema struct {
+	autorest.Response `json:"-"`
+	// Title - The JSON title.
+	Title *string `json:"title,omitempty"`
+	// Content - The JSON content.
+	Content *string `json:"content,omitempty"`
+}
+
+// KeyVaultKey the key vault key.
+type KeyVaultKey struct {
+	// Kid - The key id.
+	Kid *string `json:"kid,omitempty"`
+	// Attributes - The key attributes.
+	Attributes *KeyVaultKeyAttributes `json:"attributes,omitempty"`
+}
+
+// KeyVaultKeyAttributes the key attributes.
+type KeyVaultKeyAttributes struct {
+	// Enabled - Whether the key is enabled or not.
+	Enabled *bool `json:"enabled,omitempty"`
+	// Created - When the key was created.
+	Created *int64 `json:"created,omitempty"`
+	// Updated - When the key was updated.
+	Updated *int64 `json:"updated,omitempty"`
+}
+
+// KeyVaultKeyCollection collection of key vault keys.
+type KeyVaultKeyCollection struct {
+	autorest.Response `json:"-"`
+	// Value - The key vault keys.
+	Value *[]KeyVaultKey `json:"value,omitempty"`
+	// SkipToken - The skip token.
+	SkipToken *string `json:"skipToken,omitempty"`
+}
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic/models.go
 
 	return nil
 }
@@ -3847,12 +4677,47 @@ type ListKeyVaultKeysDefinition struct {
 	SkipToken *string `json:"skipToken,omitempty"`
 }
 
+// OpenAuthenticationAccessPolicies authenticationPolicy of type Open.
+type OpenAuthenticationAccessPolicies struct {
+	// Policies - Open authentication policies.
+	Policies map[string]*OpenAuthenticationAccessPolicy `json:"policies"`
+}
+
+// MarshalJSON is the custom marshaler for OpenAuthenticationAccessPolicies.
+func (oaap OpenAuthenticationAccessPolicies) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if oaap.Policies != nil {
+		objectMap["policies"] = oaap.Policies
+	}
+	return json.Marshal(objectMap)
+}
+
+// OpenAuthenticationAccessPolicy open authentication access policy defined by user.
+type OpenAuthenticationAccessPolicy struct {
+	// Type - READ-ONLY; Type of provider for OAuth. Possible values include: 'AAD'
+	Type OpenAuthenticationProviderType `json:"type,omitempty"`
+	// Claims - The access policy claims.
+	Claims *[]OpenAuthenticationPolicyClaim `json:"claims,omitempty"`
+}
+
+// OpenAuthenticationPolicyClaim open authentication policy claim.
+type OpenAuthenticationPolicyClaim struct {
+	// Name - The name of the claim.
+	Name *string `json:"name,omitempty"`
+	// Value - The value of the claim.
+	Value *string `json:"value,omitempty"`
+}
+
 // Operation logic REST API operation
 type Operation struct {
+	// Origin - Operation: origin
+	Origin *string `json:"origin,omitempty"`
 	// Name - Operation name: {provider}/{resource}/{operation}
 	Name *string `json:"name,omitempty"`
 	// Display - The object that represents the operation.
 	Display *OperationDisplay `json:"display,omitempty"`
+	// Properties - The properties.
+	Properties interface{} `json:"properties,omitempty"`
 }
 
 // OperationDisplay the object that represents the operation.
@@ -3863,6 +4728,8 @@ type OperationDisplay struct {
 	Resource *string `json:"resource,omitempty"`
 	// Operation - Operation type: Read, write, delete, etc.
 	Operation *string `json:"operation,omitempty"`
+	// Description - Operation: description.
+	Description *string `json:"description,omitempty"`
 }
 
 // OperationListResult result of the request to list Logic operations. It contains a list of operations and
@@ -4454,7 +5321,12 @@ type SetObject struct {
 
 // SetTriggerStateActionDefinition ...
 type SetTriggerStateActionDefinition struct {
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic/models.go
 	Source *WorkflowTrigger `json:"source,omitempty"`
+=======
+	// Source - The source.
+	Source *WorkflowTriggerReference `json:"source,omitempty"`
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic/models.go
 }
 
 // Sku the sku type.
@@ -4475,10 +5347,21 @@ type SubResource struct {
 type TrackingEvent struct {
 	// EventLevel - Possible values include: 'LogAlways', 'Critical', 'Error', 'Warning', 'Informational', 'Verbose'
 	EventLevel EventLevel `json:"eventLevel,omitempty"`
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic/models.go
 	EventTime  *date.Time `json:"eventTime,omitempty"`
 	// RecordType - Possible values include: 'TrackingRecordTypeNotSpecified', 'TrackingRecordTypeCustom', 'TrackingRecordTypeAS2Message', 'TrackingRecordTypeAS2MDN', 'TrackingRecordTypeX12Interchange', 'TrackingRecordTypeX12FunctionalGroup', 'TrackingRecordTypeX12TransactionSet', 'TrackingRecordTypeX12InterchangeAcknowledgment', 'TrackingRecordTypeX12FunctionalGroupAcknowledgment', 'TrackingRecordTypeX12TransactionSetAcknowledgment', 'TrackingRecordTypeEdifactInterchange', 'TrackingRecordTypeEdifactFunctionalGroup', 'TrackingRecordTypeEdifactTransactionSet', 'TrackingRecordTypeEdifactInterchangeAcknowledgment', 'TrackingRecordTypeEdifactFunctionalGroupAcknowledgment', 'TrackingRecordTypeEdifactTransactionSetAcknowledgment'
 	RecordType TrackingRecordType      `json:"recordType,omitempty"`
 	Error      *TrackingEventErrorInfo `json:"error,omitempty"`
+=======
+	// EventTime - The event time.
+	EventTime *date.Time `json:"eventTime,omitempty"`
+	// RecordType - The record type. Possible values include: 'TrackingRecordTypeNotSpecified', 'TrackingRecordTypeCustom', 'TrackingRecordTypeAS2Message', 'TrackingRecordTypeAS2MDN', 'TrackingRecordTypeX12Interchange', 'TrackingRecordTypeX12FunctionalGroup', 'TrackingRecordTypeX12TransactionSet', 'TrackingRecordTypeX12InterchangeAcknowledgment', 'TrackingRecordTypeX12FunctionalGroupAcknowledgment', 'TrackingRecordTypeX12TransactionSetAcknowledgment', 'TrackingRecordTypeEdifactInterchange', 'TrackingRecordTypeEdifactFunctionalGroup', 'TrackingRecordTypeEdifactTransactionSet', 'TrackingRecordTypeEdifactInterchangeAcknowledgment', 'TrackingRecordTypeEdifactFunctionalGroupAcknowledgment', 'TrackingRecordTypeEdifactTransactionSetAcknowledgment'
+	RecordType TrackingRecordType `json:"recordType,omitempty"`
+	// Record - The record.
+	Record interface{} `json:"record,omitempty"`
+	// Error - The error.
+	Error *TrackingEventErrorInfo `json:"error,omitempty"`
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic/models.go
 }
 
 // TrackingEventErrorInfo ...
@@ -4776,7 +5659,7 @@ type WorkflowParameter struct {
 
 // WorkflowProperties the workflow properties.
 type WorkflowProperties struct {
-	// ProvisioningState - READ-ONLY; Gets the provisioning state. Possible values include: 'WorkflowProvisioningStateNotSpecified', 'WorkflowProvisioningStateAccepted', 'WorkflowProvisioningStateRunning', 'WorkflowProvisioningStateReady', 'WorkflowProvisioningStateCreating', 'WorkflowProvisioningStateCreated', 'WorkflowProvisioningStateDeleting', 'WorkflowProvisioningStateDeleted', 'WorkflowProvisioningStateCanceled', 'WorkflowProvisioningStateFailed', 'WorkflowProvisioningStateSucceeded', 'WorkflowProvisioningStateMoving', 'WorkflowProvisioningStateUpdating', 'WorkflowProvisioningStateRegistering', 'WorkflowProvisioningStateRegistered', 'WorkflowProvisioningStateUnregistering', 'WorkflowProvisioningStateUnregistered', 'WorkflowProvisioningStateCompleted'
+	// ProvisioningState - READ-ONLY; Gets the provisioning state. Possible values include: 'WorkflowProvisioningStateNotSpecified', 'WorkflowProvisioningStateAccepted', 'WorkflowProvisioningStateRunning', 'WorkflowProvisioningStateReady', 'WorkflowProvisioningStateCreating', 'WorkflowProvisioningStateCreated', 'WorkflowProvisioningStateDeleting', 'WorkflowProvisioningStateDeleted', 'WorkflowProvisioningStateCanceled', 'WorkflowProvisioningStateFailed', 'WorkflowProvisioningStateSucceeded', 'WorkflowProvisioningStateMoving', 'WorkflowProvisioningStateUpdating', 'WorkflowProvisioningStateRegistering', 'WorkflowProvisioningStateRegistered', 'WorkflowProvisioningStateUnregistering', 'WorkflowProvisioningStateUnregistered', 'WorkflowProvisioningStateCompleted', 'WorkflowProvisioningStateRenewing', 'WorkflowProvisioningStatePending', 'WorkflowProvisioningStateWaiting', 'WorkflowProvisioningStateInProgress'
 	ProvisioningState WorkflowProvisioningState `json:"provisioningState,omitempty"`
 	// CreatedTime - READ-ONLY; Gets the created time.
 	CreatedTime *date.Time `json:"createdTime,omitempty"`
@@ -4788,7 +5671,15 @@ type WorkflowProperties struct {
 	Version *string `json:"version,omitempty"`
 	// AccessEndpoint - READ-ONLY; Gets the access endpoint.
 	AccessEndpoint *string `json:"accessEndpoint,omitempty"`
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic/models.go
 	// Sku - The sku.
+=======
+	// EndpointsConfiguration - The endpoints configuration.
+	EndpointsConfiguration *FlowEndpointsConfiguration `json:"endpointsConfiguration,omitempty"`
+	// AccessControl - The access control configuration.
+	AccessControl *FlowAccessControlConfiguration `json:"accessControl,omitempty"`
+	// Sku - READ-ONLY; The sku.
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic/models.go
 	Sku *Sku `json:"sku,omitempty"`
 	// IntegrationAccount - The integration account.
 	IntegrationAccount *ResourceReference `json:"integrationAccount,omitempty"`
@@ -4804,8 +5695,16 @@ func (wp WorkflowProperties) MarshalJSON() ([]byte, error) {
 	if wp.State != "" {
 		objectMap["state"] = wp.State
 	}
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic/models.go
 	if wp.Sku != nil {
 		objectMap["sku"] = wp.Sku
+=======
+	if wp.EndpointsConfiguration != nil {
+		objectMap["endpointsConfiguration"] = wp.EndpointsConfiguration
+	}
+	if wp.AccessControl != nil {
+		objectMap["accessControl"] = wp.AccessControl
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic/models.go
 	}
 	if wp.IntegrationAccount != nil {
 		objectMap["integrationAccount"] = wp.IntegrationAccount
@@ -4817,6 +5716,16 @@ func (wp WorkflowProperties) MarshalJSON() ([]byte, error) {
 		objectMap["parameters"] = wp.Parameters
 	}
 	return json.Marshal(objectMap)
+}
+
+// WorkflowReference the workflow reference.
+type WorkflowReference struct {
+	// ID - The resource id.
+	ID *string `json:"id,omitempty"`
+	// Name - READ-ONLY; Gets the resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - READ-ONLY; Gets the resource type.
+	Type *string `json:"type,omitempty"`
 }
 
 // WorkflowRun the workflow run.
@@ -5132,7 +6041,7 @@ type WorkflowRunActionProperties struct {
 	// TrackingID - READ-ONLY; Gets the tracking id.
 	TrackingID *string `json:"trackingId,omitempty"`
 	// Correlation - The correlation properties.
-	Correlation *Correlation `json:"correlation,omitempty"`
+	Correlation *RunActionCorrelation `json:"correlation,omitempty"`
 	// InputsLink - READ-ONLY; Gets the link to inputs.
 	InputsLink *ContentLink `json:"inputsLink,omitempty"`
 	// OutputsLink - READ-ONLY; Gets the link to outputs.
@@ -5831,6 +6740,8 @@ type WorkflowTriggerHistoryProperties struct {
 	StartTime *date.Time `json:"startTime,omitempty"`
 	// EndTime - READ-ONLY; Gets the end time.
 	EndTime *date.Time `json:"endTime,omitempty"`
+	// ScheduledTime - READ-ONLY; The scheduled time.
+	ScheduledTime *date.Time `json:"scheduledTime,omitempty"`
 	// Status - READ-ONLY; Gets the status. Possible values include: 'WorkflowStatusNotSpecified', 'WorkflowStatusPaused', 'WorkflowStatusRunning', 'WorkflowStatusWaiting', 'WorkflowStatusSucceeded', 'WorkflowStatusSkipped', 'WorkflowStatusSuspended', 'WorkflowStatusCancelled', 'WorkflowStatusFailed', 'WorkflowStatusFaulted', 'WorkflowStatusTimedOut', 'WorkflowStatusAborted', 'WorkflowStatusIgnored'
 	Status WorkflowStatus `json:"status,omitempty"`
 	// Code - READ-ONLY; Gets the code.
@@ -6047,6 +6958,20 @@ type WorkflowTriggerRecurrence struct {
 	TimeZone *string `json:"timeZone,omitempty"`
 	// Schedule - The recurrence schedule.
 	Schedule *RecurrenceSchedule `json:"schedule,omitempty"`
+}
+
+// WorkflowTriggerReference the workflow trigger reference.
+type WorkflowTriggerReference struct {
+	// FlowName - The workflow name.
+	FlowName *string `json:"flowName,omitempty"`
+	// TriggerName - The workflow trigger name.
+	TriggerName *string `json:"triggerName,omitempty"`
+	// ID - The resource id.
+	ID *string `json:"id,omitempty"`
+	// Name - READ-ONLY; Gets the resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - READ-ONLY; Gets the resource type.
+	Type *string `json:"type,omitempty"`
 }
 
 // WorkflowVersion the workflow version.
@@ -6298,6 +7223,8 @@ func NewWorkflowVersionListResultPage(getNextPage func(context.Context, Workflow
 
 // WorkflowVersionProperties the workflow version properties.
 type WorkflowVersionProperties struct {
+	// ProvisioningState - READ-ONLY; The provisioning state. Possible values include: 'WorkflowProvisioningStateNotSpecified', 'WorkflowProvisioningStateAccepted', 'WorkflowProvisioningStateRunning', 'WorkflowProvisioningStateReady', 'WorkflowProvisioningStateCreating', 'WorkflowProvisioningStateCreated', 'WorkflowProvisioningStateDeleting', 'WorkflowProvisioningStateDeleted', 'WorkflowProvisioningStateCanceled', 'WorkflowProvisioningStateFailed', 'WorkflowProvisioningStateSucceeded', 'WorkflowProvisioningStateMoving', 'WorkflowProvisioningStateUpdating', 'WorkflowProvisioningStateRegistering', 'WorkflowProvisioningStateRegistered', 'WorkflowProvisioningStateUnregistering', 'WorkflowProvisioningStateUnregistered', 'WorkflowProvisioningStateCompleted', 'WorkflowProvisioningStateRenewing', 'WorkflowProvisioningStatePending', 'WorkflowProvisioningStateWaiting', 'WorkflowProvisioningStateInProgress'
+	ProvisioningState WorkflowProvisioningState `json:"provisioningState,omitempty"`
 	// CreatedTime - READ-ONLY; Gets the created time.
 	CreatedTime *date.Time `json:"createdTime,omitempty"`
 	// ChangedTime - READ-ONLY; Gets the changed time.
@@ -6308,7 +7235,11 @@ type WorkflowVersionProperties struct {
 	Version *string `json:"version,omitempty"`
 	// AccessEndpoint - READ-ONLY; Gets the access endpoint.
 	AccessEndpoint *string `json:"accessEndpoint,omitempty"`
-	// Sku - The sku.
+	// EndpointsConfiguration - The endpoints configuration.
+	EndpointsConfiguration *FlowEndpointsConfiguration `json:"endpointsConfiguration,omitempty"`
+	// AccessControl - The access control configuration.
+	AccessControl *FlowAccessControlConfiguration `json:"accessControl,omitempty"`
+	// Sku - READ-ONLY; The sku.
 	Sku *Sku `json:"sku,omitempty"`
 	// IntegrationAccount - The integration account.
 	IntegrationAccount *ResourceReference `json:"integrationAccount,omitempty"`
@@ -6324,8 +7255,11 @@ func (wvp WorkflowVersionProperties) MarshalJSON() ([]byte, error) {
 	if wvp.State != "" {
 		objectMap["state"] = wvp.State
 	}
-	if wvp.Sku != nil {
-		objectMap["sku"] = wvp.Sku
+	if wvp.EndpointsConfiguration != nil {
+		objectMap["endpointsConfiguration"] = wvp.EndpointsConfiguration
+	}
+	if wvp.AccessControl != nil {
+		objectMap["accessControl"] = wvp.AccessControl
 	}
 	if wvp.IntegrationAccount != nil {
 		objectMap["integrationAccount"] = wvp.IntegrationAccount

@@ -1374,7 +1374,24 @@ type VolumeProperties struct {
 	// SubnetID - The Azure Resource URI for a delegated subnet. Must have the delegation Microsoft.NetApp/volumes
 	SubnetID *string `json:"subnetId,omitempty"`
 	// MountTargets - List of mount targets
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/netapp/mgmt/2019-06-01/netapp/models.go
 	MountTargets *[]MountTargetList `json:"mountTargets,omitempty"`
+=======
+	MountTargets *[]MountTargetProperties `json:"mountTargets,omitempty"`
+	// VolumeType - What type of volume is this
+	VolumeType *string `json:"volumeType,omitempty"`
+	// DataProtection - DataProtection type volumes include an object containing details of the replication
+	DataProtection *VolumePropertiesDataProtection `json:"dataProtection,omitempty"`
+	// IsRestoring - Restoring
+	IsRestoring *bool `json:"isRestoring,omitempty"`
+}
+
+// VolumePropertiesDataProtection dataProtection type volumes include an object containing details of the
+// replication
+type VolumePropertiesDataProtection struct {
+	// Replication - Replication properties
+	Replication *ReplicationObject `json:"replication,omitempty"`
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/netapp/mgmt/2019-10-01/netapp/models.go
 }
 
 // VolumePropertiesExportPolicy set of export policy rules

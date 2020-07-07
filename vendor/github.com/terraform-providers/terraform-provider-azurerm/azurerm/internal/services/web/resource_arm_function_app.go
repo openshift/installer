@@ -15,6 +15,11 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
+<<<<<<< HEAD
+=======
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/storage"
+	webValidate "github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/web/validate"
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
 	azSchema "github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/schema"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
@@ -46,7 +51,7 @@ func resourceArmFunctionApp() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validateAppServiceName,
+				ValidateFunc: webValidate.AppServiceName,
 			},
 
 			"resource_group_name": azure.SchemaResourceGroupName(),
@@ -395,6 +400,15 @@ func resourceArmFunctionAppUpdate(d *schema.ResourceData, meta interface{}) erro
 
 	location := azure.NormalizeLocation(d.Get("location").(string))
 	kind := "functionapp"
+<<<<<<< HEAD
+=======
+	if osTypeRaw, ok := d.GetOk("os_type"); ok {
+		osType := osTypeRaw.(string)
+		if osType == "linux" {
+			kind = "functionapp,linux"
+		}
+	}
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 	appServicePlanID := d.Get("app_service_plan_id").(string)
 	enabled := d.Get("enabled").(bool)
 	clientAffinityEnabled := d.Get("client_affinity_enabled").(bool)
@@ -573,11 +587,23 @@ func resourceArmFunctionAppRead(d *schema.ResourceData, meta interface{}) error 
 	dashboard, ok := appSettings["AzureWebJobsDashboard"]
 	d.Set("enable_builtin_logging", ok && dashboard != "")
 
-	delete(appSettings, "AzureWebJobsDashboard")
-	delete(appSettings, "AzureWebJobsStorage")
-	delete(appSettings, "FUNCTIONS_EXTENSION_VERSION")
-	delete(appSettings, "WEBSITE_CONTENTSHARE")
-	delete(appSettings, "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING")
+	if _, ok = d.GetOk("app_settings.AzureWebJobsDashboard"); !ok {
+		delete(appSettings, "AzureWebJobsDashboard")
+	}
+	if _, ok = d.GetOk("app_settings.AzureWebJobsStorage"); !ok {
+		delete(appSettings, "AzureWebJobsStorage")
+	}
+	if _, ok = d.GetOk("app_settings.FUNCTIONS_EXTENSION_VERSION"); !ok {
+		delete(appSettings, "FUNCTIONS_EXTENSION_VERSION")
+	}
+
+	// Let the user have a final say whether he wants to keep these 2 or not on
+	// Linux consumption plans. They shouldn't be there according to a bug
+	// report (see // https://github.com/Azure/azure-functions-python-worker/issues/598)
+	if !strings.EqualFold(d.Get("os_type").(string), "linux") {
+		delete(appSettings, "WEBSITE_CONTENTSHARE")
+		delete(appSettings, "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING")
+	}
 
 	if err = d.Set("app_settings", appSettings); err != nil {
 		return err
@@ -642,6 +668,7 @@ func getBasicFunctionAppAppSettings(d *schema.ResourceData, appServiceTier strin
 	dashboardPropName := "AzureWebJobsDashboard"
 	storagePropName := "AzureWebJobsStorage"
 	functionVersionPropName := "FUNCTIONS_EXTENSION_VERSION"
+
 	contentSharePropName := "WEBSITE_CONTENTSHARE"
 	contentFileConnStringPropName := "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING"
 
@@ -666,9 +693,17 @@ func getBasicFunctionAppAppSettings(d *schema.ResourceData, appServiceTier strin
 		{Name: &contentFileConnStringPropName, Value: &storageConnection},
 	}
 
+<<<<<<< HEAD
 	// If the application plan is NOT dynamic (consumption plan), we do NOT want to include WEBSITE_CONTENT components
 	if !strings.EqualFold(appServiceTier, "dynamic") {
 		return basicSettings
+=======
+	// On consumption and premium plans include WEBSITE_CONTENT components, unless it's a Linux consumption plan
+	// (see https://github.com/Azure/azure-functions-python-worker/issues/598)
+	if (strings.EqualFold(appServiceTier, "dynamic") || strings.EqualFold(appServiceTier, "elasticpremium")) &&
+		!strings.EqualFold(d.Get("os_type").(string), "linux") {
+		return append(basicSettings, consumptionSettings...), nil
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 	}
 	return append(basicSettings, consumptionSettings...)
 }
@@ -754,7 +789,15 @@ func expandFunctionAppSiteConfig(d *schema.ResourceData) web.SiteConfig {
 		siteConfig.FtpsState = web.FtpsState(v.(string))
 	}
 
+<<<<<<< HEAD
 	return siteConfig
+=======
+	if v, ok := config["pre_warmed_instance_count"]; ok {
+		siteConfig.PreWarmedInstanceCount = utils.Int32(int32(v.(int)))
+	}
+
+	return siteConfig, nil
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 }
 
 func flattenFunctionAppSiteConfig(input *web.SiteConfig) []interface{} {

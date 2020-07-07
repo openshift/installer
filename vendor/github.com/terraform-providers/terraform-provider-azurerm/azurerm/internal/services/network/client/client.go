@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-09-01/network"
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2020-03-01/network"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/common"
 )
 
@@ -40,6 +40,7 @@ type Client struct {
 	VpnServerConfigurationsClient        *network.VpnServerConfigurationsClient
 	WatcherClient                        *network.WatchersClient
 	WebApplicationFirewallPoliciesClient *network.WebApplicationFirewallPoliciesClient
+	PrivateDnsZoneGroupClient            *network.PrivateDNSZoneGroupsClient
 	PrivateLinkServiceClient             *network.PrivateLinkServicesClient
 }
 
@@ -106,6 +107,9 @@ func NewClient(o *common.ClientOptions) *Client {
 
 	PublicIPPrefixesClient := network.NewPublicIPPrefixesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&PublicIPPrefixesClient.Client, o.ResourceManagerAuthorizer)
+
+	PrivateDnsZoneGroupClient := network.NewPrivateDNSZoneGroupsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&PrivateDnsZoneGroupClient.Client, o.ResourceManagerAuthorizer)
 
 	PrivateLinkServiceClient := network.NewPrivateLinkServicesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&PrivateLinkServiceClient.Client, o.ResourceManagerAuthorizer)
@@ -184,6 +188,7 @@ func NewClient(o *common.ClientOptions) *Client {
 		VpnServerConfigurationsClient:        &vpnServerConfigurationsClient,
 		WatcherClient:                        &WatcherClient,
 		WebApplicationFirewallPoliciesClient: &WebApplicationFirewallPoliciesClient,
+		PrivateDnsZoneGroupClient:            &PrivateDnsZoneGroupClient,
 		PrivateLinkServiceClient:             &PrivateLinkServiceClient,
 	}
 }

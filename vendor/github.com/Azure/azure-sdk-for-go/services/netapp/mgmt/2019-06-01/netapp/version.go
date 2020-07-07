@@ -21,7 +21,11 @@ import "github.com/Azure/azure-sdk-for-go/version"
 
 // UserAgent returns the UserAgent string to use when sending http.Requests.
 func UserAgent() string {
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/netapp/mgmt/2019-06-01/netapp/version.go
 	return "Azure-SDK-For-Go/" + version.Number + " netapp/2019-06-01"
+=======
+	return "Azure-SDK-For-Go/" + Version() + " netapp/2019-10-01"
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/netapp/mgmt/2019-10-01/netapp/version.go
 }
 
 // Version returns the semantic version (see http://semver.org) of the client.

@@ -900,7 +900,11 @@ func (client WorkflowsClient) ListSwaggerResponder(resp *http.Response) (result 
 // resourceGroupName - the resource group name.
 // workflowName - the workflow name.
 // move - the workflow to move.
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic/workflows.go
 func (client WorkflowsClient) Move(ctx context.Context, resourceGroupName string, workflowName string, move Workflow) (result autorest.Response, err error) {
+=======
+func (client WorkflowsClient) Move(ctx context.Context, resourceGroupName string, workflowName string, move WorkflowReference) (result WorkflowsMoveFuture, err error) {
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic/workflows.go
 	if tracing.IsEnabled() {
 		ctx = tracing.StartSpan(ctx, fqdn+"/WorkflowsClient.Move")
 		defer func() {
@@ -933,7 +937,7 @@ func (client WorkflowsClient) Move(ctx context.Context, resourceGroupName string
 }
 
 // MovePreparer prepares the Move request.
-func (client WorkflowsClient) MovePreparer(ctx context.Context, resourceGroupName string, workflowName string, move Workflow) (*http.Request, error) {
+func (client WorkflowsClient) MovePreparer(ctx context.Context, resourceGroupName string, workflowName string, move WorkflowReference) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
@@ -1055,8 +1059,7 @@ func (client WorkflowsClient) RegenerateAccessKeyResponder(resp *http.Response) 
 // Parameters:
 // resourceGroupName - the resource group name.
 // workflowName - the workflow name.
-// workflow - the workflow.
-func (client WorkflowsClient) Update(ctx context.Context, resourceGroupName string, workflowName string, workflow Workflow) (result Workflow, err error) {
+func (client WorkflowsClient) Update(ctx context.Context, resourceGroupName string, workflowName string) (result Workflow, err error) {
 	if tracing.IsEnabled() {
 		ctx = tracing.StartSpan(ctx, fqdn+"/WorkflowsClient.Update")
 		defer func() {
@@ -1067,7 +1070,7 @@ func (client WorkflowsClient) Update(ctx context.Context, resourceGroupName stri
 			tracing.EndSpan(ctx, sc, err)
 		}()
 	}
-	req, err := client.UpdatePreparer(ctx, resourceGroupName, workflowName, workflow)
+	req, err := client.UpdatePreparer(ctx, resourceGroupName, workflowName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "logic.WorkflowsClient", "Update", nil, "Failure preparing request")
 		return
@@ -1089,7 +1092,7 @@ func (client WorkflowsClient) Update(ctx context.Context, resourceGroupName stri
 }
 
 // UpdatePreparer prepares the Update request.
-func (client WorkflowsClient) UpdatePreparer(ctx context.Context, resourceGroupName string, workflowName string, workflow Workflow) (*http.Request, error) {
+func (client WorkflowsClient) UpdatePreparer(ctx context.Context, resourceGroupName string, workflowName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
@@ -1102,11 +1105,9 @@ func (client WorkflowsClient) UpdatePreparer(ctx context.Context, resourceGroupN
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPatch(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/workflows/{workflowName}", pathParameters),
-		autorest.WithJSON(workflow),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
@@ -1135,8 +1136,13 @@ func (client WorkflowsClient) UpdateResponder(resp *http.Response) (result Workf
 // resourceGroupName - the resource group name.
 // location - the workflow location.
 // workflowName - the workflow name.
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic/workflows.go
 // workflow - the workflow definition.
 func (client WorkflowsClient) Validate(ctx context.Context, resourceGroupName string, location string, workflowName string, workflow Workflow) (result autorest.Response, err error) {
+=======
+// validate - the workflow.
+func (client WorkflowsClient) ValidateByLocation(ctx context.Context, resourceGroupName string, location string, workflowName string, validate Workflow) (result autorest.Response, err error) {
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic/workflows.go
 	if tracing.IsEnabled() {
 		ctx = tracing.StartSpan(ctx, fqdn+"/WorkflowsClient.Validate")
 		defer func() {
@@ -1147,7 +1153,11 @@ func (client WorkflowsClient) Validate(ctx context.Context, resourceGroupName st
 			tracing.EndSpan(ctx, sc, err)
 		}()
 	}
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic/workflows.go
 	req, err := client.ValidatePreparer(ctx, resourceGroupName, location, workflowName, workflow)
+=======
+	req, err := client.ValidateByLocationPreparer(ctx, resourceGroupName, location, workflowName, validate)
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic/workflows.go
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "logic.WorkflowsClient", "Validate", nil, "Failure preparing request")
 		return
@@ -1168,8 +1178,13 @@ func (client WorkflowsClient) Validate(ctx context.Context, resourceGroupName st
 	return
 }
 
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic/workflows.go
 // ValidatePreparer prepares the Validate request.
 func (client WorkflowsClient) ValidatePreparer(ctx context.Context, resourceGroupName string, location string, workflowName string, workflow Workflow) (*http.Request, error) {
+=======
+// ValidateByLocationPreparer prepares the ValidateByLocation request.
+func (client WorkflowsClient) ValidateByLocationPreparer(ctx context.Context, resourceGroupName string, location string, workflowName string, validate Workflow) (*http.Request, error) {
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic/workflows.go
 	pathParameters := map[string]interface{}{
 		"location":          autorest.Encode("path", location),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
@@ -1187,7 +1202,11 @@ func (client WorkflowsClient) ValidatePreparer(ctx context.Context, resourceGrou
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/locations/{location}/workflows/{workflowName}/validate", pathParameters),
+<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic/workflows.go
 		autorest.WithJSON(workflow),
+=======
+		autorest.WithJSON(validate),
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic/workflows.go
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }

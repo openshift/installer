@@ -69,7 +69,6 @@ func resourceArmStorageAccount() *schema.Resource {
 			"account_kind": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					string(storage.Storage),
 					string(storage.BlobStorage),
@@ -108,6 +107,8 @@ func resourceArmStorageAccount() *schema.Resource {
 					"ZRS",
 					"GRS",
 					"RAGRS",
+					"GZRS",
+					"RAGZRS",
 				}, true),
 				DiffSuppressFunc: suppress.CaseDifference,
 			},
@@ -281,6 +282,10 @@ func resourceArmStorageAccount() *schema.Resource {
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+<<<<<<< HEAD
+=======
+						"cors_rule": azure.SchemaStorageAccountCorsRule(true),
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 						"delete_retention_policy": {
 							Type:     schema.TypeList,
 							Optional: true,
@@ -307,6 +312,7 @@ func resourceArmStorageAccount() *schema.Resource {
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+<<<<<<< HEAD
 						"cors_rule": {
 							Type:     schema.TypeList,
 							Optional: true,
@@ -367,6 +373,9 @@ func resourceArmStorageAccount() *schema.Resource {
 								},
 							},
 						},
+=======
+						"cors_rule": azure.SchemaStorageAccountCorsRule(false),
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 						"logging": {
 							Type:     schema.TypeList,
 							Optional: true,
@@ -622,6 +631,20 @@ func resourceArmStorageAccount() *schema.Resource {
 				Sensitive: true,
 			},
 		},
+		CustomizeDiff: func(d *schema.ResourceDiff, v interface{}) error {
+			if d.HasChange("account_kind") {
+				accountKind, changedKind := d.GetChange("account_kind")
+
+				if accountKind != string(storage.Storage) && changedKind != string(storage.StorageV2) {
+					log.Printf("[DEBUG] recreate storage account, could't be migrated from %s to %s", accountKind, changedKind)
+					d.ForceNew("account_kind")
+				} else {
+					log.Printf("[DEBUG] storage account can be upgraded from %s to %s", accountKind, changedKind)
+				}
+			}
+
+			return nil
+		},
 	}
 }
 
@@ -859,8 +882,6 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 		}
 	}
 
-	d.Partial(true)
-
 	if d.HasChange("account_replication_type") {
 		sku := storage.Sku{
 			Name: storage.SkuName(storageType),
@@ -873,8 +894,16 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 		if _, err := client.Update(ctx, resourceGroupName, storageAccountName, opts); err != nil {
 			return fmt.Errorf("Error updating Azure Storage Account type %q: %+v", storageAccountName, err)
 		}
+	}
 
-		d.SetPartial("account_replication_type")
+	if d.HasChange("account_kind") {
+		opts := storage.AccountUpdateParameters{
+			Kind: storage.Kind(accountKind),
+		}
+
+		if _, err := client.Update(ctx, resourceGroupName, storageAccountName, opts); err != nil {
+			return fmt.Errorf("Error updating Azure Storage Account account_kind %q: %+v", storageAccountName, err)
+		}
 	}
 
 	if d.HasChange("access_tier") {
@@ -889,8 +918,6 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 		if _, err := client.Update(ctx, resourceGroupName, storageAccountName, opts); err != nil {
 			return fmt.Errorf("Error updating Azure Storage Account access_tier %q: %+v", storageAccountName, err)
 		}
-
-		d.SetPartial("access_tier")
 	}
 
 	if d.HasChange("tags") {
@@ -903,8 +930,6 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 		if _, err := client.Update(ctx, resourceGroupName, storageAccountName, opts); err != nil {
 			return fmt.Errorf("Error updating Azure Storage Account tags %q: %+v", storageAccountName, err)
 		}
-
-		d.SetPartial("tags")
 	}
 
 	if d.HasChange("enable_blob_encryption") || d.HasChange("enable_file_encryption") {
@@ -965,8 +990,6 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 		if _, err := client.Update(ctx, resourceGroupName, storageAccountName, opts); err != nil {
 			return fmt.Errorf("Error updating Azure Storage Account enable_https_traffic_only %q: %+v", storageAccountName, err)
 		}
-
-		d.SetPartial("enable_https_traffic_only")
 	}
 
 	if d.HasChange("identity") {
@@ -989,8 +1012,6 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 		if _, err := client.Update(ctx, resourceGroupName, storageAccountName, opts); err != nil {
 			return fmt.Errorf("Error updating Azure Storage Account network_rules %q: %+v", storageAccountName, err)
 		}
-
-		d.SetPartial("network_rules")
 	}
 
 	if d.HasChange("enable_advanced_threat_protection") {
@@ -1016,8 +1037,6 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 			if _, err = blobClient.SetServiceProperties(ctx, resourceGroupName, storageAccountName, blobProperties); err != nil {
 				return fmt.Errorf("Error updating Azure Storage Account `blob_properties` %q: %+v", storageAccountName, err)
 			}
-
-			d.SetPartial("blob_properties")
 		} else {
 			return fmt.Errorf("`blob_properties` aren't supported for File Storage accounts.")
 		}
@@ -1046,11 +1065,39 @@ func resourceArmStorageAccountUpdate(d *schema.ResourceData, meta interface{}) e
 		if _, err = queueClient.SetServiceProperties(ctx, storageAccountName, queueProperties); err != nil {
 			return fmt.Errorf("Error updating Azure Storage Account `queue_properties` %q: %+v", storageAccountName, err)
 		}
-
-		d.SetPartial("queue_properties")
 	}
 
+<<<<<<< HEAD
 	d.Partial(false)
+=======
+	if d.HasChange("static_website") {
+		// static website only supported on Storage V2
+		if accountKind != string(storage.StorageV2) {
+			return fmt.Errorf("`static_website` is only supported for Storage V2.")
+		}
+		storageClient := meta.(*clients.Client).Storage
+
+		account, err := storageClient.FindAccount(ctx, storageAccountName)
+		if err != nil {
+			return fmt.Errorf("Error retrieving Account %q: %s", storageAccountName, err)
+		}
+		if account == nil {
+			return fmt.Errorf("Unable to locate Storage Account %q!", storageAccountName)
+		}
+
+		accountsClient, err := storageClient.AccountsDataPlaneClient(ctx, *account)
+		if err != nil {
+			return fmt.Errorf("Error building Accounts Data Plane Client: %s", err)
+		}
+
+		staticWebsiteProps := expandStaticWebsiteProperties(d.Get("static_website").([]interface{}))
+
+		if _, err = accountsClient.SetServiceProperties(ctx, storageAccountName, staticWebsiteProps); err != nil {
+			return fmt.Errorf("Error updating Azure Storage Account `static_website` %q: %+v", storageAccountName, err)
+		}
+	}
+
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 	return resourceArmStorageAccountRead(d, meta)
 }
 

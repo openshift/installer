@@ -220,29 +220,33 @@ func resourceArmAppServicePlanCreateUpdate(d *schema.ResourceData, meta interfac
 		AppServicePlanProperties: properties,
 	}
 
+<<<<<<< HEAD
 	if v, exists := d.GetOkExists("app_service_environment_id"); exists {
 		appServicePlan.AppServicePlanProperties.HostingEnvironmentProfile = &web.HostingEnvironmentProfile{
 			ID: utils.String(v.(string)),
+=======
+	if v := d.Get("app_service_environment_id").(string); v != "" {
+		appServicePlan.AppServicePlanProperties.HostingEnvironmentProfile = &web.HostingEnvironmentProfile{
+			ID: utils.String(v),
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 		}
 	}
 
-	if v, exists := d.GetOkExists("per_site_scaling"); exists {
-		appServicePlan.AppServicePlanProperties.PerSiteScaling = utils.Bool(v.(bool))
+	if v := d.Get("per_site_scaling").(bool); v {
+		appServicePlan.AppServicePlanProperties.PerSiteScaling = utils.Bool(v)
 	}
 
-	reserved, reservedExists := d.GetOkExists("reserved")
-	if strings.EqualFold(kind, "Linux") {
-		if !reserved.(bool) || !reservedExists {
-			return fmt.Errorf("Reserved has to be set to true when using kind Linux")
-		}
+	reserved := d.Get("reserved").(bool)
+	if strings.EqualFold(kind, "Linux") && !reserved {
+		return fmt.Errorf("`reserved` has to be set to true when kind is set to `Linux`")
 	}
 
-	if v, exists := d.GetOkExists("maximum_elastic_worker_count"); exists {
-		appServicePlan.AppServicePlanProperties.MaximumElasticWorkerCount = utils.Int32(int32(v.(int)))
+	if v := d.Get("maximum_elastic_worker_count").(int); v > 0 {
+		appServicePlan.AppServicePlanProperties.MaximumElasticWorkerCount = utils.Int32(int32(v))
 	}
 
-	if reservedExists {
-		appServicePlan.AppServicePlanProperties.Reserved = utils.Bool(reserved.(bool))
+	if reserved {
+		appServicePlan.AppServicePlanProperties.Reserved = utils.Bool(reserved)
 	}
 
 	future, err := client.CreateOrUpdate(ctx, resGroup, name, appServicePlan)

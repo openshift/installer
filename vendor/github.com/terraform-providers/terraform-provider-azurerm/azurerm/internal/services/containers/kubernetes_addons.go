@@ -3,7 +3,12 @@ package containers
 import (
 	"strings"
 
+<<<<<<< HEAD
 	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice"
+=======
+	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice"
+	"github.com/Azure/go-autorest/autorest/azure"
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
@@ -18,7 +23,29 @@ const (
 	omsAgentKey               = "omsagent"
 )
 
+<<<<<<< HEAD
 func SchemaKubernetesAddOnProfiles() *schema.Schema {
+=======
+// The AKS API hard-codes which add-ons are supported in which environment
+// as such unfortunately we can't just send "disabled" - we need to strip
+// the unsupported addons from the HTTP response. As such this defines
+// the list of unsupported addons in the defined region - e.g. by being
+// omitted from this list an addon/environment combination will be supported
+var unsupportedAddonsForEnvironment = map[string][]string{
+	azure.ChinaCloud.Name: {
+		aciConnectorKey,           // https://github.com/terraform-providers/terraform-provider-azurerm/issues/5510
+		azurePolicyKey,            // https://github.com/terraform-providers/terraform-provider-azurerm/issues/6462
+		httpApplicationRoutingKey, // https://github.com/terraform-providers/terraform-provider-azurerm/issues/5960
+	},
+	azure.USGovernmentCloud.Name: {
+		azurePolicyKey,            // https://github.com/terraform-providers/terraform-provider-azurerm/issues/6702
+		httpApplicationRoutingKey, // https://github.com/terraform-providers/terraform-provider-azurerm/issues/5960
+		kubernetesDashboardKey,    // https://github.com/terraform-providers/terraform-provider-azurerm/issues/7136
+	},
+}
+
+func schemaKubernetesAddOnProfiles() *schema.Schema {
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 	return &schema.Schema{
 		Type:     schema.TypeList,
 		MaxItems: 1,
@@ -109,6 +136,26 @@ func SchemaKubernetesAddOnProfiles() *schema.Schema {
 								Optional:     true,
 								ValidateFunc: azure.ValidateResourceID,
 							},
+							"oms_agent_identity": {
+								Type:     schema.TypeList,
+								Computed: true,
+								Elem: &schema.Resource{
+									Schema: map[string]*schema.Schema{
+										"client_id": {
+											Type:     schema.TypeString,
+											Computed: true,
+										},
+										"object_id": {
+											Type:     schema.TypeString,
+											Computed: true,
+										},
+										"user_assigned_identity_id": {
+											Type:     schema.TypeString,
+											Computed: true,
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -152,8 +199,8 @@ func ExpandKubernetesAddOnProfiles(input []interface{}) map[string]*containerser
 		config := make(map[string]*string)
 		enabled := value["enabled"].(bool)
 
-		if workspaceId, ok := value["log_analytics_workspace_id"]; ok && workspaceId != "" {
-			config["logAnalyticsWorkspaceResourceID"] = utils.String(workspaceId.(string))
+		if workspaceID, ok := value["log_analytics_workspace_id"]; ok && workspaceID != "" {
+			config["logAnalyticsWorkspaceResourceID"] = utils.String(workspaceID.(string))
 		}
 
 		addonProfiles["omsagent"] = &containerservice.ManagedClusterAddonProfile{
@@ -196,7 +243,9 @@ func ExpandKubernetesAddOnProfiles(input []interface{}) map[string]*containerser
 
 		addonProfiles["azurepolicy"] = &containerservice.ManagedClusterAddonProfile{
 			Enabled: utils.Bool(enabled),
-			Config:  nil,
+			Config: map[string]*string{
+				"version": utils.String("v2"),
+			},
 		}
 	}
 
@@ -283,14 +332,17 @@ func FlattenKubernetesAddOnProfiles(profile map[string]*containerservice.Managed
 			enabled = *enabledVal
 		}
 
-		workspaceId := ""
+		workspaceID := ""
 		if workspaceResourceID := omsAgent.Config["logAnalyticsWorkspaceResourceID"]; workspaceResourceID != nil {
-			workspaceId = *workspaceResourceID
+			workspaceID = *workspaceResourceID
 		}
+
+		omsagentIdentity := flattenKubernetesClusterOmsAgentIdentityProfile(omsAgent.Identity)
 
 		omsAgents = append(omsAgents, map[string]interface{}{
 			"enabled":                    enabled,
-			"log_analytics_workspace_id": workspaceId,
+			"log_analytics_workspace_id": workspaceID,
+			"oms_agent_identity":         omsagentIdentity,
 		})
 	}
 
@@ -308,4 +360,34 @@ func FlattenKubernetesAddOnProfiles(profile map[string]*containerservice.Managed
 			"oms_agent":                omsAgents,
 		},
 	}
+}
+
+func flattenKubernetesClusterOmsAgentIdentityProfile(profile *containerservice.ManagedClusterAddonProfileIdentity) []interface{} {
+	if profile == nil {
+		return []interface{}{}
+	}
+
+	identity := make([]interface{}, 0)
+	clientID := ""
+	if clientid := profile.ClientID; clientid != nil {
+		clientID = *clientid
+	}
+
+	objectID := ""
+	if objectid := profile.ObjectID; objectid != nil {
+		objectID = *objectid
+	}
+
+	userAssignedIdentityID := ""
+	if resourceid := profile.ResourceID; resourceid != nil {
+		userAssignedIdentityID = *resourceid
+	}
+
+	identity = append(identity, map[string]interface{}{
+		"client_id":                 clientID,
+		"object_id":                 objectID,
+		"user_assigned_identity_id": userAssignedIdentityID,
+	})
+
+	return identity
 }

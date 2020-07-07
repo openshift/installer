@@ -3,7 +3,12 @@ package client
 import (
 	"github.com/Azure/azure-sdk-for-go/services/containerinstance/mgmt/2018-10-01/containerinstance"
 	"github.com/Azure/azure-sdk-for-go/services/containerregistry/mgmt/2018-09-01/containerregistry"
+<<<<<<< HEAD
 	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice"
+=======
+	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice"
+	"github.com/Azure/go-autorest/autorest/azure"
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/common"
 )
 

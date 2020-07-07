@@ -1,9 +1,15 @@
 package locks
 
+<<<<<<< HEAD
 import "github.com/hashicorp/terraform-plugin-sdk/helper/mutexkv"
+=======
+import (
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/common"
+)
+>>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 
 // armMutexKV is the instance of MutexKV for ARM resources
-var armMutexKV = mutexkv.NewMutexKV()
+var armMutexKV = NewMutexKV()
 
 func ByID(id string) {
 	armMutexKV.Lock(id)
