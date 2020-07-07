@@ -1,6 +1,6 @@
 # This Dockerfile is used by CI to test using OpenShift Installer against an OpenStack cloud.
 # It builds an image containing the openshift-install command as well as the openstack cli.
-FROM registry.svc.ci.openshift.org/openshift/release:golang-1.13 AS builder
+FROM registry.svc.ci.openshift.org/openshift/release:golang-1.14 AS builder
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN hack/build.sh

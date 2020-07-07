@@ -1,6 +1,6 @@
 module github.com/openshift/installer
 
-go 1.13
+go 1.14
 
 require (
 	github.com/Azure/azure-sdk-for-go v41.2.0+incompatible
