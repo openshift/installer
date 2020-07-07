@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/frontdoor/mgmt/2019-04-01/frontdoor"
+	"github.com/Azure/azure-sdk-for-go/services/frontdoor/mgmt/2020-01-01/frontdoor"
 	"github.com/hashicorp/go-azure-helpers/response"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -14,6 +15,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/frontdoor/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
@@ -42,7 +44,7 @@ func resourceArmFrontDoor() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: ValidateFrontDoorName,
+				ValidateFunc: validate.FrontDoorName,
 			},
 
 			"cname": {
@@ -66,12 +68,28 @@ func resourceArmFrontDoor() *schema.Resource {
 				Default:  true,
 			},
 
+			// TODO: In 3.0
+			// Move 'enforce_backend_pools_certificate_name_check' and 'backend_pools_send_receive_timeout_seconds'
+			// into a 'backend_pool_settings' block
 			"enforce_backend_pools_certificate_name_check": {
 				Type:     schema.TypeBool,
 				Required: true,
 			},
 
-			"location": azure.SchemaLocation(),
+			"backend_pools_send_receive_timeout_seconds": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      60,
+				ValidateFunc: validation.IntBetween(0, 240),
+			},
+
+			// TODO: Remove in 3.0
+			"location": {
+				Type:       schema.TypeString,
+				Optional:   true,
+				Computed:   true,
+				Deprecated: "Due to the service's API changing 'location' must now always be set to 'Global' for new resources, however if the Front Door service was created prior 2020/03/10 it may continue to exist in a specific current location",
+			},
 
 			"resource_group_name": azure.SchemaResourceGroupName(),
 
@@ -88,7 +106,7 @@ func resourceArmFrontDoor() *schema.Resource {
 						"name": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: ValidateBackendPoolRoutingRuleName,
+							ValidateFunc: validate.FrontDoorBackendPoolRoutingRuleName,
 						},
 						"enabled": {
 							Type:     schema.TypeBool,
@@ -176,7 +194,12 @@ func resourceArmFrontDoor() *schema.Resource {
 									"backend_pool_name": {
 										Type:         schema.TypeString,
 										Required:     true,
-										ValidateFunc: ValidateBackendPoolRoutingRuleName,
+										ValidateFunc: validate.FrontDoorBackendPoolRoutingRuleName,
+									},
+									"cache_enabled": {
+										Type:     schema.TypeBool,
+										Optional: true,
+										Default:  false,
 									},
 									"cache_use_dynamic_compression": {
 										Type:     schema.TypeBool,
@@ -186,11 +209,11 @@ func resourceArmFrontDoor() *schema.Resource {
 									"cache_query_parameter_strip_directive": {
 										Type:     schema.TypeString,
 										Optional: true,
+										Default:  string(frontdoor.StripAll),
 										ValidateFunc: validation.StringInSlice([]string{
 											string(frontdoor.StripAll),
 											string(frontdoor.StripNone),
 										}, false),
-										Default: string(frontdoor.StripNone),
 									},
 									"custom_forwarding_path": {
 										Type:     schema.TypeString,
@@ -199,12 +222,12 @@ func resourceArmFrontDoor() *schema.Resource {
 									"forwarding_protocol": {
 										Type:     schema.TypeString,
 										Optional: true,
+										Default:  string(frontdoor.HTTPSOnly),
 										ValidateFunc: validation.StringInSlice([]string{
 											string(frontdoor.HTTPOnly),
 											string(frontdoor.HTTPSOnly),
 											string(frontdoor.MatchRequest),
 										}, false),
-										Default: string(frontdoor.MatchRequest),
 									},
 								},
 							},
@@ -226,7 +249,7 @@ func resourceArmFrontDoor() *schema.Resource {
 						"name": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: ValidateBackendPoolRoutingRuleName,
+							ValidateFunc: validate.FrontDoorBackendPoolRoutingRuleName,
 						},
 						"sample_size": {
 							Type:     schema.TypeInt,
@@ -260,7 +283,12 @@ func resourceArmFrontDoor() *schema.Resource {
 						"name": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: ValidateBackendPoolRoutingRuleName,
+							ValidateFunc: validate.FrontDoorBackendPoolRoutingRuleName,
+						},
+						"enabled": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  true,
 						},
 						"path": {
 							Type:     schema.TypeString,
@@ -270,11 +298,20 @@ func resourceArmFrontDoor() *schema.Resource {
 						"protocol": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Default:  string(frontdoor.HTTP),
 							ValidateFunc: validation.StringInSlice([]string{
 								string(frontdoor.HTTP),
 								string(frontdoor.HTTPS),
 							}, false),
-							Default: string(frontdoor.HTTP),
+						},
+						"probe_method": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Default:  string(frontdoor.GET),
+							ValidateFunc: validation.StringInSlice([]string{
+								string(frontdoor.GET),
+								string(frontdoor.HEAD),
+							}, false),
 						},
 						"interval_in_seconds": {
 							Type:     schema.TypeInt,
@@ -319,14 +356,14 @@ func resourceArmFrontDoor() *schema.Resource {
 									"weight": {
 										Type:         schema.TypeInt,
 										Optional:     true,
-										ValidateFunc: validation.IntBetween(1, 1000),
 										Default:      50,
+										ValidateFunc: validation.IntBetween(1, 1000),
 									},
 									"priority": {
 										Type:         schema.TypeInt,
 										Optional:     true,
-										ValidateFunc: validation.IntBetween(1, 5),
 										Default:      1,
+										ValidateFunc: validation.IntBetween(1, 5),
 									},
 									"host_header": {
 										Type:     schema.TypeString,
@@ -342,7 +379,7 @@ func resourceArmFrontDoor() *schema.Resource {
 						"name": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: ValidateBackendPoolRoutingRuleName,
+							ValidateFunc: validate.FrontDoorBackendPoolRoutingRuleName,
 						},
 						"health_probe_name": {
 							Type:     schema.TypeString,
@@ -369,7 +406,7 @@ func resourceArmFrontDoor() *schema.Resource {
 						"name": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: ValidateBackendPoolRoutingRuleName,
+							ValidateFunc: validate.FrontDoorBackendPoolRoutingRuleName,
 						},
 						"host_name": {
 							Type:     schema.TypeString,
@@ -402,11 +439,15 @@ func resourceArmFrontDoor() *schema.Resource {
 									"certificate_source": {
 										Type:     schema.TypeString,
 										Optional: true,
+										Default:  string(frontdoor.CertificateSourceFrontDoor),
 										ValidateFunc: validation.StringInSlice([]string{
 											string(frontdoor.CertificateSourceAzureKeyVault),
 											string(frontdoor.CertificateSourceFrontDoor),
 										}, false),
-										Default: string(frontdoor.CertificateSourceFrontDoor),
+									},
+									"minimum_tls_version": {
+										Type:     schema.TypeString,
+										Computed: true,
 									},
 									"provisioning_state": {
 										Type:     schema.TypeString,
@@ -441,8 +482,8 @@ func resourceArmFrontDoor() *schema.Resource {
 		},
 
 		CustomizeDiff: func(d *schema.ResourceDiff, v interface{}) error {
-			if err := ValidateFrontdoorSettings(d); err != nil {
-				return fmt.Errorf("Error creating Front Door %q (Resource Group %q): %+v", d.Get("name").(string), d.Get("resource_group_name").(string), err)
+			if err := validate.FrontdoorSettings(d); err != nil {
+				return fmt.Errorf("creating Front Door %q (Resource Group %q): %+v", d.Get("name").(string), d.Get("resource_group_name").(string), err)
 			}
 
 			return nil
@@ -463,7 +504,7 @@ func resourceArmFrontDoorCreateUpdate(d *schema.ResourceData, meta interface{}) 
 		resp, err := client.Get(ctx, resourceGroup, name)
 		if err != nil {
 			if !utils.ResponseWasNotFound(resp.Response) {
-				return fmt.Errorf("Error checking for present of existing Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
+				return fmt.Errorf("checking for present of existing Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
 			}
 		}
 		if !utils.ResponseWasNotFound(resp.Response) {
@@ -471,8 +512,30 @@ func resourceArmFrontDoorCreateUpdate(d *schema.ResourceData, meta interface{}) 
 		}
 	}
 
+	// remove in 3.0
+	// due to a change in the RP, if a Frontdoor exists in a location other than 'Global' it may continue to
+	// exist in that location, if this is a brand new Frontdoor it must be created in the 'Global' location
+	location := "Global"
+	preExists := false
+	cfgLocation, hasLocation := d.GetOk("location")
+
+	exists, err := client.Get(ctx, resourceGroup, name)
+	if err != nil {
+		if !utils.ResponseWasNotFound(exists.Response) {
+			return fmt.Errorf("locating Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
+		}
+	} else {
+		preExists = true
+		location = azure.NormalizeLocation(*exists.Location)
+	}
+
+	if hasLocation && preExists {
+		if location != azure.NormalizeLocation(cfgLocation) {
+			return fmt.Errorf("the Front Door %q (Resource Group %q) already exists in %q and cannot be moved to the %q location", name, resourceGroup, location, cfgLocation)
+		}
+	}
+
 	frontDoorPath := fmt.Sprintf("/subscriptions/%s/resourcegroups/%s/providers/Microsoft.Network/Frontdoors/%s", subscriptionId, resourceGroup, name)
-	location := azure.NormalizeLocation(d.Get("location").(string))
 	friendlyName := d.Get("friendly_name").(string)
 	routingRules := d.Get("routing_rule").([]interface{})
 	loadBalancingSettings := d.Get("backend_pool_load_balancing").([]interface{})
@@ -480,7 +543,9 @@ func resourceArmFrontDoorCreateUpdate(d *schema.ResourceData, meta interface{}) 
 	backendPools := d.Get("backend_pool").([]interface{})
 	frontendEndpoints := d.Get("frontend_endpoint").([]interface{})
 	backendPoolsSettings := d.Get("enforce_backend_pools_certificate_name_check").(bool)
+	backendPoolsSendReceiveTimeoutSeconds := int32(d.Get("backend_pools_send_receive_timeout_seconds").(int))
 	enabledState := d.Get("load_balancer_enabled").(bool)
+
 	t := d.Get("tags").(map[string]interface{})
 
 	frontDoorParameters := frontdoor.FrontDoor{
@@ -489,7 +554,7 @@ func resourceArmFrontDoorCreateUpdate(d *schema.ResourceData, meta interface{}) 
 			FriendlyName:          utils.String(friendlyName),
 			RoutingRules:          expandArmFrontDoorRoutingRule(routingRules, frontDoorPath),
 			BackendPools:          expandArmFrontDoorBackendPools(backendPools, frontDoorPath),
-			BackendPoolsSettings:  expandArmFrontDoorBackendPoolsSettings(backendPoolsSettings),
+			BackendPoolsSettings:  expandArmFrontDoorBackendPoolsSettings(backendPoolsSettings, backendPoolsSendReceiveTimeoutSeconds),
 			FrontendEndpoints:     expandArmFrontDoorFrontendEndpoint(frontendEndpoints, frontDoorPath),
 			HealthProbeSettings:   expandArmFrontDoorHealthProbeSettingsModel(healthProbeSettings, frontDoorPath),
 			LoadBalancingSettings: expandArmFrontDoorLoadBalancingSettingsModel(loadBalancingSettings, frontDoorPath),
@@ -500,39 +565,39 @@ func resourceArmFrontDoorCreateUpdate(d *schema.ResourceData, meta interface{}) 
 
 	future, err := client.CreateOrUpdate(ctx, resourceGroup, name, frontDoorParameters)
 	if err != nil {
-		return fmt.Errorf("Error creating Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
+		return fmt.Errorf("creating Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
 	}
 	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
-		return fmt.Errorf("Error waiting for creation of Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
+		return fmt.Errorf("waiting for creation of Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
 	}
 
 	resp, err := client.Get(ctx, resourceGroup, name)
 	if err != nil {
-		return fmt.Errorf("Error retrieving Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
+		return fmt.Errorf("retrieving Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
 	}
 	if resp.ID == nil {
-		return fmt.Errorf("Cannot read Front Door %q (Resource Group %q) ID", name, resourceGroup)
+		return fmt.Errorf("cannot read Front Door %q (Resource Group %q) ID", name, resourceGroup)
 	}
 	d.SetId(*resp.ID)
 
 	// Now loop through the FrontendEndpoints and enable/disable Custom Domain HTTPS
 	// on each individual Frontend Endpoint if required
+	feClient := meta.(*clients.Client).Frontdoor.FrontDoorsFrontendClient
+	feCtx, feCancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
+	defer feCancel()
+
 	for _, v := range frontendEndpoints {
 		frontendEndpoint := v.(map[string]interface{})
 		customHttpsProvisioningEnabled := frontendEndpoint["custom_https_provisioning_enabled"].(bool)
 		frontendEndpointName := frontendEndpoint["name"].(string)
 
 		// Get current state of endpoint from Azure
-		client := meta.(*clients.Client).Frontdoor.FrontDoorsFrontendClient
-		ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
-		defer cancel()
-
-		resp, err := client.Get(ctx, resourceGroup, name, frontendEndpointName)
+		resp, err := feClient.Get(feCtx, resourceGroup, name, frontendEndpointName)
 		if err != nil {
-			return fmt.Errorf("Error retrieving Front Door Frontend Endpoint %q (Resource Group %q): %+v", frontendEndpointName, resourceGroup, err)
+			return fmt.Errorf("retrieving Front Door Frontend Endpoint %q (Resource Group %q): %+v", frontendEndpointName, resourceGroup, err)
 		}
 		if resp.ID == nil {
-			return fmt.Errorf("Cannot read Front Door Frontend Endpoint %q (Resource Group %q) ID", frontendEndpointName, resourceGroup)
+			return fmt.Errorf("cannot read Front Door Frontend Endpoint %q (Resource Group %q) ID", frontendEndpointName, resourceGroup)
 		}
 
 		if properties := resp.FrontendEndpointProperties; properties != nil {
@@ -549,9 +614,12 @@ func resourceArmFrontDoorCreateUpdate(d *schema.ResourceData, meta interface{}) 
 					// Build a custom Https configuration based off the config file to send to the enable call
 					// NOTE: I do not need to check to see if this exists since I already do that in the validation code
 					chc := frontendEndpoint["custom_https_configuration"].([]interface{})
-					customHttpsConfiguration := chc[0].(map[string]interface{})
-					customHTTPSConfigurationUpdate := makeCustomHttpsConfiguration(customHttpsConfiguration)
-
+					customHTTPSConfiguration := chc[0].(map[string]interface{})
+					minTLSVersion := frontdoor.OneFullStopTwo // Default to TLS 1.2
+					if httpsConfig := properties.CustomHTTPSConfiguration; httpsConfig != nil {
+						minTLSVersion = httpsConfig.MinimumTLSVersion
+					}
+					customHTTPSConfigurationUpdate := makeCustomHttpsConfiguration(customHTTPSConfiguration, minTLSVersion)
 					// Enable Custom Domain HTTPS for the Frontend Endpoint
 					if err := resourceArmFrontDoorFrontendEndpointEnableHttpsProvisioning(ctx, true, name, frontendEndpointName, resourceGroup, customHTTPSConfigurationUpdate, meta); err != nil {
 						return fmt.Errorf("Unable enable Custom Domain HTTPS for Frontend Endpoint %q (Resource Group %q): %+v", frontendEndpointName, resourceGroup, err)
@@ -576,19 +644,19 @@ func resourceArmFrontDoorFrontendEndpointEnableHttpsProvisioning(ctx context.Con
 		future, err := client.EnableHTTPS(ctx, resourceGroup, frontDoorName, frontendEndpointName, customHTTPSConfiguration)
 
 		if err != nil {
-			return fmt.Errorf("Error enabling Custom Domain HTTPS for Frontend Endpoint: %+v", err)
+			return fmt.Errorf("enabling Custom Domain HTTPS for Frontend Endpoint: %+v", err)
 		}
 		if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
-			return fmt.Errorf("Error waiting to enable Custom Domain HTTPS for Frontend Endpoint: %+v", err)
+			return fmt.Errorf("waiting to enable Custom Domain HTTPS for Frontend Endpoint: %+v", err)
 		}
 	} else {
 		future, err := client.DisableHTTPS(ctx, resourceGroup, frontDoorName, frontendEndpointName)
 
 		if err != nil {
-			return fmt.Errorf("Error disabling Custom Domain HTTPS for Frontend Endpoint: %+v", err)
+			return fmt.Errorf("disabling Custom Domain HTTPS for Frontend Endpoint: %+v", err)
 		}
 		if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
-			return fmt.Errorf("Error waiting to disable Custom Domain HTTPS for Frontend Endpoint: %+v", err)
+			return fmt.Errorf("waiting to disable Custom Domain HTTPS for Frontend Endpoint: %+v", err)
 		}
 	}
 
@@ -606,6 +674,10 @@ func resourceArmFrontDoorRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	resourceGroup := id.ResourceGroup
 	name := id.Path["frontdoors"]
+	// Link to issue: https://github.com/Azure/azure-sdk-for-go/issues/6762
+	if name == "" {
+		name = id.Path["Frontdoors"]
+	}
 
 	resp, err := client.Get(ctx, resourceGroup, name)
 	if err != nil {
@@ -614,23 +686,26 @@ func resourceArmFrontDoorRead(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("Error reading Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
+		return fmt.Errorf("reading Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
 	}
 
 	d.Set("name", resp.Name)
 	d.Set("resource_group_name", resourceGroup)
-
-	if location := resp.Location; location != nil {
-		d.Set("location", azure.NormalizeLocation(*location))
-	}
+	d.Set("location", azure.NormalizeLocation(*resp.Location))
 
 	if properties := resp.Properties; properties != nil {
 		if err := d.Set("backend_pool", flattenArmFrontDoorBackendPools(properties.BackendPools)); err != nil {
-			return fmt.Errorf("Error setting `backend_pool`: %+v", err)
+			return fmt.Errorf("setting `backend_pool`: %+v", err)
 		}
 
-		if err := d.Set("enforce_backend_pools_certificate_name_check", flattenArmFrontDoorBackendPoolsSettings(properties.BackendPoolsSettings)); err != nil {
-			return fmt.Errorf("Error setting `enforce_backend_pools_certificate_name_check`: %+v", err)
+		backendPoolSettings := flattenArmFrontDoorBackendPoolsSettings(properties.BackendPoolsSettings)
+
+		if err := d.Set("enforce_backend_pools_certificate_name_check", backendPoolSettings["enforce_backend_pools_certificate_name_check"].(bool)); err != nil {
+			return fmt.Errorf("setting `enforce_backend_pools_certificate_name_check`: %+v", err)
+		}
+
+		if err := d.Set("backend_pools_send_receive_timeout_seconds", backendPoolSettings["backend_pools_send_receive_timeout_seconds"].(int32)); err != nil {
+			return fmt.Errorf("setting `backend_pools_send_receive_timeout_seconds`: %+v", err)
 		}
 
 		d.Set("cname", properties.Cname)
@@ -642,26 +717,26 @@ func resourceArmFrontDoorRead(d *schema.ResourceData, meta interface{}) error {
 			if resp.Name != nil {
 				if frontDoorFrontendEndpoints, err := flattenArmFrontDoorFrontendEndpoint(ctx, frontendEndpoints, resourceGroup, *resp.Name, meta); frontDoorFrontendEndpoints != nil {
 					if err := d.Set("frontend_endpoint", frontDoorFrontendEndpoints); err != nil {
-						return fmt.Errorf("Error setting `frontend_endpoint`: %+v", err)
+						return fmt.Errorf("setting `frontend_endpoint`: %+v", err)
 					}
 				} else {
-					return fmt.Errorf("Error flattening `frontend_endpoint`: %+v", err)
+					return fmt.Errorf("flattening `frontend_endpoint`: %+v", err)
 				}
 			} else {
-				return fmt.Errorf("Error flattening `frontend_endpoint`: Unable to read Frontdoor Name")
+				return fmt.Errorf("flattening `frontend_endpoint`: Unable to read Frontdoor Name")
 			}
 		}
 
 		if err := d.Set("backend_pool_health_probe", flattenArmFrontDoorHealthProbeSettingsModel(properties.HealthProbeSettings)); err != nil {
-			return fmt.Errorf("Error setting `backend_pool_health_probe`: %+v", err)
+			return fmt.Errorf("setting `backend_pool_health_probe`: %+v", err)
 		}
 
 		if err := d.Set("backend_pool_load_balancing", flattenArmFrontDoorLoadBalancingSettingsModel(properties.LoadBalancingSettings)); err != nil {
-			return fmt.Errorf("Error setting `backend_pool_load_balancing`: %+v", err)
+			return fmt.Errorf("setting `backend_pool_load_balancing`: %+v", err)
 		}
 
-		if err := d.Set("routing_rule", flattenArmFrontDoorRoutingRule(properties.RoutingRules)); err != nil {
-			return fmt.Errorf("Error setting `routing_rules`: %+v", err)
+		if err := d.Set("routing_rule", flattenArmFrontDoorRoutingRule(properties.RoutingRules, d.Get("routing_rule"))); err != nil {
+			return fmt.Errorf("setting `routing_rules`: %+v", err)
 		}
 	}
 
@@ -679,18 +754,22 @@ func resourceArmFrontDoorDelete(d *schema.ResourceData, meta interface{}) error 
 	}
 	resourceGroup := id.ResourceGroup
 	name := id.Path["frontdoors"]
+	// Link to issue: https://github.com/Azure/azure-sdk-for-go/issues/6762
+	if name == "" {
+		name = id.Path["Frontdoors"]
+	}
 
 	future, err := client.Delete(ctx, resourceGroup, name)
 	if err != nil {
 		if response.WasNotFound(future.Response()) {
 			return nil
 		}
-		return fmt.Errorf("Error deleting Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
+		return fmt.Errorf("deleting Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
 	}
 
 	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
 		if !response.WasNotFound(future.Response()) {
-			return fmt.Errorf("Error waiting for deleting Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
+			return fmt.Errorf("waiting for deleting Front Door %q (Resource Group %q): %+v", name, resourceGroup, err)
 		}
 	}
 
@@ -775,7 +854,7 @@ func expandArmFrontDoorBackendEnabledState(isEnabled bool) frontdoor.BackendEnab
 	return frontdoor.Disabled
 }
 
-func expandArmFrontDoorBackendPoolsSettings(enforceCertificateNameCheck bool) *frontdoor.BackendPoolsSettings {
+func expandArmFrontDoorBackendPoolsSettings(enforceCertificateNameCheck bool, backendPoolsSendReceiveTimeoutSeconds int32) *frontdoor.BackendPoolsSettings {
 	enforceCheck := frontdoor.EnforceCertificateNameCheckEnabledStateDisabled
 
 	if enforceCertificateNameCheck {
@@ -784,6 +863,7 @@ func expandArmFrontDoorBackendPoolsSettings(enforceCertificateNameCheck bool) *f
 
 	result := frontdoor.BackendPoolsSettings{
 		EnforceCertificateNameCheck: enforceCheck,
+		SendRecvTimeoutSeconds:      utils.Int32(backendPoolsSendReceiveTimeoutSeconds),
 	}
 
 	return &result
@@ -802,7 +882,6 @@ func expandArmFrontDoorFrontendEndpoint(input []interface{}, frontDoorPath strin
 		hostName := frontendEndpoint["host_name"].(string)
 		isSessionAffinityEnabled := frontendEndpoint["session_affinity_enabled"].(bool)
 		sessionAffinityTtlSeconds := int32(frontendEndpoint["session_affinity_ttl_seconds"].(int))
-		customHttpsConfiguration := frontendEndpoint["custom_https_configuration"].([]interface{})
 		waf := frontendEndpoint["web_application_firewall_policy_link_id"].(string)
 		name := frontendEndpoint["name"].(string)
 		id := utils.String(frontDoorPath + "/FrontendEndpoints/" + name)
@@ -816,7 +895,6 @@ func expandArmFrontDoorFrontendEndpoint(input []interface{}, frontDoorPath strin
 			ID:   id,
 			Name: utils.String(name),
 			FrontendEndpointProperties: &frontdoor.FrontendEndpointProperties{
-				CustomHTTPSConfiguration:    expandArmFrontDoorCustomHTTPSConfiguration(customHttpsConfiguration),
 				HostName:                    utils.String(hostName),
 				SessionAffinityEnabledState: sessionAffinityEnabled,
 				SessionAffinityTTLSeconds:   utils.Int32(sessionAffinityTtlSeconds),
@@ -835,24 +913,6 @@ func expandArmFrontDoorFrontendEndpoint(input []interface{}, frontDoorPath strin
 	return &output
 }
 
-func expandArmFrontDoorCustomHTTPSConfiguration(input []interface{}) *frontdoor.CustomHTTPSConfiguration {
-	if len(input) == 0 {
-		defaultHttpsConfiguration := frontdoor.CustomHTTPSConfiguration{
-			ProtocolType:      frontdoor.ServerNameIndication,
-			CertificateSource: frontdoor.CertificateSourceFrontDoor,
-			CertificateSourceParameters: &frontdoor.CertificateSourceParameters{
-				CertificateType: frontdoor.Dedicated,
-			},
-		}
-		return &defaultHttpsConfiguration
-	}
-
-	v := input[0].(map[string]interface{})
-	customHttpsConfiguration := makeCustomHttpsConfiguration(v)
-
-	return &customHttpsConfiguration
-}
-
 func expandArmFrontDoorHealthProbeSettingsModel(input []interface{}, frontDoorPath string) *[]frontdoor.HealthProbeSettingsModel {
 	if len(input) == 0 {
 		return &[]frontdoor.HealthProbeSettingsModel{}
@@ -867,6 +927,12 @@ func expandArmFrontDoorHealthProbeSettingsModel(input []interface{}, frontDoorPa
 		protocol := v["protocol"].(string)
 		intervalInSeconds := int32(v["interval_in_seconds"].(int))
 		name := v["name"].(string)
+		enabled := v["enabled"].(bool)
+
+		healthProbeEnabled := frontdoor.HealthProbeEnabledEnabled
+		if !enabled {
+			healthProbeEnabled = frontdoor.HealthProbeEnabledDisabled
+		}
 
 		result := frontdoor.HealthProbeSettingsModel{
 			ID:   utils.String(frontDoorPath + "/HealthProbeSettings/" + name),
@@ -875,6 +941,8 @@ func expandArmFrontDoorHealthProbeSettingsModel(input []interface{}, frontDoorPa
 				IntervalInSeconds: utils.Int32(intervalInSeconds),
 				Path:              utils.String(path),
 				Protocol:          frontdoor.Protocol(protocol),
+				HealthProbeMethod: frontdoor.HealthProbeMethod(v["probe_method"].(string)),
+				EnabledState:      healthProbeEnabled,
 			},
 		}
 
@@ -1055,20 +1123,10 @@ func expandArmFrontDoorForwardingConfiguration(input []interface{}, frontDoorPat
 
 	customForwardingPath := v["custom_forwarding_path"].(string)
 	forwardingProtocol := v["forwarding_protocol"].(string)
+	backendPoolName := v["backend_pool_name"].(string)
 	cacheUseDynamicCompression := v["cache_use_dynamic_compression"].(bool)
 	cacheQueryParameterStripDirective := v["cache_query_parameter_strip_directive"].(string)
-	backendPoolName := v["backend_pool_name"].(string)
-
-	useDynamicCompression := frontdoor.DynamicCompressionEnabledDisabled
-
-	if cacheUseDynamicCompression {
-		useDynamicCompression = frontdoor.DynamicCompressionEnabledEnabled
-	}
-
-	cacheConfiguration := &frontdoor.CacheConfiguration{
-		QueryParameterStripDirective: frontdoor.Query(cacheQueryParameterStripDirective),
-		DynamicCompression:           useDynamicCompression,
-	}
+	cacheEnabled := v["cache_enabled"].(bool)
 
 	backend := &frontdoor.SubResource{
 		ID: utils.String(frontDoorPath + "/BackendPools/" + backendPoolName),
@@ -1076,9 +1134,28 @@ func expandArmFrontDoorForwardingConfiguration(input []interface{}, frontDoorPat
 
 	forwardingConfiguration := frontdoor.ForwardingConfiguration{
 		ForwardingProtocol: frontdoor.ForwardingProtocol(forwardingProtocol),
-		CacheConfiguration: cacheConfiguration,
 		BackendPool:        backend,
 		OdataType:          frontdoor.OdataTypeMicrosoftAzureFrontDoorModelsFrontdoorForwardingConfiguration,
+	}
+
+	// Per the portal, if you enable the cache the cache_query_parameter_strip_directive
+	// is then a required attribute else the CacheConfiguration type is null
+	if cacheEnabled {
+		// Set the default value for dynamic compression or use the value defined in the config
+		dynamicCompression := frontdoor.DynamicCompressionEnabledEnabled
+		if !cacheUseDynamicCompression {
+			dynamicCompression = frontdoor.DynamicCompressionEnabledDisabled
+		}
+
+		if cacheQueryParameterStripDirective == "" {
+			// Set Default Value for strip directive is not in the key slice and cache is enabled
+			cacheQueryParameterStripDirective = string(frontdoor.StripAll)
+		}
+
+		forwardingConfiguration.CacheConfiguration = &frontdoor.CacheConfiguration{
+			DynamicCompression:           dynamicCompression,
+			QueryParameterStripDirective: frontdoor.Query(cacheQueryParameterStripDirective),
+		}
 	}
 
 	if customForwardingPath != "" {
@@ -1109,7 +1186,16 @@ func flattenArmFrontDoorBackendPools(input *[]frontdoor.BackendPool) []map[strin
 		if properties := v.BackendPoolProperties; properties != nil {
 			result["backend"] = flattenArmFrontDoorBackend(properties.Backends)
 			result["health_probe_name"] = flattenArmFrontDoorSubResource(properties.HealthProbeSettings, "HealthProbeSettings")
+			// Link to issue: https://github.com/Azure/azure-sdk-for-go/issues/6762
+			if result["health_probe_name"] == "" {
+				result["health_probe_name"] = flattenArmFrontDoorSubResource(properties.HealthProbeSettings, "healthProbeSettings")
+			}
+
 			result["load_balancing_name"] = flattenArmFrontDoorSubResource(properties.LoadBalancingSettings, "LoadBalancingSettings")
+			// Link to issue: https://github.com/Azure/azure-sdk-for-go/issues/6762
+			if result["load_balancing_name"] == "" {
+				result["load_balancing_name"] = flattenArmFrontDoorSubResource(properties.LoadBalancingSettings, "loadBalancingSettings")
+			}
 		}
 		output = append(output, result)
 	}
@@ -1117,17 +1203,25 @@ func flattenArmFrontDoorBackendPools(input *[]frontdoor.BackendPool) []map[strin
 	return output
 }
 
-func flattenArmFrontDoorBackendPoolsSettings(input *frontdoor.BackendPoolsSettings) bool {
+func flattenArmFrontDoorBackendPoolsSettings(input *frontdoor.BackendPoolsSettings) map[string]interface{} {
+	result := make(map[string]interface{})
+
+	// Set default values
+	result["enforce_backend_pools_certificate_name_check"] = true
+	result["backend_pools_send_receive_timeout_seconds"] = int32(60)
+
 	if input == nil {
-		return true
+		return result
 	}
 
-	result := false
+	result["enforce_backend_pools_certificate_name_check"] = false
 
-	if enforceCertificateNameCheck := input.EnforceCertificateNameCheck; enforceCertificateNameCheck != "" {
-		if enforceCertificateNameCheck == frontdoor.EnforceCertificateNameCheckEnabledStateEnabled {
-			result = true
-		}
+	if enforceCertificateNameCheck := input.EnforceCertificateNameCheck; enforceCertificateNameCheck != "" && enforceCertificateNameCheck == frontdoor.EnforceCertificateNameCheckEnabledStateEnabled {
+		result["enforce_backend_pools_certificate_name_check"] = true
+	}
+
+	if sendRecvTimeoutSeconds := input.SendRecvTimeoutSeconds; sendRecvTimeoutSeconds != nil {
+		result["backend_pools_send_receive_timeout_seconds"] = *sendRecvTimeoutSeconds
 	}
 
 	return result
@@ -1176,7 +1270,7 @@ func flattenArmFrontDoorBackend(input *[]frontdoor.Backend) []interface{} {
 
 func flattenArmFrontDoorFrontendEndpoint(ctx context.Context, input *[]frontdoor.FrontendEndpoint, resourceGroup string, frontDoorName string, meta interface{}) ([]interface{}, error) {
 	if input == nil {
-		return make([]interface{}, 0), fmt.Errorf("Cannot read Front Door Frontend Endpoint (Resource Group %q): slice is empty", resourceGroup)
+		return make([]interface{}, 0), fmt.Errorf("cannot read Front Door Frontend Endpoint (Resource Group %q): slice is empty", resourceGroup)
 	}
 
 	output := make([]interface{}, 0)
@@ -1195,10 +1289,10 @@ func flattenArmFrontDoorFrontendEndpoint(ctx context.Context, input *[]frontdoor
 
 			resp, err := client.Get(ctx, resourceGroup, frontDoorName, *name)
 			if err != nil {
-				return make([]interface{}, 0), fmt.Errorf("Error retrieving Front Door Frontend Endpoint Custom HTTPS Configuration %q (Resource Group %q): %+v", *name, resourceGroup, err)
+				return make([]interface{}, 0), fmt.Errorf("retrieving Front Door Frontend Endpoint Custom HTTPS Configuration %q (Resource Group %q): %+v", *name, resourceGroup, err)
 			}
 			if resp.ID == nil {
-				return make([]interface{}, 0), fmt.Errorf("Cannot read Front Door Frontend Endpoint Custom HTTPS Configuration %q (Resource Group %q) ID", *name, resourceGroup)
+				return make([]interface{}, 0), fmt.Errorf("cannot read Front Door Frontend Endpoint Custom HTTPS Configuration %q (Resource Group %q) ID", *name, resourceGroup)
 			}
 
 			result["id"] = resp.ID
@@ -1233,6 +1327,8 @@ func flattenArmFrontDoorFrontendEndpoint(ctx context.Context, input *[]frontdoor
 						chc["certificate_source"] = string(frontdoor.CertificateSourceFrontDoor)
 					}
 
+					chc["minimum_tls_version"] = string(customHTTPSConfiguration.MinimumTLSVersion)
+
 					if provisioningState := properties.CustomHTTPSProvisioningState; provisioningState != "" {
 						chc["provisioning_state"] = provisioningState
 						if provisioningState == frontdoor.CustomHTTPSProvisioningStateEnabled || provisioningState == frontdoor.CustomHTTPSProvisioningStateEnabling {
@@ -1259,12 +1355,13 @@ func flattenArmFrontDoorFrontendEndpoint(ctx context.Context, input *[]frontdoor
 }
 
 func flattenArmFrontDoorHealthProbeSettingsModel(input *[]frontdoor.HealthProbeSettingsModel) []interface{} {
+	results := make([]interface{}, 0)
 	if input == nil {
-		return make([]interface{}, 0)
+		return results
 	}
-	result := make(map[string]interface{})
 
 	for _, v := range *input {
+		result := make(map[string]interface{})
 		if id := v.ID; id != nil {
 			result["id"] = *id
 		}
@@ -1278,21 +1375,31 @@ func flattenArmFrontDoorHealthProbeSettingsModel(input *[]frontdoor.HealthProbeS
 			if path := properties.Path; path != nil {
 				result["path"] = *path
 			}
+			if healthProbeMethod := properties.HealthProbeMethod; healthProbeMethod != "" {
+				// I have to upper this as the frontdoor.GET and frondoor.HEAD types are uppercased
+				// but Azure stores them in the resource as pascal cased (e.g. "Get" and "Head")
+				result["probe_method"] = strings.ToUpper(string(healthProbeMethod))
+			}
+			if enabled := properties.EnabledState; enabled != "" {
+				result["enabled"] = enabled == frontdoor.HealthProbeEnabledEnabled
+			}
 			result["protocol"] = string(properties.Protocol)
 		}
+
+		results = append(results, result)
 	}
 
-	return []interface{}{result}
+	return results
 }
 
 func flattenArmFrontDoorLoadBalancingSettingsModel(input *[]frontdoor.LoadBalancingSettingsModel) []interface{} {
+	results := make([]interface{}, 0)
 	if input == nil {
-		return make([]interface{}, 0)
+		return results
 	}
 
-	result := make(map[string]interface{})
-
 	for _, v := range *input {
+		result := make(map[string]interface{})
 		if id := v.ID; id != nil {
 			result["id"] = *id
 		}
@@ -1310,24 +1417,36 @@ func flattenArmFrontDoorLoadBalancingSettingsModel(input *[]frontdoor.LoadBalanc
 				result["successful_samples_required"] = *successfulSamplesRequired
 			}
 		}
+
+		results = append(results, result)
 	}
-	return []interface{}{result}
+
+	return results
 }
 
-func flattenArmFrontDoorRoutingRule(input *[]frontdoor.RoutingRule) []interface{} {
+func flattenArmFrontDoorRoutingRule(input *[]frontdoor.RoutingRule, oldBlocks interface{}) []interface{} {
 	if input == nil {
 		return make([]interface{}, 0)
 	}
 
-	output := make([]interface{}, 0)
+	oldByName := map[string]map[string]interface{}{}
 
+	for _, i := range oldBlocks.([]interface{}) {
+		v := i.(map[string]interface{})
+
+		oldByName[v["name"].(string)] = v
+	}
+
+	output := make([]interface{}, 0)
 	for _, v := range *input {
 		result := make(map[string]interface{})
 
 		if id := v.ID; id != nil {
 			result["id"] = *id
 		}
-		if name := v.Name; name != nil {
+
+		name := v.Name
+		if name != nil {
 			result["name"] = *name
 		}
 
@@ -1349,21 +1468,39 @@ func flattenArmFrontDoorRoutingRule(input *[]frontdoor.RoutingRule) []interface{
 					v := brc.(frontdoor.ForwardingConfiguration)
 
 					c["backend_pool_name"] = flattenArmFrontDoorSubResource(v.BackendPool, "BackendPools")
+					// Link to issue: https://github.com/Azure/azure-sdk-for-go/issues/6762
+					if c["backend_pool_name"] == "" {
+						c["backend_pool_name"] = flattenArmFrontDoorSubResource(v.BackendPool, "backendPools")
+					}
 					c["custom_forwarding_path"] = v.CustomForwardingPath
 					c["forwarding_protocol"] = string(v.ForwardingProtocol)
 
 					if cacheConfiguration := v.CacheConfiguration; cacheConfiguration != nil {
-						if queryParameter := cacheConfiguration.QueryParameterStripDirective; queryParameter != "" {
-							c["cache_query_parameter_strip_directive"] = string(queryParameter)
+						c["cache_enabled"] = true
+						if stripDirective := cacheConfiguration.QueryParameterStripDirective; stripDirective != "" {
+							c["cache_query_parameter_strip_directive"] = string(stripDirective)
 						} else {
-							c["cache_query_parameter_strip_directive"] = string(frontdoor.StripNone)
+							// Default value if not set
+							c["cache_query_parameter_strip_directive"] = string(frontdoor.StripAll)
 						}
 
-						c["cache_use_dynamic_compression"] = false
-
 						if dynamicCompression := cacheConfiguration.DynamicCompression; dynamicCompression != "" {
-							if dynamicCompression == frontdoor.DynamicCompressionEnabledEnabled {
-								c["cache_use_dynamic_compression"] = true
+							c["cache_use_dynamic_compression"] = string(dynamicCompression) == string(frontdoor.DynamicCompressionEnabledEnabled)
+						}
+					} else {
+						// if the cache is disabled, set the default values or revert to what they were in the previous plan
+						c["cache_enabled"] = false
+						c["cache_query_parameter_strip_directive"] = string(frontdoor.StripAll)
+
+						if name != nil {
+							// get `forwarding_configuration`
+							if o, ok := oldByName[*name]; ok {
+								ofcs := o["forwarding_configuration"].([]interface{})
+								if len(ofcs) > 0 {
+									ofc := ofcs[0].(map[string]interface{})
+									c["cache_query_parameter_strip_directive"] = ofc["cache_query_parameter_strip_directive"]
+									c["cache_use_dynamic_compression"] = ofc["cache_use_dynamic_compression"]
+								}
 							}
 						}
 					}
@@ -1431,15 +1568,23 @@ func flattenArmFrontDoorFrontendEndpointsSubResources(input *[]frontdoor.SubReso
 
 	for _, v := range *input {
 		name := flattenArmFrontDoorSubResource(&v, "FrontendEndpoints")
+		// Link to issue: https://github.com/Azure/azure-sdk-for-go/issues/6762
+		if name == "" {
+			name = flattenArmFrontDoorSubResource(&v, "frontendEndpoints")
+		}
 		output = append(output, name)
 	}
 
 	return output
 }
 
-func makeCustomHttpsConfiguration(customHttpsConfiguration map[string]interface{}) frontdoor.CustomHTTPSConfiguration {
+func makeCustomHttpsConfiguration(customHttpsConfiguration map[string]interface{}, minTLSVersion frontdoor.MinimumTLSVersion) frontdoor.CustomHTTPSConfiguration {
+	// https://github.com/Azure/azure-sdk-for-go/issues/6882
+	defaultProtocolType := "ServerNameIndication"
+
 	customHTTPSConfigurationUpdate := frontdoor.CustomHTTPSConfiguration{
-		ProtocolType: frontdoor.ServerNameIndication,
+		ProtocolType:      &defaultProtocolType,
+		MinimumTLSVersion: minTLSVersion,
 	}
 
 	if customHttpsConfiguration["certificate_source"].(string) == "AzureKeyVault" {

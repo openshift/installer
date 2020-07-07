@@ -16,7 +16,6 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/analysisservices/parse"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
 	azSchema "github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/schema"
@@ -83,7 +82,7 @@ func resourceArmAnalysisServicesServer() *schema.Resource {
 			},
 
 			"ipv4_firewall_rule": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -117,7 +116,7 @@ func resourceArmAnalysisServicesServer() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Sensitive:    true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"server_full_name": {
@@ -140,7 +139,7 @@ func resourceArmAnalysisServicesServerCreate(d *schema.ResourceData, meta interf
 	name := d.Get("name").(string)
 	resourceGroup := d.Get("resource_group_name").(string)
 
-	if features.ShouldResourcesBeImported() && d.IsNewResource() {
+	if d.IsNewResource() {
 		server, err := client.GetDetails(ctx, resourceGroup, name)
 		if err != nil {
 			if !utils.ResponseWasNotFound(server.Response) {
@@ -405,7 +404,7 @@ func expandAnalysisServicesServerFirewallSettings(d *schema.ResourceData) *analy
 		EnablePowerBIService: utils.Bool(d.Get("enable_power_bi_service").(bool)),
 	}
 
-	firewallRules := d.Get("ipv4_firewall_rule").([]interface{})
+	firewallRules := d.Get("ipv4_firewall_rule").(*schema.Set).List()
 
 	fwRules := make([]analysisservices.IPv4FirewallRule, len(firewallRules))
 	for i, v := range firewallRules {

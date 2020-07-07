@@ -3,20 +3,13 @@ package clients
 import (
 	"context"
 	"fmt"
-<<<<<<< HEAD
-	"time"
-=======
 	"strings"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 
 	"github.com/hashicorp/go-azure-helpers/authentication"
 	"github.com/hashicorp/go-azure-helpers/sender"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/common"
-<<<<<<< HEAD
-=======
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/location"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 )
 
 type ClientBuilder struct {
@@ -25,7 +18,9 @@ type ClientBuilder struct {
 	DisableTerraformPartnerID   bool
 	PartnerId                   string
 	SkipProviderRegistration    bool
+	StorageUseAzureAD           bool
 	TerraformVersion            string
+	Features                    features.UserFeatures
 }
 
 const azureStackEnvironmentError = `
@@ -111,11 +106,12 @@ func Build(ctx context.Context, builder ClientBuilder) (*Client, error) {
 		ResourceManagerAuthorizer:   auth,
 		ResourceManagerEndpoint:     endpoint,
 		StorageAuthorizer:           storageAuth,
-		PollingDuration:             180 * time.Minute,
 		SkipProviderReg:             builder.SkipProviderRegistration,
 		DisableCorrelationRequestID: builder.DisableCorrelationRequestID,
 		DisableTerraformPartnerID:   builder.DisableTerraformPartnerID,
 		Environment:                 *env,
+		Features:                    builder.Features,
+		StorageUseAzureAD:           builder.StorageUseAzureAD,
 	}
 
 	if err := client.Build(ctx, o); err != nil {

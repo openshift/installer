@@ -9,10 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
@@ -47,34 +45,9 @@ func resourceArmAutomationAccount() *schema.Resource {
 
 			"resource_group_name": azure.SchemaResourceGroupName(),
 
-			// Remove in 2.0
-			"sku": {
-				Type:          schema.TypeList,
-				Optional:      true,
-				Computed:      true,
-				Deprecated:    "This property has been deprecated in favour of the 'sku_name' property and will be removed in version 2.0 of the provider",
-				ConflictsWith: []string{"sku_name"},
-				MaxItems:      1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:             schema.TypeString,
-							Optional:         true,
-							DiffSuppressFunc: suppress.CaseDifference,
-							ValidateFunc: validation.StringInSlice([]string{
-								string(automation.Basic),
-								string(automation.Free),
-							}, true),
-						},
-					},
-				},
-			},
-
 			"sku_name": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
-				ConflictsWith: []string{"sku"},
+				Type:     schema.TypeString,
+				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					string(automation.Basic),
 					string(automation.Free),
@@ -104,25 +77,8 @@ func resourceArmAutomationAccountCreateUpdate(d *schema.ResourceData, meta inter
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	// Remove in 2.0
-	var sku automation.Sku
-
-	if inputs := d.Get("sku").([]interface{}); len(inputs) != 0 {
-		input := inputs[0].(map[string]interface{})
-		v := input["name"].(string)
-
-		sku = automation.Sku{
-			Name: automation.SkuNameEnum(v),
-		}
-	} else {
-		// Keep in 2.0
-		sku = automation.Sku{
-			Name: automation.SkuNameEnum(d.Get("sku_name").(string)),
-		}
-	}
-
-	if sku.Name == "" {
-		return fmt.Errorf("either 'sku_name' or 'sku' must be defined in the configuration file")
+	sku := automation.Sku{
+		Name: automation.SkuNameEnum(d.Get("sku_name").(string)),
 	}
 
 	log.Printf("[INFO] preparing arguments for Automation Account create/update.")
@@ -130,7 +86,7 @@ func resourceArmAutomationAccountCreateUpdate(d *schema.ResourceData, meta inter
 	name := d.Get("name").(string)
 	resourceGroup := d.Get("resource_group_name").(string)
 
-	if features.ShouldResourcesBeImported() && d.IsNewResource() {
+	if d.IsNewResource() {
 		existing, err := client.Get(ctx, resourceGroup, name)
 		if err != nil {
 			if !utils.ResponseWasNotFound(existing.Response) {
@@ -214,11 +170,6 @@ func resourceArmAutomationAccountRead(d *schema.ResourceData, meta interface{}) 
 	}
 
 	if sku := resp.Sku; sku != nil {
-		// Remove in 2.0
-		if err := d.Set("sku", flattenAutomationAccountSku(sku)); err != nil {
-			return fmt.Errorf("Error setting 'sku': %+v", err)
-		}
-
 		if err := d.Set("sku_name", string(sku.Name)); err != nil {
 			return fmt.Errorf("Error setting 'sku_name': %+v", err)
 		}
@@ -262,15 +213,4 @@ func resourceArmAutomationAccountDelete(d *schema.ResourceData, meta interface{}
 	}
 
 	return nil
-}
-
-// Remove in 2.0
-func flattenAutomationAccountSku(sku *automation.Sku) []interface{} {
-	if sku == nil {
-		return []interface{}{}
-	}
-
-	result := map[string]interface{}{}
-	result["name"] = string(sku.Name)
-	return []interface{}{result}
 }

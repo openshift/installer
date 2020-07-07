@@ -95,8 +95,6 @@ func resourceArmKustoCluster() *schema.Resource {
 				},
 			},
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/kusto/resource_arm_kusto_cluster.go
-=======
 			"enable_disk_encryption": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -137,7 +135,6 @@ func resourceArmKustoCluster() *schema.Resource {
 				},
 			},
 
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/kusto/kusto_cluster_resource.go
 			"uri": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -185,9 +182,6 @@ func resourceArmKustoClusterCreateUpdate(d *schema.ResourceData, meta interface{
 		return err
 	}
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/kusto/resource_arm_kusto_cluster.go
-	clusterProperties := kusto.ClusterProperties{}
-=======
 	zones := azure.ExpandZones(d.Get("zones").([]interface{}))
 
 	clusterProperties := kusto.ClusterProperties{
@@ -200,7 +194,6 @@ func resourceArmKustoClusterCreateUpdate(d *schema.ResourceData, meta interface{
 		vnet := expandKustoClusterVNET(v.([]interface{}))
 		clusterProperties.VirtualNetworkConfiguration = vnet
 	}
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/kusto/kusto_cluster_resource.go
 
 	t := d.Get("tags").(map[string]interface{})
 
@@ -282,13 +275,10 @@ func resourceArmKustoClusterRead(d *schema.ResourceData, meta interface{}) error
 	}
 
 	if clusterProperties := clusterResponse.ClusterProperties; clusterProperties != nil {
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/kusto/resource_arm_kusto_cluster.go
-=======
 		d.Set("enable_disk_encryption", clusterProperties.EnableDiskEncryption)
 		d.Set("enable_streaming_ingest", clusterProperties.EnableStreamingIngest)
 		d.Set("enable_purge", clusterProperties.EnablePurge)
 		d.Set("virtual_network_configuration", flatteKustoClusterVNET(clusterProperties.VirtualNetworkConfiguration))
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/kusto/kusto_cluster_resource.go
 		d.Set("uri", clusterProperties.URI)
 		d.Set("data_ingestion_uri", clusterProperties.DataIngestionURI)
 	}

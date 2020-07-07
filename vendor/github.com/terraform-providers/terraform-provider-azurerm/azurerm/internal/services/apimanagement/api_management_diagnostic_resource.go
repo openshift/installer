@@ -5,19 +5,15 @@ import (
 	"log"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2018-01-01/apimanagement"
+	"github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2019-12-01/apimanagement"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/resource_arm_api_management_diagnostic.go
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
-=======
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/parse"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/validate"
 	azSchema "github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/schema"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/api_management_diagnostic_resource.go
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
@@ -62,8 +58,9 @@ func resourceArmApiManagementDiagnostic() *schema.Resource {
 			},
 
 			"enabled": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type:       schema.TypeBool,
+				Optional:   true,
+				Deprecated: "this property has been removed from the API and will be removed in version 3.0 of the provider",
 			},
 		},
 	}
@@ -77,13 +74,12 @@ func resourceArmApiManagementDiagnosticCreateUpdate(d *schema.ResourceData, meta
 	diagnosticId := d.Get("identifier").(string)
 	resourceGroup := d.Get("resource_group_name").(string)
 	serviceName := d.Get("api_management_name").(string)
-	enabled := d.Get("enabled").(bool)
 
-	if features.ShouldResourcesBeImported() && d.IsNewResource() {
+	if d.IsNewResource() {
 		existing, err := client.Get(ctx, resourceGroup, serviceName, diagnosticId)
 		if err != nil {
 			if !utils.ResponseWasNotFound(existing.Response) {
-				return fmt.Errorf("Error checking for presence of existing Diagnostic %q (API Management Service %q / Resource Group %q): %s", diagnosticId, serviceName, resourceGroup, err)
+				return fmt.Errorf("checking for presence of existing Diagnostic %q (API Management Service %q / Resource Group %q): %s", diagnosticId, serviceName, resourceGroup, err)
 			}
 		}
 
@@ -94,21 +90,17 @@ func resourceArmApiManagementDiagnosticCreateUpdate(d *schema.ResourceData, meta
 
 	parameters := apimanagement.DiagnosticContract{
 		DiagnosticContractProperties: &apimanagement.DiagnosticContractProperties{
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/resource_arm_api_management_diagnostic.go
-			Enabled: utils.Bool(enabled),
-=======
 			LoggerID: utils.String(d.Get("api_management_logger_id").(string)),
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/api_management_diagnostic_resource.go
 		},
 	}
 
 	if _, err := client.CreateOrUpdate(ctx, resourceGroup, serviceName, diagnosticId, parameters, ""); err != nil {
-		return fmt.Errorf("Error creating or updating Diagnostic %q (Resource Group %q / API Management Service %q): %+v", diagnosticId, resourceGroup, serviceName, err)
+		return fmt.Errorf("creating or updating Diagnostic %q (Resource Group %q / API Management Service %q): %+v", diagnosticId, resourceGroup, serviceName, err)
 	}
 
 	resp, err := client.Get(ctx, resourceGroup, serviceName, diagnosticId)
 	if err != nil {
-		return fmt.Errorf("Error retrieving Diagnostic %q (Resource Group %q / API Management Service %q): %+v", diagnosticId, resourceGroup, serviceName, err)
+		return fmt.Errorf("retrieving Diagnostic %q (Resource Group %q / API Management Service %q): %+v", diagnosticId, resourceGroup, serviceName, err)
 	}
 	if resp.ID == nil {
 		return fmt.Errorf("reading ID for Diagnostic %q (Resource Group %q / API Management Service %q): ID is empty", diagnosticId, resourceGroup, serviceName)
@@ -136,21 +128,13 @@ func resourceArmApiManagementDiagnosticRead(d *schema.ResourceData, meta interfa
 			return nil
 		}
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/resource_arm_api_management_diagnostic.go
-		return fmt.Errorf("Error making Read request for Diagnostic %q (Resource Group %q / API Management Service %q): %+v", diagnosticId, resourceGroup, serviceName, err)
-=======
 		return fmt.Errorf("making Read request for Diagnostic %q (Resource Group %q / API Management Service %q): %+v", diagnosticId.Name, diagnosticId.ResourceGroup, diagnosticId.ServiceName, err)
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/api_management_diagnostic_resource.go
 	}
 
 	d.Set("identifier", resp.Name)
 	d.Set("resource_group_name", diagnosticId.ResourceGroup)
 	d.Set("api_management_name", diagnosticId.ServiceName)
 	d.Set("api_management_logger_id", resp.LoggerID)
-
-	if props := resp.DiagnosticContractProperties; props != nil {
-		d.Set("enabled", props.Enabled)
-	}
 
 	return nil
 }
@@ -167,11 +151,7 @@ func resourceArmApiManagementDiagnosticDelete(d *schema.ResourceData, meta inter
 
 	if resp, err := client.Delete(ctx, diagnosticId.ResourceGroup, diagnosticId.ServiceName, diagnosticId.Name, ""); err != nil {
 		if !utils.ResponseWasNotFound(resp) {
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/resource_arm_api_management_diagnostic.go
-			return fmt.Errorf("Error deleting Diagnostic %q (Resource Group %q / API Management Service %q): %+v", diagnosticId, resourceGroup, serviceName, err)
-=======
 			return fmt.Errorf("deleting Diagnostic %q (Resource Group %q / API Management Service %q): %+v", diagnosticId.Name, diagnosticId.ResourceGroup, diagnosticId.ServiceName, err)
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/api_management_diagnostic_resource.go
 		}
 	}
 

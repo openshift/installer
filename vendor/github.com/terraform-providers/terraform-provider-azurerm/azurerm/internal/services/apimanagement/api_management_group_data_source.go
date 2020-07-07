@@ -64,7 +64,7 @@ func dataSourceApiManagementGroupRead(d *schema.ResourceData, meta interface{}) 
 			return fmt.Errorf("Group %q (Resource Group %q / API Management Service %q) was not found", name, resourceGroup, serviceName)
 		}
 
-		return fmt.Errorf("Error making Read request for Group %q (Resource Group %q / API Management Service %q): %+v", name, resourceGroup, serviceName, err)
+		return fmt.Errorf("making Read request for Group %q (Resource Group %q / API Management Service %q): %+v", name, resourceGroup, serviceName, err)
 	}
 
 	d.SetId(*resp.ID)

@@ -1,36 +1,42 @@
 package compute
 
 import (
-<<<<<<< HEAD
-=======
 	"crypto/rsa"
 	"encoding/base64"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 	"fmt"
 	"regexp"
+	"strings"
+
+	"golang.org/x/crypto/ssh"
 
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-12-01/compute"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
-func SSHKeysSchema() *schema.Schema {
+func SSHKeysSchema(isVirtualMachine bool) *schema.Schema {
+	// the SSH Keys for a Virtual Machine cannot be changed once provisioned:
+	// Code="PropertyChangeNotAllowed" Message="Changing property 'linuxConfiguration.ssh.publicKeys' is not allowed."
+
 	return &schema.Schema{
 		Type:     schema.TypeSet,
 		Optional: true,
+		ForceNew: isVirtualMachine,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"public_key": {
 					Type:         schema.TypeString,
 					Required:     true,
-					ValidateFunc: validate.NoEmptyStrings,
+					ForceNew:     isVirtualMachine,
+					ValidateFunc: ValidateSSHKey,
 				},
 
 				"username": {
 					Type:         schema.TypeString,
 					Required:     true,
-					ValidateFunc: validate.NoEmptyStrings,
+					ForceNew:     isVirtualMachine,
+					ValidateFunc: validation.StringIsNotEmpty,
 				},
 			},
 		},
@@ -89,13 +95,10 @@ func formatUsernameForAuthorizedKeysPath(username string) string {
 func parseUsernameFromAuthorizedKeysPath(input string) *string {
 	// the Azure VM agent hard-codes this to `/home/username/.ssh/authorized_keys`
 	// as such we can hard-code this for a better UX
-	compiled, err := regexp.Compile("(/home/)+(?P<username>.*?)(/.ssh/authorized_keys)+")
-	if err != nil {
-		return nil
-	}
+	r := regexp.MustCompile("(/home/)+(?P<username>.*?)(/.ssh/authorized_keys)+")
 
-	keys := compiled.SubexpNames()
-	values := compiled.FindStringSubmatch(input)
+	keys := r.SubexpNames()
+	values := r.FindStringSubmatch(input)
 
 	if values == nil {
 		return nil
@@ -110,8 +113,6 @@ func parseUsernameFromAuthorizedKeysPath(input string) *string {
 
 	return nil
 }
-<<<<<<< HEAD
-=======
 
 // ValidateSSHKey performs some basic validation on supplied SSH Keys - Encoded Signature and Key Size are evaluated
 // Will require rework if/when other Key Types are supported
@@ -154,4 +155,3 @@ func ValidateSSHKey(i interface{}, k string) (warnings []string, errors []error)
 
 	return warnings, errors
 }
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0

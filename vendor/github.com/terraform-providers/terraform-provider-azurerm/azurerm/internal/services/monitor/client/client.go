@@ -21,6 +21,7 @@ type Client struct {
 	DiagnosticSettingsCategoryClient *insights.DiagnosticSettingsCategoryClient
 	LogProfilesClient                *insights.LogProfilesClient
 	MetricAlertsClient               *insights.MetricAlertsClient
+	ScheduledQueryRulesClient        *insights.ScheduledQueryRulesClient
 }
 
 func NewClient(o *common.ClientOptions) *Client {
@@ -51,6 +52,9 @@ func NewClient(o *common.ClientOptions) *Client {
 	MetricAlertsClient := insights.NewMetricAlertsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&MetricAlertsClient.Client, o.ResourceManagerAuthorizer)
 
+	ScheduledQueryRulesClient := insights.NewScheduledQueryRulesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&ScheduledQueryRulesClient.Client, o.ResourceManagerAuthorizer)
+
 	return &Client{
 		AutoscaleSettingsClient:          &AutoscaleSettingsClient,
 		ActionRulesClient:                &ActionRulesClient,
@@ -61,5 +65,6 @@ func NewClient(o *common.ClientOptions) *Client {
 		DiagnosticSettingsCategoryClient: &DiagnosticSettingsCategoryClient,
 		LogProfilesClient:                &LogProfilesClient,
 		MetricAlertsClient:               &MetricAlertsClient,
+		ScheduledQueryRulesClient:        &ScheduledQueryRulesClient,
 	}
 }

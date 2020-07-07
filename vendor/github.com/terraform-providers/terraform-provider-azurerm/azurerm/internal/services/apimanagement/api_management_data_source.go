@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2018-01-01/apimanagement"
+	"github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2019-12-01/apimanagement"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
@@ -45,24 +45,6 @@ func dataSourceApiManagementService() *schema.Resource {
 			"publisher_email": {
 				Type:     schema.TypeString,
 				Computed: true,
-			},
-
-			// TODO: Remove in 2.0
-			"sku": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"capacity": {
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-					},
-				},
 			},
 
 			"sku_name": {
@@ -219,7 +201,7 @@ func dataSourceApiManagementRead(d *schema.ResourceData, meta interface{}) error
 			return fmt.Errorf("API Management Service %q (Resource Group %q) was not found", name, resourceGroup)
 		}
 
-		return fmt.Errorf("Error retrieving API Management Service %q (Resource Group %q): %+v", name, resourceGroup, err)
+		return fmt.Errorf("retrieving API Management Service %q (Resource Group %q): %+v", name, resourceGroup, err)
 	}
 
 	d.SetId(*resp.ID)
@@ -244,23 +226,15 @@ func dataSourceApiManagementRead(d *schema.ResourceData, meta interface{}) error
 		d.Set("public_ip_addresses", props.PublicIPAddresses)
 
 		if err := d.Set("hostname_configuration", flattenDataSourceApiManagementHostnameConfigurations(props.HostnameConfigurations)); err != nil {
-			return fmt.Errorf("Error setting `hostname_configuration`: %+v", err)
+			return fmt.Errorf("setting `hostname_configuration`: %+v", err)
 		}
 
 		if err := d.Set("additional_location", flattenDataSourceApiManagementAdditionalLocations(props.AdditionalLocations)); err != nil {
-			return fmt.Errorf("Error setting `additional_location`: %+v", err)
+			return fmt.Errorf("setting `additional_location`: %+v", err)
 		}
 	}
 
-	if sku := resp.Sku; sku != nil {
-		// TODO: Remove in 2.0
-		if err := d.Set("sku", flattenApiManagementServiceSku(resp.Sku)); err != nil {
-			return fmt.Errorf("Error setting `sku`: %+v", err)
-		}
-		if err := d.Set("sku_name", flattenApiManagementServiceSkuName(resp.Sku)); err != nil {
-			return fmt.Errorf("Error setting `sku_name`: %+v", err)
-		}
-	}
+	d.Set("sku_name", flattenApiManagementServiceSkuName(resp.Sku))
 
 	return tags.FlattenAndSet(d, resp.Tags)
 }
@@ -293,27 +267,23 @@ func flattenDataSourceApiManagementHostnameConfigurations(input *[]apimanagement
 		}
 
 		switch strings.ToLower(string(config.Type)) {
-		case strings.ToLower(string(apimanagement.Proxy)):
+		case strings.ToLower(string(apimanagement.HostnameTypeProxy)):
 			// only set SSL binding for proxy types
 			if config.DefaultSslBinding != nil {
 				output["default_ssl_binding"] = *config.DefaultSslBinding
 			}
 			proxyResults = append(proxyResults, output)
 
-		case strings.ToLower(string(apimanagement.Management)):
+		case strings.ToLower(string(apimanagement.HostnameTypeManagement)):
 			managementResults = append(managementResults, output)
 
-		case strings.ToLower(string(apimanagement.Portal)):
+		case strings.ToLower(string(apimanagement.HostnameTypePortal)):
 			portalResults = append(portalResults, output)
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/data_source_api_management.go
-		case strings.ToLower(string(apimanagement.Scm)):
-=======
 		case strings.ToLower(string(apimanagement.HostnameTypeDeveloperPortal)):
 			developerPortalResults = append(developerPortalResults, output)
 
 		case strings.ToLower(string(apimanagement.HostnameTypeScm)):
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/api_management_data_source.go
 			scmResults = append(scmResults, output)
 		}
 	}

@@ -4,13 +4,8 @@ import (
 	"fmt"
 	"time"
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/network/resource_arm_network_security_group.go
-	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-09-01/network"
-	"github.com/hashicorp/go-multierror"
-=======
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2020-03-01/network"
 	multierror "github.com/hashicorp/go-multierror"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/network/network_security_group_resource.go
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"

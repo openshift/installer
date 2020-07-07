@@ -1,6 +1,7 @@
 package compute
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -98,21 +99,6 @@ func dataSourceArmSharedImageVersionRead(d *schema.ResourceData, meta interface{
 	galleryName := d.Get("gallery_name").(string)
 	resourceGroup := d.Get("resource_group_name").(string)
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/data_source_shared_image_version.go
-	resp, err := client.Get(ctx, resourceGroup, galleryName, imageName, imageVersion, compute.ReplicationStatusTypesReplicationStatus)
-	if err != nil {
-		if utils.ResponseWasNotFound(resp.Response) {
-			log.Printf("[DEBUG] Shared Image Version %q (Image %q / Gallery %q / Resource Group %q) was not found - removing from state", imageVersion, imageName, galleryName, resourceGroup)
-			d.SetId("")
-			return nil
-		}
-		return fmt.Errorf("Error retrieving Shared Image Version %q (Image %q / Gallery %q / Resource Group %q): %+v", imageVersion, imageName, galleryName, resourceGroup, err)
-	}
-
-	d.SetId(*resp.ID)
-
-	d.Set("name", resp.Name)
-=======
 	image, err := obtainImage(client, ctx, resourceGroup, galleryName, imageName, imageVersion)
 	if err != nil {
 		return err
@@ -120,16 +106,15 @@ func dataSourceArmSharedImageVersionRead(d *schema.ResourceData, meta interface{
 
 	d.SetId(*image.ID)
 	d.Set("name", image.Name)
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/shared_image_version_data_source.go
 	d.Set("image_name", imageName)
 	d.Set("gallery_name", galleryName)
 	d.Set("resource_group_name", resourceGroup)
 
-	if location := resp.Location; location != nil {
+	if location := image.Location; location != nil {
 		d.Set("location", azure.NormalizeLocation(*location))
 	}
 
-	if props := resp.GalleryImageVersionProperties; props != nil {
+	if props := image.GalleryImageVersionProperties; props != nil {
 		if profile := props.PublishingProfile; profile != nil {
 			d.Set("exclude_from_latest", profile.ExcludeFromLatest)
 
@@ -151,9 +136,6 @@ func dataSourceArmSharedImageVersionRead(d *schema.ResourceData, meta interface{
 		}
 	}
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/data_source_shared_image_version.go
-	return tags.FlattenAndSet(d, resp.Tags)
-=======
 	return tags.FlattenAndSet(d, image.Tags)
 }
 
@@ -215,7 +197,6 @@ func obtainImage(client *compute.GalleryImageVersionsClient, ctx context.Context
 
 		return &image, nil
 	}
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/shared_image_version_data_source.go
 }
 
 func flattenSharedImageVersionDataSourceTargetRegions(input *[]compute.TargetRegion) []interface{} {

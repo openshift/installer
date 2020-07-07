@@ -44,8 +44,6 @@ func dataSourceArmSharedImage() *schema.Resource {
 				Computed: true,
 			},
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/data_source_shared_image.go
-=======
 			"specialized": {
 				Type:     schema.TypeBool,
 				Computed: true,
@@ -56,7 +54,6 @@ func dataSourceArmSharedImage() *schema.Resource {
 				Computed: true,
 			},
 
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/shared_image_data_source.go
 			"identifier": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -133,11 +130,8 @@ func dataSourceArmSharedImageRead(d *schema.ResourceData, meta interface{}) erro
 		d.Set("description", props.Description)
 		d.Set("eula", props.Eula)
 		d.Set("os_type", string(props.OsType))
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/data_source_shared_image.go
-=======
 		d.Set("specialized", props.OsState == compute.Specialized)
 		d.Set("hyper_v_generation", string(props.HyperVGeneration))
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/shared_image_data_source.go
 		d.Set("privacy_statement_uri", props.PrivacyStatementURI)
 		d.Set("release_note_uri", props.ReleaseNoteURI)
 

@@ -42,10 +42,8 @@ func resourceArmLoadBalancerNatPool() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
-
-			"location": azure.SchemaLocationDeprecated(),
 
 			"resource_group_name": azure.SchemaResourceGroupName(),
 
@@ -89,7 +87,7 @@ func resourceArmLoadBalancerNatPool() *schema.Resource {
 			"frontend_ip_configuration_name": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"frontend_ip_configuration_id": {
@@ -163,7 +161,7 @@ func resourceArmLoadBalancerNatPoolCreateUpdate(d *schema.ResourceData, meta int
 	}
 
 	var natPoolId string
-	for _, InboundNatPool := range *(*read.LoadBalancerPropertiesFormat).InboundNatPools {
+	for _, InboundNatPool := range *read.LoadBalancerPropertiesFormat.InboundNatPools {
 		if *InboundNatPool.Name == name {
 			natPoolId = *InboundNatPool.ID
 		}

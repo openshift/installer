@@ -68,6 +68,8 @@ func resourceArmHDInsightInteractiveQueryCluster() *schema.Resource {
 
 			"tier": azure.SchemaHDInsightTier(),
 
+			"tls_min_version": azure.SchemaHDInsightTls(),
+
 			"component_version": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -130,6 +132,7 @@ func resourceArmHDInsightInteractiveQueryClusterCreate(d *schema.ResourceData, m
 	clusterVersion := d.Get("cluster_version").(string)
 	t := d.Get("tags").(map[string]interface{})
 	tier := hdinsight.Tier(d.Get("tier").(string))
+	tls := d.Get("tls_min_version").(string)
 
 	componentVersionsRaw := d.Get("component_version").([]interface{})
 	componentVersions := expandHDInsightInteractiveQueryComponentVersion(componentVersionsRaw)
@@ -171,9 +174,10 @@ func resourceArmHDInsightInteractiveQueryClusterCreate(d *schema.ResourceData, m
 	params := hdinsight.ClusterCreateParametersExtended{
 		Location: utils.String(location),
 		Properties: &hdinsight.ClusterCreateProperties{
-			Tier:           tier,
-			OsType:         hdinsight.Linux,
-			ClusterVersion: utils.String(clusterVersion),
+			Tier:                   tier,
+			OsType:                 hdinsight.Linux,
+			ClusterVersion:         utils.String(clusterVersion),
+			MinSupportedTLSVersion: utils.String(tls),
 			ClusterDefinition: &hdinsight.ClusterDefinition{
 				Kind:             utils.String("INTERACTIVEHIVE"),
 				ComponentVersion: componentVersions,
@@ -252,6 +256,7 @@ func resourceArmHDInsightInteractiveQueryClusterRead(d *schema.ResourceData, met
 	if props := resp.Properties; props != nil {
 		d.Set("cluster_version", props.ClusterVersion)
 		d.Set("tier", string(props.Tier))
+		d.Set("tls_min_version", props.MinSupportedTLSVersion)
 
 		if def := props.ClusterDefinition; def != nil {
 			if err := d.Set("component_version", flattenHDInsightInteractiveQueryComponentVersion(def.ComponentVersion)); err != nil {

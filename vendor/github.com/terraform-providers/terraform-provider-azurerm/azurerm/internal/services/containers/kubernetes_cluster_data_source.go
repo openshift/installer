@@ -5,11 +5,7 @@ import (
 	"strings"
 	"time"
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/containers/data_source_kubernetes_cluster.go
-	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice"
-=======
 	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/containers/kubernetes_cluster_data_source.go
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/kubernetes"
@@ -168,17 +164,12 @@ func dataSourceArmKubernetesCluster() *schema.Resource {
 							},
 						},
 
-						// TODO: remove this in a future version
-						"dns_prefix": {
-							Type:       schema.TypeString,
-							Computed:   true,
-							Deprecated: "This field is no longer returned from the Azure API",
-						},
-
 						"vm_size": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+
+						"tags": tags.SchemaDataSource(),
 
 						"os_disk_size_gb": {
 							Type:     schema.TypeInt,
@@ -203,6 +194,14 @@ func dataSourceArmKubernetesCluster() *schema.Resource {
 						"max_pods": {
 							Type:     schema.TypeInt,
 							Computed: true,
+						},
+
+						"node_labels": {
+							Type:     schema.TypeMap,
+							Computed: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
 						},
 
 						"node_taints": {
@@ -243,10 +242,6 @@ func dataSourceArmKubernetesCluster() *schema.Resource {
 			},
 
 			"private_link_enabled": {
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/containers/data_source_kubernetes_cluster.go
-				Type:     schema.TypeBool,
-				Computed: true,
-=======
 				Type:          schema.TypeBool,
 				Computed:      true,
 				ConflictsWith: []string{"private_cluster_enabled"},
@@ -257,7 +252,6 @@ func dataSourceArmKubernetesCluster() *schema.Resource {
 				Type:          schema.TypeBool,
 				Computed:      true, // TODO -- remove this when deprecation resolves
 				ConflictsWith: []string{"private_link_enabled"},
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/containers/kubernetes_cluster_data_source.go
 			},
 
 			"private_fqdn": {
@@ -593,6 +587,7 @@ func dataSourceArmKubernetesClusterRead(d *schema.ResourceData, meta interface{}
 			}
 
 			d.Set("private_link_enabled", accessProfile.EnablePrivateCluster)
+			d.Set("private_cluster_enabled", accessProfile.EnablePrivateCluster)
 		}
 
 		addonProfiles := flattenKubernetesClusterDataSourceAddonProfiles(props.AddonProfiles)
@@ -913,12 +908,20 @@ func flattenKubernetesClusterDataSourceAgentPoolProfiles(input *[]containerservi
 			agentPoolProfile["max_pods"] = int(*profile.MaxPods)
 		}
 
+		if profile.NodeLabels != nil {
+			agentPoolProfile["node_labels"] = profile.NodeLabels
+		}
+
 		if profile.NodeTaints != nil {
 			agentPoolProfile["node_taints"] = *profile.NodeTaints
 		}
 
 		if profile.EnableNodePublicIP != nil {
 			agentPoolProfile["enable_node_public_ip"] = *profile.EnableNodePublicIP
+		}
+
+		if profile.Tags != nil {
+			agentPoolProfile["tags"] = tags.Flatten(profile.Tags)
 		}
 
 		agentPoolProfiles = append(agentPoolProfiles, agentPoolProfile)

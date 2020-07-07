@@ -26,7 +26,6 @@ func dataSourceArmLoadBalancer() *schema.Resource {
 			"name": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.NoZeroValues,
 			},
 
@@ -137,7 +136,6 @@ func dataSourceArmLoadBalancerRead(d *schema.ResourceData, meta interface{}) err
 
 			privateIpAddress := ""
 			privateIpAddresses := make([]string, 0)
-			privateIpAddressVersion := ""
 			for _, config := range *feipConfigs {
 				if feipProps := config.FrontendIPConfigurationPropertiesFormat; feipProps != nil {
 					if ip := feipProps.PrivateIPAddress; ip != nil {
@@ -147,14 +145,10 @@ func dataSourceArmLoadBalancerRead(d *schema.ResourceData, meta interface{}) err
 
 						privateIpAddresses = append(privateIpAddresses, *feipProps.PrivateIPAddress)
 					}
-					if privateIpAddressVersion == "" {
-						privateIpAddressVersion = string(feipProps.PrivateIPAddressVersion)
-					}
 				}
 			}
 
 			d.Set("private_ip_address", privateIpAddress)
-			d.Set("private_ip_address_version", privateIpAddressVersion)
 			d.Set("private_ip_addresses", privateIpAddresses)
 		}
 	}

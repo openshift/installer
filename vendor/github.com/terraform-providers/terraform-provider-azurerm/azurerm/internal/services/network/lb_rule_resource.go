@@ -46,8 +46,6 @@ func resourceArmLoadBalancerRule() *schema.Resource {
 				ValidateFunc: ValidateArmLoadBalancerRuleName,
 			},
 
-			"location": azure.SchemaLocationDeprecated(),
-
 			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"loadbalancer_id": {
@@ -60,7 +58,7 @@ func resourceArmLoadBalancerRule() *schema.Resource {
 			"frontend_ip_configuration_name": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"frontend_ip_configuration_id": {
@@ -199,7 +197,7 @@ func resourceArmLoadBalancerRuleCreateUpdate(d *schema.ResourceData, meta interf
 	}
 
 	var ruleId string
-	for _, LoadBalancingRule := range *(*read.LoadBalancerPropertiesFormat).LoadBalancingRules {
+	for _, LoadBalancingRule := range *read.LoadBalancerPropertiesFormat.LoadBalancingRules {
 		if *LoadBalancingRule.Name == name {
 			ruleId = *LoadBalancingRule.ID
 		}

@@ -93,11 +93,7 @@ func (client AgentPoolsClient) CreateOrUpdatePreparer(ctx context.Context, resou
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
 
-<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice/agentpools.go
-	const APIVersion = "2019-10-01"
-=======
 	const APIVersion = "2020-03-01"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice/agentpools.go
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -187,11 +183,7 @@ func (client AgentPoolsClient) DeletePreparer(ctx context.Context, resourceGroup
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
 
-<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice/agentpools.go
-	const APIVersion = "2019-10-01"
-=======
 	const APIVersion = "2020-03-01"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice/agentpools.go
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -284,11 +276,7 @@ func (client AgentPoolsClient) GetPreparer(ctx context.Context, resourceGroupNam
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
 
-<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice/agentpools.go
-	const APIVersion = "2019-10-01"
-=======
 	const APIVersion = "2020-03-01"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice/agentpools.go
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -374,11 +362,7 @@ func (client AgentPoolsClient) GetAvailableAgentPoolVersionsPreparer(ctx context
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
 
-<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice/agentpools.go
-	const APIVersion = "2019-10-01"
-=======
 	const APIVersion = "2020-03-01"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice/agentpools.go
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -467,11 +451,7 @@ func (client AgentPoolsClient) GetUpgradeProfilePreparer(ctx context.Context, re
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
 
-<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice/agentpools.go
-	const APIVersion = "2019-10-01"
-=======
 	const APIVersion = "2020-03-01"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice/agentpools.go
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -559,11 +539,7 @@ func (client AgentPoolsClient) ListPreparer(ctx context.Context, resourceGroupNa
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
 
-<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice/agentpools.go
-	const APIVersion = "2019-10-01"
-=======
 	const APIVersion = "2020-03-01"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice/agentpools.go
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}

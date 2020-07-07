@@ -28,9 +28,6 @@ import (
 )
 
 // The package's fully qualified name.
-<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice/models.go
-const fqdn = "github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice"
-=======
 const fqdn = "github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice"
 
 // AgentPoolMode enumerates the values for agent pool mode.
@@ -47,7 +44,6 @@ const (
 func PossibleAgentPoolModeValues() []AgentPoolMode {
 	return []AgentPoolMode{System, User}
 }
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice/models.go
 
 // AgentPoolType enumerates the values for agent pool type.
 type AgentPoolType string
@@ -94,8 +90,6 @@ func PossibleLoadBalancerSkuValues() []LoadBalancerSku {
 	return []LoadBalancerSku{Basic, Standard}
 }
 
-<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice/models.go
-=======
 // ManagedClusterSKUName enumerates the values for managed cluster sku name.
 type ManagedClusterSKUName string
 
@@ -139,7 +133,6 @@ func PossibleNetworkModeValues() []NetworkMode {
 	return []NetworkMode{Bridge, Transparent}
 }
 
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice/models.go
 // NetworkPlugin enumerates the values for network plugin.
 type NetworkPlugin string
 
@@ -298,6 +291,21 @@ func PossibleOSTypeValues() []OSType {
 	return []OSType{Linux, Windows}
 }
 
+// OutboundType enumerates the values for outbound type.
+type OutboundType string
+
+const (
+	// LoadBalancer ...
+	LoadBalancer OutboundType = "loadBalancer"
+	// UserDefinedRouting ...
+	UserDefinedRouting OutboundType = "userDefinedRouting"
+)
+
+// PossibleOutboundTypeValues returns an array of possible values for the OutboundType const type.
+func PossibleOutboundTypeValues() []OutboundType {
+	return []OutboundType{LoadBalancer, UserDefinedRouting}
+}
+
 // ResourceIdentityType enumerates the values for resource identity type.
 type ResourceIdentityType string
 
@@ -336,11 +344,13 @@ const (
 	Low ScaleSetPriority = "Low"
 	// Regular ...
 	Regular ScaleSetPriority = "Regular"
+	// Spot ...
+	Spot ScaleSetPriority = "Spot"
 )
 
 // PossibleScaleSetPriorityValues returns an array of possible values for the ScaleSetPriority const type.
 func PossibleScaleSetPriorityValues() []ScaleSetPriority {
-	return []ScaleSetPriority{Low, Regular}
+	return []ScaleSetPriority{Low, Regular, Spot}
 }
 
 // StorageProfileTypes enumerates the values for storage profile types.
@@ -1812,6 +1822,8 @@ type ManagedClusterAddonProfile struct {
 	Enabled *bool `json:"enabled,omitempty"`
 	// Config - Key-value pairs for configuring an add-on.
 	Config map[string]*string `json:"config"`
+	// Identity - READ-ONLY; Information of user assigned identity used by this add-on.
+	Identity *ManagedClusterAddonProfileIdentity `json:"identity,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ManagedClusterAddonProfile.
@@ -1824,6 +1836,16 @@ func (mcap ManagedClusterAddonProfile) MarshalJSON() ([]byte, error) {
 		objectMap["config"] = mcap.Config
 	}
 	return json.Marshal(objectMap)
+}
+
+// ManagedClusterAddonProfileIdentity information of user assigned identity used by this add-on.
+type ManagedClusterAddonProfileIdentity struct {
+	// ResourceID - The resource id of the user assigned identity.
+	ResourceID *string `json:"resourceId,omitempty"`
+	// ClientID - The client id of the user assigned identity.
+	ClientID *string `json:"clientId,omitempty"`
+	// ObjectID - The object id of the user assigned identity.
+	ObjectID *string `json:"objectId,omitempty"`
 }
 
 // ManagedClusterAgentPoolProfile profile for the container service agent pool.
@@ -1856,20 +1878,24 @@ type ManagedClusterAgentPoolProfile struct {
 	OrchestratorVersion *string `json:"orchestratorVersion,omitempty"`
 	// ProvisioningState - READ-ONLY; The current deployment or provisioning state, which only appears in the response.
 	ProvisioningState *string `json:"provisioningState,omitempty"`
-	// AvailabilityZones - (PREVIEW) Availability zones for nodes. Must use VirtualMachineScaleSets AgentPoolType.
+	// AvailabilityZones - Availability zones for nodes. Must use VirtualMachineScaleSets AgentPoolType.
 	AvailabilityZones *[]string `json:"availabilityZones,omitempty"`
 	// EnableNodePublicIP - Enable public IP for nodes
 	EnableNodePublicIP *bool `json:"enableNodePublicIP,omitempty"`
-	// ScaleSetPriority - ScaleSetPriority to be used to specify virtual machine scale set priority. Default to regular. Possible values include: 'Low', 'Regular'
+	// ScaleSetPriority - ScaleSetPriority to be used to specify virtual machine scale set priority. Default to regular. Possible values include: 'Spot', 'Low', 'Regular'
 	ScaleSetPriority ScaleSetPriority `json:"scaleSetPriority,omitempty"`
-	// ScaleSetEvictionPolicy - ScaleSetEvictionPolicy to be used to specify eviction policy for low priority virtual machine scale set. Default to Delete. Possible values include: 'Delete', 'Deallocate'
+	// ScaleSetEvictionPolicy - ScaleSetEvictionPolicy to be used to specify eviction policy for Spot or low priority virtual machine scale set. Default to Delete. Possible values include: 'Delete', 'Deallocate'
 	ScaleSetEvictionPolicy ScaleSetEvictionPolicy `json:"scaleSetEvictionPolicy,omitempty"`
+	// SpotMaxPrice - SpotMaxPrice to be used to specify the maximum price you are willing to pay in US Dollars. Possible values are any decimal value greater than zero or -1 which indicates default price to be up-to on-demand.
+	SpotMaxPrice *float64 `json:"spotMaxPrice,omitempty"`
+	// Tags - Agent pool tags to be persisted on the agent pool virtual machine scale set.
+	Tags map[string]*string `json:"tags"`
+	// NodeLabels - Agent pool node labels to be persisted across all nodes in agent pool.
+	NodeLabels map[string]*string `json:"nodeLabels"`
 	// NodeTaints - Taints added to new nodes during node pool create and scale. For example, key=value:NoSchedule.
 	NodeTaints *[]string `json:"nodeTaints,omitempty"`
 }
 
-<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice/models.go
-=======
 // MarshalJSON is the custom marshaler for ManagedClusterAgentPoolProfile.
 func (mcapp ManagedClusterAgentPoolProfile) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -1939,7 +1965,6 @@ func (mcapp ManagedClusterAgentPoolProfile) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice/models.go
 // ManagedClusterAgentPoolProfileProperties properties for the container service agent pool profile.
 type ManagedClusterAgentPoolProfileProperties struct {
 	// Count - Number of agents (VMs) to host docker containers. Allowed values must be in the range of 0 to 100 (inclusive) for user pools and in the range of 1 to 100 (inclusive) for system pools. The default value is 1.
@@ -1968,20 +1993,24 @@ type ManagedClusterAgentPoolProfileProperties struct {
 	OrchestratorVersion *string `json:"orchestratorVersion,omitempty"`
 	// ProvisioningState - READ-ONLY; The current deployment or provisioning state, which only appears in the response.
 	ProvisioningState *string `json:"provisioningState,omitempty"`
-	// AvailabilityZones - (PREVIEW) Availability zones for nodes. Must use VirtualMachineScaleSets AgentPoolType.
+	// AvailabilityZones - Availability zones for nodes. Must use VirtualMachineScaleSets AgentPoolType.
 	AvailabilityZones *[]string `json:"availabilityZones,omitempty"`
 	// EnableNodePublicIP - Enable public IP for nodes
 	EnableNodePublicIP *bool `json:"enableNodePublicIP,omitempty"`
-	// ScaleSetPriority - ScaleSetPriority to be used to specify virtual machine scale set priority. Default to regular. Possible values include: 'Low', 'Regular'
+	// ScaleSetPriority - ScaleSetPriority to be used to specify virtual machine scale set priority. Default to regular. Possible values include: 'Spot', 'Low', 'Regular'
 	ScaleSetPriority ScaleSetPriority `json:"scaleSetPriority,omitempty"`
-	// ScaleSetEvictionPolicy - ScaleSetEvictionPolicy to be used to specify eviction policy for low priority virtual machine scale set. Default to Delete. Possible values include: 'Delete', 'Deallocate'
+	// ScaleSetEvictionPolicy - ScaleSetEvictionPolicy to be used to specify eviction policy for Spot or low priority virtual machine scale set. Default to Delete. Possible values include: 'Delete', 'Deallocate'
 	ScaleSetEvictionPolicy ScaleSetEvictionPolicy `json:"scaleSetEvictionPolicy,omitempty"`
+	// SpotMaxPrice - SpotMaxPrice to be used to specify the maximum price you are willing to pay in US Dollars. Possible values are any decimal value greater than zero or -1 which indicates default price to be up-to on-demand.
+	SpotMaxPrice *float64 `json:"spotMaxPrice,omitempty"`
+	// Tags - Agent pool tags to be persisted on the agent pool virtual machine scale set.
+	Tags map[string]*string `json:"tags"`
+	// NodeLabels - Agent pool node labels to be persisted across all nodes in agent pool.
+	NodeLabels map[string]*string `json:"nodeLabels"`
 	// NodeTaints - Taints added to new nodes during node pool create and scale. For example, key=value:NoSchedule.
 	NodeTaints *[]string `json:"nodeTaints,omitempty"`
 }
 
-<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice/models.go
-=======
 // MarshalJSON is the custom marshaler for ManagedClusterAgentPoolProfileProperties.
 func (mcappp ManagedClusterAgentPoolProfileProperties) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
@@ -2048,7 +2077,6 @@ func (mcappp ManagedClusterAgentPoolProfileProperties) MarshalJSON() ([]byte, er
 	return json.Marshal(objectMap)
 }
 
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice/models.go
 // ManagedClusterAPIServerAccessProfile access profile for managed cluster API server.
 type ManagedClusterAPIServerAccessProfile struct {
 	// AuthorizedIPRanges - Authorized IP Ranges to kubernetes API server.
@@ -2213,7 +2241,7 @@ func NewManagedClusterListResultPage(getNextPage func(context.Context, ManagedCl
 	return ManagedClusterListResultPage{fn: getNextPage}
 }
 
-// ManagedClusterLoadBalancerProfile profile of the managed cluster load balancer
+// ManagedClusterLoadBalancerProfile profile of the managed cluster load balancer.
 type ManagedClusterLoadBalancerProfile struct {
 	// ManagedOutboundIPs - Desired managed outbound IPs for the cluster load balancer.
 	ManagedOutboundIPs *ManagedClusterLoadBalancerProfileManagedOutboundIPs `json:"managedOutboundIPs,omitempty"`
@@ -2223,6 +2251,10 @@ type ManagedClusterLoadBalancerProfile struct {
 	OutboundIPs *ManagedClusterLoadBalancerProfileOutboundIPs `json:"outboundIPs,omitempty"`
 	// EffectiveOutboundIPs - The effective outbound IP resources of the cluster load balancer.
 	EffectiveOutboundIPs *[]ResourceReference `json:"effectiveOutboundIPs,omitempty"`
+	// AllocatedOutboundPorts - Desired number of allocated SNAT ports per VM. Allowed values must be in the range of 0 to 64000 (inclusive). The default value is 0 which results in Azure dynamically allocating ports.
+	AllocatedOutboundPorts *int32 `json:"allocatedOutboundPorts,omitempty"`
+	// IdleTimeoutInMinutes - Desired outbound flow idle timeout in minutes. Allowed values must be in the range of 4 to 120 (inclusive). The default value is 30 minutes.
+	IdleTimeoutInMinutes *int32 `json:"idleTimeoutInMinutes,omitempty"`
 }
 
 // ManagedClusterLoadBalancerProfileManagedOutboundIPs desired managed outbound IPs for the cluster load
@@ -2300,8 +2332,14 @@ type ManagedClusterProperties struct {
 	NetworkProfile *NetworkProfileType `json:"networkProfile,omitempty"`
 	// AadProfile - Profile of Azure Active Directory configuration.
 	AadProfile *ManagedClusterAADProfile `json:"aadProfile,omitempty"`
+	// AutoScalerProfile - Parameters to be applied to the cluster-autoscaler when enabled
+	AutoScalerProfile *ManagedClusterPropertiesAutoScalerProfile `json:"autoScalerProfile,omitempty"`
 	// APIServerAccessProfile - Access profile for managed cluster API server.
 	APIServerAccessProfile *ManagedClusterAPIServerAccessProfile `json:"apiServerAccessProfile,omitempty"`
+	// DiskEncryptionSetID - ResourceId of the disk encryption set to use for enabling encryption at rest.
+	DiskEncryptionSetID *string `json:"diskEncryptionSetID,omitempty"`
+	// IdentityProfile - Identities associated with the cluster.
+	IdentityProfile map[string]*ManagedClusterPropertiesIdentityProfileValue `json:"identityProfile"`
 }
 
 // MarshalJSON is the custom marshaler for ManagedClusterProperties.
@@ -2343,14 +2381,21 @@ func (mcp ManagedClusterProperties) MarshalJSON() ([]byte, error) {
 	if mcp.AadProfile != nil {
 		objectMap["aadProfile"] = mcp.AadProfile
 	}
+	if mcp.AutoScalerProfile != nil {
+		objectMap["autoScalerProfile"] = mcp.AutoScalerProfile
+	}
 	if mcp.APIServerAccessProfile != nil {
 		objectMap["apiServerAccessProfile"] = mcp.APIServerAccessProfile
+	}
+	if mcp.DiskEncryptionSetID != nil {
+		objectMap["diskEncryptionSetID"] = mcp.DiskEncryptionSetID
+	}
+	if mcp.IdentityProfile != nil {
+		objectMap["identityProfile"] = mcp.IdentityProfile
 	}
 	return json.Marshal(objectMap)
 }
 
-<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice/models.go
-=======
 // ManagedClusterPropertiesAutoScalerProfile parameters to be applied to the cluster-autoscaler when
 // enabled
 type ManagedClusterPropertiesAutoScalerProfile struct {
@@ -2375,7 +2420,6 @@ type ManagedClusterPropertiesIdentityProfileValue struct {
 	ObjectID *string `json:"objectId,omitempty"`
 }
 
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice/models.go
 // ManagedClustersCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a
 // long-running operation.
 type ManagedClustersCreateOrUpdateFuture struct {
@@ -2668,6 +2712,8 @@ type NetworkProfileType struct {
 	NetworkPlugin NetworkPlugin `json:"networkPlugin,omitempty"`
 	// NetworkPolicy - Network policy used for building Kubernetes network. Possible values include: 'NetworkPolicyCalico', 'NetworkPolicyAzure'
 	NetworkPolicy NetworkPolicy `json:"networkPolicy,omitempty"`
+	// NetworkMode - Network mode used for building Kubernetes network. Possible values include: 'Transparent', 'Bridge'
+	NetworkMode NetworkMode `json:"networkMode,omitempty"`
 	// PodCidr - A CIDR notation IP range from which to assign pod IPs when kubenet is used.
 	PodCidr *string `json:"podCidr,omitempty"`
 	// ServiceCidr - A CIDR notation IP range from which to assign service cluster IPs. It must not overlap with any Subnet IP ranges.
@@ -2676,6 +2722,8 @@ type NetworkProfileType struct {
 	DNSServiceIP *string `json:"dnsServiceIP,omitempty"`
 	// DockerBridgeCidr - A CIDR notation IP range assigned to the Docker bridge network. It must not overlap with any Subnet IP ranges or the Kubernetes service address range.
 	DockerBridgeCidr *string `json:"dockerBridgeCidr,omitempty"`
+	// OutboundType - The outbound (egress) routing method. Possible values include: 'LoadBalancer', 'UserDefinedRouting'
+	OutboundType OutboundType `json:"outboundType,omitempty"`
 	// LoadBalancerSku - The load balancer sku for the managed cluster. Possible values include: 'Standard', 'Basic'
 	LoadBalancerSku LoadBalancerSku `json:"loadBalancerSku,omitempty"`
 	// LoadBalancerProfile - Profile of the cluster load balancer.
@@ -3566,6 +3614,16 @@ func (toVar TagsObject) MarshalJSON() ([]byte, error) {
 		objectMap["tags"] = toVar.Tags
 	}
 	return json.Marshal(objectMap)
+}
+
+// UserAssignedIdentity ...
+type UserAssignedIdentity struct {
+	// ResourceID - The resource id of the user assigned identity.
+	ResourceID *string `json:"resourceId,omitempty"`
+	// ClientID - The client id of the user assigned identity.
+	ClientID *string `json:"clientId,omitempty"`
+	// ObjectID - The object id of the user assigned identity.
+	ObjectID *string `json:"objectId,omitempty"`
 }
 
 // VMDiagnostics profile for diagnostics on the container service VMs.

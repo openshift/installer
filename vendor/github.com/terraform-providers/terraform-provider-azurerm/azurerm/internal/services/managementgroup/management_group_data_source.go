@@ -8,6 +8,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2018-03-01-preview/managementgroups"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managementgroup/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
@@ -22,10 +23,6 @@ func dataSourceArmManagementGroup() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"group_id": {
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managementgroup/data_source_management_group.go
-				Type:     schema.TypeString,
-				Required: true,
-=======
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true,
@@ -40,7 +37,6 @@ func dataSourceArmManagementGroup() *schema.Resource {
 				Computed:     true,
 				ExactlyOneOf: []string{"name", "group_id", "display_name"},
 				ValidateFunc: validate.ManagementGroupName,
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managementgroup/management_group_data_source.go
 			},
 
 			"display_name": {
@@ -70,9 +66,6 @@ func dataSourceArmManagementGroupRead(d *schema.ResourceData, meta interface{}) 
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managementgroup/data_source_management_group.go
-	groupId := d.Get("group_id").(string)
-=======
 	groupName := ""
 	if v, ok := d.GetOk("name"); ok {
 		groupName = v.(string)
@@ -81,7 +74,6 @@ func dataSourceArmManagementGroupRead(d *schema.ResourceData, meta interface{}) 
 		groupName = v.(string)
 	}
 	displayName := d.Get("display_name").(string)
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managementgroup/management_group_data_source.go
 
 	// one of displayName and groupName must be non-empty, this is guaranteed by schema
 	// if the user is retrieving the mgmt group by display name, use the list api to get the group name first
@@ -93,26 +85,22 @@ func dataSourceArmManagementGroupRead(d *schema.ResourceData, meta interface{}) 
 		}
 	}
 	recurse := true
-	resp, err := client.Get(ctx, groupId, "children", &recurse, "", managementGroupCacheControl)
+	resp, err := client.Get(ctx, groupName, "children", &recurse, "", managementGroupCacheControl)
 	if err != nil {
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managementgroup/data_source_management_group.go
-		if utils.ResponseWasNotFound(resp.Response) {
-			return fmt.Errorf("Management Group %q was not found", groupId)
-=======
 		if utils.ResponseWasForbidden(resp.Response) {
 			return fmt.Errorf("Management Group %q was not found", groupName)
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/managementgroup/management_group_data_source.go
 		}
 
 		return fmt.Errorf("Error reading Management Group %q: %+v", groupName, err)
 	}
 
 	if resp.ID == nil {
-		return fmt.Errorf("Client returned an nil ID for Management Group %q", groupId)
+		return fmt.Errorf("Client returned an nil ID for Management Group %q", groupName)
 	}
 
 	d.SetId(*resp.ID)
-	d.Set("group_id", groupId)
+	d.Set("name", groupName)
+	d.Set("group_id", groupName)
 
 	if props := resp.Properties; props != nil {
 		d.Set("display_name", props.DisplayName)

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
@@ -36,21 +36,21 @@ func resourceArmMarketplaceAgreement() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"plan": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"publisher": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"license_text_link": {
@@ -158,15 +158,11 @@ func resourceArmMarketplaceAgreementRead(d *schema.ResourceData, meta interface{
 	d.Set("offer", offer)
 	d.Set("plan", plan)
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/resource_arm_marketplace_agreement.go
-	if props := resp.AgreementProperties; props != nil {
-=======
 	if props := term.AgreementProperties; props != nil {
 		if accepted := props.Accepted != nil && *props.Accepted; !accepted {
 			// if props.Accepted is not true, the agreement does not exist
 			d.SetId("")
 		}
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/marketplace_agreement_resource.go
 		d.Set("license_text_link", props.LicenseTextLink)
 		d.Set("privacy_policy_link", props.PrivacyPolicyLink)
 	}

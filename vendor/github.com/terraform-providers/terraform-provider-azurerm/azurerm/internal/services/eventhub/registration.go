@@ -11,18 +11,21 @@ func (r Registration) Name() string {
 	return "EventHub"
 }
 
+// WebsiteCategories returns a list of categories which can be used for the sidebar
+func (r Registration) WebsiteCategories() []string {
+	return []string{
+		"Messaging",
+	}
+}
+
 // SupportedDataSources returns the supported Data Sources supported by this Service
 func (r Registration) SupportedDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
-<<<<<<< HEAD
-		"azurerm_eventhub_namespace": dataSourceEventHubNamespace(),
-=======
 		"azurerm_eventhub":                              dataSourceEventHub(),
 		"azurerm_eventhub_authorization_rule":           dataSourceEventHubAuthorizationRule(),
 		"azurerm_eventhub_consumer_group":               dataSourceEventHubConsumerGroup(),
 		"azurerm_eventhub_namespace":                    dataSourceEventHubNamespace(),
 		"azurerm_eventhub_namespace_authorization_rule": dataSourceEventHubNamespaceAuthorizationRule(),
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 	}
 }
 

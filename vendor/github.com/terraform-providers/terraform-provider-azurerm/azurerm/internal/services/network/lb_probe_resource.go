@@ -41,10 +41,8 @@ func resourceArmLoadBalancerProbe() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
-
-			"location": azure.SchemaLocationDeprecated(),
 
 			"resource_group_name": azure.SchemaResourceGroupName(),
 
@@ -96,7 +94,7 @@ func resourceArmLoadBalancerProbe() *schema.Resource {
 				Computed: true,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
-					ValidateFunc: validate.NoEmptyStrings,
+					ValidateFunc: validation.StringIsNotEmpty,
 				},
 				Set: schema.HashString,
 			},
@@ -163,7 +161,7 @@ func resourceArmLoadBalancerProbeCreateUpdate(d *schema.ResourceData, meta inter
 	}
 
 	var createdProbeId string
-	for _, Probe := range *(*read.LoadBalancerPropertiesFormat).Probes {
+	for _, Probe := range *read.LoadBalancerPropertiesFormat.Probes {
 		if *Probe.Name == name {
 			createdProbeId = *Probe.ID
 		}

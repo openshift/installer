@@ -54,9 +54,6 @@ func resourceArmEventHub() *schema.Resource {
 
 			"resource_group_name": azure.SchemaResourceGroupName(),
 
-			// TODO: remove me in the next major version
-			"location": azure.SchemaLocationDeprecated(),
-
 			"partition_count": {
 				Type:         schema.TypeInt,
 				Required:     true,
@@ -187,12 +184,7 @@ func resourceArmEventHubCreateUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	if _, ok := d.GetOk("capture_description"); ok {
-		captureDescription, err := expandEventHubCaptureDescription(d)
-		if err != nil {
-			return fmt.Errorf("Error expanding EventHub Capture Description: %s", err)
-		}
-
-		parameters.Properties.CaptureDescription = captureDescription
+		parameters.Properties.CaptureDescription = expandEventHubCaptureDescription(d)
 	}
 
 	if _, err := client.CreateOrUpdate(ctx, resourceGroup, namespaceName, name, parameters); err != nil {
@@ -322,7 +314,7 @@ func ValidateEventHubArchiveNameFormat(v interface{}, k string) (warnings []stri
 	return warnings, errors
 }
 
-func expandEventHubCaptureDescription(d *schema.ResourceData) (*eventhub.CaptureDescription, error) {
+func expandEventHubCaptureDescription(d *schema.ResourceData) *eventhub.CaptureDescription {
 	inputs := d.Get("capture_description").([]interface{})
 	input := inputs[0].(map[string]interface{})
 
@@ -361,7 +353,7 @@ func expandEventHubCaptureDescription(d *schema.ResourceData) (*eventhub.Capture
 		}
 	}
 
-	return &captureDescription, nil
+	return &captureDescription
 }
 
 func flattenEventHubCaptureDescription(description *eventhub.CaptureDescription) []interface{} {

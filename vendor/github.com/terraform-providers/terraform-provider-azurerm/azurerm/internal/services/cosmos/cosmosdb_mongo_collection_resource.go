@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/cosmos-db/mgmt/2015-04-08/documentdb"
@@ -67,7 +66,7 @@ func resourceArmCosmosDbMongoCollection() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			// default TTL is simply an index on _ts with expireAfterOption, given we can't seem to set TTLs on a given index lets expose this to match the portal
@@ -84,26 +83,41 @@ func resourceArmCosmosDbMongoCollection() *schema.Resource {
 				ValidateFunc: validate.CosmosThroughput,
 			},
 
-			"indexes": {
-				Type:       schema.TypeSet,
-				Optional:   true,
-				Deprecated: "Indexes are ignored unless they are the shared key so have been deprecated.",
+			"index": {
+				Type:     schema.TypeSet,
+				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"key": {
-							Type:         schema.TypeString, // this is a list in the SDK/API, however any more then a single value causes a 404
-							Required:     true,
-							ValidateFunc: validate.NoEmptyStrings,
+						"keys": {
+							Type:     schema.TypeSet,
+							Required: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
 						},
 
 						"unique": {
 							Type:     schema.TypeBool,
 							Optional: true,
-							Default:  true, // portal defaults to true
+							Default:  false,
+						},
+					},
+				},
+			},
+
+			"system_indexes": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"keys": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
 						},
 
-						// expire_after_seconds is only allowed on `_ts`:
-						// Unable to parse request payload due to the following reason: 'The 'expireAfterSeconds' option is supported on '_ts' field only.
+						"unique": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -146,7 +160,7 @@ func resourceArmCosmosDbMongoCollectionCreate(d *schema.ResourceData, meta inter
 		MongoDBCollectionCreateUpdateProperties: &documentdb.MongoDBCollectionCreateUpdateProperties{
 			Resource: &documentdb.MongoDBCollectionResource{
 				ID:      &name,
-				Indexes: expandCosmosMongoCollectionIndexes(d.Get("indexes"), ttl),
+				Indexes: expandCosmosMongoCollectionIndex(d.Get("index").(*schema.Set).List(), ttl),
 			},
 			Options: map[string]*string{},
 		},
@@ -206,7 +220,7 @@ func resourceArmCosmosDbMongoCollectionUpdate(d *schema.ResourceData, meta inter
 		MongoDBCollectionCreateUpdateProperties: &documentdb.MongoDBCollectionCreateUpdateProperties{
 			Resource: &documentdb.MongoDBCollectionResource{
 				ID:      &id.Collection,
-				Indexes: expandCosmosMongoCollectionIndexes(d.Get("indexes"), ttl),
+				Indexes: expandCosmosMongoCollectionIndex(d.Get("index").(*schema.Set).List(), ttl),
 			},
 			Options: map[string]*string{},
 		},
@@ -288,12 +302,15 @@ func resourceArmCosmosDbMongoCollectionRead(d *schema.ResourceData, meta interfa
 			d.Set("shard_key", k)
 		}
 
-		if props.Indexes != nil {
-			indexes, ttl := flattenCosmosMongoCollectionIndexes(props.Indexes)
-			d.Set("default_ttl_seconds", ttl)
-			if err := d.Set("indexes", indexes); err != nil {
-				return fmt.Errorf("Error setting `indexes`: %+v", err)
-			}
+		indexes, systemIndexes, ttl := flattenCosmosMongoCollectionIndex(props.Indexes)
+		if err := d.Set("default_ttl_seconds", ttl); err != nil {
+			return fmt.Errorf("failed to set `default_ttl_seconds`: %+v", err)
+		}
+		if err := d.Set("index", indexes); err != nil {
+			return fmt.Errorf("failed to set `index`: %+v", err)
+		}
+		if err := d.Set("system_indexes", systemIndexes); err != nil {
+			return fmt.Errorf("failed to set `system_indexes`: %+v", err)
 		}
 	}
 
@@ -336,23 +353,26 @@ func resourceArmCosmosDbMongoCollectionDelete(d *schema.ResourceData, meta inter
 	return nil
 }
 
-func expandCosmosMongoCollectionIndexes(input interface{}, defaultTtl *int) *[]documentdb.MongoIndex {
-	outputs := make([]documentdb.MongoIndex, 0)
+func expandCosmosMongoCollectionIndex(indexes []interface{}, defaultTtl *int) *[]documentdb.MongoIndex {
+	results := make([]documentdb.MongoIndex, 0)
 
-	for _, i := range input.(*schema.Set).List() {
-		b := i.(map[string]interface{})
-		outputs = append(outputs, documentdb.MongoIndex{
-			Key: &documentdb.MongoIndexKeys{
-				Keys: &[]string{b["key"].(string)},
-			},
-			Options: &documentdb.MongoIndexOptions{
-				Unique: utils.Bool(b["unique"].(bool)),
-			},
-		})
+	if len(indexes) != 0 {
+		for _, v := range indexes {
+			index := v.(map[string]interface{})
+
+			results = append(results, documentdb.MongoIndex{
+				Key: &documentdb.MongoIndexKeys{
+					Keys: utils.ExpandStringSlice(index["keys"].(*schema.Set).List()),
+				},
+				Options: &documentdb.MongoIndexOptions{
+					Unique: utils.Bool(index["unique"].(bool)),
+				},
+			})
+		}
 	}
 
 	if defaultTtl != nil {
-		outputs = append(outputs, documentdb.MongoIndex{
+		results = append(results, documentdb.MongoIndex{
 			Key: &documentdb.MongoIndexKeys{
 				Keys: &[]string{"_ts"},
 			},
@@ -362,46 +382,62 @@ func expandCosmosMongoCollectionIndexes(input interface{}, defaultTtl *int) *[]d
 		})
 	}
 
-	return &outputs
+	return &results
 }
 
-func flattenCosmosMongoCollectionIndexes(indexes *[]documentdb.MongoIndex) (*[]map[string]interface{}, *int) {
-	slice := make([]map[string]interface{}, 0)
+func flattenCosmosMongoCollectionIndex(input *[]documentdb.MongoIndex) (*[]map[string]interface{}, *[]map[string]interface{}, *int32) {
+	indexes := make([]map[string]interface{}, 0)
+	systemIndexes := make([]map[string]interface{}, 0)
+	var ttl *int32
+	if input == nil {
+		return &indexes, &systemIndexes, ttl
+	}
 
-	var ttl int
-	for _, i := range *indexes {
-		if key := i.Key; key != nil {
-			m := map[string]interface{}{}
-			var ttlInner int32
+	for _, v := range *input {
+		index := map[string]interface{}{}
+		systemIndex := map[string]interface{}{}
 
-			if options := i.Options; options != nil {
-				if v := options.Unique; v != nil {
-					m["unique"] = *v
-				} else {
-					m["unique"] = false // todo required? API sends back nothing for false
+		if v.Key != nil && v.Key.Keys != nil && len(*v.Key.Keys) > 0 {
+			key := (*v.Key.Keys)[0]
+
+			switch key {
+			// As `DocumentDBDefaultIndex` and `_id` cannot be updated, so they would be moved into `system_indexes`.
+			case "_id":
+				systemIndex["keys"] = utils.FlattenStringSlice(v.Key.Keys)
+				// The system index `_id` is always unique but api returns nil and it would be converted to `false` by zero-value. So it has to be manually set as `true`.
+				systemIndex["unique"] = true
+
+				systemIndexes = append(systemIndexes, systemIndex)
+			case "DocumentDBDefaultIndex":
+				// Updating system index `DocumentDBDefaultIndex` is not a supported scenario.
+				systemIndex["keys"] = utils.FlattenStringSlice(v.Key.Keys)
+
+				isUnique := false
+				if v.Options != nil && v.Options.Unique != nil {
+					isUnique = *v.Options.Unique
 				}
+				systemIndex["unique"] = isUnique
 
-				if v := options.ExpireAfterSeconds; v != nil {
-					ttlInner = *v
+				systemIndexes = append(systemIndexes, systemIndex)
+			case "_ts":
+				if v.Options != nil && v.Options.ExpireAfterSeconds != nil {
+					// As `ExpireAfterSeconds` only can be applied to system index `_ts`, so it would be set in `default_ttl_seconds`.
+					ttl = v.Options.ExpireAfterSeconds
 				}
-			}
+			default:
+				// The other settable indexes would be set in `index`
+				index["keys"] = utils.FlattenStringSlice(v.Key.Keys)
 
-			if keys := key.Keys; keys != nil && len(*keys) > 0 {
-				k := (*keys)[0]
-
-				if !strings.HasPrefix(k, "_") && k != "DocumentDBDefaultIndex" { // lets ignore system properties?
-					m["key"] = k
-
-					// only append indexes with a non system key
-					slice = append(slice, m)
+				isUnique := false
+				if v.Options != nil && v.Options.Unique != nil {
+					isUnique = *v.Options.Unique
 				}
+				index["unique"] = isUnique
 
-				if k == "_ts" {
-					ttl = int(ttlInner)
-				}
+				indexes = append(indexes, index)
 			}
 		}
 	}
 
-	return &slice, &ttl
+	return &indexes, &systemIndexes, ttl
 }

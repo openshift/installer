@@ -12,8 +12,6 @@ func ExpandStringSlice(input []interface{}) *[]string {
 	return &result
 }
 
-<<<<<<< HEAD
-=======
 func ExpandFloatSlice(input []interface{}) *[]float64 {
 	result := make([]float64, 0)
 	for _, item := range input {
@@ -41,7 +39,6 @@ func ExpandInt32Slice(input []interface{}) *[]int32 {
 	return &result
 }
 
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0
 func FlattenStringSlice(input *[]string) []interface{} {
 	result := make([]interface{}, 0)
 	if input != nil {
@@ -51,8 +48,6 @@ func FlattenStringSlice(input *[]string) []interface{} {
 	}
 	return result
 }
-<<<<<<< HEAD
-=======
 
 func FlattenFloatSlice(input *[]float64) []interface{} {
 	result := make([]interface{}, 0)
@@ -85,4 +80,3 @@ func FlattenInt32Slice(input *[]int32) []interface{} {
 	}
 	return result
 }
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0

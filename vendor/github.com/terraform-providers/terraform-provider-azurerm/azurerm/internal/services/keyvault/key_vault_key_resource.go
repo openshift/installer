@@ -7,16 +7,12 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/2016-10-01/keyvault"
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/keyvault/resource_arm_key_vault_key.go
-=======
 	"github.com/Azure/go-autorest/autorest/date"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/keyvault/key_vault_key_resource.go
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
@@ -50,23 +46,10 @@ func resourceArmKeyVaultKey() *schema.Resource {
 			},
 
 			"key_vault_id": {
-				Type:          schema.TypeString,
-				Optional:      true, //todo required in 2.0
-				Computed:      true, //todo removed in 2.0
-				ForceNew:      true,
-				ValidateFunc:  azure.ValidateResourceID,
-				ConflictsWith: []string{"vault_uri"},
-			},
-
-			// todo remove in 2.0
-			"vault_uri": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				Computed:      true,
-				Deprecated:    "This property has been deprecated in favour of the key_vault_id property. This will prevent a class of bugs as described in https://github.com/terraform-providers/terraform-provider-azurerm/issues/2396 and will be removed in version 2.0 of the provider",
-				ValidateFunc:  validate.URLIsHTTPS,
-				ConflictsWith: []string{"key_vault_id"},
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"key_type": {
@@ -127,6 +110,18 @@ func resourceArmKeyVaultKey() *schema.Resource {
 				ConflictsWith: []string{"key_size"},
 			},
 
+			"not_before_date": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.IsRFC3339Time,
+			},
+
+			"expiration_date": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.IsRFC3339Time,
+			},
+
 			// Computed
 			"version": {
 				Type:     schema.TypeString,
@@ -166,26 +161,11 @@ func resourceArmKeyVaultKeyCreate(d *schema.ResourceData, meta interface{}) erro
 
 	log.Print("[INFO] preparing arguments for AzureRM KeyVault Key creation.")
 	name := d.Get("name").(string)
-	keyVaultBaseUri := d.Get("vault_uri").(string)
 	keyVaultId := d.Get("key_vault_id").(string)
 
-	if keyVaultBaseUri == "" {
-		if keyVaultId == "" {
-			return fmt.Errorf("one of `key_vault_id` or `vault_uri` must be set")
-		}
-
-		pKeyVaultBaseUrl, err := azure.GetKeyVaultBaseUrlFromID(ctx, vaultClient, keyVaultId)
-		if err != nil {
-			return fmt.Errorf("Error looking up Key %q vault url from id %q: %+v", name, keyVaultId, err)
-		}
-
-		keyVaultBaseUri = pKeyVaultBaseUrl
-	} else {
-		id, err := azure.GetKeyVaultIDFromBaseUrl(ctx, vaultClient, keyVaultBaseUri)
-		if err != nil {
-			return fmt.Errorf("Error unable to find key vault ID from URL %q for certificate %q: %+v", keyVaultBaseUri, name, err)
-		}
-		d.Set("key_vault_id", id)
+	keyVaultBaseUri, err := azure.GetKeyVaultBaseUrlFromID(ctx, vaultClient, keyVaultId)
+	if err != nil {
+		return fmt.Errorf("Error looking up Key %q vault url from id %q: %+v", name, keyVaultId, err)
 	}
 
 	if features.ShouldResourcesBeImported() {
@@ -230,10 +210,6 @@ func resourceArmKeyVaultKeyCreate(d *schema.ResourceData, meta interface{}) erro
 	// TODO: support `oct` once this is fixed
 	// https://github.com/Azure/azure-rest-api-specs/issues/1739#issuecomment-332236257
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/keyvault/resource_arm_key_vault_key.go
-	if _, err := client.CreateKey(ctx, keyVaultBaseUri, name, parameters); err != nil {
-		return fmt.Errorf("Error Creating Key: %+v", err)
-=======
 	if v, ok := d.GetOk("not_before_date"); ok {
 		notBeforeDate, _ := time.Parse(time.RFC3339, v.(string)) // validated by schema
 		notBeforeUnixTime := date.UnixTime(notBeforeDate)
@@ -272,7 +248,6 @@ func resourceArmKeyVaultKeyCreate(d *schema.ResourceData, meta interface{}) erro
 		} else {
 			return fmt.Errorf("Error Creating Key: %+v", err)
 		}
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/keyvault/key_vault_key_resource.go
 	}
 
 	// "" indicates the latest version
@@ -326,6 +301,18 @@ func resourceArmKeyVaultKeyUpdate(d *schema.ResourceData, meta interface{}) erro
 		Tags: tags.Expand(t),
 	}
 
+	if v, ok := d.GetOk("not_before_date"); ok {
+		notBeforeDate, _ := time.Parse(time.RFC3339, v.(string)) // validated by schema
+		notBeforeUnixTime := date.UnixTime(notBeforeDate)
+		parameters.KeyAttributes.NotBefore = &notBeforeUnixTime
+	}
+
+	if v, ok := d.GetOk("expiration_date"); ok {
+		expirationDate, _ := time.Parse(time.RFC3339, v.(string)) // validated by schema
+		expirationUnixTime := date.UnixTime(expirationDate)
+		parameters.KeyAttributes.Expires = &expirationUnixTime
+	}
+
 	if _, err = client.UpdateKey(ctx, id.KeyVaultBaseUrl, id.Name, id.Version, parameters); err != nil {
 		return err
 	}
@@ -376,7 +363,7 @@ func resourceArmKeyVaultKeyRead(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	d.Set("name", id.Name)
-	d.Set("vault_uri", id.KeyVaultBaseUrl)
+
 	if key := resp.Key; key != nil {
 		d.Set("key_type", string(key.Kty))
 
@@ -398,6 +385,16 @@ func resourceArmKeyVaultKeyRead(d *schema.ResourceData, meta interface{}) error 
 		}
 
 		d.Set("curve", key.Crv)
+	}
+
+	if attributes := resp.Attributes; attributes != nil {
+		if v := attributes.NotBefore; v != nil {
+			d.Set("not_before_date", time.Time(*v).Format(time.RFC3339))
+		}
+
+		if v := attributes.Expires; v != nil {
+			d.Set("expiration_date", time.Time(*v).Format(time.RFC3339))
+		}
 	}
 
 	// Computed

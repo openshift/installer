@@ -18,9 +18,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/structure"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/policy/parse"
+	azSchema "github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/schema"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
@@ -31,9 +32,11 @@ func resourceArmPolicySetDefinition() *schema.Resource {
 		Update: resourceArmPolicySetDefinitionCreateUpdate,
 		Read:   resourceArmPolicySetDefinitionRead,
 		Delete: resourceArmPolicySetDefinitionDelete,
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
+
+		Importer: azSchema.ValidateResourceIDPriorToImport(func(id string) error {
+			_, err := parse.PolicySetDefinitionID(id)
+			return err
+		}),
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(30 * time.Minute),
@@ -47,7 +50,7 @@ func resourceArmPolicySetDefinition() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"policy_type": {
@@ -71,7 +74,7 @@ func resourceArmPolicySetDefinition() *schema.Resource {
 			"display_name": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"description": {
@@ -82,36 +85,28 @@ func resourceArmPolicySetDefinition() *schema.Resource {
 			"metadata": {
 				Type:             schema.TypeString,
 				Optional:         true,
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/policy/resource_arm_policy_set_definition.go
-				ValidateFunc:     validation.ValidateJsonString,
-				DiffSuppressFunc: structure.SuppressJsonDiff,
-=======
 				Computed:         true,
 				ValidateFunc:     validation.StringIsJSON,
 				DiffSuppressFunc: policySetDefinitionsMetadataDiffSuppressFunc,
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/policy/policy_set_definition_resource.go
 			},
 
 			"parameters": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateFunc:     validation.ValidateJsonString,
+				ValidateFunc:     validation.StringIsJSON,
 				DiffSuppressFunc: structure.SuppressJsonDiff,
 			},
 
 			"policy_definitions": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				ValidateFunc:     validation.ValidateJsonString,
+				ValidateFunc:     validation.StringIsJSON,
 				DiffSuppressFunc: policyDefinitionsDiffSuppressFunc,
 			},
 		},
 	}
 }
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/policy/resource_arm_policy_set_definition.go
-func policyDefinitionsDiffSuppressFunc(k, old, new string, d *schema.ResourceData) bool {
-=======
 func policySetDefinitionsMetadataDiffSuppressFunc(_, old, new string, _ *schema.ResourceData) bool {
 	var oldPolicySetDefinitionsMetadata map[string]interface{}
 	errOld := json.Unmarshal([]byte(old), &oldPolicySetDefinitionsMetadata)
@@ -136,7 +131,6 @@ func policySetDefinitionsMetadataDiffSuppressFunc(_, old, new string, _ *schema.
 }
 
 func policyDefinitionsDiffSuppressFunc(_, old, new string, _ *schema.ResourceData) bool {
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/policy/policy_set_definition_resource.go
 	var oldPolicyDefinitions []policy.DefinitionReference
 	errOld := json.Unmarshal([]byte(old), &oldPolicyDefinitions)
 	if errOld != nil {
@@ -172,7 +166,7 @@ func resourceArmPolicySetDefinitionCreateUpdate(d *schema.ResourceData, meta int
 	managementGroupID := d.Get("management_group_id").(string)
 
 	if features.ShouldResourcesBeImported() && d.IsNewResource() {
-		existing, err := getPolicySetDefinition(ctx, client, name, managementGroupID)
+		existing, err := getPolicySetDefinitionByName(ctx, client, name, managementGroupID)
 		if err != nil {
 			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("Error checking for presence of existing Policy Set Definition %q: %s", name, err)
@@ -241,14 +235,10 @@ func resourceArmPolicySetDefinitionCreateUpdate(d *schema.ResourceData, meta int
 		ContinuousTargetOccurence: 10,
 	}
 
-	if features.SupportsCustomTimeouts() {
-		if d.IsNewResource() {
-			stateConf.Timeout = d.Timeout(schema.TimeoutCreate)
-		} else {
-			stateConf.Timeout = d.Timeout(schema.TimeoutUpdate)
-		}
+	if d.IsNewResource() {
+		stateConf.Timeout = d.Timeout(schema.TimeoutCreate)
 	} else {
-		stateConf.Timeout = 5 * time.Minute
+		stateConf.Timeout = d.Timeout(schema.TimeoutUpdate)
 	}
 
 	if _, err = stateConf.WaitForState(); err != nil {
@@ -256,7 +246,7 @@ func resourceArmPolicySetDefinitionCreateUpdate(d *schema.ResourceData, meta int
 	}
 
 	var resp policy.SetDefinition
-	resp, err = getPolicySetDefinition(ctx, client, name, managementGroupID)
+	resp, err = getPolicySetDefinitionByName(ctx, client, name, managementGroupID)
 	if err != nil {
 		return fmt.Errorf("Error retrieving Policy Set Definition %q: %s", name, err)
 	}
@@ -278,7 +268,7 @@ func resourceArmPolicySetDefinitionRead(d *schema.ResourceData, meta interface{}
 
 	managementGroupID := parseManagementGroupIdFromPolicySetId(d.Id())
 
-	resp, err := getPolicySetDefinition(ctx, client, name, managementGroupID)
+	resp, err := getPolicySetDefinitionByName(ctx, client, name, managementGroupID)
 
 	if err != nil {
 		if utils.ResponseWasNotFound(resp.Response) {
@@ -372,7 +362,7 @@ func parsePolicySetDefinitionNameFromId(id string) (string, error) {
 }
 
 func parseManagementGroupIdFromPolicySetId(id string) string {
-	r, _ := regexp.Compile("managementgroups/(.+)/providers/.*$")
+	r := regexp.MustCompile("managementgroups/(.+)/providers/.*$")
 
 	if r.MatchString(id) {
 		matches := r.FindAllStringSubmatch(id, -1)[0]
@@ -384,21 +374,11 @@ func parseManagementGroupIdFromPolicySetId(id string) string {
 
 func policySetDefinitionRefreshFunc(ctx context.Context, client *policy.SetDefinitionsClient, name string, managementGroupId string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		res, err := getPolicySetDefinition(ctx, client, name, managementGroupId)
+		res, err := getPolicySetDefinitionByName(ctx, client, name, managementGroupId)
 		if err != nil {
 			return nil, strconv.Itoa(res.StatusCode), fmt.Errorf("Error issuing read request in policySetDefinitionRefreshFunc for Policy Set Definition %q: %s", name, err)
 		}
 
 		return res, strconv.Itoa(res.StatusCode), nil
 	}
-}
-
-func getPolicySetDefinition(ctx context.Context, client *policy.SetDefinitionsClient, name string, managementGroupID string) (res policy.SetDefinition, err error) {
-	if managementGroupID == "" {
-		res, err = client.Get(ctx, name)
-	} else {
-		res, err = client.GetAtManagementGroup(ctx, name, managementGroupID)
-	}
-
-	return res, err
 }

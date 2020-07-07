@@ -79,18 +79,10 @@ func resourceArmEventHubNamespace() *schema.Resource {
 				Default:  false,
 			},
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventhub/resource_arm_eventhub_namespace.go
-			"kafka_enabled": {
-				Type:       schema.TypeBool,
-				Optional:   true,
-				Computed:   true,
-				Deprecated: "This field is now automatically set depending on the SKU used - as such it's no longer used and will be removed in 2.0 of the Azure Provider",
-=======
 			"zone_redundant": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventhub/eventhub_namespace_resource.go
 			},
 
 			"maximum_throughput_units": {
@@ -118,9 +110,11 @@ func resourceArmEventHubNamespace() *schema.Resource {
 							}, false),
 						},
 
+						// 128 limit per https://docs.microsoft.com/azure/event-hubs/event-hubs-quotas
 						"virtual_network_rule": {
 							Type:       schema.TypeList,
 							Optional:   true,
+							MaxItems:   128,
 							ConfigMode: schema.SchemaConfigModeAttr,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -142,10 +136,11 @@ func resourceArmEventHubNamespace() *schema.Resource {
 							},
 						},
 
+						// 128 limit per https://docs.microsoft.com/azure/event-hubs/event-hubs-quotas
 						"ip_rule": {
 							Type:       schema.TypeList,
 							Optional:   true,
-							MaxItems:   1,
+							MaxItems:   128,
 							ConfigMode: schema.SchemaConfigModeAttr,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -336,13 +331,7 @@ func resourceArmEventHubNamespaceRead(d *schema.ResourceData, meta interface{}) 
 	if props := resp.EHNamespaceProperties; props != nil {
 		d.Set("auto_inflate_enabled", props.IsAutoInflateEnabled)
 		d.Set("maximum_throughput_units", int(*props.MaximumThroughputUnits))
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventhub/resource_arm_eventhub_namespace.go
-
-		// TODO: remove me in 2.0
-		d.Set("kafka_enabled", props.KafkaEnabled)
-=======
 		d.Set("zone_redundant", props.ZoneRedundant)
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventhub/eventhub_namespace_resource.go
 	}
 
 	ruleset, err := client.GetNetworkRuleSet(ctx, resGroup, name)
@@ -399,12 +388,7 @@ func waitForEventHubNamespaceToBeDeleted(ctx context.Context, client *eventhub.N
 		Pending: []string{"200"},
 		Target:  []string{"404"},
 		Refresh: eventHubNamespaceStateStatusCodeRefreshFunc(ctx, client, resourceGroup, name),
-	}
-
-	if features.SupportsCustomTimeouts() {
-		stateConf.Timeout = d.Timeout(schema.TimeoutDelete)
-	} else {
-		stateConf.Timeout = 40 * time.Minute
+		Timeout: d.Timeout(schema.TimeoutDelete),
 	}
 
 	if _, err := stateConf.WaitForState(); err != nil {

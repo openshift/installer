@@ -11,7 +11,6 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
@@ -70,7 +69,7 @@ func resourceArmLoadBalancer() *schema.Resource {
 						"name": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validate.NoEmptyStrings,
+							ValidateFunc: validation.StringIsNotEmpty,
 						},
 
 						"subnet_id": {
@@ -84,6 +83,10 @@ func resourceArmLoadBalancer() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
+							ValidateFunc: validation.Any(
+								validation.IsIPAddress,
+								validation.StringIsEmpty,
+							),
 						},
 
 						"private_ip_address_version": {
@@ -127,7 +130,7 @@ func resourceArmLoadBalancer() *schema.Resource {
 							Computed: true,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
-								ValidateFunc: validate.NoEmptyStrings,
+								ValidateFunc: validation.StringIsNotEmpty,
 							},
 							Set: schema.HashString,
 						},
@@ -137,7 +140,7 @@ func resourceArmLoadBalancer() *schema.Resource {
 							Computed: true,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
-								ValidateFunc: validate.NoEmptyStrings,
+								ValidateFunc: validation.StringIsNotEmpty,
 							},
 							Set: schema.HashString,
 						},
@@ -147,7 +150,7 @@ func resourceArmLoadBalancer() *schema.Resource {
 							Computed: true,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
-								ValidateFunc: validate.NoEmptyStrings,
+								ValidateFunc: validation.StringIsNotEmpty,
 							},
 							Set: schema.HashString,
 						},
@@ -279,7 +282,6 @@ func resourceArmLoadBalancerRead(d *schema.ResourceData, meta interface{}) error
 
 			privateIpAddress := ""
 			privateIpAddresses := make([]string, 0)
-			privateIpAddressVersion := ""
 			for _, config := range *feipConfigs {
 				if feipProps := config.FrontendIPConfigurationPropertiesFormat; feipProps != nil {
 					if ip := feipProps.PrivateIPAddress; ip != nil {
@@ -289,13 +291,11 @@ func resourceArmLoadBalancerRead(d *schema.ResourceData, meta interface{}) error
 
 						privateIpAddresses = append(privateIpAddresses, *feipProps.PrivateIPAddress)
 					}
-					privateIpAddressVersion = string(feipProps.PrivateIPAddressVersion)
 				}
 			}
 
 			d.Set("private_ip_address", privateIpAddress)
 			d.Set("private_ip_addresses", privateIpAddresses)
-			d.Set("private_ip_address_version", privateIpAddressVersion)
 		}
 	}
 

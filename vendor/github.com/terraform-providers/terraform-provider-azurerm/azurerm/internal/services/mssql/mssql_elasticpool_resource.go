@@ -12,9 +12,9 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mssql/parse"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
@@ -118,53 +118,13 @@ func resourceArmMsSqlElasticPool() *schema.Resource {
 						"min_capacity": {
 							Type:         schema.TypeFloat,
 							Required:     true,
-							ValidateFunc: validate.FloatAtLeast(0.0),
+							ValidateFunc: validation.FloatAtLeast(0.0),
 						},
 
 						"max_capacity": {
 							Type:         schema.TypeFloat,
 							Required:     true,
-							ValidateFunc: validate.FloatAtLeast(0.0),
-						},
-					},
-				},
-			},
-
-			"elastic_pool_properties": {
-				Type:       schema.TypeList,
-				Computed:   true,
-				MaxItems:   1,
-				Deprecated: "These properties herein have been moved to the top level or removed",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"state": {
-							Type:       schema.TypeString,
-							Computed:   true,
-							Deprecated: "This property has been removed",
-						},
-
-						"creation_date": {
-							Type:       schema.TypeString,
-							Computed:   true,
-							Deprecated: "This property has been removed",
-						},
-
-						"max_size_bytes": {
-							Type:       schema.TypeInt,
-							Computed:   true,
-							Deprecated: "This property has been moved to the top level",
-						},
-
-						"zone_redundant": {
-							Type:       schema.TypeBool,
-							Computed:   true,
-							Deprecated: "This property has been moved to the top level",
-						},
-
-						"license_type": {
-							Type:       schema.TypeString,
-							Computed:   true,
-							Deprecated: "This property has been removed",
+							ValidateFunc: validation.FloatAtLeast(0.0),
 						},
 					},
 				},
@@ -183,12 +143,22 @@ func resourceArmMsSqlElasticPool() *schema.Resource {
 				Optional:      true,
 				Computed:      true,
 				ConflictsWith: []string{"max_size_bytes"},
-				ValidateFunc:  validate.FloatAtLeast(0),
+				ValidateFunc:  validation.FloatAtLeast(0),
 			},
 
 			"zone_redundant": {
 				Type:     schema.TypeBool,
 				Optional: true,
+			},
+
+			"license_type": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					string(sql.BasePrice),
+					string(sql.LicenseIncluded),
+				}, false),
 			},
 
 			"tags": tags.Schema(),
@@ -238,13 +208,9 @@ func resourceArmMsSqlElasticPoolCreateUpdate(d *schema.ResourceData, meta interf
 		Sku:      sku,
 		Tags:     tags.Expand(t),
 		ElasticPoolProperties: &sql.ElasticPoolProperties{
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mssql/resource_arm_mssql_elasticpool.go
-			PerDatabaseSettings: expandAzureRmMsSqlElasticPoolPerDatabaseSettings(d),
-=======
 			LicenseType:         sql.ElasticPoolLicenseType(d.Get("license_type").(string)),
 			PerDatabaseSettings: expandAzureRmMsSqlElasticPoolPerDatabaseSettings(d),
 			ZoneRedundant:       utils.Bool(d.Get("zone_redundant").(bool)),
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mssql/mssql_elasticpool_resource.go
 		},
 	}
 
@@ -253,10 +219,8 @@ func resourceArmMsSqlElasticPoolCreateUpdate(d *schema.ResourceData, meta interf
 			maxSizeBytes := v.(float64) * 1073741824
 			elasticPool.MaxSizeBytes = utils.Int64(int64(maxSizeBytes))
 		}
-	} else {
-		if v, ok := d.GetOk("max_size_bytes"); ok {
-			elasticPool.MaxSizeBytes = utils.Int64(int64(v.(int)))
-		}
+	} else if v, ok := d.GetOk("max_size_bytes"); ok {
+		elasticPool.MaxSizeBytes = utils.Int64(int64(v.(int)))
 	}
 
 	future, err := client.CreateOrUpdate(ctx, resGroup, serverName, elasticPoolName, elasticPool)
@@ -286,28 +250,28 @@ func resourceArmMsSqlElasticPoolRead(d *schema.ResourceData, meta interface{}) e
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	resGroup, serverName, name, err := parseArmMsSqlElasticPoolId(d.Id())
+	elasticPool, err := parse.MSSqlElasticPoolID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, resGroup, serverName, name)
+	resp, err := client.Get(ctx, elasticPool.ResourceGroup, elasticPool.MsSqlServer, elasticPool.Name)
 	if err != nil {
 		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("Error making Read request on MsSql Elastic Pool %s: %s", name, err)
+		return fmt.Errorf("Error making Read request on MsSql Elastic Pool %s: %s", elasticPool.Name, err)
 	}
 
 	d.Set("name", resp.Name)
-	d.Set("resource_group_name", resGroup)
+	d.Set("resource_group_name", elasticPool.ResourceGroup)
 
 	if location := resp.Location; location != nil {
 		d.Set("location", azure.NormalizeLocation(*location))
 	}
 
-	d.Set("server_name", serverName)
+	d.Set("server_name", elasticPool.MsSqlServer)
 
 	if err := d.Set("sku", flattenAzureRmMsSqlElasticPoolSku(resp.Sku)); err != nil {
 		return fmt.Errorf("Error setting `sku`: %+v", err)
@@ -323,11 +287,7 @@ func resourceArmMsSqlElasticPoolRead(d *schema.ResourceData, meta interface{}) e
 			}
 		}
 		d.Set("zone_redundant", properties.ZoneRedundant)
-
-		// todo remove in 2.0
-		if err := d.Set("elastic_pool_properties", flattenAzureRmMsSqlElasticPoolProperties(resp.ElasticPoolProperties)); err != nil {
-			return fmt.Errorf("Error setting `elastic_pool_properties`: %+v", err)
-		}
+		d.Set("license_type", string(properties.LicenseType))
 
 		if err := d.Set("per_database_settings", flattenAzureRmMsSqlElasticPoolPerDatabaseSettings(properties.PerDatabaseSettings)); err != nil {
 			return fmt.Errorf("Error setting `per_database_settings`: %+v", err)
@@ -342,15 +302,11 @@ func resourceArmMsSqlElasticPoolDelete(d *schema.ResourceData, meta interface{})
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	resGroup, serverName, name, err := parseArmMSSqlElasticPoolId(d.Id())
+	elasticPool, err := parse.MSSqlElasticPoolID(d.Id())
 	if err != nil {
 		return err
 	}
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mssql/resource_arm_mssql_elasticpool.go
-	_, err = client.Delete(ctx, resGroup, serverName, name)
-	return err
-=======
 	future, err := client.Delete(ctx, elasticPool.ResourceGroup, elasticPool.MsSqlServer, elasticPool.Name)
 	if err != nil {
 		return fmt.Errorf("deleting ElasticPool %q (Server %q / Resource Group %q): %+v", elasticPool.Name, elasticPool.MsSqlServer, elasticPool.ResourceGroup, err)
@@ -360,16 +316,6 @@ func resourceArmMsSqlElasticPoolDelete(d *schema.ResourceData, meta interface{})
 	}
 
 	return nil
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/mssql/mssql_elasticpool_resource.go
-}
-
-func parseArmMsSqlElasticPoolId(sqlElasticPoolId string) (string, string, string, error) {
-	id, err := azure.ParseAzureResourceID(sqlElasticPoolId)
-	if err != nil {
-		return "", "", "", fmt.Errorf("[ERROR] Unable to parse MsSQL ElasticPool ID %q: %+v", sqlElasticPoolId, err)
-	}
-
-	return id.ResourceGroup, id.Path["servers"], id.Path["elasticPools"], nil
 }
 
 func expandAzureRmMsSqlElasticPoolPerDatabaseSettings(d *schema.ResourceData) *sql.ElasticPoolPerDatabaseSettings {
@@ -428,23 +374,6 @@ func flattenAzureRmMsSqlElasticPoolSku(input *sql.Sku) []interface{} {
 	return []interface{}{values}
 }
 
-func flattenAzureRmMsSqlElasticPoolProperties(resp *sql.ElasticPoolProperties) []interface{} {
-	elasticPoolProperty := map[string]interface{}{}
-	elasticPoolProperty["state"] = string(resp.State)
-
-	if date := resp.CreationDate; date != nil {
-		elasticPoolProperty["creation_date"] = date.String()
-	}
-
-	if zoneRedundant := resp.ZoneRedundant; zoneRedundant != nil {
-		elasticPoolProperty["zone_redundant"] = *zoneRedundant
-	}
-
-	elasticPoolProperty["license_type"] = string(resp.LicenseType)
-
-	return []interface{}{elasticPoolProperty}
-}
-
 func flattenAzureRmMsSqlElasticPoolPerDatabaseSettings(resp *sql.ElasticPoolPerDatabaseSettings) []interface{} {
 	perDatabaseSettings := map[string]interface{}{}
 
@@ -457,13 +386,4 @@ func flattenAzureRmMsSqlElasticPoolPerDatabaseSettings(resp *sql.ElasticPoolPerD
 	}
 
 	return []interface{}{perDatabaseSettings}
-}
-
-func parseArmMSSqlElasticPoolId(sqlElasticPoolId string) (string, string, string, error) {
-	id, err := azure.ParseAzureResourceID(sqlElasticPoolId)
-	if err != nil {
-		return "", "", "", fmt.Errorf("[ERROR] Unable to parse SQL ElasticPool ID %q: %+v", sqlElasticPoolId, err)
-	}
-
-	return id.ResourceGroup, id.Path["servers"], id.Path["elasticPools"], nil
 }

@@ -76,11 +76,7 @@ func (client OperationsClient) List(ctx context.Context) (result OperationListRe
 
 // ListPreparer prepares the List request.
 func (client OperationsClient) ListPreparer(ctx context.Context) (*http.Request, error) {
-<<<<<<< HEAD:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-10-01/containerservice/operations.go
-	const APIVersion = "2019-10-01"
-=======
 	const APIVersion = "2020-03-01"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2020-03-01/containerservice/operations.go
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}

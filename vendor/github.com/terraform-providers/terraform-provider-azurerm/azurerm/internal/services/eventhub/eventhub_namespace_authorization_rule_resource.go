@@ -61,8 +61,6 @@ func resourceArmEventHubNamespaceAuthorizationRule() *schema.Resource {
 			},
 
 			"resource_group_name": azure.SchemaResourceGroupName(),
-
-			"location": azure.SchemaLocationDeprecated(),
 		}),
 
 		CustomizeDiff: azure.EventHubAuthorizationRuleCustomizeDiff,
@@ -131,15 +129,7 @@ func resourceArmEventHubNamespaceAuthorizationRuleRead(d *schema.ResourceData, m
 		return err
 	}
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventhub/resource_arm_eventhub_namespace_authorization_rule.go
-	name := id.Path["AuthorizationRules"] //this is different then eventhub where its authorizationRules
-	resourceGroup := id.ResourceGroup
-	namespaceName := id.Path["namespaces"]
-
-	resp, err := client.GetAuthorizationRule(ctx, resourceGroup, namespaceName, name)
-=======
 	resp, err := client.GetAuthorizationRule(ctx, id.ResourceGroup, id.NamespaceName, id.Name)
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventhub/eventhub_namespace_authorization_rule_resource.go
 	if err != nil {
 		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
@@ -184,16 +174,8 @@ func resourceArmEventHubNamespaceAuthorizationRuleDelete(d *schema.ResourceData,
 		return err
 	}
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventhub/resource_arm_eventhub_namespace_authorization_rule.go
-	name := id.Path["AuthorizationRules"] //this is different then eventhub where its authorizationRules
-	resourceGroup := id.ResourceGroup
-	namespaceName := id.Path["namespaces"]
-
-	resp, err := eventhubClient.DeleteAuthorizationRule(ctx, resourceGroup, namespaceName, name)
-=======
 	locks.ByName(id.NamespaceName, eventHubNamespaceResourceName)
 	defer locks.UnlockByName(id.NamespaceName, eventHubNamespaceResourceName)
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/eventhub/eventhub_namespace_authorization_rule_resource.go
 
 	if _, err := eventhubClient.DeleteAuthorizationRule(ctx, id.ResourceGroup, id.NamespaceName, id.Name); err != nil {
 		return fmt.Errorf("deleting Authorization Rule %q (EventHub Namespace %q / Resource Group %q): %+v", id.Name, id.NamespaceName, id.ResourceGroup, err)

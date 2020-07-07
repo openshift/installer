@@ -1,28 +1,20 @@
 package compute
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/resource_arm_shared_image.go
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-07-01/compute"
-	"github.com/hashicorp/go-azure-helpers/response"
-=======
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-12-01/compute"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/shared_image_resource.go
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/tf"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/clients"
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/resource_arm_shared_image.go
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/features"
-=======
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/parse"
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/shared_image_resource.go
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
 	azSchema "github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/schema"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts"
@@ -74,6 +66,17 @@ func resourceArmSharedImage() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{
 					string(compute.Linux),
 					string(compute.Windows),
+				}, false),
+			},
+
+			"hyper_v_generation": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  string(compute.HyperVGenerationTypesV1),
+				ForceNew: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					string(compute.V1),
+					string(compute.V2),
 				}, false),
 			},
 
@@ -140,20 +143,8 @@ func resourceArmSharedImageCreateUpdate(d *schema.ResourceData, meta interface{}
 	name := d.Get("name").(string)
 	galleryName := d.Get("gallery_name").(string)
 	resourceGroup := d.Get("resource_group_name").(string)
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/resource_arm_shared_image.go
-	location := azure.NormalizeLocation(d.Get("location").(string))
-	description := d.Get("description").(string)
 
-	eula := d.Get("eula").(string)
-	privacyStatementUri := d.Get("privacy_statement_uri").(string)
-	releaseNoteURI := d.Get("release_note_uri").(string)
-
-	osType := d.Get("os_type").(string)
-	t := d.Get("tags").(map[string]interface{})
-=======
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/shared_image_resource.go
-
-	if features.ShouldResourcesBeImported() && d.IsNewResource() {
+	if d.IsNewResource() {
 		existing, err := client.Get(ctx, resourceGroup, galleryName, name)
 		if err != nil {
 			if !utils.ResponseWasNotFound(existing.Response) {
@@ -169,15 +160,6 @@ func resourceArmSharedImageCreateUpdate(d *schema.ResourceData, meta interface{}
 	image := compute.GalleryImage{
 		Location: utils.String(azure.NormalizeLocation(d.Get("location").(string))),
 		GalleryImageProperties: &compute.GalleryImageProperties{
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/resource_arm_shared_image.go
-			Description:         utils.String(description),
-			Eula:                utils.String(eula),
-			Identifier:          identifier,
-			PrivacyStatementURI: utils.String(privacyStatementUri),
-			ReleaseNoteURI:      utils.String(releaseNoteURI),
-			OsType:              compute.OperatingSystemTypes(osType),
-			OsState:             compute.Generalized,
-=======
 			Description:         utils.String(d.Get("description").(string)),
 			Eula:                utils.String(d.Get("eula").(string)),
 			Identifier:          expandGalleryImageIdentifier(d),
@@ -185,7 +167,6 @@ func resourceArmSharedImageCreateUpdate(d *schema.ResourceData, meta interface{}
 			ReleaseNoteURI:      utils.String(d.Get("release_note_uri").(string)),
 			OsType:              compute.OperatingSystemTypes(d.Get("os_type").(string)),
 			HyperVGeneration:    compute.HyperVGeneration(d.Get("hyper_v_generation").(string)),
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/shared_image_resource.go
 		},
 		Tags: tags.Expand(d.Get("tags").(map[string]interface{})),
 	}
@@ -251,11 +232,8 @@ func resourceArmSharedImageRead(d *schema.ResourceData, meta interface{}) error 
 		d.Set("description", props.Description)
 		d.Set("eula", props.Eula)
 		d.Set("os_type", string(props.OsType))
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/resource_arm_shared_image.go
-=======
 		d.Set("specialized", props.OsState == compute.Specialized)
 		d.Set("hyper_v_generation", string(props.HyperVGeneration))
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/shared_image_resource.go
 		d.Set("privacy_statement_uri", props.PrivacyStatementURI)
 		d.Set("release_note_uri", props.ReleaseNoteURI)
 
@@ -279,20 +257,6 @@ func resourceArmSharedImageDelete(d *schema.ResourceData, meta interface{}) erro
 
 	future, err := client.Delete(ctx, id.ResourceGroup, id.Gallery, id.Name)
 	if err != nil {
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/resource_arm_shared_image.go
-		// deleted outside of Terraform
-		if response.WasNotFound(future.Response()) {
-			return nil
-		}
-
-		return fmt.Errorf("Error deleting Shared Image %q (Gallery %q / Resource Group %q): %+v", name, galleryName, resourceGroup, err)
-	}
-
-	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
-		if !response.WasNotFound(future.Response()) {
-			return fmt.Errorf("Error waiting for the deletion of Shared Image %q (Gallery %q / Resource Group %q): %+v", name, galleryName, resourceGroup, err)
-		}
-=======
 		return fmt.Errorf("deleting Shared Image %q (Gallery %q / Resource Group %q): %+v", id.Name, id.Gallery, id.ResourceGroup, err)
 	}
 
@@ -312,14 +276,11 @@ func resourceArmSharedImageDelete(d *schema.ResourceData, meta interface{}) erro
 
 	if _, err := stateConf.WaitForState(); err != nil {
 		return fmt.Errorf("failed to wait for Shared Image %q (Gallery %q / Resource Group %q) to be deleted: %+v", id.Name, id.Gallery, id.ResourceGroup, err)
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/shared_image_resource.go
 	}
 
 	return nil
 }
 
-<<<<<<< HEAD:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/resource_arm_shared_image.go
-=======
 func sharedImageDeleteStateRefreshFunc(ctx context.Context, client *compute.GalleryImagesClient, resourceGroupName string, galleryName string, imageName string) resource.StateRefreshFunc {
 	// The resource Shared Image depends on the resource Shared Image Gallery.
 	// Although the delete API returns 404 which means the Shared Image resource has been deleted.
@@ -340,7 +301,6 @@ func sharedImageDeleteStateRefreshFunc(ctx context.Context, client *compute.Gall
 	}
 }
 
->>>>>>> 5aa20dd53... vendor: bump terraform-provider-azure to version v2.17.0:vendor/github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/compute/shared_image_resource.go
 func expandGalleryImageIdentifier(d *schema.ResourceData) *compute.GalleryImageIdentifier {
 	vs := d.Get("identifier").([]interface{})
 	v := vs[0].(map[string]interface{})
