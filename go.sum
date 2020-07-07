@@ -52,9 +52,9 @@ github.com/Azure/azure-sdk-for-go v32.5.0+incompatible/go.mod h1:9XXNKU+eRnpl9mo
 github.com/Azure/azure-sdk-for-go v35.0.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v36.1.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v36.2.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
-github.com/Azure/azure-sdk-for-go v40.3.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
-github.com/Azure/azure-sdk-for-go v41.2.0+incompatible h1:JOlv1wDuxcJi1ExJpQLNfEj6znsTFt2TiwQMow2YaXI=
-github.com/Azure/azure-sdk-for-go v41.2.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
+github.com/Azure/azure-sdk-for-go v42.1.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
+github.com/Azure/azure-sdk-for-go v43.2.0+incompatible h1:H8jfb+wuVlLqyP1Nr6zqapNxqhgwshD5OETJsBO74iY=
+github.com/Azure/azure-sdk-for-go v43.2.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-storage-blob-go v0.8.0/go.mod h1:lPI3aLPpuLTeUwh1sViKXFxwl2B6teiRqI0deQUvsw0=
 github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78/go.mod h1:LmzpDX56iTiv29bbRTIsUNlaFfuhWRQBWjQdVyAevI8=
 github.com/Azure/go-autorest/autorest/adal v0.5.0/go.mod h1:8Z9fGy2MpX0PvDjB1pEgQTmVqjGhiHBW7RJJEciWzS0=
@@ -1490,8 +1490,8 @@ github.com/openshift/terraform v0.12.20-openshift-3 h1:aA0Mn8+Jl4ZWIOh84FkR7y34A
 github.com/openshift/terraform v0.12.20-openshift-3/go.mod h1:R/dUWEZVB5itR8fNzx3g8QZMIwwWuI8rcwF8SbL1sq4=
 github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699 h1:vDqnd5N3KG0NvPXOQ6iO5rWMJ/R7ccxtO3Tis1gZRYE=
 github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699/go.mod h1:0U3OgA2uDYSc7gNkdWA92+/BxWXwuYhWqqZ4UhM1RCw=
-github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200508151851-2bfa0b7d4a9d h1:r4vjVl7dNQaD2t0OMEMraXoHjzeWELDcDYGgL4icJ+g=
-github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200508151851-2bfa0b7d4a9d/go.mod h1:CXabSd1afOL+oXuR3ClVDh6E/+KqZpmSqJ1cDRFL3Lw=
+github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200707062554-97ea089cc12a h1:yrCt4MiDMfLRv//VnIc3lnrmBYhIIz72+ZcGq/YMIjk=
+github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200707062554-97ea089cc12a/go.mod h1:9VGDn8x+Pz/j5vQ8nseuH+YsKyxpGYx+faT9b9fqCWQ=
 github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-1 h1:Jvi/tGlF8xOLZ5lWjJWi8hyXOSe7NqbAqOrwjdDRE7E=
 github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-1/go.mod h1:a1mEaZ0sy5RL+ukbqPvY1N6dw9K0yG7EYWZZkfJUeyA=
 github.com/opentracing-contrib/go-stdlib v0.0.0-20190519235532-cf7a6c988dc9/go.mod h1:PLldrQSroqzH70Xl+1DQcGnefIbqsKR7UDaiux3zV+w=
@@ -1631,6 +1631,10 @@ github.com/quasilyte/go-consistent v0.0.0-20190521200055-c6f3937de18c/go.mod h1:
 github.com/quobyte/api v0.1.2/go.mod h1:jL7lIHrmqQ7yh05OJ+eEEdHr0u/kmT1Ff9iHd+4H6VI=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/remyoudompheng/bigfft v0.0.0-20170806203942-52369c62f446/go.mod h1:uYEyJGbgTkfkS4+E/PavXkNJcbFIpEtjt2B0KDQ5+9M=
+github.com/rickb777/date v1.12.5-0.20200422084442-6300e543c4d9 h1:czJCcoUR3FMpHnRQow2E84H/0CPrX1fMAGn9HugzyI4=
+github.com/rickb777/date v1.12.5-0.20200422084442-6300e543c4d9/go.mod h1:L8WrssTzvgYw34/Ppa0JpJfI7KKXZ2cVGI6Djt0brUU=
+github.com/rickb777/plural v1.2.0 h1:5tvEc7UBCZ7l8h/2UeybSkt/uu1DQsZFOFdNevmUhlE=
+github.com/rickb777/plural v1.2.0/go.mod h1:UdpyWFCGbo3mvK3f/PfZOAOrkjzJlYN/sD46XNWJ+Es=
 github.com/robfig/cron v0.0.0-20170526150127-736158dc09e1/go.mod h1:JGuDeoQd7Z6yL4zQhZ3OPEVHB7fL6Ka6skscFHfmt2k=
 github.com/robfig/cron v1.1.0/go.mod h1:JGuDeoQd7Z6yL4zQhZ3OPEVHB7fL6Ka6skscFHfmt2k=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
@@ -1787,8 +1791,8 @@ github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG
 github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07/go.mod h1:kDXzergiv9cbyO7IOYJZWg1U88JhDg3PB6klq9Hg2pA=
 github.com/tchap/go-patricia v2.3.0+incompatible/go.mod h1:bmLyhP68RS6kStMGxByiQ23RP/odRBOTVjwp2cDyi6I=
 github.com/tdakkota/asciicheck v0.0.0-20200416190851-d7f85be797a2/go.mod h1:yHp0ai0Z9gUljN3o0xMhYJnH/IcvkdTBOX2fmJ93JEM=
-github.com/terraform-providers/terraform-provider-azuread v0.8.0 h1:ZcF5f+F3tFBK7N2T+OSjgFDpgLHYKfSWxhGRfUoPKUU=
-github.com/terraform-providers/terraform-provider-azuread v0.8.0/go.mod h1:7RxccROJFJZmxJpmbRTHA+mn6U/s7UnVeEbOHLX6CQU=
+github.com/terraform-providers/terraform-provider-azuread v0.9.0 h1:XLzFgVHakq6qjJ2L0o/tN2yHu/hT4vIW9sKtejr7gPs=
+github.com/terraform-providers/terraform-provider-azuread v0.9.0/go.mod h1:sSDzB/8CD639+yWo5lZf+NJvGSYQBSS6z+GoET9IrzE=
 github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200204003432-77547e3e7d52 h1:umchDMBO+CSf3aMpg6CBnNtnjcjFLidDgSexmbnTwG0=
 github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200204003432-77547e3e7d52/go.mod h1:IDEFovLVDQNg5CvzGC8I0aBYGXS7dx7uvB3ScqRtxtw=
 github.com/terraform-providers/terraform-provider-ignition v1.2.1 h1:dlRZGcokysc9Z2gTVm+neSghAMv9/2WA/pYiGZ6JHCg=
