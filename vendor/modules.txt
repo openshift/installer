@@ -1337,10 +1337,10 @@ github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/st
 github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts
 github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils
 github.com/terraform-providers/terraform-provider-azurerm/version
-# github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160
+# github.com/terraform-providers/terraform-provider-google-beta v1.20.1-0.20200706234411-baca0e84297e
 ## explicit
-github.com/terraform-providers/terraform-provider-google/google
-github.com/terraform-providers/terraform-provider-google/version
+github.com/terraform-providers/terraform-provider-google-beta/google-beta
+github.com/terraform-providers/terraform-provider-google-beta/version
 # github.com/terraform-providers/terraform-provider-ignition v1.2.1
 ## explicit
 github.com/terraform-providers/terraform-provider-ignition/ignition
@@ -1585,7 +1585,7 @@ golang.org/x/tools/internal/typesinternal
 # golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
-# google.golang.org/api v0.25.0
+# google.golang.org/api v0.26.0
 ## explicit
 google.golang.org/api/appengine/v1
 google.golang.org/api/bigquery/v2
@@ -1593,6 +1593,7 @@ google.golang.org/api/bigtableadmin/v2
 google.golang.org/api/cloudbilling/v1
 google.golang.org/api/cloudbuild/v1
 google.golang.org/api/cloudfunctions/v1
+google.golang.org/api/cloudidentity/v1beta1
 google.golang.org/api/cloudiot/v1
 google.golang.org/api/cloudkms/v1
 google.golang.org/api/cloudresourcemanager/v1

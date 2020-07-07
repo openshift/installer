@@ -72,7 +72,7 @@ require (
 	github.com/stretchr/testify v1.5.1
 	github.com/terraform-providers/terraform-provider-aws v0.0.0
 	github.com/terraform-providers/terraform-provider-azurerm v0.0.0
-	github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160
+	github.com/terraform-providers/terraform-provider-google-beta v1.20.1-0.20200706234411-baca0e84297e // v3.29.0
 	github.com/terraform-providers/terraform-provider-ignition v1.2.1
 	github.com/terraform-providers/terraform-provider-local v1.4.0
 	github.com/terraform-providers/terraform-provider-openstack v1.25.0
@@ -86,7 +86,7 @@ require (
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d
-	google.golang.org/api v0.25.0
+	google.golang.org/api v0.26.0
 	gopkg.in/AlecAivazis/survey.v1 v1.8.9-0.20200217094205-6773bdf39b7f
 	gopkg.in/ini.v1 v1.51.0
 	gopkg.in/yaml.v2 v2.2.8

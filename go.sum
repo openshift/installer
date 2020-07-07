@@ -1741,7 +1741,7 @@ github.com/spf13/viper v1.0.2/go.mod h1:A8kyI5cUJhb8N+3pkfONlcEcZbueH6nhAm0Fq7Sr
 github.com/spf13/viper v1.3.2/go.mod h1:ZiWeW+zYFKm7srdB9IoDzzZXaJaI5eL9QjNiN/DMA2s=
 github.com/spf13/viper v1.4.0/go.mod h1:PTJ7Z/lr49W6bUbkmS1V3by4uWynFiR9p7+dSq/yZzE=
 github.com/spf13/viper v1.6.1/go.mod h1:t3iDnF5Jlj76alVNuyFBk5oUMCvsrkbvZK0WQdfDi5k=
-github.com/stoewer/go-strcase v1.0.2/go.mod h1:eLfe5bL3qbL7ep/KafHzthxejrOF5J3xmt03uL5tzek=
+github.com/stoewer/go-strcase v1.0.1/go.mod h1:gp9UQXAK1lJW+r7OLJ7XiMdnJ+wY3J50feBQlcvwaJA=
 github.com/stoewer/go-strcase v1.1.0 h1:LYi3yl9/mBw9RO3PbYclr+ztp2PNRL0gTobczsVJ5Ic=
 github.com/stoewer/go-strcase v1.1.0/go.mod h1:G7YglbHPK5jX3JcWljxVXRXPh90/dtxfy6xWqxu5b90=
 github.com/storageos/go-api v0.0.0-20180912212459-343b3eff91fc/go.mod h1:ZrLn+e0ZuF3Y65PNF6dIwbJPZqfmtCXxFm9ckv0agOY=
@@ -1766,8 +1766,8 @@ github.com/tchap/go-patricia v2.3.0+incompatible/go.mod h1:bmLyhP68RS6kStMGxByiQ
 github.com/tdakkota/asciicheck v0.0.0-20200416190851-d7f85be797a2/go.mod h1:yHp0ai0Z9gUljN3o0xMhYJnH/IcvkdTBOX2fmJ93JEM=
 github.com/terraform-providers/terraform-provider-azuread v0.8.0 h1:ZcF5f+F3tFBK7N2T+OSjgFDpgLHYKfSWxhGRfUoPKUU=
 github.com/terraform-providers/terraform-provider-azuread v0.8.0/go.mod h1:7RxccROJFJZmxJpmbRTHA+mn6U/s7UnVeEbOHLX6CQU=
-github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160 h1:Ghc1PD9TckxsdyP1BG+dM8q84cNNyL93qRmYq/PVNow=
-github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160/go.mod h1:QxehqxV8Swl+O2JXJUdS6orHYJXWUEr4HFfYH5JV9ew=
+github.com/terraform-providers/terraform-provider-google-beta v1.20.1-0.20200706234411-baca0e84297e h1:ybPvaI6bPyOt2a2qSssJ7AnmTLNkXR4jdO6L5UsOclc=
+github.com/terraform-providers/terraform-provider-google-beta v1.20.1-0.20200706234411-baca0e84297e/go.mod h1:wPW6rbiohjQ+VJz90Gxc0U6vfyXFXRa4fOVgBM4UZ8M=
 github.com/terraform-providers/terraform-provider-ignition v1.2.1 h1:dlRZGcokysc9Z2gTVm+neSghAMv9/2WA/pYiGZ6JHCg=
 github.com/terraform-providers/terraform-provider-ignition v1.2.1/go.mod h1:tUlGVBhkz+z79iffnt7vKISS199MdPd85+l6SNpoS/s=
 github.com/terraform-providers/terraform-provider-local v1.4.0 h1:n0CNTMjBfCC5R6LMyuqxJRlgWPUqx0mvSU+ZIhg8EN0=
@@ -1776,7 +1776,7 @@ github.com/terraform-providers/terraform-provider-null v1.0.1-0.20191204185112-e
 github.com/terraform-providers/terraform-provider-null v1.0.1-0.20191204185112-e5c592237f62/go.mod h1:RaAgicYv+oKLyZpaQB5BOkwL/t5WKYHQ+Q0kgMgXgR4=
 github.com/terraform-providers/terraform-provider-openstack v1.25.0 h1:cUGi9qbg/6B7lv4+HyrarINEtVMSIouEuEuVpOE/0zY=
 github.com/terraform-providers/terraform-provider-openstack v1.25.0/go.mod h1:cTefkvjGdhORynFvVsB2beWN+XmGhjAm3RBrnEJLvfs=
-github.com/terraform-providers/terraform-provider-random v0.0.0-20190925200408-30dac3233094/go.mod h1:F4KE9YftuJyMiBth4W1kCrsyOHndtTjAmZ+ZzjqWY+4=
+github.com/terraform-providers/terraform-provider-random v0.0.0-20190925211435-95c131714b03/go.mod h1:F4KE9YftuJyMiBth4W1kCrsyOHndtTjAmZ+ZzjqWY+4=
 github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f h1:oqZwtMD9/XcOcCzm/9cz8+pQWRTGF60N1RNcYLg+BCw=
 github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f/go.mod h1:F4KE9YftuJyMiBth4W1kCrsyOHndtTjAmZ+ZzjqWY+4=
 github.com/terraform-providers/terraform-provider-template v1.0.0/go.mod h1:/J+B8me5DCMa0rEBH5ic2aKPjhtpWNeScmxFJWxB1EU=
@@ -2322,8 +2322,8 @@ google.golang.org/api v0.15.0/go.mod h1:iLdEw5Ide6rF15KTC1Kkl0iskquN2gFfn9o9XIsb
 google.golang.org/api v0.17.0/go.mod h1:BwFmGc8tA3vsd7r/7kR8DY7iEEGSU04BFxCo5jP/sfE=
 google.golang.org/api v0.18.0/go.mod h1:BwFmGc8tA3vsd7r/7kR8DY7iEEGSU04BFxCo5jP/sfE=
 google.golang.org/api v0.20.0/go.mod h1:BwFmGc8tA3vsd7r/7kR8DY7iEEGSU04BFxCo5jP/sfE=
-google.golang.org/api v0.25.0 h1:LodzhlzZEUfhXzNUMIfVlf9Gr6Ua5MMtoFWh7+f47qA=
-google.golang.org/api v0.25.0/go.mod h1:lIXQywCXRcnZPGlsd8NbLnOjtAoL6em04bJ9+z0MncE=
+google.golang.org/api v0.26.0 h1:VJZ8h6E8ip82FRpQl848c5vAadxlTXrUh8RzQzSRm08=
+google.golang.org/api v0.26.0/go.mod h1:lIXQywCXRcnZPGlsd8NbLnOjtAoL6em04bJ9+z0MncE=
 google.golang.org/appengine v1.1.0/go.mod h1:EbEs0AVv82hx2wNQdGPgUI5lhzA/G0D9YwlJXL52JkM=
 google.golang.org/appengine v1.2.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
 google.golang.org/appengine v1.3.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
