@@ -117,5 +117,7 @@ func summarizeReport(reports []quota.ConstraintReport) {
 			continue
 		}
 	}
-	logrus.Warnf("Following quotas %s are available but will be completely used pretty soon.", strings.Join(low, ", "))
+	if len(low) > 0 {
+		logrus.Warnf("Following quotas %s are available but will be completely used pretty soon.", strings.Join(low, ", "))
+	}
 }
