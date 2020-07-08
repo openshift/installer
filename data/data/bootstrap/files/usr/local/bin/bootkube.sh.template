@@ -114,7 +114,6 @@ then
         --etcd-ca=/assets/tls/etcd-ca-bundle.crt \
         --etcd-metric-ca=/assets/tls/etcd-metric-ca-bundle.crt \
         --manifest-etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
-        --etcd-discovery-domain={{.ClusterDomain}} \
         --manifest-cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}" \
         --manifest-setup-etcd-env-image="${MACHINE_CONFIG_OPERATOR_IMAGE}" \
         --manifest-kube-client-agent-image="${MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE}" \
