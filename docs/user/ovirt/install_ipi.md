@@ -69,7 +69,7 @@ $ openshift-install create cluster --dir=install_dir
 ? Platform ovirt
 ? Enter oVirt's api endpoint URL https://ovirt-engine-fqdn/ovirt-engine/api
 ? Is the installed oVirt certificate trusted? Yes
-? Enter ovirt-engine username admin@internal
+? Enter ovirt-engine username ocpadmin@internal
 ? Enter password ***
 ? oVirt cluster xxxx
 ? oVirt storage xxxx

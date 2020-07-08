@@ -46,7 +46,7 @@ func Test_validateAuth(t *testing.T) {
 		expectSuccess bool
 	}{{
 		url:           okOvirtServer.URL,
-		username:      "admin@internal",
+		username:      "ocpadmin@internal",
 		password:      "123",
 		insecure:      false,
 		cafile:        "",

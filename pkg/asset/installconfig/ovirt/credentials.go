@@ -123,7 +123,7 @@ func askUsername(c *Config) error {
 			Prompt: &survey.Input{
 				Message: "Engine username",
 				Help:    "The username to connect to Engine API",
-				Default: "admin@internal",
+				Default: "ocpadmin@internal",
 			},
 			Validate: survey.ComposeValidators(survey.Required),
 		},
