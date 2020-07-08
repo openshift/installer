@@ -72,8 +72,8 @@ to be created. The security groups which exist after the default install are:
 By default, a cluster will create:
 
 * One m4.large bootstrap machine (2 vCPUs but removed after install)
-* Three m4.xlarge master nodes (4 vCPUs each).
-* Three m4.large worker nodes (2 vCPUs each).
+* Three m5.xlarge master nodes (4 vCPUs each).
+* Three m5.large worker nodes (2 vCPUs each).
 
 Currently, these vCPU counts are not within a new account's default limit. The default limit is 1 but for all these instances you will need 20. To increase the limit you have to [contact the AWS support](https://console.aws.amazon.com/support/cases?#/create?issueType=service-limit-increase&limitType=ec2-instances).
 If you intend to start with a higher number of workers, enable autoscaling and large workloads

@@ -188,7 +188,7 @@ spec:
 							Platform: types.MachinePoolPlatform{
 								AWS: &awstypes.MachinePool{
 									Zones:        []string{"us-east-1a"},
-									InstanceType: "m4.xlarge",
+									InstanceType: "m5.xlarge",
 								},
 							},
 						},

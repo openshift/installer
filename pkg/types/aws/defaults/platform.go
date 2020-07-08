@@ -6,13 +6,8 @@ import (
 
 var (
 	defaultMachineClass = map[string][]string{
-		"ap-east-1":      {"m5", "m4"},
-		"ap-northeast-2": {"m5", "m4"},
-		"eu-north-1":     {"m5", "m4"},
-		"eu-west-3":      {"m5", "m4"},
-		"me-south-1":     {"m5", "m4"},
-		"us-gov-east-1":  {"m5", "m4"},
-		"us-west-2":      {"m5", "m4"},
+		// Example region default machine class override:
+		// "ap-east-1":      {"m5", "m4"},
 	}
 )
 
@@ -21,21 +16,19 @@ func SetPlatformDefaults(p *aws.Platform) {
 }
 
 // InstanceClass returns the instance "class" we should use for a given
-// region. We prefer m4 if available (more EBS volumes per node) but will use
-// m5 in regions that don't have m4.
+// region. Default is m5 unless a region override is defined in defaultMachineClass.
 func InstanceClass(region string) string {
 	if classes, ok := defaultMachineClass[region]; ok {
 		return classes[0]
 	}
-	return "m4"
+	return "m5"
 }
 
 // InstanceClasses returns a list of instance "class", in decreasing priority order, which we should use for a given
-// region. We prefer m4 if available (more EBS volumes per node) but will use
-// m5 in regions that don't have m4.
+// region. Default is m5 then m4 unless a region override is defined in defaultMachineClass.
 func InstanceClasses(region string) []string {
 	if classes, ok := defaultMachineClass[region]; ok {
 		return classes
 	}
-	return []string{"m4", "m5"}
+	return []string{"m5", "m4"}
 }

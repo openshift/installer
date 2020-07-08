@@ -49,7 +49,7 @@ Parameters:
     Description: IAM profile to associate with master nodes.
     Type: String
   MasterInstanceType:
-    Default: m4.xlarge
+    Default: m5.xlarge
     Type: String
     AllowedValues:
     - "m4.xlarge"
