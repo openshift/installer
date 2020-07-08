@@ -363,6 +363,9 @@ func getVIPs() (string, string, error) {
 				Help:    "The VIP to be used for ingress to the cluster.",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				if apiVIP == (ans.(string)) {
+					return fmt.Errorf("%q should not be equal to the Virtual IP address for the API", ans.(string))
+				}
 				return validate.IP((ans).(string))
 			}),
 		},
