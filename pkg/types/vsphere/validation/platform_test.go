@@ -124,6 +124,16 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			expectedError: `^test-path.ingressVIP: Invalid value: "192.168.111": "192.168.111" is not a valid IP`,
 		},
+		{
+			name: "Same API and Ingress VIP",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.APIVIP = "192.168.111.1"
+				p.IngressVIP = "192.168.111.1"
+				return p
+			}(),
+			expectedError: `^test-path.apiVIP: Invalid value: "192.168.111.1": IPs for both API and Ingress should not be the same`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
