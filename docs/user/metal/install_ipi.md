@@ -283,21 +283,6 @@ platform.
 
 https://github.com/openshift-metal3/kni-installer/issues/74
 
-### install gather not supported
-
-When an installation fails, `openshift-install` will attempt to gather debug
-information from hosts.  This is not yet supported by the `baremetal` platform.
-
-https://github.com/openshift-metal3/kni-installer/issues/79
-
-### Provisioning subnet not fully configurable
-
-There are some install-config parameters to control templating of the provisioning
-network configuration, but fully supporting alternative subnets for the
-provisioning network is incomplete.
-
-https://github.com/openshift/installer/issues/2091
-
 ## Troubleshooting
 
 General troubleshooting for OpenShift installations can be found
