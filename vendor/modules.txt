@@ -937,7 +937,7 @@ github.com/masterzen/winrm/soap
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.12
 github.com/mattn/go-isatty
-# github.com/metal3-io/baremetal-operator v0.0.0 => github.com/openshift/baremetal-operator v0.0.0-20200611190251-d997d9c06ba8
+# github.com/metal3-io/baremetal-operator v0.0.0 => github.com/openshift/baremetal-operator v0.0.0-20200702005656-4ce920a36861
 ## explicit
 github.com/metal3-io/baremetal-operator/pkg/apis/metal3/v1alpha1
 github.com/metal3-io/baremetal-operator/pkg/bmc
@@ -2016,7 +2016,7 @@ sigs.k8s.io/yaml
 # github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb
 # github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-3
 # github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
-# github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20200611190251-d997d9c06ba8
+# github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20200702005656-4ce920a36861
 # github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
 # github.com/openshift/api => github.com/openshift/api v0.0.0-20200601094953-95abe2d2f422
 # github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200116152001-92a2713fa240

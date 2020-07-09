@@ -5,8 +5,8 @@ import (
 )
 
 func init() {
-	registerFactory("ipmi", newIPMIAccessDetails)
-	registerFactory("libvirt", newIPMIAccessDetails)
+	registerFactory("ipmi", newIPMIAccessDetails, []string{})
+	registerFactory("libvirt", newIPMIAccessDetails, []string{})
 }
 
 func newIPMIAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
