@@ -1,6 +1,7 @@
 package openstack
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
@@ -54,6 +55,28 @@ func uploadBootstrapConfig(cloud string, bootstrapIgn string, clusterID string) 
 	return img.File, nil
 }
 
+// parseCertificateBundle loads each certificate in the bundle to the Ingition
+// carrier type, ignoring any invisible character before, after and in between
+// certificates.
+func parseCertificateBundle(userCA []byte) ([]ignition.CaReference, error) {
+	userCA = bytes.TrimSpace(userCA)
+
+	var carefs []ignition.CaReference
+	for len(userCA) > 0 {
+		var block *pem.Block
+		block, userCA = pem.Decode(userCA)
+		if block == nil {
+			return nil, fmt.Errorf("unable to parse certificate, please check the cacert section of clouds.yaml")
+		}
+
+		carefs = append(carefs, ignition.CaReference{Source: dataurl.EncodeBytes(pem.EncodeToMemory(block))})
+
+		userCA = bytes.TrimSpace(userCA)
+	}
+
+	return carefs, nil
+}
+
 // To allow Ignition to download its config on the bootstrap machine from a location secured by a
 // self-signed certificate, we have to provide it a valid custom ca bundle.
 // To do so we generate a small ignition config that contains just Security section with the bundle
@@ -96,30 +119,14 @@ func generateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL st
 		},
 	}
 
-	security := ignition.Security{}
-	if userCA != "" {
-		carefs := []ignition.CaReference{}
-		rest := []byte(userCA)
-
-		for {
-			var block *pem.Block
-			block, rest = pem.Decode(rest)
-			if block == nil {
-				return "", fmt.Errorf("unable to parse certificate, please check the cacert section of clouds.yaml")
-			}
-
-			carefs = append(carefs, ignition.CaReference{Source: dataurl.EncodeBytes(pem.EncodeToMemory(block))})
-
-			if len(rest) == 0 {
-				break
-			}
-		}
-
-		security = ignition.Security{
-			TLS: ignition.TLS{
-				CertificateAuthorities: carefs,
-			},
-		}
+	carefs, err := parseCertificateBundle([]byte(userCA))
+	if err != nil {
+		return "", err
+	}
+	security := ignition.Security{
+		TLS: ignition.TLS{
+			CertificateAuthorities: carefs,
+		},
 	}
 
 	headers := []ignition.HTTPHeader{
