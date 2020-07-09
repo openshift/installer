@@ -295,6 +295,7 @@ then
 			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
 			--cloud-config-file=/assets/manifests/cloud-provider-config.yaml \
 			--cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+			--release-image="${RELEASE_IMAGE_DIGEST}" \
 			${ADDITIONAL_FLAGS}
 
 	# Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to
