@@ -12,15 +12,20 @@ var defaultPacketConfigEnvVar = "PACKET_CONFIG"
 
 // TODO(displague) what is the preferred config for Packet projects? support
 // both yaml and json?
-var defaultPacketConfigPath = filepath.Join(os.Getenv("HOME"), "packet-config.yaml")
+var defaultPacketConfigPath = filepath.Join(os.Getenv("HOME"), ".packet-config.yaml")
 
 // Config holds Packet api access details
 type Config struct {
+	// APIURL is the Base URL for accessing the Packet API (https://api.packet.com/)
+	APIURL string `json:"api_url,omitempty"`
+
+	// APIKey is the User or Project API Key used to authenticate requests to the Packet API
+	APIKey string `json:"api_key,omitempty"`
 }
 
 // LoadPacketConfig from the following location (first wins):
 // 1. PACKET_CONFIG env variable
-// 2  $defaultPacketConfigPath
+// 2. $defaultPacketConfigPath
 // See #@Config for the expected format
 func LoadPacketConfig() ([]byte, error) {
 	data, err := ioutil.ReadFile(discoverPath())
