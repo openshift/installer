@@ -196,6 +196,8 @@ TODO RHEL CoreOS does not have assets for bare-metal.
 
 * `rd.neednet=1`: [CoreOS Installer][coreos-installer] needs internet access to fetch the OS image that needs to be installed on the machine.
 
+* `coreos.inst.image_url`: If you're not using a live image based initrd you will need to specify a [CoreOS Installer][coreos-installer] image. A live image is available starting in 4.6.
+
 * CoreOS Installer [arguments][coreos-installer-args] are required to be configured to install RHCOS and setup the Ignition config file for that machine.
 
 ## Watching your installation
