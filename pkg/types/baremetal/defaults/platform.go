@@ -41,7 +41,8 @@ func SetPlatformDefaults(p *baremetal.Platform, c *types.InstallConfig) {
 	// address in the network.
 	if !p.ProvisioningDHCPExternal && p.ProvisioningDHCPRange == "" {
 		startIP, _ := cidr.Host(&p.ProvisioningNetworkCIDR.IPNet, 10)
-		endIP, _ := cidr.Host(&p.ProvisioningNetworkCIDR.IPNet, 100)
+		_, broadcastIP := cidr.AddressRange(&p.ProvisioningNetworkCIDR.IPNet)
+		endIP := cidr.Dec(broadcastIP)
 		p.ProvisioningDHCPRange = fmt.Sprintf("%s,%s", startIP, endIP)
 	}
 
