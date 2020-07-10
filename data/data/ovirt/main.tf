@@ -20,6 +20,7 @@ module "bootstrap" {
   source                               = "./bootstrap"
   ovirt_cluster_id                     = var.ovirt_cluster_id
   ovirt_template_id                    = module.template.releaseimage_template_id
+  ovirt_tmp_template_vm_id             = module.template.tmp_import_vm
   ignition_bootstrap                   = var.ignition_bootstrap
   cluster_id                           = var.cluster_id
   openstack_base_image_name            = var.openstack_base_image_name

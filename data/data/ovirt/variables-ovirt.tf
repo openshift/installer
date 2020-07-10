@@ -19,6 +19,12 @@ variable "ovirt_password" {
   description = "The plain password of user to access Engine API"
 }
 
+variable "ovirt_tmp_template_vm_id" {
+  type        = string
+  default     = ""
+  description = "The ID of tmp VM which was created for creating the templated"
+}
+
 variable "ovirt_cluster_id" {
   type        = string
   description = "The ID of Cluster"
