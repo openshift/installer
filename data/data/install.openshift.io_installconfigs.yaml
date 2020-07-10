@@ -1277,6 +1277,11 @@ spec:
                     description: ExternalNetwork is name of the external network in
                       your OpenStack cluster.
                     type: string
+                  ingressFloatingIP:
+                    description: IngressFloatingIP is the ID of an available floating
+                      IP in your OpenStack cluster that will be associated with the
+                      OpenShift ingress port
+                    type: string
                   ingressVIP:
                     description: 'IngressVIP is the static IP on the nodes subnet
                       that the apps port for openshift will be assigned Default: will
@@ -1313,6 +1318,7 @@ spec:
                 - cloud
                 - computeFlavor
                 - externalNetwork
+                - ingressFloatingIP
                 - lbFloatingIP
                 - octaviaSupport
                 - region

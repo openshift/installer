@@ -127,6 +127,13 @@ resource "openstack_networking_floatingip_associate_v2" "api_fip" {
   depends_on  = [openstack_networking_router_interface_v2.nodes_router_interface]
 }
 
+resource "openstack_networking_floatingip_associate_v2" "ingress_fip" {
+  count       = length(var.ingress_floating_ip) == 0 ? 0 : 1
+  port_id     = openstack_networking_port_v2.ingress_port.id
+  floating_ip = var.ingress_floating_ip
+  depends_on  = [openstack_networking_router_interface_v2.nodes_router_interface]
+}
+
 resource "openstack_networking_router_v2" "openshift-external-router" {
   count               = local.create_router
   name                = "${var.cluster_id}-external-router"
