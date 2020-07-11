@@ -135,7 +135,7 @@ module "bootstrap" {
   pxe_kernel             = local.pxe_kernel
   pxe_initrd             = local.pxe_initrd
   pxe_kernel_args        = concat(
-    local.pxe_kernel_args,
+    local.kernel_args,
     ["${var.pxe_kernel_args}"],
   )
   matchbox_http_endpoint = var.matchbox_http_endpoint
