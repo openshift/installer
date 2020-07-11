@@ -33,10 +33,12 @@ type Platform struct {
 
 	// TrunkSupport holds a `0` or `1` value that indicates whether or not to use trunk ports
 	// in your OpenShift cluster.
+	// Deprecated: this value is set by the installer automatically.
 	TrunkSupport string `json:"trunkSupport"`
 
 	// OctaviaSupport holds a `0` or `1` value that indicates whether your OpenStack
 	// cluster supports Octavia Loadbalancing.
+	// Deprecated: this value is set by the installer automatically.
 	OctaviaSupport string `json:"octaviaSupport"`
 
 	// ClusterOSImage is either a URL with `http(s)` or `file` scheme to override

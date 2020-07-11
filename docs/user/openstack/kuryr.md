@@ -108,15 +108,9 @@ apiVersion: v1
 networking:
   networkType: Kuryr
   ...
-platform:
-  openstack:
-    ...
-    trunkSupport: true
-    octaviaSupport: true
-    ...
 ```
 
-**NOTE:** both `trunkSupport` and `octaviaSupport` are automatically discovered by the installer, so there is no need to set them. But if your environment doesn't meet both requirements Kuryr SDN will not properly work, as trunks are needed to connect the pods to the OpenStack network and Octavia to create the OpenShift services.
+**NOTE:** If your environment doesn't support trunks or OpenStack Octavia service isn't available, Kuryr SDN will not properly work, as trunks are needed to connect the pods to the OpenStack network and Octavia to create the OpenShift services.
 
 ### Known limitations of installing with Kuryr SDN
 

@@ -1295,8 +1295,9 @@ spec:
                       will not be deleted or modified by the installer.
                     type: string
                   octaviaSupport:
-                    description: OctaviaSupport holds a `0` or `1` value that indicates
+                    description: 'OctaviaSupport holds a `0` or `1` value that indicates
                       whether your OpenStack cluster supports Octavia Loadbalancing.
+                      Deprecated: this value is set by the installer automatically.'
                     type: string
                   region:
                     description: 'Region specifies the OpenStack region where the
@@ -1304,8 +1305,9 @@ spec:
                       by the installer.'
                     type: string
                   trunkSupport:
-                    description: TrunkSupport holds a `0` or `1` value that indicates
+                    description: 'TrunkSupport holds a `0` or `1` value that indicates
                       whether or not to use trunk ports in your OpenShift cluster.
+                      Deprecated: this value is set by the installer automatically.'
                     type: string
                 required:
                 - cloud

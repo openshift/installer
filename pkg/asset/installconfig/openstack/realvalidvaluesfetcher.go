@@ -3,10 +3,7 @@ package openstack
 import (
 	"github.com/pkg/errors"
 
-	"github.com/gophercloud/gophercloud/openstack/common/extensions"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
-	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
-	netext "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
@@ -96,59 +93,6 @@ func (f realValidValuesFetcher) GetFlavorNames(cloud string) ([]string, error) {
 	}
 
 	return flavorNames, nil
-}
-
-func (f realValidValuesFetcher) GetNetworkExtensionsAliases(cloud string) ([]string, error) {
-	opts := defaultClientOpts(cloud)
-
-	conn, err := clientconfig.NewServiceClient("network", opts)
-	if err != nil {
-		return nil, err
-	}
-
-	allPages, err := netext.List(conn).AllPages()
-	if err != nil {
-		return nil, err
-	}
-
-	allExts, err := extensions.ExtractExtensions(allPages)
-	if err != nil {
-		return nil, err
-	}
-
-	extAliases := make([]string, len(allExts))
-	for i, ext := range allExts {
-		extAliases[i] = ext.Alias
-	}
-
-	return extAliases, nil
-}
-
-func (f realValidValuesFetcher) GetServiceCatalog(cloud string) ([]string, error) {
-	opts := defaultClientOpts(cloud)
-
-	conn, err := clientconfig.NewServiceClient("identity", opts)
-	if err != nil {
-		return nil, err
-	}
-
-	authResult := conn.GetAuthResult()
-	auth, ok := authResult.(tokens.CreateResult)
-	if !ok {
-		return nil, errors.New("unable to extract service catalog")
-	}
-
-	allServices, err := auth.ExtractServiceCatalog()
-	if err != nil {
-		return nil, err
-	}
-
-	serviceCatalogNames := make([]string, len(allServices.Entries))
-	for i, service := range allServices.Entries {
-		serviceCatalogNames[i] = service.Name
-	}
-
-	return serviceCatalogNames, nil
 }
 
 func (f realValidValuesFetcher) GetFloatingIPNames(cloud string, floatingNetworkName string) ([]string, error) {
