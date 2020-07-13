@@ -22,6 +22,10 @@ for name in ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb i
     podman ps --all | grep -w "$name$" && podman rm $name -f
 done
 
+{{- range $n, $v := .PlatformData.BareMetal.IronicExtraConf }}
+export {{ $n }}='{{ $v }}'
+{{- end }}
+
 # Start the provisioning nic if not already started
 PROVISIONING_NIC=ens4
 if ! nmcli -t device | grep "$PROVISIONING_NIC:ethernet:connected:provisioning"; then
@@ -123,6 +127,7 @@ podman run -d --net host --privileged --name ironic-conductor \
      --env MARIADB_PASSWORD=$mariadb_password \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --env OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120 \
+     --env "OS_*" \
      --entrypoint /bin/runironic-conductor \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
 
@@ -131,11 +136,13 @@ sleep 10
 
 podman run -d --net host --privileged --name ironic-inspector \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     --env "OS_*" \
      -v $IRONIC_SHARED_VOLUME:/shared:z "${IRONIC_INSPECTOR_IMAGE}"
 
 podman run -d --net host --privileged --name ironic-api \
      --env MARIADB_PASSWORD=$mariadb_password \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     --env "OS_*" \
      --entrypoint /bin/runironic-api \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
 

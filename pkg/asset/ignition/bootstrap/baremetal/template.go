@@ -23,6 +23,8 @@ type TemplateData struct {
 	// ProvisioningDHCPAllowList contains a space-separated list of all of the control plane's boot
 	// MAC addresses. Requests to bootstrap DHCP from other hosts will be ignored.
 	ProvisioningDHCPAllowList string
+
+	IronicExtraConf map[string]interface{}
 }
 
 // GetTemplateData returns platform-specific data for bootstrap templates.
@@ -47,6 +49,8 @@ func GetTemplateData(config *baremetal.Platform) *TemplateData {
 		}
 		templateData.ProvisioningDHCPAllowList = strings.Join(dhcpAllowList, " ")
 	}
+
+	templateData.IronicExtraConf = config.IronicExtraConf
 
 	return &templateData
 }

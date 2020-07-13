@@ -9,3 +9,7 @@ spec:
   provisioningDHCPExternal: {{.Baremetal.ProvisioningDHCPExternal}}
   provisioningDHCPRange: "{{.Baremetal.ProvisioningDHCPRange}}"
   provisioningOSDownloadURL: "{{.ProvisioningOSDownloadURL}}"
+  ironicExtraConf:
+{{- range $n, $v := .Baremetal.IronicExtraConf }}
+    {{ $n }}: '{{ $v }}'
+{{- end }}

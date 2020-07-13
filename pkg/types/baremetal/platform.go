@@ -108,4 +108,9 @@ type Platform struct {
 	//
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty" validate:"omitempty,osimageuri,urlexist"`
+
+	// IronicExtraConf is a map of config options to be passed to ironic,  each entry should take the
+	// format OS_<section>_\_<name>=<value> - where `section` and `name` reprepresent the
+	// config option in ironic.conf
+	IronicExtraConf map[string]interface{} `json:"ironicExtraConf,omitempty"`
 }

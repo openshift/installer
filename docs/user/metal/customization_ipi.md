@@ -139,3 +139,19 @@ certificates signed by a known certificate authority. In environments
 where certificates are signed by unknown authorities, this behavior
 can be disabled by setting `disableCertificateVerification` to `true`
 for each `bmc` entry.
+
+## Customizing ironic for provisioning
+
+Should you need to adjust any of the config options in ironic you can
+set ironicExtraConf in the platform section of install-config.yaml. Each
+config option should be expressed as a key/value pair with the format
+
+OS_<section>_\_<name>=<value> - where `section` and `name` are the
+reprepresent the config option in ironic.conf e.g. to set a IPA ssh key and
+set the number of ironic API workers
+
+```yaml
+platform:
+  baremetal:
+    ironicExtraConf: {"OS_PXE__PXE_APPEND_PARAMS":'nofb nomodeset vga=normal sshkey="ssh-rsa AAAA..."', "OS_API__API_WORKERS":"8"}
+```
