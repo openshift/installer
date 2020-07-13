@@ -88,8 +88,8 @@ podman run -d --net host --name ipa-downloader \
 
 # Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
 for port in 80 5050 6385 ; do
-    if ! sudo $IPTABLES -C INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
-        sudo $IPTABLES -I INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT
+    if ! $IPTABLES -C INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
+        $IPTABLES -I INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT
     fi
 done
 
@@ -119,7 +119,7 @@ while ! curl --fail http://localhost/images/rhcos-ootpa-latest.qcow2.md5sum ; do
 while ! curl --fail --head http://localhost/images/ironic-python-agent.initramfs ; do sleep 1; done
 while ! curl --fail --head http://localhost/images/ironic-python-agent.kernel ; do sleep 1; done
 
-sudo podman run -d --net host --privileged --name ironic-conductor \
+podman run -d --net host --privileged --name ironic-conductor \
      --env MARIADB_PASSWORD=$mariadb_password \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --env OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120 \
@@ -133,7 +133,7 @@ podman run -d --net host --privileged --name ironic-inspector \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      -v $IRONIC_SHARED_VOLUME:/shared:z "${IRONIC_INSPECTOR_IMAGE}"
 
-sudo podman run -d --net host --privileged --name ironic-api \
+podman run -d --net host --privileged --name ironic-api \
      --env MARIADB_PASSWORD=$mariadb_password \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --entrypoint /bin/runironic-api \
