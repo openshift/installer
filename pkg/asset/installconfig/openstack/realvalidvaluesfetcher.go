@@ -21,25 +21,23 @@ func NewValidValuesFetcher() validation.ValidValuesFetcher {
 
 // GetCloudNames gets the valid cloud names. These are read from clouds.yaml.
 func (f realValidValuesFetcher) GetCloudNames() ([]string, error) {
-	clouds, err := new(yamlLoadOpts).LoadCloudsYAML()
+	clouds, err := clientconfig.LoadCloudsYAML()
 	if err != nil {
 		return nil, err
 	}
 
-	i := 0
-	cloudNames := make([]string, len(clouds))
+	cloudNames := []string{}
 	for k := range clouds {
-		cloudNames[i] = k
-		i++
+		cloudNames = append(cloudNames, k)
 	}
 	return cloudNames, nil
 }
 
 // GetNetworkNames gets the valid network names.
 func (f realValidValuesFetcher) GetNetworkNames(cloud string) ([]string, error) {
-	opts := defaultClientOpts(cloud)
-
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := clientconfig.NewServiceClient("network", &clientconfig.ClientOpts{
+		Cloud: cloud,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -65,9 +63,9 @@ func (f realValidValuesFetcher) GetNetworkNames(cloud string) ([]string, error) 
 
 // GetFlavorNames gets a list of valid flavor names.
 func (f realValidValuesFetcher) GetFlavorNames(cloud string) ([]string, error) {
-	opts := defaultClientOpts(cloud)
-
-	conn, err := clientconfig.NewServiceClient("compute", opts)
+	conn, err := clientconfig.NewServiceClient("compute", &clientconfig.ClientOpts{
+		Cloud: cloud,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -94,11 +92,10 @@ func (f realValidValuesFetcher) GetFlavorNames(cloud string) ([]string, error) {
 
 	return flavorNames, nil
 }
-
 func (f realValidValuesFetcher) GetFloatingIPNames(cloud string, floatingNetworkName string) ([]string, error) {
-	opts := defaultClientOpts(cloud)
-
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := clientconfig.NewServiceClient("network", &clientconfig.ClientOpts{
+		Cloud: cloud,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -138,11 +135,9 @@ func (f realValidValuesFetcher) GetFloatingIPNames(cloud string, floatingNetwork
 }
 
 func (f realValidValuesFetcher) GetSubnetCIDR(cloud string, subnetID string) (string, error) {
-	opts := &clientconfig.ClientOpts{
+	networkClient, err := clientconfig.NewServiceClient("network", &clientconfig.ClientOpts{
 		Cloud: cloud,
-	}
-
-	networkClient, err := clientconfig.NewServiceClient("network", opts)
+	})
 	if err != nil {
 		return "", err
 	}
