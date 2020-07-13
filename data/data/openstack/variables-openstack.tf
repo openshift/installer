@@ -314,7 +314,8 @@ variable "openstack_master_flavor_name" {
 }
 
 variable "openstack_trunk_support" {
-  type = bool
+  type    = bool
+  default = false
 
   description = <<EOF
 False if the OpenStack Neutron trunk extension is disabled and True if it is enabled.
@@ -324,6 +325,7 @@ EOF
 
 variable "openstack_octavia_support" {
   type = bool
+  default = false
 
   description = <<EOF
 False if the OpenStack Octavia endpoint is missing and True if it exists.
