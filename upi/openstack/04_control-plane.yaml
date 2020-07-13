@@ -39,11 +39,13 @@
       - ip_address: "{{ os_subnet_range2 | next_nth_usable(7) }}"
     with_indexed_items: "{{ [os_port_master2] * os_cp_nodes_number }}"
     register: ports
+    when: os_networking_type == "CiscoACI"
 
   - name: 'Set Control Plane ports tag2'
     command:
       cmd: "openstack port set --tag {{ cluster_id_tag }} {{ item.1 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_port_master2] * os_cp_nodes_number }}"
+    when: os_networking_type == "CiscoACI"
 
   - name: 'List the Control Plane Trunks'
     command:
@@ -74,6 +76,23 @@
       - port-name: "{{ os_port_master }}-{{ item.0 }}"
       - port-name: "{{ os_port_master2 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
+    when: os_networking_type == "CiscoACI"
+
+  - name: 'Create the Control Plane servers'
+    os_server:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      image: "{{ os_image_rhcos }}"
+      flavor: "{{ os_flavor_master }}"
+      auto_ip: no
+      # The ignition filename will be concatenated with the Control Plane node
+      # name and its 0-indexed serial number.
+      # In this case, the first node will look for this filename:
+      #    "{{ infraID }}-master-0-ignition.json"
+      userdata: "{{ lookup('file', [item.1, item.0, 'ignition.json'] | join('-')) | string }}"
+      nics:
+      - port-name: "{{ os_port_master }}-{{ item.0 }}"
+    with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
+    when: os_networking_type != "CiscoACI"
 
   - name: 'Create the master floating IP'
     os_floating_ip:
@@ -82,3 +101,4 @@
       network: "{{ os_external_network }}"
       server: "{{ item.1 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
+    when: os_networking_type == "CiscoACI"

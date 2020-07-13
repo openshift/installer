@@ -35,11 +35,13 @@
       - ip_address: "{{ os_subnet_range2 | next_nth_usable(7) }}"
     with_indexed_items: "{{ [os_port_worker2] * os_compute_nodes_number }}"
     register: ports
+    when: os_networking_type == "CiscoACI"
 
   - name: 'Set Compute ports tag2'
     command:
       cmd: "openstack port set --tag {{ [cluster_id_tag] }} {{ item.1 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_port_worker2] * os_compute_nodes_number }}"
+    when: os_networking_type == "CiscoACI"
 
   - name: 'List the Compute Trunks'
     command:
@@ -66,6 +68,18 @@
       - port-name: "{{ os_port_worker }}-{{ item.0 }}"
       - port-name: "{{ os_port_worker2 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
+    when: os_networking_type == "CiscoACI"
+
+  - name: 'Create the Compute servers'
+    os_server:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      image: "{{ os_image_rhcos }}"
+      flavor: "{{ os_flavor_worker }}"
+      auto_ip: no
+      userdata: "{{ lookup('file', 'worker.ign') | string }}"
+      nics:
+      - port-name: "{{ os_port_worker }}-{{ item.0 }}"
+    with_indexed_items: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
 
   - name: 'Create the compute floating IP'
     os_floating_ip:
@@ -74,3 +88,4 @@
       network: "{{ os_external_network }}"
       server: "{{ item.1 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
+    when: os_networking_type == "CiscoACI"
