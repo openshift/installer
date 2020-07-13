@@ -72,6 +72,9 @@ aliases:
     - mjudeikis
   ovirt-approvers:
     - rgolangh
+    - dougsland
+    - Gal-Zaidman
+    - gekorob
   ovirt-reviewers:
     - dougsland
     - Gal-Zaidman
