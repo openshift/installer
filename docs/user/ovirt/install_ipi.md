@@ -14,10 +14,8 @@ DNS and LB services but is a platform provider. See also [OpenShift-Metal³ kni-
 ## Prerequisite
 
 1. oVirt/RHV version 4.3.9.4 or later. 
-2. Allocate 3 IP on the VM network: 
+2. Allocate 2 IP on the VM network:
     - IP for the internal kubernetes api, that all components will interact with 
-    - IP for the internal DNS service, to bootstrap etcd and to resolve names like 
-    `api.$CLUSTER_NAME.$CLUSTER_DOMAIN` and node names 
     - IP for the Ingress, the load balancer in front of the cluster apps 
     To work with this provider one must supply 2 IPs that are related to any MAC 
     in the virtualization env, where the cluster will run. Those IPs will be active 
@@ -67,15 +65,13 @@ using a wizard:
 $ openshift-install create cluster --dir=install_dir
 ? SSH Public Key /home/user/.ssh/id_dsa.pub
 ? Platform ovirt
-? Enter oVirt's api endpoint URL https://ovirt-engine-fqdn/ovirt-engine/api
-? Is the installed oVirt certificate trusted? Yes
+? Engine FQDN[:PORT] [? for help] ovirt-engine-fqdn
 ? Enter ovirt-engine username admin@internal
 ? Enter password ***
 ? oVirt cluster xxxx
 ? oVirt storage xxxx
 ? oVirt network xxxx
 ? Internal API virtual IP 10.0.0.1
-? Internal DNS virtual IP 10.0.0.2
 ? Ingress virtual IP 10.0.0.3
 ? Base Domain example.org
 ? Cluster Name test
