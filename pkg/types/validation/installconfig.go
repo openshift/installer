@@ -37,6 +37,9 @@ const (
 	masterPoolName = "master"
 )
 
+// list of known plugins that require hostPrefix to be set
+var pluginsUsingHostPrefix = sets.NewString("OpenShiftSDN", "OVNKubernetes")
+
 // ValidateInstallConfig checks that the specified install config is valid.
 func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -302,10 +305,13 @@ func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, 
 	if cn.HostPrefix < 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "hostPrefix must be positive"))
 	}
-	if ones, bits := cn.CIDR.Mask.Size(); cn.HostPrefix < int32(ones) {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must not be larger size than CIDR "+cn.CIDR.String()))
-	} else if bits == 128 && cn.HostPrefix != 64 {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must be 64 for IPv6 networks"))
+	// ignore hostPrefix if the plugin does not use it and has it unset
+	if pluginsUsingHostPrefix.Has(n.NetworkType) || (cn.HostPrefix != 0) {
+		if ones, bits := cn.CIDR.Mask.Size(); cn.HostPrefix < int32(ones) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must not be larger size than CIDR "+cn.CIDR.String()))
+		} else if bits == 128 && cn.HostPrefix != 64 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must be 64 for IPv6 networks"))
+		}
 	}
 	return allErrs
 }
