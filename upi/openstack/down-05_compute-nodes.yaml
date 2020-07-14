@@ -41,3 +41,4 @@
       name: "{{ item.1 }}-{{ item.0 }}"
       state: absent
     with_indexed_items: "{{ [os_port_worker2] * os_compute_nodes_number }}"
+    when: os_networking_type == "CiscoACI"

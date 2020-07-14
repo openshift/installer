@@ -25,17 +25,30 @@
     command:
       cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_bootstrap }}"
 
-  - name: 'Create the bootstrap server port'
+  - name: 'Create the bootstrap server port2'
     os_port:
       name: "{{ os_port_bootstrap2 }}"
       network: "{{ os_network2 }}"
       allowed_address_pairs:
       - ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
       - ip_address: "{{ os_subnet_range | next_nth_usable(6) }}"
+    when: os_networking_type == "CiscoACI"
 
   - name: 'Set bootstrap port tag 2'
     command:
       cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_bootstrap2 }}"
+    when: os_networking_type == "CiscoACI"
+
+  - name: 'Create the bootstrap server'
+    os_server:
+      name: "{{ os_bootstrap_server_name }}"
+      image: "{{ os_image_rhcos }}"
+      flavor: "{{ os_flavor_master }}"
+      userdata: "{{ lookup('file', os_bootstrap_ignition) | string }}"
+      auto_ip: no
+      nics:
+      - port-name: "{{ os_port_bootstrap }}"
+    when: os_networking_type != "CiscoACI"
 
   - name: 'Create the bootstrap server'
     os_server:
@@ -47,6 +60,7 @@
       nics:
       - port-name: "{{ os_port_bootstrap }}"
       - port-name: "{{ os_port_bootstrap2 }}"
+    when: os_networking_type == "CiscoACI"
 
   - name: 'Create the bootstrap floating IP'
     os_floating_ip:

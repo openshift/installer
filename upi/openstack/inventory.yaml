@@ -23,7 +23,7 @@ all:
       host_prefix: '23'
       # Name of the SDN.
       # Possible values are OpenshiftSDN or Kuryr.
-      os_networking_type: 'OpenshiftSDN'
+      os_networking_type: 'CiscoACI'
 
       # Number of provisioned Control Plane nodes
       # 3 is the minimum number for a fully-functional cluster.

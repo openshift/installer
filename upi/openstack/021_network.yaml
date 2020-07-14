@@ -7,10 +7,12 @@
   - name: 'Create second node network'
     command:
       cmd: "neutron net-create {{ os_network2 }} --apic:nested-domain-name openshift-domain --apic:nested-domain-type openshift --apic:nested_domain_infra_vlan 4093 --apic:nested_domain_service_vlan 2003"
+    when: os_networking_type == "CiscoACI"
 
   - name: 'Set the second cluster network tag'
     command:
       cmd: "openstack network set --tag {{ cluster_id_tag }} {{ os_network2 }}"
+    when: os_networking_type == "CiscoACI"
 
   - name: 'Create a subnet2'
     os_subnet:
@@ -20,11 +22,14 @@
       cidr: "{{ os_subnet_range2 }}"
       allocation_pool_start: "{{ os_subnet_range2 | next_nth_usable(10) }}"
       allocation_pool_end: "{{ os_subnet_range2 | ipaddr('last_usable') }}"
+    when: os_networking_type == "CiscoACI"
 
   - name: 'Set the cluster subnet tag'
     command:
       cmd: "openstack subnet set --tag {{ cluster_id_tag }} {{ os_subnet2 }}"
+    when: os_networking_type == "CiscoACI"
 
   - name: 'Set dns nameserver'
     command:
       cmd: "openstack subnet set --dns-nameserver {{ dns_ip }} {{ os_subnet }}"
+    when: os_networking_type == "CiscoACI"
