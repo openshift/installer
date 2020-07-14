@@ -27,7 +27,7 @@
       cmd: "openstack port set --tag {{ [cluster_id_tag] }} {{ item.1 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"
 
-  - name: 'Create the Compute ports2'
+  - name: 'Create the second Compute ports'
     os_port:
       name: "{{ item.1 }}-{{ item.0 }}"
       network: ipi-net2
@@ -37,7 +37,7 @@
     register: ports
     when: os_networking_type == "CiscoACI"
 
-  - name: 'Set Compute ports tag2'
+  - name: 'Set second Compute ports tag'
     command:
       cmd: "openstack port set --tag {{ [cluster_id_tag] }} {{ item.1 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_port_worker2] * os_compute_nodes_number }}"
