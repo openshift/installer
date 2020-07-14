@@ -20,7 +20,7 @@
       name: "{{ os_port_bootstrap }}"
       state: absent
 
-  - name: 'Remove the bootstrap server port2'
+  - name: 'Remove the second bootstrap server port'
     os_port:
       name: "{{ os_port_bootstrap2 }}"
       state: absent

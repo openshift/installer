@@ -25,7 +25,7 @@
     command:
       cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_bootstrap }}"
 
-  - name: 'Create the bootstrap server port2'
+  - name: 'Create the second bootstrap server port'
     os_port:
       name: "{{ os_port_bootstrap2 }}"
       network: "{{ os_network2 }}"
@@ -34,7 +34,7 @@
       - ip_address: "{{ os_subnet_range | next_nth_usable(6) }}"
     when: os_networking_type == "CiscoACI"
 
-  - name: 'Set bootstrap port tag 2'
+  - name: 'Set second bootstrap port tag'
     command:
       cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_bootstrap2 }}"
     when: os_networking_type == "CiscoACI"

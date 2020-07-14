@@ -9,19 +9,14 @@
     set_fact:
       cluster_id_tag: "openshiftClusterID={{ infraID }}"
       os_network: "{{ infraID }}-network"
-      os_network2: "{{ infraID }}-network2"
       os_subnet: "{{ infraID }}-nodes"
-      os_subnet2: "{{ infraID }}-nodes2"
       os_router: "{{ infraID }}-external-router"
       # Port names
       os_port_api: "{{ infraID }}-api-port"
       os_port_ingress: "{{ infraID }}-ingress-port"
       os_port_bootstrap: "{{ infraID }}-bootstrap-port"
-      os_port_bootstrap2: "{{ infraID }}-bootstrap-port2"
       os_port_master: "{{ infraID }}-master-port"
-      os_port_master2: "{{ infraID }}-master-port2"
       os_port_worker: "{{ infraID }}-worker-port"
-      os_port_worker2: "{{ infraID }}-worker-port2"
       # Security groups names
       os_sg_master: "{{ infraID }}-master"
       os_sg_worker: "{{ infraID }}-worker"
@@ -40,3 +35,7 @@
       os_svc_subnet: "{{ infraID }}-kuryr-service-subnet"
       # Ignition files
       os_bootstrap_ignition: "{{ infraID }}-bootstrap-ignition.json"
+
+  - name: 'Import variables for CiscoACI CNI'
+    import_playbook: common_ciscoaci.yaml
+    when: os_networking_type == "CiscoACI"
