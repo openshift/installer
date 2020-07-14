@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/baremetal/defaults"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -304,7 +305,7 @@ func TestValidateProvisioning(t *testing.T) {
 			name: "invalid_provisioningDHCPRange_not_a_range",
 			platform: platform().
 				ProvisioningDHCPRange("172.22.0.19").build(),
-			expected: "Invalid value: \"172.22.0.19\": provisioning dhcp range should be in format: start_ip,end_ip",
+			expected: "Invalid value: \"172.22.0.19\": provisioning DHCP range should be in format: start_ip,end_ip",
 		},
 		{
 			name: "invalid_provisioningDHCPRange_wrong_CIDR",
@@ -313,10 +314,22 @@ func TestValidateProvisioning(t *testing.T) {
 			expected: "Invalid value: \"192.168.128.1,172.22.0.100\": \"192.168.128.1\" is not in the provisioning network",
 		},
 		{
+			name: "invalid_clusterprovip_overlapDHCPRange",
+			platform: platform().
+				ClusterProvisioningIP("172.22.0.10").build(),
+			expected: "Invalid value: \"172.22.0.10\": \"172.22.0.10\" overlaps with the allocated DHCP range",
+		},
+		{
+			name: "invalid_bootstrapprovip_overlapDHCPRange",
+			platform: platform().
+				BootstrapProvisioningIP("172.22.0.20").build(),
+			expected: "Invalid value: \"172.22.0.20\": \"172.22.0.20\" overlaps with the allocated DHCP range",
+		},
+		{
 			name: "invalid_libvirturi",
 			platform: platform().
-				LibvirtURI("").build(),
-			expected: "invalid URI \"\"",
+				LibvirtURI("bad").build(),
+			expected: "invalid URI \"bad\"",
 		},
 	}
 
@@ -327,6 +340,8 @@ func TestValidateProvisioning(t *testing.T) {
 				tc.config = installConfig().build()
 				tc.config.BareMetal = tc.platform
 			}
+
+			defaults.SetPlatformDefaults(tc.config.BareMetal, tc.config)
 
 			err := ValidateProvisioning(tc.config.BareMetal, network(), field.NewPath("baremetal")).ToAggregate()
 

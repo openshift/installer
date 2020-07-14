@@ -107,6 +107,48 @@ func validateOSImageURI(uri string) error {
 	return nil
 }
 
+// validateDHCPRange ensures the provided range is valid, and that provisioning service IP's do not overlap.
+func validateDHCPRange(p *baremetal.Platform, fldPath *field.Path) (allErrs field.ErrorList) {
+	dhcpRange := strings.Split(p.ProvisioningDHCPRange, ",")
+
+	if len(dhcpRange) != 2 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPRange"), p.ProvisioningDHCPRange, "provisioning DHCP range should be in format: start_ip,end_ip"))
+		return
+	}
+
+	for _, ip := range dhcpRange {
+		// Ensure IP is valid
+		if err := validate.IP(ip); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPRange"), p.ProvisioningDHCPRange, fmt.Sprintf("%s: %s", ip, err.Error())))
+			return
+		}
+
+		// Validate IP is in the provisioning network
+		if p.ProvisioningNetworkCIDR != nil && !p.ProvisioningNetworkCIDR.Contains(net.ParseIP(ip)) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPRange"), p.ProvisioningDHCPRange, fmt.Sprintf("%q is not in the provisioning network", ip)))
+			return
+		}
+	}
+
+	// Validate VIP's are not within the DHCP Range
+	start := net.ParseIP(dhcpRange[0])
+	end := net.ParseIP(dhcpRange[1])
+
+	if start != nil && end != nil {
+		// Validate ClusterProvisioningIP is not in DHCP range
+		if clusterProvisioningIP := net.ParseIP(p.ClusterProvisioningIP); clusterProvisioningIP != nil && bytes.Compare(clusterProvisioningIP, start) >= 0 && bytes.Compare(clusterProvisioningIP, end) <= 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningHostIP"), p.ClusterProvisioningIP, fmt.Sprintf("%q overlaps with the allocated DHCP range", p.ClusterProvisioningIP)))
+		}
+
+		// Validate BootstrapProvisioningIP is not in DHCP range
+		if bootstrapProvisioningIP := net.ParseIP(p.BootstrapProvisioningIP); bootstrapProvisioningIP != nil && bytes.Compare(bootstrapProvisioningIP, start) >= 0 && bytes.Compare(bootstrapProvisioningIP, end) <= 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, fmt.Sprintf("%q overlaps with the allocated DHCP range", p.BootstrapProvisioningIP)))
+		}
+	}
+
+	return
+}
+
 // validateHostsBase validates the hosts based on a filtering function
 func validateHostsBase(hosts []*baremetal.Host, fldPath *field.Path, filter validator.FilterFunc) field.ErrorList {
 	hostErrs := field.ErrorList{}
@@ -301,22 +343,7 @@ func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *f
 	}
 
 	if p.ProvisioningDHCPRange != "" {
-		dhcpRange := strings.Split(p.ProvisioningDHCPRange, ",")
-		if len(dhcpRange) != 2 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPRange"), p.ProvisioningDHCPRange, "provisioning dhcp range should be in format: start_ip,end_ip"))
-		} else {
-			for _, ip := range dhcpRange {
-				// Ensure IP is valid
-				if err := validate.IP(ip); err != nil {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPRange"), p.ProvisioningDHCPRange, fmt.Sprintf("%s: %s", ip, err.Error())))
-				}
-
-				// Validate IP is in the provisioning network
-				if p.ProvisioningNetworkCIDR != nil && !p.ProvisioningNetworkCIDR.Contains(net.ParseIP(ip)) {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningDHCPRange"), p.ProvisioningDHCPRange, fmt.Sprintf("%q is not in the provisioning network", ip)))
-				}
-			}
-		}
+		allErrs = append(allErrs, validateDHCPRange(p, fldPath)...)
 	}
 
 	if err := validateIPNotinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
