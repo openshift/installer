@@ -25,9 +25,11 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects"
+	"github.com/gophercloud/gophercloud/pagination"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	k8serrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -655,27 +657,37 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 			// Openshiftclusterid in the X-Container-Meta- HEAD output
 			titlekey := strings.Title(strings.ToLower(key))
 			if metadata[titlekey] == val {
-				listOpts := objects.ListOpts{Full: false}
-				allPages, err := objects.List(conn, container, listOpts).AllPages()
-				if err != nil {
-					logger.Error(err)
-					return false, nil
-				}
-				allObjects, err := objects.ExtractNames(allPages)
-				if err != nil {
-					logger.Error(err)
-					return false, nil
-				}
-				for _, object := range allObjects {
-					logger.Debugf("Deleting object %q", object)
-					_, err = objects.Delete(conn, container, object, nil).Extract()
+				logger.Debugf("Bulk deleting container %q objects", container)
+				pager := objects.List(conn, container, &objects.ListOpts{
+					Limit: 50,
+				})
+				err = pager.EachPage(func(page pagination.Page) (bool, error) {
+					objectsOnPage, err := objects.ExtractNames(page)
 					if err != nil {
-						// Ignore the error if the object cannot be found and return with an appropriate message if it's another type of error
-						if _, ok := err.(gophercloud.ErrDefault404); !ok {
-							logger.Errorf("Removing object %q from container %q failed: %v", object, container, err)
-							return false, nil
+						return false, err
+					}
+					resp, err := objects.BulkDelete(conn, container, objectsOnPage).Extract()
+					if err != nil {
+						return false, err
+					}
+					if len(resp.Errors) > 0 {
+						// Convert resp.Errors to golang errors.
+						// Each error is represented by a list of 2 strings, where the first one
+						// is the object name, and the second one contains an error message.
+						errs := make([]error, len(resp.Errors))
+						for i, objectError := range resp.Errors {
+							errs[i] = errors.Errorf("cannot delete object %v: %v", objectError[0], objectError[1])
 						}
-						logger.Debugf("Cannot find object %q in container %q. It's probably already been deleted.", object, container)
+
+						return false, errors.Errorf("errors occured during bulk deleting of container %v objects: %v", container, k8serrors.NewAggregate(errs))
+					}
+
+					return true, nil
+				})
+				if err != nil {
+					if _, ok := err.(gophercloud.ErrDefault404); !ok {
+						logger.Errorf("Bulk deleting of container %q objects failed: %v", container, err)
+						return false, nil
 					}
 				}
 				logger.Debugf("Deleting container %q", container)

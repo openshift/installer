@@ -14,7 +14,7 @@ Example of a new empty Trunk creation
 		PortID:       "a6f0560c-b7a8-401f-bf6e-d0a5c851ae10",
 	}
 
-	trunk, err := trunks.Create(networkClient, trunkOpts).Extract()
+	trunk, err := trunks.Create(networkClient, createOpts).Extract()
 	if err != nil {
 		panic(err)
 	}
@@ -42,7 +42,7 @@ Example of a new Trunk creation with 2 subports
 		},
 	}
 
-	trunk, err := trunks.Create(client, trunkOpts).Extract()
+	trunk, err := trunks.Create(client, createOpts).Extract()
 	if err != nil {
 		panic(err)
 	}

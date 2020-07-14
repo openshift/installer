@@ -1,6 +1,7 @@
 package openstack
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -11,6 +12,14 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/routers"
+)
+
+const (
+	errEnableSNATWithoutExternalNet = "setting enable_snat for openstack_networking_router_v2 " +
+		"requires external_network_id to be set"
+
+	errExternalFixedIPWithoutExternalNet = "setting an external_fixed_ip for openstack_networking_router_v2 " +
+		"requires external_network_id to be set"
 )
 
 func resourceNetworkingRouterV2() *schema.Resource {
@@ -35,28 +44,33 @@ func resourceNetworkingRouterV2() *schema.Resource {
 				ForceNew: true,
 				Computed: true,
 			},
+
 			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
+
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: false,
 			},
+
 			"admin_state_up": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: false,
 				Computed: true,
 			},
+
 			"distributed": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
+
 			"external_gateway": {
 				Type:          schema.TypeString,
 				Optional:      true,
@@ -65,6 +79,7 @@ func resourceNetworkingRouterV2() *schema.Resource {
 				Deprecated:    "use external_network_id instead",
 				ConflictsWith: []string{"external_network_id"},
 			},
+
 			"external_network_id": {
 				Type:          schema.TypeString,
 				Optional:      true,
@@ -72,12 +87,14 @@ func resourceNetworkingRouterV2() *schema.Resource {
 				Computed:      true,
 				ConflictsWith: []string{"external_gateway"},
 			},
+
 			"enable_snat": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: false,
 				Computed: true,
 			},
+
 			"external_fixed_ip": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -97,17 +114,20 @@ func resourceNetworkingRouterV2() *schema.Resource {
 					},
 				},
 			},
+
 			"tenant_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
+
 			"value_specs": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
 			},
+
 			"availability_zone_hints": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -115,6 +135,7 @@ func resourceNetworkingRouterV2() *schema.Resource {
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
+
 			"vendor_options": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -130,6 +151,7 @@ func resourceNetworkingRouterV2() *schema.Resource {
 					},
 				},
 			},
+
 			"tags": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -195,16 +217,16 @@ func resourceNetworkingRouterV2Create(d *schema.ResourceData, meta interface{}) 
 
 	if esRaw, ok := d.GetOkExists("enable_snat"); ok {
 		if externalNetworkID == "" {
-			return fmt.Errorf("setting enable_snat requires external_network_id to be set")
+			return errors.New(errEnableSNATWithoutExternalNet)
 		}
 		es := esRaw.(bool)
 		gatewayInfo.EnableSNAT = &es
 	}
 
-	externalFixedIPs := resourceRouterExternalFixedIPsV2(d)
+	externalFixedIPs := expandNetworkingRouterExternalFixedIPsV2(d.Get("external_fixed_ip").([]interface{}))
 	if len(externalFixedIPs) > 0 {
 		if externalNetworkID == "" {
-			return fmt.Errorf("setting an external_fixed_ip requires external_network_id to be set")
+			return errors.New(errExternalFixedIPWithoutExternalNet)
 		}
 		gatewayInfo.ExternalFixedIPs = externalFixedIPs
 	}
@@ -217,52 +239,57 @@ func resourceNetworkingRouterV2Create(d *schema.ResourceData, meta interface{}) 
 		createOpts.GatewayInfo = &gatewayInfo
 	}
 
-	log.Printf("[DEBUG] Create Options: %#v", createOpts)
-	n, err := routers.Create(networkingClient, createOpts).Extract()
-	if err != nil {
-		return fmt.Errorf("Error creating OpenStack Neutron router: %s", err)
-	}
-	log.Printf("[INFO] Router ID: %s", n.ID)
+	log.Printf("[DEBUG] openstack_networking_router_v2 create options: %#v", createOpts)
 
-	log.Printf("[DEBUG] Waiting for OpenStack Neutron Router (%s) to become available", n.ID)
+	r, err := routers.Create(networkingClient, createOpts).Extract()
+	if err != nil {
+		return fmt.Errorf("Error creating openstack_networking_router_v2: %s", err)
+	}
+
+	log.Printf("[DEBUG] Waiting for openstack_networking_router_v2 %s to become available.", r.ID)
+
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"BUILD", "PENDING_CREATE", "PENDING_UPDATE"},
 		Target:     []string{"ACTIVE"},
-		Refresh:    waitForRouterActive(networkingClient, n.ID),
+		Refresh:    resourceNetworkingRouterV2StateRefreshFunc(networkingClient, r.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
 
 	_, err = stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf("Error waiting for openstack_networking_router_v2 %s to become available: %s", r.ID, err)
+	}
 
-	d.SetId(n.ID)
+	d.SetId(r.ID)
 
 	// If the vendorUpdateGateway flag was specified and if an external network
 	// was specified, then set the gateway information after router creation.
 	if vendorUpdateGateway && externalNetworkID != "" {
-		log.Printf("[DEBUG] Adding External Network %s to router ID %s", externalNetworkID, d.Id())
+		log.Printf("[DEBUG] Adding external_network %s to openstack_networking_router_v2 %s", externalNetworkID, r.ID)
 
 		var updateOpts routers.UpdateOpts
 		updateOpts.GatewayInfo = &gatewayInfo
 
-		log.Printf("[DEBUG] Assigning external gateway to Router %s with options: %+v", d.Id(), updateOpts)
-		_, err = routers.Update(networkingClient, d.Id(), updateOpts).Extract()
+		log.Printf("[DEBUG] Assigning external_gateway to openstack_networking_router_v2 %s with options: %#v", r.ID, updateOpts)
+		_, err = routers.Update(networkingClient, r.ID, updateOpts).Extract()
 		if err != nil {
-			return fmt.Errorf("Error updating OpenStack Neutron Router: %s", err)
+			return fmt.Errorf("Error updating openstack_networking_router_v2: %s", err)
 		}
 	}
 
 	tags := networkingV2AttributesTags(d)
 	if len(tags) > 0 {
 		tagOpts := attributestags.ReplaceAllOpts{Tags: tags}
-		tags, err := attributestags.ReplaceAll(networkingClient, "routers", n.ID, tagOpts).Extract()
+		tags, err := attributestags.ReplaceAll(networkingClient, "routers", r.ID, tagOpts).Extract()
 		if err != nil {
-			return fmt.Errorf("Error creating Tags on Router: %s", err)
+			return fmt.Errorf("Error setting tags on openstack_networking_router_v2 %s: %s", r.ID, err)
 		}
-		log.Printf("[DEBUG] Set Tags = %+v on Router %+v", tags, n.ID)
+		log.Printf("[DEBUG] Set tags %s on openstack_networking_router_v2 %s", tags, r.ID)
 	}
 
+	log.Printf("[DEBUG] Created openstack_networking_router_v2 %s: %#v", r.ID, r)
 	return resourceNetworkingRouterV2Read(d, meta)
 }
 
@@ -273,61 +300,55 @@ func resourceNetworkingRouterV2Read(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
 
-	n, err := routers.Get(networkingClient, d.Id()).Extract()
+	r, err := routers.Get(networkingClient, d.Id()).Extract()
 	if err != nil {
 		if _, ok := err.(gophercloud.ErrDefault404); ok {
 			d.SetId("")
 			return nil
 		}
 
-		return fmt.Errorf("Error retrieving OpenStack Neutron Router: %s", err)
+		return fmt.Errorf("Error retrieving openstack_networking_router_v2: %s", err)
 	}
 
-	log.Printf("[DEBUG] Retrieved Router %s: %+v", d.Id(), n)
+	log.Printf("[DEBUG] Retrieved openstack_networking_router_v2 %s: %#v", d.Id(), r)
 
-	d.Set("name", n.Name)
-	d.Set("description", n.Description)
-	d.Set("admin_state_up", n.AdminStateUp)
-	d.Set("distributed", n.Distributed)
-	d.Set("tenant_id", n.TenantID)
+	// Basic settings.
+	d.Set("name", r.Name)
+	d.Set("description", r.Description)
+	d.Set("admin_state_up", r.AdminStateUp)
+	d.Set("distributed", r.Distributed)
+	d.Set("tenant_id", r.TenantID)
 	d.Set("region", GetRegion(d, config))
 
-	networkingV2ReadAttributesTags(d, n.Tags)
+	networkingV2ReadAttributesTags(d, r.Tags)
 
-	if err := d.Set("availability_zone_hints", n.AvailabilityZoneHints); err != nil {
-		log.Printf("[DEBUG] unable to set availability_zone_hints: %s", err)
+	if err := d.Set("availability_zone_hints", r.AvailabilityZoneHints); err != nil {
+		log.Printf("[DEBUG] Unable to set openstack_networking_router_v2 %s availability_zone_hints: %s", d.Id(), err)
 	}
 
-	// Gateway settings
-	d.Set("external_gateway", n.GatewayInfo.NetworkID)
-	d.Set("external_network_id", n.GatewayInfo.NetworkID)
-	d.Set("enable_snat", n.GatewayInfo.EnableSNAT)
+	// Gateway settings.
+	d.Set("external_gateway", r.GatewayInfo.NetworkID)
+	d.Set("external_network_id", r.GatewayInfo.NetworkID)
+	d.Set("enable_snat", r.GatewayInfo.EnableSNAT)
 
-	var externalFixedIPs []map[string]string
-	for _, v := range n.GatewayInfo.ExternalFixedIPs {
-		externalFixedIPs = append(externalFixedIPs, map[string]string{
-			"subnet_id":  v.SubnetID,
-			"ip_address": v.IPAddress,
-		})
-	}
-
+	externalFixedIPs := flattenNetworkingRouterExternalFixedIPsV2(r.GatewayInfo.ExternalFixedIPs)
 	if err = d.Set("external_fixed_ip", externalFixedIPs); err != nil {
-		log.Printf("[DEBUG] unable to set external_fixed_ip: %s", err)
+		log.Printf("[DEBUG] Unable to set openstack_networking_router_v2 %s external_fixed_ip: %s", d.Id(), err)
 	}
 
 	return nil
 }
 
 func resourceNetworkingRouterV2Update(d *schema.ResourceData, meta interface{}) error {
-	routerId := d.Id()
-	osMutexKV.Lock(routerId)
-	defer osMutexKV.Unlock(routerId)
-
 	config := meta.(*Config)
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
+
+	routerID := d.Id()
+	osMutexKV.Lock(routerID)
+	defer osMutexKV.Unlock(routerID)
 
 	var hasChange bool
 	var updateOpts routers.UpdateOpts
@@ -346,7 +367,7 @@ func resourceNetworkingRouterV2Update(d *schema.ResourceData, meta interface{}) 
 		updateOpts.AdminStateUp = &asu
 	}
 
-	// Gateway settings
+	// Gateway settings.
 	var updateGatewaySettings bool
 	var externalNetworkID string
 	gatewayInfo := routers.GatewayInfo{}
@@ -374,7 +395,7 @@ func resourceNetworkingRouterV2Update(d *schema.ResourceData, meta interface{}) 
 	if d.HasChange("enable_snat") {
 		updateGatewaySettings = true
 		if externalNetworkID == "" {
-			return fmt.Errorf("setting enable_snat requires external_network_id to be set")
+			return errors.New(errEnableSNATWithoutExternalNet)
 		}
 
 		enableSNAT := d.Get("enable_snat").(bool)
@@ -384,11 +405,11 @@ func resourceNetworkingRouterV2Update(d *schema.ResourceData, meta interface{}) 
 	if d.HasChange("external_fixed_ip") {
 		updateGatewaySettings = true
 
-		externalFixedIPs := resourceRouterExternalFixedIPsV2(d)
+		externalFixedIPs := expandNetworkingRouterExternalFixedIPsV2(d.Get("external_fixed_ip").([]interface{}))
 		gatewayInfo.ExternalFixedIPs = externalFixedIPs
 		if len(externalFixedIPs) > 0 {
 			if externalNetworkID == "" {
-				return fmt.Errorf("setting an external_fixed_ip requires external_network_id to be set")
+				return errors.New(errExternalFixedIPWithoutExternalNet)
 			}
 		}
 	}
@@ -399,21 +420,22 @@ func resourceNetworkingRouterV2Update(d *schema.ResourceData, meta interface{}) 
 	}
 
 	if hasChange {
-		log.Printf("[DEBUG] Updating Router %s with options: %+v", d.Id(), updateOpts)
+		log.Printf("[DEBUG] openstack_networking_router_v2 %s update options: %#v", d.Id(), updateOpts)
 		_, err = routers.Update(networkingClient, d.Id(), updateOpts).Extract()
 		if err != nil {
-			return fmt.Errorf("Error updating OpenStack Neutron Router: %s", err)
+			return fmt.Errorf("Error updating openstack_networking_router_v2: %s", err)
 		}
 	}
 
+	// Next, perform any required updates to the tags.
 	if d.HasChange("tags") {
 		tags := networkingV2UpdateAttributesTags(d)
 		tagOpts := attributestags.ReplaceAllOpts{Tags: tags}
 		tags, err := attributestags.ReplaceAll(networkingClient, "routers", d.Id(), tagOpts).Extract()
 		if err != nil {
-			return fmt.Errorf("Error updating Tags on Router: %s", err)
+			return fmt.Errorf("Error setting tags on openstack_networking_router_v2 %s: %s", d.Id(), err)
 		}
-		log.Printf("[DEBUG] Updated Tags = %+v on Router %+v", tags, d.Id())
+		log.Printf("[DEBUG] Set tags %s on openstack_networking_router_v2 %s", tags, d.Id())
 	}
 
 	return resourceNetworkingRouterV2Read(d, meta)
@@ -426,10 +448,14 @@ func resourceNetworkingRouterV2Delete(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
 
+	if err := routers.Delete(networkingClient, d.Id()).ExtractErr(); err != nil {
+		return CheckDeleted(d, err, "Error deleting openstack_networking_router_v2")
+	}
+
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"ACTIVE"},
 		Target:     []string{"DELETED"},
-		Refresh:    waitForRouterDelete(networkingClient, d.Id()),
+		Refresh:    resourceNetworkingRouterV2StateRefreshFunc(networkingClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
@@ -437,64 +463,9 @@ func resourceNetworkingRouterV2Delete(d *schema.ResourceData, meta interface{}) 
 
 	_, err = stateConf.WaitForState()
 	if err != nil {
-		return fmt.Errorf("Error deleting OpenStack Neutron Router: %s", err)
+		return fmt.Errorf("Error deleting openstack_networking_router_v2: %s", err)
 	}
 
 	d.SetId("")
 	return nil
-}
-
-func waitForRouterActive(networkingClient *gophercloud.ServiceClient, routerId string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		r, err := routers.Get(networkingClient, routerId).Extract()
-		if err != nil {
-			return nil, r.Status, err
-		}
-
-		log.Printf("[DEBUG] OpenStack Neutron Router: %+v", r)
-		return r, r.Status, nil
-	}
-}
-
-func waitForRouterDelete(networkingClient *gophercloud.ServiceClient, routerId string) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		log.Printf("[DEBUG] Attempting to delete OpenStack Router %s.\n", routerId)
-
-		r, err := routers.Get(networkingClient, routerId).Extract()
-		if err != nil {
-			if _, ok := err.(gophercloud.ErrDefault404); ok {
-				log.Printf("[DEBUG] Successfully deleted OpenStack Router %s", routerId)
-				return r, "DELETED", nil
-			}
-			return r, "ACTIVE", err
-		}
-
-		err = routers.Delete(networkingClient, routerId).ExtractErr()
-		if err != nil {
-			if _, ok := err.(gophercloud.ErrDefault404); ok {
-				log.Printf("[DEBUG] Successfully deleted OpenStack Router %s", routerId)
-				return r, "DELETED", nil
-			}
-			return r, "ACTIVE", err
-		}
-
-		log.Printf("[DEBUG] OpenStack Router %s still active.\n", routerId)
-		return r, "ACTIVE", nil
-	}
-}
-
-func resourceRouterExternalFixedIPsV2(d *schema.ResourceData) []routers.ExternalFixedIP {
-	var externalFixedIPs []routers.ExternalFixedIP
-	eFIPs := d.Get("external_fixed_ip").([]interface{})
-
-	for _, eFIP := range eFIPs {
-		v := eFIP.(map[string]interface{})
-		fip := routers.ExternalFixedIP{
-			SubnetID:  v["subnet_id"].(string),
-			IPAddress: v["ip_address"].(string),
-		}
-		externalFixedIPs = append(externalFixedIPs, fip)
-	}
-
-	return externalFixedIPs
 }

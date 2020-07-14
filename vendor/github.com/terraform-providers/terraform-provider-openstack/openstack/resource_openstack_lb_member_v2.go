@@ -56,16 +56,17 @@ func resourceMemberV2() *schema.Resource {
 			},
 
 			"protocol_port": {
-				Type:     schema.TypeInt,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeInt,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IntBetween(1, 65535),
 			},
 
 			"weight": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Computed:     true,
-				ValidateFunc: validation.IntAtLeast(0),
+				ValidateFunc: validation.IntBetween(0, 256),
 			},
 
 			"subnet_id": {
@@ -279,7 +280,7 @@ func resourceMemberV2Delete(d *schema.ResourceData, meta interface{}) error {
 	timeout := d.Timeout(schema.TimeoutDelete)
 	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", lbPendingStatuses, timeout)
 	if err != nil {
-		return err
+		return CheckDeleted(d, err, "Error waiting for the members pool status")
 	}
 
 	log.Printf("[DEBUG] Attempting to delete member %s", d.Id())

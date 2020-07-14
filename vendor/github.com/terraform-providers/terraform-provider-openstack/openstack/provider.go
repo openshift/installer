@@ -209,14 +209,14 @@ func Provider() terraform.ResourceProvider {
 			"delayed_auth": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("OS_DELAYED_AUTH", false),
+				DefaultFunc: schema.EnvDefaultFunc("OS_DELAYED_AUTH", true),
 				Description: descriptions["delayed_auth"],
 			},
 
 			"allow_reauth": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("OS_ALLOW_REAUTH", false),
+				DefaultFunc: schema.EnvDefaultFunc("OS_ALLOW_REAUTH", true),
 				Description: descriptions["allow_reauth"],
 			},
 
@@ -339,6 +339,7 @@ func Provider() terraform.ResourceProvider {
 			"openstack_lb_listener_v2":                           resourceListenerV2(),
 			"openstack_lb_pool_v2":                               resourcePoolV2(),
 			"openstack_lb_member_v2":                             resourceMemberV2(),
+			"openstack_lb_members_v2":                            resourceMembersV2(),
 			"openstack_lb_monitor_v2":                            resourceMonitorV2(),
 			"openstack_lb_l7policy_v2":                           resourceL7PolicyV2(),
 			"openstack_lb_l7rule_v2":                             resourceL7RuleV2(),
@@ -378,6 +379,7 @@ func Provider() terraform.ResourceProvider {
 			"openstack_sharedfilesystem_share_access_v2":         resourceSharedFilesystemShareAccessV2(),
 			"openstack_keymanager_secret_v1":                     resourceKeyManagerSecretV1(),
 			"openstack_keymanager_container_v1":                  resourceKeyManagerContainerV1(),
+			"openstack_keymanager_order_v1":                      resourceKeyManagerOrderV1(),
 		},
 	}
 
@@ -452,13 +454,11 @@ func init() {
 		"use_octavia": "If set to `true`, API requests will go the Load Balancer\n" +
 			"service (Octavia) instead of the Networking service (Neutron).",
 
-		"delayed_auth": "If set to `true`, OpenStack authorization will be perfomed,\n" +
-			"when the service provider client is called.",
+		"delayed_auth": "If set to `false`, OpenStack authorization will be perfomed,\n" +
+			"every time the service provider client is called. Defaults to `true`.",
 
-		"allow_reauth": "If set to `true`, OpenStack authorization will be perfomed\n" +
-			"automatically, if the initial auth token get expired. This is useful,\n" +
-			"when the token TTL is low or the overall Terraform provider execution\n" +
-			"time expected to be greater than the initial token TTL.",
+		"allow_reauth": "If set to `false`, OpenStack authorization won't be perfomed\n" +
+			"automatically, if the initial auth token get expired. Defaults to `true`",
 
 		"cloud": "An entry in a `clouds.yaml` file to use.",
 

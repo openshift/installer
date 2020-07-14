@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack/keymanager/v1/acls"
 	"github.com/gophercloud/gophercloud/openstack/keymanager/v1/containers"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -13,7 +14,7 @@ import (
 )
 
 func resourceKeyManagerContainerV1() *schema.Resource {
-	return &schema.Resource{
+	ret := &schema.Resource{
 		Create: resourceKeyManagerContainerV1Create,
 		Read:   resourceKeyManagerContainerV1Read,
 		Update: resourceKeyManagerContainerV1Update,
@@ -69,6 +70,13 @@ func resourceKeyManagerContainerV1() *schema.Resource {
 				},
 			},
 
+			"acl": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				MaxItems: 1,
+			},
+
 			"container_ref": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -112,6 +120,16 @@ func resourceKeyManagerContainerV1() *schema.Resource {
 			},
 		},
 	}
+
+	elem := &schema.Resource{
+		Schema: make(map[string]*schema.Schema),
+	}
+	for _, aclOp := range aclOperations {
+		elem.Schema[aclOp] = aclSchema
+	}
+	ret.Schema["acl"].Elem = elem
+
+	return ret
 }
 
 func resourceKeyManagerContainerV1Create(d *schema.ResourceData, meta interface{}) error {
@@ -124,9 +142,8 @@ func resourceKeyManagerContainerV1Create(d *schema.ResourceData, meta interface{
 	containerType := keyManagerContainerV1Type(d.Get("type").(string))
 
 	createOpts := containers.CreateOpts{
-		Name:       d.Get("name").(string),
-		Type:       containerType,
-		SecretRefs: expandKeyManagerContainerV1SecretRefs(d.Get("secret_refs").(*schema.Set)),
+		Name: d.Get("name").(string),
+		Type: containerType,
 	}
 
 	log.Printf("[DEBUG] Create Options for resource_keymanager_container_v1: %#v", createOpts)
@@ -149,10 +166,36 @@ func resourceKeyManagerContainerV1Create(d *schema.ResourceData, meta interface{
 
 	_, err = stateConf.WaitForState()
 	if err != nil {
-		return CheckDeleted(d, err, "Error creating openstack_keymanager_container_v1")
+		return fmt.Errorf("Error waiting for openstack_keymanager_container_v1: %s", err)
 	}
 
 	d.SetId(uuid)
+
+	d.Partial(true)
+
+	// set the acl first before setting the secret refs
+	if _, ok := d.GetOk("acl"); ok {
+		setOpts := expandKeyManagerV1ACLs(d.Get("acl"))
+		_, err = acls.SetContainerACL(kmClient, uuid, setOpts).Extract()
+		if err != nil {
+			return fmt.Errorf("Error settings ACLs for the openstack_keymanager_container_v1: %s", err)
+		}
+	}
+
+	// set the secret refs
+	for _, addRef := range expandKeyManagerContainerV1SecretRefs(d.Get("secret_refs").(*schema.Set)) {
+		res := containers.CreateSecretRef(kmClient, d.Id(), addRef)
+		if res.Err != nil {
+			return fmt.Errorf("Error setting %s secret reference to the %s container: %s", addRef.Name, d.Id(), res.Err)
+		}
+	}
+
+	_, err = stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf("Error waiting for openstack_keymanager_container_v1: %s", err)
+	}
+
+	d.Partial(false)
 
 	return resourceKeyManagerContainerV1Read(d, meta)
 }
@@ -183,6 +226,12 @@ func resourceKeyManagerContainerV1Read(d *schema.ResourceData, meta interface{})
 
 	d.Set("secret_refs", flattenKeyManagerContainerV1SecretRefs(container.SecretRefs))
 
+	acl, err := acls.GetContainerACL(kmClient, d.Id()).Extract()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to get %s container acls: %s", d.Id(), err)
+	}
+	d.Set("acl", flattenKeyManagerV1ACLs(acl))
+
 	// Set the region
 	d.Set("region", GetRegion(d, config))
 
@@ -194,6 +243,14 @@ func resourceKeyManagerContainerV1Update(d *schema.ResourceData, meta interface{
 	kmClient, err := config.KeyManagerV1Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack barbican client: %s", err)
+	}
+
+	if d.HasChange("acl") {
+		updateOpts := expandKeyManagerV1ACLs(d.Get("acl"))
+		_, err := acls.UpdateContainerACL(kmClient, d.Id(), updateOpts).Extract()
+		if err != nil {
+			return fmt.Errorf("Error updating openstack_keymanager_container_v1 %s acl: %s", d.Id(), err)
+		}
 	}
 
 	if d.HasChange("secret_refs") {

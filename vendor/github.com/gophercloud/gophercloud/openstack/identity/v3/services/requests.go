@@ -48,9 +48,10 @@ func Create(client *gophercloud.ServiceClient, opts CreateOptsBuilder) (r Create
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(createURL(client), &b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(createURL(client), &b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{201},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -92,7 +93,8 @@ func List(client *gophercloud.ServiceClient, opts ListOptsBuilder) pagination.Pa
 
 // Get returns additional information about a service, given its ID.
 func Get(client *gophercloud.ServiceClient, serviceID string) (r GetResult) {
-	_, r.Err = client.Get(serviceURL(client, serviceID), &r.Body, nil)
+	resp, err := client.Get(serviceURL(client, serviceID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -139,9 +141,10 @@ func Update(client *gophercloud.ServiceClient, serviceID string, opts UpdateOpts
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Patch(updateURL(client, serviceID), &b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Patch(updateURL(client, serviceID), &b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -149,6 +152,7 @@ func Update(client *gophercloud.ServiceClient, serviceID string, opts UpdateOpts
 // It either deletes all associated endpoints, or fails until all endpoints
 // are deleted.
 func Delete(client *gophercloud.ServiceClient, serviceID string) (r DeleteResult) {
-	_, r.Err = client.Delete(serviceURL(client, serviceID), nil)
+	resp, err := client.Delete(serviceURL(client, serviceID), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

@@ -1,8 +1,19 @@
 package projects
 
 import (
+	"encoding/json"
+
 	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/internal"
 	"github.com/gophercloud/gophercloud/pagination"
+)
+
+// Option is a specific option defined at the API to enable features
+// on a project.
+type Option string
+
+const (
+	Immutable Option = "immutable"
 )
 
 type projectResult struct {
@@ -55,6 +66,45 @@ type Project struct {
 
 	// ParentID is the parent_id of the project.
 	ParentID string `json:"parent_id"`
+
+	// Tags is the list of tags associated with the project.
+	Tags []string `json:"tags,omitempty"`
+
+	// Extra is free-form extra key/value pairs to describe the project.
+	Extra map[string]interface{} `json:"-"`
+
+	// Options are defined options in the API to enable certain features.
+	Options map[Option]interface{} `json:"options,omitempty"`
+}
+
+func (r *Project) UnmarshalJSON(b []byte) error {
+	type tmp Project
+	var s struct {
+		tmp
+		Extra map[string]interface{} `json:"extra"`
+	}
+	err := json.Unmarshal(b, &s)
+	if err != nil {
+		return err
+	}
+	*r = Project(s.tmp)
+
+	// Collect other fields and bundle them into Extra
+	// but only if a field titled "extra" wasn't sent.
+	if s.Extra != nil {
+		r.Extra = s.Extra
+	} else {
+		var result interface{}
+		err := json.Unmarshal(b, &result)
+		if err != nil {
+			return err
+		}
+		if resultMap, ok := result.(map[string]interface{}); ok {
+			r.Extra = internal.RemainingKeys(Project{}, resultMap)
+		}
+	}
+
+	return err
 }
 
 // ProjectPage is a single page of Project results.

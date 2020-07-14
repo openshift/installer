@@ -110,13 +110,15 @@ func dataSourceContainerInfraCluster() *schema.Resource {
 			},
 
 			"master_addresses": {
-				Type:     schema.TypeString,
+				Type:     schema.TypeList,
 				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
 			"node_addresses": {
-				Type:     schema.TypeString,
+				Type:     schema.TypeList,
 				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
 			"stack_id": {

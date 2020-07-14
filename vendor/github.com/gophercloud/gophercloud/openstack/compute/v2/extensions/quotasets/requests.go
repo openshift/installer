@@ -6,13 +6,15 @@ import (
 
 // Get returns public data about a previously created QuotaSet.
 func Get(client *gophercloud.ServiceClient, tenantID string) (r GetResult) {
-	_, r.Err = client.Get(getURL(client, tenantID), &r.Body, nil)
+	resp, err := client.Get(getURL(client, tenantID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // GetDetail returns detailed public data about a previously created QuotaSet.
 func GetDetail(client *gophercloud.ServiceClient, tenantID string) (r GetDetailResult) {
-	_, r.Err = client.Get(getDetailURL(client, tenantID), &r.Body, nil)
+	resp, err := client.Get(getDetailURL(client, tenantID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -24,13 +26,15 @@ func Update(client *gophercloud.ServiceClient, tenantID string, opts UpdateOptsB
 		return
 	}
 
-	_, r.Err = client.Put(updateURL(client, tenantID), reqBody, &r.Body, &gophercloud.RequestOpts{OkCodes: []int{200}})
+	resp, err := client.Put(updateURL(client, tenantID), reqBody, &r.Body, &gophercloud.RequestOpts{OkCodes: []int{200}})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Resets the quotas for the given tenant to their default values.
 func Delete(client *gophercloud.ServiceClient, tenantID string) (r DeleteResult) {
-	_, r.Err = client.Delete(deleteURL(client, tenantID), nil)
+	resp, err := client.Delete(deleteURL(client, tenantID), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 

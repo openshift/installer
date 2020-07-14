@@ -59,51 +59,14 @@ func ListDetail(client *gophercloud.ServiceClient, opts ListOptsBuilder) paginat
 
 // Get returns data about a specific image by its ID.
 func Get(client *gophercloud.ServiceClient, id string) (r GetResult) {
-	_, r.Err = client.Get(getURL(client, id), &r.Body, nil)
+	resp, err := client.Get(getURL(client, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Delete deletes the specified image ID.
 func Delete(client *gophercloud.ServiceClient, id string) (r DeleteResult) {
-	_, r.Err = client.Delete(deleteURL(client, id), nil)
+	resp, err := client.Delete(deleteURL(client, id), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
-}
-
-// IDFromName is a convienience function that returns an image's ID given its
-// name.
-func IDFromName(client *gophercloud.ServiceClient, name string) (string, error) {
-	count := 0
-	id := ""
-	allPages, err := ListDetail(client, nil).AllPages()
-	if err != nil {
-		return "", err
-	}
-
-	all, err := ExtractImages(allPages)
-	if err != nil {
-		return "", err
-	}
-
-	for _, f := range all {
-		if f.Name == name {
-			count++
-			id = f.ID
-		}
-	}
-
-	switch count {
-	case 0:
-		err := &gophercloud.ErrResourceNotFound{}
-		err.ResourceType = "image"
-		err.Name = name
-		return "", err
-	case 1:
-		return id, nil
-	default:
-		err := &gophercloud.ErrMultipleResourcesFound{}
-		err.ResourceType = "image"
-		err.Name = name
-		err.Count = count
-		return "", err
-	}
 }

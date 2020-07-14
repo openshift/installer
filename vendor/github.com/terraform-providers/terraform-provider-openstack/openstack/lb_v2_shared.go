@@ -11,6 +11,7 @@ import (
 	"github.com/gophercloud/gophercloud"
 	octavialisteners "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/listeners"
 	octaviamonitors "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/monitors"
+	octaviapools "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/pools"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/l7policies"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/listeners"
 	neutronlisteners "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/listeners"
@@ -50,7 +51,7 @@ func chooseLBV2AccTestClient(config *Config, region string) (*gophercloud.Servic
 
 // chooseLBV2ListenerCreateOpts will determine which load balancer listener Create options to use:
 // Either the Octavia/LBaaS or the Neutron/Networking v2.
-func chooseLBV2ListenerCreateOpts(d *schema.ResourceData, config *Config) neutronlisteners.CreateOptsBuilder {
+func chooseLBV2ListenerCreateOpts(d *schema.ResourceData, config *Config) (neutronlisteners.CreateOptsBuilder, error) {
 	adminStateUp := d.Get("admin_state_up").(bool)
 
 	var sniContainerRefs []string
@@ -102,36 +103,47 @@ func chooseLBV2ListenerCreateOpts(d *schema.ResourceData, config *Config) neutro
 			opts.TimeoutTCPInspect = &timeoutTCPInspect
 		}
 
-		createOpts = opts
-	} else {
-		// Use Neutron.
-		opts := neutronlisteners.CreateOpts{
-			Protocol:               neutronlisteners.Protocol(d.Get("protocol").(string)),
-			ProtocolPort:           d.Get("protocol_port").(int),
-			TenantID:               d.Get("tenant_id").(string),
-			LoadbalancerID:         d.Get("loadbalancer_id").(string),
-			Name:                   d.Get("name").(string),
-			DefaultPoolID:          d.Get("default_pool_id").(string),
-			Description:            d.Get("description").(string),
-			DefaultTlsContainerRef: d.Get("default_tls_container_ref").(string),
-			SniContainerRefs:       sniContainerRefs,
-			AdminStateUp:           &adminStateUp,
+		// Get and check insert  headers map.
+		rawHeaders := d.Get("insert_headers").(map[string]interface{})
+		headers, err := expandLBV2ListenerHeadersMap(rawHeaders)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse insert_headers argument: %s", err)
 		}
 
-		if v, ok := d.GetOk("connection_limit"); ok {
-			connectionLimit := v.(int)
-			opts.ConnLimit = &connectionLimit
-		}
+		opts.InsertHeaders = headers
 
 		createOpts = opts
+
+		return createOpts, nil
 	}
 
-	return createOpts
+	// Use Neutron.
+	opts := neutronlisteners.CreateOpts{
+		Protocol:               neutronlisteners.Protocol(d.Get("protocol").(string)),
+		ProtocolPort:           d.Get("protocol_port").(int),
+		TenantID:               d.Get("tenant_id").(string),
+		LoadbalancerID:         d.Get("loadbalancer_id").(string),
+		Name:                   d.Get("name").(string),
+		DefaultPoolID:          d.Get("default_pool_id").(string),
+		Description:            d.Get("description").(string),
+		DefaultTlsContainerRef: d.Get("default_tls_container_ref").(string),
+		SniContainerRefs:       sniContainerRefs,
+		AdminStateUp:           &adminStateUp,
+	}
+
+	if v, ok := d.GetOk("connection_limit"); ok {
+		connectionLimit := v.(int)
+		opts.ConnLimit = &connectionLimit
+	}
+
+	createOpts = opts
+
+	return createOpts, nil
 }
 
 // chooseLBV2ListenerUpdateOpts will determine which load balancer listener Update options to use:
 // Either the Octavia/LBaaS or the Neutron/Networking v2.
-func chooseLBV2ListenerUpdateOpts(d *schema.ResourceData, config *Config) neutronlisteners.UpdateOptsBuilder {
+func chooseLBV2ListenerUpdateOpts(d *schema.ResourceData, config *Config) (neutronlisteners.UpdateOptsBuilder, error) {
 	var hasChange bool
 
 	if config.UseOctavia {
@@ -142,46 +154,55 @@ func chooseLBV2ListenerUpdateOpts(d *schema.ResourceData, config *Config) neutro
 			name := d.Get("name").(string)
 			opts.Name = &name
 		}
+
 		if d.HasChange("description") {
 			hasChange = true
 			description := d.Get("description").(string)
 			opts.Description = &description
 		}
+
 		if d.HasChange("connection_limit") {
 			hasChange = true
 			connLimit := d.Get("connection_limit").(int)
 			opts.ConnLimit = &connLimit
 		}
+
 		if d.HasChange("timeout_client_data") {
 			hasChange = true
 			timeoutClientData := d.Get("timeout_client_data").(int)
 			opts.TimeoutClientData = &timeoutClientData
 		}
+
 		if d.HasChange("timeout_member_connect") {
 			hasChange = true
 			timeoutMemberConnect := d.Get("timeout_member_connect").(int)
 			opts.TimeoutMemberConnect = &timeoutMemberConnect
 		}
+
 		if d.HasChange("timeout_member_data") {
 			hasChange = true
 			timeoutMemberData := d.Get("timeout_member_data").(int)
 			opts.TimeoutMemberData = &timeoutMemberData
 		}
+
 		if d.HasChange("timeout_tcp_inspect") {
 			hasChange = true
 			timeoutTCPInspect := d.Get("timeout_tcp_inspect").(int)
 			opts.TimeoutTCPInspect = &timeoutTCPInspect
 		}
+
 		if d.HasChange("default_pool_id") {
 			hasChange = true
 			defaultPoolID := d.Get("default_pool_id").(string)
 			opts.DefaultPoolID = &defaultPoolID
 		}
+
 		if d.HasChange("default_tls_container_ref") {
 			hasChange = true
 			defaultTlsContainerRef := d.Get("default_tls_container_ref").(string)
 			opts.DefaultTlsContainerRef = &defaultTlsContainerRef
 		}
+
 		if d.HasChange("sni_container_refs") {
 			hasChange = true
 			var sniContainerRefs []string
@@ -192,65 +213,99 @@ func chooseLBV2ListenerUpdateOpts(d *schema.ResourceData, config *Config) neutro
 			}
 			opts.SniContainerRefs = &sniContainerRefs
 		}
+
 		if d.HasChange("admin_state_up") {
 			hasChange = true
 			asu := d.Get("admin_state_up").(bool)
 			opts.AdminStateUp = &asu
 		}
 
-		if hasChange {
-			return opts
-		}
-	} else {
-		// Use Neutron.
-		var opts neutronlisteners.UpdateOpts
-		if d.HasChange("name") {
+		if d.HasChange("insert_headers") {
 			hasChange = true
-			name := d.Get("name").(string)
-			opts.Name = &name
-		}
-		if d.HasChange("description") {
-			hasChange = true
-			description := d.Get("description").(string)
-			opts.Description = &description
-		}
-		if d.HasChange("connection_limit") {
-			hasChange = true
-			connLimit := d.Get("connection_limit").(int)
-			opts.ConnLimit = &connLimit
-		}
-		if d.HasChange("default_pool_id") {
-			hasChange = true
-			defaultPoolID := d.Get("default_pool_id").(string)
-			opts.DefaultPoolID = &defaultPoolID
-		}
-		if d.HasChange("default_tls_container_ref") {
-			hasChange = true
-			defaultTlsContainerRef := d.Get("default_tls_container_ref").(string)
-			opts.DefaultTlsContainerRef = &defaultTlsContainerRef
-		}
-		if d.HasChange("sni_container_refs") {
-			hasChange = true
-			var sniContainerRefs []string
-			if raw, ok := d.GetOk("sni_container_refs"); ok {
-				for _, v := range raw.([]interface{}) {
-					sniContainerRefs = append(sniContainerRefs, v.(string))
-				}
+
+			// Get and check insert headers map.
+			rawHeaders := d.Get("insert_headers").(map[string]interface{})
+			headers, err := expandLBV2ListenerHeadersMap(rawHeaders)
+			if err != nil {
+				return nil, fmt.Errorf("unable to parse insert_headers argument: %s", err)
 			}
-			opts.SniContainerRefs = &sniContainerRefs
-		}
-		if d.HasChange("admin_state_up") {
-			hasChange = true
-			asu := d.Get("admin_state_up").(bool)
-			opts.AdminStateUp = &asu
+
+			opts.InsertHeaders = &headers
 		}
 
 		if hasChange {
-			return opts
+			return opts, nil
 		}
 	}
 
-	return nil
+	// Use Neutron.
+	var opts neutronlisteners.UpdateOpts
+	if d.HasChange("name") {
+		hasChange = true
+		name := d.Get("name").(string)
+		opts.Name = &name
+	}
+
+	if d.HasChange("description") {
+		hasChange = true
+		description := d.Get("description").(string)
+		opts.Description = &description
+	}
+
+	if d.HasChange("connection_limit") {
+		hasChange = true
+		connLimit := d.Get("connection_limit").(int)
+		opts.ConnLimit = &connLimit
+	}
+
+	if d.HasChange("default_pool_id") {
+		hasChange = true
+		defaultPoolID := d.Get("default_pool_id").(string)
+		opts.DefaultPoolID = &defaultPoolID
+	}
+
+	if d.HasChange("default_tls_container_ref") {
+		hasChange = true
+		defaultTlsContainerRef := d.Get("default_tls_container_ref").(string)
+		opts.DefaultTlsContainerRef = &defaultTlsContainerRef
+	}
+
+	if d.HasChange("sni_container_refs") {
+		hasChange = true
+		var sniContainerRefs []string
+		if raw, ok := d.GetOk("sni_container_refs"); ok {
+			for _, v := range raw.([]interface{}) {
+				sniContainerRefs = append(sniContainerRefs, v.(string))
+			}
+		}
+		opts.SniContainerRefs = &sniContainerRefs
+	}
+
+	if d.HasChange("admin_state_up") {
+		hasChange = true
+		asu := d.Get("admin_state_up").(bool)
+		opts.AdminStateUp = &asu
+	}
+
+	if hasChange {
+		return opts, nil
+	}
+
+	return nil, nil
+}
+
+func expandLBV2ListenerHeadersMap(raw map[string]interface{}) (map[string]string, error) {
+	m := make(map[string]string, len(raw))
+	for key, val := range raw {
+		labelValue, ok := val.(string)
+		if !ok {
+			return nil, fmt.Errorf("label %s value should be string", key)
+		}
+
+		m[key] = labelValue
+	}
+
+	return m, nil
 }
 
 func waitForLBV2Listener(lbClient *gophercloud.ServiceClient, listener *listeners.Listener, target string, pending []string, timeout time.Duration) error {
@@ -921,4 +976,49 @@ func flattenLBPoolPersistenceV2(p pools.SessionPersistence) []map[string]interfa
 			"cookie_name": p.CookieName,
 		},
 	}
+}
+
+func flattenLBMembersV2(members []octaviapools.Member) []map[string]interface{} {
+	m := make([]map[string]interface{}, len(members))
+
+	for i, member := range members {
+		m[i] = map[string]interface{}{
+			"name":           member.Name,
+			"weight":         member.Weight,
+			"admin_state_up": member.AdminStateUp,
+			"subnet_id":      member.SubnetID,
+			"address":        member.Address,
+			"protocol_port":  member.ProtocolPort,
+			"id":             member.ID,
+		}
+	}
+
+	return m
+}
+
+func expandLBMembersV2(members *schema.Set) []octaviapools.BatchUpdateMemberOpts {
+	var m []octaviapools.BatchUpdateMemberOpts
+
+	if members != nil {
+		for _, raw := range members.List() {
+			rawMap := raw.(map[string]interface{})
+			name := rawMap["name"].(string)
+			subnetID := rawMap["subnet_id"].(string)
+			weight := rawMap["weight"].(int)
+			adminStateUp := rawMap["admin_state_up"].(bool)
+
+			member := octaviapools.BatchUpdateMemberOpts{
+				Address:      rawMap["address"].(string),
+				ProtocolPort: rawMap["protocol_port"].(int),
+				Name:         &name,
+				SubnetID:     &subnetID,
+				Weight:       &weight,
+				AdminStateUp: &adminStateUp,
+			}
+
+			m = append(m, member)
+		}
+	}
+
+	return m
 }

@@ -32,6 +32,18 @@ type ListOpts struct {
 	// ParentID filters the response by projects of a given parent project.
 	ParentID string `q:"parent_id"`
 
+	// Tags filters on specific project tags. All tags must be present for the project.
+	Tags string `q:"tags"`
+
+	// TagsAny filters on specific project tags. At least one of the tags must be present for the project.
+	TagsAny string `q:"tags-any"`
+
+	// NotTags filters on specific project tags. All tags must be absent for the project.
+	NotTags string `q:"not-tags"`
+
+	// NotTagsAny filters on specific project tags. At least one of the tags must be absent for the project.
+	NotTagsAny string `q:"not-tags-any"`
+
 	// Filters filters the response by custom filters such as
 	// 'name__contains=foo'
 	Filters map[string]string `q:"-"`
@@ -75,7 +87,8 @@ func List(client *gophercloud.ServiceClient, opts ListOptsBuilder) pagination.Pa
 
 // Get retrieves details on a single project, by ID.
 func Get(client *gophercloud.ServiceClient, id string) (r GetResult) {
-	_, r.Err = client.Get(getURL(client, id), &r.Body, nil)
+	resp, err := client.Get(getURL(client, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -104,11 +117,34 @@ type CreateOpts struct {
 
 	// Description is the description of the project.
 	Description string `json:"description,omitempty"`
+
+	// Tags is a list of tags to associate with the project.
+	Tags []string `json:"tags,omitempty"`
+
+	// Extra is free-form extra key/value pairs to describe the project.
+	Extra map[string]interface{} `json:"-"`
+
+	// Options are defined options in the API to enable certain features.
+	Options map[Option]interface{} `json:"options,omitempty"`
 }
 
 // ToProjectCreateMap formats a CreateOpts into a create request.
 func (opts CreateOpts) ToProjectCreateMap() (map[string]interface{}, error) {
-	return gophercloud.BuildRequestBody(opts, "project")
+	b, err := gophercloud.BuildRequestBody(opts, "project")
+
+	if err != nil {
+		return nil, err
+	}
+
+	if opts.Extra != nil {
+		if v, ok := b["project"].(map[string]interface{}); ok {
+			for key, value := range opts.Extra {
+				v[key] = value
+			}
+		}
+	}
+
+	return b, nil
 }
 
 // Create creates a new Project.
@@ -118,13 +154,15 @@ func Create(client *gophercloud.ServiceClient, opts CreateOptsBuilder) (r Create
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(createURL(client), &b, &r.Body, nil)
+	resp, err := client.Post(createURL(client), &b, &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Delete deletes a project.
 func Delete(client *gophercloud.ServiceClient, projectID string) (r DeleteResult) {
-	_, r.Err = client.Delete(deleteURL(client, projectID), nil)
+	resp, err := client.Delete(deleteURL(client, projectID), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -153,11 +191,34 @@ type UpdateOpts struct {
 
 	// Description is the description of the project.
 	Description *string `json:"description,omitempty"`
+
+	// Tags is a list of tags to associate with the project.
+	Tags *[]string `json:"tags,omitempty"`
+
+	// Extra is free-form extra key/value pairs to describe the project.
+	Extra map[string]interface{} `json:"-"`
+
+	// Options are defined options in the API to enable certain features.
+	Options map[Option]interface{} `json:"options,omitempty"`
 }
 
 // ToUpdateCreateMap formats a UpdateOpts into an update request.
 func (opts UpdateOpts) ToProjectUpdateMap() (map[string]interface{}, error) {
-	return gophercloud.BuildRequestBody(opts, "project")
+	b, err := gophercloud.BuildRequestBody(opts, "project")
+
+	if err != nil {
+		return nil, err
+	}
+
+	if opts.Extra != nil {
+		if v, ok := b["project"].(map[string]interface{}); ok {
+			for key, value := range opts.Extra {
+				v[key] = value
+			}
+		}
+	}
+
+	return b, nil
 }
 
 // Update modifies the attributes of a project.
@@ -167,8 +228,9 @@ func Update(client *gophercloud.ServiceClient, id string, opts UpdateOptsBuilder
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Patch(updateURL(client, id), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Patch(updateURL(client, id), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

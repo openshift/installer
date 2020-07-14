@@ -143,7 +143,8 @@ func List(client *gophercloud.ServiceClient, opts ListOptsBuilder) pagination.Pa
 
 // Get retrieves details of a secrets.
 func Get(client *gophercloud.ServiceClient, id string) (r GetResult) {
-	_, r.Err = client.Get(getURL(client, id), &r.Body, nil)
+	resp, err := client.Get(getURL(client, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -180,15 +181,11 @@ func GetPayload(client *gophercloud.ServiceClient, id string, opts GetPayloadOpt
 
 	url := payloadURL(client, id)
 	resp, err := client.Get(url, nil, &gophercloud.RequestOpts{
-		MoreHeaders: h,
-		OkCodes:     []int{200},
+		MoreHeaders:      h,
+		OkCodes:          []int{200},
+		KeepResponseBody: true,
 	})
-
-	if resp != nil {
-		r.Header = resp.Header
-		r.Body = resp.Body
-	}
-	r.Err = err
+	r.Body, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -249,15 +246,17 @@ func Create(client *gophercloud.ServiceClient, opts CreateOptsBuilder) (r Create
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(createURL(client), &b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(createURL(client), &b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{201},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Delete deletes a secrets.
 func Delete(client *gophercloud.ServiceClient, id string) (r DeleteResult) {
-	_, r.Err = client.Delete(deleteURL(client, id), nil)
+	resp, err := client.Delete(deleteURL(client, id), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -310,22 +309,18 @@ func Update(client *gophercloud.ServiceClient, id string, opts UpdateOptsBuilder
 		b = payload
 	}
 
-	resp, err := client.Put(url, nil, nil, &gophercloud.RequestOpts{
-		RawBody:     strings.NewReader(b),
+	resp, err := client.Put(url, strings.NewReader(b), nil, &gophercloud.RequestOpts{
 		MoreHeaders: h,
 		OkCodes:     []int{204},
 	})
-	r.Err = err
-	if resp != nil {
-		r.Header = resp.Header
-	}
-
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // GetMetadata will list metadata for a given secret.
 func GetMetadata(client *gophercloud.ServiceClient, secretID string) (r MetadataResult) {
-	_, r.Err = client.Get(metadataURL(client, secretID), &r.Body, nil)
+	resp, err := client.Get(metadataURL(client, secretID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -350,15 +345,17 @@ func CreateMetadata(client *gophercloud.ServiceClient, secretID string, opts Cre
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Put(metadataURL(client, secretID), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Put(metadataURL(client, secretID), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{201},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // GetMetadatum will get a single key/value metadata from a secret.
 func GetMetadatum(client *gophercloud.ServiceClient, secretID string, key string) (r MetadatumResult) {
-	_, r.Err = client.Get(metadatumURL(client, secretID, key), &r.Body, nil)
+	resp, err := client.Get(metadatumURL(client, secretID, key), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -386,9 +383,10 @@ func CreateMetadatum(client *gophercloud.ServiceClient, secretID string, opts Cr
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(metadataURL(client, secretID), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(metadataURL(client, secretID), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{201},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -411,14 +409,16 @@ func UpdateMetadatum(client *gophercloud.ServiceClient, secretID string, opts Up
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Put(metadatumURL(client, secretID, key), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Put(metadatumURL(client, secretID, key), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // DeleteMetadatum will delete an individual metadatum from a secret.
 func DeleteMetadatum(client *gophercloud.ServiceClient, secretID string, key string) (r MetadatumDeleteResult) {
-	_, r.Err = client.Delete(metadatumURL(client, secretID, key), nil)
+	resp, err := client.Delete(metadatumURL(client, secretID, key), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

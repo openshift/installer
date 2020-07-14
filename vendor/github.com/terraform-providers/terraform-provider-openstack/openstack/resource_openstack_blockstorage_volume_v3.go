@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/schedulerhints"
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/volumeactions"
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/volumeattach"
@@ -136,6 +137,43 @@ func resourceBlockStorageVolumeV3() *schema.Resource {
 				},
 				Set: blockStorageVolumeV3AttachmentHash,
 			},
+
+			"scheduler_hints": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"different_host": {
+							Type:     schema.TypeList,
+							Optional: true,
+							ForceNew: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
+						"same_host": {
+							Type:     schema.TypeList,
+							Optional: true,
+							ForceNew: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
+						"query": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+						"local_to_instance": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+						"additional_properties": {
+							Type:     schema.TypeMap,
+							Optional: true,
+							ForceNew: true,
+						},
+					},
+				},
+				Set: blockStorageExtensionsSchedulerHintsHash,
+			},
 		},
 	}
 }
@@ -148,7 +186,7 @@ func resourceBlockStorageVolumeV3Create(d *schema.ResourceData, meta interface{}
 	}
 
 	metadata := d.Get("metadata").(map[string]interface{})
-	createOpts := &volumes.CreateOpts{
+	volumeCreateOpts := &volumes.CreateOpts{
 		AvailabilityZone:   d.Get("availability_zone").(string),
 		ConsistencyGroupID: d.Get("consistency_group_id").(string),
 		Description:        d.Get("description").(string),
@@ -161,6 +199,19 @@ func resourceBlockStorageVolumeV3Create(d *schema.ResourceData, meta interface{}
 		SourceVolID:        d.Get("source_vol_id").(string),
 		VolumeType:         d.Get("volume_type").(string),
 		Multiattach:        d.Get("multiattach").(bool),
+	}
+
+	var createOpts schedulerhints.CreateOptsExt
+	var schedulerHints schedulerhints.SchedulerHints
+
+	schedulerHintsRaw := d.Get("scheduler_hints").(*schema.Set).List()
+	if len(schedulerHintsRaw) > 0 {
+		log.Printf("[DEBUG] openstack_blockstorage_volume_v3 scheduler hints: %+v", schedulerHintsRaw[0])
+		schedulerHints = resourceBlockStorageSchedulerHints(schedulerHintsRaw[0].(map[string]interface{}))
+	}
+	createOpts = schedulerhints.CreateOptsExt{
+		VolumeCreateOptsBuilder: volumeCreateOpts,
+		SchedulerHints:          schedulerHints,
 	}
 
 	log.Printf("[DEBUG] openstack_blockstorage_volume_v3 create options: %#v", createOpts)
@@ -185,7 +236,6 @@ func resourceBlockStorageVolumeV3Create(d *schema.ResourceData, meta interface{}
 			"Error waiting for openstack_blockstorage_volume_v3 %s to become ready: %s", v.ID, err)
 	}
 
-	// Store the ID now
 	d.SetId(v.ID)
 
 	return resourceBlockStorageVolumeV3Read(d, meta)

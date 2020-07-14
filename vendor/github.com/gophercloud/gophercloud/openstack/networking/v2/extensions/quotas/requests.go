@@ -4,7 +4,8 @@ import "github.com/gophercloud/gophercloud"
 
 // Get returns Networking Quotas for a project.
 func Get(client *gophercloud.ServiceClient, projectID string) (r GetResult) {
-	_, r.Err = client.Get(getURL(client, projectID), &r.Body, nil)
+	resp, err := client.Get(getURL(client, projectID), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -57,9 +58,9 @@ func Update(c *gophercloud.ServiceClient, projectID string, opts UpdateOptsBuild
 		r.Err = err
 		return
 	}
-	_, r.Err = c.Put(updateURL(c, projectID), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := c.Put(updateURL(c, projectID), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
-
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

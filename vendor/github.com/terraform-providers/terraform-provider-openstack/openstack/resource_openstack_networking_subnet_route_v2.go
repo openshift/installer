@@ -3,7 +3,6 @@ package openstack
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 
@@ -27,16 +26,19 @@ func resourceNetworkingSubnetRouteV2() *schema.Resource {
 				Computed: true,
 				ForceNew: true,
 			},
+
 			"subnet_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
+
 			"destination_cidr": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
+
 			"next_hop": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -47,177 +49,165 @@ func resourceNetworkingSubnetRouteV2() *schema.Resource {
 }
 
 func resourceNetworkingSubnetRouteV2Create(d *schema.ResourceData, meta interface{}) error {
-
-	subnetId := d.Get("subnet_id").(string)
-	osMutexKV.Lock(subnetId)
-	defer osMutexKV.Unlock(subnetId)
-
-	var destCidr string = d.Get("destination_cidr").(string)
-	var nextHop string = d.Get("next_hop").(string)
-
 	config := meta.(*Config)
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
 
-	subnet, err := subnets.Get(networkingClient, subnetId).Extract()
+	destCIDR := d.Get("destination_cidr").(string)
+	nextHop := d.Get("next_hop").(string)
+
+	subnetID := d.Get("subnet_id").(string)
+	osMutexKV.Lock(subnetID)
+	defer osMutexKV.Unlock(subnetID)
+
+	subnet, err := subnets.Get(networkingClient, subnetID).Extract()
 	if err != nil {
 		if _, ok := err.(gophercloud.ErrDefault404); ok {
 			d.SetId("")
 			return nil
 		}
 
-		return fmt.Errorf("Error retrieving OpenStack Neutron Subnet: %s", err)
+		return fmt.Errorf("Error retrieving openstack_networking_subnet_v2: %s", err)
 	}
 
-	var updateOpts subnets.UpdateOpts
-	var routeExists bool = false
-
-	var rts []subnets.HostRoute = subnet.HostRoutes
-	for _, r := range rts {
-
-		if r.DestinationCIDR == destCidr && r.NextHop == nextHop {
-			routeExists = true
-			break
+	for _, r := range subnet.HostRoutes {
+		if r.DestinationCIDR == destCIDR && r.NextHop == nextHop {
+			return fmt.Errorf(
+				"openstack_networking_subnet_v2 %s already has a route to %s via %s",
+				subnetID,
+				r.DestinationCIDR,
+				r.NextHop,
+			)
 		}
 	}
 
-	if routeExists {
-		return fmt.Errorf("Subnet %s has route already", subnetId)
+	// Add a new route.
+	subnet.HostRoutes = append(subnet.HostRoutes, subnets.HostRoute{
+		DestinationCIDR: destCIDR,
+		NextHop:         nextHop,
+	})
+
+	log.Printf(
+		"[DEBUG] Adding openstack_networking_subnet_v2 %s route to %s via %s",
+		subnetID,
+		destCIDR,
+		nextHop,
+	)
+	updateOpts := subnets.UpdateOpts{
+		HostRoutes: &subnet.HostRoutes,
 	}
-
-	if destCidr != "" && nextHop != "" {
-		r := subnets.HostRoute{DestinationCIDR: destCidr, NextHop: nextHop}
-		log.Printf("[INFO] Adding route %s", r)
-		rts = append(rts, r)
-	}
-
-	updateOpts.HostRoutes = &rts
-
-	log.Printf("[DEBUG] Updating Subnet %s with options: %+v", subnetId, updateOpts)
-
-	_, err = subnets.Update(networkingClient, subnetId, updateOpts).Extract()
+	log.Printf("[DEBUG] Updating openstack_networking_subnet_v2 %s with options: %+v", subnetID, updateOpts)
+	_, err = subnets.Update(networkingClient, subnetID, updateOpts).Extract()
 	if err != nil {
-		return fmt.Errorf("Error updating OpenStack Neutron Subnet: %s", err)
+		return fmt.Errorf("Error updating openstack_networking_subnet_v2: %s", err)
 	}
-	id := fmt.Sprintf("%s-route-%s-%s", subnetId, destCidr, nextHop)
-	d.SetId(id)
+
+	d.SetId(resourceNetworkingSubnetRouteV2BuildID(subnetID, destCIDR, nextHop))
 
 	return resourceNetworkingSubnetRouteV2Read(d, meta)
 }
 
 func resourceNetworkingSubnetRouteV2Read(d *schema.ResourceData, meta interface{}) error {
-
-	subnetId := d.Get("subnet_id").(string)
-
 	config := meta.(*Config)
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
 
-	destCidr := d.Get("destination_cidr").(string)
-	nextHop := d.Get("next_hop").(string)
-
-	routeIDParts := []string{}
-	if d.Id() != "" && strings.Contains(d.Id(), "-route-") {
-		routeIDParts = strings.Split(d.Id(), "-route-")
-		routeLastIDParts := strings.Split(routeIDParts[1], "-")
-
-		if subnetId == "" {
-			subnetId = routeIDParts[0]
-			d.Set("subnet_id", subnetId)
-		}
-		if destCidr == "" {
-			destCidr = routeLastIDParts[0]
-		}
-		if nextHop == "" {
-			nextHop = routeLastIDParts[1]
-		}
+	subnetID, destCIDR, nextHop, err := resourceNetworkingSubnetRouteV2ParseID(d.Id())
+	if err != nil {
+		return fmt.Errorf("Error reading openstack_networking_subnet_route_v2 ID %s: %s", d.Id(), err)
 	}
 
-	subnet, err := subnets.Get(networkingClient, subnetId).Extract()
+	subnet, err := subnets.Get(networkingClient, subnetID).Extract()
 	if err != nil {
 		if _, ok := err.(gophercloud.ErrDefault404); ok {
 			d.SetId("")
 			return nil
 		}
 
-		return fmt.Errorf("Error retrieving OpenStack Neutron Subnet: %s", err)
+		return fmt.Errorf("Error retrieving openstack_networking_subnet_v2: %s", err)
 	}
 
-	log.Printf("[DEBUG] Retrieved Subnet %s: %+v", subnetId, subnet)
-
-	var exists bool
+	exists := false
 	for _, r := range subnet.HostRoutes {
-		if r.DestinationCIDR == destCidr && r.NextHop == nextHop {
+		if r.DestinationCIDR == destCIDR && r.NextHop == nextHop {
 			exists = true
 		}
 	}
-
 	if !exists {
-		return fmt.Errorf("Route doesn't exist")
+		return fmt.Errorf(
+			"openstack_networking_subnet_v2 %s doesn't have a route to %s via %s",
+			subnetID,
+			destCIDR,
+			nextHop,
+		)
 	}
 
+	d.Set("subnet_id", subnetID)
 	d.Set("next_hop", nextHop)
-	d.Set("destination_cidr", destCidr)
-
+	d.Set("destination_cidr", destCIDR)
 	d.Set("region", GetRegion(d, config))
 
 	return nil
 }
 
 func resourceNetworkingSubnetRouteV2Delete(d *schema.ResourceData, meta interface{}) error {
-
-	subnetId := d.Get("subnet_id").(string)
-	osMutexKV.Lock(subnetId)
-	defer osMutexKV.Unlock(subnetId)
-
 	config := meta.(*Config)
-
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
 
-	subnet, err := subnets.Get(networkingClient, subnetId).Extract()
+	subnetID := d.Get("subnet_id").(string)
+	osMutexKV.Lock(subnetID)
+	defer osMutexKV.Unlock(subnetID)
+
+	subnet, err := subnets.Get(networkingClient, subnetID).Extract()
 	if err != nil {
 		if _, ok := err.(gophercloud.ErrDefault404); ok {
 			return nil
 		}
 
-		return fmt.Errorf("Error retrieving OpenStack Neutron Subnet: %s", err)
+		return fmt.Errorf("Error retrieving openstack_networking_subnet_v2: %s", err)
 	}
 
-	var updateOpts subnets.UpdateOpts
-
-	var destCidr string = d.Get("destination_cidr").(string)
+	var destCIDR string = d.Get("destination_cidr").(string)
 	var nextHop string = d.Get("next_hop").(string)
 
-	var oldRts []subnets.HostRoute = subnet.HostRoutes
-	var newRts []subnets.HostRoute
+	oldRoutes := subnet.HostRoutes
+	newRoutes := make([]subnets.HostRoute, 0, 1)
 
-	for _, r := range oldRts {
-
-		if r.DestinationCIDR != destCidr || r.NextHop != nextHop {
-			newRts = append(newRts, r)
+	for _, r := range oldRoutes {
+		if r.DestinationCIDR != destCIDR || r.NextHop != nextHop {
+			newRoutes = append(newRoutes, r)
 		}
 	}
 
-	if len(oldRts) == len(newRts) {
-		return fmt.Errorf("Route did not exist already")
+	if len(oldRoutes) == len(newRoutes) {
+		return fmt.Errorf(
+			"openstack_networking_subnet_v2 %s already doesn't have a route to %s via %s",
+			subnetID,
+			destCIDR,
+			nextHop,
+		)
 	}
 
-	r := subnets.HostRoute{DestinationCIDR: destCidr, NextHop: nextHop}
-	log.Printf("[INFO] Deleting route %s", r)
-	updateOpts.HostRoutes = &newRts
-
-	log.Printf("[DEBUG] Updating Subnet %s with options: %+v", subnetId, updateOpts)
-
-	_, err = subnets.Update(networkingClient, subnetId, updateOpts).Extract()
+	log.Printf(
+		"[DEBUG] Deleting openstack_networking_subnet_v2 %s route to %s via %s",
+		subnetID,
+		destCIDR,
+		nextHop,
+	)
+	updateOpts := subnets.UpdateOpts{
+		HostRoutes: &newRoutes,
+	}
+	log.Printf("[DEBUG] Updating openstack_networking_subnet_v2 %s with options: %#v", subnetID, updateOpts)
+	_, err = subnets.Update(networkingClient, subnetID, updateOpts).Extract()
 	if err != nil {
-		return fmt.Errorf("Error updating OpenStack Neutron Subnet: %s", err)
+		return fmt.Errorf("Error updating openstack_networking_subnet_v2: %s", err)
 	}
 
 	return nil

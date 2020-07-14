@@ -169,25 +169,3 @@ type GetResult struct {
 type UpdateResult struct {
 	commonResult
 }
-
-// IDFromName is a convenience function that returns a snapshot's ID given its name.
-func IDFromName(client *gophercloud.ServiceClient, name string) (string, error) {
-	r, err := ListDetail(client, &ListOpts{Name: name}).AllPages()
-	if err != nil {
-		return "", err
-	}
-
-	ss, err := ExtractSnapshots(r)
-	if err != nil {
-		return "", err
-	}
-
-	switch len(ss) {
-	case 0:
-		return "", gophercloud.ErrResourceNotFound{Name: name, ResourceType: "snapshot"}
-	case 1:
-		return ss[0].ID, nil
-	default:
-		return "", gophercloud.ErrMultipleResourcesFound{Name: name, Count: len(ss), ResourceType: "snapshot"}
-	}
-}

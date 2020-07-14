@@ -99,7 +99,7 @@ func keyManagerSecretMetadataV1WaitForSecretMetadataCreation(kmClient *gopherclo
 func keyManagerSecretV1GetPayload(kmClient *gophercloud.ServiceClient, id string) string {
 	payload, err := secrets.GetPayload(kmClient, id, nil).Extract()
 	if err != nil {
-		fmt.Errorf("Could not retrieve payload for secret with id %s: %s", id, err)
+		log.Printf("[DEBUG] Could not retrieve payload for secret with id %s: %s", id, err)
 	}
 	return string(payload)
 }

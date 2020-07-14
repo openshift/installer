@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata"
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imageimport"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -79,7 +80,7 @@ func resourceImagesImageV2() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      true,
-				ConflictsWith: []string{"image_source_url"},
+				ConflictsWith: []string{"image_source_url", "web_download"},
 			},
 
 			"min_disk_gb": {
@@ -119,10 +120,10 @@ func resourceImagesImageV2() *schema.Resource {
 			},
 
 			"verify_checksum": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				ForceNew: false,
-				Default:  true,
+				Type:          schema.TypeBool,
+				Optional:      true,
+				ForceNew:      false,
+				ConflictsWith: []string{"web_download"},
 			},
 
 			"visibility": {
@@ -139,6 +140,13 @@ func resourceImagesImageV2() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
+			},
+
+			"web_download": {
+				Type:          schema.TypeBool,
+				Optional:      true,
+				ForceNew:      false,
+				ConflictsWith: []string{"local_file_path", "verify_checksum"},
 			},
 
 			// Computed-only
@@ -230,33 +238,57 @@ func resourceImagesImageV2Create(d *schema.ResourceData, meta interface{}) error
 
 	d.SetId(newImg.ID)
 
-	// downloading/getting image file props
-	imgFilePath, err := resourceImagesImageV2File(d)
-	if err != nil {
-		return fmt.Errorf("Error opening file for Image: %s", err)
+	var fileChecksum string
+	useWebDownload := d.Get("web_download").(bool)
+	if !useWebDownload {
+		// variable declaration
+		var err error
+		var imgFilePath string
+		var fileSize int64
+		var imgFile *os.File
 
-	}
-	fileSize, fileChecksum, err := resourceImagesImageV2FileProps(imgFilePath)
-	if err != nil {
-		return fmt.Errorf("Error getting file props: %s", err)
-	}
+		// downloading/getting image file props
+		imgFilePath, err = resourceImagesImageV2File(d)
+		if err != nil {
+			return fmt.Errorf("Error opening file for Image: %s", err)
 
-	// upload
-	imgFile, err := os.Open(imgFilePath)
-	if err != nil {
-		return fmt.Errorf("Error opening file %q: %s", imgFilePath, err)
-	}
-	defer imgFile.Close()
-	log.Printf("[WARN] Uploading image %s (%d bytes). This can be pretty long.", d.Id(), fileSize)
+		}
+		fileSize, fileChecksum, err = resourceImagesImageV2FileProps(imgFilePath)
+		if err != nil {
+			return fmt.Errorf("Error getting file props: %s", err)
+		}
 
-	res := imagedata.Upload(imageClient, d.Id(), imgFile)
-	if res.Err != nil {
-		return fmt.Errorf("Error while uploading file %q: %s", imgFilePath, res.Err)
+		// upload
+		imgFile, err = os.Open(imgFilePath)
+		if err != nil {
+			return fmt.Errorf("Error opening file %q: %s", imgFilePath, err)
+		}
+		defer imgFile.Close()
+		log.Printf("[WARN] Uploading image %s (%d bytes). This can be pretty long.", d.Id(), fileSize)
+
+		res := imagedata.Upload(imageClient, d.Id(), imgFile)
+		if res.Err != nil {
+			return fmt.Errorf("Error while uploading file %q: %s", imgFilePath, res.Err)
+		}
+	} else {
+		// import
+		imgUrl := d.Get("image_source_url").(string)
+
+		importOpts := &imageimport.CreateOpts{
+			Name: imageimport.WebDownloadMethod,
+			URI:  imgUrl,
+		}
+
+		log.Printf("[DEBUG] Import Options: %#v", importOpts)
+		res := imageimport.Create(imageClient, d.Id(), importOpts)
+		if res.Err != nil {
+			return fmt.Errorf("Error while importing url %q: %s", imgUrl, res.Err)
+		}
 	}
 
 	//wait for active
 	stateConf := &resource.StateChangeConf{
-		Pending:    []string{string(images.ImageStatusQueued), string(images.ImageStatusSaving)},
+		Pending:    []string{string(images.ImageStatusQueued), string(images.ImageStatusSaving), string(images.ImageStatusImporting)},
 		Target:     []string{string(images.ImageStatusActive)},
 		Refresh:    resourceImagesImageV2RefreshFunc(imageClient, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
@@ -273,9 +305,10 @@ func resourceImagesImageV2Create(d *schema.ResourceData, meta interface{}) error
 		return CheckDeleted(d, err, "image")
 	}
 
-	verifyChecksum := d.Get("verify_checksum").(bool)
-	if img.Checksum != fileChecksum && verifyChecksum {
-		return fmt.Errorf("Error wrong checksum: got %q, expected %q", img.Checksum, fileChecksum)
+	if v, ok := d.GetOkExists("verify_checksum"); !useWebDownload && (!ok || (ok && v.(bool))) {
+		if img.Checksum != fileChecksum {
+			return fmt.Errorf("Error wrong checksum: got %q, expected %q", img.Checksum, fileChecksum)
+		}
 	}
 
 	d.Partial(false)

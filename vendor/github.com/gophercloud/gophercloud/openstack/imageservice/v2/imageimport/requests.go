@@ -15,7 +15,8 @@ const (
 
 // Get retrieves Import API information data.
 func Get(c *gophercloud.ServiceClient) (r GetResult) {
-	_, r.Err = c.Get(infoURL(c), &r.Body, nil)
+	resp, err := c.Get(infoURL(c), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -46,8 +47,9 @@ func Create(client *gophercloud.ServiceClient, imageID string, opts CreateOptsBu
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(importURL(client, imageID), b, nil, &gophercloud.RequestOpts{
+	resp, err := client.Post(importURL(client, imageID), b, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{202},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

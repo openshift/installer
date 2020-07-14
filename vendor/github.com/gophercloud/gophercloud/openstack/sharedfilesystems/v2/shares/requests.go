@@ -63,9 +63,10 @@ func Create(client *gophercloud.ServiceClient, opts CreateOptsBuilder) (r Create
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(createURL(client), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(createURL(client), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200, 201},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -164,20 +165,31 @@ func ListDetail(client *gophercloud.ServiceClient, opts ListOptsBuilder) paginat
 
 // Delete will delete an existing Share with the given UUID.
 func Delete(client *gophercloud.ServiceClient, id string) (r DeleteResult) {
-	_, r.Err = client.Delete(deleteURL(client, id), nil)
+	resp, err := client.Delete(deleteURL(client, id), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Get will get a single share with given UUID
 func Get(client *gophercloud.ServiceClient, id string) (r GetResult) {
-	_, r.Err = client.Get(getURL(client, id), &r.Body, nil)
+	resp, err := client.Get(getURL(client, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
-// GetExportLocations will get shareID's export locations.
-// Client must have Microversion set; minimum supported microversion for GetExportLocations is 2.14.
-func GetExportLocations(client *gophercloud.ServiceClient, id string) (r GetExportLocationsResult) {
-	_, r.Err = client.Get(getExportLocationsURL(client, id), &r.Body, nil)
+// ListExportLocations will list shareID's export locations.
+// Client must have Microversion set; minimum supported microversion for ListExportLocations is 2.9.
+func ListExportLocations(client *gophercloud.ServiceClient, id string) (r ListExportLocationsResult) {
+	resp, err := client.Get(listExportLocationsURL(client, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// GetExportLocation will get shareID's export location by an ID.
+// Client must have Microversion set; minimum supported microversion for GetExportLocation is 2.9.
+func GetExportLocation(client *gophercloud.ServiceClient, shareID string, id string) (r GetExportLocationResult) {
+	resp, err := client.Get(getExportLocationURL(client, shareID, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -214,9 +226,10 @@ func GrantAccess(client *gophercloud.ServiceClient, id string, opts GrantAccessO
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(grantAccessURL(client, id), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(grantAccessURL(client, id), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -250,10 +263,10 @@ func RevokeAccess(client *gophercloud.ServiceClient, id string, opts RevokeAcces
 		return
 	}
 
-	_, r.Err = client.Post(revokeAccessURL(client, id), b, nil, &gophercloud.RequestOpts{
+	resp, err := client.Post(revokeAccessURL(client, id), b, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{200, 202},
 	})
-
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -262,9 +275,10 @@ func RevokeAccess(client *gophercloud.ServiceClient, id string, opts RevokeAcces
 // Client must have Microversion set; minimum supported microversion for ListAccessRights is 2.7.
 func ListAccessRights(client *gophercloud.ServiceClient, id string) (r ListAccessRightsResult) {
 	requestBody := map[string]interface{}{"access_list": nil}
-	_, r.Err = client.Post(listAccessRightsURL(client, id), requestBody, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(listAccessRightsURL(client, id), requestBody, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -298,10 +312,10 @@ func Extend(client *gophercloud.ServiceClient, id string, opts ExtendOptsBuilder
 		return
 	}
 
-	_, r.Err = client.Post(extendURL(client, id), b, nil, &gophercloud.RequestOpts{
+	resp, err := client.Post(extendURL(client, id), b, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{202},
 	})
-
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -335,10 +349,10 @@ func Shrink(client *gophercloud.ServiceClient, id string, opts ShrinkOptsBuilder
 		return
 	}
 
-	_, r.Err = client.Post(shrinkURL(client, id), b, nil, &gophercloud.RequestOpts{
+	resp, err := client.Post(shrinkURL(client, id), b, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{202},
 	})
-
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -374,23 +388,26 @@ func Update(client *gophercloud.ServiceClient, id string, opts UpdateOptsBuilder
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Put(updateURL(client, id), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Put(updateURL(client, id), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // GetMetadata retrieves metadata of the specified share. To extract the retrieved
 // metadata from the response, call the Extract method on the MetadataResult.
 func GetMetadata(client *gophercloud.ServiceClient, id string) (r MetadataResult) {
-	_, r.Err = client.Get(getMetadataURL(client, id), &r.Body, nil)
+	resp, err := client.Get(getMetadataURL(client, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // GetMetadatum retrieves a single metadata item of the specified share. To extract the retrieved
 // metadata from the response, call the Extract method on the GetMetadatumResult.
 func GetMetadatum(client *gophercloud.ServiceClient, id, key string) (r GetMetadatumResult) {
-	_, r.Err = client.Get(getMetadatumURL(client, id, key), &r.Body, nil)
+	resp, err := client.Get(getMetadatumURL(client, id, key), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -424,10 +441,10 @@ func SetMetadata(client *gophercloud.ServiceClient, id string, opts SetMetadataO
 		return
 	}
 
-	_, r.Err = client.Post(setMetadataURL(client, id), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(setMetadataURL(client, id), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
-
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -461,18 +478,122 @@ func UpdateMetadata(client *gophercloud.ServiceClient, id string, opts UpdateMet
 		return
 	}
 
-	_, r.Err = client.Post(updateMetadataURL(client, id), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(updateMetadataURL(client, id), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
-
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // DeleteMetadatum deletes a single key-value pair from the metadata of the specified share.
 func DeleteMetadatum(client *gophercloud.ServiceClient, id, key string) (r DeleteMetadatumResult) {
-	_, r.Err = client.Delete(deleteMetadatumURL(client, id, key), &gophercloud.RequestOpts{
+	resp, err := client.Delete(deleteMetadatumURL(client, id, key), &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
 
+// RevertOptsBuilder allows extensions to add additional parameters to the
+// Revert request.
+type RevertOptsBuilder interface {
+	ToShareRevertMap() (map[string]interface{}, error)
+}
+
+// RevertOpts contains options for reverting a Share to a snapshot.
+// For more information about these parameters, please, refer to the shared file systems API v2,
+// Share Actions, Revert share documentation.
+// Available only since Manila Microversion 2.27
+type RevertOpts struct {
+	// SnapshotID is a Snapshot ID to revert a Share to
+	SnapshotID string `json:"snapshot_id"`
+}
+
+// ToShareRevertMap assembles a request body based on the contents of a
+// RevertOpts.
+func (opts RevertOpts) ToShareRevertMap() (map[string]interface{}, error) {
+	return gophercloud.BuildRequestBody(opts, "revert")
+}
+
+// Revert will revert the existing share to a Snapshot. RevertResult contains only the error.
+// To extract it, call the ExtractErr method on the RevertResult.
+// Client must have Microversion set; minimum supported microversion for Revert is 2.27.
+func Revert(client *gophercloud.ServiceClient, id string, opts RevertOptsBuilder) (r RevertResult) {
+	b, err := opts.ToShareRevertMap()
+	if err != nil {
+		r.Err = err
+		return
+	}
+
+	resp, err := client.Post(revertURL(client, id), b, nil, &gophercloud.RequestOpts{
+		OkCodes: []int{202},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// ResetStatusOptsBuilder allows extensions to add additional parameters to the
+// ResetStatus request.
+type ResetStatusOptsBuilder interface {
+	ToShareResetStatusMap() (map[string]interface{}, error)
+}
+
+// ResetStatusOpts contains options for resetting a Share status.
+// For more information about these parameters, please, refer to the shared file systems API v2,
+// Share Actions, ResetStatus share documentation.
+type ResetStatusOpts struct {
+	// Status is a share status to reset to. Must be "new", "error" or "active".
+	Status string `json:"status"`
+}
+
+// ToShareResetStatusMap assembles a request body based on the contents of a
+// ResetStatusOpts.
+func (opts ResetStatusOpts) ToShareResetStatusMap() (map[string]interface{}, error) {
+	return gophercloud.BuildRequestBody(opts, "reset_status")
+}
+
+// ResetStatus will reset the existing share status. ResetStatusResult contains only the error.
+// To extract it, call the ExtractErr method on the ResetStatusResult.
+// Client must have Microversion set; minimum supported microversion for ResetStatus is 2.7.
+func ResetStatus(client *gophercloud.ServiceClient, id string, opts ResetStatusOptsBuilder) (r ResetStatusResult) {
+	b, err := opts.ToShareResetStatusMap()
+	if err != nil {
+		r.Err = err
+		return
+	}
+
+	resp, err := client.Post(resetStatusURL(client, id), b, nil, &gophercloud.RequestOpts{
+		OkCodes: []int{202},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// ForceDelete will delete the existing share in any state. ForceDeleteResult contains only the error.
+// To extract it, call the ExtractErr method on the ForceDeleteResult.
+// Client must have Microversion set; minimum supported microversion for ForceDelete is 2.7.
+func ForceDelete(client *gophercloud.ServiceClient, id string) (r ForceDeleteResult) {
+	b := map[string]interface{}{
+		"force_delete": nil,
+	}
+	resp, err := client.Post(forceDeleteURL(client, id), b, nil, &gophercloud.RequestOpts{
+		OkCodes: []int{202},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// Unmanage will remove a share from the management of the Shared File System
+// service without deleting the share. UnmanageResult contains only the error.
+// To extract it, call the ExtractErr method on the UnmanageResult.
+// Client must have Microversion set; minimum supported microversion for Unmanage is 2.7.
+func Unmanage(client *gophercloud.ServiceClient, id string) (r UnmanageResult) {
+	b := map[string]interface{}{
+		"unmanage": nil,
+	}
+	resp, err := client.Post(unmanageURL(client, id), b, nil, &gophercloud.RequestOpts{
+		OkCodes: []int{202},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

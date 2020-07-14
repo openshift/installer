@@ -171,7 +171,8 @@ func List(c *gophercloud.ServiceClient, opts PolicyListOptsBuilder) pagination.P
 
 // Get retrieves a specific QoS policy based on its ID.
 func Get(c *gophercloud.ServiceClient, id string) (r GetResult) {
-	_, r.Err = c.Get(getURL(c, id), &r.Body, nil)
+	resp, err := c.Get(getURL(c, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -214,9 +215,10 @@ func Create(client *gophercloud.ServiceClient, opts CreateOptsBuilder) (r Create
 		r.Err = err
 		return
 	}
-	_, r.Err = client.Post(createURL(client), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Post(createURL(client), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{201},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -254,14 +256,16 @@ func Update(c *gophercloud.ServiceClient, policyID string, opts UpdateOptsBuilde
 		r.Err = err
 		return
 	}
-	_, r.Err = c.Put(updateURL(c, policyID), b, &r.Body, &gophercloud.RequestOpts{
+	resp, err := c.Put(updateURL(c, policyID), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
 // Delete accepts a unique ID and deletes the QoS policy associated with it.
 func Delete(c *gophercloud.ServiceClient, id string) (r DeleteResult) {
-	_, r.Err = c.Delete(deleteURL(c, id), nil)
+	resp, err := c.Delete(deleteURL(c, id), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }

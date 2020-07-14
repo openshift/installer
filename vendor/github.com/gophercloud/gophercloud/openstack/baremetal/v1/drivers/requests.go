@@ -43,9 +43,10 @@ func ListDrivers(client *gophercloud.ServiceClient, opts ListDriversOptsBuilder)
 
 // GetDriverDetails Shows details for a driver
 func GetDriverDetails(client *gophercloud.ServiceClient, driverName string) (r GetDriverResult) {
-	_, r.Err = client.Get(driverDetailsURL(client, driverName), &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Get(driverDetailsURL(client, driverName), &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -53,9 +54,10 @@ func GetDriverDetails(client *gophercloud.ServiceClient, driverName string) (r G
 // driverName expects to be supplied in the driver_info field for every
 // Node it manages
 func GetDriverProperties(client *gophercloud.ServiceClient, driverName string) (r GetPropertiesResult) {
-	_, r.Err = client.Get(driverPropertiesURL(client, driverName), &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Get(driverPropertiesURL(client, driverName), &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
 
@@ -63,8 +65,9 @@ func GetDriverProperties(client *gophercloud.ServiceClient, driverName string) (
 // driverName expects to be supplied in the node’s raid_config field, if a
 // RAID configuration change is requested.
 func GetDriverDiskProperties(client *gophercloud.ServiceClient, driverName string) (r GetDiskPropertiesResult) {
-	_, r.Err = client.Get(driverDiskPropertiesURL(client, driverName), &r.Body, &gophercloud.RequestOpts{
+	resp, err := client.Get(driverDiskPropertiesURL(client, driverName), &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
 	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
