@@ -7,8 +7,8 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
-// ValidateMachinePool checks that the specified machine pool is valid.
-func ValidateMachinePool(p *openstack.MachinePool, fldPath *field.Path) field.ErrorList {
+// validateMachinePool checks that the specified machine pool is valid.
+func validateMachinePool(p *openstack.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	// Validate Root Volumes
