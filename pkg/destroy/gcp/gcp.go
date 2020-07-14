@@ -272,6 +272,17 @@ func newPendingItemTracker() pendingItemTracker {
 	}
 }
 
+// GetAllPendintItems returns a slice of all of the pending items across all types.
+func (t pendingItemTracker) GetAllPendingItems() []cloudResource {
+	var items []cloudResource
+	for _, is := range t.pendingItems {
+		for _, i := range is {
+			items = append(items, i)
+		}
+	}
+	return items
+}
+
 // getPendingItems returns the list of resources to be deleted.
 func (t pendingItemTracker) getPendingItems(itemType string) []cloudResource {
 	lastFound, exists := t.pendingItems[itemType]
