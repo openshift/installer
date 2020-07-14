@@ -80,12 +80,4 @@
       nics:
       - port-name: "{{ os_port_worker }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
-
-  - name: 'Create the compute floating IP'
-    os_floating_ip:
-      state: present
-      nat_destination: "{{ os_network }}"
-      network: "{{ os_external_network }}"
-      server: "{{ item.1 }}-{{ item.0 }}"
-    with_indexed_items: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
-    when: os_networking_type == "CiscoACI"
+    when: os_networking_type != "CiscoACI"

@@ -1,0 +1,14 @@
+- import_playbook: common.yaml
+
+- hosts: all
+  gather_facts: no
+
+  tasks:
+  - name: 'Create the master floating IP'
+    os_floating_ip:
+      state: present
+      nat_destination: "{{ os_network }}"
+      network: "{{ os_external_network }}"
+      server: "{{ item.1 }}-{{ item.0 }}"
+    with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
+    when: os_networking_type == "CiscoACI"
