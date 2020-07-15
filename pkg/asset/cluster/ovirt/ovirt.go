@@ -10,12 +10,12 @@ import (
 
 // Metadata converts an install configuration to ovirt metadata.
 func Metadata(config *types.InstallConfig) *ovirt.Metadata {
-	customImage, ok := os.LookupEnv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE")
+	_, ok := os.LookupEnv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE")
 	m := ovirt.Metadata{
 		ClusterID: config.Ovirt.ClusterID,
-		// if we have a custom image, don't remove the template, otherwise its
-		// a per deployment template, destroy it
-		RemoveTemplate: ok && customImage != "",
+		// if we have a custom image, don't remove the template,
+		// otherwise its a per deployment template, destroy it
+		RemoveTemplate: !ok,
 	}
 	return &m
 }
