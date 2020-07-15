@@ -703,7 +703,6 @@ EOF
 ```
 - `name`: the name of the compute node (for example worker-0)
 - `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
 - `zone`: the zone to deploy the worker node into (for example us-east1-b)
 - `compute_subnet`: the URI to the compute subnet
 - `image`: the URI to the RHCOS image
