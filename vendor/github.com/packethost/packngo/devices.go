@@ -1,7 +1,6 @@
 package packngo
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -13,13 +12,14 @@ type DeviceService interface {
 	Get(DeviceID string, getOpt *GetOptions) (*Device, *Response, error)
 	Create(*DeviceCreateRequest) (*Device, *Response, error)
 	Update(string, *DeviceUpdateRequest) (*Device, *Response, error)
-	Delete(string) (*Response, error)
+	Delete(string, bool) (*Response, error)
 	Reboot(string) (*Response, error)
 	PowerOff(string) (*Response, error)
 	PowerOn(string) (*Response, error)
 	Lock(string) (*Response, error)
 	Unlock(string) (*Response, error)
 	ListBGPSessions(deviceID string, listOpt *ListOptions) ([]BGPSession, *Response, error)
+	ListBGPNeighbors(deviceID string, listOpt *ListOptions) ([]BGPNeighbor, *Response, error)
 	ListEvents(string, *ListOptions) ([]Event, *Response, error)
 }
 
@@ -28,8 +28,8 @@ type devicesRoot struct {
 	Meta    meta     `json:"meta"`
 }
 
-// DeviceRaw represents a Packet device from API
-type DeviceRaw struct {
+// Device represents a Packet device from API
+type Device struct {
 	ID                  string                 `json:"id"`
 	Href                string                 `json:"href,omitempty"`
 	Hostname            string                 `json:"hostname,omitempty"`
@@ -38,7 +38,7 @@ type DeviceRaw struct {
 	Updated             string                 `json:"updated_at,omitempty"`
 	Locked              bool                   `json:"locked,omitempty"`
 	BillingCycle        string                 `json:"billing_cycle,omitempty"`
-	Storage             map[string]interface{} `json:"storage,omitempty"`
+	Storage             *CPR                   `json:"storage,omitempty"`
 	Tags                []string               `json:"tags,omitempty"`
 	Network             []*IPAddressAssignment `json:"ip_addresses"`
 	Volumes             []*Volume              `json:"volumes"`
@@ -60,27 +60,7 @@ type DeviceRaw struct {
 	CustomData          map[string]interface{} `json:"customdata,omitempty"`
 	SSHKeys             []SSHKey               `json:"ssh_keys,omitempty"`
 	ShortID             string                 `json:"short_id,omitempty"`
-}
-
-type Device struct {
-	DeviceRaw
-	NetworkType string
-}
-
-func (d *Device) UnmarshalJSON(b []byte) error {
-	dJSON := DeviceRaw{}
-	if err := json.Unmarshal(b, &dJSON); err != nil {
-		return err
-	}
-	d.DeviceRaw = dJSON
-	if len(dJSON.NetworkPorts) > 0 {
-		networkType, err := dJSON.GetNetworkType()
-		if err != nil {
-			return err
-		}
-		d.NetworkType = networkType
-	}
-	return nil
+	SwitchUUID          string                 `json:"switch_uuid,omitempty"`
 }
 
 type NetworkInfo struct {
@@ -112,21 +92,124 @@ func (d Device) String() string {
 	return Stringify(d)
 }
 
-func (d DeviceRaw) GetNetworkType() (string, error) {
-	if len(d.NetworkPorts) == 0 {
-		return "", fmt.Errorf("Device has no network ports listed")
-	}
+func (d *Device) NumOfBonds() int {
+	numOfBonds := 0
 	for _, p := range d.NetworkPorts {
-		if p.Name == "bond0" {
-			return p.NetworkType, nil
+		if p.Type == "NetworkBondPort" {
+			numOfBonds++
 		}
 	}
-	return "", fmt.Errorf("Bound port not found")
+	return numOfBonds
+}
+
+func (d *Device) GetPortsInBond(name string) map[string]*Port {
+	ports := map[string]*Port{}
+	for _, port := range d.NetworkPorts {
+		if port.Bond != nil && port.Bond.Name == name {
+			p := port
+			ports[p.Name] = &p
+		}
+	}
+	return ports
+}
+
+func (d *Device) GetBondPorts() map[string]*Port {
+	ports := map[string]*Port{}
+	for _, port := range d.NetworkPorts {
+		if port.Type == "NetworkBondPort" {
+			p := port
+			ports[p.Name] = &p
+		}
+	}
+	return ports
+}
+
+func (d *Device) GetPhysicalPorts() map[string]*Port {
+	ports := map[string]*Port{}
+	for _, port := range d.NetworkPorts {
+		if port.Type == "NetworkPort" {
+			p := port
+			ports[p.Name] = &p
+		}
+	}
+	return ports
+}
+
+func (d *Device) GetPortByName(name string) (*Port, error) {
+	for _, port := range d.NetworkPorts {
+		if port.Name == name {
+			return &port, nil
+		}
+	}
+	return nil, fmt.Errorf("Port %s not found in device %s", name, d.ID)
+}
+
+func (d *Device) GetNetworkType() (string, error) {
+	numOfBonds := d.NumOfBonds()
+	if (numOfBonds < 1) || (numOfBonds > 2) {
+		return "", fmt.Errorf("Wrong number of Bond ports")
+	}
+	bond0, err := d.GetPortByName("bond0")
+	if err != nil {
+		return "", err
+	}
+	if numOfBonds == 2 {
+		bond1, err := d.GetPortByName("bond1")
+		if err != nil {
+			return "", err
+		}
+		if bond0.NetworkType == bond1.NetworkType {
+			return bond0.NetworkType, nil
+		}
+		if (bond0.NetworkType == "layer3") && (bond1.NetworkType == "layer2-individual") {
+			return "hybrid", nil
+		}
+		return "", fmt.Errorf("Strange 2-bond ports conf - bond0: %s, bond1: %s", bond0.NetworkType, bond1.NetworkType)
+	}
+	return bond0.NetworkType, nil
 }
 
 type IPAddressCreateRequest struct {
-	AddressFamily int  `json:"address_family"`
-	Public        bool `json:"public"`
+	AddressFamily int      `json:"address_family"`
+	Public        bool     `json:"public"`
+	CIDR          int      `json:"cidr,omitempty"`
+	Reservations  []string `json:"ip_reservations,omitempty"`
+}
+
+// CPR is a struct for custom partitioning and RAID
+// If you don't want to bother writing the struct, just write the CPR conf to
+// a string and then do
+//
+// 	var cpr CPR
+//  err := json.Unmarshal([]byte(cprString), &cpr)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+type CPR struct {
+	Disks []struct {
+		Device     string `json:"device"`
+		WipeTable  bool   `json:"wipeTable"`
+		Partitions []struct {
+			Label  string `json:"label"`
+			Number int    `json:"number"`
+			Size   string `json:"size"`
+		} `json:"partitions"`
+	} `json:"disks"`
+	Raid []struct {
+		Devices []string `json:"devices"`
+		Level   string   `json:"level"`
+		Name    string   `json:"name"`
+	} `json:"raid,omitempty"`
+	Filesystems []struct {
+		Mount struct {
+			Device string `json:"device"`
+			Format string `json:"format"`
+			Point  string `json:"point"`
+			Create struct {
+				Options []string `json:"options"`
+			} `json:"create"`
+		} `json:"mount"`
+	} `json:"filesystems"`
 }
 
 // DeviceCreateRequest type used to create a Packet device
@@ -138,7 +221,7 @@ type DeviceCreateRequest struct {
 	BillingCycle          string     `json:"billing_cycle"`
 	ProjectID             string     `json:"project_id"`
 	UserData              string     `json:"userdata"`
-	Storage               string     `json:"storage,omitempty"`
+	Storage               *CPR       `json:"storage,omitempty"`
 	Tags                  []string   `json:"tags"`
 	IPXEScriptURL         string     `json:"ipxe_script_url,omitempty"`
 	PublicIPv4SubnetSize  int        `json:"public_ipv4_subnet_size,omitempty"`
@@ -151,7 +234,7 @@ type DeviceCreateRequest struct {
 	// UserSSHKeys is a list of user UUIDs - essentialy a list of
 	// collaborators. The users must be a collaborator in the same project
 	// where the device is created. The user's SSH keys then go to the
-	// device.
+	// device
 	UserSSHKeys []string `json:"user_ssh_keys,omitempty"`
 	// Project SSHKeys is a list of SSHKeys resource UUIDs. If this param
 	// is supplied, only the listed SSHKeys will go to the device.
@@ -181,6 +264,10 @@ func (d DeviceCreateRequest) String() string {
 // DeviceActionRequest type used to execute actions on devices
 type DeviceActionRequest struct {
 	Type string `json:"type"`
+}
+
+type DeviceDeleteRequest struct {
+	Force bool `json:"force_delete"`
 }
 
 func (d DeviceActionRequest) String() string {
@@ -260,10 +347,11 @@ func (s *DeviceServiceOp) Update(deviceID string, updateRequest *DeviceUpdateReq
 }
 
 // Delete deletes a device
-func (s *DeviceServiceOp) Delete(deviceID string) (*Response, error) {
+func (s *DeviceServiceOp) Delete(deviceID string, force bool) (*Response, error) {
 	path := fmt.Sprintf("%s/%s", deviceBasePath, deviceID)
+	req := &DeviceDeleteRequest{Force: force}
 
-	return s.client.DoRequest("DELETE", path, nil, nil)
+	return s.client.DoRequest("DELETE", path, req, nil)
 }
 
 // Reboot reboots on a device
@@ -308,6 +396,19 @@ func (s *DeviceServiceOp) Unlock(deviceID string) (*Response, error) {
 	action := lockType{Locked: false}
 
 	return s.client.DoRequest("PATCH", path, action, nil)
+}
+
+func (s *DeviceServiceOp) ListBGPNeighbors(deviceID string, listOpt *ListOptions) ([]BGPNeighbor, *Response, error) {
+	root := new(bgpNeighborsRoot)
+	params := createListOptionsURL(listOpt)
+	path := fmt.Sprintf("%s/%s%s?%s", deviceBasePath, deviceID, bgpNeighborsBasePath, params)
+
+	resp, err := s.client.DoRequest("GET", path, nil, root)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return root.BGPNeighbors, resp, err
 }
 
 // ListBGPSessions returns all BGP Sessions associated with the device

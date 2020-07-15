@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/packethost/packngo"
 )
 
@@ -11,6 +11,9 @@ func resourcePacketOrganization() *schema.Resource {
 		Read:   resourcePacketOrganizationRead,
 		Update: resourcePacketOrganizationUpdate,
 		Delete: resourcePacketOrganizationDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {

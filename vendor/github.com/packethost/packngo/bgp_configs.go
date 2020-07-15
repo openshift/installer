@@ -7,7 +7,7 @@ var bgpConfigBasePath = "/bgp-config"
 // BGPConfigService interface defines available BGP config methods
 type BGPConfigService interface {
 	Get(projectID string, getOpt *GetOptions) (*BGPConfig, *Response, error)
-	Create(string, CreateBGPConfigRequest) (*Response, error)
+	Create(projectID string, request CreateBGPConfigRequest) (*Response, error)
 	// Delete(configID string) (resp *Response, err error) TODO: Not in Packet API
 }
 

@@ -3,12 +3,15 @@ package packet
 import (
 	"time"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/mutexkv"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-// Provider returns a schema.Provider for managing Packet infrastructure.
+var packetMutexKV = mutexkv.NewMutexKV()
+
 func Provider() terraform.ResourceProvider {
+
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"auth_token": {
@@ -19,9 +22,16 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"packet_precreated_ip_block": dataSourcePacketPreCreatedIPBlock(),
-			"packet_operating_system":    dataSourceOperatingSystem(),
-			"packet_spot_market_price":   dataSourceSpotMarketPrice(),
+			"packet_ip_block_ranges":      dataSourcePacketIPBlockRanges(),
+			"packet_precreated_ip_block":  dataSourcePacketPreCreatedIPBlock(),
+			"packet_operating_system":     dataSourceOperatingSystem(),
+			"packet_organization":         dataSourcePacketOrganization(),
+			"packet_spot_market_price":    dataSourceSpotMarketPrice(),
+			"packet_device":               dataSourcePacketDevice(),
+			"packet_device_bgp_neighbors": dataSourcePacketDeviceBGPNeighbors(),
+			"packet_project":              dataSourcePacketProject(),
+			"packet_spot_market_request":  dataSourcePacketSpotMarketRequest(),
+			"packet_volume":               dataSourcePacketVolume(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -38,7 +48,6 @@ func Provider() terraform.ResourceProvider {
 			"packet_vlan":                 resourcePacketVlan(),
 			"packet_bgp_session":          resourcePacketBGPSession(),
 			"packet_port_vlan_attachment": resourcePacketPortVlanAttachment(),
-			"packet_connect":              resourcePacketConnect(),
 		},
 
 		ConfigureFunc: providerConfigure,

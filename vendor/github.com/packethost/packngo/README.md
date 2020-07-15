@@ -1,5 +1,5 @@
 # packngo
-Packet Go Api Client
+A Golang client for the Packet API.
 
 ![](https://www.packet.net/media/images/xeiw-packettwitterprofilew.png)
 
@@ -45,7 +45,6 @@ func main() {
 This lib is used by the official [terraform-provider-packet](https://github.com/terraform-providers/terraform-provider-packet).
 
 You can also learn a lot from the `*_test.go` sources. Almost all out tests touch the Packet API, so you can see how auth, querying and POSTing works. For example [devices_test.go](devices_test.go).
-
 
 Linked resources in Get\* and List\* functions
 ----------------------------------------------
@@ -125,3 +124,21 @@ Committing
 ----------
 
 Before committing, it's a good idea to run `gofmt -w *.go`. ([gofmt](https://golang.org/cmd/gofmt/))
+
+## Building and Testing
+
+The [Makefile](./Makefile) contains the targets to build, lint and test:
+
+```sh
+make build
+make lint
+make test
+```
+
+These normally will be run in a docker image of golang. To run locally, just run with `BUILD=local`:
+
+```sh
+make build BUILD=local
+make lint BUILD=local
+make test BUILD=local
+```

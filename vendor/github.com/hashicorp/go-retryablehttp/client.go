@@ -1,4 +1,4 @@
-// The retryablehttp package provides a familiar HTTP client interface with
+// Package retryablehttp provides a familiar HTTP client interface with
 // automatic retries and exponential backoff. It is a thin wrapper over the
 // standard net/http client library and exposes nearly the same public API.
 // This makes retryablehttp very easy to drop into existing programs.
@@ -119,95 +119,127 @@ func (r *Request) BodyBytes() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// SetBody allows setting the request body.
+//
+// It is useful if a new body needs to be set without constructing a new Request.
+func (r *Request) SetBody(rawBody interface{}) error {
+	bodyReader, contentLength, err := getBodyReaderAndContentLength(rawBody)
+	if err != nil {
+		return err
+	}
+	r.body = bodyReader
+	r.ContentLength = contentLength
+	return nil
+}
+
+// WriteTo allows copying the request body into a writer.
+//
+// It writes data to w until there's no more data to write or
+// when an error occurs. The return int64 value is the number of bytes
+// written. Any error encountered during the write is also returned.
+// The signature matches io.WriterTo interface.
+func (r *Request) WriteTo(w io.Writer) (int64, error) {
+	body, err := r.body()
+	if err != nil {
+		return 0, err
+	}
+	if c, ok := body.(io.Closer); ok {
+		defer c.Close()
+	}
+	return io.Copy(w, body)
+}
+
 func getBodyReaderAndContentLength(rawBody interface{}) (ReaderFunc, int64, error) {
 	var bodyReader ReaderFunc
 	var contentLength int64
 
-	if rawBody != nil {
-		switch body := rawBody.(type) {
-		// If they gave us a function already, great! Use it.
-		case ReaderFunc:
-			bodyReader = body
-			tmp, err := body()
-			if err != nil {
-				return nil, 0, err
-			}
-			if lr, ok := tmp.(LenReader); ok {
-				contentLength = int64(lr.Len())
-			}
-			if c, ok := tmp.(io.Closer); ok {
-				c.Close()
-			}
-
-		case func() (io.Reader, error):
-			bodyReader = body
-			tmp, err := body()
-			if err != nil {
-				return nil, 0, err
-			}
-			if lr, ok := tmp.(LenReader); ok {
-				contentLength = int64(lr.Len())
-			}
-			if c, ok := tmp.(io.Closer); ok {
-				c.Close()
-			}
-
-		// If a regular byte slice, we can read it over and over via new
-		// readers
-		case []byte:
-			buf := body
-			bodyReader = func() (io.Reader, error) {
-				return bytes.NewReader(buf), nil
-			}
-			contentLength = int64(len(buf))
-
-		// If a bytes.Buffer we can read the underlying byte slice over and
-		// over
-		case *bytes.Buffer:
-			buf := body
-			bodyReader = func() (io.Reader, error) {
-				return bytes.NewReader(buf.Bytes()), nil
-			}
-			contentLength = int64(buf.Len())
-
-		// We prioritize *bytes.Reader here because we don't really want to
-		// deal with it seeking so want it to match here instead of the
-		// io.ReadSeeker case.
-		case *bytes.Reader:
-			buf, err := ioutil.ReadAll(body)
-			if err != nil {
-				return nil, 0, err
-			}
-			bodyReader = func() (io.Reader, error) {
-				return bytes.NewReader(buf), nil
-			}
-			contentLength = int64(len(buf))
-
-		// Compat case
-		case io.ReadSeeker:
-			raw := body
-			bodyReader = func() (io.Reader, error) {
-				_, err := raw.Seek(0, 0)
-				return ioutil.NopCloser(raw), err
-			}
-			if lr, ok := raw.(LenReader); ok {
-				contentLength = int64(lr.Len())
-			}
-
-		// Read all in so we can reset
-		case io.Reader:
-			buf, err := ioutil.ReadAll(body)
-			if err != nil {
-				return nil, 0, err
-			}
-			bodyReader = func() (io.Reader, error) {
-				return bytes.NewReader(buf), nil
-			}
-			contentLength = int64(len(buf))
-
-		default:
-			return nil, 0, fmt.Errorf("cannot handle type %T", rawBody)
+	switch body := rawBody.(type) {
+	// If they gave us a function already, great! Use it.
+	case ReaderFunc:
+		bodyReader = body
+		tmp, err := body()
+		if err != nil {
+			return nil, 0, err
 		}
+		if lr, ok := tmp.(LenReader); ok {
+			contentLength = int64(lr.Len())
+		}
+		if c, ok := tmp.(io.Closer); ok {
+			c.Close()
+		}
+
+	case func() (io.Reader, error):
+		bodyReader = body
+		tmp, err := body()
+		if err != nil {
+			return nil, 0, err
+		}
+		if lr, ok := tmp.(LenReader); ok {
+			contentLength = int64(lr.Len())
+		}
+		if c, ok := tmp.(io.Closer); ok {
+			c.Close()
+		}
+
+	// If a regular byte slice, we can read it over and over via new
+	// readers
+	case []byte:
+		buf := body
+		bodyReader = func() (io.Reader, error) {
+			return bytes.NewReader(buf), nil
+		}
+		contentLength = int64(len(buf))
+
+	// If a bytes.Buffer we can read the underlying byte slice over and
+	// over
+	case *bytes.Buffer:
+		buf := body
+		bodyReader = func() (io.Reader, error) {
+			return bytes.NewReader(buf.Bytes()), nil
+		}
+		contentLength = int64(buf.Len())
+
+	// We prioritize *bytes.Reader here because we don't really want to
+	// deal with it seeking so want it to match here instead of the
+	// io.ReadSeeker case.
+	case *bytes.Reader:
+		buf, err := ioutil.ReadAll(body)
+		if err != nil {
+			return nil, 0, err
+		}
+		bodyReader = func() (io.Reader, error) {
+			return bytes.NewReader(buf), nil
+		}
+		contentLength = int64(len(buf))
+
+	// Compat case
+	case io.ReadSeeker:
+		raw := body
+		bodyReader = func() (io.Reader, error) {
+			_, err := raw.Seek(0, 0)
+			return ioutil.NopCloser(raw), err
+		}
+		if lr, ok := raw.(LenReader); ok {
+			contentLength = int64(lr.Len())
+		}
+
+	// Read all in so we can reset
+	case io.Reader:
+		buf, err := ioutil.ReadAll(body)
+		if err != nil {
+			return nil, 0, err
+		}
+		bodyReader = func() (io.Reader, error) {
+			return bytes.NewReader(buf), nil
+		}
+		contentLength = int64(len(buf))
+
+	// No body provided, nothing to do
+	case nil:
+
+	// Unrecognized type
+	default:
+		return nil, 0, fmt.Errorf("cannot handle type %T", rawBody)
 	}
 	return bodyReader, contentLength, nil
 }
@@ -415,7 +447,7 @@ func DefaultBackoff(min, max time.Duration, attemptNum int, resp *http.Response)
 // perform linear backoff based on the attempt number and with jitter to
 // prevent a thundering herd.
 //
-// min and max here are *not* absolute values. The number to be multipled by
+// min and max here are *not* absolute values. The number to be multiplied by
 // the attempt number will be chosen at random from between them, thus they are
 // bounding the jitter.
 //
@@ -545,7 +577,7 @@ func (c *Client) Do(req *Request) (*http.Response, error) {
 			return resp, err
 		}
 
-		// We do this before drainBody beause there's no need for the I/O if
+		// We do this before drainBody because there's no need for the I/O if
 		// we're breaking out
 		remain := c.RetryMax - i
 		if remain <= 0 {
@@ -662,4 +694,12 @@ func PostForm(url string, data url.Values) (*http.Response, error) {
 // pre-filled url.Values form data.
 func (c *Client) PostForm(url string, data url.Values) (*http.Response, error) {
 	return c.Post(url, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+}
+
+// StandardClient returns a stdlib *http.Client with a custom Transport, which
+// shims in a *retryablehttp.Client for added retries.
+func (c *Client) StandardClient() *http.Client {
+	return &http.Client{
+		Transport: &RoundTripper{Client: c},
+	}
 }

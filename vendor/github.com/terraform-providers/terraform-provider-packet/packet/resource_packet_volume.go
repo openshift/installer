@@ -1,12 +1,11 @@
 package packet
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/packethost/packngo"
 )
 
@@ -153,50 +152,33 @@ func resourcePacketVolumeCreate(d *schema.ResourceData, meta interface{}) error 
 
 	d.SetId(newVolume.ID)
 
-	_, err = waitForVolumeAttribute(d, "active", []string{"queued", "provisioning"}, "state", meta)
+	err = waitForVolumeState(newVolume.ID, "active", []string{"queued", "provisioning"}, meta)
 	if err != nil {
-		if isForbidden(err) {
-			// If the volume doesn't get to the active state, we can't recover it from here.
-			d.SetId("")
-
-			return errors.New("provisioning time limit exceeded; the Packet team will investigate")
-		}
+		d.SetId("")
 		return err
 	}
 
 	return resourcePacketVolumeRead(d, meta)
 }
 
-func waitForVolumeAttribute(d *schema.ResourceData, target string, pending []string, attribute string, meta interface{}) (interface{}, error) {
+func waitForVolumeState(volumeID string, target string, pending []string, meta interface{}) error {
 	stateConf := &resource.StateChangeConf{
-		Pending:    pending,
-		Target:     []string{target},
-		Refresh:    newVolumeStateRefreshFunc(d, attribute, meta),
+		Pending: pending,
+		Target:  []string{target},
+		Refresh: func() (interface{}, string, error) {
+			client := meta.(*packngo.Client)
+			v, _, err := client.Volumes.Get(volumeID, &packngo.GetOptions{Includes: []string{"project", "snapshot_policies", "facility"}})
+			if err == nil {
+				return 42, v.State, nil
+			}
+			return 42, "error", err
+		},
 		Timeout:    60 * time.Minute,
 		Delay:      10 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
-	return stateConf.WaitForState()
-}
-
-func newVolumeStateRefreshFunc(d *schema.ResourceData, attribute string, meta interface{}) resource.StateRefreshFunc {
-	client := meta.(*packngo.Client)
-
-	return func() (interface{}, string, error) {
-		if err := resourcePacketVolumeRead(d, meta); err != nil {
-			return nil, "", err
-		}
-
-		if attr, ok := d.GetOk(attribute); ok {
-			volume, _, err := client.Volumes.Get(d.Id(), &packngo.GetOptions{Includes: []string{"project", "snapshot_policies", "facility"}})
-			if err != nil {
-				return nil, "", friendlyError(err)
-			}
-			return &volume, attr.(string), nil
-		}
-
-		return nil, "", nil
-	}
+	_, err := stateConf.WaitForState()
+	return err
 }
 
 func resourcePacketVolumeRead(d *schema.ResourceData, meta interface{}) error {

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/packethost/packngo"
 )
 
@@ -75,6 +75,11 @@ func resourcePacketReservedIPBlock() *schema.Resource {
 		Optional: true,
 		ForceNew: true,
 	}
+	reservedBlockSchema["description"] = &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
+		ForceNew: true,
+	}
 	reservedBlockSchema["quantity"] = &schema.Schema{
 		Type:     schema.TypeInt,
 		Required: true,
@@ -121,6 +126,10 @@ func resourcePacketReservedIPBlockCreate(d *schema.ResourceData, meta interface{
 	fs := f.(string)
 	if typ == "public_ipv4" {
 		req.Facility = &fs
+	}
+	desc, ok := d.GetOk("description")
+	if ok {
+		req.Description = desc.(string)
 	}
 
 	projectID := d.Get("project_id").(string)
@@ -210,6 +219,9 @@ func resourcePacketReservedIPBlockRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error reading IP address block with ID %s: %s", id, err)
 	}
 	err = loadBlock(d, reservedBlock)
+	if (reservedBlock.Description != nil) && (*(reservedBlock.Description) != "") {
+		d.Set("description", *(reservedBlock.Description))
+	}
 	d.Set("global", getGlobalBool(reservedBlock))
 	if err != nil {
 		return err

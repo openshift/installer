@@ -6,8 +6,11 @@ import (
 	"github.com/openshift/installer/pkg/types/packet"
 )
 
-// Metadata converts an install configuration to ovirt metadata.
+// Metadata converts an install configuration to Packet metadata.
 func Metadata(config *types.InstallConfig) *packet.Metadata {
-	m := packet.Metadata{}
+	m := packet.Metadata{
+		FacilityCode: config.Platform.Packet.FacilityCode,
+		ProjectID:    config.Platform.Packet.ProjectID,
+	}
 	return &m
 }

@@ -6,11 +6,27 @@ import (
 
 const ipBasePath = "/ips"
 
+const (
+	// PublicIPv4 fixed string representation of public ipv4
+	PublicIPv4 = "public_ipv4"
+	// PrivateIPv4 fixed string representation of private ipv4
+	PrivateIPv4 = "private_ipv4"
+	// GlobalIPv4 fixed string representation of global ipv4
+	GlobalIPv4 = "global_ipv4"
+	// PublicIPv6 fixed string representation of public ipv6
+	PublicIPv6 = "public_ipv6"
+	// PrivateIPv6 fixed string representation of private ipv6
+	PrivateIPv6 = "private_ipv6"
+	// GlobalIPv6 fixed string representation of global ipv6
+	GlobalIPv6 = "global_ipv6"
+)
+
 // DeviceIPService handles assignment of addresses from reserved blocks to instances in a project.
 type DeviceIPService interface {
 	Assign(deviceID string, assignRequest *AddressStruct) (*IPAddressAssignment, *Response, error)
 	Unassign(assignmentID string) (*Response, error)
 	Get(assignmentID string, getOpt *GetOptions) (*IPAddressAssignment, *Response, error)
+	List(deviceID string, listOpt *ListOptions) ([]IPAddressAssignment, *Response, error)
 }
 
 // ProjectIPService handles reservation of IP address blocks for a project.
@@ -22,22 +38,24 @@ type ProjectIPService interface {
 	AvailableAddresses(ipReservationID string, r *AvailableRequest) ([]string, *Response, error)
 }
 
-type IpAddressCommon struct {
-	ID            string `json:"id"`
-	Address       string `json:"address"`
-	Gateway       string `json:"gateway"`
-	Network       string `json:"network"`
-	AddressFamily int    `json:"address_family"`
-	Netmask       string `json:"netmask"`
-	Public        bool   `json:"public"`
-	CIDR          int    `json:"cidr"`
-	Created       string `json:"created_at,omitempty"`
-	Updated       string `json:"updated_at,omitempty"`
-	Href          string `json:"href"`
-	Management    bool   `json:"management"`
-	Manageable    bool   `json:"manageable"`
-	Project       Href   `json:"project"`
-	Global        *bool  `json:"global_ip"`
+type IpAddressCommon struct { //nolint:golint
+	ID            string                 `json:"id"`
+	Address       string                 `json:"address"`
+	Gateway       string                 `json:"gateway"`
+	Network       string                 `json:"network"`
+	AddressFamily int                    `json:"address_family"`
+	Netmask       string                 `json:"netmask"`
+	Public        bool                   `json:"public"`
+	CIDR          int                    `json:"cidr"`
+	Created       string                 `json:"created_at,omitempty"`
+	Updated       string                 `json:"updated_at,omitempty"`
+	Href          string                 `json:"href"`
+	Management    bool                   `json:"management"`
+	Manageable    bool                   `json:"manageable"`
+	Project       Href                   `json:"project"`
+	Global        *bool                  `json:"global_ip"`
+	Tags          []string               `json:"tags,omitempty"`
+	CustomData    map[string]interface{} `json:"customdata,omitempty"`
 }
 
 // IPAddressReservation is created when user sends IP reservation request for a project (considering it's within quota).
@@ -69,10 +87,12 @@ type IPAddressAssignment struct {
 
 // IPReservationRequest represents the body of a reservation request.
 type IPReservationRequest struct {
-	Type        string  `json:"type"`
-	Quantity    int     `json:"quantity"`
-	Description string  `json:"details,omitempty"`
-	Facility    *string `json:"facility,omitempty"`
+	Type        string                 `json:"type"`
+	Quantity    int                    `json:"quantity"`
+	Description string                 `json:"details,omitempty"`
+	Facility    *string                `json:"facility,omitempty"`
+	Tags        []string               `json:"tags,omitempty"`
+	CustomData  map[string]interface{} `json:"customdata,omitempty"`
 }
 
 // AddressStruct is a helper type for request/response with dict like {"address": ... }
@@ -132,6 +152,27 @@ func (i *DeviceIPServiceOp) Get(assignmentID string, getOpt *GetOptions) (*IPAdd
 	}
 
 	return ipa, resp, err
+}
+
+// List list all of the IP address assignments on a device
+func (i *DeviceIPServiceOp) List(deviceID string, listOpt *ListOptions) ([]IPAddressAssignment, *Response, error) {
+	params := createListOptionsURL(listOpt)
+
+	path := fmt.Sprintf("%s/%s%s?%s", deviceBasePath, deviceID, ipBasePath, params)
+
+	//ipList represents collection of IP Address reservations
+	type ipList struct {
+		IPs []IPAddressAssignment `json:"ip_addresses,omitempty"`
+	}
+
+	ips := new(ipList)
+
+	resp, err := i.client.DoRequest("GET", path, nil, ips)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return ips.IPs, resp, err
 }
 
 // ProjectIPServiceOp is interface for IP assignment methods.

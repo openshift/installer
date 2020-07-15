@@ -1,10 +1,11 @@
 package packet
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/packethost/packngo"
 )
 
@@ -108,7 +109,10 @@ func resourcePacketSpotMarketRequest() *schema.Resource {
 				ForceNew: true,
 			},
 		},
-		Timeouts: resourceDefaultTimeouts,
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
+		},
 	}
 }
 
@@ -270,7 +274,7 @@ func resourcePacketSpotMarketRequestDelete(d *schema.ResourceData, meta interfac
 		}
 
 		for _, d := range smr.Devices {
-			_, err := client.Devices.Delete(d.ID)
+			_, err := client.Devices.Delete(d.ID, true)
 			if err != nil {
 				return err
 			}
@@ -289,14 +293,17 @@ func resourceStateRefreshFunc(d *schema.ResourceData, meta interface{}) resource
 		smr, _, err := client.SpotMarketRequests.Get(d.Id(), &packngo.GetOptions{Includes: []string{"project", "devices", "facilities"}})
 
 		if err != nil {
-			return nil, "", err
+			return nil, "", fmt.Errorf("Failed to fetch Spot market request with following error: %s", err.Error())
 
 		}
 		var finished bool
 
 		for _, d := range smr.Devices {
 
-			dev, _, _ := client.Devices.Get(d.ID, nil)
+			dev, _, err := client.Devices.Get(d.ID, nil)
+			if err != nil {
+				return nil, "", fmt.Errorf("Failed to fetch Device with following error: %s", err.Error())
+			}
 			if dev.State != "active" {
 				break
 			} else {

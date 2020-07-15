@@ -62,7 +62,7 @@ require (
 	github.com/ovirt/go-ovirt v0.0.0-20200613023950-320a86f9df27
 	github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200406133650-74a154c1d861
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
-	github.com/packethost/packngo v0.2.0
+	github.com/packethost/packngo v0.2.1-0.20200424110205-36917dbc292f
 	github.com/pborman/uuid v1.2.0
 	github.com/pierrec/lz4 v2.3.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1
@@ -80,14 +80,14 @@ require (
 	github.com/terraform-providers/terraform-provider-ignition v1.2.1
 	github.com/terraform-providers/terraform-provider-local v1.4.0
 	github.com/terraform-providers/terraform-provider-openstack v1.28.0
-	github.com/terraform-providers/terraform-provider-packet v1.7.2
+	github.com/terraform-providers/terraform-provider-packet v1.7.3-0.20200512085448-9717adf77547
 	github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
 	github.com/terraform-providers/terraform-provider-vsphere v1.16.2
 	github.com/ulikunitz/xz v0.5.6
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 	github.com/vmware/govmomi v0.22.2
 	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca // indirect
-	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
+	golang.org/x/crypto v0.0.0-20200420201142-3c4aac89819a
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d

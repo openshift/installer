@@ -28,7 +28,7 @@ type SSHKey struct {
 	FingerPrint string `json:"fingerprint"`
 	Created     string `json:"created_at"`
 	Updated     string `json:"updated_at"`
-	User        User   `json:"user,omitempty"`
+	Owner       Href
 	URL         string `json:"href,omitempty"`
 }
 

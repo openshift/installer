@@ -3,6 +3,7 @@ package packngo
 import "fmt"
 
 var bgpSessionBasePath = "/bgp/sessions"
+var bgpNeighborsBasePath = "/bgp/neighbors"
 
 // BGPSessionService interface defines available BGP session methods
 type BGPSessionService interface {
@@ -30,6 +31,30 @@ type BGPSession struct {
 	Device        Device   `json:"device,omitempty"`
 	Href          string   `json:"href,omitempty"`
 	DefaultRoute  *bool    `json:"default_route,omitempty"`
+}
+
+type bgpNeighborsRoot struct {
+	BGPNeighbors []BGPNeighbor `json:"bgp_neighbors"`
+}
+
+// BGPNeighor is struct for listing BGP neighbors of a device
+type BGPNeighbor struct {
+	AddressFamily int        `json:"address_family"`
+	CustomerAs    int        `json:"customer_as"`
+	CustomerIP    string     `json:"customer_ip"`
+	Md5Enabled    bool       `json:"md5_enabled"`
+	Md5Password   string     `json:"md5_password"`
+	Multihop      bool       `json:"multihop"`
+	PeerAs        int        `json:"peer_as"`
+	PeerIps       []string   `json:"peer_ips"`
+	RoutesIn      []BGPRoute `json:"routes_in"`
+	RoutesOut     []BGPRoute `json:"routes_out"`
+}
+
+// BGPRoute is a struct for Route in BGP neighbor listing
+type BGPRoute struct {
+	Route string `json:"route"`
+	Exact bool   `json:"exact"`
 }
 
 // CreateBGPSessionRequest struct

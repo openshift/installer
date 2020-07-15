@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/packethost/packngo"
 )
 
@@ -58,73 +58,60 @@ func dataSourcePacketOperatingSystemRead(d *schema.ResourceData, meta interface{
 		return err
 	}
 
-	final := []packngo.OS{}
-	temp := []packngo.OS{}
-
 	if nameOK {
+		temp := []packngo.OS{}
 		for _, os := range oss {
 			if strings.Contains(strings.ToLower(os.Name), strings.ToLower(name.(string))) {
 				temp = append(temp, os)
 			}
-			final = temp
 		}
+		oss = temp
 	}
 
-	if distroOK {
-		temp = []packngo.OS{}
-		if len(temp) == 0 {
-			final = oss
-		}
-		for _, v := range final {
+	if distroOK && (len(oss) != 0) {
+		temp := []packngo.OS{}
+		for _, v := range oss {
 			if v.Distro == distro.(string) {
 				temp = append(temp, v)
 			}
 		}
-		final = temp
+		oss = temp
 	}
 
-	if versionOK {
-		temp = []packngo.OS{}
-		if len(final) == 0 {
-			final = oss
-		}
-		for _, v := range final {
+	if versionOK && (len(oss) != 0) {
+		temp := []packngo.OS{}
+		for _, v := range oss {
 			if v.Version == version.(string) {
 				temp = append(temp, v)
 			}
 		}
-		final = temp
+		oss = temp
 	}
 
-	if provisionableOnOK {
-		temp = []packngo.OS{}
-		if len(final) == 0 {
-			final = oss
-		}
-		for _, v := range final {
+	if provisionableOnOK && (len(oss) != 0) {
+		temp := []packngo.OS{}
+		for _, v := range oss {
 			for _, po := range v.ProvisionableOn {
 				if po == provisionableOn.(string) {
 					temp = append(temp, v)
 				}
 			}
 		}
-		final = temp
+		oss = temp
 	}
-	log.Println("[DEBUG] RESULTS:", final)
+	log.Println("[DEBUG] RESULTS:", oss)
 
-	if len(final) == 0 {
+	if len(oss) == 0 {
 		return fmt.Errorf("There are no operating systems that match the search criteria")
 	}
 
-	if len(final) > 1 {
+	if len(oss) > 1 {
 		return fmt.Errorf("There is more than one operating system that matches the search criteria")
 	}
-	for _, v := range final {
-		d.Set("name", v.Name)
-		d.Set("distro", v.Distro)
-		d.Set("version", v.Version)
-		d.Set("slug", v.Slug)
-		d.SetId(v.Slug)
-	}
+	d.Set("name", oss[0].Name)
+	d.Set("distro", oss[0].Distro)
+	d.Set("version", oss[0].Version)
+	d.Set("slug", oss[0].Slug)
+	d.SetId(oss[0].Slug)
 	return nil
 }

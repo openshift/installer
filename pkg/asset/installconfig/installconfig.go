@@ -188,6 +188,7 @@ func (a *InstallConfig) platformValidation() error {
 	}
 	if a.Config.Platform.OpenStack != nil {
 		return icopenstack.Validate(a.Config)
+	}
 	if a.Config.Platform.Packet != nil {
 		return icpacket.Validate(a.Config)
 	}

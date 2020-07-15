@@ -1,6 +1,7 @@
 package packet
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"path"
@@ -11,17 +12,22 @@ import (
 	"time"
 
 	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/structure"
-	"github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/structure"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/packethost/packngo"
 )
 
 var matchIPXEScript = regexp.MustCompile(`(?i)^#![i]?pxe`)
+var ipAddressTypes = []string{"public_ipv4", "private_ipv4", "public_ipv6"}
 
 func resourcePacketDevice() *schema.Resource {
 	return &schema.Resource{
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
+		},
 		Create: resourcePacketDeviceCreate,
 		Read:   resourcePacketDeviceRead,
 		Update: resourcePacketDeviceUpdate,
@@ -52,28 +58,50 @@ func resourcePacketDevice() *schema.Resource {
 				ForceNew: true,
 			},
 
+			"deployed_facility": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			"facility": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ValidateFunc:  validateFacilityForDevice,
-				Deprecated:    "Use the 'facilities' array instead.",
-				ConflictsWith: []string{"facilities"},
+				Type:     schema.TypeString,
+				Optional: true,
+				Removed:  "Use the \"facilities\" array instead, i.e. change \n  facility = \"ewr1\"\nto \n  facilities = [\"ewr1\"]",
+			},
+			"ip_address_types": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validation.StringInSlice(ipAddressTypes, false),
+				},
+				Removed: "Removed in favor of 'ip_address' attribute.",
+			},
+			"facilities": {
+				Type:     schema.TypeList,
+				Required: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				ForceNew: true,
+				MinItems: 1,
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					// ignore set of empty facility "" => "xxx1"
-					if new == "" {
+					fsRaw := d.Get("facilities")
+					fs := convertStringArr(fsRaw.([]interface{}))
+					df := d.Get("deployed_facility").(string)
+					if contains(fs, df) {
+						return true
+					}
+					if contains(fs, "any") && (len(df) != 0) {
 						return true
 					}
 					return false
 				},
 			},
-
-			"facilities": {
-				Type:          schema.TypeList,
-				Optional:      true,
-				ForceNew:      true,
-				Elem:          &schema.Schema{Type: schema.TypeString},
-				ConflictsWith: []string{"facility"},
+			"ip_address": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Inbound rules for this security group",
+				Elem:        ipAddressSchema(),
+				MinItems:    1,
 			},
 
 			"plan": {
@@ -118,7 +146,7 @@ func resourcePacketDevice() *schema.Resource {
 				Computed: true,
 			},
 
-			"network_type": &schema.Schema{
+			"network_type": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice([]string{"layer3", "layer2-bonded", "layer2-individual", "hybrid"}, false),
@@ -130,28 +158,28 @@ func resourcePacketDevice() *schema.Resource {
 				},
 			},
 
-			"ports": &schema.Schema{
+			"ports": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
+						"name": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"id": &schema.Schema{
+						"id": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"type": &schema.Schema{
+						"type": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"mac": &schema.Schema{
+						"mac": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"bonded": &schema.Schema{
+						"bonded": {
 							Type:     schema.TypeBool,
 							Computed: true,
 						},
@@ -205,15 +233,7 @@ func resourcePacketDevice() *schema.Resource {
 			"user_data": {
 				Type:      schema.TypeString,
 				Optional:  true,
-				ForceNew:  true,
 				Sensitive: true,
-			},
-
-			"public_ipv4_subnet_size": {
-				Type:     schema.TypeInt,
-				Computed: true,
-				Optional: true,
-				ForceNew: true,
 			},
 
 			"ipxe_script_url": {
@@ -266,6 +286,18 @@ func resourcePacketDevice() *schema.Resource {
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
+			"wait_for_reservation_deprovision": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				ForceNew: false,
+			},
+			"force_detach_volumes": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				ForceNew: false,
+			},
 		},
 	}
 }
@@ -285,14 +317,21 @@ func resourcePacketDeviceCreate(d *schema.ResourceData, meta interface{}) error 
 		}
 	}
 
+	var addressTypesSlice []packngo.IPAddressCreateRequest
+	_, ok = d.GetOk("ip_address")
+	if ok {
+		arr := d.Get("ip_address").([]interface{})
+		addressTypesSlice = getNewIPAddressSlice(arr)
+	}
+
 	createRequest := &packngo.DeviceCreateRequest{
-		Hostname:             d.Get("hostname").(string),
-		Plan:                 d.Get("plan").(string),
-		Facility:             facs,
-		OS:                   d.Get("operating_system").(string),
-		BillingCycle:         d.Get("billing_cycle").(string),
-		ProjectID:            d.Get("project_id").(string),
-		PublicIPv4SubnetSize: d.Get("public_ipv4_subnet_size").(int),
+		Hostname:     d.Get("hostname").(string),
+		Plan:         d.Get("plan").(string),
+		Facility:     facs,
+		IPAddresses:  addressTypesSlice,
+		OS:           d.Get("operating_system").(string),
+		BillingCycle: d.Get("billing_cycle").(string),
+		ProjectID:    d.Get("project_id").(string),
 	}
 	targetNetworkState, nTypeOk := d.GetOk("network_type")
 	if attr, ok := d.GetOk("user_data"); ok {
@@ -305,6 +344,11 @@ func resourcePacketDeviceCreate(d *schema.ResourceData, meta interface{}) error 
 
 	if attr, ok := d.GetOk("hardware_reservation_id"); ok {
 		createRequest.HardwareReservationID = attr.(string)
+	} else {
+		wfrd := "wait_for_reservation_deprovision"
+		if d.Get(wfrd).(bool) {
+			return friendlyError(fmt.Errorf("You can't set %s when not using a hardware reservation", wfrd))
+		}
 	}
 
 	if createRequest.OS == "custom_ipxe" {
@@ -347,30 +391,47 @@ func resourcePacketDeviceCreate(d *schema.ResourceData, meta interface{}) error 
 		if err != nil {
 			return errwrap.Wrapf("storage param contains invalid JSON: {{err}}", err)
 		}
-		createRequest.Storage = s
+		var cpr packngo.CPR
+		err = json.Unmarshal([]byte(s), &cpr)
+		if err != nil {
+			return errwrap.Wrapf("Error parsing Storage string: {{err}}", err)
+		}
+		createRequest.Storage = &cpr
 	}
 
 	newDevice, _, err := client.Devices.Create(createRequest)
 	if err != nil {
-		return friendlyError(err)
+		retErr := friendlyError(err)
+		if isNotFound(retErr) {
+			retErr = fmt.Errorf("%s, make sure project \"%s\" exists", retErr, createRequest.ProjectID)
+		}
+		return retErr
 	}
 
 	d.SetId(newDevice.ID)
 
 	// Wait for the device so we can get the networking attributes that show up after a while.
-	_, err = waitForDeviceAttribute(d, "active", []string{"queued", "provisioning"}, "state", meta)
+	state, err := waitForDeviceAttribute(d, []string{"active", "failed"}, []string{"queued", "provisioning"}, "state", meta)
 	if err != nil {
-		if isForbidden(err) {
+		d.SetId("")
+		fErr := friendlyError(err)
+		if isForbidden(fErr) {
 			// If the device doesn't get to the active state, we can't recover it from here.
-			d.SetId("")
 
 			return errors.New("provisioning time limit exceeded; the Packet team will investigate")
 		}
-		return err
+		return fErr
+	}
+	if state != "active" {
+		d.SetId("")
+		return fmt.Errorf("Device in non-active state \"%s\"", state)
 	}
 
 	if nTypeOk {
-		_, err = waitForDeviceAttribute(d, "layer3", []string{"hybrid", "layer2-bonded", "layer2-individual"}, "network_type", meta)
+		_, err := waitForDeviceAttribute(d, []string{"layer3"}, []string{"hybrid", "layer2-bonded", "layer2-individual"}, "network_type", meta)
+		if err != nil {
+			return err
+		}
 
 		tns := targetNetworkState.(string)
 		if tns != "layer3" {
@@ -382,45 +443,6 @@ func resourcePacketDeviceCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	return resourcePacketDeviceRead(d, meta)
-}
-
-type NetworkInfo struct {
-	Networks       []map[string]interface{}
-	IPv4SubnetSize int
-	Host           string
-	PublicIPv4     string
-	PublicIPv6     string
-	PrivateIPv4    string
-}
-
-func getNetworkInfo(ips []*packngo.IPAddressAssignment) NetworkInfo {
-	ni := NetworkInfo{Networks: make([]map[string]interface{}, 0, 1)}
-	for _, ip := range ips {
-		network := map[string]interface{}{
-			"address": ip.Address,
-			"gateway": ip.Gateway,
-			"family":  ip.AddressFamily,
-			"cidr":    ip.CIDR,
-			"public":  ip.Public,
-		}
-		ni.Networks = append(ni.Networks, network)
-
-		// Initial device IPs are fixed and marked as "Management"
-		if ip.Management {
-			if ip.AddressFamily == 4 {
-				if ip.Public {
-					ni.Host = ip.Address
-					ni.IPv4SubnetSize = ip.CIDR
-					ni.PublicIPv4 = ip.Address
-				} else {
-					ni.PrivateIPv4 = ip.Address
-				}
-			} else {
-				ni.PublicIPv6 = ip.Address
-			}
-		}
-	}
-	return ni
 }
 
 func resourcePacketDeviceRead(d *schema.ResourceData, meta interface{}) error {
@@ -441,7 +463,8 @@ func resourcePacketDeviceRead(d *schema.ResourceData, meta interface{}) error {
 
 	d.Set("hostname", device.Hostname)
 	d.Set("plan", device.Plan.Slug)
-	d.Set("facility", device.Facility.Code)
+	d.Set("deployed_facility", device.Facility.Code)
+	d.Set("facilities", []string{device.Facility.Code})
 	d.Set("operating_system", device.OS.Slug)
 	d.Set("state", device.State)
 	d.Set("billing_cycle", device.BillingCycle)
@@ -452,16 +475,36 @@ func resourcePacketDeviceRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("always_pxe", device.AlwaysPXE)
 	d.Set("root_password", device.RootPassword)
 	d.Set("project_id", device.Project.ID)
-	storageString, err := structure.FlattenJsonToString(device.Storage)
-	if err != nil {
-		return fmt.Errorf("[ERR] Error getting storage JSON string for device (%s): %s", d.Id(), err)
+	if device.Storage != nil {
+		rawStorageBytes, err := json.Marshal(device.Storage)
+		if err != nil {
+			return fmt.Errorf("[ERR] Error getting storage JSON string for device (%s): %s", d.Id(), err)
+		}
+
+		storageString, err := structure.NormalizeJsonString(string(rawStorageBytes))
+		if err != nil {
+			return fmt.Errorf("[ERR] Errori normalizing storage JSON string for device (%s): %s", d.Id(), err)
+		}
+		d.Set("storage", storageString)
 	}
-	d.Set("storage", storageString)
 
 	if len(device.HardwareReservation.Href) > 0 {
 		d.Set("hardware_reservation_id", path.Base(device.HardwareReservation.Href))
 	}
-	d.Set("network_type", device.NetworkType)
+	networkType, err := device.GetNetworkType()
+	if err != nil {
+		return err
+	}
+	d.Set("network_type", networkType)
+
+	wfrd := "wait_for_reservation_deprovision"
+	if _, ok := d.GetOk(wfrd); !ok {
+		d.Set(wfrd, nil)
+	}
+	fdv := "force_detach_volumes"
+	if _, ok := d.GetOk(fdv); !ok {
+		d.Set(fdv, nil)
+	}
 
 	d.Set("tags", device.Tags)
 	keyIDs := []string{}
@@ -480,7 +523,6 @@ func resourcePacketDeviceRead(d *schema.ResourceData, meta interface{}) error {
 	})
 
 	d.Set("network", networkInfo.Networks)
-	d.Set("public_ipv4_subnet_size", networkInfo.IPv4SubnetSize)
 	d.Set("access_public_ipv4", networkInfo.PublicIPv4)
 	d.Set("access_private_ipv4", networkInfo.PrivateIPv4)
 	d.Set("access_public_ipv6", networkInfo.PublicIPv6)
@@ -496,33 +538,6 @@ func resourcePacketDeviceRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	return nil
-}
-
-func getNetworkRank(family int, public bool) int {
-	switch {
-	case family == 4 && public:
-		return 0
-	case family == 6:
-		return 1
-	case family == 4 && public:
-		return 2
-	}
-	return 3
-}
-
-func getPorts(ps []packngo.Port) []map[string]interface{} {
-	ret := make([]map[string]interface{}, 0, 1)
-	for _, p := range ps {
-		port := map[string]interface{}{
-			"name":   p.Name,
-			"id":     p.ID,
-			"type":   p.Type,
-			"mac":    p.Data.MAC,
-			"bonded": p.Data.Bonded,
-		}
-		ret = append(ret, port)
-	}
-	return ret
 }
 
 func resourcePacketDeviceUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -544,6 +559,10 @@ func resourcePacketDeviceUpdate(d *schema.ResourceData, meta interface{}) error 
 	if d.HasChange("description") {
 		dDesc := d.Get("description").(string)
 		ur.Description = &dDesc
+	}
+	if d.HasChange("user_data") {
+		dUserData := d.Get("user_data").(string)
+		ur.UserData = &dUserData
 	}
 	if d.HasChange("hostname") {
 		dHostname := d.Get("hostname").(string)
@@ -593,60 +612,25 @@ func resourcePacketDeviceUpdate(d *schema.ResourceData, meta interface{}) error 
 func resourcePacketDeviceDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*packngo.Client)
 
-	if _, err := client.Devices.Delete(d.Id()); err != nil {
+	fdvIf, fdvOk := d.GetOk("force_detach_volumes")
+	fdv := false
+	if fdvOk && fdvIf.(bool) {
+		fdv = true
+	}
+
+	if _, err := client.Devices.Delete(d.Id(), fdv); err != nil {
 		return friendlyError(err)
 	}
 
-	return nil
-}
-
-func waitForDeviceAttribute(d *schema.ResourceData, target string, pending []string, attribute string, meta interface{}) (interface{}, error) {
-	stateConf := &resource.StateChangeConf{
-		Pending:    pending,
-		Target:     []string{target},
-		Refresh:    newDeviceStateRefreshFunc(d, attribute, meta),
-		Timeout:    60 * time.Minute,
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
-	}
-	return stateConf.WaitForState()
-}
-
-func newDeviceStateRefreshFunc(d *schema.ResourceData, attribute string, meta interface{}) resource.StateRefreshFunc {
-	client := meta.(*packngo.Client)
-
-	return func() (interface{}, string, error) {
-		if err := resourcePacketDeviceRead(d, meta); err != nil {
-			return nil, "", err
-		}
-
-		if attr, ok := d.GetOk(attribute); ok {
-			device, _, err := client.Devices.Get(d.Id(), &packngo.GetOptions{Includes: []string{"project"}})
+	resId, resIdOk := d.GetOk("hardware_reservation_id")
+	if resIdOk {
+		wfrd, wfrdOK := d.GetOk("wait_for_reservation_deprovision")
+		if wfrdOK && wfrd.(bool) {
+			err := waitUntilReservationProvisionable(resId.(string), meta)
 			if err != nil {
-				return nil, "", friendlyError(err)
+				return err
 			}
-			return &device, attr.(string), nil
 		}
-
-		return nil, "", nil
 	}
-}
-
-// powerOnAndWait Powers on the device and waits for it to be active.
-func powerOnAndWait(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*packngo.Client)
-	_, err := client.Devices.PowerOn(d.Id())
-	if err != nil {
-		return friendlyError(err)
-	}
-
-	_, err = waitForDeviceAttribute(d, "active", []string{"off"}, "state", client)
-	return err
-}
-
-func validateFacilityForDevice(v interface{}, k string) (ws []string, errors []error) {
-	if v.(string) == "any" {
-		errors = append(errors, fmt.Errorf(`Cannot use facility: "any"`))
-	}
-	return
+	return nil
 }

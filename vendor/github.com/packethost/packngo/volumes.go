@@ -222,17 +222,17 @@ func (v *VolumeAttachmentServiceOp) Delete(attachmentID string) (*Response, erro
 }
 
 // Lock sets a volume to "locked"
-func (s *VolumeServiceOp) Lock(id string) (*Response, error) {
+func (v *VolumeServiceOp) Lock(id string) (*Response, error) {
 	path := fmt.Sprintf("%s/%s", volumeBasePath, id)
 	action := lockType{Locked: true}
 
-	return s.client.DoRequest("PATCH", path, action, nil)
+	return v.client.DoRequest("PATCH", path, action, nil)
 }
 
 // Unlock sets a volume to "unlocked"
-func (s *VolumeServiceOp) Unlock(id string) (*Response, error) {
+func (v *VolumeServiceOp) Unlock(id string) (*Response, error) {
 	path := fmt.Sprintf("%s/%s", volumeBasePath, id)
 	action := lockType{Locked: false}
 
-	return s.client.DoRequest("PATCH", path, action, nil)
+	return v.client.DoRequest("PATCH", path, action, nil)
 }

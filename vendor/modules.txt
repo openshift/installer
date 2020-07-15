@@ -699,7 +699,7 @@ github.com/hashicorp/go-multierror
 ## explicit
 github.com/hashicorp/go-plugin
 github.com/hashicorp/go-plugin/internal/plugin
-# github.com/hashicorp/go-retryablehttp v0.6.4
+# github.com/hashicorp/go-retryablehttp v0.6.6
 github.com/hashicorp/go-retryablehttp
 # github.com/hashicorp/go-safetemp v1.0.0
 github.com/hashicorp/go-safetemp
@@ -779,15 +779,12 @@ github.com/hashicorp/terraform/configs/configupgrade
 github.com/hashicorp/terraform/configs/hcl2shim
 github.com/hashicorp/terraform/dag
 github.com/hashicorp/terraform/experiments
-github.com/hashicorp/terraform/flatmap
-github.com/hashicorp/terraform/helper/config
 github.com/hashicorp/terraform/helper/didyoumean
 github.com/hashicorp/terraform/helper/experiment
 github.com/hashicorp/terraform/helper/hashcode
 github.com/hashicorp/terraform/helper/hilmapstructure
 github.com/hashicorp/terraform/helper/logging
 github.com/hashicorp/terraform/helper/plugin
-github.com/hashicorp/terraform/helper/resource
 github.com/hashicorp/terraform/helper/schema
 github.com/hashicorp/terraform/helper/slowmessage
 github.com/hashicorp/terraform/helper/structure
@@ -1069,7 +1066,7 @@ github.com/ovirt/terraform-provider-ovirt/ovirt
 # github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db
 ## explicit
 github.com/packer-community/winrmcp/winrmcp
-# github.com/packethost/packngo v0.2.0
+# github.com/packethost/packngo v0.2.1-0.20200424110205-36917dbc292f
 ## explicit
 github.com/packethost/packngo
 # github.com/pborman/uuid v1.2.0
@@ -1434,7 +1431,7 @@ github.com/terraform-providers/terraform-provider-local/local
 # github.com/terraform-providers/terraform-provider-openstack v1.28.0
 ## explicit
 github.com/terraform-providers/terraform-provider-openstack/openstack
-# github.com/terraform-providers/terraform-provider-packet v1.7.2
+# github.com/terraform-providers/terraform-provider-packet v1.7.3-0.20200512085448-9717adf77547
 ## explicit
 github.com/terraform-providers/terraform-provider-packet/packet
 # github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
@@ -1563,7 +1560,7 @@ go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
 # go4.org v0.0.0-20191010144846-132d2879e1e9
 go4.org/errorutil
-# golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
+# golang.org/x/crypto v0.0.0-20200420201142-3c4aac89819a
 ## explicit
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
