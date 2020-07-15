@@ -124,7 +124,7 @@ func (uninstaller *ClusterUninstaller) removeVM(vmsService *ovirtsdk.VmsService,
 func (uninstaller *ClusterUninstaller) removeTemplate(con *ovirtsdk.Connection) error {
 	if uninstaller.Metadata.Ovirt.RemoveTemplate {
 		search, err := con.SystemService().TemplatesService().
-			List().Search(fmt.Sprintf("name=%s", uninstaller.Metadata.InfraID)).Send()
+			List().Search(fmt.Sprintf("name=%s-rhcos", uninstaller.Metadata.InfraID)).Send()
 		if err != nil {
 			return fmt.Errorf("couldn't find a template with name %s", uninstaller.Metadata.InfraID)
 		}
