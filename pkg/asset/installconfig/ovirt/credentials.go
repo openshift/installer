@@ -98,11 +98,17 @@ func (c *clientHTTP) checkURLResponse() error {
 // The password provided will be added in the Config struct.
 // If an error happens, it will ask again username for users.
 func askPassword(c *Config) error {
+	survey.PasswordQuestionTemplate = `
+{{- if .ShowHelp }}{{- color "cyan"}}{{ HelpIcon }} {{ .Help }}{{color "reset"}}{{"\n"}}{{end}}
+{{- color "green+hb"}}{{ QuestionIcon }} {{color "reset"}}
+{{- color "default+hb"}}{{ .Message }} {{color "reset"}}
+{{- if and .Help (not .ShowHelp)}}{{color "cyan"}}[Press Ctrl+C to switch username, {{ HelpInputRune }} for help]{{color "reset"}} {{end}}`
+
 	err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Password{
 				Message: "Engine password",
-				Help:    "",
+				Help:    "Password for the choosen username",
 			},
 			Validate: survey.ComposeValidators(survey.Required, authenticated(c)),
 		},
