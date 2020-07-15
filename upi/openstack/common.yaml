@@ -37,5 +37,5 @@
       os_bootstrap_ignition: "{{ infraID }}-bootstrap-ignition.json"
 
   - name: 'Import variables for CiscoACI CNI'
-    import_playbook: common_ciscoaci.yaml
+    include: common_ciscoaci.yaml
     when: os_networking_type == "CiscoACI"
