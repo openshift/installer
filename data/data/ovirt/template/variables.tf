@@ -12,6 +12,12 @@ variable "ovirt_storage_domain_id" {
   description = "The ID of Storage Domain"
 }
 
+variable "ovirt_tmp_template_vm_id" {
+  type        = string
+  default     = ""
+  description = "The ID of tmp VM which was created for creating the templated"
+}
+
 variable "ignition_bootstrap" {
   type        = string
   description = "bootstrap ignition config"

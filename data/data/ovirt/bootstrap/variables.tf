@@ -12,6 +12,11 @@ variable "ovirt_template_id" {
   description = "The ID of VM template"
 }
 
+variable "ovirt_tmp_template_vm_id" {
+  type        = string
+  description = "The ID of tmp VM which was created for creating the templated"
+}
+
 variable "ignition_bootstrap" {
   type        = string
   description = "bootstrap ignition config"

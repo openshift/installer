@@ -27,11 +27,18 @@ func (uninstaller *ClusterUninstaller) Run() error {
 	}
 	defer con.Close()
 
-	if err := uninstaller.removeVMs(con); err != nil {
-		uninstaller.Logger.Errorf("Failed to remove VMs: %s", err)
-	}
-	if err := uninstaller.removeTag(con); err != nil {
-		uninstaller.Logger.Errorf("Failed to remove tag: %s", err)
+	// Tags
+	tagVMs := uninstaller.Metadata.InfraID
+	tagVMbootstrap := uninstaller.Metadata.InfraID + "-bootstrap"
+	tags := [2]string{tagVMs, tagVMbootstrap}
+
+	for _, tag := range tags {
+		if err := uninstaller.removeVMs(con, tag); err != nil {
+			uninstaller.Logger.Errorf("failed to remove VMs: %s", err)
+		}
+		if err := uninstaller.removeTag(con, tag); err != nil {
+			uninstaller.Logger.Errorf("failed to remove tag: %s", err)
+		}
 	}
 	if err := uninstaller.removeTemplate(con); err != nil {
 		uninstaller.Logger.Errorf("Failed to remove template: %s", err)
@@ -40,10 +47,10 @@ func (uninstaller *ClusterUninstaller) Run() error {
 	return nil
 }
 
-func (uninstaller *ClusterUninstaller) removeVMs(con *ovirtsdk.Connection) error {
+func (uninstaller *ClusterUninstaller) removeVMs(con *ovirtsdk.Connection, tag string) error {
 	// - find all vms by tag name=infraID
 	vmsService := con.SystemService().VmsService()
-	searchTerm := fmt.Sprintf("tag=%s", uninstaller.Metadata.InfraID)
+	searchTerm := fmt.Sprintf("tag=%s", tag)
 	uninstaller.Logger.Debugf("Searching VMs by %s", searchTerm)
 	vmsResponse, err := vmsService.List().Search(searchTerm).Send()
 	if err != nil {
@@ -65,7 +72,7 @@ func (uninstaller *ClusterUninstaller) removeVMs(con *ovirtsdk.Connection) error
 	return nil
 }
 
-func (uninstaller *ClusterUninstaller) removeTag(con *ovirtsdk.Connection) error {
+func (uninstaller *ClusterUninstaller) removeTag(con *ovirtsdk.Connection, tag string) error {
 	// finally remove the tag
 	tagsService := con.SystemService().TagsService()
 	tagsServiceListResponse, err := tagsService.List().Send()
@@ -74,7 +81,7 @@ func (uninstaller *ClusterUninstaller) removeTag(con *ovirtsdk.Connection) error
 	}
 	if tagsServiceListResponse != nil {
 		for _, t := range tagsServiceListResponse.MustTags().Slice() {
-			if t.MustName() == uninstaller.Metadata.InfraID {
+			if t.MustName() == tag {
 				uninstaller.Logger.Infof("Removing tag %s", t.MustName())
 				_, err := tagsService.TagService(t.MustId()).Remove().Send()
 				if err != nil {

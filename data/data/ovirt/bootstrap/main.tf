@@ -9,3 +9,8 @@ resource "ovirt_vm" "bootstrap" {
     custom_script = var.ignition_bootstrap
   }
 }
+
+resource "ovirt_tag" "cluster_bootstrap_tag" {
+  name   = "${var.cluster_id}-bootstrap"
+  vm_ids = concat([ovirt_vm.bootstrap.id], [var.ovirt_tmp_template_vm_id])
+}
