@@ -1,11 +1,31 @@
 import base64
 import json
 import os
+import yaml
 
 with open('bootstrap.ign', 'r') as f:
     ignition = json.load(f)
 
 files = ignition['storage'].get('files', [])
+
+# Read inventory.yaml for CiscoACI CNI variables
+with open("inventory.yaml", 'r') as stream:
+    try:
+        inventory = yaml.safe_load(stream)['all']['hosts']['localhost']
+    except yaml.YAMLError as exc:
+        print(exc)
+
+if 'neutron_network_mtu' not in inventory:
+    neutron_network_mtu = "1500"
+else:
+    neutron_network_mtu = str(inventory['neutron_network_mtu'])
+
+try:
+    infra_vlan = str(inventory['infra_vlan'])
+    node_interface = inventory['node_interface']
+    opflex_interface = inventory['opflex_interface']
+except:
+    print("The inventory.yaml must have infra_vlan, node_interface and opflex_interface fields set")
 
 infra_id = os.environ.get('INFRA_ID', 'openshift').encode()
 hostname_b64 = base64.standard_b64encode(infra_id + b'-bootstrap\n').decode().strip()
@@ -44,16 +64,16 @@ files.append(
     'filesystem': 'root'
 })
 
-ifcfg_ens3 = """TYPE=Ethernet
-DEVICE=ens3
+ifcfg_ens3 = ("""TYPE=Ethernet
+DEVICE=""" + node_interface + """
 ONBOOT=yes
 BOOTPROTO=dhcp
 DEFROUTE=yes
 PROXY_METHOD=none
 BROWSER_ONLY=no
-MTU=1700
+MTU=""" + neutron_network_mtu + """
 IPV4_FAILURE_FATAL=no
-IPV6INIT=no""".encode()
+IPV6INIT=no""").encode()
 
 ifcfg_ens3_b64 = base64.standard_b64encode(ifcfg_ens3).decode().strip()
 
@@ -68,16 +88,16 @@ files.append(
     'filesystem': 'root',
 })
 
-ifcfg_ens4 = """TYPE=Ethernet
-DEVICE=ens4
+ifcfg_ens4 = ("""TYPE=Ethernet
+DEVICE=""" + opflex_interface + """
 ONBOOT=yes
 BOOTPROTO=dhcp
 DEFROUTE=no
 PROXY_METHOD=none
 BROWSER_ONLY=no
-MTU=1700
+MTU=""" + neutron_network_mtu + """
 IPV4_FAILURE_FATAL=no
-IPV6INIT=no""".encode()
+IPV6INIT=no""").encode()
 
 ifcfg_ens4_b64 = base64.standard_b64encode(ifcfg_ens4).decode().strip()
 
@@ -92,11 +112,10 @@ files.append(
     'filesystem': 'root',
 })
 
-
-opflex_conn = """VLAN=yes
+opflex_conn = ("""VLAN=yes
 TYPE=Vlan
-PHYSDEV=ens4
-VLAN_ID=4093
+PHYSDEV=""" + opflex_interface + """
+VLAN_ID=""" + infra_vlan + """
 REORDER_HDR=yes
 GVRP=no
 MVRP=no
@@ -107,9 +126,9 @@ DEFROUTE=no
 IPV4_FAILURE_FATAL=no
 IPV6INIT=no
 NAME=opflex-conn
-DEVICE=ens4.4093
+DEVICE=""" + opflex_interface + """.""" + infra_vlan + """
 ONBOOT=yes
-MTU=1600""".encode()
+MTU=""" + neutron_network_mtu).encode()
 
 opflex_conn_b64 = base64.standard_b64encode(opflex_conn).decode().strip()
 

@@ -4,9 +4,14 @@
   gather_facts: no
 
   tasks:
+  - name: 'Set MTU for the first neutron network'
+    command:
+      cmd: "openstack networrk set {{ os_network }} --mtu {{ neutron_network_mtu }}"
+    when: os_networking_type == "CiscoACI"
+
   - name: 'Create second node network'
     command:
-      cmd: "neutron net-create {{ os_network2 }} --apic:nested-domain-name openshift-domain --apic:nested-domain-type openshift --apic:nested_domain_infra_vlan 4093 --apic:nested_domain_service_vlan 2003"
+      cmd: "neutron net-create {{ os_network2 }} --apic:nested-domain-name openshift-domain --apic:nested-domain-type openshift --apic:nested_domain_infra_vlan {{ infra_vlan }} --apic:nested_domain_service_vlan {{ service_vlan }}"
     when: os_networking_type == "CiscoACI"
 
   - name: 'Set the second cluster network tag'

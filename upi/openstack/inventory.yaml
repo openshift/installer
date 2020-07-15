@@ -5,20 +5,22 @@ all:
       ansible_python_interpreter: "{{ansible_playbook_python}}"
 
       # User-provided values
-      os_subnet_range: '10.0.0.0/16'
-      os_flavor_master: 'm1.xlarge'
-      os_flavor_worker: 'm1.large'
-      os_image_rhcos: 'rhcos'
-      os_external_network: 'external'
+      os_subnet_range: '15.11.0.0/24'
+      os_subnet_range2: '16.11.0.0/24'
+      os_flavor_master: 'aci_rhel_huge'
+      os_flavor_worker: 'aci_rhel_huge'
+      os_image_rhcos: 'rhcos-4.4'
+      os_external_network: 'l3out-2'
       # OpenShift API floating IP address
-      os_api_fip: '203.0.113.23'
+      os_api_fip: '60.60.60.6'
+      dns_ip: '172.28.184.18'
       # OpenShift Ingress floating IP address
-      os_ingress_fip: '203.0.113.19'
+      os_ingress_fip: '60.60.60.8'
       # Service subnet cidr
       svc_subnet_range: '172.30.0.0/16'
       os_svc_network_range: '172.30.0.0/15'
       # Subnet pool prefixes
-      cluster_network_cidrs: '10.128.0.0/14'
+      cluster_network_cidrs: '15.128.0.0/14'
       # Subnet pool prefix length
       host_prefix: '23'
       # Name of the SDN.
@@ -32,3 +34,8 @@ all:
       # Number of provisioned Compute nodes.
       # 3 is the minimum number for a fully-functional cluster.
       os_compute_nodes_number: 3
+
+      infra_vlan: 4093
+      service_vlan: 2003
+      opflex_interface: ens4
+      node_interface: ens3
