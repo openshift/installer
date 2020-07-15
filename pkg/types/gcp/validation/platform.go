@@ -22,8 +22,10 @@ var (
 		"asia-east2":              "Hong Kong",
 		"asia-northeast1":         "Tokyo, Japan",
 		"asia-northeast2":         "Osaka, Japan",
+		"asia-northeast3":         "Seoul, South Korea",
 		"asia-south1":             "Mumbai, India",
 		"asia-southeast1":         "Jurong West, Singapore",
+		"asia-southeast2":         "Jakarta, Indonesia",
 		"australia-southeast1":    "Sydney, Australia",
 		"europe-north1":           "Hamina, Finland",
 		"europe-west1":            "St. Ghislain, Belgium",
@@ -38,6 +40,8 @@ var (
 		"us-east4":                "Ashburn, Northern Virginia, USA",
 		"us-west1":                "The Dalles, Oregon, USA",
 		"us-west2":                "Los Angeles, California, USA",
+		"us-west3":                "Salt Lake City, Utah, USA",
+		"us-west4":                "Las Vegas, Nevada, USA",
 	}
 	validRegionValues = func() []string {
 		validValues := make([]string, len(Regions))
