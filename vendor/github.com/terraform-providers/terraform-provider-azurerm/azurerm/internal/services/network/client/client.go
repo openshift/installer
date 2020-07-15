@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-09-01/network"
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2020-03-01/network"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/common"
 )
 
@@ -14,6 +14,7 @@ type Client struct {
 	DDOSProtectionPlansClient            *network.DdosProtectionPlansClient
 	ExpressRouteAuthsClient              *network.ExpressRouteCircuitAuthorizationsClient
 	ExpressRouteCircuitsClient           *network.ExpressRouteCircuitsClient
+	ExpressRouteGatewaysClient           *network.ExpressRouteGatewaysClient
 	ExpressRoutePeeringsClient           *network.ExpressRouteCircuitPeeringsClient
 	InterfacesClient                     *network.InterfacesClient
 	LoadBalancersClient                  *network.LoadBalancersClient
@@ -28,6 +29,7 @@ type Client struct {
 	RouteTablesClient                    *network.RouteTablesClient
 	SecurityGroupClient                  *network.SecurityGroupsClient
 	SecurityRuleClient                   *network.SecurityRulesClient
+	ServiceTagsClient                    *network.ServiceTagsClient
 	SubnetsClient                        *network.SubnetsClient
 	NatGatewayClient                     *network.NatGatewaysClient
 	VnetGatewayConnectionsClient         *network.VirtualNetworkGatewayConnectionsClient
@@ -40,6 +42,7 @@ type Client struct {
 	VpnServerConfigurationsClient        *network.VpnServerConfigurationsClient
 	WatcherClient                        *network.WatchersClient
 	WebApplicationFirewallPoliciesClient *network.WebApplicationFirewallPoliciesClient
+	PrivateDnsZoneGroupClient            *network.PrivateDNSZoneGroupsClient
 	PrivateLinkServiceClient             *network.PrivateLinkServicesClient
 }
 
@@ -67,6 +70,9 @@ func NewClient(o *common.ClientOptions) *Client {
 
 	ExpressRouteCircuitsClient := network.NewExpressRouteCircuitsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&ExpressRouteCircuitsClient.Client, o.ResourceManagerAuthorizer)
+
+	ExpressRouteGatewaysClient := network.NewExpressRouteGatewaysClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&ExpressRouteGatewaysClient.Client, o.ResourceManagerAuthorizer)
 
 	ExpressRoutePeeringsClient := network.NewExpressRouteCircuitPeeringsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&ExpressRoutePeeringsClient.Client, o.ResourceManagerAuthorizer)
@@ -107,6 +113,9 @@ func NewClient(o *common.ClientOptions) *Client {
 	PublicIPPrefixesClient := network.NewPublicIPPrefixesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&PublicIPPrefixesClient.Client, o.ResourceManagerAuthorizer)
 
+	PrivateDnsZoneGroupClient := network.NewPrivateDNSZoneGroupsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&PrivateDnsZoneGroupClient.Client, o.ResourceManagerAuthorizer)
+
 	PrivateLinkServiceClient := network.NewPrivateLinkServicesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&PrivateLinkServiceClient.Client, o.ResourceManagerAuthorizer)
 
@@ -121,6 +130,9 @@ func NewClient(o *common.ClientOptions) *Client {
 
 	SecurityRuleClient := network.NewSecurityRulesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&SecurityRuleClient.Client, o.ResourceManagerAuthorizer)
+
+	ServiceTagsClient := network.NewServiceTagsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&ServiceTagsClient.Client, o.ResourceManagerAuthorizer)
 
 	SubnetsClient := network.NewSubnetsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&SubnetsClient.Client, o.ResourceManagerAuthorizer)
@@ -158,6 +170,7 @@ func NewClient(o *common.ClientOptions) *Client {
 		DDOSProtectionPlansClient:            &DDOSProtectionPlansClient,
 		ExpressRouteAuthsClient:              &ExpressRouteAuthsClient,
 		ExpressRouteCircuitsClient:           &ExpressRouteCircuitsClient,
+		ExpressRouteGatewaysClient:           &ExpressRouteGatewaysClient,
 		ExpressRoutePeeringsClient:           &ExpressRoutePeeringsClient,
 		InterfacesClient:                     &InterfacesClient,
 		LoadBalancersClient:                  &LoadBalancersClient,
@@ -172,6 +185,7 @@ func NewClient(o *common.ClientOptions) *Client {
 		RouteTablesClient:                    &RouteTablesClient,
 		SecurityGroupClient:                  &SecurityGroupClient,
 		SecurityRuleClient:                   &SecurityRuleClient,
+		ServiceTagsClient:                    &ServiceTagsClient,
 		SubnetsClient:                        &SubnetsClient,
 		NatGatewayClient:                     &NatGatewayClient,
 		VnetGatewayConnectionsClient:         &VnetGatewayConnectionsClient,
@@ -184,6 +198,7 @@ func NewClient(o *common.ClientOptions) *Client {
 		VpnServerConfigurationsClient:        &vpnServerConfigurationsClient,
 		WatcherClient:                        &WatcherClient,
 		WebApplicationFirewallPoliciesClient: &WebApplicationFirewallPoliciesClient,
+		PrivateDnsZoneGroupClient:            &PrivateDnsZoneGroupClient,
 		PrivateLinkServiceClient:             &PrivateLinkServiceClient,
 	}
 }
