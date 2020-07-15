@@ -649,6 +649,12 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 	for _, container := range allContainers {
 		metadata, err := containers.Get(conn, container, nil).ExtractMetadata()
 		if err != nil {
+			// Some containers that we fetched previously can already be deleted in
+			// runtime. We should ignore these cases and continue to iterate through
+			// the remaining containers.
+			if _, ok := err.(gophercloud.ErrDefault404); ok {
+				continue
+			}
 			logger.Error(err)
 			return false, nil
 		}
