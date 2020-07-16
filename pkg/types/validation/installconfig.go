@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -321,10 +322,11 @@ func validateControlPlane(platform *types.Platform, pool *types.MachinePool, fld
 func validateCompute(platform *types.Platform, control *types.MachinePool, pools []types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	poolNames := map[string]bool{}
+	hostnameRE := regexp.MustCompile("^[a-z0-9][a-z0-9-]*$")
 	for i, p := range pools {
 		poolFldPath := fldPath.Index(i)
-		if p.Name != "worker" {
-			allErrs = append(allErrs, field.NotSupported(poolFldPath.Child("name"), p.Name, []string{"worker"}))
+		if !hostnameRE.MatchString(p.Name) {
+			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("name"), p.Name, "must be a valid hostname"))
 		}
 		if poolNames[p.Name] {
 			allErrs = append(allErrs, field.Duplicate(poolFldPath.Child("name"), p.Name))

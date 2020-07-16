@@ -462,6 +462,28 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^compute\[1\]\.name: Duplicate value: "worker"$`,
 		},
 		{
+			name: "mixed compute",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute = []types.MachinePool{
+					*validMachinePool("worker"),
+					*validMachinePool("other-worker"),
+				}
+				return c
+			}(),
+		},
+		{
+			name: "invalid compute name",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute = []types.MachinePool{
+					*validMachinePool("invalid_worker"),
+				}
+				return c
+			}(),
+			expectedError: `^compute\[0\]\.name: Invalid value: "invalid_worker": must be a valid hostname$`,
+		},
+		{
 			name: "no compute replicas",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
