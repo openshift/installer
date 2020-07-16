@@ -90,6 +90,10 @@ func provider(clusterName string, platform *baremetal.Platform, osImage string, 
 	cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(platform.ClusterProvisioningIP, "6180"), imageFilename, compressedImageFilename)
 	cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
 	config := &baremetalprovider.BareMetalMachineProviderSpec{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "baremetal.cluster.k8s.io/v1alpha1",
+			Kind:       "BareMetalMachineProviderSpec",
+		},
 		Image: baremetalprovider.Image{
 			URL:      cacheImageURL,
 			Checksum: cacheChecksumURL,
