@@ -57,11 +57,7 @@ resource "openstack_compute_instance_v2" "bootstrap" {
     port = openstack_networking_port_v2.bootstrap_port.id
   }
 
-  metadata = {
-    Name = "${var.cluster_id}-bootstrap"
-    # "kubernetes.io/cluster/${var.cluster_id}" = "owned"
-    openshiftClusterID = var.cluster_id
-  }
+  tags = ["openshiftClusterID=${var.cluster_id}"]
 }
 
 resource "openstack_networking_floatingip_v2" "bootstrap_fip" {

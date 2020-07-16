@@ -80,10 +80,5 @@ resource "openstack_compute_instance_v2" "master_conf" {
     }
   }
 
-  metadata = {
-    # FIXME(mandre) shouldn't it be "${var.cluster_id}-master-${count.index}" ?
-    Name = "${var.cluster_id}-master"
-    # "kubernetes.io/cluster/${var.cluster_id}" = "owned"
-    openshiftClusterID = var.cluster_id
-  }
+  tags = ["openshiftClusterID=${var.cluster_id}"]
 }

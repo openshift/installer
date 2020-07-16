@@ -200,14 +200,11 @@ func deleteServers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		logger.Error(err)
 		return false, nil
 	}
+	// Microversion "2.26" is the first that supports server tags
+	conn.Microversion = "2.26"
 
 	listOpts := servers.ListOpts{
-		// FIXME(shardy) when gophercloud supports tags we should
-		// filter by tag here
-		// https://github.com/gophercloud/gophercloud/pull/1115
-		// and Nova doesn't seem to support filter by Metadata, so for
-		// now we do client side filtering below based on the
-		// Metadata key (which matches the server properties).
+		TagsAny: strings.Join(filterTags(filter), ","),
 	}
 
 	allPages, err := servers.List(conn, listOpts).AllPages()
@@ -222,16 +219,7 @@ func deleteServers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		return false, nil
 	}
 
-	serverObjects := []ObjectWithTags{}
 	for _, server := range allServers {
-		serverObjects = append(
-			serverObjects, ObjectWithTags{
-				ID:   server.ID,
-				Tags: server.Metadata})
-	}
-
-	filteredServers := filterObjects(serverObjects, filter)
-	for _, server := range filteredServers {
 		logger.Debugf("Deleting Server %q", server.ID)
 		err = servers.Delete(conn, server.ID).ExtractErr()
 		if err != nil {
@@ -243,7 +231,7 @@ func deleteServers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 			logger.Debugf("Cannot find server %q. It's probably already been deleted.", server.ID)
 		}
 	}
-	return len(filteredServers) == 0, nil
+	return len(allServers) == 0, nil
 }
 
 func deleteServerGroups(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
