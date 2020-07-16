@@ -110,6 +110,13 @@
       "metadata" : {
         "description" : "The size of the Master Virtual Machines"
       }
+    },
+    "diskSizeGB" : {
+      "type" : "int",
+      "defaultValue" : 1024,
+      "metadata" : {
+        "description" : "Size of the Master VM OS disk, in GB"
+      }
     }
   },
   "variables" : {
@@ -256,7 +263,7 @@
             "managedDisk": {
               "storageAccountType": "Premium_LRS"
             },
-            "diskSizeGB" : 128
+            "diskSizeGB" : "[parameters('diskSizeGB')]"
           }
         },
         "networkProfile" : {
