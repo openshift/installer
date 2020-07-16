@@ -1474,8 +1474,8 @@ github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf53
 github.com/openshift/origin v0.0.0-20160503220234-8f127d736703/go.mod h1:0Rox5r9C8aQn6j1oAOQ0c1uC86mYbUFObzjBRvUKHII=
 github.com/openshift/prom-label-proxy v0.1.1-0.20191016113035-b8153a7f39f1/go.mod h1:p5MuxzsYP1JPsNGwtjtcgRHHlGziCJJfztff91nNixw=
 github.com/openshift/runtime-utils v0.0.0-20191011150825-9169de69ebf6/go.mod h1:5gDRVvQwesU7cfwlpuMivdv3Dz/oslvv2qTBHCy4wqQ=
-github.com/openshift/terraform v0.12.20-openshift-3 h1:aA0Mn8+Jl4ZWIOh84FkR7y34AAxnBfOu8FT2VMwTjEQ=
-github.com/openshift/terraform v0.12.20-openshift-3/go.mod h1:R/dUWEZVB5itR8fNzx3g8QZMIwwWuI8rcwF8SbL1sq4=
+github.com/openshift/terraform v0.12.20-openshift-4 h1:1v7cIei84p26eqbD4LiTZOH0ecXbL7Qss0sy4BFeWhY=
+github.com/openshift/terraform v0.12.20-openshift-4/go.mod h1:R/dUWEZVB5itR8fNzx3g8QZMIwwWuI8rcwF8SbL1sq4=
 github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699 h1:vDqnd5N3KG0NvPXOQ6iO5rWMJ/R7ccxtO3Tis1gZRYE=
 github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699/go.mod h1:0U3OgA2uDYSc7gNkdWA92+/BxWXwuYhWqqZ4UhM1RCw=
 github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200707062554-97ea089cc12a h1:yrCt4MiDMfLRv//VnIc3lnrmBYhIIz72+ZcGq/YMIjk=
