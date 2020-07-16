@@ -23,8 +23,14 @@ variable "external_network_id" {
   default     = ""
 }
 
-variable "lb_floating_ip" {
-  description = "(optional) Existing floating IP address to attach to the load balancer created by the installer."
+variable "api_floating_ip" {
+  description = "(optional) Existing floating IP address to attach to the api load balancer created by the installer."
+  type        = string
+  default     = ""
+}
+
+variable "ingress_floating_ip" {
+  description = "(optional) Existing floating IP address to attach to the ingress load balancer created by the installer."
   type        = string
   default     = ""
 }

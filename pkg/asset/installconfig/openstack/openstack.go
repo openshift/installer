@@ -75,7 +75,7 @@ func Platform() (*openstack.Platform, error) {
 		return nil, err
 	}
 	sort.Strings(floatingIPNames)
-	var lbFloatingIP string
+	var apiFloatingIP string
 	err = survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Select{
@@ -92,7 +92,7 @@ func Platform() (*openstack.Platform, error) {
 				return nil
 			}),
 		},
-	}, &lbFloatingIP)
+	}, &apiFloatingIP)
 	if err != nil {
 		return nil, err
 	}
@@ -128,6 +128,6 @@ func Platform() (*openstack.Platform, error) {
 		Cloud:           cloud,
 		ExternalNetwork: extNet,
 		FlavorName:      flavor,
-		LbFloatingIP:    lbFloatingIP,
+		APIFloatingIP:   apiFloatingIP,
 	}, nil
 }

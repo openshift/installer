@@ -1205,6 +1205,11 @@ spec:
                 description: OpenStack is the configuration used when installing on
                   OpenStack.
                 properties:
+                  apiFloatingIP:
+                    description: APIFloatingIP is the IP address of an available floating
+                      IP in your OpenStack cluster to associate with the OpenShift
+                      api port.
+                    type: string
                   apiVIP:
                     description: 'APIVIP is the static IP on the nodes subnet that
                       the api port for openshift will be assigned Default: will be
@@ -1277,15 +1282,15 @@ spec:
                     description: ExternalNetwork is name of the external network in
                       your OpenStack cluster.
                     type: string
+                  ingressFloatingIP:
+                    description: IngressFloatingIP is the IP address of an available
+                      floating ip in your OpenStack cluster to associate with the
+                      OpenShift ingress port.
+                    type: string
                   ingressVIP:
                     description: 'IngressVIP is the static IP on the nodes subnet
                       that the apps port for openshift will be assigned Default: will
                       be set to the 7 on the first entry in the machineNewtwork CIDR'
-                    type: string
-                  lbFloatingIP:
-                    description: LbFloatingIP is the IP address of an available floating
-                      IP in your OpenStack cluster to associate with the OpenShift
-                      load balancer.
                     type: string
                   machinesSubnet:
                     description: MachinesSubnet is the UUIDv4 of an openstack subnet.
@@ -1310,10 +1315,11 @@ spec:
                       Deprecated: this value is set by the installer automatically.'
                     type: string
                 required:
+                - apiFloatingIP
                 - cloud
                 - computeFlavor
                 - externalNetwork
-                - lbFloatingIP
+                - ingressFloatingIP
                 - octaviaSupport
                 - region
                 - trunkSupport

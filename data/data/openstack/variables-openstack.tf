@@ -276,45 +276,55 @@ EOF
 
 }
 
-variable "openstack_lb_floating_ip" {
+variable "openstack_api_floating_ip" {
   type = string
   default = ""
 
   description = <<EOF
-(optional) Existing Floating IP to attach to the load balancer created by the installer.
+(optional) Existing Floating IP to attach to the api load balancer created by the installer.
+EOF
+
+}
+
+variable "openstack_ingress_floating_ip" {
+  type    = string
+  default = ""
+
+  description = <<EOF
+(optional) Existing Floating IP to attach to the ingress load balancer created by the installer.
 EOF
 
 }
 
 variable "openstack_api_int_ip" {
-  type        = string
+  type = string
   description = "IP on the node subnet reserved for api-int VIP."
 }
 
 variable "openstack_ingress_ip" {
-  type        = string
+  type = string
   description = "IP on the nodes subnet reserved for the ingress VIP."
 }
 
 variable "openstack_external_dns" {
-  type        = list(string)
+  type = list(string)
   description = "IP addresses of exernal dns servers to add to networks."
-  default     = []
+  default = []
 }
 
 variable "openstack_additional_network_ids" {
-  type        = list(string)
+  type = list(string)
   description = "IDs of additional networks for master nodes."
-  default     = []
+  default = []
 }
 
 variable "openstack_master_flavor_name" {
-  type        = string
+  type = string
   description = "Instance size for the master node(s). Example: `m1.medium`."
 }
 
 variable "openstack_trunk_support" {
-  type    = bool
+  type = bool
   default = false
 
   description = <<EOF
@@ -324,7 +334,7 @@ EOF
 }
 
 variable "openstack_octavia_support" {
-  type = bool
+  type    = bool
   default = false
 
   description = <<EOF
@@ -334,18 +344,18 @@ EOF
 }
 
 variable "openstack_master_server_group_name" {
-  type        = string
+  type = string
   description = "Name of the server group for the master nodes."
 }
 
 variable "openstack_machines_subnet_id" {
-  type        = string
-  default     = ""
+  type = string
+  default = ""
   description = "ID of the subnet to use for cluster machines. If empty, the installer will create a subnet to use as machinesSubnet."
 }
 
 variable "openstack_machines_network_id" {
-  type        = string
-  default     = ""
+  type = string
+  default = ""
   description = "ID of the network the machines subnet is on. If empty, the installer will create a network to use as machinesNetwork."
 }
