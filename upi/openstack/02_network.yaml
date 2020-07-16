@@ -19,13 +19,17 @@
     command:
       cmd: "openstack network set --tag {{ cluster_id_tag }} {{ os_network }}"
 
+  - name: 'Create the cluster address-scope'
+    command:
+      cmd: "neutron address-scope-update {{ aci_containers_addr_scope }} --apic:distinguished_names type=dict VRF={{ aci_containers_l3out_vrf }}"
+
+  - name: 'Create the subnetpool'
+    command:
+      cmd: "neutron subnetpool-create --pool-prefix {{ os_subnet_range }} --address-scope {{ aci_containers_addr_scope }} {{ aci_containers_subnet_pool }}"
+
   - name: 'Create a subnet'
-    os_subnet:
-      name: "{{ os_subnet }}"
-      network_name: "{{ os_network }}"
-      cidr: "{{ os_subnet_range }}"
-      allocation_pool_start: "{{ os_subnet_range | next_nth_usable(10) }}"
-      allocation_pool_end: "{{ os_subnet_range | ipaddr('last_usable') }}"
+    command:
+      cmd: "openstack subnet create --network {{ os_network }}  --subnet-pool {{ aci_containers_subnet_pool }} --subnet-range {{ os_subnet_range }} --allocation-pool start={{ os_subnet_range | next_nth_usable(10) }},end={{ os_subnet_range | ipaddr('last_usable') }} --dhcp {{ os_subnet }} --prefix-length {{aci_containers_prefix_length }}"
 
   - name: 'Set the cluster subnet tag'
     command:

@@ -1,7 +1,7 @@
 - name: 'Compute CiscoACI resource names'
   set_fact:
-    os_network2: "{{ infraID }}-network2"
-    os_subnet2: "{{ infraID }}-nodes2"
-    os_port_bootstrap2: "{{ infraID }}-bootstrap-port2"
-    os_port_master2: "{{ infraID }}-master-port2"
-    os_port_worker2: "{{ infraID }}-worker-port2"
+    os_aci_containers_network: "{{ infraID }}-acicontainers-network"
+    os_aci_containers_subnet: "{{ infraID }}-acicontainers-nodes"
+    os_aci_containers_port_bootstrap: "{{ infraID }}-acicontainers-bootstrap-port"
+    os_aci_containers_port_master: "{{ infraID }}-acicontainers-master-port"
+    os_aci_containers_port_worker: "{{ infraID }}-acicontainers-worker-port"
