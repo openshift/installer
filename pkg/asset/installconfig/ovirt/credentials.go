@@ -98,6 +98,7 @@ func (c *clientHTTP) checkURLResponse() error {
 // The password provided will be added in the Config struct.
 // If an error happens, it will ask again username for users.
 func askPassword(c *Config) error {
+	origPwdTpl := survey.PasswordQuestionTemplate
 	survey.PasswordQuestionTemplate = `
 {{- if .ShowHelp }}{{- color "cyan"}}{{ HelpIcon }} {{ .Help }}{{color "reset"}}{{"\n"}}{{end}}
 {{- color "green+hb"}}{{ QuestionIcon }} {{color "reset"}}
@@ -113,6 +114,9 @@ func askPassword(c *Config) error {
 			Validate: survey.ComposeValidators(survey.Required, authenticated(c)),
 		},
 	}, &c.Password)
+
+	survey.PasswordQuestionTemplate = origPwdTpl
+
 	if err != nil {
 		return err
 	}
