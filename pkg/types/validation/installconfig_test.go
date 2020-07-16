@@ -5,7 +5,6 @@ import (
 	"net"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,7 +19,6 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
-	"github.com/openshift/installer/pkg/types/openstack/validation/mock"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -476,23 +474,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
-			name: "invalid compute",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Compute = []types.MachinePool{
-					func() types.MachinePool {
-						p := *validMachinePool("worker")
-						p.Platform = types.MachinePoolPlatform{
-							OpenStack: &openstack.MachinePool{},
-						}
-						return p
-					}(),
-				}
-				return c
-			}(),
-			expectedError: `^compute\[0\]\.platform\.openstack: Invalid value: openstack\.MachinePool{.*}: cannot specify "openstack" for machine pool when cluster is using "aws"$`,
-		},
-		{
 			name: "missing platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -571,10 +552,10 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{
 					OpenStack: validOpenStackPlatform(),
 				}
-				c.Platform.OpenStack.Cloud = ""
+				c.Platform.OpenStack.APIVIP = "123.456.789.000"
 				return c
 			}(),
-			expectedError: `^platform\.openstack\.cloud: Unsupported value: "": supported values: "test-cloud"$`,
+			expectedError: `^platform\.openstack\.apiVIP: Invalid value: "123.456.789.000": "123.456.789.000" is not a valid IP$`,
 		},
 		{
 			name: "valid baremetal platform",
@@ -935,15 +916,7 @@ func TestValidateInstallConfig(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockCtrl := gomock.NewController(t)
-			defer mockCtrl.Finish()
-
-			fetcher := mock.NewMockValidValuesFetcher(mockCtrl)
-			fetcher.EXPECT().GetCloudNames().Return([]string{"test-cloud"}, nil).AnyTimes()
-			fetcher.EXPECT().GetNetworkNames(gomock.Any()).Return([]string{"test-network"}, nil).AnyTimes()
-			fetcher.EXPECT().GetFlavorNames(gomock.Any()).Return([]string{"test-flavor"}, nil).AnyTimes()
-
-			err := ValidateInstallConfig(tc.installConfig, fetcher).ToAggregate()
+			err := ValidateInstallConfig(tc.installConfig).ToAggregate()
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {

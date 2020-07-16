@@ -6,22 +6,12 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	networkutils "github.com/gophercloud/utils/openstack/networking/v2/networks"
-
-	"github.com/openshift/installer/pkg/types/openstack/validation"
 )
 
-type realValidValuesFetcher struct{}
-
-// NewValidValuesFetcher returns a new ValidValuesFetcher.
-func NewValidValuesFetcher() validation.ValidValuesFetcher {
-	return realValidValuesFetcher{}
-}
-
-// GetCloudNames gets the valid cloud names. These are read from clouds.yaml.
-func (f realValidValuesFetcher) GetCloudNames() ([]string, error) {
+// getCloudNames gets the valid cloud names. These are read from clouds.yaml.
+func getCloudNames() ([]string, error) {
 	clouds, err := clientconfig.LoadCloudsYAML()
 	if err != nil {
 		return nil, err
@@ -34,8 +24,8 @@ func (f realValidValuesFetcher) GetCloudNames() ([]string, error) {
 	return cloudNames, nil
 }
 
-// GetNetworkNames gets the valid network names.
-func (f realValidValuesFetcher) GetNetworkNames(cloud string) ([]string, error) {
+// getNetworkNames gets the valid network names.
+func getNetworkNames(cloud string) ([]string, error) {
 	conn, err := clientconfig.NewServiceClient("network", &clientconfig.ClientOpts{
 		Cloud: cloud,
 	})
@@ -62,8 +52,8 @@ func (f realValidValuesFetcher) GetNetworkNames(cloud string) ([]string, error) 
 	return networkNames, nil
 }
 
-// GetFlavorNames gets a list of valid flavor names.
-func (f realValidValuesFetcher) GetFlavorNames(cloud string) ([]string, error) {
+// getFlavorNames gets a list of valid flavor names.
+func getFlavorNames(cloud string) ([]string, error) {
 	conn, err := clientconfig.NewServiceClient("compute", &clientconfig.ClientOpts{
 		Cloud: cloud,
 	})
@@ -93,7 +83,7 @@ func (f realValidValuesFetcher) GetFlavorNames(cloud string) ([]string, error) {
 
 	return flavorNames, nil
 }
-func (f realValidValuesFetcher) GetFloatingIPNames(cloud string, floatingNetworkName string) ([]string, error) {
+func getFloatingIPNames(cloud string, floatingNetworkName string) ([]string, error) {
 	conn, err := clientconfig.NewServiceClient("network", &clientconfig.ClientOpts{
 		Cloud: cloud,
 	})
@@ -133,20 +123,4 @@ func (f realValidValuesFetcher) GetFloatingIPNames(cloud string, floatingNetwork
 	}
 
 	return floatingIPNames, nil
-}
-
-func (f realValidValuesFetcher) GetSubnetCIDR(cloud string, subnetID string) (string, error) {
-	networkClient, err := clientconfig.NewServiceClient("network", &clientconfig.ClientOpts{
-		Cloud: cloud,
-	})
-	if err != nil {
-		return "", err
-	}
-
-	subnet, err := subnets.Get(networkClient, subnetID).Extract()
-	if err != nil {
-		return "", err
-	}
-
-	return subnet.CIDR, nil
 }

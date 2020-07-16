@@ -138,7 +138,7 @@ func (a *InstallConfig) finish(filename string) error {
 	if a.Config.Azure != nil {
 		a.Azure = icazure.NewMetadata(a.Config.Azure.CloudName)
 	}
-	if err := validation.ValidateInstallConfig(a.Config, icopenstack.NewValidValuesFetcher()).ToAggregate(); err != nil {
+	if err := validation.ValidateInstallConfig(a.Config).ToAggregate(); err != nil {
 		if filename == "" {
 			return errors.Wrap(err, "invalid install config")
 		}
@@ -183,6 +183,9 @@ func (a *InstallConfig) platformValidation() error {
 	}
 	if a.Config.Platform.Ovirt != nil {
 		return icovirt.Validate(a.Config)
+	}
+	if a.Config.Platform.OpenStack != nil {
+		return icopenstack.Validate(a.Config)
 	}
 	return field.ErrorList{}.ToAggregate()
 }
