@@ -1451,7 +1451,6 @@ github.com/tombuildsstuff/giovanni/storage/internal/endpoints
 github.com/tombuildsstuff/giovanni/storage/internal/metadata
 github.com/tombuildsstuff/giovanni/version
 # github.com/ulikunitz/xz v0.5.6
-## explicit
 github.com/ulikunitz/xz
 github.com/ulikunitz/xz/internal/hash
 github.com/ulikunitz/xz/internal/xlog
@@ -1500,6 +1499,9 @@ github.com/vmware/govmomi/vim25/xml
 github.com/vmware/govmomi/vmdk
 # github.com/xanzy/ssh-agent v0.2.1
 github.com/xanzy/ssh-agent
+# github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
+## explicit
+github.com/xi2/xz
 # github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca
 ## explicit
 github.com/xlab/treeprint

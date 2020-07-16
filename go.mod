@@ -80,9 +80,9 @@ require (
 	github.com/terraform-providers/terraform-provider-openstack v1.28.0
 	github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
 	github.com/terraform-providers/terraform-provider-vsphere v1.16.2
-	github.com/ulikunitz/xz v0.5.6
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 	github.com/vmware/govmomi v0.22.2
+	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
 	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca // indirect
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b

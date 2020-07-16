@@ -842,17 +842,12 @@ github.com/gophercloud/gophercloud v0.6.0/go.mod h1:GICNByuaEBibcjmjvI7QvYJSZEbG
 github.com/gophercloud/gophercloud v0.6.1-0.20191025185032-6ad562af8c1f/go.mod h1:GICNByuaEBibcjmjvI7QvYJSZEbGkcYwAR7EZK2WMqM=
 github.com/gophercloud/gophercloud v0.6.1-0.20191122030953-d8ac278c1c9d/go.mod h1:ozGNgr9KYOVATV5jsgHl/ceCDXGuguqOZAzoQ/2vcNM=
 github.com/gophercloud/gophercloud v0.7.1-0.20191210042042-7aa2e52d21f9/go.mod h1:gmC5oQqMDOMO1t1gq5DquX/yAU808e/4mzjjDA76+Ss=
-github.com/gophercloud/gophercloud v0.7.1-0.20191211202411-f940f50ff1f7/go.mod h1:gmC5oQqMDOMO1t1gq5DquX/yAU808e/4mzjjDA76+Ss=
-github.com/gophercloud/gophercloud v0.8.0 h1:1ylFFLRx7otpfRPSuOm77q8HLSlSOwYCGDeXmXJhX7A=
-github.com/gophercloud/gophercloud v0.8.0/go.mod h1:Kc/QKr9thLKruO/dG0szY8kRIYS+iENz0ziI0hJf76A=
 github.com/gophercloud/gophercloud v0.10.1-0.20200424014253-c3bfe50899e5/go.mod h1:gmC5oQqMDOMO1t1gq5DquX/yAU808e/4mzjjDA76+Ss=
 github.com/gophercloud/gophercloud v0.11.0 h1:pYMP9UZBdQa3lsfIZ1tZor4EbtxiuB6BHhocenkiH/E=
 github.com/gophercloud/gophercloud v0.11.0/go.mod h1:gmC5oQqMDOMO1t1gq5DquX/yAU808e/4mzjjDA76+Ss=
 github.com/gophercloud/utils v0.0.0-20190124231947-9c3b9f2457ef/go.mod h1:wjDF8z83zTeg5eMLml5EBSlAhbF7G8DobyI1YsMuyzw=
 github.com/gophercloud/utils v0.0.0-20190313033024-0bcc8e728cb5/go.mod h1:SZ9FTKibIotDtCrxAU/evccoyu1yhKST6hgBvwTB5Eg=
 github.com/gophercloud/utils v0.0.0-20191129022341-463e26ffa30d/go.mod h1:SZ9FTKibIotDtCrxAU/evccoyu1yhKST6hgBvwTB5Eg=
-github.com/gophercloud/utils v0.0.0-20191212191830-4533a07bd492 h1:NAwq2GgRiqbNLw1cA7KUdt7lDR/NzJtk4EXGxO3gqas=
-github.com/gophercloud/utils v0.0.0-20191212191830-4533a07bd492/go.mod h1:SZ9FTKibIotDtCrxAU/evccoyu1yhKST6hgBvwTB5Eg=
 github.com/gophercloud/utils v0.0.0-20200423144003-7c72efc7435d/go.mod h1:ehWUbLQJPqS0Ep+CxeD559hsm9pthPXadJNKwZkp43w=
 github.com/gophercloud/utils v0.0.0-20200508015959-b0167b94122c h1:iawx2ojEQA7c+GmkaVO5sN+k8YONibXyDO8RlsC+1bs=
 github.com/gophercloud/utils v0.0.0-20200508015959-b0167b94122c/go.mod h1:ehWUbLQJPqS0Ep+CxeD559hsm9pthPXadJNKwZkp43w=
@@ -872,7 +867,6 @@ github.com/gorilla/mux v1.7.3/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2z
 github.com/gorilla/websocket v0.0.0-20170926233335-4201258b820c/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/gorilla/websocket v1.4.0 h1:WDFjx/TMzVgy9VdMMQi2K2Emtwi2QcUQsztZ/zLaH/Q=
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
-github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gostaticanalysis/analysisutil v0.0.0-20190318220348-4088753ea4d3/go.mod h1:eEOZF4jCKGi+aprrirO9e7WKB3beBRtWgqGunKl6pKE=
 github.com/gostaticanalysis/analysisutil v0.0.3/go.mod h1:eEOZF4jCKGi+aprrirO9e7WKB3beBRtWgqGunKl6pKE=
 github.com/gosuri/uitable v0.0.4/go.mod h1:tKR86bXuXPZazfOTG1FIzvjIdXzd0mo4Vtn16vt0PJo=
@@ -1786,8 +1780,6 @@ github.com/terraform-providers/terraform-provider-local v1.4.0 h1:n0CNTMjBfCC5R6
 github.com/terraform-providers/terraform-provider-local v1.4.0/go.mod h1:nbnWkAjiiG0FHlsfYYMRfBwvDbo6eLjorQs/mmRGi14=
 github.com/terraform-providers/terraform-provider-null v1.0.1-0.20191204185112-e5c592237f62 h1:vi12lh3hnvMclOqFwEf73s8JCUTPTchOhEmf/7uMPn0=
 github.com/terraform-providers/terraform-provider-null v1.0.1-0.20191204185112-e5c592237f62/go.mod h1:RaAgicYv+oKLyZpaQB5BOkwL/t5WKYHQ+Q0kgMgXgR4=
-github.com/terraform-providers/terraform-provider-openstack v1.25.0 h1:cUGi9qbg/6B7lv4+HyrarINEtVMSIouEuEuVpOE/0zY=
-github.com/terraform-providers/terraform-provider-openstack v1.25.0/go.mod h1:cTefkvjGdhORynFvVsB2beWN+XmGhjAm3RBrnEJLvfs=
 github.com/terraform-providers/terraform-provider-openstack v1.28.0 h1:yiT3Z5fDkJt0YX5BDkX/+0uwGpX/uNjVsuYqFIJ/kL0=
 github.com/terraform-providers/terraform-provider-openstack v1.28.0/go.mod h1:MxR5egxGj9OfPTj0VorSjpIVAi3OT24jOMiCBH/d7hU=
 github.com/terraform-providers/terraform-provider-random v0.0.0-20190925200408-30dac3233094/go.mod h1:F4KE9YftuJyMiBth4W1kCrsyOHndtTjAmZ+ZzjqWY+4=
@@ -1875,6 +1867,7 @@ github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb/go.mod h1:N2
 github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415/go.mod h1:GwrjFmJcFw6At/Gs6z4yjiIwzuJ1/+UwLxMQDVQXShQ=
 github.com/xeipuuv/gojsonschema v0.0.0-20180618132009-1d523034197f/go.mod h1:5yf86TLmAcydyeJq5YvxkGPE2fm/u4myDekKRoLuqhs=
 github.com/xeipuuv/gojsonschema v1.1.0/go.mod h1:5yf86TLmAcydyeJq5YvxkGPE2fm/u4myDekKRoLuqhs=
+github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 h1:nIPpBwaJSVYIxUFsDv3M8ofmx9yWTog9BfvIu0q41lo=
 github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8/go.mod h1:HUYIGzjTL3rfEspMxjDjgmT5uz5wzYJKVo23qUhYTos=
 github.com/xiang90/probing v0.0.0-20160813154853-07dd2e8dfe18/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 h1:eY9dn8+vbi4tKz5Qo6v2eYzo7kUS51QINcR5jNpbZS8=

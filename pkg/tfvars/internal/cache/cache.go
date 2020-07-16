@@ -15,8 +15,7 @@ import (
 	"github.com/h2non/filetype/matchers"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/ulikunitz/xz"
-
+	"github.com/xi2/xz"
 	"golang.org/x/sys/unix"
 )
 
@@ -131,7 +130,7 @@ func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err er
 		reader = uncompressor
 	case matchers.Xz(buf):
 		logrus.Debug("decompressing the image archive as xz")
-		uncompressor, err := xz.NewReader(reader)
+		uncompressor, err := xz.NewReader(reader, 0)
 		if err != nil {
 			return err
 		}
