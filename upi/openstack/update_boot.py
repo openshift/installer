@@ -40,29 +40,22 @@ files.append(
     'filesystem': 'root',
 })
 
-dhcp_client_conf_b64 = base64.standard_b64encode(b'[main]\ndhcp=dhclient\n').decode().strip()
-files.append(
-{
-    'path': '/etc/NetworkManager/conf.d/dhcp-client.conf',
-    'mode': 420,
-    'contents': {
-        'source': 'data:text/plain;charset=utf-8;base64,' + dhcp_client_conf_b64,
-        'verification': {}
-        },
-    'filesystem': 'root',
-})
+ca_cert_path = os.environ.get('OS_CACERT', '')
+if ca_cert_path:
+    with open(ca_cert_path, 'r') as f:
+        ca_cert = f.read().encode()
+        ca_cert_b64 = base64.standard_b64encode(ca_cert).decode().strip()
 
-dhclient_cont_b64 = base64.standard_b64encode(b'send dhcp-client-identifier = hardware;\nprepend domain-name-servers 127.0.0.1;\n').decode().strip()
-files.append(
-{
-    'path': '/etc/dhcp/dhclient.conf',
-    'mode': 420,
-    'contents': {
-        'source': 'data:text/plain;charset=utf-8;base64,' + dhclient_cont_b64,
-        'verification': {}
+    files.append(
+    {
+        'path': '/opt/openshift/tls/cloud-ca-cert.pem',
+        'mode': 420,
+        'contents': {
+            'source': 'data:text/plain;charset=utf-8;base64,' + ca_cert_b64,
+            'verification': {}
         },
-    'filesystem': 'root'
-})
+        'filesystem': 'root',
+    })
 
 ifcfg_ens3 = ("""TYPE=Ethernet
 DEVICE=""" + node_interface + """
