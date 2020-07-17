@@ -37,16 +37,12 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if poolPlatform := pool.Platform.Name(); poolPlatform != openstack.Name {
 		return nil, fmt.Errorf("non-OpenStack machine-pool: %q", poolPlatform)
 	}
-	platform := config.Platform.OpenStack
 
-	az := ""
-	provider, err := generateProvider(clusterID, platform, pool.Platform.OpenStack, osImage, az, role, userDataSecret)
+	mpool := pool.Platform.OpenStack
+	platform := config.Platform.OpenStack
+	trunkSupport, err := checkNetworkExtensionAvailability(platform.Cloud, "trunk")
 	if err != nil {
 		return nil, err
-	}
-
-	if role == "master" {
-		provider.ServerGroupName = clusterID + "-master"
 	}
 
 	total := int64(1)
@@ -54,7 +50,33 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		total = *pool.Replicas
 	}
 	machines := make([]machineapi.Machine, 0, total)
+	providerConfigs := map[string]*openstackprovider.OpenstackProviderSpec{}
 	for idx := int64(0); idx < total; idx++ {
+		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
+		var provider *openstackprovider.OpenstackProviderSpec
+
+		if _, ok := providerConfigs[zone]; !ok {
+			provider, err = generateProvider(
+				clusterID,
+				platform,
+				mpool,
+				osImage,
+				zone,
+				role,
+				userDataSecret,
+				trunkSupport,
+			)
+			if err != nil {
+				return nil, err
+			}
+			providerConfigs[zone] = provider
+		}
+
+		provider = providerConfigs[zone]
+		if role == "master" {
+			provider.ServerGroupName = clusterID + "-master"
+		}
+
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
@@ -82,12 +104,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string) (*openstackprovider.OpenstackProviderSpec, error) {
-	trunkSupport, err := checkNetworkExtensionAvailability(platform.Cloud, "trunk")
-	if err != nil {
-		return nil, err
-	}
-
+func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunkSupport bool) (*openstackprovider.OpenstackProviderSpec, error) {
 	var networks []openstackprovider.NetworkParam
 	if platform.MachinesSubnet != "" {
 		networks = []openstackprovider.NetworkParam{{

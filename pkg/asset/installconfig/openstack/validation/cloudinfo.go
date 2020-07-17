@@ -2,6 +2,7 @@ package validation
 
 import (
 	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/availabilityzones"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
@@ -21,6 +22,7 @@ type CloudInfo struct {
 	MachinesSubnet  *subnets.Subnet
 	APIFIP          *floatingips.FloatingIP
 	IngressFIP      *floatingips.FloatingIP
+	Zones           []string
 
 	clients *clients
 }
@@ -110,6 +112,11 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig) error {
 		return err
 	}
 
+	ci.Zones, err = ci.getZones()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -186,4 +193,29 @@ func (ci *CloudInfo) getFloatingIP(fip string) (*floatingips.FloatingIP, error) 
 		return &allFIPs[0], nil
 	}
 	return nil, nil
+}
+
+func (ci *CloudInfo) getZones() ([]string, error) {
+	zones := []string{}
+	allPages, err := availabilityzones.List(ci.clients.computeClient).AllPages()
+	if err != nil {
+		return []string{}, err
+	}
+
+	availabilityZoneInfo, err := availabilityzones.ExtractAvailabilityZones(allPages)
+	if err != nil {
+		return []string{}, err
+	}
+
+	for _, zoneInfo := range availabilityZoneInfo {
+		if zoneInfo.ZoneState.Available {
+			zones = append(zones, zoneInfo.ZoneName)
+		}
+	}
+
+	if len(zones) == 0 {
+		return []string{""}, nil
+	}
+
+	return zones, nil
 }

@@ -50,8 +50,34 @@ func ValidateMachinePool(p *openstack.MachinePool, ci *CloudInfo, controlPlane b
 		}
 	}
 
+	allErrs = append(allErrs, validateZones(p.Zones, ci.Zones, fldPath.Child("zones"))...)
 	allErrs = append(allErrs, validateUUIDV4s(p.AdditionalNetworkIDs, fldPath.Child("additionalNetworkIDs"))...)
 	allErrs = append(allErrs, validateUUIDV4s(p.AdditionalSecurityGroupIDs, fldPath.Child("additionalSecurityGroupIDs"))...)
+
+	return allErrs
+}
+
+func validateZones(input []string, actual []string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Base Case: No user input
+	if len(input) == 1 {
+		if input[0] == "" {
+			return allErrs
+		}
+	}
+	if len(input) >= 1 {
+		actualZones := map[string]bool{}
+		for _, zone := range actual {
+			actualZones[zone] = true
+		}
+
+		for _, zoneInput := range input {
+			if !actualZones[zoneInput] {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("zone"), zoneInput, "Zone either does not exist in this cloud, or is not available"))
+			}
+		}
+	}
 
 	return allErrs
 }

@@ -359,3 +359,9 @@ variable "openstack_machines_network_id" {
   default = ""
   description = "ID of the network the machines subnet is on. If empty, the installer will create a network to use as machinesNetwork."
 }
+
+variable "openstack_master_availability_zones" {
+  type = list(string)
+  default = [""]
+  description = "List of availability Zones to Schedule the masters on"
+}

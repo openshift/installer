@@ -22,9 +22,14 @@ type MachinePool struct {
 	// where each ID is presented in UUID v4 format.
 	// +optional
 	AdditionalSecurityGroupIDs []string `json:"additionalSecurityGroupIDs,omitempty"`
+
+	// Zones contains a list of availabilty zones that instances can be deployed on
+	//
+	// +optional
+	Zones []string `json:"zones,omitempty"`
 }
 
-// Set sets the values from `required` to `a`.
+// Set sets the values from `required` to `o`.
 func (o *MachinePool) Set(required *MachinePool) {
 	if required == nil || o == nil {
 		return
@@ -49,6 +54,13 @@ func (o *MachinePool) Set(required *MachinePool) {
 	if required.AdditionalSecurityGroupIDs != nil {
 		o.AdditionalSecurityGroupIDs = append(required.AdditionalSecurityGroupIDs[:0:0], required.AdditionalSecurityGroupIDs...)
 	}
+
+	if len(required.Zones) > 0 {
+		o.Zones = required.Zones
+	} else {
+		o.Zones = []string{""}
+	}
+
 }
 
 // RootVolume defines the storage for an instance.
