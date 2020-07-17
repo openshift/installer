@@ -16,6 +16,8 @@ import (
 	"gopkg.in/AlecAivazis/survey.v1"
 )
 
+var errHTTPNotFound = errors.New("http response 404")
+
 // Add PEM into the System Pool
 func (c *clientHTTP) addTrustBundle(pemFilePath string, engineConfig *Config) error {
 	c.certPool, _ = x509.SystemCertPool()
@@ -50,11 +52,17 @@ func (c *clientHTTP) downloadFile() error {
 	}
 
 	if c.saveFilePath == "" {
-		return errors.New("saveFilePath must be specificed")
+		return errors.New("saveFilePath must be specified")
 	}
 
 	client := &http.Client{Transport: tr}
 	resp, err := client.Get(c.urlAddr)
+
+	switch resp.StatusCode {
+	case http.StatusNotFound:
+		return fmt.Errorf("%s: %w", c.urlAddr, errHTTPNotFound)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -222,6 +230,10 @@ func engineSetup() (Config, error) {
 	httpResource.skipVerify = true
 	httpResource.urlAddr = engineConfig.PemURL
 	err = httpResource.downloadFile()
+	if errors.Is(err, errHTTPNotFound) {
+		return engineConfig, err
+	}
+
 	if err != nil {
 		logrus.Warning("cannot download PEM file from Engine!", err)
 		engineConfig.Insecure = true
