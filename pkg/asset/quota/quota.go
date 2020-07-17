@@ -119,21 +119,31 @@ func (a *PlatformQuotaCheck) Name() string {
 }
 
 // summarizeFailingReport summarizes a report when there are failing constraints.
-func summarizeFailingReport(reports []quota.ConstraintReport) *diagnostics.Err {
-	dErr := &diagnostics.Err{Reason: "MissingQuota"}
-	var messages []string
+func summarizeFailingReport(reports []quota.ConstraintReport) error {
+	var notavailable []string
+	var unknown []string
 	for _, report := range reports {
 		switch report.Result {
 		case quota.NotAvailable:
-			messages = append(messages, fmt.Sprintf("%s is not available in %s because %s", report.For.Name, report.For.Region, report.Message))
+			notavailable = append(notavailable, fmt.Sprintf("%s is not available in %s because %s", report.For.Name, report.For.Region, report.Message))
 		case quota.Unknown:
-			messages = append(messages, fmt.Sprintf("could not find any quota information for %s", report.For.Name))
+			unknown = append(unknown, report.For.Name)
 		default:
 			continue
 		}
 	}
-	dErr.Message = strings.Join(messages, ", ")
-	return dErr
+
+	if len(notavailable) == 0 && len(unknown) > 0 {
+		// all quotas are missing information so warn and skip
+		logrus.Warnf("Failed to find information on quotas %s", strings.Join(unknown, ", "))
+		return nil
+	}
+
+	msg := strings.Join(notavailable, ", ")
+	if len(unknown) > 0 {
+		msg = fmt.Sprintf("%s, and could not find information on %s", msg, strings.Join(unknown, ", "))
+	}
+	return &diagnostics.Err{Reason: "MissingQuota", Message: msg}
 }
 
 // summarizeReport summarizes a report when there are availble.
