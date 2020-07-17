@@ -913,6 +913,43 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `^compute\[0\].architecture: Invalid value: "ppc64le": heteregeneous multi-arch is not supported; compute pool architecture must match control plane$`,
 		},
+		{
+			name: "valid cloud credentials mode",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.CredentialsMode = types.PassthroughCredentialsMode
+				return c
+			}(),
+		},
+		{
+			name: "unsupported manual cloud credentials mode",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.CredentialsMode = types.ManualCredentialsMode
+				return c
+			}(),
+			expectedError: `^credentialsMode: Unsupported value: "manual": supported values: "mint", "passthrough"$`,
+		},
+		{
+			name: "invalidly set cloud credentials mode",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{BareMetal: validBareMetalPlatform()}
+				c.CredentialsMode = types.PassthroughCredentialsMode
+				return c
+			}(),
+			expectedError: `^credentialsMode: Invalid value: "passthrough": cannot be set when using the "baremetal" platform$`,
+		},
+		{
+			name: "bad cloud credentials mode",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.CredentialsMode = "bad-mode"
+				return c
+			}(),
+			expectedError: `^credentialsMode: Unsupported value: "bad-mode": supported values: "manual", "mint", "passthrough"$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
