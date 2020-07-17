@@ -10,7 +10,7 @@
 // the template.
 data "ovirt_templates" "osImage" {
   search = {
-    criteria       = "name=${var.openstack_base_image_name} or name=Blank"
+    criteria       = "name=${var.openstack_base_image_name} or name=Blank*"
     case_sensitive = true
   }
 }
