@@ -9,6 +9,7 @@ import (
 
 	dockerref "github.com/containers/image/docker/reference"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/ipnet"
@@ -98,6 +99,7 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	if _, ok := validPublishingStrategies[c.Publish]; !ok {
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("publish"), c.Publish, validPublishingStrategyValues))
 	}
+	allErrs = append(allErrs, validateCloudCredentialsMode(c.CredentialsMode, field.NewPath("credentialsMode"), c.Platform.Name())...)
 
 	return allErrs
 }
@@ -459,3 +461,29 @@ var (
 		return v
 	}()
 )
+
+func validateCloudCredentialsMode(mode types.CredentialsMode, fldPath *field.Path, platform string) field.ErrorList {
+	if mode == "" {
+		return nil
+	}
+	allErrs := field.ErrorList{}
+	// validPlatformCredentialsModes is a map from the platform name to a slice of credentials modes that are valid
+	// for the platform. If a platform name is not in the map, then the credentials mode cannot be set for that platform.
+	validPlatformCredentialsModes := map[string][]types.CredentialsMode{
+		aws.Name:   {types.MintCredentialsMode, types.PassthroughCredentialsMode, types.ManualCredentialsMode},
+		azure.Name: {types.MintCredentialsMode, types.PassthroughCredentialsMode},
+		gcp.Name:   {types.MintCredentialsMode, types.PassthroughCredentialsMode},
+	}
+	if validModes, ok := validPlatformCredentialsModes[platform]; ok {
+		validModesSet := sets.NewString()
+		for _, m := range validModes {
+			validModesSet.Insert(string(m))
+		}
+		if !validModesSet.Has(string(mode)) {
+			allErrs = append(allErrs, field.NotSupported(fldPath, mode, validModesSet.List()))
+		}
+	} else {
+		allErrs = append(allErrs, field.Invalid(fldPath, mode, fmt.Sprintf("cannot be set when using the %q platform", platform)))
+	}
+	return allErrs
+}
