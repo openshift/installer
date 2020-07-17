@@ -119,6 +119,12 @@ type InstallConfig struct {
 	// +kubebuilder:default=false
 	// +optional
 	FIPS bool `json:"fips,omitempty"`
+
+	// ForceCredentialsMode instructs the installer to not attempt to query the cloud permissions before attempting
+	// installation. It also passes down the desired credentials mode to the cloud-credential-operator so that it too
+	// does not attempt to query permissions.
+	// +optional
+	ForceCloudCredentialsMode CloudCredentialsMode `json:"forceCloudCredentialsMode,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
@@ -294,3 +300,20 @@ type ImageContentSource struct {
 	// +optional
 	Mirrors []string `json:"mirrors,omitempty"`
 }
+
+// CloudCredentialsMode is the mode in which the cloud-credential-operator operates.
+// +kubebuilder:validation:Enum="";mint;passthrough;manual
+type CloudCredentialsMode string
+
+const (
+	// ManualCloudCredentialsMode indicates that cloud-credential-operator should not process any CredentialsRequests.
+	ManualCloudCredentialsMode CloudCredentialsMode = "manual"
+
+	// MintCloudCredentialsMode indicates that cloud-credential-operator should be creating users for each
+	// CredentialsRequest.
+	MintCloudCredentialsMode CloudCredentialsMode = "mint"
+
+	// PassthroughCloudCredentialsMode indicates that cloud-credential-operator should just copy over the cluster's
+	// cloud credentials for each CredentialsRequest.
+	PassthroughCloudCredentialsMode CloudCredentialsMode = "passthrough"
+)

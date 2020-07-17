@@ -173,6 +173,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	etcdEndpointHostnames[0] = "etcd-bootstrap"
 
 	templateData := &bootkubeTemplateData{
+		CloudCredentialsMode:       string(installConfig.Config.ForceCloudCredentialsMode),
 		CVOClusterID:               clusterID.UUID,
 		EtcdCaBundle:               string(etcdCABundle.Cert()),
 		EtcdEndpointDNSSuffix:      installConfig.Config.ClusterDomain(),

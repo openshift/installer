@@ -57,6 +57,7 @@ type cloudCredsSecretData struct {
 }
 
 type bootkubeTemplateData struct {
+	CloudCredentialsMode       string
 	CVOClusterID               string
 	EtcdCaBundle               string
 	EtcdEndpointDNSSuffix      string

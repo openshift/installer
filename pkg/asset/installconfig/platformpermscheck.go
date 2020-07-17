@@ -40,6 +40,10 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 	ic := &InstallConfig{}
 	dependencies.Get(ic)
 
+	if ic.Config.ForceCloudCredentialsMode != "" {
+		return nil
+	}
+
 	var err error
 	platform := ic.Config.Platform.Name()
 	switch platform {

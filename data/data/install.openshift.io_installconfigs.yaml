@@ -613,6 +613,17 @@ spec:
             default: false
             description: FIPS configures https://www.nist.gov/itl/fips-general-information
             type: boolean
+          forceCloudCredentialsMode:
+            description: ForceCredentialsMode instructs the installer to not attempt
+              to query the cloud permissions before attempting installation. It also
+              passes down the desired credentials mode to the cloud-credential-operator
+              so that it too does not attempt to query permissions.
+            enum:
+            - ""
+            - mint
+            - passthrough
+            - manual
+            type: string
           imageContentSources:
             description: ImageContentSources lists sources/repositories for the release-image
               content.
