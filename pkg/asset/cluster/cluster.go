@@ -12,11 +12,14 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
+	"github.com/openshift/installer/pkg/asset/cluster/azure"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/quota"
 	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
+	typesaws "github.com/openshift/installer/pkg/types/aws"
+	typesazure "github.com/openshift/installer/pkg/types/azure"
 )
 
 // Cluster uses the terraform executable to launch a cluster
@@ -78,8 +81,13 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	logrus.Infof("Creating infrastructure resources...")
-	if installConfig.Config.Platform.AWS != nil {
+	switch installConfig.Config.Platform.Name() {
+	case typesaws.Name:
 		if err := aws.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
+			return err
+		}
+	case typesazure.Name:
+		if err := azure.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
 			return err
 		}
 	}
