@@ -300,8 +300,10 @@ func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, 
 	if cn.HostPrefix < 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "hostPrefix must be positive"))
 	}
-	if ones, _ := cn.CIDR.Mask.Size(); cn.HostPrefix < int32(ones) {
+	if ones, bits := cn.CIDR.Mask.Size(); cn.HostPrefix < int32(ones) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must not be larger size than CIDR "+cn.CIDR.String()))
+	} else if bits == 128 && cn.HostPrefix != 64 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must be 64 for IPv6 networks"))
 	}
 	return allErrs
 }
