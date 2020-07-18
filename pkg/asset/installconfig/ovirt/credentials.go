@@ -3,6 +3,7 @@ package ovirt
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,25 +17,30 @@ import (
 	"gopkg.in/AlecAivazis/survey.v1"
 )
 
+// readFile reads a file provided in the args and return
+// the content or in case of failure return an error
+func readFile(pathFile string) ([]byte, error) {
+	content, err := ioutil.ReadFile(pathFile)
+	if err != nil {
+		return content, errors.Wrapf(err, "failed to read file: %s", pathFile)
+	}
+	return content, nil
+}
+
 // Add PEM into the System Pool
-func (c *clientHTTP) addTrustBundle(pemFilePath string, engineConfig *Config) error {
+func (c *clientHTTP) addTrustBundle(pemContent string, engineConfig *Config) error {
 	c.certPool, _ = x509.SystemCertPool()
 	if c.certPool == nil {
 		logrus.Debug("failed to load cert pool.... Creating new cert pool")
 		c.certPool = x509.NewCertPool()
 	}
 
-	pem, err := ioutil.ReadFile(pemFilePath)
-	if err != nil {
-		return errors.Wrapf(err, "failed to read the cert: %s", pemFilePath)
-	}
-
-	if len(pem) != 0 {
-		if !c.certPool.AppendCertsFromPEM(pem) {
-			return errors.Wrapf(err, "unable to load local certificate: %s", pemFilePath)
+	if len(pemContent) != 0 {
+		if !c.certPool.AppendCertsFromPEM([]byte(pemContent)) {
+			return errors.New("unable to load certificate")
 		}
-		logrus.Debugf("loaded %s into the system pool: ", pemFilePath)
-		engineConfig.CABundle = strings.TrimSpace(string(pem))
+		logrus.Debugf("loaded %s into the system pool: ", engineConfig.CAFile)
+		engineConfig.CABundle = strings.TrimSpace(string(pemContent))
 	}
 	return nil
 }
@@ -182,6 +188,60 @@ func askCredentials(c Config) (Config, error) {
 	return c, nil
 }
 
+// showPEM will print information about PEM file provided in param or error
+// if a failure happens
+func showPEM(pemFilePath string) error {
+	certpem, err := ioutil.ReadFile(pemFilePath)
+	if err != nil {
+		return errors.Wrapf(err, "failed to read the cert: %s", pemFilePath)
+	}
+
+	block, _ := pem.Decode(certpem)
+	if block == nil {
+		return errors.New("failed to parse certificate PEM")
+	}
+
+	if block.Type != "CERTIFICATE" {
+		return errors.New("PEM-block should be CERTIFICATE type")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return errors.Wrapf(err, "failed to read the cert: %s", pemFilePath)
+	}
+
+	logrus.Info("Loaded the follow PEM file:")
+
+	logrus.Info("\tVersion: ", cert.Version)
+	logrus.Info("\tSignature Algorithm: ", cert.SignatureAlgorithm.String())
+	logrus.Info("\tSerial Number: ", cert.SerialNumber)
+	logrus.Info("\tIssuer: ", cert.Issuer.String())
+	logrus.Info("\tValiditY")
+	logrus.Info("\t\tNot Before: ", cert.NotBefore)
+	logrus.Info("\t\tNot After: ", cert.NotAfter)
+	logrus.Info("\tSubject: ", cert.Subject.ToRDNSequence())
+
+	return nil
+
+}
+
+// askPEMFile ask users the PEM bundle and returns the bundle string
+// or in case of failure returns error
+func askPEMFile() (string, error) {
+	bundlePEM := ""
+	err := survey.AskOne(&survey.Multiline{
+		Message: "Certificate bundle",
+		Help:    "The certificate bundle to installer be able to communicate with oVirt API",
+	},
+		&bundlePEM,
+		survey.ComposeValidators(survey.Required))
+	if err != nil {
+		return bundlePEM, err
+	}
+
+	return bundlePEM, nil
+}
+
 // engineSetup will ask users: FQDN, execute validations and about
 // the credentials. In case of failure, returns Config and error
 func engineSetup() (Config, error) {
@@ -237,24 +297,62 @@ func engineSetup() (Config, error) {
 	err = httpResource.downloadFile()
 	if err != nil {
 		logrus.Warning("cannot download PEM file from Engine!", err)
-		answer, err := askQuestionTrueOrFalse("Would you like to continue?", "By not using a trusted CA, insecure connections can cause man-in-the-middle attacks among many others.")
-		if !answer {
+		answer, err := askQuestionTrueOrFalse(
+			"Would you like to continue?",
+			"By not using a trusted CA, insecure connections can "+
+				"cause man-in-the-middle attacks among many others.")
+		if err != nil || !answer {
 			return engineConfig, err
 		}
-		engineConfig.Insecure = true
 	} else {
-		err = httpResource.addTrustBundle(httpResource.saveFilePath, &engineConfig)
+		err = showPEM(httpResource.saveFilePath)
 		if err != nil {
 			engineConfig.Insecure = true
 		} else {
-			engineConfig.Insecure = false
+			answer, err := askQuestionTrueOrFalse(
+				"Would you like to continue?",
+				"The above PEM was auto-detected from Engine.")
+			if err != nil {
+				return engineConfig, err
+			}
+			if answer {
+				pemFile, err := readFile(httpResource.saveFilePath)
+				engineConfig.CABundle = string(pemFile)
+				if err != nil {
+					return engineConfig, err
+				}
+				if len(engineConfig.CABundle) > 0 {
+					engineConfig.Insecure = false
+				}
+			} else {
+				answer, err = askQuestionTrueOrFalse(
+					"Would you like to import another PEM bundle?",
+					"Users are able to use it's own PEM bundle to connect to Engine API")
+				if err != nil {
+					return engineConfig, err
+				}
+				if answer {
+					engineConfig.CABundle, _ = askPEMFile()
+					if len(engineConfig.CABundle) > 0 {
+						engineConfig.Insecure = false
+					}
+				}
+
+			}
 		}
-		logrus.Debugf("engine PEM temporary stored: %s", httpResource.saveFilePath)
+	}
+
+	if engineConfig.Insecure == false {
+		err = httpResource.addTrustBundle(engineConfig.CABundle, &engineConfig)
+		if err != nil {
+			engineConfig.Insecure = true
+		}
 	}
 
 	if engineConfig.Insecure == true {
-		logrus.Warning("cannot detect Engine CA cert imported in the system. Communication with the Engine will be insecure.")
+		logrus.Warning(
+			"cannot detect Engine CA cert imported in the system. ",
+			"Communication with the Engine will be insecure.")
 	}
-
 	return askCredentials(engineConfig)
 }
