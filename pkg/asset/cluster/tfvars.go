@@ -279,6 +279,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			azuretfvars.TFVarsSources{
 				Auth:                        auth,
 				CloudName:                   installConfig.Config.Azure.CloudName,
+				ResourceGroupName:           installConfig.Config.Azure.ResourceGroupName,
 				BaseDomainResourceGroupName: installConfig.Config.Azure.BaseDomainResourceGroupName,
 				MasterConfigs:               masterConfigs,
 				WorkerConfigs:               workerConfigs,

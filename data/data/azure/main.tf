@@ -26,7 +26,7 @@ provider "azureprivatedns" {
 
 module "bootstrap" {
   source                 = "./bootstrap"
-  resource_group_name    = azurerm_resource_group.main.name
+  resource_group_name    = data.azurerm_resource_group.main.name
   region                 = var.azure_region
   vm_size                = var.azure_bootstrap_vm_type
   vm_image               = azurerm_image.cluster.id
@@ -51,7 +51,7 @@ module "bootstrap" {
 
 module "vnet" {
   source              = "./vnet"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = data.azurerm_resource_group.main.name
   vnet_v4_cidrs       = var.machine_v4_cidrs
   vnet_v6_cidrs       = var.machine_v6_cidrs
   cluster_id          = var.cluster_id
@@ -73,7 +73,7 @@ module "vnet" {
 
 module "master" {
   source                 = "./master"
-  resource_group_name    = azurerm_resource_group.main.name
+  resource_group_name    = data.azurerm_resource_group.main.name
   cluster_id             = var.cluster_id
   region                 = var.azure_region
   availability_zones     = var.azure_master_availability_zones
@@ -108,7 +108,7 @@ module "dns" {
   external_lb_fqdn_v6             = module.vnet.public_lb_pip_v6_fqdn
   internal_lb_ipaddress_v4        = module.vnet.internal_lb_ip_v4_address
   internal_lb_ipaddress_v6        = module.vnet.internal_lb_ip_v6_address
-  resource_group_name             = azurerm_resource_group.main.name
+  resource_group_name             = data.azurerm_resource_group.main.name
   base_domain_resource_group_name = var.azure_base_domain_resource_group_name
   private                         = module.vnet.private
 
@@ -124,9 +124,17 @@ resource "random_string" "storage_suffix" {
 }
 
 resource "azurerm_resource_group" "main" {
+  count = var.azure_resource_group_name == "" ? 1 : 0
+
   name     = "${var.cluster_id}-rg"
   location = var.azure_region
   tags     = local.tags
+}
+
+data "azurerm_resource_group" "main" {
+  name = var.azure_resource_group_name == "" ? "${var.cluster_id}-rg" : var.azure_resource_group_name
+
+  depends_on = [azurerm_resource_group.main]
 }
 
 data "azurerm_resource_group" "network" {
@@ -137,21 +145,21 @@ data "azurerm_resource_group" "network" {
 
 resource "azurerm_storage_account" "cluster" {
   name                     = "cluster${random_string.storage_suffix.result}"
-  resource_group_name      = azurerm_resource_group.main.name
+  resource_group_name      = data.azurerm_resource_group.main.name
   location                 = var.azure_region
   account_tier             = "Standard"
   account_replication_type = "LRS"
 }
 
 resource "azurerm_user_assigned_identity" "main" {
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  resource_group_name = data.azurerm_resource_group.main.name
+  location            = data.azurerm_resource_group.main.location
 
   name = "${var.cluster_id}-identity"
 }
 
 resource "azurerm_role_assignment" "main" {
-  scope                = azurerm_resource_group.main.id
+  scope                = data.azurerm_resource_group.main.id
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.main.principal_id
 }
@@ -181,7 +189,7 @@ resource "azurerm_storage_blob" "rhcos_image" {
 
 resource "azurerm_image" "cluster" {
   name                = var.cluster_id
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = data.azurerm_resource_group.main.name
   location            = var.azure_region
 
   os_disk {
