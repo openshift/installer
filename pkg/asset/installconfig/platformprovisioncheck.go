@@ -51,6 +51,11 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		client, err := ic.Azure.Client()
+		if err != nil {
+			return err
+		}
+		return azconfig.ValidateForProvisioning(client, ic.Config)
 	case baremetal.Name:
 		err = bmconfig.ValidateProvisioning(ic.Config)
 		if err != nil {

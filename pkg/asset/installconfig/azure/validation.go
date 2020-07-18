@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"sort"
 	"strings"
 	"time"
 
@@ -176,4 +177,54 @@ func ValidatePublicDNS(ic *types.InstallConfig, azureDNS *DNSConfig) error {
 	}
 
 	return nil
+}
+
+// ValidateForProvisioning validates if the isntall config if valid for provisioning the cluster.
+func ValidateForProvisioning(client API, ic *types.InstallConfig) error {
+	allErrs := field.ErrorList{}
+	allErrs = append(allErrs, validateResourceGroup(client, field.NewPath("platform").Child("azure"), ic.Azure)...)
+	return allErrs.ToAggregate()
+}
+
+func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.Platform) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if len(platform.ResourceGroupName) == 0 {
+		return allErrs
+	}
+	group, err := client.GetGroup(context.TODO(), platform.ResourceGroupName)
+	if err != nil {
+		return append(allErrs, field.InternalError(fieldPath.Child("resourceGroupName"), errors.Wrap(err, "failed to get resource group")))
+	}
+
+	normalizedRegion := strings.Replace(strings.ToLower(to.String(group.Location)), " ", "", -1)
+	if !strings.EqualFold(normalizedRegion, platform.Region) {
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("expected to in region %s, but found it to be in %s", platform.Region, normalizedRegion)))
+	}
+
+	tagKeys := make([]string, 0, len(group.Tags))
+	for key := range group.Tags {
+		tagKeys = append(tagKeys, key)
+	}
+	sort.Strings(tagKeys)
+	conflictingTagKeys := tagKeys[:0]
+	for _, key := range tagKeys {
+		if strings.HasPrefix(key, "kubernetes.io_cluster") {
+			conflictingTagKeys = append(conflictingTagKeys, key)
+		}
+	}
+	if len(conflictingTagKeys) > 0 {
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("resource group has conflicting tags %s", strings.Join(conflictingTagKeys, ", "))))
+	}
+
+	ids, err := client.ListResourceIDsByGroup(context.TODO(), platform.ResourceGroupName)
+	if err != nil {
+		return append(allErrs, field.InternalError(fieldPath.Child("resourceGroupName"), errors.Wrap(err, "failed to list resources in the resource group")))
+	}
+	if l := len(ids); l > 0 {
+		if len(ids) > 2 {
+			ids = ids[:2]
+		}
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("resourceGroupName"), platform.ResourceGroupName, fmt.Sprintf("resource group must be empty but it has %d resources like %s ...", l, strings.Join(ids, ", "))))
+	}
+	return allErrs
 }

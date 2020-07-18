@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 type editFunctions []func(ic *types.InstallConfig)
@@ -220,6 +221,79 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
 				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+var validGroupResult = &azres.Group{
+	ID:       to.StringPtr("valid-resource-group"),
+	Location: to.StringPtr("centralus"),
+}
+
+var invalidGroupOutsideRegionResult = &azres.Group{
+	ID:       to.StringPtr("invalid-resource-group-useast2"),
+	Location: to.StringPtr("useast2"),
+}
+
+var validGroupWithTagsResult = &azres.Group{
+	ID:       to.StringPtr("valid-resource-group-tags"),
+	Location: to.StringPtr("centralus"),
+	Tags: map[string]*string{
+		"key": to.StringPtr("value"),
+	},
+}
+
+var validGroupWithConflictinsTagsResult = &azres.Group{
+	ID:       to.StringPtr("valid-resource-group-conf-tags"),
+	Location: to.StringPtr("centralus"),
+	Tags: map[string]*string{
+		"kubernetes.io_cluster.test-cluster-12345": to.StringPtr("owned"),
+	},
+}
+
+func Test_validateResourceGroup(t *testing.T) {
+	cases := []struct {
+		groupName string
+		err       string
+	}{{
+		groupName: "non-existent-group",
+		err:       `^\Qplatform.azure.resourceGroupName: Internal error: failed to get resource group: resource group /resourceGroups/non-existent-group was not found\E$`,
+	}, {
+		groupName: "valid-resource-group",
+	}, {
+		groupName: "invalid-resource-group-useast2",
+		err:       `^\Qplatform.azure.resourceGroupName: Invalid value: "invalid-resource-group-useast2": expected to in region centralus, but found it to be in useast2\E$`,
+	}, {
+		groupName: "valid-resource-group-tags",
+	}, {
+		groupName: "valid-resource-group-conf-tags",
+		err:       `^\Qplatform.azure.resourceGroupName: Invalid value: "valid-resource-group-conf-tags": resource group has conflicting tags kubernetes.io_cluster.test-cluster-12345\E$`,
+	}, {
+		groupName: "valid-resource-group-with-resources",
+		err:       `^\Qplatform.azure.resourceGroupName: Invalid value: "valid-resource-group-with-resources": resource group must be empty but it has 3 resources like id1, id2 ...\E$`,
+	}}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	azureClient := mock.NewMockAPI(mockCtrl)
+	azureClient.EXPECT().GetGroup(gomock.Any(), "non-existent-group").Return(nil, fmt.Errorf("resource group /resourceGroups/non-existent-group was not found")).AnyTimes()
+	azureClient.EXPECT().GetGroup(gomock.Any(), "valid-resource-group").Return(validGroupResult, nil).AnyTimes()
+	azureClient.EXPECT().GetGroup(gomock.Any(), "invalid-resource-group-useast2").Return(invalidGroupOutsideRegionResult, nil).AnyTimes()
+	azureClient.EXPECT().GetGroup(gomock.Any(), "valid-resource-group-with-resources").Return(validGroupResult, nil).AnyTimes()
+	azureClient.EXPECT().GetGroup(gomock.Any(), "valid-resource-group-tags").Return(validGroupWithTagsResult, nil).AnyTimes()
+	azureClient.EXPECT().GetGroup(gomock.Any(), "valid-resource-group-conf-tags").Return(validGroupWithConflictinsTagsResult, nil).AnyTimes()
+	azureClient.EXPECT().ListResourceIDsByGroup(gomock.Any(), gomock.Not("valid-resource-group-with-resources")).Return(nil, nil).AnyTimes()
+	azureClient.EXPECT().ListResourceIDsByGroup(gomock.Any(), "valid-resource-group-with-resources").Return([]string{"id1", "id2", "id3"}, nil).AnyTimes()
+
+	for _, test := range cases {
+		t.Run("", func(t *testing.T) {
+			err := validateResourceGroup(azureClient, field.NewPath("platform").Child("azure"), &azure.Platform{ResourceGroupName: test.groupName, Region: "centralus"})
+			if test.err != "" {
+				assert.Regexp(t, test.err, err.ToAggregate())
+			} else {
+				assert.NoError(t, err.ToAggregate())
 			}
 		})
 	}

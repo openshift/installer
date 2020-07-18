@@ -126,3 +126,33 @@ func (mr *MockAPIMockRecorder) GetDiskSkus(ctx, region interface{}) *gomock.Call
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDiskSkus", reflect.TypeOf((*MockAPI)(nil).GetDiskSkus), ctx, region)
 }
+
+// GetGroup mocks base method.
+func (m *MockAPI) GetGroup(ctx context.Context, groupName string) (*resources.Group, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroup", ctx, groupName)
+	ret0, _ := ret[0].(*resources.Group)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGroup indicates an expected call of GetGroup.
+func (mr *MockAPIMockRecorder) GetGroup(ctx, groupName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroup", reflect.TypeOf((*MockAPI)(nil).GetGroup), ctx, groupName)
+}
+
+// ListResourceIDsByGroup mocks base method.
+func (m *MockAPI) ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListResourceIDsByGroup", ctx, groupName)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListResourceIDsByGroup indicates an expected call of ListResourceIDsByGroup.
+func (mr *MockAPIMockRecorder) ListResourceIDsByGroup(ctx, groupName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListResourceIDsByGroup", reflect.TypeOf((*MockAPI)(nil).ListResourceIDsByGroup), ctx, groupName)
+}

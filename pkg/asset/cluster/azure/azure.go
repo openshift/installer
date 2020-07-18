@@ -37,7 +37,7 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 		return errors.Wrap(err, "failed to get session")
 	}
 
-	client := resources.NewGroupsClient(session.Credentials.SubscriptionID)
+	client := resources.NewGroupsClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
 	client.Authorizer = session.Authorizer
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
