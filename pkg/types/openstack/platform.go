@@ -26,6 +26,10 @@ type Platform struct {
 	// to associate with the OpenShift load balancer.
 	LbFloatingIP string `json:"lbFloatingIP"`
 
+	// IngressFloatingIP is the ID of an available floating IP in your OpenStack cluster
+	// that will be associated with the OpenShift ingress port
+	IngressFloatingIP string `json:"ingressFloatingIP"`
+
 	// ExternalDNS holds the IP addresses of dns servers that will
 	// be added to the dns resolution of all instances in the cluster.
 	// +optional
