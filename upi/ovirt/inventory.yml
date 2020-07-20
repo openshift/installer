@@ -1,0 +1,83 @@
+---
+all:
+  vars:
+    ovirt_cluster: "Default"
+
+    ocp:
+      assets_dir: "./wrk"
+      ovirt_config_path: "{{ lookup('env', 'HOME') }}/.ovirt/ovirt-config.yaml"
+
+    rhcos:
+      image_url: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/latest-4.6/rhcos-4.6.0-0.nightly-2020-07-16-122837-x86_64-openstack.x86_64.qcow2.gz"
+      local_cmp_image_path: "/tmp/rhcos.qcow2.gz"
+      local_image_path: "/tmp/rhcos.qcow2"
+
+    control_plane:
+      cluster: "{{ ovirt_cluster }}"
+      memory: 16GiB
+      sockets: 4
+      cores: 1
+      template: rhcos_tpl
+      operating_system: "rhcos_x64"
+      type: high_performance
+      graphical_console:
+        headless_mode: false
+        protocol:
+        - spice
+        - vnc
+      disks:
+      - size: 120GiB
+        name: os
+        interface: virtio_scsi
+        storage_domain: depot_nvme
+      nics:
+      - name: nic1
+        network: lab
+        profile: lab
+
+    compute:
+      cluster: "{{ ovirt_cluster }}"
+      memory: 16GiB
+      sockets: 4
+      cores: 1
+      template: worker_rhcos_tpl
+      operating_system: "rhcos_x64"
+      type: high_performance
+      graphical_console:
+        headless_mode: false
+        protocol:
+        - spice
+        - vnc
+      disks:
+      - size: 120GiB
+        name: os
+        interface: virtio_scsi
+        storage_domain: depot_nvme
+      nics:
+      - name: nic1
+        network: lab
+        profile: lab
+
+    vms:
+    - name: "{{ metadata.infraID }}-bootstrap"
+      ocp_type: bootstrap
+      profile: "{{ control_plane }}"
+      type: server
+    - name: "{{ metadata.infraID }}-master0"
+      ocp_type: master
+      profile: "{{ control_plane }}"
+    - name: "{{ metadata.infraID }}-master1"
+      ocp_type: master
+      profile: "{{ control_plane }}"
+    - name: "{{ metadata.infraID }}-master2"
+      ocp_type: master
+      profile: "{{ control_plane }}"
+    - name: "{{ metadata.infraID }}-worker0"
+      ocp_type: worker
+      profile: "{{ compute }}"
+    - name: "{{ metadata.infraID }}-worker1"
+      ocp_type: worker
+      profile: "{{ compute }}"
+    - name: "{{ metadata.infraID }}-worker2"
+      ocp_type: worker
+      profile: "{{ compute }}"

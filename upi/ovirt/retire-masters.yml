@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+  - import_tasks: common-auth.yml
+
+  - name: Remove master VMs
+    ovirt_vm:
+      auth: "{{ ovirt_auth }}"
+      cluster: "{{ item.profile.cluster }}"
+      name: "{{ item.name }}"
+      state: absent
+    with_items:
+    - "{{ vms }}"
+    when: item.ocp_type == 'master'

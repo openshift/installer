@@ -1,0 +1,71 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+  - import_tasks: common-auth.yml
+
+  - name: Check local image existance
+    stat:
+      get_mime: no
+      get_checksum: no
+      get_attributes: no
+      path: "{{ rhcos.local_image_path }}"
+    register: image_stats
+
+  - name: Download RHCOS image
+    get_url:
+      url: "{{ rhcos.image_url }}"
+      dest: "{{ rhcos.local_cmp_image_path}}"
+      force: no
+
+  - name: Extract RHCOS image
+    shell: "gunzip -c {{ rhcos.local_cmp_image_path }} > {{ rhcos.local_image_path }}"
+    when: not image_stats.stat.exists
+
+  - name: Get templates info
+    ovirt_template_info:
+      auth: "{{ ovirt_auth }}"
+      pattern: name={{ item.template }} and cluster={{ item.cluster }}
+    register: templates_info
+    loop:
+    - "{{ control_plane }}"
+    - "{{ compute }}"
+
+  - name: Templates list
+    set_fact:
+      templates_list: >-
+        {{
+          templates_list | default([]) +
+          [
+            item.ovirt_templates | map(attribute='name') | list
+          ]
+        }}
+    with_items: "{{ templates_info.results }}"
+
+  - name: Create templates
+    include_role:
+      name: ovirt.image-template
+    vars:
+      qcow_url: "file://{{ rhcos.local_image_path }}"
+      image_path: "{{ rhcos.local_image_path }}"
+      template_cluster: "{{ item.cluster }}"
+      template_name: "{{ item.template }}"
+      template_cpu: "{{ item.cores }}"
+      template_memory: "{{ item.memory }}"
+      template_memory_guaranteed: "{{ item.memory_guaranteed | default(omit) }}"
+      template_disk_size: "{{ item.disks.0.size}}"
+      template_disk_interface: "{{ item.disks.0.interface }}"
+      template_disk_storage: "{{ item.disks.0.storage_domain }}"
+      template_operating_system: "{{ item.operating_system }}"
+      template_type: "{{ item.type }}"
+      template_seal: no
+    loop:
+    - "{{ control_plane }}"
+    - "{{ compute }}"
+    when: item.template not in templates_list
+
+  - name: Create VMs infra
+    include_role:
+      name: ovirt.vm-infra
