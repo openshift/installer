@@ -17,7 +17,6 @@ func Platform() (*ovirt.Platform, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer ovirtConfig.Save()
 	}
 
 	c, err := ovirtsdk4.NewConnectionBuilder().
@@ -36,6 +35,7 @@ func Platform() (*ovirt.Platform, error) {
 	if err != nil {
 		return nil, err
 	}
+	ovirtConfig.Save()
 
 	clusterName, err := askCluster(c, &p)
 	if err != nil {
