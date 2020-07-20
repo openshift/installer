@@ -8,19 +8,12 @@ import (
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
-	"github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
-	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
 const (
 	noExtNet = "<none>"
 )
-
-// Validate validates the given installconfig for OpenStack platform
-func Validate(ic *types.InstallConfig) error {
-	return validation.Validate(ic)
-}
 
 // Platform collects OpenStack-specific configuration.
 func Platform() (*openstack.Platform, error) {

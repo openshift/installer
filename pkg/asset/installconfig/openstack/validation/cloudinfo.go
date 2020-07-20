@@ -13,7 +13,8 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-type cloudinfo struct {
+// CloudInfo caches data fetched from the user's openstack cloud
+type CloudInfo struct {
 	ExternalNetwork *networks.Network
 	PlatformFlavor  *flavors.Flavor
 	MachinesSubnet  *subnets.Subnet
@@ -26,9 +27,10 @@ type clients struct {
 	computeClient *gophercloud.ServiceClient
 }
 
-func newCloudInfo(ic *types.InstallConfig) (*cloudinfo, error) {
+// GetCloudInfo fetches and caches metadata from openstack
+func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 	var err error
-	ci := cloudinfo{
+	ci := CloudInfo{
 		clients: &clients{},
 	}
 
@@ -52,7 +54,7 @@ func newCloudInfo(ic *types.InstallConfig) (*cloudinfo, error) {
 	return &ci, nil
 }
 
-func (ci *cloudinfo) collectInfo(ic *types.InstallConfig) error {
+func (ci *CloudInfo) collectInfo(ic *types.InstallConfig) error {
 	var err error
 
 	ci.ExternalNetwork, err = ci.getNetwork(ic.OpenStack.ExternalNetwork)
@@ -73,7 +75,7 @@ func (ci *cloudinfo) collectInfo(ic *types.InstallConfig) error {
 	return nil
 }
 
-func (ci *cloudinfo) getSubnet(subnetID string) (*subnets.Subnet, error) {
+func (ci *CloudInfo) getSubnet(subnetID string) (*subnets.Subnet, error) {
 	subnet, err := subnets.Get(ci.clients.networkClient, subnetID).Extract()
 	if err != nil {
 		if errors.Is(err, gophercloud.ErrResourceNotFound{}) {
@@ -85,7 +87,7 @@ func (ci *cloudinfo) getSubnet(subnetID string) (*subnets.Subnet, error) {
 	return subnet, nil
 }
 
-func (ci *cloudinfo) getFlavor(flavorName string) (*flavors.Flavor, error) {
+func (ci *CloudInfo) getFlavor(flavorName string) (*flavors.Flavor, error) {
 	flavorID, err := flavorutils.IDFromName(ci.clients.computeClient, flavorName)
 	if err != nil {
 		if errors.Is(err, gophercloud.ErrResourceNotFound{}) {
@@ -102,7 +104,7 @@ func (ci *cloudinfo) getFlavor(flavorName string) (*flavors.Flavor, error) {
 	return flavor, nil
 }
 
-func (ci *cloudinfo) getNetwork(networkName string) (*networks.Network, error) {
+func (ci *CloudInfo) getNetwork(networkName string) (*networks.Network, error) {
 	if networkName == "" {
 		return &networks.Network{}, nil
 	}
