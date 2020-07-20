@@ -108,11 +108,12 @@ Continue the installation using the install-config in the new folder `install_di
 $ openshift-install create cluster --dir=install_dir
 ``` 
 
-When the all prompts are done the installer will create 3 VMs under the
-Cluster supplied, and another VM as the bootstrap node.
-The bootstrap will perform ignition fully and will advertise the IP in the
-pre-login msg. Go to Engine webadmin UI, and open the console of the bootstrap
-VM to get it. 
+When the all prompts are done the installer will create ${HOME}/.ovirt/ovirt-config.yaml
+containing all required information about the connection with Engine.
+The installation process will create a temporary VM which will trigger bootstrap VM
+for later create three masters nodes. The masters nodes will create all services and
+checks required. Finally, the cluster will create the three workers node.
+
 In the end the installer finishes and the cluster should be up.
 
 To access the cluster as the system:admin user: 
@@ -122,3 +123,26 @@ $ export KUBECONFIG=$PWD/install_dir/auth/kubeconfig
 $ oc get nodes
 ```
 
+### Bootstrap VM
+
+The bootstrap will perform ignition fully and will advertise the IP in the
+pre-login msg. Go to Engine webadmin UI, and open the console of the bootstrap
+VM to get it.
+
+### ovirt-config.yaml
+
+The ovirt-config.yaml is created under ${HOME}/.ovirt directory by the installer.
+It contains all information how the installer connects to oVirt and can be re-used
+if required to re-trigger a new installation.
+
+Below the description of all config options in ovirt-config.yaml.
+
+| Name           | Value                          | Type     | Example                                                                                                |
+| ---------------|:------------------------------:|:--------:|:------------------------------------------------------------------------------------------------------:|
+| ovirt_url      | URL for Engine API             | string   | https://engine.fqdn.home/ovirt-engine/api                                                              |
+| ovirt_fqdn     | Engine FQDN                    | string   | engine.fqdn.home                                                                                       |
+| ovirt_username | User to connect with Engine    | string   | admin@internal                                                                                         |
+| ovirt_password | Password for the user provided | string   | superpass                                                                                              |
+| ovirt_insecure | TLS verification disabled      | boolean  | false                                                                                                  |
+| ovirt_ca_bundle| CA Bundle                      | string   | -----BEGIN CERTIFICATE----- MIIDvTCCAqWgAwIBAgICEAA.... ----- END CERTIFICATE -----                    |
+| ovirt_pem_url  | PEM URL                        | string   | https://engine.fqdn.home/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA |
