@@ -62,7 +62,7 @@ func resourceArmSqlVirtualNetworkRule() *schema.Resource {
 			"ignore_missing_vnet_service_endpoint": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  false, //When not provided, Azure defaults to false
+				Default:  false, // When not provided, Azure defaults to false
 			},
 		},
 	}
@@ -103,7 +103,7 @@ func resourceArmSqlVirtualNetworkRuleCreateUpdate(d *schema.ResourceData, meta i
 		return fmt.Errorf("Error creating SQL Virtual Network Rule %q (SQL Server: %q, Resource Group: %q): %+v", name, serverName, resourceGroup, err)
 	}
 
-	//Wait for the provisioning state to become ready
+	// Wait for the provisioning state to become ready
 	log.Printf("[DEBUG] Waiting for SQL Virtual Network Rule %q (SQL Server: %q, Resource Group: %q) to become ready", name, serverName, resourceGroup)
 	stateConf := &resource.StateChangeConf{
 		Pending:                   []string{"Initializing", "InProgress", "Unknown", "ResponseNotFound"},
@@ -113,14 +113,10 @@ func resourceArmSqlVirtualNetworkRuleCreateUpdate(d *schema.ResourceData, meta i
 		ContinuousTargetOccurence: 5,
 	}
 
-	if features.SupportsCustomTimeouts() {
-		if d.IsNewResource() {
-			stateConf.Timeout = d.Timeout(schema.TimeoutCreate)
-		} else {
-			stateConf.Timeout = d.Timeout(schema.TimeoutUpdate)
-		}
+	if d.IsNewResource() {
+		stateConf.Timeout = d.Timeout(schema.TimeoutCreate)
 	} else {
-		stateConf.Timeout = 10 * time.Minute
+		stateConf.Timeout = d.Timeout(schema.TimeoutUpdate)
 	}
 
 	if _, err := stateConf.WaitForState(); err != nil {
@@ -221,16 +217,22 @@ func ValidateSqlVirtualNetworkRuleName(v interface{}, k string) (warnings []stri
 			"%q cannot be an empty string: %q", k, value))
 	}
 
-	// Cannot be more than 128 characters
-	if len(value) > 128 {
+	// Cannot be shorter than 2 characters
+	if len(value) == 1 {
 		errors = append(errors, fmt.Errorf(
-			"%q cannot be longer than 128 characters: %q", k, value))
+			"%q cannot be shorter than 2 characters: %q", k, value))
 	}
 
-	// Must only contain alphanumeric characters or hyphens
-	if !regexp.MustCompile(`^[A-Za-z0-9-]*$`).MatchString(value) {
+	// Cannot be more than 64 characters
+	if len(value) > 64 {
 		errors = append(errors, fmt.Errorf(
-			"%q can only contain alphanumeric characters and hyphens: %q",
+			"%q cannot be longer than 64 characters: %q", k, value))
+	}
+
+	// Must only contain alphanumeric characters, underscores, periods or hyphens
+	if !regexp.MustCompile(`^[A-Za-z0-9-\._]*$`).MatchString(value) {
+		errors = append(errors, fmt.Errorf(
+			"%q can only contain alphanumeric characters, underscores, periods and hyphens: %q",
 			k, value))
 	}
 
@@ -240,10 +242,16 @@ func ValidateSqlVirtualNetworkRuleName(v interface{}, k string) (warnings []stri
 			"%q cannot end with a hyphen: %q", k, value))
 	}
 
-	// Cannot start with a number or hyphen
-	if regexp.MustCompile(`^[0-9-]`).MatchString(value) {
+	// Cannot end in a period
+	if regexp.MustCompile(`\.$`).MatchString(value) {
 		errors = append(errors, fmt.Errorf(
-			"%q cannot start with a number or hyphen: %q", k, value))
+			"%q cannot end with a period: %q", k, value))
+	}
+
+	// Cannot start with a period, underscore or hyphen
+	if regexp.MustCompile(`^[\._-]`).MatchString(value) {
+		errors = append(errors, fmt.Errorf(
+			"%q cannot start with a period, underscore or hyphen: %q", k, value))
 	}
 
 	// There are multiple returns in the case that there is more than one invalid
@@ -280,7 +288,7 @@ func sqlVirtualNetworkStateStatusCodeRefreshFunc(ctx context.Context, client *sq
 			return resp, string(props.State), nil
 		}
 
-		//Valid response was returned but VirtualNetworkRuleProperties was nil. Basically the rule exists, but with no properties for some reason. Assume Unknown instead of returning error.
+		// Valid response was returned but VirtualNetworkRuleProperties was nil. Basically the rule exists, but with no properties for some reason. Assume Unknown instead of returning error.
 		log.Printf("[DEBUG] Retrieving SQL Virtual Network Rule %q (SQL Server: %q, Resource Group: %q) returned empty VirtualNetworkRuleProperties", resourceGroup, serverName, name)
 		return resp, "Unknown", nil
 	}

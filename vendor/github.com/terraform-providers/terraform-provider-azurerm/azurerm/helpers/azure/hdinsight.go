@@ -2,7 +2,6 @@ package azure
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2018-06-01-preview/hdinsight"
@@ -11,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/validate"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/location"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -39,9 +39,22 @@ func SchemaHDInsightTier() *schema.Schema {
 		ValidateFunc: validation.StringInSlice([]string{
 			string(hdinsight.Standard),
 			string(hdinsight.Premium),
-		}, false),
+		}, true),
 		// TODO: file a bug about this
-		DiffSuppressFunc: SuppressLocationDiff,
+		DiffSuppressFunc: location.DiffSuppressFunc,
+	}
+}
+
+func SchemaHDInsightTls() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
+		ForceNew: true,
+		ValidateFunc: validation.StringInSlice([]string{
+			"1.0",
+			"1.1",
+			"1.2",
+		}, false),
 	}
 }
 
@@ -79,12 +92,58 @@ func SchemaHDInsightsGateway() *schema.Schema {
 		MaxItems: 1,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
+				// TODO 3.0: remove this attribute
 				"enabled": {
-					Type:     schema.TypeBool,
+					Type:       schema.TypeBool,
+					Optional:   true,
+					Default:    true,
+					Deprecated: "HDInsight doesn't support disabling gateway anymore",
+					ValidateFunc: func(i interface{}, k string) (warnings []string, errors []error) {
+						enabled := i.(bool)
+
+						if !enabled {
+							errors = append(errors, fmt.Errorf("Only true is supported, because HDInsight doesn't support disabling gateway anymore. Provided value %t", enabled))
+						}
+						return warnings, errors
+					},
+				},
+				// NOTE: these are Required since if these aren't present you get a `500 bad request`
+				"username": {
+					Type:     schema.TypeString,
 					Required: true,
 					ForceNew: true,
 				},
-				// NOTE: these are Required since if these aren't present you get a `500 bad request`
+				"password": {
+					Type:      schema.TypeString,
+					Required:  true,
+					Sensitive: true,
+					// Azure returns the key as *****. We'll suppress that here.
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						return (new == d.Get(k).(string)) && (old == "*****")
+					},
+				},
+			},
+		},
+	}
+}
+
+func SchemaHDInsightsExternalMetastore() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"server": {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				"database_name": {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
 				"username": {
 					Type:     schema.TypeString,
 					Required: true,
@@ -109,7 +168,7 @@ func ExpandHDInsightsConfigurations(input []interface{}) map[string]interface{} 
 	vs := input[0].(map[string]interface{})
 
 	// NOTE: Admin username must be different from SSH Username
-	enabled := vs["enabled"].(bool)
+	enabled := true
 	username := vs["username"].(string)
 	password := vs["password"].(string)
 
@@ -122,14 +181,88 @@ func ExpandHDInsightsConfigurations(input []interface{}) map[string]interface{} 
 	}
 }
 
-func FlattenHDInsightsConfigurations(input map[string]*string) []interface{} {
-	enabled := false
-	if v, exists := input["restAuthCredential.isEnabled"]; exists && v != nil {
-		e, err := strconv.ParseBool(*v)
-		if err == nil {
-			enabled = e
-		}
+func ExpandHDInsightsHiveMetastore(input []interface{}) map[string]interface{} {
+	if len(input) == 0 {
+		return nil
 	}
+	vs := input[0].(map[string]interface{})
+
+	server := vs["server"].(string)
+	database := vs["database_name"].(string)
+	username := vs["username"].(string)
+	password := vs["password"].(string)
+
+	return map[string]interface{}{
+		"hive-site": map[string]interface{}{
+			"javax.jdo.option.ConnectionDriverName": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
+			"javax.jdo.option.ConnectionURL":        fmt.Sprintf("jdbc:sqlserver://%s;database=%s;encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300", server, database),
+			"javax.jdo.option.ConnectionUserName":   username,
+			"javax.jdo.option.ConnectionPassword":   password,
+		},
+		"hive-env": map[string]interface{}{
+			"hive_database":                       "Existing MSSQL Server database with SQL authentication",
+			"hive_database_name":                  database,
+			"hive_database_type":                  "mssql",
+			"hive_existing_mssql_server_database": database,
+			"hive_existing_mssql_server_host":     server,
+			"hive_hostname":                       server,
+		},
+	}
+}
+
+func ExpandHDInsightsOozieMetastore(input []interface{}) map[string]interface{} {
+	if len(input) == 0 {
+		return nil
+	}
+	vs := input[0].(map[string]interface{})
+
+	server := vs["server"].(string)
+	database := vs["database_name"].(string)
+	username := vs["username"].(string)
+	password := vs["password"].(string)
+
+	return map[string]interface{}{
+		"oozie-site": map[string]interface{}{
+			"oozie.service.JPAService.jdbc.driver":   "com.microsoft.sqlserver.jdbc.SQLServerDriver",
+			"oozie.service.JPAService.jdbc.url":      fmt.Sprintf("jdbc:sqlserver://%s;database=%s;encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300", server, database),
+			"oozie.service.JPAService.jdbc.username": username,
+			"oozie.service.JPAService.jdbc.password": password,
+			"oozie.db.schema.name":                   "oozie",
+		},
+		"oozie-env": map[string]interface{}{
+			"oozie_database":                       "Existing MSSQL Server database with SQL authentication",
+			"oozie_database_name":                  database,
+			"oozie_database_type":                  "mssql",
+			"oozie_existing_mssql_server_database": database,
+			"oozie_existing_mssql_server_host":     server,
+			"oozie_hostname":                       server,
+		},
+	}
+}
+
+func ExpandHDInsightsAmbariMetastore(input []interface{}) map[string]interface{} {
+	if len(input) == 0 {
+		return nil
+	}
+	vs := input[0].(map[string]interface{})
+
+	server := vs["server"].(string)
+	database := vs["database_name"].(string)
+	username := vs["username"].(string)
+	password := vs["password"].(string)
+
+	return map[string]interface{}{
+		"ambari-conf": map[string]interface{}{
+			"database-server":        server,
+			"database-name":          database,
+			"database-user-name":     username,
+			"database-user-password": password,
+		},
+	}
+}
+
+func FlattenHDInsightsConfigurations(input map[string]*string) []interface{} {
+	enabled := true
 
 	username := ""
 	if v, exists := input["restAuthCredential.username"]; exists && v != nil {
@@ -150,6 +283,111 @@ func FlattenHDInsightsConfigurations(input map[string]*string) []interface{} {
 	}
 }
 
+func FlattenHDInsightsHiveMetastore(env map[string]*string, site map[string]*string) []interface{} {
+	server := ""
+	if v, exists := env["hive_hostname"]; exists && v != nil {
+		server = *v
+	}
+
+	database := ""
+	if v, exists := env["hive_database_name"]; exists && v != nil {
+		database = *v
+	}
+
+	username := ""
+	if v, exists := site["javax.jdo.option.ConnectionUserName"]; exists && v != nil {
+		username = *v
+	}
+
+	password := ""
+	if v, exists := site["javax.jdo.option.ConnectionPassword"]; exists && v != nil {
+		password = *v
+	}
+
+	if server != "" && database != "" {
+		return []interface{}{
+			map[string]interface{}{
+				"server":        server,
+				"database_name": database,
+				"username":      username,
+				"password":      password,
+			},
+		}
+	}
+
+	return nil
+}
+
+func FlattenHDInsightsOozieMetastore(env map[string]*string, site map[string]*string) []interface{} {
+	server := ""
+	if v, exists := env["oozie_hostname"]; exists && v != nil {
+		server = *v
+	}
+
+	database := ""
+	if v, exists := env["oozie_database_name"]; exists && v != nil {
+		database = *v
+	}
+
+	username := ""
+	if v, exists := site["oozie.service.JPAService.jdbc.username"]; exists && v != nil {
+		username = *v
+	}
+
+	password := ""
+	if v, exists := site["oozie.service.JPAService.jdbc.password"]; exists && v != nil {
+		password = *v
+	}
+
+	if server != "" && database != "" {
+		return []interface{}{
+			map[string]interface{}{
+				"server":        server,
+				"database_name": database,
+				"username":      username,
+				"password":      password,
+			},
+		}
+	}
+
+	return nil
+}
+
+func FlattenHDInsightsAmbariMetastore(conf map[string]*string) []interface{} {
+	server := ""
+	if v, exists := conf["database-server"]; exists && v != nil {
+		server = *v
+	}
+
+	database := ""
+	if v, exists := conf["database-name"]; exists && v != nil {
+		database = *v
+	}
+
+	username := ""
+	if v, exists := conf["database-user-name"]; exists && v != nil {
+		username = *v
+	}
+
+	password := ""
+	if v, exists := conf["database-user-password"]; exists && v != nil {
+		password = *v
+	}
+
+	if server != "" && database != "" {
+		return []interface{}{
+			map[string]interface{}{
+				"server":        server,
+				"database_name": database,
+				"username":      username,
+				"password":      password,
+			},
+		}
+	}
+
+	return nil
+}
+
 func SchemaHDInsightsStorageAccounts() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
@@ -161,13 +399,13 @@ func SchemaHDInsightsStorageAccounts() *schema.Schema {
 					Required:     true,
 					ForceNew:     true,
 					Sensitive:    true,
-					ValidateFunc: validate.NoEmptyStrings,
+					ValidateFunc: validation.StringIsNotEmpty,
 				},
 				"storage_container_id": {
 					Type:         schema.TypeString,
 					Required:     true,
 					ForceNew:     true,
-					ValidateFunc: validate.NoEmptyStrings,
+					ValidateFunc: validation.StringIsNotEmpty,
 				},
 				"is_default": {
 					Type:     schema.TypeBool,
@@ -197,7 +435,7 @@ func SchemaHDInsightsGen2StorageAccounts() *schema.Schema {
 					Type:         schema.TypeString,
 					Required:     true,
 					ForceNew:     true,
-					ValidateFunc: validate.NoEmptyStrings,
+					ValidateFunc: validation.StringIsNotEmpty,
 				},
 				"managed_identity_resource_id": {
 					Type:         schema.TypeString,
@@ -284,7 +522,7 @@ func ExpandHDInsightsStorageAccounts(storageAccounts []interface{}, gen2storageA
 type HDInsightNodeDefinition struct {
 	CanSpecifyInstanceCount  bool
 	MinInstanceCount         int
-	MaxInstanceCount         int
+	MaxInstanceCount         *int
 	CanSpecifyDisks          bool
 	MaxNumberOfDisksPerNode  *int
 	FixedMinInstanceCount    *int32
@@ -405,7 +643,7 @@ func SchemaHDInsightNodeDefinition(schemaLocation string, definition HDInsightNo
 			ForceNew: true,
 			Elem: &schema.Schema{
 				Type:         schema.TypeString,
-				ValidateFunc: validate.NoEmptyStrings,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			Set: schema.HashString,
 			ConflictsWith: []string{
@@ -429,16 +667,24 @@ func SchemaHDInsightNodeDefinition(schemaLocation string, definition HDInsightNo
 	}
 
 	if definition.CanSpecifyInstanceCount {
+		countValidation := validation.IntAtLeast(definition.MinInstanceCount)
+		if definition.MaxInstanceCount != nil {
+			countValidation = validation.IntBetween(definition.MinInstanceCount, *definition.MaxInstanceCount)
+		}
+
+		// TODO 3.0: remove this property
 		result["min_instance_count"] = &schema.Schema{
 			Type:         schema.TypeInt,
 			Optional:     true,
 			ForceNew:     true,
-			ValidateFunc: validation.IntBetween(definition.MinInstanceCount, definition.MaxInstanceCount),
+			Computed:     true,
+			Deprecated:   "this has been deprecated from the API and will be removed in version 3.0 of the provider",
+			ValidateFunc: countValidation,
 		}
 		result["target_instance_count"] = &schema.Schema{
 			Type:         schema.TypeInt,
 			Required:     true,
-			ValidateFunc: validation.IntBetween(definition.MinInstanceCount, definition.MaxInstanceCount),
+			ValidateFunc: countValidation,
 		}
 	}
 
