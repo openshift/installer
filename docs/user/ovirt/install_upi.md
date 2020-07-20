@@ -507,7 +507,7 @@ CSR requests for nodes joining the cluster will need to be approved by the admin
 pending requests
 
 ```sh
-$ watch "oc get csr -A | grep pending -i"
+$ oc get csr -A
 ```
 
 Eventually one CSR request per node will be shown
