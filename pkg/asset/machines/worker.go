@@ -17,6 +17,8 @@ import (
 	ovirtproviderapi "github.com/openshift/cluster-api-provider-ovirt/pkg/apis"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
+	vsphereproviderapi "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider"
+	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -456,6 +458,7 @@ func (w *Worker) MachineSets() ([]machineapi.MachineSet, error) {
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
 	ovirtproviderapi.AddToScheme(scheme)
+	vsphereproviderapi.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		awsprovider.SchemeGroupVersion,
 		azureprovider.SchemeGroupVersion,
@@ -464,6 +467,7 @@ func (w *Worker) MachineSets() ([]machineapi.MachineSet, error) {
 		libvirtprovider.SchemeGroupVersion,
 		openstackprovider.SchemeGroupVersion,
 		ovirtprovider.SchemeGroupVersion,
+		vsphereprovider.SchemeGroupVersion,
 	)
 
 	machineSets := []machineapi.MachineSet{}
