@@ -16,7 +16,9 @@ func Validate(ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validatePlatform(ic, ci)...)
-	allErrs = append(allErrs, validateMachinePool(ic.ControlPlane.Platform.OpenStack, field.NewPath("controlPlane", "platform", "openstack"))...)
+	if ic.ControlPlane.Platform.OpenStack != nil {
+		allErrs = append(allErrs, validateMachinePool(ic.ControlPlane.Platform.OpenStack, field.NewPath("controlPlane", "platform", "openstack"))...)
+	}
 	for idx, compute := range ic.Compute {
 		fldPath := field.NewPath("compute").Index(idx)
 		if compute.Platform.OpenStack != nil {
