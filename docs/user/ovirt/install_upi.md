@@ -202,18 +202,6 @@ the main components and services
   DNS records `api.<cluster_name>.<base_domain>` (internal and external resolution) and `api-int.<cluster_name>.<base_domain>` 
   (internal resolution) must be added to point to the Load balancer targeting the control plane machines. 
 
-- etcd
-  For each control plane machine (by default only master nodes, excluding the bootstrap), DNS records 
-  `etcd-<idx>.<cluster_name>.<base_domain>` must be added to point to `<idx>`'th control plane machine (internal resolution).
-
-  For each control plane machine a SRV type DNS record must be provided, like:
-
-    ```plain
-    # _service._proto.name.                            TTL   class SRV priority weight port target.
-    _etcd-server-ssl._tcp.$cluster_name.$base_domain   86400 IN    SRV 0        10     2380 etcd-0.$cluster_name.$base_domain.
-    _etcd-server-ssl._tcp.$cluster_name.$base_domain   86400 IN    SRV 0        10     2380 etcd-1.$cluster_name.$base_domain.
-    _etcd-server-ssl._tcp.$cluster_name.$base_domain   86400 IN    SRV 0        10     2380 etcd-2.$cluster_name.$base_domain.
-    ```
 - OpenShift routes
   A DNS record `*.apps.<cluster_name>.<base_domain>` must be provided to point to the Load balancer configured to manage the
   traffic for the ingress router (ports `443` and `80` of the compute machines).
