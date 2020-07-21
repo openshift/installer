@@ -17,37 +17,48 @@ of this method of installation.
 
 ## Table of Contents
 
-* [Prerequisites](#prerequisites)
-* [Install Ansible](#install-ansible)
-* [OpenShift Configuration Directory](#openshift-configuration-directory)
-* [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-rhcos)
-* [API and Ingress Floating IP Addresses](#api-and-ingress-floating-ip-addresses)
-* [Install Config](#install-config)
-  * [Fix the Node Subnet](#fix-the-node-subnet)
-  * [Empty Compute Pools](#empty-compute-pools)
-  * [Modify NetworkType (Required for Kuryr SDN)](#modify-networktype-required-for-kuryr-sdn)
-* [Edit Manifests](#edit-manifests)
-  * [Remove Machines and MachineSets](#remove-machines-and-machinesets)
-  * [Make control-plane nodes unschedulable](#make-control-plane-nodes-unschedulable)
-* [Ignition Config](#ignition-config)
-  * [Infra ID](#infra-id)
-  * [Bootstrap Ignition](#bootstrap-ignition)
-  * [Master Ignition](#master-ignition)
-* [Network Topology](#network-topology)
-  * [Security Groups](#security-groups)
-  * [Network, Subnet and external router](#network-subnet-and-external-router)
-  * [Subnet DNS (optional)](#subnet-dns-optional)
-* [Bootstrap](#bootstrap)
-* [Control Plane](#control-plane)
-  * [Control Plane Trunks (Kuryr SDN)](#control-plane-trunks-kuryr-sdn)
-  * [Wait for the Control Plane to Complete](#wait-for-the-control-plane-to-complete)
-  * [Access the OpenShift API](#access-the-openshift-api)
-  * [Delete the Bootstrap Resources](#delete-the-bootstrap-resources)
-* [Compute Nodes](#compute-nodes)
-  * [Compute Nodes Trunks (Kuryr SDN)](#compute-nodes-trunks-kuryr-sdn)
-  * [Approve the worker CSRs](#approve-the-worker-csrs)
-  * [Wait for the OpenShift Installation to Complete](#wait-for-the-openshift-installation-to-complete)
-* [Destroy the OpenShift Cluster](#destroy-the-openshift-cluster)
+
+- [Installing OpenShift on OpenStack User-Provisioned Infrastructure](#installing-openshift-on-openstack-user-provisioned-infrastructure)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Install Ansible](#install-ansible)
+    - [RHEL](#rhel)
+    - [Fedora](#fedora)
+  - [OpenShift Configuration Directory](#openshift-configuration-directory)
+  - [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-rhcos)
+  - [API and Ingress Floating IP Addresses](#api-and-ingress-floating-ip-addresses)
+  - [Install Config](#install-config)
+    - [Fix the Node Subnet](#fix-the-node-subnet)
+    - [Empty Compute Pools](#empty-compute-pools)
+    - [Modify NetworkType (Required for Kuryr SDN)](#modify-networktype-required-for-kuryr-sdn)
+  - [Edit Manifests](#edit-manifests)
+    - [Remove Machines and MachineSets](#remove-machines-and-machinesets)
+    - [Make control-plane nodes unschedulable](#make-control-plane-nodes-unschedulable)
+  - [Ignition Config](#ignition-config)
+    - [Infra ID](#infra-id)
+    - [Bootstrap Ignition](#bootstrap-ignition)
+      - [Edit the Bootstrap Ignition](#edit-the-bootstrap-ignition)
+      - [Upload the Boostrap Ignition](#upload-the-boostrap-ignition)
+        - [Example 1: Swift](#example-1-swift)
+        - [Example 2: Glance image service](#example-2-glance-image-service)
+    - [Create the Bootstrap Ignition Shim](#create-the-bootstrap-ignition-shim)
+      - [Ignition file served by server using self-signed certificate](#ignition-file-served-by-server-using-self-signed-certificate)
+    - [Master Ignition](#master-ignition)
+  - [Network Topology](#network-topology)
+    - [Security Groups](#security-groups)
+    - [Network, Subnet and external router](#network-subnet-and-external-router)
+    - [Subnet DNS (optional)](#subnet-dns-optional)
+  - [Bootstrap](#bootstrap)
+  - [Control Plane](#control-plane)
+    - [Control Plane Trunks (Kuryr SDN)](#control-plane-trunks-kuryr-sdn)
+    - [Wait for the Control Plane to Complete](#wait-for-the-control-plane-to-complete)
+    - [Access the OpenShift API](#access-the-openshift-api)
+    - [Delete the Bootstrap Resources](#delete-the-bootstrap-resources)
+  - [Compute Nodes](#compute-nodes)
+    - [Compute Nodes Trunks (Kuryr SDN)](#compute-nodes-trunks-kuryr-sdn)
+    - [Approve the worker CSRs](#approve-the-worker-csrs)
+    - [Wait for the OpenShift Installation to Complete](#wait-for-the-openshift-installation-to-complete)
+  - [Destroy the OpenShift Cluster](#destroy-the-openshift-cluster)
 
 ## Prerequisites
 
@@ -449,9 +460,7 @@ files.append(
     'mode': 420,
     'contents': {
         'source': 'data:text/plain;charset=utf-8;base64,' + hostname_b64,
-        'verification': {}
     },
-    'filesystem': 'root',
 })
 
 ca_cert_path = os.environ.get('OS_CACERT', '')
@@ -466,9 +475,7 @@ if ca_cert_path:
         'mode': 420,
         'contents': {
             'source': 'data:text/plain;charset=utf-8;base64,' + ca_cert_b64,
-            'verification': {}
         },
-        'filesystem': 'root',
     })
 
 ignition['storage']['files'] = files;
@@ -545,7 +552,7 @@ Get Glance public URL:
 $ openstack catalog show image
 ```
 
-By default Glance service doesn't allow anonymous access to the data. So, if you use Glance to store the ignition config, then you also need to provide a valid auth token in the `ignition.config.append.httpHeaders` field.
+By default Glance service doesn't allow anonymous access to the data. So, if you use Glance to store the ignition config, then you also need to provide a valid auth token in the `ignition.config.merge.httpHeaders` field.
 
 To obtain the token execute:
 
@@ -553,7 +560,7 @@ To obtain the token execute:
 openstack token issue -c id -f value
 ```
 
-The command will return the token to be added to the `ignition.config.append[0].httpHeaders` property in the Bootstrap Ignition Shim (see [below](#create-the-bootstrap-ignition-shim)):
+The command will return the token to be added to the `ignition.config.merge[0].httpHeaders` property in the Bootstrap Ignition Shim (see [below](#create-the-bootstrap-ignition-shim)):
 
 ```json
 "httpHeaders": [
@@ -578,26 +585,18 @@ Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`
 {
   "ignition": {
     "config": {
-      "append": [
+      "merge": [
         {
           "source": "https://static.example.com/bootstrap.ign",
-          "verification": {},
-          "httpHeaders": []
         }
       ]
     },
-    "security": {},
-    "timeouts": {},
-    "version": "2.4.0"
+    "version": "3.1.0"
   },
-  "networkd": {},
-  "passwd": {},
-  "storage": {},
-  "systemd": {}
 }
 ```
 
-Change the `ignition.config.append.source` field to the URL hosting the `bootstrap.ign` file you've uploaded previously.
+Change the `ignition.config.merge.source` field to the URL hosting the `bootstrap.ign` file you've uploaded previously.
 
 #### Ignition file served by server using self-signed certificate
 
@@ -606,24 +605,17 @@ In order for the bootstrap node to retrieve the ignition file when it is served 
 ```json
 {
   "ignition": {
-    "config": {},
     "security": {
       "tls": {
         "certificateAuthorities": [
           {
             "source": "data:text/plain;charset=utf-8;base64,<base64_encoded_certificate>",
-            "verification": {}
           }
         ]
       }
     },
-    "timeouts": {},
-    "version": "2.4.0"
+    "version": "3.1.0"
   },
-  "networkd": {},
-  "passwd": {},
-  "storage": {},
-  "systemd": {}
 }
 ```
 
@@ -641,7 +633,7 @@ $ for index in $(seq 0 2); do
     python -c "import base64, json, sys;
 ignition = json.load(sys.stdin);
 files = ignition['storage'].get('files', []);
-files.append({'path': '/etc/hostname', 'mode': 420, 'contents': {'source': 'data:text/plain;charset=utf-8;base64,' + base64.standard_b64encode(b'$MASTER_HOSTNAME').decode().strip(), 'verification': {}}, 'filesystem': 'root'});
+files.append({'path': '/etc/hostname', 'mode': 420, 'contents': {'source': 'data:text/plain;charset=utf-8;base64,' + base64.standard_b64encode(b'$MASTER_HOSTNAME').decode().strip()}});
 ignition['storage']['files'] = files;
 json.dump(ignition, sys.stdout)" <master.ign >"$INFRA_ID-master-$index-ignition.json"
 done

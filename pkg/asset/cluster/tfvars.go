@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_1/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
@@ -554,7 +554,7 @@ func injectInstallInfo(bootstrap []byte) (string, error) {
 
 	config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/opt/openshift/manifests/openshift-install.yaml", "root", 0644, cm))
 
-	ign, err := json.Marshal(config)
+	ign, err := ignition.Marshal(config)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to marshal bootstrap Ignition config")
 	}

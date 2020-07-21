@@ -40,19 +40,12 @@ metadata:
 spec:
   config:
     ignition:
-      config: {}
-      security:
-        tls: {}
-      timeouts: {}
-      version: 2.2.0
-    networkd: {}
+      version: 3.1.0
     passwd:
       users:
       - name: core
         sshAuthorizedKeys:
         - 'ssh-rsa: dummy-key'
-    storage: {}
-    systemd: {}
   fips: false
   kernelArguments: null
   kernelType: ""
@@ -72,24 +65,16 @@ metadata:
 spec:
   config:
     ignition:
-      config: {}
-      security:
-        tls: {}
-      timeouts: {}
-      version: 2.2.0
-    networkd: {}
-    passwd: {}
+      version: 3.1.0
     storage:
       files:
       - contents:
           source: data:text/plain;charset=utf-8;base64,QUREIG5vc210
-          verification: {}
-        filesystem: root
         mode: 384
+        overwrite: true
         path: /etc/pivot/kernel-args
         user:
           name: root
-    systemd: {}
   fips: false
   kernelArguments: null
   kernelType: ""
@@ -110,24 +95,16 @@ metadata:
 spec:
   config:
     ignition:
-      config: {}
-      security:
-        tls: {}
-      timeouts: {}
-      version: 2.2.0
-    networkd: {}
-    passwd: {}
+      version: 3.1.0
     storage:
       files:
       - contents:
           source: data:text/plain;charset=utf-8;base64,QUREIG5vc210
-          verification: {}
-        filesystem: root
         mode: 384
+        overwrite: true
         path: /etc/pivot/kernel-args
         user:
           name: root
-    systemd: {}
   fips: false
   kernelArguments: null
   kernelType: ""
@@ -142,19 +119,12 @@ metadata:
 spec:
   config:
     ignition:
-      config: {}
-      security:
-        tls: {}
-      timeouts: {}
-      version: 2.2.0
-    networkd: {}
+      version: 3.1.0
     passwd:
       users:
       - name: core
         sshAuthorizedKeys:
         - 'ssh-rsa: dummy-key'
-    storage: {}
-    systemd: {}
   fips: false
   kernelArguments: null
   kernelType: ""

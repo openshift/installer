@@ -3,7 +3,7 @@ package machineconfig
 import (
 	"fmt"
 
-	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_1/types"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -12,7 +12,23 @@ import (
 
 // ForHyperthreadingDisabled creates the MachineConfig to disable hyperthreading.
 // RHCOS ships with pivot.service that uses the `/etc/pivot/kernel-args` to override the kernel arguments for hosts.
-func ForHyperthreadingDisabled(role string) *mcfgv1.MachineConfig {
+func ForHyperthreadingDisabled(role string) (*mcfgv1.MachineConfig, error) {
+	ignConfig := igntypes.Config{
+		Ignition: igntypes.Ignition{
+			Version: igntypes.MaxVersion.String(),
+		},
+		Storage: igntypes.Storage{
+			Files: []igntypes.File{
+				ignition.FileFromString("/etc/pivot/kernel-args", "root", 0600, "ADD nosmt"),
+			},
+		},
+	}
+
+	rawExt, err := ignition.ConvertToRawExtension(ignConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return &mcfgv1.MachineConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machineconfiguration.openshift.io/v1",
@@ -25,16 +41,7 @@ func ForHyperthreadingDisabled(role string) *mcfgv1.MachineConfig {
 			},
 		},
 		Spec: mcfgv1.MachineConfigSpec{
-			Config: igntypes.Config{
-				Ignition: igntypes.Ignition{
-					Version: igntypes.MaxVersion.String(),
-				},
-				Storage: igntypes.Storage{
-					Files: []igntypes.File{
-						ignition.FileFromString("/etc/pivot/kernel-args", "root", 0600, "ADD nosmt"),
-					},
-				},
-			},
+			Config: rawExt,
 		},
-	}
+	}, nil
 }

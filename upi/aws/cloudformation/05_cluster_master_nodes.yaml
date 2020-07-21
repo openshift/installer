@@ -180,7 +180,7 @@ Resources:
         SubnetId: !Ref "Master0Subnet"
       UserData:
         Fn::Base64: !Sub
-        - '{"ignition":{"config":{"append":[{"source":"${SOURCE}","verification":{}}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}","verification":{}}]}},"timeouts":{},"version":"2.2.0"},"networkd":{},"passwd":{},"storage":{},"systemd":{}}'
+        - '{"ignition":{"config":{"merge":[{"source":"${SOURCE}"}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}"}]}},"version":"3.1.0"}}'
         - {
           SOURCE: !Ref IgnitionLocation,
           CA_BUNDLE: !Ref CertificateAuthorities,
@@ -232,7 +232,7 @@ Resources:
         SubnetId: !Ref "Master1Subnet"
       UserData:
         Fn::Base64: !Sub
-        - '{"ignition":{"config":{"append":[{"source":"${SOURCE}","verification":{}}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}","verification":{}}]}},"timeouts":{},"version":"2.2.0"},"networkd":{},"passwd":{},"storage":{},"systemd":{}}'
+        - '{"ignition":{"config":{"merge":[{"source":"${SOURCE}"}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}"}]}},"version":"3.1.0"}}'
         - {
           SOURCE: !Ref IgnitionLocation,
           CA_BUNDLE: !Ref CertificateAuthorities,
@@ -284,7 +284,7 @@ Resources:
         SubnetId: !Ref "Master2Subnet"
       UserData:
         Fn::Base64: !Sub
-        - '{"ignition":{"config":{"append":[{"source":"${SOURCE}","verification":{}}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}","verification":{}}]}},"timeouts":{},"version":"2.2.0"},"networkd":{},"passwd":{},"storage":{},"systemd":{}}'
+        - '{"ignition":{"config":{"merge":[{"source":"${SOURCE}"}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}"}]}},"version":"3.1.0"}}'
         - {
           SOURCE: !Ref IgnitionLocation,
           CA_BUNDLE: !Ref CertificateAuthorities,

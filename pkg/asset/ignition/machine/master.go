@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"os"
 
-	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_1/types"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
 )
@@ -40,7 +41,7 @@ func (a *Master) Generate(dependencies asset.Parents) error {
 
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master")
 
-	data, err := json.Marshal(a.Config)
+	data, err := ignition.Marshal(a.Config)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal Ignition config")
 	}

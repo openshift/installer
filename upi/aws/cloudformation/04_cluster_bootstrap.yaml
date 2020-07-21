@@ -168,7 +168,7 @@ Resources:
         SubnetId: !Ref "PublicSubnet"
       UserData:
         Fn::Base64: !Sub
-        - '{"ignition":{"config":{"replace":{"source":"${S3Loc}","verification":{}}},"timeouts":{},"version":"2.1.0"},"networkd":{},"passwd":{},"storage":{},"systemd":{}}'
+        - '{"ignition":{"config":{"replace":{"source":"${S3Loc}"}},"version":"3.1.0"}}'
         - {
           S3Loc: !Ref BootstrapIgnitionLocation
         }

@@ -22,7 +22,7 @@ def GenerateConfig(context):
             'metadata': {
                 'items': [{
                     'key': 'user-data',
-                    'value': '{"ignition":{"config":{"replace":{"source":"' + context.properties['bootstrap_ign'] + '","verification":{}}},"timeouts":{},"version":"2.1.0"},"networkd":{},"passwd":{},"storage":{},"systemd":{}}',
+                    'value': '{"ignition":{"config":{"replace":{"source":"' + context.properties['bootstrap_ign'] + '"}},"version":"3.1.0"}}',
                 }]
             },
             'networkInterfaces': [{

@@ -3,17 +3,19 @@ package openstack
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"strings"
 
-	ignition "github.com/coreos/ignition/config/v2_4/types"
+	ignutil "github.com/coreos/ignition/v2/config/util"
+	igntypes "github.com/coreos/ignition/v2/config/v3_1/types"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
+
+	"github.com/openshift/installer/pkg/asset/ignition"
 )
 
 // Starting from OpenShift 4.4 we store bootstrap Ignition configs in Glance.
@@ -58,10 +60,10 @@ func uploadBootstrapConfig(cloud string, bootstrapIgn string, clusterID string) 
 // parseCertificateBundle loads each certificate in the bundle to the Ingition
 // carrier type, ignoring any invisible character before, after and in between
 // certificates.
-func parseCertificateBundle(userCA []byte) ([]ignition.CaReference, error) {
+func parseCertificateBundle(userCA []byte) ([]igntypes.Resource, error) {
 	userCA = bytes.TrimSpace(userCA)
 
-	var carefs []ignition.CaReference
+	var carefs []igntypes.Resource
 	for len(userCA) > 0 {
 		var block *pem.Block
 		block, userCA = pem.Decode(userCA)
@@ -69,7 +71,7 @@ func parseCertificateBundle(userCA []byte) ([]ignition.CaReference, error) {
 			return nil, fmt.Errorf("unable to parse certificate, please check the cacert section of clouds.yaml")
 		}
 
-		carefs = append(carefs, ignition.CaReference{Source: dataurl.EncodeBytes(pem.EncodeToMemory(block))})
+		carefs = append(carefs, igntypes.Resource{Source: ignutil.StrToPtr(dataurl.EncodeBytes(pem.EncodeToMemory(block)))})
 
 		userCA = bytes.TrimSpace(userCA)
 	}
@@ -92,29 +94,29 @@ func generateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL st
 	// Hostname Config
 	contents := fmt.Sprintf("%s-bootstrap", clusterID)
 
-	hostnameConfigFile := ignition.File{
-		Node: ignition.Node{
-			Filesystem: "root",
-			Path:       "/etc/hostname",
+	hostnameConfigFile := igntypes.File{
+		Node: igntypes.Node{
+			Path:      "/etc/hostname",
+			Overwrite: ignutil.BoolToPtr(true),
 		},
-		FileEmbedded1: ignition.FileEmbedded1{
+		FileEmbedded1: igntypes.FileEmbedded1{
 			Mode: &fileMode,
-			Contents: ignition.FileContents{
-				Source: dataurl.EncodeBytes([]byte(contents)),
+			Contents: igntypes.Resource{
+				Source: ignutil.StrToPtr(dataurl.EncodeBytes([]byte(contents))),
 			},
 		},
 	}
 
 	// Openstack Ca Cert file
-	openstackCAFile := ignition.File{
-		Node: ignition.Node{
-			Filesystem: "root",
-			Path:       "/opt/openshift/tls/cloud-ca-cert.pem",
+	openstackCAFile := igntypes.File{
+		Node: igntypes.Node{
+			Path:      "/opt/openshift/tls/cloud-ca-cert.pem",
+			Overwrite: ignutil.BoolToPtr(true),
 		},
-		FileEmbedded1: ignition.FileEmbedded1{
+		FileEmbedded1: igntypes.FileEmbedded1{
 			Mode: &fileMode,
-			Contents: ignition.FileContents{
-				Source: dataurl.EncodeBytes([]byte(userCA)),
+			Contents: igntypes.Resource{
+				Source: ignutil.StrToPtr(dataurl.EncodeBytes([]byte(userCA))),
 			},
 		},
 	}
@@ -123,41 +125,41 @@ func generateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL st
 	if err != nil {
 		return "", err
 	}
-	security := ignition.Security{
-		TLS: ignition.TLS{
+	security := igntypes.Security{
+		TLS: igntypes.TLS{
 			CertificateAuthorities: carefs,
 		},
 	}
 
-	headers := []ignition.HTTPHeader{
+	headers := []igntypes.HTTPHeader{
 		{
 			Name:  "X-Auth-Token",
-			Value: tokenID,
+			Value: ignutil.StrToPtr(tokenID),
 		},
 	}
 
-	ign := ignition.Config{
-		Ignition: ignition.Ignition{
-			Version:  ignition.MaxVersion.String(),
+	ign := igntypes.Config{
+		Ignition: igntypes.Ignition{
+			Version:  igntypes.MaxVersion.String(),
 			Security: security,
-			Config: ignition.IgnitionConfig{
-				Append: []ignition.ConfigReference{
+			Config: igntypes.IgnitionConfig{
+				Merge: []igntypes.Resource{
 					{
-						Source:      bootstrapConfigURL,
+						Source:      ignutil.StrToPtr(bootstrapConfigURL),
 						HTTPHeaders: headers,
 					},
 				},
 			},
 		},
-		Storage: ignition.Storage{
-			Files: []ignition.File{
+		Storage: igntypes.Storage{
+			Files: []igntypes.File{
 				hostnameConfigFile,
 				openstackCAFile,
 			},
 		},
 	}
 
-	data, err := json.Marshal(ign)
+	data, err := ignition.Marshal(ign)
 	if err != nil {
 		return "", err
 	}
