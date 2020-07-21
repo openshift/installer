@@ -153,6 +153,23 @@ func askUsername(c *Config) error {
 	return nil
 }
 
+// askQuestionTrueOrFalse generic function to ask question to users which
+// requires true (Yes) or false (No) as answer
+func askQuestionTrueOrFalse(question string, helpMessage string) (bool, error) {
+	value := false
+	err := survey.AskOne(
+		&survey.Confirm{
+			Message: question,
+			Help:    helpMessage,
+		},
+		&value, survey.Required)
+	if err != nil {
+		return value, err
+	}
+
+	return value, nil
+}
+
 // askCredentials will handle username and password for connecting with Engine
 func askCredentials(c Config) (Config, error) {
 	loginAttempts := 3
@@ -236,6 +253,10 @@ func engineSetup() (Config, error) {
 
 	if err != nil {
 		logrus.Warning("cannot download PEM file from Engine!", err)
+		answer, err := askQuestionTrueOrFalse("Would you like to continue?", "By not using a trusted CA, insecure connections can cause man-in-the-middle attacks among many others.")
+		if !answer {
+			return engineConfig, err
+		}
 		engineConfig.Insecure = true
 	} else {
 		err = httpResource.addTrustBundle(httpResource.saveFilePath, &engineConfig)
