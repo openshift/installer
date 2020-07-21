@@ -521,16 +521,18 @@ github.com/googleapis/gax-go/v2
 github.com/googleapis/gnostic/OpenAPIv2
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
-# github.com/gophercloud/gophercloud v0.11.0
+# github.com/gophercloud/gophercloud v0.12.0
 ## explicit
 github.com/gophercloud/gophercloud
 github.com/gophercloud/gophercloud/internal
 github.com/gophercloud/gophercloud/openstack
+github.com/gophercloud/gophercloud/openstack/baremetal/httpbasic
 github.com/gophercloud/gophercloud/openstack/baremetal/noauth
 github.com/gophercloud/gophercloud/openstack/baremetal/v1/allocations
 github.com/gophercloud/gophercloud/openstack/baremetal/v1/drivers
 github.com/gophercloud/gophercloud/openstack/baremetal/v1/nodes
 github.com/gophercloud/gophercloud/openstack/baremetal/v1/ports
+github.com/gophercloud/gophercloud/openstack/baremetalintrospection/httpbasic
 github.com/gophercloud/gophercloud/openstack/baremetalintrospection/noauth
 github.com/gophercloud/gophercloud/openstack/baremetalintrospection/v1/introspection
 github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/quotasets
@@ -997,9 +999,10 @@ github.com/oklog/run
 # github.com/opencontainers/go-digest v1.0.0-rc1
 github.com/opencontainers/go-digest
 # github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6
+## explicit
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openshift-metal3/terraform-provider-ironic v0.2.2
+# github.com/openshift-metal3/terraform-provider-ironic v0.2.3
 ## explicit
 github.com/openshift-metal3/terraform-provider-ironic/ironic
 # github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible => github.com/openshift/api v0.0.0-20200601094953-95abe2d2f422

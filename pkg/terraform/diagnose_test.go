@@ -89,6 +89,24 @@ Error: compute.VirtualMachinesClient#CreateOrUpdate: Failure sending request: St
 `,
 
 		err: `error\(AzureQuotaLimitExceeded\) from Infrastructure Provider: Service limits exceeded for Virtual Machine cores in the the subscriptions for the region\. Requesting increase in quota should fix the error\.`,
+	}, {
+		input: `
+Error: could not contact Ironic API: timeout reached 
+
+  on ../../../../tmp/openshift-install-431515935/masters/main.tf line 1, in resource "ironic_node_v1" "openshift-master-host":
+   1: resource "ironic_node_v1" "openshift-master-host" {
+`,
+
+		err: `error\(BaremetalIronicAPITimeout\) from Infrastructure Provider: Timed out waiting for provisioning service\. This failure can be caused by misconfiguration or inability to download the machine operating system images\. Please check the bootstrap host for failing services\.`,
+	}, {
+		input: `
+Error: could not inspect: could not inspect node, node is currently 'inspect failed', last error was 'timeout reached while inspecting the node'
+
+  on ../../tmp/openshift-install-229338618/masters/main.tf line 1, in resource "ironic_node_v1" "openshift-master-host":
+   1: resource "ironic_node_v1" "openshift-master-host" {
+`,
+
+		err: `error\(BaremetalIronicInspectTimeout\) from Infrastructure Provider: Timed out waiting for node inspection to complete\. Please check the console on the host for more details\.`,
 	}}
 
 	for _, test := range cases {

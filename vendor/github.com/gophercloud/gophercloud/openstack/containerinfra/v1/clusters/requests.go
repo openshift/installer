@@ -26,6 +26,7 @@ type CreateOpts struct {
 	FloatingIPEnabled *bool             `json:"floating_ip_enabled,omitempty"`
 	FixedNetwork      string            `json:"fixed_network,omitempty"`
 	FixedSubnet       string            `json:"fixed_subnet,omitempty"`
+	MergeLabels       *bool             `json:"merge_labels,omitempty"`
 }
 
 // ToClusterCreateMap constructs a request body from CreateOpts.

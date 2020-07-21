@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack/baremetal/httpbasic"
 	"github.com/gophercloud/gophercloud/openstack/baremetal/noauth"
 	"github.com/gophercloud/gophercloud/openstack/baremetal/v1/drivers"
+	httpbasicintrospection "github.com/gophercloud/gophercloud/openstack/baremetalintrospection/httpbasic"
 	noauthintrospection "github.com/gophercloud/gophercloud/openstack/baremetalintrospection/noauth"
 	"github.com/gophercloud/gophercloud/pagination"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"log"
 	"net/http"
@@ -60,7 +63,7 @@ func (c *Clients) GetIronicClient() (*gophercloud.ServiceClient, error) {
 
 	// We previously tried and it failed.
 	if c.ironicFailed {
-		return nil, fmt.Errorf("could not contact API: timeout reached")
+		return nil, fmt.Errorf("could not contact Ironic API: timeout reached")
 	}
 
 	// Let's poll the API until it's up, or times out.
@@ -82,7 +85,7 @@ func (c *Clients) GetIronicClient() (*gophercloud.ServiceClient, error) {
 	case <-ctx.Done():
 		if err := ctx.Err(); err != nil {
 			c.ironicFailed = true
-			return nil, fmt.Errorf("could not contact API: %w", err)
+			return nil, fmt.Errorf("could not contact Ironic API: %w", err)
 		}
 	case <-done:
 	}
@@ -104,7 +107,7 @@ func (c *Clients) GetInspectorClient() (*gophercloud.ServiceClient, error) {
 	} else if c.inspectorUp || c.timeout == 0 {
 		return c.inspector, nil
 	} else if c.inspectorFailed {
-		return nil, fmt.Errorf("could not contact API: timeout reached")
+		return nil, fmt.Errorf("could not contact Inspector API: timeout reached")
 	}
 
 	// Let's poll the API until it's up, or times out.
@@ -166,6 +169,41 @@ func Provider() terraform.ResourceProvider {
 				Description: descriptions["timeout"],
 				Default:     0,
 			},
+			"auth_strategy": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("IRONIC_AUTH_STRATEGY", "noauth"),
+				Description: descriptions["auth_strategy"],
+				ValidateFunc: validation.StringInSlice([]string{
+					"noauth", "http_basic",
+				}, false),
+			},
+			"ironic_username": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("IRONIC_HTTP_BASIC_USERNAME", ""),
+				Description: descriptions["ironic_username"],
+			},
+			"ironic_password": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Sensitive:   true,
+				DefaultFunc: schema.EnvDefaultFunc("IRONIC_HTTP_BASIC_PASSWORD", ""),
+				Description: descriptions["ironic_password"],
+			},
+			"inspector_username": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("INSPECTOR_HTTP_BASIC_USERNAME", ""),
+				Description: descriptions["inspector_username"],
+			},
+			"inspector_password": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Sensitive:   true,
+				DefaultFunc: schema.EnvDefaultFunc("INSPECTOR_HTTP_BASIC_PASSWORD", ""),
+				Description: descriptions["inspector_username"],
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"ironic_node_v1":       resourceNodeV1(),
@@ -184,10 +222,15 @@ var descriptions map[string]string
 
 func init() {
 	descriptions = map[string]string{
-		"url":          "The authentication endpoint for Ironic",
-		"inspector":    "The endpoint for Ironic inspector",
-		"microversion": "The microversion to use for Ironic",
-		"timeout":      "Wait at least the specified number of seconds for the API to become available",
+		"url":                "The authentication endpoint for Ironic",
+		"inspector":          "The endpoint for Ironic inspector",
+		"microversion":       "The microversion to use for Ironic",
+		"timeout":            "Wait at least the specified number of seconds for the API to become available",
+		"auth_strategy":      "Determine the strategy to use for authentication with Ironic services, Possible values: noauth, http_basic. Defaults to noauth.",
+		"ironic_username":    "Username to be used by Ironic when using `http_basic` authentication",
+		"ironic_password":    "Password to be used by Ironic when using `http_basic` authentication",
+		"inspector_username": "Username to be used by Ironic Inspector when using `http_basic` authentication",
+		"inspector_password": "Password to be used by Ironic Inspector when using `http_basic` authentication",
 	}
 }
 
@@ -201,30 +244,72 @@ func configureProvider(schema *schema.ResourceData) (interface{}, error) {
 	}
 	log.Printf("[DEBUG] Ironic endpoint is %s", url)
 
-	ironic, err := noauth.NewBareMetalNoAuth(noauth.EndpointOpts{
-		IronicEndpoint: url,
-	})
-	if err != nil {
-		return nil, err
-	}
-	ironic.Microversion = schema.Get("microversion").(string)
-	clients.ironic = ironic
+	authStrategy := schema.Get("auth_strategy").(string)
 
-	inspectorURL := schema.Get("inspector").(string)
-	if inspectorURL != "" {
-		log.Printf("[DEBUG] Inspector endpoint is %s", inspectorURL)
-		inspector, err := noauthintrospection.NewBareMetalIntrospectionNoAuth(noauthintrospection.EndpointOpts{
-			IronicInspectorEndpoint: inspectorURL,
+	if authStrategy == "http_basic" {
+		log.Printf("[DEBUG] Using http_basic auth_strategy")
+
+		ironicUser := schema.Get("ironic_username").(string)
+		ironicPassword := schema.Get("ironic_password").(string)
+		ironic, err := httpbasic.NewBareMetalHTTPBasic(httpbasic.EndpointOpts{
+			IronicEndpoint:     url,
+			IronicUser:         ironicUser,
+			IronicUserPassword: ironicPassword,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		ironic.Microversion = schema.Get("microversion").(string)
+		clients.ironic = ironic
+
+		inspectorURL := schema.Get("inspector").(string)
+		if inspectorURL != "" {
+			inspectorUser := schema.Get("inspector_username").(string)
+			inspectorPassword := schema.Get("inspector_password").(string)
+			log.Printf("[DEBUG] Inspector endpoint is %s", inspectorURL)
+
+			inspector, err := httpbasicintrospection.NewBareMetalIntrospectionHTTPBasic(httpbasicintrospection.EndpointOpts{
+				IronicInspectorEndpoint:     inspectorURL,
+				IronicInspectorUser:         inspectorUser,
+				IronicInspectorUserPassword: inspectorPassword,
+			})
+
+			if err != nil {
+				return nil, err
+			}
+			clients.inspector = inspector
+		}
+
+	} else {
+		log.Printf("[DEBUG] Using noauth auth_strategy")
+		ironic, err := noauth.NewBareMetalNoAuth(noauth.EndpointOpts{
+			IronicEndpoint: url,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("could not configure inspector endpoint: %s", err.Error())
+			return nil, err
 		}
-		clients.inspector = inspector
+		ironic.Microversion = schema.Get("microversion").(string)
+		clients.ironic = ironic
+
+		inspectorURL := schema.Get("inspector").(string)
+		if inspectorURL != "" {
+			log.Printf("[DEBUG] Inspector endpoint is %s", inspectorURL)
+			inspector, err := noauthintrospection.NewBareMetalIntrospectionNoAuth(noauthintrospection.EndpointOpts{
+				IronicInspectorEndpoint: inspectorURL,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("could not configure inspector endpoint: %s", err.Error())
+			}
+			clients.inspector = inspector
+		}
+
 	}
 
 	clients.timeout = schema.Get("timeout").(int)
 
-	return &clients, err
+	return &clients, nil
 }
 
 // Retries an API forever until it responds.
