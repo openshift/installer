@@ -27,14 +27,13 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if poolPlatform := pool.Platform.Name(); poolPlatform != baremetal.Name {
 		return nil, fmt.Errorf("non bare metal machine-pool: %q", poolPlatform)
 	}
-	clustername := config.ObjectMeta.Name
 	platform := config.Platform.BareMetal
 
 	total := int64(1)
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider, err := provider(clustername, platform, osImage, userDataSecret)
+	provider, err := provider(platform, osImage, userDataSecret)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create provider")
 	}
@@ -47,9 +46,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "openshift-machine-api",
-				Name:      fmt.Sprintf("%s-%s-%d", clustername, pool.Name, idx),
+				Name:      fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx),
 				Labels: map[string]string{
-					"machine.openshift.io/cluster-api-cluster":      clustername,
+					"machine.openshift.io/cluster-api-cluster":      clusterID,
 					"machine.openshift.io/cluster-api-machine-role": role,
 					"machine.openshift.io/cluster-api-machine-type": role,
 				},
@@ -67,7 +66,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterName string, platform *baremetal.Platform, osImage string, userDataSecret string) (*baremetalprovider.BareMetalMachineProviderSpec, error) {
+func provider(platform *baremetal.Platform, osImage string, userDataSecret string) (*baremetalprovider.BareMetalMachineProviderSpec, error) {
 	// The machine-os-downloader container launched by the baremetal-operator downloads the image,
 	// compresses it to speed up deployments and makes it available on platform.ClusterProvisioningIP, via http
 	// osImage looks like:
