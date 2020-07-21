@@ -28,6 +28,27 @@ func validNetworking() *types.Networking {
 	}
 }
 
+func TestValidateClusterName(t *testing.T) {
+	testConfig := types.InstallConfig{}
+
+	// valid platform
+	testConfig.ObjectMeta.Name = "test"
+	errs := ValidatePlatform(validPlatform(), validNetworking(), field.NewPath("test-path"), &testConfig)
+	assert.NoError(t, errs.ToAggregate())
+
+	// too long cluster name (more than 14 chars)
+	testConfig.ObjectMeta.Name = "0123456789abcde"
+	errs = ValidatePlatform(validPlatform(), validNetworking(), field.NewPath("test-path"), &testConfig)
+	assert.True(t, len(errs) == 1)
+	assert.Equal(t, "cluster name is too long, please restrict it to 14 characters", errs[0].Detail)
+
+	// . in the name
+	testConfig.ObjectMeta.Name = "test.cluster"
+	errs = ValidatePlatform(validPlatform(), validNetworking(), field.NewPath("test-path"), &testConfig)
+	assert.True(t, len(errs) == 1)
+	assert.Equal(t, "cluster name can't contain \".\" character", errs[0].Detail)
+}
+
 func TestValidatePlatform(t *testing.T) {
 	cases := []struct {
 		name                  string
@@ -122,16 +143,6 @@ func TestValidatePlatform(t *testing.T) {
 		},
 		{
 			name: "invalid network custom API vip",
-			platform: func() *openstack.Platform {
-				p := validPlatform()
-				p.APIVIP = "banana"
-				return p
-			}(),
-			networking: validNetworking(),
-			valid:      false,
-		},
-		{
-			name: "too long cluster name",
 			platform: func() *openstack.Platform {
 				p := validPlatform()
 				p.APIVIP = "banana"
