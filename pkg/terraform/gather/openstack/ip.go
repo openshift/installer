@@ -16,7 +16,7 @@ func BootstrapIP(tfs *terraform.State) (string, error) {
 	// Floating IPs aren't required but we try them first. If one
 	// exists it would be the best means to access the bootstrap instance
 	fip, err := terraform.LookupResource(tfs, "module.bootstrap", "openstack_networking_floatingip_v2", "bootstrap_fip")
-	if err == nil && fip != nil {
+	if err == nil && fip != nil && len(fip.Instances) != 0 {
 		bootstrap, _, err := unstructured.NestedString(fip.Instances[0].Attributes, "address")
 		if err == nil {
 			return bootstrap, nil

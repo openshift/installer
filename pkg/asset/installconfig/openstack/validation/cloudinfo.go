@@ -103,6 +103,9 @@ func (ci *cloudinfo) getFlavor(flavorName string) (*flavors.Flavor, error) {
 }
 
 func (ci *cloudinfo) getNetwork(networkName string) (*networks.Network, error) {
+	if networkName == "" {
+		return &networks.Network{}, nil
+	}
 	networkID, err := networkutils.IDFromName(ci.clients.networkClient, networkName)
 	if err != nil {
 		if errors.Is(err, gophercloud.ErrResourceNotFound{}) {
