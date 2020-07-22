@@ -19,6 +19,7 @@ import (
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	azuresession "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/destroy/providers"
@@ -101,25 +102,85 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 
 // Run is the entrypoint to start the uninstall process.
 func (o *ClusterUninstaller) Run() error {
+	var errs []error
+	var err error
+
 	o.configureClients()
 
-	o.Logger.Debug("deleting public records")
-	if err := deletePublicRecords(context.TODO(), o.zonesClient, o.recordsClient, o.privateZonesClient, o.privateRecordSetsClient, o.Logger, o.ResourceGroupName); err != nil {
+	timeout := 30 * time.Minute
+	waitCtx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	wait.UntilWithContext(
+		waitCtx,
+		func(ctx context.Context) {
+			o.Logger.Debugf("deleting public records")
+			err = deletePublicRecords(ctx, o.zonesClient, o.recordsClient, o.privateZonesClient, o.privateRecordSetsClient, o.Logger, o.ResourceGroupName)
+			if err != nil {
+				o.Logger.Debug(err)
+				return
+			}
+			cancel()
+		},
+		1*time.Second,
+	)
+	err = waitCtx.Err()
+	if err != nil && err != context.Canceled {
+		errs = append(errs, errors.Wrap(err, "failed to delete public DNS records"))
 		o.Logger.Debug(err)
-		return errors.Wrap(err, "failed to delete public DNS records")
-	}
-	o.Logger.Debug("deleting resource group")
-	if err := deleteResourceGroup(context.TODO(), o.resourceGroupsClient, o.Logger, o.ResourceGroupName); err != nil {
-		o.Logger.Debug(err)
-		return errors.Wrap(err, "failed to delete resource group")
-	}
-	o.Logger.Debug("deleting application registrations")
-	if err := deleteApplicationRegistrations(context.TODO(), o.applicationsClient, o.serviceprincipalsClient, o.Logger, o.InfraID); err != nil {
-		o.Logger.Debug(err)
-		return errors.Wrap(err, "failed to delete application registrations and their service principals")
 	}
 
-	return nil
+	deadline, _ := waitCtx.Deadline()
+	diff := deadline.Sub(time.Now())
+	if diff > 0 {
+		waitCtx, cancel = context.WithTimeout(context.Background(), diff)
+	}
+
+	wait.UntilWithContext(
+		waitCtx,
+		func(ctx context.Context) {
+			o.Logger.Debugf("deleting resource group")
+			err = deleteResourceGroup(ctx, o.resourceGroupsClient, o.Logger, o.ResourceGroupName)
+			if err != nil {
+				o.Logger.Debug(err)
+				return
+			}
+			cancel()
+		},
+		1*time.Second,
+	)
+	err = waitCtx.Err()
+	if err != nil && err != context.Canceled {
+		errs = append(errs, errors.Wrap(err, "failed to delete resource group"))
+		o.Logger.Debug(err)
+	}
+
+	deadline, _ = waitCtx.Deadline()
+	diff = deadline.Sub(time.Now())
+	if diff > 0 {
+		waitCtx, cancel = context.WithTimeout(context.Background(), diff)
+	}
+
+	wait.UntilWithContext(
+		waitCtx,
+		func(ctx context.Context) {
+			o.Logger.Debugf("deleting application registrations")
+			err = deleteApplicationRegistrations(ctx, o.applicationsClient, o.serviceprincipalsClient, o.Logger, o.InfraID)
+			if err != nil {
+				o.Logger.Debug(err)
+				return
+			}
+			cancel()
+		},
+		1*time.Second,
+	)
+	err = waitCtx.Err()
+	if err != nil && err != context.Canceled {
+		errs = append(errs, errors.Wrap(err, "failed to delete application registrations and their service principals"))
+		o.Logger.Debug(err)
+	}
+
+	return utilerrors.NewAggregate(errs)
 }
 
 func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, privateDNSClient privatedns.PrivateZonesClient, privateRecordsClient privatedns.RecordSetsClient, logger logrus.FieldLogger, rgName string) error {
