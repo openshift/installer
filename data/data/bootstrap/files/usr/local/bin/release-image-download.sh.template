@@ -42,5 +42,7 @@ if [ ! -f .pivot-done ]; then
 
   touch .pivot-done
   /usr/local/bin/machine-config-daemon pivot
+
+  systemctl reboot
 fi
 {{end -}}
