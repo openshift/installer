@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
+	ovirtmanifests "github.com/openshift/installer/pkg/asset/manifests/ovirt"
 	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -83,7 +84,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	}
 
 	switch installConfig.Config.Platform.Name() {
-	case awstypes.Name, libvirttypes.Name, nonetypes.Name, baremetaltypes.Name, ovirttypes.Name:
+	case awstypes.Name, libvirttypes.Name, nonetypes.Name, baremetaltypes.Name:
 		return nil
 	case openstacktypes.Name:
 		cloud, err := icopenstack.GetSession(installConfig.Config.Platform.OpenStack.Cloud)
@@ -159,6 +160,15 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}
 		cm.Data[cloudProviderConfigDataKey] = vsphereConfig
+	case ovirttypes.Name:
+		ovirtConfig, err := ovirtmanifests.CloudProviderConfig(
+			installConfig.Config.Platform.Ovirt.StorageDomainID,
+			installConfig.Config.Platform.Ovirt.ClusterID,
+			installConfig.Config.Platform.Ovirt.NetworkName)
+		if err != nil {
+			return err
+		}
+		cm.Data[cloudProviderConfigDataKey] = ovirtConfig
 	default:
 		return errors.New("invalid Platform")
 	}
