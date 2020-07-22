@@ -13,6 +13,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources"
 	"github.com/Azure/go-autorest/autorest"
+	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -31,6 +32,7 @@ type ClusterUninstaller struct {
 	TenantID        string
 	GraphAuthorizer autorest.Authorizer
 	Authorizer      autorest.Authorizer
+	Environment     azureenv.Environment
 
 	InfraID string
 
@@ -46,25 +48,25 @@ type ClusterUninstaller struct {
 }
 
 func (o *ClusterUninstaller) configureClients() {
-	o.resourceGroupsClient = resources.NewGroupsClient(o.SubscriptionID)
+	o.resourceGroupsClient = resources.NewGroupsClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
 	o.resourceGroupsClient.Authorizer = o.Authorizer
 
-	o.zonesClient = dns.NewZonesClient(o.SubscriptionID)
+	o.zonesClient = dns.NewZonesClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
 	o.zonesClient.Authorizer = o.Authorizer
 
-	o.recordsClient = dns.NewRecordSetsClient(o.SubscriptionID)
+	o.recordsClient = dns.NewRecordSetsClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
 	o.recordsClient.Authorizer = o.Authorizer
 
-	o.privateZonesClient = privatedns.NewPrivateZonesClient(o.SubscriptionID)
+	o.privateZonesClient = privatedns.NewPrivateZonesClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
 	o.privateZonesClient.Authorizer = o.Authorizer
 
-	o.privateRecordSetsClient = privatedns.NewRecordSetsClient(o.SubscriptionID)
+	o.privateRecordSetsClient = privatedns.NewRecordSetsClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
 	o.privateRecordSetsClient.Authorizer = o.Authorizer
 
-	o.serviceprincipalsClient = graphrbac.NewServicePrincipalsClient(o.TenantID)
+	o.serviceprincipalsClient = graphrbac.NewServicePrincipalsClientWithBaseURI(o.Environment.GraphEndpoint, o.TenantID)
 	o.serviceprincipalsClient.Authorizer = o.GraphAuthorizer
 
-	o.applicationsClient = graphrbac.NewApplicationsClient(o.TenantID)
+	o.applicationsClient = graphrbac.NewApplicationsClientWithBaseURI(o.Environment.GraphEndpoint, o.TenantID)
 	o.applicationsClient.Authorizer = o.GraphAuthorizer
 }
 
@@ -84,6 +86,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		TenantID:        session.Credentials.TenantID,
 		GraphAuthorizer: session.GraphAuthorizer,
 		Authorizer:      session.Authorizer,
+		Environment:     session.Environment,
 		InfraID:         metadata.InfraID,
 		Logger:          logger,
 	}, nil

@@ -125,13 +125,13 @@ func NewDNSConfig(ssn *Session) *DNSConfig {
 }
 
 func newZonesClient(session *Session) ZonesGetter {
-	azureClient := azdns.NewZonesClient(session.Credentials.SubscriptionID)
+	azureClient := azdns.NewZonesClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
 	azureClient.Authorizer = session.Authorizer
 	return &ZonesClient{azureClient: azureClient}
 }
 
 func newRecordSetsClient(session *Session) *RecordSetsClient {
-	azureClient := azdns.NewRecordSetsClient(session.Credentials.SubscriptionID)
+	azureClient := azdns.NewRecordSetsClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
 	azureClient.Authorizer = session.Authorizer
 	return &RecordSetsClient{azureClient: azureClient}
 }

@@ -30,10 +30,10 @@ type legacyDNSClient struct {
 }
 
 func newLegacyDNSClient(session *azconfig.Session, resourceGroup string) *legacyDNSClient {
-	zonesClient := azdns.NewZonesClient(session.Credentials.SubscriptionID)
+	zonesClient := azdns.NewZonesClientWithBaseURI(dnsEndpoint(session), session.Credentials.SubscriptionID)
 	zonesClient.Authorizer = session.Authorizer
 
-	recordsetsClient := azdns.NewRecordSetsClient(session.Credentials.SubscriptionID)
+	recordsetsClient := azdns.NewRecordSetsClientWithBaseURI(dnsEndpoint(session), session.Credentials.SubscriptionID)
 	recordsetsClient.Authorizer = session.Authorizer
 
 	return &legacyDNSClient{resourceGroup, zonesClient, recordsetsClient}
@@ -125,16 +125,16 @@ type privateDNSClient struct {
 }
 
 func newPrivateDNSClient(session *azconfig.Session, resourceGroup string, virtualNetwork string, vnetResourceGroup string) *privateDNSClient {
-	zonesClient := azprivatedns.NewPrivateZonesClient(session.Credentials.SubscriptionID)
+	zonesClient := azprivatedns.NewPrivateZonesClientWithBaseURI(dnsEndpoint(session), session.Credentials.SubscriptionID)
 	zonesClient.Authorizer = session.Authorizer
 
-	recordsetsClient := azprivatedns.NewRecordSetsClient(session.Credentials.SubscriptionID)
+	recordsetsClient := azprivatedns.NewRecordSetsClientWithBaseURI(dnsEndpoint(session), session.Credentials.SubscriptionID)
 	recordsetsClient.Authorizer = session.Authorizer
 
-	virtualNetworkLinksClient := azprivatedns.NewVirtualNetworkLinksClient(session.Credentials.SubscriptionID)
+	virtualNetworkLinksClient := azprivatedns.NewVirtualNetworkLinksClientWithBaseURI(dnsEndpoint(session), session.Credentials.SubscriptionID)
 	virtualNetworkLinksClient.Authorizer = session.Authorizer
 
-	virtualNetworksClient := aznetwork.NewVirtualNetworksClient(session.Credentials.SubscriptionID)
+	virtualNetworksClient := aznetwork.NewVirtualNetworksClientWithBaseURI(dnsEndpoint(session), session.Credentials.SubscriptionID)
 	virtualNetworksClient.Authorizer = session.Authorizer
 
 	return &privateDNSClient{resourceGroup, vnetResourceGroup, virtualNetwork, zonesClient, recordsetsClient, virtualNetworkLinksClient, virtualNetworksClient}
@@ -527,4 +527,8 @@ func Eligible(cloudName azure.CloudEnvironment) error {
 	}
 
 	return nil
+}
+
+func dnsEndpoint(session *azconfig.Session) string {
+	return session.Environment.ResourceManagerEndpoint
 }
