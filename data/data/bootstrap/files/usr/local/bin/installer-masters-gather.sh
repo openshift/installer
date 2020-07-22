@@ -16,7 +16,8 @@ echo "Gathering master failed systemd unit status ..."
 mkdir -p "${ARTIFACTS}/unit-status"
 sed -n 's/^\* \([^ ]*\) .*/\1/p' < "${ARTIFACTS}/failed-units.txt" | while read -r UNIT
 do
-    systemctl status "${UNIT}" >& "${ARTIFACTS}/unit-status/${UNIT}.txt"
+    systemctl status --full "${UNIT}" >& "${ARTIFACTS}/unit-status/${UNIT}.txt"
+    journalctl -u "${UNIT}" > "${ARTIFACTS}/unit-status/${UNIT}.log"
 done
 
 echo "Gathering master journals ..."
