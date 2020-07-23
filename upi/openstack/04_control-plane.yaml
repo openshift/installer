@@ -33,10 +33,6 @@
     os_port:
       name: "{{ item.1 }}-{{ item.0 }}"
       network: "{{ os_network2 }}"
-      allowed_address_pairs:
-      - ip_address: "{{ os_subnet_range2 | next_nth_usable(5) }}"
-      - ip_address: "{{ os_subnet_range2 | next_nth_usable(6) }}"
-      - ip_address: "{{ os_subnet_range2 | next_nth_usable(7) }}"
     with_indexed_items: "{{ [os_port_master2] * os_cp_nodes_number }}"
     register: ports
     when: os_networking_type == "CiscoACI"
