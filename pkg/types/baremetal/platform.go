@@ -13,6 +13,17 @@ type BMC struct {
 	DisableCertificateVerification bool   `json:"disableCertificateVerification"`
 }
 
+// BootMode puts the server in legacy (BIOS) or UEFI mode for
+// booting. The default is UEFI.
+// +kubebuilder:validation:Enum=UEFI;legacy
+type BootMode string
+
+// Allowed boot mode from metal3
+const (
+	UEFI   BootMode = "UEFI"
+	Legacy BootMode = "legacy"
+)
+
 // Host stores all the configuration data for a baremetal host.
 type Host struct {
 	Name            string                    `json:"name,omitempty" validate:"required,uniqueField"`
@@ -21,6 +32,7 @@ type Host struct {
 	BootMACAddress  string                    `json:"bootMACAddress" validate:"required,uniqueField"`
 	HardwareProfile string                    `json:"hardwareProfile"`
 	RootDeviceHints *v1alpha1.RootDeviceHints `json:"rootDeviceHints,omitempty"`
+	BootMode        BootMode                  `json:"bootMode,omitempty"`
 }
 
 // Platform stores all the global configuration that all machinesets use.

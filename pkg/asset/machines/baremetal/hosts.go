@@ -2,6 +2,7 @@ package baremetal
 
 import (
 	"fmt"
+
 	"github.com/metal3-io/baremetal-operator/pkg/hardware"
 
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
@@ -78,6 +79,7 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSet
 				BMC:             bmc,
 				BootMACAddress:  host.BootMACAddress,
 				HardwareProfile: host.HardwareProfile,
+				BootMode:        baremetalhost.BootMode(host.BootMode),
 			},
 		}
 		if i < len(machines) {

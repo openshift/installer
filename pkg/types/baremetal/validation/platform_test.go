@@ -110,6 +110,24 @@ func TestValidatePlatform(t *testing.T) {
 					host2().BootMACAddress("CA:FE:CA:FE:CA:FE")).build(),
 			expected: "baremetal.hosts\\[1\\].BootMACAddress: Duplicate value: \"CA:FE:CA:FE:CA:FE\"",
 		},
+		{
+			name: "invalid_boot_mode",
+			platform: platform().
+				Hosts(host1().BootMode("not-a-valid-value")).build(),
+			expected: "baremetal.Hosts\\[0\\].bootMode: Invalid value: \"not-a-valid-value\": bootMode must be one of \"UEFI\" or \"legacy\"",
+		},
+		{
+			name: "uefi_boot_mode",
+			platform: platform().
+				Hosts(host1().BootMode("UEFI")).build(),
+			expected: "",
+		},
+		{
+			name: "legacy_boot_mode",
+			platform: platform().
+				Hosts(host1().BootMode("legacy")).build(),
+			expected: "",
+		},
 	}
 
 	for _, tc := range cases {
@@ -397,6 +415,11 @@ func (hb *hostBuilder) Name(value string) *hostBuilder {
 
 func (hb *hostBuilder) BootMACAddress(value string) *hostBuilder {
 	hb.Host.BootMACAddress = value
+	return hb
+}
+
+func (hb *hostBuilder) BootMode(value string) *hostBuilder {
+	hb.Host.BootMode = baremetal.BootMode(value)
 	return hb
 }
 

@@ -1010,6 +1010,13 @@ spec:
                           type: object
                         bootMACAddress:
                           type: string
+                        bootMode:
+                          description: BootMode puts the server in legacy (BIOS) or
+                            UEFI mode for booting. The default is UEFI.
+                          enum:
+                          - UEFI
+                          - legacy
+                          type: string
                         hardwareProfile:
                           type: string
                         name:
