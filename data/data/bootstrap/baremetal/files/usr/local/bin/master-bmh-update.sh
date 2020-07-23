@@ -40,5 +40,5 @@ for node in $(curl -s http://localhost:6385/v1/nodes | jq -r '.nodes[] | .uuid')
         "${BAREMETAL_OPERATOR_IMAGE}" \
         http://localhost:5050/v1 "$node" | jq '{hardware: .}')
 
-     oc annotate --overwrite -n openshift-machine-api baremetalhosts "$name" 'baremetalhost.metal3.io/status'="$HARDWARE_DETAILS"
+     oc annotate --overwrite -n openshift-machine-api baremetalhosts "$name" 'baremetalhost.metal3.io/status'="$HARDWARE_DETAILS" 'baremetalhost.metal3.io/paused-'
 done
