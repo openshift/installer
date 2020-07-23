@@ -28,9 +28,6 @@ const (
 	// annotation is present and status is empty, BMO will reconstruct BMH Status
 	// from the status annotation.
 	StatusAnnotation = "baremetalhost.metal3.io/status"
-
-	// UnhealthyAnnotation is the annotation that sets unhealthy status of BMH
-	UnhealthyAnnotation = "baremetalhost.metal3.io/unhealthy"
 )
 
 // RootDeviceHints holds the hints for specifying the storage location
@@ -75,6 +72,16 @@ type RootDeviceHints struct {
 	// True if the device should use spinning media, false otherwise.
 	Rotational *bool `json:"rotational,omitempty"`
 }
+
+// BootMode is the boot mode of the system
+// +kubebuilder:validation:Enum=UEFI;legacy
+type BootMode string
+
+// Allowed boot mode from metal3
+const (
+	UEFI   BootMode = "UEFI"
+	Legacy BootMode = "legacy"
+)
 
 // OperationalStatus represents the state of the host
 type OperationalStatus string
@@ -121,6 +128,10 @@ type ProvisioningState string
 const (
 	// StateNone means the state is unknown
 	StateNone ProvisioningState = ""
+
+	// StateUnmanaged means there is insufficient information available to
+	// register the host
+	StateUnmanaged ProvisioningState = "unmanaged"
 
 	// StateRegistrationError means there was an error registering the
 	// host with the backend
@@ -214,6 +225,11 @@ type BareMetalHostSpec struct {
 	// Provide guidance about how to choose the device for the image
 	// being provisioned.
 	RootDeviceHints *RootDeviceHints `json:"rootDeviceHints,omitempty"`
+
+	// Select the method of initializing the hardware during boot to
+	// override the value based on the BMC driver.
+	// +optional
+	BootMode BootMode `json:"bootMode,omitempty"`
 
 	// Which MAC address will PXE boot? This is optional for some
 	// types, but required for libvirt VMs driven by vbmc.
@@ -544,6 +560,9 @@ type ProvisionStatus struct {
 
 	// The RootDevicehints set by the user
 	RootDeviceHints *RootDeviceHints `json:"rootDeviceHints,omitempty"`
+
+	// BootMode indicates the boot mode used to provision the node
+	BootMode BootMode `json:"bootMode,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -635,6 +654,11 @@ func (host *BareMetalHost) getLabel(name string) string {
 		return ""
 	}
 	return host.Labels[name]
+}
+
+// HasBMCDetails returns true if the BMC details are set
+func (host *BareMetalHost) HasBMCDetails() bool {
+	return host.Spec.BMC.Address != "" || host.Spec.BMC.CredentialsName != ""
 }
 
 // NeedsHardwareProfile returns true if the profile is not set

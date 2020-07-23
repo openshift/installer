@@ -9,6 +9,7 @@ func init() {
 	schemes := []string{"http", "https"}
 	registerFactory("redfish", newRedfishAccessDetails, schemes)
 	registerFactory("redfish-virtualmedia", newRedfishVirtualMediaAccessDetails, schemes)
+	registerFactory("ilo5-redfish", newRedfishAccessDetails, schemes)
 	registerFactory("ilo5-virtualmedia", newRedfishVirtualMediaAccessDetails, schemes)
 	registerFactory("idrac-virtualmedia", newRedfishiDracVirtualMediaAccessDetails, schemes)
 }
