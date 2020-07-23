@@ -23,7 +23,6 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	if poolPlatform := pool.Platform.Name(); poolPlatform != "" && poolPlatform != baremetal.Name {
 		return nil, fmt.Errorf("non bare metal machine-pool: %q", poolPlatform)
 	}
-	clustername := config.ObjectMeta.Name
 	platform := config.Platform.BareMetal
 	// FIXME: bare metal actuator does not support any options from machinepool.
 	// mpool := pool.Platform.BareMetal
@@ -33,11 +32,11 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		total = *pool.Replicas
 	}
 
-	provider, err := provider(clustername, platform, osImage, userDataSecret)
+	provider, err := provider(platform, osImage, userDataSecret)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create provider")
 	}
-	name := fmt.Sprintf("%s-%s-%d", clustername, pool.Name, 0)
+	name := fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, 0)
 	mset := &machineapi.MachineSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -47,7 +46,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			Namespace: "openshift-machine-api",
 			Name:      name,
 			Labels: map[string]string{
-				"machine.openshift.io/cluster-api-cluster":      clustername,
+				"machine.openshift.io/cluster-api-cluster":      clusterID,
 				"machine.openshift.io/cluster-api-machine-role": role,
 				"machine.openshift.io/cluster-api-machine-type": role,
 			},
@@ -57,14 +56,14 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"machine.openshift.io/cluster-api-machineset": name,
-					"machine.openshift.io/cluster-api-cluster":    clustername,
+					"machine.openshift.io/cluster-api-cluster":    clusterID,
 				},
 			},
 			Template: machineapi.MachineTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						"machine.openshift.io/cluster-api-machineset":   name,
-						"machine.openshift.io/cluster-api-cluster":      clustername,
+						"machine.openshift.io/cluster-api-cluster":      clusterID,
 						"machine.openshift.io/cluster-api-machine-role": role,
 						"machine.openshift.io/cluster-api-machine-type": role,
 					},
