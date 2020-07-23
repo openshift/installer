@@ -1,14 +1,35 @@
 package validation
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	guuid "github.com/google/uuid"
 	"github.com/openshift/installer/pkg/types/openstack"
+
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+)
+
+type flavorRequirements struct {
+	RAM, VCPUs, Disk int
+}
+
+var (
+	ctrlPlaneFlavorMinimums = flavorRequirements{
+		RAM:   16,
+		VCPUs: 4,
+		Disk:  25,
+	}
+	computeFlavorMinimums = flavorRequirements{
+		RAM:   8,
+		VCPUs: 2,
+		Disk:  25,
+	}
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
-func ValidateMachinePool(p *openstack.MachinePool, ci *CloudInfo, fldPath *field.Path) field.ErrorList {
+func ValidateMachinePool(p *openstack.MachinePool, ci *CloudInfo, controlPlane bool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	// Validate Root Volumes
@@ -18,6 +39,14 @@ func ValidateMachinePool(p *openstack.MachinePool, ci *CloudInfo, fldPath *field
 		}
 		if p.RootVolume.Size <= 0 {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("rootVolume").Child("size"), p.RootVolume.Size, "Volume size must be greater than zero to use root volumes"))
+		}
+	}
+
+	if p.FlavorName != "" {
+		if controlPlane {
+			allErrs = append(allErrs, validateMpoolFlavor(ci.Flavors[p.FlavorName], p.FlavorName, ctrlPlaneFlavorMinimums, fldPath)...)
+		} else {
+			allErrs = append(allErrs, validateMpoolFlavor(ci.Flavors[p.FlavorName], p.FlavorName, computeFlavorMinimums, fldPath)...)
 		}
 	}
 
@@ -52,4 +81,35 @@ func validUUIDv4(s string) bool {
 	}
 
 	return true
+}
+
+func validateMpoolFlavor(flavor *flavors.Flavor, name string, req flavorRequirements, fldPath *field.Path) field.ErrorList {
+	if flavor == nil {
+		return field.ErrorList{field.NotFound(fldPath.Child("flavorName"), name)}
+	}
+
+	errs := []string{}
+	if flavor.RAM < req.RAM {
+		errs = append(errs, fmt.Sprintf("Must have minimum of %d GB RAM, had %d GB", req.RAM, flavor.RAM))
+	}
+	if flavor.VCPUs < req.VCPUs {
+		errs = append(errs, fmt.Sprintf("Must have minimum of %d VCPUs, had %d", req.VCPUs, flavor.VCPUs))
+	}
+	if flavor.Disk < req.Disk {
+		errs = append(errs, fmt.Sprintf("Must have minimum of %d GB Disk, had %d GB", req.Disk, flavor.Disk))
+	}
+
+	if len(errs) == 0 {
+		return field.ErrorList{}
+	}
+
+	errString := "Flavor did not meet the following minimum requirements: "
+	for i, err := range errs {
+		errString = errString + err
+		if i != len(errs)-1 {
+			errString = errString + "; "
+		}
+	}
+
+	return field.ErrorList{field.Invalid(fldPath.Child("flavorName"), flavor.Name, errString)}
 }

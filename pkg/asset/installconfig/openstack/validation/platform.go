@@ -25,7 +25,7 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, ci *CloudInfo)
 	allErrs = append(allErrs, validatePlatformFlavor(p, ci, fldPath)...)
 
 	if p.DefaultMachinePlatform != nil {
-		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, ci, fldPath.Child("defaultMachinePlatform"))...)
+		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, ci, true, fldPath.Child("defaultMachinePlatform"))...)
 	}
 
 	return allErrs
@@ -60,10 +60,38 @@ func validateExternalNetwork(p *openstack.Platform, ci *CloudInfo, fldPath *fiel
 	return allErrs
 }
 
-// validatePlatformFlavor validates the platform flavor and returns a list of all validatoin errors
+// validatePlatformFlavor validates the platform flavor and returns a list of all validation errors
 func validatePlatformFlavor(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
-	if ci.PlatformFlavor == nil {
+	flavor := ci.Flavors[p.FlavorName]
+	if flavor == nil {
 		allErrs = append(allErrs, field.NotFound(fldPath.Child("computeFlavor"), p.FlavorName))
+		return allErrs
 	}
+
+	errs := []string{}
+	req := ctrlPlaneFlavorMinimums
+	if flavor.RAM < req.RAM {
+		errs = append(errs, fmt.Sprintf("Must have minimum of %d GB RAM, had %d GB", req.RAM, flavor.RAM))
+	}
+	if flavor.VCPUs < req.VCPUs {
+		errs = append(errs, fmt.Sprintf("Must have minimum of %d VCPUs, had %d", req.VCPUs, flavor.VCPUs))
+	}
+	if flavor.Disk < req.Disk {
+		errs = append(errs, fmt.Sprintf("Must have minimum of %d GB Disk, had %d GB", req.Disk, flavor.Disk))
+	}
+
+	if len(errs) == 0 {
+		return field.ErrorList{}
+	}
+
+	errString := "Flavor did not meet the following minimum requirements: "
+	for i, err := range errs {
+		errString = errString + err
+		if i != len(errs)-1 {
+			errString = errString + "; "
+		}
+	}
+
+	allErrs = append(allErrs, field.Invalid(fldPath.Child("flavorName"), flavor.Name, errString))
 	return allErrs
 }

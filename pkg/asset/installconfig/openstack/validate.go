@@ -18,14 +18,14 @@ func Validate(ic *types.InstallConfig) error {
 
 	allErrs = append(allErrs, validation.ValidatePlatform(ic.Platform.OpenStack, ic.Networking, ci)...)
 	if ic.ControlPlane.Platform.OpenStack != nil {
-		allErrs = append(allErrs, validation.ValidateMachinePool(ic.ControlPlane.Platform.OpenStack, ci, field.NewPath("controlPlane", "platform", "openstack"))...)
+		allErrs = append(allErrs, validation.ValidateMachinePool(ic.ControlPlane.Platform.OpenStack, ci, true, field.NewPath("controlPlane", "platform", "openstack"))...)
 	}
 	for idx, compute := range ic.Compute {
 		fldPath := field.NewPath("compute").Index(idx)
 		if compute.Platform.OpenStack != nil {
 			allErrs = append(
 				allErrs,
-				validation.ValidateMachinePool(compute.Platform.OpenStack, ci, fldPath.Child("platform", "openstack"))...)
+				validation.ValidateMachinePool(compute.Platform.OpenStack, ci, false, fldPath.Child("platform", "openstack"))...)
 		}
 	}
 
