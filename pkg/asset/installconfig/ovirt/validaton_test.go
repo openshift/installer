@@ -83,3 +83,39 @@ func Test_validateAuth(t *testing.T) {
 func CreateMockOvirtServer(handler http.HandlerFunc) *httptest.Server {
 	return httptest.NewServer(handler)
 }
+
+func Test_validateURL(t *testing.T) {
+	httpsErrorRegExp := "must use https.*"
+	tests := []struct {
+		url           string
+		expectedError string
+	}{
+		{
+			url:           "engine.example.com",
+			expectedError: httpsErrorRegExp,
+		},
+		{
+			url:           "ftp://engine.example.com",
+			expectedError: httpsErrorRegExp,
+		},
+		{
+			url:           "http://engine.example.com",
+			expectedError: httpsErrorRegExp,
+		},
+		{
+			url: "https://engine.example.com",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.url, func(t *testing.T) {
+			err := validURL(tt.url)
+
+			if tt.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, tt.expectedError, err.Error())
+			}
+		})
+	}
+}

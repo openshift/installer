@@ -16,7 +16,7 @@ func askCredentials() (Config, error) {
 				Message: "oVirt API endpoint URL",
 				Help:    "The URL of the oVirt engine API. For example, https://ovirt-engine-fqdn/ovirt-engine/api.",
 			},
-			Validate: survey.ComposeValidators(survey.Required),
+			Validate: survey.ComposeValidators(survey.Required, validURL),
 		},
 	}, &c.URL)
 	if err != nil {
