@@ -29,6 +29,7 @@ type Session struct {
 	GraphAuthorizer autorest.Authorizer
 	Authorizer      autorest.Authorizer
 	Credentials     Credentials
+	Environment     azureenv.Environment
 }
 
 //Credentials is the data type for credentials as understood by the azure sdk
@@ -76,6 +77,8 @@ func newSessionFromFile(authFilePath string, cloudName azure.CloudEnvironment) (
 		return nil, errors.Wrap(err, "failed to get settings from file")
 	}
 
+	authSettings.Values[auth.ActiveDirectoryEndpoint] = env.ActiveDirectoryEndpoint
+
 	credentials, err := getCredentials(authSettings)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to map authsettings to credentials")
@@ -102,6 +105,7 @@ func newSessionFromFile(authFilePath string, cloudName azure.CloudEnvironment) (
 		GraphAuthorizer: graphAuthorizer,
 		Authorizer:      authorizer,
 		Credentials:     *credentials,
+		Environment:     env,
 	}, nil
 }
 

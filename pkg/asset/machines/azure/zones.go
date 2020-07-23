@@ -26,7 +26,7 @@ func AvailabilityZones(session *azure.Session, region string, instanceType strin
 }
 
 func skusClient(session *azure.Session) (client *compute.ResourceSkusClient, err error) {
-	skusClient := compute.NewResourceSkusClient(session.Credentials.SubscriptionID)
+	skusClient := compute.NewResourceSkusClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
 	skusClient.Authorizer = session.Authorizer
 	return &skusClient, nil
 }

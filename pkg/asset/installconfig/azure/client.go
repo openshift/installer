@@ -86,14 +86,14 @@ func (c *Client) GetControlPlaneSubnet(ctx context.Context, resourceGroupName, v
 
 // getVnetsClient sets up a new client to retrieve vnets
 func (c *Client) getVirtualNetworksClient(ctx context.Context) (*aznetwork.VirtualNetworksClient, error) {
-	vnetsClient := aznetwork.NewVirtualNetworksClient(c.ssn.Credentials.SubscriptionID)
+	vnetsClient := aznetwork.NewVirtualNetworksClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	vnetsClient.Authorizer = c.ssn.Authorizer
 	return &vnetsClient, nil
 }
 
 // getSubnetsClient sets up a new client to retrieve a subnet
 func (c *Client) getSubnetsClient(ctx context.Context) (*aznetwork.SubnetsClient, error) {
-	subnetClient := aznetwork.NewSubnetsClient(c.ssn.Credentials.SubscriptionID)
+	subnetClient := aznetwork.NewSubnetsClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	subnetClient.Authorizer = c.ssn.Authorizer
 	return &subnetClient, nil
 }
@@ -118,7 +118,7 @@ func (c *Client) ListLocations(ctx context.Context) (*[]azsubs.Location, error) 
 
 // getSubscriptionsClient sets up a new client to retrieve subscription data
 func (c *Client) getSubscriptionsClient(ctx context.Context) (azsubs.Client, error) {
-	client := azsubs.NewClient()
+	client := azsubs.NewClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint)
 	client.Authorizer = c.ssn.Authorizer
 	return client, nil
 }
@@ -143,14 +143,14 @@ func (c *Client) GetResourcesProvider(ctx context.Context, resourceProviderNames
 
 // getProvidersClient sets up a new client to retrieve providers data
 func (c *Client) getProvidersClient(ctx context.Context) (azres.ProvidersClient, error) {
-	client := azres.NewProvidersClient(c.ssn.Credentials.SubscriptionID)
+	client := azres.NewProvidersClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	client.Authorizer = c.ssn.Authorizer
 	return client, nil
 }
 
 // GetDiskSkus returns all the disk SKU pages for a given region.
 func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azsku.ResourceSku, error) {
-	client := azsku.NewResourceSkusClient(c.ssn.Credentials.SubscriptionID)
+	client := azsku.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	client.Authorizer = c.ssn.Authorizer
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
