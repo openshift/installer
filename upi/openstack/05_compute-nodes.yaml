@@ -27,18 +27,18 @@
       cmd: "openstack port set --tag {{ [cluster_id_tag] }} {{ item.1 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"
 
-  - name: 'Create the second Compute ports'
+  - name: 'Create the ACI containers Compute ports'
     os_port:
       name: "{{ item.1 }}-{{ item.0 }}"
-      network: "{{ os_network2 }}"
-    with_indexed_items: "{{ [os_port_worker2] * os_compute_nodes_number }}"
+      network: "{{ os_aci_containers_network }}"
+    with_indexed_items: "{{ [os_aci_containers_port_worker] * os_compute_nodes_number }}"
     register: ports
     when: os_networking_type == "CiscoACI"
 
-  - name: 'Set second Compute ports tag'
+  - name: 'Set ACI containers Compute ports tag'
     command:
       cmd: "openstack port set --tag {{ [cluster_id_tag] }} {{ item.1 }}-{{ item.0 }}"
-    with_indexed_items: "{{ [os_port_worker2] * os_compute_nodes_number }}"
+    with_indexed_items: "{{ [os_aci_containers_port_worker] * os_compute_nodes_number }}"
     when: os_networking_type == "CiscoACI"
 
   - name: 'List the Compute Trunks'
@@ -64,7 +64,7 @@
       userdata: "{{ lookup('file', 'worker.ign') | string }}"
       nics:
       - port-name: "{{ os_port_worker }}-{{ item.0 }}"
-      - port-name: "{{ os_port_worker2 }}-{{ item.0 }}"
+      - port-name: "{{ os_aci_containers_port_worker }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
     when: os_networking_type == "CiscoACI"
 

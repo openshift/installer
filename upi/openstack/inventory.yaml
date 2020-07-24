@@ -35,7 +35,10 @@ all:
       # 3 is the minimum number for a fully-functional cluster.
       os_compute_nodes_number: 3
 
-      infra_vlan: 4093
-      service_vlan: 2003
+      acc_provision_tar: /fullpath/to/tar/file
       opflex_interface: ens4
       node_interface: ens3
+      aci_containers_addr_scope: addr-scp-openshiftupi 
+      aci_containers_l3out_vrf: uni/tn-common/ctx-sauto_l3out-1_vrf
+      aci_containers_subnet_pool: subpool-openshiftupi
+      aci_containers_prefix_length: 27

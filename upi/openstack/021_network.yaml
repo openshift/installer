@@ -9,29 +9,29 @@
       cmd: "openstack networrk set {{ os_network }} --mtu {{ neutron_network_mtu }}"
     when: os_networking_type == "CiscoACI"
 
-  - name: 'Create second node network'
+  - name: 'Create ACI containers node network'
     command:
-      cmd: "neutron net-create {{ os_network2 }} --apic:nested-domain-name openshift-domain --apic:nested-domain-type openshift --apic:nested_domain_infra_vlan {{ infra_vlan }} --apic:nested_domain_service_vlan {{ service_vlan }}"
+      cmd: "neutron net-create {{ os_aci_containers_network }} --apic:nested-domain-name openshift-domain --apic:nested-domain-type openshift --apic:nested_domain_infra_vlan {{ infra_vlan }} --apic:nested_domain_service_vlan {{ service_vlan }}"
     when: os_networking_type == "CiscoACI"
 
-  - name: 'Set the second cluster network tag'
+  - name: 'Set the ACI containers cluster network tag'
     command:
-      cmd: "openstack network set --tag {{ cluster_id_tag }} {{ os_network2 }}"
+      cmd: "openstack network set --tag {{ cluster_id_tag }} {{ os_aci_containers_network }}"
     when: os_networking_type == "CiscoACI"
 
-  - name: 'Create a subnet2'
+  - name: 'Create the ACI containers subnet'
     os_subnet:
-      name: "{{ os_subnet2 }}"
-      network_name: "{{ os_network2 }}"
+      name: "{{ os_aci_containers_subnet }}"
+      network_name: "{{ os_aci_containers_network }}"
       no_gateway_ip: yes
-      cidr: "{{ os_subnet_range2 }}"
-      allocation_pool_start: "{{ os_subnet_range2 | next_nth_usable(10) }}"
-      allocation_pool_end: "{{ os_subnet_range2 | ipaddr('last_usable') }}"
+      cidr: "{{ os_aci_containers_subnet_range }}"
+      allocation_pool_start: "{{ os_aci_containers_subnet_range | next_nth_usable(10) }}"
+      allocation_pool_end: "{{ os_aci_containers_subnet_range | ipaddr('last_usable') }}"
     when: os_networking_type == "CiscoACI"
 
-  - name: 'Set the cluster subnet tag'
+  - name: 'Set the ACI containers cluster subnet tag'
     command:
-      cmd: "openstack subnet set --tag {{ cluster_id_tag }} {{ os_subnet2 }}"
+      cmd: "openstack subnet set --tag {{ cluster_id_tag }} {{ os_aci_containers_subnet }}"
     when: os_networking_type == "CiscoACI"
 
   - name: 'Set dns nameserver'

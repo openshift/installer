@@ -149,6 +149,14 @@
       port_range_min: 2379
       port_range_max: 2380
 
+  - name: 'Create master-sg rule "etcd" for pod network'
+    os_security_group_rule:
+      security_group: "{{ os_sg_master }}"
+      protocol: tcp
+      remote_ip_prefix: "{{ cluster_network_cidrs }}"
+      port_range_min: 2379
+      port_range_max: 2380
+
   - name: 'Create master-sg rule "master ingress services (TCP)"'
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
@@ -191,6 +199,15 @@
       remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 5353
       port_range_max: 5353
+
+  - name: 'Create worker-sg rule "DNS (UDP)"'
+    os_security_group_rule:
+      security_group: "{{ os_sg_worker }}"
+      remote_ip_prefix: "{{ cluster_network_cidrs }}"
+      protocol: udp
+      port_range_min: 53
+      port_range_max: 53
+    when: os_networking_type == "CiscoACI"
 
   - name: 'Create worker-sg rule "Ingress HTTP"'
     os_security_group_rule:

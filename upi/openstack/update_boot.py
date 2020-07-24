@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import tarfile
 import yaml
 
 with open('bootstrap.ign', 'r') as f:
@@ -15,18 +16,59 @@ with open("inventory.yaml", 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
+# Get accprovision tar path from inventory
+try:
+    acc_provision_tar = inventory['acc_provision_tar']
+except:
+    print("inventory.yaml should have acc_provision_tar field")
+
+# Read acc-provision for vlan values
+extract_to = './accProvisionTar'
+tar = tarfile.open(acc_provision_tar, "r:gz")
+tar.extractall(extract_to)
+tar.close()
+
+data = ''
+for filename in os.listdir(extract_to):
+    if 'ConfigMap-aci-containers-config' in filename:
+        filepath = "%s/%s" % (extract_to, filename)
+        with open(filepath, 'r') as stream:
+            try:
+                data = yaml.safe_load(stream)['data']['host-agent-config']
+            except yaml.YAMLError as exc:
+                print(exc)
+
+# Extract host-agent-config and obtain vlan values
+try:
+    json_data = json.loads(data)
+    aci_infra_vlan = json_data['aci-infra-vlan']
+    service_vlan = json_data['service-vlan']
+except:
+    print("Couldn't extract host-agent-config from aci-containers ConfigMap")
+
+# Set infra_vlan field in inventory.yaml using accprovision tar value
+try:
+    with open("inventory.yaml", 'r') as stream:
+        cur_yaml = yaml.safe_load(stream)
+        cur_yaml['all']['hosts']['localhost']['infra_vlan'] = aci_infra_vlan
+
+    if cur_yaml:
+        with open("inventory.yaml",'w') as yamlfile:
+           yaml.safe_dump(cur_yaml, yamlfile)
+except:
+    print("Unable to edit inventory.yaml")
+try:
+    node_interface = inventory['node_interface']
+    opflex_interface = inventory['opflex_interface']
+except:
+    print("The inventory.yaml must have node_interface and opflex_interface fields set")
+
 if 'neutron_network_mtu' not in inventory:
     neutron_network_mtu = "1500"
 else:
     neutron_network_mtu = str(inventory['neutron_network_mtu'])
 
-try:
-    infra_vlan = str(inventory['infra_vlan'])
-    node_interface = inventory['node_interface']
-    opflex_interface = inventory['opflex_interface']
-except:
-    print("The inventory.yaml must have infra_vlan, node_interface and opflex_interface fields set")
-
+infra_vlan = str(aci_infra_vlan)
 infra_id = os.environ.get('INFRA_ID', 'openshift').encode()
 hostname_b64 = base64.standard_b64encode(infra_id + b'-bootstrap\n').decode().strip()
 files.append(
