@@ -7,6 +7,7 @@
   * [Prerequisite](#prerequisite)
   * [Minimum resources](#minimum-resources)
   * [Install](#install)
+    + [Minimum permission for installation](#minimum-permission-for-installation)
     + [ovirt-config.yaml](#ovirt-configyaml)
     + [Bootstrap VM](#bootstrap-vm)
     + [Install using the wizard](#install-using-the-wizard)
@@ -69,6 +70,21 @@ is included in the minimum resources calculation.
 
 
 ## Install 
+
+### Minimum permission for installation
+
+It's **not recommended** to users use admin@internal during the installation. Instead, create an exclusive user to install and manage OCP on oVirt.
+
+The minimum permissions are:
+- DiskOperator
+- DiskCreator
+- UserTemplateBasedVm
+- TemplateOwner
+- TemplateCreator
+- ClusterAdmin  (on the specific cluster targeted for OCP deployment)
+
+There is an [ansible playbook available](https://github.com/oVirt/ocp-on-ovirt/tree/master/installer-tools/ocpadmin) which helps to setup an internal user and group with the minimum privileges to run the openshift-install on oVirt.
+
 ### ovirt-config.yaml
 
 The ovirt-config.yaml is created under ${HOME}/.ovirt directory by the installer.
