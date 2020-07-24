@@ -29,9 +29,6 @@
     os_port:
       name: "{{ os_port_bootstrap2 }}"
       network: "{{ os_network2 }}"
-      allowed_address_pairs:
-      - ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
-      - ip_address: "{{ os_subnet_range | next_nth_usable(6) }}"
     when: os_networking_type == "CiscoACI"
 
   - name: 'Set second bootstrap port tag'
