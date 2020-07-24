@@ -26,8 +26,9 @@ type metadata struct {
 		URL   string `json:"url"`
 	}
 	GCP struct {
-		Image string `json:"image"`
-		URL   string `json:"url"`
+		Image   string `json:"image"`
+		Project string `json:"project"`
+		URL     string `json:"url"`
 	}
 	BaseURI string `json:"baseURI"`
 	Images  struct {

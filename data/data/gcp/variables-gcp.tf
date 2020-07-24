@@ -48,7 +48,18 @@ variable "gcp_master_instance_type" {
 
 variable "gcp_image_uri" {
   type = string
-  description = "Image for all nodes."
+  description = "URL to Raw Image for all nodes. This is used in case a new image needs to be generated for the nodes."
+}
+
+variable "gcp_image" {
+  type = string
+  description = "URL to the Image for all nodes."
+}
+
+variable "gcp_preexisting_image" {
+  type = bool
+  default = true
+  description = "Specifies whether an existing GCP Image should be used or a new one created for installation"
 }
 
 variable "gcp_master_root_volume_type" {

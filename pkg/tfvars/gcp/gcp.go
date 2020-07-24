@@ -21,6 +21,8 @@ type config struct {
 	MasterInstanceType      string   `json:"gcp_master_instance_type,omitempty"`
 	MasterAvailabilityZones []string `json:"gcp_master_availability_zones"`
 	ImageURI                string   `json:"gcp_image_uri,omitempty"`
+	Image                   string   `json:"gcp_image,omitempty"`
+	PreexistingImage        bool     `json:"gcp_preexisting_image"`
 	ImageLicenses           []string `json:"gcp_image_licenses,omitempty"`
 	VolumeType              string   `json:"gcp_master_root_volume_type"`
 	VolumeSize              int64    `json:"gcp_master_root_volume_size"`
@@ -36,7 +38,7 @@ type config struct {
 type TFVarsSources struct {
 	Auth               Auth
 	ImageURI           string
-	ImageLicenses      []string `json:"gcp_image_licenses,omitempty"`
+	ImageLicenses      []string
 	MasterConfigs      []*gcpprovider.GCPMachineProviderSpec
 	WorkerConfigs      []*gcpprovider.GCPMachineProviderSpec
 	PublicZoneName     string
@@ -52,6 +54,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	for i, c := range sources.MasterConfigs {
 		masterAvailabilityZones[i] = c.Zone
 	}
+
 	cfg := &config{
 		Auth:                    sources.Auth,
 		Region:                  masterConfig.Region,
@@ -61,6 +64,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VolumeType:              masterConfig.Disks[0].Type,
 		VolumeSize:              masterConfig.Disks[0].SizeGb,
 		ImageURI:                sources.ImageURI,
+		Image:                   masterConfig.Disks[0].Image,
 		ImageLicenses:           sources.ImageLicenses,
 		PublicZoneName:          sources.PublicZoneName,
 		PublishStrategy:         string(sources.PublishStrategy),
@@ -68,6 +72,10 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ControlPlaneSubnet:      masterConfig.NetworkInterfaces[0].Subnetwork,
 		ComputeSubnet:           workerConfig.NetworkInterfaces[0].Subnetwork,
 		PreexistingNetwork:      sources.PreexistingNetwork,
+	}
+	cfg.PreexistingImage = true
+	if len(sources.ImageLicenses) > 0 {
+		cfg.PreexistingImage = false
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
