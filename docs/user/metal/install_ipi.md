@@ -99,7 +99,10 @@ use one of the hosts that is intended to later become a worker node in the same
 cluster.  That way it is already connected to the proper networks.
 
 It is recommended that the provisioning host be a bare metal host, as it must be
-able to use libvirt to launch the OpenShift bootstrap VM locally.
+able to use libvirt to launch the OpenShift bootstrap VM locally. Additionally,
+the installer creates a directory backed libvirt storage pool in the 
+`/var/lib/libvirt/openshift-images` directory. Sufficient disk space must be
+available in the directory to host the bootstrap VM volume.
 
 ### Supported Hardware
 

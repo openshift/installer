@@ -22,4 +22,3 @@ variable "provisioning_bridge" {
   type        = string
   description = "The name of the bridge used for provisioning"
 }
-
