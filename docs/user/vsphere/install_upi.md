@@ -218,19 +218,14 @@ $ rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml openshift/99_o
 
 #### Check Folder Name in Cloud Provider Manifest
 
-An absolute path to the cluster VM folder is specified in the `cloud-provider-config.yaml` manifest. The vSphere Cloud Provider uses the specified folder for cluster operations, such as provisioning volumes. By default, the
-folder name is specified as the cluster id:
+An absolute path to the cluster VM folder is specified in the `cloud-provider-config.yaml` manifest. The vSphere Cloud Provider uses the specified folder for cluster operations, such as provisioning volumes. The folder path can be specified in the install-config (see [customization.md](customization.md)) or the default value will be a top-level folder named with the infrastructure ID.
 
 ```console
 $ cat vsphere-test/manifests/cloud-provider-config.yaml | grep folder
     folder = "/<datacenter>/vm/test-kndtw"
 ```
 
-You must either:
-* change this value to match the absolute path of your VM folder; OR
-* create a VM folder at this path named with the cluster ID
-
-Note: `folder` may be specified in the install config, and this value will automatically be updated to match the provided value. See [customization.md](customization.md) for more details.
+For successful cluster operation, VMs will need to be created in a folder matching the path specified in the cloud-provider config.
 
 ### Invoking the installer to get Ignition configs
 
