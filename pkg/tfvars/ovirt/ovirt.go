@@ -38,7 +38,7 @@ type config struct {
 func TFVars(
 	auth Auth,
 	clusterID string,
-	stoarageDomainID string,
+	storageDomainID string,
 	networkName string,
 	vnicProfileID string,
 	baseImage string,
@@ -48,7 +48,7 @@ func TFVars(
 	cfg := config{
 		Auth:                 auth,
 		ClusterID:            clusterID,
-		StorageDomainID:      stoarageDomainID,
+		StorageDomainID:      storageDomainID,
 		NetworkName:          networkName,
 		VNICProfileID:        vnicProfileID,
 		BaseImageName:        baseImage,
