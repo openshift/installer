@@ -15,6 +15,9 @@ RHCOS_BOOT_IMAGE_URL="{{.BootImage}}"
 # dnsmasq will only serve TFTP, and DHCP will be disabled.
 DHCP_RANGE="{{.PlatformData.BareMetal.ProvisioningDHCPRange}}"
 
+# Used by ironic to allow ssh to running IPA instances
+IRONIC_RAMDISK_SSH_KEY="{{.SSHKey}}"
+
 # First we stop any previously started containers, because ExecStop only runs when the ExecStart process
 # e.g this script is still running, but we exit if *any* of the containers exits unexpectedly
 for name in ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
@@ -63,6 +66,7 @@ podman run -d --net host --privileged --name dnsmasq \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/rundnsmasq ${IRONIC_IMAGE}
 
 podman run -d --net host --privileged --name httpd \
+     --env IRONIC_RAMDISK_SSH_KEY="$IRONIC_RAMDISK_SSH_KEY" \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 
@@ -124,6 +128,7 @@ while ! curl --fail --head http://localhost/images/ironic-python-agent.initramfs
 while ! curl --fail --head http://localhost/images/ironic-python-agent.kernel ; do sleep 1; done
 
 sudo podman run -d --net host --privileged --name ironic-conductor \
+     --env IRONIC_RAMDISK_SSH_KEY="$IRONIC_RAMDISK_SSH_KEY" \
      --env MARIADB_PASSWORD=$mariadb_password \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --env OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120 \

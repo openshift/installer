@@ -49,6 +49,7 @@ type bootstrapTemplateData struct {
 	FIPS                  bool
 	EtcdCluster           string
 	PullSecret            string
+	SSHKey                string
 	ReleaseImage          string
 	Proxy                 *configv1.ProxyStatus
 	Registries            []sysregistriesv2.Registry
@@ -254,6 +255,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		AdditionalTrustBundle: installConfig.AdditionalTrustBundle,
 		FIPS:                  installConfig.FIPS,
 		PullSecret:            installConfig.PullSecret,
+		SSHKey:                installConfig.SSHKey,
 		ReleaseImage:          releaseImage,
 		EtcdCluster:           strings.Join(etcdEndpoints, ","),
 		Proxy:                 &proxy.Status,
