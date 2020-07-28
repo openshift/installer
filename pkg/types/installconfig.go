@@ -127,15 +127,15 @@ type InstallConfig struct {
 	// credentials provided are sufficient to perform an installation.
 	//
 	// There are three possible values for this field, but the valid values are dependent upon the platform being used.
-	// "mint": create new credentials with a subset of the overall permissions for each CredentialsRequest
-	// "passthrough": copy the credentials with all of the overall permsissions for each CredentialsRequest
-	// "manual": CredentialsRequests must be handled manually by the user
+	// "Mint": create new credentials with a subset of the overall permissions for each CredentialsRequest
+	// "Passthrough": copy the credentials with all of the overall permissions for each CredentialsRequest
+	// "Manual": CredentialsRequests must be handled manually by the user
 	//
 	// For each of the following platforms, the field can set to the specified values. For all other platforms, the
 	// field must not be set.
-	// AWS: "mint", "passthrough", "manual"
-	// Azure: "mint", "passthrough"
-	// GCP: "mint", "passthrough"
+	// AWS: "Mint", "Passthrough", "Manual"
+	// Azure: "Mint", "Passthrough"
+	// GCP: "Mint", "Passthrough"
 	// +optional
 	CredentialsMode CredentialsMode `json:"credentialsMode,omitempty"`
 }
@@ -315,18 +315,18 @@ type ImageContentSource struct {
 }
 
 // CredentialsMode is the mode by which CredentialsRequests will be satisfied.
-// +kubebuilder:validation:Enum="";mint;passthrough;manual
+// +kubebuilder:validation:Enum="";Mint;Passthrough;Manual
 type CredentialsMode string
 
 const (
 	// ManualCredentialsMode indicates that cloud-credential-operator should not process any CredentialsRequests.
-	ManualCredentialsMode CredentialsMode = "manual"
+	ManualCredentialsMode CredentialsMode = "Manual"
 
 	// MintCredentialsMode indicates that cloud-credential-operator should be creating users for each
 	// CredentialsRequest.
-	MintCredentialsMode CredentialsMode = "mint"
+	MintCredentialsMode CredentialsMode = "Mint"
 
 	// PassthroughCredentialsMode indicates that cloud-credential-operator should just copy over the cluster's
 	// cloud credentials for each CredentialsRequest.
-	PassthroughCredentialsMode CredentialsMode = "passthrough"
+	PassthroughCredentialsMode CredentialsMode = "Passthrough"
 )

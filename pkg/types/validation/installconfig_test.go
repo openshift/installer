@@ -949,7 +949,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.CredentialsMode = types.ManualCredentialsMode
 				return c
 			}(),
-			expectedError: `^credentialsMode: Unsupported value: "manual": supported values: "mint", "passthrough"$`,
+			expectedError: `^credentialsMode: Unsupported value: "Manual": supported values: "Mint", "Passthrough"$`,
 		},
 		{
 			name: "invalidly set cloud credentials mode",
@@ -959,7 +959,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.CredentialsMode = types.PassthroughCredentialsMode
 				return c
 			}(),
-			expectedError: `^credentialsMode: Invalid value: "passthrough": cannot be set when using the "baremetal" platform$`,
+			expectedError: `^credentialsMode: Invalid value: "Passthrough": cannot be set when using the "baremetal" platform$`,
 		},
 		{
 			name: "bad cloud credentials mode",
@@ -968,7 +968,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.CredentialsMode = "bad-mode"
 				return c
 			}(),
-			expectedError: `^credentialsMode: Unsupported value: "bad-mode": supported values: "manual", "mint", "passthrough"$`,
+			expectedError: `^credentialsMode: Unsupported value: "bad-mode": supported values: "Manual", "Mint", "Passthrough"$`,
 		},
 	}
 	for _, tc := range cases {
