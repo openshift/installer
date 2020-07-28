@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euoE pipefail ## -E option will cause functions to inherit trap
+
+touch /opt/openshift/.aiokube.done
+echo "aiokube.service complete"

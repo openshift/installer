@@ -1,0 +1,16 @@
+[Unit]
+Description=Bootstrap an all-on-one Kubernetes cluster
+Requires=crio-configure.service
+Wants=kubelet.service
+After=kubelet.service crio-configure.service
+ConditionPathExists=!/opt/openshift/.aiokube.done
+
+[Service]
+WorkingDirectory=/opt/openshift
+ExecStart=/usr/local/bin/aiokube.sh
+
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

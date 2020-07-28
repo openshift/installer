@@ -80,6 +80,17 @@ var (
 		assets: targetassets.IgnitionConfigs,
 	}
 
+	aioConfigTarget = target{
+		name: "All-in-one Config",
+		command: &cobra.Command{
+			Use:   "aio-config",
+			Short: "Generates the all-in-one Ignition Config asset",
+			// FIXME: add longer descriptions for our commands with examples for better UX.
+			// Long:  "",
+		},
+		assets: targetassets.AIOConfig,
+	}
+
 	clusterTarget = target{
 		name: "Cluster",
 		command: &cobra.Command{
@@ -140,7 +151,7 @@ var (
 		assets: targetassets.Cluster,
 	}
 
-	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget}
+	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, aioConfigTarget, clusterTarget}
 )
 
 func newCreateCmd() *cobra.Command {
