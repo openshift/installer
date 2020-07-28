@@ -108,7 +108,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		}
 
 		nsg := fmt.Sprintf("%s-nsg", clusterID.InfraID)
-		nrg := fmt.Sprintf("%s-rg", clusterID.InfraID)
+		nrg := installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID)
 		if installConfig.Config.Azure.NetworkResourceGroupName != "" {
 			nrg = installConfig.Config.Azure.NetworkResourceGroupName
 		}
@@ -122,6 +122,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		}
 		azureConfig, err := azure.CloudProviderConfig{
 			CloudName:                installConfig.Config.Azure.CloudName,
+			ResourceGroupName:        installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID),
 			GroupLocation:            installConfig.Config.Azure.Region,
 			ResourcePrefix:           clusterID.InfraID,
 			SubscriptionID:           session.Credentials.SubscriptionID,

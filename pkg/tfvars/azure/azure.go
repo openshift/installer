@@ -34,6 +34,7 @@ type config struct {
 	ImageURL                    string            `json:"azure_image_url,omitempty"`
 	Region                      string            `json:"azure_region,omitempty"`
 	BaseDomainResourceGroupName string            `json:"azure_base_domain_resource_group_name,omitempty"`
+	ResourceGroupName           string            `json:"azure_resource_group_name"`
 	NetworkResourceGroupName    string            `json:"azure_network_resource_group_name"`
 	VirtualNetwork              string            `json:"azure_virtual_network"`
 	ControlPlaneSubnet          string            `json:"azure_control_plane_subnet"`
@@ -48,6 +49,7 @@ type config struct {
 type TFVarsSources struct {
 	Auth                        Auth
 	CloudName                   azure.CloudEnvironment
+	ResourceGroupName           string
 	BaseDomainResourceGroupName string
 	MasterConfigs               []*azureprovider.AzureMachineProviderSpec
 	WorkerConfigs               []*azureprovider.AzureMachineProviderSpec
@@ -91,6 +93,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ImageURL:                    sources.ImageURL,
 		Private:                     sources.Publish == types.InternalPublishingStrategy,
 		OutboundUDR:                 sources.OutboundType == azure.UserDefinedRoutingOutboundType,
+		ResourceGroupName:           sources.ResourceGroupName,
 		BaseDomainResourceGroupName: sources.BaseDomainResourceGroupName,
 		NetworkResourceGroupName:    masterConfig.NetworkResourceGroup,
 		VirtualNetwork:              masterConfig.Vnet,

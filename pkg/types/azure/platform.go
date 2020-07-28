@@ -1,6 +1,9 @@
 package azure
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // OutboundType is a strategy for how egress from cluster is achieved.
 // +kubebuilder:validation:Enum="";Loadbalancer;UserDefinedRouting
@@ -62,6 +65,16 @@ type Platform struct {
 	// +kubebuilder:default=Loadbalancer
 	// +optional
 	OutboundType OutboundType `json:"outboundType"`
+
+	// ResourceGroupName is the name of an already existing resource group where the cluster should be installed.
+	// This resource group should only be used for this specific cluster and the cluster components will assume assume
+	// ownership of all resources in the resource group. Destroying the cluster using installer will delete this
+	// resource group.
+	// This resource group must be empty with no other resources when trying to use it for creating a cluster.
+	// If empty, a new resource group will created for the cluster.
+	//
+	// +optional
+	ResourceGroupName string `json:"resourceGroupName,omitempty"`
 }
 
 // CloudEnvironment is the name of the Azure cloud environment
@@ -93,4 +106,12 @@ func (p *Platform) SetBaseDomain(baseDomainID string) error {
 	parts := strings.Split(baseDomainID, "/")
 	p.BaseDomainResourceGroupName = parts[4]
 	return nil
+}
+
+// ClusterResourceGroupName returns the name of the resource group for the cluster.
+func (p *Platform) ClusterResourceGroupName(infraID string) string {
+	if len(p.ResourceGroupName) > 0 {
+		return p.ResourceGroupName
+	}
+	return fmt.Sprintf("%s-rg", infraID)
 }

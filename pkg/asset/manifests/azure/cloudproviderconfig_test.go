@@ -12,6 +12,7 @@ func TestCloudProviderConfig(t *testing.T) {
 
 	config := CloudProviderConfig{
 		CloudName:                azure.PublicCloud,
+		ResourceGroupName:        "clusterid-rg",
 		GroupLocation:            "westeurope",
 		ResourcePrefix:           "clusterid",
 		SubscriptionID:           "subID",
