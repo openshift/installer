@@ -37,7 +37,6 @@ for node in $(curl -s http://localhost:6385/v1/nodes | jq -r '.nodes[] | .uuid')
     # the BareMetalHost CRs as annotations, which BMO then picks up.
     HARDWARE_DETAILS=$(podman run --quiet --net=host \
         --rm \
-        --name baremetal-operator \
         --entrypoint /get-hardware-details \
         "${BAREMETAL_OPERATOR_IMAGE}" \
         http://localhost:5050/v1 "$node" | jq '{hardware: .}')
