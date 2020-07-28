@@ -8,6 +8,7 @@ import (
 	azconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	bmconfig "github.com/openshift/installer/pkg/asset/installconfig/baremetal"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	icovirt "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	vsconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -75,8 +76,15 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-	case aws.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name:
+	case ovirt.Name:
+		err = icovirt.ValidateProvisioning(ic.Config)
+		if err != nil {
+			return err
+		}
+
+	case aws.Name, libvirt.Name, none.Name, openstack.Name:
 		// no special provisioning requirements to check
+
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
 	}

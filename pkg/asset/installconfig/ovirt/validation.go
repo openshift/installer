@@ -2,6 +2,7 @@ package ovirt
 
 import (
 	"fmt"
+	"net"
 
 	ovirtsdk "github.com/ovirt/go-ovirt"
 	"github.com/pkg/errors"
@@ -123,5 +124,26 @@ func validateVNICProfile(platform ovirt.Platform, con *ovirtsdk.Connection) erro
 			platform.VNICProfileID,
 			platform.NetworkName)
 	}
+	return nil
+}
+
+// ValidateProvisioning Performs Provisioning Validations for oVirt
+func ValidateProvisioning(ic *types.InstallConfig) error {
+	clusterName := ic.ObjectMeta.Name
+	zoneName := ic.BaseDomain
+	fmtStr := "DNS record  for %s was not found."
+
+	validFqdns := []string{
+		fmt.Sprintf("api.%s.%s", clusterName, zoneName),
+		fmt.Sprintf("test.apps.%s.%s", clusterName, zoneName),
+	}
+
+	for _, addr := range validFqdns {
+		_, err := net.LookupIP(addr)
+		if err != nil {
+			return fmt.Errorf(fmtStr, addr)
+		}
+	}
+
 	return nil
 }
