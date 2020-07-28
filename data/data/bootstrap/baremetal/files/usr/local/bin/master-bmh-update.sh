@@ -3,7 +3,7 @@
 # shellcheck disable=SC1091
 . /usr/local/bin/release-image.sh
 
-export KUBECONFIG=/etc/kubernetes/kubeconfig
+export KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback
 
 # Wait till the baremetalhosts are populated
 until oc get baremetalhosts -n openshift-machine-api; do
