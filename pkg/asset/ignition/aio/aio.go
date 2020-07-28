@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	rootDir        = "/opt/openshift"
 	aioIgnFilename = "aio.ign"
 )
 
@@ -82,6 +83,8 @@ func (a *AIO) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
+	a.addParentFiles(dependencies)
+
 	a.Config.Passwd.Users = append(
 		a.Config.Passwd.Users,
 		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{
@@ -130,6 +133,18 @@ func (a *AIO) getTemplateData(installConfig *types.InstallConfig, releaseImage s
 		ReleaseImage: releaseImage,
 		PullSecret:   installConfig.PullSecret,
 	}, nil
+}
+
+func (a *AIO) addParentFiles(dependencies asset.Parents) {
+	// These files are all added with mode 0600; use for secret keys and the like.
+	ignition.AddParentFiles(a.Config, dependencies, rootDir, "root", 0600, []asset.WritableAsset{
+		&tls.EtcdCABundle{},
+		&tls.EtcdMetricCABundle{},
+		&tls.EtcdMetricSignerCertKey{},
+		&tls.EtcdMetricSignerClientCertKey{},
+		&tls.EtcdSignerCertKey{},
+		&tls.EtcdSignerClientCertKey{},
+	})
 }
 
 // Load returns the all-in-one ignition from disk.
