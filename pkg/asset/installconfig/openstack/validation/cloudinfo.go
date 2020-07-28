@@ -38,17 +38,17 @@ func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 
 	ci.clients.networkClient, err = clientconfig.NewServiceClient("network", opts)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create a network client")
 	}
 
 	ci.clients.computeClient, err = clientconfig.NewServiceClient("compute", opts)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create a compute client")
 	}
 
 	err = ci.collectInfo(ic)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to generate OpenStack cloud info")
 	}
 
 	return &ci, nil
@@ -59,17 +59,17 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig) error {
 
 	ci.ExternalNetwork, err = ci.getNetwork(ic.OpenStack.ExternalNetwork)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to fetch external network info")
 	}
 
 	ci.PlatformFlavor, err = ci.getFlavor(ic.OpenStack.FlavorName)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to fetch platform flavor info")
 	}
 
 	ci.MachinesSubnet, err = ci.getSubnet(ic.OpenStack.MachinesSubnet)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to fetch machine subnet info")
 	}
 
 	return nil
@@ -78,7 +78,8 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig) error {
 func (ci *CloudInfo) getSubnet(subnetID string) (*subnets.Subnet, error) {
 	subnet, err := subnets.Get(ci.clients.networkClient, subnetID).Extract()
 	if err != nil {
-		if errors.Is(err, gophercloud.ErrResourceNotFound{}) {
+		var gerr *gophercloud.ErrResourceNotFound
+		if errors.As(err, &gerr) {
 			return nil, nil
 		}
 		return nil, err
@@ -90,7 +91,8 @@ func (ci *CloudInfo) getSubnet(subnetID string) (*subnets.Subnet, error) {
 func (ci *CloudInfo) getFlavor(flavorName string) (*flavors.Flavor, error) {
 	flavorID, err := flavorutils.IDFromName(ci.clients.computeClient, flavorName)
 	if err != nil {
-		if errors.Is(err, gophercloud.ErrResourceNotFound{}) {
+		var gerr *gophercloud.ErrResourceNotFound
+		if errors.As(err, &gerr) {
 			return nil, nil
 		}
 		return nil, err
@@ -106,11 +108,12 @@ func (ci *CloudInfo) getFlavor(flavorName string) (*flavors.Flavor, error) {
 
 func (ci *CloudInfo) getNetwork(networkName string) (*networks.Network, error) {
 	if networkName == "" {
-		return &networks.Network{}, nil
+		return nil, nil
 	}
 	networkID, err := networkutils.IDFromName(ci.clients.networkClient, networkName)
 	if err != nil {
-		if errors.Is(err, gophercloud.ErrResourceNotFound{}) {
+		var gerr *gophercloud.ErrResourceNotFound
+		if errors.As(err, &gerr) {
 			return nil, nil
 		}
 		return nil, err
