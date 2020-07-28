@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -euo pipefail
+
 # shellcheck disable=SC1091
 . /usr/local/bin/release-image.sh
 
