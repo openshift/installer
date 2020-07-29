@@ -35,14 +35,19 @@ then
     mkdir --parents /etc/kubernetes/static-pod-resources/etcd-certs/configmaps/{etcd-serving-ca,etcd-peer-client-ca,etcd-metrics-proxy-serving-ca}
     cp tls/etcd-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-certs/configmaps/etcd-serving-ca/ca-bundle.crt
     cp tls/etcd-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-certs/configmaps/etcd-peer-client-ca/ca-bundle.crt
-    cp tls/etcd-metric-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-certs/configmaps/etcd-peer-client-ca/etcd-metrics-proxy-serving-ca/ca-bundle.crt
+    cp tls/etcd-metric-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-certs/configmaps/etcd-metrics-proxy-serving-ca/ca-bundle.crt
 
     # hackier
     mkdir --parents /etc/kubernetes/static-pod-resources/etcd-certs/configmaps/etcd-scripts
-    echo "### Created by cluster-etcd-operator" > etc/kubernetes/static-pod-resources/etcd-certs/configmaps/etcd-scripts/etcd-dummy.sh
+    echo "### Created by cluster-etcd-operator" > /etc/kubernetes/static-pod-resources/etcd-certs/configmaps/etcd-scripts/etcd-dummy.sh
 
     # hackiest
     mkdir --parents /etc/kubernetes/static-pod-resources/{etcd-pod-1,etcd-member}
+
+    # unspeakable
+    sed -i 's/exit 1/# exit 1/' etcd-aio/etcd-member.yaml
+    sed -i 's|export ETCD_INITIAL_CLUSTER|export ETCD_INITIAL_CLUSTER="aio=https://127.0.0.1:2380"|' etcd-aio/etcd-member.yaml
+    sed -i 's/--target-name=aio/--target-name=aio || true/' etcd-aio/etcd-member.yaml
 
     cp etcd-aio/etcd-member.yaml /etc/kubernetes/manifests/etcd-pod.yaml
 
