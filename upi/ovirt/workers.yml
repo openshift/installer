@@ -18,3 +18,5 @@
     with_items:
     - "{{ vms }}"
     when: item.ocp_type == 'worker'
+    async: 60
+    poll: 0
