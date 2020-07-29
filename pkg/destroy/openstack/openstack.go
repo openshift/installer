@@ -224,7 +224,8 @@ func deleteServers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		err = servers.Delete(conn, server.ID).ExtractErr()
 		if err != nil {
 			// Ignore the error if the server cannot be found and return with an appropriate message if it's another type of error
-			if _, ok := err.(gophercloud.ErrDefault404); !ok {
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
 				logger.Errorf("Deleting server %q failed: %v", server.ID, err)
 				return false, nil
 			}
@@ -279,7 +280,8 @@ func deleteServerGroups(opts *clientconfig.ClientOpts, filter Filter, logger log
 			// Ignore the error if the server cannot be found and
 			// return with an appropriate message if it's another
 			// type of error
-			if _, ok := err.(gophercloud.ErrDefault404); !ok {
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
 				logger.Errorf("Deleting server group %q failed: %v", serverGroup.ID, err)
 				return false, nil
 			}
@@ -335,7 +337,8 @@ func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fie
 			_, err := floatingips.Update(conn, fip.ID, floatingips.UpdateOpts{}).Extract()
 			if err != nil {
 				// Ignore the error if the floating ip cannot be found and return with an appropriate message if it's another type of error
-				if _, ok := err.(gophercloud.ErrDefault404); !ok {
+				var gerr gophercloud.ErrDefault404
+				if !errors.As(err, &gerr) {
 					logger.Errorf("While deleting port %q, the update of the floating IP %q failed with error: %v", port.ID, fip.ID, err)
 					return false, nil
 				}
@@ -384,7 +387,8 @@ func deleteSecurityGroups(opts *clientconfig.ClientOpts, filter Filter, logger l
 		err = sg.Delete(conn, group.ID).ExtractErr()
 		if err != nil {
 			// Ignore the error if the security group cannot be found
-			if _, ok := err.(gophercloud.ErrDefault404); !ok {
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
 				// This can fail when sg is still in use by servers
 				logger.Debugf("Deleting Security Group %q failed with error: %v", group.ID, err)
 				return false, nil
@@ -443,7 +447,8 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 			_, err := floatingips.Update(conn, fip.ID, floatingips.UpdateOpts{}).Extract()
 			if err != nil {
 				// Ignore the error if the resource cannot be found and return with an appropriate message if it's another type of error
-				if _, ok := err.(gophercloud.ErrDefault404); !ok {
+				var gerr gophercloud.ErrDefault404
+				if !errors.As(err, &gerr) {
 					logger.Errorf("Updating floating IP %q for Router %q failed: %v", fip.ID, router.ID, err)
 					return false, nil
 				}
@@ -487,7 +492,8 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 					logger.Debugf("Removing Subnet %q from Router %q", IP.SubnetID, router.ID)
 					_, err = routers.RemoveInterface(conn, router.ID, removeOpts).Extract()
 					if err != nil {
-						if _, ok := err.(gophercloud.ErrDefault404); !ok {
+						var gerr gophercloud.ErrDefault404
+						if !errors.As(err, &gerr) {
 							// This can fail when subnet is still in use
 							logger.Debugf("Removing Subnet %q from Router %q failed: %v", IP.SubnetID, router.ID, err)
 							return false, nil
@@ -502,7 +508,8 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		err = routers.Delete(conn, router.ID).ExtractErr()
 		if err != nil {
 			// Ignore the error if the router cannot be found and return with an appropriate message if it's another type of error
-			if _, ok := err.(gophercloud.ErrDefault404); !ok {
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
 				logger.Errorf("Deleting router %q failed: %v", router.ID, err)
 				return false, nil
 			}
@@ -542,7 +549,8 @@ func deleteSubnets(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		err = subnets.Delete(conn, subnet.ID).ExtractErr()
 		if err != nil {
 			// Ignore the error if the subnet cannot be found
-			if _, ok := err.(gophercloud.ErrDefault404); !ok {
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
 				// This can fail when subnet is still in use
 				logger.Debugf("Deleting Subnet %q failed: %v", subnet.ID, err)
 				return false, nil
@@ -583,7 +591,8 @@ func deleteNetworks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.
 		err = networks.Delete(conn, network.ID).ExtractErr()
 		if err != nil {
 			// Ignore the error if the network cannot be found
-			if _, ok := err.(gophercloud.ErrDefault404); !ok {
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
 				// This can fail when network is still in use
 				logger.Debugf("Deleting Network %q failed: %v", network.ID, err)
 				return false, nil
@@ -601,7 +610,8 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 	conn, err := clientconfig.NewServiceClient("object-store", opts)
 	if err != nil {
 		// Ignore the error if Swift is not available for the cloud
-		if _, ok := err.(*gophercloud.ErrEndpointNotFound); ok {
+		var gerr *gophercloud.ErrEndpointNotFound
+		if errors.As(err, &gerr) {
 			logger.Debug("Skip container deletion because Swift endpoint is not found")
 			return true, nil
 		}
@@ -617,11 +627,13 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 		// 403 with Keystone and 401 with internal Swauth.
 		// It means we have to catch them both.
 		// More information about Swith auth: https://docs.openstack.org/swift/latest/overview_auth.html
-		if _, ok := err.(gophercloud.ErrDefault403); ok {
+		var gerr403 gophercloud.ErrDefault403
+		if errors.As(err, &gerr403) {
 			logger.Debug("Skip container deletion because the user doesn't have the `swiftoperator` role")
 			return true, nil
 		}
-		if _, ok := err.(gophercloud.ErrDefault401); ok {
+		var gerr401 gophercloud.ErrDefault401
+		if errors.As(err, &gerr401) {
 			logger.Debug("Skip container deletion because the user doesn't have the `swiftoperator` role")
 			return true, nil
 		}
@@ -640,7 +652,8 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 			// Some containers that we fetched previously can already be deleted in
 			// runtime. We should ignore these cases and continue to iterate through
 			// the remaining containers.
-			if _, ok := err.(gophercloud.ErrDefault404); ok {
+			var gerr gophercloud.ErrDefault404
+			if errors.As(err, &gerr) {
 				continue
 			}
 			logger.Error(err)
@@ -679,7 +692,8 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 					return true, nil
 				})
 				if err != nil {
-					if _, ok := err.(gophercloud.ErrDefault404); !ok {
+					var gerr gophercloud.ErrDefault404
+					if !errors.As(err, &gerr) {
 						logger.Errorf("Bulk deleting of container %q objects failed: %v", container, err)
 						return false, nil
 					}
@@ -688,7 +702,8 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 				_, err = containers.Delete(conn, container).Extract()
 				if err != nil {
 					// Ignore the error if the container cannot be found and return with an appropriate message if it's another type of error
-					if _, ok := err.(gophercloud.ErrDefault404); !ok {
+					var gerr gophercloud.ErrDefault404
+					if !errors.As(err, &gerr) {
 						logger.Errorf("Deleting container %q failed: %v", container, err)
 						return false, nil
 					}
@@ -718,7 +733,8 @@ func deleteTrunks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 	}
 	allPages, err := trunks.List(conn, listOpts).AllPages()
 	if err != nil {
-		if _, ok := err.(gophercloud.ErrDefault404); ok {
+		var gerr gophercloud.ErrDefault404
+		if errors.As(err, &gerr) {
 			logger.Debug("Skip trunk deletion because the cloud doesn't support trunk ports")
 			return true, nil
 		}
@@ -736,7 +752,8 @@ func deleteTrunks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 		err = trunks.Delete(conn, trunk.ID).ExtractErr()
 		if err != nil {
 			// Ignore the error if the trunk cannot be found
-			if _, ok := err.(gophercloud.ErrDefault404); !ok {
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
 				// This can fail when the trunk is still in use so return/retry
 				logger.Debugf("Deleting Trunk %q failed: %v", trunk.ID, err)
 				return false, nil
@@ -754,7 +771,8 @@ func deleteLoadBalancers(opts *clientconfig.ClientOpts, filter Filter, logger lo
 	conn, err := clientconfig.NewServiceClient("load-balancer", opts)
 	if err != nil {
 		// Ignore the error if Octavia is not available for the cloud
-		if _, ok := err.(*gophercloud.ErrEndpointNotFound); ok {
+		var gerr *gophercloud.ErrEndpointNotFound
+		if errors.As(err, &gerr) {
 			logger.Debug("Skip load balancer deletion because Octavia endpoint is not found")
 			return true, nil
 		}
@@ -826,7 +844,8 @@ func deleteLoadBalancers(opts *clientconfig.ClientOpts, filter Filter, logger lo
 		err = loadbalancers.Delete(conn, loadbalancer.ID, deleteOpts).ExtractErr()
 		if err != nil {
 			// Ignore the error if the load balancer cannot be found
-			if _, ok := err.(gophercloud.ErrDefault404); !ok {
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
 				// This can fail when the load balancer is still in use so return/retry
 				logger.Debugf("Deleting load balancer %q failed: %v", loadbalancer.ID, err)
 				return false, nil
@@ -868,7 +887,8 @@ func deleteSubnetPools(opts *clientconfig.ClientOpts, filter Filter, logger logr
 		err = subnetpools.Delete(conn, subnetPool.ID).ExtractErr()
 		if err != nil {
 			// Ignore the error if the subnet pool cannot be found
-			if _, ok := err.(gophercloud.ErrDefault404); !ok {
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
 				logger.Debugf("Deleting subnet pool %q failed: %v", subnetPool.ID, err)
 				return false, nil
 			}
@@ -927,7 +947,8 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		err = volumes.Delete(conn, volumeID, deleteOpts).ExtractErr()
 		if err != nil {
 			// Ignore the error if the server cannot be found
-			if _, ok := err.(gophercloud.ErrDefault404); !ok {
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
 				logger.Debugf("Deleting volume %q failed: %v", volumeID, err)
 				return false, nil
 			}
@@ -968,7 +989,8 @@ func deleteFloatingIPs(opts *clientconfig.ClientOpts, filter Filter, logger logr
 		err = floatingips.Delete(conn, floatingIP.ID).ExtractErr()
 		if err != nil {
 			// Ignore the error if the floating ip cannot be found
-			if _, ok := err.(gophercloud.ErrDefault404); !ok {
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
 				logger.Debugf("Deleting floating ip %q failed: %v", floatingIP.ID, err)
 				return false, nil
 			}
