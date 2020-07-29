@@ -229,9 +229,9 @@ $ openshift-install create install-config --dir ./wrk
 *Internal API* and *Ingress* are the IPs added following the above DNS instructions
 
 - `api.ocp4.example.org`: 172.16.0.252
-- `api-int.ocp4.example.org`: 172.16.0.251 
+- `*.apps.ocp4.example.org`: 172.16.0.251 
 
-*Cluster Name* and *Base Domain* joint together will form the FQFN of the OCP cluster used to expose the API interface
+*Cluster Name* and *Base Domain* joint together will form the FQDN of the OCP cluster used to expose the API interface
 (`https://api.ocp4.example.org:6443/`) and the newly created applications.
 
 You can obtain a new Pull secret from [here](https://cloud.redhat.com/openshift/install/pull-secret).
