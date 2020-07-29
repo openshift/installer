@@ -24,6 +24,7 @@ const (
 // template files.
 type aioTemplateData struct {
 	ReleaseImage string
+	PullSecret   string
 }
 
 // AIO is an asset that generates the ignition config for an all-in-one node.
@@ -127,6 +128,7 @@ func (a *AIO) getTemplateData(installConfig *types.InstallConfig, releaseImage s
 
 	return &aioTemplateData{
 		ReleaseImage: releaseImage,
+		PullSecret:   installConfig.PullSecret,
 	}, nil
 }
 
