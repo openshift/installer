@@ -42,12 +42,6 @@ resource "aws_s3_bucket_object" "ignition" {
   }
 }
 
-data "ignition_config" "redirect" {
-  replace {
-    source = var.ignition_presigned_url
-  }
-}
-
 resource "aws_iam_instance_profile" "bootstrap" {
   name = "${var.cluster_id}-bootstrap-profile"
 
@@ -117,7 +111,7 @@ resource "aws_instance" "bootstrap" {
   iam_instance_profile        = aws_iam_instance_profile.bootstrap.name
   instance_type               = var.instance_type
   subnet_id                   = var.subnet_id
-  user_data                   = data.ignition_config.redirect.rendered
+  user_data                   = var.ignition_stub
   vpc_security_group_ids      = flatten([var.vpc_security_group_ids, aws_security_group.bootstrap.id])
   associate_public_ip_address = local.public_endpoints
 
