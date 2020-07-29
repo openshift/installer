@@ -1,5 +1,53 @@
 #!/usr/bin/env bash
 set -euoE pipefail ## -E option will cause functions to inherit trap
 
+. /usr/local/bin/release-image.sh
+
+mkdir --parents /etc/kubernetes/manifests
+
+aiokube_podman_run() {
+    # we run all commands in the host-network to prevent IP conflicts with
+    # end-user infrastructure.
+    podman run --quiet --net=host "${@}"
+}
+
+MACHINE_CONFIG_ETCD_IMAGE=$(image_for etcd)
+CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator)
+
+if [ ! -f etcd-aio.done ]
+then
+    echo "Rendering CEO Manifests..."
+    aiokube_podman_run \
+        --volume "$PWD:/assets:z" \
+        "${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+        /usr/bin/cluster-etcd-operator aio \
+        --etcd-ca-cert=/assets/tls/etcd-signer.crt \
+        --etcd-ca-key=/assets/tls/etcd-signer.key \
+        --etcd-metric-ca-cert=/assets/tls/etcd-metric-signer.crt \
+        --etcd-metric-ca-key=/assets/tls/etcd-metric-signer.key \
+        --asset-output-dir=/assets/etcd-aio \
+        --manifest-etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}"
+
+    mkdir --parents /etc/kubernetes/static-pod-resources/etcd-certs
+    cp -a etcd-aio/secrets /etc/kubernetes/static-pod-resources/etcd-certs/
+
+    # hacky
+    mkdir --parents /etc/kubernetes/static-pod-resources/etcd-certs/configmaps/{etcd-serving-ca,etcd-peer-client-ca,etcd-metrics-proxy-serving-ca}
+    cp tls/etcd-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-certs/configmaps/etcd-serving-ca/ca-bundle.crt
+    cp tls/etcd-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-certs/configmaps/etcd-peer-client-ca/ca-bundle.crt
+    cp tls/etcd-metric-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-certs/configmaps/etcd-peer-client-ca/etcd-metrics-proxy-serving-ca/ca-bundle.crt
+
+    # hackier
+    mkdir --parents /etc/kubernetes/static-pod-resources/etcd-certs/configmaps/etcd-scripts
+    echo "### Created by cluster-etcd-operator" > etc/kubernetes/static-pod-resources/etcd-certs/configmaps/etcd-scripts/etcd-dummy.sh
+
+    # hackiest
+    mkdir --parents /etc/kubernetes/static-pod-resources/{etcd-pod-1,etcd-member}
+
+    cp etcd-aio/etcd-member.yaml /etc/kubernetes/manifests/etcd-pod.yaml
+
+    touch etcd-aio.done
+fi
+
 touch /opt/openshift/.aiokube.done
 echo "aiokube.service complete"
