@@ -64,6 +64,10 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 	platform := ic.Config.Platform.Name()
 	switch platform {
 	case typesaws.Name:
+		if !quotaaws.SupportedRegions.Has(ic.AWS.Region) {
+			logrus.Debugf("%s does not support API for checking quotas, therefore skipping.", ic.AWS.Region)
+			return nil
+		}
 		services := []string{"ec2", "vpc"}
 		session, err := ic.AWS.Session(context.TODO())
 		if err != nil {
