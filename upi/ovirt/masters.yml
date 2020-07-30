@@ -18,3 +18,5 @@
     with_items:
     - "{{ vms }}"
     when: item.ocp_type == 'master'
+    async: 60
+    poll: 0
