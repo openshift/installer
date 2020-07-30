@@ -12,7 +12,7 @@ mandatory ignition files and to monitor the installation process itself.
 ## Table of Contents
 
 * [Prerequisites](#prerequisites)
-* [Ansible and oVirt-Infra roles](#ansible-and-ovirt-infra-roles)
+* [Ansible and oVirt roles](#ansible-and-ovirt-roles)
 * [Inventory explained](#inventory-explained)
 * [Network Requirements](#network-requirements)
   * [Load Balancers](#load-balancers)
@@ -57,16 +57,18 @@ the [IPI](./install_ipi.md#minimum-resources).
   - for bootstrap and control-plane machines.
   - for machines running the ingress router (usually compute nodes).
 
-## Ansible and oVirt-Infra roles
+## Ansible and oVirt roles
 To use the UPI process described here the following are required:
 
 - Python3
 - Ansible 
 - python3-ovirt-engine-sdk4
+- ovirt.image-template ansible role
+- ovirt.vm-infra ansible role
 
 To be sure to follow the UPI installation process, Ansible scripts and the binary openshift-install 
 should be executed from the oVirt/RHV Manager or from a machine with access to the REST API of the 
-oVirt/RHV Manager and with all the oVirt-Infra roles available (installed by default on the Manager 
+oVirt/RHV Manager and with all the oVirt roles available (installed by default on the Manager 
 machine).
 
 ## Inventory Explained
@@ -156,7 +158,7 @@ In the last section there's the list of all the vms that will be created and the
 ```
 
 VMs parameters can override the default ones specified in their profile (e.g.: the server type of the boostrap vm) and it's also
-possible to use all the attributes documented in the oVirt.infra role (like fixed MAC addresses for each machine that could help to
+possible to use all the attributes documented in the oVirt.vm-infra role (like fixed MAC addresses for each machine that could help to
 assign permanent IP through a DHCP).
 
 
@@ -229,9 +231,9 @@ $ openshift-install create install-config --dir ./wrk
 *Internal API* and *Ingress* are the IPs added following the above DNS instructions
 
 - `api.ocp4.example.org`: 172.16.0.252
-- `api-int.ocp4.example.org`: 172.16.0.251 
+- `*.apps.ocp4.example.org`: 172.16.0.251 
 
-*Cluster Name* and *Base Domain* joint together will form the FQFN of the OCP cluster used to expose the API interface
+*Cluster Name* and *Base Domain* joint together will form the FQDN of the OCP cluster used to expose the API interface
 (`https://api.ocp4.example.org:6443/`) and the newly created applications.
 
 You can obtain a new Pull secret from [here](https://cloud.redhat.com/openshift/install/pull-secret).
