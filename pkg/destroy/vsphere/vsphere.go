@@ -130,6 +130,15 @@ func getAttachedObjectsOnTag(ctx context.Context, client *rest.Client, tagName s
 	return attached, nil
 }
 
+func deleteTag(ctx context.Context, client *rest.Client, tagID string) error {
+	tagManager := tags.NewManager(client)
+	tag, err := tagManager.GetTag(ctx, tagID)
+	if err == nil {
+		err = tagManager.DeleteTag(ctx, tag)
+	}
+	return err
+}
+
 // Run is the entrypoint to start the uninstall process.
 func (o *ClusterUninstaller) Run() error {
 	var folderList []types.ManagedObjectReference
@@ -188,6 +197,12 @@ func (o *ClusterUninstaller) Run() error {
 	o.Logger.Debug("delete Folder")
 	err = deleteFolder(context.TODO(), o.Client, folderMoList, o.Logger)
 	if err != nil {
+		o.Logger.Errorln(err)
+		return err
+	}
+
+	o.Logger.Debug("delete tag")
+	if err = deleteTag(context.TODO(), o.RestClient, o.InfraID); err != nil {
 		o.Logger.Errorln(err)
 		return err
 	}
