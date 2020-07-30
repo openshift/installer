@@ -16,7 +16,7 @@ import (
 // CloudInfo caches data fetched from the user's openstack cloud
 type CloudInfo struct {
 	ExternalNetwork *networks.Network
-	PlatformFlavor  *flavors.Flavor
+	Flavors         map[string]*flavors.Flavor
 	MachinesSubnet  *subnets.Subnet
 
 	clients *clients
@@ -32,6 +32,7 @@ func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 	var err error
 	ci := CloudInfo{
 		clients: &clients{},
+		Flavors: map[string]*flavors.Flavor{},
 	}
 
 	opts := &clientconfig.ClientOpts{Cloud: ic.OpenStack.Cloud}
@@ -62,9 +63,33 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig) error {
 		return errors.Wrap(err, "failed to fetch external network info")
 	}
 
-	ci.PlatformFlavor, err = ci.getFlavor(ic.OpenStack.FlavorName)
+	ci.Flavors[ic.OpenStack.FlavorName], err = ci.getFlavor(ic.OpenStack.FlavorName)
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch platform flavor info")
+	}
+
+	if ic.ControlPlane != nil && ic.ControlPlane.Platform.OpenStack != nil {
+		crtlPlaneFlavor := ic.ControlPlane.Platform.OpenStack.FlavorName
+		if crtlPlaneFlavor != "" {
+			ci.Flavors[crtlPlaneFlavor], err = ci.getFlavor(crtlPlaneFlavor)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	for _, machine := range ic.Compute {
+		if machine.Platform.OpenStack != nil {
+			flavorName := machine.Platform.OpenStack.FlavorName
+			if flavorName != "" {
+				if _, seen := ci.Flavors[flavorName]; !seen {
+					ci.Flavors[flavorName], err = ci.getFlavor(flavorName)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
 	}
 
 	ci.MachinesSubnet, err = ci.getSubnet(ic.OpenStack.MachinesSubnet)

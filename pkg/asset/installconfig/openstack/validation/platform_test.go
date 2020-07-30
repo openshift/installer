@@ -15,7 +15,6 @@ var (
 	validExternalNetwork = "valid-external-network"
 	validFIP1            = "128.35.27.8"
 	validFIP2            = "128.35.27.13"
-	validCtrlPlaneFlavor = "valid-control-plane-flavor"
 )
 
 // Returns a default install
@@ -41,8 +40,19 @@ func validPlatformCloudInfo() *CloudInfo {
 			AdminStateUp: true,
 			Status:       "ACTIVE",
 		},
-		PlatformFlavor: &flavors.Flavor{
-			Name: validCtrlPlaneFlavor,
+		Flavors: map[string]*flavors.Flavor{
+			validCtrlPlaneFlavor: {
+				Name:  validCtrlPlaneFlavor,
+				RAM:   16,
+				Disk:  25,
+				VCPUs: 4,
+			},
+			invalidCtrlPlaneFlavor: {
+				Name:  invalidCtrlPlaneFlavor,
+				RAM:   8,  // too low
+				Disk:  20, // too low
+				VCPUs: 2,  // too low
+			},
 		},
 	}
 }
@@ -63,6 +73,20 @@ func TestOpenStackPlatformValidation(t *testing.T) {
 			networking:     validNetworking(),
 			expectedError:  false,
 			expectedErrMsg: "",
+		},
+		{
+			// if platform flavor is for both compute and ctrl plane, then it needs to be valid for
+			// the ctrl plane
+			name: "invalid platform flavor",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.FlavorName = invalidCtrlPlaneFlavor
+				return p
+			}(),
+			cloudInfo:      validPlatformCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `platform.openstack.flavorName: Invalid value: "invalid-control-plane-flavor": Flavor did not meet the following minimum requirements: Must have minimum of 16 GB RAM, had 8 GB; Must have minimum of 4 VCPUs, had 2; Must have minimum of 25 GB Disk, had 20 GB`,
 		},
 	}
 
