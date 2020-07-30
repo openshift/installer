@@ -199,9 +199,14 @@ func newAWSResolver(region string, services []typesaws.ServiceEndpoint) *awsReso
 func (ar *awsResolver) EndpointFor(service, region string, optFns ...func(*endpoints.Options)) (endpoints.ResolvedEndpoint, error) {
 	if s, ok := ar.services[resolverKey(service)]; ok {
 		logrus.Debugf("resolved AWS service %s (%s) to %q", service, region, s.URL)
+		signingRegion := ar.region
+		def, _ := endpoints.DefaultResolver().EndpointFor(service, region)
+		if len(def.SigningRegion) > 0 {
+			signingRegion = def.SigningRegion
+		}
 		return endpoints.ResolvedEndpoint{
 			URL:           s.URL,
-			SigningRegion: ar.region,
+			SigningRegion: signingRegion,
 		}, nil
 	}
 	if rv, ok := ar.defaultEndpoints[region]; ok {
