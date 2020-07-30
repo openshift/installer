@@ -961,6 +961,25 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `^credentialsMode: Unsupported value: "bad-mode": supported values: "manual", "mint", "passthrough"$`,
 		},
+		{
+			name: "allowed docker bridge with non-libvirt",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{{CIDR: *ipnet.MustParseCIDR("172.17.64.0/18")}}
+				return c
+			}(),
+			expectedError: ``,
+		},
+		{
+			name: "docker bridge not allowed with libvirt",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{Libvirt: validLibvirtPlatform()}
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{{CIDR: *ipnet.MustParseCIDR("172.17.64.0/18")}}
+				return c
+			}(),
+			expectedError: `\Q[networking.machineNewtork[0]: Invalid value: "172.17.64.0/18": overlaps with default Docker Bridge subnet, platform: Invalid value: "libvirt": must specify one of the platforms (\E.*\Q)]\E`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

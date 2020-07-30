@@ -9,6 +9,7 @@ import (
 
 	dockerref "github.com/containers/image/docker/reference"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -79,6 +80,7 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 	if c.Networking != nil {
 		allErrs = append(allErrs, validateNetworking(c.Networking, field.NewPath("networking"))...)
 		allErrs = append(allErrs, validateNetworkingIPVersion(c.Networking, &c.Platform)...)
+		allErrs = append(allErrs, validateNetworkingForPlatform(c.Networking, &c.Platform, field.NewPath("networking"))...)
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
 	}
@@ -275,6 +277,47 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 	}
 	if len(n.ClusterNetwork) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("clusterNetwork"), "cluster network required"))
+	}
+	return allErrs
+}
+
+func validateNetworkingForPlatform(n *types.Networking, platform *types.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	switch {
+	case platform.Libvirt != nil:
+		errMsg := "overlaps with default Docker Bridge subnet"
+		for idx, mn := range n.MachineNetwork {
+			if validate.DoCIDRsOverlap(&mn.CIDR.IPNet, validate.DockerBridgeCIDR) {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("machineNewtork").Index(idx), mn.CIDR.String(), errMsg))
+			}
+		}
+		for idx, sn := range n.ServiceNetwork {
+			if validate.DoCIDRsOverlap(&sn.IPNet, validate.DockerBridgeCIDR) {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork").Index(idx), sn.String(), errMsg))
+			}
+		}
+		for idx, cn := range n.ClusterNetwork {
+			if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, validate.DockerBridgeCIDR) {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterNetwork").Index(idx), cn.CIDR.String(), errMsg))
+			}
+		}
+	default:
+		warningMsgFmt := "%s: %s overlaps with default Docker Bridge subnet"
+		for idx, mn := range n.MachineNetwork {
+			if validate.DoCIDRsOverlap(&mn.CIDR.IPNet, validate.DockerBridgeCIDR) {
+				logrus.Warnf(warningMsgFmt, fldPath.Child("machineNetwork").Index(idx), mn.CIDR.String())
+			}
+		}
+		for idx, sn := range n.ServiceNetwork {
+			if validate.DoCIDRsOverlap(&sn.IPNet, validate.DockerBridgeCIDR) {
+				logrus.Warnf(warningMsgFmt, fldPath.Child("serviceNetwork").Index(idx), sn.String())
+			}
+		}
+		for idx, cn := range n.ClusterNetwork {
+			if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, validate.DockerBridgeCIDR) {
+				logrus.Warnf(warningMsgFmt, fldPath.Child("clusterNetwork").Index(idx), cn.CIDR.String())
+			}
+		}
 	}
 	return allErrs
 }

@@ -19,7 +19,8 @@ import (
 )
 
 var (
-	dockerBridgeCIDR = func() *net.IPNet {
+	// DockerBridgeCIDR is the network range that is used by default network for docker.
+	DockerBridgeCIDR = func() *net.IPNet {
 		_, cidr, _ := net.ParseCIDR("172.17.0.0/16")
 		return cidr
 	}()
@@ -133,9 +134,6 @@ func SubnetCIDR(cidr *net.IPNet) error {
 	nip := cidr.IP.Mask(cidr.Mask)
 	if nip.String() != cidr.IP.String() {
 		return fmt.Errorf("invalid network address. got %s, expecting %s", cidr.String(), (&net.IPNet{IP: nip, Mask: cidr.Mask}).String())
-	}
-	if DoCIDRsOverlap(cidr, dockerBridgeCIDR) {
-		return fmt.Errorf("overlaps with default Docker Bridge subnet (%v)", cidr.String())
 	}
 	return nil
 }
