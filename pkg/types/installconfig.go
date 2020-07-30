@@ -138,6 +138,12 @@ type InstallConfig struct {
 	// GCP: "mint", "passthrough"
 	// +optional
 	CredentialsMode CredentialsMode `json:"credentialsMode,omitempty"`
+
+	// ClusterProfile is used to select the deployment model
+	//
+	// +kubebuilder:default=default
+	// +optional
+	ClusterProfile string `json:"clusterProfile,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.

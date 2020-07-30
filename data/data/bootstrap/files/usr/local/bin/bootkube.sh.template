@@ -64,7 +64,8 @@ then
 		"${RELEASE_IMAGE_DIGEST}" \
 		render \
 			--output-dir=/assets/cvo-bootstrap \
-			--release-image="${RELEASE_IMAGE_DIGEST}"
+			--release-image="${RELEASE_IMAGE_DIGEST}" \
+			--cluster-profile={{.ClusterProfile}}
 
 	cp cvo-bootstrap/bootstrap/* bootstrap-manifests/
 	cp cvo-bootstrap/manifests/* manifests/

@@ -34,6 +34,10 @@ spec:
             description: BaseDomain is the base domain to which the cluster should
               belong.
             type: string
+          clusterProfile:
+            default: default
+            description: ClusterProfile is used to select the deployment model
+            type: string
           compute:
             description: Compute is the configuration for the machines that comprise
               the compute nodes.
