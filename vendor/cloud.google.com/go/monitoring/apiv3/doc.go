@@ -22,7 +22,7 @@
 // individual method pages. The table entries below are presented in
 // alphabetical order, not in order of common use. For explanations of the
 // concepts found in the table entries, read the [Cloud Monitoring
-// documentation](/monitoring/docs).
+// documentation](https://cloud.google.com/monitoring/docs).
 //
 // Use of Context
 //
@@ -42,10 +42,16 @@ import (
 	"strings"
 	"unicode"
 
+	"google.golang.org/api/option"
 	"google.golang.org/grpc/metadata"
 )
 
-const versionClient = "20200331"
+// For more information on implementing a client constructor hook, see
+// https://github.com/googleapis/google-cloud-go/wiki/Customizing-constructors.
+type clientHookParams struct{}
+type clientHook func(context.Context, clientHookParams) ([]option.ClientOption, error)
+
+const versionClient = "20200416"
 
 func insertMetadata(ctx context.Context, mds ...metadata.MD) context.Context {
 	out, _ := metadata.FromOutgoingContext(ctx)

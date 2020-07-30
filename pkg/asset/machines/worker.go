@@ -191,13 +191,25 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	ic := installConfig.Config
 	for _, pool := range ic.Compute {
 		if pool.Hyperthreading == types.HyperthreadingDisabled {
-			machineConfigs = append(machineConfigs, machineconfig.ForHyperthreadingDisabled("worker"))
+			ignHT, err := machineconfig.ForHyperthreadingDisabled("worker")
+			if err != nil {
+				return errors.Wrap(err, "failed to create ignition for hyperthreading disabled for worker machines")
+			}
+			machineConfigs = append(machineConfigs, ignHT)
 		}
 		if ic.SSHKey != "" {
-			machineConfigs = append(machineConfigs, machineconfig.ForAuthorizedKeys(ic.SSHKey, "worker"))
+			ignSSH, err := machineconfig.ForAuthorizedKeys(ic.SSHKey, "worker")
+			if err != nil {
+				return errors.Wrap(err, "failed to create ignition for authorized SSH keys for worker machines")
+			}
+			machineConfigs = append(machineConfigs, ignSSH)
 		}
 		if ic.FIPS {
-			machineConfigs = append(machineConfigs, machineconfig.ForFIPSEnabled("worker"))
+			ignFIPS, err := machineconfig.ForFIPSEnabled("worker")
+			if err != nil {
+				return errors.Wrap(err, "failed to create ignition for FIPS enabled for worker machines")
+			}
+			machineConfigs = append(machineConfigs, ignFIPS)
 		}
 		switch ic.Platform.Name() {
 		case awstypes.Name:

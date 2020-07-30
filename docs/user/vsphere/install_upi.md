@@ -269,20 +269,14 @@ The Ignition config created by the OpenShift Installer cannot be used directly b
 {
   "ignition": {
     "config": {
-      "append": [
+      "merge": [
         {
           "source": "bootstrap_ignition_config_url",
-          "verification": {}
         }
       ]
     },
-    "timeouts": {},
-    "version": "2.1.0"
+    "version": "3.1.0"
   },
-  "networkd": {},
-  "passwd": {},
-  "storage": {},
-  "systemd": {}
 }
 ```
 ### Hostname
@@ -296,28 +290,19 @@ For example, the following Ignition config will create a hostname file that sets
 ```json
 {
   "ignition": {
-    "config": {},
-    "timeouts": {},
-    "version": "2.1.0"
+    "version": "3.1.0"
   },
-  "networkd": {},
-  "passwd": {},
   "storage": {
     "files": [
       {
-        "filesystem": "root",
-        "group": {},
         "path": "/etc/hostname",
-        "user": {},
         "contents": {
           "source": "data:text/plain;charset=utf-8,control-plane-0",
-          "verification": {}
         },
         "mode": 420
       }
     ]
   },
-  "systemd": {}
 }
 ```
 
@@ -330,28 +315,19 @@ For example, the following Ignition config will create an ifcfg file that sets t
 ```json
 {
   "ignition": {
-    "config": {},
-    "timeouts": {},
-    "version": "2.1.0"
+    "version": "3.1.0"
   },
-  "networkd": {},
-  "passwd": {},
   "storage": {
     "files": [
       {
-        "filesystem": "root",
-        "group": {},
         "path": "/etc/sysconfig/network-scripts/ifcfg-ens192",
-        "user": {},
         "contents": {
           "source": "data:text/plain;charset=utf-8;base64,VFlQRT1FdGhlcm5ldApCT09UUFJPVE89bm9uZQpOQU1FPWVuczE5MgpERVZJQ0U9ZW5zMTkyCk9OQk9PVD15ZXMKSVBBRERSPTEwLjAuMC4yClBSRUZJWD0yNApHQVRFV0FZPTEwLjAuMC4xCkRPTUFJTj1teWRvbWFpbi5jb20KRE5TMT04LjguOC44",
-          "verification": {}
         },
         "mode": 420
       }
     ]
   },
-  "systemd": {}
 }
 ```
 

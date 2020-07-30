@@ -5,7 +5,6 @@ locals {
 data "ignition_file" "hostname" {
   for_each = var.hostnames_ip_addresses
 
-  filesystem = "root"
   path       = "/etc/hostname"
   mode       = "420"
 
@@ -17,7 +16,6 @@ data "ignition_file" "hostname" {
 data "ignition_file" "static_ip" {
   for_each = var.hostnames_ip_addresses
 
-  filesystem = "root"
   path       = "/etc/sysconfig/network-scripts/ifcfg-ens192"
   mode       = "420"
 
@@ -35,7 +33,7 @@ data "ignition_file" "static_ip" {
 data "ignition_config" "ign" {
   for_each = var.hostnames_ip_addresses
 
-  append {
+  merge {
     source = local.ignition_encoded
   }
 

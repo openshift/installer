@@ -1,3 +1,8 @@
+# force local ignition provider binary
+provider "ignition" {
+  version = "0.0.0"
+}
+
 locals {
   bootstrap_fqdns     = ["bootstrap-0.${var.cluster_domain}"]
   lb_fqdns            = ["lb-0.${var.cluster_domain}"]

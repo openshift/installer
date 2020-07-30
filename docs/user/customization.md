@@ -310,7 +310,7 @@ For example:
     spec:
       config:
         ignition:
-          version: 2.2.0
+          version: 3.1.0
         systemd:
           units:
           - contents: |
@@ -378,19 +378,19 @@ For example:
     ```console
     oc --kubeconfig no-taint-cluster/auth/kubeconfig get machineconfigs
     NAME                                                        GENERATEDBYCONTROLLER        IGNITIONVERSION   CREATED
-    00-master                                                   3.11.0-744-g5b05d9d3-dirty   2.2.0             137m
+    00-master                                                   3.11.0-744-g5b05d9d3-dirty   3.1.0             137m
     00-master-ssh                                               3.11.0-744-g5b05d9d3-dirty                     137m
-    00-worker                                                   3.11.0-744-g5b05d9d3-dirty   2.2.0             137m
+    00-worker                                                   3.11.0-744-g5b05d9d3-dirty   3.1.0             137m
     00-worker-ssh                                               3.11.0-744-g5b05d9d3-dirty                     137m
-    01-master-container-runtime                                 3.11.0-744-g5b05d9d3-dirty   2.2.0             137m
-    01-master-kubelet                                           3.11.0-744-g5b05d9d3-dirty   2.2.0             137m
-    02-master-kubelet                                                                        2.2.0             137m
-    01-worker-container-runtime                                 3.11.0-744-g5b05d9d3-dirty   2.2.0             137m
-    01-worker-kubelet                                           3.11.0-744-g5b05d9d3-dirty   2.2.0             137m
+    01-master-container-runtime                                 3.11.0-744-g5b05d9d3-dirty   3.1.0             137m
+    01-master-kubelet                                           3.11.0-744-g5b05d9d3-dirty   3.1.0             137m
+    02-master-kubelet                                                                        3.1.0             137m
+    01-worker-container-runtime                                 3.11.0-744-g5b05d9d3-dirty   3.1.0             137m
+    01-worker-kubelet                                           3.11.0-744-g5b05d9d3-dirty   3.1.0             137m
     99-master-3c81ffa3-3b8d-11e9-ac1e-52fdfc072182-registries   3.11.0-744-g5b05d9d3-dirty                     133m
     99-worker-3c83a226-3b8d-11e9-ac1e-52fdfc072182-registries   3.11.0-744-g5b05d9d3-dirty                     133m
-    master-55491738d7cd1ad6c72891e77c35e024                     3.11.0-744-g5b05d9d3-dirty   2.2.0             137m
-    worker-edab0895c59dba7a566f4b955d87d964                     3.11.0-744-g5b05d9d3-dirty   2.2.0             137m
+    master-55491738d7cd1ad6c72891e77c35e024                     3.11.0-744-g5b05d9d3-dirty   3.1.0             137m
+    worker-edab0895c59dba7a566f4b955d87d964                     3.11.0-744-g5b05d9d3-dirty   3.1.0             137m
     ```
 
 #### Nodes with Custom Kernel Arguments
@@ -442,10 +442,10 @@ Example application of `loglevel=7` (change Linux kernel log level to KERN_DEBUG
     ```console
     $ oc --kubeconfig log_debug_cluster/auth/kubeconfig get machineconfigs
     NAME                                                        GENERATEDBYCONTROLLER                      IGNITIONVERSION   CREATED
-    99-master-kargs-loglevel                                    bd846958bc95d049547164046a962054fca093df   2.2.0             26h
-    99-master-ssh                                               bd846958bc95d049547164046a962054fca093df   2.2.0             26h
+    99-master-kargs-loglevel                                    bd846958bc95d049547164046a962054fca093df   3.1.0             26h
+    99-master-ssh                                               bd846958bc95d049547164046a962054fca093df   3.1.0             26h
     ...
-    rendered-master-5f4a5bd806567871be1b608474eca373            bd846958bc95d049547164046a962054fca093df   2.2.0             26h
+    rendered-master-5f4a5bd806567871be1b608474eca373            bd846958bc95d049547164046a962054fca093df   3.1.0             26h
 
     $ oc describe machineconfig/rendered-master-5f4a5bd806567871be1b608474eca373 | grep -A 1 "Kernel Arguments"
       Kernel Arguments:
@@ -495,8 +495,8 @@ Example for switching to RT kernel on worker nodes during initial cluster instal
     NAME                                                        GENERATEDBYCONTROLLER                      IGNITIONVERSION   AGE
     ...
     99-worker-kerneltype                                                                                                     80m
-    99-worker-ssh                                                                                          2.2.0             80m
-    rendered-worker-853ba9bf0337db528a857a9c7380b95a            6306be9274cd3052f5075c81fa447c7895b7b9f4   2.2.0             78m
+    99-worker-ssh                                                                                          3.1.0             80m
+    rendered-worker-853ba9bf0337db528a857a9c7380b95a            6306be9274cd3052f5075c81fa447c7895b7b9f4   3.1.0             78m
     ...
 
 4. To confirm that worker node has switched to RT kernel, access one of the worker node and run `uname -a`
@@ -519,9 +519,9 @@ An example `worker.ign` is shown below. It has been modified to increase the HTT
 ```json ignition
 {
   "ignition": {
-    "version": "2.2.0",
+    "version": "3.1.0",
     "config": {
-      "append": [{
+      "merge": [{
         "source": "https://test-cluster-api.example.com:22623/config/worker"
       }]
     },

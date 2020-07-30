@@ -4,21 +4,21 @@ import (
 	"fmt"
 	"testing"
 
-	ignition "github.com/coreos/ignition/config/v2_4/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_1/types"
 )
 
 func TestParseCertificateBundle(t *testing.T) {
-	type checkFunc func([]ignition.CaReference, error) error
+	type checkFunc func([]igntypes.Resource, error) error
 	check := func(fns ...checkFunc) []checkFunc { return fns }
 
-	hasNilError := func(_ []ignition.CaReference, have error) error {
+	hasNilError := func(_ []igntypes.Resource, have error) error {
 		if have != nil {
 			return fmt.Errorf("expected nil error, found %q", have)
 		}
 		return nil
 	}
 
-	hasSomeError := func(_ []ignition.CaReference, have error) error {
+	hasSomeError := func(_ []igntypes.Resource, have error) error {
 		if have == nil {
 			return fmt.Errorf("expected error, found nil")
 		}
@@ -26,7 +26,7 @@ func TestParseCertificateBundle(t *testing.T) {
 	}
 
 	chainHasLength := func(want int) checkFunc {
-		return func(caref []ignition.CaReference, _ error) error {
+		return func(caref []igntypes.Resource, _ error) error {
 			if have := len(caref); want != have {
 				return fmt.Errorf("expected bundle length %d, found %d", want, have)
 			}

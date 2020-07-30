@@ -1,3 +1,10 @@
+# ================IGNITION=====================
+
+# force local ignition provider binary
+provider "ignition" {
+  version = "0.0.0"
+}
+
 # ================MATCHBOX=====================
 
 locals {
