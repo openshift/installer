@@ -61,8 +61,6 @@ func TestSubnetCIDR(t *testing.T) {
 		{"1.2.3.4/32", ""},
 		{"0:0:0:0:0:1:102:304/116", "invalid network address. got ::1:102:304/116, expecting ::1:102:0/116"},
 		{"0:0:0:0:0:ffff:102:304/116", "invalid network address. got 1.2.3.4/20, expecting 1.2.0.0/20"},
-		{"172.17.0.0/20", "overlaps with default Docker Bridge subnet (172.17.0.0/20)"},
-		{"172.0.0.0/8", "overlaps with default Docker Bridge subnet (172.0.0.0/8)"},
 		{"255.255.255.255/1", "invalid network address. got 255.255.255.255/1, expecting 128.0.0.0/1"},
 		{"255.255.255.255/32", ""},
 	}
