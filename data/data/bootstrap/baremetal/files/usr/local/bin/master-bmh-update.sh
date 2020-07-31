@@ -1,9 +1,11 @@
 #!/bin/sh
 
+set -euo pipefail
+
 # shellcheck disable=SC1091
 . /usr/local/bin/release-image.sh
 
-export KUBECONFIG=/etc/kubernetes/kubeconfig
+export KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback
 
 # Wait till the baremetalhosts are populated
 until oc get baremetalhosts -n openshift-machine-api; do
@@ -35,7 +37,6 @@ for node in $(curl -s http://localhost:6385/v1/nodes | jq -r '.nodes[] | .uuid')
     # the BareMetalHost CRs as annotations, which BMO then picks up.
     HARDWARE_DETAILS=$(podman run --quiet --net=host \
         --rm \
-        --name baremetal-operator \
         --entrypoint /get-hardware-details \
         "${BAREMETAL_OPERATOR_IMAGE}" \
         http://localhost:5050/v1 "$node" | jq '{hardware: .}')

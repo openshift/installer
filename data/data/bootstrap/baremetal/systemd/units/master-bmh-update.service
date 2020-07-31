@@ -5,7 +5,10 @@ After=release-image.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/master-bmh-update.sh
+# FIXME https://github.com/systemd/systemd/pull/13754/
+# Doesn't yet exist in our systemd version, when it does
+# we can replace the loop with Restart=on-failure
+ExecStart=/usr/bin/sh -c 'while ! /usr/local/bin/master-bmh-update.sh; do echo "master-bmh-update.sh failed, retrying" && sleep 10; done'
 
 [Install]
 WantedBy=multi-user.target
