@@ -78,4 +78,14 @@ var conditions = []condition{{
 
 	reason:  "GCPComputeBackendTimeout",
 	message: `GCP is experiencing backend service interuptions, the compute instance failed to create in reasonable time.`,
+}, {
+	match: regexp.MustCompile(`Error: could not contact Ironic API: timeout reached`),
+
+	reason:  "BaremetalIronicAPITimeout",
+	message: `Timed out waiting for provisioning service. This failure can be caused by misconfiguration or inability to download the machine operating system images. Please check the bootstrap host for failing services.`,
+}, {
+	match: regexp.MustCompile(`Error: could not inspect: could not inspect node, node is currently 'inspect failed', last error was 'timeout reached while inspecting the node'`),
+
+	reason:  "BaremetalIronicInspectTimeout",
+	message: `Timed out waiting for node inspection to complete. Please check the console on the host for more details.`,
 }}

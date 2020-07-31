@@ -568,7 +568,7 @@ type LogicalDisk struct {
 	Controller string `json:"controller,omitempty"`
 
 	// A list of physical disks to use as read by the RAID interface.
-	PhysicalDisks []string `json:"physical_disks,omitempty"`
+	PhysicalDisks []interface{} `json:"physical_disks,omitempty"`
 }
 
 func (opts RAIDConfigOpts) ToRAIDConfigMap() (map[string]interface{}, error) {
@@ -577,10 +577,12 @@ func (opts RAIDConfigOpts) ToRAIDConfigMap() (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	for _, v := range body["logical_disks"].([]interface{}) {
-		if logicalDisk, ok := v.(map[string]interface{}); ok {
-			if logicalDisk["size_gb"] == nil {
-				logicalDisk["size_gb"] = "MAX"
+	if body["logical_disks"] != nil {
+		for _, v := range body["logical_disks"].([]interface{}) {
+			if logicalDisk, ok := v.(map[string]interface{}); ok {
+				if logicalDisk["size_gb"] == nil {
+					logicalDisk["size_gb"] = "MAX"
+				}
 			}
 		}
 	}
