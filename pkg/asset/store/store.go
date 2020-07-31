@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/metrics/gatherer"
 )
 
 const (
@@ -310,6 +311,11 @@ func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 	// The asset is on disk and that differs from what is in the source file.
 	// The asset is sourced from on disk.
 	case foundOnDisk && !onDiskMatchesStateFile:
+		metricName := gatherer.FileCategories[a.Name()]
+		if metricName != "" {
+			gatherer.AddLabelValue(metricName, "result", "success")
+			gatherer.SetValue(metricName, 1)
+		}
 		logrus.Debugf("%sUsing %s loaded from target directory", indent, a.Name())
 		assetToStore = onDiskAsset
 		source = onDiskSource

@@ -13,6 +13,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 	"k8s.io/klog"
 
+	"github.com/openshift/installer/pkg/metrics/gatherer"
 	"github.com/openshift/installer/pkg/terraform/exec/plugins"
 )
 
@@ -40,6 +41,7 @@ func main() {
 		}
 	}
 
+	gatherer.Initialize()
 	installerMain()
 }
 

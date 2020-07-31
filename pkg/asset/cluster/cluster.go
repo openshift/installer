@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/quota"
+	"github.com/openshift/installer/pkg/metrics/gatherer"
 	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
@@ -117,7 +118,8 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		logrus.Errorf("Failed to read tfstate: %v", err2)
 	}
 
-	timer.StopTimer("Infrastructure")
+	duration := timer.StopTimer("Infrastructure")
+	gatherer.SetValue(gatherer.DurationInfrastructureMetricName, duration.Minutes())
 	return err
 }
 

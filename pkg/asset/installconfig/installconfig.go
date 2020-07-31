@@ -16,6 +16,7 @@ import (
 	icopenstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	icovirt "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	icvsphere "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
+	"github.com/openshift/installer/pkg/metrics/gatherer"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/conversion"
 	"github.com/openshift/installer/pkg/types/defaults"
@@ -157,6 +158,7 @@ func (a *InstallConfig) finish(filename string) error {
 		Filename: installConfigFilename,
 		Data:     data,
 	}
+	gatherer.AddLabelValue(gatherer.CurrentInvocationContext, "platform", a.Config.Platform.Name())
 	return nil
 }
 

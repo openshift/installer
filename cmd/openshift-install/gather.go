@@ -24,6 +24,8 @@ import (
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/gather/ssh"
+	"github.com/openshift/installer/pkg/metrics/gatherer"
+	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
 	gatheraws "github.com/openshift/installer/pkg/terraform/gather/aws"
 	gatherazure "github.com/openshift/installer/pkg/terraform/gather/azure"
@@ -77,10 +79,14 @@ func newGatherBootstrapCmd() *cobra.Command {
 		Run: func(_ *cobra.Command, _ []string) {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
+			gatherer.InitializeInvocationMetrics(gatherer.GatherMetricName)
+			timer.StartTimer(timer.TotalTimeElapsed)
 			err := runGatherBootstrapCmd(rootOpts.dir)
 			if err != nil {
+				gatherer.LogError("failed", gatherer.CurrentInvocationContext)
 				logrus.Fatal(err)
 			}
+			timer.StopTimer(timer.TotalTimeElapsed)
 		},
 	}
 	cmd.PersistentFlags().StringVar(&gatherBootstrapOpts.bootstrap, "bootstrap", "", "Hostname or IP of the bootstrap host")

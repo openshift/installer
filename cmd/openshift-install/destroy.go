@@ -19,6 +19,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
+	"github.com/openshift/installer/pkg/metrics/gatherer"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
 )
@@ -45,11 +46,13 @@ func newDestroyClusterCmd() *cobra.Command {
 		Run: func(_ *cobra.Command, _ []string) {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
-
+			gatherer.InitializeInvocationMetrics(gatherer.DestroyMetricName)
 			err := runDestroyCmd(rootOpts.dir)
 			if err != nil {
+				gatherer.LogError("failed", gatherer.CurrentInvocationContext)
 				logrus.Fatal(err)
 			}
+			gatherer.SendPrometheusInvocationData(gatherer.CurrentInvocationContext)
 		},
 	}
 }
@@ -68,6 +71,7 @@ func runDestroyCmd(directory string) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to create asset store")
 	}
+
 	for _, asset := range clusterTarget.assets {
 		if err := store.Destroy(asset); err != nil {
 			return errors.Wrapf(err, "failed to destroy asset %q", asset.Name())
@@ -86,7 +90,6 @@ func runDestroyCmd(directory string) error {
 	}
 	timer.StopTimer(timer.TotalTimeElapsed)
 	timer.LogSummary()
-
 	return nil
 }
 
@@ -98,14 +101,17 @@ func newDestroyBootstrapCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
+			gatherer.InitializeInvocationMetrics(gatherer.DestroyMetricName)
 
 			timer.StartTimer(timer.TotalTimeElapsed)
 			err := bootstrap.Destroy(rootOpts.dir)
 			if err != nil {
+				gatherer.LogError("failed", gatherer.CurrentInvocationContext)
 				logrus.Fatal(err)
 			}
 			timer.StopTimer(timer.TotalTimeElapsed)
 			timer.LogSummary()
+			gatherer.SendPrometheusInvocationData(gatherer.CurrentInvocationContext)
 		},
 	}
 }

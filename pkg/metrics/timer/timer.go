@@ -28,8 +28,8 @@ func StartTimer(key string) {
 }
 
 // StopTimer records the duration for the current stage sent as the key parameter and stores the information.
-func StopTimer(key string) {
-	timer.StopTimer(key)
+func StopTimer(key string) time.Duration {
+	return timer.StopTimer(key)
 }
 
 // LogSummary prints the summary of all the times collected so far into the INFO section.
