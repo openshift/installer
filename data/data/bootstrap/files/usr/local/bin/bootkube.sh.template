@@ -19,7 +19,6 @@ MACHINE_CONFIG_ETCD_IMAGE=$(image_for etcd)
 MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(image_for kube-client-agent)
 MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 
-KUBE_ETCD_SIGNER_SERVER_IMAGE=$(image_for kube-etcd-signer-server)
 CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator || echo "no-ceo-image")
 CLUSTER_ETCD_OPERATOR_MANAGED=${CLUSTER_ETCD_OPERATOR_IMAGE:+$(bootkube_podman_run \
 	"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
@@ -74,39 +73,6 @@ then
 	touch cvo-bootstrap.done
 fi
 
-# We originally wanted to run the etcd cert signer as
-# a static pod, but kubelet could't remove static pod
-# when API server is not up, so we have to run this as
-# podman container.
-# See https://github.com/kubernetes/kubernetes/issues/43292
-
-echo "Starting etcd certificate signer..."
-
-trap "podman rm --force etcd-signer" ERR
-
-bootkube_podman_run \
-	--name etcd-signer \
-	--detach \
-	--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
-	"${KUBE_ETCD_SIGNER_SERVER_IMAGE}" \
-	serve \
-	--cacrt=/opt/openshift/tls/etcd-signer.crt \
-	--cakey=/opt/openshift/tls/etcd-signer.key \
-	--metric-cacrt=/opt/openshift/tls/etcd-metric-signer.crt \
-	--metric-cakey=/opt/openshift/tls/etcd-metric-signer.key \
-	--servcrt=/opt/openshift/tls/kube-apiserver-lb-server.crt \
-	--servkey=/opt/openshift/tls/kube-apiserver-lb-server.key \
-	--servcrt=/opt/openshift/tls/kube-apiserver-internal-lb-server.crt \
-	--servkey=/opt/openshift/tls/kube-apiserver-internal-lb-server.key \
-	--servcrt=/opt/openshift/tls/kube-apiserver-localhost-server.crt \
-	--servkey=/opt/openshift/tls/kube-apiserver-localhost-server.key \
-	--address=0.0.0.0:6443 \
-	--insecure-health-check-address=0.0.0.0:6080 \
-	--csrdir=/tmp \
-	--peercertdur=26280h \
-	--servercertdur=26280h \
-	--metriccertdur=26280h
-
 # during initial operator rollout phase this logic allows us to deploy the operator via CVO
 # in an `Unmanaged` no-op state. after all of the pieces have merged and the operator is
 # deemed stable we can remove this logic and the operator will be `Managed` by default.
@@ -122,7 +88,7 @@ then
 			"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
 			/usr/bin/cluster-etcd-operator render \
 			--etcd-ca=/assets/tls/etcd-ca-bundle.crt \
-			--etcd-metric-ca=/assets/tls/etcd-metric-ca-bundle.crt \
+			--etcd-ca-key=/assets/tls/etcd-signer.key \
 			--manifest-etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
 			--etcd-discovery-domain={{.ClusterDomain}} \
 			--manifest-cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}" \
@@ -139,10 +105,10 @@ then
 		cp etcd-bootstrap/manifests/* manifests/
 		cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
 
-		# /etc/kubernetes/static-pod-resources/etcd-member is the location etcd-bootstrap tls assets.
 		mkdir --parents /etc/kubernetes/static-pod-resources/etcd-member
 		cp tls/etcd-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-member/ca.crt
-		cp tls/etcd-metric-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-member/metric-ca.crt
+		cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-serving /etc/kubernetes/static-pod-resources/etcd-member
+		cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-peer /etc/kubernetes/static-pod-resources/etcd-member
 
 		touch etcd-bootstrap.done
 	fi
@@ -377,10 +343,6 @@ do
 	echo "etcdctl failed. Retrying in 5 seconds..."
 	sleep 5
 done
-
-echo "etcd cluster up. Killing etcd certificate signer..."
-
-podman rm --force etcd-signer
 
 echo "Starting cluster-bootstrap..."
 
