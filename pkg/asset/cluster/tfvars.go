@@ -227,17 +227,18 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			osImageRegion = osImage[1]
 		}
 		data, err := awstfvars.TFVars(awstfvars.TFVarsSources{
-			VPC:                  vpc,
-			PrivateSubnets:       privateSubnets,
-			PublicSubnets:        publicSubnets,
-			Services:             installConfig.Config.AWS.ServiceEndpoints,
-			Publish:              installConfig.Config.Publish,
-			MasterConfigs:        masterConfigs,
-			WorkerConfigs:        workerConfigs,
-			AMIID:                osImageID,
-			AMIRegion:            osImageRegion,
-			IgnitionBucket:       bucket,
-			IgnitionPresignedURL: url,
+			VPC:                   vpc,
+			PrivateSubnets:        privateSubnets,
+			PublicSubnets:         publicSubnets,
+			Services:              installConfig.Config.AWS.ServiceEndpoints,
+			Publish:               installConfig.Config.Publish,
+			MasterConfigs:         masterConfigs,
+			WorkerConfigs:         workerConfigs,
+			AMIID:                 osImageID,
+			AMIRegion:             osImageRegion,
+			IgnitionBucket:        bucket,
+			IgnitionPresignedURL:  url,
+			AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

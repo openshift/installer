@@ -141,7 +141,10 @@ variable "aws_ignition_bucket" {
   description = "The S3 bucket where the ignition configuration is stored"
 }
 
-variable "aws_ignition_presigned_url" {
+variable "aws_bootstrap_stub_ignition" {
   type        = string
-  description = "The presigned URL for the S3 bucket where the ignition configuration is stored"
+  description = <<EOF
+The stub Ignition config that should be used to boot the bootstrap instance. This already points to the presigned URL for the s3 bucket
+specified in aws_ignition_bucket.
+EOF
 }

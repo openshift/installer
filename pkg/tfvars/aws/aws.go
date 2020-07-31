@@ -35,7 +35,7 @@ type config struct {
 	PublishStrategy         string            `json:"aws_publish_strategy,omitempty"`
 	SkipRegionCheck         bool              `json:"aws_skip_region_validation"`
 	IgnitionBucket          string            `json:"aws_ignition_bucket"`
-	IgnitionPresignedURL    string            `json:"aws_ignition_presigned_url"`
+	BootstrapIgnitionStub   string            `json:"aws_bootstrap_stub_ignition"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -51,6 +51,8 @@ type TFVarsSources struct {
 	MasterConfigs, WorkerConfigs []*v1beta1.AWSMachineProviderConfig
 
 	IgnitionBucket, IgnitionPresignedURL string
+
+	AdditionalTrustBundle string
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
@@ -121,8 +123,13 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PublishStrategy:         string(sources.Publish),
 		SkipRegionCheck:         !configaws.IsKnownRegion(masterConfig.Placement.Region),
 		IgnitionBucket:          sources.IgnitionBucket,
-		IgnitionPresignedURL:    sources.IgnitionPresignedURL,
 	}
+
+	stubIgn, err := generateIgnitionShim(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create stub Ignition config for bootstrap")
+	}
+	cfg.BootstrapIgnitionStub = stubIgn
 
 	if len(sources.PublicSubnets) == 0 {
 		if cfg.VPC != "" {
