@@ -77,10 +77,20 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 			"vendor_interface":     accessDetails.VendorInterface(),
 		}
 
+		// Explicitly set the boot mode to the default "uefi" in case
+		// it is not set. We use the capabilities field instead of
+		// instance_info to ensure the host is in the right mode for
+		// virtualmedia-based introspection.
+		bootMode := "boot_mode:uefi"
+		if host.BootMode == baremetal.Legacy {
+			bootMode = "boot_mode:bios"
+		}
+
 		// Properties
 		propertiesMap := map[string]interface{}{
-			"local_gb": profile.LocalGB,
-			"cpu_arch": profile.CPUArch,
+			"local_gb":     profile.LocalGB,
+			"cpu_arch":     profile.CPUArch,
+			"capabilities": bootMode,
 		}
 
 		// Root device hints
@@ -96,13 +106,6 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 			rootDevice["hctl"] = profile.RootDeviceHints.HCTL
 		} else {
 			rootDevice["name"] = profile.RootDeviceHints.DeviceName
-		}
-
-		// explicitly set the boot mode to the default "uefi" in case
-		// it is not set
-		bootMode := "uefi"
-		if host.BootMode == baremetal.Legacy {
-			bootMode = "bios"
 		}
 
 		// Instance Info
@@ -123,10 +126,9 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(bootstrapProvisioningIP, "80"), imageFilename, compressedImageFilename)
 		cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
 		instanceInfo := map[string]interface{}{
-			"root_gb":          25, // FIXME(stbenjam): Needed until https://storyboard.openstack.org/#!/story/2005165
-			"image_source":     cacheImageURL,
-			"image_checksum":   cacheChecksumURL,
-			"deploy_boot_mode": bootMode,
+			"root_gb":        25, // FIXME(stbenjam): Needed until https://storyboard.openstack.org/#!/story/2005165
+			"image_source":   cacheImageURL,
+			"image_checksum": cacheChecksumURL,
 		}
 
 		hosts = append(hosts, hostMap)
