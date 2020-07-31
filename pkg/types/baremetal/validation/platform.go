@@ -274,6 +274,18 @@ func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallCon
 	return nil
 }
 
+// ensure that the bootMode field contains a valid value
+func validateBootMode(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
+	for idx, host := range hosts {
+		switch host.BootMode {
+		case "", baremetal.UEFI, baremetal.Legacy:
+		default:
+			errors = append(errors, field.Invalid(fldPath.Index(idx).Child("bootMode"), host.BootMode, "bootMode must be one of \"UEFI\" or \"legacy\""))
+		}
+	}
+	return
+}
+
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -310,6 +322,8 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 	}
 
 	allErrs = append(allErrs, validateHostsWithoutBMC(p.Hosts, fldPath)...)
+
+	allErrs = append(allErrs, validateBootMode(p.Hosts, fldPath.Child("Hosts"))...)
 
 	return allErrs
 }

@@ -151,6 +151,9 @@ include:
   be found here
   https://github.com/metal3-io/baremetal-operator/blob/master/docs/api.md
 
+* *bootMode* -- Put the server in legacy (BIOS) or UEFI mode for
+  booting. The default is UEFI.
+
 ```yaml
 apiVersion: v1
 baseDomain: test.metalkube.org
@@ -182,6 +185,7 @@ platform:
         bootMACAddress: 00:11:07:4e:f6:68
         rootDeviceHints:
           minSizeGigabytes: 20
+        bootMode: legacy
       - name: openshift-master-1
         role: master
         bmc:
@@ -191,6 +195,7 @@ platform:
         bootMACAddress: 00:11:07:4e:f6:6c
         rootDeviceHints:
           minSizeGigabytes: 20
+        bootMode: UEFI
       - name: openshift-master-2
         role: master
         bmc:
