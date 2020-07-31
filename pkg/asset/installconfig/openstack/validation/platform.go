@@ -24,6 +24,9 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, ci *CloudInfo)
 	// validate platform flavor
 	allErrs = append(allErrs, validatePlatformFlavor(p, ci, fldPath)...)
 
+	// validate floating ips
+	allErrs = append(allErrs, validateFloatingIPs(p, ci, fldPath)...)
+
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, ci, true, fldPath.Child("defaultMachinePlatform"))...)
 	}
@@ -93,5 +96,28 @@ func validatePlatformFlavor(p *openstack.Platform, ci *CloudInfo, fldPath *field
 	}
 
 	allErrs = append(allErrs, field.Invalid(fldPath.Child("flavorName"), flavor.Name, errString))
+	return allErrs
+}
+
+func validateFloatingIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
+	if p.LbFloatingIP != "" {
+		if ci.APIFIP == nil {
+			allErrs = append(allErrs, field.NotFound(fldPath.Child("lbFloatingIP"), p.LbFloatingIP))
+		} else if ci.APIFIP.Status != "DOWN" {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("lbFloatingIP"), p.LbFloatingIP, "Floating IP already in use"))
+		} else if p.ExternalNetwork == "" {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("lbFloatingIP"), p.LbFloatingIP, "Cannot set floating ips when external network not specified"))
+		}
+	}
+
+	if p.IngressFloatingIP != "" {
+		if ci.IngressFIP == nil {
+			allErrs = append(allErrs, field.NotFound(fldPath.Child("ingressFloatingIP"), p.IngressFloatingIP))
+		} else if ci.IngressFIP.Status != "DOWN" {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressFloatingIP"), p.IngressFloatingIP, "Floating IP already in use"))
+		} else if p.ExternalNetwork == "" {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressFloatingIP"), p.IngressFloatingIP, "Cannot set floating ips when external network not specified"))
+		}
+	}
 	return allErrs
 }

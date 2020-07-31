@@ -3,6 +3,7 @@ package validation
 import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
@@ -18,6 +19,8 @@ type CloudInfo struct {
 	ExternalNetwork *networks.Network
 	Flavors         map[string]*flavors.Flavor
 	MachinesSubnet  *subnets.Subnet
+	APIFIP          *floatingips.FloatingIP
+	IngressFIP      *floatingips.FloatingIP
 
 	clients *clients
 }
@@ -97,6 +100,16 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig) error {
 		return errors.Wrap(err, "failed to fetch machine subnet info")
 	}
 
+	ci.APIFIP, err = ci.getFloatingIP(ic.OpenStack.LbFloatingIP)
+	if err != nil {
+		return err
+	}
+
+	ci.IngressFIP, err = ci.getFloatingIP(ic.OpenStack.IngressFloatingIP)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -150,4 +163,27 @@ func (ci *CloudInfo) getNetwork(networkName string) (*networks.Network, error) {
 	}
 
 	return network, nil
+}
+
+func (ci *CloudInfo) getFloatingIP(fip string) (*floatingips.FloatingIP, error) {
+	if fip != "" {
+		opts := floatingips.ListOpts{
+			FloatingIP: fip,
+		}
+		allPages, err := floatingips.List(ci.clients.networkClient, opts).AllPages()
+		if err != nil {
+			return nil, err
+		}
+
+		allFIPs, err := floatingips.ExtractFloatingIPs(allPages)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(allFIPs) == 0 {
+			return nil, nil
+		}
+		return &allFIPs[0], nil
+	}
+	return nil, nil
 }

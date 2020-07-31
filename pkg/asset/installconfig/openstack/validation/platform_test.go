@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -54,6 +55,14 @@ func validPlatformCloudInfo() *CloudInfo {
 				VCPUs: 2,  // too low
 			},
 		},
+		APIFIP: &floatingips.FloatingIP{
+			ID:     validFIP1,
+			Status: "DOWN",
+		},
+		IngressFIP: &floatingips.FloatingIP{
+			ID:     validFIP2,
+			Status: "DOWN",
+		},
 	}
 }
 
@@ -87,6 +96,79 @@ func TestOpenStackPlatformValidation(t *testing.T) {
 			networking:     validNetworking(),
 			expectedError:  true,
 			expectedErrMsg: `platform.openstack.flavorName: Invalid value: "invalid-control-plane-flavor": Flavor did not meet the following minimum requirements: Must have minimum of 16 GB RAM, had 8 GB; Must have minimum of 4 VCPUs, had 2; Must have minimum of 25 GB Disk, had 20 GB`,
+		},
+		{
+			name:     "not found api FIP",
+			platform: validPlatform(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				ci.APIFIP = nil
+				return ci
+			}(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `platform.openstack.lbFloatingIP: Not found: "128.35.27.8"`,
+		},
+		{
+			name:     "not found ingress FIP",
+			platform: validPlatform(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				ci.IngressFIP = nil
+				return ci
+			}(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `platform.openstack.ingressFloatingIP: Not found: "128.35.27.13"`,
+		},
+		{
+			name:     "not found both FIPs",
+			platform: validPlatform(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				ci.IngressFIP = nil
+				ci.APIFIP = nil
+				return ci
+			}(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `[platform.openstack.lbFloatingIP: Not found: "128.35.27.8", platform.openstack.ingressFloatingIP: Not found: "128.35.27.13"]`,
+		},
+		{
+			name:     "in use ingress FIP",
+			platform: validPlatform(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				ci.IngressFIP.Status = "ACTIVE"
+				return ci
+			}(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `platform.openstack.ingressFloatingIP: Invalid value: "128.35.27.13": Floating IP already in use`,
+		},
+		{
+			name:     "in use api FIP",
+			platform: validPlatform(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				ci.APIFIP.Status = "ACTIVE"
+				return ci
+			}(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `platform.openstack.lbFloatingIP: Invalid value: "128.35.27.8": Floating IP already in use`,
+		},
+		{
+			name: "invalid usage both FIPs",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.ExternalNetwork = ""
+				return p
+			}(),
+			cloudInfo:      validPlatformCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `[platform.openstack.ingressFloatingIP: Invalid value: "128.35.27.13": Cannot set floating ips when external network not specified, platform.openstack.lbFloatingIP: Invalid value: "128.35.27.8": Cannot set floating ips when external network not specified]`,
 		},
 	}
 
