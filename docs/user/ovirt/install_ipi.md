@@ -9,6 +9,7 @@
   * [Install](#install)
     + [Minimum permission for installation](#minimum-permission-for-installation)
     + [ovirt-config.yaml](#ovirt-configyaml)
+    + [ovirt-credentials](#ovirt-credentials)
     + [Bootstrap VM](#bootstrap-vm)
     + [Install using the wizard](#install-using-the-wizard)
     + [Install in stages when customization is needed](#install-in-stages-when-customization-is-needed)
@@ -103,6 +104,53 @@ Below the description of all config options in ovirt-config.yaml.
 | ovirt_ca_bundle| CA Bundle                      | string   | -----BEGIN CERTIFICATE----- MIIDvTCCAqWgAwIBAgICEAA.... ----- END CERTIFICATE -----                    |
 | ovirt_pem_url  | PEM URL                        | string   | https://engine.fqdn.home/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA |
 
+### ovirt-credentials
+During installation ${HOME}/.ovirt/ovirt-config.yaml is converted to a **secret** named as **ovirt-credentials**
+and every openshift component with permission can use it.
+
+$ oc get secrets --all-namespaces | grep ovirt-credentials
+```
+kube-system                                        ovirt-credentials
+openshift-machine-api                              ovirt-credentials
+```
+
+$ oc get secret ovirt-credentials -n kube-system -o yaml
+$ oc get secret ovirt-credentials -n openshift-machine-api -o yaml
+```
+apiVersion: v1
+data:
+  ovirt_ca_bundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR2VENDFTE1Ba0dBMVV...
+  ovirt_cafile: ""
+  ovirt_insecure: Zm2U=
+  ovirt_password: cmGF0
+  ovirt_url: aHR0cHM3Z5lL2FwaQ==
+  ovirt_username: YWRtaJuYWw=
+kind: Secret
+metadata:
+  creationTimestamp: "2020-07-30T15:03:06Z"
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:data:
+        .: {}
+        f:ovirt_ca_bundle: {}
+        f:ovirt_cafile: {}
+        f:ovirt_insecure: {}
+        f:ovirt_password: {}
+        f:ovirt_url: {}
+        f:ovirt_username: {}
+      f:type: {}
+    manager: cluster-bootstrap
+    operation: Update
+    time: "2020-07-30T15:03:06Z"
+  name: ovirt-credentials
+  namespace: kube-system
+  resourceVersion: "94"
+  selfLink: /api/v1/namespaces/kube-system/secrets/ovirt-credentials
+  uid: 642dbc91-12eb-4111-baa7-d79cbc9b79e4
+type: Opaque
+```
 
 ### Bootstrap VM
 
