@@ -680,7 +680,8 @@ spec:
                     hostPrefix:
                       description: HostPrefix is the prefix size to allocate to each
                         node from the CIDR. For example, 24 would allocate 2^8=256
-                        adresses to each node.
+                        adresses to each node. If this field is not used by the plugin,
+                        it can be left unset.
                       format: int32
                       type: integer
                     hostSubnetLength:
@@ -691,7 +692,6 @@ spec:
                       type: integer
                   required:
                   - cidr
-                  - hostPrefix
                   type: object
                 type: array
               clusterNetworks:
@@ -706,7 +706,8 @@ spec:
                     hostPrefix:
                       description: HostPrefix is the prefix size to allocate to each
                         node from the CIDR. For example, 24 would allocate 2^8=256
-                        adresses to each node.
+                        adresses to each node. If this field is not used by the plugin,
+                        it can be left unset.
                       format: int32
                       type: integer
                     hostSubnetLength:
@@ -717,7 +718,6 @@ spec:
                       type: integer
                   required:
                   - cidr
-                  - hostPrefix
                   type: object
                 type: array
               machineCIDR:

@@ -405,6 +405,27 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.clusterNetwork\[0]\.hostPrefix: Invalid value: 23: cluster network host subnetwork prefix must not be larger size than CIDR 192.168.1.0/24$`,
 		},
 		{
+			name: "cluster network host prefix unset",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = "OpenShiftSDN"
+				c.Networking.ClusterNetwork[0].CIDR = *ipnet.MustParseCIDR("192.168.1.0/24")
+				c.Networking.ClusterNetwork[0].HostPrefix = 0
+				return c
+			}(),
+			expectedError: `^networking\.clusterNetwork\[0]\.hostPrefix: Invalid value: 0: cluster network host subnetwork prefix must not be larger size than CIDR 192.168.1.0/24$`,
+		},
+		{
+			name: "cluster network host prefix unset ignored",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = "HostPrefixNotRequiredPlugin"
+				c.Networking.ClusterNetwork[0].CIDR = *ipnet.MustParseCIDR("192.168.1.0/24")
+				return c
+			}(),
+			expectedError: ``,
+		},
+		{
 			name: "missing control plane",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
