@@ -42,21 +42,33 @@ type config struct {
 	AdditionalSecurityGroupIDs []string `json:"openstack_master_extra_sg_ids,omitempty"`
 	MachinesSubnet             string   `json:"openstack_machines_subnet_id,omitempty"`
 	MachinesNetwork            string   `json:"openstack_machines_network_id,omitempty"`
+	MasterAvailabilityZones    []string `json:"openstack_master_availability_zones,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, lbFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool, machinesSubnet string) ([]byte, error) {
+func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, externalNetwork string, externalDNS []string, lbFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool, machinesSubnet string) ([]byte, error) {
+	cloud := masterConfigs[0].CloudName
+
+	zones := []string{}
+	seen := map[string]bool{}
+	for _, config := range masterConfigs {
+		if !seen[config.AvailabilityZone] {
+			zones = append(zones, config.AvailabilityZone)
+			seen[config.AvailabilityZone] = true
+		}
+	}
 
 	cfg := &config{
-		ExternalNetwork:   externalNetwork,
-		Cloud:             cloud,
-		FlavorName:        masterConfig.Flavor,
-		LbFloatingIP:      lbFloatingIP,
-		IngressFloatingIP: ingressFloatingIP,
-		APIVIP:            apiVIP,
-		IngressVIP:        ingressVIP,
-		ExternalDNS:       externalDNS,
-		MachinesSubnet:    machinesSubnet,
+		ExternalNetwork:         externalNetwork,
+		Cloud:                   masterConfigs[0].CloudName,
+		FlavorName:              masterConfigs[0].Flavor,
+		LbFloatingIP:            lbFloatingIP,
+		IngressFloatingIP:       ingressFloatingIP,
+		APIVIP:                  apiVIP,
+		IngressVIP:              ingressVIP,
+		ExternalDNS:             externalDNS,
+		MachinesSubnet:          machinesSubnet,
+		MasterAvailabilityZones: zones,
 	}
 
 	serviceCatalog, err := getServiceCatalog(cloud)
@@ -129,6 +141,7 @@ func TFVars(masterConfig *v1alpha1.OpenstackProviderSpec, cloud string, external
 	}
 
 	cfg.BootstrapShim = userCAIgnition
+	masterConfig := masterConfigs[0]
 
 	cfg.TrunkSupport = masterConfig.Trunk
 

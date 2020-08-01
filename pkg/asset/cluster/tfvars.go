@@ -393,9 +393,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+
+		var masterSpecs []*openstackprovider.OpenstackProviderSpec
+		for _, master := range masters {
+			masterSpecs = append(masterSpecs, master.Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec))
+		}
 		data, err = openstacktfvars.TFVars(
-			masters[0].Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec),
-			installConfig.Config.Platform.OpenStack.Cloud,
+			masterSpecs,
 			installConfig.Config.Platform.OpenStack.ExternalNetwork,
 			installConfig.Config.Platform.OpenStack.ExternalDNS,
 			installConfig.Config.Platform.OpenStack.LbFloatingIP,

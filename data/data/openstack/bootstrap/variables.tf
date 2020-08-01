@@ -73,3 +73,8 @@ variable "root_volume_type" {
   type = string
   description = "The type of volume for the root block device."
 }
+
+variable "zone" {
+  type = string
+  description = "Availability Zone to schedule the bootstrap node onto"
+}

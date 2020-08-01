@@ -233,6 +233,12 @@ spec:
                           description: FlavorName defines the OpenStack Nova flavor.
                             eg. m1.large
                           type: string
+                        zones:
+                          description: Zones contains a list of availabilty zones
+                            that instances can be deployed on
+                          items:
+                            type: string
+                          type: array
                       required:
                       - type
                       type: object
@@ -520,6 +526,12 @@ spec:
                         description: FlavorName defines the OpenStack Nova flavor.
                           eg. m1.large
                         type: string
+                      zones:
+                        description: Zones contains a list of availabilty zones that
+                          instances can be deployed on
+                        items:
+                          type: string
+                        type: array
                     required:
                     - type
                     type: object
@@ -1303,6 +1315,12 @@ spec:
                         description: FlavorName defines the OpenStack Nova flavor.
                           eg. m1.large
                         type: string
+                      zones:
+                        description: Zones contains a list of availabilty zones that
+                          instances can be deployed on
+                        items:
+                          type: string
+                        type: array
                     required:
                     - type
                     type: object

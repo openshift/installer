@@ -4,16 +4,18 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 
 ## Table of Contents
 
-* [Cluster-scoped properties](#cluster-scoped-properties)
-* [Machine pools](#machine-pools)
-* [Examples](#examples)
-  * [Minimal](#minimal)
-  * [Custom-machine-pools](#custom-machine-pools)
-* [Image Overrides](#image-overrides)
-* [Custom Subnets](#custom-subnets)
-* [Additional Networks](#additional-networks)
-* [Additional Security Groups](#additional-security-groups)
-* [Further customization](#further-customization)
+- [OpenStack Platform Customization](#openstack-platform-customization)
+  - [Table of Contents](#table-of-contents)
+  - [Cluster-scoped properties](#cluster-scoped-properties)
+  - [Machine pools](#machine-pools)
+  - [Examples](#examples)
+    - [Minimal](#minimal)
+    - [Custom machine pools](#custom-machine-pools)
+  - [Image Overrides](#image-overrides)
+  - [Custom Subnets](#custom-subnets)
+  - [Additional Networks](#additional-networks)
+  - [Additional Security Groups](#additional-security-groups)
+  - [Further customization](#further-customization)
 
 ## Cluster-scoped properties
 
@@ -40,6 +42,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `rootVolume` (optional object): Defines the root volume for instances in the machine pool. The instances use ephemeral disks if not set.
   * `size` (required integer): Size of the root volume in GB.
   * `type` (required string): The volume pool to create the volume from.
+* `zones` (optional list of strings): The names of the availability zones you want to install your nodes on. If unset, the installer will use your default compute zone.
 
 **NOTE:** The bootstrap node follows the `type` and `rootVolume` parameters from the `controlPlane` machine pool.
 

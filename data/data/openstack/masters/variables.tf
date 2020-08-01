@@ -50,3 +50,8 @@ variable "additional_network_ids" {
   type        = list(string)
   description = "IDs of additional networks for master nodes."
 }
+
+variable "zones" {
+  type        = list(string)
+  description = "Availability Zones to schedule masters on."
+}

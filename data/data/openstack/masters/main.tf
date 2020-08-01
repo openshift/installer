@@ -47,6 +47,7 @@ resource "openstack_compute_instance_v2" "master_conf" {
   flavor_id = data.openstack_compute_flavor_v2.masters_flavor.id
   image_id = var.root_volume_size == null ? var.base_image_id : null
   security_groups = var.master_sg_ids
+  availability_zone = var.zones[count.index % length(var.zones)]
   user_data = element(
     data.ignition_config.master_ignition_config.*.rendered,
     count.index,

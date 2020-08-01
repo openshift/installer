@@ -11,6 +11,9 @@ import (
 )
 
 var (
+	validFlavor = "valid-flavor"
+	validZone   = "valid-zone"
+
 	validCtrlPlaneFlavor = "valid-control-plane-flavor"
 	validComputeFlavor   = "valid-compute-flavor"
 
@@ -54,6 +57,9 @@ func validMpoolCloudInfo() *CloudInfo {
 				VCPUs: 2,
 			},
 		},
+		Zones: []string{
+			validZone,
+		},
 	}
 }
 
@@ -73,6 +79,28 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			cloudInfo:      validMpoolCloudInfo(),
 			expectedError:  false,
 			expectedErrMsg: "",
+		},
+		{
+			name: "valid zone",
+			mpool: func() *openstack.MachinePool {
+				mp := validMachinePool()
+				mp.Zones = []string{validZone}
+				return mp
+			}(),
+			cloudInfo:      validMpoolCloudInfo(),
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name: "invalid zone",
+			mpool: func() *openstack.MachinePool {
+				mp := validMachinePool()
+				mp.Zones = []string{"invalid-zone"}
+				return mp
+			}(),
+			cloudInfo:      validMpoolCloudInfo(),
+			expectedError:  true,
+			expectedErrMsg: "Zone either does not exist in this cloud, or is not available",
 		},
 		{
 			name:           "valid compute",
