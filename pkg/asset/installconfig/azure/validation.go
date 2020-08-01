@@ -81,7 +81,7 @@ func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.Mach
 func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) field.ErrorList {
 	locations, err := client.ListLocations(context.TODO())
 	if err != nil {
-		return field.ErrorList{field.Invalid(fieldPath, p.Region, "failed to retrieve available regions")}
+		return field.ErrorList{field.InternalError(fieldPath, errors.Wrap(err, "failed to retrieve available regions"))}
 	}
 
 	availableRegions := map[string]string{}
@@ -90,7 +90,6 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 	}
 
 	displayName, ok := availableRegions[p.Region]
-
 	if !ok {
 		errMsg := fmt.Sprintf("region %q is not valid or not available for this account", p.Region)
 
@@ -105,7 +104,7 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 
 	provider, err := client.GetResourcesProvider(context.TODO(), "Microsoft.Resources")
 	if err != nil {
-		return field.ErrorList{field.Invalid(fieldPath, p.Region, "failed to retrieve resource capable regions")}
+		return field.ErrorList{field.InternalError(fieldPath, errors.Wrap(err, "failed to retrieve resource capable regions"))}
 	}
 
 	for _, resType := range *provider.ResourceTypes {
