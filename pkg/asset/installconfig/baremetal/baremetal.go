@@ -100,6 +100,11 @@ func Platform() (*baremetal.Platform, error) {
 			fmt.Printf("invalid host - please try again")
 			continue
 		}
+		if hostRole == "control plane" {
+			host.Role = "master"
+		} else {
+			host.Role = hostRole
+		}
 		hosts = append(hosts, host)
 
 		more := false
