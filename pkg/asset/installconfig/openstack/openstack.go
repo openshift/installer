@@ -107,6 +107,44 @@ func Platform() (*openstack.Platform, error) {
 		}
 	}
 
+	bootstrapFloatingIP := ""
+	if extNet != "" {
+		floatingIPNames, err := getFloatingIPNames(cloud, extNet)
+                if err != nil {
+                        return nil, err
+                }
+                sort.Strings(floatingIPNames)
+		
+		for i, v := range floatingIPNames {
+         		if v == lbFloatingIP {
+                		floatingIPNames = append(floatingIPNames[:i], floatingIPNames[i+1:]...)
+                       	 	break
+                	}
+        	}	
+
+		var bootstrapFloatingIP string
+        	err = survey.Ask([]*survey.Question{
+			{
+				Prompt: &survey.Select{
+					Message: "BootstrapFloatingIPAddress",
+					Help: "The Floating IP address used for bootstrap machine.",
+					Options: floatingIPNames,
+				},
+				Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+					value := ans.(string)
+					i := sort.SearchStrings(floatingIPNames, value)
+                                	if i == len(floatingIPNames) || floatingIPNames[i] != value {
+                                        	return errors.Errorf("invalid floating IP %q, should be one of %+v", value, strings.Join(floatingIPNames, ", "))
+                               		}
+                                	return nil
+				}),
+			},
+		}, &bootstrapFloatingIP)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	flavorNames, err := getFlavorNames(cloud)
 	if err != nil {
 		return nil, err
@@ -139,5 +177,6 @@ func Platform() (*openstack.Platform, error) {
 		ExternalNetwork: extNet,
 		FlavorName:      flavor,
 		LbFloatingIP:    lbFloatingIP,
+		BootstrapFloatingIP: bootstrapFloatingIP,
 	}, nil
 }

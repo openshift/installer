@@ -412,6 +412,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			bootstrapIgn,
 			installConfig.Config.ControlPlane.Platform.OpenStack,
 			installConfig.Config.Platform.OpenStack.MachinesSubnet,
+			installConfig.Config.Platform.OpenStack.BootstrapFloatingIP,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

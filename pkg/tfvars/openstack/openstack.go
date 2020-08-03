@@ -43,10 +43,11 @@ type config struct {
 	MachinesSubnet             string   `json:"openstack_machines_subnet_id,omitempty"`
 	MachinesNetwork            string   `json:"openstack_machines_network_id,omitempty"`
 	MasterAvailabilityZones    []string `json:"openstack_master_availability_zones,omitempty"`
+	BootstrapFloatingIP	   string   `json:"openstack_bootstrap_floating_ip,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, externalNetwork string, externalDNS []string, lbFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool, machinesSubnet string) ([]byte, error) {
+func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, externalNetwork string, externalDNS []string, lbFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool, machinesSubnet string, bootstrapFloatingIP string) ([]byte, error) {
 	cloud := masterConfigs[0].CloudName
 
 	zones := []string{}
@@ -69,6 +70,7 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, externalNetwork str
 		ExternalDNS:             externalDNS,
 		MachinesSubnet:          machinesSubnet,
 		MasterAvailabilityZones: zones,
+		BootstrapFloatingIP: bootstrapFloatingIP,
 	}
 
 	serviceCatalog, err := getServiceCatalog(cloud)

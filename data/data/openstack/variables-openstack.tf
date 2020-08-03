@@ -296,6 +296,11 @@ EOF
 
 }
 
+variable "openstack_bootstrap_floating_ip" {
+  type 	      = string
+  description = "Existing Floating IP to attach to the bootstrap node"
+}
+
 variable "openstack_api_int_ip" {
   type = string
   description = "IP on the node subnet reserved for api-int VIP."

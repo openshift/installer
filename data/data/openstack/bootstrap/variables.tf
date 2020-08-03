@@ -78,3 +78,8 @@ variable "zone" {
   type = string
   description = "Availability Zone to schedule the bootstrap node onto"
 }
+
+variable "bootstrap_floating_ip" {
+  type = string
+  description = "Defines the floating ip for the bootstrap machine"
+}

@@ -60,12 +60,10 @@ resource "openstack_compute_instance_v2" "bootstrap" {
   tags = ["openshiftClusterID=${var.cluster_id}"]
 }
 
-resource "openstack_networking_floatingip_v2" "bootstrap_fip" {
+resource "openstack_networking_floatingip_associate_v2" "bootstrap_fip" {
   count       = var.external_network != "" ? 1 : 0
-  description = "${var.cluster_id}-bootstrap-fip"
-  pool        = var.external_network
   port_id     = openstack_networking_port_v2.bootstrap_port.id
-  tags        = ["openshiftClusterID=${var.cluster_id}"]
-
+  floating_ip = var.bootstrap_floating_ip
   depends_on = [openstack_compute_instance_v2.bootstrap]
 }
+

@@ -41,6 +41,7 @@ module "bootstrap" {
   root_volume_size        = var.openstack_master_root_volume_size
   root_volume_type        = var.openstack_master_root_volume_type
   zone                    = var.openstack_master_availability_zones[0]
+  bootstrap_floating_ip   = var.openstack_bootstrap_floating_ip
 }
 
 module "masters" {
