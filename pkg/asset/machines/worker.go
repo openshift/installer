@@ -351,7 +351,12 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-			sets, err := openstack.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data-managed")
+			trunkSupport, err := openstack.CheckNetworkExtensionAvailability(ic.Platform.OpenStack.Cloud, "trunk")
+			if err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects")
+			}
+
+			sets, err := openstack.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data-managed", trunkSupport)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}

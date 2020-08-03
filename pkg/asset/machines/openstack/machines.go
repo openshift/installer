@@ -30,7 +30,7 @@ const (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, trunkSupport bool) ([]machineapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
 		return nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
@@ -40,10 +40,6 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 	mpool := pool.Platform.OpenStack
 	platform := config.Platform.OpenStack
-	trunkSupport, err := checkNetworkExtensionAvailability(platform.Cloud, "trunk")
-	if err != nil {
-		return nil, err
-	}
 
 	total := int64(1)
 	if pool.Replicas != nil {
@@ -52,8 +48,15 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	machines := make([]machineapi.Machine, 0, total)
 	providerConfigs := map[string]*openstackprovider.OpenstackProviderSpec{}
 	for idx := int64(0); idx < total; idx++ {
-		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
-		var provider *openstackprovider.OpenstackProviderSpec
+		var (
+			provider *openstackprovider.OpenstackProviderSpec
+			zone     string
+			err      error
+		)
+
+		if len(mpool.Zones) > 0 {
+			zone = mpool.Zones[int(idx)%len(mpool.Zones)]
+		}
 
 		if _, ok := providerConfigs[zone]; !ok {
 			provider, err = generateProvider(
@@ -170,7 +173,9 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 	return &spec, nil
 }
 
-func checkNetworkExtensionAvailability(cloud, alias string) (bool, error) {
+// CheckNetworkExtensionAvailability interrogates the OpenStack cloud for
+// checking the availability of the network extension with the given alias.
+func CheckNetworkExtensionAvailability(cloud, alias string) (bool, error) {
 	opts := &clientconfig.ClientOpts{
 		Cloud: cloud,
 	}

@@ -13,7 +13,7 @@ import (
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]*clusterapi.MachineSet, error) {
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, trunkSupport bool) ([]*clusterapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
 		return nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
@@ -22,10 +22,6 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	}
 	platform := config.Platform.OpenStack
 	mpool := pool.Platform.OpenStack
-	trunkSupport, err := checkNetworkExtensionAvailability(platform.Cloud, "trunk")
-	if err != nil {
-		return nil, err
-	}
 
 	total := int32(0)
 	if pool.Replicas != nil {

@@ -238,7 +238,12 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 
 		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-		machines, err = openstack.Machines(clusterID.InfraID, ic, pool, imageName, "master", "master-user-data-managed")
+		trunkSupport, err := openstack.CheckNetworkExtensionAvailability(ic.Platform.OpenStack.Cloud, "trunk")
+		if err != nil {
+			return errors.Wrap(err, "failed to create master machine objects")
+		}
+
+		machines, err = openstack.Machines(clusterID.InfraID, ic, pool, imageName, "master", "master-user-data-managed", trunkSupport)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
