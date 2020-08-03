@@ -57,10 +57,7 @@ func (o *MachinePool) Set(required *MachinePool) {
 
 	if len(required.Zones) > 0 {
 		o.Zones = required.Zones
-	} else {
-		o.Zones = []string{""}
 	}
-
 }
 
 // RootVolume defines the storage for an instance.
