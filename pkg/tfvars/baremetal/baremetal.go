@@ -11,7 +11,6 @@ import (
 
 	"github.com/metal3-io/baremetal-operator/pkg/bmc"
 	"github.com/metal3-io/baremetal-operator/pkg/hardware"
-	"github.com/metal3-io/baremetal-operator/pkg/provisioner/ironic/devicehints"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/pkg/errors"
@@ -98,7 +97,7 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 
 		// host.RootDeviceHints overrides the root device hint in the profile
 		if host.RootDeviceHints != nil {
-			rootDeviceStringMap := devicehints.MakeHintMap(host.RootDeviceHints)
+			rootDeviceStringMap := host.RootDeviceHints.MakeHintMap()
 			for key, value := range rootDeviceStringMap {
 				rootDevice[key] = value
 			}
