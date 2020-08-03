@@ -24,6 +24,8 @@ if [ ! -f .pivot-done ]; then
 
   MACHINE_CONFIG_OPERATOR_IMAGE=$(image_for machine-config-operator)
   MACHINE_CONFIG_OSCONTENT=$(image_for machine-os-content)
+  CLI_IMAGE=$(image_for machine-config-operator)
+
   mkdir --parents /run/pivot /etc/pivot
   touch /run/pivot/reboot-needed
   echo "${MACHINE_CONFIG_OSCONTENT}" > /etc/pivot/image-pullspec
@@ -36,6 +38,10 @@ if [ ! -f .pivot-done ]; then
     /usr/bin/machine-config-daemon > /usr/local/bin/machine-config-daemon
   chmod +x /usr/local/bin/machine-config-daemon
   restorecon /usr/local/bin/machine-config-daemon
+
+  podman run --quiet --net=host --entrypoint=cat "${CLI_IMAGE}" /usr/bin/oc > /usr/local/bin/oc
+  chmod +x /usr/local/bin/oc
+  restorecon /usr/local/bin/oc
 
   # GCP: enable gcp-routes services
   systemctl enable openshift-gcp-routes.service || true
