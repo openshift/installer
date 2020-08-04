@@ -23,8 +23,8 @@ type MachinePool struct {
 	// +optional
 	AdditionalSecurityGroupIDs []string `json:"additionalSecurityGroupIDs,omitempty"`
 
-	// Zones contains a list of availabilty zones that instances can be deployed on
-	//
+	// Zones is the list of availability zones where the instances should be deployed.
+	// If no zones are provided, all instances will be deployed on OpenStack Nova default availability zone
 	// +optional
 	Zones []string `json:"zones,omitempty"`
 }

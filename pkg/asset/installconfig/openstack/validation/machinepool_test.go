@@ -26,6 +26,7 @@ var (
 func validMachinePool() *openstack.MachinePool {
 	return &openstack.MachinePool{
 		FlavorName: validCtrlPlaneFlavor,
+		Zones:      []string{""},
 	}
 }
 

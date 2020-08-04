@@ -33,7 +33,6 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	}
 
 	numOfAZs := int32(len(mpool.Zones))
-	// TODO(flaper87): Add support for availability zones
 	var machinesets []*clusterapi.MachineSet
 
 	for idx, az := range mpool.Zones {
@@ -67,7 +66,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 				},
 			},
 			Spec: clusterapi.MachineSetSpec{
-				Replicas: &total,
+				Replicas: &replicas,
 				Selector: metav1.LabelSelector{
 					MatchLabels: map[string]string{
 						"machine.openshift.io/cluster-api-machineset": name,

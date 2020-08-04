@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	guuid "github.com/google/uuid"
@@ -57,25 +58,17 @@ func ValidateMachinePool(p *openstack.MachinePool, ci *CloudInfo, controlPlane b
 	return allErrs
 }
 
-func validateZones(input []string, actual []string, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	// Base Case: No user input
-	if len(input) == 1 {
-		if input[0] == "" {
-			return allErrs
-		}
+func validateZones(input []string, available []string, fldPath *field.Path) field.ErrorList {
+	// check if machinepool default
+	if len(input) == 1 && input[0] == "" {
+		return field.ErrorList{}
 	}
-	if len(input) >= 1 {
-		actualZones := map[string]bool{}
-		for _, zone := range actual {
-			actualZones[zone] = true
-		}
 
-		for _, zoneInput := range input {
-			if !actualZones[zoneInput] {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("zone"), zoneInput, "Zone either does not exist in this cloud, or is not available"))
-			}
+	allErrs := field.ErrorList{}
+	availableZones := sets.NewString(available...)
+	for idx, zone := range input {
+		if !availableZones.Has(zone) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("zone").Index(idx), zone, "Zone either does not exist in this cloud, or is not available"))
 		}
 	}
 
