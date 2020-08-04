@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"sort"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -19,9 +21,31 @@ func ValidatePlatform(p *aws.Platform, fldPath *field.Path) field.ErrorList {
 	}
 
 	allErrs = append(allErrs, validateServiceEndpoints(p.ServiceEndpoints, fldPath.Child("serviceEndpoints"))...)
+	allErrs = append(allErrs, validateUserTags(p.UserTags, fldPath.Child("userTags"))...)
 
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
+	}
+	return allErrs
+}
+
+func validateUserTags(tags map[string]string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if len(tags) == 0 {
+		return allErrs
+	}
+	keys := make([]string, 0, len(tags))
+	for k := range tags {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		if strings.EqualFold(key, "Name") {
+			allErrs = append(allErrs, field.Invalid(fldPath.Key(key), tags[key], "Name key is not allowed for user defined tags"))
+		}
+		if strings.HasPrefix(key, "kubernetes.io/clustername/") {
+			allErrs = append(allErrs, field.Invalid(fldPath.Key(key), tags[key], "Keys with prefix 'kubernetes.io/clustername/' are not allowed for user defined tags"))
+		}
 	}
 	return allErrs
 }
