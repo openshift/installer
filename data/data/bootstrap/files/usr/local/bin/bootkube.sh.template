@@ -124,13 +124,21 @@ then
 
 	rm --recursive --force config-bootstrap
 
+	ADDITIONAL_FLAGS=""
+	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
+		ADDITIONAL_FLAGS="--cloud-provider-config-input-file=/assets/manifests/cloud-provider-config.yaml"
+	fi
+
 	bootkube_podman_run \
 		--volume "$PWD:/assets:z" \
 		"${CONFIG_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-config-operator render \
+		--cluster-infrastructure-input-file=/assets/manifests/cluster-infrastructure-02-config.yml \
+		--cloud-provider-config-output-file=/assets/config-bootstrap/cloud-provider-config-generated.yaml \
 		--config-output-file=/assets/config-bootstrap/config \
 		--asset-input-dir=/assets/tls \
-		--asset-output-dir=/assets/config-bootstrap
+		--asset-output-dir=/assets/config-bootstrap \
+		${ADDITIONAL_FLAGS}
 
 	cp config-bootstrap/manifests/* manifests/
 
@@ -236,6 +244,9 @@ then
 	if [ -f "/opt/openshift/tls/cloud-ca-cert.pem" ]; then
 		ADDITIONAL_FLAGS="--cloud-provider-ca-file=/assets/tls/cloud-ca-cert.pem"
 	fi
+	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
+		ADDITIONAL_FLAGS="${ADDITIONAL_FLAGS} --cloud-config-file=/assets/config-bootstrap/cloud-provider-config-generated.yaml"
+	fi
 
 	bootkube_podman_run \
 		--user 0 \
@@ -259,7 +270,6 @@ then
 			--mdns-publisher-image="${MDNS_PUBLISHER_IMAGE}" \
 			--haproxy-image="${HAPROXY_IMAGE}" \
 			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
-			--cloud-config-file=/assets/manifests/cloud-provider-config.yaml \
 			--cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}" \
 			--release-image="${RELEASE_IMAGE_DIGEST}" \
 			${ADDITIONAL_FLAGS}
