@@ -108,6 +108,7 @@ func defaultGCPMachinePoolPlatform() gcptypes.MachinePool {
 func defaultOpenStackMachinePoolPlatform(flavor string) openstacktypes.MachinePool {
 	return openstacktypes.MachinePool{
 		FlavorName: flavor,
+		Zones:      []string{""},
 	}
 }
 
