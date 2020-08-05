@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/pkg/errors"
 )
 
@@ -79,6 +80,8 @@ func Destroy(dir string) (err error) {
 		if err != nil {
 			return errors.Wrapf(err, "Failed to delete glance image %s", imageName)
 		}
+	case ovirt.Name:
+		extraArgs = append(extraArgs, "-target=module.template.ovirt_vm.tmp_import_vm")
 	}
 
 	extraArgs = append(extraArgs, "-target=module.bootstrap")
