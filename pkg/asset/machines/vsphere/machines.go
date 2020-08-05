@@ -65,6 +65,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 func provider(clusterID string, platform *vsphere.Platform, mpool *vsphere.MachinePool, osImage string, userDataSecret string) (*vsphereapis.VSphereMachineProviderSpec, error) {
 	folder := fmt.Sprintf("/%s/vm/%s", platform.Datacenter, clusterID)
+	resourcePool := fmt.Sprintf("/%s/host/%s/Resources", platform.Datacenter, platform.Cluster)
 	if platform.Folder != "" {
 		folder = platform.Folder
 	}
@@ -85,10 +86,11 @@ func provider(clusterID string, platform *vsphere.Platform, mpool *vsphere.Machi
 			},
 		},
 		Workspace: &vsphereapis.Workspace{
-			Server:     platform.VCenter,
-			Datacenter: platform.Datacenter,
-			Datastore:  platform.DefaultDatastore,
-			Folder:     folder,
+			Server:       platform.VCenter,
+			Datacenter:   platform.Datacenter,
+			Datastore:    platform.DefaultDatastore,
+			Folder:       folder,
+			ResourcePool: resourcePool,
 		},
 		NumCPUs:           mpool.NumCPUs,
 		NumCoresPerSocket: mpool.NumCoresPerSocket,
