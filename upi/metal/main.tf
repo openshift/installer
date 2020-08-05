@@ -96,14 +96,16 @@ resource "matchbox_group" "worker" {
 provider "packet" {}
 
 locals {
-  packet_facility = "sjc1"
+  # The packet facility to deploy to - core facilities:
+  # all,ams1,iad2,dc13,dfw2,ewr1,ny5,sin3,sjc1,nrt1
+  packet_facility = "any"
 }
 
 resource "packet_device" "masters" {
   count            = var.master_count
   hostname         = "master-${count.index}.${var.cluster_domain}"
   plan             = "c1.small.x86"
-  facilities       = ["any"]
+  facilities       = [local.packet_facility]
   operating_system = "custom_ipxe"
   ipxe_script_url  = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=master"
   billing_cycle    = "hourly"
@@ -116,7 +118,7 @@ resource "packet_device" "workers" {
   count            = var.worker_count
   hostname         = "worker-${count.index}.${var.cluster_domain}"
   plan             = "c1.small.x86"
-  facilities       = ["any"]
+  facilities       = [local.packet_facility]
   operating_system = "custom_ipxe"
   ipxe_script_url  = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=worker"
   billing_cycle    = "hourly"
@@ -141,7 +143,7 @@ module "bootstrap" {
 
   cluster_id = var.cluster_id
 
-  packet_facility   = "any"
+  packet_facility   = local.packet_facility
   packet_project_id = var.packet_project_id
 }
 
