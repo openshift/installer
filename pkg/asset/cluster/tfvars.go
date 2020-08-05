@@ -400,6 +400,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		data, err = openstacktfvars.TFVars(
 			masterSpecs,
+			installConfig.Config.Platform.OpenStack.Cloud,
 			installConfig.Config.Platform.OpenStack.ExternalNetwork,
 			installConfig.Config.Platform.OpenStack.ExternalDNS,
 			installConfig.Config.Platform.OpenStack.LbFloatingIP,
