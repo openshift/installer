@@ -46,9 +46,12 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			return nil, err
 		}
 
-		// TODO(flaper87): Implement AZ support sometime soon
-		//name := fmt.Sprintf("%s-%s-%s", clustername, pool.Name, az)
-		name := fmt.Sprintf("%s-%s", clusterID, pool.Name)
+		// Set unique name for the machineset
+		name := clusterID + "-" + pool.Name
+		if az != "" {
+			name += "-" + az
+		}
+
 		mset := &clusterapi.MachineSet{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
