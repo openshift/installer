@@ -8,13 +8,19 @@ provider "ignition" {
 # ================MATCHBOX=====================
 
 locals {
+  initrd_list = split("/", var.pxe_initrd_url)
   kernel_args = [
     "console=tty0",
     "console=ttyS1,115200n8",
     "rd.neednet=1",
 
     # "rd.break=initqueue"
-    "coreos.inst.install_dev=/dev/sda",
+    "coreos.inst=yes",
+    "initrd=${ local.initrd_list[ length(local.initrd_list) - 1 ] }",
+
+    "coreos.inst.image_url=${var.pxe_os_image_url}",
+    "coreos.inst.install_dev=sda",
+    "coreos.inst.skip_media_check",
   ]
 
   pxe_kernel = var.pxe_kernel_url
