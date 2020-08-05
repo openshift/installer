@@ -28,9 +28,11 @@ frontend router-https
     default_backend router-https
 
 backend api-server
+    option  httpchk GET /readyz HTTP/1.0
+    option  log-health-checks
     balance roundrobin
     %{ for addr in api ~}
-    server ${addr} ${addr}:6443 check
+    server ${addr} ${addr}:6443 weight 1 verify none check check-ssl inter 1s fall 2 rise 3
     %{ endfor ~}
 
 backend machine-config-server
