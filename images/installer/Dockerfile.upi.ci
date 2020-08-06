@@ -19,15 +19,23 @@ COPY --from=builder /go/src/github.com/openshift/installer/data/data/rhcos.json 
 RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
 RUN sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" >/etc/yum.repos.d/azure-cli.repo'
 
-RUN yum install --setopt=tsflags=nodocs -y \
-    gettext \
-    openssh-clients \
-    azure-cli \
-    openssl && \
-    yum update -y && \
+RUN sh -c 'echo -e "[google-cloud-sdk]\nname=Google Cloud SDK\nbaseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg\n       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" > /etc/yum.repos.d/google-cloud-sdk.repo'
+
+RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
-    unzip gzip jq util-linux && \
-    yum clean all && rm -rf /var/cache/yum/* && \
+      azure-cli \
+      gettext \
+      google-cloud-sdk \
+      gzip \
+      jq \
+      unzip \
+      openssh-clients \
+      openssl \
+      pyOpenSSL \
+      PyYAML \
+      util-linux && \
+    yum clean all && \
+    rm -rf /var/cache/yum/* && \
     chmod g+w /etc/passwd
 
 ENV TERRAFORM_VERSION=0.12.24
