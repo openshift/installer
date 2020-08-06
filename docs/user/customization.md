@@ -426,6 +426,9 @@ Example application of `loglevel=7` (change Linux kernel log level to KERN_DEBUG
         machineconfiguration.openshift.io/role: "master"
       name: 99-master-kargs-loglevel
     spec:
+      config:
+        ignition:
+          version: 3.1.0
       kernelArguments:
         - 'loglevel=7'
     EOF
@@ -479,6 +482,9 @@ Example for switching to RT kernel on worker nodes during initial cluster instal
         machineconfiguration.openshift.io/role: "worker"
       name: 99-worker-kerneltype
     spec:
+      config:
+        ignition:
+          version: 3.1.0
       kernelType: realtime
     EOF
     ```
@@ -495,7 +501,7 @@ Example for switching to RT kernel on worker nodes during initial cluster instal
     $ oc --kubeconfig realtime_kernel/auth/kubeconfig get machineconfigs
     NAME                                                        GENERATEDBYCONTROLLER                      IGNITIONVERSION   AGE
     ...
-    99-worker-kerneltype                                                                                                     80m
+    99-worker-kerneltype                                                                                   3.1.0             80m
     99-worker-ssh                                                                                          3.1.0             80m
     rendered-worker-853ba9bf0337db528a857a9c7380b95a            6306be9274cd3052f5075c81fa447c7895b7b9f4   3.1.0             78m
     ...
@@ -510,6 +516,30 @@ Example for switching to RT kernel on worker nodes during initial cluster instal
     ```
 
 **Note:**  The RT kernel lowers throughput (performance) in return for improved worst-case latency bounds. This feature is intended only for use cases that require consistent low latency. For more information, see the [Linux Foundation wiki](https://wiki.linuxfoundation.org/realtime/start) and the [RHEL RT portal](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux_for_real_time/8/).
+
+#### Enabling RHCOS Extensions
+RHCOS is a minimal OCP focused OS which provides capabilities common across all the platforms. With extensions support, OCP 4.6 and onward users can enable a limited set of additional functionality on the RHCOS nodes. In OCP 4.6 the supported extensions are `usbguard` and `kernel-devel`.
+
+Extensions can be installed by creating a MachineConfig object. It can be enabled during cluster installation as well as later on. See [customizing MachineConfig](#install-time-customization-for-machine-configuration) to enable an extension during install time. For day2 install, see [MachineConfiguration](https://github.com/openshift/machine-config-operator/blob/master/docs/MachineConfiguration.md#RHCO-Extensions) doc.
+
+Example MachineConfig to install usbguard on worker nodes:
+
+ ```yaml
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: worker
+  name: worker-extensions
+spec:
+  config:
+    ignition:
+      version: 3.1.0
+  extensions:
+    - usbguard
+  ```
+
+**Note:** `kernel-devel` extension should be installed only when you are using compatible traditional kernel (kernelType: default).
 
 ## OS Customization (unvalidated)
 
