@@ -198,6 +198,12 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 
 		err := runner(rootOpts.dir)
 		if err != nil {
+			// Attempt to gather logs if cluster asset creation failed
+			if cmd.Name() == "cluster" {
+				if err2 := runGatherBootstrapCmd(rootOpts.dir); err2 != nil {
+					logrus.Error("Attempted to gather debug logs after installation failure: ", err2)
+				}
+			}
 			logrus.Fatal(err)
 		}
 		if cmd.Name() != "cluster" {
