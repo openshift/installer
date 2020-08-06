@@ -132,13 +132,13 @@ EOF
 
 }
 
-variable "pxe_os_image_url" {
+variable "pxe_kernel_args" {
   type = string
+  default = ""
 
   description = <<EOF
-URL to the OS image for RHCOS that should be installed on machines.
-
-For more info: https://github.com/coreos/coreos-installer#kernel-command-line-options-for-coreos-installer-running-in-the-initramfs
+Arbitrary kernel arguments, space delimited ie:
+coreos.inst.image_url=http://example.com/image.gz coreos.color=blue
 EOF
 
 }

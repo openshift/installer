@@ -8,7 +8,7 @@ bootstrap_ign_file = ""
 cluster_domain = ""
 
 // The number of control plane machines required.
-// 
+//
 // Since etcd is colocated on control plane machines, suggested number is 3 or 5.
 // Default: 1
 master_count = "1"
@@ -17,22 +17,22 @@ master_count = "1"
 master_ign_file = ""
 
 // Client certificate used to authenticate with the matchbox RPC API.
-// 
+//
 // For more info: https://github.com/coreos/matchbox/blob/master/Documentation/api.md
 matchbox_client_cert = "matchbox/tls/client.crt"
 
 // Client certificate's key used to authenticate with the matchbox RPC API.
-// 
+//
 // For more info: https://github.com/coreos/matchbox/blob/master/Documentation/api.md
 matchbox_client_key = "matchbox/tls/client.key"
 
 // HTTPS endpoint for matchbox. This must include the scheme
-// 
+//
 // For more info: https://github.com/coreos/matchbox/blob/master/Documentation/api.md
 matchbox_http_endpoint = ""
 
 // RPC endpoint for matchbox.
-// 
+//
 // For more info: https://godoc.org/github.com/coreos/matchbox/matchbox/client
 matchbox_rpc_endpoint = ""
 
@@ -46,22 +46,24 @@ packet_project_id = ""
 public_r53_zone = ""
 
 // URL to the initrd image that should be used to PXE machines.
-// 
+//
 // This can be a fully-qualified URL or URL relative to matchbox_http_endpoint to use Matchbox assets (https://github.com/coreos/matchbox/blob/master/Documentation/matchbox.md#assets).
 pxe_initrd_url = ""
 
 // URL to the kernel image that should be used to PXE machines.
-// 
+//
 // This can be a fully-qualified URL or URL relative to matchbox_http_endpoint to use Matchbox assets (https://github.com/coreos/matchbox/blob/master/Documentation/matchbox.md#assets).
 pxe_kernel_url = ""
 
-// URL to the OS image for RHCOS that should be installed on machines.
-// 
+// PXE Boot Kernel args
+// Note, earlier versions of this code relied on a url via pxe_os_image_url, this has been replaced
+// with arbitrary kernel arguments which can include coreos.inst.image_url
+//
 // For more info: https://github.com/coreos/coreos-installer#kernel-command-line-options-for-coreos-installer-running-in-the-initramfs
-pxe_os_image_url = ""
+pxe_kernel_args = "coreos.inst.image_url=https://example.com/image.gz "
 
 // The number of worker machines required.
-// 
+//
 // Default: 1
 worker_count = "1"
 
