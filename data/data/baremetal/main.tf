@@ -20,7 +20,7 @@ module "bootstrap" {
   cluster_id = var.cluster_id
   image      = var.bootstrap_os_image
   ignition   = var.ignition_bootstrap
-  bridges    = compact([var.external_bridge, var.provisioning_bridge])
+  bridges    = var.bridges
 }
 
 module "masters" {

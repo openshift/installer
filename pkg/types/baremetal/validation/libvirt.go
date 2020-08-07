@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/libvirt/libvirt-go"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/validate"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"strings"
@@ -29,8 +30,20 @@ func validateInterfaces(p *baremetal.Platform, fldPath *field.Path) field.ErrorL
 		errorList = append(errorList, field.Invalid(fldPath.Child("externalBridge"), p.ExternalBridge, err.Error()))
 	}
 
+	if err := validate.MAC(p.ExternalMACAddress); p.ExternalMACAddress != "" && err != nil {
+		errorList = append(errorList, field.Invalid(fldPath.Child("externalMACAddress"), p.ExternalMACAddress, err.Error()))
+	}
+
 	if err := findInterface(p.ProvisioningBridge); p.ProvisioningNetwork != baremetal.DisabledProvisioningNetwork && err != nil {
 		errorList = append(errorList, field.Invalid(fldPath.Child("provisioningBridge"), p.ProvisioningBridge, err.Error()))
+	}
+
+	if err := validate.MAC(p.ProvisioningMACAddress); p.ProvisioningMACAddress != "" && err != nil {
+		errorList = append(errorList, field.Invalid(fldPath.Child("provisioningMACAddress"), p.ProvisioningMACAddress, err.Error()))
+	}
+
+	if p.ProvisioningMACAddress != "" && strings.EqualFold(p.ProvisioningMACAddress, p.ExternalMACAddress) {
+		errorList = append(errorList, field.Duplicate(fldPath.Child("provisioningMACAddress"), "provisioning and external MAC addresses may not be identical"))
 	}
 
 	return errorList
@@ -38,6 +51,7 @@ func validateInterfaces(p *baremetal.Platform, fldPath *field.Path) field.ErrorL
 
 // interfaceValidator fetches the valid interface names from a particular libvirt instance, and returns a closure
 // to validate if an interface is found among them
+
 func interfaceValidator(libvirtURI string) (func(string) error, error) {
 	// Connect to libvirt and obtain a list of interface names
 	interfaces := make(map[string]struct{})

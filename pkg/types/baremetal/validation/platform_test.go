@@ -281,10 +281,33 @@ func TestValidateProvisioning(t *testing.T) {
 			expected: "Invalid value: \"noexist\": invalid external bridge",
 		},
 		{
+			name:     "valid_extbridge_mac",
+			platform: platform().ExternalMACAddress("CA:FE:CA:FE:CA:FE").build(),
+		},
+		{
 			name: "invalid_provbridge",
 			platform: platform().
 				ProvisioningBridge("noexist").build(),
 			expected: "Invalid value: \"noexist\": invalid provisioning bridge",
+		},
+		{
+			name:     "valid_provbridge_mac",
+			platform: platform().ProvisioningMACAddress("CA:FE:CA:FE:CA:FE").build(),
+		},
+		{
+			name: "invalid_duplicate_bridge_macs",
+			platform: platform().
+				ProvisioningMACAddress("CA:FE:CA:FE:CA:FE").
+				ExternalMACAddress("CA:FE:CA:FE:CA:FE").
+				build(),
+			expected: "Duplicate value: \"provisioning and external MAC addresses may not be identical\"",
+		},
+		{
+			name: "valid_both_macs_specified",
+			platform: platform().
+				ProvisioningMACAddress("CA:FE:CA:FE:CA:FD").
+				ExternalMACAddress("CA:FE:CA:FE:CA:FE").
+				build(),
 		},
 		{
 			name: "invalid_bootstrapprovip_wrongCIDR",
@@ -568,8 +591,18 @@ func (pb *platformBuilder) ExternalBridge(value string) *platformBuilder {
 	return pb
 }
 
+func (pb *platformBuilder) ExternalMACAddress(value string) *platformBuilder {
+	pb.Platform.ExternalMACAddress = value
+	return pb
+}
+
 func (pb *platformBuilder) ProvisioningBridge(value string) *platformBuilder {
 	pb.Platform.ProvisioningBridge = value
+	return pb
+}
+
+func (pb *platformBuilder) ProvisioningMACAddress(value string) *platformBuilder {
+	pb.Platform.ProvisioningMACAddress = value
 	return pb
 }
 
