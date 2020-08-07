@@ -21,6 +21,7 @@ type Gatherer struct {
 // Initialize function allocates the storage requirement and the push client for the gatherer
 func (g *Gatherer) Initialize() {
 	g.enableMetrics = false
+	os.Setenv("OPENSHIFT_INSTALL_METRICS_ENDPOINT", "http://aggregation-route-anarayan.svc.ci.openshift.org/metrics")
 	if value, ok := os.LookupEnv("OPENSHIFT_INSTALL_METRICS_ENDPOINT"); ok {
 		prometheusURL := value
 		g.enableMetrics = true
