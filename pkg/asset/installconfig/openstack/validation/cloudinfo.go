@@ -199,12 +199,12 @@ func (ci *CloudInfo) getZones() ([]string, error) {
 	zones := []string{}
 	allPages, err := availabilityzones.List(ci.clients.computeClient).AllPages()
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
 
 	availabilityZoneInfo, err := availabilityzones.ExtractAvailabilityZones(allPages)
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
 
 	for _, zoneInfo := range availabilityZoneInfo {
@@ -214,7 +214,7 @@ func (ci *CloudInfo) getZones() ([]string, error) {
 	}
 
 	if len(zones) == 0 {
-		return []string{""}, nil
+		return nil, errors.New("could not find an available compute availability zone")
 	}
 
 	return zones, nil

@@ -234,8 +234,10 @@ spec:
                             eg. m1.large
                           type: string
                         zones:
-                          description: Zones contains a list of availabilty zones
-                            that instances can be deployed on
+                          description: Zones is the list of availability zones where
+                            the instances should be deployed. If no zones are provided,
+                            all instances will be deployed on OpenStack Nova default
+                            availability zone
                           items:
                             type: string
                           type: array
@@ -527,8 +529,10 @@ spec:
                           eg. m1.large
                         type: string
                       zones:
-                        description: Zones contains a list of availabilty zones that
-                          instances can be deployed on
+                        description: Zones is the list of availability zones where
+                          the instances should be deployed. If no zones are provided,
+                          all instances will be deployed on OpenStack Nova default
+                          availability zone
                         items:
                           type: string
                         type: array
@@ -1316,8 +1320,10 @@ spec:
                           eg. m1.large
                         type: string
                       zones:
-                        description: Zones contains a list of availabilty zones that
-                          instances can be deployed on
+                        description: Zones is the list of availability zones where
+                          the instances should be deployed. If no zones are provided,
+                          all instances will be deployed on OpenStack Nova default
+                          availability zone
                         items:
                           type: string
                         type: array
