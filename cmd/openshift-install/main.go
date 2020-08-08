@@ -2,10 +2,14 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -14,6 +18,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/openshift/installer/pkg/terraform/exec/plugins"
+	"github.com/openshift/installer/pkg/version"
 )
 
 var (
@@ -101,5 +106,36 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 
 	if err != nil {
 		logrus.Fatal(errors.Wrap(err, "invalid log-level"))
+	}
+
+	if version.CommitDate != "" {
+		logOldInstallerNotification(version.CommitDate)
+	}
+}
+
+func logOldInstallerNotification(commitDate string) {
+	commit, err := time.Parse("2006-01-02", commitDate)
+	if err != nil {
+		logrus.Warnf("Failed to parse commit date %q: %v", version.CommitDate, err)
+		return
+	}
+
+	releaseName, err := version.Version()
+	if err != nil {
+		logrus.Warnf("Failed to parse version: %v", err)
+		return
+	}
+
+	now := time.Now()
+	age := now.Sub(commit)
+	days := int(math.Floor(age.Hours() / 24))
+	arch := runtime.GOARCH
+	switch arch {
+	case "amd64":
+		arch = "x86_64"
+	}
+	uri := fmt.Sprintf("https://mirror.openshift.com/pub/openshift-v4/%s/clients/ocp/latest/", arch)
+	if days > 30 {
+		logrus.Infof("The OpenShift Installer installs a version of OpenShift which is matched to the Installer's version, %s. This Installer is more than %d days old. Red Hat frequently updates OpenShift with bug fixes, please consider using a newer installer. You may download the latest from %s", releaseName, days, uri)
 	}
 }

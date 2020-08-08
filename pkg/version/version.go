@@ -26,6 +26,10 @@ var (
 	// Set in hack/build.sh.
 	Commit = ""
 
+	// CommitDate is the commit date, in YYYY-MM-DD format, from which
+	// the installer was built.  Set in hack/build.sh.
+	CommitDate = ""
+
 	// defaultReleaseInfoPadded may be replaced in the binary with Release Metadata: Version that overrides defaultVersion as
 	// a null-terminated string within the allowed character length. This allows a distributor to override the payload
 	// location without having to rebuild the source.
