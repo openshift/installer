@@ -1381,9 +1381,6 @@ spec:
                 required:
                 - cloud
                 - computeFlavor
-                - octaviaSupport
-                - region
-                - trunkSupport
                 type: object
               ovirt:
                 description: Ovirt is the configuration used when installing on oVirt.
