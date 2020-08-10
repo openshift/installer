@@ -62,8 +62,8 @@ resource "aws_lb_target_group" "api_internal" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
     interval            = 10
-    port                = 6443
-    protocol            = "HTTPS"
+    port                = 6080
+    protocol            = "HTTP"
     path                = "/readyz"
   }
 }
@@ -90,8 +90,8 @@ resource "aws_lb_target_group" "api_external" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
     interval            = 10
-    port                = 6443
-    protocol            = "HTTPS"
+    port                = 6080
+    protocol            = "HTTP"
     path                = "/readyz"
   }
 }
