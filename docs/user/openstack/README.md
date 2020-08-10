@@ -242,7 +242,7 @@ OpenStack support has [known issues](known-issues.md). We will be documenting wo
 
 ### Initial Setup
 
-Please head to [try.openshift.com](https://try.openshift.com) to get the latest versions of the installer, and instructions to run it.
+Please head to [openshift.com/try](https://www.openshift.com/try) to get the latest versions of the installer, and instructions to run it.
 
 Before running the installer, we recommend you create a directory for each cluster you plan to deploy. See the documents on the [recommended workflow](../overview.md#multiple-invocations) for more information about why you should do it this way.
 
