@@ -81,4 +81,9 @@ resource "openstack_compute_instance_v2" "master_conf" {
   }
 
   tags = ["openshiftClusterID=${var.cluster_id}"]
+
+  metadata = {
+    Name = "${var.cluster_id}-master"
+    openshiftClusterID = var.cluster_id
+  }
 }
