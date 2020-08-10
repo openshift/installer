@@ -156,6 +156,10 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		Tags: []string{
 			fmt.Sprintf("openshiftClusterID=%s", clusterID),
 		},
+		ServerMetadata: map[string]string{
+			"Name":               fmt.Sprintf("%s-%s", clusterID, role),
+			"openshiftClusterID": clusterID,
+		},
 	}
 	if mpool.RootVolume != nil {
 		spec.RootVolume = &openstackprovider.RootVolume{
