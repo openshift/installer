@@ -518,7 +518,7 @@ Example for switching to RT kernel on worker nodes during initial cluster instal
 **Note:**  The RT kernel lowers throughput (performance) in return for improved worst-case latency bounds. This feature is intended only for use cases that require consistent low latency. For more information, see the [Linux Foundation wiki](https://wiki.linuxfoundation.org/realtime/start) and the [RHEL RT portal](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux_for_real_time/8/).
 
 #### Enabling RHCOS Extensions
-RHCOS is a minimal OCP focused OS which provides capabilities common across all the platforms. With extensions support, OCP 4.6 and onward users can enable a limited set of additional functionality on the RHCOS nodes. In OCP 4.6 the supported extensions are `usbguard` and `kernel-devel`.
+RHCOS is a minimal OCP focused OS which provides capabilities common across all the platforms. With extensions support, beginning in OCP 4.6 and onward, users can enable a limited set of additional functionality on the RHCOS nodes. In OCP 4.6 the supported extension is `usbguard`.
 
 Extensions can be installed by creating a MachineConfig object. It can be enabled during cluster installation as well as later on. See [customizing MachineConfig](#install-time-customization-for-machine-configuration) to enable an extension during install time. For day2 install, see [MachineConfiguration](https://github.com/openshift/machine-config-operator/blob/master/docs/MachineConfiguration.md#RHCO-Extensions) doc.
 
@@ -538,8 +538,6 @@ spec:
   extensions:
     - usbguard
   ```
-
-**Note:** `kernel-devel` extension should be installed only when you are using compatible traditional kernel (kernelType: default).
 
 ## OS Customization (unvalidated)
 
