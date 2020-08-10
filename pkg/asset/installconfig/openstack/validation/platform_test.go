@@ -170,6 +170,47 @@ func TestOpenStackPlatformValidation(t *testing.T) {
 			expectedError:  true,
 			expectedErrMsg: `[platform.openstack.ingressFloatingIP: Invalid value: "128.35.27.13": Cannot set floating ips when external network not specified, platform.openstack.lbFloatingIP: Invalid value: "128.35.27.8": Cannot set floating ips when external network not specified]`,
 		},
+		{
+			name: "no external network provided",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.ExternalNetwork = ""
+				p.LbFloatingIP = ""
+				p.IngressFloatingIP = ""
+				p.APIVIP = ""
+				return p
+			}(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				ci.ExternalNetwork = nil
+				ci.IngressFIP = nil
+				ci.APIFIP = nil
+				return ci
+			}(),
+			networking:     validNetworking(),
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "valid external network",
+			platform:       validPlatform(),
+			cloudInfo:      validPlatformCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:     "external network not found",
+			platform: validPlatform(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				ci.ExternalNetwork = nil
+				return ci
+			}(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: "platform.openstack.externalNetwork: Not found: \"valid-external-network\"",
+		},
 	}
 
 	for _, tc := range cases {
