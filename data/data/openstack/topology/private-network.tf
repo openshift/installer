@@ -118,7 +118,7 @@ resource "openstack_networking_trunk_v2" "masters" {
 // step that can't always be automated (we need to support OpenStack clusters)
 // that do not have or do not want to use Octavia.
 //
-// If an external network has not bee defined then a floating IP
+// If an external network has not been defined then a floating IP
 // will not be provided or assigned to the masters.
 //
 // If the floating IP is not provided, the installer will time out waiting for

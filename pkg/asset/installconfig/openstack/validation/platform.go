@@ -57,7 +57,8 @@ func validateMachinesSubnet(p *openstack.Platform, n *types.Networking, ci *Clou
 
 // validateExternalNetwork validates the user's input for the externalNetwork and returns a list of all validation errors
 func validateExternalNetwork(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
-	if ci.ExternalNetwork == nil {
+	// Return an error if external network was specified in the install config, but hasn't been found
+	if p.ExternalNetwork != "" && ci.ExternalNetwork == nil {
 		allErrs = append(allErrs, field.NotFound(fldPath.Child("externalNetwork"), p.ExternalNetwork))
 	}
 	return allErrs
