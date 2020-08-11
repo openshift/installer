@@ -52,6 +52,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	machines := make([]machineapi.Machine, 0, total)
 	providerConfigs := map[string]*openstackprovider.OpenstackProviderSpec{}
 	for idx := int64(0); idx < total; idx++ {
+		if len(mpool.Zones) == 0 {
+			return nil, fmt.Errorf("no zones in OpenStack machine-pool")
+		}
 		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
 		var provider *openstackprovider.OpenstackProviderSpec
 
