@@ -14,9 +14,7 @@ locals {
     "rd.neednet=1",
 
     # "rd.break=initqueue"
-    "coreos.inst=yes",
-    "coreos.inst.install_dev=sda",
-    "coreos.inst.skip_media_check",
+    "coreos.inst.install_dev=/dev/sda",
   ]
 
   pxe_kernel = var.pxe_kernel_url
