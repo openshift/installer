@@ -95,6 +95,7 @@ func validBareMetalPlatform() *baremetal.Platform {
 		ProvisioningNetworkCIDR:      ipnet.MustParseCIDR("192.168.111.0/24"),
 		BootstrapProvisioningIP:      "192.168.111.1",
 		ClusterProvisioningIP:        "192.168.111.2",
+		ProvisioningNetwork:          baremetal.ManagedProvisioningNetwork,
 		Hosts: []*baremetal.Host{
 			{
 				Name:           "host1",
@@ -598,7 +599,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.APIVIP = ""
 				return c
 			}(),
-			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "": "" is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "": the virtual IP is expected to be in one of the machine networks]$`,
+			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "": "" is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "": IP expected to be in one of the machine networks: 10.0.0.0/16]$`,
 		},
 		{
 			name: "baremetal API VIP not an IP",
@@ -610,7 +611,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.APIVIP = "test"
 				return c
 			}(),
-			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "test": the virtual IP is expected to be in one of the machine networks]$`,
+			expectedError: `^\[platform\.baremetal\.apiVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.apiVIP: Invalid value: "test": IP expected to be in one of the machine networks: 10.0.0.0/16]$`,
 		},
 		{
 			name: "baremetal API VIP set to an incorrect value",
@@ -622,7 +623,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.APIVIP = "10.1.0.5"
 				return c
 			}(),
-			expectedError: `^platform\.baremetal\.apiVIP: Invalid value: "10\.1\.0\.5": the virtual IP is expected to be in one of the machine networks$`,
+			expectedError: `^platform\.baremetal\.apiVIP: Invalid value: "10\.1\.0\.5": IP expected to be in one of the machine networks: 10.0.0.0/16$`,
 		},
 		{
 			name: "baremetal Ingress VIP not an IP",
@@ -634,7 +635,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.IngressVIP = "test"
 				return c
 			}(),
-			expectedError: `^\[platform\.baremetal\.ingressVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.ingressVIP: Invalid value: "test": the virtual IP is expected to be in one of the machine networks]$`,
+			expectedError: `^\[platform\.baremetal\.ingressVIP: Invalid value: "test": "test" is not a valid IP, platform\.baremetal\.ingressVIP: Invalid value: "test": IP expected to be in one of the machine networks: 10.0.0.0/16]$`,
 		},
 		{
 			name: "baremetal Ingress VIP set to an incorrect value",
@@ -646,7 +647,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal.IngressVIP = "10.1.0.7"
 				return c
 			}(),
-			expectedError: `^platform\.baremetal\.ingressVIP: Invalid value: "10\.1\.0\.7": the virtual IP is expected to be in one of the machine networks$`,
+			expectedError: `^platform\.baremetal\.ingressVIP: Invalid value: "10\.1\.0\.7": IP expected to be in one of the machine networks: 10.0.0.0/16$`,
 		}, {
 			name: "valid vsphere platform",
 			installConfig: func() *types.InstallConfig {

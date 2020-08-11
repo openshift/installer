@@ -17,8 +17,10 @@ deployments, see [install_upi.md](install_upi.md).
 
 ### Network Requirements
 
-It is assumed that all hosts have at least 2 NICs, used for the following
-purposes:
+You have the choice of a single or dual NIC setup, depending on whether
+you would like to use PXE/DHCP-based provisioning or not. Please note
+that disabling the provisioning network means that host BMC's must be
+accessible over the external network which may not be desirable.
 
 * **NIC #1 - External Network**
   * This network is the main network used by the cluster, including API traffic
@@ -46,12 +48,15 @@ purposes:
     * `api.<cluster-name>.<base-domain>` - pointing to the API VIP
     * `*.apps.<cluster-name>.<base-domain>` - pointing to the Ingress VIP
 
-* **NIC #2 - Provisioning Network**
+* **NIC #2 - Provisioning Network (optional) **
   * A private network used for PXE based provisioning.
   * You must specify `provisioningNetworkInterface` to indicate which
-    interface is connected to this network.
-  * DHCP is automated for this network by default, to rely on external
-    DHCP, set the platform's `provisioningDHCPExternal` option to `true`
+    interface is connected to this network on the control plane nodes.
+  * The provisioning network may be "Managed" (default), "Unmanaged," or
+    "Disabled."
+  * In managed mode, DHCP and TFTP are configured to run in the cluster. In
+    unmanaged mode, TFTP is still available but you must configure DHCP
+    externally.
   * Addressing for this network defaults to `172.22.0.0/24`, but is
     configurable by setting the `provisioningNetworkCIDR` option.
   * Two IP's are required to be available for use, one for the bootstrap
@@ -277,6 +282,9 @@ both required.  For example
 
 To use virtual media instead of PXE for attaching the provisioning
 image to the host, use `redfish-virtualmedia://` or `idrac-virtualmedia://`
+
+Please note that when the provisioning network is disabled, the only
+supported BMC's are virtual media.
 
 ## Work in Progress
 

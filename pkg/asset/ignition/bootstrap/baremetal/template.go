@@ -1,12 +1,19 @@
 package baremetal
 
 import (
-	"github.com/openshift/installer/pkg/types/baremetal"
+	"net"
 	"strings"
+
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/baremetal"
 )
 
 // TemplateData holds data specific to templates used for the baremetal platform.
 type TemplateData struct {
+	// ProvisioningInterface holds the interface the bootstrap node will use to host the ProvisioningIP below.
+	// When the provisioning network is disabled, this is the external baremetal network interface.
+	ProvisioningInterface string
+
 	// ProvisioningIP holds the IP the bootstrap node will use to service Ironic, TFTP, etc.
 	ProvisioningIP string
 
@@ -15,6 +22,9 @@ type TemplateData struct {
 
 	// ProvisioningCIDR has the integer CIDR notation, e.g. 255.255.255.0 should be "24"
 	ProvisioningCIDR int
+
+	// ProvisioningDNSMasq determines if we start the dnsmasq service on the bootstrap node.
+	ProvisioningDNSMasq bool
 
 	// ProvisioningDHCPRange has the DHCP range, if DHCP is not external. Otherwise it
 	// should be blank.
@@ -26,17 +36,22 @@ type TemplateData struct {
 }
 
 // GetTemplateData returns platform-specific data for bootstrap templates.
-func GetTemplateData(config *baremetal.Platform) *TemplateData {
+func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetworkEntry) *TemplateData {
 	var templateData TemplateData
 
 	templateData.ProvisioningIP = config.BootstrapProvisioningIP
 
-	cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()
-	templateData.ProvisioningCIDR = cidr
+	if config.ProvisioningNetwork != baremetal.DisabledProvisioningNetwork {
+		cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()
+		templateData.ProvisioningCIDR = cidr
+		templateData.ProvisioningIPv6 = config.ProvisioningNetworkCIDR.IP.To4() == nil
+		templateData.ProvisioningInterface = "ens4"
+		templateData.ProvisioningDNSMasq = true
+	}
 
-	templateData.ProvisioningIPv6 = config.ProvisioningNetworkCIDR.IP.To4() == nil
-
-	if !config.ProvisioningDHCPExternal {
+	switch config.ProvisioningNetwork {
+	case baremetal.ManagedProvisioningNetwork:
+		// When provisioning network is managed, we set a DHCP range:
 		templateData.ProvisioningDHCPRange = config.ProvisioningDHCPRange
 
 		var dhcpAllowList []string
@@ -46,6 +61,19 @@ func GetTemplateData(config *baremetal.Platform) *TemplateData {
 			}
 		}
 		templateData.ProvisioningDHCPAllowList = strings.Join(dhcpAllowList, " ")
+	case baremetal.DisabledProvisioningNetwork:
+		templateData.ProvisioningInterface = "ens3"
+		templateData.ProvisioningDNSMasq = false
+
+		for _, network := range networks {
+			if network.CIDR.Contains(net.ParseIP(templateData.ProvisioningIP)) {
+				templateData.ProvisioningIPv6 = network.CIDR.IP.To4() == nil
+
+				cidr, _ := network.CIDR.Mask.Size()
+				templateData.ProvisioningCIDR = cidr
+			}
+
+		}
 	}
 
 	return &templateData

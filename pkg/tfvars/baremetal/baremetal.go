@@ -18,11 +18,11 @@ import (
 )
 
 type config struct {
-	LibvirtURI              string `json:"libvirt_uri,omitempty"`
-	BootstrapProvisioningIP string `json:"bootstrap_provisioning_ip,omitempty"`
-	BootstrapOSImage        string `json:"bootstrap_os_image,omitempty"`
-	ExternalBridge          string `json:"external_bridge,omitempty"`
-	ProvisioningBridge      string `json:"provisioning_bridge,omitempty"`
+	LibvirtURI              string `json:"libvirt_uri"`
+	BootstrapProvisioningIP string `json:"bootstrap_provisioning_ip"`
+	BootstrapOSImage        string `json:"bootstrap_os_image"`
+	ExternalBridge          string `json:"external_bridge"`
+	ProvisioningBridge      string `json:"provisioning_bridge"`
 
 	// Data required for control plane deployment - several maps per host, because of terraform's limitations
 	Hosts         []map[string]interface{} `json:"hosts"`

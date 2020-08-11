@@ -37,12 +37,11 @@ resource "libvirt_domain" "bootstrap" {
     mode = "host-passthrough"
   }
 
-  network_interface {
-    bridge = var.external_bridge
-  }
-
-  network_interface {
-    bridge = var.provisioning_bridge
+  dynamic "network_interface" {
+    for_each = var.bridges
+    content {
+      bridge = network_interface.value
+    }
   }
 }
 

@@ -9,10 +9,10 @@ import (
 
 func TestTemplatingIPv4(t *testing.T) {
 	bareMetalConfig := baremetal.Platform{
-		ProvisioningNetworkCIDR:  ipnet.MustParseCIDR("172.22.0.0/24"),
-		BootstrapProvisioningIP:  "172.22.0.2",
-		ProvisioningDHCPExternal: false,
-		ProvisioningDHCPRange:    "172.22.0.10,172.22.0.100",
+		ProvisioningNetworkCIDR: ipnet.MustParseCIDR("172.22.0.0/24"),
+		BootstrapProvisioningIP: "172.22.0.2",
+		ProvisioningNetwork:     baremetal.ManagedProvisioningNetwork,
+		ProvisioningDHCPRange:   "172.22.0.10,172.22.0.100",
 		Hosts: []*baremetal.Host{
 			{
 				Role:           "master",
@@ -33,7 +33,7 @@ func TestTemplatingIPv4(t *testing.T) {
 		},
 	}
 
-	result := GetTemplateData(&bareMetalConfig)
+	result := GetTemplateData(&bareMetalConfig, nil)
 
 	assert.Equal(t, result.ProvisioningDHCPRange, "172.22.0.10,172.22.0.100")
 	assert.Equal(t, result.ProvisioningCIDR, 24)
@@ -44,12 +44,12 @@ func TestTemplatingIPv4(t *testing.T) {
 
 func TestTemplatingIPv6(t *testing.T) {
 	bareMetalConfig := baremetal.Platform{
-		ProvisioningNetworkCIDR:  ipnet.MustParseCIDR("fd2e:6f44:5dd8:b856::0/64"),
-		BootstrapProvisioningIP:  "fd2e:6f44:5dd8:b856::2",
-		ProvisioningDHCPExternal: true,
+		ProvisioningNetworkCIDR: ipnet.MustParseCIDR("fd2e:6f44:5dd8:b856::0/64"),
+		BootstrapProvisioningIP: "fd2e:6f44:5dd8:b856::2",
+		ProvisioningNetwork:     baremetal.UnmanagedProvisioningNetwork,
 	}
 
-	result := GetTemplateData(&bareMetalConfig)
+	result := GetTemplateData(&bareMetalConfig, nil)
 
 	assert.Equal(t, result.ProvisioningDHCPRange, "")
 	assert.Equal(t, result.ProvisioningCIDR, 64)

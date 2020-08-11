@@ -28,6 +28,8 @@ func TestSetPlatformDefaults(t *testing.T) {
 		}
 	}
 
+	machineNetwork := ipnet.MustParseCIDR("192.168.111.0/24")
+
 	cases := []struct {
 		name     string
 		platform *baremetal.Platform
@@ -42,6 +44,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				BootstrapProvisioningIP: "172.22.0.2",
 				ExternalBridge:          "baremetal",
 				ProvisioningBridge:      "provisioning",
+				ProvisioningNetwork:     baremetal.ManagedProvisioningNetwork,
 				APIVIP:                  "192.168.111.2",
 				IngressVIP:              "192.168.111.3",
 				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("172.22.0.0/24"),
@@ -59,6 +62,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				BootstrapProvisioningIP: "172.23.0.2",
 				ExternalBridge:          "baremetal",
 				ProvisioningBridge:      "provisioning",
+				ProvisioningNetwork:     baremetal.ManagedProvisioningNetwork,
 				APIVIP:                  "192.168.111.2",
 				IngressVIP:              "192.168.111.3",
 				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("172.23.0.0/24"),
@@ -76,6 +80,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 				BootstrapProvisioningIP: "fd2e:6f44:5dd8:b856::2",
 				ExternalBridge:          "baremetal",
 				ProvisioningBridge:      "provisioning",
+				ProvisioningNetwork:     baremetal.ManagedProvisioningNetwork,
 				APIVIP:                  "192.168.111.2",
 				IngressVIP:              "192.168.111.3",
 				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("fd2e:6f44:5dd8:b856::/64"),
@@ -85,27 +90,54 @@ func TestSetPlatformDefaults(t *testing.T) {
 		{
 			name: "alternate_cidr_dhcp_disabled",
 			platform: &baremetal.Platform{
-				ProvisioningNetworkCIDR:  ipnet.MustParseCIDR("172.23.0.0/24"),
-				ProvisioningDHCPExternal: true,
+				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("172.23.0.0/24"),
+				ProvisioningNetwork:     baremetal.UnmanagedProvisioningNetwork,
 			},
 			expected: &baremetal.Platform{
-				LibvirtURI:               "qemu:///system",
-				ClusterProvisioningIP:    "172.23.0.3",
-				BootstrapProvisioningIP:  "172.23.0.2",
-				ExternalBridge:           "baremetal",
-				ProvisioningBridge:       "provisioning",
-				APIVIP:                   "192.168.111.2",
-				IngressVIP:               "192.168.111.3",
-				ProvisioningNetworkCIDR:  ipnet.MustParseCIDR("172.23.0.0/24"),
-				ProvisioningDHCPExternal: true,
+				LibvirtURI:              "qemu:///system",
+				ClusterProvisioningIP:   "172.23.0.3",
+				BootstrapProvisioningIP: "172.23.0.2",
+				ExternalBridge:          "baremetal",
+				ProvisioningBridge:      "provisioning",
+				APIVIP:                  "192.168.111.2",
+				IngressVIP:              "192.168.111.3",
+				ProvisioningNetworkCIDR: ipnet.MustParseCIDR("172.23.0.0/24"),
+				ProvisioningNetwork:     baremetal.UnmanagedProvisioningNetwork,
+			},
+		},
+		{
+			name: "disabled_provisioning_network",
+			platform: &baremetal.Platform{
+				ProvisioningNetwork:     baremetal.DisabledProvisioningNetwork,
+				BootstrapProvisioningIP: "192.168.111.7",
+				ClusterProvisioningIP:   "192.168.111.8",
+			},
+			expected: &baremetal.Platform{
+				BootstrapProvisioningIP: "192.168.111.7",
+				ClusterProvisioningIP:   "192.168.111.8",
+				LibvirtURI:              "qemu:///system",
+				ExternalBridge:          "baremetal",
+				ProvisioningBridge:      "",
+				ProvisioningNetwork:     baremetal.DisabledProvisioningNetwork,
+				ProvisioningNetworkCIDR: machineNetwork,
+				APIVIP:                  "192.168.111.2",
+				IngressVIP:              "192.168.111.3",
 			},
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+
 			ic := &types.InstallConfig{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: testClusterName,
+				},
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{
+							CIDR: ipnet.IPNet{IPNet: machineNetwork.IPNet},
+						},
+					},
 				},
 				BaseDomain: "test",
 			}

@@ -29,7 +29,7 @@ func validateInterfaces(p *baremetal.Platform, fldPath *field.Path) field.ErrorL
 		errorList = append(errorList, field.Invalid(fldPath.Child("externalBridge"), p.ExternalBridge, err.Error()))
 	}
 
-	if err := findInterface(p.ProvisioningBridge); err != nil {
+	if err := findInterface(p.ProvisioningBridge); p.ProvisioningNetwork != baremetal.DisabledProvisioningNetwork && err != nil {
 		errorList = append(errorList, field.Invalid(fldPath.Child("provisioningBridge"), p.ProvisioningBridge, err.Error()))
 	}
 
