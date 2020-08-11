@@ -31,6 +31,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
     - [Checking Cluster Status](#checking-cluster-status)
     - [Destroying The Cluster](#destroying-the-cluster)
   - [Post Install Operations](#post-install-operations)
+    - [Adding a MachineSet](#adding-a-machineset)
     - [Using an External Load Balancer](#using-an-external-load-balancer)
     - [Refreshing a CA Certificate](#refreshing-a-ca-certificate)
   - [Reporting Issues](#reporting-issues)
@@ -426,6 +427,85 @@ Then, you can delete the folder containing the cluster metadata:
 rm -rf ostest/
 ```
 ## Post Install Operations
+
+### Adding a MachineSet
+
+Groups of Compute nodes are managed using the [MachineSet][machine-set-code] resource. It is possible to create additional MachineSets post-install, for example to assign workloads to specific machines.
+
+When running on OpenStack, the MachineSet has platform-specific fields:
+
+```yaml
+apiVersion: machine.openshift.io/v1beta1
+kind: MachineSet
+metadata:
+  labels:
+    machine.openshift.io/cluster-api-cluster: <infrastructure_ID>
+    machine.openshift.io/cluster-api-machine-role: <node_role>
+    machine.openshift.io/cluster-api-machine-type: <node_role>
+  name: <infrastructure_ID>-<node_role>
+  namespace: openshift-machine-api
+spec:
+  replicas: <number_of_replicas>
+  selector:
+    matchLabels:
+      machine.openshift.io/cluster-api-cluster: <infrastructure_ID>
+      machine.openshift.io/cluster-api-machineset: <infrastructure_ID>-<node_role>
+  template:
+    metadata:
+      labels:
+        machine.openshift.io/cluster-api-cluster: <infrastructure_ID>
+        machine.openshift.io/cluster-api-machine-role: <node_role>
+        machine.openshift.io/cluster-api-machine-type: <node_role>
+        machine.openshift.io/cluster-api-machineset: <infrastructure_ID>-<node_role>
+    spec:
+      providerSpec:
+        value:
+          apiVersion: openstackproviderconfig.openshift.io/v1alpha1
+          cloudName: openstack
+          cloudsSecret:
+            name: openstack-cloud-credentials
+            namespace: openshift-machine-api
+          flavor: <nova_flavor>
+          image: <glance_image_name_or_location>
+          serverGroupID: <UUID of the pre-created Nova server group (optional)>
+          kind: OpenstackProviderSpec
+          networks:
+          - filter: {}
+            subnets:
+            - filter:
+                name: <subnet_name>
+                tags: openshiftClusterID=<infrastructure_ID>
+          securityGroups:
+          - filter: {}
+            name: <infrastructure_ID>-<node_role>
+          serverMetadata:
+            Name: <infrastructure_ID>-<node_role>
+            openshiftClusterID: <infrastructure_ID>
+          tags:
+          - openshiftClusterID=<infrastructure_ID>
+          trunk: true
+          userDataSecret:
+            name: <node_role>-user-data
+```
+
+#### Using a Server Group
+
+In order to hint the Nova scheduler to spread the Machines across different
+hosts, first create a Server Group with the [desired
+policy][server-group-docs]:
+
+```shell
+openstack server group create --policy=anti-affinity <server-group-name>
+## OR ##
+openstack --os-compute-api-version=2.15 server group create --policy=soft-anti-affinity <server-group-name>
+```
+
+If the command is successful, the OpenStack CLI will return the ID of the newly
+created Server Group. Paste it in the optional "serverGroupID" property of the
+MachineSet.
+
+[machine-set-code]: https://github.com/openshift/cluster-api-provider-openstack/blob/master/pkg/apis/openstackproviderconfig/v1alpha1/types.go
+[server-group-docs]: https://docs.openstack.org/api-ref/compute/?expanded=create-server-group-detail#create-server-group
 
 ### Using an External Load Balancer
 
