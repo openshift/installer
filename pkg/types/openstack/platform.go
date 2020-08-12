@@ -5,7 +5,8 @@ package openstack
 type Platform struct {
 	// Region specifies the OpenStack region where the cluster will be created.
 	// Deprecated: this value is not used by the installer.
-	Region string `json:"region"`
+	// +optional
+	DeprecatedRegion string `json:"region"`
 
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on OpenStack for machine pools which do not define their own
@@ -38,12 +39,14 @@ type Platform struct {
 	// TrunkSupport holds a `0` or `1` value that indicates whether or not to use trunk ports
 	// in your OpenShift cluster.
 	// Deprecated: this value is set by the installer automatically.
-	TrunkSupport string `json:"trunkSupport"`
+	// +optional
+	DeprecatedTrunkSupport string `json:"trunkSupport"`
 
 	// OctaviaSupport holds a `0` or `1` value that indicates whether your OpenStack
 	// cluster supports Octavia Loadbalancing.
 	// Deprecated: this value is set by the installer automatically.
-	OctaviaSupport string `json:"octaviaSupport"`
+	// +optional
+	DeprecatedOctaviaSupport string `json:"octaviaSupport"`
 
 	// ClusterOSImage is either a URL with `http(s)` or `file` scheme to override
 	// the default OS image for cluster nodes, or an existing Glance image name.
