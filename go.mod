@@ -117,7 +117,7 @@ replace (
 	github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20200130220348-e5685c0cf530 // Pin MCO so it doesn't get downgraded
 	github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699 // Pin to openshift fork with tag v2.67.0-openshift
 	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200707062554-97ea089cc12a // release-2.17.0 branch
-	github.com/terraform-providers/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-1
+	github.com/terraform-providers/terraform-provider-vsphere => github.com/mtnbikenc/terraform-provider-vsphere v1.18.2-0.20200807173801-22d13c155527
 	github.com/vmware/govmomi => github.com/vmware/govmomi v0.22.2-0.20200420222347-5fceac570f29
 	google.golang.org/api => google.golang.org/api v0.13.0 // Pin to version required by tf-provider-google
 	k8s.io/api => k8s.io/api v0.17.1 // Replaced by MCO/CRI-O
