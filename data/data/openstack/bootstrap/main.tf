@@ -58,6 +58,11 @@ resource "openstack_compute_instance_v2" "bootstrap" {
   }
 
   tags = ["openshiftClusterID=${var.cluster_id}"]
+
+  metadata = {
+    Name               = "${var.cluster_id}-bootstrap"
+    openshiftClusterID = var.cluster_id
+  }
 }
 
 resource "openstack_networking_floatingip_v2" "bootstrap_fip" {
