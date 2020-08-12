@@ -18,6 +18,7 @@ type Platform struct {
 	Cloud string `json:"cloud"`
 
 	// ExternalNetwork is name of the external network in your OpenStack cluster.
+	// +optional
 	ExternalNetwork string `json:"externalNetwork,omitempty"`
 
 	// FlavorName is the name of the compute flavor to use for instances in this cluster.
@@ -25,10 +26,12 @@ type Platform struct {
 
 	// LbFloatingIP is the IP address of an available floating IP in your OpenStack cluster
 	// to associate with the OpenShift load balancer.
+	// +optional
 	LbFloatingIP string `json:"lbFloatingIP,omitempty"`
 
 	// IngressFloatingIP is the ID of an available floating IP in your OpenStack cluster
 	// that will be associated with the OpenShift ingress port
+	// +optional
 	IngressFloatingIP string `json:"ingressFloatingIP,omitempty"`
 
 	// ExternalDNS holds the IP addresses of dns servers that will
