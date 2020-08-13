@@ -44,6 +44,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
 - [Customizing your install](customization.md)
 - [Installing OpenShift on OpenStack User-Provisioned Infrastructure](install_upi.md)
 - [Learn about the OpenShift on OpenStack networking infrastructure design](../../design/openstack/networking-infrastructure.md)
+- [Deploying OpenShift bare-metal workers](deploy_baremetal_workers.md)
 
 ## OpenStack Requirements
 
