@@ -1,76 +1,80 @@
 {
-    "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.6-s390x/46.82.202006241639-0/s390x/",
-    "buildid": "46.82.202006241639-0",
+    "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.6-s390x/46.82.202008121739-0/s390x/",
+    "buildid": "46.82.202008121739-0",
     "images": {
         "dasd": {
-            "path": "rhcos-46.82.202006241639-0-dasd.s390x.raw.gz",
-            "sha256": "2bfeac3861b5786ededdea3dfe13d1698831b0b2f54cb9e6e0e04388d105f9b0",
-            "size": 832351316,
-            "uncompressed-sha256": "cf389be55dc2e7c51dc9beb5305637f90df94b635bc0195e7cc7abddb2e2ab51",
-            "uncompressed-size": 3682598912
+            "path": "rhcos-46.82.202008121739-0-dasd.s390x.raw.gz",
+            "sha256": "26d43652caae5cdccb41826e099283fe0064488094e4387cf0a1ee89f12058e5",
+            "size": 834798434,
+            "uncompressed-sha256": "dd85ecfd2afb5a4522b903b3cd3b88f003b413f2f07b5cffeee1fcd6956a4f4f",
+            "uncompressed-size": 3609198592
         },
         "initramfs": {
-            "path": "rhcos-46.82.202006241639-0-installer-initramfs.s390x.img",
-            "sha256": "097f1844930727d053efeda1ba848c93d130b760f250d25a006fda3e2b43346e"
+            "path": "rhcos-46.82.202008121739-0-installer-initramfs.s390x.img",
+            "sha256": "1d7cd19e3e982c6af91094654f1f8c1fa3708d64b0c0c8bcfad3c3437b80cadb"
         },
         "iso": {
-            "path": "rhcos-46.82.202006241639-0-installer.s390x.iso",
-            "sha256": "6f9cc505ee2b68e7336b562ed58411c30f54c18dab5df4538e193d06eb2fcc85"
+            "path": "rhcos-46.82.202008121739-0-installer.s390x.iso",
+            "sha256": "60ae5d74e4187ef74778abb128d488997489779ef76563d07ccfd30f14737ed1"
         },
         "kernel": {
-            "path": "rhcos-46.82.202006241639-0-installer-kernel-s390x",
+            "path": "rhcos-46.82.202008121739-0-installer-kernel-s390x",
             "sha256": "7a468bd7f6f67bb156ea64f29cb23ad59eddd1a322b7cc850c5a0c26aef01e7f"
         },
         "live-initramfs": {
-            "path": "rhcos-46.82.202006241639-0-live-initramfs.s390x.img",
-            "sha256": "72ef01220faae98db0f9e27d8cdf46a7597294be2e0a1b787612a4c0c8a64d00"
+            "path": "rhcos-46.82.202008121739-0-live-initramfs.s390x.img",
+            "sha256": "1599e922c32ab75ca85bdb276f9cdb05415d83b9ef8fdb4d0a3929d044a867f6"
         },
         "live-iso": {
-            "path": "rhcos-46.82.202006241639-0-live.s390x.iso",
-            "sha256": "c17320745bb8b7d11f0cb2bc08f4f27edf9c5bb18c8f0c2c4fee6fccb44c3a36"
+            "path": "rhcos-46.82.202008121739-0-live.s390x.iso",
+            "sha256": "07f6b476d6987397035b2a46292306f59c1878cb77701a0ec472443f6d608e90"
         },
         "live-kernel": {
-            "path": "rhcos-46.82.202006241639-0-live-kernel-s390x",
+            "path": "rhcos-46.82.202008121739-0-live-kernel-s390x",
             "sha256": "7a468bd7f6f67bb156ea64f29cb23ad59eddd1a322b7cc850c5a0c26aef01e7f"
         },
+        "live-rootfs": {
+            "path": "rhcos-46.82.202008121739-0-live-rootfs.s390x.img",
+            "sha256": "9dbf88144a579d02317a23be91768f851a73c81a2c950863016f3d9ca3c4f001"
+        },
         "metal": {
-            "path": "rhcos-46.82.202006241639-0-metal.s390x.raw.gz",
-            "sha256": "9cedf7df554abea5c98eea65dd58a8aa587268729aebbff65de075bbcb6a627c",
-            "size": 832389552,
-            "uncompressed-sha256": "ae430bcc6df24a6daa5e735e27ab5107a76bba28a8f1d6e684f435ac32479ed6",
-            "uncompressed-size": 3682598912
+            "path": "rhcos-46.82.202008121739-0-metal.s390x.raw.gz",
+            "sha256": "6f4a881a65e3f7d3b95d858e4d074e6ff29272b1eed76c9cc8c676d1490c1b89",
+            "size": 834940523,
+            "uncompressed-sha256": "015b8095d7a12a2b171ce3d079d130bf7b7ac984dd6966e1239150ed357613d9",
+            "uncompressed-size": 3609198592
         },
         "metal4k": {
-            "path": "rhcos-46.82.202006241639-0-metal4k.s390x.raw.gz",
-            "sha256": "db0e572ece27d83919e22b00355a6aab7927356012ca8c4f9267ad8fb3318b31",
-            "size": 832436489,
-            "uncompressed-sha256": "1d705d296b0abcbaef5ee1122921784e9fc0a6e9287609fff8471111a4e368d8",
-            "uncompressed-size": 3682598912
+            "path": "rhcos-46.82.202008121739-0-metal4k.s390x.raw.gz",
+            "sha256": "23b12937d2882bd3e5f93f6b7f16cb270cd292ae0abbfe268541a931df0ecf79",
+            "size": 834786079,
+            "uncompressed-sha256": "0596150b5722bb693cf68f8195151a0877a9ce8cdd25f5ff16db9da6e1d62e0d",
+            "uncompressed-size": 3609198592
         },
         "openstack": {
-            "path": "rhcos-46.82.202006241639-0-openstack.s390x.qcow2.gz",
-            "sha256": "393481755869aab7cee4218da05b8749340335eec39cbd7eaa76076b86b40549",
-            "size": 831110776,
-            "uncompressed-sha256": "b28efc53e9d3dbde628cbcc6538821d0901d333361a0df7176b9c50579f72337",
-            "uncompressed-size": 2306998272
+            "path": "rhcos-46.82.202008121739-0-openstack.s390x.qcow2.gz",
+            "sha256": "9672bbce91f3d11615d547e9462d75b4267cfe4c2e746c9928d53149a9ec1969",
+            "size": 833617262,
+            "uncompressed-sha256": "11eddb4784f7cfe3acf2a33678ed0b7e7a66bab0453f7e16e1b7462b9d4320e8",
+            "uncompressed-size": 2269249536
         },
         "ostree": {
-            "path": "rhcos-46.82.202006241639-0-ostree.s390x.tar",
-            "sha256": "755ffc75c2551eebd7c5d8284a501efb87b96fc41a7ba8cf375525d84dd0e885",
-            "size": 778444800
+            "path": "rhcos-46.82.202008121739-0-ostree.s390x.tar",
+            "sha256": "a1e1ee4e7407588fad32016c2be5a0e76a4025c3e2b5a60cf79cb6eaf53a7118",
+            "size": 777277440
         },
         "qemu": {
-            "path": "rhcos-46.82.202006241639-0-qemu.s390x.qcow2.gz",
-            "sha256": "508eeecf9011b59139a9c1f910fc444c0dac6e43ae424a15106c98fa1b609f85",
-            "size": 832217393,
-            "uncompressed-sha256": "655a3ec009a88a7f47cba5f80ddb728f26991ab231a20b4cd19a23386ad725d5",
-            "uncompressed-size": 2356215808
+            "path": "rhcos-46.82.202008121739-0-qemu.s390x.qcow2.gz",
+            "sha256": "85f8d152ce0d6062afc22110a046b793815f7dbdd4a5f3543abdb1508589be71",
+            "size": 834475750,
+            "uncompressed-sha256": "98f796bf9cc28fde8a158e2d7ea4bbd0bfe5ca2736fab0eeaf858c5cc83e33a8",
+            "uncompressed-size": 2307129344
         }
     },
     "oscontainer": {
-        "digest": "sha256:6728457912a2ba37f42b206cb356d1d5b79e90f8224b69d498473a114d1b5fb0",
+        "digest": "sha256:fadff7fba98c43a787d3db0f82d913cbd950f5f7e75593e1d41af61d15b73d40",
         "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
     },
-    "ostree-commit": "6dc0583bd710713416e4b2ed3f98b5cdf6ec746d3ea1b6413a1deaf87b210317",
-    "ostree-version": "46.82.202006241639-0"
+    "ostree-commit": "e605c9ebc20706424b5aac2958e18f405f8ccfdac80938445b7375c7ee655ecb",
+    "ostree-version": "46.82.202008121739-0"
 }
