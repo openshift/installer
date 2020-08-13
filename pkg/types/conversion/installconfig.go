@@ -31,10 +31,11 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 
 	switch config.Platform.Name() {
 	case baremetal.Name:
-		convertBaremetal(config)
+		if err := convertBaremetal(config); err != nil {
+			return err
+		}
 	case openstack.Name:
-		err := convertOpenStack(config)
-		if err != nil {
+		if err := convertOpenStack(config); err != nil {
 			return err
 		}
 	}
@@ -87,11 +88,25 @@ func convertNetworking(config *types.InstallConfig) {
 
 // convertBaremetal upconverts deprecated fields in the baremetal
 // platform. ProvisioningDHCPExternal has been replaced by setting
-// the ProvisioningNetwork field to "Unmanaged"
-func convertBaremetal(config *types.InstallConfig) {
+// the ProvisioningNetwork field to "Unmanaged" and ProvisioningHostIP
+// has been replaced by ClusterProvisioningIP.
+func convertBaremetal(config *types.InstallConfig) error {
 	if config.Platform.BareMetal.DeprecatedProvisioningDHCPExternal && config.Platform.BareMetal.ProvisioningNetwork == "" {
 		config.Platform.BareMetal.ProvisioningNetwork = baremetal.UnmanagedProvisioningNetwork
 	}
+
+	if config.Platform.BareMetal.DeprecatedProvisioningHostIP != "" && config.Platform.BareMetal.ClusterProvisioningIP == "" {
+		config.Platform.BareMetal.ClusterProvisioningIP = config.Platform.BareMetal.DeprecatedProvisioningHostIP
+	}
+
+	// If user specified both, but they aren't equal, let them know they are the same field
+	if config.Platform.BareMetal.DeprecatedProvisioningHostIP != "" &&
+		config.Platform.BareMetal.DeprecatedProvisioningHostIP != config.Platform.BareMetal.ClusterProvisioningIP {
+		return field.Invalid(field.NewPath("platform").Child("baremetal").Child("provisioningHostIP"),
+			config.Platform.BareMetal.DeprecatedProvisioningHostIP, "provisioningHostIP is deprecated; only clusterProvisioningIP needs to be specified")
+	}
+
+	return nil
 }
 
 // convertOpenStack upconverts deprecated fields in the OpenStack platform.

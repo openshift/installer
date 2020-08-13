@@ -142,7 +142,7 @@ func validateDHCPRange(p *baremetal.Platform, fldPath *field.Path) (allErrs fiel
 	if start != nil && end != nil {
 		// Validate ClusterProvisioningIP is not in DHCP range
 		if clusterProvisioningIP := net.ParseIP(p.ClusterProvisioningIP); clusterProvisioningIP != nil && bytes.Compare(clusterProvisioningIP, start) >= 0 && bytes.Compare(clusterProvisioningIP, end) <= 0 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningHostIP"), p.ClusterProvisioningIP, fmt.Sprintf("%q overlaps with the allocated DHCP range", p.ClusterProvisioningIP)))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, fmt.Sprintf("%q overlaps with the allocated DHCP range", p.ClusterProvisioningIP)))
 		}
 
 		// Validate BootstrapProvisioningIP is not in DHCP range
@@ -311,7 +311,7 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 
 	if p.ClusterProvisioningIP != "" {
 		if err := validate.IP(p.ClusterProvisioningIP); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningHostIP"), p.ClusterProvisioningIP, err.Error()))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, err.Error()))
 		}
 	}
 
