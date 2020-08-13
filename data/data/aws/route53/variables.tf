@@ -53,3 +53,8 @@ based on if api_external_lb_dns_name for example, which will be null when there 
 So publish_strategy serves an coordinated proxy for that decision.
 EOF
 }
+
+variable "region" {
+  type = string
+  description = "The target AWS region for the cluster."
+}
