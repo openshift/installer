@@ -51,7 +51,7 @@ resource "azurerm_storage_blob" "ignition" {
   source                 = local_file.ignition_bootstrap.filename
   storage_account_name   = var.storage_account.name
   storage_container_name = azurerm_storage_container.ignition.name
-  type                   = "Page"
+  type                   = "Block"
 }
 
 data "ignition_config" "redirect" {
