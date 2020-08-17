@@ -1008,7 +1008,7 @@ func DiskPostCloneOperation(d *schema.ResourceData, c *govmomi.Client, l object.
 			//
 			// TODO: Remove "name" after 2.0.
 			switch k {
-			case "label", "path", "name", "datastore_id", "uuid":
+			case "label", "path", "name", "datastore_id", "uuid", "thin_provisioned", "eagerly_scrub":
 				continue
 			case "io_share_count":
 				if src["io_share_level"] != string(types.SharesLevelCustom) {

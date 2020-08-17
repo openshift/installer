@@ -1455,8 +1455,8 @@ github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e569
 github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699/go.mod h1:0U3OgA2uDYSc7gNkdWA92+/BxWXwuYhWqqZ4UhM1RCw=
 github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200707062554-97ea089cc12a h1:yrCt4MiDMfLRv//VnIc3lnrmBYhIIz72+ZcGq/YMIjk=
 github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200707062554-97ea089cc12a/go.mod h1:9VGDn8x+Pz/j5vQ8nseuH+YsKyxpGYx+faT9b9fqCWQ=
-github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-1 h1:Jvi/tGlF8xOLZ5lWjJWi8hyXOSe7NqbAqOrwjdDRE7E=
-github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-1/go.mod h1:a1mEaZ0sy5RL+ukbqPvY1N6dw9K0yG7EYWZZkfJUeyA=
+github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-2 h1:stvaZiT/RzGhlxq9w7+QxdvmVWcWl7j3DtoPbbF5tnY=
+github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-2/go.mod h1:a1mEaZ0sy5RL+ukbqPvY1N6dw9K0yG7EYWZZkfJUeyA=
 github.com/opentracing-contrib/go-stdlib v0.0.0-20190519235532-cf7a6c988dc9/go.mod h1:PLldrQSroqzH70Xl+1DQcGnefIbqsKR7UDaiux3zV+w=
 github.com/opentracing/basictracer-go v1.0.0/go.mod h1:QfBfYuafItcjQuMwinw9GhYKwFXS9KnPs5lxoYwgW74=
 github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
