@@ -1427,7 +1427,7 @@ github.com/terraform-providers/terraform-provider-openstack/openstack
 # github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
 ## explicit
 github.com/terraform-providers/terraform-provider-random/random
-# github.com/terraform-providers/terraform-provider-vsphere v1.16.2 => github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-1
+# github.com/terraform-providers/terraform-provider-vsphere v1.16.2 => github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-2
 ## explicit
 github.com/terraform-providers/terraform-provider-vsphere/vsphere
 github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/clustercomputeresource
@@ -2102,7 +2102,7 @@ sigs.k8s.io/yaml
 # github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699
 # github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200707062554-97ea089cc12a
 # github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.0
-# github.com/terraform-providers/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-1
+# github.com/terraform-providers/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-2
 # github.com/vmware/govmomi => github.com/vmware/govmomi v0.22.2-0.20200420222347-5fceac570f29
 # k8s.io/api => k8s.io/api v0.17.1
 # k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.17.1
