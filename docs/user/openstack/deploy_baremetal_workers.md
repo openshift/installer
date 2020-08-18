@@ -7,6 +7,7 @@
 - [Deploying cluster with BM workers on tenant network deployed by the installer](#deploying-cluster-with-bm-workers-on-tenant-network-deployed-by-the-installer)
 - [Deploying cluster with BM workers on preexisting network](#deploying-cluster-with-bm-workers-on-preexisting-network)
 - [Deploy cluster with VM workers only and add BM workers after](#deploy-cluster-with-vm-workers-only-and-add-bm-workers-after)
+- [Known issues](#known-issues)
 
 
 ## Common prerequisites
@@ -180,6 +181,10 @@ where the bare-metal machines will be attached.
 
           oc create -v baremetalMachineSet.yaml
 
+
+## Known issues
+
+Bare metal nodes are not supported on clusters that use Kuryr.
 
 
 [1]: <https://docs.openstack.org/nova/latest/user/flavors.html> "In OpenStack, flavors define the compute, memory, and storage capacity of nova computing instances"
