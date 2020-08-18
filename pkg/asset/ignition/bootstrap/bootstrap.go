@@ -53,7 +53,6 @@ type bootstrapTemplateData struct {
 	Proxy                 *configv1.ProxyStatus
 	Registries            []sysregistriesv2.Registry
 	BootImage             string
-	ClusterDomain         string
 	PlatformData          platformTemplateData
 }
 
@@ -259,7 +258,6 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		Proxy:                 &proxy.Status,
 		Registries:            registries,
 		BootImage:             string(*rhcosImage),
-		ClusterDomain:         installConfig.ClusterDomain(),
 		PlatformData:          platformData,
 	}, nil
 }
