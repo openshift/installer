@@ -475,6 +475,44 @@ func waitForConsole(ctx context.Context, config *rest.Config) (string, error) {
 	return url, nil
 }
 
+// checkComputeReplicas checks the number of requested replicas of worker nodes on the baremetal platform
+func checkComputeReplicas(ctx context.Context, config *rest.Config, directory string) (err error) {
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return errors.Wrap(err, "creating a Kubernetes client")
+	}
+
+	nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return errors.Wrap(err, "failed to get node list")
+	}
+
+	assetStore, err := assetstore.NewStore(directory)
+	if err != nil {
+		return errors.Wrap(err, "failed to create asset store")
+	}
+
+	ic := &installconfig.InstallConfig{}
+	if err := assetStore.Fetch(ic); err != nil {
+		return errors.Wrapf(err, "failed to fetch %s", ic.Name())
+	}
+
+	var computeReplicas, controlPlaneReplicas int64
+	if ic.Config.Platform.Name() == baremetal.Name {
+		for _, compute := range ic.Config.Compute {
+			computeReplicas += *compute.Replicas
+		}
+		controlPlaneReplicas += *ic.Config.ControlPlane.Replicas
+
+		foundReplicas := int64(len(nodes.Items)) - controlPlaneReplicas
+		if foundReplicas != computeReplicas {
+			err := errors.New("incorrect number of compute replicas found")
+			return errors.Wrapf(err, "specified %d compute replicas but found %d", computeReplicas, foundReplicas)
+		}
+	}
+	return nil
+}
+
 // logComplete prints info upon completion
 func logComplete(directory, consoleURL string) error {
 	absDir, err := filepath.Abs(directory)
@@ -491,6 +529,7 @@ func logComplete(directory, consoleURL string) error {
 	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=%s'", kubeconfig)
 	logrus.Infof("Access the OpenShift web-console here: %s", consoleURL)
 	logrus.Infof("Login to the console with user: %q, and password: %q", "kubeadmin", pw)
+
 	return nil
 }
 
@@ -506,6 +545,10 @@ func waitForInstallComplete(ctx context.Context, config *rest.Config, directory 
 
 	if err = addRouterCAToClusterCA(ctx, config, rootOpts.dir); err != nil {
 		return err
+	}
+
+	if err = checkComputeReplicas(ctx, config, rootOpts.dir); err != nil {
+		logrus.Warnf("Warning: Some workers may still be provisioning, please check their status: %s", err)
 	}
 
 	return logComplete(rootOpts.dir, consoleURL)
