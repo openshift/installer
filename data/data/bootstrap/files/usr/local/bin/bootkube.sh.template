@@ -16,7 +16,6 @@ bootkube_podman_run() {
 MACHINE_CONFIG_OPERATOR_IMAGE=$(image_for machine-config-operator)
 MACHINE_CONFIG_OSCONTENT=$(image_for machine-os-content)
 MACHINE_CONFIG_ETCD_IMAGE=$(image_for etcd)
-MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE=$(image_for kube-client-agent)
 MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 
 CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator)
@@ -81,8 +80,6 @@ then
 		--manifest-etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
 		--etcd-discovery-domain={{.ClusterDomain}} \
 		--manifest-cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}" \
-		--manifest-setup-etcd-env-image="${MACHINE_CONFIG_OPERATOR_IMAGE}" \
-		--manifest-kube-client-agent-image="${MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE}" \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/etcd-bootstrap \
 		--config-output-file=/assets/etcd-bootstrap/config \
@@ -234,15 +231,11 @@ then
 		--volume "$PWD:/assets:z" \
 		"${MACHINE_CONFIG_OPERATOR_IMAGE}" \
 		bootstrap \
-			--etcd-ca=/assets/tls/etcd-ca-bundle.crt \
-			--etcd-metric-ca=/assets/tls/etcd-metric-ca-bundle.crt \
 			--root-ca=/assets/tls/root-ca.crt \
 			--kube-ca=/assets/tls/kube-apiserver-complete-client-ca-bundle.crt \
 			--config-file=/assets/manifests/cluster-config.yaml \
 			--dest-dir=/assets/mco-bootstrap \
 			--pull-secret=/assets/manifests/openshift-config-secret-pull-secret.yaml \
-			--etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
-			--kube-client-agent-image="${MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE}" \
 			--machine-config-operator-image="${MACHINE_CONFIG_OPERATOR_IMAGE}" \
 			--machine-config-oscontent-image="${MACHINE_CONFIG_OSCONTENT}" \
 			--infra-image="${MACHINE_CONFIG_INFRA_IMAGE}" \
@@ -251,7 +244,6 @@ then
 			--mdns-publisher-image="${MDNS_PUBLISHER_IMAGE}" \
 			--haproxy-image="${HAPROXY_IMAGE}" \
 			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
-			--cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}" \
 			--release-image="${RELEASE_IMAGE_DIGEST}" \
 			${ADDITIONAL_FLAGS}
 
