@@ -36,8 +36,8 @@ accessible over the external network which may not be desirable.
   * ***NTP***
     * A time source must be accessible from this network.
   * ***Reserved VIPs (Virtual IPs)*** - 3 IP addresses must be reserved on this
-	network for use by the cluster. These Virtual IPs are managed using VRRP
-	(v2 for IPv4 and v3 for IPv6). Specifically, these IPs will serve the
+    network for use by the cluster. These Virtual IPs are managed using VRRP
+    (v2 for IPv4 and v3 for IPv6). Specifically, these IPs will serve the
     following purposes:
     * API - This IP will be used to reach the cluster API.
     * Ingress - This IP will be used by cluster ingress traffic
@@ -52,11 +52,13 @@ accessible over the external network which may not be desirable.
   * A private network used for PXE based provisioning.
   * You must specify `provisioningNetworkInterface` to indicate which
     interface is connected to this network on the control plane nodes.
-  * The provisioning network may be "Managed" (default), "Unmanaged," or
+  * The `provisioningNetwork` may be "Managed" (default), "Unmanaged," or
     "Disabled."
-  * In managed mode, DHCP and TFTP are configured to run in the cluster. In
+  * In `Managed` mode, DHCP and TFTP are configured to run in the cluster. In
     unmanaged mode, TFTP is still available but you must configure DHCP
     externally.
+  * In `Disabled` mode, no second NIC is required, but an additional controlplane
+    IP must be specified by the `clusterProvisioningIP`.
   * Addressing for this network defaults to `172.22.0.0/24`, but is
     configurable by setting the `provisioningNetworkCIDR` option.
   * Two IP's are required to be available for use, one for the bootstrap
