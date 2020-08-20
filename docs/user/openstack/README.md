@@ -433,7 +433,7 @@ rm -rf ostest/
 
 Groups of Compute nodes are managed using the [MachineSet][machine-set-code] resource. It is possible to create additional MachineSets post-install, for example to assign workloads to specific machines.
 
-When running on OpenStack, the MachineSet has platform-specific fields:
+When running on OpenStack, the MachineSet has platform-specific fields under `spec.template.spec.providerSpec.value`:
 
 ```yaml
 apiVersion: machine.openshift.io/v1beta1
@@ -487,6 +487,7 @@ spec:
           trunk: true
           userDataSecret:
             name: <node_role>-user-data
+          availabilityZone: <optional_openstack_availability_zone>
 ```
 
 #### Using a Server Group
@@ -502,8 +503,14 @@ openstack --os-compute-api-version=2.15 server group create --policy=soft-anti-a
 ```
 
 If the command is successful, the OpenStack CLI will return the ID of the newly
-created Server Group. Paste it in the optional "serverGroupID" property of the
+created Server Group. Paste it in the optional `serverGroupID` property of the
 MachineSet.
+
+#### Deploying on Availability Zones
+
+In order to use Availability Zones, create one MachineSet per target
+Availability Zone, and set the Availability Zone in the `availabilityZone`
+property of the MachineSet.
 
 [machine-set-code]: https://github.com/openshift/cluster-api-provider-openstack/blob/master/pkg/apis/openstackproviderconfig/v1alpha1/types.go
 [server-group-docs]: https://docs.openstack.org/api-ref/compute/?expanded=create-server-group-detail#create-server-group
