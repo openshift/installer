@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/ovirt/validation"
+	"github.com/openshift/installer/pkg/validate"
 )
 
 // Validate executes ovirt specific validation
@@ -124,4 +125,13 @@ func validateVNICProfile(platform ovirt.Platform, con *ovirtsdk.Connection) erro
 			platform.NetworkName)
 	}
 	return nil
+}
+
+func validURL(val interface{}) error {
+	uri, ok := val.(string)
+	if !ok {
+		return fmt.Errorf("cannot check url validity on type %T", val)
+	}
+
+	return validate.URIWithProtocol(uri, "https")
 }
