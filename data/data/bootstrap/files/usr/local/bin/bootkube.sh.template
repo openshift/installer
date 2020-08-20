@@ -92,8 +92,6 @@ then
 			--manifest-etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
 			--etcd-discovery-domain={{.ClusterDomain}} \
 			--manifest-cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}" \
-			--manifest-setup-etcd-env-image="${MACHINE_CONFIG_OPERATOR_IMAGE}" \
-			--manifest-kube-client-agent-image="${MACHINE_CONFIG_KUBE_CLIENT_AGENT_IMAGE}" \
 			--asset-input-dir=/assets/tls \
 			--asset-output-dir=/assets/etcd-bootstrap \
 			--config-output-file=/assets/etcd-bootstrap/config \
