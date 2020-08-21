@@ -2,6 +2,12 @@ provider "packet" {
   auth_token = var.packet_auth_token
 }
 
+terraform {
+  required_providers {
+    packet = "~> 3.0.0"
+  }
+}
+
 provider "cloudflare" {
   email   = var.packet_cf_email
   api_key = var.packet_cf_api_key
@@ -9,7 +15,7 @@ provider "cloudflare" {
 
 module "bastion" {
 
-  source               = "./modules/bastion"
+  source               = "./modules/bootstrap"
   auth_token           = var.auth_token
   project_id           = var.project_id
   facility             = var.facility
@@ -27,11 +33,11 @@ module "bastion" {
 module "dns_lb" {
   source = "./modules/dns"
 
-  cluster_name         = var.cluster_name
-  cluster_basedomain   = var.cluster_basedomain
-  cf_zone_id           = var.cf_zone_id
-  node_type            = "lb"
-  node_ips             = tolist([module.bastion.lb_ip])
+  cluster_name       = var.cluster_name
+  cluster_basedomain = var.cluster_basedomain
+  cf_zone_id         = var.cf_zone_id
+  node_type          = "lb"
+  node_ips           = tolist([module.bastion.lb_ip])
 }
 
 module "prepare_openshift" {
@@ -51,7 +57,7 @@ module "prepare_openshift" {
 }
 
 module "openshift_install" {
-  source               = "./modules/install"
+  source = "./modules/install"
 
   ssh_private_key_path = var.ssh_private_key_path
   operating_system     = var.bastion_operating_system

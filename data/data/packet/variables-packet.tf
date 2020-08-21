@@ -64,22 +64,22 @@ variable "packet_count_master" {
 }
 
 variable "packet_count_compute" {
-  default = "2"
+  default     = "2"
   description = "Number of Compute Nodes"
 }
 
 variable "packet_cluster_name" {
-  default = "jr"
+  default     = "jr"
   description = "Cluster name label"
 }
 
 variable "packet_ocp_version" {
-  default = "4.4"
+  default     = "4.4"
   description = "OpenShift minor release version"
 }
 
 variable "packet_ocp_version_zstream" {
-  default = "3"
+  default     = "3"
   description = "OpenShift zstream version"
 }
 
@@ -90,7 +90,7 @@ variable "packet_ocp_cluster_manager_token" {
 variable "packet_ocp_storage_nfs_enable" {
   description = "Enable configuration of NFS and NFS-related k8s provisioner/storageClass"
   default     = true
-} 
+}
 variable "packet_ocp_storage_ocs_enable" {
   description = "Enable installation of OpenShift Container Storage via operator. This requires a minimum of 3 worker nodes"
   default     = false

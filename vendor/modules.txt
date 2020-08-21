@@ -1066,6 +1066,9 @@ github.com/ovirt/terraform-provider-ovirt/ovirt
 # github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db
 ## explicit
 github.com/packer-community/winrmcp/winrmcp
+# github.com/packethost/cluster-api-provider-packet v0.1.0
+## explicit
+github.com/packethost/cluster-api-provider-packet/pkg/apis/packetprovider/v1alpha1
 # github.com/packethost/packngo v0.2.1-0.20200424110205-36917dbc292f
 ## explicit
 github.com/packethost/packngo
@@ -2039,6 +2042,7 @@ sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1
 sigs.k8s.io/cluster-api-provider-openstack/pkg/apis
 sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1
 # sigs.k8s.io/controller-runtime v0.5.2
+sigs.k8s.io/controller-runtime/pkg/runtime/scheme
 sigs.k8s.io/controller-runtime/pkg/scheme
 # sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 ## explicit

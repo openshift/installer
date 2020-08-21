@@ -13,6 +13,7 @@ import (
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
+	packetprovider "github.com/packethost/cluster-api-provider-packet/pkg/apis/packetprovider/v1alpha1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
@@ -30,6 +31,7 @@ import (
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	packetconfig "github.com/openshift/installer/pkg/asset/installconfig/packet"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
@@ -488,11 +490,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case packet.Name:
+		config, err := packetconfig.NewConfig()
+		if err != nil {
+			return err
+		}
 		/*
-			config, err := packetconfig.NewConfig()
-			if err != nil {
-				return err
-			}
 			con, err := packetconfig.NewConnection()
 			if err != nil {
 				return err
@@ -500,14 +502,18 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		*/
 		// TODO(displague) Packet networking
 
-		/*
-			masters, err := mastersAsset.Machines()
-			if err != nil {
-				return err
-			}
-		*/
+		masters, err := mastersAsset.Machines()
+		if err != nil {
+			return err
+		}
 
-		data, err := packettfvars.TFVars(packettfvars.TFVarsSources{})
+		data, err := packettfvars.TFVars(packettfvars.TFVarsSources{
+			ControlPlaneConfigs: []*packetprovider.PacketMachineProviderSpec{
+				masters[0].Spec.ProviderSpec.Value.Object.(*packetprovider.PacketMachineProviderSpec),
+			},
+			APIURL: config.APIURL,
+			APIKey: config.APIKey,
+		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}

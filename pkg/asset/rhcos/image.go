@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/packet"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -96,6 +97,8 @@ func osImage(config *types.InstallConfig) (string, error) {
 		}
 		osimage, err = rhcos.OpenStack(ctx, arch)
 	case ovirt.Name:
+		osimage, err = rhcos.OpenStack(ctx, arch)
+	case packet.Name:
 		osimage, err = rhcos.OpenStack(ctx, arch)
 	case azure.Name:
 		osimage, err = rhcos.VHD(ctx, arch)

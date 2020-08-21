@@ -54,6 +54,7 @@ The following `install-config.yaml` properties are available:
     * `azure` (optional object): [Azure-specific properties](azure/customization.md#cluster-scoped-properties).
     * `openstack` (optional object): [OpenStack-specific properties](openstack/customization.md#cluster-scoped-properties).
     * `ovirt` (optional object): [oVirt-specific properties](ovirt/customization.md#cluster-scoped-properties).
+    * `packet` (optional object): [Packet-specific properties](packet/customization.md#cluster-scoped-properties).
     * `vsphere` (optional object): [vSphere-specific properties](vsphere/customization.md#cluster-scoped-properties).
 * `proxy` (optional object): The proxy settings for the cluster.
     If unset, the cluster will not be configured to use a proxy.
@@ -83,6 +84,7 @@ The following machine-pool properties are available:
     * `gcp` (optional object): [GCP-specific properties](gcp/customization.md#machine-pools).
     * `openstack` (optional object): [OpenStack-specific properties](openstack/customization.md#machine-pools).
     * `ovirt` (optional object): [oVirt-specific properties](ovirt/customization.md#machine-pools).
+    * `packet` (optional object): [Packet-specific properties](packet/customization.md#machine-pools).
     * `vsphere` (optional object): [vSphere-specific properties](vsphere/customization.md#machine-pools).
 * `replicas` (optional integer): The machine count for the machine pool.
 
