@@ -72,10 +72,6 @@ func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, 
 		cfg.MasterDiskSize = masterConfig.Volume.VolumeSize.String()
 	}
 
-	if architecture == types.ArchitecturePPC64LE {
-		cfg.BootstrapMemory = 5120
-	}
-
 	return json.MarshalIndent(cfg, "", "  ")
 }
 
