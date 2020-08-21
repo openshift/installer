@@ -102,21 +102,21 @@ This repository contains [Ansible playbooks][ansible-upi] to deploy OpenShift on
 They can be downloaded from Github with this script:
 
 ```sh
-xargs -n 1 curl -O <<< '
-        https://raw.githubusercontent.com/openshift/installer/release-4.6/upi/openstack/bootstrap.yaml
-        https://raw.githubusercontent.com/openshift/installer/release-4.6/upi/openstack/common.yaml
-        https://raw.githubusercontent.com/openshift/installer/release-4.6/upi/openstack/compute-nodes.yaml
-        https://raw.githubusercontent.com/openshift/installer/release-4.6/upi/openstack/control-plane.yaml
-        https://raw.githubusercontent.com/openshift/installer/release-4.6/upi/openstack/down-bootstrap.yaml
-        https://raw.githubusercontent.com/openshift/installer/release-4.6/upi/openstack/down-compute-nodes.yaml
-        https://raw.githubusercontent.com/openshift/installer/release-4.6/upi/openstack/down-control-plane.yaml
-        https://raw.githubusercontent.com/openshift/installer/release-4.6/upi/openstack/down-load-balancers.yaml
-        https://raw.githubusercontent.com/openshift/installer/release-4.6/upi/openstack/down-network.yaml
-        https://raw.githubusercontent.com/openshift/installer/release-4.6/upi/openstack/down-security-groups.yaml
-        https://raw.githubusercontent.com/openshift/installer/release-4.6/upi/openstack/down-containers.yaml
-        https://raw.githubusercontent.com/openshift/installer/release-4.6/upi/openstack/inventory.yaml
-        https://raw.githubusercontent.com/openshift/installer/release-4.6/upi/openstack/network.yaml
-        https://raw.githubusercontent.com/openshift/installer/release-4.6/upi/openstack/security-groups.yaml'
+RELEASE="release-4.6"; xargs -n 1 curl -O <<< "
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/bootstrap.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/common.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/compute-nodes.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/control-plane.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-bootstrap.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-compute-nodes.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-control-plane.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-load-balancers.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-network.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-security-groups.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-containers.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/inventory.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/network.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/security-groups.yaml"
 ```
 
 For installing a different version, change the branch (`release-4.6`)
