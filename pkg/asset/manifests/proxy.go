@@ -67,11 +67,11 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 			HTTPSProxy: installConfig.Config.Proxy.HTTPSProxy,
 			NoProxy:    installConfig.Config.Proxy.NoProxy,
 		}
+	}
 
-		if installConfig.Config.AdditionalTrustBundle != "" {
-			p.Config.Spec.TrustedCA = configv1.ConfigMapNameReference{
-				Name: additionalTrustBundleConfigMapName,
-			}
+	if installConfig.Config.AdditionalTrustBundle != "" {
+		p.Config.Spec.TrustedCA = configv1.ConfigMapNameReference{
+			Name: additionalTrustBundleConfigMapName,
 		}
 	}
 
