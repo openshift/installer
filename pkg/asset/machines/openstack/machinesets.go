@@ -46,10 +46,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		}
 
 		// Set unique name for the machineset
-		name := clusterID + "-" + pool.Name
-		if az != "" {
-			name += "-" + az
-		}
+		name := fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx)
 
 		mset := &clusterapi.MachineSet{
 			TypeMeta: metav1.TypeMeta{
