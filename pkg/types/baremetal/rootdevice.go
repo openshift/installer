@@ -5,6 +5,8 @@ package baremetal
 
 import (
 	"fmt"
+
+	"github.com/metal3-io/baremetal-operator/pkg/apis/metal3/v1alpha1"
 )
 
 // RootDeviceHints holds the hints for specifying the storage location
@@ -95,4 +97,24 @@ func (source *RootDeviceHints) MakeHintMap() map[string]string {
 	}
 
 	return hints
+}
+
+// MakeCRDHints returns the hints in the format needed to pass to
+// create a BareMetalHost resource.
+func (source *RootDeviceHints) MakeCRDHints() *v1alpha1.RootDeviceHints {
+	if source == nil {
+		return nil
+	}
+	return &v1alpha1.RootDeviceHints{
+		DeviceName:         source.DeviceName,
+		HCTL:               source.HCTL,
+		Model:              source.Model,
+		Vendor:             source.Vendor,
+		SerialNumber:       source.SerialNumber,
+		MinSizeGigabytes:   source.MinSizeGigabytes,
+		WWN:                source.WWN,
+		WWNWithExtension:   source.WWNWithExtension,
+		WWNVendorExtension: source.WWNVendorExtension,
+		Rotational:         source.Rotational,
+	}
 }
