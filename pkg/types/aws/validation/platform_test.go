@@ -128,14 +128,14 @@ func TestValidatePlatform(t *testing.T) {
 			expected: `^\Qtest-path.userTags[Name]: Invalid value: "test-cluster": Name key is not allowed for user defined tags\E$`,
 		},
 		{
-			name: "invalid userTags, key with kubernetes.io/clustername/",
+			name: "invalid userTags, key with kubernetes.io/cluster/",
 			platform: &aws.Platform{
 				Region: "us-east-1",
 				UserTags: map[string]string{
-					"kubernetes.io/clustername/test-cluster": "shared",
+					"kubernetes.io/cluster/test-cluster": "shared",
 				},
 			},
-			expected: `^\Qtest-path.userTags[kubernetes.io/clustername/test-cluster]: Invalid value: "shared": Keys with prefix 'kubernetes.io/clustername/' are not allowed for user defined tags\E$`,
+			expected: `^\Qtest-path.userTags[kubernetes.io/cluster/test-cluster]: Invalid value: "shared": Keys with prefix 'kubernetes.io/cluster/' are not allowed for user defined tags\E$`,
 		},
 		{
 			name: "valid userTags",
