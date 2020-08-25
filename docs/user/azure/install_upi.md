@@ -344,7 +344,7 @@ Create the deployment using the `az` client:
 
 ```sh
 export BOOTSTRAP_URL=`az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c "files" -n "bootstrap.ign" -o tsv`
-export BOOTSTRAP_IGNITION=`jq -rcnM --arg v "3.1.0" --arg url $BOOTSTRAP_URL '{ignition:{version:$v,config:{replace:{source:$url}}}}' | base64 -w0`
+export BOOTSTRAP_IGNITION=`jq -rcnM --arg v "3.1.0" --arg url $BOOTSTRAP_URL '{ignition:{version:$v,config:{replace:{source:$url}}}}' | base64 | tr -d '\n'`
 
 az group deployment create -g $RESOURCE_GROUP \
   --template-file "04_bootstrap.json" \
@@ -360,7 +360,7 @@ Copy the [`05_masters.json`](../../../upi/azure/05_masters.json) ARM template lo
 Create the deployment using the `az` client:
 
 ```sh
-export MASTER_IGNITION=`cat master.ign | base64`
+export MASTER_IGNITION=`cat master.ign | base64 | tr -d '\n'`
 
 az group deployment create -g $RESOURCE_GROUP \
   --template-file "05_masters.json" \
@@ -425,7 +425,7 @@ Copy the [`06_workers.json`](../../../upi/azure/06_workers.json) ARM template lo
 Create the deployment using the `az` client:
 
 ```sh
-export WORKER_IGNITION=`cat worker.ign | base64`
+export WORKER_IGNITION=`cat worker.ign | base64 | tr -d '\n'`
 
 az group deployment create -g $RESOURCE_GROUP \
   --template-file "06_workers.json" \
