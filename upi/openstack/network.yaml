@@ -11,15 +11,15 @@
   gather_facts: no
 
   tasks:
-  - name: 'Create the cluster network'
+  - name: 'Create the primary cluster network'
     os_network:
       name: "{{ os_network }}"
 
-  - name: 'Set the cluster network tag'
+  - name: 'Set tags on the  primary cluster network'
     command:
-      cmd: "openstack network set --tag {{ cluster_id_tag }} {{ os_network }}"
+      cmd: "openstack network set --tag {{ primary_cluster_network_tag }} --tag {{ cluster_id_tag }} {{ os_network }}"
 
-  - name: 'Create a subnet'
+  - name: 'Create the primary cluster subnet'
     os_subnet:
       name: "{{ os_subnet }}"
       network_name: "{{ os_network }}"
@@ -27,7 +27,7 @@
       allocation_pool_start: "{{ os_subnet_range | next_nth_usable(10) }}"
       allocation_pool_end: "{{ os_subnet_range | ipaddr('last_usable') }}"
 
-  - name: 'Set the cluster subnet tag'
+  - name: 'Set tags on  primary cluster subnet'
     command:
       cmd: "openstack subnet set --tag {{ cluster_id_tag }} {{ os_subnet }}"
 

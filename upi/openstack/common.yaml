@@ -8,6 +8,7 @@
   - name: 'Compute resource names'
     set_fact:
       cluster_id_tag: "openshiftClusterID={{ infraID }}"
+      primary_cluster_network_tag: "{{ infraID }}-primaryClusterNetwork"
       os_infra_id: "{{ infraID }}"
       os_network: "{{ infraID }}-network"
       os_subnet: "{{ infraID }}-nodes"
