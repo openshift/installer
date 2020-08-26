@@ -14,6 +14,7 @@
   - name: 'Create the cluster network'
     os_network:
       name: "{{ os_network }}"
+      provider_network_type: "{{ os_network_type }}"
 
   - name: 'Set the cluster network tag'
     command:

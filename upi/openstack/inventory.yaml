@@ -9,6 +9,7 @@ all:
       os_flavor_master: 'm1.xlarge'
       os_flavor_worker: 'm1.large'
       os_image_rhcos: 'rhcos'
+      os_network_type: "vlan"
       os_external_network: 'external'
       # OpenShift API floating IP address
       os_api_fip: '203.0.113.23'
