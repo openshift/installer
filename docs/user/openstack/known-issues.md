@@ -39,6 +39,22 @@ If you are having this problem in the IPI installer, you will need to set the [`
 
 Alternatively, for UPI, you will need to [set the subnet DNS resolvers](./install_upi.md#subnet-dns-optional).
 
+## Deleting machine when instance stuck in provisioning state
+
+The machine controller can get stuck in a delete loop when it tries to delete a machine that is stuck in the provisioning state in OpenStack. This is a bug with OpenStack
+because despite the instance existing, it returns a `Not Found` error when the controller attempts to delete it. If you have determined that the proper course of action is to delete the machine, you will first have to manually remove any [finalizers](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/#finalizers) from that machine's object. This can be done with the `oc edit` tool. Machines can be found and edited like this:
+
+```sh
+oc get machine -n openshift-machine-api
+oc edit machine -n openshift-machine-api <name>
+```
+
+Once the finalizers are removed, you can delete it.
+
+```sh
+oc delete machine -n openshift-machine-api <machine>
+```
+
 # Known Issues specific to User-Provisioned Installations
 
 ## Stale resources
