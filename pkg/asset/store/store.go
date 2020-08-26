@@ -1,11 +1,16 @@
 package store
 
 import (
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
+	"github.com/openshift/installer/pkg/asset/tls"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -232,6 +237,23 @@ func (s *storeImpl) fetch(a asset.Asset, indent string) error {
 	return nil
 }
 
+// checkExpiredSigner checks the KubeletCSRSignerCertKey to see if it has expired
+func checkExpiredSigner(kubeletCSRSigner *tls.KubeletCSRSignerCertKey) {
+	block, _ := pem.Decode(kubeletCSRSigner.CertRaw)
+	if block != nil {
+		cert, err := x509.ParseCertificate(block.Bytes)
+		if err == nil {
+			if time.Now().UTC().After(cert.NotAfter) {
+				logrus.Warnf("Bootstrap Ignition-Config expired at %s.  Installation attempts with the created Ignition-Configs will possibly fail.", cert.NotAfter.Format(time.RFC3339))
+			}
+		} else {
+			logrus.Debugf("Unable to parse certificate from asset. %s", err.Error())
+		}
+	} else {
+		logrus.Debugf("Unable to decode PEM from asset.")
+	}
+}
+
 // load loads the asset and all of its ancestors from on-disk and the state file.
 func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 	logrus.Debugf("%sLoading %s...", indent, a.Name())
@@ -282,6 +304,11 @@ func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 			if err := s.loadAssetFromState(stateFileAsset); err != nil {
 				return nil, errors.Wrapf(err, "failed to load asset %q from state file", a.Name())
 			}
+
+			if strings.Compare(reflect.TypeOf(stateFileAsset).String(), "*tls.KubeletCSRSignerCertKey") == 0 {
+				checkExpiredSigner(stateFileAsset.(*tls.KubeletCSRSignerCertKey))
+			}
+
 		}
 
 		if foundOnDisk && foundInStateFile {
