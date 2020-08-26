@@ -123,7 +123,7 @@
       - "{{ os_sg_master }}"
       fixed_ips:
       - subnet: "{{ os_subnet }}"
-        ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
+        ip_address: "{{ os_apiVIP }}"
 
   - name: 'Set API port tag'
     command:
@@ -137,7 +137,7 @@
       - "{{ os_sg_worker }}"
       fixed_ips:
       - subnet: "{{ os_subnet }}"
-        ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
+        ip_address: "{{ os_ingressVIP }}"
 
   - name: 'Set the Ingress port tag'
     command:
