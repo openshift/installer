@@ -8,7 +8,7 @@ WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN hack/build.sh
 
-FROM registry.svc.ci.openshift.org/ocp/4.1:cli as cli
+FROM registry.svc.ci.openshift.org/ocp/4.6:cli as cli
 
 FROM registry.svc.ci.openshift.org/ocp/4.1:base
 COPY --from=cli /usr/bin/oc /bin/oc
