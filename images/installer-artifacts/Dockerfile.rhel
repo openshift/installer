@@ -9,3 +9,5 @@ RUN go generate ./data && \
 
 FROM registry.svc.ci.openshift.org/ocp/4.1:installer
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/mac/openshift-install
+# Temporary (ideally 4.6 only) place for https://github.com/openshift/enhancements/pull/201#issuecomment-665183467
+COPY --from=builder /go/src/github.com/openshift/installer/data/data/rhcos*.json /bootimage/

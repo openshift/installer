@@ -9,6 +9,8 @@ RUN hack/build.sh
 
 FROM registry.svc.ci.openshift.org/origin/4.1:base
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
+# Temporary (ideally 4.6 only) place for https://github.com/openshift/enhancements/pull/201#issuecomment-665183467
+COPY --from=builder /go/src/github.com/openshift/installer/data/data/rhcos*.json /bootimage/
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
 ENV PATH /bin
