@@ -68,7 +68,6 @@ then
 	touch cvo-bootstrap.done
 fi
 
-# TODO: host-etcd endpoint rendered by cluster-etcd-operator
 ETCD_ENDPOINTS=https://localhost:2379
 if [ ! -f etcd-bootstrap.done ]
 then
@@ -88,9 +87,6 @@ then
 		--asset-output-dir=/assets/etcd-bootstrap \
 		--config-output-file=/assets/etcd-bootstrap/config \
 		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml
-
-	# pass an IP in the sample range to pass validation, but be ignored.
-	sed -i "s/__BOOTSTRAP_IP__/192.0.2.200/" /opt/openshift/manifests/etcd-host-service-endpoints.yaml
 
 	cp etcd-bootstrap/manifests/* manifests/
 	cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
