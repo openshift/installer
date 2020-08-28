@@ -16,7 +16,7 @@ COPY --from=builder /go/src/github.com/openshift/installer/images/openstack/rdo-
 
 # Install Dependendencies for tests
 # https://github.com/openshift/origin/blob/6114cbc507bf18890f009f16ee424a62007bc390/images/tests/Dockerfile.rhel
-RUN yum install --setopt=tsflags=nodocs -y git gzip util-linux && \
+RUN yum install --setopt=tsflags=nodocs -y git gzip util-linux glibc-locale-source && \
     yum clean all && rm -rf /var/cache/yum/* && \
     localedef -c -f UTF-8 -i en_US en_US.UTF-8 && \
     git config --system user.name test && \
