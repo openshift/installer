@@ -113,7 +113,6 @@ The installer uses the [cluster-version-operator] to create all the components o
     spec:
       channel: stable-4.1
       clusterID: 5ec312f9-f729-429d-a454-61d4906896ca
-      upstream: https://api.openshift.com/api/upgrades_info/v1/graph
     status:
       availableUpdates: null
       conditions:
