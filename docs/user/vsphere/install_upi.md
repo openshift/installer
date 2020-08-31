@@ -279,72 +279,27 @@ The Ignition config created by the OpenShift Installer cannot be used directly b
   },
 }
 ```
-### Hostname
 
-The hostname of each control plane and worker machine must be resolvable from all nodes within the cluster.
+### Static hostname and IP Addresses via guestinfo
 
-Preferrably, the hostname will be set via DHCP. If you need to manually set a hostname, you can create a hostname file by adding an entry in the `.storage.files` list in an Ignition config.
+Preferably, the hostname and IP address for each machine will be set via DHCP; please see the vSphere documentation to enable that.  However, some organizations require static IP addressing.
 
-For example, the following Ignition config will create a hostname file that sets the hostname of a machine to `control-plane-0.
+As of OpenShift 4.6 for vSphere environments, the CoreOS "afterburn" component will lookup for the well-known key `guestinfo.afterburn.initrd.network-kargs` and use its value instead of the default.
+The property must be set on the VM before the first boot; changing the property after the instance is booted the first time will have no effect.
 
-```json
-{
-  "ignition": {
-    "version": "3.1.0"
-  },
-  "storage": {
-    "files": [
-      {
-        "path": "/etc/hostname",
-        "contents": {
-          "source": "data:text/plain;charset=utf-8,control-plane-0",
-        },
-        "mode": 420
-      }
-    ]
-  },
-}
-```
-
-### Static IP Addresses
-
-Preferrably, the IP address for each machine will be set via DHCP. If you need to use a static IP address, you can be set one for a machine by creating an ifcfg file. You can create an ifcfg file by adding an entry in the `.storage.files` list in an Ignition config.
-
-For example, the following Ignition config will create an ifcfg file that sets the IP address of the ens192 device to 10.0.0.2.
-
-```json
-{
-  "ignition": {
-    "version": "3.1.0"
-  },
-  "storage": {
-    "files": [
-      {
-        "path": "/etc/sysconfig/network-scripts/ifcfg-ens192",
-        "contents": {
-          "source": "data:text/plain;charset=utf-8;base64,VFlQRT1FdGhlcm5ldApCT09UUFJPVE89bm9uZQpOQU1FPWVuczE5MgpERVZJQ0U9ZW5zMTkyCk9OQk9PVD15ZXMKSVBBRERSPTEwLjAuMC4yClBSRUZJWD0yNApHQVRFV0FZPTEwLjAuMC4xCkRPTUFJTj1teWRvbWFpbi5jb20KRE5TMT04LjguOC44",
-        },
-        "mode": 420
-      }
-    ]
-  },
-}
-```
-
-The ifcfg file will have the following contents.
+The example below shows a `node1` VM booting with a static hostname and IPv4 routing on the `ens192` interface.
 
 ```
-TYPE=Ethernet
-BOOTPROTO=none
-NAME=ens192
-DEVICE=ens192
-ONBOOT=yes
-IPADDR=10.0.0.2
-PREFIX=24
-GATEWAY=10.0.0.1
-DOMAIN=mydomain.com
-DNS1=8.8.8.8
+VM_NAME="node1"
+
+IPCFG="ip=10.20.30.42::10.20.30.254:255.255.255.0:mynode01:ens192:off"
+
+govc vm.change -vm "${VM_NAME}" -e "guestinfo.afterburn.initrd.network-kargs=${IPCFG}"
+
+govc vm.power -on "${VM_NAME}"
 ```
+
+See the [the upstream documentation](https://github.com/coreos/afterburn/blob/master/docs/usage/initrd-network-cmdline.md) for more information.
 
 ## Watching your installation
 
