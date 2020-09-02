@@ -28,6 +28,7 @@ INGRESS_OPERATOR_IMAGE=$(image_for cluster-ingress-operator)
 CLOUD_CREDENTIAL_OPERATOR_IMAGE=$(image_for cloud-credential-operator)
 
 OPENSHIFT_HYPERKUBE_IMAGE=$(image_for hyperkube)
+OPENSHIFT_CLUSTER_POLICY_IMAGE=$(image_for cluster-policy-controller)
 
 CLUSTER_BOOTSTRAP_IMAGE=$(image_for cluster-bootstrap)
 
@@ -159,6 +160,7 @@ then
 		--volume "$PWD:/assets:z" \
 		"${KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-controller-manager-operator render \
+		--cluster-policy-controller-image="${OPENSHIFT_CLUSTER_POLICY_IMAGE}" \
 		--manifest-image="${OPENSHIFT_HYPERKUBE_IMAGE}" \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
