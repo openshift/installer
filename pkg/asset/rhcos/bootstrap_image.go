@@ -42,6 +42,7 @@ func (i *BootstrapImage) Generate(p asset.Parents) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
 	switch config.Platform.Name() {
+	// TODO(displague) Packet?
 	case baremetal.Name:
 		// Check for RHCOS image URL override
 		if boi := config.Platform.BareMetal.BootstrapOSImage; boi != "" {

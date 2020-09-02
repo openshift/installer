@@ -42,6 +42,8 @@ This document describes the process for adding a new platform to OpenShift in st
 
 Expected PRs:
 
+* <github.com/openshift/enhancements>: Before starting any work, create an enhancement request. The OpenShift team will surface reference architectures and dependencies, viable paths, best practices, and expected challenges such as potential blockers and open issues. Follow the enhancement template at <https://github.com/openshift/enhancements/blob/master/guidelines/enhancement_template.md>.
+
 * <github.com/openshift/installer>: adding your Platform
   TODO(displague) expected limitations
 

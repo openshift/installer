@@ -37,6 +37,7 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 			ignitionHost = net.JoinHostPort(installConfig.VSphere.APIVIP, "22623")
 		}
 	case packettypes.Name:
+		// TODO(displague) Do I have to set platform = "packet" around here?
 		if installConfig.Packet.APIVIP != "" {
 			ignitionHost = net.JoinHostPort(installConfig.Packet.APIVIP, "22623")
 

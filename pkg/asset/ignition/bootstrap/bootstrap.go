@@ -331,6 +331,7 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 		"systemd-journal-gatewayd.socket": {},
 		"approve-csr.service":             {},
 		// baremetal & openstack platform services
+		// TODO(displague) packet?
 		"keepalived.service":        {},
 		"coredns.service":           {},
 		"ironic.service":            {},

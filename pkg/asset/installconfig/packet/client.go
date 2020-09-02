@@ -11,7 +11,7 @@ const (
 	PACKET_CONSUMER_TOKEN = "redhat openshift ipi"
 )
 
-//go:generate mockgen -source=./client.go -destination=mock/packet_generated.go -package=mock
+//go:generate mockgen -source=./client.go -destination=mock/packetclient_generated.go -package=mock
 
 // API represents the calls made to the API.
 type API interface {

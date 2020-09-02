@@ -3,23 +3,13 @@ package packet
 // MachinePool stores the configuration for a machine pool installed
 // on packet.
 type MachinePool struct {
-}
+	// The Packet Plan defines the CPU, memory, and networking specs of the
+	// provisioned node
+	Plan string
 
-// Disk defines a BM disk
-type Disk struct {
-	// SizeGB size of the bootable disk in GiB.
-	SizeGB int64 `json:"sizeGB"`
-}
-
-// CPU defines the BM cpu, made of (Sockets * Cores).
-type CPU struct {
-	// Sockets is the number of sockets for a BM.
-	// Total CPUs is (Sockets * Cores)
-	Sockets int32 `json:"sockets"`
-
-	// Cores is the number of cores per socket.
-	// Total CPUs is (Sockets * Cores)
-	Cores int32 `json:"cores"`
+	// TODO(displague) Hardware reservation id?
+	// TODO(displague) virtual network?
+	// TODO(displague) is userdata needed at this level?
 }
 
 // Set sets the values from `required` to `p`.
