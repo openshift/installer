@@ -1626,6 +1626,35 @@ func deleteIAMRole(ctx context.Context, client *iam.IAM, roleARN arn.ARN, logger
 		return errors.Wrap(err, "listing IAM role policies")
 	}
 
+	err = client.ListAttachedRolePoliciesPagesWithContext(
+		ctx,
+		&iam.ListAttachedRolePoliciesInput{RoleName: &name},
+		func(results *iam.ListAttachedRolePoliciesOutput, lastPage bool) bool {
+			for _, policy := range results.AttachedPolicies {
+				_, err := client.DetachRolePolicyWithContext(ctx, &iam.DetachRolePolicyInput{
+					RoleName:  &name,
+					PolicyArn: policy.PolicyArn,
+				})
+				if err != nil {
+					if lastError != nil {
+						logger.Debug(lastError)
+					}
+					lastError = errors.Wrapf(err, "detaching IAM role policy %s", *policy.PolicyName)
+				}
+				logger.WithField("policy", *policy.PolicyName).Info("Detached")
+			}
+
+			return !lastPage
+		},
+	)
+
+	if lastError != nil {
+		return lastError
+	}
+	if err != nil {
+		return errors.Wrap(err, "listing attached IAM role policies")
+	}
+
 	err = client.ListInstanceProfilesForRolePagesWithContext(
 		ctx,
 		&iam.ListInstanceProfilesForRoleInput{RoleName: &name},
