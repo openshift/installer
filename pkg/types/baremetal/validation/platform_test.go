@@ -42,45 +42,10 @@ func TestValidatePlatform(t *testing.T) {
 				BootstrapProvisioningIP("fd2e:6f44:5dd8:b856::2").build(),
 		},
 		{
-			name: "invalid_apivip",
-			platform: platform().
-				APIVIP("192.168.222.2").build(),
-			expected: "Invalid value: \"192.168.222.2\": IP expected to be in one of the machine networks: 192.168.111.0/24",
-		},
-		{
-			name: "invalid_ingressvip",
-			platform: platform().
-				IngressVIP("192.168.222.4").build(),
-			expected: "Invalid value: \"192.168.222.4\": IP expected to be in one of the machine networks: 192.168.111.0/24",
-		},
-		{
 			name: "invalid_hosts",
 			platform: platform().
 				Hosts().build(),
 			expected: "bare metal hosts are missing",
-		},
-		{
-			name: "toofew_hosts",
-			config: installConfig().
-				BareMetalPlatform(
-					platform().Hosts(
-						host1())).
-				ControlPlane(
-					machinePool().Replicas(3)).
-				Compute(
-					machinePool().Replicas(2),
-					machinePool().Replicas(3)).build(),
-			expected: "baremetal.Hosts: Required value: not enough hosts found \\(1\\) to support all the configured ControlPlane and Compute replicas \\(8\\)",
-		},
-		{
-			name: "enough_hosts",
-			config: installConfig().
-				BareMetalPlatform(
-					platform().Hosts(
-						host1(),
-						host2())).
-				ControlPlane(
-					machinePool().Replicas(2)).build(),
 		},
 		{
 			name: "missing_name",
@@ -363,6 +328,38 @@ func TestValidateProvisioning(t *testing.T) {
 				LibvirtURI("bad").build(),
 			expected: "invalid URI \"bad\"",
 		},
+		{
+			name: "invalid_apivip",
+			platform: platform().
+				APIVIP("192.168.222.2").build(),
+			expected: "Invalid value: \"192.168.222.2\": IP expected to be in one of the machine networks: 192.168.111.0/24",
+		},
+		{
+			name: "invalid_ingressvip",
+			platform: platform().
+				IngressVIP("192.168.222.4").build(),
+			expected: "Invalid value: \"192.168.222.4\": IP expected to be in one of the machine networks: 192.168.111.0/24",
+		},
+		{
+			name: "toofew_hosts",
+			config: installConfig().
+				ControlPlane(
+					machinePool().Replicas(3)).
+				Compute(
+					machinePool().Replicas(2),
+					machinePool().Replicas(3)).build(),
+			platform: platform().
+				Hosts(host1()).build(),
+			expected: "baremetal.Hosts: Required value: not enough hosts found \\(1\\) to support all the configured ControlPlane and Compute replicas \\(8\\)",
+		},
+		{
+			name: "enough_hosts",
+			config: installConfig().
+				ControlPlane(
+					machinePool().Replicas(2)).build(),
+			platform: platform().
+				Hosts(host1(), host2()).build(),
+		},
 
 		// Disabled provisioning network
 		{
@@ -403,7 +400,7 @@ func TestValidateProvisioning(t *testing.T) {
 
 			defaults.SetPlatformDefaults(tc.config.BareMetal, tc.config)
 
-			err := ValidateProvisioning(tc.config.BareMetal, network(), field.NewPath("baremetal")).ToAggregate()
+			err := ValidateProvisioning(tc.config.BareMetal, network(), field.NewPath("baremetal"), tc.config).ToAggregate()
 
 			if tc.expected == "" {
 				assert.NoError(t, err)

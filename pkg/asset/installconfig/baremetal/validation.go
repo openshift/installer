@@ -16,7 +16,7 @@ func ValidateProvisioning(ic *types.InstallConfig) error {
 		return errors.New(field.Required(field.NewPath("platform", "baremetal"), "Baremetal validation requires a baremetal platform configuration").Error())
 	}
 
-	allErrs = append(allErrs, validation.ValidateProvisioning(ic.Platform.BareMetal, ic.Networking, field.NewPath("platform").Child("baremetal"))...)
+	allErrs = append(allErrs, validation.ValidateProvisioning(ic.Platform.BareMetal, ic.Networking, field.NewPath("platform").Child("baremetal"), ic)...)
 
 	return allErrs.ToAggregate()
 }

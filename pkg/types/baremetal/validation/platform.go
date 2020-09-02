@@ -319,20 +319,8 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
 	}
 
-	if err := validateIPinMachineCIDR(p.APIVIP, n); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
-	}
-
 	if err := validate.IP(p.IngressVIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
-	}
-
-	if err := validateIPinMachineCIDR(p.IngressVIP, n); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
-	}
-
-	if err := validateHostsCount(p.Hosts, c); err != nil {
-		allErrs = append(allErrs, field.Required(fldPath.Child("Hosts"), err.Error()))
 	}
 
 	allErrs = append(allErrs, validateHostsWithoutBMC(p.Hosts, fldPath)...)
@@ -343,7 +331,7 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 }
 
 // ValidateProvisioning checks that provisioning network requirements specified is valid.
-func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *field.Path) field.ErrorList {
+func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	switch p.ProvisioningNetwork {
@@ -389,8 +377,21 @@ func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *f
 		}
 	}
 
+	// Ensure the VIPs are in machine CIDR.
+	if err := validateIPinMachineCIDR(p.APIVIP, n); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
+	}
+
+	if err := validateIPinMachineCIDR(p.IngressVIP, n); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
+	}
+
 	if err := validate.URI(p.LibvirtURI); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("libvirtURI"), p.LibvirtURI, err.Error()))
+	}
+
+	if err := validateHostsCount(p.Hosts, c); err != nil {
+		allErrs = append(allErrs, field.Required(fldPath.Child("Hosts"), err.Error()))
 	}
 
 	allErrs = append(allErrs, validateOSImages(p, fldPath)...)
