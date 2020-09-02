@@ -10,7 +10,7 @@ resource "ovirt_vm" "master" {
   // if instance type is declared then memory is redundant. Since terraform
   // doesn't allow to condionally omit it, it must be passed.
   // The number passed is multiplied by 4 and becomes the maximum memory the VM can have.
-  memory = var.ovirt_master_instance_type_id != "" ? 16348 : var.ovirt_master_memory
+  memory = var.ovirt_master_instance_type_id != "" ? 16384 : var.ovirt_master_memory
 
   initialization {
     host_name     = "${var.cluster_id}-master-${count.index}"

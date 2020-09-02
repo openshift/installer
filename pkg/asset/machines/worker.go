@@ -122,7 +122,7 @@ func defaultOvirtMachinePoolPlatform() ovirttypes.MachinePool {
 			Cores:   4,
 			Sockets: 1,
 		},
-		MemoryMB: 16348,
+		MemoryMB: 16384,
 		OSDisk: &ovirttypes.Disk{
 			SizeGB: 120,
 		},
