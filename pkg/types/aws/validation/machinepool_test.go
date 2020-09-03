@@ -79,3 +79,37 @@ func TestValidateMachinePool(t *testing.T) {
 		})
 	}
 }
+
+func Test_validateAMIID(t *testing.T) {
+	cases := []struct {
+		platform *aws.Platform
+		pool     *aws.MachinePool
+
+		err string
+	}{{
+		platform: &aws.Platform{Region: "us-east-1"},
+	}, {
+		platform: &aws.Platform{Region: "us-gov-east-1"},
+		err:      `^test-path: Required value: AMI ID must be provided for regions .*$`,
+	}, {
+		platform: &aws.Platform{Region: "cn-north-1"},
+		err:      `^test-path: Required value: AMI ID must be provided for regions .*$`,
+	}, {
+		platform: &aws.Platform{Region: "us-gov-east-1", AMIID: "ami"},
+	}, {
+		platform: &aws.Platform{Region: "us-gov-east-1", DefaultMachinePlatform: &aws.MachinePool{AMIID: "ami"}},
+	}, {
+		platform: &aws.Platform{Region: "us-gov-east-1"},
+		pool:     &aws.MachinePool{AMIID: "ami"},
+	}}
+	for _, test := range cases {
+		t.Run("", func(t *testing.T) {
+			err := ValidateAMIID(test.platform, test.pool, field.NewPath("test-path")).ToAggregate()
+			if test.err == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, test.err, err)
+			}
+		})
+	}
+}
