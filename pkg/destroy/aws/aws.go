@@ -139,7 +139,12 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) error {
 			tagClients = append(tagClients, tagClient)
 			tagClientNames[tagClient] = endpoints.CnNorthwest1RegionID
 		}
-
+	case endpoints.UsGovEast1RegionID, endpoints.UsGovWest1RegionID:
+		if o.Region != endpoints.UsGovWest1RegionID {
+			tagClient := resourcegroupstaggingapi.New(awsSession, aws.NewConfig().WithRegion(endpoints.UsGovWest1RegionID))
+			tagClients = append(tagClients, tagClient)
+			tagClientNames[tagClient] = endpoints.UsGovWest1RegionID
+		}
 	default:
 		if o.Region != endpoints.UsEast1RegionID {
 			tagClient := resourcegroupstaggingapi.New(awsSession, aws.NewConfig().WithRegion(endpoints.UsEast1RegionID))

@@ -46,6 +46,9 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 
 **NOTE:** The bootstrap node follows the `type` and `rootVolume` parameters from the `controlPlane` machine pool.
 
+**NOTE:** Note when deploying with `Kuryr` there is an Octavia API loadbalancer VM that will not fulfill the Availability Zones restrictions due to Octavia lack of support for it. In addition, if Octavia only has the amphora provider instead of also the OVN-Octavia provider, all the OpenShift services will be backed up by Octavia Load Balancer VMs which will not fulfill the Availability Zone restrictions either.
+
+
 ## Examples
 
 Some example `install-config.yaml` are shown below.
@@ -144,7 +147,7 @@ platform:
 
 ## Custom Subnets
 
-Before running the installer with a custom `machinesSubnet`, there are a few things you should check. First, make sure that you have a network and subnet available. Note that the installer will create ports on this network, and some ports will be given a fixed IP addresses in the subnet's CIDR. Make sure that the credentials that you give the installer are authorized to do this! The installer will also apply a tag to the subnet. Lastly, the installer will not create a router, so make sure to do this if you need a router to attach floating ip addresses to the network you want to install the nodes onto. Note that for now, this feature does not fully support provider networks. 
+Before running the installer with a custom `machinesSubnet`, there are a few things you should check. First, make sure that you have a network and subnet available. Note that the installer will create ports on this network, and some ports will be given a fixed IP addresses in the subnet's CIDR. Make sure that the credentials that you give the installer are authorized to do this! The installer will also apply a tag to the subnet. Lastly, the installer will not create a router, so make sure to do this if you need a router to attach floating ip addresses to the network you want to install the nodes onto. Note that for now, this feature does not fully support provider networks.
 
 Once that is ironed out, you can pass the ID of the subnet to the install config with the `machinesSubnet` option. This subnet will be tagged as the primary subnet for the cluster. The nodes, and VIP port will be created on this subnet. This does add some complexity to the install process that needs to be accounted for. First of all, the subnet must have DHCP enabled. Also, the CIDR of the custom subnet must match the cidr of `networks.machineNetwork`. Be aware that the API and Ingress VIPs by default will try to take the .5 and .7 of your network CIDR. To avoid other services taking the ports assigned to the api and ingress VIPs, it is recommended that users set the `apiVIP` and `ingressVIP` options in the install config to addresses that are outside of the DHCP allocation pool. Lastly, note that setting `externalDNS` while setting `machinesSubnet` is invalid usage, since the installer will not modify your subnet. If you want to add a DNS to your cluster while using a custom subnet, add it to the subnet in openstack [like this](https://docs.openstack.org/neutron/rocky/admin/config-dns-res.html).
 

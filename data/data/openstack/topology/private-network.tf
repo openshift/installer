@@ -29,13 +29,11 @@ resource "openstack_networking_subnet_v2" "nodes" {
   dns_nameservers = var.external_dns
 
   # We reserve some space at the beginning of the CIDR to use for the VIPs
-  # It would be good to make this more dynamic by calculating the number of
-  # addresses in the provided CIDR. This currently assumes at least a /18.
   # FIXME(mandre) if we let the ports pick up VIPs automatically, we don't have
   # to do any of this.
   allocation_pool {
     start = cidrhost(local.nodes_cidr_block, 10)
-    end   = cidrhost(local.nodes_cidr_block, 16000)
+    end   = cidrhost(local.nodes_cidr_block, pow(2, (32 - split("/", local.nodes_cidr_block)[1])) - 2)
   }
 }
 
@@ -118,7 +116,7 @@ resource "openstack_networking_trunk_v2" "masters" {
 // step that can't always be automated (we need to support OpenStack clusters)
 // that do not have or do not want to use Octavia.
 //
-// If an external network has not bee defined then a floating IP
+// If an external network has not been defined then a floating IP
 // will not be provided or assigned to the masters.
 //
 // If the floating IP is not provided, the installer will time out waiting for

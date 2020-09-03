@@ -6,7 +6,7 @@ type Platform struct {
 	// Region specifies the OpenStack region where the cluster will be created.
 	// Deprecated: this value is not used by the installer.
 	// +optional
-	DeprecatedRegion string `json:"region"`
+	DeprecatedRegion string `json:"region,omitempty"`
 
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on OpenStack for machine pools which do not define their own
@@ -18,6 +18,7 @@ type Platform struct {
 	Cloud string `json:"cloud"`
 
 	// ExternalNetwork is name of the external network in your OpenStack cluster.
+	// +optional
 	ExternalNetwork string `json:"externalNetwork,omitempty"`
 
 	// FlavorName is the name of the compute flavor to use for instances in this cluster.
@@ -25,10 +26,12 @@ type Platform struct {
 
 	// LbFloatingIP is the IP address of an available floating IP in your OpenStack cluster
 	// to associate with the OpenShift load balancer.
+	// +optional
 	LbFloatingIP string `json:"lbFloatingIP,omitempty"`
 
 	// IngressFloatingIP is the ID of an available floating IP in your OpenStack cluster
 	// that will be associated with the OpenShift ingress port
+	// +optional
 	IngressFloatingIP string `json:"ingressFloatingIP,omitempty"`
 
 	// ExternalDNS holds the IP addresses of dns servers that will
@@ -40,13 +43,13 @@ type Platform struct {
 	// in your OpenShift cluster.
 	// Deprecated: this value is set by the installer automatically.
 	// +optional
-	DeprecatedTrunkSupport string `json:"trunkSupport"`
+	DeprecatedTrunkSupport string `json:"trunkSupport,omitempty"`
 
 	// OctaviaSupport holds a `0` or `1` value that indicates whether your OpenStack
 	// cluster supports Octavia Loadbalancing.
 	// Deprecated: this value is set by the installer automatically.
 	// +optional
-	DeprecatedOctaviaSupport string `json:"octaviaSupport"`
+	DeprecatedOctaviaSupport string `json:"octaviaSupport,omitempty"`
 
 	// ClusterOSImage is either a URL with `http(s)` or `file` scheme to override
 	// the default OS image for cluster nodes, or an existing Glance image name.

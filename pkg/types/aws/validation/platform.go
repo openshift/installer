@@ -43,8 +43,8 @@ func validateUserTags(tags map[string]string, fldPath *field.Path) field.ErrorLi
 		if strings.EqualFold(key, "Name") {
 			allErrs = append(allErrs, field.Invalid(fldPath.Key(key), tags[key], "Name key is not allowed for user defined tags"))
 		}
-		if strings.HasPrefix(key, "kubernetes.io/clustername/") {
-			allErrs = append(allErrs, field.Invalid(fldPath.Key(key), tags[key], "Keys with prefix 'kubernetes.io/clustername/' are not allowed for user defined tags"))
+		if strings.HasPrefix(key, "kubernetes.io/cluster/") {
+			allErrs = append(allErrs, field.Invalid(fldPath.Key(key), tags[key], "Keys with prefix 'kubernetes.io/cluster/' are not allowed for user defined tags"))
 		}
 	}
 	return allErrs

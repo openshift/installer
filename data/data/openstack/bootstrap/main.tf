@@ -36,9 +36,10 @@ resource "openstack_blockstorage_volume_v3" "bootstrap_volume" {
 }
 
 resource "openstack_compute_instance_v2" "bootstrap" {
-  name      = "${var.cluster_id}-bootstrap"
-  flavor_id = data.openstack_compute_flavor_v2.bootstrap_flavor.id
-  image_id  = var.root_volume_size == null ? var.base_image_id : null
+  name              = "${var.cluster_id}-bootstrap"
+  flavor_id         = data.openstack_compute_flavor_v2.bootstrap_flavor.id
+  image_id          = var.root_volume_size == null ? var.base_image_id : null
+  availability_zone = var.zone
 
   user_data = var.bootstrap_shim_ignition
 
@@ -58,6 +59,11 @@ resource "openstack_compute_instance_v2" "bootstrap" {
   }
 
   tags = ["openshiftClusterID=${var.cluster_id}"]
+
+  metadata = {
+    Name               = "${var.cluster_id}-bootstrap"
+    openshiftClusterID = var.cluster_id
+  }
 }
 
 resource "openstack_networking_floatingip_v2" "bootstrap_fip" {

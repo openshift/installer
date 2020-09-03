@@ -99,6 +99,30 @@ RHEL 8 and may not work properly when run on RHEL 7.
 
 This repository contains [Ansible playbooks][ansible-upi] to deploy OpenShift on OpenStack.
 
+They can be downloaded from Github with this script:
+
+```sh
+RELEASE="release-4.6"; xargs -n 1 curl -O <<< "
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/bootstrap.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/common.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/compute-nodes.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/control-plane.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-bootstrap.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-compute-nodes.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-control-plane.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-load-balancers.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-network.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-security-groups.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-containers.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/inventory.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/network.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/security-groups.yaml"
+```
+
+For installing a different version, change the branch (`release-4.6`)
+accordingly (e.g. `release-4.7`). Note that `down-containers.yaml` was only
+introduced in `release-4.6`.
+
 **Requirements:**
 
 * Python
@@ -632,9 +656,11 @@ $ for index in $(seq 0 2); do
     MASTER_HOSTNAME="$INFRA_ID-master-$index\n"
     python -c "import base64, json, sys;
 ignition = json.load(sys.stdin);
-files = ignition['storage'].get('files', []);
+storage = ignition.get('storage', {});
+files = storage.get('files', []);
 files.append({'path': '/etc/hostname', 'mode': 420, 'contents': {'source': 'data:text/plain;charset=utf-8;base64,' + base64.standard_b64encode(b'$MASTER_HOSTNAME').decode().strip()}});
-ignition['storage']['files'] = files;
+storage['files'] = files;
+ignition['storage'] = storage
 json.dump(ignition, sys.stdout)" <master.ign >"$INFRA_ID-master-$index-ignition.json"
 done
 ```

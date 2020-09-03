@@ -2,7 +2,7 @@
 IFACE=$1
 STATUS=$2
 case "$STATUS" in
-    up)
+    up|dhcp4-change|dhcp6-change)
     logger -s "NM local-dns-prepender triggered by ${1} ${2}."
     DNS_IP="127.0.0.1"
     set +e
