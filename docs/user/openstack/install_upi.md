@@ -474,7 +474,8 @@ import os
 with open('bootstrap.ign', 'r') as f:
     ignition = json.load(f)
 
-files = ignition['storage'].get('files', [])
+storage = ignition.get('storage', {});
+files = storage.get('files', []);
 
 infra_id = os.environ.get('INFRA_ID', 'openshift').encode()
 hostname_b64 = base64.standard_b64encode(infra_id + b'-bootstrap\n').decode().strip()
@@ -502,7 +503,8 @@ if ca_cert_path:
         },
     })
 
-ignition['storage']['files'] = files;
+storage['files'] = files;
+ignition['storage'] = storage
 
 with open('bootstrap.ign', 'w') as f:
     json.dump(ignition, f)
