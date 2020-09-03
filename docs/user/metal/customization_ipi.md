@@ -13,7 +13,7 @@
 `provisioningBridge` | `provisioning` | The name of the bridge on the hypervisor attached to the provisioning network. |
 `provisioningNetworkCIDR` | `172.22.0.0/24` | The CIDR for the network to use for provisioning. |
 `provisioningNetwork` | `Managed` | ProvisioningNetwork is used to indicate if there is a network dedicated to provisioning traffic, and how it will be managed. Valid values are `Managed` (default), `Unmanaged`, and `Disabled`. See <link to new section describing the options in more detail> for more detail.
-`provisioningDHCPExternal` | `false` | *DEPRECATED* use provisioningNetwork: Unmanaged instead.
+`provisioningDHCPExternal` | `false` | *DEPRECATED* use `provisioningNetwork: Unmanaged` instead.
 `provisioningDHCPRange` | The tenth through the second last IP on the provisioning network. `172.22.0.10,172.22.0.254` | The IP range to use for hosts on the provisioning network. |
 `defaultMachinePlatform` | | The default configuration used for machine pools without a platform configuration. |
 `bootstrapOSImage` | *based on the release image* | A URL to override the default operating system image for the bootstrap node. The URL must contain a sha256 hash of the image. Example `https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd...` |
