@@ -88,6 +88,11 @@ then
 	cp etcd-bootstrap/manifests/* manifests/
 	cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
 
+    #lower the etcd timeout
+    sed -ie 's/1000/2500/g' /etc/kubernetes/manifests/etcd-member-pod.yaml
+    sed -ie 's/100/500/g' /etc/kubernetes/manifests/etcd-member-pod.yaml
+    sed -ie 's/7516192768/4294967296/g' /etc/kubernetes/manifests/etcd-member-pod.yaml
+
 	mkdir --parents /etc/kubernetes/static-pod-resources/etcd-member
 	cp tls/etcd-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-member/ca.crt
 	cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-serving /etc/kubernetes/static-pod-resources/etcd-member
