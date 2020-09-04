@@ -44,6 +44,11 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 	platform := &platform{
 		Platform: types.Platform{None: &none.Platform{}},
 	}
+	networking := &networking{
+		Networking: types.Networking{
+			NetworkType: "OpenShiftSDN",
+		},
+	}
 	installConfig := &InstallConfig{}
 	parents := asset.Parents{}
 	parents.Add(
@@ -52,6 +57,7 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 		clusterName,
 		pullSecret,
 		platform,
+		networking,
 	)
 	if err := installConfig.Generate(parents); err != nil {
 		t.Errorf("unexpected error generating install config: %v", err)

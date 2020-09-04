@@ -23,6 +23,9 @@ const userProvidedAssets = `{
   "*installconfig.clusterName": {
     "ClusterName": "test-cluster"
   },
+  "*installconfig.networking": {
+    "Networking": "{\"networkType\": \"OpenShiftSDN\" }"
+  },
   "*installconfig.platform": {
     "none": {}
   },

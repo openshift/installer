@@ -42,6 +42,13 @@ var (
 		baremetal.Name,
 		none.Name,
 	}
+	// NetworkPluginNames is a slice of all available network plugins
+	// supported by the installer out-of-box. This is the list of
+	// network plugins presented to the user in the interactive wizard.
+	NetworkPluginNames = []string{
+		"OVNKubernetes",
+		"OpenShiftSDN",
+	}
 )
 
 // PublishingStrategy is a strategy for how various endpoints for the cluster are exposed.

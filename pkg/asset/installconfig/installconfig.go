@@ -45,6 +45,7 @@ func (a *InstallConfig) Dependencies() []asset.Asset {
 		&clusterName{},
 		&pullSecret{},
 		&platform{},
+		&networking{},
 	}
 }
 
@@ -55,12 +56,14 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	clusterName := &clusterName{}
 	pullSecret := &pullSecret{}
 	platform := &platform{}
+	networking := &networking{}
 	parents.Get(
 		sshPublicKey,
 		baseDomain,
 		clusterName,
 		pullSecret,
 		platform,
+		networking,
 	)
 
 	a.Config = &types.InstallConfig{
@@ -73,6 +76,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		SSHKey:     sshPublicKey.Key,
 		BaseDomain: baseDomain.BaseDomain,
 		PullSecret: pullSecret.PullSecret,
+		Networking: &networking.Networking,
 	}
 
 	a.Config.AWS = platform.AWS
