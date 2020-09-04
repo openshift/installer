@@ -11,32 +11,34 @@ mandatory ignition files and to monitor the installation process itself.
 
 ## Table of Contents
 
-* [Prerequisites](#prerequisites)
-* [Ansible and oVirt roles](#ansible-and-ovirt-roles)
-* [Network Requirements](#network-requirements)
-  * [Load Balancers](#load-balancers)
-  * [DNS](#dns)
-* [RHCOS image](#rhcos-image)
-* [Getting Ansible playbooks](#getting-ansible-playbooks)
-* [Inventory explained](#inventory-explained)
-* [Assets directory](#assets-directory)
-* [Install Config](#install-config)
-  * [Set compute replicas to zero](#set-compute-replicas-to-zero)
-  * [Set machine network](#set-machine-network)
-  * [Set platform to none](#set-platform-to-none)
-* [Manifests](#manifests)
-  * [Set control-plane nodes unschedulable](#set-control-plane-nodes-unschedulable)
-* [Ignition configs](#ignition-configs)
-* [Create templates and VMs](#create-templates-and-vms)
-* [Bootstrap](#bootstrap)
-* [Master nodes](#master-nodes)
-* [Wait for Control Plane](#wait-for-control-plane)
-* [OpenShift API](#openshift-api)
-* [Retire Bootstrap](#retire-bootstrap)
-* [Worker nodes](#worker-nodes)
-    * [Approve CSRs](#approve-csrs)
-* [Wait for Installation Complete](#wait-for-installation-complete)
-* [Destroy OpenShift cluster](#destroy-openshift-cluster)
+- [Install: oVirt/RHV User-Provided Infrastructure](#install-ovirtrhv-user-provided-infrastructure)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Ansible and oVirt roles](#ansible-and-ovirt-roles)
+  - [Network Requirements](#network-requirements)
+    - [Load Balancers](#load-balancers)
+    - [DNS](#dns)
+  - [RHCOS image](#rhcos-image)
+  - [Getting Ansible playbooks](#getting-ansible-playbooks)
+  - [Inventory Explained](#inventory-explained)
+  - [Assets directory](#assets-directory)
+  - [Install config](#install-config)
+    - [Set compute replicas to zero](#set-compute-replicas-to-zero)
+    - [Set machine network](#set-machine-network)
+    - [Set platform to none](#set-platform-to-none)
+  - [Manifests](#manifests)
+    - [Set control-plane nodes unschedulable](#set-control-plane-nodes-unschedulable)
+  - [Ignition configs](#ignition-configs)
+  - [Create templates and VMs](#create-templates-and-vms)
+  - [Bootstrap](#bootstrap)
+  - [Master nodes](#master-nodes)
+  - [Wait for Control Plane](#wait-for-control-plane)
+  - [OpenShift API](#openshift-api)
+  - [Retire Bootstrap](#retire-bootstrap)
+  - [Worker nodes](#worker-nodes)
+    - [Approve CSRs](#approve-csrs)
+  - [Wait for Installation Complete](#wait-for-installation-complete)
+  - [Destroy OpenShift cluster](#destroy-openshift-cluster)
 
 ## Prerequisites
 The `inventory.yml` file all the variables used by this installation can be customized as per
@@ -312,11 +314,13 @@ Machine API will not be used by the UPI to create nodes, we'll create compute no
 Therefore we'll set the number of compute nodes to zero replicas using the following python script:
 
 ```sh
-$ python3 -c 'import os, yaml
-path = "%s/install-config.yaml" % os.environ["ASSETS_DIR"]
-conf = yaml.safe_load(open(path))
-conf["compute"][0]["replicas"] = 0
-open(path, "w").write(yaml.dump(conf, default_flow_style=False))'
+$ python3 -c 'import yaml;
+path = "./wrk/install-config.yaml";
+conf = yaml.safe_load(open(path));
+conf["compute"][0]["replicas"] = 0;
+open(path, "w").write(yaml.dump(conf, default_flow_style=False));'
+
+**NOTE**: All the Python snippets in this document work with both Python 3 and Python 2.
 ```
 
 **NOTE**: All the Python snippets in this document work with both Python 3 and Python 2.
@@ -326,11 +330,11 @@ OpenShift installer sets a default IP range for nodes and we need to change it a
 We'll set the range to `172.16.0.0/16` (we can use the following python script for this):
 
 ```sh
-$ python3 -c 'import os, yaml
-path = "%s/install-config.yaml" % os.environ["ASSETS_DIR"]
-conf = yaml.safe_load(open(path))
-conf["networking"]["machineNetwork"][0]["cidr"] = "172.16.0.0/16"
-open(path, "w").write(yaml.dump(conf, default_flow_style=False))'
+$ python3 -c 'import yaml;
+path = "./wrk/install-config.yaml";
+conf = yaml.safe_load(open(path));
+conf["networking"]["machineNetwork"][0]["cidr"] = "172.16.0.0/16";
+open(path, "w").write(yaml.dump(conf, default_flow_style=False));'
 ```
 
 ### Set platform to none
@@ -339,13 +343,13 @@ platform section in the `install-config.yaml`, all the settings needed are speci
 We'll remove the section 
 
 ```sh
-$ python3 -c 'import os, yaml
-path = "%s/install-config.yaml" % os.environ["ASSETS_DIR"]
-conf = yaml.safe_load(open(path))
-platform = conf["platform"]
-del platform["ovirt"]
-platform["none"] = {}
-open(path, "w").write(yaml.dump(conf, default_flow_style=False))'
+$ python3 -c 'import yaml;
+path = "./wrk/install-config.yaml";
+conf = yaml.safe_load(open(path));
+platform = conf["platform"];
+del platform["ovirt"];
+platform["none"] = {};
+open(path, "w").write(yaml.dump(conf, default_flow_style=False));'
 ```
 
 ## Manifests
@@ -409,11 +413,11 @@ Setting the control-plan as unschedulable means modifying the `manifests/cluster
 `masterSchedulable` to `False`.
 
 ```sh 
-$ python3 -c 'import os, yaml
-path = "%s/manifests/cluster-scheduler-02-config.yml" % os.environ["ASSETS_DIR"]
-data = yaml.safe_load(open(path))
-data["spec"]["mastersSchedulable"] = False
-open(path, "w").write(yaml.dump(data, default_flow_style=False))'
+$ python3 -c 'import yaml;
+path = "./wrk/manifests/cluster-scheduler-02-config.yml";
+data = yaml.safe_load(open(path));
+data["spec"]["mastersSchedulable"] = False;
+open(path, "w").write(yaml.dump(data, default_flow_style=False));'
 ```
 
 ## Ignition configs
