@@ -618,7 +618,7 @@ Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`
       ]
     },
     "version": "3.1.0"
-  },
+  }
 }
 ```
 
@@ -641,7 +641,7 @@ In order for the bootstrap node to retrieve the ignition file when it is served 
       }
     },
     "version": "3.1.0"
-  },
+  }
 }
 ```
 
