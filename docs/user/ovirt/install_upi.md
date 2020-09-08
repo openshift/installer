@@ -259,11 +259,13 @@ Machine API will not be used by the UPI to create nodes, we'll create compute no
 Therefore we'll set the number of compute nodes to zero replicas using the following python script:
 
 ```sh
-$ python -c 'import yaml;
+$ python3 -c 'import yaml;
 path = "./wrk/install-config.yaml";
 conf = yaml.safe_load(open(path));
 conf["compute"][0]["replicas"] = 0;
 open(path, "w").write(yaml.dump(conf, default_flow_style=False));'
+
+**NOTE**: All the Python snippets in this document work with both Python 3 and Python 2.
 ```
 
 ### Set machine network
@@ -271,7 +273,7 @@ OpenShift installer sets a default IP range for nodes and we need to change it a
 We'll set the range to `172.16.0.0/16` (we can use the following python script for this):
 
 ```sh
-$ python -c 'import yaml;
+$ python3 -c 'import yaml;
 path = "./wrk/install-config.yaml";
 conf = yaml.safe_load(open(path));
 conf["networking"]["machineNetwork"][0]["cidr"] = "172.16.0.0/16";
@@ -284,7 +286,7 @@ platform section in the `install-config.yaml`, all the settings needed are speci
 We'll remove the section 
 
 ```sh
-$ python -c 'import yaml;
+$ python3 -c 'import yaml;
 path = "./wrk/install-config.yaml";
 conf = yaml.safe_load(open(path));
 platform = conf["platform"];
@@ -354,7 +356,7 @@ Setting the control-plan as unschedulable means modifying the `manifests/cluster
 `masterSchedulable` to `False`.
 
 ```sh 
-$ python -c 'import yaml;
+$ python3 -c 'import yaml;
 path = "./wrk/manifests/cluster-scheduler-02-config.yml";
 data = yaml.safe_load(open(path));
 data["spec"]["mastersSchedulable"] = False;
