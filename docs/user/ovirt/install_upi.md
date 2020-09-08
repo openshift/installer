@@ -13,10 +13,10 @@ mandatory ignition files and to monitor the installation process itself.
 
 * [Prerequisites](#prerequisites)
 * [Ansible and oVirt roles](#ansible-and-ovirt-roles)
-* [Inventory explained](#inventory-explained)
 * [Network Requirements](#network-requirements)
   * [Load Balancers](#load-balancers)
   * [DNS](#dns)
+* [Inventory explained](#inventory-explained)
 * [Install Config](#install-config)
   * [Set compute replicas to zero](#set-compute-replicas-to-zero)
   * [Set machine network](#set-machine-network)
@@ -70,6 +70,52 @@ To be sure to follow the UPI installation process, Ansible scripts and the binar
 should be executed from the oVirt/RHV Manager or from a machine with access to the REST API of the 
 oVirt/RHV Manager and with all the oVirt roles available (installed by default on the Manager 
 machine).
+
+## Network Requirements
+The UPI installation process assumes that the user satisfies some network requirements providing them through the
+existing infrastructure.
+During the boot the RHCOS based machines require an IP address in `initramfs` in order to establish a network connection to get their
+ignition config files.
+One of the recommended ways is to use a DHCP server to manage the machines in the long-term, maybe configuring the DHCP server
+itself to provide persistent IP addresses and host names to the cluster machines.
+
+Network connectivity between machines should be configured to allow cluster components to communicate:
+
+- Kubernetes NodePort
+  Machines require connectivity to every other machine for OpenShift platform components through the port range `30000`-`32767` .
+
+- OpenShift reserved
+  Connectivity to reserved port ranges `10250`-`10259` and `9000`-`9999` should be granted on every machine.
+
+- Machines to control-plane
+  Connectivity to ports on ranges `2379`-`2380` (for etcd, peer and metrics) is required for control-plane machines and on
+  port `6443` for Kubernetes API.
+
+
+### Load Balancers
+Before installing the OpenShift Container Platform, two load balancers (layer-4) must be provided by the user infrastructure,
+one for the API and one for the Ingress Controller (to allow ingress to applications).
+
+- Load balancer for port `6443` and `22623` on control-plane and bootstrap machines (the bootstrap can be removed after control-plane
+  initialization completes).
+  The `6443` must be both internal and external reachable and is needed by the Kubernetes API server.
+  Port `22623` must be accessible to nodes within the cluster.
+
+- Load balancer for port `443` and `80` for machines running the ingress router (usually worker nodes in the default configuration).
+  Both ports must be accessible from within and outside the cluster.
+
+
+### DNS
+The UPI installation process requires the user to setup the existing infrastructure provided DNS to allow the correct resolution of
+the main components and services
+
+- Kubernetes API
+  DNS records `api.<cluster_name>.<base_domain>` (internal and external resolution) and `api-int.<cluster_name>.<base_domain>` 
+  (internal resolution) must be added to point to the Load balancer targeting the control plane machines. 
+
+- OpenShift routes
+  A DNS record `*.apps.<cluster_name>.<base_domain>` must be provided to point to the Load balancer configured to manage the
+  traffic for the ingress router (ports `443` and `80` of the compute machines).
 
 ## Inventory Explained
 This section is a brief explanation of the customizable variables contained in the `inventory.yml`.
@@ -163,53 +209,6 @@ In the last section there's the list of all the vms that will be created and the
 VMs parameters can override the default ones specified in their profile (e.g.: the server type of the boostrap VM) and it's also
 possible to use all the attributes documented in the oVirt.vm-infra role (like fixed MAC addresses for each machine that could help to
 assign permanent IP through a DHCP).
-
-
-## Network Requirements
-The UPI installation process assumes that the user satisfies some network requirements providing them through the
-existing infrastructure.
-During the boot the RHCOS based machines require an IP address in `initramfs` in order to establish a network connection to get their
-ignition config files.
-One of the recommended ways is to use a DHCP server to manage the machines in the long-term, maybe configuring the DHCP server
-itself to provide persistent IP addresses and host names to the cluster machines.
-
-Network connectivity between machines should be configured to allow cluster components to communicate:
-
-- Kubernetes NodePort
-  Machines require connectivity to every other machine for OpenShift platform components through the port range `30000`-`32767` .
-
-- OpenShift reserved
-  Connectivity to reserved port ranges `10250`-`10259` and `9000`-`9999` should be granted on every machine.
-
-- Machines to control-plane
-  Connectivity to ports on ranges `2379`-`2380` (for etcd, peer and metrics) is required for control-plane machines and on
-  port `6443` for Kubernetes API.
-
-
-### Load Balancers
-Before installing the OpenShift Container Platform, two load balancers (layer-4) must be provided by the user infrastructure,
-one for the API and one for the Ingress Controller (to allow ingress to applications).
-
-- Load balancer for port `6443` and `22623` on control-plane and bootstrap machines (the bootstrap can be removed after control-plane
-  initialization completes).
-  The `6443` must be both internal and external reachable and is needed by the Kubernetes API server.
-  Port `22623` must be accessible to nodes within the cluster.
-
-- Load balancer for port `443` and `80` for machines running the ingress router (usually worker nodes in the default configuration).
-  Both ports must be accessible from within and outside the cluster.
-
-
-### DNS
-The UPI installation process requires the user to setup the existing infrastructure provided DNS to allow the correct resolution of
-the main components and services.
-
-- Kubernetes API
-  DNS records `api.<cluster_name>.<base_domain>` (internal and external resolution) and `api-int.<cluster_name>.<base_domain>` 
-  (internal resolution) must be added to point to the Load balancer targeting the control plane machines. 
-
-- OpenShift routes
-  A DNS record `*.apps.<cluster_name>.<base_domain>` must be provided to point to the Load balancer configured to manage the
-  traffic for the ingress router (ports `443` and `80` of the compute machines).
 
 ## Install config
 Run the `openshift-install` to create the initial `install-config` using as assets directory the same that is specified in
