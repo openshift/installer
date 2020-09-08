@@ -56,6 +56,7 @@ import (
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	packettypes "github.com/openshift/installer/pkg/types/packet"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -126,6 +127,13 @@ func defaultOvirtMachinePoolPlatform() ovirttypes.MachinePool {
 			SizeGB: 120,
 		},
 		VMType: ovirttypes.VMTypeServer,
+	}
+}
+
+func defaultPacketMachinePoolPlatform() packettypes.MachinePool {
+	return packettypes.MachinePool{
+		// TODO(displague) what defaults should we supply?
+		Plan: "c3-medium.x86",
 	}
 }
 

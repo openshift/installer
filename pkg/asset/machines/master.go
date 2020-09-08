@@ -20,6 +20,7 @@ import (
 	vsphereapi "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider"
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
+	packetapi "github.com/packethost/cluster-api-provider-packet/pkg/apis"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -42,6 +43,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/machines/ovirt"
+	"github.com/openshift/installer/pkg/asset/machines/packet"
 	"github.com/openshift/installer/pkg/asset/machines/vsphere"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
@@ -56,6 +58,7 @@ import (
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	packettypes "github.com/openshift/installer/pkg/types/packet"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -349,6 +352,15 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		vsphere.ConfigMasters(machines, clusterID.InfraID)
+	case packettypes.Name:
+		mpool := defaultPacketMachinePoolPlatform()
+		mpool.Set(ic.Platform.Packet.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.Packet)
+		pool.Platform.Packet = &mpool
+		machines, err = packet.Machines(clusterID.InfraID, ic, pool, string(*rhcosImage), "master", "master-user-data")
+		if err != nil {
+			return errors.Wrap(err, "failed to create master machine objects")
+		}
 	case nonetypes.Name:
 	default:
 		return fmt.Errorf("invalid Platform")
@@ -464,6 +476,7 @@ func (m *Master) Machines() ([]machineapi.Machine, error) {
 	libvirtapi.AddToScheme(scheme)
 	openstackapi.AddToScheme(scheme)
 	ovirtproviderapi.AddToScheme(scheme)
+	packetapi.AddToScheme(scheme)
 	vsphereapi.AddToScheme(scheme)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
 		awsprovider.SchemeGroupVersion,
