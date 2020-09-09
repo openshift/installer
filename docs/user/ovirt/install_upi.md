@@ -16,7 +16,9 @@ mandatory ignition files and to monitor the installation process itself.
 * [Network Requirements](#network-requirements)
   * [Load Balancers](#load-balancers)
   * [DNS](#dns)
+* [RHCOS image](#rhcos-image)
 * [Inventory explained](#inventory-explained)
+* [Assets directory](#assets-directory)
 * [Install Config](#install-config)
   * [Set compute replicas to zero](#set-compute-replicas-to-zero)
   * [Set machine network](#set-machine-network)
@@ -104,6 +106,8 @@ one for the API and one for the Ingress Controller (to allow ingress to applicat
 - Load balancer for port `443` and `80` for machines running the ingress router (usually worker nodes in the default configuration).
   Both ports must be accessible from within and outside the cluster.
 
+**NOTE**: the rules above can also be set on the same load balancer server. 
+
 
 ### DNS
 The UPI installation process requires the user to setup the existing infrastructure provided DNS to allow the correct resolution of
@@ -117,6 +121,24 @@ the main components and services
   A DNS record `*.apps.<cluster_name>.<base_domain>` must be provided to point to the Load balancer configured to manage the
   traffic for the ingress router (ports `443` and `80` of the compute machines).
 
+**NOTE**: the DNS records above may also point to the same IP in case you are using only one load balancer configured with the rules described
+in the [previous section](#load-balancers).
+
+## RHCOS image
+This UPI installation process requires a proper RHCOS (Red Hat Enterprise Linux CoreOS) image URL to be set in the `inventory.yml` file.
+
+The RHCOS images can be found [here](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/) and you have to choose
+the URL related to the `OpenStack` qcow2 image type, like in the example below
+
+```
+https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/4.6.0-0.nightly-2020-07-16-122837/rhcos-4.6.0-0.nightly-2020-07-16-122837-x86_64-openstack.x86_64.qcow2.gz
+```
+
+The version of the image should be choosen according to the OpenShift version you're about to install (in general less than or equal to the OCP
+version). 
+Once you have the URL set in the `inventory.yml` a dedicated Ansible playbook will be in charge to download the `qcow2.gz` file, uncompress it
+in a specified folder and use it to create RHV templates.
+
 ## Inventory Explained
 This section is a brief explanation of the customizable variables contained in the `inventory.yml`.
 
@@ -128,7 +150,7 @@ oVirt/RHV Manager REST API)
   ovirt_cluster: "Default"
 
   ocp:
-    assets_dir: "./wrk"
+    assets_dir: "{{ lookup('env', 'ASSETS_DIR') }}"
     ovirt_config_path: "{{ lookup('env', 'HOME') }}/.ovirt/ovirt-config.yaml"
 ```
 
@@ -138,7 +160,7 @@ uncompressing it before being able to use it
 ```YAML
 
   rhcos:
-    image_url: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/latest-4.6/rhcos-4.6.0-0.nightly-2020-07-16-122837-x86_64-openstack.x86_64.qcow2.gz"
+    image_url: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/4.6.0-0.nightly-2020-07-16-122837/rhcos-4.6.0-0.nightly-2020-07-16-122837-x86_64-openstack.x86_64.qcow2.gz"
     local_cmp_image_path: "/tmp/rhcos.qcow2.gz"
     local_image_path: "/tmp/rhcos.qcow2"
 ```
@@ -210,12 +232,20 @@ VMs parameters can override the default ones specified in their profile (e.g.: t
 possible to use all the attributes documented in the oVirt.vm-infra role (like fixed MAC addresses for each machine that could help to
 assign permanent IP through a DHCP).
 
+## Assets directory
+Before proceeding with the installation is better to set an environment variable with the path (absolute or relative according to your preferences) 
+of the directory in which the `openshift-install` command will put all the artifacts and that we'll also refer to in the `inventory.yml`.
+
+```sh
+$ export ASSETS_DIR=./wrk
+```
+
 ## Install config
 Run the `openshift-install` to create the initial `install-config` using as assets directory the same that is specified in
 the `inventory.yml` (`working_path`).
 
 ```sh
-$ openshift-install create install-config --dir ./wrk
+$ openshift-install create install-config --dir $ASSETS_DIR
 ? SSH Public Key /home/user/.ssh/id_dsa.pub
 ? Platform <ovirt>
 ? Engine FQDN[:PORT] [? for help] <engine.fqdn>
@@ -230,6 +260,7 @@ $ openshift-install create install-config --dir ./wrk
 ? Cluster Name <ocp4>
 ? Pull Secret [? for help] <********>
 ```
+
 *Internal API* and *Ingress* are the IPs added following the above DNS instructions
 
 - `api.ocp4.example.org`: 172.16.0.252
@@ -253,27 +284,34 @@ $ tree
 File `$HOME/.ovirt/ovirt-config.yaml` was also created for you by the `openshift-install` containing all the connection
 parameters needed to reach the oVirt/RHV engine and use its REST API.
 
+**NOTE:**
+Some of the parameters added during the `openshift-install` workflow, in particular the `Internal API virtual IP` and
+`Ingress virtual IP`, will not be used because already configured in your infrastructure DNS (see [DNS](#dns) section).
+Other paramenters like `oVirt cluster`, `oVirt storage`, `oVirt network`, will be used as specified in the `inventory.yml`
+and removed from the `install-config.yaml` with the previously mentioned `virtual IPs`, using a script reported in a 
+[section below](#set-platform-to-none).
+
 ### Set compute replicas to zero
 Machine API will not be used by the UPI to create nodes, we'll create compute nodes explicitly with Ansible scripts.
 Therefore we'll set the number of compute nodes to zero replicas using the following python script:
 
 ```sh
-$ python3 -c 'import yaml;
-path = "./wrk/install-config.yaml";
+$ python3 -c 'import os, yaml;
+path = "%s/install-config.yaml" % os.environ["ASSETS_DIR"];
 conf = yaml.safe_load(open(path));
 conf["compute"][0]["replicas"] = 0;
 open(path, "w").write(yaml.dump(conf, default_flow_style=False));'
+```
 
 **NOTE**: All the Python snippets in this document work with both Python 3 and Python 2.
-```
 
 ### Set machine network
 OpenShift installer sets a default IP range for nodes and we need to change it according to our infrastructure.
 We'll set the range to `172.16.0.0/16` (we can use the following python script for this):
 
 ```sh
-$ python3 -c 'import yaml;
-path = "./wrk/install-config.yaml";
+$ python3 -c 'import os, yaml;
+path = "%s/install-config.yaml" % os.environ["ASSETS_DIR"];
 conf = yaml.safe_load(open(path));
 conf["networking"]["machineNetwork"][0]["cidr"] = "172.16.0.0/16";
 open(path, "w").write(yaml.dump(conf, default_flow_style=False));'
@@ -285,8 +323,8 @@ platform section in the `install-config.yaml`, all the settings needed are speci
 We'll remove the section 
 
 ```sh
-$ python3 -c 'import yaml;
-path = "./wrk/install-config.yaml";
+$ python3 -c 'import os, yaml;
+path = "%s/install-config.yaml" % os.environ["ASSETS_DIR"];
 conf = yaml.safe_load(open(path));
 platform = conf["platform"];
 del platform["ovirt"];
@@ -298,7 +336,7 @@ open(path, "w").write(yaml.dump(conf, default_flow_style=False));'
 Editing manifests is an action required for the UPI and to generate them we can use again the binary installer
 
 ```sh
-$ openshift-install create manifests --dir ./wrk
+$ openshift-install create manifests --dir $ASSETS_DIR
 ```
 ```sh
 $ tree
@@ -355,8 +393,8 @@ Setting the control-plan as unschedulable means modifying the `manifests/cluster
 `masterSchedulable` to `False`.
 
 ```sh 
-$ python3 -c 'import yaml;
-path = "./wrk/manifests/cluster-scheduler-02-config.yml";
+$ python3 -c 'import os, yaml;
+path = "%s/manifests/cluster-scheduler-02-config.yml" % os.environ["ASSETS_DIR"];
 data = yaml.safe_load(open(path));
 data["spec"]["mastersSchedulable"] = False;
 open(path, "w").write(yaml.dump(data, default_flow_style=False));'
@@ -368,7 +406,7 @@ Ignition files have to be fetched by RHCOS machine initramfs to perform configur
 We will use again the binary installer.
 
 ```sh 
-$ openshift-install create ignition-configs --dir ./wrk
+$ openshift-install create ignition-configs --dir $ASSETS_DIR
 ```
 
 ```sh
@@ -408,7 +446,7 @@ According to the variables
 
 ```YAML
   rhcos:
-    image_url: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-4.5.2-x86_64-openstack.x86_64.qcow2.gz"
+    image_url: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/4.6.0-0.nightly-2020-07-16-122837/rhcos-4.6.0-0.nightly-2020-07-16-122837-x86_64-openstack.x86_64.qcow2.gz"
     local_cmp_image_path: "/tmp/rhcos.qcow2.gz"
     local_image_path: "/tmp/rhcos.qcow2"
 ```
@@ -470,7 +508,7 @@ targeted by the Load balancer that manages the traffic on port `22623` (accessib
 The user can monitor the control-plane bootstrap process with the following command:
 
 ```sh
-$ openshift-install wait-for bootstrap-complete --dir ./wrk
+$ openshift-install wait-for bootstrap-complete --dir $ASSETS_DIR
 ```
 
 After some time the output of the command will be the following
@@ -491,7 +529,7 @@ The OpenShift API can be accessed via the `oc` or `kubectl` using the admin cred
 in the file `auth/kubeconfig`:
 
 ```sh
-$ export KUBECONFIG=wrk/auth/kubeconfig
+$ export KUBECONFIG=$ASSETS_DIR/auth/kubeconfig
 $ oc get nodes
 $ oc get pods -A
 ```
@@ -577,7 +615,7 @@ joining the cluster, but also becoming `Ready` and having pods scheduled on them
 The following command can now be run to follow the installation process till it's complete:
 
 ```sh
-$ openshift-install wait-for install-complete --dir ./wrk --log-level debug
+$ openshift-install wait-for install-complete --dir $ASSETS_DIR --log-level debug
 ```
 
 Eventually it will give as output
