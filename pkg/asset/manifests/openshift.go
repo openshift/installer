@@ -8,20 +8,19 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/ghodss/yaml"
-
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
+	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
-	"github.com/openshift/installer/pkg/asset/rhcos"
-
-	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/password"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -246,10 +245,20 @@ func (o *Openshift) Files() []*asset.File {
 
 // Load returns the openshift asset from disk.
 func (o *Openshift) Load(f asset.FileFetcher) (bool, error) {
-	fileList, err := f.FetchByPattern(filepath.Join(openshiftManifestDir, "*"))
+	yamlFileList, err := f.FetchByPattern(filepath.Join(openshiftManifestDir, "*.yaml"))
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "failed to load *.yaml files")
 	}
+	ymlFileList, err := f.FetchByPattern(filepath.Join(openshiftManifestDir, "*.yml"))
+	if err != nil {
+		return false, errors.Wrap(err, "failed to load *.yml files")
+	}
+	jsonFileList, err := f.FetchByPattern(filepath.Join(openshiftManifestDir, "*.json"))
+	if err != nil {
+		return false, errors.Wrap(err, "failed to load *.json files")
+	}
+	fileList := append(yamlFileList, ymlFileList...)
+	fileList = append(fileList, jsonFileList...)
 
 	for _, file := range fileList {
 		if machines.IsMachineManifest(file) {
