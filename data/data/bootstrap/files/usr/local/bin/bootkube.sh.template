@@ -79,33 +79,33 @@ fi
 # when API server is not up, so we have to run this as
 # podman container.
 # See https://github.com/kubernetes/kubernetes/issues/43292
+trap "{ echo 'Tearing down etcd-signer container'; podman rm --force etcd-signer 2> /dev/null; }" ERR
 
-echo "Starting etcd certificate signer..."
-
-trap "podman rm --force etcd-signer" ERR
-
-bootkube_podman_run \
-	--name etcd-signer \
-	--detach \
-	--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
-	"${KUBE_ETCD_SIGNER_SERVER_IMAGE}" \
-	serve \
-	--cacrt=/opt/openshift/tls/etcd-signer.crt \
-	--cakey=/opt/openshift/tls/etcd-signer.key \
-	--metric-cacrt=/opt/openshift/tls/etcd-metric-signer.crt \
-	--metric-cakey=/opt/openshift/tls/etcd-metric-signer.key \
-	--servcrt=/opt/openshift/tls/kube-apiserver-lb-server.crt \
-	--servkey=/opt/openshift/tls/kube-apiserver-lb-server.key \
-	--servcrt=/opt/openshift/tls/kube-apiserver-internal-lb-server.crt \
-	--servkey=/opt/openshift/tls/kube-apiserver-internal-lb-server.key \
-	--servcrt=/opt/openshift/tls/kube-apiserver-localhost-server.crt \
-	--servkey=/opt/openshift/tls/kube-apiserver-localhost-server.key \
-	--address=0.0.0.0:6443 \
-	--insecure-health-check-address=0.0.0.0:6080 \
-	--csrdir=/tmp \
-	--peercertdur=26280h \
-	--servercertdur=26280h \
-	--metriccertdur=26280h
+if [ ! -f etcd-signer-bootstrap.done ]
+	echo "Starting etcd certificate signer..."
+	bootkube_podman_run \
+		--name etcd-signer \
+		--detach \
+		--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
+		"${KUBE_ETCD_SIGNER_SERVER_IMAGE}" \
+		serve \
+		--cacrt=/opt/openshift/tls/etcd-signer.crt \
+		--cakey=/opt/openshift/tls/etcd-signer.key \
+		--metric-cacrt=/opt/openshift/tls/etcd-metric-signer.crt \
+		--metric-cakey=/opt/openshift/tls/etcd-metric-signer.key \
+		--servcrt=/opt/openshift/tls/kube-apiserver-lb-server.crt \
+		--servkey=/opt/openshift/tls/kube-apiserver-lb-server.key \
+		--servcrt=/opt/openshift/tls/kube-apiserver-internal-lb-server.crt \
+		--servkey=/opt/openshift/tls/kube-apiserver-internal-lb-server.key \
+		--servcrt=/opt/openshift/tls/kube-apiserver-localhost-server.crt \
+		--servkey=/opt/openshift/tls/kube-apiserver-localhost-server.key \
+		--address=0.0.0.0:6443 \
+		--insecure-health-check-address=0.0.0.0:6080 \
+		--csrdir=/tmp \
+		--peercertdur=26280h \
+		--servercertdur=26280h \
+		--metriccertdur=26280h
+fi
 
 # during initial operator rollout phase this logic allows us to deploy the operator via CVO
 # in an `Unmanaged` no-op state. after all of the pieces have merged and the operator is
@@ -359,8 +359,9 @@ then
 	touch cco-bootstrap.done
 fi
 
-# Wait for the etcd cluster to come up.
-until bootkube_podman_run \
+if [ ! -f etcd-signer-bootstrap.done ]
+	# Wait for bootstrap etcd to come up.
+	until bootkube_podman_run \
 		--rm \
 		--name etcdctl \
 		--env ETCDCTL_API=3 \
@@ -373,14 +374,16 @@ until bootkube_podman_run \
 		--key=/opt/openshift/tls/etcd-client.key \
 		--endpoints="${ETCD_ENDPOINTS}" \
 		endpoint health
-do
-	echo "etcdctl failed. Retrying in 5 seconds..."
-	sleep 5
-done
+	do
+		echo "Health check for bootstrap etcd failed. Retrying in 5 seconds..."
+		sleep 5
+	done
 
-echo "etcd cluster up. Killing etcd certificate signer..."
+	echo "Bootstrap etcd up. Killing etcd certificate signer..."
+	podman rm --force etcd-signer
 
-podman rm --force etcd-signer
+	touch etcd-signer-bootstrap.done
+fi
 
 echo "Starting cluster-bootstrap..."
 
