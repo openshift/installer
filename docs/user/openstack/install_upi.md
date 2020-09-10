@@ -323,9 +323,9 @@ import sys;
 path = "install-config.yaml";
 data = yaml.safe_load(open(path));
 if "apiVIP" in data["platform"]["openstack"]:
-   data["platform"]["openstack"]["apiVIP"] = '192.0.2.8';
+   data["platform"]["openstack"]["apiVIP"] = "192.0.2.8";
 if "ingressVIP" in data["platform"]["openstack"]:
-   data["platform"]["openstack"]["ingressVIP"] = '192.0.2.9';
+   data["platform"]["openstack"]["ingressVIP"] = "192.0.2.9";
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
