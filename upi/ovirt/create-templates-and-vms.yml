@@ -13,16 +13,20 @@
       get_attributes: no
       path: "{{ rhcos.local_image_path }}"
     register: image_stats
+    loop:
+    - "{{ rhcos.local_cmp_image_path }}"
+    - "{{ rhcos.local_image_path }}"
 
   - name: Download RHCOS image
     get_url:
       url: "{{ rhcos.image_url }}"
       dest: "{{ rhcos.local_cmp_image_path}}"
       force: no
+    when: not image_stats.results[1].stat.exists
 
   - name: Extract RHCOS image
     shell: "gunzip -c {{ rhcos.local_cmp_image_path }} > {{ rhcos.local_image_path }}"
-    when: not image_stats.stat.exists
+    when: not image_stats.results[0].stat.exists
 
   - name: Get templates info
     ovirt_template_info:
@@ -38,9 +42,7 @@
       templates_list: >-
         {{
           templates_list | default([]) +
-          [
             item.ovirt_templates | map(attribute='name') | list
-          ]
         }}
     with_items: "{{ templates_info.results }}"
 
