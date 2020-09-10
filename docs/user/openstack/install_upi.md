@@ -308,9 +308,9 @@ import sys;
 path = "install-config.yaml";
 data = yaml.safe_load(open(path));
 if "apiVIP" in data["platform"]["openstack"]:
-   delete data["platform"]["openstack"]["apiVIP"] ;
+   del data["platform"]["openstack"]["apiVIP"] ;
 if "ingressVIP" in data["platform"]["openstack"]:
-   delete data["platform"]["openstack"]["ingressVIP"];
+   del data["platform"]["openstack"]["ingressVIP"];
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
