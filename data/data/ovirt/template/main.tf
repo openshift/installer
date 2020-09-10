@@ -45,6 +45,7 @@ resource "ovirt_vm" "tmp_import_vm" {
   count      = length(local.existing_id) == 0 ? 1 : 0
   name       = "tmpvm-for-${ovirt_image_transfer.releaseimage.0.alias}"
   cluster_id = var.ovirt_cluster_id
+  auto_start = false
   block_device {
     disk_id   = ovirt_image_transfer.releaseimage.0.disk_id
     interface = "virtio_scsi"

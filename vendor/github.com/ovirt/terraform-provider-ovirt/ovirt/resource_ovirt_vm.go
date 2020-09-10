@@ -199,6 +199,11 @@ func resourceOvirtVM() *schema.Resource {
 					},
 				},
 			},
+			"auto_start": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
+			},
 			"initialization": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -462,31 +467,35 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	// Try to start VM
-	log.Printf("[DEBUG] Try to start VM (%s)", d.Id())
+	autoStart := d.Get("auto_start").(bool)
+	if autoStart {
+		// Try to start VM
+		log.Printf("[DEBUG] Try to start VM (%s)", d.Id())
 
-	_, initialize := d.GetOk("initialization")
-	_, err = vmService.Start().UseInitialization(initialize).Send()
-	if err != nil {
-		return err
-	}
-	// Wait until vm is up
-	log.Printf("[DEBUG] Wait for VM (%s) status to become up", d.Id())
+		_, initialize := d.GetOk("initialization")
+		_, err = vmService.Start().UseInitialization(initialize).Send()
+		if err != nil {
+			return err
+		}
+		// Wait until vm is up
+		log.Printf("[DEBUG] Wait for VM (%s) status to become up", d.Id())
 
-	upStateConf := &resource.StateChangeConf{
-		Target:     []string{string(ovirtsdk4.VMSTATUS_UP)},
-		Refresh:    VMStateRefreshFunc(conn, d.Id()),
-		Timeout:    d.Timeout(schema.TimeoutCreate),
-		Delay:      10 * time.Second,
-		MinTimeout: 3 * time.Second,
-	}
-	_, err = upStateConf.WaitForState()
-	if err != nil {
-		log.Printf("[DEBUG] Error waiting for VM (%s) to become up: %s", d.Id(), err)
-		return err
+		upStateConf := &resource.StateChangeConf{
+			Target:     []string{string(ovirtsdk4.VMSTATUS_UP)},
+			Refresh:    VMStateRefreshFunc(conn, d.Id()),
+			Timeout:    d.Timeout(schema.TimeoutCreate),
+			Delay:      10 * time.Second,
+			MinTimeout: 3 * time.Second,
+		}
+		_, err = upStateConf.WaitForState()
+		if err != nil {
+			log.Printf("[DEBUG] Error waiting for VM (%s) to become up: %s", d.Id(), err)
+			return err
+		}
+
+		log.Printf("[DEBUG] VM (%s) status has became to up", d.Id())
 	}
 
-	log.Printf("[DEBUG] VM (%s) status has became to up", d.Id())
 	return resourceOvirtVMRead(d, meta)
 }
 
