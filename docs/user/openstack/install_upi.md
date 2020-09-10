@@ -290,10 +290,10 @@ the OpenStack deployment in use. You should check your OpenStack deployment.
 The following script modifies the value of `machineNetwork.CIDR` in the `install-config.yaml` file.
 
 ```sh
-$ python -c 'import yaml;
-path = "install-config.yaml";
-data = yaml.safe_load(open(path));
-data["networking"]["machineNetwork"][0]["cidr"] = "192.0.2.0/24";
+$ python -c 'import yaml
+path = "install-config.yaml"
+data = yaml.safe_load(open(path))
+data["networking"]["machineNetwork"][0]["cidr"] = "192.0.2.0/24"
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
@@ -303,14 +303,14 @@ The following script will clear the values from the `install-config.yaml` file s
 the 5th and 7th IP addresses in the new range, 192.0.2.5 and 192.0.2.7. 
 
 ```sh
-$ python -c 'import yaml;
-import sys;
-path = "install-config.yaml";
-data = yaml.safe_load(open(path));
+$ python -c 'import yaml
+import sys
+path = "install-config.yaml"
+data = yaml.safe_load(open(path))
 if "apiVIP" in data["platform"]["openstack"]:
-   del data["platform"]["openstack"]["apiVIP"] ;
+   del data["platform"]["openstack"]["apiVIP"]
 if "ingressVIP" in data["platform"]["openstack"]:
-   del data["platform"]["openstack"]["ingressVIP"];
+   del data["platform"]["openstack"]["ingressVIP"]
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
@@ -318,14 +318,14 @@ If you want to specify the values yourself, you can use the following script, wh
 and 192.0.2.9.
 
 ```sh
-$ python -c 'import yaml;
-import sys;
-path = "install-config.yaml";
-data = yaml.safe_load(open(path));
+$ python -c 'import yaml
+import sys
+path = "install-config.yaml"
+data = yaml.safe_load(open(path))
 if "apiVIP" in data["platform"]["openstack"]:
-   data["platform"]["openstack"]["apiVIP"] = "192.0.2.8";
+   data["platform"]["openstack"]["apiVIP"] = "192.0.2.8"
 if "ingressVIP" in data["platform"]["openstack"]:
-   data["platform"]["openstack"]["ingressVIP"] = "192.0.2.9";
+   data["platform"]["openstack"]["ingressVIP"] = "192.0.2.9"
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
@@ -342,10 +342,10 @@ This command will do it for you:
 
 ```sh
 $ python -c '
-import yaml;
-path = "install-config.yaml";
-data = yaml.safe_load(open(path));
-data["compute"][0]["replicas"] = 0;
+import yaml
+path = "install-config.yaml"
+data = yaml.safe_load(open(path))
+data["compute"][0]["replicas"] = 0
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
@@ -359,10 +359,10 @@ This command will do it for you:
 
 ```sh
 $ python -c '
-import yaml;
-path = "install-config.yaml";
-data = yaml.safe_load(open(path));
-data["networking"]["networkType"] = "Kuryr";
+import yaml
+path = "install-config.yaml"
+data = yaml.safe_load(open(path))
+data["networking"]["networkType"] = "Kuryr"
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
@@ -445,10 +445,10 @@ Currently [emptying the compute pools][empty-compute-pools] makes control-plane 
 
 ```sh
 $ python -c '
-import yaml;
+import yaml
 path = "manifests/cluster-scheduler-02-config.yml"
-data = yaml.safe_load(open(path));
-data["spec"]["mastersSchedulable"] = False;
+data = yaml.safe_load(open(path))
+data["spec"]["mastersSchedulable"] = False
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
@@ -521,8 +521,8 @@ import os
 with open('bootstrap.ign', 'r') as f:
     ignition = json.load(f)
 
-storage = ignition.get('storage', {});
-files = storage.get('files', []);
+storage = ignition.get('storage', {})
+files = storage.get('files', [])
 
 infra_id = os.environ.get('INFRA_ID', 'openshift').encode()
 hostname_b64 = base64.standard_b64encode(infra_id + b'-bootstrap\n').decode().strip()
@@ -550,7 +550,7 @@ if ca_cert_path:
         },
     })
 
-storage['files'] = files;
+storage['files'] = files
 ignition['storage'] = storage
 
 with open('bootstrap.ign', 'w') as f:
@@ -703,12 +703,12 @@ We will deploy three Control plane (master) nodes. Their Ignition configs can be
 ```sh
 $ for index in $(seq 0 2); do
     MASTER_HOSTNAME="$INFRA_ID-master-$index\n"
-    python -c "import base64, json, sys;
-ignition = json.load(sys.stdin);
-storage = ignition.get('storage', {});
-files = storage.get('files', []);
-files.append({'path': '/etc/hostname', 'mode': 420, 'contents': {'source': 'data:text/plain;charset=utf-8;base64,' + base64.standard_b64encode(b'$MASTER_HOSTNAME').decode().strip()}});
-storage['files'] = files;
+    python -c "import base64, json, sys
+ignition = json.load(sys.stdin)
+storage = ignition.get('storage', {})
+files = storage.get('files', [])
+files.append({'path': '/etc/hostname', 'mode': 420, 'contents': {'source': 'data:text/plain;charset=utf-8;base64,' + base64.standard_b64encode(b'$MASTER_HOSTNAME').decode().strip()}})
+storage['files'] = files
 ignition['storage'] = storage
 json.dump(ignition, sys.stdout)" <master.ign >"$INFRA_ID-master-$index-ignition.json"
 done
