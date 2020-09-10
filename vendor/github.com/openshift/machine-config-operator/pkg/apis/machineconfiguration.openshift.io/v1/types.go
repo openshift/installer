@@ -48,12 +48,6 @@ type ControllerConfigSpec struct {
 	// kubeAPIServerServingCAData managed Kubelet to API Server Cert... Rotated automatically
 	KubeAPIServerServingCAData []byte `json:"kubeAPIServerServingCAData"`
 
-	// etcdCAData specifies the etcd CA data
-	EtcdCAData []byte `json:"etcdCAData"`
-
-	// etcdMetricData specifies the etcd metric CA data
-	EtcdMetricCAData []byte `json:"etcdMetricCAData"`
-
 	// rootCAData specifies the root CA data
 	RootCAData []byte `json:"rootCAData"`
 
@@ -78,6 +72,9 @@ type ControllerConfigSpec struct {
 	// osImageURL is the location of the container image that contains the OS update payload.
 	// Its value is taken from the data.osImageURL field on the machine-config-osimageurl ConfigMap.
 	OSImageURL string `json:"osImageURL"`
+
+	// releaseImage is the image used when installing the cluster
+	ReleaseImage string `json:"releaseImage"`
 
 	// proxy holds the current proxy configuration for the nodes
 	// +nullable
@@ -176,6 +173,7 @@ type MachineConfigSpec struct {
 
 	// +nullable
 	KernelArguments []string `json:"kernelArguments"`
+	Extensions      []string `json:"extensions"`
 
 	FIPS       bool   `json:"fips"`
 	KernelType string `json:"kernelType"`

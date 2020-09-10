@@ -215,9 +215,14 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		if ic.IsOKD() {
 			ignMitigationsDisable, err := machineconfig.ForMitigationsDisabled("worker")
 			if err != nil {
-				return errors.Wrap(err, "failed to create ignition for mitigations disable for master machines")
+				return errors.Wrap(err, "failed to create ignition for mitigations disable for worker machines")
 			}
 			machineConfigs = append(machineConfigs, ignMitigationsDisable)
+			ignOKDExtensions, err := machineconfig.ForOKDExtensions("worker")
+			if err != nil {
+				return errors.Wrap(err, "failed to create ignition for OKD extensions for worker machines")
+			}
+			machineConfigs = append(machineConfigs, ignOKDExtensions)
 		}
 		switch ic.Platform.Name() {
 		case awstypes.Name:

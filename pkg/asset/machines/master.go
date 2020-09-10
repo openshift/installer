@@ -411,6 +411,11 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create ignition for mitigations disable for master machines")
 		}
 		machineConfigs = append(machineConfigs, ignMitigationsDisable)
+		ignOKDExtensions, err := machineconfig.ForOKDExtensions("master")
+		if err != nil {
+			return errors.Wrap(err, "failed to create ignition for OKD extensions for master machines")
+		}
+		machineConfigs = append(machineConfigs, ignOKDExtensions)
 	}
 
 	m.MachineConfigFiles, err = machineconfig.Manifests(machineConfigs, "master", directory)
