@@ -17,6 +17,7 @@ mandatory ignition files and to monitor the installation process itself.
   * [Load Balancers](#load-balancers)
   * [DNS](#dns)
 * [RHCOS image](#rhcos-image)
+* [Getting Ansible playbooks](#getting-ansible-playbooks)
 * [Inventory explained](#inventory-explained)
 * [Assets directory](#assets-directory)
 * [Install Config](#install-config)
@@ -138,6 +139,21 @@ The version of the image should be choosen according to the OpenShift version yo
 version). 
 Once you have the URL set in the `inventory.yml` a dedicated Ansible playbook will be in charge to download the `qcow2.gz` file, uncompress it
 in a specified folder and use it to create RHV templates.
+
+## Getting Ansible playbooks
+All the Ansible playbooks used in this UPI installation process are available [here](https://github.com/openshift/installer/tree/master/upi/ovirt)
+and can be downloaded with the following utility script
+
+```sh
+RELEASE="release-4.6"; \
+curl -L -X GET https://api.github.com/repos/openshift/installer/contents/upi/ovirt\?ref\=${RELEASE} | 
+grep 'download_url.*\.yml' | 
+awk '{ print $2 }' | sed -r 's/("|",)//g' | 
+xargs -n 1 curl -O
+```
+
+Different versions of the oVirt UPI playbooks can be downloaded changing the RELEASE environment variable to the desired branch 
+(please be aware that this UPI work started with the `release-4.6`).
 
 ## Inventory Explained
 This section is a brief explanation of the customizable variables contained in the `inventory.yml`.
