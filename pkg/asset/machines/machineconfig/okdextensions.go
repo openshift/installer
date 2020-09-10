@@ -18,7 +18,7 @@ func ForOKDExtensions(role string) (*mcfgv1.MachineConfig, error) {
 		},
 	}
 
-	_, err := ignition.ConvertToRawExtension(ignConfig)
+	rawExt, err := ignition.ConvertToRawExtension(ignConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -35,6 +35,7 @@ func ForOKDExtensions(role string) (*mcfgv1.MachineConfig, error) {
 			},
 		},
 		Spec: mcfgv1.MachineConfigSpec{
+			Config: rawExt,
 			Extensions: []string{
 				"glusterfs",
 				"glusterfs-fuse",
