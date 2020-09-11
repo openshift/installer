@@ -14,6 +14,7 @@ ExecStart=/bin/podman run --name haproxy \
   --entrypoint=/usr/sbin/haproxy \
   -v /etc/haproxy/haproxy.conf:/var/lib/haproxy/conf/haproxy.conf:Z \
   quay.io/openshift/origin-haproxy-router -f /var/lib/haproxy/conf/haproxy.conf
+ExecStop=/bin/podman rm -f haproxy
 
 [Install]
 WantedBy=multi-user.target

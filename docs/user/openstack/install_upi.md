@@ -28,7 +28,7 @@ of this method of installation.
   - [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-rhcos)
   - [API and Ingress Floating IP Addresses](#api-and-ingress-floating-ip-addresses)
   - [Install Config](#install-config)
-    - [Fix the Node Subnet](#fix-the-node-subnet)
+    - [Configure the machineNetwork CIDR, apiVIP, and ingressVIP](#configure-the-machinenetworkcidr-apivip-and-ingressvip)
     - [Empty Compute Pools](#empty-compute-pools)
     - [Modify NetworkType (Required for Kuryr SDN)](#modify-networktype-required-for-kuryr-sdn)
   - [Edit Manifests](#edit-manifests)
@@ -264,26 +264,73 @@ $ tree
 └── install-config.yaml
 ```
 
-### Fix the Node Subnet
+### Configure the machineNetwork.CIDR apiVIP and ingressVIP
+The `machineNetwork` represents the OpenStack network which will be used to connect all the OpenShift cluster nodes.
+The `machineNetwork.CIDR` defines the IP range, in CIDR notation, from which the installer will choose what IP addresses
+to assign the nodes.  The `apiVIP` and `ingressVIP` are the IP addresses the installer will assign to the cluster API and
+ingress VIPs, respectively.
+In the previous steps, the installer added default values for the `machineNetwork.CIDR`, and then it picked the
+5th and 7th IP addresses from that range to assign to `apiVIP` and `ingressVIP`.
+`machineNetwork.CIDR` needs to match the IP range specified by `os_subnet_range` in the `inventory.yaml` file.
 
-The installer added a default IP range for the OpenShift nodes. It must match the range for the Neutron subnet you'll create later on.
+When the installer creates the manifest files from an existing `install-config.yaml` file, it validates that the
+`apiVIP` and `ingressVIP` fall within the IP range specified by `machineNetwork.CIDR`. If they do not, it errors out.
+If you change the value of `machineNetwork.CIDR` you must make sure the `apiVIP` and `ingresVIP` values still fall within
+the new range. There are two options for setting the `apiVIP` and `ingressVIP`. If you know the values you want to use,
+you can specify them in the `install-config.yaml` file. If you want the installer to pick the 5th and 7th IP addresses in the
+new range, you need to remove the `apiVIP` and `ingressVIP` entries from the `install-config.yaml` file.
 
-We're going to use a custom subnet to illustrate how that can be done.
+To illustrate the process, we will use '192.0.2.0/24' as an example. It defines a usable IP range from
+192.0.2.1 to 192.0.2.254. There are some IP addresses that should be avoided because they are usually taken up or
+reserved. For example, the first address (.1) is usually assigned to a router. The DHCP and DNS servers will use a few
+more addresses, usually .2, .3, .11 and .12. The actual addresses used by these services depend on the configuration of
+the OpenStack deployment in use. You should check your OpenStack deployment.
 
-Our range will be `192.0.2.0/24` so we need to add that value to
-`install-config.yaml`. Look under `networking` -> `machineNetwork` -> network -> `cidr`.
 
-This command will do it for you:
+The following script modifies the value of `machineNetwork.CIDR` in the `install-config.yaml` file.
 
 ```sh
-$ python -c 'import yaml;
-path = "install-config.yaml";
-data = yaml.safe_load(open(path));
-data["networking"]["machineNetwork"][0]["cidr"] = "192.0.2.0/24";
+$ python -c 'import yaml
+path = "install-config.yaml"
+data = yaml.safe_load(open(path))
+data["networking"]["machineNetwork"][0]["cidr"] = "192.0.2.0/24"
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
-**NOTE**: All the scripts in this guide work with Python 3 as well as Python 2.
+Next, we need to correct the `apiVIP` and `ingressVIP` values.
+
+The following script will clear the values from the `install-config.yaml` file so that the installer will pick
+the 5th and 7th IP addresses in the new range, 192.0.2.5 and 192.0.2.7. 
+
+```sh
+$ python -c 'import yaml
+import sys
+path = "install-config.yaml"
+data = yaml.safe_load(open(path))
+if "apiVIP" in data["platform"]["openstack"]:
+   del data["platform"]["openstack"]["apiVIP"]
+if "ingressVIP" in data["platform"]["openstack"]:
+   del data["platform"]["openstack"]["ingressVIP"]
+open(path, "w").write(yaml.dump(data, default_flow_style=False))'
+```
+
+If you want to specify the values yourself, you can use the following script, which sets them to 192.0.2.8
+and 192.0.2.9.
+
+```sh
+$ python -c 'import yaml
+import sys
+path = "install-config.yaml"
+data = yaml.safe_load(open(path))
+if "apiVIP" in data["platform"]["openstack"]:
+   data["platform"]["openstack"]["apiVIP"] = "192.0.2.8"
+if "ingressVIP" in data["platform"]["openstack"]:
+   data["platform"]["openstack"]["ingressVIP"] = "192.0.2.9"
+open(path, "w").write(yaml.dump(data, default_flow_style=False))'
+```
+
+**NOTE**: All the scripts in this guide work with Python 3 as well as Python 2. You can also choose to edit the 
+`install-config.yaml` file by hand.
 
 ### Empty Compute Pools
 
@@ -295,10 +342,10 @@ This command will do it for you:
 
 ```sh
 $ python -c '
-import yaml;
-path = "install-config.yaml";
-data = yaml.safe_load(open(path));
-data["compute"][0]["replicas"] = 0;
+import yaml
+path = "install-config.yaml"
+data = yaml.safe_load(open(path))
+data["compute"][0]["replicas"] = 0
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
@@ -312,10 +359,10 @@ This command will do it for you:
 
 ```sh
 $ python -c '
-import yaml;
-path = "install-config.yaml";
-data = yaml.safe_load(open(path));
-data["networking"]["networkType"] = "Kuryr";
+import yaml
+path = "install-config.yaml"
+data = yaml.safe_load(open(path))
+data["networking"]["networkType"] = "Kuryr"
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
@@ -398,10 +445,10 @@ Currently [emptying the compute pools][empty-compute-pools] makes control-plane 
 
 ```sh
 $ python -c '
-import yaml;
+import yaml
 path = "manifests/cluster-scheduler-02-config.yml"
-data = yaml.safe_load(open(path));
-data["spec"]["mastersSchedulable"] = False;
+data = yaml.safe_load(open(path))
+data["spec"]["mastersSchedulable"] = False
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
@@ -474,7 +521,8 @@ import os
 with open('bootstrap.ign', 'r') as f:
     ignition = json.load(f)
 
-files = ignition['storage'].get('files', [])
+storage = ignition.get('storage', {})
+files = storage.get('files', [])
 
 infra_id = os.environ.get('INFRA_ID', 'openshift').encode()
 hostname_b64 = base64.standard_b64encode(infra_id + b'-bootstrap\n').decode().strip()
@@ -502,7 +550,8 @@ if ca_cert_path:
         },
     })
 
-ignition['storage']['files'] = files;
+storage['files'] = files
+ignition['storage'] = storage
 
 with open('bootstrap.ign', 'w') as f:
     json.dump(ignition, f)
@@ -616,7 +665,7 @@ Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`
       ]
     },
     "version": "3.1.0"
-  },
+  }
 }
 ```
 
@@ -639,7 +688,7 @@ In order for the bootstrap node to retrieve the ignition file when it is served 
       }
     },
     "version": "3.1.0"
-  },
+  }
 }
 ```
 
@@ -654,12 +703,12 @@ We will deploy three Control plane (master) nodes. Their Ignition configs can be
 ```sh
 $ for index in $(seq 0 2); do
     MASTER_HOSTNAME="$INFRA_ID-master-$index\n"
-    python -c "import base64, json, sys;
-ignition = json.load(sys.stdin);
-storage = ignition.get('storage', {});
-files = storage.get('files', []);
-files.append({'path': '/etc/hostname', 'mode': 420, 'contents': {'source': 'data:text/plain;charset=utf-8;base64,' + base64.standard_b64encode(b'$MASTER_HOSTNAME').decode().strip()}});
-storage['files'] = files;
+    python -c "import base64, json, sys
+ignition = json.load(sys.stdin)
+storage = ignition.get('storage', {})
+files = storage.get('files', [])
+files.append({'path': '/etc/hostname', 'mode': 420, 'contents': {'source': 'data:text/plain;charset=utf-8;base64,' + base64.standard_b64encode(b'$MASTER_HOSTNAME').decode().strip()}})
+storage['files'] = files
 ignition['storage'] = storage
 json.dump(ignition, sys.stdout)" <master.ign >"$INFRA_ID-master-$index-ignition.json"
 done

@@ -82,6 +82,7 @@ func Destroy(dir string) (err error) {
 		}
 	case ovirt.Name:
 		extraArgs = append(extraArgs, "-target=module.template.ovirt_vm.tmp_import_vm")
+		extraArgs = append(extraArgs, "-target=module.template.ovirt_image_transfer.releaseimage")
 	}
 
 	extraArgs = append(extraArgs, "-target=module.bootstrap")

@@ -90,6 +90,7 @@ func parseCertificateBundle(userCA []byte) ([]igntypes.Resource, error) {
 // in its Security section.
 func generateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL string, tokenID string) (string, error) {
 	fileMode := 420
+	bootstrapHTTPResponseHeaders := 120
 
 	// Hostname Config
 	contents := fmt.Sprintf("%s-bootstrap", clusterID)
@@ -140,7 +141,10 @@ func generateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL st
 
 	ign := igntypes.Config{
 		Ignition: igntypes.Ignition{
-			Version:  igntypes.MaxVersion.String(),
+			Version: igntypes.MaxVersion.String(),
+			Timeouts: igntypes.Timeouts{
+				HTTPResponseHeaders: &bootstrapHTTPResponseHeaders,
+			},
 			Security: security,
 			Config: igntypes.IgnitionConfig{
 				Merge: []igntypes.Resource{

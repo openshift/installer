@@ -77,14 +77,13 @@ func Platform() (*openstack.Platform, error) {
 		return nil, err
 	}
 
-	lbFloatingIP := ""
+	var lbFloatingIP string
 	if extNet != "" {
 		floatingIPNames, err := getFloatingIPNames(cloud, extNet)
 		if err != nil {
 			return nil, err
 		}
 		sort.Strings(floatingIPNames)
-		var lbFloatingIP string
 		err = survey.Ask([]*survey.Question{
 			{
 				Prompt: &survey.Select{

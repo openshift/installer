@@ -222,10 +222,21 @@ func applyTemplateData(data []byte, templateData interface{}) []byte {
 
 // Load returns the manifests asset from disk.
 func (m *Manifests) Load(f asset.FileFetcher) (bool, error) {
-	fileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*"))
+	yamlFileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.yaml"))
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "failed to load *.yaml files")
 	}
+	ymlFileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.yml"))
+	if err != nil {
+		return false, errors.Wrap(err, "failed to load *.yml files")
+	}
+	jsonFileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.json"))
+	if err != nil {
+		return false, errors.Wrap(err, "failed to load *.json files")
+	}
+	fileList := append(yamlFileList, ymlFileList...)
+	fileList = append(fileList, jsonFileList...)
+
 	if len(fileList) == 0 {
 		return false, nil
 	}
