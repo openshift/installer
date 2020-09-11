@@ -4,7 +4,7 @@ all:
     ovirt_cluster: "Default"
 
     ocp:
-      assets_dir: "./wrk"
+      assets_dir: "{{ lookup('env', 'ASSETS_DIR') }}"
       ovirt_config_path: "{{ lookup('env', 'HOME') }}/.ovirt/ovirt-config.yaml"
 
     rhcos:
