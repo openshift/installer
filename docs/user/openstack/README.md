@@ -323,9 +323,9 @@ If you have created the API DNS record, you should be able access the OpenShift 
 
 ##### External Ingress (apps) Access
 
-The installer doesn't currently handle the Ingress floating IP address the same way it does the API one.
+In the same manner, you may have specified an Ingress floating IP by adding the `ingressFloatingIP` entry in your `install-config.yaml`, in which case the installer attaches the Floating IP address to the `ingress-port` automatically.
 
-To make the OpenShift Ingress access available (this includes logging into the deployed cluster), you will need to attach the Ingress floating IP to the `ingress-port` after the cluster is created.
+If `ingressFloatingIP` is empty or absent in `install-config.yaml`, the Ingress port will be created but not attached to any floating IP. You can manually attach the Ingress floating IP to the ingress-port after the cluster is created.
 
 That can be done in the following steps:
 
