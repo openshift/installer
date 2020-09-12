@@ -22,11 +22,16 @@ aliases:
   libvirt-reviewers:
   openstack-approvers:
     - Fedosin
-    - mandre
-    - tomassedovic
+    - adduarte
     - iamemilio
+    - mandre
     - pierreprinetti
   openstack-reviewers:
+    - Fedosin
+    - adduarte
+    - iamemilio
+    - mandre
+    - pierreprinetti
   vsphere-approvers:
     - abhinavdahiya
     - dav1x
