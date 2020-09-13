@@ -16,6 +16,11 @@ func ForOKDExtensions(role string) (*mcfgv1.MachineConfig, error) {
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
 		},
+		Storage: igntypes.Storage{
+			Files: []igntypes.File{
+				ignition.FileFromString("/etc/sysconfig/selinux", "root", 0644, "SELINUX=permissive\nSELINUXTYPE=targeted"),
+			},
+		},
 	}
 
 	rawExt, err := ignition.ConvertToRawExtension(ignConfig)
