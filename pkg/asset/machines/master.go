@@ -21,6 +21,7 @@ import (
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 	packetapi "github.com/packethost/cluster-api-provider-packet/pkg/apis"
+	packetprovider "github.com/packethost/cluster-api-provider-packet/pkg/apis/packetprovider/v1alpha1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -487,6 +488,7 @@ func (m *Master) Machines() ([]machineapi.Machine, error) {
 		openstackprovider.SchemeGroupVersion,
 		vsphereprovider.SchemeGroupVersion,
 		ovirtprovider.SchemeGroupVersion,
+		packetprovider.SchemeGroupVersion,
 	)
 
 	machines := []machineapi.Machine{}

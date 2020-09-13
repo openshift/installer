@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	"github.com/openshift/installer/pkg/asset/installconfig/packet"
 	"github.com/openshift/installer/pkg/asset/machines"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
@@ -30,6 +31,7 @@ import (
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	packettypes "github.com/openshift/installer/pkg/types/packet"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -177,6 +179,19 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 				Base64encodeCABundle: base64.StdEncoding.EncodeToString([]byte(conf.CABundle)),
 			},
 		}
+	case packettypes.Name:
+		conf, err := packet.NewConfig()
+		if err != nil {
+			return err
+		}
+
+		cloudCreds = cloudCredsSecretData{
+			Packet: &PacketCredsSecretData{
+				Base64encodeURL:      base64.StdEncoding.EncodeToString([]byte(conf.APIURL)),
+				Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(conf.APIKey)),
+			},
+		}
+
 	}
 
 	templateData := &openshiftTemplateData{

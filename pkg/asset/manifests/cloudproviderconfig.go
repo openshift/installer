@@ -26,6 +26,7 @@ import (
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
+	packettypes "github.com/openshift/installer/pkg/types/packet"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -83,7 +84,8 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	}
 
 	switch installConfig.Config.Platform.Name() {
-	case awstypes.Name, libvirttypes.Name, nonetypes.Name, baremetaltypes.Name, ovirttypes.Name:
+	case awstypes.Name, libvirttypes.Name, nonetypes.Name, baremetaltypes.Name, ovirttypes.Name, packettypes.Name:
+		// TODO(displague) What should Packet do?
 		return nil
 	case openstacktypes.Name:
 		cloud, err := icopenstack.GetSession(installConfig.Config.Platform.OpenStack.Cloud)
