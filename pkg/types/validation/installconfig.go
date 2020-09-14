@@ -451,21 +451,21 @@ func validateProxy(p *types.Proxy, fldPath *field.Path) field.ErrorList {
 	}
 	if p.HTTPProxy != "" {
 		if err := validate.URI(p.HTTPProxy); err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("HTTPProxy"), p.HTTPProxy, err.Error()))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("httpProxy"), p.HTTPProxy, err.Error()))
 		}
 	}
 	if p.HTTPSProxy != "" {
 		if err := validate.URI(p.HTTPSProxy); err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("HTTPSProxy"), p.HTTPSProxy, err.Error()))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("httpsProxy"), p.HTTPSProxy, err.Error()))
 		}
 	}
-	if p.NoProxy != "" {
-		for _, v := range strings.Split(p.NoProxy, ",") {
+	if p.NoProxy != "" && p.NoProxy != "*" {
+		for idx, v := range strings.Split(p.NoProxy, ",") {
 			v = strings.TrimSpace(v)
 			errDomain := validate.NoProxyDomainName(v)
 			_, _, errCIDR := net.ParseCIDR(v)
 			if errDomain != nil && errCIDR != nil {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("NoProxy"), v, "must be a CIDR or domain, without wildcard characters"))
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("noProxy").Index(idx), v, "must be a CIDR or domain, without wildcard characters"))
 			}
 		}
 	}
