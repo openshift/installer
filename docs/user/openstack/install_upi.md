@@ -73,7 +73,7 @@ The requirements for UPI are broadly similar to the [ones for OpenStack IPI][ipi
   - input in the `openshift-install` wizard
 - Nova flavors
   - inventory: `os_flavor_master` and `os_flavor_worker`
-- An external subnet you want to use for floating IP addresses
+- An external subnet you want to use for floating IP addresses (if FIPs are used)
   - inventory: `os_external_network`
 - The `openshift-install` binary
 - A subnet range for the Nova servers / OpenShift Nodes, that does not conflict with your existing network
@@ -209,6 +209,8 @@ $ openstack image show rhcos
 [rhcos-image]: https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/
 
 ## API and Ingress Floating IP Addresses
+
+If the variables `os_api_fip` and `os_ingress_fip` are found in `inventory.yaml`, the corresponding floating IPs will be attached to the API load balancer and to the worker nodes load balancer respectively. Note that `os_external_network` is a requirement for those. If `os_external_network` is found in `inventory.yaml`, the playbooks will create and attach an additional floating IP to the bootstrap machine.
 
 **NOTE**: throughout this document, we will use `203.0.113.23` as the public IP address for the OpenShift API endpoint and `203.0.113.19` as the public IP for the ingress (`*.apps`) endpoint.
 

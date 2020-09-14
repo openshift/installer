@@ -106,11 +106,14 @@
       network: "{{ os_external_network }}"
       interfaces:
       - "{{ os_subnet }}"
+    when: os_external_network is defined and os_external_network|length>0
 
   - name: 'Set external router tag'
     command:
       cmd: "openstack router set --tag {{ cluster_id_tag }} {{ os_router }}"
-    when: os_networking_type == "Kuryr"
+    when:
+    - os_networking_type == "Kuryr"
+    - os_external_network is defined and os_external_network|length>0
 
   - name: 'Create the API port'
     os_port:
@@ -145,9 +148,11 @@
   - name: 'Attach the API floating IP to API port'
     command:
       cmd: "openstack floating ip set --port {{ os_port_api }} {{ os_api_fip }}"
+    when: os_api_fip is defined and os_api_fip|length>0
 
   # NOTE: openstack ansible module doesn't allow attaching Floating IPs to
   # ports, let's use the CLI instead
   - name: 'Attach the Ingress floating IP to Ingress port'
     command:
       cmd: "openstack floating ip set --port {{ os_port_ingress }} {{ os_ingress_fip }}"
+    when: os_ingress_fip is defined and os_ingress_fip|length>0
