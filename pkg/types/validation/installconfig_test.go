@@ -700,7 +700,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.HTTPProxy = "http://bad%20uri"
 				return c
 			}(),
-			expectedError: `^HTTPProxy: Invalid value: "http://bad%20uri": parse .*: invalid URL escape "%20"$`,
+			expectedError: `^proxy.httpProxy: Invalid value: "http://bad%20uri": parse .*: invalid URL escape "%20"$`,
 		},
 		{
 			name: "invalid HTTPSProxy",
@@ -709,7 +709,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.HTTPSProxy = "https://bad%20uri"
 				return c
 			}(),
-			expectedError: `^HTTPSProxy: Invalid value: "https://bad%20uri": parse .*: invalid URL escape "%20"$`,
+			expectedError: `^proxy.httpsProxy: Invalid value: "https://bad%20uri": parse .*: invalid URL escape "%20"$`,
 		},
 		{
 			name: "invalid NoProxy domain",
@@ -718,7 +718,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.NoProxy = "good-no-proxy.com, *.bad-proxy"
 				return c
 			}(),
-			expectedError: `^\QNoProxy: Invalid value: "*.bad-proxy": must be a CIDR or domain, without wildcard characters\E$`,
+			expectedError: `^\Qproxy.noProxy[1]: Invalid value: "*.bad-proxy": must be a CIDR or domain, without wildcard characters\E$`,
 		},
 		{
 			name: "invalid NoProxy CIDR",
@@ -727,7 +727,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.NoProxy = "good-no-proxy.com, 172.bad.CIDR.0/16"
 				return c
 			}(),
-			expectedError: `^\QNoProxy: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters\E$`,
+			expectedError: `^\Qproxy.noProxy[1]: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters\E$`,
 		},
 		{
 			name: "invalid NoProxy domain & CIDR",
@@ -736,7 +736,15 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Proxy.NoProxy = "good-no-proxy.com, a-good-one, *.bad-proxy., another,   172.bad.CIDR.0/16, good-end"
 				return c
 			}(),
-			expectedError: `^\Q[NoProxy: Invalid value: "*.bad-proxy.": must be a CIDR or domain, without wildcard characters, NoProxy: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters]\E$`,
+			expectedError: `^\Q[proxy.noProxy[2]: Invalid value: "*.bad-proxy.": must be a CIDR or domain, without wildcard characters, proxy.noProxy[4]: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters]\E$`,
+		},
+		{
+			name: "valid * NoProxy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.NoProxy = "*"
+				return c
+			}(),
 		},
 		{
 			name: "valid GCP platform",
