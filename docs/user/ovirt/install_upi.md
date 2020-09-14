@@ -451,6 +451,10 @@ Other than the ignition files the installer generated
 The `infraID` will be used by the UPI Ansible playbooks as prefix for the VMs created during the installation
 process avoiding name clashes in case of multiple installations in the same oVirt/RHV cluster.
 
+**Note:** certificates contained into ignition config files expire after 24 hours. You must complete the cluster installation
+and keep the cluster running for 24 hours in a non-degradated state to ensure that the first certificate rotation has finished.
+
+
 ## Create templates and VMs
 After having checked that all our variables in the `inventory.yml` fit the needs, we can run the first of our Ansible provisioning
 playbooks.
