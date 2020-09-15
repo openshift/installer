@@ -1,0 +1,8 @@
+[openstack-train]
+name=OpenStack Train Repository
+baseurl=http://mirror.centos.org/centos/$releasever/cloud/$basearch/openstack-train/
+#mirrorlist=http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=cloud-openstack-train
+gpgcheck=1
+enabled=1
+module_hotfixes=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-Cloud
