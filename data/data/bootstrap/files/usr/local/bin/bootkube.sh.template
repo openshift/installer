@@ -165,9 +165,11 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
 		--config-output-file=/assets/kube-controller-manager-bootstrap/config \
+		--cpc-config-output-file=/assets/kube-controller-manager-bootstrap/cpc-config \
 		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml
 
 	cp kube-controller-manager-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-controller-manager-config.yaml
+	cp kube-controller-manager-bootstrap/cpc-config /etc/kubernetes/bootstrap-configs/cluster-policy-controller-config.yaml
 	cp kube-controller-manager-bootstrap/bootstrap-manifests/* bootstrap-manifests/
 	cp kube-controller-manager-bootstrap/manifests/* manifests/
 
