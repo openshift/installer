@@ -54,14 +54,9 @@
       image_path: "{{ rhcos.local_image_path }}"
       template_cluster: "{{ item.cluster }}"
       template_name: "{{ item.template }}"
-      template_cpu: "{{ item.cores }}"
-      template_memory: "{{ item.memory }}"
       template_memory_guaranteed: "{{ item.memory_guaranteed | default(omit) }}"
-      template_disk_size: "{{ item.disks.0.size}}"
-      template_disk_interface: "{{ item.disks.0.interface }}"
       template_disk_storage: "{{ item.disks.0.storage_domain }}"
       template_operating_system: "{{ item.operating_system }}"
-      template_type: "{{ item.type }}"
       template_seal: no
     loop:
     - "{{ control_plane }}"
