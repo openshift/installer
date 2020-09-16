@@ -9,6 +9,11 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `computeSubnet` (optional string): The name of an existing GCP subnet which should be used by the cluster nodes.
 * `defaultMachinePlatform` (optional object): Default [GCP-specific machine pool properties](#machine-pools) which apply to [machine pools](../customization.md#machine-pools) that do not define their own GCP-specific properties.
 * `licenses` (optional list of strings): A list of license URLs (https) that should be applied to the compute images (as defined in [the API][compute-images]). The use of this property in combination with any mechanism that results in using pre-built images (such as the current OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE) is forbidden. Also, note that use of these URLs will force the installer to copy the source image before being used. An example of this license is the one that enables [nested virtualization][gcp-nested]. A full list of available licenses can be retrieved using [the license API][license-api].
+* `labels` (optional object): A map of key-value pairs to apply to resources that are created. Not all GCP resources support labels.
+  Additionally, the following requirements apply:
+    * Keys and values cannot be longer than be 63 characters each.
+    * Keys and values can only contain lowercase letters, numeric characters, underscores, and hyphens. International characters are allowed.
+    * Keys must start with a lowercase letter and cannot be empty.
 
 ## Machine pools
 

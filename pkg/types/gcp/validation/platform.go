@@ -2,8 +2,10 @@ package validation
 
 import (
 	"os"
-
+	"regexp"
 	"sort"
+	"unicode"
+	"unicode/utf8"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -53,6 +55,7 @@ var (
 		sort.Strings(validValues)
 		return validValues
 	}()
+	labelRE = regexp.MustCompile(`^[\p{Ll}\d_-]{0,63}$`)
 )
 
 // ValidatePlatform checks that the specified platform is valid.
@@ -87,5 +90,33 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path) field.ErrorList {
 		}
 	}
 
+	allErrs = append(allErrs, validateLabels(p.Labels, fldPath.Child("labels"))...)
+
+	return allErrs
+}
+
+func validateLabels(labels map[string]string, fldPath *field.Path) field.ErrorList {
+	const labelReqs = "must be less than 63 characters and can only contain lowercase letters, numeric characters, underscores, and hyphens"
+	const maxLabelCount = 64
+	allErrs := field.ErrorList{}
+	if len(labels) > maxLabelCount {
+		allErrs = append(allErrs, field.TooMany(fldPath, len(labels), maxLabelCount))
+	}
+	for k, v := range labels {
+		if k == "" {
+			allErrs = append(allErrs, field.Invalid(fldPath.Key(k), k, "Label key cannot be empty"))
+		} else {
+			r, _ := utf8.DecodeRuneInString(k)
+			if !unicode.IsLower(r) {
+				allErrs = append(allErrs, field.Invalid(fldPath.Key(k), k, "Label key must start with a lowercase letter"))
+			}
+		}
+		if !labelRE.MatchString(k) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Key(k), k, "Label key "+labelReqs))
+		}
+		if !labelRE.MatchString(v) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Key(k), v, "Label value "+labelReqs))
+		}
+	}
 	return allErrs
 }

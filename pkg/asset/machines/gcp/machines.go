@@ -91,6 +91,7 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			Type:       mpool.OSDisk.DiskType,
 			Image:      osImage,
 		}},
+		Labels: platform.Labels,
 		NetworkInterfaces: []*gcpprovider.GCPNetworkInterface{{
 			Network:    network,
 			Subnetwork: subnetwork,

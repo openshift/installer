@@ -37,4 +37,14 @@ type Platform struct {
 	// such as the current env OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE
 	// +optional
 	Licenses []string `json:"licenses,omitempty"`
+
+	// Labels is a map of key-value pairs to apply to resources that are created.
+	// Not all GCP resources support labels.
+	// Additionally, the following requirements apply:
+	// Keys and values cannot be longer than be 63 characters each.
+	// Keys and values can only contain lowercase letters, numeric characters, underscores,
+	// and hyphens. International characters are allowed.
+	// Keys must start with a lowercase letter and cannot be empty.
+	// +optional
+	Labels map[string]string `json:"labels,omitempty"`
 }

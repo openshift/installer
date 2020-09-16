@@ -345,6 +345,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PublicZoneName:     publicZoneName,
 				PublishStrategy:    installConfig.Config.Publish,
 				PreexistingNetwork: preexistingnetwork,
+				Labels:             installConfig.Config.GCP.Labels,
 			},
 		)
 		if err != nil {
