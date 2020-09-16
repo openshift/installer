@@ -16,22 +16,23 @@ type Auth struct {
 
 type config struct {
 	Auth                    `json:",inline"`
-	Region                  string   `json:"gcp_region,omitempty"`
-	BootstrapInstanceType   string   `json:"gcp_bootstrap_instance_type,omitempty"`
-	MasterInstanceType      string   `json:"gcp_master_instance_type,omitempty"`
-	MasterAvailabilityZones []string `json:"gcp_master_availability_zones"`
-	ImageURI                string   `json:"gcp_image_uri,omitempty"`
-	Image                   string   `json:"gcp_image,omitempty"`
-	PreexistingImage        bool     `json:"gcp_preexisting_image"`
-	ImageLicenses           []string `json:"gcp_image_licenses,omitempty"`
-	VolumeType              string   `json:"gcp_master_root_volume_type"`
-	VolumeSize              int64    `json:"gcp_master_root_volume_size"`
-	PublicZoneName          string   `json:"gcp_public_dns_zone_name,omitempty"`
-	PublishStrategy         string   `json:"gcp_publish_strategy,omitempty"`
-	PreexistingNetwork      bool     `json:"gcp_preexisting_network,omitempty"`
-	ClusterNetwork          string   `json:"gcp_cluster_network,omitempty"`
-	ControlPlaneSubnet      string   `json:"gcp_control_plane_subnet,omitempty"`
-	ComputeSubnet           string   `json:"gcp_compute_subnet,omitempty"`
+	Region                  string            `json:"gcp_region,omitempty"`
+	BootstrapInstanceType   string            `json:"gcp_bootstrap_instance_type,omitempty"`
+	MasterInstanceType      string            `json:"gcp_master_instance_type,omitempty"`
+	MasterAvailabilityZones []string          `json:"gcp_master_availability_zones"`
+	ImageURI                string            `json:"gcp_image_uri,omitempty"`
+	Image                   string            `json:"gcp_image,omitempty"`
+	PreexistingImage        bool              `json:"gcp_preexisting_image"`
+	ImageLicenses           []string          `json:"gcp_image_licenses,omitempty"`
+	VolumeType              string            `json:"gcp_master_root_volume_type"`
+	VolumeSize              int64             `json:"gcp_master_root_volume_size"`
+	PublicZoneName          string            `json:"gcp_public_dns_zone_name,omitempty"`
+	PublishStrategy         string            `json:"gcp_publish_strategy,omitempty"`
+	PreexistingNetwork      bool              `json:"gcp_preexisting_network,omitempty"`
+	ClusterNetwork          string            `json:"gcp_cluster_network,omitempty"`
+	ControlPlaneSubnet      string            `json:"gcp_control_plane_subnet,omitempty"`
+	ComputeSubnet           string            `json:"gcp_compute_subnet,omitempty"`
+	Labels                  map[string]string `json:"gcp_extra_labels,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -44,6 +45,7 @@ type TFVarsSources struct {
 	PublicZoneName     string
 	PublishStrategy    types.PublishingStrategy
 	PreexistingNetwork bool
+	Labels             map[string]string
 }
 
 // TFVars generates gcp-specific Terraform variables launching the cluster.
@@ -72,6 +74,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ControlPlaneSubnet:      masterConfig.NetworkInterfaces[0].Subnetwork,
 		ComputeSubnet:           workerConfig.NetworkInterfaces[0].Subnetwork,
 		PreexistingNetwork:      sources.PreexistingNetwork,
+		Labels:                  sources.Labels,
 	}
 	cfg.PreexistingImage = true
 	if len(sources.ImageLicenses) > 0 {

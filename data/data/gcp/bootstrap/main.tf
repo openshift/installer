@@ -1,6 +1,7 @@
 resource "google_storage_bucket" "ignition" {
   name     = "${var.cluster_id}-bootstrap-ignition"
   location = var.region
+  labels   = var.labels
 }
 
 resource "google_storage_bucket_object" "ignition" {
@@ -50,9 +51,10 @@ resource "google_compute_instance" "bootstrap" {
 
   boot_disk {
     initialize_params {
-      type  = var.root_volume_type
-      size  = var.root_volume_size
-      image = var.image
+      type   = var.root_volume_type
+      size   = var.root_volume_size
+      image  = var.image
+      labels = var.labels
     }
   }
 

@@ -91,6 +91,7 @@ module "dns" {
   api_external_lb_ip   = module.network.cluster_public_ip
   api_internal_lb_ip   = module.network.cluster_ip
   public_endpoints     = local.public_endpoints
+  labels               = local.labels
 }
 
 resource "google_compute_image" "cluster" {
@@ -111,4 +112,6 @@ resource "google_compute_image" "cluster" {
   }
 
   licenses = var.gcp_image_licenses
+
+  labels = local.labels
 }

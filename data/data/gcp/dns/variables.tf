@@ -32,3 +32,9 @@ variable "public_endpoints" {
   type        = bool
   description = "If the cluster should have externally accessible resources."
 }
+
+variable "labels" {
+  type        = map(string)
+  description = "GCP labels to be applied to created resources."
+  default     = {}
+}

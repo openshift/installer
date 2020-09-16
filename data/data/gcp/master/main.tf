@@ -37,9 +37,10 @@ resource "google_compute_instance" "master" {
 
   boot_disk {
     initialize_params {
-      type  = var.root_volume_type
-      size  = var.root_volume_size
-      image = var.image
+      type   = var.root_volume_type
+      size   = var.root_volume_size
+      image  = var.image
+      labels = var.labels
     }
   }
 
