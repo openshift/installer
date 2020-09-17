@@ -68,7 +68,7 @@ func parseCertificateBundle(userCA []byte) ([]igntypes.Resource, error) {
 		var block *pem.Block
 		block, userCA = pem.Decode(userCA)
 		if block == nil {
-			return nil, fmt.Errorf("unable to parse certificate, please check the cacert section of clouds.yaml")
+			return nil, fmt.Errorf("failed to parse the certificate with index %d from the additional trustbundle", len(carefs))
 		}
 
 		carefs = append(carefs, igntypes.Resource{Source: ignutil.StrToPtr(dataurl.EncodeBytes(pem.EncodeToMemory(block)))})

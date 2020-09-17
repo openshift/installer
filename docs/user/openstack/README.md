@@ -223,7 +223,9 @@ sudo cp ca.crt.pem /etc/pki/ca-trust/source/anchors/
 sudo update-ca-trust extract
 ```
 
-Next, you should add the `cacert` key to your `clouds.yaml`. Its value should be a valid path to your CA cert that does not require root privilege to read. The path can be either absolute, or relative to the current working directory while running the installer.
+The additional trust bundle will be fetched from [the `additionalTrustBundle` property of `install-config.yaml`](https://github.com/openshift/installer/blob/master/docs/user/customization.md#platform-customization).
+
+Alternatively, the Installer will use the `cacert` property of the corresponding cloud in `clouds.yaml`. This value should be a valid path to your CA cert that does not require root privilege to read. The path can be either absolute, or relative to the current working directory while running the installer.
 
 ```yaml
 clouds:

@@ -389,6 +389,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			caCert = string(caFile)
 		}
 
+		// If additionalTrustBundle is set in install-config, use it
+		// possibly overwriting the clouds.yaml cacert property
+		if installConfig.Config.AdditionalTrustBundle != "" {
+			caCert = installConfig.Config.AdditionalTrustBundle
+		}
+
 		masters, err := mastersAsset.Machines()
 		if err != nil {
 			return err

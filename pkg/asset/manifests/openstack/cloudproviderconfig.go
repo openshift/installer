@@ -1,32 +1,67 @@
 package openstack
 
 import (
+	"io/ioutil"
 	"strconv"
 	"strings"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/openshift/installer/pkg/asset/installconfig/openstack"
+	"github.com/openshift/installer/pkg/types"
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 )
 
-// CloudProviderConfig generates the cloud provider config for the OpenStack platform.
-func CloudProviderConfig(cloud *clientconfig.Cloud) string {
-	res := `[Global]
+func getCaBundle(cloud *clientconfig.Cloud, installConfig types.InstallConfig) (string, error) {
+	// install-config's additionalTrustBundle property overrides
+	// clouds.yaml's cacert
+	if caCert := installConfig.AdditionalTrustBundle; caCert != "" {
+		return caCert, nil
+	}
+
+	// Get the ca-cert-bundle key if there is a value for cacert in clouds.yaml
+	if caPath := cloud.CACertFile; caPath != "" {
+		caCert, err := ioutil.ReadFile(caPath)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to read clouds.yaml ca-cert from disk")
+		}
+		return string(caCert), nil
+	}
+
+	return "", nil
+}
+
+// GenerateCloudProviderConfig adds the cloud provider config for the OpenStack
+// platform in the provided configmap.
+func GenerateCloudProviderConfig(cm *corev1.ConfigMap, cloudProviderConfigDataKey string, installConfig types.InstallConfig) error {
+	cloud, err := openstack.GetSession(installConfig.Platform.OpenStack.Cloud)
+	if err != nil {
+		return errors.Wrap(err, "failed to get cloud config for openstack")
+	}
+
+	cm.Data[cloudProviderConfigDataKey] = `[Global]
 secret-name = openstack-credentials
 secret-namespace = kube-system
 `
-	if cloud.RegionName != "" {
-		res += "region = " + cloud.RegionName + "\n"
+	if regionName := cloud.CloudConfig.RegionName; regionName != "" {
+		cm.Data[cloudProviderConfigDataKey] += "region = " + regionName + "\n"
 	}
 
-	if cloud.CACertFile != "" {
-		res += "ca-file = /etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem\n"
+	caBundle, err := getCaBundle(cloud.CloudConfig, installConfig)
+	if err != nil {
+		return errors.Wrap(err, "failed to get the additional trust-bundle")
+	}
+	if caBundle != "" {
+		cm.Data[cloudProviderConfigDataKey] += "ca-file = /etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem\n"
+		cm.Data["ca-bundle.pem"] = caBundle
 	}
 
-	return res
+	return nil
 }
 
 // CloudProviderConfigSecret generates the cloud provider config for the OpenStack
 // platform, that will be stored in the system secret.
-func CloudProviderConfigSecret(cloud *clientconfig.Cloud) ([]byte, error) {
+func CloudProviderConfigSecret(cloud *clientconfig.Cloud, installConfig types.InstallConfig) ([]byte, error) {
 	domainID := cloud.AuthInfo.DomainID
 	if domainID == "" {
 		domainID = cloud.AuthInfo.UserDomainID
@@ -69,7 +104,11 @@ func CloudProviderConfigSecret(cloud *clientconfig.Cloud) ([]byte, error) {
 	if cloud.RegionName != "" {
 		res.WriteString("region = " + strconv.Quote(cloud.RegionName) + "\n")
 	}
-	if cloud.CACertFile != "" {
+	caBundle, err := getCaBundle(cloud, installConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get the additional trust-bundle")
+	}
+	if caBundle != "" {
 		res.WriteString("ca-file = /etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem\n")
 	}
 

@@ -139,7 +139,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			return err
 		}
 
-		cloudProviderConf, err := openstackmanifests.CloudProviderConfigSecret(cloud)
+		cloudProviderConf, err := openstackmanifests.CloudProviderConfigSecret(cloud, *installConfig.Config)
 		if err != nil {
 			return err
 		}
