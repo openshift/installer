@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
+	openstackclientconfig "github.com/gophercloud/utils/openstack/clientconfig"
 	baremetalapi "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis"
 	baremetalprovider "github.com/metal3-io/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
 	gcpapi "github.com/openshift/cluster-api-provider-gcp/pkg/apis"
@@ -352,7 +353,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-			sets, err := openstack.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data")
+			sets, err := openstack.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data", &openstackclientconfig.ClientOpts{})
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
