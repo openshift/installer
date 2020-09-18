@@ -16,7 +16,7 @@ import (
 // Constraints returns a list of quota constraints based on the InstallConfig.
 // These constraints can be used to check if there is enough quota for creating a cluster
 // for the isntall config.
-func Constraints(config *types.InstallConfig, controlPlanes []machineapi.Machine, computes []machineapi.MachineSet) []quota.Constraint {
+func Constraints(client *Client, config *types.InstallConfig, controlPlanes []machineapi.Machine, computes []machineapi.MachineSet) []quota.Constraint {
 	ctrplConfigs := make([]*gcpprovider.GCPMachineProviderSpec, len(controlPlanes))
 	for i, m := range controlPlanes {
 		ctrplConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
@@ -33,8 +33,8 @@ func Constraints(config *types.InstallConfig, controlPlanes []machineapi.Machine
 		network(config),
 		apiExternal(config),
 		apiInternal(config),
-		controlPlane(config, ctrplConfigs),
-		compute(config, computeReplicas, computeConfigs),
+		controlPlane(client, config, ctrplConfigs),
+		compute(client, config, computeReplicas, computeConfigs),
 		others,
 	} {
 		ret = append(ret, gen()...)
@@ -140,11 +140,11 @@ func apiInternal(config *types.InstallConfig) func() []quota.Constraint {
 	}
 }
 
-func controlPlane(config *types.InstallConfig, machines []*gcpprovider.GCPMachineProviderSpec) func() []quota.Constraint {
+func controlPlane(client MachineTypeGetter, config *types.InstallConfig, machines []*gcpprovider.GCPMachineProviderSpec) func() []quota.Constraint {
 	return func() []quota.Constraint {
 		var ret []quota.Constraint
 		for _, m := range machines {
-			q := machineTypeToQuota(m.MachineType)
+			q := machineTypeToQuota(client, m.Zone, m.MachineType)
 			q.Region = config.Platform.GCP.Region
 			ret = append(ret, q)
 		}
@@ -158,11 +158,11 @@ func controlPlane(config *types.InstallConfig, machines []*gcpprovider.GCPMachin
 	}
 }
 
-func compute(config *types.InstallConfig, replicas []int64, machines []*gcpprovider.GCPMachineProviderSpec) func() []quota.Constraint {
+func compute(client MachineTypeGetter, config *types.InstallConfig, replicas []int64, machines []*gcpprovider.GCPMachineProviderSpec) func() []quota.Constraint {
 	return func() []quota.Constraint {
 		var ret []quota.Constraint
 		for idx, m := range machines {
-			q := machineTypeToQuota(m.MachineType)
+			q := machineTypeToQuota(client, m.Zone, m.MachineType)
 			q.Count = q.Count * replicas[idx]
 			q.Region = config.Platform.GCP.Region
 			ret = append(ret, q)
@@ -189,30 +189,45 @@ func others() []quota.Constraint {
 	}}
 }
 
-func machineTypeToQuota(t string) quota.Constraint {
-	var class string
-	var count int64
-	split := strings.Split(t, "-")
-	switch len(split) {
-	case 3, 4:
-		class = split[0]
-		if c, err := strconv.ParseInt(split[2], 10, 0); err == nil {
-			count = c
-		}
-	case 2:
-		class = split[0]
-	}
+func machineTypeToQuota(client MachineTypeGetter, zone string, machineType string) quota.Constraint {
+	var name string
+	class := strings.SplitN(machineType, "-", 2)[0]
 	switch class {
 	case "c2", "m1", "m2", "n2", "n2d":
-		return quota.Constraint{Name: fmt.Sprintf("compute.googleapis.com/%s_cpus", class), Count: count}
-	case "e2":
-		if count == 0 {
-			count = 2
-		}
-		return quota.Constraint{Name: "compute.googleapis.com/cpus", Count: count}
-	case "f1", "g1":
-		return quota.Constraint{Name: "compute.googleapis.com/cpus", Count: 1}
+		name = fmt.Sprintf("compute.googleapis.com/%s_cpus", class)
 	default:
-		return quota.Constraint{Name: "compute.googleapis.com/cpus", Count: count}
+		name = "compute.googleapis.com/cpus"
 	}
+
+	info, err := client.GetMachineType(zone, machineType)
+	if err != nil {
+		return quota.Constraint{Name: name, Count: guessMachineCPUCount(machineType)}
+	}
+	return quota.Constraint{Name: name, Count: info.GuestCpus}
+}
+
+// the guess is based on https://cloud.google.com/compute/docs/machine-types
+func guessMachineCPUCount(machineType string) int64 {
+	split := strings.Split(machineType, "-")
+	switch len(split) {
+	case 4:
+		if c, err := strconv.ParseInt(split[2], 10, 0); err == nil {
+			return c
+		}
+	case 3:
+		switch split[0] {
+		case "c2", "m1", "m2", "n1", "n2", "n2d", "e2":
+			if c, err := strconv.ParseInt(split[2], 10, 0); err == nil {
+				return c
+			}
+		}
+	case 2:
+		switch split[0] {
+		case "e2":
+			return 2
+		case "f1", "g1":
+			return 1
+		}
+	}
+	return 0
 }

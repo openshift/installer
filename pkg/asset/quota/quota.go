@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	configgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/quota/aws"
 	"github.com/openshift/installer/pkg/asset/quota/gcp"
@@ -104,7 +105,15 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to load Quota for services: %s", strings.Join(services, ", "))
 		}
-		reports, err := quota.Check(q, gcp.Constraints(ic.Config, masters, workers))
+		session, err := configgcp.GetSession(context.TODO())
+		if err != nil {
+			return errors.Wrap(err, "failed to load GCP session")
+		}
+		client, err := gcp.NewClient(context.TODO(), session, ic.Config.Platform.GCP.ProjectID)
+		if err != nil {
+			return errors.Wrap(err, "failed to create client for quota constraints")
+		}
+		reports, err := quota.Check(q, gcp.Constraints(client, ic.Config, masters, workers))
 		if err != nil {
 			return summarizeFailingReport(reports)
 		}
