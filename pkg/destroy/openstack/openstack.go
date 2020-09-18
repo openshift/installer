@@ -104,14 +104,14 @@ func (o *ClusterUninstaller) Run() error {
 		Cloud: o.Cloud,
 	}
 
-	err := cleanRouterRunner(opts, o.Filter, o.Logger, o.InfraID)
-	if err != nil {
-		return err
-	}
-
 	// launch goroutines
 	for name, function := range deleteFuncs {
 		go deleteRunner(name, function, opts, o.Filter, o.Logger, returnChannel)
+	}
+
+	err := cleanRouterRunner(opts, o.Filter, o.Logger, o.InfraID)
+	if err != nil {
+		return err
 	}
 
 	// wait for them to finish
@@ -552,6 +552,9 @@ func deleteCustomRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, 
 		logger.Debug(err)
 		return false, nil
 	}
+	if routerID == "" {
+		return true, nil
+	}
 
 	removed, err := removeRouterInterfaces(conn, filter, routerID, logger)
 	if err != nil {
@@ -644,7 +647,7 @@ func getRouterByPort(client *gophercloud.ServiceClient, allPorts []ports.Port) (
 			}
 		}
 	}
-	return "", errors.Errorf("No router found.")
+	return "", nil
 }
 
 func isClusterSubnet(subnets []subnets.Subnet, subnetID string) bool {
