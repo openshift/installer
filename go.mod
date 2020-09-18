@@ -55,7 +55,7 @@ require (
 	github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20200120152131-1b09fd9e7156
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20200504092944-27473ea1ae43
-	github.com/openshift/library-go v0.0.0-20200324092245-db2a8546af81
+	github.com/openshift/library-go v0.0.0-20200917093739-70fa806b210a
 	github.com/openshift/machine-api-operator v0.2.1-0.20200429102619-d36974451290
 	github.com/openshift/machine-config-operator v0.0.0
 	github.com/ovirt/go-ovirt v0.0.0-20200613023950-320a86f9df27
