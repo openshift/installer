@@ -540,7 +540,7 @@ files.append(
 ca_cert_path = os.environ.get('OS_CACERT', '')
 if ca_cert_path:
     with open(ca_cert_path, 'r') as f:
-        ca_cert = f.read().encode()
+        ca_cert = f.read().encode().strip()
         ca_cert_b64 = base64.standard_b64encode(ca_cert).decode().strip()
 
     files.append(
