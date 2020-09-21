@@ -675,8 +675,14 @@ Change the `ignition.config.merge.source` field to the URL hosting the `bootstra
 
 #### Ignition file served by server using self-signed certificate
 
-In order for the bootstrap node to retrieve the ignition file when it is served by a server using self-signed certificate, it is necessary to add the CA certificate to the `ignition.security.tls.certificateAuthorities` in the ignition file. Make sure the certificate does not include trailing new lines before it is encoded in base64. For instance:
+In order for the bootstrap node to retrieve the ignition file when it is served by a server using self-signed certificate, it is necessary to add the CA certificate to the `ignition.security.tls.certificateAuthorities` in the ignition file. Here is how you might do it.
 
+Encode the certificate to base64:
+```sh
+$ openssl x509 -in cacert.pem | base64 -w0
+```
+
+Add the base64-encoded certificate to the ignition shim:
 ```json
 {
   "ignition": {
