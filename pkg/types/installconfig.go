@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -145,7 +146,7 @@ type InstallConfig struct {
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
 func (c *InstallConfig) ClusterDomain() string {
-	return fmt.Sprintf("%s.%s", c.ObjectMeta.Name, c.BaseDomain)
+	return fmt.Sprintf("%s.%s", c.ObjectMeta.Name, strings.TrimSuffix(c.BaseDomain, "."))
 }
 
 // IsOKD returns true if community-only modifications are enabled
