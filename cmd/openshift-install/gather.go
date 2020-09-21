@@ -265,7 +265,7 @@ func logClusterOperatorConditions(ctx context.Context, config *rest.Config) erro
 		return errors.Wrap(err, "creating a config client")
 	}
 
-	operators, err := client.ConfigV1().ClusterOperators().List(metav1.ListOptions{})
+	operators, err := client.ConfigV1().ClusterOperators().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return errors.Wrap(err, "listing ClusterOperator objects")
 	}

@@ -208,14 +208,14 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 }
 
 // addRouterCAToClusterCA adds router CA to cluster CA in kubeconfig
-func addRouterCAToClusterCA(config *rest.Config, directory string) (err error) {
+func addRouterCAToClusterCA(ctx context.Context, config *rest.Config, directory string) (err error) {
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return errors.Wrap(err, "creating a Kubernetes client")
 	}
 
 	// Configmap may not exist. log and accept not-found errors with configmap.
-	caConfigMap, err := client.CoreV1().ConfigMaps("openshift-config-managed").Get("default-ingress-cert", metav1.GetOptions{})
+	caConfigMap, err := client.CoreV1().ConfigMaps("openshift-config-managed").Get(ctx, "default-ingress-cert", metav1.GetOptions{})
 	if err != nil {
 		return errors.Wrap(err, "fetching default-ingress-cert configmap from openshift-config-managed namespace")
 	}
@@ -439,7 +439,7 @@ func waitForConsole(ctx context.Context, config *rest.Config) (string, error) {
 	silenceRemaining := logDownsample
 	timer.StartTimer("Console")
 	wait.Until(func() {
-		consoleRoutes, err := rc.RouteV1().Routes(consoleNamespace).List(metav1.ListOptions{})
+		consoleRoutes, err := rc.RouteV1().Routes(consoleNamespace).List(ctx, metav1.ListOptions{})
 		if err == nil && len(consoleRoutes.Items) > 0 {
 			for _, route := range consoleRoutes.Items {
 				logrus.Debugf("Route found in openshift-console namespace: %s", route.Name)
@@ -503,7 +503,7 @@ func waitForInstallComplete(ctx context.Context, config *rest.Config, directory 
 		return err
 	}
 
-	if err = addRouterCAToClusterCA(config, rootOpts.dir); err != nil {
+	if err = addRouterCAToClusterCA(ctx, config, rootOpts.dir); err != nil {
 		return err
 	}
 
