@@ -39,7 +39,7 @@ func clearIAMPolicyBindings(policy *resourcemanager.Policy, emails sets.String, 
 	for _, binding := range policy.Bindings {
 		members := []string{}
 		for _, member := range binding.Members {
-			email := strings.TrimPrefix(strings.TrimPrefix(member, "deleted:"), "serviceAccount:")
+			email := policyMemberToEmail(member)
 			if emails.Has(email) {
 				logger.Debugf("IAM: removing %s from role %s", member, binding.Role)
 				removedBindings = true
@@ -65,7 +65,7 @@ func (o *ClusterUninstaller) destroyIAMPolicyBindings() error {
 	for _, item := range sas {
 		emails.Insert(item.url)
 	}
-
+	o.Logger.Debugf("candidate members to be removed: %s", emails.List())
 	if !clearIAMPolicyBindings(policy, emails, o.Logger) {
 		pendingPolicy := o.getPendingItems("iampolicy")
 		if len(pendingPolicy) > 0 {
@@ -80,4 +80,15 @@ func (o *ClusterUninstaller) destroyIAMPolicyBindings() error {
 		return err
 	}
 	return errors.Errorf("%d items pending", 1)
+}
+
+// policyMemberToEmail takes member of IAM policy binding and converts it to service account email.
+// https://cloud.google.com/iam/docs/reference/rest/v1/Policy#Binding
+// see members[]
+func policyMemberToEmail(member string) string {
+	email := strings.TrimPrefix(strings.TrimPrefix(member, "deleted:"), "serviceAccount:")
+	if idx := strings.Index(email, "?uid"); idx != -1 {
+		email = email[:idx]
+	}
+	return email
 }

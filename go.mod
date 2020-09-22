@@ -59,7 +59,7 @@ require (
 	github.com/openshift/machine-api-operator v0.2.1-0.20200429102619-d36974451290
 	github.com/openshift/machine-config-operator v0.0.0
 	github.com/ovirt/go-ovirt v0.0.0-20200613023950-320a86f9df27
-	github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200406133650-74a154c1d861
+	github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200914080915-c4444fb5c201
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
 	github.com/pborman/uuid v1.2.0
 	github.com/pierrec/lz4 v2.3.0+incompatible // indirect
