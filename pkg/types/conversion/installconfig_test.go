@@ -147,6 +147,25 @@ func TestConvertInstallConfig(t *testing.T) {
 			},
 			expectedError: "no version was provided",
 		},
+		{
+			name: "deprecated OpenShiftSDN spelling",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Networking: &types.Networking{
+					NetworkType: "OpenshiftSDN",
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Networking: &types.Networking{
+					NetworkType: "OpenShiftSDN",
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
