@@ -62,6 +62,7 @@ The following `install-config.yaml` properties are available:
     * `noProxy` (optional string): A comma-separated list of domains and [CIDRs][cidr-notation] for which the proxy should not be used.
 * `pullSecret` (required string): The secret to use when pulling images.
 * `sshKey` (optional string): The public Secure Shell (SSH) key to provide access to instances.
+* `installType` (optional string): The name of the non standard installation type used to bootstrap the cluster.
 
 ### IP networks
 
@@ -152,6 +153,22 @@ networking:
 platform: ...
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
+```
+
+### Custom installation type
+
+An example install config with custom install type:
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+controlPlane:
+  name: master
+  replicas: 2
+metadata:
+  name: test-cluster
+platform: ...
+installType: assisted
 ```
 
 ### Image content sources

@@ -50,6 +50,9 @@ func Test_PrintFields(t *testing.T) {
       ImageContentSources lists sources/repositories for the release-image content.
       ImageContentSource defines a list of sources/repositories that can be used to pull content.
 
+    installType <string>
+      InstallType provides signal to the cluster that the installation will not follow the default installer workflow.
+
     kind <string>
       Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 

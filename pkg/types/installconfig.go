@@ -120,6 +120,11 @@ type InstallConfig struct {
 	// +optional
 	FIPS bool `json:"fips,omitempty"`
 
+	// InstallType provides signal to the cluster that the installation will not follow the default installer workflow.
+	//
+	// +optional
+	InstallType string `json:"installType,omitempty"`
+
 	// CredentialsMode is used to explicitly set the mode with which CredentialRequests are satisfied.
 	//
 	// If this field is set, then the installer will not attempt to query the cloud permissions before attempting

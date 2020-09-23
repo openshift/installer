@@ -672,6 +672,10 @@ spec:
               - source
               type: object
             type: array
+          installType:
+            description: InstallType provides signal to the cluster that the installation
+              will not follow the default installer workflow.
+            type: string
           kind:
             description: 'Kind is a string value representing the REST resource this
               object represents. Servers may infer this from the endpoint the client
