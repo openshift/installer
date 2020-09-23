@@ -1,6 +1,7 @@
 package defaults
 
 import (
+	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
@@ -19,7 +20,7 @@ var (
 	defaultServiceNetwork = ipnet.MustParseCIDR("172.30.0.0/16")
 	defaultClusterNetwork = ipnet.MustParseCIDR("10.128.0.0/14")
 	defaultHostPrefix     = 23
-	defaultNetworkType    = "OpenShiftSDN"
+	defaultNetworkType    = string(operv1.NetworkTypeOpenShiftSDN)
 )
 
 // SetInstallConfigDefaults sets the defaults for the install config.
