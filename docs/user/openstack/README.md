@@ -38,6 +38,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
 
 ## Reference Documents
 
+- [Privileges](privileges.md)
 - [Known Issues and Workarounds](known-issues.md)
 - [Using the OSP 4 installer with Kuryr](kuryr.md)
 - [Troubleshooting your cluster](troubleshooting.md)
@@ -70,6 +71,8 @@ You may need to increase the security group related quotas from their default va
 ```sh
 openstack quota set --secgroups 8 --secgroup-rules 100 <project>`
 ```
+
+Once you configure the quota for your project, please ensure that the user for the installer has the proper [privileges](privileges.md).
 
 ### Master Nodes
 
