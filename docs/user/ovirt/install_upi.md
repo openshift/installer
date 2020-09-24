@@ -707,7 +707,7 @@ in the file `auth/kubeconfig`:
 ```sh
 $ export KUBECONFIG=$ASSETS_DIR/auth/kubeconfig
 $ oc get nodes
-$ oc get pods -A
+$ oc get pods --all-namespaces
 ```
 ## Retire Bootstrap
 After the `wait-for` command says that the bootstrap process is complete, it is possible to remove the bootstrap VM

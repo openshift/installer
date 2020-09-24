@@ -412,7 +412,7 @@ oc get clusteroperator
 Finally, to see all the running pods in your cluster, you can do:
 
 ```sh
-oc get pods -A
+oc get pods --all-namespaces
 ```
 ### Destroying The Cluster
 

@@ -843,7 +843,7 @@ You can use the `oc` or `kubectl` commands to talk to the OpenShift API. The adm
 ```sh
 $ export KUBECONFIG="$PWD/auth/kubeconfig"
 $ oc get nodes
-$ oc get pods -A
+$ oc get pods --all-namespaces
 ```
 
 **NOTE**: Only the API will be up at this point. The OpenShift UI will run on the compute nodes.
