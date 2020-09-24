@@ -1,73 +1,61 @@
 {
-    "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.6-ppc64le/46.82.202009010341-0/ppc64le/",
-    "buildid": "46.82.202009010341-0",
+    "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.6-ppc64le/46.82.202009240941-0/ppc64le/",
+    "buildid": "46.82.202009240941-0",
     "images": {
-        "initramfs": {
-            "path": "rhcos-46.82.202009010341-0-installer-initramfs.ppc64le.img",
-            "sha256": "7bb871142cc448a145b430eafe2f3e9af2521d104369fe31bf27eac0e2d06c02"
-        },
-        "iso": {
-            "path": "rhcos-46.82.202009010341-0-installer.ppc64le.iso",
-            "sha256": "141ff8e8a05f639c760cf916803f0fa945418d8d61ee55936a5ee50936ca7442"
-        },
-        "kernel": {
-            "path": "rhcos-46.82.202009010341-0-installer-kernel-ppc64le",
-            "sha256": "2c37d0517ae6229cfeb93e83f0dcc7b39dd4212477783002bd9607d1171b8c9d"
-        },
         "live-initramfs": {
-            "path": "rhcos-46.82.202009010341-0-live-initramfs.ppc64le.img",
-            "sha256": "1595b1b9cd83ce6da292ef5762f04ebeee15e3e1171b88ecdaeec207db8d2172"
+            "path": "rhcos-46.82.202009240941-0-live-initramfs.ppc64le.img",
+            "sha256": "c0a52acf1c883565bff9c1ea8ab2eb9a2789f23124fdd1be78f6d2f624450445"
         },
         "live-iso": {
-            "path": "rhcos-46.82.202009010341-0-live.ppc64le.iso",
-            "sha256": "8e2396fb9aad28aededc22a37d67ddadf6e0499f575317e4c9fecc91c2e95220"
+            "path": "rhcos-46.82.202009240941-0-live.ppc64le.iso",
+            "sha256": "90359e206905513694860f0d195af257da3db95b507e83b1f53daa6bfbe9023d"
         },
         "live-kernel": {
-            "path": "rhcos-46.82.202009010341-0-live-kernel-ppc64le",
-            "sha256": "2c37d0517ae6229cfeb93e83f0dcc7b39dd4212477783002bd9607d1171b8c9d"
+            "path": "rhcos-46.82.202009240941-0-live-kernel-ppc64le",
+            "sha256": "430755e6db588ec04fd5ba56d7973e8622eee90cc8f6d819fefb46926625d19b"
         },
         "live-rootfs": {
-            "path": "rhcos-46.82.202009010341-0-live-rootfs.ppc64le.img",
-            "sha256": "2fcff703d6672152d363f74f9dd08dfbcb59909e61b636d180eb56f4cfbc3aa6"
+            "path": "rhcos-46.82.202009240941-0-live-rootfs.ppc64le.img",
+            "sha256": "3ec25712a88d1da7e60d2581677b0fde9c6b175c2fa5b6dd9ec43296e5aba2c7"
         },
         "metal": {
-            "path": "rhcos-46.82.202009010341-0-metal.ppc64le.raw.gz",
-            "sha256": "72391b7aafe408652c11da41c11356fcfca68dfe98694ddbe07d093e5a985bd4",
-            "size": 910634815,
-            "uncompressed-sha256": "024cdb188e35929f0459a6db9ad90900ad6e318a38092afcc8dae1fe6f6f106d",
-            "uncompressed-size": 3964665856
+            "path": "rhcos-46.82.202009240941-0-metal.ppc64le.raw.gz",
+            "sha256": "20288d82cb5698bae23bea7f364c046a19eb5b3fb1ca618b7a4068d1c36d6eba",
+            "size": 867240759,
+            "uncompressed-sha256": "6156add3bdfdf384d7dddbc431a2a1438f6360f92452bb862ddb229c2a84c06a",
+            "uncompressed-size": 3693084672
         },
         "metal4k": {
-            "path": "rhcos-46.82.202009010341-0-metal4k.ppc64le.raw.gz",
-            "sha256": "4c2c888ab9f5df80dc0c1f00deab1ef1a976a3fd26730e55101a497a15960205",
-            "size": 910973412,
-            "uncompressed-sha256": "74c6f936fd05c7fff37faf454adf41816b4f5ed7b7b36a218d863e819e2c70b0",
-            "uncompressed-size": 3964665856
+            "path": "rhcos-46.82.202009240941-0-metal4k.ppc64le.raw.gz",
+            "sha256": "8f519caa7429ba8d1dcfdf44a7ff4a92665381b07ab2d035ff90318e41b5ab12",
+            "size": 867334091,
+            "uncompressed-sha256": "41924484e1a93c0a47eadc19c860baf52337dd428d90a9147d773b9723ac11df",
+            "uncompressed-size": 3693084672
         },
         "openstack": {
-            "path": "rhcos-46.82.202009010341-0-openstack.ppc64le.qcow2.gz",
-            "sha256": "bd5817a5d50d4b3ac58f16a5f9ee3ae32cdab0c7ae3c31cfbe2b39e192d4e111",
-            "size": 909419313,
-            "uncompressed-sha256": "f23ad30997f5ff2e4449e970a74fcec8391427aa8b9e5b4298218aacf9298693",
-            "uncompressed-size": 2568880128
+            "path": "rhcos-46.82.202009240941-0-openstack.ppc64le.qcow2.gz",
+            "sha256": "96adcc9d0f01b2748eb8a86868162ec8e844288040a43e44bda11567a0249061",
+            "size": 865739613,
+            "uncompressed-sha256": "daf1c90ed5082c7da490fe666c91c65ffe74c119eac27f78bdf6216e4bb61d2f",
+            "uncompressed-size": 2361982976
         },
         "ostree": {
-            "path": "rhcos-46.82.202009010341-0-ostree.ppc64le.tar",
-            "sha256": "e9fae1040a2fc622c0da04902ebbf52a457b4a24653e822b3ccb0244030587e2",
-            "size": 831600640
+            "path": "rhcos-46.82.202009240941-0-ostree.ppc64le.tar",
+            "sha256": "11c1f85b82a418416706c1a7f7b974590e5b1b746a9727544187d5b34cabd7ef",
+            "size": 776611840
         },
         "qemu": {
-            "path": "rhcos-46.82.202009010341-0-qemu.ppc64le.qcow2.gz",
-            "sha256": "4e560de76395f41707fe4105612b804ace56ce751d9ac6ba887cff30f616b704",
-            "size": 910228841,
-            "uncompressed-sha256": "f013399832df3e01029490c12c780d102c11d2d7fbc36adaa4b33158df02f25e",
-            "uncompressed-size": 2608267264
+            "path": "rhcos-46.82.202009240941-0-qemu.ppc64le.qcow2.gz",
+            "sha256": "86be9dea62495d885cc0622f8025aaf56a1af26429bfa27b4ad2169d448a7668",
+            "size": 866267572,
+            "uncompressed-sha256": "ce30ae7d26ce24a04a42831ae18541f97a1cc9eb57f3bf6395a99b78ec60c1dd",
+            "uncompressed-size": 2400714752
         }
     },
     "oscontainer": {
-        "digest": "sha256:365e4ba78b43eba71f4f0021c90573da029a9a62b11c9a44bfcee2987e56f8ee",
+        "digest": "sha256:2758233e925dff411d2553ce48babed0e0608a58225455040dc3f0c4710cb08f",
         "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
     },
-    "ostree-commit": "188702fede855b0b84c0d7a1ee823d4e83ebae8bcc2b37ec6a010efbd3c8a5cb",
-    "ostree-version": "46.82.202009010341-0"
+    "ostree-commit": "271c5b43ce734e38d75299e7fc1e4d331679942ad4b93a6fb2fc8fe0f34d19bd",
+    "ostree-version": "46.82.202009240941-0"
 }
