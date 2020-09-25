@@ -106,7 +106,6 @@
       network: "{{ os_external_network }}"
       interfaces:
       - "{{ os_subnet }}"
-    when: os_external_network is defined and os_external_network|length>0
 
   - name: 'Set external router tag'
     command:
