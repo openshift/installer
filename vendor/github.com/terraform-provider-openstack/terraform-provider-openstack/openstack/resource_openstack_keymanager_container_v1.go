@@ -142,8 +142,9 @@ func resourceKeyManagerContainerV1Create(d *schema.ResourceData, meta interface{
 	containerType := keyManagerContainerV1Type(d.Get("type").(string))
 
 	createOpts := containers.CreateOpts{
-		Name: d.Get("name").(string),
-		Type: containerType,
+		Name:       d.Get("name").(string),
+		Type:       containerType,
+		SecretRefs: expandKeyManagerContainerV1SecretRefs(d.Get("secret_refs").(*schema.Set)),
 	}
 
 	log.Printf("[DEBUG] Create Options for resource_keymanager_container_v1: %#v", createOpts)
@@ -179,14 +180,6 @@ func resourceKeyManagerContainerV1Create(d *schema.ResourceData, meta interface{
 		_, err = acls.SetContainerACL(kmClient, uuid, setOpts).Extract()
 		if err != nil {
 			return fmt.Errorf("Error settings ACLs for the openstack_keymanager_container_v1: %s", err)
-		}
-	}
-
-	// set the secret refs
-	for _, addRef := range expandKeyManagerContainerV1SecretRefs(d.Get("secret_refs").(*schema.Set)) {
-		res := containers.CreateSecretRef(kmClient, d.Id(), addRef)
-		if res.Err != nil {
-			return fmt.Errorf("Error setting %s secret reference to the %s container: %s", addRef.Name, d.Id(), res.Err)
 		}
 	}
 

@@ -134,6 +134,12 @@ func resourceListenerV2() *schema.Resource {
 				Optional: true,
 				ForceNew: false,
 			},
+
+			"allowed_cidrs": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
 		},
 	}
 }
@@ -214,6 +220,7 @@ func resourceListenerV2Read(d *schema.ResourceData, meta interface{}) error {
 		d.Set("timeout_tcp_inspect", listener.TimeoutTCPInspect)
 		d.Set("sni_container_refs", listener.SniContainerRefs)
 		d.Set("default_tls_container_ref", listener.DefaultTlsContainerRef)
+		d.Set("allowed_cidrs", listener.AllowedCIDRs)
 		d.Set("region", GetRegion(d, config))
 
 		// Required by import.

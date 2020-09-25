@@ -127,6 +127,16 @@ func resourceComputeInstanceV2() *schema.Resource {
 				ConflictsWith:    []string{"availability_zone_hints"},
 				DiffSuppressFunc: suppressAvailabilityZoneDetailDiffs,
 			},
+			"network_mode": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				Computed:      false,
+				ConflictsWith: []string{"network"},
+				ValidateFunc: validation.StringInSlice([]string{
+					"auto", "none",
+				}, true),
+			},
 			"network": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -429,6 +439,7 @@ func resourceComputeInstanceV2Create(d *schema.ResourceData, meta interface{}) e
 
 	var createOpts servers.CreateOptsBuilder
 	var availabilityZone string
+	var networks interface{}
 
 	// Determines the Image ID using the following rules:
 	// If a bootable block_device was specified, ignore the image altogether.
@@ -453,15 +464,23 @@ func resourceComputeInstanceV2Create(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 
-	// Build a list of networks with the information given upon creation.
-	// Error out if an invalid network configuration was used.
-	allInstanceNetworks, err := getAllInstanceNetworks(d, meta)
-	if err != nil {
-		return err
-	}
+	if networkMode := d.Get("network_mode").(string); networkMode == "auto" || networkMode == "none" {
+		// Use special string for network option
+		computeClient.Microversion = computeV2InstanceCreateServerWithNetworkModeMicroversion
+		networks = networkMode
+		log.Printf("[DEBUG] Create with network options %s", networks)
+	} else {
+		log.Printf("[DEBUG] Create with specified network options")
+		// Build a list of networks with the information given upon creation.
+		// Error out if an invalid network configuration was used.
+		allInstanceNetworks, err := getAllInstanceNetworks(d, meta)
+		if err != nil {
+			return err
+		}
 
-	// Build a []servers.Network to pass into the create options.
-	networks := expandInstanceNetworks(allInstanceNetworks)
+		// Build a []servers.Network to pass into the create options.
+		networks = expandInstanceNetworks(allInstanceNetworks)
+	}
 
 	configDrive := d.Get("config_drive").(bool)
 

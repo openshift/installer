@@ -238,7 +238,7 @@ type RootDiskType struct {
 	ByPath             string `json:"by_path"`
 	Rotational         bool   `json:"rotational"`
 	Serial             string `json:"serial"`
-	Size               int    `json:"size"`
+	Size               int64  `json:"size"`
 	Vendor             string `json:"vendor"`
 	Wwn                string `json:"wwn"`
 	WwnVendorExtension string `json:"wwn_vendor_extension"`

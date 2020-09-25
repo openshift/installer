@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/gophercloud/gophercloud"
@@ -220,4 +221,62 @@ func resourceImagesImageAccessV2DetectMemberID(client *gophercloud.ServiceClient
 		return "", fmt.Errorf("Too many members found for the %q image, please specify the member_id explicitly", imageID)
 	}
 	return allMembers[0].MemberID, nil
+}
+
+func imagesFilterByRegex(imageArr []images.Image, name_regex string) []images.Image {
+	var result []images.Image
+	r := regexp.MustCompile(name_regex)
+
+	for _, image := range imageArr {
+		// Check for a very rare case where the response would include no
+		// image name. No name means nothing to attempt a match against,
+		// therefore we are skipping such image.
+		if image.Name == "" {
+			log.Printf("[WARN] Unable to find image name to match against "+
+				"for image ID %q owned by %q, nothing to do.",
+				image.ID, image.Owner)
+			continue
+		}
+		if r.MatchString(image.Name) {
+			result = append(result, image)
+		}
+	}
+
+	return result
+}
+
+// v - slice of images to filter
+// p - field "properties" of schema.Resource from dataSourceImagesImageIDsV2
+//	or dataSourceImagesImageV2. If p is empty no filtering applies and the
+//	function returns the v.
+func imagesFilterByProperties(v []images.Image, p map[string]string) []images.Image {
+	var result []images.Image
+
+	if len(p) > 0 {
+		for _, image := range v {
+			if len(image.Properties) > 0 {
+				match := true
+				for searchKey, searchValue := range p {
+					imageValue, ok := image.Properties[searchKey]
+					if !ok {
+						match = false
+						break
+					}
+
+					if searchValue != imageValue {
+						match = false
+						break
+					}
+				}
+
+				if match {
+					result = append(result, image)
+				}
+			}
+		}
+	} else {
+		result = v
+	}
+
+	return result
 }

@@ -80,14 +80,15 @@ func dataSourceComputeFlavorV2() *schema.Resource {
 				ForceNew: true,
 			},
 
+			"is_public": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
+			},
+
 			// Computed values
 			"extra_specs": {
 				Type:     schema.TypeMap,
-				Computed: true,
-			},
-
-			"is_public": {
-				Type:     schema.TypeBool,
 				Computed: true,
 			},
 		},
@@ -114,10 +115,20 @@ func dataSourceComputeFlavorV2Read(d *schema.ResourceData, meta interface{}) err
 
 		allFlavors = append(allFlavors, *flavor)
 	} else {
+		accessType := flavors.AllAccess
+		if v, ok := d.GetOkExists("is_public"); ok {
+			if v, ok := v.(bool); ok {
+				if v {
+					accessType = flavors.PublicAccess
+				} else {
+					accessType = flavors.PrivateAccess
+				}
+			}
+		}
 		listOpts := flavors.ListOpts{
 			MinDisk:    d.Get("min_disk").(int),
 			MinRAM:     d.Get("min_ram").(int),
-			AccessType: flavors.PublicAccess,
+			AccessType: accessType,
 		}
 
 		log.Printf("[DEBUG] openstack_compute_flavor_v2 ListOpts: %#v", listOpts)

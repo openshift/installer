@@ -2,7 +2,7 @@ package plugins
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/plugin"
-	"github.com/terraform-providers/terraform-provider-openstack/openstack"
+	"github.com/terraform-provider-openstack/terraform-provider-openstack/openstack"
 )
 
 func init() {

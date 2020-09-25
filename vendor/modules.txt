@@ -521,7 +521,7 @@ github.com/googleapis/gax-go/v2
 github.com/googleapis/gnostic/OpenAPIv2
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
-# github.com/gophercloud/gophercloud v0.12.0
+# github.com/gophercloud/gophercloud v0.12.1-0.20200821143728-362eb785d617
 ## explicit
 github.com/gophercloud/gophercloud
 github.com/gophercloud/gophercloud/internal
@@ -576,6 +576,7 @@ github.com/gophercloud/gophercloud/openstack/identity/v2/tenants
 github.com/gophercloud/gophercloud/openstack/identity/v2/tokens
 github.com/gophercloud/gophercloud/openstack/identity/v3/applicationcredentials
 github.com/gophercloud/gophercloud/openstack/identity/v3/endpoints
+github.com/gophercloud/gophercloud/openstack/identity/v3/extensions/ec2credentials
 github.com/gophercloud/gophercloud/openstack/identity/v3/extensions/ec2tokens
 github.com/gophercloud/gophercloud/openstack/identity/v3/extensions/oauth1
 github.com/gophercloud/gophercloud/openstack/identity/v3/groups
@@ -817,7 +818,7 @@ github.com/hashicorp/terraform/version
 github.com/hashicorp/terraform-config-inspect/tfconfig
 # github.com/hashicorp/terraform-json v0.5.0
 github.com/hashicorp/terraform-json
-# github.com/hashicorp/terraform-plugin-sdk v1.14.0 => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
+# github.com/hashicorp/terraform-plugin-sdk v1.15.0 => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
 ## explicit
 github.com/hashicorp/terraform-plugin-sdk/acctest
 github.com/hashicorp/terraform-plugin-sdk/helper/acctest
@@ -1127,6 +1128,9 @@ github.com/stoewer/go-strcase
 # github.com/stretchr/testify v1.5.1
 ## explicit
 github.com/stretchr/testify/assert
+# github.com/terraform-provider-openstack/terraform-provider-openstack v1.32.0
+## explicit
+github.com/terraform-provider-openstack/terraform-provider-openstack/openstack
 # github.com/terraform-providers/terraform-provider-aws v0.0.0 => github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699
 ## explicit
 github.com/terraform-providers/terraform-provider-aws/aws
@@ -1420,9 +1424,6 @@ github.com/terraform-providers/terraform-provider-ignition/v2/ignition
 # github.com/terraform-providers/terraform-provider-local v1.4.0
 ## explicit
 github.com/terraform-providers/terraform-provider-local/local
-# github.com/terraform-providers/terraform-provider-openstack v1.28.0
-## explicit
-github.com/terraform-providers/terraform-provider-openstack/openstack
 # github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
 ## explicit
 github.com/terraform-providers/terraform-provider-random/random
@@ -1848,7 +1849,7 @@ gopkg.in/inf.v0
 # gopkg.in/ini.v1 v1.51.0
 ## explicit
 gopkg.in/ini.v1
-# gopkg.in/yaml.v2 v2.2.8
+# gopkg.in/yaml.v2 v2.3.0
 ## explicit
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20191010095647-fc94e3f71652

@@ -135,6 +135,11 @@ func dataSourceContainerInfraCluster() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+
+			"floating_ip_enabled": {
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -173,6 +178,7 @@ func dataSourceContainerInfraClusterRead(d *schema.ResourceData, meta interface{
 	d.Set("stack_id", c.StackID)
 	d.Set("fixed_network", c.FixedNetwork)
 	d.Set("fixed_subnet", c.FixedSubnet)
+	d.Set("floating_ip_enabled", c.FloatingIPEnabled)
 
 	if err := d.Set("labels", c.Labels); err != nil {
 		log.Printf("[DEBUG] Unable to set labels for openstack_containerinfra_cluster_v1 %s: %s", c.UUID, err)
