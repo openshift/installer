@@ -656,10 +656,11 @@ github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/shares
 github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/snapshots
 github.com/gophercloud/gophercloud/openstack/utils
 github.com/gophercloud/gophercloud/pagination
-# github.com/gophercloud/utils v0.0.0-20200508015959-b0167b94122c
+# github.com/gophercloud/utils v0.0.0-20200918191848-da0e919a012a
 ## explicit
 github.com/gophercloud/utils/client
 github.com/gophercloud/utils/env
+github.com/gophercloud/utils/gnocchi
 github.com/gophercloud/utils/openstack/baremetal/v1/nodes
 github.com/gophercloud/utils/openstack/clientconfig
 github.com/gophercloud/utils/openstack/compute/v2/flavors
