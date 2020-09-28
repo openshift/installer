@@ -41,18 +41,31 @@ func validPlatformCloudInfo() *CloudInfo {
 			AdminStateUp: true,
 			Status:       "ACTIVE",
 		},
-		Flavors: map[string]*flavors.Flavor{
+		Flavors: map[string]Flavor{
 			validCtrlPlaneFlavor: {
-				Name:  validCtrlPlaneFlavor,
-				RAM:   16,
-				Disk:  25,
-				VCPUs: 4,
+				Flavor: &flavors.Flavor{
+					Name:  validCtrlPlaneFlavor,
+					RAM:   16,
+					Disk:  25,
+					VCPUs: 4,
+				},
 			},
 			invalidCtrlPlaneFlavor: {
-				Name:  invalidCtrlPlaneFlavor,
-				RAM:   8,  // too low
-				Disk:  20, // too low
-				VCPUs: 2,  // too low
+				Flavor: &flavors.Flavor{
+					Name:  invalidCtrlPlaneFlavor,
+					RAM:   8,  // too low
+					Disk:  20, // too low
+					VCPUs: 2,  // too low
+				},
+			},
+			baremetalFlavor: {
+				Flavor: &flavors.Flavor{
+					Name:  baremetalFlavor,
+					RAM:   8,  // too low
+					Disk:  20, // too low
+					VCPUs: 2,  // too low
+				},
+				Baremetal: true,
 			},
 		},
 		APIFIP: &floatingips.FloatingIP{
@@ -78,6 +91,18 @@ func TestOpenStackPlatformValidation(t *testing.T) {
 		{
 			name:           "valid platform",
 			platform:       validPlatform(),
+			cloudInfo:      validPlatformCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name: "baremetal flavor",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.FlavorName = baremetalFlavor
+				return p
+			}(),
 			cloudInfo:      validPlatformCloudInfo(),
 			networking:     validNetworking(),
 			expectedError:  false,

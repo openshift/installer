@@ -8,8 +8,6 @@ import (
 
 	guuid "github.com/google/uuid"
 	"github.com/openshift/installer/pkg/types/openstack"
-
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 )
 
 type flavorRequirements struct {
@@ -44,10 +42,15 @@ func ValidateMachinePool(p *openstack.MachinePool, ci *CloudInfo, controlPlane b
 	}
 
 	if p.FlavorName != "" {
-		if controlPlane {
-			allErrs = append(allErrs, validateMpoolFlavor(ci.Flavors[p.FlavorName], p.FlavorName, ctrlPlaneFlavorMinimums, fldPath)...)
+		flavor, ok := ci.Flavors[p.FlavorName]
+		if ok {
+			if controlPlane {
+				allErrs = append(allErrs, validateMpoolFlavor(flavor, ctrlPlaneFlavorMinimums, fldPath)...)
+			} else {
+				allErrs = append(allErrs, validateMpoolFlavor(flavor, computeFlavorMinimums, fldPath)...)
+			}
 		} else {
-			allErrs = append(allErrs, validateMpoolFlavor(ci.Flavors[p.FlavorName], p.FlavorName, computeFlavorMinimums, fldPath)...)
+			allErrs = append(allErrs, field.NotFound(fldPath.Child("flavorName"), p.FlavorName))
 		}
 	}
 
@@ -102,9 +105,12 @@ func validUUIDv4(s string) bool {
 	return true
 }
 
-func validateMpoolFlavor(flavor *flavors.Flavor, name string, req flavorRequirements, fldPath *field.Path) field.ErrorList {
-	if flavor == nil {
-		return field.ErrorList{field.NotFound(fldPath.Child("flavorName"), name)}
+func validateMpoolFlavor(flavor Flavor, req flavorRequirements, fldPath *field.Path) field.ErrorList {
+
+	// OpenStack administrators don't always fill in accurate metadata for
+	// baremetal flavors. Skipping validation.
+	if flavor.Baremetal {
+		return field.ErrorList{}
 	}
 
 	errs := []string{}
