@@ -10,7 +10,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 )
 
-var (
+const (
 	validFlavor = "valid-flavor"
 	validZone   = "valid-zone"
 
@@ -21,6 +21,8 @@ var (
 
 	invalidComputeFlavor   = "invalid-compute-flavor"
 	invalidCtrlPlaneFlavor = "invalid-control-plane-flavor"
+
+	baremetalFlavor = "baremetal-flavor"
 )
 
 func validMachinePool() *openstack.MachinePool {
@@ -32,30 +34,47 @@ func validMachinePool() *openstack.MachinePool {
 
 func validMpoolCloudInfo() *CloudInfo {
 	return &CloudInfo{
-		Flavors: map[string]*flavors.Flavor{
+		Flavors: map[string]Flavor{
 			validCtrlPlaneFlavor: {
-				Name:  validCtrlPlaneFlavor,
-				RAM:   16,
-				Disk:  25,
-				VCPUs: 4,
+				Flavor: &flavors.Flavor{
+					Name:  validCtrlPlaneFlavor,
+					RAM:   16,
+					Disk:  25,
+					VCPUs: 4,
+				},
 			},
 			validComputeFlavor: {
-				Name:  validComputeFlavor,
-				RAM:   8,
-				Disk:  25,
-				VCPUs: 2,
+				Flavor: &flavors.Flavor{
+					Name:  validComputeFlavor,
+					RAM:   8,
+					Disk:  25,
+					VCPUs: 2,
+				},
 			},
 			invalidCtrlPlaneFlavor: {
-				Name:  invalidCtrlPlaneFlavor,
-				RAM:   8, // too low
-				Disk:  25,
-				VCPUs: 2, // too low
+				Flavor: &flavors.Flavor{
+					Name:  invalidCtrlPlaneFlavor,
+					RAM:   8, // too low
+					Disk:  25,
+					VCPUs: 2, // too low
+				},
 			},
 			invalidComputeFlavor: {
-				Name:  invalidComputeFlavor,
-				RAM:   8,
-				Disk:  10, // too low
-				VCPUs: 2,
+				Flavor: &flavors.Flavor{
+					Name:  invalidComputeFlavor,
+					RAM:   8,
+					Disk:  10, // too low
+					VCPUs: 2,
+				},
+			},
+			baremetalFlavor: {
+				Flavor: &flavors.Flavor{
+					Name:  baremetalFlavor,
+					RAM:   8,  // too low
+					Disk:  10, // too low
+					VCPUs: 2,  // too low
+				},
+				Baremetal: true,
 			},
 		},
 		Zones: []string{
@@ -157,6 +176,18 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			cloudInfo:      validMpoolCloudInfo(),
 			expectedError:  true,
 			expectedErrMsg: `compute\[0\].platform.openstack.flavorName: Invalid value: "invalid-compute-flavor": Flavor did not meet the following minimum requirements: Must have minimum of 25 GB Disk, had 10 GB`,
+		},
+		{
+			name:         "valid baremetal compute",
+			controlPlane: false,
+			mpool: func() *openstack.MachinePool {
+				mp := validMachinePool()
+				mp.FlavorName = baremetalFlavor
+				return mp
+			}(),
+			cloudInfo:      validMpoolCloudInfo(),
+			expectedError:  false,
+			expectedErrMsg: "",
 		},
 	}
 

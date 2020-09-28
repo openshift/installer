@@ -66,9 +66,15 @@ func validateExternalNetwork(p *openstack.Platform, ci *CloudInfo, fldPath *fiel
 
 // validatePlatformFlavor validates the platform flavor and returns a list of all validation errors
 func validatePlatformFlavor(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
-	flavor := ci.Flavors[p.FlavorName]
-	if flavor == nil {
+	flavor, ok := ci.Flavors[p.FlavorName]
+	if !ok {
 		allErrs = append(allErrs, field.NotFound(fldPath.Child("computeFlavor"), p.FlavorName))
+		return allErrs
+	}
+
+	// OpenStack administrators don't always fill in accurate metadata for
+	// baremetal flavors. Skipping validation.
+	if flavor.Baremetal {
 		return allErrs
 	}
 
@@ -96,8 +102,7 @@ func validatePlatformFlavor(p *openstack.Platform, ci *CloudInfo, fldPath *field
 		}
 	}
 
-	allErrs = append(allErrs, field.Invalid(fldPath.Child("flavorName"), flavor.Name, errString))
-	return allErrs
+	return append(allErrs, field.Invalid(fldPath.Child("flavorName"), flavor.Name, errString))
 }
 
 func validateFloatingIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
