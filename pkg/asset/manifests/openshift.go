@@ -130,6 +130,12 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
+
+		// We need to replace the local cacert path with one that is used in OpenShift
+		if cloud.CACertFile != "" {
+			cloud.CACertFile = "/etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem"
+		}
+
 		clouds := make(map[string]map[string]*clientconfig.Cloud)
 		clouds["clouds"] = map[string]*clientconfig.Cloud{
 			osmachine.CloudName: cloud,
