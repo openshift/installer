@@ -51,7 +51,7 @@ func Platform() (*openstack.Platform, error) {
 	// will be ignored if OS_CLOUD contains something.
 	os.Unsetenv("OS_CLOUD")
 
-	networkNames, err := getNetworkNames(cloud)
+	networkNames, err := getExternalNetworkNames(cloud)
 	if err != nil {
 		return nil, err
 	}
