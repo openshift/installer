@@ -262,7 +262,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				subnets,
 				&pool,
 				"worker",
-				"worker-user-data-managed",
+				"worker-user-data",
 				installConfig.Config.Platform.AWS.UserTags,
 			)
 			if err != nil {
@@ -294,7 +294,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 
 			pool.Platform.Azure = &mpool
-			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data-managed")
+			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -306,7 +306,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(ic.Platform.BareMetal.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.BareMetal)
 			pool.Platform.BareMetal = &mpool
-			sets, err := baremetal.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data-managed")
+			sets, err := baremetal.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -325,7 +325,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				mpool.Zones = azs
 			}
 			pool.Platform.GCP = &mpool
-			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data-managed")
+			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -337,7 +337,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.Libvirt)
 			pool.Platform.Libvirt = &mpool
-			sets, err := libvirt.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data-managed")
+			sets, err := libvirt.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -352,7 +352,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-			sets, err := openstack.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data-managed")
+			sets, err := openstack.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -366,7 +366,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			pool.Platform.VSphere = &mpool
 			templateName := clusterID.InfraID + "-rhcos"
 
-			sets, err := vsphere.MachineSets(clusterID.InfraID, ic, &pool, templateName, "worker", "worker-user-data-managed")
+			sets, err := vsphere.MachineSets(clusterID.InfraID, ic, &pool, templateName, "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -381,7 +381,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-			sets, err := ovirt.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data-managed")
+			sets, err := ovirt.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects for ovirt provider")
 			}
@@ -394,7 +394,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 	}
 
-	data, err := userDataSecret("worker-user-data-managed", wign.File.Data)
+	data, err := userDataSecret("worker-user-data", wign.File.Data)
 	if err != nil {
 		return errors.Wrap(err, "failed to create user-data secret for worker machines")
 	}
