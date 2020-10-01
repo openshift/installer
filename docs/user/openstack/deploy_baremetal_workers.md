@@ -6,7 +6,7 @@
 - [Considerations when deploying bare-metal workers](#considerations-when-deploying-bare-metal-workers)
 - [Deploying cluster with BM workers on tenant network deployed by the installer](#deploying-cluster-with-bm-workers-on-tenant-network-deployed-by-the-installer)
 - [Deploying cluster with BM workers on preexisting network](#deploying-cluster-with-bm-workers-on-preexisting-network)
-- [Deploy cluster with VM workers only and add BM workers after](#deploy-cluster-with-vm-workers-only-and-add-bm-workers-after)
+- [Deploying cluster with BM machines only on preexisting network](#deploying-cluster-with-bm-machines-only-on-preexisting-network)
 - [Known issues](#known-issues)
 
 
@@ -83,8 +83,7 @@ Initial cluster is deployed using bare-metal workers only. Bare-metal workers ar
 a preexisting network.
 
 - Requirements:
-
-    - An OpenStack subnet has been pre-provisioned. The subnet supports attaching both VMs and bare-metal servers to it.
+    - An OpenStack subnet has been pre-provisioned which supports attaching both VMs and bare-metal servers to it.
 
 - Create install-config.yaml:
 
@@ -127,26 +126,28 @@ a preexisting network.
     If the installer times out waiting for the bare-metal workers to complete booting,
     restart the installation using [the appropriate *wait-for* command](#considerations-when-deploying-bare-metal-workers).
 
-## Deploy cluster with VM workers only and add BM workers after
+## Deploying cluster with BM machines only on preexisting network
 
-Initial cluster deployment is done with only
-VM workers attached to the installer-provisioned network. The bare-metal
-workers are added after initial installation. Bare-metal workers are
-attached to a preexisting network. Traffic between masters and workers is routed between subnets.
+Initial cluster is deployed using bare-metal machines only for both Control
+Plane and Compute nodes. The cluster is deployed to a preexisting network.
 
 - Requirements:
-    - Cloud provider is configured to route traffic between VM subnets and bare-metal subnets.
+    - An OpenStack subnet has been pre-provisioned which supports attaching bare-metal servers to it.
 
 - Create install-config.yaml:
-    - Set `compute.[worker].platform.openstack.type` to the VM flavor which will be used by worker nodes.
-    - Set `controlPlane.platform.openstack.type` to the VM flavor which will be used by the control plane nodes.
+
+    - Set `compute.[worker].platform.openstack.type` to a bare-metal server flavor.
+
+    - Set `controlPlane.platform.openstack.type` to a bare-metal server flavor.
+
+    - Set `platform.openstack.machinesSubnet` to the UUID of the pre-provisioned subnet.
 
         For example:
 
                 controlPlane:
                    platform:
                      openstack:
-                       type: <vmComputeFlavorForMasters>
+                       type: <bmComputeFlavorForMasters>
 
                  ... other settings
 
@@ -156,14 +157,14 @@ attached to a preexisting network. Traffic between masters and workers is routed
                    name: worker
                    platform:
                      openstack:
-                       type: <vmComputeFlavorForWorkers>
+                       type: <bmComputeFlavorForWorkers>
                    replicas: 3
 
                  ... other settings
 
                  platform:
                    openstack:
-                     computeFlavor: <vmComputeFlavorForMasters>
+                     machinesSubnet: <uuidOfPreprovisionedSubnet>
 
 - Run the openshift installer:
 
@@ -171,16 +172,8 @@ attached to a preexisting network. Traffic between masters and workers is routed
 
 - wait for the installer to complete.
 
-- Once the installation is complete, enable routing between the subnet created by the installer and the preexisting subnet
-where the bare-metal machines will be attached.
-
-- Deploy the bare-metal workers using [`machinesets`][6] and the [machine-api-operator][7]
-    - Create bare-metal worker machineset yaml file: `baremetalMachineSet.yaml`
-
-    - Create bare-metal worker machineset resource
-
-          oc create -v baremetalMachineSet.yaml
-
+    If the installer times out waiting for the bare-metal workers to complete booting,
+    restart the installation using [the appropriate *wait-for* command](#considerations-when-deploying-bare-metal-workers).
 
 ## Known issues
 
@@ -192,5 +185,3 @@ Bare metal nodes are not supported on clusters that use Kuryr.
 [3]: <https://docs.openstack.org/api-ref/compute/>
 [4]: <https://docs.openstack.org/glance/latest/>
 [5]: <https://github.com/openshift/installer/blob/master/docs/user/openstack/customization.md#image-overrides>
-[6]: <https://github.com/openshift/installer/blob/master/docs/user/openstack/README.md#adding-a-machineset>
-[7]: <https://github.com/openshift/machine-api-operator>
