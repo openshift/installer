@@ -15,6 +15,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/baremetal"
 	"github.com/openshift/installer/pkg/destroy/bootstrap"
 	_ "github.com/openshift/installer/pkg/destroy/gcp"
+	_ "github.com/openshift/installer/pkg/destroy/kubevirt"
 	_ "github.com/openshift/installer/pkg/destroy/libvirt"
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"
