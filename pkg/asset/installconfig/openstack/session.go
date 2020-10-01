@@ -2,6 +2,7 @@
 package openstack
 
 import (
+	"os"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -21,6 +22,12 @@ type Session struct {
 // GetSession returns an OpenStack session for a given cloud name in clouds.yaml.
 func GetSession(cloudName string) (*Session, error) {
 	opts := defaultClientOpts(cloudName)
+
+	// We should unset OS_CLOUD env variable here, because the real cloud name was
+	// defined on the previous step. OS_CLOUD has more priority, so the value from
+	// "opts" variable will be ignored if OS_CLOUD contains something.
+	os.Unsetenv("OS_CLOUD")
+
 	cloudConfig, err := clientconfig.GetCloudFromYAML(opts)
 	if err != nil {
 		return nil, err
