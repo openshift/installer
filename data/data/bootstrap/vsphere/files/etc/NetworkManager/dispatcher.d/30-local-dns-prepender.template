@@ -2,10 +2,21 @@
 IFACE=$1
 STATUS=$2
 case "$STATUS" in
-    up|down|dhcp4-change|dhcp6-change)
+    up|dhcp4-change|dhcp6-change)
 {{if .PlatformData.VSphere.UserProvidedVIPs}}
     logger -s "NM local-dns-prepender triggered by ${1} ${2}."
     DNS_IP="127.0.0.1"
+
+    # In DHCP connections, the resolv.conf content may be late, thus we wait for nameservers
+    timeout 45s /bin/bash <<EOF
+		if [[ "$STATUS" == dhcp* ]]; then
+			logger -s "NM resolv-prepender: Checking for nameservers in /var/run/NetworkManager/resolv.conf"
+			while ! grep nameserver /var/run/NetworkManager/resolv.conf; do
+				logger -s "NM resolv-prepender: NM resolv.conf still empty of nameserver"
+                sleep 0.5
+            done
+        fi
+EOF
     set +e
     logger -s "NM local-dns-prepender: Checking if local DNS IP is the first entry in resolv.conf"
     if grep nameserver /etc/resolv.conf | head -n 1 | grep -q "$DNS_IP" ; then
