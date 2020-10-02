@@ -11,32 +11,39 @@ mandatory ignition files and to monitor the installation process itself.
 
 ## Table of Contents
 
-* [Prerequisites](#prerequisites)
-* [Ansible and oVirt roles](#ansible-and-ovirt-roles)
-* [Network Requirements](#network-requirements)
-  * [Load Balancers](#load-balancers)
-  * [DNS](#dns)
-* [RHCOS image](#rhcos-image)
-* [Getting Ansible playbooks](#getting-ansible-playbooks)
-* [Inventory explained](#inventory-explained)
-* [Assets directory](#assets-directory)
-* [Install Config](#install-config)
-  * [Set compute replicas to zero](#set-compute-replicas-to-zero)
-  * [Set machine network](#set-machine-network)
-  * [Set platform to none](#set-platform-to-none)
-* [Manifests](#manifests)
-  * [Set control-plane nodes unschedulable](#set-control-plane-nodes-unschedulable)
-* [Ignition configs](#ignition-configs)
-* [Create templates and VMs](#create-templates-and-vms)
-* [Bootstrap](#bootstrap)
-* [Master nodes](#master-nodes)
-* [Wait for Control Plane](#wait-for-control-plane)
-* [OpenShift API](#openshift-api)
-* [Retire Bootstrap](#retire-bootstrap)
-* [Worker nodes](#worker-nodes)
-    * [Approve CSRs](#approve-csrs)
-* [Wait for Installation Complete](#wait-for-installation-complete)
-* [Destroy OpenShift cluster](#destroy-openshift-cluster)
+- [Install: oVirt/RHV User-Provided Infrastructure](#install-ovirtrhv-user-provided-infrastructure)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Ansible and oVirt roles](#ansible-and-ovirt-roles)
+  - [Network Requirements](#network-requirements)
+    - [Load Balancers](#load-balancers)
+    - [DNS](#dns)
+  - [RHCOS image](#rhcos-image)
+  - [Getting Ansible playbooks](#getting-ansible-playbooks)
+  - [Assets directory](#assets-directory)
+  - [Inventory Explained](#inventory-explained)
+    - [General section](#general-section)
+    - [RHCOS section](#rhcos-section)
+    - [Profiles and VMs](#profiles-and-vms)
+      - [Profiles section](#profiles-section)
+      - [VMs section](#vms-section)
+  - [Install config](#install-config)
+    - [Set compute replicas to zero](#set-compute-replicas-to-zero)
+    - [Set machine network](#set-machine-network)
+    - [Set platform to none](#set-platform-to-none)
+  - [Manifests](#manifests)
+    - [Set control-plane nodes unschedulable](#set-control-plane-nodes-unschedulable)
+  - [Ignition configs](#ignition-configs)
+  - [Create templates and VMs](#create-templates-and-vms)
+  - [Bootstrap](#bootstrap)
+  - [Master nodes](#master-nodes)
+  - [Wait for Control Plane](#wait-for-control-plane)
+  - [OpenShift API](#openshift-api)
+  - [Retire Bootstrap](#retire-bootstrap)
+  - [Worker nodes](#worker-nodes)
+    - [Approve CSRs](#approve-csrs)
+  - [Wait for Installation Complete](#wait-for-installation-complete)
+  - [Destroy OpenShift cluster](#destroy-openshift-cluster)
 
 ## Prerequisites
 The `inventory.yml` file all the variables used by this installation can be customized as per
@@ -138,7 +145,7 @@ https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/4.6
 The version of the image should be choosen according to the OpenShift version you're about to install (in general less than or equal to the OCP
 version). 
 Once you have the URL set in the `inventory.yml` a dedicated Ansible playbook will be in charge to download the `qcow2.gz` file, uncompress it
-in a specified folder and use it to create RHV templates.
+in a specified folder and use it to create oVirt/RHV templates.
 
 ## Getting Ansible playbooks
 All the Ansible playbooks used in this UPI installation process are available [here](https://github.com/openshift/installer/tree/master/upi/ovirt)
@@ -155,37 +162,42 @@ xargs -n 1 curl -O
 Different versions of the oVirt UPI playbooks can be downloaded changing the RELEASE environment variable to the desired branch 
 (please be aware that this UPI work started with the `release-4.6`).
 
+## Assets directory
+Before proceeding with the installation is better to set an environment variable with the path (absolute or relative according to your preferences) 
+of the directory in which the `openshift-install` command will put all the artifacts and that we'll also refer to in the `inventory.yml`.
+
+```sh
+$ export ASSETS_DIR=./wrk
+```
+
 ## Inventory Explained
-This section is a brief explanation of the customizable variables contained in the `inventory.yml`.
-
-The first variable allows the user to specify the name of oVirt/RHV cluster to use, path of the OpenShift
-installer assets directory and the path of connection parameters file (mandatory to use the
-oVirt/RHV Manager REST API)
+This section shows an example of `inventory.yml`, used to specify the variables needed for the UPI installation process, with a brief explanation of 
+the sections included.
 
 ```YAML
-  ovirt_cluster: "Default"
+---
+all:
+  vars:
 
-  ocp:
-    assets_dir: "{{ lookup('env', 'ASSETS_DIR') }}"
-    ovirt_config_path: "{{ lookup('env', 'HOME') }}/.ovirt/ovirt-config.yaml"
-```
+    # ---
+    # General section
+    # ---
+    ovirt_cluster: "Default" 
+    ocp:
+      assets_dir: "{{ lookup('env', 'ASSETS_DIR') }}"
+      ovirt_config_path: "{{ lookup('env', 'HOME') }}/.ovirt/ovirt-config.yaml"
 
-The `rhcos` section contains the RHCOS public URL for downloading the image in the local specified path and
-uncompressing it before being able to use it
+    # ---
+    # RHCOS section
+    # ---
+    rhcos:
+      image_url: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/latest-4.6/rhcos-4.6.0-0.nightly-2020-07-16-122837-x86_64-openstack.x86_64.qcow2.gz"
+      local_cmp_image_path: "/tmp/rhcos.qcow2.gz"
+      local_image_path: "/tmp/rhcos.qcow2"
 
-```YAML
-
-  rhcos:
-    image_url: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/4.6.0-0.nightly-2020-07-16-122837/rhcos-4.6.0-0.nightly-2020-07-16-122837-x86_64-openstack.x86_64.qcow2.gz"
-    local_cmp_image_path: "/tmp/rhcos.qcow2.gz"
-    local_image_path: "/tmp/rhcos.qcow2"
-```
-`control_plane` and `compute` sections define the two different profiles used respectively for masters (and bootstrap) and workers.
-The user will be able to customize the parameters of both profiles according to the needs, including the possibility to specify different
-storage domains for masters and workers. This might be useful as etcd key-value store running on masters has quite strict
-[storage demands](https://www.ibm.com/cloud/blog/using-fio-to-tell-whether-your-storage-is-fast-enough-for-etcd).
-
-```YAML
+    # ---
+    # Profiles section
+    # ---
     control_plane:
       cluster: "{{ ovirt_cluster }}"
       memory: 16GiB
@@ -193,15 +205,21 @@ storage domains for masters and workers. This might be useful as etcd key-value 
       cores: 1
       template: rhcos_tpl
       operating_system: "rhcos_x64"
-      # When deploying on top of oVirt 4.4, type should be set to server unless you have oVirt version
-      # wherein this bug has been fixed: https://bugzilla.redhat.com/show_bug.cgi?id=1863615
       type: high_performance
       graphical_console:
-        ...
+        headless_mode: false
+        protocol:
+        - spice
+        - vnc
       disks:
-        ...
+      - size: 120GiB
+        name: os
+        interface: virtio_scsi
+        storage_domain: depot_nvme
       nics:
-        ...
+      - name: nic1
+        network: lab
+        profile: lab
 
     compute:
       cluster: "{{ ovirt_cluster }}"
@@ -212,12 +230,132 @@ storage domains for masters and workers. This might be useful as etcd key-value 
       operating_system: "rhcos_x64"
       type: high_performance
       graphical_console:
-        ...
+        headless_mode: false
+        protocol:
+        - spice
+        - vnc
       disks:
-        ...
+      - size: 120GiB
+        name: os
+        interface: virtio_scsi
+        storage_domain: depot_nvme
       nics:
-        ...
+      - name: nic1
+        network: lab
+        profile: lab
+
+    # ---
+    # VMs section
+    # ---
+    vms:
+    - name: "{{ metadata.infraID }}-bootstrap"
+      ocp_type: bootstrap
+      profile: "{{ control_plane }}"
+      type: server
+    - name: "{{ metadata.infraID }}-master0"
+      ocp_type: master
+      profile: "{{ control_plane }}"
+    - name: "{{ metadata.infraID }}-master1"
+      ocp_type: master
+      profile: "{{ control_plane }}"
+    - name: "{{ metadata.infraID }}-master2"
+      ocp_type: master
+      profile: "{{ control_plane }}"
+    - name: "{{ metadata.infraID }}-worker0"
+      ocp_type: worker
+      profile: "{{ compute }}"
+    - name: "{{ metadata.infraID }}-worker1"
+      ocp_type: worker
+      profile: "{{ compute }}"
+    - name: "{{ metadata.infraID }}-worker2"
+      ocp_type: worker
+      profile: "{{ compute }}"
 ```
+
+### General section
+Variables in this section are mandatory and allow the user to specify 
+
+* `ovirt_cluster`: the name of the ovirt cluster in which you'll install the OCP cluster.
+* `ocp.assets_dir`: is the path of the folder in which the `openshift-install` command will put all the files built in different stages.
+* `ocp.ovirt_config_path`: path of the `ovirt-config.yaml`, generated by the `openshift-install` in the [first stage](#install-config), containing the ovirt credentials 
+(necessary to interact with the oVirt/RHV Manager REST API).
+
+### RHCOS section
+The `rhcos` variable contains the RHCOS public URL (`image_url`) for downloading the image in the local specified path (`local_cmp_image_path`) and
+uncompressing it (in a file described by `local_image_path`)  before being able to use it.
+
+```YAML
+  rhcos:
+    image_url: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/4.6.0-0.nightly-2020-07-16-122837/rhcos-4.6.0-0.nightly-2020-07-16-122837-x86_64-openstack.x86_64.qcow2.gz"
+    local_cmp_image_path: "/tmp/rhcos.qcow2.gz"
+    local_image_path: "/tmp/rhcos.qcow2"
+```
+
+Please refer to the [specific paragraph](#rhcos-image) to learn more about which version of RHCOS image to choose and where to find it.
+
+### Profiles and VMs
+The latest and important part of the `inventory.yml` is related to `profiles` and `vms` definition using the capabilities
+offered by the ovirt.vm-infra role, whose documentation can be found [here](#https://github.com/oVirt/ovirt-ansible-vm-infra).
+In the following paragraphs we'll explain the meaning of the basic parameters from the OCP point of view.
+
+#### Profiles section
+This section is mainly composed of two variable, `control_plane` and `compute`, that define the two different profiles used respectively
+for masters (and bootstrap) and workers.
+
+```YAML
+    control_plane:
+      cluster: "{{ ovirt_cluster }}"
+      memory: 16GiB
+      sockets: 4
+      cores: 1
+      template: rhcos_tpl
+      operating_system: "rhcos_x64"
+      type: high_performance
+      disks:
+      - size: 120GiB
+        name: os
+        interface: virtio_scsi
+        storage_domain: depot_nvme
+      nics:
+      - name: nic1
+        network: lab
+        profile: lab
+
+    compute:
+      cluster: "{{ ovirt_cluster }}"
+      memory: 16GiB
+      sockets: 4
+      cores: 1
+      template: worker_rhcos_tpl
+      operating_system: "rhcos_x64"
+      type: high_performance
+      disks:
+      - size: 120GiB
+        name: os
+        interface: virtio_scsi
+        storage_domain: depot_nvme
+      nics:
+      - name: nic1
+        network: lab
+        profile: lab
+```
+
+The user can customize the parameters of both profiles according to the needs and the minimum requirements.
+
+* `cluster`: it's already set according to the value of the variable in the [General Section](#general-section).
+* `memory, sockets, cores`: mandatory parameters necessary to define the common specs of the VMs generated from this profile.
+* `template`: name of the template that the virtual machine will be based on (refer to [this](#create-templates-and-vms) for further information about templates).
+* `operating_system`: sets the vm OS type. With oVirt/RHV 4.4 it's mandatory to use the value `rhcos_x64` to allow the `ignition script` 
+to be correctly passed to the VM. 
+* `type`: it's the type that the VM will have once created.
+* `disks`: in this section the specs of the disk must be set according to the basic requirements of OCP in terms of capacity and storage 
+performances. It's possible to choose different storage-domains for control_plane and compute nodes.
+* `nics`: defines the specs like the name of the nic and the network that the Vms will use. The virtual network interface profile can also be specified.
+The MAC address will be taken from the oVirt/RHV MAC pool.
+
+#### VMs section
+In this last section of the `inventory.yml` there's the definition of the `vms` variable, containing all the node instance that the user plans to create
+to deploy the OCP cluster (remember that there are minimum requirements in terms of number of master and worker nodes).
 
 In the last section there's the list of all the vms that will be created and their role expressed by the `ocp_type`.
 
@@ -244,16 +382,36 @@ In the last section there's the list of all the vms that will be created and the
       profile: "{{ compute }}"
 ```
 
-VMs parameters can override the default ones specified in their profile (e.g.: the server type of the boostrap VM) and it's also
-possible to use all the attributes documented in the oVirt.vm-infra role (like fixed MAC addresses for each machine that could help to
-assign permanent IP through a DHCP).
+As you can see above the `vms` variable is basically defined by a list of elements each one with at least three mandatory attributes
 
-## Assets directory
-Before proceeding with the installation is better to set an environment variable with the path (absolute or relative according to your preferences) 
-of the directory in which the `openshift-install` command will put all the artifacts and that we'll also refer to in the `inventory.yml`.
+* `name`: name of the virtual machine to create.
+* `ocp_type`: the role of the virtual machine in the OCP cluster (possible values are `bootstrap`, `master`, `worker`).
+* `profile`: name of the profile (`control_plane` or `compute`) from which to inherit common specs
 
-```sh
-$ export ASSETS_DIR=./wrk
+Additional attributes can be specified to override the ones defined in the inheriting profile
+
+* `type`: is re-defined as `server` in the `bootstrap` vm
+
+It's also possible to use all the attributes documented in the [oVirt.vm-infra role](#https://github.com/oVirt/ovirt-ansible-vm-infra)
+(e.g.: fixed MAC address for each vm that could help to assign permanent IP through a DHCP).
+
+**Note**:
+Looking at the `vms` attribute `name` setting, you can see that we are using the variable `metadata.infraID` whose value is 
+obtained parsing the `metadata.json` file generated using the command `openshift-install create ignition-configs` (read more about it
+[here](#ignition-configs)).
+There's a specific set of Ansible tasks ([common-auth.yml](https://github.com/openshift/installer/blob/master/upi/ovirt/common-auth.yml)) included in all
+the UPI playbooks that contains the code to read the `infraID` from the specific file located in the `ocp.assets_dir` 
+
+```YAML
+---
+- name: include metadata.json vars
+  include_vars:
+    file: "{{ ocp.assets_dir }}/metadata.json"
+    name: metadata
+  
+  ...
+
+
 ```
 
 ## Install config
@@ -312,11 +470,13 @@ Machine API will not be used by the UPI to create nodes, we'll create compute no
 Therefore we'll set the number of compute nodes to zero replicas using the following python script:
 
 ```sh
-$ python3 -c 'import os, yaml
-path = "%s/install-config.yaml" % os.environ["ASSETS_DIR"]
-conf = yaml.safe_load(open(path))
-conf["compute"][0]["replicas"] = 0
-open(path, "w").write(yaml.dump(conf, default_flow_style=False))'
+$ python3 -c 'import yaml;
+path = "./wrk/install-config.yaml";
+conf = yaml.safe_load(open(path));
+conf["compute"][0]["replicas"] = 0;
+open(path, "w").write(yaml.dump(conf, default_flow_style=False));'
+
+**NOTE**: All the Python snippets in this document work with both Python 3 and Python 2.
 ```
 
 **NOTE**: All the Python snippets in this document work with both Python 3 and Python 2.
@@ -326,11 +486,11 @@ OpenShift installer sets a default IP range for nodes and we need to change it a
 We'll set the range to `172.16.0.0/16` (we can use the following python script for this):
 
 ```sh
-$ python3 -c 'import os, yaml
-path = "%s/install-config.yaml" % os.environ["ASSETS_DIR"]
-conf = yaml.safe_load(open(path))
-conf["networking"]["machineNetwork"][0]["cidr"] = "172.16.0.0/16"
-open(path, "w").write(yaml.dump(conf, default_flow_style=False))'
+$ python3 -c 'import yaml;
+path = "./wrk/install-config.yaml";
+conf = yaml.safe_load(open(path));
+conf["networking"]["machineNetwork"][0]["cidr"] = "172.16.0.0/16";
+open(path, "w").write(yaml.dump(conf, default_flow_style=False));'
 ```
 
 ### Set platform to none
@@ -339,13 +499,13 @@ platform section in the `install-config.yaml`, all the settings needed are speci
 We'll remove the section 
 
 ```sh
-$ python3 -c 'import os, yaml
-path = "%s/install-config.yaml" % os.environ["ASSETS_DIR"]
-conf = yaml.safe_load(open(path))
-platform = conf["platform"]
-del platform["ovirt"]
-platform["none"] = {}
-open(path, "w").write(yaml.dump(conf, default_flow_style=False))'
+$ python3 -c 'import yaml;
+path = "./wrk/install-config.yaml";
+conf = yaml.safe_load(open(path));
+platform = conf["platform"];
+del platform["ovirt"];
+platform["none"] = {};
+open(path, "w").write(yaml.dump(conf, default_flow_style=False));'
 ```
 
 ## Manifests
@@ -409,11 +569,11 @@ Setting the control-plan as unschedulable means modifying the `manifests/cluster
 `masterSchedulable` to `False`.
 
 ```sh 
-$ python3 -c 'import os, yaml
-path = "%s/manifests/cluster-scheduler-02-config.yml" % os.environ["ASSETS_DIR"]
-data = yaml.safe_load(open(path))
-data["spec"]["mastersSchedulable"] = False
-open(path, "w").write(yaml.dump(data, default_flow_style=False))'
+$ python3 -c 'import yaml;
+path = "./wrk/manifests/cluster-scheduler-02-config.yml";
+data = yaml.safe_load(open(path));
+data["spec"]["mastersSchedulable"] = False;
+open(path, "w").write(yaml.dump(data, default_flow_style=False));'
 ```
 
 ## Ignition configs
@@ -446,6 +606,10 @@ Other than the ignition files the installer generated
 
 The `infraID` will be used by the UPI Ansible playbooks as prefix for the VMs created during the installation
 process avoiding name clashes in case of multiple installations in the same oVirt/RHV cluster.
+
+**Note:** certificates contained into ignition config files expire after 24 hours. You must complete the cluster installation
+and keep the cluster running for 24 hours in a non-degradated state to ensure that the first certificate rotation has finished.
+
 
 ## Create templates and VMs
 After having checked that all our variables in the `inventory.yml` fit the needs, we can run the first of our Ansible provisioning

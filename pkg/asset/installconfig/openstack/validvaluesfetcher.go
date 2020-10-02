@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/external"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/utils/openstack/clientconfig"
@@ -24,8 +25,9 @@ func getCloudNames() ([]string, error) {
 	return cloudNames, nil
 }
 
-// getNetworkNames gets the valid network names.
-func getNetworkNames(cloud string) ([]string, error) {
+// getExternalNetworkNames interrogates OpenStack to get the external network
+// names.
+func getExternalNetworkNames(cloud string) ([]string, error) {
 	conn, err := clientconfig.NewServiceClient("network", &clientconfig.ClientOpts{
 		Cloud: cloud,
 	})
@@ -33,7 +35,12 @@ func getNetworkNames(cloud string) ([]string, error) {
 		return nil, err
 	}
 
-	listOpts := networks.ListOpts{}
+	iTrue := true
+	listOpts := external.ListOptsExt{
+		ListOptsBuilder: networks.ListOpts{},
+		External:        &iTrue,
+	}
+
 	allPages, err := networks.List(conn, listOpts).AllPages()
 	if err != nil {
 		return nil, err
