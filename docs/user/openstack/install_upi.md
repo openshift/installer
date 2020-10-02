@@ -629,11 +629,13 @@ $ openstack catalog show image
 
 By default Glance service doesn't allow anonymous access to the data. So, if you use Glance to store the ignition config, then you also need to provide a valid auth token in the `ignition.config.merge.httpHeaders` field.
 
-To obtain the token execute:
+The token can be obtained with this command:
 
 ```sh
 openstack token issue -c id -f value
 ```
+
+Note that this token can be generated as any OpenStack user with Glance read access; this particular token will only be used for downloading the Ignition file.
 
 The command will return the token to be added to the `ignition.config.merge[0].httpHeaders` property in the Bootstrap Ignition Shim (see [below](#create-the-bootstrap-ignition-shim)):
 
