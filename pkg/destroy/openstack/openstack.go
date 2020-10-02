@@ -1,6 +1,7 @@
 package openstack
 
 import (
+	"os"
 	"strings"
 	"time"
 
@@ -103,6 +104,11 @@ func (o *ClusterUninstaller) Run() error {
 	opts := &clientconfig.ClientOpts{
 		Cloud: o.Cloud,
 	}
+
+	// We should unset OS_CLOUD env variable here, because the real cloud name was
+	// defined on the previous step. OS_CLOUD has more priority, so the value from
+	// "opts" variable will be ignored if OS_CLOUD contains something.
+	os.Unsetenv("OS_CLOUD")
 
 	// launch goroutines
 	for name, function := range deleteFuncs {
