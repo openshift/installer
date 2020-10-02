@@ -13,7 +13,6 @@
     os_server:
       name: "{{ os_bootstrap_server_name }}"
       state: absent
-      delete_fip: yes
 
   - name: 'Remove the bootstrap server port'
     os_port:
