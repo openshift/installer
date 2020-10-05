@@ -88,6 +88,7 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
 				}
 
+				// TODO this error would be better rendered with newlines intact instead of quoted.
 				logrus.Fatal(err)
 			}
 			timer.StopTimer(timer.TotalTimeElapsed)

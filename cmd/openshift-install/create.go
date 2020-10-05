@@ -131,6 +131,7 @@ var (
 					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
 					}
+					// TODO this error would be better rendered with newlines intact instead of quoted.
 					logrus.Fatal(err)
 				}
 				timer.StopTimer(timer.TotalTimeElapsed)

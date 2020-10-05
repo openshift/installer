@@ -280,9 +280,21 @@ func logClusterOperatorConditions(ctx context.Context, config *rest.Config) erro
 				continue
 			}
 			if condition.Type == configv1.OperatorDegraded {
-				logrus.Errorf("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
+				// many operators have messages split by newlines. Per condition docs, these are human readable, so messages are what we will show:
+				// condition docs: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/types.go#L1408
+				// logrus doesn't render newlines, because of this we will split manually
+				// logrus no-newlines: https://github.com/sirupsen/logrus/issues/608
+				// Per condition docs, reasons are intended to be machine readable, not human readable.  We will not display reasons
+				// condition docs: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/types.go#L1397
+				messages := strings.Split(condition.Message, "\n")
+				for _, message := range messages{
+					logrus.Errorf("Cluster operator %s %s is %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, message)
+				}
 			} else {
-				logrus.Infof("Cluster operator %s %s is %s with %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, condition.Reason, condition.Message)
+				messages := strings.Split(condition.Message, "\n")
+				for _, message := range messages{
+					logrus.Infof("Cluster operator %s %s is %s: %s", operator.ObjectMeta.Name, condition.Type, condition.Status, message)
+				}
 			}
 		}
 	}
