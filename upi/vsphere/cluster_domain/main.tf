@@ -18,5 +18,6 @@ resource "aws_route53_record" "name_server" {
   ttl     = "300"
   zone_id = data.aws_route53_zone.base.zone_id
   records = aws_route53_zone.cluster.name_servers
+  allow_overwrite = true
 }
 
