@@ -11,10 +11,6 @@ OpenStack CLI tools should be installed, then:
 
 `openstack console log show <instance>`
 
-## Cluster destroying fails
-
-Destroying the cluster has been noticed to [sometimes fail](https://github.com/openshift/installer/issues/1985). We are working on patching this, but in a mean time the workaround is to simply restart the destroying process of the cluster.
-
 ## Machine has ERROR state
 
 This could be because the machine's instance was accidentally destroyed and the cluster API provider cannot recreate it.
