@@ -11,7 +11,7 @@ import (
 // Auth is the collection of credentials that will be used by terrform.
 type Auth struct {
 	ProjectID      string `json:"gcp_project_id,omitempty"`
-	ServiceAccount string `json:"gcp_service_account,ompitempty"`
+	ServiceAccount string `json:"gcp_service_account,omitempty"`
 }
 
 type config struct {
