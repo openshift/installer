@@ -8,7 +8,7 @@ import (
 	serviceusage "google.golang.org/api/serviceusage/v1beta1"
 )
 
-// loadLimis loads the comumer quota metric for a given project and the list of services.
+// loadLimits loads the consumer quota metric for a given project and the list of services.
 // The limits are defined wrt to the regions. If the limit is global, it's location is treated as `global` else the
 // region value is used for location.
 func loadLimits(ctx context.Context, client *serviceusage.ServicesService, project string, services ...string) ([]record, error) {
