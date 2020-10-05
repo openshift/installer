@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -83,7 +84,7 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 		if err = gcpconfig.ValidateEnabledServices(ctx, client, ic.Config.GCP.ProjectID); err != nil {
 			return errors.Wrap(err, "failed to validate services in this project")
 		}
-	case azure.Name, baremetal.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name:
+	case azure.Name, baremetal.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name, kubevirt.Name:
 		// no permissions to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
