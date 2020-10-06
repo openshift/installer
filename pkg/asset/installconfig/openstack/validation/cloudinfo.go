@@ -117,7 +117,7 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig) error {
 		return errors.Wrap(err, "failed to fetch machine subnet info")
 	}
 
-	ci.APIFIP, err = ci.getFloatingIP(ic.OpenStack.LbFloatingIP)
+	ci.APIFIP, err = ci.getFloatingIP(ic.OpenStack.APIFloatingIP)
 	if err != nil {
 		return err
 	}

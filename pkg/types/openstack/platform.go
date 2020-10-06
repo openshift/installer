@@ -26,8 +26,14 @@ type Platform struct {
 
 	// LbFloatingIP is the IP address of an available floating IP in your OpenStack cluster
 	// to associate with the OpenShift load balancer.
+	// Deprecated: this value has been renamed to apiFloatingIP.
 	// +optional
-	LbFloatingIP string `json:"lbFloatingIP,omitempty"`
+	DeprecatedLbFloatingIP string `json:"lbFloatingIP,omitempty"`
+
+	// APIFloatingIP is the IP address of an available floating IP in your OpenStack cluster
+	// to associate with the OpenShift API load balancer.
+	// +optional
+	APIFloatingIP string `json:"apiFloatingIP,omitempty"`
 
 	// IngressFloatingIP is the ID of an available floating IP in your OpenStack cluster
 	// that will be associated with the OpenShift ingress port
