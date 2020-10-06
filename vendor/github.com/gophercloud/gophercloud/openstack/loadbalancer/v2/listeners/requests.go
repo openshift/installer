@@ -10,11 +10,12 @@ type Protocol string
 
 // Supported attributes for create/update operations.
 const (
-	ProtocolTCP   Protocol = "TCP"
-	ProtocolUDP   Protocol = "UDP"
-	ProtocolPROXY Protocol = "PROXY"
-	ProtocolHTTP  Protocol = "HTTP"
-	ProtocolHTTPS Protocol = "HTTPS"
+	ProtocolTCP             Protocol = "TCP"
+	ProtocolUDP             Protocol = "UDP"
+	ProtocolPROXY           Protocol = "PROXY"
+	ProtocolHTTP            Protocol = "HTTP"
+	ProtocolHTTPS           Protocol = "HTTPS"
+	ProtocolTerminatedHTTPS Protocol = "TERMINATED_HTTPS"
 )
 
 // ListOptsBuilder allows extensions to add additional parameters to the
@@ -85,7 +86,7 @@ type CreateOpts struct {
 	// The load balancer on which to provision this listener.
 	LoadbalancerID string `json:"loadbalancer_id" required:"true"`
 
-	// The protocol - can either be TCP, HTTP or HTTPS.
+	// The protocol - can either be TCP, HTTP, HTTPS or TERMINATED_HTTPS.
 	Protocol Protocol `json:"protocol" required:"true"`
 
 	// The port on which to listen for client traffic.

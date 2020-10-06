@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/projects"
-	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/users"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -101,20 +100,11 @@ func dataSourceIdentityProjectV3Read(d *schema.ResourceData, meta interface{}) e
 		userID := config.UserID
 		log.Printf("[DEBUG] Will try to find project with users.ListProjects as I am unable to query openstack_identity_project_v3: %s. Trying listing userprojects.", err)
 		if userID == "" {
-			// If we don't have the ID for the user we will try to fetch it from the Token
-			tokenID := config.OsClient.TokenID
-			d.SetId(d.Get("name").(string))
-			result := tokens.Get(identityClient, tokenID)
-			if result.Err != nil {
-				log.Printf("[ERROR] Error when getting token info %s", result)
-				return result.Err
-			}
-			user, err := result.ExtractUser()
+			userID, _, err = GetTokenInfo(identityClient)
 			if err != nil {
-				log.Printf("[ERROR] Error when extracting user: %s", err)
+				return fmt.Errorf("Error when getting token info: %s", err)
 				return err
 			}
-			userID = user.ID
 		}
 		// Search for all the projects using the users.ListProjects API call and filter them
 		allPages, err = users.ListProjects(identityClient, userID).AllPages()

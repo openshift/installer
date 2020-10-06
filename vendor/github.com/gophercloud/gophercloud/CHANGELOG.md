@@ -1,4 +1,14 @@
-## 0.13.0 (Unlreleased)
+## 0.13.0 (Unreleased)
+
+IMPROVEMENTS
+
+* Added `ProtocolTerminatedHTTPS` as a valid listener protocol to `loadbalancer/v2/listeners` [GH-1992](https://github.com/gophercloud/gophercloud/pull/1992)
+* Added `objectstorage/v1/objects.CreateTempURLOpts.Timestamp` [GH-1994](https://github.com/gophercloud/gophercloud/pull/1994)
+
+BUG FIXES
+
+* Fixed URL escaping in `objectstorage/v1/objects.CreateTempURL` [GH-1994](https://github.com/gophercloud/gophercloud/pull/1994)
+* Remove unused `ServiceClient` from `compute/v2/servers.CreateOpts` [GH-2004](https://github.com/gophercloud/gophercloud/pull/2004)
 
 ## 0.12.0 (June 25, 2020)
 
@@ -20,6 +30,7 @@ BUG FIXES
 * Fixed marshalling of `blockstorage/extensions/backups.ImportBackup.Metadata` [GH-1967](https://github.com/gophercloud/gophercloud/pull/1967)
 * Fixed typo of "OAUth" to "OAuth" in `identity/v3/extensions/oauth1` [GH-1969](https://github.com/gophercloud/gophercloud/pull/1969)
 * Fixed goroutine leak during reauthentication [GH-1978](https://github.com/gophercloud/gophercloud/pull/1978)
+* Changed `baremetalintrospection/v1/introspection.RootDiskType.Size` from `int` to `int64` [GH-1988](https://github.com/gophercloud/gophercloud/pull/1988)
 
 ## 0.11.0 (May 14, 2020)
 
@@ -197,7 +208,7 @@ IMPROVEMENTS
 * Added `MonitorAddress` to `loadbalancer/v2/pools.CreateMemberOpts` [GH-1824](https://github.com/gophercloud/gophercloud/pull/1824)
 * Added `MonitorPort` to `loadbalancer/v2/pools.CreateMemberOpts` [GH-1824](https://github.com/gophercloud/gophercloud/pull/1824)
 * Changed `Impersonation` to a non-required field in `identity/v3/extensions/trusts.CreateOpts` [GH-1818](https://github.com/gophercloud/gophercloud/pull/1818)
-* Added `InsertHeaders` to `loadbalancer/v2/listeners.UpdateOpts` [GH-1835]
+* Added `InsertHeaders` to `loadbalancer/v2/listeners.UpdateOpts` [GH-1835](https://github.com/gophercloud/gophercloud/pull/1835)
 * Added `NUMATopology` to `baremetalintrospection/v1/introspection.Data` [GH-1842](https://github.com/gophercloud/gophercloud/pull/1842)
 * Added `placement/v1/resourceproviders.Create` [GH-1841](https://github.com/gophercloud/gophercloud/pull/1841)
 * Added `blockstorage/extensions/volumeactions.UploadImageOpts.Visibility` [GH-1873](https://github.com/gophercloud/gophercloud/pull/1873)

@@ -141,6 +141,12 @@ func resourceContainerInfraClusterV1() *schema.Resource {
 				Computed: true,
 			},
 
+			"merge_labels": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
+			},
+
 			"master_count": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -184,6 +190,13 @@ func resourceContainerInfraClusterV1() *schema.Resource {
 
 			"fixed_subnet": {
 				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Computed: true,
+			},
+
+			"floating_ip_enabled": {
+				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
@@ -253,6 +266,9 @@ func resourceContainerInfraClusterV1Create(d *schema.ResourceData, meta interfac
 		return fmt.Errorf("Unable to determine openstack_containerinfra_cluster_v1 master_flavor")
 	}
 
+	// Get boolean parameters that will be passed by reference.
+	floatingIPEnabled := d.Get("floating_ip_enabled").(bool)
+
 	createOpts := clusters.CreateOpts{
 		ClusterTemplateID: d.Get("cluster_template_id").(string),
 		DiscoveryURL:      d.Get("discovery_url").(string),
@@ -263,6 +279,7 @@ func resourceContainerInfraClusterV1Create(d *schema.ResourceData, meta interfac
 		Name:              d.Get("name").(string),
 		FixedNetwork:      d.Get("fixed_network").(string),
 		FixedSubnet:       d.Get("fixed_subnet").(string),
+		FloatingIPEnabled: &floatingIPEnabled,
 	}
 
 	// Set int parameters that will be passed by reference.
@@ -284,6 +301,11 @@ func resourceContainerInfraClusterV1Create(d *schema.ResourceData, meta interfac
 	nodeCount := d.Get("node_count").(int)
 	if nodeCount > 0 {
 		createOpts.NodeCount = &nodeCount
+	}
+
+	mergeLabels := d.Get("merge_labels").(bool)
+	if mergeLabels {
+		createOpts.MergeLabels = &mergeLabels
 	}
 
 	s, err := clusters.Create(containerInfraClient, createOpts).Extract()
@@ -349,6 +371,7 @@ func resourceContainerInfraClusterV1Read(d *schema.ResourceData, meta interface{
 	d.Set("stack_id", s.StackID)
 	d.Set("fixed_network", s.FixedNetwork)
 	d.Set("fixed_subnet", s.FixedSubnet)
+	d.Set("floating_ip_enabled", s.FloatingIPEnabled)
 
 	kubeconfig, err := flattenContainerInfraV1Kubeconfig(d, containerInfraClient)
 	if err != nil {

@@ -434,6 +434,26 @@ func (c *Config) ImageV2Client(region string) (*gophercloud.ServiceClient, error
 	return client, nil
 }
 
+func (c *Config) MessagingV2Client(region string) (*gophercloud.ServiceClient, error) {
+	if err := c.authenticate(); err != nil {
+		return nil, err
+	}
+
+	client, err := openstack.NewMessagingV2(c.OsClient, "", gophercloud.EndpointOpts{
+		Region:       c.determineRegion(region),
+		Availability: clientconfig.GetEndpointType(c.EndpointType),
+	})
+
+	if err != nil {
+		return client, err
+	}
+
+	// Check if an endpoint override was specified for the messaging service.
+	client = c.determineEndpoint(client, "message")
+
+	return client, nil
+}
+
 func (c *Config) NetworkingV2Client(region string) (*gophercloud.ServiceClient, error) {
 	if err := c.authenticate(); err != nil {
 		return nil, err

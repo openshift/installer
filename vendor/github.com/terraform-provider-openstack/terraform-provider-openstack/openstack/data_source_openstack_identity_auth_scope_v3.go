@@ -5,8 +5,6 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-
-	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 )
 
 func dataSourceIdentityAuthScopeV3() *schema.Resource {
@@ -104,16 +102,10 @@ func dataSourceIdentityAuthScopeV3Read(d *schema.ResourceData, meta interface{})
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack identity client: %s", err)
 	}
-	tokenID := config.OsClient.TokenID
 
 	d.SetId(d.Get("name").(string))
 
-	result := tokens.Get(identityClient, tokenID)
-	if result.Err != nil {
-		return result.Err
-	}
-
-	user, err := result.ExtractUser()
+	user, domain, project, roles, err := GetTokenDetails(identityClient)
 	if err != nil {
 		return err
 	}
@@ -123,10 +115,6 @@ func dataSourceIdentityAuthScopeV3Read(d *schema.ResourceData, meta interface{})
 	d.Set("user_domain_name", user.Domain.Name)
 	d.Set("user_domain_id", user.Domain.ID)
 
-	domain, err := result.ExtractDomain()
-	if err != nil {
-		return err
-	}
 	if domain != nil {
 		d.Set("domain_name", domain.Name)
 		d.Set("domain_id", domain.ID)
@@ -135,10 +123,6 @@ func dataSourceIdentityAuthScopeV3Read(d *schema.ResourceData, meta interface{})
 		d.Set("domain_id", "")
 	}
 
-	project, err := result.ExtractProject()
-	if err != nil {
-		return err
-	}
 	if project != nil {
 		d.Set("project_name", project.Name)
 		d.Set("project_id", project.ID)
@@ -149,11 +133,6 @@ func dataSourceIdentityAuthScopeV3Read(d *schema.ResourceData, meta interface{})
 		d.Set("project_id", "")
 		d.Set("project_domain_name", "")
 		d.Set("project_domain_id", "")
-	}
-
-	roles, err := result.ExtractRoles()
-	if err != nil {
-		return err
 	}
 
 	allRoles := flattenIdentityAuthScopeV3Roles(roles)

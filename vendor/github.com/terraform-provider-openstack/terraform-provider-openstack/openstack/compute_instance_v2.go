@@ -23,9 +23,10 @@ import (
 )
 
 const (
-	computeV2InstanceCreateServerWithTagsMicroversion  = "2.52"
-	computeV2TagsExtensionMicroversion                 = "2.26"
-	computeV2InstanceBlockDeviceVolumeTypeMicroversion = "2.67"
+	computeV2InstanceCreateServerWithNetworkModeMicroversion = "2.37"
+	computeV2InstanceCreateServerWithTagsMicroversion        = "2.52"
+	computeV2TagsExtensionMicroversion                       = "2.26"
+	computeV2InstanceBlockDeviceVolumeTypeMicroversion       = "2.67"
 )
 
 // InstanceNIC is a structured representation of a Gophercloud servers.Server

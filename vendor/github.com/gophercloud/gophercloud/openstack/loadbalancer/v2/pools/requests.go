@@ -425,8 +425,7 @@ func BatchUpdateMembers(c *gophercloud.ServiceClient, poolID string, opts []Batc
 	return
 }
 
-// DisassociateMember will remove and disassociate a Member from a particular
-// Pool.
+// DeleteMember will remove and disassociate a Member from a particular Pool.
 func DeleteMember(c *gophercloud.ServiceClient, poolID string, memberID string) (r DeleteMemberResult) {
 	resp, err := c.Delete(memberResourceURL(c, poolID, memberID), nil)
 	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)

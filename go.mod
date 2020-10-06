@@ -29,14 +29,14 @@ require (
 	github.com/golang/protobuf v1.4.1
 	github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible // indirect
 	github.com/google/uuid v1.1.1
-	github.com/gophercloud/gophercloud v0.12.0
-	github.com/gophercloud/utils v0.0.0-20200508015959-b0167b94122c
+	github.com/gophercloud/gophercloud v0.12.1-0.20200821143728-362eb785d617
+	github.com/gophercloud/utils v0.0.0-20200918191848-da0e919a012a
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-azure-helpers v0.10.0
 	github.com/hashicorp/go-plugin v1.2.2
 	github.com/hashicorp/logutils v1.0.0
 	github.com/hashicorp/terraform v0.12.21
-	github.com/hashicorp/terraform-plugin-sdk v1.14.0
+	github.com/hashicorp/terraform-plugin-sdk v1.15.0
 	github.com/hashicorp/vault v1.3.0 // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/keybase/go-crypto v0.0.0-20190828182435-a05457805304 // indirect
@@ -73,12 +73,12 @@ require (
 	github.com/spf13/cobra v0.0.6
 	github.com/stoewer/go-strcase v1.1.0 // indirect
 	github.com/stretchr/testify v1.5.1
+	github.com/terraform-provider-openstack/terraform-provider-openstack v1.32.0
 	github.com/terraform-providers/terraform-provider-aws v0.0.0
 	github.com/terraform-providers/terraform-provider-azurerm v0.0.0
 	github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160
 	github.com/terraform-providers/terraform-provider-ignition/v2 v2.1.0
 	github.com/terraform-providers/terraform-provider-local v1.4.0
-	github.com/terraform-providers/terraform-provider-openstack v1.28.0
 	github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
 	github.com/terraform-providers/terraform-provider-vsphere v1.16.2
 	github.com/ulikunitz/xz v0.5.7
@@ -95,7 +95,7 @@ require (
 	google.golang.org/grpc v1.29.1
 	gopkg.in/AlecAivazis/survey.v1 v1.8.9-0.20200217094205-6773bdf39b7f
 	gopkg.in/ini.v1 v1.51.0
-	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v2 v2.3.0
 	k8s.io/api v0.18.3
 	k8s.io/apiextensions-apiserver v0.18.2
 	k8s.io/apimachinery v0.18.3
