@@ -998,6 +998,9 @@ spec:
               openstack:
                 description: OpenStack is the configuration used when installing on OpenStack.
                 properties:
+                  apiFloatingIP:
+                    description: APIFloatingIP is the IP address of an available floating IP in your OpenStack cluster to associate with the OpenShift API load balancer.
+                    type: string
                   apiVIP:
                     description: 'APIVIP is the static IP on the nodes subnet that the api port for openshift will be assigned Default: will be set to the 5 on the first entry in the machineNetwork CIDR'
                     type: string
@@ -1062,7 +1065,7 @@ spec:
                     description: 'IngressVIP is the static IP on the nodes subnet that the apps port for openshift will be assigned Default: will be set to the 7 on the first entry in the machineNewtwork CIDR'
                     type: string
                   lbFloatingIP:
-                    description: LbFloatingIP is the IP address of an available floating IP in your OpenStack cluster to associate with the OpenShift load balancer.
+                    description: 'LbFloatingIP is the IP address of an available floating IP in your OpenStack cluster to associate with the OpenShift load balancer. Deprecated: this value has been renamed to apiFloatingIP.'
                     type: string
                   machinesSubnet:
                     description: MachinesSubnet is the UUIDv4 of an openstack subnet. This subnet will be used by all nodes created by the installer. By setting this, the installer will no longer create a network and subnet. The subnet and network specified in MachinesSubnet will not be deleted or modified by the installer.
