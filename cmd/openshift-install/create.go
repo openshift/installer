@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/x509"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -36,6 +35,7 @@ import (
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
+	"github.com/openshift/library-go/pkg/route/routeapihelpers"
 )
 
 type target struct {
@@ -445,12 +445,18 @@ func waitForConsole(ctx context.Context, config *rest.Config) (string, error) {
 			for _, route := range consoleRoutes.Items {
 				logrus.Debugf("Route found in openshift-console namespace: %s", route.Name)
 				if route.Name == consoleRouteName {
-					url = fmt.Sprintf("https://%s", route.Spec.Host)
+					if uri, _, err2 := routeapihelpers.IngressURI(&route, ""); err2 == nil {
+						url = uri.String()
+						logrus.Debug("OpenShift console route is admitted")
+						cancel()
+					} else {
+						err = err2
+					}
+					break
 				}
 			}
-			logrus.Debug("OpenShift console route is created")
-			cancel()
-		} else if err != nil {
+		}
+		if err != nil {
 			silenceRemaining--
 			if silenceRemaining == 0 {
 				logrus.Debugf("Still waiting for the console route: %v", err)
