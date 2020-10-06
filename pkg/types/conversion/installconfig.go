@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/openstack"
 )
 
 // ConvertInstallConfig is modeled after the k8s conversion schemes, which is
@@ -31,6 +32,11 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 	switch config.Platform.Name() {
 	case baremetal.Name:
 		ConvertBaremetal(config)
+	case openstack.Name:
+		err := convertOpenStack(config)
+		if err != nil {
+			return err
+		}
 	}
 
 	config.APIVersion = types.InstallConfigVersion
@@ -86,4 +92,19 @@ func ConvertBaremetal(config *types.InstallConfig) {
 	if config.Platform.BareMetal.DeprecatedProvisioningDHCPExternal == true && config.Platform.BareMetal.ProvisioningNetwork == "" {
 		config.Platform.BareMetal.ProvisioningNetwork = baremetal.UnmanagedProvisioningNetwork
 	}
+}
+
+// convertOpenStack upconverts deprecated fields in the OpenStack platform.
+func convertOpenStack(config *types.InstallConfig) error {
+	// LbFloatingIP has been renamed to APIFloatingIP
+	if config.Platform.OpenStack.DeprecatedLbFloatingIP != "" {
+		if config.Platform.OpenStack.APIFloatingIP == "" {
+			config.Platform.OpenStack.APIFloatingIP = config.Platform.OpenStack.DeprecatedLbFloatingIP
+		} else {
+			// Return error if both LbFloatingIP and APIFloatingIP are specified in the config
+			return field.Forbidden(field.NewPath("platform").Child("openstack").Child("lbFloatingIP"), "cannot specify lbFloatingIP and apiFloatingIP together")
+		}
+	}
+
+	return nil
 }
