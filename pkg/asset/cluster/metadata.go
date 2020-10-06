@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/cluster/ovirt"
 	"github.com/openshift/installer/pkg/asset/cluster/vsphere"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -51,6 +52,7 @@ func (m *Metadata) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
+		&bootstrap.Bootstrap{},
 	}
 }
 
