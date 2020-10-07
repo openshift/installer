@@ -41,22 +41,6 @@ func (z Zone) String() string {
 	return fmt.Sprintf("%s", z.Name)
 }
 
-func transformZone(f func(s string) *Zone) survey.Transformer {
-	return func(ans interface{}) interface{} {
-		// if the answer value passed in is the zero value of the appropriate type
-		if "" == ans.(string) {
-			return nil
-		}
-
-		s, ok := ans.(string)
-		if !ok {
-			return nil
-		}
-
-		return f(s)
-	}
-}
-
 //GetDNSZoneID returns the Azure DNS zone resourceID
 //by interpolating the subscriptionID, the resource group and the zone name
 func (config DNSConfig) GetDNSZoneID(rgName string, zoneName string) string {

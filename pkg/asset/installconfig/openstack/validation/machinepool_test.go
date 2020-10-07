@@ -11,8 +11,7 @@ import (
 )
 
 const (
-	validFlavor = "valid-flavor"
-	validZone   = "valid-zone"
+	validZone = "valid-zone"
 
 	validCtrlPlaneFlavor = "valid-control-plane-flavor"
 	validComputeFlavor   = "valid-compute-flavor"

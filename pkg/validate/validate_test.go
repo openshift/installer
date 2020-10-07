@@ -452,12 +452,6 @@ CNA1OOo=
 Invalid data here
 `
 
-const invalidCertificate = `-----BEGIN CERTIFICATE-----
-MIIF2zCCA8OgAwIBAgICEAAwDQYJKoZIhvcNAQELBQAwgYExCzAJBgNVBAYTAlVT
-MRcwFQYDVQQIDA5Ob3J0aCBDYXJvbGluYTEQMA4GA1UEBwwHUmFsZWlnaDEUMBIG
------END CERTIFICATE-----
-`
-
 func TestAdditionalTrustBundle(t *testing.T) {
 	cases := []struct {
 		name        string

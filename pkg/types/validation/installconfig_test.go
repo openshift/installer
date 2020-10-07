@@ -13,7 +13,6 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
-	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -51,13 +50,6 @@ func validInstallConfig() *types.InstallConfig {
 func validAWSPlatform() *aws.Platform {
 	return &aws.Platform{
 		Region: "us-east-1",
-	}
-}
-
-func validAzurePlatform() *azure.Platform {
-	return &azure.Platform{
-		Region:                      "us-east-1",
-		BaseDomainResourceGroupName: "my-resource-group",
 	}
 }
 

@@ -1410,50 +1410,6 @@ func deleteElasticLoadBalancerTargetGroup(ctx context.Context, client *elbv2.ELB
 	return nil
 }
 
-func deleteElasticLoadBalancerTargetGroupsByVPC(ctx context.Context, client *elbv2.ELBV2, vpc string, logger logrus.FieldLogger) error {
-	var lastError error
-	err := client.DescribeTargetGroupsPagesWithContext(
-		ctx,
-		&elbv2.DescribeTargetGroupsInput{},
-		func(results *elbv2.DescribeTargetGroupsOutput, lastPage bool) bool {
-			for _, group := range results.TargetGroups {
-				if group.VpcId == nil {
-					logger.WithField("target group", *group.TargetGroupArn).Warn("load balancer target group does not have a VPC ID so could not determine whether it should be deleted")
-					continue
-				}
-
-				if *group.VpcId != vpc {
-					continue
-				}
-
-				parsed, err := arn.Parse(*group.TargetGroupArn)
-				if err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrap(err, "parse ARN for target group")
-					continue
-				}
-
-				err = deleteElasticLoadBalancerTargetGroup(ctx, client, parsed, logger.WithField("target group", parsed.Resource))
-				if err != nil {
-					if lastError != nil {
-						logger.Debug(lastError)
-					}
-					lastError = errors.Wrapf(err, "deleting %s", parsed.String())
-				}
-			}
-
-			return !lastPage
-		},
-	)
-
-	if lastError != nil {
-		return lastError
-	}
-	return err
-}
-
 func deleteElasticLoadBalancerV2(ctx context.Context, client *elbv2.ELBV2, arn arn.ARN, logger logrus.FieldLogger) error {
 	_, err := client.DeleteLoadBalancerWithContext(ctx, &elbv2.DeleteLoadBalancerInput{
 		LoadBalancerArn: aws.String(arn.String()),

@@ -18,24 +18,6 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 )
 
-func validInstallConfig() *types.InstallConfig {
-	return &types.InstallConfig{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: types.InstallConfigVersion,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-cluster",
-		},
-		BaseDomain: "test-domain",
-		Platform: types.Platform{
-			AWS: &aws.Platform{
-				Region: "us-east-1",
-			},
-		},
-		PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
-	}
-}
-
 func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 	sshPublicKey := &sshPublicKey{}
 	baseDomain := &baseDomain{"test-domain"}

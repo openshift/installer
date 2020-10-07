@@ -6,7 +6,6 @@ import (
 	"net"
 	"sort"
 	"strings"
-	"time"
 
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns"
 	aznetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
@@ -118,29 +117,6 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 	}
 
 	return field.ErrorList{field.Invalid(fieldPath, p.Region, fmt.Sprintf("region %q does not support resource creation", p.Region))}
-}
-
-// validateRegionForUltraDisks checks that the Ultra SSD disks are available for the user.
-func validateRegionForUltraDisks(fldPath *field.Path, client *Client, region string) *field.Error {
-	diskType := "UltraSSD_LRS"
-
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
-	defer cancel()
-
-	regionDisks, err := client.GetDiskSkus(ctx, region)
-	if err != nil {
-		return field.InternalError(fldPath.Child("diskType"), err)
-	}
-
-	for _, page := range regionDisks {
-		for _, location := range to.StringSlice(page.Locations) {
-			if location == diskType {
-				return nil
-			}
-		}
-	}
-
-	return field.NotFound(fldPath.Child("diskType"), fmt.Sprintf("%s is not available in specified subscription for region %s", diskType, region))
 }
 
 // ValidatePublicDNS checks DNS for CNAME, A, and AAA records for

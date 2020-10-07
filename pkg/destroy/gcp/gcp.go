@@ -202,14 +202,6 @@ func isNoOp(err error) bool {
 	return ok && (ae.Code == http.StatusNotFound || ae.Code == http.StatusNotModified)
 }
 
-func isNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	ae, ok := err.(*googleapi.Error)
-	return ok && ae.Code == http.StatusNotFound
-}
-
 // aggregateError is a utility function that takes a slice of errors and an
 // optional pending argument, and returns an error or nil
 func aggregateError(errs []error, pending ...int) error {

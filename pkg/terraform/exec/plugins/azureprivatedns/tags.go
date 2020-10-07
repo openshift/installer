@@ -2,7 +2,6 @@ package azureprivatedns
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -13,23 +12,6 @@ func tagsSchema() *schema.Schema {
 		Optional:     true,
 		Computed:     true,
 		ValidateFunc: validateAzureRMTags,
-	}
-}
-
-func tagsForceNewSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:         schema.TypeMap,
-		Optional:     true,
-		Computed:     true,
-		ForceNew:     true,
-		ValidateFunc: validateAzureRMTags,
-	}
-}
-
-func tagsForDataSourceSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeMap,
-		Computed: true,
 	}
 }
 
@@ -77,30 +59,6 @@ func expandTags(tagsMap map[string]interface{}) map[string]*string {
 	}
 
 	return output
-}
-
-func filterTags(tagsMap map[string]*string, tagNames ...string) map[string]*string {
-	if len(tagNames) == 0 {
-		return tagsMap
-	}
-
-	// Build the filter dictionary from passed tag names.
-	filterDict := make(map[string]bool)
-	for _, name := range tagNames {
-		if len(name) > 0 {
-			filterDict[strings.ToLower(name)] = true
-		}
-	}
-
-	// Filter out tag if it exists(case insensitive) in the dictionary.
-	tagsRet := make(map[string]*string)
-	for k, v := range tagsMap {
-		if !filterDict[strings.ToLower(k)] {
-			tagsRet[k] = v
-		}
-	}
-
-	return tagsRet
 }
 
 func flattenAndSetTags(d *schema.ResourceData, tagMap map[string]*string) {
