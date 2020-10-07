@@ -1,11 +1,11 @@
 # This Dockerfile builds an image containing the Mac version of the installer layered
 # on top of the Linux installer image.
 
-FROM registry.svc.ci.openshift.org/ocp/builder:rhel-8-golang-1.15-openshift-4.6 AS builder
+FROM registry.svc.ci.openshift.org/ocp/builder:rhel-8-golang-1.15-openshift-4.7 AS builder
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN go generate ./data && \
     SKIP_GENERATION=y GOOS=darwin GOARCH=amd64 hack/build.sh
 
-FROM registry.svc.ci.openshift.org/ocp/4.6:installer
+FROM registry.svc.ci.openshift.org/ocp/4.7:installer
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/mac/openshift-install
