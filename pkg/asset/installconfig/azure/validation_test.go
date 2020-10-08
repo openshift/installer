@@ -5,7 +5,6 @@ import (
 	"net"
 	"testing"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-07-01/compute"
 	aznetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
 	azres "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
 	azsubs "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-06-01/subscriptions"
@@ -35,7 +34,6 @@ var (
 	validResourceGroupNamespace    = "Microsoft.Resources"
 	validResourceGroupResourceType = "resourceGroups"
 	validResourceSkuRegions        = "southeastasia"
-	validDiskSkuType               = "UltraSSD_LRS"
 
 	invalidateMachineCIDR = func(ic *types.InstallConfig) {
 		_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
@@ -44,11 +42,7 @@ var (
 		}
 	}
 	invalidResourceSkuRegion = "centralus"
-	invalidDiskType          = "LRS"
 
-	invalidateNetworkResourceGroup = func(ic *types.InstallConfig) {
-		ic.Azure.NetworkResourceGroupName = "invalid-network-resource-group"
-	}
 	invalidateVirtualNetwork     = func(ic *types.InstallConfig) { ic.Azure.VirtualNetwork = "invalid-virtual-network" }
 	invalidateComputeSubnet      = func(ic *types.InstallConfig) { ic.Azure.ComputeSubnet = "invalid-compute-subnet" }
 	invalidateControlPlaneSubnet = func(ic *types.InstallConfig) { ic.Azure.ControlPlaneSubnet = "invalid-controlplane-subnet" }
@@ -57,9 +51,6 @@ var (
 	invalidateRegionLetterCase   = func(ic *types.InstallConfig) { ic.Azure.Region = "Central US" }
 	removeVirtualNetwork         = func(ic *types.InstallConfig) { ic.Azure.VirtualNetwork = "" }
 	removeSubnets                = func(ic *types.InstallConfig) { ic.Azure.ComputeSubnet, ic.Azure.ControlPlaneSubnet = "", "" }
-	invalidateDiskType           = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.OSDisk.DiskType = invalidDiskType }
-	invalidateRegionForDiskType  = func(ic *types.InstallConfig) { ic.Azure.Region = invalidResourceSkuRegion }
-	validResourceSkuDisk         = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.OSDisk.DiskType = validDiskSkuType }
 
 	virtualNetworkAPIResult = &aznetwork.VirtualNetwork{
 		Name: &validVirtualNetwork,
@@ -94,9 +85,6 @@ var (
 				Locations:    &resourcesCapableRegionsList,
 			},
 		},
-	}
-	validateResourceSkuResult = &compute.ResourceSku{
-		Name: to.StringPtr("UltraSSD_LRS"),
 	}
 )
 

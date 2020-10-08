@@ -39,7 +39,6 @@ import (
 const (
 	rootDir              = "/opt/openshift"
 	bootstrapIgnFilename = "bootstrap.ign"
-	ignitionUser         = "core"
 )
 
 // bootstrapTemplateData is the data to use to replace values in bootstrap

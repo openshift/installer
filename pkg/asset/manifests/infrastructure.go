@@ -24,7 +24,6 @@ import (
 )
 
 var (
-	infraCrdFilename           = filepath.Join(manifestDir, "cluster-infrastructure-01-crd.yaml")
 	infraCfgFilename           = filepath.Join(manifestDir, "cluster-infrastructure-02-config.yml")
 	cloudControllerUIDFilename = filepath.Join(manifestDir, "cloud-controller-uid-config.yml")
 )
