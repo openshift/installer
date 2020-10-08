@@ -23,6 +23,9 @@ type config struct {
 	ExternalBridge          string `json:"external_bridge"`
 	ProvisioningBridge      string `json:"provisioning_bridge"`
 
+	IronicUsername string `json:"ironic_username"`
+	IronicPassword string `json:"ironic_password"`
+
 	// Data required for control plane deployment - several maps per host, because of terraform's limitations
 	Hosts         []map[string]interface{} `json:"hosts"`
 	RootDevices   []map[string]interface{} `json:"root_devices"`
@@ -32,7 +35,7 @@ type config struct {
 }
 
 // TFVars generates bare metal specific Terraform variables.
-func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridge, provisioningBridge string, platformHosts []*baremetal.Host, image string) ([]byte, error) {
+func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridge, provisioningBridge string, platformHosts []*baremetal.Host, image, ironicUsername, ironicPassword string) ([]byte, error) {
 	bootstrapOSImage, err := cache.DownloadImageFile(bootstrapOSImage)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to use cached bootstrap libvirt image")
@@ -143,6 +146,8 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		BootstrapOSImage:        bootstrapOSImage,
 		ExternalBridge:          externalBridge,
 		ProvisioningBridge:      provisioningBridge,
+		IronicUsername:          ironicUsername,
+		IronicPassword:          ironicPassword,
 		Hosts:                   hosts,
 		Properties:              properties,
 		DriverInfos:             driverInfos,

@@ -33,13 +33,15 @@ func TestTemplatingIPv4(t *testing.T) {
 		},
 	}
 
-	result := GetTemplateData(&bareMetalConfig, nil)
+	result := GetTemplateData(&bareMetalConfig, nil, "bootstrap-ironic-user", "passw0rd")
 
 	assert.Equal(t, result.ProvisioningDHCPRange, "172.22.0.10,172.22.0.100")
 	assert.Equal(t, result.ProvisioningCIDR, 24)
 	assert.Equal(t, result.ProvisioningIPv6, false)
 	assert.Equal(t, result.ProvisioningIP, "172.22.0.2")
 	assert.Equal(t, result.ProvisioningDHCPAllowList, "c0:ff:ee:ca:fe:00 c0:ff:ee:ca:fe:01 c0:ff:ee:ca:fe:02")
+	assert.Equal(t, result.IronicUsername, "bootstrap-ironic-user")
+	assert.Equal(t, result.IronicPassword, "passw0rd")
 }
 
 func TestTemplatingIPv6(t *testing.T) {
@@ -49,11 +51,13 @@ func TestTemplatingIPv6(t *testing.T) {
 		ProvisioningNetwork:     baremetal.UnmanagedProvisioningNetwork,
 	}
 
-	result := GetTemplateData(&bareMetalConfig, nil)
+	result := GetTemplateData(&bareMetalConfig, nil, "bootstrap-ironic-user", "passw0rd")
 
 	assert.Equal(t, result.ProvisioningDHCPRange, "")
 	assert.Equal(t, result.ProvisioningCIDR, 64)
 	assert.Equal(t, result.ProvisioningIPv6, true)
 	assert.Equal(t, result.ProvisioningIP, "fd2e:6f44:5dd8:b856::2")
 	assert.Equal(t, result.ProvisioningDHCPAllowList, "")
+	assert.Equal(t, result.IronicUsername, "bootstrap-ironic-user")
+	assert.Equal(t, result.IronicPassword, "passw0rd")
 }

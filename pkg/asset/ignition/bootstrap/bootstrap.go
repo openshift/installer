@@ -144,7 +144,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	ironicCreds := &baremetal.IronicCreds{}
 	dependencies.Get(installConfig, proxy, releaseImage, rhcosImage, bootstrapSSHKeyPair, ironicCreds)
 
-	templateData, err := a.getTemplateData(installConfig.Config, releaseImage.PullSpec, installConfig.Config.ImageContentSources, proxy.Config, rhcosImage)
+	templateData, err := a.getTemplateData(installConfig.Config, releaseImage.PullSpec, installConfig.Config.ImageContentSources, proxy.Config, rhcosImage, ironicCreds)
 
 	if err != nil {
 		return errors.Wrap(err, "failed to get bootstrap templates")
@@ -223,7 +223,7 @@ func (a *Bootstrap) Files() []*asset.File {
 }
 
 // getTemplateData returns the data to use to execute bootstrap templates.
-func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseImage string, imageSources []types.ImageContentSource, proxy *configv1.Proxy, rhcosImage *rhcos.Image) (*bootstrapTemplateData, error) {
+func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseImage string, imageSources []types.ImageContentSource, proxy *configv1.Proxy, rhcosImage *rhcos.Image, ironicCreds *baremetal.IronicCreds) (*bootstrapTemplateData, error) {
 	etcdEndpoints := make([]string, *installConfig.ControlPlane.Replicas)
 
 	for i := range etcdEndpoints {
@@ -250,7 +250,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 
 	switch installConfig.Platform.Name() {
 	case baremetaltypes.Name:
-		platformData.BareMetal = baremetal.GetTemplateData(installConfig.Platform.BareMetal, installConfig.MachineNetwork)
+		platformData.BareMetal = baremetal.GetTemplateData(installConfig.Platform.BareMetal, installConfig.MachineNetwork, ironicCreds.Username, ironicCreds.Password)
 	case vspheretypes.Name:
 		platformData.VSphere = vsphere.GetTemplateData(installConfig.Platform.VSphere)
 	}

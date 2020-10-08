@@ -433,6 +433,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.BareMetal.ProvisioningBridge,
 			installConfig.Config.Platform.BareMetal.Hosts,
 			string(*rhcosImage),
+			ironicCreds.Username,
+			ironicCreds.Password,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
