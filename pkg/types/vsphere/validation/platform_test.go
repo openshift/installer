@@ -134,6 +134,15 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			expectedError: `^test-path.apiVIP: Invalid value: "192.168.111.1": IPs for both API and Ingress should not be the same`,
 		},
+		{
+			name: "Capital letters in vCenter",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.VCenter = "tEsT-vCenter"
+				return p
+			}(),
+			expectedError: `^test-path.vCenter: Invalid value: "tEsT-vCenter": must be all lower case`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
