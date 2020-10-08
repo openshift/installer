@@ -276,12 +276,12 @@ EOF
 
 }
 
-variable "openstack_lb_floating_ip" {
+variable "openstack_api_floating_ip" {
   type = string
   default = ""
 
   description = <<EOF
-(optional) Existing Floating IP to attach to the load balancer created by the installer.
+(optional) Existing Floating IP to attach to the OpenShift API created by the installer.
 EOF
 
 }

@@ -83,7 +83,7 @@ func Platform() (*openstack.Platform, error) {
 		return nil, err
 	}
 
-	var lbFloatingIP string
+	var apiFloatingIP string
 	if extNet != "" {
 		floatingIPNames, err := getFloatingIPNames(cloud, extNet)
 		if err != nil {
@@ -106,7 +106,7 @@ func Platform() (*openstack.Platform, error) {
 					return nil
 				}),
 			},
-		}, &lbFloatingIP)
+		}, &apiFloatingIP)
 		if err != nil {
 			return nil, err
 		}
@@ -140,9 +140,9 @@ func Platform() (*openstack.Platform, error) {
 	}
 
 	return &openstack.Platform{
+		APIFloatingIP:   apiFloatingIP,
 		Cloud:           cloud,
 		ExternalNetwork: extNet,
 		FlavorName:      flavor,
-		LbFloatingIP:    lbFloatingIP,
 	}, nil
 }

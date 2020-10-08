@@ -317,7 +317,7 @@ If you're unable to create and publish these DNS records, you can add them to yo
 
 ##### External API Access
 
-If you have specified the API floating IP (either via the installer prompt or by adding the `lbFloatingIP` entry in your `install-config.yaml`) the installer will attach the Floating IP address to the `api-port` automatically.
+If you have specified the API floating IP (either via the installer prompt or by adding the `apiFloatingIP` entry in your `install-config.yaml`) the installer will attach the Floating IP address to the `api-port` automatically.
 
 If you have created the API DNS record, you should be able access the OpenShift API.
 

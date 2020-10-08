@@ -23,8 +23,8 @@ variable "external_network_id" {
   default     = ""
 }
 
-variable "lb_floating_ip" {
-  description = "(optional) Existing floating IP address to attach to the load balancer created by the installer."
+variable "api_floating_ip" {
+  description = "(optional) Existing floating IP address to attach to the OpenShift API created by the installer."
   type        = string
   default     = ""
 }

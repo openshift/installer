@@ -27,7 +27,7 @@ type config struct {
 	ExternalNetwork            string   `json:"openstack_external_network,omitempty"`
 	Cloud                      string   `json:"openstack_credentials_cloud,omitempty"`
 	FlavorName                 string   `json:"openstack_master_flavor_name,omitempty"`
-	LbFloatingIP               string   `json:"openstack_lb_floating_ip,omitempty"`
+	APIFloatingIP              string   `json:"openstack_api_floating_ip,omitempty"`
 	IngressFloatingIP          string   `json:"openstack_ingress_floating_ip,omitempty"`
 	APIVIP                     string   `json:"openstack_api_int_ip,omitempty"`
 	IngressVIP                 string   `json:"openstack_ingress_ip,omitempty"`
@@ -46,7 +46,7 @@ type config struct {
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, lbFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool, machinesSubnet string) ([]byte, error) {
+func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool, machinesSubnet string) ([]byte, error) {
 	zones := []string{}
 	seen := map[string]bool{}
 	for _, config := range masterConfigs {
@@ -60,7 +60,7 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 		ExternalNetwork:         externalNetwork,
 		Cloud:                   cloud,
 		FlavorName:              masterConfigs[0].Flavor,
-		LbFloatingIP:            lbFloatingIP,
+		APIFloatingIP:           apiFloatingIP,
 		IngressFloatingIP:       ingressFloatingIP,
 		APIVIP:                  apiVIP,
 		IngressVIP:              ingressVIP,

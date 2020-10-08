@@ -106,13 +106,13 @@ func validatePlatformFlavor(p *openstack.Platform, ci *CloudInfo, fldPath *field
 }
 
 func validateFloatingIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
-	if p.LbFloatingIP != "" {
+	if p.APIFloatingIP != "" {
 		if ci.APIFIP == nil {
-			allErrs = append(allErrs, field.NotFound(fldPath.Child("lbFloatingIP"), p.LbFloatingIP))
+			allErrs = append(allErrs, field.NotFound(fldPath.Child("apiFloatingIP"), p.APIFloatingIP))
 		} else if ci.APIFIP.Status != "DOWN" {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("lbFloatingIP"), p.LbFloatingIP, "Floating IP already in use"))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("apiFloatingIP"), p.APIFloatingIP, "Floating IP already in use"))
 		} else if p.ExternalNetwork == "" {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("lbFloatingIP"), p.LbFloatingIP, "Cannot set floating ips when external network not specified"))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("apiFloatingIP"), p.APIFloatingIP, "Cannot set floating ips when external network not specified"))
 		}
 	}
 
