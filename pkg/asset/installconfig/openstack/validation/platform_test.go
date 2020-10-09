@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/openshift/installer/pkg/types"
@@ -242,6 +243,115 @@ func TestOpenStackPlatformValidation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			aggregatedErrors := ValidatePlatform(tc.platform, tc.networking, tc.cloudInfo).ToAggregate()
 			if tc.expectedError {
+				assert.Regexp(t, tc.expectedErrMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestClusterOSImage(t *testing.T) {
+	cases := []struct {
+		name           string
+		platform       *openstack.Platform
+		cloudInfo      *CloudInfo
+		networking     *types.Networking
+		expectedErrMsg string // NOTE: this is a REGEXP
+	}{
+		{
+			name:           "no image provided",
+			platform:       validPlatform(),
+			cloudInfo:      validPlatformCloudInfo(),
+			networking:     validNetworking(),
+			expectedErrMsg: "",
+		},
+		{
+			name: "HTTP address instead of the image name",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.ClusterOSImage = "http://example.com/myrhcos.iso"
+				return p
+			}(),
+			cloudInfo:      validPlatformCloudInfo(),
+			networking:     validNetworking(),
+			expectedErrMsg: "",
+		},
+		{
+			name: "file location instead of the image name",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.ClusterOSImage = "file:///home/user/myrhcos.iso"
+				return p
+			}(),
+			cloudInfo:      validPlatformCloudInfo(),
+			networking:     validNetworking(),
+			expectedErrMsg: "",
+		},
+		{
+			name: "valid image",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.ClusterOSImage = "my-rhcos"
+				return p
+			}(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				ci.OSImage = &images.Image{
+					Name:   "my-rhcos",
+					Status: images.ImageStatusActive,
+				}
+				return ci
+			}(),
+			networking:     validNetworking(),
+			expectedErrMsg: "",
+		},
+		{
+			name: "image with invalid status",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.ClusterOSImage = "my-rhcos"
+				return p
+			}(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				ci.OSImage = &images.Image{
+					Name:   "my-rhcos",
+					Status: images.ImageStatusSaving,
+				}
+				return ci
+			}(),
+			networking:     validNetworking(),
+			expectedErrMsg: "platform.openstack.clusterOSImage: Invalid value: \"my-rhcos\": OS image must be active but its status is 'saving'",
+		},
+		{
+			name: "image not found",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.ClusterOSImage = "my-rhcos"
+				return p
+			}(),
+			cloudInfo:      validPlatformCloudInfo(),
+			networking:     validNetworking(),
+			expectedErrMsg: "platform.openstack.clusterOSImage: Not found: \"my-rhcos\"",
+		},
+		{
+			name: "Unsupported image URL scheme",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.ClusterOSImage = "s3://mybucket/myrhcos.iso"
+				return p
+			}(),
+			cloudInfo:      validPlatformCloudInfo(),
+			networking:     validNetworking(),
+			expectedErrMsg: "platform.openstack.clusterOSImage: Invalid value: \"s3://mybucket/myrhcos.iso\": URL scheme should be either http\\(s\\) or file but it is 's3'",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			aggregatedErrors := ValidatePlatform(tc.platform, tc.networking, tc.cloudInfo).ToAggregate()
+			if tc.expectedErrMsg != "" {
 				assert.Regexp(t, tc.expectedErrMsg, aggregatedErrors)
 			} else {
 				assert.NoError(t, aggregatedErrors)
