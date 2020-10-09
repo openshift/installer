@@ -104,10 +104,26 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 			return nil, errors.Errorf("Unsupported URL scheme: '%v'", url.Scheme)
 		}
 
-		err = uploadBaseImage(cloud, localFilePath, imageName, infraID)
+		useImageImport, err := isImageImportSupported(cloud)
 		if err != nil {
 			return nil, err
 		}
+
+		err = uploadBaseImage(cloud, localFilePath, imageName, infraID, useImageImport)
+		if err != nil {
+			// If we tried to upload the data with the image import mechanism and failed,
+			// let's disable it and try legacy uploading.
+			if useImageImport {
+
+				err = uploadBaseImage(cloud, localFilePath, imageName, infraID, false)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, err
+			}
+		}
+
 	} else {
 		// Not a URL -> use baseImage value as an overridden Glance image name.
 		// Need to check if this image exists and there are no other images with this name.
