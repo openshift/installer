@@ -955,16 +955,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
-			name: "unsupported manual cloud credentials mode",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{GCP: validGCPPlatform()}
-				c.CredentialsMode = types.ManualCredentialsMode
-				return c
-			}(),
-			expectedError: `^credentialsMode: Unsupported value: "Manual": supported values: "Mint", "Passthrough"$`,
-		},
-		{
 			name: "invalidly set cloud credentials mode",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
