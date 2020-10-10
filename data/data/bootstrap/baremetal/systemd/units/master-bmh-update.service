@@ -2,6 +2,7 @@
 Description=Update master BareMetalHosts with introspection data
 Wants=bootkube.service
 After=release-image.service
+Before=progress.service
 
 [Service]
 Type=oneshot
