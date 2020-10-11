@@ -87,7 +87,7 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 				if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
 				}
-
+				logTroubleshootingLink()
 				logrus.Fatal(err)
 			}
 			timer.StopTimer(timer.TotalTimeElapsed)

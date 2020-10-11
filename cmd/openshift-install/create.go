@@ -131,6 +131,7 @@ var (
 					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
 					}
+					logTroubleshootingLink()
 					logrus.Fatal(err)
 				}
 				timer.StopTimer(timer.TotalTimeElapsed)
@@ -508,4 +509,11 @@ func waitForInstallComplete(ctx context.Context, config *rest.Config, directory 
 	}
 
 	return logComplete(rootOpts.dir, consoleURL)
+}
+
+func logTroubleshootingLink() {
+	logrus.Error("Cluster initialization failed because one or more operators are not functioning properly.")
+	logrus.Error("The cluster should be accessible for troublsehooting as detailed in the documentation linked below.")
+	logrus.Error("The 'wait-for install-complete' subcommand can then be used to continue the installation.")
+	logrus.Error("https://docs.openshift.com/container-platform/latest/support/troubleshooting/troubleshooting-installations.html")
 }
