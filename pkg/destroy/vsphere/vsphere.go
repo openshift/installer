@@ -139,6 +139,15 @@ func deleteTag(ctx context.Context, client *rest.Client, tagID string) error {
 	return err
 }
 
+func deleteTagCategory(ctx context.Context, client *rest.Client, categoryID string) error {
+	tagManager := tags.NewManager(client)
+	category, err := tagManager.GetCategory(ctx, categoryID)
+	if err == nil {
+		err = tagManager.DeleteCategory(ctx, category)
+	}
+	return err
+}
+
 // Run is the entrypoint to start the uninstall process.
 func (o *ClusterUninstaller) Run() error {
 	var folderList []types.ManagedObjectReference
@@ -203,6 +212,12 @@ func (o *ClusterUninstaller) Run() error {
 
 	o.Logger.Debug("delete tag")
 	if err = deleteTag(context.TODO(), o.RestClient, o.InfraID); err != nil {
+		o.Logger.Errorln(err)
+		return err
+	}
+
+	o.Logger.Debug("delete tag category")
+	if err = deleteTagCategory(context.TODO(), o.RestClient, "openshift-"+o.InfraID); err != nil {
 		o.Logger.Errorln(err)
 		return err
 	}
