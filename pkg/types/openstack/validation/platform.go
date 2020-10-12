@@ -2,11 +2,14 @@ package validation
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/apparentlymart/go-cidr/cidr"
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/validate"
@@ -32,6 +35,13 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 	err = validateVIP(p.IngressVIP, n)
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
+	}
+
+	// Ensure clusterNetwork doesn't overlap with any machine network
+	for _, cn := range n.ClusterNetwork {
+		if err := validateNoOverlapMachineCIDR(&cn.CIDR.IPNet, n); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking").Child("clusterNetwork"), cn.CIDR.IPNet.String(), err.Error()))
+		}
 	}
 
 	return allErrs
@@ -61,4 +71,43 @@ func validateClusterName(name string) (allErrs field.ErrorList) {
 	}
 
 	return
+}
+
+// duplicated from baremetal
+func validateNoOverlapMachineCIDR(target *net.IPNet, n *types.Networking) error {
+	allIPv4 := ipnet.MustParseCIDR("0.0.0.0/0")
+	allIPv6 := ipnet.MustParseCIDR("::/0")
+	netIsIPv6 := target.IP.To4() == nil
+
+	for _, machineCIDR := range n.MachineNetwork {
+		machineCIDRisIPv6 := machineCIDR.CIDR.IP.To4() == nil
+
+		// Only compare if both are the same IP version
+		if netIsIPv6 == machineCIDRisIPv6 {
+			var err error
+			if netIsIPv6 {
+				err = cidr.VerifyNoOverlap(
+					[]*net.IPNet{
+						target,
+						&machineCIDR.CIDR.IPNet,
+					},
+					&allIPv6.IPNet,
+				)
+			} else {
+				err = cidr.VerifyNoOverlap(
+					[]*net.IPNet{
+						target,
+						&machineCIDR.CIDR.IPNet,
+					},
+					&allIPv4.IPNet,
+				)
+			}
+
+			if err != nil {
+				return fmt.Errorf("%v cannot overlap with machine network", err)
+			}
+		}
+	}
+
+	return nil
 }

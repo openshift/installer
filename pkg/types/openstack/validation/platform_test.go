@@ -151,6 +151,18 @@ func TestValidatePlatform(t *testing.T) {
 			networking: validNetworking(),
 			valid:      false,
 		},
+		{
+			name:     "cluster network overlaps machine network",
+			platform: validPlatform(),
+			networking: func() *types.Networking {
+				n := validNetworking()
+				n.ClusterNetwork = []types.ClusterNetworkEntry{{
+					CIDR: *ipnet.MustParseCIDR("10.0.0.0/6"),
+				}}
+				return n
+			}(),
+			valid: true,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
