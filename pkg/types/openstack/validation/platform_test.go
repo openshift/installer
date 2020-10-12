@@ -161,7 +161,7 @@ func TestValidatePlatform(t *testing.T) {
 				}}
 				return n
 			}(),
-			valid: true,
+			valid: false,
 		},
 	}
 	for _, tc := range cases {
