@@ -120,7 +120,7 @@ func TestOpenStackPlatformValidation(t *testing.T) {
 			cloudInfo:      validPlatformCloudInfo(),
 			networking:     validNetworking(),
 			expectedError:  true,
-			expectedErrMsg: `platform.openstack.flavorName: Invalid value: "invalid-control-plane-flavor": Flavor did not meet the following minimum requirements: Must have minimum of 16 GB RAM, had 8 GB; Must have minimum of 4 VCPUs, had 2; Must have minimum of 25 GB Disk, had 20 GB`,
+			expectedErrMsg: `platform.openstack.computeFlavor: Invalid value: "invalid-control-plane-flavor": Flavor did not meet the following minimum requirements: Must have minimum of 16 GB RAM, had 8 GB; Must have minimum of 4 VCPUs, had 2; Must have minimum of 25 GB Disk, had 20 GB`,
 		},
 		{
 			name:     "not found api FIP",
