@@ -144,7 +144,7 @@ sudo subscription-manager repos --disable=* # if not done already
 sudo subscription-manager repos \
   --enable=rhel-8-for-x86_64-baseos-rpms \
   --enable=openstack-16-tools-for-rhel-8-x86_64-rpms \
-  --enable=ansible-2.8-for-rhel-8-x86_64-rpms \
+  --enable=ansible-2.9-for-rhel-8-x86_64-rpms \
   --enable=rhel-8-for-x86_64-appstream-rpms
 ```
 
