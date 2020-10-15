@@ -509,7 +509,7 @@ If the command is successful, the OpenStack CLI will return the ID of the newly
 created Server Group. Paste it in the optional `serverGroupID` property of the
 MachineSet.
 
-#### Deploying on Availability Zones
+#### Setting Nova Availability Zones
 
 In order to use Availability Zones, create one MachineSet per target
 Availability Zone, and set the Availability Zone in the `availabilityZone`
