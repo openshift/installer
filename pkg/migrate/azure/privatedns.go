@@ -82,9 +82,7 @@ func (client *legacyDNSClient) getZone(legacyZone string) (*legacyDNSZone, error
 			return nil, err
 		}
 
-		for _, rs := range recordsetsPage.Values() {
-			legacyDNSZone.recordsets = append(legacyDNSZone.recordsets, rs)
-		}
+		legacyDNSZone.recordsets = append(legacyDNSZone.recordsets, recordsetsPage.Values()...)
 	}
 
 	return &legacyDNSZone, nil
@@ -440,7 +438,7 @@ func (client *privateDNSClient) migrateLegacyZone(legacyDNSZone *legacyDNSZone, 
 	}
 
 	// Do we link, or not?
-	if link == false || client.virtualNetwork == "" {
+	if !link || client.virtualNetwork == "" {
 		return nil
 	}
 

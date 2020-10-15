@@ -107,5 +107,5 @@ func getIntAPIServerURL(ic *types.InstallConfig) string {
 }
 
 func getLoopbackAPIServerURL(ic *types.InstallConfig) string {
-	return fmt.Sprintf("https://localhost:6443")
+	return "https://localhost:6443"
 }

@@ -33,7 +33,7 @@ func runMigrateAzurePrivateDNSMigrateCmd(cmd *cobra.Command, args []string) erro
 	if azureMigrateOpts.resourceGroup == "" {
 		return errors.New("resource-group is a required argument")
 	}
-	if azureMigrateOpts.link == true && azureMigrateOpts.virtualNetwork == "" {
+	if azureMigrateOpts.link && azureMigrateOpts.virtualNetwork == "" {
 		return errors.New("link requires virtual-network to be set")
 	}
 	if azureMigrateOpts.virtualNetwork != "" && azureMigrateOpts.vnetResourceGroup == "" {

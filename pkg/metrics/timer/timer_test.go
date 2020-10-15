@@ -45,7 +45,7 @@ func TestBasicLogSummaryMultipleStages(t *testing.T) {
 	timer.StopTimer("testStage4")
 	timer.StopTimer(TotalTimeElapsed)
 
-	timeElapsed := fmt.Sprintf("Time elapsed per stage:\n")
+	timeElapsed := "Time elapsed per stage:\n"
 	time1 := fmt.Sprintf("testStage1: %s\n", timer.stageTimes["testStage1"])
 	time2 := fmt.Sprintf("testStage2: %s\n", timer.stageTimes["testStage2"])
 	time3 := fmt.Sprintf("testStage3: %s\n", timer.stageTimes["testStage3"])

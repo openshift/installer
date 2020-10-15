@@ -90,6 +90,4 @@ func ConvertToAppendix(file *igntypes.File) {
 	}
 	file.Contents = igntypes.Resource{}
 	file.Overwrite = ignutil.BoolToPtr(false)
-
-	return
 }

@@ -154,9 +154,7 @@ func (c *Client) GetSubnetworks(ctx context.Context, network, project, region st
 	req := svc.Subnetworks.List(project, region).Filter(filter)
 	var res []*compute.Subnetwork
 	if err := req.Pages(ctx, func(page *compute.SubnetworkList) error {
-		for _, subnet := range page.Items {
-			res = append(res, subnet)
-		}
+		res = append(res, page.Items...)
 		return nil
 	}); err != nil {
 		return nil, err
