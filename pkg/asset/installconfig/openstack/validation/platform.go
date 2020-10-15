@@ -24,7 +24,12 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, ci *CloudInfo)
 	allErrs = append(allErrs, validateExternalNetwork(p, ci, fldPath)...)
 
 	// validate platform flavor
-	allErrs = append(allErrs, validatePlatformFlavor(p, ci, fldPath)...)
+	flavor, ok := ci.Flavors[p.FlavorName]
+	if ok {
+		allErrs = append(allErrs, validateFlavor(flavor, ctrlPlaneFlavorMinimums, fldPath.Child("computeFlavor"))...)
+	} else {
+		allErrs = append(allErrs, field.NotFound(fldPath.Child("computeFlavor"), p.FlavorName))
+	}
 
 	// validate floating ips
 	allErrs = append(allErrs, validateFloatingIPs(p, ci, fldPath)...)
@@ -67,47 +72,6 @@ func validateExternalNetwork(p *openstack.Platform, ci *CloudInfo, fldPath *fiel
 		allErrs = append(allErrs, field.NotFound(fldPath.Child("externalNetwork"), p.ExternalNetwork))
 	}
 	return allErrs
-}
-
-// validatePlatformFlavor validates the platform flavor and returns a list of all validation errors
-func validatePlatformFlavor(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
-	flavor, ok := ci.Flavors[p.FlavorName]
-	if !ok {
-		allErrs = append(allErrs, field.NotFound(fldPath.Child("computeFlavor"), p.FlavorName))
-		return allErrs
-	}
-
-	// OpenStack administrators don't always fill in accurate metadata for
-	// baremetal flavors. Skipping validation.
-	if flavor.Baremetal {
-		return allErrs
-	}
-
-	errs := []string{}
-	req := ctrlPlaneFlavorMinimums
-	if flavor.RAM < req.RAM {
-		errs = append(errs, fmt.Sprintf("Must have minimum of %d GB RAM, had %d GB", req.RAM, flavor.RAM))
-	}
-	if flavor.VCPUs < req.VCPUs {
-		errs = append(errs, fmt.Sprintf("Must have minimum of %d VCPUs, had %d", req.VCPUs, flavor.VCPUs))
-	}
-	if flavor.Disk < req.Disk {
-		errs = append(errs, fmt.Sprintf("Must have minimum of %d GB Disk, had %d GB", req.Disk, flavor.Disk))
-	}
-
-	if len(errs) == 0 {
-		return field.ErrorList{}
-	}
-
-	errString := "Flavor did not meet the following minimum requirements: "
-	for i, err := range errs {
-		errString = errString + err
-		if i != len(errs)-1 {
-			errString = errString + "; "
-		}
-	}
-
-	return append(allErrs, field.Invalid(fldPath.Child("flavorName"), flavor.Name, errString))
 }
 
 func validateFloatingIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {

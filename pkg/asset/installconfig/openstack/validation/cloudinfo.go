@@ -93,9 +93,11 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig) error {
 		return errors.Wrap(err, "failed to fetch external network info")
 	}
 
-	ci.Flavors[ic.OpenStack.FlavorName], err = ci.getFlavor(ic.OpenStack.FlavorName)
-	if err != nil {
-		return errors.Wrap(err, "failed to fetch platform flavor info")
+	if flavorName := ic.OpenStack.FlavorName; flavorName != "" {
+		ci.Flavors[flavorName], err = ci.getFlavor(flavorName)
+		if err != nil {
+			return errors.Wrap(err, "failed to fetch platform flavor info")
+		}
 	}
 
 	// Fetch the image info if the user provided a Glance image name
@@ -110,9 +112,8 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig) error {
 	}
 
 	if ic.ControlPlane != nil && ic.ControlPlane.Platform.OpenStack != nil {
-		crtlPlaneFlavor := ic.ControlPlane.Platform.OpenStack.FlavorName
-		if crtlPlaneFlavor != "" {
-			ci.Flavors[crtlPlaneFlavor], err = ci.getFlavor(crtlPlaneFlavor)
+		if flavorName := ic.ControlPlane.Platform.OpenStack.FlavorName; flavorName != "" {
+			ci.Flavors[flavorName], err = ci.getFlavor(flavorName)
 			if err != nil {
 				return err
 			}
@@ -121,8 +122,7 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig) error {
 
 	for _, machine := range ic.Compute {
 		if machine.Platform.OpenStack != nil {
-			flavorName := machine.Platform.OpenStack.FlavorName
-			if flavorName != "" {
+			if flavorName := machine.Platform.OpenStack.FlavorName; flavorName != "" {
 				if _, seen := ci.Flavors[flavorName]; !seen {
 					ci.Flavors[flavorName], err = ci.getFlavor(flavorName)
 					if err != nil {
