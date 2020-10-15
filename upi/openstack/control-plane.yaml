@@ -18,9 +18,8 @@
       security_groups:
       - "{{ os_sg_master }}"
       allowed_address_pairs:
-      - ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
-      - ip_address: "{{ os_subnet_range | next_nth_usable(6) }}"
-      - ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
+      - ip_address: "{{ os_apiVIP }}"
+      - ip_address: "{{ os_ingressVIP }}"
     with_indexed_items: "{{ [os_port_master] * os_cp_nodes_number }}"
     register: ports
 

@@ -18,8 +18,7 @@
       security_groups:
       - "{{ os_sg_master }}"
       allowed_address_pairs:
-      - ip_address: "{{ os_subnet_range | next_nth_usable(5) }}"
-      - ip_address: "{{ os_subnet_range | next_nth_usable(6) }}"
+      - ip_address: "{{ os_apiVIP }}"
 
   - name: 'Set bootstrap port tag'
     command:

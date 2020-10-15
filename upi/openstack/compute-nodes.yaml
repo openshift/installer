@@ -18,7 +18,7 @@
       security_groups:
       - "{{ os_sg_worker }}"
       allowed_address_pairs:
-      - ip_address: "{{ os_subnet_range | next_nth_usable(7) }}"
+      - ip_address: "{{ os_ingressVIP }}"
     with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"
     register: ports
 
