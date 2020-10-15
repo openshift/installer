@@ -46,6 +46,7 @@ spec:
       - name: core
         sshAuthorizedKeys:
         - 'ssh-rsa: dummy-key'
+  extensions: null
   fips: false
   kernelArguments: null
   kernelType: ""
@@ -75,6 +76,7 @@ spec:
         path: /etc/pivot/kernel-args
         user:
           name: root
+  extensions: null
   fips: false
   kernelArguments: null
   kernelType: ""
@@ -105,6 +107,7 @@ spec:
         path: /etc/pivot/kernel-args
         user:
           name: root
+  extensions: null
   fips: false
   kernelArguments: null
   kernelType: ""
@@ -125,6 +128,7 @@ spec:
       - name: core
         sshAuthorizedKeys:
         - 'ssh-rsa: dummy-key'
+  extensions: null
   fips: false
   kernelArguments: null
   kernelType: ""
