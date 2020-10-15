@@ -1,17 +1,20 @@
 package validation
 
 import (
+	"net/url"
 	"os"
 	"strings"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/availabilityzones"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	flavorutils "github.com/gophercloud/utils/openstack/compute/v2/flavors"
+	imageutils "github.com/gophercloud/utils/openstack/imageservice/v2/images"
 	networkutils "github.com/gophercloud/utils/openstack/networking/v2/networks"
 	"github.com/pkg/errors"
 
@@ -20,11 +23,12 @@ import (
 
 // CloudInfo caches data fetched from the user's openstack cloud
 type CloudInfo struct {
+	APIFIP          *floatingips.FloatingIP
 	ExternalNetwork *networks.Network
 	Flavors         map[string]Flavor
-	MachinesSubnet  *subnets.Subnet
-	APIFIP          *floatingips.FloatingIP
 	IngressFIP      *floatingips.FloatingIP
+	MachinesSubnet  *subnets.Subnet
+	OSImage         *images.Image
 	Zones           []string
 
 	clients *clients
@@ -33,6 +37,7 @@ type CloudInfo struct {
 type clients struct {
 	networkClient *gophercloud.ServiceClient
 	computeClient *gophercloud.ServiceClient
+	imageClient   *gophercloud.ServiceClient
 }
 
 // Flavor embeds information from the Gophercloud Flavor struct and adds
@@ -67,6 +72,11 @@ func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 		return nil, errors.Wrap(err, "failed to create a compute client")
 	}
 
+	ci.clients.imageClient, err = clientconfig.NewServiceClient("image", opts)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create an image client")
+	}
+
 	err = ci.collectInfo(ic)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate OpenStack cloud info")
@@ -86,6 +96,17 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig) error {
 	ci.Flavors[ic.OpenStack.FlavorName], err = ci.getFlavor(ic.OpenStack.FlavorName)
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch platform flavor info")
+	}
+
+	// Fetch the image info if the user provided a Glance image name
+	imagePtr := ic.OpenStack.ClusterOSImage
+	if imagePtr != "" {
+		if _, err := url.ParseRequestURI(imagePtr); err != nil {
+			ci.OSImage, err = ci.getImage(imagePtr)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	if ic.ControlPlane != nil && ic.ControlPlane.Platform.OpenStack != nil {
@@ -226,6 +247,24 @@ func (ci *CloudInfo) getFloatingIP(fip string) (*floatingips.FloatingIP, error) 
 		return &allFIPs[0], nil
 	}
 	return nil, nil
+}
+
+func (ci *CloudInfo) getImage(imageName string) (*images.Image, error) {
+	imageID, err := imageutils.IDFromName(ci.clients.imageClient, imageName)
+	if err != nil {
+		var gerr *gophercloud.ErrResourceNotFound
+		if errors.As(err, &gerr) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	image, err := images.Get(ci.clients.imageClient, imageID).Extract()
+	if err != nil {
+		return nil, err
+	}
+
+	return image, nil
 }
 
 func (ci *CloudInfo) getZones() ([]string, error) {

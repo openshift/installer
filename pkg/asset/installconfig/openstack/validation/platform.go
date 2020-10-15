@@ -3,9 +3,11 @@ package validation
 import (
 	"errors"
 	"fmt"
+	"net/url"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -26,6 +28,9 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, ci *CloudInfo)
 
 	// validate floating ips
 	allErrs = append(allErrs, validateFloatingIPs(p, ci, fldPath)...)
+
+	// validate custom cluster os image
+	allErrs = append(allErrs, validateClusterOSImage(p, ci, fldPath)...)
 
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, ci, true, fldPath.Child("defaultMachinePlatform"))...)
@@ -125,5 +130,35 @@ func validateFloatingIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Pa
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressFloatingIP"), p.IngressFloatingIP, "Cannot set floating ips when external network not specified"))
 		}
 	}
+	return allErrs
+}
+
+// validateExternalNetwork validates the user's input for the clusterOSImage and returns a list of all validation errors
+func validateClusterOSImage(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
+	if p.ClusterOSImage == "" {
+		return
+	}
+
+	// For URLs we support only 'http(s)' and 'file' schemes
+	if uri, err := url.ParseRequestURI(p.ClusterOSImage); err == nil {
+		switch uri.Scheme {
+		case "http", "https", "file":
+		default:
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), p.ClusterOSImage, fmt.Sprintf("URL scheme should be either http(s) or file but it is '%v'", uri.Scheme)))
+		}
+		return
+	}
+
+	// Image should exist in OpenStack Glance
+	if ci.OSImage == nil {
+		allErrs = append(allErrs, field.NotFound(fldPath.Child("clusterOSImage"), p.ClusterOSImage))
+		return allErrs
+	}
+
+	// Image should have "active" status
+	if ci.OSImage.Status != images.ImageStatusActive {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), p.ClusterOSImage, fmt.Sprintf("OS image must be active but its status is '%s'", ci.OSImage.Status)))
+	}
+
 	return allErrs
 }
