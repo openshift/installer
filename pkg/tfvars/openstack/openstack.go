@@ -10,7 +10,6 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
@@ -108,13 +107,6 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		// Not a URL -> use baseImage value as an overridden Glance image name.
-		// Need to check if this image exists and there are no other images with this name.
-		err := validateOverriddenImageName(imageName, cloud)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	glancePublicURL, err := getGlancePublicURL(serviceCatalog)
@@ -190,41 +182,6 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
-}
-
-func validateOverriddenImageName(imageName, cloud string) error {
-	opts := &clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
-
-	client, err := clientconfig.NewServiceClient("image", opts)
-	if err != nil {
-		return err
-	}
-
-	listOpts := images.ListOpts{
-		Name: imageName,
-	}
-
-	allPages, err := images.List(client, listOpts).AllPages()
-	if err != nil {
-		return err
-	}
-
-	allImages, err := images.ExtractImages(allPages)
-	if err != nil {
-		return err
-	}
-
-	if len(allImages) == 0 {
-		return errors.Errorf("image '%v' doesn't exist", imageName)
-	}
-
-	if len(allImages) > 1 {
-		return errors.Errorf("there's more than one image with the name '%v'", imageName)
-	}
-
-	return nil
 }
 
 // We need to obtain Glance public endpoint that will be used by Ignition to download bootstrap ignition files.
