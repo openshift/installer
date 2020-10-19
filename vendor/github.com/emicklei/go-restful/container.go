@@ -185,6 +185,11 @@ func logStackOnRecover(panicReason interface{}, httpWriter http.ResponseWriter) 
 // when a ServiceError is returned during route selection. Default implementation
 // calls resp.WriteErrorString(err.Code, err.Message)
 func writeServiceError(err ServiceError, req *Request, resp *Response) {
+	for header, values := range err.Header {
+		for _, value := range values {
+			resp.Header().Add(header, value)
+		}
+	}
 	resp.WriteErrorString(err.Code, err.Message)
 }
 
@@ -296,13 +301,70 @@ func fixedPrefixPath(pathspec string) string {
 }
 
 // ServeHTTP implements net/http.Handler therefore a Container can be a Handler in a http.Server
-func (c *Container) ServeHTTP(httpwriter http.ResponseWriter, httpRequest *http.Request) {
-	c.ServeMux.ServeHTTP(httpwriter, httpRequest)
+func (c *Container) ServeHTTP(httpWriter http.ResponseWriter, httpRequest *http.Request) {
+	// Skip, if httpWriter is already an CompressingResponseWriter
+	if _, ok := httpWriter.(*CompressingResponseWriter); ok {
+		c.ServeMux.ServeHTTP(httpWriter, httpRequest)
+		return
+	}
+
+	writer := httpWriter
+	// CompressingResponseWriter should be closed after all operations are done
+	defer func() {
+		if compressWriter, ok := writer.(*CompressingResponseWriter); ok {
+			compressWriter.Close()
+		}
+	}()
+
+	if c.contentEncodingEnabled {
+		doCompress, encoding := wantsCompressedResponse(httpRequest)
+		if doCompress {
+			var err error
+			writer, err = NewCompressingResponseWriter(httpWriter, encoding)
+			if err != nil {
+				log.Print("unable to install compressor: ", err)
+				httpWriter.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
+	c.ServeMux.ServeHTTP(writer, httpRequest)
 }
 
 // Handle registers the handler for the given pattern. If a handler already exists for pattern, Handle panics.
 func (c *Container) Handle(pattern string, handler http.Handler) {
-	c.ServeMux.Handle(pattern, handler)
+	c.ServeMux.Handle(pattern, http.HandlerFunc(func(httpWriter http.ResponseWriter, httpRequest *http.Request) {
+		// Skip, if httpWriter is already an CompressingResponseWriter
+		if _, ok := httpWriter.(*CompressingResponseWriter); ok {
+			handler.ServeHTTP(httpWriter, httpRequest)
+			return
+		}
+
+		writer := httpWriter
+
+		// CompressingResponseWriter should be closed after all operations are done
+		defer func() {
+			if compressWriter, ok := writer.(*CompressingResponseWriter); ok {
+				compressWriter.Close()
+			}
+		}()
+
+		if c.contentEncodingEnabled {
+			doCompress, encoding := wantsCompressedResponse(httpRequest)
+			if doCompress {
+				var err error
+				writer, err = NewCompressingResponseWriter(httpWriter, encoding)
+				if err != nil {
+					log.Print("unable to install compressor: ", err)
+					httpWriter.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+			}
+		}
+
+		handler.ServeHTTP(writer, httpRequest)
+	}))
 }
 
 // HandleWithFilter registers the handler for the given pattern.
@@ -316,7 +378,7 @@ func (c *Container) HandleWithFilter(pattern string, handler http.Handler) {
 		}
 
 		chain := FilterChain{Filters: c.containerFilters, Target: func(req *Request, resp *Response) {
-			handler.ServeHTTP(httpResponse, httpRequest)
+			handler.ServeHTTP(resp, req.Request)
 		}}
 		chain.ProcessFilter(NewRequest(httpRequest), NewResponse(httpResponse))
 	}
