@@ -95,7 +95,7 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 		level = logrus.InfoLevel
 	}
 
-	logrus.AddHook(newFileHook(os.Stderr, level, &logrus.TextFormatter{
+	logrus.AddHook(newFileHookWithNewlineTruncate(os.Stderr, level, &logrus.TextFormatter{
 		// Setting ForceColors is necessary because logrus.TextFormatter determines
 		// whether or not to enable colors by looking at the output of the logger.
 		// In this case, the output is ioutil.Discard, which is not a terminal.
@@ -104,6 +104,7 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 		ForceColors:            terminal.IsTerminal(int(os.Stderr.Fd())),
 		DisableTimestamp:       true,
 		DisableLevelTruncation: true,
+		DisableQuote:           true,
 	}))
 
 	if err != nil {
