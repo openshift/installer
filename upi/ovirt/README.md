@@ -13,5 +13,5 @@ Execute every step of the installation like below:
 $ ansible-playbook -i inventory.yml bootstrap.yml
 ```
 
-Please refer to the [oVirt/RHV documentation](../../docs/users/ovirt/install_upi.md)
+Please refer to the [oVirt/RHV documentation](../../docs/user/ovirt/install_upi.md)
 for the full step-by-step process.
