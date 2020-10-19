@@ -3,7 +3,10 @@ package tfvars
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type config struct {
@@ -17,23 +20,35 @@ type config struct {
 	UseIPv4 bool `json:"use_ipv4"`
 	UseIPv6 bool `json:"use_ipv6"`
 
-	IgnitionBootstrap string `json:"ignition_bootstrap,omitempty"`
-	IgnitionMaster    string `json:"ignition_master,omitempty"`
+	IgnitionBootstrap     string `json:"ignition_bootstrap,omitempty"`
+	IgnitionBootstrapFile string `json:"ignition_bootstrap_file,omitempty"`
+	IgnitionMaster        string `json:"ignition_master,omitempty"`
 }
 
 // TFVars generates terraform.tfvar JSON for launching the cluster.
 func TFVars(clusterID string, clusterDomain string, baseDomain string, machineV4CIDRs []string, machineV6CIDRs []string, useIPv4, useIPv6 bool, bootstrapIgn string, masterIgn string, masterCount int) ([]byte, error) {
+	f, err := ioutil.TempFile("", "openshift-install-bootstrap-*.ign")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create tmp file for bootstrap ignition")
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(bootstrapIgn); err != nil {
+		return nil, errors.Wrap(err, "failed to write bootstrap ignition")
+	}
+
 	config := &config{
-		ClusterID:         clusterID,
-		ClusterDomain:     strings.TrimSuffix(clusterDomain, "."),
-		BaseDomain:        strings.TrimSuffix(baseDomain, "."),
-		MachineV4CIDRs:    machineV4CIDRs,
-		MachineV6CIDRs:    machineV6CIDRs,
-		UseIPv4:           useIPv4,
-		UseIPv6:           useIPv6,
-		Masters:           masterCount,
-		IgnitionBootstrap: bootstrapIgn,
-		IgnitionMaster:    masterIgn,
+		ClusterID:             clusterID,
+		ClusterDomain:         strings.TrimSuffix(clusterDomain, "."),
+		BaseDomain:            strings.TrimSuffix(baseDomain, "."),
+		MachineV4CIDRs:        machineV4CIDRs,
+		MachineV6CIDRs:        machineV6CIDRs,
+		UseIPv4:               useIPv4,
+		UseIPv6:               useIPv6,
+		Masters:               masterCount,
+		IgnitionBootstrap:     bootstrapIgn,
+		IgnitionBootstrapFile: f.Name(),
+		IgnitionMaster:        masterIgn,
 	}
 
 	return json.MarshalIndent(config, "", "  ")

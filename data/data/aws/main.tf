@@ -28,7 +28,7 @@ module "bootstrap" {
   ami                      = var.aws_region == var.aws_ami_region ? var.aws_ami : aws_ami_copy.imported[0].id
   instance_type            = var.aws_bootstrap_instance_type
   cluster_id               = var.cluster_id
-  ignition                 = var.ignition_bootstrap
+  ignition                 = var.ignition_bootstrap_file
   ignition_bucket          = var.aws_ignition_bucket
   ignition_stub            = var.aws_bootstrap_stub_ignition
   subnet_id                = var.aws_publish_strategy == "External" ? module.vpc.az_to_public_subnet_id[var.aws_master_availability_zones[0]] : module.vpc.az_to_private_subnet_id[var.aws_master_availability_zones[0]]

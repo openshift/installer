@@ -23,10 +23,10 @@ resource "aws_s3_bucket" "ignition" {
 }
 
 resource "aws_s3_bucket_object" "ignition" {
-  bucket  = aws_s3_bucket.ignition.id
-  key     = "bootstrap.ign"
-  content = var.ignition
-  acl     = "private"
+  bucket = aws_s3_bucket.ignition.id
+  key    = "bootstrap.ign"
+  source = var.ignition
+  acl    = "private"
 
   server_side_encryption = "AES256"
 

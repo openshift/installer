@@ -10,7 +10,7 @@ variable "cluster_id" {
 
 variable "ignition" {
   type        = string
-  description = "The content of the bootstrap ignition file."
+  description = "The path of the bootstrap ignition file."
 }
 
 variable "ignition_bucket" {
