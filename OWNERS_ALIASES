@@ -86,3 +86,15 @@ aliases:
     - Gal-Zaidman
     - rgolangh
     - eslutsky
+  kubevirt-approvers:
+    - nirarg
+    - bardielle
+    - ravidbro
+    - rgolangh
+    - chenyosef
+  kubevirt-reviewers:
+    - nirarg
+    - bardielle
+    - ravidbro
+    - rgolangh
+    - chenyosef
