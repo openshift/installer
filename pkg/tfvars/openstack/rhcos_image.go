@@ -3,6 +3,7 @@ package openstack
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gophercloud/gophercloud"
@@ -33,10 +34,17 @@ func uploadBaseImage(cloud string, localFilePath string, imageName string, clust
 		return err
 	}
 
+	// By default we use "qcow2" disk format, but if the file extension is "raw",
+	// then we set the disk format as "raw".
+	diskFormat := "qcow2"
+	if extension := filepath.Ext(localFilePath); extension == "raw" {
+		diskFormat = "raw"
+	}
+
 	imageCreateOpts := images.CreateOpts{
 		Name:            imageName,
 		ContainerFormat: "bare",
-		DiskFormat:      "qcow2",
+		DiskFormat:      diskFormat,
 		Tags:            []string{fmt.Sprintf("openshiftClusterID=%s", clusterID)},
 		// TODO(mfedosin): add Description when gophercloud supports it.
 	}
