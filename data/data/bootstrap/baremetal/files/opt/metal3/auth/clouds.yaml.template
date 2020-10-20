@@ -1,0 +1,7 @@
+clouds:
+  metal3-bootstrap:
+    auth_type: http_basic
+    username: {{.PlatformData.BareMetal.IronicUsername}}
+    password: {{.PlatformData.BareMetal.IronicPassword}}
+    baremetal_endpoint_override: http://{{if .PlatformData.BareMetal.ProvisioningIPv6}}[{{end}}{{.PlatformData.BareMetal.ProvisioningIP}}{{if .PlatformData.BareMetal.ProvisioningIPv6}}]{{end}}:6385/v1
+    baremetal_introspection_endpoint_override: http://{{if .PlatformData.BareMetal.ProvisioningIPv6}}[{{end}}{{.PlatformData.BareMetal.ProvisioningIP}}{{if .PlatformData.BareMetal.ProvisioningIPv6}}]{{end}}:5050/v1
