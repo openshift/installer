@@ -138,9 +138,13 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 				mp.FlavorName = notExistFlavor
 				return mp
 			}(),
-			cloudInfo:      validMpoolCloudInfo(),
+			cloudInfo: func() *CloudInfo {
+				ci := validMpoolCloudInfo()
+				ci.Flavors[notExistFlavor] = Flavor{}
+				return ci
+			}(),
 			expectedError:  true,
-			expectedErrMsg: "controlPlane.platform.openstack.flavorName: Not found: \"non-existant-flavor\"",
+			expectedErrMsg: "controlPlane.platform.openstack.type: Not found: \"non-existant-flavor\"",
 		},
 		{
 			name: "not found compute flavorName",
@@ -149,9 +153,13 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 				mp.FlavorName = notExistFlavor
 				return mp
 			}(),
-			cloudInfo:      validMpoolCloudInfo(),
+			cloudInfo: func() *CloudInfo {
+				ci := validMpoolCloudInfo()
+				ci.Flavors[notExistFlavor] = Flavor{}
+				return ci
+			}(),
 			expectedError:  true,
-			expectedErrMsg: `compute\[0\].platform.openstack.flavorName: Not found: "non-existant-flavor"`,
+			expectedErrMsg: `compute\[0\].platform.openstack.type: Not found: "non-existant-flavor"`,
 		},
 		{
 			name:         "invalid control plane flavorName",
@@ -163,7 +171,7 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			}(),
 			cloudInfo:      validMpoolCloudInfo(),
 			expectedError:  true,
-			expectedErrMsg: "controlPlane.platform.openstack.flavorName: Invalid value: \"invalid-control-plane-flavor\": Flavor did not meet the following minimum requirements: Must have minimum of 16 GB RAM, had 8 GB; Must have minimum of 4 VCPUs, had 2",
+			expectedErrMsg: "controlPlane.platform.openstack.type: Invalid value: \"invalid-control-plane-flavor\": Flavor did not meet the following minimum requirements: Must have minimum of 16 GB RAM, had 8 GB; Must have minimum of 4 VCPUs, had 2",
 		},
 		{
 			name:         "invalid compute flavorName",
@@ -175,7 +183,7 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			}(),
 			cloudInfo:      validMpoolCloudInfo(),
 			expectedError:  true,
-			expectedErrMsg: `compute\[0\].platform.openstack.flavorName: Invalid value: "invalid-compute-flavor": Flavor did not meet the following minimum requirements: Must have minimum of 25 GB Disk, had 10 GB`,
+			expectedErrMsg: `compute\[0\].platform.openstack.type: Invalid value: "invalid-compute-flavor": Flavor did not meet the following minimum requirements: Must have minimum of 25 GB Disk, had 10 GB`,
 		},
 		{
 			name:         "valid baremetal compute",
