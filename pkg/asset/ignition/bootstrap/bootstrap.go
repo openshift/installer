@@ -2,7 +2,9 @@ package bootstrap
 
 import (
 	"bytes"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/containers/image/pkg/sysregistriesv2"
 	ignutil "github.com/coreos/ignition/v2/config/util"
@@ -18,6 +21,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/vincent-petithory/dataurl"
 
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
@@ -557,5 +561,46 @@ func (a *Bootstrap) Load(f asset.FileFetcher) (found bool, err error) {
 	}
 
 	a.File, a.Config = file, config
+	warnIfCertificatesExpired(a.Config)
 	return true, nil
+}
+
+// warnIfCertificatesExpired checks for expired certificates and warns if so
+func warnIfCertificatesExpired(config *igntypes.Config) {
+	expiredCerts := 0
+	for _, file := range config.Storage.Files {
+		if filepath.Ext(file.Path) == ".crt" && file.Contents.Source != nil {
+			fileName := path.Base(file.Path)
+			decoded, err := dataurl.DecodeString(*file.Contents.Source)
+			if err != nil {
+				logrus.Debugf("Unable to decode certificate %s: %s", fileName, err.Error())
+				continue
+			}
+			data := decoded.Data
+			for {
+				block, rest := pem.Decode(data)
+				if block != nil {
+					cert, err := x509.ParseCertificate(block.Bytes)
+					if err == nil {
+						if time.Now().UTC().After(cert.NotAfter) {
+							logrus.Warnf("Bootstrap Ignition-Config Certificate %s expired at %s.", path.Base(file.Path), cert.NotAfter.Format(time.RFC3339))
+							expiredCerts++
+						}
+					} else {
+						logrus.Debugf("Unable to parse certificate %s: %s", fileName, err.Error())
+						break
+					}
+				}
+				if len(rest) > 0 {
+					data = rest
+				} else {
+					break
+				}
+			}
+		}
+	}
+
+	if expiredCerts > 0 {
+		logrus.Warnf("Bootstrap Ignition-Config: %d certificates expired. Installation attempts with the created Ignition-Configs will possibly fail.", expiredCerts)
+	}
 }
