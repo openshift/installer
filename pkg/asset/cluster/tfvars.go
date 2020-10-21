@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	baremetalbootstrap "github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
@@ -90,6 +91,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		&machine.Master{},
 		&machines.Master{},
 		&machines.Worker{},
+		&baremetalbootstrap.IronicCreds{},
 	}
 }
 
@@ -104,7 +106,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	workersAsset := &machines.Worker{}
 	rhcosImage := new(rhcos.Image)
 	rhcosBootstrapImage := new(rhcos.BootstrapImage)
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, rhcosImage, rhcosBootstrapImage)
+	ironicCreds := &baremetalbootstrap.IronicCreds{}
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, rhcosImage, rhcosBootstrapImage, ironicCreds)
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {

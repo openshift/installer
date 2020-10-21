@@ -78,6 +78,7 @@ var _ asset.WritableAsset = (*Bootstrap)(nil)
 // Dependencies returns the assets on which the Bootstrap asset depends.
 func (a *Bootstrap) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&baremetal.IronicCreds{},
 		&installconfig.InstallConfig{},
 		&kubeconfig.AdminInternalClient{},
 		&kubeconfig.Kubelet{},
@@ -140,7 +141,8 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	releaseImage := &releaseimage.Image{}
 	rhcosImage := new(rhcos.Image)
 	bootstrapSSHKeyPair := &tls.BootstrapSSHKeyPair{}
-	dependencies.Get(installConfig, proxy, releaseImage, rhcosImage, bootstrapSSHKeyPair)
+	ironicCreds := &baremetal.IronicCreds{}
+	dependencies.Get(installConfig, proxy, releaseImage, rhcosImage, bootstrapSSHKeyPair, ironicCreds)
 
 	templateData, err := a.getTemplateData(installConfig.Config, releaseImage.PullSpec, installConfig.Config.ImageContentSources, proxy.Config, rhcosImage)
 
