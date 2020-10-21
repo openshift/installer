@@ -138,7 +138,11 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 				mp.FlavorName = notExistFlavor
 				return mp
 			}(),
-			cloudInfo:      validMpoolCloudInfo(),
+			cloudInfo: func() *CloudInfo {
+				ci := validMpoolCloudInfo()
+				ci.Flavors[notExistFlavor] = Flavor{}
+				return ci
+			}(),
 			expectedError:  true,
 			expectedErrMsg: "controlPlane.platform.openstack.type: Not found: \"non-existant-flavor\"",
 		},
@@ -149,7 +153,11 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 				mp.FlavorName = notExistFlavor
 				return mp
 			}(),
-			cloudInfo:      validMpoolCloudInfo(),
+			cloudInfo: func() *CloudInfo {
+				ci := validMpoolCloudInfo()
+				ci.Flavors[notExistFlavor] = Flavor{}
+				return ci
+			}(),
 			expectedError:  true,
 			expectedErrMsg: `compute\[0\].platform.openstack.type: Not found: "non-existant-flavor"`,
 		},
