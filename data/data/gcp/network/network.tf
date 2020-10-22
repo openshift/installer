@@ -50,7 +50,7 @@ resource "google_compute_router_nat" "worker_nat" {
   name                               = "${var.cluster_id}-nat-worker"
   router                             = google_compute_router.router[0].name
   nat_ip_allocate_option             = "AUTO_ONLY"
-  min_ports_per_vm                   = 512
+  min_ports_per_vm                   = 4096
   source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
 
   subnetwork {
