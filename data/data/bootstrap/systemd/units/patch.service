@@ -1,0 +1,15 @@
+[Unit]
+Description=Patch single node OpenShift cluster
+Wants=bootkube.service
+ConditionPathExists=!/opt/openshift/patch.done
+
+[Service]
+WorkingDirectory=/opt/openshift
+ExecStart=/usr/local/bin/patch.sh
+
+Restart=on-failure
+RestartSec=5s
+
+
+[Install]
+WantedBy=multi-user.target
