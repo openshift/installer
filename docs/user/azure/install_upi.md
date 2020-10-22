@@ -11,7 +11,7 @@ example.
 * all prerequisites from [README](README.md)
 * the following binaries installed and in $PATH:
   * [openshift-install][openshiftinstall]
-    * It is recommended that the OpenShift installer CLI version is the same of the cluster being deployed. The version used in this example is 4.3.0 GA.
+    * It is recommended that the OpenShift installer CLI version is the same of the cluster being deployed.
   * [az (Azure CLI)][azurecli] installed and aunthenticated
     * Commands flags and structure may vary between `az` versions. The recommended version used in this example is 2.0.80.
   * python3
