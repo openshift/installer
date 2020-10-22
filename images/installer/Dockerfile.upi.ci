@@ -52,10 +52,6 @@ RUN curl -L -O https://github.com/community-terraform-providers/terraform-provid
 RUN curl -L -O https://github.com/vmware/govmomi/releases/download/v0.20.0/govc_linux_amd64.gz && \
     gzip -d govc_linux_amd64.gz && \
     chmod +x govc_linux_amd64 && mv govc_linux_amd64 /bin/govc
-RUN curl -L -O -k https://vcsa-ci.vmware.devcluster.openshift.com/certs/download.zip && \
-    unzip download.zip && \
-    cp certs/lin/* /etc/pki/ca-trust/source/anchors && \
-    update-ca-trust extract
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip && \
     ./aws/install -b /bin && \
