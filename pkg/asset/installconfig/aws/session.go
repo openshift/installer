@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -23,12 +24,14 @@ import (
 const (
 	sharedCredentialsProviderName = "SharedCredentialsProvider"
 	envProviderName               = "EnvProvider"
+	assumeRoleProviderName        = "AssumeRoleProvider"
 )
 
 var (
 	onceLoggers = map[string]*sync.Once{
 		sharedCredentialsProviderName: new(sync.Once),
 		envProviderName:               new(sync.Once),
+		assumeRoleProviderName:        new(sync.Once),
 	}
 )
 
@@ -70,6 +73,7 @@ func GetSessionWithOptions(optFuncs ...SessionOptions) (*session.Session, error)
 
 	sharedCredentialsProvider := &credentials.SharedCredentialsProvider{}
 	ssn.Config.Credentials = credentials.NewChainCredentials([]credentials.Provider{
+		&stscreds.AssumeRoleProvider{},
 		&credentials.EnvProvider{},
 		sharedCredentialsProvider,
 	})
@@ -79,11 +83,15 @@ func GetSessionWithOptions(optFuncs ...SessionOptions) (*session.Session, error)
 		switch creds.ProviderName {
 		case sharedCredentialsProviderName:
 			onceLoggers[sharedCredentialsProviderName].Do(func() {
-				logrus.Infof("Credentials loaded from the %q profile in file %q", sharedCredentialsProvider.Profile, sharedCredentialsProvider.Filename)
+				logrus.Infof("User-based credentials loaded from the %q profile in file %q", sharedCredentialsProvider.Profile, sharedCredentialsProvider.Filename)
 			})
 		case envProviderName:
 			onceLoggers[envProviderName].Do(func() {
-				logrus.Info("Credentials loaded from default AWS environment variables")
+				logrus.Info("User-based credentials loaded from AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY AWS environment variables")
+			})
+		case assumeRoleProviderName:
+			onceLoggers[envProviderName].Do(func() {
+				logrus.Info("Role-based credentials loaded from AWS_ROLE_ARN and AWS_WEB_IDENTITY_TOKEN_FILE AWS environment variables")
 			})
 		}
 	}
