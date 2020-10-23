@@ -19,6 +19,7 @@ type Metadata struct {
 	privateSubnets    map[string]Subnet
 	publicSubnets     map[string]Subnet
 	vpc               string
+	instanceTypes     map[string]InstanceType
 
 	Region   string                     `json:"region,omitempty"`
 	Subnets  []string                   `json:"subnets,omitempty"`
@@ -138,4 +139,24 @@ func (m *Metadata) VPC(ctx context.Context) (string, error) {
 	}
 
 	return m.vpc, nil
+}
+
+// InstanceTypes retrieves instance type metadata indexed by InstanceType for the configured region.
+func (m *Metadata) InstanceTypes(ctx context.Context) (map[string]InstanceType, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if len(m.instanceTypes) == 0 {
+		session, err := m.unlockedSession(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		m.instanceTypes, err = instanceTypes(ctx, session, m.Region)
+		if err != nil {
+			return nil, errors.Wrap(err, "listing instance types")
+		}
+	}
+
+	return m.instanceTypes, nil
 }

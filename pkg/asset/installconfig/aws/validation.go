@@ -16,6 +16,21 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
+type resourceRequirements struct {
+	minimumVCpus  int64
+	minimumMemory int64
+}
+
+var controlPlaneReq = resourceRequirements{
+	minimumVCpus:  4,
+	minimumMemory: 16384,
+}
+
+var computeReq = resourceRequirements{
+	minimumVCpus:  2,
+	minimumMemory: 8192,
+}
+
 // Validate executes platform-specific validation.
 func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
@@ -26,12 +41,12 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config.Platform.AWS, config.Networking, config.Publish)...)
 
 	if config.ControlPlane != nil && config.ControlPlane.Platform.AWS != nil {
-		allErrs = append(allErrs, validateMachinePool(ctx, meta, field.NewPath("controlPlane", "platform", "aws"), config.Platform.AWS, config.ControlPlane.Platform.AWS)...)
+		allErrs = append(allErrs, validateMachinePool(ctx, meta, field.NewPath("controlPlane", "platform", "aws"), config.Platform.AWS, config.ControlPlane.Platform.AWS, controlPlaneReq)...)
 	}
 	for idx, compute := range config.Compute {
 		fldPath := field.NewPath("compute").Index(idx)
 		if compute.Platform.AWS != nil {
-			allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("platform", "aws"), config.Platform.AWS, compute.Platform.AWS)...)
+			allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("platform", "aws"), config.Platform.AWS, compute.Platform.AWS, computeReq)...)
 		}
 	}
 	return allErrs.ToAggregate()
@@ -51,7 +66,7 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceEndpoints"), platform.ServiceEndpoints, err.Error()))
 	}
 	if platform.DefaultMachinePlatform != nil {
-		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("defaultMachinePlatform"), platform, platform.DefaultMachinePlatform)...)
+		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("defaultMachinePlatform"), platform, platform.DefaultMachinePlatform, controlPlaneReq)...)
 	}
 	return allErrs
 }
@@ -104,7 +119,7 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, s
 	return allErrs
 }
 
-func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, pool *awstypes.MachinePool) field.ErrorList {
+func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, pool *awstypes.MachinePool, req resourceRequirements) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if len(pool.Zones) > 0 {
 		availableZones := sets.String{}
@@ -127,6 +142,25 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 		if diff := sets.NewString(pool.Zones...).Difference(availableZones); diff.Len() > 0 {
 			errMsg := fmt.Sprintf("No subnets provided for zones %s", diff.List())
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("zones"), pool.Zones, errMsg))
+		}
+	}
+	if pool.InstanceType != "" {
+		instanceTypes, err := meta.InstanceTypes(ctx)
+		if err != nil {
+			return append(allErrs, field.InternalError(fldPath, err))
+		}
+		if typeMeta, ok := instanceTypes[pool.InstanceType]; ok {
+			if typeMeta.DefaultVCpus < req.minimumVCpus {
+				errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d vCPUs", req.minimumVCpus)
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
+			}
+			if typeMeta.MemInMiB < req.minimumMemory {
+				errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d MiB Memory", req.minimumMemory)
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
+			}
+		} else {
+			errMsg := fmt.Sprintf("instance type %s not found", pool.InstanceType)
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
 		}
 	}
 	return allErrs
