@@ -169,6 +169,8 @@ github.com/PuerkitoBio/purell
 github.com/PuerkitoBio/urlesc
 # github.com/agext/levenshtein v1.2.3
 github.com/agext/levenshtein
+# github.com/ajeddeloh/go-json v0.0.0-20170920214419-6a2fe990e083
+github.com/ajeddeloh/go-json
 # github.com/antchfx/xpath v1.1.2
 ## explicit
 # github.com/apparentlymart/go-cidr v1.0.1
@@ -415,8 +417,36 @@ github.com/containers/image/types
 github.com/coreos/go-json
 # github.com/coreos/go-semver v0.3.0
 github.com/coreos/go-semver/semver
+# github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
+github.com/coreos/go-systemd/unit
 # github.com/coreos/go-systemd/v22 v22.0.0
 github.com/coreos/go-systemd/v22/unit
+# github.com/coreos/ign-converter v0.0.0-20200918193805-44d462f1c700
+## explicit
+github.com/coreos/ign-converter/translate/v24tov31
+github.com/coreos/ign-converter/util
+# github.com/coreos/ignition v0.35.0
+## explicit
+github.com/coreos/ignition/config/shared/errors
+github.com/coreos/ignition/config/shared/validations
+github.com/coreos/ignition/config/util
+github.com/coreos/ignition/config/v1
+github.com/coreos/ignition/config/v1/types
+github.com/coreos/ignition/config/v2_0
+github.com/coreos/ignition/config/v2_0/types
+github.com/coreos/ignition/config/v2_1
+github.com/coreos/ignition/config/v2_1/types
+github.com/coreos/ignition/config/v2_2
+github.com/coreos/ignition/config/v2_2/types
+github.com/coreos/ignition/config/v2_3
+github.com/coreos/ignition/config/v2_3/types
+github.com/coreos/ignition/config/v2_4
+github.com/coreos/ignition/config/v2_4/types
+github.com/coreos/ignition/config/v2_5_experimental/types
+github.com/coreos/ignition/config/validate
+github.com/coreos/ignition/config/validate/astjson
+github.com/coreos/ignition/config/validate/astnode
+github.com/coreos/ignition/config/validate/report
 # github.com/coreos/ignition/v2 v2.3.0
 ## explicit
 github.com/coreos/ignition/v2/config/shared/errors
@@ -1552,6 +1582,8 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
+# go4.org v0.0.0-20200104003542-c7e774b10ea0
+go4.org/errorutil
 # golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 ## explicit
 golang.org/x/crypto/bcrypt

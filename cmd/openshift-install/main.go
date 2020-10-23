@@ -63,6 +63,7 @@ func installerMain() {
 		newCompletionCmd(),
 		newMigrateCmd(),
 		newExplainCmd(),
+		newIgnitionCmd(),
 	} {
 		rootCmd.AddCommand(subCmd)
 	}

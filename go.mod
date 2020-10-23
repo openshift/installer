@@ -20,6 +20,8 @@ require (
 	github.com/c4milo/gotoolkit v0.0.0-20190525173301-67483a18c17a // indirect
 	github.com/clarketm/json v1.14.1
 	github.com/containers/image v3.0.2+incompatible
+	github.com/coreos/ign-converter v0.0.0-20200918193805-44d462f1c700
+	github.com/coreos/ignition v0.35.0
 	github.com/coreos/ignition/v2 v2.3.0
 	github.com/dmacvicar/terraform-provider-libvirt v0.6.2
 	github.com/frankban/quicktest v1.7.2 // indirect
