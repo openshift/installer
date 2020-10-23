@@ -4,6 +4,7 @@ aliases:
   installer-approvers:
     - abhinavdahiya
     - crawford
+    - staebler
     - sdodson
     - smarterclayton
     - wking
