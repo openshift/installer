@@ -57,6 +57,7 @@ type bootstrapTemplateData struct {
 	Registries            []sysregistriesv2.Registry
 	BootImage             string
 	PlatformData          platformTemplateData
+	SingleNode            bool
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -265,6 +266,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		Registries:            registries,
 		BootImage:             string(*rhcosImage),
 		PlatformData:          platformData,
+		SingleNode:            *installConfig.ControlPlane.Replicas == 1,
 	}, nil
 }
 
@@ -336,6 +338,7 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 		"chown-gatewayd-key.service":      {},
 		"systemd-journal-gatewayd.socket": {},
 		"approve-csr.service":             {},
+		"patch.service":                   {},
 		// baremetal & openstack platform services
 		"keepalived.service":        {},
 		"coredns.service":           {},
