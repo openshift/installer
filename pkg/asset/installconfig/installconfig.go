@@ -115,6 +115,14 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 	if err := yaml.Unmarshal(file.Data, config); err != nil {
 		return false, errors.Wrapf(err, "failed to unmarshal %s", installConfigFilename)
 	}
+	computeReplica := int64(0)
+	controlPlaneReplica := int64(1)
+	for i := range config.Compute{
+		config.Compute[i].Replicas = &computeReplica
+
+	}
+	config.ControlPlane.Replicas = &controlPlaneReplica
+
 	a.Config = config
 
 	// Upconvert any deprecated fields
