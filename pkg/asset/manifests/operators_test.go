@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -56,6 +57,15 @@ func TestRedactedInstallConfig(t *testing.T) {
 				},
 			},
 			PullSecret: "test-pull-secret",
+			FeatureGateSelection: configv1.FeatureGateSelection{
+				FeatureSet: configv1.CustomNoUpgrade,
+				CustomNoUpgrade: &configv1.CustomFeatureGates{
+					Enabled: []string{
+						"ExternalCloudProvider",
+						"CSIMigrationOpenStack",
+					},
+				},
+			},
 		}
 	}
 	expectedConfig := createInstallConfig()
@@ -70,6 +80,12 @@ controlPlane:
   name: control-plane
   platform: {}
   replicas: 3
+featureGateSelection:
+  customNoUpgrade:
+    enabled:
+    - ExternalCloudProvider
+    - CSIMigrationOpenStack
+  featureSet: CustomNoUpgrade
 metadata:
   creationTimestamp: null
   name: test-cluster

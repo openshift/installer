@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -139,6 +140,10 @@ type InstallConfig struct {
 	// GCP: "Mint", "Passthrough", "Manual"
 	// +optional
 	CredentialsMode CredentialsMode `json:"credentialsMode,omitempty"`
+
+	// FeatureGateSelection allows to enable additional unsupported features.
+	// +optional
+	FeatureGateSelection configv1.FeatureGateSelection `json:"featureGateSelection,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
