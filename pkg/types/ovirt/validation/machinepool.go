@@ -22,6 +22,10 @@ func ValidateMachinePool(p *ovirt.MachinePool, fldPath *field.Path) field.ErrorL
 		}
 	}
 
+	if p.MemoryMB < 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("memoryMB"), p.MemoryMB, "Memory value must be nonnegative"))
+	}
+
 	if p.VMType != "" && !ValidVMType(p.VMType) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("vmType"), p.VMType, fmt.Sprintf("VM type must be one of %s", supportedVMTypes())))
 	}
