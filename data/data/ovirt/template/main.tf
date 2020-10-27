@@ -38,6 +38,9 @@ resource "ovirt_image_transfer" "releaseimage" {
   source_url        = var.openstack_base_image_local_file_path
   storage_domain_id = var.ovirt_storage_domain_id
   sparse            = true
+  timeouts {
+    create = "20m"
+  }
 }
 
 resource "ovirt_vm" "tmp_import_vm" {
@@ -77,6 +80,9 @@ resource "ovirt_template" "releaseimage_template" {
   cluster_id = data.ovirt_vms.tmp_import_vm_data.0.vms.0.cluster_id
   // create from vm
   vm_id = data.ovirt_vms.tmp_import_vm_data.0.vms.0.id
+  timeouts {
+    create = "20m"
+  }
 }
 
 // finally get the template by name(should be unique), fail if it doesn't exist
