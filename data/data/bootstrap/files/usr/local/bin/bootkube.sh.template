@@ -79,7 +79,6 @@ then
 		--etcd-ca=/assets/tls/etcd-ca-bundle.crt \
 		--etcd-ca-key=/assets/tls/etcd-signer.key \
 		--manifest-etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
-		--etcd-discovery-domain={{.ClusterDomain}} \
 		--manifest-cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}" \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/etcd-bootstrap \
@@ -88,11 +87,6 @@ then
 
 	cp etcd-bootstrap/manifests/* manifests/
 	cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
-
-	mkdir --parents /etc/kubernetes/static-pod-resources/etcd-member
-	cp tls/etcd-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-member/ca.crt
-	cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-serving /etc/kubernetes/static-pod-resources/etcd-member
-	cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-peer /etc/kubernetes/static-pod-resources/etcd-member
 
 	touch etcd-bootstrap.done
 fi
