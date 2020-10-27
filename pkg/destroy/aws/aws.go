@@ -98,6 +98,10 @@ func (o *ClusterUninstaller) validate() error {
 	if len(o.Filters) == 0 {
 		return errors.Errorf("you must specify at least one tag filter")
 	}
+	switch r := o.Region; r {
+	case "us-iso-east-1":
+		return errors.Errorf("cannot destroy cluster in region %q", r)
+	}
 	return nil
 }
 
