@@ -38,7 +38,7 @@ type Zone struct {
 }
 
 func (z Zone) String() string {
-	return fmt.Sprintf("%s", z.Name)
+	return z.Name
 }
 
 //GetDNSZoneID returns the Azure DNS zone resourceID

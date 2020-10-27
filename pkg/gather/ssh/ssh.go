@@ -113,7 +113,7 @@ func defaultPrivateSSHKeys() (map[string]interface{}, error) {
 		files = append(files, filepath.Join(d, path.Name()))
 	}
 	keys, err := LoadPrivateSSHKeys(files)
-	if keys != nil && len(keys) > 0 {
+	if len(keys) > 0 {
 		return keys, nil
 	}
 	return nil, err

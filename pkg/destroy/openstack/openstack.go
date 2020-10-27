@@ -122,10 +122,8 @@ func (o *ClusterUninstaller) Run() error {
 
 	// wait for them to finish
 	for i := 0; i < len(deleteFuncs); i++ {
-		select {
-		case res := <-returnChannel:
-			o.Logger.Debugf("goroutine %v complete", res)
-		}
+		res := <-returnChannel
+		o.Logger.Debugf("goroutine %v complete", res)
 	}
 
 	// we need to untag the custom network if it was provided by the user
@@ -154,7 +152,6 @@ func deleteRunner(deleteFuncName string, dFunction deleteFunc, opts *clientconfi
 
 	// record that the goroutine has run to completion
 	channel <- deleteFuncName
-	return
 }
 
 // filterObjects will do client-side filtering given an appropriately filled out

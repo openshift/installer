@@ -358,14 +358,14 @@ func engineSetup() (Config, error) {
 		}
 	}
 
-	if engineConfig.Insecure == false {
+	if !engineConfig.Insecure {
 		err = httpResource.addTrustBundle(engineConfig.CABundle, &engineConfig)
 		if err != nil {
 			engineConfig.Insecure = true
 		}
 	}
 
-	if engineConfig.Insecure == true {
+	if engineConfig.Insecure {
 		logrus.Warning(
 			"cannot detect Engine CA cert imported in the system. ",
 			"Communication with the Engine will be insecure.")

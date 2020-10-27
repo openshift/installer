@@ -135,7 +135,7 @@ func (o *ClusterUninstaller) Run() error {
 	}
 
 	deadline, _ := waitCtx.Deadline()
-	diff := deadline.Sub(time.Now())
+	diff := time.Until(deadline)
 	if diff > 0 {
 		waitCtx, cancel = context.WithTimeout(context.Background(), diff)
 	}
@@ -163,7 +163,7 @@ func (o *ClusterUninstaller) Run() error {
 	}
 
 	deadline, _ = waitCtx.Deadline()
-	diff = deadline.Sub(time.Now())
+	diff = time.Until(deadline)
 	if diff > 0 {
 		waitCtx, cancel = context.WithTimeout(context.Background(), diff)
 	}

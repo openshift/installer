@@ -50,33 +50,6 @@ func (o *ClusterUninstaller) listInstanceGroupsWithFilter(fields string, filter 
 	return result, nil
 }
 
-func (o *ClusterUninstaller) listInstanceGroupInstances(ig cloudResource) ([]cloudResource, error) {
-	o.Logger.Debugf("Listing instance group instances for %v", ig)
-	ctx, cancel := o.contextWithTimeout()
-	defer cancel()
-	result := []cloudResource{}
-	req := o.computeSvc.InstanceGroups.ListInstances(o.ProjectID, ig.zone, ig.name, &compute.InstanceGroupsListInstancesRequest{}).Fields("items(instance),nextPageToken")
-	err := req.Pages(ctx, func(list *compute.InstanceGroupsListInstances) error {
-		for _, item := range list.Items {
-			name, zone := o.getInstanceNameAndZone(item.Instance)
-			if len(name) == 0 {
-				continue
-			}
-			result = append(result, cloudResource{
-				key:      fmt.Sprintf("%s/%s", zone, name),
-				name:     name,
-				typeName: "instance",
-				zone:     zone,
-			})
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to fetch instance group instances")
-	}
-	return result, nil
-}
-
 func (o *ClusterUninstaller) deleteInstanceGroup(item cloudResource) error {
 	o.Logger.Debugf("Deleting instance group %s in zone %s", item.name, item.zone)
 	ctx, cancel := o.contextWithTimeout()

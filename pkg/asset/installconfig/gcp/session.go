@@ -164,7 +164,7 @@ func (f *contentLoader) Load(ctx context.Context) (*googleoauth.Credentials, err
 }
 
 func (f *contentLoader) String() string {
-	return fmt.Sprintf("content <redacted>")
+	return "content <redacted>"
 }
 
 type cliLoader struct{}
@@ -174,7 +174,7 @@ func (c *cliLoader) Load(ctx context.Context) (*googleoauth.Credentials, error) 
 }
 
 func (c *cliLoader) String() string {
-	return fmt.Sprintf("gcloud CLI defaults")
+	return "gcloud CLI defaults"
 }
 
 type userLoader struct{}

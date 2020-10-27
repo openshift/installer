@@ -89,7 +89,7 @@ func ConvertNetworking(config *types.InstallConfig) {
 // platform. ProvisioningDHCPExternal has been replaced by setting
 // the ProvisioningNetwork field to "Unmanaged"
 func ConvertBaremetal(config *types.InstallConfig) {
-	if config.Platform.BareMetal.DeprecatedProvisioningDHCPExternal == true && config.Platform.BareMetal.ProvisioningNetwork == "" {
+	if config.Platform.BareMetal.DeprecatedProvisioningDHCPExternal && config.Platform.BareMetal.ProvisioningNetwork == "" {
 		config.Platform.BareMetal.ProvisioningNetwork = baremetal.UnmanagedProvisioningNetwork
 	}
 }
