@@ -75,11 +75,10 @@ aliases:
     - mjudeikis
   ovirt-approvers:
     - rgolangh
-    - dougsland
     - Gal-Zaidman
-    - gekorob
+    - eslutsky
   ovirt-reviewers:
     - dougsland
     - Gal-Zaidman
-    - gekorob
     - rgolangh
+    - eslutsky
