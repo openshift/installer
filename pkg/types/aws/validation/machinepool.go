@@ -37,7 +37,7 @@ func ValidateAMIID(platform *aws.Platform, p *aws.MachinePool, fldPath *field.Pa
 
 	// regions is a list of regions for which the user should set AMI ID as copying the AMI to these regions
 	// is known to not be supported.
-	regions := sets.NewString("us-gov-west-1", "us-gov-east-1", "cn-north-1", "cn-northwest-1")
+	regions := sets.NewString("us-gov-west-1", "us-gov-east-1", "us-iso-east-1", "cn-north-1", "cn-northwest-1")
 	if pool.AMIID == "" && regions.Has(platform.Region) {
 		allErrs = append(allErrs, field.Required(fldPath, fmt.Sprintf("AMI ID must be provided for regions %s", strings.Join(regions.List(), ", "))))
 	}
