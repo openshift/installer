@@ -579,23 +579,22 @@ func warnIfCertificatesExpired(config *igntypes.Config) {
 			data := decoded.Data
 			for {
 				block, rest := pem.Decode(data)
-				if block != nil {
-					cert, err := x509.ParseCertificate(block.Bytes)
-					if err == nil {
-						if time.Now().UTC().After(cert.NotAfter) {
-							logrus.Warnf("Bootstrap Ignition-Config Certificate %s expired at %s.", path.Base(file.Path), cert.NotAfter.Format(time.RFC3339))
-							expiredCerts++
-						}
-					} else {
-						logrus.Debugf("Unable to parse certificate %s: %s", fileName, err.Error())
-						break
-					}
-				}
-				if len(rest) > 0 {
-					data = rest
-				} else {
+				if block == nil {
 					break
 				}
+
+				cert, err := x509.ParseCertificate(block.Bytes)
+				if err == nil {
+					if time.Now().UTC().After(cert.NotAfter) {
+						logrus.Warnf("Bootstrap Ignition-Config Certificate %s expired at %s.", path.Base(file.Path), cert.NotAfter.Format(time.RFC3339))
+						expiredCerts++
+					}
+				} else {
+					logrus.Debugf("Unable to parse certificate %s: %s", fileName, err.Error())
+					break
+				}
+
+				data = rest
 			}
 		}
 	}
