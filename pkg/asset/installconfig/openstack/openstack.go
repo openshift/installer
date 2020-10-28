@@ -143,6 +143,8 @@ func Platform() (*openstack.Platform, error) {
 		APIFloatingIP:   apiFloatingIP,
 		Cloud:           cloud,
 		ExternalNetwork: extNet,
-		FlavorName:      flavor,
+		DefaultMachinePlatform: &openstack.MachinePool{
+			FlavorName: flavor,
+		},
 	}, nil
 }

@@ -110,10 +110,9 @@ func defaultGCPMachinePoolPlatform() gcptypes.MachinePool {
 	}
 }
 
-func defaultOpenStackMachinePoolPlatform(flavor string) openstacktypes.MachinePool {
+func defaultOpenStackMachinePoolPlatform() openstacktypes.MachinePool {
 	return openstacktypes.MachinePool{
-		FlavorName: flavor,
-		Zones:      []string{""},
+		Zones: []string{""},
 	}
 }
 
@@ -358,7 +357,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				machineSets = append(machineSets, set)
 			}
 		case openstacktypes.Name:
-			mpool := defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName)
+			mpool := defaultOpenStackMachinePoolPlatform()
 			mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.OpenStack)
 			pool.Platform.OpenStack = &mpool

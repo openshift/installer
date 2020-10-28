@@ -20,8 +20,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 ## Cluster-scoped properties
 
 * `cloud` (required string): The name of the OpenStack cloud to use from `clouds.yaml`.
-* `computeFlavor` (required string): The OpenStack flavor to use for compute and control-plane machines.
-    This is currently required, but has lower precedence than [the `type` property](#machine-pools) on [the `compute` and `controlPlane` machine-pools](../customization.md#platform-customization).
+* `computeFlavor` (deprecated string): The OpenStack flavor to use for compute and control-plane machines.
 * `externalDNS` (optional list of strings): The IP addresses of DNS servers to be used for the DNS resolution of all instances in the cluster
 * `externalNetwork` (optional string): Name of external network the installer will use to provide access to the cluster. If defined, a floating ip from this network will be created and associated with the bootstrap node to facilitate debugging and connection to the bootstrap node during installation. The `apiFloatingIP` property is a floating ip address selected from this network.
 * `apiFloatingIP` (optional string): Address of existing Floating IP from externalNetwork the installer will associate with the OpenShift API. This property is only valid if externalNetwork is defined. If externalNetwork is not defined, the installer will throw an error.
@@ -67,7 +66,8 @@ platform:
   openstack:
     apiFloatingIP: 128.0.0.1
     cloud: mycloud
-    computeFlavor: m1.s2.xlarge
+    defaultMachinePlatform:
+      type: m1.s2.xlarge
     externalNetwork: external
     externalDNS:
       - "8.8.8.8"
@@ -101,7 +101,8 @@ platform:
   openstack:
     apiFloatingIP: 128.0.0.1
     cloud: mycloud
-    computeFlavor: m1.s2.xlarge
+    defaultMachinePlatform:
+      type: m1.s2.xlarge
     externalNetwork: external
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...

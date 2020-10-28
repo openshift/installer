@@ -121,5 +121,19 @@ func convertOpenStack(config *types.InstallConfig) error {
 		}
 	}
 
+	// computeFlavor has been deprecated in favor of type in defaultMachinePlatform.
+	if config.Platform.OpenStack.DeprecatedFlavorName != "" {
+		if config.Platform.OpenStack.DefaultMachinePlatform == nil {
+			config.Platform.OpenStack.DefaultMachinePlatform = &openstack.MachinePool{}
+		}
+
+		if config.Platform.OpenStack.DefaultMachinePlatform.FlavorName != "" && config.Platform.OpenStack.DefaultMachinePlatform.FlavorName != config.Platform.OpenStack.DeprecatedFlavorName {
+			// Return error if both computeFlavor and type of defaultMachinePlatform are specified in the config
+			return field.Forbidden(field.NewPath("platform").Child("openstack").Child("computeFlavor"), "cannot specify computeFlavor and type in defaultMachinePlatform together")
+		}
+
+		config.Platform.OpenStack.DefaultMachinePlatform.FlavorName = config.Platform.OpenStack.DeprecatedFlavorName
+	}
+
 	return nil
 }

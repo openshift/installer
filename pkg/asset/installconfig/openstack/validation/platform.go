@@ -29,6 +29,10 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, ci *CloudInfo)
 	// validate custom cluster os image
 	allErrs = append(allErrs, validateClusterOSImage(p, ci, fldPath)...)
 
+	if p.DefaultMachinePlatform != nil {
+		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, ci, true, fldPath.Child("defaultMachinePlatform"))...)
+	}
+
 	return allErrs
 }
 
