@@ -112,17 +112,6 @@ func (o *ClusterUninstaller) Run() error {
 	waitCtx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	// check if resource group exists before attempting delete
-	resourceGroup, err := o.resourceGroupsClient.Get(waitCtx, o.ResourceGroupName)
-	if err != nil {
-		if resourceGroup.Response.StatusCode == http.StatusNotFound {
-			o.Logger.Debug(errors.Wrap(err, "resource group does not exist, nothing to delete"))
-			return nil
-		}
-		o.Logger.Error(err)
-		return err
-	}
-
 	wait.UntilWithContext(
 		waitCtx,
 		func(ctx context.Context) {
