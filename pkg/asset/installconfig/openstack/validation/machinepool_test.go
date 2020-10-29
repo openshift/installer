@@ -22,12 +22,38 @@ const (
 	invalidCtrlPlaneFlavor = "invalid-control-plane-flavor"
 
 	baremetalFlavor = "baremetal-flavor"
+
+	volumeType      = "performance"
+	volumeSmallSize = 10
+	volumeLargeSize = 25
 )
 
 func validMachinePool() *openstack.MachinePool {
 	return &openstack.MachinePool{
 		FlavorName: validCtrlPlaneFlavor,
 		Zones:      []string{""},
+	}
+}
+
+func invalidMachinePoolSmallVolume() *openstack.MachinePool {
+	return &openstack.MachinePool{
+		FlavorName: validCtrlPlaneFlavor,
+		Zones:      []string{""},
+		RootVolume: &openstack.RootVolume{
+			Type: volumeType,
+			Size: volumeSmallSize,
+		},
+	}
+}
+
+func validMachinePoolLargeVolume() *openstack.MachinePool {
+	return &openstack.MachinePool{
+		FlavorName: validCtrlPlaneFlavor,
+		Zones:      []string{""},
+		RootVolume: &openstack.RootVolume{
+			Type: volumeType,
+			Size: volumeLargeSize,
+		},
 	}
 }
 
@@ -190,6 +216,30 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			mpool: func() *openstack.MachinePool {
 				mp := validMachinePool()
 				mp.FlavorName = baremetalFlavor
+				return mp
+			}(),
+			cloudInfo:      validMpoolCloudInfo(),
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:         "volume too small",
+			controlPlane: false,
+			mpool: func() *openstack.MachinePool {
+				mp := invalidMachinePoolSmallVolume()
+				mp.FlavorName = invalidCtrlPlaneFlavor
+				return mp
+			}(),
+			cloudInfo:      validMpoolCloudInfo(),
+			expectedError:  true,
+			expectedErrMsg: "Volume size must be greater than 25 to use root volumes, had 10",
+		},
+		{
+			name:         "volume big enough",
+			controlPlane: false,
+			mpool: func() *openstack.MachinePool {
+				mp := validMachinePoolLargeVolume()
+				mp.FlavorName = invalidCtrlPlaneFlavor
 				return mp
 			}(),
 			cloudInfo:      validMpoolCloudInfo(),
