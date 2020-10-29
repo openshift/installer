@@ -22,7 +22,7 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, ci *CloudInfo)
 	allErrs = append(allErrs, validateExternalNetwork(p, ci, fldPath)...)
 
 	// validate platform flavor
-	allErrs = append(allErrs, validateFlavor(p.FlavorName, ci, ctrlPlaneFlavorMinimums, fldPath.Child("computeFlavor"))...)
+	allErrs = append(allErrs, validateFlavor(p.FlavorName, ci, ctrlPlaneFlavorMinimums, fldPath.Child("computeFlavor"), true)...)
 
 	// validate floating ips
 	allErrs = append(allErrs, validateFloatingIPs(p, ci, fldPath)...)
