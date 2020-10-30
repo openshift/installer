@@ -2,12 +2,14 @@
 
 
 ## Table of Contents
-- [Common prerequisites](#common-prerequisites)
-- [Considerations when deploying bare-metal workers](#considerations-when-deploying-bare-metal-workers)
-- [Deploying cluster with BM workers on tenant network deployed by the installer](#deploying-cluster-with-bm-workers-on-tenant-network-deployed-by-the-installer)
-- [Deploying cluster with BM workers on preexisting network](#deploying-cluster-with-bm-workers-on-preexisting-network)
-- [Deploying cluster with BM machines only on preexisting network](#deploying-cluster-with-bm-machines-only-on-preexisting-network)
-- [Known issues](#known-issues)
+- [Deploying OpenShift bare-metal workers on OpenStack cloud provider](#deploying-openshift-bare-metal-workers-on-openstack-cloud-provider)
+  - [Table of Contents](#table-of-contents)
+  - [Common prerequisites](#common-prerequisites)
+  - [Considerations when deploying bare-metal workers](#considerations-when-deploying-bare-metal-workers)
+  - [Deploying cluster with BM workers on tenant network deployed by the installer](#deploying-cluster-with-bm-workers-on-tenant-network-deployed-by-the-installer)
+  - [Deploying cluster with BM workers on preexisting network](#deploying-cluster-with-bm-workers-on-preexisting-network)
+  - [Deploying cluster with BM machines only on preexisting network](#deploying-cluster-with-bm-machines-only-on-preexisting-network)
+  - [Known issues](#known-issues)
 
 
 ## Common prerequisites

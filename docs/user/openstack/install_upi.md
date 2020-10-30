@@ -28,7 +28,7 @@ of this method of installation.
   - [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-rhcos)
   - [API and Ingress Floating IP Addresses](#api-and-ingress-floating-ip-addresses)
   - [Install Config](#install-config)
-    - [Configure the machineNetwork CIDR, apiVIP, and ingressVIP](#configure-the-machinenetworkcidr-apivip-and-ingressvip)
+    - [Configure the machineNetwork.CIDR apiVIP and ingressVIP](#configure-the-machinenetworkcidr-apivip-and-ingressvip)
     - [Empty Compute Pools](#empty-compute-pools)
     - [Modify NetworkType (Required for Kuryr SDN)](#modify-networktype-required-for-kuryr-sdn)
   - [Edit Manifests](#edit-manifests)
