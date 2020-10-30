@@ -104,7 +104,7 @@ resource "azurerm_linux_virtual_machine" "master" {
 
   os_disk {
     name                 = "${var.cluster_id}-master-${count.index}_OSDisk" # os disk name needs to match cluster-api convention
-    caching              = "ReadOnly"
+    caching              = "None"
     storage_account_type = var.os_volume_type
     disk_size_gb         = var.os_volume_size
   }
