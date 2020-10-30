@@ -51,6 +51,21 @@ func (mr *MockAPIMockRecorder) GetNetwork(ctx, network, project interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetwork", reflect.TypeOf((*MockAPI)(nil).GetNetwork), ctx, network, project)
 }
 
+// GetMachineTypes mocks base method.
+func (m *MockAPI) GetMachineTypes(ctx context.Context, project, filter string) (map[string]*compute.MachineType, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMachineTypes", ctx, project, filter)
+	ret0, _ := ret[0].(map[string]*compute.MachineType)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMachineTypes indicates an expected call of GetMachineTypes.
+func (mr *MockAPIMockRecorder) GetMachineTypes(ctx, project, filter interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineTypes", reflect.TypeOf((*MockAPI)(nil).GetMachineTypes), ctx, project, filter)
+}
+
 // GetPublicDomains mocks base method.
 func (m *MockAPI) GetPublicDomains(ctx context.Context, project string) ([]string, error) {
 	m.ctrl.T.Helper()
