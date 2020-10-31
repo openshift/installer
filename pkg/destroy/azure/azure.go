@@ -121,6 +121,7 @@ func (o *ClusterUninstaller) Run() error {
 				o.Logger.Debug(err)
 				if isAuthError(err) {
 					cancel()
+					errs = append(errs, errors.Wrap(err, "unable to authenticate when deleting public DNS records"))
 				}
 				return
 			}
@@ -149,6 +150,7 @@ func (o *ClusterUninstaller) Run() error {
 				o.Logger.Debug(err)
 				if isAuthError(err) {
 					cancel()
+					errs = append(errs, errors.Wrap(err, "unable to authenticate when deleting resource group"))
 				}
 				return
 			}
@@ -177,6 +179,7 @@ func (o *ClusterUninstaller) Run() error {
 				o.Logger.Debug(err)
 				if isAuthError(err) {
 					cancel()
+					errs = append(errs, errors.Wrap(err, "unable to authenticate when deleting application registrations and their service principals"))
 				}
 				return
 			}
