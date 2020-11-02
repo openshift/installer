@@ -6,12 +6,13 @@ package mock
 
 import (
 	context "context"
+	reflect "reflect"
+
 	compute "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute"
 	network "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-12-01/network"
 	resources "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
 	subscriptions "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-06-01/subscriptions"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
 // MockAPI is a mock of API interface.

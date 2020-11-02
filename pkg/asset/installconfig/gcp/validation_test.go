@@ -261,7 +261,7 @@ func TestGCPEnabledServicesList(t *testing.T) {
 			defer mockCtrl.Finish()
 			gcpClient := mock.NewMockAPI(mockCtrl)
 
-			gcpClient.EXPECT().GetEnabledServices(gomock.Any()).Return(test.services, nil).AnyTimes()
+			gcpClient.EXPECT().GetEnabledServices(gomock.Any(), gomock.Any()).Return(test.services, nil).AnyTimes()
 			err := ValidateEnabledServices(nil, gcpClient, "")
 			if test.err == "" {
 				assert.NoError(t, err)
