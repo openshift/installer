@@ -23,6 +23,16 @@ variable "provisioning_bridge" {
   description = "The name of the provisioning bridge"
 }
 
+variable "ironic_username" {
+  type        = string
+  description = "Username for authentication to Ironic"
+}
+
+variable "ironic_password" {
+  type        = string
+  description = "Password for authentication to Ironic"
+}
+
 variable "hosts" {
   type        = list(map(string))
   description = "Hardware details for hosts"

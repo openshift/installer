@@ -42,6 +42,12 @@ while [ -z "$(ip -o addr show dev $PROVISIONING_NIC | grep -v link)" ]; do
     sleep 1
 done
 
+# set password for ironic basic auth
+# The ironic container contains httpd (and thus httpd-tools), so rely on it to
+# supply the htpasswd command
+AUTH_DIR=/opt/metal3/auth
+IRONIC_HTPASSWD="$(cat ${AUTH_DIR}/ironic/password | podman run -i --rm --entrypoint htpasswd ${IRONIC_IMAGE} -niB {{.PlatformData.BareMetal.IronicUsername}})"
+
 # set password for mariadb
 mariadb_password=$(uuidgen -r  | sed "s/-//g")
 
@@ -138,7 +144,9 @@ sudo podman run -d --net host --privileged --name ironic-conductor \
      --env MARIADB_PASSWORD=$mariadb_password \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --env OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120 \
+     --env HTTP_BASIC_HTPASSWD=${IRONIC_HTPASSWD} \
      --entrypoint /bin/runironic-conductor \
+     -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
 
 # We need a better way to wait for the DB sync to happen..
@@ -146,12 +154,16 @@ sleep 10
 
 podman run -d --net host --privileged --name ironic-inspector \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     --env HTTP_BASIC_HTPASSWD=${IRONIC_HTPASSWD} \
+     -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z "${IRONIC_INSPECTOR_IMAGE}"
 
 sudo podman run -d --net host --privileged --name ironic-api \
      --env MARIADB_PASSWORD=$mariadb_password \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     --env HTTP_BASIC_HTPASSWD=${IRONIC_HTPASSWD} \
      --entrypoint /bin/runironic-api \
+     -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
 
 # Now loop so the service remains active and restart everything should one of the containers exit unexpectedly.
