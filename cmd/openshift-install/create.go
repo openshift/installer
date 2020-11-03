@@ -440,32 +440,21 @@ func waitForConsole(ctx context.Context, config *rest.Config) (string, error) {
 	silenceRemaining := logDownsample
 	timer.StartTimer("Console")
 	wait.Until(func() {
-		consoleRoutes, err := rc.RouteV1().Routes(consoleNamespace).List(ctx, metav1.ListOptions{})
-		if err == nil && len(consoleRoutes.Items) > 0 {
-			for _, route := range consoleRoutes.Items {
-				logrus.Debugf("Route found in openshift-console namespace: %s", route.Name)
-				if route.Name == consoleRouteName {
-					if uri, _, err2 := routeapihelpers.IngressURI(&route, ""); err2 == nil {
-						url = uri.String()
-						logrus.Debug("OpenShift console route is admitted")
-						cancel()
-					} else {
-						err = err2
-					}
-					break
-				}
+		route, err := rc.RouteV1().Routes(consoleNamespace).Get(ctx, consoleRouteName, metav1.GetOptions{})
+		if err == nil {
+			logrus.Debugf("Route found in openshift-console namespace: %s", consoleRouteName)
+			if uri, _, err2 := routeapihelpers.IngressURI(route, ""); err2 == nil {
+				url = uri.String()
+				logrus.Debug("OpenShift console route is admitted")
+				cancel()
+			} else {
+				err = err2
 			}
 		}
 		if err != nil {
 			silenceRemaining--
 			if silenceRemaining == 0 {
 				logrus.Debugf("Still waiting for the console route: %v", err)
-				silenceRemaining = logDownsample
-			}
-		} else if len(consoleRoutes.Items) == 0 {
-			silenceRemaining--
-			if silenceRemaining == 0 {
-				logrus.Debug("Still waiting for the console route...")
 				silenceRemaining = logDownsample
 			}
 		}
