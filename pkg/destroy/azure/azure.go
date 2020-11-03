@@ -205,6 +205,10 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 
 	zonesPage, err := dnsClient.ListByResourceGroup(ctx, rgName, to.Int32Ptr(100))
 	if err != nil {
+		if zonesPage.Response().IsHTTPStatus(http.StatusNotFound) {
+			logger.Debug("already deleted")
+			return utilerrors.NewAggregate(errs)
+		}
 		errs = append(errs, errors.Wrap(err, "failed to list dns zone"))
 		if isAuthError(err) {
 			return err
@@ -232,6 +236,10 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 
 	privateZonesPage, err := privateDNSClient.ListByResourceGroup(ctx, rgName, to.Int32Ptr(100))
 	if err != nil {
+		if privateZonesPage.Response().IsHTTPStatus(http.StatusNotFound) {
+			logger.Debug("already deleted")
+			return utilerrors.NewAggregate(errs)
+		}
 		errs = append(errs, errors.Wrap(err, "failed to list private dns zone"))
 		if isAuthError(err) {
 			return err
