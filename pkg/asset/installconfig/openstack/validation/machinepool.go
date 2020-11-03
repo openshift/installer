@@ -41,17 +41,10 @@ func ValidateMachinePool(p *openstack.MachinePool, ci *CloudInfo, controlPlane b
 		}
 	}
 
-	if p.FlavorName != "" {
-		flavor, ok := ci.Flavors[p.FlavorName]
-		if ok {
-			if controlPlane {
-				allErrs = append(allErrs, validateFlavor(flavor, ctrlPlaneFlavorMinimums, fldPath.Child("type"))...)
-			} else {
-				allErrs = append(allErrs, validateFlavor(flavor, computeFlavorMinimums, fldPath.Child("type"))...)
-			}
-		} else {
-			allErrs = append(allErrs, field.NotFound(fldPath.Child("type"), p.FlavorName))
-		}
+	if controlPlane {
+		allErrs = append(allErrs, validateFlavor(p.FlavorName, ci, ctrlPlaneFlavorMinimums, fldPath.Child("type"))...)
+	} else {
+		allErrs = append(allErrs, validateFlavor(p.FlavorName, ci, computeFlavorMinimums, fldPath.Child("type"))...)
 	}
 
 	allErrs = append(allErrs, validateZones(p.Zones, ci.Zones, fldPath.Child("zones"))...)
@@ -105,7 +98,18 @@ func validUUIDv4(s string) bool {
 	return true
 }
 
-func validateFlavor(flavor Flavor, req flavorRequirements, fldPath *field.Path) field.ErrorList {
+// validate flavor checks to make sure that a given flavor exists and meets the minimum requrement to run a cluster
+// this function does not validate proper install config usage
+func validateFlavor(flavorName string, ci *CloudInfo, req flavorRequirements, fldPath *field.Path) field.ErrorList {
+	if flavorName == "" {
+		return nil
+	}
+
+	flavor, _ := ci.Flavors[flavorName]
+	if flavor.Flavor == nil {
+		return field.ErrorList{field.NotFound(fldPath, flavorName)}
+	}
+
 	// OpenStack administrators don't always fill in accurate metadata for
 	// baremetal flavors. Skipping validation.
 	if flavor.Baremetal {
