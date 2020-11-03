@@ -1,5 +1,12 @@
 package aws
 
+import "k8s.io/apimachinery/pkg/util/sets"
+
+var (
+	// C2SRegions are the C2S AWS regions.
+	C2SRegions = sets.NewString("us-iso-east-1")
+)
+
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
