@@ -1,0 +1,18 @@
+# This Dockerfile is used by CI to test using OpenShift Installer against an KubeVirt platform.
+# It builds an image containing the openshift-installer command but does nothing.
+# This is the first step in running end-to-end tests on kubevirt-installer before merging it.
+
+FROM registry.svc.ci.openshift.org/ocp/builder:rhel-8-golang-1.15-openshift-4.7 AS builder
+WORKDIR /go/src/github.com/openshift/installer
+COPY . .
+RUN hack/build.sh
+
+FROM registry.svc.ci.openshift.org/ocp/4.7:base
+
+COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
+
+RUN mkdir /output && chown 1000:1000 /output
+USER 1000:1000
+ENV PATH /bin
+ENV HOME /output
+WORKDIR /output
