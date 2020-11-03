@@ -1,0 +1,22 @@
+<network>
+  <name>test-net</name>
+  <uuid>a29bce40-ce15-43c8-9142-fd0a3cc37f9a</uuid>
+  <forward mode='nat'/>
+  <bridge name='tt0' stp='on' delay='0'/>
+  <mtu size='1500'/>
+  <mac address='52:54:00:e0:8d:fe'/>
+  <domain name='redhat.com'/>
+  <dns enable='yes'>
+    <host ip='192.168.126.10'>
+      <hostname>api.test-cluster.redhat.com</hostname>
+      <hostname>api-int.test-cluster.redhat.com</hostname>
+    </host>
+  </dns>
+  <ip family='ipv4' address='192.168.126.1' prefix='24'>
+    <dhcp>
+      <range start='192.168.126.2' end='192.168.126.254'/>
+      <host mac='52:54:00:ee:42:e1' name='master1' ip='192.168.126.10'/>
+    </dhcp>
+  </ip>
+</network>
+
