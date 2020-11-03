@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	awssdk "github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
@@ -32,6 +34,11 @@ func Platform() (*aws.Platform, error) {
 
 	ssn, err := GetSession()
 	if err != nil {
+		return nil, err
+	}
+	quickSsn := ssn.Copy(&awssdk.Config{MaxRetries: awssdk.Int(3)})
+	svc := sts.New(quickSsn)
+	if _, err = svc.GetCallerIdentity(&sts.GetCallerIdentityInput{}); err != nil {
 		return nil, err
 	}
 
