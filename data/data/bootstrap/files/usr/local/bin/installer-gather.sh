@@ -16,10 +16,14 @@ LANG=POSIX systemctl list-units --state=failed >& "${ARTIFACTS}/failed-units.txt
 
 echo "Gathering bootstrap failed systemd unit status ..."
 mkdir -p "${ARTIFACTS}/unit-status"
-sed -n 's/^\* \([^ ]*\) .*/\1/p' < "${ARTIFACTS}/failed-units.txt" | while read -r UNIT
+
+(
+    journalctl -o json _PID=1 MESSAGE_ID=5eb03494b6584870a536b337290809b3 | jq -r .UNIT
+    sed -n 's/^\* \([^ ]*\) .*/\1/p' < "${ARTIFACTS}/failed-units.txt"
+) | sort -u | while read -r UNIT
 do
     systemctl status --full "${UNIT}" >& "${ARTIFACTS}/unit-status/${UNIT}.txt"
-    journalctl -u "${UNIT}" > "${ARTIFACTS}/unit-status/${UNIT}.log"
+    journalctl -o json-pretty -u "${UNIT}" > "${ARTIFACTS}/unit-status/${UNIT}.log.json"
 done
 
 echo "Gathering bootstrap journals ..."
