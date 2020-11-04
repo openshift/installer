@@ -56,6 +56,9 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		}
 	case openstack.Name:
 		_, err = openstackconfig.GetSession(ic.Config.Platform.OpenStack.Cloud)
+		if err != nil {
+			return errors.Wrap(err, "creating OpenStack session")
+		}
 	case baremetal.Name, libvirt.Name, none.Name, vsphere.Name:
 		// no creds to check
 	case azure.Name:
