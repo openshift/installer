@@ -150,6 +150,7 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		CloudsSecret:     &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
 		UserDataSecret:   &corev1.SecretReference{Name: userDataSecret},
 		Networks:         networks,
+		PrimarySubnet:    platform.MachinesSubnet,
 		AvailabilityZone: az,
 		SecurityGroups:   securityGroups,
 		Trunk:            trunkSupport,

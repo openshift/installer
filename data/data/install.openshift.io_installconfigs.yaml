@@ -1115,7 +1115,10 @@ spec:
                       of the image e.g https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8...
                     type: string
                   clusterProvisioningIP:
-                    description: ClusterProvisioningIP is the IP on the dedicated provisioning network where the baremetal-operator pod runs provisioning services, and an http server to cache some downloaded content e.g RHCOS/IPA images
+                    description: ClusterProvisioningIP is the IP on the dedicated
+                      provisioning network where the baremetal-operator pod runs provisioning
+                      services, and an http server to cache some downloaded content
+                      e.g RHCOS/IPA images
                     type: string
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
@@ -1249,10 +1252,11 @@ spec:
                       to hosts for provisioning.
                     type: string
                   provisioningHostIP:
-                    description: ClusterProvisioningIP is the IP on the dedicated
-                      provisioning network where the baremetal-operator pod runs provisioning
-                      services, and an http server to cache some downloaded content
-                      e.g RHCOS/IPA images
+                    description: DeprecatedProvisioningHostIP is the deprecated version
+                      of clusterProvisioningIP. When the baremetal platform was initially
+                      added to the installer, the JSON field for ClusterProvisioningIP
+                      was incorrectly set to "provisioningHostIP."  This field is
+                      here to allow backwards-compatibility.
                     type: string
                   provisioningMACAddress:
                     description: ProvisioningMACAddress is used to allow setting a
@@ -1512,10 +1516,14 @@ spec:
                   clusterOSImageProperties:
                     additionalProperties:
                       type: string
-                    description: 'ClusterOSImageProperties is a list of properties to be added to the metadata of the uploaded Glance ClusterOSImage. Default: the default is to not set any properties.'
+                    description: 'ClusterOSImageProperties is a list of properties
+                      to be added to the metadata of the uploaded Glance ClusterOSImage.
+                      Default: the default is to not set any properties.'
                     type: object
                   computeFlavor:
-                    description: 'DeprecatedFlavorName is the name of the flavor to use for instances in this cluster. Deprecated: use FlavorName in DefaultMachinePlatform to define default flavor.'
+                    description: 'DeprecatedFlavorName is the name of the flavor to
+                      use for instances in this cluster. Deprecated: use FlavorName
+                      in DefaultMachinePlatform to define default flavor.'
                     type: string
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
