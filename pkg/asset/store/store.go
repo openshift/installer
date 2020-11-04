@@ -234,6 +234,7 @@ func (s *storeImpl) fetch(a asset.Asset, indent string) error {
 
 // load loads the asset and all of its ancestors from on-disk and the state file.
 func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
+	logrus.Debugf("elephant debug load")
 	logrus.Debugf("%sLoading %s...", indent, a.Name())
 
 	// Stop descent if the asset has already been loaded.
