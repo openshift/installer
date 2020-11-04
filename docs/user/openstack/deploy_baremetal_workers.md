@@ -9,6 +9,7 @@
   - [Deploying cluster with BM workers on tenant network deployed by the installer](#deploying-cluster-with-bm-workers-on-tenant-network-deployed-by-the-installer)
   - [Deploying cluster with BM workers on preexisting network](#deploying-cluster-with-bm-workers-on-preexisting-network)
   - [Deploying cluster with BM machines only on preexisting network](#deploying-cluster-with-bm-machines-only-on-preexisting-network)
+  - [Deploying cluster with mixture of VM and BM workers](#deploying-cluster-with-mixture-of-vm-and-bm-workers)
   - [Known issues](#known-issues)
 
 
@@ -177,6 +178,43 @@ Plane and Compute nodes. The cluster is deployed to a preexisting network.
     If the installer times out waiting for the bare-metal workers to complete booting,
     restart the installation using [the appropriate *wait-for* command](#considerations-when-deploying-bare-metal-workers).
 
+## Deploying cluster with mixture of VM and BM workers
+Cluster is initially deployed with VM workers. BM workers are added to the cluster post initial deployment.
+
+- Requirements:
+    - By default, OpenStack networks support attaching both VMs and bare-metal machines to them.
+    * [Ironic bare metal service][2] can listen for, and PXE-boot machines in tenant networks
+
+- Create install-config.yaml:
+
+    - Set `compute.[worker].platform.openstack.type` to the VM flavor which will be used for VM workers.
+
+    - Set `controlPlane.platform.openstack.type` to the VM flavor which will be used by the control plane nodes.
+
+        For example:
+
+                controlPlane:
+                   platform:
+                     openstack:
+                       type: <vmComputeFlavorForMasters>
+
+                 ... other settings
+
+                 compute:
+                 - architecture: amd64
+                   hyperthreading: Enabled
+                   name: worker
+                   platform:
+                     openstack:
+                       type: <vmComputeFlavorForWorkers>
+                   replicas: 3
+
+- Run the openshift installer:
+
+        ./openshift-install create cluster --log-level debug
+        
+- Once the cluster is deployed and running, [create and deploy a new infrastructure MachineSet][6] using the bare-metal server flavor.
+
 ## Known issues
 
 Bare metal nodes are not supported on clusters that use Kuryr.
@@ -187,3 +225,4 @@ Bare metal nodes are not supported on clusters that use Kuryr.
 [3]: <https://docs.openstack.org/api-ref/compute/>
 [4]: <https://docs.openstack.org/glance/latest/>
 [5]: <https://github.com/openshift/installer/blob/master/docs/user/openstack/customization.md#image-overrides>
+[6]: https://docs.okd.io/latest/machine_management/creating-infrastructure-machinesets.html#machineset-yaml-osp_creating-infrastructure-machinesets
