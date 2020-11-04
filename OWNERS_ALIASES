@@ -43,10 +43,12 @@ aliases:
     - jcpowermac
     - patrickdillon
   baremetal-approvers:
+    - dhellmann
     - hardys
     - stbenjam
   baremetal-reviewers:
     - celebdor
+    - dhellmann
     - markmc
     - russellb
     - hardys
