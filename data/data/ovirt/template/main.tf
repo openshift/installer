@@ -60,6 +60,9 @@ resource "ovirt_vm" "tmp_import_vm" {
     name            = "nic1"
     vnic_profile_id = var.ovirt_vnic_profile_id
   }
+  timeouts {
+    create = "20m"
+  }
   depends_on = [ovirt_image_transfer.releaseimage]
 }
 
