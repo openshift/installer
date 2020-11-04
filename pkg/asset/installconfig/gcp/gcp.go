@@ -24,6 +24,9 @@ func Platform() (*gcp.Platform, error) {
 	}
 
 	region, err := selectRegion(project)
+	if err != nil {
+		return nil, err
+	}
 
 	return &gcp.Platform{
 		ProjectID: project,
@@ -75,7 +78,7 @@ func selectProject(ctx context.Context) (string, error) {
 	}, &selectedProject)
 
 	selectedProject = ids[selectedProject]
-	return selectedProject, nil
+	return selectedProject, err
 }
 
 func selectRegion(project string) (string, error) {
