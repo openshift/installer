@@ -147,11 +147,10 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		}
 	case vsphere.Name:
 		config.Spec.PlatformSpec.Type = configv1.VSpherePlatformType
+		config.Status.PlatformStatus.VSphere = &configv1.VSpherePlatformStatus{}
 		if installConfig.Config.VSphere.APIVIP != "" {
-			config.Status.PlatformStatus.VSphere = &configv1.VSpherePlatformStatus{
-				APIServerInternalIP: installConfig.Config.VSphere.APIVIP,
-				IngressIP:           installConfig.Config.VSphere.IngressVIP,
-			}
+			config.Status.PlatformStatus.VSphere.APIServerInternalIP = installConfig.Config.VSphere.APIVIP
+			config.Status.PlatformStatus.VSphere.IngressIP = installConfig.Config.VSphere.IngressVIP
 		}
 	case ovirt.Name:
 		config.Spec.PlatformSpec.Type = configv1.OvirtPlatformType
