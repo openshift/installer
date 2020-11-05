@@ -25,6 +25,7 @@ aliases:
     - adduarte
     - iamemilio
     - mandre
+    - mdbooth
     - pierreprinetti
   openstack-reviewers:
     - EmilienM
@@ -32,6 +33,7 @@ aliases:
     - adduarte
     - iamemilio
     - mandre
+    - mdbooth
     - pierreprinetti
   vsphere-approvers:
     - dav1x
