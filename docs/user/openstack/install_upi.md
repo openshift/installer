@@ -150,7 +150,7 @@ sudo subscription-manager repos \
 
 Then install the packages:
 ```sh
-sudo yum install python3-openstackclient ansible python3-openstacksdk python3-netaddr
+sudo dnf install python3-openstackclient ansible python3-openstacksdk python3-netaddr
 ```
 
 Make sure that `python` points to Python3:
@@ -163,7 +163,7 @@ sudo alternatives --set python /usr/bin/python3
 This command installs all required dependencies on Fedora:
 
 ```sh
-sudo dnf install python-openstackclient ansible python-openstacksdk python-netaddr
+sudo dnf install python3-openstackclient ansible python3-openstacksdk python3-netaddr
 ```
 
 [ansible-upi]: ../../../upi/openstack "Ansible Playbooks for Openstack UPI"
@@ -279,7 +279,7 @@ In the previous steps, the installer added default values for the `machineNetwor
 
 When the installer creates the manifest files from an existing `install-config.yaml` file, it validates that the
 `apiVIP` and `ingressVIP` fall within the IP range specified by `machineNetwork.CIDR`. If they do not, it errors out.
-If you change the value of `machineNetwork.CIDR` you must make sure the `apiVIP` and `ingresVIP` values still fall within
+If you change the value of `machineNetwork.CIDR` you must make sure the `apiVIP` and `ingressVIP` values still fall within
 the new range. There are two options for setting the `apiVIP` and `ingressVIP`. If you know the values you want to use,
 you can specify them in the `install-config.yaml` file. If you want the installer to pick the 5th and 7th IP addresses in the
 new range, you need to remove the `apiVIP` and `ingressVIP` entries from the `install-config.yaml` file.
@@ -590,17 +590,17 @@ https://static.example.com/bootstrap.ign
 ##### Example 1: Swift
 
 The `swift` client is needed for enabling listing on the container.
-
-Create the `<container_name>` container and upload the `bootstrap.ign` file:
+It can be installed by the following command:
 
 ```sh
-$ swift upload <container_name> bootstrap.ign
+$ sudo dnf install python3-swiftclient
 ```
 
-Make the container accessible:
+Create the `<container_name>` (e.g. $INFRA_ID) container and upload the `bootstrap.ign` file:
 
 ```sh
-$ swift post <container_name> --read-acl ".r:*,.rlistings"
+$ openstack container create <container_name> --public
+$ openstack object create <container_name> bootstrap.ign
 ```
 
 Get the `storage_url` from the output:
@@ -745,7 +745,6 @@ $ ansible-playbook -i inventory.yaml security-groups.yaml
 ```
 
 The playbook creates one Security group for the Control Plane and one for the Compute nodes, then attaches rules for enabling communication between the nodes.
-
 ### Network, Subnet and external router
 
 ```sh
@@ -894,13 +893,13 @@ Eventually, you should see `Pending` entries looking like this
 $ oc get csr -A
 NAME        AGE    REQUESTOR                                                                   CONDITION
 csr-2scwb   16m    system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
-csr-5jwqf   16m    system:node:openshift-qlvwv-master-0                                         Approved,Issued
+csr-5jwqf   16m    system:node:openshift-qlvwv-master-0                                        Approved,Issued
 csr-88jp8   116s   system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Pending
-csr-9dt8f   15m    system:node:openshift-qlvwv-master-1                                         Approved,Issued
+csr-9dt8f   15m    system:node:openshift-qlvwv-master-1                                        Approved,Issued
 csr-bqkw5   16m    system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
 csr-dpprd   6s     system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Pending
 csr-dtcws   24s    system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Pending
-csr-lj7f9   16m    system:node:openshift-qlvwv-master-2                                         Approved,Issued
+csr-lj7f9   16m    system:node:openshift-qlvwv-master-2                                        Approved,Issued
 csr-lrtlk   15m    system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
 csr-wkm94   16m    system:serviceaccount:openshift-machine-config-operator:node-bootstrapper   Approved,Issued
 ```
