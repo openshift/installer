@@ -3,40 +3,52 @@ package ovirt
 import (
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/ovirt"
 )
 
+const PlatformValidationMaxTries = 3
+
 // Platform collects ovirt-specific configuration.
 func Platform() (*ovirt.Platform, error) {
 	p := ovirt.Platform{}
 
+	var c *ovirtsdk4.Connection
+
+	// Fetch config from file
 	ovirtConfig, err := NewConfig()
-	if err != nil {
-		ovirtConfig, err = engineSetup()
+	for tries := 0; tries < PlatformValidationMaxTries; tries++ {
+		if err == nil {
+			// If no error happened previously (loading file or configuration), validate the connection.
+			c, err = ovirtConfig.getValidatedConnection()
+			if err != nil {
+				// If validation failed log and drop into reconfig below.
+				logrus.Error(errors.Wrap(err, "failed to validate oVirt configuration"))
+			} else {
+				// If connection is valid, break
+				break
+			}
+		}
+
 		if err != nil {
-			return nil, err
+			// If a previous error happened (validation or loading from file), rerun the setup.
+			ovirtConfig, err = engineSetup()
+			if err != nil {
+				// If validation failed log and loop back to engineSetup()
+				logrus.Error(errors.Wrap(err, "oVirt configuration failed"))
+			}
 		}
 	}
-
-	c, err := ovirtsdk4.NewConnectionBuilder().
-		URL(ovirtConfig.URL).
-		Username(ovirtConfig.Username).
-		Password(ovirtConfig.Password).
-		CAFile(ovirtConfig.CAFile).
-		Insecure(ovirtConfig.Insecure).
-		Build()
-
 	if err != nil {
-		return nil, err
+		// Last error is not nil, we don't have a valid config.
+		return nil, errors.Wrap(err, "maximum retries for configuration exhausted")
 	}
 	defer c.Close()
-	err = c.Test()
-	if err != nil {
+	if err = ovirtConfig.Save(); err != nil {
 		return nil, err
 	}
-	ovirtConfig.Save()
 
 	clusterName, err := askCluster(c, &p)
 	if err != nil {

@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	ovirtsdk "github.com/ovirt/go-ovirt"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -84,4 +86,18 @@ func (c *Config) Save() error {
 		return err
 	}
 	return ioutil.WriteFile(path, out, 0600)
+}
+
+// getValidatedConnection will create a connection and validate it before returning.
+func (c *Config) getValidatedConnection() (*ovirtsdk.Connection, error) {
+	connection, err := getConnection(*c)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to build configuration for ovirt connection validation")
+	}
+
+	if err := connection.Test(); err != nil {
+		_ = connection.Close()
+		return nil, err
+	}
+	return connection, nil
 }
