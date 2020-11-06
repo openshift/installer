@@ -24,7 +24,7 @@ will also create the bootstrap machine, and the configuration needed to get
 the initial cluster running by supplying DNS a service and load balancing, all 
 using static pods. 
 This work is related to the Bare-Metal provider because oVirt does not supply 
-DNS and LB services but is a platform provider. See also [OpenShift-Metal³ kni-installer](https://github.com/openshift-metal3/kni-installer)
+DNS and LB services but is a platform provider. See also [Bare Metal IPI Networking Infrastructure]
  
 
 ## Prerequisite
@@ -33,7 +33,7 @@ DNS and LB services but is a platform provider. See also [OpenShift-Metal³ kni-
 2. Allocate 2 IP on the VM network:
     - IP for the internal kubernetes api, that all components will interact with 
     - IP for the Ingress, the load balancer in front of the cluster apps 
-    To work with this provider one must supply 2 IPs that are related to any MAC 
+    To work with this provider one must supply 2 IPs excluded from the MAC range
     in the virtualization env, where the cluster will run. Those IPs will be active 
     by keepalived, on, initially the bootstrap machine, and then the masters, after 
     a fail-over, when the bootstrap is killed. 
@@ -224,3 +224,5 @@ To access the cluster as the system:admin user:
 $ export KUBECONFIG=$PWD/install_dir/auth/kubeconfig
 $ oc get nodes
 ```
+
+[Bare Metal IPI Networking Infrastructure]: https://github.com/openshift/installer/blob/master/docs/design/baremetal/networking-infrastructure.md
