@@ -40,12 +40,13 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 
 	publicSubnets, err := installConfig.AWS.PublicSubnets(ctx)
 
-	arns := make([]*string, 0, len(privateSubnets)+len(publicSubnets))
-	for _, subnet := range privateSubnets {
-		arns = append(arns, aws.String(subnet.ARN))
+	//arns := make([]*string, 0, len(privateSubnets)+len(publicSubnets))
+	ids := make([]*string, 0, len(privateSubnets)+len(publicSubnets))
+	for id := range privateSubnets {
+		ids = append(ids, aws.String(id))
 	}
-	for _, subnet := range publicSubnets {
-		arns = append(arns, aws.String(subnet.ARN))
+	for id := range publicSubnets {
+		ids = append(ids, aws.String(id))
 	}
 
 	session, err := installConfig.AWS.Session(ctx)
@@ -62,7 +63,7 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 	client := ec2.New(session, aws.NewConfig().WithRegion(installConfig.Config.Platform.AWS.Region))
 
 	if _, err = client.CreateTagsWithContext(ctx, &ec2.CreateTagsInput{
-		Resources: arns,
+		Resources: ids,
 		Tags:      tags,
 	}); err != nil {
 		return err
