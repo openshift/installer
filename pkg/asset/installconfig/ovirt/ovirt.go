@@ -2,6 +2,7 @@ package ovirt
 
 import (
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
+	"github.com/pkg/errors"
 	"gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/ovirt"
@@ -68,7 +69,7 @@ func Platform() (*ovirt.Platform, error) {
 		},
 	}, &p.APIVIP)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed UserInput")
 	}
 
 	err = survey.Ask([]*survey.Question{
@@ -82,7 +83,7 @@ func Platform() (*ovirt.Platform, error) {
 		},
 	}, &p.IngressVIP)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed UserInput")
 	}
 
 	return &p, nil

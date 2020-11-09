@@ -1,6 +1,7 @@
 package installconfig
 
 import (
+	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -20,7 +21,7 @@ func (a *pullSecret) Dependencies() []asset.Asset {
 
 // Generate queries for the pull secret from the user.
 func (a *pullSecret) Generate(asset.Parents) error {
-	return survey.Ask([]*survey.Question{
+	if err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Password{
 				Message: "Pull Secret",
@@ -30,7 +31,10 @@ func (a *pullSecret) Generate(asset.Parents) error {
 				return validate.ImagePullSecret(ans.(string))
 			}),
 		},
-	}, &a.PullSecret)
+	}, &a.PullSecret); err != nil {
+		return errors.Wrap(err, "failed UserInput")
+	}
+	return nil
 }
 
 // Name returns the human-friendly name of the asset.

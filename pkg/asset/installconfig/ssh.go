@@ -92,7 +92,7 @@ func (a *sshPublicKey) Generate(asset.Parents) error {
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "failed UserInput for SSH public key")
+		return errors.Wrap(err, "failed UserInput")
 	}
 
 	a.Key = pubKeys[path]

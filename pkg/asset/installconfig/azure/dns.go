@@ -85,7 +85,7 @@ func (config DNSConfig) GetDNSZone() (*Zone, error) {
 		},
 	}, &zoneName)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed UserInput")
 	}
 
 	return &Zone{

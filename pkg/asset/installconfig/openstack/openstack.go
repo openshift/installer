@@ -43,7 +43,7 @@ func Platform() (*openstack.Platform, error) {
 		},
 	}, &cloud)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed UserInput")
 	}
 
 	// We should unset OS_CLOUD env variable here, because the real cloud name was defined
@@ -80,7 +80,7 @@ func Platform() (*openstack.Platform, error) {
 		extNet = ""
 	}
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed UserInput")
 	}
 
 	var apiFloatingIP string
@@ -108,7 +108,7 @@ func Platform() (*openstack.Platform, error) {
 			},
 		}, &apiFloatingIP)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed UserInput")
 		}
 	}
 
@@ -136,7 +136,7 @@ func Platform() (*openstack.Platform, error) {
 		},
 	}, &flavor)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed UserInput")
 	}
 
 	return &openstack.Platform{

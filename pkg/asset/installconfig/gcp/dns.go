@@ -59,7 +59,7 @@ func GetBaseDomain(project string) (string, error) {
 		}
 		return nil
 	}); err != nil {
-		return "", errors.Wrap(err, "failed UserInput for base domain")
+		return "", errors.Wrap(err, "failed UserInput")
 	}
 
 	return domain, nil

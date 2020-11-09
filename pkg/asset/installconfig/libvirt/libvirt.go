@@ -2,6 +2,7 @@
 package libvirt
 
 import (
+	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -23,7 +24,7 @@ func Platform() (*libvirt.Platform, error) {
 		},
 	}, &uri)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed UserInput")
 	}
 
 	return &libvirt.Platform{
