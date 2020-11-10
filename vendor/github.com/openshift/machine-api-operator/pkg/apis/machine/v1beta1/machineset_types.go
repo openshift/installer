@@ -55,7 +55,7 @@ type MachineSetSpec struct {
 	// Replicas is the number of desired replicas.
 	// This is a pointer to distinguish between explicit zero and unspecified.
 	// Defaults to 1.
-	// +optional
+	// +kubebuilder:default=1
 	Replicas *int32 `json:"replicas,omitempty"`
 
 	// MinReadySeconds is the minimum number of seconds for which a newly created machine should be ready.

@@ -81,7 +81,8 @@ type AWSMachineProviderConfig struct {
 	// should be added once it is created.
 	LoadBalancers []LoadBalancerReference `json:"loadBalancers,omitempty"`
 
-	// BlockDevices is the set of block device mapping associated to this instance
+	// BlockDevices is the set of block device mapping associated to this instance,
+	// block device without a name will be used as a root device and only one device without a name is allowed
 	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
 	BlockDevices []BlockDeviceMappingSpec `json:"blockDevices,omitempty"`
 

@@ -35,6 +35,9 @@ type GCPMachineProviderSpec struct {
 	Region             string                 `json:"region"`
 	Zone               string                 `json:"zone"`
 	ProjectID          string                 `json:"projectID,omitempty"`
+
+	// Preemptible indicates if created instance is preemptible
+	Preemptible bool `json:"preemptible,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -63,6 +66,7 @@ type GCPMetadata struct {
 type GCPNetworkInterface struct {
 	PublicIP   bool   `json:"publicIP,omitempty"`
 	Network    string `json:"network,omitempty"`
+	ProjectID  string `json:"projectID,omitempty"`
 	Subnetwork string `json:"subnetwork,omitempty"`
 }
 
