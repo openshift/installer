@@ -40,8 +40,8 @@ resource "libvirt_domain" "bootstrap" {
   dynamic "network_interface" {
     for_each = var.bridges
     content {
-      bridge = network_interface.value
+      bridge = network_interface.value["name"]
+      mac    = network_interface.value["mac"]
     }
   }
 }
-

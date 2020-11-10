@@ -851,6 +851,9 @@ spec:
                   externalBridge:
                     description: External bridge is used for external communication.
                     type: string
+                  externalMACAddress:
+                    description: ExternalMACAddress is used to allow setting a static MAC address for the bootstrap host on the external network. If left blank, libvirt will generate one for you.
+                    type: string
                   hosts:
                     description: Hosts is the information needed to create the objects in Ironic.
                     items:
@@ -948,6 +951,9 @@ spec:
                     type: string
                   provisioningHostIP:
                     description: ClusterProvisioningIP is the IP on the dedicated provisioning network where the baremetal-operator pod runs provisioning services, and an http server to cache some downloaded content e.g RHCOS/IPA images
+                    type: string
+                  provisioningMACAddress:
+                    description: ProvisioningMACAddress is used to allow setting a static MAC address for the bootstrap host on the provisioning network. If left blank, libvirt will generate one for you.
                     type: string
                   provisioningNetwork:
                     default: Managed

@@ -387,6 +387,18 @@ func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *f
 		if p.ProvisioningNetworkInterface == "" {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkInterface"), p.ProvisioningNetworkInterface, "no provisioning network interface is configured, please set this value to be the interface on the provisioning network on your cluster's baremetal hosts"))
 		}
+
+		if err := validate.MAC(p.ExternalMACAddress); p.ExternalMACAddress != "" && err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("externalMACAddress"), p.ExternalMACAddress, err.Error()))
+		}
+
+		if err := validate.MAC(p.ProvisioningMACAddress); p.ProvisioningMACAddress != "" && err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningMACAddress"), p.ProvisioningMACAddress, err.Error()))
+		}
+
+		if p.ProvisioningMACAddress != "" && strings.EqualFold(p.ProvisioningMACAddress, p.ExternalMACAddress) {
+			allErrs = append(allErrs, field.Duplicate(fldPath.Child("provisioningMACAddress"), "provisioning and external MAC addresses may not be identical"))
+		}
 	}
 
 	if err := validate.URI(p.LibvirtURI); err != nil {

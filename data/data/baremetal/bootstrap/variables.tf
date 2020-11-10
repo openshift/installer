@@ -14,6 +14,6 @@ variable "ignition" {
 }
 
 variable "bridges" {
-  type        = list(string)
-  description = "A list of network interfaces to attach to the bootstrap virtual machine"
+  type        = list(map(string))
+  description = "A list of network bridge maps, containing the interface name and optionally the MAC address"
 }

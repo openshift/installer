@@ -83,6 +83,12 @@ type Platform struct {
 	// +optional
 	ExternalBridge string `json:"externalBridge,omitempty"`
 
+	// ExternalMACAddress is used to allow setting a static MAC address for
+	// the bootstrap host on the external network. If left blank, libvirt will
+	// generate one for you.
+	// +optional
+	ExternalMACAddress string `json:"externalMACAddress,omitempty"`
+
 	// ProvisioningNetwork is used to indicate if we will have a provisioning network, and how it will be managed.
 	// +kubebuilder:default=Managed
 	// +optional
@@ -92,6 +98,12 @@ type Platform struct {
 	// will run the bootstrap VM.
 	// +optional
 	ProvisioningBridge string `json:"provisioningBridge,omitempty"`
+
+	// ProvisioningMACAddress is used to allow setting a static MAC address for
+	// the bootstrap host on the provisioning network. If left blank, libvirt will
+	// generate one for you.
+	// +optional
+	ProvisioningMACAddress string `json:"provisioningMACAddress,omitempty"`
 
 	// ProvisioningNetworkInterface is the name of the network interface on a control plane
 	// baremetal host that is connected to the provisioning network.
