@@ -25,5 +25,5 @@ discussed above.
 `coredns` runs with a custom `mdns` plugin (`coredns-mdns`).
 
 Relevant files:
-* **[files/etc/dhcp/dhclient.conf](files/etc/dhcp/dhclient.conf)** - Sepcify
+* **[files/etc/dhcp/dhclient.conf](files/etc/dhcp/dhclient.conf)** - Specify
   that the bootstrap VM should use `localhost` as its primary DNS server.
