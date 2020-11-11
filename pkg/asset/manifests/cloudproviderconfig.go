@@ -34,7 +34,8 @@ var (
 )
 
 const (
-	cloudProviderConfigDataKey = "config"
+	cloudProviderConfigDataKey         = "config"
+	cloudProviderConfigCABundleDataKey = "ca-bundle.pem"
 )
 
 // CloudProviderConfig generates the cloud-provider-config.yaml files.
@@ -83,8 +84,15 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	}
 
 	switch installConfig.Config.Platform.Name() {
-	case awstypes.Name, libvirttypes.Name, nonetypes.Name, baremetaltypes.Name, ovirttypes.Name:
+	case libvirttypes.Name, nonetypes.Name, baremetaltypes.Name, ovirttypes.Name:
 		return nil
+	case awstypes.Name:
+		// Store the additional trust bundle in the ca-bundle.pem key if the cluster is being installed on a C2S region.
+		trustBundle := installConfig.Config.AdditionalTrustBundle
+		if trustBundle == "" || !awstypes.C2SRegions.Has(installConfig.Config.AWS.Region) {
+			return nil
+		}
+		cm.Data[cloudProviderConfigCABundleDataKey] = trustBundle
 	case openstacktypes.Name:
 		cloud, err := icopenstack.GetSession(installConfig.Config.Platform.OpenStack.Cloud)
 		if err != nil {
@@ -99,7 +107,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			if err != nil {
 				return errors.Wrap(err, "failed to read clouds.yaml ca-cert from disk")
 			}
-			cm.Data["ca-bundle.pem"] = string(caFile)
+			cm.Data[cloudProviderConfigCABundleDataKey] = string(caFile)
 		}
 	case azuretypes.Name:
 		session, err := installConfig.Azure.Session()
