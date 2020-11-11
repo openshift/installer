@@ -5,7 +5,7 @@ locals {
   // So publish_strategy serves an coordinated proxy for that decision.
   public_endpoints = var.publish_strategy == "External" ? true : false
 
-  use_cname = contains(["us-gov-west-1", "us-gov-east-1"], var.region)
+  use_cname = contains(["us-gov-west-1", "us-gov-east-1", "us-iso-east-1"], var.region)
   use_alias = ! local.use_cname
 }
 
