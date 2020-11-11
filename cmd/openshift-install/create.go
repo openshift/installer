@@ -508,7 +508,7 @@ func waitForInstallComplete(ctx context.Context, config *rest.Config, directory 
 
 func logTroubleshootingLink() {
 	logrus.Error(`Cluster initialization failed because one or more operators are not functioning properly.
-The cluster should be accessible for troublsehooting as detailed in the documentation linked below,
+The cluster should be accessible for troubleshooting as detailed in the documentation linked below,
 https://docs.openshift.com/container-platform/latest/support/troubleshooting/troubleshooting-installations.html
 The 'wait-for install-complete' subcommand can then be used to continue the installation`)
 }
