@@ -6,8 +6,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
-	"github.com/sirupsen/logrus"
+	"github.com/aws/aws-sdk-go/service/ec2"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
@@ -41,12 +40,13 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 
 	publicSubnets, err := installConfig.AWS.PublicSubnets(ctx)
 
-	arns := make([]string, 0, len(privateSubnets)+len(publicSubnets))
-	for _, subnet := range privateSubnets {
-		arns = append(arns, subnet.ARN)
+	//arns := make([]*string, 0, len(privateSubnets)+len(publicSubnets))
+	ids := make([]*string, 0, len(privateSubnets)+len(publicSubnets))
+	for id := range privateSubnets {
+		ids = append(ids, aws.String(id))
 	}
-	for _, subnet := range publicSubnets {
-		arns = append(arns, subnet.ARN)
+	for id := range publicSubnets {
+		ids = append(ids, aws.String(id))
 	}
 
 	session, err := installConfig.AWS.Session(ctx)
@@ -54,23 +54,19 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 		return err
 	}
 
-	request := &resourcegroupstaggingapi.TagResourcesInput{
-		Tags: map[string]*string{
-			fmt.Sprintf("kubernetes.io/cluster/%s", clusterID): aws.String("shared"),
+	tags := []*ec2.Tag{
+		{
+			Key:   aws.String(fmt.Sprintf("kubernetes.io/cluster/%s", clusterID)),
+			Value: aws.String("shared"),
 		},
 	}
+	client := ec2.New(session, aws.NewConfig().WithRegion(installConfig.Config.Platform.AWS.Region))
 
-	tagClient := resourcegroupstaggingapi.New(session, aws.NewConfig().WithRegion(installConfig.Config.Platform.AWS.Region))
-	for i := 0; i < len(arns); i += 20 {
-		request.ResourceARNList = make([]*string, 0, 20)
-		for j := 0; i+j < len(arns) && j < 20; j++ {
-			logrus.Debugf("Tagging %s with kubernetes.io/cluster/%s: shared", arns[i+j], clusterID)
-			request.ResourceARNList = append(request.ResourceARNList, aws.String(arns[i+j]))
-		}
-		_, err = tagClient.TagResourcesWithContext(ctx, request)
-		if err != nil {
-			return err
-		}
+	if _, err = client.CreateTagsWithContext(ctx, &ec2.CreateTagsInput{
+		Resources: ids,
+		Tags:      tags,
+	}); err != nil {
+		return err
 	}
 
 	return nil
