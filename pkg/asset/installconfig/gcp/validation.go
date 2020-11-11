@@ -17,14 +17,89 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
+type resourceRequirements struct {
+	minimumVCpus  int64
+	minimumMemory int64
+}
+
+var controlPlaneReq = resourceRequirements{
+	minimumVCpus:  4,
+	minimumMemory: 15360,
+}
+
+var computeReq = resourceRequirements{
+	minimumVCpus:  2,
+	minimumMemory: 7680,
+}
+
 // Validate executes platform-specific validation.
 func Validate(client API, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateProject(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateNetworks(client, ic, field.NewPath("platform").Child("gcp"))...)
+	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
 
 	return allErrs.ToAggregate()
+}
+
+// ValidateInstanceType ensures the instance type has sufficient Vcpu and Memory.
+func ValidateInstanceType(client API, ic *types.InstallConfig, fieldPath *field.Path, instanceType string, req resourceRequirements) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if instanceType == "" {
+		return nil
+	}
+
+	filter := fmt.Sprintf("name = %s", instanceType)
+	instanceTypes, err := client.GetMachineTypes(context.TODO(), ic.GCP.ProjectID, filter)
+	if err != nil {
+		return append(allErrs, field.InternalError(fieldPath, err))
+	}
+
+	if typeMeta, ok := instanceTypes[instanceType]; ok {
+		if typeMeta.GuestCpus < req.minimumVCpus {
+			errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d vCPUs", req.minimumVCpus)
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+		}
+		if typeMeta.MemoryMb < req.minimumMemory {
+			errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d MB Memory", req.minimumMemory)
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+		}
+	} else {
+		errMsg := fmt.Sprintf("instance type %s not found", instanceType)
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+	}
+
+	return allErrs
+}
+
+// validateInstanceTypes checks that the user-provided instance types are valid.
+func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Default requirements need to be sufficient to support Control Plane instances.
+	defaultInstanceReq := controlPlaneReq
+
+	if ic.ControlPlane != nil && ic.ControlPlane.Platform.GCP != nil && ic.ControlPlane.Platform.GCP.InstanceType != "" {
+		// Default requirements can be relaxed when the controlPlane type is set explicitly.
+		defaultInstanceReq = computeReq
+
+		allErrs = append(allErrs, ValidateInstanceType(client, ic, field.NewPath("controlPlane", "platform", "gcp"), ic.ControlPlane.Platform.GCP.InstanceType, controlPlaneReq)...)
+	}
+
+	if ic.Platform.GCP.DefaultMachinePlatform != nil && ic.Platform.GCP.DefaultMachinePlatform.InstanceType != "" {
+		allErrs = append(allErrs, ValidateInstanceType(client, ic, field.NewPath("platform", "gcp", "defaultMachinePlatform"), ic.Platform.GCP.DefaultMachinePlatform.InstanceType, defaultInstanceReq)...)
+	}
+
+	for idx, compute := range ic.Compute {
+		fieldPath := field.NewPath("compute").Index(idx)
+		if compute.Platform.GCP != nil && compute.Platform.GCP.InstanceType != "" {
+			allErrs = append(allErrs, ValidateInstanceType(client, ic, fieldPath.Child("platform", "gcp"), compute.Platform.GCP.InstanceType, computeReq)...)
+		}
+	}
+
+	return allErrs
 }
 
 // ValidatePreExitingPublicDNS ensure no pre-existing DNS record exists in the public

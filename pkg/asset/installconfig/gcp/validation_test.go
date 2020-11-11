@@ -34,6 +34,28 @@ var (
 		}
 	}
 
+	validMachineTypes = func(ic *types.InstallConfig) {
+		ic.Platform.GCP.DefaultMachinePlatform.InstanceType = "n1-standard-2"
+		ic.ControlPlane.Platform.GCP.InstanceType = "n1-standard-4"
+		ic.Compute[0].Platform.GCP.InstanceType = "n1-standard-2"
+	}
+
+	invalidateDefaultMachineTypes = func(ic *types.InstallConfig) {
+		ic.Platform.GCP.DefaultMachinePlatform.InstanceType = "n1-standard-1"
+	}
+
+	invalidateControlPlaneMachineTypes = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.InstanceType = "n1-standard-1"
+	}
+
+	invalidateComputeMachineTypes = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.InstanceType = "n1-standard-1"
+	}
+
+	undefinedDefaultMachineTypes = func(ic *types.InstallConfig) {
+		ic.Platform.GCP.DefaultMachinePlatform.InstanceType = "n1-dne-1"
+	}
+
 	invalidateNetwork       = func(ic *types.InstallConfig) { ic.GCP.Network = "invalid-vpc" }
 	invalidateComputeSubnet = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet = "invalid-compute-subnet" }
 	invalidateCPSubnet      = func(ic *types.InstallConfig) { ic.GCP.ControlPlaneSubnet = "invalid-cp-subnet" }
@@ -41,6 +63,12 @@ var (
 	invalidateProject       = func(ic *types.InstallConfig) { ic.GCP.ProjectID = "invalid-project" }
 	removeVPC               = func(ic *types.InstallConfig) { ic.GCP.Network = "" }
 	removeSubnets           = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet, ic.GCP.ControlPlaneSubnet = "", "" }
+
+	machineTypeAPIResult = map[string]*compute.MachineType{
+		"n1-standard-1": {GuestCpus: 1, MemoryMb: 3840},
+		"n1-standard-2": {GuestCpus: 2, MemoryMb: 7680},
+		"n1-standard-4": {GuestCpus: 4, MemoryMb: 15360},
+	}
 
 	subnetAPIResult = []*compute.Subnetwork{
 		{
@@ -63,13 +91,24 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		Platform: types.Platform{
 			GCP: &gcp.Platform{
-				ProjectID:          validProjectName,
-				Region:             validRegion,
-				Network:            validNetworkName,
-				ComputeSubnet:      validComputeSubnet,
-				ControlPlaneSubnet: validCPSubnet,
+				DefaultMachinePlatform: &gcp.MachinePool{},
+				ProjectID:              validProjectName,
+				Region:                 validRegion,
+				Network:                validNetworkName,
+				ComputeSubnet:          validComputeSubnet,
+				ControlPlaneSubnet:     validCPSubnet,
 			},
 		},
+		ControlPlane: &types.MachinePool{
+			Platform: types.MachinePoolPlatform{
+				GCP: &gcp.MachinePool{},
+			},
+		},
+		Compute: []types.MachinePool{{
+			Platform: types.MachinePoolPlatform{
+				GCP: &gcp.MachinePool{},
+			},
+		}},
 	}
 }
 
@@ -123,6 +162,36 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			expectedErrMsg: "computeSubnet: Invalid value.*controlPlaneSubnet: Invalid value",
 		},
 		{
+			name:           "Valid machine types",
+			edits:          editFunctions{validMachineTypes},
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid default machine type",
+			edits:          editFunctions{invalidateDefaultMachineTypes},
+			expectedError:  true,
+			expectedErrMsg: `\[platform.gcp.defaultMachinePlatform.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 4 vCPUs, platform.gcp.defaultMachinePlatform.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 15360 MB Memory\]`,
+		},
+		{
+			name:           "Invalid control plane machine types",
+			edits:          editFunctions{invalidateControlPlaneMachineTypes},
+			expectedError:  true,
+			expectedErrMsg: `[controlPlane.platform.gcp.type: Invalid value: "n1\-standard\-1": instance type does not meet minimum resource requirements of 4 vCPUs, controlPlane.platform.gcp.type: Invalid value: "n1\-standard\-1": instance type does not meet minimum resource requirements of 15361 MB Memory]`,
+		},
+		{
+			name:           "Invalid compute machine types",
+			edits:          editFunctions{invalidateComputeMachineTypes},
+			expectedError:  true,
+			expectedErrMsg: `\[compute\[0\].platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 2 vCPUs, compute\[0\].platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 7680 MB Memory\]`,
+		},
+		{
+			name:           "Undefined default machine types",
+			edits:          editFunctions{undefinedDefaultMachineTypes},
+			expectedError:  true,
+			expectedErrMsg: `platform.gcp.defaultMachinePlatform.type: Invalid value: "n1-dne-1": instance type n1-dne-1 not found`,
+		},
+		{
 			name:           "Invalid region",
 			edits:          editFunctions{invalidateRegion},
 			expectedError:  true,
@@ -153,6 +222,8 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	gcpClient := mock.NewMockAPI(mockCtrl)
 	// Should get the list of projects.
 	gcpClient.EXPECT().GetProjects(gomock.Any()).Return(map[string]string{"valid-project": "valid-project"}, nil).AnyTimes()
+	// Should return the list of machine types in machineTypeAPIResult.
+	gcpClient.EXPECT().GetMachineTypes(gomock.Any(), gomock.Any(), gomock.Any()).Return(machineTypeAPIResult, nil).AnyTimes()
 	// When passed the correct network & project, return an empty network, which should be enough to validate ok.
 	gcpClient.EXPECT().GetNetwork(gomock.Any(), validNetworkName, validProjectName).Return(&compute.Network{}, nil).AnyTimes()
 
@@ -261,7 +332,7 @@ func TestGCPEnabledServicesList(t *testing.T) {
 			defer mockCtrl.Finish()
 			gcpClient := mock.NewMockAPI(mockCtrl)
 
-			gcpClient.EXPECT().GetEnabledServices(gomock.Any()).Return(test.services, nil).AnyTimes()
+			gcpClient.EXPECT().GetEnabledServices(gomock.Any(), gomock.Any()).Return(test.services, nil).AnyTimes()
 			err := ValidateEnabledServices(nil, gcpClient, "")
 			if test.err == "" {
 				assert.NoError(t, err)
