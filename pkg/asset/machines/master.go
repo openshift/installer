@@ -361,7 +361,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 
 		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-		machines, err = kubevirt.Machines(clusterID.InfraID, ic, pool, imageName, "master", "master-user-data-managed")
+		machines, err = kubevirt.Machines(clusterID.InfraID, ic, pool, imageName, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects for kubevirt provider")
 		}

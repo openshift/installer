@@ -409,7 +409,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-			sets, err := kubevirt.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data-managed")
+			sets, err := kubevirt.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects for kubevirt provider")
 			}
