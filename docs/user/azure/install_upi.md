@@ -283,7 +283,7 @@ Copy the [`01_vnet.json`](../../../upi/azure/01_vnet.json) ARM template locally.
 Create the deployment using the `az` client:
 
 ```sh
-az group deployment create -g $RESOURCE_GROUP \
+az deployment group create -g $RESOURCE_GROUP \
   --template-file "01_vnet.json" \
   --parameters baseName="$INFRA_ID"
 ```
@@ -303,7 +303,7 @@ Create the deployment using the `az` client:
 ```sh
 export VHD_BLOB_URL=`az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c vhd -n "rhcos.vhd" -o tsv`
 
-az group deployment create -g $RESOURCE_GROUP \
+az deployment group create -g $RESOURCE_GROUP \
   --template-file "02_storage.json" \
   --parameters vhdBlobURL="$VHD_BLOB_URL" \
   --parameters baseName="$INFRA_ID"
@@ -316,7 +316,7 @@ Copy the [`03_infra.json`](../../../upi/azure/03_infra.json) ARM template locall
 Deploy the load balancers and public IP addresses using the `az` client:
 
 ```sh
-az group deployment create -g $RESOURCE_GROUP \
+az deployment group create -g $RESOURCE_GROUP \
   --template-file "03_infra.json" \
   --parameters privateDNSZoneName="${CLUSTER_NAME}.${BASE_DOMAIN}" \
   --parameters baseName="$INFRA_ID"
@@ -346,7 +346,7 @@ Create the deployment using the `az` client:
 export BOOTSTRAP_URL=`az storage blob url --account-name ${CLUSTER_NAME}sa --account-key $ACCOUNT_KEY -c "files" -n "bootstrap.ign" -o tsv`
 export BOOTSTRAP_IGNITION=`jq -rcnM --arg v "3.1.0" --arg url $BOOTSTRAP_URL '{ignition:{version:$v,config:{replace:{source:$url}}}}' | base64 | tr -d '\n'`
 
-az group deployment create -g $RESOURCE_GROUP \
+az deployment group create -g $RESOURCE_GROUP \
   --template-file "04_bootstrap.json" \
   --parameters bootstrapIgnition="$BOOTSTRAP_IGNITION" \
   --parameters sshKeyData="$SSH_KEY" \
@@ -362,7 +362,7 @@ Create the deployment using the `az` client:
 ```sh
 export MASTER_IGNITION=`cat master.ign | base64 | tr -d '\n'`
 
-az group deployment create -g $RESOURCE_GROUP \
+az deployment group create -g $RESOURCE_GROUP \
   --template-file "05_masters.json" \
   --parameters masterIgnition="$MASTER_IGNITION" \
   --parameters sshKeyData="$SSH_KEY" \
@@ -427,7 +427,7 @@ Create the deployment using the `az` client:
 ```sh
 export WORKER_IGNITION=`cat worker.ign | base64 | tr -d '\n'`
 
-az group deployment create -g $RESOURCE_GROUP \
+az deployment group create -g $RESOURCE_GROUP \
   --template-file "06_workers.json" \
   --parameters workerIgnition="$WORKER_IGNITION" \
   --parameters sshKeyData="$SSH_KEY" \
