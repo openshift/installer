@@ -49,8 +49,11 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 	switch platform {
 	case aws.Name:
 		permissionGroups := []awsconfig.PermissionGroup{awsconfig.PermissionCreateBase, awsconfig.PermissionDeleteBase}
-		// If subnets are not provided in install-config.yaml, include network permissions
-		if len(ic.Config.AWS.Subnets) == 0 {
+		usingExistingVPC := len(ic.Config.AWS.Subnets) != 0
+
+		if usingExistingVPC {
+			permissionGroups = append(permissionGroups, awsconfig.PermissionCreateSharedNetworking, awsconfig.PermissionDeleteSharedNetworking)
+		} else {
 			permissionGroups = append(permissionGroups, awsconfig.PermissionCreateNetworking, awsconfig.PermissionDeleteNetworking)
 		}
 
