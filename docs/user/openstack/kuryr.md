@@ -29,12 +29,12 @@ or
 When using Kuryr SDN, as the pods, services, namespaces, network policies, etc., are using resources from the OpenStack Quota, the minimum requirements are higher. Kuryr also has some additional requirements on top of what a default install requires. At a bare minimum you need the following quota to run a *default* cluster:
 
 * Floating IPs: 3 (plus the expected number of services of LoadBalancer type)
-* Security Groups: 100 (1 needed per network policy)
-* Security Group Rules: 500
+* Security Groups: 250 (1 needed per Service and per NetworkPolicy)
+* Security Group Rules: 1000
 * Routers: 1
-* Subnets: 100 (1 needed per namespace)
-* Networks: 100 (1 needed per namespace)
-* Ports: 1000
+* Subnets: 250 (1 needed per namespace)
+* Networks: 250 (1 needed per namespace)
+* Ports: 1500
 * RAM: 112 GB
 * vCPUs: 28
 * Volume Storage: 175 GB
@@ -48,7 +48,7 @@ When using Kuryr SDN, as the pods, services, namespaces, network policies, etc.,
 As highlighted in the minimum quota recommendations, when using Kuryr SDN, there is a need for increasing the quotas as pods, services, namespaces, network policies are using OpenStack resources. So, as an administrator,the next quotas should be increased for the selected project:
 
 ```sh
-openstack quota set --secgroups 100 --secgroup-rules 500 --ports 500 --subnets 100 --networks 100 <project>
+openstack quota set --secgroups 250 --secgroup-rules 1000 --ports 1500 --subnets 250 --networks 250 <project>
 ```
 
 **NOTE:** Each Amphora Load Balancer creates a VM. Even if that VM is not part of the user quota, the OpenStack cluster must have enough capacity to allocate those VMs too. A standard OpenShift installation ends up with more that 50 Amphora Load Balancers.
