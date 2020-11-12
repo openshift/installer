@@ -141,7 +141,8 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
 		--config-output-file=/assets/kube-apiserver-bootstrap/config \
-		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml
+		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml \
+		--cluster-auth-file=/assets/manifests/cluster-authentication-02-config.yaml
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
