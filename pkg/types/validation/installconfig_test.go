@@ -248,7 +248,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^baseDomain: Invalid value: "\.bad-domain\.": a DNS-1123 subdomain must consist of lower case alphanumeric characters, '-' or '\.', and must start and end with an alphanumeric character \(e\.g\. 'example\.com', regex used for validation is '\[a-z0-9]\(\[-a-z0-9]\*\[a-z0-9]\)\?\(\\\.\[a-z0-9]\(\[-a-z0-9]\*\[a-z0-9]\)\?\)\*'\)$`,
 		},
 		{
-			name: "overly long cluster domain",
+			name: "cluster domain invalidly long",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.ObjectMeta.Name = fmt.Sprintf("test-cluster%042d", 0)
@@ -256,6 +256,16 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^baseDomain: Invalid value: "` + fmt.Sprintf("test-cluster%042d.test-domain%056d.a%060d.b%060d.c%060d", 0, 0, 0, 0, 0) + `": must be no more than 253 characters$`,
+		},
+		{
+			name: "cluster name too long for sufficient subdomains",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ObjectMeta.Name = "test-cluster"
+				c.BaseDomain = fmt.Sprintf("test-domain.a%060d.b%060d.c%060d", 0, 0, 0)
+				return c
+			}(),
+			expectedError: `^baseDomain: Invalid value: "` + fmt.Sprintf("test-cluster.test-domain.a%060d.b%060d.c%060d", 0, 0, 0) + `": contains 210 characters, but the cluster domain is limited to 184 to allow room for subdomains.$`,
 		},
 		{
 			name: "missing networking",

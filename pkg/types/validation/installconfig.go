@@ -79,6 +79,8 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 		clusterDomain := c.ClusterDomain()
 		if err := validate.DomainName(clusterDomain, true); err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("baseDomain"), clusterDomain, err.Error()))
+		} else if maxLength := 184; len(clusterDomain) > maxLength {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("baseDomain"), clusterDomain, fmt.Sprintf("contains %d characters, but the cluster domain is limited to %d to allow room for subdomains.", len(clusterDomain), maxLength)))
 		}
 	}
 	if c.Networking != nil {
