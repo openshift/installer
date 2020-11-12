@@ -18,7 +18,7 @@ import (
 
 // pointerIgnitionConfig generates a config which references the remote config
 // served by the machine config server.
-func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string) *igntypes.Config {
+func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, token, role string) *igntypes.Config {
 	var ignitionHost string
 	// Default platform independent ignitionHost
 	ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
@@ -37,16 +37,20 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 			ignitionHost = net.JoinHostPort(installConfig.VSphere.APIVIP, "22623")
 		}
 	}
+
 	return &igntypes.Config{
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
 			Config: igntypes.IgnitionConfig{
 				Merge: []igntypes.Resource{{
 					Source: ignutil.StrToPtr(func() *url.URL {
+						queryvals := url.Values{}
+						queryvals.Add("token", token)
 						return &url.URL{
-							Scheme: "https",
-							Host:   ignitionHost,
-							Path:   fmt.Sprintf("/config/%s", role),
+							Scheme:   "https",
+							Host:     ignitionHost,
+							Path:     fmt.Sprintf("/config/%s", role),
+							RawQuery: queryvals.Encode(),
 						}
 					}().String()),
 				}},

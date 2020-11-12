@@ -82,5 +82,6 @@ type baremetalTemplateData struct {
 
 type openshiftTemplateData struct {
 	CloudCreds                   cloudCredsSecretData
+	IgnitionProvisioningToken    string
 	Base64EncodedKubeadminPwHash string
 }

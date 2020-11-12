@@ -29,6 +29,7 @@ var _ asset.WritableAsset = (*Master)(nil)
 func (a *Master) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		&ignition.ProvisioningToken{},
 		&tls.RootCA{},
 	}
 }
@@ -37,9 +38,10 @@ func (a *Master) Dependencies() []asset.Asset {
 func (a *Master) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	rootCA := &tls.RootCA{}
-	dependencies.Get(installConfig, rootCA)
+	token := &ignition.ProvisioningToken{}
+	dependencies.Get(installConfig, rootCA, token)
 
-	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master")
+	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), token.Token, "master")
 
 	data, err := ignition.Marshal(a.Config)
 	if err != nil {
