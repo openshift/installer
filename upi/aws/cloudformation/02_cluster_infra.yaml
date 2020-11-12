@@ -157,6 +157,12 @@ Resources:
   ExternalApiTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: "/readyz"
+      HealthCheckPort: 6443
+      HealthCheckProtocol: HTTPS
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
       Port: 6443
       Protocol: TCP
       TargetType: ip
@@ -181,6 +187,12 @@ Resources:
   InternalApiTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: "/readyz"
+      HealthCheckPort: 6443
+      HealthCheckProtocol: HTTPS
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
       Port: 6443
       Protocol: TCP
       TargetType: ip
@@ -205,6 +217,12 @@ Resources:
   InternalServiceTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: "/healthz"
+      HealthCheckPort: 22623
+      HealthCheckProtocol: HTTPS
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
       Port: 22623
       Protocol: TCP
       TargetType: ip
