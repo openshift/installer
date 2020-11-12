@@ -315,7 +315,7 @@ fi
 
 # Wait for the etcd cluster to come up.
 until bootkube_podman_run \
-		--rm \
+        --rm \
 		--name etcdctl \
 		--env ETCDCTL_API=3 \
 		--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
@@ -326,38 +326,121 @@ until bootkube_podman_run \
 		--cert=/opt/openshift/tls/etcd-client.crt \
 		--key=/opt/openshift/tls/etcd-client.key \
 		--endpoints="${ETCD_ENDPOINTS}" \
-		endpoint health
+		 endpoint health
 do
 	echo "etcdctl failed. Retrying in 5 seconds..."
 	sleep 5
 done
 
-echo "Starting cluster-bootstrap..."
+
+#Do you thing
+if [ ! -f pivot.done ]
+then
+
+    curl -k https://localhost:22623/config/master -o master.ign
+    # Apply the master ignition to FS
+    bootkube_podman_run \
+        --volume /:/rootfs:rw \
+        --volume /usr/bin/rpm-ostree:/usr/bin/rpm-ostree \
+        --privileged --entrypoint /usr/bin/machine-config-daemon \
+        "${MACHINE_CONFIG_OPERATOR_IMAGE}" \
+        start --node-name localhost --root-mount /rootfs --once-from /opt/openshift/master.ign --skip-reboot
+
+    # Restart required services
+    echo "starting systemd services"
+    systemctl daemon-reload
+    systemctl restart ovsdb-server.service \
+        ovs-configuration.service \
+        openvswitch.service \
+        nodeip-configuration.service \
+        node-valid-hostname.service \
+        machine-config-daemon-pull.service \
+        machine-config-daemon-firstboot.service \
+        kubelet.service \
+        NetworkManager.service
+
+    # stop the MCS
+    echo "Stopping MCS"
+    rm -rf /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
+
+
+    # Backup master ignition
+    cp /etc/kubernetes/kubeconfig ./master-kubeconfig
+    ## Restore: CVO should use `/etc/kubernetes/bootstrap-secrets/kubeconfig` instead
+    cp auth/kubeconfig-loopback /etc/kubernetes/kubeconfig
+
+    # The files under /opt/openshift/bootstrap-manifests/ will be deployed as static pods by the cluster bootstrap
+
+    echo "Rename bootstrap static pods"
+    # Rename the manifests files
+    ls bootstrap-manifests/ | xargs -I {} mv bootstrap-manifests/{} bootstrap-manifests/bootstrap-{}
+
+    # Rename the temporary control plane containers
+    sed -i 's/name: cluster-version-operator/name: bootstrap-cluster-version-operator/g' bootstrap-manifests/bootstrap-bootstrap-pod.yaml
+    sed -i 's/name: cloud-credential-operator/name: bootstrap-cloud-credential-operator/g' bootstrap-manifests/bootstrap-cloud-credential-operator-pod.yaml
+    sed -i 's/name: kube-apiserver/name: bootstrap-kube-apiserver/g' bootstrap-manifests/bootstrap-kube-apiserver-pod.yaml
+    sed -i 's/name: kube-controller-manager/name: bootstrap-kube-controller-manager/g' bootstrap-manifests/bootstrap-kube-controller-manager-pod.yaml
+    sed -i 's/name: kube-controller-manager/name: bootstrap-kube-controller-manager/g' bootstrap-manifests/bootstrap-kube-controller-manager-pod.yaml
+    sed -i 's/name: kube-scheduler/name: bootstrap-kube-scheduler/g' bootstrap-manifests/bootstrap-kube-scheduler-pod.yaml
+
+    touch pivot.done
+fi
+
 
 if [ ! -f cb-bootstrap.done ]
 then
     bootkube_podman_run \
         --rm \
         --volume "$PWD:/assets:z" \
+        --detach \
         --volume /etc/kubernetes:/etc/kubernetes:z \
         "${CLUSTER_BOOTSTRAP_IMAGE}" \
         start --tear-down-early=false --asset-dir=/assets --required-pods="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
+    # TODO: handle cluster-bootstrap better - it should just wait for the static pods and exit
+    # TODO: need to check if the timeout is enough
+    # Wait for control plane static pods
+    for file_name in etcd-pod.yaml  kube-apiserver-pod.yaml  kube-controller-manager-pod.yaml  kube-scheduler-pod.yaml
+    do
+        until ls /etc/kubernetes/manifests/$file_name; do echo "waiting for $file_name"
+        sleep 5
+        done
+    done
+
     touch cb-bootstrap.done
-fi
-
-rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
-
-if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
-then
-	echo "Waiting for CEO to finish..."
-	bootkube_podman_run \
-		--volume "$PWD:/assets:z" \
-		"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
-		/usr/bin/cluster-etcd-operator \
-			wait-for-ceo \
-			--kubeconfig /assets/auth/kubeconfig
 fi
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
 echo "bootkube.service complete"
+
+
+
+#if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
+#then
+#	echo "Waiting for CEO to finish..."
+#	bootkube_podman_run \
+#		--volume "$PWD:/assets:z" \
+#		"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+#		/usr/bin/cluster-etcd-operator \
+#			wait-for-ceo \
+#			--kubeconfig /assets/auth/kubeconfig
+#fi
+
+
+
+#Cleanup
+systemctl stop patch.service
+systemctl disable patch.service
+systemctl disable bootkube.service
+
+mv /opt/openshift/master-kubeconfig /etc/kubernetes/kubeconfig
+
+# Remove the bootstrap control plane
+rm -rf /etc/kubernetes/bootstrap-*
+rm -rf /etc/kubernetes/manifests/etcd-member-pod.yaml
+rm -rf /etc/kubernetes/manifests/bootstrap-*
+rm -rf /opt/openshift
+ls /etc/kubernetes/manifests/
+
+echo "Going to reboot"
+reboot
