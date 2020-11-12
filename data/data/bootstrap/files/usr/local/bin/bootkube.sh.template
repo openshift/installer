@@ -315,7 +315,7 @@ fi
 
 # Wait for the etcd cluster to come up.
 until bootkube_podman_run \
-		--rm \
+        --rm \
 		--name etcdctl \
 		--env ETCDCTL_API=3 \
 		--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
@@ -332,8 +332,66 @@ do
 	sleep 5
 done
 
-echo "Starting cluster-bootstrap..."
 
+{{if .SingleNode}}
+
+if [ ! -f cb-bootstrap.done ]
+then
+    bootkube_podman_run \
+        --rm \
+        --volume "$PWD:/assets:z" \
+        --volume /etc/kubernetes:/etc/kubernetes:z \
+        quay.io/eranco74/cluster-bootstrap:bootstrap-in-place \
+        start --tear-down-early=false --asset-dir=/assets --required-pods="" --assets-create-timeout=5m
+        # TODO: make sure this finish!
+        touch cb-bootstrap.done
+fi
+
+if [ ! -f create-static-pods-data.done ]
+then
+    # TODO: add a service for moving these files to the right place post node reboot
+    echo "Move etcd static pod"
+    mv /etc/kubernetes/manifests/etcd-member-pod.yaml /etc/kubernetes
+
+    until ! crictl ps | grep etcd
+    do
+        echo "Waiting for etcd to go down"
+        sleep 10
+    done
+
+    echo "Creating master ignition and writing it to disk"
+    # Get the master ignition for MCS
+    curl -k  -H "Accept:'application/vnd.coreos.ignition+json;version=3.1.0, */*;q=0.1'" \
+    https://localhost:22623/config/master -o /opt/openshift/master.ign
+
+    echo "Creating master ignition"
+    bootkube_podman_run \
+        --rm \
+        --privileged \
+        --volume "/var/lib/etcd:/var/lib/etcd" \
+        --volume "$PWD:/assets:z" \
+        --volume "/etc/kubernetes:/etc/kubernetes" \
+        quay.io/eranco74/cluster-bootstrap:bip \
+        bootstrap-in-place --asset-dir=/assets --ignition-path=/assets/master.ign
+
+    touch create-static-pods-data.done
+fi
+
+if [ ! -f write-to-disk.done ]
+then
+    # Write image + ignition to disk
+    coreos-installer install --insecure -i /opt/openshift/master.ign /dev/vda
+
+    touch write-to-disk.done
+
+fi
+
+echo "Going to reboot"
+# TODO: reoobt!!!
+shutdown -r +1 "Bootstrap completed, server is going to reboot."
+
+
+{{else}}
 if [ ! -f cb-bootstrap.done ]
 then
     bootkube_podman_run \
@@ -361,3 +419,5 @@ fi
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
 echo "bootkube.service complete"
+
+{{end}}

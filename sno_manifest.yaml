@@ -1,0 +1,22 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: after-reboot
+spec:
+  config:
+    ignition:
+      version: 3.1.0
+    storage:
+      files:
+        - contents:
+            source: data:text/plain;charset=utf-8;base64,IyEvYmluL2Jhc2ggLXgKZXhwb3J0IEtVQkVDT05GSUc9L2V0Yy9rdWJlcm5ldGVzL2Jvb3RzdHJhcC1zZWNyZXRzL2t1YmVjb25maWcKCmZ1bmN0aW9uIHdhaXRfZm9yX2FwaSB7CiAgdW50aWwgb2MgZ2V0IGNzciAmPiAvZGV2L251bGwKICAgIGRvCiAgICAgICAgZWNobyAiV2FpdGluZyBmb3IgYXBpIC4uLiIKICAgICAgICBzbGVlcCAzMAogICAgZG9uZQp9CmZ1bmN0aW9uIHJlc3RhcnRfa3ViZWxldCB7CiAgZWNobyAiUmVzdGFydGluZyBrdWJlbGV0IgogIHdoaWxlIGNhdCAvZXRjL2t1YmVybmV0ZXMvbWFuaWZlc3RzL2t1YmUtYXBpc2VydmVyLXBvZC55YW1sICB8IGdyZXAgYm9vdHN0cmFwLWt1YmUtYXBpc2VydmVyOyBkbwogICAgZWNobyAiV2FpdGluZyBmb3Iga3ViZS1hcGlzZXJ2ZXIgdG8gYXBwbHkgdGhlIG5ldyBzdGF0aWMgcG9kIGNvbmZpZ3VyYXRpb24iCiAgICBzbGVlcCAxMAogIGRvbmUKICBzeXN0ZW1jdGwgZGFlbW9uLXJlbG9hZAogIHN5c3RlbWN0bCByZXN0YXJ0IGt1YmVsZXQKfQpmdW5jdGlvbiBhcHByb3ZlX2NzciB7CiAgZWNobyAiQXBwcm92aW5nIGNzcnMgLi4uIgogIG5lZWRlZF90b19hcHByb3ZlPWZhbHNlCiAgdW50aWwgWyAkKG9jIGdldCBub2RlcyB8IGdyZXAgbWFzdGVyIHwgZ3JlcCAtdiBOb3RSZWFkeSB8IGdyZXAgUmVhZHkgfCB3YyAtbCkgLWVxIDEgXTsgZG8KICAgICAgbmVlZGVkX3RvX2FwcHJvdmU9dHJ1ZQogICAgICBlY2hvICJBcHByb3ZpbmcgY3NycyAuLi4iCiAgICAgb2MgZ2V0IGNzciAtbyBnby10ZW1wbGF0ZT0ne3tyYW5nZSAuaXRlbXN9fXt7aWYgbm90IC5zdGF0dXN9fXt7Lm1ldGFkYXRhLm5hbWV9fXt7IlxuIn19e3tlbmR9fXt7ZW5kfX0nIHwgeGFyZ3Mgb2MgYWRtIGNlcnRpZmljYXRlIGFwcHJvdmUgJj4gL2Rldi9udWxsIHx8IHRydWUKICAgICBzbGVlcCAzMAogICAgZG9uZQogICMgUmVzdGFydCBrdWJlbGV0IG9ubHkgaWYgbm9kZSB3YXMgYWRkZWQKICBpZiAkbmVlZGVkX3RvX2FwcHJvdmUgOyB0aGVuCiAgICBzbGVlcCA2MAogICAgcmVzdGFydF9rdWJlbGV0CiAgZmkKfQpmdW5jdGlvbiB3YWl0X2Zvcl9jdm8gewogIGVjaG8gIldhaXRpbmcgZm9yIGN2byIKICB1bnRpbCBbICIkKG9jIGdldCBjbHVzdGVydmVyc2lvbiAtbyBqc29ucGF0aD0ney5pdGVtc1swXS5zdGF0dXMuY29uZGl0aW9uc1s/KEAudHlwZT09IkF2YWlsYWJsZSIpXS5zdGF0dXN9JykiID09ICJUcnVlIiBdOyBkbwogICAgICBlY2hvICJTdGlsbCB3YWl0aW5nIGZvciBjdm8gLi4uIgogICAgIHNsZWVwIDMwCiAgICBkb25lCn0KZnVuY3Rpb24gY2xlYW4gewogIGlmIFsgLWQgIi9ldGMva3ViZXJuZXRlcy9ib290c3RyYXAtc2VjcmV0cyIgXTsgdGhlbgogICAgIHJtIC1yZiAvZXRjL2t1YmVybmV0ZXMvYm9vdHN0cmFwLSoKICBmaQp9Cgp3YWl0X2Zvcl9hcGkKYXBwcm92ZV9jc3IKd2FpdF9mb3JfY3ZvCmNsZWFu
+          mode: 365
+          overwrite: true
+          path: /usr/local/bin/after_reboot.sh
+    systemd:
+      units:
+        - name:  after_reboot.service
+          contents: "[Unit]\nDescription=Master Install\nWants=kubelet.service\nAfter=kubelet.service\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/after_reboot.sh\n\nRestartSec=5s\n\n[Install]\nWantedBy=multi-user.target\n"
+          enabled: true
