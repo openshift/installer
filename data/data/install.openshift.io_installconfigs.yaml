@@ -664,7 +664,7 @@ spec:
                 description: NetworkType is the type of network to install. The default is OpenShiftSDN
                 type: string
               serviceCIDR:
-                description: Depcreated name for ServiceNetwork
+                description: Deprecated name for ServiceNetwork
                 type: Any
               serviceNetwork:
                 description: 'ServiceNetwork is the list of IP address pools for services. Default is 172.30.0.0/16. NOTE: currently only one entry is supported.'
