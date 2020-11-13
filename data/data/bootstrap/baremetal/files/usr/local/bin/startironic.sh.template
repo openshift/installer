@@ -134,8 +134,8 @@ $IPTABLES -t raw -A DHCP_IRONIC -j DROP
 {{end}}
 
 # Wait for images to be downloaded/ready
-podman wait -i 1000 ipa-downloader
-podman wait -i 1000 coreos-downloader
+podman wait -i 1000ms ipa-downloader
+podman wait -i 1000ms coreos-downloader
 while ! curl --fail http://localhost/images/rhcos-ootpa-latest.qcow2.md5sum ; do sleep 1; done
 while ! curl --fail --head http://localhost/images/ironic-python-agent.initramfs ; do sleep 1; done
 while ! curl --fail --head http://localhost/images/ironic-python-agent.kernel ; do sleep 1; done
