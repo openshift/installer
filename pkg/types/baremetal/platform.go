@@ -83,8 +83,9 @@ type Platform struct {
 	// +optional
 	ExternalBridge string `json:"externalBridge,omitempty"`
 
-	// ExternalMACAddress is used to allow setting a static MAC address for
-	// the bootstrap host on the external network. If left blank, libvirt will
+	// ExternalMACAddress is used to allow setting a static unicast MAC
+	// address for the bootstrap host on the external network. Consider
+	// using the QEMU vendor prefix `52:54:00`. If left blank, libvirt will
 	// generate one for you.
 	// +optional
 	ExternalMACAddress string `json:"externalMACAddress,omitempty"`
@@ -99,8 +100,9 @@ type Platform struct {
 	// +optional
 	ProvisioningBridge string `json:"provisioningBridge,omitempty"`
 
-	// ProvisioningMACAddress is used to allow setting a static MAC address for
-	// the bootstrap host on the provisioning network. If left blank, libvirt will
+	// ProvisioningMACAddress is used to allow setting a static unicast MAC
+	// address for the bootstrap host on the provisioning network. Consider
+	// using the QEMU vendor prefix `52:54:00`. If left blank, libvirt will
 	// generate one for you.
 	// +optional
 	ProvisioningMACAddress string `json:"provisioningMACAddress,omitempty"`

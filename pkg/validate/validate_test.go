@@ -563,3 +563,41 @@ func TestURI(t *testing.T) {
 		})
 	}
 }
+
+func TestMAC(t *testing.T) {
+	cases := []struct {
+		name     string
+		addr     string
+		expected string
+	}{
+		{
+			name: "valid_mac",
+			addr: "7A:CE:E3:29:35:6F",
+		},
+		{
+			name:     "invalid_multicast",
+			addr:     "7D:CE:E3:29:35:6F",
+			expected: "expected unicast mac address",
+		},
+		{
+			name:     "invalid_infiniband",
+			addr:     "00-00-00-00-fe-80-00-00-00-00-00-00-02-00-5e-10-00-00-00-01",
+			expected: "invalid MAC address",
+		},
+		{
+			name:     "invalid_mac",
+			addr:     "this is a bad mac",
+			expected: "invalid MAC address",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := MAC(tc.addr)
+			if tc.expected == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, tc.expected, err)
+			}
+		})
+	}
+}

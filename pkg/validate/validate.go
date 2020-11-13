@@ -184,10 +184,43 @@ func IP(ip string) error {
 	return nil
 }
 
-// MAC validates that a value is a valid mac address
+// MAC validates that a value is a valid unicast EUI-48 MAC address
 func MAC(addr string) error {
-	_, err := net.ParseMAC(addr)
-	return err
+	hwAddr, err := net.ParseMAC(addr)
+	if err != nil {
+		return err
+	}
+
+	// net.ParseMAC checks for any valid mac, including 20-octet infiniband
+	// MAC's. Let's make sure we have an EUI-48 MAC, consisting of 6 octets
+	if len(hwAddr) != 6 {
+		return fmt.Errorf("invalid MAC address")
+	}
+
+	// We also need to check that the MAC is a valid unicast address. A multicast
+	// address is an address where the least significant bit of the most significant
+	// byte is 1.
+	//
+	//      Example 1: Multicast MAC
+	//      ------------------------
+	//      7D:CE:E3:29:35:6F
+	//       ^--> most significant byte
+	//
+	//      0x7D is 0b11111101
+	//                       ^--> this is a multicast MAC
+	//
+	//      Example 2: Unicast MAC
+	//      ----------------------
+	//      7A:CE:E3:29:35:6F
+	//       ^--> most significant byte
+	//
+	//      0x7A is 0b11111010
+	//                       ^--> this is a unicast MAC
+	if hwAddr[0]&1 == 1 {
+		return fmt.Errorf("expected unicast mac address, found multicast")
+	}
+
+	return nil
 }
 
 // UUID validates that a uuid is non-empty and a valid uuid.
