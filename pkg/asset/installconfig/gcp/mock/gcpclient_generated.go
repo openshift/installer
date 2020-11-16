@@ -51,19 +51,19 @@ func (mr *MockAPIMockRecorder) GetNetwork(ctx, network, project interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetwork", reflect.TypeOf((*MockAPI)(nil).GetNetwork), ctx, network, project)
 }
 
-// GetMachineTypes mocks base method.
-func (m *MockAPI) GetMachineTypes(ctx context.Context, project, filter string) (map[string]*compute.MachineType, error) {
+// GetMachineType mocks base method.
+func (m *MockAPI) GetMachineType(ctx context.Context, project, zone, machineType string) (*compute.MachineType, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMachineTypes", ctx, project, filter)
-	ret0, _ := ret[0].(map[string]*compute.MachineType)
+	ret := m.ctrl.Call(m, "GetMachineType", ctx, project, zone, machineType)
+	ret0, _ := ret[0].(*compute.MachineType)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetMachineTypes indicates an expected call of GetMachineTypes.
-func (mr *MockAPIMockRecorder) GetMachineTypes(ctx, project, filter interface{}) *gomock.Call {
+// GetMachineType indicates an expected call of GetMachineType.
+func (mr *MockAPIMockRecorder) GetMachineType(ctx, project, zone, machineType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineTypes", reflect.TypeOf((*MockAPI)(nil).GetMachineTypes), ctx, project, filter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineType", reflect.TypeOf((*MockAPI)(nil).GetMachineType), ctx, project, zone, machineType)
 }
 
 // GetPublicDomains mocks base method.
@@ -139,6 +139,21 @@ func (m *MockAPI) GetRecordSets(ctx context.Context, project, zone string) ([]*d
 func (mr *MockAPIMockRecorder) GetRecordSets(ctx, project, zone interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecordSets", reflect.TypeOf((*MockAPI)(nil).GetRecordSets), ctx, project, zone)
+}
+
+// GetZones mocks base method.
+func (m *MockAPI) GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetZones", ctx, project, filter)
+	ret0, _ := ret[0].([]*compute.Zone)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetZones indicates an expected call of GetZones.
+func (mr *MockAPIMockRecorder) GetZones(ctx, project, filter interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetZones", reflect.TypeOf((*MockAPI)(nil).GetZones), ctx, project, filter)
 }
 
 // GetEnabledServices mocks base method.

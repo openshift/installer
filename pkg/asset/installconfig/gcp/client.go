@@ -19,12 +19,13 @@ import (
 // API represents the calls made to the API.
 type API interface {
 	GetNetwork(ctx context.Context, network, project string) (*compute.Network, error)
-	GetMachineTypes(ctx context.Context, project, filter string) (map[string]*compute.MachineType, error)
+	GetMachineType(ctx context.Context, project, zone, machineType string) (*compute.MachineType, error)
 	GetPublicDomains(ctx context.Context, project string) ([]string, error)
 	GetPublicDNSZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error)
 	GetSubnetworks(ctx context.Context, network, project, region string) ([]*compute.Subnetwork, error)
 	GetProjects(ctx context.Context) (map[string]string, error)
 	GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error)
+	GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error)
 	GetEnabledServices(ctx context.Context, project string) ([]string, error)
 }
 
@@ -49,10 +50,8 @@ func NewClient(ctx context.Context) (*Client, error) {
 	return client, nil
 }
 
-// GetMachineTypes uses the GCP Compute Service API to get a list of machine types from a project.
-func (c *Client) GetMachineTypes(ctx context.Context, project, filter string) (map[string]*compute.MachineType, error) {
-	types := map[string]*compute.MachineType{}
-
+// GetMachineType uses the GCP Compute Service API to get the specified machine type.
+func (c *Client) GetMachineType(ctx context.Context, project, zone, machineType string) (*compute.MachineType, error) {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
@@ -61,22 +60,12 @@ func (c *Client) GetMachineTypes(ctx context.Context, project, filter string) (m
 		return nil, err
 	}
 
-	req := svc.MachineTypes.AggregatedList(project)
-	if filter != "" {
-		req = req.Filter(filter)
+	req, err := svc.MachineTypes.Get(project, zone, machineType).Context(ctx).Do()
+	if err != nil {
+		return nil, err
 	}
 
-	if err := req.Pages(ctx, func(page *compute.MachineTypeAggregatedList) error {
-		for _, scopedList := range page.Items {
-			for _, item := range scopedList.MachineTypes {
-				types[item.Name] = item
-			}
-		}
-		return nil
-	}); err != nil {
-		return nil, errors.Wrapf(err, "failed to get machine types from project %s", project)
-	}
-	return types, nil
+	return req, nil
 }
 
 // GetNetwork uses the GCP Compute Service API to get a network by name from a project.
@@ -231,6 +220,35 @@ func (c *Client) GetProjects(ctx context.Context) (map[string]string, error) {
 		return nil, err
 	}
 	return projects, nil
+}
+
+// GetZones uses the GCP Compute Service API to get a list of zones from a project.
+func (c *Client) GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error) {
+	zones := []*compute.Zone{}
+
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	svc, err := c.getComputeService(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := svc.Zones.List(project)
+	if filter != "" {
+		req = req.Filter(filter)
+	}
+
+	if err := req.Pages(ctx, func(page *compute.ZoneList) error {
+		for _, zone := range page.Items {
+			zones = append(zones, zone)
+		}
+		return nil
+	}); err != nil {
+		return nil, errors.Wrapf(err, "failed to get zones from project %s", project)
+	}
+
+	return zones, nil
 }
 
 func (c *Client) getCloudResourceService(ctx context.Context) (*cloudresourcemanager.Service, error) {

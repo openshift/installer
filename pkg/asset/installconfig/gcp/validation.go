@@ -44,30 +44,23 @@ func Validate(client API, ic *types.InstallConfig) error {
 }
 
 // ValidateInstanceType ensures the instance type has sufficient Vcpu and Memory.
-func ValidateInstanceType(client API, ic *types.InstallConfig, fieldPath *field.Path, instanceType string, req resourceRequirements) field.ErrorList {
+func ValidateInstanceType(client API, fieldPath *field.Path, project, zone, instanceType string, req resourceRequirements) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if instanceType == "" {
-		return nil
-	}
-
-	filter := fmt.Sprintf("name = %s", instanceType)
-	instanceTypes, err := client.GetMachineTypes(context.TODO(), ic.GCP.ProjectID, filter)
+	typeMeta, err := client.GetMachineType(context.TODO(), project, zone, instanceType)
 	if err != nil {
-		return append(allErrs, field.InternalError(fieldPath, err))
+		if _, ok := err.(*googleapi.Error); ok {
+			return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
+		}
+		return append(allErrs, field.InternalError(nil, err))
 	}
 
-	if typeMeta, ok := instanceTypes[instanceType]; ok {
-		if typeMeta.GuestCpus < req.minimumVCpus {
-			errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d vCPUs", req.minimumVCpus)
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
-		}
-		if typeMeta.MemoryMb < req.minimumMemory {
-			errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d MB Memory", req.minimumMemory)
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
-		}
-	} else {
-		errMsg := fmt.Sprintf("instance type %s not found", instanceType)
+	if typeMeta.GuestCpus < req.minimumVCpus {
+		errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d vCPUs", req.minimumVCpus)
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+	}
+	if typeMeta.MemoryMb < req.minimumMemory {
+		errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d MB Memory", req.minimumMemory)
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
 	}
 
@@ -78,6 +71,12 @@ func ValidateInstanceType(client API, ic *types.InstallConfig, fieldPath *field.
 func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	// Get list of zones in region
+	zones, err := client.GetZones(context.TODO(), ic.GCP.ProjectID, fmt.Sprintf("region eq .*%s", ic.GCP.Region))
+	if err != nil {
+		return append(allErrs, field.InternalError(nil, err))
+	}
+
 	// Default requirements need to be sufficient to support Control Plane instances.
 	defaultInstanceReq := controlPlaneReq
 
@@ -85,17 +84,20 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		// Default requirements can be relaxed when the controlPlane type is set explicitly.
 		defaultInstanceReq = computeReq
 
-		allErrs = append(allErrs, ValidateInstanceType(client, ic, field.NewPath("controlPlane", "platform", "gcp"), ic.ControlPlane.Platform.GCP.InstanceType, controlPlaneReq)...)
+		allErrs = append(allErrs, ValidateInstanceType(client, field.NewPath("controlPlane", "platform", "gcp"), ic.GCP.ProjectID, zones[0].Name,
+			ic.ControlPlane.Platform.GCP.InstanceType, controlPlaneReq)...)
 	}
 
 	if ic.Platform.GCP.DefaultMachinePlatform != nil && ic.Platform.GCP.DefaultMachinePlatform.InstanceType != "" {
-		allErrs = append(allErrs, ValidateInstanceType(client, ic, field.NewPath("platform", "gcp", "defaultMachinePlatform"), ic.Platform.GCP.DefaultMachinePlatform.InstanceType, defaultInstanceReq)...)
+		allErrs = append(allErrs, ValidateInstanceType(client, field.NewPath("platform", "gcp", "defaultMachinePlatform"), ic.GCP.ProjectID, zones[0].Name,
+			ic.Platform.GCP.DefaultMachinePlatform.InstanceType, defaultInstanceReq)...)
 	}
 
 	for idx, compute := range ic.Compute {
 		fieldPath := field.NewPath("compute").Index(idx)
 		if compute.Platform.GCP != nil && compute.Platform.GCP.InstanceType != "" {
-			allErrs = append(allErrs, ValidateInstanceType(client, ic, fieldPath.Child("platform", "gcp"), compute.Platform.GCP.InstanceType, computeReq)...)
+			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "gcp"), ic.GCP.ProjectID, zones[0].Name,
+				compute.Platform.GCP.InstanceType, computeReq)...)
 		}
 	}
 
