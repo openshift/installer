@@ -124,6 +124,9 @@ func validateFloatingIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Pa
 		} else if p.ExternalNetwork == "" {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressFloatingIP"), p.IngressFloatingIP, "Cannot set floating ips when external network not specified"))
 		}
+		if p.APIFloatingIP != "" && p.APIFloatingIP == p.IngressFloatingIP {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressFloatingIP"), p.IngressFloatingIP, "ingressFloatingIP can not be the same as apiFloatingIP"))
+		}
 	}
 	return allErrs
 }
