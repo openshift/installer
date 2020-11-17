@@ -25,6 +25,9 @@ const (
 
 	// PermissionDeleteNetworking is a set of permissions required when the installer destroys networking resources.
 	PermissionDeleteNetworking PermissionGroup = "delete-networking"
+
+	// PermissionDeleteSharedNetworking is a set of permissions required when the installer destroys resources from a shared-network cluster.
+	PermissionDeleteSharedNetworking PermissionGroup = "delete-shared-networking"
 )
 
 var permissions = map[PermissionGroup][]string{
@@ -214,6 +217,10 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:DetachInternetGateway",
 		"ec2:DisassociateRouteTable",
 		"ec2:ReplaceRouteTableAssociation",
+	},
+	// Permissions required for deleting a cluster with shared network resources
+	PermissionDeleteSharedNetworking: {
+		"tag:UnTagResources",
 	},
 }
 
