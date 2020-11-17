@@ -127,7 +127,6 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(bootstrapProvisioningIP, "80"), imageFilename, compressedImageFilename)
 		cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
 		instanceInfo := map[string]interface{}{
-			"root_gb":        25, // FIXME(stbenjam): Needed until https://storyboard.openstack.org/#!/story/2005165
 			"image_source":   cacheImageURL,
 			"image_checksum": cacheChecksumURL,
 		}
