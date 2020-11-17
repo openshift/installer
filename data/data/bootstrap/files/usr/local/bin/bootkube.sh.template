@@ -383,7 +383,7 @@ then
     sed -i 's/name: kube-controller-manager/name: bootstrap-kube-controller-manager/g' bootstrap-manifests/bootstrap-kube-controller-manager-pod.yaml
     sed -i 's/name: kube-scheduler/name: bootstrap-kube-scheduler/g' bootstrap-manifests/bootstrap-kube-scheduler-pod.yaml
 
-    echo "Rename bootstrap static pods"
+    echo "create-master-data done"
     touch create-master-data.done
 fi
 
@@ -430,7 +430,7 @@ echo "These are the static pods:"
 ls /etc/kubernetes/manifests/
 
 echo "Going to reboot"
-reboot
+shutdown -r +1 "Bootstrap completed, server is going to reboot."
 
 
 {{else}}
