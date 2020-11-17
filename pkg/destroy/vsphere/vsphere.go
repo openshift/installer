@@ -153,7 +153,7 @@ func (o *ClusterUninstaller) Run() error {
 	var folderList []types.ManagedObjectReference
 	var virtualMachineList []types.ManagedObjectReference
 
-	o.Logger.Debug("find attached objects on tag")
+	o.Logger.Debug("Find attached objects on tag")
 	tagAttachedObjects, err := getAttachedObjectsOnTag(context.TODO(), o.RestClient, o.InfraID)
 	if err != nil {
 		return err
@@ -179,44 +179,46 @@ func (o *ClusterUninstaller) Run() error {
 		return errors.Errorf("Expected 1 Folder per tag but got %d", len(folderList))
 	}
 
-	o.Logger.Debug("find VirtualMachine objects")
-	virtualMachineMoList, err := getVirtualMachineManagedObjects(context.TODO(), o.Client, virtualMachineList)
-	if err != nil {
-		return err
-	}
-	o.Logger.Debug("delete VirtualMachines")
-	err = deleteVirtualMachines(context.TODO(), o.Client, virtualMachineMoList, o.Logger)
-	if err != nil {
-		return err
-	}
-
-	// In this case, folder was user-provided
-	// and should not be deleted so we are done.
-	if len(folderList) == 0 {
-		return nil
+	if len(virtualMachineList) > 0 {
+		o.Logger.Debug("Find VirtualMachine objects")
+		virtualMachineMoList, err := getVirtualMachineManagedObjects(context.TODO(), o.Client, virtualMachineList)
+		if err != nil {
+			return err
+		}
+		o.Logger.Debug("Delete VirtualMachines")
+		err = deleteVirtualMachines(context.TODO(), o.Client, virtualMachineMoList, o.Logger)
+		if err != nil {
+			return err
+		}
+	} else {
+		o.Logger.Debug("No VirtualMachines found")
 	}
 
-	o.Logger.Debug("find Folder objects")
-	folderMoList, err := getFolderManagedObjects(context.TODO(), o.Client, folderList)
-	if err != nil {
-		o.Logger.Errorln(err)
-		return err
+	if len(folderList) > 0 {
+		o.Logger.Debug("Find Folder objects")
+		folderMoList, err := getFolderManagedObjects(context.TODO(), o.Client, folderList)
+		if err != nil {
+			o.Logger.Errorln(err)
+			return err
+		}
+
+		o.Logger.Debug("Delete Folder")
+		err = deleteFolder(context.TODO(), o.Client, folderMoList, o.Logger)
+		if err != nil {
+			o.Logger.Errorln(err)
+			return err
+		}
+	} else {
+		o.Logger.Debug("No managed Folder found")
 	}
 
-	o.Logger.Debug("delete Folder")
-	err = deleteFolder(context.TODO(), o.Client, folderMoList, o.Logger)
-	if err != nil {
-		o.Logger.Errorln(err)
-		return err
-	}
-
-	o.Logger.Debug("delete tag")
+	o.Logger.Debug("Delete tag")
 	if err = deleteTag(context.TODO(), o.RestClient, o.InfraID); err != nil {
 		o.Logger.Errorln(err)
 		return err
 	}
 
-	o.Logger.Debug("delete tag category")
+	o.Logger.Debug("Delete tag category")
 	if err = deleteTagCategory(context.TODO(), o.RestClient, "openshift-"+o.InfraID); err != nil {
 		o.Logger.Errorln(err)
 		return err
