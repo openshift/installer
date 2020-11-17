@@ -25,6 +25,8 @@ done
 # Start the provisioning nic if not already started
 PROVISIONING_NIC={{.PlatformData.BareMetal.ProvisioningInterface}}
 
+{{ if .PlatformData.BareMetal.ProvisioningIP }}
+
 if ! nmcli -t device | grep "$PROVISIONING_NIC:ethernet:connected"; then
     nmcli c add type ethernet ifname $PROVISIONING_NIC con-name provisioning {{ if .PlatformData.BareMetal.ProvisioningIPv6 }} ip6 {{ else }} ip4 {{ end }} {{.PlatformData.BareMetal.ProvisioningIP}}/{{.PlatformData.BareMetal.ProvisioningCIDR}}
     nmcli c up provisioning
@@ -41,6 +43,8 @@ fi
 while [ -z "$(ip -o addr show dev $PROVISIONING_NIC | grep -v link)" ]; do
     sleep 1
 done
+
+{{ end }}
 
 # set password for ironic basic auth
 # The ironic container contains httpd (and thus httpd-tools), so rely on it to
