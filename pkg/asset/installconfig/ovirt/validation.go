@@ -86,6 +86,7 @@ func authenticated(c *Config) survey.Validator {
 			Username(c.Username).
 			Password(fmt.Sprint(val)).
 			CAFile(c.CAFile).
+			CACert([]byte(c.CABundle)).
 			Insecure(c.Insecure).
 			Build()
 

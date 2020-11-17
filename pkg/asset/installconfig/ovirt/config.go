@@ -2,7 +2,6 @@ package ovirt
 
 import (
 	"crypto/x509"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"

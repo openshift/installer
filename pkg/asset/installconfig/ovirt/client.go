@@ -15,6 +15,7 @@ func getConnection(ovirtConfig Config) (*ovirtsdk.Connection, error) {
 		Username(ovirtConfig.Username).
 		Password(ovirtConfig.Password).
 		CAFile(ovirtConfig.CAFile).
+		CACert([]byte(ovirtConfig.CABundle)).
 		Insecure(ovirtConfig.Insecure).
 		Build()
 	if err != nil {
