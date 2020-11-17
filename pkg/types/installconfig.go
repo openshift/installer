@@ -247,7 +247,7 @@ type Networking struct {
 	// +optional
 	ServiceNetwork []ipnet.IPNet `json:"serviceNetwork,omitempty"`
 
-	// Deprected types, scheduled to be removed
+	// Deprecated types, scheduled to be removed
 
 	// Deprecated name for MachineCIDRs. If set, MachineCIDRs must
 	// be empty or the first index must match.
@@ -258,7 +258,7 @@ type Networking struct {
 	// +optional
 	DeprecatedType string `json:"type,omitempty"`
 
-	// Depcreated name for ServiceNetwork
+	// Deprecated name for ServiceNetwork
 	// +optional
 	DeprecatedServiceCIDR *ipnet.IPNet `json:"serviceCIDR,omitempty"`
 

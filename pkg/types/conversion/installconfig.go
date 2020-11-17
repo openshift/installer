@@ -27,11 +27,11 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 	default:
 		return field.Invalid(field.NewPath("apiVersion"), config.APIVersion, fmt.Sprintf("cannot upconvert from version %s", config.APIVersion))
 	}
-	ConvertNetworking(config)
+	convertNetworking(config)
 
 	switch config.Platform.Name() {
 	case baremetal.Name:
-		ConvertBaremetal(config)
+		convertBaremetal(config)
 	case openstack.Name:
 		err := convertOpenStack(config)
 		if err != nil {
@@ -43,8 +43,8 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 	return nil
 }
 
-// ConvertNetworking upconverts deprecated fields in networking
-func ConvertNetworking(config *types.InstallConfig) {
+// convertNetworking upconverts deprecated fields in networking
+func convertNetworking(config *types.InstallConfig) {
 	if config.Networking == nil {
 		return
 	}
@@ -85,10 +85,10 @@ func ConvertNetworking(config *types.InstallConfig) {
 	}
 }
 
-// ConvertBaremetal upconverts deprecated fields in the baremetal
+// convertBaremetal upconverts deprecated fields in the baremetal
 // platform. ProvisioningDHCPExternal has been replaced by setting
 // the ProvisioningNetwork field to "Unmanaged"
-func ConvertBaremetal(config *types.InstallConfig) {
+func convertBaremetal(config *types.InstallConfig) {
 	if config.Platform.BareMetal.DeprecatedProvisioningDHCPExternal && config.Platform.BareMetal.ProvisioningNetwork == "" {
 		config.Platform.BareMetal.ProvisioningNetwork = baremetal.UnmanagedProvisioningNetwork
 	}
