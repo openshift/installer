@@ -28,7 +28,7 @@ EOF
       - group: apps/v1
         kind: Deployment
         name: etcd-quorum-guard
-        namespace: openshift-machine-config-operator
+        namespace: openshift-etcd
         unmanaged: true
 EOF
 )" || return 1
@@ -43,4 +43,3 @@ while ! patchit; do
     echo "Waiting to try again..."
     sleep 10
 done
-
