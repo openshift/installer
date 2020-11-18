@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
+	"github.com/pkg/errors"
 	"gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/ovirt"
@@ -28,7 +29,7 @@ func askNetwork(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
 		networkByNames[network.MustName()] = network
 		networkNames = append(networkNames, network.MustName())
 	}
-	err = survey.AskOne(&survey.Select{
+	if err := survey.AskOne(&survey.Select{
 		Message: "Network",
 		Help:    "The Engine network of the deployed VMs. 'ovirtmgmt' is the default network. It is recommended to use a dedicated network for each OpenShift cluster.",
 		Options: networkNames,
@@ -47,8 +48,10 @@ func askNetwork(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
 			}
 			p.NetworkName = network.MustName()
 			return nil
-		})
-	return err
+		}); err != nil {
+		return errors.Wrap(err, "failed UserInput")
+	}
+	return nil
 }
 
 func askVNICProfileID(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
@@ -71,7 +74,7 @@ func askVNICProfileID(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
 	}
 
 	// we have multiple vnic profile for the selected network
-	err = survey.AskOne(&survey.Select{
+	if err := survey.AskOne(&survey.Select{
 		Message: "VNIC Profile",
 		Help:    "The Engine VNIC profile of the VMs.",
 		Options: profileNames,
@@ -90,6 +93,8 @@ func askVNICProfileID(c *ovirtsdk4.Connection, p *ovirt.Platform) error {
 			}
 			p.VNICProfileID = profile.MustId()
 			return nil
-		})
-	return err
+		}); err != nil {
+		return errors.Wrap(err, "failed UserInput")
+	}
+	return nil
 }

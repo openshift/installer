@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
+	"github.com/pkg/errors"
 	"gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/ovirt"
@@ -28,7 +29,7 @@ func askStorage(c *ovirtsdk4.Connection, p *ovirt.Platform, clusterName string) 
 		domainsForCluster[domain.MustName()] = domain
 		domainNames = append(domainNames, domain.MustName())
 	}
-	err = survey.AskOne(&survey.Select{
+	if err := survey.AskOne(&survey.Select{
 		Message: "Storage domain",
 		Help:    "The storage domain will be used to create the disks of all the cluster nodes.",
 		Options: domainNames,
@@ -47,6 +48,8 @@ func askStorage(c *ovirtsdk4.Connection, p *ovirt.Platform, clusterName string) 
 			}
 			p.StorageDomainID = domain.MustId()
 			return nil
-		})
-	return err
+		}); err != nil {
+		return errors.Wrap(err, "failed UserInput")
+	}
+	return nil
 }

@@ -38,7 +38,7 @@ func askCluster(c *ovirtsdk4.Connection, p *ovirt.Platform) (string, error) {
 			clusterNames = append(clusterNames, cluster.MustName())
 		}
 	}
-	err = survey.AskOne(&survey.Select{
+	if err := survey.AskOne(&survey.Select{
 		Message: "Cluster",
 		Help:    "The Cluster where the VMs will be created.",
 		Options: clusterNames,
@@ -57,6 +57,8 @@ func askCluster(c *ovirtsdk4.Connection, p *ovirt.Platform) (string, error) {
 			}
 			p.ClusterID = cl.MustId()
 			return nil
-		})
-	return clusterName, err
+		}); err != nil {
+		return clusterName, errors.Wrap(err, "failed UserInput")
+	}
+	return clusterName, nil
 }

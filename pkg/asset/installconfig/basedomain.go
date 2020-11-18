@@ -65,7 +65,7 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 		//Do nothing
 	}
 
-	return survey.Ask([]*survey.Question{
+	if err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
 				Message: "Base Domain",
@@ -75,7 +75,10 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 				return validate.DomainName(ans.(string), true)
 			}),
 		},
-	}, &a.BaseDomain)
+	}, &a.BaseDomain); err != nil {
+		return errors.Wrap(err, "failed UserInput")
+	}
+	return nil
 }
 
 // Name returns the human-friendly name of the asset.
