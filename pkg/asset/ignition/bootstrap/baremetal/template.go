@@ -71,14 +71,15 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 		templateData.ProvisioningInterface = "ens3"
 		templateData.ProvisioningDNSMasq = false
 
-		for _, network := range networks {
-			if network.CIDR.Contains(net.ParseIP(templateData.ProvisioningIP)) {
-				templateData.ProvisioningIPv6 = network.CIDR.IP.To4() == nil
+		if templateData.ProvisioningIP != "" {
+			for _, network := range networks {
+				if network.CIDR.Contains(net.ParseIP(templateData.ProvisioningIP)) {
+					templateData.ProvisioningIPv6 = network.CIDR.IP.To4() == nil
 
-				cidr, _ := network.CIDR.Mask.Size()
-				templateData.ProvisioningCIDR = cidr
+					cidr, _ := network.CIDR.Mask.Size()
+					templateData.ProvisioningCIDR = cidr
+				}
 			}
-
 		}
 	}
 
