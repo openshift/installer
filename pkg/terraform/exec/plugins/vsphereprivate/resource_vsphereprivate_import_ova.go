@@ -339,6 +339,13 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 		return errors.Errorf("failed to lease wait: %s", err)
 	}
 
+	d.SetId(info.Entity.Value)
+
+	err = attachTag(d, meta)
+	if err != nil {
+		return errors.Errorf("failed to attach tag to virtual machine: %s", err)
+	}
+
 	u := lease.StartUpdater(ctx, info)
 	defer u.Done()
 
@@ -356,12 +363,6 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 		return errors.Errorf("failed to lease complete: %s", err)
 	}
 
-	d.SetId(info.Entity.Value)
-
-	err = attachTag(d, meta)
-	if err != nil {
-		return errors.Errorf("failed to attach tag to virtual machine: %s", err)
-	}
 	log.Printf("[DEBUG] %s: ova import complete", d.Get("name").(string))
 
 	return resourceVSpherePrivateImportOvaRead(d, meta)
