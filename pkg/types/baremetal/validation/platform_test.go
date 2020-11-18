@@ -310,6 +310,13 @@ func TestValidateProvisioning(t *testing.T) {
 				build(),
 		},
 		{
+			name: "invalid_multicast_mac",
+			platform: platform().
+				ExternalMACAddress("7D:CE:E3:29:35:6F").
+				build(),
+			expected: "expected unicast mac address, found multicast",
+		},
+		{
 			name: "invalid_bootstrapprovip_wrongCIDR",
 			platform: platform().
 				BootstrapProvisioningIP("192.168.128.1").build(),
