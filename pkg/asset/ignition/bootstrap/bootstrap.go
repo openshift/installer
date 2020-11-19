@@ -28,6 +28,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/vsphere"
+	mcign "github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
@@ -82,6 +83,8 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&kubeconfig.AdminInternalClient{},
 		&kubeconfig.Kubelet{},
 		&kubeconfig.LoopbackClient{},
+		&mcign.MasterIgnitionCustomizations{},
+		&mcign.WorkerIgnitionCustomizations{},
 		&machines.Master{},
 		&machines.Worker{},
 		&manifests.Manifests{},
@@ -461,6 +464,8 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 		&manifests.Openshift{},
 		&machines.Master{},
 		&machines.Worker{},
+		&mcign.MasterIgnitionCustomizations{},
+		&mcign.WorkerIgnitionCustomizations{},
 	} {
 		dependencies.Get(asset)
 

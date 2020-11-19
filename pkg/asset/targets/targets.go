@@ -62,6 +62,8 @@ var (
 	// Cluster are the cluster targeted assets.
 	Cluster = []asset.WritableAsset{
 		&cluster.Metadata{},
+		&machine.MasterIgnitionCustomizations{},
+		&machine.WorkerIgnitionCustomizations{},
 		&cluster.TerraformVariables{},
 		&kubeconfig.AdminClient{},
 		&password.KubeadminPassword{},
