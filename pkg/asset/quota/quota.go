@@ -11,9 +11,11 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	configgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	openstackvalidation "github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/quota/aws"
 	"github.com/openshift/installer/pkg/asset/quota/gcp"
+	"github.com/openshift/installer/pkg/asset/quota/openstack"
 	"github.com/openshift/installer/pkg/diagnostics"
 	"github.com/openshift/installer/pkg/quota"
 	quotaaws "github.com/openshift/installer/pkg/quota/aws"
@@ -25,7 +27,7 @@ import (
 	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
-	"github.com/openshift/installer/pkg/types/openstack"
+	typesopenstack "github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -119,7 +121,17 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 			return summarizeFailingReport(reports)
 		}
 		summarizeReport(reports)
-	case azure.Name, baremetal.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name, kubevirt.Name:
+	case typesopenstack.Name:
+		ci, err := openstackvalidation.GetCloudInfo(ic.Config)
+		if err != nil {
+			return errors.Wrap(err, "failed to get cloud info")
+		}
+		reports, err := quota.Check(ci.Quotas, openstack.Constraints(ci, masters, workers))
+		if err != nil {
+			return summarizeFailingReport(reports)
+		}
+		summarizeReport(reports)
+	case azure.Name, baremetal.Name, libvirt.Name, none.Name, ovirt.Name, vsphere.Name, kubevirt.Name:
 		// no special provisioning requirements to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
@@ -136,10 +148,16 @@ func (a *PlatformQuotaCheck) Name() string {
 func summarizeFailingReport(reports []quota.ConstraintReport) error {
 	var notavailable []string
 	var unknown []string
+	var regionMessage string
 	for _, report := range reports {
 		switch report.Result {
 		case quota.NotAvailable:
-			notavailable = append(notavailable, fmt.Sprintf("%s is not available in %s because %s", report.For.Name, report.For.Region, report.Message))
+			if report.For.Region != "" {
+				regionMessage = " in " + report.For.Region
+			} else {
+				regionMessage = ""
+			}
+			notavailable = append(notavailable, fmt.Sprintf("%s is not available%s because %s", report.For.Name, regionMessage, report.Message))
 		case quota.Unknown:
 			unknown = append(unknown, report.For.Name)
 		default:
@@ -163,10 +181,16 @@ func summarizeFailingReport(reports []quota.ConstraintReport) error {
 // summarizeReport summarizes a report when there are availble.
 func summarizeReport(reports []quota.ConstraintReport) {
 	var low []string
+	var regionMessage string
 	for _, report := range reports {
 		switch report.Result {
 		case quota.AvailableButLow:
-			low = append(low, fmt.Sprintf("%s (%s)", report.For.Name, report.For.Region))
+			if report.For.Region != "" {
+				regionMessage = " (" + report.For.Region + ")"
+			} else {
+				regionMessage = ""
+			}
+			low = append(low, fmt.Sprintf("%s%s", report.For.Name, regionMessage))
 		default:
 			continue
 		}

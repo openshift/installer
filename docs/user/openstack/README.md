@@ -72,6 +72,8 @@ For a successful installation it is required:
 - Depending on the type of [image registry backend](#image-registry-requirements) either 1 Swift container or an additional 100 GB volume.
 - OpenStack resource tagging
 
+**NOTE:** The installer will check OpenStack quota limits to make sure that the requested resources can be created. Note that it won't check for resource availability in the cloud, but only on the quotas.
+
 You may need to increase the security group related quotas from their default values. For example (as an OpenStack administrator):
 
 ```sh
