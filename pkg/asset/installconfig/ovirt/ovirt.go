@@ -9,7 +9,7 @@ import (
 	"github.com/openshift/installer/pkg/types/ovirt"
 )
 
-const PlatformValidationMaxTries = 3
+const platformValidationMaxTries = 3
 
 // Platform collects ovirt-specific configuration.
 func Platform() (*ovirt.Platform, error) {
@@ -19,7 +19,7 @@ func Platform() (*ovirt.Platform, error) {
 
 	// Fetch config from file
 	ovirtConfig, err := NewConfig()
-	for tries := 0; tries < PlatformValidationMaxTries; tries++ {
+	for tries := 0; tries < platformValidationMaxTries; tries++ {
 		if err == nil {
 			// If no error happened previously (loading file or configuration), validate the connection.
 			c, err = ovirtConfig.getValidatedConnection()
