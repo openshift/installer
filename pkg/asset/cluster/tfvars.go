@@ -401,6 +401,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for _, master := range masters {
 			masterSpecs = append(masterSpecs, master.Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec))
 		}
+
+		var clusterOSImageProperties = make(map[string]string)
+		if installConfig.Config.Platform.OpenStack.HwQEMUGuestAgentSupport {
+			clusterOSImageProperties["hw_qemu_guest_agent"] = "yes"
+		}
+
 		data, err = openstacktfvars.TFVars(
 			masterSpecs,
 			installConfig.Config.Platform.OpenStack.Cloud,
@@ -411,6 +417,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.OpenStack.APIVIP,
 			installConfig.Config.Platform.OpenStack.IngressVIP,
 			string(*rhcosImage),
+		    clusterOSImageProperties,
 			clusterID.InfraID,
 			caCert,
 			bootstrapIgn,

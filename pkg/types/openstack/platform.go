@@ -62,6 +62,10 @@ type Platform struct {
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
 
+	// HwQEMUGuestAgentSupport Enables hw_qemu_guest_agent support on KVM hypvervisors.
+	// Default: bool
+	HwQEMUGuestAgentSupport bool `json:"hwQEMUGuestAgentSupport,omitempty"`
+
 	// APIVIP is the static IP on the nodes subnet that the api port for openshift will be assigned
 	// Default: will be set to the 5 on the first entry in the machineNetwork CIDR
 	// +optional
