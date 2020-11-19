@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+. /usr/local/bin/bootstrap-service-record.sh
+
 KUBECONFIG="${1}"
 
 echo "Approving all CSR requests until bootstrapping is complete..."

@@ -11,6 +11,10 @@ mkdir -p "${ARTIFACTS}"
 
 exec &> >(tee "${ARTIFACTS}/gather.log")
 
+echo "Gathering bootstrap service records ..."
+mkdir -p "${ARTIFACTS}/bootstrap/services"
+sudo cp -r /var/log/openshift/* "${ARTIFACTS}/bootstrap/services/"
+
 echo "Gathering bootstrap systemd summary ..."
 LANG=POSIX systemctl list-units --state=failed >& "${ARTIFACTS}/failed-units.txt"
 
