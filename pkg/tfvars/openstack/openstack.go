@@ -45,7 +45,7 @@ type config struct {
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool, machinesSubnet string) ([]byte, error) {
+func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool, machinesSubnet string) ([]byte, error) {
 	zones := []string{}
 	seen := map[string]bool{}
 	for _, config := range masterConfigs {
@@ -103,7 +103,7 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 			return nil, errors.Errorf("Unsupported URL scheme: '%v'", url.Scheme)
 		}
 
-		err = uploadBaseImage(cloud, localFilePath, imageName, infraID)
+		err = uploadBaseImage(cloud, localFilePath, imageName, infraID, baseImageProperties)
 		if err != nil {
 			return nil, err
 		}

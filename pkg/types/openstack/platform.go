@@ -62,6 +62,11 @@ type Platform struct {
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
 
+	// ClusterOSImageProperties is a list of properties to be added to the metadata of the uploaded Glance ClusterOSImage.
+	// Default: the default is to not set any properties.
+	// +optional
+	ClusterOSImageProperties map[string]string `json:"clusterOSImageProperties,omitempty"`
+
 	// APIVIP is the static IP on the nodes subnet that the api port for openshift will be assigned
 	// Default: will be set to the 5 on the first entry in the machineNetwork CIDR
 	// +optional
