@@ -29,7 +29,6 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-/// [MachineSet]
 // MachineSet ensures that a specified number of machines replicas are running at any given time.
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
@@ -47,15 +46,12 @@ type MachineSet struct {
 	Status MachineSetStatus `json:"status,omitempty"`
 }
 
-/// [MachineSet]
-
-/// [MachineSetSpec]
 // MachineSetSpec defines the desired state of MachineSet
 type MachineSetSpec struct {
 	// Replicas is the number of desired replicas.
 	// This is a pointer to distinguish between explicit zero and unspecified.
 	// Defaults to 1.
-	// +optional
+	// +kubebuilder:default=1
 	Replicas *int32 `json:"replicas,omitempty"`
 
 	// MinReadySeconds is the minimum number of seconds for which a newly created machine should be ready.
@@ -104,25 +100,19 @@ const (
 	OldestMachineSetDeletePolicy MachineSetDeletePolicy = "Oldest"
 )
 
-/// [MachineSetSpec] // doxygen marker
-
-/// [MachineTemplateSpec] // doxygen marker
 // MachineTemplateSpec describes the data needed to create a Machine from a template
 type MachineTemplateSpec struct {
 	// Standard object's metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
 	ObjectMeta `json:"metadata,omitempty"`
 
 	// Specification of the desired behavior of the machine.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
 	// +optional
 	Spec MachineSpec `json:"spec,omitempty"`
 }
 
-/// [MachineTemplateSpec]
-
-/// [MachineSetStatus]
 // MachineSetStatus defines the observed state of MachineSet
 type MachineSetStatus struct {
 	// Replicas is the most recently observed number of replicas.
@@ -167,8 +157,6 @@ type MachineSetStatus struct {
 	// +optional
 	ErrorMessage *string `json:"errorMessage,omitempty"`
 }
-
-/// [MachineSetStatus]
 
 func (m *MachineSet) Validate() field.ErrorList {
 	errors := field.ErrorList{}
