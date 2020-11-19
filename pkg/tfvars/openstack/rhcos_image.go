@@ -16,7 +16,7 @@ import (
 )
 
 // uploadBaseImage creates a new image in Glance and uploads the RHCOS image there
-func uploadBaseImage(cloud string, localFilePath string, imageName string, clusterID string) error {
+func uploadBaseImage(cloud string, localFilePath string, imageName string, clusterID string, imageProperties map[string]string) error {
 	logrus.Debugln("Creating a Glance image for RHCOS...")
 
 	f, err := os.Open(localFilePath)
@@ -46,6 +46,7 @@ func uploadBaseImage(cloud string, localFilePath string, imageName string, clust
 		ContainerFormat: "bare",
 		DiskFormat:      diskFormat,
 		Tags:            []string{fmt.Sprintf("openshiftClusterID=%s", clusterID)},
+		Properties:     imageProperties,
 		// TODO(mfedosin): add Description when gophercloud supports it.
 	}
 

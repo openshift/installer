@@ -411,6 +411,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.OpenStack.APIVIP,
 			installConfig.Config.Platform.OpenStack.IngressVIP,
 			string(*rhcosImage),
+			installConfig.Config.Platform.OpenStack.UseHwQEMUAgentForClusterOSImage,
 			clusterID.InfraID,
 			caCert,
 			bootstrapIgn,

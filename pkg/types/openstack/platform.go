@@ -62,6 +62,10 @@ type Platform struct {
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
 
+	// UseHwQEMUAgentForClusterOSImage indicates that the property "hw_qemu_guest_agent=yes" should be added to the Glance ClusterOSImage
+	// +optional
+	UseHwQEMUAgentForClusterOSImage bool `json:"useHwQEMUAgentForClusterOSImage,omitempty`
+
 	// APIVIP is the static IP on the nodes subnet that the api port for openshift will be assigned
 	// Default: will be set to the 5 on the first entry in the machineNetwork CIDR
 	// +optional
