@@ -2,12 +2,12 @@ package defaults
 
 import (
 	"errors"
-	"github.com/openshift/installer/pkg/ipnet"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 )
@@ -114,6 +114,24 @@ func TestSetPlatformDefaults(t *testing.T) {
 			},
 			expected: &baremetal.Platform{
 				BootstrapProvisioningIP: "192.168.111.7",
+				ClusterProvisioningIP:   "192.168.111.8",
+				LibvirtURI:              "qemu:///system",
+				ExternalBridge:          "baremetal",
+				ProvisioningBridge:      "",
+				ProvisioningNetwork:     baremetal.DisabledProvisioningNetwork,
+				ProvisioningNetworkCIDR: machineNetwork,
+				APIVIP:                  "192.168.111.2",
+				IngressVIP:              "192.168.111.3",
+			},
+		},
+		{
+			name: "disabled_provisioning_network_no_bootstrap_ip",
+			platform: &baremetal.Platform{
+				ProvisioningNetwork:   baremetal.DisabledProvisioningNetwork,
+				ClusterProvisioningIP: "192.168.111.8",
+			},
+			expected: &baremetal.Platform{
+				BootstrapProvisioningIP: "",
 				ClusterProvisioningIP:   "192.168.111.8",
 				LibvirtURI:              "qemu:///system",
 				ExternalBridge:          "baremetal",

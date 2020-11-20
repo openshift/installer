@@ -351,9 +351,11 @@ func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *f
 	// will be run on the external network. Users must provide IP's on the
 	// machine networks to host those services.
 	case baremetal.DisabledProvisioningNetwork:
-		// Ensure bootstrapProvisioningIP is in one of the machine networks
-		if err := validateIPinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, fmt.Sprintf("provisioning network is disabled, %s", err.Error())))
+		// If set, ensure bootstrapProvisioningIP is in one of the machine networks
+		if p.BootstrapProvisioningIP != "" {
+			if err := validateIPinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, fmt.Sprintf("provisioning network is disabled, %s", err.Error())))
+			}
 		}
 
 		// Ensure clusterProvisioningIP is in one of the machine networks
