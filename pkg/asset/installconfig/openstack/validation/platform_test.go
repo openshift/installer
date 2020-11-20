@@ -142,6 +142,18 @@ func TestOpenStackPlatformValidation(t *testing.T) {
 			expectedErrMsg: `[platform.openstack.ingressFloatingIP: Invalid value: "128.35.27.13": Cannot set floating ips when external network not specified, platform.openstack.apiFloatingIP: Invalid value: "128.35.27.8": Cannot set floating ips when external network not specified]`,
 		},
 		{
+			name: "ingress and API FIPs identical",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				p.IngressFloatingIP = p.APIFloatingIP
+				return p
+			}(),
+			cloudInfo:      validPlatformCloudInfo(),
+			networking:     validNetworking(),
+			expectedError:  true,
+			expectedErrMsg: `platform.openstack.ingressFloatingIP: Invalid value: "128.35.27.8": ingressFloatingIP can not be the same as apiFloatingIP`,
+		},
+		{
 			name: "no external network provided",
 			platform: func() *openstack.Platform {
 				p := validPlatform()
