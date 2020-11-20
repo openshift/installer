@@ -316,18 +316,19 @@ func engineSetup() (Config, error) {
 		answer, err := askQuestionTrueOrFalse(
 			"Would you like to continue?",
 			"By not using a trusted CA, insecure connections can "+
-				"cause man-in-the-middle attacks among many others.")
+				"cause man-in-the-middle attacks among others.")
 		if err != nil || !answer {
 			return engineConfig, err
 		}
 	} else {
 		err = showPEM(httpResource.saveFilePath)
 		if err != nil {
+			logrus.Warning("could not decode oVirt engine certificate", err)
 			engineConfig.Insecure = true
 		} else {
 			answer, err := askQuestionTrueOrFalse(
 				"Would you like to use the above certificate to connect to Engine? ",
-				"Certificate to connecto with Engine. Make sure this cert CA is trusted locally.")
+				"Certificate to connect to with Engine. Make sure this cert CA is trusted locally.")
 			if err != nil {
 				return engineConfig, err
 			}
@@ -366,9 +367,18 @@ func engineSetup() (Config, error) {
 	}
 
 	if engineConfig.Insecure {
-		logrus.Warning(
-			"cannot detect Engine CA cert imported in the system. ",
-			"Communication with the Engine will be insecure.")
+		answer, err := askQuestionTrueOrFalse(
+			"Failed to load engine certificate. Do you want to continue in insecure mode?",
+			"By not using a trusted CA, insecure connections can "+
+				"cause man-in-the-middle attacks among others.")
+		if err != nil {
+			return engineConfig, err
+		}
+		if !answer {
+			return engineConfig, errors.New(
+				"could not load engine certificate, not proceeding in insecure mode",
+			)
+		}
 	}
 	return askCredentials(engineConfig)
 }
