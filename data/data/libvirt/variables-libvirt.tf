@@ -58,3 +58,9 @@ variable "libvirt_master_size" {
   description = "Size of the volume in bytes"
   default     = "17179869184"
 }
+
+variable "libvirt_pool_path" {
+  type        = string
+  description = "Directory path for the libvirt storage pool"
+  default     = "/var/lib/libvirt/openshift-images"
+}

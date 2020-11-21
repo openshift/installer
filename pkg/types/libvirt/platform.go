@@ -23,6 +23,12 @@ type Platform struct {
 	// Network
 	// +optional
 	Network *Network `json:"network,omitempty"`
+
+	// Directory path for the libvirt storage pool
+	//
+	// +kubebuilder:default="/var/lib/libvirt/openshift-images"
+	// +optional
+	PoolPath string `json:"poolPath,omitempty"`
 }
 
 // Network is the configuration of the libvirt network.

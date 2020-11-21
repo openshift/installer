@@ -1078,6 +1078,10 @@ spec:
                         description: The interface make used for the network. Default is tt0.
                         type: string
                     type: object
+                  poolPath:
+                    default: /var/lib/libvirt/openshift-images
+                    description: Directory path for the libvirt storage pool
+                    type: string
                 type: object
               none:
                 description: None is the empty configuration used when installing on an unsupported platform.

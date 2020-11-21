@@ -5,7 +5,7 @@ provider "libvirt" {
 resource "libvirt_pool" "storage_pool" {
   name = var.cluster_id
   type = "dir"
-  path = "/var/lib/libvirt/openshift-images/${var.cluster_id}"
+  path = "${var.libvirt_pool_path}/${var.cluster_id}"
 }
 
 module "volume" {
@@ -126,4 +126,3 @@ data "libvirt_network_dns_host_template" "masters_int" {
   ip       = var.libvirt_master_ips[count.index]
   hostname = "api-int.${var.cluster_domain}"
 }
-

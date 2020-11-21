@@ -12,8 +12,9 @@ func defaultPlatform() *libvirt.Platform {
 	n := &libvirt.Network{}
 	SetNetworkDefaults(n)
 	return &libvirt.Platform{
-		URI:     DefaultURI,
-		Network: n,
+		URI:      DefaultURI,
+		Network:  n,
+		PoolPath: DefaultPoolPath,
 	}
 }
 

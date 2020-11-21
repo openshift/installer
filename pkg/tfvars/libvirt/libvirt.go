@@ -27,10 +27,11 @@ type config struct {
 	MasterVcpu      string   `json:"libvirt_master_vcpu,omitempty"`
 	BootstrapMemory int      `json:"libvirt_bootstrap_memory,omitempty"`
 	MasterDiskSize  string   `json:"libvirt_master_size,omitempty"`
+	PoolPath        string   `json:"libvirt_pool_path"`
 }
 
 // TFVars generates libvirt-specific Terraform variables.
-func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, machineCIDR *net.IPNet, bridge string, masterCount int, architecture types.Architecture) ([]byte, error) {
+func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, machineCIDR *net.IPNet, bridge string, masterCount int, architecture types.Architecture, poolPath string) ([]byte, error) {
 	bootstrapIP, err := cidr.Host(machineCIDR, 10)
 	if err != nil {
 		return nil, errors.Errorf("failed to generate bootstrap IP: %v", err)
@@ -66,6 +67,7 @@ func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, 
 		MasterIPs:    masterIPs,
 		MasterMemory: strconv.Itoa(masterConfig.DomainMemory),
 		MasterVcpu:   strconv.Itoa(masterConfig.DomainVcpu),
+		PoolPath:     poolPath,
 	}
 
 	if masterConfig.Volume.VolumeSize != nil {
