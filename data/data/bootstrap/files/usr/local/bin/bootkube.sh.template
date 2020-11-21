@@ -3,14 +3,21 @@ set -euoE pipefail ## -E option will cause functions to inherit trap
 
 . /usr/local/bin/release-image.sh
 
-mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
+LOG_PATH=/var/log/container-logs/
+
+mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests,container-logs}
+mkdir --parents "$LOG_PATH"
 
 ETCD_ENDPOINTS=
 
 bootkube_podman_run() {
     # we run all commands in the host-network to prevent IP conflicts with
     # end-user infrastructure.
-    podman run --quiet --net=host "${@}"
+    podman run \
+		--quiet \
+		--log-opt=path="$LOG_PATH$1" \
+		--net=host \
+		"${@:2}" 
 }
 
 MACHINE_CONFIG_OPERATOR_IMAGE=$(image_for machine-config-operator)
@@ -54,6 +61,7 @@ then
 	rm --recursive --force cvo-bootstrap
 
 	bootkube_podman_run \
+		release-image-digest.log \
 		--volume "$PWD:/assets:z" \
 		"${RELEASE_IMAGE_DIGEST}" \
 		render \
@@ -73,6 +81,7 @@ if [ ! -f etcd-bootstrap.done ]
 then
 	echo "Rendering CEO Manifests..."
 	bootkube_podman_run \
+		cluster-etcd-operator.log \
 		--volume "$PWD:/assets:z" \
 		"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-etcd-operator render \
@@ -108,6 +117,7 @@ then
 	fi
 
 	bootkube_podman_run \
+		cluster-config-operator.log \
 		--volume "$PWD:/assets:z" \
 		"${CONFIG_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-config-operator render \
@@ -130,6 +140,7 @@ then
 	rm --recursive --force kube-apiserver-bootstrap
 
 	bootkube_podman_run  \
+		cluster-kube-apiserver-operator.log \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_APISERVER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-apiserver-operator render \
@@ -156,6 +167,7 @@ then
 	rm --recursive --force kube-controller-manager-bootstrap
 
 	bootkube_podman_run \
+		cluster-kube-controller-manager-operator.log \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-controller-manager-operator render \
@@ -182,6 +194,7 @@ then
 	rm --recursive --force kube-scheduler-bootstrap
 
 	bootkube_podman_run \
+		cluster-kube-scheduler-operator.log \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_SCHEDULER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-scheduler-operator render \
@@ -204,6 +217,7 @@ then
 	rm --recursive --force ingress-operator-bootstrap
 
 	bootkube_podman_run \
+		cloud-ingress-operator.log \
 		--volume "$PWD:/assets:z" \
 		"${INGRESS_OPERATOR_IMAGE}" \
 		render \
@@ -230,6 +244,7 @@ then
 	fi
 
 	bootkube_podman_run \
+		machine-config-operator.log \
 		--user 0 \
 		--volume "$PWD:/assets:z" \
 		"${MACHINE_CONFIG_OPERATOR_IMAGE}" \
@@ -294,6 +309,7 @@ then
 
 	# shellcheck disable=SC2154
 	bootkube_podman_run \
+		cloud-credential-operator.log \
 		--quiet \
 		--user 0 \
 		--volume "$PWD:/assets:z" \
@@ -314,6 +330,7 @@ fi
 
 # Wait for the etcd cluster to come up.
 until bootkube_podman_run \
+		machine-config-etcd.log \
 		--rm \
 		--name etcdctl \
 		--env ETCDCTL_API=3 \
@@ -336,6 +353,7 @@ echo "Starting cluster-bootstrap..."
 if [ ! -f cb-bootstrap.done ]
 then
     bootkube_podman_run \
+		cluster-bootstrap.log \
         --rm \
         --volume "$PWD:/assets:z" \
         --volume /etc/kubernetes:/etc/kubernetes:z \
@@ -350,6 +368,7 @@ if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
 then
 	echo "Waiting for CEO to finish..."
 	bootkube_podman_run \
+		machine-config-etcd.log \
 		--volume "$PWD:/assets:z" \
 		"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-etcd-operator \
