@@ -30,8 +30,9 @@ module "bootstrap" {
   zone             = var.gcp_master_availability_zones[0]
   region           = var.gcp_region
 
-  root_volume_size = var.gcp_master_root_volume_size
-  root_volume_type = var.gcp_master_root_volume_type
+  root_volume_size         = var.gcp_master_root_volume_size
+  root_volume_type         = var.gcp_master_root_volume_type
+  root_volume_kms_key_link = var.gcp_root_volume_kms_key_link
 
   labels = local.labels
 }

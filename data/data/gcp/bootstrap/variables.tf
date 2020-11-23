@@ -60,10 +60,10 @@ variable "root_volume_type" {
 }
 
 variable "root_volume_kms_key_link" {
-  type       = string
-  description = "The GCP self link of KMS key to encrypt the volume"
-  default = null
- }
+  type        = string
+  description = "The GCP self link of KMS key to encrypt the volume."
+  default     = null
+}
 
 variable "zone" {
   type        = string
