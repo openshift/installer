@@ -35,6 +35,9 @@ type GCPMachineProviderSpec struct {
 	Region             string                 `json:"region"`
 	Zone               string                 `json:"zone"`
 	ProjectID          string                 `json:"projectID,omitempty"`
+
+	// Preemptible indicates if created instance is preemptible
+	Preemptible bool `json:"preemptible,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -45,12 +48,13 @@ func init() {
 
 // GCPDisk describes disks for GCP.
 type GCPDisk struct {
-	AutoDelete bool              `json:"autoDelete"`
-	Boot       bool              `json:"boot"`
-	SizeGb     int64             `json:"sizeGb"`
-	Type       string            `json:"type"`
-	Image      string            `json:"image"`
-	Labels     map[string]string `json:"labels"`
+	AutoDelete    bool                       `json:"autoDelete"`
+	Boot          bool                       `json:"boot"`
+	SizeGb        int64                      `json:"sizeGb"`
+	Type          string                     `json:"type"`
+	Image         string                     `json:"image"`
+	Labels        map[string]string          `json:"labels"`
+	EncryptionKey *GCPEncryptionKeyReference `json:"encryptionKey,omitempty"`
 }
 
 // GCPMetadata describes metadata for GCP.
@@ -63,6 +67,7 @@ type GCPMetadata struct {
 type GCPNetworkInterface struct {
 	PublicIP   bool   `json:"publicIP,omitempty"`
 	Network    string `json:"network,omitempty"`
+	ProjectID  string `json:"projectID,omitempty"`
 	Subnetwork string `json:"subnetwork,omitempty"`
 }
 
@@ -70,4 +75,32 @@ type GCPNetworkInterface struct {
 type GCPServiceAccount struct {
 	Email  string   `json:"email"`
 	Scopes []string `json:"scopes"`
+}
+
+// GCPEncryptionKeyReference describes the encryptionKey to use for a disk's encryption.
+type GCPEncryptionKeyReference struct {
+	KMSKey *GCPKMSKeyReference `json:"kmsKey,omitempty"`
+
+	// KMSKeyServiceAccount is the service account being used for the
+	// encryption request for the given KMS key. If absent, the Compute
+	// Engine default service account is used.
+	// See https://cloud.google.com/compute/docs/access/service-accounts#compute_engine_service_account
+	// for details on the default service account.
+	KMSKeyServiceAccount string `json:"kmsKeyServiceAccount,omitempty"`
+}
+
+// GCPKMSKeyReference gathers required fields for looking up a GCP KMS Key
+type GCPKMSKeyReference struct {
+	// Name is the name of the customer managed encryption key to be used for the disk encryption.
+	Name string `json:"name"`
+
+	// KeyRing is the name of the KMS Key Ring which the KMS Key belongs to.
+	KeyRing string `json:"keyRing"`
+
+	// ProjectID is the ID of the Project in which the KMS Key Ring exists.
+	// Defaults to the VM ProjectID if not set.
+	ProjectID string `json:"projectID,omitempty"`
+
+	// Location is the GCP location in which the Key Ring exists.
+	Location string `json:"location"`
 }
