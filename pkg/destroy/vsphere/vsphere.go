@@ -213,16 +213,20 @@ func (o *ClusterUninstaller) Run() error {
 	}
 
 	o.Logger.Debug("Delete tag")
+	tagLogger := o.Logger.WithField("Tag", o.InfraID)
 	if err = deleteTag(context.TODO(), o.RestClient, o.InfraID); err != nil {
-		o.Logger.Errorln(err)
+		tagLogger.Errorln(err)
 		return err
 	}
+	tagLogger.Info("Destroyed")
 
 	o.Logger.Debug("Delete tag category")
+	tcLogger := o.Logger.WithField("TagCategory", "openshift-"+o.InfraID)
 	if err = deleteTagCategory(context.TODO(), o.RestClient, "openshift-"+o.InfraID); err != nil {
-		o.Logger.Errorln(err)
+		tcLogger.Errorln(err)
 		return err
 	}
+	tcLogger.Info("Destroyed")
 
 	return nil
 }
