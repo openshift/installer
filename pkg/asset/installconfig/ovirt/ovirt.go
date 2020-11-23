@@ -17,27 +17,21 @@ func Platform() (*ovirt.Platform, error) {
 
 	var c *ovirtsdk4.Connection
 
-	// Fetch config from file
 	ovirtConfig, err := NewConfig()
 	for tries := 0; tries < platformValidationMaxTries; tries++ {
-		if err == nil {
-			// If no error happened previously (loading file or configuration), validate the connection.
-			c, err = ovirtConfig.getValidatedConnection()
+		if err != nil {
+			ovirtConfig, err = engineSetup()
 			if err != nil {
-				// If validation failed log and drop into reconfig below.
-				logrus.Error(errors.Wrap(err, "failed to validate oVirt configuration"))
-			} else {
-				// If connection is valid, break
-				break
+				logrus.Error(errors.Wrap(err, "oVirt configuration failed"))
 			}
 		}
 
-		if err != nil {
-			// If a previous error happened (validation or loading from file), rerun the setup.
-			ovirtConfig, err = engineSetup()
+		if err == nil {
+			c, err = ovirtConfig.getValidatedConnection()
 			if err != nil {
-				// If validation failed log and loop back to engineSetup()
-				logrus.Error(errors.Wrap(err, "oVirt configuration failed"))
+				logrus.Error(errors.Wrap(err, "failed to validate oVirt configuration"))
+			} else {
+				break
 			}
 		}
 	}
