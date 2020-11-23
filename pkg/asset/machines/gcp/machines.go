@@ -89,8 +89,6 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			},
 			KMSKeyServiceAccount: mpool.OSDisk.EncryptionKey.KMSKeyServiceAccount,
 		}
-	} else {
-		encryptionKey = nil
 	}
 
 	return &gcpprovider.GCPMachineProviderSpec{
