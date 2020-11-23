@@ -413,11 +413,11 @@ func TestValidateProvisioning(t *testing.T) {
 				BootstrapProvisioningIP("192.168.111.3").build(),
 		},
 		{
-			name:   "valid_provisioningDisabled_no_boostrap_ip",
+			name:   "valid_provisioningDisabled_no_provisioning_ips",
 			config: installConfig().Network(networking().Network("192.168.111.0/24")).build(),
 			platform: platform().
 				ProvisioningNetwork(baremetal.DisabledProvisioningNetwork).
-				ClusterProvisioningIP("192.168.111.2").
+				ClusterProvisioningIP("").
 				BootstrapProvisioningIP("").build(),
 		},
 		{
