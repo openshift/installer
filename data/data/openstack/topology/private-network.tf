@@ -41,10 +41,13 @@ resource "openstack_networking_port_v2" "masters" {
   name  = "${var.cluster_id}-master-port-${count.index}"
   count = var.masters_count
 
-  admin_state_up     = "true"
-  network_id         = local.nodes_network_id
-  security_group_ids = [openstack_networking_secgroup_v2.master.id]
-  tags               = ["openshiftClusterID=${var.cluster_id}"]
+  admin_state_up = "true"
+  network_id     = local.nodes_network_id
+  security_group_ids = concat(
+    var.master_extra_sg_ids,
+    [openstack_networking_secgroup_v2.master.id],
+  )
+  tags = ["openshiftClusterID=${var.cluster_id}"]
 
   extra_dhcp_option {
     name  = "domain-search"
