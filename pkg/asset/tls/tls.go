@@ -24,6 +24,9 @@ const (
 	// ValidityOneDay sets the validity of a cert to 24 hours.
 	ValidityOneDay = time.Hour * 24
 
+	// ValidityOneMinute sets the validity of a cert to 1 month.
+	ValidityOneMonth = ValidityOneDay * 30
+
 	// ValidityOneYear sets the validity of a cert to 1 year.
 	ValidityOneYear = ValidityOneDay * 365
 
