@@ -185,7 +185,7 @@ func (a *KubeAPIServerLocalhostServerCertKey) Generate(dependencies asset.Parent
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		Validity:     ValidityOneDay,
+		Validity:     ValidityOneMonth,
 		DNSNames: []string{
 			"localhost",
 		},
@@ -288,7 +288,7 @@ func (a *KubeAPIServerServiceNetworkServerCertKey) Generate(dependencies asset.P
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		Validity:     ValidityOneDay,
+		Validity:     ValidityOneMonth,
 		DNSNames: []string{
 			"kubernetes", "kubernetes.default",
 			"kubernetes.default.svc",
@@ -392,7 +392,7 @@ func (a *KubeAPIServerExternalLBServerCertKey) Generate(dependencies asset.Paren
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		Validity:     ValidityOneDay,
+		Validity:     ValidityOneMonth,
 		DNSNames: []string{
 			apiAddress(installConfig.Config),
 		},
@@ -431,7 +431,7 @@ func (a *KubeAPIServerInternalLBServerCertKey) Generate(dependencies asset.Paren
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		Validity:     ValidityOneDay,
+		Validity:     ValidityOneMonth,
 		DNSNames: []string{
 			internalAPIAddress(installConfig.Config),
 		},
