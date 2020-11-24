@@ -355,7 +355,7 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 	if assetStore, err := assetstore.NewStore(rootOpts.dir); err == nil {
 		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
 			if installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == baremetal.Name {
-				timeout = 60 * time.Minute
+				timeout = 90 * time.Minute
 			}
 		}
 	}
