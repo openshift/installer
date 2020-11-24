@@ -23,6 +23,7 @@ var (
 	validNetworkName   = "valid-vpc"
 	validProjectName   = "valid-project"
 	validRegion        = "us-east1"
+	validZone          = "us-east1-b"
 	validComputeSubnet = "valid-compute-subnet"
 	validCPSubnet      = "valid-controlplane-subnet"
 	validCIDR          = "10.0.0.0/16"
@@ -189,7 +190,7 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			name:           "Undefined default machine types",
 			edits:          editFunctions{undefinedDefaultMachineTypes},
 			expectedError:  true,
-			expectedErrMsg: `platform.gcp.defaultMachinePlatform.type: Invalid value: "n1-dne-1": instance type n1-dne-1 not found`,
+			expectedErrMsg: `Internal error: 404`,
 		},
 		{
 			name:           "Invalid region",
@@ -222,8 +223,16 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	gcpClient := mock.NewMockAPI(mockCtrl)
 	// Should get the list of projects.
 	gcpClient.EXPECT().GetProjects(gomock.Any()).Return(map[string]string{"valid-project": "valid-project"}, nil).AnyTimes()
-	// Should return the list of machine types in machineTypeAPIResult.
-	gcpClient.EXPECT().GetMachineTypes(gomock.Any(), gomock.Any(), gomock.Any()).Return(machineTypeAPIResult, nil).AnyTimes()
+	// Should get the list of zones.
+	gcpClient.EXPECT().GetZones(gomock.Any(), gomock.Any(), gomock.Any()).Return([]*compute.Zone{{Name: validZone}}, nil).AnyTimes()
+
+	// Should return the machine type as specified.
+	for key, value := range machineTypeAPIResult {
+		gcpClient.EXPECT().GetMachineType(gomock.Any(), gomock.Any(), gomock.Any(), key).Return(value, nil).AnyTimes()
+	}
+	// When passed incorrect machine type, the API returns nil.
+	gcpClient.EXPECT().GetMachineType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("404")).AnyTimes()
+
 	// When passed the correct network & project, return an empty network, which should be enough to validate ok.
 	gcpClient.EXPECT().GetNetwork(gomock.Any(), validNetworkName, validProjectName).Return(&compute.Network{}, nil).AnyTimes()
 
