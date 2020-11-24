@@ -17,7 +17,7 @@ function patchit {
       - group: apps/v1
         kind: Deployment
         name: etcd-quorum-guard
-        namespace: openshift-machine-config-operator
+        namespace: openshift-etcd
         unmanaged: true
 EOF
 )" || return 1
