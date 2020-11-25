@@ -63,7 +63,7 @@ Here's what a log bundle looks like,
 ├── failed-units.txt
 ├── rendered-assets
 ├── resources
-└── unit-status
+└── failed-unit-status
 
 5 directories, 1 file
 ```
@@ -72,9 +72,9 @@ Here's what a log bundle looks like,
 
 The failed-units.txt contains a list of all the **failed** systemd units on the bootstrap host.
 
-### directory: unit-status
+### directory: failed-unit-status
 
-The unit-status directory contains the details of each failed systemd unit from [failed-units](#file-failed-units-txt),
+The failed-unit-status directory contains the details of each failed systemd unit from [failed-units](#file-failed-units-txt),
 
 ### directory: bootstrap
 
@@ -138,17 +138,17 @@ control-plane
 │   ├── containers
 │   ├── failed-units.txt
 │   ├── journals
-│   └── unit-status
+│   └── failed-unit-status
 ├── 10.0.142.138
 │   ├── containers
 │   ├── failed-units.txt
 │   ├── journals
-│   └── unit-status
+│   └── failed-unit-status
 └── 10.0.148.48
     ├── containers
     ├── failed-units.txt
     ├── journals
-    └── unit-status
+    └── failed-unit-status
 
 12 directories, 3 files
 ```

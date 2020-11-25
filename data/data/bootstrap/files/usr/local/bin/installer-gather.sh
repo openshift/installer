@@ -15,11 +15,11 @@ echo "Gathering bootstrap systemd summary ..."
 LANG=POSIX systemctl list-units --state=failed >& "${ARTIFACTS}/failed-units.txt"
 
 echo "Gathering bootstrap failed systemd unit status ..."
-mkdir -p "${ARTIFACTS}/unit-status"
+mkdir -p "${ARTIFACTS}/failed-unit-status"
 sed -n 's/^\* \([^ ]*\) .*/\1/p' < "${ARTIFACTS}/failed-units.txt" | while read -r UNIT
 do
-    systemctl status --full "${UNIT}" >& "${ARTIFACTS}/unit-status/${UNIT}.txt"
-    journalctl -u "${UNIT}" > "${ARTIFACTS}/unit-status/${UNIT}.log"
+    systemctl status --full "${UNIT}" >& "${ARTIFACTS}/failed-unit-status/${UNIT}.txt"
+    journalctl -u "${UNIT}" > "${ARTIFACTS}/failed-unit-status/${UNIT}.log"
 done
 
 echo "Gathering bootstrap journals ..."
