@@ -82,9 +82,10 @@ func provider(platform *baremetal.Platform, osImage string, userDataSecret strin
 	}
 	imageURL.RawQuery = ""
 	imageURL.Fragment = ""
-	// We strip any .gz suffix because ironic-machine-os-downloader unzips the image
+	// We strip any .gz/.xz suffix because ironic-machine-os-downloader unzips the image
 	// ref https://github.com/openshift/ironic-rhcos-downloader/pull/12
 	imageFilename := path.Base(strings.TrimSuffix(imageURL.String(), ".gz"))
+	imageFilename = strings.TrimSuffix(imageFilename, ".xz")
 	compressedImageFilename := strings.Replace(imageFilename, "openstack", "compressed", 1)
 	cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(platform.ClusterProvisioningIP, "6180"), imageFilename, compressedImageFilename)
 	cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
