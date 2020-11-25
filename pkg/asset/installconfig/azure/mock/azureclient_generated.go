@@ -113,6 +113,21 @@ func (mr *MockAPIMockRecorder) GetResourcesProvider(ctx, resourceProviderNamespa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourcesProvider", reflect.TypeOf((*MockAPI)(nil).GetResourcesProvider), ctx, resourceProviderNamespace)
 }
 
+// GetVirtualMachineSku mocks base method.
+func (m *MockAPI) GetVirtualMachineSku(ctx context.Context, name, region string) (*compute.ResourceSku, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVirtualMachineSku", ctx, name, region)
+	ret0, _ := ret[0].(*compute.ResourceSku)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVirtualMachineSku indicates an expected call of GetVirtualMachineSku.
+func (mr *MockAPIMockRecorder) GetVirtualMachineSku(ctx, name, region interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVirtualMachineSku", reflect.TypeOf((*MockAPI)(nil).GetVirtualMachineSku), ctx, name, region)
+}
+
 // GetDiskSkus mocks base method.
 func (m *MockAPI) GetDiskSkus(ctx context.Context, region string) ([]compute.ResourceSku, error) {
 	m.ctrl.T.Helper()

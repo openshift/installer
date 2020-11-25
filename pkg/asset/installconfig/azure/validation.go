@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"sort"
+	"strconv"
 	"strings"
 
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns"
@@ -17,13 +18,98 @@ import (
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 )
 
+type resourceRequirements struct {
+	minimumVCpus  int64
+	minimumMemory int64
+}
+
+var controlPlaneReq = resourceRequirements{
+	minimumVCpus:  4,
+	minimumMemory: 16,
+}
+
+var computeReq = resourceRequirements{
+	minimumVCpus:  2,
+	minimumMemory: 8,
+}
+
 // Validate executes platform-specific validation.
 func Validate(client API, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateNetworks(client, ic.Azure, ic.Networking.MachineNetwork, field.NewPath("platform").Child("azure"))...)
 	allErrs = append(allErrs, validateRegion(client, field.NewPath("platform").Child("azure").Child("region"), ic.Azure)...)
+	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
 	return allErrs.ToAggregate()
+}
+
+// ValidateInstanceType ensures the instance type has sufficient Vcpu and Memory.
+func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceType string, req resourceRequirements) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	typeMeta, err := client.GetVirtualMachineSku(context.TODO(), instanceType, region)
+	if err != nil {
+		return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
+	}
+
+	if typeMeta == nil {
+		errMsg := fmt.Sprintf("not found in region %s", region)
+		return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+	}
+
+	for _, capability := range *typeMeta.Capabilities {
+
+		if strings.EqualFold(*capability.Name, "vCPUs") {
+			cpus, err := strconv.ParseInt(*capability.Value, 10, 0)
+			if err != nil {
+				return append(allErrs, field.InternalError(fieldPath, err))
+			}
+			if cpus < req.minimumVCpus {
+				errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d vCPUs", req.minimumVCpus)
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+			}
+		} else if strings.EqualFold(*capability.Name, "MemoryGB") {
+			memory, err := strconv.ParseInt(*capability.Value, 10, 0)
+			if err != nil {
+				return append(allErrs, field.InternalError(fieldPath, err))
+			}
+			if memory < req.minimumMemory {
+				errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d GB Memory", req.minimumMemory)
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+			}
+		}
+	}
+
+	return allErrs
+}
+
+// validateInstanceTypes checks that the user-provided instance types are valid.
+func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Default requirements need to be sufficient to support Control Plane instances.
+	defaultInstanceReq := controlPlaneReq
+
+	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Azure != nil && ic.ControlPlane.Platform.Azure.InstanceType != "" {
+		// Default requirements can be relaxed when the controlPlane type is set explicitly.
+		defaultInstanceReq = computeReq
+
+		allErrs = append(allErrs, ValidateInstanceType(client, field.NewPath("controlPlane", "platform", "azure"), ic.Azure.Region, ic.ControlPlane.Platform.Azure.InstanceType, controlPlaneReq)...)
+	}
+
+	if ic.Platform.Azure.DefaultMachinePlatform != nil && ic.Platform.Azure.DefaultMachinePlatform.InstanceType != "" {
+		allErrs = append(allErrs, ValidateInstanceType(client, field.NewPath("platform", "azure", "defaultMachinePlatform"), ic.Azure.Region, ic.Platform.Azure.DefaultMachinePlatform.InstanceType, defaultInstanceReq)...)
+	}
+
+	for idx, compute := range ic.Compute {
+		fieldPath := field.NewPath("compute").Index(idx)
+		if compute.Platform.Azure != nil && compute.Platform.Azure.InstanceType != "" {
+			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "azure"),
+				ic.Azure.Region, compute.Platform.Azure.InstanceType, computeReq)...)
+		}
+	}
+
+	return allErrs
 }
 
 // validateNetworks checks that the user-provided VNet and subnets are valid.
