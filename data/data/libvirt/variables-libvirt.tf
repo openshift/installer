@@ -56,5 +56,5 @@ variable "libvirt_bootstrap_memory" {
 variable "libvirt_master_size" {
   type        = string
   description = "Size of the volume in bytes"
-  default     = "17179869184"
+  default     = "107374182400"
 }
