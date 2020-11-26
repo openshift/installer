@@ -87,7 +87,14 @@ func provider(platform *baremetal.Platform, osImage string, userDataSecret strin
 	imageFilename := path.Base(strings.TrimSuffix(imageURL.String(), ".gz"))
 	imageFilename = strings.TrimSuffix(imageFilename, ".xz")
 	compressedImageFilename := strings.Replace(imageFilename, "openstack", "compressed", 1)
-	cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(platform.ClusterProvisioningIP, "6180"), imageFilename, compressedImageFilename)
+
+	cacheImageIP := platform.ClusterProvisioningIP
+	cacheImagePort := "6180"
+	if platform.ProvisioningNetwork == baremetal.DisabledProvisioningNetwork && platform.ClusterProvisioningIP == "" {
+		cacheImageIP = platform.APIVIP
+		cacheImagePort = "6181"
+	}
+	cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(cacheImageIP, cacheImagePort), imageFilename, compressedImageFilename)
 	cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
 	config := &baremetalprovider.BareMetalMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
