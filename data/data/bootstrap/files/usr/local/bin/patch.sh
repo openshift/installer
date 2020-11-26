@@ -2,16 +2,16 @@
 
 function patchit {
     # allow etcd-operator to start the etcd cluster without minimum of 3 master nodes
-    oc --kubeconfig ./auth/kubeconfig patch etcd cluster -p='{"spec": {"unsupportedConfigOverrides": {"useUnsupportedUnsafeNonHANonProductionUnstableEtcd": true}}}' --type=merge || return 1
+    oc --kubeconfig ./auth/kubeconfig-loopback patch etcd cluster -p='{"spec": {"unsupportedConfigOverrides": {"useUnsupportedUnsafeNonHANonProductionUnstableEtcd": true}}}' --type=merge || return 1
 
     # allow cluster-authentication-operator to deploy OAuthServer without minimum of 3 master nodes
-    oc --kubeconfig ./auth/kubeconfig patch authentications.operator.openshift.io cluster -p='{"spec": {"managementState": "Managed", "unsupportedConfigOverrides": {"useUnsupportedUnsafeNonHANonProductionUnstableOAuthServer": true}}}' --type=merge || return 1
+    oc --kubeconfig ./auth/kubeconfig-loopback patch authentications.operator.openshift.io cluster -p='{"spec": {"managementState": "Managed", "unsupportedConfigOverrides": {"useUnsupportedUnsafeNonHANonProductionUnstableOAuthServer": true}}}' --type=merge || return 1
 
     # patch ingress operator to run a single router pod
-    oc patch --kubeconfig ./auth/kubeconfig -n openshift-ingress-operator ingresscontroller/default --patch '{"spec":{"replicas": 1}}' --type=merge || return 1
+    oc patch --kubeconfig ./auth/kubeconfig-loopback -n openshift-ingress-operator ingresscontroller/default --patch '{"spec":{"replicas": 1}}' --type=merge || return 1
 
     # Mark etcd-quorum-guard as unmanaged
-    oc --kubeconfig ./auth/kubeconfig patch clusterversion/version --type='merge' -p "$(cat <<- EOF
+    oc --kubeconfig ./auth/kubeconfig-loopback patch clusterversion/version --type='merge' -p "$(cat <<- EOF
  spec:
     overrides:
       - group: apps/v1
@@ -23,7 +23,7 @@ EOF
 )" || return 1
 
     # scale down etcd-quorum-guard
-    oc --kubeconfig ./auth/kubeconfig scale --replicas=1 deployment/etcd-quorum-guard -n openshift-etcd || return 1
+    oc --kubeconfig ./auth/kubeconfig-loopback scale --replicas=1 deployment/etcd-quorum-guard -n openshift-etcd || return 1
 
     return 0
 }
