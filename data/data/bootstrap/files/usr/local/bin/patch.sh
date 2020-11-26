@@ -23,7 +23,7 @@ EOF
 )" || return 1
 
     # scale down etcd-quorum-guard
-    oc --kubeconfig ./auth/kubeconfig-loopback scale --replicas=1 deployment/etcd-quorum-guard -n openshift-etcd || return 1
+    oc --kubeconfig ./auth/kubeconfig-loopback scale --replicas=0 deployment/etcd-quorum-guard -n openshift-etcd || return 1
 
     return 0
 }
