@@ -226,3 +226,24 @@ $ oc get nodes
 ```
 
 [Bare Metal IPI Networking Infrastructure]: https://github.com/openshift/installer/blob/master/docs/design/baremetal/networking-infrastructure.md
+
+#### Installing OpenShift on RHV/oVirt in *insecure* mode
+
+<!-- Do not change this title as it is used in the code to point users to the right place -->
+
+Starting OpenShift 4.7 we are sunsetting the “insecure” option from the OpenShift Installer. Starting with this version, the installer only supports installation methods from the user interface that lead to using verified certificates.
+
+This change also means that setting up the CA certificate for RHV is no longer required before running the installer. The installer will ask you for confirmation about the certificate and store the CA certificate for use during the installation.
+
+Should you, nevertheless, require an installation without certificate verification you can create a file named ovirt-config.yaml in the .ovirt directory in your home directory (~/.ovirt/ovirt-config.yaml) before running the installer with the following content:
+
+```yaml
+ovirt_url: https://ovirt.example.com/ovirt-engine/api
+ovirt_fqdn: ovirt.example.com
+ovirt_pem_url: ""
+ovirt_username: admin@internal
+ovirt_password: super-secret-password
+ovirt_insecure: true
+```
+
+Please note that this option is **not recommended** as it will allow a potential attacker to perform a Man-in-the-Middle attack and capture sensitive credentials on the network.

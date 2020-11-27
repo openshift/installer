@@ -366,9 +366,19 @@ func engineSetup() (Config, error) {
 	}
 
 	if engineConfig.Insecure {
-		logrus.Warning(
-			"cannot detect Engine CA cert imported in the system. ",
-			"Communication with the Engine will be insecure.")
+		logrus.Error(
+			"****************************************************************************\n",
+			"* Could not configure secure communication to the oVirt engine.            *\n",
+			"* As of 4.7 insecure mode for oVirt is no longer supported in the          *\n",
+			"* installer. Please see the help article titled \"Installing OpenShift on   *\n",
+			"* RHV/oVirt in insecure mode\" for details how to configure insecure mode   *\n",
+			"* manually.                                                                *\n",
+			"****************************************************************************",
+		)
+		return engineConfig,
+			errors.New(
+				"cannot detect engine ca cert imported in the system",
+			)
 	}
 	return askCredentials(engineConfig)
 }
