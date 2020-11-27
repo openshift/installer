@@ -16,6 +16,7 @@ import (
 	"github.com/vincent-petithory/dataurl"
 
 	"github.com/openshift/installer/pkg/asset/ignition"
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
 // Starting from OpenShift 4.4 we store bootstrap Ignition configs in Glance.
@@ -23,11 +24,8 @@ import (
 // uploadBootstrapConfig uploads the bootstrap Ignition config in Glance and returns its location
 func uploadBootstrapConfig(cloud string, bootstrapIgn string, clusterID string) (string, error) {
 	logrus.Debugln("Creating a Glance image for your bootstrap ignition config...")
-	opts := clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
 
-	conn, err := clientconfig.NewServiceClient("image", &opts)
+	conn, err := clientconfig.NewServiceClient("image", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return "", err
 	}
@@ -179,11 +177,7 @@ func generateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL st
 
 // getAuthToken fetches valid OpenStack authentication token ID
 func getAuthToken(cloud string) (string, error) {
-	opts := &clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
-
-	conn, err := clientconfig.NewServiceClient("identity", opts)
+	conn, err := clientconfig.NewServiceClient("identity", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return "", err
 	}

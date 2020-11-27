@@ -1,12 +1,12 @@
 package openstack
 
 import (
-	"os"
 	"strings"
 	"time"
 
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes"
@@ -101,14 +101,7 @@ func (o *ClusterUninstaller) Run() error {
 	}
 	returnChannel := make(chan string)
 
-	opts := &clientconfig.ClientOpts{
-		Cloud: o.Cloud,
-	}
-
-	// We should unset OS_CLOUD env variable here, because the real cloud name was
-	// defined on the previous step. OS_CLOUD has more priority, so the value from
-	// "opts" variable will be ignored if OS_CLOUD contains something.
-	os.Unsetenv("OS_CLOUD")
+	opts := openstackdefaults.DefaultClientOpts(o.Cloud)
 
 	// launch goroutines
 	for name, function := range deleteFuncs {

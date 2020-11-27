@@ -2,7 +2,6 @@ package validation
 
 import (
 	"net/url"
-	"os"
 	"strings"
 
 	"github.com/gophercloud/gophercloud"
@@ -24,6 +23,7 @@ import (
 
 	"github.com/openshift/installer/pkg/quota"
 	"github.com/openshift/installer/pkg/types"
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
 // CloudInfo caches data fetched from the user's openstack cloud
@@ -68,12 +68,7 @@ func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 		Flavors: map[string]Flavor{},
 	}
 
-	opts := &clientconfig.ClientOpts{Cloud: ic.OpenStack.Cloud}
-
-	// We should unset OS_CLOUD env variable here, because the real cloud name was
-	// defined on the previous step. OS_CLOUD has more priority, so the value from
-	// "opts" variable will be ignored if OS_CLOUD contains something.
-	os.Unsetenv("OS_CLOUD")
+	opts := openstackdefaults.DefaultClientOpts(ic.OpenStack.Cloud)
 
 	ci.clients.networkClient, err = clientconfig.NewServiceClient("network", opts)
 	if err != nil {

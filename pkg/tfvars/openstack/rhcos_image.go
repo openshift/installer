@@ -13,6 +13,8 @@ import (
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
 // uploadBaseImage creates a new image in Glance and uploads the RHCOS image there
@@ -25,11 +27,7 @@ func uploadBaseImage(cloud string, localFilePath string, imageName string, clust
 	}
 	defer f.Close()
 
-	opts := clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
-
-	conn, err := clientconfig.NewServiceClient("image", &opts)
+	conn, err := clientconfig.NewServiceClient("image", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return err
 	}
@@ -125,11 +123,7 @@ func isImageImportSupported(cloud string) (bool, error) {
 	// https://docs.openstack.org/api-ref/image/v2/?expanded=#image-service-info-discovery
 	logrus.Debugln("Checking if the image import mechanism is supported")
 
-	opts := clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
-
-	conn, err := clientconfig.NewServiceClient("image", &opts)
+	conn, err := clientconfig.NewServiceClient("image", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return false, err
 	}

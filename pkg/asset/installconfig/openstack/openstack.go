@@ -2,7 +2,6 @@
 package openstack
 
 import (
-	"os"
 	"sort"
 	"strings"
 
@@ -45,11 +44,6 @@ func Platform() (*openstack.Platform, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed UserInput")
 	}
-
-	// We should unset OS_CLOUD env variable here, because the real cloud name was defined
-	// on the previous step. OS_CLOUD has more priority, so the value from "cloud" variable
-	// will be ignored if OS_CLOUD contains something.
-	os.Unsetenv("OS_CLOUD")
 
 	networkNames, err := getExternalNetworkNames(cloud)
 	if err != nil {
