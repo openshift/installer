@@ -91,6 +91,9 @@ type OpenstackProviderSpec struct {
 	// ServerGroupName are non-empty, they must refer to the same OpenStack
 	// resource.
 	ServerGroupName string `json:"serverGroupName,omitempty"`
+
+	// The subnet that a set of machines will get ingress/egress traffic from
+	PrimarySubnet string `json:"primarySubnet,omitempty"`
 }
 
 type SecurityGroupParam struct {
