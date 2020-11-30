@@ -79,6 +79,7 @@ const apiId = "servicemanagement:v1"
 const apiName = "servicemanagement"
 const apiVersion = "v1"
 const basePath = "https://servicemanagement.googleapis.com/"
+const mtlsBasePath = "https://servicemanagement.mtls.googleapis.com/"
 
 // OAuth2 scopes used by this API.
 const (
@@ -106,6 +107,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*APIService, 
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
 	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
+	opts = append(opts, internaloption.WithDefaultMTLSEndpoint(mtlsBasePath))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -355,7 +357,7 @@ func (s *Api) MarshalJSON() ([]byte, error) {
 //     {
 //       "audit_configs": [
 //         {
-//           "service": "allServices"
+//           "service": "allServices",
 //           "audit_log_configs": [
 //             {
 //               "log_type": "DATA_READ",
@@ -364,18 +366,18 @@ func (s *Api) MarshalJSON() ([]byte, error) {
 //               ]
 //             },
 //             {
-//               "log_type": "DATA_WRITE",
+//               "log_type": "DATA_WRITE"
 //             },
 //             {
-//               "log_type": "ADMIN_READ",
+//               "log_type": "ADMIN_READ"
 //             }
 //           ]
 //         },
 //         {
-//           "service": "sampleservice.googleapis.com"
+//           "service": "sampleservice.googleapis.com",
 //           "audit_log_configs": [
 //             {
-//               "log_type": "DATA_READ",
+//               "log_type": "DATA_READ"
 //             },
 //             {
 //               "log_type": "DATA_WRITE",
@@ -442,7 +444,7 @@ func (s *AuditConfig) MarshalJSON() ([]byte, error) {
 //           ]
 //         },
 //         {
-//           "log_type": "DATA_WRITE",
+//           "log_type": "DATA_WRITE"
 //         }
 //       ]
 //     }
@@ -948,54 +950,6 @@ type BackendRule struct {
 	// es/tls-extensiontype-values.xhtml#alpn-protocol-ids
 	// for more details on the supported values.
 	Protocol string `json:"protocol,omitempty"`
-
-	// RenameTo: Unimplemented. Do not use.
-	//
-	// The new name the selected proto elements should be renamed to.
-	//
-	// The package, the service and the method can all be renamed.
-	// The backend server should implement the renamed proto. However,
-	// clients
-	// should call the original method, and ESF routes the traffic to the
-	// renamed
-	// method.
-	//
-	// HTTP clients should call the URL mapped to the original method.
-	// gRPC and Stubby clients should call the original method with package
-	// name.
-	//
-	// For legacy reasons, ESF allows Stubby clients to call with the
-	// short name (without the package name). However, for API
-	// Versioning(or
-	// multiple methods mapped to the same short name), all Stubby clients
-	// must
-	// call the method's full name with the package name, otherwise the
-	// first one
-	// (selector) wins.
-	//
-	// If this `rename_to` is specified with a trailing `*`, the `selector`
-	// must
-	// be specified with a trailing `*` as well. The all element short
-	// names
-	// matched by the `*` in the selector will be kept in the
-	// `rename_to`.
-	//
-	// For example,
-	//     rename_rules:
-	//     - selector: |-
-	//         google.example.library.v1.*
-	//       rename_to: google.example.library.*
-	//
-	// The selector matches `google.example.library.v1.Library.CreateShelf`
-	// and
-	// `google.example.library.v1.Library.CreateBook`, they will be renamed
-	// to
-	// `google.example.library.Library.CreateShelf`
-	// and
-	// `google.example.library.Library.CreateBook`. It essentially renames
-	// the
-	// proto package name section of the matched proto service and methods.
-	RenameTo string `json:"renameTo,omitempty"`
 
 	// Selector: Selects the methods to which this rule applies.
 	//
@@ -2157,9 +2111,6 @@ type Endpoint struct {
 	// is
 	// allowed to proceed.
 	AllowCors bool `json:"allowCors,omitempty"`
-
-	// Features: The list of features enabled on this endpoint.
-	Features []string `json:"features,omitempty"`
 
 	// Name: The canonical name of this endpoint.
 	Name string `json:"name,omitempty"`
@@ -3650,6 +3601,22 @@ func (s *Method) MarshalJSON() ([]byte, error) {
 // deleting or altering it stops data collection and makes the metric
 // type's
 // existing data unusable.
+//
+// The following are specific rules for service defined Monitoring
+// metric
+// descriptors:
+//
+// * `type`, `metric_kind`, `value_type`, `description`,
+// `display_name`,
+//   `launch_stage` fields are all required. The `unit` field must be
+// specified
+//   if the `value_type` is any of DOUBLE, INT64, DISTRIBUTION.
+// * Maximum of default 500 metric descriptors per service is allowed.
+// * Maximum of default 10 labels per metric descriptor is allowed.
+//
+// The default maximum limit can be overridden. Please
+// follow
+// https://cloud.google.com/monitoring/quotas
 type MetricDescriptor struct {
 	// Description: A detailed description of the metric, which can be used
 	// in documentation.
@@ -3666,7 +3633,16 @@ type MetricDescriptor struct {
 
 	// Labels: The set of labels that can be used to describe a
 	// specific
-	// instance of this metric type. For example,
+	// instance of this metric type.
+	//
+	// The label key name must follow:
+	//
+	// * Only upper and lower-case letters, digits and underscores (_) are
+	//   allowed.
+	// * Label name must start with a letter or digit.
+	// * The maximum length of a label name is 100 characters.
+	//
+	// For example,
 	// the
 	// `appengine.googleapis.com/http/server/response_latencies` metric
 	// type has a label for the HTTP response code, `response_code`, so
@@ -3765,11 +3741,31 @@ type MetricDescriptor struct {
 
 	// Type: The metric type, including its DNS name prefix. The type is
 	// not
-	// URL-encoded.  All user-defined metric types have the DNS
+	// URL-encoded.
+	//
+	// All service defined metrics must be prefixed with the service name,
+	// in the
+	// format of `{service name}/{relative metric name}`, such
+	// as
+	// `cloudsql.googleapis.com/database/cpu/utilization`. The relative
+	// metric
+	// name must follow:
+	//
+	// * Only upper and lower-case letters, digits, '/' and underscores '_'
+	// are
+	//   allowed.
+	// * The maximum number of characters allowed for the
+	// relative_metric_name is
+	//   100.
+	//
+	// All user-defined metric types have the DNS
 	// name
-	// `custom.googleapis.com` or `external.googleapis.com`.  Metric types
-	// should
-	// use a natural hierarchical grouping. For example:
+	// `custom.googleapis.com`, `external.googleapis.com`,
+	// or
+	// `logging.googleapis.com/user/`.
+	//
+	// Metric types should use a natural hierarchical grouping. For
+	// example:
 	//
 	//     "custom.googleapis.com/invoice/paid/amount"
 	//     "external.googleapis.com/prometheus/up"
@@ -3820,6 +3816,7 @@ type MetricDescriptor struct {
 	// * `min`   minute
 	// * `h`     hour
 	// * `d`     day
+	// * `1`     dimensionless
 	//
 	// **Prefixes (PREFIX)**
 	//
@@ -4213,11 +4210,31 @@ func (s *Mixin) MarshalJSON() ([]byte, error) {
 // and
 // "zone" to identify particular VM instances.
 //
-// Different APIs can support different monitored resource types. APIs
-// generally
-// provide a `list` method that returns the monitored resource
-// descriptors used
-// by the API.
+// Different services can support different monitored resource
+// types.
+//
+// The following are specific rules to service defined monitored
+// resources for
+// Monitoring and Logging:
+//
+// * The `type`, `display_name`, `description`, `labels` and
+// `launch_stage`
+//   fields are all required.
+// * The first label of the monitored resource descriptor must be
+//   `resource_container`. There are legacy monitored resource
+// descritptors
+//   start with `project_id`.
+// * It must include a `location` label.
+// * Maximum of default 5 service defined monitored resource
+// descriptors
+//   is allowed per service.
+// * Maximum of default 10 labels per monitored resource is
+// allowed.
+//
+// The default maximum limit can be overridden. Please
+// follow
+// https://cloud.google.com/monitoring/quotas
+//
 type MonitoredResourceDescriptor struct {
 	// Description: Optional. A detailed description of the monitored
 	// resource type that might
@@ -4234,9 +4251,16 @@ type MonitoredResourceDescriptor struct {
 
 	// Labels: Required. A set of labels used to describe instances of this
 	// monitored
-	// resource type. For example, an individual Google Cloud SQL database
-	// is
-	// identified by values for the labels "database_id" and "zone".
+	// resource type.
+	// The label key name must follow:
+	//
+	// * Only upper and lower-case letters, digits and underscores (_) are
+	//   allowed.
+	// * Label name must start with a letter or digit.
+	// * The maximum length of a label name is 100 characters.
+	//
+	// For example, an individual Google Cloud SQL database is
+	// identified by values for the labels `database_id` and `location`.
 	Labels []*LabelDescriptor `json:"labels,omitempty"`
 
 	// LaunchStage: Optional. The launch stage of the monitored resource
@@ -4311,8 +4335,24 @@ type MonitoredResourceDescriptor struct {
 
 	// Type: Required. The monitored resource type. For example, the
 	// type
-	// "cloudsql_database" represents databases in Google Cloud SQL.
-	// The maximum length of this value is 256 characters.
+	// `cloudsql_database` represents databases in Google Cloud SQL.
+	//
+	// All service defined monitored resource types must be prefixed with
+	// the
+	// service name, in the format of `{service name}/{relative resource
+	// name}`.
+	// The relative resource name must follow:
+	//
+	// * Only upper and lower-case letters and digits are allowed.
+	// * It must start with upper case character and is recommended to use
+	// Upper
+	//   Camel Case style.
+	// * The maximum number of characters allowed for the
+	// relative_resource_name
+	//   is 100.
+	//
+	// Note there are legacy service monitored resources not following this
+	// rule.
 	Type string `json:"type,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Description") to
@@ -4348,44 +4388,59 @@ func (s *MonitoredResourceDescriptor) MarshalJSON() ([]byte, error) {
 // sent
 // to both producer and consumer projects, whereas
 // the
-// `library.googleapis.com/book/overdue_count` metric is only sent to
+// `library.googleapis.com/book/num_overdue` metric is only sent to
 // the
 // consumer project.
 //
 //     monitored_resources:
-//     - type: library.googleapis.com/branch
+//     - type: library.googleapis.com/Branch
+//       display_name: "Library Branch"
+//       description: "A branch of a library."
+//       launch_stage: GA
 //       labels:
-//       - key: /city
-//         description: The city where the library branch is located
-// in.
-//       - key: /name
-//         description: The name of the branch.
+//       - key: resource_container
+//         description: "The Cloud container (ie. project id) for the
+// Branch."
+//       - key: location
+//         description: "The location of the library branch."
+//       - key: branch_id
+//         description: "The id of the branch."
 //     metrics:
 //     - name: library.googleapis.com/book/returned_count
+//       display_name: "Books Returned"
+//       description: "The count of books that have been returned."
+//       launch_stage: GA
 //       metric_kind: DELTA
 //       value_type: INT64
+//       unit: "1"
 //       labels:
-//       - key: /customer_id
-//     - name: library.googleapis.com/book/overdue_count
+//       - key: customer_id
+//         description: "The id of the customer."
+//     - name: library.googleapis.com/book/num_overdue
+//       display_name: "Books Overdue"
+//       description: "The current number of overdue books."
+//       launch_stage: GA
 //       metric_kind: GAUGE
 //       value_type: INT64
+//       unit: "1"
 //       labels:
-//       - key: /customer_id
+//       - key: customer_id
+//         description: "The id of the customer."
 //     monitoring:
 //       producer_destinations:
-//       - monitored_resource: library.googleapis.com/branch
+//       - monitored_resource: library.googleapis.com/Branch
 //         metrics:
 //         - library.googleapis.com/book/returned_count
 //       consumer_destinations:
-//       - monitored_resource: library.googleapis.com/branch
+//       - monitored_resource: library.googleapis.com/Branch
 //         metrics:
 //         - library.googleapis.com/book/returned_count
-//         - library.googleapis.com/book/overdue_count
+//         - library.googleapis.com/book/num_overdue
 type Monitoring struct {
 	// ConsumerDestinations: Monitoring configurations for sending metrics
 	// to the consumer project.
-	// There can be multiple consumer destinations. A monitored resouce type
-	// may
+	// There can be multiple consumer destinations. A monitored resource
+	// type may
 	// appear in multiple monitoring destinations if different aggregations
 	// are
 	// needed for different sets of metrics associated with that
@@ -4397,8 +4452,8 @@ type Monitoring struct {
 
 	// ProducerDestinations: Monitoring configurations for sending metrics
 	// to the producer project.
-	// There can be multiple producer destinations. A monitored resouce type
-	// may
+	// There can be multiple producer destinations. A monitored resource
+	// type may
 	// appear in multiple monitoring destinations if different aggregations
 	// are
 	// needed for different sets of metrics associated with that
@@ -6326,7 +6381,7 @@ func (c *OperationsGetCall) Header() http.Header {
 
 func (c *OperationsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6522,7 +6577,7 @@ func (c *OperationsListCall) Header() http.Header {
 
 func (c *OperationsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6700,7 +6755,7 @@ func (c *ServicesCreateCall) Header() http.Header {
 
 func (c *ServicesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6834,7 +6889,7 @@ func (c *ServicesDeleteCall) Header() http.Header {
 
 func (c *ServicesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6971,7 +7026,7 @@ func (c *ServicesDisableCall) Header() http.Header {
 
 func (c *ServicesDisableCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7117,7 +7172,7 @@ func (c *ServicesEnableCall) Header() http.Header {
 
 func (c *ServicesEnableCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7272,7 +7327,7 @@ func (c *ServicesGenerateConfigReportCall) Header() http.Header {
 
 func (c *ServicesGenerateConfigReportCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7411,7 +7466,7 @@ func (c *ServicesGetCall) Header() http.Header {
 
 func (c *ServicesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7581,7 +7636,7 @@ func (c *ServicesGetConfigCall) Header() http.Header {
 
 func (c *ServicesGetConfigCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7735,7 +7790,7 @@ func (c *ServicesGetIamPolicyCall) Header() http.Header {
 
 func (c *ServicesGetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7932,7 +7987,7 @@ func (c *ServicesListCall) Header() http.Header {
 
 func (c *ServicesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8105,7 +8160,7 @@ func (c *ServicesSetIamPolicyCall) Header() http.Header {
 
 func (c *ServicesSetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8256,7 +8311,7 @@ func (c *ServicesTestIamPermissionsCall) Header() http.Header {
 
 func (c *ServicesTestIamPermissionsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8405,7 +8460,7 @@ func (c *ServicesUndeleteCall) Header() http.Header {
 
 func (c *ServicesUndeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8549,7 +8604,7 @@ func (c *ServicesConfigsCreateCall) Header() http.Header {
 
 func (c *ServicesConfigsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8712,7 +8767,7 @@ func (c *ServicesConfigsGetCall) Header() http.Header {
 
 func (c *ServicesConfigsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8892,7 +8947,7 @@ func (c *ServicesConfigsListCall) Header() http.Header {
 
 func (c *ServicesConfigsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9079,7 +9134,7 @@ func (c *ServicesConfigsSubmitCall) Header() http.Header {
 
 func (c *ServicesConfigsSubmitCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9222,7 +9277,7 @@ func (c *ServicesConsumersGetIamPolicyCall) Header() http.Header {
 
 func (c *ServicesConsumersGetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9370,7 +9425,7 @@ func (c *ServicesConsumersSetIamPolicyCall) Header() http.Header {
 
 func (c *ServicesConsumersSetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9521,7 +9576,7 @@ func (c *ServicesConsumersTestIamPermissionsCall) Header() http.Header {
 
 func (c *ServicesConsumersTestIamPermissionsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9684,7 +9739,7 @@ func (c *ServicesRolloutsCreateCall) Header() http.Header {
 
 func (c *ServicesRolloutsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9835,7 +9890,7 @@ func (c *ServicesRolloutsGetCall) Header() http.Header {
 
 func (c *ServicesRolloutsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10022,7 +10077,7 @@ func (c *ServicesRolloutsListCall) Header() http.Header {
 
 func (c *ServicesRolloutsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}

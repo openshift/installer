@@ -666,7 +666,7 @@ func (s *ArimaResult) MarshalJSON() ([]byte, error) {
 //     {
 //       "audit_configs": [
 //         {
-//           "service": "allServices"
+//           "service": "allServices",
 //           "audit_log_configs": [
 //             {
 //               "log_type": "DATA_READ",
@@ -675,18 +675,18 @@ func (s *ArimaResult) MarshalJSON() ([]byte, error) {
 //               ]
 //             },
 //             {
-//               "log_type": "DATA_WRITE",
+//               "log_type": "DATA_WRITE"
 //             },
 //             {
-//               "log_type": "ADMIN_READ",
+//               "log_type": "ADMIN_READ"
 //             }
 //           ]
 //         },
 //         {
-//           "service": "sampleservice.googleapis.com"
+//           "service": "sampleservice.googleapis.com",
 //           "audit_log_configs": [
 //             {
-//               "log_type": "DATA_READ",
+//               "log_type": "DATA_READ"
 //             },
 //             {
 //               "log_type": "DATA_WRITE",
@@ -753,7 +753,7 @@ func (s *AuditConfig) MarshalJSON() ([]byte, error) {
 //           ]
 //         },
 //         {
-//           "log_type": "DATA_WRITE",
+//           "log_type": "DATA_WRITE"
 //         }
 //       ]
 //     }
@@ -2639,6 +2639,10 @@ type ExternalDataConfiguration struct {
 	// Datastore backups and Avro formats.
 	Compression string `json:"compression,omitempty"`
 
+	// ConnectionId: [Optional, Trusted Tester] Connection for external data
+	// source.
+	ConnectionId string `json:"connectionId,omitempty"`
+
 	// CsvOptions: Additional properties to set if sourceFormat is set to
 	// CSV.
 	CsvOptions *CsvOptions `json:"csvOptions,omitempty"`
@@ -3737,8 +3741,17 @@ type JobConfigurationTableCopy struct {
 	// (e.g., Cloud KMS keys).
 	DestinationEncryptionConfiguration *EncryptionConfiguration `json:"destinationEncryptionConfiguration,omitempty"`
 
+	// DestinationExpirationTime: [Optional] The time when the destination
+	// table expires. Expired tables will be deleted and their storage
+	// reclaimed.
+	DestinationExpirationTime interface{} `json:"destinationExpirationTime,omitempty"`
+
 	// DestinationTable: [Required] The destination table
 	DestinationTable *TableReference `json:"destinationTable,omitempty"`
+
+	// OperationType: [Optional] Supported operation types in table copy
+	// job.
+	OperationType string `json:"operationType,omitempty"`
 
 	// SourceTable: [Pick one] Source table to copy.
 	SourceTable *TableReference `json:"sourceTable,omitempty"`
@@ -5194,6 +5207,14 @@ type QueryRequest struct {
 	// Kind: The resource type of the request.
 	Kind string `json:"kind,omitempty"`
 
+	// Labels: The labels associated with this job. You can use these to
+	// organize and group your jobs. Label keys and values can be no longer
+	// than 63 characters, can only contain lowercase letters, numeric
+	// characters, underscores and dashes. International characters are
+	// allowed. Label values are optional. Label keys must start with a
+	// letter and each label in the list must have a different key.
+	Labels map[string]string `json:"labels,omitempty"`
+
 	// Location: The geographic location where the job should run. See
 	// details at
 	// https://cloud.google.com/bigquery/docs/locations#specifying_your_location.
@@ -5206,6 +5227,12 @@ type QueryRequest struct {
 	// also limited to 10 MB. By default, there is no maximum row count, and
 	// only the byte limit applies.
 	MaxResults int64 `json:"maxResults,omitempty"`
+
+	// MaximumBytesBilled: [Optional] Limits the bytes billed for this job.
+	// Queries that will have bytes billed beyond this limit will fail
+	// (without incurring a charge). If unspecified, this will be set to
+	// your project default.
+	MaximumBytesBilled int64 `json:"maximumBytesBilled,omitempty,string"`
 
 	// ParameterMode: Standard SQL only. Set to POSITIONAL to use positional
 	// (?) query parameters or to NAMED to use named (@myparam) query
@@ -5222,6 +5249,29 @@ type QueryRequest struct {
 
 	// QueryParameters: Query parameters for Standard SQL queries.
 	QueryParameters []*QueryParameter `json:"queryParameters,omitempty"`
+
+	// RequestId: A unique user provided identifier to ensure idempotent
+	// behavior for queries. Note that this is different from the job_id. It
+	// has the following properties: 1. It is case-sensitive, limited to up
+	// to 36 ASCII characters. A UUID is recommended. 2. Read only queries
+	// can ignore this token since they are nullipotent by definition. 3.
+	// For the purposes of idempotency ensured by the request_id, a request
+	// is considered duplicate of another only if they have the same
+	// request_id and are actually duplicates. When determining whether a
+	// request is a duplicate of the previous request, all parameters in the
+	// request that may affect the behavior are considered. For example,
+	// query, connection_properties, query_parameters, use_legacy_sql are
+	// parameters that affect the result and are considered when determining
+	// whether a request is a duplicate, but properties like timeout_ms
+	// don't affect the result and are thus not considered. Dry run query
+	// requests are never considered duplicate of another request. 4. When a
+	// duplicate mutating query request is detected, it returns: a. the
+	// results of the mutation if it completes successfully within the
+	// timeout. b. the running operation if it is still in progress at the
+	// end of the timeout. 5. Its lifetime is limited to 15 minutes. In
+	// other words, if two requests are sent with the same request_id, but
+	// more than 15 minutes apart, idempotency is not guaranteed.
+	RequestId string `json:"requestId,omitempty"`
 
 	// TimeoutMs: [Optional] How long to wait for the query to complete, in
 	// milliseconds, before the request times out and returns. Note that
@@ -5650,6 +5700,18 @@ type Routine struct {
 	// if defined.
 	Description string `json:"description,omitempty"`
 
+	// DeterminismLevel: Optional. [Experimental] The determinism level of
+	// the JavaScript UDF if defined.
+	//
+	// Possible values:
+	//   "DETERMINISM_LEVEL_UNSPECIFIED" - The determinism of the UDF is
+	// unspecified.
+	//   "DETERMINISTIC" - The UDF is deterministic, meaning that 2 function
+	// calls with the same
+	// inputs always produce the same result, even across 2 query runs.
+	//   "NOT_DETERMINISTIC" - The UDF is not deterministic.
+	DeterminismLevel string `json:"determinismLevel,omitempty"`
+
 	// Etag: Output only. A hash of this resource.
 	Etag string `json:"etag,omitempty"`
 
@@ -6044,6 +6106,7 @@ type StandardSqlDataType struct {
 	// 1985-04-12T23:20:50.52
 	//   "GEOGRAPHY" - Encoded as WKT
 	//   "NUMERIC" - Encoded as a decimal string.
+	//   "BIGNUMERIC" - Encoded as a decimal string.
 	//   "ARRAY" - Encoded as a list with types matching Type.array_type.
 	//   "STRUCT" - Encoded as a list with fields of type
 	// Type.struct_type[i]. List is used
@@ -7185,6 +7248,13 @@ type TrainingOptions struct {
 	// regression problem.
 	OptimizationStrategy string `json:"optimizationStrategy,omitempty"`
 
+	// PreserveInputStructs: Whether to preserve the input structs in output
+	// feature names.
+	// Suppose there is a struct A with field b.
+	// When false (default), the output feature name is A_b.
+	// When true, the output feature name is A.b.
+	PreserveInputStructs bool `json:"preserveInputStructs,omitempty"`
+
 	// Subsample: Subsample fraction of the training data to grow tree to
 	// prevent
 	// overfitting for boosted tree models.
@@ -7305,6 +7375,12 @@ func (s *TrainingRun) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// UserDefinedFunctionResource: This is used for defining User Defined
+// Function (UDF) resources only when using legacy SQL. Users of
+// Standard SQL should leverage either DDL (e.g. CREATE [TEMPORARY]
+// FUNCTION ... ) or the Routines API to define UDF resources. For
+// additional information on migrating, see:
+// https://cloud.google.com/bigquery/docs/reference/standard-sql/migrating-from-legacy-sql#differences_in_user-defined_javascript_functions
 type UserDefinedFunctionResource struct {
 	// InlineCode: [Pick one] An inline resource that contains code for a
 	// user-defined function (UDF). Providing a inline code resource is
@@ -7434,7 +7510,7 @@ func (c *DatasetsDeleteCall) Header() http.Header {
 
 func (c *DatasetsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7561,7 +7637,7 @@ func (c *DatasetsGetCall) Header() http.Header {
 
 func (c *DatasetsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7705,7 +7781,7 @@ func (c *DatasetsInsertCall) Header() http.Header {
 
 func (c *DatasetsInsertCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7885,7 +7961,7 @@ func (c *DatasetsListCall) Header() http.Header {
 
 func (c *DatasetsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8068,7 +8144,7 @@ func (c *DatasetsPatchCall) Header() http.Header {
 
 func (c *DatasetsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8219,7 +8295,7 @@ func (c *DatasetsUpdateCall) Header() http.Header {
 
 func (c *DatasetsUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8377,7 +8453,7 @@ func (c *JobsCancelCall) Header() http.Header {
 
 func (c *JobsCancelCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8542,7 +8618,7 @@ func (c *JobsGetCall) Header() http.Header {
 
 func (c *JobsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8741,7 +8817,7 @@ func (c *JobsGetQueryResultsCall) Header() http.Header {
 
 func (c *JobsGetQueryResultsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8975,7 +9051,7 @@ func (c *JobsInsertCall) Header() http.Header {
 
 func (c *JobsInsertCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9242,7 +9318,7 @@ func (c *JobsListCall) Header() http.Header {
 
 func (c *JobsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9462,7 +9538,7 @@ func (c *JobsQueryCall) Header() http.Header {
 
 func (c *JobsQueryCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9605,7 +9681,7 @@ func (c *ModelsDeleteCall) Header() http.Header {
 
 func (c *ModelsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9741,7 +9817,7 @@ func (c *ModelsGetCall) Header() http.Header {
 
 func (c *ModelsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9926,7 +10002,7 @@ func (c *ModelsListCall) Header() http.Header {
 
 func (c *ModelsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10109,7 +10185,7 @@ func (c *ModelsPatchCall) Header() http.Header {
 
 func (c *ModelsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10278,7 +10354,7 @@ func (c *ProjectsGetServiceAccountCall) Header() http.Header {
 
 func (c *ProjectsGetServiceAccountCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10436,7 +10512,7 @@ func (c *ProjectsListCall) Header() http.Header {
 
 func (c *ProjectsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10594,7 +10670,7 @@ func (c *RoutinesDeleteCall) Header() http.Header {
 
 func (c *RoutinesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10738,7 +10814,7 @@ func (c *RoutinesGetCall) Header() http.Header {
 
 func (c *RoutinesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10902,7 +10978,7 @@ func (c *RoutinesInsertCall) Header() http.Header {
 
 func (c *RoutinesInsertCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11106,7 +11182,7 @@ func (c *RoutinesListCall) Header() http.Header {
 
 func (c *RoutinesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11302,7 +11378,7 @@ func (c *RoutinesUpdateCall) Header() http.Header {
 
 func (c *RoutinesUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11466,7 +11542,7 @@ func (c *TabledataInsertAllCall) Header() http.Header {
 
 func (c *TabledataInsertAllCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11665,7 +11741,7 @@ func (c *TabledataListCall) Header() http.Header {
 
 func (c *TabledataListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -11863,7 +11939,7 @@ func (c *TablesDeleteCall) Header() http.Header {
 
 func (c *TablesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12005,7 +12081,7 @@ func (c *TablesGetCall) Header() http.Header {
 
 func (c *TablesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12165,7 +12241,7 @@ func (c *TablesGetIamPolicyCall) Header() http.Header {
 
 func (c *TablesGetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12310,7 +12386,7 @@ func (c *TablesInsertCall) Header() http.Header {
 
 func (c *TablesInsertCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12483,7 +12559,7 @@ func (c *TablesListCall) Header() http.Header {
 
 func (c *TablesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12666,7 +12742,7 @@ func (c *TablesPatchCall) Header() http.Header {
 
 func (c *TablesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12826,7 +12902,7 @@ func (c *TablesSetIamPolicyCall) Header() http.Header {
 
 func (c *TablesSetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -12977,7 +13053,7 @@ func (c *TablesTestIamPermissionsCall) Header() http.Header {
 
 func (c *TablesTestIamPermissionsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -13126,7 +13202,7 @@ func (c *TablesUpdateCall) Header() http.Header {
 
 func (c *TablesUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200514")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20200707")
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
