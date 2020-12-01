@@ -58,6 +58,7 @@ of this method of installation.
     - [Compute Nodes Trunks (Kuryr SDN)](#compute-nodes-trunks-kuryr-sdn)
     - [Approve the worker CSRs](#approve-the-worker-csrs)
     - [Wait for the OpenShift Installation to Complete](#wait-for-the-openshift-installation-to-complete)
+    - [Compute Nodes with SR-IOV NICs](#compute-nodes-with-sr-iov-nics)
   - [Destroy the OpenShift Cluster](#destroy-the-openshift-cluster)
 
 ## Prerequisites
@@ -312,7 +313,7 @@ open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 Next, we need to correct the `apiVIP` and `ingressVIP` values.
 
 The following script will clear the values from the `install-config.yaml` file so that the installer will pick
-the 5th and 7th IP addresses in the new range, 192.0.2.5 and 192.0.2.7. 
+the 5th and 7th IP addresses in the new range, 192.0.2.5 and 192.0.2.7.
 
 ```sh
 $ python -c 'import yaml
@@ -341,7 +342,7 @@ if "ingressVIP" in data["platform"]["openstack"]:
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
-**NOTE**: All the scripts in this guide work with Python 3 as well as Python 2. You can also choose to edit the 
+**NOTE**: All the scripts in this guide work with Python 3 as well as Python 2. You can also choose to edit the
 `install-config.yaml` file by hand.
 
 ### Empty Compute Pools
@@ -884,6 +885,34 @@ The workers need no ignition override.
 ### Compute Nodes Trunks (Kuryr SDN)
 
 If `os_networking_type` is set to `Kuryr` in the Ansible inventory, the playbook creates the Trunks for Kuryr to plug the containers into the OpenStack SDN.
+
+### Compute Nodes with SR-IOV NICs
+
+Using single root I/O virtualization (SR-IOV) networking as an additional network in OpenShift can be beneficial for applications that require high bandwidth and low latency. To enable this in your cluster, you will need to install the [SR-IOV Network Operator](https://docs.openshift.com/container-platform/4.6/networking/hardware_networks/installing-sriov-operator.html). If you are not sure whether your cluster supports this feature, please refer to the [SR-IOV hardware networks documentation](https://docs.openshift.com/container-platform/4.6/networking/hardware_networks/about-sriov.html). If you are planning an openstack deployment with SR-IOV networks and need addition resources, check the [OpenStack SR-IOV deployment docs](https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/16.1/html-single/network_functions_virtualization_planning_and_configuration_guide/index#assembly_sriov_parameters). Once you meet these requirements, you can start provisioning an SR-IOV network and subnet in OpenStack.
+
+```sh
+openstack network create radio --provider-physical-network radio --provider-network-type vlan --provider-segment 120
+
+openstack subnet create radio --network radio --subnet-range <your CIDR range> --dhcp
+```
+
+Your compute nodes will need to have two types of ports for this feature to work. One port needs to connect the node to your OpenShift network so that it can join the cluster and communicate with the other nodes. The other type of port is for your SR-IOV traffic. The OpenShift networking port should be created the same way we normally create ports for compute nodes.
+
+```sh
+openstack port os_port_worker_0 --network <infraID>-network --security-group <infraID>-worker --fixed-ip subnet=<infraID>-nodes,ip-address=<a fixed IP> --allowed-address ip-address=<infraID>-ingress-port
+```
+
+The SR-IOV port(s) must be created explicitly by the user and passed as a NIC during instance creation, otherwise the `vnic-type` will not be `direct` and it will not work.
+
+```sh
+openstack port create radio_port --vnic-type direct --network radio --fixed-ip subnet=radio,ip-address=<a fixed ip> --tag=radio --disable-port-security
+```
+
+When you create your instance, make sure that the SR-IOV port and the OCP port you created for it are added as NICs.
+
+```sh
+openstack server create --image <infraID>-rhcos --flavor ocp --user-data <ocp project>/build-artifacts/worker.ign --nic port-id=<os_port_worker_0 ID> --nic port-id=<radio_port ID> --config-drive true worker-<worker_id>.<cluster_name>.<cluster_domain>
+```
 
 ### Approve the worker CSRs
 
