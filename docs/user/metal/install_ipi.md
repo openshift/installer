@@ -340,7 +340,8 @@ may also view the logs of the individual containers:
   - `podman logs ironic`
   - `podman logs ironic-inspector`
   - `podman logs ironic-dnsmasq`
-
+  - `podman logs ironic-deploy-ramdisk-logs`
+  - `podman logs ironic-inspector-ramdisk-logs`
 
 
 ### Control Plane
