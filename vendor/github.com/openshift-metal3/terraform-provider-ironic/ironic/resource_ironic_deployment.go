@@ -53,6 +53,11 @@ func resourceDeployment() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
+			"user_data_url_headers": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				ForceNew: true,
+			},
 			"network_data": {
 				Type:     schema.TypeMap,
 				Optional: true,
@@ -105,9 +110,13 @@ func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 	userData := d.Get("user_data").(string)
 	userDataURL := d.Get("user_data_url").(string)
 	userDataCaCert := d.Get("user_data_url_ca_cert").(string)
+	userDataHeaders := d.Get("user_data_url_headers").(map[string]interface{})
 
 	// if user_data_url is specified in addition to user_data, use the former
-	ignitionData := fetchFullIgnition(userDataURL, userDataCaCert)
+	ignitionData, err := fetchFullIgnition(userDataURL, userDataCaCert, userDataHeaders)
+	if err != nil {
+		return fmt.Errorf("could not fetch data from user_data_url: %s", err)
+	}
 	if ignitionData != "" {
 		userData = ignitionData
 	}
@@ -125,7 +134,7 @@ func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 // fetchFullIgnition gets full igntion from the URL and cert passed to it and returns userdata as a string
-func fetchFullIgnition(userDataURL string, userDataCaCert string) string {
+func fetchFullIgnition(userDataURL string, userDataCaCert string, userDataHeaders map[string]interface{}) (string, error) {
 	// Send full ignition, if the URL is specified
 	if userDataURL != "" {
 		caCertPool := x509.NewCertPool()
@@ -135,7 +144,7 @@ func fetchFullIgnition(userDataURL string, userDataCaCert string) string {
 			caCert, err := base64.StdEncoding.DecodeString(userDataCaCert)
 			if err != nil {
 				log.Printf("could not decode user_data_url_ca_cert: %s", err)
-				return ""
+				return "", err
 			}
 			caCertPool.AppendCertsFromPEM(caCert)
 
@@ -149,21 +158,31 @@ func fetchFullIgnition(userDataURL string, userDataCaCert string) string {
 		client.HTTPClient.Transport = transport
 
 		// Get the data
-		resp, err := client.Get(userDataURL)
+		req, err := retryablehttp.NewRequest("GET", userDataURL, nil)
 		if err != nil {
 			log.Printf("could not get user_data_url: %s", err)
-			return ""
+			return "", err
+		}
+		if userDataHeaders != nil {
+			for k, v := range userDataHeaders {
+				req.Header.Add(k, v.(string))
+			}
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Printf("could not get user_data_url: %s", err)
+			return "", err
 		}
 		defer resp.Body.Close()
 		var userData []byte
 		userData, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
 			log.Printf("could not read user_data_url: %s", err)
-			return ""
+			return "", err
 		}
-		return string(userData)
+		return string(userData), nil
 	}
-	return ""
+	return "", nil
 }
 
 // buildConfigDrive handles building a config drive appropriate for the Ironic version we are using.  Newer versions

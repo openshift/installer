@@ -1396,6 +1396,8 @@ github.com/opencontainers/runtime-tools v0.0.0-20181011054405-1d69bd0f9c39/go.mo
 github.com/opencontainers/selinux v1.5.2/go.mod h1:yTcKuYAh6R95iDpefGLQaPaRwJFwyzAJufJyiTt7s0g=
 github.com/openshift-metal3/terraform-provider-ironic v0.2.3 h1:16pF9y0RN+8jz9h4EUBz5Uv1dhUTPcHrTKz4nzQdd3Q=
 github.com/openshift-metal3/terraform-provider-ironic v0.2.3/go.mod h1:ux2W6gsCIYsY/fX5N0V0ZgwFEBNN7P8g6RlH6ACi97k=
+github.com/openshift-metal3/terraform-provider-ironic v0.2.4 h1:AThAHxSvN18rdK3PqWJS73gMpOvjPka60LRu3IkIiR8=
+github.com/openshift-metal3/terraform-provider-ironic v0.2.4/go.mod h1:ux2W6gsCIYsY/fX5N0V0ZgwFEBNN7P8g6RlH6ACi97k=
 github.com/openshift/api v0.0.0-20200601094953-95abe2d2f422 h1:tgKcQVgHscJFBji1uLH5KjA81fGxNQkom5lETA5VURs=
 github.com/openshift/api v0.0.0-20200601094953-95abe2d2f422/go.mod h1:l6TGeqJ92DrZBuWMNKcot1iZUHfbYSJyBWHGgg6Dn6s=
 github.com/openshift/baremetal-operator v0.0.0-20200715132148-0f91f62a41fe h1:bu99IMkaN6o/JcxpWEb1eT8gDdL9hLcwOmfiVIbXWj8=
