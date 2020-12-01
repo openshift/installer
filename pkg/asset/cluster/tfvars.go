@@ -493,6 +493,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.Ovirt.VNICProfileID,
 			string(*rhcosImage),
 			clusterID.InfraID,
+			installConfig.Config.Platform.Ovirt.MasterClone,
 			masters[0].Spec.ProviderSpec.Value.Object.(*ovirtprovider.OvirtMachineProviderSpec),
 		)
 		if err != nil {

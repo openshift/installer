@@ -7,6 +7,7 @@ resource "ovirt_vm" "master" {
   type             = var.ovirt_master_vm_type
   cores            = var.ovirt_master_cores
   sockets          = var.ovirt_master_sockets
+  clone            = var.ovirt_master_clone
   // if instance type is declared then memory is redundant. Since terraform
   // doesn't allow to condionally omit it, it must be passed.
   // The number passed is multiplied by 4 and becomes the maximum memory the VM can have.

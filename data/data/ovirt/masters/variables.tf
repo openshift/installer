@@ -22,6 +22,11 @@ variable "ovirt_template_id" {
   description = "The ID of VM template"
 }
 
+variable "ovirt_master_clone" {
+  type        = bool
+  description = "Clone the full disk on master creation"
+}
+
 variable "ignition_master" {
   type        = string
   description = "master ignition config"

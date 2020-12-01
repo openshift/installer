@@ -1226,6 +1226,9 @@ spec:
                   ovirt_cluster_id:
                     description: The target cluster under which all VMs will run
                     type: string
+                  ovirt_master_clone:
+                    description: MasterClone indicates that the disk of the master node should be cloned (thick provisioning)
+                    type: boolean
                   ovirt_network_name:
                     description: NetworkName is the target network of all the network interfaces of the nodes. When no ovirt_network_name is provided it defaults to `ovirtmgmt` network, which is a default network for every ovirt cluster.
                     type: string
@@ -1239,6 +1242,7 @@ spec:
                 - api_vip
                 - ingress_vip
                 - ovirt_cluster_id
+                - ovirt_master_clone
                 - ovirt_storage_domain_id
                 type: object
               vsphere:

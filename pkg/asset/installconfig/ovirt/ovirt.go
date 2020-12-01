@@ -92,5 +92,19 @@ func Platform() (*ovirt.Platform, error) {
 		return nil, errors.Wrap(err, "failed UserInput")
 	}
 
+	err = survey.Ask([]*survey.Question{
+		{
+			Prompt: &survey.Confirm{
+				Message: "Use thick disk provisioning for master nodes?",
+				Help:    "Thick provisioning improves master node performance, but makes the installation process slower and will consume the entire disk up-front on the oVirt cluster.",
+				Default: true,
+			},
+			Validate: survey.ComposeValidators(survey.Required),
+		},
+	}, &p.MasterClone)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed UserInput")
+	}
+
 	return &p, nil
 }

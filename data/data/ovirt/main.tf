@@ -41,4 +41,5 @@ module "masters" {
   ovirt_master_memory           = var.ovirt_master_memory
   ovirt_master_vm_type          = var.ovirt_master_vm_type
   ovirt_master_os_disk_size_gb  = var.ovirt_master_os_disk_gb
+  ovirt_master_clone            = var.ovirt_master_clone
 }

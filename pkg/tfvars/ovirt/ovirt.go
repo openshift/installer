@@ -32,6 +32,7 @@ type config struct {
 	MasterCores            int32  `json:"ovirt_master_cores"`
 	MasterSockets          int32  `json:"ovirt_master_sockets"`
 	MasterOsDiskGB         int64  `json:"ovirt_master_os_disk_gb"`
+	MasterClone            bool   `json:"ovirt_master_clone"`
 }
 
 // TFVars generates ovirt-specific Terraform variables.
@@ -43,6 +44,7 @@ func TFVars(
 	vnicProfileID string,
 	baseImage string,
 	infraID string,
+	masterClone bool,
 	masterSpec *v1beta1.OvirtMachineProviderSpec) ([]byte, error) {
 
 	cfg := config{
@@ -56,6 +58,7 @@ func TFVars(
 		MasterVMType:         masterSpec.VMType,
 		MasterOsDiskGB:       masterSpec.OSDisk.SizeGB,
 		MasterMemory:         masterSpec.MemoryMB,
+		MasterClone:          masterClone,
 	}
 	if masterSpec.CPU != nil {
 		cfg.MasterCores = masterSpec.CPU.Cores

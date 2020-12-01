@@ -33,4 +33,7 @@ type Platform struct {
 	// Default will set the image field to the latest RHCOS image.
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
+
+	// MasterClone indicates that the disk of the master node should be cloned (thick provisioning)
+	MasterClone bool `json:"ovirt_master_clone"`
 }
