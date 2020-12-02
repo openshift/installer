@@ -207,6 +207,16 @@ $ openstack image create --container-format=bare --disk-format=qcow2 --file rhco
 
 **NOTE:** Depending on your OpenStack environment you can upload the RHCOS image as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/introduction.html#disk-and-container-formats-for-images) for more information.
 
+[qemu_guest_agent]: https://docs.openstack.org/nova/latest/admin/configuration/hypervisor-kvm.html 
+If the RHCOS image being used supports it,  the [KVM Qemu Guest Agent][qemu_guest_agent] may be used to enable optional
+access between OpenStack KVM hypervisors and the cluster nodes.
+
+To enable this feature, you must add the `hw_qemu_guest_agent=yes` property to the image:
+
+```
+$ openstack image rhcos update --property hw_qemu_guest_agent=yes
+```
+
 Finally validate that the image was successfully created:
 
 ```sh
