@@ -47,13 +47,13 @@ Keepalived, dns, and loadbalancers, are manged by the
 The MCO has been configured to run static pods on the Bootstrap, Master, and
 Worker Nodes that run our internal networking infrastructure. Files run on the
 bootstrap node can be found
-[here](https://github.com/openshift/machine-config-operator/tree/master/manifests/openstack).
+[here](https://github.com/openshift/machine-config-operator/tree/master/manifests/on-prem).
 Files run on both master and worker nodes can be found
 [here](https://github.com/openshift/machine-config-operator/tree/master/templates/common/openstack/files).
 Files run on only master nodes can be found
-[here](https://github.com/openshift/machine-config-operator/tree/master/templates/master/00-master/openstack/files).
+[here](https://github.com/openshift/machine-config-operator/tree/master/templates/master).
 Lastly, files run only on worker nodes can be found
-[here](https://github.com/openshift/machine-config-operator/tree/master/templates/worker/00-worker/openstack/files).
+[here](https://github.com/openshift/machine-config-operator/tree/master/templates/worker).
 
 ## Infrastructure Walkthrough
 
