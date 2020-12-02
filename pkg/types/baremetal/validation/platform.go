@@ -303,8 +303,16 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("provisioningNetwork"), p.ProvisioningNetwork, provisioningNetwork.List()))
 	}
 
-	if err := validate.IP(p.ClusterProvisioningIP); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningHostIP"), p.ClusterProvisioningIP, err.Error()))
+	if p.BootstrapProvisioningIP != "" {
+		if err := validate.IP(p.BootstrapProvisioningIP); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, err.Error()))
+		}
+	}
+
+	if p.ClusterProvisioningIP != "" {
+		if err := validate.IP(p.ClusterProvisioningIP); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningHostIP"), p.ClusterProvisioningIP, err.Error()))
+		}
 	}
 
 	if p.Hosts == nil {
@@ -358,9 +366,11 @@ func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *f
 			}
 		}
 
-		// Ensure clusterProvisioningIP is in one of the machine networks
-		if err := validateIPinMachineCIDR(p.ClusterProvisioningIP, n); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, fmt.Sprintf("provisioning network is disabled, %s", err.Error())))
+		// If set, ensure clusterProvisioningIP is in one of the machine networks
+		if p.ClusterProvisioningIP != "" {
+			if err := validateIPinMachineCIDR(p.ClusterProvisioningIP, n); err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, fmt.Sprintf("provisioning network is disabled, %s", err.Error())))
+			}
 		}
 	default:
 		// Ensure provisioningNetworkCIDR doesn't overlap with any machine network
