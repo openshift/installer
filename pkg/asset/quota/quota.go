@@ -76,7 +76,7 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		}
 		q, err := quotaaws.Load(context.TODO(), session, ic.AWS.Region, services...)
 		if quotaaws.IsUnauthorized(err) {
-			logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v, make sure you have `servicequotas:ListAWSDefaultServiceQuotas` persmission available to the user.", err)
+			logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v, make sure you have `servicequotas:ListAWSDefaultServiceQuotas` permission available to the user.", err)
 			return nil
 		}
 		if err != nil {
@@ -84,7 +84,7 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		}
 		instanceTypes, err := aws.InstanceTypes(context.TODO(), session, ic.AWS.Region)
 		if quotaaws.IsUnauthorized(err) {
-			logrus.Warnf("Missing permissions to fetch instance types and therefore will skip checking Quotas: %v, make sure you have `ec2:DescribeInstanceTypes` persmission available to the user.", err)
+			logrus.Warnf("Missing permissions to fetch instance types and therefore will skip checking Quotas: %v, make sure you have `ec2:DescribeInstanceTypes` permission available to the user.", err)
 			return nil
 		}
 		if err != nil {
