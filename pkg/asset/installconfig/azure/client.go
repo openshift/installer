@@ -22,6 +22,7 @@ type API interface {
 	GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*aznetwork.Subnet, error)
 	ListLocations(ctx context.Context) (*[]azsubs.Location, error)
 	GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*azres.Provider, error)
+	GetVirtualMachineSku(ctx context.Context, name, region string) (*azsku.ResourceSku, error)
 	GetDiskSkus(ctx context.Context, region string) ([]azsku.ResourceSku, error)
 	GetGroup(ctx context.Context, groupName string) (*azres.Group, error)
 	ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error)
@@ -210,4 +211,35 @@ func (c *Client) ListResourceIDsByGroup(ctx context.Context, groupName string) (
 		}
 	}
 	return res, nil
+}
+
+// GetVirtualMachineSku retrieves the resource SKU of a specified virtual machine SKU in the specified region.
+func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) (*azsku.ResourceSku, error) {
+	client := azsku.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
+	client.Authorizer = c.ssn.Authorizer
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	for page, err := client.List(ctx); page.NotDone(); err = page.NextWithContext(ctx) {
+		if err != nil {
+			return nil, errors.Wrap(err, "error fetching SKU pages")
+		}
+		for _, sku := range page.Values() {
+			// Filter out resources that are not virtualMachines
+			if !strings.EqualFold("virtualMachines", *sku.ResourceType) {
+				continue
+			}
+			// Filter out resources that do not match the provided name
+			if !strings.EqualFold(name, *sku.Name) {
+				continue
+			}
+			// Return the resource from the provided region
+			for _, location := range to.StringSlice(sku.Locations) {
+				if strings.EqualFold(location, region) {
+					return &sku, nil
+				}
+			}
+		}
+	}
+	return nil, nil
 }
