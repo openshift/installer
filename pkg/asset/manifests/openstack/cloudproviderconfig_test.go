@@ -108,6 +108,6 @@ secret-name = openstack-credentials
 secret-namespace = kube-system
 region = my_region
 `
-	actualConfig := CloudProviderConfig(&cloud)
+	actualConfig, _, _ := generateCloudProviderConfig(&cloud)
 	assert.Equal(t, expectedConfig, string(actualConfig), "unexpected cloud provider config")
 }

@@ -2,7 +2,6 @@ package manifests
 
 import (
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	icopenstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
@@ -93,22 +91,17 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return nil
 		}
 		cm.Data[cloudProviderConfigCABundleDataKey] = trustBundle
+
 	case openstacktypes.Name:
-		cloud, err := icopenstack.GetSession(installConfig.Config.Platform.OpenStack.Cloud)
+		cloudProviderConfigData, cloudProviderConfigCABundleData, err := openstackmanifests.GenerateCloudProviderConfig(*installConfig.Config)
 		if err != nil {
-			return errors.Wrap(err, "failed to get cloud config for openstack")
+			return errors.Wrap(err, "failed to generate OpenStack provider config")
+		}
+		cm.Data[cloudProviderConfigDataKey] = cloudProviderConfigData
+		if cloudProviderConfigCABundleData != "" {
+			cm.Data[cloudProviderConfigCABundleDataKey] = cloudProviderConfigCABundleData
 		}
 
-		cm.Data[cloudProviderConfigDataKey] = openstackmanifests.CloudProviderConfig(cloud.CloudConfig)
-
-		// Get the ca-cert-bundle key if there is a value for cacert in clouds.yaml
-		if caPath := cloud.CloudConfig.CACertFile; caPath != "" {
-			caFile, err := ioutil.ReadFile(caPath)
-			if err != nil {
-				return errors.Wrap(err, "failed to read clouds.yaml ca-cert from disk")
-			}
-			cm.Data[cloudProviderConfigCABundleDataKey] = string(caFile)
-		}
 	case azuretypes.Name:
 		session, err := installConfig.Azure.Session()
 		if err != nil {
