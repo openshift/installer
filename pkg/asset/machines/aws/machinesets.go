@@ -4,7 +4,7 @@ package aws
 import (
 	"fmt"
 
-	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
+	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -74,7 +74,7 @@ func MachineSets(clusterID string, region string, subnets map[string]string, poo
 					},
 				},
 				Template: machineapi.MachineTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
+					ObjectMeta: machineapi.ObjectMeta{
 						Labels: map[string]string{
 							"machine.openshift.io/cluster-api-machineset":   name,
 							"machine.openshift.io/cluster-api-cluster":      clusterID,

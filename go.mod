@@ -55,7 +55,6 @@ require (
 	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible
 	github.com/openshift/client-go v0.0.0-20201020074620-f8fd44879f7c
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
-	github.com/openshift/cluster-api v0.0.0-20191030113141-9a3a7bbe9258
 	github.com/openshift/cluster-api-provider-gcp v0.0.1-0.20201203141909-4dc702fd57a5
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20200504092944-27473ea1ae43
@@ -108,7 +107,6 @@ require (
 	k8s.io/apiextensions-apiserver v0.19.4
 	k8s.io/apimachinery v0.19.4
 	k8s.io/client-go v12.0.0+incompatible
-	k8s.io/gengo v0.0.0-20201113003025-83324d819ded // indirect
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.4.0
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
