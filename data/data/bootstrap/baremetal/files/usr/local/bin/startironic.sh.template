@@ -17,7 +17,7 @@ DHCP_RANGE="{{.PlatformData.BareMetal.ProvisioningDHCPRange}}"
 
 # First we stop any previously started containers, because ExecStop only runs when the ExecStart process
 # e.g this script is still running, but we exit if *any* of the containers exits unexpectedly
-for name in ironic-api ironic-conductor ironic-inspector dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
+for name in ironic-api ironic-conductor ironic-inspector ironic-deploy-ramdisk-logs ironic-inspector-ramdisk-logs dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
     podman ps | grep -w "$name$" && podman kill $name
     podman ps --all | grep -w "$name$" && podman rm $name -f
 done
@@ -170,10 +170,18 @@ sudo podman run -d --net host --privileged --name ironic-api \
      -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
 
+sudo podman run -d --name ironic-deploy-ramdisk-logs \
+     --entrypoint /bin/runlogwatch.sh \
+     -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
+
+podman run -d --name ironic-inspector-ramdisk-logs \
+     --entrypoint /bin/runlogwatch.sh \
+     -v $IRONIC_SHARED_VOLUME:/shared:z "${IRONIC_INSPECTOR_IMAGE}"
+
 # Now loop so the service remains active and restart everything should one of the containers exit unexpectedly.
 # The alternative would be RemainAfterExit=yes but then we lose the ability to restart if something crashes.
 while true; do
-    for name in ironic-api ironic-conductor ironic-inspector $dnsmasq_container_name httpd mariadb; do
+    for name in ironic-api ironic-conductor ironic-inspector ironic-deploy-ramdisk-logs ironic-inspector-ramdisk-logs $dnsmasq_container_name httpd mariadb; do
         # Note there are two levels of go templating here, the outer braces
         # are for the templating done in openshift-install, to escape the
         # templating input to the --format option of podman inspect
