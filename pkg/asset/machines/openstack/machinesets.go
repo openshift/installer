@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
-	clusterapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
+	clusterapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -72,7 +72,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 					},
 				},
 				Template: clusterapi.MachineTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
+					ObjectMeta: clusterapi.ObjectMeta{
 						Labels: map[string]string{
 							"machine.openshift.io/cluster-api-machineset":   name,
 							"machine.openshift.io/cluster-api-cluster":      clusterID,
