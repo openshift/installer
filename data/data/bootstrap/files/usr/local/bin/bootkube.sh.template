@@ -355,9 +355,9 @@ then
         --rm \
         --volume "$PWD:/assets:z" \
         --volume /etc/kubernetes:/etc/kubernetes:z \
-        "${CLUSTER_BOOTSTRAP_IMAGE}" \
-        start --tear-down-early=false --asset-dir=/assets 
-
+        quay.io/eranco74/cluster-bootstrap:cluster-profile \
+        start --tear-down-early=false --asset-dir=/assets --cluster-profile="single-node-production-edge" --required-pods=""
+        # TODO: make sure this finish! 
         touch cb-bootstrap.done
 fi
 
@@ -380,12 +380,16 @@ then
     cp /opt/openshift/bootstrap-manifests/kube* /mnt/rhcos/master/kubernetes/manifests/
 
     mkdir -p /mnt/rhcos/master/kubernetes/bootstrap-configs
-    cp /etc/kubernetes/bootstrap-configs /mnt/rhcos/master/kubernetes/bootstrap-configs
+    mkdir -p /mnt/rhcos/master/kubernetes/bootstrap-secrets
+
+    cp -r /etc/kubernetes/bootstrap-configs /mnt/rhcos/master/kubernetes/
+    cp -r /opt/openshift/tls/* /mnt/rhcos/master/kubernetes/bootstrap-secrets
+    cp    /opt/openshift/auth/kubeconfig-loopback /mnt/rhcos/master/kubernetes/bootstrap-secrets/kubeconfig
 
     mkdir -p /mnt/rhcos/master/kubernetes/static-pod-resources/etcd-member
-    cp tls/etcd-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-member/ca.crt
-    cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-serving /etc/kubernetes/static-pod-resources/etcd-member
-    cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-peer /etc/kubernetes/static-pod-resources/etcd-member
+    cp tls/etcd-ca-bundle.crt /mnt/rhcos/master/kubernetes/static-pod-resources/etcd-member/ca.crt
+    cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-serving /mnt/rhcos/master/kubernetes/static-pod-resources/etcd-member
+    cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-peer /mnt/rhcos/master/kubernetes/static-pod-resources/etcd-member
 
     # TODO: wait for etcd pod to go down before copy the etcd data
     sleep 60
