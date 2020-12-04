@@ -54,6 +54,7 @@ type bootstrapTemplateData struct {
 	EtcdCluster           string
 	PullSecret            string
 	ReleaseImage          string
+	ClusterProfile        string
 	Proxy                 *configv1.ProxyStatus
 	Registries            []sysregistriesv2.Registry
 	BootImage             string
@@ -259,6 +260,13 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		platformData.VSphere = vsphere.GetTemplateData(installConfig.Platform.VSphere)
 	}
 
+	// Set cluster profile
+	clusterProfile := ""
+	if cp := os.Getenv("OPENSHIFT_INSTALL_EXPERIMENTAL_CLUSTER_PROFILE"); cp != "" {
+		logrus.Warnf("Found override for Cluster Profile: %q", cp)
+		clusterProfile = cp
+	}
+
 	return &bootstrapTemplateData{
 		AdditionalTrustBundle: installConfig.AdditionalTrustBundle,
 		FIPS:                  installConfig.FIPS,
@@ -269,6 +277,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		Registries:            registries,
 		BootImage:             string(*rhcosImage),
 		PlatformData:          platformData,
+		ClusterProfile:        clusterProfile,
 	}, nil
 }
 

@@ -55,6 +55,9 @@ then
 
 	bootkube_podman_run \
 		--volume "$PWD:/assets:z" \
+{{- if .ClusterProfile}}
+		--env CLUSTER_PROFILE="{{.ClusterProfile}}" \
+{{- end}}
 		"${RELEASE_IMAGE_DIGEST}" \
 		render \
 			--output-dir=/assets/cvo-bootstrap \
