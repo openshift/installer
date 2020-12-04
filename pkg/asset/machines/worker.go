@@ -37,7 +37,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
@@ -185,7 +184,6 @@ func (w *Worker) Dependencies() []asset.Asset {
 		// it is put in the dependencies but not fetched in Generate
 		&installconfig.PlatformCredsCheck{},
 		&installconfig.InstallConfig{},
-		&kubeconfig.AdminClient{},
 		new(rhcos.Image),
 		&machine.Worker{},
 	}
@@ -196,10 +194,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	ctx := context.TODO()
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
-	adminKubeConfig := &kubeconfig.AdminClient{}
 	rhcosImage := new(rhcos.Image)
 	wign := &machine.Worker{}
-	dependencies.Get(clusterID, installConfig, adminKubeConfig, rhcosImage, wign)
+	dependencies.Get(clusterID, installConfig, rhcosImage, wign)
 
 	machineConfigs := []*mcfgv1.MachineConfig{}
 	machineSets := []runtime.Object{}
@@ -328,19 +325,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
-			if adminKubeConfig.Config != nil {
-				data, err := yaml.Marshal(adminKubeConfig.Config)
-				if err != nil {
-					return errors.Wrap(err, "failed to Marshal kubeconfig")
-				}
-
-				adminKC, err := machineconfig.GenerateKubeConfig(data, "worker")
-				if err != nil {
-					return errors.Wrap(err, "failed to create ignition for admin kubeconfig for worker machines")
-				}
-				machineConfigs = append(machineConfigs, adminKC)
-			}
-
 		case gcptypes.Name:
 			mpool := defaultGCPMachinePoolPlatform()
 			mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)

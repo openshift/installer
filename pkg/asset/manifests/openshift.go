@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	kubeconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
@@ -58,11 +59,13 @@ func (o *Openshift) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
 		&installconfig.ClusterID{},
+		&kubeconfig.Kubelet{},
 		&password.KubeadminPassword{},
 		&openshiftinstall.Config{},
 
 		&openshift.CloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
+		&openshift.KubeconfigKubeletSecret{},
 		&openshift.RoleCloudCredsSecretReader{},
 		&openshift.PrivateClusterOutbound{},
 		&openshift.BaremetalConfig{},
@@ -75,8 +78,9 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	kubeadminPassword := &password.KubeadminPassword{}
+	kubeconfigKubelet := &kubeconfig.Kubelet{}
 	openshiftInstall := &openshiftinstall.Config{}
-	dependencies.Get(installConfig, kubeadminPassword, clusterID, openshiftInstall)
+	dependencies.Get(installConfig, kubeadminPassword, kubeconfigKubelet, clusterID, openshiftInstall)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -196,13 +200,19 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		}
 	}
 
+	kubeconfigKubeletData, err := yaml.Marshal(kubeconfigKubelet.Config)
+	if err != nil {
+		return err
+	}
 	templateData := &openshiftTemplateData{
-		CloudCreds:                   cloudCreds,
-		Base64EncodedKubeadminPwHash: base64.StdEncoding.EncodeToString(kubeadminPassword.PasswordHash),
+		CloudCreds:                         cloudCreds,
+		Base64EncodedKubeadminPwHash:       base64.StdEncoding.EncodeToString(kubeadminPassword.PasswordHash),
+		Base64EncodedKubeconfigKubeletData: base64.StdEncoding.EncodeToString(kubeconfigKubeletData),
 	}
 
 	cloudCredsSecret := &openshift.CloudCredsSecret{}
 	kubeadminPasswordSecret := &openshift.KubeadminPasswordSecret{}
+	kubeconfigKubeletSecret := &openshift.KubeconfigKubeletSecret{}
 	roleCloudCredsSecretReader := &openshift.RoleCloudCredsSecretReader{}
 	baremetalConfig := &openshift.BaremetalConfig{}
 	rhcosImage := new(rhcos.Image)
@@ -210,12 +220,14 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	dependencies.Get(
 		cloudCredsSecret,
 		kubeadminPasswordSecret,
+		kubeconfigKubeletSecret,
 		roleCloudCredsSecretReader,
 		baremetalConfig,
 		rhcosImage)
 
 	assetData := map[string][]byte{
 		"99_kubeadmin-password-secret.yaml": applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
+		"99_kubeconfig-kubelet-secret.yaml": applyTemplateData(kubeconfigKubeletSecret.Files()[0].Data, templateData),
 	}
 
 	switch platform {
