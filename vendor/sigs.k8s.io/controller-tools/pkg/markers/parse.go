@@ -340,13 +340,8 @@ func guessType(scanner *sc.Scanner, raw string, allowSlice bool) *Argument {
 		}
 	}
 
-	// then, integers...
 	if !probablyString {
-		nextTok := subScanner.Scan()
-		if nextTok == '-' {
-			nextTok = subScanner.Scan()
-		}
-		if nextTok == sc.Int {
+		if nextTok := subScanner.Scan(); nextTok == sc.Int {
 			return &Argument{Type: IntType}
 		}
 	}
@@ -486,21 +481,11 @@ func (a *Argument) parse(scanner *sc.Scanner, raw string, out reflect.Value, inS
 		for tok := scanner.Scan(); tok != sc.EOF; tok = scanner.Scan() {
 		}
 	case IntType:
-		nextChar := scanner.Peek()
-		isNegative := false
-		if nextChar == '-' {
-			isNegative = true
-			scanner.Scan() // eat the '-'
-		}
 		if !expect(scanner, sc.Int, "integer") {
 			return
 		}
 		// TODO(directxman12): respect the size when parsing
-		text := scanner.TokenText()
-		if isNegative {
-			text = "-" + text
-		}
-		val, err := strconv.Atoi(text)
+		val, err := strconv.Atoi(scanner.TokenText())
 		if err != nil {
 			scanner.Error(scanner, fmt.Sprintf("unable to parse integer: %v", err))
 			return

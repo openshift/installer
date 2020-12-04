@@ -46,32 +46,6 @@ func (g Generators) RegisterMarkers(reg *markers.Registry) error {
 	return nil
 }
 
-// CheckFilters returns the set of NodeFilters for all Generators that
-// implement NeedsTypeChecking.
-func (g Generators) CheckFilters() []loader.NodeFilter {
-	var filters []loader.NodeFilter
-	for _, gen := range g {
-		withFilter, needsChecking := (*gen).(NeedsTypeChecking)
-		if !needsChecking {
-			continue
-		}
-		filters = append(filters, withFilter.CheckFilter())
-	}
-	return filters
-}
-
-// NeedsTypeChecking indicates that a particular generator needs & has opinions
-// on typechecking.  If this is not implemented, a generator will be given a
-// context with a nil typechecker.
-type NeedsTypeChecking interface {
-	// CheckFilter indicates the loader.NodeFilter (if any) that should be used
-	// to prune out unused types/packages when type-checking (nodes for which
-	// the filter returns true are considered "interesting").  This filter acts
-	// as a baseline -- all types the pass through this filter will be checked,
-	// but more than that may also be checked due to other generators' filters.
-	CheckFilter() loader.NodeFilter
-}
-
 // Generator knows how to register some set of markers, and then produce
 // output artifacts based on loaded code containing those markers,
 // sharing common loaded data.
@@ -170,9 +144,7 @@ func (g Generators) ForRoots(rootPaths ...string) (*Runtime, error) {
 			},
 			Roots:     roots,
 			InputRule: InputFromFileSystem,
-			Checker: &loader.TypeChecker{
-				NodeFilters: g.CheckFilters(),
-			},
+			Checker:   &loader.TypeChecker{},
 		},
 		OutputRules: OutputRules{Default: OutputToNothing},
 	}
@@ -193,23 +165,14 @@ func (r *Runtime) Run() bool {
 		return true
 	}
 
-	hadErrs := false
 	for _, gen := range r.Generators {
 		ctx := r.GenerationContext // make a shallow copy
 		ctx.OutputRule = r.OutputRules.ForGenerator(gen)
-
-		// don't pass a typechecker to generators that don't provide a filter
-		// to avoid accidents
-		if _, needsChecking := (*gen).(NeedsTypeChecking); !needsChecking {
-			ctx.Checker = nil
-		}
-
 		if err := (*gen).Generate(&ctx); err != nil {
 			fmt.Fprintln(os.Stderr, err)
-			hadErrs = true
 		}
 	}
 
 	// skip TypeErrors -- they're probably just from partial typechecking in crd-gen
-	return loader.PrintErrors(r.Roots, packages.TypeError) || hadErrs
+	return loader.PrintErrors(r.Roots, packages.TypeError)
 }

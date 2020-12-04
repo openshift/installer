@@ -115,7 +115,7 @@ require (
 	sigs.k8s.io/cluster-api-provider-aws v0.0.0
 	sigs.k8s.io/cluster-api-provider-azure v0.0.0
 	sigs.k8s.io/cluster-api-provider-openstack v0.0.0
-	sigs.k8s.io/controller-tools v0.4.1
+	sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 	sigs.k8s.io/structured-merge-diff/v4 v4.0.2 // indirect
 )
 

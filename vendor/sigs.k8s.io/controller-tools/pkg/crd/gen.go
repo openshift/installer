@@ -18,9 +18,7 @@ package crd
 
 import (
 	"fmt"
-	"go/ast"
 	"go/types"
-	"os"
 
 	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextlegacy "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -32,9 +30,6 @@ import (
 	"sigs.k8s.io/controller-tools/pkg/markers"
 	"sigs.k8s.io/controller-tools/pkg/version"
 )
-
-// The default CustomResourceDefinition version to generate.
-const defaultVersion = "v1"
 
 // +controllertools:marker:generateHelp
 
@@ -76,7 +71,7 @@ type Generator struct {
 	MaxDescLen *int `marker:",optional"`
 
 	// CRDVersions specifies the target API versions of the CRD type itself to
-	// generate. Defaults to v1.
+	// generate.  Defaults to v1beta1.
 	//
 	// The first version listed will be assumed to be the "default" version and
 	// will not get a version suffix in the output filename.
@@ -86,9 +81,6 @@ type Generator struct {
 	CRDVersions []string `marker:"crdVersions,optional"`
 }
 
-func (Generator) CheckFilter() loader.NodeFilter {
-	return filterTypesForCRDs
-}
 func (Generator) RegisterMarkers(into *markers.Registry) error {
 	return crdmarkers.Register(into)
 }
@@ -121,7 +113,7 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 	crdVersions := g.CRDVersions
 
 	if len(crdVersions) == 0 {
-		crdVersions = []string{defaultVersion}
+		crdVersions = []string{"v1beta1"}
 	}
 
 	for groupKind := range kubeKinds {
@@ -161,11 +153,6 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 		}
 
 		for i, crd := range versionedCRDs {
-			// defaults are not allowed to be specified in v1beta1 CRDs, so strip them
-			// before writing to a file
-			if crdVersions[i] == "v1beta1" {
-				removeDefaultsFromSchemas(crd.(*apiextlegacy.CustomResourceDefinition))
-			}
 			var fileName string
 			if i == 0 {
 				fileName = fmt.Sprintf("%s_%s.yaml", crdRaw.Spec.Group, crdRaw.Spec.Names.Plural)
@@ -179,49 +166,6 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 	}
 
 	return nil
-}
-
-// removeDefaultsFromSchemas will remove all instances of default values being
-// specified across all defined API versions
-func removeDefaultsFromSchemas(crd *apiextlegacy.CustomResourceDefinition) {
-	if crd.Spec.Validation != nil {
-		removeDefaultsFromSchemaProps(crd.Spec.Validation.OpenAPIV3Schema)
-	}
-
-	for _, versionSpec := range crd.Spec.Versions {
-		if versionSpec.Schema != nil {
-			removeDefaultsFromSchemaProps(versionSpec.Schema.OpenAPIV3Schema)
-		}
-	}
-}
-
-// removeDefaultsFromSchemaProps will recurse into JSONSchemaProps to remove
-// all instances of default values being specified
-func removeDefaultsFromSchemaProps(v *apiextlegacy.JSONSchemaProps) {
-	if v == nil {
-		return
-	}
-
-	if v.Default != nil {
-		fmt.Fprintln(os.Stderr, "Warning: default unsupported in CRD version v1beta1, v1 required. Removing defaults.")
-	}
-
-	// nil-out the default field
-	v.Default = nil
-	for name, prop := range v.Properties {
-		// iter var reference is fine -- we handle the persistence of the modfications on the line below
-		//nolint:gosec
-		removeDefaultsFromSchemaProps(&prop)
-		v.Properties[name] = prop
-	}
-	if v.Items != nil {
-		removeDefaultsFromSchemaProps(v.Items.Schema)
-		for i := range v.Items.JSONSchemas {
-			props := v.Items.JSONSchemas[i]
-			removeDefaultsFromSchemaProps(&props)
-			v.Items.JSONSchemas[i] = props
-		}
-	}
 }
 
 // toTrivialVersions strips out all schemata except for the storage schema,
@@ -329,23 +273,4 @@ func FindKubeKinds(parser *Parser, metav1Pkg *loader.Package) map[schema.GroupKi
 	}
 
 	return kubeKinds
-}
-
-// filterTypesForCRDs filters out all nodes that aren't used in CRD generation,
-// like interfaces and struct fields without JSON tag.
-func filterTypesForCRDs(node ast.Node) bool {
-	switch node := node.(type) {
-	case *ast.InterfaceType:
-		// skip interfaces, we never care about references in them
-		return false
-	case *ast.StructType:
-		return true
-	case *ast.Field:
-		_, hasTag := loader.ParseAstTag(node.Tag).Lookup("json")
-		// fields without JSON tags mean we have custom serialization,
-		// so only visit fields with tags.
-		return hasTag
-	default:
-		return true
-	}
 }
