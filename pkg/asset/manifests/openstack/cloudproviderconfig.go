@@ -1,28 +1,24 @@
 package openstack
 
 import (
+	"io/ioutil"
 	"strconv"
 	"strings"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/openshift/installer/pkg/asset/installconfig/openstack"
+	"github.com/openshift/installer/pkg/types"
 )
 
-// CloudProviderConfig generates the cloud provider config for the OpenStack platform.
-func CloudProviderConfig(cloud *clientconfig.Cloud) string {
-	res := `[Global]
-secret-name = openstack-credentials
-secret-namespace = kube-system
-`
-	if cloud.RegionName != "" {
-		res += "region = " + cloud.RegionName + "\n"
-	}
-
-	if cloud.CACertFile != "" {
-		res += "ca-file = /etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem\n"
-	}
-
-	return res
+// Error represents a failure while generating OpenStack provider
+// configuration.
+type Error struct {
+	err error
+	msg string
 }
+
+func (e Error) Error() string { return e.msg + ": " + e.err.Error() }
+func (e Error) Unwrap() error { return e.err }
 
 // CloudProviderConfigSecret generates the cloud provider config for the OpenStack
 // platform, that will be stored in the system secret.
@@ -74,4 +70,36 @@ func CloudProviderConfigSecret(cloud *clientconfig.Cloud) ([]byte, error) {
 	}
 
 	return []byte(res.String()), nil
+}
+
+func generateCloudProviderConfig(cloudConfig *clientconfig.Cloud) (cloudProviderConfigData, cloudProviderConfigCABundleData string, err error) {
+	cloudProviderConfigData = `[Global]
+secret-name = openstack-credentials
+secret-namespace = kube-system
+`
+	if regionName := cloudConfig.RegionName; regionName != "" {
+		cloudProviderConfigData += "region = " + regionName + "\n"
+	}
+
+	if caCertFile := cloudConfig.CACertFile; caCertFile != "" {
+		cloudProviderConfigData += "ca-file = /etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem\n"
+		caFile, err := ioutil.ReadFile(caCertFile)
+		if err != nil {
+			return "", "", Error{err, "failed to read clouds.yaml ca-cert from disk"}
+		}
+		cloudProviderConfigCABundleData = string(caFile)
+	}
+
+	return cloudProviderConfigData, cloudProviderConfigCABundleData, nil
+}
+
+// GenerateCloudProviderConfig adds the cloud provider config for the OpenStack
+// platform in the provided configmap.
+func GenerateCloudProviderConfig(installConfig types.InstallConfig) (cloudProviderConfigData, cloudProviderConfigCABundleData string, err error) {
+	cloud, err := openstack.GetSession(installConfig.Platform.OpenStack.Cloud)
+	if err != nil {
+		return "", "", Error{err, "failed to get cloud config for openstack"}
+	}
+
+	return generateCloudProviderConfig(cloud.CloudConfig)
 }
