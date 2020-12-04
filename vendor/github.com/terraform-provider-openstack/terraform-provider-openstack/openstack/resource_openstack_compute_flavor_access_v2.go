@@ -108,7 +108,7 @@ func resourceComputeFlavorAccessV2Delete(d *schema.ResourceData, meta interface{
 	return nil
 }
 
-func parseComputeFlavorAccessId(id string) (string, string, error) {
+func parseComputeFlavorAccessID(id string) (string, string, error) {
 	idParts := strings.Split(id, "/")
 	if len(idParts) < 2 {
 		return "", "", fmt.Errorf("Unable to determine flavor access ID")
@@ -122,7 +122,7 @@ func parseComputeFlavorAccessId(id string) (string, string, error) {
 
 func getFlavorAccess(computeClient *gophercloud.ServiceClient, d *schema.ResourceData) (flavors.FlavorAccess, error) {
 	var access flavors.FlavorAccess
-	flavorID, tenantID, err := parseComputeFlavorAccessId(d.Id())
+	flavorID, tenantID, err := parseComputeFlavorAccessID(d.Id())
 	if err != nil {
 		return access, err
 	}

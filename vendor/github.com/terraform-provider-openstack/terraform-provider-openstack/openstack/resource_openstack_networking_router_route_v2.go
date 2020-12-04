@@ -55,8 +55,9 @@ func resourceNetworkingRouterRouteV2Create(d *schema.ResourceData, meta interfac
 	}
 
 	routerID := d.Get("router_id").(string)
-	osMutexKV.Lock(routerID)
-	defer osMutexKV.Unlock(routerID)
+	mutex := config.MutexKV
+	mutex.Lock(routerID)
+	defer mutex.Unlock(routerID)
 
 	r, err := routers.Get(networkingClient, routerID).Extract()
 	if err != nil {
@@ -146,8 +147,9 @@ func resourceNetworkingRouterRouteV2Delete(d *schema.ResourceData, meta interfac
 	}
 
 	routerID := d.Get("router_id").(string)
-	osMutexKV.Lock(routerID)
-	defer osMutexKV.Unlock(routerID)
+	mutex := config.MutexKV
+	mutex.Lock(routerID)
+	defer mutex.Unlock(routerID)
 
 	r, err := routers.Get(networkingClient, routerID).Extract()
 	if err != nil {

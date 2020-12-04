@@ -28,7 +28,7 @@ func (opts FirewallCreateOpts) ToFirewallCreateMap() (map[string]interface{}, er
 	return BuildRequest(opts, "firewall")
 }
 
-//FirewallUpdateOpts
+// FirewallUpdateOpts.
 type FirewallUpdateOpts struct {
 	firewalls.UpdateOptsBuilder
 }

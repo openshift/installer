@@ -188,7 +188,7 @@ func dataSourceImagesImageV2Read(d *schema.ResourceData, meta interface{}) error
 	}
 
 	visibility := resourceImagesImageV2VisibilityFromString(d.Get("visibility").(string))
-	member_status := resourceImagesImageV2MemberStatusFromString(d.Get("member_status").(string))
+	memberStatus := resourceImagesImageV2MemberStatusFromString(d.Get("member_status").(string))
 
 	var tags []string
 	tag := d.Get("tag").(string)
@@ -206,7 +206,7 @@ func dataSourceImagesImageV2Read(d *schema.ResourceData, meta interface{}) error
 		SortKey:      d.Get("sort_key").(string),
 		SortDir:      d.Get("sort_direction").(string),
 		Tags:         tags,
-		MemberStatus: member_status,
+		MemberStatus: memberStatus,
 	}
 
 	log.Printf("[DEBUG] List Options: %#v", listOpts)

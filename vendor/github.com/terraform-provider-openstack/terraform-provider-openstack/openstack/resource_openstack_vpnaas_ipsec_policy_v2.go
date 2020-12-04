@@ -145,6 +145,10 @@ func resourceIPSecPolicyV2Create(d *schema.ResourceData, meta interface{}) error
 		MinTimeout: 2 * time.Second,
 	}
 	_, err = stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf(
+			"Error waiting for openstack_vpnaas_ipsec_policy_v2 %s to become active: %s", policy.ID, err)
+	}
 
 	log.Printf("[DEBUG] IPSec policy created: %#v", policy)
 
@@ -340,7 +344,6 @@ func resourceIPSecPolicyV2TransformProtocol(trp string) ipsecpolicies.TransformP
 		protocol = ipsecpolicies.TransformProtocolAHESP
 	}
 	return protocol
-
 }
 func resourceIPSecPolicyV2PFS(pfsString string) ipsecpolicies.PFS {
 	var pfs ipsecpolicies.PFS
@@ -353,7 +356,6 @@ func resourceIPSecPolicyV2PFS(pfsString string) ipsecpolicies.PFS {
 		pfs = ipsecpolicies.PFSGroup14
 	}
 	return pfs
-
 }
 func resourceIPSecPolicyV2EncryptionAlgorithm(encryptionAlgo string) ipsecpolicies.EncryptionAlgorithm {
 	var alg ipsecpolicies.EncryptionAlgorithm
@@ -431,5 +433,4 @@ func resourceIPSecPolicyV2LifetimeUpdateOpts(d *schema.Set) ipsecpolicies.Lifeti
 		lifetimeUpdateOpts.Value = value
 	}
 	return lifetimeUpdateOpts
-
 }

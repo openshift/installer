@@ -144,7 +144,7 @@ func resourceLoadBalancerV2Create(d *schema.ResourceData, meta interface{}) erro
 
 	// Wait for load-balancer to become active before continuing.
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForLBV2LoadBalancer(lbClient, lbID, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2LoadBalancer(lbClient, lbID, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -252,7 +252,7 @@ func resourceLoadBalancerV2Update(d *schema.ResourceData, meta interface{}) erro
 	if updateOpts != (neutronloadbalancers.UpdateOpts{}) {
 		// Wait for load-balancer to become active before continuing.
 		timeout := d.Timeout(schema.TimeoutUpdate)
-		err = waitForLBV2LoadBalancer(lbClient, d.Id(), "ACTIVE", lbPendingStatuses, timeout)
+		err = waitForLBV2LoadBalancer(lbClient, d.Id(), "ACTIVE", getLbPendingStatuses(), timeout)
 		if err != nil {
 			return err
 		}
@@ -271,7 +271,7 @@ func resourceLoadBalancerV2Update(d *schema.ResourceData, meta interface{}) erro
 		}
 
 		// Wait for load-balancer to become active before continuing.
-		err = waitForLBV2LoadBalancer(lbClient, d.Id(), "ACTIVE", lbPendingStatuses, timeout)
+		err = waitForLBV2LoadBalancer(lbClient, d.Id(), "ACTIVE", getLbPendingStatuses(), timeout)
 		if err != nil {
 			return err
 		}
@@ -314,7 +314,7 @@ func resourceLoadBalancerV2Delete(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	// Wait for load-balancer to become deleted.
-	err = waitForLBV2LoadBalancer(lbClient, d.Id(), "DELETED", lbPendingDeleteStatuses, timeout)
+	err = waitForLBV2LoadBalancer(lbClient, d.Id(), "DELETED", getLbPendingDeleteStatuses(), timeout)
 	if err != nil {
 		return err
 	}

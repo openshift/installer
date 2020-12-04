@@ -12,9 +12,9 @@ import (
 )
 
 func computeInterfaceAttachV2AttachFunc(
-	computeClient *gophercloud.ServiceClient, instanceId, attachmentId string) resource.StateRefreshFunc {
+	computeClient *gophercloud.ServiceClient, instanceID, attachmentID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		va, err := attachinterfaces.Get(computeClient, instanceId, attachmentId).Extract()
+		va, err := attachinterfaces.Get(computeClient, instanceID, attachmentID).Extract()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault404); ok {
 				return va, "ATTACHING", nil
@@ -27,12 +27,12 @@ func computeInterfaceAttachV2AttachFunc(
 }
 
 func computeInterfaceAttachV2DetachFunc(
-	computeClient *gophercloud.ServiceClient, instanceId, attachmentId string) resource.StateRefreshFunc {
+	computeClient *gophercloud.ServiceClient, instanceID, attachmentID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		log.Printf("[DEBUG] Attempting to detach openstack_compute_interface_attach_v2 %s from instance %s",
-			attachmentId, instanceId)
+			attachmentID, instanceID)
 
-		va, err := attachinterfaces.Get(computeClient, instanceId, attachmentId).Extract()
+		va, err := attachinterfaces.Get(computeClient, instanceID, attachmentID).Extract()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault404); ok {
 				return va, "DETACHED", nil
@@ -40,7 +40,7 @@ func computeInterfaceAttachV2DetachFunc(
 			return va, "", err
 		}
 
-		err = attachinterfaces.Delete(computeClient, instanceId, attachmentId).ExtractErr()
+		err = attachinterfaces.Delete(computeClient, instanceID, attachmentID).ExtractErr()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault404); ok {
 				return va, "DETACHED", nil
@@ -53,7 +53,7 @@ func computeInterfaceAttachV2DetachFunc(
 			return nil, "", err
 		}
 
-		log.Printf("[DEBUG] openstack_compute_interface_attach_v2 %s is still active.", attachmentId)
+		log.Printf("[DEBUG] openstack_compute_interface_attach_v2 %s is still active.", attachmentID)
 		return nil, "", nil
 	}
 }
@@ -64,8 +64,8 @@ func computeInterfaceAttachV2ParseID(id string) (string, string, error) {
 		return "", "", fmt.Errorf("Unable to determine openstack_compute_interface_attach_v2 %s ID", id)
 	}
 
-	instanceId := idParts[0]
-	attachmentId := idParts[1]
+	instanceID := idParts[0]
+	attachmentID := idParts[1]
 
-	return instanceId, attachmentId, nil
+	return instanceID, attachmentID, nil
 }

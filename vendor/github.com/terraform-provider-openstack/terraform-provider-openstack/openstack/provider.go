@@ -1,16 +1,13 @@
 package openstack
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/mutexkv"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 
 	"github.com/gophercloud/utils/terraform/auth"
+	"github.com/gophercloud/utils/terraform/mutexkv"
 )
-
-// This is a global MutexKV for use within this plugin.
-var osMutexKV = mutexkv.NewMutexKV()
 
 // Use openstackbase.Config as the base/foundation of this provider's
 // Config struct.
@@ -510,6 +507,7 @@ func configureProvider(d *schema.ResourceData, terraformVersion string) (interfa
 			DisableNoCacheHeader:        d.Get("disable_no_cache_header").(bool),
 			TerraformVersion:            terraformVersion,
 			SDKVersion:                  meta.SDKVersionString(),
+			MutexKV:                     *(mutexkv.NewMutexKV()),
 		},
 	}
 

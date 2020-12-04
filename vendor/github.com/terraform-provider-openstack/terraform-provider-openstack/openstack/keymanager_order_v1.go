@@ -59,8 +59,8 @@ func keyManagerOrderV1WaitForOrderCreation(kmClient *gophercloud.ServiceClient, 
 func keyManagerOrderV1GetUUIDfromOrderRef(ref string) string {
 	// order ref has form https://{barbican_host}/v1/orders/{order_uuid}
 	// so we are only interested in the last part
-	ref_split := strings.Split(ref, "/")
-	uuid := ref_split[len(ref_split)-1]
+	refSplit := strings.Split(ref, "/")
+	uuid := refSplit[len(refSplit)-1]
 	return uuid
 }
 
@@ -123,7 +123,6 @@ func flattenKeyManagerOrderV1Meta(m orders.Meta) []map[string]interface{} {
 
 	if m.PayloadContentType != "" {
 		s["payload_content_type"] = m.PayloadContentType
-
 	}
 
 	return append(meta, s)

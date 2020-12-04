@@ -154,7 +154,7 @@ func resourceListenerV2Create(d *schema.ResourceData, meta interface{}) error {
 	timeout := d.Timeout(schema.TimeoutCreate)
 
 	// Wait for LoadBalancer to become active before continuing.
-	err = waitForLBV2LoadBalancer(lbClient, d.Get("loadbalancer_id").(string), "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2LoadBalancer(lbClient, d.Get("loadbalancer_id").(string), "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -180,7 +180,7 @@ func resourceListenerV2Create(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for the listener to become ACTIVE.
-	err = waitForLBV2Listener(lbClient, listener, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Listener(lbClient, listener, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -278,7 +278,7 @@ func resourceListenerV2Update(d *schema.ResourceData, meta interface{}) error {
 
 	// Wait for the listener to become ACTIVE.
 	timeout := d.Timeout(schema.TimeoutUpdate)
-	err = waitForLBV2Listener(lbClient, listener, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Listener(lbClient, listener, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -306,13 +306,12 @@ func resourceListenerV2Update(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for the listener to become ACTIVE.
-	err = waitForLBV2Listener(lbClient, listener, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Listener(lbClient, listener, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
 
 	return resourceListenerV2Read(d, meta)
-
 }
 
 func resourceListenerV2Delete(d *schema.ResourceData, meta interface{}) error {
@@ -344,7 +343,7 @@ func resourceListenerV2Delete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for the listener to become DELETED.
-	err = waitForLBV2Listener(lbClient, listener, "DELETED", lbPendingDeleteStatuses, timeout)
+	err = waitForLBV2Listener(lbClient, listener, "DELETED", getLbPendingDeleteStatuses(), timeout)
 	if err != nil {
 		return err
 	}

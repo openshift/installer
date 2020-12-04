@@ -13,7 +13,7 @@ import (
 )
 
 // BuildRequest takes an opts struct and builds a request body for
-// Gophercloud to execute
+// Gophercloud to execute.
 func BuildRequest(opts interface{}, parent string) (map[string]interface{}, error) {
 	b, err := gophercloud.BuildRequestBody(opts, "")
 	if err != nil {
@@ -60,7 +60,7 @@ func AddValueSpecs(body map[string]interface{}) map[string]interface{} {
 	return body
 }
 
-// MapValueSpecs converts ResourceData into a map
+// MapValueSpecs converts ResourceData into a map.
 func MapValueSpecs(d *schema.ResourceData) map[string]string {
 	m := make(map[string]string)
 	for key, val := range d.Get("value_specs").(map[string]interface{}) {
@@ -82,7 +82,7 @@ func checkForRetryableError(err error) *resource.RetryError {
 	}
 }
 
-func suppressEquivilentTimeDiffs(k, old, new string, d *schema.ResourceData) bool {
+func suppressEquivalentTimeDiffs(k, old, new string, d *schema.ResourceData) bool {
 	oldTime, err := time.Parse(time.RFC3339, old)
 	if err != nil {
 		return false
@@ -112,7 +112,6 @@ func expandVendorOptions(vendOptsRaw []interface{}) map[string]interface{} {
 		for optKey, optValue := range option.(map[string]interface{}) {
 			vendorOptions[optKey] = optValue
 		}
-
 	}
 
 	return vendorOptions
@@ -260,7 +259,7 @@ func compatibleMicroversion(direction, required, given string) (bool, error) {
 	return false, nil
 }
 
-func validateJsonObject(v interface{}, k string) ([]string, []error) {
+func validateJSONObject(v interface{}, k string) ([]string, []error) {
 	if v == nil || v.(string) == "" {
 		return nil, []error{fmt.Errorf("%q value must not be empty", k)}
 	}
@@ -276,7 +275,7 @@ func validateJsonObject(v interface{}, k string) ([]string, []error) {
 	return nil, nil
 }
 
-func diffSuppressJsonObject(k, old, new string, d *schema.ResourceData) bool {
+func diffSuppressJSONObject(k, old, new string, d *schema.ResourceData) bool {
 	if strSliceContains([]string{"{}", ""}, old) &&
 		strSliceContains([]string{"{}", ""}, new) {
 		return true

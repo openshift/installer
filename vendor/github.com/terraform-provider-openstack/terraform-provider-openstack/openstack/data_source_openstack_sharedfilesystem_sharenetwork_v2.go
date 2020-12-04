@@ -149,7 +149,7 @@ func dataSourceSharedFilesystemShareNetworkV2Read(d *schema.ResourceData, meta i
 
 		if len(filteredShareNetworks) == 0 {
 			return fmt.Errorf("Your query returned no results after the security service ID filter. " +
-				"Please change your search criteria and try again.")
+				"Please change your search criteria and try again")
 		}
 		allShareNetworks = filteredShareNetworks
 	}
@@ -157,11 +157,9 @@ func dataSourceSharedFilesystemShareNetworkV2Read(d *schema.ResourceData, meta i
 	var shareNetwork sharenetworks.ShareNetwork
 	if len(allShareNetworks) > 1 {
 		log.Printf("[DEBUG] Multiple results found: %#v", allShareNetworks)
-		return fmt.Errorf("Your query returned more than one result. Please try a more " +
-			"specific search criteria.")
-	} else {
-		shareNetwork = allShareNetworks[0]
+		return fmt.Errorf("Your query returned more than one result. Please try a more specific search criteria")
 	}
+	shareNetwork = allShareNetworks[0]
 
 	// skip extra calls if "security_service_id" filter was already used
 	if securityServiceID == "" {

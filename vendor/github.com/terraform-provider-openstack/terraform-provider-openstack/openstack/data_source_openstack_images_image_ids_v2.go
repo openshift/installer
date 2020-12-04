@@ -121,14 +121,13 @@ func dataSourceImagesImageIDsV2() *schema.Resource {
 			},
 
 			// Computed values
-			"ids": &schema.Schema{
+			"ids": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 		},
 	}
-
 }
 
 // dataSourceImagesImageIdsV2Read performs the image lookup.
@@ -154,7 +153,7 @@ func dataSourceImagesImageIdsV2Read(d *schema.ResourceData, meta interface{}) er
 
 	visibility := resourceImagesImageV2VisibilityFromString(
 		d.Get("visibility").(string))
-	member_status := resourceImagesImageV2MemberStatusFromString(
+	memberStatus := resourceImagesImageV2MemberStatusFromString(
 		d.Get("member_status").(string))
 	properties := resourceImagesImageV2ExpandProperties(
 		d.Get("properties").(map[string]interface{}))
@@ -173,7 +172,7 @@ func dataSourceImagesImageIdsV2Read(d *schema.ResourceData, meta interface{}) er
 		SizeMax:      int64(d.Get("size_max").(int)),
 		Sort:         sortValue.(string),
 		Tags:         tags,
-		MemberStatus: member_status,
+		MemberStatus: memberStatus,
 	}
 
 	log.Printf("[DEBUG] List Options in openstack_images_image_ids_v2: %#v", listOpts)

@@ -161,7 +161,7 @@ func resourceL7RuleV2Create(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for parent L7 Policy to become active before continuing
-	err = waitForLBV2L7Policy(lbClient, parentListener, parentL7Policy, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2L7Policy(lbClient, parentListener, parentL7Policy, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func resourceL7RuleV2Create(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for L7 Rule to become active before continuing
-	err = waitForLBV2L7Rule(lbClient, parentListener, parentL7Policy, l7Rule, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2L7Rule(lbClient, parentListener, parentL7Policy, l7Rule, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -279,13 +279,13 @@ func resourceL7RuleV2Update(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for parent L7 Policy to become active before continuing
-	err = waitForLBV2L7Policy(lbClient, parentListener, parentL7Policy, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2L7Policy(lbClient, parentListener, parentL7Policy, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
 
 	// Wait for L7 Rule to become active before continuing
-	err = waitForLBV2L7Rule(lbClient, parentListener, parentL7Policy, l7Rule, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2L7Rule(lbClient, parentListener, parentL7Policy, l7Rule, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -304,7 +304,7 @@ func resourceL7RuleV2Update(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for L7 Rule to become active before continuing
-	err = waitForLBV2L7Rule(lbClient, parentListener, parentL7Policy, l7Rule, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2L7Rule(lbClient, parentListener, parentL7Policy, l7Rule, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -343,7 +343,7 @@ func resourceL7RuleV2Delete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for parent L7 Policy to become active before continuing
-	err = waitForLBV2L7Policy(lbClient, parentListener, parentL7Policy, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2L7Policy(lbClient, parentListener, parentL7Policy, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -361,7 +361,7 @@ func resourceL7RuleV2Delete(d *schema.ResourceData, meta interface{}) error {
 		return CheckDeleted(d, err, "Error deleting L7 Rule")
 	}
 
-	err = waitForLBV2L7Rule(lbClient, parentListener, parentL7Policy, l7Rule, "DELETED", lbPendingDeleteStatuses, timeout)
+	err = waitForLBV2L7Rule(lbClient, parentListener, parentL7Policy, l7Rule, "DELETED", getLbPendingDeleteStatuses(), timeout)
 	if err != nil {
 		return err
 	}

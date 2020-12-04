@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	// major share functionality appeared in 2.14
+	// Major share functionality appeared in 2.14.
 	minManilaShareMicroversion = "2.14"
 )
 

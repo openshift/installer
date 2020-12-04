@@ -175,8 +175,8 @@ func resourceKeyManagerSecretV1() *schema.Resource {
 	elem := &schema.Resource{
 		Schema: make(map[string]*schema.Schema),
 	}
-	for _, aclOp := range aclOperations {
-		elem.Schema[aclOp] = aclSchema
+	for _, aclOp := range getSupportedACLOperations() {
+		elem.Schema[aclOp] = getACLSchema()
 	}
 	ret.Schema["acl"].Elem = elem
 

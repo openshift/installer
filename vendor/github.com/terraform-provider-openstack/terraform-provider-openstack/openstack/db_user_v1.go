@@ -54,7 +54,7 @@ func databaseUserV1StateRefreshFunc(client *gophercloud.ServiceClient, instanceI
 	}
 }
 
-// databaseUserV1Exists is used to check whether user exists on particular database instance
+// databaseUserV1Exists is used to check whether user exists on particular database instance.
 func databaseUserV1Exists(client *gophercloud.ServiceClient, instanceID string, userName string) (bool, users.User, error) {
 	var exists bool
 	var err error

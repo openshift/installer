@@ -134,7 +134,6 @@ func networkingSubnetV2AllocationPoolsCustomizeDiff(diff *schema.ResourceDiff) e
 			log.Printf("[DEBUG] allocation_pools have not changed. clearing diff")
 			return diff.Clear("allocation_pools")
 		}
-
 	}
 
 	return nil
@@ -177,9 +176,8 @@ func networkingSubnetV2DNSNameserverAreUnique(raw []interface{}) error {
 		if ok {
 			if _, exists := set[nameserver]; exists {
 				return fmt.Errorf("got duplicate nameserver %s", nameserver)
-			} else {
-				set[nameserver] = struct{}{}
 			}
+			set[nameserver] = struct{}{}
 		}
 	}
 

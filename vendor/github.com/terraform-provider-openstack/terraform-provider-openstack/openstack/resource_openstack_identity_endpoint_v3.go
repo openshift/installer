@@ -115,14 +115,14 @@ func resourceIdentityEndpointV3Read(d *schema.ResourceData, meta interface{}) er
 
 	var endpoint endpoints.Endpoint
 	err = endpoints.List(identityClient, nil).EachPage(func(page pagination.Page) (bool, error) {
-		if endpointList, err := endpoints.ExtractEndpoints(page); err != nil {
+		endpointList, err := endpoints.ExtractEndpoints(page)
+		if err != nil {
 			return false, err
-		} else {
-			for _, v := range endpointList {
-				if v.ID == d.Id() {
-					endpoint = v
-					break
-				}
+		}
+		for _, v := range endpointList {
+			if v.ID == d.Id() {
+				endpoint = v
+				break
 			}
 		}
 		return true, nil

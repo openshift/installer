@@ -79,7 +79,7 @@ func databaseInstanceV1StateRefreshFunc(client *gophercloud.ServiceClient, insta
 		}
 
 		if i.Status == "error" {
-			return i, i.Status, fmt.Errorf("There was an error creating the database instance.")
+			return i, i.Status, fmt.Errorf("There was an error creating the database instance")
 		}
 
 		return i, i.Status, nil

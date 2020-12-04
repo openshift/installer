@@ -23,10 +23,9 @@ func computeVolumeAttachV2ParseID(id string) (string, string, error) {
 	return instanceID, attachmentID, nil
 }
 
-func computeVolumeAttachV2AttachFunc(
-	computeClient *gophercloud.ServiceClient, instanceId, attachmentId string) resource.StateRefreshFunc {
+func computeVolumeAttachV2AttachFunc(computeClient *gophercloud.ServiceClient, instanceID, attachmentID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		va, err := volumeattach.Get(computeClient, instanceId, attachmentId).Extract()
+		va, err := volumeattach.Get(computeClient, instanceID, attachmentID).Extract()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault404); ok {
 				return va, "ATTACHING", nil
@@ -38,13 +37,12 @@ func computeVolumeAttachV2AttachFunc(
 	}
 }
 
-func computeVolumeAttachV2DetachFunc(
-	computeClient *gophercloud.ServiceClient, instanceId, attachmentId string) resource.StateRefreshFunc {
+func computeVolumeAttachV2DetachFunc(computeClient *gophercloud.ServiceClient, instanceID, attachmentID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		log.Printf("[DEBUG] openstack_compute_volume_attach_v2 attempting to detach OpenStack volume %s from instance %s",
-			attachmentId, instanceId)
+			attachmentID, instanceID)
 
-		va, err := volumeattach.Get(computeClient, instanceId, attachmentId).Extract()
+		va, err := volumeattach.Get(computeClient, instanceID, attachmentID).Extract()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault404); ok {
 				return va, "DETACHED", nil
@@ -52,7 +50,7 @@ func computeVolumeAttachV2DetachFunc(
 			return va, "", err
 		}
 
-		err = volumeattach.Delete(computeClient, instanceId, attachmentId).ExtractErr()
+		err = volumeattach.Delete(computeClient, instanceID, attachmentID).ExtractErr()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault404); ok {
 				return va, "DETACHED", nil
@@ -65,7 +63,7 @@ func computeVolumeAttachV2DetachFunc(
 			return nil, "", err
 		}
 
-		log.Printf("[DEBUG] openstack_compute_volume_attach_v2 (%s/%s) is still active.", instanceId, attachmentId)
+		log.Printf("[DEBUG] openstack_compute_volume_attach_v2 (%s/%s) is still active.", instanceID, attachmentID)
 		return nil, "", nil
 	}
 }

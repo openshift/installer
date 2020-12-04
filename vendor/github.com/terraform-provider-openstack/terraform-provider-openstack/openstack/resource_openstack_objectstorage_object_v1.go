@@ -81,7 +81,7 @@ func resourceObjectStorageObjectV1() *schema.Resource {
 				Type:             schema.TypeString,
 				Computed:         true,
 				Optional:         true,
-				DiffSuppressFunc: suppressEquivilentTimeDiffs,
+				DiffSuppressFunc: suppressEquivalentTimeDiffs,
 			},
 
 			"detect_content_type": {

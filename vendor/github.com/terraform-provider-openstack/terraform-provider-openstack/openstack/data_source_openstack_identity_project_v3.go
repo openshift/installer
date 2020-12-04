@@ -125,11 +125,11 @@ func dataSourceIdentityProjectV3Read(d *schema.ResourceData, meta interface{}) e
 
 	if len(allProjects) < 1 {
 		return fmt.Errorf("Your openstack_identity_project_v3 query returned no results. " +
-			"Please change your search criteria and try again.")
+			"Please change your search criteria and try again")
 	}
 
 	if len(allProjects) > 1 {
-		return fmt.Errorf("Your openstack_identity_project_v3 query returned more than one result.")
+		return fmt.Errorf("Your openstack_identity_project_v3 query returned more than one result %#v", allProjects)
 	}
 
 	project = allProjects[0]

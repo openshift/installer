@@ -124,6 +124,10 @@ func resourceDNSRecordSetV2Create(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	_, err = stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf(
+			"Error waiting for openstack_dns_recordset_v2 %s to become active: %s", d.Id(), err)
+	}
 
 	id := fmt.Sprintf("%s/%s", zoneID, n.ID)
 	d.SetId(id)
@@ -214,6 +218,10 @@ func resourceDNSRecordSetV2Update(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	_, err = stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf(
+			"Error waiting for openstack_dns_recordset_v2 %s to become active: %s", d.Id(), err)
+	}
 
 	return resourceDNSRecordSetV2Read(d, meta)
 }
@@ -246,6 +254,10 @@ func resourceDNSRecordSetV2Delete(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	_, err = stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf(
+			"Error waiting for openstack_dns_recordset_v2 %s to become deleted: %s", d.Id(), err)
+	}
 
 	return nil
 }

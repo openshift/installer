@@ -115,7 +115,7 @@ func resourceLBMemberV1Create(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[DEBUG] OpenStack LB Member Update Options: %#v", createOpts)
-	m, err = members.Update(networkingClient, m.ID, updateOpts).Extract()
+	_, err = members.Update(networkingClient, m.ID, updateOpts).Extract()
 	if err != nil {
 		return fmt.Errorf("Error updating OpenStack LB member: %s", err)
 	}
@@ -200,9 +200,9 @@ func resourceLBMemberV1Delete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func waitForLBMemberActive(networkingClient *gophercloud.ServiceClient, memberId string) resource.StateRefreshFunc {
+func waitForLBMemberActive(networkingClient *gophercloud.ServiceClient, memberID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		m, err := members.Get(networkingClient, memberId).Extract()
+		m, err := members.Get(networkingClient, memberID).Extract()
 		if err != nil {
 			return nil, "", err
 		}
@@ -216,21 +216,20 @@ func waitForLBMemberActive(networkingClient *gophercloud.ServiceClient, memberId
 	}
 }
 
-func waitForLBMemberDelete(networkingClient *gophercloud.ServiceClient, memberId string) resource.StateRefreshFunc {
+func waitForLBMemberDelete(networkingClient *gophercloud.ServiceClient, memberID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		log.Printf("[DEBUG] Attempting to delete OpenStack LB member %s", memberId)
+		log.Printf("[DEBUG] Attempting to delete OpenStack LB member %s", memberID)
 
-		m, err := members.Get(networkingClient, memberId).Extract()
+		m, err := members.Get(networkingClient, memberID).Extract()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault404); ok {
-				log.Printf("[DEBUG] Successfully deleted OpenStack LB member %s", memberId)
+				log.Printf("[DEBUG] Successfully deleted OpenStack LB member %s", memberID)
 				return m, "DELETED", nil
 			}
 			return m, "ACTIVE", err
 		}
 
-		log.Printf("[DEBUG] OpenStack LB member %s still active.", memberId)
+		log.Printf("[DEBUG] OpenStack LB member %s still active.", memberID)
 		return m, "ACTIVE", nil
 	}
-
 }

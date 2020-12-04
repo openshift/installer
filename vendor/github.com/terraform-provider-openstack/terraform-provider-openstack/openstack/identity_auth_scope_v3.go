@@ -17,7 +17,6 @@ func flattenIdentityAuthScopeV3Roles(roles []tokens3.Role) []map[string]string {
 			"role_name": r.Name,
 			"role_id":   r.ID,
 		}
-
 	}
 
 	return allRoles

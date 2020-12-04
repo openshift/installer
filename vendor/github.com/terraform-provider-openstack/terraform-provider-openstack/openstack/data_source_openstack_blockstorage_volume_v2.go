@@ -88,11 +88,11 @@ func dataSourceBlockStorageVolumeV2Read(d *schema.ResourceData, meta interface{}
 	}
 
 	if len(allVolumes) > 1 {
-		return fmt.Errorf("Your openstack_blockstorage_volume_v2 query returned multiple results.")
+		return fmt.Errorf("Your openstack_blockstorage_volume_v2 query returned multiple results")
 	}
 
 	if len(allVolumes) < 1 {
-		return fmt.Errorf("Your openstack_blockstorage_volume_v2 query returned no results.")
+		return fmt.Errorf("Your openstack_blockstorage_volume_v2 query returned no results")
 	}
 
 	return dataSourceBlockStorageVolumeV2Attributes(d, allVolumes[0])

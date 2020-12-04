@@ -276,7 +276,6 @@ func resourceObjectStorageContainerV1Delete(d *schema.ResourceData, meta interfa
 			pager := objects.List(objectStorageClient, container, opts)
 			// Define an anonymous function to be executed on each page's iteration
 			err := pager.EachPage(func(page pagination.Page) (bool, error) {
-
 				objectList, err := objects.ExtractNames(page)
 				if err != nil {
 					return false, fmt.Errorf("error extracting names from objects from page for objectstorage_container_v1 '%s': %+v", container, err)

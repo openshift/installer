@@ -71,19 +71,19 @@ func resourceComputeInterfaceAttachV2Create(d *schema.ResourceData, meta interfa
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
 
-	instanceId := d.Get("instance_id").(string)
+	instanceID := d.Get("instance_id").(string)
 
-	var portId string
+	var portID string
 	if v, ok := d.GetOk("port_id"); ok {
-		portId = v.(string)
+		portID = v.(string)
 	}
 
-	var networkId string
+	var networkID string
 	if v, ok := d.GetOk("network_id"); ok {
-		networkId = v.(string)
+		networkID = v.(string)
 	}
 
-	if networkId == "" && portId == "" {
+	if networkID == "" && portID == "" {
 		return fmt.Errorf("Must set one of network_id and port_id")
 	}
 
@@ -94,14 +94,14 @@ func resourceComputeInterfaceAttachV2Create(d *schema.ResourceData, meta interfa
 	}
 
 	attachOpts := attachinterfaces.CreateOpts{
-		PortID:    portId,
-		NetworkID: networkId,
+		PortID:    portID,
+		NetworkID: networkID,
 		FixedIPs:  fixedIPs,
 	}
 
 	log.Printf("[DEBUG] openstack_compute_interface_attach_v2 attach options: %#v", attachOpts)
 
-	attachment, err := attachinterfaces.Create(computeClient, instanceId, attachOpts).Extract()
+	attachment, err := attachinterfaces.Create(computeClient, instanceID, attachOpts).Extract()
 	if err != nil {
 		return err
 	}
@@ -109,18 +109,18 @@ func resourceComputeInterfaceAttachV2Create(d *schema.ResourceData, meta interfa
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"ATTACHING"},
 		Target:     []string{"ATTACHED"},
-		Refresh:    computeInterfaceAttachV2AttachFunc(computeClient, instanceId, attachment.PortID),
+		Refresh:    computeInterfaceAttachV2AttachFunc(computeClient, instanceID, attachment.PortID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      5 * time.Second,
 		MinTimeout: 5 * time.Second,
 	}
 
 	if _, err = stateConf.WaitForState(); err != nil {
-		return fmt.Errorf("Error creating openstack_compute_interface_attach_v2 %s: %s", instanceId, err)
+		return fmt.Errorf("Error creating openstack_compute_interface_attach_v2 %s: %s", instanceID, err)
 	}
 
 	// Use the instance ID and attachment ID as the resource ID.
-	id := fmt.Sprintf("%s/%s", instanceId, attachment.PortID)
+	id := fmt.Sprintf("%s/%s", instanceID, attachment.PortID)
 
 	log.Printf("[DEBUG] Created openstack_compute_interface_attach_v2 %s: %#v", id, attachment)
 
@@ -136,19 +136,19 @@ func resourceComputeInterfaceAttachV2Read(d *schema.ResourceData, meta interface
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
 
-	instanceId, attachmentId, err := computeInterfaceAttachV2ParseID(d.Id())
+	instanceID, attachmentID, err := computeInterfaceAttachV2ParseID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	attachment, err := attachinterfaces.Get(computeClient, instanceId, attachmentId).Extract()
+	attachment, err := attachinterfaces.Get(computeClient, instanceID, attachmentID).Extract()
 	if err != nil {
 		return CheckDeleted(d, err, "Error retrieving openstack_compute_interface_attach_v2")
 	}
 
 	log.Printf("[DEBUG] Retrieved openstack_compute_interface_attach_v2 %s: %#v", d.Id(), attachment)
 
-	d.Set("instance_id", instanceId)
+	d.Set("instance_id", instanceID)
 	d.Set("port_id", attachment.PortID)
 	d.Set("network_id", attachment.NetID)
 	d.Set("region", GetRegion(d, config))
@@ -163,7 +163,7 @@ func resourceComputeInterfaceAttachV2Delete(d *schema.ResourceData, meta interfa
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
 
-	instanceId, attachmentId, err := computeInterfaceAttachV2ParseID(d.Id())
+	instanceID, attachmentID, err := computeInterfaceAttachV2ParseID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -171,7 +171,7 @@ func resourceComputeInterfaceAttachV2Delete(d *schema.ResourceData, meta interfa
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{""},
 		Target:     []string{"DETACHED"},
-		Refresh:    computeInterfaceAttachV2DetachFunc(computeClient, instanceId, attachmentId),
+		Refresh:    computeInterfaceAttachV2DetachFunc(computeClient, instanceID, attachmentID),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      5 * time.Second,
 		MinTimeout: 5 * time.Second,

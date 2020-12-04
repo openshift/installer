@@ -340,6 +340,12 @@ func resourceComputeInstanceV2() *schema.Resource {
 							Optional: true,
 							ForceNew: true,
 						},
+						"different_cell": {
+							Type:     schema.TypeList,
+							Optional: true,
+							ForceNew: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
 						"build_near_host_ip": {
 							Type:     schema.TypeString,
 							Optional: true,
@@ -445,7 +451,7 @@ func resourceComputeInstanceV2Create(d *schema.ResourceData, meta interface{}) e
 	// If a bootable block_device was specified, ignore the image altogether.
 	// If an image_id was specified, use it.
 	// If an image_name was specified, look up the image ID, report if error.
-	imageId, err := getImageIDFromConfig(computeClient, d)
+	imageID, err := getImageIDFromConfig(computeClient, d)
 	if err != nil {
 		return err
 	}
@@ -453,7 +459,7 @@ func resourceComputeInstanceV2Create(d *schema.ResourceData, meta interface{}) e
 	// Determines the Flavor ID using the following rules:
 	// If a flavor_id was specified, use it.
 	// If a flavor_name was specified, lookup the flavor ID, report if error.
-	flavorId, err := getFlavorID(computeClient, d)
+	flavorID, err := getFlavorID(computeClient, d)
 	if err != nil {
 		return err
 	}
@@ -498,8 +504,8 @@ func resourceComputeInstanceV2Create(d *schema.ResourceData, meta interface{}) e
 
 	createOpts = &servers.CreateOpts{
 		Name:             d.Get("name").(string),
-		ImageRef:         imageId,
-		FlavorRef:        flavorId,
+		ImageRef:         imageID,
+		FlavorRef:        flavorID,
 		SecurityGroups:   resourceInstanceSecGroupsV2(d),
 		AvailabilityZone: availabilityZone,
 		Networks:         networks,
@@ -678,14 +684,14 @@ func resourceComputeInstanceV2Read(d *schema.ResourceData, meta interface{}) err
 	}
 	d.Set("security_groups", secGrpNames)
 
-	flavorId, ok := server.Flavor["id"].(string)
+	flavorID, ok := server.Flavor["id"].(string)
 	if !ok {
 		return fmt.Errorf("Error setting OpenStack server's flavor: %v", server.Flavor)
 	}
-	d.Set("flavor_id", flavorId)
+	d.Set("flavor_id", flavorID)
 
 	d.Set("key_pair", server.KeyName)
-	flavor, err := flavors.Get(computeClient, flavorId).Extract()
+	flavor, err := flavors.Get(computeClient, flavorID).Extract()
 	if err != nil {
 		return err
 	}
@@ -866,9 +872,8 @@ func resourceComputeInstanceV2Update(d *schema.ResourceData, meta interface{}) e
 				}
 
 				return fmt.Errorf("Error removing security group (%s) from OpenStack server (%s): %s", g, d.Id(), err)
-			} else {
-				log.Printf("[DEBUG] Removed security group (%s) from instance (%s)", g, d.Id())
 			}
+			log.Printf("[DEBUG] Removed security group (%s) from instance (%s)", g, d.Id())
 		}
 
 		for _, g := range secgroupsToAdd.List() {
@@ -898,20 +903,20 @@ func resourceComputeInstanceV2Update(d *schema.ResourceData, meta interface{}) e
 			ignoreResizeConfirmation = vendorOptions["ignore_resize_confirmation"].(bool)
 		}
 
-		var newFlavorId string
+		var newFlavorID string
 		var err error
 		if d.HasChange("flavor_id") {
-			newFlavorId = d.Get("flavor_id").(string)
+			newFlavorID = d.Get("flavor_id").(string)
 		} else {
 			newFlavorName := d.Get("flavor_name").(string)
-			newFlavorId, err = flavors_utils.IDFromName(computeClient, newFlavorName)
+			newFlavorID, err = flavors_utils.IDFromName(computeClient, newFlavorName)
 			if err != nil {
 				return err
 			}
 		}
 
 		resizeOpts := &servers.ResizeOpts{
-			FlavorRef: newFlavorId,
+			FlavorRef: newFlavorID,
 		}
 		log.Printf("[DEBUG] Resize configuration: %#v", resizeOpts)
 		err = servers.Resize(computeClient, d.Id(), resizeOpts).ExtractErr()
@@ -1028,7 +1033,6 @@ func resourceComputeInstanceV2Delete(d *schema.ResourceData, meta interface{}) e
 		if err != nil {
 			log.Printf("[WARN] Unable to get openstack_compute_instance_v2 ports: %s", err)
 		} else {
-
 			for _, network := range allInstanceNetworks {
 				if network.Port != "" {
 					stateConf := &resource.StateChangeConf{
@@ -1083,7 +1087,6 @@ func resourceComputeInstanceV2Delete(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourceOpenStackComputeInstanceV2ImportState(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-
 	var serverWithAttachments struct {
 		VolumesAttached []map[string]interface{} `json:"os-extended-volumes:volumes_attached"`
 	}
@@ -1119,7 +1122,7 @@ func resourceOpenStackComputeInstanceV2ImportState(d *schema.ResourceData, meta 
 
 		var volMetaData = struct {
 			VolumeImageMetadata map[string]interface{} `json:"volume_image_metadata"`
-			Id                  string                 `json:"id"`
+			ID                  string                 `json:"id"`
 			Size                int                    `json:"size"`
 			Bootable            string                 `json:"bootable"`
 		}{}
@@ -1147,8 +1150,14 @@ func resourceOpenStackComputeInstanceV2ImportState(d *schema.ResourceData, meta 
 
 		d.Set("block_device", bds)
 	}
+
 	metadata, err := servers.Metadata(computeClient, d.Id()).Extract()
+	if err != nil {
+		return nil, fmt.Errorf("Unable to read metadata for openstack_compute_instance_v2 %s: %s", d.Id(), err)
+	}
+
 	d.Set("metadata", metadata)
+
 	results[0] = d
 
 	return results, nil
@@ -1253,12 +1262,20 @@ func resourceInstanceSchedulerHintsV2(d *schema.ResourceData, schedulerHintsRaw 
 		}
 	}
 
+	differentCell := []string{}
+	if v, ok := schedulerHintsRaw["different_cell"].([]interface{}); ok {
+		for _, dh := range v {
+			differentCell = append(differentCell, dh.(string))
+		}
+	}
+
 	schedulerHints := schedulerhints.SchedulerHints{
 		Group:                schedulerHintsRaw["group"].(string),
 		DifferentHost:        differentHost,
 		SameHost:             sameHost,
 		Query:                query,
 		TargetCell:           schedulerHintsRaw["target_cell"].(string),
+		DifferentCell:        differentCell,
 		BuildNearHostIP:      schedulerHintsRaw["build_near_host_ip"].(string),
 		AdditionalProperties: schedulerHintsRaw["additional_properties"].(map[string]interface{}),
 	}
@@ -1282,13 +1299,12 @@ func getImageIDFromConfig(computeClient *gophercloud.ServiceClient, d *schema.Re
 		}
 	}
 
-	if imageId := d.Get("image_id").(string); imageId != "" {
-		return imageId, nil
-	} else {
-		// try the OS_IMAGE_ID environment variable
-		if v := os.Getenv("OS_IMAGE_ID"); v != "" {
-			return v, nil
-		}
+	if imageID := d.Get("image_id").(string); imageID != "" {
+		return imageID, nil
+	}
+	// try the OS_IMAGE_ID environment variable
+	if v := os.Getenv("OS_IMAGE_ID"); v != "" {
+		return v, nil
 	}
 
 	imageName := d.Get("image_name").(string)
@@ -1300,14 +1316,14 @@ func getImageIDFromConfig(computeClient *gophercloud.ServiceClient, d *schema.Re
 	}
 
 	if imageName != "" {
-		imageId, err := images_utils.IDFromName(computeClient, imageName)
+		imageID, err := images_utils.IDFromName(computeClient, imageName)
 		if err != nil {
 			return "", err
 		}
-		return imageId, nil
+		return imageID, nil
 	}
 
-	return "", fmt.Errorf("Neither a boot device, image ID, or image name were able to be determined.")
+	return "", fmt.Errorf("Neither a boot device, image ID, or image name were able to be determined")
 }
 
 func setImageInformation(computeClient *gophercloud.ServiceClient, server *servers.Server, d *schema.ResourceData) error {
@@ -1328,10 +1344,11 @@ func setImageInformation(computeClient *gophercloud.ServiceClient, server *serve
 	}
 
 	if server.Image["id"] != nil {
-		imageId := server.Image["id"].(string)
-		if imageId != "" {
-			d.Set("image_id", imageId)
-			if image, err := images.Get(computeClient, imageId).Extract(); err != nil {
+		imageID := server.Image["id"].(string)
+		if imageID != "" {
+			d.Set("image_id", imageID)
+			image, err := images.Get(computeClient, imageID).Extract()
+			if err != nil {
 				if _, ok := err.(gophercloud.ErrDefault404); ok {
 					// If the image name can't be found, set the value to "Image not found".
 					// The most likely scenario is that the image no longer exists in the Image Service
@@ -1340,9 +1357,8 @@ func setImageInformation(computeClient *gophercloud.ServiceClient, server *serve
 					return nil
 				}
 				return err
-			} else {
-				d.Set("image_name", image.Name)
 			}
+			d.Set("image_name", image.Name)
 		}
 	}
 
@@ -1350,13 +1366,12 @@ func setImageInformation(computeClient *gophercloud.ServiceClient, server *serve
 }
 
 func getFlavorID(computeClient *gophercloud.ServiceClient, d *schema.ResourceData) (string, error) {
-	if flavorId := d.Get("flavor_id").(string); flavorId != "" {
-		return flavorId, nil
-	} else {
-		// Try the OS_FLAVOR_ID environment variable
-		if v := os.Getenv("OS_FLAVOR_ID"); v != "" {
-			return v, nil
-		}
+	if flavorID := d.Get("flavor_id").(string); flavorID != "" {
+		return flavorID, nil
+	}
+	// Try the OS_FLAVOR_ID environment variable
+	if v := os.Getenv("OS_FLAVOR_ID"); v != "" {
+		return v, nil
 	}
 
 	flavorName := d.Get("flavor_name").(string)
@@ -1368,14 +1383,14 @@ func getFlavorID(computeClient *gophercloud.ServiceClient, d *schema.ResourceDat
 	}
 
 	if flavorName != "" {
-		flavorId, err := flavors_utils.IDFromName(computeClient, flavorName)
+		flavorID, err := flavors_utils.IDFromName(computeClient, flavorName)
 		if err != nil {
 			return "", err
 		}
-		return flavorId, nil
+		return flavorID, nil
 	}
 
-	return "", fmt.Errorf("Neither a flavor_id or flavor_name could be determined.")
+	return "", fmt.Errorf("Neither a flavor_id or flavor_name could be determined")
 }
 
 func resourceComputeSchedulerHintsHash(v interface{}) int {
@@ -1403,6 +1418,7 @@ func resourceComputeSchedulerHintsHash(v interface{}) int {
 	buf.WriteString(fmt.Sprintf("%s-", m["different_host"].([]interface{})))
 	buf.WriteString(fmt.Sprintf("%s-", m["same_host"].([]interface{})))
 	buf.WriteString(fmt.Sprintf("%s-", m["query"].([]interface{})))
+	buf.WriteString(fmt.Sprintf("%s-", m["different_cell"].([]interface{})))
 
 	return hashcode.String(buf.String())
 }
