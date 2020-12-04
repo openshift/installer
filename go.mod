@@ -48,7 +48,7 @@ require (
 	github.com/metal3-io/baremetal-operator v0.0.0
 	github.com/metal3-io/cluster-api-provider-baremetal v0.0.0
 	github.com/mitchellh/cli v1.1.1
-	github.com/openshift-metal3/terraform-provider-ironic v0.2.3
+	github.com/openshift-metal3/terraform-provider-ironic v0.2.4
 	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible
 	github.com/openshift/client-go v0.0.0-20201020074620-f8fd44879f7c
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e

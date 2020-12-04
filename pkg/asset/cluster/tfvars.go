@@ -442,6 +442,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			string(*rhcosImage),
 			ironicCreds.Username,
 			ironicCreds.Password,
+			masterIgn,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
