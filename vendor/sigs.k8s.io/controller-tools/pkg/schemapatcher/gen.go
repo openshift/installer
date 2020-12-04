@@ -32,7 +32,6 @@ import (
 	crdgen "sigs.k8s.io/controller-tools/pkg/crd"
 	crdmarkers "sigs.k8s.io/controller-tools/pkg/crd/markers"
 	"sigs.k8s.io/controller-tools/pkg/genall"
-	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 	yamlop "sigs.k8s.io/controller-tools/pkg/schemapatcher/internal/yaml"
 )
@@ -87,10 +86,6 @@ type Generator struct {
 }
 
 var _ genall.Generator = &Generator{}
-
-func (Generator) CheckFilter() loader.NodeFilter {
-	return crdgen.Generator{}.CheckFilter()
-}
 
 func (Generator) RegisterMarkers(into *markers.Registry) error {
 	return crdmarkers.Register(into)

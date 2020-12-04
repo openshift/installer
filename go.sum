@@ -2520,8 +2520,8 @@ sigs.k8s.io/controller-tools v0.2.2-0.20190919191502-76a25b63325a/go.mod h1:8SNG
 sigs.k8s.io/controller-tools v0.2.4/go.mod h1:m/ztfQNocGYBgTTCmFdnK94uVvgxeZeE3LtJvd/jIzA=
 sigs.k8s.io/controller-tools v0.2.8/go.mod h1:9VKHPszmf2DHz/QmHkcfZoewO6BL7pPs9uAiBVsaJSE=
 sigs.k8s.io/controller-tools v0.3.0/go.mod h1:enhtKGfxZD1GFEoMgP8Fdbu+uKQ/cq1/WGJhdVChfvI=
-sigs.k8s.io/controller-tools v0.4.1 h1:VkuV0MxlRPmRu5iTgBZU4UxUX2LiR99n3sdQGRxZF4w=
-sigs.k8s.io/controller-tools v0.4.1/go.mod h1:G9rHdZMVlBDocIxGkK3jHLWqcTMNvveypYJwrvYKjWU=
+sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185 h1:wLsmaqTEgs3DIfNzr0u/AfPHSVJbWHj/eevcS4AFvFE=
+sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185/go.mod h1:JuPG+FXjAeZL7eGmTuXUJduEMlI2/kGqb0rUGlVi+Yo=
 sigs.k8s.io/kube-storage-version-migrator v0.0.3/go.mod h1:mXfSLkx9xbJHQsgNDDUZK/iQTs2tMbx/hsJlWe6Fthw=
 sigs.k8s.io/kustomize v2.0.3+incompatible h1:JUufWFNlI44MdtnjUqVnvh29rR37PQFzPbLXqhyOyX0=
 sigs.k8s.io/kustomize v2.0.3+incompatible/go.mod h1:MkjgH3RdOWrievjo6c9T245dYlB5QeXV4WCbnt/PEpU=

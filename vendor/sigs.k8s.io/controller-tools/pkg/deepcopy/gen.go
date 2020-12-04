@@ -58,14 +58,6 @@ type Generator struct {
 	Year string `marker:",optional"`
 }
 
-func (Generator) CheckFilter() loader.NodeFilter {
-	return func(node ast.Node) bool {
-		// ignore interfaces
-		_, isIface := node.(*ast.InterfaceType)
-		return !isIface
-	}
-}
-
 func (Generator) RegisterMarkers(into *markers.Registry) error {
 	if err := markers.RegisterAll(into,
 		enablePkgMarker, legacyEnablePkgMarker, enableTypeMarker,
@@ -152,7 +144,7 @@ func (d Generator) Generate(ctx *genall.GenerationContext) error {
 	}
 
 	for _, root := range ctx.Roots {
-		outContents := objGenCtx.generateForPackage(root)
+		outContents := objGenCtx.GenerateForPackage(root)
 		if outContents == nil {
 			continue
 		}
@@ -194,17 +186,21 @@ import (
 
 }
 
-// generateForPackage generates DeepCopy and runtime.Object implementations for
+// GenerateForPackage generates DeepCopy and runtime.Object implementations for
 // types in the given package, writing the formatted result to given writer.
 // May return nil if source could not be generated.
-func (ctx *ObjectGenCtx) generateForPackage(root *loader.Package) []byte {
+func (ctx *ObjectGenCtx) GenerateForPackage(root *loader.Package) []byte {
 	allTypes, err := enabledOnPackage(ctx.Collector, root)
 	if err != nil {
 		root.AddError(err)
 		return nil
 	}
 
-	ctx.Checker.Check(root)
+	ctx.Checker.Check(root, func(node ast.Node) bool {
+		// ignore interfaces
+		_, isIface := node.(*ast.InterfaceType)
+		return !isIface
+	})
 
 	root.NeedTypesInfo()
 
