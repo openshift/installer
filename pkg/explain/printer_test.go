@@ -93,6 +93,9 @@ func Test_PrintFields(t *testing.T) {
     gcp <object>
       GCP is the configuration used when installing on Google Cloud Platform.
 
+    kubevirt <object>
+      Kubevirt is the configuration used when installing on kubevirt.
+
     libvirt <object>
       Libvirt is the configuration used when installing on libvirt.
 

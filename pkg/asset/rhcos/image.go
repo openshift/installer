@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -96,6 +97,8 @@ func osImage(config *types.InstallConfig) (string, error) {
 		}
 		osimage, err = rhcos.OpenStack(ctx, arch)
 	case ovirt.Name:
+		osimage, err = rhcos.OpenStack(ctx, arch)
+	case kubevirt.Name:
 		osimage, err = rhcos.OpenStack(ctx, arch)
 	case azure.Name:
 		osimage, err = rhcos.VHD(ctx, arch)

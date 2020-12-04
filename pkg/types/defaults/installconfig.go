@@ -8,6 +8,7 @@ import (
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	baremetaldefaults "github.com/openshift/installer/pkg/types/baremetal/defaults"
 	gcpdefaults "github.com/openshift/installer/pkg/types/gcp/defaults"
+	kubevirtdefaults "github.com/openshift/installer/pkg/types/kubevirt/defaults"
 	libvirtdefaults "github.com/openshift/installer/pkg/types/libvirt/defaults"
 	nonedefaults "github.com/openshift/installer/pkg/types/none/defaults"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
@@ -85,6 +86,8 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		baremetaldefaults.SetPlatformDefaults(c.Platform.BareMetal, c)
 	case c.Platform.Ovirt != nil:
 		ovirtdefaults.SetPlatformDefaults(c.Platform.Ovirt)
+	case c.Platform.Kubevirt != nil:
+		kubevirtdefaults.SetPlatformDefaults(c.Platform.Kubevirt)
 	case c.Platform.None != nil:
 		nonedefaults.SetPlatformDefaults(c.Platform.None)
 	}

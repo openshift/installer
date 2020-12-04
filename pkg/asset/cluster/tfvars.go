@@ -10,6 +10,8 @@ import (
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_1/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
+	kubevirtprovider "github.com/openshift/cluster-api-provider-kubevirt/pkg/apis/kubevirtprovider/v1alpha1"
+	kubevirtutils "github.com/openshift/cluster-api-provider-kubevirt/pkg/utils"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
@@ -38,6 +40,7 @@ import (
 	azuretfvars "github.com/openshift/installer/pkg/tfvars/azure"
 	baremetaltfvars "github.com/openshift/installer/pkg/tfvars/baremetal"
 	gcptfvars "github.com/openshift/installer/pkg/tfvars/gcp"
+	kubevirttfvars "github.com/openshift/installer/pkg/tfvars/kubevirt"
 	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
 	ovirttfvars "github.com/openshift/installer/pkg/tfvars/ovirt"
@@ -47,6 +50,7 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -533,6 +537,33 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
 			Data:     data,
 		})
+	case kubevirt.Name:
+		masters, err := mastersAsset.Machines()
+		if err != nil {
+			return err
+		}
+		masterSpecs := make([]*kubevirtprovider.KubevirtMachineProviderSpec, len(masters))
+		for i, m := range masters {
+			masterSpecs[i] = m.Spec.ProviderSpec.Value.Object.(*kubevirtprovider.KubevirtMachineProviderSpec)
+		}
+
+		labels := kubevirtutils.BuildLabels(clusterID.InfraID)
+		data, err := kubevirttfvars.TFVars(
+			kubevirttfvars.TFVarsSources{
+				MasterSpecs:     masterSpecs,
+				ImageURL:        string(*rhcosImage),
+				Namespace:       installConfig.Config.Kubevirt.Namespace,
+				ResourcesLabels: labels,
+			},
+		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
+		}
+		t.FileList = append(t.FileList, &asset.File{
+			Filename: fmt.Sprintf(TfPlatformVarsFileName, platform),
+			Data:     data,
+		})
+
 	default:
 		logrus.Warnf("unrecognized platform %s", platform)
 	}

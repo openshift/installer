@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	ickubevirt "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	icopenstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	icovirt "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	icvsphere "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
@@ -43,6 +44,7 @@ func (a *InstallConfig) Dependencies() []asset.Asset {
 		&sshPublicKey{},
 		&baseDomain{},
 		&clusterName{},
+		&networking{},
 		&pullSecret{},
 		&platform{},
 	}
@@ -53,12 +55,14 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	sshPublicKey := &sshPublicKey{}
 	baseDomain := &baseDomain{}
 	clusterName := &clusterName{}
+	networking := &networking{}
 	pullSecret := &pullSecret{}
 	platform := &platform{}
 	parents.Get(
 		sshPublicKey,
 		baseDomain,
 		clusterName,
+		networking,
 		pullSecret,
 		platform,
 	)
@@ -73,6 +77,9 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		SSHKey:     sshPublicKey.Key,
 		BaseDomain: baseDomain.BaseDomain,
 		PullSecret: pullSecret.PullSecret,
+		Networking: &types.Networking{
+			MachineNetwork: networking.machineNetwork,
+		},
 	}
 
 	a.Config.AWS = platform.AWS
@@ -84,6 +91,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	a.Config.GCP = platform.GCP
 	a.Config.BareMetal = platform.BareMetal
 	a.Config.Ovirt = platform.Ovirt
+	a.Config.Kubevirt = platform.Kubevirt
 
 	return a.finish("")
 }
@@ -186,6 +194,13 @@ func (a *InstallConfig) platformValidation() error {
 	}
 	if a.Config.Platform.OpenStack != nil {
 		return icopenstack.Validate(a.Config)
+	}
+	if a.Config.Platform.Kubevirt != nil {
+		client, err := ickubevirt.NewClient()
+		if err != nil {
+			return err
+		}
+		return ickubevirt.Validate(a.Config, client)
 	}
 	return field.ErrorList{}.ToAggregate()
 }

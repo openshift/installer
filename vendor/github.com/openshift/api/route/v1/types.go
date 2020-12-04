@@ -26,6 +26,14 @@ import (
 // return information to clients about the names and states of the route under each router.
 // If a client chooses a duplicate name, for instance, the route status conditions are used
 // to indicate the route cannot be chosen.
+//
+// To enable HTTP/2 ALPN on a route it requires a custom
+// (non-wildcard) certificate. This prevents connection coalescing by
+// clients, notably web browsers. We do not support HTTP/2 ALPN on
+// routes that use the default certificate because of the risk of
+// connection re-use/coalescing. Routes that do not have their own
+// custom certificate will not be HTTP/2 ALPN-enabled on either the
+// frontend or the backend.
 type Route struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
@@ -204,6 +212,10 @@ type RouterShard struct {
 // TLSConfig defines config used to secure a route and provide termination
 type TLSConfig struct {
 	// termination indicates termination type.
+	//
+	// * edge - TLS termination is done by the router and http is used to communicate with the backend (default)
+	// * passthrough - Traffic is sent straight to the destination without the router providing TLS termination
+	// * reencrypt - TLS termination is done by the router and https is used to communicate with the backend
 	Termination TLSTerminationType `json:"termination" protobuf:"bytes,1,opt,name=termination,casttype=TLSTerminationType"`
 
 	// certificate provides certificate contents
