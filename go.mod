@@ -152,3 +152,5 @@ replace (
 	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 	google.golang.org/grpc => google.golang.org/grpc v1.29.1
 )
+
+replace github.com/openshift/cluster-api-provider-kubevirt => ./vendor2/github.com/openshift/cluster-api-provider-kubevirt
