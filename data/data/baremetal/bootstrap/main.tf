@@ -21,6 +21,7 @@ resource "libvirt_volume" "bootstrap" {
 
 resource "libvirt_ignition" "bootstrap" {
   name    = "${var.cluster_id}-bootstrap.ign"
+  pool    = libvirt_pool.bootstrap.name
   content = var.ignition
 }
 
