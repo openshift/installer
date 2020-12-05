@@ -116,6 +116,16 @@ func uploadBaseImage(cloud string, localFilePath string, imageName string, clust
 		logrus.Debugf("The data was uploaded.")
 	}
 
+	// Make sure that the image has Active status
+	img, err = images.Get(conn, img.ID).Extract()
+	if err != nil {
+		return err
+	}
+
+	if img.Status != images.ImageStatusActive {
+		return errors.New("RHCOS image uploading failed")
+	}
+
 	return nil
 }
 
