@@ -1,14 +1,22 @@
 package openstack
 
 import (
+	"os"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/sirupsen/logrus"
 )
 
 // Validate validates the given installconfig for OpenStack platform
 func Validate(ic *types.InstallConfig) error {
+	if skip := os.Getenv("OPENSHFIT_INSTALL_SKIP_PREFLIGHT_VALIDATIONS"); skip == "1" {
+		logrus.Warnf("OVERRIDE: pre-flight validation disabled.")
+		return nil
+	}
+
 	ci, err := validation.GetCloudInfo(ic)
 	if err != nil {
 		return err
