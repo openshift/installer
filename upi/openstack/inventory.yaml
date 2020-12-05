@@ -28,11 +28,11 @@ all:
       # 3 is the minimum number for a fully-functional cluster.
       os_compute_nodes_number: 3
 
-      # The public network, if available. Required for os_api_fip and
-      # os_ingress_fip.
-      # If non-empty, an additional floating IP will be created and attached to
-      # the bootstrap machine to allow the retrieval of a log bundle in case of
-      # install failure ('must-gather').
+      # The public network providing connectivity to the cluster. If not
+      # provided, the cluster external connectivity must be provided in another
+      # way.
+      #
+      # Required for os_api_fip, os_ingress_fip, os_bootstrap_fip.
       os_external_network: 'external'
 
       # OpenShift API floating IP address. If this value is non-empty, the
@@ -44,3 +44,8 @@ all:
       # corresponding floating IP will be attached to the worker nodes to serve
       # the applications.
       os_ingress_fip: '203.0.113.19'
+
+      # If this value is non-empty, the corresponding floating IP will be
+      # attached to the bootstrap machine. This is needed for collecting logs
+      # in case of install failure.
+      os_bootstrap_fip: '203.0.113.20'

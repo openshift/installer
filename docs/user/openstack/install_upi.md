@@ -73,7 +73,7 @@ The requirements for UPI are broadly similar to the [ones for OpenStack IPI][ipi
   - input in the `openshift-install` wizard
 - Nova flavors
   - inventory: `os_flavor_master` and `os_flavor_worker`
-- An external subnet you want to use for floating IP addresses (if FIPs are used)
+- An external subnet for external connectivity. Required if any of the floating IPs is set in the inventory.
   - inventory: `os_external_network`
 - The `openshift-install` binary
 - A subnet range for the Nova servers / OpenShift Nodes, that does not conflict with your existing network
@@ -210,15 +210,17 @@ $ openstack image show rhcos
 
 ## API and Ingress Floating IP Addresses
 
-If the variables `os_api_fip` and `os_ingress_fip` are found in `inventory.yaml`, the corresponding floating IPs will be attached to the API load balancer and to the worker nodes load balancer respectively. Note that `os_external_network` is a requirement for those. If `os_external_network` is found in `inventory.yaml`, the playbooks will create and attach an additional floating IP to the bootstrap machine.
+If the variables `os_api_fip`, `os_ingress_fip` and `os_bootstrap_fip` are found in `inventory.yaml`, the corresponding floating IPs will be attached to the API load balancer, to the worker nodes load balancer and to the temporary machine used for the install process, respectively. Note that `os_external_network` is a requirement for those.
 
-**NOTE**: throughout this document, we will use `203.0.113.23` as the public IP address for the OpenShift API endpoint and `203.0.113.19` as the public IP for the ingress (`*.apps`) endpoint.
+**NOTE**: throughout this document, we will use `203.0.113.23` as the public IP address for the OpenShift API endpoint and `203.0.113.19` as the public IP for the ingress (`*.apps`) endpoint. `203.0.113.20` will be the public IP used for the bootstrap machine.
 
 ```sh
 $ openstack floating ip create --description "OpenShift API" <external>
 => 203.0.113.23
 $ openstack floating ip create --description "OpenShift Ingress" <external>
 => 203.0.113.19
+$ openstack floating ip create --description "bootstrap machine" <external>
+=> 203.0.113.20
 ```
 
 The OpenShift API (for the OpenShift administrators and app developers) will be at `api.<cluster name>.<cluster domain>` and the Ingress (for the apps' end users) at `*.apps.<cluster name>.<cluster domain>`.
@@ -629,11 +631,13 @@ $ openstack catalog show image
 
 By default Glance service doesn't allow anonymous access to the data. So, if you use Glance to store the ignition config, then you also need to provide a valid auth token in the `ignition.config.merge.httpHeaders` field.
 
-To obtain the token execute:
+The token can be obtained with this command:
 
 ```sh
 openstack token issue -c id -f value
 ```
+
+Note that this token can be generated as any OpenStack user with Glance read access; this particular token will only be used for downloading the Ignition file.
 
 The command will return the token to be added to the `ignition.config.merge[0].httpHeaders` property in the Bootstrap Ignition Shim (see [below](#create-the-bootstrap-ignition-shim)):
 
@@ -854,7 +858,9 @@ $ oc get pods -A
 $ ansible-playbook -i inventory.yaml down-bootstrap.yaml
 ```
 
-The teardown playbook deletes the bootstrap port, server and floating IP address.
+The teardown playbook deletes the bootstrap port and server.
+
+Now the bootstrap floating IP can also be destroyed.
 
 If you haven't done so already, you should also disable the bootstrap Ignition URL.
 
@@ -981,3 +987,5 @@ The playbook `down-load-balancers.yaml` idempotently deletes the load balancers 
 `down-load-balancers.yaml` playbook once the load balancers have transitioned to `ACTIVE`.
 
 Then, remove the `api` and `*.apps` DNS records.
+
+The floating IPs can also be deleted if not useful any more.

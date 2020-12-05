@@ -3,7 +3,6 @@ package validation
 import (
 	"testing"
 
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/openshift/installer/pkg/types"
@@ -23,7 +22,6 @@ func validPlatform() *openstack.Platform {
 	return &openstack.Platform{
 		Cloud:             validCloud,
 		ExternalNetwork:   validExternalNetwork,
-		FlavorName:        validCtrlPlaneFlavor,
 		LbFloatingIP:      validFIP1,
 		IngressFloatingIP: validFIP2,
 	}
@@ -40,33 +38,6 @@ func validPlatformCloudInfo() *CloudInfo {
 			Name:         validExternalNetwork,
 			AdminStateUp: true,
 			Status:       "ACTIVE",
-		},
-		Flavors: map[string]Flavor{
-			validCtrlPlaneFlavor: {
-				Flavor: &flavors.Flavor{
-					Name:  validCtrlPlaneFlavor,
-					RAM:   16,
-					Disk:  25,
-					VCPUs: 4,
-				},
-			},
-			invalidCtrlPlaneFlavor: {
-				Flavor: &flavors.Flavor{
-					Name:  invalidCtrlPlaneFlavor,
-					RAM:   8,  // too low
-					Disk:  20, // too low
-					VCPUs: 2,  // too low
-				},
-			},
-			baremetalFlavor: {
-				Flavor: &flavors.Flavor{
-					Name:  baremetalFlavor,
-					RAM:   8,  // too low
-					Disk:  20, // too low
-					VCPUs: 2,  // too low
-				},
-				Baremetal: true,
-			},
 		},
 		APIFIP: &floatingips.FloatingIP{
 			ID:     validFIP1,
@@ -95,32 +66,6 @@ func TestOpenStackPlatformValidation(t *testing.T) {
 			networking:     validNetworking(),
 			expectedError:  false,
 			expectedErrMsg: "",
-		},
-		{
-			name: "baremetal flavor",
-			platform: func() *openstack.Platform {
-				p := validPlatform()
-				p.FlavorName = baremetalFlavor
-				return p
-			}(),
-			cloudInfo:      validPlatformCloudInfo(),
-			networking:     validNetworking(),
-			expectedError:  false,
-			expectedErrMsg: "",
-		},
-		{
-			// if platform flavor is for both compute and ctrl plane, then it needs to be valid for
-			// the ctrl plane
-			name: "invalid platform flavor",
-			platform: func() *openstack.Platform {
-				p := validPlatform()
-				p.FlavorName = invalidCtrlPlaneFlavor
-				return p
-			}(),
-			cloudInfo:      validPlatformCloudInfo(),
-			networking:     validNetworking(),
-			expectedError:  true,
-			expectedErrMsg: `platform.openstack.flavorName: Invalid value: "invalid-control-plane-flavor": Flavor did not meet the following minimum requirements: Must have minimum of 16 GB RAM, had 8 GB; Must have minimum of 4 VCPUs, had 2; Must have minimum of 25 GB Disk, had 20 GB`,
 		},
 		{
 			name:     "not found api FIP",
