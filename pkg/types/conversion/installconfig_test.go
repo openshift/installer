@@ -8,6 +8,7 @@ import (
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
@@ -205,6 +206,71 @@ func TestConvertInstallConfig(t *testing.T) {
 				},
 			},
 			expectedError: "cannot specify lbFloatingIP and apiFloatingIP together",
+		},
+
+		// BareMetal platform conversions
+		{
+			name: "baremetal external DHCP",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						DeprecatedProvisioningDHCPExternal: true,
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						DeprecatedProvisioningDHCPExternal: true,
+						ProvisioningNetwork:                "Unmanaged",
+					},
+				},
+			},
+		},
+		{
+			name: "baremetal provisioningHostIP -> clusterProvisioningIP",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						DeprecatedProvisioningHostIP: "172.22.0.3",
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						ClusterProvisioningIP:        "172.22.0.3",
+						DeprecatedProvisioningHostIP: "172.22.0.3",
+					},
+				},
+			},
+		},
+		{
+			name: "baremetal provisioningHostIP mismatch clusterProvisioningIP",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						ClusterProvisioningIP:        "172.22.0.4",
+						DeprecatedProvisioningHostIP: "172.22.0.3",
+					},
+				},
+			},
+			expectedError: "provisioningHostIP is deprecated; only clusterProvisioningIP needs to be specified",
 		},
 	}
 

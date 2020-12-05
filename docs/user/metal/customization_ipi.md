@@ -59,7 +59,7 @@ be customized.
 * `bootstrapProvisioningIP` (optional string): Override the bootstrap
     provisioning IP. If unspecified, uses the 2nd address in the
     provisioning network's subnet.
-* `provisioningHostIP` (optional string): Override the IP used by the
+* `clusterProvisioningIP` (optional string): Override the IP used by the
     cluster's provisioning infrastructure. If unspecified, uses the 3rd
     address in the provisioning network's subnet.
 
@@ -70,7 +70,7 @@ platform:
   baremetal:
     provisioningNetworkCIDR: 172.23.0.0/16
     bootstrapProvisioningIP: 172.23.0.2
-    provisioningHostIP: 172.23.0.3
+    clusterProvisioningIP: 172.23.0.3
 ```
 
 * `provisioningDHCPRange` (optional string): By default, the installer picks a range from
@@ -91,7 +91,7 @@ use an external DHCP server, you can specify provisioningDHCPExternal,
 in which case the cluster will only run TFTP.  When using PXE boot for
 the control plane and workers, your DHCP server needs to specify the
 next-server as `bootstrapProvisioningIP` for the control plane, and
-`provisioningHostIP` for the workers.
+`clusterProvisioningIP` for the workers.
 
 Example:
 

@@ -69,7 +69,13 @@ type Platform struct {
 	// where the baremetal-operator pod runs provisioning services,
 	// and an http server to cache some downloaded content e.g RHCOS/IPA images
 	// +optional
-	ClusterProvisioningIP string `json:"provisioningHostIP,omitempty"`
+	ClusterProvisioningIP string `json:"clusterProvisioningIP,omitempty"`
+
+	// DeprecatedProvisioningHostIP is the deprecated version of clusterProvisioningIP. When the
+	// baremetal platform was initially added to the installer, the JSON field for ClusterProvisioningIP
+	// was incorrectly set to "provisioningHostIP."  This field is here to allow backwards-compatibility.
+	// +optional
+	DeprecatedProvisioningHostIP string `json:"provisioningHostIP,omitempty"`
 
 	// BootstrapProvisioningIP is the IP used on the bootstrap VM to
 	// bring up provisioning services that are used to create the
