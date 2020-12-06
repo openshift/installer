@@ -235,7 +235,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 	case openstacktypes.Name:
-		mpool := defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName)
+		mpool := defaultOpenStackMachinePoolPlatform()
 		mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.OpenStack)
 		pool.Platform.OpenStack = &mpool

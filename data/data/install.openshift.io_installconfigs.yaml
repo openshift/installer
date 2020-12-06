@@ -1178,7 +1178,7 @@ spec:
                     description: 'ClusterOSImageProperties is a list of properties to be added to the metadata of the uploaded Glance ClusterOSImage. Default: the default is to not set any properties.'
                     type: object
                   computeFlavor:
-                    description: FlavorName is the name of the compute flavor to use for instances in this cluster.
+                    description: 'DeprecatedFlavorName is the name of the flavor to use for instances in this cluster. Deprecated: use FlavorName in DefaultMachinePlatform to define default flavor.'
                     type: string
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration used when installing on OpenStack for machine pools which do not define their own platform configuration.
@@ -1248,7 +1248,6 @@ spec:
                     type: string
                 required:
                 - cloud
-                - computeFlavor
                 type: object
               ovirt:
                 description: Ovirt is the configuration used when installing on oVirt.

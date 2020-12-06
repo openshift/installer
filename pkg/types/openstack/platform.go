@@ -21,8 +21,10 @@ type Platform struct {
 	// +optional
 	ExternalNetwork string `json:"externalNetwork,omitempty"`
 
-	// FlavorName is the name of the compute flavor to use for instances in this cluster.
-	FlavorName string `json:"computeFlavor"`
+	// DeprecatedFlavorName is the name of the flavor to use for instances in this cluster.
+	// Deprecated: use FlavorName in DefaultMachinePlatform to define default flavor.
+	// +optional
+	DeprecatedFlavorName string `json:"computeFlavor,omitempty"`
 
 	// LbFloatingIP is the IP address of an available floating IP in your OpenStack cluster
 	// to associate with the OpenShift load balancer.

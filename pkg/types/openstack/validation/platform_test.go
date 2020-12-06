@@ -15,7 +15,9 @@ func validPlatform() *openstack.Platform {
 	return &openstack.Platform{
 		Cloud:           "test-cloud",
 		ExternalNetwork: "test-network",
-		FlavorName:      "test-flavor",
+		DefaultMachinePlatform: &openstack.MachinePool{
+			FlavorName: "test-flavor",
+		},
 	}
 }
 

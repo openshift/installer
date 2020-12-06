@@ -118,10 +118,14 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 	}
 
 	// Get flavor info
-	if flavorName := ic.OpenStack.FlavorName; flavorName != "" {
-		ci.Flavors[flavorName], err = ci.getFlavor(flavorName)
-		if err != nil {
-			return err
+	if ic.Platform.OpenStack.DefaultMachinePlatform != nil {
+		if flavorName := ic.Platform.OpenStack.DefaultMachinePlatform.FlavorName; flavorName != "" {
+			if _, seen := ci.Flavors[flavorName]; !seen {
+				ci.Flavors[flavorName], err = ci.getFlavor(flavorName)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 

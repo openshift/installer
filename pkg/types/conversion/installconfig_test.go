@@ -272,6 +272,49 @@ func TestConvertInstallConfig(t *testing.T) {
 			},
 			expectedError: "provisioningHostIP is deprecated; only clusterProvisioningIP needs to be specified",
 		},
+		{
+			name: "deprecated OpenStack computeFlavor",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					OpenStack: &openstack.Platform{
+						DeprecatedFlavorName: "big-flavor",
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					OpenStack: &openstack.Platform{
+						DeprecatedFlavorName: "big-flavor",
+						DefaultMachinePlatform: &openstack.MachinePool{
+							FlavorName: "big-flavor",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "deprecated OpenStack computeFlavor with type in defaultMachinePlatform",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					OpenStack: &openstack.Platform{
+						DeprecatedFlavorName: "flavor1",
+						DefaultMachinePlatform: &openstack.MachinePool{
+							FlavorName: "flavor2",
+						},
+					},
+				},
+			},
+			expectedError: "cannot specify computeFlavor and type in defaultMachinePlatform together",
+		},
 	}
 
 	for _, tc := range cases {
