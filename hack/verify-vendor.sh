@@ -1,6 +1,7 @@
 #!/bin/sh
 
 if [ "$IS_CONTAINER" != "" ]; then
+  set -euxo pipefail
   go mod vendor
   go mod verify
   git diff --exit-code
