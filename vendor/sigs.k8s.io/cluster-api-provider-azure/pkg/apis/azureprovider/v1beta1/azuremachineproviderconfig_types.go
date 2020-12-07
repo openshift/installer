@@ -88,6 +88,15 @@ type AzureMachineProviderSpec struct {
 
 	NetworkResourceGroup string `json:"networkResourceGroup,omitempty"`
 	ResourceGroup        string `json:"resourceGroup,omitempty"`
+
+	// SpotVMOptions allows the ability to specify the Machine should use a Spot VM
+	SpotVMOptions *SpotVMOptions `json:"spotVMOptions,omitempty"`
+}
+
+// SpotVMOptions defines the options relevant to running the Machine on Spot VMs
+type SpotVMOptions struct {
+	// MaxPrice defines the maximum price the user is willing to pay for Spot VM instances
+	MaxPrice *string `json:"maxPrice,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -22,58 +22,77 @@ spec:
         description: InstallConfig is the configuration for an OpenShift install.
         properties:
           additionalTrustBundle:
-            description: AdditionalTrustBundle is a PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted certificate store.
+            description: AdditionalTrustBundle is a PEM-encoded X.509 certificate
+              bundle that will be added to the nodes' trusted certificate store.
             type: string
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           baseDomain:
-            description: BaseDomain is the base domain to which the cluster should belong.
+            description: BaseDomain is the base domain to which the cluster should
+              belong.
             type: string
           compute:
-            description: Compute is the configuration for the machines that comprise the compute nodes.
+            description: Compute is the configuration for the machines that comprise
+              the compute nodes.
             items:
               description: MachinePool is a pool of machines to be installed.
               properties:
                 architecture:
                   default: amd64
-                  description: Architecture is the instruction set architecture of the machine pool. Defaults to amd64.
+                  description: Architecture is the instruction set architecture of
+                    the machine pool. Defaults to amd64.
                   enum:
                   - ""
                   - amd64
                   type: string
                 hyperthreading:
                   default: Enabled
-                  description: Hyperthreading determines the mode of hyperthreading that machines in the pool will utilize. Default is for hyperthreading to be enabled.
+                  description: Hyperthreading determines the mode of hyperthreading
+                    that machines in the pool will utilize. Default is for hyperthreading
+                    to be enabled.
                   enum:
                   - ""
                   - Enabled
                   - Disabled
                   type: string
                 name:
-                  description: Name is the name of the machine pool. For the control plane machine pool, the name will always be "master". For the compute machine pools, the only valid name is "worker".
+                  description: Name is the name of the machine pool. For the control
+                    plane machine pool, the name will always be "master". For the
+                    compute machine pools, the only valid name is "worker".
                   type: string
                 platform:
-                  description: Platform is configuration for machine pool specific to the platform.
+                  description: Platform is configuration for machine pool specific
+                    to the platform.
                   properties:
                     aws:
-                      description: AWS is the configuration used when installing on AWS.
+                      description: AWS is the configuration used when installing on
+                        AWS.
                       properties:
                         amiID:
-                          description: AMIID is the AMI that should be used to boot the ec2 instance. If set, the AMI should belong to the same region as the cluster.
+                          description: AMIID is the AMI that should be used to boot
+                            the ec2 instance. If set, the AMI should belong to the
+                            same region as the cluster.
                           type: string
                         rootVolume:
-                          description: EC2RootVolume defines the root volume for EC2 instances in the machine pool.
+                          description: EC2RootVolume defines the root volume for EC2
+                            instances in the machine pool.
                           properties:
                             iops:
-                              description: IOPS defines the amount of provisioned IOPS. This is only valid for type io1.
+                              description: IOPS defines the amount of provisioned
+                                IOPS. This is only valid for type io1.
                               minimum: 0
                               type: integer
                             kmsKeyARN:
-                              description: The KMS key that will be used to encrypt the EBS volume. If no key is provided the default KMS key for the account will be used. https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetEbsDefaultKmsKeyId.html
+                              description: The KMS key that will be used to encrypt
+                                the EBS volume. If no key is provided the default
+                                KMS key for the account will be used. https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetEbsDefaultKmsKeyId.html
                               type: string
                             size:
-                              description: Size defines the size of the volume in gibibytes (GiB).
+                              description: Size defines the size of the volume in
+                                gibibytes (GiB).
                               minimum: 0
                               type: integer
                             type:
@@ -84,27 +103,34 @@ spec:
                           - type
                           type: object
                         type:
-                          description: InstanceType defines the ec2 instance type. eg. m4-large
+                          description: InstanceType defines the ec2 instance type.
+                            eg. m4-large
                           type: string
                         zones:
-                          description: Zones is list of availability zones that can be used.
+                          description: Zones is list of availability zones that can
+                            be used.
                           items:
                             type: string
                           type: array
                       type: object
                     azure:
-                      description: Azure is the configuration used when installing on Azure.
+                      description: Azure is the configuration used when installing
+                        on Azure.
                       properties:
                         osDisk:
                           description: OSDisk defines the storage for instance.
                           properties:
                             diskSizeGB:
-                              description: DiskSizeGB defines the size of disk in GB.
+                              description: DiskSizeGB defines the size of disk in
+                                GB.
                               format: int32
                               minimum: 0
                               type: integer
                             diskType:
-                              description: DiskType defines the type of disk. The valid values are Standard_LRS, Premium_LRS, StandardSSD_LRS For control plane nodes, the valid values are Premium_LRS and StandardSSD_LRS. Default is Premium_LRS
+                              description: DiskType defines the type of disk. The
+                                valid values are Standard_LRS, Premium_LRS, StandardSSD_LRS
+                                For control plane nodes, the valid values are Premium_LRS
+                                and StandardSSD_LRS. Default is Premium_LRS
                               enum:
                               - Standard_LRS
                               - Premium_LRS
@@ -114,52 +140,67 @@ spec:
                           - diskSizeGB
                           type: object
                         type:
-                          description: InstanceType defines the azure instance type. eg. Standard_DS_V2
+                          description: InstanceType defines the azure instance type.
+                            eg. Standard_DS_V2
                           type: string
                         zones:
-                          description: Zones is list of availability zones that can be used. eg. ["1", "2", "3"]
+                          description: Zones is list of availability zones that can
+                            be used. eg. ["1", "2", "3"]
                           items:
                             type: string
                           type: array
                       type: object
                     baremetal:
-                      description: BareMetal is the configuration used when installing on bare metal.
+                      description: BareMetal is the configuration used when installing
+                        on bare metal.
                       type: object
                     gcp:
-                      description: GCP is the configuration used when installing on GCP
+                      description: GCP is the configuration used when installing on
+                        GCP
                       properties:
                         osDisk:
                           description: OSDisk defines the storage for instance.
                           properties:
                             DiskSizeGB:
-                              description: DiskSizeGB defines the size of disk in GB.
+                              description: DiskSizeGB defines the size of disk in
+                                GB.
                               format: int64
                               maximum: 65536
                               minimum: 16
                               type: integer
                             DiskType:
-                              description: DiskType defines the type of disk. The valid values are pd-standard and pd-ssd For control plane nodes, the valid value is pd-ssd.
+                              description: DiskType defines the type of disk. The
+                                valid values are pd-standard and pd-ssd For control
+                                plane nodes, the valid value is pd-ssd.
                               enum:
                               - pd-ssd
                               - pd-standard
                               type: string
                             encryptionKey:
-                              description: EncryptionKey defines the KMS key to be used to encrypt the disk.
+                              description: EncryptionKey defines the KMS key to be
+                                used to encrypt the disk.
                               properties:
                                 kmsKey:
-                                  description: KMSKey is a reference to a KMS Key to use for the encryption.
+                                  description: KMSKey is a reference to a KMS Key
+                                    to use for the encryption.
                                   properties:
                                     keyRing:
-                                      description: KeyRing is the name of the KMS Key Ring which the KMS Key belongs to.
+                                      description: KeyRing is the name of the KMS
+                                        Key Ring which the KMS Key belongs to.
                                       type: string
                                     location:
-                                      description: Location is the GCP location in which the Key Ring exists.
+                                      description: Location is the GCP location in
+                                        which the Key Ring exists.
                                       type: string
                                     name:
-                                      description: Name is the name of the customer managed encryption key to be used for the disk encryption.
+                                      description: Name is the name of the customer
+                                        managed encryption key to be used for the
+                                        disk encryption.
                                       type: string
                                     projectID:
-                                      description: ProjectID is the ID of the Project in which the KMS Key Ring exists. Defaults to the VM ProjectID if not set.
+                                      description: ProjectID is the ID of the Project
+                                        in which the KMS Key Ring exists. Defaults
+                                        to the VM ProjectID if not set.
                                       type: string
                                   required:
                                   - keyRing
@@ -167,56 +208,75 @@ spec:
                                   - name
                                   type: object
                                 kmsKeyServiceAccount:
-                                  description: KMSKeyServiceAccount is the service account being used for the encryption request for the given KMS key. If absent, the Compute Engine default service account is used. See https://cloud.google.com/compute/docs/access/service-accounts#compute_engine_service_account for details on the default service account.
+                                  description: KMSKeyServiceAccount is the service
+                                    account being used for the encryption request
+                                    for the given KMS key. If absent, the Compute
+                                    Engine default service account is used. See https://cloud.google.com/compute/docs/access/service-accounts#compute_engine_service_account
+                                    for details on the default service account.
                                   type: string
                               type: object
                           required:
                           - DiskSizeGB
                           type: object
                         type:
-                          description: InstanceType defines the GCP instance type. eg. n1-standard-4
+                          description: InstanceType defines the GCP instance type.
+                            eg. n1-standard-4
                           type: string
                         zones:
-                          description: Zones is list of availability zones that can be used.
+                          description: Zones is list of availability zones that can
+                            be used.
                           items:
                             type: string
                           type: array
                       type: object
                     kubevirt:
-                      description: Kubevirt is the configuration used when installing on Kubevirt.
+                      description: Kubevirt is the configuration used when installing
+                        on Kubevirt.
                       properties:
                         cpu:
                           description: CPU is the amount of CPUs used.
                           format: int32
                           type: integer
                         memory:
-                          description: 'Memory is the size of a VM''s memory. Format: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go'
+                          description: 'Memory is the size of a VM''s memory. Format:
+                            https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go'
                           type: string
                         storageSize:
-                          description: 'StorageSize is the size of VM''s boot volume. Format: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go'
+                          description: 'StorageSize is the size of VM''s boot volume.
+                            Format: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go'
                           type: string
                       type: object
                     libvirt:
-                      description: Libvirt is the configuration used when installing on libvirt.
+                      description: Libvirt is the configuration used when installing
+                        on libvirt.
                       type: object
                     openstack:
-                      description: OpenStack is the configuration used when installing on OpenStack.
+                      description: OpenStack is the configuration used when installing
+                        on OpenStack.
                       properties:
                         additionalNetworkIDs:
-                          description: AdditionalNetworkIDs contains IDs of additional networks for machines, where each ID is presented in UUID v4 format. Allowed address pairs won't be created for the additional networks.
+                          description: AdditionalNetworkIDs contains IDs of additional
+                            networks for machines, where each ID is presented in UUID
+                            v4 format. Allowed address pairs won't be created for
+                            the additional networks.
                           items:
                             type: string
                           type: array
                         additionalSecurityGroupIDs:
-                          description: AdditionalSecurityGroupIDs contains IDs of additional security groups for machines, where each ID is presented in UUID v4 format.
+                          description: AdditionalSecurityGroupIDs contains IDs of
+                            additional security groups for machines, where each ID
+                            is presented in UUID v4 format.
                           items:
                             type: string
                           type: array
                         rootVolume:
-                          description: RootVolume defines the root volume for instances in the machine pool. The instances use ephemeral disks if not set.
+                          description: RootVolume defines the root volume for instances
+                            in the machine pool. The instances use ephemeral disks
+                            if not set.
                           properties:
                             size:
-                              description: Size defines the size of the volume in gibibytes (GiB). Required
+                              description: Size defines the size of the volume in
+                                gibibytes (GiB). Required
                               type: integer
                             type:
                               description: Type defines the type of the volume. Required
@@ -226,10 +286,14 @@ spec:
                           - type
                           type: object
                         type:
-                          description: FlavorName defines the OpenStack Nova flavor. eg. m1.large
+                          description: FlavorName defines the OpenStack Nova flavor.
+                            eg. m1.large
                           type: string
                         zones:
-                          description: Zones is the list of availability zones where the instances should be deployed. If no zones are provided, all instances will be deployed on OpenStack Nova default availability zone
+                          description: Zones is the list of availability zones where
+                            the instances should be deployed. If no zones are provided,
+                            all instances will be deployed on OpenStack Nova default
+                            availability zone
                           items:
                             type: string
                           type: array
@@ -237,17 +301,20 @@ spec:
                       - type
                       type: object
                     ovirt:
-                      description: Ovirt is the configuration used when installing on oVirt.
+                      description: Ovirt is the configuration used when installing
+                        on oVirt.
                       properties:
                         cpu:
                           description: CPU defines the VM CPU.
                           properties:
                             cores:
-                              description: Cores is the number of cores per socket. Total CPUs is (Sockets * Cores)
+                              description: Cores is the number of cores per socket.
+                                Total CPUs is (Sockets * Cores)
                               format: int32
                               type: integer
                             sockets:
-                              description: Sockets is the number of sockets for a VM. Total CPUs is (Sockets * Cores)
+                              description: Sockets is the number of sockets for a
+                                VM. Total CPUs is (Sockets * Cores)
                               format: int32
                               type: integer
                           required:
@@ -255,7 +322,10 @@ spec:
                           - sockets
                           type: object
                         instanceTypeID:
-                          description: InstanceTypeID defines the VM instance type and overrides the hardware parameters of the created VM, including cpu and memory. If InstanceTypeID is passed, all memory and cpu variables will be ignored.
+                          description: InstanceTypeID defines the VM instance type
+                            and overrides the hardware parameters of the created VM,
+                            including cpu and memory. If InstanceTypeID is passed,
+                            all memory and cpu variables will be ignored.
                           type: string
                         memoryMB:
                           description: MemoryMB is the size of a VM's memory in MiBs.
@@ -281,14 +351,18 @@ spec:
                           type: string
                       type: object
                     vsphere:
-                      description: VSphere is the configuration used when installing on vSphere.
+                      description: VSphere is the configuration used when installing
+                        on vSphere.
                       properties:
                         coresPerSocket:
-                          description: NumCoresPerSocket is the number of cores per socket in a vm. The number of vCPUs on the vm will be NumCPUs/NumCoresPerSocket.
+                          description: NumCoresPerSocket is the number of cores per
+                            socket in a vm. The number of vCPUs on the vm will be
+                            NumCPUs/NumCoresPerSocket.
                           format: int32
                           type: integer
                         cpus:
-                          description: NumCPUs is the total number of virtual processor cores to assign a vm.
+                          description: NumCPUs is the total number of virtual processor
+                            cores to assign a vm.
                           format: int32
                           type: integer
                         memoryMB:
@@ -299,7 +373,8 @@ spec:
                           description: OSDisk defines the storage for instance.
                           properties:
                             diskSizeGB:
-                              description: DiskSizeGB defines the size of disk in GB.
+                              description: DiskSizeGB defines the size of disk in
+                                GB.
                               format: int32
                               type: integer
                           type: object
@@ -315,47 +390,62 @@ spec:
               type: object
             type: array
           controlPlane:
-            description: ControlPlane is the configuration for the machines that comprise the control plane.
+            description: ControlPlane is the configuration for the machines that comprise
+              the control plane.
             properties:
               architecture:
                 default: amd64
-                description: Architecture is the instruction set architecture of the machine pool. Defaults to amd64.
+                description: Architecture is the instruction set architecture of the
+                  machine pool. Defaults to amd64.
                 enum:
                 - ""
                 - amd64
                 type: string
               hyperthreading:
                 default: Enabled
-                description: Hyperthreading determines the mode of hyperthreading that machines in the pool will utilize. Default is for hyperthreading to be enabled.
+                description: Hyperthreading determines the mode of hyperthreading
+                  that machines in the pool will utilize. Default is for hyperthreading
+                  to be enabled.
                 enum:
                 - ""
                 - Enabled
                 - Disabled
                 type: string
               name:
-                description: Name is the name of the machine pool. For the control plane machine pool, the name will always be "master". For the compute machine pools, the only valid name is "worker".
+                description: Name is the name of the machine pool. For the control
+                  plane machine pool, the name will always be "master". For the compute
+                  machine pools, the only valid name is "worker".
                 type: string
               platform:
-                description: Platform is configuration for machine pool specific to the platform.
+                description: Platform is configuration for machine pool specific to
+                  the platform.
                 properties:
                   aws:
-                    description: AWS is the configuration used when installing on AWS.
+                    description: AWS is the configuration used when installing on
+                      AWS.
                     properties:
                       amiID:
-                        description: AMIID is the AMI that should be used to boot the ec2 instance. If set, the AMI should belong to the same region as the cluster.
+                        description: AMIID is the AMI that should be used to boot
+                          the ec2 instance. If set, the AMI should belong to the same
+                          region as the cluster.
                         type: string
                       rootVolume:
-                        description: EC2RootVolume defines the root volume for EC2 instances in the machine pool.
+                        description: EC2RootVolume defines the root volume for EC2
+                          instances in the machine pool.
                         properties:
                           iops:
-                            description: IOPS defines the amount of provisioned IOPS. This is only valid for type io1.
+                            description: IOPS defines the amount of provisioned IOPS.
+                              This is only valid for type io1.
                             minimum: 0
                             type: integer
                           kmsKeyARN:
-                            description: The KMS key that will be used to encrypt the EBS volume. If no key is provided the default KMS key for the account will be used. https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetEbsDefaultKmsKeyId.html
+                            description: The KMS key that will be used to encrypt
+                              the EBS volume. If no key is provided the default KMS
+                              key for the account will be used. https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetEbsDefaultKmsKeyId.html
                             type: string
                           size:
-                            description: Size defines the size of the volume in gibibytes (GiB).
+                            description: Size defines the size of the volume in gibibytes
+                              (GiB).
                             minimum: 0
                             type: integer
                           type:
@@ -366,16 +456,19 @@ spec:
                         - type
                         type: object
                       type:
-                        description: InstanceType defines the ec2 instance type. eg. m4-large
+                        description: InstanceType defines the ec2 instance type. eg.
+                          m4-large
                         type: string
                       zones:
-                        description: Zones is list of availability zones that can be used.
+                        description: Zones is list of availability zones that can
+                          be used.
                         items:
                           type: string
                         type: array
                     type: object
                   azure:
-                    description: Azure is the configuration used when installing on Azure.
+                    description: Azure is the configuration used when installing on
+                      Azure.
                     properties:
                       osDisk:
                         description: OSDisk defines the storage for instance.
@@ -386,7 +479,10 @@ spec:
                             minimum: 0
                             type: integer
                           diskType:
-                            description: DiskType defines the type of disk. The valid values are Standard_LRS, Premium_LRS, StandardSSD_LRS For control plane nodes, the valid values are Premium_LRS and StandardSSD_LRS. Default is Premium_LRS
+                            description: DiskType defines the type of disk. The valid
+                              values are Standard_LRS, Premium_LRS, StandardSSD_LRS
+                              For control plane nodes, the valid values are Premium_LRS
+                              and StandardSSD_LRS. Default is Premium_LRS
                             enum:
                             - Standard_LRS
                             - Premium_LRS
@@ -396,19 +492,23 @@ spec:
                         - diskSizeGB
                         type: object
                       type:
-                        description: InstanceType defines the azure instance type. eg. Standard_DS_V2
+                        description: InstanceType defines the azure instance type.
+                          eg. Standard_DS_V2
                         type: string
                       zones:
-                        description: Zones is list of availability zones that can be used. eg. ["1", "2", "3"]
+                        description: Zones is list of availability zones that can
+                          be used. eg. ["1", "2", "3"]
                         items:
                           type: string
                         type: array
                     type: object
                   baremetal:
-                    description: BareMetal is the configuration used when installing on bare metal.
+                    description: BareMetal is the configuration used when installing
+                      on bare metal.
                     type: object
                   gcp:
-                    description: GCP is the configuration used when installing on GCP
+                    description: GCP is the configuration used when installing on
+                      GCP
                     properties:
                       osDisk:
                         description: OSDisk defines the storage for instance.
@@ -420,28 +520,38 @@ spec:
                             minimum: 16
                             type: integer
                           DiskType:
-                            description: DiskType defines the type of disk. The valid values are pd-standard and pd-ssd For control plane nodes, the valid value is pd-ssd.
+                            description: DiskType defines the type of disk. The valid
+                              values are pd-standard and pd-ssd For control plane
+                              nodes, the valid value is pd-ssd.
                             enum:
                             - pd-ssd
                             - pd-standard
                             type: string
                           encryptionKey:
-                            description: EncryptionKey defines the KMS key to be used to encrypt the disk.
+                            description: EncryptionKey defines the KMS key to be used
+                              to encrypt the disk.
                             properties:
                               kmsKey:
-                                description: KMSKey is a reference to a KMS Key to use for the encryption.
+                                description: KMSKey is a reference to a KMS Key to
+                                  use for the encryption.
                                 properties:
                                   keyRing:
-                                    description: KeyRing is the name of the KMS Key Ring which the KMS Key belongs to.
+                                    description: KeyRing is the name of the KMS Key
+                                      Ring which the KMS Key belongs to.
                                     type: string
                                   location:
-                                    description: Location is the GCP location in which the Key Ring exists.
+                                    description: Location is the GCP location in which
+                                      the Key Ring exists.
                                     type: string
                                   name:
-                                    description: Name is the name of the customer managed encryption key to be used for the disk encryption.
+                                    description: Name is the name of the customer
+                                      managed encryption key to be used for the disk
+                                      encryption.
                                     type: string
                                   projectID:
-                                    description: ProjectID is the ID of the Project in which the KMS Key Ring exists. Defaults to the VM ProjectID if not set.
+                                    description: ProjectID is the ID of the Project
+                                      in which the KMS Key Ring exists. Defaults to
+                                      the VM ProjectID if not set.
                                     type: string
                                 required:
                                 - keyRing
@@ -449,56 +559,75 @@ spec:
                                 - name
                                 type: object
                               kmsKeyServiceAccount:
-                                description: KMSKeyServiceAccount is the service account being used for the encryption request for the given KMS key. If absent, the Compute Engine default service account is used. See https://cloud.google.com/compute/docs/access/service-accounts#compute_engine_service_account for details on the default service account.
+                                description: KMSKeyServiceAccount is the service account
+                                  being used for the encryption request for the given
+                                  KMS key. If absent, the Compute Engine default service
+                                  account is used. See https://cloud.google.com/compute/docs/access/service-accounts#compute_engine_service_account
+                                  for details on the default service account.
                                 type: string
                             type: object
                         required:
                         - DiskSizeGB
                         type: object
                       type:
-                        description: InstanceType defines the GCP instance type. eg. n1-standard-4
+                        description: InstanceType defines the GCP instance type. eg.
+                          n1-standard-4
                         type: string
                       zones:
-                        description: Zones is list of availability zones that can be used.
+                        description: Zones is list of availability zones that can
+                          be used.
                         items:
                           type: string
                         type: array
                     type: object
                   kubevirt:
-                    description: Kubevirt is the configuration used when installing on Kubevirt.
+                    description: Kubevirt is the configuration used when installing
+                      on Kubevirt.
                     properties:
                       cpu:
                         description: CPU is the amount of CPUs used.
                         format: int32
                         type: integer
                       memory:
-                        description: 'Memory is the size of a VM''s memory. Format: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go'
+                        description: 'Memory is the size of a VM''s memory. Format:
+                          https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go'
                         type: string
                       storageSize:
-                        description: 'StorageSize is the size of VM''s boot volume. Format: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go'
+                        description: 'StorageSize is the size of VM''s boot volume.
+                          Format: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go'
                         type: string
                     type: object
                   libvirt:
-                    description: Libvirt is the configuration used when installing on libvirt.
+                    description: Libvirt is the configuration used when installing
+                      on libvirt.
                     type: object
                   openstack:
-                    description: OpenStack is the configuration used when installing on OpenStack.
+                    description: OpenStack is the configuration used when installing
+                      on OpenStack.
                     properties:
                       additionalNetworkIDs:
-                        description: AdditionalNetworkIDs contains IDs of additional networks for machines, where each ID is presented in UUID v4 format. Allowed address pairs won't be created for the additional networks.
+                        description: AdditionalNetworkIDs contains IDs of additional
+                          networks for machines, where each ID is presented in UUID
+                          v4 format. Allowed address pairs won't be created for the
+                          additional networks.
                         items:
                           type: string
                         type: array
                       additionalSecurityGroupIDs:
-                        description: AdditionalSecurityGroupIDs contains IDs of additional security groups for machines, where each ID is presented in UUID v4 format.
+                        description: AdditionalSecurityGroupIDs contains IDs of additional
+                          security groups for machines, where each ID is presented
+                          in UUID v4 format.
                         items:
                           type: string
                         type: array
                       rootVolume:
-                        description: RootVolume defines the root volume for instances in the machine pool. The instances use ephemeral disks if not set.
+                        description: RootVolume defines the root volume for instances
+                          in the machine pool. The instances use ephemeral disks if
+                          not set.
                         properties:
                           size:
-                            description: Size defines the size of the volume in gibibytes (GiB). Required
+                            description: Size defines the size of the volume in gibibytes
+                              (GiB). Required
                             type: integer
                           type:
                             description: Type defines the type of the volume. Required
@@ -508,10 +637,14 @@ spec:
                         - type
                         type: object
                       type:
-                        description: FlavorName defines the OpenStack Nova flavor. eg. m1.large
+                        description: FlavorName defines the OpenStack Nova flavor.
+                          eg. m1.large
                         type: string
                       zones:
-                        description: Zones is the list of availability zones where the instances should be deployed. If no zones are provided, all instances will be deployed on OpenStack Nova default availability zone
+                        description: Zones is the list of availability zones where
+                          the instances should be deployed. If no zones are provided,
+                          all instances will be deployed on OpenStack Nova default
+                          availability zone
                         items:
                           type: string
                         type: array
@@ -519,17 +652,20 @@ spec:
                     - type
                     type: object
                   ovirt:
-                    description: Ovirt is the configuration used when installing on oVirt.
+                    description: Ovirt is the configuration used when installing on
+                      oVirt.
                     properties:
                       cpu:
                         description: CPU defines the VM CPU.
                         properties:
                           cores:
-                            description: Cores is the number of cores per socket. Total CPUs is (Sockets * Cores)
+                            description: Cores is the number of cores per socket.
+                              Total CPUs is (Sockets * Cores)
                             format: int32
                             type: integer
                           sockets:
-                            description: Sockets is the number of sockets for a VM. Total CPUs is (Sockets * Cores)
+                            description: Sockets is the number of sockets for a VM.
+                              Total CPUs is (Sockets * Cores)
                             format: int32
                             type: integer
                         required:
@@ -537,7 +673,10 @@ spec:
                         - sockets
                         type: object
                       instanceTypeID:
-                        description: InstanceTypeID defines the VM instance type and overrides the hardware parameters of the created VM, including cpu and memory. If InstanceTypeID is passed, all memory and cpu variables will be ignored.
+                        description: InstanceTypeID defines the VM instance type and
+                          overrides the hardware parameters of the created VM, including
+                          cpu and memory. If InstanceTypeID is passed, all memory
+                          and cpu variables will be ignored.
                         type: string
                       memoryMB:
                         description: MemoryMB is the size of a VM's memory in MiBs.
@@ -563,14 +702,17 @@ spec:
                         type: string
                     type: object
                   vsphere:
-                    description: VSphere is the configuration used when installing on vSphere.
+                    description: VSphere is the configuration used when installing
+                      on vSphere.
                     properties:
                       coresPerSocket:
-                        description: NumCoresPerSocket is the number of cores per socket in a vm. The number of vCPUs on the vm will be NumCPUs/NumCoresPerSocket.
+                        description: NumCoresPerSocket is the number of cores per
+                          socket in a vm. The number of vCPUs on the vm will be NumCPUs/NumCoresPerSocket.
                         format: int32
                         type: integer
                       cpus:
-                        description: NumCPUs is the total number of virtual processor cores to assign a vm.
+                        description: NumCPUs is the total number of virtual processor
+                          cores to assign a vm.
                         format: int32
                         type: integer
                       memoryMB:
@@ -596,7 +738,21 @@ spec:
             - platform
             type: object
           credentialsMode:
-            description: "CredentialsMode is used to explicitly set the mode with which CredentialRequests are satisfied. \n If this field is set, then the installer will not attempt to query the cloud permissions before attempting installation. If the field is not set or empty, then the installer will perform its normal verification that the credentials provided are sufficient to perform an installation. \n There are three possible values for this field, but the valid values are dependent upon the platform being used. \"Mint\": create new credentials with a subset of the overall permissions for each CredentialsRequest \"Passthrough\": copy the credentials with all of the overall permissions for each CredentialsRequest \"Manual\": CredentialsRequests must be handled manually by the user \n For each of the following platforms, the field can set to the specified values. For all other platforms, the field must not be set. AWS: \"Mint\", \"Passthrough\", \"Manual\" Azure: \"Mint\", \"Passthrough\", \"Manual\" GCP: \"Mint\", \"Passthrough\", \"Manual\""
+            description: "CredentialsMode is used to explicitly set the mode with
+              which CredentialRequests are satisfied. \n If this field is set, then
+              the installer will not attempt to query the cloud permissions before
+              attempting installation. If the field is not set or empty, then the
+              installer will perform its normal verification that the credentials
+              provided are sufficient to perform an installation. \n There are three
+              possible values for this field, but the valid values are dependent upon
+              the platform being used. \"Mint\": create new credentials with a subset
+              of the overall permissions for each CredentialsRequest \"Passthrough\":
+              copy the credentials with all of the overall permissions for each CredentialsRequest
+              \"Manual\": CredentialsRequests must be handled manually by the user
+              \n For each of the following platforms, the field can set to the specified
+              values. For all other platforms, the field must not be set. AWS: \"Mint\",
+              \"Passthrough\", \"Manual\" Azure: \"Mint\", \"Passthrough\", \"Manual\"
+              GCP: \"Mint\", \"Passthrough\", \"Manual\""
             enum:
             - ""
             - Mint
@@ -608,44 +764,58 @@ spec:
             description: FIPS configures https://www.nist.gov/itl/fips-general-information
             type: boolean
           imageContentSources:
-            description: ImageContentSources lists sources/repositories for the release-image content.
+            description: ImageContentSources lists sources/repositories for the release-image
+              content.
             items:
-              description: ImageContentSource defines a list of sources/repositories that can be used to pull content.
+              description: ImageContentSource defines a list of sources/repositories
+                that can be used to pull content.
               properties:
                 mirrors:
-                  description: Mirrors is one or more repositories that may also contain the same images.
+                  description: Mirrors is one or more repositories that may also contain
+                    the same images.
                   items:
                     type: string
                   type: array
                 source:
-                  description: Source is the repository that users refer to, e.g. in image pull specifications.
+                  description: Source is the repository that users refer to, e.g.
+                    in image pull specifications.
                   type: string
               required:
               - source
               type: object
             type: array
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
           networking:
-            description: Networking is the configuration for the pod network provider in the cluster.
+            description: Networking is the configuration for the pod network provider
+              in the cluster.
             properties:
               clusterNetwork:
-                description: ClusterNetwork is the list of IP address pools for pods. Default is 10.128.0.0/14 and a host prefix of /23.
+                description: ClusterNetwork is the list of IP address pools for pods.
+                  Default is 10.128.0.0/14 and a host prefix of /23.
                 items:
-                  description: ClusterNetworkEntry is a single IP address block for pod IP blocks. IP blocks are allocated with size 2^HostSubnetLength.
+                  description: ClusterNetworkEntry is a single IP address block for
+                    pod IP blocks. IP blocks are allocated with size 2^HostSubnetLength.
                   properties:
                     cidr:
                       description: CIDR is the IP block address pool.
                       type: Any
                     hostPrefix:
-                      description: HostPrefix is the prefix size to allocate to each node from the CIDR. For example, 24 would allocate 2^8=256 adresses to each node. If this field is not used by the plugin, it can be left unset.
+                      description: HostPrefix is the prefix size to allocate to each
+                        node from the CIDR. For example, 24 would allocate 2^8=256
+                        adresses to each node. If this field is not used by the plugin,
+                        it can be left unset.
                       format: int32
                       type: integer
                     hostSubnetLength:
-                      description: The size of blocks to allocate from the larger pool. This is the length in bits - so a 9 here will allocate a /23.
+                      description: The size of blocks to allocate from the larger
+                        pool. This is the length in bits - so a 9 here will allocate
+                        a /23.
                       format: int32
                       type: integer
                   required:
@@ -655,17 +825,23 @@ spec:
               clusterNetworks:
                 description: Deprecated name for ClusterNetwork
                 items:
-                  description: ClusterNetworkEntry is a single IP address block for pod IP blocks. IP blocks are allocated with size 2^HostSubnetLength.
+                  description: ClusterNetworkEntry is a single IP address block for
+                    pod IP blocks. IP blocks are allocated with size 2^HostSubnetLength.
                   properties:
                     cidr:
                       description: CIDR is the IP block address pool.
                       type: Any
                     hostPrefix:
-                      description: HostPrefix is the prefix size to allocate to each node from the CIDR. For example, 24 would allocate 2^8=256 adresses to each node. If this field is not used by the plugin, it can be left unset.
+                      description: HostPrefix is the prefix size to allocate to each
+                        node from the CIDR. For example, 24 would allocate 2^8=256
+                        adresses to each node. If this field is not used by the plugin,
+                        it can be left unset.
                       format: int32
                       type: integer
                     hostSubnetLength:
-                      description: The size of blocks to allocate from the larger pool. This is the length in bits - so a 9 here will allocate a /23.
+                      description: The size of blocks to allocate from the larger
+                        pool. This is the length in bits - so a 9 here will allocate
+                        a /23.
                       format: int32
                       type: integer
                   required:
@@ -673,15 +849,22 @@ spec:
                   type: object
                 type: array
               machineCIDR:
-                description: Deprecated name for MachineCIDRs. If set, MachineCIDRs must be empty or the first index must match.
+                description: Deprecated name for MachineCIDRs. If set, MachineCIDRs
+                  must be empty or the first index must match.
                 type: Any
               machineNetwork:
-                description: MachineNetwork is the list of IP address pools for machines. This field replaces MachineCIDR, and if set MachineCIDR must be empty or match the first entry in the list. Default is 10.0.0.0/16 for all platforms other than libvirt. For libvirt, the default is 192.168.126.0/24.
+                description: MachineNetwork is the list of IP address pools for machines.
+                  This field replaces MachineCIDR, and if set MachineCIDR must be
+                  empty or match the first entry in the list. Default is 10.0.0.0/16
+                  for all platforms other than libvirt. For libvirt, the default is
+                  192.168.126.0/24.
                 items:
-                  description: MachineNetworkEntry is a single IP address block for node IP blocks.
+                  description: MachineNetworkEntry is a single IP address block for
+                    node IP blocks.
                   properties:
                     cidr:
-                      description: CIDR is the IP block address pool for machines within the cluster.
+                      description: CIDR is the IP block address pool for machines
+                        within the cluster.
                       type: Any
                   required:
                   - cidr
@@ -689,13 +872,15 @@ spec:
                 type: array
               networkType:
                 default: OpenShiftSDN
-                description: NetworkType is the type of network to install. The default is OpenShiftSDN
+                description: NetworkType is the type of network to install. The default
+                  is OpenShiftSDN
                 type: string
               serviceCIDR:
                 description: Deprecated name for ServiceNetwork
                 type: Any
               serviceNetwork:
-                description: 'ServiceNetwork is the list of IP address pools for services. Default is 172.30.0.0/16. NOTE: currently only one entry is supported.'
+                description: 'ServiceNetwork is the list of IP address pools for services.
+                  Default is 172.30.0.0/16. NOTE: currently only one entry is supported.'
                 items:
                   type: Any
                 maxItems: 1
@@ -705,32 +890,44 @@ spec:
                 type: string
             type: object
           platform:
-            description: Platform is the configuration for the specific platform upon which to perform the installation.
+            description: Platform is the configuration for the specific platform upon
+              which to perform the installation.
             properties:
               aws:
                 description: AWS is the configuration used when installing on AWS.
                 properties:
                   amiID:
-                    description: AMIID is the AMI that should be used to boot machines for the cluster. If set, the AMI should belong to the same region as the cluster.
+                    description: AMIID is the AMI that should be used to boot machines
+                      for the cluster. If set, the AMI should belong to the same region
+                      as the cluster.
                     type: string
                   defaultMachinePlatform:
-                    description: DefaultMachinePlatform is the default configuration used when installing on AWS for machine pools which do not define their own platform configuration.
+                    description: DefaultMachinePlatform is the default configuration
+                      used when installing on AWS for machine pools which do not define
+                      their own platform configuration.
                     properties:
                       amiID:
-                        description: AMIID is the AMI that should be used to boot the ec2 instance. If set, the AMI should belong to the same region as the cluster.
+                        description: AMIID is the AMI that should be used to boot
+                          the ec2 instance. If set, the AMI should belong to the same
+                          region as the cluster.
                         type: string
                       rootVolume:
-                        description: EC2RootVolume defines the root volume for EC2 instances in the machine pool.
+                        description: EC2RootVolume defines the root volume for EC2
+                          instances in the machine pool.
                         properties:
                           iops:
-                            description: IOPS defines the amount of provisioned IOPS. This is only valid for type io1.
+                            description: IOPS defines the amount of provisioned IOPS.
+                              This is only valid for type io1.
                             minimum: 0
                             type: integer
                           kmsKeyARN:
-                            description: The KMS key that will be used to encrypt the EBS volume. If no key is provided the default KMS key for the account will be used. https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetEbsDefaultKmsKeyId.html
+                            description: The KMS key that will be used to encrypt
+                              the EBS volume. If no key is provided the default KMS
+                              key for the account will be used. https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetEbsDefaultKmsKeyId.html
                             type: string
                           size:
-                            description: Size defines the size of the volume in gibibytes (GiB).
+                            description: Size defines the size of the volume in gibibytes
+                              (GiB).
                             minimum: 0
                             type: integer
                           type:
@@ -741,27 +938,36 @@ spec:
                         - type
                         type: object
                       type:
-                        description: InstanceType defines the ec2 instance type. eg. m4-large
+                        description: InstanceType defines the ec2 instance type. eg.
+                          m4-large
                         type: string
                       zones:
-                        description: Zones is list of availability zones that can be used.
+                        description: Zones is list of availability zones that can
+                          be used.
                         items:
                           type: string
                         type: array
                     type: object
                   region:
-                    description: Region specifies the AWS region where the cluster will be created.
+                    description: Region specifies the AWS region where the cluster
+                      will be created.
                     type: string
                   serviceEndpoints:
-                    description: ServiceEndpoints list contains custom endpoints which will override default service endpoint of AWS Services. There must be only one ServiceEndpoint for a service.
+                    description: ServiceEndpoints list contains custom endpoints which
+                      will override default service endpoint of AWS Services. There
+                      must be only one ServiceEndpoint for a service.
                     items:
-                      description: ServiceEndpoint store the configuration for services to override existing defaults of AWS Services.
+                      description: ServiceEndpoint store the configuration for services
+                        to override existing defaults of AWS Services.
                       properties:
                         name:
-                          description: Name is the name of the AWS service. This must be provided and cannot be empty.
+                          description: Name is the name of the AWS service. This must
+                            be provided and cannot be empty.
                           type: string
                         url:
-                          description: URL is fully qualified URI with scheme https, that overrides the default generated endpoint for a client. This must be provided and cannot be empty.
+                          description: URL is fully qualified URI with scheme https,
+                            that overrides the default generated endpoint for a client.
+                            This must be provided and cannot be empty.
                           pattern: ^https://
                           type: string
                       required:
@@ -770,14 +976,18 @@ spec:
                       type: object
                     type: array
                   subnets:
-                    description: Subnets specifies existing subnets (by ID) where cluster resources will be created.  Leave unset to have the installer create subnets in a new VPC on your behalf.
+                    description: Subnets specifies existing subnets (by ID) where
+                      cluster resources will be created.  Leave unset to have the
+                      installer create subnets in a new VPC on your behalf.
                     items:
                       type: string
                     type: array
                   userTags:
                     additionalProperties:
                       type: string
-                    description: UserTags additional keys and values that the installer will add as tags to all resources that it creates. Resources created by the cluster itself may not include these tags.
+                    description: UserTags additional keys and values that the installer
+                      will add as tags to all resources that it creates. Resources
+                      created by the cluster itself may not include these tags.
                     type: object
                 required:
                 - region
@@ -786,10 +996,13 @@ spec:
                 description: Azure is the configuration used when installing on Azure.
                 properties:
                   baseDomainResourceGroupName:
-                    description: BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found.
+                    description: BaseDomainResourceGroupName specifies the resource
+                      group where the Azure DNS zone for the base domain is found.
                     type: string
                   cloudName:
-                    description: cloudName is the name of the Azure cloud environment which can be used to configure the Azure SDK with the appropriate Azure API endpoints. If empty, the value is equal to "AzurePublicCloud".
+                    description: cloudName is the name of the Azure cloud environment
+                      which can be used to configure the Azure SDK with the appropriate
+                      Azure API endpoints. If empty, the value is equal to "AzurePublicCloud".
                     enum:
                     - ""
                     - AzurePublicCloud
@@ -798,13 +1011,17 @@ spec:
                     - AzureGermanCloud
                     type: string
                   computeSubnet:
-                    description: ComputeSubnet specifies an existing subnet for use by compute nodes
+                    description: ComputeSubnet specifies an existing subnet for use
+                      by compute nodes
                     type: string
                   controlPlaneSubnet:
-                    description: ControlPlaneSubnet specifies an existing subnet for use by the control plane nodes
+                    description: ControlPlaneSubnet specifies an existing subnet for
+                      use by the control plane nodes
                     type: string
                   defaultMachinePlatform:
-                    description: DefaultMachinePlatform is the default configuration used when installing on Azure for machine pools which do not define their own platform configuration.
+                    description: DefaultMachinePlatform is the default configuration
+                      used when installing on Azure for machine pools which do not
+                      define their own platform configuration.
                     properties:
                       osDisk:
                         description: OSDisk defines the storage for instance.
@@ -815,7 +1032,10 @@ spec:
                             minimum: 0
                             type: integer
                           diskType:
-                            description: DiskType defines the type of disk. The valid values are Standard_LRS, Premium_LRS, StandardSSD_LRS For control plane nodes, the valid values are Premium_LRS and StandardSSD_LRS. Default is Premium_LRS
+                            description: DiskType defines the type of disk. The valid
+                              values are Standard_LRS, Premium_LRS, StandardSSD_LRS
+                              For control plane nodes, the valid values are Premium_LRS
+                              and StandardSSD_LRS. Default is Premium_LRS
                             enum:
                             - Standard_LRS
                             - Premium_LRS
@@ -825,73 +1045,105 @@ spec:
                         - diskSizeGB
                         type: object
                       type:
-                        description: InstanceType defines the azure instance type. eg. Standard_DS_V2
+                        description: InstanceType defines the azure instance type.
+                          eg. Standard_DS_V2
                         type: string
                       zones:
-                        description: Zones is list of availability zones that can be used. eg. ["1", "2", "3"]
+                        description: Zones is list of availability zones that can
+                          be used. eg. ["1", "2", "3"]
                         items:
                           type: string
                         type: array
                     type: object
                   networkResourceGroupName:
-                    description: NetworkResourceGroupName specifies the network resource group that contains an existing VNet
+                    description: NetworkResourceGroupName specifies the network resource
+                      group that contains an existing VNet
                     type: string
                   outboundType:
                     default: Loadbalancer
-                    description: OutboundType is a strategy for how egress from cluster is achieved. When not specified default is "Loadbalancer".
+                    description: OutboundType is a strategy for how egress from cluster
+                      is achieved. When not specified default is "Loadbalancer".
                     enum:
                     - ""
                     - Loadbalancer
                     - UserDefinedRouting
                     type: string
                   region:
-                    description: Region specifies the Azure region where the cluster will be created.
+                    description: Region specifies the Azure region where the cluster
+                      will be created.
                     type: string
                   resourceGroupName:
-                    description: ResourceGroupName is the name of an already existing resource group where the cluster should be installed. This resource group should only be used for this specific cluster and the cluster components will assume assume ownership of all resources in the resource group. Destroying the cluster using installer will delete this resource group. This resource group must be empty with no other resources when trying to use it for creating a cluster. If empty, a new resource group will created for the cluster.
+                    description: ResourceGroupName is the name of an already existing
+                      resource group where the cluster should be installed. This resource
+                      group should only be used for this specific cluster and the
+                      cluster components will assume assume ownership of all resources
+                      in the resource group. Destroying the cluster using installer
+                      will delete this resource group. This resource group must be
+                      empty with no other resources when trying to use it for creating
+                      a cluster. If empty, a new resource group will created for the
+                      cluster.
                     type: string
                   virtualNetwork:
-                    description: VirtualNetwork specifies the name of an existing VNet for the installer to use
+                    description: VirtualNetwork specifies the name of an existing
+                      VNet for the installer to use
                     type: string
                 required:
                 - region
                 type: object
               baremetal:
-                description: BareMetal is the configuration used when installing on bare metal.
+                description: BareMetal is the configuration used when installing on
+                  bare metal.
                 properties:
                   apiVIP:
                     description: APIVIP is the VIP to use for internal API communication
                     format: ip
                     type: string
                   bootstrapOSImage:
-                    description: BootstrapOSImage is a URL to override the default OS image for the bootstrap node. The URL must contain a sha256 hash of the image e.g https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd...
+                    description: BootstrapOSImage is a URL to override the default
+                      OS image for the bootstrap node. The URL must contain a sha256
+                      hash of the image e.g https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd...
                     type: string
                   bootstrapProvisioningIP:
-                    description: BootstrapProvisioningIP is the IP used on the bootstrap VM to bring up provisioning services that are used to create the control-plane machines
+                    description: BootstrapProvisioningIP is the IP used on the bootstrap
+                      VM to bring up provisioning services that are used to create
+                      the control-plane machines
                     format: ip
                     type: string
                   clusterOSImage:
-                    description: ClusterOSImage is a URL to override the default OS image for cluster nodes. The URL must contain a sha256 hash of the image e.g https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8...
+                    description: ClusterOSImage is a URL to override the default OS
+                      image for cluster nodes. The URL must contain a sha256 hash
+                      of the image e.g https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8...
                     type: string
                   clusterProvisioningIP:
-                    description: ClusterProvisioningIP is the IP on the dedicated provisioning network where the baremetal-operator pod runs provisioning services, and an http server to cache some downloaded content e.g RHCOS/IPA images
+                    description: ClusterProvisioningIP is the IP on the dedicated
+                      provisioning network where the baremetal-operator pod runs provisioning
+                      services, and an http server to cache some downloaded content
+                      e.g RHCOS/IPA images
                     type: string
                   defaultMachinePlatform:
-                    description: DefaultMachinePlatform is the default configuration used when installing on bare metal for machine pools which do not define their own platform configuration.
+                    description: DefaultMachinePlatform is the default configuration
+                      used when installing on bare metal for machine pools which do
+                      not define their own platform configuration.
                     type: object
                   externalBridge:
                     description: External bridge is used for external communication.
                     type: string
                   externalMACAddress:
-                    description: ExternalMACAddress is used to allow setting a static unicast MAC address for the bootstrap host on the external network. Consider using the QEMU vendor prefix `52:54:00`. If left blank, libvirt will generate one for you.
+                    description: ExternalMACAddress is used to allow setting a static
+                      unicast MAC address for the bootstrap host on the external network.
+                      Consider using the QEMU vendor prefix `52:54:00`. If left blank,
+                      libvirt will generate one for you.
                     type: string
                   hosts:
-                    description: Hosts is the information needed to create the objects in Ironic.
+                    description: Hosts is the information needed to create the objects
+                      in Ironic.
                     items:
-                      description: Host stores all the configuration data for a baremetal host.
+                      description: Host stores all the configuration data for a baremetal
+                        host.
                       properties:
                         bmc:
-                          description: BMC stores the information about a baremetal host's management controller.
+                          description: BMC stores the information about a baremetal
+                            host's management controller.
                           properties:
                             address:
                               type: string
@@ -910,7 +1162,8 @@ spec:
                         bootMACAddress:
                           type: string
                         bootMode:
-                          description: BootMode puts the server in legacy (BIOS) or UEFI mode for booting. The default is UEFI.
+                          description: BootMode puts the server in legacy (BIOS) or
+                            UEFI mode for booting. The default is UEFI.
                           enum:
                           - UEFI
                           - legacy
@@ -922,38 +1175,50 @@ spec:
                         role:
                           type: string
                         rootDeviceHints:
-                          description: RootDeviceHints holds the hints for specifying the storage location for the root filesystem for the image.
+                          description: RootDeviceHints holds the hints for specifying
+                            the storage location for the root filesystem for the image.
                           properties:
                             deviceName:
-                              description: A Linux device name like "/dev/vda". The hint must match the actual value exactly.
+                              description: A Linux device name like "/dev/vda". The
+                                hint must match the actual value exactly.
                               type: string
                             hctl:
-                              description: A SCSI bus address like 0:0:0:0. The hint must match the actual value exactly.
+                              description: A SCSI bus address like 0:0:0:0. The hint
+                                must match the actual value exactly.
                               type: string
                             minSizeGigabytes:
                               description: The minimum size of the device in Gigabytes.
                               minimum: 0
                               type: integer
                             model:
-                              description: A vendor-specific device identifier. The hint can be a substring of the actual value.
+                              description: A vendor-specific device identifier. The
+                                hint can be a substring of the actual value.
                               type: string
                             rotational:
-                              description: True if the device should use spinning media, false otherwise.
+                              description: True if the device should use spinning
+                                media, false otherwise.
                               type: boolean
                             serialNumber:
-                              description: Device serial number. The hint must match the actual value exactly.
+                              description: Device serial number. The hint must match
+                                the actual value exactly.
                               type: string
                             vendor:
-                              description: The name of the vendor or manufacturer of the device. The hint can be a substring of the actual value.
+                              description: The name of the vendor or manufacturer
+                                of the device. The hint can be a substring of the
+                                actual value.
                               type: string
                             wwn:
-                              description: Unique storage identifier. The hint must match the actual value exactly.
+                              description: Unique storage identifier. The hint must
+                                match the actual value exactly.
                               type: string
                             wwnVendorExtension:
-                              description: Unique vendor storage identifier. The hint must match the actual value exactly.
+                              description: Unique vendor storage identifier. The hint
+                                must match the actual value exactly.
                               type: string
                             wwnWithExtension:
-                              description: Unique storage identifier with the vendor extension appended. The hint must match the actual value exactly.
+                              description: Unique storage identifier with the vendor
+                                extension appended. The hint must match the actual
+                                value exactly.
                               type: string
                           type: object
                       required:
@@ -969,26 +1234,40 @@ spec:
                     type: string
                   libvirtURI:
                     default: qemu:///system
-                    description: LibvirtURI is the identifier for the libvirtd connection.  It must be reachable from the host where the installer is run. Default is qemu:///system
+                    description: LibvirtURI is the identifier for the libvirtd connection.  It
+                      must be reachable from the host where the installer is run.
+                      Default is qemu:///system
                     type: string
                   provisioningBridge:
-                    description: Provisioning bridge is used for provisioning nodes, on the host that will run the bootstrap VM.
+                    description: Provisioning bridge is used for provisioning nodes,
+                      on the host that will run the bootstrap VM.
                     type: string
                   provisioningDHCPExternal:
-                    description: DeprecatedProvisioningDHCPExternal indicates that DHCP is provided by an external service. This parameter is replaced by ProvisioningNetwork being set to "Unmanaged".
+                    description: DeprecatedProvisioningDHCPExternal indicates that
+                      DHCP is provided by an external service. This parameter is replaced
+                      by ProvisioningNetwork being set to "Unmanaged".
                     type: boolean
                   provisioningDHCPRange:
-                    description: ProvisioningDHCPRange is used to provide DHCP services to hosts for provisioning.
+                    description: ProvisioningDHCPRange is used to provide DHCP services
+                      to hosts for provisioning.
                     type: string
                   provisioningHostIP:
-                    description: DeprecatedProvisioningHostIP is the deprecated version of clusterProvisioningIP. When the baremetal platform was initially added to the installer, the JSON field for ClusterProvisioningIP was incorrectly set to "provisioningHostIP."  This field is here to allow backwards-compatibility.
+                    description: DeprecatedProvisioningHostIP is the deprecated version
+                      of clusterProvisioningIP. When the baremetal platform was initially
+                      added to the installer, the JSON field for ClusterProvisioningIP
+                      was incorrectly set to "provisioningHostIP."  This field is
+                      here to allow backwards-compatibility.
                     type: string
                   provisioningMACAddress:
-                    description: ProvisioningMACAddress is used to allow setting a static unicast MAC address for the bootstrap host on the provisioning network. Consider using the QEMU vendor prefix `52:54:00`. If left blank, libvirt will generate one for you.
+                    description: ProvisioningMACAddress is used to allow setting a
+                      static unicast MAC address for the bootstrap host on the provisioning
+                      network. Consider using the QEMU vendor prefix `52:54:00`. If
+                      left blank, libvirt will generate one for you.
                     type: string
                   provisioningNetwork:
                     default: Managed
-                    description: ProvisioningNetwork is used to indicate if we will have a provisioning network, and how it will be managed.
+                    description: ProvisioningNetwork is used to indicate if we will
+                      have a provisioning network, and how it will be managed.
                     enum:
                     - ""
                     - Managed
@@ -996,10 +1275,13 @@ spec:
                     - Disabled
                     type: string
                   provisioningNetworkCIDR:
-                    description: ProvisioningNetworkCIDR defines the network to use for provisioning.
+                    description: ProvisioningNetworkCIDR defines the network to use
+                      for provisioning.
                     type: Any
                   provisioningNetworkInterface:
-                    description: ProvisioningNetworkInterface is the name of the network interface on a control plane baremetal host that is connected to the provisioning network.
+                    description: ProvisioningNetworkInterface is the name of the network
+                      interface on a control plane baremetal host that is connected
+                      to the provisioning network.
                     type: string
                 required:
                 - apiVIP
@@ -1008,16 +1290,23 @@ spec:
                 - provisioningNetworkInterface
                 type: object
               gcp:
-                description: GCP is the configuration used when installing on Google Cloud Platform.
+                description: GCP is the configuration used when installing on Google
+                  Cloud Platform.
                 properties:
                   computeSubnet:
-                    description: ComputeSubnet is an existing subnet where the compute nodes will be deployed. The value should be the name of the subnet.
+                    description: ComputeSubnet is an existing subnet where the compute
+                      nodes will be deployed. The value should be the name of the
+                      subnet.
                     type: string
                   controlPlaneSubnet:
-                    description: ControlPlaneSubnet is an existing subnet where the control plane will be deployed. The value should be the name of the subnet.
+                    description: ControlPlaneSubnet is an existing subnet where the
+                      control plane will be deployed. The value should be the name
+                      of the subnet.
                     type: string
                   defaultMachinePlatform:
-                    description: DefaultMachinePlatform is the default configuration used when installing on GCP for machine pools which do not define their own platform configuration.
+                    description: DefaultMachinePlatform is the default configuration
+                      used when installing on GCP for machine pools which do not define
+                      their own platform configuration.
                     properties:
                       osDisk:
                         description: OSDisk defines the storage for instance.
@@ -1029,28 +1318,38 @@ spec:
                             minimum: 16
                             type: integer
                           DiskType:
-                            description: DiskType defines the type of disk. The valid values are pd-standard and pd-ssd For control plane nodes, the valid value is pd-ssd.
+                            description: DiskType defines the type of disk. The valid
+                              values are pd-standard and pd-ssd For control plane
+                              nodes, the valid value is pd-ssd.
                             enum:
                             - pd-ssd
                             - pd-standard
                             type: string
                           encryptionKey:
-                            description: EncryptionKey defines the KMS key to be used to encrypt the disk.
+                            description: EncryptionKey defines the KMS key to be used
+                              to encrypt the disk.
                             properties:
                               kmsKey:
-                                description: KMSKey is a reference to a KMS Key to use for the encryption.
+                                description: KMSKey is a reference to a KMS Key to
+                                  use for the encryption.
                                 properties:
                                   keyRing:
-                                    description: KeyRing is the name of the KMS Key Ring which the KMS Key belongs to.
+                                    description: KeyRing is the name of the KMS Key
+                                      Ring which the KMS Key belongs to.
                                     type: string
                                   location:
-                                    description: Location is the GCP location in which the Key Ring exists.
+                                    description: Location is the GCP location in which
+                                      the Key Ring exists.
                                     type: string
                                   name:
-                                    description: Name is the name of the customer managed encryption key to be used for the disk encryption.
+                                    description: Name is the name of the customer
+                                      managed encryption key to be used for the disk
+                                      encryption.
                                     type: string
                                   projectID:
-                                    description: ProjectID is the ID of the Project in which the KMS Key Ring exists. Defaults to the VM ProjectID if not set.
+                                    description: ProjectID is the ID of the Project
+                                      in which the KMS Key Ring exists. Defaults to
+                                      the VM ProjectID if not set.
                                     type: string
                                 required:
                                 - keyRing
@@ -1058,76 +1357,101 @@ spec:
                                 - name
                                 type: object
                               kmsKeyServiceAccount:
-                                description: KMSKeyServiceAccount is the service account being used for the encryption request for the given KMS key. If absent, the Compute Engine default service account is used. See https://cloud.google.com/compute/docs/access/service-accounts#compute_engine_service_account for details on the default service account.
+                                description: KMSKeyServiceAccount is the service account
+                                  being used for the encryption request for the given
+                                  KMS key. If absent, the Compute Engine default service
+                                  account is used. See https://cloud.google.com/compute/docs/access/service-accounts#compute_engine_service_account
+                                  for details on the default service account.
                                 type: string
                             type: object
                         required:
                         - DiskSizeGB
                         type: object
                       type:
-                        description: InstanceType defines the GCP instance type. eg. n1-standard-4
+                        description: InstanceType defines the GCP instance type. eg.
+                          n1-standard-4
                         type: string
                       zones:
-                        description: Zones is list of availability zones that can be used.
+                        description: Zones is list of availability zones that can
+                          be used.
                         items:
                           type: string
                         type: array
                     type: object
                   licenses:
-                    description: Licenses is a list of licenses to apply to the compute images The value should a list of strings (https URLs only) representing the license keys. When set, this will cause the installer to copy the image into user's project. This option is incompatible with any mechanism that makes use of pre-built images such as the current env OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE
+                    description: Licenses is a list of licenses to apply to the compute
+                      images The value should a list of strings (https URLs only)
+                      representing the license keys. When set, this will cause the
+                      installer to copy the image into user's project. This option
+                      is incompatible with any mechanism that makes use of pre-built
+                      images such as the current env OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE
                     items:
                       type: string
                     type: array
                   network:
-                    description: Network specifies an existing VPC where the cluster should be created rather than provisioning a new one.
+                    description: Network specifies an existing VPC where the cluster
+                      should be created rather than provisioning a new one.
                     type: string
                   projectID:
-                    description: ProjectID is the the project that will be used for the cluster.
+                    description: ProjectID is the the project that will be used for
+                      the cluster.
                     type: string
                   region:
-                    description: Region specifies the GCP region where the cluster will be created.
+                    description: Region specifies the GCP region where the cluster
+                      will be created.
                     type: string
                 required:
                 - projectID
                 - region
                 type: object
               kubevirt:
-                description: Kubevirt is the configuration used when installing on kubevirt.
+                description: Kubevirt is the configuration used when installing on
+                  kubevirt.
                 properties:
                   apiVIP:
                     description: APIVIP is the virtual IP address for the api endpoint.
                     format: ip
                     type: string
                   defaultMachinePlatform:
-                    description: DefaultMachinePlatform is the default configuration used when installing on Kubevirt for machine pools which do not define their own platform configuration.
+                    description: DefaultMachinePlatform is the default configuration
+                      used when installing on Kubevirt for machine pools which do
+                      not define their own platform configuration.
                     properties:
                       cpu:
                         description: CPU is the amount of CPUs used.
                         format: int32
                         type: integer
                       memory:
-                        description: 'Memory is the size of a VM''s memory. Format: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go'
+                        description: 'Memory is the size of a VM''s memory. Format:
+                          https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go'
                         type: string
                       storageSize:
-                        description: 'StorageSize is the size of VM''s boot volume. Format: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go'
+                        description: 'StorageSize is the size of VM''s boot volume.
+                          Format: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go'
                         type: string
                     type: object
                   ingressVIP:
-                    description: IngressIP is an external IP which routes to the default ingress controller.
+                    description: IngressIP is an external IP which routes to the default
+                      ingress controller.
                     format: ip
                     type: string
                   namespace:
-                    description: Namespace is the namespace in the infra cluster, which the control plane (master vms) and the compute (worker vms) are installed in.
+                    description: Namespace is the namespace in the infra cluster,
+                      which the control plane (master vms) and the compute (worker
+                      vms) are installed in.
                     type: string
                   networkName:
-                    description: NetworkName is the target network of all the network interfaces of the nodes.
+                    description: NetworkName is the target network of all the network
+                      interfaces of the nodes.
                     type: string
                   persistentVolumeAccessMode:
                     default: ReadWriteMany
-                    description: PersistentVolumeAccessMode is the access mode should be use with the persistent volumes.
+                    description: PersistentVolumeAccessMode is the access mode should
+                      be use with the persistent volumes.
                     type: string
                   storageClass:
-                    description: StorageClass is the Storage Class used in the infra cluster.
+                    description: StorageClass is the Storage Class used in the infra
+                      cluster.
                     type: string
                 required:
                 - apiVIP
@@ -1136,68 +1460,99 @@ spec:
                 - networkName
                 type: object
               libvirt:
-                description: Libvirt is the configuration used when installing on libvirt.
+                description: Libvirt is the configuration used when installing on
+                  libvirt.
                 properties:
                   URI:
                     default: qemu+tcp://192.168.122.1/system
-                    description: URI is the identifier for the libvirtd connection.  It must be reachable from both the host (where the installer is run) and the cluster (where the cluster-API controller pod will be running). Default is qemu+tcp://192.168.122.1/system
+                    description: URI is the identifier for the libvirtd connection.  It
+                      must be reachable from both the host (where the installer is
+                      run) and the cluster (where the cluster-API controller pod will
+                      be running). Default is qemu+tcp://192.168.122.1/system
                     type: string
                   defaultMachinePlatform:
-                    description: DefaultMachinePlatform is the default configuration used when installing on libvirt for machine pools which do not define their own platform configuration. Default will set the image field to the latest RHCOS image.
+                    description: DefaultMachinePlatform is the default configuration
+                      used when installing on libvirt for machine pools which do not
+                      define their own platform configuration. Default will set the
+                      image field to the latest RHCOS image.
                     type: object
                   network:
                     description: Network
                     properties:
                       if:
                         default: tt0
-                        description: The interface make used for the network. Default is tt0.
+                        description: The interface make used for the network. Default
+                          is tt0.
                         type: string
                     type: object
                 type: object
               none:
-                description: None is the empty configuration used when installing on an unsupported platform.
+                description: None is the empty configuration used when installing
+                  on an unsupported platform.
                 type: object
               openstack:
-                description: OpenStack is the configuration used when installing on OpenStack.
+                description: OpenStack is the configuration used when installing on
+                  OpenStack.
                 properties:
                   apiFloatingIP:
-                    description: APIFloatingIP is the IP address of an available floating IP in your OpenStack cluster to associate with the OpenShift API load balancer.
+                    description: APIFloatingIP is the IP address of an available floating
+                      IP in your OpenStack cluster to associate with the OpenShift
+                      API load balancer.
                     type: string
                   apiVIP:
-                    description: 'APIVIP is the static IP on the nodes subnet that the api port for openshift will be assigned Default: will be set to the 5 on the first entry in the machineNetwork CIDR'
+                    description: 'APIVIP is the static IP on the nodes subnet that
+                      the api port for openshift will be assigned Default: will be
+                      set to the 5 on the first entry in the machineNetwork CIDR'
                     type: string
                   cloud:
-                    description: Cloud is the name of OpenStack cloud to use from clouds.yaml.
+                    description: Cloud is the name of OpenStack cloud to use from
+                      clouds.yaml.
                     type: string
                   clusterOSImage:
-                    description: ClusterOSImage is either a URL with `http(s)` or `file` scheme to override the default OS image for cluster nodes, or an existing Glance image name.
+                    description: ClusterOSImage is either a URL with `http(s)` or
+                      `file` scheme to override the default OS image for cluster nodes,
+                      or an existing Glance image name.
                     type: string
                   clusterOSImageProperties:
                     additionalProperties:
                       type: string
-                    description: 'ClusterOSImageProperties is a list of properties to be added to the metadata of the uploaded Glance ClusterOSImage. Default: the default is to not set any properties.'
+                    description: 'ClusterOSImageProperties is a list of properties
+                      to be added to the metadata of the uploaded Glance ClusterOSImage.
+                      Default: the default is to not set any properties.'
                     type: object
                   computeFlavor:
-                    description: 'DeprecatedFlavorName is the name of the flavor to use for instances in this cluster. Deprecated: use FlavorName in DefaultMachinePlatform to define default flavor.'
+                    description: 'DeprecatedFlavorName is the name of the flavor to
+                      use for instances in this cluster. Deprecated: use FlavorName
+                      in DefaultMachinePlatform to define default flavor.'
                     type: string
                   defaultMachinePlatform:
-                    description: DefaultMachinePlatform is the default configuration used when installing on OpenStack for machine pools which do not define their own platform configuration.
+                    description: DefaultMachinePlatform is the default configuration
+                      used when installing on OpenStack for machine pools which do
+                      not define their own platform configuration.
                     properties:
                       additionalNetworkIDs:
-                        description: AdditionalNetworkIDs contains IDs of additional networks for machines, where each ID is presented in UUID v4 format. Allowed address pairs won't be created for the additional networks.
+                        description: AdditionalNetworkIDs contains IDs of additional
+                          networks for machines, where each ID is presented in UUID
+                          v4 format. Allowed address pairs won't be created for the
+                          additional networks.
                         items:
                           type: string
                         type: array
                       additionalSecurityGroupIDs:
-                        description: AdditionalSecurityGroupIDs contains IDs of additional security groups for machines, where each ID is presented in UUID v4 format.
+                        description: AdditionalSecurityGroupIDs contains IDs of additional
+                          security groups for machines, where each ID is presented
+                          in UUID v4 format.
                         items:
                           type: string
                         type: array
                       rootVolume:
-                        description: RootVolume defines the root volume for instances in the machine pool. The instances use ephemeral disks if not set.
+                        description: RootVolume defines the root volume for instances
+                          in the machine pool. The instances use ephemeral disks if
+                          not set.
                         properties:
                           size:
-                            description: Size defines the size of the volume in gibibytes (GiB). Required
+                            description: Size defines the size of the volume in gibibytes
+                              (GiB). Required
                             type: integer
                           type:
                             description: Type defines the type of the volume. Required
@@ -1207,10 +1562,14 @@ spec:
                         - type
                         type: object
                       type:
-                        description: FlavorName defines the OpenStack Nova flavor. eg. m1.large
+                        description: FlavorName defines the OpenStack Nova flavor.
+                          eg. m1.large
                         type: string
                       zones:
-                        description: Zones is the list of availability zones where the instances should be deployed. If no zones are provided, all instances will be deployed on OpenStack Nova default availability zone
+                        description: Zones is the list of availability zones where
+                          the instances should be deployed. If no zones are provided,
+                          all instances will be deployed on OpenStack Nova default
+                          availability zone
                         items:
                           type: string
                         type: array
@@ -1218,33 +1577,52 @@ spec:
                     - type
                     type: object
                   externalDNS:
-                    description: ExternalDNS holds the IP addresses of dns servers that will be added to the dns resolution of all instances in the cluster.
+                    description: ExternalDNS holds the IP addresses of dns servers
+                      that will be added to the dns resolution of all instances in
+                      the cluster.
                     items:
                       type: string
                     type: array
                   externalNetwork:
-                    description: ExternalNetwork is name of the external network in your OpenStack cluster.
+                    description: ExternalNetwork is name of the external network in
+                      your OpenStack cluster.
                     type: string
                   ingressFloatingIP:
-                    description: IngressFloatingIP is the ID of an available floating IP in your OpenStack cluster that will be associated with the OpenShift ingress port
+                    description: IngressFloatingIP is the ID of an available floating
+                      IP in your OpenStack cluster that will be associated with the
+                      OpenShift ingress port
                     type: string
                   ingressVIP:
-                    description: 'IngressVIP is the static IP on the nodes subnet that the apps port for openshift will be assigned Default: will be set to the 7 on the first entry in the machineNewtwork CIDR'
+                    description: 'IngressVIP is the static IP on the nodes subnet
+                      that the apps port for openshift will be assigned Default: will
+                      be set to the 7 on the first entry in the machineNewtwork CIDR'
                     type: string
                   lbFloatingIP:
-                    description: 'LbFloatingIP is the IP address of an available floating IP in your OpenStack cluster to associate with the OpenShift load balancer. Deprecated: this value has been renamed to apiFloatingIP.'
+                    description: 'LbFloatingIP is the IP address of an available floating
+                      IP in your OpenStack cluster to associate with the OpenShift
+                      load balancer. Deprecated: this value has been renamed to apiFloatingIP.'
                     type: string
                   machinesSubnet:
-                    description: MachinesSubnet is the UUIDv4 of an openstack subnet. This subnet will be used by all nodes created by the installer. By setting this, the installer will no longer create a network and subnet. The subnet and network specified in MachinesSubnet will not be deleted or modified by the installer.
+                    description: MachinesSubnet is the UUIDv4 of an openstack subnet.
+                      This subnet will be used by all nodes created by the installer.
+                      By setting this, the installer will no longer create a network
+                      and subnet. The subnet and network specified in MachinesSubnet
+                      will not be deleted or modified by the installer.
                     type: string
                   octaviaSupport:
-                    description: 'OctaviaSupport holds a `0` or `1` value that indicates whether your OpenStack cluster supports Octavia Loadbalancing. Deprecated: this value is set by the installer automatically.'
+                    description: 'OctaviaSupport holds a `0` or `1` value that indicates
+                      whether your OpenStack cluster supports Octavia Loadbalancing.
+                      Deprecated: this value is set by the installer automatically.'
                     type: string
                   region:
-                    description: 'Region specifies the OpenStack region where the cluster will be created. Deprecated: this value is not used by the installer.'
+                    description: 'Region specifies the OpenStack region where the
+                      cluster will be created. Deprecated: this value is not used
+                      by the installer.'
                     type: string
                   trunkSupport:
-                    description: 'TrunkSupport holds a `0` or `1` value that indicates whether or not to use trunk ports in your OpenShift cluster. Deprecated: this value is set by the installer automatically.'
+                    description: 'TrunkSupport holds a `0` or `1` value that indicates
+                      whether or not to use trunk ports in your OpenShift cluster.
+                      Deprecated: this value is set by the installer automatically.'
                     type: string
                 required:
                 - cloud
@@ -1253,20 +1631,26 @@ spec:
                 description: Ovirt is the configuration used when installing on oVirt.
                 properties:
                   api_vip:
-                    description: APIVIP is an IP which will be served by bootstrap and then pivoted masters, using keepalived
+                    description: APIVIP is an IP which will be served by bootstrap
+                      and then pivoted masters, using keepalived
                     type: string
                   defaultMachinePlatform:
-                    description: DefaultMachinePlatform is the default configuration used when installing on ovirt for machine pools which do not define their own platform configuration. Default will set the image field to the latest RHCOS image.
+                    description: DefaultMachinePlatform is the default configuration
+                      used when installing on ovirt for machine pools which do not
+                      define their own platform configuration. Default will set the
+                      image field to the latest RHCOS image.
                     properties:
                       cpu:
                         description: CPU defines the VM CPU.
                         properties:
                           cores:
-                            description: Cores is the number of cores per socket. Total CPUs is (Sockets * Cores)
+                            description: Cores is the number of cores per socket.
+                              Total CPUs is (Sockets * Cores)
                             format: int32
                             type: integer
                           sockets:
-                            description: Sockets is the number of sockets for a VM. Total CPUs is (Sockets * Cores)
+                            description: Sockets is the number of sockets for a VM.
+                              Total CPUs is (Sockets * Cores)
                             format: int32
                             type: integer
                         required:
@@ -1274,7 +1658,10 @@ spec:
                         - sockets
                         type: object
                       instanceTypeID:
-                        description: InstanceTypeID defines the VM instance type and overrides the hardware parameters of the created VM, including cpu and memory. If InstanceTypeID is passed, all memory and cpu variables will be ignored.
+                        description: InstanceTypeID defines the VM instance type and
+                          overrides the hardware parameters of the created VM, including
+                          cpu and memory. If InstanceTypeID is passed, all memory
+                          and cpu variables will be ignored.
                         type: string
                       memoryMB:
                         description: MemoryMB is the size of a VM's memory in MiBs.
@@ -1300,19 +1687,29 @@ spec:
                         type: string
                     type: object
                   ingress_vip:
-                    description: IngressIP is an external IP which routes to the default ingress controller. The IP is a suitable target of a wildcard DNS record used to resolve default route host names.
+                    description: IngressIP is an external IP which routes to the default
+                      ingress controller. The IP is a suitable target of a wildcard
+                      DNS record used to resolve default route host names.
                     type: string
                   ovirt_cluster_id:
                     description: The target cluster under which all VMs will run
                     type: string
                   ovirt_network_name:
-                    description: NetworkName is the target network of all the network interfaces of the nodes. When no ovirt_network_name is provided it defaults to `ovirtmgmt` network, which is a default network for every ovirt cluster.
+                    description: NetworkName is the target network of all the network
+                      interfaces of the nodes. When no ovirt_network_name is provided
+                      it defaults to `ovirtmgmt` network, which is a default network
+                      for every ovirt cluster.
                     type: string
                   ovirt_storage_domain_id:
-                    description: The target storage domain under which all VM disk would be created.
+                    description: The target storage domain under which all VM disk
+                      would be created.
                     type: string
                   vnicProfileID:
-                    description: VNICProfileID defines the VNIC profile ID to use the the VM network interfaces. When no vnicProfileID is provided it will be set to the profile of the network. If there are multiple profiles for the network, the installer requires you to explicitly set the vnicProfileID.
+                    description: VNICProfileID defines the VNIC profile ID to use
+                      the the VM network interfaces. When no vnicProfileID is provided
+                      it will be set to the profile of the network. If there are multiple
+                      profiles for the network, the installer requires you to explicitly
+                      set the vnicProfileID.
                     type: string
                 required:
                 - api_vip
@@ -1321,32 +1718,41 @@ spec:
                 - ovirt_storage_domain_id
                 type: object
               vsphere:
-                description: VSphere is the configuration used when installing on vSphere.
+                description: VSphere is the configuration used when installing on
+                  vSphere.
                 properties:
                   apiVIP:
                     description: APIVIP is the virtual IP address for the api endpoint
                     type: string
                   cluster:
-                    description: Cluster is the name of the cluster virtual machines will be cloned into.
+                    description: Cluster is the name of the cluster virtual machines
+                      will be cloned into.
                     type: string
                   clusterOSImage:
-                    description: ClusterOSImage overrides the url provided in rhcos.json to download the RHCOS OVA
+                    description: ClusterOSImage overrides the url provided in rhcos.json
+                      to download the RHCOS OVA
                     type: string
                   datacenter:
-                    description: Datacenter is the name of the datacenter to use in the vCenter.
+                    description: Datacenter is the name of the datacenter to use in
+                      the vCenter.
                     type: string
                   defaultDatastore:
-                    description: DefaultDatastore is the default datastore to use for provisioning volumes.
+                    description: DefaultDatastore is the default datastore to use
+                      for provisioning volumes.
                     type: string
                   defaultMachinePlatform:
-                    description: DefaultMachinePlatform is the default configuration used when installing on VSphere for machine pools which do not define their own platform configuration.
+                    description: DefaultMachinePlatform is the default configuration
+                      used when installing on VSphere for machine pools which do not
+                      define their own platform configuration.
                     properties:
                       coresPerSocket:
-                        description: NumCoresPerSocket is the number of cores per socket in a vm. The number of vCPUs on the vm will be NumCPUs/NumCoresPerSocket.
+                        description: NumCoresPerSocket is the number of cores per
+                          socket in a vm. The number of vCPUs on the vm will be NumCPUs/NumCoresPerSocket.
                         format: int32
                         type: integer
                       cpus:
-                        description: NumCPUs is the total number of virtual processor cores to assign a vm.
+                        description: NumCPUs is the total number of virtual processor
+                          cores to assign a vm.
                         format: int32
                         type: integer
                       memoryMB:
@@ -1363,19 +1769,24 @@ spec:
                         type: object
                     type: object
                   folder:
-                    description: Folder is the absolute path of the folder that will be used and/or created for virtual machines. The absolute path is of the form /<datacenter>/vm/<folder>/<subfolder>.
+                    description: Folder is the absolute path of the folder that will
+                      be used and/or created for virtual machines. The absolute path
+                      is of the form /<datacenter>/vm/<folder>/<subfolder>.
                     type: string
                   ingressVIP:
                     description: IngressVIP is the virtual IP address for ingress
                     type: string
                   network:
-                    description: Network specifies the name of the network to be used by the cluster.
+                    description: Network specifies the name of the network to be used
+                      by the cluster.
                     type: string
                   password:
-                    description: Password is the password for the user to use to connect to the vCenter.
+                    description: Password is the password for the user to use to connect
+                      to the vCenter.
                     type: string
                   username:
-                    description: Username is the name of the user to use to connect to the vCenter.
+                    description: Username is the name of the user to use to connect
+                      to the vCenter.
                     type: string
                   vCenter:
                     description: VCenter is the domain name or IP address of the vCenter.
@@ -1389,7 +1800,8 @@ spec:
                 type: object
             type: object
           proxy:
-            description: Proxy defines the proxy settings for the cluster. If unset, the cluster will not be configured to use a proxy.
+            description: Proxy defines the proxy settings for the cluster. If unset,
+              the cluster will not be configured to use a proxy.
             properties:
               httpProxy:
                 description: HTTPProxy is the URL of the proxy for HTTP requests.
@@ -1398,12 +1810,15 @@ spec:
                 description: HTTPSProxy is the URL of the proxy for HTTPS requests.
                 type: string
               noProxy:
-                description: NoProxy is a comma-separated list of domains and CIDRs for which the proxy should not be used.
+                description: NoProxy is a comma-separated list of domains and CIDRs
+                  for which the proxy should not be used.
                 type: string
             type: object
           publish:
             default: External
-            description: Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed. When no strategy is specified, the strategy is "External".
+            description: Publish controls how the user facing endpoints of the cluster
+              like the Kubernetes API, OpenShift routes etc. are exposed. When no
+              strategy is specified, the strategy is "External".
             enum:
             - ""
             - External
@@ -1413,7 +1828,8 @@ spec:
             description: PullSecret is the secret to use when pulling images.
             type: string
           sshKey:
-            description: SSHKey is the public Secure Shell (SSH) key to provide access to instances.
+            description: SSHKey is the public Secure Shell (SSH) key to provide access
+              to instances.
             type: string
         required:
         - baseDomain
