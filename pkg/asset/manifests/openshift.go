@@ -14,7 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
-	kubeconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
+	"github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
@@ -189,7 +189,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			},
 		}
 	case kubevirttypes.Name:
-		kubeconfigContent, err := kubeconfig.LoadKubeConfigContent()
+		kubeconfigContent, err := kubevirt.LoadKubeConfigContent()
 		if err != nil {
 			return err
 		}
