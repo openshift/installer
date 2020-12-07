@@ -5,6 +5,8 @@ clean:
 generate:
 	mkdir -p mydir
 	cp ./install-config.yaml mydir/
+	OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="quay.io/openshift-release-dev/ocp-release:4.6.1-x86_64" ./bin/openshift-install create manifests --dir=mydir
+	cp ./sno_manifest.yaml mydir/openshift/
 	OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="quay.io/openshift-release-dev/ocp-release:4.6.1-x86_64" ./bin/openshift-install create ignition-configs --dir=mydir
 embed:
 	sudo podman run --pull=always --privileged --rm -v /dev:/dev -v /run/udev:/run/udev -v .:/data -w /data     quay.io/coreos/coreos-installer:release iso ignition embed /data/installer-image.iso -f --ignition-file /data/mydir/bootstrap.ign -o /data/installer-SNO-image.iso
