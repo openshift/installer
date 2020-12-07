@@ -77,6 +77,20 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 		return nil, err
 	}
 
+	var encryptionKey *gcpprovider.GCPEncryptionKeyReference
+
+	if mpool.OSDisk.EncryptionKey != nil {
+		encryptionKey = &gcpprovider.GCPEncryptionKeyReference{
+			KMSKey: &gcpprovider.GCPKMSKeyReference{
+				Name:      mpool.OSDisk.EncryptionKey.KMSKey.Name,
+				KeyRing:   mpool.OSDisk.EncryptionKey.KMSKey.KeyRing,
+				ProjectID: mpool.OSDisk.EncryptionKey.KMSKey.ProjectID,
+				Location:  mpool.OSDisk.EncryptionKey.KMSKey.Location,
+			},
+			KMSKeyServiceAccount: mpool.OSDisk.EncryptionKey.KMSKeyServiceAccount,
+		}
+	}
+
 	return &gcpprovider.GCPMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "gcpprovider.openshift.io/v1beta1",
@@ -85,11 +99,12 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret: &corev1.LocalObjectReference{Name: "gcp-cloud-credentials"},
 		Disks: []*gcpprovider.GCPDisk{{
-			AutoDelete: true,
-			Boot:       true,
-			SizeGb:     mpool.OSDisk.DiskSizeGB,
-			Type:       mpool.OSDisk.DiskType,
-			Image:      osImage,
+			AutoDelete:    true,
+			Boot:          true,
+			SizeGb:        mpool.OSDisk.DiskSizeGB,
+			Type:          mpool.OSDisk.DiskType,
+			Image:         osImage,
+			EncryptionKey: encryptionKey,
 		}},
 		NetworkInterfaces: []*gcpprovider.GCPNetworkInterface{{
 			Network:    network,

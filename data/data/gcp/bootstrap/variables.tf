@@ -59,6 +59,12 @@ variable "root_volume_type" {
   description = "The volume type for the bootstrap node's root volume."
 }
 
+variable "root_volume_kms_key_link" {
+  type        = string
+  description = "The GCP self link of KMS key to encrypt the volume."
+  default     = null
+}
+
 variable "zone" {
   type        = string
   description = "The zone for the bootstrap node."

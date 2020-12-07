@@ -115,3 +115,8 @@ variable "gcp_image_licenses" {
   default = []
 }
 
+variable "gcp_root_volume_kms_key_link" {
+  type = string
+  description = "The GCP self link of KMS key to encrypt the volume."
+  default = null
+}

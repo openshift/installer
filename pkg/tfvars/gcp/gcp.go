@@ -2,10 +2,15 @@ package gcp
 
 import (
 	"encoding/json"
+	"fmt"
 
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
+)
+
+const (
+	kmsKeyNameFmt = "projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s"
 )
 
 // Auth is the collection of credentials that will be used by terrform.
@@ -26,6 +31,7 @@ type config struct {
 	ImageLicenses           []string `json:"gcp_image_licenses,omitempty"`
 	VolumeType              string   `json:"gcp_master_root_volume_type"`
 	VolumeSize              int64    `json:"gcp_master_root_volume_size"`
+	VolumeKMSKeyLink        string   `json:"gcp_root_volume_kms_key_link"`
 	PublicZoneName          string   `json:"gcp_public_dns_zone_name,omitempty"`
 	PublishStrategy         string   `json:"gcp_publish_strategy,omitempty"`
 	PreexistingNetwork      bool     `json:"gcp_preexisting_network,omitempty"`
@@ -78,5 +84,17 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		cfg.PreexistingImage = false
 	}
 
+	if masterConfig.Disks[0].EncryptionKey != nil {
+		cfg.VolumeKMSKeyLink = generateDiskEncryptionKeyLink(masterConfig.Disks[0].EncryptionKey, masterConfig.ProjectID)
+	}
+
 	return json.MarshalIndent(cfg, "", "  ")
+}
+
+func generateDiskEncryptionKeyLink(keyRef *gcpprovider.GCPEncryptionKeyReference, projectID string) string {
+	if keyRef.KMSKey.ProjectID != "" {
+		projectID = keyRef.KMSKey.ProjectID
+	}
+
+	return fmt.Sprintf(kmsKeyNameFmt, projectID, keyRef.KMSKey.Location, keyRef.KMSKey.KeyRing, keyRef.KMSKey.Name)
 }

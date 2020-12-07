@@ -41,6 +41,7 @@ resource "google_compute_instance" "master" {
       size  = var.root_volume_size
       image = var.image
     }
+    kms_key_self_link = var.root_volume_kms_key_link
   }
 
   network_interface {
