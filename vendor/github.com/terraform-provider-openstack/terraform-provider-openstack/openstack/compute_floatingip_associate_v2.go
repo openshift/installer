@@ -12,17 +12,17 @@ import (
 	nfloatingips "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 )
 
-func parseComputeFloatingIPAssociateId(id string) (string, string, string, error) {
+func parseComputeFloatingIPAssociateID(id string) (string, string, string, error) {
 	idParts := strings.Split(id, "/")
 	if len(idParts) < 3 {
 		return "", "", "", fmt.Errorf("Unable to determine floating ip association ID")
 	}
 
 	floatingIP := idParts[0]
-	instanceId := idParts[1]
+	instanceID := idParts[1]
 	fixedIP := idParts[2]
 
-	return floatingIP, instanceId, fixedIP, nil
+	return floatingIP, instanceID, fixedIP, nil
 }
 
 func computeFloatingIPAssociateV2NetworkExists(networkClient *gophercloud.ServiceClient, floatingIP string) (bool, error) {
@@ -72,9 +72,9 @@ func computeFloatingIPAssociateV2ComputeExists(computeClient *gophercloud.Servic
 }
 
 func computeFloatingIPAssociateV2CheckAssociation(
-	computeClient *gophercloud.ServiceClient, instanceId, floatingIP string) resource.StateRefreshFunc {
+	computeClient *gophercloud.ServiceClient, instanceID, floatingIP string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		instance, err := servers.Get(computeClient, instanceId).Extract()
+		instance, err := servers.Get(computeClient, instanceID).Extract()
 		if err != nil {
 			return instance, "", err
 		}

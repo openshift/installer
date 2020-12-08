@@ -143,6 +143,10 @@ func resourceIKEPolicyV2Create(d *schema.ResourceData, meta interface{}) error {
 		MinTimeout: 2 * time.Second,
 	}
 	_, err = stateConf.WaitForState()
+	if err != nil {
+		return fmt.Errorf(
+			"Error waiting for openstack_vpnaas_ike_policy_v2 %s to become active: %s", policy.ID, err)
+	}
 
 	log.Printf("[DEBUG] IKE policy created: %#v", policy)
 
@@ -408,7 +412,6 @@ func resourceIKEPolicyV2LifetimeCreateOpts(d *schema.Set) ikepolicies.LifetimeCr
 		lifetimeCreateOpts.Value = value
 	}
 	return lifetimeCreateOpts
-
 }
 
 func resourceIKEPolicyV2LifetimeUpdateOpts(d *schema.Set) ikepolicies.LifetimeUpdateOpts {
@@ -423,5 +426,4 @@ func resourceIKEPolicyV2LifetimeUpdateOpts(d *schema.Set) ikepolicies.LifetimeUp
 		lifetimeUpdateOpts.Value = value
 	}
 	return lifetimeUpdateOpts
-
 }

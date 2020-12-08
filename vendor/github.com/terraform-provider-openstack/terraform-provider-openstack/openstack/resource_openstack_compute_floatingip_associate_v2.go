@@ -70,7 +70,7 @@ func resourceComputeFloatingIPAssociateV2Create(d *schema.ResourceData, meta int
 
 	floatingIP := d.Get("floating_ip").(string)
 	fixedIP := d.Get("fixed_ip").(string)
-	instanceId := d.Get("instance_id").(string)
+	instanceID := d.Get("instance_id").(string)
 
 	associateOpts := floatingips.AssociateOpts{
 		FloatingIP: floatingIP,
@@ -78,7 +78,7 @@ func resourceComputeFloatingIPAssociateV2Create(d *schema.ResourceData, meta int
 	}
 	log.Printf("[DEBUG] openstack_compute_floatingip_associate_v2 create options: %#v", associateOpts)
 
-	err = floatingips.AssociateInstance(computeClient, instanceId, associateOpts).ExtractErr()
+	err = floatingips.AssociateInstance(computeClient, instanceID, associateOpts).ExtractErr()
 	if err != nil {
 		return fmt.Errorf("Error creating openstack_compute_floatingip_associate_v2: %s", err)
 	}
@@ -96,7 +96,7 @@ func resourceComputeFloatingIPAssociateV2Create(d *schema.ResourceData, meta int
 		stateConf := &resource.StateChangeConf{
 			Pending:    []string{"NOT_ASSOCIATED"},
 			Target:     []string{"ASSOCIATED"},
-			Refresh:    computeFloatingIPAssociateV2CheckAssociation(computeClient, instanceId, floatingIP),
+			Refresh:    computeFloatingIPAssociateV2CheckAssociation(computeClient, instanceID, floatingIP),
 			Timeout:    d.Timeout(schema.TimeoutCreate),
 			Delay:      0,
 			MinTimeout: 3 * time.Second,
@@ -111,7 +111,7 @@ func resourceComputeFloatingIPAssociateV2Create(d *schema.ResourceData, meta int
 	// There's an API call to get this information, but it has been
 	// deprecated. The Neutron API could be used, but I'm trying not
 	// to mix service APIs. Therefore, a faux ID will be used.
-	id := fmt.Sprintf("%s/%s/%s", floatingIP, instanceId, fixedIP)
+	id := fmt.Sprintf("%s/%s/%s", floatingIP, instanceID, fixedIP)
 	d.SetId(id)
 
 	return resourceComputeFloatingIPAssociateV2Read(d, meta)
@@ -125,7 +125,7 @@ func resourceComputeFloatingIPAssociateV2Read(d *schema.ResourceData, meta inter
 	}
 
 	// Obtain relevant info from parsing the ID
-	floatingIP, instanceId, fixedIP, err := parseComputeFloatingIPAssociateId(d.Id())
+	floatingIP, instanceID, fixedIP, err := parseComputeFloatingIPAssociateID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -156,7 +156,7 @@ func resourceComputeFloatingIPAssociateV2Read(d *schema.ResourceData, meta inter
 	}
 
 	// Next, see if the instance still exists
-	instance, err := servers.Get(computeClient, instanceId).Extract()
+	instance, err := servers.Get(computeClient, instanceID).Extract()
 	if err != nil {
 		if CheckDeleted(d, err, "instance") == nil {
 			return nil
@@ -180,7 +180,7 @@ func resourceComputeFloatingIPAssociateV2Read(d *schema.ResourceData, meta inter
 
 	// Set the attributes pulled from the composed resource ID
 	d.Set("floating_ip", floatingIP)
-	d.Set("instance_id", instanceId)
+	d.Set("instance_id", instanceID)
 	d.Set("fixed_ip", fixedIP)
 	d.Set("region", GetRegion(d, config))
 
@@ -195,18 +195,18 @@ func resourceComputeFloatingIPAssociateV2Delete(d *schema.ResourceData, meta int
 	}
 
 	floatingIP := d.Get("floating_ip").(string)
-	instanceId := d.Get("instance_id").(string)
+	instanceID := d.Get("instance_id").(string)
 
 	disassociateOpts := floatingips.DisassociateOpts{
 		FloatingIP: floatingIP,
 	}
 	log.Printf("[DEBUG] openstack_compute_floatingip_associate_v2 %s delete options: %#v", d.Id(), disassociateOpts)
 
-	err = floatingips.DisassociateInstance(computeClient, instanceId, disassociateOpts).ExtractErr()
+	err = floatingips.DisassociateInstance(computeClient, instanceID, disassociateOpts).ExtractErr()
 	if err != nil {
 		if _, ok := err.(gophercloud.ErrDefault409); ok {
 			// 409 is returned when floating ip address is not associated with an instance.
-			log.Printf("[DEBUG] openstack_compute_floatingip_associate_v2 %s is not associated with instance %s", d.Id(), instanceId)
+			log.Printf("[DEBUG] openstack_compute_floatingip_associate_v2 %s is not associated with instance %s", d.Id(), instanceID)
 		} else {
 			return CheckDeleted(d, err, "Error deleting openstack_compute_floatingip_associate_v2")
 		}

@@ -61,11 +61,11 @@ func dataSourceIdentityRoleV3Read(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if len(allRoles) < 1 {
-		return fmt.Errorf("Your openstack_identity_role_v3 query returned no results.")
+		return fmt.Errorf("Your openstack_identity_role_v3 query returned no results")
 	}
 
 	if len(allRoles) > 1 {
-		return fmt.Errorf("Your openstack_identity_role_v3 query returned more than one result.")
+		return fmt.Errorf("Your openstack_identity_role_v3 query returned more than one result")
 	}
 
 	role = allRoles[0]

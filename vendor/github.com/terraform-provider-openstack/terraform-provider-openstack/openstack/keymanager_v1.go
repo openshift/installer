@@ -7,36 +7,40 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-// so far only "read" is supported
-var aclOperations = []string{"read"}
+// So far only "read" is supported.
+func getSupportedACLOperations() [1]string {
+	return [1]string{"read"}
+}
 
-var aclSchema = &schema.Schema{
-	Type:     schema.TypeList, // the list, returned by Barbican, is always ordered
-	Optional: true,
-	Computed: true,
-	MaxItems: 1,
-	Elem: &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"project_access": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true, // defaults to true in OpenStack Barbican code
-			},
-			"users": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-			},
-			"created_at": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"updated_at": {
-				Type:     schema.TypeString,
-				Computed: true,
+func getACLSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList, // the list, returned by Barbican, is always ordered
+		Optional: true,
+		Computed: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"project_access": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Default:  true, // defaults to true in OpenStack Barbican code
+				},
+				"users": {
+					Type:     schema.TypeSet,
+					Optional: true,
+					Elem:     &schema.Schema{Type: schema.TypeString},
+				},
+				"created_at": {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				"updated_at": {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
 			},
 		},
-	},
+	}
 }
 
 func expandKeyManagerV1ACL(v interface{}, aclType string) acls.SetOpt {
@@ -91,7 +95,7 @@ func flattenKeyManagerV1ACLs(acl *acls.ACL) []map[string][]map[string]interface{
 
 	if acl != nil {
 		allAcls := *acl
-		for _, aclOp := range aclOperations {
+		for _, aclOp := range getSupportedACLOperations() {
 			if v, ok := allAcls[aclOp]; ok {
 				if m == nil {
 					m = make([]map[string][]map[string]interface{}, 1)

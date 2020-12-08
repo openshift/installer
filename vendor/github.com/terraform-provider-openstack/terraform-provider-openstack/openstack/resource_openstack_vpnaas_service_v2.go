@@ -86,7 +86,6 @@ func resourceServiceV2() *schema.Resource {
 }
 
 func resourceServiceV2Create(d *schema.ResourceData, meta interface{}) error {
-
 	config := meta.(*Config)
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
@@ -167,7 +166,6 @@ func resourceServiceV2Read(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceServiceV2Update(d *schema.ResourceData, meta interface{}) error {
-
 	config := meta.(*Config)
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
@@ -256,7 +254,6 @@ func resourceServiceV2Delete(d *schema.ResourceData, meta interface{}) error {
 }
 
 func waitForServiceDeletion(networkingClient *gophercloud.ServiceClient, id string) resource.StateRefreshFunc {
-
 	return func() (interface{}, string, error) {
 		serv, err := services.Get(networkingClient, id).Extract()
 		log.Printf("[DEBUG] Got service %s => %#v", id, serv)

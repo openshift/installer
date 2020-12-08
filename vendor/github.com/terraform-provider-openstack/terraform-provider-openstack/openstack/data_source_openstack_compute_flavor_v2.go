@@ -206,9 +206,7 @@ func dataSourceComputeFlavorV2Read(d *schema.ResourceData, meta interface{}) err
 }
 
 // dataSourceComputeFlavorV2Attributes populates the fields of a Flavor resource.
-func dataSourceComputeFlavorV2Attributes(
-	d *schema.ResourceData, computeClient *gophercloud.ServiceClient, flavor *flavors.Flavor) error {
-
+func dataSourceComputeFlavorV2Attributes(d *schema.ResourceData, computeClient *gophercloud.ServiceClient, flavor *flavors.Flavor) error {
 	log.Printf("[DEBUG] Retrieved openstack_compute_flavor_v2 %s: %#v", flavor.ID, flavor)
 
 	d.SetId(flavor.ID)

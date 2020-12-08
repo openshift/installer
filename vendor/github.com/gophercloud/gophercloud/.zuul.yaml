@@ -24,6 +24,24 @@
     nodeset: ubuntu-bionic
 
 - job:
+    name: gophercloud-acceptance-test-ussuri
+    parent: gophercloud-acceptance-test
+    description: |
+      Run gophercloud acceptance test on ussuri branch
+    vars:
+      global_env:
+        OS_BRANCH: stable/ussuri
+
+- job:
+    name: gophercloud-acceptance-test-train
+    parent: gophercloud-acceptance-test
+    description: |
+      Run gophercloud acceptance test on train branch
+    vars:
+      global_env:
+        OS_BRANCH: stable/train
+
+- job:
     name: gophercloud-acceptance-test-stein
     parent: gophercloud-acceptance-test
     description: |
@@ -37,7 +55,6 @@
     parent: gophercloud-acceptance-test
     description: |
       Run gophercloud acceptance test on rocky branch
-    nodeset: ubuntu-xenial
     vars:
       global_env:
         OS_BRANCH: stable/rocky
@@ -52,6 +69,8 @@
       global_env:
         OS_BRANCH: stable/queens
 
+# NOTE: A Pike-based devstack environment is currently
+# not building correctly. This might be a temporary issue.
 - job:
     name: gophercloud-acceptance-test-pike
     parent: gophercloud-acceptance-test
@@ -72,6 +91,8 @@
       global_env:
         OS_BRANCH: stable/ocata
 
+# NOTE: A Newton-based devstack environment is currently
+# not building correctly. This might be a temporary issue.
 - job:
     name: gophercloud-acceptance-test-newton
     parent: gophercloud-acceptance-test
@@ -107,3 +128,9 @@
     recheck-stein:
       jobs:
         - gophercloud-acceptance-test-stein
+    recheck-train:
+      jobs:
+        - gophercloud-acceptance-test-train
+    recheck-ussuri:
+      jobs:
+        - gophercloud-acceptance-test-ussuri

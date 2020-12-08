@@ -129,7 +129,7 @@ func resourceMemberV2Create(d *schema.ResourceData, meta interface{}) error {
 
 	// Wait for parent pool to become active before continuing
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -149,7 +149,7 @@ func resourceMemberV2Create(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for member to become active before continuing
-	err = waitForLBV2Member(lbClient, parentPool, member, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Member(lbClient, parentPool, member, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -223,13 +223,13 @@ func resourceMemberV2Update(d *schema.ResourceData, meta interface{}) error {
 
 	// Wait for parent pool to become active before continuing.
 	timeout := d.Timeout(schema.TimeoutUpdate)
-	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
 
 	// Wait for the member to become active before continuing.
-	err = waitForLBV2Member(lbClient, parentPool, member, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Member(lbClient, parentPool, member, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -248,7 +248,7 @@ func resourceMemberV2Update(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for the member to become active before continuing.
-	err = waitForLBV2Member(lbClient, parentPool, member, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Member(lbClient, parentPool, member, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -278,7 +278,7 @@ func resourceMemberV2Delete(d *schema.ResourceData, meta interface{}) error {
 
 	// Wait for parent pool to become active before continuing.
 	timeout := d.Timeout(schema.TimeoutDelete)
-	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return CheckDeleted(d, err, "Error waiting for the members pool status")
 	}
@@ -297,7 +297,7 @@ func resourceMemberV2Delete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for the member to become DELETED.
-	err = waitForLBV2Member(lbClient, parentPool, member, "DELETED", lbPendingDeleteStatuses, timeout)
+	err = waitForLBV2Member(lbClient, parentPool, member, "DELETED", getLbPendingDeleteStatuses(), timeout)
 	if err != nil {
 		return err
 	}

@@ -67,11 +67,11 @@ func dataSourceIdentityGroupV3Read(d *schema.ResourceData, meta interface{}) err
 
 	if len(allGroups) < 1 {
 		return fmt.Errorf("Your openstack_identity_group_v3 query returned no results. " +
-			"Please change your search criteria and try again.")
+			"Please change your search criteria and try again")
 	}
 
 	if len(allGroups) > 1 {
-		return fmt.Errorf("Your openstack_identity_group_v3 query returned more than one result.")
+		return fmt.Errorf("Your openstack_identity_group_v3 query returned more than one result")
 	}
 
 	group = allGroups[0]

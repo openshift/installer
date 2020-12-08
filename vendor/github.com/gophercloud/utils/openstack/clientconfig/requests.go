@@ -10,6 +10,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/utils/env"
 	"github.com/gophercloud/utils/gnocchi"
+	"github.com/gophercloud/utils/internal"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -749,9 +750,62 @@ func NewServiceClient(service string, opts *ClientOpts) (*gophercloud.ServiceCli
 		return nil, err
 	}
 
+	// Check if a custom CA cert was provided.
+	// First, check if the CACERT environment variable is set.
+	var caCertPath string
+	if v := env.Getenv(envPrefix + "CACERT"); v != "" {
+		caCertPath = v
+	}
+	// Next, check if the cloud entry sets a CA cert.
+	if v := cloud.CACertFile; v != "" {
+		caCertPath = v
+	}
+
+	// Check if a custom client cert was provided.
+	// First, check if the CERT environment variable is set.
+	var clientCertPath string
+	if v := env.Getenv(envPrefix + "CERT"); v != "" {
+		clientCertPath = v
+	}
+	// Next, check if the cloud entry sets a client cert.
+	if v := cloud.ClientCertFile; v != "" {
+		clientCertPath = v
+	}
+
+	// Check if a custom client key was provided.
+	// First, check if the KEY environment variable is set.
+	var clientKeyPath string
+	if v := env.Getenv(envPrefix + "KEY"); v != "" {
+		clientKeyPath = v
+	}
+	// Next, check if the cloud entry sets a client key.
+	if v := cloud.ClientKeyFile; v != "" {
+		clientKeyPath = v
+	}
+
+	// Define whether or not SSL API requests should be verified.
+	var insecurePtr *bool
+	if cloud.Verify != nil {
+		// Here we take the boolean pointer negation.
+		insecure := !*cloud.Verify
+		insecurePtr = &insecure
+	}
+
+	tlsConfig, err := internal.PrepareTLSConfig(caCertPath, clientCertPath, clientKeyPath, insecurePtr)
+	if err != nil {
+		return nil, err
+	}
+
 	// If an HTTPClient was specified, use it.
 	if opts.HTTPClient != nil {
 		pClient.HTTPClient = *opts.HTTPClient
+	} else {
+		// Otherwise create a new HTTP client with the generated TLS config.
+		pClient.HTTPClient = http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: tlsConfig,
+			},
+		}
 	}
 
 	// Determine the region to use.

@@ -355,9 +355,9 @@ func lbVipV1AssignFloatingIP(floatingIP, portID string, networkingClient *gopher
 	return nil
 }
 
-func waitForLBVIPActive(networkingClient *gophercloud.ServiceClient, vipId string) resource.StateRefreshFunc {
+func waitForLBVIPActive(networkingClient *gophercloud.ServiceClient, vipID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		p, err := vips.Get(networkingClient, vipId).Extract()
+		p, err := vips.Get(networkingClient, vipID).Extract()
 		if err != nil {
 			return nil, "", err
 		}
@@ -371,31 +371,30 @@ func waitForLBVIPActive(networkingClient *gophercloud.ServiceClient, vipId strin
 	}
 }
 
-func waitForLBVIPDelete(networkingClient *gophercloud.ServiceClient, vipId string) resource.StateRefreshFunc {
+func waitForLBVIPDelete(networkingClient *gophercloud.ServiceClient, vipID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		log.Printf("[DEBUG] Attempting to delete OpenStack LB VIP %s", vipId)
+		log.Printf("[DEBUG] Attempting to delete OpenStack LB VIP %s", vipID)
 
-		p, err := vips.Get(networkingClient, vipId).Extract()
+		p, err := vips.Get(networkingClient, vipID).Extract()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault404); ok {
-				log.Printf("[DEBUG] Successfully deleted OpenStack LB VIP %s", vipId)
+				log.Printf("[DEBUG] Successfully deleted OpenStack LB VIP %s", vipID)
 				return p, "DELETED", nil
 			}
 			return p, "ACTIVE", err
 		}
 
 		log.Printf("[DEBUG] OpenStack LB VIP: %+v", p)
-		err = vips.Delete(networkingClient, vipId).ExtractErr()
+		err = vips.Delete(networkingClient, vipID).ExtractErr()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault404); ok {
-				log.Printf("[DEBUG] Successfully deleted OpenStack LB VIP %s", vipId)
+				log.Printf("[DEBUG] Successfully deleted OpenStack LB VIP %s", vipID)
 				return p, "DELETED", nil
 			}
 			return p, "ACTIVE", err
 		}
 
-		log.Printf("[DEBUG] OpenStack LB VIP %s still active.", vipId)
+		log.Printf("[DEBUG] OpenStack LB VIP %s still active.", vipID)
 		return p, "ACTIVE", nil
 	}
-
 }

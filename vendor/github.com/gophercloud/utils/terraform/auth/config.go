@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,11 +10,10 @@ import (
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/swauth"
 	osClient "github.com/gophercloud/utils/client"
+	"github.com/gophercloud/utils/internal"
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/gophercloud/utils/terraform/mutexkv"
 )
-
-// This is a global MutexKV for use within this package.
-var osMutexKV = newMutexKV()
 
 type Config struct {
 	CACertFile                  string
@@ -60,6 +57,8 @@ type Config struct {
 
 	TerraformVersion string
 	SDKVersion       string
+
+	mutexkv.MutexKV
 }
 
 // LoadAndValidate performs the authentication and initial configuration
@@ -161,41 +160,9 @@ func (c *Config) LoadAndValidate() error {
 	// Set UserAgent
 	client.UserAgent.Prepend(terraformUserAgent(c.TerraformVersion, c.SDKVersion))
 
-	config := &tls.Config{}
-	if c.CACertFile != "" {
-		caCert, _, err := pathOrContents(c.CACertFile)
-		if err != nil {
-			return fmt.Errorf("Error reading CA Cert: %s", err)
-		}
-
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM([]byte(caCert))
-		config.RootCAs = caCertPool
-	}
-
-	if c.Insecure == nil {
-		config.InsecureSkipVerify = false
-	} else {
-		config.InsecureSkipVerify = *c.Insecure
-	}
-
-	if c.ClientCertFile != "" && c.ClientKeyFile != "" {
-		clientCert, _, err := pathOrContents(c.ClientCertFile)
-		if err != nil {
-			return fmt.Errorf("Error reading Client Cert: %s", err)
-		}
-		clientKey, _, err := pathOrContents(c.ClientKeyFile)
-		if err != nil {
-			return fmt.Errorf("Error reading Client Key: %s", err)
-		}
-
-		cert, err := tls.X509KeyPair([]byte(clientCert), []byte(clientKey))
-		if err != nil {
-			return err
-		}
-
-		config.Certificates = []tls.Certificate{cert}
-		config.BuildNameToCertificate()
+	config, err := internal.PrepareTLSConfig(c.CACertFile, c.ClientCertFile, c.ClientKeyFile, c.Insecure)
+	if err != nil {
+		return err
 	}
 
 	var logger osClient.Logger
@@ -237,13 +204,13 @@ func (c *Config) LoadAndValidate() error {
 	return nil
 }
 
-func (c *Config) authenticate() error {
+func (c *Config) Authenticate() error {
 	if !c.DelayedAuth {
 		return nil
 	}
 
-	osMutexKV.Lock("auth")
-	defer osMutexKV.Unlock("auth")
+	c.MutexKV.Lock("auth")
+	defer c.MutexKV.Unlock("auth")
 
 	if c.authFailed != nil {
 		return c.authFailed
@@ -260,9 +227,9 @@ func (c *Config) authenticate() error {
 	return nil
 }
 
-// determineEndpoint is a helper method to determine if the user wants to
+// DetermineEndpoint is a helper method to determine if the user wants to
 // override an endpoint returned from the catalog.
-func (c *Config) determineEndpoint(client *gophercloud.ServiceClient, service string) *gophercloud.ServiceClient {
+func (c *Config) DetermineEndpoint(client *gophercloud.ServiceClient, service string) *gophercloud.ServiceClient {
 	finalEndpoint := client.ResourceBaseURL()
 
 	if v, ok := c.EndpointOverrides[service]; ok {
@@ -278,9 +245,9 @@ func (c *Config) determineEndpoint(client *gophercloud.ServiceClient, service st
 	return client
 }
 
-// determineRegion is a helper method to determine the region based on
+// DetermineRegion is a helper method to determine the region based on
 // the user's settings.
-func (c *Config) determineRegion(region string) string {
+func (c *Config) DetermineRegion(region string) string {
 	// If a resource-level region was not specified, and a provider-level region was set,
 	// use the provider-level region.
 	if region == "" && c.Region != "" {
@@ -294,13 +261,15 @@ func (c *Config) determineRegion(region string) string {
 // The following methods assist with the creation of individual Service Clients
 // which interact with the various OpenStack services.
 
-func (c *Config) BlockStorageV1Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
+type commonCommonServiceClientInitFunc func(*gophercloud.ProviderClient, gophercloud.EndpointOpts) (*gophercloud.ServiceClient, error)
+
+func (c *Config) CommonServiceClientInit(newClient commonCommonServiceClientInitFunc, region, service string) (*gophercloud.ServiceClient, error) {
+	if err := c.Authenticate(); err != nil {
 		return nil, err
 	}
 
-	client, err := openstack.NewBlockStorageV1(c.OsClient, gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
+	client, err := newClient(c.OsClient, gophercloud.EndpointOpts{
+		Region:       c.DetermineRegion(region),
 		Availability: clientconfig.GetEndpointType(c.EndpointType),
 	})
 
@@ -309,138 +278,46 @@ func (c *Config) BlockStorageV1Client(region string) (*gophercloud.ServiceClient
 	}
 
 	// Check if an endpoint override was specified for the volume service.
-	client = c.determineEndpoint(client, "volume")
+	client = c.DetermineEndpoint(client, service)
 
 	return client, nil
+}
+
+func (c *Config) BlockStorageV1Client(region string) (*gophercloud.ServiceClient, error) {
+	return c.CommonServiceClientInit(openstack.NewBlockStorageV1, region, "volume")
 }
 
 func (c *Config) BlockStorageV2Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
-		return nil, err
-	}
-
-	client, err := openstack.NewBlockStorageV2(c.OsClient, gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
-		Availability: clientconfig.GetEndpointType(c.EndpointType),
-	})
-
-	if err != nil {
-		return client, err
-	}
-
-	// Check if an endpoint override was specified for the volumev2 service.
-	client = c.determineEndpoint(client, "volumev2")
-
-	return client, nil
+	return c.CommonServiceClientInit(openstack.NewBlockStorageV2, region, "volumev2")
 }
 
 func (c *Config) BlockStorageV3Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
-		return nil, err
-	}
-
-	client, err := openstack.NewBlockStorageV3(c.OsClient, gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
-		Availability: clientconfig.GetEndpointType(c.EndpointType),
-	})
-
-	if err != nil {
-		return client, err
-	}
-
-	// Check if an endpoint override was specified for the volumev3 service.
-	client = c.determineEndpoint(client, "volumev3")
-
-	return client, nil
+	return c.CommonServiceClientInit(openstack.NewBlockStorageV3, region, "volumev3")
 }
 
 func (c *Config) ComputeV2Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
-		return nil, err
-	}
-
-	client, err := openstack.NewComputeV2(c.OsClient, gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
-		Availability: clientconfig.GetEndpointType(c.EndpointType),
-	})
-
-	if err != nil {
-		return client, err
-	}
-
-	// Check if an endpoint override was specified for the compute service.
-	client = c.determineEndpoint(client, "compute")
-
-	return client, nil
+	return c.CommonServiceClientInit(openstack.NewComputeV2, region, "compute")
 }
 
 func (c *Config) DNSV2Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
-		return nil, err
-	}
-
-	client, err := openstack.NewDNSV2(c.OsClient, gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
-		Availability: clientconfig.GetEndpointType(c.EndpointType),
-	})
-
-	if err != nil {
-		return client, err
-	}
-
-	// Check if an endpoint override was specified for the dns service.
-	client = c.determineEndpoint(client, "dns")
-
-	return client, nil
+	return c.CommonServiceClientInit(openstack.NewDNSV2, region, "dns")
 }
 
 func (c *Config) IdentityV3Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
-		return nil, err
-	}
-
-	client, err := openstack.NewIdentityV3(c.OsClient, gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
-		Availability: clientconfig.GetEndpointType(c.EndpointType),
-	})
-
-	if err != nil {
-		return client, err
-	}
-
-	// Check if an endpoint override was specified for the identity service.
-	client = c.determineEndpoint(client, "identity")
-
-	return client, nil
+	return c.CommonServiceClientInit(openstack.NewIdentityV3, region, "identity")
 }
 
 func (c *Config) ImageV2Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
-		return nil, err
-	}
-
-	client, err := openstack.NewImageServiceV2(c.OsClient, gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
-		Availability: clientconfig.GetEndpointType(c.EndpointType),
-	})
-
-	if err != nil {
-		return client, err
-	}
-
-	// Check if an endpoint override was specified for the image service.
-	client = c.determineEndpoint(client, "image")
-
-	return client, nil
+	return c.CommonServiceClientInit(openstack.NewImageServiceV2, region, "image")
 }
 
 func (c *Config) MessagingV2Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
+	if err := c.Authenticate(); err != nil {
 		return nil, err
 	}
 
 	client, err := openstack.NewMessagingV2(c.OsClient, "", gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
+		Region:       c.DetermineRegion(region),
 		Availability: clientconfig.GetEndpointType(c.EndpointType),
 	})
 
@@ -449,29 +326,13 @@ func (c *Config) MessagingV2Client(region string) (*gophercloud.ServiceClient, e
 	}
 
 	// Check if an endpoint override was specified for the messaging service.
-	client = c.determineEndpoint(client, "message")
+	client = c.DetermineEndpoint(client, "message")
 
 	return client, nil
 }
 
 func (c *Config) NetworkingV2Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
-		return nil, err
-	}
-
-	client, err := openstack.NewNetworkV2(c.OsClient, gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
-		Availability: clientconfig.GetEndpointType(c.EndpointType),
-	})
-
-	if err != nil {
-		return client, err
-	}
-
-	// Check if an endpoint override was specified for the network service.
-	client = c.determineEndpoint(client, "network")
-
-	return client, nil
+	return c.CommonServiceClientInit(openstack.NewNetworkV2, region, "network")
 }
 
 func (c *Config) ObjectStorageV1Client(region string) (*gophercloud.ServiceClient, error) {
@@ -487,8 +348,8 @@ func (c *Config) ObjectStorageV1Client(region string) (*gophercloud.ServiceClien
 				Key:  c.Password,
 			})
 		} else {
-			osMutexKV.Lock("SwAuth")
-			defer osMutexKV.Unlock("SwAuth")
+			c.MutexKV.Lock("SwAuth")
+			defer c.MutexKV.Unlock("SwAuth")
 
 			if c.swAuthFailed != nil {
 				return nil, c.swAuthFailed
@@ -509,12 +370,12 @@ func (c *Config) ObjectStorageV1Client(region string) (*gophercloud.ServiceClien
 			client = c.swClient
 		}
 	} else {
-		if err := c.authenticate(); err != nil {
+		if err := c.Authenticate(); err != nil {
 			return nil, err
 		}
 
 		client, err = openstack.NewObjectStorageV1(c.OsClient, gophercloud.EndpointOpts{
-			Region:       c.determineRegion(region),
+			Region:       c.DetermineRegion(region),
 			Availability: clientconfig.GetEndpointType(c.EndpointType),
 		})
 
@@ -524,127 +385,31 @@ func (c *Config) ObjectStorageV1Client(region string) (*gophercloud.ServiceClien
 	}
 
 	// Check if an endpoint override was specified for the object-store service.
-	client = c.determineEndpoint(client, "object-store")
+	client = c.DetermineEndpoint(client, "object-store")
 
 	return client, nil
 }
 
 func (c *Config) OrchestrationV1Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
-		return nil, err
-	}
-
-	client, err := openstack.NewOrchestrationV1(c.OsClient, gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
-		Availability: clientconfig.GetEndpointType(c.EndpointType),
-	})
-
-	if err != nil {
-		return client, err
-	}
-
-	// Check if an endpoint override was specified for the orchestration service.
-	client = c.determineEndpoint(client, "orchestration")
-
-	return client, nil
+	return c.CommonServiceClientInit(openstack.NewOrchestrationV1, region, "orchestration")
 }
 
 func (c *Config) LoadBalancerV2Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
-		return nil, err
-	}
-
-	client, err := openstack.NewLoadBalancerV2(c.OsClient, gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
-		Availability: clientconfig.GetEndpointType(c.EndpointType),
-	})
-
-	if err != nil {
-		return client, err
-	}
-
-	// Check if an endpoint override was specified for the octavia service.
-	client = c.determineEndpoint(client, "octavia")
-
-	return client, nil
+	return c.CommonServiceClientInit(openstack.NewLoadBalancerV2, region, "octavia")
 }
 
 func (c *Config) DatabaseV1Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
-		return nil, err
-	}
-
-	client, err := openstack.NewDBV1(c.OsClient, gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
-		Availability: clientconfig.GetEndpointType(c.EndpointType),
-	})
-
-	if err != nil {
-		return client, err
-	}
-
-	// Check if an endpoint override was specified for the database service.
-	client = c.determineEndpoint(client, "database")
-
-	return client, nil
+	return c.CommonServiceClientInit(openstack.NewDBV1, region, "database")
 }
 
 func (c *Config) ContainerInfraV1Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
-		return nil, err
-	}
-
-	client, err := openstack.NewContainerInfraV1(c.OsClient, gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
-		Availability: clientconfig.GetEndpointType(c.EndpointType),
-	})
-
-	if err != nil {
-		return client, err
-	}
-
-	// Check if an endpoint override was specified for the container-infra service.
-	client = c.determineEndpoint(client, "container-infra")
-
-	return client, nil
+	return c.CommonServiceClientInit(openstack.NewContainerInfraV1, region, "container-infra")
 }
 
 func (c *Config) SharedfilesystemV2Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
-		return nil, err
-	}
-
-	client, err := openstack.NewSharedFileSystemV2(c.OsClient, gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
-		Availability: clientconfig.GetEndpointType(c.EndpointType),
-	})
-
-	if err != nil {
-		return client, err
-	}
-
-	// Check if an endpoint override was specified for the sharev2 service.
-	client = c.determineEndpoint(client, "sharev2")
-
-	return client, nil
+	return c.CommonServiceClientInit(openstack.NewSharedFileSystemV2, region, "sharev2")
 }
 
 func (c *Config) KeyManagerV1Client(region string) (*gophercloud.ServiceClient, error) {
-	if err := c.authenticate(); err != nil {
-		return nil, err
-	}
-
-	client, err := openstack.NewKeyManagerV1(c.OsClient, gophercloud.EndpointOpts{
-		Region:       c.determineRegion(region),
-		Availability: clientconfig.GetEndpointType(c.EndpointType),
-	})
-
-	if err != nil {
-		return client, err
-	}
-
-	// Check if an endpoint override was specified for the keymanager service.
-	client = c.determineEndpoint(client, "key-manager")
-
-	return client, nil
+	return c.CommonServiceClientInit(openstack.NewKeyManagerV1, region, "key-manager")
 }

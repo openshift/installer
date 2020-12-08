@@ -106,11 +106,11 @@ func dataSourceIdentityUserV3Read(d *schema.ResourceData, meta interface{}) erro
 
 	if len(allUsers) < 1 {
 		return fmt.Errorf("Your openstack_identity_user_v3 query returned no results. " +
-			"Please change your search criteria and try again.")
+			"Please change your search criteria and try again")
 	}
 
 	if len(allUsers) > 1 {
-		return fmt.Errorf("Your openstack_identity_user_v3 query returned more than one result.")
+		return fmt.Errorf("Your openstack_identity_user_v3 query returned more than one result")
 	}
 
 	user = allUsers[0]

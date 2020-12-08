@@ -251,9 +251,9 @@ func resourceLBMonitorV1DetermineType(t string) monitors.MonitorType {
 	return monitorType
 }
 
-func waitForLBMonitorActive(networkingClient *gophercloud.ServiceClient, monitorId string) resource.StateRefreshFunc {
+func waitForLBMonitorActive(networkingClient *gophercloud.ServiceClient, monitorID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		m, err := monitors.Get(networkingClient, monitorId).Extract()
+		m, err := monitors.Get(networkingClient, monitorID).Extract()
 		if err != nil {
 			return nil, "", err
 		}
@@ -264,19 +264,19 @@ func waitForLBMonitorActive(networkingClient *gophercloud.ServiceClient, monitor
 	}
 }
 
-func waitForLBMonitorDelete(networkingClient *gophercloud.ServiceClient, monitorId string) resource.StateRefreshFunc {
+func waitForLBMonitorDelete(networkingClient *gophercloud.ServiceClient, monitorID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		log.Printf("[DEBUG] Attempting to delete OpenStack LB Monitor %s", monitorId)
+		log.Printf("[DEBUG] Attempting to delete OpenStack LB Monitor %s", monitorID)
 
-		m, err := monitors.Get(networkingClient, monitorId).Extract()
+		m, err := monitors.Get(networkingClient, monitorID).Extract()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault404); ok {
-				log.Printf("[DEBUG] Successfully deleted OpenStack LB Monitor %s", monitorId)
+				log.Printf("[DEBUG] Successfully deleted OpenStack LB Monitor %s", monitorID)
 				return m, "DELETED", nil
 			}
 
 			if _, ok := err.(gophercloud.ErrDefault409); ok {
-				log.Printf("[DEBUG] OpenStack LB Monitor (%s) is waiting for Pool to delete.", monitorId)
+				log.Printf("[DEBUG] OpenStack LB Monitor (%s) is waiting for Pool to delete.", monitorID)
 				return m, "PENDING", nil
 			}
 
@@ -284,23 +284,22 @@ func waitForLBMonitorDelete(networkingClient *gophercloud.ServiceClient, monitor
 		}
 
 		log.Printf("[DEBUG] OpenStack LB Monitor: %+v", m)
-		err = monitors.Delete(networkingClient, monitorId).ExtractErr()
+		err = monitors.Delete(networkingClient, monitorID).ExtractErr()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault404); ok {
-				log.Printf("[DEBUG] Successfully deleted OpenStack LB Monitor %s", monitorId)
+				log.Printf("[DEBUG] Successfully deleted OpenStack LB Monitor %s", monitorID)
 				return m, "DELETED", nil
 			}
 
 			if _, ok := err.(gophercloud.ErrDefault409); ok {
-				log.Printf("[DEBUG] OpenStack LB Monitor (%s) is waiting for Pool to delete.", monitorId)
+				log.Printf("[DEBUG] OpenStack LB Monitor (%s) is waiting for Pool to delete.", monitorID)
 				return m, "PENDING", nil
 			}
 
 			return m, "ACTIVE", err
 		}
 
-		log.Printf("[DEBUG] OpenStack LB Monitor %s still active.", monitorId)
+		log.Printf("[DEBUG] OpenStack LB Monitor %s still active.", monitorID)
 		return m, "ACTIVE", nil
 	}
-
 }

@@ -8,11 +8,13 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/users"
 )
 
-var userOptions = map[users.Option]string{
-	users.IgnoreChangePasswordUponFirstUse: "ignore_change_password_upon_first_use",
-	users.IgnorePasswordExpiry:             "ignore_password_expiry",
-	users.IgnoreLockoutFailureAttempts:     "ignore_lockout_failure_attempts",
-	users.MultiFactorAuthEnabled:           "multi_factor_auth_enabled",
+func getUserOptions() [4]users.Option {
+	return [4]users.Option{
+		users.IgnoreChangePasswordUponFirstUse,
+		users.IgnorePasswordExpiry,
+		users.IgnoreLockoutFailureAttempts,
+		users.MultiFactorAuthEnabled,
+	}
 }
 
 func expandIdentityUserV3MFARules(rules []interface{}) []interface{} {

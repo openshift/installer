@@ -70,7 +70,6 @@ func resourceEndpointGroupV2() *schema.Resource {
 }
 
 func resourceEndpointGroupV2Create(d *schema.ResourceData, meta interface{}) error {
-
 	config := meta.(*Config)
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
@@ -152,7 +151,6 @@ func resourceEndpointGroupV2Read(d *schema.ResourceData, meta interface{}) error
 }
 
 func resourceEndpointGroupV2Update(d *schema.ResourceData, meta interface{}) error {
-
 	config := meta.(*Config)
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
@@ -235,7 +233,6 @@ func resourceEndpointGroupV2Delete(d *schema.ResourceData, meta interface{}) err
 }
 
 func waitForEndpointGroupDeletion(networkingClient *gophercloud.ServiceClient, id string) resource.StateRefreshFunc {
-
 	return func() (interface{}, string, error) {
 		group, err := endpointgroups.Get(networkingClient, id).Extract()
 		log.Printf("[DEBUG] Got group %s => %#v", id, group)

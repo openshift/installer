@@ -13,11 +13,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-var validDateFilters = []string{
-	string(secrets.DateFilterGT),
-	string(secrets.DateFilterGTE),
-	string(secrets.DateFilterLT),
-	string(secrets.DateFilterLTE),
+func getDateFilters() [4]string {
+	return [4]string{
+		string(secrets.DateFilterGT),
+		string(secrets.DateFilterGTE),
+		string(secrets.DateFilterLT),
+		string(secrets.DateFilterLTE),
+	}
+}
+
+func getDateFiltersRegexPreformatted() string {
+	df := getDateFilters()
+	return strings.Join(df[:], "|")
 }
 
 func dataSourceKeyManagerSecretV1() *schema.Resource {
@@ -148,8 +155,8 @@ func dataSourceKeyManagerSecretV1() *schema.Resource {
 	elem := &schema.Resource{
 		Schema: make(map[string]*schema.Schema),
 	}
-	for _, aclOp := range aclOperations {
-		elem.Schema[aclOp] = aclSchema
+	for _, aclOp := range getSupportedACLOperations() {
+		elem.Schema[aclOp] = getACLSchema()
 	}
 	ret.Schema["acl"].Elem = elem
 
@@ -191,13 +198,13 @@ func dataSourceKeyManagerSecretV1Read(d *schema.ResourceData, meta interface{}) 
 
 	if len(allSecrets) < 1 {
 		return fmt.Errorf("Your query returned no openstack_keymanager_secret_v1 results. " +
-			"Please change your search criteria and try again.")
+			"Please change your search criteria and try again")
 	}
 
 	if len(allSecrets) > 1 {
 		log.Printf("[DEBUG] Multiple openstack_keymanager_secret_v1 results found: %#v", allSecrets)
 		return fmt.Errorf("Your query returned more than one result. Please try a more " +
-			"specific search criteria.")
+			"specific search criteria")
 	}
 
 	secret := allSecrets[0]
@@ -251,7 +258,7 @@ func dataSourceKeyManagerSecretV1Read(d *schema.ResourceData, meta interface{}) 
 func dataSourceParseDateFilter(date string) *secrets.DateQuery {
 	// error checks are not necessary, since they were validated by terraform validate functions
 	var parts []string
-	if regexp.MustCompile("^" + strings.Join(validDateFilters, "|") + ":").Match([]byte(date)) {
+	if regexp.MustCompile("^" + getDateFiltersRegexPreformatted() + ":").Match([]byte(date)) {
 		parts = strings.SplitN(date, ":", 2)
 	} else {
 		parts = []string{date}
@@ -279,15 +286,16 @@ func dataSourceParseDateFilter(date string) *secrets.DateQuery {
 
 func dataSourceValidateDateFilter(v interface{}, k string) (ws []string, errors []error) {
 	var parts []string
-	if regexp.MustCompile("^" + strings.Join(validDateFilters, "|") + ":").Match([]byte(v.(string))) {
+	if regexp.MustCompile("^" + getDateFiltersRegexPreformatted() + ":").Match([]byte(v.(string))) {
 		parts = strings.SplitN(v.(string), ":", 2)
 	} else {
 		parts = []string{v.(string)}
 	}
 
 	if len(parts) == 2 {
-		if !strSliceContains(validDateFilters, parts[0]) {
-			errors = append(errors, fmt.Errorf("Invalid %q date filter, supported: %+q", parts[0], validDateFilters))
+		supportedDateFilters := getDateFilters()
+		if !strSliceContains(supportedDateFilters[:], parts[0]) {
+			errors = append(errors, fmt.Errorf("Invalid %q date filter, supported: %+q", parts[0], supportedDateFilters))
 		}
 
 		_, err := time.Parse(time.RFC3339, parts[1])

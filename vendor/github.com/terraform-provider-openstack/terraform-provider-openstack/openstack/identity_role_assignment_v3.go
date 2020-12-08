@@ -10,7 +10,7 @@ import (
 )
 
 // Role assignments have no ID in OpenStack.
-// Build an ID out of the IDs that make up the role assignment
+// Build an ID out of the IDs that make up the role assignment.
 func identityRoleAssignmentV3ID(domainID, projectID, groupID, userID, roleID string) string {
 	return fmt.Sprintf("%s/%s/%s/%s/%s", domainID, projectID, groupID, userID, roleID)
 }

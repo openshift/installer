@@ -21,19 +21,19 @@ func computeSecGroupV2RulesCheckForErrors(d *schema.ResourceData) error {
 
 		// only one of cidr, from_group_id, or self can be set
 		cidr := rawRuleMap["cidr"].(string)
-		groupId := rawRuleMap["from_group_id"].(string)
+		groupID := rawRuleMap["from_group_id"].(string)
 		self := rawRuleMap["self"].(bool)
-		errorMessage := fmt.Errorf("Only one of cidr, from_group_id, or self can be set.")
+		errorMessage := fmt.Errorf("Only one of cidr, from_group_id, or self can be set")
 
 		// if cidr is set, from_group_id and self cannot be set
 		if cidr != "" {
-			if groupId != "" || self {
+			if groupID != "" || self {
 				return errorMessage
 			}
 		}
 
 		// if from_group_id is set, cidr and self cannot be set
-		if groupId != "" {
+		if groupID != "" {
 			if cidr != "" || self {
 				return errorMessage
 			}
@@ -41,7 +41,7 @@ func computeSecGroupV2RulesCheckForErrors(d *schema.ResourceData) error {
 
 		// if self is set, cidr and from_group_id cannot be set
 		if self {
-			if cidr != "" || groupId != "" {
+			if cidr != "" || groupID != "" {
 				return errorMessage
 			}
 		}
@@ -63,9 +63,9 @@ func expandComputeSecGroupV2CreateRules(d *schema.ResourceData) []secgroups.Crea
 
 func expandComputeSecGroupV2CreateRule(d *schema.ResourceData, rawRule interface{}) secgroups.CreateRuleOpts {
 	rawRuleMap := rawRule.(map[string]interface{})
-	groupId := rawRuleMap["from_group_id"].(string)
+	groupID := rawRuleMap["from_group_id"].(string)
 	if rawRuleMap["self"].(bool) {
-		groupId = d.Id()
+		groupID = d.Id()
 	}
 	return secgroups.CreateRuleOpts{
 		ParentGroupID: d.Id(),
@@ -73,7 +73,7 @@ func expandComputeSecGroupV2CreateRule(d *schema.ResourceData, rawRule interface
 		ToPort:        rawRuleMap["to_port"].(int),
 		IPProtocol:    rawRuleMap["ip_protocol"].(string),
 		CIDR:          rawRuleMap["cidr"].(string),
-		FromGroupID:   groupId,
+		FromGroupID:   groupID,
 	}
 }
 
@@ -92,7 +92,7 @@ func expandComputeSecGroupV2Rule(d *schema.ResourceData, rawRule interface{}) se
 func flattenComputeSecGroupV2Rules(computeClient *gophercloud.ServiceClient, d *schema.ResourceData, sgrs []secgroups.Rule) ([]map[string]interface{}, error) {
 	sgrMap := make([]map[string]interface{}, len(sgrs))
 	for i, sgr := range sgrs {
-		groupId := ""
+		groupID := ""
 		self := false
 		if sgr.Group.Name != "" {
 			if sgr.Group.Name == d.Get("name").(string) {
@@ -113,7 +113,7 @@ func flattenComputeSecGroupV2Rules(computeClient *gophercloud.ServiceClient, d *
 
 				for _, sg := range securityGroups {
 					if sg.Name == sgr.Group.Name {
-						groupId = sg.ID
+						groupID = sg.ID
 					}
 				}
 			}
@@ -126,7 +126,7 @@ func flattenComputeSecGroupV2Rules(computeClient *gophercloud.ServiceClient, d *
 			"ip_protocol":   sgr.IPProtocol,
 			"cidr":          sgr.IPRange.CIDR,
 			"self":          self,
-			"from_group_id": groupId,
+			"from_group_id": groupID,
 		}
 	}
 	return sgrMap, nil

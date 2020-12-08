@@ -33,11 +33,9 @@ func (opts RecordSetCreateOpts) ToRecordSetCreateMap() (map[string]interface{}, 
 	return nil, fmt.Errorf("Expected map but got %T", b[""])
 }
 
-func dnsRecordSetV2RefreshFunc(
-	dnsClient *gophercloud.ServiceClient, zoneID, recordsetId string) resource.StateRefreshFunc {
-
+func dnsRecordSetV2RefreshFunc(dnsClient *gophercloud.ServiceClient, zoneID, recordsetID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		recordset, err := recordsets.Get(dnsClient, zoneID, recordsetId).Extract()
+		recordset, err := recordsets.Get(dnsClient, zoneID, recordsetID).Extract()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault404); ok {
 				return recordset, "DELETED", nil

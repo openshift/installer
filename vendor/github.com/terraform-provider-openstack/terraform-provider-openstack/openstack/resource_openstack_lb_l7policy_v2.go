@@ -151,7 +151,7 @@ func resourceL7PolicyV2Create(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("Unable to retrieve %s: %s", redirectPoolID, err)
 		}
 
-		err = waitForLBV2Pool(lbClient, pool, "ACTIVE", lbPendingStatuses, timeout)
+		err = waitForLBV2Pool(lbClient, pool, "ACTIVE", getLbPendingStatuses(), timeout)
 		if err != nil {
 			return err
 		}
@@ -164,7 +164,7 @@ func resourceL7PolicyV2Create(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for parent Listener to become active before continuing.
-	err = waitForLBV2Listener(lbClient, parentListener, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Listener(lbClient, parentListener, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func resourceL7PolicyV2Create(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for L7 Policy to become active before continuing
-	err = waitForLBV2L7Policy(lbClient, parentListener, l7Policy, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2L7Policy(lbClient, parentListener, l7Policy, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -278,7 +278,7 @@ func resourceL7PolicyV2Update(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("Unable to retrieve %s: %s", redirectPoolID, err)
 		}
 
-		err = waitForLBV2Pool(lbClient, pool, "ACTIVE", lbPendingStatuses, timeout)
+		err = waitForLBV2Pool(lbClient, pool, "ACTIVE", getLbPendingStatuses(), timeout)
 		if err != nil {
 			return err
 		}
@@ -297,13 +297,13 @@ func resourceL7PolicyV2Update(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for parent Listener to become active before continuing.
-	err = waitForLBV2Listener(lbClient, parentListener, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Listener(lbClient, parentListener, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
 
 	// Wait for L7 Policy to become active before continuing
-	err = waitForLBV2L7Policy(lbClient, parentListener, l7Policy, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2L7Policy(lbClient, parentListener, l7Policy, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -322,7 +322,7 @@ func resourceL7PolicyV2Update(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for L7 Policy to become active before continuing
-	err = waitForLBV2L7Policy(lbClient, parentListener, l7Policy, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2L7Policy(lbClient, parentListener, l7Policy, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -353,7 +353,7 @@ func resourceL7PolicyV2Delete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for Listener to become active before continuing.
-	err = waitForLBV2Listener(lbClient, listener, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Listener(lbClient, listener, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -371,7 +371,7 @@ func resourceL7PolicyV2Delete(d *schema.ResourceData, meta interface{}) error {
 		return CheckDeleted(d, err, "Error deleting L7 Policy")
 	}
 
-	err = waitForLBV2L7Policy(lbClient, listener, l7Policy, "DELETED", lbPendingDeleteStatuses, timeout)
+	err = waitForLBV2L7Policy(lbClient, listener, l7Policy, "DELETED", getLbPendingDeleteStatuses(), timeout)
 	if err != nil {
 		return err
 	}

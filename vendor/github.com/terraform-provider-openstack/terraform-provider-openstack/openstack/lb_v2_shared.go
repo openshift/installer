@@ -25,14 +25,28 @@ import (
 
 const octaviaLBClientType = "load-balancer"
 
+const (
+	lbPendingCreate = "PENDING_CREATE"
+	lbPendingUpdate = "PENDING_UPDATE"
+	lbPendingDelete = "PENDING_DELETE"
+	lbActive        = "ACTIVE"
+	lbError         = "ERROR"
+)
+
 // lbPendingStatuses are the valid statuses a LoadBalancer will be in while
 // it's updating.
-var lbPendingStatuses = []string{"PENDING_CREATE", "PENDING_UPDATE"}
+func getLbPendingStatuses() []string {
+	return []string{lbPendingCreate, lbPendingUpdate}
+}
 
-// lbPendingDeleteStatuses are the valid statuses a LoadBalancer will be before delete
-var lbPendingDeleteStatuses = []string{"ERROR", "PENDING_UPDATE", "PENDING_DELETE", "ACTIVE"}
+// lbPendingDeleteStatuses are the valid statuses a LoadBalancer will be before delete.
+func getLbPendingDeleteStatuses() []string {
+	return []string{lbError, lbPendingUpdate, lbPendingDelete, lbActive}
+}
 
-var lbSkipLBStatuses = []string{"ERROR", "ACTIVE"}
+func getLbSkipStatuses() []string {
+	return []string{lbError, lbActive}
+}
 
 // chooseLBV2Client will determine which load balacing client to use:
 // either the Octavia/LBaaS client or the Neutron/Networking v2 client.
@@ -212,8 +226,8 @@ func chooseLBV2ListenerUpdateOpts(d *schema.ResourceData, config *Config) (neutr
 
 		if d.HasChange("default_tls_container_ref") {
 			hasChange = true
-			defaultTlsContainerRef := d.Get("default_tls_container_ref").(string)
-			opts.DefaultTlsContainerRef = &defaultTlsContainerRef
+			defaultTLSContainerRef := d.Get("default_tls_container_ref").(string)
+			opts.DefaultTlsContainerRef = &defaultTLSContainerRef
 		}
 
 		if d.HasChange("sni_container_refs") {
@@ -290,8 +304,8 @@ func chooseLBV2ListenerUpdateOpts(d *schema.ResourceData, config *Config) (neutr
 
 	if d.HasChange("default_tls_container_ref") {
 		hasChange = true
-		defaultTlsContainerRef := d.Get("default_tls_container_ref").(string)
-		opts.DefaultTlsContainerRef = &defaultTlsContainerRef
+		defaultTLSContainerRef := d.Get("default_tls_container_ref").(string)
+		opts.DefaultTlsContainerRef = &defaultTLSContainerRef
 	}
 
 	if d.HasChange("sni_container_refs") {
@@ -371,7 +385,7 @@ func resourceLBV2ListenerRefreshFunc(lbClient *gophercloud.ServiceClient, lbID s
 			if err != nil {
 				return lb, status, err
 			}
-			if !strSliceContains(lbSkipLBStatuses, status) {
+			if !strSliceContains(getLbSkipStatuses(), status) {
 				return lb, status, nil
 			}
 
@@ -609,7 +623,7 @@ func resourceLBV2MemberRefreshFunc(lbClient *gophercloud.ServiceClient, lbID str
 			if err != nil {
 				return lb, status, err
 			}
-			if !strSliceContains(lbSkipLBStatuses, status) {
+			if !strSliceContains(getLbSkipStatuses(), status) {
 				return lb, status, nil
 			}
 
@@ -662,7 +676,7 @@ func resourceLBV2MonitorRefreshFunc(lbClient *gophercloud.ServiceClient, lbID st
 			if err != nil {
 				return lb, status, err
 			}
-			if !strSliceContains(lbSkipLBStatuses, status) {
+			if !strSliceContains(getLbSkipStatuses(), status) {
 				return lb, status, nil
 			}
 
@@ -716,7 +730,7 @@ func resourceLBV2PoolRefreshFunc(lbClient *gophercloud.ServiceClient, lbID strin
 			if err != nil {
 				return lb, status, err
 			}
-			if !strSliceContains(lbSkipLBStatuses, status) {
+			if !strSliceContains(getLbSkipStatuses(), status) {
 				return lb, status, nil
 			}
 
@@ -772,7 +786,7 @@ func resourceLBV2LoadBalancerStatusRefreshFuncNeutron(lbClient *gophercloud.Serv
 		if statuses == nil || statuses.Loadbalancer == nil {
 			statuses = new(neutronloadbalancers.StatusTree)
 			statuses.Loadbalancer = new(neutronloadbalancers.LoadBalancer)
-		} else if !strSliceContains(lbSkipLBStatuses, statuses.Loadbalancer.ProvisioningStatus) {
+		} else if !strSliceContains(getLbSkipStatuses(), statuses.Loadbalancer.ProvisioningStatus) {
 			return statuses.Loadbalancer, statuses.Loadbalancer.ProvisioningStatus, nil
 		}
 
@@ -863,7 +877,7 @@ func resourceLBV2L7PolicyRefreshFunc(lbClient *gophercloud.ServiceClient, lbID s
 			if err != nil {
 				return lb, status, err
 			}
-			if !strSliceContains(lbSkipLBStatuses, status) {
+			if !strSliceContains(getLbSkipStatuses(), status) {
 				return lb, status, nil
 			}
 
@@ -947,7 +961,7 @@ func resourceLBV2L7RuleRefreshFunc(lbClient *gophercloud.ServiceClient, lbID str
 			if err != nil {
 				return lb, status, err
 			}
-			if !strSliceContains(lbSkipLBStatuses, status) {
+			if !strSliceContains(getLbSkipStatuses(), status) {
 				return lb, status, nil
 			}
 

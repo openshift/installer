@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	// export_location_path filter appeared in 2.35
+	// export_location_path filter appeared in 2.35.
 	minManilaShareListExportLocationPath = "2.35"
 )
 
@@ -156,18 +156,15 @@ func dataSourceSharedFilesystemShareV2Read(d *schema.ResourceData, meta interfac
 	}
 
 	if len(allShares) < 1 {
-		return fmt.Errorf("Your query returned no results. " +
-			"Please change your search criteria and try again.")
+		return fmt.Errorf("Your query returned no results. Please change your search criteria and try again")
 	}
 
 	var share shares.Share
 	if len(allShares) > 1 {
 		log.Printf("[DEBUG] Multiple results found: %#v", allShares)
-		return fmt.Errorf("Your query returned more than one result. Please try a more " +
-			"specific search criteria.")
-	} else {
-		share = allShares[0]
+		return fmt.Errorf("Your query returned more than one result. Please try a more specific search criteria")
 	}
+	share = allShares[0]
 
 	exportLocationsRaw, err := shares.ListExportLocations(sfsClient, share.ID).Extract()
 	if err != nil {

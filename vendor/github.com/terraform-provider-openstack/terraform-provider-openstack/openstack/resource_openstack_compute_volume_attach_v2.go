@@ -68,8 +68,8 @@ func resourceComputeVolumeAttachV2Create(d *schema.ResourceData, meta interface{
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
 
-	instanceId := d.Get("instance_id").(string)
-	volumeId := d.Get("volume_id").(string)
+	instanceID := d.Get("instance_id").(string)
+	volumeID := d.Get("volume_id").(string)
 
 	var device string
 	if v, ok := d.GetOk("device"); ok {
@@ -78,10 +78,10 @@ func resourceComputeVolumeAttachV2Create(d *schema.ResourceData, meta interface{
 
 	attachOpts := volumeattach.CreateOpts{
 		Device:   device,
-		VolumeID: volumeId,
+		VolumeID: volumeID,
 	}
 
-	log.Printf("[DEBUG] openstack_compute_volume_attach_v2 attach options %s: %#v", instanceId, attachOpts)
+	log.Printf("[DEBUG] openstack_compute_volume_attach_v2 attach options %s: %#v", instanceID, attachOpts)
 
 	multiattach := d.Get("multiattach").(bool)
 	if multiattach {
@@ -91,7 +91,7 @@ func resourceComputeVolumeAttachV2Create(d *schema.ResourceData, meta interface{
 	var attachment *volumeattach.VolumeAttachment
 	timeout := d.Timeout(schema.TimeoutCreate)
 	err = resource.Retry(timeout, func() *resource.RetryError {
-		attachment, err = volumeattach.Create(computeClient, instanceId, attachOpts).Extract()
+		attachment, err = volumeattach.Create(computeClient, instanceID, attachOpts).Extract()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault400); ok && multiattach {
 				return resource.RetryableError(err)
@@ -104,25 +104,25 @@ func resourceComputeVolumeAttachV2Create(d *schema.ResourceData, meta interface{
 	})
 
 	if err != nil {
-		return fmt.Errorf("Error creating openstack_compute_volume_attach_v2 %s: %s", instanceId, err)
+		return fmt.Errorf("Error creating openstack_compute_volume_attach_v2 %s: %s", instanceID, err)
 	}
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"ATTACHING"},
 		Target:     []string{"ATTACHED"},
-		Refresh:    computeVolumeAttachV2AttachFunc(computeClient, instanceId, attachment.ID),
+		Refresh:    computeVolumeAttachV2AttachFunc(computeClient, instanceID, attachment.ID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
 
 	if _, err = stateConf.WaitForState(); err != nil {
-		return fmt.Errorf("Error attaching openstack_compute_volume_attach_v2 %s: %s", instanceId, err)
+		return fmt.Errorf("Error attaching openstack_compute_volume_attach_v2 %s: %s", instanceID, err)
 	}
 
 	// Use the instance ID and attachment ID as the resource ID.
 	// This is because an attachment cannot be retrieved just by its ID alone.
-	id := fmt.Sprintf("%s/%s", instanceId, attachment.ID)
+	id := fmt.Sprintf("%s/%s", instanceID, attachment.ID)
 
 	d.SetId(id)
 
@@ -136,12 +136,12 @@ func resourceComputeVolumeAttachV2Read(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
 
-	instanceId, attachmentId, err := computeVolumeAttachV2ParseID(d.Id())
+	instanceID, attachmentID, err := computeVolumeAttachV2ParseID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	attachment, err := volumeattach.Get(computeClient, instanceId, attachmentId).Extract()
+	attachment, err := volumeattach.Get(computeClient, instanceID, attachmentID).Extract()
 	if err != nil {
 		return CheckDeleted(d, err, "Error retrieving openstack_compute_volume_attach_v2")
 	}
@@ -163,7 +163,7 @@ func resourceComputeVolumeAttachV2Delete(d *schema.ResourceData, meta interface{
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
 	}
 
-	instanceId, attachmentId, err := computeVolumeAttachV2ParseID(d.Id())
+	instanceID, attachmentID, err := computeVolumeAttachV2ParseID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -171,7 +171,7 @@ func resourceComputeVolumeAttachV2Delete(d *schema.ResourceData, meta interface{
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{""},
 		Target:     []string{"DETACHED"},
-		Refresh:    computeVolumeAttachV2DetachFunc(computeClient, instanceId, attachmentId),
+		Refresh:    computeVolumeAttachV2DetachFunc(computeClient, instanceID, attachmentID),
 		Timeout:    d.Timeout(schema.TimeoutDelete),
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,

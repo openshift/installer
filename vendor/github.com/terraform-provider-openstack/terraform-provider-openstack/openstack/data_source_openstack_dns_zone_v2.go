@@ -20,6 +20,11 @@ func dataSourceDNSZoneV2() *schema.Resource {
 				Computed: true,
 			},
 
+			"all_projects": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+
 			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -140,6 +145,8 @@ func dataSourceDNSZoneV2Read(d *schema.ResourceData, meta interface{}) error {
 	if v, ok := d.GetOk("type"); ok {
 		listOpts.Type = v.(string)
 	}
+
+	dnsClientSetAuthHeader(d, dnsClient)
 
 	pages, err := zones.List(dnsClient, listOpts).AllPages()
 	if err != nil {

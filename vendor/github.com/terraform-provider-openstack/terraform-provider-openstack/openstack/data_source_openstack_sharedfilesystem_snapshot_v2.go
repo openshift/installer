@@ -93,18 +93,15 @@ func dataSourceSharedFilesystemSnapshotV2Read(d *schema.ResourceData, meta inter
 	}
 
 	if len(allSnapshots) < 1 {
-		return fmt.Errorf("Your query returned no results. " +
-			"Please change your search criteria and try again.")
+		return fmt.Errorf("Your query returned no results. Please change your search criteria and try again")
 	}
 
 	var share snapshots.Snapshot
 	if len(allSnapshots) > 1 {
 		log.Printf("[DEBUG] Multiple results found: %#v", allSnapshots)
-		return fmt.Errorf("Your query returned more than one result. Please try a more " +
-			"specific search criteria.")
-	} else {
-		share = allSnapshots[0]
+		return fmt.Errorf("Your query returned more than one result. Please try a more specific search criteria")
 	}
+	share = allSnapshots[0]
 
 	return dataSourceSharedFilesystemSnapshotV2Attributes(d, &share, GetRegion(d, config))
 }

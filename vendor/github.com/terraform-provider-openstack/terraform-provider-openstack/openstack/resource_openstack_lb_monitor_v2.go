@@ -133,7 +133,7 @@ func resourceMonitorV2Create(d *schema.ResourceData, meta interface{}) error {
 
 	// Wait for parent pool to become active before continuing.
 	timeout := d.Timeout(schema.TimeoutCreate)
-	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func resourceMonitorV2Create(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for monitor to become active before continuing
-	err = waitForLBV2Monitor(lbClient, parentPool, monitor, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Monitor(lbClient, parentPool, monitor, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -256,13 +256,13 @@ func resourceMonitorV2Update(d *schema.ResourceData, meta interface{}) error {
 
 	// Wait for parent pool to become active before continuing.
 	timeout := d.Timeout(schema.TimeoutUpdate)
-	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
 
 	// Wait for monitor to become active before continuing.
-	err = waitForLBV2Monitor(lbClient, parentPool, monitor, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Monitor(lbClient, parentPool, monitor, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -281,7 +281,7 @@ func resourceMonitorV2Update(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for monitor to become active before continuing
-	err = waitForLBV2Monitor(lbClient, parentPool, monitor, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Monitor(lbClient, parentPool, monitor, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -312,7 +312,7 @@ func resourceMonitorV2Delete(d *schema.ResourceData, meta interface{}) error {
 
 	// Wait for parent pool to become active before continuing
 	timeout := d.Timeout(schema.TimeoutUpdate)
-	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Pool(lbClient, parentPool, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -331,7 +331,7 @@ func resourceMonitorV2Delete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for monitor to become DELETED
-	err = waitForLBV2Monitor(lbClient, parentPool, monitor, "DELETED", lbPendingDeleteStatuses, timeout)
+	err = waitForLBV2Monitor(lbClient, parentPool, monitor, "DELETED", getLbPendingDeleteStatuses(), timeout)
 	if err != nil {
 		return err
 	}

@@ -141,14 +141,13 @@ func resourcePoolV2Create(d *schema.ResourceData, meta interface{}) error {
 		if persistence.Type == "APP_COOKIE" {
 			if pV["cookie_name"].(string) == "" {
 				return fmt.Errorf(
-					"Persistence cookie_name needs to be set if using 'APP_COOKIE' persistence type.")
-			} else {
-				persistence.CookieName = pV["cookie_name"].(string)
+					"Persistence cookie_name needs to be set if using 'APP_COOKIE' persistence type")
 			}
+			persistence.CookieName = pV["cookie_name"].(string)
 		} else {
 			if pV["cookie_name"].(string) != "" {
 				return fmt.Errorf(
-					"Persistence cookie_name can only be set if using 'APP_COOKIE' persistence type.")
+					"Persistence cookie_name can only be set if using 'APP_COOKIE' persistence type")
 			}
 		}
 	}
@@ -177,16 +176,20 @@ func resourcePoolV2Create(d *schema.ResourceData, meta interface{}) error {
 	if listenerID != "" {
 		listener, err := listeners.Get(lbClient, listenerID).Extract()
 		if err != nil {
-			return err
+			return fmt.Errorf("Unable to get openstack_lb_listener_v2 %s: %s", listenerID, err)
 		}
 
-		err = waitForLBV2Listener(lbClient, listener, "ACTIVE", lbPendingStatuses, timeout)
+		waitErr := waitForLBV2Listener(lbClient, listener, "ACTIVE", getLbPendingStatuses(), timeout)
+		if waitErr != nil {
+			return fmt.Errorf(
+				"Error waiting for openstack_lb_listener_v2 %s to become active: %s", listenerID, err)
+		}
 	} else {
-		err = waitForLBV2LoadBalancer(lbClient, lbID, "ACTIVE", lbPendingStatuses, timeout)
-	}
-
-	if err != nil {
-		return err
+		waitErr := waitForLBV2LoadBalancer(lbClient, lbID, "ACTIVE", getLbPendingStatuses(), timeout)
+		if waitErr != nil {
+			return fmt.Errorf(
+				"Error waiting for openstack_lb_loadbalancer_v2 %s to become active: %s", lbID, err)
+		}
 	}
 
 	log.Printf("[DEBUG] Attempting to create pool")
@@ -205,7 +208,7 @@ func resourcePoolV2Create(d *schema.ResourceData, meta interface{}) error {
 
 	// Pool was successfully created
 	// Wait for pool to become active before continuing
-	err = waitForLBV2Pool(lbClient, pool, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Pool(lbClient, pool, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -274,7 +277,7 @@ func resourcePoolV2Update(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for pool to become active before continuing
-	err = waitForLBV2Pool(lbClient, pool, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Pool(lbClient, pool, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -293,7 +296,7 @@ func resourcePoolV2Update(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for pool to become active before continuing
-	err = waitForLBV2Pool(lbClient, pool, "ACTIVE", lbPendingStatuses, timeout)
+	err = waitForLBV2Pool(lbClient, pool, "ACTIVE", getLbPendingStatuses(), timeout)
 	if err != nil {
 		return err
 	}
@@ -330,7 +333,7 @@ func resourcePoolV2Delete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for Pool to delete
-	err = waitForLBV2Pool(lbClient, pool, "DELETED", lbPendingDeleteStatuses, timeout)
+	err = waitForLBV2Pool(lbClient, pool, "DELETED", getLbPendingDeleteStatuses(), timeout)
 	if err != nil {
 		return err
 	}

@@ -124,9 +124,9 @@ func resourceIdentityUserV3Create(d *schema.ResourceData, meta interface{}) erro
 
 	// Build the user options
 	options := map[users.Option]interface{}{}
-	for optionType, option := range userOptions {
-		if v, ok := d.GetOk(option); ok {
-			options[optionType] = v.(bool)
+	for _, option := range getUserOptions() {
+		if v, ok := d.GetOk(string(option)); ok {
+			options[option] = v.(bool)
 		}
 	}
 
@@ -177,9 +177,9 @@ func resourceIdentityUserV3Read(d *schema.ResourceData, meta interface{}) error 
 
 	// Check and see if any options match those defined in the schema.
 	options := user.Options
-	for _, option := range userOptions {
-		if v, ok := options[option]; ok {
-			d.Set(option, v.(bool))
+	for _, option := range getUserOptions() {
+		if v, ok := options[string(option)]; ok {
+			d.Set(string(option), v.(bool))
 		}
 	}
 
@@ -235,10 +235,10 @@ func resourceIdentityUserV3Update(d *schema.ResourceData, meta interface{}) erro
 
 	// Determine if the options have changed
 	options := map[users.Option]interface{}{}
-	for optionType, option := range userOptions {
-		if d.HasChange(option) {
+	for _, option := range getUserOptions() {
+		if d.HasChange(string(option)) {
 			hasChange = true
-			options[optionType] = d.Get(option).(bool)
+			options[option] = d.Get(string(option)).(bool)
 		}
 	}
 

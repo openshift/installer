@@ -65,7 +65,6 @@ func resourceImagesImageV2FileProps(filename string) (int64, string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return -1, "", fmt.Errorf("Error opening file for Image: %s", err)
-
 	}
 	defer file.Close()
 
@@ -111,10 +110,9 @@ func resourceImagesImageV2File(d *schema.ResourceData) (string, error) {
 				return "", fmt.Errorf("Error downloading image %q to file %q: %s", furl, filename, err)
 			}
 			return filename, nil
-		} else {
-			log.Printf("[DEBUG] File exists %s", filename)
-			return filename, nil
 		}
+		log.Printf("[DEBUG] File exists %s", filename)
+		return filename, nil
 	} else {
 		return "", fmt.Errorf("Error in config. no file specified")
 	}
@@ -223,9 +221,9 @@ func resourceImagesImageAccessV2DetectMemberID(client *gophercloud.ServiceClient
 	return allMembers[0].MemberID, nil
 }
 
-func imagesFilterByRegex(imageArr []images.Image, name_regex string) []images.Image {
+func imagesFilterByRegex(imageArr []images.Image, nameRegex string) []images.Image {
 	var result []images.Image
-	r := regexp.MustCompile(name_regex)
+	r := regexp.MustCompile(nameRegex)
 
 	for _, image := range imageArr {
 		// Check for a very rare case where the response would include no

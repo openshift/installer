@@ -173,14 +173,14 @@ func dataSourceComputeInstanceV2Read(d *schema.ResourceData, meta interface{}) e
 
 	d.Set("security_groups", secGrpNames)
 
-	flavorId, ok := server.Flavor["id"].(string)
+	flavorID, ok := server.Flavor["id"].(string)
 	if !ok {
 		return fmt.Errorf("Error setting OpenStack server's flavor: %v", server.Flavor)
 	}
-	d.Set("flavor_id", flavorId)
+	d.Set("flavor_id", flavorID)
 
 	d.Set("key_pair", server.KeyName)
-	flavor, err := flavors.Get(computeClient, flavorId).Extract()
+	flavor, err := flavors.Get(computeClient, flavorID).Extract()
 	if err != nil {
 		return err
 	}

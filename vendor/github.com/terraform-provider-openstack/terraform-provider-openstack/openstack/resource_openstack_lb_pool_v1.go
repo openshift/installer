@@ -298,9 +298,9 @@ func resourceLBPoolV1DetermineLBMethod(v string) pools.LBMethod {
 	return lbMethod
 }
 
-func waitForLBPoolActive(networkingClient *gophercloud.ServiceClient, poolId string) resource.StateRefreshFunc {
+func waitForLBPoolActive(networkingClient *gophercloud.ServiceClient, poolID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		p, err := pools.Get(networkingClient, poolId).Extract()
+		p, err := pools.Get(networkingClient, poolID).Extract()
 		if err != nil {
 			return nil, "", err
 		}
@@ -314,31 +314,30 @@ func waitForLBPoolActive(networkingClient *gophercloud.ServiceClient, poolId str
 	}
 }
 
-func waitForLBPoolDelete(networkingClient *gophercloud.ServiceClient, poolId string) resource.StateRefreshFunc {
+func waitForLBPoolDelete(networkingClient *gophercloud.ServiceClient, poolID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		log.Printf("[DEBUG] Attempting to delete OpenStack LB Pool %s", poolId)
+		log.Printf("[DEBUG] Attempting to delete OpenStack LB Pool %s", poolID)
 
-		p, err := pools.Get(networkingClient, poolId).Extract()
+		p, err := pools.Get(networkingClient, poolID).Extract()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault404); ok {
-				log.Printf("[DEBUG] Successfully deleted OpenStack LB Pool %s", poolId)
+				log.Printf("[DEBUG] Successfully deleted OpenStack LB Pool %s", poolID)
 				return p, "DELETED", nil
 			}
 			return p, "ACTIVE", err
 		}
 
 		log.Printf("[DEBUG] OpenStack LB Pool: %+v", p)
-		err = pools.Delete(networkingClient, poolId).ExtractErr()
+		err = pools.Delete(networkingClient, poolID).ExtractErr()
 		if err != nil {
 			if _, ok := err.(gophercloud.ErrDefault404); ok {
-				log.Printf("[DEBUG] Successfully deleted OpenStack LB Pool %s", poolId)
+				log.Printf("[DEBUG] Successfully deleted OpenStack LB Pool %s", poolID)
 				return p, "DELETED", nil
 			}
 			return p, "ACTIVE", err
 		}
 
-		log.Printf("[DEBUG] OpenStack LB Pool %s still active.", poolId)
+		log.Printf("[DEBUG] OpenStack LB Pool %s still active.", poolID)
 		return p, "ACTIVE", nil
 	}
-
 }

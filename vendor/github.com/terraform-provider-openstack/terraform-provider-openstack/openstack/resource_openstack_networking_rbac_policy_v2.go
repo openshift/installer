@@ -42,7 +42,7 @@ func resourceNetworkingRBACPolicyV2() *schema.Resource {
 				ForceNew: true,
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					"network", "qos_policy",
+					"address_scope", "network", "qos_policy", "security_group", "subnetpool",
 				}, false),
 			},
 

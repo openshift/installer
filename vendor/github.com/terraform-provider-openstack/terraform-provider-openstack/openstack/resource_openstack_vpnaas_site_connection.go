@@ -141,7 +141,6 @@ func resourceSiteConnectionV2() *schema.Resource {
 }
 
 func resourceSiteConnectionV2Create(d *schema.ResourceData, meta interface{}) error {
-
 	config := meta.(*Config)
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
@@ -262,7 +261,6 @@ func resourceSiteConnectionV2Read(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceSiteConnectionV2Update(d *schema.ResourceData, meta interface{}) error {
-
 	config := meta.(*Config)
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
@@ -403,7 +401,6 @@ func resourceSiteConnectionV2Delete(d *schema.ResourceData, meta interface{}) er
 }
 
 func waitForSiteConnectionDeletion(networkingClient *gophercloud.ServiceClient, id string) resource.StateRefreshFunc {
-
 	return func() (interface{}, string, error) {
 		conn, err := siteconnections.Get(networkingClient, id).Extract()
 		log.Printf("[DEBUG] Got site connection %s => %#v", id, conn)

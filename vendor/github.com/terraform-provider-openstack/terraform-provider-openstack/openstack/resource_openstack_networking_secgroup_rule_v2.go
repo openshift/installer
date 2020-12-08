@@ -107,11 +107,12 @@ func resourceNetworkingSecGroupRuleV2() *schema.Resource {
 }
 
 func resourceNetworkingSecGroupRuleV2Create(d *schema.ResourceData, meta interface{}) error {
-	securityGroupId := d.Get("security_group_id").(string)
-	osMutexKV.Lock(securityGroupId)
-	defer osMutexKV.Unlock(securityGroupId)
-
 	config := meta.(*Config)
+	securityGroupID := d.Get("security_group_id").(string)
+	mutex := config.MutexKV
+	mutex.Lock(securityGroupID)
+	defer mutex.Unlock(securityGroupID)
+
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
@@ -204,11 +205,12 @@ func resourceNetworkingSecGroupRuleV2Read(d *schema.ResourceData, meta interface
 }
 
 func resourceNetworkingSecGroupRuleV2Delete(d *schema.ResourceData, meta interface{}) error {
-	securityGroupId := d.Get("security_group_id").(string)
-	osMutexKV.Lock(securityGroupId)
-	defer osMutexKV.Unlock(securityGroupId)
-
 	config := meta.(*Config)
+	securityGroupID := d.Get("security_group_id").(string)
+	mutex := config.MutexKV
+	mutex.Lock(securityGroupID)
+	defer mutex.Unlock(securityGroupID)
+
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
