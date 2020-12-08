@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -Eeuxo pipefail
+set -Eeuo pipefail
 
 [[ $(type -P yq) ]] || { >&2 echo "Required tool 'yq' not found in PATH" ; exit 1; }
 
@@ -11,6 +11,10 @@ declare \
 	os_cloud='' \
 	external_network='' \
 	compute_flavor=''
+
+# Let install-config describe a configuration that is incompatible with the
+# target CI infrastructure
+export OPENSHFIT_INSTALL_SKIP_PREFLIGHT_VALIDATIONS=1
 
 print_help() {
 	set +x
@@ -47,7 +51,6 @@ fill_install_config() {
 }
 
 validate_configuration() {
-	set +x
 	declare -a required_values=("os_cloud" "external_network" "compute_flavor")
 	declare fail=false
 
@@ -63,7 +66,6 @@ validate_configuration() {
 		print_help
 		exit 1
 	fi
-	set -x
 }
 
 while getopts a:c:e:f:i:t:h o; do
@@ -92,27 +94,27 @@ validate_configuration
 
 >&2 echo "Running the tests from '${tests_dir}' against the Installer binary '${openshift_install}'."
 
-declare -i failed_tests=0
+declare result='PASS'
 for testcase in "${tests_dir}"/* ; do
 	if [ -d "$testcase" ]; then
 		assets_dir="$(mktemp -d)"
 		temp_dirs+=("$assets_dir")
 		fill_install_config "${testcase}/install-config.yaml" > "${assets_dir}/install-config.yaml"
 		"$openshift_install" create manifests --dir "$assets_dir"
-		for t in "${testcase}"/*.sh; do
+		for t in "${testcase}"/test_*; do
 			if $t "$assets_dir"; then
 				echo "PASS: '$t'"
 			else
-				declare -i f="$?"
-				echo "FAIL: $f failed tests in '$t'."
-				failed_tests=$((failed_tests+f))
+				result='FAIL'
+				echo "FAIL: '$t'"
 			fi
 		done
 	fi
 done
 
-if [ $failed_tests == 0 ]; then
-	echo 'PASS'
-else
-	echo "FAIL: ${failed_tests} failed tests."
+if [ "$result" != 'PASS' ]; then
+	echo "FAIL"
+	exit 1
 fi
+
+echo 'PASS'
