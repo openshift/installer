@@ -688,6 +688,7 @@ github.com/gophercloud/utils/gnocchi
 github.com/gophercloud/utils/internal
 github.com/gophercloud/utils/openstack/baremetal/v1/nodes
 github.com/gophercloud/utils/openstack/clientconfig
+github.com/gophercloud/utils/openstack/compute/v2/availabilityzones
 github.com/gophercloud/utils/openstack/compute/v2/flavors
 github.com/gophercloud/utils/openstack/compute/v2/images
 github.com/gophercloud/utils/openstack/imageservice/v2/images
