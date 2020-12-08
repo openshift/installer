@@ -220,7 +220,9 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 
 	switch platform {
 	case awstypes.Name, openstacktypes.Name, vspheretypes.Name, azuretypes.Name, gcptypes.Name, ovirttypes.Name, kubevirttypes.Name:
-		assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
+		if installConfig.Config.CredentialsMode != types.ManualCredentialsMode {
+			assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
+		}
 		assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleCloudCredsSecretReader.Files()[0].Data, templateData)
 	case baremetaltypes.Name:
 		bmTemplateData := baremetalTemplateData{
