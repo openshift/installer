@@ -81,11 +81,14 @@ aliases:
     - rgolangh
     - Gal-Zaidman
     - eslutsky
-  ovirt-reviewers:
     - dougsland
-    - Gal-Zaidman
+    - janoszen
+  ovirt-reviewers:
     - rgolangh
+    - Gal-Zaidman
     - eslutsky
+    - dougsland
+    - janoszen
   kubevirt-approvers:
     - nirarg
     - bardielle
