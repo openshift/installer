@@ -40,3 +40,7 @@ func getAPIServerURL(ic *types.InstallConfig) string {
 func getInternalAPIServerURL(ic *types.InstallConfig) string {
 	return fmt.Sprintf("https://api-int.%s:6443", ic.ClusterDomain())
 }
+
+func getEtcdDiscoveryDomain(ic *types.InstallConfig) string {
+	return ic.ClusterDomain()
+}

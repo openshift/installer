@@ -76,6 +76,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			InfrastructureName:   clusterID.InfraID,
 			APIServerURL:         getAPIServerURL(installConfig.Config),
 			APIServerInternalURL: getInternalAPIServerURL(installConfig.Config),
+			EtcdDiscoveryDomain:  getEtcdDiscoveryDomain(installConfig.Config),
 			PlatformStatus:       &configv1.PlatformStatus{},
 		},
 	}
