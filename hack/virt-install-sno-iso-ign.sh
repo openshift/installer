@@ -23,5 +23,4 @@ virt-install \
     --events on_reboot=restart \
     --cdrom "${RHCOS_ISO}" \
     --disk pool=default,size="${DISK_GB}" \
-    --boot hd,cdrom \
-    --noautoconsole
+    --boot hd,cdrom
