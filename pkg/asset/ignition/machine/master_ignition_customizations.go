@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
@@ -45,10 +46,18 @@ func (a *MasterIgnitionCustomizations) Generate(dependencies asset.Parents) erro
 	defaultPointerIgnition := pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master")
 	savedPointerIgnition := master.Config
 
-	if savedPointerIgnition != defaultPointerIgnition {
+	savedPointerIgnitionJSON, err := ignition.Marshal(savedPointerIgnition)
+	if err != nil {
+		return errors.Wrap(err, "failed to Marshal savedPointerIgnition")
+	}
+	defaultPointerIgnitionJSON, err := ignition.Marshal(defaultPointerIgnition)
+	if err != nil {
+		return errors.Wrap(err, "failed to Marshal defaultPointerIgnition")
+	}
+	if string(savedPointerIgnitionJSON) != string(defaultPointerIgnitionJSON) {
 		logrus.Infof("Master pointer ignition was modified. Saving contents to a machineconfig")
 		mc := &mcfgv1.MachineConfig{}
-		mc, err := generatePointerMachineConfig(*savedPointerIgnition, "master")
+		mc, err = generatePointerMachineConfig(*savedPointerIgnition, "master")
 		if err != nil {
 			return errors.Wrap(err, "failed to generate master installer machineconfig")
 		}

@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
 	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
@@ -46,10 +47,18 @@ func (a *WorkerIgnitionCustomizations) Generate(dependencies asset.Parents) erro
 	savedPointerIgnition := worker.Config
 
 	// Create a machineconfig if the ignition has been modified
-	if savedPointerIgnition != defaultPointerIgnition {
+	savedPointerIgnitionJSON, err := ignition.Marshal(savedPointerIgnition)
+	if err != nil {
+		return errors.Wrap(err, "failed Marshal savedPointerIgnition")
+	}
+	defaultPointerIgnitionJSON, err := ignition.Marshal(defaultPointerIgnition)
+	if err != nil {
+		return errors.Wrap(err, "failed Marshal defaultPointerIgnition")
+	}
+	if string(savedPointerIgnitionJSON) != string(defaultPointerIgnitionJSON) {
 		logrus.Infof("Worker pointer ignition was modified. Saving contents to a machineconfig")
 		mc := &mcfgv1.MachineConfig{}
-		mc, err := generatePointerMachineConfig(*savedPointerIgnition, "worker")
+		mc, err = generatePointerMachineConfig(*savedPointerIgnition, "worker")
 		if err != nil {
 			return errors.Wrap(err, "failed to generate worker installer machineconfig")
 		}
