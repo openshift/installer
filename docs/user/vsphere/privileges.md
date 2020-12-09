@@ -3,37 +3,61 @@ In order to install an OpenShift cluster to a vCenter, the user provided to the 
 
 If the provided user has global admin privileges, no further action for permissions is required. Otherwise, the rest of this document can be used as a resource to create a user with more fine-grained privileges.
 
-## Privileges
-In order to create an OpenShift cluster, a user needs privileges in the following categories: _Datastore_, _Folder_, _vSphere Tagging_, _Network_, _Resource_, _Profile-driven storage_, _vApp_, and _Virtual machine_.
+## Create new roles with the appropriate privileges
 
-Here is an example summary of privileges that could be used to install a cluster:
+In the tables below describe the absolute minimal set of privileges to install and run OpenShift including Machine management and the vSphere Storage provider.
 
-- __Datastore__
-  - _Allocate space_
-- __Folder__
-  - _Create folder_
-  - _Delete folder_
-- __vSphere Tagging__
-  - All privileges
-- __Network__
-  - _Assign network_
-- __Resource__
-  - _Assign virtual machine to resource pool_
-- __Profile-driven storage__
-  - All privileges
-- __vApp__
-  - All privileges
-- __Virtual machine__
-  - All privileges
+### Precreated virtual machine folder
 
-It may be possible to further refine the categories where _All privileges_ have been granted.
+If there is a pre-existing virtual machine folder that OpenShift RHCOS guests will be created within the privilege set can be used below.
 
-The user also needs the privileges from the `Read-Only` role. 
-## Permissions
+Role Name | vSphere object | Privilege Set
+--- | --- | ---
+openshift-vcenter-level | vSphere vCenter | Cns.Searchable<br/>InventoryService.Tagging.AttachTag<br/>InventoryService.Tagging.CreateCategory<br/>InventoryService.Tagging.CreateTag<br/>InventoryService.Tagging.DeleteCategory<br/>InventoryService.Tagging.DeleteTag<br/>InventoryService.Tagging.EditCategory<br/>InventoryService.Tagging.EditTag<br/>Sessions.ValidateSession<br/>StorageProfile.View
+openshift-cluster-level | vSphere vCenter Cluster | Host.Config.Storage<br/>Resource.AssignVMToPool<br/>VApp.AssignResourcePool<br/>VApp.Import<br/>VirtualMachine.Config.AddNewDisk
+openshift-datastore-level| vSphere Datastore | Datastore.AllocateSpace<br/>Datastore.Browse<br/>Datastore.FileManagement
+openshift-portgroup-level | vSphere Port Group | Network.Assign
+openshift-folder-level| Virtual Machine Folder | Resource.AssignVMToPool<br/>VApp.Import<br/>VirtualMachine.Config.AddExistingDisk<br/>VirtualMachine.Config.AddNewDisk<br/>VirtualMachine.Config.AddRemoveDevice<br/>VirtualMachine.Config.AdvancedConfig<br/>VirtualMachine.Config.Annotation<br/>VirtualMachine.Config.CPUCount<br/>VirtualMachine.Config.DiskExtend<br/>VirtualMachine.Config.DiskLease<br/>VirtualMachine.Config.EditDevice<br/>VirtualMachine.Config.Memory<br/>VirtualMachine.Config.RemoveDisk<br/>VirtualMachine.Config.Rename<br/>VirtualMachine.Config.ResetGuestInfo<br/>VirtualMachine.Config.Resource<br/>VirtualMachine.Config.Settings<br/>VirtualMachine.Config.UpgradeVirtualHardware<br/>VirtualMachine.Interact.GuestControl<br/>VirtualMachine.Interact.PowerOff<br/>VirtualMachine.Interact.PowerOn<br/>VirtualMachine.Interact.Reset<br/>VirtualMachine.Inventory.Create<br/>VirtualMachine.Inventory.CreateFromExisting<br/>VirtualMachine.Inventory.Delete<br/>VirtualMachine.Provisioning.Clone
 
-The easiest way to ensure proper permissions is to grant Global Permissions to the user with the privileges above (both the listed privileges and `Read Only` role). Otherwise, it is necessary to ensure that the user with the listed privileges has permissions granted on all necessary entities in the vCenter. In addition, the user must have `Read-Only` privileges on the compute-node VM and all parent entities (`vCenter`, `Datacenter`, `Datastore Cluster`, and `Datastore Storage Folder`).
+
+### Installer created virtual machine folder
+
+Including the role-set above one additional role needs to be created if the installer is to create a vSphere virtual machine folder.
+Since the datacenter's top-level virtual machine folder is hidden the only way to support installation that creates a vm folder for the OpenShift cluster is to create a new datacenter role and propagate. Once installation is complete the `openshift-folder-level` role could be applied to the folder that the installer created.
+
+Role Name | vSphere object | Privilege Set
+--- | --- | ---
+openshift-datacenter-level| vSphere vCenter Datacenter | Resource.AssignVMToPool<br/>VApp.Import<br/>VirtualMachine.Config.AddExistingDisk<br/>VirtualMachine.Config.AddNewDisk<br/>VirtualMachine.Config.AddRemoveDevice<br/>VirtualMachine.Config.AdvancedConfig<br/>VirtualMachine.Config.Annotation<br/>VirtualMachine.Config.CPUCount<br/>VirtualMachine.Config.DiskExtend<br/>VirtualMachine.Config.DiskLease<br/>VirtualMachine.Config.EditDevice<br/>VirtualMachine.Config.Memory<br/>VirtualMachine.Config.RemoveDisk<br/>VirtualMachine.Config.Rename<br/>VirtualMachine.Config.ResetGuestInfo<br/>VirtualMachine.Config.Resource<br/>VirtualMachine.Config.Settings<br/>VirtualMachine.Config.UpgradeVirtualHardware<br/>VirtualMachine.Interact.GuestControl<br/>VirtualMachine.Interact.PowerOff<br/>VirtualMachine.Interact.PowerOn<br/>VirtualMachine.Interact.Reset<br/>VirtualMachine.Inventory.Create<br/>VirtualMachine.Inventory.CreateFromExisting<br/>VirtualMachine.Inventory.Delete<br/>VirtualMachine.Provisioning.Clone<br/>Folder.Create<br/>Folder.Delete
+
+## Permission assignments
+
+The easiest way to ensure proper permissions is to grant Global Permissions to the user with the privileges above. Otherwise, it is necessary to ensure that the user with the listed privileges has permissions granted on all necessary entities in the vCenter.
 
 For more information, consult [vSphere Permissions and User Management Tasks][vsphere-perms]
+
+### Precreated virtual machine folder
+
+Role Name | Propagate | Entity
+--- | --- | ---
+openshift-vcenter-level | False | vSphere vCenter
+ReadOnly | False | vSphere vCenter Datacenter
+openshift-cluster-level | True | vSphere vCenter Cluster
+openshift-datastore-level | False | vSphere vCenter Datastore
+ReadOnly | False | vSphere Switch
+openshift-portgroup-level | False | vSphere Port Group
+openshift-folder-level | True | vSphere vCenter Virtual Machine folder
+
+
+### Installer created virtual machine folder
+Role Name | Propagate | Entity
+--- | --- | ---
+openshift-vcenter-level | False | vSphere vCenter
+openshift-datacenter-level | True | vSphere vCenter Datacenter
+openshift-cluster-level | True | vSphere vCenter Cluster
+openshift-datastore-level | False | vSphere vCenter Datastore
+ReadOnly | False | vSphere Switch
+openshift-portgroup-level | False | vSphere Port Group
+
 
 ## Walkthrough: Creating and Assigning Global Roles
 The following is a visual walkthrough of creating and assigning global roles in the vSphere 6 web client. Roles can be similarly created for specific clusters. For more information, refer to the [vSphere docs][vsphere-docs].
