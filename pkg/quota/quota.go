@@ -15,6 +15,8 @@ type Quota struct {
 
 	InUse int64
 	Limit int64
+
+	Unlimited bool
 }
 
 // Constraint defines a check against availablity
@@ -75,6 +77,13 @@ func Check(quotas []Quota, checks []Constraint) ([]ConstraintReport, error) {
 		if !ok {
 			report.Result = Unknown
 			report.Message = "No matching quota found for the constraint"
+			reports = append(reports, report)
+			continue
+		}
+
+		if matched.Unlimited {
+			report.Result = Available
+			report.Message = "Unlimited quota found for the constraint"
 			reports = append(reports, report)
 			continue
 		}
