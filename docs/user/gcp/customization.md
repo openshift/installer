@@ -17,6 +17,13 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `osDisk` (optional object):
     * `diskSizeGB` (optional integer): The size of the disk in gigabytes (GB) (Minimum: 16GB, Maximum: 65536GB).
     * `diskType` (optional string): The type of disk (allowed values are: `pd-ssd`, and `pd-standard`. Default: `pd-ssd`).
+    * `encryptionKey` (optional object):
+      * `kmsKey` (optional object):
+        * `name` (string): The name of the customer managed encryption key to be used for the disk encryption.
+        * `keyRing` (string): The name of the KMS Key Ring which the KMS Key belongs to.
+        * `location` (string): The GCP location in which the Key Ring exists.
+        * `projectID` (optional string): The ID of the Project in which the KMS Key Ring exists. Defaults to the VM ProjectID if not set.
+      * `kmsKeyServiceAccount` (optional string): The service account being used for the encryption request for the given KMS key. If absent, the [Compute Engine default service account][default-service-account] is used.
 
 ## Installing to Existing Networks & Subnetworks
 
@@ -64,7 +71,7 @@ apiVersion: v1
 baseDomain: example.com
 compute:
 - name: worker
-  platform: 
+  platform:
     gcp:
       type: n2-standard-2
       zones:
@@ -73,6 +80,13 @@ compute:
       osDisk:
         diskType: pd-standard
         diskSizeGB: 128
+        encryptionKey:
+          kmsKey:
+            name: worker-key
+            keyRing: openshift-machine-keys
+            location: global
+            projectID: openshift-dev-installer
+          kmsKeyServiceAccount:  openshift-dev-installer@openshift-gce-devel.iam.gserviceaccount.com
   replicas: 3
 controlPlane:
   name: master
@@ -135,3 +149,4 @@ platform:
 [compute-images]: https://cloud.google.com/compute/docs/reference/rest/v1/images
 [gcp-nested]: https://cloud.google.com/compute/docs/instances/enable-nested-virtualization-vm-instances
 [license-api]: https://cloud.google.com/compute/docs/reference/rest/v1/licenses/list
+[default-service-account]: https://cloud.google.com/compute/docs/access/service-accounts#compute_engine_service_account
