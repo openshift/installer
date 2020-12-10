@@ -51,7 +51,7 @@ resource "matchbox_profile" "master" {
     [var.pxe_kernel_args],
   )
 
-  raw_ignition = file(var.master_ign_file)
+  raw_ignition = file(var.bootstrap_ign_file)
 }
 
 resource "matchbox_profile" "worker" {
@@ -123,26 +123,6 @@ resource "packet_device" "workers" {
   project_id       = var.packet_project_id
 
   depends_on = [matchbox_group.worker]
-}
-
-# ==============BOOTSTRAP=================
-
-module "bootstrap" {
-  source = "./bootstrap"
-
-  pxe_kernel             = local.pxe_kernel
-  pxe_initrd             = local.pxe_initrd
-  pxe_kernel_args        = concat(
-    local.kernel_args,
-    [var.pxe_kernel_args],
-  )
-  matchbox_http_endpoint = var.matchbox_http_endpoint
-  igntion_config_content = file(var.bootstrap_ign_file)
-
-  cluster_id = var.cluster_id
-
-  packet_facility   = "any"
-  packet_project_id = var.packet_project_id
 }
 
 # ================AWS=====================
