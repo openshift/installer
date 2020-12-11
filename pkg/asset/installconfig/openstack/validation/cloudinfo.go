@@ -356,10 +356,15 @@ func getComputeLimits(opts *clientconfig.ClientOpts, projectID string) ([]record
 
 	var records []record
 	addRecord := func(name string, quota computequotasets.QuotaDetail) {
+		qval := int64(quota.Limit - quota.InUse - quota.Reserved)
+		// -1 means unlimited in OpenStack so we will ignore that record.
+		if quota.Limit == -1 {
+			qval = -1
+		}
 		records = append(records, record{
 			Service: "compute",
 			Name:    name,
-			Value:   int64(quota.Limit - quota.InUse - quota.Reserved),
+			Value:   qval,
 		})
 	}
 	addRecord("Cores", qs.Cores)
@@ -413,13 +418,15 @@ func loadQuotas(opts *clientconfig.ClientOpts) ([]quota.Quota, error) {
 func newQuota(limits []record) []quota.Quota {
 	var ret []quota.Quota
 	for _, limit := range limits {
+		isUnlimited := limit.Value == -1
 		q := quota.Quota{
 			Service: limit.Service,
 			Name:    limit.Name,
 			// Since limit.Value contains the actual
 			// available resources, we can set InUse to 0.
-			InUse: 0,
-			Limit: limit.Value,
+			InUse:     0,
+			Limit:     limit.Value,
+			Unlimited: isUnlimited,
 		}
 		ret = append(ret, q)
 	}
