@@ -1896,6 +1896,9 @@ func deleteRoute53(ctx context.Context, session *session.Session, arn arn.ARN, l
 		Id: aws.String(id),
 	})
 	if err != nil {
+		if err.(awserr.Error).Code() == "NoSuchHostedZone" {
+			return nil
+		}
 		return err
 	}
 
