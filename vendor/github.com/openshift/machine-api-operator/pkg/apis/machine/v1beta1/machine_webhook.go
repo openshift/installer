@@ -128,10 +128,32 @@ func getInfra() (*osconfigv1.Infrastructure, error) {
 	return infra, nil
 }
 
-type machineAdmissionFn func(m *Machine, clusterID string) (bool, []string, utilerrors.Aggregate)
+func getDNS() (*osconfigv1.DNS, error) {
+	cfg, err := ctrl.GetConfig()
+	if err != nil {
+		return nil, err
+	}
+	client, err := osclientset.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	dns, err := client.ConfigV1().DNSes().Get(context.Background(), "cluster", metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return dns, nil
+}
+
+type machineAdmissionFn func(m *Machine, config *admissionConfig) (bool, []string, utilerrors.Aggregate)
+
+type admissionConfig struct {
+	clusterID       string
+	dnsDisconnected bool
+}
 
 type admissionHandler struct {
-	clusterID         string
+	*admissionConfig
 	webhookOperations machineAdmissionFn
 	decoder           *admission.Decoder
 }
@@ -163,14 +185,23 @@ func NewMachineValidator() (*machineValidatorHandler, error) {
 		return nil, err
 	}
 
-	return createMachineValidator(infra.Status.PlatformStatus.Type, infra.Status.InfrastructureName), nil
+	dns, err := getDNS()
+	if err != nil {
+		return nil, err
+	}
+
+	return createMachineValidator(infra, dns), nil
 }
 
-func createMachineValidator(platform osconfigv1.PlatformType, clusterID string) *machineValidatorHandler {
+func createMachineValidator(infra *osconfigv1.Infrastructure, dns *osconfigv1.DNS) *machineValidatorHandler {
+	admissionConfig := &admissionConfig{
+		dnsDisconnected: dns.Spec.PublicZone == nil,
+		clusterID:       infra.Status.InfrastructureName,
+	}
 	return &machineValidatorHandler{
 		admissionHandler: &admissionHandler{
-			clusterID:         clusterID,
-			webhookOperations: getMachineValidatorOperation(platform),
+			admissionConfig:   admissionConfig,
+			webhookOperations: getMachineValidatorOperation(infra.Status.PlatformStatus.Type),
 		},
 	}
 }
@@ -187,7 +218,7 @@ func getMachineValidatorOperation(platform osconfigv1.PlatformType) machineAdmis
 		return validateVSphere
 	default:
 		// just no-op
-		return func(m *Machine, clusterID string) (bool, []string, utilerrors.Aggregate) {
+		return func(m *Machine, config *admissionConfig) (bool, []string, utilerrors.Aggregate) {
 			return true, []string{}, nil
 		}
 	}
@@ -206,7 +237,7 @@ func NewMachineDefaulter() (*machineDefaulterHandler, error) {
 func createMachineDefaulter(platformStatus *osconfigv1.PlatformStatus, clusterID string) *machineDefaulterHandler {
 	return &machineDefaulterHandler{
 		admissionHandler: &admissionHandler{
-			clusterID:         clusterID,
+			admissionConfig:   &admissionConfig{clusterID: clusterID},
 			webhookOperations: getMachineDefaulterOperation(platformStatus),
 		},
 	}
@@ -228,7 +259,7 @@ func getMachineDefaulterOperation(platformStatus *osconfigv1.PlatformStatus) mac
 		return defaultVSphere
 	default:
 		// just no-op
-		return func(m *Machine, clusterID string) (bool, []string, utilerrors.Aggregate) {
+		return func(m *Machine, config *admissionConfig) (bool, []string, utilerrors.Aggregate) {
 			return true, []string{}, nil
 		}
 	}
@@ -417,7 +448,7 @@ func (h *machineValidatorHandler) Handle(ctx context.Context, req admission.Requ
 
 	klog.V(3).Infof("Validate webhook called for Machine: %s", m.GetName())
 
-	ok, warnings, errs := h.webhookOperations(m, h.clusterID)
+	ok, warnings, errs := h.webhookOperations(m, h.admissionConfig)
 	if !ok {
 		return responseWithWarnings(admission.Denied(errs.Error()), warnings)
 	}
@@ -446,7 +477,7 @@ func (h *machineDefaulterHandler) Handle(ctx context.Context, req admission.Requ
 		m.Labels[MachineClusterIDLabel] = h.clusterID
 	}
 
-	ok, warnings, errs := h.webhookOperations(m, h.clusterID)
+	ok, warnings, errs := h.webhookOperations(m, h.admissionConfig)
 	if !ok {
 		return responseWithWarnings(admission.Denied(errs.Error()), warnings)
 	}
@@ -462,7 +493,7 @@ type awsDefaulter struct {
 	region string
 }
 
-func (a awsDefaulter) defaultAWS(m *Machine, clusterID string) (bool, []string, utilerrors.Aggregate) {
+func (a awsDefaulter) defaultAWS(m *Machine, config *admissionConfig) (bool, []string, utilerrors.Aggregate) {
 	klog.V(3).Infof("Defaulting AWS providerSpec")
 
 	var errs []error
@@ -513,7 +544,7 @@ func unmarshalInto(m *Machine, providerSpec interface{}) error {
 	return nil
 }
 
-func validateAWS(m *Machine, clusterID string) (bool, []string, utilerrors.Aggregate) {
+func validateAWS(m *Machine, config *admissionConfig) (bool, []string, utilerrors.Aggregate) {
 	klog.V(3).Infof("Validating AWS providerSpec")
 
 	var errs []error
@@ -583,6 +614,20 @@ func validateAWS(m *Machine, clusterID string) (bool, []string, utilerrors.Aggre
 	// TODO(alberto): Validate providerSpec.BlockDevices.
 	// https://github.com/openshift/cluster-api-provider-aws/pull/299#discussion_r433920532
 
+	switch providerSpec.Tenancy {
+	case "", aws.DefaultTenancy, aws.DedicatedTenancy, aws.HostTenancy:
+		// Do nothing, valid values
+	default:
+		errs = append(
+			errs,
+			field.Invalid(
+				field.NewPath("providerSpec", "tenancy"),
+				providerSpec.Tenancy,
+				fmt.Sprintf("Invalid providerSpec.tenancy, the only allowed options are: %s, %s, %s", aws.DefaultTenancy, aws.DedicatedTenancy, aws.HostTenancy),
+			),
+		)
+	}
+
 	if len(errs) > 0 {
 		return false, warnings, utilerrors.NewAggregate(errs)
 	}
@@ -590,7 +635,7 @@ func validateAWS(m *Machine, clusterID string) (bool, []string, utilerrors.Aggre
 	return true, warnings, nil
 }
 
-func defaultAzure(m *Machine, clusterID string) (bool, []string, utilerrors.Aggregate) {
+func defaultAzure(m *Machine, config *admissionConfig) (bool, []string, utilerrors.Aggregate) {
 	klog.V(3).Infof("Defaulting Azure providerSpec")
 
 	var errs []error
@@ -607,12 +652,12 @@ func defaultAzure(m *Machine, clusterID string) (bool, []string, utilerrors.Aggr
 
 	// Vnet and Subnet need to be provided together by the user
 	if providerSpec.Vnet == "" && providerSpec.Subnet == "" {
-		providerSpec.Vnet = defaultAzureVnet(clusterID)
-		providerSpec.Subnet = defaultAzureSubnet(clusterID)
+		providerSpec.Vnet = defaultAzureVnet(config.clusterID)
+		providerSpec.Subnet = defaultAzureSubnet(config.clusterID)
 	}
 
 	if providerSpec.Image == (azure.Image{}) {
-		providerSpec.Image.ResourceID = defaultAzureImageResourceID(clusterID)
+		providerSpec.Image.ResourceID = defaultAzureImageResourceID(config.clusterID)
 	}
 
 	if providerSpec.UserDataSecret == nil {
@@ -645,7 +690,7 @@ func defaultAzure(m *Machine, clusterID string) (bool, []string, utilerrors.Aggr
 	return true, warnings, nil
 }
 
-func validateAzure(m *Machine, clusterID string) (bool, []string, utilerrors.Aggregate) {
+func validateAzure(m *Machine, config *admissionConfig) (bool, []string, utilerrors.Aggregate) {
 	klog.V(3).Infof("Validating Azure providerSpec")
 
 	var errs []error
@@ -660,6 +705,9 @@ func validateAzure(m *Machine, clusterID string) (bool, []string, utilerrors.Agg
 		errs = append(errs, field.Required(field.NewPath("providerSpec", "vmSize"), "vmSize should be set to one of the supported Azure VM sizes"))
 	}
 
+	if providerSpec.PublicIP && config.dnsDisconnected {
+		errs = append(errs, field.Forbidden(field.NewPath("providerSpec", "publicIP"), "publicIP is not allowed in Azure disconnected installation"))
+	}
 	// Vnet requires Subnet
 	if providerSpec.Vnet != "" && providerSpec.Subnet == "" {
 		errs = append(errs, field.Required(field.NewPath("providerSpec", "subnet"), "must provide a subnet when a virtual network is specified"))
@@ -729,7 +777,7 @@ func validateAzureImage(image azure.Image) []error {
 	return errors
 }
 
-func defaultGCP(m *Machine, clusterID string) (bool, []string, utilerrors.Aggregate) {
+func defaultGCP(m *Machine, config *admissionConfig) (bool, []string, utilerrors.Aggregate) {
 	klog.V(3).Infof("Defaulting GCP providerSpec")
 
 	var errs []error
@@ -746,15 +794,15 @@ func defaultGCP(m *Machine, clusterID string) (bool, []string, utilerrors.Aggreg
 
 	if len(providerSpec.NetworkInterfaces) == 0 {
 		providerSpec.NetworkInterfaces = append(providerSpec.NetworkInterfaces, &gcp.GCPNetworkInterface{
-			Network:    defaultGCPNetwork(clusterID),
-			Subnetwork: defaultGCPSubnetwork(clusterID),
+			Network:    defaultGCPNetwork(config.clusterID),
+			Subnetwork: defaultGCPSubnetwork(config.clusterID),
 		})
 	}
 
-	providerSpec.Disks = defaultGCPDisks(providerSpec.Disks, clusterID)
+	providerSpec.Disks = defaultGCPDisks(providerSpec.Disks, config.clusterID)
 
 	if len(providerSpec.Tags) == 0 {
-		providerSpec.Tags = defaultGCPTags(clusterID)
+		providerSpec.Tags = defaultGCPTags(config.clusterID)
 	}
 
 	if providerSpec.UserDataSecret == nil {
@@ -804,7 +852,7 @@ func defaultGCPDisks(disks []*gcp.GCPDisk, clusterID string) []*gcp.GCPDisk {
 	return disks
 }
 
-func validateGCP(m *Machine, clusterID string) (bool, []string, utilerrors.Aggregate) {
+func validateGCP(m *Machine, config *admissionConfig) (bool, []string, utilerrors.Aggregate) {
 	klog.V(3).Infof("Validating GCP providerSpec")
 
 	var errs []error
@@ -927,7 +975,7 @@ func validateGCPServiceAccounts(serviceAccounts []gcp.GCPServiceAccount, parentP
 	return errs
 }
 
-func defaultVSphere(m *Machine, clusterID string) (bool, []string, utilerrors.Aggregate) {
+func defaultVSphere(m *Machine, config *admissionConfig) (bool, []string, utilerrors.Aggregate) {
 	klog.V(3).Infof("Defaulting vSphere providerSpec")
 
 	var errs []error
@@ -959,7 +1007,7 @@ func defaultVSphere(m *Machine, clusterID string) (bool, []string, utilerrors.Ag
 	return true, warnings, nil
 }
 
-func validateVSphere(m *Machine, clusterID string) (bool, []string, utilerrors.Aggregate) {
+func validateVSphere(m *Machine, config *admissionConfig) (bool, []string, utilerrors.Aggregate) {
 	klog.V(3).Infof("Validating vSphere providerSpec")
 
 	var errs []error

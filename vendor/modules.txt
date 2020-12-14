@@ -1087,7 +1087,7 @@ github.com/openshift/cluster-api/pkg/apis/machine/v1beta1
 ## explicit
 github.com/openshift/cluster-api-provider-gcp/pkg/apis
 github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1
-# github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20201005071206-fe82f25a4e7c => ./vendor2/github.com/openshift/cluster-api-provider-kubevirt
+# github.com/openshift/cluster-api-provider-kubevirt v0.0.0-20201214114543-e5aed9c73f1f
 ## explicit
 github.com/openshift/cluster-api-provider-kubevirt/pkg/apis
 github.com/openshift/cluster-api-provider-kubevirt/pkg/apis/kubevirtprovider/v1alpha1
@@ -1106,7 +1106,7 @@ github.com/openshift/custom-resource-status/conditions/v1
 ## explicit
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/route/routeapihelpers
-# github.com/openshift/machine-api-operator v0.2.1-0.20201002104344-6abfb5440597
+# github.com/openshift/machine-api-operator v0.2.1-0.20201111151924-77300d0c997a
 ## explicit
 github.com/openshift/machine-api-operator/pkg/apis/machine
 github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1
@@ -1738,7 +1738,7 @@ golang.org/x/xerrors
 golang.org/x/xerrors/internal
 # gomodules.xyz/jsonpatch/v2 v2.0.1
 gomodules.xyz/jsonpatch/v2
-# google.golang.org/api v0.31.0 => google.golang.org/api v0.25.0
+# google.golang.org/api v0.33.0 => google.golang.org/api v0.25.0
 ## explicit
 google.golang.org/api/appengine/v1
 google.golang.org/api/bigquery/v2
@@ -2230,7 +2230,7 @@ k8s.io/utils/exec
 k8s.io/utils/integer
 k8s.io/utils/pointer
 k8s.io/utils/trace
-# kubevirt.io/client-go v0.29.0
+# kubevirt.io/client-go v0.29.0 => kubevirt.io/client-go v0.29.0
 ## explicit
 kubevirt.io/client-go/api/v1
 kubevirt.io/client-go/precond
@@ -2286,7 +2286,7 @@ sigs.k8s.io/controller-runtime/pkg/webhook/admission
 sigs.k8s.io/controller-runtime/pkg/webhook/conversion
 sigs.k8s.io/controller-runtime/pkg/webhook/internal/certwatcher
 sigs.k8s.io/controller-runtime/pkg/webhook/internal/metrics
-# sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
+# sigs.k8s.io/controller-tools v0.4.1 => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 ## explicit
 sigs.k8s.io/controller-tools/cmd/controller-gen
 sigs.k8s.io/controller-tools/pkg/crd
@@ -2350,9 +2350,11 @@ sigs.k8s.io/yaml
 # github.com/vmware/govmomi => github.com/vmware/govmomi v0.22.2-0.20200420222347-5fceac570f29
 # k8s.io/api => k8s.io/api v0.19.0
 # k8s.io/client-go => k8s.io/client-go v0.19.0
+# kubevirt.io/client-go => kubevirt.io/client-go v0.29.0
 # sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20201022175424-d30c7a274820
 # sigs.k8s.io/cluster-api-provider-azure => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20201016155852-4090a6970205
 # sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.0.0-20201116051540-155384b859c5
+# sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 # github.com/Azure/go-autorest/autorest/adal => github.com/Azure/go-autorest/autorest/adal v0.8.2
 # github.com/Azure/go-autorest/autorest/azure/cli => github.com/Azure/go-autorest/autorest/azure/cli v0.3.1
 # github.com/Azure/go-autorest/autorest/date => github.com/Azure/go-autorest/autorest/date v0.2.0
@@ -2365,4 +2367,3 @@ sigs.k8s.io/yaml
 # google.golang.org/api => google.golang.org/api v0.25.0
 # google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 # google.golang.org/grpc => google.golang.org/grpc v1.29.1
-# github.com/openshift/cluster-api-provider-kubevirt => ./vendor2/github.com/openshift/cluster-api-provider-kubevirt
