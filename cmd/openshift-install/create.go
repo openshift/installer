@@ -261,7 +261,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) (err err
 
 	discovery := client.Discovery()
 
-	apiTimeout := 20 * time.Minute
+	apiTimeout := 60 * time.Minute
 	logrus.Infof("Waiting up to %v for the Kubernetes API at %s...", apiTimeout, config.Host)
 
 	apiContext, cancel := context.WithTimeout(ctx, apiTimeout)
