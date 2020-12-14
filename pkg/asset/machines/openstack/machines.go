@@ -140,6 +140,11 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		})
 	}
 
+	primarySubnet := platform.MachinesSubnet
+	if primarySubnet == "" {
+		primarySubnet = fmt.Sprintf("%s-openshift", clusterID)
+	}
+
 	spec := openstackprovider.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: openstackprovider.SchemeGroupVersion.String(),
@@ -150,7 +155,7 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		CloudsSecret:     &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
 		UserDataSecret:   &corev1.SecretReference{Name: userDataSecret},
 		Networks:         networks,
-		PrimarySubnet:    platform.MachinesSubnet,
+		PrimarySubnet:    primarySubnet,
 		AvailabilityZone: az,
 		SecurityGroups:   securityGroups,
 		Trunk:            trunkSupport,
