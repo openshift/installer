@@ -10,21 +10,50 @@ import (
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 )
 
+// These numbers should reflect what is documented here:
+// https://github.com/openshift/installer/tree/master/docs/user/openstack
+// https://github.com/openshift/installer/blob/master/docs/user/openstack/kuryr.md
+// Number or ports here don't include the constraints needed for each machine, which are calculated later
+var networkConstraint = buildNetworkConstraint(15, 1, 1, 1, 3, 60)
+var networkConstraintWithKuryr = buildNetworkConstraint(1500, 1, 250, 250, 250, 1000)
+
+func buildNetworkConstraint(ports, routers, subnets, networks, securityGroups, securityGroupRules int64) []quota.Constraint {
+	return []quota.Constraint{
+		{Name: "Port", Count: ports},
+		{Name: "Router", Count: routers},
+		{Name: "Subnet", Count: subnets},
+		{Name: "Network", Count: networks},
+		{Name: "SecurityGroup", Count: securityGroups},
+		{Name: "SecurityGroupRule", Count: securityGroupRules},
+	}
+}
+
+func getNetworkConstraints(networkType string) []quota.Constraint {
+	if networkType == "kuryr" {
+		return networkConstraintWithKuryr
+	}
+	return networkConstraint
+}
+
 // Constraints returns a list of quota constraints based on the InstallConfig.
 // These constraints can be used to check if there is enough quota for creating a cluster
 // for the install config.
-func Constraints(ci *validation.CloudInfo, controlPlanes []machineapi.Machine, computes []machineapi.MachineSet) []quota.Constraint {
+func Constraints(ci *validation.CloudInfo, controlPlanes []machineapi.Machine, computes []machineapi.MachineSet, networkType string) []quota.Constraint {
 	var constraints []quota.Constraint
 
 	for i := 0; i < len(controlPlanes); i++ {
-		constraints = append(constraints, machineConstraints(ci, &controlPlanes[i])...)
+		constraints = append(constraints, machineConstraints(ci, &controlPlanes[i], networkType)...)
 	}
 	constraints = append(constraints, instanceConstraint(int64(len(controlPlanes))))
 
 	for i := 0; i < len(computes); i++ {
-		constraints = append(constraints, machineSetConstraints(ci, &computes[i])...)
+		constraints = append(constraints, machineSetConstraints(ci, &computes[i], networkType)...)
 	}
 	constraints = append(constraints, instanceConstraint(int64(len(computes))))
+
+	for _, constraint := range getNetworkConstraints(networkType) {
+		constraints = append(constraints, constraint)
+	}
 
 	return aggregate(constraints)
 }
@@ -38,7 +67,7 @@ func getOpenstackProviderSpec(spec *machineapi.ProviderSpec) *openstackprovider.
 	return spec.Value.Object.(*openstackprovider.OpenstackProviderSpec)
 }
 
-func machineConstraints(ci *validation.CloudInfo, machine *machineapi.Machine) []quota.Constraint {
+func machineConstraints(ci *validation.CloudInfo, machine *machineapi.Machine, networkType string) []quota.Constraint {
 	osps := getOpenstackProviderSpec(&machine.Spec.ProviderSpec)
 	if osps == nil {
 		logrus.Warnf("Skipping quota validation for Machine %s: Invalid ProviderSpec", machine.Name)
@@ -53,11 +82,10 @@ func machineConstraints(ci *validation.CloudInfo, machine *machineapi.Machine) [
 		return nil
 	}
 	flavor := flavorInfo.Flavor
-
-	return []quota.Constraint{machineFlavorCoresToQuota(&flavor), machineFlavorRAMToQuota(&flavor)}
+	return []quota.Constraint{machineFlavorCoresToQuota(&flavor), machineFlavorRAMToQuota(&flavor), portConstraint(int64(len(osps.Networks)))}
 }
 
-func machineSetConstraints(ci *validation.CloudInfo, ms *machineapi.MachineSet) []quota.Constraint {
+func machineSetConstraints(ci *validation.CloudInfo, ms *machineapi.MachineSet, networkType string) []quota.Constraint {
 	osps := getOpenstackProviderSpec(&ms.Spec.Template.Spec.ProviderSpec)
 	if osps == nil {
 		logrus.Warnf("Skipping quota validation for MachineSet %s: Invalid ProviderSpec", ms.Name)
@@ -85,8 +113,9 @@ func machineSetConstraints(ci *validation.CloudInfo, ms *machineapi.MachineSet) 
 	coresConstraint.Count = coresConstraint.Count * int64(*replicas)
 	ramConstraint := machineFlavorRAMToQuota(&flavor)
 	ramConstraint.Count = ramConstraint.Count * int64(*replicas)
+	portConstraint := portConstraint((int64(len(osps.Networks)) * int64(*replicas)))
 
-	return []quota.Constraint{coresConstraint, ramConstraint}
+	return []quota.Constraint{coresConstraint, ramConstraint, portConstraint}
 }
 
 func aggregate(quotas []quota.Constraint) []quota.Constraint {
@@ -111,6 +140,10 @@ func machineFlavorRAMToQuota(f *flavors.Flavor) quota.Constraint {
 
 func instanceConstraint(count int64) quota.Constraint {
 	return generateConstraint("Instances", count)
+}
+
+func portConstraint(count int64) quota.Constraint {
+	return generateConstraint("Port", count)
 }
 
 func generateConstraint(name string, count int64) quota.Constraint {

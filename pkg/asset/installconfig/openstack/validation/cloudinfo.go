@@ -10,6 +10,7 @@ import (
 	tokensv3 "github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
+	networkquotasets "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/quotas"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
@@ -341,13 +342,21 @@ func loadLimits(opts *clientconfig.ClientOpts) ([]record, error) {
 		limits = append(limits, r)
 	}
 
+	networkRecords, err := getNetworkLimits(opts, projectID)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get network quota records")
+	}
+	for _, r := range networkRecords {
+		limits = append(limits, r)
+	}
+
 	return limits, nil
 }
 
 func getComputeLimits(opts *clientconfig.ClientOpts, projectID string) ([]record, error) {
 	computeClient, err := clientconfig.NewServiceClient("compute", opts)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect against OpenStack Comute v2 API")
+		return nil, errors.Wrap(err, "failed to connect against OpenStack Compute v2 API")
 	}
 	qs, err := computequotasets.GetDetail(computeClient, projectID).Extract()
 	if err != nil {
@@ -370,6 +379,39 @@ func getComputeLimits(opts *clientconfig.ClientOpts, projectID string) ([]record
 	addRecord("Cores", qs.Cores)
 	addRecord("Instances", qs.Instances)
 	addRecord("RAM", qs.RAM)
+
+	return records, nil
+}
+
+func getNetworkLimits(opts *clientconfig.ClientOpts, projectID string) ([]record, error) {
+	networkClient, err := clientconfig.NewServiceClient("network", opts)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to connect against OpenStack Network v2 API")
+	}
+	qs, err := networkquotasets.GetDetail(networkClient, projectID).Extract()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get QuotaSets from OpenStack Network API")
+	}
+
+	var records []record
+	addRecord := func(name string, quota networkquotasets.QuotaDetail) {
+		qval := int64(quota.Limit - quota.Used - quota.Reserved)
+		// -1 means unlimited in OpenStack so we will ignore that record.
+		if quota.Limit == -1 {
+			qval = -1
+		}
+		records = append(records, record{
+			Service: "network",
+			Name:    name,
+			Value:   qval,
+		})
+	}
+	addRecord("Port", qs.Port)
+	addRecord("Router", qs.Router)
+	addRecord("Subnet", qs.Subnet)
+	addRecord("Network", qs.Network)
+	addRecord("SecurityGroup", qs.SecurityGroup)
+	addRecord("SecurityGroupRule", qs.SecurityGroupRule)
 
 	return records, nil
 }
