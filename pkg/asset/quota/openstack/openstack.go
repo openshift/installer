@@ -1,6 +1,9 @@
 package openstack
 
 import (
+	"github.com/sirupsen/logrus"
+
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
 	"github.com/openshift/installer/pkg/quota"
 	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
@@ -11,44 +14,79 @@ import (
 // These constraints can be used to check if there is enough quota for creating a cluster
 // for the install config.
 func Constraints(ci *validation.CloudInfo, controlPlanes []machineapi.Machine, computes []machineapi.MachineSet) []quota.Constraint {
-	ctrplConfigs := make([]*openstackprovider.OpenstackProviderSpec, len(controlPlanes))
-	for i, m := range controlPlanes {
-		ctrplConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec)
-	}
-	computeReplicas := make([]int64, len(computes))
-	computeConfigs := make([]*openstackprovider.OpenstackProviderSpec, len(computes))
-	for i, m := range computes {
-		computeReplicas[i] = int64(*m.Spec.Replicas)
-		computeConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec)
-	}
+	var constraints []quota.Constraint
 
-	var ret []quota.Constraint
-	ret = controlPlane(ci, ctrplConfigs)
-	ret = append(ret, compute(ci, computeReplicas, computeConfigs)...)
-	return aggregate(ret)
+	for i := 0; i < len(controlPlanes); i++ {
+		constraints = append(constraints, machineConstraints(ci, &controlPlanes[i])...)
+	}
+	constraints = append(constraints, instanceConstraint(int64(len(controlPlanes))))
+
+	for i := 0; i < len(computes); i++ {
+		constraints = append(constraints, machineSetConstraints(ci, &computes[i])...)
+	}
+	constraints = append(constraints, instanceConstraint(int64(len(computes))))
+
+	return aggregate(constraints)
 }
 
-func controlPlane(ci *validation.CloudInfo, machines []*openstackprovider.OpenstackProviderSpec) []quota.Constraint {
-	var ret []quota.Constraint
-	for _, m := range machines {
-		flavorInfo := ci.Flavors[m.Flavor]
-		ret = append(ret, machineFlavorCoresToQuota(flavorInfo, ci), machineFlavorRAMToQuota(flavorInfo, ci))
+func getOpenstackProviderSpec(spec *machineapi.ProviderSpec) *openstackprovider.OpenstackProviderSpec {
+	if spec.Value == nil {
+		logrus.Warnf("Empty ProviderSpec")
+		return nil
 	}
-	ret = append(ret, instanceConstraint(int64(len(machines))))
-	return ret
+
+	return spec.Value.Object.(*openstackprovider.OpenstackProviderSpec)
 }
 
-func compute(ci *validation.CloudInfo, replicas []int64, machines []*openstackprovider.OpenstackProviderSpec) []quota.Constraint {
-	var ret []quota.Constraint
-	for idx, m := range machines {
-		flavorInfo := ci.Flavors[m.Flavor]
-		coresConstraint := machineFlavorCoresToQuota(flavorInfo, ci)
-		coresConstraint.Count = coresConstraint.Count * replicas[idx]
-		ramConstraint := machineFlavorRAMToQuota(flavorInfo, ci)
-		ramConstraint.Count = ramConstraint.Count * replicas[idx]
-		ret = append(ret, instanceConstraint(int64(replicas[idx])), coresConstraint, ramConstraint)
+func machineConstraints(ci *validation.CloudInfo, machine *machineapi.Machine) []quota.Constraint {
+	osps := getOpenstackProviderSpec(&machine.Spec.ProviderSpec)
+	if osps == nil {
+		logrus.Warnf("Skipping quota validation for Machine %s: Invalid ProviderSpec", machine.Name)
+		return nil
 	}
-	return ret
+
+	flavorInfo, ok := ci.Flavors[osps.Flavor]
+	if !ok {
+		// This will result in a separate validation failure
+		logrus.Warnf("Skipping quota validation for Machine %s: Flavor '%s' is not valid",
+			machine.Name, osps.Flavor)
+		return nil
+	}
+	flavor := flavorInfo.Flavor
+
+	return []quota.Constraint{machineFlavorCoresToQuota(&flavor), machineFlavorRAMToQuota(&flavor)}
+}
+
+func machineSetConstraints(ci *validation.CloudInfo, ms *machineapi.MachineSet) []quota.Constraint {
+	osps := getOpenstackProviderSpec(&ms.Spec.Template.Spec.ProviderSpec)
+	if osps == nil {
+		logrus.Warnf("Skipping quota validation for MachineSet %s: Invalid ProviderSpec", ms.Name)
+		return nil
+	}
+
+	replicas := ms.Spec.Replicas
+	if replicas == nil {
+		// We defensively check for nil Replicas here, but this should have
+		// already been defaulted if omitted.
+
+		logrus.Warnf("Skipping quota validation for MachineSet %s due to unspecified replica count", ms.Name)
+		return nil
+	}
+
+	flavorInfo, ok := ci.Flavors[osps.Flavor]
+	if !ok {
+		// This will result in a separate validation failure
+		logrus.Warnf("Skipping quota validation for MachineSet %s: Flavor '%s' is not valid", ms.Name, osps.Flavor)
+		return nil
+	}
+	flavor := flavorInfo.Flavor
+
+	coresConstraint := machineFlavorCoresToQuota(&flavor)
+	coresConstraint.Count = coresConstraint.Count * int64(*replicas)
+	ramConstraint := machineFlavorRAMToQuota(&flavor)
+	ramConstraint.Count = ramConstraint.Count * int64(*replicas)
+
+	return []quota.Constraint{coresConstraint, ramConstraint}
 }
 
 func aggregate(quotas []quota.Constraint) []quota.Constraint {
@@ -63,14 +101,11 @@ func aggregate(quotas []quota.Constraint) []quota.Constraint {
 	return aggregatedQuotas
 }
 
-//constraintGenerator generates a list of constraints.
-type constraintGenerator func() []quota.Constraint
-
-func machineFlavorCoresToQuota(f validation.Flavor, ci *validation.CloudInfo) quota.Constraint {
+func machineFlavorCoresToQuota(f *flavors.Flavor) quota.Constraint {
 	return generateConstraint("Cores", int64(f.VCPUs))
 }
 
-func machineFlavorRAMToQuota(f validation.Flavor, ci *validation.CloudInfo) quota.Constraint {
+func machineFlavorRAMToQuota(f *flavors.Flavor) quota.Constraint {
 	return generateConstraint("RAM", int64(f.RAM))
 }
 
