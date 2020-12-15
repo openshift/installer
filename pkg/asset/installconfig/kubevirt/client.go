@@ -2,7 +2,7 @@ package kubevirt
 
 import (
 	"context"
-	"io/ioutil"
+	"fmt"
 
 	nadv1 "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
 	"github.com/pkg/errors"
@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	kubevirtapiv1 "kubevirt.io/client-go/api/v1"
 	cdiv1 "kubevirt.io/containerized-data-importer/pkg/apis/core/v1alpha1"
 )
@@ -59,9 +60,36 @@ var (
 // LoadKubeConfigContent returns the kubeconfig file content
 func LoadKubeConfigContent() ([]byte, error) {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	kubeConfigFilename := loadingRules.GetDefaultFilename()
+	configOverrides := &clientcmd.ConfigOverrides{}
+	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+	rawConfig, err := clientConfig.RawConfig()
+	if err != nil {
+		return nil, err
+	}
 
-	return ioutil.ReadFile(kubeConfigFilename)
+	// Remove anything that is not related to the current context from the result rawConfig
+	currentContextValue := rawConfig.Contexts[rawConfig.CurrentContext]
+	if currentContextValue == nil {
+		return nil, fmt.Errorf("currentContext is not included in rawConfig.Contexts")
+	}
+
+	rawConfig.Contexts = map[string]*clientcmdapi.Context{
+		rawConfig.CurrentContext: currentContextValue,
+	}
+
+	if v, ok := rawConfig.Clusters[currentContextValue.Cluster]; ok {
+		rawConfig.Clusters = map[string]*clientcmdapi.Cluster{
+			currentContextValue.Cluster: v,
+		}
+	}
+
+	if v, ok := rawConfig.AuthInfos[currentContextValue.AuthInfo]; ok {
+		rawConfig.AuthInfos = map[string]*clientcmdapi.AuthInfo{
+			currentContextValue.AuthInfo: v,
+		}
+	}
+
+	return clientcmd.Write(rawConfig)
 }
 
 // NewClient creates our client wrapper object for the actual kubeVirt and kubernetes clients we use.
