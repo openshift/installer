@@ -7,7 +7,7 @@
 - import_playbook: common.yaml
 
 - hosts: all
-  gather_facts: no
+  gather_facts: false
 
   tasks:
   - name: 'List ports attatched to router'
@@ -17,8 +17,8 @@
 
   - name: 'Remove the ports from router'
     command:
-      cmd: "openstack router remove port {{ os_router }} {{ item.1}}"
-    with_indexed_items: "{{ router_ports.stdout_lines }}"
+      cmd: "openstack router remove port {{ os_router }} {{ item }}"
+    loop: "{{ router_ports.stdout_lines }}"
 
   - name: 'List ha ports attached to router'
     command:
@@ -27,8 +27,8 @@
 
   - name: 'Remove the ha ports from router'
     command:
-      cmd: "openstack router remove port {{ os_router }} {{ item.1}}"
-    with_indexed_items: "{{ ha_router_ports.stdout_lines }}"
+      cmd: "openstack router remove port {{ os_router }} {{ item }}"
+    loop: "{{ ha_router_ports.stdout_lines }}"
 
   - name: 'List ports'
     command:

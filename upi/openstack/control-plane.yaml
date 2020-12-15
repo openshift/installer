@@ -8,25 +8,31 @@
 - import_playbook: common.yaml
 
 - hosts: all
-  gather_facts: no
+  gather_facts: false
 
   tasks:
   - name: 'Create the Control Plane ports'
     os_port:
-      name: "{{ item.1 }}-{{ item.0 }}"
+      name: "{{ item }}-{{ index_port }}"
       network: "{{ os_network }}"
       security_groups:
       - "{{ os_sg_master }}"
       allowed_address_pairs:
       - ip_address: "{{ os_apiVIP }}"
       - ip_address: "{{ os_ingressVIP }}"
-    with_indexed_items: "{{ [os_port_master] * os_cp_nodes_number }}"
+    loop: "{{ [os_port_master] * os_cp_nodes_number }}"
+    loop_control:
+      index_var: index_port
     register: ports
 
+  # Remove that task once we can create ports with tags directly:
+  # https://review.opendev.org/c/openstack/ansible-collections-openstack/+/767219
   - name: 'Set Control Plane ports tag'
     command:
-      cmd: "openstack port set --tag {{ cluster_id_tag }} {{ item.1 }}-{{ item.0 }}"
-    with_indexed_items: "{{ [os_port_master] * os_cp_nodes_number }}"
+      cmd: "openstack port set --tag {{ cluster_id_tag }} {{ item }}-{{ index_tag }}"
+    loop: "{{ [os_port_worker] * os_cp_nodes_number }}"
+    loop_control:
+      index_var: index_tag
 
   - name: 'List the Control Plane Trunks'
     command:
@@ -36,8 +42,10 @@
 
   - name: 'Create the Control Plane trunks'
     command:
-      cmd: "openstack network trunk create --parent-port {{ item.1.id }} {{ os_cp_trunk_name }}-{{ item.0 }}"
-    with_indexed_items: "{{ ports.results }}"
+      cmd: "openstack network trunk create --parent-port {{ item.id }} {{ os_cp_trunk_name }}-{{ index_trunk }}"
+    loop: "{{ ports.results }}"
+    loop_control:
+      index_var: index_trunk
     when:
     - os_networking_type == "Kuryr"
     - "os_cp_trunk_name|string not in control_plane_trunks.stdout"
@@ -72,18 +80,20 @@
 
   - name: 'Create the Control Plane servers'
     os_server:
-      name: "{{ item.1 }}-{{ item.0 }}"
+      name: "{{ item }}-{{ index_server }}"
       image: "{{ os_image_rhcos }}"
       flavor: "{{ os_flavor_master }}"
-      auto_ip: no
+      auto_ip: false
       # The ignition filename will be concatenated with the Control Plane node
       # name and its 0-indexed serial number.
       # In this case, the first node will look for this filename:
       #    "{{ infraID }}-master-0-ignition.json"
-      userdata: "{{ lookup('file', [item.1, item.0, 'ignition.json'] | join('-')) | string }}"
+      userdata: "{{ lookup('file', [item, index_server, 'ignition.json'] | join('-')) | string }}"
       nics:
-      - port-name: "{{ os_port_master }}-{{ item.0 }}"
+      - port-name: "{{ os_port_master }}-{{ index_server }}"
       scheduler_hints:
         group: "{{ server_group_id }}"
       meta: "{{ cluster_id_tag }}"
-    with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
+    loop: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
+    loop_control:
+      index_var: index_server

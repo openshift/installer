@@ -8,24 +8,30 @@
 - import_playbook: common.yaml
 
 - hosts: all
-  gather_facts: no
+  gather_facts: false
 
   tasks:
   - name: 'Create the Compute ports'
     os_port:
-      name: "{{ item.1 }}-{{ item.0 }}"
+      name: "{{ item }}-{{ index_port }}"
       network: "{{ os_network }}"
       security_groups:
       - "{{ os_sg_worker }}"
       allowed_address_pairs:
       - ip_address: "{{ os_ingressVIP }}"
-    with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"
+    loop: "{{ [os_port_worker] * os_compute_nodes_number }}"
+    loop_control:
+      index_var: index_port
     register: ports
 
+  # Remove that task once we can create ports with tags directly:
+  # https://review.opendev.org/c/openstack/ansible-collections-openstack/+/767219
   - name: 'Set Compute ports tag'
     command:
-      cmd: "openstack port set --tag {{ cluster_id_tag }} {{ item.1 }}-{{ item.0 }}"
-    with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"
+      cmd: "openstack port set --tag {{ cluster_id_tag }} {{ item }}-{{ index_tag }}"
+    loop: "{{ [os_port_worker] * os_compute_nodes_number }}"
+    loop_control:
+      index_var: index_tag
 
   - name: 'List the Compute Trunks'
     command:
@@ -35,20 +41,24 @@
 
   - name: 'Create the Compute trunks'
     command:
-      cmd: "openstack network trunk create --parent-port {{ item.1.id }} {{ os_compute_trunk_name }}-{{ item.0 }}"
-    with_indexed_items: "{{ ports.results }}"
+      cmd: "openstack network trunk create --parent-port {{ item.id }} {{ os_compute_trunk_name }}-{{ index_trunk }}"
+    loop: "{{ ports.results }}"
+    loop_control:
+      index_var: index_trunk
     when:
     - os_networking_type == "Kuryr"
     - "os_compute_trunk_name|string not in compute_trunks.stdout"
 
   - name: 'Create the Compute servers'
     os_server:
-      name: "{{ item.1 }}-{{ item.0 }}"
+      name: "{{ item }}-{{ index_server }}"
       image: "{{ os_image_rhcos }}"
       flavor: "{{ os_flavor_worker }}"
-      auto_ip: no
+      auto_ip: false
       userdata: "{{ lookup('file', 'worker.ign') | string }}"
       nics:
       - port-name: "{{ os_port_worker }}-{{ item.0 }}"
       meta: "{{ cluster_id_tag }}"
-    with_indexed_items: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
+    loop: "{{ [os_port_worker] * os_compute_nodes_number }}"
+    loop_control:
+      index_var: index_server

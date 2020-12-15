@@ -6,7 +6,7 @@
 - import_playbook: common.yaml
 
 - hosts: all
-  gather_facts: no
+  gather_facts: false
 
   tasks:
   - name: 'Remove the bootstrap server'

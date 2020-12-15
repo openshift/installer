@@ -7,13 +7,15 @@
 - import_playbook: common.yaml
 
 - hosts: all
-  gather_facts: no
+  gather_facts: false
 
   tasks:
   - name: 'Create the master security group'
     os_security_group:
       name: "{{ os_sg_master }}"
 
+  # Remove that task once we can create ports with tags directly:
+  # https://review.opendev.org/c/openstack/ansible-collections-openstack/+/767219
   - name: 'Set master security group tag'
     command:
       cmd: "openstack security group set --tag {{ cluster_id_tag }} {{ os_sg_master }} "
@@ -22,6 +24,8 @@
     os_security_group:
       name: "{{ os_sg_worker }}"
 
+  # Remove that task once we can create ports with tags directly:
+  # https://review.opendev.org/c/openstack/ansible-collections-openstack/+/767219
   - name: 'Set worker security group tag'
     command:
       cmd: "openstack security group set --tag {{ cluster_id_tag }} {{ os_sg_worker }} "
