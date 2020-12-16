@@ -59,7 +59,7 @@ oc delete machine -n openshift-machine-api <machine>
 
 OpenShift does not currently support Cinder availability zones. When attaching a volume to a Nova machine, the Cloud Provider will look for available storage in the same Availability Zone (or better said: in a Cinder availability Zone with the same name as the Nova availability zone of the corresponding machine).
 
-In 4.6, [it is possible to control what Availability Zone each machine will be created in][nova-az-setting]. Cloud Provider can be instructed to ignore the corresponding machine's AZ (and thus pick storage regardless of the zones) by adding the `ignore-volume-az` directive in its configuration, under the `[BlockStorage]` section of the `cloud-provider-config` configmap:
+In 4.6, [it is possible to control what Availability Zone each machine will be created in][nova-az-setting]. Cloud Provider can be instructed to ignore the corresponding machine's AZ (and thus pick storage regardless of the zones) by adding the `ignore-volume-az = yes` directive in its configuration, under the `[BlockStorage]` section of the `cloud-provider-config` configmap:
 
 ```
 oc edit cm cloud-provider-config -n openshift-config
@@ -67,7 +67,7 @@ oc edit cm cloud-provider-config -n openshift-config
 
 ```
 [BlockStorage]
-ignore-volume-az
+ignore-volume-az = yes
 ```
 
 [nova-az-setting]: ../openstack#setting-nova-availability-zones
