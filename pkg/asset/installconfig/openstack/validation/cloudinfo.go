@@ -186,6 +186,9 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 }
 
 func (ci *CloudInfo) getSubnet(subnetID string) (*subnets.Subnet, error) {
+	if subnetID == "" {
+		return nil, nil
+	}
 	subnet, err := subnets.Get(ci.clients.networkClient, subnetID).Extract()
 	if err != nil {
 		var gerr *gophercloud.ErrResourceNotFound
