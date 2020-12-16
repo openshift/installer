@@ -444,7 +444,7 @@ rm -rf ostest/
 
 Groups of Compute nodes are managed using the [MachineSet][machine-set-code] resource. It is possible to create additional MachineSets post-install, for example to assign workloads to specific machines.
 
-When running on OpenStack, the MachineSet has platform-specific fields under `spec.template.spec.providerSpec.value`:
+When running on OpenStack, the MachineSet has platform-specific fields under `spec.template.spec.providerSpec.value`. For more information about the values that you can set in the `providerSpec`, see [the API definition](provider-spec-definition).
 
 ```yaml
 apiVersion: machine.openshift.io/v1beta1
@@ -500,6 +500,14 @@ spec:
             name: <node_role>-user-data
           availabilityZone: <optional_openstack_availability_zone>
 ```
+
+[provider-spec-definition]: https://github.com/openshift/cluster-api-provider-openstack/blob/155384b859c5b2fb5b7f11c9111d3f8e4f3066bd/pkg/apis/openstackproviderconfig/v1alpha1/types.go#L31
+
+#### Defining a MachineSet That Uses Multiple Networks
+
+To define a MachineSet with multiple networks, the `primarySubnet` value in the `providerSpec` must be set to the OpenStack subnet that you want the Kubernetes endpoints of the nodes to be published on. For most use cases, this is the same subnet as the [machinesSubnet](./customization.md#cluster-scoped-properties) in the `install-config.yaml`.
+
+ After you set the subnet, add all of the networks that you want to attach to your machines to the `Networks` list in `providerSpec`. You must also add the network that the primary subnet is part of to this list.
 
 #### Using a Server Group
 

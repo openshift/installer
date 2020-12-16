@@ -150,9 +150,18 @@ platform:
 
 ## Custom Subnets
 
-Before running the installer with a custom `machinesSubnet`, there are a few things you should check. First, make sure that you have a network and subnet available. Note that the installer will create ports on this network, and some ports will be given a fixed IP addresses in the subnet's CIDR. Make sure that the credentials that you give the installer are authorized to do this! The installer will also apply a tag to the subnet. Lastly, the installer will not create a router, so make sure to do this if you need a router to attach floating IP addresses to the network you want to install the nodes onto. Note that for now, this feature does not fully support provider networks.
+In the `install-config.yaml` file, the value of the `machinesSubnet` property is the subnet where the Kubernetes endpoints of the nodes in your cluster are published. The Ingress and API ports are created on this subnet, too. By default, the installer creates a network and subnet for these endpoints and ports. Alternatively, you can use a subnet of your own by setting the value of the `machinesSubnet` property to the UUID of an existing OpenStack subnet. To use this feature, you need to meet these requirements:
 
-Once that is ironed out, you can pass the ID of the subnet to the install config with the `machinesSubnet` option. This subnet will be tagged as the primary subnet for the cluster. The nodes, and VIP port will be created on this subnet. This does add some complexity to the install process that needs to be accounted for. First of all, the subnet must have DHCP enabled. Also, the CIDR of the custom subnet must match the cidr of `networks.machineNetwork`. Be aware that the API and Ingress VIPs by default will try to take the .5 and .7 of your network CIDR. To avoid other services taking the ports assigned to the api and ingress VIPs, it is recommended that users set the `apiVIP` and `ingressVIP` options in the install config to addresses that are outside of the DHCP allocation pool. Lastly, note that setting `externalDNS` while setting `machinesSubnet` is invalid usage, since the installer will not modify your subnet. If you want to add a DNS to your cluster while using a custom subnet, add it to the subnet in openstack [like this](https://docs.openstack.org/neutron/rocky/admin/config-dns-res.html).
+* The subnet that is used by `machinesSubnet` has DHCP enabled.
+* The CIDR of `machinesSubnet` matches the CIDR of `networks.machineNetwork`.
+* The installer user must have permission to create ports on this network, including ports with fixed IP addresses.
+
+You should also be aware of the following limitations:
+
+* If you plan to install a cluster that uses floating IPs, the `machinesSubnet` must be attached to a router that is connected to the `externalNetwork`.
+* The installer will not create a private network or subnet for your OpenShift machines if the `machinesSubnet` is set in the `install-config.yaml`.
+* By default, the API and Ingress VIPs use the .5 and .7 of your network CIDR. To prevent other services from taking the ports that are assigned to the API and Ingress VIPs, set the `apiVIP` and `ingressVIP` options in the `install-config.yaml` to addresses that are outside of the DHCP allocation pool.
+* You cannot use the `externalDNS` property at the same time as a custom `machinesSubnet`. If you want to add a DNS to your cluster while using a custom subnet, [add it to the subnet in OpenStack](https://docs.openstack.org/neutron/rocky/admin/config-dns-res.html).
 
 ## Additional Networks
 
