@@ -396,7 +396,7 @@ az vm stop -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap
 az vm deallocate -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap
 az vm delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap --yes
 az disk delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap_OSDisk --no-wait --yes
-az network nic delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap-nic --no-wait
+az network nic delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap-nic-1 --no-wait
 az storage blob delete --account-key $ACCOUNT_KEY --account-name ${CLUSTER_NAME}sa --container-name files --name bootstrap.ign
 az network public-ip delete -g $RESOURCE_GROUP --name ${INFRA_ID}-bootstrap-ssh-pip
 ```

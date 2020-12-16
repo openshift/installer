@@ -122,6 +122,13 @@
         "count" :  "[parameters('numberOfNodes')]",
         "input" : "[concat(parameters('baseName'), '-worker-', variables('location'), '-', copyIndex('vmNames', 1))]"
       }
+    ],
+    "copy" : [
+      {
+        "name" : "nicNames",
+        "count" : "[parameters('numberOfNodes')]",
+        "input" : "[concat(parameters('baseName'), '-worker-nic-', copyIndex('nicNames'))]"
+      }
     ]
   },
   "resources" : [
@@ -142,7 +149,7 @@
             {
               "apiVersion" : "2018-06-01",
               "type" : "Microsoft.Network/networkInterfaces",
-              "name" : "[concat(variables('vmNames')[copyIndex()], '-nic')]",
+              "name" : "[variables('nicNames')[copyIndex()]]",
               "location" : "[variables('location')]",
               "properties" : {
                 "ipConfigurations" : [
@@ -173,7 +180,7 @@
                 }
               },
               "dependsOn" : [
-                "[concat('Microsoft.Network/networkInterfaces/', concat(variables('vmNames')[copyIndex()], '-nic'))]"
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicNames')[copyIndex()])]"
               ],
               "properties" : {
                 "hardwareProfile" : {
@@ -212,7 +219,7 @@
                 "networkProfile" : {
                   "networkInterfaces" : [
                     {
-                      "id" : "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmNames')[copyIndex()], '-nic'))]",
+                      "id" : "[resourceId('Microsoft.Network/networkInterfaces', variables('nicNames')[copyIndex()])]",
                       "properties": {
                         "primary": true
                       }

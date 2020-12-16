@@ -9,7 +9,12 @@ locals {
 resource "azurerm_network_interface" "master" {
   count = var.instance_count
 
-  name                = "${var.cluster_id}-master${count.index}-nic"
+  // https://github.com/kubernetes/kubernetes/pull/95542 requires that the NIC name matches the regex (.+)-nic-(.+),
+  // where the node name is $1-$2 from the regex capture.
+  // For example, let's say that the cluster ID is abcde.
+  // The node names will be abcde-master-0, abcde-master-1, and abcde-master-2.
+  // The NIC names must be abcde-master-nic-0, abcde-master-nic-1, and abcde-master-nic-2.
+  name                = "${var.cluster_id}-master-nic-${count.index}"
   location            = var.region
   resource_group_name = var.resource_group_name
 
