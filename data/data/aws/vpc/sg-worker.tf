@@ -73,6 +73,36 @@ resource "aws_security_group_rule" "worker_ingress_geneve" {
   self      = true
 }
 
+resource "aws_security_group_rule" "worker_ingress_ike" {
+  type              = "ingress"
+  security_group_id = aws_security_group.worker.id
+
+  protocol  = "udp"
+  from_port = 500
+  to_port   = 500
+  self      = true
+}
+
+resource "aws_security_group_rule" "worker_ingress_ike_nat_t" {
+  type              = "ingress"
+  security_group_id = aws_security_group.worker.id
+
+  protocol  = "udp"
+  from_port = 4500
+  to_port   = 4500
+  self      = true
+}
+
+resource "aws_security_group_rule" "worker_ingress_esp" {
+  type              = "ingress"
+  security_group_id = aws_security_group.worker.id
+
+  protocol  = 50
+  from_port = 0
+  to_port   = 0
+  self      = true
+}
+
 resource "aws_security_group_rule" "worker_ingress_geneve_from_master" {
   type                     = "ingress"
   security_group_id        = aws_security_group.worker.id
