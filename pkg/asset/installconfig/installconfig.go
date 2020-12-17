@@ -14,7 +14,6 @@ import (
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ickubevirt "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
-	icopenstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	icovirt "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	icvsphere "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types"
@@ -191,9 +190,6 @@ func (a *InstallConfig) platformValidation() error {
 	}
 	if a.Config.Platform.Ovirt != nil {
 		return icovirt.Validate(a.Config)
-	}
-	if a.Config.Platform.OpenStack != nil {
-		return icopenstack.Validate(a.Config)
 	}
 	if a.Config.Platform.Kubevirt != nil {
 		client, err := ickubevirt.NewClient()

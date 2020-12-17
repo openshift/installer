@@ -382,6 +382,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case openstack.Name:
+		err = openstackconfig.Validate(installConfig.Config)
+		if err != nil {
+			return err
+		}
+
 		cloud, err := openstackconfig.GetSession(installConfig.Config.Platform.OpenStack.Cloud)
 		if err != nil {
 			return errors.Wrap(err, "failed to get cloud config for openstack")

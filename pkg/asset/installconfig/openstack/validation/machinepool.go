@@ -109,10 +109,6 @@ func validUUIDv4(s string) bool {
 // validate flavor checks to make sure that a given flavor exists and meets the minimum requrement to run a cluster
 // this function does not validate proper install config usage
 func validateFlavor(flavorName string, ci *CloudInfo, req flavorRequirements, fldPath *field.Path, storage bool) field.ErrorList {
-	if flavorName == "" {
-		return nil
-	}
-
 	flavor, ok := ci.Flavors[flavorName]
 	if !ok {
 		return field.ErrorList{field.NotFound(fldPath, flavorName)}
