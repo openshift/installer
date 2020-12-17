@@ -1479,6 +1479,24 @@ spec:
                   network:
                     description: Network
                     properties:
+                      dnsmasqOptions:
+                        description: DnsmasqOptions is the dnsmasq options to be used
+                          when installing on libvirt.
+                        items:
+                          description: DnsmasqOption contains the name and value of
+                            the option to configure in the libvirt network.
+                          properties:
+                            name:
+                              description: The dnsmasq option name. A full list of
+                                options and an explanation for each can be found in
+                                /etc/dnsmasq.conf
+                              type: string
+                            value:
+                              description: The value that is being set for the particular
+                                option.
+                              type: string
+                          type: object
+                        type: array
                       if:
                         default: tt0
                         description: The interface make used for the network. Default
