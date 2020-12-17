@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -172,16 +173,17 @@ func getDataCenter(ctx context.Context, finder *find.Finder, client *vim25.Clien
 		return "", "", errors.New("did not find any datacenters")
 	}
 	if len(dataCenters) == 1 {
-		logrus.Infof("Defaulting to only available datacenter: %s", dataCenters[0].Name())
-		dc := dataCenters[0]
-		return dc.Name(), formatPath(dc.InventoryPath), nil
+		name := strings.TrimPrefix(dataCenters[0].InventoryPath, "/")
+		logrus.Infof("Defaulting to only available datacenter: %s", name)
+		return name, dataCenters[0].InventoryPath, nil
 	}
 
 	dataCenterPaths := make(map[string]string)
 	var dataCenterChoices []string
 	for _, dc := range dataCenters {
-		dataCenterPaths[dc.Name()] = dc.InventoryPath
-		dataCenterChoices = append(dataCenterChoices, dc.Name())
+		name := strings.TrimPrefix(dc.InventoryPath, "/")
+		dataCenterPaths[name] = dc.InventoryPath
+		dataCenterChoices = append(dataCenterChoices, name)
 	}
 	sort.Strings(dataCenterChoices)
 
@@ -199,15 +201,14 @@ func getDataCenter(ctx context.Context, finder *find.Finder, client *vim25.Clien
 		return "", "", errors.Wrap(err, "failed UserInput")
 	}
 
-	selectedDataCenterPath := formatPath(dataCenterPaths[selectedDataCenter])
-	return selectedDataCenter, selectedDataCenterPath, nil
+	return selectedDataCenter, dataCenterPaths[selectedDataCenter], nil
 }
 
 func getCluster(ctx context.Context, path string, finder *find.Finder, client *vim25.Client) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
-	clusters, err := finder.ClusterComputeResourceList(ctx, path)
+	clusters, err := finder.ClusterComputeResourceList(ctx, formatPath(path))
 	if err != nil {
 		return "", errors.Wrap(err, "unable to list clusters")
 	}
@@ -217,13 +218,15 @@ func getCluster(ctx context.Context, path string, finder *find.Finder, client *v
 		return "", errors.New("did not find any clusters")
 	}
 	if len(clusters) == 1 {
-		logrus.Infof("Defaulting to only available cluster: %s", clusters[0].Name())
-		return clusters[0].Name(), nil
+		name := strings.TrimPrefix(clusters[0].InventoryPath, path+"/host/")
+		logrus.Infof("Defaulting to only available cluster: %s", name)
+		return name, nil
 	}
 
 	var clusterChoices []string
 	for _, c := range clusters {
-		clusterChoices = append(clusterChoices, c.Name())
+		name := strings.TrimPrefix(c.InventoryPath, path+"/host/")
+		clusterChoices = append(clusterChoices, name)
 	}
 	sort.Strings(clusterChoices)
 
@@ -248,7 +251,7 @@ func getDataStore(ctx context.Context, path string, finder *find.Finder, client 
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
-	dataStores, err := finder.DatastoreList(ctx, path)
+	dataStores, err := finder.DatastoreList(ctx, formatPath(path))
 	if err != nil {
 		return "", errors.Wrap(err, "unable to list datastores")
 	}
@@ -289,7 +292,7 @@ func getNetwork(ctx context.Context, path string, finder *find.Finder, client *v
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
-	networks, err := finder.NetworkList(ctx, path)
+	networks, err := finder.NetworkList(ctx, formatPath(path))
 	if err != nil {
 		return "", errors.Wrap(err, "unable to list networks")
 	}
