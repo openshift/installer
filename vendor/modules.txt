@@ -441,7 +441,7 @@ github.com/davecgh/go-spew/spew
 github.com/dgrijalva/jwt-go
 # github.com/dimchansky/utfbom v1.1.0
 github.com/dimchansky/utfbom
-# github.com/dmacvicar/terraform-provider-libvirt v0.6.2
+# github.com/dmacvicar/terraform-provider-libvirt v0.6.4-0.20201216193629-2b60d7626ff8
 ## explicit
 github.com/dmacvicar/terraform-provider-libvirt/libvirt
 github.com/dmacvicar/terraform-provider-libvirt/libvirt/helper/suppress
@@ -1035,8 +1035,6 @@ github.com/mitchellh/go-wordwrap
 github.com/mitchellh/hashstructure
 # github.com/mitchellh/mapstructure v1.3.3
 github.com/mitchellh/mapstructure
-# github.com/mitchellh/packer v1.3.2
-github.com/mitchellh/packer/common/uuid
 # github.com/mitchellh/panicwrap v1.0.0
 github.com/mitchellh/panicwrap
 # github.com/mitchellh/reflectwalk v1.0.1

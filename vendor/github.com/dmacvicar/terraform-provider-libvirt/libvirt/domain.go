@@ -18,12 +18,6 @@ import (
 	"github.com/libvirt/libvirt-go-xml"
 )
 
-// deprecated, now defaults to not use it, but we warn the user
-const skipQemuAgentEnvVar = "TF_SKIP_QEMU_AGENT"
-
-// if explicitly enabled
-const useQemuAgentEnvVar = "TF_USE_QEMU_AGENT"
-
 const domWaitLeaseStillWaiting = "waiting-addresses"
 const domWaitLeaseDone = "all-addresses-obtained"
 
@@ -305,8 +299,8 @@ func setVideo(d *schema.ResourceData, domainDef *libvirtxml.Domain) error {
 }
 
 func setGraphics(d *schema.ResourceData, domainDef *libvirtxml.Domain, arch string) error {
-	// For s390x, ppc64 and ppc64le spice is not supported
-	if arch == "s390x" || strings.HasPrefix(arch, "ppc64") {
+	// For aarch64, s390x, ppc64 and ppc64le spice is not supported
+	if arch == "aarch64" || arch == "s390x" || strings.HasPrefix(arch, "ppc64") {
 		domainDef.Devices.Graphics = nil
 		return nil
 	}
@@ -451,7 +445,13 @@ func setConsoles(d *schema.ResourceData, domainDef *libvirtxml.Domain) {
 				Type: "telnet",
 			}
 		case "pty":
-			fallthrough
+			if sourcePath, ok := d.GetOk(prefix + ".source_path"); ok {
+				console.Source = &libvirtxml.DomainChardevSource{
+					Pty: &libvirtxml.DomainChardevSourcePty{
+						Path: sourcePath.(string),
+					},
+				}
+			}
 		default:
 			if sourcePath, ok := d.GetOk(prefix + ".source_path"); ok {
 				console.Source = &libvirtxml.DomainChardevSource{
