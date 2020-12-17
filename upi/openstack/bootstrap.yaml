@@ -40,3 +40,10 @@
       auto_ip: "{{ bootstrap_auto_ip | default(omit) }}"
       nics:
       - port-name: "{{ os_port_bootstrap }}"
+
+  - name: 'Create the bootstrap floating IP'
+    os_floating_ip:
+      state: present
+      nat_destination: "{{ os_network }}"
+      network: "{{ os_external_network }}"
+      server: "{{ os_bootstrap_server_name }}"
