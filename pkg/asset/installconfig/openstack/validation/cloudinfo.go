@@ -41,9 +41,10 @@ type CloudInfo struct {
 }
 
 type clients struct {
-	networkClient *gophercloud.ServiceClient
-	computeClient *gophercloud.ServiceClient
-	imageClient   *gophercloud.ServiceClient
+	networkClient  *gophercloud.ServiceClient
+	computeClient  *gophercloud.ServiceClient
+	imageClient    *gophercloud.ServiceClient
+	identityClient *gophercloud.ServiceClient
 }
 
 // Flavor embeds information from the Gophercloud Flavor struct and adds
@@ -90,6 +91,11 @@ func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 	ci.clients.imageClient, err = clientconfig.NewServiceClient("image", opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create an image client")
+	}
+
+	ci.clients.identityClient, err = clientconfig.NewServiceClient("identity", opts)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create an identity client")
 	}
 
 	err = ci.collectInfo(ic, opts)
@@ -175,7 +181,7 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 		return err
 	}
 
-	ci.Quotas, err = loadQuotas(opts)
+	ci.Quotas, err = loadQuotas(ci)
 	if err != nil {
 		if isUnauthorized(err) {
 			logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v", err)
@@ -326,15 +332,15 @@ func (ci *CloudInfo) getZones() ([]string, error) {
 }
 
 // loadLimits loads the consumer quota metric.
-func loadLimits(opts *clientconfig.ClientOpts) ([]record, error) {
+func loadLimits(ci *CloudInfo) ([]record, error) {
 	var limits []record
 
-	projectID, err := getProjectID(opts)
+	projectID, err := getProjectID(ci)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get keystone project ID")
 	}
 
-	computeRecords, err := getComputeLimits(opts, projectID)
+	computeRecords, err := getComputeLimits(ci, projectID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get compute quota records")
 	}
@@ -342,7 +348,7 @@ func loadLimits(opts *clientconfig.ClientOpts) ([]record, error) {
 		limits = append(limits, r)
 	}
 
-	networkRecords, err := getNetworkLimits(opts, projectID)
+	networkRecords, err := getNetworkLimits(ci, projectID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get network quota records")
 	}
@@ -353,12 +359,8 @@ func loadLimits(opts *clientconfig.ClientOpts) ([]record, error) {
 	return limits, nil
 }
 
-func getComputeLimits(opts *clientconfig.ClientOpts, projectID string) ([]record, error) {
-	computeClient, err := clientconfig.NewServiceClient("compute", opts)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect against OpenStack Compute v2 API")
-	}
-	qs, err := computequotasets.GetDetail(computeClient, projectID).Extract()
+func getComputeLimits(ci *CloudInfo, projectID string) ([]record, error) {
+	qs, err := computequotasets.GetDetail(ci.clients.computeClient, projectID).Extract()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get QuotaSets from OpenStack Compute API")
 	}
@@ -383,12 +385,8 @@ func getComputeLimits(opts *clientconfig.ClientOpts, projectID string) ([]record
 	return records, nil
 }
 
-func getNetworkLimits(opts *clientconfig.ClientOpts, projectID string) ([]record, error) {
-	networkClient, err := clientconfig.NewServiceClient("network", opts)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect against OpenStack Network v2 API")
-	}
-	qs, err := networkquotasets.GetDetail(networkClient, projectID).Extract()
+func getNetworkLimits(ci *CloudInfo, projectID string) ([]record, error) {
+	qs, err := networkquotasets.GetDetail(ci.clients.networkClient, projectID).Extract()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get QuotaSets from OpenStack Network API")
 	}
@@ -416,12 +414,8 @@ func getNetworkLimits(opts *clientconfig.ClientOpts, projectID string) ([]record
 	return records, nil
 }
 
-func getProjectID(opts *clientconfig.ClientOpts) (string, error) {
-	keystoneClient, err := clientconfig.NewServiceClient("identity", opts)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to conect against OpenStack Keystone API")
-	}
-	authResult := keystoneClient.GetAuthResult()
+func getProjectID(ci *CloudInfo) (string, error) {
+	authResult := ci.clients.identityClient.GetAuthResult()
 	if authResult == nil {
 		return "", errors.Errorf("Client did not use openstack.Authenticate()")
 	}
@@ -449,8 +443,8 @@ func getProjectID(opts *clientconfig.ClientOpts) (string, error) {
 
 // loadQuotas loads the quota information for a project and provided services. It provides information
 // about the usage and limit for each resource quota.
-func loadQuotas(opts *clientconfig.ClientOpts) ([]quota.Quota, error) {
-	records, err := loadLimits(opts)
+func loadQuotas(ci *CloudInfo) ([]quota.Quota, error) {
+	records, err := loadLimits(ci)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load quota limits")
 	}
