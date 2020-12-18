@@ -32,10 +32,10 @@ var (
 	PlatformNames = []string{
 		aws.Name,
 		azure.Name,
+		equinixmetal.Name,
 		gcp.Name,
 		openstack.Name,
 		ovirt.Name,
-		equinixmetal.Name,
 		vsphere.Name,
 	}
 	// HiddenPlatformNames is a slice with all the

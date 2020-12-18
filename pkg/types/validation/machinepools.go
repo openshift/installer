@@ -106,6 +106,7 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 	if p.Ovirt != nil {
 		validate(ovirt.Name, p.Ovirt, func(f *field.Path) field.ErrorList { return ovirtvalidation.ValidateMachinePool(p.Ovirt, f) })
 	}
+	// TODO(displague) p.EquinixMetal ?
 	return allErrs
 }
 

@@ -441,6 +441,7 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 			return ovirtvalidation.ValidatePlatform(platform.Ovirt, f)
 		})
 	}
+	// TODO(displague) platform.EquinixMetal
 	return allErrs
 }
 
