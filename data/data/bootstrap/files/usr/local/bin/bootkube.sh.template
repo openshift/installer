@@ -379,8 +379,9 @@ fi
 
 if [ ! -f write-to-disk.done ]
 then
-    # Write image + ignition to disk
-    coreos-installer install --insecure -i /opt/openshift/master.ign /dev/vda
+    INSTALLATION_DISK=$(lsblk | grep disk | awk 'NR==1{print $1}')
+     # Write image + ignition to disk
+    coreos-installer install --insecure -i /opt/openshift/master.ign /dev/${INSTALLATION_DISK}
 
     touch write-to-disk.done
 
