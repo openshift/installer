@@ -14,6 +14,7 @@ func Validate(ic *types.InstallConfig, client Client) error {
 	fldPath := field.NewPath("platform", "kubevirt")
 	kubevirtPlatform := ic.Platform.Kubevirt
 
+	allErrs = append(allErrs, validateNamespace(kubevirtPlatform.Namespace, client, fldPath.Child("namespace"))...)
 	allErrs = append(allErrs, validateStorageClassExistsInInfraCluster(kubevirtPlatform.StorageClass, client, fldPath.Child("storageClass"))...)
 	allErrs = append(allErrs, validateNetworkAttachmentDefinitionExistsInNamespace(kubevirtPlatform.NetworkName, kubevirtPlatform.Namespace, client, fldPath.Child("networkName"))...)
 
@@ -55,6 +56,38 @@ func validateNetworkAttachmentDefinitionExistsInNamespace(name string, namespace
 				fieldPath,
 				name,
 				fmt.Sprintf("failed to get network-attachment-definition from InfraCluster, with error: %v", err),
+			),
+		)
+	}
+
+	return allErrs
+}
+
+func validateNamespace(namespace string, client Client, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	ns, err := client.GetNamespace(context.Background(), namespace)
+	if err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(
+				fieldPath,
+				namespace,
+				fmt.Sprintf("failed to get namepsace, with error: %v", err),
+			),
+		)
+		return allErrs
+	}
+	labelRequiredKey := "mutatevirtualmachines.kubemacpool.io"
+	labelRequiredVal := "allocate"
+	labelVal, ok := ns.Labels[labelRequiredKey]
+	if !ok || labelVal != labelRequiredVal {
+		allErrs = append(
+			allErrs,
+			field.Invalid(
+				fieldPath,
+				namespace,
+				fmt.Sprintf("KubeMacPool component is not enabled for the namespace, the namespace must have label \"%s: %s\"", labelRequiredKey, labelRequiredVal),
 			),
 		)
 	}
