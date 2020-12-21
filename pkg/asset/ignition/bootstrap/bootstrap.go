@@ -42,23 +42,25 @@ import (
 )
 
 const (
-	rootDir              = "/opt/openshift"
-	bootstrapIgnFilename = "bootstrap.ign"
+	rootDir                     = "/opt/openshift"
+	bootstrapIgnFilename        = "bootstrap.ign"
+	bootstrapInPlaceIgnFilename = "bootstrap-in-place-for-live-iso.ign"
 )
 
 // bootstrapTemplateData is the data to use to replace values in bootstrap
 // template files.
 type bootstrapTemplateData struct {
-	AdditionalTrustBundle string
-	FIPS                  bool
-	EtcdCluster           string
-	PullSecret            string
-	ReleaseImage          string
-	ClusterProfile        string
-	Proxy                 *configv1.ProxyStatus
-	Registries            []sysregistriesv2.Registry
-	BootImage             string
-	PlatformData          platformTemplateData
+	AdditionalTrustBundle      string
+	FIPS                       bool
+	EtcdCluster                string
+	PullSecret                 string
+	ReleaseImage               string
+	ClusterProfile             string
+	Proxy                      *configv1.ProxyStatus
+	Registries                 []sysregistriesv2.Registry
+	BootImage                  string
+	PlatformData               platformTemplateData
+	SingleNodeBootstrapInPlace bool
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -70,8 +72,9 @@ type platformTemplateData struct {
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
 type Bootstrap struct {
-	Config *igntypes.Config
-	File   *asset.File
+	SingleNodeBootstrapInPlace bool
+	Config                     *igntypes.Config
+	File                       *asset.File
 }
 
 var _ asset.WritableAsset = (*Bootstrap)(nil)
@@ -165,6 +168,12 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return err
 	}
+	if templateData.SingleNodeBootstrapInPlace {
+		err = a.addStorageFiles("/", "bootstrap/bootstrap-in-place", templateData)
+		if err != nil {
+			return err
+		}
+	}
 	err = a.addSystemdUnits("bootstrap/systemd/units", templateData)
 	if err != nil {
 		return err
@@ -206,8 +215,15 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to Marshal Ignition config")
 	}
+	fileName := bootstrapIgnFilename
+	if a.SingleNodeBootstrapInPlace {
+		if err := verifyBootstrapInPlace(installConfig.Config); err != nil {
+			return err
+		}
+		fileName = bootstrapInPlaceIgnFilename
+	}
 	a.File = &asset.File{
-		Filename: bootstrapIgnFilename,
+		Filename: fileName,
 		Data:     data,
 	}
 
@@ -268,16 +284,17 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 	}
 
 	return &bootstrapTemplateData{
-		AdditionalTrustBundle: installConfig.AdditionalTrustBundle,
-		FIPS:                  installConfig.FIPS,
-		PullSecret:            installConfig.PullSecret,
-		ReleaseImage:          releaseImage,
-		EtcdCluster:           strings.Join(etcdEndpoints, ","),
-		Proxy:                 &proxy.Status,
-		Registries:            registries,
-		BootImage:             string(*rhcosImage),
-		PlatformData:          platformData,
-		ClusterProfile:        clusterProfile,
+		AdditionalTrustBundle:      installConfig.AdditionalTrustBundle,
+		FIPS:                       installConfig.FIPS,
+		PullSecret:                 installConfig.PullSecret,
+		ReleaseImage:               releaseImage,
+		EtcdCluster:                strings.Join(etcdEndpoints, ","),
+		Proxy:                      &proxy.Status,
+		Registries:                 registries,
+		BootImage:                  string(*rhcosImage),
+		PlatformData:               platformData,
+		ClusterProfile:             clusterProfile,
+		SingleNodeBootstrapInPlace: a.SingleNodeBootstrapInPlace,
 	}, nil
 }
 

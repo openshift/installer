@@ -60,6 +60,14 @@ var (
 		&cluster.Metadata{},
 	}
 
+	// SingleNodeIgnitionConfig is the bootstrap-in-place ignition-config targeted assets.
+	SingleNodeIgnitionConfig = []asset.WritableAsset{
+		&kubeconfig.AdminClient{},
+		&password.KubeadminPassword{},
+		&bootstrap.Bootstrap{SingleNodeBootstrapInPlace: true},
+		&cluster.Metadata{},
+	}
+
 	// Cluster are the cluster targeted assets.
 	Cluster = []asset.WritableAsset{
 		&cluster.Metadata{},
