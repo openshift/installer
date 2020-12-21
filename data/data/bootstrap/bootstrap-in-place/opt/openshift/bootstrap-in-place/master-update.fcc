@@ -1,0 +1,55 @@
+variant: fcos
+version: 1.1.0
+ignition:
+  config:
+    merge:
+      - local: original-master.ign
+storage:
+  trees:
+    - local: kubernetes/bootstrap-configs
+      path: /etc/kubernetes/bootstrap-configs
+    - local: tls/
+      path: /etc/kubernetes/bootstrap-secrets
+    - local: etcd-bootstrap/bootstrap-manifests/secrets/
+      path: /etc/kubernetes/static-pod-resources/etcd-member
+    - local: etcd-data
+      path: /var/lib/etcd
+  files:
+    - path: /etc/kubernetes/bootstrap-secrets/kubeconfig
+      contents:
+        local: auth/kubeconfig-loopback
+    - path: /etc/kubernetes/static-pod-resources/etcd-member/ca.crt
+      contents:
+        local: tls/etcd-ca-bundle.crt
+    - path: /etc/kubernetes/manifests/etcd-pod.yaml
+      contents:
+        local: etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml
+    - path: /etc/kubernetes/manifests/kube-apiserver-pod.yaml
+      contents:
+        local: bootstrap-manifests/kube-apiserver-pod.yaml
+    - path: /etc/kubernetes/manifests/kube-controller-manager-pod.yaml
+      contents:
+        local: bootstrap-manifests/kube-controller-manager-pod.yaml
+    - path: /etc/kubernetes/manifests/kube-scheduler-pod.yaml
+      contents:
+        local: bootstrap-manifests/kube-scheduler-pod.yaml
+    - path: /usr/local/bin/bootstrap-in-place-post-reboot.sh
+      contents:
+        local: bootstrap-in-place/bootstrap-in-place-post-reboot.sh
+      mode: 0555
+systemd:
+  units:
+    - name: bootstrap-in-place-post-reboot.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=bootstrap-in-place-post-reboot
+        Wants=kubelet.service
+        After=kubelet.service
+        ConditionPathExists=/etc/kubernetes/bootstrap-secrets/kubeconfig
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/bin/bootstrap-in-place-post-reboot.sh
+        RestartSec=5s
+        [Install]
+        WantedBy=multi-user.target

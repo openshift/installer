@@ -79,6 +79,16 @@ var (
 		},
 		assets: targetassets.IgnitionConfigs,
 	}
+	singleNodeignitionConfigsTarget = target{
+		name: "Single Node Ignition Config",
+		command: &cobra.Command{
+			Use:   "single-node-ignition-config",
+			Short: "Generates the bootstrap-in-place-for-live-iso Ignition Config asset",
+			// FIXME: add longer descriptions for our commands with examples for better UX.
+			// Long:  "",
+		},
+		assets: targetassets.SingleNodeIgnitionConfig,
+	}
 
 	clusterTarget = target{
 		name: "Cluster",
@@ -141,7 +151,7 @@ var (
 		assets: targetassets.Cluster,
 	}
 
-	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget}
+	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget, singleNodeignitionConfigsTarget}
 )
 
 func newCreateCmd() *cobra.Command {

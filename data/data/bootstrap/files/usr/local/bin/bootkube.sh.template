@@ -13,6 +13,26 @@ bootkube_podman_run() {
     podman run --quiet --net=host "${@}"
 }
 
+wait_for_etcd_cluster() {
+  until bootkube_podman_run \
+      --rm \
+      --name etcdctl \
+      --env ETCDCTL_API=3 \
+      --volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
+      --entrypoint etcdctl \
+      "${MACHINE_CONFIG_ETCD_IMAGE}" \
+      --dial-timeout=10m \
+      --cacert=/opt/openshift/tls/etcd-ca-bundle.crt \
+      --cert=/opt/openshift/tls/etcd-client.crt \
+      --key=/opt/openshift/tls/etcd-client.key \
+      --endpoints="${ETCD_ENDPOINTS}" \
+      endpoint health
+  do
+    echo "etcdctl failed. Retrying in 5 seconds..."
+    sleep 5
+  done
+}
+
 MACHINE_CONFIG_OPERATOR_IMAGE=$(image_for machine-config-operator)
 MACHINE_CONFIG_OSCONTENT=$(image_for machine-os-content)
 MACHINE_CONFIG_ETCD_IMAGE=$(image_for etcd)
@@ -317,24 +337,17 @@ then
 	touch cco-bootstrap.done
 fi
 
-# Wait for the etcd cluster to come up.
-until bootkube_podman_run \
-		--rm \
-		--name etcdctl \
-		--env ETCDCTL_API=3 \
-		--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
-		--entrypoint etcdctl \
-		"${MACHINE_CONFIG_ETCD_IMAGE}" \
-		--dial-timeout=10m \
-		--cacert=/opt/openshift/tls/etcd-ca-bundle.crt \
-		--cert=/opt/openshift/tls/etcd-client.crt \
-		--key=/opt/openshift/tls/etcd-client.key \
-		--endpoints="${ETCD_ENDPOINTS}" \
-		endpoint health
-do
-	echo "etcdctl failed. Retrying in 5 seconds..."
-	sleep 5
-done
+# in case of single node, if we removed etcd, there is no point to wait for it on restart
+{{- if .SingleNode.BootstrapInPlace}}
+if [ ! -f stop-etcd.done ]
+then
+  # Wait for the etcd cluster to come up.
+  wait_for_etcd_cluster
+fi
+{{- else}}
+wait_for_etcd_cluster
+{{- end}}
+
 
 echo "Starting cluster-bootstrap..."
 
@@ -345,10 +358,17 @@ then
         --volume "$PWD:/assets:z" \
         --volume /etc/kubernetes:/etc/kubernetes:z \
         "${CLUSTER_BOOTSTRAP_IMAGE}" \
+{{- if .SingleNode.BootstrapInPlace}}
+        start --tear-down-early=false --asset-dir=/assets --required-pods=""  --assets-create-timeout=5m
+{{- else}}
         start --tear-down-early=false --asset-dir=/assets --required-pods="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
+{{- end}}
     touch cb-bootstrap.done
 fi
 
+{{- if .SingleNode.BootstrapInPlace}}
+. /usr/local/bin/bootstrap-in-place.sh "${CLUSTER_BOOTSTRAP_IMAGE}"
+{{- else}}
 rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
 
 if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
@@ -361,6 +381,7 @@ then
 			wait-for-ceo \
 			--kubeconfig /assets/auth/kubeconfig
 fi
+{{- end}}
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
