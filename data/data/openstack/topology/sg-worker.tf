@@ -87,6 +87,34 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_geneve" {
   security_group_id = openstack_networking_secgroup_v2.worker.id
 }
 
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_ike" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 500
+  port_range_max    = 500
+  remote_ip_prefix  = var.cidr_block
+  security_group_id = openstack_networking_secgroup_v2.worker.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_ike_nat_t" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 4500
+  port_range_max    = 4500
+  remote_ip_prefix  = var.cidr_block
+  security_group_id = openstack_networking_secgroup_v2.worker.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "worker_ingress_esp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "esp"
+  remote_ip_prefix  = var.cidr_block
+  security_group_id = openstack_networking_secgroup_v2.worker.id
+}
+
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal" {
   direction         = "ingress"
   ethertype         = "IPv4"

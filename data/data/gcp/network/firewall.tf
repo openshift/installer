@@ -101,6 +101,17 @@ resource "google_compute_firewall" "internal_cluster" {
     ports    = ["4789", "6081"]
   }
 
+  # ESP
+  allow {
+    protocol = "esp"
+  }
+
+  # IKE and IKE(NAT-T)
+  allow {
+    protocol = "udp"
+    ports    = ["500", "4500"]
+  }
+
   # internal tcp
   allow {
     protocol = "tcp"

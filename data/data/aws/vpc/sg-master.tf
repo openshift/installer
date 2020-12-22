@@ -93,6 +93,36 @@ resource "aws_security_group_rule" "master_ingress_geneve" {
   self      = true
 }
 
+resource "aws_security_group_rule" "master_ingress_ike" {
+  type              = "ingress"
+  security_group_id = aws_security_group.master.id
+
+  protocol  = "udp"
+  from_port = 500
+  to_port   = 500
+  self      = true
+}
+
+resource "aws_security_group_rule" "master_ingress_ike_nat_t" {
+  type              = "ingress"
+  security_group_id = aws_security_group.master.id
+
+  protocol  = "udp"
+  from_port = 4500
+  to_port   = 4500
+  self      = true
+}
+
+resource "aws_security_group_rule" "master_ingress_esp" {
+  type              = "ingress"
+  security_group_id = aws_security_group.master.id
+
+  protocol  = 50
+  from_port = 0
+  to_port   = 0
+  self      = true
+}
+
 resource "aws_security_group_rule" "master_ingress_geneve_from_worker" {
   type                     = "ingress"
   security_group_id        = aws_security_group.master.id
@@ -101,6 +131,36 @@ resource "aws_security_group_rule" "master_ingress_geneve_from_worker" {
   protocol  = "udp"
   from_port = 6081
   to_port   = 6081
+}
+
+resource "aws_security_group_rule" "master_ingress_ike_from_worker" {
+  type                     = "ingress"
+  security_group_id        = aws_security_group.master.id
+  source_security_group_id = aws_security_group.worker.id
+
+  protocol  = "udp"
+  from_port = 500
+  to_port   = 500
+}
+
+resource "aws_security_group_rule" "master_ingress_ike_nat_t_from_worker" {
+  type                     = "ingress"
+  security_group_id        = aws_security_group.master.id
+  source_security_group_id = aws_security_group.worker.id
+
+  protocol  = "udp"
+  from_port = 4500
+  to_port   = 4500
+}
+
+resource "aws_security_group_rule" "master_ingress_esp_from_worker" {
+  type                     = "ingress"
+  security_group_id        = aws_security_group.master.id
+  source_security_group_id = aws_security_group.worker.id
+
+  protocol  = 50
+  from_port = 0
+  to_port   = 0
 }
 
 resource "aws_security_group_rule" "master_ingress_ovndb" {
