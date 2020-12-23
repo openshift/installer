@@ -64,6 +64,7 @@ type InfrastructureStatus struct {
 	// etcdDiscoveryDomain is the domain used to fetch the SRV records for discovering
 	// etcd servers and clients.
 	// For more info: https://github.com/etcd-io/etcd/blob/329be66e8b3f9e2e6af83c123ff89297e49ebd15/Documentation/op-guide/clustering.md#dns-discovery
+	// deprecated: as of 4.7, this field is no longer set or honored.  It will be removed in a future release.
 	EtcdDiscoveryDomain string `json:"etcdDiscoveryDomain"`
 
 	// apiServerURL is a valid URI with scheme 'https', address and
@@ -76,7 +77,37 @@ type InfrastructureStatus struct {
 	// like kubelets, to contact the Kubernetes API server using the
 	// infrastructure provider rather than Kubernetes networking.
 	APIServerInternalURL string `json:"apiServerInternalURI"`
+
+	// ControlPlaneTopology expresses the expectations for operands that normally run on control nodes.
+	// The default is 'HighlyAvailable', which represents the behavior operators have in a "normal" cluster.
+	// The 'SingleReplica' mode will be used in single-node deployments (developer and production) for example,
+	// and the operators should not configure the operand for highly-available operation
+	// +kubebuilder:default=HighlyAvailable
+	ControlPlaneTopology TopologyMode `json:"controlPlaneTopology"`
+
+	// InfrastructureTopology expresses the expectations for infrastructure services that do not run on control
+	// plane nodes, usually indicated by a node selector for a `role` value
+	// other than `master`. This includes, but is not necessarily limited to,
+	// the registry, logging, monitoring, and router services. In the future,
+	// it also could be used by additional add-on features such as kubevirt,
+	// serverless, mesh, pipelines, or any other supporting infrastructure
+	// service as a hint to understand what availability posture they should
+	// provide by default.
+	// +kubebuilder:default=HighlyAvailable
+	InfrastructureTopology TopologyMode `json:"infrastructureTopology"`
 }
+
+// TopologyMode defines the topology mode of the control/infra nodes.
+// +kubebuilder:validation:Enum=HighlyAvailable;SingleReplica
+type TopologyMode string
+
+const (
+	// "HighlyAvailable" is for operators to configure high-availability as much as possible.
+	HighlyAvailableTopologyMode TopologyMode = "HighlyAvailable"
+
+	// "SingleReplica" is for operators to avoid spending resources for high-availability purpose.
+	SingleReplicaTopologyMode TopologyMode = "SingleReplica"
+)
 
 // PlatformType is a specific supported infrastructure provider.
 // +kubebuilder:validation:Enum="";AWS;Azure;BareMetal;GCP;Libvirt;OpenStack;None;VSphere;oVirt;IBMCloud;KubeVirt
