@@ -80,6 +80,27 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		},
 	}
 
+	if installConfig.Config.ControlPlane.Replicas != nil && *installConfig.Config.ControlPlane.Replicas < 3 {
+		config.Status.ControlPlaneTopology = configv1.SingleReplicaTopologyMode
+	} else {
+		config.Status.ControlPlaneTopology = configv1.HighlyAvailableTopologyMode
+	}
+
+	numOfWorkers := int64(0)
+	for _, mp := range installConfig.Config.Compute {
+		if mp.Replicas != nil {
+			numOfWorkers += *mp.Replicas
+		}
+	}
+	switch numOfWorkers {
+	case 0:
+		config.Status.InfrastructureTopology = config.Status.ControlPlaneTopology
+	case 1:
+		config.Status.InfrastructureTopology = configv1.SingleReplicaTopologyMode
+	default:
+		config.Status.InfrastructureTopology = configv1.HighlyAvailableTopologyMode
+	}
+
 	switch installConfig.Config.Platform.Name() {
 	case aws.Name:
 		config.Spec.PlatformSpec.Type = configv1.AWSPlatformType
