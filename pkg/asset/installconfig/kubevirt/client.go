@@ -34,6 +34,7 @@ type Client interface {
 	GetSecret(ctx context.Context, namespace string, name string) (*corev1.Secret, error)
 	ListSecret(ctx context.Context, namespace string, opts metav1.ListOptions) (*corev1.SecretList, error)
 	DeleteSecret(ctx context.Context, namespace string, name string) error
+	GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error)
 	GetStorageClass(ctx context.Context, name string) (*storagev1.StorageClass, error)
 	GetNetworkAttachmentDefinition(ctx context.Context, name string, namespace string) (*unstructured.Unstructured, error)
 }
@@ -182,6 +183,10 @@ func (c *client) ListSecret(ctx context.Context, namespace string, opts metav1.L
 
 func (c *client) DeleteSecret(ctx context.Context, namespace string, name string) error {
 	return c.kubernetesClient.CoreV1().Secrets(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+}
+
+func (c *client) GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error) {
+	return c.kubernetesClient.CoreV1().Namespaces().Get(ctx, name, metav1.GetOptions{})
 }
 
 func (c *client) GetStorageClass(ctx context.Context, name string) (*storagev1.StorageClass, error) {

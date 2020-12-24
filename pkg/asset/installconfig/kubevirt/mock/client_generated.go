@@ -171,6 +171,21 @@ func (mr *MockClientMockRecorder) DeleteSecret(ctx, namespace, name interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSecret", reflect.TypeOf((*MockClient)(nil).DeleteSecret), ctx, namespace, name)
 }
 
+// GetNamespace mocks base method
+func (m *MockClient) GetNamespace(ctx context.Context, name string) (*v1.Namespace, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNamespace", ctx, name)
+	ret0, _ := ret[0].(*v1.Namespace)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetNamespace indicates an expected call of GetNamespace
+func (mr *MockClientMockRecorder) GetNamespace(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNamespace", reflect.TypeOf((*MockClient)(nil).GetNamespace), ctx, name)
+}
+
 // GetStorageClass mocks base method
 func (m *MockClient) GetStorageClass(ctx context.Context, name string) (*v10.StorageClass, error) {
 	m.ctrl.T.Helper()

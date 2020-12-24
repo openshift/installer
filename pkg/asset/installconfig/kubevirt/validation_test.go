@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/kubevirt"
+	corev1 "k8s.io/api/core/v1"
 )
 
 var (
@@ -29,6 +30,8 @@ var (
 	invalidIngressVIP     = "invalid-ingress-vip"
 	invalidAccessMode     = "invalid-access-mode"
 	invalidMachineCIDR    = "10.0.0.0/16"
+	namespaceStruct       = &corev1.Namespace{}
+	kubeMacPoolLabels     = map[string]string{"mutatevirtualmachines.kubemacpool.io": "allocate"}
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -69,6 +72,8 @@ func TestKubevirtInstallConfigValidation(t *testing.T) {
 			expectClient: func(kubevirtClient *mock.MockClient) {
 				kubevirtClient.EXPECT().GetNetworkAttachmentDefinition(gomock.Any(), validNetworkName, validNamespace).Return(nil, nil).AnyTimes()
 				kubevirtClient.EXPECT().GetStorageClass(gomock.Any(), validStorageClass).Return(nil, nil).AnyTimes()
+				namespaceStruct.Labels = kubeMacPoolLabels
+				kubevirtClient.EXPECT().GetNamespace(gomock.Any(), validNamespace).Return(namespaceStruct, nil).AnyTimes()
 			},
 		},
 		{
@@ -83,6 +88,8 @@ func TestKubevirtInstallConfigValidation(t *testing.T) {
 			expectClient: func(kubevirtClient *mock.MockClient) {
 				kubevirtClient.EXPECT().GetNetworkAttachmentDefinition(gomock.Any(), validNetworkName, validNamespace).Return(nil, nil).AnyTimes()
 				kubevirtClient.EXPECT().GetStorageClass(gomock.Any(), validStorageClass).Return(nil, nil).AnyTimes()
+				namespaceStruct.Labels = kubeMacPoolLabels
+				kubevirtClient.EXPECT().GetNamespace(gomock.Any(), validNamespace).Return(namespaceStruct, nil).AnyTimes()
 			},
 		},
 		{
@@ -93,6 +100,8 @@ func TestKubevirtInstallConfigValidation(t *testing.T) {
 			expectClient: func(kubevirtClient *mock.MockClient) {
 				kubevirtClient.EXPECT().GetNetworkAttachmentDefinition(gomock.Any(), validNetworkName, validNamespace).Return(nil, nil).AnyTimes()
 				kubevirtClient.EXPECT().GetStorageClass(gomock.Any(), invalidStorageClass).Return(nil, fmt.Errorf("test")).AnyTimes()
+				namespaceStruct.Labels = kubeMacPoolLabels
+				kubevirtClient.EXPECT().GetNamespace(gomock.Any(), validNamespace).Return(namespaceStruct, nil).AnyTimes()
 			},
 		},
 		{
@@ -103,6 +112,56 @@ func TestKubevirtInstallConfigValidation(t *testing.T) {
 			expectClient: func(kubevirtClient *mock.MockClient) {
 				kubevirtClient.EXPECT().GetNetworkAttachmentDefinition(gomock.Any(), invalidNetworkName, validNamespace).Return(nil, fmt.Errorf("test")).AnyTimes()
 				kubevirtClient.EXPECT().GetStorageClass(gomock.Any(), validStorageClass).Return(nil, nil).AnyTimes()
+				namespaceStruct.Labels = kubeMacPoolLabels
+				kubevirtClient.EXPECT().GetNamespace(gomock.Any(), validNamespace).Return(namespaceStruct, nil).AnyTimes()
+			},
+		},
+		{
+			name:           "invalid kubemacpool namespace not found",
+			edit:           nil,
+			expectedError:  true,
+			expectedErrMsg: "platform.kubevirt.namespace: Invalid value: \"valid-namespace\": failed to get namepsace, with error: test",
+			expectClient: func(kubevirtClient *mock.MockClient) {
+				kubevirtClient.EXPECT().GetNetworkAttachmentDefinition(gomock.Any(), validNetworkName, validNamespace).Return(nil, nil).AnyTimes()
+				kubevirtClient.EXPECT().GetStorageClass(gomock.Any(), validStorageClass).Return(nil, nil).AnyTimes()
+				namespaceStruct.Labels = kubeMacPoolLabels
+				kubevirtClient.EXPECT().GetNamespace(gomock.Any(), validNamespace).Return(nil, fmt.Errorf("test")).AnyTimes()
+			},
+		},
+		{
+			name:           "invalid kubemacpool Labels nil",
+			edit:           nil,
+			expectedError:  true,
+			expectedErrMsg: "platform.kubevirt.namespace: Invalid value: \"valid-namespace\": KubeMacPool component is not enabled for the namespace, the namespace must have label \"mutatevirtualmachines.kubemacpool.io: allocate\"",
+			expectClient: func(kubevirtClient *mock.MockClient) {
+				kubevirtClient.EXPECT().GetNetworkAttachmentDefinition(gomock.Any(), validNetworkName, validNamespace).Return(nil, nil).AnyTimes()
+				kubevirtClient.EXPECT().GetStorageClass(gomock.Any(), validStorageClass).Return(nil, nil).AnyTimes()
+				namespaceStruct.Labels = nil
+				kubevirtClient.EXPECT().GetNamespace(gomock.Any(), validNamespace).Return(namespaceStruct, nil).AnyTimes()
+			},
+		},
+		{
+			name:           "invalid kubemacpool Labels empty",
+			edit:           nil,
+			expectedError:  true,
+			expectedErrMsg: "platform.kubevirt.namespace: Invalid value: \"valid-namespace\": KubeMacPool component is not enabled for the namespace, the namespace must have label \"mutatevirtualmachines.kubemacpool.io: allocate\"",
+			expectClient: func(kubevirtClient *mock.MockClient) {
+				kubevirtClient.EXPECT().GetNetworkAttachmentDefinition(gomock.Any(), validNetworkName, validNamespace).Return(nil, nil).AnyTimes()
+				kubevirtClient.EXPECT().GetStorageClass(gomock.Any(), validStorageClass).Return(nil, nil).AnyTimes()
+				namespaceStruct.Labels = map[string]string{}
+				kubevirtClient.EXPECT().GetNamespace(gomock.Any(), validNamespace).Return(namespaceStruct, nil).AnyTimes()
+			},
+		},
+		{
+			name:           "invalid kubemacpool wrong label val",
+			edit:           nil,
+			expectedError:  true,
+			expectedErrMsg: "platform.kubevirt.namespace: Invalid value: \"valid-namespace\": KubeMacPool component is not enabled for the namespace, the namespace must have label \"mutatevirtualmachines.kubemacpool.io: allocate\"",
+			expectClient: func(kubevirtClient *mock.MockClient) {
+				kubevirtClient.EXPECT().GetNetworkAttachmentDefinition(gomock.Any(), validNetworkName, validNamespace).Return(nil, nil).AnyTimes()
+				kubevirtClient.EXPECT().GetStorageClass(gomock.Any(), validStorageClass).Return(nil, nil).AnyTimes()
+				namespaceStruct.Labels = map[string]string{"mutatevirtualmachines.kubemacpool.io": "wrong value"}
+				kubevirtClient.EXPECT().GetNamespace(gomock.Any(), validNamespace).Return(namespaceStruct, nil).AnyTimes()
 			},
 		},
 	}
