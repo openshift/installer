@@ -26,10 +26,8 @@ RUN yum install --setopt=tsflags=nodocs -y git gzip util-linux glibc-locale-sour
 
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
-    python3-openstackclient ansible-2.9.14-1.el8ae unzip jq && \
+    python3-openstackclient ansible-2.9.14-1.el8ae python3-openstacksdk python3-netaddr unzip jq && \
     yum clean all && rm -rf /var/cache/yum/*
-
-RUN ansible-galaxy collection install ansible.netcommon openstack.cloud
 
 RUN python -m pip install yq
 

@@ -151,11 +151,7 @@ sudo subscription-manager repos \
 
 Then install the packages:
 ```sh
-sudo dnf install python3-openstackclient ansible
-
-sudo ansible-galaxy collection install \
-  ansible.netcommon \
-  openstack.cloud
+sudo dnf install python3-openstackclient ansible python3-openstacksdk python3-netaddr
 ```
 
 Make sure that `python` points to Python3:
@@ -168,11 +164,7 @@ sudo alternatives --set python /usr/bin/python3
 This command installs all required dependencies on Fedora:
 
 ```sh
-sudo dnf install python3-openstackclient ansible
-
-sudo ansible-galaxy collection install \
-  ansible.netcommon \
-  openstack.cloud
+sudo dnf install python3-openstackclient ansible python3-openstacksdk python3-netaddr
 ```
 
 [ansible-upi]: ../../../upi/openstack "Ansible Playbooks for Openstack UPI"
