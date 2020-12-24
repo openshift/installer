@@ -968,7 +968,7 @@ github.com/kr/fs
 github.com/kr/pretty
 # github.com/kr/text v0.2.0
 github.com/kr/text
-# github.com/kubevirt/terraform-provider-kubevirt v0.0.0-00010101000000-000000000000 => github.com/nirarg/terraform-provider-kubevirt v0.0.0-20201111070257-ed9d6108939e
+# github.com/kubevirt/terraform-provider-kubevirt v0.0.0-00010101000000-000000000000 => github.com/nirarg/terraform-provider-kubevirt v0.0.0-20201222125919-101cee051ed3
 ## explicit
 github.com/kubevirt/terraform-provider-kubevirt/kubevirt
 github.com/kubevirt/terraform-provider-kubevirt/kubevirt/client
@@ -2337,7 +2337,7 @@ sigs.k8s.io/yaml
 # github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb
 # github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-4
 # github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
-# github.com/kubevirt/terraform-provider-kubevirt => github.com/nirarg/terraform-provider-kubevirt v0.0.0-20201111070257-ed9d6108939e
+# github.com/kubevirt/terraform-provider-kubevirt => github.com/nirarg/terraform-provider-kubevirt v0.0.0-20201222125919-101cee051ed3
 # github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20200715132148-0f91f62a41fe
 # github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
 # github.com/openshift/api => github.com/openshift/api v0.0.0-20201020123828-1e2e1963a41f
