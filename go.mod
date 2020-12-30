@@ -158,6 +158,7 @@ replace (
 	github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.32.3
 	github.com/go-openapi/spec => github.com/go-openapi/spec v0.19.4
 	github.com/hashicorp/go-plugin => github.com/hashicorp/go-plugin v1.2.2
+	github.com/ovirt/terraform-provider-ovirt => github.com/liranr23/terraform-provider-ovirt v0.4.3-0.20201213090522-82c90a86a57d
 	github.com/ulikunitz/xz => github.com/ulikunitz/xz v0.5.7
 	google.golang.org/api => google.golang.org/api v0.25.0
 	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013

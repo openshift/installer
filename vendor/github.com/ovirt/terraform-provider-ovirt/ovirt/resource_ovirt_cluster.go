@@ -63,6 +63,13 @@ func resourceOvirtCluster() *schema.Resource {
 				ForceNew:    false,
 				Description: "Memory balloon is used to re-distribute / reclaim the host memory based on VM needs in a dynamic way",
 			},
+			"ksm": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    false,
+				Default:     false,
+				Description: "KSM is used to have identical memory regions or pages in a single page",
+			},
 			"gluster": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -133,6 +140,14 @@ func resourceOvirtClusterCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 	if be, ok := d.GetOkExists("ballooning"); ok {
 		clusterBuilder.BallooningEnabled(be.(bool))
+	}
+
+	if be, ok := d.GetOkExists("ksm"); ok {
+		clusterBuilder.Ksm(
+			ovirtsdk4.NewKsmBuilder().
+				Enabled(be.(bool)).
+				MustBuild()).
+			MustBuild()
 	}
 
 	// Extract CPU attributes
@@ -282,6 +297,17 @@ func resourceOvirtClusterUpdate(d *schema.ResourceData, meta interface{}) error 
 	if d.HasChange("ballooning") {
 		if be, ok := d.GetOkExists("ballooning"); ok {
 			paramCluster.BallooningEnabled(be.(bool))
+		}
+		attributeUpdate = true
+	}
+
+	if d.HasChange("ksm") {
+		if be, ok := d.GetOkExists("ksm"); ok {
+			paramCluster.Ksm(
+				ovirtsdk4.NewKsmBuilder().
+					Enabled(be.(bool)).
+					MustBuild()).
+				MustBuild()
 		}
 		attributeUpdate = true
 	}

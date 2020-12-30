@@ -98,13 +98,11 @@ func resourceOvirtVM() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
-				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
 							Type:     schema.TypeString,
 							Required: true,
-							ForceNew: true,
 						},
 					},
 				},
@@ -399,8 +397,34 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	isHighPerformance := false
 	if v, ok := d.GetOk("type"); ok {
-		vmBuilder.Type(ovirtsdk4.VmType(fmt.Sprint(v)))
+		vmType := ovirtsdk4.VmType(fmt.Sprint(v))
+		vmBuilder.Type(vmType)
+		if vmType == ovirtsdk4.VMTYPE_HIGH_PERFORMANCE {
+			isHighPerformance = true
+
+			// disable ballooning
+			memoryPolicy, err := ovirtsdk4.NewMemoryPolicyBuilder().
+				Ballooning(false).
+				Build()
+			if err != nil {
+				return err
+			}
+			vmBuilder.MemoryPolicy(memoryPolicy)
+
+			// set cpu host-passthrough
+			cpu.SetMode(ovirtsdk4.CPUMODE_HOST_PASSTHROUGH)
+			vmBuilder.Cpu(cpu)
+
+			// enable serial console
+			console, err := ovirtsdk4.NewConsoleBuilder().
+				Enabled(true).Build()
+			if err != nil {
+				return err
+			}
+			vmBuilder.Console(console)
+		}
 	}
 
 	if v, ok := d.GetOk("instance_type_id"); ok {
@@ -458,6 +482,15 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	// remove graphic devices for high performance VM
+	if isHighPerformance {
+		log.Printf("[DEBUG] High Performance VM (%s) Removing Graphic consoles", d.Id())
+		err := ovirtRemoveGraphicsConsoles(d.Id(), meta)
+		if err != nil {
+			log.Printf("[DEBUG] Error removing graphical devices")
+		}
+	}
+
 	// Do attach disks
 	if blockDeviceOk {
 		log.Printf("[DEBUG] Attach disk specified by block_device to VM (%s)", d.Id())
@@ -497,6 +530,33 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	return resourceOvirtVMRead(d, meta)
+}
+
+func ovirtRemoveGraphicsConsoles(vmID string, meta interface{}) error {
+	conn := meta.(*ovirtsdk4.Connection)
+	vmGraphicConsoleService := conn.SystemService().VmsService().VmService(vmID).GraphicsConsolesService()
+
+	graphics, err := vmGraphicConsoleService.List().Send()
+	if err != nil {
+		if _, ok := err.(*ovirtsdk4.NotFoundError); ok {
+			return nil
+		}
+		return fmt.Errorf("error getting VM (%s) graphic consoles before deleting: %s", vmID, err)
+	}
+
+	for _, device := range graphics.MustConsoles().Slice() {
+		_, err = vmGraphicConsoleService.
+			ConsoleService(device.MustId()).
+			Remove().
+			Send()
+		if err != nil {
+			if _, ok := err.(*ovirtsdk4.NotFoundError); ok {
+				// Wait until NotFoundError raises
+				return nil
+			}
+		}
+	}
+	return nil
 }
 
 func resourceOvirtVMUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -555,6 +615,16 @@ func resourceOvirtVMUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 		if initialization != nil {
 			vmBuilder.Initialization(initialization)
+		}
+	}
+
+	if os_data, ok := d.GetOk("os"); ok {
+		source := os_data.([]interface{})[0].(map[string]interface{})
+		if v, ok := source["type"]; ok {
+			os := ovirtsdk4.NewOperatingSystemBuilder().
+				Type(v.(string)).
+				MustBuild()
+			vmBuilder.Os(os)
 		}
 	}
 
@@ -781,8 +851,8 @@ func resourceOvirtVMDelete(d *schema.ResourceData, meta interface{}) error {
 	// VM created by Template must be remove with detachOnly=false
 	detachOnly := true
 	log.Printf("[DEBUG] Determine the detachOnly flag before removing VM (%s)", d.Id())
-	if vm.MustTemplate().MustId() != BlankTemplateID {
-		log.Printf("[DEBUG] Set detachOnly flag to false since VM (%s) is based on template (%s)",
+	if vm.MustTemplate().MustId() != BlankTemplateID || d.Get("clone").(bool) {
+		log.Printf("[DEBUG] Set detachOnly flag to false since VM (%s) is based on template (%s) or is a clone",
 			d.Id(), vm.MustTemplate().MustId())
 		detachOnly = false
 	}
