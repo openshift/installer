@@ -27,4 +27,12 @@ type InstallConfigExternalProvider interface {
 		AWS *aws.Metadata,
 		Azure *icazure.Metadata,
 	) error
+
+	// PlatformPermsCheck validates the platform permissions.
+	PlatformPermsCheck(
+		Config *types.InstallConfig,
+		File *asset.File,
+		AWS *aws.Metadata,
+		Azure *icazure.Metadata,
+	) error
 }

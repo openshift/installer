@@ -56,3 +56,20 @@ func PlatformCredsCheck(
 		Azure,
 	)
 }
+
+// PlatformPermsCheck validates the platform permissions.
+func PlatformPermsCheck(
+	ProviderName Name,
+	Config *types.InstallConfig,
+	File *asset.File,
+	AWS *aws.Metadata,
+	Azure *icazure.Metadata,
+) error {
+	provider := providerRegistry.MustGet(string(ProviderName))
+	return provider.PlatformPermsCheck(
+		Config,
+		File,
+		AWS,
+		Azure,
+	)
+}

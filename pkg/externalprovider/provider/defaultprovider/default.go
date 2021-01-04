@@ -36,3 +36,13 @@ func (d *DefaultProvider) PlatformCredsCheck(
 ) error {
 	return nil
 }
+
+// PlatformPermsCheck validates the platform permissions.
+func (d *DefaultProvider) PlatformPermsCheck(
+	_ *types.InstallConfig,
+	_ *asset.File,
+	_ *aws.Metadata,
+	_ *azure.Metadata,
+) error {
+	return nil
+}
