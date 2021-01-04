@@ -73,3 +73,20 @@ func PlatformPermsCheck(
 		Azure,
 	)
 }
+
+// PlatformProvisionCheck validates the if provisioning can commence on the platform.
+func PlatformProvisionCheck(
+	ProviderName Name,
+	Config *types.InstallConfig,
+	File *asset.File,
+	AWS *aws.Metadata,
+	Azure *icazure.Metadata,
+) error {
+	provider := providerRegistry.MustGet(string(ProviderName))
+	return provider.PlatformProvisionCheck(
+		Config,
+		File,
+		AWS,
+		Azure,
+	)
+}

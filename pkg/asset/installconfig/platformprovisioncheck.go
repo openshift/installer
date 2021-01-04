@@ -9,6 +9,7 @@ import (
 	bmconfig "github.com/openshift/installer/pkg/asset/installconfig/baremetal"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	vsconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
+	"github.com/openshift/installer/pkg/externalprovider"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -76,7 +77,15 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-	case aws.Name, libvirt.Name, none.Name, openstack.Name, ovirt.Name, kubevirt.Name:
+	case ovirt.Name:
+		return externalprovider.PlatformProvisionCheck(
+			externalprovider.Name(ovirt.Name),
+			ic.Config,
+			ic.File,
+			ic.AWS,
+			ic.Azure,
+		)
+	case aws.Name, libvirt.Name, none.Name, openstack.Name, kubevirt.Name:
 		// no special provisioning requirements to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)

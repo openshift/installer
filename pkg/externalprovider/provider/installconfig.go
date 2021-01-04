@@ -35,4 +35,12 @@ type InstallConfigExternalProvider interface {
 		AWS *aws.Metadata,
 		Azure *icazure.Metadata,
 	) error
+
+	// PlatformProvisionCheck validates the if provisioning can commence on the platform.
+	PlatformProvisionCheck(
+		Config *types.InstallConfig,
+		File *asset.File,
+		AWS *aws.Metadata,
+		Azure *icazure.Metadata,
+	) error
 }

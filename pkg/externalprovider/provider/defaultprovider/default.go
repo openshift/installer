@@ -46,3 +46,13 @@ func (d *DefaultProvider) PlatformPermsCheck(
 ) error {
 	return nil
 }
+
+// PlatformProvisionCheck validates the if provisioning can commence on the platform.
+func (d *DefaultProvider) PlatformProvisionCheck(
+	_ *types.InstallConfig,
+	_ *asset.File,
+	_ *aws.Metadata,
+	_ *azure.Metadata,
+) error {
+	return nil
+}
