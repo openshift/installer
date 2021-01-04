@@ -15,8 +15,8 @@ import (
 	kubevirtconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	libvirtconfig "github.com/openshift/installer/pkg/asset/installconfig/libvirt"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
-	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	vsphereconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
+	"github.com/openshift/installer/pkg/externalprovider"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -84,10 +84,7 @@ func (a *platform) Generate(asset.Parents) error {
 			return err
 		}
 	case ovirt.Name:
-		a.Ovirt, err = ovirtconfig.Platform()
-		if err != nil {
-			return err
-		}
+		return externalprovider.AddToInstallConfigPlatform(externalprovider.NameOvirt, &a.Platform)
 	case vsphere.Name:
 		a.VSphere, err = vsphereconfig.Platform()
 		if err != nil {

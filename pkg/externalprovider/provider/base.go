@@ -4,4 +4,7 @@ package provider
 type ExternalProvider interface {
 	// Name returns the name of the external provider.
 	Name() string
+
+	// InstallConfigExternalProvider contains the installconfig-specific steps.
+	InstallConfigExternalProvider
 }
