@@ -39,3 +39,20 @@ func ValidateInstallConfig(
 		Azure,
 	)
 }
+
+// PlatformCredsCheck validates the platform credentials.
+func PlatformCredsCheck(
+	ProviderName Name,
+	Config *types.InstallConfig,
+	File *asset.File,
+	AWS *aws.Metadata,
+	Azure *icazure.Metadata,
+) error {
+	provider := providerRegistry.MustGet(string(ProviderName))
+	return provider.PlatformCredsCheck(
+		Config,
+		File,
+		AWS,
+		Azure,
+	)
+}

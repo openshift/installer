@@ -10,7 +10,7 @@ import (
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	kubevirtconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
-	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	"github.com/openshift/installer/pkg/externalprovider"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -70,14 +70,13 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "creating Azure session")
 		}
 	case ovirt.Name:
-		con, err := ovirtconfig.NewConnection()
-		if err != nil {
-			return errors.Wrap(err, "creating Engine connection")
-		}
-		err = con.Test()
-		if err != nil {
-			return errors.Wrap(err, "testing Engine connection")
-		}
+		return externalprovider.PlatformCredsCheck(
+			externalprovider.Name(ovirt.Name),
+			ic.Config,
+			ic.File,
+			ic.AWS,
+			ic.Azure,
+		)
 	case kubevirt.Name:
 		client, err := kubevirtconfig.NewClient()
 		if err != nil {

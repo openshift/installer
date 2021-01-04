@@ -26,3 +26,13 @@ func (d *DefaultProvider) ValidateInstallConfig(
 ) error {
 	return nil
 }
+
+// PlatformCredsCheck validates the platform credentials.
+func (d *DefaultProvider) PlatformCredsCheck(
+	_ *types.InstallConfig,
+	_ *asset.File,
+	_ *aws.Metadata,
+	_ *azure.Metadata,
+) error {
+	return nil
+}

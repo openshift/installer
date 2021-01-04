@@ -19,4 +19,12 @@ type InstallConfigExternalProvider interface {
 		AWS *aws.Metadata,
 		Azure *icazure.Metadata,
 	) error
+
+	// PlatformCredsCheck validates the platform credentials.
+	PlatformCredsCheck(
+		Config *types.InstallConfig,
+		File *asset.File,
+		AWS *aws.Metadata,
+		Azure *icazure.Metadata,
+	) error
 }
