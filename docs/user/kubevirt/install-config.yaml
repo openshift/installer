@@ -32,5 +32,5 @@ platform:
     networkName: Enter here the network (NAD name) to be used by the tenant cluster
     storageClass: Enter here the storage class used in the infra cluster
 publish: External
-pullSecret: `Enter pullSecret here, You can get this secret from https://cloud.redhat.com/openshift/install/pull-secret`
+pullSecret: Enter pullSecret here, You can get this secret from https://cloud.redhat.com/openshift/install/pull-secret
 sshKey: Enter here your ssh public key
