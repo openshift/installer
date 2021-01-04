@@ -1,6 +1,9 @@
 package provider
 
 import (
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig/aws"
+	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -8,4 +11,12 @@ import (
 type InstallConfigExternalProvider interface {
 	// AddToInstallConfigPlatform adds the current platform to the installconfig.
 	AddToInstallConfigPlatform(p *types.Platform) error
+
+	// ValidateInstallConfig validates the install config.
+	ValidateInstallConfig(
+		Config *types.InstallConfig,
+		File *asset.File,
+		AWS *aws.Metadata,
+		Azure *icazure.Metadata,
+	) error
 }

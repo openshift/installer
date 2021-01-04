@@ -15,8 +15,8 @@ import (
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ickubevirt "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	icopenstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
-	icovirt "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	icvsphere "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
+	"github.com/openshift/installer/pkg/externalprovider"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/conversion"
 	"github.com/openshift/installer/pkg/types/defaults"
@@ -190,7 +190,13 @@ func (a *InstallConfig) platformValidation() error {
 		return icvsphere.Validate(a.Config)
 	}
 	if a.Config.Platform.Ovirt != nil {
-		return icovirt.Validate(a.Config)
+		return externalprovider.ValidateInstallConfig(
+			externalprovider.NameOvirt,
+			a.Config,
+			a.File,
+			a.AWS,
+			a.Azure,
+		)
 	}
 	if a.Config.Platform.OpenStack != nil {
 		return icopenstack.Validate(a.Config)
