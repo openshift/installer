@@ -62,7 +62,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 func provider(platform *equinixmetal.Platform, pool *types.MachinePool, userDataSecret string, osImage string) *equinixprovider.EquinixMetalMachineProviderConfig {
 	spec := equinixprovider.EquinixMetalMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "equinixprovider.k8s.io/v1beta1",
+			APIVersion: equinixprovider.SchemeGroupVersion.String(),
 			Kind:       "EquinixMetalMachineProviderConfig",
 		},
 		// TODO(displague) which role? doesn't matter - not present in latest providerconfig
