@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -50,7 +51,9 @@ func PrepareTLSConfig(caCertFile, clientCertFile, clientKeyFile string, insecure
 		}
 
 		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
+		if ok := caCertPool.AppendCertsFromPEM(bytes.TrimSpace(caCert)); !ok {
+			return nil, fmt.Errorf("Error parsing CA Cert from %s", caCertFile)
+		}
 		config.RootCAs = caCertPool
 	}
 
