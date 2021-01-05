@@ -29,8 +29,9 @@ resource "vsphere_virtual_machine" "vm" {
   }
 
   extra_config = {
-    "guestinfo.ignition.config.data"          = base64encode(data.ignition_config.ign[each.key].rendered)
-    "guestinfo.ignition.config.data.encoding" = "base64"
+    "guestinfo.ignition.config.data"           = base64encode(var.ignition)
+    "guestinfo.ignition.config.data.encoding"  = "base64"
+    "guestinfo.afterburn.initrd.network-kargs" = "ip=${each.value}::${cidrhost(var.machine_cidr, 1)}:${cidrnetmask(var.machine_cidr)}:${element(split(".", each.key), 0)}:ens192:none:${join(":", var.dns_addresses)}"
   }
 }
 
