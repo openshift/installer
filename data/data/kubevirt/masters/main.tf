@@ -82,6 +82,7 @@ resource "kubevirt_virtual_machine" "master_vm" {
         }
       }
       spec {
+        termination_grace_period_seconds = 600
         volume {
           name = "datavolumedisk1"
           volume_source {
