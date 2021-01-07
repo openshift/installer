@@ -137,31 +137,31 @@ type ipAddressType struct {
 // ipAddressTypeByField is a map of field path to ipAddressType
 type ipAddressTypeByField map[string]ipAddressType
 
-// ipByField is a map of field path to the net.IPs in sorted order.
-type ipByField map[string][]net.IP
+// ipNetByField is a map of field path to the IPNets
+type ipNetByField map[string][]ipnet.IPNet
 
 // inferIPVersionFromInstallConfig infers the user's desired ip version from the networking config.
 // Presence field names match the field path of the struct within the Networking type. This function
 // assumes a valid install config.
-func inferIPVersionFromInstallConfig(n *types.Networking) (hasIPv4, hasIPv6 bool, presence ipAddressTypeByField, addresses ipByField) {
+func inferIPVersionFromInstallConfig(n *types.Networking) (hasIPv4, hasIPv6 bool, presence ipAddressTypeByField, addresses ipNetByField) {
 	if n == nil {
 		return
 	}
-	addresses = make(ipByField)
+	addresses = make(ipNetByField)
 	for _, network := range n.MachineNetwork {
-		addresses["machineNetwork"] = append(addresses["machineNetwork"], network.CIDR.IP)
+		addresses["machineNetwork"] = append(addresses["machineNetwork"], network.CIDR)
 	}
 	for _, network := range n.ServiceNetwork {
-		addresses["serviceNetwork"] = append(addresses["serviceNetwork"], network.IP)
+		addresses["serviceNetwork"] = append(addresses["serviceNetwork"], network)
 	}
 	for _, network := range n.ClusterNetwork {
-		addresses["clusterNetwork"] = append(addresses["clusterNetwork"], network.CIDR.IP)
+		addresses["clusterNetwork"] = append(addresses["clusterNetwork"], network.CIDR)
 	}
 	presence = make(ipAddressTypeByField)
-	for k, ips := range addresses {
-		for i, ip := range ips {
+	for k, ipnets := range addresses {
+		for i, ipnet := range ipnets {
 			has := presence[k]
-			if ip.To4() != nil {
+			if ipnet.IP.To4() != nil {
 				has.IPv4 = true
 				if i == 0 {
 					has.Primary = corev1.IPv4Protocol
@@ -184,20 +184,11 @@ func inferIPVersionFromInstallConfig(n *types.Networking) (hasIPv4, hasIPv6 bool
 	return
 }
 
-func ipSliceToStrings(ips []net.IP) []string {
-	var s []string
-	for _, ip := range ips {
-		s = append(s, ip.String())
-	}
-	return s
-}
-
 func ipnetworksToStrings(networks []ipnet.IPNet) []string {
 	var diag []string
 	for _, sn := range networks {
 		diag = append(diag, sn.String())
 	}
-	sort.Strings(diag)
 	return diag
 }
 
@@ -232,16 +223,16 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 			case k == "machineNetwork" && p.AWS != nil:
 				// AWS can default an ipv6 subnet
 			case v.IPv4 && !v.IPv6:
-				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipSliceToStrings(addresses[k]), ", "), "dual-stack IPv4/IPv6 requires an IPv6 address in this list"))
+				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipnetworksToStrings(addresses[k]), ", "), "dual-stack IPv4/IPv6 requires an IPv6 network in this list"))
 			case !v.IPv4 && v.IPv6:
-				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipSliceToStrings(addresses[k]), ", "), "dual-stack IPv4/IPv6 requires an IPv4 address in this list"))
+				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipnetworksToStrings(addresses[k]), ", "), "dual-stack IPv4/IPv6 requires an IPv4 network in this list"))
 			}
 
 			// FIXME: we should allow either all-networks-IPv4Primary or
 			// all-networks-IPv6Primary, but the latter currently causes
 			// confusing install failures, so block it.
 			if v.IPv4 && v.IPv6 && v.Primary != corev1.IPv4Protocol {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipSliceToStrings(addresses[k]), ", "), "IPv4 addresses must be listed before IPv6 addresses"))
+				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipnetworksToStrings(addresses[k]), ", "), "IPv4 addresses must be listed before IPv6 addresses"))
 			}
 		}
 
