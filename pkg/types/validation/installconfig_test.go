@@ -1138,7 +1138,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking.MachineNetwork = c.Networking.MachineNetwork[:1]
 				return c
 			}(),
-			expectedError: `Invalid value: "10.0.0.0": dual-stack IPv4/IPv6 requires an IPv6 address in this list`,
+			expectedError: `Invalid value: "10.0.0.0/16": dual-stack IPv4/IPv6 requires an IPv6 network in this list`,
 		},
 		{
 			name: "valid dual-stack configuration, machine has no IPv6 but is on AWS",
@@ -1162,7 +1162,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `Invalid value: "ffd1::, 172.30.0.0": IPv4 addresses must be listed before IPv6 addresses`,
+			expectedError: `Invalid value: "ffd1::/112, 172.30.0.0/16": IPv4 addresses must be listed before IPv6 addresses`,
 		},
 		{
 			name: "valid dual-stack configuration with mixed-order clusterNetworks",
