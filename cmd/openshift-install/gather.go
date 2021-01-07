@@ -225,11 +225,15 @@ func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State)
 			logrus.Error(err)
 		}
 	case ovirttypes.Name:
-		bootstrap, err := gatherovirt.BootstrapIP(tfstate)
+		bootstrap, err = gatherovirt.BootstrapIP(tfstate)
 		if err != nil {
 			return bootstrap, port, masters, err
 		}
 		masters, err = gatherovirt.ControlPlaneIPs(tfstate)
+		if err != nil {
+			logrus.Error(err)
+		}
+
 	case vspheretypes.Name:
 		bootstrap, err = gathervsphere.BootstrapIP(config, tfstate)
 		if err != nil {
