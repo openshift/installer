@@ -60,20 +60,20 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 	for _, capability := range *typeMeta.Capabilities {
 
 		if strings.EqualFold(*capability.Name, "vCPUs") {
-			cpus, err := strconv.ParseInt(*capability.Value, 10, 0)
+			cpus, err := strconv.ParseFloat(*capability.Value, 0)
 			if err != nil {
 				return append(allErrs, field.InternalError(fieldPath, err))
 			}
-			if cpus < req.minimumVCpus {
+			if cpus < float64(req.minimumVCpus) {
 				errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d vCPUs", req.minimumVCpus)
 				allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
 			}
 		} else if strings.EqualFold(*capability.Name, "MemoryGB") {
-			memory, err := strconv.ParseInt(*capability.Value, 10, 0)
+			memory, err := strconv.ParseFloat(*capability.Value, 0)
 			if err != nil {
 				return append(allErrs, field.InternalError(fieldPath, err))
 			}
-			if memory < req.minimumMemory {
+			if memory < float64(req.minimumMemory) {
 				errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d GB Memory", req.minimumMemory)
 				allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
 			}
