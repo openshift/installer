@@ -200,7 +200,7 @@ $ openstack image create --container-format=bare --disk-format=qcow2 --file rhco
 
 **NOTE:** Depending on your OpenStack environment you can upload the RHCOS image as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/introduction.html#disk-and-container-formats-for-images) for more information.
 
-[qemu_guest_agent]: https://docs.openstack.org/nova/latest/admin/configuration/hypervisor-kvm.html 
+[qemu_guest_agent]: https://docs.openstack.org/nova/latest/admin/configuration/hypervisor-kvm.html
 If the RHCOS image being used supports it,  the [KVM Qemu Guest Agent][qemu_guest_agent] may be used to enable optional
 access between OpenStack KVM hypervisors and the cluster nodes.
 
@@ -901,7 +901,7 @@ openstack subnet create radio --network radio --subnet-range <your CIDR range> -
 Your compute nodes will need to have two types of ports for this feature to work. One port needs to connect the node to your OpenShift network so that it can join the cluster and communicate with the other nodes. The other type of port is for your SR-IOV traffic. The OpenShift networking port should be created the same way we normally create ports for compute nodes.
 
 ```sh
-openstack port os_port_worker_0 --network <infraID>-network --security-group <infraID>-worker --fixed-ip subnet=<infraID>-nodes,ip-address=<a fixed IP> --allowed-address ip-address=<infraID>-ingress-port
+openstack port create os_port_worker_0 --network <infraID>-network --security-group <infraID>-worker --fixed-ip subnet=<infraID>-nodes,ip-address=<a fixed IP> --allowed-address ip-address=<infraID>-ingress-port
 ```
 
 The SR-IOV port(s) must be created explicitly by the user and passed as a NIC during instance creation, otherwise the `vnic-type` will not be `direct` and it will not work.
