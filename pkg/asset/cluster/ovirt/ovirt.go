@@ -16,6 +16,7 @@ func Metadata(config *types.InstallConfig) *ovirt.Metadata {
 		// if we have a custom image, don't remove the template,
 		// otherwise its a per deployment template, destroy it
 		RemoveTemplate: !ok,
+		APIVIP: config.Ovirt.APIVIP,
 	}
 	return &m
 }

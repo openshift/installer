@@ -4,4 +4,5 @@ package ovirt
 type Metadata struct {
 	ClusterID      string `json:"cluster_id"`
 	RemoveTemplate bool   `json:"remove_template"`
+	APIVIP	       string `json:"api_vip"`
 }
