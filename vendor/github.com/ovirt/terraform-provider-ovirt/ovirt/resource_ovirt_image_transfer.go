@@ -85,6 +85,7 @@ func resourceOvirtImageTransferCreate(d *schema.ResourceData, meta interface{}) 
 	sourceUrl := d.Get("source_url").(string)
 	domainId := d.Get("storage_domain_id").(string)
 	sparse := d.Get("sparse").(bool)
+	correlationID := fmt.Sprintf("image_transfer_%s", alias)
 
 	uploadSize, qcowSize, sourceFile, format, err := PrepareForTransfer(sourceUrl)
 	if err != nil {
@@ -106,7 +107,9 @@ func resourceOvirtImageTransferCreate(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 
-	addResp, err := conn.SystemService().DisksService().Add().Disk(disk).Send()
+	addDiskRequest := conn.SystemService().DisksService().Add().Disk(disk)
+	addDiskRequest.Query("correlation_id", correlationID)
+	addResp, err := addDiskRequest.Send()
 	if err != nil {
 		alias, _ := disk.Alias()
 		log.Printf("[DEBUG] Error creating the Disk (%s)", alias)
@@ -131,16 +134,32 @@ func resourceOvirtImageTransferCreate(d *schema.ResourceData, meta interface{}) 
 	log.Printf("starting a transfer for disk id: %s", diskID)
 
 	// initialize an image transfer
-	transferService, err := UploadToDisk(conn, sourceFile, diskID, alias, uploadSize)
+	transferService, err := UploadToDisk(conn, sourceFile, diskID, alias, uploadSize, correlationID)
 	if err != nil {
 		return err
 	}
 
 	log.Printf("finalizing...")
-	_, err = transferService.Finalize().Send()
+	finalizeRequest := transferService.Finalize()
+	finalizeRequest.Query("correlation_id", correlationID)
+	_, err = finalizeRequest.Send()
 
 	if err != nil {
 		return err
+	}
+
+	for {
+		finished, err := allJobsFinished(conn, correlationID)
+		if err != nil {
+			return fmt.Errorf("Failed to fetch jobs %v", err)
+		}
+
+		if finished {
+			break
+		}
+
+		log.Printf("Not all jobs for correlation ID %s are finished...", correlationID)
+		time.Sleep(time.Second * 5)
 	}
 
 	for {
@@ -165,13 +184,15 @@ func resourceOvirtImageTransferCreate(d *schema.ResourceData, meta interface{}) 
 
 // UploadToDisk reads a file and uploads its content to the ovirt disk.
 // Return value is an image transfer object, representing the transfer progress
-func UploadToDisk(conn *ovirtsdk4.Connection, sourceFile *os.File, diskID string, alias string, uploadSize int64) (*ovirtsdk4.ImageTransferService, error) {
+func UploadToDisk(conn *ovirtsdk4.Connection, sourceFile *os.File, diskID string, alias string, uploadSize int64, correlationID string) (*ovirtsdk4.ImageTransferService, error) {
 	defer sourceFile.Close()
 	imageTransfersService := conn.SystemService().ImageTransfersService()
 	image := ovirtsdk4.NewImageBuilder().Id(diskID).MustBuild()
 	log.Printf("the image to transfer: %s", alias)
 	transfer := ovirtsdk4.NewImageTransferBuilder().Image(image).MustBuild()
-	transferRes, err := imageTransfersService.Add().ImageTransfer(transfer).Send()
+	transferReq := imageTransfersService.Add().ImageTransfer(transfer)
+	transferReq.Query("correlation_id", correlationID)
+	transferRes, err := transferReq.Send()
 	if err != nil {
 		log.Printf("failed to initialize an image transfer for image (%v) : %s", transfer, err)
 		return nil, err
@@ -382,4 +403,21 @@ func PrepareForTransfer(sourceUrl string) (uploadSize int64, qcowSize uint64, so
 	// so must parse the virtual size from the disk. see the UI handling for that
 	// for block format, the initial size of disk == uploadSize
 	return uploadSize, qcowSize, sFile, format, nil
+}
+
+func allJobsFinished(conn *ovirtsdk4.Connection, correlationID string) (bool, error) {
+	jobResp, err := conn.SystemService().JobsService().List().Search(fmt.Sprintf("correlation_id=%s", correlationID)).Send()
+	if err != nil {
+		return false, err
+	}
+	if jobSlice, ok := jobResp.Jobs(); ok && len(jobSlice.Slice()) > 0 {
+		jobs := jobSlice.Slice()
+		for _, job := range jobs {
+			if status, _ := job.Status(); status == ovirtsdk4.JOBSTATUS_STARTED {
+				return false, nil
+			}
+		}
+	}
+
+	return true, nil
 }
