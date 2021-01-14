@@ -49,7 +49,7 @@ type clients struct {
 // Flavor embeds information from the Gophercloud Flavor struct and adds
 // information on whether a flavor is of baremetal type.
 type Flavor struct {
-	*flavors.Flavor
+	flavors.Flavor
 	Baremetal bool
 }
 
@@ -229,8 +229,11 @@ func (ci *CloudInfo) getFlavor(flavorName string) (Flavor, error) {
 		}
 	}
 
+	// NOTE(mdbooth): The dereference of flavor is safe here because
+	// flavors.Get().Extract() should have raised an error above if the flavor
+	// was not found.
 	return Flavor{
-		Flavor:    flavor,
+		Flavor:    *flavor,
 		Baremetal: baremetal,
 	}, nil
 }

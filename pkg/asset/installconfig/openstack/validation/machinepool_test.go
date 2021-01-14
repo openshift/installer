@@ -61,7 +61,7 @@ func validMpoolCloudInfo() *CloudInfo {
 	return &CloudInfo{
 		Flavors: map[string]Flavor{
 			validCtrlPlaneFlavor: {
-				Flavor: &flavors.Flavor{
+				Flavor: flavors.Flavor{
 					Name:  validCtrlPlaneFlavor,
 					RAM:   16,
 					Disk:  25,
@@ -69,7 +69,7 @@ func validMpoolCloudInfo() *CloudInfo {
 				},
 			},
 			validComputeFlavor: {
-				Flavor: &flavors.Flavor{
+				Flavor: flavors.Flavor{
 					Name:  validComputeFlavor,
 					RAM:   8,
 					Disk:  25,
@@ -77,7 +77,7 @@ func validMpoolCloudInfo() *CloudInfo {
 				},
 			},
 			invalidCtrlPlaneFlavor: {
-				Flavor: &flavors.Flavor{
+				Flavor: flavors.Flavor{
 					Name:  invalidCtrlPlaneFlavor,
 					RAM:   8, // too low
 					Disk:  25,
@@ -85,7 +85,7 @@ func validMpoolCloudInfo() *CloudInfo {
 				},
 			},
 			invalidComputeFlavor: {
-				Flavor: &flavors.Flavor{
+				Flavor: flavors.Flavor{
 					Name:  invalidComputeFlavor,
 					RAM:   8,
 					Disk:  10, // too low
@@ -93,7 +93,7 @@ func validMpoolCloudInfo() *CloudInfo {
 				},
 			},
 			baremetalFlavor: {
-				Flavor: &flavors.Flavor{
+				Flavor: flavors.Flavor{
 					Name:  baremetalFlavor,
 					RAM:   8,  // too low
 					Disk:  10, // too low
@@ -165,7 +165,6 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			}(),
 			cloudInfo: func() *CloudInfo {
 				ci := validMpoolCloudInfo()
-				ci.Flavors[notExistFlavor] = Flavor{}
 				return ci
 			}(),
 			expectedError:  true,
@@ -180,7 +179,6 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			}(),
 			cloudInfo: func() *CloudInfo {
 				ci := validMpoolCloudInfo()
-				ci.Flavors[notExistFlavor] = Flavor{}
 				return ci
 			}(),
 			expectedError:  true,
