@@ -113,6 +113,36 @@ resource "aws_security_group_rule" "worker_ingress_geneve_from_master" {
   to_port   = 6081
 }
 
+resource "aws_security_group_rule" "worker_ingress_ike_from_master" {
+  type                     = "ingress"
+  security_group_id        = aws_security_group.worker.id
+  source_security_group_id = aws_security_group.master.id
+
+  protocol  = "udp"
+  from_port = 500
+  to_port   = 500
+}
+
+resource "aws_security_group_rule" "worker_ingress_nat_t_from_master" {
+  type                     = "ingress"
+  security_group_id        = aws_security_group.worker.id
+  source_security_group_id = aws_security_group.master.id
+
+  protocol  = "udp"
+  from_port = 4500
+  to_port   = 4500
+}
+
+resource "aws_security_group_rule" "worker_ingress_esp_from_master" {
+  type                     = "ingress"
+  security_group_id        = aws_security_group.worker.id
+  source_security_group_id = aws_security_group.master.id
+
+  protocol  = 50
+  from_port = 0
+  to_port   = 0
+}
+
 resource "aws_security_group_rule" "worker_ingress_internal" {
   type              = "ingress"
   security_group_id = aws_security_group.worker.id
