@@ -81,3 +81,19 @@ The teardown playbooks provided for UPI installation will not delete:
  - Swift container for image registry (bootstrap container is correctly deleted)
 
 These objects have to be manually removed after running the teardown playbooks.
+
+## Control plane scale out anti-affinity
+
+A long-standing OpenStack Compute issue prevents the "soft"-anti-affinity
+policy to be correctly applied when instances are created in parallel. The
+Installer places the initial control plane nodes in a Server group with
+"soft-anti-affinity" policy and creates the first three sequentially to work
+around the problem. Additional control plane nodes beyond the first three are
+created, according to the "replicas" property, in a later phase. These nodes
+are not guaranteed to be created sequentially.
+
+When anti-affinity is a requirement, it is advised to rely on the more stable
+"anti-affinity" for any node beyond the third. To do so, install with three
+control plane replicas only. Add more nodes as a day-2 operation by assigning
+them a new Server group with "anti-affinity" policy. Use the `ServerGroupID`
+property of the Machine ProviderSpec.
