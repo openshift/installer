@@ -93,6 +93,22 @@
       port_range_min: 6081
       port_range_max: 6081
 
+  - name: 'Create master-sg rule "IPsec IKE"'
+    os_security_group_rule:
+      security_group: "{{ os_sg_master }}"
+      protocol: udp
+      remote_ip_prefix: "{{ os_subnet_range }}"
+      port_range_min: 500
+      port_range_max: 500
+
+  - name: 'Create master-sg rule "IPsec NAT-T"'
+    os_security_group_rule:
+      security_group: "{{ os_sg_master }}"
+      protocol: udp
+      remote_ip_prefix: "{{ os_subnet_range }}"
+      port_range_min: 4500
+      port_range_max: 4500
+
   - name: 'Create master-sg rule "ovndb"'
     os_security_group_rule:
       security_group: "{{ os_sg_master }}"
@@ -229,6 +245,22 @@
       remote_ip_prefix: "{{ os_subnet_range }}"
       port_range_min: 6081
       port_range_max: 6081
+
+  - name: 'Create worker-sg rule "IPsec IKE"'
+    os_security_group_rule:
+      security_group: "{{ os_sg_worker }}"
+      protocol: udp
+      remote_ip_prefix: "{{ os_subnet_range }}"
+      port_range_min: 500
+      port_range_max: 500
+
+  - name: 'Create worker-sg rule "IPsec NAT-T"'
+    os_security_group_rule:
+      security_group: "{{ os_sg_worker }}"
+      protocol: udp
+      remote_ip_prefix: "{{ os_subnet_range }}"
+      port_range_min: 4500
+      port_range_max: 4500
 
   - name: 'Create worker-sg rule "worker ingress internal (TCP)"'
     os_security_group_rule:

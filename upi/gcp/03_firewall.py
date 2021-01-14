@@ -95,6 +95,11 @@ def GenerateConfig(context):
                 'IPProtocol': 'udp',
                 'ports': ['4789', '6081']
             },{
+                'IPProtocol': 'udp',
+                'ports': ['500', '4500']
+            },{
+                'IPProtocol': 'esp',
+            },{
                 'IPProtocol': 'tcp',
                 'ports': ['9000-9999']
             },{
