@@ -45,7 +45,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
   * `type` (required string): The volume pool to create the volume from.
 * `zones` (optional list of strings): The names of the availability zones you want to install your nodes on. If unset, the installer will use your default compute zone.
 
-**NOTE:** The bootstrap node follows the `type` and `rootVolume` parameters from the `controlPlane` machine pool.
+**NOTE:** The bootstrap node follows the `type`, `rootVolume`, `additionalNetworkIDs`, and `additionalSecurityGroupIDs` parameters from the `controlPlane` machine pool.
 
 **NOTE:** Note when deploying with `Kuryr` there is an Octavia API loadbalancer VM that will not fulfill the Availability Zones restrictions due to Octavia lack of support for it. In addition, if Octavia only has the amphora provider instead of also the OVN-Octavia provider, all the OpenShift services will be backed up by Octavia Load Balancer VMs which will not fulfill the Availability Zone restrictions either.
 
@@ -192,7 +192,9 @@ controlPlane:
       - fa806b2f-ac49-4bce-b9db-124bc64209bf
 ```
 
-**NOTE:** Allowed address pairs won't be created for the additional networks.
+**NOTES:**
+* Allowed address pairs won't be created for the additional networks.
+* The additional networks attached to the Control Plane machine will also be attached to the bootstrap node.
 
 ## Additional Security Groups
 
@@ -222,6 +224,8 @@ controlPlane:
       additionalSecurityGroupIDs:
       - 7ee219f3-d2e9-48a1-96c2-e7429f1b0da7
 ```
+
+**NOTE:** The additional security groups attached to the Control Plane machine will also be attached to the bootstrap node.
 
 ## Further customization
 
