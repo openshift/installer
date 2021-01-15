@@ -4,7 +4,7 @@ In a new AWS account, you are provided with a root user. This account is based o
 the account. This is a highly privileged account and not recommended for usage beyond configuring initial account and
 billing settings, an initial set of users, and locking it down.
 
-Before proceeding with the OpenShift install, you should create a secondary IAM administrative user following the steps
+Before proceeding with the OpenShift install, you should create a IAM administrative user following the steps
 outlined here:
 
 [AWS: Creating an IAM User in Your AWS Account][user-create]
