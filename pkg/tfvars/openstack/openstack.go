@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	types_openstack "github.com/openshift/installer/pkg/types/openstack"
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	"github.com/pkg/errors"
 
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
@@ -197,11 +198,7 @@ func getGlancePublicURL(serviceCatalog *tokens.ServiceCatalog) (string, error) {
 
 // getServiceCatalog fetches OpenStack service catalog with service endpoints
 func getServiceCatalog(cloud string) (*tokens.ServiceCatalog, error) {
-	opts := &clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
-
-	conn, err := clientconfig.NewServiceClient("identity", opts)
+	conn, err := clientconfig.NewServiceClient("identity", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}
@@ -222,11 +219,7 @@ func getServiceCatalog(cloud string) (*tokens.ServiceCatalog, error) {
 
 // getNetworkFromSubnet looks up a subnet in openstack and returns the ID of the network it's a part of
 func getNetworkFromSubnet(cloud string, subnetID string) (string, error) {
-	opts := &clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
-
-	networkClient, err := clientconfig.NewServiceClient("network", opts)
+	networkClient, err := clientconfig.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return "", err
 	}

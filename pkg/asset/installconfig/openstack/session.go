@@ -2,9 +2,9 @@
 package openstack
 
 import (
-	"os"
 	"sync"
 
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	"github.com/pkg/errors"
 
 	"github.com/ghodss/yaml"
@@ -21,12 +21,8 @@ type Session struct {
 
 // GetSession returns an OpenStack session for a given cloud name in clouds.yaml.
 func GetSession(cloudName string) (*Session, error) {
-	opts := defaultClientOpts(cloudName)
-
-	// We should unset OS_CLOUD env variable here, because the real cloud name was
-	// defined on the previous step. OS_CLOUD has more priority, so the value from
-	// "opts" variable will be ignored if OS_CLOUD contains something.
-	os.Unsetenv("OS_CLOUD")
+	opts := openstackdefaults.DefaultClientOpts(cloudName)
+	opts.YAMLOpts = new(yamlLoadOpts)
 
 	cloudConfig, err := clientconfig.GetCloudFromYAML(opts)
 	if err != nil {
@@ -35,13 +31,6 @@ func GetSession(cloudName string) (*Session, error) {
 	return &Session{
 		CloudConfig: cloudConfig,
 	}, nil
-}
-
-func defaultClientOpts(cloudName string) *clientconfig.ClientOpts {
-	opts := new(clientconfig.ClientOpts)
-	opts.Cloud = cloudName
-	opts.YAMLOpts = new(yamlLoadOpts)
-	return opts
 }
 
 type yamlLoadOpts struct{}

@@ -9,6 +9,8 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	networkutils "github.com/gophercloud/utils/openstack/networking/v2/networks"
+
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
 // getCloudNames gets the valid cloud names. These are read from clouds.yaml.
@@ -28,9 +30,7 @@ func getCloudNames() ([]string, error) {
 // getExternalNetworkNames interrogates OpenStack to get the external network
 // names.
 func getExternalNetworkNames(cloud string) ([]string, error) {
-	conn, err := clientconfig.NewServiceClient("network", &clientconfig.ClientOpts{
-		Cloud: cloud,
-	})
+	conn, err := clientconfig.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}
@@ -61,9 +61,7 @@ func getExternalNetworkNames(cloud string) ([]string, error) {
 
 // getFlavorNames gets a list of valid flavor names.
 func getFlavorNames(cloud string) ([]string, error) {
-	conn, err := clientconfig.NewServiceClient("compute", &clientconfig.ClientOpts{
-		Cloud: cloud,
-	})
+	conn, err := clientconfig.NewServiceClient("compute", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}
@@ -91,9 +89,7 @@ func getFlavorNames(cloud string) ([]string, error) {
 	return flavorNames, nil
 }
 func getFloatingIPNames(cloud string, floatingNetworkName string) ([]string, error) {
-	conn, err := clientconfig.NewServiceClient("network", &clientconfig.ClientOpts{
-		Cloud: cloud,
-	})
+	conn, err := clientconfig.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}

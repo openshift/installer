@@ -8,6 +8,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -29,11 +31,7 @@ func DeleteGlanceImage(name string, cloud string) error {
 }
 
 func deleteGlanceImage(name string, cloud string) (bool, error) {
-	opts := clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
-
-	conn, err := clientconfig.NewServiceClient("image", &opts)
+	conn, err := clientconfig.NewServiceClient("image", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		logrus.Warningf("There was an error during the image removal: %v", err)
 		return false, nil
