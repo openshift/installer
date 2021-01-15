@@ -1,7 +1,8 @@
 # IAM User
 
-In a new AWS account, you are provided with a root user. This account is based on the email address which created
-the account. This is a highly privileged account and not recommended for usage beyond configuring initial account and
+When you first create an Amazon Web Services (AWS) account, you begin with a single sign-in identity that has complete access to all AWS services and resources in the account. This identity is called the [AWS account *root user*][aws-account-root-user]. You can sign in as the root user using the email address and password that you used to create the account.
+
+This is a highly privileged account and not recommended for usage beyond configuring initial account and
 billing settings, an initial set of users, and locking it down.
 
 Before proceeding with the OpenShift install, you should create a IAM administrative user following the steps
@@ -42,4 +43,5 @@ the installer. This step is your only opportunity to collect those values.
 
 ![IAM Create User Step 5](images/iam_create_user_step5.png)
 
+[aws-account-root-user]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html
 [user-create]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html
