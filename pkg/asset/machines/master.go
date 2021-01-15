@@ -371,7 +371,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	}
 
 	if pool.Replicas != nil && *pool.Replicas == 1 && ic.IsOKD() {
-		m.SingleMasterFiles = make([]*asset.File, 2)
+		m.SingleMasterFiles = make([]*asset.File, 3)
 		m.SingleMasterFiles[0] = &asset.File{
 			Filename: filepath.Join(directory, fmt.Sprintf(singleMasterFileName, "etcd")),
 			Data:     etcdSingleMasterData,
@@ -379,6 +379,10 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		m.SingleMasterFiles[1] = &asset.File{
 			Filename: filepath.Join(directory, fmt.Sprintf(singleMasterFileName, "ingress")),
 			Data:     ingressSingleMasterData,
+		}
+		m.SingleMasterFiles[2] = &asset.File{
+			Filename: filepath.Join(directory, fmt.Sprintf(singleMasterFileName, "authentication")),
+			Data:     authSingleMasterData,
 		}
 	}
 

@@ -18,3 +18,12 @@ metadata:
 spec:
   replicas: 1
 `)
+
+var authSingleMasterData = []byte(`apiVersion: operator.openshift.io/v1
+kind: Authentication
+metadata:
+  name: cluster
+spec:
+  unsupportedConfigOverrides:
+    useUnsupportedUnsafeNonHANonProductionUnstableOAuthServer: true
+`)
