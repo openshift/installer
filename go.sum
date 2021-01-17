@@ -84,6 +84,8 @@ github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3
 github.com/Djarvur/go-err113 v0.0.0-20200410182137-af658d038157/go.mod h1:4UJr5HIiMZrwgkSPdsjy2uOQExX/WEILpIrO9UPGuXs=
 github.com/Djarvur/go-err113 v0.0.0-20200511133814-5174e21577d5/go.mod h1:4UJr5HIiMZrwgkSPdsjy2uOQExX/WEILpIrO9UPGuXs=
 github.com/Djarvur/go-err113 v0.1.0/go.mod h1:4UJr5HIiMZrwgkSPdsjy2uOQExX/WEILpIrO9UPGuXs=
+github.com/Gal-Zaidman/terraform-provider-ovirt v0.4.3-0.20210117130043-41e6da7f623e h1:4zpen4cCWy4YoxLOXbLR2tQTRCDLtjVPp0Qk309zC94=
+github.com/Gal-Zaidman/terraform-provider-ovirt v0.4.3-0.20210117130043-41e6da7f623e/go.mod h1:LDHfgu36xGyr0tUPZpL+a7HRovpRzlcNiu0CmPcxcUI=
 github.com/InVisionApp/go-health v2.1.0+incompatible/go.mod h1:/+Gv1o8JUsrjC6pi6MN6/CgKJo4OqZ6x77XAnImrzhg=
 github.com/Jeffail/gabs v1.1.1/go.mod h1:6xMvQMK4k33lb7GUUpaAPh6nKMmemQeg5d4gn7/bOXc=
 github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd/go.mod h1:64YHyfSL2R96J44Nlwm39UHepQbyR5q10x7iYa1ks2E=
@@ -1127,6 +1129,8 @@ github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de h1:9TO3cAIGXtEhn
 github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de/go.mod h1:zAbeS9B/r2mtpb6U+EI2rYA5OAXxsYw6wTamcNW+zcE=
 github.com/lightstep/lightstep-tracer-common/golang/gogo v0.0.0-20190605223551-bc2310a04743/go.mod h1:qklhhLq1aX+mtWk9cPHPzaBjWImj5ULL6C7HFJtXQMM=
 github.com/lightstep/lightstep-tracer-go v0.18.0/go.mod h1:jlF1pusYV4pidLvZ+XD0UBX0ZE6WURAspgAczcDHrL4=
+github.com/liranr23/terraform-provider-ovirt v0.4.3-0.20201213090522-82c90a86a57d h1:3qjzWpEwMKOA8lam0bd9NjdY4zCAWqZKe25bgZkNvWw=
+github.com/liranr23/terraform-provider-ovirt v0.4.3-0.20201213090522-82c90a86a57d/go.mod h1:XFDLN/srNA1s2Dq+gp4zBvql6nRnfNJzDGzI5vtK85g=
 github.com/lithammer/dedent v1.1.0/go.mod h1:jrXYCQtgg0nJiN+StA2KgR7w6CiQNv9Fd/Z9BP0jIOc=
 github.com/logrusorgru/aurora v0.0.0-20181002194514-a7b3b318ed4e/go.mod h1:7rIyQOR62GCctdiQpZ/zOJlFyk6y+94wXzv6RNZgaR4=
 github.com/lovoo/gcloud-opentracing v0.3.0/go.mod h1:ZFqk2y38kMDDikZPAK7ynTTGuyt17nSPdS3K5e+ZTBY=
@@ -1437,8 +1441,8 @@ github.com/ovirt/go-ovirt v0.0.0-20200313072907-d30f754823a6/go.mod h1:fLDxPk1Sf
 github.com/ovirt/go-ovirt v0.0.0-20200428093010-9bcc4fd4e6c0/go.mod h1:fLDxPk1Sf64DBYtwIYxrnx3gPZ1q0xPdWdI1y9vxUaw=
 github.com/ovirt/go-ovirt v0.0.0-20200613023950-320a86f9df27 h1:jHcZg49imi3zydtFqly5vniMnFX7HxW27L9M095eLhI=
 github.com/ovirt/go-ovirt v0.0.0-20200613023950-320a86f9df27/go.mod h1:fLDxPk1Sf64DBYtwIYxrnx3gPZ1q0xPdWdI1y9vxUaw=
-github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200914080915-c4444fb5c201 h1:43ItTdmiCXccs0JrwcGfMrw5Md9np6NYQXIC+0U74mk=
-github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200914080915-c4444fb5c201/go.mod h1:XFDLN/srNA1s2Dq+gp4zBvql6nRnfNJzDGzI5vtK85g=
+github.com/ovirt/go-ovirt v0.0.0-20210112072624-e4d3b104de71 h1:rMPlu5YNQomOQ9hXQDcYTfcmFy8rlYgeDJPPl1qgqz8=
+github.com/ovirt/go-ovirt v0.0.0-20210112072624-e4d3b104de71/go.mod h1:fLDxPk1Sf64DBYtwIYxrnx3gPZ1q0xPdWdI1y9vxUaw=
 github.com/oxtoacart/bpool v0.0.0-20150712133111-4e1c5567d7c2/go.mod h1:L3UMQOThbttwfYRNFOWLLVXMhk5Lkio4GGOtw5UrxS0=
 github.com/packer-community/winrmcp v0.0.0-20180102160824-81144009af58/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db h1:9uViuKtx1jrlXLBW/pMnhOfzn3iSEdLase/But/IZRU=

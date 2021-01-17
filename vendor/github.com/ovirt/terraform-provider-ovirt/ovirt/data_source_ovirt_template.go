@@ -26,6 +26,11 @@ func dataSourceOvirtTemplates() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.ValidateRegexp,
 			},
+			"latest": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 
 			"templates": {
 				Type:     schema.TypeList,
@@ -72,6 +77,7 @@ func dataSourceOvirtTemplatesRead(d *schema.ResourceData, meta interface{}) erro
 
 	search, searchOK := d.GetOk("search")
 	nameRegex, nameRegexOK := d.GetOk("name_regex")
+	latest := d.Get("latest").(bool)
 
 	if searchOK {
 		searchMap := search.(map[string]interface{})
@@ -125,6 +131,10 @@ func dataSourceOvirtTemplatesRead(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("your query returned no results, please change your search criteria and try again")
 	}
 
+	if latest {
+		filteredTemplates = getLatestTemplate(filteredTemplates)
+	}
+
 	return templatesDescriptionAttributes(d, filteredTemplates, meta)
 }
 
@@ -144,4 +154,14 @@ func templatesDescriptionAttributes(d *schema.ResourceData, templates []*ovirtsd
 	}
 	d.SetId(resource.UniqueId())
 	return d.Set("templates", s)
+}
+
+func getLatestTemplate(templates []*ovirtsdk4.Template) []*ovirtsdk4.Template {
+	var latest *ovirtsdk4.Template
+	for i, e := range templates {
+		if i == 0 || e.MustCreationTime().After(latest.MustCreationTime()) {
+			latest = e
+		}
+	}
+	return []*ovirtsdk4.Template{latest}
 }

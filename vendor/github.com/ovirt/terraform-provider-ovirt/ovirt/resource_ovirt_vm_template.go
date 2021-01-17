@@ -101,6 +101,22 @@ func resourceOvirtTemplate() *schema.Resource {
 				Default:  1,
 				ForceNew: true,
 			},
+			"custom_properties": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"value": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
 			"nics": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -321,6 +337,16 @@ func resourceOvirtTemplateCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 	builder.Cpu(cpu)
+
+	if cp, ok := d.GetOkExists("custom_properties"); ok {
+		customProperties, err := expandOvirtCustomProperties(cp.([]interface{}))
+		if err != nil {
+			return err
+		}
+		if len(customProperties) > 0 {
+			builder.CustomPropertiesOfAny(customProperties...)
+		}
+	}
 
 	if v, ok := d.GetOk("initialization"); ok {
 		initialization, err := expandOvirtVMInitialization(v.([]interface{}))

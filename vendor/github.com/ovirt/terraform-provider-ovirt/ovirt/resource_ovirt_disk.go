@@ -226,6 +226,11 @@ func resourceOvirtDiskRead(d *schema.ResourceData, meta interface{}) error {
 	getDiskResp, err := conn.SystemService().DisksService().
 		DiskService(d.Id()).Get().Send()
 	if err != nil {
+		_, ok := err.(*ovirtsdk4.NotFoundError)
+		if ok {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 

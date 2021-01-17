@@ -64,7 +64,7 @@ require (
 	github.com/openshift/library-go v0.0.0-20201109112824-093ad3cf6600
 	github.com/openshift/machine-api-operator v0.2.1-0.20201111151924-77300d0c997a
 	github.com/openshift/machine-config-operator v0.0.0
-	github.com/ovirt/go-ovirt v0.0.0-20200613023950-320a86f9df27
+	github.com/ovirt/go-ovirt v0.0.0-20210112072624-e4d3b104de71
 	github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200914080915-c4444fb5c201
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
 	github.com/pborman/uuid v1.2.0
@@ -158,6 +158,7 @@ replace (
 	github.com/aws/aws-sdk-go => github.com/aws/aws-sdk-go v1.32.3
 	github.com/go-openapi/spec => github.com/go-openapi/spec v0.19.4
 	github.com/hashicorp/go-plugin => github.com/hashicorp/go-plugin v1.2.2
+	github.com/ovirt/terraform-provider-ovirt => github.com/Gal-Zaidman/terraform-provider-ovirt v0.4.3-0.20210117130043-41e6da7f623e
 	github.com/ulikunitz/xz => github.com/ulikunitz/xz v0.5.7
 	google.golang.org/api => google.golang.org/api v0.25.0
 	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
