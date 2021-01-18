@@ -67,39 +67,13 @@ func (c *Connection) URL() string {
 	return c.url.String()
 }
 
-// Test tests the connectivity with the server using the credentials provided in connection.
-// If connectivity works correctly and the credentials are valid, it returns a nil error,
-// or it will return an error containing the reason as the message.
-// If the authentication fails because the oauth token is no longer valid it will
-// try to re-authenticate, to renew the token.
+// Test tests the connectivity with the server using the system service.
 func (c *Connection) Test() error {
-	statusCode, err := c.testToken()
-	if err != nil || statusCode == http.StatusUnauthorized {
-		// failed, then clear state.
-		c.ssoToken = ""
+	_, err  := c.SystemService().Get().Send()
+	if err != nil  {
+		return fmt.Errorf("Failed to validate the connection, '%s'", err)
 	}
-	_, err = c.authenticate()
-	return err
-}
-
-// testToken tries a minimal request, using the existing token. Returns the status
-// code and an error.
-func (c *Connection) testToken() (int, error) {
-	// a simple http OPTIONS request is the lightest method to test auth.
-	options, err := http.NewRequest(http.MethodOptions, c.url.String(), nil)
-	// add auth token to the request
-	options.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.ssoToken))
-	if err != nil {
-		// shouldn't fail to construct a request, but report anyway.
-		return 0, err
-	}
-	res, err := c.client.Do(options)
-	if err != nil {
-		return 0, err
-	}
-	defer res.Body.Close()
-
-	return res.StatusCode, err
+	return nil
 }
 
 func (c *Connection) getHref(object Href) (string, bool) {
@@ -151,6 +125,10 @@ func (c *Connection) FollowLink(object Href) (interface{}, error) {
 		requestCaller = serviceValue.MethodByName("Get").Call([]reflect.Value{})[0]
 	}
 	callerResponse := requestCaller.MethodByName("Send").Call([]reflect.Value{})[0]
+	if callerResponse.IsNil() {
+		return nil, errors.New("Could not get response")
+	}
+
 	// Get the method index, which is not the Must version
 	methodIndex := 0
 	callerResponseType := callerResponse.Type()

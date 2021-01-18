@@ -98,13 +98,27 @@ func resourceOvirtVM() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
-				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
 							Type:     schema.TypeString,
 							Required: true,
-							ForceNew: true,
+						},
+					},
+				},
+			},
+			"custom_properties": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"value": {
+							Type:     schema.TypeString,
+							Required: true,
 						},
 					},
 				},
@@ -122,6 +136,12 @@ func resourceOvirtVM() *schema.Resource {
 						"vnic_profile_id": {
 							Type:     schema.TypeString,
 							Required: true,
+							ForceNew: true,
+						},
+						"mac": {
+							Type:     schema.TypeString,
+							Required: false,
+							Optional: true,
 							ForceNew: true,
 						},
 					},
@@ -173,6 +193,17 @@ func resourceOvirtVM() *schema.Resource {
 							}, false),
 							Required: true,
 							ForceNew: true,
+						},
+						"alias": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: false,
+						},
+						"storage_domain": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: false,
+							Default:  "",
 						},
 						"logical_name": {
 							Type:     schema.TypeString,
@@ -381,6 +412,78 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	vmBuilder.Cpu(cpu)
 
+	if blockDeviceOk {
+		if storage_domain, _ := blockDevice.([]interface{})[0].(map[string]interface{})["storage_domain"]; storage_domain != "" && templateIDOK {
+
+			// Get the reference to the service that manages the storage domains
+			sdsService := conn.SystemService().StorageDomainsService()
+
+			// Find the storage domain we want to be used for virtual machine disks
+			sdsResp, err := sdsService.List().Search("name=" + storage_domain.(string)).Send()
+			if err != nil {
+				return fmt.Errorf("Failed to search storage domains, reason: %v", err)
+			}
+
+			tds, err := getTemplateDiskAttachments(templateID.(string), meta)
+			if err != nil {
+				return fmt.Errorf("Failed to get Template disks attachments: %v", err)
+			}
+
+			if storageDomains, ok := sdsResp.StorageDomains(); ok {
+				if len(storageDomains.Slice()) == 0 {
+					return fmt.Errorf("Failed to find storage domain with name=%s", storage_domain.(string))
+				}
+				sd := storageDomains.Slice()[0]
+
+				for i, v := range tds {
+					diskIndex := i + 1
+					disk := v.MustDisk()
+					disk.SetStorageDomain(sd)
+
+					// Gett full information about disk
+					diskService := conn.SystemService().DisksService().DiskService(disk.MustId())
+					fullDiskInfo := diskService.Get().MustSend().MustDisk()
+					diskFormat := fullDiskInfo.MustFormat()
+
+					diskattachment := ovirtsdk4.NewDiskAttachmentBuilder().
+						Disk(ovirtsdk4.NewDiskBuilder().
+							Id(disk.MustId()).
+							Format(diskFormat).
+							StorageDomainsOfAny(
+								ovirtsdk4.NewStorageDomainBuilder().
+									Id(sd.MustId()).
+									MustBuild()).
+							MustBuild()).
+						MustBuild()
+
+					// Define basic disk aliases only if attribute alias defined
+					if alias, _ := blockDevice.([]interface{})[0].(map[string]interface{})["alias"]; alias != "" {
+						_, diskBotable := disk.Bootable()
+						switch diskBotable {
+						case true:
+							disk.SetAlias(alias.(string))
+						case false:
+							disk.SetAlias(fmt.Sprintf("%s_Disk%v", d.Get("name").(string), diskIndex))
+						}
+
+						var newdiskattachment = diskattachment.MustDisk()
+						newdiskattachment.SetAlias(disk.MustAlias())
+					}
+					vmBuilder.DiskAttachmentsOfAny(diskattachment)
+				}
+			}
+		}
+	}
+	if cp, ok := d.GetOkExists("custom_properties"); ok {
+		customProperties, err := expandOvirtCustomProperties(cp.([]interface{}))
+		if err != nil {
+			return err
+		}
+		if len(customProperties) > 0 {
+			vmBuilder.CustomPropertiesOfAny(customProperties...)
+		}
+	}
+
 	os, err := expandOS(d)
 	if err != nil {
 		return err
@@ -399,8 +502,34 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	isHighPerformance := false
 	if v, ok := d.GetOk("type"); ok {
-		vmBuilder.Type(ovirtsdk4.VmType(fmt.Sprint(v)))
+		vmType := ovirtsdk4.VmType(fmt.Sprint(v))
+		vmBuilder.Type(vmType)
+		if vmType == ovirtsdk4.VMTYPE_HIGH_PERFORMANCE {
+			isHighPerformance = true
+
+			// disable ballooning
+			memoryPolicy, err := ovirtsdk4.NewMemoryPolicyBuilder().
+				Ballooning(false).
+				Build()
+			if err != nil {
+				return err
+			}
+			vmBuilder.MemoryPolicy(memoryPolicy)
+
+			// set cpu host-passthrough
+			cpu.SetMode(ovirtsdk4.CPUMODE_HOST_PASSTHROUGH)
+			vmBuilder.Cpu(cpu)
+
+			// enable serial console
+			console, err := ovirtsdk4.NewConsoleBuilder().
+				Enabled(true).Build()
+			if err != nil {
+				return err
+			}
+			vmBuilder.Console(console)
+		}
 	}
 
 	if v, ok := d.GetOk("instance_type_id"); ok {
@@ -458,6 +587,15 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	// remove graphic devices for high performance VM
+	if isHighPerformance {
+		log.Printf("[DEBUG] High Performance VM (%s) Removing Graphic consoles", d.Id())
+		err := ovirtRemoveGraphicsConsoles(d.Id(), meta)
+		if err != nil {
+			log.Printf("[DEBUG] Error removing graphical devices")
+		}
+	}
+
 	// Do attach disks
 	if blockDeviceOk {
 		log.Printf("[DEBUG] Attach disk specified by block_device to VM (%s)", d.Id())
@@ -497,6 +635,33 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	return resourceOvirtVMRead(d, meta)
+}
+
+func ovirtRemoveGraphicsConsoles(vmID string, meta interface{}) error {
+	conn := meta.(*ovirtsdk4.Connection)
+	vmGraphicConsoleService := conn.SystemService().VmsService().VmService(vmID).GraphicsConsolesService()
+
+	graphics, err := vmGraphicConsoleService.List().Send()
+	if err != nil {
+		if _, ok := err.(*ovirtsdk4.NotFoundError); ok {
+			return nil
+		}
+		return fmt.Errorf("error getting VM (%s) graphic consoles before deleting: %s", vmID, err)
+	}
+
+	for _, device := range graphics.MustConsoles().Slice() {
+		_, err = vmGraphicConsoleService.
+			ConsoleService(device.MustId()).
+			Remove().
+			Send()
+		if err != nil {
+			if _, ok := err.(*ovirtsdk4.NotFoundError); ok {
+				// Wait until NotFoundError raises
+				return nil
+			}
+		}
+	}
+	return nil
 }
 
 func resourceOvirtVMUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -547,6 +712,16 @@ func resourceOvirtVMUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 	vmBuilder.Cpu(cpu)
 
+	if cp, ok := d.GetOkExists("custom_properties"); ok {
+		customProperties, err := expandOvirtCustomProperties(cp.([]interface{}))
+		if err != nil {
+			return err
+		}
+		if len(customProperties) > 0 {
+			vmBuilder.CustomPropertiesOfAny(customProperties...)
+		}
+	}
+
 	//paramVM.Initialization(initialization)
 	if v, ok := d.GetOk("initialization"); ok {
 		initialization, err := expandOvirtVMInitialization(v.([]interface{}))
@@ -555,6 +730,16 @@ func resourceOvirtVMUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 		if initialization != nil {
 			vmBuilder.Initialization(initialization)
+		}
+	}
+
+	if os_data, ok := d.GetOk("os"); ok {
+		source := os_data.([]interface{})[0].(map[string]interface{})
+		if v, ok := source["type"]; ok {
+			os := ovirtsdk4.NewOperatingSystemBuilder().
+				Type(v.(string)).
+				MustBuild()
+			vmBuilder.Os(os)
 		}
 	}
 
@@ -781,8 +966,8 @@ func resourceOvirtVMDelete(d *schema.ResourceData, meta interface{}) error {
 	// VM created by Template must be remove with detachOnly=false
 	detachOnly := true
 	log.Printf("[DEBUG] Determine the detachOnly flag before removing VM (%s)", d.Id())
-	if vm.MustTemplate().MustId() != BlankTemplateID {
-		log.Printf("[DEBUG] Set detachOnly flag to false since VM (%s) is based on template (%s)",
+	if vm.MustTemplate().MustId() != BlankTemplateID || d.Get("clone").(bool) {
+		log.Printf("[DEBUG] Set detachOnly flag to false since VM (%s) is based on template (%s) or is a clone",
 			d.Id(), vm.MustTemplate().MustId())
 		detachOnly = false
 	}
@@ -904,6 +1089,23 @@ func expandOvirtBootDevices(l []interface{}) ([]ovirtsdk4.BootDevice, error) {
 	return devices, nil
 }
 
+func expandOvirtCustomProperties(l []interface{}) ([]*ovirtsdk4.CustomProperty, error) {
+	customProperties := make([]*ovirtsdk4.CustomProperty, len(l))
+	for i, v := range l {
+		vmap := v.(map[string]interface{})
+		customPropBuilder := ovirtsdk4.NewCustomPropertyBuilder()
+		customPropBuilder.Name(vmap["name"].(string))
+		customPropBuilder.Value(vmap["value"].(string))
+		customProp, err := customPropBuilder.Build()
+		if err != nil {
+			return nil, err
+		}
+
+		customProperties[i] = customProp
+	}
+	return customProperties, nil
+}
+
 func expandOvirtVMNicConfigurations(l []interface{}) ([]*ovirtsdk4.NicConfiguration, error) {
 	nicConfs := make([]*ovirtsdk4.NicConfiguration, len(l))
 	for i, v := range l {
@@ -947,8 +1149,15 @@ func expandOvirtVMDiskAttachment(d interface{}, disk *ovirtsdk4.Disk) (*ovirtsdk
 	if disk != nil {
 		builder.Disk(disk)
 		if v, ok := dmap["size"]; ok {
-			newSize := int64(v.(int)) * int64(math.Pow(2, 30))
-			disk.SetProvisionedSize(newSize)
+			if v != 0 {
+				newSize := int64(v.(int)) * int64(math.Pow(2, 30))
+				disk.SetProvisionedSize(newSize)
+			}
+		}
+		if v, ok := dmap["alias"]; ok {
+			if v != "" {
+				disk.SetAlias(v.(string))
+			}
 		}
 	}
 	if v, ok := dmap["interface"]; ok {
@@ -978,9 +1187,14 @@ func ovirtAttachNics(n []interface{}, vmID string, meta interface{}) error {
 	vmService := conn.SystemService().VmsService().VmService(vmID)
 	for _, v := range n {
 		nic := v.(map[string]interface{})
+		mac := &ovirtsdk4.Mac{}
+		if len(nic["mac"].(string)) != 0 {
+			mac.SetAddress(nic["mac"].(string))
+		}
 		resp, err := vmService.NicsService().Add().Nic(
 			ovirtsdk4.NewNicBuilder().
 				Name(nic["name"].(string)).
+				Mac(mac).
 				VnicProfile(
 					ovirtsdk4.NewVnicProfileBuilder().
 						Id(nic["vnic_profile_id"].(string)).
