@@ -175,18 +175,22 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, datastore, n
 	if err != nil {
 		return nil, err
 	}
-	foundDatastore := false
-	foundNetwork := false
 	var hostSystemManagedObject mo.HostSystem
 
 	// Confirm that the network and datastore that was provided is
 	// available for use on the HostSystem we will import the
 	// OVA to.
 	for _, hostObj := range hosts {
-		hostObj.Properties(ctx, hostObj.Reference(), []string{"network", "datastore"}, &hostSystemManagedObject)
-
+		foundDatastore := false
+		foundNetwork := false
+		hostObj.Properties(ctx, hostObj.Reference(), []string{"network", "datastore", "runtime"}, &hostSystemManagedObject)
 		if err != nil {
 			return nil, err
+		}
+
+		// Skip all hosts that are in maintenance mode.
+		if hostSystemManagedObject.Runtime.InMaintenanceMode {
+			continue
 		}
 		for _, dsMoRef := range hostSystemManagedObject.Datastore {
 
@@ -209,16 +213,10 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, datastore, n
 				return nil, err
 			}
 			importOvaParams.ResourcePool = resourcePool
+			return importOvaParams, nil
 		}
 	}
-	if !foundDatastore {
-		return nil, errors.Errorf("failed to find a host in the cluster that contains the provided datastore")
-	}
-	if !foundNetwork {
-		return nil, errors.Errorf("failed to find a host in the cluster that contains the provided network")
-	}
-
-	return importOvaParams, nil
+	return nil, errors.Errorf("failed to find a host in the cluster that contains the provided datastore and network")
 }
 
 func attachTag(d *schema.ResourceData, meta interface{}) error {
