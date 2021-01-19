@@ -1,4 +1,23 @@
 #!/usr/bin/env python3
+# As of 4.8 we are aiming to switch to stream metadata:
+# https://github.com/openshift/enhancements/pull/679
+# That transition hasn't yet fully completed; there are two copies of the
+# RHCOS metadata:
+# 
+# - data/data/rhcos-4.8.json (stream format, 4.8+)
+# - data/data/rhcos-$arch.json (openshift/installer specific, 4.7 and below)
+# 
+# See https://github.com/coreos/coreos-assembler/pull/2000 in particular.
+# 
+# The initial file data/data/rhcos-4.8 was generated this way:
+# 
+# $ plume cosa2stream --name rhcos-4.8 --distro rhcos  x86_64=48.83.202102230316-0 s390x=47.83.202102090311-0 ppc64le=47.83.202102091015-0 > data/data/rhcos-4.8.json
+# 
+# To update the bootimage for one or more architectures, use e.g.
+# 
+# $ plume cosa2stream --target data/data/rhcos-4.8.json --distro rhcos  x86_64=48.83.202102230316-0 s390x=47.83.202102090311-0 ppc64le=47.83.202102091015-0
+#
+# To update the legacy metadata, use:
 # Usage: ./hack/update-rhcos-bootimage.py https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.6/46.82.202008260918-0/x86_64/meta.json amd64
 import codecs,os,sys,json,argparse
 import urllib.parse

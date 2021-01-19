@@ -3,7 +3,10 @@ package rhcos
 
 import (
 	"context"
+	"fmt"
 	"time"
+
+	"github.com/coreos/stream-metadata-go/arch"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -37,28 +40,44 @@ func (i *BootstrapImage) Generate(p asset.Parents) error {
 	p.Get(ic)
 	config := ic.Config
 
-	var osimage string
-	var err error
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
+
 	switch config.Platform.Name() {
 	case baremetal.Name:
-		// Check for RHCOS image URL override
-		if boi := config.Platform.BareMetal.BootstrapOSImage; boi != "" {
-			osimage = boi
-			break
+		archName := arch.RpmArch(string(config.ControlPlane.Architecture))
+		st, err := rhcos.FetchCoreOSBuild(ctx)
+		if err != nil {
+			return err
+		}
+		streamArch, err := st.GetArchitecture(archName)
+		if err != nil {
+			return err
 		}
 
+		// Check for CoreOS image URL override
+		if boi := config.Platform.BareMetal.BootstrapOSImage; boi != "" {
+			*i = BootstrapImage(boi)
+			return nil
+		}
 		// Baremetal IPI launches a local VM for the bootstrap node
 		// Hence requires the QEMU image to use the libvirt backend
-		osimage, err = rhcos.QEMU(ctx, config.ControlPlane.Architecture)
+		if a, ok := streamArch.Artifacts["qemu"]; ok {
+			u, err := rhcos.FindArtifactURL(a)
+			if err != nil {
+				return err
+			}
+			*i = BootstrapImage(u)
+			return nil
+		}
+		return fmt.Errorf("%s: No qemu build found", st.FormatPrefix(archName))
 	default:
 		// other platforms use the same image for all nodes
-		osimage, err = osImage(config)
+		u, err := osImage(config)
+		if err != nil {
+			return err
+		}
+		*i = BootstrapImage(u)
+		return nil
 	}
-	if err != nil {
-		return err
-	}
-	*i = BootstrapImage(osimage)
-	return nil
 }

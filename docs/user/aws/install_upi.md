@@ -21,8 +21,8 @@ $ openshift-install create install-config
 ### Optional: Create Encrypted AMIs
 
 The IPI-based installer creates an encrypted AMI by default. If you wish to have an encrypted AMI for UPI-based
-installs, you will need to create it directly. You can find a list of the appropriate base AMIs 
-[here](../../../data/data/rhcos.json).
+installs, you will need to create it directly.  See [CoreOS bootimages](../overview.md#coreos-bootimages) for more information
+about bootimages, including how to find the AMI identifiers.
 
 You will make an encrypted copy of the AMI according to the [AWS documentation][encrypted-copy].
 

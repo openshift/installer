@@ -24,13 +24,15 @@
 
 When doing a disconnected installation, the baremetal platform has the
 additional requirement that we have locations to download the RHCOS
-images. The installer downloads these from a location described in
-[/data/data/rhcos.json](/data/data/rhcos.json), but they can be
+images. The installer downloads these from a CoreOS stream metadata
+embedded in the installer code, but they can be
 overridden to point to a local mirror.
 
-The SHA256 parameter in the URLs are required, and should match the
-uncompressed SHA256 from rhcos.json.
+See [CoreOS bootimages](../overview.md#coreos-bootimages) for more information
+about bootimages.
 
+The SHA256 parameter in the URL is required, and should match the
+uncompressed SHA256 from the stream metadata JSON.
 
 * `bootstrapOSImage` (optional string): Override the image used for the
     bootstrap virtual machine.

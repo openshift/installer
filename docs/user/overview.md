@@ -84,3 +84,33 @@ As the unstable warning suggests, the presence of `manifests` and the names and 
 It is occasionally useful to make alterations like this as one-off changes, but don't expect them to work on subsequent installer releases.
 
 [cluster-version]: https://github.com/openshift/cluster-version-operator/blob/master/docs/dev/clusterversion.md
+
+### CoreOS bootimages
+
+The `openshift-install` binary contains pinned versions of RHEL CoreOS "bootimages" (e.g. OpenStack `qcow2`, AWS AMI, bare metal `.iso`).
+Fully automated installs use these by default.
+
+For UPI (User Provisioned Infrastructure) installs, you can use the `openshift-install coreos print-stream-json` command to access information
+about the bootimages in [CoreOS Stream Metadata](https://github.com/coreos/stream-metadata-go) format.
+
+For example, this command will print the `x86_64` AMI for `us-west-1`:
+
+```
+$ openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.images.aws.regions["us-west-1"].image'
+ami-0c548bdf93b74cd59
+```
+
+For on-premise clouds (e.g. OpenStack) with UPI installs, you may need to manually copy
+a bootimage into the infrastructure.  Here's an example command to print the `x86_64` `qcow2` file for `openstack`:
+
+```
+$ openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.openstack.formats["qcow2.gz"]'
+{
+  "disk": {
+    "location": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.8/48.83.202102230316-0/x86_64/rhcos-48.83.202102230316-0-openstack.x86_64.qcow2.gz",
+    "signature": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.8/48.83.202102230316-0/x86_64/rhcos-48.83.202102230316-0-openstack.x86_64.qcow2.gz.sig",
+    "sha256": "abc2add9746eb7be82e6919ec13aad8e9eae8cf073d8da6126d7c95ea0dee962",
+    "uncompressed-sha256": "9ed73a4e415ac670535c2188221e5a4a5f3e945bc2e03a65b1ed4fc76e5db6f2"
+  }
+}
+```
