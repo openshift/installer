@@ -107,7 +107,7 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 
 // createNoProxy combines user-provided & platform-specific values to create a comma-separated
 // list of unique NO_PROXY values. Platform values are: serviceCIDR, podCIDR, machineCIDR,
-// localhost, 127.0.0.1, api.clusterdomain, api-int.clusterdomain, etcd-idx.clusterdomain
+// localhost, 127.0.0.1, api.clusterdomain, api-int.clusterdomain.
 // If platform is AWS, GCP, Azure, or OpenStack add 169.254.169.254 to the list of NO_PROXY addresses.
 // If platform is AWS, add ".ec2.internal" for region us-east-1 or for all other regions add
 // ".<aws_region>.compute.internal" to the list of NO_PROXY addresses. We should not proxy
@@ -153,11 +153,6 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 	// "metadata.google.internal." added due to https://bugzilla.redhat.com/show_bug.cgi?id=1754049
 	if platform == gcp.Name {
 		set.Insert("metadata", "metadata.google.internal", "metadata.google.internal.")
-	}
-
-	for i := int64(0); i < *installConfig.Config.ControlPlane.Replicas; i++ {
-		etcdHost := fmt.Sprintf("etcd-%d.%s", i, installConfig.Config.ClusterDomain())
-		set.Insert(etcdHost)
 	}
 
 	for _, network := range installConfig.Config.Networking.ServiceNetwork {
