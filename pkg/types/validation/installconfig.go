@@ -70,6 +70,10 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 	if c.Platform.GCP != nil || c.Platform.Azure != nil {
 		nameErr = validate.ClusterName1035(c.ObjectMeta.Name)
 	}
+	if c.Platform.Ovirt != nil {
+		// FIX-ME: As soon bz#1915122 get resolved remove the limitation of 14 chars for the clustername
+		nameErr = validate.ClusterNameMaxLength(c.ObjectMeta.Name, 14)
+	}
 	if nameErr != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), c.ObjectMeta.Name, nameErr.Error()))
 	}
