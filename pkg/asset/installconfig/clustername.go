@@ -36,6 +36,12 @@ func (a *clusterName) Generate(parents asset.Parents) error {
 			return validate.ClusterName1035(ans.(string))
 		})
 	}
+	if platform.Ovirt != nil {
+		// FIX-ME: As soon bz#1915122 get resolved remove the limitation of 14 chars for the clustername
+		validator = survey.ComposeValidators(validator, func(ans interface{}) error {
+			return validate.ClusterNameMaxLength(ans.(string), 14)
+		})
+	}
 	validator = survey.ComposeValidators(validator, func(ans interface{}) error {
 		installConfig := &types.InstallConfig{BaseDomain: bd.BaseDomain}
 		installConfig.ObjectMeta.Name = ans.(string)
