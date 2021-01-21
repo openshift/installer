@@ -24,6 +24,7 @@ kind: Authentication
 metadata:
   name: cluster
 spec:
+  managementState: Managed
   unsupportedConfigOverrides:
     useUnsupportedUnsafeNonHANonProductionUnstableOAuthServer: true
 `)
