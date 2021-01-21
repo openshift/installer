@@ -2,6 +2,49 @@
 
 This document describes the relevant changes between releases of the SDK.
 
+== 4.4.3 / Jan 11 2021
+
+Update to model 4.4.22 and metamodel 1.3.4
+
+Bug Fixes:
+
+* Align connection test code with other SDKs
+  https://github.com/oVirt/ovirt-engine-sdk-go/pull/217[GitHub-217]
+
+== 4.4.2 / Oct 13 2020
+
+Update to model 4.4.19 and metamodel 1.3.3
+
+New features:
+
+* Add add_cluster.go and add new examples
+  https://github.com/oVirt/ovirt-engine-sdk-go/pull/196[GitHub-196]
+
+* Tries the connection token aquired in `Test()` method
+  https://github.com/oVirt/ovirt-engine-sdk-go/pull/197[GitHub-197]
+
+* Add CACert attribute to connection
+  https://github.com/oVirt/ovirt-engine-sdk-go/pull/203[GitHub-203]
+
+* Add new example set_vm_comment.go for sdk
+  https://github.com/oVirt/ovirt-engine-sdk-go/pull/212[Github-212]
+
+
+Bug fixes:
+
+* Fix error handling in case token request errors
+  https://github.com/oVirt/ovirt-engine-sdk-go/pull/204[GitHub-204]
+
+* Networks parsing problem
+  https://bugzilla.redhat.com/1841556[1841556].
+
+* Fix show_summary and add check_OCP_support
+  https://github.com/oVirt/ovirt-engine-sdk-go/pull/211[Github-211]
+
+* Check if follow link response is not nil
+  https://github.com/oVirt/ovirt-engine-sdk-go/pull/215[Github-215]
+
+
 == 4.4.1 / Jan 31 2020
 
 Bug fixes:

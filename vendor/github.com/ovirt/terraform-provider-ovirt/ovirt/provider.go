@@ -47,6 +47,7 @@ func Provider() terraform.ResourceProvider {
 		},
 		ConfigureFunc: ConfigureProvider,
 		ResourcesMap: map[string]*schema.Resource{
+			"ovirt_affinity_group":  resourceOvirtAffinityGroup(),
 			"ovirt_vm":              resourceOvirtVM(),
 			"ovirt_template":        resourceOvirtTemplate(),
 			"ovirt_disk":            resourceOvirtDisk(),

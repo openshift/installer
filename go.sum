@@ -1435,8 +1435,12 @@ github.com/ovirt/go-ovirt v0.0.0-20200313072907-d30f754823a6/go.mod h1:fLDxPk1Sf
 github.com/ovirt/go-ovirt v0.0.0-20200428093010-9bcc4fd4e6c0/go.mod h1:fLDxPk1Sf64DBYtwIYxrnx3gPZ1q0xPdWdI1y9vxUaw=
 github.com/ovirt/go-ovirt v0.0.0-20200613023950-320a86f9df27 h1:jHcZg49imi3zydtFqly5vniMnFX7HxW27L9M095eLhI=
 github.com/ovirt/go-ovirt v0.0.0-20200613023950-320a86f9df27/go.mod h1:fLDxPk1Sf64DBYtwIYxrnx3gPZ1q0xPdWdI1y9vxUaw=
+github.com/ovirt/go-ovirt v0.0.0-20210112072624-e4d3b104de71 h1:rMPlu5YNQomOQ9hXQDcYTfcmFy8rlYgeDJPPl1qgqz8=
+github.com/ovirt/go-ovirt v0.0.0-20210112072624-e4d3b104de71/go.mod h1:fLDxPk1Sf64DBYtwIYxrnx3gPZ1q0xPdWdI1y9vxUaw=
 github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200914080915-c4444fb5c201 h1:43ItTdmiCXccs0JrwcGfMrw5Md9np6NYQXIC+0U74mk=
 github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20200914080915-c4444fb5c201/go.mod h1:XFDLN/srNA1s2Dq+gp4zBvql6nRnfNJzDGzI5vtK85g=
+github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20210118101701-cc657a8c6634 h1:UbLzL9bHndq8OrKxqTbIC1EZ9lTXp5/GVkhJ0wZYIYI=
+github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20210118101701-cc657a8c6634/go.mod h1:LDHfgu36xGyr0tUPZpL+a7HRovpRzlcNiu0CmPcxcUI=
 github.com/oxtoacart/bpool v0.0.0-20150712133111-4e1c5567d7c2/go.mod h1:L3UMQOThbttwfYRNFOWLLVXMhk5Lkio4GGOtw5UrxS0=
 github.com/packer-community/winrmcp v0.0.0-20180102160824-81144009af58/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db h1:9uViuKtx1jrlXLBW/pMnhOfzn3iSEdLase/But/IZRU=
