@@ -40,10 +40,12 @@ aliases:
     - mtnbikenc
     - jcpowermac
     - patrickdillon
+    - jstuever
   vsphere-reviewers:
     - mtnbikenc
     - jcpowermac
     - patrickdillon
+    - jstuever
   baremetal-approvers:
     - dhellmann
     - hardys
