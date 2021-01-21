@@ -172,11 +172,11 @@ func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err er
 	return os.Rename(tempPath, filePath)
 }
 
-// DownloadFile obtains a file from a given URL, puts it in the cache folder, defined by dataType parameter,
+// downloadFile obtains a file from a given URL, puts it in the cache folder, defined by dataType parameter,
 // and returns the local file path.
 // If the query string contains sha256 parameter (i.e. https://example.com/data.bin?sha256=098a5a...),
 // then the downloaded data checksum will be compared with the provided value.
-func DownloadFile(baseURL string, dataType string) (string, error) {
+func downloadFile(baseURL string, dataType string) (string, error) {
 	// Convert the given URL into a file name using md5 algorithm
 	fileName := fmt.Sprintf("%x", md5.Sum([]byte(baseURL)))
 
@@ -232,5 +232,5 @@ func DownloadFile(baseURL string, dataType string) (string, error) {
 func DownloadImageFile(baseURL string) (string, error) {
 	logrus.Infof("Obtaining RHCOS image file from '%v'", baseURL)
 
-	return DownloadFile(baseURL, imageDataType)
+	return downloadFile(baseURL, imageDataType)
 }
