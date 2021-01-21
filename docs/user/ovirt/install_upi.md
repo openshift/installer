@@ -16,7 +16,7 @@ mandatory ignition files and to monitor the installation process itself.
   * [Network Requirements](#network-requirements)
     * [Load Balancers](#load-balancers)
     * [DNS](#dns)
-    * [RHCOS image](#rhcos-image)
+  * [RHCOS image](#rhcos-image)
 * [Getting Ansible playbooks](#getting-ansible-playbooks)
 * [Assets directory](#assets-directory)
 * [Inventory explained](#inventory-explained)
@@ -150,7 +150,7 @@ the main components and services
 **NOTE**: the DNS records above may also point to the same IP in case you are using only one load balancer configured with the rules described
 in the [previous section](#load-balancers).
 
-### RHCOS image
+## RHCOS image
 This UPI installation process requires a proper RHCOS (Red Hat Enterprise Linux CoreOS) image URL to be set in the [inventory.yml](../../../upi/ovirt/inventory.yml) file.
 
 The RHCOS images can be found [here](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/) and you have to choose
