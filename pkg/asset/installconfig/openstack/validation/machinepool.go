@@ -113,8 +113,8 @@ func validateFlavor(flavorName string, ci *CloudInfo, req flavorRequirements, fl
 		return nil
 	}
 
-	flavor, _ := ci.Flavors[flavorName]
-	if flavor.Flavor == nil {
+	flavor, ok := ci.Flavors[flavorName]
+	if !ok {
 		return field.ErrorList{field.NotFound(fldPath, flavorName)}
 	}
 
