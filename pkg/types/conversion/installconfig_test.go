@@ -193,7 +193,7 @@ func TestConvertInstallConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "deprecated OpenStack LbFloatingIP with APIFloatingIP",
+			name: "deprecated OpenStack LbFloatingIP is the same as APIFloatingIP",
 			config: &types.InstallConfig{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: types.InstallConfigVersion,
@@ -202,6 +202,31 @@ func TestConvertInstallConfig(t *testing.T) {
 					OpenStack: &openstack.Platform{
 						DeprecatedLbFloatingIP: "10.0.109.1",
 						APIFloatingIP:          "10.0.109.1",
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					OpenStack: &openstack.Platform{
+						DeprecatedLbFloatingIP: "10.0.109.1",
+						APIFloatingIP:          "10.0.109.1",
+					},
+				},
+			},
+		},
+		{
+			name: "deprecated OpenStack LbFloatingIP with APIFloatingIP",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					OpenStack: &openstack.Platform{
+						DeprecatedLbFloatingIP: "10.0.109.1",
+						APIFloatingIP:          "10.0.109.2",
 					},
 				},
 			},

@@ -115,7 +115,7 @@ func convertOpenStack(config *types.InstallConfig) error {
 	if config.Platform.OpenStack.DeprecatedLbFloatingIP != "" {
 		if config.Platform.OpenStack.APIFloatingIP == "" {
 			config.Platform.OpenStack.APIFloatingIP = config.Platform.OpenStack.DeprecatedLbFloatingIP
-		} else {
+		} else if config.Platform.OpenStack.DeprecatedLbFloatingIP != config.Platform.OpenStack.APIFloatingIP {
 			// Return error if both LbFloatingIP and APIFloatingIP are specified in the config
 			return field.Forbidden(field.NewPath("platform").Child("openstack").Child("lbFloatingIP"), "cannot specify lbFloatingIP and apiFloatingIP together")
 		}
