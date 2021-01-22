@@ -160,7 +160,7 @@ Resources:
       GroupId: !GetAtt MasterSecurityGroup.GroupId
       SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
       Description: IPsec ESP packets
-      IpProtocol: esp
+      IpProtocol: 50
 
   MasterIngressWorkerIpsecIke:
     Type: AWS::EC2::SecurityGroupIngress
@@ -188,7 +188,7 @@ Resources:
       GroupId: !GetAtt MasterSecurityGroup.GroupId
       SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
       Description: IPsec ESP packets
-      IpProtocol: esp
+      IpProtocol: 50
 
   MasterIngressInternal:
     Type: AWS::EC2::SecurityGroupIngress
@@ -356,7 +356,7 @@ Resources:
       GroupId: !GetAtt WorkerSecurityGroup.GroupId
       SourceSecurityGroupId: !GetAtt WorkerSecurityGroup.GroupId
       Description: IPsec ESP packets
-      IpProtocol: esp
+      IpProtocol: 50
 
   WorkerIngressMasterIpsecIke:
     Type: AWS::EC2::SecurityGroupIngress
@@ -384,7 +384,7 @@ Resources:
       GroupId: !GetAtt WorkerSecurityGroup.GroupId
       SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
       Description: IPsec ESP packets
-      IpProtocol: esp
+      IpProtocol: 50
 
   WorkerIngressInternal:
     Type: AWS::EC2::SecurityGroupIngress
