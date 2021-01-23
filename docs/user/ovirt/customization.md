@@ -9,6 +9,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `ovirt_network_name` (required string): The network name where the VM nics will be created.
 * `vnicProfileID` (required string): The ID of the [vNic profile][vnic-profile] used for the VM network interfaces.
     This can be inferred if the cluster network has a single profile.
+* `ovirt_template_name` (required string): The template name for the VM.
 * `api_vip` (required string): An IP address on the machineNetwork that will be assigned to the API VIP.
 * `ingress_vip` (required string): An IP address on the machineNetwork that will be assigned to the Ingress VIP.
 

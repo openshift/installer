@@ -9,6 +9,11 @@ type Platform struct {
 	// The target storage domain under which all VM disk would be created.
 	StorageDomainID string `json:"ovirt_storage_domain_id"`
 
+	// TemplateName is the target oVirt template
+	// When no ovirt_template_name is provided it defaults to `Blank` template, which is a default template for every ovirt cluster.
+	// +optional
+	TemplateName string `json:"ovirt_template_name,omitempty"`
+
 	// NetworkName is the target network of all the network interfaces of the nodes.
 	// When no ovirt_network_name is provided it defaults to `ovirtmgmt` network, which is a default network for every ovirt cluster.
 	// +optional

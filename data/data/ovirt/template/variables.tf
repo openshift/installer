@@ -43,3 +43,8 @@ variable "ovirt_vnic_profile_id" {
   type        = string
   description = "The ID of the vNIC profile of Logical Network."
 }
+
+variable "ovirt_template_name" {
+  type        = string
+  description = "The name of the Template for the selected Cluster."
+}

@@ -49,6 +49,11 @@ func Platform() (*ovirt.Platform, error) {
 		return &p, err
 	}
 
+	err = askTemplate(c, &p)
+	if err != nil {
+		return &p, err
+	}
+
 	err = askStorage(c, &p, clusterName)
 	if err != nil {
 		return &p, err

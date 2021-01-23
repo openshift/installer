@@ -1704,6 +1704,11 @@ spec:
                     description: The target storage domain under which all VM disk
                       would be created.
                     type: string
+                  ovirt_template_name:
+                    description: TemplateName is the target oVirt template When no
+                      ovirt_template_name is provided it defaults to `Blank` template,
+                      which is a default template for every ovirt cluster.
+                    type: string
                   vnicProfileID:
                     description: VNICProfileID defines the VNIC profile ID to use
                       the the VM network interfaces. When no vnicProfileID is provided

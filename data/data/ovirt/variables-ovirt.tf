@@ -86,3 +86,8 @@ variable "ovirt_master_instance_type_id" {
   type        = string
   description = "master VM instance type ID"
 }
+
+variable "ovirt_template_name" {
+  type        = string
+  description = "The name of the Template for the selected Cluster."
+}

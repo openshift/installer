@@ -10,7 +10,8 @@ import (
 
 func defaultPlatform() *ovirt.Platform {
 	return &ovirt.Platform{
-		NetworkName: DefaultNetworkName,
+		NetworkName:  DefaultNetworkName,
+		TemplateName: DefaultTemplateName,
 	}
 }
 
