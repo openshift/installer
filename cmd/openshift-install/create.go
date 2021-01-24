@@ -79,7 +79,7 @@ var (
 		},
 		assets: targetassets.IgnitionConfigs,
 	}
-	singleNodeignitionConfigsTarget = target{
+	singleNodeIgnitionConfigTarget = target{
 		name: "Single Node Ignition Config",
 		command: &cobra.Command{
 			Use:   "single-node-ignition-config",
@@ -151,7 +151,7 @@ var (
 		assets: targetassets.Cluster,
 	}
 
-	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget, singleNodeignitionConfigsTarget}
+	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget, singleNodeIgnitionConfigTarget}
 )
 
 func newCreateCmd() *cobra.Command {

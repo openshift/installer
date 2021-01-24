@@ -1,10 +1,12 @@
 package bootstrap
 
 import (
-	"github.com/openshift/installer/pkg/types"
+	"os"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"os"
+
+	"github.com/openshift/installer/pkg/types"
 )
 
 // SingleNodeBootstrapInPlace is the data to use to replace values in bootstrap template files.
@@ -24,7 +26,7 @@ func GetSingleNodeBootstrapInPlaceConfig() *SingleNodeBootstrapInPlace {
 // verifyBootstrapInPlace validate the number of control plane replica is one
 func verifyBootstrapInPlace(installConfig *types.InstallConfig) error {
 	if *installConfig.ControlPlane.Replicas != 1 {
-		return errors.Errorf("Bootstrap in place require single control plane replica, current value: %d", *installConfig.ControlPlane.Replicas)
+		return errors.Errorf("bootstrap in place require single control plane replica, current value: %d", *installConfig.ControlPlane.Replicas)
 	}
 	logrus.Warnf("Creating single node bootstrap in place configuration")
 	return nil

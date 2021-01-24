@@ -15,7 +15,7 @@ function restart_kubelet {
   echo "Restarting kubelet"
   until [ "$(oc get pod -n openshift-kube-apiserver-operator --selector='app=kube-apiserver-operator'  -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' | grep -c "True")" -eq 1 ];
   do
-    echo "Waiting for kube-apiserver-operator to ready condition to be True"
+    echo "Waiting for kube-apiserver-operator ready condition to be True"
     sleep 10
   done
   # daemon-reload is required because /etc/systemd/system/kubelet.service.d/20-nodenet.conf is added after kubelet started
@@ -32,18 +32,12 @@ function restart_kubelet {
 
 function approve_csr {
   echo "Approving csrs ..."
-  needed_to_approve=false
   until [ "$(oc get nodes --selector='node-role.kubernetes.io/master' -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' | grep -c "True")" -eq 1 ];
   do
-      needed_to_approve=true
-      echo "Approving csrs ..."
-     oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs oc adm certificate approve &> /dev/null || true
+     echo "Approving csrs ..."
+     oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs --no-run-if-empty oc adm certificate approve &> /dev/null || true
      sleep 30
   done
-  # Restart kubelet only if node was added
-  if $needed_to_approve ; then
-    restart_kubelet
-  fi
 }
 
 function wait_for_cvo {
@@ -64,5 +58,6 @@ function clean {
 
 wait_for_api
 approve_csr
+restart_kubelet
 wait_for_cvo
 clean
