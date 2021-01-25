@@ -1,17 +1,16 @@
 package gcp
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/util/sets"
 
 	resourcemanager "google.golang.org/api/cloudresourcemanager/v1"
 )
 
 func (o *ClusterUninstaller) getProjectIAMPolicy() (*resourcemanager.Policy, error) {
-	o.Logger.Debug("Fetching project IAM policy")
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 	req := &resourcemanager.GetIamPolicyRequest{}
@@ -34,14 +33,28 @@ func (o *ClusterUninstaller) setProjectIAMPolicy(policy *resourcemanager.Policy)
 	return nil
 }
 
-func clearIAMPolicyBindings(policy *resourcemanager.Policy, emails sets.String, logger logrus.FieldLogger) bool {
+// removeIAMPolicyBindings reads through the IAM policy and updates a local copy to remove any
+// roles with a service account prefixed with the clusterID. The list of pending items for deletion
+// is updated to reflect the current state of the policy.
+// returns true if the policy was updated to remove a role.
+func (o *ClusterUninstaller) removeIAMPolicyBindings(policy *resourcemanager.Policy, logger logrus.FieldLogger) bool {
 	removedBindings := false
+
+	// Clear any pending role bindings so they can be updated to reflect the current IAM policy,
+	// which is the source of truth. We shouldn't expect any rolebindings to be pending unless
+	// there was an error when writing the updated policy on a previous run.
+	o.clearPendingRoleBindings(false)
+
+	logger.Debug("Listing IAM role bindings")
+
 	for _, binding := range policy.Bindings {
 		members := []string{}
 		for _, member := range binding.Members {
 			email := policyMemberToEmail(member)
-			if emails.Has(email) {
-				logger.Debugf("IAM: removing %s from role %s", member, binding.Role)
+			if o.isClusterResource(email) {
+				logger.Debugf("IAM: updating local policy to remove %s from role %s", member, binding.Role)
+				bindingName := fmt.Sprintf("%s-%s", member, binding.Role)
+				o.insertPendingItems("iamrolebindings", []cloudResource{{key: bindingName, name: bindingName, typeName: "iamrolebindings"}})
 				removedBindings = true
 				continue
 			}
@@ -60,26 +73,20 @@ func (o *ClusterUninstaller) destroyIAMPolicyBindings() error {
 		return err
 	}
 
-	sas := o.getPendingItems("serviceaccount_binding")
-	emails := sets.NewString()
-	for _, item := range sas {
-		emails.Insert(item.url)
-	}
-	o.Logger.Debugf("candidate members to be removed: %s", emails.List())
-	if !clearIAMPolicyBindings(policy, emails, o.Logger) {
-		pendingPolicy := o.getPendingItems("iampolicy")
-		if len(pendingPolicy) > 0 {
-			o.Logger.Infof("Deleted IAM project role bindings")
-			o.deletePendingItems("iampolicy", pendingPolicy)
+	if o.removeIAMPolicyBindings(policy, o.Logger) {
+		if err = o.setProjectIAMPolicy(policy); err != nil {
+			pendingPolicy := o.getPendingItems("iamrolebindings")
+			errMsgPendingItems := fmt.Sprintf("unable to update IAM policy to remove %d pending roles", len(pendingPolicy))
+			return errors.Wrapf(err, errMsgPendingItems)
 		}
+
+		// Clear pending items, because updating policy was successful.
+		o.clearPendingRoleBindings(true)
 		return nil
 	}
-	o.insertPendingItems("iampolicy", []cloudResource{{key: "policy", name: "policy", typeName: "iampolicy"}})
-	err = o.setProjectIAMPolicy(policy)
-	if err != nil {
-		return err
-	}
-	return errors.Errorf("%d items pending", 1)
+
+	// No role bindings were found in the policy.
+	return nil
 }
 
 // policyMemberToEmail takes member of IAM policy binding and converts it to service account email.
@@ -91,4 +98,16 @@ func policyMemberToEmail(member string) string {
 		email = email[:idx]
 	}
 	return email
+}
+
+// clearPendingRoleBindings removes all currently pending role bindings.
+// expected toggles whether a debugging statement is displayed if items are removed from the queue.
+func (o *ClusterUninstaller) clearPendingRoleBindings(expected bool) {
+	pendingPolicy := o.getPendingItems("iamrolebindings")
+	if len(pendingPolicy) > 0 {
+		if !expected {
+			o.Logger.Debugf("Found %d leftover IAM rolebindings when clearing pending items", len(pendingPolicy))
+		}
+		o.deletePendingItems("iamrolebindings", pendingPolicy)
+	}
 }
