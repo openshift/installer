@@ -77,17 +77,21 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig) error {
 		return errors.Wrap(err, "failed to fetch external network info")
 	}
 
-	ci.Flavors[ic.OpenStack.FlavorName], err = ci.getFlavor(ic.OpenStack.FlavorName)
-	if err != nil {
-		return errors.Wrap(err, "failed to fetch platform flavor info")
+	// Get flavor info
+	if flavorName := ic.OpenStack.FlavorName; flavorName != "" {
+		ci.Flavors[flavorName], err = ci.getFlavor(flavorName)
+		if err != nil {
+			return err
+		}
 	}
 
 	if ic.ControlPlane != nil && ic.ControlPlane.Platform.OpenStack != nil {
-		crtlPlaneFlavor := ic.ControlPlane.Platform.OpenStack.FlavorName
-		if crtlPlaneFlavor != "" {
-			ci.Flavors[crtlPlaneFlavor], err = ci.getFlavor(crtlPlaneFlavor)
-			if err != nil {
-				return err
+		if flavorName := ic.ControlPlane.Platform.OpenStack.FlavorName; flavorName != "" {
+			if _, seen := ci.Flavors[flavorName]; !seen {
+				ci.Flavors[flavorName], err = ci.getFlavor(flavorName)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -130,6 +134,9 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig) error {
 }
 
 func (ci *CloudInfo) getSubnet(subnetID string) (*subnets.Subnet, error) {
+	if subnetID == "" {
+		return nil, nil
+	}
 	subnet, err := subnets.Get(ci.clients.networkClient, subnetID).Extract()
 	if err != nil {
 		var gerr *gophercloud.ErrResourceNotFound
@@ -142,11 +149,15 @@ func (ci *CloudInfo) getSubnet(subnetID string) (*subnets.Subnet, error) {
 	return subnet, nil
 }
 
+func isNotFoundError(err error) bool {
+	var errNotFound *gophercloud.ErrResourceNotFound
+	return errors.As(err, &errNotFound) || strings.Contains(err.Error(), "Resource not found")
+}
+
 func (ci *CloudInfo) getFlavor(flavorName string) (Flavor, error) {
 	flavorID, err := flavorutils.IDFromName(ci.clients.computeClient, flavorName)
 	if err != nil {
-		var gerr *gophercloud.ErrResourceNotFound
-		if errors.As(err, &gerr) {
+		if isNotFoundError(err) {
 			return Flavor{}, nil
 		}
 		return Flavor{}, err
@@ -160,10 +171,9 @@ func (ci *CloudInfo) getFlavor(flavorName string) (Flavor, error) {
 	var baremetal bool
 	{
 		const baremetalProperty = "baremetal"
-		var errNotFound *gophercloud.ErrResourceNotFound
 
 		m, err := flavors.GetExtraSpec(ci.clients.computeClient, flavorID, baremetalProperty).Extract()
-		if err != nil && !errors.As(err, &errNotFound) && !strings.Contains(err.Error(), "Resource not found") {
+		if err != nil && !isNotFoundError(err) {
 			return Flavor{}, err
 		}
 

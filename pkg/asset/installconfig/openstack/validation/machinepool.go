@@ -14,16 +14,20 @@ type flavorRequirements struct {
 	RAM, VCPUs, Disk int
 }
 
+const (
+	minimumStorage = 25
+)
+
 var (
 	ctrlPlaneFlavorMinimums = flavorRequirements{
 		RAM:   16,
 		VCPUs: 4,
-		Disk:  25,
+		Disk:  minimumStorage,
 	}
 	computeFlavorMinimums = flavorRequirements{
 		RAM:   8,
 		VCPUs: 2,
-		Disk:  25,
+		Disk:  minimumStorage,
 	}
 )
 
@@ -31,27 +35,24 @@ var (
 func ValidateMachinePool(p *openstack.MachinePool, ci *CloudInfo, controlPlane bool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	var checkStorageFlavor bool
 	// Validate Root Volumes
 	if p.RootVolume != nil {
 		if p.RootVolume.Type == "" {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("rootVolume").Child("type"), p.RootVolume.Type, "Volume type must be specified to use root volumes"))
 		}
-		if p.RootVolume.Size <= 0 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("rootVolume").Child("size"), p.RootVolume.Size, "Volume size must be greater than zero to use root volumes"))
+		if p.RootVolume.Size < minimumStorage {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("rootVolume").Child("size"), p.RootVolume.Size, fmt.Sprintf("Volume size must be greater than %d to use root volumes, had %d", minimumStorage, p.RootVolume.Size)))
 		}
+	} else {
+		// Not using root volume, so must check flavor
+		checkStorageFlavor = true
 	}
 
-	if p.FlavorName != "" {
-		flavor, ok := ci.Flavors[p.FlavorName]
-		if ok {
-			if controlPlane {
-				allErrs = append(allErrs, validateMpoolFlavor(flavor, ctrlPlaneFlavorMinimums, fldPath)...)
-			} else {
-				allErrs = append(allErrs, validateMpoolFlavor(flavor, computeFlavorMinimums, fldPath)...)
-			}
-		} else {
-			allErrs = append(allErrs, field.NotFound(fldPath.Child("flavorName"), p.FlavorName))
-		}
+	if controlPlane {
+		allErrs = append(allErrs, validateFlavor(p.FlavorName, ci, ctrlPlaneFlavorMinimums, fldPath.Child("type"), checkStorageFlavor)...)
+	} else {
+		allErrs = append(allErrs, validateFlavor(p.FlavorName, ci, computeFlavorMinimums, fldPath.Child("type"), checkStorageFlavor)...)
 	}
 
 	allErrs = append(allErrs, validateZones(p.Zones, ci.Zones, fldPath.Child("zones"))...)
@@ -105,7 +106,17 @@ func validUUIDv4(s string) bool {
 	return true
 }
 
-func validateMpoolFlavor(flavor Flavor, req flavorRequirements, fldPath *field.Path) field.ErrorList {
+// validate flavor checks to make sure that a given flavor exists and meets the minimum requrement to run a cluster
+// this function does not validate proper install config usage
+func validateFlavor(flavorName string, ci *CloudInfo, req flavorRequirements, fldPath *field.Path, storage bool) field.ErrorList {
+	if flavorName == "" {
+		return nil
+	}
+
+	flavor, _ := ci.Flavors[flavorName]
+	if flavor.Flavor == nil {
+		return field.ErrorList{field.NotFound(fldPath, flavorName)}
+	}
 
 	// OpenStack administrators don't always fill in accurate metadata for
 	// baremetal flavors. Skipping validation.
@@ -120,7 +131,7 @@ func validateMpoolFlavor(flavor Flavor, req flavorRequirements, fldPath *field.P
 	if flavor.VCPUs < req.VCPUs {
 		errs = append(errs, fmt.Sprintf("Must have minimum of %d VCPUs, had %d", req.VCPUs, flavor.VCPUs))
 	}
-	if flavor.Disk < req.Disk {
+	if flavor.Disk < req.Disk && storage {
 		errs = append(errs, fmt.Sprintf("Must have minimum of %d GB Disk, had %d GB", req.Disk, flavor.Disk))
 	}
 
@@ -136,5 +147,5 @@ func validateMpoolFlavor(flavor Flavor, req flavorRequirements, fldPath *field.P
 		}
 	}
 
-	return field.ErrorList{field.Invalid(fldPath.Child("flavorName"), flavor.Name, errString)}
+	return field.ErrorList{field.Invalid(fldPath, flavor.Name, errString)}
 }

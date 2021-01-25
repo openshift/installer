@@ -81,6 +81,7 @@ module "topology" {
   octavia_support     = var.openstack_octavia_support
   machines_subnet_id  = var.openstack_machines_subnet_id
   machines_network_id = var.openstack_machines_network_id
+  master_extra_sg_ids = var.openstack_master_extra_sg_ids
 }
 
 data "openstack_images_image_v2" "base_image" {
