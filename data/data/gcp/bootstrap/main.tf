@@ -1,6 +1,6 @@
 resource "google_storage_bucket" "ignition" {
-  name     = "${var.cluster_id}-bootstrap-ignition"
-  location = var.region
+  name               = "${var.cluster_id}-bootstrap-ignition"
+  location           = var.region
   bucket_policy_only = true
 }
 
