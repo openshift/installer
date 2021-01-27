@@ -156,6 +156,12 @@ func askUsername(c *Config) error {
 		return err
 	}
 
+	if !strings.Contains(c.Username, "@") {
+		logrus.Info("Please use the format: username@domain. Example: admin@internal")
+		askUsername(c)
+
+	}
+
 	return nil
 }
 
