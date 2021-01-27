@@ -7,9 +7,9 @@ If the provided user has global admin privileges, no further action for permissi
 
 The tables below describe the absolute minimal set of privileges to install and run OpenShift including Machine management and the vSphere Storage provider.
 
-### Precreated virtual machine folder
+### Fundamental Privileges
 
-If there is a pre-existing virtual machine folder that OpenShift RHCOS guests will be created within the privilege set can be used below.
+These privileges are necessary for OpenShift clusters on vSphere and are sufficient to install into an existing virtual machine folder. The privileges in the next section are necessary for the installer to provision a folder, which is the default behavior if no folder is specified in the install config.
 
 Role Name | vSphere object | Privilege Set
 --- | --- | ---
