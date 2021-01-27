@@ -5,6 +5,7 @@
 # Instead of gathering logs from the various masters, it simply runs the installer-masters-gather.sh script on itself.
 # Instead of gathering bootstrap logs from "itself", it unpacks the bundle transferred to it from the bootstrap phase
 # via the master ignition.
+# The script will also gather the bootstrap-in-place-post-reboot service logs.
 
 if test "x${1}" = 'x--id'
 then
@@ -33,6 +34,10 @@ if [[ -f $BOOTSTRAP_PHASE_LOG_BUNDLE_ARCHIVE_PATH ]]; then
 else
   echo "Bootstrap phase logs not found, including only master logs in log bundle"
 fi
+
+echo "Gathering bootstrap-in-place-post-reboot journal"
+mkdir -p "${ARTIFACTS}/bootstrap-in-place/journals"
+journalctl --boot --no-pager --output=short --unit=bootstrap-in-place-post-reboot > "${ARTIFACTS}/bootstrap-in-place/journals/bootstrap-in-place-post-reboot.log"
 
 TAR_FILE="${TAR_FILE:-${HOME}/log-bundle-${GATHER_ID}.tar.gz}"
 tar cz -C "${ARTIFACTS}" --transform "s?^\\.?log-bundle-${GATHER_ID}?" . > "${TAR_FILE}"
