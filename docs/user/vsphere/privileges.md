@@ -5,7 +5,7 @@ If the provided user has global admin privileges, no further action for permissi
 
 ## Create new roles with the appropriate privileges
 
-In the tables below describe the absolute minimal set of privileges to install and run OpenShift including Machine management and the vSphere Storage provider.
+The tables below describe the absolute minimal set of privileges to install and run OpenShift including Machine management and the vSphere Storage provider.
 
 ### Precreated virtual machine folder
 
