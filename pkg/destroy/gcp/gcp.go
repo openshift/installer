@@ -129,8 +129,8 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 	}, {
 		{name: "Instances", execute: o.destroyInstances},
 		{name: "Disks", execute: o.destroyDisks},
-		{name: "Policy bindings", execute: o.destroyIAMPolicyBindings},
 		{name: "Service accounts", execute: o.destroyServiceAccounts},
+		{name: "Policy bindings", execute: o.destroyIAMPolicyBindings},
 		{name: "Images", execute: o.destroyImages},
 		{name: "DNS", execute: o.destroyDNS},
 		{name: "Buckets", execute: o.destroyBuckets},
