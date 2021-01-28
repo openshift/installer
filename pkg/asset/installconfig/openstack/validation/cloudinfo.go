@@ -2,7 +2,6 @@ package validation
 
 import (
 	"net/url"
-	"strings"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/availabilityzones"
@@ -169,11 +168,15 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 	}
 
 	ci.Quotas, err = loadQuotas(opts)
-	if isUnauthorized(err) {
-		logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v", err)
-		return nil
-	}
 	if err != nil {
+		if isUnauthorized(err) {
+			logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v", err)
+			return nil
+		}
+		if isNotFoundError(err) {
+			logrus.Warnf("Quota API is not available and therefore will skip checking them: %v", err)
+			return nil
+		}
 		return errors.Wrap(err, "failed to load Quota")
 	}
 
@@ -186,8 +189,7 @@ func (ci *CloudInfo) getSubnet(subnetID string) (*subnets.Subnet, error) {
 	}
 	subnet, err := subnets.Get(ci.clients.networkClient, subnetID).Extract()
 	if err != nil {
-		var gerr *gophercloud.ErrResourceNotFound
-		if errors.As(err, &gerr) {
+		if isNotFoundError(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -197,8 +199,12 @@ func (ci *CloudInfo) getSubnet(subnetID string) (*subnets.Subnet, error) {
 }
 
 func isNotFoundError(err error) bool {
-	var errNotFound *gophercloud.ErrResourceNotFound
-	return errors.As(err, &errNotFound) || strings.Contains(err.Error(), "Resource not found")
+	var errNotFound gophercloud.ErrResourceNotFound
+	var pErrNotFound *gophercloud.ErrResourceNotFound
+	var errDefault404 gophercloud.ErrDefault404
+	var pErrDefault404 *gophercloud.ErrDefault404
+
+	return errors.As(err, &errNotFound) || errors.As(err, &pErrNotFound) || errors.As(err, &errDefault404) || errors.As(err, &pErrDefault404)
 }
 
 func (ci *CloudInfo) getFlavor(flavorName string) (Flavor, error) {
@@ -244,8 +250,7 @@ func (ci *CloudInfo) getNetwork(networkName string) (*networks.Network, error) {
 	}
 	networkID, err := networkutils.IDFromName(ci.clients.networkClient, networkName)
 	if err != nil {
-		var gerr *gophercloud.ErrResourceNotFound
-		if errors.As(err, &gerr) {
+		if isNotFoundError(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -285,8 +290,7 @@ func (ci *CloudInfo) getFloatingIP(fip string) (*floatingips.FloatingIP, error) 
 func (ci *CloudInfo) getImage(imageName string) (*images.Image, error) {
 	imageID, err := imageutils.IDFromName(ci.clients.imageClient, imageName)
 	if err != nil {
-		var gerr *gophercloud.ErrResourceNotFound
-		if errors.As(err, &gerr) {
+		if isNotFoundError(err) {
 			return nil, nil
 		}
 		return nil, err
