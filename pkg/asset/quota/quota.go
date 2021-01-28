@@ -11,11 +11,9 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	configgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
-	openstackvalidation "github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/quota/aws"
 	"github.com/openshift/installer/pkg/asset/quota/gcp"
-	"github.com/openshift/installer/pkg/asset/quota/openstack"
 	"github.com/openshift/installer/pkg/diagnostics"
 	"github.com/openshift/installer/pkg/quota"
 	quotaaws "github.com/openshift/installer/pkg/quota/aws"
@@ -27,7 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
-	typesopenstack "github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -121,17 +119,7 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 			return summarizeFailingReport(reports)
 		}
 		summarizeReport(reports)
-	case typesopenstack.Name:
-		ci, err := openstackvalidation.GetCloudInfo(ic.Config)
-		if err != nil {
-			return errors.Wrap(err, "failed to get cloud info")
-		}
-		reports, err := quota.Check(ci.Quotas, openstack.Constraints(ci, masters, workers))
-		if err != nil {
-			return summarizeFailingReport(reports)
-		}
-		summarizeReport(reports)
-	case azure.Name, baremetal.Name, libvirt.Name, none.Name, ovirt.Name, vsphere.Name, kubevirt.Name:
+	case azure.Name, baremetal.Name, libvirt.Name, none.Name, ovirt.Name, vsphere.Name, kubevirt.Name, openstack.Name:
 		// no special provisioning requirements to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
