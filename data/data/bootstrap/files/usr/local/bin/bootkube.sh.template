@@ -338,7 +338,7 @@ then
 fi
 
 # in case of single node, if we removed etcd, there is no point to wait for it on restart
-{{- if .SingleNode.BootstrapInPlace}}
+{{- if .SingleNodeBootstrapInPlace}}
 if [ ! -f stop-etcd.done ]
 then
   # Wait for the etcd cluster to come up.
@@ -358,7 +358,7 @@ then
         --volume "$PWD:/assets:z" \
         --volume /etc/kubernetes:/etc/kubernetes:z \
         "${CLUSTER_BOOTSTRAP_IMAGE}" \
-{{- if .SingleNode.BootstrapInPlace}}
+{{- if .SingleNodeBootstrapInPlace}}
         start --tear-down-early=false --asset-dir=/assets --required-pods=""  --assets-create-timeout=5m
 {{- else}}
         start --tear-down-early=false --asset-dir=/assets --required-pods="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
@@ -366,7 +366,7 @@ then
     touch cb-bootstrap.done
 fi
 
-{{- if .SingleNode.BootstrapInPlace}}
+{{- if .SingleNodeBootstrapInPlace}}
 . /usr/local/bin/bootstrap-in-place.sh "${CLUSTER_BOOTSTRAP_IMAGE}"
 {{- else}}
 rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml

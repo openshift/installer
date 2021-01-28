@@ -50,17 +50,17 @@ const (
 // bootstrapTemplateData is the data to use to replace values in bootstrap
 // template files.
 type bootstrapTemplateData struct {
-	AdditionalTrustBundle string
-	FIPS                  bool
-	EtcdCluster           string
-	PullSecret            string
-	ReleaseImage          string
-	ClusterProfile        string
-	Proxy                 *configv1.ProxyStatus
-	Registries            []sysregistriesv2.Registry
-	BootImage             string
-	PlatformData          platformTemplateData
-	SingleNode            *SingleNodeBootstrapInPlace
+	AdditionalTrustBundle      string
+	FIPS                       bool
+	EtcdCluster                string
+	PullSecret                 string
+	ReleaseImage               string
+	ClusterProfile             string
+	Proxy                      *configv1.ProxyStatus
+	Registries                 []sysregistriesv2.Registry
+	BootImage                  string
+	PlatformData               platformTemplateData
+	SingleNodeBootstrapInPlace bool
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -168,7 +168,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return err
 	}
-	if templateData.SingleNode.BootstrapInPlace {
+	if templateData.SingleNodeBootstrapInPlace {
 		err = a.addStorageFiles("/", "bootstrap/bootstrap-in-place", templateData)
 		if err != nil {
 			return err
@@ -282,25 +282,19 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		logrus.Warnf("Found override for Cluster Profile: %q", cp)
 		clusterProfile = cp
 	}
-	var singelNodeTemplateData *SingleNodeBootstrapInPlace
-	if a.SingleNodeBootstrapInPlace {
-		singelNodeTemplateData = GetSingleNodeBootstrapInPlaceConfig()
-	} else {
-		singelNodeTemplateData = &SingleNodeBootstrapInPlace{BootstrapInPlace: false}
-	}
 
 	return &bootstrapTemplateData{
-		AdditionalTrustBundle: installConfig.AdditionalTrustBundle,
-		FIPS:                  installConfig.FIPS,
-		PullSecret:            installConfig.PullSecret,
-		ReleaseImage:          releaseImage,
-		EtcdCluster:           strings.Join(etcdEndpoints, ","),
-		Proxy:                 &proxy.Status,
-		Registries:            registries,
-		BootImage:             string(*rhcosImage),
-		PlatformData:          platformData,
-		ClusterProfile:        clusterProfile,
-		SingleNode:            singelNodeTemplateData,
+		AdditionalTrustBundle:      installConfig.AdditionalTrustBundle,
+		FIPS:                       installConfig.FIPS,
+		PullSecret:                 installConfig.PullSecret,
+		ReleaseImage:               releaseImage,
+		EtcdCluster:                strings.Join(etcdEndpoints, ","),
+		Proxy:                      &proxy.Status,
+		Registries:                 registries,
+		BootImage:                  string(*rhcosImage),
+		PlatformData:               platformData,
+		ClusterProfile:             clusterProfile,
+		SingleNodeBootstrapInPlace: a.SingleNodeBootstrapInPlace,
 	}, nil
 }
 

@@ -52,20 +52,5 @@ if [ ! -f master-ignition.done ]; then
   touch master-ignition.done
 fi
 
-{{- if .SingleNode.CoreosInstallerArgs}}
-# The user specified .SingleNode.CoreosInstallerArgs so we complete the installation
-if [ ! -f coreos-installer.done ]; then
-  # Write image + ignition to disk
-  echo "Executing coreos-installer with the following options: install -i /opt/openshift/master.ign {{.SingleNode.CoreosInstallerArgs}}"
-  coreos-installer install -i /opt/openshift/master.ign {{.SingleNode.CoreosInstallerArgs}}
-
-  touch coreos-installer.done
-fi
-
-if [ ! -f reboot.done ]; then
-  echo "Going to reboot"
-  shutdown -r +1 "Bootstrap completed, server is going to reboot."
-  touch reboot.done
-fi
-{{- end}}
 echo "Done"
+echo "To complete the installation execute: 'coreos-installer install -i /opt/openshift/master.ign <device>' and reboot the node"
