@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	iam "google.golang.org/api/iam/v1"
 )
@@ -69,9 +70,29 @@ func (o *ClusterUninstaller) destroyServiceAccounts() error {
 	if err != nil {
 		return err
 	}
-	o.insertPendingItems("serviceaccount_binding", found) // store service accounts to remove project IAM binding
-
 	items := o.insertPendingItems("serviceaccount", found)
+	if len(items) == 0 {
+		return nil
+	}
+
+	// Remove service accounts from project policy
+	policy, err := o.getProjectIAMPolicy()
+	if err != nil {
+		return err
+	}
+	emails := sets.NewString()
+	for _, item := range items {
+		emails.Insert(item.url)
+	}
+	if o.clearIAMPolicyBindings(policy, emails, o.Logger) {
+		err = o.setProjectIAMPolicy(policy)
+		if err != nil {
+			o.errorTracker.suppressWarning("iampolicy", err, o.Logger)
+			return errors.Errorf("%d items pending", len(items))
+		}
+		o.Logger.Infof("Deleted IAM project role bindings")
+	}
+
 	for _, item := range items {
 		err := o.deleteServiceAccount(item)
 		if err != nil {
