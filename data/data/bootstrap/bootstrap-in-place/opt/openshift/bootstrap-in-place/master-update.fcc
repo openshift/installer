@@ -37,16 +37,16 @@ storage:
       contents:
         local: bootstrap-in-place/bootstrap-in-place-post-reboot.sh
       mode: 0555
-    - path: /var/log/log-bundle-bootstrap-in-place-pre-reboot.tar.gz
+    - path: /var/log/log-bundle-bootstrap.tar.gz
       contents:
-        local: log-bundle-bootstrap-in-place-pre-reboot.tar.gz
+        local: log-bundle-bootstrap.tar.gz
     - path: /usr/local/bin/installer-masters-gather.sh
       contents:
         local: bin/installer-masters-gather.sh
       mode: 0555
     - path: /usr/local/bin/installer-gather.sh
       contents:
-        local: bin/installer-master-bootstrap-in-place-gather.sh
+        local: bin/installer-gather.sh
       mode: 0555
 systemd:
   units:

@@ -29,7 +29,7 @@ if [ ! -f master-ignition.done ]; then
   curl --header "Accept:'application/vnd.coreos.ignition+json;version=3.1.0 ;q=0.1'" \
     http://localhost:22624/config/master -o /opt/openshift/original-master.ign
 
-  GATHER_ID="bootstrap-in-place-pre-reboot"
+  GATHER_ID="bootstrap"
   GATHER_TAR_FILE=log-bundle-${GATHER_ID}.tar.gz
 
   echo "Gathering installer bootstrap logs"
