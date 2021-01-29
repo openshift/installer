@@ -61,13 +61,28 @@ OpenShift does not currently support Cinder availability zones. When attaching a
 
 In 4.6, [it is possible to control what Availability Zone each machine will be created in][nova-az-setting]. Cloud Provider can be instructed to ignore the corresponding machine's AZ (and thus pick storage regardless of the zones) by adding the `ignore-volume-az = yes` directive in its configuration, under the `[BlockStorage]` section of the `cloud-provider-config` configmap:
 
-```
+```sh
 oc edit cm cloud-provider-config -n openshift-config
 ```
 
-```
+```txt
 [BlockStorage]
 ignore-volume-az = yes
+```
+
+Then it is required to create and use a new Storage Class that has the availability parameter set to `nova`, as below:
+
+```txt
+allowVolumeExpansion: true
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: sc-availability
+provisioner: kubernetes.io/cinder
+parameters:
+  availability: nova
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
 ```
 
 [nova-az-setting]: ../openstack#setting-nova-availability-zones
