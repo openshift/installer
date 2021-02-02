@@ -36,7 +36,51 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenter = ""
 				return p
 			}(),
-			expectedError: `^test-path\.vCenter: Required value: must specify the name of the vCenter$`,
+			expectedError: `^test-path\.vCenter: Invalid value: "": must specify the name of the vCenter$`,
+		},
+		{
+			name: "vcenter name has transport",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.VCenter = "http://www.forest.com?param=value"
+				return p
+			}(),
+			expectedError: `^test-path\.vCenter: Invalid value: "http:\/\/www\.forest\.com\?param=value": vCenter hostname cannot contain url scheme$`,
+		},
+		{
+			name: "vcenter name has transport and port",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.VCenter = "https://www.forest.com:9089"
+				return p
+			}(),
+			expectedError: `^test-path\.vCenter: Invalid value: "https:\/\/www\.forest\.com:9089": vCenter hostname cannot contain url scheme$`,
+		},
+		{
+			name: "vcenter name has path and port",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.VCenter = "www.forest/tropical/rain.com:9089"
+				return p
+			}(),
+			expectedError: `^test-path\.vCenter: Invalid value: "www\.forest\/tropical\/rain.com:9089": vCenter hostname is not valid`,
+		},
+		{
+			name: "vcenter name has transport",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.VCenter = "scheme://"
+				return p
+			}(),
+			expectedError: `^test-path\.vCenter: Invalid value: "scheme:\/\/": port can only contain numbers$`,
+		},
+		{
+			name: "vcenter name with port",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.VCenter = "www.forest.tropical:9089"
+				return p
+			}(),
 		},
 		{
 			name: "missing username",
@@ -147,6 +191,96 @@ func TestValidatePlatform(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := ValidatePlatform(tc.platform, field.NewPath("test-path")).ToAggregate()
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, tc.expectedError, err)
+			}
+		})
+	}
+}
+
+func TestValidateVCenterAddress(t *testing.T) {
+
+	cases := []struct {
+		name          string
+		vCenterName   string
+		expectedError string
+	}{
+		{
+			name:        "vcenter with port",
+			vCenterName: "ww.forest.com:9090",
+		},
+		{
+			name:        "vcenter without port",
+			vCenterName: "ww.forest.com",
+		},
+		{
+			name:        "vcenter with port and number",
+			vCenterName: "ww.878forest.com:9090",
+		},
+		{
+			name:        "vcenter with port and -",
+			vCenterName: "ww.forest-hdlkd.c-om:9090",
+		},
+		{
+			name:        "vcenter with port with all allowed charcaters",
+			vCenterName: "w-987w.forest.com:9090",
+		},
+		{
+			name:          "vcenter with port cannot start with a -",
+			vCenterName:   "-w-987w.forest.com:9090",
+			expectedError: "vCenter hostname is not valid",
+		},
+		{
+			name:          "vcenter with port cannot start with a number",
+			vCenterName:   "0-w-987w.forest.com:9090",
+			expectedError: "vCenter hostname is not valid",
+		},
+		{
+			name:          "vcenter with scheme",
+			vCenterName:   "https://www.forest.com:9090",
+			expectedError: "vCenter hostname cannot contain url scheme",
+		},
+		{
+			name:          "vcenter with params",
+			vCenterName:   "www.forest.com?param=name",
+			expectedError: "vCenter hostname cannot contain request params",
+		},
+		{
+			name:          "vcenter with path",
+			vCenterName:   "www.forest.com/pathvariable:9090",
+			expectedError: "vCenter hostname is not valid",
+		},
+		{
+			name:          "vcenter with invalid port",
+			vCenterName:   "www.forest.com:",
+			expectedError: "port can only contain numbers",
+		},
+		{
+			name:          "vcenter with invalid port",
+			vCenterName:   "www.forest.com:987dsc",
+			expectedError: "port can only contain numbers",
+		},
+		{
+			name:          "vcenter with spaces",
+			vCenterName:   "   ",
+			expectedError: "must specify the name of the vCenter",
+		},
+		{
+			name:          "vcenter empty",
+			vCenterName:   "",
+			expectedError: "must specify the name of the vCenter",
+		},
+		{
+			name:          "vcenter only transport",
+			vCenterName:   "https://",
+			expectedError: "port can only contain numbers",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateVCenterAddress(tc.vCenterName)
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {

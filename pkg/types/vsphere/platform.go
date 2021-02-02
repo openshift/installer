@@ -2,7 +2,9 @@ package vsphere
 
 // Platform stores any global configuration used for vsphere platforms.
 type Platform struct {
-	// VCenter is the domain name or IP address of the vCenter.
+	// VCenter is the domain name or IP address of the vCenter. It can optionally contain a port number given
+	//in the form 'hostname:port'. The domain name should follow DNS naming standards and should not contain url
+	//protocol scheme or params.
 	VCenter string `json:"vCenter"`
 
 	// Username is the name of the user to use to connect to the vCenter.

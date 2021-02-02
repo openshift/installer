@@ -35,4 +35,31 @@ datacenters = "test-datacenter"
 	actualConfig, err := CloudProviderConfig(folderPath, platform)
 	assert.NoError(t, err, "failed to create cloud provider config")
 	assert.Equal(t, expectedConfig, actualConfig, "unexpected cloud provider config")
+
+	platformWithPort := &vspheretypes.Platform{
+		VCenter:          "test-name.sub-name:8989",
+		Username:         "test-username",
+		Password:         "test-password",
+		Datacenter:       "test-datacenter",
+		DefaultDatastore: "test-datastore",
+	}
+	expectedConfigWithPort := `[Global]
+secret-name = "vsphere-creds"
+secret-namespace = "kube-system"
+insecure-flag = "1"
+port = "8989"
+
+[Workspace]
+server = "test-name.sub-name"
+datacenter = "test-datacenter"
+default-datastore = "test-datastore"
+folder = "/test-datacenter/vm/clusterID"
+
+[VirtualCenter "test-name.sub-name"]
+datacenters = "test-datacenter"
+`
+
+	actualConfigWithPort, err := CloudProviderConfig(folderPath, platformWithPort)
+	assert.NoError(t, err, "failed to create cloud provider config")
+	assert.Equal(t, expectedConfigWithPort, actualConfigWithPort, "unexpected cloud provider config")
 }

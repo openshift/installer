@@ -18,6 +18,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types/vsphere"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
+	validation "github.com/openshift/installer/pkg/types/vsphere/validation"
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -104,7 +105,9 @@ func getClients() (*vCenterClient, error) {
 				Message: "vCenter",
 				Help:    "The hostname of the vCenter to be used for installation.",
 			},
-			Validate: survey.Required,
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				return validation.ValidateVCenterAddress(ans.(string))
+			}),
 		},
 	}, &vcenter); err != nil {
 		return nil, errors.Wrap(err, "failed UserInput")

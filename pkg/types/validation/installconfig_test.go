@@ -662,7 +662,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.VSphere.VCenter = ""
 				return c
 			}(),
-			expectedError: `^platform\.vsphere.vCenter: Required value: must specify the name of the vCenter$`,
+			expectedError: `^platform\.vsphere.vCenter: Invalid value: "": must specify the name of the vCenter$`,
 		},
 		{
 			name: "invalid vsphere folder",

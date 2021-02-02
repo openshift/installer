@@ -2,8 +2,12 @@ package validation
 
 import (
 	"fmt"
+	"net"
+	"net/url"
+	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -13,8 +17,8 @@ import (
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if len(p.VCenter) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("vCenter"), "must specify the name of the vCenter"))
+	if err := ValidateVCenterAddress(p.VCenter); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("vCenter"), p.VCenter, err.Error()))
 	}
 	if len(p.Username) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("username"), "must specify the username"))
@@ -101,4 +105,42 @@ func validateFolder(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 	}
 
 	return allErrs
+}
+
+// ValidateVCenterAddress validates vCenter to only contain hostname and port.
+func ValidateVCenterAddress(vCenter string) error {
+	if strings.TrimSpace(vCenter) == "" {
+		return errors.New("must specify the name of the vCenter")
+	}
+	vCenterURL, err := url.ParseRequestURI(vCenter)
+	if err == nil && vCenterURL.Host != "" {
+		return errors.Errorf("vCenter hostname cannot contain url scheme")
+	}
+
+	vCenterURL, err = url.Parse(vCenter)
+	if err != nil {
+		return errors.Errorf("vCenter hostname is not valid")
+	}
+	if vCenterURL.RawQuery != "" {
+		return errors.Errorf("vCenter hostname cannot contain request params")
+	}
+
+	if vCenterURL.RawPath != "" {
+		return errors.Errorf("vCenter hostname cannot contain path")
+	}
+
+	if count := strings.Count(vCenter, ":"); count > 1 {
+		return errors.Errorf("vCenter cannot contain more than one ':' character")
+	} else if count == 1 {
+		host, port, err := net.SplitHostPort(vCenter)
+		if err != nil || host == "" {
+			return errors.Errorf("vCenter hostname is not valid")
+		} else if domainError := validate.DomainName(host, true); domainError != nil {
+			return errors.Errorf("vCenter hostname is not valid")
+		} else if _, err := strconv.Atoi(port); err != nil {
+			return errors.Errorf("port can only contain numbers")
+		}
+	}
+
+	return nil
 }
