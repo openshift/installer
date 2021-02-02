@@ -142,7 +142,7 @@ fi
 echo "Gather remote logs"
 export MASTERS=()
 if [[ -f ${LOG_BUNDLE_BOOTSTRAP_ARCHIVE_NAME} ]]; then
-    # Instead of running installer-masters-gather.sh on remote masters, run it on ourselves
+    # Instead of running installer-masters-gather.sh on remote masters, run it on the current node
     MASTER_GATHER_ID="master-${GATHER_ID}"
     MASTER_ARTIFACTS="/tmp/artifacts-${MASTER_GATHER_ID}"
     mkdir -p "${ARTIFACTS}/control-plane/master"
