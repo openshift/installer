@@ -14,7 +14,7 @@ declare \
 
 # Let install-config describe a configuration that is incompatible with the
 # target CI infrastructure
-export OPENSHFIT_INSTALL_SKIP_PREFLIGHT_VALIDATIONS=1
+export OPENSHIFT_INSTALL_SKIP_PREFLIGHT_VALIDATIONS=1
 
 print_help() {
 	set +x
