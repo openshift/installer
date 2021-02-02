@@ -39,3 +39,11 @@ func Validate(ic *types.InstallConfig) error {
 
 	return allErrs.ToAggregate()
 }
+
+// ValidateForProvisioning validates that the install config is valid for provisioning the cluster.
+func ValidateForProvisioning(ic *types.InstallConfig) error {
+	if ic.ControlPlane.Replicas != nil && *ic.ControlPlane.Replicas != 3 {
+		return field.Invalid(field.NewPath("controlPlane", "replicas"), ic.ControlPlane.Replicas, "control plane must be exactly three nodes when provisioning on OpenStack")
+	}
+	return nil
+}
