@@ -96,7 +96,9 @@ resource "aws_iam_role_policy" "master_policy" {
         "elasticloadbalancing:RegisterTargets",
         "elasticloadbalancing:SetLoadBalancerPoliciesForBackendServer",
         "elasticloadbalancing:SetLoadBalancerPoliciesOfListener",
-        "kms:DescribeKey"
+        "kms:DescribeKey",
+        "elasticfilesystem:ClientWrite",
+        "elasticfilesystem:ClientMount"
       ],
       "Resource": "*",
       "Effect": "Allow"

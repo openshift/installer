@@ -543,6 +543,8 @@ Resources:
             - "elasticloadbalancing:SetLoadBalancerPoliciesForBackendServer"
             - "elasticloadbalancing:SetLoadBalancerPoliciesOfListener"
             - "kms:DescribeKey"
+            - "elasticfilesystem:ClientWrite"
+            - "elasticfilesystem:ClientMount"
             Resource: "*"
 
   MasterInstanceProfile:
@@ -572,6 +574,8 @@ Resources:
             Action:
             - "ec2:DescribeInstances"
             - "ec2:DescribeRegions"
+            - "elasticfilesystem:ClientWrite"
+            - "elasticfilesystem:ClientMount"
             Resource: "*"
 
   WorkerInstanceProfile:
