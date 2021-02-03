@@ -19,12 +19,10 @@ variable "metal_cluster_basedomain" {
 
 variable "metal_auth_token" {
   description = "Your Equinix Metal API key"
-  default = "TODO"
 }
 
 variable "metal_project_id" {
   description = "Your Equinix Metal Project ID"
-  default = "TODO"
 }
 
 variable "metal_ssh_private_key_path" {
@@ -44,41 +42,38 @@ variable "metal_bastion_operating_system" {
 
 variable "metal_facility" {
   description = "Your primary facility"
-  default     = "dfw2"
+}
+
+variable "metal_billing_cycle" {
+  description = "Your billing cycle (hourly)"
 }
 
 variable "metal_plan_master" {
   description = "Plan for Master Nodes"
-  default     = "c3.medium.x86"
 }
 
 variable "metal_plan_compute" {
   description = "Plan for Compute Nodes"
-  default     = "c2.medium.x86"
 }
 
 variable "metal_count_bootstrap" {
-  default     = "1"
   description = "Number of Master Nodes."
 }
 
 variable "metal_count_master" {
-  default     = "3"
   description = "Number of Master Nodes."
 }
 
 variable "metal_count_compute" {
-  default     = "2"
   description = "Number of Compute Nodes"
 }
 
 variable "metal_cluster_name" {
-  default     = "jr"
   description = "Cluster name label"
 }
 
 variable "metal_ocp_version" {
-  default     = "4.4"
+  default     = "4.6"
   description = "OpenShift minor release version"
 }
 
@@ -89,7 +84,6 @@ variable "metal_ocp_version_zstream" {
 
 variable "metal_ocp_cluster_manager_token" {
   description = "OpenShift Cluster Manager API Token used to generate your pullSecret (https://cloud.redhat.com/openshift/token)"
-  default = "TODO"
 }
 
 variable "metal_ocp_storage_nfs_enable" {

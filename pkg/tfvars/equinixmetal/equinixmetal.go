@@ -6,21 +6,27 @@ import (
 	equinixprovider "github.com/openshift/cluster-api-provider-equinix-metal/pkg/apis/equinixmetal/v1beta1"
 )
 
+type Auth struct {
+	APIURL string `json:"metal_api_url"`
+	APIKey string `json:"metal_auth_token"`
+}
 type config struct {
-	Roles        []string `json:"metal_roles,omitempty"`
-	Facility     []string `json:"metal_facility,omitempty"`
-	OS           string   `json:"metal_os"`
-	ProjectID    string   `json:"metal_project_id"`
-	BillingCycle string   `json:"metal_billing_cycle"`
-	MachineType  string   `json:"metal_machine_type"`
-	SshKeys      []string `json:"metal_ssh_keys,omitempty"`
+	Auth          Auth     `json:",inline"`
+	Roles         []string `json:"metal_roles,omitempty"`
+	Facility      string   `json:"metal_facility,omitempty"`
+	OS            string   `json:"metal_os"`
+	ProjectID     string   `json:"metal_project_id"`
+	BillingCycle  string   `json:"metal_billing_cycle"`
+	MachineType   string   `json:"metal_machine_type"`
+	SshKeys       []string `json:"metal_ssh_keys,omitempty"`
+	IPXEScriptURL string   `json:"metal_ipxe_script_url,omitempty"`
+	CustomData    string   `json:"metal_custom_data"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
 	ControlPlaneConfigs []*equinixprovider.EquinixMetalMachineProviderConfig
-	APIURL              string
-	APIKey              string
+	Auth                Auth
 }
 
 //TFVars generate EquinixMetal-specific Terraform variables
@@ -35,12 +41,15 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	*/
 	// TODO(displague) fill in the tf vars
 	cfg := &config{
+		Auth: sources.Auth,
 		// Roles:        roles,
-		Facility:     []string{plane0.Facility},
-		OS:           plane0.OS,
-		ProjectID:    plane0.ProjectID,
-		BillingCycle: plane0.BillingCycle,
-		MachineType:  plane0.MachineType,
+		Facility:      plane0.Facility,
+		OS:            plane0.OS,
+		ProjectID:     plane0.ProjectID,
+		BillingCycle:  plane0.BillingCycle,
+		MachineType:   plane0.MachineType,
+		IPXEScriptURL: plane0.IPXEScriptURL,
+
 		// SshKeys:      plane0.SshKeys,
 	}
 

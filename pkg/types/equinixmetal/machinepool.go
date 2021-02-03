@@ -7,9 +7,12 @@ type MachinePool struct {
 	// provisioned node
 	Plan string
 
+	// CustomData is an arbitrary bit of json to make available within each
+	// nodes metadata
+	CustomData string
+
 	// TODO(displague) Hardware reservation id?
 	// TODO(displague) virtual network?
-	// TODO(displague) is userdata needed at this level?
 }
 
 // Set sets the values from `required` to `p`.

@@ -25,8 +25,8 @@ func Platform() (*equinixmetal.Platform, error) {
 	}
 
 	return &equinixmetal.Platform{
-		FacilityCode: facilityCode,
-		ProjectID:    projectID,
+		Facility:  facilityCode,
+		ProjectID: projectID,
 	}, nil
 }
 

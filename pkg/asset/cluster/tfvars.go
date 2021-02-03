@@ -20,8 +20,6 @@ import (
 	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 
-	// TODO(displague) This is moving to sigs.k8s.io
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
@@ -530,8 +528,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			ControlPlaneConfigs: []*equinixprovider.EquinixMetalMachineProviderConfig{
 				masters[0].Spec.ProviderSpec.Value.Object.(*equinixprovider.EquinixMetalMachineProviderConfig),
 			},
-			APIURL: config.APIURL,
-			APIKey: config.APIKey,
+			Auth: equinixtfvars.Auth{
+				APIURL: config.APIURL,
+				APIKey: config.APIKey,
+			},
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

@@ -24,14 +24,16 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		return nil, fmt.Errorf("non-equinixmetal machine-pool: %q", poolPlatform)
 	}
 	platform := config.Platform.EquinixMetal
+	mpool := pool.Platform.EquinixMetal
 
 	total := int64(1)
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider := provider(platform, pool, userDataSecret, osImage)
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
+		provider := provider(clusterID, platform, mpool.Plan, mpool.CustomData, role, userDataSecret, osImage)
+
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
@@ -59,26 +61,36 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(platform *equinixmetal.Platform, pool *types.MachinePool, userDataSecret string, osImage string) *equinixprovider.EquinixMetalMachineProviderConfig {
+func provider(clusterID string, platform *equinixmetal.Platform, plan, customData, role, userDataSecret, osImage string) *equinixprovider.EquinixMetalMachineProviderConfig {
+	// TOOD(displague) This IPXE script url contains the kernel and initrd
+	// parameters needed to an official RHCOS image from the official mirror.
+	// Equinix Metal devices can be created with userdata values of #!ipxe" to
+	// avoid the need for a hosted IPXE script, but userdata must be a valid
+	// Ignition Config for IPI purposes. I am actively seeking a EM feature to
+	// permit ipxescripturl to support data urls or to offer an ipxescript
+	// (content, not url) device creation field. Notably, this static script
+	// should be dynamic based on the osImage parameter which may reflect a
+	// differnet version and architecture than this gist offers.
+	ipxeScriptURL := "https://gist.githubusercontent.com/displague/5282172449a83c7b83821f8f8333a072/raw/f7300a5ab652e923dddacb5c9f206864c4c2aceb/rhcos.ipxe"
+	_ = osImage
+
 	spec := equinixprovider.EquinixMetalMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: equinixprovider.SchemeGroupVersion.String(),
 			Kind:       "EquinixMetalMachineProviderConfig",
 		},
-		// TODO(displague) which role? doesn't matter - not present in latest providerconfig
-		// Roles:     []equinixprovider.MachineRole{equinixprovider.MasterRole, equinixprovider.NodeRole},
-		// TODO(displague) should Facility be offered as a slice? EM-API can pick from a list
-		Facility:  platform.FacilityCode,
-		OS:        "custom_ipxe",
-		ProjectID: platform.ProjectID,
-		// TODO(displague) IPXE / osImage / platform.BootstrapOSImage / platform.ClusterOSImage?
-		IPXEScriptURL: osImage,
+		CustomData:    customData,
+		Facility:      platform.Facility,
+		OS:            "custom_ipxe",
+		ProjectID:     platform.ProjectID,
+		IPXEScriptURL: ipxeScriptURL,
 		BillingCycle:  "hourly",
-		MachineType:   "t1.small.x86", // TODO(displague) must provide a type
-		Tags:          []string{"openshift-ipi", "wip", "TODO"},
+		MachineType:   plan,
+		Tags:          []string{"openshift-ipi", fmt.Sprintf("%s-%s", clusterID, role)},
+		// TODO(displague) ssh keys will need to be defined in the project
 		// SshKeys:      []string{},
-		UserDataSecret: &corev1.LocalObjectReference{Name: userDataSecret},
-		// CredentialsSecret: &corev1.LocalObjectReference{Name: "equinixmetal-credentials"},
+		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
+		CredentialsSecret: &corev1.LocalObjectReference{Name: "equinixmetal-credentials"},
 	}
 	return &spec
 }

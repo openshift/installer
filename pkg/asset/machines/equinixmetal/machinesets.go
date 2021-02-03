@@ -24,13 +24,15 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		return nil, fmt.Errorf("non-equinixmetal machine-pool: %q", poolPlatform)
 	}
 	platform := config.Platform.EquinixMetal
-
-	total := int64(0)
+	mpool := pool.Platform.EquinixMetal
+	plan := mpool.Plan
+	customData := mpool.CustomData
+	total := int64(1)
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
 
-	provider := provider(platform, pool, userDataSecret, osImage)
+	provider := provider(clusterID, platform, plan, customData, role, userDataSecret, osImage)
 	name := fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, 0)
 	mset := &machineapi.MachineSet{
 		TypeMeta: metav1.TypeMeta{

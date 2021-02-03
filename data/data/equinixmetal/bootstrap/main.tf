@@ -1,7 +1,8 @@
 
 locals {
   arch           = "x86_64"
-  coreos_baseurl = "http://54.172.173.155/pub/openshift-v4/dependencies/rhcos"
+  // TODO(displague) use an EquinixMetal proxy
+  coreos_baseurl = "http://mirror.openshift.com/pub/openshift-v4/${local.arch}/dependencies/rhcos"
   coreos_url     = "${local.coreos_baseurl}/${var.ocp_version}/${var.ocp_version}.${var.ocp_version_zstream}"
   coreos_filenm  = "rhcos-${var.ocp_version}.${var.ocp_version_zstream}-${local.arch}"
   coreos_img     = "${local.coreos_filenm}-metal.${local.arch}.raw.gz"

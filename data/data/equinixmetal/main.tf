@@ -5,11 +5,11 @@ provider "packet" {
 module "bootstrap" {
 
   source               = "./bootstrap"
-  // auth_token           = var.metal_auth_token
-  //project_id           = var.metal_project_id
-  //facility             = var.metal_facility
-  // plan                 = var.metal_plan_master
-  //operating_system     = var.bastion_operating_system
+  project_id           = var.metal_project_id
+  facility             = var.metal_facility
+  billing_cycle        = var.metal_billing_cycle
+  plan                 = var.metal_plan_master
+  operating_system     = var.metal_bastion_operating_system
   ssh_private_key_path = var.metal_ssh_private_key_path
   cluster_name         = var.metal_cluster_name
   cluster_basedomain   = var.metal_cluster_basedomain

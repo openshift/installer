@@ -14,11 +14,11 @@ variable "depends" {
   default = null
 }
 
-variable "plan" {default = "TODO"}
-variable "facility" {default = "TODO"}
-variable "operating_system" {default = "TODO"}
-variable "project_id" {default = "TODO"}
-variable "billing_cycle" {default = "TODO"}
+variable "plan" {}
+variable "facility" {}
+variable "operating_system" {}
+variable "project_id" {}
+variable "billing_cycle" {}
 variable "ssh_private_key_path" { default = "TODO" }
 variable "cluster_name" {default = "TODO" }
 variable "cluster_basedomain" {default = "TODO" }
