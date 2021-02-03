@@ -646,6 +646,57 @@ func getRouterByPort(client *gophercloud.ServiceClient, allPorts []ports.Port) (
 	return "", nil
 }
 
+func deleteLeftoverLoadBalancers(opts *clientconfig.ClientOpts, logger logrus.FieldLogger, networkID string) {
+	conn, err := clientconfig.NewServiceClient("load-balancer", opts)
+	if err != nil {
+		// Ignore the error if Octavia is not available for the cloud
+		var gerr *gophercloud.ErrEndpointNotFound
+		if errors.As(err, &gerr) {
+			logger.Debug("Skip load balancer deletion because Octavia endpoint is not found")
+			return
+		}
+		logger.Error(err)
+		return
+	}
+
+	listOpts := loadbalancers.ListOpts{
+		VipNetworkID: networkID,
+	}
+	allPages, err := loadbalancers.List(conn, listOpts).AllPages()
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+
+	allLoadBalancers, err := loadbalancers.ExtractLoadBalancers(allPages)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	deleteOpts := loadbalancers.DeleteOpts{
+		Cascade: true,
+	}
+	for _, loadbalancer := range allLoadBalancers {
+		if !strings.HasPrefix(loadbalancer.Description, "Kubernetes external service") {
+			logger.Debugf("Not deleting LoadBalancer %q with description %q", loadbalancer.ID, loadbalancer.Description)
+			continue
+		}
+		logger.Debugf("Deleting LoadBalancer %q", loadbalancer.ID)
+		err = loadbalancers.Delete(conn, loadbalancer.ID, deleteOpts).ExtractErr()
+		if err != nil {
+			// Ignore the error if the load balancer cannot be found
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
+				// This can fail when the load balancer is still in use so return/retry
+				logger.Debugf("Deleting load balancer %q failed: %v", loadbalancer.ID, err)
+				return
+			}
+			logger.Debugf("Cannot find load balancer %q. It's probably already been deleted.", loadbalancer.ID)
+		}
+	}
+	return
+}
+
 func isClusterSubnet(subnets []subnets.Subnet, subnetID string) bool {
 	for _, subnet := range subnets {
 		if subnet.ID == subnetID {
@@ -731,6 +782,8 @@ func deleteNetworks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.
 			if !errors.As(err, &gerr) {
 				// This can fail when network is still in use
 				logger.Debugf("Deleting Network %q failed: %v", network.ID, err)
+				// Try to delete eventual leftover load balancers
+				deleteLeftoverLoadBalancers(opts, logger, network.ID)
 				return false, nil
 			}
 			logger.Debugf("Cannot find network %q. It's probably already been deleted.", network.ID)
