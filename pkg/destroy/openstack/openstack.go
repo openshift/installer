@@ -103,14 +103,14 @@ func (o *ClusterUninstaller) Run() error {
 
 	opts := openstackdefaults.DefaultClientOpts(o.Cloud)
 
+	err := cleanRouterRunner(opts, o.Filter, o.Logger)
+	if err != nil {
+		return err
+	}
+
 	// launch goroutines
 	for name, function := range deleteFuncs {
 		go deleteRunner(name, function, opts, o.Filter, o.Logger, returnChannel)
-	}
-
-	err := cleanRouterRunner(opts, o.Filter, o.Logger, o.InfraID)
-	if err != nil {
-		return err
 	}
 
 	// wait for them to finish
@@ -403,6 +403,43 @@ func deleteSecurityGroups(opts *clientconfig.ClientOpts, filter Filter, logger l
 	return len(allGroups) == 0, nil
 }
 
+func updateFips(routerID string, opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) error {
+	// If a user provisioned floating ip was used, it needs to be dissociated
+	// Any floating Ip's associated with routers that are going to be deleted will be dissociated
+	conn, err := clientconfig.NewServiceClient("network", opts)
+	if err != nil {
+		return err
+	}
+
+	fipOpts := floatingips.ListOpts{
+		RouterID: routerID,
+	}
+
+	fipPages, err := floatingips.List(conn, fipOpts).AllPages()
+	if err != nil {
+		return err
+	}
+
+	allFIPs, err := floatingips.ExtractFloatingIPs(fipPages)
+	if err != nil {
+		return err
+	}
+
+	for _, fip := range allFIPs {
+		_, err := floatingips.Update(conn, fip.ID, floatingips.UpdateOpts{}).Extract()
+		if err != nil {
+			// Ignore the error if the resource cannot be found and return with an appropriate message if it's another type of error
+			var gerr gophercloud.ErrDefault404
+			if !errors.As(err, &gerr) {
+				logger.Errorf("Updating floating IP %q for Router %q failed: %v", fip.ID, routerID, err)
+				return err
+			}
+			logger.Debugf("Cannot find floating ip %q. It's probably already been deleted.", fip.ID)
+		}
+	}
+	return nil
+}
+
 func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
 	logger.Debug("Deleting openstack routers")
 	defer logger.Debugf("Exiting deleting openstack routers")
@@ -429,37 +466,11 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		return false, nil
 	}
 	for _, router := range allRouters {
-		// If a user provisioned floating ip was used, it needs to be dissociated
-		// Any floating Ip's associated with routers that are going to be deleted will be dissociated
-		fipOpts := floatingips.ListOpts{
-			RouterID: router.ID,
-		}
-
-		fipPages, err := floatingips.List(conn, fipOpts).AllPages()
+		err = updateFips(router.ID, opts, filter, logger)
 		if err != nil {
 			logger.Error(err)
 			return false, nil
 		}
-
-		allFIPs, err := floatingips.ExtractFloatingIPs(fipPages)
-		if err != nil {
-			logger.Error(err)
-			return false, nil
-		}
-
-		for _, fip := range allFIPs {
-			_, err := floatingips.Update(conn, fip.ID, floatingips.UpdateOpts{}).Extract()
-			if err != nil {
-				// Ignore the error if the resource cannot be found and return with an appropriate message if it's another type of error
-				var gerr gophercloud.ErrDefault404
-				if !errors.As(err, &gerr) {
-					logger.Errorf("Updating floating IP %q for Router %q failed: %v", fip.ID, router.ID, err)
-					return false, nil
-				}
-				logger.Debugf("Cannot find floating ip %q. It's probably already been deleted.", fip.ID)
-			}
-		}
-
 		// Clean Gateway interface
 		updateOpts := routers.UpdateOpts{
 			GatewayInfo: &routers.GatewayInfo{},
@@ -490,7 +501,7 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	return len(allRouters) == 0, nil
 }
 
-func deleteCustomRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger, infraID string) (bool, error) {
+func deleteCustomRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
 	logger.Debugf("Removing interfaces from custom router")
 	defer logger.Debug("Exiting removal of interfaces from custom router")
 	conn, err := clientconfig.NewServiceClient("network", opts)
@@ -499,37 +510,59 @@ func deleteCustomRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, 
 		return false, nil
 	}
 
+	// Find the machines Network by the master machines Ports.
+	// Any worker nodes ports, including the ones used for additionalNetworks,
+	// are tagged with cluster-api-provider-openstack and should be excluded
+	// to ensure only the primary Network ports are filtered.
 	tags := filterTags(filter)
-	networkTag := infraID + "-primaryClusterNetwork"
-	listOpts := networks.ListOpts{
-		Tags:    networkTag,
+	listOpts := ports.ListOpts{
+		Tags:        strings.Join(tags, ","),
+		DeviceOwner: "compute:nova",
+		NotTags:     "cluster-api-provider-openstack",
+	}
+
+	allPages, err := ports.List(conn, listOpts).AllPages()
+	if err != nil {
+		logger.Debug(err)
+		return false, nil
+	}
+
+	allServerPorts, err := ports.ExtractPorts(allPages)
+	if err != nil {
+		logger.Debug(err)
+		return false, nil
+	}
+
+	if len(allServerPorts) == 0 {
+		return true, nil
+	}
+
+	// Only proceed with clean up if is a provided Network
+	networkListOpts := networks.ListOpts{
 		NotTags: strings.Join(tags, ","),
+		ID:      allServerPorts[0].NetworkID,
 	}
 
-	allPages, err := networks.List(conn, listOpts).AllPages()
+	allNetworksPages, err := networks.List(conn, networkListOpts).AllPages()
 	if err != nil {
 		logger.Debug(err)
 		return false, nil
 	}
 
-	allPrimaryNetworks, err := networks.ExtractNetworks(allPages)
+	allNetworks, err := networks.ExtractNetworks(allNetworksPages)
 	if err != nil {
 		logger.Debug(err)
 		return false, nil
 	}
 
-	if len(allPrimaryNetworks) > 1 {
-		logger.Debug(err)
-		return false, nil
-	}
-
-	if len(allPrimaryNetworks) == 0 {
+	if len(allNetworks) == 0 {
 		return true, nil
 	}
 
 	portListOpts := ports.ListOpts{
-		NetworkID: allPrimaryNetworks[0].ID,
+		NetworkID: allServerPorts[0].NetworkID,
 	}
+
 	allPagesPort, err := ports.List(conn, portListOpts).AllPages()
 	if err != nil {
 		logger.Error(err)
@@ -550,6 +583,13 @@ func deleteCustomRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, 
 	}
 	if routerID == "" {
 		return true, nil
+	}
+
+	// disassociate any fips linked to the router
+	err = updateFips(routerID, opts, filter, logger)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
 	}
 
 	removed, err := removeRouterInterfaces(conn, filter, routerID, logger)
@@ -1246,7 +1286,7 @@ func untagRunner(opts *clientconfig.ClientOpts, infraID string, logger logrus.Fi
 	return nil
 }
 
-func cleanRouterRunner(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger, infraID string) error {
+func cleanRouterRunner(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) error {
 	backoffSettings := wait.Backoff{
 		Duration: time.Second * 15,
 		Factor:   1.3,
@@ -1254,7 +1294,7 @@ func cleanRouterRunner(opts *clientconfig.ClientOpts, filter Filter, logger logr
 	}
 
 	err := wait.ExponentialBackoff(backoffSettings, func() (bool, error) {
-		return deleteCustomRouterInterfaces(opts, filter, logger, infraID)
+		return deleteCustomRouterInterfaces(opts, filter, logger)
 	})
 	if err != nil {
 		if err == wait.ErrWaitTimeout {
