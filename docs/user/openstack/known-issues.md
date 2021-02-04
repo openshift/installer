@@ -70,7 +70,7 @@ oc edit cm cloud-provider-config -n openshift-config
 ignore-volume-az = yes
 ```
 
-Then it is required to create and use a new Storage Class that has the availability parameter set to `nova`, as below:
+Then it is required to create and use a new Storage Class that has the `availability` parameter set to your Cinder availability zone name, as below:
 
 ```txt
 allowVolumeExpansion: true
@@ -80,7 +80,7 @@ metadata:
   name: sc-availability
 provisioner: kubernetes.io/cinder
 parameters:
-  availability: nova
+  availability: <Cinder_AZ>
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
 ```
