@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: etcd-serving-ca
-  namespace: openshift-config
-data:
-  ca-bundle.crt: |
-    {{.EtcdCaBundle | indent 4}}

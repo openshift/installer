@@ -62,25 +62,10 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&Scheduler{},
 		&ImageContentSourcePolicy{},
 		&tls.RootCA{},
-		&tls.EtcdSignerCertKey{},
-		&tls.EtcdCABundle{},
-		&tls.EtcdSignerClientCertKey{},
-		&tls.EtcdMetricCABundle{},
-		&tls.EtcdMetricSignerCertKey{},
-		&tls.EtcdMetricSignerClientCertKey{},
 		&tls.MCSCertKey{},
 
 		&bootkube.CVOOverrides{},
-		&bootkube.EtcdCAConfigMap{},
-		&bootkube.EtcdClientSecret{},
-		&bootkube.EtcdMetricClientSecret{},
-		&bootkube.EtcdMetricServingCAConfigMap{},
-		&bootkube.EtcdMetricSignerSecret{},
-		&bootkube.EtcdNamespace{},
-		&bootkube.EtcdService{},
-		&bootkube.EtcdSignerSecret{},
 		&bootkube.KubeCloudConfig{},
-		&bootkube.EtcdServingCAConfigMap{},
 		&bootkube.KubeSystemConfigmapRootCA{},
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.OpenshiftConfigSecretPullSecret{},
@@ -144,56 +129,25 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	mcsCertKey := &tls.MCSCertKey{}
-	etcdMetricCABundle := &tls.EtcdMetricCABundle{}
-	etcdMetricSignerClientCertKey := &tls.EtcdMetricSignerClientCertKey{}
-	etcdMetricSignerCertKey := &tls.EtcdMetricSignerCertKey{}
 	rootCA := &tls.RootCA{}
-	etcdSignerCertKey := &tls.EtcdSignerCertKey{}
-	etcdCABundle := &tls.EtcdCABundle{}
-	etcdSignerClientCertKey := &tls.EtcdSignerClientCertKey{}
 	dependencies.Get(
 		clusterID,
 		installConfig,
-		etcdSignerCertKey,
-		etcdCABundle,
-		etcdSignerClientCertKey,
-		etcdMetricCABundle,
-		etcdMetricSignerClientCertKey,
-		etcdMetricSignerCertKey,
 		mcsCertKey,
 		rootCA,
 	)
 
 	templateData := &bootkubeTemplateData{
-		CVOClusterID:               clusterID.UUID,
-		EtcdCaBundle:               string(etcdCABundle.Cert()),
-		EtcdMetricCaCert:           string(etcdMetricCABundle.Cert()),
-		EtcdMetricSignerCert:       base64.StdEncoding.EncodeToString(etcdMetricSignerCertKey.Cert()),
-		EtcdMetricSignerClientCert: base64.StdEncoding.EncodeToString(etcdMetricSignerClientCertKey.Cert()),
-		EtcdMetricSignerClientKey:  base64.StdEncoding.EncodeToString(etcdMetricSignerClientCertKey.Key()),
-		EtcdMetricSignerKey:        base64.StdEncoding.EncodeToString(etcdMetricSignerCertKey.Key()),
-		EtcdSignerCert:             base64.StdEncoding.EncodeToString(etcdSignerCertKey.Cert()),
-		EtcdSignerClientCert:       base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Cert()),
-		EtcdSignerClientKey:        base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Key()),
-		EtcdSignerKey:              base64.StdEncoding.EncodeToString(etcdSignerCertKey.Key()),
-		McsTLSCert:                 base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
-		McsTLSKey:                  base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
-		PullSecretBase64:           base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
-		RootCaCert:                 string(rootCA.Cert()),
+		CVOClusterID:     clusterID.UUID,
+		McsTLSCert:       base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
+		McsTLSKey:        base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
+		PullSecretBase64: base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
+		RootCaCert:       string(rootCA.Cert()),
 	}
 
 	files := []*asset.File{}
 	for _, a := range []asset.WritableAsset{
 		&bootkube.CVOOverrides{},
-		&bootkube.EtcdCAConfigMap{},
-		&bootkube.EtcdClientSecret{},
-		&bootkube.EtcdMetricClientSecret{},
-		&bootkube.EtcdMetricSignerSecret{},
-		&bootkube.EtcdMetricServingCAConfigMap{},
-		&bootkube.EtcdNamespace{},
-		&bootkube.EtcdService{},
-		&bootkube.EtcdServingCAConfigMap{},
-		&bootkube.EtcdSignerSecret{},
 		&bootkube.KubeCloudConfig{},
 		&bootkube.KubeSystemConfigmapRootCA{},
 		&bootkube.MachineConfigServerTLSSecret{},
