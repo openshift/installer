@@ -6,6 +6,8 @@ package mock
 
 import (
 	context "context"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	v1 "k8s.io/api/core/v1"
 	v10 "k8s.io/api/storage/v1"
@@ -13,63 +15,60 @@ import (
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	v12 "kubevirt.io/client-go/api/v1"
 	v1alpha1 "kubevirt.io/containerized-data-importer/pkg/apis/core/v1alpha1"
-	reflect "reflect"
 )
 
-// MockClient is a mock of Client interface
+// MockClient is a mock of Client interface.
 type MockClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockClientMockRecorder
 }
 
-// MockClientMockRecorder is the mock recorder for MockClient
+// MockClientMockRecorder is the mock recorder for MockClient.
 type MockClientMockRecorder struct {
 	mock *MockClient
 }
 
-// NewMockClient creates a new mock instance
+// NewMockClient creates a new mock instance.
 func NewMockClient(ctrl *gomock.Controller) *MockClient {
 	mock := &MockClient{ctrl: ctrl}
 	mock.recorder = &MockClientMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
-// GetVirtualMachine mocks base method
-func (m *MockClient) GetVirtualMachine(ctx context.Context, namespace, name string) (*v12.VirtualMachine, error) {
+// DeleteDataVolume mocks base method.
+func (m *MockClient) DeleteDataVolume(ctx context.Context, namespace, name string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVirtualMachine", ctx, namespace, name)
-	ret0, _ := ret[0].(*v12.VirtualMachine)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "DeleteDataVolume", ctx, namespace, name)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// GetVirtualMachine indicates an expected call of GetVirtualMachine
-func (mr *MockClientMockRecorder) GetVirtualMachine(ctx, namespace, name interface{}) *gomock.Call {
+// DeleteDataVolume indicates an expected call of DeleteDataVolume.
+func (mr *MockClientMockRecorder) DeleteDataVolume(ctx, namespace, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVirtualMachine", reflect.TypeOf((*MockClient)(nil).GetVirtualMachine), ctx, namespace, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDataVolume", reflect.TypeOf((*MockClient)(nil).DeleteDataVolume), ctx, namespace, name)
 }
 
-// ListVirtualMachine mocks base method
-func (m *MockClient) ListVirtualMachine(ctx context.Context, namespace string, opts v11.ListOptions) (*v12.VirtualMachineList, error) {
+// DeleteSecret mocks base method.
+func (m *MockClient) DeleteSecret(ctx context.Context, namespace, name string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListVirtualMachine", ctx, namespace, opts)
-	ret0, _ := ret[0].(*v12.VirtualMachineList)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "DeleteSecret", ctx, namespace, name)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// ListVirtualMachine indicates an expected call of ListVirtualMachine
-func (mr *MockClientMockRecorder) ListVirtualMachine(ctx, namespace, opts interface{}) *gomock.Call {
+// DeleteSecret indicates an expected call of DeleteSecret.
+func (mr *MockClientMockRecorder) DeleteSecret(ctx, namespace, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListVirtualMachine", reflect.TypeOf((*MockClient)(nil).ListVirtualMachine), ctx, namespace, opts)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSecret", reflect.TypeOf((*MockClient)(nil).DeleteSecret), ctx, namespace, name)
 }
 
-// DeleteVirtualMachine mocks base method
+// DeleteVirtualMachine mocks base method.
 func (m *MockClient) DeleteVirtualMachine(ctx context.Context, namespace, name string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteVirtualMachine", ctx, namespace, name)
@@ -77,13 +76,13 @@ func (m *MockClient) DeleteVirtualMachine(ctx context.Context, namespace, name s
 	return ret0
 }
 
-// DeleteVirtualMachine indicates an expected call of DeleteVirtualMachine
+// DeleteVirtualMachine indicates an expected call of DeleteVirtualMachine.
 func (mr *MockClientMockRecorder) DeleteVirtualMachine(ctx, namespace, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteVirtualMachine", reflect.TypeOf((*MockClient)(nil).DeleteVirtualMachine), ctx, namespace, name)
 }
 
-// GetDataVolume mocks base method
+// GetDataVolume mocks base method.
 func (m *MockClient) GetDataVolume(ctx context.Context, namespace, name string) (*v1alpha1.DataVolume, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDataVolume", ctx, namespace, name)
@@ -92,86 +91,13 @@ func (m *MockClient) GetDataVolume(ctx context.Context, namespace, name string) 
 	return ret0, ret1
 }
 
-// GetDataVolume indicates an expected call of GetDataVolume
+// GetDataVolume indicates an expected call of GetDataVolume.
 func (mr *MockClientMockRecorder) GetDataVolume(ctx, namespace, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDataVolume", reflect.TypeOf((*MockClient)(nil).GetDataVolume), ctx, namespace, name)
 }
 
-// ListDataVolume mocks base method
-func (m *MockClient) ListDataVolume(ctx context.Context, namespace string, opts v11.ListOptions) (*v1alpha1.DataVolumeList, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListDataVolume", ctx, namespace, opts)
-	ret0, _ := ret[0].(*v1alpha1.DataVolumeList)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListDataVolume indicates an expected call of ListDataVolume
-func (mr *MockClientMockRecorder) ListDataVolume(ctx, namespace, opts interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDataVolume", reflect.TypeOf((*MockClient)(nil).ListDataVolume), ctx, namespace, opts)
-}
-
-// DeleteDataVolume mocks base method
-func (m *MockClient) DeleteDataVolume(ctx context.Context, namespace, name string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteDataVolume", ctx, namespace, name)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteDataVolume indicates an expected call of DeleteDataVolume
-func (mr *MockClientMockRecorder) DeleteDataVolume(ctx, namespace, name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDataVolume", reflect.TypeOf((*MockClient)(nil).DeleteDataVolume), ctx, namespace, name)
-}
-
-// GetSecret mocks base method
-func (m *MockClient) GetSecret(ctx context.Context, namespace, name string) (*v1.Secret, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSecret", ctx, namespace, name)
-	ret0, _ := ret[0].(*v1.Secret)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetSecret indicates an expected call of GetSecret
-func (mr *MockClientMockRecorder) GetSecret(ctx, namespace, name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecret", reflect.TypeOf((*MockClient)(nil).GetSecret), ctx, namespace, name)
-}
-
-// ListSecret mocks base method
-func (m *MockClient) ListSecret(ctx context.Context, namespace string, opts v11.ListOptions) (*v1.SecretList, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListSecret", ctx, namespace, opts)
-	ret0, _ := ret[0].(*v1.SecretList)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListSecret indicates an expected call of ListSecret
-func (mr *MockClientMockRecorder) ListSecret(ctx, namespace, opts interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSecret", reflect.TypeOf((*MockClient)(nil).ListSecret), ctx, namespace, opts)
-}
-
-// DeleteSecret mocks base method
-func (m *MockClient) DeleteSecret(ctx context.Context, namespace, name string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteSecret", ctx, namespace, name)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteSecret indicates an expected call of DeleteSecret
-func (mr *MockClientMockRecorder) DeleteSecret(ctx, namespace, name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSecret", reflect.TypeOf((*MockClient)(nil).DeleteSecret), ctx, namespace, name)
-}
-
-// GetNamespace mocks base method
+// GetNamespace mocks base method.
 func (m *MockClient) GetNamespace(ctx context.Context, name string) (*v1.Namespace, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNamespace", ctx, name)
@@ -180,28 +106,13 @@ func (m *MockClient) GetNamespace(ctx context.Context, name string) (*v1.Namespa
 	return ret0, ret1
 }
 
-// GetNamespace indicates an expected call of GetNamespace
+// GetNamespace indicates an expected call of GetNamespace.
 func (mr *MockClientMockRecorder) GetNamespace(ctx, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNamespace", reflect.TypeOf((*MockClient)(nil).GetNamespace), ctx, name)
 }
 
-// GetStorageClass mocks base method
-func (m *MockClient) GetStorageClass(ctx context.Context, name string) (*v10.StorageClass, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetStorageClass", ctx, name)
-	ret0, _ := ret[0].(*v10.StorageClass)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetStorageClass indicates an expected call of GetStorageClass
-func (mr *MockClientMockRecorder) GetStorageClass(ctx, name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStorageClass", reflect.TypeOf((*MockClient)(nil).GetStorageClass), ctx, name)
-}
-
-// GetNetworkAttachmentDefinition mocks base method
+// GetNetworkAttachmentDefinition mocks base method.
 func (m *MockClient) GetNetworkAttachmentDefinition(ctx context.Context, name, namespace string) (*unstructured.Unstructured, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNetworkAttachmentDefinition", ctx, name, namespace)
@@ -210,8 +121,98 @@ func (m *MockClient) GetNetworkAttachmentDefinition(ctx context.Context, name, n
 	return ret0, ret1
 }
 
-// GetNetworkAttachmentDefinition indicates an expected call of GetNetworkAttachmentDefinition
+// GetNetworkAttachmentDefinition indicates an expected call of GetNetworkAttachmentDefinition.
 func (mr *MockClientMockRecorder) GetNetworkAttachmentDefinition(ctx, name, namespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetworkAttachmentDefinition", reflect.TypeOf((*MockClient)(nil).GetNetworkAttachmentDefinition), ctx, name, namespace)
+}
+
+// GetSecret mocks base method.
+func (m *MockClient) GetSecret(ctx context.Context, namespace, name string) (*v1.Secret, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSecret", ctx, namespace, name)
+	ret0, _ := ret[0].(*v1.Secret)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSecret indicates an expected call of GetSecret.
+func (mr *MockClientMockRecorder) GetSecret(ctx, namespace, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecret", reflect.TypeOf((*MockClient)(nil).GetSecret), ctx, namespace, name)
+}
+
+// GetStorageClass mocks base method.
+func (m *MockClient) GetStorageClass(ctx context.Context, name string) (*v10.StorageClass, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetStorageClass", ctx, name)
+	ret0, _ := ret[0].(*v10.StorageClass)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetStorageClass indicates an expected call of GetStorageClass.
+func (mr *MockClientMockRecorder) GetStorageClass(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStorageClass", reflect.TypeOf((*MockClient)(nil).GetStorageClass), ctx, name)
+}
+
+// GetVirtualMachine mocks base method.
+func (m *MockClient) GetVirtualMachine(ctx context.Context, namespace, name string) (*v12.VirtualMachine, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVirtualMachine", ctx, namespace, name)
+	ret0, _ := ret[0].(*v12.VirtualMachine)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVirtualMachine indicates an expected call of GetVirtualMachine.
+func (mr *MockClientMockRecorder) GetVirtualMachine(ctx, namespace, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVirtualMachine", reflect.TypeOf((*MockClient)(nil).GetVirtualMachine), ctx, namespace, name)
+}
+
+// ListDataVolume mocks base method.
+func (m *MockClient) ListDataVolume(ctx context.Context, namespace string, opts v11.ListOptions) (*v1alpha1.DataVolumeList, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListDataVolume", ctx, namespace, opts)
+	ret0, _ := ret[0].(*v1alpha1.DataVolumeList)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListDataVolume indicates an expected call of ListDataVolume.
+func (mr *MockClientMockRecorder) ListDataVolume(ctx, namespace, opts interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDataVolume", reflect.TypeOf((*MockClient)(nil).ListDataVolume), ctx, namespace, opts)
+}
+
+// ListSecret mocks base method.
+func (m *MockClient) ListSecret(ctx context.Context, namespace string, opts v11.ListOptions) (*v1.SecretList, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSecret", ctx, namespace, opts)
+	ret0, _ := ret[0].(*v1.SecretList)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSecret indicates an expected call of ListSecret.
+func (mr *MockClientMockRecorder) ListSecret(ctx, namespace, opts interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSecret", reflect.TypeOf((*MockClient)(nil).ListSecret), ctx, namespace, opts)
+}
+
+// ListVirtualMachine mocks base method.
+func (m *MockClient) ListVirtualMachine(ctx context.Context, namespace string, opts v11.ListOptions) (*v12.VirtualMachineList, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListVirtualMachine", ctx, namespace, opts)
+	ret0, _ := ret[0].(*v12.VirtualMachineList)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListVirtualMachine indicates an expected call of ListVirtualMachine.
+func (mr *MockClientMockRecorder) ListVirtualMachine(ctx, namespace, opts interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListVirtualMachine", reflect.TypeOf((*MockClient)(nil).ListVirtualMachine), ctx, namespace, opts)
 }

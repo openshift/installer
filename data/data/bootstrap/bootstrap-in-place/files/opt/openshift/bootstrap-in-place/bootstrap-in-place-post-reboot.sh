@@ -7,8 +7,8 @@ export KUBECONFIG=/etc/kubernetes/bootstrap-secrets/kubeconfig
 function wait_for_api {
   until oc get csr &> /dev/null
   do
-      echo "Waiting for api ..."
-      sleep 5
+    echo "Waiting for api ..."
+    sleep 5
   done
 }
 
@@ -35,9 +35,9 @@ function approve_csr {
   echo "Approving csrs ..."
   until [ "$(oc get nodes --selector='node-role.kubernetes.io/master' -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' | grep -c "True")" -eq 1 ];
   do
-     echo "Approving csrs ..."
-     oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs --no-run-if-empty oc adm certificate approve &> /dev/null || true
-     sleep 30
+    echo "Approving csrs ..."
+    oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs --no-run-if-empty oc adm certificate approve &> /dev/null || true
+    sleep 30
   done
 }
 

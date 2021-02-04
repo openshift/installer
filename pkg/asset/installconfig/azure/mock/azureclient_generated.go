@@ -38,21 +38,6 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
 }
 
-// GetVirtualNetwork mocks base method.
-func (m *MockAPI) GetVirtualNetwork(ctx context.Context, resourceGroupName, virtualNetwork string) (*network.VirtualNetwork, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVirtualNetwork", ctx, resourceGroupName, virtualNetwork)
-	ret0, _ := ret[0].(*network.VirtualNetwork)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetVirtualNetwork indicates an expected call of GetVirtualNetwork.
-func (mr *MockAPIMockRecorder) GetVirtualNetwork(ctx, resourceGroupName, virtualNetwork interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVirtualNetwork", reflect.TypeOf((*MockAPI)(nil).GetVirtualNetwork), ctx, resourceGroupName, virtualNetwork)
-}
-
 // GetComputeSubnet mocks base method.
 func (m *MockAPI) GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*network.Subnet, error) {
 	m.ctrl.T.Helper()
@@ -83,19 +68,34 @@ func (mr *MockAPIMockRecorder) GetControlPlaneSubnet(ctx, resourceGroupName, vir
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetControlPlaneSubnet", reflect.TypeOf((*MockAPI)(nil).GetControlPlaneSubnet), ctx, resourceGroupName, virtualNetwork, subnet)
 }
 
-// ListLocations mocks base method.
-func (m *MockAPI) ListLocations(ctx context.Context) (*[]subscriptions.Location, error) {
+// GetDiskSkus mocks base method.
+func (m *MockAPI) GetDiskSkus(ctx context.Context, region string) ([]compute.ResourceSku, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListLocations", ctx)
-	ret0, _ := ret[0].(*[]subscriptions.Location)
+	ret := m.ctrl.Call(m, "GetDiskSkus", ctx, region)
+	ret0, _ := ret[0].([]compute.ResourceSku)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListLocations indicates an expected call of ListLocations.
-func (mr *MockAPIMockRecorder) ListLocations(ctx interface{}) *gomock.Call {
+// GetDiskSkus indicates an expected call of GetDiskSkus.
+func (mr *MockAPIMockRecorder) GetDiskSkus(ctx, region interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListLocations", reflect.TypeOf((*MockAPI)(nil).ListLocations), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDiskSkus", reflect.TypeOf((*MockAPI)(nil).GetDiskSkus), ctx, region)
+}
+
+// GetGroup mocks base method.
+func (m *MockAPI) GetGroup(ctx context.Context, groupName string) (*resources.Group, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroup", ctx, groupName)
+	ret0, _ := ret[0].(*resources.Group)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGroup indicates an expected call of GetGroup.
+func (mr *MockAPIMockRecorder) GetGroup(ctx, groupName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroup", reflect.TypeOf((*MockAPI)(nil).GetGroup), ctx, groupName)
 }
 
 // GetResourcesProvider mocks base method.
@@ -128,34 +128,34 @@ func (mr *MockAPIMockRecorder) GetVirtualMachineSku(ctx, name, region interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVirtualMachineSku", reflect.TypeOf((*MockAPI)(nil).GetVirtualMachineSku), ctx, name, region)
 }
 
-// GetDiskSkus mocks base method.
-func (m *MockAPI) GetDiskSkus(ctx context.Context, region string) ([]compute.ResourceSku, error) {
+// GetVirtualNetwork mocks base method.
+func (m *MockAPI) GetVirtualNetwork(ctx context.Context, resourceGroupName, virtualNetwork string) (*network.VirtualNetwork, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDiskSkus", ctx, region)
-	ret0, _ := ret[0].([]compute.ResourceSku)
+	ret := m.ctrl.Call(m, "GetVirtualNetwork", ctx, resourceGroupName, virtualNetwork)
+	ret0, _ := ret[0].(*network.VirtualNetwork)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetDiskSkus indicates an expected call of GetDiskSkus.
-func (mr *MockAPIMockRecorder) GetDiskSkus(ctx, region interface{}) *gomock.Call {
+// GetVirtualNetwork indicates an expected call of GetVirtualNetwork.
+func (mr *MockAPIMockRecorder) GetVirtualNetwork(ctx, resourceGroupName, virtualNetwork interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDiskSkus", reflect.TypeOf((*MockAPI)(nil).GetDiskSkus), ctx, region)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVirtualNetwork", reflect.TypeOf((*MockAPI)(nil).GetVirtualNetwork), ctx, resourceGroupName, virtualNetwork)
 }
 
-// GetGroup mocks base method.
-func (m *MockAPI) GetGroup(ctx context.Context, groupName string) (*resources.Group, error) {
+// ListLocations mocks base method.
+func (m *MockAPI) ListLocations(ctx context.Context) (*[]subscriptions.Location, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetGroup", ctx, groupName)
-	ret0, _ := ret[0].(*resources.Group)
+	ret := m.ctrl.Call(m, "ListLocations", ctx)
+	ret0, _ := ret[0].(*[]subscriptions.Location)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetGroup indicates an expected call of GetGroup.
-func (mr *MockAPIMockRecorder) GetGroup(ctx, groupName interface{}) *gomock.Call {
+// ListLocations indicates an expected call of ListLocations.
+func (mr *MockAPIMockRecorder) ListLocations(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroup", reflect.TypeOf((*MockAPI)(nil).GetGroup), ctx, groupName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListLocations", reflect.TypeOf((*MockAPI)(nil).ListLocations), ctx)
 }
 
 // ListResourceIDsByGroup mocks base method.

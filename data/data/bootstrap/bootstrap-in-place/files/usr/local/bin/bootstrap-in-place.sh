@@ -13,7 +13,7 @@ bootkube_podman_run() {
 
 if [ ! -f stop-etcd.done ]; then
   echo "Stop etcd static pod by moving the manifest"
-  mv /etc/kubernetes/manifests/etcd-member-pod.yaml /etc/kubernetes
+  mv /etc/kubernetes/manifests/etcd-member-pod.yaml /etc/kubernetes || echo "already moved etcd-member-pod.yaml"
 
   until ! crictl ps | grep etcd; do
     echo "Waiting for etcd to go down"
@@ -26,7 +26,7 @@ fi
 if [ ! -f master-ignition.done ]; then
   echo "Creating master ignition and writing it to disk"
   # Get the master ignition from MCS
-  curl --header "Accept:'application/vnd.coreos.ignition+json;version=3.1.0 ;q=0.1'" \
+  curl --header 'Accept:application/vnd.coreos.ignition+json;version=3.1.0' \
     http://localhost:22624/config/master -o /opt/openshift/original-master.ign
 
   GATHER_ID="bootstrap"
@@ -51,6 +51,3 @@ if [ ! -f master-ignition.done ]; then
 
   touch master-ignition.done
 fi
-
-echo "Done"
-echo "To complete the installation execute: 'coreos-installer install -i /opt/openshift/master.ign <device>' and reboot the node"

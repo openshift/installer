@@ -34,6 +34,16 @@ spec:
             description: BaseDomain is the base domain to which the cluster should
               belong.
             type: string
+          bootstrapInPlace:
+            description: BootstrapInPlace is the configuration for installing a single
+              node with bootstrap in place installation.
+            properties:
+              installationDisk:
+                description: InstallationDisk is the target disk drive for coreos-installer
+                type: string
+            required:
+            - installationDisk
+            type: object
           compute:
             description: Compute is the configuration for the machines that comprise
               the compute nodes.
