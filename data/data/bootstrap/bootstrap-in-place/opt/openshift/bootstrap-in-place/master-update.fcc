@@ -50,11 +50,11 @@ storage:
       mode: 0555
 systemd:
   units:
-    - name: bootstrap-in-place-post-reboot.service
+    - name: bootkube.service
       enabled: true
       contents: |
         [Unit]
-        Description=bootstrap-in-place-post-reboot
+        Description=Bootkube - bootstrap in place post reboot
         Wants=kubelet.service
         After=kubelet.service
         ConditionPathExists=/etc/kubernetes/bootstrap-secrets/kubeconfig

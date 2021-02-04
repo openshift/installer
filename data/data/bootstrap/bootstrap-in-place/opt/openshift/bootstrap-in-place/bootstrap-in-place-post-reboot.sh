@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euoE pipefail ## -E option will cause functions to inherit trap
 
+echo "Running bootkube bootstrap-in-place post reboot"
 export KUBECONFIG=/etc/kubernetes/bootstrap-secrets/kubeconfig
 
 function wait_for_api {
@@ -58,7 +59,7 @@ function clean {
   rm -rf /usr/local/bin/installer-masters-gather.sh
   rm -rf /var/log/log-bundle-bootstrap.tar.gz
 
-  systemctl disable bootstrap-in-place-post-reboot.service
+  systemctl disable bootkube.service
 }
 
 wait_for_api
