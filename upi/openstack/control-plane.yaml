@@ -83,4 +83,5 @@
       - port-name: "{{ os_port_master }}-{{ item.0 }}"
       scheduler_hints:
         group: "{{ server_group_id }}"
+      meta: "{{ cluster_id_tag }}"
     with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
