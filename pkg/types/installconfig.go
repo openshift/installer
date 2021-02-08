@@ -77,6 +77,10 @@ type InstallConfig struct {
 	// +optional
 	SSHKey string `json:"sshKey,omitempty"`
 
+	// PasswordHash is the hash of the core user password
+	// +optional
+	PasswordHash string `json:"passwordHash,omitempty"`
+
 	// BaseDomain is the base domain to which the cluster should belong.
 	BaseDomain string `json:"baseDomain"`
 

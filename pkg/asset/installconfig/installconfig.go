@@ -42,6 +42,7 @@ var _ asset.WritableAsset = (*InstallConfig)(nil)
 func (a *InstallConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&sshPublicKey{},
+		&passwordHash{},
 		&baseDomain{},
 		&clusterName{},
 		&networking{},
@@ -53,6 +54,7 @@ func (a *InstallConfig) Dependencies() []asset.Asset {
 // Generate generates the install-config.yaml file.
 func (a *InstallConfig) Generate(parents asset.Parents) error {
 	sshPublicKey := &sshPublicKey{}
+	passwordHash := &passwordHash{}
 	baseDomain := &baseDomain{}
 	clusterName := &clusterName{}
 	networking := &networking{}
@@ -60,6 +62,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	platform := &platform{}
 	parents.Get(
 		sshPublicKey,
+		passwordHash,
 		baseDomain,
 		clusterName,
 		networking,
@@ -74,9 +77,10 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterName.ClusterName,
 		},
-		SSHKey:     sshPublicKey.Key,
-		BaseDomain: baseDomain.BaseDomain,
-		PullSecret: pullSecret.PullSecret,
+		SSHKey:       sshPublicKey.Key,
+		PasswordHash: passwordHash.Hash,
+		BaseDomain:   baseDomain.BaseDomain,
+		PullSecret:   pullSecret.PullSecret,
 		Networking: &types.Networking{
 			MachineNetwork: networking.machineNetwork,
 		},

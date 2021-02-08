@@ -194,12 +194,26 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 
 	a.addParentFiles(dependencies)
 
+	var core igntypes.PasswdUser
+
+	if installConfig.Config.PasswordHash == "" {
+		core = igntypes.PasswdUser{Name: "core",
+			SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{
+				igntypes.SSHAuthorizedKey(installConfig.Config.SSHKey),
+				igntypes.SSHAuthorizedKey(string(bootstrapSSHKeyPair.Public())),
+			}}
+	} else {
+		core = igntypes.PasswdUser{Name: "core",
+			PasswordHash: &installConfig.Config.PasswordHash,
+			SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{
+				igntypes.SSHAuthorizedKey(installConfig.Config.SSHKey),
+				igntypes.SSHAuthorizedKey(string(bootstrapSSHKeyPair.Public())),
+			}}
+	}
+
 	a.Config.Passwd.Users = append(
 		a.Config.Passwd.Users,
-		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{
-			igntypes.SSHAuthorizedKey(installConfig.Config.SSHKey),
-			igntypes.SSHAuthorizedKey(string(bootstrapSSHKeyPair.Public())),
-		}},
+		core,
 	)
 
 	data, err := ignition.Marshal(a.Config)
