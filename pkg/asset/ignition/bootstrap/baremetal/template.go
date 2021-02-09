@@ -1,6 +1,7 @@
 package baremetal
 
 import (
+	"fmt"
 	"net"
 	"strings"
 
@@ -57,8 +58,11 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 
 	switch config.ProvisioningNetwork {
 	case baremetal.ManagedProvisioningNetwork:
-		// When provisioning network is managed, we set a DHCP range:
-		templateData.ProvisioningDHCPRange = config.ProvisioningDHCPRange
+		cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()
+
+		// When provisioning network is managed, we set a DHCP range including
+		// netmask for dnsmasq.
+		templateData.ProvisioningDHCPRange = fmt.Sprintf("%s,%d", config.ProvisioningDHCPRange, cidr)
 
 		var dhcpAllowList []string
 		for _, host := range config.Hosts {
