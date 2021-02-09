@@ -4,6 +4,7 @@ package openstack
 import (
 	"fmt"
 
+	"github.com/gophercloud/utils/openstack/clientconfig"
 	clusterapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -13,7 +14,7 @@ import (
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]*clusterapi.MachineSet, error) {
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, clientOpts *clientconfig.ClientOpts) ([]*clusterapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
 		return nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
@@ -22,7 +23,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	}
 	platform := config.Platform.OpenStack
 	mpool := pool.Platform.OpenStack
-	trunkSupport, err := checkNetworkExtensionAvailability(platform.Cloud, "trunk")
+	trunkSupport, err := checkNetworkExtensionAvailability(platform.Cloud, "trunk", clientOpts)
 	if err != nil {
 		return nil, err
 	}
