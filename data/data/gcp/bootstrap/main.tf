@@ -22,15 +22,17 @@ data "ignition_config" "redirect" {
 }
 
 resource "google_compute_address" "bootstrap" {
-  name = "${var.cluster_id}-bootstrap-ip"
+  name        = "${var.cluster_id}-bootstrap-ip"
+  description = local.description
 
   address_type = var.public_endpoints ? "EXTERNAL" : "INTERNAL"
   subnetwork   = var.public_endpoints ? null : var.subnet
 }
 
 resource "google_compute_firewall" "bootstrap_ingress_ssh" {
-  name    = "${var.cluster_id}-bootstrap-in-ssh"
-  network = var.network
+  name        = "${var.cluster_id}-bootstrap-in-ssh"
+  network     = var.network
+  description = local.description
 
   allow {
     protocol = "tcp"
@@ -42,7 +44,8 @@ resource "google_compute_firewall" "bootstrap_ingress_ssh" {
 }
 
 resource "google_compute_instance" "bootstrap" {
-  count = var.bootstrap_enabled ? 1 : 0
+  count       = var.bootstrap_enabled ? 1 : 0
+  description = local.description
 
   name         = "${var.cluster_id}-bootstrap"
   machine_type = var.machine_type
@@ -88,7 +91,8 @@ resource "google_compute_instance" "bootstrap" {
 }
 
 resource "google_compute_instance_group" "bootstrap" {
-  count = var.bootstrap_enabled ? 1 : 0
+  count       = var.bootstrap_enabled ? 1 : 0
+  description = local.description
 
   name = "${var.cluster_id}-bootstrap"
   zone = var.zone

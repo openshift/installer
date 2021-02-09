@@ -1,6 +1,11 @@
+locals {
+  description = "Created By OpenShift Installer"
+}
+
 resource "google_service_account" "master-node-sa" {
   account_id   = "${var.cluster_id}-m"
   display_name = "${var.cluster_id}-master-node"
+  description  = local.description
 }
 
 resource "google_project_iam_member" "master-compute-admin" {
@@ -29,7 +34,8 @@ resource "google_project_iam_member" "master-service-account-user" {
 }
 
 resource "google_compute_instance" "master" {
-  count = var.instance_count
+  count       = var.instance_count
+  description = local.description
 
   name         = "${var.cluster_id}-master-${count.index}"
   machine_type = var.machine_type
@@ -71,7 +77,8 @@ resource "google_compute_instance" "master" {
 }
 
 resource "google_compute_instance_group" "master" {
-  count = length(var.zones)
+  count       = length(var.zones)
+  description = local.description
 
   name = "${var.cluster_id}-master-${var.zones[count.index]}"
   #network = var.network

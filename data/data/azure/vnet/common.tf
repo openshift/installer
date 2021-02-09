@@ -37,4 +37,6 @@ locals {
 
   virtual_network    = var.preexisting_network ? data.azurerm_virtual_network.preexisting_virtual_network[0].name : azurerm_virtual_network.cluster_vnet[0].name
   virtual_network_id = var.preexisting_network ? data.azurerm_virtual_network.preexisting_virtual_network[0].id : azurerm_virtual_network.cluster_vnet[0].id
+
+  description = "Created By OpenShift Installer"
 }

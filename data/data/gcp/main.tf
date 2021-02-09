@@ -5,7 +5,8 @@ locals {
   worker_subnet_cidr = cidrsubnet(var.machine_v4_cidrs[0], 3, 1) #worker subnet is a smaller subnet within the vnet. i.e from /21 to /24
   public_endpoints   = var.gcp_publish_strategy == "External" ? true : false
 
-  gcp_image = var.gcp_preexisting_image ? var.gcp_image : google_compute_image.cluster[0].self_link
+  gcp_image   = var.gcp_preexisting_image ? var.gcp_image : google_compute_image.cluster[0].self_link
+  description = "Created By OpenShift Installer"
 }
 
 provider "google" {
@@ -96,7 +97,8 @@ module "dns" {
 }
 
 resource "google_compute_image" "cluster" {
-  count = var.gcp_preexisting_image ? 0 : 1
+  count       = var.gcp_preexisting_image ? 0 : 1
+  description = local.description
 
   name = "${var.cluster_id}-rhcos-image"
 

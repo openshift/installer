@@ -3,6 +3,7 @@
 
 locals {
   public_endpoints = var.publish_strategy == "External" ? true : false
+  description      = "Created By OpenShift Installer"
 }
 
 # all data sources should be input variable-agnostic and used as canonical source for querying "state of resources" and building outputs

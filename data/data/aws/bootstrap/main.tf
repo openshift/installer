@@ -1,5 +1,6 @@
 locals {
   public_endpoints = var.publish_strategy == "External" ? true : false
+  description      = "Created By OpenShift Installer"
 }
 
 data "aws_partition" "current" {}
@@ -154,7 +155,8 @@ resource "aws_lb_target_group_attachment" "bootstrap" {
 }
 
 resource "aws_security_group" "bootstrap" {
-  vpc_id = var.vpc_id
+  vpc_id      = var.vpc_id
+  description = local.description
 
   timeouts {
     create = "20m"
@@ -171,6 +173,7 @@ resource "aws_security_group" "bootstrap" {
 resource "aws_security_group_rule" "ssh" {
   type              = "ingress"
   security_group_id = aws_security_group.bootstrap.id
+  description       = local.description
 
   protocol    = "tcp"
   cidr_blocks = local.public_endpoints ? ["0.0.0.0/0"] : var.vpc_cidrs
@@ -181,6 +184,7 @@ resource "aws_security_group_rule" "ssh" {
 resource "aws_security_group_rule" "bootstrap_journald_gateway" {
   type              = "ingress"
   security_group_id = aws_security_group.bootstrap.id
+  description       = local.description
 
   protocol    = "tcp"
   cidr_blocks = local.public_endpoints ? ["0.0.0.0/0"] : var.vpc_cidrs

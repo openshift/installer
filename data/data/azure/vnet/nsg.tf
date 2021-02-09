@@ -30,4 +30,5 @@ resource "azurerm_network_security_rule" "apiserver_in" {
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
   network_security_group_name = azurerm_network_security_group.cluster.name
+  description                 = local.description
 }

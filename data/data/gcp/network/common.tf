@@ -22,4 +22,5 @@ data "google_compute_subnetwork" "preexisting_worker_subnet" {
 locals {
   cluster_network = var.preexisting_network ? data.google_compute_network.preexisting_cluster_network[0].self_link : google_compute_network.cluster_network[0].self_link
   master_subnet   = var.preexisting_network ? data.google_compute_subnetwork.preexisting_master_subnet[0].self_link : google_compute_subnetwork.master_subnet[0].self_link
+  description     = "Created By OpenShift Installer"
 }

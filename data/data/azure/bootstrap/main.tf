@@ -1,6 +1,7 @@
 locals {
   bootstrap_nic_ip_v4_configuration_name = "bootstrap-nic-ip-v4"
   bootstrap_nic_ip_v6_configuration_name = "bootstrap-nic-ip-v6"
+  description                            = "Created By OpenShift Installer"
 }
 
 data "azurerm_storage_account_sas" "ignition" {
@@ -226,4 +227,5 @@ resource "azurerm_network_security_rule" "bootstrap_ssh_in" {
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
   network_security_group_name = var.nsg_name
+  description                 = local.description
 }

@@ -1,3 +1,7 @@
+locals {
+  description = "Created By OpenShift Installer"
+}
+
 resource "vsphere_virtual_machine" "vm" {
   count = var.instance_count
 
@@ -10,6 +14,7 @@ resource "vsphere_virtual_machine" "vm" {
   guest_id             = var.guest_id
   folder               = var.folder
   enable_disk_uuid     = "true"
+  annotation           = local.description
 
   wait_for_guest_net_timeout  = "0"
   wait_for_guest_net_routable = "false"
