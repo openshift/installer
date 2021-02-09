@@ -65,7 +65,7 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 		p.Config.Spec = configv1.ProxySpec{
 			HTTPProxy:  installConfig.Config.Proxy.HTTPProxy,
 			HTTPSProxy: installConfig.Config.Proxy.HTTPSProxy,
-			NoProxy:    trimSpaceNoProxy(installConfig.Config.Proxy.NoProxy),
+			NoProxy:    installConfig.Config.Proxy.NoProxy,
 		}
 
 		if installConfig.Config.AdditionalTrustBundle != "" {
@@ -86,7 +86,7 @@ func (p *Proxy) Generate(dependencies asset.Parents) error {
 		p.Config.Status = configv1.ProxyStatus{
 			HTTPProxy:  installConfig.Config.Proxy.HTTPProxy,
 			HTTPSProxy: installConfig.Config.Proxy.HTTPSProxy,
-			NoProxy:    trimSpaceNoProxy(noProxy),
+			NoProxy:    noProxy,
 		}
 	}
 
@@ -184,13 +184,4 @@ func (p *Proxy) Files() []*asset.File {
 // Load loads the already-rendered files back from disk.
 func (p *Proxy) Load(f asset.FileFetcher) (bool, error) {
 	return false, nil
-}
-
-// trimSpaceNoProxy removes the space from comma separated items.
-func trimSpaceNoProxy(noProxy string) string {
-	split := strings.Split(noProxy, ",")
-	for idx, v := range split {
-		split[idx] = strings.TrimSpace(v)
-	}
-	return strings.Join(split, ",")
 }
