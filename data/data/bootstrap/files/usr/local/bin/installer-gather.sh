@@ -148,7 +148,7 @@ if [[ -f ${LOG_BUNDLE_BOOTSTRAP_ARCHIVE_NAME} ]]; then
     MASTER_ARTIFACTS="/tmp/artifacts-${MASTER_GATHER_ID}"
     mkdir -p "${ARTIFACTS}/control-plane/master"
     sudo /usr/local/bin/installer-masters-gather.sh --id "${MASTER_GATHER_ID}" </dev/null
-    cp -r "$MASTER_ARTIFACTS"/* "${ARTIFACTS}/control-plane/master/"
+    cp -r "${MASTER_ARTIFACTS}"/* "${ARTIFACTS}/control-plane/master/"
 elif [ "$#" -ne 0 ]; then
     MASTERS=( "$@" )
 elif test -s "${ARTIFACTS}/resources/masters.list"; then

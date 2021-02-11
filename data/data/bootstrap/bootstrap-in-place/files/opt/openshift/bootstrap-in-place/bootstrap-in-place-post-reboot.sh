@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
 set -euoE pipefail ## -E option will cause functions to inherit trap
 
+echo "Running bootkube bootstrap-in-place post reboot"
 export KUBECONFIG=/etc/kubernetes/bootstrap-secrets/kubeconfig
 
 function wait_for_api {
   until oc get csr &> /dev/null
   do
-      echo "Waiting for api ..."
-      sleep 5
+    echo "Waiting for api ..."
+    sleep 5
   done
 }
 
 function restart_kubelet {
   echo "Restarting kubelet"
-  until [ "$(oc get pod -n openshift-kube-apiserver-operator --selector='app=kube-apiserver-operator'  -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' | grep -c "True")" -eq 1 ];
+  until [ "$(oc get pod -n openshift-kube-apiserver-operator --selector='app=kube-apiserver-operator' -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' | grep -c "True")" -eq 1 ];
   do
     echo "Waiting for kube-apiserver-operator ready condition to be True"
     sleep 10
@@ -22,7 +23,7 @@ function restart_kubelet {
   systemctl daemon-reload
   systemctl restart kubelet
 
-  while grep  bootstrap-kube-apiserver /etc/kubernetes/manifests/kube-apiserver-pod.yaml;
+  while grep bootstrap-kube-apiserver /etc/kubernetes/manifests/kube-apiserver-pod.yaml;
   do
     echo "Waiting for kube-apiserver to apply the new static pod configuration"
     sleep 10
@@ -34,9 +35,9 @@ function approve_csr {
   echo "Approving csrs ..."
   until [ "$(oc get nodes --selector='node-role.kubernetes.io/master' -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' | grep -c "True")" -eq 1 ];
   do
-     echo "Approving csrs ..."
-     oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs --no-run-if-empty oc adm certificate approve &> /dev/null || true
-     sleep 30
+    echo "Approving csrs ..."
+    oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs --no-run-if-empty oc adm certificate approve &> /dev/null || true
+    sleep 30
   done
 }
 
@@ -58,7 +59,7 @@ function clean {
   rm -rf /usr/local/bin/installer-masters-gather.sh
   rm -rf /var/log/log-bundle-bootstrap.tar.gz
 
-  systemctl disable bootstrap-in-place-post-reboot.service
+  systemctl disable bootkube.service
 }
 
 wait_for_api

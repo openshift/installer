@@ -64,7 +64,7 @@ var (
 	SingleNodeIgnitionConfig = []asset.WritableAsset{
 		&kubeconfig.AdminClient{},
 		&password.KubeadminPassword{},
-		&bootstrap.Bootstrap{SingleNodeBootstrapInPlace: true},
+		&bootstrap.SingleNodeBootstrapInPlace{Bootstrap: &bootstrap.Bootstrap{}},
 		&cluster.Metadata{},
 	}
 

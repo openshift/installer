@@ -5,6 +5,12 @@ set -euoE pipefail ## -E option will cause functions to inherit trap
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
+{{- if .BootstrapInPlace }}
+BOOTSTRAP_INPLACE=true
+{{ else }}
+BOOTSTRAP_INPLACE=false
+{{ end -}}
+
 ETCD_ENDPOINTS=
 
 bootkube_podman_run() {
@@ -14,23 +20,23 @@ bootkube_podman_run() {
 }
 
 wait_for_etcd_cluster() {
-  until bootkube_podman_run \
-      --rm \
-      --name etcdctl \
-      --env ETCDCTL_API=3 \
-      --volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
-      --entrypoint etcdctl \
-      "${MACHINE_CONFIG_ETCD_IMAGE}" \
-      --dial-timeout=10m \
-      --cacert=/opt/openshift/tls/etcd-ca-bundle.crt \
-      --cert=/opt/openshift/tls/etcd-client.crt \
-      --key=/opt/openshift/tls/etcd-client.key \
-      --endpoints="${ETCD_ENDPOINTS}" \
-      endpoint health
-  do
-    echo "etcdctl failed. Retrying in 5 seconds..."
-    sleep 5
-  done
+    until bootkube_podman_run \
+        --rm \
+        --name etcdctl \
+        --env ETCDCTL_API=3 \
+        --volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
+        --entrypoint etcdctl \
+        "${MACHINE_CONFIG_ETCD_IMAGE}" \
+        --dial-timeout=10m \
+        --cacert=/opt/openshift/tls/etcd-ca-bundle.crt \
+        --cert=/opt/openshift/tls/etcd-client.crt \
+        --key=/opt/openshift/tls/etcd-client.key \
+        --endpoints="${ETCD_ENDPOINTS}" \
+        endpoint health
+    do
+        echo "etcdctl failed. Retrying in 5 seconds..."
+        sleep 5
+    done
 }
 
 MACHINE_CONFIG_OPERATOR_IMAGE=$(image_for machine-config-operator)
@@ -338,16 +344,17 @@ then
 fi
 
 # in case of single node, if we removed etcd, there is no point to wait for it on restart
-{{- if .SingleNodeBootstrapInPlace}}
 if [ ! -f stop-etcd.done ]
 then
-  # Wait for the etcd cluster to come up.
-  wait_for_etcd_cluster
+	# Wait for the etcd cluster to come up.
+	wait_for_etcd_cluster
 fi
-{{- else}}
-wait_for_etcd_cluster
-{{- end}}
 
+REQUIRED_PODS="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
+if [ "$BOOTSTRAP_INPLACE" = true ]
+then
+    REQUIRED_PODS=""
+fi
 
 echo "Starting cluster-bootstrap..."
 
@@ -358,31 +365,28 @@ then
         --volume "$PWD:/assets:z" \
         --volume /etc/kubernetes:/etc/kubernetes:z \
         "${CLUSTER_BOOTSTRAP_IMAGE}" \
-{{- if .SingleNodeBootstrapInPlace}}
-        start --tear-down-early=false --asset-dir=/assets --required-pods=""  --assets-create-timeout=5m
-{{- else}}
-        start --tear-down-early=false --asset-dir=/assets --required-pods="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
-{{- end}}
+        start --tear-down-early=false --asset-dir=/assets --required-pods="${REQUIRED_PODS}"
+
     touch cb-bootstrap.done
 fi
 
-{{- if .SingleNodeBootstrapInPlace}}
-. /usr/local/bin/bootstrap-in-place.sh "${CLUSTER_BOOTSTRAP_IMAGE}"
-{{- else}}
-rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
-
-if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
+if [ "$BOOTSTRAP_INPLACE" = true ]
 then
-	echo "Waiting for CEO to finish..."
-	bootkube_podman_run \
-		--volume "$PWD:/assets:z" \
-		"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
-		/usr/bin/cluster-etcd-operator \
-			wait-for-ceo \
-			--kubeconfig /assets/auth/kubeconfig
-fi
-{{- end}}
+    . /usr/local/bin/bootstrap-in-place.sh "${CLUSTER_BOOTSTRAP_IMAGE}"
+else
+    rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
 
+    if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
+    then
+        echo "Waiting for CEO to finish..."
+        bootkube_podman_run \
+            --volume "$PWD:/assets:z" \
+            "${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+            /usr/bin/cluster-etcd-operator \
+            wait-for-ceo \
+            --kubeconfig /assets/auth/kubeconfig
+    fi
+fi
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
 echo "bootkube.service complete"
