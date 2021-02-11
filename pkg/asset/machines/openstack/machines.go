@@ -41,7 +41,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 	mpool := pool.Platform.OpenStack
 	platform := config.Platform.OpenStack
-	trunkSupport, err := checkNetworkExtensionAvailability(platform.Cloud, "trunk")
+	trunkSupport, err := checkNetworkExtensionAvailability(platform.Cloud, "trunk", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -176,8 +176,11 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 	return &spec, nil
 }
 
-func checkNetworkExtensionAvailability(cloud, alias string) (bool, error) {
-	conn, err := clientconfig.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
+func checkNetworkExtensionAvailability(cloud, alias string, opts *clientconfig.ClientOpts) (bool, error) {
+	if opts == nil {
+		opts = openstackdefaults.DefaultClientOpts(cloud)
+	}
+	conn, err := clientconfig.NewServiceClient("network", opts)
 	if err != nil {
 		return false, err
 	}
