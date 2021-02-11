@@ -1,57 +1,57 @@
 {
-    "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.4-s390x/44.81.202004252140-0/s390x/",
-    "buildid": "44.81.202004252140-0",
+    "baseURI": "https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.4-s390x/44.82.202011122341-0/s390x/",
+    "buildid": "44.82.202011122341-0",
     "images": {
         "dasd": {
-            "path": "rhcos-44.81.202004252140-0-dasd.s390x.raw.gz",
-            "sha256": "b84b38fcd4040e02906ffb0d6f2c7d07f02e87cad80c1860b91a308422348364",
-            "size": 746433534,
-            "uncompressed-sha256": "00886fa8a5e2decf85763d5e41fe9c08248cc9f4dd6b635b581fee1b254a8432",
-            "uncompressed-size": 3388997632
+            "path": "rhcos-44.82.202011122341-0-dasd.s390x.raw.gz",
+            "sha256": "3b702fa7b9de37ae5cd3a56fb3490b37659488a1143dada8ae05bdc8b9e1bef3",
+            "size": 795897608,
+            "uncompressed-sha256": "890fc6a76482f0c7911967f3a2790722d4e37daaa4caece2d5219714a2cbc51d",
+            "uncompressed-size": 3555721216
         },
         "initramfs": {
-            "path": "rhcos-44.81.202004252140-0-installer-initramfs.s390x.img",
-            "sha256": "2e13f35a3a9e472675b6b915fc1084f8dd82f065813dcb89f05db71e7a12295d"
+            "path": "rhcos-44.82.202011122341-0-installer-initramfs.s390x.img",
+            "sha256": "fc5e45edabd75ba01c67d829d0cdf5e8e7abfd0c8112df084f4f520f5da4ba11"
         },
         "iso": {
-            "path": "rhcos-44.81.202004252140-0-installer.s390x.iso",
-            "sha256": "b57a42438feece1faade14ca5436c35d7e92b1018faa133278be33815d51efe9"
+            "path": "rhcos-44.82.202011122341-0-installer.s390x.iso",
+            "sha256": "80f76b8ca41af855409d167ef519c0371eac297978d83d3e51d5e3e53fd656b2"
         },
         "kernel": {
-            "path": "rhcos-44.81.202004252140-0-installer-kernel-s390x",
-            "sha256": "1ebb79ccaab68e9b0e18eee44e7fb92300ada7e4937ecc3c37052ae62db94c85"
+            "path": "rhcos-44.82.202011122341-0-installer-kernel-s390x",
+            "sha256": "54d180071776bb989163897079c2652b0c7106f9c41d7187de4d015204aae8c4"
         },
         "metal": {
-            "path": "rhcos-44.81.202004252140-0-metal.s390x.raw.gz",
-            "sha256": "68a5356ae34235ba950ee64851993e8cf2505edc8212663cf1c7ee92b52f96eb",
-            "size": 746461543,
-            "uncompressed-sha256": "4f83deb98fcf4afc1771c7d06ad432fa3fb8ab8f561a50b05e629fd87c628c1d",
-            "uncompressed-size": 3388997632
+            "path": "rhcos-44.82.202011122341-0-metal.s390x.raw.gz",
+            "sha256": "ed6d3aad0309c2e504ac3a6240010ba4702ae728e00e47d82dd1edd4af5418fa",
+            "size": 795900163,
+            "uncompressed-sha256": "a7e68c15dcb3c529fda947c40de91e128140460ed0172e75c8d8234a6525ea97",
+            "uncompressed-size": 3555721216
         },
         "openstack": {
-            "path": "rhcos-44.81.202004252140-0-openstack.s390x.qcow2.gz",
-            "sha256": "3018b631693dfc5d5ee91ba2d8eeec774ab801556996e39a68ae5bd79fc0657d",
-            "size": 745137519,
-            "uncompressed-sha256": "5eb06dfa9ab0d8064fd947afa393f0e0524c7d82a17f7353de4783591ab04fbc",
-            "uncompressed-size": 2088828928
+            "path": "rhcos-44.82.202011122341-0-openstack.s390x.qcow2.gz",
+            "sha256": "1d12600fa463b353695e52a974a2249cbfc79d7bfb75003e7a18dd46ab2f58c1",
+            "size": 794699273,
+            "uncompressed-sha256": "2b818bb5a708d96b00a6c71275ece422aef2dccdade8c7ebac36107c6023c680",
+            "uncompressed-size": 2215706624
         },
         "ostree": {
-            "path": "rhcos-44.81.202004252140-0-ostree.s390x.tar",
-            "sha256": "77b3f54fa88da11756994e72f2231452d801748acb452a549fff2c4975fc8e89",
-            "size": 686766080
+            "path": "rhcos-44.82.202011122341-0-ostree.s390x.tar",
+            "sha256": "e65097ab76edbcb2c9fe661beb6980116c406401ae526dc1697f241af4aa5166",
+            "size": 744847360
         },
         "qemu": {
-            "path": "rhcos-44.81.202004252140-0-qemu.s390x.qcow2.gz",
-            "sha256": "7a51f9858f1a9c7c2812c5c3516ad1aca3054192814b85143378778eab9db095",
-            "size": 746006738,
-            "uncompressed-sha256": "cf1f8da465ee970395757b488f1281446101adf2fbd5a3fdec859f706de43596",
-            "uncompressed-size": 2134376448
+            "path": "rhcos-44.82.202011122341-0-qemu.s390x.qcow2.gz",
+            "sha256": "9ad1bd3e6f1fb00ac612c17cf3f48cbdc44e126806424f01a1eee518778d3387",
+            "size": 795424066,
+            "uncompressed-sha256": "65ec07ee975923a15ceb019d885abcf9c35af99c42159837f94aa28990bf084f",
+            "uncompressed-size": 2263547904
         }
     },
     "oscontainer": {
-        "digest": "sha256:eb003f57224d25f57b3a1d7afe79fbf9d20817e823fca92c2d9457896ee912a4",
+        "digest": "sha256:6306c5834f09cd7ea3a4c5020e71602a4e604784edd6b92927daf8b36f2ce0f4",
         "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
     },
-    "ostree-commit": "0af5951ba6139e849321b4949750a42ff3997eb1da464e65c0cf251b24317ceb",
-    "ostree-version": "44.81.202004252140-0"
+    "ostree-commit": "c8b2aee4b094b86ccacb9a5f07a51da2a2429b598c8d59bef0c45eade281b308",
+    "ostree-version": "44.82.202011122341-0"
 }
