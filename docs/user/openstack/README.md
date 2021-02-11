@@ -227,14 +227,9 @@ In order to determine which cloud to use, the user can either specify it in the 
 
 ### Self Signed OpenStack CA certificates
 
-If your OpenStack cluster uses self signed CA certificates for endpoint authentication, you will need a few additional steps to run the installer. First, make sure that the host running the installer trusts your CA certificates. If you want more information on how to do this, refer to the [Red Hat OpenStack Plaform documentation](https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/13/html/director_installation_and_usage/appe-ssltls_certificate_configuration#Adding_the_Certificate_Authority_to_Clients). In the future, we plan to modify the installer to be able to trust certificates independently of the host OS.
+If your OpenStack cluster uses self signed CA certificates for endpoint authentication, add the `cacert` key to your `clouds.yaml`. Its value should be a valid path to your CA cert, and the file should be readable by the user who runs the installer. The path can be either absolute, or relative to the current working directory while running the installer.
 
-```sh
-sudo cp ca.crt.pem /etc/pki/ca-trust/source/anchors/
-sudo update-ca-trust extract
-```
-
-Next, you should add the `cacert` key to your `clouds.yaml`. Its value should be a valid path to your CA cert that does not require root privilege to read. The path can be either absolute, or relative to the current working directory while running the installer.
+For example:
 
 ```yaml
 clouds:
