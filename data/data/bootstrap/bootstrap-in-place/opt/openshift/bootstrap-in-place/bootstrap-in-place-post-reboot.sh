@@ -53,6 +53,11 @@ function clean {
   if [ -d "/etc/kubernetes/bootstrap-secrets" ]; then
      rm -rf /etc/kubernetes/bootstrap-*
   fi
+
+  rm -rf /usr/local/bin/installer-gather.sh
+  rm -rf /usr/local/bin/installer-masters-gather.sh
+  rm -rf /var/log/log-bundle-bootstrap.tar.gz
+
   systemctl disable bootstrap-in-place-post-reboot.service
 }
 
