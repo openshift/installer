@@ -1,4 +1,4 @@
-// Copyright 2016 CoreOS, Inc.
+// Copyright 2020 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,28 +15,37 @@
 package types
 
 import (
+	"net/url"
+
 	"github.com/coreos/ignition/v2/config/shared/errors"
+	"github.com/coreos/ignition/v2/config/util"
 
 	"github.com/coreos/vcontext/path"
 	"github.com/coreos/vcontext/report"
 )
 
-func (f File) Validate(c path.ContextPath) (r report.Report) {
-	r.Merge(f.Node.Validate(c))
-	r.AddOnError(c.Append("mode"), validateMode(f.Mode))
-	r.AddOnError(c.Append("overwrite"), f.validateOverwrite())
+func (t Tang) Key() string {
+	return t.URL
+}
+
+func (t Tang) Validate(c path.ContextPath) (r report.Report) {
+	r.AddOnError(c.Append("url"), validateTangURL(t.URL))
+	if util.NilOrEmpty(t.Thumbprint) {
+		r.AddOnError(c.Append("thumbprint"), errors.ErrTangThumbprintRequired)
+	}
 	return
 }
 
-func (f File) validateOverwrite() error {
-	if f.Overwrite != nil && *f.Overwrite && f.Contents.Source == nil {
-		return errors.ErrOverwriteAndNilSource
+func validateTangURL(s string) error {
+	u, err := url.Parse(s)
+	if err != nil {
+		return errors.ErrInvalidUrl
 	}
-	return nil
-}
 
-func (f FileEmbedded1) IgnoreDuplicates() map[string]struct{} {
-	return map[string]struct{}{
-		"Append": {},
+	switch u.Scheme {
+	case "http", "https":
+		return nil
+	default:
+		return errors.ErrInvalidScheme
 	}
 }
