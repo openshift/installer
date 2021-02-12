@@ -6,13 +6,13 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/ghodss/yaml"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	installconfigaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	kubeconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
@@ -81,12 +81,21 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
 	case awstypes.Name:
-		ssn := session.Must(session.NewSessionWithOptions(session.Options{
-			SharedConfigState: session.SharedConfigEnable,
-		}))
+		ssn, err := installConfig.AWS.Session(context.TODO())
+		if err != nil {
+			return err
+		}
 		creds, err := ssn.Config.Credentials.Get()
 		if err != nil {
 			return err
+		}
+		if !installconfigaws.IsStaticCredentials(creds) {
+			switch {
+			case installConfig.Config.CredentialsMode == "":
+				return errors.Errorf("AWS credentials provided by %s are not valid for default credentials mode", creds.ProviderName)
+			case installConfig.Config.CredentialsMode != types.ManualCredentialsMode:
+				return errors.Errorf("AWS credentials provided by %s are not valid for %s credentials mode", creds.ProviderName, installConfig.Config.CredentialsMode)
+			}
 		}
 		cloudCreds = cloudCredsSecretData{
 			AWS: &AwsCredsSecretData{

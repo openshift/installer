@@ -3,9 +3,11 @@ package aws
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
@@ -20,15 +22,11 @@ import (
 	"github.com/openshift/installer/pkg/version"
 )
 
-const (
-	sharedCredentialsProviderName = "SharedCredentialsProvider"
-	envProviderName               = "EnvProvider"
-)
-
 var (
 	onceLoggers = map[string]*sync.Once{
-		sharedCredentialsProviderName: new(sync.Once),
-		envProviderName:               new(sync.Once),
+		credentials.SharedCredsProviderName: new(sync.Once),
+		credentials.EnvProviderName:         new(sync.Once),
+		"credentialsFromSession":            new(sync.Once),
 	}
 )
 
@@ -60,39 +58,24 @@ func GetSession() (*session.Session, error) { return GetSessionWithOptions() }
 // and, if no creds are found, asks for them and stores them on disk in a config file
 func GetSessionWithOptions(optFuncs ...SessionOptions) (*session.Session, error) {
 	options := session.Options{
+		Config:            aws.Config{MaxRetries: aws.Int(0)},
 		SharedConfigState: session.SharedConfigEnable,
 	}
 	for _, optFunc := range optFuncs {
 		optFunc(&options)
 	}
 
-	ssn := session.Must(session.NewSessionWithOptions(options))
-
-	sharedCredentialsProvider := &credentials.SharedCredentialsProvider{}
-	ssn.Config.Credentials = credentials.NewChainCredentials([]credentials.Provider{
-		&credentials.EnvProvider{},
-		sharedCredentialsProvider,
-	})
-
-	creds, err := ssn.Config.Credentials.Get()
-	if err == nil {
-		switch creds.ProviderName {
-		case sharedCredentialsProviderName:
-			onceLoggers[sharedCredentialsProviderName].Do(func() {
-				logrus.Infof("Credentials loaded from the %q profile in file %q", sharedCredentialsProvider.Profile, sharedCredentialsProvider.Filename)
-			})
-		case envProviderName:
-			onceLoggers[envProviderName].Do(func() {
-				logrus.Info("Credentials loaded from default AWS environment variables")
-			})
-		}
-	}
-	if err == credentials.ErrNoValidProvidersFoundInChain {
-		err = getCredentials()
-		if err != nil {
+	_, err := getCredentials(options)
+	if err != nil && errCodeEquals(err, "NoCredentialProviders") {
+		if err = getUserCredentials(); err != nil {
 			return nil, err
 		}
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	ssn := session.Must(session.NewSessionWithOptions(options))
 	ssn = ssn.Copy(&aws.Config{MaxRetries: aws.Int(25)})
 	ssn.Handlers.Build.PushBackNamed(request.NamedHandler{
 		Name: "openshiftInstaller.OpenshiftInstallerUserAgentHandler",
@@ -101,7 +84,85 @@ func GetSessionWithOptions(optFuncs ...SessionOptions) (*session.Session, error)
 	return ssn, nil
 }
 
-func getCredentials() error {
+func getCredentials(options session.Options) (*credentials.Credentials, error) {
+	sharedCredentialsProvider := &credentials.SharedCredentialsProvider{}
+	providers := []credentials.Provider{
+		&credentials.EnvProvider{},
+		sharedCredentialsProvider,
+	}
+
+	creds := credentials.NewChainCredentials(providers)
+	credsValue, err := creds.Get()
+	if err != nil && errCodeEquals(err, "NoCredentialProviders") {
+		// getCredentialsFromSession returns credentials derived from a session. A
+		// session uses the AWS SDK Go chain of providers so may use a provider (e.g.,
+		// STS) which provides temporary credentials.
+		return getCredentialsFromSession(options)
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "error loading credentials for AWS Provider")
+	}
+
+	// log the source of credential provider.
+	switch credsValue.ProviderName {
+	case credentials.SharedCredsProviderName:
+		onceLoggers[credentials.SharedCredsProviderName].Do(func() {
+			logrus.Infof("Credentials loaded from the %q profile in file %q", sharedCredentialsProvider.Profile, sharedCredentialsProvider.Filename)
+		})
+	case credentials.EnvProviderName:
+		onceLoggers[credentials.EnvProviderName].Do(func() {
+			logrus.Info("Credentials loaded from default AWS environment variables")
+		})
+	}
+	return creds, nil
+}
+
+func getCredentialsFromSession(options session.Options) (*credentials.Credentials, error) {
+	sess, err := session.NewSessionWithOptions(options)
+	if err != nil {
+		if errCodeEquals(err, "NoCredentialProviders") {
+			return nil, errors.Wrap(err, "failed to get credentials from session")
+		}
+		return nil, errors.Wrap(err, "error creating AWS session")
+	}
+	creds := sess.Config.Credentials
+
+	credsValue, err := sess.Config.Credentials.Get()
+	if err != nil {
+		return nil, err
+	}
+	onceLoggers["credentialsFromSession"].Do(func() {
+		logrus.Infof("Credentials loaded from the AWS config using %q provider", credsValue.ProviderName)
+	})
+
+	return creds, nil
+}
+
+// IsStaticCredentials returns whether the credentials value provider are
+// static credentials safe for installer to transfer to cluster for use as-is.
+func IsStaticCredentials(credsValue credentials.Value) bool {
+	switch credsValue.ProviderName {
+	case credentials.EnvProviderName, credentials.StaticProviderName, credentials.SharedCredsProviderName:
+		return credsValue.SessionToken == ""
+	}
+	if strings.HasPrefix(credsValue.ProviderName, "SharedConfigCredentials") {
+		return credsValue.SessionToken == ""
+	}
+	return false
+}
+
+// errCodeEquals returns true if the error matches all these conditions:
+//  * err is of type awserr.Error
+//  * Error.Code() equals code
+func errCodeEquals(err error, code string) bool {
+	var awsErr awserr.Error
+	if errors.As(err, &awsErr) {
+		return awsErr.Code() == code
+	}
+	return false
+}
+
+func getUserCredentials() error {
 	var keyID string
 	err := survey.Ask([]*survey.Question{
 		{
