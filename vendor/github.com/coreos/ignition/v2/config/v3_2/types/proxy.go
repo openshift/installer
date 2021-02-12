@@ -1,4 +1,4 @@
-// Copyright 2016 CoreOS, Inc.
+// Copyright 2020 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,28 +15,35 @@
 package types
 
 import (
+	"net/url"
+
 	"github.com/coreos/ignition/v2/config/shared/errors"
 
 	"github.com/coreos/vcontext/path"
 	"github.com/coreos/vcontext/report"
 )
 
-func (f File) Validate(c path.ContextPath) (r report.Report) {
-	r.Merge(f.Node.Validate(c))
-	r.AddOnError(c.Append("mode"), validateMode(f.Mode))
-	r.AddOnError(c.Append("overwrite"), f.validateOverwrite())
+func (p Proxy) Validate(c path.ContextPath) (r report.Report) {
+	validateProxyURL(p.HTTPProxy, c.Append("httpProxy"), &r, true)
+	validateProxyURL(p.HTTPSProxy, c.Append("httpsProxy"), &r, false)
 	return
 }
 
-func (f File) validateOverwrite() error {
-	if f.Overwrite != nil && *f.Overwrite && f.Contents.Source == nil {
-		return errors.ErrOverwriteAndNilSource
+func validateProxyURL(s *string, p path.ContextPath, r *report.Report, httpOk bool) {
+	if s == nil {
+		return
 	}
-	return nil
-}
+	u, err := url.Parse(*s)
+	if err != nil {
+		r.AddOnError(p, errors.ErrInvalidUrl)
+		return
+	}
 
-func (f FileEmbedded1) IgnoreDuplicates() map[string]struct{} {
-	return map[string]struct{}{
-		"Append": {},
+	if u.Scheme != "https" && u.Scheme != "http" {
+		r.AddOnError(p, errors.ErrInvalidProxy)
+		return
+	}
+	if u.Scheme == "http" && !httpOk {
+		r.AddOnWarn(p, errors.ErrInsecureProxy)
 	}
 }

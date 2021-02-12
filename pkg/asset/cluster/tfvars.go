@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	igntypes "github.com/coreos/ignition/v2/config/v3_1/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	kubevirtprovider "github.com/openshift/cluster-api-provider-kubevirt/pkg/apis/kubevirtprovider/v1alpha1"
 	kubevirtutils "github.com/openshift/cluster-api-provider-kubevirt/pkg/utils"

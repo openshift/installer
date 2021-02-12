@@ -6,7 +6,7 @@ import (
 
 	"github.com/clarketm/json"
 	ignutil "github.com/coreos/ignition/v2/config/util"
-	igntypes "github.com/coreos/ignition/v2/config/v3_1/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/vincent-petithory/dataurl"
 	"k8s.io/apimachinery/pkg/runtime"
 
