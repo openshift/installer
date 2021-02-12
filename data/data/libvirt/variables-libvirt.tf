@@ -58,3 +58,9 @@ variable "libvirt_master_size" {
   description = "Size of the volume in bytes"
   default     = "17179869184"
 }
+
+variable "libvirt_dnsmasq_options" {
+  type        = map(string)
+  description = "Dnsmasq options to be applied to the libvirt network"
+  default     = {}
+}

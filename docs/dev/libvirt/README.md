@@ -345,6 +345,18 @@ server=/tt.testing/192.168.126.1
 address=/.apps.tt.testing/192.168.126.51
 ```
 
+- An alternate method to specify the dnsmasq option, if the system is using libvirt version 5.6.0+, is to specify the option in the install config under the platform's network section in the following way.
+
+```
+    platform:
+      libvirt:
+        network:
+          dnsmasqOptions:
+          - name: "address"
+            value: "/.apps.tt.testing/192.168.126.51"
+          if: tt0
+```
+
 - Make sure you restart the NetworkManager after change in `openshift.conf`:
 
 ```console

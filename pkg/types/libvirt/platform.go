@@ -33,4 +33,25 @@ type Network struct {
 	// +kubebuilder:default="tt0"
 	// +optional
 	IfName string `json:"if,omitempty"`
+
+	// DnsmasqOptions is the dnsmasq options to be used when installing on
+	// libvirt.
+	//
+	// +optional
+	DnsmasqOptions []DnsmasqOption `json:"dnsmasqOptions,omitempty"`
+}
+
+// DnsmasqOption contains the name and value of the option to configure in the
+// libvirt network.
+type DnsmasqOption struct {
+	// The dnsmasq option name. A full list of options and an explanation for
+	// each can be found in /etc/dnsmasq.conf
+	//
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	// The value that is being set for the particular option.
+	//
+	// +optional
+	Value string `json:"value,omitempty"`
 }

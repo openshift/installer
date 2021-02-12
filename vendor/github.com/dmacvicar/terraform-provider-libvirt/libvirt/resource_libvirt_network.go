@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/libvirt/libvirt-go"
-	"github.com/libvirt/libvirt-go-xml"
+	libvirtxml "github.com/libvirt/libvirt-go-xml"
 )
 
 const (
@@ -35,6 +35,9 @@ const (
 // "addresses" can contain (0 or 1) ipv4 and (0 or 1) ipv6 subnets
 // "mode" can be one of: "nat" (default), "isolated"
 //
+// Not all resources support update, for those that require ForceNew
+// check here: https://gitlab.com/search?utf8=%E2%9C%93&search=virNetworkDefUpdateNoSupport&group_id=130330&project_id=192693&search_code=true&repository_ref=master
+//
 func resourceLibvirtNetwork() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceLibvirtNetworkCreate,
@@ -54,7 +57,8 @@ func resourceLibvirtNetwork() *schema.Resource {
 			"domain": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: false,
+				// libvirt cannot update it so force new
+				ForceNew: true,
 			},
 			"mode": { // can be "none", "nat" (default), "route", "bridge"
 				Type:     schema.TypeString,
@@ -235,6 +239,38 @@ func resourceLibvirtNetwork() *schema.Resource {
 					},
 				},
 			},
+			"dnsmasq_options": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"options": {
+							Type:     schema.TypeList,
+							Optional: true,
+							ForceNew: false,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"option_name": {
+										Type: schema.TypeString,
+										// This should be required, but Terraform does validation too early
+										// and therefore doesn't recognize that this is set when assigning from
+										// a rendered dnsmasq_options template.
+										Optional: true,
+									},
+									"option_value": {
+										Type: schema.TypeString,
+										// This should be required, but Terraform does validation too early
+										// and therefore doesn't recognize that this is set when assigning from
+										// a rendered dnsmasq_options template.
+										Optional: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"xml": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -339,25 +375,6 @@ func resourceLibvirtNetworkUpdate(d *schema.ResourceData, meta interface{}) erro
 		d.SetPartial("bridge")
 	}
 
-	// detect changes in the domain
-	if d.HasChange("domain") {
-		networkDomain := getDomainFromResource(d)
-
-		data, err := xmlMarshallIndented(networkDomain)
-		if err != nil {
-			return fmt.Errorf("serialize update: %s", err)
-		}
-
-		log.Printf("[DEBUG] Updating domain for libvirt network '%s' with XML: %s", networkName, data)
-		err = network.Update(libvirt.NETWORK_UPDATE_COMMAND_MODIFY, libvirt.NETWORK_SECTION_DOMAIN, -1,
-			data, libvirt.NETWORK_UPDATE_AFFECT_LIVE|libvirt.NETWORK_UPDATE_AFFECT_CONFIG)
-		if err != nil {
-			return fmt.Errorf("Error when updating domain in %s: %s", networkName, err)
-		}
-
-		d.SetPartial("domain")
-	}
-
 	d.Partial(false)
 	return nil
 }
@@ -437,6 +454,15 @@ func resourceLibvirtNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("unsupported network mode '%s'", networkDef.Forward.Mode)
 	}
 
+	dnsmasqOption, err := getDNSMasqOptionFromResource(d)
+	if err != nil {
+		return err
+	}
+	dnsMasqOptions := libvirtxml.NetworkDnsmasqOptions{
+		Option: dnsmasqOption,
+	}
+	networkDef.DnsmasqOptions = &dnsMasqOptions
+
 	// parse any static routes
 	routes, err := getRoutesFromResource(d)
 	if err != nil {
@@ -462,14 +488,29 @@ func resourceLibvirtNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("Error applying XSLT stylesheet: %s", err)
 	}
 
-	log.Printf("[DEBUG] Creating libvirt network at %s: %s", connectURI, data)
-	network, err := virConn.NetworkDefineXML(data)
+	network, err := func() (*libvirt.Network, error) {
+		// define only one network at a time
+		// see https://gitlab.com/libvirt/libvirt/-/issues/78
+		meta.(*Client).networkMutex.Lock()
+		defer meta.(*Client).networkMutex.Unlock()
+
+		log.Printf("[DEBUG] Creating libvirt network at %s: %s", connectURI, data)
+		return virConn.NetworkDefineXML(data)
+	}()
+
 	if err != nil {
 		return fmt.Errorf("Error defining libvirt network: %s - %s", err, data)
 	}
+
 	err = network.Create()
 	if err != nil {
-		return fmt.Errorf("Error clearing libvirt network: %s", err)
+		// in some cases, the network creation fails but an artifact is created
+		// an 'broken network". Remove the network in case of failure
+		// see https://github.com/dmacvicar/terraform-provider-libvirt/issues/739
+		// don't handle the error for destroying
+		network.Destroy()
+		network.Undefine()
+		return fmt.Errorf("Error creating libvirt network: %s", err)
 	}
 	defer network.Free()
 
@@ -633,22 +674,24 @@ func resourceLibvirtNetworkDelete(d *schema.ResourceData, meta interface{}) erro
 	if err != nil {
 		return fmt.Errorf("Couldn't determine if network is active: %s", err)
 	}
+	// network can be in 2 states, handles this case by case
+
+	// in case network is inactive just undefine it
 	if !active {
-		// we have to restart an inactive network, otherwise it won't be
-		// possible to remove it.
-		if err := network.Create(); err != nil {
-			return fmt.Errorf("Cannot restart an inactive network %s", err)
+		if err := network.Undefine(); err != nil {
+			return fmt.Errorf("Couldn't undefine libvirt network: %s", err)
 		}
 	}
+	// network is active, so we need to destroy it and undefine it
+	if active {
+		if err := network.Destroy(); err != nil {
+			return fmt.Errorf("When destroying libvirt network: %s", err)
+		}
 
-	if err := network.Destroy(); err != nil {
-		return fmt.Errorf("When destroying libvirt network: %s", err)
+		if err := network.Undefine(); err != nil {
+			return fmt.Errorf("Couldn't undefine libvirt network: %s", err)
+		}
 	}
-
-	if err := network.Undefine(); err != nil {
-		return fmt.Errorf("Couldn't undefine libvirt network: %s", err)
-	}
-
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"ACTIVE"},
 		Target:     []string{"NOT-EXISTS"},

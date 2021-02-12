@@ -18,29 +18,42 @@ import (
 )
 
 type config struct {
-	URI             string   `json:"libvirt_uri,omitempty"`
-	Image           string   `json:"os_image,omitempty"`
-	IfName          string   `json:"libvirt_network_if"`
-	MasterIPs       []string `json:"libvirt_master_ips,omitempty"`
-	BootstrapIP     string   `json:"libvirt_bootstrap_ip,omitempty"`
-	MasterMemory    string   `json:"libvirt_master_memory,omitempty"`
-	MasterVcpu      string   `json:"libvirt_master_vcpu,omitempty"`
-	BootstrapMemory int      `json:"libvirt_bootstrap_memory,omitempty"`
-	MasterDiskSize  string   `json:"libvirt_master_size,omitempty"`
+	URI             string            `json:"libvirt_uri,omitempty"`
+	Image           string            `json:"os_image,omitempty"`
+	IfName          string            `json:"libvirt_network_if"`
+	MasterIPs       []string          `json:"libvirt_master_ips,omitempty"`
+	BootstrapIP     string            `json:"libvirt_bootstrap_ip,omitempty"`
+	MasterMemory    string            `json:"libvirt_master_memory,omitempty"`
+	MasterVcpu      string            `json:"libvirt_master_vcpu,omitempty"`
+	BootstrapMemory int               `json:"libvirt_bootstrap_memory,omitempty"`
+	MasterDiskSize  string            `json:"libvirt_master_size,omitempty"`
+	DnsmasqOptions  map[string]string `json:"libvirt_dnsmasq_options,omitempty"`
+}
+
+// TFVarsSources contains the parameters to be converted into Terraform variables
+type TFVarsSources struct {
+	MasterConfig   *v1beta1.LibvirtMachineProviderConfig
+	OsImage        string
+	MachineCIDR    *net.IPNet
+	Bridge         string
+	MasterCount    int
+	Architecture   types.Architecture
+	DnsmasqOptions map[string]string
 }
 
 // TFVars generates libvirt-specific Terraform variables.
-func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, machineCIDR *net.IPNet, bridge string, masterCount int, architecture types.Architecture) ([]byte, error) {
-	bootstrapIP, err := cidr.Host(machineCIDR, 10)
+func TFVars(sources TFVarsSources) ([]byte, error) {
+	bootstrapIP, err := cidr.Host(sources.MachineCIDR, 10)
 	if err != nil {
 		return nil, errors.Errorf("failed to generate bootstrap IP: %v", err)
 	}
 
-	masterIPs, err := generateIPs("master", machineCIDR, masterCount, 11)
+	masterIPs, err := generateIPs("master", sources.MachineCIDR, sources.MasterCount, 11)
 	if err != nil {
 		return nil, err
 	}
 
+	osImage := sources.OsImage
 	url, err := url.Parse(osImage)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse image url")
@@ -59,17 +72,18 @@ func TFVars(masterConfig *v1beta1.LibvirtMachineProviderConfig, osImage string, 
 	}
 
 	cfg := &config{
-		URI:          masterConfig.URI,
-		Image:        osImage,
-		IfName:       bridge,
-		BootstrapIP:  bootstrapIP.String(),
-		MasterIPs:    masterIPs,
-		MasterMemory: strconv.Itoa(masterConfig.DomainMemory),
-		MasterVcpu:   strconv.Itoa(masterConfig.DomainVcpu),
+		URI:            sources.MasterConfig.URI,
+		Image:          osImage,
+		IfName:         sources.Bridge,
+		BootstrapIP:    bootstrapIP.String(),
+		MasterIPs:      masterIPs,
+		MasterMemory:   strconv.Itoa(sources.MasterConfig.DomainMemory),
+		MasterVcpu:     strconv.Itoa(sources.MasterConfig.DomainVcpu),
+		DnsmasqOptions: sources.DnsmasqOptions,
 	}
 
-	if masterConfig.Volume.VolumeSize != nil {
-		cfg.MasterDiskSize = masterConfig.Volume.VolumeSize.String()
+	if sources.MasterConfig.Volume.VolumeSize != nil {
+		cfg.MasterDiskSize = sources.MasterConfig.Volume.VolumeSize.String()
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

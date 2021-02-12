@@ -366,13 +366,21 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		// convert options list to a map which can be consumed by terraform
+		dnsmasqoptions := make(map[string]string)
+		for _, option := range installConfig.Config.Platform.Libvirt.Network.DnsmasqOptions {
+			dnsmasqoptions[option.Name] = option.Value
+		}
 		data, err = libvirttfvars.TFVars(
-			masters[0].Spec.ProviderSpec.Value.Object.(*libvirtprovider.LibvirtMachineProviderConfig),
-			string(*rhcosImage),
-			&installConfig.Config.Networking.MachineNetwork[0].CIDR.IPNet,
-			installConfig.Config.Platform.Libvirt.Network.IfName,
-			masterCount,
-			installConfig.Config.ControlPlane.Architecture,
+			libvirttfvars.TFVarsSources{
+				MasterConfig:   masters[0].Spec.ProviderSpec.Value.Object.(*libvirtprovider.LibvirtMachineProviderConfig),
+				OsImage:        string(*rhcosImage),
+				MachineCIDR:    &installConfig.Config.Networking.MachineNetwork[0].CIDR.IPNet,
+				Bridge:         installConfig.Config.Platform.Libvirt.Network.IfName,
+				MasterCount:    masterCount,
+				Architecture:   installConfig.Config.ControlPlane.Architecture,
+				DnsmasqOptions: dnsmasqoptions,
+			},
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

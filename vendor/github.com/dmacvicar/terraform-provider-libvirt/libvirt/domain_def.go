@@ -62,6 +62,9 @@ func newDomainDef() libvirtxml.Domain {
 			},
 			Channels: []libvirtxml.DomainChannel{
 				{
+					Source: &libvirtxml.DomainChardevSource{
+						UNIX: &libvirtxml.DomainChardevSourceUNIX{},
+					},
 					Target: &libvirtxml.DomainChannelTarget{
 						VirtIO: &libvirtxml.DomainChannelTargetVirtIO{
 							Name: "org.qemu.guest_agent.0",
@@ -112,6 +115,12 @@ func newDomainDefForConnection(virConn *libvirt.Connect, rd *schema.ResourceData
 			return d, err
 		}
 		d.OS.Type.Arch = arch
+	}
+
+	if d.OS.Type.Arch == "aarch64" {
+		// for aarch64 speciffying this will automatically select the firmware and NVRAM file
+		// reference: https://libvirt.org/formatdomain.html#bios-bootloader
+		d.OS.Firmware = "efi"
 	}
 
 	caps, err := getHostCapabilities(virConn)
