@@ -1,0 +1,13 @@
+[Unit]
+Description=Install to disk
+Requires=bootkube.service
+Wants=bootkube.service
+After=bootkube.service
+ConditionPathExists=!/opt/openshift/.install-to-disk.done
+
+[Service]
+WorkingDirectory=/opt/openshift
+ExecStart=/usr/local/bin/install-to-disk.sh
+
+Restart=on-failure
+RestartSec=5s

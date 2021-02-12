@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euoE pipefail ## -E option will cause functions to inherit trap
+
+# This script is executed by install-to-disk service when installing single node with bootstrap in place
+
+echo "Waiting for /opt/openshift/.bootkube.done"
+until [ -f /opt/openshift/.bootkube.done ]; do
+  sleep 5
+done
+
+if [ ! -f coreos-installer.done ]; then
+  # Write image + ignition to disk
+  echo "Executing coreos-installer with the following options: install -i /opt/openshift/master.ign {{.BootstrapInPlace.InstallationDisk}}"
+  coreos-installer install -i /opt/openshift/master.ign {{.BootstrapInPlace.InstallationDisk}}
++
+  touch coreos-installer.done
+fi
+
+echo "Going to reboot"
+shutdown -r +1 "Bootstrap completed, server is going to reboot."
+touch /opt/openshift/.install-to-disk.done
+echo "Done"

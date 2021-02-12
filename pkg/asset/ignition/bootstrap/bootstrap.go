@@ -59,6 +59,7 @@ type bootstrapTemplateData struct {
 	Registries            []sysregistriesv2.Registry
 	BootImage             string
 	PlatformData          platformTemplateData
+	BootstrapInPlace      *types.BootstrapInPlace
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -70,8 +71,9 @@ type platformTemplateData struct {
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
 type Bootstrap struct {
-	Config *igntypes.Config
-	File   *asset.File
+	Config           *igntypes.Config
+	File             *asset.File
+	bootstrapInPlace bool
 }
 
 var _ asset.WritableAsset = (*Bootstrap)(nil)
@@ -206,8 +208,9 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to Marshal Ignition config")
 	}
+	fileName := bootstrapIgnFilename
 	a.File = &asset.File{
-		Filename: bootstrapIgnFilename,
+		Filename: fileName,
 		Data:     data,
 	}
 
@@ -266,7 +269,10 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		logrus.Warnf("Found override for Cluster Profile: %q", cp)
 		clusterProfile = cp
 	}
-
+	var bootstrapInPlaceConfig *types.BootstrapInPlace
+	if a.bootstrapInPlace {
+		bootstrapInPlaceConfig = installConfig.BootstrapInPlace
+	}
 	return &bootstrapTemplateData{
 		AdditionalTrustBundle: installConfig.AdditionalTrustBundle,
 		FIPS:                  installConfig.FIPS,
@@ -278,6 +284,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 		BootImage:             string(*rhcosImage),
 		PlatformData:          platformData,
 		ClusterProfile:        clusterProfile,
+		BootstrapInPlace:      bootstrapInPlaceConfig,
 	}, nil
 }
 

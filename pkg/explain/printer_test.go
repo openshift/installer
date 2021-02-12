@@ -28,6 +28,9 @@ func Test_PrintFields(t *testing.T) {
     baseDomain <string> -required-
       BaseDomain is the base domain to which the cluster should belong.
 
+    bootstrapInPlace <object>
+      BootstrapInPlace is the configuration for installing a single node with bootstrap in place installation.
+
     compute <[]object>
       Compute is the configuration for the machines that comprise the compute nodes.
       MachinePool is a pool of machines to be installed.
