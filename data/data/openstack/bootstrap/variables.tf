@@ -78,3 +78,8 @@ variable "zone" {
   type = string
   description = "Availability Zone to schedule the bootstrap node onto"
 }
+
+variable "additional_network_ids" {
+  type = list(string)
+  description = "IDs of additional networks for the bootstrap node."
+}

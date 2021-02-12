@@ -58,6 +58,14 @@ resource "openstack_compute_instance_v2" "bootstrap" {
     port = openstack_networking_port_v2.bootstrap_port.id
   }
 
+  dynamic network {
+    for_each = var.additional_network_ids
+
+    content {
+      uuid = network.value
+    }
+  }
+
   tags = ["openshiftClusterID=${var.cluster_id}"]
 
   metadata = {
