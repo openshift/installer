@@ -100,6 +100,7 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 	scheduler := &Scheduler{}
 	imageContentSourcePolicy := &ImageContentSourcePolicy{}
 	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy)
+	installConfig.Config.CGroupsV2 = true
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
