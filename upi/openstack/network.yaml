@@ -111,9 +111,7 @@
   - name: 'Set external router tag'
     command:
       cmd: "openstack router set --tag {{ cluster_id_tag }} {{ os_router }}"
-    when:
-    - os_networking_type == "Kuryr"
-    - os_external_network is defined and os_external_network|length>0
+    when: os_external_network is defined and os_external_network|length>0
 
   - name: 'Create the API port'
     os_port:

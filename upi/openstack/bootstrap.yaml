@@ -39,3 +39,4 @@
       auto_ip: "{{ bootstrap_auto_ip | default(omit) }}"
       nics:
       - port-name: "{{ os_port_bootstrap }}"
+      meta: "{{ cluster_id_tag }}"

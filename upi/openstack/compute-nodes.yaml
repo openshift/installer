@@ -50,4 +50,5 @@
       userdata: "{{ lookup('file', 'worker.ign') | string }}"
       nics:
       - port-name: "{{ os_port_worker }}-{{ item.0 }}"
+      meta: "{{ cluster_id_tag }}"
     with_indexed_items: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
