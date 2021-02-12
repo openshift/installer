@@ -35,19 +35,29 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
 }
 
+<<<<<<< HEAD
 // GetNetwork mocks base method
 func (m *MockAPI) GetNetwork(ctx context.Context, network, project string) (*compute.Network, error) {
+=======
+// GetEnabledServices mocks base method.
+func (m *MockAPI) GetEnabledServices(ctx context.Context, project string) ([]string, error) {
+>>>>>>> 60db542c8 (initial pass to enable cgroupsv2)
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetNetwork", ctx, network, project)
-	ret0, _ := ret[0].(*compute.Network)
+	ret := m.ctrl.Call(m, "GetEnabledServices", ctx, project)
+	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
+<<<<<<< HEAD
 // GetNetwork indicates an expected call of GetNetwork
 func (mr *MockAPIMockRecorder) GetNetwork(ctx, network, project interface{}) *gomock.Call {
+=======
+// GetEnabledServices indicates an expected call of GetEnabledServices.
+func (mr *MockAPIMockRecorder) GetEnabledServices(ctx, project interface{}) *gomock.Call {
+>>>>>>> 60db542c8 (initial pass to enable cgroupsv2)
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetwork", reflect.TypeOf((*MockAPI)(nil).GetNetwork), ctx, network, project)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnabledServices", reflect.TypeOf((*MockAPI)(nil).GetEnabledServices), ctx, project)
 }
 
 // GetMachineType mocks base method
@@ -65,53 +75,38 @@ func (mr *MockAPIMockRecorder) GetMachineType(ctx, project, zone, machineType in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineType", reflect.TypeOf((*MockAPI)(nil).GetMachineType), ctx, project, zone, machineType)
 }
 
+<<<<<<< HEAD
 // GetPublicDomains mocks base method
 func (m *MockAPI) GetPublicDomains(ctx context.Context, project string) ([]string, error) {
+=======
+// GetNetwork mocks base method.
+func (m *MockAPI) GetNetwork(ctx context.Context, network, project string) (*compute.Network, error) {
+>>>>>>> 60db542c8 (initial pass to enable cgroupsv2)
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPublicDomains", ctx, project)
-	ret0, _ := ret[0].([]string)
+	ret := m.ctrl.Call(m, "GetNetwork", ctx, network, project)
+	ret0, _ := ret[0].(*compute.Network)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
+<<<<<<< HEAD
 // GetPublicDomains indicates an expected call of GetPublicDomains
 func (mr *MockAPIMockRecorder) GetPublicDomains(ctx, project interface{}) *gomock.Call {
+=======
+// GetNetwork indicates an expected call of GetNetwork.
+func (mr *MockAPIMockRecorder) GetNetwork(ctx, network, project interface{}) *gomock.Call {
+>>>>>>> 60db542c8 (initial pass to enable cgroupsv2)
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicDomains", reflect.TypeOf((*MockAPI)(nil).GetPublicDomains), ctx, project)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetwork", reflect.TypeOf((*MockAPI)(nil).GetNetwork), ctx, network, project)
 }
 
+<<<<<<< HEAD
 // GetPublicDNSZone mocks base method
 func (m *MockAPI) GetPublicDNSZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPublicDNSZone", ctx, project, baseDomain)
-	ret0, _ := ret[0].(*dns.ManagedZone)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetPublicDNSZone indicates an expected call of GetPublicDNSZone
-func (mr *MockAPIMockRecorder) GetPublicDNSZone(ctx, project, baseDomain interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicDNSZone", reflect.TypeOf((*MockAPI)(nil).GetPublicDNSZone), ctx, project, baseDomain)
-}
-
-// GetSubnetworks mocks base method
-func (m *MockAPI) GetSubnetworks(ctx context.Context, network, project, region string) ([]*compute.Subnetwork, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSubnetworks", ctx, network, project, region)
-	ret0, _ := ret[0].([]*compute.Subnetwork)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetSubnetworks indicates an expected call of GetSubnetworks
-func (mr *MockAPIMockRecorder) GetSubnetworks(ctx, network, project, region interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnetworks", reflect.TypeOf((*MockAPI)(nil).GetSubnetworks), ctx, network, project, region)
-}
-
-// GetProjects mocks base method
+=======
+// GetProjects mocks base method.
 func (m *MockAPI) GetProjects(ctx context.Context) (map[string]string, error) {
+>>>>>>> 60db542c8 (initial pass to enable cgroupsv2)
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetProjects", ctx)
 	ret0, _ := ret[0].(map[string]string)
@@ -119,10 +114,65 @@ func (m *MockAPI) GetProjects(ctx context.Context) (map[string]string, error) {
 	return ret0, ret1
 }
 
-// GetProjects indicates an expected call of GetProjects
+<<<<<<< HEAD
+// GetPublicDNSZone indicates an expected call of GetPublicDNSZone
+func (mr *MockAPIMockRecorder) GetPublicDNSZone(ctx, project, baseDomain interface{}) *gomock.Call {
+=======
+// GetProjects indicates an expected call of GetProjects.
 func (mr *MockAPIMockRecorder) GetProjects(ctx interface{}) *gomock.Call {
+>>>>>>> 60db542c8 (initial pass to enable cgroupsv2)
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjects", reflect.TypeOf((*MockAPI)(nil).GetProjects), ctx)
+}
+
+<<<<<<< HEAD
+// GetSubnetworks mocks base method
+func (m *MockAPI) GetSubnetworks(ctx context.Context, network, project, region string) ([]*compute.Subnetwork, error) {
+=======
+// GetPublicDNSZone mocks base method.
+func (m *MockAPI) GetPublicDNSZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error) {
+>>>>>>> 60db542c8 (initial pass to enable cgroupsv2)
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPublicDNSZone", ctx, project, baseDomain)
+	ret0, _ := ret[0].(*dns.ManagedZone)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+<<<<<<< HEAD
+// GetSubnetworks indicates an expected call of GetSubnetworks
+func (mr *MockAPIMockRecorder) GetSubnetworks(ctx, network, project, region interface{}) *gomock.Call {
+=======
+// GetPublicDNSZone indicates an expected call of GetPublicDNSZone.
+func (mr *MockAPIMockRecorder) GetPublicDNSZone(ctx, project, baseDomain interface{}) *gomock.Call {
+>>>>>>> 60db542c8 (initial pass to enable cgroupsv2)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicDNSZone", reflect.TypeOf((*MockAPI)(nil).GetPublicDNSZone), ctx, project, baseDomain)
+}
+
+<<<<<<< HEAD
+// GetProjects mocks base method
+func (m *MockAPI) GetProjects(ctx context.Context) (map[string]string, error) {
+=======
+// GetPublicDomains mocks base method.
+func (m *MockAPI) GetPublicDomains(ctx context.Context, project string) ([]string, error) {
+>>>>>>> 60db542c8 (initial pass to enable cgroupsv2)
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPublicDomains", ctx, project)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+<<<<<<< HEAD
+// GetProjects indicates an expected call of GetProjects
+func (mr *MockAPIMockRecorder) GetProjects(ctx interface{}) *gomock.Call {
+=======
+// GetPublicDomains indicates an expected call of GetPublicDomains.
+func (mr *MockAPIMockRecorder) GetPublicDomains(ctx, project interface{}) *gomock.Call {
+>>>>>>> 60db542c8 (initial pass to enable cgroupsv2)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicDomains", reflect.TypeOf((*MockAPI)(nil).GetPublicDomains), ctx, project)
 }
 
 // GetRecordSets mocks base method
@@ -140,8 +190,38 @@ func (mr *MockAPIMockRecorder) GetRecordSets(ctx, project, zone interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecordSets", reflect.TypeOf((*MockAPI)(nil).GetRecordSets), ctx, project, zone)
 }
 
+<<<<<<< HEAD
 // GetZones mocks base method
 func (m *MockAPI) GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error) {
+=======
+// GetSubnetworks mocks base method.
+func (m *MockAPI) GetSubnetworks(ctx context.Context, network, project, region string) ([]*compute.Subnetwork, error) {
+>>>>>>> 60db542c8 (initial pass to enable cgroupsv2)
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSubnetworks", ctx, network, project, region)
+	ret0, _ := ret[0].([]*compute.Subnetwork)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+<<<<<<< HEAD
+// GetZones indicates an expected call of GetZones
+func (mr *MockAPIMockRecorder) GetZones(ctx, project, filter interface{}) *gomock.Call {
+=======
+// GetSubnetworks indicates an expected call of GetSubnetworks.
+func (mr *MockAPIMockRecorder) GetSubnetworks(ctx, network, project, region interface{}) *gomock.Call {
+>>>>>>> 60db542c8 (initial pass to enable cgroupsv2)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnetworks", reflect.TypeOf((*MockAPI)(nil).GetSubnetworks), ctx, network, project, region)
+}
+
+<<<<<<< HEAD
+// GetEnabledServices mocks base method
+func (m *MockAPI) GetEnabledServices(ctx context.Context, project string) ([]string, error) {
+=======
+// GetZones mocks base method.
+func (m *MockAPI) GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error) {
+>>>>>>> 60db542c8 (initial pass to enable cgroupsv2)
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetZones", ctx, project, filter)
 	ret0, _ := ret[0].([]*compute.Zone)
@@ -149,23 +229,13 @@ func (m *MockAPI) GetZones(ctx context.Context, project, filter string) ([]*comp
 	return ret0, ret1
 }
 
-// GetZones indicates an expected call of GetZones
-func (mr *MockAPIMockRecorder) GetZones(ctx, project, filter interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetZones", reflect.TypeOf((*MockAPI)(nil).GetZones), ctx, project, filter)
-}
-
-// GetEnabledServices mocks base method
-func (m *MockAPI) GetEnabledServices(ctx context.Context, project string) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEnabledServices", ctx, project)
-	ret0, _ := ret[0].([]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
+<<<<<<< HEAD
 // GetEnabledServices indicates an expected call of GetEnabledServices
 func (mr *MockAPIMockRecorder) GetEnabledServices(ctx, project interface{}) *gomock.Call {
+=======
+// GetZones indicates an expected call of GetZones.
+func (mr *MockAPIMockRecorder) GetZones(ctx, project, filter interface{}) *gomock.Call {
+>>>>>>> 60db542c8 (initial pass to enable cgroupsv2)
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnabledServices", reflect.TypeOf((*MockAPI)(nil).GetEnabledServices), ctx, project)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetZones", reflect.TypeOf((*MockAPI)(nil).GetZones), ctx, project, filter)
 }

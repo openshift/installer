@@ -145,6 +145,9 @@ type InstallConfig struct {
 	// BootstrapInPlace is the configuration for installing a single node
 	// with bootstrap in place installation.
 	BootstrapInPlace *BootstrapInPlace `json:"bootstrapInPlace,omitempty"`
+
+	// CGroupsV2 enable cgroups within the cluster
+	CGroupsV2 bool `json:"cgroupsV2,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.

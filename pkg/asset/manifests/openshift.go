@@ -66,6 +66,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&openshift.RoleCloudCredsSecretReader{},
 		&openshift.PrivateClusterOutbound{},
 		&openshift.BaremetalConfig{},
+		&openshift.MachineConfigCgroupsv2{},
 		new(rhcos.Image),
 	}
 }
@@ -214,6 +215,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	kubeadminPasswordSecret := &openshift.KubeadminPasswordSecret{}
 	roleCloudCredsSecretReader := &openshift.RoleCloudCredsSecretReader{}
 	baremetalConfig := &openshift.BaremetalConfig{}
+	mcoCgroupsV2 := &openshift.MachineConfigCgroupsv2{}
 	rhcosImage := new(rhcos.Image)
 
 	dependencies.Get(
@@ -221,7 +223,8 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		kubeadminPasswordSecret,
 		roleCloudCredsSecretReader,
 		baremetalConfig,
-		rhcosImage)
+		rhcosImage,
+		mcoCgroupsV2)
 
 	assetData := map[string][]byte{
 		"99_kubeadmin-password-secret.yaml": applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
@@ -247,6 +250,11 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		privateClusterOutbound := &openshift.PrivateClusterOutbound{}
 		dependencies.Get(privateClusterOutbound)
 		assetData["99_private-cluster-outbound-service.yaml"] = applyTemplateData(privateClusterOutbound.Files()[0].Data, templateData)
+	}
+
+	if installConfig.Config.CGroupsV2 {
+		assetData["99-openshift-machineconfig-workers-kargs.yaml"] = applyTemplateData(mcoCgroupsV2.Files()[0].Data, templateData)
+		assetData["99-openshift-machineconfig-masters-kargs.yaml"] = applyTemplateData(mcoCgroupsV2.Files()[1].Data, templateData)
 	}
 
 	o.FileList = []*asset.File{}

@@ -44,6 +44,9 @@ spec:
             required:
             - installationDisk
             type: object
+          cgroupsV2:
+            description: CGroupsV2 enable cgroups within the cluster
+            type: boolean
           compute:
             description: Compute is the configuration for the machines that comprise
               the compute nodes.

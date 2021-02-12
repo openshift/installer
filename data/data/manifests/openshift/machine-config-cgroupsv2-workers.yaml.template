@@ -1,0 +1,11 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: worker
+  name: 99-openshift-cgroupsv2-worker-kargs
+spec:
+  kernelArguments:
+    - systemd.unified_cgroup_hierarchy=1
+    - cgroup_no_v1="all"
+    - psi=1
