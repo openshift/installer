@@ -1,119 +1,61 @@
 package bootstrap
 
 import (
-	"encoding/json"
-	"os"
-
-	igntypes "github.com/coreos/ignition/v2/config/v3_1/types"
-	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/ignition"
-	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
-	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/manifests"
-	"github.com/openshift/installer/pkg/asset/releaseimage"
-	"github.com/openshift/installer/pkg/asset/rhcos"
-	"github.com/openshift/installer/pkg/asset/tls"
-	"github.com/openshift/installer/pkg/types"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/types"
 )
 
 const (
 	singleNodeBootstrapInPlaceIgnFilename = "bootstrap-in-place-for-live-iso.ign"
 )
 
+var (
+	bootstrapInPlaceEnabledServices = []string{
+		"install-to-disk.service",
+	}
+)
+
 // SingleNodeBootstrapInPlace is an asset that generates the ignition config for single node OpenShift.
 type SingleNodeBootstrapInPlace struct {
-	Bootstrap *Bootstrap
-	File      *asset.File
-	Config    *igntypes.Config
+	Common
 }
 
 var _ asset.Asset = (*SingleNodeBootstrapInPlace)(nil)
-
-// Dependencies returns no dependencies.
-func (a *SingleNodeBootstrapInPlace) Dependencies() []asset.Asset {
-	a.Bootstrap.bootstrapInPlace = true
-	return a.Bootstrap.Dependencies()
-}
 
 // Name returns the human-friendly name of the asset.
 func (a *SingleNodeBootstrapInPlace) Name() string {
 	return "Single node bootstrap In Place Ignition Config"
 }
 
-// Files returns the password file.
-func (a *SingleNodeBootstrapInPlace) Files() []*asset.File {
-	if a.File != nil {
-		return []*asset.File{a.File}
-	}
-	return []*asset.File{}
-}
-
 // Generate generates the ignition config for the Bootstrap asset.
 func (a *SingleNodeBootstrapInPlace) Generate(dependencies asset.Parents) error {
-	a.Bootstrap.bootstrapInPlace = true
 	installConfig := &installconfig.InstallConfig{}
-	proxy := &manifests.Proxy{}
-	releaseImage := &releaseimage.Image{}
-	rhcosImage := new(rhcos.Image)
-	bootstrapSSHKeyPair := &tls.BootstrapSSHKeyPair{}
-	ironicCreds := &baremetal.IronicCreds{}
-	dependencies.Get(installConfig, proxy, releaseImage, rhcosImage, bootstrapSSHKeyPair, ironicCreds)
+	dependencies.Get(installConfig)
 	if err := verifyBootstrapInPlace(installConfig.Config); err != nil {
 		return err
 	}
-	templateData, err := a.Bootstrap.getTemplateData(installConfig.Config, releaseImage.PullSpec, installConfig.Config.ImageContentSources, proxy.Config, rhcosImage, ironicCreds)
-
-	if err = a.Bootstrap.Generate(dependencies); err != nil {
+	templateData := a.getTemplateData(dependencies, true)
+	if err := a.generateConfig(dependencies, templateData); err != nil {
 		return err
 	}
-	err = a.Bootstrap.addStorageFiles("/", "bootstrap/bootstrap-in-place/files", templateData)
-	if err != nil {
+	if err := a.addStorageFiles("/", "bootstrap/bootstrap-in-place/files", templateData); err != nil {
 		return err
 	}
-	err = a.Bootstrap.addSystemdUnits("bootstrap/bootstrap-in-place/systemd/units", templateData)
-	if err != nil {
+	if err := a.addSystemdUnits("bootstrap/bootstrap-in-place/systemd/units", templateData, bootstrapInPlaceEnabledServices); err != nil {
 		return err
 	}
-
-	a.Config = a.Bootstrap.Config
-	data, err := ignition.Marshal(a.Config)
-	if err != nil {
-		return errors.Wrap(err, "failed to Marshal Ignition config")
-	}
-
-	a.File = &asset.File{
-		Filename: singleNodeBootstrapInPlaceIgnFilename,
-		Data:     data,
+	if err := a.Common.generateFile(singleNodeBootstrapInPlaceIgnFilename); err != nil {
+		return err
 	}
 	return nil
 }
 
 // Load returns the bootstrap-in-place ignition from disk.
 func (a *SingleNodeBootstrapInPlace) Load(f asset.FileFetcher) (found bool, err error) {
-	file, err := f.FetchByName(singleNodeBootstrapInPlaceIgnFilename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-
-	config := &igntypes.Config{}
-	if err := json.Unmarshal(file.Data, config); err != nil {
-		return false, errors.Wrapf(err, "failed to unmarshal %s", bootstrapIgnFilename)
-	}
-
-	a.File, a.Config = file, config
-	bootstrapFile := &asset.File{
-		Filename: bootstrapIgnFilename,
-		Data:     a.File.Data,
-	}
-	a.Bootstrap = &Bootstrap{Config: config, File: bootstrapFile}
-	a.Bootstrap.bootstrapInPlace = true
-	warnIfCertificatesExpired(a.Config)
-	return true, nil
+	return a.load(f, singleNodeBootstrapInPlaceIgnFilename)
 }
 
 // verifyBootstrapInPlace validate the number of control plane replica is one and that installation disk is set
