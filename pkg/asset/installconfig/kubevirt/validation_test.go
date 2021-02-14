@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/types/kubevirt"
 	authv1 "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 var (
@@ -34,6 +35,10 @@ var (
 	invalidMachineCIDR    = "10.0.0.0/16"
 	namespaceStruct       = &corev1.Namespace{}
 	kubeMacPoolLabels     = map[string]string{"mutatevirtualmachines.kubemacpool.io": "allocate"}
+	hcoNamespace          = "openshift-cnv"
+	hcoCrName             = "kubevirt-hyperconverged"
+	hcoValidCr            = unstructured.Unstructured{}
+	hcoInvalidCr          = unstructured.Unstructured{}
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -167,6 +172,7 @@ func TestKubevirtInstallConfigValidation(t *testing.T) {
 			},
 		},
 	}
+
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -225,4 +231,66 @@ func TestValidatePermissions(t *testing.T) {
 		err := ValidatePermissions(client, validInstallConfig())
 		assert.NotNil(t, err)
 	})
+}
+
+func TestValidationForProvisioning(t *testing.T) {
+	createHcoObjects()
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	t.Run("Missing HyperConverged CR", func(t *testing.T) {
+		client := mock.NewMockClient(mockCtrl)
+		client.EXPECT().GetHyperConverged(gomock.Any(), hcoCrName, hcoNamespace).Return(nil, fmt.Errorf("test")).AnyTimes()
+		err := ValidateForProvisioning(client)
+		assert.NotNil(t, err)
+	})
+
+	t.Run("Feature gate not set", func(t *testing.T) {
+		client := mock.NewMockClient(mockCtrl)
+		client.EXPECT().GetHyperConverged(gomock.Any(), hcoCrName, hcoNamespace).Return(&hcoInvalidCr, nil).AnyTimes()
+		err := ValidateForProvisioning(client)
+		assert.NotNil(t, err)
+	})
+
+	t.Run("Feature gate is set", func(t *testing.T) {
+		client := mock.NewMockClient(mockCtrl)
+		client.EXPECT().GetHyperConverged(gomock.Any(), hcoCrName, hcoNamespace).Return(&hcoValidCr, nil).AnyTimes()
+		err := ValidateForProvisioning(client)
+		assert.Nil(t, err)
+	})
+}
+
+func createHcoObjects() {
+	hcoValidCrJSON := `{
+							"apiVersion": "hco.kubevirt.io/v1beta1",
+							"kind": "HyperConverged",
+							"metadata": {
+								"name": "kubevirt-hyperconverged",
+								"namespace": "openshift-cnv"
+							},
+							"spec": {
+								"featureGates": {
+									"hotplugVolumes": true
+								}
+							}
+						}`
+	hcoInvalidCrJSON := `{
+							"apiVersion": "hco.kubevirt.io/v1beta1",
+							"kind": "HyperConverged",
+							"metadata": {
+								"name": "kubevirt-hyperconverged",
+								"namespace": "openshift-cnv"
+							},
+							"spec": {}
+						}`
+
+	err := hcoValidCr.UnmarshalJSON([]byte(hcoValidCrJSON))
+	if err != nil {
+		panic(err)
+	}
+	err = hcoInvalidCr.UnmarshalJSON([]byte(hcoInvalidCrJSON))
+	if err != nil {
+		panic(err)
+	}
 }

@@ -8,6 +8,7 @@ import (
 	azconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	bmconfig "github.com/openshift/installer/pkg/asset/installconfig/baremetal"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	kubevirtconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	osconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	vsconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -82,7 +83,16 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
-	case aws.Name, libvirt.Name, none.Name, ovirt.Name, kubevirt.Name:
+	case kubevirt.Name:
+		client, err := kubevirtconfig.NewClient()
+		if err != nil {
+			return err
+		}
+		err = kubevirtconfig.ValidateForProvisioning(client)
+		if err != nil {
+			return err
+		}
+	case aws.Name, libvirt.Name, none.Name, ovirt.Name:
 		// no special provisioning requirements to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)

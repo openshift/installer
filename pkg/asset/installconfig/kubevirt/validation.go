@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	authv1 "k8s.io/api/authorization/v1"
+	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -53,6 +54,25 @@ func ValidatePermissions(client Client, ic *types.InstallConfig) error {
 		}
 
 		return fmt.Errorf("the user is missing the following permissions: %s", strings.Join(notAllowed, ", "))
+	}
+
+	return nil
+}
+
+// ValidateForProvisioning is called by PlatformProvisionCheck
+func ValidateForProvisioning(client Client) error {
+	hcUnstructured, err := client.GetHyperConverged(context.Background(), "kubevirt-hyperconverged", "openshift-cnv")
+	if err != nil {
+		return fmt.Errorf("failed to get resource openshift-cnv/kubevirt-hyperconverged, with error: %v", err)
+	}
+
+	enabled, found, err := unstructured.NestedBool(hcUnstructured.Object, "spec", "featureGates", "hotplugVolumes")
+	if err != nil {
+		return fmt.Errorf("failed to read boolean value 'spec.featureGates.hotplugVolumes' from resource openshift-cnv/kubevirt-hyperconverged, with error: %v", err)
+	}
+
+	if !found || !enabled {
+		return fmt.Errorf("feature gate hotplugVolumes is either missing or not set to true. Review resource openshift-cnv/kubevirt-hyperconverged. Follow Kubevirt CSI driver documentation for setting the feature gate (https://github.com/openshift/kubevirt-csi-driver)")
 	}
 
 	return nil
