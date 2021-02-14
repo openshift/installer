@@ -12,7 +12,7 @@ if [ ! -f coreos-installer.done ]; then
   # Write image + ignition to disk
   echo "Executing coreos-installer with the following options: install -i /opt/openshift/master.ign {{.BootstrapInPlace.InstallationDisk}}"
   coreos-installer install -i /opt/openshift/master.ign {{.BootstrapInPlace.InstallationDisk}}
-+
+
   touch coreos-installer.done
 fi
 

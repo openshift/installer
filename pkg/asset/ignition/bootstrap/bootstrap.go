@@ -361,6 +361,8 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 		"coredns.service":           {},
 		"ironic.service":            {},
 		"master-bmh-update.service": {},
+		// single node bootstrap in place service
+		"install-to-disk.service": {},
 	}
 
 	directory, err := data.Assets.Open(uri)

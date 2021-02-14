@@ -6,6 +6,7 @@ import (
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_1/types"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/manifests"
@@ -77,9 +78,14 @@ func (a *SingleNodeBootstrapInPlace) Generate(dependencies asset.Parents) error 
 	}
 
 	a.Config = a.Bootstrap.Config
+	data, err := ignition.Marshal(a.Config)
+	if err != nil {
+		return errors.Wrap(err, "failed to Marshal Ignition config")
+	}
+
 	a.File = &asset.File{
 		Filename: singleNodeBootstrapInPlaceIgnFilename,
-		Data:     a.Bootstrap.File.Data,
+		Data:     data,
 	}
 	return nil
 }
