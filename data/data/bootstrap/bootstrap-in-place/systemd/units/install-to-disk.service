@@ -11,3 +11,6 @@ ExecStart=/usr/local/bin/install-to-disk.sh
 
 Restart=on-failure
 RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
