@@ -32,26 +32,57 @@ const userProvidedAssets = `{
   "*installconfig.sshPublicKey": {}
 }`
 
+const singleNodeBootstrapInPlaceInstallConfig = `
+apiVersion: v1
+baseDomain: test-domain
+metadata:
+  name: test-cluster
+platform:
+  none: {}
+controlPlane:
+  replicas: 1
+bootstrapInPlace:
+  installationDisk: /dev/sda
+pullSecret: |
+  {
+    "auths": {
+      "example.com": {
+        "auth": "test-auth"
+       }
+    }
+  }
+`
+
 func TestCreatedAssetsAreNotDirty(t *testing.T) {
 	cases := []struct {
 		name    string
 		targets []asset.WritableAsset
+		files   map[string]string
 	}{
 		{
 			name:    "install config",
 			targets: targets.InstallConfig,
+			files:   map[string]string{stateFileName: userProvidedAssets},
 		},
 		{
 			name:    "manifest templates",
 			targets: targets.ManifestTemplates,
+			files:   map[string]string{stateFileName: userProvidedAssets},
 		},
 		{
 			name:    "manifests",
 			targets: targets.Manifests,
+			files:   map[string]string{stateFileName: userProvidedAssets},
 		},
 		{
 			name:    "ignition configs",
 			targets: targets.IgnitionConfigs,
+			files:   map[string]string{stateFileName: userProvidedAssets},
+		},
+		{
+			name:    "single node bootstrap-in-place ignition config",
+			targets: targets.SingleNodeIgnitionConfig,
+			files:   map[string]string{"install-config.yaml": singleNodeBootstrapInPlaceInstallConfig},
 		},
 	}
 	for _, tc := range cases {
@@ -62,8 +93,10 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 			}
 			defer os.RemoveAll(tempDir)
 
-			if err := ioutil.WriteFile(filepath.Join(tempDir, stateFileName), []byte(userProvidedAssets), 0666); err != nil {
-				t.Fatalf("could not write the state file: %v", err)
+			for name, contents := range tc.files {
+				if err := ioutil.WriteFile(filepath.Join(tempDir, name), []byte(contents), 0666); err != nil {
+					t.Fatalf("could not write the %s file: %v", name, err)
+				}
 			}
 
 			assetStore, err := newStore(tempDir)
@@ -107,6 +140,9 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 			assert.Equal(t, len(assetStore.assets), len(newAssetStore.assets), "new asset store does not have the same number of assets as original")
 
 			for _, a := range newAssetStore.assets {
+				if a.source == unfetched {
+					continue
+				}
 				if emptyAssets[a.asset.Name()] {
 					continue
 				}
