@@ -42,6 +42,11 @@ func Validate(ic *types.InstallConfig) error {
 
 // ValidateForProvisioning validates that the install config is valid for provisioning the cluster.
 func ValidateForProvisioning(ic *types.InstallConfig) error {
+	if skip := os.Getenv("OPENSHIFT_INSTALL_SKIP_PREFLIGHT_VALIDATIONS"); skip == "1" {
+		logrus.Warnf("OVERRIDE: pre-flight validation disabled.")
+		return nil
+	}
+
 	if ic.ControlPlane.Replicas != nil && *ic.ControlPlane.Replicas != 3 {
 		return field.Invalid(field.NewPath("controlPlane", "replicas"), ic.ControlPlane.Replicas, "control plane must be exactly three nodes when provisioning on OpenStack")
 	}
