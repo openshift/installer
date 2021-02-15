@@ -29,3 +29,11 @@ variable "packet_facility" {
 variable "packet_project_id" {
   type = string
 }
+
+variable "packet_plan" {
+  type = string
+}
+
+variable "packet_hardware_reservation_id" {
+  type = string
+}

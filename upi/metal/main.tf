@@ -93,34 +93,36 @@ resource "matchbox_group" "worker" {
 
 # ================PACKET=====================
 
-provider "packet" {}
-
-locals {
-  packet_facility = "sjc1"
+provider "packet" {
+  version = "3.2.0"
 }
 
 resource "packet_device" "masters" {
-  count            = var.master_count
-  hostname         = "master-${count.index}.${var.cluster_domain}"
-  plan             = "c1.small.x86"
-  facilities       = ["any"]
-  operating_system = "custom_ipxe"
-  ipxe_script_url  = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=master"
-  billing_cycle    = "hourly"
-  project_id       = var.packet_project_id
+  count                   = var.master_count
+  hostname                = "master-${count.index}.${var.cluster_domain}"
+  plan                    = var.packet_plan
+  facilities              = [var.packet_facility]
+  operating_system        = "custom_ipxe"
+  ipxe_script_url         = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=master"
+  billing_cycle           = "hourly"
+  project_id              = var.packet_project_id
+  //hardware_reservation_id = var.packet_hardware_reservation_id
+  hardware_reservation_id = ""
 
   depends_on = [matchbox_group.master]
 }
 
 resource "packet_device" "workers" {
-  count            = var.worker_count
-  hostname         = "worker-${count.index}.${var.cluster_domain}"
-  plan             = "c1.small.x86"
-  facilities       = ["any"]
-  operating_system = "custom_ipxe"
-  ipxe_script_url  = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=worker"
-  billing_cycle    = "hourly"
-  project_id       = var.packet_project_id
+  count                   = var.worker_count
+  hostname                = "worker-${count.index}.${var.cluster_domain}"
+  plan                    = var.packet_plan
+  facilities              = [var.packet_facility]
+  operating_system        = "custom_ipxe"
+  ipxe_script_url         = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=worker"
+  billing_cycle           = "hourly"
+  project_id              = var.packet_project_id
+  //hardware_reservation_id = var.packet_hardware_reservation_id
+  hardware_reservation_id = ""
 
   depends_on = [matchbox_group.worker]
 }
@@ -130,9 +132,9 @@ resource "packet_device" "workers" {
 module "bootstrap" {
   source = "./bootstrap"
 
-  pxe_kernel             = local.pxe_kernel
-  pxe_initrd             = local.pxe_initrd
-  pxe_kernel_args        = concat(
+  pxe_kernel = local.pxe_kernel
+  pxe_initrd = local.pxe_initrd
+  pxe_kernel_args = concat(
     local.kernel_args,
     [var.pxe_kernel_args],
   )
@@ -141,8 +143,12 @@ module "bootstrap" {
 
   cluster_id = var.cluster_id
 
-  packet_facility   = "any"
+  packet_facility   = var.packet_facility
   packet_project_id = var.packet_project_id
+  packet_plan       = var.packet_plan
+
+  //packet_hardware_reservation_id = var.packet_hardware_reservation_id
+  packet_hardware_reservation_id = ""
 }
 
 # ================AWS=====================
