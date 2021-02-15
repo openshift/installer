@@ -108,6 +108,12 @@ func resourceDNSZoneV2() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
+
+			"disable_status_check": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 		},
 	}
 }
@@ -140,6 +146,13 @@ func resourceDNSZoneV2Create(d *schema.ResourceData, meta interface{}) error {
 	n, err := zones.Create(dnsClient, createOpts).Extract()
 	if err != nil {
 		return fmt.Errorf("Error creating openstack_dns_zone_v2: %s", err)
+	}
+
+	if d.Get("disable_status_check").(bool) {
+		d.SetId(n.ID)
+
+		log.Printf("[DEBUG] Created OpenStack DNS Zone %s: %#v", n.ID, n)
+		return resourceDNSZoneV2Read(d, meta)
 	}
 
 	log.Printf("[DEBUG] Waiting for openstack_dns_zone_v2 %s to become available", n.ID)
@@ -203,21 +216,31 @@ func resourceDNSZoneV2Update(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	var updateOpts zones.UpdateOpts
+	changed := false
 	if d.HasChange("email") {
 		updateOpts.Email = d.Get("email").(string)
+		changed = true
 	}
 
 	if d.HasChange("ttl") {
 		updateOpts.TTL = d.Get("ttl").(int)
+		changed = true
 	}
 
 	if d.HasChange("masters") {
 		updateOpts.Masters = expandToStringSlice(d.Get("masters").(*schema.Set).List())
+		changed = true
 	}
 
 	if d.HasChange("description") {
 		description := d.Get("description").(string)
 		updateOpts.Description = &description
+		changed = true
+	}
+
+	if !changed {
+		// Nothing in OpenStack fields really changed, so just return zone from OpenStack
+		return resourceDNSZoneV2Read(d, meta)
 	}
 
 	if err := dnsClientSetAuthHeader(d, dnsClient); err != nil {
@@ -229,6 +252,10 @@ func resourceDNSZoneV2Update(d *schema.ResourceData, meta interface{}) error {
 	_, err = zones.Update(dnsClient, d.Id(), updateOpts).Extract()
 	if err != nil {
 		return fmt.Errorf("Error updating openstack_dns_zone_v2 %s: %s", d.Id(), err)
+	}
+
+	if d.Get("disable_status_check").(bool) {
+		return resourceDNSZoneV2Read(d, meta)
 	}
 
 	stateConf := &resource.StateChangeConf{
@@ -263,6 +290,10 @@ func resourceDNSZoneV2Delete(d *schema.ResourceData, meta interface{}) error {
 	_, err = zones.Delete(dnsClient, d.Id()).Extract()
 	if err != nil {
 		return CheckDeleted(d, err, "Error deleting openstack_dns_zone_v2")
+	}
+
+	if d.Get("disable_status_check").(bool) {
+		return nil
 	}
 
 	stateConf := &resource.StateChangeConf{

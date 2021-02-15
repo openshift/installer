@@ -39,6 +39,11 @@ type UpdateResult struct {
 	commonResult
 }
 
+// UpgradeResult is the response of a Upgrade operations.
+type UpgradeResult struct {
+	commonResult
+}
+
 // ResizeResult is the response of a Resize operations.
 type ResizeResult struct {
 	commonResult
@@ -53,6 +58,14 @@ func (r CreateResult) Extract() (string, error) {
 }
 
 func (r UpdateResult) Extract() (string, error) {
+	var s struct {
+		UUID string
+	}
+	err := r.ExtractInto(&s)
+	return s.UUID, err
+}
+
+func (r UpgradeResult) Extract() (string, error) {
 	var s struct {
 		UUID string
 	}

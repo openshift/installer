@@ -1,5 +1,7 @@
 package clientconfig
 
+import "encoding/json"
+
 // PublicClouds represents a collection of PublicCloud entries in clouds-public.yaml file.
 // The format of the clouds-public.yml is documented at
 // https://docs.openstack.org/python-openstackclient/latest/configuration/
@@ -16,12 +18,12 @@ type Clouds struct {
 
 // Cloud represents an entry in a clouds.yaml/public-clouds.yaml/secure.yaml file.
 type Cloud struct {
-	Cloud      string        `yaml:"cloud,omitempty" json:"cloud,omitempty"`
-	Profile    string        `yaml:"profile,omitempty" json:"profile,omitempty"`
-	AuthInfo   *AuthInfo     `yaml:"auth,omitempty" json:"auth,omitempty"`
-	AuthType   AuthType      `yaml:"auth_type,omitempty" json:"auth_type,omitempty"`
-	RegionName string        `yaml:"region_name,omitempty" json:"region_name,omitempty"`
-	Regions    []interface{} `yaml:"regions,omitempty" json:"regions,omitempty"`
+	Cloud      string    `yaml:"cloud,omitempty" json:"cloud,omitempty"`
+	Profile    string    `yaml:"profile,omitempty" json:"profile,omitempty"`
+	AuthInfo   *AuthInfo `yaml:"auth,omitempty" json:"auth,omitempty"`
+	AuthType   AuthType  `yaml:"auth_type,omitempty" json:"auth_type,omitempty"`
+	RegionName string    `yaml:"region_name,omitempty" json:"region_name,omitempty"`
+	Regions    []Region  `yaml:"regions,omitempty" json:"regions,omitempty"`
 
 	// EndpointType and Interface both specify whether to use the public, internal,
 	// or admin interface of a service. They should be considered synonymous, but
@@ -124,4 +126,52 @@ type AuthInfo struct {
 	// DefaultDomain is the domain ID to fall back on if no other domain has
 	// been specified and a domain is required for scope.
 	DefaultDomain string `yaml:"default_domain,omitempty" json:"default_domain,omitempty"`
+}
+
+// Region represents a region included as part of cloud in clouds.yaml
+// According to Python-based openstacksdk, this can be either a struct (as defined)
+// or a plain string. Custom unmarshallers handle both cases.
+type Region struct {
+	Name   string `yaml:"name,omitempty" json:"name,omitempty"`
+	Values Cloud  `yaml:"values,omitempty" json:"values,omitempty"`
+}
+
+// UnmarshalJSON handles either a plain string acting as the Name property or
+// a struct, mimicking the Python-based openstacksdk.
+func (r *Region) UnmarshalJSON(data []byte) error {
+	var name string
+	if err := json.Unmarshal(data, &name); err == nil {
+		r.Name = name
+		return nil
+	}
+
+	type region Region
+	var tmp region
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	r.Name = tmp.Name
+	r.Values = tmp.Values
+
+	return nil
+}
+
+// UnmarshalYAML handles either a plain string acting as the Name property or
+// a struct, mimicking the Python-based openstacksdk.
+func (r *Region) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var name string
+	if err := unmarshal(&name); err == nil {
+		r.Name = name
+		return nil
+	}
+
+	type region Region
+	var tmp region
+	if err := unmarshal(&tmp); err != nil {
+		return err
+	}
+	r.Name = tmp.Name
+	r.Values = tmp.Values
+
+	return nil
 }

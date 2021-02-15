@@ -282,3 +282,23 @@ func diffSuppressJSONObject(k, old, new string, d *schema.ResourceData) bool {
 	}
 	return false
 }
+
+// Metadata in openstack are not fully replaced with a "set"
+// operation, instead, it's only additive, and the existing
+// metadata are only removed when set to `null` value in json.
+func mapDiffWithNilValues(oldMap, newMap map[string]interface{}) (output map[string]interface{}) {
+	output = make(map[string]interface{})
+
+	for k, v := range newMap {
+		output[k] = v
+	}
+
+	for key := range oldMap {
+		_, ok := newMap[key]
+		if !ok {
+			output[key] = nil
+		}
+	}
+
+	return
+}

@@ -1,14 +1,123 @@
-## 0.13.0 (Unreleased)
+## 0.16.0 (Unreleased)
+
+BUG FIXES
+
+* Fixed `xor` logic issues in `loadbalancers/v2/l7policies.CreateOpts` [GH-2087](https://github.com/gophercloud/gophercloud/pull/2087)
+* Fixed `xor` logic issues in `loadbalancers/v2/listeners.CreateOpts` [GH-2087](https://github.com/gophercloud/gophercloud/pull/2087)
+* Fixed `If-Modified-Since` so it's correctly sent in a `objectstorage/v1/objects.Download` request [GH-2108](https://github.com/gophercloud/gophercloud/pull/2108)
+* Fixed `If-Unmodified-Since` so it's correctly sent in a `objectstorage/v1/objects.Download` request [GH-2108](https://github.com/gophercloud/gophercloud/pull/2108)
+
+IMPROVEMENTS
+
+* Added `blockstorage/extensions/limits.Get` [GH-2084](https://github.com/gophercloud/gophercloud/pull/2084)
+* `clustering/v1/clusters.RemoveNodes` now returns an `ActionResult` [GH-2089](https://github.com/gophercloud/gophercloud/pull/2089)
+* Added `identity/v3/projects.ListAvailable` [GH-2090](https://github.com/gophercloud/gophercloud/pull/2090)
+* Added `blockstorage/extensions/backups.ListDetail` [GH-2085](https://github.com/gophercloud/gophercloud/pull/2085)
+* Allow all ports to be removed in `networking/v2/extensions/fwaas_v2/groups.UpdateOpts` [GH-2073]
+* Added `imageservice/v2/images.ListOpts.Hidden` [GH-2094](https://github.com/gophercloud/gophercloud/pull/2094)
+* Added `imageservice/v2/images.CreateOpts.Hidden` [GH-2094](https://github.com/gophercloud/gophercloud/pull/2094)
+* Added `imageservice/v2/images.ReplaceImageHidden` [GH-2094](https://github.com/gophercloud/gophercloud/pull/2094)
+* Added `imageservice/v2/images.Image.Hidden` [GH-2094](https://github.com/gophercloud/gophercloud/pull/2094)
+* Added `containerinfra/v1/clusters.CreateOpts.MasterLBEnabled` [GH-2102](https://github.com/gophercloud/gophercloud/pull/2102)
+* Added the ability to define a custom function to handle "Retry-After" (429) responses [GH-2097](https://github.com/gophercloud/gophercloud/pull/2097)
+* Added `baremetal/v1/nodes.JBOD` constant for the `RAIDLevel` type [GH-2103](https://github.com/gophercloud/gophercloud/pull/2103)
+
+## 0.15.0 (December 27, 2020)
+
+BREAKING CHANGES
+
+* `compute/v2/extensions/servergroups.List` now takes a `ListOpts` parameter. You can pass `nil` if you don't need to use this.
+
+IMPROVEMENTS
+
+* Added `loadbalancer/v2/pools.CreateMemberOpts.Tags` [GH-2056](https://github.com/gophercloud/gophercloud/pull/2056)
+* Added `loadbalancer/v2/pools.UpdateMemberOpts.Backup` [GH-2056](https://github.com/gophercloud/gophercloud/pull/2056)
+* Added `loadbalancer/v2/pools.UpdateMemberOpts.MonitorAddress` [GH-2056](https://github.com/gophercloud/gophercloud/pull/2056)
+* Added `loadbalancer/v2/pools.UpdateMemberOpts.MonitorPort` [GH-2056](https://github.com/gophercloud/gophercloud/pull/2056)
+* Added `loadbalancer/v2/pools.UpdateMemberOpts.Tags` [GH-2056](https://github.com/gophercloud/gophercloud/pull/2056)
+* Added `loadbalancer/v2/pools.BatchUpdateMemberOpts.Backup` [GH-2056](https://github.com/gophercloud/gophercloud/pull/2056)
+* Added `loadbalancer/v2/pools.BatchUpdateMemberOpts.MonitorAddress` [GH-2056](https://github.com/gophercloud/gophercloud/pull/2056)
+* Added `loadbalancer/v2/pools.BatchUpdateMemberOpts.MonitorPort` [GH-2056](https://github.com/gophercloud/gophercloud/pull/2056)
+* Added `loadbalancer/v2/pools.BatchUpdateMemberOpts.Tags` [GH-2056](https://github.com/gophercloud/gophercloud/pull/2056)
+* Added `networking/v2/extensions/quotas.GetDetail` [GH-2061](https://github.com/gophercloud/gophercloud/pull/2061)
+* Added `networking/v2/extensions/quotas.UpdateOpts.Trunk` [GH-2061](https://github.com/gophercloud/gophercloud/pull/2061)
+* Added `objectstorage/v1/accounts.UpdateOpts.RemoveMetadata` [GH-2063](https://github.com/gophercloud/gophercloud/pull/2063)
+* Added `objectstorage/v1/objects.UpdateOpts.RemoveMetadata` [GH-2063](https://github.com/gophercloud/gophercloud/pull/2063)
+* Added `identity/v3/catalog.List` [GH-2067](https://github.com/gophercloud/gophercloud/pull/2067)
+* Added `networking/v2/extensions/fwaas_v2/policies.List` [GH-2057](https://github.com/gophercloud/gophercloud/pull/2057)
+* Added `networking/v2/extensions/fwaas_v2/policies.Create` [GH-2057](https://github.com/gophercloud/gophercloud/pull/2057)
+* Added `networking/v2/extensions/fwaas_v2/policies.Get` [GH-2057](https://github.com/gophercloud/gophercloud/pull/2057)
+* Added `networking/v2/extensions/fwaas_v2/policies.Update` [GH-2057](https://github.com/gophercloud/gophercloud/pull/2057)
+* Added `networking/v2/extensions/fwaas_v2/policies.Delete` [GH-2057](https://github.com/gophercloud/gophercloud/pull/2057)
+* Added `compute/v2/extensions/servergroups.ListOpts.AllProjects` [GH-2070](https://github.com/gophercloud/gophercloud/pull/2070)
+* Added `objectstorage/v1/containers.CreateOpts.StoragePolicy` [GH-2075](https://github.com/gophercloud/gophercloud/pull/2075)
+* Added `blockstorage/v3/snapshots.Update` [GH-2081](https://github.com/gophercloud/gophercloud/pull/2081)
+* Added `loadbalancer/v2/l7policies.CreateOpts.Rules` [GH-2077](https://github.com/gophercloud/gophercloud/pull/2077)
+* Added `loadbalancer/v2/listeners.CreateOpts.DefaultPool` [GH-2077](https://github.com/gophercloud/gophercloud/pull/2077)
+* Added `loadbalancer/v2/listeners.CreateOpts.L7Policies` [GH-2077](https://github.com/gophercloud/gophercloud/pull/2077)
+* Added `loadbalancer/v2/listeners.Listener.DefaultPool` [GH-2077](https://github.com/gophercloud/gophercloud/pull/2077)
+* Added `loadbalancer/v2/loadbalancers.CreateOpts.Listeners` [GH-2077](https://github.com/gophercloud/gophercloud/pull/2077)
+* Added `loadbalancer/v2/loadbalancers.CreateOpts.Pools` [GH-2077](https://github.com/gophercloud/gophercloud/pull/2077)
+* Added `loadbalancer/v2/pools.CreateOpts.Members` [GH-2077](https://github.com/gophercloud/gophercloud/pull/2077)
+* Added `loadbalancer/v2/pools.CreateOpts.Monitor` [GH-2077](https://github.com/gophercloud/gophercloud/pull/2077)
+
+
+## 0.14.0 (November 11, 2020)
+
+IMPROVEMENTS
+
+* Added `identity/v3/endpoints.Endpoint.Enabled` [GH-2030](https://github.com/gophercloud/gophercloud/pull/2030)
+* Added `containerinfra/v1/clusters.Upgrade` [GH-2032](https://github.com/gophercloud/gophercloud/pull/2032)
+* Added `compute/apiversions.List` [GH-2037](https://github.com/gophercloud/gophercloud/pull/2037)
+* Added `compute/apiversions.Get` [GH-2037](https://github.com/gophercloud/gophercloud/pull/2037)
+* Added `compute/v2/servers.ListOpts.IP` [GH-2038](https://github.com/gophercloud/gophercloud/pull/2038)
+* Added `compute/v2/servers.ListOpts.IP6` [GH-2038](https://github.com/gophercloud/gophercloud/pull/2038)
+* Added `compute/v2/servers.ListOpts.UserID` [GH-2038](https://github.com/gophercloud/gophercloud/pull/2038)
+* Added `dns/v2/transfer/accept.List` [GH-2041](https://github.com/gophercloud/gophercloud/pull/2041)
+* Added `dns/v2/transfer/accept.Get` [GH-2041](https://github.com/gophercloud/gophercloud/pull/2041)
+* Added `dns/v2/transfer/accept.Create` [GH-2041](https://github.com/gophercloud/gophercloud/pull/2041)
+* Added `dns/v2/transfer/requests.List` [GH-2041](https://github.com/gophercloud/gophercloud/pull/2041)
+* Added `dns/v2/transfer/requests.Get` [GH-2041](https://github.com/gophercloud/gophercloud/pull/2041)
+* Added `dns/v2/transfer/requests.Update` [GH-2041](https://github.com/gophercloud/gophercloud/pull/2041)
+* Added `dns/v2/transfer/requests.Delete` [GH-2041](https://github.com/gophercloud/gophercloud/pull/2041)
+* Added `baremetal/v1/nodes.RescueWait` [GH-2052](https://github.com/gophercloud/gophercloud/pull/2052)
+* Added `baremetal/v1/nodes.Unrescuing` [GH-2052](https://github.com/gophercloud/gophercloud/pull/2052)
+* Added `networking/v2/extensions/fwaas_v2/groups.List` [GH-2050](https://github.com/gophercloud/gophercloud/pull/2050)
+* Added `networking/v2/extensions/fwaas_v2/groups.Get` [GH-2050](https://github.com/gophercloud/gophercloud/pull/2050)
+* Added `networking/v2/extensions/fwaas_v2/groups.Create` [GH-2050](https://github.com/gophercloud/gophercloud/pull/2050)
+* Added `networking/v2/extensions/fwaas_v2/groups.Update` [GH-2050](https://github.com/gophercloud/gophercloud/pull/2050)
+* Added `networking/v2/extensions/fwaas_v2/groups.Delete` [GH-2050](https://github.com/gophercloud/gophercloud/pull/2050)
+
+BUG FIXES
+
+* Changed `networking/v2/extensions/layer3/routers.Routes` from `[]Route` to `*[]Route` [GH-2043](https://github.com/gophercloud/gophercloud/pull/2043)
+
+## 0.13.0 (September 27, 2020)
 
 IMPROVEMENTS
 
 * Added `ProtocolTerminatedHTTPS` as a valid listener protocol to `loadbalancer/v2/listeners` [GH-1992](https://github.com/gophercloud/gophercloud/pull/1992)
 * Added `objectstorage/v1/objects.CreateTempURLOpts.Timestamp` [GH-1994](https://github.com/gophercloud/gophercloud/pull/1994)
+* Added `compute/v2/extensions/schedulerhints.SchedulerHints.DifferentCell` [GH-2012](https://github.com/gophercloud/gophercloud/pull/2012)
+* Added `loadbalancer/v2/quotas.Get` [GH-2010](https://github.com/gophercloud/gophercloud/pull/2010)
+* Added `messaging/v2/queues.CreateOpts.EnableEncryptMessages` [GH-2016](https://github.com/gophercloud/gophercloud/pull/2016)
+* Added `messaging/v2/queues.ListOpts.Name` [GH-2018](https://github.com/gophercloud/gophercloud/pull/2018)
+* Added `messaging/v2/queues.ListOpts.WithCount` [GH-2018](https://github.com/gophercloud/gophercloud/pull/2018)
+* Added `loadbalancer/v2/quotas.Update` [GH-2023](https://github.com/gophercloud/gophercloud/pull/2023)
+* Added `loadbalancer/v2/loadbalancers.ListOpts.AvailabilityZone` [GH-2026](https://github.com/gophercloud/gophercloud/pull/2026)
+* Added `loadbalancer/v2/loadbalancers.CreateOpts.AvailabilityZone` [GH-2026](https://github.com/gophercloud/gophercloud/pull/2026)
+* Added `loadbalancer/v2/loadbalancers.LoadBalancer.AvailabilityZone` [GH-2026](https://github.com/gophercloud/gophercloud/pull/2026)
+* Added `networking/v2/extensions/layer3/routers.ListL3Agents` [GH-2025](https://github.com/gophercloud/gophercloud/pull/2025)
 
 BUG FIXES
 
 * Fixed URL escaping in `objectstorage/v1/objects.CreateTempURL` [GH-1994](https://github.com/gophercloud/gophercloud/pull/1994)
 * Remove unused `ServiceClient` from `compute/v2/servers.CreateOpts` [GH-2004](https://github.com/gophercloud/gophercloud/pull/2004)
+* Changed `objectstorage/v1/objects.CreateOpts.DeleteAfter` from `int` to `int64` [GH-2014](https://github.com/gophercloud/gophercloud/pull/2014)
+* Changed `objectstorage/v1/objects.CreateOpts.DeleteAt` from `int` to `int64` [GH-2014](https://github.com/gophercloud/gophercloud/pull/2014)
+* Changed `objectstorage/v1/objects.UpdateOpts.DeleteAfter` from `int` to `int64` [GH-2014](https://github.com/gophercloud/gophercloud/pull/2014)
+* Changed `objectstorage/v1/objects.UpdateOpts.DeleteAt` from `int` to `int64` [GH-2014](https://github.com/gophercloud/gophercloud/pull/2014)
+
 
 ## 0.12.0 (June 25, 2020)
 

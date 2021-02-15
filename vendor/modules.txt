@@ -545,10 +545,9 @@ github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
 github.com/googleapis/gnostic/jsonschema
 github.com/googleapis/gnostic/openapiv2
-# github.com/gophercloud/gophercloud v0.12.1-0.20200827191144-bb4781e9de45
+# github.com/gophercloud/gophercloud v0.15.1-0.20210202035223-633d73521055
 ## explicit
 github.com/gophercloud/gophercloud
-github.com/gophercloud/gophercloud/internal
 github.com/gophercloud/gophercloud/openstack
 github.com/gophercloud/gophercloud/openstack/baremetal/httpbasic
 github.com/gophercloud/gophercloud/openstack/baremetal/noauth
@@ -569,10 +568,12 @@ github.com/gophercloud/gophercloud/openstack/blockstorage/v3/snapshots
 github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes
 github.com/gophercloud/gophercloud/openstack/common/extensions
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/aggregates
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/attachinterfaces
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/availabilityzones
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/bootfromvolume
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/floatingips
+github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/hypervisors
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/keypairs
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/quotasets
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/schedulerhints
@@ -680,7 +681,7 @@ github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/shares
 github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/snapshots
 github.com/gophercloud/gophercloud/openstack/utils
 github.com/gophercloud/gophercloud/pagination
-# github.com/gophercloud/utils v0.0.0-20201212031956-9dc30e126fea
+# github.com/gophercloud/utils v0.0.0-20210216074907-f6de111f2eae
 ## explicit
 github.com/gophercloud/utils/client
 github.com/gophercloud/utils/env
@@ -689,7 +690,6 @@ github.com/gophercloud/utils/internal
 github.com/gophercloud/utils/openstack/baremetal/v1/nodes
 github.com/gophercloud/utils/openstack/clientconfig
 github.com/gophercloud/utils/openstack/compute/v2/flavors
-github.com/gophercloud/utils/openstack/compute/v2/images
 github.com/gophercloud/utils/openstack/imageservice/v2/images
 github.com/gophercloud/utils/openstack/networking/v2/networks
 github.com/gophercloud/utils/terraform/auth
@@ -984,7 +984,6 @@ github.com/leodido/go-urn
 ## explicit
 github.com/libvirt/libvirt-go
 # github.com/libvirt/libvirt-go-xml v5.10.0+incompatible
-## explicit
 github.com/libvirt/libvirt-go-xml
 # github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de
 github.com/liggitt/tabwriter
@@ -1195,7 +1194,7 @@ github.com/stoewer/go-strcase
 # github.com/stretchr/testify v1.6.1
 ## explicit
 github.com/stretchr/testify/assert
-# github.com/terraform-provider-openstack/terraform-provider-openstack v1.33.0
+# github.com/terraform-provider-openstack/terraform-provider-openstack v1.37.0
 ## explicit
 github.com/terraform-provider-openstack/terraform-provider-openstack/openstack
 # github.com/terraform-providers/terraform-provider-aws v1.60.1-0.20200807230610-d5346d47e3af => github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699
@@ -1679,7 +1678,7 @@ golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.0.0-20201117132131-f5c789dd3221
+# golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
 golang.org/x/term
 # golang.org/x/text v0.3.4
 golang.org/x/text/encoding

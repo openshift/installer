@@ -79,6 +79,14 @@ func resourceNetworkingFloatingIPV2() *schema.Resource {
 			"subnet_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
+			},
+
+			"subnet_ids": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				ConflictsWith: []string{"subnet_id"},
 			},
 
 			"value_specs": {
@@ -132,21 +140,35 @@ func resourceNetworkFloatingIPV2Create(d *schema.ResourceData, meta interface{})
 	if len(poolID) == 0 {
 		return fmt.Errorf("No network found with name: %s", poolName)
 	}
-	createOpts := FloatingIPCreateOpts{
-		floatingips.CreateOpts{
-			FloatingNetworkID: poolID,
-			Description:       d.Get("description").(string),
-			FloatingIP:        d.Get("address").(string),
-			PortID:            d.Get("port_id").(string),
-			TenantID:          d.Get("tenant_id").(string),
-			FixedIP:           d.Get("fixed_ip").(string),
-			SubnetID:          d.Get("subnet_id").(string),
-		},
-		MapValueSpecs(d),
+
+	subnetID := d.Get("subnet_id").(string)
+	var subnetIDs []string
+	if v, ok := d.Get("subnet_ids").([]interface{}); ok {
+		subnetIDs = make([]string, len(v))
+		for i, v := range v {
+			subnetIDs[i] = v.(string)
+		}
+	}
+
+	if subnetID == "" && len(subnetIDs) > 0 {
+		subnetID = subnetIDs[0]
+	}
+
+	createOpts := &floatingips.CreateOpts{
+		FloatingNetworkID: poolID,
+		Description:       d.Get("description").(string),
+		FloatingIP:        d.Get("address").(string),
+		PortID:            d.Get("port_id").(string),
+		TenantID:          d.Get("tenant_id").(string),
+		FixedIP:           d.Get("fixed_ip").(string),
+		SubnetID:          subnetID,
 	}
 
 	var finalCreateOpts floatingips.CreateOptsBuilder
-	finalCreateOpts = createOpts
+	finalCreateOpts = FloatingIPCreateOpts{
+		createOpts,
+		MapValueSpecs(d),
+	}
 
 	dnsName := d.Get("dns_name").(string)
 	dnsDomain := d.Get("dns_domain").(string)
@@ -161,9 +183,33 @@ func resourceNetworkFloatingIPV2Create(d *schema.ResourceData, meta interface{})
 	var fip floatingIPExtended
 
 	log.Printf("[DEBUG] openstack_networking_floatingip_v2 create options: %#v", finalCreateOpts)
-	err = floatingips.Create(networkingClient, finalCreateOpts).ExtractInto(&fip)
-	if err != nil {
-		return fmt.Errorf("Error creating openstack_networking_floatingip_v2: %s", err)
+
+	if len(subnetIDs) == 0 {
+		// floating IP allocation without a retry
+		err = floatingips.Create(networkingClient, finalCreateOpts).ExtractInto(&fip)
+		if err != nil {
+			return fmt.Errorf("Error creating openstack_networking_floatingip_v2: %s", err)
+		}
+	} else {
+		// create a floatingip in a loop with the first available external subnet
+		for i, subnetID := range subnetIDs {
+			createOpts.SubnetID = subnetID
+
+			log.Printf("[DEBUG] openstack_networking_floatingip_v2 create options (try %d): %#v", i+1, finalCreateOpts)
+
+			err = floatingips.Create(networkingClient, finalCreateOpts).ExtractInto(&fip)
+			if err != nil {
+				if retryOn409(err) {
+					continue
+				}
+				return fmt.Errorf("Error creating openstack_networking_floatingip_v2: %s", err)
+			}
+			break
+		}
+		// handle the last error
+		if err != nil {
+			return fmt.Errorf("Error creating openstack_networking_floatingip_v2: %d subnets exhausted: %s", len(subnetIDs), err)
+		}
 	}
 
 	log.Printf("[DEBUG] Waiting for openstack_networking_floatingip_v2 %s to become available.", fip.ID)
@@ -182,6 +228,11 @@ func resourceNetworkFloatingIPV2Create(d *schema.ResourceData, meta interface{})
 	}
 
 	d.SetId(fip.ID)
+
+	if createOpts.SubnetID != "" {
+		// resourceNetworkFloatingIPV2Read doesn't handle this, since FIP GET request doesn't provide this info.
+		d.Set("subnet_id", createOpts.SubnetID)
+	}
 
 	tags := networkingV2AttributesTags(d)
 	if len(tags) > 0 {

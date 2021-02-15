@@ -208,6 +208,7 @@ func dataSourceImagesImageIdsV2Read(d *schema.ResourceData, meta interface{}) er
 
 	d.SetId(fmt.Sprintf("%d", hashcode.String(strings.Join(imageIDs, ","))))
 	d.Set("ids", imageIDs)
+	d.Set("region", GetRegion(d, config))
 
 	return nil
 }

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -45,6 +46,7 @@ type Config struct {
 	UseOctavia                  bool
 	MaxRetries                  int
 	DisableNoCacheHeader        bool
+	Context                     context.Context
 
 	DelayedAuth   bool
 	AllowReauth   bool
@@ -58,7 +60,7 @@ type Config struct {
 	TerraformVersion string
 	SDKVersion       string
 
-	mutexkv.MutexKV
+	*mutexkv.MutexKV
 }
 
 // LoadAndValidate performs the authentication and initial configuration
@@ -90,11 +92,18 @@ func (c *Config) LoadAndValidate() error {
 		return fmt.Errorf("Invalid endpoint type provided")
 	}
 
+	if c.MaxRetries < 0 {
+		return fmt.Errorf("max_retries should be a positive value")
+	}
+
 	clientOpts := new(clientconfig.ClientOpts)
 
 	// If a cloud entry was given, base AuthOptions on a clouds.yaml file.
 	if c.Cloud != "" {
 		clientOpts.Cloud = c.Cloud
+
+		// Passing region allows GetCloudFromYAML to apply per-region overrides
+		clientOpts.RegionName = c.Region
 
 		cloud, err := clientconfig.GetCloudFromYAML(clientOpts)
 		if err != nil {
@@ -157,6 +166,8 @@ func (c *Config) LoadAndValidate() error {
 		return err
 	}
 
+	client.Context = c.Context
+
 	// Set UserAgent
 	client.UserAgent.Prepend(terraformUserAgent(c.TerraformVersion, c.SDKVersion))
 
@@ -187,15 +198,16 @@ func (c *Config) LoadAndValidate() error {
 		client.HTTPClient.Transport.(*osClient.RoundTripper).SetHeaders(extraHeaders)
 	}
 
+	if c.MaxRetries > 0 {
+		client.MaxBackoffRetries = uint(c.MaxRetries)
+		client.RetryBackoffFunc = osClient.RetryBackoffFunc(logger)
+	}
+
 	if !c.DelayedAuth && !c.Swauth {
 		err = openstack.Authenticate(client, *ao)
 		if err != nil {
 			return err
 		}
-	}
-
-	if c.MaxRetries < 0 {
-		return fmt.Errorf("max_retries should be a positive value")
 	}
 
 	c.authOpts = ao

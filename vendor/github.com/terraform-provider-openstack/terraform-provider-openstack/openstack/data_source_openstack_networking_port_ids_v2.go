@@ -266,6 +266,7 @@ func dataSourceNetworkingPortIDsV2Read(d *schema.ResourceData, meta interface{})
 
 	d.SetId(fmt.Sprintf("%d", hashcode.String(strings.Join(portIDs, ""))))
 	d.Set("ids", portIDs)
+	d.Set("region", GetRegion(d, config))
 
 	return nil
 }

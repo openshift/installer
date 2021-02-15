@@ -16,7 +16,7 @@ import (
 
 // FloatingIPCreateOpts represents the attributes used when creating a new floating ip.
 type FloatingIPCreateOpts struct {
-	floatingips.CreateOpts
+	*floatingips.CreateOpts
 	ValueSpecs map[string]string `json:"value_specs,omitempty"`
 }
 

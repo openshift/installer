@@ -11,6 +11,16 @@ Example to Get project quotas
 
     fmt.Printf("quotas: %#v\n", quotasInfo)
 
+Example to Get a Detailed Quota Set
+
+    projectID = "23d5d3f79dfa4f73b72b8b0b0063ec55"
+    quotasInfo, err := quotas.GetDetail(networkClient, projectID).Extract()
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("quotas: %#v\n", quotasInfo)
+
 Example to Update project quotas
 
     projectID = "23d5d3f79dfa4f73b72b8b0b0063ec55"
@@ -25,6 +35,7 @@ Example to Update project quotas
         SecurityGroupRule: gophercloud.IntToPointer(-1),
         Subnet:            gophercloud.IntToPointer(25),
         SubnetPool:        gophercloud.IntToPointer(0),
+        Trunk:             gophercloud.IntToPointer(0),
     }
     quotasInfo, err := quotas.Update(networkClient, projectID)
     if err != nil {
