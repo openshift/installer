@@ -142,7 +142,7 @@ func getCredentialsFromSession(options session.Options) (*credentials.Credential
 // static credentials safe for installer to transfer to cluster for use as-is.
 func IsStaticCredentials(credsValue credentials.Value) bool {
 	switch credsValue.ProviderName {
-	case credentials.EnvProviderName, credentials.StaticProviderName, credentials.SharedCredsProviderName:
+	case credentials.EnvProviderName, credentials.StaticProviderName, credentials.SharedCredsProviderName, session.EnvProviderName:
 		return credsValue.SessionToken == ""
 	}
 	if strings.HasPrefix(credsValue.ProviderName, "SharedConfigCredentials") {
