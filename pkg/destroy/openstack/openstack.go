@@ -403,24 +403,8 @@ func deleteSecurityGroups(opts *clientconfig.ClientOpts, filter Filter, logger l
 	return len(allGroups) == 0, nil
 }
 
-func updateFips(routerID string, opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) error {
-	// If a user provisioned floating ip was used, it needs to be dissociated
-	// Any floating Ip's associated with routers that are going to be deleted will be dissociated
+func updateFips(allFIPs []floatingips.FloatingIP, opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) error {
 	conn, err := clientconfig.NewServiceClient("network", opts)
-	if err != nil {
-		return err
-	}
-
-	fipOpts := floatingips.ListOpts{
-		RouterID: routerID,
-	}
-
-	fipPages, err := floatingips.List(conn, fipOpts).AllPages()
-	if err != nil {
-		return err
-	}
-
-	allFIPs, err := floatingips.ExtractFloatingIPs(fipPages)
 	if err != nil {
 		return err
 	}
@@ -431,7 +415,7 @@ func updateFips(routerID string, opts *clientconfig.ClientOpts, filter Filter, l
 			// Ignore the error if the resource cannot be found and return with an appropriate message if it's another type of error
 			var gerr gophercloud.ErrDefault404
 			if !errors.As(err, &gerr) {
-				logger.Errorf("Updating floating IP %q for Router %q failed: %v", fip.ID, routerID, err)
+				logger.Errorf("Updating floating IP %q for Router failed: %v", fip.ID, err)
 				return err
 			}
 			logger.Debugf("Cannot find floating ip %q. It's probably already been deleted.", fip.ID)
@@ -466,7 +450,24 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		return false, nil
 	}
 	for _, router := range allRouters {
-		err = updateFips(router.ID, opts, filter, logger)
+		fipOpts := floatingips.ListOpts{
+			RouterID: router.ID,
+		}
+
+		fipPages, err := floatingips.List(conn, fipOpts).AllPages()
+		if err != nil {
+			logger.Error(err)
+			return false, nil
+		}
+
+		allFIPs, err := floatingips.ExtractFloatingIPs(fipPages)
+		if err != nil {
+			logger.Error(err)
+			return false, nil
+		}
+		// If a user provisioned floating ip was used, it needs to be dissociated
+		// Any floating Ip's associated with routers that are going to be deleted will be dissociated
+		err = updateFips(allFIPs, opts, filter, logger)
 		if err != nil {
 			logger.Error(err)
 			return false, nil
@@ -585,8 +586,25 @@ func deleteCustomRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, 
 		return true, nil
 	}
 
-	// disassociate any fips linked to the router
-	err = updateFips(routerID, opts, filter, logger)
+	fipOpts := floatingips.ListOpts{
+		RouterID: routerID,
+		Tags:     strings.Join(tags, ","),
+	}
+
+	fipPages, err := floatingips.List(conn, fipOpts).AllPages()
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	allFIPs, err := floatingips.ExtractFloatingIPs(fipPages)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	// disassociate any fips created by Kuryr linked to the router
+	err = updateFips(allFIPs, opts, filter, logger)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
