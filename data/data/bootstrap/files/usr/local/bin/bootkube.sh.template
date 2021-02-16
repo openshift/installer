@@ -108,11 +108,10 @@ then
 		--etcd-ca=/assets/tls/etcd-ca-bundle.crt \
 		--etcd-ca-key=/assets/tls/etcd-signer.key \
 		--manifest-etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
-		--manifest-cluster-etcd-operator-image="${CLUSTER_ETCD_OPERATOR_IMAGE}" \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/etcd-bootstrap \
 		--config-output-file=/assets/etcd-bootstrap/config \
-		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml
+		--network-config-file=/assets/manifests/cluster-network-02-config.yml
 
 	cp etcd-bootstrap/manifests/* manifests/
 	cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
