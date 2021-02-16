@@ -363,6 +363,18 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 
 	log.Printf("[DEBUG] %s: ova import complete", d.Get("name").(string))
 
+	vm := object.NewVirtualMachine(client, info.Entity)
+	if vm == nil {
+		return fmt.Errorf("error VirtualMachine not found, managed object id: %s", d.Id())
+	}
+	log.Printf("[DEBUG] %s: mark as template", vm.Name())
+
+	err = vm.MarkAsTemplate(ctx)
+	if err != nil {
+		return errors.Errorf("failed to mark vm as template: %s", err)
+	}
+	log.Printf("[DEBUG] %s: mark as template complete", vm.Name())
+
 	return resourceVSpherePrivateImportOvaRead(d, meta)
 }
 
