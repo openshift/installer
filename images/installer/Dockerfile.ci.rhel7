@@ -7,7 +7,7 @@ COPY . .
 RUN hack/build.sh
 
 
-FROM registry.ci.openshift.org/ocp/4.1:base
+FROM registry.ci.openshift.org/ocp/4.8:base
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
