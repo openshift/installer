@@ -295,7 +295,6 @@ github.com/coreos/ignition v0.34.0/go.mod h1:WJQapxzEn9DE0ryxsGvm8QnBajm/XsS/Pkr
 github.com/coreos/ignition v0.35.0 h1:UFodoYq1mOPrbEjtxIsZbThcDyQwAI1owczRDqWmKkQ=
 github.com/coreos/ignition v0.35.0/go.mod h1:WJQapxzEn9DE0ryxsGvm8QnBajm/XsS/PkrDqSpz+bA=
 github.com/coreos/ignition/v2 v2.1.1/go.mod h1:RqmqU64zxarUJa3l4cHtbhcSwfQLpUhv0WVziZwoXvE=
-github.com/coreos/ignition/v2 v2.3.0 h1:TK+STbzVe6KZp4tQ2IaNSRMiWX4/diNngep1F7tP7Zk=
 github.com/coreos/ignition/v2 v2.3.0/go.mod h1:85dmM/CERMZXNrJsXqtNLIxR/dn8G9qlL1CmEjCugp0=
 github.com/coreos/ignition/v2 v2.9.0 h1:Zl5N08OyqlECB8BrBlMDp3Jf1ShwVTtREPcUq/YO034=
 github.com/coreos/ignition/v2 v2.9.0/go.mod h1:A5lFFzA2/zvZQPVEvI1lR5WPLWRb7KZ7Q1QOeUMtcAc=
@@ -305,7 +304,6 @@ github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f/go.mod h1:E3G3o1h8I7cfc
 github.com/coreos/prometheus-operator v0.35.0/go.mod h1:XHYZUStZWcwd1yk/1DjZv/fywqKIyAJ6pSwvIr+v9BQ=
 github.com/coreos/vcontext v0.0.0-20190529201340-22b159166068/go.mod h1:E+6hug9bFSe0KZ2ZAzr8M9F5JlArJjv5D1JS7KSkPKE=
 github.com/coreos/vcontext v0.0.0-20191017033345-260217907eb5/go.mod h1:E+6hug9bFSe0KZ2ZAzr8M9F5JlArJjv5D1JS7KSkPKE=
-github.com/coreos/vcontext v0.0.0-20200225161404-ee043618d38d h1:Nu473BdYOxcnhFfPrl1ihpCtxI/VZr2IfhVIHDGP43Y=
 github.com/coreos/vcontext v0.0.0-20200225161404-ee043618d38d/go.mod h1:z4pMVvaUrxs98RROlIYdAQCKhEicjnTirOaVyDRH5h8=
 github.com/coreos/vcontext v0.0.0-20201120045928-b0e13dab675c h1:jA28WeORitsxGFVWhyWB06sAG2HbLHPQuHwDydhU2CQ=
 github.com/coreos/vcontext v0.0.0-20201120045928-b0e13dab675c/go.mod h1:z4pMVvaUrxs98RROlIYdAQCKhEicjnTirOaVyDRH5h8=
@@ -590,7 +588,6 @@ github.com/golang/protobuf v1.4.0-rc.2/go.mod h1:LlEzMj4AhA7rCAGe4KMBDvJI+AwstrU
 github.com/golang/protobuf v1.4.0-rc.4.0.20200313231945-b860323f09d0/go.mod h1:WU3c8KckQ9AFe+yFwt9sWVRKCVIyN9cPHBJSNnbL67w=
 github.com/golang/protobuf v1.4.0/go.mod h1:jodUvKwWbYaEsadDk5Fwe5c77LiNKVO9IDvqG2KuDX0=
 github.com/golang/protobuf v1.4.1/go.mod h1:U8fpvMrcmy5pZrNK1lt4xCsGvpyWQ/VVv6QDs8UjoX8=
-github.com/golang/protobuf v1.4.2 h1:+Z5KGCizgyZCbGh1KZqA0fcLLkwbsjIzS4aV2v7wJX0=
 github.com/golang/protobuf v1.4.2/go.mod h1:oDoupMAO8OvCJWAcko0GGGIgR6R6ocIYbsSw735rRwI=
 github.com/golang/protobuf v1.4.3 h1:JjCZWpVbqXDqFVmTfYWEVTMIYrL/NPdPSCHPJ0T/raM=
 github.com/golang/protobuf v1.4.3/go.mod h1:oDoupMAO8OvCJWAcko0GGGIgR6R6ocIYbsSw735rRwI=
@@ -690,7 +687,6 @@ github.com/gophercloud/gophercloud v0.15.1-0.20210202035223-633d73521055/go.mod 
 github.com/gophercloud/utils v0.0.0-20190124231947-9c3b9f2457ef/go.mod h1:wjDF8z83zTeg5eMLml5EBSlAhbF7G8DobyI1YsMuyzw=
 github.com/gophercloud/utils v0.0.0-20190313033024-0bcc8e728cb5/go.mod h1:SZ9FTKibIotDtCrxAU/evccoyu1yhKST6hgBvwTB5Eg=
 github.com/gophercloud/utils v0.0.0-20191129022341-463e26ffa30d/go.mod h1:SZ9FTKibIotDtCrxAU/evccoyu1yhKST6hgBvwTB5Eg=
-github.com/gophercloud/utils v0.0.0-20210202040619-eca783186fc4 h1:cMAAW/VtHAO72V4r1qlLOJ0bCHPaQrZB8j5aK7XcpSg=
 github.com/gophercloud/utils v0.0.0-20210202040619-eca783186fc4/go.mod h1:wx8HMD8oQD0Ryhz6+6ykq75PJ79iPyEqYHfwZ4l7OsA=
 github.com/gophercloud/utils v0.0.0-20210216074907-f6de111f2eae h1:Hi3IgB9RQDE15Kfovd8MTZrcana+UlQqNbOif8dLpA0=
 github.com/gophercloud/utils v0.0.0-20210216074907-f6de111f2eae/go.mod h1:wx8HMD8oQD0Ryhz6+6ykq75PJ79iPyEqYHfwZ4l7OsA=
@@ -973,7 +969,6 @@ github.com/klauspost/cpuid v0.0.0-20180405133222-e7e905edc00e/go.mod h1:Pj4uuM52
 github.com/klauspost/cpuid v1.2.0/go.mod h1:Pj4uuM528wm8OyEC2QMXAi2YiTZ96dNQPGgoMS4s3ek=
 github.com/klauspost/pgzip v1.2.4/go.mod h1:Ch1tH69qFZu15pkjo5kYi6mth2Zzwzt50oCQKQE9RUs=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
-github.com/konsorten/go-windows-terminal-sequences v1.0.3 h1:CE8S1cTafDpPvMhIxNJKvHsGVBgn1xWYf1NbHQhywc8=
 github.com/konsorten/go-windows-terminal-sequences v1.0.3/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/kr/fs v0.1.0 h1:Jskdu9ieNAYnjxsi0LbQp1ulIKZV1LAFgK1tWhpZgl8=
 github.com/kr/fs v0.1.0/go.mod h1:FFnZGqtBN9Gxj7eW1uZ42v5BccTP0vu6NEaFoC2HwRg=
