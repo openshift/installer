@@ -21,10 +21,6 @@ type AvailabilityZone struct {
 	UpdatedAt time.Time `json:"-"`
 }
 
-type commonResult struct {
-	gophercloud.Result
-}
-
 // ListResult contains the response body and error from a List request.
 type AvailabilityZonePage struct {
 	pagination.SinglePageBase

@@ -55,9 +55,8 @@ func resourceNetworkingRouterRouteV2Create(d *schema.ResourceData, meta interfac
 	}
 
 	routerID := d.Get("router_id").(string)
-	mutex := config.MutexKV
-	mutex.Lock(routerID)
-	defer mutex.Unlock(routerID)
+	config.MutexKV.Lock(routerID)
+	defer config.MutexKV.Unlock(routerID)
 
 	r, err := routers.Get(networkingClient, routerID).Extract()
 	if err != nil {
@@ -88,7 +87,7 @@ func resourceNetworkingRouterRouteV2Create(d *schema.ResourceData, meta interfac
 		NextHop:         nextHop,
 	})
 	updateOpts := routers.UpdateOpts{
-		Routes: routes,
+		Routes: &routes,
 	}
 	log.Printf("[DEBUG] openstack_networking_router_v2 %s update options: %#v", routerID, updateOpts)
 	_, err = routers.Update(networkingClient, routerID, updateOpts).Extract()
@@ -147,9 +146,8 @@ func resourceNetworkingRouterRouteV2Delete(d *schema.ResourceData, meta interfac
 	}
 
 	routerID := d.Get("router_id").(string)
-	mutex := config.MutexKV
-	mutex.Lock(routerID)
-	defer mutex.Unlock(routerID)
+	config.MutexKV.Lock(routerID)
+	defer config.MutexKV.Unlock(routerID)
 
 	r, err := routers.Get(networkingClient, routerID).Extract()
 	if err != nil {
@@ -176,7 +174,7 @@ func resourceNetworkingRouterRouteV2Delete(d *schema.ResourceData, meta interfac
 
 	log.Printf("[DEBUG] Deleting openstack_networking_router_v2 %s route to %s via %s", routerID, dstCIDR, nextHop)
 	updateOpts := routers.UpdateOpts{
-		Routes: newRoute,
+		Routes: &newRoute,
 	}
 	_, err = routers.Update(networkingClient, routerID, updateOpts).Extract()
 	if err != nil {

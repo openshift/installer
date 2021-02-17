@@ -26,6 +26,13 @@ func resourceComputeFlavorV2() *schema.Resource {
 				ForceNew: true,
 			},
 
+			"flavor_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
+
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -101,6 +108,7 @@ func resourceComputeFlavorV2Create(d *schema.ResourceData, meta interface{}) err
 		RAM:        d.Get("ram").(int),
 		VCPUs:      d.Get("vcpus").(int),
 		Disk:       &disk,
+		ID:         d.Get("flavor_id").(string),
 		Swap:       &swap,
 		RxTxFactor: d.Get("rx_tx_factor").(float64),
 		IsPublic:   &isPublic,
@@ -146,6 +154,7 @@ func resourceComputeFlavorV2Read(d *schema.ResourceData, meta interface{}) error
 	d.Set("ram", fl.RAM)
 	d.Set("vcpus", fl.VCPUs)
 	d.Set("disk", fl.Disk)
+	d.Set("flavor_id", fl.ID)
 	d.Set("swap", fl.Swap)
 	d.Set("rx_tx_factor", fl.RxTxFactor)
 	d.Set("is_public", fl.IsPublic)

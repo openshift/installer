@@ -200,14 +200,16 @@ func flattenNetworkingPortBindingV2(port portExtended) interface{} {
 	var portBinding []map[string]interface{}
 	var profile interface{}
 
-	// "TypeMap" with "ValidateFunc", "DiffSuppressFunc" and "StateFunc" combination
-	// is not supported by Terraform. Therefore a regular JSON string is used for the
-	// port resource.
-	tmp, err := json.Marshal(port.Profile)
-	if err != nil {
-		log.Printf("[DEBUG] flattenNetworkingPortBindingV2: Cannot marshal port.Profile: %s", err)
+	if port.Profile != nil {
+		// "TypeMap" with "ValidateFunc", "DiffSuppressFunc" and "StateFunc" combination
+		// is not supported by Terraform. Therefore a regular JSON string is used for the
+		// port resource.
+		tmp, err := json.Marshal(port.Profile)
+		if err != nil {
+			log.Printf("[DEBUG] flattenNetworkingPortBindingV2: Cannot marshal port.Profile: %s", err)
+		}
+		profile = string(tmp)
 	}
-	profile = string(tmp)
 
 	vifDetails := make(map[string]string)
 	for k, v := range port.VIFDetails {

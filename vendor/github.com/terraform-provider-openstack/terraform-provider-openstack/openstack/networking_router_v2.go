@@ -22,18 +22,30 @@ func resourceNetworkingRouterV2StateRefreshFunc(client *gophercloud.ServiceClien
 }
 
 func expandNetworkingRouterExternalFixedIPsV2(externalFixedIPs []interface{}) []routers.ExternalFixedIP {
-	var fixedIPs []routers.ExternalFixedIP
+	fixedIPs := make([]routers.ExternalFixedIP, len(externalFixedIPs))
 
-	for _, raw := range externalFixedIPs {
+	for i, raw := range externalFixedIPs {
 		rawMap := raw.(map[string]interface{})
 
-		fixedIPs = append(fixedIPs, routers.ExternalFixedIP{
+		fixedIPs[i] = routers.ExternalFixedIP{
 			SubnetID:  rawMap["subnet_id"].(string),
 			IPAddress: rawMap["ip_address"].(string),
-		})
+		}
 	}
 
 	return fixedIPs
+}
+
+func expandNetworkingRouterExternalSubnetIDsV2(externalSubnetIDs []interface{}) []routers.ExternalFixedIP {
+	subnetIDs := make([]routers.ExternalFixedIP, len(externalSubnetIDs))
+
+	for i, raw := range externalSubnetIDs {
+		subnetIDs[i] = routers.ExternalFixedIP{
+			SubnetID: raw.(string),
+		}
+	}
+
+	return subnetIDs
 }
 
 func flattenNetworkingRouterExternalFixedIPsV2(externalFixedIPs []routers.ExternalFixedIP) []map[string]string {

@@ -35,6 +35,7 @@ func resourceIdentityProjectV3() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+				ForceNew: true,
 			},
 
 			"enabled": {
@@ -46,6 +47,8 @@ func resourceIdentityProjectV3() *schema.Resource {
 			"is_domain": {
 				Type:     schema.TypeBool,
 				Optional: true,
+				Default:  false,
+				ForceNew: true,
 			},
 
 			"name": {
@@ -57,6 +60,7 @@ func resourceIdentityProjectV3() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+				ForceNew: true,
 			},
 
 			"tags": {

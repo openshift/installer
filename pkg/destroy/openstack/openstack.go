@@ -259,7 +259,7 @@ func deleteServerGroups(opts *clientconfig.ClientOpts, filter Filter, logger log
 		return false, nil
 	}
 
-	allPages, err := servergroups.List(conn).AllPages()
+	allPages, err := servergroups.List(conn, nil).AllPages()
 	if err != nil {
 		logger.Error(err)
 		return false, nil

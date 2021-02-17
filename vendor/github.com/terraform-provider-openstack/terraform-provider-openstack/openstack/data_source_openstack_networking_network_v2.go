@@ -101,6 +101,12 @@ func dataSourceNetworkingNetworkV2() *schema.Resource {
 				Computed: true,
 			},
 
+			"subnets": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+
 			"all_tags": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -233,6 +239,7 @@ func dataSourceNetworkingNetworkV2Read(d *schema.ResourceData, meta interface{})
 	d.Set("external", network.External)
 	d.Set("tenant_id", network.TenantID)
 	d.Set("transparent_vlan", network.VLANTransparent)
+	d.Set("subnets", network.Subnets)
 	d.Set("all_tags", network.Tags)
 	d.Set("mtu", network.MTU)
 	d.Set("dns_domain", network.DNSDomain)

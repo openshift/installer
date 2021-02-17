@@ -56,9 +56,11 @@ func resourceComputeInterfaceAttachV2() *schema.Resource {
 			},
 
 			"fixed_ip": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"port_id"},
 			},
 		},
 	}
@@ -147,6 +149,10 @@ func resourceComputeInterfaceAttachV2Read(d *schema.ResourceData, meta interface
 	}
 
 	log.Printf("[DEBUG] Retrieved openstack_compute_interface_attach_v2 %s: %#v", d.Id(), attachment)
+
+	if len(attachment.FixedIPs) > 0 {
+		d.Set("fixed_ip", attachment.FixedIPs[0].IPAddress)
+	}
 
 	d.Set("instance_id", instanceID)
 	d.Set("port_id", attachment.PortID)

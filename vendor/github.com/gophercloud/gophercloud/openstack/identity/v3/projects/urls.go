@@ -2,6 +2,10 @@ package projects
 
 import "github.com/gophercloud/gophercloud"
 
+func listAvailableURL(client *gophercloud.ServiceClient) string {
+	return client.ServiceURL("auth", "projects")
+}
+
 func listURL(client *gophercloud.ServiceClient) string {
 	return client.ServiceURL("projects")
 }
