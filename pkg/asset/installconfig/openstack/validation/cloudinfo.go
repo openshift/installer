@@ -4,7 +4,6 @@ import (
 	"net/url"
 
 	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/availabilityzones"
 	computequotasets "github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/quotasets"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	tokensv2 "github.com/gophercloud/gophercloud/openstack/identity/v2/tokens"
@@ -14,6 +13,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	azutils "github.com/gophercloud/utils/openstack/compute/v2/availabilityzones"
 	flavorutils "github.com/gophercloud/utils/openstack/compute/v2/flavors"
 	imageutils "github.com/gophercloud/utils/openstack/imageservice/v2/images"
 	networkutils "github.com/gophercloud/utils/openstack/networking/v2/networks"
@@ -305,21 +305,9 @@ func (ci *CloudInfo) getImage(imageName string) (*images.Image, error) {
 }
 
 func (ci *CloudInfo) getZones() ([]string, error) {
-	zones := []string{}
-	allPages, err := availabilityzones.List(ci.clients.computeClient).AllPages()
+	zones, err := azutils.ListAvailableAvailabilityZones(ci.clients.computeClient)
 	if err != nil {
-		return nil, err
-	}
-
-	availabilityZoneInfo, err := availabilityzones.ExtractAvailabilityZones(allPages)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, zoneInfo := range availabilityZoneInfo {
-		if zoneInfo.ZoneState.Available {
-			zones = append(zones, zoneInfo.ZoneName)
-		}
+		return nil, errors.Wrap(err, "failed to list compute availability zones")
 	}
 
 	if len(zones) == 0 {
