@@ -1424,6 +1424,28 @@ func init() {
 	t["BaseHostMultipathInfoLogicalUnitPolicy"] = reflect.TypeOf((*HostMultipathInfoLogicalUnitPolicy)(nil)).Elem()
 }
 
+func (b *HostNvmeSpec) GetHostNvmeSpec() *HostNvmeSpec { return b }
+
+type BaseHostNvmeSpec interface {
+	GetHostNvmeSpec() *HostNvmeSpec
+}
+
+func init() {
+	t["BaseHostNvmeSpec"] = reflect.TypeOf((*HostNvmeSpec)(nil)).Elem()
+}
+
+func (b *HostNvmeTransportParameters) GetHostNvmeTransportParameters() *HostNvmeTransportParameters {
+	return b
+}
+
+type BaseHostNvmeTransportParameters interface {
+	GetHostNvmeTransportParameters() *HostNvmeTransportParameters
+}
+
+func init() {
+	t["BaseHostNvmeTransportParameters"] = reflect.TypeOf((*HostNvmeTransportParameters)(nil)).Elem()
+}
+
 func (b *HostPciPassthruConfig) GetHostPciPassthruConfig() *HostPciPassthruConfig { return b }
 
 type BaseHostPciPassthruConfig interface {
@@ -1474,6 +1496,16 @@ type BaseHostProfilesEntityCustomizations interface {
 
 func init() {
 	t["BaseHostProfilesEntityCustomizations"] = reflect.TypeOf((*HostProfilesEntityCustomizations)(nil)).Elem()
+}
+
+func (b *HostRdmaDeviceBacking) GetHostRdmaDeviceBacking() *HostRdmaDeviceBacking { return b }
+
+type BaseHostRdmaDeviceBacking interface {
+	GetHostRdmaDeviceBacking() *HostRdmaDeviceBacking
+}
+
+func init() {
+	t["BaseHostRdmaDeviceBacking"] = reflect.TypeOf((*HostRdmaDeviceBacking)(nil)).Elem()
 }
 
 func (b *HostSriovDevicePoolInfo) GetHostSriovDevicePoolInfo() *HostSriovDevicePoolInfo { return b }
@@ -2988,6 +3020,16 @@ type BaseVirtualMachineBootOptionsBootableDevice interface {
 
 func init() {
 	t["BaseVirtualMachineBootOptionsBootableDevice"] = reflect.TypeOf((*VirtualMachineBootOptionsBootableDevice)(nil)).Elem()
+}
+
+func (b *VirtualMachineConnection) GetVirtualMachineConnection() *VirtualMachineConnection { return b }
+
+type BaseVirtualMachineConnection interface {
+	GetVirtualMachineConnection() *VirtualMachineConnection
+}
+
+func init() {
+	t["BaseVirtualMachineConnection"] = reflect.TypeOf((*VirtualMachineConnection)(nil)).Elem()
 }
 
 func (b *VirtualMachineDeviceRuntimeInfoDeviceRuntimeState) GetVirtualMachineDeviceRuntimeInfoDeviceRuntimeState() *VirtualMachineDeviceRuntimeInfoDeviceRuntimeState {

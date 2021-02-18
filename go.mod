@@ -41,6 +41,7 @@ require (
 	github.com/hashicorp/terraform v0.13.4
 	github.com/hashicorp/terraform-plugin-sdk v1.16.0
 	github.com/hashicorp/terraform-provider-kubernetes v1.13.3
+	github.com/hashicorp/terraform-provider-vsphere v1.24.3
 	github.com/hashicorp/vault v1.3.0 // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/k8snetworkplumbingwg/network-attachment-definition-client v0.0.0-20191119172530-79f836b90111
@@ -83,10 +84,9 @@ require (
 	github.com/terraform-providers/terraform-provider-ignition/v2 v2.1.0
 	github.com/terraform-providers/terraform-provider-local v1.4.0
 	github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
-	github.com/terraform-providers/terraform-provider-vsphere v1.16.2
 	github.com/ulikunitz/xz v0.5.8
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
-	github.com/vmware/govmomi v0.22.2
+	github.com/vmware/govmomi v0.24.0
 	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca // indirect
 	golang.org/dl v0.0.0-20210204224843-1557c60ec592 // indirect
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
@@ -126,6 +126,7 @@ replace (
 	github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb // Pinned by MCO
 	github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-4 // Pin to fork with deduplicated rpc types v0.12.20-openshift-4
 	github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift // Pin to fork with public rpc types
+	github.com/hashicorp/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.24.3-openshift
 	github.com/kubevirt/terraform-provider-kubevirt => github.com/nirarg/terraform-provider-kubevirt v0.0.0-20201222125919-101cee051ed3
 	github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20200715132148-0f91f62a41fe // Use OpenShift fork
 	github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d // Pin OpenShift fork
@@ -135,8 +136,6 @@ replace (
 	github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699 // Pin to openshift fork with tag v2.67.0-openshift
 	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200707062554-97ea089cc12a // release-2.17.0 branch
 	github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.0
-	github.com/terraform-providers/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-2
-	github.com/vmware/govmomi => github.com/vmware/govmomi v0.22.2-0.20200420222347-5fceac570f29
 	k8s.io/api => k8s.io/api v0.20.0
 	k8s.io/client-go => k8s.io/client-go v0.20.0
 	kubevirt.io/client-go => kubevirt.io/client-go v0.29.0

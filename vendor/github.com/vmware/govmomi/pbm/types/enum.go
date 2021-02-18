@@ -104,6 +104,19 @@ func init() {
 	types.Add("pbm:PbmComplianceStatus", reflect.TypeOf((*PbmComplianceStatus)(nil)).Elem())
 }
 
+type PbmHealthStatusForEntity string
+
+const (
+	PbmHealthStatusForEntityRed     = PbmHealthStatusForEntity("red")
+	PbmHealthStatusForEntityYellow  = PbmHealthStatusForEntity("yellow")
+	PbmHealthStatusForEntityGreen   = PbmHealthStatusForEntity("green")
+	PbmHealthStatusForEntityUnknown = PbmHealthStatusForEntity("unknown")
+)
+
+func init() {
+	types.Add("pbm:PbmHealthStatusForEntity", reflect.TypeOf((*PbmHealthStatusForEntity)(nil)).Elem())
+}
+
 type PbmIofilterInfoFilterType string
 
 const (
@@ -131,6 +144,7 @@ const (
 	PbmLineOfServiceInfoLineOfServiceEnumPERSISTENCE          = PbmLineOfServiceInfoLineOfServiceEnum("PERSISTENCE")
 	PbmLineOfServiceInfoLineOfServiceEnumDATA_PROVIDER        = PbmLineOfServiceInfoLineOfServiceEnum("DATA_PROVIDER")
 	PbmLineOfServiceInfoLineOfServiceEnumDATASTORE_IO_CONTROL = PbmLineOfServiceInfoLineOfServiceEnum("DATASTORE_IO_CONTROL")
+	PbmLineOfServiceInfoLineOfServiceEnumDATA_PROTECTION      = PbmLineOfServiceInfoLineOfServiceEnum("DATA_PROTECTION")
 )
 
 func init() {
@@ -145,6 +159,7 @@ const (
 	PbmObjectTypeVirtualDiskId          = PbmObjectType("virtualDiskId")
 	PbmObjectTypeVirtualDiskUUID        = PbmObjectType("virtualDiskUUID")
 	PbmObjectTypeDatastore              = PbmObjectType("datastore")
+	PbmObjectTypeFileShareId            = PbmObjectType("fileShareId")
 	PbmObjectTypeUnknown                = PbmObjectType("unknown")
 )
 

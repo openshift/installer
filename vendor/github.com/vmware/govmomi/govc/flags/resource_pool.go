@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 )
 
@@ -67,6 +68,10 @@ func (flag *ResourcePoolFlag) Process(ctx context.Context) error {
 	})
 }
 
+func (flag *ResourcePoolFlag) IsSet() bool {
+	return flag.name != ""
+}
+
 func (flag *ResourcePoolFlag) ResourcePool() (*object.ResourcePool, error) {
 	if flag.pool != nil {
 		return flag.pool, nil
@@ -77,8 +82,17 @@ func (flag *ResourcePoolFlag) ResourcePool() (*object.ResourcePool, error) {
 		return nil, err
 	}
 
-	if flag.pool, err = finder.ResourcePoolOrDefault(context.TODO(), flag.name); err != nil {
-		return nil, err
+	flag.pool, err = finder.ResourcePoolOrDefault(context.TODO(), flag.name)
+	if err != nil {
+		if _, ok := err.(*find.NotFoundError); ok {
+			vapp, verr := finder.VirtualApp(context.TODO(), flag.name)
+			if verr != nil {
+				return nil, err
+			}
+			flag.pool = vapp.ResourcePool
+		} else {
+			return nil, err
+		}
 	}
 
 	return flag.pool, nil

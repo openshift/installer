@@ -910,6 +910,36 @@ github.com/hashicorp/terraform-plugin-test
 # github.com/hashicorp/terraform-provider-kubernetes v1.13.3
 ## explicit
 github.com/hashicorp/terraform-provider-kubernetes/kubernetes
+# github.com/hashicorp/terraform-provider-vsphere v1.24.3 => github.com/openshift/terraform-provider-vsphere v1.24.3-openshift
+## explicit
+github.com/hashicorp/terraform-provider-vsphere/vsphere
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/administrationroles
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/clustercomputeresource
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/computeresource
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/contentlibrary
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datacenter
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datastore
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/dvportgroup
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/envbrowse
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/folder
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/hostsystem
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/network
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/nsx
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/ovfdeploy
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/provider
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/resourcepool
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/spbm
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/storagepod
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/structure
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/utils
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/vappcontainer
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/viapi
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/virtualdisk
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/virtualmachine
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/vsansystem
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/virtualdevice
+github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/vmworkflow
 # github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734
 github.com/hashicorp/terraform-svchost
 github.com/hashicorp/terraform-svchost/auth
@@ -1495,32 +1525,6 @@ github.com/terraform-providers/terraform-provider-local/local
 # github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
 ## explicit
 github.com/terraform-providers/terraform-provider-random/random
-# github.com/terraform-providers/terraform-provider-vsphere v1.16.2 => github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-2
-## explicit
-github.com/terraform-providers/terraform-provider-vsphere/vsphere
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/clustercomputeresource
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/computeresource
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/contentlibrary
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/customattribute
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/datacenter
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/datastore
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/dvportgroup
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/envbrowse
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/folder
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/hostsystem
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/network
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/nsx
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/ovfdeploy
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/provider
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/resourcepool
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/spbm
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/storagepod
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/structure
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/vappcontainer
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/viapi
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/helper/virtualmachine
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/virtualdevice
-github.com/terraform-providers/terraform-provider-vsphere/vsphere/internal/vmworkflow
 # github.com/tombuildsstuff/giovanni v0.10.0
 github.com/tombuildsstuff/giovanni/storage/2018-11-09/blob/accounts
 github.com/tombuildsstuff/giovanni/storage/2018-11-09/blob/blobs
@@ -1550,7 +1554,7 @@ github.com/vmihailenco/msgpack/v4/codes
 github.com/vmihailenco/tagparser
 github.com/vmihailenco/tagparser/internal
 github.com/vmihailenco/tagparser/internal/parser
-# github.com/vmware/govmomi v0.22.2 => github.com/vmware/govmomi v0.22.2-0.20200420222347-5fceac570f29
+# github.com/vmware/govmomi v0.24.0
 ## explicit
 github.com/vmware/govmomi
 github.com/vmware/govmomi/event
@@ -1558,6 +1562,7 @@ github.com/vmware/govmomi/find
 github.com/vmware/govmomi/govc/cli
 github.com/vmware/govmomi/govc/flags
 github.com/vmware/govmomi/govc/importx
+github.com/vmware/govmomi/internal
 github.com/vmware/govmomi/license
 github.com/vmware/govmomi/list
 github.com/vmware/govmomi/nfc
@@ -1569,6 +1574,7 @@ github.com/vmware/govmomi/pbm/types
 github.com/vmware/govmomi/property
 github.com/vmware/govmomi/session
 github.com/vmware/govmomi/session/cache
+github.com/vmware/govmomi/session/keepalive
 github.com/vmware/govmomi/task
 github.com/vmware/govmomi/vapi/internal
 github.com/vmware/govmomi/vapi/library
@@ -2344,6 +2350,7 @@ sigs.k8s.io/yaml
 # github.com/go-log/log => github.com/go-log/log v0.1.1-0.20181211034820-a514cf01a3eb
 # github.com/hashicorp/terraform => github.com/openshift/terraform v0.12.20-openshift-4
 # github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
+# github.com/hashicorp/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.24.3-openshift
 # github.com/kubevirt/terraform-provider-kubevirt => github.com/nirarg/terraform-provider-kubevirt v0.0.0-20201222125919-101cee051ed3
 # github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20200715132148-0f91f62a41fe
 # github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
@@ -2353,8 +2360,6 @@ sigs.k8s.io/yaml
 # github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699
 # github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200707062554-97ea089cc12a
 # github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.0
-# github.com/terraform-providers/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-2
-# github.com/vmware/govmomi => github.com/vmware/govmomi v0.22.2-0.20200420222347-5fceac570f29
 # k8s.io/api => k8s.io/api v0.20.0
 # k8s.io/client-go => k8s.io/client-go v0.20.0
 # kubevirt.io/client-go => kubevirt.io/client-go v0.29.0

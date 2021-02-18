@@ -1411,8 +1411,8 @@ github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e569
 github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699/go.mod h1:0U3OgA2uDYSc7gNkdWA92+/BxWXwuYhWqqZ4UhM1RCw=
 github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200707062554-97ea089cc12a h1:yrCt4MiDMfLRv//VnIc3lnrmBYhIIz72+ZcGq/YMIjk=
 github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200707062554-97ea089cc12a/go.mod h1:9VGDn8x+Pz/j5vQ8nseuH+YsKyxpGYx+faT9b9fqCWQ=
-github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-2 h1:stvaZiT/RzGhlxq9w7+QxdvmVWcWl7j3DtoPbbF5tnY=
-github.com/openshift/terraform-provider-vsphere v1.18.1-openshift-2/go.mod h1:a1mEaZ0sy5RL+ukbqPvY1N6dw9K0yG7EYWZZkfJUeyA=
+github.com/openshift/terraform-provider-vsphere v1.24.3-openshift h1:tG83XgfFwH4OLONUeEsxh8JPG9QRrqKLoPzkPmLye/Y=
+github.com/openshift/terraform-provider-vsphere v1.24.3-openshift/go.mod h1:FgcsrcPpnjLUO4XWpudYiBho9ETIXYRxVXWV7R3Iz6k=
 github.com/opentracing-contrib/go-stdlib v0.0.0-20190519235532-cf7a6c988dc9/go.mod h1:PLldrQSroqzH70Xl+1DQcGnefIbqsKR7UDaiux3zV+w=
 github.com/opentracing/basictracer-go v1.0.0/go.mod h1:QfBfYuafItcjQuMwinw9GhYKwFXS9KnPs5lxoYwgW74=
 github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
@@ -1775,8 +1775,10 @@ github.com/vmihailenco/msgpack/v4 v4.3.12 h1:07s4sz9IReOgdikxLTKNbBdqDMLsjPKXwvC
 github.com/vmihailenco/msgpack/v4 v4.3.12/go.mod h1:gborTTJjAo/GWTqqRjrLCn9pgNN+NXzzngzBKDPIqw4=
 github.com/vmihailenco/tagparser v0.1.1 h1:quXMXlA39OCbd2wAdTsGDlK9RkOk6Wuw+x37wVyIuWY=
 github.com/vmihailenco/tagparser v0.1.1/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgqMEUPoW2WPyhdI=
-github.com/vmware/govmomi v0.22.2-0.20200420222347-5fceac570f29 h1:8S2J/LGp5U19G4tia+aq+KvlNPuynIeui7W8xc8PGqU=
-github.com/vmware/govmomi v0.22.2-0.20200420222347-5fceac570f29/go.mod h1:Y+Wq4lst78L85Ge/F8+ORXIWiKYqaro1vhAulACy9Lc=
+github.com/vmware/govmomi v0.22.2-0.20200523220130-61b30e20be49/go.mod h1:Y+Wq4lst78L85Ge/F8+ORXIWiKYqaro1vhAulACy9Lc=
+github.com/vmware/govmomi v0.22.2/go.mod h1:Y+Wq4lst78L85Ge/F8+ORXIWiKYqaro1vhAulACy9Lc=
+github.com/vmware/govmomi v0.24.0 h1:G7YFF6unMTG3OY25Dh278fsomVTKs46m2ENlEFSbmbs=
+github.com/vmware/govmomi v0.24.0/go.mod h1:Y+Wq4lst78L85Ge/F8+ORXIWiKYqaro1vhAulACy9Lc=
 github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728/go.mod h1:x9oS4Wk2s2u4tS29nEaDLdzvuHdB19CvSGJjPgkZJNk=
 github.com/vmware/vmw-ovflib v0.0.0-20170608004843-1f217b9dc714/go.mod h1:jiPk45kn7klhByRvUq5i2vo1RtHKBHj+iWGFpxbXuuI=
 github.com/xanzy/go-gitlab v0.15.0/go.mod h1:8zdQa/ri1dfn8eS3Ir1SyfvOKlw7WBJ8DVThkpGiXrs=

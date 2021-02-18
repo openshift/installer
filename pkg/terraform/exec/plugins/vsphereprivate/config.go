@@ -6,7 +6,7 @@ import (
 	"net/url"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/terraform-providers/terraform-provider-vsphere/vsphere"
+	"github.com/hashicorp/terraform-provider-vsphere/vsphere"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/session/cache"
 	"github.com/vmware/govmomi/vapi/rest"
