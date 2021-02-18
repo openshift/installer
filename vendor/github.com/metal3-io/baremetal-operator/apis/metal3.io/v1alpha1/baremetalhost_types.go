@@ -1,3 +1,19 @@
+/*
+
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package v1alpha1
 
 import (
@@ -74,13 +90,15 @@ type RootDeviceHints struct {
 }
 
 // BootMode is the boot mode of the system
-// +kubebuilder:validation:Enum=UEFI;legacy
+// +kubebuilder:validation:Enum=UEFI;UEFISecureBoot;legacy
 type BootMode string
 
 // Allowed boot mode from metal3
 const (
-	UEFI   BootMode = "UEFI"
-	Legacy BootMode = "legacy"
+	UEFI            BootMode = "UEFI"
+	UEFISecureBoot  BootMode = "UEFISecureBoot"
+	Legacy          BootMode = "legacy"
+	DefaultBootMode BootMode = UEFI
 )
 
 // OperationalStatus represents the state of the host
@@ -99,6 +117,8 @@ const (
 	// OperationalStatusError is the status value for when the host
 	// has any sort of error.
 	OperationalStatusError OperationalStatus = "error"
+
+	OperationalStatusDelayed = "delayed"
 )
 
 // ErrorType indicates the class of problem that has caused the Host resource
@@ -106,6 +126,9 @@ const (
 type ErrorType string
 
 const (
+	// ProvisionedRegistrationError is an error condition occurring when the controller
+	// is unable to re-register an already provisioned host.
+	ProvisionedRegistrationError ErrorType = "provisioned registration error"
 	// RegistrationError is an error condition occurring when the
 	// controller is unable to connect to the Host's baseboard management
 	// controller.
@@ -113,6 +136,9 @@ const (
 	// InspectionError is an error condition occurring when an attempt to
 	// obtain hardware details from the Host fails.
 	InspectionError ErrorType = "inspection error"
+	// PreparationError is an error condition occurring when do
+	// cleaning steps failed.
+	PreparationError ErrorType = "preparation error"
 	// ProvisioningError is an error condition occuring when the controller
 	// fails to provision or deprovision the Host.
 	ProvisioningError ErrorType = "provisioning error"
@@ -133,16 +159,15 @@ const (
 	// register the host
 	StateUnmanaged ProvisioningState = "unmanaged"
 
-	// StateRegistrationError means there was an error registering the
-	// host with the backend
-	StateRegistrationError ProvisioningState = "registration error"
-
 	// StateRegistering means we are telling the backend about the host
 	StateRegistering ProvisioningState = "registering"
 
 	// StateMatchProfile means we are comparing the discovered details
 	// against known hardware profiles
 	StateMatchProfile ProvisioningState = "match profile"
+
+	// StatePreparing means we are removing existing configuration and set new configuration to the host
+	StatePreparing ProvisioningState = "preparing"
 
 	// StateReady means the host can be consumed
 	StateReady ProvisioningState = "ready"
@@ -153,10 +178,6 @@ const (
 	// StateProvisioning means we are writing an image to the host's
 	// disk(s)
 	StateProvisioning ProvisioningState = "provisioning"
-
-	// StateProvisioningError means we are writing an image to the
-	// host's disk(s)
-	StateProvisioningError ProvisioningState = "provisioning error"
 
 	// StateProvisioned means we have written an image to the host's
 	// disk(s)
@@ -173,10 +194,6 @@ const (
 	// StateInspecting means we are running the agent on the host to
 	// learn about the hardware components available there
 	StateInspecting ProvisioningState = "inspecting"
-
-	// StatePowerManagementError means something went wrong trying to
-	// power the server on or off.
-	StatePowerManagementError ProvisioningState = "power management error"
 
 	// StateDeleting means we are in the process of cleaning up the host
 	// ready for deletion
@@ -205,7 +222,7 @@ type BMCDetails struct {
 
 // BareMetalHostSpec defines the desired state of BareMetalHost
 type BareMetalHostSpec struct {
-	// Important: Run "operator-sdk generate k8s" to regenerate code
+	// Important: Run "make generate manifests" to regenerate code
 	// after modifying this file
 
 	// Taints is the full, authoritative list of taints to apply to
@@ -226,8 +243,8 @@ type BareMetalHostSpec struct {
 	// being provisioned.
 	RootDeviceHints *RootDeviceHints `json:"rootDeviceHints,omitempty"`
 
-	// Select the method of initializing the hardware during boot to
-	// override the value based on the BMC driver.
+	// Select the method of initializing the hardware during
+	// boot. Defaults to UEFI.
 	// +optional
 	BootMode BootMode `json:"bootMode,omitempty"`
 
@@ -292,15 +309,18 @@ type Image struct {
 	URL string `json:"url"`
 
 	// Checksum is the checksum for the image.
-	Checksum string `json:"checksum"`
+	Checksum string `json:"checksum,omitempty"`
 
 	// ChecksumType is the checksum algorithm for the image.
 	// e.g md5, sha256, sha512
 	ChecksumType ChecksumType `json:"checksumType,omitempty"`
 
-	// DiskFormat contains the format of the image (raw, qcow2, ...)
-	// Needs to be set to raw for raw images streaming
-	// +kubebuilder:validation:Enum=raw;qcow2;vdi;vmdk
+	// DiskFormat contains the format of the image (raw, qcow2, ...).
+	// Needs to be set to raw for raw images streaming.
+	// Note live-iso means an iso referenced by the url will be live-booted
+	// and not deployed to disk, and in this case the checksum options
+	// are not required and if specified will be ignored.
+	// +kubebuilder:validation:Enum=raw;qcow2;vdi;vmdk;live-iso
 	DiskFormat *string `json:"format,omitempty"`
 }
 
@@ -308,6 +328,7 @@ type Image struct {
 // data structures.
 
 // ClockSpeed is a clock speed in MHz
+// +kubebuilder:validation:Format=double
 type ClockSpeed float64
 
 // ClockSpeed multipliers
@@ -343,7 +364,8 @@ type CPU struct {
 
 // Storage describes one storage device (disk, SSD, etc.) on the host.
 type Storage struct {
-	// A name for the disk, e.g. "disk 1 (boot)"
+	// The Linux device name of the disk, e.g. "/dev/sda". Note that this
+	// may not be stable across reboots.
 	Name string `json:"name"`
 
 	// Whether this disk represents rotational storage
@@ -389,20 +411,22 @@ type VLAN struct {
 
 // NIC describes one network interface on the host.
 type NIC struct {
-	// The name of the NIC, e.g. "nic-1"
+	// The name of the network interface, e.g. "en0"
 	Name string `json:"name"`
 
-	// The name of the model, e.g. "virt-io"
+	// The vendor and product IDs of the NIC, e.g. "0x8086 0x1572"
 	Model string `json:"model"`
 
-	// The device MAC addr
+	// The device MAC address
 	// +kubebuilder:validation:Pattern=`[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}`
 	MAC string `json:"mac"`
 
-	// The IP address of the device
+	// The IP address of the interface. This will be an IPv4 or IPv6 address
+	// if one is present.  If both IPv4 and IPv6 addresses are present in a
+	// dual-stack environment, two nics will be output, one with each IP.
 	IP string `json:"ip"`
 
-	// The speed of the device
+	// The speed of the device in Gigabits per second
 	SpeedGbps int `json:"speedGbps"`
 
 	// The VLANs available
@@ -504,16 +528,16 @@ type OperationHistory struct {
 
 // BareMetalHostStatus defines the observed state of BareMetalHost
 type BareMetalHostStatus struct {
-	// Important: Run "operator-sdk generate k8s" to regenerate code
+	// Important: Run "make generate manifests" to regenerate code
 	// after modifying this file
 
 	// OperationalStatus holds the status of the host
-	// +kubebuilder:validation:Enum="";OK;discovered;error
+	// +kubebuilder:validation:Enum="";OK;discovered;error;delayed
 	OperationalStatus OperationalStatus `json:"operationalStatus"`
 
 	// ErrorType indicates the type of failure encountered when the
 	// OperationalStatus is OperationalStatusError
-	// +kubebuilder:validation:Enum=registration error;inspection error;provisioning error;power management error
+	// +kubebuilder:validation:Enum=provisioned registration error;registration error;inspection error;preparation error;provisioning error;power management error
 	ErrorType ErrorType `json:"errorType,omitempty"`
 
 	// LastUpdated identifies when this status was last observed.
@@ -543,7 +567,11 @@ type BareMetalHostStatus struct {
 
 	// OperationHistory holds information about operations performed
 	// on this host.
-	OperationHistory OperationHistory `json:"operationHistory"`
+	OperationHistory OperationHistory `json:"operationHistory,omitempty"`
+
+	// ErrorCount records how many times the host has encoutered an error since the last successful operation
+	// +kubebuilder:default:=0
+	ErrorCount int `json:"errorCount"`
 }
 
 // ProvisionStatus holds the state information for a single target.
@@ -571,13 +599,14 @@ type ProvisionStatus struct {
 // +k8s:openapi-gen=true
 // +kubebuilder:resource:shortName=bmh;bmhost
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.operationalStatus",description="Operational status"
-// +kubebuilder:printcolumn:name="Provisioning Status",type="string",JSONPath=".status.provisioning.state",description="Provisioning status"
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.operationalStatus",description="Operational status",priority=1
+// +kubebuilder:printcolumn:name="State",type="string",JSONPath=".status.provisioning.state",description="Provisioning status"
 // +kubebuilder:printcolumn:name="Consumer",type="string",JSONPath=".spec.consumerRef.name",description="Consumer using this host"
-// +kubebuilder:printcolumn:name="BMC",type="string",JSONPath=".spec.bmc.address",description="Address of management controller"
-// +kubebuilder:printcolumn:name="Hardware Profile",type="string",JSONPath=".status.hardwareProfile",description="The type of hardware detected"
+// +kubebuilder:printcolumn:name="BMC",type="string",JSONPath=".spec.bmc.address",description="Address of management controller",priority=1
+// +kubebuilder:printcolumn:name="Hardware_Profile",type="string",JSONPath=".status.hardwareProfile",description="The type of hardware detected",priority=1
 // +kubebuilder:printcolumn:name="Online",type="string",JSONPath=".spec.online",description="Whether the host is online or not"
-// +kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.errorMessage",description="Most recent error"
+// +kubebuilder:printcolumn:name="Error",type="string",JSONPath=".status.errorType",description="Type of the most recent error"
+// +kubebuilder:object:root=true
 type BareMetalHost struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -586,52 +615,13 @@ type BareMetalHost struct {
 	Status BareMetalHostStatus `json:"status,omitempty"`
 }
 
-// Available returns true if the host is available to be provisioned.
-func (host *BareMetalHost) Available() bool {
-	if host.Spec.ConsumerRef != nil {
-		return false
+// BootMode returns the boot method to use for the host.
+func (host *BareMetalHost) BootMode() BootMode {
+	mode := host.Spec.BootMode
+	if mode == "" {
+		return DefaultBootMode
 	}
-	if host.GetDeletionTimestamp() != nil {
-		return false
-	}
-	if host.HasError() {
-		return false
-	}
-	return true
-}
-
-// SetErrorMessage updates the ErrorMessage in the host Status struct
-// when necessary and returns true when a change is made or false when
-// no change is made.
-func (host *BareMetalHost) SetErrorMessage(errType ErrorType, message string) (dirty bool) {
-	if host.Status.OperationalStatus != OperationalStatusError {
-		host.Status.OperationalStatus = OperationalStatusError
-		dirty = true
-	}
-	if host.Status.ErrorType != errType {
-		host.Status.ErrorType = errType
-		dirty = true
-	}
-	if host.Status.ErrorMessage != message {
-		host.Status.ErrorMessage = message
-		dirty = true
-	}
-	return dirty
-}
-
-// ClearError removes any existing error message.
-func (host *BareMetalHost) ClearError() (dirty bool) {
-	dirty = host.SetOperationalStatus(OperationalStatusOK)
-	var emptyErrType ErrorType = ""
-	if host.Status.ErrorType != emptyErrType {
-		host.Status.ErrorType = emptyErrType
-		dirty = true
-	}
-	if host.Status.ErrorMessage != "" {
-		host.Status.ErrorMessage = ""
-		dirty = true
-	}
-	return dirty
+	return mode
 }
 
 // setLabel updates the given label when necessary and returns true
@@ -697,12 +687,6 @@ func (host *BareMetalHost) OperationalStatus() OperationalStatus {
 	return host.Status.OperationalStatus
 }
 
-// HasError returns a boolean indicating whether there is an error
-// set for the host.
-func (host *BareMetalHost) HasError() bool {
-	return host.Status.ErrorMessage != ""
-}
-
 // CredentialsKey returns a NamespacedName suitable for loading the
 // Secret containing the credentials associated with the host.
 func (host *BareMetalHost) CredentialsKey() types.NamespacedName {
@@ -764,24 +748,6 @@ func (host *BareMetalHost) WasProvisioned() bool {
 	return false
 }
 
-// NeedsDeprovisioning compares the settings with the provisioning
-// status and returns true when the host should be deprovisioned.
-func (host *BareMetalHost) NeedsDeprovisioning() bool {
-	if host.Spec.Image == nil {
-		return true
-	}
-	if host.Spec.Image.URL == "" {
-		return true
-	}
-	if host.Status.Provisioning.Image.URL == "" {
-		return false
-	}
-	if host.Spec.Image.URL != host.Status.Provisioning.Image.URL {
-		return true
-	}
-	return false
-}
-
 // UpdateGoodCredentials modifies the GoodCredentials portion of the
 // Status struct to record the details of the secret containing
 // credentials known to work.
@@ -818,7 +784,7 @@ func (host *BareMetalHost) NewEvent(reason, message string) corev1.Event {
 			Namespace:  host.Namespace,
 			Name:       host.Name,
 			UID:        host.UID,
-			APIVersion: SchemeGroupVersion.String(),
+			APIVersion: GroupVersion.String(),
 		},
 		Reason:  reason,
 		Message: message,
@@ -853,30 +819,40 @@ func (host *BareMetalHost) OperationMetricForState(operation ProvisioningState) 
 
 // GetImageChecksum returns the hash value and its algo.
 func (host *BareMetalHost) GetImageChecksum() (string, string, bool) {
-	if host.Spec.Image == nil {
-		return "", "", false
-	}
-
-	checksum := host.Spec.Image.Checksum
-	checksumType := host.Spec.Image.ChecksumType
-
-	if checksum == "" {
-		// Return empty if checksum is not provided
-		return "", "", false
-	}
-	if checksumType == "" {
-		// If only checksum is specified. Assume type is md5
-		return checksum, string(MD5), true
-	}
-	switch checksumType {
-	case MD5, SHA256, SHA512:
-		return checksum, string(checksumType), true
-	default:
-		return "", "", false
-	}
+	return host.Spec.Image.GetChecksum()
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+func (image *Image) GetChecksum() (checksum, checksumType string, ok bool) {
+	if image == nil {
+		return
+	}
+
+	if image.DiskFormat != nil && *image.DiskFormat == "live-iso" {
+		// Checksum is not required for live-iso
+		ok = true
+		return
+	}
+
+	if image.Checksum == "" {
+		// Return empty if checksum is not provided
+		return
+	}
+
+	switch image.ChecksumType {
+	case "":
+		checksumType = string(MD5)
+	case MD5, SHA256, SHA512:
+		checksumType = string(image.ChecksumType)
+	default:
+		return
+	}
+
+	checksum = image.Checksum
+	ok = true
+	return
+}
+
+// +kubebuilder:object:root=true
 
 // BareMetalHostList contains a list of BareMetalHost
 type BareMetalHostList struct {

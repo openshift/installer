@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	registerFactory("irmc", newIRMCAccessDetails, []string{})
+	RegisterFactory("irmc", newIRMCAccessDetails, []string{})
 }
 
 func newIRMCAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
@@ -83,4 +83,8 @@ func (a *iRMCAccessDetails) RAIDInterface() string {
 
 func (a *iRMCAccessDetails) VendorInterface() string {
 	return ""
+}
+
+func (a *iRMCAccessDetails) SupportsSecureBoot() bool {
+	return true
 }
