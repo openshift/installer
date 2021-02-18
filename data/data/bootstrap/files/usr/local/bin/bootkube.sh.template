@@ -93,8 +93,19 @@ then
 
 	mkdir --parents /etc/kubernetes/static-pod-resources/etcd-member
 	cp tls/etcd-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-member/ca.crt
-	cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-serving /etc/kubernetes/static-pod-resources/etcd-member
-	cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-peer /etc/kubernetes/static-pod-resources/etcd-member
+	# Temporarily ensure compatibility with both the new single cert secret and
+	# legacy multiple secrets. Support for copying the legacy secrets can be
+	# removed once https://github.com/openshift/cluster-etcd-operator/pull/544
+	# merges.
+	if [ -d "etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-certs" ]
+	then
+		# Copy the contents of the single aggregated cert secret if it is present.
+		cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-certs /etc/kubernetes/static-pod-resources/etcd-member
+	else
+		# Copy the contents of the legacy secrets
+		cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-serving /etc/kubernetes/static-pod-resources/etcd-member
+		cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-peer /etc/kubernetes/static-pod-resources/etcd-member
+	fi
 
 	touch etcd-bootstrap.done
 fi
