@@ -706,6 +706,135 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^proxy.httpProxy: Invalid value: "http//baduri": parse "http//baduri": invalid URI for request$`,
 		},
 		{
+			name: "overlapping HTTPProxy and Cluster Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = "http://192.168.1.25"
+				c.Networking = validIPv4NetworkingConfig()
+				return c
+			}(),
+			expectedError: `^proxy.httpProxy: Invalid value: "http://192.168.1.25": proxy value is part of the cluster networks$`,
+		},
+		{
+			name: "non-overlapping HTTPProxy and Cluster Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = "http://192.169.1.25"
+				c.Networking = validIPv4NetworkingConfig()
+				return c
+			}(),
+		},
+		{
+			name: "overlapping HTTPProxy and more than one Cluster Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = "http://192.168.1.25"
+				c.Networking = validIPv4NetworkingConfig()
+				c.ClusterNetwork = append(c.ClusterNetwork, []types.ClusterNetworkEntry{
+					{
+						CIDR:       *ipnet.MustParseCIDR("192.168.0.0/16"),
+						HostPrefix: 28,
+					},
+				}...,
+				)
+				return c
+			}(),
+			expectedError: `^\Q[networking.clusterNetwork[1].cidr: Invalid value: "192.168.0.0/16": cluster network must not overlap with cluster network 0, proxy.httpProxy: Invalid value: "http://192.168.1.25": proxy value is part of the cluster networks]\E$`,
+		},
+		{
+			name: "non-overlapping HTTPProxy and Service Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = "http://172.31.0.25"
+				c.Networking = validIPv4NetworkingConfig()
+				return c
+			}(),
+		},
+		{
+			name: "overlapping HTTPProxy and Service Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = "http://172.30.0.25"
+				c.Networking = validIPv4NetworkingConfig()
+				return c
+			}(),
+			expectedError: `^proxy.httpProxy: Invalid value: "http://172.30.0.25": proxy value is part of the service networks$`,
+		},
+		{
+			name: "overlapping HTTPProxy and more than one Service Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = "http://172.30.0.25"
+				c.Networking = validIPv4NetworkingConfig()
+				c.ServiceNetwork = append(c.ServiceNetwork, []ipnet.IPNet{
+					*ipnet.MustParseCIDR("172.30.1.0/24"),
+				}...,
+				)
+				return c
+			}(),
+			expectedError: `^\Q[networking.serviceNetwork[1]: Invalid value: "172.30.1.0/24": service network must not overlap with service network 0, networking.serviceNetwork: Invalid value: "172.30.0.0/16, 172.30.1.0/24": only one service network can be specified, proxy.httpProxy: Invalid value: "http://172.30.0.25": proxy value is part of the service networks]\E$`,
+		},
+		{
+			name: "non-overlapping HTTPSProxy and Cluster Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPSProxy = "http://192.168.2.25"
+				c.Networking = validIPv4NetworkingConfig()
+				return c
+			}(),
+		},
+		{
+			name: "overlapping HTTPSProxy and Cluster Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPSProxy = "http://192.168.1.25"
+				c.Networking = validIPv4NetworkingConfig()
+				return c
+			}(),
+			expectedError: `^proxy.httpsProxy: Invalid value: "http://192.168.1.25": proxy value is part of the cluster networks$`,
+		},
+		{
+			name: "overlapping HTTPSProxy and more than one Cluster Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPSProxy = "http://192.168.1.25"
+				c.Networking = validIPv4NetworkingConfig()
+				c.ClusterNetwork = append(c.ClusterNetwork, []types.ClusterNetworkEntry{
+					{
+						CIDR:       *ipnet.MustParseCIDR("192.168.0.0/16"),
+						HostPrefix: 28,
+					},
+				}...,
+				)
+				return c
+			}(),
+			expectedError: `^\Q[networking.clusterNetwork[1].cidr: Invalid value: "192.168.0.0/16": cluster network must not overlap with cluster network 0, proxy.httpsProxy: Invalid value: "http://192.168.1.25": proxy value is part of the cluster networks]\E$`,
+		},
+		{
+			name: "overlapping HTTPSProxy and Service Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPSProxy = "http://172.30.0.25"
+				c.Networking = validIPv4NetworkingConfig()
+				return c
+			}(),
+			expectedError: `^proxy.httpsProxy: Invalid value: "http://172.30.0.25": proxy value is part of the service networks$`,
+		},
+		{
+			name: "overlapping HTTPSProxy and more than one Service Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPSProxy = "http://172.30.0.25"
+				c.Networking = validIPv4NetworkingConfig()
+				c.ServiceNetwork = append(c.ServiceNetwork, []ipnet.IPNet{
+					*ipnet.MustParseCIDR("172.30.1.0/24"),
+				}...,
+				)
+				return c
+			}(),
+			expectedError: `^\Q[networking.serviceNetwork[1]: Invalid value: "172.30.1.0/24": service network must not overlap with service network 0, networking.serviceNetwork: Invalid value: "172.30.0.0/16, 172.30.1.0/24": only one service network can be specified, proxy.httpsProxy: Invalid value: "http://172.30.0.25": proxy value is part of the service networks]\E$`,
+		},
+		{
 			name: "invalid HTTPProxy Schema different schema",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
