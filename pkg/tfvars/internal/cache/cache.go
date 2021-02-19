@@ -3,7 +3,6 @@ package cache
 import (
 	"bytes"
 	"compress/gzip"
-	"crypto/md5"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -11,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/h2non/filetype/matchers"
 	"github.com/pkg/errors"
@@ -172,14 +172,23 @@ func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err er
 	return os.Rename(tempPath, filePath)
 }
 
-// DownloadFile obtains a file from a given URL, puts it in the cache folder, defined by dataType parameter,
-// and returns the local file path.
+// urlWithIntegrity pairs a URL with an optional expected sha256 checksum (after decompression, if any)
 // If the query string contains sha256 parameter (i.e. https://example.com/data.bin?sha256=098a5a...),
 // then the downloaded data checksum will be compared with the provided value.
-func DownloadFile(baseURL string, dataType string) (string, error) {
-	// Convert the given URL into a file name using md5 algorithm
-	fileName := fmt.Sprintf("%x", md5.Sum([]byte(baseURL)))
+type urlWithIntegrity struct {
+	location           url.URL
+	uncompressedSHA256 string
+}
 
+func (u *urlWithIntegrity) uncompressedName() string {
+	n := filepath.Base(u.location.Path)
+	return strings.TrimSuffix(strings.TrimSuffix(n, ".gz"), ".xz")
+}
+
+// download obtains a file from a given URL, puts it in the cache folder, defined by dataType parameter,
+// and returns the local file path.
+func (u *urlWithIntegrity) download(dataType string) (string, error) {
+	fileName := u.uncompressedName()
 	cacheDir, err := getCacheDir(dataType)
 	if err != nil {
 		return "", err
@@ -197,7 +206,7 @@ func DownloadFile(baseURL string, dataType string) (string, error) {
 	}
 
 	// Send a request
-	resp, err := http.Get(baseURL)
+	resp, err := http.Get(u.location.String())
 	if err != nil {
 		return "", err
 	}
@@ -208,17 +217,7 @@ func DownloadFile(baseURL string, dataType string) (string, error) {
 		return "", errors.Errorf("bad status: %s", resp.Status)
 	}
 
-	// Get sha256 checksum if it was provided as a part of the URL
-	var sha256Checksum string
-	parsedURL, err := url.ParseRequestURI(baseURL)
-	if err != nil {
-		return "", err
-	}
-	if sha256Checksums, ok := parsedURL.Query()["sha256"]; ok {
-		sha256Checksum = sha256Checksums[0]
-	}
-
-	err = cacheFile(resp.Body, filePath, sha256Checksum)
+	err = cacheFile(resp.Body, filePath, u.uncompressedSHA256)
 	if err != nil {
 		return "", err
 	}
@@ -232,5 +231,18 @@ func DownloadFile(baseURL string, dataType string) (string, error) {
 func DownloadImageFile(baseURL string) (string, error) {
 	logrus.Infof("Obtaining RHCOS image file from '%v'", baseURL)
 
-	return DownloadFile(baseURL, imageDataType)
+	var u urlWithIntegrity
+	parsedURL, err := url.ParseRequestURI(baseURL)
+	if err != nil {
+		return "", err
+	}
+	q := parsedURL.Query()
+	if uncompressedSHA256, ok := q["sha256"]; ok {
+		u.uncompressedSHA256 = uncompressedSHA256[0]
+		q.Del("sha256")
+		parsedURL.RawQuery = q.Encode()
+	}
+	u.location = *parsedURL
+
+	return u.download(imageDataType)
 }
