@@ -30,7 +30,7 @@ func TestValidateForProvisioning(t *testing.T) {
 					Replicas: pointer.Int64Ptr(5),
 				},
 			},
-			expectedErrMsg: `controlPlane.replicas: Invalid value: 5: control plane must be exactly three nodes when provisioning on OpenStack`,
+			expectedErrMsg: `controlPlane.replicas: Invalid value: 5: control plane cannot be more than three nodes when provisioning on OpenStack`,
 		},
 	}
 	for _, tc := range cases {
