@@ -106,7 +106,7 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("pullSecret"), c.PullSecret, err.Error()))
 	}
 	if c.Proxy != nil {
-		allErrs = append(allErrs, validateProxy(c.Proxy, field.NewPath("proxy"))...)
+		allErrs = append(allErrs, validateProxy(c.Proxy, c, field.NewPath("proxy"))...)
 	}
 	allErrs = append(allErrs, validateImageContentSources(c.ImageContentSources, field.NewPath("imageContentSources"))...)
 	if _, ok := validPublishingStrategies[c.Publish]; !ok {
@@ -456,7 +456,7 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 	return allErrs
 }
 
-func validateProxy(p *types.Proxy, fldPath *field.Path) field.ErrorList {
+func validateProxy(p *types.Proxy, c *types.InstallConfig, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if p.HTTPProxy == "" && p.HTTPSProxy == "" {
@@ -464,9 +464,15 @@ func validateProxy(p *types.Proxy, fldPath *field.Path) field.ErrorList {
 	}
 	if p.HTTPProxy != "" {
 		allErrs = append(allErrs, validateURI(p.HTTPProxy, fldPath.Child("httpProxy"), []string{"http"})...)
+		if c.Networking != nil {
+			allErrs = append(allErrs, validateIPProxy(p.HTTPProxy, c.Networking, fldPath.Child("httpProxy"))...)
+		}
 	}
 	if p.HTTPSProxy != "" {
 		allErrs = append(allErrs, validateURI(p.HTTPSProxy, fldPath.Child("httpsProxy"), []string{"http", "https"})...)
+		if c.Networking != nil {
+			allErrs = append(allErrs, validateIPProxy(p.HTTPSProxy, c.Networking, fldPath.Child("httpsProxy"))...)
+		}
 	}
 	if p.NoProxy != "" && p.NoProxy != "*" {
 		if strings.Contains(p.NoProxy, " ") {
@@ -570,4 +576,36 @@ func validateURI(uri string, fldPath *field.Path, schemes []string) field.ErrorL
 		}
 	}
 	return field.ErrorList{field.NotSupported(fldPath, parsed.Scheme, schemes)}
+}
+
+// validateIPProxy checks if the given proxy string is an IP and if so checks the service and
+// cluster networks and returns error if the IP belongs in them. Returns nil if the proxy is
+// not an IP address.
+func validateIPProxy(proxy string, n *types.Networking, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	parsed, err := url.ParseRequestURI(proxy)
+	if err != nil {
+		return allErrs
+	}
+
+	proxyIP := net.ParseIP(parsed.Host)
+	if proxyIP == nil {
+		return nil
+	}
+
+	for _, network := range n.ClusterNetwork {
+		if network.CIDR.Contains(proxyIP) {
+			allErrs = append(allErrs, field.Invalid(fldPath, proxy, "proxy value is part of the cluster networks"))
+			break
+		}
+	}
+
+	for _, network := range n.ServiceNetwork {
+		if network.Contains(proxyIP) {
+			allErrs = append(allErrs, field.Invalid(fldPath, proxy, "proxy value is part of the service networks"))
+			break
+		}
+	}
+	return allErrs
 }
