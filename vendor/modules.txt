@@ -992,8 +992,6 @@ github.com/keybase/go-crypto/openpgp/errors
 github.com/keybase/go-crypto/openpgp/packet
 github.com/keybase/go-crypto/openpgp/s2k
 github.com/keybase/go-crypto/rsa
-# github.com/konsorten/go-windows-terminal-sequences v1.0.3
-github.com/konsorten/go-windows-terminal-sequences
 # github.com/kr/fs v0.1.0
 github.com/kr/fs
 # github.com/kr/pretty v0.2.1
@@ -1036,9 +1034,9 @@ github.com/mattn/go-colorable
 github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/metal3-io/baremetal-operator v0.0.0 => github.com/openshift/baremetal-operator v0.0.0-20200715132148-0f91f62a41fe
+# github.com/metal3-io/baremetal-operator v0.0.0-20210212154228-75e27989f8c7 => github.com/openshift/baremetal-operator v0.0.0-20210217155533-fa9ca2e66839
 ## explicit
-github.com/metal3-io/baremetal-operator/pkg/apis/metal3/v1alpha1
+github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1
 github.com/metal3-io/baremetal-operator/pkg/bmc
 github.com/metal3-io/baremetal-operator/pkg/hardware
 # github.com/metal3-io/cluster-api-provider-baremetal v0.0.0 => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
@@ -1206,11 +1204,12 @@ github.com/satori/go.uuid
 ## explicit
 github.com/satori/uuid
 # github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
+## explicit
 github.com/shurcooL/httpfs/vfsutil
 # github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 ## explicit
 github.com/shurcooL/vfsgen
-# github.com/sirupsen/logrus v1.6.0
+# github.com/sirupsen/logrus v1.7.0
 ## explicit
 github.com/sirupsen/logrus
 # github.com/spf13/afero v1.3.5
@@ -1595,7 +1594,6 @@ github.com/vmware/govmomi/vmdk
 # github.com/xanzy/ssh-agent v0.2.1
 github.com/xanzy/ssh-agent
 # github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca
-## explicit
 github.com/xlab/treeprint
 # github.com/zclconf/go-cty v1.6.1
 github.com/zclconf/go-cty/cty
@@ -1626,8 +1624,6 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
-# golang.org/dl v0.0.0-20210204224843-1557c60ec592
-## explicit
 # golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 ## explicit
 golang.org/x/crypto/bcrypt
@@ -1944,7 +1940,7 @@ gopkg.in/ini.v1
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 gopkg.in/yaml.v3
-# honnef.co/go/tools v0.0.1-2020.1.5
+# honnef.co/go/tools v0.0.1-2020.1.6
 honnef.co/go/tools/arg
 honnef.co/go/tools/cmd/staticcheck
 honnef.co/go/tools/code
@@ -2352,7 +2348,7 @@ sigs.k8s.io/yaml
 # github.com/hashicorp/terraform-plugin-sdk => github.com/openshift/hashicorp-terraform-plugin-sdk v1.14.0-openshift
 # github.com/hashicorp/terraform-provider-vsphere => github.com/openshift/terraform-provider-vsphere v1.24.3-openshift
 # github.com/kubevirt/terraform-provider-kubevirt => github.com/nirarg/terraform-provider-kubevirt v0.0.0-20201222125919-101cee051ed3
-# github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20200715132148-0f91f62a41fe
+# github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20210217155533-fa9ca2e66839
 # github.com/metal3-io/cluster-api-provider-baremetal => github.com/openshift/cluster-api-provider-baremetal v0.0.0-20190821174549-a2a477909c1d
 # github.com/openshift/api => github.com/openshift/api v0.0.0-20210208192252-670ac3fc997c
 # github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200929181438-91d71ef2122c

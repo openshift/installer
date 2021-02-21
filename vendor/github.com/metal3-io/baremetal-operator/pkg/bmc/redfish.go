@@ -7,11 +7,8 @@ import (
 
 func init() {
 	schemes := []string{"http", "https"}
-	registerFactory("redfish", newRedfishAccessDetails, schemes)
-	registerFactory("redfish-virtualmedia", newRedfishVirtualMediaAccessDetails, schemes)
-	registerFactory("ilo5-redfish", newRedfishAccessDetails, schemes)
-	registerFactory("ilo5-virtualmedia", newRedfishVirtualMediaAccessDetails, schemes)
-	registerFactory("idrac-virtualmedia", newRedfishiDracVirtualMediaAccessDetails, schemes)
+	RegisterFactory("redfish", newRedfishAccessDetails, schemes)
+	RegisterFactory("ilo5-redfish", newRedfishAccessDetails, schemes)
 }
 
 func redfishDetails(parsedURL *url.URL, disableCertificateVerification bool) *redfishAccessDetails {
@@ -27,31 +24,11 @@ func newRedfishAccessDetails(parsedURL *url.URL, disableCertificateVerification 
 	return redfishDetails(parsedURL, disableCertificateVerification), nil
 }
 
-func newRedfishVirtualMediaAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
-	return &redfishVirtualMediaAccessDetails{
-		*redfishDetails(parsedURL, disableCertificateVerification),
-	}, nil
-}
-
-func newRedfishiDracVirtualMediaAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
-	return &redfishiDracVirtualMediaAccessDetails{
-		*redfishDetails(parsedURL, disableCertificateVerification),
-	}, nil
-}
-
 type redfishAccessDetails struct {
 	bmcType                        string
 	host                           string
 	path                           string
 	disableCertificateVerification bool
-}
-
-type redfishVirtualMediaAccessDetails struct {
-	redfishAccessDetails
-}
-
-type redfishiDracVirtualMediaAccessDetails struct {
-	redfishAccessDetails
 }
 
 const redfishDefaultScheme = "https"
@@ -76,27 +53,30 @@ func (a *redfishAccessDetails) DisableCertificateVerification() bool {
 	return a.disableCertificateVerification
 }
 
-// DriverInfo returns a data structure to pass as the DriverInfo
-// parameter when creating a node in Ironic. The structure is
-// pre-populated with the access information, and the caller is
-// expected to add any other information that might be needed (such as
-// the kernel and ramdisk locations).
-func (a *redfishAccessDetails) DriverInfo(bmcCreds Credentials) map[string]interface{} {
+func getRedfishAddress(bmcType, host string) string {
 	redfishAddress := []string{}
-	schemes := strings.Split(a.bmcType, "+")
+	schemes := strings.Split(bmcType, "+")
 	if len(schemes) > 1 {
 		redfishAddress = append(redfishAddress, schemes[1])
 	} else {
 		redfishAddress = append(redfishAddress, redfishDefaultScheme)
 	}
 	redfishAddress = append(redfishAddress, "://")
-	redfishAddress = append(redfishAddress, a.host)
+	redfishAddress = append(redfishAddress, host)
+	return strings.Join(redfishAddress, "")
+}
 
+// DriverInfo returns a data structure to pass as the DriverInfo
+// parameter when creating a node in Ironic. The structure is
+// pre-populated with the access information, and the caller is
+// expected to add any other information that might be needed (such as
+// the kernel and ramdisk locations).
+func (a *redfishAccessDetails) DriverInfo(bmcCreds Credentials) map[string]interface{} {
 	result := map[string]interface{}{
 		"redfish_system_id": a.path,
 		"redfish_username":  bmcCreds.Username,
 		"redfish_password":  bmcCreds.Password,
-		"redfish_address":   strings.Join(redfishAddress, ""),
+		"redfish_address":   getRedfishAddress(a.bmcType, a.host),
 	}
 
 	if a.disableCertificateVerification {
@@ -127,34 +107,6 @@ func (a *redfishAccessDetails) VendorInterface() string {
 	return ""
 }
 
-// Virtual Media Overrides
-
-func (a *redfishVirtualMediaAccessDetails) BootInterface() string {
-	return "redfish-virtual-media"
-}
-
-// iDrac Virtual Media Overrides
-
-func (a *redfishiDracVirtualMediaAccessDetails) Driver() string {
-	return "idrac"
-}
-
-func (a *redfishiDracVirtualMediaAccessDetails) BootInterface() string {
-	return "idrac-redfish-virtual-media"
-}
-
-func (a *redfishiDracVirtualMediaAccessDetails) ManagementInterface() string {
-	return "idrac-redfish"
-}
-
-func (a *redfishiDracVirtualMediaAccessDetails) PowerInterface() string {
-	return "idrac-redfish"
-}
-
-func (a *redfishiDracVirtualMediaAccessDetails) RAIDInterface() string {
-	return "no-raid"
-}
-
-func (a *redfishiDracVirtualMediaAccessDetails) VendorInterface() string {
-	return "no-vendor"
+func (a *redfishAccessDetails) SupportsSecureBoot() bool {
+	return true
 }

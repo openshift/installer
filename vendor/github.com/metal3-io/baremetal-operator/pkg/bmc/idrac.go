@@ -6,7 +6,7 @@ import (
 )
 
 func init() {
-	registerFactory("idrac", newIDRACAccessDetails, []string{"http", "https"})
+	RegisterFactory("idrac", newIDRACAccessDetails, []string{"http", "https"})
 }
 
 func newIDRACAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
@@ -92,4 +92,10 @@ func (a *iDracAccessDetails) RAIDInterface() string {
 
 func (a *iDracAccessDetails) VendorInterface() string {
 	return ""
+}
+
+// NOTE(dtantsur): change to true if we switch to redfish-based implementations
+// by default.
+func (a *iDracAccessDetails) SupportsSecureBoot() bool {
+	return false
 }

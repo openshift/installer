@@ -5,8 +5,8 @@ import (
 )
 
 func init() {
-	registerFactory("ipmi", newIPMIAccessDetails, []string{})
-	registerFactory("libvirt", newIPMIAccessDetails, []string{})
+	RegisterFactory("ipmi", newIPMIAccessDetails, []string{})
+	RegisterFactory("libvirt", newIPMIAccessDetails, []string{})
 }
 
 func newIPMIAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
@@ -91,4 +91,8 @@ func (a *ipmiAccessDetails) RAIDInterface() string {
 
 func (a *ipmiAccessDetails) VendorInterface() string {
 	return ""
+}
+
+func (a *ipmiAccessDetails) SupportsSecureBoot() bool {
+	return false
 }
