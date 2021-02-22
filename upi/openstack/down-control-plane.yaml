@@ -16,10 +16,26 @@
       state: absent
     with_indexed_items: "{{ [os_cp_server_name] * os_cp_nodes_number }}"
 
+  - name: 'List the Server groups'
+    command:
+      # os-compute-api-version 2.15 or higher is required for the 'soft-anti-affinity' policy
+      cmd: "openstack --os-compute-api-version=2.15 server group list -f json -c ID -c Name"
+    register: server_group_list
+
+  - name: 'Parse the Server group ID from existing'
+    set_fact:
+      server_group_id: "{{ (server_group_list.stdout | from_json | json_query(list_query) | first).ID }}"
+    vars:
+      list_query: "[?Name=='{{ os_cp_server_group_name }}']"
+    when:
+    - "os_cp_server_group_name|string in server_group_list.stdout"
+
   - name: 'Remove the Control Plane server group'
-    os_server_group:
-      name: "{{ os_cp_server_group_name }}"
-      state: absent
+    command:
+      # os-compute-api-version 2.15 or higher is required for the 'soft-anti-affinity' policy
+      cmd: "openstack --os-compute-api-version=2.15 server group delete {{ server_group_id }}"
+    when:
+    - server_group_id is defined
 
   - name: 'List the Compute trunks'
     command:

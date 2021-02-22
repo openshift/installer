@@ -44,7 +44,8 @@
 
   - name: 'List the Server groups'
     command:
-      cmd: "openstack server group list -f json -c ID -c Name"
+      # os-compute-api-version 2.15 or higher is required for the 'soft-anti-affinity' policy
+      cmd: "openstack --os-compute-api-version=2.15 server group list -f json -c ID -c Name"
     register: server_group_list
 
   - name: 'Parse the Server group ID from existing'
@@ -57,6 +58,7 @@
 
   - name: 'Create the Control Plane server group'
     command:
+      # os-compute-api-version 2.15 or higher is required for the 'soft-anti-affinity' policy
       cmd: "openstack --os-compute-api-version=2.15 server group create -f json -c id --policy=soft-anti-affinity {{ os_cp_server_group_name }}"
     register: server_group_created
     when:
