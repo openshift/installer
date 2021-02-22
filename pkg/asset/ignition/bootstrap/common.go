@@ -67,6 +67,7 @@ type bootstrapTemplateData struct {
 	FIPS                  bool
 	EtcdCluster           string
 	PullSecret            string
+	SSHKey                string
 	ReleaseImage          string
 	ClusterProfile        string
 	Proxy                 *configv1.ProxyStatus
@@ -280,6 +281,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
 		FIPS:                  installConfig.Config.FIPS,
 		PullSecret:            installConfig.Config.PullSecret,
+		SSHKey:                installConfig.Config.SSHKey,
 		ReleaseImage:          releaseImage.PullSpec,
 		EtcdCluster:           strings.Join(etcdEndpoints, ","),
 		Proxy:                 &proxy.Config.Status,
