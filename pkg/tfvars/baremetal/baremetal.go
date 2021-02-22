@@ -88,9 +88,14 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		// it is not set. We use the capabilities field instead of
 		// instance_info to ensure the host is in the right mode for
 		// virtualmedia-based introspection.
-		bootMode := "boot_mode:uefi"
-		if host.BootMode == baremetal.Legacy {
+		var bootMode string
+		switch host.BootMode {
+		case baremetal.Legacy:
 			bootMode = "boot_mode:bios"
+		case baremetal.UEFISecureBoot:
+			bootMode = "boot_mode:uefi,secure_boot:true"
+		default:
+			bootMode = "boot_mode:uefi"
 		}
 
 		// Properties
@@ -136,6 +141,12 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		instanceInfo := map[string]interface{}{
 			"image_source":   cacheImageURL,
 			"image_checksum": cacheChecksumURL,
+		}
+
+		if host.BootMode == baremetal.UEFISecureBoot {
+			instanceInfo["capabilities"] = map[string]string{
+				"secure_boot": "true",
+			}
 		}
 
 		hosts = append(hosts, hostMap)
