@@ -152,12 +152,12 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 	}
 
 	cfg.AdditionalNetworkIDs = []string{}
-	if mpool.AdditionalNetworkIDs != nil {
+	if mpool != nil {
 		cfg.AdditionalNetworkIDs = append(cfg.AdditionalNetworkIDs, mpool.AdditionalNetworkIDs...)
 	}
 
 	cfg.AdditionalSecurityGroupIDs = []string{}
-	if mpool.AdditionalSecurityGroupIDs != nil {
+	if mpool != nil {
 		cfg.AdditionalSecurityGroupIDs = append(cfg.AdditionalSecurityGroupIDs, mpool.AdditionalSecurityGroupIDs...)
 	}
 
