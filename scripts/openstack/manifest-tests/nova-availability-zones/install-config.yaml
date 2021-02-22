@@ -8,7 +8,11 @@ controlPlane:
   platform:
     openstack:
       type: ${COMPUTE_FLAVOR}
-  replicas: 3
+      zones:
+      - masterzone
+      - masterztwo
+      - masterzthree
+  replicas: 10
 compute:
 - name: worker
   platform:
