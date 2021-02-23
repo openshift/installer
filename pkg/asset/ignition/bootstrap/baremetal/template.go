@@ -35,6 +35,10 @@ type TemplateData struct {
 	// MAC addresses. Requests to bootstrap DHCP from other hosts will be ignored.
 	ProvisioningDHCPAllowList string
 
+	// ProvisioningConsole is a device which should be passed to the IPA kernel to use as its console as
+	// kernel ... console=<ProvisioningConsole>
+	ProvisioningConsole string
+
 	// IronicUsername contains the username for authentication to Ironic
 	IronicUsername string
 
@@ -47,6 +51,7 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	var templateData TemplateData
 
 	templateData.ProvisioningIP = config.BootstrapProvisioningIP
+	templateData.ProvisioningConsole = config.ProvisioningConsole
 
 	if config.ProvisioningNetwork != baremetal.DisabledProvisioningNetwork {
 		cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()

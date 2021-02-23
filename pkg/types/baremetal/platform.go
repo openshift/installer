@@ -163,4 +163,10 @@ type Platform struct {
 	//
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty" validate:"omitempty,osimageuri,urlexist"`
+
+	// ProvisioningConsole is a device which should be passed to the IPA
+	// kernel to use as its console
+	//
+	// +optional
+	ProvisioningConsole string `json:"provisioningConsole,omitempty" validate:"alphanum"`
 }
