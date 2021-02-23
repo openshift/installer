@@ -9,16 +9,16 @@ import (
 	"strings"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	"github.com/ghodss/yaml"
+	configv1 "github.com/openshift/api/config/v1"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	kubevirtprovider "github.com/openshift/cluster-api-provider-kubevirt/pkg/apis/kubevirtprovider/v1alpha1"
 	kubevirtutils "github.com/openshift/cluster-api-provider-kubevirt/pkg/utils"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
-	configv1 "github.com/openshift/api/config/v1"
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/ghodss/yaml"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
 	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
@@ -29,12 +29,12 @@ import (
 	baremetalbootstrap "github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/manifests"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcospkg "github.com/openshift/installer/pkg/rhcos"
@@ -206,14 +206,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 		}
 
-		privateHostedZoneId := ""
+		privateHostedZoneID := ""
 		for _, manifestFile := range manifestsInDirectory.Files() {
-			if manifestFile.Filename == manifests.GetDnsCfgFilename() {
-				var clusterDnsFileStruct configv1.DNS
-				if err := yaml.Unmarshal(manifestFile.Data, &clusterDnsFileStruct); err != nil {
-					return errors.Wrapf(err, "Unable to parse manifests/cluster-dns-02-config.yml as proper YAML file", platform)
+			if manifestFile.Filename == manifests.GetDNSCfgFilename() {
+				var clusterDNSFileStruct configv1.DNS
+				if err := yaml.Unmarshal(manifestFile.Data, &clusterDNSFileStruct); err != nil {
+					return errors.Wrapf(err, "Unable to parse manifests/cluster-dns-02-config.yml as proper YAML file")
 				}
-				privateHostedZoneId = clusterDnsFileStruct.Spec.PrivateZone.ID
+				privateHostedZoneID = clusterDNSFileStruct.Spec.PrivateZone.ID
 				break
 			}
 		}
@@ -263,7 +263,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			IgnitionBucket:        bucket,
 			IgnitionPresignedURL:  url,
 			AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
-			PrivateZoneId:         privateHostedZoneId,
+			PrivateZoneID:         privateHostedZoneID,
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

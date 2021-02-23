@@ -45,8 +45,8 @@ func (*DNS) Name() string {
 	return "DNS Config"
 }
 
-// returns the dnsCfgFilename variable
-func GetDnsCfgFilename() string {
+// GetDNSCfgFilename returns the dnsCfgFilename variable
+func GetDNSCfgFilename() string {
 	return dnsCfgFilename
 }
 
