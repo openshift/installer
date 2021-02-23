@@ -5,6 +5,8 @@ locals {
   // So publish_strategy serves an coordinated proxy for that decision.
   public_endpoints = var.publish_strategy == "External" ? true : false
 
+  use_existing_private_zone = var.zone_id == "" ? false : true
+
   use_cname = contains(["us-gov-west-1", "us-gov-east-1", "us-iso-east-1"], var.region)
   use_alias = ! local.use_cname
 }
@@ -15,7 +17,15 @@ data "aws_route53_zone" "public" {
   name = var.base_domain
 }
 
+data "aws_route53_zone" "int" {
+  count = local.use_existing_private_zone ? 1 : 0
+
+  zone_id = var.zone_id
+}
+
 resource "aws_route53_zone" "int" {
+  count = local.use_existing_private_zone ? 0 : 1
+
   name          = var.cluster_domain
   force_destroy = true
 
@@ -50,7 +60,7 @@ resource "aws_route53_record" "api_external_alias" {
 resource "aws_route53_record" "api_internal_alias" {
   count = local.use_alias ? 1 : 0
 
-  zone_id = aws_route53_zone.int.zone_id
+  zone_id = local.use_existing_private_zone ? data.aws_route53_zone.int[0].zone_id : aws_route53_zone.int[0].zone_id
   name    = "api-int.${var.cluster_domain}"
   type    = "A"
 
@@ -64,7 +74,7 @@ resource "aws_route53_record" "api_internal_alias" {
 resource "aws_route53_record" "api_external_internal_zone_alias" {
   count = local.use_alias ? 1 : 0
 
-  zone_id = aws_route53_zone.int.zone_id
+  zone_id = local.use_existing_private_zone ? data.aws_route53_zone.int[0].zone_id : aws_route53_zone.int[0].zone_id
   name    = "api.${var.cluster_domain}"
   type    = "A"
 
@@ -89,7 +99,7 @@ resource "aws_route53_record" "api_external_cname" {
 resource "aws_route53_record" "api_internal_cname" {
   count = local.use_cname ? 1 : 0
 
-  zone_id = aws_route53_zone.int.zone_id
+  zone_id = local.use_existing_private_zone ? data.aws_route53_zone.int[0].zone_id : aws_route53_zone.int[0].zone_id
   name    = "api-int.${var.cluster_domain}"
   type    = "CNAME"
   ttl     = 10
@@ -100,7 +110,7 @@ resource "aws_route53_record" "api_internal_cname" {
 resource "aws_route53_record" "api_external_internal_zone_cname" {
   count = local.use_cname ? 1 : 0
 
-  zone_id = aws_route53_zone.int.zone_id
+  zone_id = local.use_existing_private_zone ? data.aws_route53_zone.int[0].zone_id : aws_route53_zone.int[0].zone_id
   name    = "api.${var.cluster_domain}"
   type    = "CNAME"
   ttl     = 10

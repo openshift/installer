@@ -89,6 +89,7 @@ module "dns" {
   vpc_id                   = module.vpc.vpc_id
   region                   = var.aws_region
   publish_strategy         = var.aws_publish_strategy
+  zone_id                  = var.aws_private_zone_id
 }
 
 module "vpc" {
@@ -128,4 +129,3 @@ resource "aws_ami_copy" "imported" {
     local.tags,
   )
 }
-

@@ -148,3 +148,8 @@ The stub Ignition config that should be used to boot the bootstrap instance. Thi
 specified in aws_ignition_bucket.
 EOF
 }
+
+variable "aws_private_zone_id" {
+  type = string
+  description = "The existing private zone ID to use. If left empty, then a new zone will be created (default)."
+}

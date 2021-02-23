@@ -45,6 +45,11 @@ func (*DNS) Name() string {
 	return "DNS Config"
 }
 
+// returns the dnsCfgFilename variable
+func GetDnsCfgFilename() string {
+	return dnsCfgFilename
+}
+
 // Dependencies returns all of the dependencies directly needed to generate
 // the asset.
 func (*DNS) Dependencies() []asset.Asset {

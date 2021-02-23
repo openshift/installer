@@ -36,11 +36,13 @@ type config struct {
 	SkipRegionCheck         bool              `json:"aws_skip_region_validation"`
 	IgnitionBucket          string            `json:"aws_ignition_bucket"`
 	BootstrapIgnitionStub   string            `json:"aws_bootstrap_stub_ignition"`
+	PrivateZoneId           string            `json:"aws_private_zone_id"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
 	VPC                           string
+	PrivateZoneId                 string
 	PrivateSubnets, PublicSubnets []string
 	Services                      []typesaws.ServiceEndpoint
 
@@ -123,6 +125,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PublishStrategy:         string(sources.Publish),
 		SkipRegionCheck:         !configaws.IsKnownRegion(masterConfig.Placement.Region),
 		IgnitionBucket:          sources.IgnitionBucket,
+		PrivateZoneId:           sources.PrivateZoneId,
 	}
 
 	stubIgn, err := generateIgnitionShim(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle)

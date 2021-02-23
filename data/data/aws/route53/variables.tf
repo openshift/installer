@@ -58,3 +58,8 @@ variable "region" {
   type = string
   description = "The target AWS region for the cluster."
 }
+
+variable "zone_id" {
+  type = string
+  description = "The existing private zone ID to use. If left empty, then a new zone will be created (default)."
+}

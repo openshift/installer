@@ -14,9 +14,11 @@ import (
 	kubevirtutils "github.com/openshift/cluster-api-provider-kubevirt/pkg/utils"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
+	configv1 "github.com/openshift/api/config/v1"
 	vsphereprovider "github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/ghodss/yaml"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
 	azureprovider "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1beta1"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
@@ -27,6 +29,7 @@ import (
 	baremetalbootstrap "github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
@@ -96,6 +99,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		&machines.Master{},
 		&machines.Worker{},
 		&baremetalbootstrap.IronicCreds{},
+		&manifests.Manifests{},
 	}
 }
 
@@ -111,7 +115,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	rhcosImage := new(rhcos.Image)
 	rhcosBootstrapImage := new(rhcos.BootstrapImage)
 	ironicCreds := &baremetalbootstrap.IronicCreds{}
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, rhcosImage, rhcosBootstrapImage, ironicCreds)
+	manifestsInDirectory := &manifests.Manifests{}
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, rhcosImage, rhcosBootstrapImage, ironicCreds, manifestsInDirectory)
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -201,6 +206,18 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 		}
 
+		privateHostedZoneId := ""
+		for _, manifestFile := range manifestsInDirectory.Files() {
+			if manifestFile.Filename == manifests.GetDnsCfgFilename() {
+				var clusterDnsFileStruct configv1.DNS
+				if err := yaml.Unmarshal(manifestFile.Data, &clusterDnsFileStruct); err != nil {
+					return errors.Wrapf(err, "Unable to parse manifests/cluster-dns-02-config.yml as proper YAML file", platform)
+				}
+				privateHostedZoneId = clusterDnsFileStruct.Spec.PrivateZone.ID
+				break
+			}
+		}
+
 		sess, err := installConfig.AWS.Session(ctx)
 		if err != nil {
 			return err
@@ -246,6 +263,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			IgnitionBucket:        bucket,
 			IgnitionPresignedURL:  url,
 			AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
+			PrivateZoneId:         privateHostedZoneId,
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
