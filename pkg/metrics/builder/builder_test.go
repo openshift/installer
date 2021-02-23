@@ -175,6 +175,9 @@ func TestMetricBuilderCollector(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			metricBuilder, err := NewMetricBuilder(tc.opts, tc.value, tc.labelKeyValues)
+			if !assert.NoError(t, err, "error constructing new metric builder") {
+				return
+			}
 			collector, err := metricBuilder.PromCollector()
 			if tc.expectedErrorMessage == "" {
 				assert.NoError(t, err, "expected successful collector creation")
@@ -220,6 +223,9 @@ func TestNewMetricBuilder(t *testing.T) {
 	assert.False(t, found)
 
 	err = metricBuilder.AddLabelValue("test3", "metric labels")
+	if err != nil {
+		assert.Failf(t, err.Error(), "error adding label value")
+	}
 	_, found = metricBuilder.labelKeyValues["test3"]
 	assert.True(t, found)
 }
