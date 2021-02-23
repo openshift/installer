@@ -2,15 +2,18 @@
 package gcp
 
 import (
+	"context"
 	"fmt"
 
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	"github.com/pkg/errors"
+	googleoauth "golang.org/x/oauth2/google"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	ic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
@@ -35,7 +38,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		azIndex := int(idx) % len(azs)
-		provider, err := provider(clusterID, platform, mpool, osImage, azIndex, role, userDataSecret)
+		provider, err := provider(clusterID, platform, mpool, osImage, azIndex, config.CredentialsMode, role, userDataSecret)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -67,7 +70,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, osImage string, azIdx int, role, userDataSecret string) (*gcpprovider.GCPMachineProviderSpec, error) {
+func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, osImage string, azIdx int, cm types.CredentialsMode, role, userDataSecret string) (*gcpprovider.GCPMachineProviderSpec, error) {
 	az := mpool.Zones[azIdx]
 	if len(platform.Licenses) > 0 {
 		osImage = fmt.Sprintf("%s-rhcos-image", clusterID)
@@ -91,6 +94,11 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 		}
 	}
 
+	sa, err := getServiceAccounts(cm, clusterID, role, platform.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+
 	return &gcpprovider.GCPMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "gcpprovider.openshift.io/v1beta1",
@@ -110,15 +118,12 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			Network:    network,
 			Subnetwork: subnetwork,
 		}},
-		ServiceAccounts: []gcpprovider.GCPServiceAccount{{
-			Email:  fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], platform.ProjectID),
-			Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
-		}},
-		Tags:        []string{fmt.Sprintf("%s-%s", clusterID, role)},
-		MachineType: mpool.InstanceType,
-		Region:      platform.Region,
-		Zone:        az,
-		ProjectID:   platform.ProjectID,
+		ServiceAccounts: sa,
+		Tags:            []string{fmt.Sprintf("%s-%s", clusterID, role)},
+		MachineType:     mpool.InstanceType,
+		Region:          platform.Region,
+		Zone:            az,
+		ProjectID:       platform.ProjectID,
 	}, nil
 }
 
@@ -134,6 +139,7 @@ func ConfigMasters(machines []machineapi.Machine, clusterID string, publish type
 		providerSpec.TargetPools = targetPools
 	}
 }
+
 func getNetworks(platform *gcp.Platform, clusterID, role string) (string, string, error) {
 	if platform.Network == "" {
 		return fmt.Sprintf("%s-network", clusterID), fmt.Sprintf("%s-%s-subnet", clusterID, role), nil
@@ -147,4 +153,43 @@ func getNetworks(platform *gcp.Platform, clusterID, role string) (string, string
 	default:
 		return "", "", fmt.Errorf("unrecognized machine role %s", role)
 	}
+}
+
+// getServiceAccounts retrieves the appropriate service account value based on the credentials mode:
+// Mint: generates a name to match the SA created in Terraform
+// Passthrough: reads the email address from the session credentials
+// Manual: leaves email blank, expecting users to manually edit manifests
+func getServiceAccounts(cm types.CredentialsMode, clusterID, role, projectID string) ([]gcpprovider.GCPServiceAccount, error) {
+	sa := gcpprovider.GCPServiceAccount{
+		Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
+	}
+	switch cm {
+	case types.PassthroughCredentialsMode:
+		var err error
+		if sa.Email, err = getServiceAccountEmail(); err != nil {
+			return nil, errors.Wrap(err, "failed to get service account email for passthrough mode")
+		}
+	case types.ManualCredentialsMode:
+		// sa.Email is empty
+	default:
+		// types.MintCredentialsMode is the default behavior
+		sa.Email = fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], projectID)
+	}
+	return []gcpprovider.GCPServiceAccount{sa}, nil
+}
+
+// getServiceAccountEmail retrieves the SA email address from the session credentials
+func getServiceAccountEmail() (string, error) {
+	ssn, err := ic.GetSession(context.TODO())
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get session")
+	}
+	cfg, err := googleoauth.JWTConfigFromJSON(ssn.Credentials.JSON, "")
+	if err != nil {
+		return "", errors.Wrap(err, "failed to parse service account from credentials")
+	}
+	if cfg.Email == "" {
+		return "", errors.New("CredentialsPassthroughMode requires GCP session credentials to have a valid client_email")
+	}
+	return cfg.Email, nil
 }

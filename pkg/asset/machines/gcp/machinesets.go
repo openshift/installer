@@ -38,7 +38,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			replicas++
 		}
 
-		provider, err := provider(clusterID, platform, mpool, osImage, idx, role, userDataSecret)
+		provider, err := provider(clusterID, platform, mpool, osImage, idx, config.CredentialsMode, role, userDataSecret)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
