@@ -249,6 +249,9 @@ func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State)
 			return bootstrap, port, masters, err
 		}
 		masters, err = gatherkubevirt.ControlPlaneIPs(tfstate)
+		if err != nil {
+			logrus.Error(err)
+		}
 	default:
 		return "", port, nil, errUnSupportedGatherPlatform{Message: fmt.Sprintf("Cannot fetch the bootstrap and control plane host addresses from state file for %s platform", config.Platform.Name())}
 	}
