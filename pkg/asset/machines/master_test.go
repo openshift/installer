@@ -191,3 +191,56 @@ spec:
 		})
 	}
 }
+
+func TestControlPlaneIsNotModified(t *testing.T) {
+	parents := asset.Parents{}
+	installConfig := installconfig.InstallConfig{
+		Config: &types.InstallConfig{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-cluster",
+			},
+			SSHKey:     "ssh-rsa: dummy-key",
+			BaseDomain: "test-domain",
+			Platform: types.Platform{
+				AWS: &awstypes.Platform{
+					Region: "us-east-1",
+					DefaultMachinePlatform: &awstypes.MachinePool{
+						InstanceType: "TEST_INSTANCE_TYPE",
+					},
+				},
+			},
+			ControlPlane: &types.MachinePool{
+				Hyperthreading: types.HyperthreadingDisabled,
+				Replicas:       pointer.Int64Ptr(1),
+				Platform: types.MachinePoolPlatform{
+					AWS: &awstypes.MachinePool{
+						Zones: []string{"us-east-1a"},
+					},
+				},
+			},
+		},
+	}
+
+	parents.Add(
+		&installconfig.ClusterID{
+			UUID:    "test-uuid",
+			InfraID: "test-infra-id",
+		},
+		&installConfig,
+		(*rhcos.Image)(pointer.StringPtr("test-image")),
+		&machine.Master{
+			File: &asset.File{
+				Filename: "master-ignition",
+				Data:     []byte("test-ignition"),
+			},
+		},
+	)
+	master := &Master{}
+	if err := master.Generate(parents); err != nil {
+		t.Fatalf("failed to generate master machines: %v", err)
+	}
+
+	if installConfig.Config.ControlPlane.Platform.AWS.Type != "" {
+		t.Fatalf("control plance in the install config has been modified")
+	}
+}

@@ -193,3 +193,59 @@ spec:
 		})
 	}
 }
+
+func TestComputeIsNotModified(t *testing.T) {
+	parents := asset.Parents{}
+	installConfig := installconfig.InstallConfig{
+		Config: &types.InstallConfig{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-cluster",
+			},
+			SSHKey:     "ssh-rsa: dummy-key",
+			BaseDomain: "test-domain",
+			Platform: types.Platform{
+				AWS: &awstypes.Platform{
+					Region: "us-east-1",
+					DefaultMachinePlatform: &awstypes.MachinePool{
+						InstanceType: "TEST_INSTANCE_TYPE",
+					},
+				},
+			},
+			Compute: []types.MachinePool{
+				{
+					Replicas:       pointer.Int64Ptr(1),
+					Hyperthreading: types.HyperthreadingDisabled,
+					Platform: types.MachinePoolPlatform{
+						AWS: &awstypes.MachinePool{
+							Zones:        []string{"us-east-1a"},
+							InstanceType: "",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	parents.Add(
+		&installconfig.ClusterID{
+			UUID:    "test-uuid",
+			InfraID: "test-infra-id",
+		},
+		&installConfig,
+		(*rhcos.Image)(pointer.StringPtr("test-image")),
+		&machine.Worker{
+			File: &asset.File{
+				Filename: "worker-ignition",
+				Data:     []byte("test-ignition"),
+			},
+		},
+	)
+	worker := &Worker{}
+	if err := worker.Generate(parents); err != nil {
+		t.Fatalf("failed to generate master machines: %v", err)
+	}
+
+	if installConfig.Config.Compute[0].Platform.AWS.Type != "" {
+		t.Fatalf("compute in the install config has been modified")
+	}
+}
