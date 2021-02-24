@@ -123,3 +123,12 @@ Should the cluster be created with ipv6 networking.
 EOF
 
 }
+
+variable "credentials_mode" {
+  type = string
+  default = null
+
+  description = <<EOF
+Is the cluster in Mint, Passthrough, or Manual credential mode.
+EOF
+}

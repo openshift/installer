@@ -38,6 +38,8 @@ type config struct {
 	ClusterNetwork          string   `json:"gcp_cluster_network,omitempty"`
 	ControlPlaneSubnet      string   `json:"gcp_control_plane_subnet,omitempty"`
 	ComputeSubnet           string   `json:"gcp_compute_subnet,omitempty"`
+	MasterSAEmail           string   `json:"gcp_master_sa_email"`
+	WorkerSAEmail           string   `json:"gcp_worker_sa_email"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -78,6 +80,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ControlPlaneSubnet:      masterConfig.NetworkInterfaces[0].Subnetwork,
 		ComputeSubnet:           workerConfig.NetworkInterfaces[0].Subnetwork,
 		PreexistingNetwork:      sources.PreexistingNetwork,
+		MasterSAEmail:           masterConfig.ServiceAccounts[0].Email,
+		WorkerSAEmail:           workerConfig.ServiceAccounts[0].Email,
 	}
 	cfg.PreexistingImage = true
 	if len(sources.ImageLicenses) > 0 {

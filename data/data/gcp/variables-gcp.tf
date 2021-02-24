@@ -120,3 +120,13 @@ variable "gcp_root_volume_kms_key_link" {
   description = "The GCP self link of KMS key to encrypt the volume."
   default = null
 }
+
+variable "gcp_master_sa_email" {
+  type = string
+  description = "The email address of the master service account."
+}
+
+variable "gcp_worker_sa_email" {
+  type = string
+  description = "The email address of the worker service account."
+}

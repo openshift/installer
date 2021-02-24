@@ -40,13 +40,14 @@ module "bootstrap" {
 module "master" {
   source = "./master"
 
-  image          = local.gcp_image
-  instance_count = var.master_count
-  machine_type   = var.gcp_master_instance_type
-  cluster_id     = var.cluster_id
-  ignition       = var.ignition_master
-  subnet         = module.network.master_subnet
-  zones          = distinct(var.gcp_master_availability_zones)
+  image           = local.gcp_image
+  instance_count  = var.master_count
+  machine_type    = var.gcp_master_instance_type
+  cluster_id      = var.cluster_id
+  ignition        = var.ignition_master
+  subnet          = module.network.master_subnet
+  zones           = distinct(var.gcp_master_availability_zones)
+  master_sa_email = module.iam.master_sa_email
 
   root_volume_size         = var.gcp_master_root_volume_size
   root_volume_type         = var.gcp_master_root_volume_type
@@ -58,7 +59,10 @@ module "master" {
 module "iam" {
   source = "./iam"
 
-  cluster_id = var.cluster_id
+  cluster_id       = var.cluster_id
+  credentials_mode = var.credentials_mode
+  master_sa_email  = var.gcp_master_sa_email
+  worker_sa_email  = var.gcp_worker_sa_email
 }
 
 module "network" {

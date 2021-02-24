@@ -53,3 +53,7 @@ variable "root_volume_kms_key_link" {
 variable "zones" {
   type = list
 }
+
+variable "master_sa_email" {
+  type = string
+}

@@ -155,7 +155,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		bootstrapIgn,
 		masterIgn,
 		masterCount,
+		installConfig.Config.CredentialsMode,
 	)
+
 	if err != nil {
 		return errors.Wrap(err, "failed to get Terraform variables")
 	}
