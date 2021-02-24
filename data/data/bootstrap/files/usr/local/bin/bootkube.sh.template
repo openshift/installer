@@ -4,6 +4,7 @@ set -euoE pipefail ## -E option will cause functions to inherit trap
 . /usr/local/bin/bootstrap-service-record.sh
 
 . /usr/local/bin/release-image.sh
+. /usr/local/bin/bootstrap-cluster-gather.sh
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
@@ -377,19 +378,28 @@ then
 fi
 
 echo "Starting cluster-bootstrap..."
-
-if [ ! -f cb-bootstrap.done ]
-then
-    record_service_stage_start "cb-bootstrap"
-    bootkube_podman_run \
+run_cluster_bootstrap() {
+	record_service_stage_start "cb-bootstrap"
+	bootkube_podman_run \
         --rm \
         --volume "$PWD:/assets:z" \
         --volume /etc/kubernetes:/etc/kubernetes:z \
         "${CLUSTER_BOOTSTRAP_IMAGE}" \
         start --tear-down-early=false --asset-dir=/assets --required-pods="${REQUIRED_PODS}"
-
-    touch cb-bootstrap.done
-    record_service_stage_success
+}
+    
+if [ ! -f cb-bootstrap.done ]
+then
+    if run_cluster_bootstrap
+    then
+        touch cb-bootstrap.done
+        record_service_stage_success
+    else
+        ret=$?
+        set +u
+        cluster_bootstrap_gather
+        exit $ret
+    fi
 fi
 
 if [ "$BOOTSTRAP_INPLACE" = true ]
