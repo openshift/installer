@@ -53,6 +53,7 @@ In addition, it covers the installation with the default CNI (OpenShiftSDN), as 
 - [Learn about the OpenShift on OpenStack networking infrastructure design](../../design/openstack/networking-infrastructure.md)
 - [Deploying OpenShift bare-metal workers](deploy_baremetal_workers.md)
 - [Provider Networks](provider_networks.md)
+- [How to set affinity rules for workers at install-time](affinity.md)
 
 ## OpenStack Requirements
 
