@@ -8,7 +8,7 @@ resource "openstack_networking_port_v2" "bootstrap_port" {
 
   admin_state_up     = "true"
   network_id         = var.private_network_id
-  security_group_ids = var.openstack_disable_sg ? null : [var.master_sg_id]
+  security_group_ids = var.openstack_disable_sg ? [] : var.master_sg_ids
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
   extra_dhcp_option {

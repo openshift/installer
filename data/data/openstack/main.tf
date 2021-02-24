@@ -40,7 +40,10 @@ module "bootstrap" {
   cluster_domain          = var.cluster_domain
   nodes_subnet_id         = module.topology.nodes_subnet_id
   private_network_id      = module.topology.private_network_id
-  master_sg_id            = var.openstack_disable_sg ? null : module.topology.master_sg_id
+  master_sg_ids           = var.openstack_disable_sg ? [] : concat(
+    var.openstack_master_extra_sg_ids,
+    [module.topology.master_sg_id],
+  )
   bootstrap_shim_ignition = var.openstack_bootstrap_shim_ignition
   master_port_ids         = module.topology.master_port_ids
   root_volume_size        = var.openstack_master_root_volume_size
