@@ -11,6 +11,10 @@ variable "cluster_domain" {
   description = "The domain name of the cluster. All DNS records must be under this domain."
 }
 
+variable "openstack_disable_sg" {
+  type = bool
+}
+
 variable "external_network" {
   description = "Name of the external network providing Floating IP addresses."
   type        = string

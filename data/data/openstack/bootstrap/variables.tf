@@ -3,6 +3,10 @@ variable "base_image_id" {
   description = "The identifier of the Glance image for the bootstrap node."
 }
 
+variable "openstack_disable_sg" {
+  type = bool
+}
+
 variable "extra_tags" {
   type    = map(string)
   default = {}
@@ -48,8 +52,8 @@ variable "private_network_id" {
   type = string
 }
 
-variable "master_sg_ids" {
-  type = list(string)
+variable "master_sg_id" {
+  type = string
 }
 
 variable "nodes_subnet_id" {

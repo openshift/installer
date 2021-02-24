@@ -658,6 +658,9 @@ spec:
                         items:
                           type: string
                         type: array
+                      disableSecurityGroups:
+                        description: Do not use security groups for this cluster.
+                        type: boolean
                     required:
                     - type
                     type: object

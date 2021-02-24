@@ -1,5 +1,5 @@
 output "master_sg_id" {
-  value = openstack_networking_secgroup_v2.master.id
+  value = var.openstack_disable_sg ? null : openstack_networking_secgroup_v2.master[0].id
 }
 
 output "master_port_ids" {

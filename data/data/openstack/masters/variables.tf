@@ -8,6 +8,10 @@ variable "cluster_id" {
   description = "The identifier for the cluster."
 }
 
+variable "openstack_disable_sg" {
+  type = bool
+}
+
 variable "flavor_name" {
   type = string
 }

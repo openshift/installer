@@ -39,13 +39,14 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 
 * `additionalNetworkIDs` (optional list of strings): IDs of additional networks for machines.
 * `additionalSecurityGroupIDs` (optional list of strings): IDs of additional security groups for machines.
+* `disableSecurityGroups` (optional boolean): Do not use security groups for machines/networks.
 * `type` (optional string): The OpenStack flavor name for machines in the pool.
 * `rootVolume` (optional object): Defines the root volume for instances in the machine pool. The instances use ephemeral disks if not set.
   * `size` (required integer): Size of the root volume in GB. Must be set to at least 25.
   * `type` (required string): The volume pool to create the volume from.
 * `zones` (optional list of strings): The names of the availability zones you want to install your nodes on. If unset, the installer will use your default compute zone.
 
-**NOTE:** The bootstrap node follows the `type`, `rootVolume`, `additionalNetworkIDs`, and `additionalSecurityGroupIDs` parameters from the `controlPlane` machine pool.
+**NOTE:** The bootstrap node follows the `type`, `rootVolume`, `additionalNetworkIDs`, `additionalSecurityGroupIDs`, and `disableSecurityGroups` parameters from the `controlPlane` machine pool.
 
 **NOTE:** Note when deploying with `Kuryr` there is an Octavia API loadbalancer VM that will not fulfill the Availability Zones restrictions due to Octavia lack of support for it. In addition, if Octavia only has the amphora provider instead of also the OVN-Octavia provider, all the OpenShift services will be backed up by Octavia Load Balancer VMs which will not fulfill the Availability Zone restrictions either.
 

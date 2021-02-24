@@ -42,10 +42,11 @@ type config struct {
 	MachinesSubnet             string   `json:"openstack_machines_subnet_id,omitempty"`
 	MachinesNetwork            string   `json:"openstack_machines_network_id,omitempty"`
 	MasterAvailabilityZones    []string `json:"openstack_master_availability_zones,omitempty"`
+	DisableSecurityGroups      bool     `json:"openstack_disable_sg,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool, machinesSubnet string) ([]byte, error) {
+func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool, machinesSubnet string, disableSg bool) ([]byte, error) {
 	zones := []string{}
 	seen := map[string]bool{}
 	for _, config := range masterConfigs {
@@ -66,6 +67,7 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 		ExternalDNS:             externalDNS,
 		MachinesSubnet:          machinesSubnet,
 		MasterAvailabilityZones: zones,
+		DisableSecurityGroups:   disableSg,
 	}
 
 	serviceCatalog, err := getServiceCatalog(cloud)

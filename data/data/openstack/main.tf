@@ -29,20 +29,18 @@ provider "openstack" {
 module "bootstrap" {
   source = "./bootstrap"
 
-  cluster_id         = var.cluster_id
-  extra_tags         = var.openstack_extra_tags
-  base_image_id      = data.openstack_images_image_v2.base_image.id
-  flavor_name        = var.openstack_master_flavor_name
-  ignition           = var.ignition_bootstrap
-  api_int_ip         = var.openstack_api_int_ip
-  external_network   = var.openstack_external_network
-  cluster_domain     = var.cluster_domain
-  nodes_subnet_id    = module.topology.nodes_subnet_id
-  private_network_id = module.topology.private_network_id
-  master_sg_ids = concat(
-    var.openstack_master_extra_sg_ids,
-    [module.topology.master_sg_id],
-  )
+  cluster_id              = var.cluster_id
+  openstack_disable_sg    = var.openstack_disable_sg
+  extra_tags              = var.openstack_extra_tags
+  base_image_id           = data.openstack_images_image_v2.base_image.id
+  flavor_name             = var.openstack_master_flavor_name
+  ignition                = var.ignition_bootstrap
+  api_int_ip              = var.openstack_api_int_ip
+  external_network        = var.openstack_external_network
+  cluster_domain          = var.cluster_domain
+  nodes_subnet_id         = module.topology.nodes_subnet_id
+  private_network_id      = module.topology.private_network_id
+  master_sg_id            = var.openstack_disable_sg ? null : module.topology.master_sg_id
   bootstrap_shim_ignition = var.openstack_bootstrap_shim_ignition
   master_port_ids         = module.topology.master_port_ids
   root_volume_size        = var.openstack_master_root_volume_size
@@ -55,12 +53,13 @@ module "masters" {
   source = "./masters"
 
   base_image_id   = data.openstack_images_image_v2.base_image.id
+  openstack_disable_sg      = var.openstack_disable_sg
   cluster_id      = var.cluster_id
   flavor_name     = var.openstack_master_flavor_name
   instance_count  = var.master_count
   master_port_ids = module.topology.master_port_ids
   user_data_ign   = var.ignition_master
-  master_sg_ids = concat(
+  master_sg_ids   = var.openstack_disable_sg ? null : concat(
     var.openstack_master_extra_sg_ids,
     [module.topology.master_sg_id],
   )
@@ -74,22 +73,23 @@ module "masters" {
 module "topology" {
   source = "./topology"
 
-  cidr_block          = var.machine_v4_cidrs[0]
-  cluster_id          = var.cluster_id
-  cluster_domain      = var.cluster_domain
-  external_network    = var.openstack_external_network
-  external_network_id = var.openstack_external_network_id
-  masters_count       = var.master_count
-  api_floating_ip     = var.openstack_api_floating_ip
-  ingress_floating_ip = var.openstack_ingress_floating_ip
-  api_int_ip          = var.openstack_api_int_ip
-  ingress_ip          = var.openstack_ingress_ip
-  external_dns        = var.openstack_external_dns
-  trunk_support       = var.openstack_trunk_support
-  octavia_support     = var.openstack_octavia_support
-  machines_subnet_id  = var.openstack_machines_subnet_id
-  machines_network_id = var.openstack_machines_network_id
-  master_extra_sg_ids = var.openstack_master_extra_sg_ids
+  cidr_block            = var.machine_v4_cidrs[0]
+  cluster_id            = var.cluster_id
+  openstack_disable_sg  = var.openstack_disable_sg
+  cluster_domain        = var.cluster_domain
+  external_network      = var.openstack_external_network
+  external_network_id   = var.openstack_external_network_id
+  masters_count         = var.master_count
+  api_floating_ip       = var.openstack_api_floating_ip
+  ingress_floating_ip   = var.openstack_ingress_floating_ip
+  api_int_ip            = var.openstack_api_int_ip
+  ingress_ip            = var.openstack_ingress_ip
+  external_dns          = var.openstack_external_dns
+  trunk_support         = var.openstack_trunk_support
+  octavia_support       = var.openstack_octavia_support
+  machines_subnet_id    = var.openstack_machines_subnet_id
+  machines_network_id   = var.openstack_machines_network_id
+  master_extra_sg_ids   = var.openstack_disable_sg ? null : var.openstack_master_extra_sg_ids
 }
 
 data "openstack_images_image_v2" "base_image" {

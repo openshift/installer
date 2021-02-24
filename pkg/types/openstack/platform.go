@@ -84,4 +84,8 @@ type Platform struct {
 	// The subnet and network specified in MachinesSubnet will not be deleted or modified by the installer.
 	// +optional
 	MachinesSubnet string `json:"machinesSubnet,omitempty"`
+
+	// DisableSecurityGroups will allow clusters to be created without the use of OpenStack Security Groups. Some Openstack
+	// configurations do not support security groups. This is generally not recommended where security groups are supported.
+	DisableSecurityGroups bool `json:"disableSecurityGroups,omitempty"`
 }
