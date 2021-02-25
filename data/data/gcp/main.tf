@@ -5,7 +5,7 @@ locals {
   worker_subnet_cidr = cidrsubnet(var.machine_v4_cidrs[0], 3, 1) #worker subnet is a smaller subnet within the vnet. i.e from /21 to /24
   public_endpoints   = var.gcp_publish_strategy == "External" ? true : false
 
-  gcp_image = var.gcp_preexisting_image ? var.gcp_image : google_compute_image.cluster[0].self_link
+  gcp_image = var.gcp_image
 }
 
 provider "google" {
@@ -93,24 +93,4 @@ module "dns" {
   api_external_lb_ip   = module.network.cluster_public_ip
   api_internal_lb_ip   = module.network.cluster_ip
   public_endpoints     = local.public_endpoints
-}
-
-resource "google_compute_image" "cluster" {
-  count = var.gcp_preexisting_image ? 0 : 1
-
-  name = "${var.cluster_id}-rhcos-image"
-
-  # See https://github.com/openshift/installer/issues/2546
-  guest_os_features {
-    type = "SECURE_BOOT"
-  }
-  guest_os_features {
-    type = "UEFI_COMPATIBLE"
-  }
-
-  raw_disk {
-    source = var.gcp_image_uri
-  }
-
-  licenses = var.gcp_image_licenses
 }

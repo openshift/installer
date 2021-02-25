@@ -56,12 +56,6 @@ variable "gcp_image" {
   description = "URL to the Image for all nodes."
 }
 
-variable "gcp_preexisting_image" {
-  type = bool
-  default = true
-  description = "Specifies whether an existing GCP Image should be used or a new one created for installation"
-}
-
 variable "gcp_master_root_volume_type" {
   type = string
   description = "The type of volume for the root block device of master nodes."
@@ -107,12 +101,6 @@ variable "gcp_compute_subnet" {
 variable "gcp_publish_strategy" {
   type = string
   description = "The cluster publishing strategy, either Internal or External"
-}
-
-variable "gcp_image_licenses" {
-  type = list(string)
-  description = "The licenses to use when creating compute instances"
-  default = []
 }
 
 variable "gcp_root_volume_kms_key_link" {

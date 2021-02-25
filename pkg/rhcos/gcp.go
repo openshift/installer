@@ -18,13 +18,3 @@ func GCP(ctx context.Context, arch types.Architecture) (string, error) {
 
 	return fmt.Sprintf("projects/%s/global/images/%s", meta.GCP.Project, meta.GCP.Image), nil
 }
-
-// GCPRaw fetches the URL of the public GCP storage bucket containing the RHCOS image
-func GCPRaw(ctx context.Context, arch types.Architecture) (string, error) {
-	meta, err := fetchRHCOSBuild(ctx, arch)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to fetch RHCOS metadata")
-	}
-
-	return meta.GCP.URL, nil
-}

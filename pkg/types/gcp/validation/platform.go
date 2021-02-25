@@ -2,14 +2,16 @@ package validation
 
 import (
 	"os"
-
 	"sort"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/gcp"
+)
 
-	"github.com/openshift/installer/pkg/validate"
+const (
+	// nestedVirtLicense is enabled by default, see https://github.com/coreos/coreos-assembler/pull/1618/commits/73320cf633e362f96de5f9d9aabb02b8647d4156
+	nestedVirtLicense = "https://compute.googleapis.com/compute/v1/projects/vm-options/global/licenses/enable-vmx"
 )
 
 var (
@@ -82,8 +84,8 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path) field.ErrorList {
 	}
 
 	for i, license := range p.Licenses {
-		if validate.URIWithProtocol(license, "https") != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("licenses").Index(i), license, "licenses must be URLs (https) only"))
+		if license != nestedVirtLicense {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("licenses").Index(i), license, "only accepted license is enable-vmx"))
 		}
 	}
 
