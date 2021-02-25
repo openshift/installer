@@ -283,9 +283,10 @@ func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallCon
 func validateBootMode(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
 	for idx, host := range hosts {
 		switch host.BootMode {
-		case "", baremetal.UEFI, baremetal.Legacy:
+		case "", baremetal.UEFI, baremetal.UEFISecureBoot, baremetal.Legacy:
 		default:
-			errors = append(errors, field.Invalid(fldPath.Index(idx).Child("bootMode"), host.BootMode, "bootMode must be one of \"UEFI\" or \"legacy\""))
+			valid := []string{string(baremetal.UEFI), string(baremetal.UEFISecureBoot), string(baremetal.Legacy)}
+			errors = append(errors, field.NotSupported(fldPath.Index(idx).Child("bootMode"), host.BootMode, valid))
 		}
 	}
 	return

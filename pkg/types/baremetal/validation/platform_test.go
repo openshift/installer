@@ -114,12 +114,18 @@ func TestValidatePlatform(t *testing.T) {
 			name: "invalid_boot_mode",
 			platform: platform().
 				Hosts(host1().BootMode("not-a-valid-value")).build(),
-			expected: "baremetal.Hosts\\[0\\].bootMode: Invalid value: \"not-a-valid-value\": bootMode must be one of \"UEFI\" or \"legacy\"",
+			expected: "baremetal.Hosts\\[0\\].bootMode: Unsupported value: \"not-a-valid-value\": supported values: \"UEFI\", \"UEFISecureBoot\", \"legacy\"",
 		},
 		{
 			name: "uefi_boot_mode",
 			platform: platform().
 				Hosts(host1().BootMode("UEFI")).build(),
+			expected: "",
+		},
+		{
+			name: "uefi_secure_boot_mode",
+			platform: platform().
+				Hosts(host1().BootMode("UEFISecureBoot")).build(),
 			expected: "",
 		},
 		{

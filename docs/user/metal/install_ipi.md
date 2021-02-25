@@ -157,7 +157,8 @@ include:
   https://github.com/metal3-io/baremetal-operator/blob/master/docs/api.md
 
 * *bootMode* -- Put the server in legacy (BIOS) or UEFI mode for
-  booting. The default is UEFI.
+  booting. Use UEFISecureBoot to enable UEFI and secure boot on the server.
+  The default is UEFI.
 
 ```yaml
 apiVersion: v1
