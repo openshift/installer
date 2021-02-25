@@ -11,4 +11,7 @@ import (
 
 	// dependency of generating CRD for install-config
 	_ "sigs.k8s.io/controller-tools/cmd/controller-gen"
+
+	// used to generate mocks
+	_ "github.com/golang/mock/mockgen"
 )
