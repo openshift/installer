@@ -19,10 +19,11 @@ import (
 )
 
 type config struct {
-	LibvirtURI              string              `json:"libvirt_uri,omitempty"`
-	BootstrapProvisioningIP string              `json:"bootstrap_provisioning_ip,omitempty"`
-	BootstrapOSImage        string              `json:"bootstrap_os_image,omitempty"`
-	Bridges                 []map[string]string `json:"bridges"`
+	LibvirtURI       string              `json:"libvirt_uri,omitempty"`
+	IronicURI        string              `json:"ironic_uri,omitempty"`
+	InspectorURI     string              `json:"inspector_uri,omitempty"`
+	BootstrapOSImage string              `json:"bootstrap_os_image,omitempty"`
+	Bridges          []map[string]string `json:"bridges"`
 
 	IronicUsername string `json:"ironic_username"`
 	IronicPassword string `json:"ironic_password"`
@@ -40,7 +41,7 @@ type config struct {
 }
 
 // TFVars generates bare metal specific Terraform variables.
-func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridge, externalMAC, provisioningBridge, provisioningMAC string, platformHosts []*baremetal.Host, image, ironicUsername, ironicPassword, ignition string) ([]byte, error) {
+func TFVars(libvirtURI, apiVIP, imageCacheIP, bootstrapOSImage, externalBridge, externalMAC, provisioningBridge, provisioningMAC string, platformHosts []*baremetal.Host, image, ironicUsername, ironicPassword, ignition string) ([]byte, error) {
 	bootstrapOSImage, err := cache.DownloadImageFile(bootstrapOSImage)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to use cached bootstrap libvirt image")
@@ -69,8 +70,8 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 			Password: host.BMC.Password,
 		}
 		driverInfo := accessDetails.DriverInfo(credentials)
-		driverInfo["deploy_kernel"] = fmt.Sprintf("http://%s/images/ironic-python-agent.kernel", net.JoinHostPort(bootstrapProvisioningIP, "80"))
-		driverInfo["deploy_ramdisk"] = fmt.Sprintf("http://%s/images/ironic-python-agent.initramfs", net.JoinHostPort(bootstrapProvisioningIP, "80"))
+		driverInfo["deploy_kernel"] = fmt.Sprintf("http://%s/images/ironic-python-agent.kernel", net.JoinHostPort(imageCacheIP, "80"))
+		driverInfo["deploy_ramdisk"] = fmt.Sprintf("http://%s/images/ironic-python-agent.initramfs", net.JoinHostPort(imageCacheIP, "80"))
 
 		// Host Details
 		hostMap := map[string]interface{}{
@@ -136,7 +137,7 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 		imageFilename := path.Base(strings.TrimSuffix(imageURL.String(), ".gz"))
 		imageFilename = strings.TrimSuffix(imageFilename, ".xz")
 		compressedImageFilename := strings.Replace(imageFilename, "openstack", "compressed", 1)
-		cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(bootstrapProvisioningIP, "80"), imageFilename, compressedImageFilename)
+		cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(imageCacheIP, "80"), imageFilename, compressedImageFilename)
 		cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
 		instanceInfo := map[string]interface{}{
 			"image_source":   cacheImageURL,
@@ -197,7 +198,8 @@ func TFVars(libvirtURI, bootstrapProvisioningIP, bootstrapOSImage, externalBridg
 
 	cfg := &config{
 		LibvirtURI:               libvirtURI,
-		BootstrapProvisioningIP:  bootstrapProvisioningIP,
+		IronicURI:                fmt.Sprintf("http://%s/v1", net.JoinHostPort(apiVIP, "6385")),
+		InspectorURI:             fmt.Sprintf("http://%s/v1", net.JoinHostPort(apiVIP, "5050")),
 		BootstrapOSImage:         bootstrapOSImage,
 		IronicUsername:           ironicUsername,
 		IronicPassword:           ironicPassword,

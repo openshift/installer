@@ -438,14 +438,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case baremetal.Name:
-		provisioningIP := installConfig.Config.Platform.BareMetal.BootstrapProvisioningIP
-		if installConfig.Config.Platform.BareMetal.ProvisioningNetwork == baremetal.DisabledProvisioningNetwork && provisioningIP == "" {
-			provisioningIP = installConfig.Config.Platform.BareMetal.APIVIP
+		var imageCacheIP string
+		if installConfig.Config.Platform.BareMetal.ProvisioningNetwork == baremetal.DisabledProvisioningNetwork {
+			imageCacheIP = installConfig.Config.Platform.BareMetal.APIVIP
+		} else {
+			imageCacheIP = installConfig.Config.Platform.BareMetal.BootstrapProvisioningIP
 		}
 
 		data, err = baremetaltfvars.TFVars(
 			installConfig.Config.Platform.BareMetal.LibvirtURI,
-			provisioningIP,
+			installConfig.Config.Platform.BareMetal.APIVIP,
+			imageCacheIP,
 			string(*rhcosBootstrapImage),
 			installConfig.Config.Platform.BareMetal.ExternalBridge,
 			installConfig.Config.Platform.BareMetal.ExternalMACAddress,
