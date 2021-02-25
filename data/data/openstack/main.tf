@@ -56,13 +56,12 @@ module "masters" {
   source = "./masters"
 
   base_image_id   = data.openstack_images_image_v2.base_image.id
-  openstack_disable_sg      = var.openstack_disable_sg
   cluster_id      = var.cluster_id
   flavor_name     = var.openstack_master_flavor_name
   instance_count  = var.master_count
   master_port_ids = module.topology.master_port_ids
   user_data_ign   = var.ignition_master
-  master_sg_ids   = var.openstack_disable_sg ? null : concat(
+  master_sg_ids   = module.topology.master_sg_id == null ? [] : concat(
     var.openstack_master_extra_sg_ids,
     [module.topology.master_sg_id],
   )
@@ -92,7 +91,7 @@ module "topology" {
   octavia_support       = var.openstack_octavia_support
   machines_subnet_id    = var.openstack_machines_subnet_id
   machines_network_id   = var.openstack_machines_network_id
-  master_extra_sg_ids   = var.openstack_disable_sg ? null : var.openstack_master_extra_sg_ids
+  master_extra_sg_ids   = var.openstack_master_extra_sg_ids
 }
 
 data "openstack_images_image_v2" "base_image" {
