@@ -185,6 +185,20 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			expectedErrMsg: `compute\[0\].platform.openstack.type: Not found: "non-existant-flavor"`,
 		},
 		{
+			name: "no flavor name",
+			mpool: func() *openstack.MachinePool {
+				mp := validMachinePool()
+				mp.FlavorName = ""
+				return mp
+			}(),
+			cloudInfo: func() *CloudInfo {
+				ci := validMpoolCloudInfo()
+				return ci
+			}(),
+			expectedError:  true,
+			expectedErrMsg: `compute\[0\].platform.openstack.type: Required value: Flavor name must be provided`,
+		},
+		{
 			name:         "invalid control plane flavorName",
 			controlPlane: true,
 			mpool: func() *openstack.MachinePool {
