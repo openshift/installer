@@ -110,7 +110,7 @@ func validUUIDv4(s string) bool {
 // this function does not validate proper install config usage
 func validateFlavor(flavorName string, ci *CloudInfo, req flavorRequirements, fldPath *field.Path, storage bool) field.ErrorList {
 	if flavorName == "" {
-		return nil
+		return field.ErrorList{field.Required(fldPath, "Flavor name must be provided")}
 	}
 
 	flavor, ok := ci.Flavors[flavorName]
