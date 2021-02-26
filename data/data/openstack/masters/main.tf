@@ -58,7 +58,7 @@ resource "openstack_compute_servergroup_v2" "master_group" {
 #
 # [1]: https://github.com/openshift/installer/tree/master/docs/user/openstack#master-nodes
 resource "openstack_compute_instance_v2" "master_conf_0" {
-  count = "${var.instance_count > 0 ? 1 : 0}"
+  count = var.instance_count > 0 ? 1 : 0
   name = "${var.cluster_id}-master-0"
 
   flavor_id = data.openstack_compute_flavor_v2.masters_flavor.id
@@ -106,7 +106,7 @@ resource "openstack_compute_instance_v2" "master_conf_0" {
 }
 
 resource "openstack_compute_instance_v2" "master_conf_1" {
-  count = "${var.instance_count > 1 ? 1 : 0}"
+  count = var.instance_count > 1 ? 1 : 0
   name = "${var.cluster_id}-master-1"
 
   flavor_id = data.openstack_compute_flavor_v2.masters_flavor.id
@@ -156,7 +156,7 @@ resource "openstack_compute_instance_v2" "master_conf_1" {
 }
 
 resource "openstack_compute_instance_v2" "master_conf_2" {
-  count = "${var.instance_count > 2 ? 1 : 0}"
+  count = var.instance_count > 2 ? 1 : 0
   name = "${var.cluster_id}-master-2"
 
   flavor_id = data.openstack_compute_flavor_v2.masters_flavor.id
