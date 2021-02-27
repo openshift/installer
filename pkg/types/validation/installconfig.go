@@ -589,7 +589,7 @@ func validateIPProxy(proxy string, n *types.Networking, fldPath *field.Path) fie
 		return allErrs
 	}
 
-	proxyIP := net.ParseIP(parsed.Host)
+	proxyIP := net.ParseIP(parsed.Hostname())
 	if proxyIP == nil {
 		return nil
 	}

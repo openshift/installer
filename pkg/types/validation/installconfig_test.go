@@ -706,6 +706,16 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^proxy.httpProxy: Invalid value: "http//baduri": parse "http//baduri": invalid URI for request$`,
 		},
 		{
+			name: "HTTPProxy with port overlapping with Cluster Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = "http://192.168.1.25:3030"
+				c.Networking = validIPv4NetworkingConfig()
+				return c
+			}(),
+			expectedError: `^proxy.httpProxy: Invalid value: "http://192.168.1.25:3030": proxy value is part of the cluster networks$`,
+		},
+		{
 			name: "overlapping HTTPProxy and Cluster Networks",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -751,6 +761,16 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
+			name: "HTTPProxy with port overlapping with Service Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = "http://172.30.0.25:3030"
+				c.Networking = validIPv4NetworkingConfig()
+				return c
+			}(),
+			expectedError: `^proxy.httpProxy: Invalid value: "http://172.30.0.25:3030": proxy value is part of the service networks$`,
+		},
+		{
 			name: "overlapping HTTPProxy and Service Networks",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -782,6 +802,16 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking = validIPv4NetworkingConfig()
 				return c
 			}(),
+		},
+		{
+			name: "HTTPSProxy with port overlapping with Cluster Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPSProxy = "http://192.168.1.25:3030"
+				c.Networking = validIPv4NetworkingConfig()
+				return c
+			}(),
+			expectedError: `^proxy.httpsProxy: Invalid value: "http://192.168.1.25:3030": proxy value is part of the cluster networks$`,
 		},
 		{
 			name: "overlapping HTTPSProxy and Cluster Networks",
@@ -819,6 +849,16 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^proxy.httpsProxy: Invalid value: "http://172.30.0.25": proxy value is part of the service networks$`,
+		},
+		{
+			name: "HTTPSProxy with port overlapping with Service Networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPSProxy = "http://172.30.0.25:3030"
+				c.Networking = validIPv4NetworkingConfig()
+				return c
+			}(),
+			expectedError: `^proxy.httpsProxy: Invalid value: "http://172.30.0.25:3030": proxy value is part of the service networks$`,
 		},
 		{
 			name: "overlapping HTTPSProxy and more than one Service Networks",
