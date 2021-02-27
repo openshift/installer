@@ -151,6 +151,9 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, datastore, n
 			break
 		}
 	}
+	if importOvaParams.Network == nil {
+		return nil, errors.Errorf("failed to find a host in the cluster that contains the provided network")
+	}
 
 	// Find all the datastores that are configured under the cluster
 	datastores, err := clusterComputeResource.Datastores(ctx)
@@ -168,6 +171,9 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, datastore, n
 			importOvaParams.Datastore = datastoreObj
 			break
 		}
+	}
+	if importOvaParams.Datastore == nil {
+		return nil, errors.Errorf("failed to find a host in the cluster that contains the provided datastore")
 	}
 
 	// Find all the HostSystem(s) under cluster
