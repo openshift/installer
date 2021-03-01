@@ -266,7 +266,7 @@ EOF
 
 variable "openstack_disable_sg" {
   type    = bool
-  default = false
+  default = true
 
   description = <<EOF
 False if the user wants to use security groups and True to disable their creation (e.g. PowerVC)
