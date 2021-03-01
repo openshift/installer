@@ -6,8 +6,6 @@ import (
 	"github.com/gophercloud/gophercloud"
 	computequotasets "github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/quotasets"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
-	tokensv2 "github.com/gophercloud/gophercloud/openstack/identity/v2/tokens"
-	tokensv3 "github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
@@ -321,12 +319,7 @@ func (ci *CloudInfo) getZones() ([]string, error) {
 func loadLimits(opts *clientconfig.ClientOpts) ([]record, error) {
 	var limits []record
 
-	projectID, err := getProjectID(opts)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get keystone project ID")
-	}
-
-	computeRecords, err := getComputeLimits(opts, projectID)
+	computeRecords, err := getComputeLimits(opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get compute quota records")
 	}
@@ -337,12 +330,12 @@ func loadLimits(opts *clientconfig.ClientOpts) ([]record, error) {
 	return limits, nil
 }
 
-func getComputeLimits(opts *clientconfig.ClientOpts, projectID string) ([]record, error) {
+func getComputeLimits(opts *clientconfig.ClientOpts) ([]record, error) {
 	computeClient, err := clientconfig.NewServiceClient("compute", opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to connect against OpenStack Comute v2 API")
 	}
-	qs, err := computequotasets.GetDetail(computeClient, projectID).Extract()
+	qs, err := computequotasets.GetDetail(computeClient, opts.AuthInfo.ProjectID).Extract()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get QuotaSets from OpenStack Compute API")
 	}
@@ -365,37 +358,6 @@ func getComputeLimits(opts *clientconfig.ClientOpts, projectID string) ([]record
 	addRecord("RAM", qs.RAM)
 
 	return records, nil
-}
-
-func getProjectID(opts *clientconfig.ClientOpts) (string, error) {
-	keystoneClient, err := clientconfig.NewServiceClient("identity", opts)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to conect against OpenStack Keystone API")
-	}
-	authResult := keystoneClient.GetAuthResult()
-	if authResult == nil {
-		return "", errors.Errorf("Client did not use openstack.Authenticate()")
-	}
-
-	switch authResult.(type) {
-	case tokensv2.CreateResult:
-		// Gophercloud has support for v2, but keystone has deprecated
-		// and it's not even documented.
-		return "", errors.Errorf("Extracting project ID using the keystone v2 API is not supported")
-
-	case tokensv3.CreateResult:
-		v3Result := authResult.(tokensv3.CreateResult)
-		project, err := v3Result.ExtractProject()
-		if err != nil {
-			return "", errors.Wrap(err, "Extracting project from v3 authResult")
-		} else if project == nil {
-			return "", errors.Errorf("Token is not scoped to a project")
-		}
-		return project.ID, nil
-
-	default:
-		return "", errors.Errorf("Unsupported AuthResult type: %T", authResult)
-	}
 }
 
 // loadQuotas loads the quota information for a project and provided services. It provides information
