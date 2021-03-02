@@ -1,6 +1,7 @@
 resource "openstack_networking_secgroup_v2" "master" {
-  name = "${var.cluster_id}-master"
-  tags = ["openshiftClusterID=${var.cluster_id}"]
+  name        = "${var.cluster_id}-master"
+  tags        = ["openshiftClusterID=${var.cluster_id}"]
+  description = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_mcs" {
@@ -11,6 +12,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_mcs" {
   port_range_max    = 22623
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 # TODO(mandre) Explicitely enable egress
@@ -24,6 +26,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_icmp" {
   # FIXME(mandre) AWS only allows ICMP from cidr_block
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_ssh" {
@@ -34,6 +37,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_ssh" {
   port_range_max    = 22
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_tcp" {
@@ -44,6 +48,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_tcp" {
   port_range_max    = 53
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_udp" {
@@ -54,6 +59,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_udp" {
   port_range_max    = 53
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_mdns_udp" {
@@ -64,6 +70,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_mdns_udp" {
   port_range_max    = 5353
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
@@ -75,6 +82,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
   # FIXME(mandre) AWS only allows API port from cidr_block
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_vxlan" {
@@ -85,6 +93,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_vxlan" {
   port_range_max    = 4789
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_geneve" {
@@ -95,6 +104,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_geneve" {
   port_range_max    = 6081
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_ike" {
@@ -105,6 +115,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_ike" {
   port_range_max    = 500
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_ike_nat_t" {
@@ -115,6 +126,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_ike_nat_t" {
   port_range_max    = 4500
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_esp" {
@@ -123,6 +135,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_esp" {
   protocol          = "esp"
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_ovndb" {
@@ -133,6 +146,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_ovndb" {
   port_range_max    = 6642
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal" {
@@ -143,6 +157,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal" {
   port_range_max    = 9999
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_udp" {
@@ -153,6 +168,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_udp" {
   port_range_max    = 9999
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_scheduler" {
@@ -163,6 +179,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_scheduler"
   port_range_max    = 10259
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller_manager" {
@@ -173,6 +190,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller
   port_range_max    = 10257
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_secure" {
@@ -183,6 +201,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_secure"
   port_range_max    = 10250
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_etcd" {
@@ -193,6 +212,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_etcd" {
   port_range_max    = 2380
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_tcp" {
@@ -203,6 +223,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_tcp" {
   port_range_max    = 32767
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_udp" {
@@ -213,6 +234,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_udp" {
   port_range_max    = 32767
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_vrrp" {
@@ -223,5 +245,6 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_vrrp" {
   protocol          = "112"
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
 }
 

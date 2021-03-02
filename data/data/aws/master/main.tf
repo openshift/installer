@@ -2,6 +2,7 @@ locals {
   // Because of the issue https://github.com/hashicorp/terraform/issues/12570, the consumers cannot use a dynamic list for count
   // and therefore are force to implicitly assume that the list is of aws_lb_target_group_arns_length - 1, in case there is no api_external
   target_group_arns_length = var.publish_strategy == "External" ? var.target_group_arns_length : var.target_group_arns_length - 1
+  description              = "Created By OpenShift Installer"
 }
 
 data "aws_partition" "current" {}
@@ -15,8 +16,9 @@ resource "aws_iam_instance_profile" "master" {
 }
 
 resource "aws_iam_role" "master_role" {
-  name = "${var.cluster_id}-master-role"
-  path = "/"
+  name        = "${var.cluster_id}-master-role"
+  path        = "/"
+  description = local.description
 
   assume_role_policy = <<EOF
 {
@@ -108,8 +110,9 @@ EOF
 }
 
 resource "aws_network_interface" "master" {
-  count     = var.instance_count
-  subnet_id = var.az_to_subnet_id[var.availability_zones[count.index]]
+  count       = var.instance_count
+  description = local.description
+  subnet_id   = var.az_to_subnet_id[var.availability_zones[count.index]]
 
   security_groups = var.master_sg_ids
 

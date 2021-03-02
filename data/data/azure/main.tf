@@ -5,6 +5,7 @@ locals {
     },
     var.azure_extra_tags,
   )
+  description = "Created By OpenShift Installer"
 }
 
 provider "azurerm" {

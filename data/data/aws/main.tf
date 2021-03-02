@@ -5,6 +5,7 @@ locals {
     },
     var.aws_extra_tags,
   )
+  description = "Created By OpenShift Installer"
 }
 
 provider "aws" {
@@ -115,6 +116,7 @@ module "vpc" {
 resource "aws_ami_copy" "imported" {
   count             = var.aws_region != var.aws_ami_region ? 1 : 0
   name              = "${var.cluster_id}-master"
+  description       = local.description
   source_ami_id     = var.aws_ami
   source_ami_region = var.aws_ami_region
   encrypted         = true

@@ -1,6 +1,7 @@
 resource "openstack_networking_secgroup_v2" "worker" {
-  name = "${var.cluster_id}-worker"
-  tags = ["openshiftClusterID=${var.cluster_id}"]
+  name        = "${var.cluster_id}-worker"
+  tags        = ["openshiftClusterID=${var.cluster_id}"]
+  description = local.description
 }
 
 # TODO(mandre) Explicitely enable egress
@@ -14,6 +15,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_icmp" {
   # FIXME(mandre) AWS only allows ICMP from cidr_block
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_ssh" {
@@ -24,6 +26,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_ssh" {
   port_range_max    = 22
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_mdns_udp" {
@@ -34,6 +37,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_mdns_udp" {
   port_range_max    = 5353
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_http" {
@@ -44,6 +48,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_http" {
   port_range_max    = 80
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_https" {
@@ -54,6 +59,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_https" {
   port_range_max    = 443
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_router" {
@@ -64,6 +70,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_router" {
   port_range_max    = 1936
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vxlan" {
@@ -74,6 +81,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vxlan" {
   port_range_max    = 4789
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_geneve" {
@@ -84,6 +92,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_geneve" {
   port_range_max    = 6081
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_ike" {
@@ -94,6 +103,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_ike" {
   port_range_max    = 500
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_ike_nat_t" {
@@ -104,6 +114,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_ike_nat_t" {
   port_range_max    = 4500
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_esp" {
@@ -112,6 +123,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_esp" {
   protocol          = "esp"
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal" {
@@ -122,6 +134,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal" {
   port_range_max    = 9999
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal_udp" {
@@ -132,6 +145,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_internal_udp" {
   port_range_max    = 9999
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_kubelet_insecure" {
@@ -142,6 +156,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_kubelet_insecur
   port_range_max    = 10250
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_tcp" {
@@ -152,6 +167,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_tcp" {
   port_range_max    = 32767
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_udp" {
@@ -162,6 +178,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_services_udp" {
   port_range_max    = 32767
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vrrp" {
@@ -172,4 +189,5 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_vrrp" {
   protocol          = "112"
   remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
+  description       = local.description
 }

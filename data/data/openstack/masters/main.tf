@@ -1,3 +1,7 @@
+locals {
+  description = "Created By OpenShift Installer"
+}
+
 data "openstack_compute_flavor_v2" "masters_flavor" {
   name = var.flavor_name
 }
@@ -28,6 +32,7 @@ data "ignition_config" "master_ignition_config" {
 
 resource "openstack_blockstorage_volume_v3" "master_volume" {
   name = "${var.cluster_id}-master-${count.index}"
+  description = local.description
   count = var.root_volume_size == null ? 0 : var.instance_count
 
   size = var.root_volume_size

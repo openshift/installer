@@ -1,5 +1,6 @@
 resource "google_compute_network" "cluster_network" {
-  count = var.preexisting_network ? 0 : 1
+  count       = var.preexisting_network ? 0 : 1
+  description = local.description
 
   name = var.cluster_network
 
@@ -7,7 +8,8 @@ resource "google_compute_network" "cluster_network" {
 }
 
 resource "google_compute_subnetwork" "worker_subnet" {
-  count = var.preexisting_network ? 0 : 1
+  count       = var.preexisting_network ? 0 : 1
+  description = local.description
 
   name          = var.worker_subnet
   network       = google_compute_network.cluster_network[0].self_link
@@ -15,7 +17,8 @@ resource "google_compute_subnetwork" "worker_subnet" {
 }
 
 resource "google_compute_subnetwork" "master_subnet" {
-  count = var.preexisting_network ? 0 : 1
+  count       = var.preexisting_network ? 0 : 1
+  description = local.description
 
   name          = var.master_subnet
   network       = google_compute_network.cluster_network[0].self_link
@@ -23,7 +26,8 @@ resource "google_compute_subnetwork" "master_subnet" {
 }
 
 resource "google_compute_router" "router" {
-  count = var.preexisting_network ? 0 : 1
+  count       = var.preexisting_network ? 0 : 1
+  description = local.description
 
   name    = "${var.cluster_id}-router"
   network = google_compute_network.cluster_network[0].self_link

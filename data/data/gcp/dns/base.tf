@@ -1,7 +1,12 @@
+locals {
+  description = "Created By OpenShift Installer"
+}
+
 resource "google_dns_managed_zone" "int" {
-  name       = "${var.cluster_id}-private-zone"
-  dns_name   = "${var.cluster_domain}."
-  visibility = "private"
+  name        = "${var.cluster_id}-private-zone"
+  description = local.description
+  dns_name    = "${var.cluster_domain}."
+  visibility  = "private"
 
   private_visibility_config {
     networks {

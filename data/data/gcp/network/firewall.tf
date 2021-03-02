@@ -1,6 +1,7 @@
 resource "google_compute_firewall" "api" {
-  name    = "${var.cluster_id}-api"
-  network = local.cluster_network
+  name        = "${var.cluster_id}-api"
+  network     = local.cluster_network
+  description = local.description
 
   # API
   allow {
@@ -13,8 +14,9 @@ resource "google_compute_firewall" "api" {
 }
 
 resource "google_compute_firewall" "health_checks" {
-  name    = "${var.cluster_id}-health-checks"
-  network = local.cluster_network
+  name        = "${var.cluster_id}-health-checks"
+  network     = local.cluster_network
+  description = local.description
 
   # API, MCS (http)
   allow {
@@ -27,8 +29,9 @@ resource "google_compute_firewall" "health_checks" {
 }
 
 resource "google_compute_firewall" "etcd" {
-  name    = "${var.cluster_id}-etcd"
-  network = local.cluster_network
+  name        = "${var.cluster_id}-etcd"
+  network     = local.cluster_network
+  description = local.description
 
   # ETCD
   allow {
@@ -41,8 +44,9 @@ resource "google_compute_firewall" "etcd" {
 }
 
 resource "google_compute_firewall" "control_plane" {
-  name    = "${var.cluster_id}-control-plane"
-  network = local.cluster_network
+  name        = "${var.cluster_id}-control-plane"
+  network     = local.cluster_network
+  description = local.description
 
   # kube manager
   allow {
@@ -70,8 +74,9 @@ resource "google_compute_firewall" "control_plane" {
 }
 
 resource "google_compute_firewall" "internal_network" {
-  name    = "${var.cluster_id}-internal-network"
-  network = local.cluster_network
+  name        = "${var.cluster_id}-internal-network"
+  network     = local.cluster_network
+  description = local.description
 
   # icmp
   allow {
@@ -92,8 +97,9 @@ resource "google_compute_firewall" "internal_network" {
 }
 
 resource "google_compute_firewall" "internal_cluster" {
-  name    = "${var.cluster_id}-internal-cluster"
-  network = local.cluster_network
+  name        = "${var.cluster_id}-internal-cluster"
+  network     = local.cluster_network
+  description = local.description
 
   # VXLAN and GENEVE
   allow {

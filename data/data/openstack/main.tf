@@ -1,3 +1,7 @@
+locals {
+  description = "Created By OpenShift Installer"
+}
+
 provider "openstack" {
   auth_url            = var.openstack_credentials_auth_url
   cert                = var.openstack_credentials_cert

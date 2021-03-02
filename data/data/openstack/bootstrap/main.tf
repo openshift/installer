@@ -1,5 +1,10 @@
+locals {
+  description = "Created By OpenShift Installer"
+}
+
 resource "openstack_networking_port_v2" "bootstrap_port" {
-  name = "${var.cluster_id}-bootstrap-port"
+  name        = "${var.cluster_id}-bootstrap-port"
+  description = local.description
 
   admin_state_up     = "true"
   network_id         = var.private_network_id
@@ -27,8 +32,9 @@ data "openstack_compute_flavor_v2" "bootstrap_flavor" {
 }
 
 resource "openstack_blockstorage_volume_v3" "bootstrap_volume" {
-  name  = "${var.cluster_id}-bootstrap"
-  count = var.root_volume_size == null ? 0 : 1
+  name        = "${var.cluster_id}-bootstrap"
+  count       = var.root_volume_size == null ? 0 : 1
+  description = local.description
 
   size        = var.root_volume_size
   volume_type = var.root_volume_type

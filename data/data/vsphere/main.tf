@@ -1,5 +1,6 @@
 locals {
-  folder = var.vsphere_preexisting_folder ? var.vsphere_folder : vsphere_folder.folder[0].path
+  folder      = var.vsphere_preexisting_folder ? var.vsphere_folder : vsphere_folder.folder[0].path
+  description = "Created By OpenShift Installer"
 }
 
 provider "vsphere" {
