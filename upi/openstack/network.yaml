@@ -14,10 +14,14 @@
   - name: 'Create the primary cluster network'
     os_network:
       name: "{{ os_network }}"
+    when:
+    - not provider_network_primary_nic|default(false)
 
   - name: 'Set tags on the  primary cluster network'
     command:
       cmd: "openstack network set --tag {{ primary_cluster_network_tag }} --tag {{ cluster_id_tag }} {{ os_network }}"
+    when:
+    - not provider_network_primary_nic|default(false)
 
   - name: 'Create the primary cluster subnet'
     os_subnet:
@@ -26,10 +30,14 @@
       cidr: "{{ os_subnet_range }}"
       allocation_pool_start: "{{ os_subnet_range | next_nth_usable(10) }}"
       allocation_pool_end: "{{ os_subnet_range | ipaddr('last_usable') }}"
+    when:
+    - not provider_network_primary_nic|default(false)
 
   - name: 'Set tags on  primary cluster subnet'
     command:
       cmd: "openstack subnet set --tag {{ cluster_id_tag }} {{ os_subnet }}"
+    when:
+    - not provider_network_primary_nic|default(false)
 
   - name: 'Create the service network'
     os_network:

@@ -4,7 +4,32 @@ all:
       ansible_connection: local
       ansible_python_interpreter: "{{ansible_playbook_python}}"
 
+      # Whether or not the machines will be plugged onto a provider network
+      # as a primary interface.
+      # When set to True, the network and subnets won't be created by Ansible
+      # and it's up to the operator to do so with an admin user.
+      # An example of a playbook is provided as "provider-network.yaml".
+      provider_network_primary_nic: false
+      # IP address of the Provider network gateway:
+      #   provider_network_gateway:
+      # Name of the Provider network:
+      #   provider_network_name:
+      # Name of the Provider network subnet:
+      #   provider_network_subnet_name:
+      # The type of physical network that maps to this network resource:
+      #   provider_network_type:
+      # The physical network where this network is implemented:
+      #   provider_physical_network:
+      # An isolated segment on the physical network. The network_type attribute
+      # defines the segmentation model.
+      # For example, if the network_type value is vlan, this ID is a vlan identifier.
+      # If the network_type value is gre, this ID is a gre key.
+      #    provider_segmentation_id:
+
       # User-provided values
+      # Required if you need to create the provider network from the admin tenant:
+      # os_project: <name or ID>
+      # machineNetwork subnet cidr
       os_subnet_range: '10.0.0.0/16'
       os_flavor_master: 'm1.xlarge'
       os_flavor_worker: 'm1.large'

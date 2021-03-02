@@ -96,6 +96,17 @@ RHEL 8 and may not work properly when run on RHEL 7.
 
 [ipi-reqs-kuryr]: ./kuryr.md#requirements-when-enabling-kuryr
 
+If you plan to use a Provider Network plugged onto a primary interface of your cluster nodes, you'll
+need to set these variables:
+
+- Set `provider_network_primary_nic` to `True`
+- IP address of the Provider network gateway: `provider_network_gateway`
+- Name of the Provider network: `provider_network_name`
+- Name of the Provider network subnet: `provider_network_subnet_name`
+- The type of physical network that maps to this network resource: `provider_network_type`
+- The physical network where this network is implemented: `provider_physical_network`
+- If any, specify a segmentation ID (e.g. VLAN ID): `provider_segmentation_id`
+
 ## Install Ansible
 
 This repository contains [Ansible playbooks][ansible-upi] to deploy OpenShift on OpenStack.
@@ -117,6 +128,7 @@ RELEASE="release-4.6"; xargs -n 1 curl -O <<< "
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-containers.yaml
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/inventory.yaml
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/network.yaml
+        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/provider-network.yaml
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/security-groups.yaml"
 ```
 
@@ -758,11 +770,19 @@ $ ansible-playbook -i inventory.yaml security-groups.yaml
 The playbook creates one Security group for the Control Plane and one for the Compute nodes, then attaches rules for enabling communication between the nodes.
 ### Network, Subnet and external router
 
+If you plan to plug the OpenShift nodes onto a provider network as primary interface, you must create the network and subnet by yourself. We provide an example of a playbook that can be re-used but keep in mind that managing provider networks can be more complex than this playbook example.
+
+```sh
+$ ansible-playbook -i inventory.yaml provider-network.yaml
+```
+
+Then, this playbook will be used to create network resources needed by OpenShift nodes:
+
 ```sh
 $ ansible-playbook -i inventory.yaml network.yaml
 ```
 
-The playbook creates a network and a subnet. The subnet obeys `os_subnet_range`; however the first ten IP addresses are removed from the allocation pool. These addresses will be used for the VRRP addresses managed by keepalived for high availability. For more information, read the [networking infrastructure design document][net-infra].
+The subnet obeys `os_subnet_range`; however the first ten IP addresses are removed from the allocation pool. These addresses will be used for the VRRP addresses managed by keepalived for high availability. For more information, read the [networking infrastructure design document][net-infra].
 
 Outside connectivity will be provided by attaching the floating IP addresses (IPs in the inventory) to the corresponding routers.
 

@@ -1,0 +1,36 @@
+# Required Python packages:
+#
+# ansible
+# openstackclient
+# openstacksdk
+# netaddr
+
+# This must be run with OpenStack admin credentials.
+
+- import_playbook: common.yaml
+
+- hosts: all
+  gather_facts: false
+
+  tasks:
+  - name: 'Create the provider network for the cluster machines'
+    os_network:
+      name: "{{ os_network }}"
+      # The network has to be "shared", see BZ for full context:
+      # https://bugzilla.redhat.com/show_bug.cgi?id=1933047
+      shared: True
+      project: "{{ os_project }}"
+      external: True
+      provider_network_type: "{{ provider_network_type | default('flat') }}"
+      provider_physical_network: "{{ provider_physical_network }}"
+      provider_segmentation_id: "{{ provider_segmentation_id | default(omit) }}"
+
+  - name: 'Create the provider network subnet for the cluster machines'
+    os_subnet:
+      name: "{{ os_subnet }}"
+      network_name: "{{ os_network }}"
+      project: "{{ os_project }}"
+      cidr: "{{ os_subnet_range }}"
+      allocation_pool_start: "{{ os_subnet_range | next_nth_usable(10) }}"
+      allocation_pool_end: "{{ os_subnet_range | ipaddr('last_usable') }}"
+      gateway_ip: "{{ provider_network_gateway }}"

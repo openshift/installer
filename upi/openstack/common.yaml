@@ -10,8 +10,8 @@
       cluster_id_tag: "openshiftClusterID={{ infraID }}"
       primary_cluster_network_tag: "{{ infraID }}-primaryClusterNetwork"
       os_infra_id: "{{ infraID }}"
-      os_network: "{{ infraID }}-network"
-      os_subnet: "{{ infraID }}-nodes"
+      os_network: "{{ provider_network_name | default(infraID + '-network') }}"
+      os_subnet: "{{ provider_network_subnet_name | default(infraID + '-nodes') }}"
       os_router: "{{ infraID }}-external-router"
       # Port names
       os_port_api: "{{ infraID }}-api-port"
