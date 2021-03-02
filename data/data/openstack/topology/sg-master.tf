@@ -29,7 +29,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_icmp" {
   # FIXME(mandre) AWS only allows ICMP from cidr_block
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.master[0].id
-  description = local.description
+  description       = local.description
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_ssh" {
