@@ -132,6 +132,8 @@ type NetworkParam struct {
 	Subnets []SubnetParam `json:"subnets,omitempty"`
 	// NoAllowedAddressPairs disables creation of allowed address pairs for the network ports
 	NoAllowedAddressPairs bool `json:"noAllowedAddressPairs,omitempty"`
+	// PortTags allows users to specify a list of tags to add to ports created in a given network
+	PortTags []string `json:"portTags,omitempty"`
 }
 
 type Filter struct {
@@ -159,6 +161,9 @@ type SubnetParam struct {
 
 	// Filters for optional network query
 	Filter SubnetFilter `json:"filter,omitempty"`
+
+	// PortTags are tags that are added to ports created on this subnet
+	PortTags []string `json:"portTags,omitempty"`
 }
 
 type SubnetFilter struct {
@@ -191,6 +196,7 @@ type RootVolume struct {
 	DeviceType string `json:"deviceType"`
 	VolumeType string `json:"volumeType,omitempty"`
 	Size       int    `json:"diskSize,omitempty"`
+	Zone       string `json:"availabilityZone,omitempty"`
 }
 
 // +genclient
