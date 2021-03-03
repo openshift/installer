@@ -45,6 +45,9 @@ func (o *MachinePool) Set(required *MachinePool) {
 		}
 		o.RootVolume.Size = required.RootVolume.Size
 		o.RootVolume.Type = required.RootVolume.Type
+		if len(required.RootVolume.Zones) > 0 {
+			o.RootVolume.Zones = required.RootVolume.Zones
+		}
 	}
 
 	if required.AdditionalNetworkIDs != nil {
@@ -68,4 +71,9 @@ type RootVolume struct {
 	// Type defines the type of the volume.
 	// Required
 	Type string `json:"type"`
+
+	// Zones is the list of availability zones where the root volumes should be deployed.
+	// If no zones are provided, all instances will be deployed on OpenStack Cinder default availability zone
+	// +optional
+	Zones []string `json:"zones,omitempty"`
 }

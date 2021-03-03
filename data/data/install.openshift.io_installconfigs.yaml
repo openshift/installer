@@ -296,6 +296,14 @@ spec:
                             type:
                               description: Type defines the type of the volume. Required
                               type: string
+                            zones:
+                              description: Zones is the list of availability zones
+                                where the root volumes should be deployed. If no zones
+                                are provided, all instances will be deployed on OpenStack
+                                Cinder default availability zone
+                              items:
+                                type: string
+                              type: array
                           required:
                           - size
                           - type
@@ -652,6 +660,14 @@ spec:
                           type:
                             description: Type defines the type of the volume. Required
                             type: string
+                          zones:
+                            description: Zones is the list of availability zones where
+                              the root volumes should be deployed. If no zones are
+                              provided, all instances will be deployed on OpenStack
+                              Cinder default availability zone
+                            items:
+                              type: string
+                            type: array
                         required:
                         - size
                         - type
@@ -1603,6 +1619,14 @@ spec:
                           type:
                             description: Type defines the type of the volume. Required
                             type: string
+                          zones:
+                            description: Zones is the list of availability zones where
+                              the root volumes should be deployed. If no zones are
+                              provided, all instances will be deployed on OpenStack
+                              Cinder default availability zone
+                            items:
+                              type: string
+                            type: array
                         required:
                         - size
                         - type
