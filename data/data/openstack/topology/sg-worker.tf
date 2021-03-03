@@ -12,8 +12,7 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_icmp" {
   protocol       = "icmp"
   port_range_min = 0
   port_range_max = 0
-  # FIXME(mandre) AWS only allows ICMP from cidr_block
-  remote_ip_prefix  = "0.0.0.0/0"
+  remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.worker.id
   description       = local.description
 }
