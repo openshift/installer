@@ -30,7 +30,7 @@ func validIPIInstallConfig() *types.InstallConfig {
 				Network:          "valid_network",
 				Password:         "valid_password",
 				Username:         "valid_username",
-				VCenter:          "valid_vcenter",
+				VCenter:          "valid-vcenter",
 				APIVIP:           "192.168.111.0",
 				IngressVIP:       "192.168.111.1",
 			},
@@ -52,7 +52,7 @@ func validUPIInstallConfig() *types.InstallConfig {
 				DefaultDatastore: "valid_ds",
 				Password:         "valid_password",
 				Username:         "valid_username",
-				VCenter:          "valid_vcenter",
+				VCenter:          "valid-vcenter",
 			},
 		},
 	}

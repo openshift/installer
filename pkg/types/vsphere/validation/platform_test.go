@@ -141,7 +141,16 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenter = "tEsT-vCenter"
 				return p
 			}(),
-			expectedError: `^test-path.vCenter: Invalid value: "tEsT-vCenter": must be all lower case`,
+			expectedError: `^test-path\.vCenter: Invalid value: "tEsT-vCenter": must be the domain name or IP address of the vCenter`,
+		},
+		{
+			name: "URL as vCenter",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.VCenter = "https://test-center"
+				return p
+			}(),
+			expectedError: `^test-path\.vCenter: Invalid value: "https://test-center": must be the domain name or IP address of the vCenter$`,
 		},
 	}
 	for _, tc := range cases {
