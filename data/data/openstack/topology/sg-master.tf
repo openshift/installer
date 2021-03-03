@@ -79,8 +79,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
   protocol       = "tcp"
   port_range_min = 6443
   port_range_max = 6443
-  # FIXME(mandre) AWS only allows API port from cidr_block
-  remote_ip_prefix  = "0.0.0.0/0"
+  remote_ip_prefix  = var.cidr_block
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
