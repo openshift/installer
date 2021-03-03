@@ -55,3 +55,8 @@ variable "zones" {
   type        = list(string)
   description = "Availability Zones to schedule masters on."
 }
+
+variable "root_volume_zones" {
+  type        = list(string)
+  description = "Availability Zones to schedule root volumes on."
+}

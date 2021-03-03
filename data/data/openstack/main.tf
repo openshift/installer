@@ -48,6 +48,7 @@ module "bootstrap" {
   root_volume_size        = var.openstack_master_root_volume_size
   root_volume_type        = var.openstack_master_root_volume_type
   zone                    = var.openstack_master_availability_zones[0]
+  root_volume_zone        = var.openstack_master_root_volume_availability_zones[0]
   additional_network_ids  = var.openstack_additional_network_ids
 }
 
@@ -69,6 +70,7 @@ module "masters" {
   server_group_name      = var.openstack_master_server_group_name
   additional_network_ids = var.openstack_additional_network_ids
   zones                  = var.openstack_master_availability_zones
+  root_volume_zones      = var.openstack_master_root_volume_availability_zones
 }
 
 module "topology" {

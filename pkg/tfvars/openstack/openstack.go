@@ -23,30 +23,31 @@ import (
 )
 
 type config struct {
-	BaseImageName              string   `json:"openstack_base_image_name,omitempty"`
-	ExternalNetwork            string   `json:"openstack_external_network,omitempty"`
-	Cloud                      string   `json:"openstack_credentials_cloud,omitempty"`
-	FlavorName                 string   `json:"openstack_master_flavor_name,omitempty"`
-	APIFloatingIP              string   `json:"openstack_api_floating_ip,omitempty"`
-	IngressFloatingIP          string   `json:"openstack_ingress_floating_ip,omitempty"`
-	APIVIP                     string   `json:"openstack_api_int_ip,omitempty"`
-	IngressVIP                 string   `json:"openstack_ingress_ip,omitempty"`
-	TrunkSupport               bool     `json:"openstack_trunk_support,omitempty"`
-	OctaviaSupport             bool     `json:"openstack_octavia_support,omitempty"`
-	RootVolumeSize             int      `json:"openstack_master_root_volume_size,omitempty"`
-	RootVolumeType             string   `json:"openstack_master_root_volume_type,omitempty"`
-	BootstrapShim              string   `json:"openstack_bootstrap_shim_ignition,omitempty"`
-	ExternalDNS                []string `json:"openstack_external_dns,omitempty"`
-	MasterServerGroupName      string   `json:"openstack_master_server_group_name,omitempty"`
-	AdditionalNetworkIDs       []string `json:"openstack_additional_network_ids,omitempty"`
-	AdditionalSecurityGroupIDs []string `json:"openstack_master_extra_sg_ids,omitempty"`
-	MachinesSubnet             string   `json:"openstack_machines_subnet_id,omitempty"`
-	MachinesNetwork            string   `json:"openstack_machines_network_id,omitempty"`
-	MasterAvailabilityZones    []string `json:"openstack_master_availability_zones,omitempty"`
+	BaseImageName                    string   `json:"openstack_base_image_name,omitempty"`
+	ExternalNetwork                  string   `json:"openstack_external_network,omitempty"`
+	Cloud                            string   `json:"openstack_credentials_cloud,omitempty"`
+	FlavorName                       string   `json:"openstack_master_flavor_name,omitempty"`
+	APIFloatingIP                    string   `json:"openstack_api_floating_ip,omitempty"`
+	IngressFloatingIP                string   `json:"openstack_ingress_floating_ip,omitempty"`
+	APIVIP                           string   `json:"openstack_api_int_ip,omitempty"`
+	IngressVIP                       string   `json:"openstack_ingress_ip,omitempty"`
+	TrunkSupport                     bool     `json:"openstack_trunk_support,omitempty"`
+	OctaviaSupport                   bool     `json:"openstack_octavia_support,omitempty"`
+	RootVolumeSize                   int      `json:"openstack_master_root_volume_size,omitempty"`
+	RootVolumeType                   string   `json:"openstack_master_root_volume_type,omitempty"`
+	BootstrapShim                    string   `json:"openstack_bootstrap_shim_ignition,omitempty"`
+	ExternalDNS                      []string `json:"openstack_external_dns,omitempty"`
+	MasterServerGroupName            string   `json:"openstack_master_server_group_name,omitempty"`
+	AdditionalNetworkIDs             []string `json:"openstack_additional_network_ids,omitempty"`
+	AdditionalSecurityGroupIDs       []string `json:"openstack_master_extra_sg_ids,omitempty"`
+	MachinesSubnet                   string   `json:"openstack_machines_subnet_id,omitempty"`
+	MachinesNetwork                  string   `json:"openstack_machines_network_id,omitempty"`
+	MasterAvailabilityZones          []string `json:"openstack_master_availability_zones,omitempty"`
+	MasterRootVolumeAvalabilityZones []string `json:"openstack_master_root_volume_availability_zones,omitempty"`
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool, machinesSubnet string, proxy *types.Proxy) ([]byte, error) {
+func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, apiFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, baseImageProperties map[string]string, infraID string, userCA string, bootstrapIgn string, mpool, defaultmpool *types_openstack.MachinePool, machinesSubnet string, proxy *types.Proxy) ([]byte, error) {
 	zones := []string{}
 	seen := map[string]bool{}
 	for _, config := range masterConfigs {
@@ -67,6 +68,13 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 		ExternalDNS:             externalDNS,
 		MachinesSubnet:          machinesSubnet,
 		MasterAvailabilityZones: zones,
+	}
+
+	if defaultmpool != nil && defaultmpool.RootVolume != nil {
+		cfg.MasterRootVolumeAvalabilityZones = defaultmpool.RootVolume.Zones
+	}
+	if mpool != nil && mpool.RootVolume != nil && mpool.RootVolume.Zones != nil {
+		cfg.MasterRootVolumeAvalabilityZones = mpool.RootVolume.Zones
 	}
 
 	serviceCatalog, err := getServiceCatalog(cloud)

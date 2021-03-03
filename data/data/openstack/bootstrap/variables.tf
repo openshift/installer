@@ -76,7 +76,12 @@ variable "root_volume_type" {
 
 variable "zone" {
   type = string
-  description = "Availability Zone to schedule the bootstrap node onto"
+  description = "Availability Zone to schedule the bootstrap node onto."
+}
+
+variable "root_volume_zone" {
+  type = string
+  description = "Availability Zone to schedule the bootstrap root volume onto."
 }
 
 variable "additional_network_ids" {
