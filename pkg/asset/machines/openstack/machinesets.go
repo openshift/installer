@@ -11,6 +11,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
@@ -28,6 +29,11 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		return nil, err
 	}
 
+	volumeAZs := openstackdefaults.DefaultRootVolumeAZ()
+	if mpool.RootVolume != nil && len(mpool.RootVolume.Zones) != 0 {
+		volumeAZs = mpool.RootVolume.Zones
+	}
+
 	total := int32(0)
 	if pool.Replicas != nil {
 		total = int32(*pool.Replicas)
@@ -41,7 +47,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		if int32(idx) < total%numOfAZs {
 			replicas++
 		}
-		provider, err := generateProvider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunkSupport)
+		provider, err := generateProvider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunkSupport, volumeAZs[idx%len(volumeAZs)])
 		if err != nil {
 			return nil, err
 		}
