@@ -47,16 +47,6 @@ while [ -z "$(ip -o addr show dev $PROVISIONING_NIC | grep -v link)" ]; do
     sleep 1
 done
 
-{{ else }}
-PROVISION_NIC_DATA="$(ip -o  addr show "$PROVISIONING_NIC" scope global | head -n1)"
-PROVISION_NIC_IP="$(echo "$PROVISION_NIC_DATA" | awk '{print $4}' | cut -d '/' -f1)"
-PROVISION_NIC_IP_VERSION="$(echo "$PROVISION_NIC_DATA" | awk '{print $3}')"
-if [ "$PROVISION_NIC_IP_VERSION" = "inet6" ] ; then
-       # For ipv6 we need to wrap our IP address in brackets to differentiate between the IP and port
-       PROVISION_NIC_IP="[$PROVISION_NIC_IP]"
-fi
-sed -i "s/baremetal_endpoint_override: http:\/\/:/baremetal_endpoint_override: http:\/\/$PROVISION_NIC_IP:/" /opt/metal3/auth/clouds.yaml
-sed -i "s/baremetal_introspection_endpoint_override: http:\/\/:/baremetal_introspection_endpoint_override: http:\/\/$PROVISION_NIC_IP:/" /opt/metal3/auth/clouds.yaml
 {{ end }}
 
 # set password for ironic basic auth
