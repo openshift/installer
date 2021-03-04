@@ -82,7 +82,7 @@ var conditions = []condition{{
 	match: regexp.MustCompile(`Error: could not contact Ironic API: timeout reached`),
 
 	reason:  "BaremetalIronicAPITimeout",
-	message: `Timed out waiting for provisioning service. This failure can be caused by misconfiguration or inability to download the machine operating system images. Please check the bootstrap host for failing services.`,
+	message: `Unable to the reach provisioning service. This failure can be caused by incorrect network/proxy settings, inability to download the machine operating system images, or other misconfiguration. Please check access to the bootstrap host, and for any failing services.`,
 }, {
 	match: regexp.MustCompile(`Error: could not inspect: could not inspect node, node is currently 'inspect failed', last error was 'timeout reached while inspecting the node'`),
 
