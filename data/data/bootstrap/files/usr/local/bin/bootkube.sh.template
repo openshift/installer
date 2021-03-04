@@ -105,30 +105,18 @@ then
 		--volume "$PWD:/assets:z" \
 		"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-etcd-operator render \
-		--etcd-ca=/assets/tls/etcd-ca-bundle.crt \
-		--etcd-ca-key=/assets/tls/etcd-signer.key \
-		--manifest-etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
-		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/etcd-bootstrap \
-		--config-output-file=/assets/etcd-bootstrap/config \
+		--cluster-configmap-file=/assets/manifests/cluster-config.yaml \
+		--etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
+		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
 		--network-config-file=/assets/manifests/cluster-network-02-config.yml
 
+	# Copy configuration required to start etcd
+	cp --recursive etcd-bootstrap/etc-kubernetes/* /etc/kubernetes/
+	# Copy manifests to apply to the bootstrap apiserver
 	cp etcd-bootstrap/manifests/* manifests/
-
-	# If the etc-kubernetes path is present, all files and their paths are intended to be
-	# recursively copied to /etc/kubernetes.  This conditional ensures temporary backwards
-	# compatibility for the operator as it transitions to generating the tls assets it
-	# requires and owning where its rendered bootstrap assets should be copied to.
-	if [ -d "etcd-bootstrap/etc-kubernetes/" ]
-	then
-		cp --recursive etcd-bootstrap/etc-kubernetes/* /etc/kubernetes/
-		cp etcd-bootstrap/tls/* tls/
-	else
-		cp etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml /etc/kubernetes/manifests/
-		mkdir --parents /etc/kubernetes/static-pod-resources/etcd-member
-		cp tls/etcd-ca-bundle.crt /etc/kubernetes/static-pod-resources/etcd-member/ca.crt
-		cp --recursive etcd-bootstrap/bootstrap-manifests/secrets/etcd-all-certs /etc/kubernetes/static-pod-resources/etcd-member
-	fi
+	# Copy the ca bundle and client certificate required by the bootstrap apiserver and wait_for_etcd_cluster
+	cp etcd-bootstrap/tls/* tls/
 
 	touch etcd-bootstrap.done
 fi
