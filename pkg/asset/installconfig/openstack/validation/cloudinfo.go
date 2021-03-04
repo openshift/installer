@@ -59,10 +59,17 @@ type record struct {
 	Value   int64
 }
 
+var ci *CloudInfo
+
 // GetCloudInfo fetches and caches metadata from openstack
 func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 	var err error
-	ci := CloudInfo{
+
+	if ci != nil {
+		return ci, nil
+	}
+
+	ci = &CloudInfo{
 		clients: &clients{},
 		Flavors: map[string]Flavor{},
 	}
@@ -89,7 +96,7 @@ func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 		return nil, errors.Wrap(err, "failed to generate OpenStack cloud info")
 	}
 
-	return &ci, nil
+	return ci, nil
 }
 
 func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.ClientOpts) error {
