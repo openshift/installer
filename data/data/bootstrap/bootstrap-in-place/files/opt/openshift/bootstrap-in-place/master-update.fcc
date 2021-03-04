@@ -10,7 +10,7 @@ storage:
       path: /etc/kubernetes/bootstrap-configs
     - local: tls/
       path: /etc/kubernetes/bootstrap-secrets
-    - local: etcd-bootstrap/bootstrap-manifests/secrets/
+    - local: etcd-bootstrap/etc-kubernetes/static-pod-resources/etcd-member/
       path: /etc/kubernetes/static-pod-resources/etcd-member
     - local: etcd-data
       path: /var/lib/etcd
@@ -18,12 +18,9 @@ storage:
     - path: /etc/kubernetes/bootstrap-secrets/kubeconfig
       contents:
         local: auth/kubeconfig-loopback
-    - path: /etc/kubernetes/static-pod-resources/etcd-member/ca.crt
-      contents:
-        local: tls/etcd-ca-bundle.crt
     - path: /etc/kubernetes/manifests/etcd-pod.yaml
       contents:
-        local: etcd-bootstrap/bootstrap-manifests/etcd-member-pod.yaml
+        local: etcd-bootstrap/etc-kubernetes/manifests/etcd-member-pod.yaml
     - path: /etc/kubernetes/manifests/kube-apiserver-pod.yaml
       contents:
         local: bootstrap-manifests/kube-apiserver-pod.yaml
