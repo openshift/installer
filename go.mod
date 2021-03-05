@@ -28,6 +28,7 @@ require (
 	github.com/go-logr/logr v0.3.0 // indirect
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/gobuffalo/flect v0.2.2 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.3
 	github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible // indirect
@@ -94,16 +95,15 @@ require (
 	golang.org/x/net v0.0.0-20201202161906-c7110b5ffcbb // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sys v0.0.0-20201202213521-69691e467435
-	golang.org/x/tools v0.0.0-20201202200335-bef1c476418a // indirect
 	google.golang.org/api v0.33.0
-	google.golang.org/genproto v0.0.0-20200911024640-645f7a48b24f
+	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a
 	google.golang.org/grpc v1.32.0
 	gopkg.in/AlecAivazis/survey.v1 v1.8.9-0.20200217094205-6773bdf39b7f
 	gopkg.in/ini.v1 v1.61.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.20.0
-	k8s.io/apiextensions-apiserver v0.19.4
-	k8s.io/apimachinery v0.20.0
+	k8s.io/api v0.20.1
+	k8s.io/apiextensions-apiserver v0.20.1
+	k8s.io/apimachinery v0.20.1
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.4.0
@@ -135,7 +135,6 @@ replace (
 	github.com/terraform-providers/terraform-provider-aws => github.com/openshift/terraform-provider-aws v1.60.1-0.20200630224953-76d1fb4e5699 // Pin to openshift fork with tag v2.67.0-openshift
 	github.com/terraform-providers/terraform-provider-azurerm => github.com/openshift/terraform-provider-azurerm v1.40.1-0.20200707062554-97ea089cc12a // release-2.17.0 branch
 	github.com/terraform-providers/terraform-provider-ignition/v2 => github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.0
-	k8s.io/api => k8s.io/api v0.20.0
 	k8s.io/client-go => k8s.io/client-go v0.20.0
 	kubevirt.io/client-go => kubevirt.io/client-go v0.29.0
 	sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20201022175424-d30c7a274820
