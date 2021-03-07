@@ -97,7 +97,7 @@ Error: could not contact Ironic API: timeout reached
    1: resource "ironic_node_v1" "openshift-master-host" {
 `,
 
-		err: `error\(BaremetalIronicAPITimeout\) from Infrastructure Provider: Timed out waiting for provisioning service\. This failure can be caused by misconfiguration or inability to download the machine operating system images\. Please check the bootstrap host for failing services\.`,
+		err: `error\(BaremetalIronicAPITimeout\) from Infrastructure Provider: Unable to the reach provisioning service\. This failure can be caused by incorrect network/proxy settings, inability to download the machine operating system images, or other misconfiguration\. Please check access to the bootstrap host, and for any failing services\.`,
 	}, {
 		input: `
 Error: could not inspect: could not inspect node, node is currently 'inspect failed', last error was 'timeout reached while inspecting the node'
