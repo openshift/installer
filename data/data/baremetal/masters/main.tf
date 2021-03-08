@@ -42,10 +42,8 @@ resource "ironic_deployment" "openshift-master-deployment" {
     count.index,
   )
 
-  instance_info         = var.instance_infos[count.index]
-  user_data_url         = var.master_ignition_url
-  user_data_url_ca_cert = var.master_ignition_url_ca_cert
-  user_data_url_headers = var.master_ignition_url_headers
+  instance_info = var.instance_infos[count.index]
+  user_data     = var.ignition
 }
 
 data "ironic_introspection" "openshift-master-introspection" {

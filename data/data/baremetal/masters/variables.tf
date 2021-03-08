@@ -4,6 +4,11 @@ variable "master_count" {
   default     = 3
 }
 
+variable "ignition" {
+  type        = string
+  description = "The content of the master ignition file"
+}
+
 variable "hosts" {
   type        = list(map(string))
   description = "Hardware details for hosts"
@@ -27,19 +32,4 @@ variable "driver_infos" {
 variable "instance_infos" {
   type        = list(map(string))
   description = "Instance information for hosts"
-}
-
-variable "master_ignition_url" {
-  type        = string
-  description = "The URL of the full ignition"
-}
-
-variable "master_ignition_url_ca_cert" {
-  type        = string
-  description = "Root CA cert of the full ignition URL"
-}
-
-variable "master_ignition_url_headers" {
-  type        = map(string)
-  description = "Headers to use when retrieving master_ignition_url"
 }
