@@ -9,8 +9,6 @@ import (
 	"path"
 	"strings"
 
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
-
 	"github.com/metal3-io/baremetal-operator/pkg/bmc"
 	"github.com/metal3-io/baremetal-operator/pkg/hardware"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
@@ -27,10 +25,6 @@ type config struct {
 
 	IronicUsername string `json:"ironic_username"`
 	IronicPassword string `json:"ironic_password"`
-
-	MasterIgnitionURL        string            `json:"master_ignition_url,omitempty"`
-	MasterIgnitionURLCACert  string            `json:"master_ignition_url_ca_cert,omitempty"`
-	MasterIgnitionURLHeaders map[string]string `json:"master_ignition_url_headers,omitempty"`
 
 	// Data required for control plane deployment - several maps per host, because of terraform's limitations
 	Hosts         []map[string]interface{} `json:"hosts"`
@@ -174,44 +168,19 @@ func TFVars(libvirtURI, apiVIP, imageCacheIP, bootstrapOSImage, externalBridge, 
 			})
 	}
 
-	var masterIgn igntypes.Config
-	if err := json.Unmarshal([]byte(ignition), &masterIgn); err != nil {
-		return nil, err
-	}
-	if len(masterIgn.Ignition.Config.Merge) == 0 {
-		return nil, errors.Wrap(err, "Empty Merge section in master pointer ignition")
-	}
-	ignitionURL := *masterIgn.Ignition.Config.Merge[0].Source
-	if len(masterIgn.Ignition.Security.TLS.CertificateAuthorities) == 0 {
-		return nil, errors.Wrap(err, "Empty CertificateAuthorities section in master pointer ignition")
-	}
-	ignitionURLCACert := strings.TrimPrefix(
-		*masterIgn.Ignition.Security.TLS.CertificateAuthorities[0].Source,
-		"data:text/plain;charset=utf-8;base64,")
-	// To return the same version as the stub config, the MCS requires a
-	// header, otherwise we get 2.2.0, e.g:
-	// "Accept: application/vnd.coreos.ignition+json; version=3.1.0"
-	ignitionURLHeaders := map[string]string{
-		"Accept": fmt.Sprintf("application/vnd.coreos.ignition+json;version=%s",
-			masterIgn.Ignition.Version),
-	}
-
 	cfg := &config{
-		LibvirtURI:               libvirtURI,
-		IronicURI:                fmt.Sprintf("http://%s/v1", net.JoinHostPort(apiVIP, "6385")),
-		InspectorURI:             fmt.Sprintf("http://%s/v1", net.JoinHostPort(apiVIP, "5050")),
-		BootstrapOSImage:         bootstrapOSImage,
-		IronicUsername:           ironicUsername,
-		IronicPassword:           ironicPassword,
-		Hosts:                    hosts,
-		Bridges:                  bridges,
-		Properties:               properties,
-		DriverInfos:              driverInfos,
-		RootDevices:              rootDevices,
-		InstanceInfos:            instanceInfos,
-		MasterIgnitionURL:        ignitionURL,
-		MasterIgnitionURLCACert:  ignitionURLCACert,
-		MasterIgnitionURLHeaders: ignitionURLHeaders,
+		LibvirtURI:       libvirtURI,
+		IronicURI:        fmt.Sprintf("http://%s/v1", net.JoinHostPort(apiVIP, "6385")),
+		InspectorURI:     fmt.Sprintf("http://%s/v1", net.JoinHostPort(apiVIP, "5050")),
+		BootstrapOSImage: bootstrapOSImage,
+		IronicUsername:   ironicUsername,
+		IronicPassword:   ironicPassword,
+		Hosts:            hosts,
+		Bridges:          bridges,
+		Properties:       properties,
+		DriverInfos:      driverInfos,
+		RootDevices:      rootDevices,
+		InstanceInfos:    instanceInfos,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
