@@ -136,8 +136,8 @@ func TFVars(libvirtURI, apiVIP, imageCacheIP, bootstrapOSImage, externalBridge, 
 		// ref https://github.com/openshift/ironic-rhcos-downloader/pull/12
 		imageFilename := path.Base(strings.TrimSuffix(imageURL.String(), ".gz"))
 		imageFilename = strings.TrimSuffix(imageFilename, ".xz")
-		compressedImageFilename := strings.Replace(imageFilename, "openstack", "compressed", 1)
-		cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(imageCacheIP, "80"), imageFilename, compressedImageFilename)
+		cachedImageFilename := "cached-" + imageFilename
+		cacheImageURL := fmt.Sprintf("http://%s/images/%s/%s", net.JoinHostPort(imageCacheIP, "80"), imageFilename, cachedImageFilename)
 		cacheChecksumURL := fmt.Sprintf("%s.md5sum", cacheImageURL)
 		instanceInfo := map[string]interface{}{
 			"image_source":   cacheImageURL,
