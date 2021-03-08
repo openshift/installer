@@ -7,11 +7,12 @@ package mock
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	v1 "k8s.io/api/core/v1"
-	v10 "k8s.io/api/storage/v1"
-	v11 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/api/authorization/v1"
+	v10 "k8s.io/api/core/v1"
+	v11 "k8s.io/api/storage/v1"
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	v12 "kubevirt.io/client-go/api/v1"
+	v13 "kubevirt.io/client-go/api/v1"
 	v1alpha1 "kubevirt.io/containerized-data-importer/pkg/apis/core/v1alpha1"
 	reflect "reflect"
 )
@@ -40,10 +41,10 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 }
 
 // GetVirtualMachine mocks base method
-func (m *MockClient) GetVirtualMachine(ctx context.Context, namespace, name string) (*v12.VirtualMachine, error) {
+func (m *MockClient) GetVirtualMachine(ctx context.Context, namespace, name string) (*v13.VirtualMachine, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVirtualMachine", ctx, namespace, name)
-	ret0, _ := ret[0].(*v12.VirtualMachine)
+	ret0, _ := ret[0].(*v13.VirtualMachine)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -55,10 +56,10 @@ func (mr *MockClientMockRecorder) GetVirtualMachine(ctx, namespace, name interfa
 }
 
 // ListVirtualMachine mocks base method
-func (m *MockClient) ListVirtualMachine(ctx context.Context, namespace string, opts v11.ListOptions) (*v12.VirtualMachineList, error) {
+func (m *MockClient) ListVirtualMachine(ctx context.Context, namespace string, opts v12.ListOptions) (*v13.VirtualMachineList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListVirtualMachine", ctx, namespace, opts)
-	ret0, _ := ret[0].(*v12.VirtualMachineList)
+	ret0, _ := ret[0].(*v13.VirtualMachineList)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -99,7 +100,7 @@ func (mr *MockClientMockRecorder) GetDataVolume(ctx, namespace, name interface{}
 }
 
 // ListDataVolume mocks base method
-func (m *MockClient) ListDataVolume(ctx context.Context, namespace string, opts v11.ListOptions) (*v1alpha1.DataVolumeList, error) {
+func (m *MockClient) ListDataVolume(ctx context.Context, namespace string, opts v12.ListOptions) (*v1alpha1.DataVolumeList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListDataVolume", ctx, namespace, opts)
 	ret0, _ := ret[0].(*v1alpha1.DataVolumeList)
@@ -128,10 +129,10 @@ func (mr *MockClientMockRecorder) DeleteDataVolume(ctx, namespace, name interfac
 }
 
 // GetSecret mocks base method
-func (m *MockClient) GetSecret(ctx context.Context, namespace, name string) (*v1.Secret, error) {
+func (m *MockClient) GetSecret(ctx context.Context, namespace, name string) (*v10.Secret, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSecret", ctx, namespace, name)
-	ret0, _ := ret[0].(*v1.Secret)
+	ret0, _ := ret[0].(*v10.Secret)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -143,10 +144,10 @@ func (mr *MockClientMockRecorder) GetSecret(ctx, namespace, name interface{}) *g
 }
 
 // ListSecret mocks base method
-func (m *MockClient) ListSecret(ctx context.Context, namespace string, opts v11.ListOptions) (*v1.SecretList, error) {
+func (m *MockClient) ListSecret(ctx context.Context, namespace string, opts v12.ListOptions) (*v10.SecretList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListSecret", ctx, namespace, opts)
-	ret0, _ := ret[0].(*v1.SecretList)
+	ret0, _ := ret[0].(*v10.SecretList)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -172,10 +173,10 @@ func (mr *MockClientMockRecorder) DeleteSecret(ctx, namespace, name interface{})
 }
 
 // GetNamespace mocks base method
-func (m *MockClient) GetNamespace(ctx context.Context, name string) (*v1.Namespace, error) {
+func (m *MockClient) GetNamespace(ctx context.Context, name string) (*v10.Namespace, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNamespace", ctx, name)
-	ret0, _ := ret[0].(*v1.Namespace)
+	ret0, _ := ret[0].(*v10.Namespace)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -187,10 +188,10 @@ func (mr *MockClientMockRecorder) GetNamespace(ctx, name interface{}) *gomock.Ca
 }
 
 // GetStorageClass mocks base method
-func (m *MockClient) GetStorageClass(ctx context.Context, name string) (*v10.StorageClass, error) {
+func (m *MockClient) GetStorageClass(ctx context.Context, name string) (*v11.StorageClass, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStorageClass", ctx, name)
-	ret0, _ := ret[0].(*v10.StorageClass)
+	ret0, _ := ret[0].(*v11.StorageClass)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -214,4 +215,19 @@ func (m *MockClient) GetNetworkAttachmentDefinition(ctx context.Context, name, n
 func (mr *MockClientMockRecorder) GetNetworkAttachmentDefinition(ctx, name, namespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetworkAttachmentDefinition", reflect.TypeOf((*MockClient)(nil).GetNetworkAttachmentDefinition), ctx, name, namespace)
+}
+
+// CreateSelfSubjectAccessReview mocks base method
+func (m *MockClient) CreateSelfSubjectAccessReview(ctx context.Context, reviewObj *v1.SelfSubjectAccessReview) (*v1.SelfSubjectAccessReview, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSelfSubjectAccessReview", ctx, reviewObj)
+	ret0, _ := ret[0].(*v1.SelfSubjectAccessReview)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateSelfSubjectAccessReview indicates an expected call of CreateSelfSubjectAccessReview
+func (mr *MockClientMockRecorder) CreateSelfSubjectAccessReview(ctx, reviewObj interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSelfSubjectAccessReview", reflect.TypeOf((*MockClient)(nil).CreateSelfSubjectAccessReview), ctx, reviewObj)
 }

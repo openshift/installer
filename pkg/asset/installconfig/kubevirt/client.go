@@ -6,6 +6,7 @@ import (
 
 	nadv1 "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
 	"github.com/pkg/errors"
+	authv1 "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -37,6 +38,7 @@ type Client interface {
 	GetNamespace(ctx context.Context, name string) (*corev1.Namespace, error)
 	GetStorageClass(ctx context.Context, name string) (*storagev1.StorageClass, error)
 	GetNetworkAttachmentDefinition(ctx context.Context, name string, namespace string) (*unstructured.Unstructured, error)
+	CreateSelfSubjectAccessReview(ctx context.Context, reviewObj *authv1.SelfSubjectAccessReview) (*authv1.SelfSubjectAccessReview, error)
 }
 
 type client struct {
@@ -202,6 +204,9 @@ func (c *client) GetNetworkAttachmentDefinition(ctx context.Context, name string
 	return c.getResource(ctx, namespace, name, nadRes)
 }
 
+func (c *client) CreateSelfSubjectAccessReview(ctx context.Context, reviewObj *authv1.SelfSubjectAccessReview) (*authv1.SelfSubjectAccessReview, error) {
+	return c.kubernetesClient.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, reviewObj, metav1.CreateOptions{})
+}
 func (c *client) createResource(ctx context.Context, obj interface{}, namespace string, resource schema.GroupVersionResource) error {
 	resultMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {

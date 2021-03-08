@@ -1,6 +1,7 @@
 package kubevirt
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/kubevirt"
+	authv1 "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -188,4 +190,39 @@ func TestKubevirtInstallConfigValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidatePermissions(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	t.Run("All permissions are set", func(t *testing.T) {
+		client := mock.NewMockClient(mockCtrl)
+		client.EXPECT().CreateSelfSubjectAccessReview(gomock.Any(), gomock.Any()).DoAndReturn(
+			func(ctx context.Context, reviewObj *authv1.SelfSubjectAccessReview) (*authv1.SelfSubjectAccessReview, error) {
+				reviewObj.Status.Allowed = true
+				return reviewObj, nil
+			},
+		).AnyTimes()
+		err := ValidatePermissions(client, validInstallConfig())
+		assert.Nil(t, err)
+	})
+
+	t.Run("Get VMI permission is missing", func(t *testing.T) {
+		client := mock.NewMockClient(mockCtrl)
+		client.EXPECT().CreateSelfSubjectAccessReview(gomock.Any(), gomock.Any()).DoAndReturn(
+			func(ctx context.Context, reviewObj *authv1.SelfSubjectAccessReview) (*authv1.SelfSubjectAccessReview, error) {
+				if reviewObj.Spec.ResourceAttributes.Resource == "virtualmachineinstances" &&
+					reviewObj.Spec.ResourceAttributes.Verb == "get" {
+					reviewObj.Status.Allowed = false
+				} else {
+					reviewObj.Status.Allowed = true
+				}
+
+				return reviewObj, nil
+			},
+		).AnyTimes()
+		err := ValidatePermissions(client, validInstallConfig())
+		assert.NotNil(t, err)
+	})
 }
