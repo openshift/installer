@@ -102,9 +102,11 @@ func getClients() (*vCenterClient, error) {
 		{
 			Prompt: &survey.Input{
 				Message: "vCenter",
-				Help:    "The hostname of the vCenter to be used for installation.",
+				Help:    "The domain name or IP address of the vCenter to be used for installation.",
 			},
-			Validate: survey.Required,
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				return validate.Host(ans.(string))
+			}),
 		},
 	}, &vcenter); err != nil {
 		return nil, errors.Wrap(err, "failed UserInput")

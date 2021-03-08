@@ -238,3 +238,16 @@ func UUID(val string) error {
 	_, err := uuid.Parse(val)
 	return err
 }
+
+// Host validates that a given string is a valid URI host.
+func Host(v string) error {
+	proxyIP := net.ParseIP(v)
+	if proxyIP != nil {
+		return nil
+	}
+	re := regexp.MustCompile("^[a-z]")
+	if !re.MatchString(v) {
+		return errors.New("domain name must begin with a lower-case letter")
+	}
+	return validateSubdomain(v)
+}

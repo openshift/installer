@@ -49,6 +49,86 @@ func TestClusterName(t *testing.T) {
 	}
 }
 
+func TestClusterName1035(t *testing.T) {
+	maxSizeName := "a" + strings.Repeat("123456789.", 5) + "123"
+
+	cases := []struct {
+		name        string
+		clusterName string
+		valid       bool
+	}{
+		{"empty", "", false},
+		{"only whitespace", " ", false},
+		{"single lowercase", "a", true},
+		{"single uppercase", "A", false},
+		{"contains whitespace", "abc D", false},
+		{"single number", "1", false},
+		{"single dot", ".", false},
+		{"ends with dot", "a.", false},
+		{"starts with dot", ".a", false},
+		{"multiple labels", "a.a", true},
+		{"starts with dash", "-a", false},
+		{"ends with dash", "a-", false},
+		{"label starts with dash", "a.-a", false},
+		{"label ends with dash", "a-.a", false},
+		{"invalid percent", "a%a", false},
+		{"only non-ascii", "日本語", false},
+		{"contains non-ascii", "a日本語a", false},
+		{"max size", maxSizeName, true},
+		{"too long", maxSizeName + "a", false},
+		{"URLs", "https://hello.openshift.org", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ClusterName1035(tc.clusterName)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestVCenter(t *testing.T) {
+	cases := []struct {
+		name        string
+		clusterName string
+		valid       bool
+	}{
+		{"empty", "", false},
+		{"only whitespace", " ", false},
+		{"single lowercase", "a", true},
+		{"single uppercase", "A", false},
+		{"contains whitespace", "abc D", false},
+		{"single number", "1", false},
+		{"single dot", ".", false},
+		{"ends with dot", "a.", false},
+		{"starts with dot", ".a", false},
+		{"multiple labels", "a.a", true},
+		{"starts with dash", "-a", false},
+		{"ends with dash", "a-", false},
+		{"label starts with dash", "a.-a", false},
+		{"label ends with dash", "a-.a", false},
+		{"invalid percent", "a%a", false},
+		{"only non-ascii", "日本語", false},
+		{"contains non-ascii", "a日本語a", false},
+		{"URLs", "https://hello.openshift.org", false},
+		{"IP", "192.168.1.1", true},
+		{"invalid IP", "192.168.1", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := Host(tc.clusterName)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
 func TestSubnetCIDR(t *testing.T) {
 	cases := []struct {
 		cidr   string

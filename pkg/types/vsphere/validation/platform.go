@@ -29,8 +29,10 @@ func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 		allErrs = append(allErrs, field.Required(fldPath.Child("defaultDatastore"), "must specify the default datastore"))
 	}
 
-	if strings.ToLower(p.VCenter) != p.VCenter {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("vCenter"), p.VCenter, "must be all lower case"))
+	if len(p.VCenter) != 0 {
+		if err := validate.Host(p.VCenter); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("vCenter"), p.VCenter, "must be the domain name or IP address of the vCenter"))
+		}
 	}
 
 	// If all VIPs are empty, skip IP validation.  All VIPs are required to be defined together.
