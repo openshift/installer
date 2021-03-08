@@ -2,8 +2,8 @@ package kubevirt
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/openshift/installer/pkg/types"
 	authv1 "k8s.io/api/authorization/v1"
@@ -47,13 +47,12 @@ func ValidatePermissions(client Client, ic *types.InstallConfig) error {
 
 	// Put all missing permissions in one error message
 	if len(notAllowedObjs) > 0 {
-		errMsg := "The user is missing the following permissions: "
-
+		var notAllowed []string
 		for _, obj := range notAllowedObjs {
-			errMsg += fmt.Sprintf("%+v, ", *obj.Spec.ResourceAttributes)
+			notAllowed = append(notAllowed, fmt.Sprintf("%+v", *obj.Spec.ResourceAttributes))
 		}
 
-		return errors.New(errMsg)
+		return fmt.Errorf("the user is missing the following permissions: %s", strings.Join(notAllowed, ", "))
 	}
 
 	return nil
