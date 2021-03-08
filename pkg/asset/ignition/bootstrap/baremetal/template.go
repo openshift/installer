@@ -41,11 +41,11 @@ type TemplateData struct {
 	// IronicUsername contains the password for authentication to Ironic
 	IronicPassword string
 
-	// APIVIP is the VIP to use for internal API communication
-	APIVIP string
+	// BaremetalEndpointOverride contains the url for the baremetal endpoint
+	BaremetalEndpointOverride string
 
-	// APIVIPv6 determines if our APIVIP is IPv6 or not
-	APIVIPv6 bool
+	// BaremetalIntrospectionEndpointOverride contains the url for the baremetal introspection endpoint
+	BaremetalIntrospectionEndpointOverride string
 }
 
 // GetTemplateData returns platform-specific data for bootstrap templates.
@@ -53,8 +53,8 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	var templateData TemplateData
 
 	templateData.ProvisioningIP = config.BootstrapProvisioningIP
-	templateData.APIVIP = config.APIVIP
-	templateData.APIVIPv6 = net.ParseIP(config.APIVIP).To4() == nil
+	templateData.BaremetalEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIP, "6385"))
+	templateData.BaremetalIntrospectionEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIP, "5050"))
 
 	if config.ProvisioningNetwork != baremetal.DisabledProvisioningNetwork {
 		cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()
