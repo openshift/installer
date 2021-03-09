@@ -1,7 +1,10 @@
 provider "ovirt" {
-  url      = var.ovirt_url
-  username = var.ovirt_username
-  password = var.ovirt_password
+  url       = var.ovirt_url
+  username  = var.ovirt_username
+  password  = var.ovirt_password
+  cafile    = var.ovirt_cafile
+  ca_bundle = var.ovirt_ca_bundle
+  insecure  = var.ovirt_insecure
 }
 
 module "template" {

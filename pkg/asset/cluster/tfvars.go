@@ -518,6 +518,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				Username: config.Username,
 				Password: config.Password,
 				Cafile:   config.CAFile,
+				Cabundle: config.CABundle,
+				Insecure: config.Insecure,
 			},
 			installConfig.Config.Platform.Ovirt.ClusterID,
 			installConfig.Config.Platform.Ovirt.StorageDomainID,
