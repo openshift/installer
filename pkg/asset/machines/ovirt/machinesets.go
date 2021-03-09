@@ -31,7 +31,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	}
 
 	provider := provider(platform, pool, userDataSecret, osImage)
-	name := fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, 0)
+	name := fmt.Sprintf("%s-%s", clusterID, pool.Name)
 	mset := &machineapi.MachineSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
