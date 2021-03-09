@@ -9,6 +9,7 @@ The following options are available when using Azure:
 * `region` (required string): The Azure region where the cluster will be created.
 * `baseDomainResourceGroupName` (required string): The resource group where the Azure DNS zone for the base domain is found.
 * `defaultMachinePlatform` (optional object): Default [Azure-specific machine pool properties](#machine-pools) which applies to [machine pools](../customization.md#machine-pools) that do not define their own Azure-specific properties.
+* `resourceGroupName` (optional string):  The name of an already existing resource group where the cluster should be installed. If empty, a new resource group will created for the cluster.
 * `networkResourceGroupName` (optional string): The resource group where the Azure VNet is found.
 * `virtualNetwork` (optional string): The name of an existing VNet where the cluster infrastructure should be provisioned.
 * `controlPlaneSubnet` (optional string): An existing subnet which should be used for the cluster control plane.
@@ -24,6 +25,12 @@ The following options are available when using Azure:
     * `diskType` (optional string): The type of disk (allowed values are: `Premium_LRS`, `Standard_LRS`, and `StandardSSD_LRS`).
 * `type` (optional string): The Azure instance type.
 * `zones` (optional string slice): List of Azure availability zones that can be used (for example, `["1", "2", "3"]`).
+
+## Installing to Existing Resource Group
+
+The installer can use an existing resource group when provisioning an OpenShift cluster. This resource group should only be used for this specific cluster and the cluster components will assume assume ownership of all resources in the resource group. Destroying the cluster using installer will delete this resource group. This resource group must be empty with no other resources when trying to use it for creating a cluster.
+
+If you're limiting the installer's Service Principal scope to the Resource Group defined with `resourceGroupName`, you will also need to ensure proper permissions for any other resource used by the installer in your environment such as Public DNS Zone, VNet, etc.
 
 ## Installing to Existing Networks & Subnetworks
 
@@ -93,6 +100,27 @@ platform:
     osDisk:
         diskSizeGB: 512
         diskType: Premium_LRS
+pullSecret: '{"auths": ...}'
+sshKey: ssh-ed25519 AAAA...
+```
+
+### Existing Resource Group
+
+An example Azure install config to use a pre-existing resource group:
+
+```yaml
+apiVersion: v1
+baseDomain: example.com
+metadata:
+  creationTimestamp: null
+  name: test-cluster
+platform:
+  azure:
+    baseDomainResourceGroupName: os4-common
+    resourceGroupName: example-rg
+    cloudName: AzurePublicCloud
+    outboundType: Loadbalancer
+    region: centralus
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
