@@ -36,6 +36,9 @@ type OSDisk struct {
 	DiskType string `json:"diskType"`
 }
 
+// DefaultDiskType holds the default Azure disk type used by the VMs.
+const DefaultDiskType string = "Premium_LRS"
+
 // Set sets the values from `required` to `a`.
 func (a *MachinePool) Set(required *MachinePool) {
 	if required == nil || a == nil {
