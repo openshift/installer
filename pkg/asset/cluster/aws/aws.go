@@ -39,6 +39,9 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 	}
 
 	publicSubnets, err := installConfig.AWS.PublicSubnets(ctx)
+	if err != nil {
+		return err
+	}
 
 	//arns := make([]*string, 0, len(privateSubnets)+len(publicSubnets))
 	ids := make([]*string, 0, len(privateSubnets)+len(publicSubnets))
