@@ -19,6 +19,21 @@ variable "ovirt_password" {
   description = "The plain password of user to access Engine API"
 }
 
+variable "ovirt_cafile" {
+  type        = string
+  description = "Path to a file containing the CA certificate for the oVirt engine API in PEM format"
+}
+
+variable "ovirt_ca_bundle" {
+  type        = string
+  description = "The CA certificate for the oVirt engine API in PEM format"
+}
+
+variable "ovirt_insecure" {
+  type        = bool
+  description = "Disable oVirt engine certificate verification"
+}
+
 variable "ovirt_tmp_template_vm_id" {
   type        = string
   default     = ""
