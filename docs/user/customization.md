@@ -277,13 +277,8 @@ For example:
     -rw-r--r--. 1 xxxxx xxxxx  557 Feb 28 10:54 cluster-network-01-crd.yml
     -rw-r--r--. 1 xxxxx xxxxx  327 Feb 28 10:54 cluster-network-02-config.yml
     -rw-r--r--. 1 xxxxx xxxxx  264 Feb 28 10:54 cvo-overrides.yaml
-    -rw-r--r--. 1 xxxxx xxxxx  275 Feb 28 10:54 etcd-service.yaml
-    -rw-r--r--. 1 xxxxx xxxxx  283 Feb 28 10:54 host-etcd-service-endpoints.yaml
-    -rw-r--r--. 1 xxxxx xxxxx  268 Feb 28 10:54 host-etcd-service.yaml
     -rw-r--r--. 1 xxxxx xxxxx  118 Feb 28 10:54 kube-cloud-config.yaml
-    -rw-r--r--. 1 xxxxx xxxxx 1299 Feb 28 10:54 kube-system-configmap-etcd-serving-ca.yaml
     -rw-r--r--. 1 xxxxx xxxxx 1304 Feb 28 10:54 kube-system-configmap-root-ca.yaml
-    -rw-r--r--. 1 xxxxx xxxxx 3877 Feb 28 10:54 kube-system-secret-etcd-client.yaml
     -rw-r--r--. 1 xxxxx xxxxx 4030 Feb 28 10:54 machine-config-server-tls-secret.yaml
     -rw-r--r--. 1 xxxxx xxxxx  856 Feb 28 10:54 pull.json
 

@@ -544,17 +544,6 @@ $ tree
     │   ├── cluster-proxy-01-config.yaml
     │   ├── cluster-scheduler-02-config.yml
     │   ├── cvo-overrides.yaml
-    │   ├── etcd-ca-bundle-configmap.yaml
-    │   ├── etcd-client-secret.yaml
-    │   ├── etcd-host-service-endpoints.yaml
-    │   ├── etcd-host-service.yaml
-    │   ├── etcd-metric-client-secret.yaml
-    │   ├── etcd-metric-serving-ca-configmap.yaml
-    │   ├── etcd-metric-signer-secret.yaml
-    │   ├── etcd-namespace.yaml
-    │   ├── etcd-service.yaml
-    │   ├── etcd-serving-ca-configmap.yaml
-    │   ├── etcd-signer-secret.yaml
     │   ├── kube-cloud-config.yaml
     │   ├── kube-system-configmap-root-ca.yaml
     │   ├── machine-config-server-tls-secret.yaml
