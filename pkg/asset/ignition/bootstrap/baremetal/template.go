@@ -40,6 +40,12 @@ type TemplateData struct {
 
 	// IronicUsername contains the password for authentication to Ironic
 	IronicPassword string
+
+	// BaremetalEndpointOverride contains the url for the baremetal endpoint
+	BaremetalEndpointOverride string
+
+	// BaremetalIntrospectionEndpointOverride contains the url for the baremetal introspection endpoint
+	BaremetalIntrospectionEndpointOverride string
 }
 
 // GetTemplateData returns platform-specific data for bootstrap templates.
@@ -47,6 +53,8 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	var templateData TemplateData
 
 	templateData.ProvisioningIP = config.BootstrapProvisioningIP
+	templateData.BaremetalEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIP, "6385"))
+	templateData.BaremetalIntrospectionEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIP, "5050"))
 
 	if config.ProvisioningNetwork != baremetal.DisabledProvisioningNetwork {
 		cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()
