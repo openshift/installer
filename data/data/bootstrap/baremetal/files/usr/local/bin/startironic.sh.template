@@ -18,6 +18,12 @@ DHCP_RANGE="{{.PlatformData.BareMetal.ProvisioningDHCPRange}}"
 # Used by ironic to allow ssh to running IPA instances
 IRONIC_RAMDISK_SSH_KEY="{{.SSHKey}}"
 
+# Used by ironic to set kernel options on running IPA instances
+IRONIC_KERNEL_PARAMS=
+{{ if .PlatformData.BareMetal.ProvisioningConsole }}
+    IRONIC_KERNEL_PARAMS="console={{.PlatformData.BareMetal.ProvisioningConsole}}"
+{{ end }}
+
 # First we stop any previously started containers, because ExecStop only runs when the ExecStart process
 # e.g this script is still running, but we exit if *any* of the containers exits unexpectedly
 for name in ironic-api ironic-conductor ironic-inspector ironic-deploy-ramdisk-logs ironic-inspector-ramdisk-logs dnsmasq httpd mariadb ipa-downloader coreos-downloader; do
@@ -88,6 +94,7 @@ podman run -d --net host --privileged --name mariadb \
 
 podman run -d --net host --privileged --name httpd \
      --env IRONIC_RAMDISK_SSH_KEY="$IRONIC_RAMDISK_SSH_KEY" \
+     --env IRONIC_KERNEL_PARAMS="$IRONIC_KERNEL_PARAMS" \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 
@@ -150,6 +157,7 @@ while ! curl --fail --head http://localhost/images/ironic-python-agent.kernel ; 
 
 sudo podman run -d --net host --privileged --name ironic-conductor \
      --env IRONIC_RAMDISK_SSH_KEY="$IRONIC_RAMDISK_SSH_KEY" \
+     --env IRONIC_KERNEL_PARAMS="$IRONIC_KERNEL_PARAMS" \
      --env MARIADB_PASSWORD=$mariadb_password \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --env OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120 \
