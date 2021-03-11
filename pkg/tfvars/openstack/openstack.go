@@ -109,7 +109,12 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 		}
 	}
 
-	glancePublicURL, err := getGlancePublicURL(serviceCatalog)
+	clientConfigCloud, err := clientconfig.GetCloudFromYAML(openstackdefaults.DefaultClientOpts(cloud))
+	if err != nil {
+		return nil, err
+	}
+
+	glancePublicURL, err := getGlancePublicURL(serviceCatalog, clientConfigCloud.RegionName)
 	if err != nil {
 		return nil, err
 	}
@@ -184,10 +189,11 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 // 2. In getGlancePublicURL we iterate through the catalog and find "public" endpoint for "image".
 
 // getGlancePublicURL obtains Glance public endpoint URL
-func getGlancePublicURL(serviceCatalog *tokens.ServiceCatalog) (string, error) {
+func getGlancePublicURL(serviceCatalog *tokens.ServiceCatalog, region string) (string, error) {
 	glancePublicURL, err := openstack.V3EndpointURL(serviceCatalog, gophercloud.EndpointOpts{
 		Type:         "image",
 		Availability: gophercloud.AvailabilityPublic,
+		Region:       region,
 	})
 	if err != nil {
 		return "", errors.Errorf("cannot retrieve Glance URL from the service catalog: %v", err)
