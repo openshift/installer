@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/pkg/errors"
 
@@ -61,7 +62,11 @@ func Destroy(dir string) (err error) {
 		if err != nil {
 			return errors.Wrap(err, "failed to create temporary directory for Terraform execution")
 		}
-		defer os.RemoveAll(tempDir)
+
+		tfKeep, _ := strconv.ParseBool(os.Getenv("OPENSHIFT_INSTALL_KEEP_TERRAFORM"))
+		if !tfKeep {
+			defer os.RemoveAll(tempDir)
+		}
 
 		if err := copyToTemp(stage.StateFilename(), dir, tempDir, false); err != nil {
 			return err

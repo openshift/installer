@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -104,7 +105,11 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		if err != nil {
 			return errors.Wrap(err, "failed to create temp dir for terraform execution")
 		}
-		defer os.RemoveAll(tmpDir)
+
+		tfKeep, _ := strconv.ParseBool(os.Getenv("OPENSHIFT_INSTALL_KEEP_TERRAFORM"))
+		if !tfKeep {
+			defer os.RemoveAll(tmpDir)
+		}
 
 		var extraArgs []string
 		for _, file := range tfvarsFiles {
