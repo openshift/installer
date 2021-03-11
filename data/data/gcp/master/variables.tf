@@ -51,5 +51,5 @@ variable "root_volume_kms_key_link" {
 }
 
 variable "zones" {
-  type = list
+  type = list(any)
 }

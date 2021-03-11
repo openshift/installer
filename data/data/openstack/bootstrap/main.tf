@@ -49,7 +49,7 @@ resource "openstack_compute_instance_v2" "bootstrap" {
 
   user_data = var.bootstrap_shim_ignition
 
-  dynamic block_device {
+  dynamic "block_device" {
     for_each = var.root_volume_size == null ? [] : [openstack_blockstorage_volume_v3.bootstrap_volume[0].id]
     content {
       uuid                  = block_device.value
@@ -64,7 +64,7 @@ resource "openstack_compute_instance_v2" "bootstrap" {
     port = openstack_networking_port_v2.bootstrap_port.id
   }
 
-  dynamic network {
+  dynamic "network" {
     for_each = var.additional_network_ids
 
     content {
