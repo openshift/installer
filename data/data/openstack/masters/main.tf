@@ -77,7 +77,7 @@ resource "openstack_compute_instance_v2" "master_conf_0" {
     0,
   )
 
-  dynamic block_device {
+  dynamic "block_device" {
     for_each = var.root_volume_size == null ? [] : [openstack_blockstorage_volume_v3.master_volume[0].id]
     content {
       uuid = block_device.value
@@ -96,7 +96,7 @@ resource "openstack_compute_instance_v2" "master_conf_0" {
     group = openstack_compute_servergroup_v2.master_group.id
   }
 
-  dynamic network {
+  dynamic "network" {
     for_each = var.additional_network_ids
 
     content {
@@ -125,7 +125,7 @@ resource "openstack_compute_instance_v2" "master_conf_1" {
     1,
   )
 
-  dynamic block_device {
+  dynamic "block_device" {
     for_each = var.root_volume_size == null ? [] : [openstack_blockstorage_volume_v3.master_volume[1].id]
     content {
       uuid = block_device.value
@@ -144,7 +144,7 @@ resource "openstack_compute_instance_v2" "master_conf_1" {
     group = openstack_compute_servergroup_v2.master_group.id
   }
 
-  dynamic network {
+  dynamic "network" {
     for_each = var.additional_network_ids
 
     content {
@@ -175,7 +175,7 @@ resource "openstack_compute_instance_v2" "master_conf_2" {
     2,
   )
 
-  dynamic block_device {
+  dynamic "block_device" {
     for_each = var.root_volume_size == null ? [] : [openstack_blockstorage_volume_v3.master_volume[2].id]
     content {
       uuid = block_device.value
@@ -194,7 +194,7 @@ resource "openstack_compute_instance_v2" "master_conf_2" {
     group = openstack_compute_servergroup_v2.master_group.id
   }
 
-  dynamic network {
+  dynamic "network" {
     for_each = var.additional_network_ids
 
     content {
