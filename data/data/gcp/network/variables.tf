@@ -4,12 +4,12 @@ variable "cluster_id" {
 }
 
 variable "bootstrap_instances" {
-  type        = list
+  type        = list(any)
   description = "The bootstrap instance."
 }
 
 variable "bootstrap_instance_groups" {
-  type        = list
+  type        = list(any)
   description = "The bootstrap instance groups."
 }
 
@@ -20,12 +20,12 @@ variable "bootstrap_lb" {
 }
 
 variable "master_instances" {
-  type        = list
+  type        = list(any)
   description = "The master instances."
 }
 
 variable "master_instance_groups" {
-  type        = list
+  type        = list(any)
   description = "The master instance groups."
 }
 
