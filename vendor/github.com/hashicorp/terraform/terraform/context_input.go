@@ -9,9 +9,9 @@ import (
 	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/zclconf/go-cty/cty"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/configs"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 )
 
 // Input asks for input to fill unset required arguments in provider
@@ -53,7 +53,7 @@ func (c *Context) Input(mode InputMode) tfdiags.Diagnostics {
 		// us to keep this relatively simple without significant hardship.
 
 		pcs := make(map[string]*configs.Provider)
-		pas := make(map[string]addrs.ProviderConfig)
+		pas := make(map[string]addrs.LocalProviderConfig)
 		for _, pc := range c.config.Module.ProviderConfigs {
 			addr := pc.Addr()
 			pcs[addr.String()] = pc
@@ -96,12 +96,13 @@ func (c *Context) Input(mode InputMode) tfdiags.Diagnostics {
 				UIInput:     c.uiInput,
 			}
 
-			schema := c.schemas.ProviderConfig(pa.Type.LegacyString())
+			providerFqn := c.config.Module.ProviderForLocalConfig(pa)
+			schema := c.schemas.ProviderConfig(providerFqn)
 			if schema == nil {
 				// Could either be an incorrect config or just an incomplete
 				// mock in tests. We'll let a later pass decide, and just
 				// ignore this for the purposes of gathering input.
-				log.Printf("[TRACE] Context.Input: No schema available for provider type %q", pa.Type)
+				log.Printf("[TRACE] Context.Input: No schema available for provider type %q", pa.LocalName)
 				continue
 			}
 
@@ -156,7 +157,13 @@ func (c *Context) Input(mode InputMode) tfdiags.Diagnostics {
 				vals[key] = cty.StringVal(rawVal)
 			}
 
-			c.providerInputConfig[pk] = vals
+			absConfigAddr := addrs.AbsProviderConfig{
+				Provider: providerFqn,
+				Alias:    pa.Alias,
+				Module:   c.Config().Path,
+			}
+			c.providerInputConfig[absConfigAddr.String()] = vals
+
 			log.Printf("[TRACE] Context.Input: Input for %s: %#v", pk, vals)
 		}
 	}

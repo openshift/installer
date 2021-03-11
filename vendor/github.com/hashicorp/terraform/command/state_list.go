@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/states"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/mitchellh/cli"
 )
 
@@ -18,11 +18,7 @@ type StateListCommand struct {
 }
 
 func (c *StateListCommand) Run(args []string) int {
-	args, err := c.Meta.process(args, true)
-	if err != nil {
-		return 1
-	}
-
+	args = c.Meta.process(args)
 	var statePath string
 	cmdFlags := c.Meta.defaultFlagSet("state list")
 	cmdFlags.StringVar(&statePath, "state", "", "path")
@@ -44,8 +40,15 @@ func (c *StateListCommand) Run(args []string) int {
 		return 1
 	}
 
+	// This is a read-only command
+	c.ignoreRemoteBackendVersionConflict(b)
+
 	// Get the state
-	env := c.Workspace()
+	env, err := c.Workspace()
+	if err != nil {
+		c.Ui.Error(fmt.Sprintf("Error selecting workspace: %s", err))
+		return 1
+	}
 	stateMgr, err := b.StateMgr(env)
 	if err != nil {
 		c.Ui.Error(fmt.Sprintf(errStateLoadingState, err))
@@ -125,10 +128,6 @@ Options:
 func (c *StateListCommand) Synopsis() string {
 	return "List resources in the state"
 }
-
-const errStateFilter = `Error filtering state: %[1]s
-
-Please ensure that all your addresses are formatted properly.`
 
 const errStateLoadingState = `Error loading the state: %[1]s
 

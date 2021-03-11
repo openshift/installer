@@ -2,9 +2,9 @@ package terraform
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"sync"
 
 	"github.com/agext/levenshtein"
@@ -12,13 +12,15 @@ import (
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/configs"
 	"github.com/hashicorp/terraform/configs/configschema"
+	"github.com/hashicorp/terraform/experiments"
+	"github.com/hashicorp/terraform/instances"
 	"github.com/hashicorp/terraform/lang"
 	"github.com/hashicorp/terraform/plans"
 	"github.com/hashicorp/terraform/states"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 )
 
 // Evaluator provides the necessary contextual data for evaluating expressions
@@ -71,7 +73,7 @@ func (e *Evaluator) Scope(data lang.Data, self addrs.Referenceable) *lang.Scope 
 	return &lang.Scope{
 		Data:     data,
 		SelfAddr: self,
-		PureOnly: e.Operation != walkApply && e.Operation != walkDestroy,
+		PureOnly: e.Operation != walkApply && e.Operation != walkDestroy && e.Operation != walkEval,
 		BaseDir:  ".", // Always current working directory for now.
 	}
 }
@@ -97,47 +99,32 @@ type evaluationStateData struct {
 	Operation walkOperation
 }
 
-// InstanceKeyEvalData is used during evaluation to specify which values,
-// if any, should be produced for count.index, each.key, and each.value.
-type InstanceKeyEvalData struct {
-	// CountIndex is the value for count.index, or cty.NilVal if evaluating
-	// in a context where the "count" argument is not active.
-	//
-	// For correct operation, this should always be of type cty.Number if not
-	// nil.
-	CountIndex cty.Value
-
-	// EachKey and EachValue are the values for each.key and each.value
-	// respectively, or cty.NilVal if evaluating in a context where the
-	// "for_each" argument is not active. These must either both be set
-	// or neither set.
-	//
-	// For correct operation, EachKey must always be either of type cty.String
-	// or cty.Number if not nil.
-	EachKey, EachValue cty.Value
-}
+// InstanceKeyEvalData is the old name for instances.RepetitionData, aliased
+// here for compatibility. In new code, use instances.RepetitionData instead.
+type InstanceKeyEvalData = instances.RepetitionData
 
 // EvalDataForInstanceKey constructs a suitable InstanceKeyEvalData for
 // evaluating in a context that has the given instance key.
+//
+// The forEachMap argument can be nil when preparing for evaluation
+// in a context where each.value is prohibited, such as a destroy-time
+// provisioner. In that case, the returned EachValue will always be
+// cty.NilVal.
 func EvalDataForInstanceKey(key addrs.InstanceKey, forEachMap map[string]cty.Value) InstanceKeyEvalData {
-	var countIdx cty.Value
-	var eachKey cty.Value
-	var eachVal cty.Value
-
-	if intKey, ok := key.(addrs.IntKey); ok {
-		countIdx = cty.NumberIntVal(int64(intKey))
+	var evalData InstanceKeyEvalData
+	if key == nil {
+		return evalData
 	}
 
-	if stringKey, ok := key.(addrs.StringKey); ok {
-		eachKey = cty.StringVal(string(stringKey))
-		eachVal = forEachMap[string(stringKey)]
+	keyValue := key.Value()
+	switch keyValue.Type() {
+	case cty.String:
+		evalData.EachKey = keyValue
+		evalData.EachValue = forEachMap[keyValue.AsString()]
+	case cty.Number:
+		evalData.CountIndex = keyValue
 	}
-
-	return InstanceKeyEvalData{
-		CountIndex: countIdx,
-		EachKey:    eachKey,
-		EachValue:  eachVal,
-	}
+	return evalData
 }
 
 // EvalDataForNoInstanceKey is a value of InstanceKeyData that sets no instance
@@ -158,7 +145,7 @@ func (d *evaluationStateData) GetCountAttr(addr addrs.CountAttr, rng tfdiags.Sou
 			diags = diags.Append(&hcl.Diagnostic{
 				Severity: hcl.DiagError,
 				Summary:  `Reference to "count" in non-counted context`,
-				Detail:   fmt.Sprintf(`The "count" object can be used only in "resource" and "data" blocks, and only when the "count" argument is set.`),
+				Detail:   fmt.Sprintf(`The "count" object can only be used in "module", "resource", and "data" blocks, and only when the "count" argument is set.`),
 				Subject:  rng.ToHCL().Ptr(),
 			})
 			return cty.UnknownVal(cty.Number), diags
@@ -209,7 +196,7 @@ func (d *evaluationStateData) GetForEachAttr(addr addrs.ForEachAttr, rng tfdiags
 		diags = diags.Append(&hcl.Diagnostic{
 			Severity: hcl.DiagError,
 			Summary:  `Reference to "each" in context without for_each`,
-			Detail:   fmt.Sprintf(`The "each" object can be used only in "resource" blocks, and only when the "for_each" argument is set.`),
+			Detail:   fmt.Sprintf(`The "each" object can be used only in "module" or "resource" blocks, and only when the "for_each" argument is set.`),
 			Subject:  rng.ToHCL().Ptr(),
 		})
 		return cty.UnknownVal(cty.DynamicPseudoType), diags
@@ -273,6 +260,10 @@ func (d *evaluationStateData) GetInputVariable(addr addrs.InputVariable, rng tfd
 	// being liberal in what it accepts because the subsequent plan walk has
 	// more information available and so can be more conservative.
 	if d.Operation == walkValidate {
+		// Ensure variable sensitivity is captured in the validate walk
+		if config.Sensitive {
+			return cty.UnknownVal(wantType).Mark("sensitive"), diags
+		}
 		return cty.UnknownVal(wantType), diags
 	}
 
@@ -304,6 +295,11 @@ func (d *evaluationStateData) GetInputVariable(addr addrs.InputVariable, rng tfd
 		// Stub out our return value so that the semantic checker doesn't
 		// produce redundant downstream errors.
 		val = cty.UnknownVal(wantType)
+	}
+
+	// Mark if sensitive, and avoid double-marking if this has already been marked
+	if config.Sensitive && !val.HasMark("sensitive") {
+		val = val.Mark("sensitive")
 	}
 
 	return val, diags
@@ -350,72 +346,16 @@ func (d *evaluationStateData) GetLocalValue(addr addrs.LocalValue, rng tfdiags.S
 	return val, diags
 }
 
-func (d *evaluationStateData) GetModuleInstance(addr addrs.ModuleCallInstance, rng tfdiags.SourceRange) (cty.Value, tfdiags.Diagnostics) {
+func (d *evaluationStateData) GetModule(addr addrs.ModuleCall, rng tfdiags.SourceRange) (cty.Value, tfdiags.Diagnostics) {
 	var diags tfdiags.Diagnostics
 
 	// Output results live in the module that declares them, which is one of
 	// the child module instances of our current module path.
-	moduleAddr := addr.ModuleInstance(d.ModulePath)
+	moduleAddr := d.ModulePath.Module().Child(addr.Name)
 
-	// We'll consult the configuration to see what output names we are
-	// expecting, so we can ensure the resulting object is of the expected
-	// type even if our data is incomplete for some reason.
-	moduleConfig := d.Evaluator.Config.DescendentForInstance(moduleAddr)
-	if moduleConfig == nil {
-		// should never happen, since this should've been caught during
-		// static validation.
-		panic(fmt.Sprintf("output value read from %s, which has no configuration", moduleAddr))
-	}
-	outputConfigs := moduleConfig.Module.Outputs
-
-	vals := map[string]cty.Value{}
-	for n := range outputConfigs {
-		addr := addrs.OutputValue{Name: n}.Absolute(moduleAddr)
-
-		// If a pending change is present in our current changeset then its value
-		// takes priority over what's in state. (It will usually be the same but
-		// will differ if the new value is unknown during planning.)
-		if changeSrc := d.Evaluator.Changes.GetOutputChange(addr); changeSrc != nil {
-			change, err := changeSrc.Decode()
-			if err != nil {
-				// This should happen only if someone has tampered with a plan
-				// file, so we won't bother with a pretty error for it.
-				diags = diags.Append(fmt.Errorf("planned change for %s could not be decoded: %s", addr, err))
-				vals[n] = cty.DynamicVal
-				continue
-			}
-			// We care only about the "after" value, which is the value this output
-			// will take on after the plan is applied.
-			vals[n] = change.After
-		} else {
-			os := d.Evaluator.State.OutputValue(addr)
-			if os == nil {
-				// Not evaluated yet?
-				vals[n] = cty.DynamicVal
-				continue
-			}
-			vals[n] = os.Value
-		}
-	}
-	return cty.ObjectVal(vals), diags
-}
-
-func (d *evaluationStateData) GetModuleInstanceOutput(addr addrs.ModuleCallOutput, rng tfdiags.SourceRange) (cty.Value, tfdiags.Diagnostics) {
-	var diags tfdiags.Diagnostics
-
-	// Output results live in the module that declares them, which is one of
-	// the child module instances of our current module path.
-	absAddr := addr.AbsOutputValue(d.ModulePath)
-	moduleAddr := absAddr.Module
-
-	// First we'll consult the configuration to see if an output of this
-	// name is declared at all.
-	moduleConfig := d.Evaluator.Config.DescendentForInstance(moduleAddr)
-	if moduleConfig == nil {
-		// this doesn't happen in normal circumstances due to our validation
-		// pass, but it can turn up in some unusual situations, like in the
-		// "terraform console" repl where arbitrary expressions can be
-		// evaluated.
+	parentCfg := d.Evaluator.Config.DescendentForInstance(d.ModulePath)
+	callConfig, ok := parentCfg.Module.ModuleCalls[addr.Name]
+	if !ok {
 		diags = diags.Append(&hcl.Diagnostic{
 			Severity: hcl.DiagError,
 			Summary:  `Reference to undeclared module`,
@@ -425,49 +365,205 @@ func (d *evaluationStateData) GetModuleInstanceOutput(addr addrs.ModuleCallOutpu
 		return cty.DynamicVal, diags
 	}
 
-	config := moduleConfig.Module.Outputs[addr.Name]
-	if config == nil {
-		var suggestions []string
-		for k := range moduleConfig.Module.Outputs {
-			suggestions = append(suggestions, k)
-		}
-		suggestion := nameSuggestion(addr.Name, suggestions)
-		if suggestion != "" {
-			suggestion = fmt.Sprintf(" Did you mean %q?", suggestion)
+	// We'll consult the configuration to see what output names we are
+	// expecting, so we can ensure the resulting object is of the expected
+	// type even if our data is incomplete for some reason.
+	moduleConfig := d.Evaluator.Config.Descendent(moduleAddr)
+	if moduleConfig == nil {
+		// should never happen, since we have a valid module call above, this
+		// should be caught during static validation.
+		panic(fmt.Sprintf("output value read from %s, which has no configuration", moduleAddr))
+	}
+	outputConfigs := moduleConfig.Module.Outputs
+
+	// Collect all the relevant outputs that current exist in the state.
+	// We know the instance path up to this point, and the child module name,
+	// so we only need to store these by instance key.
+	stateMap := map[addrs.InstanceKey]map[string]cty.Value{}
+	for _, output := range d.Evaluator.State.ModuleOutputs(d.ModulePath, addr) {
+		_, callInstance := output.Addr.Module.CallInstance()
+		instance, ok := stateMap[callInstance.Key]
+		if !ok {
+			instance = map[string]cty.Value{}
+			stateMap[callInstance.Key] = instance
 		}
 
-		diags = diags.Append(&hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  `Reference to undeclared output value`,
-			Detail:   fmt.Sprintf(`An output value with the name %q has not been declared in %s.%s`, addr.Name, moduleDisplayAddr(moduleAddr), suggestion),
-			Subject:  rng.ToHCL().Ptr(),
-		})
-		return cty.DynamicVal, diags
+		instance[output.Addr.OutputValue.Name] = output.Value
 	}
 
-	// If a pending change is present in our current changeset then its value
-	// takes priority over what's in state. (It will usually be the same but
-	// will differ if the new value is unknown during planning.)
-	if changeSrc := d.Evaluator.Changes.GetOutputChange(absAddr); changeSrc != nil {
-		change, err := changeSrc.Decode()
-		if err != nil {
-			// This should happen only if someone has tampered with a plan
-			// file, so we won't bother with a pretty error for it.
-			diags = diags.Append(fmt.Errorf("planned change for %s could not be decoded: %s", absAddr, err))
-			return cty.DynamicVal, diags
+	// Get all changes that reside for this module call within our path.
+	// The change contains the full addr, so we can key these with strings.
+	changesMap := map[addrs.InstanceKey]map[string]*plans.OutputChangeSrc{}
+	for _, change := range d.Evaluator.Changes.GetOutputChanges(d.ModulePath, addr) {
+		_, callInstance := change.Addr.Module.CallInstance()
+		instance, ok := changesMap[callInstance.Key]
+		if !ok {
+			instance = map[string]*plans.OutputChangeSrc{}
+			changesMap[callInstance.Key] = instance
 		}
-		// We care only about the "after" value, which is the value this output
-		// will take on after the plan is applied.
-		return change.After, diags
+
+		instance[change.Addr.OutputValue.Name] = change
 	}
 
-	os := d.Evaluator.State.OutputValue(absAddr)
-	if os == nil {
-		// Not evaluated yet?
-		return cty.DynamicVal, diags
+	// Build up all the module objects, creating a map of values for each
+	// module instance.
+	moduleInstances := map[addrs.InstanceKey]map[string]cty.Value{}
+
+	// create a dummy object type for validation below
+	unknownMap := map[string]cty.Type{}
+
+	// the structure is based on the configuration, so iterate through all the
+	// defined outputs, and add any instance state or changes we find.
+	for _, cfg := range outputConfigs {
+		// record the output names for validation
+		unknownMap[cfg.Name] = cty.DynamicPseudoType
+
+		// get all instance output for this path from the state
+		for key, states := range stateMap {
+			outputState, ok := states[cfg.Name]
+			if !ok {
+				continue
+			}
+
+			instance, ok := moduleInstances[key]
+			if !ok {
+				instance = map[string]cty.Value{}
+				moduleInstances[key] = instance
+			}
+
+			instance[cfg.Name] = outputState
+
+			if cfg.Sensitive && !outputState.HasMark("sensitive") {
+				instance[cfg.Name] = outputState.Mark("sensitive")
+			}
+		}
+
+		// any pending changes override the state state values
+		for key, changes := range changesMap {
+			changeSrc, ok := changes[cfg.Name]
+			if !ok {
+				continue
+			}
+
+			instance, ok := moduleInstances[key]
+			if !ok {
+				instance = map[string]cty.Value{}
+				moduleInstances[key] = instance
+			}
+
+			change, err := changeSrc.Decode()
+			if err != nil {
+				// This should happen only if someone has tampered with a plan
+				// file, so we won't bother with a pretty error for it.
+				diags = diags.Append(fmt.Errorf("planned change for %s could not be decoded: %s", addr, err))
+				instance[cfg.Name] = cty.DynamicVal
+				continue
+			}
+
+			instance[cfg.Name] = change.After
+
+			if change.Sensitive && !change.After.HasMark("sensitive") {
+				instance[cfg.Name] = change.After.Mark("sensitive")
+			}
+		}
 	}
 
-	return os.Value, diags
+	var ret cty.Value
+
+	// compile the outputs into the correct value type for the each mode
+	switch {
+	case callConfig.Count != nil:
+		// figure out what the last index we have is
+		length := -1
+		for key := range moduleInstances {
+			intKey, ok := key.(addrs.IntKey)
+			if !ok {
+				// old key from state which is being dropped
+				continue
+			}
+			if int(intKey) >= length {
+				length = int(intKey) + 1
+			}
+		}
+
+		if length > 0 {
+			vals := make([]cty.Value, length)
+			for key, instance := range moduleInstances {
+				intKey, ok := key.(addrs.IntKey)
+				if !ok {
+					// old key from state which is being dropped
+					continue
+				}
+
+				vals[int(intKey)] = cty.ObjectVal(instance)
+			}
+
+			// Insert unknown values where there are any missing instances
+			for i, v := range vals {
+				if v.IsNull() {
+					vals[i] = cty.DynamicVal
+					continue
+				}
+			}
+			ret = cty.TupleVal(vals)
+		} else {
+			ret = cty.EmptyTupleVal
+		}
+
+	case callConfig.ForEach != nil:
+		vals := make(map[string]cty.Value)
+		for key, instance := range moduleInstances {
+			strKey, ok := key.(addrs.StringKey)
+			if !ok {
+				continue
+			}
+
+			vals[string(strKey)] = cty.ObjectVal(instance)
+		}
+
+		if len(vals) > 0 {
+			ret = cty.ObjectVal(vals)
+		} else {
+			ret = cty.EmptyObjectVal
+		}
+
+	default:
+		val, ok := moduleInstances[addrs.NoKey]
+		if !ok {
+			// create the object if there wasn't one known
+			val = map[string]cty.Value{}
+			for k := range outputConfigs {
+				val[k] = cty.DynamicVal
+			}
+		}
+
+		ret = cty.ObjectVal(val)
+	}
+
+	// The module won't be expanded during validation, so we need to return an
+	// unknown value. This will ensure the types looks correct, since we built
+	// the objects based on the configuration.
+	if d.Operation == walkValidate {
+		// While we know the type here and it would be nice to validate whether
+		// indexes are valid or not, because tuples and objects have fixed
+		// numbers of elements we can't simply return an unknown value of the
+		// same type since we have not expanded any instances during
+		// validation.
+		//
+		// In order to validate the expression a little precisely, we'll create
+		// an unknown map or list here to get more type information.
+		ty := cty.Object(unknownMap)
+		switch {
+		case callConfig.Count != nil:
+			ret = cty.UnknownVal(cty.List(ty))
+		case callConfig.ForEach != nil:
+			ret = cty.UnknownVal(cty.Map(ty))
+		default:
+			ret = cty.UnknownVal(ty)
+		}
+	}
+
+	return ret, diags
 }
 
 func (d *evaluationStateData) GetPathAttr(addr addrs.PathAttr, rng tfdiags.SourceRange) (cty.Value, tfdiags.Diagnostics) {
@@ -475,7 +571,29 @@ func (d *evaluationStateData) GetPathAttr(addr addrs.PathAttr, rng tfdiags.Sourc
 	switch addr.Name {
 
 	case "cwd":
-		wd, err := os.Getwd()
+		var err error
+		var wd string
+		if d.Evaluator.Meta != nil {
+			// Meta is always non-nil in the normal case, but some test cases
+			// are not so realistic.
+			wd = d.Evaluator.Meta.OriginalWorkingDir
+		}
+		if wd == "" {
+			wd, err = os.Getwd()
+			if err != nil {
+				diags = diags.Append(&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  `Failed to get working directory`,
+					Detail:   fmt.Sprintf(`The value for path.cwd cannot be determined due to a system error: %s`, err),
+					Subject:  rng.ToHCL().Ptr(),
+				})
+				return cty.DynamicVal, diags
+			}
+		}
+		// The current working directory should always be absolute, whether we
+		// just looked it up or whether we were relying on ContextMeta's
+		// (possibly non-normalized) path.
+		wd, err = filepath.Abs(wd)
 		if err != nil {
 			diags = diags.Append(&hcl.Diagnostic{
 				Severity: hcl.DiagError,
@@ -485,6 +603,7 @@ func (d *evaluationStateData) GetPathAttr(addr addrs.PathAttr, rng tfdiags.Sourc
 			})
 			return cty.DynamicVal, diags
 		}
+
 		return cty.StringVal(filepath.ToSlash(wd)), diags
 
 	case "module":
@@ -542,28 +661,37 @@ func (d *evaluationStateData) GetResource(addr addrs.Resource, rng tfdiags.Sourc
 	rs := d.Evaluator.State.Resource(addr.Absolute(d.ModulePath))
 
 	if rs == nil {
-		// we must return DynamicVal so that both interpretations
-		// can proceed without generating errors, and we'll deal with this
-		// in a later step where more information is gathered.
-		// (In practice we should only end up here during the validate walk,
-		// since later walks should have at least partial states populated
-		// for all resources in the configuration.)
-		return cty.DynamicVal, diags
+		switch d.Operation {
+		case walkPlan, walkApply:
+			// During plan and apply as we evaluate each removed instance they
+			// are removed from the working state. Since we know there are no
+			// instances, return an empty container of the expected type.
+			switch {
+			case config.Count != nil:
+				return cty.EmptyTupleVal, diags
+			case config.ForEach != nil:
+				return cty.EmptyObjectVal, diags
+			default:
+				// While we can reference an expanded resource with 0
+				// instances, we cannot reference instances that do not exist.
+				// Due to the fact that we may have direct references to
+				// instances that may end up in a root output during destroy
+				// (since a planned destroy cannot yet remove root outputs), we
+				// need to return a dynamic value here to allow evaluation to
+				// continue.
+				log.Printf("[ERROR] unknown instance %q referenced during plan", addr.Absolute(d.ModulePath))
+				return cty.DynamicVal, diags
+			}
+
+		default:
+			// We should only end up here during the validate walk,
+			// since later walks should have at least partial states populated
+			// for all resources in the configuration.
+			return cty.DynamicVal, diags
+		}
 	}
 
-	// Break out early during validation, because resource may not be expanded
-	// yet and indexed references may show up as invalid.
-	if d.Operation == walkValidate {
-		return cty.DynamicVal, diags
-	}
-
-	return d.getResourceInstancesAll(addr, rng, config, rs, rs.ProviderConfig)
-}
-
-func (d *evaluationStateData) getResourceInstancesAll(addr addrs.Resource, rng tfdiags.SourceRange, config *configs.Resource, rs *states.Resource, providerAddr addrs.AbsProviderConfig) (cty.Value, tfdiags.Diagnostics) {
-	var diags tfdiags.Diagnostics
-
-	instAddr := addrs.ResourceInstance{Resource: addr, Key: addrs.NoKey}
+	providerAddr := rs.ProviderConfig
 
 	schema := d.getResourceSchema(addr, providerAddr)
 	if schema == nil {
@@ -577,249 +705,197 @@ func (d *evaluationStateData) getResourceInstancesAll(addr addrs.Resource, rng t
 		})
 		return cty.DynamicVal, diags
 	}
+	ty := schema.ImpliedType()
 
-	switch rs.EachMode {
-	case states.NoEach:
-		ty := schema.ImpliedType()
-		is := rs.Instances[addrs.NoKey]
+	// Decode all instances in the current state
+	instances := map[addrs.InstanceKey]cty.Value{}
+	pendingDestroy := d.Evaluator.Changes.IsFullDestroy()
+	for key, is := range rs.Instances {
 		if is == nil || is.Current == nil {
 			// Assume we're dealing with an instance that hasn't been created yet.
-			return cty.UnknownVal(ty), diags
+			instances[key] = cty.UnknownVal(ty)
+			continue
 		}
 
-		if is.Current.Status == states.ObjectPlanned {
-			// If there's a pending change for this instance in our plan, we'll prefer
-			// that. This is important because the state can't represent unknown values
-			// and so its data is inaccurate when changes are pending.
-			if change := d.Evaluator.Changes.GetResourceInstanceChange(instAddr.Absolute(d.ModulePath), states.CurrentGen); change != nil {
-				val, err := change.After.Decode(ty)
-				if err != nil {
-					diags = diags.Append(&hcl.Diagnostic{
-						Severity: hcl.DiagError,
-						Summary:  "Invalid resource instance data in plan",
-						Detail:   fmt.Sprintf("Instance %s data could not be decoded from the plan: %s.", addr.Absolute(d.ModulePath), err),
-						Subject:  &config.DeclRange,
-					})
-					return cty.UnknownVal(ty), diags
+		instAddr := addr.Instance(key).Absolute(d.ModulePath)
+
+		change := d.Evaluator.Changes.GetResourceInstanceChange(instAddr, states.CurrentGen)
+		if change != nil {
+			// Don't take any resources that are yet to be deleted into account.
+			// If the referenced resource is CreateBeforeDestroy, then orphaned
+			// instances will be in the state, as they are not destroyed until
+			// after their dependants are updated.
+			if change.Action == plans.Delete {
+				if !pendingDestroy {
+					continue
 				}
-				return val, diags
-			} else {
-				// If the object is in planned status then we should not
-				// get here, since we should've found a pending value
-				// in the plan above instead.
+			}
+		}
+
+		// Planned resources are temporarily stored in state with empty values,
+		// and need to be replaced by the planned value here.
+		if is.Current.Status == states.ObjectPlanned {
+			if change == nil {
+				// If the object is in planned status then we should not get
+				// here, since we should have found a pending value in the plan
+				// above instead.
 				diags = diags.Append(&hcl.Diagnostic{
 					Severity: hcl.DiagError,
 					Summary:  "Missing pending object in plan",
-					Detail:   fmt.Sprintf("Instance %s is marked as having a change pending but that change is not recorded in the plan. This is a bug in Terraform; please report it.", addr),
+					Detail:   fmt.Sprintf("Instance %s is marked as having a change pending but that change is not recorded in the plan. This is a bug in Terraform; please report it.", instAddr),
 					Subject:  &config.DeclRange,
 				})
-				return cty.UnknownVal(ty), diags
+				continue
 			}
+			val, err := change.After.Decode(ty)
+			if err != nil {
+				diags = diags.Append(&hcl.Diagnostic{
+					Severity: hcl.DiagError,
+					Summary:  "Invalid resource instance data in plan",
+					Detail:   fmt.Sprintf("Instance %s data could not be decoded from the plan: %s.", instAddr, err),
+					Subject:  &config.DeclRange,
+				})
+				continue
+			}
+
+			// EXPERIMENTAL: Suppressing provider-defined sensitive attrs
+			// from Terraform output.
+
+			// If our schema contains sensitive values, mark those as sensitive
+			if moduleConfig.Module.ActiveExperiments.Has(experiments.SuppressProviderSensitiveAttrs) {
+				if schema.ContainsSensitive() {
+					val = markProviderSensitiveAttributes(schema, val)
+				}
+			}
+			instances[key] = val.MarkWithPaths(change.AfterValMarks)
+			continue
 		}
 
 		ios, err := is.Current.Decode(ty)
 		if err != nil {
-			// This shouldn't happen, since by the time we get here
-			// we should've upgraded the state data already.
+			// This shouldn't happen, since by the time we get here we
+			// should have upgraded the state data already.
 			diags = diags.Append(&hcl.Diagnostic{
 				Severity: hcl.DiagError,
 				Summary:  "Invalid resource instance data in state",
-				Detail:   fmt.Sprintf("Instance %s data could not be decoded from the state: %s.", addr.Absolute(d.ModulePath), err),
+				Detail:   fmt.Sprintf("Instance %s data could not be decoded from the state: %s.", instAddr, err),
 				Subject:  &config.DeclRange,
 			})
-			return cty.UnknownVal(ty), diags
+			continue
 		}
 
-		return ios.Value, diags
+		val := ios.Value
+		// EXPERIMENTAL: Suppressing provider-defined sensitive attrs
+		// from Terraform output.
 
-	case states.EachList:
-		// We need to infer the length of our resulting tuple by searching
-		// for the max IntKey in our instances map.
-		length := 0
-		for k := range rs.Instances {
-			if ik, ok := k.(addrs.IntKey); ok {
-				if int(ik) >= length {
-					length = int(ik) + 1
-				}
+		// If our schema contains sensitive values, mark those as sensitive
+		if moduleConfig.Module.ActiveExperiments.Has(experiments.SuppressProviderSensitiveAttrs) {
+			if schema.ContainsSensitive() {
+				val = markProviderSensitiveAttributes(schema, val)
 			}
 		}
+		instances[key] = val
+	}
 
-		vals := make([]cty.Value, length)
-		for i := 0; i < length; i++ {
-			ty := schema.ImpliedType()
-			key := addrs.IntKey(i)
-			is := rs.Instances[key]
-			if is == nil || is.Current == nil {
-				// There shouldn't normally be "gaps" in our list but we'll
-				// allow it under the assumption that we're in a weird situation
-				// where e.g. someone has run "terraform state mv" to reorder
-				// a list and left a hole behind.
-				vals[i] = cty.UnknownVal(schema.ImpliedType())
+	var ret cty.Value
+
+	switch {
+	case config.Count != nil:
+		// figure out what the last index we have is
+		length := -1
+		for key := range instances {
+			intKey, ok := key.(addrs.IntKey)
+			if !ok {
 				continue
 			}
+			if int(intKey) >= length {
+				length = int(intKey) + 1
+			}
+		}
 
-			instAddr := addr.Instance(key).Absolute(d.ModulePath)
-
-			if is.Current.Status == states.ObjectPlanned {
-				if change := d.Evaluator.Changes.GetResourceInstanceChange(instAddr, states.CurrentGen); change != nil {
-					val, err := change.After.Decode(ty)
-					if err != nil {
-						diags = diags.Append(&hcl.Diagnostic{
-							Severity: hcl.DiagError,
-							Summary:  "Invalid resource instance data in plan",
-							Detail:   fmt.Sprintf("Instance %s data could not be decoded from the plan: %s.", instAddr, err),
-							Subject:  &config.DeclRange,
-						})
-						continue
-					}
-					vals[i] = val
-					continue
-				} else {
-					// If the object is in planned status then we should not
-					// get here, since we should've found a pending value
-					// in the plan above instead.
-					diags = diags.Append(&hcl.Diagnostic{
-						Severity: hcl.DiagError,
-						Summary:  "Missing pending object in plan",
-						Detail:   fmt.Sprintf("Instance %s is marked as having a change pending but that change is not recorded in the plan. This is a bug in Terraform; please report it.", instAddr),
-						Subject:  &config.DeclRange,
-					})
+		if length > 0 {
+			vals := make([]cty.Value, length)
+			for key, instance := range instances {
+				intKey, ok := key.(addrs.IntKey)
+				if !ok {
+					// old key from state, which isn't valid for evaluation
 					continue
 				}
+
+				vals[int(intKey)] = instance
 			}
 
-			ios, err := is.Current.Decode(ty)
-			if err != nil {
-				// This shouldn't happen, since by the time we get here
-				// we should've upgraded the state data already.
-				diags = diags.Append(&hcl.Diagnostic{
-					Severity: hcl.DiagError,
-					Summary:  "Invalid resource instance data in state",
-					Detail:   fmt.Sprintf("Instance %s data could not be decoded from the state: %s.", instAddr, err),
-					Subject:  &config.DeclRange,
-				})
+			// Insert unknown values where there are any missing instances
+			for i, v := range vals {
+				if v == cty.NilVal {
+					vals[i] = cty.UnknownVal(ty)
+				}
+			}
+			ret = cty.TupleVal(vals)
+		} else {
+			ret = cty.EmptyTupleVal
+		}
+
+	case config.ForEach != nil:
+		vals := make(map[string]cty.Value)
+		for key, instance := range instances {
+			strKey, ok := key.(addrs.StringKey)
+			if !ok {
+				// old key that is being dropped and not used for evaluation
 				continue
 			}
-			vals[i] = ios.Value
+			vals[string(strKey)] = instance
 		}
 
-		// We use a tuple rather than a list here because resource schemas may
-		// include dynamically-typed attributes, which will then cause each
-		// instance to potentially have a different runtime type even though
-		// they all conform to the static schema.
-		return cty.TupleVal(vals), diags
-
-	case states.EachMap:
-		ty := schema.ImpliedType()
-		vals := make(map[string]cty.Value, len(rs.Instances))
-		for k, is := range rs.Instances {
-			if sk, ok := k.(addrs.StringKey); ok {
-				if is == nil || is.Current == nil {
-					// Assume we're dealing with an instance that hasn't been created yet.
-					vals[string(sk)] = cty.UnknownVal(schema.ImpliedType())
-					continue
-				}
-
-				instAddr := addr.Instance(k).Absolute(d.ModulePath)
-
-				if is.Current.Status == states.ObjectPlanned {
-					if change := d.Evaluator.Changes.GetResourceInstanceChange(instAddr, states.CurrentGen); change != nil {
-						val, err := change.After.Decode(ty)
-						if err != nil {
-							diags = diags.Append(&hcl.Diagnostic{
-								Severity: hcl.DiagError,
-								Summary:  "Invalid resource instance data in plan",
-								Detail:   fmt.Sprintf("Instance %s data could not be decoded from the plan: %s.", instAddr, err),
-								Subject:  &config.DeclRange,
-							})
-							continue
-						}
-						vals[string(sk)] = val
-						continue
-					} else {
-						// If the object is in planned status then we should not
-						// get here, since we should've found a pending value
-						// in the plan above instead.
-						diags = diags.Append(&hcl.Diagnostic{
-							Severity: hcl.DiagError,
-							Summary:  "Missing pending object in plan",
-							Detail:   fmt.Sprintf("Instance %s is marked as having a change pending but that change is not recorded in the plan. This is a bug in Terraform; please report it.", instAddr),
-							Subject:  &config.DeclRange,
-						})
-						continue
-					}
-				}
-
-				ios, err := is.Current.Decode(ty)
-				if err != nil {
-					// This shouldn't happen, since by the time we get here
-					// we should've upgraded the state data already.
-					diags = diags.Append(&hcl.Diagnostic{
-						Severity: hcl.DiagError,
-						Summary:  "Invalid resource instance data in state",
-						Detail:   fmt.Sprintf("Instance %s data could not be decoded from the state: %s.", instAddr, err),
-						Subject:  &config.DeclRange,
-					})
-					continue
-				}
-				vals[string(sk)] = ios.Value
-			}
+		if len(vals) > 0 {
+			// We use an object rather than a map here because resource schemas
+			// may include dynamically-typed attributes, which will then cause
+			// each instance to potentially have a different runtime type even
+			// though they all conform to the static schema.
+			ret = cty.ObjectVal(vals)
+		} else {
+			ret = cty.EmptyObjectVal
 		}
-
-		// We use an object rather than a map here because resource schemas may
-		// include dynamically-typed attributes, which will then cause each
-		// instance to potentially have a different runtime type even though
-		// they all conform to the static schema.
-		return cty.ObjectVal(vals), diags
 
 	default:
-		// Should never happen since caller should deal with other modes
-		panic(fmt.Sprintf("unsupported EachMode %s", rs.EachMode))
+		val, ok := instances[addrs.NoKey]
+		if !ok {
+			// if the instance is missing, insert an unknown value
+			val = cty.UnknownVal(ty)
+		}
+
+		ret = val
 	}
+
+	// since the plan was not yet created during validate, the values we
+	// collected here may not correspond with configuration, so they must be
+	// unknown.
+	if d.Operation == walkValidate {
+		// While we know the type here and it would be nice to validate whether
+		// indexes are valid or not, because tuples and objects have fixed
+		// numbers of elements we can't simply return an unknown value of the
+		// same type since we have not expanded any instances during
+		// validation.
+		//
+		// In order to validate the expression a little precisely, we'll create
+		// an unknown map or list here to get more type information.
+		switch {
+		case config.Count != nil:
+			ret = cty.UnknownVal(cty.List(ty))
+		case config.ForEach != nil:
+			ret = cty.UnknownVal(cty.Map(ty))
+		default:
+			ret = cty.UnknownVal(ty)
+		}
+	}
+
+	return ret, diags
 }
 
 func (d *evaluationStateData) getResourceSchema(addr addrs.Resource, providerAddr addrs.AbsProviderConfig) *configschema.Block {
-	providerType := providerAddr.ProviderConfig.Type.LegacyString()
 	schemas := d.Evaluator.Schemas
-	schema, _ := schemas.ResourceTypeConfig(providerType, addr.Mode, addr.Type)
+	schema, _ := schemas.ResourceTypeConfig(providerAddr.Provider, addr.Mode, addr.Type)
 	return schema
-}
-
-// coerceInstanceKey attempts to convert the given key to the type expected
-// for the given EachMode.
-//
-// If the key is already of the correct type or if it cannot be converted then
-// it is returned verbatim. If conversion is required and possible, the
-// converted value is returned. Callers should not try to determine if
-// conversion was possible, should instead just check if the result is of
-// the expected type.
-func (d *evaluationStateData) coerceInstanceKey(key addrs.InstanceKey, mode states.EachMode) addrs.InstanceKey {
-	if key == addrs.NoKey {
-		// An absent key can't be converted
-		return key
-	}
-
-	switch mode {
-	case states.NoEach:
-		// No conversions possible at all
-		return key
-	case states.EachMap:
-		if intKey, isInt := key.(addrs.IntKey); isInt {
-			return addrs.StringKey(strconv.Itoa(int(intKey)))
-		}
-		return key
-	case states.EachList:
-		if strKey, isStr := key.(addrs.StringKey); isStr {
-			i, err := strconv.Atoi(string(strKey))
-			if err != nil {
-				return key
-			}
-			return addrs.IntKey(i)
-		}
-		return key
-	default:
-		return key
-	}
 }
 
 func (d *evaluationStateData) GetTerraformAttr(addr addrs.TerraformAttr, rng tfdiags.SourceRange) (cty.Value, tfdiags.Diagnostics) {
@@ -884,4 +960,52 @@ func moduleDisplayAddr(addr addrs.ModuleInstance) string {
 	default:
 		return addr.String()
 	}
+}
+
+// markProviderSensitiveAttributes returns an updated value
+// where attributes that are Sensitive are marked
+func markProviderSensitiveAttributes(schema *configschema.Block, val cty.Value) cty.Value {
+	return val.MarkWithPaths(getValMarks(schema, val, nil))
+}
+
+func getValMarks(schema *configschema.Block, val cty.Value, path cty.Path) []cty.PathValueMarks {
+	var pvm []cty.PathValueMarks
+	for name, attrS := range schema.Attributes {
+		if attrS.Sensitive {
+			// Create a copy of the path, with this step added, to add to our PathValueMarks slice
+			attrPath := make(cty.Path, len(path), len(path)+1)
+			copy(attrPath, path)
+			attrPath = append(path, cty.GetAttrStep{Name: name})
+			pvm = append(pvm, cty.PathValueMarks{
+				Path:  attrPath,
+				Marks: cty.NewValueMarks("sensitive"),
+			})
+		}
+	}
+
+	for name, blockS := range schema.BlockTypes {
+		// If our block doesn't contain any sensitive attributes, skip inspecting it
+		if !blockS.Block.ContainsSensitive() {
+			continue
+		}
+		// Create a copy of the path, with this step added, to add to our PathValueMarks slice
+		blockPath := make(cty.Path, len(path), len(path)+1)
+		copy(blockPath, path)
+		blockPath = append(path, cty.GetAttrStep{Name: name})
+
+		blockV := val.GetAttr(name)
+		switch blockS.Nesting {
+		case configschema.NestingSingle, configschema.NestingGroup:
+			pvm = append(pvm, getValMarks(&blockS.Block, blockV, blockPath)...)
+		case configschema.NestingList, configschema.NestingMap, configschema.NestingSet:
+			for it := blockV.ElementIterator(); it.Next(); {
+				idx, blockEV := it.Element()
+				morePaths := getValMarks(&blockS.Block, blockEV, append(blockPath, cty.IndexStep{Key: idx}))
+				pvm = append(pvm, morePaths...)
+			}
+		default:
+			panic(fmt.Sprintf("unsupported nesting mode %s", blockS.Nesting))
+		}
+	}
+	return pvm
 }

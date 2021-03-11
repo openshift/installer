@@ -6,6 +6,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/hashicorp/terraform/instances"
 	"github.com/hashicorp/terraform/plans"
 	"github.com/hashicorp/terraform/providers"
 	"github.com/hashicorp/terraform/provisioners"
@@ -14,9 +15,9 @@ import (
 	"github.com/hashicorp/terraform/states"
 
 	"github.com/hashicorp/hcl/v2"
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/configs/configschema"
 	"github.com/hashicorp/terraform/lang"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/zclconf/go-cty/cty"
@@ -30,6 +31,13 @@ type BuiltinEvalContext struct {
 
 	// PathValue is the Path that this context is operating within.
 	PathValue addrs.ModuleInstance
+
+	// pathSet indicates that this context was explicitly created for a
+	// specific path, and can be safely used for evaluation. This lets us
+	// differentiate between PathValue being unset, and the zero value which is
+	// equivalent to RootModuleInstance.  Path and Evaluation methods will
+	// panic if this is not set.
+	pathSet bool
 
 	// Evaluator is used for evaluating expressions within the scope of this
 	// eval context.
@@ -53,22 +61,29 @@ type BuiltinEvalContext struct {
 	VariableValues     map[string]map[string]cty.Value
 	VariableValuesLock *sync.Mutex
 
-	Components          contextComponentFactory
-	Hooks               []Hook
-	InputValue          UIInput
-	ProviderCache       map[string]providers.Interface
-	ProviderInputConfig map[string]map[string]cty.Value
-	ProviderLock        *sync.Mutex
-	ProvisionerCache    map[string]provisioners.Interface
-	ProvisionerLock     *sync.Mutex
-	ChangesValue        *plans.ChangesSync
-	StateValue          *states.SyncState
-
-	once sync.Once
+	Components            contextComponentFactory
+	Hooks                 []Hook
+	InputValue            UIInput
+	ProviderCache         map[string]providers.Interface
+	ProviderInputConfig   map[string]map[string]cty.Value
+	ProviderLock          *sync.Mutex
+	ProvisionerCache      map[string]provisioners.Interface
+	ProvisionerLock       *sync.Mutex
+	ChangesValue          *plans.ChangesSync
+	StateValue            *states.SyncState
+	RefreshStateValue     *states.SyncState
+	InstanceExpanderValue *instances.Expander
 }
 
 // BuiltinEvalContext implements EvalContext
 var _ EvalContext = (*BuiltinEvalContext)(nil)
+
+func (ctx *BuiltinEvalContext) WithPath(path addrs.ModuleInstance) EvalContext {
+	newCtx := *ctx
+	newCtx.pathSet = true
+	newCtx.PathValue = path
+	return &newCtx
+}
 
 func (ctx *BuiltinEvalContext) Stopped() <-chan struct{} {
 	// This can happen during tests. During tests, we just block forever.
@@ -103,12 +118,9 @@ func (ctx *BuiltinEvalContext) Input() UIInput {
 	return ctx.InputValue
 }
 
-func (ctx *BuiltinEvalContext) InitProvider(typeName string, addr addrs.ProviderConfig) (providers.Interface, error) {
-	ctx.once.Do(ctx.init)
-	absAddr := addr.Absolute(ctx.Path())
-
+func (ctx *BuiltinEvalContext) InitProvider(addr addrs.AbsProviderConfig) (providers.Interface, error) {
 	// If we already initialized, it is an error
-	if p := ctx.Provider(absAddr); p != nil {
+	if p := ctx.Provider(addr); p != nil {
 		return nil, fmt.Errorf("%s is already initialized", addr)
 	}
 
@@ -117,22 +129,20 @@ func (ctx *BuiltinEvalContext) InitProvider(typeName string, addr addrs.Provider
 	ctx.ProviderLock.Lock()
 	defer ctx.ProviderLock.Unlock()
 
-	key := absAddr.String()
+	key := addr.String()
 
-	p, err := ctx.Components.ResourceProvider(typeName, key)
+	p, err := ctx.Components.ResourceProvider(addr.Provider)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("[TRACE] BuiltinEvalContext: Initialized %q provider for %s", typeName, absAddr)
+	log.Printf("[TRACE] BuiltinEvalContext: Initialized %q provider for %s", addr.String(), addr)
 	ctx.ProviderCache[key] = p
 
 	return p, nil
 }
 
 func (ctx *BuiltinEvalContext) Provider(addr addrs.AbsProviderConfig) providers.Interface {
-	ctx.once.Do(ctx.init)
-
 	ctx.ProviderLock.Lock()
 	defer ctx.ProviderLock.Unlock()
 
@@ -140,18 +150,14 @@ func (ctx *BuiltinEvalContext) Provider(addr addrs.AbsProviderConfig) providers.
 }
 
 func (ctx *BuiltinEvalContext) ProviderSchema(addr addrs.AbsProviderConfig) *ProviderSchema {
-	ctx.once.Do(ctx.init)
-
-	return ctx.Schemas.ProviderSchema(addr.ProviderConfig.Type.LegacyString())
+	return ctx.Schemas.ProviderSchema(addr.Provider)
 }
 
-func (ctx *BuiltinEvalContext) CloseProvider(addr addrs.ProviderConfig) error {
-	ctx.once.Do(ctx.init)
-
+func (ctx *BuiltinEvalContext) CloseProvider(addr addrs.AbsProviderConfig) error {
 	ctx.ProviderLock.Lock()
 	defer ctx.ProviderLock.Unlock()
 
-	key := addr.Absolute(ctx.Path()).String()
+	key := addr.String()
 	provider := ctx.ProviderCache[key]
 	if provider != nil {
 		delete(ctx.ProviderCache, key)
@@ -161,18 +167,23 @@ func (ctx *BuiltinEvalContext) CloseProvider(addr addrs.ProviderConfig) error {
 	return nil
 }
 
-func (ctx *BuiltinEvalContext) ConfigureProvider(addr addrs.ProviderConfig, cfg cty.Value) tfdiags.Diagnostics {
+func (ctx *BuiltinEvalContext) ConfigureProvider(addr addrs.AbsProviderConfig, cfg cty.Value) tfdiags.Diagnostics {
 	var diags tfdiags.Diagnostics
-	absAddr := addr.Absolute(ctx.Path())
-	p := ctx.Provider(absAddr)
+	if !addr.Module.Equal(ctx.Path().Module()) {
+		// This indicates incorrect use of ConfigureProvider: it should be used
+		// only from the module that the provider configuration belongs to.
+		panic(fmt.Sprintf("%s configured by wrong module %s", addr, ctx.Path()))
+	}
+
+	p := ctx.Provider(addr)
 	if p == nil {
 		diags = diags.Append(fmt.Errorf("%s not initialized", addr))
 		return diags
 	}
 
-	providerSchema := ctx.ProviderSchema(absAddr)
+	providerSchema := ctx.ProviderSchema(addr)
 	if providerSchema == nil {
-		diags = diags.Append(fmt.Errorf("schema for %s is not available", absAddr))
+		diags = diags.Append(fmt.Errorf("schema for %s is not available", addr))
 		return diags
 	}
 
@@ -185,9 +196,15 @@ func (ctx *BuiltinEvalContext) ConfigureProvider(addr addrs.ProviderConfig, cfg 
 	return resp.Diagnostics
 }
 
-func (ctx *BuiltinEvalContext) ProviderInput(pc addrs.ProviderConfig) map[string]cty.Value {
+func (ctx *BuiltinEvalContext) ProviderInput(pc addrs.AbsProviderConfig) map[string]cty.Value {
 	ctx.ProviderLock.Lock()
 	defer ctx.ProviderLock.Unlock()
+
+	if !pc.Module.Equal(ctx.Path().Module()) {
+		// This indicates incorrect use of InitProvider: it should be used
+		// only from the module that the provider configuration belongs to.
+		panic(fmt.Sprintf("%s initialized by wrong module %s", pc, ctx.Path()))
+	}
 
 	if !ctx.Path().IsRoot() {
 		// Only root module provider configurations can have input.
@@ -197,10 +214,9 @@ func (ctx *BuiltinEvalContext) ProviderInput(pc addrs.ProviderConfig) map[string
 	return ctx.ProviderInputConfig[pc.String()]
 }
 
-func (ctx *BuiltinEvalContext) SetProviderInput(pc addrs.ProviderConfig, c map[string]cty.Value) {
-	absProvider := pc.Absolute(ctx.Path())
-
-	if !ctx.Path().IsRoot() {
+func (ctx *BuiltinEvalContext) SetProviderInput(pc addrs.AbsProviderConfig, c map[string]cty.Value) {
+	absProvider := pc
+	if !pc.Module.IsRoot() {
 		// Only root module provider configurations can have input.
 		log.Printf("[WARN] BuiltinEvalContext: attempt to SetProviderInput for non-root module")
 		return
@@ -212,12 +228,10 @@ func (ctx *BuiltinEvalContext) SetProviderInput(pc addrs.ProviderConfig, c map[s
 	ctx.ProviderLock.Unlock()
 }
 
-func (ctx *BuiltinEvalContext) InitProvisioner(n string) (provisioners.Interface, error) {
-	ctx.once.Do(ctx.init)
-
+func (ctx *BuiltinEvalContext) InitProvisioner(n string) error {
 	// If we already initialized, it is an error
 	if p := ctx.Provisioner(n); p != nil {
-		return nil, fmt.Errorf("Provisioner '%s' already initialized", n)
+		return fmt.Errorf("Provisioner '%s' already initialized", n)
 	}
 
 	// Warning: make sure to acquire these locks AFTER the call to Provisioner
@@ -225,19 +239,17 @@ func (ctx *BuiltinEvalContext) InitProvisioner(n string) (provisioners.Interface
 	ctx.ProvisionerLock.Lock()
 	defer ctx.ProvisionerLock.Unlock()
 
-	p, err := ctx.Components.ResourceProvisioner(n, "")
+	p, err := ctx.Components.ResourceProvisioner(n)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	ctx.ProvisionerCache[n] = p
 
-	return p, nil
+	return nil
 }
 
 func (ctx *BuiltinEvalContext) Provisioner(n string) provisioners.Interface {
-	ctx.once.Do(ctx.init)
-
 	ctx.ProvisionerLock.Lock()
 	defer ctx.ProvisionerLock.Unlock()
 
@@ -245,14 +257,10 @@ func (ctx *BuiltinEvalContext) Provisioner(n string) provisioners.Interface {
 }
 
 func (ctx *BuiltinEvalContext) ProvisionerSchema(n string) *configschema.Block {
-	ctx.once.Do(ctx.init)
-
 	return ctx.Schemas.ProvisionerConfig(n)
 }
 
 func (ctx *BuiltinEvalContext) CloseProvisioner(n string) error {
-	ctx.once.Do(ctx.init)
-
 	ctx.ProvisionerLock.Lock()
 	defer ctx.ProvisionerLock.Unlock()
 
@@ -280,22 +288,44 @@ func (ctx *BuiltinEvalContext) EvaluateExpr(expr hcl.Expression, wantType cty.Ty
 }
 
 func (ctx *BuiltinEvalContext) EvaluationScope(self addrs.Referenceable, keyData InstanceKeyEvalData) *lang.Scope {
+	if !ctx.pathSet {
+		panic("context path not set")
+	}
 	data := &evaluationStateData{
 		Evaluator:       ctx.Evaluator,
 		ModulePath:      ctx.PathValue,
 		InstanceKeyData: keyData,
 		Operation:       ctx.Evaluator.Operation,
 	}
-	return ctx.Evaluator.Scope(data, self)
+	scope := ctx.Evaluator.Scope(data, self)
+
+	// ctx.PathValue is the path of the module that contains whatever
+	// expression the caller will be trying to evaluate, so this will
+	// activate only the experiments from that particular module, to
+	// be consistent with how experiment checking in the "configs"
+	// package itself works. The nil check here is for robustness in
+	// incompletely-mocked testing situations; mc should never be nil in
+	// real situations.
+	if mc := ctx.Evaluator.Config.DescendentForInstance(ctx.PathValue); mc != nil {
+		scope.SetActiveExperiments(mc.Module.ActiveExperiments)
+	}
+	return scope
 }
 
 func (ctx *BuiltinEvalContext) Path() addrs.ModuleInstance {
+	if !ctx.pathSet {
+		panic("context path not set")
+	}
 	return ctx.PathValue
 }
 
 func (ctx *BuiltinEvalContext) SetModuleCallArguments(n addrs.ModuleCallInstance, vals map[string]cty.Value) {
 	ctx.VariableValuesLock.Lock()
 	defer ctx.VariableValuesLock.Unlock()
+
+	if !ctx.pathSet {
+		panic("context path not set")
+	}
 
 	childPath := n.ModuleInstance(ctx.PathValue)
 	key := childPath.String()
@@ -313,6 +343,9 @@ func (ctx *BuiltinEvalContext) SetModuleCallArguments(n addrs.ModuleCallInstance
 }
 
 func (ctx *BuiltinEvalContext) GetVariableValue(addr addrs.AbsInputVariableInstance) cty.Value {
+	ctx.VariableValuesLock.Lock()
+	defer ctx.VariableValuesLock.Unlock()
+
 	modKey := addr.Module.String()
 	modVars := ctx.VariableValues[modKey]
 	val, ok := modVars[addr.Variable.Name]
@@ -330,5 +363,10 @@ func (ctx *BuiltinEvalContext) State() *states.SyncState {
 	return ctx.StateValue
 }
 
-func (ctx *BuiltinEvalContext) init() {
+func (ctx *BuiltinEvalContext) RefreshState() *states.SyncState {
+	return ctx.RefreshStateValue
+}
+
+func (ctx *BuiltinEvalContext) InstanceExpander() *instances.Expander {
+	return ctx.InstanceExpanderValue
 }

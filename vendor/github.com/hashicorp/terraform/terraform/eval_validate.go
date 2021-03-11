@@ -2,17 +2,15 @@ package terraform
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/hashicorp/hcl/v2"
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/configs"
 	"github.com/hashicorp/terraform/configs/configschema"
 	"github.com/hashicorp/terraform/providers"
 	"github.com/hashicorp/terraform/provisioners"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/convert"
 	"github.com/zclconf/go-cty/cty/gocty"
 )
 
@@ -64,53 +62,9 @@ RETURN:
 	return nil, diags.NonFatalErr()
 }
 
-// EvalValidateProvider is an EvalNode implementation that validates
-// a provider configuration.
-type EvalValidateProvider struct {
-	Addr     addrs.ProviderConfig
-	Provider *providers.Interface
-	Config   *configs.Provider
-}
-
-func (n *EvalValidateProvider) Eval(ctx EvalContext) (interface{}, error) {
-	var diags tfdiags.Diagnostics
-	provider := *n.Provider
-
-	configBody := buildProviderConfig(ctx, n.Addr, n.Config)
-
-	resp := provider.GetSchema()
-	diags = diags.Append(resp.Diagnostics)
-	if diags.HasErrors() {
-		return nil, diags.NonFatalErr()
-	}
-
-	configSchema := resp.Provider.Block
-	if configSchema == nil {
-		// Should never happen in real code, but often comes up in tests where
-		// mock schemas are being used that tend to be incomplete.
-		log.Printf("[WARN] EvalValidateProvider: no config schema is available for %s, so using empty schema", n.Addr)
-		configSchema = &configschema.Block{}
-	}
-
-	configVal, configBody, evalDiags := ctx.EvaluateBlock(configBody, configSchema, nil, EvalDataForNoInstanceKey)
-	diags = diags.Append(evalDiags)
-	if evalDiags.HasErrors() {
-		return nil, diags.NonFatalErr()
-	}
-
-	req := providers.PrepareProviderConfigRequest{
-		Config: configVal,
-	}
-
-	validateResp := provider.PrepareProviderConfig(req)
-	diags = diags.Append(validateResp.Diagnostics)
-
-	return nil, diags.NonFatalErr()
-}
-
-// EvalValidateProvisioner is an EvalNode implementation that validates
-// the configuration of a provisioner belonging to a resource. The provisioner
-// config is expected to contain the merged connection configurations.
+// EvalValidateProvisioner validates the configuration of a provisioner
+// belonging to a resource. The provisioner config is expected to contain the
+// merged connection configurations.
 type EvalValidateProvisioner struct {
 	ResourceAddr       addrs.Resource
 	Provisioner        *provisioners.Interface
@@ -120,43 +74,38 @@ type EvalValidateProvisioner struct {
 	ResourceHasForEach bool
 }
 
-func (n *EvalValidateProvisioner) Eval(ctx EvalContext) (interface{}, error) {
+func (n *EvalValidateProvisioner) Validate(ctx EvalContext) error {
 	provisioner := *n.Provisioner
 	config := *n.Config
 	schema := *n.Schema
 
 	var diags tfdiags.Diagnostics
 
-	{
-		// Validate the provisioner's own config first
-
-		configVal, _, configDiags := n.evaluateBlock(ctx, config.Config, schema)
-		diags = diags.Append(configDiags)
-		if configDiags.HasErrors() {
-			return nil, diags.Err()
-		}
-
-		if configVal == cty.NilVal {
-			// Should never happen for a well-behaved EvaluateBlock implementation
-			return nil, fmt.Errorf("EvaluateBlock returned nil value")
-		}
-
-		req := provisioners.ValidateProvisionerConfigRequest{
-			Config: configVal,
-		}
-
-		resp := provisioner.ValidateProvisionerConfig(req)
-		diags = diags.Append(resp.Diagnostics)
+	// Validate the provisioner's own config first
+	configVal, _, configDiags := n.evaluateBlock(ctx, config.Config, schema)
+	diags = diags.Append(configDiags)
+	if configDiags.HasErrors() {
+		return diags.Err()
 	}
 
-	{
-		// Now validate the connection config, which contains the merged bodies
-		// of the resource and provisioner connection blocks.
-		connDiags := n.validateConnConfig(ctx, config.Connection, n.ResourceAddr)
-		diags = diags.Append(connDiags)
+	if configVal == cty.NilVal {
+		// Should never happen for a well-behaved EvaluateBlock implementation
+		return fmt.Errorf("EvaluateBlock returned nil value")
 	}
 
-	return nil, diags.NonFatalErr()
+	req := provisioners.ValidateProvisionerConfigRequest{
+		Config: configVal,
+	}
+
+	resp := provisioner.ValidateProvisionerConfig(req)
+	diags = diags.Append(resp.Diagnostics)
+
+	// Now validate the connection config, which contains the merged bodies
+	// of the resource and provisioner connection blocks.
+	connDiags := n.validateConnConfig(ctx, config.Connection, n.ResourceAddr)
+	diags = diags.Append(connDiags)
+
+	return diags.NonFatalErr()
 }
 
 func (n *EvalValidateProvisioner) validateConnConfig(ctx EvalContext, config *configs.Connection, self addrs.Referenceable) tfdiags.Diagnostics {
@@ -342,13 +291,13 @@ func ConnectionBlockSupersetSchema() *configschema.Block {
 	return connectionBlockSupersetSchema
 }
 
-// EvalValidateResource is an EvalNode implementation that validates
-// the configuration of a resource.
+// EvalValidateResource validates the configuration of a resource.
 type EvalValidateResource struct {
 	Addr           addrs.Resource
 	Provider       *providers.Interface
 	ProviderSchema **ProviderSchema
 	Config         *configs.Resource
+	ProviderMetas  map[addrs.Provider]*configs.ProviderMeta
 
 	// IgnoreWarnings means that warnings will not be passed through. This allows
 	// "just-in-time" passes of validation to continue execution through warnings.
@@ -362,9 +311,9 @@ type EvalValidateResource struct {
 	ConfigVal *cty.Value
 }
 
-func (n *EvalValidateResource) Eval(ctx EvalContext) (interface{}, error) {
+func (n *EvalValidateResource) Validate(ctx EvalContext) error {
 	if n.ProviderSchema == nil || *n.ProviderSchema == nil {
-		return nil, fmt.Errorf("EvalValidateResource has nil schema for %s", n.Addr)
+		return fmt.Errorf("EvalValidateResource has nil schema for %s", n.Addr)
 	}
 
 	var diags tfdiags.Diagnostics
@@ -374,7 +323,9 @@ func (n *EvalValidateResource) Eval(ctx EvalContext) (interface{}, error) {
 	mode := cfg.Mode
 
 	keyData := EvalDataForNoInstanceKey
-	if n.Config.Count != nil {
+
+	switch {
+	case n.Config.Count != nil:
 		// If the config block has count, we'll evaluate with an unknown
 		// number as count.index so we can still type check even though
 		// we won't expand count until the plan phase.
@@ -386,9 +337,8 @@ func (n *EvalValidateResource) Eval(ctx EvalContext) (interface{}, error) {
 		// of this will happen when we DynamicExpand during the plan walk.
 		countDiags := n.validateCount(ctx, n.Config.Count)
 		diags = diags.Append(countDiags)
-	}
 
-	if n.Config.ForEach != nil {
+	case n.Config.ForEach != nil:
 		keyData = InstanceKeyEvalData{
 			EachKey:   cty.UnknownVal(cty.String),
 			EachValue: cty.UnknownVal(cty.DynamicPseudoType),
@@ -399,7 +349,165 @@ func (n *EvalValidateResource) Eval(ctx EvalContext) (interface{}, error) {
 		diags = diags.Append(forEachDiags)
 	}
 
-	for _, traversal := range n.Config.DependsOn {
+	diags = diags.Append(validateDependsOn(ctx, n.Config.DependsOn))
+
+	// Validate the provider_meta block for the provider this resource
+	// belongs to, if there is one.
+	//
+	// Note: this will return an error for every resource a provider
+	// uses in a module, if the provider_meta for that module is
+	// incorrect. The only way to solve this that we've foudn is to
+	// insert a new ProviderMeta graph node in the graph, and make all
+	// that provider's resources in the module depend on the node. That's
+	// an awful heavy hammer to swing for this feature, which should be
+	// used only in limited cases with heavy coordination with the
+	// Terraform team, so we're going to defer that solution for a future
+	// enhancement to this functionality.
+	/*
+		if n.ProviderMetas != nil {
+			if m, ok := n.ProviderMetas[n.ProviderAddr.ProviderConfig.Type]; ok && m != nil {
+				// if the provider doesn't support this feature, throw an error
+				if (*n.ProviderSchema).ProviderMeta == nil {
+					diags = diags.Append(&hcl.Diagnostic{
+						Severity: hcl.DiagError,
+						Summary:  fmt.Sprintf("Provider %s doesn't support provider_meta", cfg.ProviderConfigAddr()),
+						Detail:   fmt.Sprintf("The resource %s belongs to a provider that doesn't support provider_meta blocks", n.Addr),
+						Subject:  &m.ProviderRange,
+					})
+				} else {
+					_, _, metaDiags := ctx.EvaluateBlock(m.Config, (*n.ProviderSchema).ProviderMeta, nil, EvalDataForNoInstanceKey)
+					diags = diags.Append(metaDiags)
+				}
+			}
+		}
+	*/
+	// BUG(paddy): we're not validating provider_meta blocks on EvalValidate right now
+	// because the ProviderAddr for the resource isn't available on the EvalValidate
+	// struct.
+
+	// Provider entry point varies depending on resource mode, because
+	// managed resources and data resources are two distinct concepts
+	// in the provider abstraction.
+	switch mode {
+	case addrs.ManagedResourceMode:
+		schema, _ := schema.SchemaForResourceType(mode, cfg.Type)
+		if schema == nil {
+			diags = diags.Append(&hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Invalid resource type",
+				Detail:   fmt.Sprintf("The provider %s does not support resource type %q.", cfg.ProviderConfigAddr(), cfg.Type),
+				Subject:  &cfg.TypeRange,
+			})
+			return diags.Err()
+		}
+
+		configVal, _, valDiags := ctx.EvaluateBlock(cfg.Config, schema, nil, keyData)
+		diags = diags.Append(valDiags)
+		if valDiags.HasErrors() {
+			return diags.Err()
+		}
+
+		if cfg.Managed != nil { // can be nil only in tests with poorly-configured mocks
+			for _, traversal := range cfg.Managed.IgnoreChanges {
+				// validate the ignore_changes traversals apply.
+				moreDiags := schema.StaticValidateTraversal(traversal)
+				diags = diags.Append(moreDiags)
+
+				// TODO: we want to notify users that they can't use
+				// ignore_changes for computed attributes, but we don't have an
+				// easy way to correlate the config value, schema and
+				// traversal together.
+			}
+		}
+
+		// Use unmarked value for validate request
+		unmarkedConfigVal, _ := configVal.UnmarkDeep()
+		req := providers.ValidateResourceTypeConfigRequest{
+			TypeName: cfg.Type,
+			Config:   unmarkedConfigVal,
+		}
+
+		resp := provider.ValidateResourceTypeConfig(req)
+		diags = diags.Append(resp.Diagnostics.InConfigBody(cfg.Config))
+
+		if n.ConfigVal != nil {
+			*n.ConfigVal = configVal
+		}
+
+	case addrs.DataResourceMode:
+		schema, _ := schema.SchemaForResourceType(mode, cfg.Type)
+		if schema == nil {
+			diags = diags.Append(&hcl.Diagnostic{
+				Severity: hcl.DiagError,
+				Summary:  "Invalid data source",
+				Detail:   fmt.Sprintf("The provider %s does not support data source %q.", cfg.ProviderConfigAddr(), cfg.Type),
+				Subject:  &cfg.TypeRange,
+			})
+			return diags.Err()
+		}
+
+		configVal, _, valDiags := ctx.EvaluateBlock(cfg.Config, schema, nil, keyData)
+		diags = diags.Append(valDiags)
+		if valDiags.HasErrors() {
+			return diags.Err()
+		}
+
+		// Use unmarked value for validate request
+		unmarkedConfigVal, _ := configVal.UnmarkDeep()
+		req := providers.ValidateDataSourceConfigRequest{
+			TypeName: cfg.Type,
+			Config:   unmarkedConfigVal,
+		}
+
+		resp := provider.ValidateDataSourceConfig(req)
+		diags = diags.Append(resp.Diagnostics.InConfigBody(cfg.Config))
+	}
+
+	if n.IgnoreWarnings {
+		// If we _only_ have warnings then we'll return nil.
+		if diags.HasErrors() {
+			return diags.NonFatalErr()
+		}
+		return nil
+	} else {
+		// We'll return an error if there are any diagnostics at all, even if
+		// some of them are warnings.
+		return diags.NonFatalErr()
+	}
+}
+
+func (n *EvalValidateResource) validateCount(ctx EvalContext, expr hcl.Expression) (diags tfdiags.Diagnostics) {
+	val, countDiags := evaluateCountExpressionValue(expr, ctx)
+	// If the value isn't known then that's the best we can do for now, but
+	// we'll check more thoroughly during the plan walk
+	if !val.IsKnown() {
+		return diags
+	}
+
+	if countDiags.HasErrors() {
+		diags = diags.Append(countDiags)
+	}
+
+	return diags
+}
+
+func (n *EvalValidateResource) validateForEach(ctx EvalContext, expr hcl.Expression) (diags tfdiags.Diagnostics) {
+	val, forEachDiags := evaluateForEachExpressionValue(expr, ctx)
+	// If the value isn't known then that's the best we can do for now, but
+	// we'll check more thoroughly during the plan walk
+	if !val.IsKnown() {
+		return diags
+	}
+
+	if forEachDiags.HasErrors() {
+		diags = diags.Append(forEachDiags)
+	}
+
+	return diags
+}
+
+func validateDependsOn(ctx EvalContext, dependsOn []hcl.Traversal) (diags tfdiags.Diagnostics) {
+	for _, traversal := range dependsOn {
 		ref, refDiags := addrs.ParseRef(traversal)
 		diags = diags.Append(refDiags)
 		if !refDiags.HasErrors() && len(ref.Remaining) != 0 {
@@ -422,167 +530,5 @@ func (n *EvalValidateResource) Eval(ctx EvalContext) (interface{}, error) {
 			}
 		}
 	}
-
-	// Provider entry point varies depending on resource mode, because
-	// managed resources and data resources are two distinct concepts
-	// in the provider abstraction.
-	switch mode {
-	case addrs.ManagedResourceMode:
-		schema, _ := schema.SchemaForResourceType(mode, cfg.Type)
-		if schema == nil {
-			diags = diags.Append(&hcl.Diagnostic{
-				Severity: hcl.DiagError,
-				Summary:  "Invalid resource type",
-				Detail:   fmt.Sprintf("The provider %s does not support resource type %q.", cfg.ProviderConfigAddr(), cfg.Type),
-				Subject:  &cfg.TypeRange,
-			})
-			return nil, diags.Err()
-		}
-
-		configVal, _, valDiags := ctx.EvaluateBlock(cfg.Config, schema, nil, keyData)
-		diags = diags.Append(valDiags)
-		if valDiags.HasErrors() {
-			return nil, diags.Err()
-		}
-
-		if cfg.Managed != nil { // can be nil only in tests with poorly-configured mocks
-			for _, traversal := range cfg.Managed.IgnoreChanges {
-				moreDiags := schema.StaticValidateTraversal(traversal)
-				diags = diags.Append(moreDiags)
-			}
-		}
-
-		req := providers.ValidateResourceTypeConfigRequest{
-			TypeName: cfg.Type,
-			Config:   configVal,
-		}
-
-		resp := provider.ValidateResourceTypeConfig(req)
-		diags = diags.Append(resp.Diagnostics.InConfigBody(cfg.Config))
-
-		if n.ConfigVal != nil {
-			*n.ConfigVal = configVal
-		}
-
-	case addrs.DataResourceMode:
-		schema, _ := schema.SchemaForResourceType(mode, cfg.Type)
-		if schema == nil {
-			diags = diags.Append(&hcl.Diagnostic{
-				Severity: hcl.DiagError,
-				Summary:  "Invalid data source",
-				Detail:   fmt.Sprintf("The provider %s does not support data source %q.", cfg.ProviderConfigAddr(), cfg.Type),
-				Subject:  &cfg.TypeRange,
-			})
-			return nil, diags.Err()
-		}
-
-		configVal, _, valDiags := ctx.EvaluateBlock(cfg.Config, schema, nil, keyData)
-		diags = diags.Append(valDiags)
-		if valDiags.HasErrors() {
-			return nil, diags.Err()
-		}
-
-		req := providers.ValidateDataSourceConfigRequest{
-			TypeName: cfg.Type,
-			Config:   configVal,
-		}
-
-		resp := provider.ValidateDataSourceConfig(req)
-		diags = diags.Append(resp.Diagnostics.InConfigBody(cfg.Config))
-	}
-
-	if n.IgnoreWarnings {
-		// If we _only_ have warnings then we'll return nil.
-		if diags.HasErrors() {
-			return nil, diags.NonFatalErr()
-		}
-		return nil, nil
-	} else {
-		// We'll return an error if there are any diagnostics at all, even if
-		// some of them are warnings.
-		return nil, diags.NonFatalErr()
-	}
-}
-
-func (n *EvalValidateResource) validateCount(ctx EvalContext, expr hcl.Expression) tfdiags.Diagnostics {
-	if expr == nil {
-		return nil
-	}
-
-	var diags tfdiags.Diagnostics
-
-	countVal, countDiags := ctx.EvaluateExpr(expr, cty.Number, nil)
-	diags = diags.Append(countDiags)
-	if diags.HasErrors() {
-		return diags
-	}
-
-	if countVal.IsNull() {
-		diags = diags.Append(&hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Invalid count argument",
-			Detail:   `The given "count" argument value is null. An integer is required.`,
-			Subject:  expr.Range().Ptr(),
-		})
-		return diags
-	}
-
-	var err error
-	countVal, err = convert.Convert(countVal, cty.Number)
-	if err != nil {
-		diags = diags.Append(&hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Invalid count argument",
-			Detail:   fmt.Sprintf(`The given "count" argument value is unsuitable: %s.`, err),
-			Subject:  expr.Range().Ptr(),
-		})
-		return diags
-	}
-
-	// If the value isn't known then that's the best we can do for now, but
-	// we'll check more thoroughly during the plan walk.
-	if !countVal.IsKnown() {
-		return diags
-	}
-
-	// If we _do_ know the value, then we can do a few more checks here.
-	var count int
-	err = gocty.FromCtyValue(countVal, &count)
-	if err != nil {
-		// Isn't a whole number, etc.
-		diags = diags.Append(&hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Invalid count argument",
-			Detail:   fmt.Sprintf(`The given "count" argument value is unsuitable: %s.`, err),
-			Subject:  expr.Range().Ptr(),
-		})
-		return diags
-	}
-
-	if count < 0 {
-		diags = diags.Append(&hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Invalid count argument",
-			Detail:   `The given "count" argument value is unsuitable: count cannot be negative.`,
-			Subject:  expr.Range().Ptr(),
-		})
-		return diags
-	}
-
-	return diags
-}
-
-func (n *EvalValidateResource) validateForEach(ctx EvalContext, expr hcl.Expression) (diags tfdiags.Diagnostics) {
-	_, known, forEachDiags := evaluateResourceForEachExpressionKnown(expr, ctx)
-	// If the value isn't known then that's the best we can do for now, but
-	// we'll check more thoroughly during the plan walk
-	if !known {
-		return diags
-	}
-
-	if forEachDiags.HasErrors() {
-		diags = diags.Append(forEachDiags)
-	}
-
 	return diags
 }
