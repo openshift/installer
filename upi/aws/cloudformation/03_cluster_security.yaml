@@ -6,14 +6,16 @@ Parameters:
     AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
     MaxLength: 27
     MinLength: 1
-    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
+    ConstraintDescription: >-
+      Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
     Description: >-
       A short, unique cluster ID used to tag cloud resources and identify items owned or used by the cluster. You should
       use the value generated when creating the manifest files using `openshift-install create manifests`.
     Type: String
 
   VpcCidr:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-4]))$
+    AllowedPattern: >-
+      ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-4]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-24.
     Description: CIDR block for VPC.
     Default: 10.0.0.0/16
@@ -30,16 +32,16 @@ Parameters:
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
-      - Label:
-          default: "Cluster Information"
-        Parameters:
-          - InfrastructureName
-      - Label:
-          default: "Network Configuration"
-        Parameters:
-          - VpcId
-          - VpcCidr
-          - PrivateSubnets
+    - Label:
+        default: "Cluster Information"
+      Parameters:
+      - InfrastructureName
+    - Label:
+        default: "Network Configuration"
+      Parameters:
+      - VpcId
+      - VpcCidr
+      - PrivateSubnets
     ParameterLabels:
       InfrastructureName:
         default: "Infrastructure Name"
@@ -57,28 +59,28 @@ Resources:
       GroupName: !Join ["-", [!Ref InfrastructureName, "master", "sg"]]
       GroupDescription: Cluster Master Security Group
       SecurityGroupIngress:
-        - IpProtocol: icmp
-          FromPort: 0
-          ToPort: 0
-          CidrIp: !Ref VpcCidr
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: !Ref VpcCidr
-        - IpProtocol: tcp
-          ToPort: 6443
-          FromPort: 6443
-          CidrIp: !Ref VpcCidr
-        - IpProtocol: tcp
-          FromPort: 22623
-          ToPort: 22623
-          CidrIp: !Ref VpcCidr
+      - IpProtocol: icmp
+        FromPort: 0
+        ToPort: 0
+        CidrIp: !Ref VpcCidr
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref VpcCidr
+      - IpProtocol: tcp
+        ToPort: 6443
+        FromPort: 6443
+        CidrIp: !Ref VpcCidr
+      - IpProtocol: tcp
+        FromPort: 22623
+        ToPort: 22623
+        CidrIp: !Ref VpcCidr
       VpcId: !Ref VpcId
       Tags:
-        - Key: "Name"
-          Value: !Join ["-", [!Ref InfrastructureName, "master", "sg"]]
-        - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
-          Value: owned
+      - Key: "Name"
+        Value: !Join ["-", [!Ref InfrastructureName, "master", "sg"]]
+      - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
+        Value: owned
 
   WorkerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -86,20 +88,20 @@ Resources:
       GroupName: !Join ["-", [!Ref InfrastructureName, "worker", "sg"]]
       GroupDescription: Cluster Worker Security Group
       SecurityGroupIngress:
-        - IpProtocol: icmp
-          FromPort: 0
-          ToPort: 0
-          CidrIp: !Ref VpcCidr
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: !Ref VpcCidr
+      - IpProtocol: icmp
+        FromPort: 0
+        ToPort: 0
+        CidrIp: !Ref VpcCidr
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref VpcCidr
       VpcId: !Ref VpcId
       Tags:
-        - Key: "Name"
-          Value: !Join ["-", [!Ref InfrastructureName, "worker", "sg"]]
-        - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
-          Value: owned
+      - Key: "Name"
+        Value: !Join ["-", [!Ref InfrastructureName, "worker", "sg"]]
+      - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
+        Value: owned
 
   MasterIngressEtcd:
     Type: AWS::EC2::SecurityGroupIngress
@@ -510,70 +512,70 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Effect: "Allow"
-            Principal:
-              Service:
-                - "ec2.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - "ec2.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
       Policies:
-        - PolicyName: !Join ["-", [!Ref InfrastructureName, "master", "policy"]]
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action:
-                  - "ec2:AttachVolume"
-                  - "ec2:AuthorizeSecurityGroupIngress"
-                  - "ec2:CreateSecurityGroup"
-                  - "ec2:CreateTags"
-                  - "ec2:CreateVolume"
-                  - "ec2:DeleteSecurityGroup"
-                  - "ec2:DeleteVolume"
-                  - "ec2:Describe*"
-                  - "ec2:DetachVolume"
-                  - "ec2:ModifyInstanceAttribute"
-                  - "ec2:ModifyVolume"
-                  - "ec2:RevokeSecurityGroupIngress"
-                  - "elasticloadbalancing:AddTags"
-                  - "elasticloadbalancing:AttachLoadBalancerToSubnets"
-                  - "elasticloadbalancing:ApplySecurityGroupsToLoadBalancer"
-                  - "elasticloadbalancing:CreateListener"
-                  - "elasticloadbalancing:CreateLoadBalancer"
-                  - "elasticloadbalancing:CreateLoadBalancerPolicy"
-                  - "elasticloadbalancing:CreateLoadBalancerListeners"
-                  - "elasticloadbalancing:CreateTargetGroup"
-                  - "elasticloadbalancing:ConfigureHealthCheck"
-                  - "elasticloadbalancing:DeleteListener"
-                  - "elasticloadbalancing:DeleteLoadBalancer"
-                  - "elasticloadbalancing:DeleteLoadBalancerListeners"
-                  - "elasticloadbalancing:DeleteTargetGroup"
-                  - "elasticloadbalancing:DeregisterInstancesFromLoadBalancer"
-                  - "elasticloadbalancing:DeregisterTargets"
-                  - "elasticloadbalancing:Describe*"
-                  - "elasticloadbalancing:DetachLoadBalancerFromSubnets"
-                  - "elasticloadbalancing:ModifyListener"
-                  - "elasticloadbalancing:ModifyLoadBalancerAttributes"
-                  - "elasticloadbalancing:ModifyTargetGroup"
-                  - "elasticloadbalancing:ModifyTargetGroupAttributes"
-                  - "elasticloadbalancing:RegisterInstancesWithLoadBalancer"
-                  - "elasticloadbalancing:RegisterTargets"
-                  - "elasticloadbalancing:SetLoadBalancerPoliciesForBackendServer"
-                  - "elasticloadbalancing:SetLoadBalancerPoliciesOfListener"
-                  - "kms:DescribeKey"
-                Resource: "*"
+      - PolicyName: !Join ["-", [!Ref InfrastructureName, "master", "policy"]]
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "ec2:AttachVolume"
+            - "ec2:AuthorizeSecurityGroupIngress"
+            - "ec2:CreateSecurityGroup"
+            - "ec2:CreateTags"
+            - "ec2:CreateVolume"
+            - "ec2:DeleteSecurityGroup"
+            - "ec2:DeleteVolume"
+            - "ec2:Describe*"
+            - "ec2:DetachVolume"
+            - "ec2:ModifyInstanceAttribute"
+            - "ec2:ModifyVolume"
+            - "ec2:RevokeSecurityGroupIngress"
+            - "elasticloadbalancing:AddTags"
+            - "elasticloadbalancing:AttachLoadBalancerToSubnets"
+            - "elasticloadbalancing:ApplySecurityGroupsToLoadBalancer"
+            - "elasticloadbalancing:CreateListener"
+            - "elasticloadbalancing:CreateLoadBalancer"
+            - "elasticloadbalancing:CreateLoadBalancerPolicy"
+            - "elasticloadbalancing:CreateLoadBalancerListeners"
+            - "elasticloadbalancing:CreateTargetGroup"
+            - "elasticloadbalancing:ConfigureHealthCheck"
+            - "elasticloadbalancing:DeleteListener"
+            - "elasticloadbalancing:DeleteLoadBalancer"
+            - "elasticloadbalancing:DeleteLoadBalancerListeners"
+            - "elasticloadbalancing:DeleteTargetGroup"
+            - "elasticloadbalancing:DeregisterInstancesFromLoadBalancer"
+            - "elasticloadbalancing:DeregisterTargets"
+            - "elasticloadbalancing:Describe*"
+            - "elasticloadbalancing:DetachLoadBalancerFromSubnets"
+            - "elasticloadbalancing:ModifyListener"
+            - "elasticloadbalancing:ModifyLoadBalancerAttributes"
+            - "elasticloadbalancing:ModifyTargetGroup"
+            - "elasticloadbalancing:ModifyTargetGroupAttributes"
+            - "elasticloadbalancing:RegisterInstancesWithLoadBalancer"
+            - "elasticloadbalancing:RegisterTargets"
+            - "elasticloadbalancing:SetLoadBalancerPoliciesForBackendServer"
+            - "elasticloadbalancing:SetLoadBalancerPoliciesOfListener"
+            - "kms:DescribeKey"
+            Resource: "*"
       Tags:
-        - Key: "Name"
-          Value: !Join ["-", [!Ref InfrastructureName, "master", "role"]]
-        - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
-          Value: owned
+      - Key: "Name"
+        Value: !Join ["-", [!Ref InfrastructureName, "master", "role"]]
+      - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
+        Value: owned
 
   MasterInstanceProfile:
     Type: "AWS::IAM::InstanceProfile"
     Properties:
       InstanceProfileName: !Join ["-", [!Ref InfrastructureName, "master", "profile"]]
       Roles:
-        - Ref: "MasterIamRole"
+      - Ref: "MasterIamRole"
 
   WorkerIamRole:
     Type: AWS::IAM::Role
@@ -582,34 +584,34 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Effect: "Allow"
-            Principal:
-              Service:
-                - "ec2.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - "ec2.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
       Policies:
-        - PolicyName: !Join ["-", [!Ref InfrastructureName, "worker", "policy"]]
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action:
-                  - "ec2:DescribeInstances"
-                  - "ec2:DescribeRegions"
-                Resource: "*"
+      - PolicyName: !Join ["-", [!Ref InfrastructureName, "worker", "policy"]]
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "ec2:DescribeInstances"
+            - "ec2:DescribeRegions"
+            Resource: "*"
       Tags:
-        - Key: "Name"
-          Value: !Join ["-", [!Ref InfrastructureName, "worker", "role"]]
-        - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
-          Value: owned
+      - Key: "Name"
+        Value: !Join ["-", [!Ref InfrastructureName, "worker", "role"]]
+      - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
+        Value: owned
 
   WorkerInstanceProfile:
     Type: "AWS::IAM::InstanceProfile"
     Properties:
       InstanceProfileName: !Join ["-", [!Ref InfrastructureName, "worker", "profile"]]
       Roles:
-        - Ref: "WorkerIamRole"
+      - Ref: "WorkerIamRole"
 
 Outputs:
   MasterSecurityGroupId:

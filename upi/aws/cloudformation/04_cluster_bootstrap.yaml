@@ -6,39 +6,35 @@ Parameters:
     AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
     MaxLength: 27
     MinLength: 1
-    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
+    ConstraintDescription: >-
+      Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
     Description: >-
       A short, unique cluster ID used to tag cloud resources and identify items owned or used by the cluster. You should
       use the value generated when creating the manifest files using `openshift-install create manifests`.
     Type: String
 
   RhcosAmi:
-    Description: >-
-      Current Red Hat Enterprise Linux CoreOS AMI to use for bootstrap.
+    Description: Current Red Hat Enterprise Linux CoreOS AMI to use for bootstrap.
     Type: AWS::EC2::Image::Id
 
   AllowedBootstrapSshCidr:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|1[0-9]|2[0-9]|3[0-2]))$
-    ConstraintDescription: >-
-      CIDR block parameter must be in the form x.x.x.x/0-32.
-    Description: >-
-      CIDR block to allow SSH access to the bootstrap node.
+    AllowedPattern: >-
+      ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|1[0-9]|2[0-9]|3[0-2]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/0-32.
+    Description: CIDR block to allow SSH access to the bootstrap node.
     Default: 0.0.0.0/0
     Type: String
 
   PublicSubnet:
-    Description: >-
-      The public subnet to launch the bootstrap node into.
+    Description: The public subnet to launch the bootstrap node into.
     Type: AWS::EC2::Subnet::Id
 
   MasterSecurityGroupId:
-    Description: >-
-      The master security group ID.
+    Description: The master security group ID.
     Type: AWS::EC2::SecurityGroup::Id
 
   VpcId:
-    Description: >-
-      The VPC-scoped resources will belong to this VPC.
+    Description: The VPC-scoped resources will belong to this VPC.
     Type: AWS::EC2::VPC::Id
 
   BootstrapIgnitionLocation:
@@ -48,60 +44,55 @@ Parameters:
 
   AutoRegisterELB:
     AllowedValues:
-      - "yes"
-      - "no"
-    Description: >-
-      Do you want to invoke NLB registration, which requires a Lambda ARN parameter?
+    - "yes"
+    - "no"
+    Description: Do you want to invoke NLB registration, which requires a Lambda ARN parameter?
     Default: "yes"
     Type: String
 
   RegisterNlbIpTargetsLambdaArn:
-    Description: >-
-      ARN for NLB IP target registration lambda.
+    Description: ARN for NLB IP target registration lambda.
     Type: String
 
   ExternalApiTargetGroupArn:
-    Description: >-
-      ARN for external API load balancer target group.
+    Description: ARN for external API load balancer target group.
     Type: String
 
   InternalApiTargetGroupArn:
-    Description: >-
-      ARN for internal API load balancer target group.
+    Description: ARN for internal API load balancer target group.
     Type: String
 
   InternalServiceTargetGroupArn:
-    Description: >-
-      ARN for internal service load balancer target group.
+    Description: ARN for internal service load balancer target group.
     Type: String
 
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
-      - Label:
-          default: "Cluster Information"
-        Parameters:
-          - InfrastructureName
-      - Label:
-          default: "Host Information"
-        Parameters:
-          - RhcosAmi
-          - BootstrapIgnitionLocation
-          - MasterSecurityGroupId
-      - Label:
-          default: "Network Configuration"
-        Parameters:
-          - VpcId
-          - AllowedBootstrapSshCidr
-          - PublicSubnet
-      - Label:
-          default: "Load Balancer Automation"
-        Parameters:
-          - AutoRegisterELB
-          - RegisterNlbIpTargetsLambdaArn
-          - ExternalApiTargetGroupArn
-          - InternalApiTargetGroupArn
-          - InternalServiceTargetGroupArn
+    - Label:
+        default: "Cluster Information"
+      Parameters:
+      - InfrastructureName
+    - Label:
+        default: "Host Information"
+      Parameters:
+      - RhcosAmi
+      - BootstrapIgnitionLocation
+      - MasterSecurityGroupId
+    - Label:
+        default: "Network Configuration"
+      Parameters:
+      - VpcId
+      - AllowedBootstrapSshCidr
+      - PublicSubnet
+    - Label:
+        default: "Load Balancer Automation"
+      Parameters:
+      - AutoRegisterELB
+      - RegisterNlbIpTargetsLambdaArn
+      - ExternalApiTargetGroupArn
+      - InternalApiTargetGroupArn
+      - InternalServiceTargetGroupArn
     ParameterLabels:
       InfrastructureName:
         default: "Infrastructure Name"
@@ -131,35 +122,35 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Effect: "Allow"
-            Principal:
-              Service:
-                - "ec2.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - "ec2.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
       Path: "/"
       Policies:
-        - PolicyName: !Join ["-", [!Ref InfrastructureName, "bootstrap", "policy"]]
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action: "ec2:Describe*"
-                Resource: "*"
-              - Effect: "Allow"
-                Action: "ec2:AttachVolume"
-                Resource: "*"
-              - Effect: "Allow"
-                Action: "ec2:DetachVolume"
-                Resource: "*"
-              - Effect: "Allow"
-                Action: "s3:GetObject"
-                Resource: "*"
+      - PolicyName: !Join ["-", [!Ref InfrastructureName, "bootstrap", "policy"]]
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action: "ec2:Describe*"
+            Resource: "*"
+          - Effect: "Allow"
+            Action: "ec2:AttachVolume"
+            Resource: "*"
+          - Effect: "Allow"
+            Action: "ec2:DetachVolume"
+            Resource: "*"
+          - Effect: "Allow"
+            Action: "s3:GetObject"
+            Resource: "*"
       Tags:
-        - Key: "Name"
-          Value: !Join ["-", [!Ref InfrastructureName, "bootstrap", "role"]]
-        - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
-          Value: owned
+      - Key: "Name"
+        Value: !Join ["-", [!Ref InfrastructureName, "bootstrap", "role"]]
+      - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
+        Value: owned
 
   BootstrapInstanceProfile:
     Type: "AWS::IAM::InstanceProfile"
@@ -174,14 +165,14 @@ Resources:
       GroupName: !Join ["-", [!Ref InfrastructureName, "bootstrap", "sg"]]
       GroupDescription: Cluster Bootstrap Security Group
       SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: !Ref AllowedBootstrapSshCidr
-        - IpProtocol: tcp
-          ToPort: 19531
-          FromPort: 19531
-          CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref AllowedBootstrapSshCidr
+      - IpProtocol: tcp
+        ToPort: 19531
+        FromPort: 19531
+        CidrIp: 0.0.0.0/0
       VpcId: !Ref VpcId
 
   BootstrapInstance:
@@ -191,12 +182,12 @@ Resources:
       IamInstanceProfile: !Ref BootstrapInstanceProfile
       InstanceType: "i3.large"
       NetworkInterfaces:
-        - AssociatePublicIpAddress: "true"
-          DeviceIndex: "0"
-          GroupSet:
-            - !Ref "BootstrapSecurityGroup"
-            - !Ref "MasterSecurityGroupId"
-          SubnetId: !Ref "PublicSubnet"
+      - AssociatePublicIpAddress: "true"
+        DeviceIndex: "0"
+        GroupSet:
+        - !Ref "BootstrapSecurityGroup"
+        - !Ref "MasterSecurityGroupId"
+        SubnetId: !Ref "PublicSubnet"
       UserData:
         Fn::Base64: !Sub [
           '{"ignition":{"config":{"replace":{"source":"${S3Loc}"}},"version":"3.1.0"}}',
@@ -205,10 +196,10 @@ Resources:
           }
         ]
       Tags:
-        - Key: Name
-          Value: !Join ["-", [!Ref InfrastructureName, "bootstrap"]]
-        - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
-          Value: "owned"
+      - Key: Name
+        Value: !Join ["-", [!Ref InfrastructureName, "bootstrap"]]
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
+        Value: "owned"
 
   RegisterBootstrapApiTarget:
     Condition: DoRegistration
