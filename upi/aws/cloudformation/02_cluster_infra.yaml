@@ -7,28 +7,38 @@ Parameters:
     MaxLength: 27
     MinLength: 1
     ConstraintDescription: Cluster name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
-    Description: A short, representative cluster name to use for host names and other identifying names.
+    Description: >-
+      A short, representative cluster name to use for host names and other identifying names. You should use the value
+      specified when generating the install-config.yaml file using `openshift-install create install-config`.
     Type: String
+
   InfrastructureName:
     AllowedPattern: ^([a-zA-Z][a-zA-Z0-9\-]{0,26})$
     MaxLength: 27
     MinLength: 1
-    ConstraintDescription: Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
-    Description: A short, unique cluster ID used to tag cloud resources and identify items owned or used by the cluster.
+    ConstraintDescription: >-
+      Infrastructure name must be alphanumeric, start with a letter, and have a maximum of 27 characters.
+    Description: >-
+      A short, unique cluster ID used to tag cloud resources and identify items owned or used by the cluster. You should
+      use the value generated when creating the manifest files using `openshift-install create manifests`.
     Type: String
+
   HostedZoneId:
     Description: The Route53 public zone ID to register the targets with, such as Z21IXYZABCZ2A4.
     Type: String
+
   HostedZoneName:
-    Description: The Route53 zone to register the targets with, such as example.com. Omit the trailing period.
+    Description: The Route53 zone to register the targets with, such as "example.com".
     Type: String
-    Default: "example.com"
+
   PublicSubnets:
     Description: The internet-facing subnets.
     Type: List<AWS::EC2::Subnet::Id>
+
   PrivateSubnets:
     Description: The internal subnets.
     Type: List<AWS::EC2::Subnet::Id>
+
   VpcId:
     Description: The VPC-scoped resources will belong to this VPC.
     Type: AWS::EC2::VPC::Id
@@ -36,22 +46,22 @@ Parameters:
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
-    - Label:
-        default: "Cluster Information"
-      Parameters:
-      - ClusterName
-      - InfrastructureName
-    - Label:
-        default: "Network Configuration"
-      Parameters:
-      - VpcId
-      - PublicSubnets
-      - PrivateSubnets
-    - Label:
-        default: "DNS"
-      Parameters:
-      - HostedZoneName
-      - HostedZoneId
+      - Label:
+          default: "Cluster Information"
+        Parameters:
+          - ClusterName
+          - InfrastructureName
+      - Label:
+          default: "Network Configuration"
+        Parameters:
+          - VpcId
+          - PublicSubnets
+          - PrivateSubnets
+      - Label:
+          default: "DNS"
+        Parameters:
+          - HostedZoneName
+          - HostedZoneId
     ParameterLabels:
       ClusterName:
         default: "Cluster Name"
@@ -76,6 +86,11 @@ Resources:
       IpAddressType: ipv4
       Subnets: !Ref PublicSubnets
       Type: network
+      Tags:
+        - Key: "Name"
+          Value: !Join ["-", [!Ref InfrastructureName, "ext"]]
+        - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
+          Value: owned
 
   IntApiElb:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -85,6 +100,11 @@ Resources:
       IpAddressType: ipv4
       Subnets: !Ref PrivateSubnets
       Type: network
+      Tags:
+        - Key: "Name"
+          Value: !Join ["-", [!Ref InfrastructureName, "int"]]
+        - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
+          Value: owned
 
   IntDns:
     Type: "AWS::Route53::HostedZone"
@@ -92,14 +112,14 @@ Resources:
       HostedZoneConfig:
         Comment: "Managed by CloudFormation"
       Name: !Join [".", [!Ref ClusterName, !Ref HostedZoneName]]
-      HostedZoneTags:
-      - Key: Name
-        Value: !Join ["-", [!Ref InfrastructureName, "int"]]
-      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
-        Value: "owned"
       VPCs:
-      - VPCId: !Ref VpcId
-        VPCRegion: !Ref "AWS::Region"
+        - VPCId: !Ref VpcId
+          VPCRegion: !Ref "AWS::Region"
+      HostedZoneTags:
+        - Key: Name
+          Value: !Join ["-", [!Ref InfrastructureName, "int"]]
+        - Key: !Join ["", ["kubernetes.io/cluster/", !Ref InfrastructureName]]
+          Value: "owned"
 
   ExternalApiServerRecord:
     Type: AWS::Route53::RecordSetGroup
@@ -107,15 +127,19 @@ Resources:
       Comment: Alias record for the API server
       HostedZoneId: !Ref HostedZoneId
       RecordSets:
-      - Name:
-          !Join [
-            ".",
-            ["api", !Ref ClusterName, !Join ["", [!Ref HostedZoneName, "."]]],
-          ]
-        Type: A
-        AliasTarget:
-          HostedZoneId: !GetAtt ExtApiElb.CanonicalHostedZoneID
-          DNSName: !GetAtt ExtApiElb.DNSName
+        - Name:
+            !Join [
+              ".",
+              [
+                "api",
+                !Ref ClusterName,
+                !Join ["", [!Ref HostedZoneName, "."]]
+              ]
+            ]
+          Type: A
+          AliasTarget:
+            HostedZoneId: !GetAtt ExtApiElb.CanonicalHostedZoneID
+            DNSName: !GetAtt ExtApiElb.DNSName
 
   InternalApiServerRecord:
     Type: AWS::Route53::RecordSetGroup
@@ -123,32 +147,40 @@ Resources:
       Comment: Alias record for the API server
       HostedZoneId: !Ref IntDns
       RecordSets:
-      - Name:
-          !Join [
-            ".",
-            ["api", !Ref ClusterName, !Join ["", [!Ref HostedZoneName, "."]]],
-          ]
-        Type: A
-        AliasTarget:
-          HostedZoneId: !GetAtt IntApiElb.CanonicalHostedZoneID
-          DNSName: !GetAtt IntApiElb.DNSName
-      - Name:
-          !Join [
-            ".",
-            ["api-int", !Ref ClusterName, !Join ["", [!Ref HostedZoneName, "."]]],
-          ]
-        Type: A
-        AliasTarget:
-          HostedZoneId: !GetAtt IntApiElb.CanonicalHostedZoneID
-          DNSName: !GetAtt IntApiElb.DNSName
+        - Name:
+            !Join [
+              ".",
+              [
+                "api",
+                !Ref ClusterName,
+                !Join ["", [!Ref HostedZoneName, "."]]
+              ]
+            ]
+          Type: A
+          AliasTarget:
+            HostedZoneId: !GetAtt IntApiElb.CanonicalHostedZoneID
+            DNSName: !GetAtt IntApiElb.DNSName
+        - Name:
+            !Join [
+              ".",
+              [
+                "api-int",
+                !Ref ClusterName,
+                !Join ["", [!Ref HostedZoneName, "."]]
+              ]
+            ]
+          Type: A
+          AliasTarget:
+            HostedZoneId: !GetAtt IntApiElb.CanonicalHostedZoneID
+            DNSName: !GetAtt IntApiElb.DNSName
 
   ExternalApiListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
-      - Type: forward
-        TargetGroupArn:
-          Ref: ExternalApiTargetGroup
+        - Type: forward
+          TargetGroupArn:
+            Ref: ExternalApiTargetGroup
       LoadBalancerArn:
         Ref: ExtApiElb
       Port: 6443
@@ -157,6 +189,7 @@ Resources:
   ExternalApiTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
+      Name: !Join ["-", [!Ref InfrastructureName, "aext"]]
       HealthCheckIntervalSeconds: 10
       HealthCheckPath: "/readyz"
       HealthCheckPort: 6443
@@ -169,16 +202,21 @@ Resources:
       VpcId:
         Ref: VpcId
       TargetGroupAttributes:
-      - Key: deregistration_delay.timeout_seconds
-        Value: 60
+        - Key: deregistration_delay.timeout_seconds
+          Value: 60
+      Tags:
+        - Key: "Name"
+          Value: !Join ["-", [!Ref InfrastructureName, "aext"]]
+        - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
+          Value: owned
 
   InternalApiListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
-      - Type: forward
-        TargetGroupArn:
-          Ref: InternalApiTargetGroup
+        - Type: forward
+          TargetGroupArn:
+            Ref: InternalApiTargetGroup
       LoadBalancerArn:
         Ref: IntApiElb
       Port: 6443
@@ -187,6 +225,7 @@ Resources:
   InternalApiTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
+      Name: !Join ["-", [!Ref InfrastructureName, "aint"]]
       HealthCheckIntervalSeconds: 10
       HealthCheckPath: "/readyz"
       HealthCheckPort: 6443
@@ -199,16 +238,21 @@ Resources:
       VpcId:
         Ref: VpcId
       TargetGroupAttributes:
-      - Key: deregistration_delay.timeout_seconds
-        Value: 60
+        - Key: deregistration_delay.timeout_seconds
+          Value: 60
+      Tags:
+        - Key: "Name"
+          Value: !Join ["-", [!Ref InfrastructureName, "aint"]]
+        - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
+          Value: owned
 
   InternalServiceInternalListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
-      - Type: forward
-        TargetGroupArn:
-          Ref: InternalServiceTargetGroup
+        - Type: forward
+          TargetGroupArn:
+            Ref: InternalServiceTargetGroup
       LoadBalancerArn:
         Ref: IntApiElb
       Port: 22623
@@ -217,6 +261,7 @@ Resources:
   InternalServiceTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
+      Name: !Join ["-", [!Ref InfrastructureName, "sint"]]
       HealthCheckIntervalSeconds: 10
       HealthCheckPath: "/healthz"
       HealthCheckPort: 22623
@@ -229,8 +274,13 @@ Resources:
       VpcId:
         Ref: VpcId
       TargetGroupAttributes:
-      - Key: deregistration_delay.timeout_seconds
-        Value: 60
+        - Key: deregistration_delay.timeout_seconds
+          Value: 60
+      Tags:
+        - Key: "Name"
+          Value: !Join ["-", [!Ref InfrastructureName, "sint"]]
+        - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
+          Value: owned
 
   RegisterTargetLambdaIamRole:
     Type: AWS::IAM::Role
@@ -239,48 +289,51 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-        - Effect: "Allow"
-          Principal:
-            Service:
-            - "lambda.amazonaws.com"
-          Action:
-          - "sts:AssumeRole"
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
       Path: "/"
       Policies:
-      - PolicyName: !Join ["-", [!Ref InfrastructureName, "master", "policy"]]
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-          - Effect: "Allow"
-            Action:
-              [
-                "elasticloadbalancing:RegisterTargets",
-                "elasticloadbalancing:DeregisterTargets",
-              ]
-            Resource: !Ref InternalApiTargetGroup
-          - Effect: "Allow"
-            Action:
-              [
-                "elasticloadbalancing:RegisterTargets",
-                "elasticloadbalancing:DeregisterTargets",
-              ]
-            Resource: !Ref InternalServiceTargetGroup
-          - Effect: "Allow"
-            Action:
-              [
-                "elasticloadbalancing:RegisterTargets",
-                "elasticloadbalancing:DeregisterTargets",
-              ]
-            Resource: !Ref ExternalApiTargetGroup
+        - PolicyName: !Join ["-", [!Ref InfrastructureName, "nlb", "lambda", "policy"]]
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  [
+                    "elasticloadbalancing:RegisterTargets",
+                    "elasticloadbalancing:DeregisterTargets"
+                  ]
+                Resource: !Ref InternalApiTargetGroup
+              - Effect: "Allow"
+                Action:
+                  [
+                    "elasticloadbalancing:RegisterTargets",
+                    "elasticloadbalancing:DeregisterTargets"
+                  ]
+                Resource: !Ref InternalServiceTargetGroup
+              - Effect: "Allow"
+                Action:
+                  [
+                    "elasticloadbalancing:RegisterTargets",
+                    "elasticloadbalancing:DeregisterTargets"
+                  ]
+                Resource: !Ref ExternalApiTargetGroup
+      Tags:
+        - Key: "Name"
+          Value: !Join ["-", [!Ref InfrastructureName, "nlb", "lambda", "role"]]
+        - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
+          Value: owned
 
   RegisterNlbIpTargets:
     Type: "AWS::Lambda::Function"
     Properties:
+      FunctionName: !Join ["-", [!Ref InfrastructureName, "register", "target"]]
       Handler: "index.handler"
-      Role:
-        Fn::GetAtt:
-        - "RegisterTargetLambdaIamRole"
-        - "Arn"
+      Role: !GetAtt RegisterTargetLambdaIamRole.Arn
       Code:
         ZipFile: |
           import json
@@ -296,49 +349,57 @@ Resources:
             cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, event['ResourceProperties']['TargetArn']+event['ResourceProperties']['TargetIp'])
       Runtime: "python3.7"
       Timeout: 120
+      Tags:
+        - Key: "Name"
+          Value: !Join ["-", [!Ref InfrastructureName, "register", "target"]]
+        - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
+          Value: owned
 
   RegisterSubnetTagsLambdaIamRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Join ["-", [!Ref InfrastructureName, "subnet-tags-lambda-role"]]
+      RoleName: !Join ["-", [!Ref InfrastructureName, "subnet", "tags", "lambda", "role"]]
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-        - Effect: "Allow"
-          Principal:
-            Service:
-            - "lambda.amazonaws.com"
-          Action:
-          - "sts:AssumeRole"
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
       Path: "/"
       Policies:
-      - PolicyName: !Join ["-", [!Ref InfrastructureName, "subnet-tagging-policy"]]
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-          - Effect: "Allow"
-            Action:
-              [
-                "ec2:DeleteTags",
-                "ec2:CreateTags"
-              ]
-            Resource: "arn:aws:ec2:*:*:subnet/*"
-          - Effect: "Allow"
-            Action:
-              [
-                "ec2:DescribeSubnets",
-                "ec2:DescribeTags"
-              ]
-            Resource: "*"
+        - PolicyName: !Join ["-", [!Ref InfrastructureName, "subnet", "tags", "policy"]]
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  [
+                    "ec2:DeleteTags",
+                    "ec2:CreateTags"
+                  ]
+                Resource: "arn:aws:ec2:*:*:subnet/*"
+              - Effect: "Allow"
+                Action:
+                  [
+                    "ec2:DescribeSubnets",
+                    "ec2:DescribeTags"
+                  ]
+                Resource: "*"
+      Tags:
+        - Key: "Name"
+          Value: !Join ["-", [!Ref InfrastructureName, "subnet", "tags", "lambda", "role"]]
+        - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
+          Value: owned
 
   RegisterSubnetTags:
     Type: "AWS::Lambda::Function"
     Properties:
+      FunctionName: !Join ["-", [!Ref InfrastructureName, "subnet", "tags"]]
       Handler: "index.handler"
-      Role:
-        Fn::GetAtt:
-        - "RegisterSubnetTagsLambdaIamRole"
-        - "Arn"
+      Role: !GetAtt RegisterSubnetTagsLambdaIamRole.Arn
       Code:
         ZipFile: |
           import json
@@ -356,6 +417,11 @@ Resources:
             cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, event['ResourceProperties']['InfrastructureName']+event['ResourceProperties']['Subnets'][0])
       Runtime: "python3.7"
       Timeout: 120
+      Tags:
+        - Key: "Name"
+          Value: !Join ["-", [!Ref InfrastructureName, "subnet", "tags"]]
+        - Key: !Join ["", [kubernetes.io/cluster/, !Ref InfrastructureName]]
+          Value: owned
 
   RegisterPublicSubnetTags:
     Type: Custom::SubnetRegister
@@ -375,24 +441,31 @@ Outputs:
   PrivateHostedZoneId:
     Description: Hosted zone ID for the private DNS, which is required for private records.
     Value: !Ref IntDns
+
   ExternalApiLoadBalancerName:
     Description: Full name of the external API load balancer.
     Value: !GetAtt ExtApiElb.LoadBalancerFullName
+
   InternalApiLoadBalancerName:
     Description: Full name of the internal API load balancer.
     Value: !GetAtt IntApiElb.LoadBalancerFullName
+
   ApiServerDnsName:
     Description: Full hostname of the API server, which is required for the Ignition config files.
     Value: !Join [".", ["api-int", !Ref ClusterName, !Ref HostedZoneName]]
+
   RegisterNlbIpTargetsLambda:
-    Description: Lambda ARN useful to help register or deregister IP targets for these load balancers.
+    Description: Lambda ARN useful to help register or deregister IP targets for the load balancers.
     Value: !GetAtt RegisterNlbIpTargets.Arn
+
   ExternalApiTargetGroupArn:
     Description: ARN of the external API target group.
     Value: !Ref ExternalApiTargetGroup
+
   InternalApiTargetGroupArn:
     Description: ARN of the internal API target group.
     Value: !Ref InternalApiTargetGroup
+
   InternalServiceTargetGroupArn:
     Description: ARN of the internal service target group.
     Value: !Ref InternalServiceTargetGroup
