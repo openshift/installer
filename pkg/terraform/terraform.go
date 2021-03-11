@@ -126,8 +126,9 @@ func unpackAndInit(dir string, platform string) (err error) {
 
 	os.Setenv("TF_CLI_CONFIG_FILE", filepath.Join(dir, "terraform.rc"))
 
-	// XXX: This is only here for debugging CI
+	// XXX: These are only here for debugging CI
 	os.Setenv("TF_LOG", "trace")
+	os.Setenv("TERRAFORM_LOCK_FILE_PATH", dir)
 
 	args := []string{
 		fmt.Sprintf("-plugin-dir=%s", filepath.Join(dir, "plugins")),

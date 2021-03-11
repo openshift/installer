@@ -2,9 +2,10 @@ package command
 
 import (
 	"os"
+	"path/filepath"
 
-	"github.com/hashicorp/terraform/internal/depsfile"
 	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
+	"github.com/hashicorp/terraform/internal/depsfile"
 )
 
 // dependenclyLockFilename is the filename of the dependency lock file.
@@ -27,6 +28,25 @@ import (
 // that the root module directory is always the current working directory.
 const dependencyLockFilename = ".terraform.lock.hcl"
 
+// getDependencyLockFileName gets the dependency lock file name. If the
+// environment variable TERRAFORM_LOCK_FILE_PATH is set, the lock file is
+// appended to it.
+func getDependencyLockFilename() string {
+	lockFilePath := os.Getenv("TERRAFORM_LOCK_FILE_PATH")
+	if lockFilePath == "" {
+		return dependencyLockFilename
+	}
+	lockFileAbsPath, err := filepath.Abs(lockFilePath)
+	if err != nil {
+		return dependencyLockFilename
+	}
+	st, err := os.Stat(lockFileAbsPath)
+	if err != nil || !st.IsDir() {
+		return dependencyLockFilename
+	}
+	return filepath.Join(lockFileAbsPath, dependencyLockFilename)
+}
+
 // lockedDependencies reads the dependency lock information from the lock file
 // in the current working directory.
 //
@@ -46,17 +66,17 @@ func (m *Meta) lockedDependencies() (*depsfile.Locks, tfdiags.Diagnostics) {
 	// with no locks. There is in theory a race condition here in that
 	// the file could be created or removed in the meantime, but we're not
 	// promising to support two concurrent dependency installation processes.
-	_, err := os.Stat(dependencyLockFilename)
+	_, err := os.Stat(getDependencyLockFilename())
 	if os.IsNotExist(err) {
 		return depsfile.NewLocks(), nil
 	}
 
-	return depsfile.LoadLocksFromFile(dependencyLockFilename)
+	return depsfile.LoadLocksFromFile(getDependencyLockFilename())
 }
 
 // replaceLockedDependencies creates or overwrites the lock file in the
 // current working directory to contain the information recorded in the given
 // locks object.
 func (m *Meta) replaceLockedDependencies(new *depsfile.Locks) tfdiags.Diagnostics {
-	return depsfile.SaveLocksToFile(new, dependencyLockFilename)
+	return depsfile.SaveLocksToFile(new, getDependencyLockFilename())
 }
