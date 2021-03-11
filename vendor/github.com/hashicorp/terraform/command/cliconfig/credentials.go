@@ -12,9 +12,10 @@ import (
 	"github.com/zclconf/go-cty/cty"
 	ctyjson "github.com/zclconf/go-cty/cty/json"
 
-	"github.com/hashicorp/terraform-svchost"
+	svchost "github.com/hashicorp/terraform-svchost"
 	svcauth "github.com/hashicorp/terraform-svchost/auth"
 	"github.com/hashicorp/terraform/configs/hcl2shim"
+	"github.com/hashicorp/terraform/internal/replacefile"
 	pluginDiscovery "github.com/hashicorp/terraform/plugin/discovery"
 )
 
@@ -317,23 +318,18 @@ func (s *CredentialsSource) updateLocalHostCredentials(host svchost.Hostname, ne
 		tmpName := f.Name()
 		moved := false
 		defer func(f *os.File, name string) {
-			// Always close our file, and remove it if it's still at its
-			// temporary name. We're ignoring errors here because there's
-			// nothing we can do about them anyway.
-			f.Close()
+			// Remove the temporary file if it hasn't been moved yet. We're
+			// ignoring errors here because there's nothing we can do about
+			// them anyway.
 			if !moved {
 				os.Remove(name)
 			}
 		}(f, tmpName)
 
-		// Credentials file should be readable only by its owner. (This may
-		// not be effective on all platforms, but should at least work on
-		// Unix-like targets and should be harmless elsewhere.)
-		if err := f.Chmod(0600); err != nil {
-			return fmt.Errorf("cannot set mode for temporary file %s: %s", tmpName, err)
-		}
-
+		// Write the credentials to the temporary file, then immediately close
+		// it, whether or not the write succeeds.
 		_, err = f.Write(newSrc)
+		f.Close()
 		if err != nil {
 			return fmt.Errorf("cannot write to temporary file %s: %s", tmpName, err)
 		}
@@ -341,10 +337,18 @@ func (s *CredentialsSource) updateLocalHostCredentials(host svchost.Hostname, ne
 		// Temporary file now replaces the original file, as atomically as
 		// possible. (At the very least, we should not end up with a file
 		// containing only a partial JSON object.)
-		err = replaceFileAtomic(tmpName, filename)
+		err = replacefile.AtomicRename(tmpName, filename)
 		if err != nil {
 			return fmt.Errorf("failed to replace %s with temporary file %s: %s", filename, tmpName, err)
 		}
+
+		// Credentials file should be readable only by its owner. (This may
+		// not be effective on all platforms, but should at least work on
+		// Unix-like targets and should be harmless elsewhere.)
+		if err := os.Chmod(filename, 0600); err != nil {
+			return fmt.Errorf("cannot set mode for credentials file %s: %s", filename, err)
+		}
+
 		moved = true
 	}
 

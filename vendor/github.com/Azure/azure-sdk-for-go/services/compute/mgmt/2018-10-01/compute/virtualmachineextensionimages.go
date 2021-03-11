@@ -72,6 +72,7 @@ func (client VirtualMachineExtensionImagesClient) Get(ctx context.Context, locat
 	result, err = client.GetResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "compute.VirtualMachineExtensionImagesClient", "Get", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -111,7 +112,6 @@ func (client VirtualMachineExtensionImagesClient) GetSender(req *http.Request) (
 func (client VirtualMachineExtensionImagesClient) GetResponder(resp *http.Response) (result VirtualMachineExtensionImage, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -149,6 +149,7 @@ func (client VirtualMachineExtensionImagesClient) ListTypes(ctx context.Context,
 	result, err = client.ListTypesResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "compute.VirtualMachineExtensionImagesClient", "ListTypes", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -186,7 +187,6 @@ func (client VirtualMachineExtensionImagesClient) ListTypesSender(req *http.Requ
 func (client VirtualMachineExtensionImagesClient) ListTypesResponder(resp *http.Response) (result ListVirtualMachineExtensionImage, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result.Value),
 		autorest.ByClosing())
@@ -225,6 +225,7 @@ func (client VirtualMachineExtensionImagesClient) ListVersions(ctx context.Conte
 	result, err = client.ListVersionsResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "compute.VirtualMachineExtensionImagesClient", "ListVersions", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -272,7 +273,6 @@ func (client VirtualMachineExtensionImagesClient) ListVersionsSender(req *http.R
 func (client VirtualMachineExtensionImagesClient) ListVersionsResponder(resp *http.Response) (result ListVirtualMachineExtensionImage, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result.Value),
 		autorest.ByClosing())

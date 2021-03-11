@@ -3,12 +3,10 @@ package command
 import (
 	"fmt"
 	"path/filepath"
-	"sort"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/configs"
-	"github.com/hashicorp/terraform/moduledeps"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform/internal/getproviders"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/xlab/treeprint"
 )
 
@@ -23,15 +21,11 @@ func (c *ProvidersCommand) Help() string {
 }
 
 func (c *ProvidersCommand) Synopsis() string {
-	return "Prints a tree of the providers used in the configuration"
+	return "Show the providers required for this configuration"
 }
 
 func (c *ProvidersCommand) Run(args []string) int {
-	args, err := c.Meta.process(args, false)
-	if err != nil {
-		return 1
-	}
-
+	args = c.Meta.process(args)
 	cmdFlags := c.Meta.defaultFlagSet("providers")
 	cmdFlags.Usage = func() { c.Ui.Error(c.Help()) }
 	if err := cmdFlags.Parse(args); err != nil {
@@ -88,61 +82,69 @@ func (c *ProvidersCommand) Run(args []string) int {
 		return 1
 	}
 
+	// This is a read-only command
+	c.ignoreRemoteBackendVersionConflict(b)
+
 	// Get the state
-	env := c.Workspace()
-	state, err := b.StateMgr(env)
+	env, err := c.Workspace()
+	if err != nil {
+		c.Ui.Error(fmt.Sprintf("Error selecting workspace: %s", err))
+		return 1
+	}
+	s, err := b.StateMgr(env)
 	if err != nil {
 		c.Ui.Error(fmt.Sprintf("Failed to load state: %s", err))
 		return 1
 	}
-	if err := state.RefreshState(); err != nil {
+	if err := s.RefreshState(); err != nil {
 		c.Ui.Error(fmt.Sprintf("Failed to load state: %s", err))
 		return 1
 	}
 
-	s := state.State()
-	depTree := terraform.ConfigTreeDependencies(config, s)
-	depTree.SortDescendents()
+	reqs, reqDiags := config.ProviderRequirementsByModule()
+	diags = diags.Append(reqDiags)
+	if diags.HasErrors() {
+		c.showDiagnostics(diags)
+		return 1
+	}
+
+	state := s.State()
+	var stateReqs getproviders.Requirements
+	if state != nil {
+		stateReqs = state.ProviderRequirements()
+	}
 
 	printRoot := treeprint.New()
-	providersCommandPopulateTreeNode(printRoot, depTree)
+	c.populateTreeNode(printRoot, reqs)
 
+	c.Ui.Output("\nProviders required by configuration:")
 	c.Ui.Output(printRoot.String())
+
+	if len(stateReqs) > 0 {
+		c.Ui.Output("Providers required by state:\n")
+		for fqn := range stateReqs {
+			c.Ui.Output(fmt.Sprintf("    provider[%s]\n", fqn.String()))
+		}
+	}
 
 	c.showDiagnostics(diags)
 	if diags.HasErrors() {
 		return 1
 	}
-
 	return 0
 }
 
-func providersCommandPopulateTreeNode(node treeprint.Tree, deps *moduledeps.Module) {
-	names := make([]string, 0, len(deps.Providers))
-	for name := range deps.Providers {
-		names = append(names, string(name))
-	}
-	sort.Strings(names)
-
-	for _, name := range names {
-		dep := deps.Providers[moduledeps.ProviderInstance(name)]
-		versionsStr := dep.Constraints.String()
+func (c *ProvidersCommand) populateTreeNode(tree treeprint.Tree, node *configs.ModuleRequirements) {
+	for fqn, dep := range node.Requirements {
+		versionsStr := getproviders.VersionConstraintsString(dep)
 		if versionsStr != "" {
 			versionsStr = " " + versionsStr
 		}
-		var reasonStr string
-		switch dep.Reason {
-		case moduledeps.ProviderDependencyInherited:
-			reasonStr = " (inherited)"
-		case moduledeps.ProviderDependencyFromState:
-			reasonStr = " (from state)"
-		}
-		node.AddNode(fmt.Sprintf("provider.%s%s%s", name, versionsStr, reasonStr))
+		tree.AddNode(fmt.Sprintf("provider[%s]%s", fqn.String(), versionsStr))
 	}
-
-	for _, child := range deps.Children {
-		childNode := node.AddBranch(fmt.Sprintf("module.%s", child.Name))
-		providersCommandPopulateTreeNode(childNode, child)
+	for name, childNode := range node.Children {
+		branch := tree.AddBranch(fmt.Sprintf("module.%s", name))
+		c.populateTreeNode(branch, childNode)
 	}
 }
 
@@ -155,5 +157,4 @@ Usage: terraform providers [dir]
   This provides an overview of all of the provider requirements across all
   referenced modules, as an aid to understanding why particular provider
   plugins are needed and why particular versions are selected.
-
 `

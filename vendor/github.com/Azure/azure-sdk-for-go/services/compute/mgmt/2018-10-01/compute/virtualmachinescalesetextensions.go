@@ -67,7 +67,7 @@ func (client VirtualMachineScaleSetExtensionsClient) CreateOrUpdate(ctx context.
 
 	result, err = client.CreateOrUpdateSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "compute.VirtualMachineScaleSetExtensionsClient", "CreateOrUpdate", result.Response(), "Failure sending request")
+		err = autorest.NewErrorWithError(err, "compute.VirtualMachineScaleSetExtensionsClient", "CreateOrUpdate", nil, "Failure sending request")
 		return
 	}
 
@@ -106,7 +106,33 @@ func (client VirtualMachineScaleSetExtensionsClient) CreateOrUpdateSender(req *h
 	if err != nil {
 		return
 	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
+	var azf azure.Future
+	azf, err = azure.NewFutureFromResponse(resp)
+	future.FutureAPI = &azf
+	future.Result = func(client VirtualMachineScaleSetExtensionsClient) (vmsse VirtualMachineScaleSetExtension, err error) {
+		var done bool
+		done, err = future.DoneWithContext(context.Background(), client)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "compute.VirtualMachineScaleSetExtensionsCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
+			return
+		}
+		if !done {
+			err = azure.NewAsyncOpIncompleteError("compute.VirtualMachineScaleSetExtensionsCreateOrUpdateFuture")
+			return
+		}
+		sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+		vmsse.Response.Response, err = future.GetResult(sender)
+		if vmsse.Response.Response == nil && err == nil {
+			err = autorest.NewErrorWithError(err, "compute.VirtualMachineScaleSetExtensionsCreateOrUpdateFuture", "Result", nil, "received nil response and error")
+		}
+		if err == nil && vmsse.Response.Response.StatusCode != http.StatusNoContent {
+			vmsse, err = client.CreateOrUpdateResponder(vmsse.Response.Response)
+			if err != nil {
+				err = autorest.NewErrorWithError(err, "compute.VirtualMachineScaleSetExtensionsCreateOrUpdateFuture", "Result", vmsse.Response.Response, "Failure responding to request")
+			}
+		}
+		return
+	}
 	return
 }
 
@@ -115,7 +141,6 @@ func (client VirtualMachineScaleSetExtensionsClient) CreateOrUpdateSender(req *h
 func (client VirtualMachineScaleSetExtensionsClient) CreateOrUpdateResponder(resp *http.Response) (result VirtualMachineScaleSetExtension, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -147,7 +172,7 @@ func (client VirtualMachineScaleSetExtensionsClient) Delete(ctx context.Context,
 
 	result, err = client.DeleteSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "compute.VirtualMachineScaleSetExtensionsClient", "Delete", result.Response(), "Failure sending request")
+		err = autorest.NewErrorWithError(err, "compute.VirtualMachineScaleSetExtensionsClient", "Delete", nil, "Failure sending request")
 		return
 	}
 
@@ -184,7 +209,23 @@ func (client VirtualMachineScaleSetExtensionsClient) DeleteSender(req *http.Requ
 	if err != nil {
 		return
 	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
+	var azf azure.Future
+	azf, err = azure.NewFutureFromResponse(resp)
+	future.FutureAPI = &azf
+	future.Result = func(client VirtualMachineScaleSetExtensionsClient) (ar autorest.Response, err error) {
+		var done bool
+		done, err = future.DoneWithContext(context.Background(), client)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "compute.VirtualMachineScaleSetExtensionsDeleteFuture", "Result", future.Response(), "Polling failure")
+			return
+		}
+		if !done {
+			err = azure.NewAsyncOpIncompleteError("compute.VirtualMachineScaleSetExtensionsDeleteFuture")
+			return
+		}
+		ar.Response = future.Response()
+		return
+	}
 	return
 }
 
@@ -193,7 +234,6 @@ func (client VirtualMachineScaleSetExtensionsClient) DeleteSender(req *http.Requ
 func (client VirtualMachineScaleSetExtensionsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent),
 		autorest.ByClosing())
 	result.Response = resp
@@ -233,6 +273,7 @@ func (client VirtualMachineScaleSetExtensionsClient) Get(ctx context.Context, re
 	result, err = client.GetResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "compute.VirtualMachineScaleSetExtensionsClient", "Get", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -274,7 +315,6 @@ func (client VirtualMachineScaleSetExtensionsClient) GetSender(req *http.Request
 func (client VirtualMachineScaleSetExtensionsClient) GetResponder(resp *http.Response) (result VirtualMachineScaleSetExtension, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -314,6 +354,11 @@ func (client VirtualMachineScaleSetExtensionsClient) List(ctx context.Context, r
 	result.vmsselr, err = client.ListResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "compute.VirtualMachineScaleSetExtensionsClient", "List", resp, "Failure responding to request")
+		return
+	}
+	if result.vmsselr.hasNextLink() && result.vmsselr.IsEmpty() {
+		err = result.NextWithContext(ctx)
+		return
 	}
 
 	return
@@ -351,7 +396,6 @@ func (client VirtualMachineScaleSetExtensionsClient) ListSender(req *http.Reques
 func (client VirtualMachineScaleSetExtensionsClient) ListResponder(resp *http.Response) (result VirtualMachineScaleSetExtensionListResult, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
