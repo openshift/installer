@@ -549,7 +549,7 @@ github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
 github.com/googleapis/gnostic/jsonschema
 github.com/googleapis/gnostic/openapiv2
-# github.com/gophercloud/gophercloud v0.15.1-0.20210202035223-633d73521055
+# github.com/gophercloud/gophercloud v0.16.1-0.20210311194000-69f51f2f086c
 ## explicit
 github.com/gophercloud/gophercloud
 github.com/gophercloud/gophercloud/openstack

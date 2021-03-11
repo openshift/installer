@@ -54,7 +54,7 @@ func Attach(client *gophercloud.ServiceClient, id string, opts AttachOptsBuilder
 	return
 }
 
-// BeginDetach will mark the volume as detaching.
+// BeginDetaching will mark the volume as detaching.
 func BeginDetaching(client *gophercloud.ServiceClient, id string) (r BeginDetachingResult) {
 	b := map[string]interface{}{"os-begin_detaching": make(map[string]interface{})}
 	resp, err := client.Post(actionURL(client, id), b, nil, &gophercloud.RequestOpts{
@@ -339,6 +339,54 @@ func SetBootable(client *gophercloud.ServiceClient, id string, opts BootableOpts
 	}
 	resp, err := client.Post(actionURL(client, id), b, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{200},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// MigrationPolicy type represents a migration_policy when changing types.
+type MigrationPolicy string
+
+// Supported attributes for MigrationPolicy attribute for changeType operations.
+const (
+	MigrationPolicyNever    MigrationPolicy = "never"
+	MigrationPolicyOnDemand MigrationPolicy = "on-demand"
+)
+
+// ChangeTypeOptsBuilder allows extensions to add additional parameters to the
+// ChangeType request.
+type ChangeTypeOptsBuilder interface {
+	ToVolumeChangeTypeMap() (map[string]interface{}, error)
+}
+
+// ChangeTypeOpts contains options for changing the type of an existing Volume.
+// This object is passed to the volumes.ChangeType function.
+type ChangeTypeOpts struct {
+	// NewType is the name of the new volume type of the volume.
+	NewType string `json:"new_type" required:"true"`
+
+	// MigrationPolicy specifies if the volume should be migrated when it is
+	// re-typed. Possible values are "on-demand" or "never". If not specified,
+	// the default is "never".
+	MigrationPolicy MigrationPolicy `json:"migration_policy,omitempty"`
+}
+
+// ToVolumeChangeTypeMap assembles a request body based on the contents of an
+// ChangeTypeOpts.
+func (opts ChangeTypeOpts) ToVolumeChangeTypeMap() (map[string]interface{}, error) {
+	return gophercloud.BuildRequestBody(opts, "os-retype")
+}
+
+// ChangeType will change the volume type of the volume based on the provided information.
+// This operation does not return a response body.
+func ChangeType(client *gophercloud.ServiceClient, id string, opts ChangeTypeOptsBuilder) (r ChangeTypeResult) {
+	b, err := opts.ToVolumeChangeTypeMap()
+	if err != nil {
+		r.Err = err
+		return
+	}
+	resp, err := client.Post(actionURL(client, id), b, nil, &gophercloud.RequestOpts{
+		OkCodes: []int{202},
 	})
 	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return

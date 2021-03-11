@@ -50,6 +50,10 @@ func ExtractNodesInto(r pagination.Page, v interface{}) error {
 
 // Node represents a node in the OpenStack Bare Metal API.
 type Node struct {
+	// Whether automated cleaning is enabled or disabled on this node.
+	// Requires microversion 1.47 or later.
+	AutomatedClean *bool `json:"automated_clean"`
+
 	// UUID for the resource.
 	UUID string `json:"uuid"`
 

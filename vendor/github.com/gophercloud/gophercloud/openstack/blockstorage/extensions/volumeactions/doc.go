@@ -93,5 +93,17 @@ Example of Setting a Volume's Bootable status
 	if err != nil {
 		panic(err)
 	}
+
+Example of Changing Type of a Volume
+
+	changeTypeOpts := volumeactions.ChangeTypeOpts{
+		NewType:         "ssd",
+		MigrationPolicy: volumeactions.MigrationPolicyOnDemand,
+	}
+
+	err = volumeactions.ChangeType(client, volumeID, changeTypeOpts).ExtractErr()
+	if err != nil {
+		panic(err)
+	}
 */
 package volumeactions

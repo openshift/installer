@@ -43,7 +43,7 @@ func Update(client *gophercloud.ServiceClient, projectID string, opts UpdateOpts
 	return
 }
 
-// UpdateOptsBuilder enables extensins to add parameters to the update request.
+// UpdateOptsBuilder enables extensions to add parameters to the update request.
 type UpdateOptsBuilder interface {
 	// Extra specific name to prevent collisions with interfaces for other quotas
 	// (e.g. neutron)
@@ -53,7 +53,20 @@ type UpdateOptsBuilder interface {
 // ToBlockStorageQuotaUpdateMap builds the update options into a serializable
 // format.
 func (opts UpdateOpts) ToBlockStorageQuotaUpdateMap() (map[string]interface{}, error) {
-	return gophercloud.BuildRequestBody(opts, "quota_set")
+	b, err := gophercloud.BuildRequestBody(opts, "quota_set")
+	if err != nil {
+		return nil, err
+	}
+
+	if opts.Extra != nil {
+		if v, ok := b["quota_set"].(map[string]interface{}); ok {
+			for key, value := range opts.Extra {
+				v[key] = value
+			}
+		}
+	}
+
+	return b, nil
 }
 
 // Options for Updating the quotas of a Tenant.
@@ -87,6 +100,10 @@ type UpdateOpts struct {
 	// Force will update the quotaset even if the quota has already been used
 	// and the reserved quota exceeds the new quota.
 	Force bool `json:"force,omitempty"`
+
+	// Extra is a collection of miscellaneous key/values used to set
+	// quota per volume_type
+	Extra map[string]interface{} `json:"-"`
 }
 
 // Resets the quotas for the given tenant to their default values.

@@ -1,6 +1,8 @@
 package quotasets
 
 import (
+	"encoding/json"
+
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/pagination"
 )
@@ -34,6 +36,36 @@ type QuotaSet struct {
 
 	// Groups is the number of groups that are allowed for each project.
 	Groups int `json:"groups,omitempty"`
+
+	// Extra is a collection of miscellaneous key/values used to set
+	// quota per volume_type
+	Extra map[string]interface{} `json:"-"`
+}
+
+// UnmarshalJSON is used on QuotaSet to unmarshal extra keys that are
+// used for volume_type quota
+func (r *QuotaSet) UnmarshalJSON(b []byte) error {
+	type tmp QuotaSet
+	var s struct {
+		tmp
+		Extra map[string]interface{} `json:"extra"`
+	}
+	err := json.Unmarshal(b, &s)
+	if err != nil {
+		return err
+	}
+	*r = QuotaSet(s.tmp)
+
+	var result interface{}
+	err = json.Unmarshal(b, &result)
+	if err != nil {
+		return err
+	}
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		r.Extra = gophercloud.RemainingKeys(QuotaSet{}, resultMap)
+	}
+
+	return err
 }
 
 // QuotaUsageSet represents details of both operational limits of block

@@ -32,6 +32,25 @@ Example to Update a Quota Set
 
 	fmt.Printf("%+v\n", quotaset)
 
+Example to Update a Quota set with volume_type quotas
+
+	updateOpts := quotasets.UpdateOpts{
+		Volumes: gophercloud.IntToPointer(100),
+		Extra: map[string]interface{}{
+			"gigabytes_foo": gophercloud.IntToPointer(100),
+			"snapshots_foo": gophercloud.IntToPointer(10),
+			"volumes_foo":   gophercloud.IntToPointer(10),
+		},
+	}
+
+	quotaset, err := quotasets.Update(blockStorageClient, "project-id", updateOpts).Extract()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%+v\n", quotaset)
+
+
 Example to Delete a Quota Set
 
 	err := quotasets.Delete(blockStorageClient, "project-id").ExtractErr()
