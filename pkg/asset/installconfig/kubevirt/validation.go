@@ -3,8 +3,10 @@ package kubevirt
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/openshift/installer/pkg/types"
+	authv1 "k8s.io/api/authorization/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -19,6 +21,41 @@ func Validate(ic *types.InstallConfig, client Client) error {
 	allErrs = append(allErrs, validateNetworkAttachmentDefinitionExistsInNamespace(kubevirtPlatform.NetworkName, kubevirtPlatform.Namespace, client, fldPath.Child("networkName"))...)
 
 	return allErrs.ToAggregate()
+}
+
+// ValidatePermissions tests that the current user has the required permissions
+// Some permissions are required for the installation
+// In addition, the current user is used for accessing the kubevirt/platfrom cluster from tenant cluster. E.g. list VMIs
+func ValidatePermissions(client Client, ic *types.InstallConfig) error {
+	// Prepare requests for permissions check
+	reviewObjs := createReviewObjs(ic.Platform.Kubevirt.Namespace)
+
+	// Collection of missing permissions
+	var notAllowedObjs []*authv1.SelfSubjectAccessReview
+
+	// Test each permission
+	for _, reviewObj := range reviewObjs {
+		reviewObjPointer, err := client.CreateSelfSubjectAccessReview(context.Background(), &reviewObj)
+		if err != nil {
+			return err
+		}
+
+		if !reviewObjPointer.Status.Allowed {
+			notAllowedObjs = append(notAllowedObjs, reviewObjPointer)
+		}
+	}
+
+	// Put all missing permissions in one error message
+	if len(notAllowedObjs) > 0 {
+		var notAllowed []string
+		for _, obj := range notAllowedObjs {
+			notAllowed = append(notAllowed, fmt.Sprintf("%+v", *obj.Spec.ResourceAttributes))
+		}
+
+		return fmt.Errorf("the user is missing the following permissions: %s", strings.Join(notAllowed, ", "))
+	}
+
+	return nil
 }
 
 func validateStorageClassExistsInInfraCluster(name string, client Client, fieldPath *field.Path) field.ErrorList {
@@ -93,4 +130,210 @@ func validateNamespace(namespace string, client Client, fieldPath *field.Path) f
 	}
 
 	return allErrs
+}
+
+// createReviewObjs creates requests for testing user permissions
+func createReviewObjs(namespace string) []authv1.SelfSubjectAccessReview {
+	return []authv1.SelfSubjectAccessReview{
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: "openshift-cnv",
+					Group:     "hco.kubevirt.io",
+					Resource:  "hyperconvergeds",
+					Verb:      "get",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "",
+					Resource:  "secrets",
+					Verb:      "get",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "",
+					Resource:  "secrets",
+					Verb:      "list",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "",
+					Resource:  "secrets",
+					Verb:      "create",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "",
+					Resource:  "secrets",
+					Verb:      "delete",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "",
+					Resource:  "namespaces",
+					Verb:      "get",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "kubevirt.io",
+					Resource:  "virtualmachines",
+					Verb:      "get",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "kubevirt.io",
+					Resource:  "virtualmachines",
+					Verb:      "list",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "kubevirt.io",
+					Resource:  "virtualmachines",
+					Verb:      "create",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "kubevirt.io",
+					Resource:  "virtualmachines",
+					Verb:      "delete",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "kubevirt.io",
+					Resource:  "virtualmachines",
+					Verb:      "update",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "kubevirt.io",
+					Resource:  "virtualmachineinstances",
+					Verb:      "get",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "kubevirt.io",
+					Resource:  "virtualmachineinstances",
+					Verb:      "list",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "cdi.kubevirt.io",
+					Resource:  "datavolumes",
+					Verb:      "get",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "cdi.kubevirt.io",
+					Resource:  "datavolumes",
+					Verb:      "list",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "cdi.kubevirt.io",
+					Resource:  "datavolumes",
+					Verb:      "create",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "cdi.kubevirt.io",
+					Resource:  "datavolumes",
+					Verb:      "delete",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "k8s.cni.cncf.io",
+					Resource:  "network-attachment-definitions",
+					Verb:      "get",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "subresources.kubevirt.io",
+					Resource:  "virtualmachineinstances/addvolume",
+					Verb:      "update",
+				},
+			},
+		},
+		{
+			Spec: authv1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authv1.ResourceAttributes{
+					Namespace: namespace,
+					Group:     "subresources.kubevirt.io",
+					Resource:  "virtualmachineinstances/removevolume",
+					Verb:      "update",
+				},
+			},
+		},
+	}
 }
