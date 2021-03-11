@@ -7,9 +7,11 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2020-03-01/network"
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2020-05-01/network"
 	"github.com/Azure/go-autorest/autorest"
 )
+
+// TODO: move this into the network package
 
 // UpdateNetworkInterfaceAllowingRemovalOfNSG patches our way around a design flaw in the Azure
 // Resource Manager API <-> Azure SDK for Go where it's not possible to remove a Network Security Group

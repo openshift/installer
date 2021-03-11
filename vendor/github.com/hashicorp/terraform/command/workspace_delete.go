@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/command/clistate"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/mitchellh/cli"
 	"github.com/posener/complete"
 )
@@ -18,11 +18,7 @@ type WorkspaceDeleteCommand struct {
 }
 
 func (c *WorkspaceDeleteCommand) Run(args []string) int {
-	args, err := c.Meta.process(args, true)
-	if err != nil {
-		return 1
-	}
-
+	args = c.Meta.process(args)
 	envCommandShowWarning(c.Ui, c.LegacyName)
 
 	var force bool
@@ -42,13 +38,6 @@ func (c *WorkspaceDeleteCommand) Run(args []string) int {
 	if len(args) == 0 {
 		c.Ui.Error("expected NAME.\n")
 		return cli.RunResultHelp
-	}
-
-	workspace := args[0]
-
-	if !validWorkspaceName(workspace) {
-		c.Ui.Error(fmt.Sprintf(envInvalidName, workspace))
-		return 1
 	}
 
 	configPath, err := ModulePath(args[1:])
@@ -76,12 +65,16 @@ func (c *WorkspaceDeleteCommand) Run(args []string) int {
 		return 1
 	}
 
+	// This command will not write state
+	c.ignoreRemoteBackendVersionConflict(b)
+
 	workspaces, err := b.Workspaces()
 	if err != nil {
 		c.Ui.Error(err.Error())
 		return 1
 	}
 
+	workspace := args[0]
 	exists := false
 	for _, ws := range workspaces {
 		if workspace == ws {
@@ -95,7 +88,12 @@ func (c *WorkspaceDeleteCommand) Run(args []string) int {
 		return 1
 	}
 
-	if workspace == c.Workspace() {
+	currentWorkspace, err := c.Workspace()
+	if err != nil {
+		c.Ui.Error(fmt.Sprintf("Error selecting workspace: %s", err))
+		return 1
+	}
+	if workspace == currentWorkspace {
 		c.Ui.Error(fmt.Sprintf(strings.TrimSpace(envDelCurrent), workspace))
 		return 1
 	}
@@ -119,6 +117,8 @@ func (c *WorkspaceDeleteCommand) Run(args []string) int {
 	}
 
 	if err := stateMgr.RefreshState(); err != nil {
+		// We need to release the lock before exit
+		stateLocker.Unlock(nil)
 		c.Ui.Error(err.Error())
 		return 1
 	}
@@ -126,6 +126,8 @@ func (c *WorkspaceDeleteCommand) Run(args []string) int {
 	hasResources := stateMgr.State().HasResources()
 
 	if hasResources && !force {
+		// We need to release the lock before exit
+		stateLocker.Unlock(nil)
 		c.Ui.Error(fmt.Sprintf(strings.TrimSpace(envNotEmpty), workspace))
 		return 1
 	}

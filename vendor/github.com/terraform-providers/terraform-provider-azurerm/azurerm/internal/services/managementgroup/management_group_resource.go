@@ -23,12 +23,12 @@ import (
 
 var managementGroupCacheControl = "no-cache"
 
-func resourceArmManagementGroup() *schema.Resource {
+func resourceManagementGroup() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceArmManagementGroupCreateUpdate,
-		Update: resourceArmManagementGroupCreateUpdate,
-		Read:   resourceArmManagementGroupRead,
-		Delete: resourceArmManagementGroupDelete,
+		Create: resourceManagementGroupCreateUpdate,
+		Update: resourceManagementGroupCreateUpdate,
+		Read:   resourceManagementGroupRead,
+		Delete: resourceManagementGroupDelete,
 
 		Importer: azSchema.ValidateResourceIDPriorToImport(func(id string) error {
 			_, err := parse.ManagementGroupID(id)
@@ -85,7 +85,7 @@ func resourceArmManagementGroup() *schema.Resource {
 	}
 }
 
-func resourceArmManagementGroupCreateUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceManagementGroupCreateUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).ManagementGroups.GroupsClient
 	subscriptionsClient := meta.(*clients.Client).ManagementGroups.SubscriptionClient
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
@@ -207,10 +207,10 @@ func resourceArmManagementGroupCreateUpdate(d *schema.ResourceData, meta interfa
 		}
 	}
 
-	return resourceArmManagementGroupRead(d, meta)
+	return resourceManagementGroupRead(d, meta)
 }
 
-func resourceArmManagementGroupRead(d *schema.ResourceData, meta interface{}) error {
+func resourceManagementGroupRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).ManagementGroups.GroupsClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
@@ -220,8 +220,8 @@ func resourceArmManagementGroupRead(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	recurse := true
-	resp, err := client.Get(ctx, id.GroupId, "children", &recurse, "", managementGroupCacheControl)
+	recurse := utils.Bool(true)
+	resp, err := client.Get(ctx, id.Name, "children", recurse, "", managementGroupCacheControl)
 	if err != nil {
 		if utils.ResponseWasForbidden(resp.Response) || utils.ResponseWasNotFound(resp.Response) {
 			log.Printf("[INFO] Management Group %q doesn't exist - removing from state", d.Id())
@@ -232,13 +232,13 @@ func resourceArmManagementGroupRead(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("unable to read Management Group %q: %+v", d.Id(), err)
 	}
 
-	d.Set("name", id.GroupId)
-	d.Set("group_id", id.GroupId)
+	d.Set("name", id.Name)
+	d.Set("group_id", id.Name)
 
 	if props := resp.Properties; props != nil {
 		d.Set("display_name", props.DisplayName)
 
-		subscriptionIds, err := flattenArmManagementGroupSubscriptionIds(props.Children)
+		subscriptionIds, err := flattenManagementGroupSubscriptionIds(props.Children)
 		if err != nil {
 			return fmt.Errorf("unable to flatten `subscription_ids`: %+v", err)
 		}
@@ -258,7 +258,7 @@ func resourceArmManagementGroupRead(d *schema.ResourceData, meta interface{}) er
 	return nil
 }
 
-func resourceArmManagementGroupDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceManagementGroupDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).ManagementGroups.GroupsClient
 	subscriptionsClient := meta.(*clients.Client).ManagementGroups.SubscriptionClient
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
@@ -270,14 +270,14 @@ func resourceArmManagementGroupDelete(d *schema.ResourceData, meta interface{}) 
 	}
 
 	recurse := true
-	group, err := client.Get(ctx, id.GroupId, "children", &recurse, "", managementGroupCacheControl)
+	group, err := client.Get(ctx, id.Name, "children", &recurse, "", managementGroupCacheControl)
 	if err != nil {
 		if utils.ResponseWasNotFound(group.Response) || utils.ResponseWasForbidden(group.Response) {
-			log.Printf("[DEBUG] Management Group %q doesn't exist in Azure - nothing to do!", id.GroupId)
+			log.Printf("[DEBUG] Management Group %q doesn't exist in Azure - nothing to do!", id.Name)
 			return nil
 		}
 
-		return fmt.Errorf("unable to retrieve Management Group %q: %+v", id.GroupId, err)
+		return fmt.Errorf("unable to retrieve Management Group %q: %+v", id.Name, err)
 	}
 
 	// before deleting a management group, return any subscriptions to the root management group
@@ -292,26 +292,26 @@ func resourceArmManagementGroupDelete(d *schema.ResourceData, meta interface{}) 
 				if err != nil {
 					return fmt.Errorf("unable to parse child Subscription ID %+v", err)
 				}
-				log.Printf("[DEBUG] De-associating Subscription %q from Management Group %q..", subscriptionId, id.GroupId)
+				log.Printf("[DEBUG] De-associating Subscription %q from Management Group %q..", subscriptionId, id.Name)
 				// NOTE: whilst this says `Delete` it's actually `Deassociate` - which is /really/ helpful
-				deleteResp, err2 := subscriptionsClient.Delete(ctx, id.GroupId, subscriptionId.subscriptionId, managementGroupCacheControl)
+				deleteResp, err2 := subscriptionsClient.Delete(ctx, id.Name, subscriptionId.subscriptionId, managementGroupCacheControl)
 				if err2 != nil {
 					if !response.WasNotFound(deleteResp.Response) {
-						return fmt.Errorf("unable to de-associate Subscription %q from Management Group %q: %+v", subscriptionId.subscriptionId, id.GroupId, err2)
+						return fmt.Errorf("unable to de-associate Subscription %q from Management Group %q: %+v", subscriptionId.subscriptionId, id.Name, err2)
 					}
 				}
 			}
 		}
 	}
 
-	resp, err := client.Delete(ctx, id.GroupId, managementGroupCacheControl)
+	resp, err := client.Delete(ctx, id.Name, managementGroupCacheControl)
 	if err != nil {
-		return fmt.Errorf("unable to delete Management Group %q: %+v", id.GroupId, err)
+		return fmt.Errorf("unable to delete Management Group %q: %+v", id.Name, err)
 	}
 
 	err = resp.WaitForCompletionRef(ctx, client.Client)
 	if err != nil {
-		return fmt.Errorf("failed when waiting for the deletion of Management Group %q: %+v", id.GroupId, err)
+		return fmt.Errorf("failed when waiting for the deletion of Management Group %q: %+v", id.Name, err)
 	}
 
 	return nil
@@ -329,7 +329,7 @@ func expandManagementGroupSubscriptionIds(input *schema.Set) []string {
 	return output
 }
 
-func flattenArmManagementGroupSubscriptionIds(input *[]managementgroups.ChildInfo) (*schema.Set, error) {
+func flattenManagementGroupSubscriptionIds(input *[]managementgroups.ChildInfo) (*schema.Set, error) {
 	subscriptionIds := &schema.Set{F: schema.HashString}
 	if input == nil {
 		return subscriptionIds, nil
