@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/backend"
 	localBackend "github.com/hashicorp/terraform/backend/local"
 	"github.com/hashicorp/terraform/command/format"
@@ -15,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform/plans/planfile"
 	"github.com/hashicorp/terraform/states/statefile"
 	"github.com/hashicorp/terraform/states/statemgr"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 )
 
 // ShowCommand is a Command implementation that reads and outputs the
@@ -24,11 +24,7 @@ type ShowCommand struct {
 }
 
 func (c *ShowCommand) Run(args []string) int {
-	args, err := c.Meta.process(args, false)
-	if err != nil {
-		return 1
-	}
-
+	args = c.Meta.process(args)
 	cmdFlags := c.Meta.defaultFlagSet("show")
 	var jsonOutput bool
 	cmdFlags.BoolVar(&jsonOutput, "json", false, "produce JSON output")
@@ -48,6 +44,7 @@ func (c *ShowCommand) Run(args []string) int {
 	}
 
 	// Check for user-supplied plugin path
+	var err error
 	if c.pluginPath, err = c.loadPluginPath(); err != nil {
 		c.Ui.Error(fmt.Sprintf("Error loading plugin path: %s", err))
 		return 1
@@ -70,6 +67,9 @@ func (c *ShowCommand) Run(args []string) int {
 		c.Ui.Error(ErrUnsupportedLocalOp)
 		return 1
 	}
+
+	// This is a read-only command
+	c.ignoreRemoteBackendVersionConflict(b)
 
 	// the show command expects the config dir to always be the cwd
 	cwd, err := os.Getwd()
@@ -133,7 +133,11 @@ func (c *ShowCommand) Run(args []string) int {
 			}
 		}
 	} else {
-		env := c.Workspace()
+		env, err := c.Workspace()
+		if err != nil {
+			c.Ui.Error(fmt.Sprintf("Error selecting workspace: %s", err))
+			return 1
+		}
 		stateFile, stateErr = getStateFromEnv(b, env)
 		if stateErr != nil {
 			c.Ui.Error(stateErr.Error())
@@ -142,7 +146,7 @@ func (c *ShowCommand) Run(args []string) int {
 	}
 
 	if plan != nil {
-		if jsonOutput == true {
+		if jsonOutput {
 			config := ctx.Config()
 			jsonPlan, err := jsonplan.Marshal(config, plan, stateFile, schemas)
 
@@ -166,7 +170,7 @@ func (c *ShowCommand) Run(args []string) int {
 		return 0
 	}
 
-	if jsonOutput == true {
+	if jsonOutput {
 		// At this point, it is possible that there is neither state nor a plan.
 		// That's ok, we'll just return an empty object.
 		jsonState, err := jsonstate.Marshal(stateFile, schemas)
@@ -208,7 +212,7 @@ Options:
 }
 
 func (c *ShowCommand) Synopsis() string {
-	return "Inspect Terraform state or plan"
+	return "Show the current state or a saved plan"
 }
 
 // getPlanFromPath returns a plan and statefile if the user-supplied path points

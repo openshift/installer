@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	version "github.com/hashicorp/go-version"
 
@@ -48,7 +49,11 @@ type Record struct {
 type Manifest map[string]Record
 
 func (m Manifest) ModuleKey(path addrs.Module) string {
-	return path.String()
+	if len(path) == 0 {
+		return ""
+	}
+	return strings.Join([]string(path), ".")
+
 }
 
 // manifestSnapshotFile is an internal struct used only to assist in our JSON
@@ -72,7 +77,9 @@ func ReadManifestSnapshot(r io.Reader) (Manifest, error) {
 
 	var read manifestSnapshotFile
 	err = json.Unmarshal(src, &read)
-
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling snapshot: %v", err)
+	}
 	new := make(Manifest)
 	for _, record := range read.Records {
 		if record.VersionStr != "" {

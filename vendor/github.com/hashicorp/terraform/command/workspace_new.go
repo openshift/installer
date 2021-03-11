@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/command/clistate"
 	"github.com/hashicorp/terraform/states/statefile"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/mitchellh/cli"
 	"github.com/posener/complete"
 )
@@ -20,11 +20,7 @@ type WorkspaceNewCommand struct {
 }
 
 func (c *WorkspaceNewCommand) Run(args []string) int {
-	args, err := c.Meta.process(args, true)
-	if err != nil {
-		return 1
-	}
-
+	args = c.Meta.process(args)
 	envCommandShowWarning(c.Ui, c.LegacyName)
 
 	var stateLock bool
@@ -84,6 +80,9 @@ func (c *WorkspaceNewCommand) Run(args []string) int {
 		c.showDiagnostics(diags)
 		return 1
 	}
+
+	// This command will not write state
+	c.ignoreRemoteBackendVersionConflict(b)
 
 	workspaces, err := b.Workspaces()
 	if err != nil {

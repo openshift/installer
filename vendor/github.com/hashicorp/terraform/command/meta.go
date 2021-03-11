@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
+	plugin "github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/terraform-svchost/disco"
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/backend"
@@ -24,9 +24,11 @@ import (
 	"github.com/hashicorp/terraform/configs/configload"
 	"github.com/hashicorp/terraform/helper/experiment"
 	"github.com/hashicorp/terraform/helper/wrappedstreams"
+	"github.com/hashicorp/terraform/internal/getproviders"
 	"github.com/hashicorp/terraform/providers"
 	"github.com/hashicorp/terraform/provisioners"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/mitchellh/cli"
 	"github.com/mitchellh/colorstring"
 )
@@ -37,10 +39,20 @@ type Meta struct {
 	// command with a Meta field. These are expected to be set externally
 	// (not from within the command itself).
 
-	Color            bool             // True if output should be colored
-	GlobalPluginDirs []string         // Additional paths to search for plugins
-	PluginOverrides  *PluginOverrides // legacy overrides from .terraformrc file
-	Ui               cli.Ui           // Ui for output
+	// OriginalWorkingDir, if set, is the actual working directory where
+	// Terraform was run from. This might not be the _actual_ current working
+	// directory, because users can add the -chdir=... option to the beginning
+	// of their command line to ask Terraform to switch.
+	//
+	// Most things should just use the current working directory in order to
+	// respect the user's override, but we retain this for exceptional
+	// situations where we need to refer back to the original working directory
+	// for some reason.
+	OriginalWorkingDir string
+
+	Color            bool     // True if output should be colored
+	GlobalPluginDirs []string // Additional paths to search for plugins
+	Ui               cli.Ui   // Ui for output
 
 	// ExtraHooks are extra hooks to add to the context.
 	ExtraHooks []terraform.Hook
@@ -74,6 +86,11 @@ type Meta struct {
 	// into the given directory.
 	PluginCacheDir string
 
+	// ProviderSource allows determining the available versions of a provider
+	// and determines where a distribution package for a particular
+	// provider version can be obtained.
+	ProviderSource getproviders.Source
+
 	// OverrideDataDir, if non-empty, overrides the return value of the
 	// DataDir method for situations where the local .terraform/ directory
 	// is not suitable, e.g. because of a read-only filesystem.
@@ -85,6 +102,23 @@ type Meta struct {
 
 	// When this channel is closed, the command will be cancelled.
 	ShutdownCh <-chan struct{}
+
+	// ProviderDevOverrides are providers where we ignore the lock file, the
+	// configured version constraints, and the local cache directory and just
+	// always use exactly the path specified. This is intended to allow
+	// provider developers to easily test local builds without worrying about
+	// what version number they might eventually be released as, or what
+	// checksums they have.
+	ProviderDevOverrides map[addrs.Provider]getproviders.PackageLocalDir
+
+	// UnmanagedProviders are a set of providers that exist as processes
+	// predating Terraform, which Terraform should use but not worry about the
+	// lifecycle of.
+	//
+	// This is essentially a more extreme version of ProviderDevOverrides where
+	// Terraform doesn't even worry about how the provider server gets launched,
+	// just trusting that someone else did it before running Terraform.
+	UnmanagedProviders map[addrs.Provider]*plugin.ReattachConfig
 
 	//----------------------------------------------------------
 	// Protected: commands can set these
@@ -99,8 +133,6 @@ type Meta struct {
 	// the data directory.
 	// This overrides all other search paths when discovering plugins.
 	pluginPath []string
-
-	ignorePluginChecksum bool
 
 	// Override certain behavior for tests within this package
 	testingOverrides *testingOverrides
@@ -173,16 +205,15 @@ type Meta struct {
 
 	// Used with the import command to allow import of state when no matching config exists.
 	allowMissingConfig bool
-}
 
-type PluginOverrides struct {
-	Providers    map[string]string
-	Provisioners map[string]string
+	// Used with commands which write state to allow users to write remote
+	// state even if the remote and local Terraform versions don't match.
+	ignoreRemoteVersion bool
 }
 
 type testingOverrides struct {
-	ProviderResolver providers.Resolver
-	Provisioners     map[string]provisioners.Factory
+	Providers    map[addrs.Provider]providers.Factory
+	Provisioners map[string]provisioners.Factory
 }
 
 // initStatePaths is used to initialize the default values for
@@ -268,6 +299,33 @@ func (m *Meta) StdinPiped() bool {
 	return fi.Mode()&os.ModeNamedPipe != 0
 }
 
+// InterruptibleContext returns a context.Context that will be cancelled
+// if the process is interrupted by a platform-specific interrupt signal.
+//
+// As usual with cancelable contexts, the caller must always call the given
+// cancel function once all operations are complete in order to make sure
+// that the context resources will still be freed even if there is no
+// interruption.
+func (m *Meta) InterruptibleContext() (context.Context, context.CancelFunc) {
+	base := context.Background()
+	if m.ShutdownCh == nil {
+		// If we're running in a unit testing context without a shutdown
+		// channel populated then we'll return an uncancelable channel.
+		return base, func() {}
+	}
+
+	ctx, cancel := context.WithCancel(base)
+	go func() {
+		select {
+		case <-m.ShutdownCh:
+			cancel()
+		case <-ctx.Done():
+			// finished without being interrupted
+		}
+	}()
+	return ctx, cancel
+}
+
 // RunOperation executes the given operation on the given backend, blocking
 // until that operation completes or is interrupted, and then returns
 // the RunningOperation object representing the completed or
@@ -325,13 +383,14 @@ func (m *Meta) RunOperation(b backend.Enhanced, opReq *backend.Operation) (*back
 	return op, nil
 }
 
-const (
-	ProviderSkipVerifyEnvVar = "TF_SKIP_PROVIDER_VERIFY"
-)
-
 // contextOpts returns the options to use to initialize a Terraform
 // context with the settings from this Meta.
-func (m *Meta) contextOpts() *terraform.ContextOpts {
+func (m *Meta) contextOpts() (*terraform.ContextOpts, error) {
+	workspace, err := m.Workspace()
+	if err != nil {
+		return nil, err
+	}
+
 	var opts terraform.ContextOpts
 	opts.Hooks = []terraform.Hook{m.uiHook()}
 	opts.Hooks = append(opts.Hooks, m.ExtraHooks...)
@@ -344,23 +403,60 @@ func (m *Meta) contextOpts() *terraform.ContextOpts {
 	// and just work with what we've been given, thus allowing the tests
 	// to provide mock providers and provisioners.
 	if m.testingOverrides != nil {
-		opts.ProviderResolver = m.testingOverrides.ProviderResolver
+		opts.Providers = m.testingOverrides.Providers
 		opts.Provisioners = m.testingOverrides.Provisioners
 	} else {
-		opts.ProviderResolver = m.providerResolver()
+		providerFactories, err := m.providerFactories()
+		if err != nil {
+			// providerFactories can fail if the plugin selections file is
+			// invalid in some way, but we don't have any way to report that
+			// from here so we'll just behave as if no providers are available
+			// in that case. However, we will produce a warning in case this
+			// shows up unexpectedly and prompts a bug report.
+			// This situation shouldn't arise commonly in practice because
+			// the selections file is generated programmatically.
+			log.Printf("[WARN] Failed to determine selected providers: %s", err)
+
+			// variable providerFactories may now be incomplete, which could
+			// lead to errors reported downstream from here. providerFactories
+			// tries to populate as many providers as possible even in an
+			// error case, so that operations not using problematic providers
+			// can still succeed.
+		}
+		opts.Providers = providerFactories
 		opts.Provisioners = m.provisionerFactories()
+
+		// Read the dependency locks so that they can be verified against the
+		// provider requirements in the configuration
+		lockedDependencies, diags := m.lockedDependencies()
+
+		// If the locks file is invalid, we should fail early rather than
+		// ignore it. A missing locks file will return no error.
+		if diags.HasErrors() {
+			return nil, diags.Err()
+		}
+		opts.LockedDependencies = lockedDependencies
+
+		// If any unmanaged providers or dev overrides are enabled, they must
+		// be listed in the context so that they can be ignored when verifying
+		// the locks against the configuration
+		opts.ProvidersInDevelopment = make(map[addrs.Provider]struct{})
+		for provider := range m.UnmanagedProviders {
+			opts.ProvidersInDevelopment[provider] = struct{}{}
+		}
+		for provider := range m.ProviderDevOverrides {
+			opts.ProvidersInDevelopment[provider] = struct{}{}
+		}
 	}
 
 	opts.ProviderSHA256s = m.providerPluginsLock().Read()
-	if v := os.Getenv(ProviderSkipVerifyEnvVar); v != "" {
-		opts.SkipProviderVerify = true
-	}
 
 	opts.Meta = &terraform.ContextMeta{
-		Env: m.Workspace(),
+		Env:                workspace,
+		OriginalWorkingDir: m.OriginalWorkingDir,
 	}
 
-	return &opts
+	return &opts, nil
 }
 
 // defaultFlagSet creates a default flag set for commands.
@@ -370,6 +466,17 @@ func (m *Meta) defaultFlagSet(n string) *flag.FlagSet {
 
 	// Set the default Usage to empty
 	f.Usage = func() {}
+
+	return f
+}
+
+// ignoreRemoteVersionFlagSet add the ignore-remote version flag to suppress
+// the error when the configured Terraform version on the remote workspace
+// does not match the local Terraform version.
+func (m *Meta) ignoreRemoteVersionFlagSet(n string) *flag.FlagSet {
+	f := m.defaultFlagSet(n)
+
+	f.BoolVar(&m.ignoreRemoteVersion, "ignore-remote-version", false, "continue even if remote and local Terraform versions differ")
 
 	return f
 }
@@ -404,11 +511,7 @@ func (m *Meta) extendedFlagSet(n string) *flag.FlagSet {
 // process will process the meta-parameters out of the arguments. This
 // will potentially modify the args in-place. It will return the resulting
 // slice.
-//
-// vars is now ignored. It used to control whether to process variables, but
-// that is no longer the responsibility of this function. (That happens
-// instead in Meta.collectVariableValues.)
-func (m *Meta) process(args []string, vars bool) ([]string, error) {
+func (m *Meta) process(args []string) []string {
 	// We do this so that we retain the ability to technically call
 	// process multiple times, even if we have no plans to do so
 	if m.oldUi != nil {
@@ -417,14 +520,18 @@ func (m *Meta) process(args []string, vars bool) ([]string, error) {
 
 	// Set colorization
 	m.color = m.Color
-	for i, v := range args {
+	i := 0 // output index
+	for _, v := range args {
 		if v == "-no-color" {
 			m.color = false
 			m.Color = false
-			args = append(args[:i], args[i+1:]...)
-			break
+		} else {
+			// copy and increment index
+			args[i] = v
+			i++
 		}
 	}
+	args = args[:i]
 
 	// Set the UI
 	m.oldUi = m.Ui
@@ -437,7 +544,7 @@ func (m *Meta) process(args []string, vars bool) ([]string, error) {
 		},
 	}
 
-	return args, nil
+	return args
 }
 
 // uiHook returns the UiHook to use with the context.
@@ -581,11 +688,16 @@ func (m *Meta) outputShadowError(err error, output bool) bool {
 // and `terraform workspace delete`.
 const WorkspaceNameEnvVar = "TF_WORKSPACE"
 
+var invalidWorkspaceNameEnvVar = fmt.Errorf("Invalid workspace name set using %s", WorkspaceNameEnvVar)
+
 // Workspace returns the name of the currently configured workspace, corresponding
 // to the desired named state.
-func (m *Meta) Workspace() string {
-	current, _ := m.WorkspaceOverridden()
-	return current
+func (m *Meta) Workspace() (string, error) {
+	current, overridden := m.WorkspaceOverridden()
+	if overridden && !validWorkspaceName(current) {
+		return "", invalidWorkspaceNameEnvVar
+	}
+	return current, nil
 }
 
 // WorkspaceOverridden returns the name of the currently configured workspace,

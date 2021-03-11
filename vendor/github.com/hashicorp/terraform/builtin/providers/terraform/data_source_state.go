@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/backend"
+	"github.com/hashicorp/terraform/backend/remote"
 	"github.com/hashicorp/terraform/configs/configschema"
 	"github.com/hashicorp/terraform/providers"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/zclconf/go-cty/cty"
 
 	backendInit "github.com/hashicorp/terraform/backend/init"
@@ -48,7 +49,7 @@ func dataSourceRemoteStateValidate(cfg cty.Value) tfdiags.Diagnostics {
 	// Getting the backend implicitly validates the configuration for it,
 	// but we can only do that if it's all known already.
 	if cfg.GetAttr("config").IsWhollyKnown() && cfg.GetAttr("backend").IsKnown() {
-		_, moreDiags := getBackend(cfg)
+		_, _, moreDiags := getBackend(cfg)
 		diags = diags.Append(moreDiags)
 	} else {
 		// Otherwise we'll just type-check the config object itself.
@@ -81,9 +82,15 @@ func dataSourceRemoteStateValidate(cfg cty.Value) tfdiags.Diagnostics {
 func dataSourceRemoteStateRead(d cty.Value) (cty.Value, tfdiags.Diagnostics) {
 	var diags tfdiags.Diagnostics
 
-	b, moreDiags := getBackend(d)
+	b, cfg, moreDiags := getBackend(d)
 	diags = diags.Append(moreDiags)
-	if diags.HasErrors() {
+	if moreDiags.HasErrors() {
+		return cty.NilVal, diags
+	}
+
+	configureDiags := b.Configure(cfg)
+	if configureDiags.HasErrors() {
+		diags = diags.Append(configureDiags.Err())
 		return cty.NilVal, diags
 	}
 
@@ -91,14 +98,15 @@ func dataSourceRemoteStateRead(d cty.Value) (cty.Value, tfdiags.Diagnostics) {
 	newState["backend"] = d.GetAttr("backend")
 	newState["config"] = d.GetAttr("config")
 
-	workspaceName := backend.DefaultStateName
+	workspaceVal := d.GetAttr("workspace")
+	// This attribute is not computed, so we always have to store the state
+	// value, even if we implicitly use a default.
+	newState["workspace"] = workspaceVal
 
-	if workspaceVal := d.GetAttr("workspace"); !workspaceVal.IsNull() {
-		newState["workspace"] = workspaceVal
+	workspaceName := backend.DefaultStateName
+	if !workspaceVal.IsNull() {
 		workspaceName = workspaceVal.AsString()
 	}
-
-	newState["workspace"] = cty.StringVal(workspaceName)
 
 	state, err := b.StateMgr(workspaceName)
 	if err != nil {
@@ -152,7 +160,7 @@ func dataSourceRemoteStateRead(d cty.Value) (cty.Value, tfdiags.Diagnostics) {
 	return cty.ObjectVal(newState), diags
 }
 
-func getBackend(cfg cty.Value) (backend.Backend, tfdiags.Diagnostics) {
+func getBackend(cfg cty.Value) (backend.Backend, cty.Value, tfdiags.Diagnostics) {
 	var diags tfdiags.Diagnostics
 
 	backendType := cfg.GetAttr("backend").AsString()
@@ -165,7 +173,7 @@ func getBackend(cfg cty.Value) (backend.Backend, tfdiags.Diagnostics) {
 
 	// Create the client to access our remote state
 	log.Printf("[DEBUG] Initializing remote state backend: %s", backendType)
-	f := backendInit.Backend(backendType)
+	f := getBackendFactory(backendType)
 	if f == nil {
 		diags = diags.Append(tfdiags.AttributeValue(
 			tfdiags.Error,
@@ -173,7 +181,7 @@ func getBackend(cfg cty.Value) (backend.Backend, tfdiags.Diagnostics) {
 			fmt.Sprintf("There is no backend type named %q.", backendType),
 			cty.Path(nil).GetAttr("backend"),
 		))
-		return nil, diags
+		return nil, cty.NilVal, diags
 	}
 	b := f()
 
@@ -199,21 +207,34 @@ func getBackend(cfg cty.Value) (backend.Backend, tfdiags.Diagnostics) {
 				tfdiags.FormatError(err)),
 			cty.Path(nil).GetAttr("config"),
 		))
-		return nil, diags
+		return nil, cty.NilVal, diags
 	}
 
 	newVal, validateDiags := b.PrepareConfig(configVal)
 	diags = diags.Append(validateDiags)
 	if validateDiags.HasErrors() {
-		return nil, diags
-	}
-	configVal = newVal
-
-	configureDiags := b.Configure(configVal)
-	if configureDiags.HasErrors() {
-		diags = diags.Append(configureDiags.Err())
-		return nil, diags
+		return nil, cty.NilVal, diags
 	}
 
-	return b, diags
+	// If this is the enhanced remote backend, we want to disable the version
+	// check, because this is a read-only operation
+	if rb, ok := b.(*remote.Remote); ok {
+		rb.IgnoreVersionConflict()
+	}
+
+	return b, newVal, diags
+}
+
+// overrideBackendFactories allows test cases to control the set of available
+// backends to allow for more self-contained tests. This should never be set
+// in non-test code.
+var overrideBackendFactories map[string]backend.InitFn
+
+func getBackendFactory(backendType string) backend.InitFn {
+	if len(overrideBackendFactories) > 0 {
+		// Tests may override the set of backend factories.
+		return overrideBackendFactories[backendType]
+	}
+
+	return backendInit.Backend(backendType)
 }

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/command/clistate"
 	"github.com/hashicorp/terraform/states"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/mitchellh/cli"
 )
 
@@ -18,16 +18,12 @@ type StateMvCommand struct {
 }
 
 func (c *StateMvCommand) Run(args []string) int {
-	args, err := c.Meta.process(args, true)
-	if err != nil {
-		return 1
-	}
-
+	args = c.Meta.process(args)
 	// We create two metas to track the two states
 	var backupPathOut, statePathOut string
 
 	var dryRun bool
-	cmdFlags := c.Meta.defaultFlagSet("state mv")
+	cmdFlags := c.Meta.ignoreRemoteVersionFlagSet("state mv")
 	cmdFlags.BoolVar(&dryRun, "dry-run", false, "dry run")
 	cmdFlags.StringVar(&c.backupPath, "backup", "-", "backup")
 	cmdFlags.StringVar(&backupPathOut, "backup-out", "-", "backup")
@@ -194,10 +190,7 @@ func (c *StateMvCommand) Run(args []string) int {
 				return 1
 			}
 			diags = diags.Append(c.validateResourceMove(addrFrom, addrTo))
-			if stateTo.Module(addrTo.Module) == nil {
-				// moving something to a mew module, so we need to ensure it exists
-				stateTo.EnsureModule(addrTo.Module)
-			}
+
 			if stateTo.Resource(addrTo) != nil {
 				diags = diags.Append(tfdiags.Sourceless(
 					tfdiags.Error,
@@ -226,8 +219,8 @@ func (c *StateMvCommand) Run(args []string) int {
 				ssFrom.RemoveResource(addrFrom)
 
 				// Update the address before adding it to the state.
-				rs.Addr = addrTo.Resource
-				stateTo.Module(addrTo.Module).Resources[addrTo.Resource.String()] = rs
+				rs.Addr = addrTo
+				stateTo.EnsureModule(addrTo.Module).Resources[addrTo.Resource.String()] = rs
 			}
 
 		case addrs.AbsResourceInstance:
@@ -280,7 +273,6 @@ func (c *StateMvCommand) Run(args []string) int {
 				fromResourceAddr := addrFrom.ContainingResource()
 				fromResource := ssFrom.Resource(fromResourceAddr)
 				fromProviderAddr := fromResource.ProviderConfig
-				fromEachMode := fromResource.EachMode
 				ssFrom.ForgetResourceInstanceAll(addrFrom)
 				ssFrom.RemoveResourceIfEmpty(fromResourceAddr)
 
@@ -290,16 +282,10 @@ func (c *StateMvCommand) Run(args []string) int {
 					// suggests the user's intent is to establish both the
 					// resource and the instance at the same time (since the
 					// address covers both). If there's an index in the
-					// target then allow creating the new instance here,
-					// inferring the mode from how the new address was parsed.
-					if addrTo.Resource.Key != addrs.NoKey {
-						fromEachMode = eachModeForInstanceKey(addrTo.Resource.Key)
-					}
-
+					// target then allow creating the new instance here.
 					resourceAddr := addrTo.ContainingResource()
-					stateTo.SyncWrapper().SetResourceMeta(
+					stateTo.SyncWrapper().SetResourceProvider(
 						resourceAddr,
-						fromEachMode,
 						fromProviderAddr, // in this case, we bring the provider along as if we were moving the whole resource
 					)
 					rs = stateTo.Resource(resourceAddr)
@@ -377,20 +363,6 @@ func (c *StateMvCommand) Run(args []string) int {
 	return 0
 }
 
-func eachModeForInstanceKey(key addrs.InstanceKey) states.EachMode {
-	switch key.(type) {
-	case addrs.IntKey:
-		return states.EachList
-	case addrs.StringKey:
-		return states.EachMap
-	default:
-		if key == addrs.NoKey {
-			return states.NoEach
-		}
-		panic(fmt.Sprintf("don't know an each mode for instance key %#v", key))
-	}
-}
-
 // sourceObjectAddrs takes a single source object address and expands it to
 // potentially multiple objects that need to be handled within it.
 //
@@ -420,10 +392,12 @@ func (c *StateMvCommand) sourceObjectAddrs(state *states.State, matched addrs.Ta
 		//   terraform state mv aws_instance.foo aws_instance.bar[1]
 		// That wouldn't be allowed if aws_instance.foo had multiple instances
 		// since we can't move multiple instances into one.
-		if rs := state.Resource(addr); rs != nil && rs.EachMode == states.NoEach {
-			ret = append(ret, addr.Instance(addrs.NoKey))
-		} else {
-			ret = append(ret, addr)
+		if rs := state.Resource(addr); rs != nil {
+			if _, ok := rs.Instances[addrs.NoKey]; ok {
+				ret = append(ret, addr.Instance(addrs.NoKey))
+			} else {
+				ret = append(ret, addr)
+			}
 		}
 	default:
 		ret = append(ret, matched)
@@ -491,31 +465,35 @@ Usage: terraform state mv [options] SOURCE DESTINATION
 
 Options:
 
-  -dry-run            If set, prints out what would've been moved but doesn't
-                      actually move anything.
+  -dry-run                If set, prints out what would've been moved but doesn't
+                          actually move anything.
 
-  -backup=PATH        Path where Terraform should write the backup for the original
-                      state. This can't be disabled. If not set, Terraform
-                      will write it to the same path as the statefile with
-                      a ".backup" extension.
+  -backup=PATH            Path where Terraform should write the backup for the
+                          original state. This can't be disabled. If not set,
+                          Terraform will write it to the same path as the
+                          statefile with a ".backup" extension.
 
-  -backup-out=PATH    Path where Terraform should write the backup for the destination
-                      state. This can't be disabled. If not set, Terraform
-                      will write it to the same path as the destination state
-                      file with a backup extension. This only needs
-                      to be specified if -state-out is set to a different path
-                      than -state.
+  -backup-out=PATH        Path where Terraform should write the backup for the
+                          destination state. This can't be disabled. If not
+                          set, Terraform will write it to the same path as the
+                          destination state file with a backup extension. This
+                          only needs to be specified if -state-out is set to a
+                          different path than -state.
 
-  -lock=true          Lock the state files when locking is supported.
+  -lock=true              Lock the state files when locking is supported.
 
-  -lock-timeout=0s    Duration to retry a state lock.
+  -lock-timeout=0s        Duration to retry a state lock.
 
-  -state=PATH         Path to the source state file. Defaults to the configured
-                      backend, or "terraform.tfstate"
+  -state=PATH             Path to the source state file. Defaults to the
+                          configured backend, or "terraform.tfstate"
 
-  -state-out=PATH     Path to the destination state file to write to. If this
-                      isn't specified, the source state file will be used. This
-                      can be a new or existing path.
+  -state-out=PATH         Path to the destination state file to write to. If
+                          this isn't specified, the source state file will be
+                          used. This can be a new or existing path.
+
+  -ignore-remote-version  Continue even if remote and local Terraform versions
+                          differ. This may result in an unusable workspace, and
+                          should be used with extreme caution.
 
 `
 	return strings.TrimSpace(helpText)
@@ -529,9 +507,3 @@ const errStateMv = `Error moving state: %s
 
 Please ensure your addresses and state paths are valid. No
 state was persisted. Your existing states are untouched.`
-
-const errStateMvPersist = `Error saving the state: %s
-
-The state wasn't saved properly. If the error happening after a partial
-write occurred, a backup file will have been created. Otherwise, the state
-is in the same state it was when the operation started.`
