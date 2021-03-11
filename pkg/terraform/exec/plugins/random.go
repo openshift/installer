@@ -11,5 +11,9 @@ func init() {
 			ProviderFunc: random.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-random"] = randomProvider
+	KnownPlugins["terraform-provider-random"] = &TFPlugin{
+		Name:    "random",
+		Exec:    randomProvider,
+		Version: GetRandomVersion(),
+	}
 }

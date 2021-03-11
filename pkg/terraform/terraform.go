@@ -99,6 +99,11 @@ func unpack(dir string, platform string) (err error) {
 		return err
 	}
 
+	err = data.Unpack(filepath.Join(dir, "terraform.rc"), "terraform.rc")
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -119,8 +124,13 @@ func unpackAndInit(dir string, platform string) (err error) {
 	defer lpDebug.Close()
 	defer lpError.Close()
 
+	os.Setenv("TF_CLI_CONFIG_FILE", filepath.Join(dir, "terraform.rc"))
+
+	// XXX: This is only here for debugging CI
+	os.Setenv("TF_LOG", "trace")
+
 	args := []string{
-		"-get-plugins=false",
+		fmt.Sprintf("-plugin-dir=%s", filepath.Join(dir, "plugins")),
 	}
 	args = append(args, dir)
 	if exitCode := texec.Init(dir, args, lpDebug, lpError); exitCode != 0 {
@@ -135,12 +145,14 @@ func setupEmbeddedPlugins(dir string) error {
 		return errors.Wrap(err, "failed to find path for the executable")
 	}
 
-	pdir := filepath.Join(dir, "plugins")
-	if err := os.MkdirAll(pdir, 0777); err != nil {
-		return err
-	}
-	for name := range plugins.KnownPlugins {
-		dst := filepath.Join(pdir, name)
+	pdir := filepath.Join(dir, "plugins", "openshift", "local")
+	for name, plugin := range plugins.KnownPlugins {
+		dstDir := filepath.Join(pdir, plugin.Name, plugin.Version, fmt.Sprintf("linux_%s", runtime.GOARCH))
+		if err := os.MkdirAll(dstDir, 0777); err != nil {
+			return err
+		}
+
+		dst := filepath.Join(dstDir, name)
 		if runtime.GOOS == "windows" {
 			dst = fmt.Sprintf("%s.exe", dst)
 		}

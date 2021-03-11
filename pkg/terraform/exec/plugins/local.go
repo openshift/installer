@@ -11,5 +11,9 @@ func init() {
 			ProviderFunc: local.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-local"] = localProvider
+	KnownPlugins["terraform-provider-local"] = &TFPlugin{
+		Name:    "local",
+		Exec:    localProvider,
+		Version: GetLocalVersion(),
+	}
 }

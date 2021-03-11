@@ -11,5 +11,9 @@ func init() {
 			ProviderFunc: google.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-google"] = googleProvider
+	KnownPlugins["terraform-provider-google"] = &TFPlugin{
+		Name:    "google",
+		Exec:    googleProvider,
+		Version: GetGoogleVersion(),
+	}
 }

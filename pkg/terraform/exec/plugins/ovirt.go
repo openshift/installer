@@ -11,5 +11,9 @@ func init() {
 			ProviderFunc: ovirt.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-ovirt"] = exec
+	KnownPlugins["terraform-provider-ovirt"] = &TFPlugin{
+		Name:    "ovirt",
+		Exec:    exec,
+		Version: GetOvirtVersion(),
+	}
 }

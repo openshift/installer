@@ -11,5 +11,9 @@ func init() {
 			ProviderFunc: openstack.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-openstack"] = exec
+	KnownPlugins["terraform-provider-openstack"] = &TFPlugin{
+		Name:    "openstack",
+		Exec:    exec,
+		Version: GetOpenstackVersion(),
+	}
 }

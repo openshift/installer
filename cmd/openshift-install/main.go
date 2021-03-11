@@ -41,8 +41,8 @@ func main() {
 	if len(os.Args) > 0 {
 		base := filepath.Base(os.Args[0])
 		cname := strings.TrimSuffix(base, filepath.Ext(base))
-		if pluginRunner, ok := plugins.KnownPlugins[cname]; ok {
-			pluginRunner()
+		if plugin, ok := plugins.KnownPlugins[cname]; ok {
+			plugin.Exec()
 			return
 		}
 	}

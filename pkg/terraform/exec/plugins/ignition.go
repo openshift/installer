@@ -11,5 +11,9 @@ func init() {
 			ProviderFunc: ignition.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-ignition"] = exec
+	KnownPlugins["terraform-provider-ignition"] = &TFPlugin{
+		Name:    "ignition",
+		Exec:    exec,
+		Version: GetIgnitionVersion(),
+	}
 }

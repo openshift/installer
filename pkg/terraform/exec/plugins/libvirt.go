@@ -15,5 +15,9 @@ func init() {
 			ProviderFunc: libvirt.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-libvirt"] = exec
+	KnownPlugins["terraform-provider-libvirt"] = &TFPlugin{
+		Name:    "libvirt",
+		Exec:    exec,
+		Version: GetLibvirtVersion(),
+	}
 }

@@ -10,5 +10,9 @@ func init() {
 		plugin.Serve(&plugin.ServeOpts{
 			ProviderFunc: vsphereprivate.Provider})
 	}
-	KnownPlugins["terraform-provider-vsphereprivate"] = vspherePrivateProvider
+	KnownPlugins["terraform-provider-vsphereprivate"] = &TFPlugin{
+		Name:    "vsphereprivate",
+		Exec:    vspherePrivateProvider,
+		Version: GetVsphereprivateproviderVersion(),
+	}
 }

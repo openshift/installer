@@ -11,5 +11,9 @@ func init() {
 			ProviderFunc: azureprivatedns.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-azureprivatedns"] = azurePrivateDNSProvider
+	KnownPlugins["terraform-provider-azureprivatedns"] = &TFPlugin{
+		Name:    "azureprivatedns",
+		Exec:    azurePrivateDNSProvider,
+		Version: GetAzureprivatednsVersion(),
+	}
 }

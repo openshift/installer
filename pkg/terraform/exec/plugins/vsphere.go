@@ -11,5 +11,9 @@ func init() {
 			ProviderFunc: vsphere.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-vsphere"] = exec
+	KnownPlugins["terraform-provider-vsphere"] = &TFPlugin{
+		Name:    "vsphere",
+		Exec:    exec,
+		Version: GetVsphereVersion(),
+	}
 }

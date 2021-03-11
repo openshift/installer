@@ -10,5 +10,9 @@ func init() {
 		plugin.Serve(&plugin.ServeOpts{
 			ProviderFunc: kubevirt.Provider})
 	}
-	KnownPlugins["terraform-provider-kubevirt"] = exec
+	KnownPlugins["terraform-provider-kubevirt"] = &TFPlugin{
+		Name:    "kubevirt",
+		Exec:    exec,
+		Version: GetKubevirtVersion(),
+	}
 }

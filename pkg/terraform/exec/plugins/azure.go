@@ -11,5 +11,9 @@ func init() {
 			ProviderFunc: azurerm.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-azurerm"] = azurermProvider
+	KnownPlugins["terraform-provider-azurerm"] = &TFPlugin{
+		Name:    "azurerm",
+		Exec:    azurermProvider,
+		Version: GetAzurermVersion(),
+	}
 }

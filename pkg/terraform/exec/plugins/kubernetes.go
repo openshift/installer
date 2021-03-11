@@ -10,5 +10,9 @@ func init() {
 		plugin.Serve(&plugin.ServeOpts{
 			ProviderFunc: kubernetes.Provider})
 	}
-	KnownPlugins["terraform-provider-kubernetes"] = exec
+	KnownPlugins["terraform-provider-kubernetes"] = &TFPlugin{
+		Name:    "kubernetes",
+		Exec:    exec,
+		Version: GetKubernetesVersion(),
+	}
 }

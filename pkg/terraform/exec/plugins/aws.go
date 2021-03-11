@@ -11,5 +11,9 @@ func init() {
 			ProviderFunc: aws.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-aws"] = exec
+	KnownPlugins["terraform-provider-aws"] = &TFPlugin{
+		Name:    "aws",
+		Exec:    exec,
+		Version: GetAwsVersion(),
+	}
 }

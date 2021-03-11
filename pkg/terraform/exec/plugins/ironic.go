@@ -13,5 +13,9 @@ func init() {
 			ProviderFunc: ironic.Provider,
 		})
 	}
-	KnownPlugins["terraform-provider-ironic"] = exec
+	KnownPlugins["terraform-provider-ironic"] = &TFPlugin{
+		Name:    "ironic",
+		Exec:    exec,
+		Version: GetIronicVersion(),
+	}
 }
