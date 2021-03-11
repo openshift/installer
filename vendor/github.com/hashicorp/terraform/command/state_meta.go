@@ -5,11 +5,10 @@ import (
 	"sort"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/addrs"
-	"github.com/hashicorp/terraform/state"
 	"github.com/hashicorp/terraform/states"
 	"github.com/hashicorp/terraform/states/statemgr"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 
 	backendLocal "github.com/hashicorp/terraform/backend/local"
 )
@@ -23,8 +22,8 @@ type StateMeta struct {
 // the backend, but changes the way that backups are done. This configures
 // backups to be timestamped rather than just the original state path plus a
 // backup path.
-func (c *StateMeta) State() (state.State, error) {
-	var realState state.State
+func (c *StateMeta) State() (statemgr.Full, error) {
+	var realState statemgr.Full
 	backupPath := c.backupPath
 	stateOutPath := c.statePath
 
@@ -38,7 +37,18 @@ func (c *StateMeta) State() (state.State, error) {
 			return nil, backendDiags.Err()
 		}
 
-		workspace := c.Workspace()
+		workspace, err := c.Workspace()
+		if err != nil {
+			return nil, err
+		}
+
+		// Check remote Terraform version is compatible
+		remoteVersionDiags := c.remoteBackendVersionCheck(b, workspace)
+		c.showDiagnostics(remoteVersionDiags)
+		if remoteVersionDiags.HasErrors() {
+			return nil, fmt.Errorf("Error checking remote Terraform version")
+		}
+
 		// Get the state
 		s, err := b.StateMgr(workspace)
 		if err != nil {
@@ -146,10 +156,6 @@ func (c *StateMeta) lookupResourceInstanceAddr(state *states.State, allowMissing
 	return ret, diags
 }
 
-func (c *StateMeta) lookupSingleResourceInstanceAddr(state *states.State, addrStr string) (addrs.AbsResourceInstance, tfdiags.Diagnostics) {
-	return addrs.ParseAbsResourceInstanceStr(addrStr)
-}
-
 func (c *StateMeta) lookupSingleStateObjectAddr(state *states.State, addrStr string) (addrs.Targetable, tfdiags.Diagnostics) {
 	target, diags := addrs.ParseTargetStr(addrStr)
 	if diags.HasErrors() {
@@ -192,7 +198,18 @@ func (c *StateMeta) collectModuleResourceInstances(ms *states.Module) []addrs.Ab
 func (c *StateMeta) collectResourceInstances(moduleAddr addrs.ModuleInstance, rs *states.Resource) []addrs.AbsResourceInstance {
 	var ret []addrs.AbsResourceInstance
 	for key := range rs.Instances {
-		ret = append(ret, rs.Addr.Instance(key).Absolute(moduleAddr))
+		ret = append(ret, rs.Addr.Instance(key))
 	}
 	return ret
+}
+
+func (c *StateMeta) lookupAllResources(state *states.State) ([]*states.Resource, tfdiags.Diagnostics) {
+	var ret []*states.Resource
+	var diags tfdiags.Diagnostics
+	for _, ms := range state.Modules {
+		for _, resource := range ms.Resources {
+			ret = append(ret, resource)
+		}
+	}
+	return ret, diags
 }

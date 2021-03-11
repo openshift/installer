@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/backend"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 )
 
 // RefreshCommand is a cli.Command implementation that refreshes the state
@@ -16,13 +16,9 @@ type RefreshCommand struct {
 }
 
 func (c *RefreshCommand) Run(args []string) int {
-	args, err := c.Meta.process(args, true)
-	if err != nil {
-		return 1
-	}
-
+	args = c.Meta.process(args)
 	cmdFlags := c.Meta.extendedFlagSet("refresh")
-	cmdFlags.StringVar(&c.Meta.statePath, "state", DefaultStateFilename, "path")
+	cmdFlags.StringVar(&c.Meta.statePath, "state", "", "path")
 	cmdFlags.IntVar(&c.Meta.parallelism, "parallelism", DefaultParallelism, "parallelism")
 	cmdFlags.StringVar(&c.Meta.stateOutPath, "state-out", "", "path")
 	cmdFlags.StringVar(&c.Meta.backupPath, "backup", "", "path")
@@ -158,5 +154,5 @@ Options:
 }
 
 func (c *RefreshCommand) Synopsis() string {
-	return "Update local state file against real resources"
+	return "Update the state to match remote systems"
 }

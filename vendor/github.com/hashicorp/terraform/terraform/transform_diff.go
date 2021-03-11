@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/dag"
 	"github.com/hashicorp/terraform/plans"
 	"github.com/hashicorp/terraform/states"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 )
 
 // DiffTransformer is a GraphTransformer that adds graph nodes representing
@@ -36,9 +36,9 @@ func (t *DiffTransformer) Transform(g *Graph) error {
 	// get evaluated before any of the corresponding instances by creating
 	// dependency edges, so we'll do some prep work here to ensure we'll only
 	// create connections to nodes that existed before we started here.
-	resourceNodes := map[string][]GraphNodeResource{}
+	resourceNodes := map[string][]GraphNodeConfigResource{}
 	for _, node := range g.Vertices() {
-		rn, ok := node.(GraphNodeResource)
+		rn, ok := node.(GraphNodeConfigResource)
 		if !ok {
 			continue
 		}
@@ -161,7 +161,6 @@ func (t *DiffTransformer) Transform(g *Graph) error {
 					NodeAbstractResourceInstance: abstract,
 					DeposedKey:                   dk,
 				}
-				node.(*NodeDestroyResourceInstance).ModifyCreateBeforeDestroy(createBeforeDestroy)
 			} else {
 				node = &NodeDestroyDeposedResourceInstanceObject{
 					NodeAbstractResourceInstance: abstract,

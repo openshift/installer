@@ -72,6 +72,7 @@ func (client DeploymentsClient) CalculateTemplateHash(ctx context.Context, templ
 	result, err = client.CalculateTemplateHashResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "CalculateTemplateHash", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -105,7 +106,6 @@ func (client DeploymentsClient) CalculateTemplateHashSender(req *http.Request) (
 func (client DeploymentsClient) CalculateTemplateHashResponder(resp *http.Response) (result TemplateHashResult, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -158,6 +158,7 @@ func (client DeploymentsClient) Cancel(ctx context.Context, resourceGroupName st
 	result, err = client.CancelResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "Cancel", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -195,7 +196,6 @@ func (client DeploymentsClient) CancelSender(req *http.Request) (*http.Response,
 func (client DeploymentsClient) CancelResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusNoContent),
 		autorest.ByClosing())
 	result.Response = resp
@@ -246,6 +246,7 @@ func (client DeploymentsClient) CancelAtManagementGroupScope(ctx context.Context
 	result, err = client.CancelAtManagementGroupScopeResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "CancelAtManagementGroupScope", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -282,7 +283,6 @@ func (client DeploymentsClient) CancelAtManagementGroupScopeSender(req *http.Req
 func (client DeploymentsClient) CancelAtManagementGroupScopeResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusNoContent),
 		autorest.ByClosing())
 	result.Response = resp
@@ -329,6 +329,7 @@ func (client DeploymentsClient) CancelAtSubscriptionScope(ctx context.Context, d
 	result, err = client.CancelAtSubscriptionScopeResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "CancelAtSubscriptionScope", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -365,7 +366,6 @@ func (client DeploymentsClient) CancelAtSubscriptionScopeSender(req *http.Reques
 func (client DeploymentsClient) CancelAtSubscriptionScopeResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusNoContent),
 		autorest.ByClosing())
 	result.Response = resp
@@ -416,6 +416,7 @@ func (client DeploymentsClient) CheckExistence(ctx context.Context, resourceGrou
 	result, err = client.CheckExistenceResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "CheckExistence", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -453,7 +454,6 @@ func (client DeploymentsClient) CheckExistenceSender(req *http.Request) (*http.R
 func (client DeploymentsClient) CheckExistenceResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusNoContent, http.StatusNotFound),
 		autorest.ByClosing())
 	result.Response = resp
@@ -502,6 +502,7 @@ func (client DeploymentsClient) CheckExistenceAtManagementGroupScope(ctx context
 	result, err = client.CheckExistenceAtManagementGroupScopeResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "CheckExistenceAtManagementGroupScope", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -538,7 +539,6 @@ func (client DeploymentsClient) CheckExistenceAtManagementGroupScopeSender(req *
 func (client DeploymentsClient) CheckExistenceAtManagementGroupScopeResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusNoContent, http.StatusNotFound),
 		autorest.ByClosing())
 	result.Response = resp
@@ -583,6 +583,7 @@ func (client DeploymentsClient) CheckExistenceAtSubscriptionScope(ctx context.Co
 	result, err = client.CheckExistenceAtSubscriptionScopeResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "CheckExistenceAtSubscriptionScope", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -619,7 +620,6 @@ func (client DeploymentsClient) CheckExistenceAtSubscriptionScopeSender(req *htt
 func (client DeploymentsClient) CheckExistenceAtSubscriptionScopeResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusNoContent, http.StatusNotFound),
 		autorest.ByClosing())
 	result.Response = resp
@@ -670,7 +670,7 @@ func (client DeploymentsClient) CreateOrUpdate(ctx context.Context, resourceGrou
 
 	result, err = client.CreateOrUpdateSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "CreateOrUpdate", result.Response(), "Failure sending request")
+		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "CreateOrUpdate", nil, "Failure sending request")
 		return
 	}
 
@@ -708,7 +708,33 @@ func (client DeploymentsClient) CreateOrUpdateSender(req *http.Request) (future 
 	if err != nil {
 		return
 	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
+	var azf azure.Future
+	azf, err = azure.NewFutureFromResponse(resp)
+	future.FutureAPI = &azf
+	future.Result = func(client DeploymentsClient) (de DeploymentExtended, err error) {
+		var done bool
+		done, err = future.DoneWithContext(context.Background(), client)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "resources.DeploymentsCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
+			return
+		}
+		if !done {
+			err = azure.NewAsyncOpIncompleteError("resources.DeploymentsCreateOrUpdateFuture")
+			return
+		}
+		sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+		de.Response.Response, err = future.GetResult(sender)
+		if de.Response.Response == nil && err == nil {
+			err = autorest.NewErrorWithError(err, "resources.DeploymentsCreateOrUpdateFuture", "Result", nil, "received nil response and error")
+		}
+		if err == nil && de.Response.Response.StatusCode != http.StatusNoContent {
+			de, err = client.CreateOrUpdateResponder(de.Response.Response)
+			if err != nil {
+				err = autorest.NewErrorWithError(err, "resources.DeploymentsCreateOrUpdateFuture", "Result", de.Response.Response, "Failure responding to request")
+			}
+		}
+		return
+	}
 	return
 }
 
@@ -717,7 +743,6 @@ func (client DeploymentsClient) CreateOrUpdateSender(req *http.Request) (future 
 func (client DeploymentsClient) CreateOrUpdateResponder(resp *http.Response) (result DeploymentExtended, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -768,7 +793,7 @@ func (client DeploymentsClient) CreateOrUpdateAtManagementGroupScope(ctx context
 
 	result, err = client.CreateOrUpdateAtManagementGroupScopeSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "CreateOrUpdateAtManagementGroupScope", result.Response(), "Failure sending request")
+		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "CreateOrUpdateAtManagementGroupScope", nil, "Failure sending request")
 		return
 	}
 
@@ -805,7 +830,33 @@ func (client DeploymentsClient) CreateOrUpdateAtManagementGroupScopeSender(req *
 	if err != nil {
 		return
 	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
+	var azf azure.Future
+	azf, err = azure.NewFutureFromResponse(resp)
+	future.FutureAPI = &azf
+	future.Result = func(client DeploymentsClient) (de DeploymentExtended, err error) {
+		var done bool
+		done, err = future.DoneWithContext(context.Background(), client)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "resources.DeploymentsCreateOrUpdateAtManagementGroupScopeFuture", "Result", future.Response(), "Polling failure")
+			return
+		}
+		if !done {
+			err = azure.NewAsyncOpIncompleteError("resources.DeploymentsCreateOrUpdateAtManagementGroupScopeFuture")
+			return
+		}
+		sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+		de.Response.Response, err = future.GetResult(sender)
+		if de.Response.Response == nil && err == nil {
+			err = autorest.NewErrorWithError(err, "resources.DeploymentsCreateOrUpdateAtManagementGroupScopeFuture", "Result", nil, "received nil response and error")
+		}
+		if err == nil && de.Response.Response.StatusCode != http.StatusNoContent {
+			de, err = client.CreateOrUpdateAtManagementGroupScopeResponder(de.Response.Response)
+			if err != nil {
+				err = autorest.NewErrorWithError(err, "resources.DeploymentsCreateOrUpdateAtManagementGroupScopeFuture", "Result", de.Response.Response, "Failure responding to request")
+			}
+		}
+		return
+	}
 	return
 }
 
@@ -814,7 +865,6 @@ func (client DeploymentsClient) CreateOrUpdateAtManagementGroupScopeSender(req *
 func (client DeploymentsClient) CreateOrUpdateAtManagementGroupScopeResponder(resp *http.Response) (result DeploymentExtended, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -861,7 +911,7 @@ func (client DeploymentsClient) CreateOrUpdateAtSubscriptionScope(ctx context.Co
 
 	result, err = client.CreateOrUpdateAtSubscriptionScopeSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "CreateOrUpdateAtSubscriptionScope", result.Response(), "Failure sending request")
+		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "CreateOrUpdateAtSubscriptionScope", nil, "Failure sending request")
 		return
 	}
 
@@ -898,7 +948,33 @@ func (client DeploymentsClient) CreateOrUpdateAtSubscriptionScopeSender(req *htt
 	if err != nil {
 		return
 	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
+	var azf azure.Future
+	azf, err = azure.NewFutureFromResponse(resp)
+	future.FutureAPI = &azf
+	future.Result = func(client DeploymentsClient) (de DeploymentExtended, err error) {
+		var done bool
+		done, err = future.DoneWithContext(context.Background(), client)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "resources.DeploymentsCreateOrUpdateAtSubscriptionScopeFuture", "Result", future.Response(), "Polling failure")
+			return
+		}
+		if !done {
+			err = azure.NewAsyncOpIncompleteError("resources.DeploymentsCreateOrUpdateAtSubscriptionScopeFuture")
+			return
+		}
+		sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+		de.Response.Response, err = future.GetResult(sender)
+		if de.Response.Response == nil && err == nil {
+			err = autorest.NewErrorWithError(err, "resources.DeploymentsCreateOrUpdateAtSubscriptionScopeFuture", "Result", nil, "received nil response and error")
+		}
+		if err == nil && de.Response.Response.StatusCode != http.StatusNoContent {
+			de, err = client.CreateOrUpdateAtSubscriptionScopeResponder(de.Response.Response)
+			if err != nil {
+				err = autorest.NewErrorWithError(err, "resources.DeploymentsCreateOrUpdateAtSubscriptionScopeFuture", "Result", de.Response.Response, "Failure responding to request")
+			}
+		}
+		return
+	}
 	return
 }
 
@@ -907,7 +983,6 @@ func (client DeploymentsClient) CreateOrUpdateAtSubscriptionScopeSender(req *htt
 func (client DeploymentsClient) CreateOrUpdateAtSubscriptionScopeResponder(resp *http.Response) (result DeploymentExtended, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -957,7 +1032,7 @@ func (client DeploymentsClient) Delete(ctx context.Context, resourceGroupName st
 
 	result, err = client.DeleteSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "Delete", result.Response(), "Failure sending request")
+		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "Delete", nil, "Failure sending request")
 		return
 	}
 
@@ -993,7 +1068,23 @@ func (client DeploymentsClient) DeleteSender(req *http.Request) (future Deployme
 	if err != nil {
 		return
 	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
+	var azf azure.Future
+	azf, err = azure.NewFutureFromResponse(resp)
+	future.FutureAPI = &azf
+	future.Result = func(client DeploymentsClient) (ar autorest.Response, err error) {
+		var done bool
+		done, err = future.DoneWithContext(context.Background(), client)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "resources.DeploymentsDeleteFuture", "Result", future.Response(), "Polling failure")
+			return
+		}
+		if !done {
+			err = azure.NewAsyncOpIncompleteError("resources.DeploymentsDeleteFuture")
+			return
+		}
+		ar.Response = future.Response()
+		return
+	}
 	return
 }
 
@@ -1002,7 +1093,6 @@ func (client DeploymentsClient) DeleteSender(req *http.Request) (future Deployme
 func (client DeploymentsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent),
 		autorest.ByClosing())
 	result.Response = resp
@@ -1048,7 +1138,7 @@ func (client DeploymentsClient) DeleteAtManagementGroupScope(ctx context.Context
 
 	result, err = client.DeleteAtManagementGroupScopeSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "DeleteAtManagementGroupScope", result.Response(), "Failure sending request")
+		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "DeleteAtManagementGroupScope", nil, "Failure sending request")
 		return
 	}
 
@@ -1083,7 +1173,23 @@ func (client DeploymentsClient) DeleteAtManagementGroupScopeSender(req *http.Req
 	if err != nil {
 		return
 	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
+	var azf azure.Future
+	azf, err = azure.NewFutureFromResponse(resp)
+	future.FutureAPI = &azf
+	future.Result = func(client DeploymentsClient) (ar autorest.Response, err error) {
+		var done bool
+		done, err = future.DoneWithContext(context.Background(), client)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "resources.DeploymentsDeleteAtManagementGroupScopeFuture", "Result", future.Response(), "Polling failure")
+			return
+		}
+		if !done {
+			err = azure.NewAsyncOpIncompleteError("resources.DeploymentsDeleteAtManagementGroupScopeFuture")
+			return
+		}
+		ar.Response = future.Response()
+		return
+	}
 	return
 }
 
@@ -1092,7 +1198,6 @@ func (client DeploymentsClient) DeleteAtManagementGroupScopeSender(req *http.Req
 func (client DeploymentsClient) DeleteAtManagementGroupScopeResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent),
 		autorest.ByClosing())
 	result.Response = resp
@@ -1134,7 +1239,7 @@ func (client DeploymentsClient) DeleteAtSubscriptionScope(ctx context.Context, d
 
 	result, err = client.DeleteAtSubscriptionScopeSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "DeleteAtSubscriptionScope", result.Response(), "Failure sending request")
+		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "DeleteAtSubscriptionScope", nil, "Failure sending request")
 		return
 	}
 
@@ -1169,7 +1274,23 @@ func (client DeploymentsClient) DeleteAtSubscriptionScopeSender(req *http.Reques
 	if err != nil {
 		return
 	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
+	var azf azure.Future
+	azf, err = azure.NewFutureFromResponse(resp)
+	future.FutureAPI = &azf
+	future.Result = func(client DeploymentsClient) (ar autorest.Response, err error) {
+		var done bool
+		done, err = future.DoneWithContext(context.Background(), client)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "resources.DeploymentsDeleteAtSubscriptionScopeFuture", "Result", future.Response(), "Polling failure")
+			return
+		}
+		if !done {
+			err = azure.NewAsyncOpIncompleteError("resources.DeploymentsDeleteAtSubscriptionScopeFuture")
+			return
+		}
+		ar.Response = future.Response()
+		return
+	}
 	return
 }
 
@@ -1178,7 +1299,6 @@ func (client DeploymentsClient) DeleteAtSubscriptionScopeSender(req *http.Reques
 func (client DeploymentsClient) DeleteAtSubscriptionScopeResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent),
 		autorest.ByClosing())
 	result.Response = resp
@@ -1228,6 +1348,7 @@ func (client DeploymentsClient) ExportTemplate(ctx context.Context, resourceGrou
 	result, err = client.ExportTemplateResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "ExportTemplate", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -1265,7 +1386,6 @@ func (client DeploymentsClient) ExportTemplateSender(req *http.Request) (*http.R
 func (client DeploymentsClient) ExportTemplateResponder(resp *http.Response) (result DeploymentExportResult, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -1315,6 +1435,7 @@ func (client DeploymentsClient) ExportTemplateAtManagementGroupScope(ctx context
 	result, err = client.ExportTemplateAtManagementGroupScopeResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "ExportTemplateAtManagementGroupScope", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -1351,7 +1472,6 @@ func (client DeploymentsClient) ExportTemplateAtManagementGroupScopeSender(req *
 func (client DeploymentsClient) ExportTemplateAtManagementGroupScopeResponder(resp *http.Response) (result DeploymentExportResult, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -1397,6 +1517,7 @@ func (client DeploymentsClient) ExportTemplateAtSubscriptionScope(ctx context.Co
 	result, err = client.ExportTemplateAtSubscriptionScopeResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "ExportTemplateAtSubscriptionScope", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -1433,7 +1554,6 @@ func (client DeploymentsClient) ExportTemplateAtSubscriptionScopeSender(req *htt
 func (client DeploymentsClient) ExportTemplateAtSubscriptionScopeResponder(resp *http.Response) (result DeploymentExportResult, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -1484,6 +1604,7 @@ func (client DeploymentsClient) Get(ctx context.Context, resourceGroupName strin
 	result, err = client.GetResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "Get", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -1521,7 +1642,6 @@ func (client DeploymentsClient) GetSender(req *http.Request) (*http.Response, er
 func (client DeploymentsClient) GetResponder(resp *http.Response) (result DeploymentExtended, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -1571,6 +1691,7 @@ func (client DeploymentsClient) GetAtManagementGroupScope(ctx context.Context, g
 	result, err = client.GetAtManagementGroupScopeResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "GetAtManagementGroupScope", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -1607,7 +1728,6 @@ func (client DeploymentsClient) GetAtManagementGroupScopeSender(req *http.Reques
 func (client DeploymentsClient) GetAtManagementGroupScopeResponder(resp *http.Response) (result DeploymentExtended, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -1653,6 +1773,7 @@ func (client DeploymentsClient) GetAtSubscriptionScope(ctx context.Context, depl
 	result, err = client.GetAtSubscriptionScopeResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "GetAtSubscriptionScope", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -1689,7 +1810,6 @@ func (client DeploymentsClient) GetAtSubscriptionScopeSender(req *http.Request) 
 func (client DeploymentsClient) GetAtSubscriptionScopeResponder(resp *http.Response) (result DeploymentExtended, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -1738,6 +1858,11 @@ func (client DeploymentsClient) ListAtManagementGroupScope(ctx context.Context, 
 	result.dlr, err = client.ListAtManagementGroupScopeResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "ListAtManagementGroupScope", resp, "Failure responding to request")
+		return
+	}
+	if result.dlr.hasNextLink() && result.dlr.IsEmpty() {
+		err = result.NextWithContext(ctx)
+		return
 	}
 
 	return
@@ -1779,7 +1904,6 @@ func (client DeploymentsClient) ListAtManagementGroupScopeSender(req *http.Reque
 func (client DeploymentsClient) ListAtManagementGroupScopeResponder(resp *http.Response) (result DeploymentListResult, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -1857,6 +1981,11 @@ func (client DeploymentsClient) ListAtSubscriptionScope(ctx context.Context, fil
 	result.dlr, err = client.ListAtSubscriptionScopeResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "ListAtSubscriptionScope", resp, "Failure responding to request")
+		return
+	}
+	if result.dlr.hasNextLink() && result.dlr.IsEmpty() {
+		err = result.NextWithContext(ctx)
+		return
 	}
 
 	return
@@ -1898,7 +2027,6 @@ func (client DeploymentsClient) ListAtSubscriptionScopeSender(req *http.Request)
 func (client DeploymentsClient) ListAtSubscriptionScopeResponder(resp *http.Response) (result DeploymentListResult, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -1986,6 +2114,11 @@ func (client DeploymentsClient) ListByResourceGroup(ctx context.Context, resourc
 	result.dlr, err = client.ListByResourceGroupResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "ListByResourceGroup", resp, "Failure responding to request")
+		return
+	}
+	if result.dlr.hasNextLink() && result.dlr.IsEmpty() {
+		err = result.NextWithContext(ctx)
+		return
 	}
 
 	return
@@ -2028,7 +2161,6 @@ func (client DeploymentsClient) ListByResourceGroupSender(req *http.Request) (*h
 func (client DeploymentsClient) ListByResourceGroupResponder(resp *http.Response) (result DeploymentListResult, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -2126,6 +2258,7 @@ func (client DeploymentsClient) Validate(ctx context.Context, resourceGroupName 
 	result, err = client.ValidateResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "Validate", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -2165,7 +2298,6 @@ func (client DeploymentsClient) ValidateSender(req *http.Request) (*http.Respons
 func (client DeploymentsClient) ValidateResponder(resp *http.Response) (result DeploymentValidateResult, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusBadRequest),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -2224,6 +2356,7 @@ func (client DeploymentsClient) ValidateAtManagementGroupScope(ctx context.Conte
 	result, err = client.ValidateAtManagementGroupScopeResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "ValidateAtManagementGroupScope", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -2262,7 +2395,6 @@ func (client DeploymentsClient) ValidateAtManagementGroupScopeSender(req *http.R
 func (client DeploymentsClient) ValidateAtManagementGroupScopeResponder(resp *http.Response) (result DeploymentValidateResult, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusBadRequest),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -2317,6 +2449,7 @@ func (client DeploymentsClient) ValidateAtSubscriptionScope(ctx context.Context,
 	result, err = client.ValidateAtSubscriptionScopeResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "resources.DeploymentsClient", "ValidateAtSubscriptionScope", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -2355,7 +2488,6 @@ func (client DeploymentsClient) ValidateAtSubscriptionScopeSender(req *http.Requ
 func (client DeploymentsClient) ValidateAtSubscriptionScopeResponder(resp *http.Response) (result DeploymentValidateResult, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusBadRequest),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())

@@ -68,7 +68,7 @@ func (client VirtualNetworkPeeringsClient) CreateOrUpdate(ctx context.Context, r
 
 	result, err = client.CreateOrUpdateSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "network.VirtualNetworkPeeringsClient", "CreateOrUpdate", result.Response(), "Failure sending request")
+		err = autorest.NewErrorWithError(err, "network.VirtualNetworkPeeringsClient", "CreateOrUpdate", nil, "Failure sending request")
 		return
 	}
 
@@ -107,7 +107,33 @@ func (client VirtualNetworkPeeringsClient) CreateOrUpdateSender(req *http.Reques
 	if err != nil {
 		return
 	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
+	var azf azure.Future
+	azf, err = azure.NewFutureFromResponse(resp)
+	future.FutureAPI = &azf
+	future.Result = func(client VirtualNetworkPeeringsClient) (vnp VirtualNetworkPeering, err error) {
+		var done bool
+		done, err = future.DoneWithContext(context.Background(), client)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "network.VirtualNetworkPeeringsCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
+			return
+		}
+		if !done {
+			err = azure.NewAsyncOpIncompleteError("network.VirtualNetworkPeeringsCreateOrUpdateFuture")
+			return
+		}
+		sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+		vnp.Response.Response, err = future.GetResult(sender)
+		if vnp.Response.Response == nil && err == nil {
+			err = autorest.NewErrorWithError(err, "network.VirtualNetworkPeeringsCreateOrUpdateFuture", "Result", nil, "received nil response and error")
+		}
+		if err == nil && vnp.Response.Response.StatusCode != http.StatusNoContent {
+			vnp, err = client.CreateOrUpdateResponder(vnp.Response.Response)
+			if err != nil {
+				err = autorest.NewErrorWithError(err, "network.VirtualNetworkPeeringsCreateOrUpdateFuture", "Result", vnp.Response.Response, "Failure responding to request")
+			}
+		}
+		return
+	}
 	return
 }
 
@@ -116,7 +142,6 @@ func (client VirtualNetworkPeeringsClient) CreateOrUpdateSender(req *http.Reques
 func (client VirtualNetworkPeeringsClient) CreateOrUpdateResponder(resp *http.Response) (result VirtualNetworkPeering, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -148,7 +173,7 @@ func (client VirtualNetworkPeeringsClient) Delete(ctx context.Context, resourceG
 
 	result, err = client.DeleteSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "network.VirtualNetworkPeeringsClient", "Delete", result.Response(), "Failure sending request")
+		err = autorest.NewErrorWithError(err, "network.VirtualNetworkPeeringsClient", "Delete", nil, "Failure sending request")
 		return
 	}
 
@@ -185,7 +210,23 @@ func (client VirtualNetworkPeeringsClient) DeleteSender(req *http.Request) (futu
 	if err != nil {
 		return
 	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
+	var azf azure.Future
+	azf, err = azure.NewFutureFromResponse(resp)
+	future.FutureAPI = &azf
+	future.Result = func(client VirtualNetworkPeeringsClient) (ar autorest.Response, err error) {
+		var done bool
+		done, err = future.DoneWithContext(context.Background(), client)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "network.VirtualNetworkPeeringsDeleteFuture", "Result", future.Response(), "Polling failure")
+			return
+		}
+		if !done {
+			err = azure.NewAsyncOpIncompleteError("network.VirtualNetworkPeeringsDeleteFuture")
+			return
+		}
+		ar.Response = future.Response()
+		return
+	}
 	return
 }
 
@@ -194,7 +235,6 @@ func (client VirtualNetworkPeeringsClient) DeleteSender(req *http.Request) (futu
 func (client VirtualNetworkPeeringsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent),
 		autorest.ByClosing())
 	result.Response = resp
@@ -233,6 +273,7 @@ func (client VirtualNetworkPeeringsClient) Get(ctx context.Context, resourceGrou
 	result, err = client.GetResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "network.VirtualNetworkPeeringsClient", "Get", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -271,7 +312,6 @@ func (client VirtualNetworkPeeringsClient) GetSender(req *http.Request) (*http.R
 func (client VirtualNetworkPeeringsClient) GetResponder(resp *http.Response) (result VirtualNetworkPeering, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -311,6 +351,11 @@ func (client VirtualNetworkPeeringsClient) List(ctx context.Context, resourceGro
 	result.vnplr, err = client.ListResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "network.VirtualNetworkPeeringsClient", "List", resp, "Failure responding to request")
+		return
+	}
+	if result.vnplr.hasNextLink() && result.vnplr.IsEmpty() {
+		err = result.NextWithContext(ctx)
+		return
 	}
 
 	return
@@ -348,7 +393,6 @@ func (client VirtualNetworkPeeringsClient) ListSender(req *http.Request) (*http.
 func (client VirtualNetworkPeeringsClient) ListResponder(resp *http.Response) (result VirtualNetworkPeeringListResult, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())

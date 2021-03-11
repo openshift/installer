@@ -1,5 +1,7 @@
 module github.com/masterzen/winrm
 
+go 1.14
+
 require (
 	github.com/Azure/go-ntlmssp v0.0.0-20180810175552-4a21cbd618b4
 	github.com/ChrisTrenkamp/goxpath v0.0.0-20170922090931-c385f95c6022

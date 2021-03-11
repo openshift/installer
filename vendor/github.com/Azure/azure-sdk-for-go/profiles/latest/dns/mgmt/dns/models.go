@@ -1,6 +1,6 @@
 // +build go1.9
 
-// Copyright 2020 Microsoft Corporation
+// Copyright 2021 Microsoft Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -94,8 +94,8 @@ func New(subscriptionID string) BaseClient {
 func NewRecordSetListResultIterator(page RecordSetListResultPage) RecordSetListResultIterator {
 	return original.NewRecordSetListResultIterator(page)
 }
-func NewRecordSetListResultPage(getNextPage func(context.Context, RecordSetListResult) (RecordSetListResult, error)) RecordSetListResultPage {
-	return original.NewRecordSetListResultPage(getNextPage)
+func NewRecordSetListResultPage(cur RecordSetListResult, getNextPage func(context.Context, RecordSetListResult) (RecordSetListResult, error)) RecordSetListResultPage {
+	return original.NewRecordSetListResultPage(cur, getNextPage)
 }
 func NewRecordSetsClient(subscriptionID string) RecordSetsClient {
 	return original.NewRecordSetsClient(subscriptionID)
@@ -115,8 +115,8 @@ func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
 func NewZoneListResultIterator(page ZoneListResultPage) ZoneListResultIterator {
 	return original.NewZoneListResultIterator(page)
 }
-func NewZoneListResultPage(getNextPage func(context.Context, ZoneListResult) (ZoneListResult, error)) ZoneListResultPage {
-	return original.NewZoneListResultPage(getNextPage)
+func NewZoneListResultPage(cur ZoneListResult, getNextPage func(context.Context, ZoneListResult) (ZoneListResult, error)) ZoneListResultPage {
+	return original.NewZoneListResultPage(cur, getNextPage)
 }
 func NewZonesClient(subscriptionID string) ZonesClient {
 	return original.NewZonesClient(subscriptionID)

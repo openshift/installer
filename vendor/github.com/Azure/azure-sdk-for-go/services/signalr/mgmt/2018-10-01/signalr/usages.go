@@ -72,6 +72,11 @@ func (client UsagesClient) List(ctx context.Context, location string) (result Us
 	result.ul, err = client.ListResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "signalr.UsagesClient", "List", resp, "Failure responding to request")
+		return
+	}
+	if result.ul.hasNextLink() && result.ul.IsEmpty() {
+		err = result.NextWithContext(ctx)
+		return
 	}
 
 	return
@@ -108,7 +113,6 @@ func (client UsagesClient) ListSender(req *http.Request) (*http.Response, error)
 func (client UsagesClient) ListResponder(resp *http.Response) (result UsageList, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
