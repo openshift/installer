@@ -12,7 +12,10 @@ the line number of the error and the last three lines from the service's journal
 * A service adds an entry when a stage of the service starts. An example of a service stage
 is the cvo-bootstrap stage of the bootkube service. During that stage, the
 cluster-version-operator renders its manifests.
-* A service  adds an entry when a stage of the service ends. This is similar to the entry
+* A service adds an entry when a stage of the service ends. This is similar to the entry
+added when a service ends, including having a result and error information if applicable.
+* A service adds an entry when a pre- or post-command starts.
+* A service adds en entry when a pre- or post-command ends. This is similar to the entry
 added when a service ends, including having a result and error information if applicable.
 
 ##### Managing Service Records in a Service #####
@@ -41,8 +44,8 @@ source the same /usr/local/bin/bootstrap-service-record.sh script. It should als
 `PRE_COMMAND` or `POST_COMMAND` environment variable with a value that identifies the command.
 For example, kubelet.service has a pre-command of /usr/local/bin/kubelet-pause-image.sh. The
 kubelet-pause-image.sh script sets the `PRE_COMMAND` environment variable to "kubelet-pause-image"
-before sourcing the bootstrap-service-record.sh script. All of the entries for the pre-command
-will contain a `preCommand` field with the "kubelet-pause-image" value.
+before sourcing the bootstrap-service-record.sh script. The entries for the pre-command will
+contain a `preCommand` field with the "kubelet-pause-image" value.
 
 ###### Sample Script #######
 

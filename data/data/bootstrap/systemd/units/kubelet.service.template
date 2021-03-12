@@ -5,6 +5,7 @@ After=crio.service release-image.service
 
 [Service]
 Type=notify
+NotifyAccess=all
 ExecStartPre=/bin/mkdir --parents /etc/kubernetes/manifests
 ExecStartPre=/bin/mkdir --parents /etc/kubernetes/kubelet-plugins/volume/exec
 ExecStartPre=/usr/local/bin/kubelet-pause-image.sh

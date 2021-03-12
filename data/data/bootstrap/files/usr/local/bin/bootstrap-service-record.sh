@@ -2,27 +2,34 @@
 # This library provides a helper functions for recording when a service
 # and its stages start and end.
 
+###
+# When running as a pre- or post-command, set PRE_COMMAND or POST_COMMAND, respectively.
+# These must be set *prior* to sourcing this script.
+# PRE_COMMAND is the name identifying the pre-command being run.
+# POST_COMMAND is the name identifying the post-command being run.
+
 # SERVICE_RECORDS_DIR is the directory under which service records will be stored.
 SERVICE_RECORDS_DIR="${SERVICE_RECORDS_DIR:-/var/log/openshift/}"
 # SYSTEMD_UNIT_NAME is the name of the systemd unit for the service
 SYSTEMD_UNIT_NAME="$(ps -o unit= $$)"
 # SERVICE_NAME is the name of the service
 SERVICE_NAME="${SERVICE_NAME:-${SYSTEMD_UNIT_NAME%.service}}"
-# STAGE_NAME is the name of the current stage in the service
-STAGE_NAME=""
-
 
 # add_service_record_entry adds a record entry to the service records file.
-#   PHASE - phase being recorded; one of "start", "end", "stage start", or "stage end"
+#   PHASE - phase being recorded; one of "service start", "service end", "stage start", "stage end", "pre-command start",
+#           "pre-command end", "post-command start", "post-command end"
 #   RESULT - result of the action
-#   MESSAGE - message giving more detail about the result of the action
+#   STAGE (optional) - stage of the service
+#   PRE_COMMAND (optional) - name of the pre-command
+#   POST_COMMAND (optional) - name of the post-command
+#   ERROR_LINE (optional) - line where the error occurred
+#   ERROR_MESSAGE (optional) - message for the error
 add_service_record_entry() {
   local FILENAME="${SERVICE_RECORDS_DIR}/${SERVICE_NAME}.json"
   mkdir --parents $(dirname "${FILENAME}")
   # Append the new entry to the existing array in the file.
   # If the file does not already exist, start with an empty array.
-  # The new entry contains only the fields that have non-empty values, since the
-  # stage, result, error line, and error message are all optional.
+  # The new entry contains only the fields that have non-empty values, to omit optional values that were not provided.
   ([ -f "${FILENAME}" ] && cat "${FILENAME}" || echo '[]') | \
       jq \
         --arg timestamp "$(date +"%Y-%m-%dT%H:%M:%SZ")" \
@@ -43,7 +50,15 @@ add_service_record_entry() {
 
 # record_service_start() records the start of a service.
 record_service_start() {
-  local PHASE="start"
+  if [ "${PRE_COMMAND-}" ]
+  then
+    local PHASE="pre-command start"
+  elif [ "${POST_COMMAND-}" ]
+  then
+    local PHASE="post-command start"
+  else
+    local PHASE="service start"
+  fi
 
   add_service_record_entry
 }
@@ -52,7 +67,15 @@ record_service_start() {
 #   ERROR_LINE - line where the error occurred, if there was an error
 #   ERROR_MESSAGE - error message, if there was an error
 record_service_end() {
-  local PHASE="end"
+  if [ "${PRE_COMMAND-}" ]
+  then
+    local PHASE="pre-command end"
+  elif [ "${POST_COMMAND-}" ]
+  then
+    local PHASE="post-command end"
+  else
+    local PHASE="service end"
+  fi
   local RESULT=${1:?Must specify a result}
 
   add_service_record_entry
@@ -60,7 +83,7 @@ record_service_end() {
 
 # record_service_stage_start(stage_name) records the start of a stage of a service.
 record_service_stage_start() {
-  if [ -n "${STAGE_NAME}" ]
+  if [ "${STAGE_NAME-}" ]
   then
     echo "attempt to record the start of a stage without ending the previous one"
     exit 1
@@ -76,7 +99,7 @@ record_service_stage_start() {
 #   ERROR_LINE - line where the error occurred, if there was an error
 #   ERROR_MESSAGE - error message, if there was an error
 record_service_stage_end() {
-  if [ -z "${STAGE_NAME}" ]
+  if [ -z "${STAGE_NAME-}" ]
   then
     echo "attempt to record the end of a stage without starting one"
     exit 1
@@ -113,7 +136,7 @@ record_service_exit() {
     get_error_info ERROR_LINE ERROR_MESSAGE
   fi
 
-  if [ -n "${STAGE_NAME}" ]
+  if [ "${STAGE_NAME-}" ]
   then
     record_service_stage_end "${RESULT}"
   fi
