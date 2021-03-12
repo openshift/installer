@@ -47,6 +47,8 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 
 **NOTE:** The bootstrap node follows the `type`, `rootVolume`, `additionalNetworkIDs`, and `additionalSecurityGroupIDs` parameters from the `controlPlane` machine pool.
 
+**NOTE:** If rootVolume is used, the Glance image for RHCOS will have to be uploaded in QCOW2 format so it can be converted to be a volume in Cinder. If it's not in this format (e.g. RAW instead), conversion might fail during the deployment and the volumes will be in `error` state.
+
 **NOTE:** Note when deploying with `Kuryr` there is an Octavia API loadbalancer VM that will not fulfill the Availability Zones restrictions due to Octavia lack of support for it. In addition, if Octavia only has the amphora provider instead of also the OVN-Octavia provider, all the OpenShift services will be backed up by Octavia Load Balancer VMs which will not fulfill the Availability Zone restrictions either.
 
 
