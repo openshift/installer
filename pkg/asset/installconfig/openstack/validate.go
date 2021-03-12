@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,17 +25,22 @@ func Validate(ic *types.InstallConfig) error {
 
 	allErrs := field.ErrorList{}
 
+	// Validate platform platform
 	allErrs = append(allErrs, validation.ValidatePlatform(ic.Platform.OpenStack, ic.Networking, ci)...)
-	if ic.ControlPlane.Platform.OpenStack != nil {
-		allErrs = append(allErrs, validation.ValidateMachinePool(ic.ControlPlane.Platform.OpenStack, ci, true, field.NewPath("controlPlane", "platform", "openstack"))...)
-	}
-	for idx, compute := range ic.Compute {
+
+	// Validate control plane
+	controlPlane := defaultOpenStackMachinePoolPlatform()
+	controlPlane.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
+	controlPlane.Set(ic.ControlPlane.Platform.OpenStack)
+	allErrs = append(allErrs, validation.ValidateMachinePool(&controlPlane, ci, true, field.NewPath("controlPlane", "platform", "openstack"))...)
+
+	// Validate computes
+	for idx := range ic.Compute {
+		compute := defaultOpenStackMachinePoolPlatform()
+		compute.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
+		compute.Set(ic.Compute[idx].Platform.OpenStack)
 		fldPath := field.NewPath("compute").Index(idx)
-		if compute.Platform.OpenStack != nil {
-			allErrs = append(
-				allErrs,
-				validation.ValidateMachinePool(compute.Platform.OpenStack, ci, false, fldPath.Child("platform", "openstack"))...)
-		}
+		allErrs = append(allErrs, validation.ValidateMachinePool(&compute, ci, false, fldPath.Child("platform", "openstack"))...)
 	}
 
 	return allErrs.ToAggregate()
@@ -46,4 +52,10 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 		return field.Invalid(field.NewPath("controlPlane", "replicas"), ic.ControlPlane.Replicas, "control plane cannot be more than three nodes when provisioning on OpenStack")
 	}
 	return nil
+}
+
+func defaultOpenStackMachinePoolPlatform() openstack.MachinePool {
+	return openstack.MachinePool{
+		Zones: []string{""},
+	}
 }
