@@ -26,7 +26,7 @@ SERVICE_NAME="${SERVICE_NAME:-${SYSTEMD_UNIT_NAME%.service}}"
 #   ERROR_MESSAGE (optional) - message for the error
 add_service_record_entry() {
   local FILENAME="${SERVICE_RECORDS_DIR}/${SERVICE_NAME}.json"
-  mkdir --parents $(dirname "${FILENAME}")
+  mkdir --parents "$(dirname "${FILENAME}")"
   # Append the new entry to the existing array in the file.
   # If the file does not already exist, start with an empty array.
   # The new entry contains only the fields that have non-empty values, to omit optional values that were not provided.
@@ -147,7 +147,9 @@ record_service_exit() {
 get_error_info() {
   local -n error_line=$1
   local -n error_message=$2
+  # shellcheck disable=SC2034  # variable used indirectly
   error_line="$(caller 1)"
+  # shellcheck disable=SC2034  # variable used indirectly
   error_message="$(journalctl --unit="${SYSTEMD_UNIT_NAME}" --lines=3 --output=cat)"
 }
 

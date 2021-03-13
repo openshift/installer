@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC1091  # using path on bootstrap machine
 . /usr/local/bin/bootstrap-service-record.sh
 
 KUBECONFIG="${1}"

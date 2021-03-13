@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC1091  # using path on bootstrap machine
 . /usr/local/bin/bootstrap-service-record.sh
 
 /usr/bin/hyperkube \
@@ -7,7 +8,7 @@
     --anonymous-auth=false \
     --container-runtime=remote \
     --container-runtime-endpoint=/var/run/crio/crio.sock \
-    --runtime-request-timeout=${KUBELET_RUNTIME_REQUEST_TIMEOUT} \
+    --runtime-request-timeout="${KUBELET_RUNTIME_REQUEST_TIMEOUT}" \
     --pod-manifest-path=/etc/kubernetes/manifests \
     --minimum-container-ttl-duration=6m0s \
     --cluster-domain=cluster.local \
@@ -15,4 +16,4 @@
     --serialize-image-pulls=false \
     --v=2 \
     --volume-plugin-dir=/etc/kubernetes/kubelet-plugins/volume/exec \
-    --pod-infra-container-image=${MACHINE_CONFIG_INFRA_IMAGE}
+    --pod-infra-container-image="${MACHINE_CONFIG_INFRA_IMAGE}"
