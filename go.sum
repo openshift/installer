@@ -686,6 +686,8 @@ github.com/gophercloud/gophercloud v0.7.1-0.20191210042042-7aa2e52d21f9/go.mod h
 github.com/gophercloud/gophercloud v0.12.0/go.mod h1:gmC5oQqMDOMO1t1gq5DquX/yAU808e/4mzjjDA76+Ss=
 github.com/gophercloud/gophercloud v0.15.1-0.20210202035223-633d73521055 h1:/wFA5WAzWcHNjpUs/Vuf4g2Sbv0wj3MUkZdeYgU4RkI=
 github.com/gophercloud/gophercloud v0.15.1-0.20210202035223-633d73521055/go.mod h1:wRtmUelyIIv3CSSDI47aUwbs075O6i+LY+pXsKCBsb4=
+github.com/gophercloud/gophercloud v0.16.1-0.20210311194000-69f51f2f086c h1:CbAMSN8mQ/SVUFk8zTXwM5thC6L2ZFvl95UPF5tLTS4=
+github.com/gophercloud/gophercloud v0.16.1-0.20210311194000-69f51f2f086c/go.mod h1:wRtmUelyIIv3CSSDI47aUwbs075O6i+LY+pXsKCBsb4=
 github.com/gophercloud/utils v0.0.0-20190124231947-9c3b9f2457ef/go.mod h1:wjDF8z83zTeg5eMLml5EBSlAhbF7G8DobyI1YsMuyzw=
 github.com/gophercloud/utils v0.0.0-20190313033024-0bcc8e728cb5/go.mod h1:SZ9FTKibIotDtCrxAU/evccoyu1yhKST6hgBvwTB5Eg=
 github.com/gophercloud/utils v0.0.0-20191129022341-463e26ffa30d/go.mod h1:SZ9FTKibIotDtCrxAU/evccoyu1yhKST6hgBvwTB5Eg=

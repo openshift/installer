@@ -1,6 +1,12 @@
 package quotas
 
-import "github.com/gophercloud/gophercloud"
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+
+	"github.com/gophercloud/gophercloud"
+)
 
 type commonResult struct {
 	gophercloud.Result
@@ -127,4 +133,41 @@ type QuotaDetail struct {
 	// Limit is the maximum number of a given resource that can be
 	// allocated/provisioned.  This is what "quota" usually refers to.
 	Limit int `json:"limit"`
+}
+
+// UnmarshalJSON overrides the default unmarshalling function to accept
+// Reserved as a string.
+//
+// Due to a bug in Neutron, under some conditions Reserved is returned as a
+// string.
+//
+// This method is left for compatibility with unpatched versions of Neutron.
+//
+// cf. https://bugs.launchpad.net/neutron/+bug/1918565
+func (q *QuotaDetail) UnmarshalJSON(b []byte) error {
+	type tmp QuotaDetail
+	var s struct {
+		tmp
+		Reserved interface{} `json:"reserved"`
+	}
+
+	err := json.Unmarshal(b, &s)
+	if err != nil {
+		return err
+	}
+
+	*q = QuotaDetail(s.tmp)
+
+	switch t := s.Reserved.(type) {
+	case float64:
+		q.Reserved = int(t)
+	case string:
+		if q.Reserved, err = strconv.Atoi(t); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("reserved has unexpected type: %T", t)
+	}
+
+	return nil
 }
