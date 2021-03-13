@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/gather/service"
 	"github.com/openshift/installer/pkg/gather/ssh"
 	"github.com/openshift/installer/pkg/terraform"
 	gatheraws "github.com/openshift/installer/pkg/terraform/gather/aws"
@@ -52,7 +53,7 @@ func newGatherCmd() *cobra.Command {
 		Short: "Gather debugging data for a given installation failure",
 		Long: `Gather debugging data for a given installation failure.
 
-When installation for Openshift cluster fails, gathering all the data useful for debugging can
+When installation for OpenShift cluster fails, gathering all the data useful for debugging can
 become a difficult task. This command helps users to collect the most relevant information that can be used
 to debug the installation failures`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -65,9 +66,10 @@ to debug the installation failures`,
 
 var (
 	gatherBootstrapOpts struct {
-		bootstrap string
-		masters   []string
-		sshKeys   []string
+		bootstrap    string
+		masters      []string
+		sshKeys      []string
+		skipAnalysis bool
 	}
 )
 
@@ -79,38 +81,44 @@ func newGatherBootstrapCmd() *cobra.Command {
 		Run: func(_ *cobra.Command, _ []string) {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
-			err := runGatherBootstrapCmd(rootOpts.dir)
+			bundlePath, err := runGatherBootstrapCmd(rootOpts.dir)
 			if err != nil {
 				logrus.Fatal(err)
+			}
+			if !gatherBootstrapOpts.skipAnalysis {
+				if err := service.AnalyzeGatherBundle(bundlePath); err != nil {
+					logrus.Fatal(err)
+				}
 			}
 		},
 	}
 	cmd.PersistentFlags().StringVar(&gatherBootstrapOpts.bootstrap, "bootstrap", "", "Hostname or IP of the bootstrap host")
 	cmd.PersistentFlags().StringArrayVar(&gatherBootstrapOpts.masters, "master", []string{}, "Hostnames or IPs of all control plane hosts")
 	cmd.PersistentFlags().StringArrayVar(&gatherBootstrapOpts.sshKeys, "key", []string{}, "Path to SSH private keys that should be used for authentication. If no key was provided, SSH private keys from user's environment will be used")
+	cmd.PersistentFlags().BoolVar(&gatherBootstrapOpts.skipAnalysis, "skipAnalysis", false, "Skip analysis of the gathered data")
 	return cmd
 }
 
-func runGatherBootstrapCmd(directory string) error {
+func runGatherBootstrapCmd(directory string) (string, error) {
 	assetStore, err := assetstore.NewStore(directory)
 	if err != nil {
-		return errors.Wrap(err, "failed to create asset store")
+		return "", errors.Wrap(err, "failed to create asset store")
 	}
 	// add the default bootstrap key pair to the sshKeys list
 	bootstrapSSHKeyPair := &tls.BootstrapSSHKeyPair{}
 	if err := assetStore.Fetch(bootstrapSSHKeyPair); err != nil {
-		return errors.Wrapf(err, "failed to fetch %s", bootstrapSSHKeyPair.Name())
+		return "", errors.Wrapf(err, "failed to fetch %s", bootstrapSSHKeyPair.Name())
 	}
 	tmpfile, err := ioutil.TempFile("", "bootstrap-ssh")
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer os.Remove(tmpfile.Name())
 	if _, err := tmpfile.Write(bootstrapSSHKeyPair.Private()); err != nil {
-		return err
+		return "", err
 	}
 	if err := tmpfile.Close(); err != nil {
-		return err
+		return "", err
 	}
 	gatherBootstrapOpts.sshKeys = append(gatherBootstrapOpts.sshKeys, tmpfile.Name())
 
@@ -120,17 +128,17 @@ func runGatherBootstrapCmd(directory string) error {
 		return unSupportedPlatformGather(directory)
 	}
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	config := &installconfig.InstallConfig{}
 	if err := assetStore.Fetch(config); err != nil {
-		return errors.Wrapf(err, "failed to fetch %s", config.Name())
+		return "", errors.Wrapf(err, "failed to fetch %s", config.Name())
 	}
 
 	tfstate, err := terraform.ReadState(tfStateFilePath)
 	if err != nil {
-		return errors.Wrapf(err, "failed to read state from %q", tfStateFilePath)
+		return "", errors.Wrapf(err, "failed to read state from %q", tfStateFilePath)
 	}
 	bootstrap, port, masters, err := extractHostAddresses(config.Config, tfstate)
 	if err != nil {
@@ -138,36 +146,36 @@ func runGatherBootstrapCmd(directory string) error {
 			logrus.Error(err2)
 			return unSupportedPlatformGather(directory)
 		}
-		return errors.Wrapf(err, "failed to get bootstrap and control plane host addresses from %q", tfStateFilePath)
+		return "", errors.Wrapf(err, "failed to get bootstrap and control plane host addresses from %q", tfStateFilePath)
 	}
 
 	return logGatherBootstrap(bootstrap, port, masters, directory)
 }
 
-func logGatherBootstrap(bootstrap string, port int, masters []string, directory string) error {
+func logGatherBootstrap(bootstrap string, port int, masters []string, directory string) (string, error) {
 	logrus.Info("Pulling debug logs from the bootstrap machine")
 	client, err := ssh.NewClient("core", net.JoinHostPort(bootstrap, strconv.Itoa(port)), gatherBootstrapOpts.sshKeys)
 	if err != nil {
 		if errors.Is(err, syscall.ECONNREFUSED) {
-			return errors.Wrap(err, "failed to connect to the bootstrap machine")
+			return "", errors.Wrap(err, "failed to connect to the bootstrap machine")
 		}
-		return errors.Wrap(err, "failed to create SSH client")
+		return "", errors.Wrap(err, "failed to create SSH client")
 	}
 
 	gatherID := time.Now().Format("20060102150405")
 	if err := ssh.Run(client, fmt.Sprintf("/usr/local/bin/installer-gather.sh --id %s %s", gatherID, strings.Join(masters, " "))); err != nil {
-		return errors.Wrap(err, "failed to run remote command")
+		return "", errors.Wrap(err, "failed to run remote command")
 	}
 	file := filepath.Join(directory, fmt.Sprintf("log-bundle-%s.tar.gz", gatherID))
 	if err := ssh.PullFileTo(client, fmt.Sprintf("/home/core/log-bundle-%s.tar.gz", gatherID), file); err != nil {
-		return errors.Wrap(err, "failed to pull log file from remote")
+		return "", errors.Wrap(err, "failed to pull log file from remote")
 	}
 	path, err := filepath.Abs(file)
 	if err != nil {
-		return errors.Wrap(err, "failed to stat log file")
+		return "", errors.Wrap(err, "failed to stat log file")
 	}
 	logrus.Infof("Bootstrap gather logs captured here %q", path)
-	return nil
+	return path, nil
 }
 
 func extractHostAddresses(config *types.InstallConfig, tfstate *terraform.State) (bootstrap string, port int, masters []string, err error) {
@@ -266,9 +274,9 @@ func (e errUnSupportedGatherPlatform) Error() string {
 	return e.Message
 }
 
-func unSupportedPlatformGather(directory string) error {
+func unSupportedPlatformGather(directory string) (string, error) {
 	if gatherBootstrapOpts.bootstrap == "" || len(gatherBootstrapOpts.masters) == 0 {
-		return errors.New("bootstrap host address and at least one control plane host address must be provided")
+		return "", errors.New("bootstrap host address and at least one control plane host address must be provided")
 	}
 
 	return logGatherBootstrap(gatherBootstrapOpts.bootstrap, 22, gatherBootstrapOpts.masters, directory)

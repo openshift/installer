@@ -32,6 +32,7 @@ import (
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
+	"github.com/openshift/installer/pkg/gather/service"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
@@ -115,11 +116,15 @@ var (
 					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
 					}
-					if err2 := runGatherBootstrapCmd(rootOpts.dir); err2 != nil {
+					bundlePath, err2 := runGatherBootstrapCmd(rootOpts.dir)
+					if err2 != nil {
 						logrus.Error("Attempted to gather debug logs after installation failure: ", err2)
 					}
 					logrus.Error("Bootstrap failed to complete: ", err.Unwrap())
 					logrus.Error(err.Error())
+					if err2 := service.AnalyzeGatherBundle(bundlePath); err2 != nil {
+						logrus.Error("Attempted to analyze the debug logs after installation failure: ", err2)
+					}
 					logrus.Fatal("Bootstrap failed to complete")
 				}
 				timer.StopTimer("Bootstrap Complete")
