@@ -1,5 +1,10 @@
 locals {
-  labels = var.gcp_extra_labels
+  labels = merge(
+    {
+      "kubernetes-io-cluster-${var.cluster_id}" = "owned"
+    },
+    var.gcp_extra_labels,
+  )
 
   master_subnet_cidr = cidrsubnet(var.machine_v4_cidrs[0], 3, 0) #master subnet is a smaller subnet within the vnet. i.e from /21 to /24
   worker_subnet_cidr = cidrsubnet(var.machine_v4_cidrs[0], 3, 1) #worker subnet is a smaller subnet within the vnet. i.e from /21 to /24
