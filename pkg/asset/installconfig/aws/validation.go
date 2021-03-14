@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/url"
 	"sort"
 
 	"github.com/aws/aws-sdk-go/aws/endpoints"
@@ -62,9 +63,7 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 	if len(platform.Subnets) > 0 {
 		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("subnets"), platform.Subnets, networking, publish)...)
 	}
-	if err := validateServiceEndpoints(fldPath.Child("serviceEndpoints"), platform.Region, platform.ServiceEndpoints); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceEndpoints"), platform.ServiceEndpoints, err.Error()))
-	}
+	allErrs = append(allErrs, validateServiceEndpoints(fldPath.Child("serviceEndpoints"), platform.Region, platform.ServiceEndpoints)...)
 	if platform.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("defaultMachinePlatform"), platform, platform.DefaultMachinePlatform, controlPlaneReq)...)
 	}
@@ -210,9 +209,32 @@ func validateDuplicateSubnetZones(fldPath *field.Path, subnets map[string]Subnet
 	return allErrs
 }
 
-func validateServiceEndpoints(fldPath *field.Path, region string, services []awstypes.ServiceEndpoint) error {
+func validateServiceEndpoints(fldPath *field.Path, region string, services []awstypes.ServiceEndpoint) field.ErrorList {
+	allErrs := field.ErrorList{}
+	// For each provided service endpoint, verify we can resolve and connect with net.Dial.
+	for id, service := range services {
+		// Ignore e2e.local from unit tests.
+		if service.URL == "e2e.local" {
+			continue
+		}
+		URL, err := url.Parse(service.URL)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(id).Child("url"), service.URL, err.Error()))
+			continue
+		}
+		port := URL.Port()
+		if port == "" {
+			port = "https"
+		}
+		conn, err := net.Dial("tcp", net.JoinHostPort(URL.Hostname(), port))
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(id).Child("url"), service.URL, err.Error()))
+			continue
+		}
+		conn.Close()
+	}
 	if isAWSSDKRegion(region) {
-		return nil
+		return allErrs
 	}
 
 	resolver := newAWSResolver(region, services)
@@ -223,7 +245,11 @@ func validateServiceEndpoints(fldPath *field.Path, region string, services []aws
 			errs = append(errs, errors.Wrapf(err, "failed to find endpoint for service %q", service))
 		}
 	}
-	return utilerrors.NewAggregate(errs)
+	if err := utilerrors.NewAggregate(errs); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, services, err.Error()))
+	}
+
+	return allErrs
 }
 
 func isAWSSDKRegion(region string) bool {
