@@ -119,6 +119,9 @@ func Test_PrintFields(t *testing.T) {
     defaultMachinePlatform <object>
       DefaultMachinePlatform is the default configuration used when installing on AWS for machine pools which do not define their own platform configuration.
 
+    experimentalPropagateUserTags <boolean>
+      ExperimentalPropagateUserTags is an experimental flag that directs in-cluster operators to include the specified user tags in the tags of the AWS resources that the operators create.
+
     region <string> -required-
       Region specifies the AWS region where the cluster will be created.
 
