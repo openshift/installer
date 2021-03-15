@@ -14,13 +14,13 @@ Create a public route53 zone using this [guide][aws-create-public-route53-zone].
 
 Setup `default` AWS cli profile on the host that will run the example terraform scripts using this [guide][aws-cli-configure-creds]
 
-### Packet
+### Equinix
 
-Setup a Project in Packet.net that will be used to deploy servers, for example using this [guide][packet-deploy-server]
+Setup a Project in Equinix.com that will be used to deploy servers, for example using this [guide][equinix-deploy-server]
 
-Setup API keys for your Project in Packet.net using this [guide][packet-api-keys]
+Setup API keys for your Project in Equinix.com using this [guide][equinix-api-keys]
 
-Store the API keys in `PACKET_AUTH_TOKEN` so that `terraform-provide-packet` can use it to deploy servers in the project. For more info see [this][terraform-provider-packet-auth]
+Store the API keys in `PACKET_AUTH_TOKEN` so that `terraform-provide-metal` can use it to deploy servers in the project. For more info see [this][terraform-provider-metal-auth]
 
 #### Terraform
 
@@ -43,8 +43,8 @@ terraform-examples config.tf > terraform.tfvars.example
 [aws-cli-configure-creds]: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html
 [aws-create-public-route53-zone]: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html
 [coreos-matchbox-getting-started]: https://matchbox.psdn.io/getting-started/
-[packet-api-keys]: https://www.packet.com/developers/changelog/project-only-api-keys/
-[packet-deploy-server]: https://support.packet.com/kb/articles/deploy-a-server
+[equinix-api-keys]: https://metal.equinix.com/developers/docs/accounts/users/
+[equinix-deploy-server]: https://metal.equinix.com/developers/docs/deploy/
 [terraform-examples]: https://github.com/s-urbaniak/terraform-examples#terraform-examples
 [terraform-getting-started]: https://learn.hashicorp.com/terraform/getting-started/install.html
-[terraform-provider-packet-auth]: https://www.terraform.io/docs/providers/packet/index.html#auth_token
+[terraform-provider-metal-auth]: https://registry.terraform.io/providers/equinix/metal/latest/docs#auth_token

@@ -22,18 +22,18 @@ variable "igntion_config_content" {
   type = string
 }
 
-variable "packet_facility" {
+variable "metal_facility" {
   type = string
 }
 
-variable "packet_project_id" {
+variable "metal_project_id" {
   type = string
 }
 
-variable "packet_plan" {
+variable "metal_plan" {
   type = string
 }
 
-variable "packet_hardware_reservation_id" {
+variable "metal_hardware_reservation_id" {
   type = string
 }

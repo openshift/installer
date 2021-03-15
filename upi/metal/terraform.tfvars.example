@@ -39,18 +39,18 @@ matchbox_rpc_endpoint = ""
 // Certificate Authority certificate to trust the matchbox endpoint.
 matchbox_trusted_ca_cert = "matchbox/tls/ca.crt"
 
-// The Project ID for Packet.net where servers will be deployed.
-packet_project_id = ""
+// The Project ID for Equinix.com where servers will be deployed.
+metal_project_id = ""
 
-// The Packet.Net device plan slug.
-packet_plan = "c1.small.x86"
+// The Equinix.com device plan slug.
+metal_plan = "c1.small.x86"
 
-// The Packet.Net facilities code(s) to be used.
-packet_facility = "any"
+// The Equinix.com facilities code(s) to be used.
+metal_facility = "any"
 
-// The UUID of the hardware reservation where you want this device deployed on Packet.net.
+// The UUID of the hardware reservation where you want this device deployed on Equinix.com.
 // The value "next-available" can also be used instead of a specific UUID. 
-packet_hardware_reservation_id = ""
+metal_hardware_reservation_id = ""
 
 // The name of the public route53 zone that should be used to create DNS records for the cluster.
 public_r53_zone = ""

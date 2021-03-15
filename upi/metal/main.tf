@@ -91,37 +91,37 @@ resource "matchbox_group" "worker" {
   }
 }
 
-# ================PACKET=====================
+# ================METAL=====================
 
-provider "packet" {
-  version = "3.2.0"
+provider "metal" {
+  version = "1.0.0"
 }
 
-resource "packet_device" "masters" {
+resource "metal_device" "masters" {
   count                   = var.master_count
   hostname                = "master-${count.index}.${var.cluster_domain}"
-  plan                    = var.packet_plan
-  facilities              = [var.packet_facility]
+  plan                    = var.metal_plan
+  facilities              = [var.metal_facility]
   operating_system        = "custom_ipxe"
   ipxe_script_url         = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=master"
   billing_cycle           = "hourly"
-  project_id              = var.packet_project_id
-  //hardware_reservation_id = var.packet_hardware_reservation_id
+  project_id              = var.metal_project_id
+  //hardware_reservation_id = var.metal_hardware_reservation_id
   hardware_reservation_id = ""
 
   depends_on = [matchbox_group.master]
 }
 
-resource "packet_device" "workers" {
+resource "metal_device" "workers" {
   count                   = var.worker_count
   hostname                = "worker-${count.index}.${var.cluster_domain}"
-  plan                    = var.packet_plan
-  facilities              = [var.packet_facility]
+  plan                    = var.metal_plan
+  facilities              = [var.metal_facility]
   operating_system        = "custom_ipxe"
   ipxe_script_url         = "${var.matchbox_http_endpoint}/ipxe?cluster_id=${var.cluster_id}&role=worker"
   billing_cycle           = "hourly"
-  project_id              = var.packet_project_id
-  //hardware_reservation_id = var.packet_hardware_reservation_id
+  project_id              = var.metal_project_id
+  //hardware_reservation_id = var.metal_hardware_reservation_id
   hardware_reservation_id = ""
 
   depends_on = [matchbox_group.worker]
@@ -143,12 +143,12 @@ module "bootstrap" {
 
   cluster_id = var.cluster_id
 
-  packet_facility   = var.packet_facility
-  packet_project_id = var.packet_project_id
-  packet_plan       = var.packet_plan
+  metal_facility   = var.metal_facility
+  metal_project_id = var.metal_project_id
+  metal_plan       = var.metal_plan
 
-  //packet_hardware_reservation_id = var.packet_hardware_reservation_id
-  packet_hardware_reservation_id = ""
+  //metal_hardware_reservation_id = var.metal_hardware_reservation_id
+  metal_hardware_reservation_id = ""
 }
 
 # ================AWS=====================
@@ -158,10 +158,10 @@ provider aws {
 }
 
 locals {
-  master_public_ipv4_networks = flatten(packet_device.masters.*.network)
+  master_public_ipv4_networks = flatten(metal_device.masters.*.network)
   master_public_ipv4          = data.template_file.master_ips.*.rendered
 
-  worker_public_ipv4_networks = flatten(packet_device.workers.*.network)
+  worker_public_ipv4_networks = flatten(metal_device.workers.*.network)
   worker_public_ipv4          = data.template_file.worker_ips.*.rendered
   ctrp_records                = compact(concat(var.bootstrap_dns ? [module.bootstrap.device_ip] : [], local.master_public_ipv4))
 }
