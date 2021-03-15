@@ -436,7 +436,9 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 		})
 	}
 	if platform.VSphere != nil {
-		validate(vsphere.Name, platform.VSphere, func(f *field.Path) field.ErrorList { return vspherevalidation.ValidatePlatform(platform.VSphere, f) })
+		validate(vsphere.Name, platform.VSphere, func(f *field.Path) field.ErrorList {
+			return vspherevalidation.ValidatePlatform(platform.VSphere, c.Networking, f)
+		})
 	}
 	if platform.BareMetal != nil {
 		validate(baremetal.Name, platform.BareMetal, func(f *field.Path) field.ErrorList {
