@@ -40,7 +40,7 @@ resource "openstack_networking_subnet_v2" "nodes" {
 }
 
 resource "openstack_networking_port_v2" "masters" {
-  name        = "${var.cluster_id}-master-port-${count.index}"
+  name        = "${var.cluster_id}-master-${count.index}"
   count       = var.masters_count
   description = local.description
 
