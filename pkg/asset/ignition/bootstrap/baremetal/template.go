@@ -46,6 +46,9 @@ type TemplateData struct {
 
 	// BaremetalIntrospectionEndpointOverride contains the url for the baremetal introspection endpoint
 	BaremetalIntrospectionEndpointOverride string
+
+	// VIPsIpv6 bool determines whether the internal API VIP is served on IPv6
+	APIIntIPv6 bool
 }
 
 // GetTemplateData returns platform-specific data for bootstrap templates.
@@ -92,6 +95,12 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 					templateData.ProvisioningCIDR = cidr
 				}
 			}
+		}
+	}
+
+	for _, network := range networks {
+		if network.CIDR.Contains(net.ParseIP(config.APIVIP)) {
+			templateData.APIIntIPv6 = network.CIDR.IP.To4() == nil
 		}
 	}
 
