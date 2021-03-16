@@ -9,6 +9,9 @@
     --container-runtime=remote \
     --container-runtime-endpoint=/var/run/crio/crio.sock \
     --runtime-request-timeout="${KUBELET_RUNTIME_REQUEST_TIMEOUT}" \
+{{- if .PlatformData.BareMetal.APIIntIPv6}}
+    --node-ip=:: \
+{{- end}}
     --pod-manifest-path=/etc/kubernetes/manifests \
     --minimum-container-ttl-duration=6m0s \
     --cluster-domain=cluster.local \
