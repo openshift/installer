@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"os"
 	"path"
 	"path/filepath"
@@ -75,6 +76,7 @@ type bootstrapTemplateData struct {
 	BootImage             string
 	PlatformData          platformTemplateData
 	BootstrapInPlace      *types.BootstrapInPlace
+	UseIPv6ForNodeIP      bool
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -261,6 +263,14 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		platformData.VSphere = vsphere.GetTemplateData(installConfig.Config.Platform.VSphere)
 	}
 
+	var APIIntVIPonIPv6 bool
+	platformAPIVIP := apiVIP(&installConfig.Config.Platform)
+	if platformAPIVIP == "" {
+		APIIntVIPonIPv6 = false
+	} else {
+		APIIntVIPonIPv6 = net.ParseIP(platformAPIVIP).To4() == nil
+	}
+
 	// Set cluster profile
 	clusterProfile := ""
 	if cp := os.Getenv("OPENSHIFT_INSTALL_EXPERIMENTAL_CLUSTER_PROFILE"); cp != "" {
@@ -284,6 +294,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		PlatformData:          platformData,
 		ClusterProfile:        clusterProfile,
 		BootstrapInPlace:      bootstrapInPlaceConfig,
+		UseIPv6ForNodeIP:      APIIntVIPonIPv6,
 	}
 }
 
@@ -611,5 +622,26 @@ func warnIfCertificatesExpired(config *igntypes.Config) {
 
 	if expiredCerts > 0 {
 		logrus.Warnf("Bootstrap Ignition-Config: %d certificates expired. Installation attempts with the created Ignition-Configs will possibly fail.", expiredCerts)
+	}
+}
+
+// APIVIP returns a string representation of the platform's API VIP
+// It returns an empty string if the platform does not configure a VIP
+func apiVIP(p *types.Platform) string {
+	switch {
+	case p == nil:
+		return ""
+	case p.BareMetal != nil:
+		return p.BareMetal.APIVIP
+	case p.OpenStack != nil:
+		return p.OpenStack.APIVIP
+	case p.VSphere != nil:
+		return p.VSphere.APIVIP
+	case p.Ovirt != nil:
+		return p.Ovirt.APIVIP
+	case p.Kubevirt != nil:
+		return p.Kubevirt.APIVIP
+	default:
+		return ""
 	}
 }
