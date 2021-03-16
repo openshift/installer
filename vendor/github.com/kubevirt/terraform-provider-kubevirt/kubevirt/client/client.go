@@ -99,7 +99,7 @@ func (c *client) GetVirtualMachine(namespace string, name string) (*kubevirtapiv
 
 func (c *client) UpdateVirtualMachine(namespace string, name string, vm *kubevirtapiv1.VirtualMachine, data []byte) error {
 	vmUpdateTypeMeta(vm)
-	return c.updateResource(namespace, name, dvRes(), vm, data)
+	return c.updateResource(namespace, name, vmRes(), vm, data)
 }
 
 func (c *client) DeleteVirtualMachine(namespace string, name string) error {

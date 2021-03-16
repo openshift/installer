@@ -336,8 +336,8 @@ func flattenNodeSelectorTerm(in api.NodeSelectorTerm) []interface{} {
 	return []interface{}{att}
 }
 
-func flattenNodeSelectorRequirementList(in []api.NodeSelectorRequirement) []map[string]interface{} {
-	att := make([]map[string]interface{}, len(in))
+func flattenNodeSelectorRequirementList(in []api.NodeSelectorRequirement) []interface{} {
+	att := make([]interface{}, len(in))
 	for i, v := range in {
 		m := map[string]interface{}{}
 		m["key"] = v.Key

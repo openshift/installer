@@ -52,7 +52,7 @@ func labelSelectorFields(updatable bool) map[string]*schema.Schema {
 func flattenLabelSelector(in *metav1.LabelSelector) []interface{} {
 	att := make(map[string]interface{})
 	if len(in.MatchLabels) > 0 {
-		att["match_labels"] = in.MatchLabels
+		att["match_labels"] = utils.FlattenStringMap(in.MatchLabels)
 	}
 	if len(in.MatchExpressions) > 0 {
 		att["match_expressions"] = flattenLabelSelectorRequirement(in.MatchExpressions)

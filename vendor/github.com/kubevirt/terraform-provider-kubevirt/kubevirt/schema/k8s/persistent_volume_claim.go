@@ -110,10 +110,10 @@ func FlattenPersistentVolumeClaimSpec(in v1.PersistentVolumeClaimSpec) []interfa
 func flattenResourceRequirements(in v1.ResourceRequirements) []interface{} {
 	att := make(map[string]interface{})
 	if len(in.Limits) > 0 {
-		att["limits"] = utils.FlattenResourceList(in.Limits)
+		att["limits"] = utils.FlattenStringMap(utils.FlattenResourceList(in.Limits))
 	}
 	if len(in.Requests) > 0 {
-		att["requests"] = utils.FlattenResourceList(in.Requests)
+		att["requests"] = utils.FlattenStringMap(utils.FlattenResourceList(in.Requests))
 	}
 	return []interface{}{att}
 }

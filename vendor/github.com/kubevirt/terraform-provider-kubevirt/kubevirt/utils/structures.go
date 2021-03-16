@@ -25,6 +25,17 @@ func BuildId(meta metav1.ObjectMeta) string {
 	return meta.Namespace + "/" + meta.Name
 }
 
+func FlattenStringMap(m map[string]string) map[string]interface{} {
+	if m == nil {
+		return nil
+	}
+	result := make(map[string]interface{})
+	for k, v := range m {
+		result[k] = v
+	}
+	return result
+}
+
 func ExpandStringMap(m map[string]interface{}) map[string]string {
 	result := make(map[string]string)
 	for k, v := range m {

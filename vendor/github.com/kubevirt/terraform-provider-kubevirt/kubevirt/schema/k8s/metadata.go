@@ -97,7 +97,12 @@ func namespacedMetadataSchemaIsTemplate(objectName string, generatableName, isTe
 		Description: fmt.Sprintf("Namespace defines the space within which name of the %s must be unique.", objectName),
 		Optional:    true,
 		ForceNew:    true,
-		Default:     utils.ConditionalDefault(!isTemplate, "default"),
+		Default: (func() interface{} {
+			if isTemplate {
+				return nil
+			}
+			return "default"
+		})(),
 	}
 	if generatableName {
 		fields["generate_name"] = &schema.Schema{
@@ -156,11 +161,11 @@ func ExpandMetadata(in []interface{}) metav1.ObjectMeta {
 
 func FlattenMetadata(meta metav1.ObjectMeta) []interface{} {
 	m := make(map[string]interface{})
-	m["annotations"] = meta.Annotations
+	m["annotations"] = utils.FlattenStringMap(meta.Annotations)
 	if meta.GenerateName != "" {
 		m["generate_name"] = meta.GenerateName
 	}
-	m["labels"] = meta.Labels
+	m["labels"] = utils.FlattenStringMap(meta.Labels)
 	m["name"] = meta.Name
 	m["resource_version"] = meta.ResourceVersion
 	m["self_link"] = meta.SelfLink

@@ -1,8 +1,6 @@
 package virtualmachine
 
 import (
-	"fmt"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/kubevirt/terraform-provider-kubevirt/kubevirt/schema/k8s"
 	"github.com/kubevirt/terraform-provider-kubevirt/kubevirt/utils/patch"
@@ -15,21 +13,6 @@ func VirtualMachineFields() map[string]*schema.Schema {
 		"spec":     virtualMachineSpecSchema(),
 		"status":   virtualMachineStatusSchema(),
 	}
-}
-
-func VirtualMachineSchema() *schema.Schema {
-	fields := VirtualMachineFields()
-
-	return &schema.Schema{
-		Type:        schema.TypeList,
-		Description: fmt.Sprintf("VirtualMachine provides a representation of our virtual machine."),
-		Required:    true,
-		MaxItems:    1,
-		Elem: &schema.Resource{
-			Schema: fields,
-		},
-	}
-
 }
 
 func ExpandVirtualMachine(virtualMachine []interface{}) (*kubevirtapiv1.VirtualMachine, error) {

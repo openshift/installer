@@ -71,7 +71,7 @@ func resourceKubevirtDataVolumeCreate(resourceData *schema.ResourceData, meta in
 			}
 
 			switch dv.Status.Phase {
-			case cdiv1.Succeeded:
+			case cdiv1.Succeeded, cdiv1.WaitForFirstConsumer:
 				return dv, "Succeeded", nil
 			case cdiv1.Failed:
 				return dv, "", fmt.Errorf("data volume failed to be created, finished with phase=\"failed\"")
