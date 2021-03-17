@@ -1174,22 +1174,33 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
-			name: "cluster is not heteregenous",
+			name: "architecture is not supported",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Compute[0].Architecture = types.ArchitectureS390X
+				c.ControlPlane.Architecture = types.ArchitectureS390X
 				return c
 			}(),
-			expectedError: `^compute\[0\].architecture: Invalid value: "s390x": heteregeneous multi-arch is not supported; compute pool architecture must match control plane$`,
+			expectedError: `[controlPlane.architecture: Unsupported value: "s390x": supported values: "amd64", "arm64", compute\[0\].architecture: Unsupported value: "s390x": supported values: "amd64", "arm64"]`,
+		},
+		{
+			name: "architecture is not supported",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute[0].Architecture = types.ArchitecturePPC64LE
+				c.ControlPlane.Architecture = types.ArchitecturePPC64LE
+				return c
+			}(),
+			expectedError: `[controlPlane.architecture: Unsupported value: "ppc64le": supported values: "amd64", "arm64", compute\[0\].architecture: Unsupported value: "ppc64le": supported values: "amd64", "arm64"]`,
 		},
 		{
 			name: "cluster is not heteregenous",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Compute[0].Architecture = types.ArchitecturePPC64LE
+				c.Compute[0].Architecture = types.ArchitectureARM64
 				return c
 			}(),
-			expectedError: `^compute\[0\].architecture: Invalid value: "ppc64le": heteregeneous multi-arch is not supported; compute pool architecture must match control plane$`,
+			expectedError: `^compute\[0\].architecture: Invalid value: "arm64": heteregeneous multi-arch is not supported; compute pool architecture must match control plane$`,
 		},
 		{
 			name: "valid cloud credentials mode",

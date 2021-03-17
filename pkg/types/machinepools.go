@@ -35,6 +35,8 @@ const (
 	ArchitectureS390X = "s390x"
 	// ArchitecturePPC64LE indicates ppc64 little endian (Power PC)
 	ArchitecturePPC64LE = "ppc64le"
+	// ArchitectureARM64 indicates arm (aarch64) systems
+	ArchitectureARM64 = "arm64"
 )
 
 // MachinePool is a pool of machines to be installed.
