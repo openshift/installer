@@ -10,7 +10,8 @@ resource "ovirt_vm" "master" {
   // if instance type is declared then memory is redundant. Since terraform
   // doesn't allow to condionally omit it, it must be passed.
   // The number passed is multiplied by 4 and becomes the maximum memory the VM can have.
-  memory = var.ovirt_master_instance_type_id != "" ? 16348 : var.ovirt_master_memory
+  memory          = var.ovirt_master_instance_type_id != "" ? 16348 : var.ovirt_master_memory
+  affinity_groups = var.ovirt_master_affinity_groups
 
   initialization {
     host_name     = "${var.cluster_id}-master-${count.index}"
@@ -21,6 +22,7 @@ resource "ovirt_vm" "master" {
     interface = "virtio_scsi"
     size      = var.ovirt_master_os_disk_size_gb
   }
+  depends_on = [var.ovirt_affinity_group_count]
 }
 
 resource "ovirt_tag" "cluster_tag" {
