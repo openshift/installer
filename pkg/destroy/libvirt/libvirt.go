@@ -123,8 +123,15 @@ func deleteDomainsSinglePass(conn *libvirt.Connect, filter filterFunc, logger lo
 				return false, errors.Wrapf(err, "destroy domain %q", dName)
 			}
 		}
-		if err := domain.Undefine(); err != nil {
-			return false, errors.Wrapf(err, "undefine domain %q", dName)
+		if err := domain.UndefineFlags(libvirt.DOMAIN_UNDEFINE_NVRAM); err != nil {
+			if e := err.(libvirt.Error); e.Code == libvirt.ERR_NO_SUPPORT || e.Code == libvirt.ERR_INVALID_ARG {
+				logger.WithField("domain", dName).Info("libvirt does not support undefine flags: will try again without flags")
+				if err := domain.Undefine(); err != nil {
+					return false, errors.Wrapf(err, "could not undefine libvirt domain: %q", dName)
+				}
+			} else {
+				return false, errors.Wrapf(err, "could not undefine libvirt domain %q with flags", dName)
+			}
 		}
 		logger.WithField("domain", dName).Info("Deleted domain")
 	}
