@@ -4,6 +4,7 @@ package ovirt
 import (
 	"fmt"
 
+	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 	machineapi "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,8 +12,6 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/ovirt"
-
-	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 )
 
 // Machines returns a list of machines for a machinepool.
@@ -29,7 +28,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider := provider(platform, pool, userDataSecret, osImage)
+	provider := provider(platform, pool, userDataSecret, clusterID, osImage)
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		machine := machineapi.Machine{
@@ -59,7 +58,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(platform *ovirt.Platform, pool *types.MachinePool, userDataSecret string, osImage string) *ovirtprovider.OvirtMachineProviderSpec {
+func provider(platform *ovirt.Platform, pool *types.MachinePool, userDataSecret string, clusterID string, osImage string) *ovirtprovider.OvirtMachineProviderSpec {
 	spec := ovirtprovider.OvirtMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "ovirtproviderconfig.machine.openshift.io/v1beta1",
@@ -73,6 +72,20 @@ func provider(platform *ovirt.Platform, pool *types.MachinePool, userDataSecret 
 		MemoryMB:          pool.Platform.Ovirt.MemoryMB,
 		VMType:            string(pool.Platform.Ovirt.VMType),
 	}
+	uniqueNewAG := make(map[string]ovirt.AffinityGroup)
+	for _, ag := range platform.AffinityGroups {
+		uniqueNewAG[ag.Name] = ag
+	}
+	ags := make([]string, len(pool.Platform.Ovirt.AffinityGroupsNames))
+	for i, agName := range pool.Platform.Ovirt.AffinityGroupsNames {
+		if _, ok := uniqueNewAG[agName]; ok {
+			// add the cluster name only if the affinity group is created by the installer
+			ags[i] = clusterID + "-" + agName
+		} else {
+			ags[i] = agName
+		}
+	}
+	spec.AffinityGroupsNames = ags
 	if pool.Platform.Ovirt.CPU != nil {
 		spec.CPU = &ovirtprovider.CPU{
 			Cores:   pool.Platform.Ovirt.CPU.Cores,

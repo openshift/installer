@@ -24,6 +24,11 @@ type MachinePool struct {
 	// +kubebuilder:validation:Enum="";desktop;server;high_performance
 	// +optional
 	VMType VMType `json:"vmType,omitempty"`
+
+	// AffinityGroupsNames contains a list of oVirt affinity group names that the newly created machines will join.
+	// The affinity groups should exist on the oVirt cluster or created by the OpenShift installer.
+	// +optional
+	AffinityGroupsNames []string `json:"affinityGroupsNames,omitempty"`
 }
 
 // Disk defines a VM disk
@@ -89,5 +94,9 @@ func (p *MachinePool) Set(required *MachinePool) {
 
 	if required.OSDisk != nil {
 		p.OSDisk = required.OSDisk
+	}
+
+	if len(required.AffinityGroupsNames) > 0 {
+		p.AffinityGroupsNames = required.AffinityGroupsNames
 	}
 }
