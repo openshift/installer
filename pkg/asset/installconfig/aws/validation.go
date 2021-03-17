@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	awsvalidation "github.com/openshift/installer/pkg/types/aws/validation"
 )
 
 type resourceRequirements struct {
@@ -80,8 +81,17 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 
 func validateAMI(ctx context.Context, config *types.InstallConfig) field.ErrorList {
 	// accept AMI from the rhcos stream metadata
-	if sets.NewString(rhcos.AMIRegions...).Has(config.Platform.AWS.Region) {
-		return nil
+	switch config.ControlPlane.Architecture {
+	case types.ArchitectureAMD64:
+		if sets.NewString(rhcos.AMIRegionsX86_64...).Has(config.Platform.AWS.Region) {
+			return nil
+		}
+	case types.ArchitectureARM64:
+		if sets.NewString(rhcos.AMIRegionsAARCH64...).Has(config.Platform.AWS.Region) {
+			return nil
+		}
+	default:
+		return field.ErrorList{field.NotSupported(field.NewPath("controlPlane", "architecture"), config.ControlPlane.Architecture, awsvalidation.ValidArchitectureValues)}
 	}
 
 	// accept AMI specified at the platform level
