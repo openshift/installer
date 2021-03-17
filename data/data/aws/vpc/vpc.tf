@@ -46,3 +46,27 @@ resource "aws_vpc_dhcp_options_association" "main" {
   vpc_id          = data.aws_vpc.cluster_vpc.id
   dhcp_options_id = aws_vpc_dhcp_options.main[0].id
 }
+
+resource "aws_ec2_tag" "new_vpc_default_network_acl" {
+  for_each = var.vpc == null ? var.tags : {}
+
+  resource_id = aws_vpc.new_vpc[0].default_network_acl_id
+  key         = each.key
+  value       = each.value
+}
+
+resource "aws_ec2_tag" "new_vpc_default_route_table" {
+  for_each = var.vpc == null ? var.tags : {}
+
+  resource_id = aws_vpc.new_vpc[0].default_route_table_id
+  key         = each.key
+  value       = each.value
+}
+
+resource "aws_ec2_tag" "new_vpc_default_security_group" {
+  for_each = var.vpc == null ? var.tags : {}
+
+  resource_id = aws_vpc.new_vpc[0].default_security_group_id
+  key         = each.key
+  value       = each.value
+}

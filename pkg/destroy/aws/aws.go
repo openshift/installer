@@ -753,6 +753,8 @@ func deleteEC2(ctx context.Context, session *session.Session, arn arn.ARN, logge
 		return deleteEC2SecurityGroup(ctx, client, id, logger)
 	case "snapshot":
 		return deleteEC2Snapshot(ctx, client, id, logger)
+	case "network-acl":
+		return deleteEC2NetworkACL(ctx, client, id, logger)
 	case "network-interface":
 		return deleteEC2NetworkInterface(ctx, client, id, logger)
 	case "subnet":
@@ -1179,6 +1181,37 @@ func deleteEC2Snapshot(ctx context.Context, client *ec2.EC2, id string, logger l
 	})
 	if err != nil {
 		if err.(awserr.Error).Code() == "InvalidSnapshot.NotFound" {
+			return nil
+		}
+		return err
+	}
+
+	logger.Info("Deleted")
+	return nil
+}
+
+func deleteEC2NetworkACL(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
+	out, err := client.DescribeNetworkAclsWithContext(ctx, &ec2.DescribeNetworkAclsInput{
+		NetworkAclIds: []*string{aws.String(id)},
+	})
+	if err != nil {
+		if err.(awserr.Error).Code() == "InvalidNetworkAclID.NotFound" {
+			return nil
+		}
+		return err
+	}
+	if len(out.NetworkAcls) == 0 {
+		return nil
+	}
+	if aws.BoolValue(out.NetworkAcls[0].IsDefault) {
+		logger.Debug("Skipping default network acl")
+		return nil
+	}
+
+	if _, err := client.DeleteNetworkAclWithContext(ctx, &ec2.DeleteNetworkAclInput{
+		NetworkAclId: aws.String(id),
+	}); err != nil {
+		if err.(awserr.Error).Code() == "InvalidNetworkAclID.NotFound" {
 			return nil
 		}
 		return err
