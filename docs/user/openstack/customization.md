@@ -43,6 +43,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `rootVolume` (optional object): Defines the root volume for instances in the machine pool. The instances use ephemeral disks if not set.
   * `size` (required integer): Size of the root volume in GB. Must be set to at least 25.
   * `type` (required string): The volume pool to create the volume from.
+  * `zones` (optional list of strings): The names of the availability zones you want to install your root volumes on. If unset, the installer will use your default volume zone.
 * `zones` (optional list of strings): The names of the availability zones you want to install your nodes on. If unset, the installer will use your default compute zone.
 
 **NOTE:** The bootstrap node follows the `type`, `rootVolume`, `additionalNetworkIDs`, and `additionalSecurityGroupIDs` parameters from the `controlPlane` machine pool.
