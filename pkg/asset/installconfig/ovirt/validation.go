@@ -5,6 +5,7 @@ import (
 
 	ovirtsdk "github.com/ovirt/go-ovirt"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/AlecAivazis/survey.v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -39,27 +40,108 @@ func Validate(ic *types.InstallConfig) error {
 			allErrs,
 			field.Invalid(ovirtPlatformPath.Child("vnicProfileID"), ic.Ovirt.VNICProfileID, err.Error()))
 	}
-
 	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Ovirt != nil {
 		allErrs = append(
 			allErrs,
-			validateMachinePool(con, field.NewPath("controlPlane", "platform", "ovirt"), ic.ControlPlane.Platform.Ovirt)...)
+			validateMachinePool(con, field.NewPath("controlPlane", "platform", "ovirt"), ic.ControlPlane.Platform.Ovirt, *ic.Ovirt)...)
 	}
 	for idx, compute := range ic.Compute {
 		fldPath := field.NewPath("compute").Index(idx)
 		if compute.Platform.Ovirt != nil {
 			allErrs = append(
 				allErrs,
-				validateMachinePool(con, fldPath.Child("platform", "ovirt"), compute.Platform.Ovirt)...)
+				validateMachinePool(con, fldPath.Child("platform", "ovirt"), compute.Platform.Ovirt, *ic.Ovirt)...)
 		}
 	}
+
+	allErrs = append(
+		allErrs,
+		validateAffinityGroups(ic, ovirtPlatformPath.Child("affinityGroups"), con)...)
 
 	return allErrs.ToAggregate()
 }
 
-func validateMachinePool(con *ovirtsdk.Connection, child *field.Path, pool *ovirt.MachinePool) field.ErrorList {
+func validateMachinePool(con *ovirtsdk.Connection, child *field.Path, pool *ovirt.MachinePool, platform ovirt.Platform) field.ErrorList {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, validateInstanceTypeID(con, child, pool)...)
+	allErrs = append(allErrs, validateMachineAffinityGroups(con, child, pool, platform)...)
+
+	return allErrs
+}
+
+// validateAffinityGroups validates that the affinity group definitions on all machinePools are valid
+// - Affinity group contains valid fields
+// - Affinity group doesn't already exist in the cluster
+// - oVirt cluster has sufficient resources to fulfil the affinity group constraints
+func validateAffinityGroups(ic *types.InstallConfig, fldPath *field.Path, con *ovirtsdk.Connection) field.ErrorList {
+	allErrs := field.ErrorList{}
+	allErrs = append(allErrs, validateExistingAffinityGroup(con, *ic.Ovirt, fldPath)...)
+	allErrs = append(allErrs, validateClusterResources(con, ic, fldPath)...)
+	return allErrs
+}
+
+// validateExistingAffinityGroup checks that there is no affinity group with the same name in the cluster
+func validateExistingAffinityGroup(con *ovirtsdk.Connection, platform ovirt.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	res, err := con.SystemService().ClustersService().
+		ClusterService(platform.ClusterID).AffinityGroupsService().List().Send()
+	if err != nil {
+		return append(
+			allErrs,
+			field.InternalError(
+				fldPath,
+				errors.Errorf("failed listing affinity groups for cluster %v", platform.ClusterID)))
+	}
+	for _, ag := range res.MustGroups().Slice() {
+		for _, agNew := range platform.AffinityGroups {
+			if ag.MustName() == agNew.Name {
+				allErrs = append(
+					allErrs,
+					field.Invalid(
+						fldPath,
+						ag,
+						fmt.Sprintf("affinity group %v already exist in cluster %v", agNew.Name, platform.ClusterID)))
+			}
+		}
+	}
+	return allErrs
+}
+
+func validateClusterResources(con *ovirtsdk.Connection, ic *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	mAgReplicas := make(map[string]int)
+	for _, agn := range ic.ControlPlane.Platform.Ovirt.AffinityGroupsNames {
+		mAgReplicas[agn] = mAgReplicas[agn] + int(*ic.ControlPlane.Replicas)
+	}
+	for _, compute := range ic.Compute {
+		for _, agn := range compute.Platform.Ovirt.AffinityGroupsNames {
+			mAgReplicas[agn] = mAgReplicas[agn] + int(*compute.Replicas)
+		}
+	}
+
+	clusterName, err := GetClusterName(con, ic.Ovirt.ClusterID)
+	if err != nil {
+		return append(allErrs, field.InternalError(fldPath, err))
+	}
+	hosts, err := FindHostsInCluster(con, clusterName)
+	if err != nil {
+		return append(allErrs, field.InternalError(fldPath, err))
+	}
+	for _, ag := range ic.Ovirt.AffinityGroups {
+		if _, found := mAgReplicas[ag.Name]; found {
+			if len(hosts) < mAgReplicas[ag.Name] {
+				msg := fmt.Sprintf("Affinity Group %v cannot be fulfilled, oVirt cluster doesn't"+
+					"have enough hosts: found %v hosts but %v replicas assigned to affinity group",
+					ag.Name, len(hosts), mAgReplicas[ag.Name])
+				if ag.Enforcing {
+					allErrs = append(allErrs, field.Invalid(fldPath, ag, msg))
+				} else {
+					logrus.Warning(msg)
+				}
+			}
+		}
+	}
 	return allErrs
 }
 
@@ -69,6 +151,41 @@ func validateInstanceTypeID(con *ovirtsdk.Connection, child *field.Path, machine
 		_, err := con.SystemService().InstanceTypesService().InstanceTypeService(machinePool.InstanceTypeID).Get().Send()
 		if err != nil {
 			allErrs = append(allErrs, field.NotFound(child.Child("instanceTypeID"), machinePool.InstanceTypeID))
+		}
+	}
+	return allErrs
+}
+
+// validateMachineAffinityGroups checks that the affinity groups on the machine object exist in the oVirt cluster
+// or created by the installer.
+func validateMachineAffinityGroups(con *ovirtsdk.Connection, child *field.Path, machinePool *ovirt.MachinePool, platform ovirt.Platform) field.ErrorList {
+	allErrs := field.ErrorList{}
+	existingAG := make(map[string]int)
+
+	res, err := con.SystemService().ClustersService().
+		ClusterService(platform.ClusterID).AffinityGroupsService().List().Send()
+	if err != nil {
+		return append(
+			allErrs,
+			field.InternalError(
+				child,
+				errors.Errorf("failed listing affinity groups for cluster %v", platform.ClusterID)))
+	}
+	for _, ag := range res.MustGroups().Slice() {
+		existingAG[ag.MustName()] = 0
+	}
+	// add affinity groups the installer creates
+	for _, ag := range platform.AffinityGroups {
+		existingAG[ag.Name] = 0
+	}
+	for _, ag := range machinePool.AffinityGroupsNames {
+		if _, ok := existingAG[ag]; !ok {
+			allErrs = append(
+				allErrs,
+				field.Invalid(
+					child.Child("affinityGroupsNames"), ag,
+					fmt.Sprintf(
+						"Affinity Group %v doesn't exist in oVirt cluster or created by the installer", ag)))
 		}
 	}
 	return allErrs

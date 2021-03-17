@@ -69,3 +69,30 @@ func FetchVNICProfileByClusterNetwork(con *ovirtsdk.Connection, clusterID string
 	}
 	return nil, fmt.Errorf("there are no vNic profiles for the given cluster ID %s and network name %s", clusterID, networkName)
 }
+
+// GetClusterName returns the name of the ovirt cluster with the specified Cluster ID
+func GetClusterName(con *ovirtsdk.Connection, clusterID string) (string, error) {
+	clusterResponse, err := con.SystemService().ClustersService().ClusterService(clusterID).Get().Send()
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch cluster %s (%w)", clusterID, err)
+	}
+	cluster, ok := clusterResponse.Cluster()
+	if !ok {
+		return "", fmt.Errorf("failed to find cluster with id %s", clusterID)
+	}
+	return cluster.MustName(), nil
+}
+
+// FindHostsInCluster returns a list of the hosts that exists in the specified cluster
+func FindHostsInCluster(con *ovirtsdk.Connection, cName string) ([]*ovirtsdk.Host, error) {
+	res, err := con.SystemService().HostsService().
+		List().Search(fmt.Sprintf("cluster=%s", cName)).Send()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch hosts for cluster %s (%w)", cName, err)
+	}
+	hosts, ok := res.Hosts()
+	if !ok {
+		return nil, fmt.Errorf("failed to find hosts in cluster %s", cName)
+	}
+	return hosts.Slice(), nil
+}

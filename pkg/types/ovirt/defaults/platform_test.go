@@ -11,6 +11,10 @@ import (
 func defaultPlatform() *ovirt.Platform {
 	return &ovirt.Platform{
 		NetworkName: DefaultNetworkName,
+		AffinityGroups: []ovirt.AffinityGroup{
+			defaultComputeAffinityGroup(),
+			defaultControlPlaneAffinityGroup(),
+		},
 	}
 }
 
