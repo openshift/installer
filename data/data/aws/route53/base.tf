@@ -15,7 +15,13 @@ data "aws_route53_zone" "public" {
   name = var.base_domain
 }
 
-resource "aws_route53_zone" "int" {
+data "aws_route53_zone" "int" {
+  zone_id = var.internal_zone == null ? aws_route53_zone.new_int[0].id : var.internal_zone
+}
+
+resource "aws_route53_zone" "new_int" {
+  count = var.internal_zone == null ? 1 : 0
+
   name          = var.cluster_domain
   force_destroy = true
 
@@ -50,7 +56,7 @@ resource "aws_route53_record" "api_external_alias" {
 resource "aws_route53_record" "api_internal_alias" {
   count = local.use_alias ? 1 : 0
 
-  zone_id = aws_route53_zone.int.zone_id
+  zone_id = data.aws_route53_zone.int.zone_id
   name    = "api-int.${var.cluster_domain}"
   type    = "A"
 
@@ -64,7 +70,7 @@ resource "aws_route53_record" "api_internal_alias" {
 resource "aws_route53_record" "api_external_internal_zone_alias" {
   count = local.use_alias ? 1 : 0
 
-  zone_id = aws_route53_zone.int.zone_id
+  zone_id = data.aws_route53_zone.int.zone_id
   name    = "api.${var.cluster_domain}"
   type    = "A"
 
@@ -89,7 +95,7 @@ resource "aws_route53_record" "api_external_cname" {
 resource "aws_route53_record" "api_internal_cname" {
   count = local.use_cname ? 1 : 0
 
-  zone_id = aws_route53_zone.int.zone_id
+  zone_id = data.aws_route53_zone.int.zone_id
   name    = "api-int.${var.cluster_domain}"
   type    = "CNAME"
   ttl     = 10
@@ -100,7 +106,7 @@ resource "aws_route53_record" "api_internal_cname" {
 resource "aws_route53_record" "api_external_internal_zone_cname" {
   count = local.use_cname ? 1 : 0
 
-  zone_id = aws_route53_zone.int.zone_id
+  zone_id = data.aws_route53_zone.int.zone_id
   name    = "api.${var.cluster_domain}"
   type    = "CNAME"
   ttl     = 10

@@ -30,6 +30,22 @@ func TestValidatePlatform(t *testing.T) {
 			expected: `^test-path\.region: Required value: region must be specified$`,
 		},
 		{
+			name: "hosted zone with subnets",
+			platform: &aws.Platform{
+				Region:     "us-east-1",
+				Subnets:    []string{"test-subnet"},
+				HostedZone: "test-hosted-zone",
+			},
+		},
+		{
+			name: "hosted zone without subnets",
+			platform: &aws.Platform{
+				Region:     "us-east-1",
+				HostedZone: "test-hosted-zone",
+			},
+			expected: `^test-path\.hostedZone: Invalid value: "test-hosted-zone": may not use an existing hosted zone when not using existing subnets$`,
+		},
+		{
 			name: "invalid url for service endpoint",
 			platform: &aws.Platform{
 				Region: "us-east-1",

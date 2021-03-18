@@ -15,4 +15,7 @@ type Metadata struct {
 	// resource matches the map if all of the key/value pairs are in its
 	// tags.  A resource matches Identifier if it matches any of the maps.
 	Identifier []map[string]string `json:"identifier"`
+
+	// ClusterDomain is the domain for the cluster.
+	ClusterDomain string `json:"clusterDomain"`
 }
