@@ -1,4 +1,4 @@
-// Copyright 2016 CoreOS, Inc.
+// Copyright 2020 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,22 +21,21 @@ import (
 	"github.com/coreos/vcontext/report"
 )
 
-func (f File) Validate(c path.ContextPath) (r report.Report) {
-	r.Merge(f.Node.Validate(c))
-	r.AddOnError(c.Append("mode"), validateMode(f.Mode))
-	r.AddOnError(c.Append("overwrite"), f.validateOverwrite())
+func (cu Custom) Key() string {
+	return cu.Pin
+}
+
+func (cu Custom) Validate(c path.ContextPath) (r report.Report) {
+	if cu.Pin == "" && cu.Config == "" {
+		return
+	}
+	switch cu.Pin {
+	case "tpm2", "tang", "sss":
+	default:
+		r.AddOnError(c.Append("pin"), errors.ErrUnknownClevisPin)
+	}
+	if cu.Config == "" {
+		r.AddOnError(c.Append("config"), errors.ErrClevisConfigRequired)
+	}
 	return
-}
-
-func (f File) validateOverwrite() error {
-	if f.Overwrite != nil && *f.Overwrite && f.Contents.Source == nil {
-		return errors.ErrOverwriteAndNilSource
-	}
-	return nil
-}
-
-func (f FileEmbedded1) IgnoreDuplicates() map[string]struct{} {
-	return map[string]struct{}{
-		"Append": {},
-	}
 }

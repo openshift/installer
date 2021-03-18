@@ -20,7 +20,7 @@ require (
 	github.com/c4milo/gotoolkit v0.0.0-20190525173301-67483a18c17a // indirect
 	github.com/clarketm/json v1.14.1
 	github.com/containers/image v3.0.2+incompatible
-	github.com/coreos/ignition/v2 v2.3.0
+	github.com/coreos/ignition/v2 v2.9.0
 	github.com/dmacvicar/terraform-provider-libvirt v0.6.2
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/frankban/quicktest v1.7.2 // indirect
@@ -89,6 +89,7 @@ require (
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 	github.com/vmware/govmomi v0.22.2
 	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca // indirect
+	golang.org/dl v0.0.0-20210204224843-1557c60ec592 // indirect
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 	golang.org/x/mod v0.4.0 // indirect

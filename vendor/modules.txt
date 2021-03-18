@@ -422,14 +422,15 @@ github.com/coreos/go-json
 github.com/coreos/go-semver/semver
 # github.com/coreos/go-systemd/v22 v22.0.0
 github.com/coreos/go-systemd/v22/unit
-# github.com/coreos/ignition/v2 v2.3.0
+# github.com/coreos/ignition/v2 v2.9.0
 ## explicit
 github.com/coreos/ignition/v2/config/shared/errors
 github.com/coreos/ignition/v2/config/shared/validations
 github.com/coreos/ignition/v2/config/util
 github.com/coreos/ignition/v2/config/v3_1/types
+github.com/coreos/ignition/v2/config/v3_2/types
 github.com/coreos/ignition/v2/config/validate
-# github.com/coreos/vcontext v0.0.0-20200225161404-ee043618d38d
+# github.com/coreos/vcontext v0.0.0-20201120045928-b0e13dab675c
 github.com/coreos/vcontext/json
 github.com/coreos/vcontext/path
 github.com/coreos/vcontext/report
@@ -1603,7 +1604,7 @@ github.com/zclconf/go-cty/cty/msgpack
 github.com/zclconf/go-cty/cty/set
 # github.com/zclconf/go-cty-yaml v1.0.2
 github.com/zclconf/go-cty-yaml
-# go.opencensus.io v0.22.4
+# go.opencensus.io v0.22.5
 go.opencensus.io
 go.opencensus.io/internal
 go.opencensus.io/internal/tagencoding
@@ -1621,6 +1622,8 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
+# golang.org/dl v0.0.0-20210204224843-1557c60ec592
+## explicit
 # golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 ## explicit
 golang.org/x/crypto/bcrypt

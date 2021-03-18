@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	igntypes "github.com/coreos/ignition/v2/config/v3_1/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 )
 
 func Test_parseCertificateBundle(t *testing.T) {

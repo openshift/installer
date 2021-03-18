@@ -40,7 +40,7 @@ metadata:
 spec:
   config:
     ignition:
-      version: 3.1.0
+      version: 3.2.0
     passwd:
       users:
       - name: core
@@ -66,7 +66,7 @@ metadata:
 spec:
   config:
     ignition:
-      version: 3.1.0
+      version: 3.2.0
     storage:
       files:
       - contents:
@@ -97,7 +97,7 @@ metadata:
 spec:
   config:
     ignition:
-      version: 3.1.0
+      version: 3.2.0
     storage:
       files:
       - contents:
@@ -122,7 +122,7 @@ metadata:
 spec:
   config:
     ignition:
-      version: 3.1.0
+      version: 3.2.0
     passwd:
       users:
       - name: core
