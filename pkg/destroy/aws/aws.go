@@ -59,10 +59,11 @@ type ClusterUninstaller struct {
 	//   }
 	//
 	// will match resources with (a:b and c:d) or d:e.
-	Filters   []Filter // filter(s) we will be searching for
-	Logger    logrus.FieldLogger
-	Region    string
-	ClusterID string
+	Filters       []Filter // filter(s) we will be searching for
+	Logger        logrus.FieldLogger
+	Region        string
+	ClusterID     string
+	ClusterDomain string
 
 	// Session is the AWS session to be used for deletion.  If nil, a
 	// new session will be created based on the usual credential
@@ -86,11 +87,12 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	}
 
 	return &ClusterUninstaller{
-		Filters:   filters,
-		Region:    region,
-		Logger:    logger,
-		ClusterID: metadata.InfraID,
-		Session:   session,
+		Filters:       filters,
+		Region:        region,
+		Logger:        logger,
+		ClusterID:     metadata.InfraID,
+		ClusterDomain: metadata.AWS.ClusterDomain,
+		Session:       session,
 	}, nil
 }
 
@@ -248,7 +250,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		return resourcesToDelete.UnsortedList(), err
 	}
 
-	err = removeSharedTags(ctx, tagClients, o.Filters, o.Logger)
+	err = o.removeSharedTags(ctx, awsSession, tagClients, tracker)
 	if err != nil {
 		return nil, err
 	}
@@ -626,9 +628,9 @@ func (search *iamUserSearch) arns(ctx context.Context) ([]string, error) {
 	return arns, err
 }
 
-// getSharedHostedZone will find the ID of the non-Terraform-managed public route53 zone given the
+// getPublicHostedZone will find the ID of the non-Terraform-managed public route53 zone given the
 // Terraform-managed zone's privateID.
-func getSharedHostedZone(ctx context.Context, client *route53.Route53, privateID string, logger logrus.FieldLogger) (string, error) {
+func getPublicHostedZone(ctx context.Context, client *route53.Route53, privateID string, logger logrus.FieldLogger) (string, error) {
 	response, err := client.GetHostedZoneWithContext(ctx, &route53.GetHostedZoneInput{
 		Id: aws.String(privateID),
 	})
@@ -640,33 +642,32 @@ func getSharedHostedZone(ctx context.Context, client *route53.Route53, privateID
 
 	if response.HostedZone.Config != nil && response.HostedZone.Config.PrivateZone != nil {
 		if !*response.HostedZone.Config.PrivateZone {
-			return "", errors.Errorf("getSharedHostedZone requires a private ID, but was passed the public %s", privateID)
+			return "", errors.Errorf("getPublicHostedZone requires a private ID, but was passed the public %s", privateID)
 		}
 	} else {
 		logger.WithField("hosted zone", privateName).Warn("could not determine whether hosted zone is private")
 	}
 
-	domain := privateName
-	parents := []string{domain}
-	for {
-		idx := strings.Index(domain, ".")
-		if idx == -1 {
-			break
-		}
-		if len(domain[idx+1:]) > 0 {
-			parents = append(parents, domain[idx+1:])
-		}
-		domain = domain[idx+1:]
-	}
+	return findAncestorPublicRoute53(ctx, client, privateName, logger)
+}
 
-	for _, p := range parents {
-		sZone, err := findPublicRoute53(ctx, client, p, logger)
+// findAncestorPublicRoute53 finds a public route53 zone with the closest ancestor or match to dnsName.
+// It returns "", when no public route53 zone could be found.
+func findAncestorPublicRoute53(ctx context.Context, client *route53.Route53, dnsName string, logger logrus.FieldLogger) (string, error) {
+	for len(dnsName) > 0 {
+		sZone, err := findPublicRoute53(ctx, client, dnsName, logger)
 		if err != nil {
 			return "", err
 		}
 		if sZone != "" {
 			return sZone, nil
 		}
+
+		idx := strings.Index(dnsName, ".")
+		if idx == -1 {
+			break
+		}
+		dnsName = dnsName[idx+1:]
 	}
 	return "", nil
 }
@@ -1816,7 +1817,7 @@ func deleteRoute53(ctx context.Context, session *session.Session, arn arn.ARN, l
 
 	client := route53.New(session)
 
-	sharedZoneID, err := getSharedHostedZone(ctx, client, id, logger)
+	publicZoneID, err := getPublicHostedZone(ctx, client, id, logger)
 	if err != nil {
 		// In some cases AWS may return the zone in the list of tagged resources despite the fact
 		// it no longer exists.
@@ -1830,15 +1831,15 @@ func deleteRoute53(ctx context.Context, session *session.Session, arn arn.ARN, l
 		return fmt.Sprintf("%s %s", *recordSet.Type, *recordSet.Name)
 	}
 
-	sharedEntries := map[string]*route53.ResourceRecordSet{}
-	if len(sharedZoneID) != 0 {
+	publicEntries := map[string]*route53.ResourceRecordSet{}
+	if len(publicZoneID) != 0 {
 		err = client.ListResourceRecordSetsPagesWithContext(
 			ctx,
-			&route53.ListResourceRecordSetsInput{HostedZoneId: aws.String(sharedZoneID)},
+			&route53.ListResourceRecordSetsInput{HostedZoneId: aws.String(publicZoneID)},
 			func(results *route53.ListResourceRecordSetsOutput, lastPage bool) bool {
 				for _, recordSet := range results.ResourceRecordSets {
 					key := recordSetKey(recordSet)
-					sharedEntries[key] = recordSet
+					publicEntries[key] = recordSet
 				}
 
 				return !lastPage
@@ -1862,14 +1863,17 @@ func deleteRoute53(ctx context.Context, session *session.Session, arn arn.ARN, l
 					continue
 				}
 				key := recordSetKey(recordSet)
-				if sharedEntry, ok := sharedEntries[key]; ok {
-					err := deleteRoute53RecordSet(ctx, client, sharedZoneID, sharedEntry, logger.WithField("public zone", sharedZoneID))
+				if publicEntry, ok := publicEntries[key]; ok {
+					err := deleteRoute53RecordSet(ctx, client, publicZoneID, publicEntry, logger.WithField("public zone", publicZoneID))
 					if err != nil {
 						if lastError != nil {
 							logger.Debug(lastError)
 						}
-						lastError = errors.Wrapf(err, "deleting public zone %s", sharedZoneID)
+						lastError = errors.Wrapf(err, "deleting record set %#v from public zone %s", publicEntry, publicZoneID)
 					}
+					// do not delete the record set in the private zone if the delete failed in the public zone;
+					// otherwise the record set in the public zone will get leaked
+					continue
 				}
 
 				err = deleteRoute53RecordSet(ctx, client, id, recordSet, logger)
@@ -2009,87 +2013,4 @@ func isBucketNotFound(err interface{}) bool {
 		}
 	}
 	return false
-}
-
-func removeSharedTags(ctx context.Context, tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI, filters []Filter, logger logrus.FieldLogger) error {
-	for _, filter := range filters {
-		for key, value := range filter {
-			if strings.HasPrefix(key, "kubernetes.io/cluster/") {
-				if value == "owned" {
-					if err := removeSharedTag(ctx, tagClients, key, logger); err != nil {
-						return err
-					}
-				} else {
-					logger.Warnf("Ignoring non-owned cluster key %s: %s for shared-tag removal", key, value)
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-func removeSharedTag(ctx context.Context, tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI, key string, logger logrus.FieldLogger) error {
-	request := &resourcegroupstaggingapi.UntagResourcesInput{
-		TagKeys: []*string{aws.String(key)},
-	}
-
-	removed := map[string]struct{}{}
-	tagClients = append([]*resourcegroupstaggingapi.ResourceGroupsTaggingAPI(nil), tagClients...)
-	for len(tagClients) > 0 {
-		nextTagClients := tagClients[:0]
-		for _, tagClient := range tagClients {
-			logger.Debugf("Search for and remove tags in %s matching %s: shared", *tagClient.Config.Region, key)
-			arns := []string{}
-			err := tagClient.GetResourcesPagesWithContext(
-				ctx,
-				&resourcegroupstaggingapi.GetResourcesInput{TagFilters: []*resourcegroupstaggingapi.TagFilter{{
-					Key:    aws.String(key),
-					Values: []*string{aws.String("shared")},
-				}}},
-				func(results *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
-					for _, resource := range results.ResourceTagMappingList {
-						arn := *resource.ResourceARN
-						if _, ok := removed[arn]; !ok {
-							arns = append(arns, arn)
-						}
-					}
-
-					return !lastPage
-				},
-			)
-			if err != nil {
-				err = errors.Wrap(err, "get tagged resources")
-				logger.Info(err)
-				nextTagClients = append(nextTagClients, tagClient)
-				continue
-			}
-			if len(arns) == 0 {
-				logger.Debugf("No matches in %s for %s: shared, removing client", *tagClient.Config.Region, key)
-				continue
-			}
-			nextTagClients = append(nextTagClients, tagClient)
-
-			for i := 0; i < len(arns); i += 20 {
-				request.ResourceARNList = make([]*string, 0, 20)
-				for j := 0; i+j < len(arns) && j < 20; j++ {
-					request.ResourceARNList = append(request.ResourceARNList, aws.String(arns[i+j]))
-				}
-				_, err = tagClient.UntagResourcesWithContext(ctx, request)
-				if err != nil {
-					err = errors.Wrap(err, "untag shared resources")
-					logger.Info(err)
-					continue
-				}
-				for j := 0; i+j < len(arns) && j < 20; j++ {
-					arn := arns[i+j]
-					logger.WithField("arn", arn).Infof("Removed tag %s: shared", key)
-					removed[arn] = exists
-				}
-			}
-		}
-		tagClients = nextTagClients
-	}
-
-	return nil
 }
