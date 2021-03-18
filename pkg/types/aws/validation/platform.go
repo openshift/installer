@@ -20,6 +20,12 @@ func ValidatePlatform(p *aws.Platform, fldPath *field.Path) field.ErrorList {
 		allErrs = append(allErrs, field.Required(fldPath.Child("region"), "region must be specified"))
 	}
 
+	if p.HostedZone != "" {
+		if len(p.Subnets) == 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostedZone"), p.HostedZone, "may not use an existing hosted zone when not using existing subnets"))
+		}
+	}
+
 	allErrs = append(allErrs, validateServiceEndpoints(p.ServiceEndpoints, fldPath.Child("serviceEndpoints"))...)
 	allErrs = append(allErrs, validateUserTags(p.UserTags, fldPath.Child("userTags"))...)
 

@@ -255,6 +255,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			VPC:                   vpc,
 			PrivateSubnets:        privateSubnets,
 			PublicSubnets:         publicSubnets,
+			InternalZone:          installConfig.Config.AWS.HostedZone,
 			Services:              installConfig.Config.AWS.ServiceEndpoints,
 			Publish:               installConfig.Config.Publish,
 			MasterConfigs:         masterConfigs,

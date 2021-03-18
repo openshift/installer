@@ -23,6 +23,11 @@ variable "tags" {
   description = "AWS tags to be applied to created resources."
 }
 
+variable "internal_zone" {
+  type        = string
+  description = "An existing hosted zone (zone ID) to use for the internal API."
+}
+
 variable "api_external_lb_dns_name" {
   description = "External API's LB DNS name"
   type        = string
