@@ -1,4 +1,4 @@
-// Copyright 2017 CoreOS, Inc.
+// Copyright 2020 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
 package types
 
 import (
-	"github.com/coreos/vcontext/path"
-	"github.com/coreos/vcontext/report"
+	"github.com/coreos/go-semver/semver"
 )
 
-func (d Directory) Validate(c path.ContextPath) (r report.Report) {
-	r.Merge(d.Node.Validate(c))
-	r.AddOnError(c.Append("mode"), validateMode(d.Mode))
-	return
-}
+var (
+	MaxVersion = semver.Version{
+		Major: 3,
+		Minor: 2,
+	}
+)

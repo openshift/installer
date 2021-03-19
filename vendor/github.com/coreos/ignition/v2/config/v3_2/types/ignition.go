@@ -1,4 +1,4 @@
-// Copyright 2016 CoreOS, Inc.
+// Copyright 2020 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,28 +15,35 @@
 package types
 
 import (
+	"github.com/coreos/go-semver/semver"
+
 	"github.com/coreos/ignition/v2/config/shared/errors"
 
 	"github.com/coreos/vcontext/path"
 	"github.com/coreos/vcontext/report"
 )
 
-func (f File) Validate(c path.ContextPath) (r report.Report) {
-	r.Merge(f.Node.Validate(c))
-	r.AddOnError(c.Append("mode"), validateMode(f.Mode))
-	r.AddOnError(c.Append("overwrite"), f.validateOverwrite())
+func (v Ignition) Semver() (*semver.Version, error) {
+	return semver.NewVersion(v.Version)
+}
+
+func (ic IgnitionConfig) Validate(c path.ContextPath) (r report.Report) {
+	for i, res := range ic.Merge {
+		r.AddOnError(c.Append("merge", i), res.validateRequiredSource())
+	}
 	return
 }
 
-func (f File) validateOverwrite() error {
-	if f.Overwrite != nil && *f.Overwrite && f.Contents.Source == nil {
-		return errors.ErrOverwriteAndNilSource
+func (v Ignition) Validate(c path.ContextPath) (r report.Report) {
+	c = c.Append("version")
+	tv, err := v.Semver()
+	if err != nil {
+		r.AddOnError(c, errors.ErrInvalidVersion)
+		return
 	}
-	return nil
-}
 
-func (f FileEmbedded1) IgnoreDuplicates() map[string]struct{} {
-	return map[string]struct{}{
-		"Append": {},
+	if MaxVersion != *tv {
+		r.AddOnError(c, errors.ErrUnknownVersion)
 	}
+	return
 }
