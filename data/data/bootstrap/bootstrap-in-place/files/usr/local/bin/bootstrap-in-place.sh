@@ -12,6 +12,7 @@ bootkube_podman_run() {
 }
 
 if [ ! -f stop-etcd.done ]; then
+  record_service_stage_start "stop-etcd"
   echo "Stop etcd static pod by moving the manifest"
   mv /etc/kubernetes/manifests/etcd-member-pod.yaml /etc/kubernetes || echo "already moved etcd-member-pod.yaml"
 
@@ -21,9 +22,11 @@ if [ ! -f stop-etcd.done ]; then
   done
 
   touch stop-etcd.done
+  record_service_stage_success
 fi
 
 if [ ! -f master-ignition.done ]; then
+  record_service_stage_start "master-ignition"
   echo "Creating master ignition and writing it to disk"
   # Get the master ignition from MCS
   curl --header 'Accept:application/vnd.coreos.ignition+json;version=3.2.0' \
@@ -50,4 +53,5 @@ if [ ! -f master-ignition.done ]; then
     --output /assets/master.ign
 
   touch master-ignition.done
+  record_service_stage_success
 fi

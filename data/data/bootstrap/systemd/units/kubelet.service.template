@@ -5,6 +5,7 @@ After=crio.service release-image.service
 
 [Service]
 Type=notify
+NotifyAccess=all
 ExecStartPre=/bin/mkdir --parents /etc/kubernetes/manifests
 ExecStartPre=/bin/mkdir --parents /etc/kubernetes/kubelet-plugins/volume/exec
 ExecStartPre=/usr/local/bin/kubelet-pause-image.sh
@@ -12,20 +13,7 @@ Environment=KUBELET_RUNTIME_REQUEST_TIMEOUT=10m
 EnvironmentFile=-/etc/kubernetes/kubelet-env
 EnvironmentFile=-/etc/kubernetes/kubelet-pause-image-override
 
-ExecStart=/usr/bin/hyperkube \
-  kubelet \
-    --anonymous-auth=false \
-    --container-runtime=remote \
-    --container-runtime-endpoint=/var/run/crio/crio.sock \
-    --runtime-request-timeout=${KUBELET_RUNTIME_REQUEST_TIMEOUT} \
-    --pod-manifest-path=/etc/kubernetes/manifests \
-    --minimum-container-ttl-duration=6m0s \
-    --cluster-domain=cluster.local \
-    --cgroup-driver=systemd \
-    --serialize-image-pulls=false \
-    --v=2 \
-    --volume-plugin-dir=/etc/kubernetes/kubelet-plugins/volume/exec \
-    --pod-infra-container-image=${MACHINE_CONFIG_INFRA_IMAGE}
+ExecStart=/usr/local/bin/kubelet.sh
 
 Restart=always
 RestartSec=10

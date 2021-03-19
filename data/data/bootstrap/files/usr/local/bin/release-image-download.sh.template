@@ -9,11 +9,20 @@ set -euo pipefail
 # service: https://github.com/systemd/systemd/issues/2582.
 #
 
+. /usr/local/bin/bootstrap-service-record.sh
+
 RELEASE_IMAGE={{.ReleaseImage}}
 
 echo "Pulling $RELEASE_IMAGE..."
-while ! podman pull --quiet "$RELEASE_IMAGE"
+while true
 do
-    echo "Pull failed. Retrying $RELEASE_IMAGE..."
+    record_service_stage_start "pull-release-image"
+    if podman pull --quiet "$RELEASE_IMAGE"
+    then
+        record_service_stage_success
+        break
+    else
+        record_service_stage_failure
+        echo "Pull failed. Retrying $RELEASE_IMAGE..."
+    fi
 done
-
