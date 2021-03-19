@@ -16,6 +16,8 @@ resource "vsphere_virtual_machine" "vm" {
   enable_disk_uuid     = "true"
   annotation           = local.description
 
+  hardware_version     = 15
+
   wait_for_guest_net_timeout  = "0"
   wait_for_guest_net_routable = "false"
 
