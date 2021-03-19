@@ -325,6 +325,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
 		}
 		workers, err := workersAsset.MachineSets()
+		if err != nil {
+			return err
+		}
 		workerConfigs := make([]*gcpprovider.GCPMachineProviderSpec, len(workers))
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*gcpprovider.GCPMachineProviderSpec)
