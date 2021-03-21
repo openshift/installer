@@ -24,6 +24,7 @@ func TestSignedCertKeyGenerate(t *testing.T) {
 				Subject:   pkix.Name{CommonName: "test0-ca", OrganizationalUnit: []string{"openshift"}},
 				KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 				Validity:  ValidityTenYears,
+				DNSNames:  []string{"test.openshift.io"},
 			},
 			filenameBase: "test0-ca",
 			appendParent: DoNotAppendParent,
