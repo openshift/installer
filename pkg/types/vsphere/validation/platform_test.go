@@ -1,11 +1,14 @@
 package validation
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -16,18 +19,31 @@ func validPlatform() *vsphere.Platform {
 		Password:         "test-password",
 		Datacenter:       "test-datacenter",
 		DefaultDatastore: "test-datastore",
+		APIVIP:           "192.168.111.2",
+		IngressVIP:       "192.168.111.3",
 	}
+}
+
+func validNetwork() *types.Networking {
+	n := types.Networking{}
+	cidr := ipnet.MustParseCIDR("192.168.111.1/24")
+	n.MachineNetwork = append(n.MachineNetwork, types.MachineNetworkEntry{
+		CIDR: *cidr,
+	})
+	return &n
 }
 
 func TestValidatePlatform(t *testing.T) {
 	cases := []struct {
 		name          string
 		platform      *vsphere.Platform
+		networking    *types.Networking
 		expectedError string
 	}{
 		{
-			name:     "minimal",
-			platform: validPlatform(),
+			name:       "minimal",
+			platform:   validPlatform(),
+			networking: validNetwork(),
 		},
 		{
 			name: "missing vCenter name",
@@ -36,6 +52,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenter = ""
 				return p
 			}(),
+			networking:    validNetwork(),
 			expectedError: `^test-path\.vCenter: Required value: must specify the name of the vCenter$`,
 		},
 		{
@@ -45,6 +62,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Username = ""
 				return p
 			}(),
+			networking:    validNetwork(),
 			expectedError: `^test-path\.username: Required value: must specify the username$`,
 		},
 		{
@@ -54,6 +72,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Password = ""
 				return p
 			}(),
+			networking:    validNetwork(),
 			expectedError: `^test-path\.password: Required value: must specify the password$`,
 		},
 		{
@@ -63,6 +82,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Datacenter = ""
 				return p
 			}(),
+			networking:    validNetwork(),
 			expectedError: `^test-path\.datacenter: Required value: must specify the datacenter$`,
 		},
 		{
@@ -72,6 +92,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.DefaultDatastore = ""
 				return p
 			}(),
+			networking:    validNetwork(),
 			expectedError: `^test-path\.defaultDatastore: Required value: must specify the default datastore$`,
 		},
 		{
@@ -82,6 +103,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.IngressVIP = "192.168.111.3"
 				return p
 			}(),
+			networking: validNetwork(),
 			// expectedError: `^test-path\.apiVIP: Invalid value: "": "" is not a valid IP`,
 		},
 		{
@@ -92,7 +114,8 @@ func TestValidatePlatform(t *testing.T) {
 				p.IngressVIP = "192.168.111.3"
 				return p
 			}(),
-			expectedError: `^test-path\.apiVIP: Required value: must specify a VIP for the API`,
+			networking:    validNetwork(),
+			expectedError: `^test-path\.apiVIP: Required value: must specify a VIP for both API and Ingress VIPs when specifying either`,
 		},
 		{
 			name: "missing Ingress VIP",
@@ -102,7 +125,8 @@ func TestValidatePlatform(t *testing.T) {
 				p.IngressVIP = ""
 				return p
 			}(),
-			expectedError: `^test-path\.ingressVIP: Required value: must specify a VIP for Ingress`,
+			networking:    validNetwork(),
+			expectedError: `^test-path\.ingressVIP: Required value: must specify a VIP for both API and Ingress VIPs when specifying either`,
 		},
 		{
 			name: "Invalid API VIP",
@@ -112,7 +136,8 @@ func TestValidatePlatform(t *testing.T) {
 				p.IngressVIP = "192.168.111.2"
 				return p
 			}(),
-			expectedError: `^test-path.apiVIP: Invalid value: "192.168.111": "192.168.111" is not a valid IP`,
+			networking:    validNetwork(),
+			expectedError: `^test-path.apiVIP: Invalid value: "192.168.111": not a valid IP address$`,
 		},
 		{
 			name: "Invalid Ingress VIP",
@@ -122,7 +147,8 @@ func TestValidatePlatform(t *testing.T) {
 				p.IngressVIP = "192.168.111"
 				return p
 			}(),
-			expectedError: `^test-path.ingressVIP: Invalid value: "192.168.111": "192.168.111" is not a valid IP`,
+			networking:    validNetwork(),
+			expectedError: `^test-path.ingressVIP: Invalid value: "192.168.111": not a valid IP address$`,
 		},
 		{
 			name: "Same API and Ingress VIP",
@@ -132,6 +158,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.IngressVIP = "192.168.111.1"
 				return p
 			}(),
+			networking:    validNetwork(),
 			expectedError: `^test-path.apiVIP: Invalid value: "192.168.111.1": IPs for both API and Ingress should not be the same`,
 		},
 		{
@@ -141,6 +168,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenter = "tEsT-vCenter"
 				return p
 			}(),
+			networking:    validNetwork(),
 			expectedError: `^test-path\.vCenter: Invalid value: "tEsT-vCenter": must be the domain name or IP address of the vCenter`,
 		},
 		{
@@ -150,12 +178,55 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenter = "https://test-center"
 				return p
 			}(),
+			networking:    validNetwork(),
 			expectedError: `^test-path\.vCenter: Invalid value: "https://test-center": must be the domain name or IP address of the vCenter$`,
+		},
+		{
+			name: "APIVIP not in machine CIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.APIVIP = "192.168.1.1"
+				p.IngressVIP = "192.168.0.1"
+				return p
+			}(),
+			networking: func() *types.Networking {
+				p := types.Networking{}
+				value, err := ipnet.ParseCIDR("192.168.0.0/24")
+				if err != nil {
+					fmt.Println(err)
+				}
+				p.MachineNetwork = append(p.MachineNetwork, types.MachineNetworkEntry{
+					CIDR: *value,
+				})
+				return &p
+			}(),
+			expectedError: `^test-path.apiVIP: Invalid value: "192.168.1.1": must be contained within one of the machine networks$`,
+		},
+		{
+			name: "IngressVIP not in machine CIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.APIVIP = "192.168.0.1"
+				p.IngressVIP = "192.168.1.1"
+				return p
+			}(),
+			networking: func() *types.Networking {
+				p := types.Networking{}
+				value, err := ipnet.ParseCIDR("192.168.0.0/24")
+				if err != nil {
+					fmt.Println(err)
+				}
+				p.MachineNetwork = append(p.MachineNetwork, types.MachineNetworkEntry{
+					CIDR: *value,
+				})
+				return &p
+			}(),
+			expectedError: `^test-path.ingressVIP: Invalid value: "192.168.1.1": must be contained within one of the machine networks$`,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidatePlatform(tc.platform, field.NewPath("test-path")).ToAggregate()
+			err := ValidatePlatform(tc.platform, tc.networking, field.NewPath("test-path")).ToAggregate()
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
