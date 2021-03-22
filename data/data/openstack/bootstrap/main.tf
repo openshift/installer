@@ -78,6 +78,8 @@ resource "openstack_compute_instance_v2" "bootstrap" {
     Name               = "${var.cluster_id}-bootstrap"
     openshiftClusterID = var.cluster_id
   }
+
+  config_drive = true
 }
 
 resource "openstack_networking_floatingip_v2" "bootstrap_fip" {

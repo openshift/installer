@@ -108,6 +108,8 @@ resource "openstack_compute_instance_v2" "master_conf_0" {
     Name = "${var.cluster_id}-master"
     openshiftClusterID = var.cluster_id
   }
+
+  config_drive = true
 }
 
 resource "openstack_compute_instance_v2" "master_conf_1" {
@@ -158,6 +160,8 @@ resource "openstack_compute_instance_v2" "master_conf_1" {
   }
 
   depends_on = [openstack_compute_instance_v2.master_conf_0]
+
+  config_drive = true
 }
 
 resource "openstack_compute_instance_v2" "master_conf_2" {
@@ -208,4 +212,6 @@ resource "openstack_compute_instance_v2" "master_conf_2" {
   }
 
   depends_on = [openstack_compute_instance_v2.master_conf_1]
+
+  config_drive = true
 }

@@ -162,6 +162,8 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 			"Name":               fmt.Sprintf("%s-%s", clusterID, role),
 			"openshiftClusterID": clusterID,
 		},
+		// ConfigDrive type is *bool, so we can't use "true" directly and have to provide a pointer
+		ConfigDrive: &[]bool{true}[0],
 	}
 	if mpool.RootVolume != nil {
 		spec.RootVolume = &openstackprovider.RootVolume{
