@@ -211,6 +211,15 @@ then
 	cp kube-controller-manager-bootstrap/bootstrap-manifests/* bootstrap-manifests/
 	cp kube-controller-manager-bootstrap/manifests/* manifests/
 
+	# Temporary check to provide forwards compatibility with ckcmo taking
+	# over responsibility for rendering the token signing keypair.
+	if [ -d kube-controller-manager-bootstrap/tls ]
+	then
+		# Copy the service account signing keypair for use by the
+		# bootstrap controller manager and apiserver.
+		cp kube-controller-manager-bootstrap/tls/* tls/
+	fi
+
 	touch kube-controller-manager-bootstrap.done
     record_service_stage_success
 fi
