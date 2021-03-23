@@ -37,8 +37,6 @@ RUN yum update -y && \
     rm -rf /var/cache/yum/* && \
     chmod g+w /etc/passwd
 
-RUN easy_install 'pip<21'
-RUN python -m pip install pyopenssl
 ENV CLOUDSDK_PYTHON=/usr/bin/python
 
 ENV TERRAFORM_VERSION=0.12.24
