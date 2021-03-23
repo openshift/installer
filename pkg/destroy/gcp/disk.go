@@ -10,7 +10,7 @@ import (
 )
 
 func (o *ClusterUninstaller) listDisks() ([]cloudResource, error) {
-	return o.listDisksWithFilter("items/*/disks(name,zone),nextPageToken", o.clusterIDFilter(), nil)
+	return o.listDisksWithFilter("items/*/disks(name,zone),nextPageToken", o.clusterLabelOrClusterIDFilter(), nil)
 }
 
 // listDisksWithFilter lists disks in the project that satisfy the filter criteria.
