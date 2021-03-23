@@ -88,10 +88,6 @@ type AWSMachineProviderConfig struct {
 
 	// SpotMarketOptions allows users to configure instances to be run using AWS Spot instances.
 	SpotMarketOptions *SpotMarketOptions `json:"spotMarketOptions,omitempty"`
-
-	// Tenancy indicates if instance should run on shared or single-tenant hardware. There are
-	// supported 3 options: default, dedicated and host.
-	Tenancy InstanceTenancy `json:"tenancy,omitempty"`
 }
 
 // BlockDeviceMappingSpec describes a block device mapping
@@ -200,6 +196,10 @@ type Placement struct {
 
 	// AvailabilityZone is the availability zone of the instance
 	AvailabilityZone string `json:"availabilityZone,omitempty"`
+
+	// Tenancy indicates if instance should run on shared or single-tenant hardware. There are
+	// supported 3 options: default, dedicated and host.
+	Tenancy InstanceTenancy `json:"tenancy,omitempty"`
 }
 
 // Filter is a filter used to identify an AWS resource
