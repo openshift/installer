@@ -1,7 +1,6 @@
 // package rhcos contains APIs for interacting with the RHEL (or Fedora) CoreOS
 // bootimages embedded as stream metadata JSON with the installer
-// For more information, see
-// https://github.com/openshift/enhancements/pull/679
+// For more information, see docs/dev/pinned-coreos.md
 
 package rhcos
 
