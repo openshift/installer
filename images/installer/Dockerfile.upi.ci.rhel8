@@ -1,0 +1,68 @@
+# NOTE: Forked temporarily from Dockerfile.upi.ci to port to rhel8
+# This Dockerfile is used by CI to test UPI platforms for OpenShift Installer
+# It builds an image containing binaries like jq, terraform, awscli, oc, etc. to allow bringing up UPI infrastructure.
+# It also contains the `upi` directory that contains various terraform and cloud formation templates that are used to create infrastructure resources.
+
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.15-openshift-4.8 AS builder
+WORKDIR /go/src/github.com/openshift/installer
+COPY . .
+RUN hack/build.sh
+
+FROM registry.ci.openshift.org/ocp/4.8:cli as cli
+
+FROM registry.ci.openshift.org/ocp/4.8:base
+COPY --from=cli /usr/bin/oc /bin/oc
+COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
+COPY --from=builder /go/src/github.com/openshift/installer/upi /var/lib/openshift-install/upi
+COPY --from=builder /go/src/github.com/openshift/installer/data/data/rhcos.json /var/lib/openshift-install/rhcos.json
+
+RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc && \
+    sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" >/etc/yum.repos.d/azure-cli.repo' && \
+    sh -c 'echo -e "[google-cloud-sdk]\nname=Google Cloud SDK\nbaseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg\n       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" > /etc/yum.repos.d/google-cloud-sdk.repo'
+
+RUN yum update -y && \
+    yum install --setopt=tsflags=nodocs -y \
+      azure-cli \
+      gettext \
+      google-cloud-sdk \
+      gzip \
+      jq \
+      unzip \
+      openssh-clients \
+      openssl \
+      python3-pyOpenSSL \
+      python2-pyyaml \
+      python3-pyyaml \
+      util-linux && \
+    yum clean all && \
+    rm -rf /var/cache/yum/* && \
+    chmod g+w /etc/passwd
+
+# Not packaged for Python 2, but required by gcloud.  See https://cloud.google.com/sdk/crypto
+RUN pip-2 install pyopenssl
+ENV CLOUDSDK_PYTHON=/usr/bin/python
+
+ENV TERRAFORM_VERSION=0.12.24
+RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
+    unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /bin/
+ENV MATCHBOX_PROVIDER_VERSION=v0.3.0
+RUN curl -L -O https://github.com/poseidon/terraform-provider-matchbox/releases/download/${MATCHBOX_PROVIDER_VERSION}/terraform-provider-matchbox-${MATCHBOX_PROVIDER_VERSION}-linux-amd64.tar.gz && \
+    tar xzf terraform-provider-matchbox-${MATCHBOX_PROVIDER_VERSION}-linux-amd64.tar.gz && \
+    mv terraform-provider-matchbox-${MATCHBOX_PROVIDER_VERSION}-linux-amd64/terraform-provider-matchbox /bin/terraform-provider-matchbox
+ENV IGNITION_PROVIDER_VERSION=v2.1.0
+RUN curl -L -O https://github.com/community-terraform-providers/terraform-provider-ignition/releases/download/${IGNITION_PROVIDER_VERSION}/terraform-provider-ignition-${IGNITION_PROVIDER_VERSION}-linux-amd64.tar.gz && \
+    tar xzf terraform-provider-ignition-${IGNITION_PROVIDER_VERSION}-linux-amd64.tar.gz && \
+    mv terraform-provider-ignition-${IGNITION_PROVIDER_VERSION}-linux-amd64/terraform-provider-ignition /bin/terraform-provider-ignition
+RUN curl -L -O https://github.com/vmware/govmomi/releases/download/v0.20.0/govc_linux_amd64.gz && \
+    gzip -d govc_linux_amd64.gz && \
+    chmod +x govc_linux_amd64 && mv govc_linux_amd64 /bin/govc
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip && \
+    ./aws/install -b /bin && \
+    rm -rf ./aws awscliv2.zip
+
+RUN mkdir /output && chown 1000:1000 /output
+USER 1000:1000
+ENV PATH /bin
+ENV HOME /output
+WORKDIR /output
