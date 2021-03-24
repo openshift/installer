@@ -20,7 +20,7 @@ func Validate(ic *types.InstallConfig) error {
 		return errors.New(field.Required(field.NewPath("platform", "vsphere"), "vSphere validation requires a vSphere platform configuration").Error())
 	}
 
-	allErrs = append(allErrs, validation.ValidatePlatform(ic.Platform.VSphere, ic.Networking, field.NewPath("platform").Child("vsphere"))...)
+	allErrs = append(allErrs, validation.ValidatePlatform(ic.Platform.VSphere, field.NewPath("platform").Child("vsphere"))...)
 
 	return allErrs.ToAggregate()
 }

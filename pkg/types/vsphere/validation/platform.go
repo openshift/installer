@@ -2,18 +2,16 @@ package validation
 
 import (
 	"fmt"
-	"net"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/validate"
 )
 
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *vsphere.Platform, network *types.Networking, fldPath *field.Path) field.ErrorList {
+func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if len(p.VCenter) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("vCenter"), "must specify the name of the vCenter"))
@@ -39,7 +37,7 @@ func ValidatePlatform(p *vsphere.Platform, network *types.Networking, fldPath *f
 
 	// If all VIPs are empty, skip IP validation.  All VIPs are required to be defined together.
 	if strings.Join([]string{p.APIVIP, p.IngressVIP}, "") != "" {
-		allErrs = append(allErrs, validateVIPs(p, network, fldPath)...)
+		allErrs = append(allErrs, validateVIPs(p, fldPath)...)
 	}
 
 	// folder is optional, but if provided should pass validation
@@ -62,63 +60,30 @@ func ValidateForProvisioning(p *vsphere.Platform, fldPath *field.Path) field.Err
 		allErrs = append(allErrs, field.Required(fldPath.Child("network"), "must specify the network"))
 	}
 
+	allErrs = append(allErrs, validateVIPs(p, fldPath)...)
+	return allErrs
+}
+
+// validateVIPs checks that all required VIPs are provided and are valid IP addresses.
+func validateVIPs(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
 	if len(p.APIVIP) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("apiVIP"), "must specify a VIP for API"))
+		allErrs = append(allErrs, field.Required(fldPath.Child("apiVIP"), "must specify a VIP for the API"))
+	} else if err := validate.IP(p.APIVIP); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, err.Error()))
 	}
 
 	if len(p.IngressVIP) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("ingressVIP"), "must specify a VIP for Ingress"))
-	}
-	return allErrs
-}
-
-// ipInNetwork return true if the given ip is within one of the machine networks.
-func ipInNetwork(vipIP net.IP, machineNetwork []types.MachineNetworkEntry) bool {
-	for _, machine := range machineNetwork {
-		if machine.CIDR.Contains(vipIP) {
-			return true
-		}
-	}
-	return false
-}
-
-// validateVIPs checks that all required VIPs are provided and are valid IP addresses.
-func validateVIPs(p *vsphere.Platform, network *types.Networking, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if network == nil {
-		return append(allErrs, field.Invalid(field.NewPath("networking"), network, "must specify the machine networks"))
-	}
-
-	if len(p.APIVIP) != 0 {
-		ip := net.ParseIP(p.APIVIP)
-		if ip != nil {
-			if !ipInNetwork(ip, network.MachineNetwork) {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, "must be contained within one of the machine networks"))
-			}
-		} else {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, "not a valid IP address"))
-		}
-	} else {
-		allErrs = append(allErrs, field.Required(fldPath.Child("apiVIP"), "must specify a VIP for both API and Ingress VIPs when specifying either"))
-	}
-
-	if len(p.IngressVIP) != 0 {
-		ip := net.ParseIP(p.IngressVIP)
-		if ip != nil {
-			if !ipInNetwork(ip, network.MachineNetwork) {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, "must be contained within one of the machine networks"))
-			}
-		} else {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, "not a valid IP address"))
-		}
-	} else {
-		allErrs = append(allErrs, field.Required(fldPath.Child("ingressVIP"), "must specify a VIP for both API and Ingress VIPs when specifying either"))
+	} else if err := validate.IP(p.IngressVIP); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("ingressVIP"), p.IngressVIP, err.Error()))
 	}
 
 	if len(p.APIVIP) != 0 && len(p.IngressVIP) != 0 && p.APIVIP == p.IngressVIP {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("apiVIP"), p.APIVIP, "IPs for both API and Ingress should not be the same."))
 	}
+
 	return allErrs
 }
 
