@@ -141,3 +141,7 @@ certificates signed by a known certificate authority. In environments
 where certificates are signed by unknown authorities, this behavior
 can be disabled by setting `disableCertificateVerification` to `true`
 for each `bmc` entry.
+
+## Shift to external load balancer post deployment
+
+The following [link](./external_loadbalancer_ipi.md) describes how to move external api/ingress traffic from the default self-hosted load balancer to another load balancer.

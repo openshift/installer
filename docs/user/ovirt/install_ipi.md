@@ -61,7 +61,7 @@ For 3 masters/3 workers, the target Cluster **must have at least**:
 - 96RAM
 - 24vCPUs
 - 720GiB storage
-- 50IOPS for the Master VM disks, [per ETCD requirement doc](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/hardware.md)
+- Storage that is fast enough for etcd, [using-fio-to-tell-whether-your-storage-is-fast-enough-for-etcd](https://www.ibm.com/cloud/blog/using-fio-to-tell-whether-your-storage-is-fast-enough-for-etcd)
 
 > Worker count can be reduced to 2 in `install-config.yaml` in case needed.
 

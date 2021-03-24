@@ -8,6 +8,8 @@ set -euo pipefail
 # Perhaps down the line we change this to run something like:
 # podman run machine-config-daemon bootstrap ... (passing the release image and the host rootfs)
 
+. /usr/local/bin/bootstrap-service-record.sh
+
 . /usr/local/bin/release-image.sh
 
 MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)

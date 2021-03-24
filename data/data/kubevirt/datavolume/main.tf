@@ -3,6 +3,9 @@ resource "kubevirt_data_volume" "data_volume" {
     name      = var.pvc_name
     namespace = var.namespace
     labels    = var.labels
+    annotations = {
+      "cdi.kubevirt.io/storage.bind.immediate.requested" = "true"
+    }
   }
   spec {
     source {

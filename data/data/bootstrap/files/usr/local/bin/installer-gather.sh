@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC1091
+. /usr/local/bin/bootstrap-cluster-gather.sh
+
 if test "x${1}" = 'x--id'
 then
 	GATHER_ID="${2}"
@@ -10,6 +13,10 @@ ARTIFACTS="/tmp/artifacts-${GATHER_ID}"
 mkdir -p "${ARTIFACTS}"
 
 exec &> >(tee "${ARTIFACTS}/gather.log")
+
+echo "Gathering bootstrap service records ..."
+mkdir -p "${ARTIFACTS}/bootstrap/services"
+sudo cp -r /var/log/openshift/* "${ARTIFACTS}/bootstrap/services/"
 
 echo "Gathering bootstrap systemd summary ..."
 LANG=POSIX systemctl list-units --state=failed >& "${ARTIFACTS}/failed-units.txt"
@@ -67,62 +74,11 @@ fi
 
 echo "Using ${GATHER_KUBECONFIG} as KUBECONFIG"
 
-function queue() {
-    local TARGET="${ARTIFACTS}/${1}"
-    shift
-    # shellcheck disable=SC2155
-    local LIVE="$(jobs | wc -l)"
-    while [[ "${LIVE}" -ge 45 ]]; do
-        sleep 1
-        LIVE="$(jobs | wc -l)"
-    done
-    # echo "${@}"
-    if [[ -n "${FILTER}" ]]; then
-        # shellcheck disable=SC2024
-        sudo KUBECONFIG="${GATHER_KUBECONFIG}" "${@}" | "${FILTER}" >"${TARGET}" &
-    else
-        # shellcheck disable=SC2024
-        sudo KUBECONFIG="${GATHER_KUBECONFIG}" "${@}" >"${TARGET}" &
-    fi
-}
-mkdir -p "${ARTIFACTS}/control-plane" "${ARTIFACTS}/resources"
-
-echo "Gathering cluster resources ..."
-queue resources/nodes.list oc --request-timeout=5s get nodes -o jsonpath --template '{range .items[*]}{.metadata.name}{"\n"}{end}'
-queue resources/masters.list oc --request-timeout=5s get nodes -o jsonpath -l 'node-role.kubernetes.io/master' --template '{range .items[*]}{.metadata.name}{"\n"}{end}'
-# ShellCheck doesn't realize that $ns is for the Go template, not something we're trying to expand in the shell
-# shellcheck disable=2016
-queue resources/containers oc --request-timeout=5s get pods --all-namespaces --template '{{ range .items }}{{ $name := .metadata.name }}{{ $ns := .metadata.namespace }}{{ range .spec.containers }}-n {{ $ns }} {{ $name }} -c {{ .name }}{{ "\n" }}{{ end }}{{ range .spec.initContainers }}-n {{ $ns }} {{ $name }} -c {{ .name }}{{ "\n" }}{{ end }}{{ end }}'
-queue resources/api-pods oc --request-timeout=5s get pods -l apiserver=true --all-namespaces --template '{{ range .items }}-n {{ .metadata.namespace }} {{ .metadata.name }}{{ "\n" }}{{ end }}'
-
-queue resources/apiservices.json oc --request-timeout=5s get apiservices -o json
-queue resources/clusteroperators.json oc --request-timeout=5s get clusteroperators -o json
-queue resources/clusterversion.json oc --request-timeout=5s get clusterversion -o json
-queue resources/configmaps.json oc --request-timeout=5s get configmaps --all-namespaces -o json
-queue resources/csr.json oc --request-timeout=5s get csr -o json
-queue resources/endpoints.json oc --request-timeout=5s get endpoints --all-namespaces -o json
-queue resources/events.json oc --request-timeout=5s get events --all-namespaces -o json
-queue resources/kubeapiserver.json oc --request-timeout=5s get kubeapiserver -o json
-queue resources/kubecontrollermanager.json oc --request-timeout=5s get kubecontrollermanager -o json
-queue resources/machineconfigpools.json oc --request-timeout=5s get machineconfigpools -o json
-queue resources/machineconfigs.json oc --request-timeout=5s get machineconfigs -o json
-queue resources/namespaces.json oc --request-timeout=5s get namespaces -o json
-queue resources/nodes.json oc --request-timeout=5s get nodes -o json
-queue resources/openshiftapiserver.json oc --request-timeout=5s get openshiftapiserver -o json
-queue resources/pods.json oc --request-timeout=5s get pods --all-namespaces -o json
-queue resources/rolebindings.json oc --request-timeout=5s get rolebindings --all-namespaces -o json
-queue resources/roles.json oc --request-timeout=5s get roles --all-namespaces -o json
-# this just lists names and number of keys
-queue resources/secrets-names.txt oc --request-timeout=5s get secrets --all-namespaces
-# this adds annotations, but strips out the SA tokens and dockercfg secrets which are noisy and may contain secrets in the annotations
-queue resources/secrets-names-with-annotations.txt oc --request-timeout=5s get secrets --all-namespaces -o=custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,TYPE:.type,ANNOTATIONS:.metadata.annotations | grep -v -- '-token-' | grep -v -- '-dockercfg-'
-queue resources/services.json oc --request-timeout=5s get services --all-namespaces -o json
-
-FILTER=gzip queue resources/openapi.json.gz oc --request-timeout=5s get --raw /openapi/v2
-
-echo "Waiting for logs ..."
-wait
-
+cluster_bootstrap_gather
+if [ -d "${API_SERVER_ARTIFACTS_DIR}/resources" ]
+then
+    cp -r "${API_SERVER_ARTIFACTS_DIR}/resources" "${ARTIFACTS}"
+fi
 # The existence of the file located in LOG_BUNDLE_BOOTSTRAP_ARCHIVE_NAME is used
 # as indication that a bootstrap process has already previously taken place and the resulting
 # bundle already exists in the filesystem. In that case, we include said bundle inside the log
@@ -139,7 +95,7 @@ if [[ -f ${LOG_BUNDLE_BOOTSTRAP_ARCHIVE_NAME} ]]; then
     echo "Including existing bootstrap bundle ${LOG_BUNDLE_BOOTSTRAP_ARCHIVE_NAME}"
     tar -xzf ${LOG_BUNDLE_BOOTSTRAP_ARCHIVE_NAME} --directory "${ARTIFACTS}"
 fi
-
+mkdir -p "${ARTIFACTS}/control-plane"
 echo "Gather remote logs"
 export MASTERS=()
 if [[ -f ${LOG_BUNDLE_BOOTSTRAP_ARCHIVE_NAME} ]]; then

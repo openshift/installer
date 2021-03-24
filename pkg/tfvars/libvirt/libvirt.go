@@ -83,7 +83,14 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	}
 
 	if sources.MasterConfig.Volume.VolumeSize != nil {
-		cfg.MasterDiskSize = sources.MasterConfig.Volume.VolumeSize.String()
+		// As per https://github.com/hashicorp/terraform/issues/3287 the
+		// master disk size needs to be specified as the number of bytes.
+		diskSizeInBytes, converted := sources.MasterConfig.Volume.VolumeSize.AsInt64()
+		if !converted {
+			msgTemplate := "failed to convert master disk size to bytes: %s"
+			return nil, fmt.Errorf(msgTemplate, sources.MasterConfig.Volume.VolumeSize)
+		}
+		cfg.MasterDiskSize = fmt.Sprintf("%d", diskSizeInBytes)
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

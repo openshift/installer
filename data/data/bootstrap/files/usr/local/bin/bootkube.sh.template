@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euoE pipefail ## -E option will cause functions to inherit trap
 
+. /usr/local/bin/bootstrap-service-record.sh
+
 . /usr/local/bin/release-image.sh
+. /usr/local/bin/bootstrap-cluster-gather.sh
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
@@ -68,13 +71,16 @@ mkdir --parents ./{bootstrap-manifests,manifests}
 
 if [ ! -f openshift-manifests.done ]
 then
+    record_service_stage_start "openshift-manifests"
 	echo "Moving OpenShift manifests in with the rest of them"
 	cp openshift/* manifests/
 	touch openshift-manifests.done
+    record_service_stage_success
 fi
 
 if [ ! -f cvo-bootstrap.done ]
 then
+    record_service_stage_start "cvo-bootstrap"
 	echo "Rendering Cluster Version Operator Manifests..."
 
 	rm --recursive --force cvo-bootstrap
@@ -95,11 +101,13 @@ then
 	cp auth/kubeconfig-loopback /etc/kubernetes/kubeconfig
 
 	touch cvo-bootstrap.done
+    record_service_stage_success
 fi
 
 ETCD_ENDPOINTS=https://localhost:2379
 if [ ! -f etcd-bootstrap.done ]
 then
+    record_service_stage_start "etcd-bootstrap"
 	echo "Rendering CEO Manifests..."
 	bootkube_podman_run \
 		--volume "$PWD:/assets:z" \
@@ -119,10 +127,12 @@ then
 	cp etcd-bootstrap/tls/* tls/
 
 	touch etcd-bootstrap.done
+    record_service_stage_success
 fi
 
 if [ ! -f config-bootstrap.done ]
 then
+    record_service_stage_start "config-bootstrap"
 	echo "Rendering cluster config manifests..."
 
 	rm --recursive --force config-bootstrap
@@ -146,10 +156,12 @@ then
 	cp config-bootstrap/manifests/* manifests/
 
 	touch config-bootstrap.done
+    record_service_stage_success
 fi
 
 if [ ! -f kube-apiserver-bootstrap.done ]
 then
+    record_service_stage_start "kube-apiserver-bootstrap"
 	echo "Rendering Kubernetes API server core manifests..."
 
 	rm --recursive --force kube-apiserver-bootstrap
@@ -173,10 +185,12 @@ then
 	cp kube-apiserver-bootstrap/manifests/* manifests/
 
 	touch kube-apiserver-bootstrap.done
+    record_service_stage_success
 fi
 
 if [ ! -f kube-controller-manager-bootstrap.done ]
 then
+    record_service_stage_start "kube-controller-manager-bootstrap"
 	echo "Rendering Kubernetes Controller Manager core manifests..."
 
 	rm --recursive --force kube-controller-manager-bootstrap
@@ -198,11 +212,22 @@ then
 	cp kube-controller-manager-bootstrap/bootstrap-manifests/* bootstrap-manifests/
 	cp kube-controller-manager-bootstrap/manifests/* manifests/
 
+	# Temporary check to provide forwards compatibility with ckcmo taking
+	# over responsibility for rendering the token signing keypair.
+	if [ -d kube-controller-manager-bootstrap/tls ]
+	then
+		# Copy the service account signing keypair for use by the
+		# bootstrap controller manager and apiserver.
+		cp kube-controller-manager-bootstrap/tls/* tls/
+	fi
+
 	touch kube-controller-manager-bootstrap.done
+    record_service_stage_success
 fi
 
 if [ ! -f kube-scheduler-bootstrap.done ]
 then
+    record_service_stage_start "kube-scheduler-bootstrap"
 	echo "Rendering Kubernetes Scheduler core manifests..."
 
 	rm --recursive --force kube-scheduler-bootstrap
@@ -221,10 +246,12 @@ then
 	cp kube-scheduler-bootstrap/manifests/* manifests/
 
 	touch kube-scheduler-bootstrap.done
+    record_service_stage_success
 fi
 
 if [ ! -f ingress-operator-bootstrap.done ]
 then
+    record_service_stage_start "ingress-operator-bootstrap"
 	echo "Rendering Ingress Operator core manifests..."
 
 	rm --recursive --force ingress-operator-bootstrap
@@ -239,10 +266,12 @@ then
 	cp ingress-operator-manifests/* manifests/
 
 	touch ingress-operator-bootstrap.done
+    record_service_stage_success
 fi
 
 if [ ! -f mco-bootstrap.done ]
 then
+    record_service_stage_start "mco-bootstrap"
 	echo "Rendering MCO manifests..."
 
 	rm --recursive --force mco-bootstrap
@@ -311,10 +340,12 @@ then
 	cp tls/machine-config-server.key /etc/ssl/mcs/tls.key
 
 	touch mco-bootstrap.done
+    record_service_stage_success
 fi
 
 if [ ! -f cco-bootstrap.done ]
 then
+    record_service_stage_start "cco-bootstrap"
 	echo "Rendering CCO manifests..."
 
 	rm --recursive --force cco-bootstrap
@@ -337,13 +368,16 @@ then
 	fi
 
 	touch cco-bootstrap.done
+    record_service_stage_success
 fi
 
 # in case of single node, if we removed etcd, there is no point to wait for it on restart
 if [ ! -f stop-etcd.done ]
 then
+    record_service_stage_start "wait-for-etcd"
 	# Wait for the etcd cluster to come up.
 	wait_for_etcd_cluster
+    record_service_stage_success
 fi
 
 REQUIRED_PODS="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
@@ -353,17 +387,28 @@ then
 fi
 
 echo "Starting cluster-bootstrap..."
-
-if [ ! -f cb-bootstrap.done ]
-then
-    bootkube_podman_run \
+run_cluster_bootstrap() {
+	record_service_stage_start "cb-bootstrap"
+	bootkube_podman_run \
         --rm \
         --volume "$PWD:/assets:z" \
         --volume /etc/kubernetes:/etc/kubernetes:z \
         "${CLUSTER_BOOTSTRAP_IMAGE}" \
         start --tear-down-early=false --asset-dir=/assets --required-pods="${REQUIRED_PODS}"
-
-    touch cb-bootstrap.done
+}
+    
+if [ ! -f cb-bootstrap.done ]
+then
+    if run_cluster_bootstrap
+    then
+        touch cb-bootstrap.done
+        record_service_stage_success
+    else
+        ret=$?
+        set +u
+        cluster_bootstrap_gather
+        exit $ret
+    fi
 fi
 
 if [ "$BOOTSTRAP_INPLACE" = true ]
@@ -374,6 +419,7 @@ else
 
     if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
     then
+        record_service_stage_start "wait-for-ceo"
         echo "Waiting for CEO to finish..."
         bootkube_podman_run \
             --volume "$PWD:/assets:z" \
@@ -381,8 +427,10 @@ else
             /usr/bin/cluster-etcd-operator \
             wait-for-ceo \
             --kubeconfig /assets/auth/kubeconfig
+        record_service_stage_success
     fi
 fi
+
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
 echo "bootkube.service complete"

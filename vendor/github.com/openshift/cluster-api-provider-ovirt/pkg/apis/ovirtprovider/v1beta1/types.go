@@ -72,6 +72,10 @@ type OvirtMachineProviderSpec struct {
 	// All network interfaces from the template are discarded and new ones will
 	// be created, unless the list is empty or nil
 	NetworkInterfaces []*NetworkInterface `json:"network_interfaces,omitempty"`
+
+	// VMAffinityGroup contains the name of the OpenShift cluster affinity groups
+	// It will be used to add the newly created machine to the affinity groups
+	AffinityGroupsNames []string `json:"affinity_groups_names,omitempty`
 }
 
 // CPU defines the VM cpu, made of (Sockets * Cores * Threads)

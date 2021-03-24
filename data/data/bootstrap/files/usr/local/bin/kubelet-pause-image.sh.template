@@ -5,6 +5,9 @@ set -euo pipefail
 # Need to set the --pod-infra-container-image flag for the kubelet to point to the pause image from the payload
 # So we add MACHINE_CONFIG_INFRA_IMAGE to an environment file and source that in the kubelet service
 
+PRE_COMMAND="kubelet-pause-image"
+. /usr/local/bin/bootstrap-service-record.sh
+
 . /usr/local/bin/release-image.sh
 
 echo "MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)" > /etc/kubernetes/kubelet-pause-image-override

@@ -237,8 +237,8 @@ openshift-vw9j6
 export BASE_DOMAIN='example.com'
 export BASE_DOMAIN_ZONE_NAME='example'
 export NETWORK_CIDR='10.0.0.0/16'
-export MASTER_SUBNET_CIDR='10.0.0.0/19'
-export WORKER_SUBNET_CIDR='10.0.32.0/19'
+export MASTER_SUBNET_CIDR='10.0.0.0/17'
+export WORKER_SUBNET_CIDR='10.0.128.0/17'
 
 export KUBECONFIG=auth/kubeconfig
 export CLUSTER_NAME=$(jq -r .clusterName metadata.json)
@@ -277,8 +277,8 @@ EOF
 ```
 - `infra_id`: the infrastructure name (INFRA_ID above)
 - `region`: the region to deploy the cluster into (for example us-east1)
-- `master_subnet_cidr`: the CIDR for the master subnet (for example 10.0.0.0/19)
-- `worker_subnet_cidr`: the CIDR for the worker subnet (for example 10.0.32.0/19)
+- `master_subnet_cidr`: the CIDR for the master subnet (for example 10.0.0.0/17)
+- `worker_subnet_cidr`: the CIDR for the worker subnet (for example 10.0.128.0/17)
 
 Create the deployment using gcloud.
 

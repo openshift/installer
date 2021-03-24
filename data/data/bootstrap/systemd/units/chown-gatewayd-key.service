@@ -9,7 +9,7 @@ Before=systemd-journal-gatewayd.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/bin/sh -c "if ! getent passwd systemd-journal-gateway &>/dev/null; then useradd -r systemd-journal-gateway; fi && chown systemd-journal-gateway: /opt/openshift/tls/journal-gatewayd.{crt,key}"
+ExecStart=/bin/sh -c ". /usr/local/bin/bootstrap-service-record.sh; if ! getent passwd systemd-journal-gateway &>/dev/null; then useradd -r systemd-journal-gateway; fi && chown systemd-journal-gateway: /opt/openshift/tls/journal-gatewayd.{crt,key}"
 
 [Install]
 WantedBy=multi-user.target

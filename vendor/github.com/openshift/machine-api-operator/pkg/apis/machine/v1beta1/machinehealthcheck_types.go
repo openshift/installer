@@ -30,6 +30,14 @@ type MachineHealthCheck struct {
 	Status MachineHealthCheckStatus `json:"status,omitempty"`
 }
 
+func (m *MachineHealthCheck) GetConditions() Conditions {
+	return m.Status.Conditions
+}
+
+func (m *MachineHealthCheck) SetConditions(conditions Conditions) {
+	m.Status.Conditions = conditions
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // MachineHealthCheckList contains a list of MachineHealthCheck
@@ -103,4 +111,13 @@ type MachineHealthCheckStatus struct {
 	// total number of machines counted by this machine health check
 	// +kubebuilder:validation:Minimum=0
 	CurrentHealthy *int `json:"currentHealthy" protobuf:"varint,4,opt,name=currentHealthy"`
+
+	// RemediationsAllowed is the number of further remediations allowed by this machine health check before
+	// maxUnhealthy short circuiting will be applied
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	RemediationsAllowed int32 `json:"remediationsAllowed"`
+
+	// Conditions defines the current state of the MachineHealthCheck
+	Conditions Conditions `json:"conditions,omitempty"`
 }
