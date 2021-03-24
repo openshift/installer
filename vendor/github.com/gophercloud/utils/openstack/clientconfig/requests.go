@@ -817,11 +817,9 @@ func NewServiceClient(service string, opts *ClientOpts) (*gophercloud.ServiceCli
 		pClient.HTTPClient = *opts.HTTPClient
 	} else {
 		// Otherwise create a new HTTP client with the generated TLS config.
-		pClient.HTTPClient = http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: tlsConfig,
-			},
-		}
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.TLSClientConfig = tlsConfig
+		pClient.HTTPClient = http.Client{Transport: transport}
 	}
 
 	err = openstack.Authenticate(pClient, *ao)

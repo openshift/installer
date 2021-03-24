@@ -33,7 +33,7 @@ require (
 	github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible // indirect
 	github.com/google/uuid v1.1.2
 	github.com/gophercloud/gophercloud v0.16.1-0.20210311194000-69f51f2f086c
-	github.com/gophercloud/utils v0.0.0-20210216074907-f6de111f2eae
+	github.com/gophercloud/utils v0.0.0-20210323225332-7b186010c04f
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-azure-helpers v0.10.0
 	github.com/hashicorp/go-plugin v1.3.0
