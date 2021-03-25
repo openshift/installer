@@ -16,6 +16,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/azure/defaults"
 )
 
 type resourceRequirements struct {
@@ -44,7 +45,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 }
 
 // ValidateInstanceType ensures the instance type has sufficient Vcpu and Memory.
-func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceType string, req resourceRequirements) field.ErrorList {
+func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceType string, diskType string, req resourceRequirements) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	typeMeta, err := client.GetVirtualMachineSku(context.TODO(), instanceType, region)
@@ -77,6 +78,11 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 				errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d GB Memory", req.minimumMemory)
 				allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
 			}
+		} else if diskType == "Premium_LRS" && strings.EqualFold(*capability.Name, "PremiumIO") {
+			if strings.EqualFold(*capability.Value, "False") {
+				errMsg := fmt.Sprintf("PremiumIO not supported for instance type %s", instanceType)
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("osDisk", "diskType"), diskType, errMsg))
+			}
 		}
 	}
 
@@ -87,25 +93,49 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	// Default requirements need to be sufficient to support Control Plane instances.
-	defaultInstanceReq := controlPlaneReq
+	defaultDiskType := aztypes.DefaultDiskType
+	defaultInstanceType := ""
 
-	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Azure != nil && ic.ControlPlane.Platform.Azure.InstanceType != "" {
-		// Default requirements can be relaxed when the controlPlane type is set explicitly.
-		defaultInstanceReq = computeReq
-
-		allErrs = append(allErrs, ValidateInstanceType(client, field.NewPath("controlPlane", "platform", "azure"), ic.Azure.Region, ic.ControlPlane.Platform.Azure.InstanceType, controlPlaneReq)...)
+	if ic.Platform.Azure.DefaultMachinePlatform != nil && ic.Platform.Azure.DefaultMachinePlatform.OSDisk.DiskType != "" {
+		defaultDiskType = ic.Platform.Azure.DefaultMachinePlatform.OSDisk.DiskType
+	}
+	if ic.Platform.Azure.DefaultMachinePlatform != nil && ic.Platform.Azure.DefaultMachinePlatform.InstanceType != "" {
+		defaultInstanceType = ic.Platform.Azure.DefaultMachinePlatform.InstanceType
 	}
 
-	if ic.Platform.Azure.DefaultMachinePlatform != nil && ic.Platform.Azure.DefaultMachinePlatform.InstanceType != "" {
-		allErrs = append(allErrs, ValidateInstanceType(client, field.NewPath("platform", "azure", "defaultMachinePlatform"), ic.Azure.Region, ic.Platform.Azure.DefaultMachinePlatform.InstanceType, defaultInstanceReq)...)
+	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Azure != nil {
+		diskType := ic.ControlPlane.Platform.Azure.OSDisk.DiskType
+		instanceType := ic.ControlPlane.Platform.Azure.InstanceType
+
+		if diskType == "" {
+			diskType = defaultDiskType
+		}
+		if instanceType == "" {
+			instanceType = defaultInstanceType
+		}
+		if instanceType == "" {
+			instanceType = defaults.ControlPlaneInstanceType(ic.Azure.Region)
+		}
+		allErrs = append(allErrs, ValidateInstanceType(client, field.NewPath("controlPlane", "platform", "azure"), ic.Azure.Region, instanceType, diskType, controlPlaneReq)...)
 	}
 
 	for idx, compute := range ic.Compute {
 		fieldPath := field.NewPath("compute").Index(idx)
-		if compute.Platform.Azure != nil && compute.Platform.Azure.InstanceType != "" {
+		if compute.Platform.Azure != nil {
+			diskType := compute.Platform.Azure.OSDisk.DiskType
+			instanceType := compute.Platform.Azure.InstanceType
+
+			if diskType == "" {
+				diskType = defaultDiskType
+			}
+			if instanceType == "" {
+				instanceType = defaultInstanceType
+			}
+			if instanceType == "" {
+				instanceType = defaults.ComputeInstanceType(ic.Azure.Region)
+			}
 			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "azure"),
-				ic.Azure.Region, compute.Platform.Azure.InstanceType, computeReq)...)
+				ic.Azure.Region, instanceType, diskType, computeReq)...)
 		}
 	}
 

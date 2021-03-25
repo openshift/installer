@@ -94,7 +94,7 @@ func defaultAzureMachinePoolPlatform() azuretypes.MachinePool {
 	return azuretypes.MachinePool{
 		OSDisk: azuretypes.OSDisk{
 			DiskSizeGB: 128,
-			DiskType:   "Premium_LRS",
+			DiskType:   azuretypes.DefaultDiskType,
 		},
 	}
 }
