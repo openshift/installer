@@ -21,6 +21,7 @@ require (
 	github.com/clarketm/json v1.14.1
 	github.com/containers/image v3.0.2+incompatible
 	github.com/coreos/ignition/v2 v2.9.0
+	github.com/coreos/stream-metadata-go v0.0.0-20210225230131-70edb9eb47b3
 	github.com/dmacvicar/terraform-provider-libvirt v0.6.4-0.20201216193629-2b60d7626ff8
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/frankban/quicktest v1.7.2 // indirect

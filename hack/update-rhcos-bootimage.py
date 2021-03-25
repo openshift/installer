@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# Usage: ./hack/update-rhcos-bootimage.py https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.6/46.82.202008260918-0/x86_64/meta.json amd64
+# This script updates the legacy metadata.  We hope to remove it soon.
+# See docs/dev/pinned-coreos.md for more information.
 import codecs,os,sys,json,argparse
 import urllib.parse
 import urllib.request

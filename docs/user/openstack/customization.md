@@ -112,13 +112,18 @@ sshKey: ssh-ed25519 AAAA...
 
 ## Image Overrides
 
-Normally the installer downloads the RHCOS image from a predetermined location described in [data/data/rhcos.json](/data/data/rhcos.json)). But the download URL can be overridden, notably for disconnected installations.
+The OpenShift installer pins the version of RHEL CoreOS and normally handles uploading the image to the target OpenStack instance.
 
-To do so and upload binary data from a custom location the user may set `clusterOSImage` parameter in the install config that points to that location, and then start the installation. In all other respects the process will be consistent with the default.
+If you want to download the image manually, see [CoreOS bootimages](../overview.md#coreos-bootimages) for more information
+about bootimages.  This is useful, for example, to perform a disconnected installation.  To do this,
+download the `qcow2` and host it at a custom location.  Then set the `openstack.clusterOSImage`
+parameter field in the install config to point to that location.   The install process will
+then use that mirrored image.
+In all other respects the process will be consistent with the default.
 
 **NOTE:** For this to work, the parameter value must be a valid http(s) URL.
 
-**NOTE:** The optional `sha256` query parameter can be attached to the URL, which will force the installer to check the image file checksum before uploading it into Glance.
+**NOTE:** The optional `sha256` query parameter can be attached to the URL. This will force the installer to check the uncompressed image file checksum before uploading it into Glance.
 
 Example:
 

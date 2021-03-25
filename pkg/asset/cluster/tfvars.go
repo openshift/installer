@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	coreosarch "github.com/coreos/stream-metadata-go/arch"
 	gcpprovider "github.com/openshift/cluster-api-provider-gcp/pkg/apis/gcpprovider/v1beta1"
 	kubevirtprovider "github.com/openshift/cluster-api-provider-kubevirt/pkg/apis/kubevirtprovider/v1alpha1"
 	kubevirtutils "github.com/openshift/cluster-api-provider-kubevirt/pkg/utils"
@@ -338,16 +339,30 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		preexistingnetwork := installConfig.Config.GCP.Network != ""
 
-		imageRaw, err := rhcospkg.GCPRaw(ctx, installConfig.Config.ControlPlane.Architecture)
+		archName := coreosarch.RpmArch(string(installConfig.Config.ControlPlane.Architecture))
+		st, err := rhcospkg.FetchCoreOSBuild(ctx)
 		if err != nil {
-			return errors.Wrap(err, "failed to find Raw GCP image URL")
+			return err
 		}
+		streamArch, err := st.GetArchitecture(archName)
+		if err != nil {
+			return err
+		}
+
+		img := streamArch.Images.Gcp
+		if img == nil {
+			return fmt.Errorf("%s: No GCP build found", st.FormatPrefix(archName))
+		}
+		// For backwards compatibility, we generate this URL to the image (only applies to RHCOS, not FCOS/OKD)
+		// right now.  It will only be used if nested virt or other licenses are enabled, which we
+		// really should deprecate and remove - xref https://github.com/openshift/installer/pull/4696
+		imageURL := fmt.Sprintf("https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz", img.Name)
 		data, err := gcptfvars.TFVars(
 			gcptfvars.TFVarsSources{
 				Auth:               auth,
 				MasterConfigs:      masterConfigs,
 				WorkerConfigs:      workerConfigs,
-				ImageURI:           imageRaw,
+				ImageURI:           imageURL,
 				ImageLicenses:      installConfig.Config.GCP.Licenses,
 				PublicZoneName:     publicZoneName,
 				PublishStrategy:    installConfig.Config.Publish,

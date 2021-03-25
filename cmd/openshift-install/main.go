@@ -60,6 +60,7 @@ func installerMain() {
 		newGatherCmd(),
 		newVersionCmd(),
 		newGraphCmd(),
+		newCoreOSCmd(),
 		newCompletionCmd(),
 		newMigrateCmd(),
 		newExplainCmd(),

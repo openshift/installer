@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -66,67 +66,95 @@ func (i *Image) Generate(p asset.Parents) error {
 }
 
 func osImage(config *types.InstallConfig) (string, error) {
-	arch := config.ControlPlane.Architecture
-
-	var osimage string
-	var err error
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
+
+	archName := arch.RpmArch(string(config.ControlPlane.Architecture))
+
+	st, err := rhcos.FetchCoreOSBuild(ctx)
+	if err != nil {
+		return "", err
+	}
+	streamArch, err := st.GetArchitecture(archName)
+	if err != nil {
+		return "", err
+	}
 	switch config.Platform.Name() {
 	case aws.Name:
 		if len(config.Platform.AWS.AMIID) > 0 {
-			osimage = config.Platform.AWS.AMIID
-			break
+			return config.Platform.AWS.AMIID, nil
 		}
 		region := config.Platform.AWS.Region
 		if !configaws.IsKnownRegion(config.Platform.AWS.Region) {
 			region = "us-east-1"
 		}
-		osimage, err = rhcos.AMI(ctx, arch, region)
+		osimage, err := st.GetAMI(archName, region)
+		if err != nil {
+			return "", err
+		}
 		if region != config.Platform.AWS.Region {
 			osimage = fmt.Sprintf("%s,%s", osimage, region)
 		}
+		return osimage, nil
 	case gcp.Name:
-		osimage, err = rhcos.GCP(ctx, arch)
-	case libvirt.Name:
-		osimage, err = rhcos.QEMU(ctx, arch)
-	case openstack.Name:
-		if oi := config.Platform.OpenStack.ClusterOSImage; oi != "" {
-			osimage = oi
-			break
+		if streamArch.Images.Gcp != nil {
+			img := streamArch.Images.Gcp
+			return fmt.Sprintf("projects/%s/global/images/%s", img.Project, img.Name), nil
 		}
-		osimage, err = rhcos.OpenStack(ctx, arch)
-	case ovirt.Name:
-		osimage, err = rhcos.OpenStack(ctx, arch)
-	case kubevirt.Name:
-		osimage, err = rhcos.OpenStack(ctx, arch)
+		return "", fmt.Errorf("%s: No GCP build found", st.FormatPrefix(archName))
+	case libvirt.Name:
+		// 𝅘𝅥𝅮 Everything's going to be a-ok 𝅘𝅥𝅮
+		if a, ok := streamArch.Artifacts["qemu"]; ok {
+			return rhcos.FindArtifactURL(a)
+		}
+		return "", fmt.Errorf("%s: No qemu build found", st.FormatPrefix(archName))
+	case ovirt.Name, kubevirt.Name, openstack.Name:
+		op := config.Platform.OpenStack
+		if op != nil {
+			if oi := op.ClusterOSImage; oi != "" {
+				return oi, nil
+			}
+		}
+		if a, ok := streamArch.Artifacts["openstack"]; ok {
+			return rhcos.FindArtifactURL(a)
+		}
+		return "", fmt.Errorf("%s: No openstack build found", st.FormatPrefix(archName))
 	case azure.Name:
-		osimage, err = rhcos.VHD(ctx, arch)
+		ext := streamArch.RHELCoreOSExtensions
+		if ext == nil {
+			return "", fmt.Errorf("%s: No azure build found", st.FormatPrefix(archName))
+		}
+		azd := ext.AzureDisk
+		if azd == nil {
+			return "", fmt.Errorf("%s: No azure build found", st.FormatPrefix(archName))
+		}
+		return azd.URL, nil
 	case baremetal.Name:
-		// Check for RHCOS image URL override
+		// Check for image URL override
 		if oi := config.Platform.BareMetal.ClusterOSImage; oi != "" {
-			osimage = oi
-			break
+			return oi, nil
 		}
 
 		// Note that baremetal IPI currently uses the OpenStack image
 		// because this contains the necessary ironic config drive
 		// ignition support, which isn't enabled in the UPI BM images
-		osimage, err = rhcos.OpenStack(ctx, arch)
+		if a, ok := streamArch.Artifacts["openstack"]; ok {
+			return rhcos.FindArtifactURL(a)
+		}
+		return "", fmt.Errorf("%s: No openstack build found", st.FormatPrefix(archName))
 	case vsphere.Name:
-		// Check for RHCOS image URL override
+		// Check for image URL override
 		if config.Platform.VSphere.ClusterOSImage != "" {
-			osimage = config.Platform.VSphere.ClusterOSImage
-			break
+			return config.Platform.VSphere.ClusterOSImage, nil
 		}
 
-		osimage, err = rhcos.VMware(ctx, arch)
+		if a, ok := streamArch.Artifacts["vmware"]; ok {
+			return rhcos.FindArtifactURL(a)
+		}
+		return "", fmt.Errorf("%s: No vmware build found", st.FormatPrefix(archName))
 	case none.Name:
+		return "", nil
 	default:
-		return "", errors.New("invalid Platform")
+		return "", fmt.Errorf("invalid platform %v", config.Platform.Name())
 	}
-	if err != nil {
-		return "", err
-	}
-	return osimage, nil
 }
