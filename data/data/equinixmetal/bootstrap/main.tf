@@ -1,13 +1,18 @@
 
 locals {
-  arch           = "x86_64"
+  arch = "x86_64"
   // TODO(displague) use an EquinixMetal proxy
+  /*
   coreos_baseurl = "http://mirror.openshift.com/pub/openshift-v4/${local.arch}/dependencies/rhcos"
   coreos_url     = "${local.coreos_baseurl}/${var.ocp_version}/${var.ocp_version}.${var.ocp_version_zstream}"
   coreos_filenm  = "rhcos-${var.ocp_version}.${var.ocp_version_zstream}-${local.arch}"
   coreos_img     = "${local.coreos_filenm}-metal.${local.arch}.raw.gz"
   coreos_kernel  = "${local.coreos_filenm}-installer-kernel-${local.arch}"
   coreos_initrd  = "${local.coreos_filenm}-installer-initramfs.${local.arch}.img"
+  */
+
+  // extracting "api.<clustername>" from <clusterdomain>
+  external_name = "api-int.${replace(var.cluster_domain, ".${var.base_domain}", "")}.${var.base_domain}"
 }
 
 /*
@@ -17,41 +22,42 @@ data "template_file" "user_data" {
 }
 
 data "template_file" "ipxe_script" {
-  depends_on = [packet_device.lb]
+  depends_on = [packet_device.bootstrap]
   for_each   = toset(var.nodes)
   template   = file("${path.module}/templates/ipxe.tpl")
 
   vars = {
     node_type           = each.value
-    bastion_ip          = packet_device.lb.access_public_ipv4
+    bootstrap_ip          = packet_device.bootstrap.access_public_ipv4
     ocp_version         = var.ocp_version
     ocp_version_zstream = var.ocp_version_zstream
   }
 }
 
 data "template_file" "ignition_append" {
-  depends_on = [packet_device.lb]
+  depends_on = [packet_device.bootstrap]
   for_each   = toset(var.nodes)
   template   = file("${path.module}/templates/ignition-append.json.tpl")
 
   vars = {
     node_type          = each.value
-    bastion_ip         = packet_device.lb.access_public_ipv4
+    bootstrap_ip         = packet_device.bootstrap.access_public_ipv4
     cluster_name       = var.cluster_name
     cluster_basedomain = var.cluster_basedomain
   }
 }
 */
 
-resource "packet_device" "lb" {
-  hostname         = "lb-0.${var.cluster_name}.${var.cluster_basedomain}"
+resource "packet_device" "bootstrap" {
+  hostname         = local.external_name
   plan             = var.plan
   facilities       = [var.facility]
-  operating_system = var.operating_system
+  operating_system = "custom_ipxe"
   billing_cycle    = var.billing_cycle
   project_id       = var.project_id
+  ipxe_script_url  = "https://gist.githubusercontent.com/displague/5282172449a83c7b83821f8f8333a072/raw/0f0d50c744bb758689911d1f8d421b7730c0fb3e/rhcos.ipxe"
   // user_data        = data.template_file.user_data.rendered
-
+  user_data = var.ignition
 }
 
 /*
@@ -61,7 +67,7 @@ resource "null_resource" "dircheck" {
 
     connection {
       private_key = file(var.ssh_private_key_path)
-      host        = packet_device.lb.access_public_ipv4
+      host        = packet_device.bootstrap.access_public_ipv4
     }
 
 
@@ -81,7 +87,7 @@ resource "null_resource" "ocp_install_ignition" {
 
     connection {
       private_key = file(var.ssh_private_key_path)
-      host        = packet_device.lb.access_public_ipv4
+      host        = packet_device.bootstrap.access_public_ipv4
     }
 
 
@@ -103,7 +109,7 @@ resource "null_resource" "ipxe_files" {
 
     connection {
       private_key = file(var.ssh_private_key_path)
-      host        = packet_device.lb.access_public_ipv4
+      host        = packet_device.bootstrap.access_public_ipv4
     }
 
     content     = each.value.rendered
@@ -114,7 +120,7 @@ resource "null_resource" "ipxe_files" {
 
     connection {
       private_key = file(var.ssh_private_key_path)
-      host        = packet_device.lb.access_public_ipv4
+      host        = packet_device.bootstrap.access_public_ipv4
     }
 
 
@@ -133,7 +139,7 @@ resource "null_resource" "ignition_append_files" {
 
     connection {
       private_key = file(var.ssh_private_key_path)
-      host        = packet_device.lb.access_public_ipv4
+      host        = packet_device.bootstrap.access_public_ipv4
     }
 
     content     = each.value.rendered
@@ -144,7 +150,7 @@ resource "null_resource" "ignition_append_files" {
 
     connection {
       private_key = file(var.ssh_private_key_path)
-      host        = packet_device.lb.access_public_ipv4
+      host        = packet_device.bootstrap.access_public_ipv4
     }
 
 

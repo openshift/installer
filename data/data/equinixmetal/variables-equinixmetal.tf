@@ -11,11 +11,6 @@ variable "metal_cf_zone_id" {
   description = "Your Cloudflare Zone"
 }
 */
-variable "metal_cluster_basedomain" {
-  description = "Your Cloudflare Base domain for your cluster"
-  default = "TODO"
-}
-
 
 variable "metal_auth_token" {
   description = "Your Equinix Metal API key"
@@ -35,8 +30,8 @@ variable "metal_ssh_public_key_path" {
   default     = "~/.ssh/id_rsa.pub"
 }
 
-variable "metal_bastion_operating_system" {
-  description = "Your preferred bastion operating systems (RHEL or CentOS)"
+variable "metal_bootstrap_operating_system" {
+  description = "Your preferred bootstrap operating systems (RHEL or CentOS)"
   default     = "rhel_7"
 }
 
@@ -48,30 +43,11 @@ variable "metal_billing_cycle" {
   description = "Your billing cycle (hourly)"
 }
 
-variable "metal_plan_master" {
-  description = "Plan for Master Nodes"
-}
-
-variable "metal_plan_compute" {
+variable "metal_machine_type" {
   description = "Plan for Compute Nodes"
 }
 
-variable "metal_count_bootstrap" {
-  description = "Number of Master Nodes."
-}
-
-variable "metal_count_master" {
-  description = "Number of Master Nodes."
-}
-
-variable "metal_count_compute" {
-  description = "Number of Compute Nodes"
-}
-
-variable "metal_cluster_name" {
-  description = "Cluster name label"
-}
-
+/*
 variable "metal_ocp_version" {
   default     = "4.6"
   description = "OpenShift minor release version"
@@ -81,6 +57,7 @@ variable "metal_ocp_version_zstream" {
   default     = "3"
   description = "OpenShift zstream version"
 }
+
 
 variable "metal_ocp_cluster_manager_token" {
   description = "OpenShift Cluster Manager API Token used to generate your pullSecret (https://cloud.redhat.com/openshift/token)"
@@ -99,3 +76,4 @@ variable "metal_ocp_virtualization_enable" {
   description = "Enable installation of OpenShift Virtualization via operator. This requires storage provided by OCS, NFS, and/or hostPath provisioner(s)"
   default     = false
 }
+*/

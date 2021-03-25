@@ -1,3 +1,3 @@
 output "finished" {
-  value = "Provisioning node type ${var.node_type} finished."
+  value = "delete me: Provisioning finished."
 }

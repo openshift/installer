@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	DefaultFacility = "EWR1" // Parsippany, NJ, US
+	DefaultFacility = "da11" // Dallas, TX, US
 )
 
 // Platform collects equinixmetal-specific configuration.
@@ -78,7 +78,7 @@ func selectFacility() (string, error) {
 		{
 			Prompt: &survey.Input{
 				Message: "Equinix Metal Facility Code",
-				Help:    "The Equinix Metal Facility code (this is the short name, e.g. 'ewr1')",
+				Help:    "The Equinix Metal Facility code (this is the short name, e.g. 'da11')",
 				Default: DefaultFacility,
 			},
 		},

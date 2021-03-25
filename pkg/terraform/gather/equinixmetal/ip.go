@@ -10,7 +10,7 @@ import (
 // BootstrapIP returns the ip address for bootstrap host.
 // TODO(displague) implement
 func BootstrapIP(tfs *terraform.State) (string, error) {
-	br, err := terraform.LookupResource(tfs, "module.bootstrap", "equinixmetal_device", "lb")
+	br, err := terraform.LookupResource(tfs, "module.bootstrap", "packet_device", "bootstrap")
 	if err != nil {
 		return "", errors.Wrap(err, "failed to lookup bootstrap")
 	}

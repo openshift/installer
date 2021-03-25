@@ -511,6 +511,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		auth := equinixtfvars.Auth{
+			APIURL: config.APIURL,
+			APIKey: config.APIKey,
+		}
+
 		/*
 			con, err := equinixconfig.NewConnection()
 			if err != nil {
@@ -525,12 +530,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 
 		data, err := equinixtfvars.TFVars(equinixtfvars.TFVarsSources{
+			Auth: auth,
 			ControlPlaneConfigs: []*equinixprovider.EquinixMetalMachineProviderConfig{
 				masters[0].Spec.ProviderSpec.Value.Object.(*equinixprovider.EquinixMetalMachineProviderConfig),
-			},
-			Auth: equinixtfvars.Auth{
-				APIURL: config.APIURL,
-				APIKey: config.APIKey,
 			},
 		})
 		if err != nil {

@@ -138,7 +138,7 @@ func defaultOvirtMachinePoolPlatform() ovirttypes.MachinePool {
 func defaultEquinixMetalMachinePoolPlatform() equinixtypes.MachinePool {
 	return equinixtypes.MachinePool{
 		// TODO(displague) what defaults should we supply?
-		Plan: "c3-medium.x86",
+		Plan: "c3.medium.x86",
 	}
 }
 

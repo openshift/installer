@@ -4,7 +4,7 @@ resource "cloudflare_record" "dns_a_cluster_api" {
   type    = "A"
   name    = "api.${var.cluster_name}.${var.cluster_basedomain}"
   value   = var.node_ips[count.index]
-  count   = (var.node_type == "lb" ? length(var.node_ips) : 0)
+  count   = (var.node_type == "bootstrap" ? length(var.node_ips) : 0)
 }
 
 resource "cloudflare_record" "dns_a_cluster_api_int" {
@@ -12,7 +12,7 @@ resource "cloudflare_record" "dns_a_cluster_api_int" {
   type    = "A"
   name    = "api-int.${var.cluster_name}.${var.cluster_basedomain}"
   value   = var.node_ips[count.index]
-  count   = (var.node_type == "lb" ? length(var.node_ips) : 0)
+  count   = (var.node_type == "bootstrap" ? length(var.node_ips) : 0)
 }
 
 resource "cloudflare_record" "dns_a_cluster_wildcard_https" {
@@ -20,7 +20,7 @@ resource "cloudflare_record" "dns_a_cluster_wildcard_https" {
   type    = "A"
   name    = "*.apps.${var.cluster_name}.${var.cluster_basedomain}"
   value   = var.node_ips[count.index]
-  count   = (var.node_type == "lb" ? length(var.node_ips) : 0)
+  count   = (var.node_type == "bootstrap" ? length(var.node_ips) : 0)
 }
 
 resource "cloudflare_record" "dns_a_node" {

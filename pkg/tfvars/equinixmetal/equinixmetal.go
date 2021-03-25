@@ -11,7 +11,7 @@ type Auth struct {
 	APIKey string `json:"metal_auth_token"`
 }
 type config struct {
-	Auth          Auth     `json:",inline"`
+	Auth          `json:",inline"`
 	Roles         []string `json:"metal_roles,omitempty"`
 	Facility      string   `json:"metal_facility,omitempty"`
 	OS            string   `json:"metal_os"`
