@@ -394,6 +394,33 @@ spec:
                   description: Replicas is the machine count for the machine pool.
                   format: int64
                   type: integer
+                workloads:
+                  description: "Workloads assign a specific group of pods to a specific
+                    set of CPUs. \n The only supported workload is \"management\"
+                    which will pin all infrastructure pods to the defined cpuset."
+                  items:
+                    description: Workload defines a set of CPUs with a name, which
+                      will be used by Kubelet and Cri-O to partition specific sets
+                      of pods to those CPUs exclusively.
+                    properties:
+                      cpuIDs:
+                        description: CPUIDs is a CPU set specifier for the CPUs to
+                          add to the isolated set for this workload, as a comma-separated
+                          list of CPU numbers and ranges of numbers.  See cpuset(7)
+                          for more details.  For example, "1,5,9" or "0-4" or "0-1,52-53"
+                        pattern: '[0-9][-,0-9]*'
+                        type: string
+                      name:
+                        description: Name is the name of the workload
+                        enum:
+                        - ""
+                        - management
+                        type: string
+                    required:
+                    - cpuIDs
+                    - name
+                    type: object
+                  type: array
               required:
               - name
               - platform
@@ -743,6 +770,33 @@ spec:
                 description: Replicas is the machine count for the machine pool.
                 format: int64
                 type: integer
+              workloads:
+                description: "Workloads assign a specific group of pods to a specific
+                  set of CPUs. \n The only supported workload is \"management\" which
+                  will pin all infrastructure pods to the defined cpuset."
+                items:
+                  description: Workload defines a set of CPUs with a name, which will
+                    be used by Kubelet and Cri-O to partition specific sets of pods
+                    to those CPUs exclusively.
+                  properties:
+                    cpuIDs:
+                      description: CPUIDs is a CPU set specifier for the CPUs to add
+                        to the isolated set for this workload, as a comma-separated
+                        list of CPU numbers and ranges of numbers.  See cpuset(7)
+                        for more details.  For example, "1,5,9" or "0-4" or "0-1,52-53"
+                      pattern: '[0-9][-,0-9]*'
+                      type: string
+                    name:
+                      description: Name is the name of the workload
+                      enum:
+                      - ""
+                      - management
+                      type: string
+                  required:
+                  - cpuIDs
+                  - name
+                  type: object
+                type: array
             required:
             - name
             - platform

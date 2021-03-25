@@ -63,6 +63,13 @@ type MachinePool struct {
 	// +kubebuilder:default=amd64
 	// +optional
 	Architecture Architecture `json:"architecture,omitempty"`
+
+	// Workloads assign a specific group of pods to a specific set of CPUs.
+	//
+	// The only supported workload is "management" which will pin all
+	// infrastructure pods to the defined cpuset.
+	// +optional
+	Workloads []Workload `json:"workloads,omitempty"`
 }
 
 // MachinePoolPlatform is the platform-specific configuration for a machine
@@ -124,4 +131,28 @@ func (p *MachinePoolPlatform) Name() string {
 	default:
 		return ""
 	}
+}
+
+// WorkloadName is the name of the workload
+// +kubebuilder:validation:Enum="";management
+type WorkloadName string
+
+const (
+	// ManagementWorkload pins all infrastructure pods to the defined
+	// cpuset.
+	ManagementWorkload WorkloadName = "management"
+)
+
+// Workload defines a set of CPUs with a name, which will be used by Kubelet
+// and Cri-O to partition specific sets of pods to those CPUs exclusively.
+type Workload struct {
+	// Name is the name of the workload
+	Name WorkloadName `json:"name"`
+
+	// CPUIDs is a CPU set specifier for the CPUs to add to the isolated
+	// set for this workload, as a comma-separated list of CPU numbers and
+	// ranges of numbers.  See cpuset(7) for more details.  For example,
+	// "1,5,9" or "0-4" or "0-1,52-53"
+	// +kubebuilder:validation:Pattern="[0-9][-,0-9]*"
+	CPUIDs string `json:"cpuIDs"`
 }

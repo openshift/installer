@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 
+	"github.com/cri-o/cpuset"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -70,6 +71,7 @@ func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("architecture"), p.Architecture, validArchitectureValues))
 	}
 	allErrs = append(allErrs, validateMachinePoolPlatform(platform, &p.Platform, p, fldPath.Child("platform"))...)
+	allErrs = append(allErrs, validateWorkloads(p.Workloads, fldPath.Child("workloads"))...)
 	return allErrs
 }
 
@@ -129,5 +131,31 @@ func validateAzureMachinePool(p *types.MachinePoolPlatform, pool *types.MachineP
 	allErrs = append(allErrs, azurevalidation.ValidateMachinePool(p.Azure, f)...)
 	allErrs = append(allErrs, azurevalidation.ValidateMasterDiskType(pool, f)...)
 
+	return allErrs
+}
+
+// validateWorkloads ensures that the given slice of workloads is either empty or:
+//  - The name of the workload must be "management"
+//  - Made of unique names (no duplicates)
+//  - With a valid-looking CPU set description (note: Cannot actually verify against real hardware)
+func validateWorkloads(workloads []types.Workload, f *field.Path) field.ErrorList {
+	workloadNames := map[types.WorkloadName]bool{}
+	allErrs := field.ErrorList{}
+	for i, w := range workloads {
+		fi := f.Index(i)
+		if w.Name != types.ManagementWorkload {
+			allErrs = append(allErrs, field.NotSupported(fi.Child("name"), w.Name, []string{string(types.ManagementWorkload)}))
+		}
+		if workloadNames[w.Name] {
+			allErrs = append(allErrs, field.Duplicate(fi.Child("name"), w.Name))
+		}
+		workloadNames[w.Name] = true
+		switch cpus, err := cpuset.Parse(w.CPUIDs); {
+		case err != nil:
+			allErrs = append(allErrs, field.Invalid(fi.Child("cpuIDs"), w.CPUIDs, "could not parse the cpuset"))
+		case cpus.IsEmpty():
+			allErrs = append(allErrs, field.Required(fi.Child("cpuIDs"), "must specify the CPU IDs"))
+		}
+	}
 	return allErrs
 }

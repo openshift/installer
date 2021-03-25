@@ -24,6 +24,17 @@ func validMachinePool(name string) *types.MachinePool {
 	}
 }
 
+func validMPWithWorkload() *types.MachinePool {
+	p := validMachinePool("test-name")
+	p.Workloads = []types.Workload{
+		{
+			Name:   types.ManagementWorkload,
+			CPUIDs: "0-1",
+		},
+	}
+	return p
+}
+
 func TestValidateMachinePool(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -184,6 +195,75 @@ func TestValidateMachinePool(t *testing.T) {
 				}
 				p.Platform.GCP.OSDisk.DiskSizeGB = 100
 				p.Platform.GCP.OSDisk.DiskType = "pd-"
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name:     "with a valid workload",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool:     validMPWithWorkload(),
+			valid:    true,
+		},
+		{
+			name:     "with empty workloads",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMPWithWorkload()
+				p.Workloads = []types.Workload{}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name:     "with invalid workload name",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMPWithWorkload()
+				p.Workloads[0].Name = "badvalue"
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name:     "with empty workload name",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMPWithWorkload()
+				p.Workloads[0].Name = ""
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name:     "with duplicate workload names",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMPWithWorkload()
+				p.Workloads = append(p.Workloads, types.Workload{
+					Name:   types.ManagementWorkload,
+					CPUIDs: "2-3",
+				})
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name:     "with empty workload cpuIDs",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMPWithWorkload()
+				p.Workloads[0].CPUIDs = ""
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name:     "with an invalid workload cpuIDs",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMPWithWorkload()
+				p.Workloads[0].CPUIDs = "unparseable"
 				return p
 			}(),
 			valid: false,
