@@ -1,4 +1,4 @@
-# cloud.google.com/go v0.65.0 => cloud.google.com/go v0.57.0
+# cloud.google.com/go v0.79.0 => cloud.google.com/go v0.57.0
 ## explicit
 cloud.google.com/go
 cloud.google.com/go/compute/metadata
@@ -994,6 +994,10 @@ github.com/hashicorp/terraform-plugin-sdk/tfdiags
 github.com/hashicorp/terraform-plugin-sdk/tfplugin5
 # github.com/hashicorp/terraform-plugin-test/v2 v2.1.2
 github.com/hashicorp/terraform-plugin-test/v2
+# github.com/hashicorp/terraform-provider-google v1.20.1-0.20200922000057-78da461b151a
+## explicit
+github.com/hashicorp/terraform-provider-google/google
+github.com/hashicorp/terraform-provider-google/version
 # github.com/hashicorp/terraform-provider-kubernetes v1.13.3
 ## explicit
 github.com/hashicorp/terraform-provider-kubernetes/kubernetes
@@ -1711,10 +1715,6 @@ github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/su
 github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/timeouts
 github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils
 github.com/terraform-providers/terraform-provider-azurerm/version
-# github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160
-## explicit
-github.com/terraform-providers/terraform-provider-google/google
-github.com/terraform-providers/terraform-provider-google/version
 # github.com/terraform-providers/terraform-provider-ignition/v2 v2.1.0 => github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.0
 ## explicit
 github.com/terraform-providers/terraform-provider-ignition/v2/ignition
@@ -1852,7 +1852,7 @@ golang.org/x/crypto/ssh/agent
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/knownhosts
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/lint v0.0.0-20200302205851-738671d3881b
+# golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5
 ## explicit
 golang.org/x/lint
 golang.org/x/lint/golint
@@ -1878,14 +1878,15 @@ golang.org/x/net/internal/socks
 golang.org/x/net/internal/timeseries
 golang.org/x/net/proxy
 golang.org/x/net/trace
-# golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
+# golang.org/x/oauth2 v0.0.0-20210313182246-cd4f82c27b84
 ## explicit
 golang.org/x/oauth2
 golang.org/x/oauth2/google
+golang.org/x/oauth2/google/internal/externalaccount
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sys v0.0.0-20201202213521-69691e467435
+# golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
@@ -1951,7 +1952,7 @@ golang.org/x/xerrors
 golang.org/x/xerrors/internal
 # gomodules.xyz/jsonpatch/v2 v2.1.0
 gomodules.xyz/jsonpatch/v2
-# google.golang.org/api v0.34.0 => google.golang.org/api v0.25.0
+# google.golang.org/api v0.43.0 => google.golang.org/api v0.33.0
 ## explicit
 google.golang.org/api/appengine/v1
 google.golang.org/api/bigquery/v2
@@ -1979,8 +1980,10 @@ google.golang.org/api/googleapi/transport
 google.golang.org/api/healthcare/v1
 google.golang.org/api/iam/v1
 google.golang.org/api/iamcredentials/v1
+google.golang.org/api/idtoken
 google.golang.org/api/internal
 google.golang.org/api/internal/gensupport
+google.golang.org/api/internal/impersonate
 google.golang.org/api/internal/third_party/uritemplates
 google.golang.org/api/iterator
 google.golang.org/api/logging/v2
@@ -2001,6 +2004,7 @@ google.golang.org/api/transport/cert
 google.golang.org/api/transport/grpc
 google.golang.org/api/transport/http
 google.golang.org/api/transport/http/internal/propagation
+google.golang.org/api/transport/internal/dca
 # google.golang.org/appengine v1.6.6
 google.golang.org/appengine
 google.golang.org/appengine/datastore
@@ -2017,7 +2021,7 @@ google.golang.org/appengine/internal/socket
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/socket
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
+# google.golang.org/genproto v0.0.0-20210319143718-93e7006c17a6 => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 ## explicit
 google.golang.org/genproto/googleapis/api
 google.golang.org/genproto/googleapis/api/annotations
@@ -2035,7 +2039,7 @@ google.golang.org/genproto/googleapis/rpc/status
 google.golang.org/genproto/googleapis/type/calendarperiod
 google.golang.org/genproto/googleapis/type/expr
 google.golang.org/genproto/protobuf/field_mask
-# google.golang.org/grpc v1.32.0 => google.golang.org/grpc v1.35.0
+# google.golang.org/grpc v1.36.0 => google.golang.org/grpc v1.35.0
 ## explicit
 google.golang.org/grpc
 google.golang.org/grpc/attributes
@@ -2581,7 +2585,7 @@ sigs.k8s.io/yaml
 # sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 # github.com/go-openapi/spec => github.com/go-openapi/spec v0.19.4
 # github.com/ulikunitz/xz => github.com/ulikunitz/xz v0.5.7
-# google.golang.org/api => google.golang.org/api v0.25.0
+# google.golang.org/api => google.golang.org/api v0.33.0
 # google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 # github.com/Azure/go-autorest/autorest => github.com/Azure/go-autorest/autorest v0.11.17
 # github.com/Azure/go-autorest/autorest/adal => github.com/Azure/go-autorest/autorest/adal v0.9.10

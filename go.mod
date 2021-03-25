@@ -3,7 +3,7 @@ module github.com/openshift/installer
 go 1.14
 
 require (
-	cloud.google.com/go v0.65.0
+	cloud.google.com/go v0.79.0
 	github.com/Azure/azure-sdk-for-go v51.2.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.17
 	github.com/Azure/go-autorest/autorest/adal v0.9.10
@@ -23,7 +23,6 @@ require (
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-git/go-git/v5 v5.2.0
-	github.com/go-logr/logr v0.3.0 // indirect
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/gobuffalo/flect v0.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -40,6 +39,7 @@ require (
 	github.com/hashicorp/logutils v1.0.0
 	github.com/hashicorp/terraform v0.14.6
 	github.com/hashicorp/terraform-plugin-sdk v1.16.0
+	github.com/hashicorp/terraform-provider-google v1.20.1-0.20200922000057-78da461b151a
 	github.com/hashicorp/terraform-provider-kubernetes v1.13.3
 	github.com/hashicorp/terraform-provider-vsphere v1.24.3
 	github.com/hashicorp/vault v1.3.0 // indirect
@@ -78,7 +78,6 @@ require (
 	github.com/terraform-provider-openstack/terraform-provider-openstack v1.37.0
 	github.com/terraform-providers/terraform-provider-aws v1.60.1-0.20200807230610-d5346d47e3af
 	github.com/terraform-providers/terraform-provider-azurerm v1.44.1-0.20200911233120-57b2bfc9d42c
-	github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160
 	github.com/terraform-providers/terraform-provider-ignition/v2 v2.1.0
 	github.com/terraform-providers/terraform-provider-local v1.4.0
 	github.com/terraform-providers/terraform-provider-random v1.3.2-0.20190925210718-83518d96ae4f
@@ -86,14 +85,14 @@ require (
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
 	github.com/vmware/govmomi v0.24.0
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
-	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
+	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5
 	golang.org/x/mod v0.4.1
 	golang.org/x/net v0.0.0-20201202161906-c7110b5ffcbb // indirect
-	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
-	golang.org/x/sys v0.0.0-20201202213521-69691e467435
-	google.golang.org/api v0.34.0
-	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a
-	google.golang.org/grpc v1.32.0
+	golang.org/x/oauth2 v0.0.0-20210313182246-cd4f82c27b84
+	golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4
+	google.golang.org/api v0.43.0
+	google.golang.org/genproto v0.0.0-20210319143718-93e7006c17a6
+	google.golang.org/grpc v1.36.0
 	gopkg.in/AlecAivazis/survey.v1 v1.8.9-0.20200217094205-6773bdf39b7f
 	gopkg.in/ini.v1 v1.61.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -140,7 +139,7 @@ replace (
 replace (
 	github.com/go-openapi/spec => github.com/go-openapi/spec v0.19.4
 	github.com/ulikunitz/xz => github.com/ulikunitz/xz v0.5.7
-	google.golang.org/api => google.golang.org/api v0.25.0
+	google.golang.org/api => google.golang.org/api v0.33.0
 	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 )
 
