@@ -196,6 +196,10 @@ func askForCredentials() (*Credentials, error) {
 
 func saveCredentials(credentials Credentials, filePath string) error {
 	jsonCreds, err := json.Marshal(credentials)
+	if err != nil {
+		return err
+	}
+
 	err = os.MkdirAll(filepath.Dir(filePath), 0700)
 	if err != nil {
 		return err
