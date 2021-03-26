@@ -1137,6 +1137,9 @@ func XMLClusterWriteOne(writer *XMLWriter, object *Cluster, tag string) error {
 	if r, ok := object.FencingPolicy(); ok {
 		XMLFencingPolicyWriteOne(writer, r, "fencing_policy")
 	}
+	if r, ok := object.FipsMode(); ok {
+		XMLFipsModeWriteOne(writer, r, "fips_mode")
+	}
 	if r, ok := object.FirewallType(); ok {
 		XMLFirewallTypeWriteOne(writer, r, "firewall_type")
 	}
@@ -5038,6 +5041,9 @@ func XMLImageTransferWriteOne(writer *XMLWriter, object *ImageTransfer, tag stri
 	if r, ok := object.Snapshot(); ok {
 		XMLDiskSnapshotWriteOne(writer, r, "snapshot")
 	}
+	if r, ok := object.TimeoutPolicy(); ok {
+		XMLImageTransferTimeoutPolicyWriteOne(writer, r, "timeout_policy")
+	}
 	if r, ok := object.TransferUrl(); ok {
 		writer.WriteCharacter("transfer_url", r)
 	}
@@ -5329,6 +5335,9 @@ func XMLInstanceTypeWriteOne(writer *XMLWriter, object *InstanceType, tag string
 	}
 	if r, ok := object.VirtioScsi(); ok {
 		XMLVirtioScsiWriteOne(writer, r, "virtio_scsi")
+	}
+	if r, ok := object.VirtioScsiMultiQueuesEnabled(); ok {
+		writer.WriteBool("virtio_scsi_multi_queues_enabled", r)
 	}
 	if r, ok := object.Vm(); ok {
 		XMLVmWriteOne(writer, r, "vm")
@@ -8981,36 +8990,6 @@ func XMLSchedulingPolicyWriteMany(writer *XMLWriter, structSlice *SchedulingPoli
 	return nil
 }
 
-func XMLSeLinuxWriteOne(writer *XMLWriter, object *SeLinux, tag string) error {
-	if object == nil {
-		return fmt.Errorf("input object pointer is nil")
-	}
-	if tag == "" {
-		tag = "se_linux"
-	}
-	writer.WriteStart("", tag, nil)
-	if r, ok := object.Mode(); ok {
-		XMLSeLinuxModeWriteOne(writer, r, "mode")
-	}
-	writer.WriteEnd(tag)
-	return nil
-}
-
-func XMLSeLinuxWriteMany(writer *XMLWriter, structSlice *SeLinuxSlice, plural, singular string) error {
-	if plural == "" {
-		plural = "se_linuxs"
-	}
-	if singular == "" {
-		singular = "se_linux"
-	}
-	writer.WriteStart("", plural, nil)
-	for _, o := range structSlice.Slice() {
-		XMLSeLinuxWriteOne(writer, o, singular)
-	}
-	writer.WriteEnd(plural)
-	return nil
-}
-
 func XMLSchedulingPolicyUnitWriteOne(writer *XMLWriter, object *SchedulingPolicyUnit, tag string) error {
 	if object == nil {
 		return fmt.Errorf("input object pointer is nil")
@@ -9061,6 +9040,36 @@ func XMLSchedulingPolicyUnitWriteMany(writer *XMLWriter, structSlice *Scheduling
 	writer.WriteStart("", plural, nil)
 	for _, o := range structSlice.Slice() {
 		XMLSchedulingPolicyUnitWriteOne(writer, o, singular)
+	}
+	writer.WriteEnd(plural)
+	return nil
+}
+
+func XMLSeLinuxWriteOne(writer *XMLWriter, object *SeLinux, tag string) error {
+	if object == nil {
+		return fmt.Errorf("input object pointer is nil")
+	}
+	if tag == "" {
+		tag = "se_linux"
+	}
+	writer.WriteStart("", tag, nil)
+	if r, ok := object.Mode(); ok {
+		XMLSeLinuxModeWriteOne(writer, r, "mode")
+	}
+	writer.WriteEnd(tag)
+	return nil
+}
+
+func XMLSeLinuxWriteMany(writer *XMLWriter, structSlice *SeLinuxSlice, plural, singular string) error {
+	if plural == "" {
+		plural = "se_linuxs"
+	}
+	if singular == "" {
+		singular = "se_linux"
+	}
+	writer.WriteStart("", plural, nil)
+	for _, o := range structSlice.Slice() {
+		XMLSeLinuxWriteOne(writer, o, singular)
 	}
 	writer.WriteEnd(plural)
 	return nil
@@ -9490,6 +9499,9 @@ func XMLSnapshotWriteOne(writer *XMLWriter, object *Snapshot, tag string) error 
 	if r, ok := object.VirtioScsi(); ok {
 		XMLVirtioScsiWriteOne(writer, r, "virtio_scsi")
 	}
+	if r, ok := object.VirtioScsiMultiQueuesEnabled(); ok {
+		writer.WriteBool("virtio_scsi_multi_queues_enabled", r)
+	}
 	if r, ok := object.Vm(); ok {
 		XMLVmWriteOne(writer, r, "vm")
 	}
@@ -9616,6 +9628,9 @@ func XMLSshWriteOne(writer *XMLWriter, object *Ssh, tag string) error {
 	}
 	if r, ok := object.Port(); ok {
 		writer.WriteInt64("port", r)
+	}
+	if r, ok := object.PublicKey(); ok {
+		writer.WriteCharacter("public_key", r)
 	}
 	if r, ok := object.User(); ok {
 		XMLUserWriteOne(writer, r, "user")
@@ -10499,6 +10514,9 @@ func XMLTemplateWriteOne(writer *XMLWriter, object *Template, tag string) error 
 	if r, ok := object.VirtioScsi(); ok {
 		XMLVirtioScsiWriteOne(writer, r, "virtio_scsi")
 	}
+	if r, ok := object.VirtioScsiMultiQueuesEnabled(); ok {
+		writer.WriteBool("virtio_scsi_multi_queues_enabled", r)
+	}
 	if r, ok := object.Vm(); ok {
 		XMLVmWriteOne(writer, r, "vm")
 	}
@@ -10786,6 +10804,9 @@ func XMLUserWriteOne(writer *XMLWriter, object *User, tag string) error {
 	if r, ok := object.Namespace(); ok {
 		writer.WriteCharacter("namespace", r)
 	}
+	if r, ok := object.Options(); ok {
+		XMLUserOptionWriteMany(writer, r, "options", "user_option")
+	}
 	if r, ok := object.Password(); ok {
 		writer.WriteCharacter("password", r)
 	}
@@ -10824,6 +10845,55 @@ func XMLUserWriteMany(writer *XMLWriter, structSlice *UserSlice, plural, singula
 	writer.WriteStart("", plural, nil)
 	for _, o := range structSlice.Slice() {
 		XMLUserWriteOne(writer, o, singular)
+	}
+	writer.WriteEnd(plural)
+	return nil
+}
+
+func XMLUserOptionWriteOne(writer *XMLWriter, object *UserOption, tag string) error {
+	if object == nil {
+		return fmt.Errorf("input object pointer is nil")
+	}
+	if tag == "" {
+		tag = "user_option"
+	}
+	var attrs map[string]string
+	if r, ok := object.Id(); ok {
+		if attrs == nil {
+			attrs = make(map[string]string)
+		}
+		attrs["id"] = r
+	}
+	writer.WriteStart("", tag, attrs)
+	if r, ok := object.Comment(); ok {
+		writer.WriteCharacter("comment", r)
+	}
+	if r, ok := object.Content(); ok {
+		writer.WriteCharacter("content", r)
+	}
+	if r, ok := object.Description(); ok {
+		writer.WriteCharacter("description", r)
+	}
+	if r, ok := object.Name(); ok {
+		writer.WriteCharacter("name", r)
+	}
+	if r, ok := object.User(); ok {
+		XMLUserWriteOne(writer, r, "user")
+	}
+	writer.WriteEnd(tag)
+	return nil
+}
+
+func XMLUserOptionWriteMany(writer *XMLWriter, structSlice *UserOptionSlice, plural, singular string) error {
+	if plural == "" {
+		plural = "user_options"
+	}
+	if singular == "" {
+		singular = "user_option"
+	}
+	writer.WriteStart("", plural, nil)
+	for _, o := range structSlice.Slice() {
+		XMLUserOptionWriteOne(writer, o, singular)
 	}
 	writer.WriteEnd(plural)
 	return nil
@@ -11385,6 +11455,9 @@ func XMLVmWriteOne(writer *XMLWriter, object *Vm, tag string) error {
 	if r, ok := object.VirtioScsi(); ok {
 		XMLVirtioScsiWriteOne(writer, r, "virtio_scsi")
 	}
+	if r, ok := object.VirtioScsiMultiQueuesEnabled(); ok {
+		writer.WriteBool("virtio_scsi_multi_queues_enabled", r)
+	}
 	if r, ok := object.VmPool(); ok {
 		XMLVmPoolWriteOne(writer, r, "vm_pool")
 	}
@@ -11559,6 +11632,9 @@ func XMLVmBaseWriteOne(writer *XMLWriter, object *VmBase, tag string) error {
 	}
 	if r, ok := object.VirtioScsi(); ok {
 		XMLVirtioScsiWriteOne(writer, r, "virtio_scsi")
+	}
+	if r, ok := object.VirtioScsiMultiQueuesEnabled(); ok {
+		writer.WriteBool("virtio_scsi_multi_queues_enabled", r)
 	}
 	writer.WriteEnd(tag)
 	return nil
@@ -12255,6 +12331,9 @@ func XMLActionWriteOne(writer *XMLWriter, object *Action, tag string) error {
 	}
 	if r, ok := object.Name(); ok {
 		writer.WriteCharacter("name", r)
+	}
+	if r, ok := object.OptimizeCpuSettings(); ok {
+		writer.WriteBool("optimize_cpu_settings", r)
 	}
 	if r, ok := object.Option(); ok {
 		XMLOptionWriteOne(writer, r, "option")
@@ -13077,6 +13156,28 @@ func XMLFenceTypeWriteMany(writer *XMLWriter, enums []FenceType, plural, singula
 	return nil
 }
 
+func XMLFipsModeWriteOne(writer *XMLWriter, enum FipsMode, tag string) {
+	if tag == "" {
+		tag = "fips_mode"
+	}
+	writer.WriteCharacter(tag, string(enum))
+}
+
+func XMLFipsModeWriteMany(writer *XMLWriter, enums []FipsMode, plural, singular string) error {
+	if plural == "" {
+		plural = "fips_modes"
+	}
+	if singular == "" {
+		singular = "fips_mode"
+	}
+	writer.WriteStart("", plural, nil)
+	for _, e := range enums {
+		writer.WriteCharacter(singular, string(e))
+	}
+	writer.WriteEnd(plural)
+	return nil
+}
+
 func XMLFirewallTypeWriteOne(writer *XMLWriter, enum FirewallType, tag string) {
 	if tag == "" {
 		tag = "firewall_type"
@@ -13354,6 +13455,28 @@ func XMLImageTransferPhaseWriteMany(writer *XMLWriter, enums []ImageTransferPhas
 	}
 	if singular == "" {
 		singular = "image_transfer_phase"
+	}
+	writer.WriteStart("", plural, nil)
+	for _, e := range enums {
+		writer.WriteCharacter(singular, string(e))
+	}
+	writer.WriteEnd(plural)
+	return nil
+}
+
+func XMLImageTransferTimeoutPolicyWriteOne(writer *XMLWriter, enum ImageTransferTimeoutPolicy, tag string) {
+	if tag == "" {
+		tag = "image_transfer_timeout_policy"
+	}
+	writer.WriteCharacter(tag, string(enum))
+}
+
+func XMLImageTransferTimeoutPolicyWriteMany(writer *XMLWriter, enums []ImageTransferTimeoutPolicy, plural, singular string) error {
+	if plural == "" {
+		plural = "image_transfer_timeout_policies"
+	}
+	if singular == "" {
+		singular = "image_transfer_timeout_policy"
 	}
 	writer.WriteStart("", plural, nil)
 	for _, e := range enums {

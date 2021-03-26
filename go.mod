@@ -65,8 +65,8 @@ require (
 	github.com/openshift/library-go v0.0.0-20201215165635-4ee79b1caed5
 	github.com/openshift/machine-api-operator v0.2.1-0.20210104142355-8e6ae0acdfcf
 	github.com/openshift/machine-config-operator v0.0.0
-	github.com/ovirt/go-ovirt v0.0.0-20210112072624-e4d3b104de71
-	github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20210118101701-cc657a8c6634
+	github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c
+	github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210326142716-4545f80e61cd
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.9.1
