@@ -5,13 +5,17 @@ FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.15-openshift-4.8 AS b
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN hack/build.sh
+RUN go run -mod=vendor hack/build-coreos-manifest.go
 
 
 FROM registry.ci.openshift.org/ocp/4.8:base
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
+COPY --from=builder /go/src/github.com/openshift/installer/bin/manifests/ /manifests/
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
 ENV PATH /bin
 ENV HOME /output
 WORKDIR /output
+# We're not really an operator, we're just getting some data into the release image.
+LABEL io.openshift.release.operator=true
 ENTRYPOINT ["/bin/openshift-install"]
