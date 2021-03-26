@@ -12,19 +12,6 @@ Parameters:
   RhcosAmi:
     Description: Current Red Hat Enterprise Linux CoreOS AMI to use for bootstrap.
     Type: AWS::EC2::Image::Id
-  AutoRegisterDNS:
-    Default: "yes"
-    AllowedValues:
-    - "yes"
-    - "no"
-    Description: Do you want to invoke DNS etcd registration, which requires Hosted Zone information?
-    Type: String
-  PrivateHostedZoneId:
-    Description: The Route53 private zone ID to register the etcd targets with, such as Z21IXYZABCZ2A4.
-    Type: String
-  PrivateHostedZoneName:
-    Description: The Route53 zone to register the targets with, such as cluster.example.com. Omit the trailing period.
-    Type: String
   Master0Subnet:
     Description: The subnets, recommend private, to launch the master nodes into.
     Type: AWS::EC2::Subnet::Id
@@ -150,12 +137,6 @@ Metadata:
       - Master1Subnet
       - Master2Subnet
     - Label:
-        default: "DNS"
-      Parameters:
-      - AutoRegisterDNS
-      - PrivateHostedZoneName
-      - PrivateHostedZoneId
-    - Label:
         default: "Load Balancer Automation"
       Parameters:
       - AutoRegisterELB
@@ -186,18 +167,11 @@ Metadata:
         default: "Ignition CA String"
       MasterSecurityGroupId:
         default: "Master Security Group ID"
-      AutoRegisterDNS:
-        default: "Use Provided DNS Automation"
       AutoRegisterELB:
         default: "Use Provided ELB Automation"
-      PrivateHostedZoneName:
-        default: "Private Hosted Zone Name"
-      PrivateHostedZoneId:
-        default: "Private Hosted Zone ID"
 
 Conditions:
   DoRegistration: !Equals ["yes", !Ref AutoRegisterELB]
-  DoDns: !Equals ["yes", !Ref AutoRegisterDNS]
 
 Resources:
   Master0:
@@ -355,61 +329,6 @@ Resources:
       ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
       TargetArn: !Ref InternalServiceTargetGroupArn
       TargetIp: !GetAtt Master2.PrivateIp
-
-  EtcdSrvRecords:
-    Condition: DoDns
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneId: !Ref PrivateHostedZoneId
-      Name: !Join [".", ["_etcd-server-ssl._tcp", !Ref PrivateHostedZoneName]]
-      ResourceRecords:
-      - !Join [
-        " ",
-        ["0 10 2380", !Join [".", ["etcd-0", !Ref PrivateHostedZoneName]]],
-      ]
-      - !Join [
-        " ",
-        ["0 10 2380", !Join [".", ["etcd-1", !Ref PrivateHostedZoneName]]],
-      ]
-      - !Join [
-        " ",
-        ["0 10 2380", !Join [".", ["etcd-2", !Ref PrivateHostedZoneName]]],
-      ]
-      TTL: 60
-      Type: SRV
-
-  Etcd0Record:
-    Condition: DoDns
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneId: !Ref PrivateHostedZoneId
-      Name: !Join [".", ["etcd-0", !Ref PrivateHostedZoneName]]
-      ResourceRecords:
-      - !GetAtt Master0.PrivateIp
-      TTL: 60
-      Type: A
-
-  Etcd1Record:
-    Condition: DoDns
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneId: !Ref PrivateHostedZoneId
-      Name: !Join [".", ["etcd-1", !Ref PrivateHostedZoneName]]
-      ResourceRecords:
-      - !GetAtt Master1.PrivateIp
-      TTL: 60
-      Type: A
-
-  Etcd2Record:
-    Condition: DoDns
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneId: !Ref PrivateHostedZoneId
-      Name: !Join [".", ["etcd-2", !Ref PrivateHostedZoneName]]
-      ResourceRecords:
-      - !GetAtt Master2.PrivateIp
-      TTL: 60
-      Type: A
 
 Outputs:
   PrivateIPs:
