@@ -26,3 +26,17 @@ do
         echo "Pull failed. Retrying $RELEASE_IMAGE..."
     fi
 done
+
+# Sanity check the image metadata to see if the arches match
+image_arch=$(podman inspect $RELEASE_IMAGE --format {{ "{{.Architecture}}" }})
+host_arch=$(uname -m)
+case $host_arch in
+    "x86_64")  host_arch="amd64"   ;;
+    "aarch64") host_arch="arm64"   ;; # not used, just for completeness
+esac
+
+if [[ "$image_arch" != "$host_arch" ]]; then
+    record_service_stage_failure
+    echo "ERROR: release image arch $image_arch does not match host arch $host_arch"
+    exit 1
+fi
