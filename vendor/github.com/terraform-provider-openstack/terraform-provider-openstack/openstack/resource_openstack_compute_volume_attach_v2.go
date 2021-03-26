@@ -57,6 +57,23 @@ func resourceComputeVolumeAttachV2() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
+
+			"vendor_options": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				ForceNew: true,
+				MinItems: 1,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"ignore_volume_confirmation": {
+							Type:     schema.TypeBool,
+							Default:  false,
+							Optional: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -66,6 +83,24 @@ func resourceComputeVolumeAttachV2Create(d *schema.ResourceData, meta interface{
 	computeClient, err := config.ComputeV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack compute client: %s", err)
+	}
+
+	var (
+		blockStorageClient       *gophercloud.ServiceClient
+		ignoreVolumeConfirmation bool
+	)
+
+	// Get vendor_options and decide if BlockStorage V3 client should be initialized.
+	vendorOptionsRaw := d.Get("vendor_options").(*schema.Set)
+	if vendorOptionsRaw.Len() > 0 {
+		vendorOptions := expandVendorOptions(vendorOptionsRaw.List())
+		ignoreVolumeConfirmation = vendorOptions["ignore_volume_confirmation"].(bool)
+	}
+	if !ignoreVolumeConfirmation {
+		blockStorageClient, err = config.BlockStorageV3Client(GetRegion(d, config))
+		if err != nil {
+			return fmt.Errorf("Error creating OpenStack block storage client: %s", err)
+		}
 	}
 
 	instanceID := d.Get("instance_id").(string)
@@ -110,7 +145,7 @@ func resourceComputeVolumeAttachV2Create(d *schema.ResourceData, meta interface{
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"ATTACHING"},
 		Target:     []string{"ATTACHED"},
-		Refresh:    computeVolumeAttachV2AttachFunc(computeClient, instanceID, attachment.ID),
+		Refresh:    computeVolumeAttachV2AttachFunc(computeClient, blockStorageClient, instanceID, attachment.ID, volumeID),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,

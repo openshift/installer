@@ -46,7 +46,10 @@ func mergeClouds(override, cloud interface{}) (*Cloud, error) {
 	var mergedCloud Cloud
 	mergedInterface := mergeInterfaces(overrideInterface, cloudInterface)
 	mergedJson, err := json.Marshal(mergedInterface)
-	json.Unmarshal(mergedJson, &mergedCloud)
+	err = json.Unmarshal(mergedJson, &mergedCloud)
+	if err != nil {
+		return nil, err
+	}
 	return &mergedCloud, nil
 }
 
@@ -108,22 +111,34 @@ func FindAndReadCloudsYAML() (string, []byte, error) {
 		}
 	}
 
-	return FindAndReadYAML("clouds.yaml")
+	s, b, err := FindAndReadYAML("clouds.yaml")
+	if s == "" {
+		return FindAndReadYAML("clouds.yml")
+	}
+	return s, b, err
 }
 
 func FindAndReadPublicCloudsYAML() (string, []byte, error) {
-	return FindAndReadYAML("clouds-public.yaml")
+	s, b, err := FindAndReadYAML("clouds-public.yaml")
+	if s == "" {
+		return FindAndReadYAML("clouds-public.yml")
+	}
+	return s, b, err
 }
 
 func FindAndReadSecureCloudsYAML() (string, []byte, error) {
-	return FindAndReadYAML("secure.yaml")
+	s, b, err := FindAndReadYAML("secure.yaml")
+	if s == "" {
+		return FindAndReadYAML("secure.yml")
+	}
+	return s, b, err
 }
 
 func FindAndReadYAML(yamlFile string) (string, []byte, error) {
 	// current directory
 	cwd, err := os.Getwd()
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to determine working directory: %s", err)
+		return "", nil, fmt.Errorf("unable to determine working directory: %w", err)
 	}
 
 	filename := filepath.Join(cwd, yamlFile)
@@ -151,7 +166,7 @@ func FindAndReadYAML(yamlFile string) (string, []byte, error) {
 		return filename, content, err
 	}
 
-	return "", nil, fmt.Errorf("no " + yamlFile + " file found")
+	return "", nil, fmt.Errorf("no %s file found: %w", yamlFile, os.ErrNotExist)
 }
 
 // fileExists checks for the existence of a file at a given location.

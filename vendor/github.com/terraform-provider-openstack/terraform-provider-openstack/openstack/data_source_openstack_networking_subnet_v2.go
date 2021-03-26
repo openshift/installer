@@ -45,6 +45,7 @@ func dataSourceNetworkingSubnetV2() *schema.Resource {
 				Type:          schema.TypeBool,
 				ConflictsWith: []string{"dhcp_enabled"},
 				Optional:      true,
+				Deprecated:    "use dhcp_enabled instead",
 			},
 
 			"network_id": {
@@ -189,13 +190,13 @@ func dataSourceNetworkingSubnetV2Read(d *schema.ResourceData, meta interface{}) 
 		listOpts.Description = v.(string)
 	}
 
-	if _, ok := d.GetOk("dhcp_enabled"); ok {
-		enableDHCP := true
+	if v, ok := d.GetOkExists("dhcp_enabled"); ok {
+		enableDHCP := v.(bool)
 		listOpts.EnableDHCP = &enableDHCP
 	}
 
-	if _, ok := d.GetOk("dhcp_disabled"); ok {
-		enableDHCP := false
+	if v, ok := d.GetOkExists("dhcp_disabled"); ok {
+		enableDHCP := !v.(bool)
 		listOpts.EnableDHCP = &enableDHCP
 	}
 

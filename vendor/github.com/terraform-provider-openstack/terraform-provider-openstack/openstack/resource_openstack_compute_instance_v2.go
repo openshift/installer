@@ -24,7 +24,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	flavors_utils "github.com/gophercloud/utils/openstack/compute/v2/flavors"
-	images_utils "github.com/gophercloud/utils/openstack/compute/v2/images"
+	images_utils "github.com/gophercloud/utils/openstack/imageservice/v2/images"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"

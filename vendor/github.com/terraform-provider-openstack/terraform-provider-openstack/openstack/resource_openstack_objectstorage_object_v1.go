@@ -204,7 +204,7 @@ func resourceObjectStorageObjectV1Create(d *schema.ResourceData, meta interface{
 	}
 
 	if v, ok := d.GetOk("delete_after"); ok {
-		createOpts.DeleteAfter = v.(int)
+		createOpts.DeleteAfter = int64(v.(int))
 	}
 
 	if v, ok := d.GetOk("delete_at"); ok && v != "" {
@@ -213,7 +213,7 @@ func resourceObjectStorageObjectV1Create(d *schema.ResourceData, meta interface{
 			return fmt.Errorf("Error Parsing Swift Object Lifecycle Expiration Date: %s, %s", err.Error(), v)
 		}
 
-		createOpts.DeleteAt = int(t.Unix())
+		createOpts.DeleteAt = t.Unix()
 	}
 
 	if v, ok := d.GetOk("detect_content_type"); ok && v.(bool) {
@@ -346,7 +346,7 @@ func resourceObjectStorageObjectV1Update(d *schema.ResourceData, meta interface{
 	}
 
 	if v, ok := d.GetOk("delete_after"); ok {
-		createOpts.DeleteAfter = v.(int)
+		createOpts.DeleteAfter = int64(v.(int))
 	}
 
 	if v, ok := d.GetOk("delete_at"); ok && v != "" {
@@ -355,7 +355,7 @@ func resourceObjectStorageObjectV1Update(d *schema.ResourceData, meta interface{
 			return fmt.Errorf("Error Parsing Swift Object Lifecycle Expiration Date: %s, %s", err.Error(), v)
 		}
 
-		createOpts.DeleteAt = int(t.Unix())
+		createOpts.DeleteAt = t.Unix()
 	}
 
 	if v, ok := d.GetOk("detect_content_type"); ok && v.(bool) {

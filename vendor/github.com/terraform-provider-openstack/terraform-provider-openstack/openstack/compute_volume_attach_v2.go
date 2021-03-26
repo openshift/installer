@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/volumeattach"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -23,7 +24,7 @@ func computeVolumeAttachV2ParseID(id string) (string, string, error) {
 	return instanceID, attachmentID, nil
 }
 
-func computeVolumeAttachV2AttachFunc(computeClient *gophercloud.ServiceClient, instanceID, attachmentID string) resource.StateRefreshFunc {
+func computeVolumeAttachV2AttachFunc(computeClient *gophercloud.ServiceClient, blockStorageClient *gophercloud.ServiceClient, instanceID, attachmentID string, volumeID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		va, err := volumeattach.Get(computeClient, instanceID, attachmentID).Extract()
 		if err != nil {
@@ -31,6 +32,22 @@ func computeVolumeAttachV2AttachFunc(computeClient *gophercloud.ServiceClient, i
 				return va, "ATTACHING", nil
 			}
 			return va, "", err
+		}
+
+		// Block Storage client will be empty if "ignore_volume_confirmation" == true.
+		if blockStorageClient == nil {
+			return va, "ATTACHED", nil
+		}
+
+		v, err := volumes.Get(blockStorageClient, volumeID).Extract()
+		if err != nil {
+			return va, "", err
+		}
+		if v.Status == "error" {
+			return va, "", fmt.Errorf("volume entered unexpected error status")
+		}
+		if v.Status != "in-use" {
+			return va, "ATTACHING", nil
 		}
 
 		return va, "ATTACHED", nil

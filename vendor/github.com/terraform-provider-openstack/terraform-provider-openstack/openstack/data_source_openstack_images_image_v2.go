@@ -256,6 +256,7 @@ func dataSourceImagesImageV2Read(d *schema.ResourceData, meta interface{}) error
 
 	d.SetId(image.ID)
 	d.Set("name", image.Name)
+	d.Set("region", GetRegion(d, config))
 	d.Set("tags", image.Tags)
 	d.Set("container_format", image.ContainerFormat)
 	d.Set("disk_format", image.DiskFormat)

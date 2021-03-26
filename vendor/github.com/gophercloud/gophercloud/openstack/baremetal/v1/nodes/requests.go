@@ -43,6 +43,8 @@ const (
 	RescueFail   ProvisionState = "rescue failed"
 	Rescuing     ProvisionState = "rescuing"
 	UnrescueFail ProvisionState = "unrescue failed"
+	RescueWait   ProvisionState = "rescue wait"
+	Unrescuing   ProvisionState = "unrescuing"
 )
 
 // TargetProvisionState is used when setting the provision state for a node.
@@ -519,6 +521,7 @@ const (
 	RAID10 RAIDLevel = "1+0"
 	RAID50 RAIDLevel = "5+0"
 	RAID60 RAIDLevel = "6+0"
+	JBOD   RAIDLevel = "JBOD"
 )
 
 // DiskType is used to specify the disk type for a logical disk, e.g. hdd or ssd.

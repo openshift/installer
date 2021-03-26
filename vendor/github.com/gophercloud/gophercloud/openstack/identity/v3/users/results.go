@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/internal"
 	"github.com/gophercloud/gophercloud/pagination"
 )
 
@@ -69,7 +68,7 @@ func (r *User) UnmarshalJSON(b []byte) error {
 		}
 		if resultMap, ok := result.(map[string]interface{}); ok {
 			delete(resultMap, "password_expires_at")
-			r.Extra = internal.RemainingKeys(User{}, resultMap)
+			r.Extra = gophercloud.RemainingKeys(User{}, resultMap)
 		}
 	}
 

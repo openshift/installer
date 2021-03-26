@@ -251,9 +251,11 @@ func Provider() terraform.ResourceProvider {
 			"openstack_blockstorage_snapshot_v3":                 dataSourceBlockStorageSnapshotV3(),
 			"openstack_blockstorage_volume_v2":                   dataSourceBlockStorageVolumeV2(),
 			"openstack_blockstorage_volume_v3":                   dataSourceBlockStorageVolumeV3(),
+			"openstack_compute_aggregate_v2":                     dataSourceComputeAggregateV2(),
 			"openstack_compute_availability_zones_v2":            dataSourceComputeAvailabilityZonesV2(),
 			"openstack_compute_instance_v2":                      dataSourceComputeInstanceV2(),
 			"openstack_compute_flavor_v2":                        dataSourceComputeFlavorV2(),
+			"openstack_compute_hypervisor_v2":                    dataSourceComputeHypervisorV2(),
 			"openstack_compute_keypair_v2":                       dataSourceComputeKeypairV2(),
 			"openstack_containerinfra_clustertemplate_v1":        dataSourceContainerInfraClusterTemplateV1(),
 			"openstack_containerinfra_cluster_v1":                dataSourceContainerInfraCluster(),
@@ -275,6 +277,7 @@ func Provider() terraform.ResourceProvider {
 			"openstack_networking_qos_minimum_bandwidth_rule_v2": dataSourceNetworkingQoSMinimumBandwidthRuleV2(),
 			"openstack_networking_qos_policy_v2":                 dataSourceNetworkingQoSPolicyV2(),
 			"openstack_networking_subnet_v2":                     dataSourceNetworkingSubnetV2(),
+			"openstack_networking_subnet_ids_v2":                 dataSourceNetworkingSubnetIDsV2(),
 			"openstack_networking_secgroup_v2":                   dataSourceNetworkingSecGroupV2(),
 			"openstack_networking_subnetpool_v2":                 dataSourceNetworkingSubnetPoolV2(),
 			"openstack_networking_floatingip_v2":                 dataSourceNetworkingFloatingIPV2(),
@@ -298,6 +301,7 @@ func Provider() terraform.ResourceProvider {
 			"openstack_blockstorage_volume_v3":                   resourceBlockStorageVolumeV3(),
 			"openstack_blockstorage_volume_attach_v2":            resourceBlockStorageVolumeAttachV2(),
 			"openstack_blockstorage_volume_attach_v3":            resourceBlockStorageVolumeAttachV3(),
+			"openstack_compute_aggregate_v2":                     resourceComputeAggregateV2(),
 			"openstack_compute_flavor_v2":                        resourceComputeFlavorV2(),
 			"openstack_compute_flavor_access_v2":                 resourceComputeFlavorAccessV2(),
 			"openstack_compute_instance_v2":                      resourceComputeInstanceV2(),
@@ -326,6 +330,7 @@ func Provider() terraform.ResourceProvider {
 			"openstack_identity_role_assignment_v3":              resourceIdentityRoleAssignmentV3(),
 			"openstack_identity_service_v3":                      resourceIdentityServiceV3(),
 			"openstack_identity_user_v3":                         resourceIdentityUserV3(),
+			"openstack_identity_user_membership_v3":              resourceIdentityUserMembershipV3(),
 			"openstack_identity_group_v3":                        resourceIdentityGroupV3(),
 			"openstack_identity_application_credential_v3":       resourceIdentityApplicationCredentialV3(),
 			"openstack_identity_ec2_credential_v3":               resourceIdentityEc2CredentialV3(),
@@ -403,6 +408,8 @@ func init() {
 	descriptions = map[string]string{
 		"auth_url": "The Identity authentication URL.",
 
+		"cloud": "An entry in a `clouds.yaml` file to use.",
+
 		"region": "The OpenStack region to connect to.",
 
 		"user_name": "Username to login with.",
@@ -443,11 +450,14 @@ func init() {
 
 		"cacert_file": "A Custom CA certificate.",
 
-		"endpoint_type": "The catalog endpoint type to use.",
-
 		"cert": "A client certificate to authenticate with.",
 
 		"key": "A client private key to authenticate with.",
+
+		"endpoint_type": "The catalog endpoint type to use.",
+
+		"endpoint_overrides": "A map of services with an endpoint to override what was\n" +
+			"from the Keystone catalog",
 
 		"swauth": "Use Swift's authentication system instead of Keystone. Only used for\n" +
 			"interaction with Swift.",
@@ -455,20 +465,15 @@ func init() {
 		"use_octavia": "If set to `true`, API requests will go the Load Balancer\n" +
 			"service (Octavia) instead of the Networking service (Neutron).",
 
+		"disable_no_cache_header": "If set to `true`, the HTTP `Cache-Control: no-cache` header will not be added by default to all API requests.",
+
 		"delayed_auth": "If set to `false`, OpenStack authorization will be perfomed,\n" +
 			"every time the service provider client is called. Defaults to `true`.",
 
 		"allow_reauth": "If set to `false`, OpenStack authorization won't be perfomed\n" +
 			"automatically, if the initial auth token get expired. Defaults to `true`",
 
-		"cloud": "An entry in a `clouds.yaml` file to use.",
-
 		"max_retries": "How many times HTTP connection should be retried until giving up.",
-
-		"endpoint_overrides": "A map of services with an endpoint to override what was\n" +
-			"from the Keystone catalog",
-
-		"disable_no_cache_header": "If set to `true`, the HTTP `Cache-Control: no-cache` header will not be added by default to all API requests.",
 	}
 }
 
@@ -507,7 +512,7 @@ func configureProvider(d *schema.ResourceData, terraformVersion string) (interfa
 			DisableNoCacheHeader:        d.Get("disable_no_cache_header").(bool),
 			TerraformVersion:            terraformVersion,
 			SDKVersion:                  meta.SDKVersionString(),
-			MutexKV:                     *(mutexkv.NewMutexKV()),
+			MutexKV:                     mutexkv.NewMutexKV(),
 		},
 	}
 

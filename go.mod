@@ -32,8 +32,8 @@ require (
 	github.com/golang/protobuf v1.4.2
 	github.com/google/martian v2.1.1-0.20190517191504-25dcb96d9e51+incompatible // indirect
 	github.com/google/uuid v1.1.2
-	github.com/gophercloud/gophercloud v0.12.1-0.20200827191144-bb4781e9de45
-	github.com/gophercloud/utils v0.0.0-20201212031956-9dc30e126fea
+	github.com/gophercloud/gophercloud v0.15.1-0.20210202035223-633d73521055
+	github.com/gophercloud/utils v0.0.0-20210323225332-7b186010c04f
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-azure-helpers v0.10.0
 	github.com/hashicorp/go-plugin v1.3.0
@@ -77,7 +77,7 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.6.1
-	github.com/terraform-provider-openstack/terraform-provider-openstack v1.33.0
+	github.com/terraform-provider-openstack/terraform-provider-openstack v1.37.0
 	github.com/terraform-providers/terraform-provider-aws v1.60.1-0.20200807230610-d5346d47e3af
 	github.com/terraform-providers/terraform-provider-azurerm v1.44.1-0.20200911233120-57b2bfc9d42c
 	github.com/terraform-providers/terraform-provider-google v1.20.1-0.20200623174414-27107f2ee160

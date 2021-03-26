@@ -108,15 +108,14 @@ func resourceNetworkingSecGroupRuleV2() *schema.Resource {
 
 func resourceNetworkingSecGroupRuleV2Create(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	securityGroupID := d.Get("security_group_id").(string)
-	mutex := config.MutexKV
-	mutex.Lock(securityGroupID)
-	defer mutex.Unlock(securityGroupID)
-
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
+
+	securityGroupID := d.Get("security_group_id").(string)
+	config.MutexKV.Lock(securityGroupID)
+	defer config.MutexKV.Unlock(securityGroupID)
 
 	portRangeMin := d.Get("port_range_min").(int)
 	portRangeMax := d.Get("port_range_max").(int)
@@ -206,15 +205,14 @@ func resourceNetworkingSecGroupRuleV2Read(d *schema.ResourceData, meta interface
 
 func resourceNetworkingSecGroupRuleV2Delete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	securityGroupID := d.Get("security_group_id").(string)
-	mutex := config.MutexKV
-	mutex.Lock(securityGroupID)
-	defer mutex.Unlock(securityGroupID)
-
 	networkingClient, err := config.NetworkingV2Client(GetRegion(d, config))
 	if err != nil {
 		return fmt.Errorf("Error creating OpenStack networking client: %s", err)
 	}
+
+	securityGroupID := d.Get("security_group_id").(string)
+	config.MutexKV.Lock(securityGroupID)
+	defer config.MutexKV.Unlock(securityGroupID)
 
 	if err := rules.Delete(networkingClient, d.Id()).ExtractErr(); err != nil {
 		return CheckDeleted(d, err, "Error deleting openstack_networking_secgroup_rule_v2")
