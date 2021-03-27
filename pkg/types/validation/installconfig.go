@@ -234,6 +234,16 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		switch {
 		case p.BareMetal != nil:
 		case p.None != nil:
+
+		case p.Azure != nil && os.Getenv("OPENSHIFT_INSTALL_AZURE_EMULATE_SINGLESTACK_IPV6") == "true":
+			if p.Azure.CloudName != azure.StackCloud {
+				if !presence["machineNetwork"].IPv4 || !presence["machineNetwork"].IPv6 {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "OPENSHIFT_INSTALL_AZURE_EMULATE_SINGLESTACK_IPV6 requires both IPv4 and IPv6 machineNetwork values"))
+				}
+			} else {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "Azure Stack does not support IPv6"))
+			}
+
 		default:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "single-stack IPv6 is not supported for this platform"))
 		}
