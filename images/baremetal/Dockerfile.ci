@@ -2,11 +2,12 @@
 # It builds an image containing openshift-install.
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.16-openshift-4.9 AS builder
+ARG TAGS="libvirt baremetal"
 RUN yum install -y libvirt-devel-6.0.0 && \
     yum clean all && rm -rf /var/cache/yum/*
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
-RUN TAGS="libvirt baremetal" DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
+RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 
 FROM registry.ci.openshift.org/ocp/4.9:base
