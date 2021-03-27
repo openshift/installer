@@ -24,6 +24,7 @@ type Auth struct {
 type config struct {
 	Auth                        `json:",inline"`
 	Environment                 string            `json:"azure_environment"`
+	ARMEndpoint                 string            `json:"azure_arm_endpoint,omitempty"`
 	ExtraTags                   map[string]string `json:"azure_extra_tags,omitempty"`
 	BootstrapInstanceType       string            `json:"azure_bootstrap_vm_type,omitempty"`
 	MasterInstanceType          string            `json:"azure_master_vm_type,omitempty"`
@@ -47,6 +48,7 @@ type config struct {
 type TFVarsSources struct {
 	Auth                        Auth
 	CloudName                   azure.CloudEnvironment
+	ARMEndpoint                 string
 	ResourceGroupName           string
 	BaseDomainResourceGroupName string
 	MasterConfigs               []*azureprovider.AzureMachineProviderSpec
@@ -77,8 +79,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	cfg := &config{
 		Auth:                        sources.Auth,
 		Environment:                 environment,
+		ARMEndpoint:                 sources.ARMEndpoint,
 		Region:                      region,
-		BootstrapInstanceType:       defaults.BootstrapInstanceType(region),
+		BootstrapInstanceType:       defaults.BootstrapInstanceType(sources.CloudName, region),
 		MasterInstanceType:          masterConfig.VMSize,
 		MasterAvailabilityZones:     masterAvailabilityZones,
 		VolumeType:                  masterConfig.OSDisk.ManagedDisk.StorageAccountType,
@@ -109,6 +112,9 @@ func environment(cloudName azure.CloudEnvironment) (string, error) {
 		return "china", nil
 	case azure.GermanCloud:
 		return "german", nil
+	case azure.StackCloud:
+		// unused since stack uses its own provider
+		return "", nil
 	default:
 		return "", errors.Errorf("unsupported cloud name %q", cloudName)
 	}

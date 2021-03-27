@@ -54,7 +54,18 @@ func newSessionFromFile(authFilePath string, cloudName azure.CloudEnvironment) (
 	// NewAuthorizerFromFileWithResource uses `auth.GetSettingsFromFile`, which uses the `azureAuthEnv` to fetch the auth credentials.
 	// therefore setting the local env here to authFilePath allows NewAuthorizerFromFileWithResource to load credentials.
 	os.Setenv(azureAuthEnv, authFilePath)
-	env, err := azureenv.EnvironmentFromName(string(cloudName))
+	var env azureenv.Environment
+	var err error
+	switch cloudName {
+	case azure.StackCloud:
+		envFilepath := os.Getenv(azureenv.EnvironmentFilepathName)
+		if envFilepath == "" {
+			return nil, errors.Errorf("must set the %q environment variable for the Azure Stack cloud", azureenv.EnvironmentFilepathName)
+		}
+		env, err = azureenv.EnvironmentFromFile(envFilepath)
+	default:
+		env, err = azureenv.EnvironmentFromName(string(cloudName))
+	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get Azure environment for the %q cloud", cloudName)
 	}
@@ -91,7 +102,7 @@ func newSessionFromFile(authFilePath string, cloudName azure.CloudEnvironment) (
 		logrus.Infof("Credentials loaded from file %q", authFilePath)
 	})
 
-	authorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(env.ResourceManagerEndpoint)
+	authorizer, err := authSettings.ClientCredentialsAuthorizerWithResource(env.TokenAudience)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get client credentials authorizer from saved azure auth settings")
 	}
