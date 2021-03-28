@@ -20,6 +20,7 @@ func TestWorkerGenerate(t *testing.T) {
 		name                  string
 		key                   string
 		hyperthreading        types.HyperthreadingMode
+		workloads             []types.Workload
 		expectedMachineConfig []string
 	}{
 		{
@@ -135,6 +136,11 @@ spec:
   osImageURL: ""
 `},
 		},
+		{
+			name:                  "workload partitioning enabled",
+			workloads:             workloadForCpuset("3,4,5"),
+			expectedMachineConfig: []string{expectedMachineConfigForWorkloads("worker", workloadForCpuset("3,4,5"))},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -166,6 +172,7 @@ spec:
 										InstanceType: "m5.large",
 									},
 								},
+								Workloads: tc.workloads,
 							},
 						},
 					},

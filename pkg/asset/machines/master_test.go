@@ -1,25 +1,76 @@
 package machines
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/vincent-petithory/dataurl"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
+
+func workloadForCpuset(cpuset string) []types.Workload {
+	return []types.Workload{
+		{
+			Name:   types.ManagementWorkload,
+			CPUIDs: cpuset,
+		},
+	}
+}
+
+func expectedMachineConfigForWorkloads(role string, workloads []types.Workload) string {
+	expectedCrioCfg, _ := machineconfig.CrioWorkloadDropinContents(workloads)
+	expectedKubeletCfg, _ := machineconfig.KubeletWorkloadDropinContents(workloads)
+	return fmt.Sprintf(`apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  creationTimestamp: null
+  labels:
+    machineconfiguration.openshift.io/role: %[1]s
+  name: 02-%[1]s-workload-partitioning
+spec:
+  config:
+    ignition:
+      version: 3.2.0
+    storage:
+      files:
+      - contents:
+          source: %s
+        mode: 420
+        overwrite: true
+        path: /etc/crio/crio.conf.d/01-workload-partitioning
+        user:
+          name: root
+      - contents:
+          source: %s
+        mode: 420
+        overwrite: true
+        path: /etc/kubernetes/workload-pinning
+        user:
+          name: root
+  extensions: null
+  fips: false
+  kernelArguments: null
+  kernelType: ""
+  osImageURL: ""
+`, role, dataurl.EncodeBytes([]byte(expectedCrioCfg)), dataurl.EncodeBytes([]byte(expectedKubeletCfg)))
+}
 
 func TestMasterGenerateMachineConfigs(t *testing.T) {
 	cases := []struct {
 		name                  string
 		key                   string
 		hyperthreading        types.HyperthreadingMode
+		workloads             []types.Workload
 		expectedMachineConfig []string
 	}{
 		{
@@ -135,6 +186,11 @@ spec:
   osImageURL: ""
 `},
 		},
+		{
+			name:                  "workload enabled",
+			workloads:             workloadForCpuset("3,4,5"),
+			expectedMachineConfig: []string{expectedMachineConfigForWorkloads("master", workloadForCpuset("3,4,5"))},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -165,6 +221,7 @@ spec:
 									InstanceType: "m5.xlarge",
 								},
 							},
+							Workloads: tc.workloads,
 						},
 					},
 				},
