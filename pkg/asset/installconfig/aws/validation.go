@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
@@ -55,7 +56,7 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if !isAWSSDKRegion(platform.Region) && platform.AMIID == "" {
+	if !sets.NewString(rhcos.AMIRegions...).Has(platform.Region) && platform.AMIID == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("amiID"), "AMI must be provided"))
 	}
 
@@ -211,7 +212,7 @@ func validateDuplicateSubnetZones(fldPath *field.Path, subnets map[string]Subnet
 }
 
 func validateServiceEndpoints(fldPath *field.Path, region string, services []awstypes.ServiceEndpoint) error {
-	if isAWSSDKRegion(region) {
+	if _, partitionFound := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region); partitionFound {
 		return nil
 	}
 
@@ -224,17 +225,6 @@ func validateServiceEndpoints(fldPath *field.Path, region string, services []aws
 		}
 	}
 	return utilerrors.NewAggregate(errs)
-}
-
-func isAWSSDKRegion(region string) bool {
-	for _, partition := range endpoints.DefaultPartitions() {
-		for _, partitionRegion := range partition.Regions() {
-			if region == partitionRegion.ID() {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 var requiredServices = []string{
