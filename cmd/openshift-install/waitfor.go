@@ -46,15 +46,16 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 				logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 			}
 			timer.StartTimer("Bootstrap Complete")
-			err = waitForBootstrapComplete(ctx, config)
-			if err != nil {
+			if err := waitForBootstrapComplete(ctx, config); err != nil {
 				if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
 				}
 
 				logrus.Info("Use the following commands to gather logs from the cluster")
 				logrus.Info("openshift-install gather bootstrap --help")
-				logrus.Fatal(err)
+				logrus.Error("Bootstrap failed to complete: ", err.Unwrap())
+				logrus.Error(err.Error())
+				logrus.Fatal("Bootstrap failed to complete")
 			}
 
 			logrus.Info("It is now safe to remove the bootstrap resources")
