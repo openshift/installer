@@ -94,7 +94,12 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	timer.StartTimer("Infrastructure")
 
-	stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name(), extraArgs...)
+	terraformPlatform := installConfig.Config.Platform.Name()
+	if terraformPlatform == typesazure.Name && installConfig.Config.Azure.CloudName == typesazure.StackCloud {
+		terraformPlatform = "azurestack"
+	}
+
+	stateFile, err := terraform.Apply(tmpDir, terraformPlatform, extraArgs...)
 	if err != nil {
 		err = errors.Wrap(err, "failed to create cluster")
 		if stateFile == "" {
