@@ -441,6 +441,9 @@ github.com/coreos/vcontext/path
 github.com/coreos/vcontext/report
 github.com/coreos/vcontext/tree
 github.com/coreos/vcontext/validate
+# github.com/cri-o/cpuset v0.0.1
+## explicit
+github.com/cri-o/cpuset
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -481,7 +484,7 @@ github.com/gammazero/workerpool
 # github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 ## explicit
 github.com/ghodss/yaml
-# github.com/go-logr/logr v0.3.0
+# github.com/go-logr/logr v0.4.0
 github.com/go-logr/logr
 # github.com/go-openapi/jsonpointer v0.19.3
 github.com/go-openapi/jsonpointer
@@ -2205,7 +2208,7 @@ k8s.io/component-base/version
 # k8s.io/klog v1.0.0
 ## explicit
 k8s.io/klog
-# k8s.io/klog/v2 v2.4.0
+# k8s.io/klog/v2 v2.8.0
 ## explicit
 k8s.io/klog/v2
 # k8s.io/kube-aggregator v0.20.0
