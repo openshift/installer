@@ -22,6 +22,7 @@ require (
 	github.com/containers/image v3.0.2+incompatible
 	github.com/coreos/ignition/v2 v2.9.0
 	github.com/coreos/stream-metadata-go v0.0.0-20210225230131-70edb9eb47b3
+	github.com/cri-o/cpuset v0.0.1
 	github.com/dmacvicar/terraform-provider-libvirt v0.6.4-0.20201216193629-2b60d7626ff8
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/frankban/quicktest v1.7.2 // indirect
@@ -106,7 +107,7 @@ require (
 	k8s.io/apimachinery v0.20.1
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog v1.0.0
-	k8s.io/klog/v2 v2.4.0
+	k8s.io/klog/v2 v2.8.0
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
 	kubevirt.io/client-go v0.29.0
 	kubevirt.io/containerized-data-importer v1.10.9
