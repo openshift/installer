@@ -217,7 +217,7 @@ VERSION:  v1
 
 RESOURCE: <object>
   InstallConfig is the configuration for an OpenShift install.
-`,
+		`,
 	}, {
 		path: []string{"publish"},
 		desc: `
@@ -226,7 +226,7 @@ VERSION:  v1
 
 RESOURCE: <string>
   Publish controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed. When no strategy is specified, the strategy is "External".
-`,
+		`,
 	}, {
 		path: []string{"platform"},
 		desc: `
@@ -235,7 +235,7 @@ VERSION:  v1
 
 RESOURCE: <object>
   Platform is the configuration for the specific platform upon which to perform the installation.
-`,
+		`,
 	}, {
 		path: []string{"platform", "aws"},
 		desc: `
@@ -244,7 +244,7 @@ VERSION:  v1
 
 RESOURCE: <object>
   AWS is the configuration used when installing on AWS.
-`,
+		`,
 	}, {
 		path: []string{"platform", "azure"},
 		desc: `
@@ -252,8 +252,8 @@ KIND:     InstallConfig
 VERSION:  v1
 
 RESOURCE: <object>
-  Azure is the configuration used when installing on Azure.    
-`,
+  Azure is the configuration used when installing on Azure.
+		`,
 	}, {
 		path: []string{"platform", "aws", "region"},
 		desc: `
@@ -261,8 +261,8 @@ KIND:     InstallConfig
 VERSION:  v1
 
 RESOURCE: <string>
-  Region specifies the AWS region where the cluster will be created.    
-`,
+  Region specifies the AWS region where the cluster will be created.
+		`,
 	}, {
 		path: []string{"platform", "aws", "subnets"},
 		desc: `
@@ -270,8 +270,8 @@ KIND:     InstallConfig
 VERSION:  v1
 
 RESOURCE: <[]string>
-  Subnets specifies existing subnets (by ID) where cluster resources will be created.  Leave unset to have the installer create subnets in a new VPC on your behalf.    
-`,
+  Subnets specifies existing subnets (by ID) where cluster resources will be created.  Leave unset to have the installer create subnets in a new VPC on your behalf.
+		`,
 	}, {
 		path: []string{"platform", "aws", "userTags"},
 		desc: `
@@ -279,8 +279,8 @@ KIND:     InstallConfig
 VERSION:  v1
 
 RESOURCE: <object>
-  UserTags additional keys and values that the installer will add as tags to all resources that it creates. Resources created by the cluster itself may not include these tags.    
-`,
+  UserTags additional keys and values that the installer will add as tags to all resources that it creates. Resources created by the cluster itself may not include these tags.
+		`,
 	}, {
 		path: []string{"platform", "aws", "serviceEndpoints"},
 		desc: `
@@ -288,8 +288,8 @@ KIND:     InstallConfig
 VERSION:  v1
 
 RESOURCE: <[]object>
-  ServiceEndpoints list contains custom endpoints which will override default service endpoint of AWS Services. There must be only one ServiceEndpoint for a service.    
-`,
+  ServiceEndpoints list contains custom endpoints which will override default service endpoint of AWS Services. There must be only one ServiceEndpoint for a service.
+		`,
 	}, {
 		path: []string{"platform", "aws", "serviceEndpoints", "url"},
 		desc: `
@@ -298,7 +298,34 @@ VERSION:  v1
 
 RESOURCE: <string>
   URL is fully qualified URI with scheme https, that overrides the default generated endpoint for a client. This must be provided and cannot be empty.
-`,
+		`,
+	}, {
+		path: []string{"compute", "platform", "aws", "iamRole"},
+		desc: `
+KIND:     InstallConfig
+VERSION:  v1
+
+RESOURCE: <string>
+  IAMRole is the name of the IAM Role to use for the instance profile of the machine. Leave unset to have the installer create the IAM Role on your behalf.
+	`,
+	}, {
+		path: []string{"controlPlane", "platform", "aws", "iamRole"},
+		desc: `
+KIND:     InstallConfig
+VERSION:  v1
+
+RESOURCE: <string>
+  IAMRole is the name of the IAM Role to use for the instance profile of the machine. Leave unset to have the installer create the IAM Role on your behalf.
+	`,
+	}, {
+		path: []string{"platform", "aws", "defaultMachinePlatform", "iamRole"},
+		desc: `
+KIND:     InstallConfig
+VERSION:  v1
+
+RESOURCE: <string>
+  IAMRole is the name of the IAM Role to use for the instance profile of the machine. Leave unset to have the installer create the IAM Role on your behalf.
+	`,
 	}}
 	for _, test := range cases {
 		t.Run("", func(t *testing.T) {

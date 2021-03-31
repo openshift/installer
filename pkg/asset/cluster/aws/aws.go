@@ -7,6 +7,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
@@ -29,6 +31,19 @@ func Metadata(clusterID, infraID string, config *types.InstallConfig) *awstypes.
 // PreTerraform performs any infrastructure initialization which must
 // happen before Terraform creates the remaining infrastructure.
 func PreTerraform(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
+
+	if err := tagSubnetEC2Instances(ctx, clusterID, installConfig); err != nil {
+		return err
+	}
+
+	if err := tagIamRoles(ctx, clusterID, installConfig); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func tagSubnetEC2Instances(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
 	if len(installConfig.Config.Platform.AWS.Subnets) == 0 {
 		return nil
 	}
@@ -56,21 +71,57 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 	if err != nil {
 		return err
 	}
+	key, value := sharedTag(clusterID)
+	ec2Tags := []*ec2.Tag{{Key: &key, Value: &value}}
+	ec2Client := ec2.New(session, aws.NewConfig().WithRegion(installConfig.Config.Platform.AWS.Region))
 
-	tags := []*ec2.Tag{
-		{
-			Key:   aws.String(fmt.Sprintf("kubernetes.io/cluster/%s", clusterID)),
-			Value: aws.String("shared"),
-		},
-	}
-	client := ec2.New(session, aws.NewConfig().WithRegion(installConfig.Config.Platform.AWS.Region))
-
-	if _, err = client.CreateTagsWithContext(ctx, &ec2.CreateTagsInput{
+	if _, err = ec2Client.CreateTagsWithContext(ctx, &ec2.CreateTagsInput{
 		Resources: ids,
-		Tags:      tags,
+		Tags:      ec2Tags,
 	}); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func tagIamRoles(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
+	workerMachinePool := installConfig.Config.WorkerMachinePool()
+
+	var iamRoleNames []*string
+
+	if installConfig.Config.ControlPlane.Platform.AWS.IAMRole != "" {
+		iamRoleNames = append(iamRoleNames, &installConfig.Config.ControlPlane.Platform.AWS.IAMRole)
+	}
+
+	if workerMachinePool.Platform.AWS.IAMRole != "" {
+		iamRoleNames = append(iamRoleNames, &workerMachinePool.Platform.AWS.IAMRole)
+	}
+
+	if len(iamRoleNames) == 0 {
+		return nil
+	}
+
+	session, err := installConfig.AWS.Session(ctx)
+	if err != nil {
+		return err
+	}
+	key, value := sharedTag(clusterID)
+	iamTags := []*iam.Tag{{Key: &key, Value: &value}}
+	iamClient := iam.New(session, aws.NewConfig().WithRegion(installConfig.Config.Platform.AWS.Region))
+
+	for _, iamRoleName := range iamRoleNames {
+		if _, err := iamClient.TagRoleWithContext(ctx, &iam.TagRoleInput{
+			RoleName: iamRoleName,
+			Tags:     iamTags,
+		}); err != nil {
+			return errors.Wrapf(err, "could not tag %s role", *iamRoleName)
+		}
+	}
+
+	return nil
+}
+
+func sharedTag(clusterID string) (string, string) {
+	return fmt.Sprintf("kubernetes.io/cluster/%s", clusterID), "shared"
 }

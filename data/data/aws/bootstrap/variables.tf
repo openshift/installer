@@ -96,3 +96,8 @@ variable "publish_strategy" {
   type = string
   description = "The publishing strategy for endpoints like load balancers"
 }
+
+variable "iam_role_name" {
+  type = string
+  description = "The name of the existing role to use for the instance profile"
+}
