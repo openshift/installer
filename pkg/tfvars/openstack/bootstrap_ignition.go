@@ -16,6 +16,7 @@ import (
 	"github.com/vincent-petithory/dataurl"
 
 	"github.com/openshift/installer/pkg/asset/ignition"
+	"github.com/openshift/installer/pkg/types"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
@@ -86,7 +87,7 @@ func parseCertificateBundle(userCA []byte) ([]igntypes.Resource, error) {
 
 // generateIgnitionShim is used to generate an ignition file that contains a user ca bundle
 // in its Security section.
-func generateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL string, tokenID string) (string, error) {
+func generateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL string, tokenID string, proxy *types.Proxy) (string, error) {
 	fileMode := 420
 	bootstrapHTTPResponseHeaders := 120
 
@@ -152,6 +153,7 @@ func generateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL st
 					},
 				},
 			},
+			Proxy: ignitionProxy(proxy),
 		},
 		Storage: igntypes.Storage{
 			Files: []igntypes.File{
@@ -188,4 +190,25 @@ func getAuthToken(cloud string) (string, error) {
 	}
 
 	return token, nil
+}
+
+func ignitionProxy(proxy *types.Proxy) igntypes.Proxy {
+	var ignProxy igntypes.Proxy
+	if proxy == nil {
+		return ignProxy
+	}
+	if httpProxy := proxy.HTTPProxy; httpProxy != "" {
+		ignProxy.HTTPProxy = &httpProxy
+	}
+	if httpsProxy := proxy.HTTPSProxy; httpsProxy != "" {
+		ignProxy.HTTPSProxy = &httpsProxy
+	}
+	ignProxy.NoProxy = make([]igntypes.NoProxyItem, 0, len(proxy.NoProxy))
+	if noProxy := proxy.NoProxy; noProxy != "" {
+		noProxySplit := strings.Split(noProxy, ",")
+		for _, p := range noProxySplit {
+			ignProxy.NoProxy = append(ignProxy.NoProxy, igntypes.NoProxyItem(p))
+		}
+	}
+	return ignProxy
 }
