@@ -16,6 +16,7 @@ import (
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
+	"github.com/openshift/installer/pkg/types"
 	types_openstack "github.com/openshift/installer/pkg/types/openstack"
 	"github.com/pkg/errors"
 
@@ -46,7 +47,7 @@ type config struct {
 }
 
 // TFVars generates OpenStack-specific Terraform variables.
-func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, lbFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool, machinesSubnet string) ([]byte, error) {
+func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, externalNetwork string, externalDNS []string, lbFloatingIP string, ingressFloatingIP string, apiVIP string, ingressVIP string, baseImage string, infraID string, userCA string, bootstrapIgn string, mpool *types_openstack.MachinePool, machinesSubnet string, proxy *types.Proxy) ([]byte, error) {
 	zones := []string{}
 	seen := map[string]bool{}
 	for _, config := range masterConfigs {
@@ -133,7 +134,7 @@ func TFVars(masterConfigs []*v1alpha1.OpenstackProviderSpec, cloud string, exter
 	}
 
 	bootstrapConfigURL := fmt.Sprintf("%s%s", glancePublicURL, configLocation)
-	userCAIgnition, err := generateIgnitionShim(userCA, infraID, bootstrapConfigURL, tokenID)
+	userCAIgnition, err := generateIgnitionShim(userCA, infraID, bootstrapConfigURL, tokenID, proxy)
 	if err != nil {
 		return nil, err
 	}
