@@ -62,10 +62,16 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	allErrs = append(allErrs, validateServiceEndpoints(fldPath.Child("serviceEndpoints"), platform.Region, platform.ServiceEndpoints)...)
+
+	// Fail fast when service endpoints are invalid to avoid long timeouts.
+	if len(allErrs) > 0 {
+		return allErrs
+	}
+
 	if len(platform.Subnets) > 0 {
 		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("subnets"), platform.Subnets, networking, publish)...)
 	}
-	allErrs = append(allErrs, validateServiceEndpoints(fldPath.Child("serviceEndpoints"), platform.Region, platform.ServiceEndpoints)...)
 	if platform.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("defaultMachinePlatform"), platform, platform.DefaultMachinePlatform, controlPlaneReq)...)
 	}
