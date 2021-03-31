@@ -11,12 +11,13 @@ data "aws_ebs_default_kms_key" "current" {}
 resource "aws_iam_instance_profile" "master" {
   name = "${var.cluster_id}-master-profile"
 
-  role = aws_iam_role.master_role.name
+  role = var.iam_role_name != "" ? var.iam_role_name : aws_iam_role.master_role[0].name
 }
 
 resource "aws_iam_role" "master_role" {
-  name = "${var.cluster_id}-master-role"
-  path = "/"
+  count = var.iam_role_name == "" ? 1 : 0
+  name  = "${var.cluster_id}-master-role"
+  path  = "/"
 
   assume_role_policy = <<EOF
 {
@@ -50,8 +51,9 @@ resource "aws_iam_role_policy" "master_policy" {
   // clusters.
   // Please see: docs/dev/aws/iam_permissions.md
 
+  count = var.iam_role_name == "" ? 1 : 0
   name = "${var.cluster_id}-master-policy"
-  role = aws_iam_role.master_role.id
+  role = aws_iam_role.master_role[0].id
 
   policy = <<EOF
 {

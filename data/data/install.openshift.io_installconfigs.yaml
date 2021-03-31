@@ -76,6 +76,11 @@ spec:
                             the ec2 instance. If set, the AMI should belong to the
                             same region as the cluster.
                           type: string
+                        iamRole:
+                          description: IAMRole is the name of the IAM Role to use
+                            for the instance profile of the machine. Leave unset to
+                            have the installer create the IAM Role on your behalf.
+                          type: string
                         rootVolume:
                           description: EC2RootVolume defines the root volume for EC2
                             instances in the machine pool.
@@ -428,6 +433,11 @@ spec:
                         description: AMIID is the AMI that should be used to boot
                           the ec2 instance. If set, the AMI should belong to the same
                           region as the cluster.
+                        type: string
+                      iamRole:
+                        description: IAMRole is the name of the IAM Role to use for
+                          the instance profile of the machine. Leave unset to have
+                          the installer create the IAM Role on your behalf.
                         type: string
                       rootVolume:
                         description: EC2RootVolume defines the root volume for EC2
@@ -910,6 +920,11 @@ spec:
                         description: AMIID is the AMI that should be used to boot
                           the ec2 instance. If set, the AMI should belong to the same
                           region as the cluster.
+                        type: string
+                      iamRole:
+                        description: IAMRole is the name of the IAM Role to use for
+                          the instance profile of the machine. Leave unset to have
+                          the installer create the IAM Role on your behalf.
                         type: string
                       rootVolume:
                         description: EC2RootVolume defines the root volume for EC2

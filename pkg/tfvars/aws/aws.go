@@ -37,6 +37,8 @@ type config struct {
 	SkipRegionCheck         bool              `json:"aws_skip_region_validation"`
 	IgnitionBucket          string            `json:"aws_ignition_bucket"`
 	BootstrapIgnitionStub   string            `json:"aws_bootstrap_stub_ignition"`
+	MasterIAMRoleName       string            `json:"aws_master_iam_role_name,omitempty"`
+	WorkerIAMRoleName       string            `json:"aws_worker_iam_role_name,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -55,6 +57,8 @@ type TFVarsSources struct {
 	IgnitionBucket, IgnitionPresignedURL string
 
 	AdditionalTrustBundle string
+
+	MasterIAMRoleName, WorkerIAMRoleName string
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
@@ -126,6 +130,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PublishStrategy:         string(sources.Publish),
 		SkipRegionCheck:         !configaws.IsKnownRegion(masterConfig.Placement.Region),
 		IgnitionBucket:          sources.IgnitionBucket,
+		MasterIAMRoleName:       sources.MasterIAMRoleName,
+		WorkerIAMRoleName:       sources.WorkerIAMRoleName,
 	}
 
 	stubIgn, err := generateIgnitionShim(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle)
