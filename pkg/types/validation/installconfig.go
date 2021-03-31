@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 
 	dockerref "github.com/containers/image/docker/reference"
@@ -195,8 +196,10 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type"))
 		}
 
+		experimentalDualStackEnabled, _ := strconv.ParseBool(os.Getenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK"))
 		switch {
-		case p.Azure != nil:
+		case p.Azure != nil && experimentalDualStackEnabled:
+			logrus.Warnf("Using experimental Azure dual-stack support")
 		case p.BareMetal != nil:
 		case p.None != nil:
 		default:
@@ -221,12 +224,6 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		switch {
 		case p.BareMetal != nil:
 		case p.None != nil:
-
-		case p.Azure != nil && os.Getenv("OPENSHIFT_INSTALL_AZURE_EMULATE_SINGLESTACK_IPV6") == "true":
-			if !presence["machineNetwork"].IPv4 || !presence["machineNetwork"].IPv6 {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "OPENSHIFT_INSTALL_AZURE_EMULATE_SINGLESTACK_IPV6 requires both IPv4 and IPv6 machineNetwork values"))
-			}
-
 		default:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "single-stack IPv6 is not supported for this platform"))
 		}

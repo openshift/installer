@@ -11,8 +11,6 @@ resource "azurerm_lb" "internal" {
 
   dynamic "frontend_ip_configuration" {
     for_each = [for ip in [
-      // TODO: internal LB should block v4 for better single stack emulation (&& ! var.emulate_single_stack_ipv6)
-      //   but RHCoS initramfs can't do v6 and so fails to ignite. https://issues.redhat.com/browse/GRPA-1343 
       { name : local.internal_lb_frontend_ip_v4_configuration_name, ipv6 : false, include : var.use_ipv4 },
       { name : local.internal_lb_frontend_ip_v6_configuration_name, ipv6 : true, include : var.use_ipv6 },
       ] : {

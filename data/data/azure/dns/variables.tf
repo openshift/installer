@@ -68,8 +68,3 @@ variable "use_ipv6" {
   type        = bool
   description = "This value determines if this is cluster should use IPv6 networking."
 }
-
-variable "emulate_single_stack_ipv6" {
-  type        = bool
-  description = "This determines whether a dual-stack cluster is configured to emulate single-stack IPv6."
-}

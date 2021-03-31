@@ -125,11 +125,6 @@ variable "azure_private" {
   description = "This determines if this is a private cluster or not."
 }
 
-variable "azure_emulate_single_stack_ipv6" {
-  type = bool
-  description = "This determines whether a dual-stack cluster is configured to emulate single-stack IPv6."
-}
-
 variable "azure_outbound_user_defined_routing" {
   type = bool
   default = false

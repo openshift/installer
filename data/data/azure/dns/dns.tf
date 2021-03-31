@@ -18,8 +18,6 @@ resource "azureprivatedns_zone_virtual_network_link" "network" {
 }
 
 resource "azureprivatedns_a_record" "apiint_internal" {
-  // TODO: internal LB should block v4 for better single stack emulation (&& ! var.emulate_single_stack_ipv6)
-  //   but RHCoS initramfs can't do v6 and so fails to ignite. https://issues.redhat.com/browse/GRPA-1343 
   count = var.use_ipv4 ? 1 : 0
 
   name                = "api-int"
@@ -40,8 +38,6 @@ resource "azureprivatedns_aaaa_record" "apiint_internal_v6" {
 }
 
 resource "azureprivatedns_a_record" "api_internal" {
-  // TODO: internal LB should block v4 for better single stack emulation (&& ! var.emulate_single_stack_ipv6)
-  //   but RHCoS initramfs can't do v6 and so fails to ignite. https://issues.redhat.com/browse/GRPA-1343 
   count = var.use_ipv4 ? 1 : 0
 
   name                = "api"

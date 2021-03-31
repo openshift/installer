@@ -45,9 +45,8 @@ module "bootstrap" {
   private                = module.vnet.private
   outbound_udr           = var.azure_outbound_user_defined_routing
 
-  use_ipv4                  = var.use_ipv4 || var.azure_emulate_single_stack_ipv6
-  use_ipv6                  = var.use_ipv6
-  emulate_single_stack_ipv6 = var.azure_emulate_single_stack_ipv6
+  use_ipv4 = var.use_ipv4
+  use_ipv6 = var.use_ipv6
 }
 
 module "vnet" {
@@ -67,9 +66,8 @@ module "vnet" {
   private                     = var.azure_private
   outbound_udr                = var.azure_outbound_user_defined_routing
 
-  use_ipv4                  = var.use_ipv4 || var.azure_emulate_single_stack_ipv6
-  use_ipv6                  = var.use_ipv6
-  emulate_single_stack_ipv6 = var.azure_emulate_single_stack_ipv6
+  use_ipv4 = var.use_ipv4
+  use_ipv6 = var.use_ipv6
 }
 
 module "master" {
@@ -94,9 +92,8 @@ module "master" {
   private                = module.vnet.private
   outbound_udr           = var.azure_outbound_user_defined_routing
 
-  use_ipv4                  = var.use_ipv4 || var.azure_emulate_single_stack_ipv6
-  use_ipv6                  = var.use_ipv6
-  emulate_single_stack_ipv6 = var.azure_emulate_single_stack_ipv6
+  use_ipv4 = var.use_ipv4
+  use_ipv6 = var.use_ipv6
 }
 
 module "dns" {
@@ -113,9 +110,8 @@ module "dns" {
   base_domain_resource_group_name = var.azure_base_domain_resource_group_name
   private                         = module.vnet.private
 
-  use_ipv4                  = var.use_ipv4 || var.azure_emulate_single_stack_ipv6
-  use_ipv6                  = var.use_ipv6
-  emulate_single_stack_ipv6 = var.azure_emulate_single_stack_ipv6
+  use_ipv4 = var.use_ipv4
+  use_ipv6 = var.use_ipv6
 }
 
 resource "random_string" "storage_suffix" {

@@ -2,7 +2,6 @@ package azure
 
 import (
 	"encoding/json"
-	"os"
 
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
@@ -42,7 +41,6 @@ type config struct {
 	PreexistingNetwork          bool              `json:"azure_preexisting_network"`
 	Private                     bool              `json:"azure_private"`
 	OutboundUDR                 bool              `json:"azure_outbound_user_defined_routing"`
-	EmulateSingleStackIPv6      bool              `json:"azure_emulate_single_stack_ipv6"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -71,11 +69,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		masterAvailabilityZones[i] = to.String(c.Zone)
 	}
 
-	var emulateSingleStackIPv6 bool
-	if os.Getenv("OPENSHIFT_INSTALL_AZURE_EMULATE_SINGLESTACK_IPV6") == "true" {
-		emulateSingleStackIPv6 = true
-	}
-
 	environment, err := environment(sources.CloudName)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not determine Azure environment to use for Terraform")
@@ -100,7 +93,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ControlPlaneSubnet:          masterConfig.Subnet,
 		ComputeSubnet:               workerConfig.Subnet,
 		PreexistingNetwork:          sources.PreexistingNetwork,
-		EmulateSingleStackIPv6:      emulateSingleStackIPv6,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
