@@ -111,15 +111,16 @@ var (
 				}
 
 				timer.StartTimer("Bootstrap Complete")
-				err = waitForBootstrapComplete(ctx, config)
-				if err != nil {
+				if err := waitForBootstrapComplete(ctx, config); err != nil {
 					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
 					}
 					if err2 := runGatherBootstrapCmd(rootOpts.dir); err2 != nil {
 						logrus.Error("Attempted to gather debug logs after installation failure: ", err2)
 					}
-					logrus.Fatal("Bootstrap failed to complete: ", err)
+					logrus.Error("Bootstrap failed to complete: ", err.Unwrap())
+					logrus.Error(err.Error())
+					logrus.Fatal("Bootstrap failed to complete")
 				}
 				timer.StopTimer("Bootstrap Complete")
 				timer.StartTimer("Bootstrap Destroy")
@@ -153,6 +154,55 @@ var (
 
 	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget, singleNodeIgnitionConfigTarget}
 )
+
+// clusterCreateError defines a custom error type that would help identify where the error occurs
+// during the bootstrap phase of the installation process. This would help identify whether the error
+// comes either from the Kubernetes API failure, the bootstrap failure or a general kubernetes client
+// creation error. In the event of any error, this interface packages the error message and a custom
+// log message that must be neatly presented to the user before termination of the project.
+type clusterCreateError struct {
+	wrappedError error
+	logMessage   string
+}
+
+// Unwrap provides the actual stored error that occured during installation.
+func (ce *clusterCreateError) Unwrap() error {
+	return ce.wrappedError
+}
+
+// Error provides the actual stored error that occured during installation.
+func (ce *clusterCreateError) Error() string {
+	return ce.logMessage
+}
+
+// newAPIError creates a clusterCreateError object with a default error message specific to the API failure.
+func newAPIError(errorInfo error) *clusterCreateError {
+	return &clusterCreateError{
+		wrappedError: errorInfo,
+		logMessage: "Failed waiting for Kubernetes API. This error usually happens when there " +
+			"is a problem on the bootstrap host that prevents creating a temporary control plane.",
+	}
+}
+
+// newBootstrapError creates a clusterCreateError object with a default error message specific to the
+// bootstrap failure.
+func newBootstrapError(errorInfo error) *clusterCreateError {
+	return &clusterCreateError{
+		wrappedError: errorInfo,
+		logMessage: "Failed to wait for bootstrapping to complete. This error usually " +
+			"happens when there is a problem with control plane hosts that prevents " +
+			"the control plane operators from creating the control plane.",
+	}
+}
+
+// newClientError creates a clusterCreateError object with a default error message specific to the
+// kubernetes client creation failure.
+func newClientError(errorInfo error) *clusterCreateError {
+	return &clusterCreateError{
+		wrappedError: errorInfo,
+		logMessage:   "Failed to create a kubernetes client.",
+	}
+}
 
 func newCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -264,10 +314,10 @@ func addRouterCAToClusterCA(ctx context.Context, config *rest.Config, directory 
 	return nil
 }
 
-func waitForBootstrapComplete(ctx context.Context, config *rest.Config) (err error) {
+func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *clusterCreateError {
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return errors.Wrap(err, "creating a Kubernetes client")
+		return newClientError(errors.Wrap(err, "creating a Kubernetes client"))
 	}
 
 	discovery := client.Discovery()
@@ -309,9 +359,9 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) (err err
 	err = apiContext.Err()
 	if err != nil && err != context.Canceled {
 		if lastErr != nil {
-			return errors.Wrap(lastErr, "failed waiting for Kubernetes API")
+			return newAPIError(lastErr)
 		}
-		return errors.Wrap(err, "waiting for Kubernetes API")
+		return newAPIError(err)
 	}
 
 	return waitForBootstrapConfigMap(ctx, client)
@@ -320,7 +370,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) (err err
 // waitForBootstrapConfigMap watches the configmaps in the kube-system namespace
 // and waits for the bootstrap configmap to report that bootstrapping has
 // completed.
-func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset) error {
+func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset) *clusterCreateError {
 	timeout := 30 * time.Minute
 	logrus.Infof("Waiting up to %v for bootstrapping to complete...", timeout)
 
@@ -352,8 +402,10 @@ func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset
 			return status == "complete", nil
 		},
 	)
-
-	return errors.Wrap(err, "failed to wait for bootstrapping to complete")
+	if err != nil {
+		return newBootstrapError(err)
+	}
+	return nil
 }
 
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation
