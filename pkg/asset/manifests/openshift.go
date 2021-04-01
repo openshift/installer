@@ -3,8 +3,10 @@ package manifests
 import (
 	"context"
 	"encoding/base64"
+	"io/ioutil"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/ghodss/yaml"
@@ -174,12 +176,19 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			return err
 		}
 
+		if len(conf.CABundle) == 0 && len(conf.CAFile) > 0 {
+			content, err := ioutil.ReadFile(conf.CAFile)
+			if err != nil {
+				return errors.Wrapf(err, "failed to read the cert file: %s", conf.CAFile)
+			}
+			conf.CABundle = strings.TrimSpace(string(content))
+		}
+
 		cloudCreds = cloudCredsSecretData{
 			Ovirt: &OvirtCredsSecretData{
 				Base64encodeURL:      base64.StdEncoding.EncodeToString([]byte(conf.URL)),
 				Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(conf.Username)),
 				Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(conf.Password)),
-				Base64encodeCAFile:   base64.StdEncoding.EncodeToString([]byte(conf.CAFile)),
 				Base64encodeInsecure: base64.StdEncoding.EncodeToString([]byte(strconv.FormatBool(conf.Insecure))),
 				Base64encodeCABundle: base64.StdEncoding.EncodeToString([]byte(conf.CABundle)),
 			},
