@@ -1208,6 +1208,34 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `\Q[networking.machineNewtork[0]: Invalid value: "172.17.64.0/18": overlaps with default Docker Bridge subnet, platform: Invalid value: "libvirt": must specify one of the platforms (\E.*\Q)]\E`,
 		},
+		{
+			name: "workloads definitions allowed for controlPlane",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ControlPlane.Workloads = []types.Workload{
+					{
+						Name:   types.ManagementWorkload,
+						CPUIDs: "0-1",
+					},
+				}
+				return c
+			}(),
+			expectedError: ``,
+		},
+		{
+			name: "workloads definitions not allowed for compute",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute[0].Workloads = []types.Workload{
+					{
+						Name:   types.ManagementWorkload,
+						CPUIDs: "0-1",
+					},
+				}
+				return c
+			}(),
+			expectedError: `\Qcompute[0].workloads: Invalid value: \E.*\Q: workloads cannot be specified for compute pools\E`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

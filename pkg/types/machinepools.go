@@ -68,6 +68,8 @@ type MachinePool struct {
 	//
 	// The only supported workload is "management" which will pin all
 	// infrastructure pods to the defined cpuset.
+	//
+	// Only valid in the controlPlane section, not the compute section.
 	// +optional
 	Workloads []Workload `json:"workloads,omitempty"`
 }

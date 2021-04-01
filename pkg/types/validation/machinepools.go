@@ -55,7 +55,7 @@ var (
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
-func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath *field.Path) field.ErrorList {
+func ValidateMachinePool(mpType machinePoolType, platform *types.Platform, p *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if p.Replicas != nil {
 		if *p.Replicas < 0 {
@@ -71,7 +71,11 @@ func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("architecture"), p.Architecture, validArchitectureValues))
 	}
 	allErrs = append(allErrs, validateMachinePoolPlatform(platform, &p.Platform, p, fldPath.Child("platform"))...)
-	allErrs = append(allErrs, validateWorkloads(p.Workloads, fldPath.Child("workloads"))...)
+	if mpType == machinePoolControlPlane {
+		allErrs = append(allErrs, validateWorkloads(p.Workloads, fldPath.Child("workloads"))...)
+	} else if len(p.Workloads) > 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("workloads"), p.Workloads, "workloads cannot be specified for compute pools"))
+	}
 	return allErrs
 }
 
@@ -159,3 +163,10 @@ func validateWorkloads(workloads []types.Workload, f *field.Path) field.ErrorLis
 	}
 	return allErrs
 }
+
+const (
+	machinePoolControlPlane machinePoolType = 0
+	machinePoolCompute      machinePoolType = 1
+)
+
+type machinePoolType int

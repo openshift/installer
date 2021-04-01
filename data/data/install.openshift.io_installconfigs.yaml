@@ -397,7 +397,8 @@ spec:
                 workloads:
                   description: "Workloads assign a specific group of pods to a specific
                     set of CPUs. \n The only supported workload is \"management\"
-                    which will pin all infrastructure pods to the defined cpuset."
+                    which will pin all infrastructure pods to the defined cpuset.
+                    \n Only valid in the controlPlane section, not the compute section."
                   items:
                     description: Workload defines a set of CPUs with a name, which
                       will be used by Kubelet and Cri-O to partition specific sets
@@ -773,7 +774,8 @@ spec:
               workloads:
                 description: "Workloads assign a specific group of pods to a specific
                   set of CPUs. \n The only supported workload is \"management\" which
-                  will pin all infrastructure pods to the defined cpuset."
+                  will pin all infrastructure pods to the defined cpuset. \n Only
+                  valid in the controlPlane section, not the compute section."
                 items:
                   description: Workload defines a set of CPUs with a name, which will
                     be used by Kubelet and Cri-O to partition specific sets of pods

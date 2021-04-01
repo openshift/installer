@@ -41,6 +41,7 @@ func TestValidateMachinePool(t *testing.T) {
 		platform *types.Platform
 		pool     *types.MachinePool
 		valid    bool
+		mpType   machinePoolType
 	}{
 		{
 			name:     "minimal",
@@ -268,10 +269,17 @@ func TestValidateMachinePool(t *testing.T) {
 			}(),
 			valid: false,
 		},
+		{
+			name:     "with a valid workload (but not allowed for compute nodes)",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
+			pool:     validMPWithWorkload(),
+			valid:    false,
+			mpType:   machinePoolCompute,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateMachinePool(tc.platform, tc.pool, field.NewPath("test-path")).ToAggregate()
+			err := ValidateMachinePool(tc.mpType, tc.platform, tc.pool, field.NewPath("test-path")).ToAggregate()
 			if tc.valid {
 				assert.NoError(t, err)
 			} else {

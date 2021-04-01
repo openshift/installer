@@ -375,7 +375,7 @@ func validateControlPlane(platform *types.Platform, pool *types.MachinePool, fld
 	if pool.Replicas != nil && *pool.Replicas == 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
 	}
-	allErrs = append(allErrs, ValidateMachinePool(platform, pool, fldPath)...)
+	allErrs = append(allErrs, ValidateMachinePool(machinePoolControlPlane, platform, pool, fldPath)...)
 	return allErrs
 }
 
@@ -394,7 +394,7 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 		if control != nil && control.Architecture != p.Architecture {
 			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, "heteregeneous multi-arch is not supported; compute pool architecture must match control plane"))
 		}
-		allErrs = append(allErrs, ValidateMachinePool(platform, &p, poolFldPath)...)
+		allErrs = append(allErrs, ValidateMachinePool(machinePoolCompute, platform, &p, poolFldPath)...)
 	}
 	return allErrs
 }
