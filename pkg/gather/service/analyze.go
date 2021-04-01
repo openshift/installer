@@ -6,11 +6,17 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
+
+// regex matching the path of a service entries file. The captured group is the name of the service.
+// For example, if the filename is "log-bundle-20210329190553/bootstrap/services/release-image.json",
+// then the name of the service is "release-image".
+var serviceEntriesFilePathRegex = regexp.MustCompile(`^[^\/]+\/bootstrap\/services\/([^.]+)\.json$`)
 
 // AnalyzeGatherBundle will analyze the bootstrap gather bundle at the specified path.
 // Analysis will be logged.
@@ -35,7 +41,7 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 
 	// read through the tar for relevant files
 	tarReader := tar.NewReader(uncompressedStream)
-	var releaseImageAnalysis *analysis
+	serviceAnalyses := make(map[string]analysis)
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -47,34 +53,49 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 		if header.Typeflag != tar.TypeReg {
 			continue
 		}
-		filenameParts := strings.SplitN(header.Name, "/", 2)
-		if len(filenameParts) != 2 {
+
+		serviceEntriesFileSubmatch := serviceEntriesFilePathRegex.FindStringSubmatch(header.Name)
+		if serviceEntriesFileSubmatch == nil {
 			continue
 		}
-		// we only care about the release-image.service for now. in the future, we will look at other services, too.
-		if filenameParts[1] == "bootstrap/services/release-image.json" {
-			var err error
-			releaseImageAnalysis, err = analyzeService(tarReader)
-			if err != nil {
-				logrus.Infof("Could not analyze the release-image.service: %v", err)
-			}
+		serviceName := serviceEntriesFileSubmatch[1]
+
+		serviceAnalysis, err := analyzeService(tarReader)
+		if err != nil {
+			logrus.Infof("Could not analyze the %s.service: %v", serviceName, err)
+			continue
+		}
+
+		serviceAnalyses[serviceName] = serviceAnalysis
+	}
+
+	analysisChecks := []struct {
+		name  string
+		check func(analysis) bool
+	}{
+		{name: "release-image", check: checkReleaseImageDownload},
+	}
+	for _, check := range analysisChecks {
+		a := serviceAnalyses[check.name]
+		if a.starts == 0 {
+			logrus.Errorf("The bootstrap machine did not execute the %s.service systemd unit", check.name)
+			break
+		}
+		if !check.check(a) {
 			break
 		}
 	}
 
-	// log details about the release-image.service.
-	if releaseImageAnalysis != nil && releaseImageAnalysis.starts > 0 {
-		if !releaseImageAnalysis.successful {
-			logrus.Error("The bootstrap machine failed to download the release image")
-			for _, l := range strings.Split(releaseImageAnalysis.lastError, "\n") {
-				logrus.Info(l)
-			}
-		}
-	} else {
-		logrus.Error("The bootstrap machine did not execute the release-image.service systemd unit")
-	}
-
 	return nil
+}
+
+func checkReleaseImageDownload(a analysis) bool {
+	if a.successful {
+		return true
+	}
+	logrus.Error("The bootstrap machine failed to download the release image")
+	a.logLastError()
+	return false
 }
 
 type analysis struct {
@@ -88,8 +109,8 @@ type analysis struct {
 	lastError string
 }
 
-func analyzeService(r io.Reader) (*analysis, error) {
-	a := &analysis{}
+func analyzeService(r io.Reader) (analysis, error) {
+	a := analysis{}
 	decoder := json.NewDecoder(r)
 	t, err := decoder.Token()
 	if err != nil {
@@ -106,7 +127,7 @@ func analyzeService(r io.Reader) (*analysis, error) {
 	for decoder.More() {
 		entry := &Entry{}
 		if err := decoder.Decode(entry); err != nil {
-			return nil, errors.Wrap(err, "could not decode an entry in the service entries file")
+			return a, errors.Wrap(err, "could not decode an entry in the service entries file")
 		}
 
 		// record a new start of the service
@@ -114,8 +135,8 @@ func analyzeService(r io.Reader) (*analysis, error) {
 			a.starts++
 		}
 
-		// the service is only considered considered successful if the very last entry is either the service ending
-		// successfully or a post-command ending successfully.
+		// the service is only considered successful if the last entry is either the service ending successfully or a
+		// post-command ending successfully.
 		a.successful = entry.Result == Success && (entry.Phase == ServiceEnd || entry.Phase == PostCommandEnd)
 
 		// save the last error
@@ -130,4 +151,10 @@ func analyzeService(r io.Reader) (*analysis, error) {
 		lastEntry = entry
 	}
 	return a, nil
+}
+
+func (a analysis) logLastError() {
+	for _, l := range strings.Split(a.lastError, "\n") {
+		logrus.Info(l)
+	}
 }
