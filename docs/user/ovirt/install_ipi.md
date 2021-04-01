@@ -102,6 +102,8 @@ Below the description of all config options in ovirt-config.yaml.
 | ovirt_password | Password for the user provided | string   | superpass                                                                                              |
 | ovirt_insecure | TLS verification disabled      | boolean  | false                                                                                                  |
 | ovirt_ca_bundle| CA Bundle                      | string   | -----BEGIN CERTIFICATE----- MIIDvTCCAqWgAwIBAgICEAA.... ----- END CERTIFICATE -----                    |
+| ovirt_cafile   | path to a file containing the  | string   | /path/to/ca.pm                                                                                         |
+|                | engine cert                    |          |                                                                                                        |
 | ovirt_pem_url  | PEM URL                        | string   | https://engine.fqdn.home/ovirt-engine/services/pki-resource?resource=ca-certificate&format=X509-PEM-CA |
 
 ### ovirt-credentials
