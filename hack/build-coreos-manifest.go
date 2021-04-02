@@ -7,19 +7,19 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
+	"github.com/ghodss/yaml"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
 	streamJSON = "data/data/rhcos-stream.json"
-	dest       = "bin/manifests/coreos-bootimages.json"
+	dest       = "bin/manifests/coreos-bootimages.yaml"
 )
 
 func run() error {
@@ -48,7 +48,7 @@ func run() error {
 		},
 	}
 
-	b, err := json.Marshal(cm)
+	b, err := yaml.Marshal(cm)
 	if err != nil {
 		return err
 	}
