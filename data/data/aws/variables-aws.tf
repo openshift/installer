@@ -148,3 +148,15 @@ The stub Ignition config that should be used to boot the bootstrap instance. Thi
 specified in aws_ignition_bucket.
 EOF
 }
+
+variable "aws_master_iam_role_name" {
+  type = string
+  description = "The name of the IAM role that will be attached to master instances."
+  default = ""
+}
+
+variable "aws_worker_iam_role_name" {
+  type = string
+  description = "The name of the IAM role that will be attached to worker instances."
+  default = ""
+}
