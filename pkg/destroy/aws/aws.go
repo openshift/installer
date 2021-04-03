@@ -810,7 +810,7 @@ func deleteEC2Image(ctx context.Context, client *ec2.EC2, id string, logger logr
 				Tags:      image.Tags,
 			})
 			if err != nil {
-				err = errors.Wrapf(err, "tagging snapshots for %s", id)
+				return errors.Wrapf(err, "tagging snapshots for %s", id)
 			}
 		}
 	}
