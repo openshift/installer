@@ -89,9 +89,10 @@ func tagIamRoles(ctx context.Context, clusterID string, installConfig *installco
 	workerMachinePool := installConfig.Config.WorkerMachinePool()
 
 	var iamRoleNames []*string
-
-	if installConfig.Config.ControlPlane.Platform.AWS.IAMRole != "" {
-		iamRoleNames = append(iamRoleNames, &installConfig.Config.ControlPlane.Platform.AWS.IAMRole)
+	if installConfig.Config.ControlPlane.Platform.AWS != nil {
+		if installConfig.Config.ControlPlane.Platform.AWS.IAMRole != "" {
+			iamRoleNames = append(iamRoleNames, &installConfig.Config.ControlPlane.Platform.AWS.IAMRole)
+		}
 	}
 
 	if workerMachinePool.Platform.AWS.IAMRole != "" {
