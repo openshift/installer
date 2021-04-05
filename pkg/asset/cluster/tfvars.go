@@ -234,15 +234,20 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			osImageRegion = osImage[1]
 		}
 
-		workerMachinePool := installConfig.Config.WorkerMachinePool()
 		workerIAMRoleName := ""
-		if workerMachinePool.Platform.AWS != nil {
-			workerIAMRoleName = workerMachinePool.Platform.AWS.IAMRole
+		if mp := installConfig.Config.WorkerMachinePool(); mp != nil {
+			awsMP := &aws.MachinePool{}
+			awsMP.Set(installConfig.Config.AWS.DefaultMachinePlatform)
+			awsMP.Set(mp.Platform.AWS)
+			workerIAMRoleName = awsMP.IAMRole
 		}
 
 		masterIAMRoleName := ""
-		if installConfig.Config.ControlPlane.Platform.AWS != nil {
-			masterIAMRoleName = installConfig.Config.ControlPlane.Platform.AWS.IAMRole
+		if mp := installConfig.Config.ControlPlane; mp != nil {
+			awsMP := &aws.MachinePool{}
+			awsMP.Set(installConfig.Config.AWS.DefaultMachinePlatform)
+			awsMP.Set(mp.Platform.AWS)
+			masterIAMRoleName = awsMP.IAMRole
 		}
 
 		data, err := awstfvars.TFVars(awstfvars.TFVarsSources{

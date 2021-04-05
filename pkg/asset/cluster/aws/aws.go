@@ -98,16 +98,22 @@ func tagSharedVPCResources(ctx context.Context, clusterID string, installConfig 
 }
 
 func tagSharedIAMRoles(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
-	workerMachinePool := installConfig.Config.WorkerMachinePool()
-
 	var iamRoleNames []*string
-
-	if installConfig.Config.ControlPlane.Platform.AWS.IAMRole != "" {
-		iamRoleNames = append(iamRoleNames, &installConfig.Config.ControlPlane.Platform.AWS.IAMRole)
+	if mp := installConfig.Config.ControlPlane; mp != nil {
+		awsMP := &awstypes.MachinePool{}
+		awsMP.Set(installConfig.Config.AWS.DefaultMachinePlatform)
+		awsMP.Set(mp.Platform.AWS)
+		if iamRole := awsMP.IAMRole; iamRole != "" {
+			iamRoleNames = append(iamRoleNames, &iamRole)
+		}
 	}
-
-	if workerMachinePool.Platform.AWS.IAMRole != "" {
-		iamRoleNames = append(iamRoleNames, &workerMachinePool.Platform.AWS.IAMRole)
+	if mp := installConfig.Config.WorkerMachinePool(); mp != nil {
+		awsMP := &awstypes.MachinePool{}
+		awsMP.Set(installConfig.Config.AWS.DefaultMachinePlatform)
+		awsMP.Set(mp.Platform.AWS)
+		if iamRole := awsMP.IAMRole; iamRole != "" {
+			iamRoleNames = append(iamRoleNames, &iamRole)
+		}
 	}
 
 	if len(iamRoleNames) == 0 {
