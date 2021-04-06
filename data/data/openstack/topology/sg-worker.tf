@@ -29,17 +29,6 @@ resource "openstack_networking_secgroup_rule_v2" "worker_ingress_ssh" {
   description       = local.description
 }
 
-resource "openstack_networking_secgroup_rule_v2" "worker_ingress_mdns_udp" {
-  direction         = "ingress"
-  ethertype         = "IPv4"
-  protocol          = "udp"
-  port_range_min    = 5353
-  port_range_max    = 5353
-  remote_ip_prefix  = var.cidr_block
-  security_group_id = openstack_networking_secgroup_v2.worker.id
-  description       = local.description
-}
-
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_http" {
   direction         = "ingress"
   ethertype         = "IPv4"
