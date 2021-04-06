@@ -8,7 +8,7 @@
 package ovirt
 
 import (
-	"os"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
@@ -22,20 +22,44 @@ func Provider() terraform.ResourceProvider {
 			"username": {
 				Type:        schema.TypeString,
 				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("OVIRT_USERNAME", os.Getenv("OVIRT_USERNAME")),
+				DefaultFunc: schema.EnvDefaultFunc("OVIRT_USERNAME", ""),
 				Description: "Login username",
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("OVIRT_PASSWORD", os.Getenv("OVIRT_PASSWORD")),
+				DefaultFunc: schema.EnvDefaultFunc("OVIRT_PASSWORD", ""),
 				Description: "Login password",
+				Sensitive:   true,
+			},
+			"insecure": {
+				Type:        schema.TypeBool,
+				Required:    false,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OVIRT_INSECURE", ""),
+				Description: "Skip certificate verification",
+				Sensitive:   false,
+			},
+			"cafile": {
+				Type:        schema.TypeString,
+				Required:    false,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OVIRT_CAFILE", ""),
+				Description: "File containing the CA certificate in PEM format",
+				Sensitive:   false,
+			},
+			"ca_bundle": {
+				Type:        schema.TypeString,
+				Required:    false,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("OVIRT_CA_BUNDLE", ""),
+				Description: "CA certificate in PEM format",
 				Sensitive:   true,
 			},
 			"url": {
 				Type:        schema.TypeString,
 				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("OVIRT_URL", os.Getenv("OVIRT_URL")),
+				DefaultFunc: schema.EnvDefaultFunc("OVIRT_URL", ""),
 				Description: "Ovirt server url",
 			},
 			"headers": {
@@ -85,11 +109,21 @@ func Provider() terraform.ResourceProvider {
 
 // ConfigureProvider initializes the API connection object by config items
 func ConfigureProvider(d *schema.ResourceData) (interface{}, error) {
+	insecure := d.Get("insecure").(bool)
+	caFile := d.Get("cafile").(string)
+	caCert := []byte(d.Get("ca_bundle").(string))
+
+	if !insecure && caFile == "" && len(caCert) == 0 {
+		return nil, fmt.Errorf("either insecure must be set or one of cafile and ca_bundle must be set")
+	}
+
 	connBuilder := ovirtsdk4.NewConnectionBuilder().
 		URL(d.Get("url").(string)).
 		Username(d.Get("username").(string)).
 		Password(d.Get("password").(string)).
-		Insecure(true)
+		CAFile(caFile).
+		CACert(caCert).
+		Insecure(insecure)
 
 	// Set headers if needed
 	if v, ok := d.GetOk("headers"); ok {

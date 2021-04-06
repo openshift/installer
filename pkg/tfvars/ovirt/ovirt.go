@@ -10,12 +10,14 @@ import (
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 )
 
-// Auth is the collection of credentials that will be used by terrform.
+// Auth is the collection of credentials that will be used by terraform.
 type Auth struct {
 	URL      string `json:"ovirt_url"`
 	Username string `json:"ovirt_username"`
 	Password string `json:"ovirt_password"`
-	Cafile   string `json:"ovirt_cafile,omitempty"`
+	Cafile   string `json:"ovirt_cafile"`
+	Cabundle string `json:"ovirt_ca_bundle"`
+	Insecure bool   `json:"ovirt_insecure"`
 }
 
 type config struct {

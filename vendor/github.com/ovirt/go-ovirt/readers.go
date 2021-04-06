@@ -3574,6 +3574,13 @@ func XMLClusterReadOne(reader *XMLReader, start *xml.StartElement, expectedTag s
 					return nil, err
 				}
 				builder.FencingPolicy(v)
+			case "fips_mode":
+				vp, err := XMLFipsModeReadOne(reader, &t)
+				v := *vp
+				if err != nil {
+					return nil, err
+				}
+				builder.FipsMode(v)
 			case "firewall_type":
 				vp, err := XMLFirewallTypeReadOne(reader, &t)
 				v := *vp
@@ -15220,6 +15227,13 @@ func XMLImageTransferReadOne(reader *XMLReader, start *xml.StartElement, expecte
 					return nil, err
 				}
 				builder.Snapshot(v)
+			case "timeout_policy":
+				vp, err := XMLImageTransferTimeoutPolicyReadOne(reader, &t)
+				v := *vp
+				if err != nil {
+					return nil, err
+				}
+				builder.TimeoutPolicy(v)
 			case "transfer_url":
 				v, err := reader.ReadString(&t)
 				if err != nil {
@@ -15917,6 +15931,12 @@ func XMLInstanceTypeReadOne(reader *XMLReader, start *xml.StartElement, expected
 					return nil, err
 				}
 				builder.VirtioScsi(v)
+			case "virtio_scsi_multi_queues_enabled":
+				v, err := reader.ReadBool(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.VirtioScsiMultiQueuesEnabled(v)
 			case "vm":
 				v, err := XMLVmReadOne(reader, &t, "vm")
 				if err != nil {
@@ -27439,123 +27459,6 @@ func XMLSchedulingPolicyReadMany(reader *XMLReader, start *xml.StartElement) (*S
 	return &result, nil
 }
 
-func XMLSeLinuxReadOne(reader *XMLReader, start *xml.StartElement, expectedTag string) (*SeLinux, error) {
-	builder := NewSeLinuxBuilder()
-	if start == nil {
-		st, err := reader.FindStartElement()
-		if err != nil {
-			if err == io.EOF {
-				return nil, nil
-			}
-			return nil, err
-		}
-		start = st
-	}
-	if expectedTag == "" {
-		expectedTag = "se_linux"
-	}
-	if start.Name.Local != expectedTag {
-		return nil, XMLTagNotMatchError{start.Name.Local, expectedTag}
-	}
-	var links []Link
-	depth := 1
-	for depth > 0 {
-		t, err := reader.Next()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return nil, err
-		}
-		t = xml.CopyToken(t)
-		switch t := t.(type) {
-		case xml.StartElement:
-			switch t.Name.Local {
-			case "mode":
-				vp, err := XMLSeLinuxModeReadOne(reader, &t)
-				v := *vp
-				if err != nil {
-					return nil, err
-				}
-				builder.Mode(v)
-			case "link":
-				var rel, href string
-				for _, attr := range t.Attr {
-					name := attr.Name.Local
-					value := attr.Value
-					switch name {
-					case "href":
-						href = value
-					case "rel":
-						rel = value
-					}
-				}
-				if rel != "" && href != "" {
-					links = append(links, Link{&href, &rel})
-				}
-				// <link> just has attributes, so must skip manually
-				reader.Skip()
-			default:
-				reader.Skip()
-			}
-		case xml.EndElement:
-			depth--
-		}
-	}
-	one, err := builder.Build()
-	if err != nil {
-		return nil, err
-	}
-	for _, link := range links {
-		switch *link.rel {
-		} // end of switch
-	} // end of for-links
-	return one, nil
-}
-
-func XMLSeLinuxReadMany(reader *XMLReader, start *xml.StartElement) (*SeLinuxSlice, error) {
-	if start == nil {
-		st, err := reader.FindStartElement()
-		if err != nil {
-			if err == io.EOF {
-				return nil, nil
-			}
-			return nil, err
-		}
-		start = st
-	}
-	var result SeLinuxSlice
-	depth := 1
-	for depth > 0 {
-		t, err := reader.Next()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return nil, err
-		}
-		t = xml.CopyToken(t)
-		switch t := t.(type) {
-		case xml.StartElement:
-			switch t.Name.Local {
-			case "se_linux":
-				one, err := XMLSeLinuxReadOne(reader, &t, "se_linux")
-				if err != nil {
-					return nil, err
-				}
-				if one != nil {
-					result.slice = append(result.slice, one)
-				}
-			default:
-				reader.Skip()
-			}
-		case xml.EndElement:
-			depth--
-		}
-	}
-	return &result, nil
-}
-
 func XMLSchedulingPolicyUnitReadOne(reader *XMLReader, start *xml.StartElement, expectedTag string) (*SchedulingPolicyUnit, error) {
 	builder := NewSchedulingPolicyUnitBuilder()
 	if start == nil {
@@ -27704,6 +27607,123 @@ func XMLSchedulingPolicyUnitReadMany(reader *XMLReader, start *xml.StartElement)
 			switch t.Name.Local {
 			case "scheduling_policy_unit":
 				one, err := XMLSchedulingPolicyUnitReadOne(reader, &t, "scheduling_policy_unit")
+				if err != nil {
+					return nil, err
+				}
+				if one != nil {
+					result.slice = append(result.slice, one)
+				}
+			default:
+				reader.Skip()
+			}
+		case xml.EndElement:
+			depth--
+		}
+	}
+	return &result, nil
+}
+
+func XMLSeLinuxReadOne(reader *XMLReader, start *xml.StartElement, expectedTag string) (*SeLinux, error) {
+	builder := NewSeLinuxBuilder()
+	if start == nil {
+		st, err := reader.FindStartElement()
+		if err != nil {
+			if err == io.EOF {
+				return nil, nil
+			}
+			return nil, err
+		}
+		start = st
+	}
+	if expectedTag == "" {
+		expectedTag = "se_linux"
+	}
+	if start.Name.Local != expectedTag {
+		return nil, XMLTagNotMatchError{start.Name.Local, expectedTag}
+	}
+	var links []Link
+	depth := 1
+	for depth > 0 {
+		t, err := reader.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		t = xml.CopyToken(t)
+		switch t := t.(type) {
+		case xml.StartElement:
+			switch t.Name.Local {
+			case "mode":
+				vp, err := XMLSeLinuxModeReadOne(reader, &t)
+				v := *vp
+				if err != nil {
+					return nil, err
+				}
+				builder.Mode(v)
+			case "link":
+				var rel, href string
+				for _, attr := range t.Attr {
+					name := attr.Name.Local
+					value := attr.Value
+					switch name {
+					case "href":
+						href = value
+					case "rel":
+						rel = value
+					}
+				}
+				if rel != "" && href != "" {
+					links = append(links, Link{&href, &rel})
+				}
+				// <link> just has attributes, so must skip manually
+				reader.Skip()
+			default:
+				reader.Skip()
+			}
+		case xml.EndElement:
+			depth--
+		}
+	}
+	one, err := builder.Build()
+	if err != nil {
+		return nil, err
+	}
+	for _, link := range links {
+		switch *link.rel {
+		} // end of switch
+	} // end of for-links
+	return one, nil
+}
+
+func XMLSeLinuxReadMany(reader *XMLReader, start *xml.StartElement) (*SeLinuxSlice, error) {
+	if start == nil {
+		st, err := reader.FindStartElement()
+		if err != nil {
+			if err == io.EOF {
+				return nil, nil
+			}
+			return nil, err
+		}
+		start = st
+	}
+	var result SeLinuxSlice
+	depth := 1
+	for depth > 0 {
+		t, err := reader.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		t = xml.CopyToken(t)
+		switch t := t.(type) {
+		case xml.StartElement:
+			switch t.Name.Local {
+			case "se_linux":
+				one, err := XMLSeLinuxReadOne(reader, &t, "se_linux")
 				if err != nil {
 					return nil, err
 				}
@@ -28809,6 +28829,12 @@ func XMLSnapshotReadOne(reader *XMLReader, start *xml.StartElement, expectedTag 
 					return nil, err
 				}
 				builder.VirtioScsi(v)
+			case "virtio_scsi_multi_queues_enabled":
+				v, err := reader.ReadBool(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.VirtioScsiMultiQueuesEnabled(v)
 			case "vm":
 				v, err := XMLVmReadOne(reader, &t, "vm")
 				if err != nil {
@@ -29320,6 +29346,12 @@ func XMLSshReadOne(reader *XMLReader, start *xml.StartElement, expectedTag strin
 					return nil, err
 				}
 				builder.Port(v)
+			case "public_key":
+				v, err := reader.ReadString(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.PublicKey(v)
 			case "user":
 				v, err := XMLUserReadOne(reader, &t, "user")
 				if err != nil {
@@ -31799,6 +31831,12 @@ func XMLTemplateReadOne(reader *XMLReader, start *xml.StartElement, expectedTag 
 					return nil, err
 				}
 				builder.VirtioScsi(v)
+			case "virtio_scsi_multi_queues_enabled":
+				v, err := reader.ReadBool(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.VirtioScsiMultiQueuesEnabled(v)
 			case "vm":
 				v, err := XMLVmReadOne(reader, &t, "vm")
 				if err != nil {
@@ -32795,6 +32833,12 @@ func XMLUserReadOne(reader *XMLReader, start *xml.StartElement, expectedTag stri
 					return nil, err
 				}
 				builder.Namespace(v)
+			case "options":
+				v, err := XMLUserOptionReadMany(reader, &t)
+				if err != nil {
+					return nil, err
+				}
+				builder.Options(v)
 			case "password":
 				v, err := reader.ReadString(&t)
 				if err != nil {
@@ -32878,6 +32922,11 @@ func XMLUserReadOne(reader *XMLReader, start *xml.StartElement, expectedTag stri
 				one.groups = new(GroupSlice)
 			}
 			one.groups.href = link.href
+		case "options":
+			if one.options == nil {
+				one.options = new(UserOptionSlice)
+			}
+			one.options.href = link.href
 		case "permissions":
 			if one.permissions == nil {
 				one.permissions = new(PermissionSlice)
@@ -32930,6 +32979,157 @@ func XMLUserReadMany(reader *XMLReader, start *xml.StartElement) (*UserSlice, er
 			switch t.Name.Local {
 			case "user":
 				one, err := XMLUserReadOne(reader, &t, "user")
+				if err != nil {
+					return nil, err
+				}
+				if one != nil {
+					result.slice = append(result.slice, one)
+				}
+			default:
+				reader.Skip()
+			}
+		case xml.EndElement:
+			depth--
+		}
+	}
+	return &result, nil
+}
+
+func XMLUserOptionReadOne(reader *XMLReader, start *xml.StartElement, expectedTag string) (*UserOption, error) {
+	builder := NewUserOptionBuilder()
+	if start == nil {
+		st, err := reader.FindStartElement()
+		if err != nil {
+			if err == io.EOF {
+				return nil, nil
+			}
+			return nil, err
+		}
+		start = st
+	}
+	if expectedTag == "" {
+		expectedTag = "user_option"
+	}
+	if start.Name.Local != expectedTag {
+		return nil, XMLTagNotMatchError{start.Name.Local, expectedTag}
+	}
+	// Process the attributes
+	for _, attr := range start.Attr {
+		name := attr.Name.Local
+		value := attr.Value
+		switch name {
+		case "id":
+			builder.Id(value)
+		case "href":
+			builder.Href(value)
+		}
+	}
+	var links []Link
+	depth := 1
+	for depth > 0 {
+		t, err := reader.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		t = xml.CopyToken(t)
+		switch t := t.(type) {
+		case xml.StartElement:
+			switch t.Name.Local {
+			case "comment":
+				v, err := reader.ReadString(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.Comment(v)
+			case "content":
+				v, err := reader.ReadString(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.Content(v)
+			case "description":
+				v, err := reader.ReadString(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.Description(v)
+			case "name":
+				v, err := reader.ReadString(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.Name(v)
+			case "user":
+				v, err := XMLUserReadOne(reader, &t, "user")
+				if err != nil {
+					return nil, err
+				}
+				builder.User(v)
+			case "link":
+				var rel, href string
+				for _, attr := range t.Attr {
+					name := attr.Name.Local
+					value := attr.Value
+					switch name {
+					case "href":
+						href = value
+					case "rel":
+						rel = value
+					}
+				}
+				if rel != "" && href != "" {
+					links = append(links, Link{&href, &rel})
+				}
+				// <link> just has attributes, so must skip manually
+				reader.Skip()
+			default:
+				reader.Skip()
+			}
+		case xml.EndElement:
+			depth--
+		}
+	}
+	one, err := builder.Build()
+	if err != nil {
+		return nil, err
+	}
+	for _, link := range links {
+		switch *link.rel {
+		} // end of switch
+	} // end of for-links
+	return one, nil
+}
+
+func XMLUserOptionReadMany(reader *XMLReader, start *xml.StartElement) (*UserOptionSlice, error) {
+	if start == nil {
+		st, err := reader.FindStartElement()
+		if err != nil {
+			if err == io.EOF {
+				return nil, nil
+			}
+			return nil, err
+		}
+		start = st
+	}
+	var result UserOptionSlice
+	depth := 1
+	for depth > 0 {
+		t, err := reader.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		t = xml.CopyToken(t)
+		switch t := t.(type) {
+		case xml.StartElement:
+			switch t.Name.Local {
+			case "user_option":
+				one, err := XMLUserOptionReadOne(reader, &t, "user_option")
 				if err != nil {
 					return nil, err
 				}
@@ -34429,6 +34629,12 @@ func XMLVmReadOne(reader *XMLReader, start *xml.StartElement, expectedTag string
 					return nil, err
 				}
 				builder.VirtioScsi(v)
+			case "virtio_scsi_multi_queues_enabled":
+				v, err := reader.ReadBool(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.VirtioScsiMultiQueuesEnabled(v)
 			case "vm_pool":
 				v, err := XMLVmPoolReadOne(reader, &t, "vm_pool")
 				if err != nil {
@@ -34919,6 +35125,12 @@ func XMLVmBaseReadOne(reader *XMLReader, start *xml.StartElement, expectedTag st
 					return nil, err
 				}
 				builder.VirtioScsi(v)
+			case "virtio_scsi_multi_queues_enabled":
+				v, err := reader.ReadBool(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.VirtioScsiMultiQueuesEnabled(v)
 			case "link":
 				var rel, href string
 				for _, attr := range t.Attr {
@@ -36991,6 +37203,12 @@ func XMLActionReadOne(reader *XMLReader, start *xml.StartElement, expectedTag st
 					return nil, err
 				}
 				builder.Name(v)
+			case "optimize_cpu_settings":
+				v, err := reader.ReadBool(&t)
+				if err != nil {
+					return nil, err
+				}
+				builder.OptimizeCpuSettings(v)
 			case "option":
 				v, err := XMLOptionReadOne(reader, &t, "option")
 				if err != nil {
@@ -39046,6 +39264,62 @@ func XMLFenceTypeReadMany(reader *XMLReader, start *xml.StartElement) ([]FenceTy
 	return results, nil
 }
 
+func XMLFipsModeReadOne(reader *XMLReader, start *xml.StartElement) (*FipsMode, error) {
+	if start == nil {
+		st, err := reader.FindStartElement()
+		if err != nil {
+			if err == io.EOF {
+				return nil, nil
+			}
+			return nil, err
+		}
+		start = st
+	}
+	s, err := reader.ReadString(start)
+	if err != nil {
+		return nil, err
+	}
+	result := new(FipsMode)
+	*result = FipsMode(s)
+	return result, nil
+}
+
+func XMLFipsModeReadMany(reader *XMLReader, start *xml.StartElement) ([]FipsMode, error) {
+	if start == nil {
+		st, err := reader.FindStartElement()
+		if err != nil {
+			if err == io.EOF {
+				return nil, nil
+			}
+			return nil, err
+		}
+		start = st
+	}
+	var results []FipsMode
+	depth := 1
+	for depth > 0 {
+		t, err := reader.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		t = xml.CopyToken(t)
+		switch t := t.(type) {
+		case xml.StartElement:
+			one, err := reader.ReadString(&t)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, FipsMode(one))
+		case xml.EndElement:
+			depth--
+		}
+	}
+	return results, nil
+}
+
 func XMLFirewallTypeReadOne(reader *XMLReader, start *xml.StartElement) (*FirewallType, error) {
 	if start == nil {
 		st, err := reader.FindStartElement()
@@ -39767,6 +40041,62 @@ func XMLImageTransferPhaseReadMany(reader *XMLReader, start *xml.StartElement) (
 				return nil, err
 			}
 			results = append(results, ImageTransferPhase(one))
+		case xml.EndElement:
+			depth--
+		}
+	}
+	return results, nil
+}
+
+func XMLImageTransferTimeoutPolicyReadOne(reader *XMLReader, start *xml.StartElement) (*ImageTransferTimeoutPolicy, error) {
+	if start == nil {
+		st, err := reader.FindStartElement()
+		if err != nil {
+			if err == io.EOF {
+				return nil, nil
+			}
+			return nil, err
+		}
+		start = st
+	}
+	s, err := reader.ReadString(start)
+	if err != nil {
+		return nil, err
+	}
+	result := new(ImageTransferTimeoutPolicy)
+	*result = ImageTransferTimeoutPolicy(s)
+	return result, nil
+}
+
+func XMLImageTransferTimeoutPolicyReadMany(reader *XMLReader, start *xml.StartElement) ([]ImageTransferTimeoutPolicy, error) {
+	if start == nil {
+		st, err := reader.FindStartElement()
+		if err != nil {
+			if err == io.EOF {
+				return nil, nil
+			}
+			return nil, err
+		}
+		start = st
+	}
+	var results []ImageTransferTimeoutPolicy
+	depth := 1
+	for depth > 0 {
+		t, err := reader.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		t = xml.CopyToken(t)
+		switch t := t.(type) {
+		case xml.StartElement:
+			one, err := reader.ReadString(&t)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, ImageTransferTimeoutPolicy(one))
 		case xml.EndElement:
 			depth--
 		}

@@ -69,7 +69,21 @@ func resourceOvirtVM() *schema.Resource {
 				Optional: true,
 				Default:  false,
 			},
+			"lease_domain": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"memory": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ValidateFunc: validation.IntAtLeast(1),
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					// Suppress diff if new memory is not set
+					return new == "0"
+				},
+				Description: "in MB",
+			},
+			"maximum_memory": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				ValidateFunc: validation.IntAtLeast(1),
@@ -334,6 +348,19 @@ func resourceOvirtVM() *schema.Resource {
 						" Checkout the IDs by requesting ovirt-engine/api/instancetypes" +
 						" from APIs or the WebAdmin portal"),
 			},
+			"auto_pinning_policy": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: fmt.Sprintf("The Auto Pinning Policy. One of %s, %s, %s",
+					ovirtsdk4.AUTOPINNINGPOLICY_DISABLED,
+					ovirtsdk4.AUTOPINNINGPOLICY_EXISTING,
+					ovirtsdk4.AUTOPINNINGPOLICY_ADJUST),
+				ValidateFunc: validation.StringInSlice([]string{
+					string(ovirtsdk4.AUTOPINNINGPOLICY_DISABLED),
+					string(ovirtsdk4.AUTOPINNINGPOLICY_EXISTING),
+					string(ovirtsdk4.AUTOPINNINGPOLICY_ADJUST),
+				}, false),
+			},
 		},
 	}
 }
@@ -374,6 +401,12 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 		vmBuilder.Memory(int64(memory.(int)) * int64(math.Pow(2, 20)))
 	}
 
+	memoryPolicyBuilder := ovirtsdk4.NewMemoryPolicyBuilder()
+	if maximumMemory, ok := d.GetOk("maximum_memory"); ok {
+		// memory is specified in MB
+		memoryPolicyBuilder.Max(int64(maximumMemory.(int)) * int64(math.Pow(2, 20)))
+	}
+
 	cluster, err := ovirtsdk4.NewClusterBuilder().
 		Id(d.Get("cluster_id").(string)).Build()
 	if err != nil {
@@ -396,6 +429,26 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 		vmBuilder.HighAvailability(highAvailability)
+
+		if leaseDomain, ok := d.GetOkExists("lease_domain"); ok {
+			sdsService := conn.SystemService().StorageDomainsService()
+			sdsResp, err := sdsService.List().Search("name=" + leaseDomain.(string)).Send()
+			if err != nil {
+				return fmt.Errorf("failed to search storage domains, reason: %v", err)
+			}
+			storageDomains := sdsResp.MustStorageDomains()
+			if len(storageDomains.Slice()) == 0 {
+				return fmt.Errorf("failed to find storage domain with name=%s", leaseDomain.(string))
+			}
+			sd := storageDomains.Slice()[0]
+
+			lease, err := ovirtsdk4.NewStorageDomainLeaseBuilder().StorageDomain(sd).Build()
+			if err != nil {
+				return err
+			}
+
+			vmBuilder.Lease(lease)
+		}
 	}
 
 	cpuTopo := ovirtsdk4.NewCpuTopologyBuilder().
@@ -510,13 +563,7 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 			isHighPerformance = true
 
 			// disable ballooning
-			memoryPolicy, err := ovirtsdk4.NewMemoryPolicyBuilder().
-				Ballooning(false).
-				Build()
-			if err != nil {
-				return err
-			}
-			vmBuilder.MemoryPolicy(memoryPolicy)
+			memoryPolicyBuilder.Ballooning(false)
 
 			// set cpu host-passthrough
 			cpu.SetMode(ovirtsdk4.CPUMODE_HOST_PASSTHROUGH)
@@ -532,10 +579,60 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	isAutoPinning := false
+	// TODO: remove the version check when everyone uses engine 4.4.5
+	engineVer := ovirtGetEngineVersion(meta)
+	versionCompareResult, err := versionCompare(engineVer, ovirtsdk4.NewVersionBuilder().
+		Major(4).
+		Minor(4).
+		Build_(5).
+		Revision(0).
+		MustBuild())
+	if err != nil {
+		return err
+	}
+	if _, ok := d.GetOk("auto_pinning_policy"); ok && versionCompareResult < 0 {
+		log.Printf("[WARN] The engine version %d.%d.%d is not supporting the auto pinning feature. "+
+			"Please update to 4.4.5 or later.", engineVer.MustMajor(), engineVer.MustMinor(), engineVer.MustBuild())
+	} else {
+		// Mimic the UI behavior. unless specified set to existing policy for high performance VMs.
+		if _, ok := d.GetOk("auto_pinning_policy"); !ok && isHighPerformance {
+			err := d.Set("auto_pinning_policy", ovirtsdk4.AUTOPINNINGPOLICY_EXISTING)
+			if err != nil {
+				return err
+			}
+		}
+		if v, ok := d.GetOk("auto_pinning_policy"); ok {
+			isAutoPinning = true
+			autoPinningPolicy := ovirtsdk4.AutoPinningPolicy(fmt.Sprint(v))
+
+			// if we have a policy, we need to set the pinning to all the hosts in the cluster.
+			if autoPinningPolicy != ovirtsdk4.AUTOPINNINGPOLICY_DISABLED {
+				hostsInCluster, err := ovirtGetHostsInCluster(cluster, meta)
+				if err != nil {
+					return err
+				}
+				placementPolicyBuilder := ovirtsdk4.NewVmPlacementPolicyBuilder()
+				placementPolicy, err := placementPolicyBuilder.Hosts(hostsInCluster).
+					Affinity(ovirtsdk4.VMAFFINITY_MIGRATABLE).Build()
+				if err != nil {
+					return fmt.Errorf("failed to build the placement policy of the vm: %v", err)
+				}
+				vmBuilder.PlacementPolicy(placementPolicy)
+			}
+		}
+	}
+
 	if v, ok := d.GetOk("instance_type_id"); ok {
 		vmBuilder.InstanceTypeBuilder(
 			ovirtsdk4.NewInstanceTypeBuilder().Id(v.(string)))
 	}
+
+	memoryPolicy, err := memoryPolicyBuilder.Build()
+	if err != nil {
+		return err
+	}
+	vmBuilder.MemoryPolicy(memoryPolicy)
 
 	vm, err := vmBuilder.Build()
 	if err != nil {
@@ -593,6 +690,18 @@ func resourceOvirtVMCreate(d *schema.ResourceData, meta interface{}) error {
 		err := ovirtRemoveGraphicsConsoles(d.Id(), meta)
 		if err != nil {
 			log.Printf("[DEBUG] Error removing graphical devices")
+		}
+	}
+
+	// update the VM with the auto pinning
+	if isAutoPinning {
+		autoPinningPolicy := ovirtsdk4.AutoPinningPolicy(fmt.Sprint(d.Get("auto_pinning_policy")))
+		if autoPinningPolicy != ovirtsdk4.AUTOPINNINGPOLICY_DISABLED {
+			log.Printf("[DEBUG] Setting Auto Pinning Policy to VM (%s).", d.Id())
+			err := ovirtSetAutoPinningPolicy(d.Id(), autoPinningPolicy, meta)
+			if err != nil {
+				return fmt.Errorf("updating the VM (%s) with auto pinning policy failed! %v", d.Id(), err)
+			}
 		}
 	}
 
@@ -664,6 +773,59 @@ func ovirtRemoveGraphicsConsoles(vmID string, meta interface{}) error {
 	return nil
 }
 
+func ovirtSetAutoPinningPolicy(vmID string, autoPinningPolicy ovirtsdk4.AutoPinningPolicy, meta interface{}) error {
+	conn := meta.(*ovirtsdk4.Connection)
+	vmService := conn.SystemService().VmsService().VmService(vmID)
+	optimizeCpuSettings := !(autoPinningPolicy == ovirtsdk4.AUTOPINNINGPOLICY_EXISTING)
+	_, err := vmService.AutoPinCpuAndNumaNodes().OptimizeCpuSettings(optimizeCpuSettings).Send()
+	if err != nil {
+		return fmt.Errorf("failed to set the auto pinning policy on the VM!, %v", err)
+	}
+	return nil
+}
+
+func ovirtGetHostsInCluster(cluster *ovirtsdk4.Cluster, meta interface{}) (*ovirtsdk4.HostSlice, error) {
+	conn := meta.(*ovirtsdk4.Connection)
+	clusterService := conn.SystemService().ClustersService().ClusterService(cluster.MustId())
+	clusterGet, err := clusterService.Get().Send()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the cluster: %v", err)
+	}
+	clusterName := clusterGet.MustCluster().MustName()
+	hostsInCluster, err := conn.SystemService().HostsService().List().Search(
+		fmt.Sprintf("cluster=%s", clusterName)).Send()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the list of hosts in the cluster: %v", err)
+	}
+	return hostsInCluster.MustHosts(), nil
+}
+
+func ovirtGetEngineVersion(meta interface{}) *ovirtsdk4.Version {
+	conn := meta.(*ovirtsdk4.Connection)
+	engineVersion := conn.SystemService().Get().MustSend().MustApi().MustProductInfo().MustVersion()
+	return engineVersion
+}
+
+func versionCompare(v *ovirtsdk4.Version, other *ovirtsdk4.Version) (int64, error) {
+	if v == nil || other == nil {
+		return 5, fmt.Errorf("can't compare nil objects")
+	}
+	if v == other {
+		return 0, nil
+	}
+	result := v.MustMajor() - other.MustMajor()
+	if result == 0 {
+		result = v.MustMinor() - other.MustMinor()
+		if result == 0 {
+			result = v.MustBuild() - other.MustBuild()
+			if result == 0 {
+				result = v.MustRevision() - other.MustRevision()
+			}
+		}
+	}
+	return result, nil
+}
+
 func resourceOvirtVMUpdate(d *schema.ResourceData, meta interface{}) error {
 	conn := meta.(*ovirtsdk4.Connection)
 	vmService := conn.SystemService().VmsService().VmService(d.Id())
@@ -679,6 +841,16 @@ func resourceOvirtVMUpdate(d *schema.ResourceData, meta interface{}) error {
 	if memory, ok := d.GetOk("memory"); ok {
 		// memory is specified in MB
 		vmBuilder.Memory(int64(memory.(int)) * int64(math.Pow(2, 20)))
+	}
+	memoryPolicyBuilder := ovirtsdk4.NewMemoryPolicyBuilder()
+	if maximumMemory, ok := d.GetOk("maximum_memory"); ok {
+		// memory is specified in MB
+		memoryPolicyBuilder.Max(int64(maximumMemory.(int)) * int64(math.Pow(2, 20)))
+		memoryPolicy, err := memoryPolicyBuilder.Build()
+		if err != nil {
+			return err
+		}
+		vmBuilder.MemoryPolicy(memoryPolicy)
 	}
 
 	cluster, err := ovirtsdk4.NewClusterBuilder().
@@ -696,6 +868,26 @@ func resourceOvirtVMUpdate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 		vmBuilder.HighAvailability(highAvailability)
+
+		if leaseDomain, ok := d.GetOkExists("lease_domain"); ok {
+			sdsService := conn.SystemService().StorageDomainsService()
+			sdsResp, err := sdsService.List().Search("name=" + leaseDomain.(string)).Send()
+			if err != nil {
+				return fmt.Errorf("failed to search storage domains, reason: %v", err)
+			}
+			storageDomains := sdsResp.MustStorageDomains()
+			if len(storageDomains.Slice()) == 0 {
+				return fmt.Errorf("failed to find storage domain with name=%s", leaseDomain.(string))
+			}
+			sd := storageDomains.Slice()[0]
+
+			lease, err := ovirtsdk4.NewStorageDomainLeaseBuilder().StorageDomain(sd).Build()
+			if err != nil {
+				return err
+			}
+
+			vmBuilder.Lease(lease)
+		}
 	}
 
 	cpuTopo := ovirtsdk4.NewCpuTopologyBuilder().
@@ -849,6 +1041,7 @@ func resourceOvirtVMRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("sockets", vm.MustCpu().MustTopology().MustSockets())
 	d.Set("threads", vm.MustCpu().MustTopology().MustThreads())
 	d.Set("cluster_id", vm.MustCluster().MustId())
+	d.Set("maximum_memory", vm.MustMemoryPolicy().MustMax()/int64(math.Pow(2, 20)))
 
 	if it, ok := vm.InstanceType(); ok {
 		d.Set("instance_type_id", it.MustId())

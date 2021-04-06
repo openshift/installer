@@ -34332,6 +34332,7 @@ type HostServiceApproveRequest struct {
 	async       *bool
 	cluster     *Cluster
 	host        *Host
+	reboot      *bool
 }
 
 func (p *HostServiceApproveRequest) Header(key, value string) *HostServiceApproveRequest {
@@ -34370,6 +34371,11 @@ func (p *HostServiceApproveRequest) Host(host *Host) *HostServiceApproveRequest 
 	return p
 }
 
+func (p *HostServiceApproveRequest) Reboot(reboot bool) *HostServiceApproveRequest {
+	p.reboot = &reboot
+	return p
+}
+
 func (p *HostServiceApproveRequest) Send() (*HostServiceApproveResponse, error) {
 	rawURL := fmt.Sprintf("%s%s/approve", p.HostService.connection.URL(), p.HostService.path)
 	actionBuilder := NewActionBuilder()
@@ -34381,6 +34387,9 @@ func (p *HostServiceApproveRequest) Send() (*HostServiceApproveResponse, error) 
 	}
 	actionBuilder.Cluster(p.cluster)
 	actionBuilder.Host(p.host)
+	if p.reboot != nil {
+		actionBuilder.Reboot(*p.reboot)
+	}
 	action, err := actionBuilder.Build()
 	if err != nil {
 		return nil, err
@@ -35697,6 +35706,7 @@ type HostServiceInstallRequest struct {
 	deployHostedEngine   *bool
 	host                 *Host
 	image                *string
+	reboot               *bool
 	rootPassword         *string
 	ssh                  *Ssh
 	undeployHostedEngine *bool
@@ -35743,6 +35753,11 @@ func (p *HostServiceInstallRequest) Image(image string) *HostServiceInstallReque
 	return p
 }
 
+func (p *HostServiceInstallRequest) Reboot(reboot bool) *HostServiceInstallRequest {
+	p.reboot = &reboot
+	return p
+}
+
 func (p *HostServiceInstallRequest) RootPassword(rootPassword string) *HostServiceInstallRequest {
 	p.rootPassword = &rootPassword
 	return p
@@ -35773,6 +35788,9 @@ func (p *HostServiceInstallRequest) Send() (*HostServiceInstallResponse, error) 
 	actionBuilder.Host(p.host)
 	if p.image != nil {
 		actionBuilder.Image(*p.image)
+	}
+	if p.reboot != nil {
+		actionBuilder.Reboot(*p.reboot)
 	}
 	if p.rootPassword != nil {
 		actionBuilder.RootPassword(*p.rootPassword)
@@ -36678,8 +36696,8 @@ func (p *HostService) Remove() *HostServiceRemoveRequest {
 //         <name>bond0</name>
 //       </host_nic>
 //       <ip_address_assignments>
-//         <assignment_method>static</assignment_method>
 //         <ip_address_assignment>
+//           <assignment_method>static</assignment_method>
 //           <ip>
 //             <address>192.168.122.10</address>
 //             <netmask>255.255.255.0</netmask>
@@ -37076,8 +37094,8 @@ func (p *HostServiceSetupNetworksRequest) MustSend() *HostServiceSetupNetworksRe
 //         <name>bond0</name>
 //       </host_nic>
 //       <ip_address_assignments>
-//         <assignment_method>static</assignment_method>
 //         <ip_address_assignment>
+//           <assignment_method>static</assignment_method>
 //           <ip>
 //             <address>192.168.122.10</address>
 //             <netmask>255.255.255.0</netmask>
@@ -37237,8 +37255,8 @@ type HostServiceSetupNetworksResponse struct {
 //         <name>bond0</name>
 //       </host_nic>
 //       <ip_address_assignments>
-//         <assignment_method>static</assignment_method>
 //         <ip_address_assignment>
+//           <assignment_method>static</assignment_method>
 //           <ip>
 //             <address>192.168.122.10</address>
 //             <netmask>255.255.255.0</netmask>
@@ -38124,6 +38142,7 @@ type HostServiceApproveUsingRootPasswordRequest struct {
 	async       *bool
 	cluster     *Cluster
 	host        *Host
+	reboot      *bool
 }
 
 func (p *HostServiceApproveUsingRootPasswordRequest) Header(key, value string) *HostServiceApproveUsingRootPasswordRequest {
@@ -38162,6 +38181,11 @@ func (p *HostServiceApproveUsingRootPasswordRequest) Host(host *Host) *HostServi
 	return p
 }
 
+func (p *HostServiceApproveUsingRootPasswordRequest) Reboot(reboot bool) *HostServiceApproveUsingRootPasswordRequest {
+	p.reboot = &reboot
+	return p
+}
+
 func (p *HostServiceApproveUsingRootPasswordRequest) Send() (*HostServiceApproveUsingRootPasswordResponse, error) {
 	rawURL := fmt.Sprintf("%s%s/usingrootpassword", p.HostService.connection.URL(), p.HostService.path)
 	actionBuilder := NewActionBuilder()
@@ -38173,6 +38197,9 @@ func (p *HostServiceApproveUsingRootPasswordRequest) Send() (*HostServiceApprove
 	}
 	actionBuilder.Cluster(p.cluster)
 	actionBuilder.Host(p.host)
+	if p.reboot != nil {
+		actionBuilder.Reboot(*p.reboot)
+	}
 	action, err := actionBuilder.Build()
 	if err != nil {
 		return nil, err
@@ -38271,6 +38298,7 @@ type HostServiceInstallUsingRootPasswordRequest struct {
 	deployHostedEngine   *bool
 	host                 *Host
 	image                *string
+	reboot               *bool
 	rootPassword         *string
 	ssh                  *Ssh
 	undeployHostedEngine *bool
@@ -38317,6 +38345,11 @@ func (p *HostServiceInstallUsingRootPasswordRequest) Image(image string) *HostSe
 	return p
 }
 
+func (p *HostServiceInstallUsingRootPasswordRequest) Reboot(reboot bool) *HostServiceInstallUsingRootPasswordRequest {
+	p.reboot = &reboot
+	return p
+}
+
 func (p *HostServiceInstallUsingRootPasswordRequest) RootPassword(rootPassword string) *HostServiceInstallUsingRootPasswordRequest {
 	p.rootPassword = &rootPassword
 	return p
@@ -38347,6 +38380,9 @@ func (p *HostServiceInstallUsingRootPasswordRequest) Send() (*HostServiceInstall
 	actionBuilder.Host(p.host)
 	if p.image != nil {
 		actionBuilder.Image(*p.image)
+	}
+	if p.reboot != nil {
+		actionBuilder.Reboot(*p.reboot)
 	}
 	if p.rootPassword != nil {
 		actionBuilder.RootPassword(*p.rootPassword)
@@ -38603,6 +38639,7 @@ type HostServiceApproveUsingSshRequest struct {
 	async       *bool
 	cluster     *Cluster
 	host        *Host
+	reboot      *bool
 }
 
 func (p *HostServiceApproveUsingSshRequest) Header(key, value string) *HostServiceApproveUsingSshRequest {
@@ -38641,6 +38678,11 @@ func (p *HostServiceApproveUsingSshRequest) Host(host *Host) *HostServiceApprove
 	return p
 }
 
+func (p *HostServiceApproveUsingSshRequest) Reboot(reboot bool) *HostServiceApproveUsingSshRequest {
+	p.reboot = &reboot
+	return p
+}
+
 func (p *HostServiceApproveUsingSshRequest) Send() (*HostServiceApproveUsingSshResponse, error) {
 	rawURL := fmt.Sprintf("%s%s/usingssh", p.HostService.connection.URL(), p.HostService.path)
 	actionBuilder := NewActionBuilder()
@@ -38652,6 +38694,9 @@ func (p *HostServiceApproveUsingSshRequest) Send() (*HostServiceApproveUsingSshR
 	}
 	actionBuilder.Cluster(p.cluster)
 	actionBuilder.Host(p.host)
+	if p.reboot != nil {
+		actionBuilder.Reboot(*p.reboot)
+	}
 	action, err := actionBuilder.Build()
 	if err != nil {
 		return nil, err
@@ -38754,6 +38799,7 @@ type HostServiceInstallUsingSshRequest struct {
 	deployHostedEngine   *bool
 	host                 *Host
 	image                *string
+	reboot               *bool
 	rootPassword         *string
 	ssh                  *Ssh
 	undeployHostedEngine *bool
@@ -38800,6 +38846,11 @@ func (p *HostServiceInstallUsingSshRequest) Image(image string) *HostServiceInst
 	return p
 }
 
+func (p *HostServiceInstallUsingSshRequest) Reboot(reboot bool) *HostServiceInstallUsingSshRequest {
+	p.reboot = &reboot
+	return p
+}
+
 func (p *HostServiceInstallUsingSshRequest) RootPassword(rootPassword string) *HostServiceInstallUsingSshRequest {
 	p.rootPassword = &rootPassword
 	return p
@@ -38830,6 +38881,9 @@ func (p *HostServiceInstallUsingSshRequest) Send() (*HostServiceInstallUsingSshR
 	actionBuilder.Host(p.host)
 	if p.image != nil {
 		actionBuilder.Image(*p.image)
+	}
+	if p.reboot != nil {
+		actionBuilder.Reboot(*p.reboot)
 	}
 	if p.rootPassword != nil {
 		actionBuilder.RootPassword(*p.rootPassword)
@@ -39592,6 +39646,7 @@ type HostsServiceAddRequest struct {
 	activate             *bool
 	deployHostedEngine   *bool
 	host                 *Host
+	reboot               *bool
 	undeployHostedEngine *bool
 }
 
@@ -39626,6 +39681,11 @@ func (p *HostsServiceAddRequest) Host(host *Host) *HostsServiceAddRequest {
 	return p
 }
 
+func (p *HostsServiceAddRequest) Reboot(reboot bool) *HostsServiceAddRequest {
+	p.reboot = &reboot
+	return p
+}
+
 func (p *HostsServiceAddRequest) UndeployHostedEngine(undeployHostedEngine bool) *HostsServiceAddRequest {
 	p.undeployHostedEngine = &undeployHostedEngine
 	return p
@@ -39640,6 +39700,10 @@ func (p *HostsServiceAddRequest) Send() (*HostsServiceAddResponse, error) {
 
 	if p.deployHostedEngine != nil {
 		values["deploy_hosted_engine"] = []string{fmt.Sprintf("%v", *p.deployHostedEngine)}
+	}
+
+	if p.reboot != nil {
+		values["reboot"] = []string{fmt.Sprintf("%v", *p.reboot)}
 	}
 
 	if p.undeployHostedEngine != nil {
@@ -40128,6 +40192,7 @@ type HostsServiceAddUsingRootPasswordRequest struct {
 	activate             *bool
 	deployHostedEngine   *bool
 	host                 *Host
+	reboot               *bool
 	undeployHostedEngine *bool
 }
 
@@ -40162,6 +40227,11 @@ func (p *HostsServiceAddUsingRootPasswordRequest) Host(host *Host) *HostsService
 	return p
 }
 
+func (p *HostsServiceAddUsingRootPasswordRequest) Reboot(reboot bool) *HostsServiceAddUsingRootPasswordRequest {
+	p.reboot = &reboot
+	return p
+}
+
 func (p *HostsServiceAddUsingRootPasswordRequest) UndeployHostedEngine(undeployHostedEngine bool) *HostsServiceAddUsingRootPasswordRequest {
 	p.undeployHostedEngine = &undeployHostedEngine
 	return p
@@ -40177,6 +40247,9 @@ func (p *HostsServiceAddUsingRootPasswordRequest) Send() (*HostsServiceAddUsingR
 		actionBuilder.DeployHostedEngine(*p.deployHostedEngine)
 	}
 	actionBuilder.Host(p.host)
+	if p.reboot != nil {
+		actionBuilder.Reboot(*p.reboot)
+	}
 	if p.undeployHostedEngine != nil {
 		actionBuilder.UndeployHostedEngine(*p.undeployHostedEngine)
 	}
@@ -40284,7 +40357,7 @@ func (p *HostsService) AddUsingRootPassword() *HostsServiceAddUsingRootPasswordR
 }
 
 //
-// Add a new host to the system providing the ssh password or fingerprint.
+// Add a new host to the system providing the ssh password, fingerprint or public key.
 //
 type HostsServiceAddUsingSshRequest struct {
 	HostsService         *HostsService
@@ -40293,6 +40366,7 @@ type HostsServiceAddUsingSshRequest struct {
 	activate             *bool
 	deployHostedEngine   *bool
 	host                 *Host
+	reboot               *bool
 	undeployHostedEngine *bool
 }
 
@@ -40327,6 +40401,11 @@ func (p *HostsServiceAddUsingSshRequest) Host(host *Host) *HostsServiceAddUsingS
 	return p
 }
 
+func (p *HostsServiceAddUsingSshRequest) Reboot(reboot bool) *HostsServiceAddUsingSshRequest {
+	p.reboot = &reboot
+	return p
+}
+
 func (p *HostsServiceAddUsingSshRequest) UndeployHostedEngine(undeployHostedEngine bool) *HostsServiceAddUsingSshRequest {
 	p.undeployHostedEngine = &undeployHostedEngine
 	return p
@@ -40342,6 +40421,9 @@ func (p *HostsServiceAddUsingSshRequest) Send() (*HostsServiceAddUsingSshRespons
 		actionBuilder.DeployHostedEngine(*p.deployHostedEngine)
 	}
 	actionBuilder.Host(p.host)
+	if p.reboot != nil {
+		actionBuilder.Reboot(*p.reboot)
+	}
 	if p.undeployHostedEngine != nil {
 		actionBuilder.UndeployHostedEngine(*p.undeployHostedEngine)
 	}
@@ -40421,7 +40503,7 @@ func (p *HostsServiceAddUsingSshRequest) MustSend() *HostsServiceAddUsingSshResp
 }
 
 //
-// Add a new host to the system providing the ssh password or fingerprint.
+// Add a new host to the system providing the ssh password, fingerprint or public key.
 //
 type HostsServiceAddUsingSshResponse struct {
 	host *Host
@@ -40442,7 +40524,7 @@ func (p *HostsServiceAddUsingSshResponse) MustHost() *Host {
 }
 
 //
-// Add a new host to the system providing the ssh password or fingerprint.
+// Add a new host to the system providing the ssh password, fingerprint or public key.
 //
 func (p *HostsService) AddUsingSsh() *HostsServiceAddUsingSshRequest {
 	return &HostsServiceAddUsingSshRequest{HostsService: p}
@@ -96680,6 +96762,175 @@ func NewVmService(connection *Connection, path string) *VmService {
 }
 
 //
+// Apply an automatic CPU and NUMA configuration on the VM.
+// An example for a request:
+// [source]
+// ----
+// POST /ovirt-engine/api/vms/123/autopincpuandnumanodes
+// ----
+// With a request body like this:
+// [source,xml]
+// ----
+// <action>
+//   <optimize_cpu_settings>true</optimize_cpu_settings>
+// </action>
+// ----
+//
+type VmServiceAutoPinCpuAndNumaNodesRequest struct {
+	VmService           *VmService
+	header              map[string]string
+	query               map[string]string
+	async               *bool
+	optimizeCpuSettings *bool
+}
+
+func (p *VmServiceAutoPinCpuAndNumaNodesRequest) Header(key, value string) *VmServiceAutoPinCpuAndNumaNodesRequest {
+	if p.header == nil {
+		p.header = make(map[string]string)
+	}
+	p.header[key] = value
+	return p
+}
+
+func (p *VmServiceAutoPinCpuAndNumaNodesRequest) Query(key, value string) *VmServiceAutoPinCpuAndNumaNodesRequest {
+	if p.query == nil {
+		p.query = make(map[string]string)
+	}
+	p.query[key] = value
+	return p
+}
+
+func (p *VmServiceAutoPinCpuAndNumaNodesRequest) Async(async bool) *VmServiceAutoPinCpuAndNumaNodesRequest {
+	p.async = &async
+	return p
+}
+
+func (p *VmServiceAutoPinCpuAndNumaNodesRequest) OptimizeCpuSettings(optimizeCpuSettings bool) *VmServiceAutoPinCpuAndNumaNodesRequest {
+	p.optimizeCpuSettings = &optimizeCpuSettings
+	return p
+}
+
+func (p *VmServiceAutoPinCpuAndNumaNodesRequest) Send() (*VmServiceAutoPinCpuAndNumaNodesResponse, error) {
+	rawURL := fmt.Sprintf("%s%s/autopincpuandnumanodes", p.VmService.connection.URL(), p.VmService.path)
+	actionBuilder := NewActionBuilder()
+	if p.async != nil {
+		actionBuilder.Async(*p.async)
+	}
+	if p.optimizeCpuSettings != nil {
+		actionBuilder.OptimizeCpuSettings(*p.optimizeCpuSettings)
+	}
+	action, err := actionBuilder.Build()
+	if err != nil {
+		return nil, err
+	}
+	values := make(url.Values)
+	if p.query != nil {
+		for k, v := range p.query {
+			values[k] = []string{v}
+		}
+	}
+	if len(values) > 0 {
+		rawURL = fmt.Sprintf("%s?%s", rawURL, values.Encode())
+	}
+	var body bytes.Buffer
+	writer := NewXMLWriter(&body)
+	err = XMLActionWriteOne(writer, action, "")
+	writer.Flush()
+	req, err := http.NewRequest("POST", rawURL, &body)
+	if err != nil {
+		return nil, err
+	}
+
+	for hk, hv := range p.VmService.connection.headers {
+		req.Header.Add(hk, hv)
+	}
+
+	if p.header != nil {
+		for hk, hv := range p.header {
+			req.Header.Add(hk, hv)
+		}
+	}
+
+	req.Header.Add("User-Agent", fmt.Sprintf("GoSDK/%s", SDK_VERSION))
+	req.Header.Add("Version", "4")
+	req.Header.Add("Content-Type", "application/xml")
+	req.Header.Add("Accept", "application/xml")
+	// get OAuth access token
+	token, err := p.VmService.connection.authenticate()
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	// Send the request and wait for the response
+	resp, err := p.VmService.connection.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if p.VmService.connection.logFunc != nil {
+		dumpReq, err := httputil.DumpRequestOut(req, true)
+		if err != nil {
+			return nil, err
+		}
+		dumpResp, err := httputil.DumpResponse(resp, true)
+		if err != nil {
+			return nil, err
+		}
+		p.VmService.connection.logFunc("<<<<<<Request:\n%sResponse:\n%s>>>>>>\n", string(dumpReq), string(dumpResp))
+	}
+	_, errCheckAction := CheckAction(resp)
+	if errCheckAction != nil {
+		return nil, errCheckAction
+	}
+	return new(VmServiceAutoPinCpuAndNumaNodesResponse), nil
+}
+
+func (p *VmServiceAutoPinCpuAndNumaNodesRequest) MustSend() *VmServiceAutoPinCpuAndNumaNodesResponse {
+	if v, err := p.Send(); err != nil {
+		panic(err)
+	} else {
+		return v
+	}
+}
+
+//
+// Apply an automatic CPU and NUMA configuration on the VM.
+// An example for a request:
+// [source]
+// ----
+// POST /ovirt-engine/api/vms/123/autopincpuandnumanodes
+// ----
+// With a request body like this:
+// [source,xml]
+// ----
+// <action>
+//   <optimize_cpu_settings>true</optimize_cpu_settings>
+// </action>
+// ----
+//
+type VmServiceAutoPinCpuAndNumaNodesResponse struct {
+}
+
+//
+// Apply an automatic CPU and NUMA configuration on the VM.
+// An example for a request:
+// [source]
+// ----
+// POST /ovirt-engine/api/vms/123/autopincpuandnumanodes
+// ----
+// With a request body like this:
+// [source,xml]
+// ----
+// <action>
+//   <optimize_cpu_settings>true</optimize_cpu_settings>
+// </action>
+// ----
+//
+func (p *VmService) AutoPinCpuAndNumaNodes() *VmServiceAutoPinCpuAndNumaNodesRequest {
+	return &VmServiceAutoPinCpuAndNumaNodesRequest{VmService: p}
+}
+
+//
 // This operation stops any migration of a virtual machine to another physical host.
 // [source]
 // ----
@@ -98572,12 +98823,25 @@ func (p *VmService) PreviewSnapshot() *VmServicePreviewSnapshotRequest {
 // ----
 // <action/>
 // ----
+// To reboot the VM even if a backup is running for it,
+// the action should include the 'force' element.
+// For example, to force reboot virtual machine `123`:
+// ----
+// POST /ovirt-engine/api/vms/123/reboot
+// ----
+// [source,xml]
+// ----
+// <action>
+//     <force>true</force>
+// </action>
+// ----
 //
 type VmServiceRebootRequest struct {
 	VmService *VmService
 	header    map[string]string
 	query     map[string]string
 	async     *bool
+	force     *bool
 }
 
 func (p *VmServiceRebootRequest) Header(key, value string) *VmServiceRebootRequest {
@@ -98601,11 +98865,19 @@ func (p *VmServiceRebootRequest) Async(async bool) *VmServiceRebootRequest {
 	return p
 }
 
+func (p *VmServiceRebootRequest) Force(force bool) *VmServiceRebootRequest {
+	p.force = &force
+	return p
+}
+
 func (p *VmServiceRebootRequest) Send() (*VmServiceRebootResponse, error) {
 	rawURL := fmt.Sprintf("%s%s/reboot", p.VmService.connection.URL(), p.VmService.path)
 	actionBuilder := NewActionBuilder()
 	if p.async != nil {
 		actionBuilder.Async(*p.async)
+	}
+	if p.force != nil {
+		actionBuilder.Force(*p.force)
 	}
 	action, err := actionBuilder.Build()
 	if err != nil {
@@ -98694,6 +98966,18 @@ func (p *VmServiceRebootRequest) MustSend() *VmServiceRebootResponse {
 // ----
 // <action/>
 // ----
+// To reboot the VM even if a backup is running for it,
+// the action should include the 'force' element.
+// For example, to force reboot virtual machine `123`:
+// ----
+// POST /ovirt-engine/api/vms/123/reboot
+// ----
+// [source,xml]
+// ----
+// <action>
+//     <force>true</force>
+// </action>
+// ----
 //
 type VmServiceRebootResponse struct {
 }
@@ -98710,6 +98994,18 @@ type VmServiceRebootResponse struct {
 // [source,xml]
 // ----
 // <action/>
+// ----
+// To reboot the VM even if a backup is running for it,
+// the action should include the 'force' element.
+// For example, to force reboot virtual machine `123`:
+// ----
+// POST /ovirt-engine/api/vms/123/reboot
+// ----
+// [source,xml]
+// ----
+// <action>
+//     <force>true</force>
+// </action>
 // ----
 //
 func (p *VmService) Reboot() *VmServiceRebootRequest {
@@ -99004,12 +99300,25 @@ func (p *VmService) ReorderMacAddresses() *VmServiceReorderMacAddressesRequest {
 // ----
 // <action/>
 // ----
+// To shutdown the VM even if a backup is running for it,
+// the action should include the 'force' element.
+// For example, to force shutdown virtual machine `123`:
+// ----
+// POST /ovirt-engine/api/vms/123/shutdown
+// ----
+// [source,xml]
+// ----
+// <action>
+//     <force>true</force>
+// </action>
+// ----
 //
 type VmServiceShutdownRequest struct {
 	VmService *VmService
 	header    map[string]string
 	query     map[string]string
 	async     *bool
+	force     *bool
 	reason    *string
 }
 
@@ -99034,6 +99343,11 @@ func (p *VmServiceShutdownRequest) Async(async bool) *VmServiceShutdownRequest {
 	return p
 }
 
+func (p *VmServiceShutdownRequest) Force(force bool) *VmServiceShutdownRequest {
+	p.force = &force
+	return p
+}
+
 func (p *VmServiceShutdownRequest) Reason(reason string) *VmServiceShutdownRequest {
 	p.reason = &reason
 	return p
@@ -99044,6 +99358,9 @@ func (p *VmServiceShutdownRequest) Send() (*VmServiceShutdownResponse, error) {
 	actionBuilder := NewActionBuilder()
 	if p.async != nil {
 		actionBuilder.Async(*p.async)
+	}
+	if p.force != nil {
+		actionBuilder.Force(*p.force)
 	}
 	if p.reason != nil {
 		actionBuilder.Reason(*p.reason)
@@ -99135,6 +99452,18 @@ func (p *VmServiceShutdownRequest) MustSend() *VmServiceShutdownResponse {
 // ----
 // <action/>
 // ----
+// To shutdown the VM even if a backup is running for it,
+// the action should include the 'force' element.
+// For example, to force shutdown virtual machine `123`:
+// ----
+// POST /ovirt-engine/api/vms/123/shutdown
+// ----
+// [source,xml]
+// ----
+// <action>
+//     <force>true</force>
+// </action>
+// ----
 //
 type VmServiceShutdownResponse struct {
 }
@@ -99151,6 +99480,18 @@ type VmServiceShutdownResponse struct {
 // [source,xml]
 // ----
 // <action/>
+// ----
+// To shutdown the VM even if a backup is running for it,
+// the action should include the 'force' element.
+// For example, to force shutdown virtual machine `123`:
+// ----
+// POST /ovirt-engine/api/vms/123/shutdown
+// ----
+// [source,xml]
+// ----
+// <action>
+//     <force>true</force>
+// </action>
 // ----
 //
 func (p *VmService) Shutdown() *VmServiceShutdownRequest {
@@ -99407,12 +99748,25 @@ func (p *VmService) Start() *VmServiceStartRequest {
 // ----
 // <action/>
 // ----
+// To stop the VM even if a backup is running for it,
+// the action should include the 'force' element.
+// For example, to force stop virtual machine `123`:
+// ----
+// POST /ovirt-engine/api/vms/123/stop
+// ----
+// [source,xml]
+// ----
+// <action>
+//     <force>true</force>
+// </action>
+// ----
 //
 type VmServiceStopRequest struct {
 	VmService *VmService
 	header    map[string]string
 	query     map[string]string
 	async     *bool
+	force     *bool
 	reason    *string
 }
 
@@ -99437,6 +99791,11 @@ func (p *VmServiceStopRequest) Async(async bool) *VmServiceStopRequest {
 	return p
 }
 
+func (p *VmServiceStopRequest) Force(force bool) *VmServiceStopRequest {
+	p.force = &force
+	return p
+}
+
 func (p *VmServiceStopRequest) Reason(reason string) *VmServiceStopRequest {
 	p.reason = &reason
 	return p
@@ -99447,6 +99806,9 @@ func (p *VmServiceStopRequest) Send() (*VmServiceStopResponse, error) {
 	actionBuilder := NewActionBuilder()
 	if p.async != nil {
 		actionBuilder.Async(*p.async)
+	}
+	if p.force != nil {
+		actionBuilder.Force(*p.force)
 	}
 	if p.reason != nil {
 		actionBuilder.Reason(*p.reason)
@@ -99538,6 +99900,18 @@ func (p *VmServiceStopRequest) MustSend() *VmServiceStopResponse {
 // ----
 // <action/>
 // ----
+// To stop the VM even if a backup is running for it,
+// the action should include the 'force' element.
+// For example, to force stop virtual machine `123`:
+// ----
+// POST /ovirt-engine/api/vms/123/stop
+// ----
+// [source,xml]
+// ----
+// <action>
+//     <force>true</force>
+// </action>
+// ----
 //
 type VmServiceStopResponse struct {
 }
@@ -99554,6 +99928,18 @@ type VmServiceStopResponse struct {
 // [source,xml]
 // ----
 // <action/>
+// ----
+// To stop the VM even if a backup is running for it,
+// the action should include the 'force' element.
+// For example, to force stop virtual machine `123`:
+// ----
+// POST /ovirt-engine/api/vms/123/stop
+// ----
+// [source,xml]
+// ----
+// <action>
+//     <force>true</force>
+// </action>
 // ----
 //
 func (p *VmService) Stop() *VmServiceStopRequest {
@@ -108428,6 +108814,931 @@ func (op *SshPublicKeysService) String() string {
 }
 
 //
+//
+type UserOptionService struct {
+	BaseService
+}
+
+func NewUserOptionService(connection *Connection, path string) *UserOptionService {
+	var result UserOptionService
+	result.connection = connection
+	result.path = path
+	return &result
+}
+
+//
+// Returns a user profile property of type JSON.
+// Example request(for user with identifier `123` and option with identifier `456`):
+// [source]
+// ----
+// GET /ovirt-engine/api/users/123/options/456
+// ----
+// The result will be the following XML document:
+// [source,xml]
+// ----
+//   <user_option href="/ovirt-engine/api/users/123/options/456" id="456">
+//     <name>SomeName</name>
+//     <content>["any", "JSON"]</content>
+//     <user href="/ovirt-engine/api/users/123" id="123"/>
+//   </user_option>
+// ----
+//
+type UserOptionServiceGetRequest struct {
+	UserOptionService *UserOptionService
+	header            map[string]string
+	query             map[string]string
+}
+
+func (p *UserOptionServiceGetRequest) Header(key, value string) *UserOptionServiceGetRequest {
+	if p.header == nil {
+		p.header = make(map[string]string)
+	}
+	p.header[key] = value
+	return p
+}
+
+func (p *UserOptionServiceGetRequest) Query(key, value string) *UserOptionServiceGetRequest {
+	if p.query == nil {
+		p.query = make(map[string]string)
+	}
+	p.query[key] = value
+	return p
+}
+
+func (p *UserOptionServiceGetRequest) Send() (*UserOptionServiceGetResponse, error) {
+	rawURL := fmt.Sprintf("%s%s", p.UserOptionService.connection.URL(), p.UserOptionService.path)
+	values := make(url.Values)
+	if p.query != nil {
+		for k, v := range p.query {
+			values[k] = []string{v}
+		}
+	}
+	if len(values) > 0 {
+		rawURL = fmt.Sprintf("%s?%s", rawURL, values.Encode())
+	}
+	req, err := http.NewRequest("GET", rawURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	for hk, hv := range p.UserOptionService.connection.headers {
+		req.Header.Add(hk, hv)
+	}
+
+	if p.header != nil {
+		for hk, hv := range p.header {
+			req.Header.Add(hk, hv)
+		}
+	}
+
+	req.Header.Add("User-Agent", fmt.Sprintf("GoSDK/%s", SDK_VERSION))
+	req.Header.Add("Version", "4")
+	req.Header.Add("Content-Type", "application/xml")
+	req.Header.Add("Accept", "application/xml")
+	// get OAuth access token
+	token, err := p.UserOptionService.connection.authenticate()
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	// Send the request and wait for the response
+	resp, err := p.UserOptionService.connection.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if p.UserOptionService.connection.logFunc != nil {
+		dumpReq, err := httputil.DumpRequestOut(req, true)
+		if err != nil {
+			return nil, err
+		}
+		dumpResp, err := httputil.DumpResponse(resp, true)
+		if err != nil {
+			return nil, err
+		}
+		p.UserOptionService.connection.logFunc("<<<<<<Request:\n%sResponse:\n%s>>>>>>\n", string(dumpReq), string(dumpResp))
+	}
+	if !Contains(resp.StatusCode, []int{200}) {
+		return nil, CheckFault(resp)
+	}
+	respBodyBytes, errReadBody := ioutil.ReadAll(resp.Body)
+	if errReadBody != nil {
+		return nil, errReadBody
+	}
+	reader := NewXMLReader(respBodyBytes)
+	result, err := XMLUserOptionReadOne(reader, nil, "")
+	if err != nil {
+		return nil, err
+	}
+	return &UserOptionServiceGetResponse{option: result}, nil
+}
+
+func (p *UserOptionServiceGetRequest) MustSend() *UserOptionServiceGetResponse {
+	if v, err := p.Send(); err != nil {
+		panic(err)
+	} else {
+		return v
+	}
+}
+
+//
+// Returns a user profile property of type JSON.
+// Example request(for user with identifier `123` and option with identifier `456`):
+// [source]
+// ----
+// GET /ovirt-engine/api/users/123/options/456
+// ----
+// The result will be the following XML document:
+// [source,xml]
+// ----
+//   <user_option href="/ovirt-engine/api/users/123/options/456" id="456">
+//     <name>SomeName</name>
+//     <content>["any", "JSON"]</content>
+//     <user href="/ovirt-engine/api/users/123" id="123"/>
+//   </user_option>
+// ----
+//
+type UserOptionServiceGetResponse struct {
+	option *UserOption
+}
+
+func (p *UserOptionServiceGetResponse) Option() (*UserOption, bool) {
+	if p.option != nil {
+		return p.option, true
+	}
+	return nil, false
+}
+
+func (p *UserOptionServiceGetResponse) MustOption() *UserOption {
+	if p.option == nil {
+		panic("option in response does not exist")
+	}
+	return p.option
+}
+
+//
+// Returns a user profile property of type JSON.
+// Example request(for user with identifier `123` and option with identifier `456`):
+// [source]
+// ----
+// GET /ovirt-engine/api/users/123/options/456
+// ----
+// The result will be the following XML document:
+// [source,xml]
+// ----
+//   <user_option href="/ovirt-engine/api/users/123/options/456" id="456">
+//     <name>SomeName</name>
+//     <content>["any", "JSON"]</content>
+//     <user href="/ovirt-engine/api/users/123" id="123"/>
+//   </user_option>
+// ----
+//
+func (p *UserOptionService) Get() *UserOptionServiceGetRequest {
+	return &UserOptionServiceGetRequest{UserOptionService: p}
+}
+
+//
+// Deletes an existing property of type JSON.
+// Example request(for user with identifier `123` and option with identifier `456`):
+// [source]
+// ----
+// DELETE /ovirt-engine/api/users/123/options/456
+// ----
+//
+type UserOptionServiceRemoveRequest struct {
+	UserOptionService *UserOptionService
+	header            map[string]string
+	query             map[string]string
+}
+
+func (p *UserOptionServiceRemoveRequest) Header(key, value string) *UserOptionServiceRemoveRequest {
+	if p.header == nil {
+		p.header = make(map[string]string)
+	}
+	p.header[key] = value
+	return p
+}
+
+func (p *UserOptionServiceRemoveRequest) Query(key, value string) *UserOptionServiceRemoveRequest {
+	if p.query == nil {
+		p.query = make(map[string]string)
+	}
+	p.query[key] = value
+	return p
+}
+
+func (p *UserOptionServiceRemoveRequest) Send() (*UserOptionServiceRemoveResponse, error) {
+	rawURL := fmt.Sprintf("%s%s", p.UserOptionService.connection.URL(), p.UserOptionService.path)
+	values := make(url.Values)
+	if p.query != nil {
+		for k, v := range p.query {
+			values[k] = []string{v}
+		}
+	}
+	if len(values) > 0 {
+		rawURL = fmt.Sprintf("%s?%s", rawURL, values.Encode())
+	}
+	req, err := http.NewRequest("DELETE", rawURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	for hk, hv := range p.UserOptionService.connection.headers {
+		req.Header.Add(hk, hv)
+	}
+
+	if p.header != nil {
+		for hk, hv := range p.header {
+			req.Header.Add(hk, hv)
+		}
+	}
+
+	req.Header.Add("User-Agent", fmt.Sprintf("GoSDK/%s", SDK_VERSION))
+	req.Header.Add("Version", "4")
+	req.Header.Add("Content-Type", "application/xml")
+	req.Header.Add("Accept", "application/xml")
+	// get OAuth access token
+	token, err := p.UserOptionService.connection.authenticate()
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	// Send the request and wait for the response
+	resp, err := p.UserOptionService.connection.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if p.UserOptionService.connection.logFunc != nil {
+		dumpReq, err := httputil.DumpRequestOut(req, true)
+		if err != nil {
+			return nil, err
+		}
+		dumpResp, err := httputil.DumpResponse(resp, true)
+		if err != nil {
+			return nil, err
+		}
+		p.UserOptionService.connection.logFunc("<<<<<<Request:\n%sResponse:\n%s>>>>>>\n", string(dumpReq), string(dumpResp))
+	}
+	if !Contains(resp.StatusCode, []int{200}) {
+		return nil, CheckFault(resp)
+	}
+	_, errReadBody := ioutil.ReadAll(resp.Body)
+	if errReadBody != nil {
+		return nil, errReadBody
+	}
+	return new(UserOptionServiceRemoveResponse), nil
+}
+
+func (p *UserOptionServiceRemoveRequest) MustSend() *UserOptionServiceRemoveResponse {
+	if v, err := p.Send(); err != nil {
+		panic(err)
+	} else {
+		return v
+	}
+}
+
+//
+// Deletes an existing property of type JSON.
+// Example request(for user with identifier `123` and option with identifier `456`):
+// [source]
+// ----
+// DELETE /ovirt-engine/api/users/123/options/456
+// ----
+//
+type UserOptionServiceRemoveResponse struct {
+}
+
+//
+// Deletes an existing property of type JSON.
+// Example request(for user with identifier `123` and option with identifier `456`):
+// [source]
+// ----
+// DELETE /ovirt-engine/api/users/123/options/456
+// ----
+//
+func (p *UserOptionService) Remove() *UserOptionServiceRemoveRequest {
+	return &UserOptionServiceRemoveRequest{UserOptionService: p}
+}
+
+//
+// Replaces an existing property of type JSON with a new one.
+// Example request(for user with identifier `123` and option with identifier `456`):
+// [source]
+// ----
+// PUT /ovirt-engine/api/users/123/options/456
+// ----
+// Payload:
+// [source,xml]
+// ----
+// <user_option>
+//   <name>SomeName</name>
+//   <content>{"new" : "JSON"}</content>
+// </user_option>
+// ----
+// The result will be the following XML document:
+// [source,xml]
+// ----
+// <user_option href="/ovirt-engine/api/users/123/options/789" id="789">
+//   <name>SomeName</name>
+//   <content>{"new" : "JSON"}</content>
+//   <user href="/ovirt-engine/api/users/123" id="123"/>
+// </user_option>
+// ----
+//
+type UserOptionServiceUpdateRequest struct {
+	UserOptionService *UserOptionService
+	header            map[string]string
+	query             map[string]string
+	option            *UserOption
+}
+
+func (p *UserOptionServiceUpdateRequest) Header(key, value string) *UserOptionServiceUpdateRequest {
+	if p.header == nil {
+		p.header = make(map[string]string)
+	}
+	p.header[key] = value
+	return p
+}
+
+func (p *UserOptionServiceUpdateRequest) Query(key, value string) *UserOptionServiceUpdateRequest {
+	if p.query == nil {
+		p.query = make(map[string]string)
+	}
+	p.query[key] = value
+	return p
+}
+
+func (p *UserOptionServiceUpdateRequest) Option(option *UserOption) *UserOptionServiceUpdateRequest {
+	p.option = option
+	return p
+}
+
+func (p *UserOptionServiceUpdateRequest) Send() (*UserOptionServiceUpdateResponse, error) {
+	rawURL := fmt.Sprintf("%s%s", p.UserOptionService.connection.URL(), p.UserOptionService.path)
+	values := make(url.Values)
+	if p.query != nil {
+		for k, v := range p.query {
+			values[k] = []string{v}
+		}
+	}
+	if len(values) > 0 {
+		rawURL = fmt.Sprintf("%s?%s", rawURL, values.Encode())
+	}
+	var body bytes.Buffer
+	writer := NewXMLWriter(&body)
+	err := XMLUserOptionWriteOne(writer, p.option, "")
+	if err != nil {
+		return nil, err
+	}
+	writer.Flush()
+	req, err := http.NewRequest("PUT", rawURL, &body)
+	if err != nil {
+		return nil, err
+	}
+
+	for hk, hv := range p.UserOptionService.connection.headers {
+		req.Header.Add(hk, hv)
+	}
+
+	if p.header != nil {
+		for hk, hv := range p.header {
+			req.Header.Add(hk, hv)
+		}
+	}
+
+	req.Header.Add("User-Agent", fmt.Sprintf("GoSDK/%s", SDK_VERSION))
+	req.Header.Add("Version", "4")
+	req.Header.Add("Content-Type", "application/xml")
+	req.Header.Add("Accept", "application/xml")
+	// get OAuth access token
+	token, err := p.UserOptionService.connection.authenticate()
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	// Send the request and wait for the response
+	resp, err := p.UserOptionService.connection.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if p.UserOptionService.connection.logFunc != nil {
+		dumpReq, err := httputil.DumpRequestOut(req, true)
+		if err != nil {
+			return nil, err
+		}
+		dumpResp, err := httputil.DumpResponse(resp, true)
+		if err != nil {
+			return nil, err
+		}
+		p.UserOptionService.connection.logFunc("<<<<<<Request:\n%sResponse:\n%s>>>>>>\n", string(dumpReq), string(dumpResp))
+	}
+	if !Contains(resp.StatusCode, []int{200}) {
+		return nil, CheckFault(resp)
+	}
+	respBodyBytes, errReadBody := ioutil.ReadAll(resp.Body)
+	if errReadBody != nil {
+		return nil, errReadBody
+	}
+	reader := NewXMLReader(respBodyBytes)
+	result, err := XMLUserOptionReadOne(reader, nil, "")
+	if err != nil {
+		return nil, err
+	}
+	return &UserOptionServiceUpdateResponse{option: result}, nil
+}
+
+func (p *UserOptionServiceUpdateRequest) MustSend() *UserOptionServiceUpdateResponse {
+	if v, err := p.Send(); err != nil {
+		panic(err)
+	} else {
+		return v
+	}
+}
+
+//
+// Replaces an existing property of type JSON with a new one.
+// Example request(for user with identifier `123` and option with identifier `456`):
+// [source]
+// ----
+// PUT /ovirt-engine/api/users/123/options/456
+// ----
+// Payload:
+// [source,xml]
+// ----
+// <user_option>
+//   <name>SomeName</name>
+//   <content>{"new" : "JSON"}</content>
+// </user_option>
+// ----
+// The result will be the following XML document:
+// [source,xml]
+// ----
+// <user_option href="/ovirt-engine/api/users/123/options/789" id="789">
+//   <name>SomeName</name>
+//   <content>{"new" : "JSON"}</content>
+//   <user href="/ovirt-engine/api/users/123" id="123"/>
+// </user_option>
+// ----
+//
+type UserOptionServiceUpdateResponse struct {
+	option *UserOption
+}
+
+func (p *UserOptionServiceUpdateResponse) Option() (*UserOption, bool) {
+	if p.option != nil {
+		return p.option, true
+	}
+	return nil, false
+}
+
+func (p *UserOptionServiceUpdateResponse) MustOption() *UserOption {
+	if p.option == nil {
+		panic("option in response does not exist")
+	}
+	return p.option
+}
+
+//
+// Replaces an existing property of type JSON with a new one.
+// Example request(for user with identifier `123` and option with identifier `456`):
+// [source]
+// ----
+// PUT /ovirt-engine/api/users/123/options/456
+// ----
+// Payload:
+// [source,xml]
+// ----
+// <user_option>
+//   <name>SomeName</name>
+//   <content>{"new" : "JSON"}</content>
+// </user_option>
+// ----
+// The result will be the following XML document:
+// [source,xml]
+// ----
+// <user_option href="/ovirt-engine/api/users/123/options/789" id="789">
+//   <name>SomeName</name>
+//   <content>{"new" : "JSON"}</content>
+//   <user href="/ovirt-engine/api/users/123" id="123"/>
+// </user_option>
+// ----
+//
+func (p *UserOptionService) Update() *UserOptionServiceUpdateRequest {
+	return &UserOptionServiceUpdateRequest{UserOptionService: p}
+}
+
+//
+// Service locator method, returns individual service on which the URI is dispatched.
+//
+func (op *UserOptionService) Service(path string) (Service, error) {
+	if path == "" {
+		return op, nil
+	}
+	return nil, fmt.Errorf("The path <%s> doesn't correspond to any service", path)
+}
+
+func (op *UserOptionService) String() string {
+	return fmt.Sprintf("UserOptionService:%s", op.path)
+}
+
+//
+//
+type UserOptionsService struct {
+	BaseService
+}
+
+func NewUserOptionsService(connection *Connection, path string) *UserOptionsService {
+	var result UserOptionsService
+	result.connection = connection
+	result.path = path
+	return &result
+}
+
+//
+// Adds a new user profile property of type JSON.
+// Example request(for user with identifier `123`):
+// [source]
+// ----
+// POST /ovirt-engine/api/users/123/options
+// ----
+// Payload:
+// [source,xml]
+// ----
+//   <user_option>
+//     <name>SomeName</name>
+//     <content>["any", "JSON"]</content>
+//   </user_option>
+// ----
+//
+type UserOptionsServiceAddRequest struct {
+	UserOptionsService *UserOptionsService
+	header             map[string]string
+	query              map[string]string
+	option             *UserOption
+}
+
+func (p *UserOptionsServiceAddRequest) Header(key, value string) *UserOptionsServiceAddRequest {
+	if p.header == nil {
+		p.header = make(map[string]string)
+	}
+	p.header[key] = value
+	return p
+}
+
+func (p *UserOptionsServiceAddRequest) Query(key, value string) *UserOptionsServiceAddRequest {
+	if p.query == nil {
+		p.query = make(map[string]string)
+	}
+	p.query[key] = value
+	return p
+}
+
+func (p *UserOptionsServiceAddRequest) Option(option *UserOption) *UserOptionsServiceAddRequest {
+	p.option = option
+	return p
+}
+
+func (p *UserOptionsServiceAddRequest) Send() (*UserOptionsServiceAddResponse, error) {
+	rawURL := fmt.Sprintf("%s%s", p.UserOptionsService.connection.URL(), p.UserOptionsService.path)
+	values := make(url.Values)
+	if p.query != nil {
+		for k, v := range p.query {
+			values[k] = []string{v}
+		}
+	}
+	if len(values) > 0 {
+		rawURL = fmt.Sprintf("%s?%s", rawURL, values.Encode())
+	}
+	var body bytes.Buffer
+	writer := NewXMLWriter(&body)
+	err := XMLUserOptionWriteOne(writer, p.option, "")
+	if err != nil {
+		return nil, err
+	}
+	writer.Flush()
+	req, err := http.NewRequest("POST", rawURL, &body)
+	if err != nil {
+		return nil, err
+	}
+
+	for hk, hv := range p.UserOptionsService.connection.headers {
+		req.Header.Add(hk, hv)
+	}
+
+	if p.header != nil {
+		for hk, hv := range p.header {
+			req.Header.Add(hk, hv)
+		}
+	}
+
+	req.Header.Add("User-Agent", fmt.Sprintf("GoSDK/%s", SDK_VERSION))
+	req.Header.Add("Version", "4")
+	req.Header.Add("Content-Type", "application/xml")
+	req.Header.Add("Accept", "application/xml")
+	// get OAuth access token
+	token, err := p.UserOptionsService.connection.authenticate()
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	// Send the request and wait for the response
+	resp, err := p.UserOptionsService.connection.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if p.UserOptionsService.connection.logFunc != nil {
+		dumpReq, err := httputil.DumpRequestOut(req, true)
+		if err != nil {
+			return nil, err
+		}
+		dumpResp, err := httputil.DumpResponse(resp, true)
+		if err != nil {
+			return nil, err
+		}
+		p.UserOptionsService.connection.logFunc("<<<<<<Request:\n%sResponse:\n%s>>>>>>\n", string(dumpReq), string(dumpResp))
+	}
+	if !Contains(resp.StatusCode, []int{200, 201, 202}) {
+		return nil, CheckFault(resp)
+	}
+	respBodyBytes, errReadBody := ioutil.ReadAll(resp.Body)
+	if errReadBody != nil {
+		return nil, errReadBody
+	}
+	reader := NewXMLReader(respBodyBytes)
+	result, err := XMLUserOptionReadOne(reader, nil, "")
+	if err != nil {
+		return nil, err
+	}
+	return &UserOptionsServiceAddResponse{option: result}, nil
+}
+
+func (p *UserOptionsServiceAddRequest) MustSend() *UserOptionsServiceAddResponse {
+	if v, err := p.Send(); err != nil {
+		panic(err)
+	} else {
+		return v
+	}
+}
+
+//
+// Adds a new user profile property of type JSON.
+// Example request(for user with identifier `123`):
+// [source]
+// ----
+// POST /ovirt-engine/api/users/123/options
+// ----
+// Payload:
+// [source,xml]
+// ----
+//   <user_option>
+//     <name>SomeName</name>
+//     <content>["any", "JSON"]</content>
+//   </user_option>
+// ----
+//
+type UserOptionsServiceAddResponse struct {
+	option *UserOption
+}
+
+func (p *UserOptionsServiceAddResponse) Option() (*UserOption, bool) {
+	if p.option != nil {
+		return p.option, true
+	}
+	return nil, false
+}
+
+func (p *UserOptionsServiceAddResponse) MustOption() *UserOption {
+	if p.option == nil {
+		panic("option in response does not exist")
+	}
+	return p.option
+}
+
+//
+// Adds a new user profile property of type JSON.
+// Example request(for user with identifier `123`):
+// [source]
+// ----
+// POST /ovirt-engine/api/users/123/options
+// ----
+// Payload:
+// [source,xml]
+// ----
+//   <user_option>
+//     <name>SomeName</name>
+//     <content>["any", "JSON"]</content>
+//   </user_option>
+// ----
+//
+func (p *UserOptionsService) Add() *UserOptionsServiceAddRequest {
+	return &UserOptionsServiceAddRequest{UserOptionsService: p}
+}
+
+//
+// Returns a list of user profile properties of type JSON.
+// Example request(for user with identifier `123`):
+// [source]
+// ----
+// GET /ovirt-engine/api/users/123/options
+// ----
+// The result will be the following XML document:
+// [source,xml]
+// ----
+// <user_options>
+//   <user_option href="/ovirt-engine/api/users/123/options/456" id="456">
+//     <name>SomeName</name>
+//     <content>["any", "JSON"]</content>
+//     <user href="/ovirt-engine/api/users/123" id="123"/>
+//   </user_option>
+// </user_options>
+// ----
+//
+type UserOptionsServiceListRequest struct {
+	UserOptionsService *UserOptionsService
+	header             map[string]string
+	query              map[string]string
+}
+
+func (p *UserOptionsServiceListRequest) Header(key, value string) *UserOptionsServiceListRequest {
+	if p.header == nil {
+		p.header = make(map[string]string)
+	}
+	p.header[key] = value
+	return p
+}
+
+func (p *UserOptionsServiceListRequest) Query(key, value string) *UserOptionsServiceListRequest {
+	if p.query == nil {
+		p.query = make(map[string]string)
+	}
+	p.query[key] = value
+	return p
+}
+
+func (p *UserOptionsServiceListRequest) Send() (*UserOptionsServiceListResponse, error) {
+	rawURL := fmt.Sprintf("%s%s", p.UserOptionsService.connection.URL(), p.UserOptionsService.path)
+	values := make(url.Values)
+	if p.query != nil {
+		for k, v := range p.query {
+			values[k] = []string{v}
+		}
+	}
+	if len(values) > 0 {
+		rawURL = fmt.Sprintf("%s?%s", rawURL, values.Encode())
+	}
+	req, err := http.NewRequest("GET", rawURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	for hk, hv := range p.UserOptionsService.connection.headers {
+		req.Header.Add(hk, hv)
+	}
+
+	if p.header != nil {
+		for hk, hv := range p.header {
+			req.Header.Add(hk, hv)
+		}
+	}
+
+	req.Header.Add("User-Agent", fmt.Sprintf("GoSDK/%s", SDK_VERSION))
+	req.Header.Add("Version", "4")
+	req.Header.Add("Content-Type", "application/xml")
+	req.Header.Add("Accept", "application/xml")
+	// get OAuth access token
+	token, err := p.UserOptionsService.connection.authenticate()
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	// Send the request and wait for the response
+	resp, err := p.UserOptionsService.connection.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if p.UserOptionsService.connection.logFunc != nil {
+		dumpReq, err := httputil.DumpRequestOut(req, true)
+		if err != nil {
+			return nil, err
+		}
+		dumpResp, err := httputil.DumpResponse(resp, true)
+		if err != nil {
+			return nil, err
+		}
+		p.UserOptionsService.connection.logFunc("<<<<<<Request:\n%sResponse:\n%s>>>>>>\n", string(dumpReq), string(dumpResp))
+	}
+	if !Contains(resp.StatusCode, []int{200}) {
+		return nil, CheckFault(resp)
+	}
+	respBodyBytes, errReadBody := ioutil.ReadAll(resp.Body)
+	if errReadBody != nil {
+		return nil, errReadBody
+	}
+	reader := NewXMLReader(respBodyBytes)
+	result, err := XMLUserOptionReadMany(reader, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &UserOptionsServiceListResponse{options: result}, nil
+}
+
+func (p *UserOptionsServiceListRequest) MustSend() *UserOptionsServiceListResponse {
+	if v, err := p.Send(); err != nil {
+		panic(err)
+	} else {
+		return v
+	}
+}
+
+//
+// Returns a list of user profile properties of type JSON.
+// Example request(for user with identifier `123`):
+// [source]
+// ----
+// GET /ovirt-engine/api/users/123/options
+// ----
+// The result will be the following XML document:
+// [source,xml]
+// ----
+// <user_options>
+//   <user_option href="/ovirt-engine/api/users/123/options/456" id="456">
+//     <name>SomeName</name>
+//     <content>["any", "JSON"]</content>
+//     <user href="/ovirt-engine/api/users/123" id="123"/>
+//   </user_option>
+// </user_options>
+// ----
+//
+type UserOptionsServiceListResponse struct {
+	options *UserOptionSlice
+}
+
+func (p *UserOptionsServiceListResponse) Options() (*UserOptionSlice, bool) {
+	if p.options != nil {
+		return p.options, true
+	}
+	return nil, false
+}
+
+func (p *UserOptionsServiceListResponse) MustOptions() *UserOptionSlice {
+	if p.options == nil {
+		panic("options in response does not exist")
+	}
+	return p.options
+}
+
+//
+// Returns a list of user profile properties of type JSON.
+// Example request(for user with identifier `123`):
+// [source]
+// ----
+// GET /ovirt-engine/api/users/123/options
+// ----
+// The result will be the following XML document:
+// [source,xml]
+// ----
+// <user_options>
+//   <user_option href="/ovirt-engine/api/users/123/options/456" id="456">
+//     <name>SomeName</name>
+//     <content>["any", "JSON"]</content>
+//     <user href="/ovirt-engine/api/users/123" id="123"/>
+//   </user_option>
+// </user_options>
+// ----
+//
+func (p *UserOptionsService) List() *UserOptionsServiceListRequest {
+	return &UserOptionsServiceListRequest{UserOptionsService: p}
+}
+
+//
+//
+func (op *UserOptionsService) OptionService(id string) *UserOptionService {
+	return NewUserOptionService(op.connection, fmt.Sprintf("%s/%s", op.path, id))
+}
+
+//
+// Service locator method, returns individual service on which the URI is dispatched.
+//
+func (op *UserOptionsService) Service(path string) (Service, error) {
+	if path == "" {
+		return op, nil
+	}
+	index := strings.Index(path, "/")
+	if index == -1 {
+		return op.OptionService(path), nil
+	}
+	return op.OptionService(path[:index]).Service(path[index+1:])
+}
+
+func (op *UserOptionsService) String() string {
+	return fmt.Sprintf("UserOptionsService:%s", op.path)
+}
+
+//
 // A service to manage a user in the system.
 // Use this service to either get users details or remove users.
 // In order to add new users please use
@@ -108804,7 +110115,7 @@ func (p *UserService) Remove() *UserServiceRemoveRequest {
 //    <user_options>
 //       <property>
 //          <name>test</name>
-//          <value>test1</value>
+//          <value>["any","JSON"]</value>
 //       </property>
 //    </user_options>
 // </user>
@@ -108936,7 +110247,7 @@ func (p *UserServiceUpdateRequest) MustSend() *UserServiceUpdateResponse {
 //    <user_options>
 //       <property>
 //          <name>test</name>
-//          <value>test1</value>
+//          <value>["any","JSON"]</value>
 //       </property>
 //    </user_options>
 // </user>
@@ -108975,7 +110286,7 @@ func (p *UserServiceUpdateResponse) MustUser() *User {
 //    <user_options>
 //       <property>
 //          <name>test</name>
-//          <value>test1</value>
+//          <value>["any","JSON"]</value>
 //       </property>
 //    </user_options>
 // </user>
@@ -108996,6 +110307,12 @@ func (op *UserService) EventSubscriptionsService() *EventSubscriptionsService {
 //
 func (op *UserService) GroupsService() *DomainUserGroupsService {
 	return NewDomainUserGroupsService(op.connection, fmt.Sprintf("%s/groups", op.path))
+}
+
+//
+//
+func (op *UserService) OptionsService() *UserOptionsService {
+	return NewUserOptionsService(op.connection, fmt.Sprintf("%s/options", op.path))
 }
 
 //
@@ -109040,6 +110357,12 @@ func (op *UserService) Service(path string) (Service, error) {
 	}
 	if strings.HasPrefix(path, "groups/") {
 		return op.GroupsService().Service(path[7:])
+	}
+	if path == "options" {
+		return op.OptionsService(), nil
+	}
+	if strings.HasPrefix(path, "options/") {
+		return op.OptionsService().Service(path[8:])
 	}
 	if path == "permissions" {
 		return op.PermissionsService(), nil

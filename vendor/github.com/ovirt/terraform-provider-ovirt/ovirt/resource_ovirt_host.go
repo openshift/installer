@@ -55,6 +55,7 @@ func resourceOvirtHost() *schema.Resource {
 				Required:     true,
 				ForceNew:     false,
 				ValidateFunc: validation.NoZeroValues,
+				Sensitive:    true,
 			},
 			"cluster_id": {
 				Type:     schema.TypeString,

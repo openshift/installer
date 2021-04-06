@@ -2720,6 +2720,7 @@ type Cluster struct {
 	errorHandling                    *ErrorHandling
 	externalNetworkProviders         *ExternalProviderSlice
 	fencingPolicy                    *FencingPolicy
+	fipsMode                         *FipsMode
 	firewallType                     *FirewallType
 	glusterHooks                     *GlusterHookSlice
 	glusterService                   *bool
@@ -3007,6 +3008,25 @@ func (p *Cluster) MustFencingPolicy() *FencingPolicy {
 		panic("the fencingPolicy must not be nil, please use FencingPolicy() function instead")
 	}
 	return p.fencingPolicy
+}
+
+func (p *Cluster) SetFipsMode(attr FipsMode) {
+	p.fipsMode = &attr
+}
+
+func (p *Cluster) FipsMode() (FipsMode, bool) {
+	if p.fipsMode != nil {
+		return *p.fipsMode, true
+	}
+	var zero FipsMode
+	return zero, false
+}
+
+func (p *Cluster) MustFipsMode() FipsMode {
+	if p.fipsMode == nil {
+		panic("the fipsMode must not be nil, please use FipsMode() function instead")
+	}
+	return *p.fipsMode
 }
 
 func (p *Cluster) SetFirewallType(attr FirewallType) {
@@ -16150,6 +16170,7 @@ type ImageTransfer struct {
 	proxyUrl          *string
 	shallow           *bool
 	snapshot          *DiskSnapshot
+	timeoutPolicy     *ImageTransferTimeoutPolicy
 	transferUrl       *string
 	transferred       *int64
 }
@@ -16451,6 +16472,25 @@ func (p *ImageTransfer) MustSnapshot() *DiskSnapshot {
 		panic("the snapshot must not be nil, please use Snapshot() function instead")
 	}
 	return p.snapshot
+}
+
+func (p *ImageTransfer) SetTimeoutPolicy(attr ImageTransferTimeoutPolicy) {
+	p.timeoutPolicy = &attr
+}
+
+func (p *ImageTransfer) TimeoutPolicy() (ImageTransferTimeoutPolicy, bool) {
+	if p.timeoutPolicy != nil {
+		return *p.timeoutPolicy, true
+	}
+	var zero ImageTransferTimeoutPolicy
+	return zero, false
+}
+
+func (p *ImageTransfer) MustTimeoutPolicy() ImageTransferTimeoutPolicy {
+	if p.timeoutPolicy == nil {
+		panic("the timeoutPolicy must not be nil, please use TimeoutPolicy() function instead")
+	}
+	return *p.timeoutPolicy
 }
 
 func (p *ImageTransfer) SetTransferUrl(attr string) {
@@ -16934,62 +16974,63 @@ func (p *Initialization) MustWindowsLicenseKey() string {
 
 type InstanceType struct {
 	Struct
-	bios                        *Bios
-	cdroms                      *CdromSlice
-	cluster                     *Cluster
-	comment                     *string
-	console                     *Console
-	cpu                         *Cpu
-	cpuProfile                  *CpuProfile
-	cpuShares                   *int64
-	creationTime                *time.Time
-	customCompatibilityVersion  *Version
-	customCpuModel              *string
-	customEmulatedMachine       *string
-	customProperties            *CustomPropertySlice
-	deleteProtected             *bool
-	description                 *string
-	diskAttachments             *DiskAttachmentSlice
-	display                     *Display
-	domain                      *Domain
-	graphicsConsoles            *GraphicsConsoleSlice
-	highAvailability            *HighAvailability
-	id                          *string
-	initialization              *Initialization
-	io                          *Io
-	largeIcon                   *Icon
-	lease                       *StorageDomainLease
-	memory                      *int64
-	memoryPolicy                *MemoryPolicy
-	migration                   *MigrationOptions
-	migrationDowntime           *int64
-	multiQueuesEnabled          *bool
-	name                        *string
-	nics                        *NicSlice
-	origin                      *string
-	os                          *OperatingSystem
-	permissions                 *PermissionSlice
-	placementPolicy             *VmPlacementPolicy
-	quota                       *Quota
-	rngDevice                   *RngDevice
-	serialNumber                *SerialNumber
-	smallIcon                   *Icon
-	soundcardEnabled            *bool
-	sso                         *Sso
-	startPaused                 *bool
-	stateless                   *bool
-	status                      *TemplateStatus
-	storageDomain               *StorageDomain
-	storageErrorResumeBehaviour *VmStorageErrorResumeBehaviour
-	tags                        *TagSlice
-	timeZone                    *TimeZone
-	tunnelMigration             *bool
-	type_                       *VmType
-	usb                         *Usb
-	version                     *TemplateVersion
-	virtioScsi                  *VirtioScsi
-	vm                          *Vm
-	watchdogs                   *WatchdogSlice
+	bios                         *Bios
+	cdroms                       *CdromSlice
+	cluster                      *Cluster
+	comment                      *string
+	console                      *Console
+	cpu                          *Cpu
+	cpuProfile                   *CpuProfile
+	cpuShares                    *int64
+	creationTime                 *time.Time
+	customCompatibilityVersion   *Version
+	customCpuModel               *string
+	customEmulatedMachine        *string
+	customProperties             *CustomPropertySlice
+	deleteProtected              *bool
+	description                  *string
+	diskAttachments              *DiskAttachmentSlice
+	display                      *Display
+	domain                       *Domain
+	graphicsConsoles             *GraphicsConsoleSlice
+	highAvailability             *HighAvailability
+	id                           *string
+	initialization               *Initialization
+	io                           *Io
+	largeIcon                    *Icon
+	lease                        *StorageDomainLease
+	memory                       *int64
+	memoryPolicy                 *MemoryPolicy
+	migration                    *MigrationOptions
+	migrationDowntime            *int64
+	multiQueuesEnabled           *bool
+	name                         *string
+	nics                         *NicSlice
+	origin                       *string
+	os                           *OperatingSystem
+	permissions                  *PermissionSlice
+	placementPolicy              *VmPlacementPolicy
+	quota                        *Quota
+	rngDevice                    *RngDevice
+	serialNumber                 *SerialNumber
+	smallIcon                    *Icon
+	soundcardEnabled             *bool
+	sso                          *Sso
+	startPaused                  *bool
+	stateless                    *bool
+	status                       *TemplateStatus
+	storageDomain                *StorageDomain
+	storageErrorResumeBehaviour  *VmStorageErrorResumeBehaviour
+	tags                         *TagSlice
+	timeZone                     *TimeZone
+	tunnelMigration              *bool
+	type_                        *VmType
+	usb                          *Usb
+	version                      *TemplateVersion
+	virtioScsi                   *VirtioScsi
+	virtioScsiMultiQueuesEnabled *bool
+	vm                           *Vm
+	watchdogs                    *WatchdogSlice
 }
 
 func (p *InstanceType) SetBios(attr *Bios) {
@@ -17982,6 +18023,25 @@ func (p *InstanceType) MustVirtioScsi() *VirtioScsi {
 		panic("the virtioScsi must not be nil, please use VirtioScsi() function instead")
 	}
 	return p.virtioScsi
+}
+
+func (p *InstanceType) SetVirtioScsiMultiQueuesEnabled(attr bool) {
+	p.virtioScsiMultiQueuesEnabled = &attr
+}
+
+func (p *InstanceType) VirtioScsiMultiQueuesEnabled() (bool, bool) {
+	if p.virtioScsiMultiQueuesEnabled != nil {
+		return *p.virtioScsiMultiQueuesEnabled, true
+	}
+	var zero bool
+	return zero, false
+}
+
+func (p *InstanceType) MustVirtioScsiMultiQueuesEnabled() bool {
+	if p.virtioScsiMultiQueuesEnabled == nil {
+		panic("the virtioScsiMultiQueuesEnabled must not be nil, please use VirtioScsiMultiQueuesEnabled() function instead")
+	}
+	return *p.virtioScsiMultiQueuesEnabled
 }
 
 func (p *InstanceType) SetVm(attr *Vm) {
@@ -28084,30 +28144,6 @@ func (p *SchedulingPolicy) MustWeight() *WeightSlice {
 	return p.weight
 }
 
-type SeLinux struct {
-	Struct
-	mode *SeLinuxMode
-}
-
-func (p *SeLinux) SetMode(attr SeLinuxMode) {
-	p.mode = &attr
-}
-
-func (p *SeLinux) Mode() (SeLinuxMode, bool) {
-	if p.mode != nil {
-		return *p.mode, true
-	}
-	var zero SeLinuxMode
-	return zero, false
-}
-
-func (p *SeLinux) MustMode() SeLinuxMode {
-	if p.mode == nil {
-		panic("the mode must not be nil, please use Mode() function instead")
-	}
-	return *p.mode
-}
-
 type SchedulingPolicyUnit struct {
 	Struct
 	comment     *string
@@ -28269,6 +28305,30 @@ func (p *SchedulingPolicyUnit) MustType() PolicyUnitType {
 		panic("the type_ must not be nil, please use Type() function instead")
 	}
 	return *p.type_
+}
+
+type SeLinux struct {
+	Struct
+	mode *SeLinuxMode
+}
+
+func (p *SeLinux) SetMode(attr SeLinuxMode) {
+	p.mode = &attr
+}
+
+func (p *SeLinux) Mode() (SeLinuxMode, bool) {
+	if p.mode != nil {
+		return *p.mode, true
+	}
+	var zero SeLinuxMode
+	return zero, false
+}
+
+func (p *SeLinux) MustMode() SeLinuxMode {
+	if p.mode == nil {
+		panic("the mode must not be nil, please use Mode() function instead")
+	}
+	return *p.mode
 }
 
 type SerialNumber struct {
@@ -28566,95 +28626,96 @@ func (p *SkipIfSdActive) MustEnabled() bool {
 
 type Snapshot struct {
 	Struct
-	affinityLabels              *AffinityLabelSlice
-	applications                *ApplicationSlice
-	bios                        *Bios
-	cdroms                      *CdromSlice
-	cluster                     *Cluster
-	comment                     *string
-	console                     *Console
-	cpu                         *Cpu
-	cpuProfile                  *CpuProfile
-	cpuShares                   *int64
-	creationTime                *time.Time
-	customCompatibilityVersion  *Version
-	customCpuModel              *string
-	customEmulatedMachine       *string
-	customProperties            *CustomPropertySlice
-	date                        *time.Time
-	deleteProtected             *bool
-	description                 *string
-	diskAttachments             *DiskAttachmentSlice
-	disks                       *DiskSlice
-	display                     *Display
-	domain                      *Domain
-	externalHostProvider        *ExternalHostProvider
-	floppies                    *FloppySlice
-	fqdn                        *string
-	graphicsConsoles            *GraphicsConsoleSlice
-	guestOperatingSystem        *GuestOperatingSystem
-	guestTimeZone               *TimeZone
-	hasIllegalImages            *bool
-	highAvailability            *HighAvailability
-	host                        *Host
-	hostDevices                 *HostDeviceSlice
-	id                          *string
-	initialization              *Initialization
-	instanceType                *InstanceType
-	io                          *Io
-	katelloErrata               *KatelloErratumSlice
-	largeIcon                   *Icon
-	lease                       *StorageDomainLease
-	memory                      *int64
-	memoryPolicy                *MemoryPolicy
-	migration                   *MigrationOptions
-	migrationDowntime           *int64
-	multiQueuesEnabled          *bool
-	name                        *string
-	nextRunConfigurationExists  *bool
-	nics                        *NicSlice
-	numaNodes                   *NumaNodeSlice
-	numaTuneMode                *NumaTuneMode
-	origin                      *string
-	originalTemplate            *Template
-	os                          *OperatingSystem
-	payloads                    *PayloadSlice
-	permissions                 *PermissionSlice
-	persistMemorystate          *bool
-	placementPolicy             *VmPlacementPolicy
-	quota                       *Quota
-	reportedDevices             *ReportedDeviceSlice
-	rngDevice                   *RngDevice
-	runOnce                     *bool
-	serialNumber                *SerialNumber
-	sessions                    *SessionSlice
-	smallIcon                   *Icon
-	snapshotStatus              *SnapshotStatus
-	snapshotType                *SnapshotType
-	snapshots                   *SnapshotSlice
-	soundcardEnabled            *bool
-	sso                         *Sso
-	startPaused                 *bool
-	startTime                   *time.Time
-	stateless                   *bool
-	statistics                  *StatisticSlice
-	status                      *VmStatus
-	statusDetail                *string
-	stopReason                  *string
-	stopTime                    *time.Time
-	storageDomain               *StorageDomain
-	storageErrorResumeBehaviour *VmStorageErrorResumeBehaviour
-	tags                        *TagSlice
-	template                    *Template
-	timeZone                    *TimeZone
-	tunnelMigration             *bool
-	type_                       *VmType
-	usb                         *Usb
-	useLatestTemplateVersion    *bool
-	virtioScsi                  *VirtioScsi
-	vm                          *Vm
-	vmPool                      *VmPool
-	watchdogs                   *WatchdogSlice
+	affinityLabels               *AffinityLabelSlice
+	applications                 *ApplicationSlice
+	bios                         *Bios
+	cdroms                       *CdromSlice
+	cluster                      *Cluster
+	comment                      *string
+	console                      *Console
+	cpu                          *Cpu
+	cpuProfile                   *CpuProfile
+	cpuShares                    *int64
+	creationTime                 *time.Time
+	customCompatibilityVersion   *Version
+	customCpuModel               *string
+	customEmulatedMachine        *string
+	customProperties             *CustomPropertySlice
+	date                         *time.Time
+	deleteProtected              *bool
+	description                  *string
+	diskAttachments              *DiskAttachmentSlice
+	disks                        *DiskSlice
+	display                      *Display
+	domain                       *Domain
+	externalHostProvider         *ExternalHostProvider
+	floppies                     *FloppySlice
+	fqdn                         *string
+	graphicsConsoles             *GraphicsConsoleSlice
+	guestOperatingSystem         *GuestOperatingSystem
+	guestTimeZone                *TimeZone
+	hasIllegalImages             *bool
+	highAvailability             *HighAvailability
+	host                         *Host
+	hostDevices                  *HostDeviceSlice
+	id                           *string
+	initialization               *Initialization
+	instanceType                 *InstanceType
+	io                           *Io
+	katelloErrata                *KatelloErratumSlice
+	largeIcon                    *Icon
+	lease                        *StorageDomainLease
+	memory                       *int64
+	memoryPolicy                 *MemoryPolicy
+	migration                    *MigrationOptions
+	migrationDowntime            *int64
+	multiQueuesEnabled           *bool
+	name                         *string
+	nextRunConfigurationExists   *bool
+	nics                         *NicSlice
+	numaNodes                    *NumaNodeSlice
+	numaTuneMode                 *NumaTuneMode
+	origin                       *string
+	originalTemplate             *Template
+	os                           *OperatingSystem
+	payloads                     *PayloadSlice
+	permissions                  *PermissionSlice
+	persistMemorystate           *bool
+	placementPolicy              *VmPlacementPolicy
+	quota                        *Quota
+	reportedDevices              *ReportedDeviceSlice
+	rngDevice                    *RngDevice
+	runOnce                      *bool
+	serialNumber                 *SerialNumber
+	sessions                     *SessionSlice
+	smallIcon                    *Icon
+	snapshotStatus               *SnapshotStatus
+	snapshotType                 *SnapshotType
+	snapshots                    *SnapshotSlice
+	soundcardEnabled             *bool
+	sso                          *Sso
+	startPaused                  *bool
+	startTime                    *time.Time
+	stateless                    *bool
+	statistics                   *StatisticSlice
+	status                       *VmStatus
+	statusDetail                 *string
+	stopReason                   *string
+	stopTime                     *time.Time
+	storageDomain                *StorageDomain
+	storageErrorResumeBehaviour  *VmStorageErrorResumeBehaviour
+	tags                         *TagSlice
+	template                     *Template
+	timeZone                     *TimeZone
+	tunnelMigration              *bool
+	type_                        *VmType
+	usb                          *Usb
+	useLatestTemplateVersion     *bool
+	virtioScsi                   *VirtioScsi
+	virtioScsiMultiQueuesEnabled *bool
+	vm                           *Vm
+	vmPool                       *VmPool
+	watchdogs                    *WatchdogSlice
 }
 
 func (p *Snapshot) SetAffinityLabels(attr *AffinityLabelSlice) {
@@ -30239,6 +30300,25 @@ func (p *Snapshot) MustVirtioScsi() *VirtioScsi {
 	return p.virtioScsi
 }
 
+func (p *Snapshot) SetVirtioScsiMultiQueuesEnabled(attr bool) {
+	p.virtioScsiMultiQueuesEnabled = &attr
+}
+
+func (p *Snapshot) VirtioScsiMultiQueuesEnabled() (bool, bool) {
+	if p.virtioScsiMultiQueuesEnabled != nil {
+		return *p.virtioScsiMultiQueuesEnabled, true
+	}
+	var zero bool
+	return zero, false
+}
+
+func (p *Snapshot) MustVirtioScsiMultiQueuesEnabled() bool {
+	if p.virtioScsiMultiQueuesEnabled == nil {
+		panic("the virtioScsiMultiQueuesEnabled must not be nil, please use VirtioScsiMultiQueuesEnabled() function instead")
+	}
+	return *p.virtioScsiMultiQueuesEnabled
+}
+
 func (p *Snapshot) SetVm(attr *Vm) {
 	p.vm = attr
 }
@@ -30388,6 +30468,7 @@ type Ssh struct {
 	id                   *string
 	name                 *string
 	port                 *int64
+	publicKey            *string
 	user                 *User
 }
 
@@ -30522,6 +30603,25 @@ func (p *Ssh) MustPort() int64 {
 		panic("the port must not be nil, please use Port() function instead")
 	}
 	return *p.port
+}
+
+func (p *Ssh) SetPublicKey(attr string) {
+	p.publicKey = &attr
+}
+
+func (p *Ssh) PublicKey() (string, bool) {
+	if p.publicKey != nil {
+		return *p.publicKey, true
+	}
+	var zero string
+	return zero, false
+}
+
+func (p *Ssh) MustPublicKey() string {
+	if p.publicKey == nil {
+		panic("the publicKey must not be nil, please use PublicKey() function instead")
+	}
+	return *p.publicKey
 }
 
 func (p *Ssh) SetUser(attr *User) {
@@ -32928,62 +33028,63 @@ func (p *Tag) MustVm() *Vm {
 
 type Template struct {
 	Struct
-	bios                        *Bios
-	cdroms                      *CdromSlice
-	cluster                     *Cluster
-	comment                     *string
-	console                     *Console
-	cpu                         *Cpu
-	cpuProfile                  *CpuProfile
-	cpuShares                   *int64
-	creationTime                *time.Time
-	customCompatibilityVersion  *Version
-	customCpuModel              *string
-	customEmulatedMachine       *string
-	customProperties            *CustomPropertySlice
-	deleteProtected             *bool
-	description                 *string
-	diskAttachments             *DiskAttachmentSlice
-	display                     *Display
-	domain                      *Domain
-	graphicsConsoles            *GraphicsConsoleSlice
-	highAvailability            *HighAvailability
-	id                          *string
-	initialization              *Initialization
-	io                          *Io
-	largeIcon                   *Icon
-	lease                       *StorageDomainLease
-	memory                      *int64
-	memoryPolicy                *MemoryPolicy
-	migration                   *MigrationOptions
-	migrationDowntime           *int64
-	multiQueuesEnabled          *bool
-	name                        *string
-	nics                        *NicSlice
-	origin                      *string
-	os                          *OperatingSystem
-	permissions                 *PermissionSlice
-	placementPolicy             *VmPlacementPolicy
-	quota                       *Quota
-	rngDevice                   *RngDevice
-	serialNumber                *SerialNumber
-	smallIcon                   *Icon
-	soundcardEnabled            *bool
-	sso                         *Sso
-	startPaused                 *bool
-	stateless                   *bool
-	status                      *TemplateStatus
-	storageDomain               *StorageDomain
-	storageErrorResumeBehaviour *VmStorageErrorResumeBehaviour
-	tags                        *TagSlice
-	timeZone                    *TimeZone
-	tunnelMigration             *bool
-	type_                       *VmType
-	usb                         *Usb
-	version                     *TemplateVersion
-	virtioScsi                  *VirtioScsi
-	vm                          *Vm
-	watchdogs                   *WatchdogSlice
+	bios                         *Bios
+	cdroms                       *CdromSlice
+	cluster                      *Cluster
+	comment                      *string
+	console                      *Console
+	cpu                          *Cpu
+	cpuProfile                   *CpuProfile
+	cpuShares                    *int64
+	creationTime                 *time.Time
+	customCompatibilityVersion   *Version
+	customCpuModel               *string
+	customEmulatedMachine        *string
+	customProperties             *CustomPropertySlice
+	deleteProtected              *bool
+	description                  *string
+	diskAttachments              *DiskAttachmentSlice
+	display                      *Display
+	domain                       *Domain
+	graphicsConsoles             *GraphicsConsoleSlice
+	highAvailability             *HighAvailability
+	id                           *string
+	initialization               *Initialization
+	io                           *Io
+	largeIcon                    *Icon
+	lease                        *StorageDomainLease
+	memory                       *int64
+	memoryPolicy                 *MemoryPolicy
+	migration                    *MigrationOptions
+	migrationDowntime            *int64
+	multiQueuesEnabled           *bool
+	name                         *string
+	nics                         *NicSlice
+	origin                       *string
+	os                           *OperatingSystem
+	permissions                  *PermissionSlice
+	placementPolicy              *VmPlacementPolicy
+	quota                        *Quota
+	rngDevice                    *RngDevice
+	serialNumber                 *SerialNumber
+	smallIcon                    *Icon
+	soundcardEnabled             *bool
+	sso                          *Sso
+	startPaused                  *bool
+	stateless                    *bool
+	status                       *TemplateStatus
+	storageDomain                *StorageDomain
+	storageErrorResumeBehaviour  *VmStorageErrorResumeBehaviour
+	tags                         *TagSlice
+	timeZone                     *TimeZone
+	tunnelMigration              *bool
+	type_                        *VmType
+	usb                          *Usb
+	version                      *TemplateVersion
+	virtioScsi                   *VirtioScsi
+	virtioScsiMultiQueuesEnabled *bool
+	vm                           *Vm
+	watchdogs                    *WatchdogSlice
 }
 
 func (p *Template) SetBios(attr *Bios) {
@@ -33978,6 +34079,25 @@ func (p *Template) MustVirtioScsi() *VirtioScsi {
 	return p.virtioScsi
 }
 
+func (p *Template) SetVirtioScsiMultiQueuesEnabled(attr bool) {
+	p.virtioScsiMultiQueuesEnabled = &attr
+}
+
+func (p *Template) VirtioScsiMultiQueuesEnabled() (bool, bool) {
+	if p.virtioScsiMultiQueuesEnabled != nil {
+		return *p.virtioScsiMultiQueuesEnabled, true
+	}
+	var zero bool
+	return zero, false
+}
+
+func (p *Template) MustVirtioScsiMultiQueuesEnabled() bool {
+	if p.virtioScsiMultiQueuesEnabled == nil {
+		panic("the virtioScsiMultiQueuesEnabled must not be nil, please use VirtioScsiMultiQueuesEnabled() function instead")
+	}
+	return *p.virtioScsiMultiQueuesEnabled
+}
+
 func (p *Template) SetVm(attr *Vm) {
 	p.vm = attr
 }
@@ -34369,6 +34489,7 @@ type User struct {
 	loggedIn      *bool
 	name          *string
 	namespace     *string
+	options       *UserOptionSlice
 	password      *string
 	permissions   *PermissionSlice
 	principal     *string
@@ -34605,6 +34726,24 @@ func (p *User) MustNamespace() string {
 	return *p.namespace
 }
 
+func (p *User) SetOptions(attr *UserOptionSlice) {
+	p.options = attr
+}
+
+func (p *User) Options() (*UserOptionSlice, bool) {
+	if p.options != nil {
+		return p.options, true
+	}
+	return nil, false
+}
+
+func (p *User) MustOptions() *UserOptionSlice {
+	if p.options == nil {
+		panic("the options must not be nil, please use Options() function instead")
+	}
+	return p.options
+}
+
 func (p *User) SetPassword(attr string) {
 	p.password = &attr
 }
@@ -34750,6 +34889,129 @@ func (p *User) MustUserOptions() *PropertySlice {
 		panic("the userOptions must not be nil, please use UserOptions() function instead")
 	}
 	return p.userOptions
+}
+
+type UserOption struct {
+	Struct
+	comment     *string
+	content     *string
+	description *string
+	id          *string
+	name        *string
+	user        *User
+}
+
+func (p *UserOption) SetComment(attr string) {
+	p.comment = &attr
+}
+
+func (p *UserOption) Comment() (string, bool) {
+	if p.comment != nil {
+		return *p.comment, true
+	}
+	var zero string
+	return zero, false
+}
+
+func (p *UserOption) MustComment() string {
+	if p.comment == nil {
+		panic("the comment must not be nil, please use Comment() function instead")
+	}
+	return *p.comment
+}
+
+func (p *UserOption) SetContent(attr string) {
+	p.content = &attr
+}
+
+func (p *UserOption) Content() (string, bool) {
+	if p.content != nil {
+		return *p.content, true
+	}
+	var zero string
+	return zero, false
+}
+
+func (p *UserOption) MustContent() string {
+	if p.content == nil {
+		panic("the content must not be nil, please use Content() function instead")
+	}
+	return *p.content
+}
+
+func (p *UserOption) SetDescription(attr string) {
+	p.description = &attr
+}
+
+func (p *UserOption) Description() (string, bool) {
+	if p.description != nil {
+		return *p.description, true
+	}
+	var zero string
+	return zero, false
+}
+
+func (p *UserOption) MustDescription() string {
+	if p.description == nil {
+		panic("the description must not be nil, please use Description() function instead")
+	}
+	return *p.description
+}
+
+func (p *UserOption) SetId(attr string) {
+	p.id = &attr
+}
+
+func (p *UserOption) Id() (string, bool) {
+	if p.id != nil {
+		return *p.id, true
+	}
+	var zero string
+	return zero, false
+}
+
+func (p *UserOption) MustId() string {
+	if p.id == nil {
+		panic("the id must not be nil, please use Id() function instead")
+	}
+	return *p.id
+}
+
+func (p *UserOption) SetName(attr string) {
+	p.name = &attr
+}
+
+func (p *UserOption) Name() (string, bool) {
+	if p.name != nil {
+		return *p.name, true
+	}
+	var zero string
+	return zero, false
+}
+
+func (p *UserOption) MustName() string {
+	if p.name == nil {
+		panic("the name must not be nil, please use Name() function instead")
+	}
+	return *p.name
+}
+
+func (p *UserOption) SetUser(attr *User) {
+	p.user = attr
+}
+
+func (p *UserOption) User() (*User, bool) {
+	if p.user != nil {
+		return p.user, true
+	}
+	return nil, false
+}
+
+func (p *UserOption) MustUser() *User {
+	if p.user == nil {
+		panic("the user must not be nil, please use User() function instead")
+	}
+	return p.user
 }
 
 type Value struct {
@@ -35417,89 +35679,90 @@ func (p *Vlan) MustId() int64 {
 
 type Vm struct {
 	Struct
-	affinityLabels              *AffinityLabelSlice
-	applications                *ApplicationSlice
-	bios                        *Bios
-	cdroms                      *CdromSlice
-	cluster                     *Cluster
-	comment                     *string
-	console                     *Console
-	cpu                         *Cpu
-	cpuProfile                  *CpuProfile
-	cpuShares                   *int64
-	creationTime                *time.Time
-	customCompatibilityVersion  *Version
-	customCpuModel              *string
-	customEmulatedMachine       *string
-	customProperties            *CustomPropertySlice
-	deleteProtected             *bool
-	description                 *string
-	diskAttachments             *DiskAttachmentSlice
-	display                     *Display
-	domain                      *Domain
-	externalHostProvider        *ExternalHostProvider
-	floppies                    *FloppySlice
-	fqdn                        *string
-	graphicsConsoles            *GraphicsConsoleSlice
-	guestOperatingSystem        *GuestOperatingSystem
-	guestTimeZone               *TimeZone
-	hasIllegalImages            *bool
-	highAvailability            *HighAvailability
-	host                        *Host
-	hostDevices                 *HostDeviceSlice
-	id                          *string
-	initialization              *Initialization
-	instanceType                *InstanceType
-	io                          *Io
-	katelloErrata               *KatelloErratumSlice
-	largeIcon                   *Icon
-	lease                       *StorageDomainLease
-	memory                      *int64
-	memoryPolicy                *MemoryPolicy
-	migration                   *MigrationOptions
-	migrationDowntime           *int64
-	multiQueuesEnabled          *bool
-	name                        *string
-	nextRunConfigurationExists  *bool
-	nics                        *NicSlice
-	numaNodes                   *NumaNodeSlice
-	numaTuneMode                *NumaTuneMode
-	origin                      *string
-	originalTemplate            *Template
-	os                          *OperatingSystem
-	payloads                    *PayloadSlice
-	permissions                 *PermissionSlice
-	placementPolicy             *VmPlacementPolicy
-	quota                       *Quota
-	reportedDevices             *ReportedDeviceSlice
-	rngDevice                   *RngDevice
-	runOnce                     *bool
-	serialNumber                *SerialNumber
-	sessions                    *SessionSlice
-	smallIcon                   *Icon
-	snapshots                   *SnapshotSlice
-	soundcardEnabled            *bool
-	sso                         *Sso
-	startPaused                 *bool
-	startTime                   *time.Time
-	stateless                   *bool
-	statistics                  *StatisticSlice
-	status                      *VmStatus
-	statusDetail                *string
-	stopReason                  *string
-	stopTime                    *time.Time
-	storageDomain               *StorageDomain
-	storageErrorResumeBehaviour *VmStorageErrorResumeBehaviour
-	tags                        *TagSlice
-	template                    *Template
-	timeZone                    *TimeZone
-	tunnelMigration             *bool
-	type_                       *VmType
-	usb                         *Usb
-	useLatestTemplateVersion    *bool
-	virtioScsi                  *VirtioScsi
-	vmPool                      *VmPool
-	watchdogs                   *WatchdogSlice
+	affinityLabels               *AffinityLabelSlice
+	applications                 *ApplicationSlice
+	bios                         *Bios
+	cdroms                       *CdromSlice
+	cluster                      *Cluster
+	comment                      *string
+	console                      *Console
+	cpu                          *Cpu
+	cpuProfile                   *CpuProfile
+	cpuShares                    *int64
+	creationTime                 *time.Time
+	customCompatibilityVersion   *Version
+	customCpuModel               *string
+	customEmulatedMachine        *string
+	customProperties             *CustomPropertySlice
+	deleteProtected              *bool
+	description                  *string
+	diskAttachments              *DiskAttachmentSlice
+	display                      *Display
+	domain                       *Domain
+	externalHostProvider         *ExternalHostProvider
+	floppies                     *FloppySlice
+	fqdn                         *string
+	graphicsConsoles             *GraphicsConsoleSlice
+	guestOperatingSystem         *GuestOperatingSystem
+	guestTimeZone                *TimeZone
+	hasIllegalImages             *bool
+	highAvailability             *HighAvailability
+	host                         *Host
+	hostDevices                  *HostDeviceSlice
+	id                           *string
+	initialization               *Initialization
+	instanceType                 *InstanceType
+	io                           *Io
+	katelloErrata                *KatelloErratumSlice
+	largeIcon                    *Icon
+	lease                        *StorageDomainLease
+	memory                       *int64
+	memoryPolicy                 *MemoryPolicy
+	migration                    *MigrationOptions
+	migrationDowntime            *int64
+	multiQueuesEnabled           *bool
+	name                         *string
+	nextRunConfigurationExists   *bool
+	nics                         *NicSlice
+	numaNodes                    *NumaNodeSlice
+	numaTuneMode                 *NumaTuneMode
+	origin                       *string
+	originalTemplate             *Template
+	os                           *OperatingSystem
+	payloads                     *PayloadSlice
+	permissions                  *PermissionSlice
+	placementPolicy              *VmPlacementPolicy
+	quota                        *Quota
+	reportedDevices              *ReportedDeviceSlice
+	rngDevice                    *RngDevice
+	runOnce                      *bool
+	serialNumber                 *SerialNumber
+	sessions                     *SessionSlice
+	smallIcon                    *Icon
+	snapshots                    *SnapshotSlice
+	soundcardEnabled             *bool
+	sso                          *Sso
+	startPaused                  *bool
+	startTime                    *time.Time
+	stateless                    *bool
+	statistics                   *StatisticSlice
+	status                       *VmStatus
+	statusDetail                 *string
+	stopReason                   *string
+	stopTime                     *time.Time
+	storageDomain                *StorageDomain
+	storageErrorResumeBehaviour  *VmStorageErrorResumeBehaviour
+	tags                         *TagSlice
+	template                     *Template
+	timeZone                     *TimeZone
+	tunnelMigration              *bool
+	type_                        *VmType
+	usb                          *Usb
+	useLatestTemplateVersion     *bool
+	virtioScsi                   *VirtioScsi
+	virtioScsiMultiQueuesEnabled *bool
+	vmPool                       *VmPool
+	watchdogs                    *WatchdogSlice
 }
 
 func (p *Vm) SetAffinityLabels(attr *AffinityLabelSlice) {
@@ -36990,6 +37253,25 @@ func (p *Vm) MustVirtioScsi() *VirtioScsi {
 	return p.virtioScsi
 }
 
+func (p *Vm) SetVirtioScsiMultiQueuesEnabled(attr bool) {
+	p.virtioScsiMultiQueuesEnabled = &attr
+}
+
+func (p *Vm) VirtioScsiMultiQueuesEnabled() (bool, bool) {
+	if p.virtioScsiMultiQueuesEnabled != nil {
+		return *p.virtioScsiMultiQueuesEnabled, true
+	}
+	var zero bool
+	return zero, false
+}
+
+func (p *Vm) MustVirtioScsiMultiQueuesEnabled() bool {
+	if p.virtioScsiMultiQueuesEnabled == nil {
+		panic("the virtioScsiMultiQueuesEnabled must not be nil, please use VirtioScsiMultiQueuesEnabled() function instead")
+	}
+	return *p.virtioScsiMultiQueuesEnabled
+}
+
 func (p *Vm) SetVmPool(attr *VmPool) {
 	p.vmPool = attr
 }
@@ -37028,52 +37310,53 @@ func (p *Vm) MustWatchdogs() *WatchdogSlice {
 
 type VmBase struct {
 	Struct
-	bios                        *Bios
-	cluster                     *Cluster
-	comment                     *string
-	console                     *Console
-	cpu                         *Cpu
-	cpuProfile                  *CpuProfile
-	cpuShares                   *int64
-	creationTime                *time.Time
-	customCompatibilityVersion  *Version
-	customCpuModel              *string
-	customEmulatedMachine       *string
-	customProperties            *CustomPropertySlice
-	deleteProtected             *bool
-	description                 *string
-	display                     *Display
-	domain                      *Domain
-	highAvailability            *HighAvailability
-	id                          *string
-	initialization              *Initialization
-	io                          *Io
-	largeIcon                   *Icon
-	lease                       *StorageDomainLease
-	memory                      *int64
-	memoryPolicy                *MemoryPolicy
-	migration                   *MigrationOptions
-	migrationDowntime           *int64
-	multiQueuesEnabled          *bool
-	name                        *string
-	origin                      *string
-	os                          *OperatingSystem
-	placementPolicy             *VmPlacementPolicy
-	quota                       *Quota
-	rngDevice                   *RngDevice
-	serialNumber                *SerialNumber
-	smallIcon                   *Icon
-	soundcardEnabled            *bool
-	sso                         *Sso
-	startPaused                 *bool
-	stateless                   *bool
-	storageDomain               *StorageDomain
-	storageErrorResumeBehaviour *VmStorageErrorResumeBehaviour
-	timeZone                    *TimeZone
-	tunnelMigration             *bool
-	type_                       *VmType
-	usb                         *Usb
-	virtioScsi                  *VirtioScsi
+	bios                         *Bios
+	cluster                      *Cluster
+	comment                      *string
+	console                      *Console
+	cpu                          *Cpu
+	cpuProfile                   *CpuProfile
+	cpuShares                    *int64
+	creationTime                 *time.Time
+	customCompatibilityVersion   *Version
+	customCpuModel               *string
+	customEmulatedMachine        *string
+	customProperties             *CustomPropertySlice
+	deleteProtected              *bool
+	description                  *string
+	display                      *Display
+	domain                       *Domain
+	highAvailability             *HighAvailability
+	id                           *string
+	initialization               *Initialization
+	io                           *Io
+	largeIcon                    *Icon
+	lease                        *StorageDomainLease
+	memory                       *int64
+	memoryPolicy                 *MemoryPolicy
+	migration                    *MigrationOptions
+	migrationDowntime            *int64
+	multiQueuesEnabled           *bool
+	name                         *string
+	origin                       *string
+	os                           *OperatingSystem
+	placementPolicy              *VmPlacementPolicy
+	quota                        *Quota
+	rngDevice                    *RngDevice
+	serialNumber                 *SerialNumber
+	smallIcon                    *Icon
+	soundcardEnabled             *bool
+	sso                          *Sso
+	startPaused                  *bool
+	stateless                    *bool
+	storageDomain                *StorageDomain
+	storageErrorResumeBehaviour  *VmStorageErrorResumeBehaviour
+	timeZone                     *TimeZone
+	tunnelMigration              *bool
+	type_                        *VmType
+	usb                          *Usb
+	virtioScsi                   *VirtioScsi
+	virtioScsiMultiQueuesEnabled *bool
 }
 
 func (p *VmBase) SetBios(attr *Bios) {
@@ -37921,6 +38204,25 @@ func (p *VmBase) MustVirtioScsi() *VirtioScsi {
 		panic("the virtioScsi must not be nil, please use VirtioScsi() function instead")
 	}
 	return p.virtioScsi
+}
+
+func (p *VmBase) SetVirtioScsiMultiQueuesEnabled(attr bool) {
+	p.virtioScsiMultiQueuesEnabled = &attr
+}
+
+func (p *VmBase) VirtioScsiMultiQueuesEnabled() (bool, bool) {
+	if p.virtioScsiMultiQueuesEnabled != nil {
+		return *p.virtioScsiMultiQueuesEnabled, true
+	}
+	var zero bool
+	return zero, false
+}
+
+func (p *VmBase) MustVirtioScsiMultiQueuesEnabled() bool {
+	if p.virtioScsiMultiQueuesEnabled == nil {
+		panic("the virtioScsiMultiQueuesEnabled must not be nil, please use VirtioScsiMultiQueuesEnabled() function instead")
+	}
+	return *p.virtioScsiMultiQueuesEnabled
 }
 
 type VmPlacementPolicy struct {
@@ -39260,6 +39562,7 @@ type Action struct {
 	modifiedLabels                 *NetworkLabelSlice
 	modifiedNetworkAttachments     *NetworkAttachmentSlice
 	name                           *string
+	optimizeCpuSettings            *bool
 	option                         *Option
 	pause                          *bool
 	permission                     *Permission
@@ -40283,6 +40586,25 @@ func (p *Action) MustName() string {
 		panic("the name must not be nil, please use Name() function instead")
 	}
 	return *p.name
+}
+
+func (p *Action) SetOptimizeCpuSettings(attr bool) {
+	p.optimizeCpuSettings = &attr
+}
+
+func (p *Action) OptimizeCpuSettings() (bool, bool) {
+	if p.optimizeCpuSettings != nil {
+		return *p.optimizeCpuSettings, true
+	}
+	var zero bool
+	return zero, false
+}
+
+func (p *Action) MustOptimizeCpuSettings() bool {
+	if p.optimizeCpuSettings == nil {
+		panic("the optimizeCpuSettings must not be nil, please use OptimizeCpuSettings() function instead")
+	}
+	return *p.optimizeCpuSettings
 }
 
 func (p *Action) SetOption(attr *Option) {
@@ -44961,30 +45283,6 @@ func (op *SchedulingPolicySlice) SetSlice(slice []*SchedulingPolicy) {
 	op.slice = slice
 }
 
-type SeLinuxSlice struct {
-	href  *string
-	slice []*SeLinux
-}
-
-func (op *SeLinuxSlice) Href() (string, bool) {
-	if op.href == nil {
-		return "", false
-	}
-	return *op.href, true
-}
-
-func (op *SeLinuxSlice) SetHref(href string) {
-	op.href = &href
-}
-
-func (op *SeLinuxSlice) Slice() []*SeLinux {
-	return op.slice
-}
-
-func (op *SeLinuxSlice) SetSlice(slice []*SeLinux) {
-	op.slice = slice
-}
-
 type SchedulingPolicyUnitSlice struct {
 	href  *string
 	slice []*SchedulingPolicyUnit
@@ -45006,6 +45304,30 @@ func (op *SchedulingPolicyUnitSlice) Slice() []*SchedulingPolicyUnit {
 }
 
 func (op *SchedulingPolicyUnitSlice) SetSlice(slice []*SchedulingPolicyUnit) {
+	op.slice = slice
+}
+
+type SeLinuxSlice struct {
+	href  *string
+	slice []*SeLinux
+}
+
+func (op *SeLinuxSlice) Href() (string, bool) {
+	if op.href == nil {
+		return "", false
+	}
+	return *op.href, true
+}
+
+func (op *SeLinuxSlice) SetHref(href string) {
+	op.href = &href
+}
+
+func (op *SeLinuxSlice) Slice() []*SeLinux {
+	return op.slice
+}
+
+func (op *SeLinuxSlice) SetSlice(slice []*SeLinux) {
 	op.slice = slice
 }
 
@@ -45654,6 +45976,30 @@ func (op *UserSlice) Slice() []*User {
 }
 
 func (op *UserSlice) SetSlice(slice []*User) {
+	op.slice = slice
+}
+
+type UserOptionSlice struct {
+	href  *string
+	slice []*UserOption
+}
+
+func (op *UserOptionSlice) Href() (string, bool) {
+	if op.href == nil {
+		return "", false
+	}
+	return *op.href, true
+}
+
+func (op *UserOptionSlice) SetHref(href string) {
+	op.href = &href
+}
+
+func (op *UserOptionSlice) Slice() []*UserOption {
+	return op.slice
+}
+
+func (op *UserOptionSlice) SetSlice(slice []*UserOption) {
 	op.slice = slice
 }
 
@@ -49526,6 +49872,15 @@ func (builder *ClusterBuilder) FencingPolicyBuilder(attrBuilder *FencingPolicyBu
 		return builder
 	}
 	return builder.FencingPolicy(attr)
+}
+
+func (builder *ClusterBuilder) FipsMode(attr FipsMode) *ClusterBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.cluster.SetFipsMode(attr)
+	return builder
 }
 
 func (builder *ClusterBuilder) FirewallType(attr FirewallType) *ClusterBuilder {
@@ -62658,6 +63013,15 @@ func (builder *ImageTransferBuilder) SnapshotBuilder(attrBuilder *DiskSnapshotBu
 	return builder.Snapshot(attr)
 }
 
+func (builder *ImageTransferBuilder) TimeoutPolicy(attr ImageTransferTimeoutPolicy) *ImageTransferBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.imageTransfer.SetTimeoutPolicy(attr)
+	return builder
+}
+
 func (builder *ImageTransferBuilder) TransferUrl(attr string) *ImageTransferBuilder {
 	if builder.err != nil {
 		return builder
@@ -64171,6 +64535,15 @@ func (builder *InstanceTypeBuilder) VirtioScsiBuilder(attrBuilder *VirtioScsiBui
 		return builder
 	}
 	return builder.VirtioScsi(attr)
+}
+
+func (builder *InstanceTypeBuilder) VirtioScsiMultiQueuesEnabled(attr bool) *InstanceTypeBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.instanceType.SetVirtioScsiMultiQueuesEnabled(attr)
+	return builder
 }
 
 func (builder *InstanceTypeBuilder) Vm(attr *Vm) *InstanceTypeBuilder {
@@ -74608,47 +74981,6 @@ func (builder *SchedulingPolicyBuilder) MustBuild() *SchedulingPolicy {
 	return builder.schedulingPolicy
 }
 
-type SeLinuxBuilder struct {
-	seLinux *SeLinux
-	err     error
-}
-
-func NewSeLinuxBuilder() *SeLinuxBuilder {
-	return &SeLinuxBuilder{seLinux: &SeLinux{}, err: nil}
-}
-
-func (builder *SeLinuxBuilder) Mode(attr SeLinuxMode) *SeLinuxBuilder {
-	if builder.err != nil {
-		return builder
-	}
-
-	builder.seLinux.SetMode(attr)
-	return builder
-}
-
-func (builder *SeLinuxBuilder) Href(href string) *SeLinuxBuilder {
-	if builder.err != nil {
-		return builder
-	}
-
-	builder.seLinux.SetHref(href)
-	return builder
-}
-
-func (builder *SeLinuxBuilder) Build() (*SeLinux, error) {
-	if builder.err != nil {
-		return nil, builder.err
-	}
-	return builder.seLinux, nil
-}
-
-func (builder *SeLinuxBuilder) MustBuild() *SeLinux {
-	if builder.err != nil {
-		panic(fmt.Sprintf("Failed to build SeLinux instance, reason: %v", builder.err))
-	}
-	return builder.seLinux
-}
-
 type SchedulingPolicyUnitBuilder struct {
 	schedulingPolicyUnit *SchedulingPolicyUnit
 	err                  error
@@ -74783,6 +75115,47 @@ func (builder *SchedulingPolicyUnitBuilder) MustBuild() *SchedulingPolicyUnit {
 		panic(fmt.Sprintf("Failed to build SchedulingPolicyUnit instance, reason: %v", builder.err))
 	}
 	return builder.schedulingPolicyUnit
+}
+
+type SeLinuxBuilder struct {
+	seLinux *SeLinux
+	err     error
+}
+
+func NewSeLinuxBuilder() *SeLinuxBuilder {
+	return &SeLinuxBuilder{seLinux: &SeLinux{}, err: nil}
+}
+
+func (builder *SeLinuxBuilder) Mode(attr SeLinuxMode) *SeLinuxBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.seLinux.SetMode(attr)
+	return builder
+}
+
+func (builder *SeLinuxBuilder) Href(href string) *SeLinuxBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.seLinux.SetHref(href)
+	return builder
+}
+
+func (builder *SeLinuxBuilder) Build() (*SeLinux, error) {
+	if builder.err != nil {
+		return nil, builder.err
+	}
+	return builder.seLinux, nil
+}
+
+func (builder *SeLinuxBuilder) MustBuild() *SeLinux {
+	if builder.err != nil {
+		panic(fmt.Sprintf("Failed to build SeLinux instance, reason: %v", builder.err))
+	}
+	return builder.seLinux
 }
 
 type SerialNumberBuilder struct {
@@ -77042,6 +77415,15 @@ func (builder *SnapshotBuilder) VirtioScsiBuilder(attrBuilder *VirtioScsiBuilder
 	return builder.VirtioScsi(attr)
 }
 
+func (builder *SnapshotBuilder) VirtioScsiMultiQueuesEnabled(attr bool) *SnapshotBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.snapshot.SetVirtioScsiMultiQueuesEnabled(attr)
+	return builder
+}
+
 func (builder *SnapshotBuilder) Vm(attr *Vm) *SnapshotBuilder {
 	if builder.err != nil {
 		return builder
@@ -77361,6 +77743,15 @@ func (builder *SshBuilder) Port(attr int64) *SshBuilder {
 	}
 
 	builder.ssh.SetPort(attr)
+	return builder
+}
+
+func (builder *SshBuilder) PublicKey(attr string) *SshBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.ssh.SetPublicKey(attr)
 	return builder
 }
 
@@ -80904,6 +81295,15 @@ func (builder *TemplateBuilder) VirtioScsiBuilder(attrBuilder *VirtioScsiBuilder
 	return builder.VirtioScsi(attr)
 }
 
+func (builder *TemplateBuilder) VirtioScsiMultiQueuesEnabled(attr bool) *TemplateBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.template.SetVirtioScsiMultiQueuesEnabled(attr)
+	return builder
+}
+
 func (builder *TemplateBuilder) Vm(attr *Vm) *TemplateBuilder {
 	if builder.err != nil {
 		return builder
@@ -81547,6 +81947,47 @@ func (builder *UserBuilder) Namespace(attr string) *UserBuilder {
 	return builder
 }
 
+func (builder *UserBuilder) Options(attr *UserOptionSlice) *UserBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.user.SetOptions(attr)
+	return builder
+}
+
+func (builder *UserBuilder) OptionsOfAny(anys ...*UserOption) *UserBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	if builder.user.options == nil {
+		builder.user.options = new(UserOptionSlice)
+	}
+	builder.user.options.slice = append(builder.user.options.slice, anys...)
+	return builder
+}
+
+func (builder *UserBuilder) OptionsBuilderOfAny(anyBuilders ...UserOptionBuilder) *UserBuilder {
+	if builder.err != nil || len(anyBuilders) == 0 {
+		return builder
+	}
+
+	for _, b := range anyBuilders {
+		if b.err != nil {
+			builder.err = b.err
+			return builder
+		}
+		attr, err := b.Build()
+		if err != nil {
+			builder.err = b.err
+			return builder
+		}
+		builder.OptionsOfAny(attr)
+	}
+	return builder
+}
+
 func (builder *UserBuilder) Password(attr string) *UserBuilder {
 	if builder.err != nil {
 		return builder
@@ -81800,6 +82241,109 @@ func (builder *UserBuilder) MustBuild() *User {
 		panic(fmt.Sprintf("Failed to build User instance, reason: %v", builder.err))
 	}
 	return builder.user
+}
+
+type UserOptionBuilder struct {
+	userOption *UserOption
+	err        error
+}
+
+func NewUserOptionBuilder() *UserOptionBuilder {
+	return &UserOptionBuilder{userOption: &UserOption{}, err: nil}
+}
+
+func (builder *UserOptionBuilder) Comment(attr string) *UserOptionBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.userOption.SetComment(attr)
+	return builder
+}
+
+func (builder *UserOptionBuilder) Content(attr string) *UserOptionBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.userOption.SetContent(attr)
+	return builder
+}
+
+func (builder *UserOptionBuilder) Description(attr string) *UserOptionBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.userOption.SetDescription(attr)
+	return builder
+}
+
+func (builder *UserOptionBuilder) Id(attr string) *UserOptionBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.userOption.SetId(attr)
+	return builder
+}
+
+func (builder *UserOptionBuilder) Name(attr string) *UserOptionBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.userOption.SetName(attr)
+	return builder
+}
+
+func (builder *UserOptionBuilder) User(attr *User) *UserOptionBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.userOption.SetUser(attr)
+	return builder
+}
+
+func (builder *UserOptionBuilder) UserBuilder(attrBuilder *UserBuilder) *UserOptionBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	if attrBuilder.err != nil {
+		builder.err = attrBuilder.err
+		return builder
+	}
+	attr, err := attrBuilder.Build()
+	if err != nil {
+		builder.err = err
+		return builder
+	}
+	return builder.User(attr)
+}
+
+func (builder *UserOptionBuilder) Href(href string) *UserOptionBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.userOption.SetHref(href)
+	return builder
+}
+
+func (builder *UserOptionBuilder) Build() (*UserOption, error) {
+	if builder.err != nil {
+		return nil, builder.err
+	}
+	return builder.userOption, nil
+}
+
+func (builder *UserOptionBuilder) MustBuild() *UserOption {
+	if builder.err != nil {
+		panic(fmt.Sprintf("Failed to build UserOption instance, reason: %v", builder.err))
+	}
+	return builder.userOption
 }
 
 type ValueBuilder struct {
@@ -84304,6 +84848,15 @@ func (builder *VmBuilder) VirtioScsiBuilder(attrBuilder *VirtioScsiBuilder) *VmB
 	return builder.VirtioScsi(attr)
 }
 
+func (builder *VmBuilder) VirtioScsiMultiQueuesEnabled(attr bool) *VmBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.vm.SetVirtioScsiMultiQueuesEnabled(attr)
+	return builder
+}
+
 func (builder *VmBuilder) VmPool(attr *VmPool) *VmBuilder {
 	if builder.err != nil {
 		return builder
@@ -85289,6 +85842,15 @@ func (builder *VmBaseBuilder) VirtioScsiBuilder(attrBuilder *VirtioScsiBuilder) 
 		return builder
 	}
 	return builder.VirtioScsi(attr)
+}
+
+func (builder *VmBaseBuilder) VirtioScsiMultiQueuesEnabled(attr bool) *VmBaseBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.vmBase.SetVirtioScsiMultiQueuesEnabled(attr)
+	return builder
 }
 
 func (builder *VmBaseBuilder) Href(href string) *VmBaseBuilder {
@@ -87703,6 +88265,15 @@ func (builder *ActionBuilder) Name(attr string) *ActionBuilder {
 	return builder
 }
 
+func (builder *ActionBuilder) OptimizeCpuSettings(attr bool) *ActionBuilder {
+	if builder.err != nil {
+		return builder
+	}
+
+	builder.action.SetOptimizeCpuSettings(attr)
+	return builder
+}
+
 func (builder *ActionBuilder) Option(attr *Option) *ActionBuilder {
 	if builder.err != nil {
 		return builder
@@ -88780,6 +89351,14 @@ const (
 	FENCETYPE_STOP    FenceType = "stop"
 )
 
+type FipsMode string
+
+const (
+	FIPSMODE_DISABLED  FipsMode = "disabled"
+	FIPSMODE_ENABLED   FipsMode = "enabled"
+	FIPSMODE_UNDEFINED FipsMode = "undefined"
+)
+
 type FirewallType string
 
 const (
@@ -88907,6 +89486,14 @@ const (
 	IMAGETRANSFERPHASE_RESUMING           ImageTransferPhase = "resuming"
 	IMAGETRANSFERPHASE_TRANSFERRING       ImageTransferPhase = "transferring"
 	IMAGETRANSFERPHASE_UNKNOWN            ImageTransferPhase = "unknown"
+)
+
+type ImageTransferTimeoutPolicy string
+
+const (
+	IMAGETRANSFERTIMEOUTPOLICY_CANCEL ImageTransferTimeoutPolicy = "cancel"
+	IMAGETRANSFERTIMEOUTPOLICY_LEGACY ImageTransferTimeoutPolicy = "legacy"
+	IMAGETRANSFERTIMEOUTPOLICY_PAUSE  ImageTransferTimeoutPolicy = "pause"
 )
 
 type InheritableBoolean string

@@ -1149,10 +1149,10 @@ github.com/openshift/machine-api-operator/pkg/apis/vsphereprovider/v1beta1
 # github.com/openshift/machine-config-operator v0.0.0 => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
 ## explicit
 github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1
-# github.com/ovirt/go-ovirt v0.0.0-20210112072624-e4d3b104de71
+# github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c
 ## explicit
 github.com/ovirt/go-ovirt
-# github.com/ovirt/terraform-provider-ovirt v0.4.3-0.20210118101701-cc657a8c6634
+# github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210326142716-4545f80e61cd
 ## explicit
 github.com/ovirt/terraform-provider-ovirt/ovirt
 # github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db
