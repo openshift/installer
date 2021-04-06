@@ -22,8 +22,6 @@ internal to the cluster as possible.
 There is a DNS VIP managed by `keepalived` in a manner similar to the API VIP
 discussed above.
 
-`coredns` runs with a custom `mdns` plugin (`coredns-mdns`).
-
 Relevant files:
 * **[files/etc/dhcp/dhclient.conf](files/etc/dhcp/dhclient.conf)** - Specify
   that the bootstrap VM should use `localhost` as its primary DNS server.

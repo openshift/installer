@@ -63,7 +63,6 @@ CLUSTER_BOOTSTRAP_IMAGE=$(image_for cluster-bootstrap)
 
 KEEPALIVED_IMAGE=$(image_for keepalived-ipfailover || echo "no-keepalived-image")
 COREDNS_IMAGE=$(image_for coredns)
-MDNS_PUBLISHER_IMAGE=$(image_for mdns-publisher)
 HAPROXY_IMAGE=$(image_for haproxy-router)
 BAREMETAL_RUNTIMECFG_IMAGE=$(image_for baremetal-runtimecfg)
 
@@ -299,7 +298,6 @@ then
 			--infra-image="${MACHINE_CONFIG_INFRA_IMAGE}" \
 			--keepalived-image="${KEEPALIVED_IMAGE}" \
 			--coredns-image="${COREDNS_IMAGE}" \
-			--mdns-publisher-image="${MDNS_PUBLISHER_IMAGE}" \
 			--haproxy-image="${HAPROXY_IMAGE}" \
 			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
 			--release-image="${RELEASE_IMAGE_DIGEST}" \
