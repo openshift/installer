@@ -1219,6 +1219,7 @@ github.com/shurcooL/vfsgen
 # github.com/sirupsen/logrus v1.7.0
 ## explicit
 github.com/sirupsen/logrus
+github.com/sirupsen/logrus/hooks/test
 # github.com/spf13/afero v1.3.5
 github.com/spf13/afero
 github.com/spf13/afero/mem

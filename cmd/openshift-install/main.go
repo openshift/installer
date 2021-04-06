@@ -58,6 +58,7 @@ func installerMain() {
 		newDestroyCmd(),
 		newWaitForCmd(),
 		newGatherCmd(),
+		newAnalyzeCmd(),
 		newVersionCmd(),
 		newGraphCmd(),
 		newCoreOSCmd(),
