@@ -45,7 +45,7 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 		}
 	case azure.Name:
 		// Create client using public cloud because install config has not been generated yet.
-		ssn, err := azureconfig.GetSession(azure.PublicCloud)
+		ssn, err := azureconfig.GetSession(azure.PublicCloud, "")
 		if err != nil {
 			return err
 		}
