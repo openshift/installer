@@ -62,6 +62,13 @@ func (params CloudProviderConfig) JSON() (string, error) {
 		// https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-tcp-reset
 		LoadBalancerSku: "standard",
 	}
+
+	if params.CloudName == azure.StackCloud {
+		config.authConfig.UseManagedIdentityExtension = false
+		config.LoadBalancerSku = "basic"
+		config.UseInstanceMetadata = false
+	}
+
 	buff := &bytes.Buffer{}
 	encoder := json.NewEncoder(buff)
 	encoder.SetIndent("", "\t")
