@@ -27,6 +27,7 @@ module "bootstrap" {
   network_id       = libvirt_network.net.id
   pool             = libvirt_pool.storage_pool.name
   bootstrap_memory = var.libvirt_bootstrap_memory
+  count            = var.bootstrapping ? 1 : 0
 }
 
 resource "libvirt_volume" "master" {
@@ -117,7 +118,7 @@ resource "libvirt_domain" "master" {
 }
 
 data "libvirt_network_dns_host_template" "bootstrap" {
-  count    = var.bootstrap_dns ? 1 : 0
+  count    = var.bootstrapping ? 1 : 0
   ip       = var.libvirt_bootstrap_ip
   hostname = "api.${var.cluster_domain}"
 }
@@ -129,7 +130,7 @@ data "libvirt_network_dns_host_template" "masters" {
 }
 
 data "libvirt_network_dns_host_template" "bootstrap_int" {
-  count    = var.bootstrap_dns ? 1 : 0
+  count    = var.bootstrapping ? 1 : 0
   ip       = var.libvirt_bootstrap_ip
   hostname = "api-int.${var.cluster_domain}"
 }

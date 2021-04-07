@@ -24,18 +24,6 @@ EOF
   default = {}
 }
 
-variable "gcp_bootstrap_enabled" {
-  type = bool
-  description = "Setting this to false allows the bootstrap resources to be disabled."
-  default = true
-}
-
-variable "gcp_bootstrap_lb" {
-  type = bool
-  description = "Setting this to false allows the bootstrap resources to be removed from the cluster load balancers."
-  default = true
-}
-
 variable "gcp_bootstrap_instance_type" {
   type = string
   description = "Instance type for the bootstrap node. Example: `n1-standard-4`"
@@ -119,4 +107,10 @@ variable "gcp_root_volume_kms_key_link" {
   type = string
   description = "The GCP self link of KMS key to encrypt the volume."
   default = null
+}
+
+variable "gcp_bootstrap_included_in_lb" {
+  type = bool
+  default = true
+  description = "True if the bootstrap machine should be included in the load balancers"
 }

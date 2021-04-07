@@ -30,7 +30,7 @@ resource "google_compute_region_backend_service" "api_internal" {
   timeout_sec           = 120
 
   dynamic "backend" {
-    for_each = var.bootstrap_lb ? concat(var.bootstrap_instance_groups, var.master_instance_groups) : var.master_instance_groups
+    for_each = concat(var.bootstrap_instance_groups, var.master_instance_groups)
 
     content {
       group = backend.value

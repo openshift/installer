@@ -20,6 +20,18 @@ EOF
 
 }
 
+variable "bootstrapping" {
+  type = bool
+
+  default = true
+  
+  description = <<EOF
+The switch that is used to keep/destroy the bootstrap. False destroys
+the bootstrap nodes.
+EOF
+
+}
+
 variable "master_count" {
   type = string
 

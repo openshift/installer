@@ -17,10 +17,12 @@ module "template" {
   openstack_base_image_local_file_path = var.openstack_base_image_local_file_path
   ovirt_network_name                   = var.ovirt_network_name
   ovirt_vnic_profile_id                = var.ovirt_vnic_profile_id
+  bootstrapping                        = var.bootstrapping
 }
 
 module "bootstrap" {
   source                               = "./bootstrap"
+  count                                = var.bootstrapping ? 1 : 0
   ovirt_cluster_id                     = var.ovirt_cluster_id
   ovirt_template_id                    = module.template.releaseimage_template_id
   ovirt_tmp_template_vm_id             = module.template.tmp_import_vm

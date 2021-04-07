@@ -58,35 +58,6 @@ func Apply(dir string, platform string, extraArgs ...string) (path string, err e
 	return sf, nil
 }
 
-// Destroy unpacks the platform-specific Terraform modules into the
-// given directory and then runs 'terraform init' and 'terraform
-// destroy'.
-func Destroy(dir string, platform string, extraArgs ...string) (err error) {
-	err = unpackAndInit(dir, platform)
-	if err != nil {
-		return err
-	}
-
-	defaultArgs := []string{
-		"-auto-approve",
-		"-input=false",
-		fmt.Sprintf("-state=%s", filepath.Join(dir, StateFileName)),
-		fmt.Sprintf("-state-out=%s", filepath.Join(dir, StateFileName)),
-	}
-	args := append(defaultArgs, extraArgs...)
-	args = append(args, dir)
-
-	lpDebug := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Debug}).Print}
-	lpError := &lineprinter.LinePrinter{Print: (&lineprinter.Trimmer{WrappedPrint: logrus.Error}).Print}
-	defer lpDebug.Close()
-	defer lpError.Close()
-
-	if exitCode := texec.Destroy(dir, args, lpDebug, lpError); exitCode != 0 {
-		return errors.New("failed to destroy using Terraform")
-	}
-	return nil
-}
-
 // unpack unpacks the platform-specific Terraform modules into the
 // given directory.
 func unpack(dir string, platform string) (err error) {

@@ -1,8 +1,3 @@
-variable "bootstrap_dns" {
-  default     = true
-  description = "Whether to include DNS entries for the bootstrap node or not."
-}
-
 variable "libvirt_uri" {
   type        = string
   description = "libvirt connection URI"

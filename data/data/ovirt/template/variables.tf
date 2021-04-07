@@ -43,3 +43,8 @@ variable "ovirt_vnic_profile_id" {
   type        = string
   description = "The ID of the vNIC profile of Logical Network."
 }
+
+variable "bootstrapping" {
+  type        = bool
+  description = "True when the cluster is bootstrapping"
+}

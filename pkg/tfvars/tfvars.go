@@ -23,6 +23,7 @@ type config struct {
 	IgnitionBootstrap     string `json:"ignition_bootstrap,omitempty"`
 	IgnitionBootstrapFile string `json:"ignition_bootstrap_file,omitempty"`
 	IgnitionMaster        string `json:"ignition_master,omitempty"`
+	Bootstrapping         bool   `json:"bootstrapping"`
 }
 
 // TFVars generates terraform.tfvar JSON for launching the cluster.
@@ -49,6 +50,7 @@ func TFVars(clusterID string, clusterDomain string, baseDomain string, machineV4
 		IgnitionBootstrap:     bootstrapIgn,
 		IgnitionBootstrapFile: f.Name(),
 		IgnitionMaster:        masterIgn,
+		Bootstrapping:         true,
 	}
 
 	return json.MarshalIndent(config, "", "  ")

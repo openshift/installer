@@ -13,12 +13,6 @@ variable "bootstrap_instance_groups" {
   description = "The bootstrap instance groups."
 }
 
-variable "bootstrap_lb" {
-  type        = bool
-  description = "If the bootstrap instance should be in the load balancers."
-  default     = true
-}
-
 variable "master_instances" {
   type        = list(any)
   description = "The master instances."
