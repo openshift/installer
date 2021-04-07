@@ -3,7 +3,7 @@ def GenerateConfig(context):
     backends = []
     for zone in context.properties['zones']:
         backends.append({
-            'group': '$(ref.' + context.properties['infra_id'] + '-master-' + zone + '-instance-group' + '.selfLink)'
+            'group': '$(ref.' + context.properties['infra_id'] + '-master-' + zone + '-ig' + '.selfLink)'
         })
 
     resources = [{
@@ -51,7 +51,7 @@ def GenerateConfig(context):
 
     for zone in context.properties['zones']:
         resources.append({
-            'name': context.properties['infra_id'] + '-master-' + zone + '-instance-group',
+            'name': context.properties['infra_id'] + '-master-' + zone + '-ig',
             'type': 'compute.v1.instanceGroup',
             'properties': {
                 'namedPorts': [
