@@ -181,6 +181,7 @@ var permissions = map[PermissionGroup][]string{
 		"elasticloadbalancing:DescribeTargetGroups",
 		"iam:DeleteAccessKey",
 		"iam:DeleteUser",
+		"iam:ListAttachedRolePolicies",
 		"iam:ListInstanceProfiles",
 		"iam:ListRolePolicies",
 		"iam:ListUserPolicies",
