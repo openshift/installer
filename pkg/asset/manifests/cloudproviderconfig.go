@@ -2,6 +2,7 @@ package manifests
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 
@@ -39,6 +40,7 @@ var (
 const (
 	cloudProviderConfigDataKey         = "config"
 	cloudProviderConfigCABundleDataKey = "ca-bundle.pem"
+	cloudProviderEndpointsKey          = "endpoints"
 )
 
 // CloudProviderConfig generates the cloud-provider-config.yaml files.
@@ -143,6 +145,14 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}
 		cm.Data[cloudProviderConfigDataKey] = azureConfig
+
+		if installConfig.Azure.CloudName == azuretypes.StackCloud {
+			b, err := json.Marshal(session.Environment)
+			if err != nil {
+				return errors.Wrap(err, "could not serialize Azure Stack endpoints")
+			}
+			cm.Data[cloudProviderEndpointsKey] = string(b)
+		}
 	case gcptypes.Name:
 		subnet := fmt.Sprintf("%s-worker-subnet", clusterID.InfraID)
 		if installConfig.Config.GCP.ComputeSubnet != "" {
