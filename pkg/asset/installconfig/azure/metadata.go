@@ -19,12 +19,15 @@ type Metadata struct {
 	// CloudName indicates the Azure cloud environment (e.g. public, gov't).
 	CloudName typesazure.CloudEnvironment `json:"cloudName,omitempty"`
 
+	// ARMEndpoint indicates the resource management API endpoint used by AzureStack.
+	ARMEndpoint string `json:"armEndpoint,omitempty"`
+
 	mutex sync.Mutex
 }
 
 // NewMetadata initializes a new Metadata object.
-func NewMetadata(cloudName typesazure.CloudEnvironment) *Metadata {
-	return &Metadata{CloudName: cloudName}
+func NewMetadata(cloudName typesazure.CloudEnvironment, armEndpoint string) *Metadata {
+	return &Metadata{CloudName: cloudName, ARMEndpoint: armEndpoint}
 }
 
 // Session holds an Azure session which can be used for Azure API calls
@@ -39,7 +42,7 @@ func (m *Metadata) Session() (*Session, error) {
 func (m *Metadata) unlockedSession() (*Session, error) {
 	if m.session == nil {
 		var err error
-		m.session, err = GetSession(m.CloudName)
+		m.session, err = GetSession(m.CloudName, m.ARMEndpoint)
 		if err != nil {
 			return nil, errors.Wrap(err, "creating Azure session")
 		}

@@ -484,7 +484,7 @@ func (client *privateDNSClient) migrateLegacyZone(legacyDNSZone *legacyDNSZone, 
 
 // Migrate does a migration from a legacy zone to a private zone
 func Migrate(cloudName azure.CloudEnvironment, resourceGroup string, migrateZone string, virtualNetwork string, vnetResourceGroup string, link bool) error {
-	session, err := azconfig.GetSession(cloudName)
+	session, err := azconfig.GetSession(cloudName, "")
 	if err != nil {
 		return err
 	}
@@ -508,7 +508,7 @@ func Migrate(cloudName azure.CloudEnvironment, resourceGroup string, migrateZone
 
 // Eligible shows legacy zones that are eligible for migrating to private zones
 func Eligible(cloudName azure.CloudEnvironment) error {
-	session, err := azconfig.GetSession(cloudName)
+	session, err := azconfig.GetSession(cloudName, "")
 	if err != nil {
 		return err
 	}
