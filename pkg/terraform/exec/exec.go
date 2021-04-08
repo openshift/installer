@@ -35,6 +35,7 @@ func Apply(datadir string, stdout, stderr io.Writer, opts ...tfexec.ApplyOption)
 	tf, err := tfexec.NewTerraform(datadir, tfPath)
 	if err != nil {
 		fmt.Fprintf(stderr, "Failed: new terraform: %s\n", err)
+		return 1
 	}
 
 	tf.SetStdout(stdout)
@@ -55,6 +56,7 @@ func Destroy(datadir string, stdout, stderr io.Writer, opts ...tfexec.DestroyOpt
 	tf, err := tfexec.NewTerraform(datadir, tfPath)
 	if err != nil {
 		fmt.Fprintf(stderr, "Failed: new terraform: %s\n", err)
+		return 1
 	}
 
 	tf.SetStdout(stdout)
@@ -75,6 +77,7 @@ func Init(datadir string, stdout, stderr io.Writer, opts ...tfexec.InitOption) i
 	tf, err := tfexec.NewTerraform(datadir, tfPath)
 	if err != nil {
 		fmt.Fprintf(stderr, "Failed: new terraform: %s\n", err)
+		return 1
 	}
 
 	tf.SetStdout(stdout)

@@ -120,19 +120,37 @@ func unpackAndInit(dir string, platform string, target string) (err error) {
 	defer lpDebug.Close()
 	defer lpError.Close()
 
-	if exitCode := texec.Init(dir, lpDebug, lpError); exitCode != 0 {
+	os.Setenv("TF_CLI_CONFIG_FILE", filepath.Join(dir, "terraform.rc"))
+	os.Setenv("TERRAFORM_LOCK_FILE_PATH", dir)
+
+	if exitCode := texec.Init(dir, lpDebug, lpError, tfexec.PluginDir(filepath.Join(dir, "plugins"))); exitCode != 0 {
 		return errors.New("failed to initialize Terraform")
 	}
 	return nil
 }
 
 func setupEmbeddedPlugins(dir string) error {
-	pdir := filepath.Join(dir, "plugins")
-	if err := os.MkdirAll(pdir, 0777); err != nil {
-		return err
-	}
+	re := regexp.MustCompile(`^terraform-provider-(.+)$`)
+	pdir := filepath.Join(dir, "plugins", "openshift", "local")
+
 	for name, pluginPath := range plugins.KnownPlugins {
 		dst := filepath.Join(pdir, name)
+		matches := re.FindStringSubmatch(name)
+		if matches == nil {
+			logrus.Warnf("Failed to extract plugin name from %s", name)
+			continue
+		}
+		pluginName := matches[1]
+
+		// XXX: HACK: pretend all plugin versions are v1.0.0
+		pluginVersion := "1.0.0"
+		dstDir := filepath.Join(pdir, pluginName, pluginVersion, fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH))
+		if err := os.MkdirAll(dstDir, 0777); err != nil {
+			return err
+		}
+
+		dst = filepath.Join(dstDir, name)
+
 		if runtime.GOOS == "windows" {
 			dst = fmt.Sprintf("%s.exe", dst)
 		}
