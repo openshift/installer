@@ -38,6 +38,8 @@ resource "openstack_blockstorage_volume_v3" "master_volume" {
   size = var.root_volume_size
   volume_type = var.root_volume_type
   image_id = var.base_image_id
+
+  availability_zone = var.root_volume_zones[count.index % length(var.root_volume_zones)]
 }
 
 resource "openstack_compute_servergroup_v2" "master_group" {

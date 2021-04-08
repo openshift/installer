@@ -46,6 +46,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		return nil, err
 	}
 
+	volumeAZs := openstackdefaults.DefaultRootVolumeAZ()
+	if mpool.RootVolume != nil && len(mpool.RootVolume.Zones) != 0 {
+		volumeAZs = mpool.RootVolume.Zones
+	}
+
 	total := int64(1)
 	if pool.Replicas != nil {
 		total = *pool.Replicas
@@ -66,6 +71,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				role,
 				userDataSecret,
 				trunkSupport,
+				volumeAZs[int(idx)%len(volumeAZs)],
 			)
 			if err != nil {
 				return nil, err
@@ -105,7 +111,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunkSupport bool) (*openstackprovider.OpenstackProviderSpec, error) {
+func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunkSupport bool, rootVolumeAZ string) (*openstackprovider.OpenstackProviderSpec, error) {
 	var networks []openstackprovider.NetworkParam
 	if platform.MachinesSubnet != "" {
 		networks = []openstackprovider.NetworkParam{{
@@ -169,6 +175,7 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 			SourceType: "image",
 			SourceUUID: osImage,
 			VolumeType: mpool.RootVolume.Type,
+			Zone:       rootVolumeAZ,
 		}
 	} else {
 		spec.Image = osImage

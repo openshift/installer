@@ -465,6 +465,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			caCert,
 			bootstrapIgn,
 			installConfig.Config.ControlPlane.Platform.OpenStack,
+			installConfig.Config.OpenStack.DefaultMachinePlatform,
 			installConfig.Config.Platform.OpenStack.MachinesSubnet,
 			installConfig.Config.Proxy,
 		)

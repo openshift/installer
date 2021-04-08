@@ -39,6 +39,8 @@ resource "openstack_blockstorage_volume_v3" "bootstrap_volume" {
   size        = var.root_volume_size
   volume_type = var.root_volume_type
   image_id    = var.base_image_id
+
+  availability_zone = var.root_volume_zone
 }
 
 resource "openstack_compute_instance_v2" "bootstrap" {
