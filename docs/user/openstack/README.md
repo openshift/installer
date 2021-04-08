@@ -112,6 +112,14 @@ openstack role add --user <user> --project <project> swiftoperator
 
 If Swift is not available, the [PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims) storage is used as the backend. For this purpose, a persistent volume of 100 GB will be created in Cinder and mounted to the image registry pod during the installation.
 
+**Note:** If you are deploying a cluster in an Availability Zone where Swift isn't available but where Cinder is, it is recommended to deploy the Image Registry with Cinder backend. It will try to schedule the volume into the same AZ as the Nova zone where the PVC is located; otherwise it'll pick the default availability zone. If needed, the Image registry can be moved to another availability zone by a day 2 operation.
+
+If you want to force Cinder to be used as a backend for the Image Registry, you need to remove the `swiftoperator` permissions. As an OpenStack administrator:
+
+```sh
+openstack role remove --user <user> --project <project> swiftoperator
+```
+
 **Note:** Since Cinder supports only [ReadWriteOnce](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes) access mode, it's not possible to have more than one replica of the image registry pod.
 
 ### Disk Requirements
