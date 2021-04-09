@@ -21,6 +21,7 @@ module "template" {
 
 module "bootstrap" {
   source                               = "./bootstrap"
+  count                                = var.bootstrapping ? 1 : 0
   ovirt_cluster_id                     = var.ovirt_cluster_id
   ovirt_template_id                    = module.template.releaseimage_template_id
   ovirt_tmp_template_vm_id             = module.template.tmp_import_vm

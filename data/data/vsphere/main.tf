@@ -82,6 +82,7 @@ resource "vsphere_folder" "folder" {
 
 module "bootstrap" {
   source = "./bootstrap"
+  count  = var.bootstrapping ? 1 : 0
 
   ignition      = var.ignition_bootstrap
   resource_pool = data.vsphere_compute_cluster.cluster.resource_pool_id

@@ -32,6 +32,7 @@ module "masters" {
 
 module "bootstrap" {
   source         = "./bootstrap"
+  count          = var.bootstrapping ? 1 : 0
   cluster_id     = var.cluster_id
   ignition_data  = var.ignition_bootstrap
   namespace      = var.kubevirt_namespace

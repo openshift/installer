@@ -11,10 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster"
 	osp "github.com/openshift/installer/pkg/destroy/openstack"
 	"github.com/openshift/installer/pkg/terraform"
-	"github.com/openshift/installer/pkg/types/gcp"
-	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
-	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/pkg/errors"
 )
 
@@ -60,41 +57,17 @@ func Destroy(dir string) (err error) {
 		}
 	}
 
-	switch platform {
-	case gcp.Name:
-		// First remove the bootstrap node from the load balancers to avoid race condition.
-		_, err = terraform.Apply(tempDir, platform, append(extraArgs, "-var=gcp_bootstrap_lb=false")...)
-		if err != nil {
-			return errors.Wrap(err, "failed disabling bootstrap load balancing")
-		}
-
-		// Then destory the bootstrap instance and instance group so destroy runs cleanly.
-		// First remove the bootstrap from LB target and its instance so that bootstrap module is cleanly destroyed.
-		_, err = terraform.Apply(tempDir, platform, append(extraArgs, "-var=gcp_bootstrap_enabled=false")...)
-		if err != nil {
-			return errors.Wrap(err, "failed disabling bootstrap")
-		}
-	case libvirt.Name:
-		// First remove the bootstrap node from DNS
-		_, err = terraform.Apply(tempDir, platform, append(extraArgs, "-var=bootstrap_dns=false")...)
-		if err != nil {
-			return errors.Wrap(err, "Terraform apply")
-		}
-	case openstack.Name:
+	if platform == openstack.Name {
 		imageName := metadata.InfraID + "-ignition"
 		err = osp.DeleteGlanceImage(imageName, metadata.OpenStack.Cloud)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to delete glance image %s", imageName)
 		}
-	case ovirt.Name:
-		extraArgs = append(extraArgs, "-target=module.template.ovirt_vm.tmp_import_vm")
-		extraArgs = append(extraArgs, "-target=module.template.ovirt_image_transfer.releaseimage")
 	}
 
-	extraArgs = append(extraArgs, "-target=module.bootstrap")
-	err = terraform.Destroy(tempDir, platform, extraArgs...)
+	_, err = terraform.Apply(tempDir, platform, append(extraArgs, "-var=bootstrapping=false")...)
 	if err != nil {
-		return errors.Wrap(err, "Terraform destroy")
+		return errors.Wrap(err, "failed disabling bootstrap")
 	}
 
 	tempStateFilePath := filepath.Join(dir, terraform.StateFileName+".new")

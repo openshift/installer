@@ -20,6 +20,13 @@ EOF
 
 }
 
+variable "boostrapping" {
+  type = bool
+  description = <<EOF
+The switch that is used to keep/destroy the bootstrap modules.
+EOF
+}
+
 variable "master_count" {
   type = string
 

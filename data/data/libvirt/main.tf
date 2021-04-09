@@ -18,6 +18,7 @@ module "volume" {
 
 module "bootstrap" {
   source = "./bootstrap"
+  count  = var.bootstrapping ? 1 : 0
 
   cluster_domain   = var.cluster_domain
   addresses        = [var.libvirt_bootstrap_ip]
@@ -117,7 +118,7 @@ resource "libvirt_domain" "master" {
 }
 
 data "libvirt_network_dns_host_template" "bootstrap" {
-  count    = var.bootstrap_dns ? 1 : 0
+  count    = var.bootstrapping ? 1 : 0
   ip       = var.libvirt_bootstrap_ip
   hostname = "api.${var.cluster_domain}"
 }
@@ -129,7 +130,7 @@ data "libvirt_network_dns_host_template" "masters" {
 }
 
 data "libvirt_network_dns_host_template" "bootstrap_int" {
-  count    = var.bootstrap_dns ? 1 : 0
+  count    = var.bootstrapping ? 1 : 0
   ip       = var.libvirt_bootstrap_ip
   hostname = "api-int.${var.cluster_domain}"
 }
