@@ -17,7 +17,6 @@ module "template" {
   openstack_base_image_local_file_path = var.openstack_base_image_local_file_path
   ovirt_network_name                   = var.ovirt_network_name
   ovirt_vnic_profile_id                = var.ovirt_vnic_profile_id
-  bootstrapping                        = var.bootstrapping
 }
 
 module "bootstrap" {
