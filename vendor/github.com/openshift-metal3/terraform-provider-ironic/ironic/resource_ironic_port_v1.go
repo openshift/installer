@@ -76,16 +76,35 @@ func resourcePortV1Read(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	d.Set("address", port.Address)
-	d.Set("node_uuid", port.NodeUUID)
-	d.Set("port_group_id", port.PortGroupUUID)
-	d.Set("local_link_collection", port.LocalLinkConnection)
-	d.Set("pxe_enabled", port.PXEEnabled)
-	d.Set("physical_network", port.PhysicalNetwork)
-	d.Set("extra", port.Extra)
-	d.Set("is_smart_nic", port.IsSmartNIC)
-
-	return nil
+	err = d.Set("address", port.Address)
+	if err != nil {
+		return err
+	}
+	err = d.Set("node_uuid", port.NodeUUID)
+	if err != nil {
+		return err
+	}
+	err = d.Set("port_group_id", port.PortGroupUUID)
+	if err != nil {
+		return err
+	}
+	err = d.Set("local_link_collection", port.LocalLinkConnection)
+	if err != nil {
+		return err
+	}
+	err = d.Set("pxe_enabled", port.PXEEnabled)
+	if err != nil {
+		return err
+	}
+	err = d.Set("physical_network", port.PhysicalNetwork)
+	if err != nil {
+		return err
+	}
+	err = d.Set("extra", port.Extra)
+	if err != nil {
+		return err
+	}
+	return d.Set("is_smart_nic", port.IsSmartNIC)
 }
 
 func resourcePortV1Update(d *schema.ResourceData, meta interface{}) error {

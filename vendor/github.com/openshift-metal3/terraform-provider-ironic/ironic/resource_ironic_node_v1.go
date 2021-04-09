@@ -222,7 +222,7 @@ func resourceNodeV1Create(d *schema.ResourceData, meta interface{}) error {
 			}
 			_, err := ports.Create(client, portCreateOpts).Extract()
 			if err != nil {
-				resourcePortV1Read(d, meta)
+				_ = resourcePortV1Read(d, meta)
 				return err
 			}
 		}
@@ -282,32 +282,96 @@ func resourceNodeV1Read(d *schema.ResourceData, meta interface{}) error {
 
 	// TODO: Ironic's Create is different than the Node object itself, GET returns things like the
 	//  RaidConfig, we need to add those and handle them in CREATE
-	d.Set("boot_interface", node.BootInterface)
-	d.Set("conductor_group", node.ConductorGroup)
-	d.Set("console_interface", node.ConsoleInterface)
-	d.Set("deploy_interface", node.DeployInterface)
-	d.Set("driver", node.Driver)
-	d.Set("driver_info", node.DriverInfo)
-	d.Set("extra", node.Extra)
-	d.Set("inspect_interface", node.InspectInterface)
-	d.Set("instance_uuid", node.InstanceUUID)
-	d.Set("management_interface", node.ManagementInterface)
-	d.Set("name", node.Name)
-	d.Set("network_interface", node.NetworkInterface)
-	d.Set("owner", node.Owner)
-	d.Set("power_interface", node.PowerInterface)
-	d.Set("power_state", node.PowerState)
-	d.Set("root_device", node.Properties["root_device"])
+	err = d.Set("boot_interface", node.BootInterface)
+	if err != nil {
+		return err
+	}
+	err = d.Set("conductor_group", node.ConductorGroup)
+	if err != nil {
+		return err
+	}
+	err = d.Set("console_interface", node.ConsoleInterface)
+	if err != nil {
+		return err
+	}
+	err = d.Set("deploy_interface", node.DeployInterface)
+	if err != nil {
+		return err
+	}
+	err = d.Set("driver", node.Driver)
+	if err != nil {
+		return err
+	}
+	err = d.Set("driver_info", node.DriverInfo)
+	if err != nil {
+		return err
+	}
+	err = d.Set("extra", node.Extra)
+	if err != nil {
+		return err
+	}
+	err = d.Set("inspect_interface", node.InspectInterface)
+	if err != nil {
+		return err
+	}
+	err = d.Set("instance_uuid", node.InstanceUUID)
+	if err != nil {
+		return err
+	}
+	err = d.Set("management_interface", node.ManagementInterface)
+	if err != nil {
+		return err
+	}
+	err = d.Set("name", node.Name)
+	if err != nil {
+		return err
+	}
+	err = d.Set("network_interface", node.NetworkInterface)
+	if err != nil {
+		return err
+	}
+	err = d.Set("owner", node.Owner)
+	if err != nil {
+		return err
+	}
+	err = d.Set("power_interface", node.PowerInterface)
+	if err != nil {
+		return err
+	}
+	err = d.Set("power_state", node.PowerState)
+	if err != nil {
+		return err
+	}
+	err = d.Set("root_device", node.Properties["root_device"])
+	if err != nil {
+		return err
+	}
 	delete(node.Properties, "root_device")
-	d.Set("properties", node.Properties)
-	d.Set("raid_interface", node.RAIDInterface)
-	d.Set("rescue_interface", node.RescueInterface)
-	d.Set("resource_class", node.ResourceClass)
-	d.Set("storage_interface", node.StorageInterface)
-	d.Set("vendor_interface", node.VendorInterface)
-	d.Set("provision_state", node.ProvisionState)
-
-	return nil
+	err = d.Set("properties", node.Properties)
+	if err != nil {
+		return err
+	}
+	err = d.Set("raid_interface", node.RAIDInterface)
+	if err != nil {
+		return err
+	}
+	err = d.Set("rescue_interface", node.RescueInterface)
+	if err != nil {
+		return err
+	}
+	err = d.Set("resource_class", node.ResourceClass)
+	if err != nil {
+		return err
+	}
+	err = d.Set("storage_interface", node.StorageInterface)
+	if err != nil {
+		return err
+	}
+	err = d.Set("vendor_interface", node.VendorInterface)
+	if err != nil {
+		return err
+	}
+	return d.Set("provision_state", node.ProvisionState)
 }
 
 // Update a node's state based on the terraform config - TODO: handle everything
