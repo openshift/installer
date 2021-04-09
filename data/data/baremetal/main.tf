@@ -16,6 +16,7 @@ provider "ironic" {
 
 module "bootstrap" {
   source = "./bootstrap"
+  count  = var.bootstrapping ? 1 : 0
 
   cluster_id = var.cluster_id
   image      = var.bootstrap_os_image

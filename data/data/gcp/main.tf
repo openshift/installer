@@ -22,8 +22,9 @@ provider "google" {
 
 module "bootstrap" {
   source = "./bootstrap"
+  count  = var.bootstrapping ? 1 : 0
 
-  bootstrap_enabled = var.gcp_bootstrap_enabled
+  bootstrap_enabled = var.bootstrapping
 
   image            = local.gcp_image
   machine_type     = var.gcp_bootstrap_instance_type
@@ -76,7 +77,7 @@ module "network" {
   network_cidr       = var.machine_v4_cidrs[0]
   public_endpoints   = local.public_endpoints
 
-  bootstrap_lb              = var.gcp_bootstrap_enabled && var.gcp_bootstrap_lb
+  bootstrap_lb              = var.bootstrapping
   bootstrap_instances       = module.bootstrap.bootstrap_instances
   bootstrap_instance_groups = module.bootstrap.bootstrap_instance_groups
 

@@ -25,6 +25,7 @@ provider "aws" {
 
 module "bootstrap" {
   source = "./bootstrap"
+  count  = var.bootstrapping ? 1 : 0
 
   ami                      = var.aws_region == var.aws_ami_region ? var.aws_ami : aws_ami_copy.imported[0].id
   instance_type            = var.aws_bootstrap_instance_type

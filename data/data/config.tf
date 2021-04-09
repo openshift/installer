@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 0.12"
+  required_version = ">= 0.14"
 }
 
 variable "machine_v4_cidrs" {
@@ -18,6 +18,13 @@ variable "machine_v6_cidrs" {
 The list of IPv6 address spaces from which to assign machine IPs.
 EOF
 
+}
+
+variable "boostrapping" {
+  type = bool
+  description = <<EOF
+The switch that is used to keep/destroy the bootstrap modules.
+EOF
 }
 
 variable "master_count" {

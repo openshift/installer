@@ -27,6 +27,7 @@ provider "azureprivatedns" {
 
 module "bootstrap" {
   source                 = "./bootstrap"
+  count                  = var.bootstrapping ? 1 : 0
   resource_group_name    = data.azurerm_resource_group.main.name
   region                 = var.azure_region
   vm_size                = var.azure_bootstrap_vm_type

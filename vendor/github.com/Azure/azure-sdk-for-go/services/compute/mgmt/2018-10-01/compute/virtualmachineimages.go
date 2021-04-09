@@ -76,6 +76,7 @@ func (client VirtualMachineImagesClient) Get(ctx context.Context, location strin
 	result, err = client.GetResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "compute.VirtualMachineImagesClient", "Get", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -116,7 +117,6 @@ func (client VirtualMachineImagesClient) GetSender(req *http.Request) (*http.Res
 func (client VirtualMachineImagesClient) GetResponder(resp *http.Response) (result VirtualMachineImage, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -158,6 +158,7 @@ func (client VirtualMachineImagesClient) List(ctx context.Context, location stri
 	result, err = client.ListResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "compute.VirtualMachineImagesClient", "List", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -206,7 +207,6 @@ func (client VirtualMachineImagesClient) ListSender(req *http.Request) (*http.Re
 func (client VirtualMachineImagesClient) ListResponder(resp *http.Response) (result ListVirtualMachineImageResource, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result.Value),
 		autorest.ByClosing())
@@ -245,6 +245,7 @@ func (client VirtualMachineImagesClient) ListOffers(ctx context.Context, locatio
 	result, err = client.ListOffersResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "compute.VirtualMachineImagesClient", "ListOffers", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -282,7 +283,6 @@ func (client VirtualMachineImagesClient) ListOffersSender(req *http.Request) (*h
 func (client VirtualMachineImagesClient) ListOffersResponder(resp *http.Response) (result ListVirtualMachineImageResource, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result.Value),
 		autorest.ByClosing())
@@ -320,6 +320,7 @@ func (client VirtualMachineImagesClient) ListPublishers(ctx context.Context, loc
 	result, err = client.ListPublishersResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "compute.VirtualMachineImagesClient", "ListPublishers", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -356,7 +357,6 @@ func (client VirtualMachineImagesClient) ListPublishersSender(req *http.Request)
 func (client VirtualMachineImagesClient) ListPublishersResponder(resp *http.Response) (result ListVirtualMachineImageResource, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result.Value),
 		autorest.ByClosing())
@@ -396,6 +396,7 @@ func (client VirtualMachineImagesClient) ListSkus(ctx context.Context, location 
 	result, err = client.ListSkusResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "compute.VirtualMachineImagesClient", "ListSkus", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -434,7 +435,6 @@ func (client VirtualMachineImagesClient) ListSkusSender(req *http.Request) (*htt
 func (client VirtualMachineImagesClient) ListSkusResponder(resp *http.Response) (result ListVirtualMachineImageResource, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result.Value),
 		autorest.ByClosing())

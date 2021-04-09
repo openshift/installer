@@ -33,7 +33,7 @@ locals {
 
 // upload the disk if we don't have an existing template
 resource "ovirt_image_transfer" "releaseimage" {
-  count             = length(local.existing_id) == 0 ? 1 : 0
+  count             = length(local.existing_id) == 0 && var.bootstrapping ? 1 : 0
   alias             = var.openstack_base_image_name
   source_url        = var.openstack_base_image_local_file_path
   storage_domain_id = var.ovirt_storage_domain_id
@@ -45,7 +45,7 @@ resource "ovirt_image_transfer" "releaseimage" {
 
 resource "ovirt_vm" "tmp_import_vm" {
   // create the vm for import only when we don't have an existing template
-  count      = length(local.existing_id) == 0 ? 1 : 0
+  count      = length(local.existing_id) == 0 && var.bootstrapping ? 1 : 0
   name       = "tmpvm-for-${ovirt_image_transfer.releaseimage.0.alias}"
   cluster_id = var.ovirt_cluster_id
   auto_start = false

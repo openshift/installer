@@ -10,11 +10,11 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 
-	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/backend"
 	"github.com/hashicorp/terraform/configs"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/tfdiags"
 )
 
 // ImportCommand is a cli.Command implementation that imports resources
@@ -32,18 +32,15 @@ func (c *ImportCommand) Run(args []string) int {
 	}
 
 	var configPath string
-	args, err = c.Meta.process(args, true)
-	if err != nil {
-		return 1
-	}
+	args = c.Meta.process(args)
 
 	cmdFlags := c.Meta.extendedFlagSet("import")
+	cmdFlags.BoolVar(&c.ignoreRemoteVersion, "ignore-remote-version", false, "continue even if remote and local Terraform versions differ")
 	cmdFlags.IntVar(&c.Meta.parallelism, "parallelism", DefaultParallelism, "parallelism")
 	cmdFlags.StringVar(&c.Meta.statePath, "state", "", "path")
 	cmdFlags.StringVar(&c.Meta.stateOutPath, "state-out", "", "path")
 	cmdFlags.StringVar(&c.Meta.backupPath, "backup", "", "path")
 	cmdFlags.StringVar(&configPath, "config", pwd, "path")
-	cmdFlags.StringVar(&c.Meta.provider, "provider", "", "provider")
 	cmdFlags.BoolVar(&c.Meta.stateLock, "lock", true, "lock state")
 	cmdFlags.DurationVar(&c.Meta.stateLockTimeout, "lock-timeout", 0, "lock timeout")
 	cmdFlags.BoolVar(&c.Meta.allowMissingConfig, "allow-missing-config", false, "allow missing config")
@@ -156,35 +153,6 @@ func (c *ImportCommand) Run(args []string) int {
 		return 1
 	}
 
-	// Also parse the user-provided provider address, if any.
-	var providerAddr addrs.AbsProviderConfig
-	if c.Meta.provider != "" {
-		traversal, travDiags := hclsyntax.ParseTraversalAbs([]byte(c.Meta.provider), `-provider=...`, hcl.Pos{Line: 1, Column: 1})
-		diags = diags.Append(travDiags)
-		if travDiags.HasErrors() {
-			c.showDiagnostics(diags)
-			c.Ui.Info(importCommandInvalidAddressReference)
-			return 1
-		}
-		relAddr, addrDiags := configs.ParseProviderConfigCompact(traversal)
-		diags = diags.Append(addrDiags)
-		if addrDiags.HasErrors() {
-			c.showDiagnostics(diags)
-			return 1
-		}
-		providerAddr = relAddr.Absolute(addrs.RootModuleInstance)
-	} else {
-		// Use a default address inferred from the resource type.
-		// We assume the same module as the resource address here, which
-		// may get resolved to an inherited provider when we construct the
-		// import graph inside ctx.Import, called below.
-		if rc != nil && rc.ProviderConfigRef != nil {
-			providerAddr = rc.ProviderConfigAddr().Absolute(addr.Module)
-		} else {
-			providerAddr = resourceRelAddr.DefaultProviderConfig().Absolute(addr.Module)
-		}
-	}
-
 	// Check for user-supplied plugin path
 	if c.pluginPath, err = c.loadPluginPath(); err != nil {
 		c.Ui.Error(fmt.Sprintf("Error loading plugin path: %s", err))
@@ -231,6 +199,14 @@ func (c *ImportCommand) Run(args []string) int {
 		}
 	}
 
+	// Check remote Terraform version is compatible
+	remoteVersionDiags := c.remoteBackendVersionCheck(b, opReq.Workspace)
+	diags = diags.Append(remoteVersionDiags)
+	c.showDiagnostics(diags)
+	if diags.HasErrors() {
+		return 1
+	}
+
 	// Get the context
 	ctx, state, ctxDiags := local.Context(opReq)
 	diags = diags.Append(ctxDiags)
@@ -239,7 +215,7 @@ func (c *ImportCommand) Run(args []string) int {
 		return 1
 	}
 
-	// Make sure to unlock the state
+	// Successfully creating the context can result in a lock, so ensure we release it
 	defer func() {
 		err := opReq.StateLocker.Unlock(nil)
 		if err != nil {
@@ -253,9 +229,8 @@ func (c *ImportCommand) Run(args []string) int {
 	newState, importDiags := ctx.Import(&terraform.ImportOpts{
 		Targets: []*terraform.ImportTarget{
 			&terraform.ImportTarget{
-				Addr:         addr,
-				ID:           args[1],
-				ProviderAddr: providerAddr,
+				Addr: addr,
+				ID:   args[1],
 			},
 		},
 	})
@@ -340,11 +315,6 @@ Options:
 
   -no-color               If specified, output won't contain any color.
 
-  -provider=provider      Deprecated: Override the provider configuration to use
-                          when importing the object. By default, Terraform uses the
-                          provider specified in the configuration for the target
-                          resource, and that is the best behavior in most cases.
-
   -state=PATH             Path to the source state file. Defaults to the configured
                           backend, or "terraform.tfstate"
 
@@ -360,17 +330,20 @@ Options:
                           a file. If "terraform.tfvars" or any ".auto.tfvars"
                           files are present, they will be automatically loaded.
 
+  -ignore-remote-version  Continue even if remote and local Terraform versions
+                          differ. This may result in an unusable workspace, and
+                          should be used with extreme caution.
 
 `
 	return strings.TrimSpace(helpText)
 }
 
 func (c *ImportCommand) Synopsis() string {
-	return "Import existing infrastructure into Terraform"
+	return "Associate existing infrastructure with a Terraform resource"
 }
 
 const importCommandInvalidAddressReference = `For information on valid syntax, see:
-https://www.terraform.io/docs/internals/resource-addressing.html`
+https://www.terraform.io/docs/cli/state/resource-addressing.html`
 
 const importCommandMissingResourceFmt = `[reset][bold][red]Error:[reset][bold] resource address %q does not exist in the configuration.[reset]
 

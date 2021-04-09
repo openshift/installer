@@ -68,7 +68,7 @@ func (client P2sVpnServerConfigurationsClient) CreateOrUpdate(ctx context.Contex
 
 	result, err = client.CreateOrUpdateSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "network.P2sVpnServerConfigurationsClient", "CreateOrUpdate", result.Response(), "Failure sending request")
+		err = autorest.NewErrorWithError(err, "network.P2sVpnServerConfigurationsClient", "CreateOrUpdate", nil, "Failure sending request")
 		return
 	}
 
@@ -108,7 +108,33 @@ func (client P2sVpnServerConfigurationsClient) CreateOrUpdateSender(req *http.Re
 	if err != nil {
 		return
 	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
+	var azf azure.Future
+	azf, err = azure.NewFutureFromResponse(resp)
+	future.FutureAPI = &azf
+	future.Result = func(client P2sVpnServerConfigurationsClient) (pvsc P2SVpnServerConfiguration, err error) {
+		var done bool
+		done, err = future.DoneWithContext(context.Background(), client)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "network.P2sVpnServerConfigurationsCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
+			return
+		}
+		if !done {
+			err = azure.NewAsyncOpIncompleteError("network.P2sVpnServerConfigurationsCreateOrUpdateFuture")
+			return
+		}
+		sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+		pvsc.Response.Response, err = future.GetResult(sender)
+		if pvsc.Response.Response == nil && err == nil {
+			err = autorest.NewErrorWithError(err, "network.P2sVpnServerConfigurationsCreateOrUpdateFuture", "Result", nil, "received nil response and error")
+		}
+		if err == nil && pvsc.Response.Response.StatusCode != http.StatusNoContent {
+			pvsc, err = client.CreateOrUpdateResponder(pvsc.Response.Response)
+			if err != nil {
+				err = autorest.NewErrorWithError(err, "network.P2sVpnServerConfigurationsCreateOrUpdateFuture", "Result", pvsc.Response.Response, "Failure responding to request")
+			}
+		}
+		return
+	}
 	return
 }
 
@@ -117,7 +143,6 @@ func (client P2sVpnServerConfigurationsClient) CreateOrUpdateSender(req *http.Re
 func (client P2sVpnServerConfigurationsClient) CreateOrUpdateResponder(resp *http.Response) (result P2SVpnServerConfiguration, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -149,7 +174,7 @@ func (client P2sVpnServerConfigurationsClient) Delete(ctx context.Context, resou
 
 	result, err = client.DeleteSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "network.P2sVpnServerConfigurationsClient", "Delete", result.Response(), "Failure sending request")
+		err = autorest.NewErrorWithError(err, "network.P2sVpnServerConfigurationsClient", "Delete", nil, "Failure sending request")
 		return
 	}
 
@@ -186,7 +211,23 @@ func (client P2sVpnServerConfigurationsClient) DeleteSender(req *http.Request) (
 	if err != nil {
 		return
 	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
+	var azf azure.Future
+	azf, err = azure.NewFutureFromResponse(resp)
+	future.FutureAPI = &azf
+	future.Result = func(client P2sVpnServerConfigurationsClient) (ar autorest.Response, err error) {
+		var done bool
+		done, err = future.DoneWithContext(context.Background(), client)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "network.P2sVpnServerConfigurationsDeleteFuture", "Result", future.Response(), "Polling failure")
+			return
+		}
+		if !done {
+			err = azure.NewAsyncOpIncompleteError("network.P2sVpnServerConfigurationsDeleteFuture")
+			return
+		}
+		ar.Response = future.Response()
+		return
+	}
 	return
 }
 
@@ -195,7 +236,6 @@ func (client P2sVpnServerConfigurationsClient) DeleteSender(req *http.Request) (
 func (client P2sVpnServerConfigurationsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent),
 		autorest.ByClosing())
 	result.Response = resp
@@ -234,6 +274,7 @@ func (client P2sVpnServerConfigurationsClient) Get(ctx context.Context, resource
 	result, err = client.GetResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "network.P2sVpnServerConfigurationsClient", "Get", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -272,7 +313,6 @@ func (client P2sVpnServerConfigurationsClient) GetSender(req *http.Request) (*ht
 func (client P2sVpnServerConfigurationsClient) GetResponder(resp *http.Response) (result P2SVpnServerConfiguration, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -312,6 +352,11 @@ func (client P2sVpnServerConfigurationsClient) ListByVirtualWan(ctx context.Cont
 	result.lpvscr, err = client.ListByVirtualWanResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "network.P2sVpnServerConfigurationsClient", "ListByVirtualWan", resp, "Failure responding to request")
+		return
+	}
+	if result.lpvscr.hasNextLink() && result.lpvscr.IsEmpty() {
+		err = result.NextWithContext(ctx)
+		return
 	}
 
 	return
@@ -349,7 +394,6 @@ func (client P2sVpnServerConfigurationsClient) ListByVirtualWanSender(req *http.
 func (client P2sVpnServerConfigurationsClient) ListByVirtualWanResponder(resp *http.Response) (result ListP2SVpnServerConfigurationsResult, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())

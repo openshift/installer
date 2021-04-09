@@ -28,6 +28,7 @@ provider "openstack" {
 
 module "bootstrap" {
   source = "./bootstrap"
+  count  = var.bootstrapping ? 1 : 0
 
   cluster_id         = var.cluster_id
   extra_tags         = var.openstack_extra_tags

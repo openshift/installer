@@ -20,6 +20,7 @@ type Resource struct {
 	ForEach hcl.Expression
 
 	ProviderConfigRef *ProviderConfigRef
+	Provider          addrs.Provider
 
 	DependsOn []hcl.Traversal
 
@@ -60,18 +61,23 @@ func (r *Resource) Addr() addrs.Resource {
 	}
 }
 
-// ProviderConfigAddr returns the address for the provider configuration
-// that should be used for this resource. This function implements the
-// default behavior of extracting the type from the resource type name if
-// an explicit "provider" argument was not provided.
-func (r *Resource) ProviderConfigAddr() addrs.ProviderConfig {
+// ProviderConfigAddr returns the address for the provider configuration that
+// should be used for this resource. This function returns a default provider
+// config addr if an explicit "provider" argument was not provided.
+func (r *Resource) ProviderConfigAddr() addrs.LocalProviderConfig {
 	if r.ProviderConfigRef == nil {
-		return r.Addr().DefaultProviderConfig()
+		// If no specific "provider" argument is given, we want to look up the
+		// provider config where the local name matches the implied provider
+		// from the resource type. This may be different from the resource's
+		// provider type.
+		return addrs.LocalProviderConfig{
+			LocalName: r.Addr().ImpliedProvider(),
+		}
 	}
 
-	return addrs.ProviderConfig{
-		Type:  addrs.NewLegacyProvider(r.ProviderConfigRef.Name),
-		Alias: r.ProviderConfigRef.Alias,
+	return addrs.LocalProviderConfig{
+		LocalName: r.ProviderConfigRef.Name,
+		Alias:     r.ProviderConfigRef.Alias,
 	}
 }
 
@@ -288,6 +294,7 @@ func decodeResourceBlock(block *hcl.Block) (*Resource, hcl.Diagnostics) {
 }
 
 func decodeDataBlock(block *hcl.Block) (*Resource, hcl.Diagnostics) {
+	var diags hcl.Diagnostics
 	r := &Resource{
 		Mode:      addrs.DataResourceMode,
 		Type:      block.Labels[0],
@@ -296,7 +303,13 @@ func decodeDataBlock(block *hcl.Block) (*Resource, hcl.Diagnostics) {
 		TypeRange: block.LabelRanges[0],
 	}
 
-	content, remain, diags := block.Body.PartialContent(dataBlockSchema)
+	// Produce deprecation messages for any pre-0.12-style
+	// single-interpolation-only expressions.
+	moreDiags := warnForDeprecatedInterpolationsInBody(block.Body)
+	diags = append(diags, moreDiags...)
+
+	content, remain, moreDiags := block.Body.PartialContent(dataBlockSchema)
+	diags = append(diags, moreDiags...)
 	r.Config = remain
 
 	if !hclsyntax.ValidIdentifier(r.Type) {
@@ -416,8 +429,16 @@ func decodeProviderConfigRef(expr hcl.Expression, argName string) (*ProviderConf
 		return nil, diags
 	}
 
+	// verify that the provider local name is normalized
+	name := traversal.RootName()
+	nameDiags := checkProviderNameNormalized(name, traversal[0].SourceRange())
+	diags = append(diags, nameDiags...)
+	if diags.HasErrors() {
+		return nil, diags
+	}
+
 	ret := &ProviderConfigRef{
-		Name:      traversal.RootName(),
+		Name:      name,
 		NameRange: traversal[0].SourceRange(),
 	}
 
@@ -445,10 +466,10 @@ func decodeProviderConfigRef(expr hcl.Expression, argName string) (*ProviderConf
 //
 // This is a trivial conversion, essentially just discarding the source
 // location information and keeping just the addressing information.
-func (r *ProviderConfigRef) Addr() addrs.ProviderConfig {
-	return addrs.ProviderConfig{
-		Type:  addrs.NewLegacyProvider(r.Name),
-		Alias: r.Alias,
+func (r *ProviderConfigRef) Addr() addrs.LocalProviderConfig {
+	return addrs.LocalProviderConfig{
+		LocalName: r.Name,
+		Alias:     r.Alias,
 	}
 }
 

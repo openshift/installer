@@ -88,7 +88,7 @@ func (client PoolsClient) CreateOrUpdate(ctx context.Context, body CapacityPool,
 
 	result, err = client.CreateOrUpdateSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "netapp.PoolsClient", "CreateOrUpdate", result.Response(), "Failure sending request")
+		err = autorest.NewErrorWithError(err, "netapp.PoolsClient", "CreateOrUpdate", nil, "Failure sending request")
 		return
 	}
 
@@ -130,7 +130,33 @@ func (client PoolsClient) CreateOrUpdateSender(req *http.Request) (future PoolsC
 	if err != nil {
 		return
 	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
+	var azf azure.Future
+	azf, err = azure.NewFutureFromResponse(resp)
+	future.FutureAPI = &azf
+	future.Result = func(client PoolsClient) (cp CapacityPool, err error) {
+		var done bool
+		done, err = future.DoneWithContext(context.Background(), client)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "netapp.PoolsCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
+			return
+		}
+		if !done {
+			err = azure.NewAsyncOpIncompleteError("netapp.PoolsCreateOrUpdateFuture")
+			return
+		}
+		sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+		cp.Response.Response, err = future.GetResult(sender)
+		if cp.Response.Response == nil && err == nil {
+			err = autorest.NewErrorWithError(err, "netapp.PoolsCreateOrUpdateFuture", "Result", nil, "received nil response and error")
+		}
+		if err == nil && cp.Response.Response.StatusCode != http.StatusNoContent {
+			cp, err = client.CreateOrUpdateResponder(cp.Response.Response)
+			if err != nil {
+				err = autorest.NewErrorWithError(err, "netapp.PoolsCreateOrUpdateFuture", "Result", cp.Response.Response, "Failure responding to request")
+			}
+		}
+		return
+	}
 	return
 }
 
@@ -139,7 +165,6 @@ func (client PoolsClient) CreateOrUpdateSender(req *http.Request) (future PoolsC
 func (client PoolsClient) CreateOrUpdateResponder(resp *http.Response) (result CapacityPool, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated, http.StatusAccepted),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -179,7 +204,7 @@ func (client PoolsClient) Delete(ctx context.Context, resourceGroupName string, 
 
 	result, err = client.DeleteSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "netapp.PoolsClient", "Delete", result.Response(), "Failure sending request")
+		err = autorest.NewErrorWithError(err, "netapp.PoolsClient", "Delete", nil, "Failure sending request")
 		return
 	}
 
@@ -216,7 +241,23 @@ func (client PoolsClient) DeleteSender(req *http.Request) (future PoolsDeleteFut
 	if err != nil {
 		return
 	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
+	var azf azure.Future
+	azf, err = azure.NewFutureFromResponse(resp)
+	future.FutureAPI = &azf
+	future.Result = func(client PoolsClient) (ar autorest.Response, err error) {
+		var done bool
+		done, err = future.DoneWithContext(context.Background(), client)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "netapp.PoolsDeleteFuture", "Result", future.Response(), "Polling failure")
+			return
+		}
+		if !done {
+			err = azure.NewAsyncOpIncompleteError("netapp.PoolsDeleteFuture")
+			return
+		}
+		ar.Response = future.Response()
+		return
+	}
 	return
 }
 
@@ -225,7 +266,6 @@ func (client PoolsClient) DeleteSender(req *http.Request) (future PoolsDeleteFut
 func (client PoolsClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent),
 		autorest.ByClosing())
 	result.Response = resp
@@ -272,6 +312,7 @@ func (client PoolsClient) Get(ctx context.Context, resourceGroupName string, acc
 	result, err = client.GetResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "netapp.PoolsClient", "Get", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -310,7 +351,6 @@ func (client PoolsClient) GetSender(req *http.Request) (*http.Response, error) {
 func (client PoolsClient) GetResponder(resp *http.Response) (result CapacityPool, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -357,6 +397,7 @@ func (client PoolsClient) List(ctx context.Context, resourceGroupName string, ac
 	result, err = client.ListResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "netapp.PoolsClient", "List", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -394,7 +435,6 @@ func (client PoolsClient) ListSender(req *http.Request) (*http.Response, error) 
 func (client PoolsClient) ListResponder(resp *http.Response) (result CapacityPoolList, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
@@ -443,6 +483,7 @@ func (client PoolsClient) Update(ctx context.Context, body CapacityPoolPatch, re
 	result, err = client.UpdateResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "netapp.PoolsClient", "Update", resp, "Failure responding to request")
+		return
 	}
 
 	return
@@ -486,7 +527,6 @@ func (client PoolsClient) UpdateSender(req *http.Request) (*http.Response, error
 func (client PoolsClient) UpdateResponder(resp *http.Response) (result CapacityPool, err error) {
 	err = autorest.Respond(
 		resp,
-		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
