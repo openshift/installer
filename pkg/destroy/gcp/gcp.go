@@ -114,6 +114,10 @@ func (o *ClusterUninstaller) Run() error {
 		time.Second*10,
 		o.destroyCluster,
 	)
+	if err != nil {
+		return errors.Wrap(err, "failed to destroy cluster")
+	}
+
 	return nil
 
 }
