@@ -2,9 +2,10 @@ package ironic
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/gophercloud/gophercloud/openstack/baremetalintrospection/v1/introspection"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"time"
 )
 
 // Schema resource for an introspection data source, that has some selected details about the node exposed.
@@ -79,11 +80,26 @@ func dataSourceIronicIntrospectionRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("could not get introspection status: %s", err.Error())
 	}
 
-	d.Set("finished", status.Finished)
-	d.Set("finished_at", status.FinishedAt)
-	d.Set("started_at", status.StartedAt)
-	d.Set("error", status.Error)
-	d.Set("state", status.State)
+	err = d.Set("finished", status.Finished)
+	if err != nil {
+		return err
+	}
+	err = d.Set("finished_at", status.FinishedAt.Format("2006-01-02T15:04:05"))
+	if err != nil {
+		return err
+	}
+	err = d.Set("started_at", status.StartedAt.Format("2006-01-02T15:04:05"))
+	if err != nil {
+		return err
+	}
+	err = d.Set("error", status.Error)
+	if err != nil {
+		return err
+	}
+	err = d.Set("state", status.State)
+	if err != nil {
+		return err
+	}
 
 	if status.Finished {
 		data, err := introspection.GetIntrospectionData(client, uuid).Extract()
@@ -100,14 +116,26 @@ func dataSourceIronicIntrospectionRead(d *schema.ResourceData, meta interface{})
 				"ip":   v.IP,
 			})
 		}
-		d.Set("interfaces", interfaces)
+		err = d.Set("interfaces", interfaces)
+		if err != nil {
+			return err
+		}
 
 		// CPU data
-		d.Set("cpu_arch", data.CPUArch)
-		d.Set("cpu_count", data.CPUs)
+		err = d.Set("cpu_arch", data.CPUArch)
+		if err != nil {
+			return err
+		}
+		err = d.Set("cpu_count", data.CPUs)
+		if err != nil {
+			return err
+		}
 
 		// Memory info
-		d.Set("memory_mb", data.MemoryMB)
+		err = d.Set("memory_mb", data.MemoryMB)
+		if err != nil {
+			return err
+		}
 	}
 
 	d.SetId(time.Now().UTC().String())

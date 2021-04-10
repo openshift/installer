@@ -2,10 +2,11 @@ package ironic
 
 import (
 	"fmt"
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack/baremetal/v1/nodes"
 	"log"
 	"time"
+
+	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack/baremetal/v1/nodes"
 )
 
 // provisionStateWorkflow is used to track state through the process of updating's it's provision state
@@ -22,7 +23,6 @@ type provisionStateWorkflow struct {
 // ChangeProvisionStateToTarget drives Ironic's state machine through the process to reach our desired end state. This requires multiple
 // possibly long-running steps.  If required, we'll build a config drive ISO for deployment.
 func ChangeProvisionStateToTarget(client *gophercloud.ServiceClient, uuid string, target nodes.TargetProvisionState, configDrive interface{}) error {
-
 	// Run the provisionStateWorkflow - this could take a while
 	wf := provisionStateWorkflow{
 		target:      target,
@@ -32,8 +32,7 @@ func ChangeProvisionStateToTarget(client *gophercloud.ServiceClient, uuid string
 		configDrive: configDrive,
 	}
 
-	err := wf.run()
-	return err
+	return wf.run()
 }
 
 // Keep driving the state machine forward
@@ -44,18 +43,20 @@ func (workflow *provisionStateWorkflow) run() error {
 		log.Printf("[DEBUG] Node is in state '%s'", workflow.node.ProvisionState)
 
 		done, err := workflow.next()
-		if done || err != nil {
-			return err
+		if err != nil {
+			_ = workflow.reloadNode() // to get the lastError
+			return fmt.Errorf("%w , last error was '%s'", err, workflow.node.LastError)
+		}
+		if done {
+			return nil
 		}
 
 		time.Sleep(workflow.wait)
 	}
-
-	return nil
 }
 
 // Do the next thing to get us to our target state
-func (workflow *provisionStateWorkflow) next() (done bool, err error) {
+func (workflow *provisionStateWorkflow) next() (bool, error) {
 	// Refresh the node on each run
 	if err := workflow.reloadNode(); err != nil {
 		return true, err
@@ -82,11 +83,11 @@ func (workflow *provisionStateWorkflow) next() (done bool, err error) {
 }
 
 // Change a node to "manageable" stable
-func (workflow *provisionStateWorkflow) toManageable() (done bool, err error) {
+func (workflow *provisionStateWorkflow) toManageable() (bool, error) {
 	switch state := workflow.node.ProvisionState; state {
 	case "manageable":
 		// We're done!
-		return true, err
+		return true, nil
 	case "enroll",
 		"adopt failed",
 		"clean failed",
@@ -100,25 +101,33 @@ func (workflow *provisionStateWorkflow) toManageable() (done bool, err error) {
 	default:
 		return true, fmt.Errorf("cannot go from state '%s' to state 'manageable'", state)
 	}
-
-	return false, nil
 }
 
 // Clean a node
-func (workflow *provisionStateWorkflow) toClean() (done bool, err error) {
+func (workflow *provisionStateWorkflow) toClean() (bool, error) {
 	// Node must be manageable first
-	workflow.reloadNode()
+	err := workflow.reloadNode()
+	if err != nil {
+		return true, err
+	}
 	if workflow.node.ProvisionState != string(nodes.Manageable) {
-		if err := ChangeProvisionStateToTarget(workflow.client, workflow.uuid, nodes.TargetManage, nil); err != nil {
+		err = ChangeProvisionStateToTarget(workflow.client, workflow.uuid, nodes.TargetManage, nil)
+		if err != nil {
 			return true, err
 		}
 	}
 
 	// Set target to clean
-	workflow.changeProvisionState(nodes.TargetClean)
+	_, err = workflow.changeProvisionState(nodes.TargetClean)
+	if err != nil {
+		return true, err
+	}
 
 	for {
-		workflow.reloadNode()
+		err = workflow.reloadNode()
+		if err != nil {
+			return true, err
+		}
 		state := workflow.node.ProvisionState
 
 		switch state {
@@ -129,17 +138,18 @@ func (workflow *provisionStateWorkflow) toClean() (done bool, err error) {
 			// Not done, no error - Ironic is working
 			continue
 		default:
-			return true, fmt.Errorf("could not clean node, node is currently '%s', last error was '%s'", state, workflow.node.LastError)
+			return true, fmt.Errorf("could not clean node, node is currently '%s'", state)
 		}
 	}
-
-	return true, nil
 }
 
 // Inspect a node
-func (workflow *provisionStateWorkflow) toInspect() (done bool, err error) {
+func (workflow *provisionStateWorkflow) toInspect() (bool, error) {
 	// Node must be manageable first
-	workflow.reloadNode()
+	err := workflow.reloadNode()
+	if err != nil {
+		return true, err
+	}
 	if workflow.node.ProvisionState != string(nodes.Manageable) {
 		if err := ChangeProvisionStateToTarget(workflow.client, workflow.uuid, nodes.TargetManage, nil); err != nil {
 			return true, err
@@ -147,10 +157,16 @@ func (workflow *provisionStateWorkflow) toInspect() (done bool, err error) {
 	}
 
 	// Set target to inspect
-	workflow.changeProvisionState(nodes.TargetInspect)
+	_, err = workflow.changeProvisionState(nodes.TargetInspect)
+	if err != nil {
+		return true, err
+	}
 
 	for {
-		workflow.reloadNode()
+		err = workflow.reloadNode()
+		if err != nil {
+			return true, err
+		}
 		state := workflow.node.ProvisionState
 
 		switch state {
@@ -161,15 +177,13 @@ func (workflow *provisionStateWorkflow) toInspect() (done bool, err error) {
 			// Not done, no error - Ironic is working
 			continue
 		default:
-			return true, fmt.Errorf("could not inspect node, node is currently '%s', last error was '%s'", state, workflow.node.LastError)
+			return true, fmt.Errorf("could not inspect node, node is currently '%s'", state)
 		}
 	}
-
-	return true, nil
 }
 
 // Change a node to "available" state
-func (workflow *provisionStateWorkflow) toAvailable() (done bool, err error) {
+func (workflow *provisionStateWorkflow) toAvailable() (bool, error) {
 	switch state := workflow.node.ProvisionState; state {
 	case "available":
 		// We're done!
@@ -192,13 +206,10 @@ func (workflow *provisionStateWorkflow) toAvailable() (done bool, err error) {
 		}
 		return false, nil
 	}
-
-	return false, nil
 }
 
 // Change a node to "active" state
 func (workflow *provisionStateWorkflow) toActive() (bool, error) {
-
 	switch state := workflow.node.ProvisionState; state {
 	case "active":
 		// We're done!
@@ -256,8 +267,6 @@ func (workflow *provisionStateWorkflow) toDeleted() (bool, error) {
 	default:
 		return true, fmt.Errorf("cannot delete node in state '%s'", state)
 	}
-
-	return false, nil
 }
 
 // Builds the ProvisionStateOpts to send to Ironic -- including config drive.
@@ -270,16 +279,26 @@ func (workflow *provisionStateWorkflow) buildProvisionStateOpts(target nodes.Tar
 	if target == "active" {
 		opts.ConfigDrive = workflow.configDrive
 	}
+	if target == "clean" {
+		opts.CleanSteps = []nodes.CleanStep{}
+		// TODO if we want to actually clean, then we need clean_steps
+		// currently bmo does quite a lot of work to get raid cleaning working.
+		// https://github.com/metal3-io/baremetal-operator/blob/master/pkg/provisioner/ironic/ironic.go#L1249-L1292
+	}
 
 	return &opts, nil
 }
 
 // Call Ironic's API and issue the change provision state request.
-func (workflow *provisionStateWorkflow) changeProvisionState(target nodes.TargetProvisionState) (done bool, err error) {
+func (workflow *provisionStateWorkflow) changeProvisionState(target nodes.TargetProvisionState) (bool, error) {
 	opts, err := workflow.buildProvisionStateOpts(target)
 	if err != nil {
 		log.Printf("[ERROR] Unable to construct provisioning state options: %s", err.Error())
 		return true, err
+	}
+
+	if target == "clean" && len(opts.CleanSteps) == 0 {
+		return true, nil
 	}
 
 	interval := 5 * time.Second

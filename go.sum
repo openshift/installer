@@ -1210,8 +1210,8 @@ github.com/opencontainers/runc v0.1.1/go.mod h1:qT5XzbpPznkRYVz/mWwUaVBUv2rmF59P
 github.com/opencontainers/runc v1.0.0-rc90/go.mod h1:qT5XzbpPznkRYVz/mWwUaVBUv2rmF59PVA73FjuZG0U=
 github.com/opencontainers/runtime-spec v0.1.2-0.20190507144316-5b71a03e2700/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/selinux v1.5.2/go.mod h1:yTcKuYAh6R95iDpefGLQaPaRwJFwyzAJufJyiTt7s0g=
-github.com/openshift-metal3/terraform-provider-ironic v0.2.4 h1:AThAHxSvN18rdK3PqWJS73gMpOvjPka60LRu3IkIiR8=
-github.com/openshift-metal3/terraform-provider-ironic v0.2.4/go.mod h1:ux2W6gsCIYsY/fX5N0V0ZgwFEBNN7P8g6RlH6ACi97k=
+github.com/openshift-metal3/terraform-provider-ironic v0.2.5 h1:5QAT2sCAH1l58tjWG3GQ27oTFuWVilre/uDNxuN1dOc=
+github.com/openshift-metal3/terraform-provider-ironic v0.2.5/go.mod h1:ux2W6gsCIYsY/fX5N0V0ZgwFEBNN7P8g6RlH6ACi97k=
 github.com/openshift/api v0.0.0-20210208192252-670ac3fc997c h1:l+KbFcYYFsp3sMIGOZxg0pApxRE1ARkS7vTLTaRiTIM=
 github.com/openshift/api v0.0.0-20210208192252-670ac3fc997c/go.mod h1:aqU5Cq+kqKKPbDMqxo9FojgDeSpNJI7iuskjXjtojDg=
 github.com/openshift/baremetal-operator v0.0.0-20210315180230-b37e044d24a4 h1:ox7fndpU81UmJ3WTwhcq/PT+nThW5DOvTc84yUGIfrA=

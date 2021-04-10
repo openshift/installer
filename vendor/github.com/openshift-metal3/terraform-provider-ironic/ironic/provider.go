@@ -3,6 +3,12 @@ package ironic
 import (
 	"context"
 	"fmt"
+	"log"
+	"net/http"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/baremetal/httpbasic"
 	"github.com/gophercloud/gophercloud/openstack/baremetal/noauth"
@@ -13,11 +19,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"log"
-	"net/http"
-	"strings"
-	"sync"
-	"time"
 )
 
 // Clients stores the client connection information for Ironic and Inspector
@@ -354,7 +355,7 @@ func waitForConductor(ctx context.Context, client *gophercloud.ServiceClient) {
 			log.Printf("[DEBUG] Waiting for conductor API to become available...")
 			driverCount := 0
 
-			drivers.ListDrivers(client, drivers.ListDriversOpts{
+			err := drivers.ListDrivers(client, drivers.ListDriversOpts{
 				Detail: false,
 			}).EachPage(func(page pagination.Page) (bool, error) {
 				actual, err := drivers.ExtractDrivers(page)
@@ -365,7 +366,7 @@ func waitForConductor(ctx context.Context, client *gophercloud.ServiceClient) {
 				return true, nil
 			})
 			// If we have any drivers, conductor is up.
-			if driverCount > 0 {
+			if err == nil && driverCount > 0 {
 				return
 			}
 

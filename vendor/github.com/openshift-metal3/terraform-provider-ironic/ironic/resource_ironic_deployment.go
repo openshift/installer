@@ -5,14 +5,15 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+
 	"github.com/gophercloud/gophercloud/openstack/baremetal/v1/nodes"
 	utils "github.com/gophercloud/utils/openstack/baremetal/v1/nodes"
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"io/ioutil"
-	"log"
-	"net/http"
 )
 
 // Schema resource definition for an Ironic deployment.
@@ -88,7 +89,7 @@ func resourceDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Reload the resource before returning
-	defer resourceDeploymentRead(d, meta)
+	defer func() { _ = resourceDeploymentRead(d, meta) }()
 
 	// Set instance info
 	instanceInfo := d.Get("instance_info").(map[string]interface{})
@@ -163,10 +164,8 @@ func fetchFullIgnition(userDataURL string, userDataCaCert string, userDataHeader
 			log.Printf("could not get user_data_url: %s", err)
 			return "", err
 		}
-		if userDataHeaders != nil {
-			for k, v := range userDataHeaders {
-				req.Header.Add(k, v.(string))
-			}
+		for k, v := range userDataHeaders {
+			req.Header.Add(k, v.(string))
 		}
 		resp, err := client.Do(req)
 		if err != nil {
@@ -187,9 +186,15 @@ func fetchFullIgnition(userDataURL string, userDataCaCert string, userDataHeader
 
 // buildConfigDrive handles building a config drive appropriate for the Ironic version we are using.  Newer versions
 // support sending the user data directly, otherwise we need to build an ISO image
-func buildConfigDrive(apiVersion, userData string, networkData, metaData map[string]interface{}) (configDrive interface{}, err error) {
+func buildConfigDrive(apiVersion, userData string, networkData, metaData map[string]interface{}) (interface{}, error) {
 	actual, err := version.NewVersion(apiVersion)
+	if err != nil {
+		return nil, err
+	}
 	minimum, err := version.NewVersion("1.56")
+	if err != nil {
+		return nil, err
+	}
 
 	if minimum.GreaterThan(actual) {
 		// Create config drive ISO directly with gophercloud/utils
@@ -202,17 +207,14 @@ func buildConfigDrive(apiVersion, userData string, networkData, metaData map[str
 		if err != nil {
 			return nil, err
 		}
-		configDrive = &configDriveISO
-	} else {
-		// Let Ironic handle creating the config drive
-		configDrive = &nodes.ConfigDrive{
-			UserData:    userData,
-			NetworkData: networkData,
-			MetaData:    metaData,
-		}
+		return &configDriveISO, nil
 	}
-
-	return
+	// Let Ironic handle creating the config drive
+	return &nodes.ConfigDrive{
+		UserData:    userData,
+		NetworkData: networkData,
+		MetaData:    metaData,
+	}, nil
 }
 
 // Read the deployment's data from Ironic
@@ -229,10 +231,11 @@ func resourceDeploymentRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("could not find node %s: %s", id, err)
 	}
 
-	d.Set("provision_state", result.ProvisionState)
-	d.Set("last_error", result.LastError)
-
-	return nil
+	err = d.Set("provision_state", result.ProvisionState)
+	if err != nil {
+		return err
+	}
+	return d.Set("last_error", result.LastError)
 }
 
 // Delete an deployment from Ironic - this cleans the node and returns it's state to 'available'
