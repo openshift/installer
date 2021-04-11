@@ -91,10 +91,14 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			}
 			config.Spec.PublicZone = &configv1.DNSZone{ID: strings.TrimPrefix(*zone.Id, "/hostedzone/")}
 		}
-		config.Spec.PrivateZone = &configv1.DNSZone{Tags: map[string]string{
-			fmt.Sprintf("kubernetes.io/cluster/%s", clusterID.InfraID): "owned",
-			"Name": fmt.Sprintf("%s-int", clusterID.InfraID),
-		}}
+		if hostedZone := installConfig.Config.AWS.HostedZone; hostedZone == "" {
+			config.Spec.PrivateZone = &configv1.DNSZone{Tags: map[string]string{
+				fmt.Sprintf("kubernetes.io/cluster/%s", clusterID.InfraID): "owned",
+				"Name": fmt.Sprintf("%s-int", clusterID.InfraID),
+			}}
+		} else {
+			config.Spec.PrivateZone = &configv1.DNSZone{ID: hostedZone}
+		}
 	case azuretypes.Name:
 		dnsConfig, err := installConfig.Azure.DNSConfig()
 		if err != nil {

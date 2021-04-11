@@ -90,6 +90,7 @@ module "dns" {
   cluster_domain           = var.cluster_domain
   cluster_id               = var.cluster_id
   tags                     = local.tags
+  internal_zone            = var.aws_internal_zone
   vpc_id                   = module.vpc.vpc_id
   region                   = var.aws_region
   publish_strategy         = var.aws_publish_strategy
