@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/utils/pointer"
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -37,6 +38,7 @@ func validInstallConfig() *types.InstallConfig {
 			},
 		},
 		ControlPlane: &types.MachinePool{
+			Replicas: pointer.Int64Ptr(3),
 			Platform: types.MachinePoolPlatform{
 				AWS: &aws.MachinePool{
 					Zones: []string{"a", "b", "c"},
@@ -44,6 +46,7 @@ func validInstallConfig() *types.InstallConfig {
 			},
 		},
 		Compute: []types.MachinePool{{
+			Replicas: pointer.Int64Ptr(3),
 			Platform: types.MachinePoolPlatform{
 				AWS: &aws.MachinePool{
 					Zones: []string{"a", "b", "c"},
@@ -447,6 +450,110 @@ func TestValidate(t *testing.T) {
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
 	}, {
+		name: "AMI omitted for new region in standard partition",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-newregion-1"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+	}, {
+		name: "accept platform-level AMI",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			c.Platform.AWS.AMIID = "custom-ami"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+	}, {
+		name: "accept AMI from default machine platform",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			c.Platform.AWS.DefaultMachinePlatform = &aws.MachinePool{AMIID: "custom-ami"}
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+	}, {
+		name: "accept AMIs specified for each machine pool",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			c.ControlPlane.Platform.AWS.AMIID = "custom-ami"
+			c.Compute[0].Platform.AWS.AMIID = "custom-ami"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+	}, {
+		name: "AMI not provided for control plane",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			c.Compute[0].Platform.AWS.AMIID = "custom-ami"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
+	}, {
+		name: "AMI not provided for compute",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			c.ControlPlane.Platform.AWS.AMIID = "custom-ami"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
+	}, {
+		name: "machine platform not provided for compute",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			c.ControlPlane.Platform.AWS.AMIID = "custom-ami"
+			c.Compute[0].Platform.AWS = nil
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
+	}, {
+		name: "AMI omitted for compute with no replicas",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			c.ControlPlane.Platform.AWS.AMIID = "custom-ami"
+			c.Compute[0].Replicas = pointer.Int64Ptr(0)
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+	}, {
+		name: "AMI not provided for US gov region",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Region = "us-gov-east-1"
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		expectErr:      `^platform\.aws\.amiID: Required value: AMI must be provided$`,
+	}, {
 		name: "AMI not provided for unknown region",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
@@ -472,7 +579,9 @@ func TestValidate(t *testing.T) {
 			if test.expectErr == "" {
 				assert.NoError(t, err)
 			} else {
-				assert.Regexp(t, test.expectErr, err.Error())
+				if assert.Error(t, err) {
+					assert.Regexp(t, test.expectErr, err.Error())
+				}
 			}
 		})
 	}
