@@ -9,13 +9,14 @@ func init() {
 	RegisterFactory("idrac", newIDRACAccessDetails, []string{"http", "https"})
 }
 
-func newIDRACAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
+func newIDRACAccessDetails(parsedURL *url.URL, disableCertificateVerification bool, privLevel string) (AccessDetails, error) {
 	return &iDracAccessDetails{
 		bmcType:                        parsedURL.Scheme,
 		portNum:                        parsedURL.Port(),
 		hostname:                       parsedURL.Hostname(),
 		path:                           parsedURL.Path,
 		disableCertificateVerification: disableCertificateVerification,
+		privLevel:                      privLevel,
 	}, nil
 }
 
@@ -25,6 +26,7 @@ type iDracAccessDetails struct {
 	hostname                       string
 	path                           string
 	disableCertificateVerification bool
+	privLevel                      string
 }
 
 func (a *iDracAccessDetails) Type() string {
@@ -87,7 +89,7 @@ func (a *iDracAccessDetails) PowerInterface() string {
 }
 
 func (a *iDracAccessDetails) RAIDInterface() string {
-	return ""
+	return "idrac-wsman"
 }
 
 func (a *iDracAccessDetails) VendorInterface() string {

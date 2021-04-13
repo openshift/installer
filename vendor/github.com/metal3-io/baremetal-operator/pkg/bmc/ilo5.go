@@ -10,12 +10,13 @@ func init() {
 	RegisterFactory("ilo5", newILO5AccessDetails, []string{"https"})
 }
 
-func newILO5AccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
+func newILO5AccessDetails(parsedURL *url.URL, disableCertificateVerification bool, privLevel string) (AccessDetails, error) {
 	return &iLO5AccessDetails{
 		bmcType:                        parsedURL.Scheme,
 		portNum:                        parsedURL.Port(),
 		hostname:                       parsedURL.Hostname(),
 		disableCertificateVerification: disableCertificateVerification,
+		privLevel:                      privLevel,
 	}, nil
 }
 
@@ -24,6 +25,7 @@ type iLO5AccessDetails struct {
 	portNum                        string
 	hostname                       string
 	disableCertificateVerification bool
+	privLevel                      string
 }
 
 func (a *iLO5AccessDetails) Type() string {

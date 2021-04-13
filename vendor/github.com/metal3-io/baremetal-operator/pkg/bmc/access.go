@@ -11,7 +11,7 @@ import (
 
 // AccessDetailsFactory describes a callable that returns a new
 // AccessDetails based on the input parameters.
-type AccessDetailsFactory func(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error)
+type AccessDetailsFactory func(parsedURL *url.URL, disableCertificateVerification bool, privLevel string) (AccessDetails, error)
 
 var factories = map[string]AccessDetailsFactory{}
 
@@ -110,7 +110,7 @@ func getParsedURL(address string) (parsedURL *url.URL, err error) {
 
 // NewAccessDetails creates an AccessDetails structure from the URL
 // for a BMC.
-func NewAccessDetails(address string, disableCertificateVerification bool) (AccessDetails, error) {
+func NewAccessDetails(address string, disableCertificateVerification bool, privLevel string) (AccessDetails, error) {
 
 	if address == "" {
 		return nil, errors.New("missing BMC address")
@@ -126,5 +126,5 @@ func NewAccessDetails(address string, disableCertificateVerification bool) (Acce
 		return nil, &UnknownBMCTypeError{address, parsedURL.Scheme}
 	}
 
-	return factory(parsedURL, disableCertificateVerification)
+	return factory(parsedURL, disableCertificateVerification, privLevel)
 }

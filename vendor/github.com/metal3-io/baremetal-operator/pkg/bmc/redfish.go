@@ -9,19 +9,27 @@ func init() {
 	schemes := []string{"http", "https"}
 	RegisterFactory("redfish", newRedfishAccessDetails, schemes)
 	RegisterFactory("ilo5-redfish", newRedfishAccessDetails, schemes)
+	RegisterFactory("idrac-redfish", newRedfishiDracAccessDetails, schemes)
 }
 
-func redfishDetails(parsedURL *url.URL, disableCertificateVerification bool) *redfishAccessDetails {
+func redfishDetails(parsedURL *url.URL, disableCertificateVerification bool, privLevel string) *redfishAccessDetails {
 	return &redfishAccessDetails{
 		bmcType:                        parsedURL.Scheme,
 		host:                           parsedURL.Host,
 		path:                           parsedURL.Path,
 		disableCertificateVerification: disableCertificateVerification,
+		privLevel:                      privLevel,
 	}
 }
 
-func newRedfishAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
-	return redfishDetails(parsedURL, disableCertificateVerification), nil
+func newRedfishAccessDetails(parsedURL *url.URL, disableCertificateVerification bool, privLevel string) (AccessDetails, error) {
+	return redfishDetails(parsedURL, disableCertificateVerification, privLevel), nil
+}
+
+func newRedfishiDracAccessDetails(parsedURL *url.URL, disableCertificateVerification bool, privLevel string) (AccessDetails, error) {
+	return &redfishiDracAccessDetails{
+		*redfishDetails(parsedURL, disableCertificateVerification, privLevel),
+	}, nil
 }
 
 type redfishAccessDetails struct {
@@ -29,6 +37,11 @@ type redfishAccessDetails struct {
 	host                           string
 	path                           string
 	disableCertificateVerification bool
+	privLevel                      string
+}
+
+type redfishiDracAccessDetails struct {
+	redfishAccessDetails
 }
 
 const redfishDefaultScheme = "https"
@@ -100,7 +113,7 @@ func (a *redfishAccessDetails) PowerInterface() string {
 }
 
 func (a *redfishAccessDetails) RAIDInterface() string {
-	return ""
+	return "no-raid"
 }
 
 func (a *redfishAccessDetails) VendorInterface() string {
@@ -109,4 +122,30 @@ func (a *redfishAccessDetails) VendorInterface() string {
 
 func (a *redfishAccessDetails) SupportsSecureBoot() bool {
 	return true
+}
+
+// iDrac Redfish Overrides
+
+func (a *redfishiDracAccessDetails) Driver() string {
+	return "idrac"
+}
+
+func (a *redfishiDracAccessDetails) BootInterface() string {
+	return "ipxe"
+}
+
+func (a *redfishiDracAccessDetails) ManagementInterface() string {
+	return "idrac-redfish"
+}
+
+func (a *redfishiDracAccessDetails) PowerInterface() string {
+	return "idrac-redfish"
+}
+
+func (a *redfishiDracAccessDetails) RAIDInterface() string {
+	return "no-raid"
+}
+
+func (a *redfishiDracAccessDetails) VendorInterface() string {
+	return "no-vendor"
 }

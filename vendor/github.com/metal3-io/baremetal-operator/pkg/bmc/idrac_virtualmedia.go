@@ -9,12 +9,13 @@ func init() {
 	RegisterFactory("idrac-virtualmedia", newRedfishiDracVirtualMediaAccessDetails, schemes)
 }
 
-func newRedfishiDracVirtualMediaAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
+func newRedfishiDracVirtualMediaAccessDetails(parsedURL *url.URL, disableCertificateVerification bool, privLevel string) (AccessDetails, error) {
 	return &redfishiDracVirtualMediaAccessDetails{
 		bmcType:                        parsedURL.Scheme,
 		host:                           parsedURL.Host,
 		path:                           parsedURL.Path,
 		disableCertificateVerification: disableCertificateVerification,
+		privLevel:                      privLevel,
 	}, nil
 }
 
@@ -23,6 +24,7 @@ type redfishiDracVirtualMediaAccessDetails struct {
 	host                           string
 	path                           string
 	disableCertificateVerification bool
+	privLevel                      string
 }
 
 func (a *redfishiDracVirtualMediaAccessDetails) Type() string {

@@ -9,12 +9,13 @@ func init() {
 	RegisterFactory("libvirt", newIPMIAccessDetails, []string{})
 }
 
-func newIPMIAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
+func newIPMIAccessDetails(parsedURL *url.URL, disableCertificateVerification bool, privLevel string) (AccessDetails, error) {
 	return &ipmiAccessDetails{
 		bmcType:                        parsedURL.Scheme,
 		portNum:                        parsedURL.Port(),
 		hostname:                       parsedURL.Hostname(),
 		disableCertificateVerification: disableCertificateVerification,
+		privLevel:                      privLevel,
 	}, nil
 }
 
@@ -23,6 +24,7 @@ type ipmiAccessDetails struct {
 	portNum                        string
 	hostname                       string
 	disableCertificateVerification bool
+	privLevel                      string
 }
 
 const ipmiDefaultPort = "623"
@@ -70,6 +72,9 @@ func (a *ipmiAccessDetails) DriverInfo(bmcCreds Credentials) map[string]interfac
 	if a.portNum == "" {
 		result["ipmi_port"] = ipmiDefaultPort
 	}
+	if len(a.privLevel) > 0 {
+		result["ipmi_priv_level"] = a.privLevel
+	}
 	return result
 }
 
@@ -86,7 +91,7 @@ func (a *ipmiAccessDetails) PowerInterface() string {
 }
 
 func (a *ipmiAccessDetails) RAIDInterface() string {
-	return ""
+	return "no-raid"
 }
 
 func (a *ipmiAccessDetails) VendorInterface() string {

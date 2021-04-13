@@ -9,12 +9,13 @@ func init() {
 	RegisterFactory("ibmc", newIbmcAccessDetails, []string{"http", "https"})
 }
 
-func newIbmcAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
+func newIbmcAccessDetails(parsedURL *url.URL, disableCertificateVerification bool, privLevel string) (AccessDetails, error) {
 	return &ibmcAccessDetails{
 		bmcType:                        parsedURL.Scheme,
 		host:                           parsedURL.Host,
 		path:                           parsedURL.Path,
 		disableCertificateVerification: disableCertificateVerification,
+		privLevel:                      privLevel,
 	}, nil
 }
 
@@ -23,6 +24,7 @@ type ibmcAccessDetails struct {
 	host                           string
 	path                           string
 	disableCertificateVerification bool
+	privLevel                      string
 }
 
 func (a *ibmcAccessDetails) Type() string {
@@ -91,7 +93,7 @@ func (a *ibmcAccessDetails) PowerInterface() string {
 }
 
 func (a *ibmcAccessDetails) RAIDInterface() string {
-	return ""
+	return "no-raid"
 }
 
 func (a *ibmcAccessDetails) VendorInterface() string {

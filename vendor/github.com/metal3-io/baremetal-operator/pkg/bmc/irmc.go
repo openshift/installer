@@ -8,12 +8,13 @@ func init() {
 	RegisterFactory("irmc", newIRMCAccessDetails, []string{})
 }
 
-func newIRMCAccessDetails(parsedURL *url.URL, disableCertificateVerification bool) (AccessDetails, error) {
+func newIRMCAccessDetails(parsedURL *url.URL, disableCertificateVerification bool, privLevel string) (AccessDetails, error) {
 	return &iRMCAccessDetails{
 		bmcType:                        parsedURL.Scheme,
 		portNum:                        parsedURL.Port(),
 		hostname:                       parsedURL.Hostname(),
 		disableCertificateVerification: disableCertificateVerification,
+		privLevel:                      privLevel,
 	}, nil
 }
 
@@ -22,6 +23,7 @@ type iRMCAccessDetails struct {
 	portNum                        string
 	hostname                       string
 	disableCertificateVerification bool
+	privLevel                      string
 }
 
 func (a *iRMCAccessDetails) Type() string {
