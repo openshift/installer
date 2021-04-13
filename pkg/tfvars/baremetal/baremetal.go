@@ -55,7 +55,7 @@ func TFVars(libvirtURI, apiVIP, imageCacheIP, bootstrapOSImage, externalBridge, 
 		}
 
 		// BMC Driver Info
-		accessDetails, err := bmc.NewAccessDetails(host.BMC.Address, host.BMC.DisableCertificateVerification)
+		accessDetails, err := bmc.NewAccessDetails(host.BMC.Address, host.BMC.DisableCertificateVerification, host.BMC.PrivLevel)
 		if err != nil {
 			return nil, err
 		}

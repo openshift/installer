@@ -57,6 +57,7 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSet
 			bmc.Address = host.BMC.Address
 			bmc.CredentialsName = secret.Name
 			bmc.DisableCertificateVerification = host.BMC.DisableCertificateVerification
+			bmc.PrivLevel = host.BMC.PrivLevel
 			settings.Secrets = append(settings.Secrets, secret)
 		}
 

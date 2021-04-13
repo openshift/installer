@@ -10,6 +10,9 @@ type BMC struct {
 	Password                       string `json:"password" validate:"required"`
 	Address                        string `json:"address" validate:"required,uniqueField"`
 	DisableCertificateVerification bool   `json:"disableCertificateVerification"`
+	// privLevel is the ipmi privilage level to use when authenicating, it is ignore
+	// when not using ipmi
+	PrivLevel                      string `json:"privLevel"`
 }
 
 // BootMode puts the server in legacy (BIOS), UEFI secure boot or UEFI mode for
