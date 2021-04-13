@@ -24,6 +24,7 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	if config.Platform.AWS == nil {
 		return errors.New(field.Required(field.NewPath("platform", "aws"), "AWS validation requires an AWS platform configuration").Error())
 	}
+	allErrs = append(allErrs, validateAMI(ctx, config)...)
 	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config.Platform.AWS, config.Networking, config.Publish)...)
 
 	if config.ControlPlane != nil && config.ControlPlane.Platform.AWS != nil {
@@ -41,10 +42,6 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if !sets.NewString(rhcos.AMIRegions...).Has(platform.Region) && platform.AMIID == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("amiID"), "AMI must be provided"))
-	}
-
 	if len(platform.Subnets) > 0 {
 		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("subnets"), platform.Subnets, networking, publish)...)
 	}
@@ -55,6 +52,53 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("defaultMachinePlatform"), platform, platform.DefaultMachinePlatform)...)
 	}
 	return allErrs
+}
+
+func validateAMI(ctx context.Context, config *types.InstallConfig) field.ErrorList {
+	// accept AMI from the rhcos stream metadata
+	if sets.NewString(rhcos.AMIRegions...).Has(config.Platform.AWS.Region) {
+		return nil
+	}
+
+	// accept AMI specified at the platform level
+	if config.Platform.AWS.AMIID != "" {
+		return nil
+	}
+
+	// accept AMI specified for the default machine platform
+	if config.Platform.AWS.DefaultMachinePlatform != nil {
+		if config.Platform.AWS.DefaultMachinePlatform.AMIID != "" {
+			return nil
+		}
+	}
+
+	// accept AMIs specified specifically for each machine pool
+	controlPlaneHasAMISpecified := false
+	if config.ControlPlane != nil && config.ControlPlane.Platform.AWS != nil {
+		controlPlaneHasAMISpecified = config.ControlPlane.Platform.AWS.AMIID != ""
+	}
+	computesHaveAMISpecified := true
+	for _, c := range config.Compute {
+		if c.Replicas != nil && *c.Replicas == 0 {
+			continue
+		}
+		if c.Platform.AWS == nil || c.Platform.AWS.AMIID == "" {
+			computesHaveAMISpecified = false
+		}
+	}
+	if controlPlaneHasAMISpecified && computesHaveAMISpecified {
+		return nil
+	}
+
+	// accept AMI that can be copied from us-east-1 if the region is in the standard AWS partition
+	if partition, partitionFound := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), config.Platform.AWS.Region); partitionFound {
+		if partition.ID() == endpoints.AwsPartitionID {
+			return nil
+		}
+	}
+
+	// fail validation since we do not have an AMI to use
+	return field.ErrorList{field.Required(field.NewPath("platform", "aws", "amiID"), "AMI must be provided")}
 }
 
 func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, subnets []string, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
