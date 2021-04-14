@@ -1,7 +1,5 @@
 package packngo
 
-import "fmt"
-
 const facilityBasePath = "/facilities"
 
 // FacilityService interface defines available facility methods
@@ -20,6 +18,7 @@ type Facility struct {
 	Code     string   `json:"code,omitempty"`
 	Features []string `json:"features,omitempty"`
 	Address  *Address `json:"address,omitempty"`
+	Metro    *Metro   `json:"metro,omitempty"`
 	URL      string   `json:"href,omitempty"`
 }
 
@@ -42,12 +41,11 @@ type FacilityServiceOp struct {
 }
 
 // List returns all facilities
-func (s *FacilityServiceOp) List(listOpt *ListOptions) ([]Facility, *Response, error) {
+func (s *FacilityServiceOp) List(opts *ListOptions) ([]Facility, *Response, error) {
 	root := new(facilityRoot)
-	params := urlQuery(listOpt)
-	path := fmt.Sprintf("%s?%s", facilityBasePath, params)
+	apiPathQuery := opts.WithQuery(facilityBasePath)
 
-	resp, err := s.client.DoRequest("GET", path, nil, root)
+	resp, err := s.client.DoRequest("GET", apiPathQuery, nil, root)
 	if err != nil {
 		return nil, resp, err
 	}

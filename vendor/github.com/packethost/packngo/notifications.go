@@ -1,6 +1,8 @@
 package packngo
 
-import "fmt"
+import (
+	"path"
+)
 
 const notificationBasePath = "/notifications"
 
@@ -41,28 +43,25 @@ func (s *NotificationServiceOp) List(listOpt *ListOptions) ([]Notification, *Res
 }
 
 // Get returns a notification by ID
-func (s *NotificationServiceOp) Get(notificationID string, getOpt *GetOptions) (*Notification, *Response, error) {
-	params := urlQuery(getOpt)
-
-	path := fmt.Sprintf("%s/%s?%s", notificationBasePath, notificationID, params)
-	return getNotifications(s.client, path)
+func (s *NotificationServiceOp) Get(notificationID string, opts *GetOptions) (*Notification, *Response, error) {
+	endpointPath := path.Join(notificationBasePath, notificationID)
+	apiPathQuery := opts.WithQuery(endpointPath)
+	return getNotifications(s.client, apiPathQuery)
 }
 
 // Marks notification as read by ID
 func (s *NotificationServiceOp) MarkAsRead(notificationID string) (*Notification, *Response, error) {
-	path := fmt.Sprintf("%s/%s", notificationBasePath, notificationID)
-	return markAsRead(s.client, path)
+	apiPath := path.Join(notificationBasePath, notificationID)
+	return markAsRead(s.client, apiPath)
 }
 
 // list helper function for all notification functions
-func listNotifications(client *Client, path string, listOpt *ListOptions) ([]Notification, *Response, error) {
-	params := urlQuery(listOpt)
-
+func listNotifications(client *Client, endpointPath string, opts *ListOptions) ([]Notification, *Response, error) {
 	root := new(notificationsRoot)
 
-	path = fmt.Sprintf("%s?%s", path, params)
+	apiPathQuery := opts.WithQuery(endpointPath)
 
-	resp, err := client.DoRequest("GET", path, nil, root)
+	resp, err := client.DoRequest("GET", apiPathQuery, nil, root)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -70,11 +69,11 @@ func listNotifications(client *Client, path string, listOpt *ListOptions) ([]Not
 	return root.Notifications, resp, err
 }
 
-func getNotifications(client *Client, path string) (*Notification, *Response, error) {
+func getNotifications(client *Client, apiPath string) (*Notification, *Response, error) {
 
 	notification := new(Notification)
 
-	resp, err := client.DoRequest("GET", path, nil, notification)
+	resp, err := client.DoRequest("GET", apiPath, nil, notification)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -82,11 +81,11 @@ func getNotifications(client *Client, path string) (*Notification, *Response, er
 	return notification, resp, err
 }
 
-func markAsRead(client *Client, path string) (*Notification, *Response, error) {
+func markAsRead(client *Client, apiPath string) (*Notification, *Response, error) {
 
 	notification := new(Notification)
 
-	resp, err := client.DoRequest("PUT", path, nil, notification)
+	resp, err := client.DoRequest("PUT", apiPath, nil, notification)
 	if err != nil {
 		return nil, resp, err
 	}

@@ -1,6 +1,8 @@
 package packngo
 
-import "fmt"
+import (
+	"path"
+)
 
 const hardwareReservationBasePath = "/hardware-reservations"
 
@@ -39,43 +41,36 @@ type hardwareReservationRoot struct {
 }
 
 // List returns all hardware reservations for a given project
-func (s *HardwareReservationServiceOp) List(projectID string, listOpt *ListOptions) (reservations []HardwareReservation, resp *Response, err error) {
+func (s *HardwareReservationServiceOp) List(projectID string, opts *ListOptions) (reservations []HardwareReservation, resp *Response, err error) {
 	root := new(hardwareReservationRoot)
-	params := urlQuery(listOpt)
 
-	path := fmt.Sprintf("%s/%s%s?%s", projectBasePath, projectID, hardwareReservationBasePath, params)
+	endpointPath := path.Join(projectBasePath, projectID, hardwareReservationBasePath)
+	apiPathQuery := opts.WithQuery(endpointPath)
 
 	for {
 		subset := new(hardwareReservationRoot)
 
-		resp, err = s.client.DoRequest("GET", path, nil, root)
+		resp, err = s.client.DoRequest("GET", apiPathQuery, nil, root)
 		if err != nil {
 			return nil, resp, err
 		}
 
 		reservations = append(reservations, root.HardwareReservations...)
-
-		if subset.Meta.Next != nil && (listOpt == nil || listOpt.Page == 0) {
-			path = subset.Meta.Next.Href
-			if params != "" {
-				path = fmt.Sprintf("%s&%s", path, params)
-			}
+		if apiPathQuery = nextPage(subset.Meta, opts); apiPathQuery != "" {
 			continue
 		}
-
 		return
 	}
 }
 
 // Get returns a single hardware reservation
-func (s *HardwareReservationServiceOp) Get(hardwareReservationdID string, getOpt *GetOptions) (*HardwareReservation, *Response, error) {
-	params := urlQuery(getOpt)
-
+func (s *HardwareReservationServiceOp) Get(hardwareReservationdID string, opts *GetOptions) (*HardwareReservation, *Response, error) {
 	hardwareReservation := new(HardwareReservation)
 
-	path := fmt.Sprintf("%s/%s?%s", hardwareReservationBasePath, hardwareReservationdID, params)
+	endpointPath := path.Join(hardwareReservationBasePath, hardwareReservationdID)
+	apiPathQuery := opts.WithQuery(endpointPath)
 
-	resp, err := s.client.DoRequest("GET", path, nil, hardwareReservation)
+	resp, err := s.client.DoRequest("GET", apiPathQuery, nil, hardwareReservation)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -86,11 +81,11 @@ func (s *HardwareReservationServiceOp) Get(hardwareReservationdID string, getOpt
 // Move a hardware reservation to another project
 func (s *HardwareReservationServiceOp) Move(hardwareReservationdID, projectID string) (*HardwareReservation, *Response, error) {
 	hardwareReservation := new(HardwareReservation)
-	path := fmt.Sprintf("%s/%s/%s", hardwareReservationBasePath, hardwareReservationdID, "move")
+	apiPath := path.Join(hardwareReservationBasePath, hardwareReservationdID, "move")
 	body := map[string]string{}
 	body["project_id"] = projectID
 
-	resp, err := s.client.DoRequest("POST", path, body, hardwareReservation)
+	resp, err := s.client.DoRequest("POST", apiPath, body, hardwareReservation)
 	if err != nil {
 		return nil, resp, err
 	}

@@ -1,6 +1,6 @@
 package packngo
 
-import "fmt"
+import "path"
 
 const usersBasePath = "/users"
 const userBasePath = "/user"
@@ -36,7 +36,13 @@ type User struct {
 	Emails                []Email `json:"emails,omitempty"`
 	PhoneNumber           string  `json:"phone_number,omitempty"`
 	URL                   string  `json:"href,omitempty"`
-	VPN                   bool    `json:"vpn"`
+
+	// VPN indicates if Doorman VPN service is enabled for the user.
+	//
+	// Deprecated: As of March 31, 2021, Doorman service is no longer
+	// available. See https://metal.equinix.com/developers/docs/accounts/doorman/
+	// for more details.
+	VPN bool `json:"vpn"`
 }
 
 func (u User) String() string {
@@ -49,25 +55,20 @@ type UserServiceOp struct {
 }
 
 // Get method gets a user by userID
-func (s *UserServiceOp) List(listOpt *ListOptions) (users []User, resp *Response, err error) {
-	params := urlQuery(listOpt)
-	path := fmt.Sprintf("%s?%s", usersBasePath, params)
+func (s *UserServiceOp) List(opts *ListOptions) (users []User, resp *Response, err error) {
+	apiPathQuery := opts.WithQuery(usersBasePath)
 
 	for {
 		subset := new(usersRoot)
 
-		resp, err = s.client.DoRequest("GET", path, nil, subset)
+		resp, err = s.client.DoRequest("GET", apiPathQuery, nil, subset)
 		if err != nil {
 			return nil, resp, err
 		}
 
 		users = append(users, subset.Users...)
 
-		if subset.Meta.Next != nil && (listOpt == nil || listOpt.Page == 0) {
-			path = subset.Meta.Next.Href
-			if params != "" {
-				path = fmt.Sprintf("%s&%s", path, params)
-			}
+		if apiPathQuery = nextPage(subset.Meta, opts); apiPathQuery != "" {
 			continue
 		}
 		return
@@ -86,12 +87,12 @@ func (s *UserServiceOp) Current() (*User, *Response, error) {
 	return user, resp, err
 }
 
-func (s *UserServiceOp) Get(userID string, getOpt *GetOptions) (*User, *Response, error) {
-	params := urlQuery(getOpt)
-	path := fmt.Sprintf("%s/%s?%s", usersBasePath, userID, params)
+func (s *UserServiceOp) Get(userID string, opts *GetOptions) (*User, *Response, error) {
+	endpointPath := path.Join(usersBasePath, userID)
+	apiPathQuery := opts.WithQuery(endpointPath)
 	user := new(User)
 
-	resp, err := s.client.DoRequest("GET", path, nil, user)
+	resp, err := s.client.DoRequest("GET", apiPathQuery, nil, user)
 	if err != nil {
 		return nil, resp, err
 	}

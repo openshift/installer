@@ -1071,7 +1071,7 @@ github.com/ovirt/terraform-provider-ovirt/ovirt
 # github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db
 ## explicit
 github.com/packer-community/winrmcp/winrmcp
-# github.com/packethost/packngo v0.5.1
+# github.com/packethost/packngo v0.13.0
 ## explicit
 github.com/packethost/packngo
 # github.com/pborman/uuid v1.2.0

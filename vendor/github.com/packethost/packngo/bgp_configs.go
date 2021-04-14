@@ -1,8 +1,13 @@
 package packngo
 
-import "fmt"
+import (
+	"path"
+)
 
-var bgpConfigBasePath = "/bgp-config"
+var (
+	bgpConfigPostBasePath = "/bgp-configs"
+	bgpConfigGetBasePath  = "/bgp-config"
+)
 
 // BGPConfigService interface defines available BGP config methods
 type BGPConfigService interface {
@@ -42,9 +47,9 @@ type BGPConfig struct {
 
 // Create function
 func (s *BGPConfigServiceOp) Create(projectID string, request CreateBGPConfigRequest) (*Response, error) {
-	path := fmt.Sprintf("%s/%s%ss", projectBasePath, projectID, bgpConfigBasePath)
+	apiPath := path.Join(projectBasePath, projectID, bgpConfigPostBasePath)
 
-	resp, err := s.client.DoRequest("POST", path, request, nil)
+	resp, err := s.client.DoRequest("POST", apiPath, request, nil)
 	if err != nil {
 		return resp, err
 	}
@@ -53,14 +58,13 @@ func (s *BGPConfigServiceOp) Create(projectID string, request CreateBGPConfigReq
 }
 
 // Get function
-func (s *BGPConfigServiceOp) Get(projectID string, getOpt *GetOptions) (bgpConfig *BGPConfig, resp *Response, err error) {
-	params := urlQuery(getOpt)
-
-	path := fmt.Sprintf("%s/%s%s?%s", projectBasePath, projectID, bgpConfigBasePath, params)
+func (s *BGPConfigServiceOp) Get(projectID string, opts *GetOptions) (bgpConfig *BGPConfig, resp *Response, err error) {
+	endpointPath := path.Join(projectBasePath, projectID, bgpConfigGetBasePath)
+	apiPathQuery := opts.WithQuery(endpointPath)
 
 	subset := new(BGPConfig)
 
-	resp, err = s.client.DoRequest("GET", path, nil, subset)
+	resp, err = s.client.DoRequest("GET", apiPathQuery, nil, subset)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -70,9 +74,9 @@ func (s *BGPConfigServiceOp) Get(projectID string, getOpt *GetOptions) (bgpConfi
 
 // Delete function TODO: this is not implemented in the Equinix Metal API
 // func (s *BGPConfigServiceOp) Delete(configID string) (resp *Response, err error) {
-// 	path := fmt.Sprintf("%ss/%s", bgpConfigBasePath, configID)
+// 	apiPath := fmt.Sprintf("%ss/%s", bgpConfigBasePath, configID)
 
-// 	resp, err = s.client.DoRequest("DELETE", path, nil, nil)
+// 	resp, err = s.client.DoRequest("DELETE", apiPath, nil, nil)
 // 	if err != nil {
 // 		return resp, err
 // 	}

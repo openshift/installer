@@ -1,6 +1,12 @@
 package packngo
 
-const spotMarketBasePath = "/market/spot/prices"
+import "path"
+
+const (
+	spotMarketBasePath = "/market/spot/prices"
+
+	spotMarketMetrosPath = "metros"
+)
 
 // SpotMarketService expooses Spot Market methods
 type SpotMarketService interface {
@@ -15,8 +21,18 @@ type SpotMarketServiceOp struct {
 // PriceMap is a map of [facility][plan]-> float Price
 type PriceMap map[string]map[string]float64
 
-// Prices gets current PriceMap from the API
+// Prices gets current spot market prices by facility.
+//
+// Deprecated: Use PricesByFacility which this function thinly wraps.
 func (s *SpotMarketServiceOp) Prices() (PriceMap, *Response, error) {
+	return s.PricesByFacility()
+}
+
+// PricesByFacility gets current spot market prices by facility. The map is
+// indexed by facility code and then plan name.
+//
+// price := client.SpotMarket.PricesByFacility()["ny5"]["c3.medium.x86"]
+func (s *SpotMarketServiceOp) PricesByFacility() (PriceMap, *Response, error) {
 	root := new(struct {
 		SMPs map[string]map[string]struct {
 			Price float64 `json:"price"`
@@ -33,6 +49,32 @@ func (s *SpotMarketServiceOp) Prices() (PriceMap, *Response, error) {
 		prices[facility] = map[string]float64{}
 		for plan, v := range planMap {
 			prices[facility][plan] = v.Price
+		}
+	}
+	return prices, resp, err
+}
+
+// PricesByMetro gets current spot market prices by metro. The map is
+// indexed by metro code and then plan name.
+//
+// price := client.SpotMarket.PricesByMetro()["sv"]["c3.medium.x86"]
+func (s *SpotMarketServiceOp) PricesByMetro() (PriceMap, *Response, error) {
+	root := new(struct {
+		SMPs map[string]map[string]struct {
+			Price float64 `json:"price"`
+		} `json:"spot_market_prices"`
+	})
+
+	resp, err := s.client.DoRequest("GET", path.Join(spotMarketBasePath, spotMarketMetrosPath), nil, root)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	prices := make(PriceMap)
+	for metro, planMap := range root.SMPs {
+		prices[metro] = map[string]float64{}
+		for plan, v := range planMap {
+			prices[metro][plan] = v.Price
 		}
 	}
 	return prices, resp, err

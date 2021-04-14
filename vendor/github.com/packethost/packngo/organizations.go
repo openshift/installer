@@ -1,6 +1,8 @@
 package packngo
 
-import "fmt"
+import (
+	"path"
+)
 
 // API documentation https://metal.equinix.com/developers/api/organizations/
 const organizationBasePath = "/organizations"
@@ -79,25 +81,20 @@ type OrganizationServiceOp struct {
 }
 
 // List returns the user's organizations
-func (s *OrganizationServiceOp) List(listOpt *ListOptions) (orgs []Organization, resp *Response, err error) {
-	params := urlQuery(listOpt)
-	root := new(organizationsRoot)
+func (s *OrganizationServiceOp) List(opts *ListOptions) (orgs []Organization, resp *Response, err error) {
+	subset := new(organizationsRoot)
 
-	path := fmt.Sprintf("%s?%s", organizationBasePath, params)
+	apiPathQuery := opts.WithQuery(organizationBasePath)
 
 	for {
-		resp, err = s.client.DoRequest("GET", path, nil, root)
+		resp, err = s.client.DoRequest("GET", apiPathQuery, nil, subset)
 		if err != nil {
 			return nil, resp, err
 		}
 
-		orgs = append(orgs, root.Organizations...)
+		orgs = append(orgs, subset.Organizations...)
 
-		if root.Meta.Next != nil && (listOpt == nil || listOpt.Page == 0) {
-			path = root.Meta.Next.Href
-			if params != "" {
-				path = fmt.Sprintf("%s&%s", path, params)
-			}
+		if apiPathQuery = nextPage(subset.Meta, opts); apiPathQuery != "" {
 			continue
 		}
 		return
@@ -105,12 +102,12 @@ func (s *OrganizationServiceOp) List(listOpt *ListOptions) (orgs []Organization,
 }
 
 // Get returns a organization by id
-func (s *OrganizationServiceOp) Get(organizationID string, getOpt *GetOptions) (*Organization, *Response, error) {
-	params := urlQuery(getOpt)
-	path := fmt.Sprintf("%s/%s?%s", organizationBasePath, organizationID, params)
+func (s *OrganizationServiceOp) Get(organizationID string, opts *GetOptions) (*Organization, *Response, error) {
+	endpointPath := path.Join(organizationBasePath, organizationID)
+	apiPathQuery := opts.WithQuery(endpointPath)
 	organization := new(Organization)
 
-	resp, err := s.client.DoRequest("GET", path, nil, organization)
+	resp, err := s.client.DoRequest("GET", apiPathQuery, nil, organization)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -132,10 +129,10 @@ func (s *OrganizationServiceOp) Create(createRequest *OrganizationCreateRequest)
 
 // Update updates an organization
 func (s *OrganizationServiceOp) Update(id string, updateRequest *OrganizationUpdateRequest) (*Organization, *Response, error) {
-	path := fmt.Sprintf("%s/%s", organizationBasePath, id)
+	apiPath := path.Join(organizationBasePath, id)
 	organization := new(Organization)
 
-	resp, err := s.client.DoRequest("PATCH", path, updateRequest, organization)
+	resp, err := s.client.DoRequest("PATCH", apiPath, updateRequest, organization)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -145,17 +142,17 @@ func (s *OrganizationServiceOp) Update(id string, updateRequest *OrganizationUpd
 
 // Delete deletes an organizationID
 func (s *OrganizationServiceOp) Delete(organizationID string) (*Response, error) {
-	path := fmt.Sprintf("%s/%s", organizationBasePath, organizationID)
+	apiPath := path.Join(organizationBasePath, organizationID)
 
-	return s.client.DoRequest("DELETE", path, nil, nil)
+	return s.client.DoRequest("DELETE", apiPath, nil, nil)
 }
 
 // ListPaymentMethods returns PaymentMethods for an organization
 func (s *OrganizationServiceOp) ListPaymentMethods(organizationID string) ([]PaymentMethod, *Response, error) {
-	url := fmt.Sprintf("%s/%s%s", organizationBasePath, organizationID, paymentMethodBasePath)
+	apiPath := path.Join(organizationBasePath, organizationID, paymentMethodBasePath)
 	root := new(paymentMethodsRoot)
 
-	resp, err := s.client.DoRequest("GET", url, nil, root)
+	resp, err := s.client.DoRequest("GET", apiPath, nil, root)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -165,7 +162,7 @@ func (s *OrganizationServiceOp) ListPaymentMethods(organizationID string) ([]Pay
 
 // ListEvents returns list of organization events
 func (s *OrganizationServiceOp) ListEvents(organizationID string, listOpt *ListOptions) ([]Event, *Response, error) {
-	path := fmt.Sprintf("%s/%s%s", organizationBasePath, organizationID, eventBasePath)
+	apiPath := path.Join(organizationBasePath, organizationID, eventBasePath)
 
-	return listEvents(s.client, path, listOpt)
+	return listEvents(s.client, apiPath, listOpt)
 }

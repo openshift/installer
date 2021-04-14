@@ -20,29 +20,29 @@ they can be run in the absence of that automation.
   git branch --points-at=master -r  | grep origin/master >/dev/null || echo "master differs from origin/master"
   ```
 
-* Update the `libraryVersion` constant. This is a library, so we can not assure
+* Update the `Version` variable. This is a library, so we can not assure
   that a build flag will be used in every client that provides a compile time
   value, let alone the correct one.
 
   ```sh
-  vim packngo.go # change libraryVersion, "0.3.0" (no v)
-  git commit --signoff -m 'v0.3.0 version bump' packngo.go
+  vim version.go # change Version, "0.8.0" (no v)
+  git commit --signoff -m 'v0.8.0 version bump' packngo.go
   ```
 
 * Tag `master` with a semver tag that suits the level of changes
   introduced:
 
   ```sh
-  git tag -m "v0.3.0" -a v0.3.0 master # use -s if gpg is available
+  git tag -m "v0.8.0" -a v0.8.0 master # use -s if gpg is available
   ```
 * Push the tag:
 
   ```sh
-  git push --tags origin master v0.3.0
+  git push --tags origin master v0.8.0
   ```
 * Create a release from the tag (include a keepthechangelog.com formatted description):
 
-  <https://github.com/packethost/packngo/releases/edit/v0.3.0> (use the correct
+  <https://github.com/packethost/packngo/releases/edit/v0.8.0> (use the correct
   version)
 
 Releases can be followed through the GitHub Atom feed at
