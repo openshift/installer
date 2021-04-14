@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 )
 
 var defaultEquinixMetalConfigEnvVar = "EQUINIXMETAL_CONFIG"
@@ -37,14 +37,17 @@ func LoadEquinixMetalConfig() ([]byte, error) {
 
 // NewConfig will return an Config by loading
 // the configuration from locations specified in @LoadEquinixMetalConfig
-func NewConfig() (Config, error) {
-	c := Config{}
+func NewConfig() (*Config, error) {
+	c := &Config{}
 	in, err := LoadEquinixMetalConfig()
 	if err != nil {
+		if os.IsNotExist(err) {
+			return askForConfig()
+		}
 		return c, err
 	}
 
-	err = yaml.Unmarshal(in, &c)
+	err = yaml.Unmarshal(in, c)
 	if err != nil {
 		return c, err
 	}

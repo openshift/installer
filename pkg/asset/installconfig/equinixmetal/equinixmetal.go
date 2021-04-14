@@ -2,10 +2,15 @@
 package equinixmetal
 
 import (
+	"context"
+	"strings"
+	"time"
+
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/types/equinixmetal"
 	"github.com/openshift/installer/pkg/validate"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -15,17 +20,24 @@ const (
 
 // Platform collects equinixmetal-specific configuration.
 func Platform() (*equinixmetal.Platform, error) {
-	facilityCode, err := selectFacility()
+	conn, err := NewConnection()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create Equinix Metal connection")
+	}
+
+	client := &Client{Conn: conn}
+
+	facilityCode, err := selectFacility(client)
 	if err != nil {
 		return nil, err
 	}
 
-	metroCode, err := selectMetro()
+	metroCode, err := selectMetro(client)
 	if err != nil {
 		return nil, err
 	}
 
-	projectID, err := selectProject()
+	projectID, err := selectProject(client)
 	if err != nil {
 		return nil, err
 	}
@@ -37,34 +49,28 @@ func Platform() (*equinixmetal.Platform, error) {
 	}, nil
 }
 
-func selectProject() (string, error) {
+func selectProject(client *Client) (string, error) {
 	var projectID string
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	conn, err := getConnection(Config{APIKey: apiKey, APIURL: apiURL})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create Equinix Metal connection")
-	}
-
-	client := &Client{Conn: conn}
 	projects, err := client.ListProjects(ctx)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list Equinix Metal projects")
+		return "", errors.Wrap(err, "failed to list Equinix Metal projects")
 	}
 
 	projectNames := []string{}
 	for _, p := range projects {
-		projectNames = append(projectNames, p.ID+" "+p.Name)
+		projectNames = append(projectNames, p.ID+" ("+p.Name+")")
 	}
 
-	err := survey.Ask([]*survey.Question{{
-		Prompt: &survey.Input{
+	err = survey.Ask([]*survey.Question{{
+		Prompt: &survey.Select{
 			Message: "Equinix Metal Project ID",
 			Help:    "The Equinix Metal project id to use for installation",
-			Options: projectName,
+			Options: projectNames,
 		},
 		Validate: survey.ComposeValidators(survey.Required),
 	}}, &projectID)
@@ -77,32 +83,26 @@ func selectProject() (string, error) {
 	return parts[0], nil
 }
 
-func selectFacility() (string, error) {
+func selectFacility(client *Client) (string, error) {
 	var facilityID string
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	conn, err := getConnection(Config{APIKey: apiKey, APIURL: apiURL})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create Equinix Metal connection")
-	}
-
-	client := &Client{Conn: conn}
 	facilities, err := client.ListFacilities(ctx)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list Equinix Metal facilities")
+		return "", errors.Wrap(err, "failed to list Equinix Metal facilities")
 	}
 
 	facilitiesNames := []string{}
 	for _, f := range facilities {
-		facilityNames = append(facilityNames, f.Code+" "+f.Name)
+		facilitiesNames = append(facilitiesNames, f.Code+" ("+f.Name+")")
 	}
 
-	err := survey.Ask([]*survey.Question{
+	err = survey.Ask([]*survey.Question{
 		{
-			Prompt: &survey.Input{
+			Prompt: &survey.Select{
 				Message: "Equinix Metal Facility Code",
 				Help:    "The Equinix Metal Facility code (this is the short name, e.g. 'da11')",
 				Default: DefaultFacility,
@@ -118,35 +118,30 @@ func selectFacility() (string, error) {
 	return facilityID, nil
 }
 
-func selectMetro() (string, error) {
+func selectMetro(client *Client) (string, error) {
 	var metroID string
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	conn, err := getConnection(Config{APIKey: apiKey, APIURL: apiURL})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create Equinix Metal connection")
-	}
-
-	client := &Client{Conn: conn}
 	metros, err := client.ListMetros(ctx)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list Equinix Metal metros")
+		return "", errors.Wrap(err, "failed to list Equinix Metal metros")
 	}
 
-	metrosNames := []string{}
+	metroNames := []string{}
 	for _, m := range metros {
-		metroNames = append(metroNames, m.Code+" "+m.Name)
+		metroNames = append(metroNames, m.Code+" ("+m.Name+")")
 	}
 
-	err := survey.Ask([]*survey.Question{
+	err = survey.Ask([]*survey.Question{
 		{
-			Prompt: &survey.Input{
+			Prompt: &survey.Select{
 				Message: "Equinix Metal Metro Code",
 				Help:    "The Equinix Metal Metro code (this is the short name, e.g. 'SV')",
 				Default: DefaultMetro,
+				Options: metroNames,
 			},
 			Validate: survey.ComposeValidators(survey.Required),
 		},
@@ -166,11 +161,11 @@ func askForConfig() (*Config, error) {
 			Prompt: &survey.Input{
 				Message: "Equinix Metal API URL",
 				Help:    "The base URL for accessing the Equinix Metal API",
-				Default: "https://api.equinix.com/metal/v1",
+				Default: "https://api.equinix.com/metal/v1/",
 			},
 			Validate: survey.ComposeValidators(survey.Required, uriValidator),
 		},
-	}, apiURL)
+	}, &apiURL)
 	if err != nil {
 		return nil, err
 	}

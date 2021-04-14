@@ -44,8 +44,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	cfg := &config{
 		Auth: sources.Auth,
 		// Roles:        roles,
-		Facility:      plane0.Facility,
-		Metro:         plane0.Metro,
+		Facility: plane0.Facility,
+		// Metro:         plane0.Metro,
 		OS:            plane0.OS,
 		ProjectID:     plane0.ProjectID,
 		BillingCycle:  plane0.BillingCycle,

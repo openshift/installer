@@ -80,8 +80,9 @@ func provider(clusterID string, platform *equinixmetal.Platform, plan, customDat
 			Kind:       "EquinixMetalMachineProviderConfig",
 		},
 		CustomData: customData,
-		// Facility:      platform.Facility,
-		Metro:         platform.Metro,
+		Facility:   platform.Facility,
+		// TODO: cluster-api-provider-equinix-metal
+		// Metro:         platform.Metro,
 		OS:            "custom_ipxe",
 		ProjectID:     platform.ProjectID,
 		IPXEScriptURL: ipxeScriptURL,
