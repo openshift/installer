@@ -17,27 +17,37 @@ const (
 type API interface {
 	ListProjects(ctx context.Context) ([]packngo.Project, error)
 	ListFacilities(ctx context.Context) ([]packngo.Facility, error)
+	ListMetros(ctx context.Context) ([]packngo.Metro, error)
 	ListPlans(ctx context.Context) ([]packngo.Plan, error)
 }
 
 type Client struct {
 	OrganizationID string
 	FacilityID     string
+	MetroID        string
 	ProjectID      string
 
 	Conn *packngo.Client
 }
 
-func (c *Client) ListProjects(ctx context.Context) ([]packngo.Project, error) {
-	return nil, nil
+func (c *Client) ListProjects(_ context.Context) ([]packngo.Project, error) {
+	p, _, err := c.Projects.List(nil)
+	return p, err
 }
 
-func (c *Client) ListFacilities(ctx context.Context) ([]packngo.Facility, error) {
-	return nil, nil
+func (c *Client) ListFacilities(_ context.Context) ([]packngo.Facility, error) {
+	f, _, err := c.Facilities.List(nil)
+	return f, err
 }
 
-func (c *Client) ListPlans(ctx context.Context) ([]packngo.Plan, error) {
-	return nil, nil
+func (c *Client) ListMetros(_ context.Context) ([]packngo.Metro, error) {
+	m, _, err := c.Metros.List(nil)
+	return m, err
+}
+
+func (c *Client) ListPlans(_ context.Context) ([]packngo.Plan, error) {
+	p, _, err := c.Plans.List(nil)
+	return p, err
 }
 
 var _ API = &Client{}

@@ -58,10 +58,25 @@ func (m *MockAPI) ListFacilities(ctx context.Context) ([]packngo.Facility, error
 	return ret0, ret1
 }
 
+// ListMetros mocks base method
+func (m *MockAPI) ListMetros(ctx context.Context) ([]packngo.Metro, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListMetros", ctx)
+	ret0, _ := ret[0].([]packngo.Metro)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
 // ListFacilities indicates an expected call of ListFacilities
 func (mr *MockAPIMockRecorder) ListFacilities(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFacilities", reflect.TypeOf((*MockAPI)(nil).ListFacilities), ctx)
+}
+
+// ListFacilities indicates an expected call of ListFacilities
+func (mr *MockAPIMockRecorder) ListMetros(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMetros", reflect.TypeOf((*MockAPI)(nil).ListMetros), ctx)
 }
 
 // ListPlans mocks base method
