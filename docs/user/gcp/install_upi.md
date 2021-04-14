@@ -611,34 +611,6 @@ Create the deployment using gcloud.
 gcloud deployment-manager deployments create ${INFRA_ID}-control-plane --config 05_control_plane.yaml
 ```
 
-## Configure control plane variables
-
-```sh
-export MASTER0_IP=$(gcloud compute instances describe ${INFRA_ID}-master-0 --zone ${ZONE_0} --format json | jq -r .networkInterfaces[0].networkIP)
-export MASTER1_IP=$(gcloud compute instances describe ${INFRA_ID}-master-1 --zone ${ZONE_1} --format json | jq -r .networkInterfaces[0].networkIP)
-export MASTER2_IP=$(gcloud compute instances describe ${INFRA_ID}-master-2 --zone ${ZONE_2} --format json | jq -r .networkInterfaces[0].networkIP)
-```
-
-## Add DNS entries for control plane etcd
-The templates do not manage DNS entries due to limitations of Deployment Manager, so we must add the etcd entries manually.
-
-If you are installing into a [Shared VPC (XPN)][sharedvpc],
-use the `--account` and `--project` parameters to perform these actions in the host project.
-
-```sh
-if [ -f transaction.yaml ]; then rm transaction.yaml; fi
-gcloud dns record-sets transaction start --zone ${INFRA_ID}-private-zone
-gcloud dns record-sets transaction add ${MASTER0_IP} --name etcd-0.${CLUSTER_NAME}.${BASE_DOMAIN}. --ttl 60 --type A --zone ${INFRA_ID}-private-zone
-gcloud dns record-sets transaction add ${MASTER1_IP} --name etcd-1.${CLUSTER_NAME}.${BASE_DOMAIN}. --ttl 60 --type A --zone ${INFRA_ID}-private-zone
-gcloud dns record-sets transaction add ${MASTER2_IP} --name etcd-2.${CLUSTER_NAME}.${BASE_DOMAIN}. --ttl 60 --type A --zone ${INFRA_ID}-private-zone
-gcloud dns record-sets transaction add \
-  "0 10 2380 etcd-0.${CLUSTER_NAME}.${BASE_DOMAIN}." \
-  "0 10 2380 etcd-1.${CLUSTER_NAME}.${BASE_DOMAIN}." \
-  "0 10 2380 etcd-2.${CLUSTER_NAME}.${BASE_DOMAIN}." \
-  --name _etcd-server-ssl._tcp.${CLUSTER_NAME}.${BASE_DOMAIN}. --ttl 60 --type SRV --zone ${INFRA_ID}-private-zone
-gcloud dns record-sets transaction execute --zone ${INFRA_ID}-private-zone
-```
-
 ## Add control plane instances to load balancers
 The templates do not manage load balancer membership due to limitations of Deployment
 Manager, so we must add the control plane nodes manually.
