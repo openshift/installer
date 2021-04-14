@@ -19,17 +19,23 @@ type CloudProviderConfig struct {
 	NetworkSecurityGroupName string
 	VirtualNetworkName       string
 	SubnetName               string
+	ARO                      bool
 }
 
 // JSON generates the cloud provider json config for the azure platform.
 // managed resource names are matching the convention defined by capz
 func (params CloudProviderConfig) JSON() (string, error) {
+	useManagedIdentityExtension := true
+	if params.ARO {
+		useManagedIdentityExtension = false
+	}
+
 	config := config{
 		authConfig: authConfig{
 			Cloud:                       params.CloudName.Name(),
 			TenantID:                    params.TenantID,
 			SubscriptionID:              params.SubscriptionID,
-			UseManagedIdentityExtension: true,
+			UseManagedIdentityExtension: useManagedIdentityExtension,
 			// The cloud provider needs the clientID which is only known after terraform has run.
 			// When left empty, the existing managed identity on the VM will be used.
 			// By leaving it empty, we don't have to create the identity before running the installer.
