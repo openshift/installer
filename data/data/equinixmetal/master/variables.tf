@@ -6,7 +6,8 @@ variable "ignition" {
 
 variable "plan" {}
 variable "node_count" {}
-variable "facility" {}
+variable "facility" { default = "" }
+variable "metro" {}
 variable "cluster_domain" {}
 variable "base_domain" {}
 variable "ssh_private_key_path" {}

@@ -14,7 +14,8 @@ variable "depends" {
 }
 
 variable "plan" {}
-variable "facility" {}
+variable "facility" { default = "" }
+variable "metro" {}
 variable "operating_system" {}
 variable "project_id" {}
 variable "billing_cycle" {}

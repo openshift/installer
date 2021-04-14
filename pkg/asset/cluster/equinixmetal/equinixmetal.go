@@ -9,7 +9,8 @@ import (
 // Metadata converts an install configuration to EquinixMetal metadata.
 func Metadata(config *types.InstallConfig) *equinixmetal.Metadata {
 	m := equinixmetal.Metadata{
-		Facility:  config.Platform.EquinixMetal.Facility,
+		// Facility:  config.Platform.EquinixMetal.Facility,
+		Metro:     config.Platform.EquinixMetal.Metro,
 		ProjectID: config.Platform.EquinixMetal.ProjectID,
 	}
 	return &m

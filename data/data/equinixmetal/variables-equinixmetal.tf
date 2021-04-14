@@ -36,7 +36,12 @@ variable "metal_bootstrap_operating_system" {
 }
 
 variable "metal_facility" {
+  default     = ""
   description = "Your primary facility"
+}
+
+variable "metal_metro" {
+  description = "Your metro"
 }
 
 variable "metal_billing_cycle" {

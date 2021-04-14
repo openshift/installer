@@ -14,6 +14,7 @@ type config struct {
 	Auth          `json:",inline"`
 	Roles         []string `json:"metal_roles,omitempty"`
 	Facility      string   `json:"metal_facility,omitempty"`
+	Metro         string   `json:"metal_metro,omitempty"`
 	OS            string   `json:"metal_os"`
 	ProjectID     string   `json:"metal_project_id"`
 	BillingCycle  string   `json:"metal_billing_cycle"`
@@ -44,6 +45,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Auth: sources.Auth,
 		// Roles:        roles,
 		Facility:      plane0.Facility,
+		Metro:         plane0.Metro,
 		OS:            plane0.OS,
 		ProjectID:     plane0.ProjectID,
 		BillingCycle:  plane0.BillingCycle,

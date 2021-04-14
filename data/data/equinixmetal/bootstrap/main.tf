@@ -49,9 +49,10 @@ data "template_file" "ignition_append" {
 */
 
 resource "packet_device" "bootstrap" {
-  hostname         = local.external_name
-  plan             = var.plan
-  facilities       = [var.facility]
+  hostname = local.external_name
+  plan     = var.plan
+  // facilities       = [var.facility]
+  metro            = var.metro
   operating_system = "custom_ipxe"
   billing_cycle    = var.billing_cycle
   project_id       = var.project_id

@@ -1,6 +1,10 @@
 package equinixmetal
 
 type Platform struct {
+	// Metro represents the Equinix Metal metro code for the location where your devices will be provisioned
+	// (https://metal.equinix.com/developers/docs/getting-started/metros/)
+	Metro string `json:"metro"`
+
 	// Facility represents the Equinix Metal facility code for the region and
 	// datacenter where your devices will be provisioned
 	// (https://metal.equinix.com/developers/docs/getting-started/facilities/)
