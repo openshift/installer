@@ -5,8 +5,8 @@ provider "packet" {
 module "bootstrap" {
   source     = "./bootstrap"
   project_id = var.metal_project_id
-  // facility             = var.metal_facility
-  metro                = var.metal_metro
+  facility   = var.metal_facility
+  // metro                = var.metal_metro
   billing_cycle        = var.metal_billing_cycle
   plan                 = var.metal_machine_type
   operating_system     = var.metal_bootstrap_operating_system
@@ -27,8 +27,8 @@ module "master" {
   source     = "./master"
 
   project_id = var.metal_project_id
-  //facility   = var.metal_facility
-  metro = var.metal_metro
+  facility   = var.metal_facility
+  // metro = var.metal_metro
   // billing_cycle        = var.metal_billing_cycle
   plan                 = var.metal_machine_type
   operating_system     = "custom_ipxe"
