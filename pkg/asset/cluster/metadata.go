@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/azure"
 	"github.com/openshift/installer/pkg/asset/cluster/baremetal"
 	"github.com/openshift/installer/pkg/asset/cluster/gcp"
+	"github.com/openshift/installer/pkg/asset/cluster/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/cluster/kubevirt"
 	"github.com/openshift/installer/pkg/asset/cluster/libvirt"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
@@ -24,6 +25,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	kubevirttypes "github.com/openshift/installer/pkg/types/kubevirt"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
@@ -81,6 +83,8 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 		metadata.ClusterPlatformMetadata.Azure = azure.Metadata(installConfig.Config)
 	case gcptypes.Name:
 		metadata.ClusterPlatformMetadata.GCP = gcp.Metadata(installConfig.Config)
+	case ibmcloudtypes.Name:
+		metadata.ClusterPlatformMetadata.IBMCloud = ibmcloud.Metadata(clusterID.InfraID, installConfig.Config)
 	case baremetaltypes.Name:
 		metadata.ClusterPlatformMetadata.BareMetal = baremetal.Metadata(installConfig.Config)
 	case ovirttypes.Name:

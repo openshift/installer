@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -89,6 +90,9 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 		if err = gcpconfig.ValidateEnabledServices(ctx, client, ic.Config.GCP.ProjectID); err != nil {
 			return errors.Wrap(err, "failed to validate services in this project")
 		}
+	case ibmcloud.Name:
+		// no permissions to check
+		// TODO: IBM: verify there are none
 	case kubevirt.Name:
 		client, err := kubevirtconfig.NewClient()
 		if err != nil {

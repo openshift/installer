@@ -103,3 +103,7 @@ aliases:
     - ravidbro
     - rgolangh
     - chenyosef
+  ibmcloud-approvers:
+    - bobbyradford
+  ibmcloud-reviewers:
+    - bobbyradford

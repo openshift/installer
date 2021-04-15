@@ -8,6 +8,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	kubevirtconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
@@ -15,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/kubevirt"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -56,6 +58,11 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		_, err = gcpconfig.GetSession(ctx)
 		if err != nil {
 			return errors.Wrap(err, "creating GCP session")
+		}
+	case ibmcloud.Name:
+		_, err = ibmcloudconfig.NewClient()
+		if err != nil {
+			return errors.Wrap(err, "creating IBM Cloud session")
 		}
 	case openstack.Name:
 		_, err = openstackconfig.GetSession(ic.Config.Platform.OpenStack.Cloud)

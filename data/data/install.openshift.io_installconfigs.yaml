@@ -244,6 +244,31 @@ spec:
                             type: string
                           type: array
                       type: object
+                    ibmcloud:
+                      description: IBMCloud is the configuration used when installing
+                        on IBM Cloud.
+                      properties:
+                        bootVolume:
+                          description: BootVolume is the configuration for the machine's
+                            boot volume.
+                          properties:
+                            encryptionKey:
+                              description: EncryptionKey is the CRN referencing a
+                                Key Protect or Hyper Protect Crypto Services key to
+                                use for volume encryption. If not specified, a provider
+                                managed encryption key will be used.
+                              type: string
+                          type: object
+                        type:
+                          description: InstanceType is the VSI machine profile.
+                          type: string
+                        zones:
+                          description: Zones is the list of availability zones used
+                            for machines in the pool.
+                          items:
+                            type: string
+                          type: array
+                      type: object
                     kubevirt:
                       description: Kubevirt is the configuration used when installing
                         on Kubevirt.
@@ -612,6 +637,31 @@ spec:
                       zones:
                         description: Zones is list of availability zones that can
                           be used.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  ibmcloud:
+                    description: IBMCloud is the configuration used when installing
+                      on IBM Cloud.
+                    properties:
+                      bootVolume:
+                        description: BootVolume is the configuration for the machine's
+                          boot volume.
+                        properties:
+                          encryptionKey:
+                            description: EncryptionKey is the CRN referencing a Key
+                              Protect or Hyper Protect Crypto Services key to use
+                              for volume encryption. If not specified, a provider
+                              managed encryption key will be used.
+                            type: string
+                        type: object
+                      type:
+                        description: InstanceType is the VSI machine profile.
+                        type: string
+                      zones:
+                        description: Zones is the list of availability zones used
+                          for machines in the pool.
                         items:
                           type: string
                         type: array
@@ -1476,6 +1526,74 @@ spec:
                     type: string
                 required:
                 - projectID
+                - region
+                type: object
+              ibmcloud:
+                description: IBMCloud is the configuration used when installing on
+                  IBM Cloud.
+                properties:
+                  clusterOSImage:
+                    description: ClusterOSImage is the name of the custom RHCOS image.
+                    type: string
+                  defaultMachinePlatform:
+                    description: DefaultMachinePlatform is the default configuration
+                      used when installing on IBM Cloud for machine pools which do
+                      not define their own platform configuration.
+                    properties:
+                      bootVolume:
+                        description: BootVolume is the configuration for the machine's
+                          boot volume.
+                        properties:
+                          encryptionKey:
+                            description: EncryptionKey is the CRN referencing a Key
+                              Protect or Hyper Protect Crypto Services key to use
+                              for volume encryption. If not specified, a provider
+                              managed encryption key will be used.
+                            type: string
+                        type: object
+                      type:
+                        description: InstanceType is the VSI machine profile.
+                        type: string
+                      zones:
+                        description: Zones is the list of availability zones used
+                          for machines in the pool.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  region:
+                    description: Region specifies the IBM Cloud region where the cluster
+                      will be created.
+                    type: string
+                  resourceGroupName:
+                    description: "ResourceGroupName is the name of an already existing
+                      resource group where the cluster should be installed. This resource
+                      group should only be used for this specific cluster and the
+                      cluster components will assume ownership of all resources in
+                      the resource group. Destroying the cluster using installer will
+                      delete this resource group. \n This resource group must be empty
+                      with no other resources when trying to use it for creating a
+                      cluster. If empty, a new resource group will be created for
+                      the cluster."
+                    type: string
+                  subnets:
+                    description: Subnets is a list of existing subnet IDs. Leave unset
+                      and the installer will create new subnets in the VPC network
+                      on your behalf.
+                    items:
+                      type: string
+                    type: array
+                  vpc:
+                    description: VPC is the ID of an existing VPC network. Leave unset
+                      and the installer will create a new VPC network on your behalf.
+                    type: string
+                  vpcResourceGroupName:
+                    description: VPCResourceGroupName specifies the resource group
+                      containing an existing VPC. This must be defined if `VPC` is
+                      defined.
+                    type: string
+                required:
+                - clusterOSImage
                 - region
                 type: object
               kubevirt:
