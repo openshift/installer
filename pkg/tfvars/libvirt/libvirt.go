@@ -18,16 +18,16 @@ import (
 )
 
 type config struct {
-	URI             string            `json:"libvirt_uri,omitempty"`
-	Image           string            `json:"os_image,omitempty"`
-	IfName          string            `json:"libvirt_network_if"`
-	MasterIPs       []string          `json:"libvirt_master_ips,omitempty"`
-	BootstrapIP     string            `json:"libvirt_bootstrap_ip,omitempty"`
-	MasterMemory    string            `json:"libvirt_master_memory,omitempty"`
-	MasterVcpu      string            `json:"libvirt_master_vcpu,omitempty"`
-	BootstrapMemory int               `json:"libvirt_bootstrap_memory,omitempty"`
-	MasterDiskSize  string            `json:"libvirt_master_size,omitempty"`
-	DnsmasqOptions  map[string]string `json:"libvirt_dnsmasq_options,omitempty"`
+	URI             string              `json:"libvirt_uri,omitempty"`
+	Image           string              `json:"os_image,omitempty"`
+	IfName          string              `json:"libvirt_network_if"`
+	MasterIPs       []string            `json:"libvirt_master_ips,omitempty"`
+	BootstrapIP     string              `json:"libvirt_bootstrap_ip,omitempty"`
+	MasterMemory    string              `json:"libvirt_master_memory,omitempty"`
+	MasterVcpu      string              `json:"libvirt_master_vcpu,omitempty"`
+	BootstrapMemory int                 `json:"libvirt_bootstrap_memory,omitempty"`
+	MasterDiskSize  string              `json:"libvirt_master_size,omitempty"`
+	DnsmasqOptions  []map[string]string `json:"libvirt_dnsmasq_options,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -38,7 +38,7 @@ type TFVarsSources struct {
 	Bridge         string
 	MasterCount    int
 	Architecture   types.Architecture
-	DnsmasqOptions map[string]string
+	DnsmasqOptions []map[string]string
 }
 
 // TFVars generates libvirt-specific Terraform variables.

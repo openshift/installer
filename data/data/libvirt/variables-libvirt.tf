@@ -60,7 +60,8 @@ variable "libvirt_master_size" {
 }
 
 variable "libvirt_dnsmasq_options" {
-  type        = map(string)
-  description = "Dnsmasq options to be applied to the libvirt network"
-  default     = {}
+  type        = list(map(string))
+  description = "A list of Dnsmasq options to be applied to the libvirt network"
+  default     = []
 }
+
