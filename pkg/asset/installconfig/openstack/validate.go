@@ -22,6 +22,10 @@ func Validate(ic *types.InstallConfig) error {
 	if err != nil {
 		return err
 	}
+	if ci == nil {
+		logrus.Warnf("Empty OpenStack cloud info and therefore will skip pre-flight validation.")
+		return nil
+	}
 
 	allErrs := field.ErrorList{}
 

@@ -100,7 +100,8 @@ func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 
 	err = ci.collectInfo(ic, opts)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to generate OpenStack cloud info")
+		logrus.Warnf("Failed to generate OpenStack cloud info: %v", err)
+		return nil, nil
 	}
 
 	return ci, nil
