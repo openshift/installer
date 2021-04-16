@@ -274,8 +274,8 @@ func engineSetup() (Config, error) {
 	}
 	logrus.Debug("engine FQDN: ", engineConfig.FQDN)
 
-	// By default, we set Insecure true
-	engineConfig.Insecure = true
+	// By default, we set Insecure false
+	engineConfig.Insecure = false
 
 	// Set c.URL with the API endpoint
 	engineConfig.URL = fmt.Sprintf("https://%s/ovirt-engine/api", engineConfig.FQDN)
@@ -320,40 +320,36 @@ func engineSetup() (Config, error) {
 		if err != nil || !answer {
 			return engineConfig, err
 		}
+		engineConfig.Insecure = true
 	} else {
 		err = showPEM(httpResource.saveFilePath)
 		if err != nil {
-			engineConfig.Insecure = true
+			return engineConfig, err
+		}
+		answer, err := askQuestionTrueOrFalse(
+			"Would you like to use the above certificate to connect to Engine? ",
+			"Certificate to connect with Engine. Make sure this cert CA is trusted locally.")
+		if err != nil {
+			return engineConfig, err
+		}
+		if answer {
+			pemFile, err := readFile(httpResource.saveFilePath)
+			engineConfig.CABundle = string(pemFile)
+			if err != nil {
+				return engineConfig, err
+			}
 		} else {
-			answer, err := askQuestionTrueOrFalse(
-				"Would you like to use the above certificate to connect to Engine? ",
-				"Certificate to connecto with Engine. Make sure this cert CA is trusted locally.")
+			answer, err = askQuestionTrueOrFalse(
+				"Would you like to import another PEM bundle?",
+				"Users are able to use it's own PEM bundle to connect to Engine API")
 			if err != nil {
 				return engineConfig, err
 			}
 			if answer {
-				pemFile, err := readFile(httpResource.saveFilePath)
-				engineConfig.CABundle = string(pemFile)
+				engineConfig.CABundle, err = askPEMFile()
 				if err != nil {
 					return engineConfig, err
 				}
-				if len(engineConfig.CABundle) > 0 {
-					engineConfig.Insecure = false
-				}
-			} else {
-				answer, err = askQuestionTrueOrFalse(
-					"Would you like to import another PEM bundle?",
-					"Users are able to use it's own PEM bundle to connect to Engine API")
-				if err != nil {
-					return engineConfig, err
-				}
-				if answer {
-					engineConfig.CABundle, _ = askPEMFile()
-					if len(engineConfig.CABundle) > 0 {
-						engineConfig.Insecure = false
-					}
-				}
-
 			}
 		}
 	}
