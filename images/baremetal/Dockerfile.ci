@@ -2,7 +2,7 @@
 # It builds an image containing openshift-install.
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.16-openshift-4.8 AS builder
-RUN yum install -y libvirt-devel-4.5.0 && \
+RUN yum install -y libvirt-devel-6.0.0 && \
     yum clean all && rm -rf /var/cache/yum/*
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
@@ -15,7 +15,7 @@ COPY --from=builder /go/src/github.com/openshift/installer/data/data/rhcos.json 
 
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
-    libvirt-libs-4.5.0 openssl unzip jq openssh-clients && \
+    libvirt-libs-6.0.0 openssl unzip jq openssh-clients && \
     yum clean all && rm -rf /var/cache/yum/* && \
     chmod g+w /etc/passwd
 
