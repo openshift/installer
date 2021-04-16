@@ -51,6 +51,12 @@ variable "azure_master_root_volume_size" {
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
+variable "azure_master_enable_accelerated_networking" {
+  type        = bool
+  default     = true
+  description = "Whether to enable accelerated networking on masters."
+}
+
 variable "azure_base_domain_resource_group_name" {
   type        = string
   description = "The resource group that contains the dns zone used as base domain for the cluster."

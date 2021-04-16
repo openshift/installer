@@ -81,6 +81,13 @@ type Platform struct {
 	//
 	// +optional
 	ResourceGroupName string `json:"resourceGroupName,omitempty"`
+
+	// AcceleratedNetworking specifies whether to enable accelerated networking
+	//  Accelerated networking enables single root I/O virtualization (SR-IOV) to a VM, greatly improving its
+	//  networking performance.
+	//
+	// +optional
+	AcceleratedNetworking *bool `json:"acceleratedNetworking,omitempty"`
 }
 
 // CloudEnvironment is the name of the Azure cloud environment

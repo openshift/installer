@@ -125,13 +125,14 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 				StorageAccountType: mpool.OSDisk.DiskType,
 			},
 		},
-		Zone:                 az,
-		Subnet:               subnet,
-		ManagedIdentity:      managedIdentity,
-		Vnet:                 virtualNetwork,
-		ResourceGroup:        rg,
-		NetworkResourceGroup: networkResourceGroup,
-		PublicLoadBalancer:   publicLB,
+		Zone:                  az,
+		Subnet:                subnet,
+		ManagedIdentity:       managedIdentity,
+		Vnet:                  virtualNetwork,
+		ResourceGroup:         rg,
+		NetworkResourceGroup:  networkResourceGroup,
+		PublicLoadBalancer:    publicLB,
+		AcceleratedNetworking: platform.AcceleratedNetworking,
 	}, nil
 }
 
