@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	validZone = "valid-zone"
+	validZone   = "valid-zone"
+	invalidZone = "invalid-zone"
 
 	validCtrlPlaneFlavor = "valid-control-plane-flavor"
 	validComputeFlavor   = "valid-compute-flavor"
@@ -40,8 +41,9 @@ func invalidMachinePoolSmallVolume() *openstack.MachinePool {
 		FlavorName: validCtrlPlaneFlavor,
 		Zones:      []string{""},
 		RootVolume: &openstack.RootVolume{
-			Type: volumeType,
-			Size: volumeSmallSize,
+			Type:  volumeType,
+			Size:  volumeSmallSize,
+			Zones: []string{""},
 		},
 	}
 }
@@ -51,8 +53,9 @@ func validMachinePoolLargeVolume() *openstack.MachinePool {
 		FlavorName: validCtrlPlaneFlavor,
 		Zones:      []string{""},
 		RootVolume: &openstack.RootVolume{
-			Type: volumeType,
-			Size: volumeLargeSize,
+			Type:  volumeType,
+			Size:  volumeLargeSize,
+			Zones: []string{validZone},
 		},
 	}
 }
@@ -102,7 +105,10 @@ func validMpoolCloudInfo() *CloudInfo {
 				Baremetal: true,
 			},
 		},
-		Zones: []string{
+		ComputeZones: []string{
+			validZone,
+		},
+		VolumeZones: []string{
 			validZone,
 		},
 	}
@@ -257,6 +263,41 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			cloudInfo:      validMpoolCloudInfo(),
 			expectedError:  false,
 			expectedErrMsg: "",
+		},
+		{
+			name:         "valid root volume az",
+			controlPlane: false,
+			mpool: func() *openstack.MachinePool {
+				mp := validMachinePoolLargeVolume()
+				return mp
+			}(),
+			cloudInfo:      validMpoolCloudInfo(),
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:         "invalid root volume az",
+			controlPlane: false,
+			mpool: func() *openstack.MachinePool {
+				mp := validMachinePoolLargeVolume()
+				mp.RootVolume.Zones = []string{invalidZone}
+				return mp
+			}(),
+			cloudInfo:      validMpoolCloudInfo(),
+			expectedError:  true,
+			expectedErrMsg: `compute\[0\].platform.openstack.rootVolume.zones.zone\[0\]: Invalid value: \"invalid-zone\": Zone either does not exist in this cloud, or is not available`,
+		},
+		{
+			name:         "volume and compute zones number mismatch",
+			controlPlane: false,
+			mpool: func() *openstack.MachinePool {
+				mp := validMachinePoolLargeVolume()
+				mp.RootVolume.Zones = []string{"AZ1", "AZ2"}
+				return mp
+			}(),
+			cloudInfo:      validMpoolCloudInfo(),
+			expectedError:  true,
+			expectedErrMsg: `compute\[0\].platform.openstack.rootVolume.zones: Invalid value: \[\]string{"AZ1", "AZ2"}: there must be either just one volume availability zone common to all nodes or the number of compute and volume availability zones must be equal`,
 		},
 	}
 

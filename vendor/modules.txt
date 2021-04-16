@@ -553,7 +553,7 @@ github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
 github.com/googleapis/gnostic/jsonschema
 github.com/googleapis/gnostic/openapiv2
-# github.com/gophercloud/gophercloud v0.16.1-0.20210311194000-69f51f2f086c
+# github.com/gophercloud/gophercloud v0.17.0
 ## explicit
 github.com/gophercloud/gophercloud
 github.com/gophercloud/gophercloud/openstack
@@ -566,6 +566,7 @@ github.com/gophercloud/gophercloud/openstack/baremetal/v1/ports
 github.com/gophercloud/gophercloud/openstack/baremetalintrospection/httpbasic
 github.com/gophercloud/gophercloud/openstack/baremetalintrospection/noauth
 github.com/gophercloud/gophercloud/openstack/baremetalintrospection/v1/introspection
+github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/availabilityzones
 github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/quotasets
 github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/schedulerhints
 github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/volumeactions

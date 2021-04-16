@@ -4,6 +4,7 @@ import (
 	"net/url"
 
 	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/availabilityzones"
 	computequotasets "github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/quotasets"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	tokensv2 "github.com/gophercloud/gophercloud/openstack/identity/v2/tokens"
@@ -34,7 +35,8 @@ type CloudInfo struct {
 	IngressFIP      *floatingips.FloatingIP
 	MachinesSubnet  *subnets.Subnet
 	OSImage         *images.Image
-	Zones           []string
+	ComputeZones    []string
+	VolumeZones     []string
 	Quotas          []quota.Quota
 
 	clients *clients
@@ -45,6 +47,7 @@ type clients struct {
 	computeClient  *gophercloud.ServiceClient
 	imageClient    *gophercloud.ServiceClient
 	identityClient *gophercloud.ServiceClient
+	volumeClient   *gophercloud.ServiceClient
 }
 
 // Flavor embeds information from the Gophercloud Flavor struct and adds
@@ -96,6 +99,11 @@ func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 	ci.clients.identityClient, err = clientconfig.NewServiceClient("identity", opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create an identity client")
+	}
+
+	ci.clients.volumeClient, err = clientconfig.NewServiceClient("volume", opts)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create a volume client")
 	}
 
 	err = ci.collectInfo(ic, opts)
@@ -177,7 +185,12 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 		return err
 	}
 
-	ci.Zones, err = ci.getZones()
+	ci.ComputeZones, err = ci.getComputeZones()
+	if err != nil {
+		return err
+	}
+
+	ci.VolumeZones, err = ci.getVolumeZones()
 	if err != nil {
 		return err
 	}
@@ -319,7 +332,7 @@ func (ci *CloudInfo) getImage(imageName string) (*images.Image, error) {
 	return image, nil
 }
 
-func (ci *CloudInfo) getZones() ([]string, error) {
+func (ci *CloudInfo) getComputeZones() ([]string, error) {
 	zones, err := azutils.ListAvailableAvailabilityZones(ci.clients.computeClient)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to list compute availability zones")
@@ -327,6 +340,31 @@ func (ci *CloudInfo) getZones() ([]string, error) {
 
 	if len(zones) == 0 {
 		return nil, errors.New("could not find an available compute availability zone")
+	}
+
+	return zones, nil
+}
+
+func (ci *CloudInfo) getVolumeZones() ([]string, error) {
+	allPages, err := availabilityzones.List(ci.clients.volumeClient).AllPages()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list volume availability zones")
+	}
+
+	availabilityZoneInfo, err := availabilityzones.ExtractAvailabilityZones(allPages)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse response with volume availability zone list")
+	}
+
+	if len(availabilityZoneInfo) == 0 {
+		return nil, errors.New("could not find an available compute availability zone")
+	}
+
+	var zones []string
+	for _, zone := range availabilityZoneInfo {
+		if zone.ZoneState.Available {
+			zones = append(zones, zone.ZoneName)
+		}
 	}
 
 	return zones, nil

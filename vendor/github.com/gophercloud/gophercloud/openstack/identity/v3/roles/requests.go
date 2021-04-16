@@ -204,6 +204,10 @@ type ListAssignmentsOpts struct {
 	// Effective lists effective assignments at the user, project, and domain
 	// level, allowing for the effects of group membership.
 	Effective *bool `q:"effective"`
+
+	// IncludeNames indicates whether to include names of any returned entities.
+	// Requires microversion 3.6 or later.
+	IncludeNames *bool `q:"include_names"`
 }
 
 // ToRolesListAssignmentsQuery formats a ListAssignmentsOpts into a query string.
