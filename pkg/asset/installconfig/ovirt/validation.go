@@ -98,7 +98,7 @@ func authenticated(c *Config) survey.Validator {
 
 		err = connection.Test()
 		if err != nil {
-			return errors.Errorf("failed to connect to Engine platform %s", err)
+			return errors.Errorf("failed to connect to the Engine platform %s", err)
 		}
 		return nil
 	}

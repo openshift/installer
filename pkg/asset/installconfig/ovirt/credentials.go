@@ -108,7 +108,7 @@ func (c *clientHTTP) checkURLResponse() error {
 	return nil
 }
 
-// askPassword will ask the password to connect to Engine API.
+// askPassword will ask the password to connect to the Engine API.
 // The password provided will be added in the Config struct.
 // If an error happens, it will ask again username for users.
 func askPassword(c *Config) error {
@@ -138,7 +138,7 @@ func askPassword(c *Config) error {
 	return nil
 }
 
-// askUsername will ask username to connect to Engine API.
+// askUsername will ask username to connect to the Engine API.
 // The username provided will be added in the Config struct.
 // Returns Config and error if failure.
 func askUsername(c *Config) error {
@@ -146,7 +146,7 @@ func askUsername(c *Config) error {
 		{
 			Prompt: &survey.Input{
 				Message: "Engine username",
-				Help:    "The username to connect to Engine API",
+				Help:    "The username to connect to the Engine API",
 				Default: "admin@internal",
 			},
 			Validate: survey.ComposeValidators(survey.Required),
@@ -326,8 +326,8 @@ func engineSetup() (Config, error) {
 			engineConfig.Insecure = true
 		} else {
 			answer, err := askQuestionTrueOrFalse(
-				"Would you like to use the above certificate to connect to Engine? ",
-				"Certificate to connecto with Engine. Make sure this cert CA is trusted locally.")
+				"Would you like to use the above certificate to connect to the Engine? ",
+				"Certificate to connect to the Engine. Make sure this cert CA is trusted locally.")
 			if err != nil {
 				return engineConfig, err
 			}
@@ -343,7 +343,7 @@ func engineSetup() (Config, error) {
 			} else {
 				answer, err = askQuestionTrueOrFalse(
 					"Would you like to import another PEM bundle?",
-					"Users are able to use it's own PEM bundle to connect to Engine API")
+					"You can use your own PEM bundle to connect to the Engine API")
 				if err != nil {
 					return engineConfig, err
 				}
