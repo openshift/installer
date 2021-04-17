@@ -181,7 +181,7 @@ Different versions of the oVirt UPI playbooks can be downloaded changing the REL
 (please be aware that this UPI work started with the `release-4.6`).
 
 ## Assets directory
-Before proceeding with the installation is better to set an environment variable with the path (absolute or relative according to your preferences) 
+Before proceeding with the installation is **required** to set an environment variable with the path (absolute or relative according to your preferences) 
 of the directory in which the `openshift-install` command will put all the artifacts and that we'll also refer to in the [inventory.yml](../../../upi/ovirt/inventory.yml)`.
 
 ```sh
