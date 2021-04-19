@@ -75,7 +75,12 @@ type OvirtMachineProviderSpec struct {
 
 	// VMAffinityGroup contains the name of the OpenShift cluster affinity groups
 	// It will be used to add the newly created machine to the affinity groups
-	AffinityGroupsNames []string `json:"affinity_groups_names,omitempty`
+	AffinityGroupsNames []string `json:"affinity_groups_names,omitempty"`
+
+	// AutoPinningPolicy defines the policy to automatically set the CPU
+	// and NUMA including pinning to the host for the instance.
+	// One of "disabled, existing, adjust"
+	AutoPinningPolicy string `json:"auto_pinning_policy,omitempty"`
 }
 
 // CPU defines the VM cpu, made of (Sockets * Cores * Threads)

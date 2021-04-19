@@ -8,7 +8,7 @@ import (
 func init() {
 	exec := func() {
 		plugin.Serve(&plugin.ServeOpts{
-			ProviderFunc: ovirt.Provider,
+			ProviderFunc: ovirt.ProviderContext(),
 		})
 	}
 	KnownPlugins["terraform-provider-ovirt"] = exec

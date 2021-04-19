@@ -1237,8 +1237,8 @@ github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-233678
 github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20191219173431-2336783d4603/go.mod h1:7pQ9Bzha+ug/5zd+0ufbDEcnn2OnNlPwRwYrzhXk4NM=
 github.com/openshift/cluster-api-provider-openstack v0.0.0-20210302164104-8498241fa4bd h1:5mq9/JftiO9u/RknQ5iR9Nkd09R1XFfUPS1nO11Wth0=
 github.com/openshift/cluster-api-provider-openstack v0.0.0-20210302164104-8498241fa4bd/go.mod h1:ONl4R7ziQtgnsBjR59fcZbOLjBEPVeZ69C1TPKevynw=
-github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210315122142-893a4db3909a h1:ZVGkVxyKM00gzdJRC7LYEBGgL4CfK8W50uOjj0fX1/E=
-github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210315122142-893a4db3909a/go.mod h1:pqKflzzmag/YrCHzJw5rpjk9o+rArgPn9qEVEe4ULP8=
+github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210406154451-1ea59ab6b543 h1:rzPiPUccXtMbXuOlgIXU8Qhhn9zQpTLeuyDcOfZc2MA=
+github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20210406154451-1ea59ab6b543/go.mod h1:PDoRQIKJb/XT14ebzBoNH0I6ZV2yA7G+jJCk1gCsXB0=
 github.com/openshift/cluster-autoscaler-operator v0.0.0-20190521201101-62768a6ba480/go.mod h1:/XmV44Fh28Vo3Ye93qFrxAbcFJ/Uy+7LPD+jGjmfJYc=
 github.com/openshift/custom-resource-status v0.0.0-20190822192428-e62f2f3b79f3 h1:XuAys09+XqT5/FjdR23G/UtbBLII89dFe9XIi73EKIQ=
 github.com/openshift/custom-resource-status v0.0.0-20190822192428-e62f2f3b79f3/go.mod h1:GDjWl0tX6FNIj82vIxeudWeSx2Ff6nDZ8uJn0ohUFvo=
@@ -1278,11 +1278,10 @@ github.com/operator-framework/operator-sdk v0.5.1-0.20190301204940-c2efe6f74e7b/
 github.com/oracle/oci-go-sdk v7.0.0+incompatible/go.mod h1:VQb79nF8Z2cwLkLS35ukwStZIg5F66tcBccjip/j888=
 github.com/ory/dockertest v3.3.4+incompatible/go.mod h1:1vX4m9wsvi00u5bseYwXaSnhNrne+V0E6LAcBILJdPs=
 github.com/ostreedev/ostree-go v0.0.0-20190702140239-759a8c1ac913/go.mod h1:J6OG6YJVEWopen4avK3VNQSnALmmjvniMmni/YFYAwc=
-github.com/ovirt/go-ovirt v0.0.0-20210112072624-e4d3b104de71/go.mod h1:fLDxPk1Sf64DBYtwIYxrnx3gPZ1q0xPdWdI1y9vxUaw=
 github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c h1:2SbYZedeIawU8sGFnohfrdEcEMBA4V8SDouG6hly+H4=
 github.com/ovirt/go-ovirt v0.0.0-20210308100159-ac0bcbc88d7c/go.mod h1:fLDxPk1Sf64DBYtwIYxrnx3gPZ1q0xPdWdI1y9vxUaw=
-github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210326142716-4545f80e61cd h1:dG/VniPIWmJbiCunCA2S85QULDPQhXkUhlKo1T3MOYo=
-github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210326142716-4545f80e61cd/go.mod h1:xiMZ4bXb5VDorJN++WoqRbxLQ6k4sSlw59jqs5R08JQ=
+github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210419101841-5d3f6567ce90 h1:7URZwDm8pcQukU2VH69h8eI1DQDLZtfCKkKtuvQ9/DA=
+github.com/ovirt/terraform-provider-ovirt v0.99.1-0.20210419101841-5d3f6567ce90/go.mod h1:wnTGn9+USQJ51TMV5brymzjxUfmYmnOQZuNfYeuqky8=
 github.com/oxtoacart/bpool v0.0.0-20150712133111-4e1c5567d7c2/go.mod h1:L3UMQOThbttwfYRNFOWLLVXMhk5Lkio4GGOtw5UrxS0=
 github.com/packer-community/winrmcp v0.0.0-20180102160824-81144009af58/go.mod h1:f6Izs6JvFTdnRbziASagjZ2vmf55NSIkC/weStxCHqk=
 github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db h1:9uViuKtx1jrlXLBW/pMnhOfzn3iSEdLase/But/IZRU=

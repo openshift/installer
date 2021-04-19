@@ -9,14 +9,26 @@ package ovirt
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
 )
 
+type providerContext struct {
+	semaphores *semaphoreProvider
+}
+
+func ProviderContext() func() terraform.ResourceProvider {
+	c := &providerContext{
+		semaphores: newSemaphoreProvider(),
+	}
+	return c.Provider
+}
+
 // Provider returns oVirt provider configuration
-func Provider() terraform.ResourceProvider {
+func (c *providerContext) Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"username": {
@@ -72,7 +84,7 @@ func Provider() terraform.ResourceProvider {
 		ConfigureFunc: ConfigureProvider,
 		ResourcesMap: map[string]*schema.Resource{
 			"ovirt_affinity_group":  resourceOvirtAffinityGroup(),
-			"ovirt_vm":              resourceOvirtVM(),
+			"ovirt_vm":              resourceOvirtVM(c),
 			"ovirt_template":        resourceOvirtTemplate(),
 			"ovirt_disk":            resourceOvirtDisk(),
 			"ovirt_disk_attachment": resourceOvirtDiskAttachment(),
@@ -135,4 +147,37 @@ func ConfigureProvider(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	return connBuilder.Build()
+}
+
+func newSemaphoreProvider() *semaphoreProvider {
+	return &semaphoreProvider{
+		lock:       &sync.Mutex{},
+		semaphores: map[string]chan struct{}{},
+	}
+}
+
+type semaphoreProvider struct {
+	lock       *sync.Mutex
+	semaphores map[string]chan struct{}
+}
+
+func (s *semaphoreProvider) Lock(semName string, capacity uint) {
+	if capacity < 1 {
+		panic(fmt.Sprintf("Invalid semaphoreProvider capacity %d for sem %s", capacity, semName))
+	}
+	s.lock.Lock()
+	if _, ok := s.semaphores[semName]; !ok {
+		s.semaphores[semName] = make(chan struct{}, capacity)
+	}
+	s.lock.Unlock()
+	s.semaphores[semName] <- struct{}{}
+}
+
+func (s *semaphoreProvider) Unlock(semName string) {
+	s.lock.Lock()
+	if _, ok := s.semaphores[semName]; !ok {
+		panic(fmt.Sprintf("semaphoreProvider unlock called before lock: %s", semName))
+	}
+	s.lock.Unlock()
+	<-s.semaphores[semName]
 }

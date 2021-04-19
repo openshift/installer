@@ -106,23 +106,29 @@ func resourceOvirtAffinityGroupCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	vmRuleBuilder := ovirtsdk4.NewAffinityRuleBuilder()
-	if _, ok := d.GetOk("vm_list"); ok {
+	vmRuleBuilder.Enabled(false)
+	if vmPositive, ok := d.GetOkExists("vm_positive"); ok {
 		vmRuleBuilder.Enabled(true)
-		vmRuleBuilder.Positive(d.Get("vm_positive").(bool))
-		vmRuleBuilder.Enforcing(d.Get("vm_enforcing").(bool))
-	} else {
-		vmRuleBuilder.Enabled(false)
+		vmRuleBuilder.Positive(vmPositive.(bool))
 	}
+	if vmEnforcing, ok := d.GetOk("vm_enforcing"); ok {
+		vmRuleBuilder.Enabled(true)
+		vmRuleBuilder.Enforcing(vmEnforcing.(bool))
+	}
+
 	agBuilder.VmsRule(vmRuleBuilder.MustBuild())
 
 	hostRuleBuilder := ovirtsdk4.NewAffinityRuleBuilder()
-	if _, ok := d.GetOk("host_list"); ok {
+	hostRuleBuilder.Enabled(false)
+	if hostPositive, ok := d.GetOkExists("host_positive"); ok {
 		hostRuleBuilder.Enabled(true)
-		hostRuleBuilder.Positive(d.Get("host_positive").(bool))
-		hostRuleBuilder.Enforcing(d.Get("host_enforcing").(bool))
-	} else {
-		hostRuleBuilder.Enabled(false)
+		hostRuleBuilder.Positive(hostPositive.(bool))
 	}
+	if hostEnforcing, ok := d.GetOk("host_enforcing"); ok {
+		hostRuleBuilder.Enabled(true)
+		hostRuleBuilder.Enforcing(hostEnforcing.(bool))
+	}
+
 	agBuilder.HostsRule(hostRuleBuilder.MustBuild())
 
 	log.Printf("Creating %#v", agBuilder.MustBuild())
