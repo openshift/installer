@@ -10,6 +10,7 @@ import (
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	kubevirtconfig "github.com/openshift/installer/pkg/asset/installconfig/kubevirt"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -65,6 +66,9 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 			} else {
 				permissionGroups = append(permissionGroups, awsconfig.PermissionDeleteNetworking)
 			}
+			if awsIncludesUserSuppliedInstanceRole(ic.Config) {
+				permissionGroups = append(permissionGroups, awsconfig.PermissionDeleteSharedInstanceRole)
+			}
 		}
 
 		ssn, err := ic.AWS.Session(ctx)
@@ -106,4 +110,22 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 // Name returns the human-friendly name of the asset.
 func (a *PlatformPermsCheck) Name() string {
 	return "Platform Permissions Check"
+}
+
+func awsIncludesUserSuppliedInstanceRole(installConfig *types.InstallConfig) bool {
+	mp := &aws.MachinePool{}
+	mp.Set(installConfig.Platform.AWS.DefaultMachinePlatform)
+	mp.Set(installConfig.ControlPlane.Platform.AWS)
+	if mp.IAMRole != "" {
+		return true
+	}
+	for _, c := range installConfig.Compute {
+		mp := &aws.MachinePool{}
+		mp.Set(installConfig.Platform.AWS.DefaultMachinePlatform)
+		mp.Set(c.Platform.AWS)
+		if mp.IAMRole != "" {
+			return true
+		}
+	}
+	return false
 }

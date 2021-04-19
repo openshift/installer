@@ -28,6 +28,10 @@ const (
 
 	// PermissionDeleteSharedNetworking is a set of permissions required when the installer destroys resources from a shared-network cluster.
 	PermissionDeleteSharedNetworking PermissionGroup = "delete-shared-networking"
+
+	// PermissionDeleteSharedInstanceRole is a set of permissions required when the installer destroys resources from a
+	// cluster with user-supplied IAM roles for instances.
+	PermissionDeleteSharedInstanceRole PermissionGroup = "delete-shared-instance-role"
 )
 
 var permissions = map[PermissionGroup][]string{
@@ -222,6 +226,11 @@ var permissions = map[PermissionGroup][]string{
 	// Permissions required for deleting a cluster with shared network resources
 	PermissionDeleteSharedNetworking: {
 		"tag:UnTagResources",
+	},
+	// Permissions required for deleting a cluster with shared instance roles
+	PermissionDeleteSharedInstanceRole: {
+		"tag:UnTagResources",
+		"iam:UntagRole",
 	},
 }
 
