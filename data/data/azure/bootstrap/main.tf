@@ -216,6 +216,8 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
 }
 
 resource "azurerm_network_security_rule" "bootstrap_ssh_in" {
+  count = var.private ? 0 : 1
+
   name                        = "bootstrap_ssh_in"
   priority                    = 103
   direction                   = "Inbound"
