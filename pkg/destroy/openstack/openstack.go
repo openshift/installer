@@ -9,6 +9,7 @@ import (
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 
 	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/snapshots"
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/servergroups"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
@@ -35,6 +36,7 @@ import (
 )
 
 const (
+	cinderCSIClusterIDKey           = "cinder.csi.openstack.org/cluster"
 	minOctaviaVersionWithTagSupport = "v2.5"
 )
 
@@ -84,20 +86,21 @@ func (o *ClusterUninstaller) Run() error {
 	// deleteFuncs contains the functions that will be launched as
 	// goroutines.
 	deleteFuncs := map[string]deleteFunc{
-		"deleteServers":        deleteServers,
-		"deleteServerGroups":   deleteServerGroups,
-		"deleteTrunks":         deleteTrunks,
-		"deleteLoadBalancers":  deleteLoadBalancers,
-		"deletePorts":          deletePorts,
-		"deleteSecurityGroups": deleteSecurityGroups,
-		"deleteRouters":        deleteRouters,
-		"deleteSubnets":        deleteSubnets,
-		"deleteSubnetPools":    deleteSubnetPools,
-		"deleteNetworks":       deleteNetworks,
-		"deleteContainers":     deleteContainers,
-		"deleteVolumes":        deleteVolumes,
-		"deleteFloatingIPs":    deleteFloatingIPs,
-		"deleteImages":         deleteImages,
+		"deleteServers":         deleteServers,
+		"deleteServerGroups":    deleteServerGroups,
+		"deleteTrunks":          deleteTrunks,
+		"deleteLoadBalancers":   deleteLoadBalancers,
+		"deletePorts":           deletePorts,
+		"deleteSecurityGroups":  deleteSecurityGroups,
+		"deleteRouters":         deleteRouters,
+		"deleteSubnets":         deleteSubnets,
+		"deleteSubnetPools":     deleteSubnetPools,
+		"deleteNetworks":        deleteNetworks,
+		"deleteContainers":      deleteContainers,
+		"deleteVolumes":         deleteVolumes,
+		"deleteVolumeSnapshots": deleteVolumeSnapshots,
+		"deleteFloatingIPs":     deleteFloatingIPs,
+		"deleteImages":          deleteImages,
 	}
 	returnChannel := make(chan string)
 
@@ -1149,7 +1152,6 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	logger.Debug("Deleting OpenStack volumes")
 	defer logger.Debugf("Exiting deleting OpenStack volumes")
 
-	// We need to delete all volumes that have names with the cluster ID as a prefix
 	var clusterID string
 	for k, v := range filter {
 		if strings.ToLower(k) == "openshiftclusterid" {
@@ -1180,7 +1182,14 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 
 	volumeIDs := []string{}
 	for _, volume := range allVolumes {
+		// First, we need to delete all volumes that have names with the cluster ID as a prefix.
+		// They are created by the in-tree Cinder provisioner.
 		if strings.HasPrefix(volume.Name, clusterID) {
+			volumeIDs = append(volumeIDs, volume.ID)
+		}
+		// Second, we need to delete volumes created by the CSI driver. They contain their cluster ID
+		// in the metadata.
+		if val, ok := volume.Metadata[cinderCSIClusterIDKey]; ok && val == clusterID {
 			volumeIDs = append(volumeIDs, volume.ID)
 		}
 	}
@@ -1200,6 +1209,58 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 				return false, nil
 			}
 			logger.Debugf("Cannot find volume %q. It's probably already been deleted.", volumeID)
+		}
+	}
+
+	return true, nil
+}
+
+func deleteVolumeSnapshots(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+	logger.Debug("Deleting OpenStack volume snapshots")
+	defer logger.Debugf("Exiting deleting OpenStack volume snapshots")
+
+	var clusterID string
+	for k, v := range filter {
+		if strings.ToLower(k) == "openshiftclusterid" {
+			clusterID = v
+			break
+		}
+	}
+
+	conn, err := clientconfig.NewServiceClient("volume", opts)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	listOpts := snapshots.ListOpts{}
+
+	allPages, err := snapshots.List(conn, listOpts).AllPages()
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	allSnapshots, err := snapshots.ExtractSnapshots(allPages)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+
+	for _, snapshot := range allSnapshots {
+		// Delete only those snapshots that contain cluster ID in the metadata
+		if val, ok := snapshot.Metadata[cinderCSIClusterIDKey]; ok && val == clusterID {
+			logger.Debugf("Deleting volume snapshot %q", snapshot.ID)
+			err = snapshots.Delete(conn, snapshot.ID).ExtractErr()
+			if err != nil {
+				// Ignore the error if the server cannot be found
+				var gerr gophercloud.ErrDefault404
+				if !errors.As(err, &gerr) {
+					logger.Debugf("Deleting volume snapshot %q failed: %v", snapshot.ID, err)
+					return false, nil
+				}
+				logger.Debugf("Cannot find volume snapshot %q. It's probably already been deleted.", snapshot.ID)
+			}
 		}
 	}
 
